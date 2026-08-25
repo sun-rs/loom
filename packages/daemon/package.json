@@ -1,0 +1,17 @@
+{
+  "name": "@rah-os/daemon",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "rah-os-daemon": "./src/cli.ts"
+  },
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@rah-os/agent-host": "*",
+    "@rah-os/application-service": "*",
+    "@rah-os/kernel": "*",
+    "@rah-os/protocol": "*",
+    "zod": "^4.4.3"
+  }
+}

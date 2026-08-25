@@ -1,0 +1,29 @@
+{
+  "name": "rah-os",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "daemon": "node packages/daemon/src/cli.ts",
+    "test": "node --test --test-concurrency=1 packages/*/test/*.test.ts",
+    "test:real:claude": "RAH_REAL_CLI_GATE=claude node --test packages/daemon/test/real-cli-gate.test.ts",
+    "test:real:codex": "RAH_REAL_CLI_GATE=codex node --test packages/daemon/test/real-cli-gate.test.ts",
+    "test:real:kimi": "RAH_REAL_CLI_GATE=kimi node --test packages/daemon/test/real-cli-gate.test.ts",
+    "test:real:opencode": "RAH_REAL_CLI_GATE=opencode node --test packages/daemon/test/real-cli-gate.test.ts",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm test",
+    "format:check": "prettier --check .",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.2"
+  }
+}

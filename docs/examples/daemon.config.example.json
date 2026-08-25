@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 2,
+  "stateDirectory": "/Users/you/Library/Application Support/RAH OS",
+  "client": {
+    "bindHost": "127.0.0.1",
+    "port": 7777
+  },
+  "host": {
+    "hostId": "macbook-codex-host",
+    "participantId": "principal_replace_me",
+    "credential": {
+      "source": "file",
+      "path": "/Users/you/.config/rah-os/host.token"
+    }
+  },
+  "hostStaleAfterMs": 60000,
+  "leaseMs": 60000,
+  "leaseRenewIntervalMs": 20000,
+  "pollIntervalMs": 30000,
+  "outboxLeaseMs": 5000,
+  "outboxPollIntervalMs": 250,
+  "outboxRetryAfterMs": 1000,
+  "retryAfterMs": 5000,
+  "runTimeoutMs": 1800000,
+  "drainTimeoutMs": 30000,
+  "runtimeStartTimeoutMs": 30000,
+  "runtimeCancelTimeoutMs": 15000,
+  "runtimeRecoveryTimeoutMs": 60000,
+  "taskClaimLeaseMs": 900000,
+  "taskClaimHeartbeatIntervalMs": 300000,
+  "runtime": {
+    "kind": "generic-process",
+    "command": "codex",
+    "args": [
+      "exec",
+      "--ephemeral",
+      "--skip-git-repo-check",
+      "--sandbox",
+      "danger-full-access",
+      "Read RAH_WORKER_API_URL and RAH_WORKER_TOKEN from the environment. Pull and acknowledge the assigned Room range, then execute its Task through the strict Worker Task endpoints. Treat stdout as diagnostics only."
+    ],
+    "cwd": "/Users/you/Code/workspace",
+    "env": {},
+    "diagnosticByteLimit": 262144,
+    "supervisorStartupTimeoutMs": 10000,
+    "supervisorControlTimeoutMs": 20000,
+    "terminationGraceMs": 5000
+  }
+}

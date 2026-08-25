@@ -1,0 +1,1330 @@
+import { z } from "zod";
+
+const IdentifierSchema = z.string().min(1);
+const TimestampSchema = z.iso.datetime({ offset: true });
+
+export const ParticipantKindSchema = z.enum(["human", "agent", "service"]);
+export type ParticipantKind = z.infer<typeof ParticipantKindSchema>;
+
+export const ActivationReasonSchema = z.enum([
+  "mention",
+  "dm",
+  "task_assigned",
+  "dependency_resolved",
+  "input_requested",
+  "input_resolved",
+  "thread_subscription",
+  "room_policy",
+  "manual",
+]);
+export type ActivationReason = z.infer<typeof ActivationReasonSchema>;
+
+export const RoomEventSchema = z
+  .object({
+    eventId: IdentifierSchema,
+    roomId: IdentifierSchema,
+    roomSeq: z.number().int().positive(),
+    type: z.string().regex(/^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/),
+    actorId: IdentifierSchema,
+    aggregateType: IdentifierSchema,
+    aggregateId: IdentifierSchema,
+    payload: z.record(z.string(), z.unknown()),
+    idempotencyKey: IdentifierSchema,
+    schemaVersion: z.number().int().positive(),
+    createdAt: TimestampSchema,
+  })
+  .strict();
+export type RoomEvent = z.infer<typeof RoomEventSchema>;
+
+export const ActivationStateSchema = z.enum([
+  "queued",
+  "leased",
+  "quarantined",
+  "completed",
+  "cancelled",
+]);
+export type ActivationState = z.infer<typeof ActivationStateSchema>;
+
+export const ActivationSchema = z
+  .object({
+    activationId: IdentifierSchema,
+    roomId: IdentifierSchema,
+    participantId: IdentifierSchema,
+    fromSeq: z.number().int().positive(),
+    toSeq: z.number().int().positive(),
+    reason: ActivationReasonSchema,
+    state: ActivationStateSchema,
+    leaseOwner: IdentifierSchema.optional(),
+    leaseUntil: TimestampSchema.optional(),
+    attemptCount: z.number().int().nonnegative(),
+    availableAt: TimestampSchema.optional(),
+    lastError: z.string().min(1).optional(),
+    createdAt: TimestampSchema,
+    updatedAt: TimestampSchema,
+  })
+  .strict()
+  .refine((activation) => activation.fromSeq <= activation.toSeq, {
+    message: "fromSeq must be less than or equal to toSeq",
+    path: ["fromSeq"],
+  })
+  .refine(
+    (activation) =>
+      activation.state !== "leased" ||
+      (activation.leaseOwner !== undefined &&
+        activation.leaseUntil !== undefined),
+    {
+      message: "leased activations require leaseOwner and leaseUntil",
+      path: ["leaseOwner"],
+    },
+  );
+export type Activation = z.infer<typeof ActivationSchema>;
+
+export const WakeHintSchema = z
+  .object({
+    activationId: IdentifierSchema,
+    participantId: IdentifierSchema,
+    roomId: IdentifierSchema,
+    headCursor: z.number().int().positive(),
+    reason: ActivationReasonSchema,
+  })
+  .strict();
+export type WakeHint = z.infer<typeof WakeHintSchema>;
+
+export const InboxStateSchema = z.enum(["pending", "acknowledged"]);
+export type InboxState = z.infer<typeof InboxStateSchema>;
+
+export const TaskStateSchema = z.enum([
+  "todo",
+  "claimed",
+  "in_progress",
+  "waiting_input",
+  "submitted",
+  "completed",
+]);
+export type TaskState = z.infer<typeof TaskStateSchema>;
+
+export const TaskSchema = z
+  .object({
+    taskId: IdentifierSchema,
+    roomId: IdentifierSchema,
+    creatorId: IdentifierSchema,
+    assigneeId: IdentifierSchema,
+    title: z.string().trim().min(1),
+    description: z.string().trim().min(1).optional(),
+    state: TaskStateSchema,
+    claimedBy: IdentifierSchema.optional(),
+    claimUntil: TimestampSchema.optional(),
+    lastProgress: z.string().trim().min(1).optional(),
+    submissionSummary: z.string().trim().min(1).optional(),
+    createdAt: TimestampSchema,
+    updatedAt: TimestampSchema,
+    submittedAt: TimestampSchema.optional(),
+    completedAt: TimestampSchema.optional(),
+  })
+  .strict()
+  .superRefine((task, context) => {
+    const requiresClaim =
+      task.state === "claimed" || task.state === "in_progress";
+    if (requiresClaim && task.claimedBy === undefined) {
+      context.addIssue({
+        code: "custom",
+        message: `${task.state} tasks require claimedBy`,
+        path: ["claimedBy"],
+      });
+    }
+    if (requiresClaim && task.claimUntil === undefined) {
+      context.addIssue({
+        code: "custom",
+        message: `${task.state} tasks require claimUntil`,
+        path: ["claimUntil"],
+      });
+    }
+    if (!requiresClaim && task.claimedBy !== undefined) {
+      context.addIssue({
+        code: "custom",
+        message: `${task.state} tasks cannot retain claimedBy`,
+        path: ["claimedBy"],
+      });
+    }
+    if (!requiresClaim && task.claimUntil !== undefined) {
+      context.addIssue({
+        code: "custom",
+        message: `${task.state} tasks cannot retain claimUntil`,
+        path: ["claimUntil"],
+      });
+    }
+    if (
+      (task.state === "submitted" || task.state === "completed") &&
+      task.submissionSummary === undefined
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: `${task.state} tasks require submissionSummary`,
+        path: ["submissionSummary"],
+      });
+    }
+    if (
+      (task.state === "submitted" || task.state === "completed") &&
+      task.submittedAt === undefined
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: `${task.state} tasks require submittedAt`,
+        path: ["submittedAt"],
+      });
+    }
+    if (task.state === "completed" && task.completedAt === undefined) {
+      context.addIssue({
+        code: "custom",
+        message: "completed tasks require completedAt",
+        path: ["completedAt"],
+      });
+    }
+    if (task.state !== "completed" && task.completedAt !== undefined) {
+      context.addIssue({
+        code: "custom",
+        message: `${task.state} tasks cannot have completedAt`,
+        path: ["completedAt"],
+      });
+    }
+  });
+export type Task = z.infer<typeof TaskSchema>;
+
+export const InputRequestStateSchema = z.enum(["pending", "resolved"]);
+export type InputRequestState = z.infer<typeof InputRequestStateSchema>;
+
+export const InputRequestSchema = z
+  .object({
+    inputRequestId: IdentifierSchema,
+    roomId: IdentifierSchema,
+    taskId: IdentifierSchema,
+    requesterId: IdentifierSchema,
+    responderId: IdentifierSchema,
+    question: z.string().trim().min(1),
+    state: InputRequestStateSchema,
+    answer: z.string().trim().min(1).optional(),
+    resolvedBy: IdentifierSchema.optional(),
+    createdAt: TimestampSchema,
+    updatedAt: TimestampSchema,
+    resolvedAt: TimestampSchema.optional(),
+  })
+  .strict()
+  .superRefine((request, context) => {
+    const resolutionFields = [
+      request.answer,
+      request.resolvedAt,
+      request.resolvedBy,
+    ];
+    if (
+      request.state === "pending" &&
+      resolutionFields.some((value) => value !== undefined)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "pending InputRequests cannot contain resolution evidence",
+        path: ["state"],
+      });
+    }
+    if (
+      request.state === "resolved" &&
+      resolutionFields.some((value) => value === undefined)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "resolved InputRequests require complete resolution evidence",
+        path: ["state"],
+      });
+    }
+    if (
+      request.resolvedBy !== undefined &&
+      request.resolvedBy !== request.responderId
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "InputRequests must be resolved by their responder",
+        path: ["resolvedBy"],
+      });
+    }
+  });
+export type InputRequest = z.infer<typeof InputRequestSchema>;
+
+export const InputRequestStatusSchema = z
+  .object({
+    inputRequestId: IdentifierSchema,
+    taskId: IdentifierSchema,
+    state: InputRequestStateSchema,
+  })
+  .strict();
+export type InputRequestStatus = z.infer<typeof InputRequestStatusSchema>;
+
+export const InputRequestResolveRequestSchema = z
+  .object({
+    answer: z.string().trim().min(1),
+    basedOnRoomSeq: z.number().int().nonnegative(),
+    idempotencyKey: IdentifierSchema,
+    inputRequestId: IdentifierSchema,
+  })
+  .strict();
+export type InputRequestResolveRequest = z.infer<
+  typeof InputRequestResolveRequestSchema
+>;
+
+export const RuntimeRecoveryDescriptorSchema = z
+  .object({
+    driver: IdentifierSchema,
+    recoveryKey: IdentifierSchema,
+    metadata: z.record(z.string(), z.unknown()),
+  })
+  .strict();
+export type RuntimeRecoveryDescriptor = z.infer<
+  typeof RuntimeRecoveryDescriptorSchema
+>;
+
+export const ContentDigestSchema = z.string().regex(/^sha256:[a-f0-9]{64}$/);
+export type ContentDigest = z.infer<typeof ContentDigestSchema>;
+
+function rejectDuplicateStrings(
+  values: readonly string[],
+  context: z.RefinementCtx,
+): void {
+  const seen = new Set<string>();
+  values.forEach((value, index) => {
+    if (seen.has(value)) {
+      context.addIssue({
+        code: "custom",
+        message: `duplicate value: ${value}`,
+        path: [index],
+      });
+    }
+    seen.add(value);
+  });
+}
+
+const UniqueIdentifierArraySchema = z
+  .array(IdentifierSchema)
+  .superRefine(rejectDuplicateStrings);
+
+export const VersionedContentRefSchema = z
+  .object({
+    artifactId: IdentifierSchema,
+    versionId: IdentifierSchema,
+    contentDigest: ContentDigestSchema,
+  })
+  .strict();
+export type VersionedContentRef = z.infer<typeof VersionedContentRefSchema>;
+
+export const AgentDefinitionStateSchema = z.enum([
+  "enabled",
+  "disabled",
+  "tombstoned",
+]);
+export type AgentDefinitionState = z.infer<typeof AgentDefinitionStateSchema>;
+
+export const AgentDefinitionSchema = z
+  .object({
+    agentDefinitionId: IdentifierSchema,
+    participantId: IdentifierSchema,
+    controlRoomId: IdentifierSchema,
+    state: AgentDefinitionStateSchema,
+    currentRevisionId: IdentifierSchema,
+    createdAt: TimestampSchema,
+    updatedAt: TimestampSchema,
+  })
+  .strict()
+  .refine(
+    (definition) =>
+      Date.parse(definition.updatedAt) >= Date.parse(definition.createdAt),
+    {
+      message: "updatedAt must not precede createdAt",
+      path: ["updatedAt"],
+    },
+  );
+export type AgentDefinition = z.infer<typeof AgentDefinitionSchema>;
+
+export const AgentDefinitionRevisionSchema = z
+  .object({
+    agentDefinitionRevisionId: IdentifierSchema,
+    agentDefinitionId: IdentifierSchema,
+    revision: z.number().int().positive(),
+    role: z.string().trim().min(1),
+    instructionRefs: z.array(VersionedContentRefSchema),
+    skillRefs: z.array(VersionedContentRefSchema),
+    memoryPolicyRef: VersionedContentRefSchema,
+    executionPolicyRevisionId: IdentifierSchema,
+    contentDigest: ContentDigestSchema,
+    createdBy: IdentifierSchema,
+    createdAt: TimestampSchema,
+  })
+  .strict()
+  .superRefine((revision, context) => {
+    const references = [...revision.instructionRefs, ...revision.skillRefs];
+    rejectDuplicateStrings(
+      references.map(
+        (reference) => `${reference.artifactId}:${reference.versionId}`,
+      ),
+      context,
+    );
+  });
+export type AgentDefinitionRevision = z.infer<
+  typeof AgentDefinitionRevisionSchema
+>;
+
+export const CapabilityEvidenceLevelSchema = z.enum([
+  "declared",
+  "probed",
+  "certified",
+]);
+export type CapabilityEvidenceLevel = z.infer<
+  typeof CapabilityEvidenceLevelSchema
+>;
+
+export const WorkspaceModeSchema = z.enum([
+  "in_place",
+  "worktree",
+  "ephemeral",
+]);
+export type WorkspaceMode = z.infer<typeof WorkspaceModeSchema>;
+
+export const IsolationLevelSchema = z.enum([
+  "none",
+  "process",
+  "platform",
+  "container",
+]);
+export type IsolationLevel = z.infer<typeof IsolationLevelSchema>;
+
+export const ReasoningLevelSchema = z.enum([
+  "default",
+  "low",
+  "medium",
+  "high",
+  "max",
+]);
+export type ReasoningLevel = z.infer<typeof ReasoningLevelSchema>;
+
+export const ExplicitReasoningLevelSchema = z.enum([
+  "low",
+  "medium",
+  "high",
+  "max",
+]);
+export type ExplicitReasoningLevel = z.infer<
+  typeof ExplicitReasoningLevelSchema
+>;
+
+export const ServiceTierSchema = z.enum(["default", "fast", "priority"]);
+export type ServiceTier = z.infer<typeof ServiceTierSchema>;
+
+export const ModelCapabilityClassSchema = z.enum([
+  "fast",
+  "balanced",
+  "deep_coding",
+]);
+export type ModelCapabilityClass = z.infer<typeof ModelCapabilityClassSchema>;
+
+export const ModelIntentSchema = z
+  .object({
+    exactBindingIds: UniqueIdentifierArraySchema.min(1).optional(),
+    capabilityClass: ModelCapabilityClassSchema.optional(),
+    reasoning: ReasoningLevelSchema.optional(),
+    serviceTier: ServiceTierSchema.optional(),
+    fallback: z.enum(["disabled", "same_profile", "compatible_offer"]),
+  })
+  .strict()
+  .refine(
+    (intent) =>
+      intent.exactBindingIds === undefined ||
+      intent.capabilityClass === undefined,
+    {
+      message: "exactBindingIds and capabilityClass are mutually exclusive",
+      path: ["capabilityClass"],
+    },
+  );
+export type ModelIntent = z.infer<typeof ModelIntentSchema>;
+
+export const RuntimeCapabilityEvidenceSchema = z
+  .object({
+    capability: IdentifierSchema,
+    evidence: CapabilityEvidenceLevelSchema,
+  })
+  .strict();
+export type RuntimeCapabilityEvidence = z.infer<
+  typeof RuntimeCapabilityEvidenceSchema
+>;
+
+export const RuntimeCertificationRefSchema = z
+  .object({
+    certificationId: IdentifierSchema,
+    certificationDigest: ContentDigestSchema,
+  })
+  .strict();
+export type RuntimeCertificationRef = z.infer<
+  typeof RuntimeCertificationRefSchema
+>;
+
+export const RuntimeCertificationSchema = z
+  .object({
+    certificationId: IdentifierSchema,
+    certificationDigest: ContentDigestSchema,
+    protocolFamily: IdentifierSchema,
+    runtimeProfileDigest: ContentDigestSchema,
+    capabilities: UniqueIdentifierArraySchema,
+    maximumIsolation: IsolationLevelSchema,
+  })
+  .strict();
+export type RuntimeCertification = z.infer<typeof RuntimeCertificationSchema>;
+
+export const RuntimeCapabilityRequirementSchema = z
+  .object({
+    capability: IdentifierSchema,
+    minimumEvidence: z.enum(["probed", "certified"]),
+  })
+  .strict();
+export type RuntimeCapabilityRequirement = z.infer<
+  typeof RuntimeCapabilityRequirementSchema
+>;
+
+const ModelBindingDescriptorFields = {
+  modelBindingId: IdentifierSchema,
+  provider: IdentifierSchema,
+  modelId: IdentifierSchema,
+  capabilityClasses: z
+    .array(ModelCapabilityClassSchema)
+    .superRefine(rejectDuplicateStrings),
+  supportedReasoning: z
+    .array(ExplicitReasoningLevelSchema)
+    .superRefine(rejectDuplicateStrings),
+  supportedServiceTiers: z
+    .array(ServiceTierSchema)
+    .superRefine(rejectDuplicateStrings),
+  evidence: CapabilityEvidenceLevelSchema,
+};
+
+export const ModelBindingDescriptorSchema = z
+  .object(ModelBindingDescriptorFields)
+  .strict();
+export type ModelBindingDescriptor = z.infer<
+  typeof ModelBindingDescriptorSchema
+>;
+
+export const RuntimeModelBindingSchema = z
+  .object({
+    ...ModelBindingDescriptorFields,
+    adapterMapping: z
+      .object({
+        kind: IdentifierSchema,
+        config: z.record(z.string(), z.unknown()),
+      })
+      .strict(),
+  })
+  .strict();
+export type RuntimeModelBinding = z.infer<typeof RuntimeModelBindingSchema>;
+
+const PreferenceWeightSchema = z.number().int().positive().max(1_000_000);
+const TargetPreferenceSchema = z
+  .object({
+    criterion: z.enum([
+      "runtime_offer",
+      "runtime_profile",
+      "protocol_family",
+      "model_binding",
+    ]),
+    targetId: IdentifierSchema,
+    weight: PreferenceWeightSchema,
+  })
+  .strict();
+const ScalarPreferenceSchema = z
+  .object({
+    criterion: z.enum(["lower_load", "avoid_structural_failures"]),
+    weight: PreferenceWeightSchema,
+  })
+  .strict();
+
+export const PlacementPreferenceSchema = z.union([
+  TargetPreferenceSchema,
+  ScalarPreferenceSchema,
+]);
+export type PlacementPreference = z.infer<typeof PlacementPreferenceSchema>;
+
+export const ExecutionPolicyRevisionSchema = z
+  .object({
+    executionPolicyId: IdentifierSchema,
+    executionPolicyRevisionId: IdentifierSchema,
+    controlRoomId: IdentifierSchema,
+    revision: z.number().int().positive(),
+    contentDigest: ContentDigestSchema,
+    required: z
+      .object({
+        authorizedHostIds: UniqueIdentifierArraySchema.min(1).optional(),
+        allowedOfferIds: UniqueIdentifierArraySchema.min(1).optional(),
+        allowedProtocolFamilies: UniqueIdentifierArraySchema.min(1),
+        capabilities: z.array(RuntimeCapabilityRequirementSchema),
+        minimumIsolation: IsolationLevelSchema,
+        workspaceMode: WorkspaceModeSchema,
+      })
+      .strict(),
+    preferred: z.array(PlacementPreferenceSchema).max(64),
+    modelIntent: ModelIntentSchema,
+    sessionPolicy: z.enum(["fresh", "prefer_resume", "require_resume"]),
+    retryPolicyRef: VersionedContentRefSchema,
+    createdBy: IdentifierSchema,
+    createdAt: TimestampSchema,
+  })
+  .strict()
+  .superRefine((policy, context) => {
+    rejectDuplicateStrings(
+      policy.required.capabilities.map((requirement) => requirement.capability),
+      context,
+    );
+    rejectDuplicateStrings(
+      policy.preferred.map((preference) =>
+        "targetId" in preference
+          ? `${preference.criterion}:${preference.targetId}`
+          : preference.criterion,
+      ),
+      context,
+    );
+  });
+export type ExecutionPolicyRevision = z.infer<
+  typeof ExecutionPolicyRevisionSchema
+>;
+
+export const RuntimeOfferStateSchema = z.enum([
+  "available",
+  "degraded",
+  "draining",
+  "unavailable",
+]);
+export type RuntimeOfferState = z.infer<typeof RuntimeOfferStateSchema>;
+
+export const WorkspaceMountDescriptorSchema = z
+  .object({
+    workspaceDefinitionId: IdentifierSchema,
+    workspaceMountRevisionId: IdentifierSchema,
+    workspaceMountDigest: ContentDigestSchema,
+    modes: z
+      .array(WorkspaceModeSchema)
+      .min(1)
+      .superRefine(rejectDuplicateStrings),
+  })
+  .strict();
+export type WorkspaceMountDescriptor = z.infer<
+  typeof WorkspaceMountDescriptorSchema
+>;
+
+export const RuntimeOfferSchema = z
+  .object({
+    runtimeOfferId: IdentifierSchema,
+    hostId: IdentifierSchema,
+    hostInstanceId: IdentifierSchema,
+    runtimeProfileId: IdentifierSchema,
+    runtimeProfileRevisionId: IdentifierSchema,
+    revisionDigest: ContentDigestSchema,
+    protocolFamily: IdentifierSchema,
+    certificationRefs: z.array(RuntimeCertificationRefSchema).default([]),
+    capabilityEvidence: z.array(RuntimeCapabilityEvidenceSchema),
+    isolation: z
+      .object({
+        level: IsolationLevelSchema,
+        evidence: CapabilityEvidenceLevelSchema,
+      })
+      .strict(),
+    modelBindingDescriptors: z.array(ModelBindingDescriptorSchema),
+    workspaceMountDescriptors: z.array(WorkspaceMountDescriptorSchema),
+    capacityPoolIds: UniqueIdentifierArraySchema,
+    maxConcurrent: z.number().int().positive(),
+    state: RuntimeOfferStateSchema,
+    observedVersion: z.string().trim().min(1).optional(),
+    observedAt: TimestampSchema,
+    leaseUntil: TimestampSchema,
+  })
+  .strict()
+  .superRefine((offer, context) => {
+    if (Date.parse(offer.leaseUntil) <= Date.parse(offer.observedAt)) {
+      context.addIssue({
+        code: "custom",
+        message: "leaseUntil must be later than observedAt",
+        path: ["leaseUntil"],
+      });
+    }
+    rejectDuplicateStrings(
+      offer.capabilityEvidence.map((evidence) => evidence.capability),
+      context,
+    );
+    rejectDuplicateStrings(
+      offer.certificationRefs.map((reference) => reference.certificationId),
+      context,
+    );
+    rejectDuplicateStrings(
+      offer.modelBindingDescriptors.map((binding) => binding.modelBindingId),
+      context,
+    );
+    rejectDuplicateStrings(
+      offer.workspaceMountDescriptors.map(
+        (workspace) => workspace.workspaceMountRevisionId,
+      ),
+      context,
+    );
+  });
+export type RuntimeOffer = z.infer<typeof RuntimeOfferSchema>;
+
+export const RuntimeOfferProjectionSchema = RuntimeOfferSchema.safeExtend({
+  acceptedAt: TimestampSchema,
+  resolvedCertifications: z.array(RuntimeCertificationSchema),
+  runtimeOfferObservationId: IdentifierSchema,
+  runtimeOfferSnapshotDigest: ContentDigestSchema,
+}).superRefine((projection, context) => {
+  rejectDuplicateStrings(
+    projection.resolvedCertifications.map(
+      (certification) => certification.certificationId,
+    ),
+    context,
+  );
+  const references = new Map(
+    projection.certificationRefs.map((reference) => [
+      reference.certificationId,
+      reference.certificationDigest,
+    ]),
+  );
+  if (
+    projection.resolvedCertifications.length !== references.size ||
+    projection.resolvedCertifications.some(
+      (certification) =>
+        references.get(certification.certificationId) !==
+        certification.certificationDigest,
+    )
+  ) {
+    context.addIssue({
+      code: "custom",
+      message: "resolvedCertifications must exactly match certificationRefs",
+      path: ["resolvedCertifications"],
+    });
+  }
+});
+export type RuntimeOfferProjection = z.infer<
+  typeof RuntimeOfferProjectionSchema
+>;
+
+export const ResolvedModelSchema = z.discriminatedUnion("source", [
+  z
+    .object({
+      source: z.literal("runtime_default"),
+      selection: z.literal("no_model_selector_sent"),
+    })
+    .strict(),
+  z
+    .object({
+      source: z.literal("explicit_binding"),
+      modelBindingId: IdentifierSchema,
+      provider: IdentifierSchema,
+      modelId: IdentifierSchema,
+      reasoning: ExplicitReasoningLevelSchema.optional(),
+      serviceTier: ServiceTierSchema.optional(),
+    })
+    .strict(),
+]);
+export type ResolvedModel = z.infer<typeof ResolvedModelSchema>;
+
+function resolvedModelsEqual(
+  left: ResolvedModel,
+  right: ResolvedModel,
+): boolean {
+  if (left.source !== right.source) return false;
+  if (left.source === "runtime_default") return true;
+  if (right.source !== "explicit_binding") return false;
+  return (
+    left.modelBindingId === right.modelBindingId &&
+    left.provider === right.provider &&
+    left.modelId === right.modelId &&
+    left.reasoning === right.reasoning &&
+    left.serviceTier === right.serviceTier
+  );
+}
+
+export const PlacementHardRejectionReasonSchema = z.enum([
+  "agent_disabled",
+  "lane_busy",
+  "host_unauthorized",
+  "host_generation_inactive",
+  "offer_stale",
+  "offer_unavailable",
+  "offer_not_allowed",
+  "protocol_unsupported",
+  "capability_missing",
+  "capability_evidence_insufficient",
+  "isolation_insufficient",
+  "model_unavailable",
+  "workspace_unavailable",
+  "workspace_mode_unsupported",
+  "workspace_busy",
+  "capacity_unconfigured",
+  "capacity_exhausted",
+  "circuit_open",
+  "session_locality_unavailable",
+]);
+export type PlacementHardRejectionReason = z.infer<
+  typeof PlacementHardRejectionReasonSchema
+>;
+
+export const PlacementHoldReasonSchema = z.enum([
+  "agent_disabled",
+  "lane_busy",
+  "no_authorized_host",
+  "no_compatible_offer",
+  "profile_offline",
+  "model_unavailable",
+  "capacity_unconfigured",
+  "capacity_exhausted",
+  "workspace_busy",
+  "session_locality_unavailable",
+  "circuit_open",
+]);
+export type PlacementHoldReason = z.infer<typeof PlacementHoldReasonSchema>;
+
+export const PlacementHoldSchema = z
+  .object({
+    activationId: IdentifierSchema,
+    reason: PlacementHoldReasonSchema,
+    dependencyKeys: UniqueIdentifierArraySchema,
+    evaluatedAt: TimestampSchema,
+    nextEvaluationAt: TimestampSchema,
+  })
+  .strict()
+  .refine(
+    (hold) => Date.parse(hold.nextEvaluationAt) >= Date.parse(hold.evaluatedAt),
+    {
+      message: "nextEvaluationAt must not precede evaluatedAt",
+      path: ["nextEvaluationAt"],
+    },
+  );
+export type PlacementHold = z.infer<typeof PlacementHoldSchema>;
+
+export const PlacementScoreEvidenceSchema = z
+  .object({
+    criterion: IdentifierSchema,
+    points: z.number().int().min(-1_000_000_000).max(1_000_000_000),
+  })
+  .strict();
+export type PlacementScoreEvidence = z.infer<
+  typeof PlacementScoreEvidenceSchema
+>;
+
+export const PlacementCandidateEvidenceSchema = z
+  .object({
+    runtimeOfferId: IdentifierSchema,
+    runtimeOfferObservationId: IdentifierSchema.optional(),
+    runtimeOfferSnapshotDigest: ContentDigestSchema.optional(),
+    runtimeProfileRevisionId: IdentifierSchema,
+    hardRejectionReasons: z.array(PlacementHardRejectionReasonSchema),
+    resolvedModel: ResolvedModelSchema.optional(),
+    workspaceMountRevisionId: IdentifierSchema.optional(),
+    score: z.array(PlacementScoreEvidenceSchema).optional(),
+    totalScore: z
+      .number()
+      .int()
+      .min(-1_000_000_000)
+      .max(1_000_000_000)
+      .optional(),
+  })
+  .strict()
+  .superRefine((evidence, context) => {
+    const rejected = evidence.hardRejectionReasons.length > 0;
+    rejectDuplicateStrings(evidence.hardRejectionReasons, context);
+    if (evidence.score !== undefined) {
+      rejectDuplicateStrings(
+        evidence.score.map((entry) => entry.criterion),
+        context,
+      );
+    }
+    if (
+      rejected &&
+      (evidence.resolvedModel !== undefined ||
+        evidence.workspaceMountRevisionId !== undefined ||
+        evidence.score !== undefined ||
+        evidence.totalScore !== undefined)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "rejected candidates cannot contain resolution or score evidence",
+        path: ["hardRejectionReasons"],
+      });
+    }
+    if (
+      !rejected &&
+      (evidence.resolvedModel === undefined ||
+        evidence.workspaceMountRevisionId === undefined ||
+        evidence.score === undefined ||
+        evidence.totalScore === undefined)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "feasible candidates require resolution and score evidence",
+        path: ["score"],
+      });
+    }
+    if (
+      !rejected &&
+      evidence.score !== undefined &&
+      evidence.totalScore !== undefined &&
+      evidence.score.reduce((total, entry) => total + entry.points, 0) !==
+        evidence.totalScore
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "totalScore must equal the sum of score evidence",
+        path: ["totalScore"],
+      });
+    }
+  });
+export type PlacementCandidateEvidence = z.infer<
+  typeof PlacementCandidateEvidenceSchema
+>;
+
+export const PlacementDecisionSchema = z
+  .object({
+    placementId: IdentifierSchema,
+    activationId: IdentifierSchema,
+    roomId: IdentifierSchema,
+    participantId: IdentifierSchema,
+    agentDefinitionRevisionId: IdentifierSchema,
+    executionPolicyRevisionId: IdentifierSchema,
+    hostId: IdentifierSchema,
+    hostInstanceId: IdentifierSchema,
+    provenanceVersion: z.enum([
+      "legacy_without_offer_observation",
+      "offer_observation_v1",
+    ]),
+    runtimeOfferId: IdentifierSchema,
+    runtimeOfferObservationId: IdentifierSchema.optional(),
+    runtimeOfferSnapshotDigest: ContentDigestSchema.optional(),
+    runtimeProfileRevisionId: IdentifierSchema,
+    runtimeProfileDigest: ContentDigestSchema,
+    protocolFamily: IdentifierSchema,
+    resolvedModel: ResolvedModelSchema,
+    workspaceDefinitionId: IdentifierSchema,
+    workspaceMountRevisionId: IdentifierSchema,
+    workspaceMountDigest: ContentDigestSchema,
+    workspaceMode: WorkspaceModeSchema,
+    capacityPoolIds: UniqueIdentifierArraySchema,
+    schedulerVersion: IdentifierSchema,
+    candidateSetDigest: ContentDigestSchema,
+    candidateEvidence: z.array(PlacementCandidateEvidenceSchema).min(1),
+    state: z.enum(["reserved", "consumed", "released"]),
+    leaseUntil: TimestampSchema,
+    createdAt: TimestampSchema,
+  })
+  .strict()
+  .superRefine((decision, context) => {
+    if (Date.parse(decision.leaseUntil) <= Date.parse(decision.createdAt)) {
+      context.addIssue({
+        code: "custom",
+        message: "leaseUntil must be later than createdAt",
+        path: ["leaseUntil"],
+      });
+    }
+    rejectDuplicateStrings(
+      decision.candidateEvidence.map((evidence) => evidence.runtimeOfferId),
+      context,
+    );
+    const candidateIds = decision.candidateEvidence.map(
+      (evidence) => evidence.runtimeOfferId,
+    );
+    if (
+      candidateIds.some(
+        (candidateId, index) =>
+          index > 0 && candidateIds[index - 1]!.localeCompare(candidateId) > 0,
+      )
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "candidateEvidence must be ordered by runtimeOfferId",
+        path: ["candidateEvidence"],
+      });
+    }
+    const selected = decision.candidateEvidence.find(
+      (evidence) => evidence.runtimeOfferId === decision.runtimeOfferId,
+    );
+    if (selected === undefined || selected.hardRejectionReasons.length > 0) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "selected runtimeOfferId must reference feasible candidate evidence",
+        path: ["runtimeOfferId"],
+      });
+    } else {
+      if (decision.provenanceVersion === "offer_observation_v1") {
+        if (
+          decision.runtimeOfferObservationId === undefined ||
+          decision.runtimeOfferSnapshotDigest === undefined ||
+          decision.candidateEvidence.some(
+            (candidate) =>
+              candidate.runtimeOfferObservationId === undefined ||
+              candidate.runtimeOfferSnapshotDigest === undefined,
+          )
+        ) {
+          context.addIssue({
+            code: "custom",
+            message:
+              "offer_observation_v1 requires immutable observation provenance for every candidate",
+            path: ["runtimeOfferObservationId"],
+          });
+        }
+        if (
+          selected.runtimeOfferObservationId !==
+            decision.runtimeOfferObservationId ||
+          selected.runtimeOfferSnapshotDigest !==
+            decision.runtimeOfferSnapshotDigest
+        ) {
+          context.addIssue({
+            code: "custom",
+            message:
+              "selected candidate observation must match placement provenance",
+            path: ["runtimeOfferObservationId"],
+          });
+        }
+      } else if (
+        decision.runtimeOfferObservationId !== undefined ||
+        decision.runtimeOfferSnapshotDigest !== undefined ||
+        decision.candidateEvidence.some(
+          (candidate) =>
+            candidate.runtimeOfferObservationId !== undefined ||
+            candidate.runtimeOfferSnapshotDigest !== undefined,
+        )
+      ) {
+        context.addIssue({
+          code: "custom",
+          message:
+            "legacy provenance cannot contain fabricated Offer observation references",
+          path: ["provenanceVersion"],
+        });
+      }
+      if (
+        selected.resolvedModel === undefined ||
+        !resolvedModelsEqual(selected.resolvedModel, decision.resolvedModel)
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: "selected candidate model must match resolvedModel",
+          path: ["resolvedModel"],
+        });
+      }
+      if (
+        selected.workspaceMountRevisionId !== decision.workspaceMountRevisionId
+      ) {
+        context.addIssue({
+          code: "custom",
+          message:
+            "selected candidate workspace must match placement workspace",
+          path: ["workspaceMountRevisionId"],
+        });
+      }
+    }
+  });
+export type PlacementDecision = z.infer<typeof PlacementDecisionSchema>;
+
+export const ActivationCredentialScopeSchema = z
+  .object({
+    activationId: IdentifierSchema,
+    consumerId: IdentifierSchema,
+    hostId: IdentifierSchema,
+    participantId: IdentifierSchema,
+    roomId: IdentifierSchema,
+    runAttemptId: IdentifierSchema,
+    toSeq: z.number().int().positive(),
+  })
+  .strict();
+export type ActivationCredentialScope = z.infer<
+  typeof ActivationCredentialScopeSchema
+>;
+
+export const CLIENT_API_VERSION = 1 as const;
+
+export const ClientRoomSyncRequestSchema = z
+  .object({
+    afterSeq: z.number().int().nonnegative().optional(),
+    consumerId: IdentifierSchema,
+    limit: z.number().int().positive().max(500).optional(),
+    roomId: IdentifierSchema,
+  })
+  .strict();
+export type ClientRoomSyncRequest = z.infer<typeof ClientRoomSyncRequestSchema>;
+
+export const ClientAcknowledgeRequestSchema = z
+  .object({
+    consumerId: IdentifierSchema,
+    roomId: IdentifierSchema,
+    throughSeq: z.number().int().nonnegative(),
+  })
+  .strict();
+export type ClientAcknowledgeRequest = z.infer<
+  typeof ClientAcknowledgeRequestSchema
+>;
+
+export const ClientTasksListRequestSchema = z
+  .object({ roomId: IdentifierSchema })
+  .strict();
+export type ClientTasksListRequest = z.infer<
+  typeof ClientTasksListRequestSchema
+>;
+
+export const ClientInputRequestsListRequestSchema = z
+  .object({
+    roomId: IdentifierSchema,
+    state: InputRequestStateSchema.optional(),
+  })
+  .strict();
+export type ClientInputRequestsListRequest = z.infer<
+  typeof ClientInputRequestsListRequestSchema
+>;
+
+export const WorkerSyncRequestSchema = z
+  .object({
+    afterSeq: z.number().int().nonnegative().optional(),
+  })
+  .strict();
+export type WorkerSyncRequest = z.infer<typeof WorkerSyncRequestSchema>;
+
+export const WorkerAcknowledgeRequestSchema = z
+  .object({
+    throughSeq: z.number().int().nonnegative(),
+  })
+  .strict();
+export type WorkerAcknowledgeRequest = z.infer<
+  typeof WorkerAcknowledgeRequestSchema
+>;
+
+const WorkerTaskCommandBaseSchema = z
+  .object({
+    taskId: IdentifierSchema,
+    idempotencyKey: IdentifierSchema,
+    basedOnRoomSeq: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const WorkerTaskClaimRequestSchema = WorkerTaskCommandBaseSchema;
+export type WorkerTaskClaimRequest = z.infer<
+  typeof WorkerTaskClaimRequestSchema
+>;
+
+export const WorkerTaskGetRequestSchema = z
+  .object({
+    taskId: IdentifierSchema,
+  })
+  .strict();
+export type WorkerTaskGetRequest = z.infer<typeof WorkerTaskGetRequestSchema>;
+
+export const WorkerTaskInputStatusRequestSchema = z
+  .object({
+    taskId: IdentifierSchema,
+  })
+  .strict();
+export type WorkerTaskInputStatusRequest = z.infer<
+  typeof WorkerTaskInputStatusRequestSchema
+>;
+
+export const WorkerTaskStartRequestSchema = WorkerTaskCommandBaseSchema;
+export type WorkerTaskStartRequest = z.infer<
+  typeof WorkerTaskStartRequestSchema
+>;
+
+export const WorkerTaskProgressRequestSchema =
+  WorkerTaskCommandBaseSchema.extend({
+    progress: z.string().trim().min(1),
+  }).strict();
+export type WorkerTaskProgressRequest = z.infer<
+  typeof WorkerTaskProgressRequestSchema
+>;
+
+export const WorkerTaskRequestInputRequestSchema =
+  WorkerTaskCommandBaseSchema.extend({
+    question: z.string().trim().min(1),
+  }).strict();
+export type WorkerTaskRequestInputRequest = z.infer<
+  typeof WorkerTaskRequestInputRequestSchema
+>;
+
+export const WorkerTaskSubmitRequestSchema = WorkerTaskCommandBaseSchema.extend(
+  {
+    summary: z.string().trim().min(1),
+  },
+).strict();
+export type WorkerTaskSubmitRequest = z.infer<
+  typeof WorkerTaskSubmitRequestSchema
+>;
+
+export const PrincipalSchema = z
+  .object({
+    principalId: IdentifierSchema,
+    handle: IdentifierSchema,
+    kind: ParticipantKindSchema,
+  })
+  .strict();
+export type Principal = z.infer<typeof PrincipalSchema>;
+
+export const RoomSchema = z
+  .object({
+    roomId: IdentifierSchema,
+    slug: IdentifierSchema,
+    name: IdentifierSchema,
+  })
+  .strict();
+export type Room = z.infer<typeof RoomSchema>;
+
+export const RoomSnapshotSchema = z
+  .object({
+    room: RoomSchema,
+    members: z.array(PrincipalSchema),
+  })
+  .strict();
+export type RoomSnapshot = z.infer<typeof RoomSnapshotSchema>;
+
+export const RoomSyncResponseSchema = z
+  .object({
+    cursorBefore: z.number().int().nonnegative(),
+    cursorAfter: z.number().int().nonnegative(),
+    latestRoomSeq: z.number().int().nonnegative(),
+    snapshot: RoomSnapshotSchema.nullable(),
+    events: z.array(RoomEventSchema),
+  })
+  .strict()
+  .refine((response) => response.cursorBefore <= response.cursorAfter, {
+    message: "cursorBefore must be less than or equal to cursorAfter",
+    path: ["cursorBefore"],
+  })
+  .refine((response) => response.cursorAfter <= response.latestRoomSeq, {
+    message: "cursorAfter must be less than or equal to latestRoomSeq",
+    path: ["cursorAfter"],
+  });
+export type RoomSyncResponse = z.infer<typeof RoomSyncResponseSchema>;
+
+export const WorkerSyncResponseSchema = RoomSyncResponseSchema;
+export type WorkerSyncResponse = RoomSyncResponse;
+
+export const ClientRoomSyncResponseSchema = RoomSyncResponseSchema;
+export type ClientRoomSyncResponse = z.infer<
+  typeof ClientRoomSyncResponseSchema
+>;
+
+export const ClientAcknowledgeResponseSchema = z
+  .object({
+    acknowledgedThrough: z.number().int().nonnegative(),
+  })
+  .strict();
+export type ClientAcknowledgeResponse = z.infer<
+  typeof ClientAcknowledgeResponseSchema
+>;
+
+export const ClientTasksListResponseSchema = z
+  .object({ tasks: z.array(TaskSchema) })
+  .strict();
+export type ClientTasksListResponse = z.infer<
+  typeof ClientTasksListResponseSchema
+>;
+
+export const ClientInputRequestsListResponseSchema = z
+  .object({ inputRequests: z.array(InputRequestSchema) })
+  .strict();
+export type ClientInputRequestsListResponse = z.infer<
+  typeof ClientInputRequestsListResponseSchema
+>;
+
+export const ClientHealthResponseSchema = z
+  .object({
+    apiVersion: z.literal(CLIENT_API_VERSION),
+    buildVersion: z.string().min(1),
+    capabilities: z
+      .object({
+        cursorAcknowledge: z.boolean(),
+        hints: z.boolean(),
+        inputRequestRead: z.boolean(),
+        inputRequestResolve: z.boolean(),
+        roomSync: z.boolean(),
+        taskRead: z.boolean(),
+      })
+      .strict(),
+    kernelSchemaVersion: z.number().int().positive(),
+    protocolVersion: z.number().int().positive(),
+    state: z.enum(["failed", "offline", "online", "starting"]),
+  })
+  .strict();
+export type ClientHealthResponse = z.infer<typeof ClientHealthResponseSchema>;
+
+export const WorkerAcknowledgeResponseSchema = z
+  .object({
+    acknowledgedThrough: z.number().int().nonnegative(),
+  })
+  .strict();
+export type WorkerAcknowledgeResponse = z.infer<
+  typeof WorkerAcknowledgeResponseSchema
+>;
+
+export const WorkerTaskMutationResponseSchema = z
+  .object({
+    deduplicated: z.boolean(),
+    event: RoomEventSchema,
+    task: TaskSchema,
+  })
+  .strict();
+export type WorkerTaskMutationResponse = z.infer<
+  typeof WorkerTaskMutationResponseSchema
+>;
+
+export const WorkerTaskRequestInputResponseSchema = z
+  .object({
+    deduplicated: z.boolean(),
+    event: RoomEventSchema,
+    inputRequest: InputRequestSchema,
+    task: TaskSchema,
+  })
+  .strict();
+export type WorkerTaskRequestInputResponse = z.infer<
+  typeof WorkerTaskRequestInputResponseSchema
+>;
+
+export const InputRequestResolveResponseSchema = z
+  .object({
+    activationIds: z.array(IdentifierSchema),
+    deduplicated: z.boolean(),
+    event: RoomEventSchema,
+    inputRequest: InputRequestSchema,
+    task: TaskSchema,
+  })
+  .strict();
+export type InputRequestResolveResponse = z.infer<
+  typeof InputRequestResolveResponseSchema
+>;
+
+export const WorkerTaskGetResponseSchema = z
+  .object({
+    task: TaskSchema,
+  })
+  .strict();
+export type WorkerTaskGetResponse = z.infer<typeof WorkerTaskGetResponseSchema>;
+
+export const WorkerTaskInputStatusResponseSchema = z
+  .object({
+    inputRequest: InputRequestStatusSchema.nullable(),
+  })
+  .strict();
+export type WorkerTaskInputStatusResponse = z.infer<
+  typeof WorkerTaskInputStatusResponseSchema
+>;
+
+export const ErrorResponseSchema = z
+  .object({
+    error: z
+      .object({
+        code: IdentifierSchema,
+        message: z.string().min(1),
+      })
+      .strict(),
+  })
+  .strict();
+export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
+
+export const WorkerErrorResponseSchema = ErrorResponseSchema;
+export type WorkerErrorResponse = ErrorResponse;
+
+export const ClientErrorResponseSchema = ErrorResponseSchema;
+export type ClientErrorResponse = z.infer<typeof ClientErrorResponseSchema>;

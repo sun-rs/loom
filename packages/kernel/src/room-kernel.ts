@@ -1,0 +1,6190 @@
+import { createHash, randomUUID } from "node:crypto";
+import { DatabaseSync } from "node:sqlite";
+
+import {
+  ActivationCredentialScopeSchema,
+  ActivationReasonSchema,
+  ActivationSchema,
+  AgentDefinitionRevisionSchema,
+  AgentDefinitionSchema,
+  ExecutionPolicyRevisionSchema,
+  InboxStateSchema,
+  InputRequestSchema,
+  InputRequestStatusSchema,
+  ParticipantKindSchema,
+  PlacementDecisionSchema,
+  RoomEventSchema,
+  RuntimeRecoveryDescriptorSchema,
+  RuntimeOfferSchema,
+  RuntimeCertificationSchema,
+  RuntimeOfferProjectionSchema,
+  TaskSchema,
+  WakeHintSchema,
+  type Activation,
+  type ActivationCredentialScope,
+  type ActivationReason,
+  type AgentDefinition,
+  type AgentDefinitionRevision,
+  type ExecutionPolicyRevision,
+  type InputRequest,
+  type InputRequestStatus,
+  type RoomEvent,
+  type PlacementDecision,
+  type RuntimeRecoveryDescriptor,
+  type RuntimeCertification,
+  type RuntimeOffer,
+  type RuntimeOfferProjection,
+  type Task,
+} from "@rah-os/protocol";
+
+import {
+  ConflictError,
+  DeliveryProofError,
+  ExecutionFencedError,
+  ForbiddenError,
+  IdempotencyConflictError,
+  LeaseConflictError,
+  NotFoundError,
+  RuntimeTerminationProofError,
+  StaleContextError,
+  TaskSubmissionProofError,
+  UnauthenticatedError,
+} from "./errors.ts";
+import {
+  type AuthenticatedActorContext,
+  type AuthenticatedHostContext,
+  type AuthenticatedWorkerExecutionContext,
+  createAccessToken,
+  createHostAccessToken,
+  hashAccessToken,
+  isIssuedActorContext,
+  isIssuedHostContext,
+  isIssuedWorkerExecutionContext,
+  issueAuthenticatedActorContext,
+  issueAuthenticatedHostContext,
+  issueAuthenticatedWorkerExecutionContext,
+} from "./auth.ts";
+import {
+  planNextPlacement,
+  type PlacementPlannerInput,
+} from "./placement-planner.ts";
+import { SCHEMA_SQL } from "./schema.ts";
+import type {
+  InboxItem,
+  AgentDefinitionContent,
+  AgentDefinitionMutationResult,
+  AgentDefinitionRecord,
+  ExecutionPolicyContent,
+  ExecutionPolicyMutationResult,
+  ExecutionPolicyRecord,
+  HostRecord,
+  InputRequestMutationResult,
+  InputRequestResolveMutationResult,
+  MessageMutationResult,
+  OutboxEntry,
+  Principal,
+  ProvisionedHostCredential,
+  ProvisionedPrincipal,
+  Room,
+  RoomSnapshot,
+  RunAttempt,
+  RuntimeProcessRecord,
+  SyncResult,
+  TaskCreateMutationResult,
+  TaskMutationResult,
+} from "./types.ts";
+
+const SYSTEM_PRINCIPAL_ID = "principal_system";
+const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
+const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
+export const KERNEL_SCHEMA_VERSION = 5;
+
+export function computeRuntimeCertificationDigest(
+  certification: Omit<RuntimeCertification, "certificationDigest">,
+): string {
+  return canonicalDigest({
+    domain: "rah/runtime-certification/v1",
+    capabilities: [...certification.capabilities].sort(),
+    certificationId: certification.certificationId,
+    maximumIsolation: certification.maximumIsolation,
+    protocolFamily: certification.protocolFamily,
+    runtimeProfileDigest: certification.runtimeProfileDigest,
+  });
+}
+
+type RoomKernelOptions = {
+  databasePath: string;
+  now?: () => Date;
+  createId?: (prefix: string) => string;
+  runtimeCertifications?: RuntimeCertification[];
+  runtimeOfferClockSkewMs?: number;
+  runtimeOfferMaxTtlMs?: number;
+};
+
+type MessageRecipient = {
+  participantId: string;
+  reason: ActivationReason;
+};
+
+type Row = Record<string, null | number | bigint | string | Uint8Array>;
+
+export class RoomKernel {
+  readonly databasePath: string;
+  readonly #database: DatabaseSync;
+  readonly #now: () => Date;
+  readonly #createId: (prefix: string) => string;
+  readonly #runtimeCertifications: Map<string, RuntimeCertification>;
+  readonly #runtimeOfferClockSkewMs: number;
+  readonly #runtimeOfferMaxTtlMs: number;
+
+  constructor(options: RoomKernelOptions) {
+    this.databasePath = options.databasePath;
+    this.#now = options.now ?? (() => new Date());
+    this.#createId =
+      options.createId ?? ((prefix) => `${prefix}_${randomUUID()}`);
+    this.#runtimeCertifications = new Map();
+    for (const untrustedCertification of options.runtimeCertifications ?? []) {
+      const parsedCertification = RuntimeCertificationSchema.parse(
+        untrustedCertification,
+      );
+      const certification: RuntimeCertification = {
+        ...parsedCertification,
+        capabilities: [...parsedCertification.capabilities].sort(),
+      };
+      if (
+        certification.certificationDigest !==
+        computeRuntimeCertificationDigest(certification)
+      ) {
+        throw new Error(
+          `RuntimeCertification ${certification.certificationId} digest does not match its canonical content`,
+        );
+      }
+      const existing = this.#runtimeCertifications.get(
+        certification.certificationId,
+      );
+      if (
+        existing !== undefined &&
+        JSON.stringify(canonicalValue(existing)) !==
+          JSON.stringify(canonicalValue(certification))
+      ) {
+        throw new Error(
+          `duplicate RuntimeCertification ${certification.certificationId}`,
+        );
+      }
+      this.#runtimeCertifications.set(
+        certification.certificationId,
+        certification,
+      );
+    }
+    this.#runtimeOfferClockSkewMs =
+      options.runtimeOfferClockSkewMs ?? DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS;
+    this.#runtimeOfferMaxTtlMs =
+      options.runtimeOfferMaxTtlMs ?? DEFAULT_RUNTIME_OFFER_MAX_TTL_MS;
+    if (
+      !Number.isSafeInteger(this.#runtimeOfferClockSkewMs) ||
+      this.#runtimeOfferClockSkewMs < 0
+    ) {
+      throw new Error("runtimeOfferClockSkewMs must be a non-negative integer");
+    }
+    if (
+      !Number.isSafeInteger(this.#runtimeOfferMaxTtlMs) ||
+      this.#runtimeOfferMaxTtlMs <= 0
+    ) {
+      throw new Error("runtimeOfferMaxTtlMs must be a positive integer");
+    }
+    this.#database = new DatabaseSync(options.databasePath, { timeout: 5_000 });
+  }
+
+  initialize(): void {
+    const schemaVersionRow = this.#database
+      .prepare("PRAGMA user_version")
+      .get();
+    const schemaVersion = schemaVersionRow
+      ? integer(schemaVersionRow, "user_version")
+      : 0;
+    if (schemaVersion > KERNEL_SCHEMA_VERSION) {
+      throw new Error(
+        `database uses newer Kernel schema ${schemaVersion}; this build supports ${KERNEL_SCHEMA_VERSION}`,
+      );
+    }
+    const taskTable = this.#database
+      .prepare(
+        "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'tasks'",
+      )
+      .get();
+    if (
+      taskTable !== undefined &&
+      !text(taskTable, "sql").includes("'waiting_input'")
+    ) {
+      this.#database.exec("PRAGMA foreign_keys = OFF");
+      try {
+        this.#database.exec(`
+          BEGIN IMMEDIATE;
+          ALTER TABLE tasks RENAME TO tasks_before_waiting_input;
+          CREATE TABLE tasks (
+            task_id TEXT PRIMARY KEY,
+            room_id TEXT NOT NULL REFERENCES rooms(room_id),
+            creator_id TEXT NOT NULL REFERENCES principals(principal_id),
+            assignee_id TEXT NOT NULL REFERENCES principals(principal_id),
+            title TEXT NOT NULL,
+            description TEXT,
+            state TEXT NOT NULL CHECK (state IN ('todo', 'claimed', 'in_progress', 'waiting_input', 'submitted', 'completed')),
+            claimed_by TEXT REFERENCES principals(principal_id),
+            claim_until TEXT,
+            claim_until_ms INTEGER,
+            last_progress TEXT,
+            submission_summary TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            submitted_at TEXT,
+            completed_at TEXT
+          ) STRICT;
+          INSERT INTO tasks SELECT * FROM tasks_before_waiting_input;
+          DROP TABLE tasks_before_waiting_input;
+          COMMIT;
+        `);
+      } catch (error) {
+        if (this.#database.isTransaction) this.#database.exec("ROLLBACK");
+        throw error;
+      } finally {
+        this.#database.exec("PRAGMA foreign_keys = ON");
+      }
+    }
+    this.#database.exec(SCHEMA_SQL);
+    const hostColumns = this.#database
+      .prepare("PRAGMA table_info(agent_hosts)")
+      .all();
+    if (!hostColumns.some((row) => text(row, "name") === "credential_id")) {
+      this.#database.exec(
+        "ALTER TABLE agent_hosts ADD COLUMN credential_id TEXT",
+      );
+      const now = this.#now();
+      this.#database
+        .prepare(
+          "UPDATE agent_hosts SET state = 'offline', last_seen_at = ?, last_seen_ms = ?",
+        )
+        .run(now.toISOString(), now.getTime());
+    }
+    if (!hostColumns.some((row) => text(row, "name") === "instance_id")) {
+      this.#database.exec(
+        "ALTER TABLE agent_hosts ADD COLUMN instance_id TEXT",
+      );
+      const now = this.#now();
+      this.#database
+        .prepare(
+          "UPDATE agent_hosts SET instance_id = 'legacy:' || host_id, state = 'offline', last_seen_at = ?, last_seen_ms = ?",
+        )
+        .run(now.toISOString(), now.getTime());
+    }
+    if (!hostColumns.some((row) => text(row, "name") === "build_version")) {
+      this.#database.exec(
+        "ALTER TABLE agent_hosts ADD COLUMN build_version TEXT",
+      );
+    }
+    if (!hostColumns.some((row) => text(row, "name") === "protocol_version")) {
+      this.#database.exec(
+        "ALTER TABLE agent_hosts ADD COLUMN protocol_version INTEGER",
+      );
+    }
+    if (!hostColumns.some((row) => text(row, "name") === "process_id")) {
+      this.#database.exec(
+        "ALTER TABLE agent_hosts ADD COLUMN process_id INTEGER",
+      );
+    }
+    const runtimeOfferColumns = this.#database
+      .prepare("PRAGMA table_info(runtime_offers)")
+      .all();
+    if (
+      !runtimeOfferColumns.some(
+        (row) => text(row, "name") === "current_observation_id",
+      )
+    ) {
+      this.#database.exec(
+        "ALTER TABLE runtime_offers ADD COLUMN current_observation_id TEXT",
+      );
+    }
+    if (
+      !runtimeOfferColumns.some(
+        (row) => text(row, "name") === "current_snapshot_digest",
+      )
+    ) {
+      this.#database.exec(
+        "ALTER TABLE runtime_offers ADD COLUMN current_snapshot_digest TEXT",
+      );
+    }
+    if (
+      !runtimeOfferColumns.some((row) => text(row, "name") === "accepted_at")
+    ) {
+      this.#database.exec(
+        "ALTER TABLE runtime_offers ADD COLUMN accepted_at TEXT",
+      );
+    }
+    this.#database
+      .prepare(
+        "UPDATE runtime_offers SET state = 'unavailable', lease_until_ms = 0 WHERE current_observation_id IS NULL",
+      )
+      .run();
+    const runAttemptColumns = this.#database
+      .prepare("PRAGMA table_info(run_attempts)")
+      .all();
+    if (
+      !runAttemptColumns.some((row) => text(row, "name") === "placement_id")
+    ) {
+      this.#database.exec(
+        "ALTER TABLE run_attempts ADD COLUMN placement_id TEXT REFERENCES placements(placement_id)",
+      );
+    }
+    const runAttemptPlacementForeignKey = this.#database
+      .prepare("PRAGMA foreign_key_list(run_attempts)")
+      .all()
+      .some(
+        (row) =>
+          text(row, "from") === "placement_id" &&
+          text(row, "table") === "placements",
+      );
+    if (!runAttemptPlacementForeignKey) {
+      this.#database.exec("PRAGMA foreign_keys = OFF");
+      try {
+        this.#database.exec(`
+          BEGIN IMMEDIATE;
+          CREATE TABLE run_attempts_with_placement_fk (
+            run_attempt_id TEXT PRIMARY KEY,
+            placement_id TEXT REFERENCES placements(placement_id),
+            activation_id TEXT NOT NULL REFERENCES activations(activation_id),
+            room_id TEXT NOT NULL REFERENCES rooms(room_id),
+            participant_id TEXT NOT NULL REFERENCES principals(principal_id),
+            host_id TEXT NOT NULL,
+            attempt_number INTEGER NOT NULL CHECK (attempt_number > 0),
+            state TEXT NOT NULL CHECK (state IN ('starting', 'running', 'orphaned', 'exited', 'failed', 'cancelled', 'timed_out')),
+            runtime_run_id TEXT,
+            exit_code INTEGER,
+            exit_signal TEXT,
+            error TEXT,
+            started_at TEXT NOT NULL,
+            finished_at TEXT,
+            UNIQUE (activation_id, attempt_number)
+          ) STRICT;
+          INSERT INTO run_attempts_with_placement_fk(
+            run_attempt_id, placement_id, activation_id, room_id, participant_id,
+            host_id, attempt_number, state, runtime_run_id, exit_code,
+            exit_signal, error, started_at, finished_at
+          )
+          SELECT
+            run_attempt_id, placement_id, activation_id, room_id, participant_id,
+            host_id, attempt_number, state, runtime_run_id, exit_code,
+            exit_signal, error, started_at, finished_at
+          FROM run_attempts;
+          DROP TABLE run_attempts;
+          ALTER TABLE run_attempts_with_placement_fk RENAME TO run_attempts;
+          CREATE INDEX idx_run_attempts_room_started
+            ON run_attempts(room_id, started_at, run_attempt_id);
+          COMMIT;
+        `);
+      } catch (error) {
+        if (this.#database.isTransaction) this.#database.exec("ROLLBACK");
+        throw error;
+      } finally {
+        this.#database.exec("PRAGMA foreign_keys = ON");
+      }
+    }
+    const placementColumns = this.#database
+      .prepare("PRAGMA table_info(placements)")
+      .all();
+    if (
+      !placementColumns.some(
+        (row) => text(row, "name") === "runtime_offer_observation_id",
+      )
+    ) {
+      this.#database.exec(
+        "ALTER TABLE placements ADD COLUMN runtime_offer_observation_id TEXT REFERENCES runtime_offer_observations(runtime_offer_observation_id)",
+      );
+    }
+    const runtimeProcessColumns = this.#database
+      .prepare("PRAGMA table_info(runtime_processes)")
+      .all();
+    if (
+      !runtimeProcessColumns.some(
+        (row) => text(row, "name") === "recovery_lease_owner_instance_id",
+      )
+    ) {
+      this.#database.exec(
+        "ALTER TABLE runtime_processes ADD COLUMN recovery_lease_owner_instance_id TEXT",
+      );
+    }
+    if (
+      !placementColumns.some(
+        (row) => text(row, "name") === "runtime_offer_snapshot_digest",
+      )
+    ) {
+      this.#database.exec(
+        "ALTER TABLE placements ADD COLUMN runtime_offer_snapshot_digest TEXT",
+      );
+    }
+    this.#database
+      .prepare(
+        "INSERT OR IGNORE INTO principals(principal_id, handle, kind, created_at) VALUES(?, ?, 'service', ?)",
+      )
+      .run(SYSTEM_PRINCIPAL_ID, "rah-system", this.#timestamp());
+    this.#database.exec(`PRAGMA user_version = ${KERNEL_SCHEMA_VERSION}`);
+    this.#transaction(() => {
+      const participantIds = this.#database
+        .prepare(
+          "SELECT DISTINCT participant_id FROM runtime_processes ORDER BY participant_id",
+        )
+        .all()
+        .map((row) => text(row, "participant_id"));
+      const now = this.#now();
+      this.#reconcileUnownedRuntimeProcesses(participantIds, now);
+      this.#quarantineExpiredActiveRuns(participantIds, now);
+      this.#reconcileProvenActivationQuarantines(participantIds);
+    });
+  }
+
+  close(): void {
+    this.#database.close();
+  }
+
+  provisionPrincipal(input: {
+    handle: string;
+    kind: "human" | "agent" | "service";
+  }): ProvisionedPrincipal {
+    const handle = input.handle.trim();
+    if (handle.length === 0) throw new Error("handle is required");
+    const kind = ParticipantKindSchema.parse(input.kind);
+    const principal: Principal = {
+      principalId: this.#createId("principal"),
+      handle,
+      kind,
+    };
+    const accessToken = createAccessToken();
+    this.#transaction(() => {
+      const createdAt = this.#timestamp();
+      this.#database
+        .prepare(
+          "INSERT INTO principals(principal_id, handle, kind, created_at) VALUES(?, ?, ?, ?)",
+        )
+        .run(
+          principal.principalId,
+          principal.handle,
+          principal.kind,
+          createdAt,
+        );
+      this.#database
+        .prepare(
+          "INSERT INTO principal_credentials(credential_id, principal_id, token_hash, created_at) VALUES(?, ?, ?, ?)",
+        )
+        .run(
+          this.#createId("credential"),
+          principal.principalId,
+          hashAccessToken(accessToken),
+          createdAt,
+        );
+    });
+    return { accessToken, principal };
+  }
+
+  authenticateAccessToken(accessToken: string): AuthenticatedActorContext {
+    if (accessToken.trim().length === 0) {
+      throw new UnauthenticatedError("authentication failed");
+    }
+    const row = this.#database
+      .prepare(
+        "SELECT credential_id, principal_id FROM principal_credentials WHERE token_hash = ? AND revoked_at IS NULL",
+      )
+      .get(hashAccessToken(accessToken));
+    if (!row) throw new UnauthenticatedError("authentication failed");
+    return issueAuthenticatedActorContext(
+      text(row, "principal_id"),
+      text(row, "credential_id"),
+    );
+  }
+
+  authenticateHumanAccessToken(accessToken: string): AuthenticatedActorContext {
+    const actor = this.authenticateAccessToken(accessToken);
+    const principal = this.#principalFromRow(
+      this.#requirePrincipal(actor.principalId),
+    );
+    if (principal.kind !== "human") {
+      throw new UnauthenticatedError("human client authentication failed");
+    }
+    return actor;
+  }
+
+  provisionHostCredential(input: {
+    hostId: string;
+    participantIds: string[];
+  }): ProvisionedHostCredential {
+    const hostId = input.hostId.trim();
+    if (hostId.length === 0) throw new Error("hostId is required");
+    const participantIds = [...new Set(input.participantIds)].sort();
+    if (participantIds.length === 0) {
+      throw new Error("Host credential requires at least one participant");
+    }
+    const accessToken = createHostAccessToken();
+    const credentialId = this.#createId("host_credential");
+    this.#transaction(() => {
+      for (const participantId of participantIds) {
+        const principal = this.#principalFromRow(
+          this.#requirePrincipal(participantId),
+        );
+        if (principal.kind !== "agent") {
+          throw new Error(
+            `host participant ${participantId} must be an Agent principal`,
+          );
+        }
+      }
+      this.#database
+        .prepare(
+          "INSERT INTO agent_host_credentials(credential_id, host_id, token_hash, participant_ids_json, created_at) VALUES(?, ?, ?, ?, ?)",
+        )
+        .run(
+          credentialId,
+          hostId,
+          hashAccessToken(accessToken),
+          JSON.stringify(participantIds),
+          this.#timestamp(),
+        );
+    });
+    return { accessToken, credentialId, hostId, participantIds };
+  }
+
+  authenticateHostAccessToken(accessToken: string): AuthenticatedHostContext {
+    if (accessToken.trim().length === 0) {
+      throw new UnauthenticatedError("host authentication failed");
+    }
+    const row = this.#database
+      .prepare(
+        "SELECT credential_id, host_id, participant_ids_json FROM agent_host_credentials WHERE token_hash = ? AND revoked_at IS NULL",
+      )
+      .get(hashAccessToken(accessToken));
+    if (!row) throw new UnauthenticatedError("host authentication failed");
+    return issueAuthenticatedHostContext(
+      text(row, "host_id"),
+      stringArray(row, "participant_ids_json"),
+      text(row, "credential_id"),
+      this.#createId("host_instance"),
+    );
+  }
+
+  revokeHostCredential(credentialId: string): void {
+    const normalizedCredentialId = credentialId.trim();
+    if (normalizedCredentialId.length === 0) {
+      throw new Error("credentialId is required");
+    }
+    this.#transaction(() => {
+      const existing = this.#database
+        .prepare(
+          "SELECT host_id FROM agent_host_credentials WHERE credential_id = ?",
+        )
+        .get(normalizedCredentialId);
+      if (!existing) {
+        throw new NotFoundError(
+          `Host credential ${normalizedCredentialId} was not found`,
+        );
+      }
+      this.#database
+        .prepare(
+          "UPDATE agent_host_credentials SET revoked_at = COALESCE(revoked_at, ?) WHERE credential_id = ?",
+        )
+        .run(this.#timestamp(), normalizedCredentialId);
+      const now = this.#now();
+      this.#database
+        .prepare(
+          "UPDATE agent_hosts SET state = 'offline', last_seen_at = ?, last_seen_ms = ? WHERE host_id = ? AND credential_id = ?",
+        )
+        .run(
+          now.toISOString(),
+          now.getTime(),
+          text(existing, "host_id"),
+          normalizedCredentialId,
+        );
+    });
+  }
+
+  createRoom(
+    actor: AuthenticatedActorContext,
+    input: { name: string; slug: string },
+  ): Room {
+    return this.#transaction(() => {
+      const actorId = this.#requireAuthenticatedActor(actor);
+      const room: Room = {
+        roomId: this.#createId("room"),
+        slug: input.slug.trim(),
+        name: input.name.trim(),
+      };
+      if (room.slug.length === 0 || room.name.length === 0) {
+        throw new Error("room slug and name are required");
+      }
+      const createdAt = this.#timestamp();
+      this.#database
+        .prepare(
+          "INSERT INTO rooms(room_id, slug, name, next_seq, created_at) VALUES(?, ?, ?, 1, ?)",
+        )
+        .run(room.roomId, room.slug, room.name, createdAt);
+      this.#database
+        .prepare(
+          "INSERT INTO memberships(room_id, principal_id, joined_at) VALUES(?, ?, ?)",
+        )
+        .run(room.roomId, actorId, createdAt);
+      this.#appendEvent({
+        actorId,
+        aggregateId: room.roomId,
+        aggregateType: "room",
+        idempotencyKey: `room.create:${room.roomId}`,
+        payload: { name: room.name, slug: room.slug },
+        roomId: room.roomId,
+        type: "room.created",
+      });
+      return room;
+    });
+  }
+
+  addMember(
+    actor: AuthenticatedActorContext,
+    input: { principalId: string; roomId: string },
+  ): void {
+    this.#transaction(() => {
+      const actorId = this.#requireAuthenticatedActor(actor);
+      this.#requireMember(input.roomId, actorId);
+      this.#requirePrincipal(input.principalId);
+      const joinedAt = this.#timestamp();
+      const result = this.#database
+        .prepare(
+          "INSERT OR IGNORE INTO memberships(room_id, principal_id, joined_at) VALUES(?, ?, ?)",
+        )
+        .run(input.roomId, input.principalId, joinedAt);
+      if (Number(result.changes) === 0) return;
+      this.#appendEvent({
+        actorId,
+        aggregateId: input.principalId,
+        aggregateType: "membership",
+        idempotencyKey: `membership.add:${input.principalId}`,
+        payload: { participantId: input.principalId },
+        roomId: input.roomId,
+        type: "membership.added",
+      });
+    });
+  }
+
+  postMessage(
+    actor: AuthenticatedActorContext,
+    input: {
+      basedOnRoomSeq?: number;
+      body: string;
+      idempotencyKey: string;
+      recipients: MessageRecipient[];
+      roomId: string;
+    },
+  ): MessageMutationResult {
+    return this.#transaction(() => {
+      const actorId = this.#requireAuthenticatedActor(actor);
+      this.#requireMember(input.roomId, actorId);
+      const body = input.body.trim();
+      if (body.length === 0) throw new Error("message body is required");
+      if (input.idempotencyKey.trim().length === 0) {
+        throw new Error("idempotencyKey is required");
+      }
+
+      const recipients = this.#normalizeRecipients(
+        input.roomId,
+        actorId,
+        input.recipients,
+      );
+      const recipientPayload = recipients.map((recipient) => ({
+        participantId: recipient.participantId,
+        reason: recipient.reason,
+      }));
+
+      const previous = this.#database
+        .prepare(
+          "SELECT * FROM room_events WHERE room_id = ? AND idempotency_key = ?",
+        )
+        .get(input.roomId, input.idempotencyKey);
+      if (previous) {
+        const event = this.#eventFromRow(previous);
+        if (
+          event.type !== "message.posted" ||
+          event.actorId !== actorId ||
+          event.payload.body !== body ||
+          JSON.stringify(event.payload.recipients) !==
+            JSON.stringify(recipientPayload)
+        ) {
+          throw new IdempotencyConflictError(
+            `idempotency key ${input.idempotencyKey} was already used for another mutation`,
+          );
+        }
+        return { activationIds: [], deduplicated: true, event };
+      }
+
+      this.#assertFreshContext(input.roomId, actorId, input.basedOnRoomSeq);
+
+      const messageId = this.#createId("message");
+      const createdAt = this.#timestamp();
+      this.#database
+        .prepare(
+          "INSERT INTO messages(message_id, room_id, actor_id, body, created_at) VALUES(?, ?, ?, ?, ?)",
+        )
+        .run(messageId, input.roomId, actorId, body, createdAt);
+
+      const event = this.#appendEvent({
+        actorId,
+        aggregateId: messageId,
+        aggregateType: "message",
+        idempotencyKey: input.idempotencyKey,
+        payload: {
+          body,
+          messageId,
+          ...(input.basedOnRoomSeq === undefined
+            ? {}
+            : { basedOnRoomSeq: input.basedOnRoomSeq }),
+          recipientIds: recipients.map((recipient) => recipient.participantId),
+          recipients: recipientPayload,
+        },
+        roomId: input.roomId,
+        type: "message.posted",
+      });
+
+      const activationIds = this.#deriveAttention(event, recipients, createdAt);
+
+      return { activationIds, deduplicated: false, event };
+    });
+  }
+
+  createTask(
+    actor: AuthenticatedActorContext,
+    input: {
+      assigneeId: string;
+      basedOnRoomSeq?: number;
+      description?: string;
+      idempotencyKey: string;
+      roomId: string;
+      title: string;
+    },
+  ): TaskCreateMutationResult {
+    return this.#transaction(() => {
+      const actorId = this.#requireAuthenticatedActor(actor);
+      this.#requireMember(input.roomId, actorId);
+      this.#requireMember(input.roomId, input.assigneeId);
+      const assignee = this.#principalFromRow(
+        this.#requirePrincipal(input.assigneeId),
+      );
+      if (assignee.kind !== "agent") {
+        throw new ForbiddenError("Task assignee must be an Agent principal");
+      }
+      const title = input.title.trim();
+      if (title.length === 0) throw new Error("task title is required");
+      const description = input.description?.trim();
+      if (input.description !== undefined && description?.length === 0) {
+        throw new Error("task description cannot be empty");
+      }
+      if (input.idempotencyKey.trim().length === 0) {
+        throw new Error("idempotencyKey is required");
+      }
+
+      const previous = this.#findRoomEventByIdempotencyKey(
+        input.roomId,
+        input.idempotencyKey,
+      );
+      if (previous !== undefined) {
+        const event = this.#assertTaskEventReplay(previous, {
+          actorId,
+          eventType: "task.created",
+          payload: {
+            assigneeId: input.assigneeId,
+            basedOnRoomSeq: input.basedOnRoomSeq,
+            creatorId: actorId,
+            description,
+            title,
+          },
+        });
+        return {
+          activationIds: [],
+          deduplicated: true,
+          event,
+          task: this.#taskFromRow(this.#requireTaskRow(event.aggregateId)),
+        };
+      }
+
+      this.#assertFreshContext(input.roomId, actorId, input.basedOnRoomSeq);
+      const taskId = this.#createId("task");
+      const createdAt = this.#timestamp();
+      this.#database
+        .prepare(
+          "INSERT INTO tasks(task_id, room_id, creator_id, assignee_id, title, description, state, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, 'todo', ?, ?)",
+        )
+        .run(
+          taskId,
+          input.roomId,
+          actorId,
+          input.assigneeId,
+          title,
+          description ?? null,
+          createdAt,
+          createdAt,
+        );
+      const event = this.#appendEvent({
+        actorId,
+        aggregateId: taskId,
+        aggregateType: "task",
+        idempotencyKey: input.idempotencyKey,
+        payload: {
+          assigneeId: input.assigneeId,
+          creatorId: actorId,
+          ...(description === undefined ? {} : { description }),
+          taskId,
+          title,
+          ...(input.basedOnRoomSeq === undefined
+            ? {}
+            : { basedOnRoomSeq: input.basedOnRoomSeq }),
+        },
+        roomId: input.roomId,
+        type: "task.created",
+      });
+      const activationIds = this.#deriveAttention(
+        event,
+        [
+          {
+            participantId: input.assigneeId,
+            reason: "task_assigned",
+          },
+        ],
+        createdAt,
+      );
+      return {
+        activationIds,
+        deduplicated: false,
+        event,
+        task: this.#taskFromRow(this.#requireTaskRow(taskId)),
+      };
+    });
+  }
+
+  listTasks(
+    actor: AuthenticatedActorContext,
+    input: { roomId: string },
+  ): Task[] {
+    const actorId = this.#requireAuthenticatedActor(actor);
+    this.#requireMember(input.roomId, actorId);
+    return this.#database
+      .prepare(
+        "SELECT * FROM tasks WHERE room_id = ? ORDER BY created_at, task_id",
+      )
+      .all(input.roomId)
+      .map((row) => this.#taskFromRow(row));
+  }
+
+  listInputRequests(
+    actor: AuthenticatedActorContext,
+    input: { roomId: string },
+  ): InputRequest[] {
+    const actorId = this.#requireAuthenticatedActor(actor);
+    this.#requireMember(input.roomId, actorId);
+    return this.#database
+      .prepare(
+        "SELECT * FROM input_requests WHERE room_id = ? ORDER BY created_at, input_request_id",
+      )
+      .all(input.roomId)
+      .map((row) => this.#inputRequestFromRow(row));
+  }
+
+  getWorkerTask(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: { taskId: string },
+  ): Task {
+    return this.#transaction(() => {
+      const scope = this.#requireAuthenticatedWorkerExecution(execution);
+      return this.#taskFromRow(this.#requireWorkerTask(scope, input.taskId));
+    });
+  }
+
+  getWorkerTaskInputStatus(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: { taskId: string },
+  ): InputRequestStatus | null {
+    return this.#transaction(() => {
+      const scope = this.#requireAuthenticatedWorkerExecution(execution);
+      this.#requireWorkerTask(scope, input.taskId);
+      const row = this.#database
+        .prepare(
+          `SELECT input_request_id, task_id, state
+           FROM input_requests
+           WHERE task_id = ? AND requester_id = ?
+           ORDER BY created_at DESC, rowid DESC
+           LIMIT 1`,
+        )
+        .get(input.taskId, scope.participantId);
+      if (row === undefined) return null;
+      return InputRequestStatusSchema.parse({
+        inputRequestId: text(row, "input_request_id"),
+        taskId: text(row, "task_id"),
+        state: text(row, "state"),
+      });
+    });
+  }
+
+  heartbeatTaskClaim(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: { leaseMs: number; taskId: string },
+  ): Task {
+    return this.#transaction(() => {
+      const scope = this.#requireAuthenticatedWorkerExecution(execution);
+      const taskRow = this.#requireWorkerTask(scope, input.taskId);
+      this.#assertPositiveTaskLease(input.leaseMs);
+      const state = text(taskRow, "state");
+      if (state !== "claimed" && state !== "in_progress") {
+        throw new ConflictError(
+          `Task ${input.taskId} has no renewable claim in state ${state}`,
+        );
+      }
+      this.#requireOwnedTaskClaim(taskRow, scope.participantId, state);
+
+      const now = this.#now();
+      const claimUntilMs = Math.max(
+        nullableInteger(taskRow, "claim_until_ms") ?? 0,
+        now.getTime() + input.leaseMs,
+      );
+      this.#database
+        .prepare(
+          "UPDATE tasks SET claim_until = ?, claim_until_ms = ?, updated_at = ? WHERE task_id = ?",
+        )
+        .run(
+          new Date(claimUntilMs).toISOString(),
+          claimUntilMs,
+          now.toISOString(),
+          input.taskId,
+        );
+      return this.#taskFromRow(this.#requireTaskRow(input.taskId));
+    });
+  }
+
+  claimTask(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: {
+      basedOnRoomSeq: number;
+      idempotencyKey: string;
+      leaseMs: number;
+      taskId: string;
+    },
+  ): TaskMutationResult {
+    return this.#transaction(() => {
+      const scope = this.#requireAuthenticatedWorkerExecution(execution);
+      const taskRow = this.#requireWorkerTask(scope, input.taskId);
+      const replay = this.#replayWorkerTaskCommand(taskRow, scope, {
+        eventType: "task.claimed",
+        idempotencyKey: input.idempotencyKey,
+      });
+      if (replay !== null) return replay;
+      this.#assertPositiveTaskLease(input.leaseMs);
+      this.#assertWorkerTaskFreshContext(
+        scope,
+        input.basedOnRoomSeq,
+        input.taskId,
+      );
+
+      const previousState = text(taskRow, "state");
+      const previousClaimedBy = nullableText(taskRow, "claimed_by");
+      const previousClaimUntil = nullableText(taskRow, "claim_until");
+      const previousClaimUntilMs = nullableInteger(taskRow, "claim_until_ms");
+      const claimIsActive =
+        (previousState === "claimed" || previousState === "in_progress") &&
+        previousClaimUntilMs !== null &&
+        previousClaimUntilMs > this.#now().getTime();
+      if (previousState !== "todo" && !claimIsActive) {
+        if (previousState !== "claimed" && previousState !== "in_progress") {
+          throw new ConflictError(
+            `Task ${input.taskId} cannot be claimed from state ${previousState}`,
+          );
+        }
+      }
+      if (claimIsActive) {
+        throw new LeaseConflictError(
+          `Task ${input.taskId} already has an active claim`,
+        );
+      }
+
+      const now = this.#now();
+      const updatedAt = now.toISOString();
+      const claimUntil = new Date(now.getTime() + input.leaseMs).toISOString();
+      this.#database
+        .prepare(
+          "UPDATE tasks SET state = 'claimed', claimed_by = ?, claim_until = ?, claim_until_ms = ?, updated_at = ? WHERE task_id = ?",
+        )
+        .run(
+          scope.participantId,
+          claimUntil,
+          now.getTime() + input.leaseMs,
+          updatedAt,
+          input.taskId,
+        );
+      const event = this.#appendWorkerTaskEvent(scope, {
+        basedOnRoomSeq: input.basedOnRoomSeq,
+        eventType: "task.claimed",
+        idempotencyKey: input.idempotencyKey,
+        payload: {
+          claimedBy: scope.participantId,
+          claimUntil,
+          ...(previousClaimedBy === null ? {} : { previousClaimedBy }),
+          ...(previousClaimUntil === null ? {} : { previousClaimUntil }),
+          previousState,
+        },
+        taskId: input.taskId,
+      });
+      return {
+        deduplicated: false,
+        event,
+        task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
+      };
+    });
+  }
+
+  startTask(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: {
+      basedOnRoomSeq: number;
+      idempotencyKey: string;
+      leaseMs: number;
+      taskId: string;
+    },
+  ): TaskMutationResult {
+    return this.#transitionOwnedTask(execution, {
+      ...input,
+      eventType: "task.started",
+      expectedState: "claimed",
+      nextState: "in_progress",
+    });
+  }
+
+  progressTask(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: {
+      basedOnRoomSeq: number;
+      idempotencyKey: string;
+      leaseMs: number;
+      progress: string;
+      taskId: string;
+    },
+  ): TaskMutationResult {
+    const progress = input.progress.trim();
+    if (progress.length === 0) throw new Error("task progress is required");
+    return this.#transitionOwnedTask(execution, {
+      ...input,
+      eventType: "task.progressed",
+      expectedState: "in_progress",
+      extraPayload: { progress },
+      lastProgress: progress,
+      nextState: "in_progress",
+    });
+  }
+
+  requestTaskInput(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: {
+      basedOnRoomSeq: number;
+      idempotencyKey: string;
+      question: string;
+      taskId: string;
+    },
+  ): InputRequestMutationResult {
+    const question = input.question.trim();
+    if (question.length === 0) throw new Error("input question is required");
+    return this.#transaction(() => {
+      const scope = this.#requireAuthenticatedWorkerExecution(execution);
+      const taskRow = this.#requireWorkerTask(scope, input.taskId);
+      const responderId = text(taskRow, "creator_id");
+      if (
+        this.#principalFromRow(this.#requirePrincipal(responderId)).kind !==
+        "human"
+      ) {
+        throw new ConflictError(
+          `Task ${input.taskId} has no human creator available for input`,
+        );
+      }
+      const previous = this.#findRoomEventByIdempotencyKey(
+        scope.roomId,
+        input.idempotencyKey,
+      );
+      if (previous !== undefined) {
+        const event = this.#assertInputRequestEventReplay(previous, {
+          actorId: scope.participantId,
+          eventType: "input.requested",
+          payload: { question, taskId: input.taskId },
+        });
+        return {
+          deduplicated: true,
+          event,
+          inputRequest: this.#inputRequestFromRow(
+            this.#requireInputRequestRow(event.aggregateId),
+          ),
+          task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
+        };
+      }
+      this.#assertWorkerTaskFreshContext(
+        scope,
+        input.basedOnRoomSeq,
+        input.taskId,
+      );
+      this.#requireOwnedTaskClaim(taskRow, scope.participantId, "in_progress");
+
+      const inputRequestId = this.#createId("input");
+      const createdAt = this.#timestamp();
+      this.#database
+        .prepare(
+          "INSERT INTO input_requests(input_request_id, room_id, task_id, requester_id, responder_id, question, state, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, 'pending', ?, ?)",
+        )
+        .run(
+          inputRequestId,
+          scope.roomId,
+          input.taskId,
+          scope.participantId,
+          responderId,
+          question,
+          createdAt,
+          createdAt,
+        );
+      this.#database
+        .prepare(
+          "UPDATE tasks SET state = 'waiting_input', claimed_by = NULL, claim_until = NULL, claim_until_ms = NULL, updated_at = ? WHERE task_id = ?",
+        )
+        .run(createdAt, input.taskId);
+      const event = this.#appendEvent({
+        actorId: scope.participantId,
+        aggregateId: inputRequestId,
+        aggregateType: "input_request",
+        idempotencyKey: input.idempotencyKey,
+        payload: {
+          basedOnRoomSeq: input.basedOnRoomSeq,
+          inputRequestId,
+          question,
+          requesterId: scope.participantId,
+          responderId,
+          runAttemptId: scope.runAttemptId,
+          taskId: input.taskId,
+        },
+        roomId: scope.roomId,
+        type: "input.requested",
+      });
+      this.#insertInboxItem({
+        createdAt,
+        event,
+        participantId: responderId,
+        reason: "input_requested",
+      });
+      return {
+        deduplicated: false,
+        event,
+        inputRequest: this.#inputRequestFromRow(
+          this.#requireInputRequestRow(inputRequestId),
+        ),
+        task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
+      };
+    });
+  }
+
+  submitTask(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: {
+      basedOnRoomSeq: number;
+      idempotencyKey: string;
+      summary: string;
+      taskId: string;
+    },
+  ): TaskMutationResult {
+    const summary = input.summary.trim();
+    if (summary.length === 0) throw new Error("task summary is required");
+    return this.#transaction(() => {
+      const scope = this.#requireAuthenticatedWorkerExecution(execution);
+      const taskRow = this.#requireWorkerTask(scope, input.taskId);
+      const replay = this.#replayWorkerTaskCommand(taskRow, scope, {
+        eventType: "task.submitted",
+        idempotencyKey: input.idempotencyKey,
+        payload: { summary },
+      });
+      if (replay !== null) return replay;
+      this.#assertWorkerTaskFreshContext(
+        scope,
+        input.basedOnRoomSeq,
+        input.taskId,
+      );
+      this.#requireOwnedTaskClaim(taskRow, scope.participantId, "in_progress");
+
+      const submittedAt = this.#timestamp();
+      this.#database
+        .prepare(
+          "UPDATE tasks SET state = 'submitted', claimed_by = NULL, claim_until = NULL, claim_until_ms = NULL, submission_summary = ?, submitted_at = ?, updated_at = ? WHERE task_id = ?",
+        )
+        .run(summary, submittedAt, submittedAt, input.taskId);
+      const event = this.#appendWorkerTaskEvent(scope, {
+        basedOnRoomSeq: input.basedOnRoomSeq,
+        eventType: "task.submitted",
+        idempotencyKey: input.idempotencyKey,
+        payload: { summary, submittedAt },
+        taskId: input.taskId,
+      });
+      return {
+        deduplicated: false,
+        event,
+        task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
+      };
+    });
+  }
+
+  resolveInputRequest(
+    actor: AuthenticatedActorContext,
+    input: {
+      answer: string;
+      basedOnRoomSeq: number;
+      idempotencyKey: string;
+      inputRequestId: string;
+    },
+  ): InputRequestResolveMutationResult {
+    const answer = input.answer.trim();
+    if (answer.length === 0) throw new Error("input answer is required");
+    return this.#transaction(() => {
+      const actorId = this.#requireAuthenticatedActor(actor);
+      const inputRow = this.#requireInputRequestRow(input.inputRequestId);
+      const roomId = text(inputRow, "room_id");
+      const taskId = text(inputRow, "task_id");
+      this.#requireMember(roomId, actorId);
+      if (text(inputRow, "responder_id") !== actorId) {
+        throw new ForbiddenError(
+          `only the designated responder can resolve InputRequest ${input.inputRequestId}`,
+        );
+      }
+      const previous = this.#findRoomEventByIdempotencyKey(
+        roomId,
+        input.idempotencyKey,
+      );
+      if (previous !== undefined) {
+        const event = this.#assertInputRequestEventReplay(previous, {
+          actorId,
+          aggregateId: input.inputRequestId,
+          eventType: "input.resolved",
+          payload: { answer, inputRequestId: input.inputRequestId, taskId },
+        });
+        return {
+          activationIds: [],
+          deduplicated: true,
+          event,
+          inputRequest: this.#inputRequestFromRow(
+            this.#requireInputRequestRow(input.inputRequestId),
+          ),
+          task: this.#taskFromRow(this.#requireTaskRow(taskId)),
+        };
+      }
+      this.#assertFreshContext(roomId, actorId, input.basedOnRoomSeq);
+      if (text(inputRow, "state") !== "pending") {
+        throw new ConflictError(
+          `InputRequest ${input.inputRequestId} is not pending`,
+        );
+      }
+      const taskRow = this.#requireTaskRow(taskId);
+      if (text(taskRow, "state") !== "waiting_input") {
+        throw new ConflictError(`Task ${taskId} is not waiting for input`);
+      }
+
+      const resolvedAt = this.#timestamp();
+      this.#database
+        .prepare(
+          "UPDATE input_requests SET state = 'resolved', answer = ?, resolved_by = ?, resolved_at = ?, updated_at = ? WHERE input_request_id = ?",
+        )
+        .run(answer, actorId, resolvedAt, resolvedAt, input.inputRequestId);
+      this.#database
+        .prepare(
+          "UPDATE tasks SET state = 'todo', updated_at = ? WHERE task_id = ?",
+        )
+        .run(resolvedAt, taskId);
+      const event = this.#appendEvent({
+        actorId,
+        aggregateId: input.inputRequestId,
+        aggregateType: "input_request",
+        idempotencyKey: input.idempotencyKey,
+        payload: {
+          answer,
+          basedOnRoomSeq: input.basedOnRoomSeq,
+          inputRequestId: input.inputRequestId,
+          requesterId: text(inputRow, "requester_id"),
+          resolvedAt,
+          resolvedBy: actorId,
+          taskId,
+        },
+        roomId,
+        type: "input.resolved",
+      });
+      const activationIds = this.#deriveAttention(
+        event,
+        [
+          {
+            participantId: text(inputRow, "requester_id"),
+            reason: "input_resolved",
+          },
+        ],
+        resolvedAt,
+      );
+      return {
+        activationIds,
+        deduplicated: false,
+        event,
+        inputRequest: this.#inputRequestFromRow(
+          this.#requireInputRequestRow(input.inputRequestId),
+        ),
+        task: this.#taskFromRow(this.#requireTaskRow(taskId)),
+      };
+    });
+  }
+
+  completeTask(
+    actor: AuthenticatedActorContext,
+    input: {
+      basedOnRoomSeq: number;
+      idempotencyKey: string;
+      taskId: string;
+    },
+  ): TaskMutationResult {
+    return this.#transaction(() => {
+      const actorId = this.#requireAuthenticatedActor(actor);
+      const taskRow = this.#requireTaskRow(input.taskId);
+      const roomId = text(taskRow, "room_id");
+      this.#requireMember(roomId, actorId);
+      if (text(taskRow, "creator_id") !== actorId) {
+        throw new ForbiddenError("only the Task creator can complete it");
+      }
+      const previous = this.#findRoomEventByIdempotencyKey(
+        roomId,
+        input.idempotencyKey,
+      );
+      if (previous !== undefined) {
+        const event = this.#assertTaskEventReplay(previous, {
+          actorId,
+          aggregateId: input.taskId,
+          eventType: "task.completed",
+          payload: { basedOnRoomSeq: input.basedOnRoomSeq },
+        });
+        return {
+          deduplicated: true,
+          event,
+          task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
+        };
+      }
+      if (input.basedOnRoomSeq === undefined) {
+        throw new StaleContextError(
+          undefined,
+          integer(this.#requireRoom(roomId), "next_seq") - 1,
+        );
+      }
+      this.#assertFreshContext(roomId, actorId, input.basedOnRoomSeq);
+      if (text(taskRow, "state") !== "submitted") {
+        throw new ConflictError(
+          `Task ${input.taskId} can only be completed from submitted`,
+        );
+      }
+      const completedAt = this.#timestamp();
+      this.#database
+        .prepare(
+          "UPDATE tasks SET state = 'completed', completed_at = ?, updated_at = ? WHERE task_id = ?",
+        )
+        .run(completedAt, completedAt, input.taskId);
+      const event = this.#appendEvent({
+        actorId,
+        aggregateId: input.taskId,
+        aggregateType: "task",
+        idempotencyKey: input.idempotencyKey,
+        payload: {
+          basedOnRoomSeq: input.basedOnRoomSeq,
+          completedAt,
+          taskId: input.taskId,
+        },
+        roomId,
+        type: "task.completed",
+      });
+      return {
+        deduplicated: false,
+        event,
+        task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
+      };
+    });
+  }
+
+  listInbox(
+    actor: AuthenticatedActorContext,
+    input: { roomId: string },
+  ): InboxItem[] {
+    const participantId = this.#requireAuthenticatedActor(actor);
+    this.#requireMember(input.roomId, participantId);
+    return this.#database
+      .prepare(
+        "SELECT * FROM inbox_items WHERE room_id = ? AND participant_id = ? ORDER BY event_seq, inbox_item_id",
+      )
+      .all(input.roomId, participantId)
+      .map((row) => this.#inboxFromRow(row));
+  }
+
+  listActivations(
+    input: {
+      participantId?: string;
+      roomId?: string;
+    } = {},
+  ): Activation[] {
+    const conditions: string[] = [];
+    const parameters: string[] = [];
+    if (input.roomId !== undefined) {
+      conditions.push("room_id = ?");
+      parameters.push(input.roomId);
+    }
+    if (input.participantId !== undefined) {
+      conditions.push("participant_id = ?");
+      parameters.push(input.participantId);
+    }
+    const where =
+      conditions.length > 0 ? ` WHERE ${conditions.join(" AND ")}` : "";
+    return this.#database
+      .prepare(
+        `SELECT * FROM activations${where} ORDER BY created_at, activation_id`,
+      )
+      .all(...parameters)
+      .map((row) => this.#activationFromRow(row));
+  }
+
+  listOutbox(): OutboxEntry[] {
+    return this.#database
+      .prepare("SELECT * FROM outbox ORDER BY outbox_seq")
+      .all()
+      .map((row) => this.#outboxFromRow(row));
+  }
+
+  createExecutionPolicy(
+    actor: AuthenticatedActorContext,
+    input: ExecutionPolicyContent & {
+      basedOnRoomSeq: number;
+      controlRoomId: string;
+      idempotencyKey: string;
+    },
+  ): ExecutionPolicyMutationResult {
+    return this.#transaction(() => {
+      const actorId = this.#requireHumanControlActor(
+        actor,
+        input.controlRoomId,
+      );
+      this.#assertIdempotencyKey(input.idempotencyKey);
+      const content = executionPolicyContentFromInput(input);
+      const contentDigest = canonicalDigest(content);
+      const previous = this.#findRoomEventByIdempotencyKey(
+        input.controlRoomId,
+        input.idempotencyKey,
+      );
+      if (previous !== undefined) {
+        const event = this.#assertControlEventReplay(previous, {
+          actorId,
+          contentDigest,
+          eventType: "policy.created",
+        });
+        const revisionId = eventPayloadText(event, "executionPolicyRevisionId");
+        return {
+          deduplicated: true,
+          event,
+          policy: this.#executionPolicyRevisionFromRow(
+            this.#requireExecutionPolicyRevisionRow(revisionId),
+          ),
+        };
+      }
+      this.#assertFreshContext(
+        input.controlRoomId,
+        actorId,
+        input.basedOnRoomSeq,
+      );
+
+      const executionPolicyId = this.#createId("execution_policy");
+      const executionPolicyRevisionId = this.#createId(
+        "execution_policy_revision",
+      );
+      const createdAt = this.#timestamp();
+      const policy = ExecutionPolicyRevisionSchema.parse({
+        ...content,
+        contentDigest,
+        controlRoomId: input.controlRoomId,
+        createdAt,
+        createdBy: actorId,
+        executionPolicyId,
+        executionPolicyRevisionId,
+        revision: 1,
+      });
+      this.#database
+        .prepare(
+          "INSERT INTO execution_policies(execution_policy_id, control_room_id, current_revision_id, created_at, updated_at) VALUES(?, ?, ?, ?, ?)",
+        )
+        .run(
+          executionPolicyId,
+          input.controlRoomId,
+          executionPolicyRevisionId,
+          createdAt,
+          createdAt,
+        );
+      this.#insertExecutionPolicyRevision(policy);
+      const event = this.#appendEvent({
+        actorId,
+        aggregateId: executionPolicyId,
+        aggregateType: "execution_policy",
+        idempotencyKey: input.idempotencyKey,
+        payload: {
+          basedOnRoomSeq: input.basedOnRoomSeq,
+          contentDigest,
+          executionPolicyId,
+          executionPolicyRevisionId,
+          revision: 1,
+        },
+        roomId: input.controlRoomId,
+        type: "policy.created",
+      });
+      return { deduplicated: false, event, policy };
+    });
+  }
+
+  reviseExecutionPolicy(
+    actor: AuthenticatedActorContext,
+    input: ExecutionPolicyContent & {
+      basedOnRoomSeq: number;
+      executionPolicyId: string;
+      idempotencyKey: string;
+    },
+  ): ExecutionPolicyMutationResult {
+    return this.#transaction(() => {
+      const policyRow = this.#requireExecutionPolicyRow(
+        input.executionPolicyId,
+      );
+      const controlRoomId = text(policyRow, "control_room_id");
+      const actorId = this.#requireHumanControlActor(actor, controlRoomId);
+      this.#assertIdempotencyKey(input.idempotencyKey);
+      const content = executionPolicyContentFromInput(input);
+      const contentDigest = canonicalDigest(content);
+      const previous = this.#findRoomEventByIdempotencyKey(
+        controlRoomId,
+        input.idempotencyKey,
+      );
+      if (previous !== undefined) {
+        const event = this.#assertControlEventReplay(previous, {
+          actorId,
+          aggregateId: input.executionPolicyId,
+          contentDigest,
+          eventType: "policy.revised",
+        });
+        return {
+          deduplicated: true,
+          event,
+          policy: this.#executionPolicyRevisionFromRow(
+            this.#requireExecutionPolicyRevisionRow(
+              eventPayloadText(event, "executionPolicyRevisionId"),
+            ),
+          ),
+        };
+      }
+      this.#assertFreshContext(controlRoomId, actorId, input.basedOnRoomSeq);
+      const currentRevision = this.#executionPolicyRevisionFromRow(
+        this.#requireExecutionPolicyRevisionRow(
+          text(policyRow, "current_revision_id"),
+        ),
+      );
+      const revision = currentRevision.revision + 1;
+      const executionPolicyRevisionId = this.#createId(
+        "execution_policy_revision",
+      );
+      const createdAt = this.#timestamp();
+      const policy = ExecutionPolicyRevisionSchema.parse({
+        ...content,
+        contentDigest,
+        controlRoomId,
+        createdAt,
+        createdBy: actorId,
+        executionPolicyId: input.executionPolicyId,
+        executionPolicyRevisionId,
+        revision,
+      });
+      this.#insertExecutionPolicyRevision(policy);
+      this.#database
+        .prepare(
+          "UPDATE execution_policies SET current_revision_id = ?, updated_at = ? WHERE execution_policy_id = ?",
+        )
+        .run(executionPolicyRevisionId, createdAt, input.executionPolicyId);
+      const event = this.#appendEvent({
+        actorId,
+        aggregateId: input.executionPolicyId,
+        aggregateType: "execution_policy",
+        idempotencyKey: input.idempotencyKey,
+        payload: {
+          basedOnRoomSeq: input.basedOnRoomSeq,
+          contentDigest,
+          executionPolicyId: input.executionPolicyId,
+          executionPolicyRevisionId,
+          revision,
+        },
+        roomId: controlRoomId,
+        type: "policy.revised",
+      });
+      return { deduplicated: false, event, policy };
+    });
+  }
+
+  getExecutionPolicy(executionPolicyId: string): ExecutionPolicyRecord {
+    const row = this.#requireExecutionPolicyRow(executionPolicyId);
+    return {
+      currentRevision: this.#executionPolicyRevisionFromRow(
+        this.#requireExecutionPolicyRevisionRow(
+          text(row, "current_revision_id"),
+        ),
+      ),
+    };
+  }
+
+  createAgentDefinition(
+    actor: AuthenticatedActorContext,
+    input: AgentDefinitionContent & {
+      basedOnRoomSeq: number;
+      controlRoomId: string;
+      idempotencyKey: string;
+      participantId: string;
+    },
+  ): AgentDefinitionMutationResult {
+    return this.#transaction(() => {
+      const actorId = this.#requireHumanControlActor(
+        actor,
+        input.controlRoomId,
+      );
+      this.#assertIdempotencyKey(input.idempotencyKey);
+      this.#requireAgentParticipant(input.participantId);
+      this.#requireMember(input.controlRoomId, input.participantId);
+      this.#requireExecutionPolicyRevisionRow(input.executionPolicyRevisionId);
+      const content = agentDefinitionContentFromInput(input);
+      const contentDigest = canonicalDigest(content);
+      const previous = this.#findRoomEventByIdempotencyKey(
+        input.controlRoomId,
+        input.idempotencyKey,
+      );
+      if (previous !== undefined) {
+        const event = this.#assertControlEventReplay(previous, {
+          actorId,
+          contentDigest,
+          eventType: "agent.created",
+          payload: { participantId: input.participantId },
+        });
+        return this.#agentDefinitionMutationReplay(event);
+      }
+      this.#assertFreshContext(
+        input.controlRoomId,
+        actorId,
+        input.basedOnRoomSeq,
+      );
+      const agentDefinitionId = this.#createId("agent_definition");
+      const agentDefinitionRevisionId = this.#createId(
+        "agent_definition_revision",
+      );
+      const createdAt = this.#timestamp();
+      const definition = AgentDefinitionSchema.parse({
+        agentDefinitionId,
+        controlRoomId: input.controlRoomId,
+        createdAt,
+        currentRevisionId: agentDefinitionRevisionId,
+        participantId: input.participantId,
+        state: "enabled",
+        updatedAt: createdAt,
+      });
+      const revision = AgentDefinitionRevisionSchema.parse({
+        ...content,
+        agentDefinitionId,
+        agentDefinitionRevisionId,
+        contentDigest,
+        createdAt,
+        createdBy: actorId,
+        revision: 1,
+      });
+      this.#database
+        .prepare(
+          "INSERT INTO agent_definitions(agent_definition_id, participant_id, control_room_id, state, current_revision_id, created_at, updated_at) VALUES(?, ?, ?, 'enabled', ?, ?, ?)",
+        )
+        .run(
+          agentDefinitionId,
+          input.participantId,
+          input.controlRoomId,
+          agentDefinitionRevisionId,
+          createdAt,
+          createdAt,
+        );
+      this.#insertAgentDefinitionRevision(revision);
+      const event = this.#appendEvent({
+        actorId,
+        aggregateId: agentDefinitionId,
+        aggregateType: "agent_definition",
+        idempotencyKey: input.idempotencyKey,
+        payload: {
+          agentDefinitionId,
+          agentDefinitionRevisionId,
+          basedOnRoomSeq: input.basedOnRoomSeq,
+          contentDigest,
+          participantId: input.participantId,
+          revision: 1,
+        },
+        roomId: input.controlRoomId,
+        type: "agent.created",
+      });
+      return { deduplicated: false, definition, event, revision };
+    });
+  }
+
+  reviseAgentDefinition(
+    actor: AuthenticatedActorContext,
+    input: AgentDefinitionContent & {
+      agentDefinitionId: string;
+      basedOnRoomSeq: number;
+      idempotencyKey: string;
+    },
+  ): AgentDefinitionMutationResult {
+    return this.#transaction(() => {
+      const definitionRow = this.#requireAgentDefinitionRow(
+        input.agentDefinitionId,
+      );
+      const controlRoomId = text(definitionRow, "control_room_id");
+      const actorId = this.#requireHumanControlActor(actor, controlRoomId);
+      this.#assertIdempotencyKey(input.idempotencyKey);
+      this.#requireExecutionPolicyRevisionRow(input.executionPolicyRevisionId);
+      const content = agentDefinitionContentFromInput(input);
+      const contentDigest = canonicalDigest(content);
+      const previous = this.#findRoomEventByIdempotencyKey(
+        controlRoomId,
+        input.idempotencyKey,
+      );
+      if (previous !== undefined) {
+        const event = this.#assertControlEventReplay(previous, {
+          actorId,
+          aggregateId: input.agentDefinitionId,
+          contentDigest,
+          eventType: "agent.revised",
+        });
+        return this.#agentDefinitionMutationReplay(event);
+      }
+      this.#assertFreshContext(controlRoomId, actorId, input.basedOnRoomSeq);
+      const currentRevision = this.#agentDefinitionRevisionFromRow(
+        this.#requireAgentDefinitionRevisionRow(
+          text(definitionRow, "current_revision_id"),
+        ),
+      );
+      const revisionNumber = currentRevision.revision + 1;
+      const agentDefinitionRevisionId = this.#createId(
+        "agent_definition_revision",
+      );
+      const createdAt = this.#timestamp();
+      const revision = AgentDefinitionRevisionSchema.parse({
+        ...content,
+        agentDefinitionId: input.agentDefinitionId,
+        agentDefinitionRevisionId,
+        contentDigest,
+        createdAt,
+        createdBy: actorId,
+        revision: revisionNumber,
+      });
+      this.#insertAgentDefinitionRevision(revision);
+      this.#database
+        .prepare(
+          "UPDATE agent_definitions SET current_revision_id = ?, updated_at = ? WHERE agent_definition_id = ?",
+        )
+        .run(agentDefinitionRevisionId, createdAt, input.agentDefinitionId);
+      const definition = this.#agentDefinitionFromRow(
+        this.#requireAgentDefinitionRow(input.agentDefinitionId),
+      );
+      const event = this.#appendEvent({
+        actorId,
+        aggregateId: input.agentDefinitionId,
+        aggregateType: "agent_definition",
+        idempotencyKey: input.idempotencyKey,
+        payload: {
+          agentDefinitionId: input.agentDefinitionId,
+          agentDefinitionRevisionId,
+          basedOnRoomSeq: input.basedOnRoomSeq,
+          contentDigest,
+          revision: revisionNumber,
+        },
+        roomId: controlRoomId,
+        type: "agent.revised",
+      });
+      return { deduplicated: false, definition, event, revision };
+    });
+  }
+
+  getAgentDefinition(agentDefinitionId: string): AgentDefinitionRecord {
+    const row = this.#requireAgentDefinitionRow(agentDefinitionId);
+    return {
+      currentRevision: this.#agentDefinitionRevisionFromRow(
+        this.#requireAgentDefinitionRevisionRow(
+          text(row, "current_revision_id"),
+        ),
+      ),
+      definition: this.#agentDefinitionFromRow(row),
+    };
+  }
+
+  publishRuntimeOffer(
+    host: AuthenticatedHostContext,
+    untrustedOffer: RuntimeOffer,
+  ): RuntimeOfferProjection {
+    const authenticatedHost = this.#requireAuthenticatedHost(host);
+    const reportedOffer = RuntimeOfferSchema.parse(untrustedOffer);
+    if (
+      reportedOffer.hostId !== authenticatedHost.hostId ||
+      reportedOffer.hostInstanceId !== authenticatedHost.instanceId
+    ) {
+      throw new ForbiddenError(
+        "RuntimeOffer must be bound to the authenticated Host generation",
+      );
+    }
+    const resolvedCertifications =
+      this.#resolveTrustedRuntimeOfferEvidence(reportedOffer);
+    const acceptedAt = this.#now();
+    const observedAtMs = Date.parse(reportedOffer.observedAt);
+    if (observedAtMs > acceptedAt.getTime() + this.#runtimeOfferClockSkewMs) {
+      throw new ConflictError(
+        "RuntimeOffer observedAt is too far in the future of Kernel time",
+      );
+    }
+    const reportedLeaseUntilMs = Date.parse(reportedOffer.leaseUntil);
+    if (reportedLeaseUntilMs <= acceptedAt.getTime()) {
+      throw new ConflictError("RuntimeOffer lease is already expired");
+    }
+    const leaseUntilMs = Math.min(
+      reportedLeaseUntilMs,
+      acceptedAt.getTime() + this.#runtimeOfferMaxTtlMs,
+    );
+    const offer = RuntimeOfferSchema.parse({
+      ...reportedOffer,
+      leaseUntil: new Date(leaseUntilMs).toISOString(),
+    });
+    const serializedReport = JSON.stringify(reportedOffer);
+    return this.#transaction(() => {
+      this.#requireAuthenticatedHost(authenticatedHost);
+      const existing = this.#database
+        .prepare("SELECT * FROM runtime_offers WHERE runtime_offer_id = ?")
+        .get(offer.runtimeOfferId);
+      if (
+        existing !== undefined &&
+        (text(existing, "host_id") !== offer.hostId ||
+          text(existing, "runtime_profile_id") !== offer.runtimeProfileId ||
+          text(existing, "runtime_profile_revision_id") !==
+            offer.runtimeProfileRevisionId ||
+          text(existing, "revision_digest") !== offer.revisionDigest)
+      ) {
+        throw new ConflictError(
+          `RuntimeOffer ${offer.runtimeOfferId} already belongs to another Host or profile revision`,
+        );
+      }
+      if (existing !== undefined) {
+        const existingObservedAtMs = integer(existing, "observed_at_ms");
+        if (observedAtMs < existingObservedAtMs) {
+          throw new ConflictError(
+            `RuntimeOffer ${offer.runtimeOfferId} observation is older than the current observation`,
+          );
+        }
+        if (observedAtMs === existingObservedAtMs) {
+          const currentObservationId = nullableText(
+            existing,
+            "current_observation_id",
+          );
+          const currentObservation =
+            currentObservationId === null
+              ? undefined
+              : this.#database
+                  .prepare(
+                    "SELECT * FROM runtime_offer_observations WHERE runtime_offer_observation_id = ?",
+                  )
+                  .get(currentObservationId);
+          if (
+            currentObservation === undefined ||
+            text(currentObservation, "report_json") !== serializedReport
+          ) {
+            throw new ConflictError(
+              `RuntimeOffer ${offer.runtimeOfferId} with the same timestamp has different content`,
+            );
+          }
+          return this.#runtimeOfferFromRow(existing);
+        }
+      }
+      const runtimeOfferObservationId = this.#createId(
+        "runtime_offer_observation",
+      );
+      const previousObservationId =
+        existing === undefined
+          ? null
+          : nullableText(existing, "current_observation_id");
+      const previousObservation =
+        previousObservationId === null
+          ? undefined
+          : this.#database
+              .prepare(
+                "SELECT observation_sequence FROM runtime_offer_observations WHERE runtime_offer_observation_id = ?",
+              )
+              .get(previousObservationId);
+      const observationSequence =
+        previousObservation === undefined
+          ? 1
+          : integer(previousObservation, "observation_sequence") + 1;
+      const acceptedAtIso = acceptedAt.toISOString();
+      const runtimeOfferSnapshotDigest = canonicalDigest({
+        domain: "rah/runtime-offer-snapshot/v1",
+        acceptedAt: acceptedAtIso,
+        observationSequence,
+        offer,
+        resolvedCertifications,
+      });
+      const projection = RuntimeOfferProjectionSchema.parse({
+        ...offer,
+        acceptedAt: acceptedAtIso,
+        resolvedCertifications,
+        runtimeOfferObservationId,
+        runtimeOfferSnapshotDigest,
+      });
+      const serializedProjection = JSON.stringify(projection);
+      this.#database
+        .prepare(
+          `INSERT INTO runtime_offer_observations(runtime_offer_observation_id, runtime_offer_id, observation_sequence, runtime_offer_snapshot_digest, host_id, host_instance_id, runtime_profile_revision_id, revision_digest, observed_at, observed_at_ms, accepted_at, accepted_at_ms, lease_until, lease_until_ms, report_json, projection_json)
+           VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        )
+        .run(
+          runtimeOfferObservationId,
+          offer.runtimeOfferId,
+          observationSequence,
+          runtimeOfferSnapshotDigest,
+          offer.hostId,
+          offer.hostInstanceId,
+          offer.runtimeProfileRevisionId,
+          offer.revisionDigest,
+          offer.observedAt,
+          observedAtMs,
+          acceptedAtIso,
+          acceptedAt.getTime(),
+          offer.leaseUntil,
+          leaseUntilMs,
+          serializedReport,
+          serializedProjection,
+        );
+      const updatedAt = acceptedAtIso;
+      this.#database
+        .prepare(
+          `INSERT INTO runtime_offers(runtime_offer_id, current_observation_id, current_snapshot_digest, host_id, host_instance_id, runtime_profile_id, runtime_profile_revision_id, revision_digest, state, observed_at, observed_at_ms, lease_until, lease_until_ms, accepted_at, offer_json, updated_at)
+           VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(runtime_offer_id) DO UPDATE SET
+             current_observation_id = excluded.current_observation_id,
+             current_snapshot_digest = excluded.current_snapshot_digest,
+             host_id = excluded.host_id,
+             host_instance_id = excluded.host_instance_id,
+             runtime_profile_id = excluded.runtime_profile_id,
+             runtime_profile_revision_id = excluded.runtime_profile_revision_id,
+             revision_digest = excluded.revision_digest,
+             state = excluded.state,
+             observed_at = excluded.observed_at,
+             observed_at_ms = excluded.observed_at_ms,
+             lease_until = excluded.lease_until,
+             lease_until_ms = excluded.lease_until_ms,
+             accepted_at = excluded.accepted_at,
+             offer_json = excluded.offer_json,
+             updated_at = excluded.updated_at`,
+        )
+        .run(
+          offer.runtimeOfferId,
+          runtimeOfferObservationId,
+          runtimeOfferSnapshotDigest,
+          offer.hostId,
+          offer.hostInstanceId,
+          offer.runtimeProfileId,
+          offer.runtimeProfileRevisionId,
+          offer.revisionDigest,
+          offer.state,
+          offer.observedAt,
+          observedAtMs,
+          offer.leaseUntil,
+          leaseUntilMs,
+          acceptedAtIso,
+          serializedProjection,
+          updatedAt,
+        );
+      return this.#runtimeOfferFromRow(
+        this.#requireRuntimeOfferRow(offer.runtimeOfferId),
+      );
+    });
+  }
+
+  scheduleNextPlacement(input: {
+    leaseMs: number;
+    schedulerVersion?: string;
+  }): PlacementDecision | null {
+    if (!Number.isInteger(input.leaseMs) || input.leaseMs <= 0) {
+      throw new Error("leaseMs must be a positive integer");
+    }
+    const schedulerVersion = input.schedulerVersion ?? "placement-planner/v1";
+    return this.#transaction(() => {
+      const now = this.#now();
+      const participantIds = this.#database
+        .prepare(
+          "SELECT participant_id FROM agent_definitions ORDER BY participant_id",
+        )
+        .all()
+        .map((row) => text(row, "participant_id"));
+      this.#reconcileUnownedRuntimeProcesses(participantIds, now);
+      this.#quarantineExpiredActiveRuns(participantIds, now);
+      this.#reconcileProvenActivationQuarantines(participantIds);
+      this.#releaseExpiredReservedPlacements(now);
+      const plannerInput = this.#buildPlacementPlannerInput(
+        now,
+        schedulerVersion,
+      );
+      const planned = planNextPlacement(plannerInput);
+      if (planned.selection === undefined) return null;
+
+      const selection = planned.selection;
+      const activation = this.#requireActivationRow(selection.activationId);
+      if (
+        text(activation, "state") !== "queued" ||
+        integer(activation, "available_at_ms") > now.getTime()
+      ) {
+        throw new ConflictError(
+          `Activation ${selection.activationId} is no longer schedulable`,
+        );
+      }
+      const offer = this.#runtimeOfferFromRow(
+        this.#requireRuntimeOfferRow(selection.runtimeOfferId),
+      );
+      if (
+        offer.hostId !== selection.hostId ||
+        offer.hostInstanceId !== selection.hostInstanceId ||
+        offer.runtimeOfferObservationId !==
+          selection.runtimeOfferObservationId ||
+        offer.runtimeOfferSnapshotDigest !==
+          selection.runtimeOfferSnapshotDigest ||
+        Date.parse(offer.leaseUntil) <= now.getTime()
+      ) {
+        throw new ConflictError(
+          `RuntimeOffer ${selection.runtimeOfferId} is no longer current`,
+        );
+      }
+      const placementId = this.#createId("placement");
+      const leaseUntil = new Date(
+        Math.min(now.getTime() + input.leaseMs, Date.parse(offer.leaseUntil)),
+      );
+      const attemptNumber = integer(activation, "attempt_count") + 1;
+      const placement = PlacementDecisionSchema.parse({
+        ...selection,
+        createdAt: now.toISOString(),
+        leaseUntil: leaseUntil.toISOString(),
+        placementId,
+        state: "reserved",
+      });
+      this.#database
+        .prepare(
+          `INSERT INTO placements(placement_id, activation_id, activation_attempt_number, room_id, participant_id, agent_definition_revision_id, execution_policy_revision_id, host_id, host_instance_id, runtime_offer_id, runtime_offer_observation_id, runtime_offer_snapshot_digest, runtime_profile_id, runtime_profile_revision_id, workspace_mount_revision_id, workspace_mode, state, lease_until, lease_until_ms, decision_json, created_at, updated_at)
+           VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'reserved', ?, ?, ?, ?, ?)`,
+        )
+        .run(
+          placementId,
+          placement.activationId,
+          attemptNumber,
+          placement.roomId,
+          placement.participantId,
+          placement.agentDefinitionRevisionId,
+          placement.executionPolicyRevisionId,
+          placement.hostId,
+          placement.hostInstanceId,
+          placement.runtimeOfferId,
+          offer.runtimeOfferObservationId,
+          offer.runtimeOfferSnapshotDigest,
+          offer.runtimeProfileId,
+          placement.runtimeProfileRevisionId,
+          placement.workspaceMountRevisionId,
+          placement.workspaceMode,
+          placement.leaseUntil,
+          leaseUntil.getTime(),
+          JSON.stringify(placement),
+          placement.createdAt,
+          placement.createdAt,
+        );
+      this.#reservePlacementResources(placement, offer);
+      this.#database
+        .prepare(
+          "UPDATE activations SET state = 'leased', lease_owner = ?, lease_until = ?, lease_until_ms = ?, attempt_count = ?, updated_at = ? WHERE activation_id = ?",
+        )
+        .run(
+          placement.hostId,
+          placement.leaseUntil,
+          leaseUntil.getTime(),
+          attemptNumber,
+          placement.createdAt,
+          placement.activationId,
+        );
+      const event = this.#appendEvent({
+        actorId: SYSTEM_PRINCIPAL_ID,
+        aggregateId: placementId,
+        aggregateType: "placement",
+        idempotencyKey: `placement.reserve:${placementId}`,
+        payload: {
+          activationId: placement.activationId,
+          agentDefinitionRevisionId: placement.agentDefinitionRevisionId,
+          attemptNumber,
+          executionPolicyRevisionId: placement.executionPolicyRevisionId,
+          hostId: placement.hostId,
+          hostInstanceId: placement.hostInstanceId,
+          leaseUntil: placement.leaseUntil,
+          placementId,
+          runtimeOfferId: placement.runtimeOfferId,
+        },
+        roomId: placement.roomId,
+        type: "placement.reserved",
+      });
+      this.#insertOutbox({
+        payload: {
+          hostId: placement.hostId,
+          hostInstanceId: placement.hostInstanceId,
+          placementId,
+        },
+        roomId: placement.roomId,
+        roomSeq: event.roomSeq,
+        topic: "placement.ready",
+      });
+      return placement;
+    });
+  }
+
+  pullNextPlacement(host: AuthenticatedHostContext): PlacementDecision | null {
+    const authenticatedHost = this.#requireAuthenticatedHost(host);
+    const row = this.#database
+      .prepare(
+        "SELECT * FROM placements WHERE host_id = ? AND host_instance_id = ? AND state = 'reserved' AND lease_until_ms > ? ORDER BY created_at, placement_id LIMIT 1",
+      )
+      .get(
+        authenticatedHost.hostId,
+        authenticatedHost.instanceId,
+        this.#now().getTime(),
+      );
+    return row === undefined ? null : this.#placementFromRow(row);
+  }
+
+  listPlacements(input: { roomId?: string } = {}): PlacementDecision[] {
+    const rows =
+      input.roomId === undefined
+        ? this.#database
+            .prepare(
+              "SELECT * FROM placements ORDER BY created_at, placement_id",
+            )
+            .all()
+        : this.#database
+            .prepare(
+              "SELECT * FROM placements WHERE room_id = ? ORDER BY created_at, placement_id",
+            )
+            .all(input.roomId);
+    return rows.map((row) => this.#placementFromRow(row));
+  }
+
+  heartbeatHost(
+    host: AuthenticatedHostContext,
+    input: {
+      buildVersion?: string;
+      processId?: number;
+      protocolVersion?: number;
+      state?: "online" | "draining" | "offline";
+      takeoverAfterMs?: number;
+    } = {},
+  ): HostRecord {
+    const authenticatedHost = this.#requireAuthenticatedHostCredential(host);
+    const hostId = authenticatedHost.hostId;
+    const participantIds = [...authenticatedHost.participantIds];
+    const state = input.state ?? "online";
+    if (
+      input.takeoverAfterMs !== undefined &&
+      (!Number.isInteger(input.takeoverAfterMs) || input.takeoverAfterMs <= 0)
+    ) {
+      throw new Error("takeoverAfterMs must be a positive integer");
+    }
+    if (
+      input.processId !== undefined &&
+      (!Number.isInteger(input.processId) || input.processId <= 0)
+    ) {
+      throw new Error("processId must be a positive integer");
+    }
+    if (
+      input.protocolVersion !== undefined &&
+      (!Number.isInteger(input.protocolVersion) || input.protocolVersion <= 0)
+    ) {
+      throw new Error("protocolVersion must be a positive integer");
+    }
+    return this.#transaction(() => {
+      for (const participantId of participantIds) {
+        const principal = this.#principalFromRow(
+          this.#requirePrincipal(participantId),
+        );
+        if (principal.kind !== "agent") {
+          throw new Error(
+            `host participant ${participantId} must be an Agent principal`,
+          );
+        }
+      }
+      const now = this.#now();
+      const existing = this.#database
+        .prepare("SELECT * FROM agent_hosts WHERE host_id = ?")
+        .get(hostId);
+      if (
+        existing !== undefined &&
+        text(existing, "instance_id") !== authenticatedHost.instanceId &&
+        text(existing, "state") !== "offline" &&
+        (input.takeoverAfterMs === undefined ||
+          integer(existing, "last_seen_ms") + input.takeoverAfterMs >
+            now.getTime())
+      ) {
+        throw new ConflictError(
+          `Host ${hostId} already has an active daemon instance`,
+        );
+      }
+      this.#database
+        .prepare(
+          `INSERT INTO agent_hosts(host_id, credential_id, instance_id, build_version, protocol_version, process_id, participant_ids_json, state, created_at, last_seen_at, last_seen_ms)
+           VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(host_id) DO UPDATE SET
+             credential_id = excluded.credential_id,
+             instance_id = excluded.instance_id,
+             build_version = COALESCE(excluded.build_version, agent_hosts.build_version),
+             protocol_version = COALESCE(excluded.protocol_version, agent_hosts.protocol_version),
+             process_id = COALESCE(excluded.process_id, agent_hosts.process_id),
+             participant_ids_json = excluded.participant_ids_json,
+             state = excluded.state,
+             last_seen_at = excluded.last_seen_at,
+             last_seen_ms = excluded.last_seen_ms`,
+        )
+        .run(
+          hostId,
+          authenticatedHost.credentialId,
+          authenticatedHost.instanceId,
+          input.buildVersion ?? null,
+          input.protocolVersion ?? null,
+          input.processId ?? null,
+          JSON.stringify(participantIds),
+          state,
+          now.toISOString(),
+          now.toISOString(),
+          now.getTime(),
+        );
+      return this.#hostFromRow(this.#requireHostRow(hostId));
+    });
+  }
+
+  listHosts(): HostRecord[] {
+    return this.#database
+      .prepare("SELECT * FROM agent_hosts ORDER BY host_id")
+      .all()
+      .map((row) => this.#hostFromRow(row));
+  }
+
+  createRunAttempt(
+    host: AuthenticatedHostContext,
+    input: { activationId: string },
+  ): RunAttempt {
+    const authenticatedHost = this.#requireAuthenticatedHost(host);
+    const hostId = authenticatedHost.hostId;
+    return this.#transaction(() => {
+      const activation = this.#requireActivationRow(input.activationId);
+      this.#requireHostParticipant(
+        authenticatedHost,
+        text(activation, "participant_id"),
+      );
+      this.#requireActivationLease(activation, hostId);
+      const attemptNumber = integer(activation, "attempt_count");
+      const placementRow = this.#database
+        .prepare(
+          "SELECT * FROM placements WHERE activation_id = ? AND state IN ('reserved', 'consumed') ORDER BY created_at DESC LIMIT 1",
+        )
+        .get(input.activationId);
+      if (
+        placementRow !== undefined &&
+        (text(placementRow, "host_id") !== hostId ||
+          text(placementRow, "host_instance_id") !==
+            authenticatedHost.instanceId ||
+          integer(placementRow, "activation_attempt_number") !== attemptNumber)
+      ) {
+        throw new LeaseConflictError(
+          `placement for Activation ${input.activationId} belongs to another Host generation`,
+        );
+      }
+      const existing = this.#database
+        .prepare(
+          "SELECT * FROM run_attempts WHERE activation_id = ? AND attempt_number = ?",
+        )
+        .get(input.activationId, attemptNumber);
+      if (existing) return this.#runAttemptFromRow(existing);
+
+      const placementId =
+        placementRow === undefined ? null : text(placementRow, "placement_id");
+      if (
+        placementRow !== undefined &&
+        text(placementRow, "state") === "reserved"
+      ) {
+        this.#setPlacementState(placementRow, "consumed");
+      }
+
+      const runAttemptId = this.#createId("run");
+      const startedAt = this.#timestamp();
+      this.#database
+        .prepare(
+          "INSERT INTO run_attempts(run_attempt_id, placement_id, activation_id, room_id, participant_id, host_id, attempt_number, state, started_at) VALUES(?, ?, ?, ?, ?, ?, ?, 'starting', ?)",
+        )
+        .run(
+          runAttemptId,
+          placementId,
+          input.activationId,
+          text(activation, "room_id"),
+          text(activation, "participant_id"),
+          hostId,
+          attemptNumber,
+          startedAt,
+        );
+      this.#appendEvent({
+        actorId: SYSTEM_PRINCIPAL_ID,
+        aggregateId: runAttemptId,
+        aggregateType: "run_attempt",
+        idempotencyKey: `run.create:${runAttemptId}`,
+        payload: {
+          activationId: input.activationId,
+          attemptNumber,
+          hostId,
+          runAttemptId,
+          ...(placementId === null ? {} : { placementId }),
+        },
+        roomId: text(activation, "room_id"),
+        type: "run.created",
+      });
+      return this.#runAttemptFromRow(this.#requireRunAttemptRow(runAttemptId));
+    });
+  }
+
+  prepareRunAttemptRuntime(
+    host: AuthenticatedHostContext,
+    input: {
+      recoveryDescriptor: RuntimeRecoveryDescriptor;
+      runAttemptId: string;
+      runtimeRunId: string;
+    },
+  ): RuntimeProcessRecord {
+    const authenticatedHost = this.#requireAuthenticatedHost(host);
+    const hostId = authenticatedHost.hostId;
+    const recoveryDescriptor = RuntimeRecoveryDescriptorSchema.parse(
+      input.recoveryDescriptor,
+    );
+    if (input.runtimeRunId.trim().length === 0) {
+      throw new Error("runtimeRunId is required");
+    }
+    return this.#transaction(() => {
+      const runAttempt = this.#requireRunAttemptRow(input.runAttemptId);
+      this.#requireHostParticipant(
+        authenticatedHost,
+        text(runAttempt, "participant_id"),
+      );
+      this.#requireRunAttemptOwner(runAttempt, hostId);
+      this.#requireRunAttemptHostGeneration(runAttempt, authenticatedHost);
+      if (text(runAttempt, "state") !== "starting") {
+        throw new ConflictError(
+          `run attempt ${input.runAttemptId} is not starting`,
+        );
+      }
+      const existing = this.#database
+        .prepare("SELECT * FROM runtime_processes WHERE run_attempt_id = ?")
+        .get(input.runAttemptId);
+      if (existing) {
+        if (
+          text(existing, "state") === "prepared" &&
+          text(existing, "launch_host_id") === hostId &&
+          text(existing, "runtime_run_id") === input.runtimeRunId &&
+          text(existing, "recovery_driver") === recoveryDescriptor.driver &&
+          text(existing, "recovery_descriptor_json") ===
+            JSON.stringify(recoveryDescriptor)
+        ) {
+          return this.#runtimeProcessFromRow(existing);
+        }
+        throw new ConflictError(
+          `run attempt ${input.runAttemptId} already has a different runtime`,
+        );
+      }
+
+      const registeredAt = this.#timestamp();
+      const runtimeProcessId = this.#createId("runtime_process");
+      this.#database
+        .prepare(
+          "INSERT INTO runtime_processes(runtime_process_id, run_attempt_id, activation_id, room_id, participant_id, launch_host_id, runtime_run_id, recovery_driver, recovery_descriptor_json, state, registered_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, 'prepared', ?, ?)",
+        )
+        .run(
+          runtimeProcessId,
+          input.runAttemptId,
+          text(runAttempt, "activation_id"),
+          text(runAttempt, "room_id"),
+          text(runAttempt, "participant_id"),
+          hostId,
+          input.runtimeRunId,
+          recoveryDescriptor.driver,
+          JSON.stringify(recoveryDescriptor),
+          registeredAt,
+          registeredAt,
+        );
+      this.#appendEvent({
+        actorId: SYSTEM_PRINCIPAL_ID,
+        aggregateId: input.runAttemptId,
+        aggregateType: "run_attempt",
+        idempotencyKey: `run.runtime_prepare:${input.runAttemptId}`,
+        payload: {
+          activationId: text(runAttempt, "activation_id"),
+          hostId,
+          recoveryDriver: recoveryDescriptor.driver,
+          runAttemptId: input.runAttemptId,
+          runtimeRunId: input.runtimeRunId,
+        },
+        roomId: text(runAttempt, "room_id"),
+        type: "run.runtime_prepared",
+      });
+      return this.#runtimeProcessFromRow(
+        this.#requireRuntimeProcessById(runtimeProcessId),
+      );
+    });
+  }
+
+  markRunAttemptRunning(
+    host: AuthenticatedHostContext,
+    input: {
+      recoveryDescriptor: RuntimeRecoveryDescriptor;
+      runAttemptId: string;
+      runtimeRunId: string;
+    },
+  ): RunAttempt {
+    const authenticatedHost = this.#requireAuthenticatedHost(host);
+    const hostId = authenticatedHost.hostId;
+    const recoveryDescriptor = RuntimeRecoveryDescriptorSchema.parse(
+      input.recoveryDescriptor,
+    );
+    return this.#transaction(() => {
+      const row = this.#requireRunAttemptRow(input.runAttemptId);
+      this.#requireHostParticipant(
+        authenticatedHost,
+        text(row, "participant_id"),
+      );
+      this.#requireRunAttemptOwner(row, hostId);
+      this.#requireRunAttemptHostGeneration(row, authenticatedHost);
+      if (text(row, "state") !== "starting") {
+        throw new ConflictError(
+          `run attempt ${input.runAttemptId} is not starting`,
+        );
+      }
+      if (input.runtimeRunId.trim().length === 0) {
+        throw new Error("runtimeRunId is required");
+      }
+      const runtimeProcess = this.#database
+        .prepare("SELECT * FROM runtime_processes WHERE run_attempt_id = ?")
+        .get(input.runAttemptId);
+      if (
+        runtimeProcess === undefined ||
+        text(runtimeProcess, "state") !== "prepared" ||
+        text(runtimeProcess, "launch_host_id") !== hostId ||
+        text(runtimeProcess, "runtime_run_id") !== input.runtimeRunId ||
+        text(runtimeProcess, "recovery_driver") !== recoveryDescriptor.driver ||
+        text(runtimeProcess, "recovery_descriptor_json") !==
+          JSON.stringify(recoveryDescriptor)
+      ) {
+        throw new ConflictError(
+          `run attempt ${input.runAttemptId} has no matching prepared runtime`,
+        );
+      }
+      const updatedAt = this.#timestamp();
+      this.#database
+        .prepare(
+          "UPDATE run_attempts SET state = 'running', runtime_run_id = ? WHERE run_attempt_id = ?",
+        )
+        .run(input.runtimeRunId, input.runAttemptId);
+      this.#database
+        .prepare(
+          "UPDATE runtime_processes SET state = 'active', updated_at = ? WHERE runtime_process_id = ?",
+        )
+        .run(updatedAt, text(runtimeProcess, "runtime_process_id"));
+      this.#appendEvent({
+        actorId: SYSTEM_PRINCIPAL_ID,
+        aggregateId: input.runAttemptId,
+        aggregateType: "run_attempt",
+        idempotencyKey: `run.start:${input.runAttemptId}`,
+        payload: {
+          activationId: text(row, "activation_id"),
+          hostId,
+          recoveryDriver: recoveryDescriptor.driver,
+          runAttemptId: input.runAttemptId,
+          runtimeRunId: input.runtimeRunId,
+        },
+        roomId: text(row, "room_id"),
+        type: "run.started",
+      });
+      return this.#runAttemptFromRow(
+        this.#requireRunAttemptRow(input.runAttemptId),
+      );
+    });
+  }
+
+  finishRunAttempt(
+    host: AuthenticatedHostContext,
+    input: {
+      error?: string;
+      exitCode?: number;
+      exitSignal?: string;
+      runAttemptId: string;
+      state: "exited" | "failed" | "cancelled" | "timed_out";
+    },
+  ): RunAttempt {
+    const authenticatedHost = this.#requireAuthenticatedHost(host);
+    return this.#transaction(() => {
+      const row = this.#requireRunAttemptRow(input.runAttemptId);
+      this.#requireHostParticipant(
+        authenticatedHost,
+        text(row, "participant_id"),
+      );
+      this.#requireRunAttemptOwner(row, authenticatedHost.hostId);
+      this.#requireRunAttemptHostGeneration(row, authenticatedHost);
+      const currentState = text(row, "state");
+      if (currentState !== "starting" && currentState !== "running") {
+        return this.#runAttemptFromRow(row);
+      }
+      const runtimeProcess = this.#database
+        .prepare("SELECT * FROM runtime_processes WHERE run_attempt_id = ?")
+        .get(input.runAttemptId);
+      if (
+        runtimeProcess !== undefined &&
+        text(runtimeProcess, "state") !== "terminated"
+      ) {
+        throw new RuntimeTerminationProofError(
+          `RunAttempt ${input.runAttemptId} still has a non-terminal RuntimeProcess`,
+        );
+      }
+      const finishedAt = this.#timestamp();
+      this.#database
+        .prepare(
+          "UPDATE run_attempts SET state = ?, exit_code = ?, exit_signal = ?, error = ?, finished_at = ? WHERE run_attempt_id = ?",
+        )
+        .run(
+          input.state,
+          input.exitCode ?? null,
+          input.exitSignal ?? null,
+          input.error ?? null,
+          finishedAt,
+          input.runAttemptId,
+        );
+      const placementId = nullableText(row, "placement_id");
+      if (placementId !== null) {
+        const placement = this.#requirePlacementRow(placementId);
+        if (text(placement, "state") !== "released") {
+          this.#setPlacementState(
+            placement,
+            "released",
+            `RunAttempt finished ${input.state}`,
+          );
+          this.#releasePlacementResources(placementId);
+        }
+      }
+      this.#appendEvent({
+        actorId: SYSTEM_PRINCIPAL_ID,
+        aggregateId: input.runAttemptId,
+        aggregateType: "run_attempt",
+        idempotencyKey: `run.finish:${input.runAttemptId}`,
+        payload: {
+          runAttemptId: input.runAttemptId,
+          state: input.state,
+          ...(placementId === null ? {} : { placementId }),
+          ...(input.exitCode === undefined ? {} : { exitCode: input.exitCode }),
+          ...(input.exitSignal === undefined
+            ? {}
+            : { exitSignal: input.exitSignal }),
+          ...(input.error === undefined ? {} : { error: input.error }),
+        },
+        roomId: text(row, "room_id"),
+        type: "run.finished",
+      });
+      return this.#runAttemptFromRow(
+        this.#requireRunAttemptRow(input.runAttemptId),
+      );
+    });
+  }
+
+  listRunAttempts(input: { roomId?: string } = {}): RunAttempt[] {
+    const rows = input.roomId
+      ? this.#database
+          .prepare(
+            "SELECT * FROM run_attempts WHERE room_id = ? ORDER BY started_at, run_attempt_id",
+          )
+          .all(input.roomId)
+      : this.#database
+          .prepare(
+            "SELECT * FROM run_attempts ORDER BY started_at, run_attempt_id",
+          )
+          .all();
+    return rows.map((row) => this.#runAttemptFromRow(row));
+  }
+
+  listRuntimeProcesses(
+    input: { roomId?: string } = {},
+  ): RuntimeProcessRecord[] {
+    const rows = input.roomId
+      ? this.#database
+          .prepare(
+            "SELECT * FROM runtime_processes WHERE room_id = ? ORDER BY registered_at, runtime_process_id",
+          )
+          .all(input.roomId)
+      : this.#database
+          .prepare(
+            "SELECT * FROM runtime_processes ORDER BY registered_at, runtime_process_id",
+          )
+          .all();
+    return rows.map((row) => this.#runtimeProcessFromRow(row));
+  }
+
+  leaseNextRuntimeRecovery(
+    host: AuthenticatedHostContext,
+    input: { driverIds: string[]; leaseMs: number },
+  ): RuntimeProcessRecord | null {
+    const authenticatedHost = this.#requireAuthenticatedHost(host);
+    const recoveryHostId = authenticatedHost.hostId;
+    if (!Number.isInteger(input.leaseMs) || input.leaseMs <= 0) {
+      throw new Error("leaseMs must be a positive integer");
+    }
+    const driverIds = [
+      ...new Set(input.driverIds.map((driverId) => driverId.trim())),
+    ].filter((driverId) => driverId.length > 0);
+    const participantIds = [...authenticatedHost.participantIds];
+    if (driverIds.length === 0 || participantIds.length === 0) return null;
+
+    return this.#transaction(() => {
+      const now = this.#now();
+      const nowMs = now.getTime();
+      const driverPlaceholders = driverIds.map(() => "?").join(", ");
+      const participantPlaceholders = participantIds.map(() => "?").join(", ");
+      const candidate = this.#database
+        .prepare(
+          `SELECT * FROM runtime_processes
+           WHERE state = 'orphaned'
+             AND participant_id IN (${participantPlaceholders})
+             AND recovery_driver IN (${driverPlaceholders})
+             AND recovery_available_at_ms <= ?
+             AND (recovery_lease_owner IS NULL OR recovery_lease_until_ms <= ?)
+           ORDER BY registered_at, runtime_process_id
+           LIMIT 1`,
+        )
+        .get(...participantIds, ...driverIds, nowMs, nowMs);
+      if (!candidate) return null;
+
+      const runtimeProcessId = text(candidate, "runtime_process_id");
+      const attemptCount = integer(candidate, "recovery_attempt_count") + 1;
+      const leaseUntil = new Date(nowMs + input.leaseMs);
+      this.#database
+        .prepare(
+          "UPDATE runtime_processes SET recovery_lease_owner = ?, recovery_lease_owner_instance_id = ?, recovery_lease_until = ?, recovery_lease_until_ms = ?, recovery_attempt_count = ?, recovery_last_error = NULL, updated_at = ? WHERE runtime_process_id = ?",
+        )
+        .run(
+          recoveryHostId,
+          authenticatedHost.instanceId,
+          leaseUntil.toISOString(),
+          leaseUntil.getTime(),
+          attemptCount,
+          now.toISOString(),
+          runtimeProcessId,
+        );
+      this.#appendEvent({
+        actorId: SYSTEM_PRINCIPAL_ID,
+        aggregateId: runtimeProcessId,
+        aggregateType: "runtime_process",
+        idempotencyKey: `runtime_process.recovery_lease:${runtimeProcessId}:${String(attemptCount)}`,
+        payload: {
+          recoveryAttemptCount: attemptCount,
+          recoveryHostId,
+          runtimeProcessId,
+        },
+        roomId: text(candidate, "room_id"),
+        type: "runtime_process.recovery_leased",
+      });
+      return this.#runtimeProcessFromRow(
+        this.#requireRuntimeProcessById(runtimeProcessId),
+      );
+    });
+  }
+
+  renewRuntimeRecoveryLease(
+    host: AuthenticatedHostContext,
+    input: {
+      leaseMs: number;
+      recoveryAttemptCount: number;
+      runtimeProcessId: string;
+    },
+  ): RuntimeProcessRecord {
+    const authenticatedHost = this.#requireAuthenticatedHost(host);
+    const recoveryHostId = authenticatedHost.hostId;
+    if (!Number.isInteger(input.leaseMs) || input.leaseMs <= 0) {
+      throw new Error("leaseMs must be a positive integer");
+    }
+    if (
+      !Number.isInteger(input.recoveryAttemptCount) ||
+      input.recoveryAttemptCount <= 0
+    ) {
+      throw new Error("recoveryAttemptCount must be a positive integer");
+    }
+    return this.#transaction(() => {
+      const row = this.#requireRuntimeProcessById(input.runtimeProcessId);
+      this.#requireHostParticipant(
+        authenticatedHost,
+        text(row, "participant_id"),
+      );
+      if (
+        text(row, "state") !== "orphaned" ||
+        nullableText(row, "recovery_lease_owner") !== recoveryHostId ||
+        nullableText(row, "recovery_lease_owner_instance_id") !==
+          authenticatedHost.instanceId ||
+        integer(row, "recovery_attempt_count") !== input.recoveryAttemptCount ||
+        (nullableInteger(row, "recovery_lease_until_ms") ?? 0) <=
+          this.#now().getTime()
+      ) {
+        throw new LeaseConflictError(
+          `recovery host ${recoveryHostId} does not own recovery attempt ${String(input.recoveryAttemptCount)} for ${input.runtimeProcessId}`,
+        );
+      }
+      const now = this.#now();
+      const leaseUntil = new Date(now.getTime() + input.leaseMs);
+      this.#database
+        .prepare(
+          "UPDATE runtime_processes SET recovery_lease_until = ?, recovery_lease_until_ms = ?, updated_at = ? WHERE runtime_process_id = ?",
+        )
+        .run(
+          leaseUntil.toISOString(),
+          leaseUntil.getTime(),
+          now.toISOString(),
+          input.runtimeProcessId,
+        );
+      return this.#runtimeProcessFromRow(
+        this.#requireRuntimeProcessById(input.runtimeProcessId),
+      );
+    });
+  }
+
+  recordRecoveredRuntimeTermination(
+    host: AuthenticatedHostContext,
+    input: {
+      exit: { code: number | null; signal?: string };
+      recoveryAttemptCount: number;
+      runtimeProcessId: string;
+    },
+  ): RuntimeProcessRecord {
+    const authenticatedHost = this.#requireAuthenticatedHost(host);
+    const recoveryHostId = authenticatedHost.hostId;
+    this.#validateRunExit(input.exit);
+    return this.#transaction(() => {
+      const row = this.#requireRuntimeProcessById(input.runtimeProcessId);
+      this.#requireHostParticipant(
+        authenticatedHost,
+        text(row, "participant_id"),
+      );
+      if (text(row, "state") === "terminated") {
+        return this.#assertMatchingRuntimeTermination(row, input.exit);
+      }
+      if (
+        text(row, "state") !== "orphaned" ||
+        nullableText(row, "recovery_lease_owner") !== recoveryHostId ||
+        nullableText(row, "recovery_lease_owner_instance_id") !==
+          authenticatedHost.instanceId ||
+        integer(row, "recovery_attempt_count") !== input.recoveryAttemptCount ||
+        (nullableInteger(row, "recovery_lease_until_ms") ?? 0) <=
+          this.#now().getTime()
+      ) {
+        throw new LeaseConflictError(
+          `recovery host ${recoveryHostId} does not own an active recovery lease for ${input.runtimeProcessId}`,
+        );
+      }
+      return this.#persistRuntimeTermination(row, input.exit, {
+        recoveryHostId,
+      });
+    });
+  }
+
+  retryRuntimeRecovery(
+    host: AuthenticatedHostContext,
+    input: {
+      error: string;
+      recoveryAttemptCount: number;
+      retryAfterMs: number;
+      runtimeProcessId: string;
+    },
+  ): RuntimeProcessRecord {
+    const authenticatedHost = this.#requireAuthenticatedHost(host);
+    const recoveryHostId = authenticatedHost.hostId;
+    if (!Number.isInteger(input.retryAfterMs) || input.retryAfterMs < 0) {
+      throw new Error("retryAfterMs must be a non-negative integer");
+    }
+    const error = input.error.trim();
+    if (error.length === 0) throw new Error("recovery error is required");
+    return this.#transaction(() => {
+      const row = this.#requireRuntimeProcessById(input.runtimeProcessId);
+      this.#requireHostParticipant(
+        authenticatedHost,
+        text(row, "participant_id"),
+      );
+      if (
+        text(row, "state") !== "orphaned" ||
+        nullableText(row, "recovery_lease_owner") !== recoveryHostId ||
+        nullableText(row, "recovery_lease_owner_instance_id") !==
+          authenticatedHost.instanceId ||
+        integer(row, "recovery_attempt_count") !== input.recoveryAttemptCount ||
+        (nullableInteger(row, "recovery_lease_until_ms") ?? 0) <=
+          this.#now().getTime()
+      ) {
+        throw new LeaseConflictError(
+          `recovery host ${recoveryHostId} does not own an active recovery lease for ${input.runtimeProcessId}`,
+        );
+      }
+      const now = this.#now();
+      this.#database
+        .prepare(
+          "UPDATE runtime_processes SET recovery_available_at_ms = ?, recovery_lease_owner = NULL, recovery_lease_owner_instance_id = NULL, recovery_lease_until = NULL, recovery_lease_until_ms = NULL, recovery_last_error = ?, updated_at = ? WHERE runtime_process_id = ?",
+        )
+        .run(
+          now.getTime() + input.retryAfterMs,
+          error,
+          now.toISOString(),
+          input.runtimeProcessId,
+        );
+      this.#appendEvent({
+        actorId: SYSTEM_PRINCIPAL_ID,
+        aggregateId: input.runtimeProcessId,
+        aggregateType: "runtime_process",
+        idempotencyKey: `runtime_process.recovery_retry:${input.runtimeProcessId}:${integer(row, "recovery_attempt_count")}`,
+        payload: {
+          error,
+          recoveryHostId,
+          retryAfterMs: input.retryAfterMs,
+          runtimeProcessId: input.runtimeProcessId,
+        },
+        roomId: text(row, "room_id"),
+        type: "runtime_process.recovery_retry_scheduled",
+      });
+      return this.#runtimeProcessFromRow(
+        this.#requireRuntimeProcessById(input.runtimeProcessId),
+      );
+    });
+  }
+
+  recordRuntimeTermination(
+    host: AuthenticatedHostContext,
+    input: {
+      exit: { code: number | null; signal?: string };
+      runAttemptId: string;
+      runtimeRunId: string;
+    },
+  ): RuntimeProcessRecord {
+    const authenticatedHost = this.#requireAuthenticatedHost(host);
+    const hostId = authenticatedHost.hostId;
+    this.#validateRunExit(input.exit);
+    return this.#transaction(() => {
+      const row = this.#requireRuntimeProcessRow(input.runAttemptId);
+      this.#requireHostParticipant(
+        authenticatedHost,
+        text(row, "participant_id"),
+      );
+      this.#requireRunAttemptHostGeneration(
+        this.#requireRunAttemptRow(text(row, "run_attempt_id")),
+        authenticatedHost,
+      );
+      if (
+        text(row, "launch_host_id") !== hostId ||
+        text(row, "runtime_run_id") !== input.runtimeRunId
+      ) {
+        throw new ExecutionFencedError(
+          "runtime termination proof does not match the launched execution",
+        );
+      }
+      if (text(row, "state") === "terminated") {
+        return this.#assertMatchingRuntimeTermination(row, input.exit);
+      }
+      return this.#persistRuntimeTermination(row, input.exit, {
+        hostId,
+      });
+    });
+  }
+
+  authorizeWorkerExecution(
+    host: AuthenticatedHostContext,
+    uncheckedScope: ActivationCredentialScope,
+  ): AuthenticatedWorkerExecutionContext {
+    const authenticatedHost = this.#requireAuthenticatedHost(host);
+    const scope = ActivationCredentialScopeSchema.parse(uncheckedScope);
+    if (scope.hostId !== authenticatedHost.hostId) {
+      throw new ForbiddenError(
+        "worker execution scope must belong to the authenticated Host",
+      );
+    }
+    this.#requireHostParticipant(authenticatedHost, scope.participantId);
+    this.#transaction(() => {
+      const { runAttempt } = this.#assertWorkerGrantScope(scope);
+      this.#requireRunAttemptHostGeneration(runAttempt, authenticatedHost);
+    });
+    return issueAuthenticatedWorkerExecutionContext(
+      authenticatedHost.credentialId,
+      authenticatedHost.instanceId,
+      scope,
+    );
+  }
+
+  leaseNextOutbox(input: {
+    dispatcherId: string;
+    leaseMs: number;
+    topics?: string[];
+  }): OutboxEntry | null {
+    if (input.dispatcherId.trim().length === 0) {
+      throw new Error("dispatcherId is required");
+    }
+    if (!Number.isInteger(input.leaseMs) || input.leaseMs <= 0) {
+      throw new Error("leaseMs must be a positive integer");
+    }
+    const topics =
+      input.topics === undefined
+        ? undefined
+        : [...new Set(input.topics.map((topic) => topic.trim()))];
+    if (topics !== undefined && (topics.length === 0 || topics.includes(""))) {
+      throw new Error("topics must contain at least one non-empty topic");
+    }
+    return this.#transaction(() => {
+      const now = this.#now();
+      const nowMs = now.getTime();
+      const candidate = this.#database
+        .prepare(
+          `SELECT * FROM outbox
+           WHERE published_at IS NULL
+             AND available_at_ms <= ?
+             AND (lease_owner IS NULL OR lease_until_ms <= ?)
+             ${topics === undefined ? "" : `AND topic IN (${topics.map(() => "?").join(", ")})`}
+           ORDER BY outbox_seq
+           LIMIT 1`,
+        )
+        .get(nowMs, nowMs, ...(topics ?? []));
+      if (!candidate) return null;
+
+      const outboxId = text(candidate, "outbox_id");
+      const attemptCount = integer(candidate, "attempt_count") + 1;
+      const leaseUntil = new Date(nowMs + input.leaseMs).toISOString();
+      this.#database
+        .prepare(
+          "UPDATE outbox SET lease_owner = ?, lease_until = ?, lease_until_ms = ?, attempt_count = ?, last_error = NULL WHERE outbox_id = ?",
+        )
+        .run(
+          input.dispatcherId,
+          leaseUntil,
+          nowMs + input.leaseMs,
+          attemptCount,
+          outboxId,
+        );
+      return this.#outboxFromRow(this.#requireOutboxRow(outboxId));
+    });
+  }
+
+  acknowledgeOutboxPublished(input: {
+    dispatcherId: string;
+    outboxId: string;
+  }): OutboxEntry {
+    return this.#transaction(() => {
+      const row = this.#requireOutboxRow(input.outboxId);
+      if (nullableText(row, "published_at") !== null) {
+        return this.#outboxFromRow(row);
+      }
+      this.#requireOutboxLease(row, input.dispatcherId);
+      this.#database
+        .prepare(
+          "UPDATE outbox SET published_at = ?, lease_owner = NULL, lease_until = NULL, lease_until_ms = NULL, last_error = NULL WHERE outbox_id = ?",
+        )
+        .run(this.#timestamp(), input.outboxId);
+      return this.#outboxFromRow(this.#requireOutboxRow(input.outboxId));
+    });
+  }
+
+  retryOutbox(input: {
+    dispatcherId: string;
+    error: string;
+    outboxId: string;
+    retryAfterMs: number;
+  }): OutboxEntry {
+    if (!Number.isInteger(input.retryAfterMs) || input.retryAfterMs < 0) {
+      throw new Error("retryAfterMs must be a non-negative integer");
+    }
+    const error = input.error.trim();
+    if (error.length === 0) throw new Error("retry error is required");
+    return this.#transaction(() => {
+      const row = this.#requireOutboxRow(input.outboxId);
+      this.#requireOutboxLease(row, input.dispatcherId);
+      this.#database
+        .prepare(
+          "UPDATE outbox SET available_at_ms = ?, lease_owner = NULL, lease_until = NULL, lease_until_ms = NULL, last_error = ? WHERE outbox_id = ?",
+        )
+        .run(this.#now().getTime() + input.retryAfterMs, error, input.outboxId);
+      return this.#outboxFromRow(this.#requireOutboxRow(input.outboxId));
+    });
+  }
+
+  leaseNextActivation(
+    host: AuthenticatedHostContext,
+    input: { leaseMs: number },
+  ): Activation | null {
+    const authenticatedHost = this.#requireAuthenticatedHost(host);
+    const hostId = authenticatedHost.hostId;
+    if (!Number.isInteger(input.leaseMs) || input.leaseMs <= 0) {
+      throw new Error("leaseMs must be a positive integer");
+    }
+    const participantIds = [...authenticatedHost.participantIds];
+    if (participantIds.length === 0) return null;
+
+    return this.#transaction(() => {
+      const now = this.#now();
+      const nowMs = now.getTime();
+      const placeholders = participantIds.map(() => "?").join(", ");
+      this.#reconcileUnownedRuntimeProcesses(participantIds, now);
+      this.#quarantineExpiredActiveRuns(participantIds, now);
+      this.#reconcileProvenActivationQuarantines(participantIds);
+      const candidate = this.#database
+        .prepare(
+          `SELECT candidate.*
+           FROM activations AS candidate
+           WHERE candidate.participant_id IN (${placeholders})
+             AND (
+             candidate.state = 'queued'
+               AND candidate.available_at_ms <= ?
+               OR (candidate.state = 'leased' AND candidate.lease_until_ms <= ?)
+             )
+             AND NOT EXISTS (
+               SELECT 1 FROM activations AS active
+               WHERE active.participant_id = candidate.participant_id
+                 AND (
+                   active.state = 'quarantined'
+                   OR (active.state = 'leased' AND active.lease_until_ms > ?)
+                 )
+             )
+           ORDER BY candidate.created_at, candidate.activation_id
+           LIMIT 1`,
+        )
+        .get(...participantIds, nowMs, nowMs, nowMs);
+      if (!candidate) return null;
+
+      const activationId = text(candidate, "activation_id");
+      const attemptCount = integer(candidate, "attempt_count") + 1;
+      const leaseUntil = new Date(nowMs + input.leaseMs);
+      const updatedAt = now.toISOString();
+      this.#database
+        .prepare(
+          "UPDATE activations SET state = 'leased', lease_owner = ?, lease_until = ?, lease_until_ms = ?, attempt_count = ?, updated_at = ? WHERE activation_id = ?",
+        )
+        .run(
+          hostId,
+          leaseUntil.toISOString(),
+          leaseUntil.getTime(),
+          attemptCount,
+          updatedAt,
+          activationId,
+        );
+
+      const roomId = text(candidate, "room_id");
+      this.#appendEvent({
+        actorId: SYSTEM_PRINCIPAL_ID,
+        aggregateId: activationId,
+        aggregateType: "activation",
+        idempotencyKey: `activation.lease:${activationId}:${attemptCount}`,
+        payload: {
+          activationId,
+          attemptCount,
+          hostId,
+          leaseUntil: leaseUntil.toISOString(),
+        },
+        roomId,
+        type: "activation.leased",
+      });
+      return this.#activationFromRow(this.#requireActivationRow(activationId));
+    });
+  }
+
+  renewActivationLease(
+    host: AuthenticatedHostContext,
+    input: { activationId: string; leaseMs: number },
+  ): Activation {
+    const authenticatedHost = this.#requireAuthenticatedHost(host);
+    if (!Number.isInteger(input.leaseMs) || input.leaseMs <= 0) {
+      throw new Error("leaseMs must be a positive integer");
+    }
+    return this.#transaction(() => {
+      const row = this.#requireActivationRow(input.activationId);
+      this.#requireHostParticipant(
+        authenticatedHost,
+        text(row, "participant_id"),
+      );
+      this.#requireActivationLease(row, authenticatedHost.hostId);
+      this.#requireActivationHostGeneration(row, authenticatedHost);
+      const now = this.#now();
+      const leaseUntil = new Date(now.getTime() + input.leaseMs);
+      this.#database
+        .prepare(
+          "UPDATE activations SET lease_until = ?, lease_until_ms = ?, updated_at = ? WHERE activation_id = ?",
+        )
+        .run(
+          leaseUntil.toISOString(),
+          leaseUntil.getTime(),
+          now.toISOString(),
+          input.activationId,
+        );
+      return this.#activationFromRow(
+        this.#requireActivationRow(input.activationId),
+      );
+    });
+  }
+
+  quarantineActivation(
+    host: AuthenticatedHostContext,
+    input: { activationId: string; error: string },
+  ): Activation {
+    const authenticatedHost = this.#requireAuthenticatedHost(host);
+    const error = input.error.trim();
+    if (error.length === 0) throw new Error("quarantine error is required");
+    return this.#transaction(() => {
+      const row = this.#requireActivationRow(input.activationId);
+      this.#requireHostParticipant(
+        authenticatedHost,
+        text(row, "participant_id"),
+      );
+      if (
+        text(row, "state") === "quarantined" &&
+        nullableText(row, "last_error") === error
+      ) {
+        return this.#activationFromRow(row);
+      }
+      this.#requireActivationLease(row, authenticatedHost.hostId);
+      this.#requireActivationHostGeneration(row, authenticatedHost);
+      const updatedAt = this.#timestamp();
+      const activeRunAttempts = this.#database
+        .prepare(
+          "SELECT * FROM run_attempts WHERE activation_id = ? AND state IN ('starting', 'running') ORDER BY attempt_number",
+        )
+        .all(input.activationId);
+      for (const runAttempt of activeRunAttempts) {
+        const runAttemptId = text(runAttempt, "run_attempt_id");
+        this.#database
+          .prepare(
+            "UPDATE run_attempts SET state = 'orphaned', error = ?, finished_at = ? WHERE run_attempt_id = ?",
+          )
+          .run(error, updatedAt, runAttemptId);
+        this.#appendEvent({
+          actorId: SYSTEM_PRINCIPAL_ID,
+          aggregateId: runAttemptId,
+          aggregateType: "run_attempt",
+          idempotencyKey: `run.orphan:${runAttemptId}`,
+          payload: {
+            activationId: input.activationId,
+            error,
+            runAttemptId,
+          },
+          roomId: text(row, "room_id"),
+          type: "run.orphaned",
+        });
+      }
+      this.#database
+        .prepare(
+          "UPDATE activations SET state = 'quarantined', lease_owner = NULL, lease_until = NULL, lease_until_ms = NULL, last_error = ?, updated_at = ? WHERE activation_id = ?",
+        )
+        .run(error, updatedAt, input.activationId);
+      this.#database
+        .prepare(
+          "UPDATE runtime_processes SET state = 'orphaned', updated_at = ? WHERE activation_id = ? AND state IN ('prepared', 'active')",
+        )
+        .run(updatedAt, input.activationId);
+      this.#appendEvent({
+        actorId: SYSTEM_PRINCIPAL_ID,
+        aggregateId: input.activationId,
+        aggregateType: "activation",
+        idempotencyKey: `activation.quarantine:${input.activationId}:${integer(row, "attempt_count")}`,
+        payload: {
+          activationId: input.activationId,
+          error,
+          hostId: authenticatedHost.hostId,
+        },
+        roomId: text(row, "room_id"),
+        type: "activation.quarantined",
+      });
+      return this.#activationFromRow(
+        this.#requireActivationRow(input.activationId),
+      );
+    });
+  }
+
+  resolveActivationQuarantine(
+    host: AuthenticatedHostContext,
+    input: { activationId: string },
+  ): Activation {
+    const authenticatedHost = this.#requireAuthenticatedHost(host);
+    return this.#transaction(() => {
+      const row = this.#requireActivationRow(input.activationId);
+      this.#requireHostParticipant(
+        authenticatedHost,
+        text(row, "participant_id"),
+      );
+      return this.#resolveProvenActivationQuarantine(row, {
+        resolverHostId: authenticatedHost.hostId,
+      });
+    });
+  }
+
+  retryActivation(
+    host: AuthenticatedHostContext,
+    input: {
+      activationId: string;
+      error: string;
+      retryAfterMs: number;
+    },
+  ): Activation {
+    const authenticatedHost = this.#requireAuthenticatedHost(host);
+    if (!Number.isInteger(input.retryAfterMs) || input.retryAfterMs < 0) {
+      throw new Error("retryAfterMs must be a non-negative integer");
+    }
+    const error = input.error.trim();
+    if (error.length === 0) throw new Error("retry error is required");
+    return this.#transaction(() => {
+      const row = this.#requireActivationRow(input.activationId);
+      this.#requireHostParticipant(
+        authenticatedHost,
+        text(row, "participant_id"),
+      );
+      const unprovenRuntime = this.#database
+        .prepare(
+          "SELECT runtime_process_id FROM runtime_processes WHERE activation_id = ? AND state <> 'terminated' LIMIT 1",
+        )
+        .get(input.activationId);
+      if (unprovenRuntime !== undefined) {
+        throw new RuntimeTerminationProofError(
+          `activation ${input.activationId} has a RuntimeProcess without terminal proof`,
+        );
+      }
+      if (
+        text(row, "state") === "queued" &&
+        nullableText(row, "last_error") === error
+      ) {
+        return this.#activationFromRow(row);
+      }
+      this.#requireActivationLease(row, authenticatedHost.hostId);
+      this.#requireActivationHostGeneration(row, authenticatedHost);
+      const activeRunAttempt = this.#database
+        .prepare(
+          "SELECT run_attempt_id FROM run_attempts WHERE activation_id = ? AND state IN ('starting', 'running') ORDER BY attempt_number DESC LIMIT 1",
+        )
+        .get(input.activationId);
+      if (activeRunAttempt !== undefined) {
+        throw new RuntimeTerminationProofError(
+          `activation ${input.activationId} has an unfinished RunAttempt ${text(activeRunAttempt, "run_attempt_id")}`,
+        );
+      }
+      const activePlacement = this.#database
+        .prepare(
+          "SELECT * FROM placements WHERE activation_id = ? AND state IN ('reserved', 'consumed') ORDER BY created_at DESC, placement_id DESC LIMIT 1",
+        )
+        .get(input.activationId);
+      if (activePlacement !== undefined) {
+        const placementId = text(activePlacement, "placement_id");
+        this.#setPlacementState(activePlacement, "released", error);
+        this.#releasePlacementResources(placementId);
+      }
+
+      const followUp = this.#database
+        .prepare(
+          "SELECT * FROM activations WHERE room_id = ? AND participant_id = ? AND state = 'queued' AND activation_id <> ?",
+        )
+        .get(
+          text(row, "room_id"),
+          text(row, "participant_id"),
+          input.activationId,
+        );
+      let fromSeq = integer(row, "from_seq");
+      let toSeq = integer(row, "to_seq");
+      let mergedActivationId: string | undefined;
+      if (followUp) {
+        fromSeq = Math.min(fromSeq, integer(followUp, "from_seq"));
+        toSeq = Math.max(toSeq, integer(followUp, "to_seq"));
+        mergedActivationId = text(followUp, "activation_id");
+        this.#database
+          .prepare(
+            "UPDATE activations SET state = 'cancelled', last_error = ?, updated_at = ? WHERE activation_id = ?",
+          )
+          .run(
+            `merged into retry ${input.activationId}`,
+            this.#timestamp(),
+            mergedActivationId,
+          );
+      }
+
+      const now = this.#now();
+      const availableAt = new Date(now.getTime() + input.retryAfterMs);
+      this.#database
+        .prepare(
+          "UPDATE activations SET state = 'queued', from_seq = ?, to_seq = ?, lease_owner = NULL, lease_until = NULL, lease_until_ms = NULL, available_at = ?, available_at_ms = ?, last_error = ?, updated_at = ? WHERE activation_id = ?",
+        )
+        .run(
+          fromSeq,
+          toSeq,
+          availableAt.toISOString(),
+          availableAt.getTime(),
+          error,
+          now.toISOString(),
+          input.activationId,
+        );
+      this.#appendEvent({
+        actorId: SYSTEM_PRINCIPAL_ID,
+        aggregateId: input.activationId,
+        aggregateType: "activation",
+        idempotencyKey: `activation.retry:${input.activationId}:${integer(row, "attempt_count")}`,
+        payload: {
+          activationId: input.activationId,
+          availableAt: availableAt.toISOString(),
+          error,
+          hostId: authenticatedHost.hostId,
+          ...(mergedActivationId === undefined ? {} : { mergedActivationId }),
+        },
+        roomId: text(row, "room_id"),
+        type: "activation.retry_scheduled",
+      });
+      return this.#activationFromRow(
+        this.#requireActivationRow(input.activationId),
+      );
+    });
+  }
+
+  completeActivation(
+    host: AuthenticatedHostContext,
+    input: { activationId: string; consumerId: string },
+  ): Activation {
+    const authenticatedHost = this.#requireAuthenticatedHost(host);
+    return this.#transaction(() => {
+      const row = this.#requireActivationRow(input.activationId);
+      this.#requireHostParticipant(
+        authenticatedHost,
+        text(row, "participant_id"),
+      );
+      this.#requireActivationLease(row, authenticatedHost.hostId);
+      this.#requireActivationHostGeneration(row, authenticatedHost);
+      if (input.consumerId.trim().length === 0) {
+        throw new Error("consumerId is required");
+      }
+      const cursor = this.#database
+        .prepare(
+          "SELECT last_seq FROM subscription_cursors WHERE room_id = ? AND participant_id = ? AND consumer_id = ?",
+        )
+        .get(
+          text(row, "room_id"),
+          text(row, "participant_id"),
+          input.consumerId,
+        );
+      const acknowledgedThrough = cursor ? integer(cursor, "last_seq") : 0;
+      const requiredThrough = integer(row, "to_seq");
+      if (acknowledgedThrough < requiredThrough) {
+        throw new DeliveryProofError(
+          `activation delivery is not acknowledged through sequence ${requiredThrough}`,
+        );
+      }
+      const unverifiedRuntime = this.#database
+        .prepare(
+          "SELECT runtime_process_id FROM runtime_processes WHERE activation_id = ? AND state <> 'terminated' LIMIT 1",
+        )
+        .get(input.activationId);
+      if (unverifiedRuntime) {
+        throw new RuntimeTerminationProofError(
+          `activation ${input.activationId} has a runtime without terminal proof`,
+        );
+      }
+      const unfinishedTask = this.#database
+        .prepare(
+          `SELECT DISTINCT tasks.task_id, tasks.state
+           FROM room_events
+           JOIN tasks ON (
+             room_events.type = 'task.created'
+             AND tasks.task_id = room_events.aggregate_id
+             OR room_events.type = 'input.resolved'
+             AND tasks.task_id = json_extract(room_events.payload_json, '$.taskId')
+           )
+           WHERE room_events.room_id = ?
+             AND room_events.room_seq BETWEEN ? AND ?
+             AND tasks.assignee_id = ?
+             AND tasks.state NOT IN ('waiting_input', 'submitted', 'completed')
+             AND NOT EXISTS (
+               SELECT 1 FROM room_events AS requested_input
+               WHERE requested_input.room_id = room_events.room_id
+                 AND requested_input.room_seq > ?
+                 AND requested_input.type = 'input.requested'
+                 AND requested_input.actor_id = ?
+                 AND json_extract(requested_input.payload_json, '$.taskId') = tasks.task_id
+             )
+           ORDER BY room_events.room_seq
+           LIMIT 1`,
+        )
+        .get(
+          text(row, "room_id"),
+          integer(row, "from_seq"),
+          integer(row, "to_seq"),
+          text(row, "participant_id"),
+          integer(row, "to_seq"),
+          text(row, "participant_id"),
+        );
+      if (unfinishedTask !== undefined) {
+        throw new TaskSubmissionProofError(
+          `activation ${input.activationId} contains unfinished Task ${text(unfinishedTask, "task_id")} in state ${text(unfinishedTask, "state")}`,
+        );
+      }
+      const updatedAt = this.#timestamp();
+      this.#database
+        .prepare(
+          "UPDATE activations SET state = 'completed', lease_owner = NULL, lease_until = NULL, lease_until_ms = NULL, updated_at = ? WHERE activation_id = ?",
+        )
+        .run(updatedAt, input.activationId);
+      this.#appendEvent({
+        actorId: SYSTEM_PRINCIPAL_ID,
+        aggregateId: input.activationId,
+        aggregateType: "activation",
+        idempotencyKey: `activation.complete:${input.activationId}`,
+        payload: {
+          activationId: input.activationId,
+          consumerId: input.consumerId,
+          hostId: authenticatedHost.hostId,
+        },
+        roomId: text(row, "room_id"),
+        type: "activation.finished",
+      });
+      return this.#activationFromRow(
+        this.#requireActivationRow(input.activationId),
+      );
+    });
+  }
+
+  acknowledgeInboxThrough(
+    actor: AuthenticatedActorContext,
+    input: { roomId: string; throughSeq: number },
+  ): void {
+    this.#transaction(() => {
+      const participantId = this.#requireAuthenticatedActor(actor);
+      this.#requireMember(input.roomId, participantId);
+      if (!Number.isInteger(input.throughSeq) || input.throughSeq <= 0) {
+        throw new Error("throughSeq must be a positive integer");
+      }
+      const acknowledgedAt = this.#timestamp();
+      const result = this.#database
+        .prepare(
+          "UPDATE inbox_items SET state = 'acknowledged', acknowledged_at = ? WHERE room_id = ? AND participant_id = ? AND event_seq <= ? AND state = 'pending'",
+        )
+        .run(acknowledgedAt, input.roomId, participantId, input.throughSeq);
+      if (Number(result.changes) === 0) return;
+      this.#appendEvent({
+        actorId: participantId,
+        aggregateId: participantId,
+        aggregateType: "inbox",
+        idempotencyKey: `inbox.ack:${participantId}:${input.throughSeq}`,
+        payload: {
+          participantId,
+          throughSeq: input.throughSeq,
+        },
+        roomId: input.roomId,
+        type: "inbox.acknowledged",
+      });
+    });
+  }
+
+  acknowledgeCursor(
+    actor: AuthenticatedActorContext,
+    input: { consumerId: string; roomId: string; throughSeq: number },
+  ): void {
+    this.#transaction(() => {
+      const participantId = this.#requireAuthenticatedActor(actor);
+      this.#acknowledgeCursorForParticipant(participantId, input);
+    });
+  }
+
+  acknowledgeWorkerCursor(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: { throughSeq: number },
+  ): void {
+    this.#transaction(() => {
+      const scope = this.#requireAuthenticatedWorkerExecution(execution);
+      this.#acknowledgeCursorForParticipant(scope.participantId, {
+        consumerId: scope.consumerId,
+        roomId: scope.roomId,
+        throughSeq: input.throughSeq,
+      });
+    });
+  }
+
+  sync(
+    actor: AuthenticatedActorContext,
+    input: {
+      consumerId: string;
+      roomId: string;
+      afterSeq?: number;
+      limit?: number;
+      throughSeq?: number;
+    },
+  ): SyncResult {
+    return this.#transaction(() => {
+      const participantId = this.#requireAuthenticatedActor(actor);
+      return this.#syncForParticipant(participantId, input);
+    });
+  }
+
+  syncWorker(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: { afterSeq?: number; limit?: number },
+  ): SyncResult {
+    return this.#transaction(() => {
+      const scope = this.#requireAuthenticatedWorkerExecution(execution);
+      return this.#syncForParticipant(scope.participantId, {
+        ...input,
+        consumerId: scope.consumerId,
+        roomId: scope.roomId,
+        throughSeq: scope.toSeq,
+      });
+    });
+  }
+
+  #acknowledgeCursorForParticipant(
+    participantId: string,
+    input: { consumerId: string; roomId: string; throughSeq: number },
+  ): void {
+    this.#requireMember(input.roomId, participantId);
+    if (input.consumerId.trim().length === 0) {
+      throw new Error("consumerId is required");
+    }
+    if (!Number.isInteger(input.throughSeq) || input.throughSeq < 0) {
+      throw new Error("throughSeq must be a non-negative integer");
+    }
+    const roomRow = this.#requireRoom(input.roomId);
+    const latestRoomSeq = integer(roomRow, "next_seq") - 1;
+    if (input.throughSeq > latestRoomSeq) {
+      throw new Error("throughSeq cannot exceed the latest Room sequence");
+    }
+    this.#database
+      .prepare(
+        `INSERT INTO subscription_cursors(room_id, participant_id, consumer_id, last_seq, updated_at)
+         VALUES(?, ?, ?, ?, ?)
+         ON CONFLICT(room_id, participant_id, consumer_id) DO UPDATE SET
+           last_seq = MAX(subscription_cursors.last_seq, excluded.last_seq),
+           updated_at = excluded.updated_at`,
+      )
+      .run(
+        input.roomId,
+        participantId,
+        input.consumerId,
+        input.throughSeq,
+        this.#timestamp(),
+      );
+  }
+
+  #syncForParticipant(
+    participantId: string,
+    input: {
+      consumerId: string;
+      roomId: string;
+      afterSeq?: number;
+      limit?: number;
+      throughSeq?: number;
+    },
+  ): SyncResult {
+    this.#requireMember(input.roomId, participantId);
+    const cursorRow = this.#database
+      .prepare(
+        "SELECT last_seq FROM subscription_cursors WHERE room_id = ? AND participant_id = ? AND consumer_id = ?",
+      )
+      .get(input.roomId, participantId, input.consumerId);
+    const cursorBefore = cursorRow ? integer(cursorRow, "last_seq") : 0;
+    const afterSeq = input.afterSeq ?? cursorBefore;
+    if (!Number.isInteger(afterSeq) || afterSeq < 0) {
+      throw new Error("afterSeq must be a non-negative integer");
+    }
+    const roomRow = this.#requireRoom(input.roomId);
+    const latestRoomSeq = integer(roomRow, "next_seq") - 1;
+    const throughSeq = input.throughSeq ?? latestRoomSeq;
+    if (!Number.isInteger(throughSeq) || throughSeq < 0) {
+      throw new Error("throughSeq must be a non-negative integer");
+    }
+    if (throughSeq > latestRoomSeq) {
+      throw new Error("throughSeq cannot exceed the latest Room sequence");
+    }
+    if (afterSeq > throughSeq) {
+      throw new Error("afterSeq cannot exceed throughSeq");
+    }
+    const limit = input.limit ?? 500;
+    if (!Number.isInteger(limit) || limit <= 0 || limit > 500) {
+      throw new Error("limit must be between 1 and 500");
+    }
+    const events = this.#database
+      .prepare(
+        "SELECT * FROM room_events WHERE room_id = ? AND room_seq > ? AND room_seq <= ? ORDER BY room_seq LIMIT ?",
+      )
+      .all(input.roomId, afterSeq, throughSeq, limit)
+      .map((row) => this.#eventFromRow(row));
+    const cursorAfter = events.at(-1)?.roomSeq ?? afterSeq;
+
+    return {
+      cursorBefore,
+      cursorAfter,
+      latestRoomSeq,
+      snapshot: afterSeq === 0 ? this.#snapshot(input.roomId) : null,
+      events,
+    };
+  }
+
+  #appendEvent(input: {
+    actorId: string;
+    aggregateId: string;
+    aggregateType: string;
+    idempotencyKey: string;
+    payload: Record<string, unknown>;
+    roomId: string;
+    type: string;
+  }): RoomEvent {
+    const room = this.#requireRoom(input.roomId);
+    const roomSeq = integer(room, "next_seq");
+    const event = RoomEventSchema.parse({
+      eventId: this.#createId("event"),
+      roomId: input.roomId,
+      roomSeq,
+      type: input.type,
+      actorId: input.actorId,
+      aggregateType: input.aggregateType,
+      aggregateId: input.aggregateId,
+      payload: input.payload,
+      idempotencyKey: input.idempotencyKey,
+      schemaVersion: 1,
+      createdAt: this.#timestamp(),
+    });
+    this.#database
+      .prepare("UPDATE rooms SET next_seq = next_seq + 1 WHERE room_id = ?")
+      .run(input.roomId);
+    this.#database
+      .prepare(
+        "INSERT INTO room_events(event_id, room_id, room_seq, type, actor_id, aggregate_type, aggregate_id, payload_json, idempotency_key, schema_version, created_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      )
+      .run(
+        event.eventId,
+        event.roomId,
+        event.roomSeq,
+        event.type,
+        event.actorId,
+        event.aggregateType,
+        event.aggregateId,
+        JSON.stringify(event.payload),
+        event.idempotencyKey,
+        event.schemaVersion,
+        event.createdAt,
+      );
+    this.#insertOutbox({
+      payload: {
+        eventId: event.eventId,
+        roomId: event.roomId,
+        roomSeq: event.roomSeq,
+        type: event.type,
+      },
+      roomId: event.roomId,
+      roomSeq: event.roomSeq,
+      topic: "room.event",
+    });
+    return event;
+  }
+
+  #insertOutbox(input: {
+    payload: Record<string, unknown>;
+    roomId: string;
+    roomSeq: number;
+    topic: string;
+  }): void {
+    this.#database
+      .prepare(
+        "INSERT INTO outbox(outbox_id, room_id, room_seq, topic, payload_json, created_at) VALUES(?, ?, ?, ?, ?, ?)",
+      )
+      .run(
+        this.#createId("outbox"),
+        input.roomId,
+        input.roomSeq,
+        input.topic,
+        JSON.stringify(input.payload),
+        this.#timestamp(),
+      );
+  }
+
+  #deriveAttention(
+    event: RoomEvent,
+    recipients: MessageRecipient[],
+    createdAt: string,
+  ): string[] {
+    const activationIds: string[] = [];
+    for (const recipient of recipients) {
+      this.#insertInboxItem({
+        createdAt,
+        event,
+        participantId: recipient.participantId,
+        reason: recipient.reason,
+      });
+
+      const queuedRow = this.#database
+        .prepare(
+          "SELECT * FROM activations WHERE room_id = ? AND participant_id = ? AND state = 'queued'",
+        )
+        .get(event.roomId, recipient.participantId);
+
+      let activationId: string;
+      if (queuedRow) {
+        activationId = text(queuedRow, "activation_id");
+        this.#database
+          .prepare(
+            "UPDATE activations SET to_seq = MAX(to_seq, ?), updated_at = ? WHERE activation_id = ?",
+          )
+          .run(event.roomSeq, createdAt, activationId);
+      } else {
+        activationId = this.#createId("activation");
+        this.#database
+          .prepare(
+            "INSERT INTO activations(activation_id, room_id, participant_id, from_seq, to_seq, reason, state, available_at, available_at_ms, attempt_count, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, 'queued', ?, ?, 0, ?, ?)",
+          )
+          .run(
+            activationId,
+            event.roomId,
+            recipient.participantId,
+            event.roomSeq,
+            event.roomSeq,
+            recipient.reason,
+            createdAt,
+            this.#now().getTime(),
+            createdAt,
+            createdAt,
+          );
+      }
+      activationIds.push(activationId);
+      const wakeHint = WakeHintSchema.parse({
+        activationId,
+        participantId: recipient.participantId,
+        roomId: event.roomId,
+        headCursor: event.roomSeq,
+        reason: recipient.reason,
+      });
+      this.#insertOutbox({
+        payload: wakeHint,
+        roomId: event.roomId,
+        roomSeq: event.roomSeq,
+        topic: "activation.requested",
+      });
+    }
+    return activationIds;
+  }
+
+  #insertInboxItem(input: {
+    createdAt: string;
+    event: RoomEvent;
+    participantId: string;
+    reason: ActivationReason;
+  }): void {
+    this.#database
+      .prepare(
+        "INSERT INTO inbox_items(inbox_item_id, room_id, participant_id, event_id, event_seq, reason, state, created_at) VALUES(?, ?, ?, ?, ?, ?, 'pending', ?)",
+      )
+      .run(
+        this.#createId("inbox"),
+        input.event.roomId,
+        input.participantId,
+        input.event.eventId,
+        input.event.roomSeq,
+        input.reason,
+        input.createdAt,
+      );
+  }
+
+  #transitionOwnedTask(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: {
+      basedOnRoomSeq: number;
+      eventType: "task.progressed" | "task.started";
+      expectedState: "claimed" | "in_progress";
+      extraPayload?: Record<string, unknown>;
+      idempotencyKey: string;
+      lastProgress?: string;
+      leaseMs: number;
+      nextState: "in_progress";
+      taskId: string;
+    },
+  ): TaskMutationResult {
+    return this.#transaction(() => {
+      const scope = this.#requireAuthenticatedWorkerExecution(execution);
+      const taskRow = this.#requireWorkerTask(scope, input.taskId);
+      const replay = this.#replayWorkerTaskCommand(taskRow, scope, {
+        eventType: input.eventType,
+        idempotencyKey: input.idempotencyKey,
+        ...(input.extraPayload === undefined
+          ? {}
+          : { payload: input.extraPayload }),
+      });
+      if (replay !== null) return replay;
+      this.#assertPositiveTaskLease(input.leaseMs);
+      this.#assertWorkerTaskFreshContext(
+        scope,
+        input.basedOnRoomSeq,
+        input.taskId,
+      );
+      this.#requireOwnedTaskClaim(
+        taskRow,
+        scope.participantId,
+        input.expectedState,
+      );
+
+      const now = this.#now();
+      const updatedAt = now.toISOString();
+      const claimUntil = new Date(now.getTime() + input.leaseMs).toISOString();
+      if (input.lastProgress === undefined) {
+        this.#database
+          .prepare(
+            "UPDATE tasks SET state = ?, claim_until = ?, claim_until_ms = ?, updated_at = ? WHERE task_id = ?",
+          )
+          .run(
+            input.nextState,
+            claimUntil,
+            now.getTime() + input.leaseMs,
+            updatedAt,
+            input.taskId,
+          );
+      } else {
+        this.#database
+          .prepare(
+            "UPDATE tasks SET state = ?, claim_until = ?, claim_until_ms = ?, last_progress = ?, updated_at = ? WHERE task_id = ?",
+          )
+          .run(
+            input.nextState,
+            claimUntil,
+            now.getTime() + input.leaseMs,
+            input.lastProgress,
+            updatedAt,
+            input.taskId,
+          );
+      }
+      const event = this.#appendWorkerTaskEvent(scope, {
+        basedOnRoomSeq: input.basedOnRoomSeq,
+        eventType: input.eventType,
+        idempotencyKey: input.idempotencyKey,
+        payload: {
+          claimUntil,
+          ...(input.extraPayload ?? {}),
+        },
+        taskId: input.taskId,
+      });
+      return {
+        deduplicated: false,
+        event,
+        task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
+      };
+    });
+  }
+
+  #replayWorkerTaskCommand(
+    taskRow: Row,
+    scope: ActivationCredentialScope,
+    input: {
+      eventType:
+        "task.claimed" | "task.progressed" | "task.started" | "task.submitted";
+      idempotencyKey: string;
+      payload?: Record<string, unknown>;
+    },
+  ): TaskMutationResult | null {
+    const roomId = text(taskRow, "room_id");
+    const previous = this.#findRoomEventByIdempotencyKey(
+      roomId,
+      input.idempotencyKey,
+    );
+    if (previous === undefined) return null;
+    const event = this.#assertTaskEventReplay(previous, {
+      actorId: scope.participantId,
+      aggregateId: text(taskRow, "task_id"),
+      eventType: input.eventType,
+      payload: input.payload ?? {},
+    });
+    return {
+      deduplicated: true,
+      event,
+      task: this.#taskFromRow(this.#requireTaskRow(text(taskRow, "task_id"))),
+    };
+  }
+
+  #appendWorkerTaskEvent(
+    scope: ActivationCredentialScope,
+    input: {
+      basedOnRoomSeq: number;
+      eventType:
+        "task.claimed" | "task.progressed" | "task.started" | "task.submitted";
+      idempotencyKey: string;
+      payload: Record<string, unknown>;
+      taskId: string;
+    },
+  ): RoomEvent {
+    return this.#appendEvent({
+      actorId: scope.participantId,
+      aggregateId: input.taskId,
+      aggregateType: "task",
+      idempotencyKey: input.idempotencyKey,
+      payload: {
+        basedOnRoomSeq: input.basedOnRoomSeq,
+        runAttemptId: scope.runAttemptId,
+        taskId: input.taskId,
+        ...input.payload,
+      },
+      roomId: scope.roomId,
+      type: input.eventType,
+    });
+  }
+
+  #assertWorkerTaskFreshContext(
+    scope: ActivationCredentialScope,
+    basedOnRoomSeq: number,
+    taskId: string,
+  ): void {
+    if (!Number.isInteger(basedOnRoomSeq) || basedOnRoomSeq < 0) {
+      throw new Error("basedOnRoomSeq must be a non-negative integer");
+    }
+    if (basedOnRoomSeq !== scope.toSeq) {
+      const causalEvent = this.#database
+        .prepare("SELECT * FROM room_events WHERE room_id = ? AND room_seq = ?")
+        .get(scope.roomId, basedOnRoomSeq);
+      const payload = causalEvent
+        ? jsonObject(causalEvent, "payload_json")
+        : {};
+      if (
+        causalEvent === undefined ||
+        text(causalEvent, "actor_id") !== scope.participantId ||
+        text(causalEvent, "aggregate_type") !== "task" ||
+        payload.runAttemptId !== scope.runAttemptId
+      ) {
+        throw new StaleContextError(
+          basedOnRoomSeq,
+          integer(this.#requireRoom(scope.roomId), "next_seq") - 1,
+        );
+      }
+    }
+
+    const newerBusinessEvent = this.#database
+      .prepare(
+        `SELECT room_seq FROM room_events
+         WHERE room_id = ?
+           AND room_seq > ?
+           AND type NOT LIKE 'activation.%'
+           AND type NOT LIKE 'inbox.%'
+           AND type NOT LIKE 'run.%'
+           AND type NOT LIKE 'runtime_process.%'
+           AND NOT (
+             aggregate_type = 'task'
+             AND aggregate_id = ?
+             AND actor_id = ?
+             AND type IN ('task.claimed', 'task.started', 'task.progressed', 'task.submitted')
+           )
+         ORDER BY room_seq DESC
+         LIMIT 1`,
+      )
+      .get(scope.roomId, basedOnRoomSeq, taskId, scope.participantId);
+    if (newerBusinessEvent !== undefined) {
+      throw new StaleContextError(
+        basedOnRoomSeq,
+        integer(newerBusinessEvent, "room_seq"),
+      );
+    }
+  }
+
+  #requireWorkerTask(scope: ActivationCredentialScope, taskId: string): Row {
+    const taskRow = this.#requireTaskRow(taskId);
+    if (
+      text(taskRow, "room_id") !== scope.roomId ||
+      text(taskRow, "assignee_id") !== scope.participantId
+    ) {
+      throw new ForbiddenError(
+        `Task ${taskId} is outside this Worker execution scope`,
+      );
+    }
+    const activation = this.#requireActivationRow(scope.activationId);
+    const delivery = this.#database
+      .prepare(
+        `SELECT room_seq FROM room_events
+         WHERE room_id = ?
+           AND room_seq BETWEEN ? AND ?
+           AND (
+             type = 'task.created'
+             AND aggregate_type = 'task'
+             AND aggregate_id = ?
+             OR type = 'input.resolved'
+             AND aggregate_type = 'input_request'
+             AND json_extract(payload_json, '$.taskId') = ?
+           )
+         LIMIT 1`,
+      )
+      .get(
+        scope.roomId,
+        integer(activation, "from_seq"),
+        integer(activation, "to_seq"),
+        taskId,
+        taskId,
+      );
+    if (delivery === undefined) {
+      throw new ForbiddenError(
+        `Task ${taskId} was not linked in this Activation range`,
+      );
+    }
+    return taskRow;
+  }
+
+  #requireOwnedTaskClaim(
+    taskRow: Row,
+    participantId: string,
+    expectedState: "claimed" | "in_progress",
+  ): void {
+    const taskId = text(taskRow, "task_id");
+    if (text(taskRow, "state") !== expectedState) {
+      throw new ConflictError(
+        `Task ${taskId} must be ${expectedState} for this command`,
+      );
+    }
+    if (
+      nullableText(taskRow, "claimed_by") !== participantId ||
+      (nullableInteger(taskRow, "claim_until_ms") ?? 0) <= this.#now().getTime()
+    ) {
+      throw new LeaseConflictError(
+        `Agent ${participantId} does not own an active claim for Task ${taskId}`,
+      );
+    }
+  }
+
+  #assertPositiveTaskLease(leaseMs: number): void {
+    if (!Number.isInteger(leaseMs) || leaseMs <= 0) {
+      throw new Error("leaseMs must be a positive integer");
+    }
+  }
+
+  #requireHumanControlActor(
+    actor: AuthenticatedActorContext,
+    controlRoomId: string,
+  ): string {
+    const actorId = this.#requireAuthenticatedActor(actor);
+    this.#requireMember(controlRoomId, actorId);
+    if (
+      this.#principalFromRow(this.#requirePrincipal(actorId)).kind !== "human"
+    ) {
+      throw new ForbiddenError(
+        "control object mutations require an authenticated Human member",
+      );
+    }
+    return actorId;
+  }
+
+  #requireAgentParticipant(participantId: string): void {
+    if (
+      this.#principalFromRow(this.#requirePrincipal(participantId)).kind !==
+      "agent"
+    ) {
+      throw new ForbiddenError(
+        `principal ${participantId} is not an Agent participant`,
+      );
+    }
+  }
+
+  #assertIdempotencyKey(idempotencyKey: string): void {
+    if (idempotencyKey.trim().length === 0) {
+      throw new Error("idempotencyKey is required");
+    }
+  }
+
+  #assertControlEventReplay(
+    row: Row,
+    expected: {
+      actorId: string;
+      aggregateId?: string;
+      contentDigest: string;
+      eventType:
+        "agent.created" | "agent.revised" | "policy.created" | "policy.revised";
+      payload?: Record<string, unknown>;
+    },
+  ): RoomEvent {
+    const event = this.#eventFromRow(row);
+    if (
+      event.type !== expected.eventType ||
+      event.actorId !== expected.actorId ||
+      (expected.aggregateId !== undefined &&
+        event.aggregateId !== expected.aggregateId) ||
+      event.payload.contentDigest !== expected.contentDigest ||
+      Object.entries(expected.payload ?? {}).some(
+        ([key, value]) =>
+          JSON.stringify(event.payload[key]) !== JSON.stringify(value),
+      )
+    ) {
+      throw new IdempotencyConflictError(
+        `idempotency key ${event.idempotencyKey} was already used for another mutation`,
+      );
+    }
+    return event;
+  }
+
+  #insertExecutionPolicyRevision(policy: ExecutionPolicyRevision): void {
+    this.#database
+      .prepare(
+        "INSERT INTO execution_policy_revisions(execution_policy_revision_id, execution_policy_id, control_room_id, revision, content_digest, policy_json, created_by, created_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
+      )
+      .run(
+        policy.executionPolicyRevisionId,
+        policy.executionPolicyId,
+        policy.controlRoomId,
+        policy.revision,
+        policy.contentDigest,
+        JSON.stringify(policy),
+        policy.createdBy,
+        policy.createdAt,
+      );
+  }
+
+  #insertAgentDefinitionRevision(revision: AgentDefinitionRevision): void {
+    this.#database
+      .prepare(
+        "INSERT INTO agent_definition_revisions(agent_definition_revision_id, agent_definition_id, revision, content_digest, definition_json, execution_policy_revision_id, created_by, created_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
+      )
+      .run(
+        revision.agentDefinitionRevisionId,
+        revision.agentDefinitionId,
+        revision.revision,
+        revision.contentDigest,
+        JSON.stringify(revision),
+        revision.executionPolicyRevisionId,
+        revision.createdBy,
+        revision.createdAt,
+      );
+  }
+
+  #agentDefinitionMutationReplay(
+    event: RoomEvent,
+  ): AgentDefinitionMutationResult {
+    const revision = this.#agentDefinitionRevisionFromRow(
+      this.#requireAgentDefinitionRevisionRow(
+        eventPayloadText(event, "agentDefinitionRevisionId"),
+      ),
+    );
+    return {
+      deduplicated: true,
+      definition: this.#agentDefinitionFromRow(
+        this.#requireAgentDefinitionRow(event.aggregateId),
+      ),
+      event,
+      revision,
+    };
+  }
+
+  #requireExecutionPolicyRow(executionPolicyId: string): Row {
+    const row = this.#database
+      .prepare("SELECT * FROM execution_policies WHERE execution_policy_id = ?")
+      .get(executionPolicyId);
+    if (row === undefined) {
+      throw new NotFoundError(
+        `execution policy ${executionPolicyId} was not found`,
+      );
+    }
+    return row;
+  }
+
+  #requireExecutionPolicyRevisionRow(executionPolicyRevisionId: string): Row {
+    const row = this.#database
+      .prepare(
+        "SELECT * FROM execution_policy_revisions WHERE execution_policy_revision_id = ?",
+      )
+      .get(executionPolicyRevisionId);
+    if (row === undefined) {
+      throw new NotFoundError(
+        `execution policy revision ${executionPolicyRevisionId} was not found`,
+      );
+    }
+    return row;
+  }
+
+  #executionPolicyRevisionFromRow(row: Row): ExecutionPolicyRevision {
+    return ExecutionPolicyRevisionSchema.parse(jsonObject(row, "policy_json"));
+  }
+
+  #requireAgentDefinitionRow(agentDefinitionId: string): Row {
+    const row = this.#database
+      .prepare("SELECT * FROM agent_definitions WHERE agent_definition_id = ?")
+      .get(agentDefinitionId);
+    if (row === undefined) {
+      throw new NotFoundError(
+        `AgentDefinition ${agentDefinitionId} was not found`,
+      );
+    }
+    return row;
+  }
+
+  #requireAgentDefinitionRevisionRow(agentDefinitionRevisionId: string): Row {
+    const row = this.#database
+      .prepare(
+        "SELECT * FROM agent_definition_revisions WHERE agent_definition_revision_id = ?",
+      )
+      .get(agentDefinitionRevisionId);
+    if (row === undefined) {
+      throw new NotFoundError(
+        `AgentDefinition revision ${agentDefinitionRevisionId} was not found`,
+      );
+    }
+    return row;
+  }
+
+  #agentDefinitionFromRow(row: Row): AgentDefinition {
+    return AgentDefinitionSchema.parse({
+      agentDefinitionId: text(row, "agent_definition_id"),
+      controlRoomId: text(row, "control_room_id"),
+      createdAt: text(row, "created_at"),
+      currentRevisionId: text(row, "current_revision_id"),
+      participantId: text(row, "participant_id"),
+      state: text(row, "state"),
+      updatedAt: text(row, "updated_at"),
+    });
+  }
+
+  #agentDefinitionRevisionFromRow(row: Row): AgentDefinitionRevision {
+    return AgentDefinitionRevisionSchema.parse(
+      jsonObject(row, "definition_json"),
+    );
+  }
+
+  #requireRuntimeOfferRow(runtimeOfferId: string): Row {
+    const row = this.#database
+      .prepare("SELECT * FROM runtime_offers WHERE runtime_offer_id = ?")
+      .get(runtimeOfferId);
+    if (row === undefined) {
+      throw new NotFoundError(`RuntimeOffer ${runtimeOfferId} was not found`);
+    }
+    return row;
+  }
+
+  #runtimeOfferFromRow(row: Row): RuntimeOfferProjection {
+    return RuntimeOfferProjectionSchema.parse(jsonObject(row, "offer_json"));
+  }
+
+  #resolveTrustedRuntimeOfferEvidence(
+    offer: RuntimeOffer,
+  ): RuntimeCertification[] {
+    const referencedCertifications = offer.certificationRefs.map(
+      (reference) => {
+        const certification = this.#runtimeCertifications.get(
+          reference.certificationId,
+        );
+        if (
+          certification === undefined ||
+          certification.certificationDigest !== reference.certificationDigest
+        ) {
+          throw new ConflictError(
+            `RuntimeOffer ${offer.runtimeOfferId} references no trusted certification ${reference.certificationId}`,
+          );
+        }
+        if (
+          certification.protocolFamily !== offer.protocolFamily ||
+          certification.runtimeProfileDigest !== offer.revisionDigest
+        ) {
+          throw new ConflictError(
+            `RuntimeOffer ${offer.runtimeOfferId} trusted certification subject does not match its profile`,
+          );
+        }
+        return certification;
+      },
+    );
+    for (const evidence of offer.capabilityEvidence) {
+      if (
+        evidence.evidence === "certified" &&
+        !referencedCertifications.some((certification) =>
+          certification.capabilities.includes(evidence.capability),
+        )
+      ) {
+        throw new ConflictError(
+          `RuntimeOffer ${offer.runtimeOfferId} has no trusted certification for capability ${evidence.capability}`,
+        );
+      }
+    }
+    if (offer.isolation.evidence === "certified") {
+      const isolationRanks = ["none", "process", "platform", "container"];
+      const requiredRank = isolationRanks.indexOf(offer.isolation.level);
+      if (
+        !referencedCertifications.some(
+          (certification) =>
+            isolationRanks.indexOf(certification.maximumIsolation) >=
+            requiredRank,
+        )
+      ) {
+        throw new ConflictError(
+          `RuntimeOffer ${offer.runtimeOfferId} has no trusted certification for isolation ${offer.isolation.level}`,
+        );
+      }
+    }
+    if (
+      offer.modelBindingDescriptors.some(
+        (binding) => binding.evidence === "certified",
+      )
+    ) {
+      throw new ConflictError(
+        `RuntimeOffer ${offer.runtimeOfferId} cannot self-certify model bindings`,
+      );
+    }
+    return [...referencedCertifications].sort((left, right) =>
+      left.certificationId.localeCompare(right.certificationId),
+    );
+  }
+
+  #runtimeOfferEvidenceIsCurrentlyTrusted(offer: RuntimeOffer): boolean {
+    try {
+      this.#resolveTrustedRuntimeOfferEvidence(offer);
+      return true;
+    } catch (error) {
+      if (error instanceof ConflictError) return false;
+      throw error;
+    }
+  }
+
+  #requirePlacementRow(placementId: string): Row {
+    const row = this.#database
+      .prepare("SELECT * FROM placements WHERE placement_id = ?")
+      .get(placementId);
+    if (row === undefined) {
+      throw new NotFoundError(`Placement ${placementId} was not found`);
+    }
+    return row;
+  }
+
+  #placementFromRow(row: Row): PlacementDecision {
+    const decision = jsonObject(row, "decision_json");
+    return PlacementDecisionSchema.parse({
+      ...decision,
+      provenanceVersion:
+        decision.provenanceVersion ?? "legacy_without_offer_observation",
+      state: text(row, "state"),
+    });
+  }
+
+  #setPlacementState(
+    row: Row,
+    state: "consumed" | "released",
+    releaseReason?: string,
+  ): void {
+    const decision = jsonObject(row, "decision_json");
+    const placement = PlacementDecisionSchema.parse({
+      ...decision,
+      provenanceVersion:
+        decision.provenanceVersion ?? "legacy_without_offer_observation",
+      state,
+    });
+    this.#database
+      .prepare(
+        "UPDATE placements SET state = ?, decision_json = ?, release_reason = COALESCE(?, release_reason), updated_at = ? WHERE placement_id = ?",
+      )
+      .run(
+        state,
+        JSON.stringify(placement),
+        releaseReason ?? null,
+        this.#timestamp(),
+        placement.placementId,
+      );
+  }
+
+  #reservePlacementResources(
+    placement: PlacementDecision,
+    offer: RuntimeOffer,
+  ): void {
+    const resources: Array<["host" | "offer" | "pool" | "profile", string]> = [
+      ["offer", placement.runtimeOfferId],
+      ["host", placement.hostId],
+      [
+        "profile",
+        capacityProfileResourceId(placement.hostId, offer.runtimeProfileId),
+      ],
+      ...placement.capacityPoolIds.map((capacityPoolId): ["pool", string] => [
+        "pool",
+        capacityPoolId,
+      ]),
+    ];
+    const insert = this.#database.prepare(
+      "INSERT INTO placement_capacity_reservations(placement_id, resource_type, resource_id) VALUES(?, ?, ?)",
+    );
+    for (const [resourceType, resourceId] of resources) {
+      insert.run(placement.placementId, resourceType, resourceId);
+    }
+    this.#database
+      .prepare(
+        "INSERT INTO workspace_leases(placement_id, workspace_mount_revision_id, workspace_mode, created_at) VALUES(?, ?, ?, ?)",
+      )
+      .run(
+        placement.placementId,
+        placement.workspaceMountRevisionId,
+        placement.workspaceMode,
+        placement.createdAt,
+      );
+  }
+
+  #releasePlacementResources(placementId: string): void {
+    const unprovenRuntime = this.#database
+      .prepare(
+        `SELECT runtime_processes.runtime_process_id
+         FROM runtime_processes
+         JOIN run_attempts
+           ON run_attempts.run_attempt_id = runtime_processes.run_attempt_id
+         WHERE run_attempts.placement_id = ?
+           AND runtime_processes.state <> 'terminated'
+         LIMIT 1`,
+      )
+      .get(placementId);
+    if (unprovenRuntime !== undefined) {
+      throw new RuntimeTerminationProofError(
+        `Placement ${placementId} has a RuntimeProcess without terminal proof`,
+      );
+    }
+    this.#database
+      .prepare(
+        "DELETE FROM placement_capacity_reservations WHERE placement_id = ?",
+      )
+      .run(placementId);
+    this.#database
+      .prepare("DELETE FROM workspace_leases WHERE placement_id = ?")
+      .run(placementId);
+  }
+
+  #releaseExpiredReservedPlacements(now: Date): void {
+    const expired = this.#database
+      .prepare(
+        "SELECT * FROM placements WHERE state = 'reserved' AND lease_until_ms <= ? ORDER BY created_at, placement_id",
+      )
+      .all(now.getTime());
+    for (const placementRow of expired) {
+      const placementId = text(placementRow, "placement_id");
+      const runAttempt = this.#database
+        .prepare("SELECT 1 AS present FROM run_attempts WHERE placement_id = ?")
+        .get(placementId);
+      if (runAttempt !== undefined) continue;
+      this.#setPlacementState(
+        placementRow,
+        "released",
+        "placement lease expired before RunAttempt",
+      );
+      this.#releasePlacementResources(placementId);
+
+      const activation = this.#requireActivationRow(
+        text(placementRow, "activation_id"),
+      );
+      let mergedActivationId: string | undefined;
+      if (
+        text(activation, "state") === "leased" &&
+        nullableText(activation, "lease_owner") ===
+          text(placementRow, "host_id") &&
+        integer(activation, "attempt_count") ===
+          integer(placementRow, "activation_attempt_number")
+      ) {
+        const followUp = this.#database
+          .prepare(
+            "SELECT * FROM activations WHERE room_id = ? AND participant_id = ? AND state = 'queued' AND activation_id <> ?",
+          )
+          .get(
+            text(activation, "room_id"),
+            text(activation, "participant_id"),
+            text(activation, "activation_id"),
+          );
+        let fromSeq = integer(activation, "from_seq");
+        let toSeq = integer(activation, "to_seq");
+        if (followUp !== undefined) {
+          fromSeq = Math.min(fromSeq, integer(followUp, "from_seq"));
+          toSeq = Math.max(toSeq, integer(followUp, "to_seq"));
+          mergedActivationId = text(followUp, "activation_id");
+          this.#database
+            .prepare(
+              "UPDATE activations SET state = 'cancelled', last_error = ?, updated_at = ? WHERE activation_id = ?",
+            )
+            .run(
+              `merged into expired placement ${placementId}`,
+              now.toISOString(),
+              mergedActivationId,
+            );
+        }
+        this.#database
+          .prepare(
+            "UPDATE activations SET state = 'queued', from_seq = ?, to_seq = ?, lease_owner = NULL, lease_until = NULL, lease_until_ms = NULL, available_at = ?, available_at_ms = ?, last_error = ?, updated_at = ? WHERE activation_id = ?",
+          )
+          .run(
+            fromSeq,
+            toSeq,
+            now.toISOString(),
+            now.getTime(),
+            "placement lease expired before RunAttempt",
+            now.toISOString(),
+            text(activation, "activation_id"),
+          );
+      }
+      this.#appendEvent({
+        actorId: SYSTEM_PRINCIPAL_ID,
+        aggregateId: placementId,
+        aggregateType: "placement",
+        idempotencyKey: `placement.release:${placementId}`,
+        payload: {
+          activationId: text(placementRow, "activation_id"),
+          ...(mergedActivationId === undefined ? {} : { mergedActivationId }),
+          placementId,
+          reason: "placement lease expired before RunAttempt",
+        },
+        roomId: text(placementRow, "room_id"),
+        type: "placement.released",
+      });
+    }
+  }
+
+  #buildPlacementPlannerInput(
+    now: Date,
+    schedulerVersion: string,
+  ): PlacementPlannerInput {
+    const offerRows = this.#database
+      .prepare(
+        `SELECT runtime_offers.*
+         FROM runtime_offers
+         JOIN agent_hosts ON agent_hosts.host_id = runtime_offers.host_id
+         WHERE runtime_offers.lease_until_ms > ?
+           AND agent_hosts.state = 'online'
+           AND agent_hosts.instance_id = runtime_offers.host_instance_id
+         ORDER BY runtime_offers.runtime_offer_id`,
+      )
+      .all(now.getTime());
+    const offers = offerRows
+      .map((row) => this.#runtimeOfferFromRow(row))
+      .filter((offer) => this.#runtimeOfferEvidenceIsCurrentlyTrusted(offer));
+    const workspaceDefinitionIds = [
+      ...new Set(
+        offers.flatMap((offer) =>
+          offer.workspaceMountDescriptors.map(
+            (workspace) => workspace.workspaceDefinitionId,
+          ),
+        ),
+      ),
+    ].sort();
+    const workspaceDefinitionId =
+      workspaceDefinitionIds.length === 1
+        ? workspaceDefinitionIds[0]!
+        : "workspace-unconfigured";
+
+    const candidateRows = this.#database
+      .prepare(
+        `SELECT activations.*, agent_definitions.state AS agent_state,
+                agent_definitions.current_revision_id AS agent_revision_id
+         FROM activations
+         JOIN agent_definitions
+           ON agent_definitions.participant_id = activations.participant_id
+         WHERE activations.state = 'queued'
+           AND activations.available_at_ms <= ?
+         ORDER BY activations.available_at_ms, activations.created_at, activations.activation_id`,
+      )
+      .all(now.getTime());
+    const candidates = candidateRows.map((row) => {
+      const revision = this.#agentDefinitionRevisionFromRow(
+        this.#requireAgentDefinitionRevisionRow(text(row, "agent_revision_id")),
+      );
+      return {
+        activationId: text(row, "activation_id"),
+        agentDefinitionRevisionId: revision.agentDefinitionRevisionId,
+        agentEnabled: text(row, "agent_state") === "enabled",
+        availableAt: text(row, "available_at"),
+        createdAt: text(row, "created_at"),
+        executionPolicy: this.#executionPolicyRevisionFromRow(
+          this.#requireExecutionPolicyRevisionRow(
+            revision.executionPolicyRevisionId,
+          ),
+        ),
+        participantId: text(row, "participant_id"),
+        priority: 0,
+        roomId: text(row, "room_id"),
+        workspaceDefinitionId,
+      };
+    });
+
+    const hostRows = this.#database
+      .prepare(
+        "SELECT * FROM agent_hosts WHERE state = 'online' ORDER BY host_id",
+      )
+      .all();
+    const reservationRows = this.#database
+      .prepare(
+        "SELECT placement_id, resource_type, resource_id FROM placement_capacity_reservations ORDER BY placement_id, resource_type, resource_id",
+      )
+      .all();
+    const reservationKeys = new Set<string>();
+    const reservedByResource = new Map<string, number>();
+    for (const row of reservationRows) {
+      const placementId = text(row, "placement_id");
+      const resourceType = text(row, "resource_type");
+      const resourceId = text(row, "resource_id");
+      reservationKeys.add(`${placementId}:${resourceType}:${resourceId}`);
+      const resourceKey = `${resourceType}:${resourceId}`;
+      reservedByResource.set(
+        resourceKey,
+        (reservedByResource.get(resourceKey) ?? 0) + 1,
+      );
+    }
+    const unprovenRuntimePlacementRows = this.#database
+      .prepare(
+        `SELECT DISTINCT placements.*
+         FROM placements
+         JOIN run_attempts ON run_attempts.placement_id = placements.placement_id
+         JOIN runtime_processes
+           ON runtime_processes.run_attempt_id = run_attempts.run_attempt_id
+         WHERE runtime_processes.state <> 'terminated'
+         ORDER BY placements.placement_id`,
+      )
+      .all();
+    const unprovenRuntimePlacements = unprovenRuntimePlacementRows.map(
+      (row) => ({
+        placement: this.#placementFromRow(row),
+        runtimeProfileId: text(row, "runtime_profile_id"),
+      }),
+    );
+    for (const { placement, runtimeProfileId } of unprovenRuntimePlacements) {
+      const implicitResources: Array<
+        ["host" | "offer" | "pool" | "profile", string]
+      > = [
+        ["offer", placement.runtimeOfferId],
+        ["host", placement.hostId],
+        [
+          "profile",
+          capacityProfileResourceId(placement.hostId, runtimeProfileId),
+        ],
+        ...placement.capacityPoolIds.map((capacityPoolId): ["pool", string] => [
+          "pool",
+          capacityPoolId,
+        ]),
+      ];
+      for (const [resourceType, resourceId] of implicitResources) {
+        const reservationKey = `${placement.placementId}:${resourceType}:${resourceId}`;
+        if (reservationKeys.has(reservationKey)) continue;
+        reservationKeys.add(reservationKey);
+        const resourceKey = `${resourceType}:${resourceId}`;
+        reservedByResource.set(
+          resourceKey,
+          (reservedByResource.get(resourceKey) ?? 0) + 1,
+        );
+      }
+    }
+    const reserved = (resourceType: string, resourceId: string): number =>
+      reservedByResource.get(`${resourceType}:${resourceId}`) ?? 0;
+    const uniqueHosts = new Map<
+      string,
+      { adminMaxConcurrent: number; hostId: string; reserved: number }
+    >();
+    const uniqueProfiles = new Map<
+      string,
+      {
+        adminMaxConcurrent: number;
+        hostId: string;
+        reserved: number;
+        runtimeProfileId: string;
+      }
+    >();
+    const uniquePools = new Map<
+      string,
+      {
+        adminMaxConcurrent: number;
+        capacityPoolId: string;
+        reserved: number;
+      }
+    >();
+    for (const offer of offers) {
+      uniqueHosts.set(offer.hostId, {
+        adminMaxConcurrent: 1,
+        hostId: offer.hostId,
+        reserved: reserved("host", offer.hostId),
+      });
+      uniqueProfiles.set(
+        capacityProfileResourceId(offer.hostId, offer.runtimeProfileId),
+        {
+          adminMaxConcurrent: 1,
+          hostId: offer.hostId,
+          reserved: reserved(
+            "profile",
+            capacityProfileResourceId(offer.hostId, offer.runtimeProfileId),
+          ),
+          runtimeProfileId: offer.runtimeProfileId,
+        },
+      );
+      for (const capacityPoolId of offer.capacityPoolIds) {
+        uniquePools.set(capacityPoolId, {
+          adminMaxConcurrent: 1,
+          capacityPoolId,
+          reserved: reserved("pool", capacityPoolId),
+        });
+      }
+    }
+
+    return {
+      activeHostInstances: hostRows.map((row) => ({
+        hostId: text(row, "host_id"),
+        hostInstanceId: text(row, "instance_id"),
+      })),
+      activeParticipantIds: [
+        ...new Set([
+          ...this.#database
+            .prepare(
+              "SELECT DISTINCT participant_id FROM activations WHERE state = 'quarantined' OR (state = 'leased' AND lease_until_ms > ?) ORDER BY participant_id",
+            )
+            .all(now.getTime())
+            .map((row) => text(row, "participant_id")),
+          ...this.#database
+            .prepare(
+              "SELECT DISTINCT participant_id FROM runtime_processes WHERE state <> 'terminated' ORDER BY participant_id",
+            )
+            .all()
+            .map((row) => text(row, "participant_id")),
+        ]),
+      ].sort(),
+      authorizedHostParticipants: hostRows.map((row) => ({
+        hostId: text(row, "host_id"),
+        participantIds: stringArray(row, "participant_ids_json"),
+      })),
+      busyWorkspaceMountRevisionIds: [
+        ...new Set([
+          ...this.#database
+            .prepare(
+              "SELECT workspace_mount_revision_id FROM workspace_leases WHERE workspace_mode = 'in_place' ORDER BY workspace_mount_revision_id",
+            )
+            .all()
+            .map((row) => text(row, "workspace_mount_revision_id")),
+          ...unprovenRuntimePlacements
+            .map(({ placement }) => placement)
+            .filter((placement) => placement.workspaceMode === "in_place")
+            .map((placement) => placement.workspaceMountRevisionId),
+        ]),
+      ].sort(),
+      candidates,
+      capacities: {
+        hosts: [...uniqueHosts.values()],
+        offers: offers.map((offer) => ({
+          reserved: reserved("offer", offer.runtimeOfferId),
+          runtimeOfferId: offer.runtimeOfferId,
+          structuralFailureCount: 0,
+        })),
+        pools: [...uniquePools.values()],
+        profiles: [...uniqueProfiles.values()],
+      },
+      now: now.toISOString(),
+      offers,
+      schedulerVersion,
+    };
+  }
+
+  #findRoomEventByIdempotencyKey(
+    roomId: string,
+    idempotencyKey: string,
+  ): Row | undefined {
+    return this.#database
+      .prepare(
+        "SELECT * FROM room_events WHERE room_id = ? AND idempotency_key = ?",
+      )
+      .get(roomId, idempotencyKey);
+  }
+
+  #assertTaskEventReplay(
+    row: Row,
+    expected: {
+      actorId: string;
+      aggregateId?: string;
+      eventType: string;
+      payload: Record<string, unknown>;
+    },
+  ): RoomEvent {
+    const event = this.#eventFromRow(row);
+    const payloadMatches = Object.entries(expected.payload).every(
+      ([key, value]) =>
+        JSON.stringify(event.payload[key]) === JSON.stringify(value),
+    );
+    if (
+      event.type !== expected.eventType ||
+      event.actorId !== expected.actorId ||
+      event.aggregateType !== "task" ||
+      (expected.aggregateId !== undefined &&
+        event.aggregateId !== expected.aggregateId) ||
+      !payloadMatches
+    ) {
+      throw new IdempotencyConflictError(
+        `idempotency key ${event.idempotencyKey} was already used for another mutation`,
+      );
+    }
+    return event;
+  }
+
+  #assertInputRequestEventReplay(
+    row: Row,
+    expected: {
+      actorId: string;
+      aggregateId?: string;
+      eventType: "input.requested" | "input.resolved";
+      payload: Record<string, unknown>;
+    },
+  ): RoomEvent {
+    const event = this.#eventFromRow(row);
+    const payloadMatches = Object.entries(expected.payload).every(
+      ([key, value]) =>
+        JSON.stringify(event.payload[key]) === JSON.stringify(value),
+    );
+    if (
+      event.type !== expected.eventType ||
+      event.actorId !== expected.actorId ||
+      event.aggregateType !== "input_request" ||
+      (expected.aggregateId !== undefined &&
+        event.aggregateId !== expected.aggregateId) ||
+      !payloadMatches
+    ) {
+      throw new IdempotencyConflictError(
+        `idempotency key ${event.idempotencyKey} was already used for another mutation`,
+      );
+    }
+    return event;
+  }
+
+  #normalizeRecipients(
+    roomId: string,
+    actorId: string,
+    recipients: MessageRecipient[],
+  ): MessageRecipient[] {
+    const normalized = new Map<string, MessageRecipient>();
+    for (const recipient of recipients) {
+      if (recipient.participantId === actorId) continue;
+      this.#requireMember(roomId, recipient.participantId);
+      normalized.set(recipient.participantId, {
+        participantId: recipient.participantId,
+        reason: ActivationReasonSchema.parse(recipient.reason),
+      });
+    }
+    return [...normalized.values()].sort((left, right) =>
+      left.participantId.localeCompare(right.participantId),
+    );
+  }
+
+  #snapshot(roomId: string): RoomSnapshot {
+    const roomRow = this.#requireRoom(roomId);
+    const members = this.#database
+      .prepare(
+        `SELECT principals.principal_id, principals.handle, principals.kind
+         FROM memberships
+         JOIN principals ON principals.principal_id = memberships.principal_id
+         WHERE memberships.room_id = ?
+         ORDER BY principals.handle`,
+      )
+      .all(roomId)
+      .map((row) => this.#principalFromRow(row));
+    return {
+      room: {
+        roomId: text(roomRow, "room_id"),
+        slug: text(roomRow, "slug"),
+        name: text(roomRow, "name"),
+      },
+      members,
+    };
+  }
+
+  #requireRoom(roomId: string): Row {
+    const row = this.#database
+      .prepare("SELECT * FROM rooms WHERE room_id = ?")
+      .get(roomId);
+    if (!row) throw new NotFoundError(`room ${roomId} was not found`);
+    return row;
+  }
+
+  #requirePrincipal(principalId: string): Row {
+    const row = this.#database
+      .prepare("SELECT * FROM principals WHERE principal_id = ?")
+      .get(principalId);
+    if (!row) {
+      throw new NotFoundError(`principal ${principalId} was not found`);
+    }
+    return row;
+  }
+
+  #requireAuthenticatedActor(actor: AuthenticatedActorContext): string {
+    if (!isIssuedActorContext(actor)) {
+      throw new UnauthenticatedError("authentication context is invalid");
+    }
+    const row = this.#database
+      .prepare(
+        "SELECT 1 AS present FROM principal_credentials WHERE credential_id = ? AND principal_id = ? AND revoked_at IS NULL",
+      )
+      .get(actor.credentialId, actor.principalId);
+    if (!row) {
+      throw new UnauthenticatedError("authentication context is invalid");
+    }
+    return actor.principalId;
+  }
+
+  #requireAuthenticatedHost(
+    host: AuthenticatedHostContext,
+  ): AuthenticatedHostContext {
+    const authenticatedHost = this.#requireAuthenticatedHostCredential(host);
+    const row = this.#database
+      .prepare(
+        "SELECT credential_id, instance_id, state FROM agent_hosts WHERE host_id = ?",
+      )
+      .get(authenticatedHost.hostId);
+    if (
+      !row ||
+      nullableText(row, "credential_id") !== authenticatedHost.credentialId ||
+      text(row, "instance_id") !== authenticatedHost.instanceId ||
+      text(row, "state") === "offline"
+    ) {
+      throw new UnauthenticatedError("Host daemon instance is not active");
+    }
+    return authenticatedHost;
+  }
+
+  #requireAuthenticatedHostCredential(
+    host: AuthenticatedHostContext,
+  ): AuthenticatedHostContext {
+    if (!isIssuedHostContext(host)) {
+      throw new UnauthenticatedError("host authentication context is invalid");
+    }
+    const row = this.#database
+      .prepare(
+        "SELECT host_id, participant_ids_json FROM agent_host_credentials WHERE credential_id = ? AND revoked_at IS NULL",
+      )
+      .get(host.credentialId);
+    if (
+      !row ||
+      text(row, "host_id") !== host.hostId ||
+      JSON.stringify(stringArray(row, "participant_ids_json")) !==
+        JSON.stringify(host.participantIds)
+    ) {
+      throw new UnauthenticatedError("host authentication context is invalid");
+    }
+    return host;
+  }
+
+  #requireAuthenticatedWorkerExecution(
+    execution: AuthenticatedWorkerExecutionContext,
+  ): ActivationCredentialScope {
+    if (!isIssuedWorkerExecutionContext(execution)) {
+      throw new UnauthenticatedError("worker execution context is invalid");
+    }
+    const scope = ActivationCredentialScopeSchema.parse(execution.scope);
+    const instance = this.#database
+      .prepare(
+        "SELECT credential_id, instance_id, state FROM agent_hosts WHERE host_id = ?",
+      )
+      .get(scope.hostId);
+    if (
+      !instance ||
+      nullableText(instance, "credential_id") !== execution.hostCredentialId ||
+      text(instance, "instance_id") !== execution.hostInstanceId ||
+      text(instance, "state") === "offline"
+    ) {
+      throw new UnauthenticatedError("worker execution context is invalid");
+    }
+    const row = this.#database
+      .prepare(
+        "SELECT host_id, participant_ids_json FROM agent_host_credentials WHERE credential_id = ? AND revoked_at IS NULL",
+      )
+      .get(execution.hostCredentialId);
+    if (
+      !row ||
+      text(row, "host_id") !== scope.hostId ||
+      !stringArray(row, "participant_ids_json").includes(scope.participantId)
+    ) {
+      throw new UnauthenticatedError("worker execution context is invalid");
+    }
+    this.#assertWorkerExecutionScope(scope);
+    return scope;
+  }
+
+  #assertWorkerGrantScope(scope: ActivationCredentialScope): {
+    activation: Row;
+    runAttempt: Row;
+  } {
+    const activation = this.#database
+      .prepare("SELECT * FROM activations WHERE activation_id = ?")
+      .get(scope.activationId);
+    const runAttempt = this.#database
+      .prepare("SELECT * FROM run_attempts WHERE run_attempt_id = ?")
+      .get(scope.runAttemptId);
+    const runState =
+      runAttempt === undefined ? undefined : text(runAttempt, "state");
+    if (
+      activation === undefined ||
+      runAttempt === undefined ||
+      text(activation, "state") !== "leased" ||
+      nullableText(activation, "lease_owner") !== scope.hostId ||
+      (nullableInteger(activation, "lease_until_ms") ?? 0) <=
+        this.#now().getTime() ||
+      text(activation, "room_id") !== scope.roomId ||
+      text(activation, "participant_id") !== scope.participantId ||
+      integer(activation, "to_seq") !== scope.toSeq ||
+      text(runAttempt, "activation_id") !== scope.activationId ||
+      text(runAttempt, "room_id") !== scope.roomId ||
+      text(runAttempt, "participant_id") !== scope.participantId ||
+      text(runAttempt, "host_id") !== scope.hostId ||
+      integer(runAttempt, "attempt_number") !==
+        integer(activation, "attempt_count") ||
+      (runState !== "starting" && runState !== "running")
+    ) {
+      throw new ExecutionFencedError();
+    }
+    return { activation, runAttempt };
+  }
+
+  #assertWorkerExecutionScope(scope: ActivationCredentialScope): void {
+    const { runAttempt } = this.#assertWorkerGrantScope(scope);
+    const runtimeProcess = this.#database
+      .prepare("SELECT * FROM runtime_processes WHERE run_attempt_id = ?")
+      .get(scope.runAttemptId);
+    const runState = text(runAttempt, "state");
+    const executionStateIsCurrent =
+      (runState === "starting" &&
+        runtimeProcess !== undefined &&
+        text(runtimeProcess, "state") === "prepared") ||
+      (runState === "running" &&
+        runtimeProcess !== undefined &&
+        text(runtimeProcess, "state") === "active" &&
+        text(runtimeProcess, "runtime_run_id") ===
+          nullableText(runAttempt, "runtime_run_id"));
+    if (!executionStateIsCurrent) throw new ExecutionFencedError();
+  }
+
+  #requireHostParticipant(
+    host: AuthenticatedHostContext,
+    participantId: string,
+  ): void {
+    if (!host.participantIds.includes(participantId)) {
+      throw new ForbiddenError(
+        `host ${host.hostId} is not authorized for participant ${participantId}`,
+      );
+    }
+  }
+
+  #assertFreshContext(
+    roomId: string,
+    actorId: string,
+    basedOnRoomSeq: number | undefined,
+  ): void {
+    const actor = this.#principalFromRow(this.#requirePrincipal(actorId));
+    const room = this.#requireRoom(roomId);
+    const latestRoomSeq = integer(room, "next_seq") - 1;
+    if (basedOnRoomSeq === undefined) {
+      if (actor.kind === "human") return;
+      throw new StaleContextError(undefined, latestRoomSeq);
+    }
+    if (!Number.isInteger(basedOnRoomSeq) || basedOnRoomSeq < 0) {
+      throw new Error("basedOnRoomSeq must be a non-negative integer");
+    }
+    if (basedOnRoomSeq !== latestRoomSeq) {
+      throw new StaleContextError(basedOnRoomSeq, latestRoomSeq);
+    }
+  }
+
+  #requireMember(roomId: string, principalId: string): void {
+    this.#requireRoom(roomId);
+    const membership = this.#database
+      .prepare(
+        "SELECT 1 AS present FROM memberships WHERE room_id = ? AND principal_id = ?",
+      )
+      .get(roomId, principalId);
+    if (!membership) {
+      throw new ForbiddenError(
+        `principal ${principalId} is not a member of room ${roomId}`,
+      );
+    }
+  }
+
+  #requireTaskRow(taskId: string): Row {
+    const row = this.#database
+      .prepare("SELECT * FROM tasks WHERE task_id = ?")
+      .get(taskId);
+    if (!row) throw new NotFoundError(`task ${taskId} was not found`);
+    return row;
+  }
+
+  #requireInputRequestRow(inputRequestId: string): Row {
+    const row = this.#database
+      .prepare("SELECT * FROM input_requests WHERE input_request_id = ?")
+      .get(inputRequestId);
+    if (!row) {
+      throw new NotFoundError(`InputRequest ${inputRequestId} was not found`);
+    }
+    return row;
+  }
+
+  #requireActivationRow(activationId: string): Row {
+    const row = this.#database
+      .prepare("SELECT * FROM activations WHERE activation_id = ?")
+      .get(activationId);
+    if (!row) {
+      throw new NotFoundError(`activation ${activationId} was not found`);
+    }
+    return row;
+  }
+
+  #requireActivationLease(row: Row, hostId: string): void {
+    if (
+      text(row, "state") !== "leased" ||
+      nullableText(row, "lease_owner") !== hostId ||
+      (nullableInteger(row, "lease_until_ms") ?? 0) <= this.#now().getTime()
+    ) {
+      throw new LeaseConflictError(
+        `host ${hostId} does not own a valid lease for ${text(row, "activation_id")}`,
+      );
+    }
+  }
+
+  #requireOutboxRow(outboxId: string): Row {
+    const row = this.#database
+      .prepare("SELECT * FROM outbox WHERE outbox_id = ?")
+      .get(outboxId);
+    if (!row) throw new NotFoundError(`outbox ${outboxId} was not found`);
+    return row;
+  }
+
+  #requireHostRow(hostId: string): Row {
+    const row = this.#database
+      .prepare("SELECT * FROM agent_hosts WHERE host_id = ?")
+      .get(hostId);
+    if (!row) throw new NotFoundError(`host ${hostId} was not found`);
+    return row;
+  }
+
+  #requireRunAttemptRow(runAttemptId: string): Row {
+    const row = this.#database
+      .prepare("SELECT * FROM run_attempts WHERE run_attempt_id = ?")
+      .get(runAttemptId);
+    if (!row) {
+      throw new NotFoundError(`run attempt ${runAttemptId} was not found`);
+    }
+    return row;
+  }
+
+  #requireRuntimeProcessRow(runAttemptId: string): Row {
+    const row = this.#database
+      .prepare("SELECT * FROM runtime_processes WHERE run_attempt_id = ?")
+      .get(runAttemptId);
+    if (!row) {
+      throw new NotFoundError(
+        `runtime process for run attempt ${runAttemptId} was not found`,
+      );
+    }
+    return row;
+  }
+
+  #requireRuntimeProcessById(runtimeProcessId: string): Row {
+    const row = this.#database
+      .prepare("SELECT * FROM runtime_processes WHERE runtime_process_id = ?")
+      .get(runtimeProcessId);
+    if (!row) {
+      throw new NotFoundError(
+        `runtime process ${runtimeProcessId} was not found`,
+      );
+    }
+    return row;
+  }
+
+  #requireRunAttemptOwner(row: Row, hostId: string): void {
+    if (text(row, "host_id") !== hostId) {
+      throw new ForbiddenError(
+        `host ${hostId} does not own run attempt ${text(row, "run_attempt_id")}`,
+      );
+    }
+  }
+
+  #requireRunAttemptHostGeneration(
+    runAttempt: Row,
+    host: AuthenticatedHostContext,
+  ): void {
+    const placementId = nullableText(runAttempt, "placement_id");
+    if (placementId === null) return;
+    const placement = this.#requirePlacementRow(placementId);
+    if (
+      text(placement, "host_id") !== host.hostId ||
+      text(placement, "host_instance_id") !== host.instanceId
+    ) {
+      throw new ExecutionFencedError(
+        `run attempt ${text(runAttempt, "run_attempt_id")} belongs to another Host generation`,
+      );
+    }
+  }
+
+  #requireActivationHostGeneration(
+    activation: Row,
+    host: AuthenticatedHostContext,
+  ): void {
+    const runAttempt = this.#database
+      .prepare(
+        "SELECT * FROM run_attempts WHERE activation_id = ? ORDER BY attempt_number DESC, started_at DESC LIMIT 1",
+      )
+      .get(text(activation, "activation_id"));
+    if (runAttempt !== undefined) {
+      this.#requireRunAttemptHostGeneration(runAttempt, host);
+      return;
+    }
+    const placement = this.#database
+      .prepare(
+        "SELECT * FROM placements WHERE activation_id = ? AND state IN ('reserved', 'consumed') ORDER BY created_at DESC, placement_id DESC LIMIT 1",
+      )
+      .get(text(activation, "activation_id"));
+    if (
+      placement !== undefined &&
+      (text(placement, "host_id") !== host.hostId ||
+        text(placement, "host_instance_id") !== host.instanceId)
+    ) {
+      throw new ExecutionFencedError(
+        `activation ${text(activation, "activation_id")} belongs to another Host generation`,
+      );
+    }
+  }
+
+  #requireOutboxLease(row: Row, dispatcherId: string): void {
+    if (
+      nullableText(row, "lease_owner") !== dispatcherId ||
+      (nullableInteger(row, "lease_until_ms") ?? 0) <= this.#now().getTime()
+    ) {
+      throw new LeaseConflictError(
+        `dispatcher ${dispatcherId} does not own an active lease for outbox ${text(row, "outbox_id")}`,
+      );
+    }
+  }
+
+  #eventFromRow(row: Row): RoomEvent {
+    return RoomEventSchema.parse({
+      eventId: text(row, "event_id"),
+      roomId: text(row, "room_id"),
+      roomSeq: integer(row, "room_seq"),
+      type: text(row, "type"),
+      actorId: text(row, "actor_id"),
+      aggregateType: text(row, "aggregate_type"),
+      aggregateId: text(row, "aggregate_id"),
+      payload: jsonObject(row, "payload_json"),
+      idempotencyKey: text(row, "idempotency_key"),
+      schemaVersion: integer(row, "schema_version"),
+      createdAt: text(row, "created_at"),
+    });
+  }
+
+  #taskFromRow(row: Row): Task {
+    const description = nullableText(row, "description");
+    const claimedBy = nullableText(row, "claimed_by");
+    const claimUntil = nullableText(row, "claim_until");
+    const lastProgress = nullableText(row, "last_progress");
+    const submissionSummary = nullableText(row, "submission_summary");
+    const submittedAt = nullableText(row, "submitted_at");
+    const completedAt = nullableText(row, "completed_at");
+    return TaskSchema.parse({
+      taskId: text(row, "task_id"),
+      roomId: text(row, "room_id"),
+      creatorId: text(row, "creator_id"),
+      assigneeId: text(row, "assignee_id"),
+      title: text(row, "title"),
+      ...(description === null ? {} : { description }),
+      state: text(row, "state"),
+      ...(claimedBy === null ? {} : { claimedBy }),
+      ...(claimUntil === null ? {} : { claimUntil }),
+      ...(lastProgress === null ? {} : { lastProgress }),
+      ...(submissionSummary === null ? {} : { submissionSummary }),
+      createdAt: text(row, "created_at"),
+      updatedAt: text(row, "updated_at"),
+      ...(submittedAt === null ? {} : { submittedAt }),
+      ...(completedAt === null ? {} : { completedAt }),
+    });
+  }
+
+  #inputRequestFromRow(row: Row): InputRequest {
+    const answer = nullableText(row, "answer");
+    const resolvedBy = nullableText(row, "resolved_by");
+    const resolvedAt = nullableText(row, "resolved_at");
+    return InputRequestSchema.parse({
+      inputRequestId: text(row, "input_request_id"),
+      roomId: text(row, "room_id"),
+      taskId: text(row, "task_id"),
+      requesterId: text(row, "requester_id"),
+      responderId: text(row, "responder_id"),
+      question: text(row, "question"),
+      state: text(row, "state"),
+      ...(answer === null ? {} : { answer }),
+      ...(resolvedBy === null ? {} : { resolvedBy }),
+      createdAt: text(row, "created_at"),
+      updatedAt: text(row, "updated_at"),
+      ...(resolvedAt === null ? {} : { resolvedAt }),
+    });
+  }
+
+  #activationFromRow(row: Row): Activation {
+    const leaseOwner = nullableText(row, "lease_owner");
+    const leaseUntil = nullableText(row, "lease_until");
+    const lastError = nullableText(row, "last_error");
+    return ActivationSchema.parse({
+      activationId: text(row, "activation_id"),
+      roomId: text(row, "room_id"),
+      participantId: text(row, "participant_id"),
+      fromSeq: integer(row, "from_seq"),
+      toSeq: integer(row, "to_seq"),
+      reason: text(row, "reason"),
+      state: text(row, "state"),
+      ...(leaseOwner === null ? {} : { leaseOwner }),
+      ...(leaseUntil === null ? {} : { leaseUntil }),
+      attemptCount: integer(row, "attempt_count"),
+      availableAt: text(row, "available_at"),
+      ...(lastError === null ? {} : { lastError }),
+      createdAt: text(row, "created_at"),
+      updatedAt: text(row, "updated_at"),
+    });
+  }
+
+  #inboxFromRow(row: Row): InboxItem {
+    const state = InboxStateSchema.parse(text(row, "state"));
+    const acknowledgedAt = nullableText(row, "acknowledged_at");
+    return {
+      inboxItemId: text(row, "inbox_item_id"),
+      roomId: text(row, "room_id"),
+      participantId: text(row, "participant_id"),
+      eventId: text(row, "event_id"),
+      eventSeq: integer(row, "event_seq"),
+      reason: ActivationReasonSchema.parse(text(row, "reason")),
+      state,
+      createdAt: text(row, "created_at"),
+      ...(acknowledgedAt === null ? {} : { acknowledgedAt }),
+    };
+  }
+
+  #outboxFromRow(row: Row): OutboxEntry {
+    const publishedAt = nullableText(row, "published_at");
+    const leaseOwner = nullableText(row, "lease_owner");
+    const leaseUntil = nullableText(row, "lease_until");
+    const lastError = nullableText(row, "last_error");
+    return {
+      outboxId: text(row, "outbox_id"),
+      roomId: text(row, "room_id"),
+      roomSeq: integer(row, "room_seq"),
+      topic: text(row, "topic"),
+      payload: jsonObject(row, "payload_json"),
+      createdAt: text(row, "created_at"),
+      availableAtMs: integer(row, "available_at_ms"),
+      attemptCount: integer(row, "attempt_count"),
+      ...(publishedAt === null ? {} : { publishedAt }),
+      ...(leaseOwner === null ? {} : { leaseOwner }),
+      ...(leaseUntil === null ? {} : { leaseUntil }),
+      ...(lastError === null ? {} : { lastError }),
+    };
+  }
+
+  #principalFromRow(row: Row): Principal {
+    return {
+      principalId: text(row, "principal_id"),
+      handle: text(row, "handle"),
+      kind: ParticipantKindSchema.parse(text(row, "kind")),
+    };
+  }
+
+  #hostFromRow(row: Row): HostRecord {
+    const participantIds = JSON.parse(text(row, "participant_ids_json"));
+    if (
+      !Array.isArray(participantIds) ||
+      !participantIds.every((value) => typeof value === "string")
+    ) {
+      throw new Error("expected participant_ids_json to contain strings");
+    }
+    const state = text(row, "state");
+    const buildVersion = nullableText(row, "build_version");
+    const processId = nullableInteger(row, "process_id");
+    const protocolVersion = nullableInteger(row, "protocol_version");
+    if (state !== "online" && state !== "draining" && state !== "offline") {
+      throw new Error(`unexpected Host state ${state}`);
+    }
+    return {
+      hostId: text(row, "host_id"),
+      instanceId: text(row, "instance_id"),
+      participantIds,
+      state,
+      lastSeenAt: text(row, "last_seen_at"),
+      ...(buildVersion === null ? {} : { buildVersion }),
+      ...(processId === null ? {} : { processId }),
+      ...(protocolVersion === null ? {} : { protocolVersion }),
+    };
+  }
+
+  #runAttemptFromRow(row: Row): RunAttempt {
+    const placementId = nullableText(row, "placement_id");
+    const runtimeRunId = nullableText(row, "runtime_run_id");
+    const exitCode = nullableInteger(row, "exit_code");
+    const exitSignal = nullableText(row, "exit_signal");
+    const error = nullableText(row, "error");
+    const finishedAt = nullableText(row, "finished_at");
+    const state = text(row, "state");
+    if (
+      state !== "starting" &&
+      state !== "running" &&
+      state !== "orphaned" &&
+      state !== "exited" &&
+      state !== "failed" &&
+      state !== "cancelled" &&
+      state !== "timed_out"
+    ) {
+      throw new Error(`unexpected RunAttempt state ${state}`);
+    }
+    return {
+      runAttemptId: text(row, "run_attempt_id"),
+      activationId: text(row, "activation_id"),
+      roomId: text(row, "room_id"),
+      participantId: text(row, "participant_id"),
+      hostId: text(row, "host_id"),
+      attemptNumber: integer(row, "attempt_number"),
+      state,
+      startedAt: text(row, "started_at"),
+      ...(runtimeRunId === null ? {} : { runtimeRunId }),
+      ...(exitCode === null ? {} : { exitCode }),
+      ...(exitSignal === null ? {} : { exitSignal }),
+      ...(error === null ? {} : { error }),
+      ...(finishedAt === null ? {} : { finishedAt }),
+      ...(placementId === null
+        ? {}
+        : {
+            placement: this.#placementFromRow(
+              this.#requirePlacementRow(placementId),
+            ),
+          }),
+    };
+  }
+
+  #runtimeProcessFromRow(row: Row): RuntimeProcessRecord {
+    const state = text(row, "state");
+    if (
+      state !== "prepared" &&
+      state !== "active" &&
+      state !== "orphaned" &&
+      state !== "terminated"
+    ) {
+      throw new Error(`unexpected RuntimeProcess state ${state}`);
+    }
+    const exitCode = nullableInteger(row, "exit_code");
+    const exitSignal = nullableText(row, "exit_signal");
+    const terminatedAt = nullableText(row, "terminated_at");
+    const recoveryLeaseOwner = nullableText(row, "recovery_lease_owner");
+    const recoveryLeaseOwnerInstanceId = nullableText(
+      row,
+      "recovery_lease_owner_instance_id",
+    );
+    const recoveryLeaseUntil = nullableText(row, "recovery_lease_until");
+    const recoveryLastError = nullableText(row, "recovery_last_error");
+    return {
+      runtimeProcessId: text(row, "runtime_process_id"),
+      runAttemptId: text(row, "run_attempt_id"),
+      activationId: text(row, "activation_id"),
+      roomId: text(row, "room_id"),
+      participantId: text(row, "participant_id"),
+      launchHostId: text(row, "launch_host_id"),
+      runtimeRunId: text(row, "runtime_run_id"),
+      recoveryDescriptor: RuntimeRecoveryDescriptorSchema.parse(
+        jsonObject(row, "recovery_descriptor_json"),
+      ),
+      state,
+      registeredAt: text(row, "registered_at"),
+      updatedAt: text(row, "updated_at"),
+      recoveryAttemptCount: integer(row, "recovery_attempt_count"),
+      ...(recoveryLeaseOwner === null ? {} : { recoveryLeaseOwner }),
+      ...(recoveryLeaseOwnerInstanceId === null
+        ? {}
+        : { recoveryLeaseOwnerInstanceId }),
+      ...(recoveryLeaseUntil === null ? {} : { recoveryLeaseUntil }),
+      ...(recoveryLastError === null ? {} : { recoveryLastError }),
+      ...(exitCode === null ? {} : { exitCode }),
+      ...(exitSignal === null ? {} : { exitSignal }),
+      ...(terminatedAt === null ? {} : { terminatedAt }),
+    };
+  }
+
+  #assertMatchingRuntimeTermination(
+    row: Row,
+    exit: { code: number | null; signal?: string },
+  ): RuntimeProcessRecord {
+    if (
+      nullableInteger(row, "exit_code") === exit.code &&
+      nullableText(row, "exit_signal") === (exit.signal ?? null)
+    ) {
+      return this.#runtimeProcessFromRow(row);
+    }
+    throw new ConflictError("runtime termination proof conflicts");
+  }
+
+  #persistRuntimeTermination(
+    row: Row,
+    exit: { code: number | null; signal?: string },
+    authority: { hostId: string } | { recoveryHostId: string },
+  ): RuntimeProcessRecord {
+    const runtimeProcessId = text(row, "runtime_process_id");
+    const runAttemptId = text(row, "run_attempt_id");
+    const runAttempt = this.#requireRunAttemptRow(runAttemptId);
+    const placementId = nullableText(runAttempt, "placement_id");
+    const terminatedAt = this.#timestamp();
+    this.#database
+      .prepare(
+        "UPDATE runtime_processes SET state = 'terminated', exit_code = ?, exit_signal = ?, recovery_lease_owner = NULL, recovery_lease_owner_instance_id = NULL, recovery_lease_until = NULL, recovery_lease_until_ms = NULL, terminated_at = ?, updated_at = ? WHERE runtime_process_id = ?",
+      )
+      .run(
+        exit.code,
+        exit.signal ?? null,
+        terminatedAt,
+        terminatedAt,
+        runtimeProcessId,
+      );
+    if (placementId !== null) {
+      const placement = this.#requirePlacementRow(placementId);
+      if (text(placement, "state") !== "released") {
+        this.#setPlacementState(
+          placement,
+          "released",
+          "orphaned RuntimeProcess termination proven",
+        );
+        this.#releasePlacementResources(placementId);
+      }
+    }
+    this.#appendEvent({
+      actorId: SYSTEM_PRINCIPAL_ID,
+      aggregateId: runAttemptId,
+      aggregateType: "run_attempt",
+      idempotencyKey: `run.termination:${runAttemptId}`,
+      payload: {
+        ...authority,
+        runAttemptId,
+        runtimeRunId: text(row, "runtime_run_id"),
+        exitCode: exit.code,
+        ...(placementId === null ? {} : { placementId }),
+        ...(exit.signal === undefined ? {} : { exitSignal: exit.signal }),
+      },
+      roomId: text(row, "room_id"),
+      type: "run.termination_proven",
+    });
+    return this.#runtimeProcessFromRow(
+      this.#requireRuntimeProcessById(runtimeProcessId),
+    );
+  }
+
+  #validateRunExit(exit: { code: number | null; signal?: string }): void {
+    if (!Number.isInteger(exit.code) && exit.code !== null) {
+      throw new Error("exit code must be an integer or null");
+    }
+    if (exit.code === null && exit.signal === undefined) {
+      throw new Error("a signalled exit requires signal");
+    }
+  }
+
+  #reconcileUnownedRuntimeProcesses(participantIds: string[], now: Date): void {
+    if (participantIds.length === 0) return;
+    const placeholders = participantIds.map(() => "?").join(", ");
+    const unsafeActivations = this.#database
+      .prepare(
+        `SELECT DISTINCT activations.*
+         FROM activations
+         JOIN runtime_processes
+           ON runtime_processes.activation_id = activations.activation_id
+         WHERE activations.participant_id IN (${placeholders})
+           AND runtime_processes.state <> 'terminated'
+           AND NOT (
+             activations.state = 'leased'
+             AND activations.lease_until_ms > ?
+           )
+         ORDER BY activations.created_at, activations.activation_id`,
+      )
+      .all(...participantIds, now.getTime());
+
+    for (const activation of unsafeActivations) {
+      const activationId = text(activation, "activation_id");
+      const runtimeProcesses = this.#database
+        .prepare(
+          "SELECT * FROM runtime_processes WHERE activation_id = ? AND state <> 'terminated' ORDER BY registered_at, runtime_process_id",
+        )
+        .all(activationId);
+      const runAttemptIds = [
+        ...new Set(
+          runtimeProcesses.map((process) => text(process, "run_attempt_id")),
+        ),
+      ];
+      const previousActivationState = text(activation, "state");
+      const error = `Activation ${activationId} has ${String(runtimeProcesses.length)} RuntimeProcess record(s) without an owning live lease`;
+
+      for (const runAttemptId of runAttemptIds) {
+        const runAttempt = this.#requireRunAttemptRow(runAttemptId);
+        if (text(runAttempt, "state") === "orphaned") continue;
+        this.#database
+          .prepare(
+            "UPDATE run_attempts SET state = 'orphaned', error = ?, finished_at = ? WHERE run_attempt_id = ?",
+          )
+          .run(error, now.toISOString(), runAttemptId);
+        this.#appendEvent({
+          actorId: SYSTEM_PRINCIPAL_ID,
+          aggregateId: runAttemptId,
+          aggregateType: "run_attempt",
+          idempotencyKey: `run.reconcile_orphan:${runAttemptId}`,
+          payload: {
+            activationId,
+            error,
+            previousActivationState,
+            runAttemptId,
+          },
+          roomId: text(activation, "room_id"),
+          type: "run.orphaned",
+        });
+      }
+      this.#database
+        .prepare(
+          "UPDATE runtime_processes SET state = 'orphaned', updated_at = ? WHERE activation_id = ? AND state IN ('prepared', 'active')",
+        )
+        .run(now.toISOString(), activationId);
+
+      if (
+        previousActivationState !== "queued" &&
+        previousActivationState !== "leased"
+      ) {
+        continue;
+      }
+      this.#database
+        .prepare(
+          "UPDATE activations SET state = 'quarantined', lease_owner = NULL, lease_until = NULL, lease_until_ms = NULL, last_error = ?, updated_at = ? WHERE activation_id = ?",
+        )
+        .run(error, now.toISOString(), activationId);
+      this.#appendEvent({
+        actorId: SYSTEM_PRINCIPAL_ID,
+        aggregateId: activationId,
+        aggregateType: "activation",
+        idempotencyKey: `activation.runtime_ownership_reconciled:${activationId}:${integer(activation, "attempt_count")}`,
+        payload: {
+          activationId,
+          error,
+          previousActivationState,
+          runAttemptIds,
+        },
+        roomId: text(activation, "room_id"),
+        type: "activation.quarantined",
+      });
+    }
+  }
+
+  #reconcileProvenActivationQuarantines(participantIds: string[]): void {
+    if (participantIds.length === 0) return;
+    const placeholders = participantIds.map(() => "?").join(", ");
+    const resolvable = this.#database
+      .prepare(
+        `SELECT activation.*
+         FROM activations AS activation
+         WHERE activation.participant_id IN (${placeholders})
+           AND activation.state = 'quarantined'
+           AND EXISTS (
+             SELECT 1 FROM runtime_processes
+             WHERE runtime_processes.activation_id = activation.activation_id
+           )
+           AND NOT EXISTS (
+             SELECT 1 FROM runtime_processes
+             WHERE runtime_processes.activation_id = activation.activation_id
+               AND runtime_processes.state <> 'terminated'
+           )
+         ORDER BY activation.created_at, activation.activation_id`,
+      )
+      .all(...participantIds);
+    for (const activation of resolvable) {
+      this.#resolveProvenActivationQuarantine(activation, {
+        kernelReconciliation: true,
+      });
+    }
+  }
+
+  #resolveProvenActivationQuarantine(
+    row: Row,
+    resolution: { kernelReconciliation: true } | { resolverHostId: string },
+  ): Activation {
+    const activationId = text(row, "activation_id");
+    if (text(row, "state") !== "quarantined") {
+      throw new ConflictError(`activation ${activationId} is not quarantined`);
+    }
+    const processes = this.#database
+      .prepare(
+        "SELECT * FROM runtime_processes WHERE activation_id = ? ORDER BY registered_at, runtime_process_id",
+      )
+      .all(activationId);
+    if (
+      processes.length === 0 ||
+      processes.some((processRow) => text(processRow, "state") !== "terminated")
+    ) {
+      throw new ConflictError(
+        `activation ${activationId} has unverified runtime termination`,
+      );
+    }
+
+    const followUp = this.#database
+      .prepare(
+        "SELECT * FROM activations WHERE room_id = ? AND participant_id = ? AND state = 'queued' AND activation_id <> ?",
+      )
+      .get(text(row, "room_id"), text(row, "participant_id"), activationId);
+    let fromSeq = integer(row, "from_seq");
+    let toSeq = integer(row, "to_seq");
+    let mergedActivationId: string | undefined;
+    const resolvedAt = this.#now();
+    if (followUp) {
+      fromSeq = Math.min(fromSeq, integer(followUp, "from_seq"));
+      toSeq = Math.max(toSeq, integer(followUp, "to_seq"));
+      mergedActivationId = text(followUp, "activation_id");
+      this.#database
+        .prepare(
+          "UPDATE activations SET state = 'cancelled', last_error = ?, updated_at = ? WHERE activation_id = ?",
+        )
+        .run(
+          `merged into resolved quarantine ${activationId}`,
+          resolvedAt.toISOString(),
+          mergedActivationId,
+        );
+    }
+    this.#database
+      .prepare(
+        "UPDATE activations SET state = 'queued', from_seq = ?, to_seq = ?, lease_owner = NULL, lease_until = NULL, lease_until_ms = NULL, available_at = ?, available_at_ms = ?, last_error = NULL, updated_at = ? WHERE activation_id = ?",
+      )
+      .run(
+        fromSeq,
+        toSeq,
+        resolvedAt.toISOString(),
+        resolvedAt.getTime(),
+        resolvedAt.toISOString(),
+        activationId,
+      );
+    this.#appendEvent({
+      actorId: SYSTEM_PRINCIPAL_ID,
+      aggregateId: activationId,
+      aggregateType: "activation",
+      idempotencyKey: `activation.quarantine_resolved:${activationId}:${integer(row, "attempt_count")}`,
+      payload: {
+        activationId,
+        ...resolution,
+        ...(mergedActivationId === undefined ? {} : { mergedActivationId }),
+      },
+      roomId: text(row, "room_id"),
+      type: "activation.quarantine_resolved",
+    });
+    return this.#activationFromRow(this.#requireActivationRow(activationId));
+  }
+
+  #quarantineExpiredActiveRuns(participantIds: string[], now: Date): void {
+    if (participantIds.length === 0) return;
+    const placeholders = participantIds.map(() => "?").join(", ");
+    const expiredActivations = this.#database
+      .prepare(
+        `SELECT activation.*
+         FROM activations AS activation
+         WHERE activation.participant_id IN (${placeholders})
+           AND activation.state = 'leased'
+           AND activation.lease_until_ms <= ?
+         ORDER BY activation.created_at, activation.activation_id`,
+      )
+      .all(...participantIds, now.getTime());
+
+    for (const activation of expiredActivations) {
+      const activationId = text(activation, "activation_id");
+      const activeRunAttempts = this.#database
+        .prepare(
+          "SELECT * FROM run_attempts WHERE activation_id = ? AND state IN ('starting', 'running') ORDER BY attempt_number",
+        )
+        .all(activationId);
+      const unprovenRuntimeProcesses = this.#database
+        .prepare(
+          "SELECT * FROM runtime_processes WHERE activation_id = ? AND state <> 'terminated' ORDER BY registered_at, runtime_process_id",
+        )
+        .all(activationId);
+      if (
+        activeRunAttempts.length === 0 &&
+        unprovenRuntimeProcesses.length === 0
+      ) {
+        this.#recoverExpiredActivationLease(
+          activation,
+          now,
+          "activation lease expired without an active RunAttempt",
+          "settled",
+        );
+        continue;
+      }
+      const runtimeProcessesForActiveRuns = activeRunAttempts.map((run) =>
+        this.#database
+          .prepare("SELECT * FROM runtime_processes WHERE run_attempt_id = ?")
+          .get(text(run, "run_attempt_id")),
+      );
+      if (
+        activeRunAttempts.length > 0 &&
+        runtimeProcessesForActiveRuns.every(
+          (process) =>
+            process !== undefined && text(process, "state") === "terminated",
+        )
+      ) {
+        this.#recoverExpiredTerminalProofActivation(
+          activation,
+          activeRunAttempts,
+          runtimeProcessesForActiveRuns as Row[],
+          now,
+        );
+        continue;
+      }
+      const hasPreparedRuntime = activeRunAttempts.some((run) =>
+        Boolean(
+          this.#database
+            .prepare(
+              "SELECT 1 AS present FROM runtime_processes WHERE run_attempt_id = ?",
+            )
+            .get(text(run, "run_attempt_id")),
+        ),
+      );
+      if (
+        activeRunAttempts.length > 0 &&
+        !hasPreparedRuntime &&
+        unprovenRuntimeProcesses.length === 0
+      ) {
+        this.#recoverExpiredPrePrepareActivation(
+          activation,
+          activeRunAttempts,
+          now,
+        );
+        continue;
+      }
+      const runAttemptIds = [
+        ...new Set([
+          ...activeRunAttempts.map((run) => text(run, "run_attempt_id")),
+          ...unprovenRuntimeProcesses.map((process) =>
+            text(process, "run_attempt_id"),
+          ),
+        ]),
+      ];
+      const error = `activation lease expired with ${String(runAttemptIds.length)} RunAttempt(s) whose runtime state cannot be safely released`;
+
+      for (const runAttemptId of runAttemptIds) {
+        const run = this.#requireRunAttemptRow(runAttemptId);
+        if (text(run, "state") === "orphaned") continue;
+        this.#database
+          .prepare(
+            "UPDATE run_attempts SET state = 'orphaned', error = ?, finished_at = ? WHERE run_attempt_id = ?",
+          )
+          .run(error, now.toISOString(), runAttemptId);
+        this.#appendEvent({
+          actorId: SYSTEM_PRINCIPAL_ID,
+          aggregateId: runAttemptId,
+          aggregateType: "run_attempt",
+          idempotencyKey: `run.orphan:${runAttemptId}`,
+          payload: {
+            activationId,
+            previousHostId: text(run, "host_id"),
+            runAttemptId,
+          },
+          roomId: text(activation, "room_id"),
+          type: "run.orphaned",
+        });
+      }
+
+      this.#database
+        .prepare(
+          "UPDATE activations SET state = 'quarantined', lease_owner = NULL, lease_until = NULL, lease_until_ms = NULL, last_error = ?, updated_at = ? WHERE activation_id = ? AND state = 'leased'",
+        )
+        .run(error, now.toISOString(), activationId);
+      this.#database
+        .prepare(
+          "UPDATE runtime_processes SET state = 'orphaned', updated_at = ? WHERE activation_id = ? AND state IN ('prepared', 'active')",
+        )
+        .run(now.toISOString(), activationId);
+      this.#appendEvent({
+        actorId: SYSTEM_PRINCIPAL_ID,
+        aggregateId: activationId,
+        aggregateType: "activation",
+        idempotencyKey: `activation.quarantine:${activationId}:${integer(activation, "attempt_count")}`,
+        payload: {
+          activationId,
+          error,
+          previousHostId: nullableText(activation, "lease_owner"),
+          runAttemptIds,
+        },
+        roomId: text(activation, "room_id"),
+        type: "activation.quarantined",
+      });
+    }
+  }
+
+  #recoverExpiredTerminalProofActivation(
+    activation: Row,
+    runAttempts: Row[],
+    runtimeProcesses: Row[],
+    now: Date,
+  ): void {
+    const activationId = text(activation, "activation_id");
+    const error =
+      "activation lease expired after runtime termination was proven but before RunAttempt bookkeeping completed";
+    for (const [index, runAttempt] of runAttempts.entries()) {
+      const runtimeProcess = runtimeProcesses[index]!;
+      const runAttemptId = text(runAttempt, "run_attempt_id");
+      const exitCode = nullableInteger(runtimeProcess, "exit_code");
+      const exitSignal = nullableText(runtimeProcess, "exit_signal");
+      const state = exitCode === 0 ? "exited" : "failed";
+      this.#database
+        .prepare(
+          "UPDATE run_attempts SET state = ?, exit_code = ?, exit_signal = ?, error = ?, finished_at = ? WHERE run_attempt_id = ? AND state IN ('starting', 'running')",
+        )
+        .run(
+          state,
+          exitCode,
+          exitSignal,
+          state === "exited" ? null : error,
+          nullableText(runtimeProcess, "terminated_at") ?? now.toISOString(),
+          runAttemptId,
+        );
+      const placementId = nullableText(runAttempt, "placement_id");
+      if (placementId !== null) {
+        const placement = this.#requirePlacementRow(placementId);
+        if (text(placement, "state") !== "released") {
+          this.#setPlacementState(placement, "released", error);
+          this.#releasePlacementResources(placementId);
+        }
+      }
+      this.#appendEvent({
+        actorId: SYSTEM_PRINCIPAL_ID,
+        aggregateId: runAttemptId,
+        aggregateType: "run_attempt",
+        idempotencyKey: `run.finish:${runAttemptId}`,
+        payload: {
+          activationId,
+          ...(placementId === null ? {} : { placementId }),
+          runAttemptId,
+          state,
+          terminalProofReconciled: true,
+        },
+        roomId: text(activation, "room_id"),
+        type: "run.finished",
+      });
+    }
+    this.#recoverExpiredActivationLease(
+      activation,
+      now,
+      error,
+      "terminal_proof",
+    );
+  }
+
+  #recoverExpiredPrePrepareActivation(
+    activation: Row,
+    runAttempts: Row[],
+    now: Date,
+  ): void {
+    const activationId = text(activation, "activation_id");
+    const error =
+      "activation lease expired before any RuntimeProcess was durably prepared";
+    for (const runAttempt of runAttempts) {
+      const runAttemptId = text(runAttempt, "run_attempt_id");
+      this.#database
+        .prepare(
+          "UPDATE run_attempts SET state = 'failed', error = ?, finished_at = ? WHERE run_attempt_id = ? AND state IN ('starting', 'running')",
+        )
+        .run(error, now.toISOString(), runAttemptId);
+      const placementId = nullableText(runAttempt, "placement_id");
+      if (placementId !== null) {
+        const placement = this.#requirePlacementRow(placementId);
+        if (text(placement, "state") !== "released") {
+          this.#setPlacementState(placement, "released", error);
+          this.#releasePlacementResources(placementId);
+        }
+      }
+      this.#appendEvent({
+        actorId: SYSTEM_PRINCIPAL_ID,
+        aggregateId: runAttemptId,
+        aggregateType: "run_attempt",
+        idempotencyKey: `run.finish:${runAttemptId}`,
+        payload: {
+          activationId,
+          error,
+          ...(placementId === null ? {} : { placementId }),
+          runAttemptId,
+          state: "failed",
+        },
+        roomId: text(activation, "room_id"),
+        type: "run.finished",
+      });
+    }
+    this.#recoverExpiredActivationLease(activation, now, error, "pre_prepare");
+  }
+
+  #recoverExpiredActivationLease(
+    activation: Row,
+    now: Date,
+    error: string,
+    recoveryKind: "pre_prepare" | "settled" | "terminal_proof",
+  ): void {
+    const activationId = text(activation, "activation_id");
+    const activePlacements = this.#database
+      .prepare(
+        "SELECT * FROM placements WHERE activation_id = ? AND state IN ('reserved', 'consumed') ORDER BY created_at, placement_id",
+      )
+      .all(activationId);
+    for (const placement of activePlacements) {
+      const placementId = text(placement, "placement_id");
+      this.#setPlacementState(placement, "released", error);
+      this.#releasePlacementResources(placementId);
+    }
+    const followUp = this.#database
+      .prepare(
+        "SELECT * FROM activations WHERE room_id = ? AND participant_id = ? AND state = 'queued' AND activation_id <> ?",
+      )
+      .get(
+        text(activation, "room_id"),
+        text(activation, "participant_id"),
+        activationId,
+      );
+    let fromSeq = integer(activation, "from_seq");
+    let toSeq = integer(activation, "to_seq");
+    let mergedActivationId: string | undefined;
+    if (followUp !== undefined) {
+      fromSeq = Math.min(fromSeq, integer(followUp, "from_seq"));
+      toSeq = Math.max(toSeq, integer(followUp, "to_seq"));
+      mergedActivationId = text(followUp, "activation_id");
+      this.#database
+        .prepare(
+          "UPDATE activations SET state = 'cancelled', last_error = ?, updated_at = ? WHERE activation_id = ?",
+        )
+        .run(
+          `merged into ${recoveryKind} recovery ${activationId}`,
+          now.toISOString(),
+          mergedActivationId,
+        );
+    }
+    this.#database
+      .prepare(
+        "UPDATE activations SET state = 'queued', from_seq = ?, to_seq = ?, lease_owner = NULL, lease_until = NULL, lease_until_ms = NULL, available_at = ?, available_at_ms = ?, last_error = ?, updated_at = ? WHERE activation_id = ?",
+      )
+      .run(
+        fromSeq,
+        toSeq,
+        now.toISOString(),
+        now.getTime(),
+        error,
+        now.toISOString(),
+        activationId,
+      );
+    this.#appendEvent({
+      actorId: SYSTEM_PRINCIPAL_ID,
+      aggregateId: activationId,
+      aggregateType: "activation",
+      idempotencyKey: `activation.${recoveryKind}_recover:${activationId}:${integer(activation, "attempt_count")}`,
+      payload: {
+        activationId,
+        error,
+        recoveryKind,
+        ...(mergedActivationId === undefined ? {} : { mergedActivationId }),
+      },
+      roomId: text(activation, "room_id"),
+      type: "activation.recovered",
+    });
+  }
+
+  #timestamp(): string {
+    return this.#now().toISOString();
+  }
+
+  #transaction<T>(operation: () => T): T {
+    this.#database.exec("BEGIN IMMEDIATE");
+    try {
+      const result = operation();
+      this.#database.exec("COMMIT");
+      return result;
+    } catch (error) {
+      this.#database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+}
+
+function executionPolicyContentFromInput(
+  input: ExecutionPolicyContent,
+): ExecutionPolicyContent {
+  return {
+    modelIntent: input.modelIntent,
+    preferred: input.preferred,
+    required: input.required,
+    retryPolicyRef: input.retryPolicyRef,
+    sessionPolicy: input.sessionPolicy,
+  };
+}
+
+function agentDefinitionContentFromInput(
+  input: AgentDefinitionContent,
+): AgentDefinitionContent {
+  return {
+    executionPolicyRevisionId: input.executionPolicyRevisionId,
+    instructionRefs: input.instructionRefs,
+    memoryPolicyRef: input.memoryPolicyRef,
+    role: input.role.trim(),
+    skillRefs: input.skillRefs,
+  };
+}
+
+function canonicalDigest(value: unknown): string {
+  return `sha256:${createHash("sha256")
+    .update(JSON.stringify(canonicalValue(value)), "utf8")
+    .digest("hex")}`;
+}
+
+function canonicalValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalValue);
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .filter(([, nested]) => nested !== undefined)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, nested]) => [key, canonicalValue(nested)]),
+    );
+  }
+  return value;
+}
+
+function eventPayloadText(event: RoomEvent, key: string): string {
+  const value = event.payload[key];
+  if (typeof value !== "string") {
+    throw new Error(`expected event payload ${key} to be text`);
+  }
+  return value;
+}
+
+function capacityProfileResourceId(
+  hostId: string,
+  runtimeProfileId: string,
+): string {
+  return JSON.stringify([hostId, runtimeProfileId]);
+}
+
+function text(row: Row, key: string): string {
+  const value = row[key];
+  if (typeof value !== "string") throw new Error(`expected ${key} to be text`);
+  return value;
+}
+
+function nullableText(row: Row, key: string): string | null {
+  const value = row[key];
+  if (value === null || value === undefined) return null;
+  if (typeof value !== "string") throw new Error(`expected ${key} to be text`);
+  return value;
+}
+
+function integer(row: Row, key: string): number {
+  const value = row[key];
+  if (typeof value !== "number" || !Number.isInteger(value)) {
+    throw new Error(`expected ${key} to be an integer`);
+  }
+  return value;
+}
+
+function nullableInteger(row: Row, key: string): number | null {
+  const value = row[key];
+  if (value === null || value === undefined) return null;
+  if (typeof value !== "number" || !Number.isInteger(value)) {
+    throw new Error(`expected ${key} to be an integer`);
+  }
+  return value;
+}
+
+function jsonObject(row: Row, key: string): Record<string, unknown> {
+  const parsed: unknown = JSON.parse(text(row, key));
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error(`expected ${key} to contain a JSON object`);
+  }
+  return parsed as Record<string, unknown>;
+}
+
+function stringArray(row: Row, key: string): string[] {
+  const parsed: unknown = JSON.parse(text(row, key));
+  if (
+    !Array.isArray(parsed) ||
+    parsed.some((value) => typeof value !== "string")
+  ) {
+    throw new Error(`expected ${key} to contain strings`);
+  }
+  return parsed;
+}
