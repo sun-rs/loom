@@ -18,7 +18,6 @@ import {
   RuntimeOfferSchema,
   RuntimeCertificationSchema,
   RuntimeOfferProjectionSchema,
-  WakeHintSchema,
   type Activation,
   type ActivationCredentialScope,
   type ActivationReason,
@@ -64,11 +63,12 @@ import {
   issueAuthenticatedWorkerExecutionContext,
 } from "./auth.ts";
 import { canonicalDigest, canonicalValue } from "./canonical-digest.ts";
-import { requireHumanRoomOwner } from "./collaboration-policy.ts";
+import { requireRoomMember } from "./collaboration-policy.ts";
+import { roomProjectionFromRow } from "./collaboration-projection.ts";
 import {
-  newLegacyRoom,
-  roomProjectionFromRow,
-} from "./collaboration-projection.ts";
+  CollaborationService,
+  type MessageRecipient,
+} from "./collaboration-service.ts";
 import {
   planNextPlacement,
   type PlacementPlannerInput,
@@ -83,6 +83,10 @@ import {
   text,
   type Row,
 } from "./sqlite-row.ts";
+import {
+  RoomEventWriter,
+  type AppendRoomEventInput,
+} from "./room-event-writer.ts";
 import { taskProjectionFromRow } from "./task-projection.ts";
 import type {
   InboxItem,
@@ -96,18 +100,25 @@ import type {
   InputRequestMutationResult,
   InputRequestResolveMutationResult,
   MessageMutationResult,
+  MessagePage,
   OutboxEntry,
   PlacementLaunchClaim,
   Principal,
   ProvisionedHostCredential,
   ProvisionedPrincipal,
   Room,
+  RoomMembership,
+  RoomMembershipMutationResult,
+  RoomMembershipRemovalResult,
   RoomSnapshot,
   RunAttempt,
   RuntimeProcessRecord,
   SyncResult,
   TaskCreateMutationResult,
   TaskMutationResult,
+  Thread,
+  ThreadMutationResult,
+  Workspace,
 } from "./types.ts";
 
 const SYSTEM_PRINCIPAL_ID = "principal_system";
@@ -155,11 +166,6 @@ export type RoomKernelOptions = {
   runtimeOfferMaxTtlMs?: number;
 };
 
-type MessageRecipient = {
-  participantId: string;
-  reason: ActivationReason;
-};
-
 export class RoomKernel {
   readonly databasePath: string;
   readonly #database: DatabaseSync;
@@ -172,6 +178,8 @@ export class RoomKernel {
   readonly #hostPlacementLimits: Map<string, number>;
   readonly #poolPlacementLimits: Map<string, number>;
   readonly #runtimeProfilePlacementLimits: Map<string, number>;
+  readonly #roomEvents: RoomEventWriter;
+  readonly #collaboration: CollaborationService;
 
   constructor(options: RoomKernelOptions) {
     this.databasePath = options.databasePath;
@@ -252,6 +260,17 @@ export class RoomKernel {
       throw new Error("runtimeOfferMaxTtlMs must be a positive integer");
     }
     this.#database = new DatabaseSync(options.databasePath, { timeout: 5_000 });
+    this.#roomEvents = new RoomEventWriter({
+      createId: this.#createId,
+      database: this.#database,
+      now: this.#now,
+    });
+    this.#collaboration = new CollaborationService({
+      createId: this.#createId,
+      database: this.#database,
+      events: this.#roomEvents,
+      now: this.#now,
+    });
   }
 
   initialize(): void {
@@ -728,46 +747,10 @@ export class RoomKernel {
   ): Room {
     return this.#transaction(() => {
       const actorId = this.#requireAuthenticatedActor(actor);
-      requireHumanRoomOwner(
+      return this.#collaboration.createRoom(
         this.#principalFromRow(this.#requirePrincipal(actorId)),
-      );
-      const room = newLegacyRoom(
-        this.#createId("room"),
         input,
-        this.#timestamp(),
       );
-      this.#database
-        .prepare(
-          "INSERT INTO rooms(room_id, workspace_id, kind, slug, name, next_seq, created_at) VALUES(?, ?, ?, ?, ?, 1, ?)",
-        )
-        .run(
-          room.roomId,
-          room.workspaceId,
-          room.kind,
-          room.slug,
-          room.name,
-          room.createdAt,
-        );
-      this.#database
-        .prepare(
-          "INSERT INTO memberships(room_id, principal_id, role, joined_at) VALUES(?, ?, 'owner', ?)",
-        )
-        .run(room.roomId, actorId, room.createdAt);
-      this.#appendEvent({
-        actorId,
-        aggregateId: room.roomId,
-        aggregateType: "room",
-        idempotencyKey: `room.create:${room.roomId}`,
-        payload: {
-          kind: room.kind,
-          name: room.name,
-          slug: room.slug,
-          workspaceId: room.workspaceId,
-        },
-        roomId: room.roomId,
-        type: "room.created",
-      });
-      return room;
     });
   }
 
@@ -777,24 +760,153 @@ export class RoomKernel {
   ): void {
     this.#transaction(() => {
       const actorId = this.#requireAuthenticatedActor(actor);
-      this.#requireMember(input.roomId, actorId);
-      this.#requirePrincipal(input.principalId);
-      const joinedAt = this.#timestamp();
-      const result = this.#database
-        .prepare(
-          "INSERT OR IGNORE INTO memberships(room_id, principal_id, role, joined_at) VALUES(?, ?, 'member', ?)",
-        )
-        .run(input.roomId, input.principalId, joinedAt);
-      if (Number(result.changes) === 0) return;
-      this.#appendEvent({
-        actorId,
-        aggregateId: input.principalId,
-        aggregateType: "membership",
-        idempotencyKey: `membership.add:${input.principalId}`,
-        payload: { participantId: input.principalId },
-        roomId: input.roomId,
-        type: "membership.added",
-      });
+      this.#collaboration.addMember(actorId, input);
+    });
+  }
+
+  listWorkspaces(actor: AuthenticatedActorContext): Workspace[] {
+    return this.#collaboration.listWorkspaces(
+      this.#requireAuthenticatedActor(actor),
+    );
+  }
+
+  listRooms(
+    actor: AuthenticatedActorContext,
+    input: { workspaceId?: string } = {},
+  ): Room[] {
+    return this.#collaboration.listRooms(
+      this.#requireAuthenticatedActor(actor),
+      input,
+    );
+  }
+
+  listRoomMemberships(
+    actor: AuthenticatedActorContext,
+    input: { roomId: string },
+  ): RoomMembership[] {
+    return this.#collaboration.listRoomMemberships(
+      this.#requireAuthenticatedActor(actor),
+      input.roomId,
+    );
+  }
+
+  addRoomMember(
+    actor: AuthenticatedActorContext,
+    input: {
+      basedOnRoomSeq: number;
+      idempotencyKey: string;
+      principalId: string;
+      role: RoomMembership["role"];
+      roomId: string;
+    },
+  ): RoomMembershipMutationResult {
+    return this.#transaction(() => {
+      const actorId = this.#requireAuthenticatedActor(actor);
+      return this.#collaboration.addRoomMember(
+        this.#principalFromRow(this.#requirePrincipal(actorId)),
+        input,
+      );
+    });
+  }
+
+  setRoomMemberRole(
+    actor: AuthenticatedActorContext,
+    input: {
+      basedOnRoomSeq: number;
+      idempotencyKey: string;
+      principalId: string;
+      role: RoomMembership["role"];
+      roomId: string;
+    },
+  ): RoomMembershipMutationResult {
+    return this.#transaction(() => {
+      const actorId = this.#requireAuthenticatedActor(actor);
+      return this.#collaboration.setRoomMemberRole(
+        this.#principalFromRow(this.#requirePrincipal(actorId)),
+        input,
+      );
+    });
+  }
+
+  removeRoomMember(
+    actor: AuthenticatedActorContext,
+    input: {
+      basedOnRoomSeq: number;
+      idempotencyKey: string;
+      principalId: string;
+      roomId: string;
+    },
+  ): RoomMembershipRemovalResult {
+    return this.#transaction(() => {
+      const actorId = this.#requireAuthenticatedActor(actor);
+      return this.#collaboration.removeRoomMember(
+        this.#principalFromRow(this.#requirePrincipal(actorId)),
+        input,
+      );
+    });
+  }
+
+  listThreads(
+    actor: AuthenticatedActorContext,
+    input: { roomId: string },
+  ): Thread[] {
+    return this.#collaboration.listThreads(
+      this.#requireAuthenticatedActor(actor),
+      input.roomId,
+    );
+  }
+
+  listMessages(
+    actor: AuthenticatedActorContext,
+    input: {
+      afterSeq?: number;
+      limit?: number;
+      roomId: string;
+      threadId?: string;
+    },
+  ): MessagePage {
+    return this.#collaboration.listMessages(
+      this.#requireAuthenticatedActor(actor),
+      input,
+    );
+  }
+
+  createThread(
+    actor: AuthenticatedActorContext,
+    input: {
+      basedOnRoomSeq: number;
+      idempotencyKey: string;
+      recipientIds: string[];
+      roomId: string;
+      rootMessageId: string;
+    },
+  ): ThreadMutationResult {
+    return this.#transaction(() => {
+      const actorId = this.#requireAuthenticatedActor(actor);
+      return this.#collaboration.createThread(
+        this.#principalFromRow(this.#requirePrincipal(actorId)),
+        input,
+      );
+    });
+  }
+
+  replyThread(
+    actor: AuthenticatedActorContext,
+    input: {
+      basedOnRoomSeq: number;
+      body: string;
+      idempotencyKey: string;
+      recipientIds: string[];
+      roomId: string;
+      threadId: string;
+    },
+  ): MessageMutationResult {
+    return this.#transaction(() => {
+      const actorId = this.#requireAuthenticatedActor(actor);
+      return this.#collaboration.replyThread(
+        this.#principalFromRow(this.#requirePrincipal(actorId)),
+        input,
+      );
     });
   }
 
@@ -810,75 +922,10 @@ export class RoomKernel {
   ): MessageMutationResult {
     return this.#transaction(() => {
       const actorId = this.#requireAuthenticatedActor(actor);
-      this.#requireMember(input.roomId, actorId);
-      const body = input.body.trim();
-      if (body.length === 0) throw new Error("message body is required");
-      if (input.idempotencyKey.trim().length === 0) {
-        throw new Error("idempotencyKey is required");
-      }
-
-      const recipients = this.#normalizeRecipients(
-        input.roomId,
-        actorId,
-        input.recipients,
+      return this.#collaboration.postMessage(
+        this.#principalFromRow(this.#requirePrincipal(actorId)),
+        input,
       );
-      const recipientPayload = recipients.map((recipient) => ({
-        participantId: recipient.participantId,
-        reason: recipient.reason,
-      }));
-
-      const previous = this.#database
-        .prepare(
-          "SELECT * FROM room_events WHERE room_id = ? AND idempotency_key = ?",
-        )
-        .get(input.roomId, input.idempotencyKey);
-      if (previous) {
-        const event = this.#eventFromRow(previous);
-        if (
-          event.type !== "message.posted" ||
-          event.actorId !== actorId ||
-          event.payload.body !== body ||
-          JSON.stringify(event.payload.recipients) !==
-            JSON.stringify(recipientPayload)
-        ) {
-          throw new IdempotencyConflictError(
-            `idempotency key ${input.idempotencyKey} was already used for another mutation`,
-          );
-        }
-        return { activationIds: [], deduplicated: true, event };
-      }
-
-      this.#assertFreshContext(input.roomId, actorId, input.basedOnRoomSeq);
-
-      const messageId = this.#createId("message");
-      const createdAt = this.#timestamp();
-      this.#database
-        .prepare(
-          "INSERT INTO messages(message_id, room_id, actor_id, body, created_at) VALUES(?, ?, ?, ?, ?)",
-        )
-        .run(messageId, input.roomId, actorId, body, createdAt);
-
-      const event = this.#appendEvent({
-        actorId,
-        aggregateId: messageId,
-        aggregateType: "message",
-        idempotencyKey: input.idempotencyKey,
-        payload: {
-          body,
-          messageId,
-          ...(input.basedOnRoomSeq === undefined
-            ? {}
-            : { basedOnRoomSeq: input.basedOnRoomSeq }),
-          recipientIds: recipients.map((recipient) => recipient.participantId),
-          recipients: recipientPayload,
-        },
-        roomId: input.roomId,
-        type: "message.posted",
-      });
-
-      const activationIds = this.#deriveAttention(event, recipients, createdAt);
-
-      return { activationIds, deduplicated: false, event };
     });
   }
 
@@ -4269,62 +4316,8 @@ export class RoomKernel {
     };
   }
 
-  #appendEvent(input: {
-    actorId: string;
-    aggregateId: string;
-    aggregateType: string;
-    idempotencyKey: string;
-    payload: Record<string, unknown>;
-    roomId: string;
-    type: string;
-  }): RoomEvent {
-    const room = this.#requireRoom(input.roomId);
-    const roomSeq = integer(room, "next_seq");
-    const event = RoomEventSchema.parse({
-      eventId: this.#createId("event"),
-      roomId: input.roomId,
-      roomSeq,
-      type: input.type,
-      actorId: input.actorId,
-      aggregateType: input.aggregateType,
-      aggregateId: input.aggregateId,
-      payload: input.payload,
-      idempotencyKey: input.idempotencyKey,
-      schemaVersion: 1,
-      createdAt: this.#timestamp(),
-    });
-    this.#database
-      .prepare("UPDATE rooms SET next_seq = next_seq + 1 WHERE room_id = ?")
-      .run(input.roomId);
-    this.#database
-      .prepare(
-        "INSERT INTO room_events(event_id, room_id, room_seq, type, actor_id, aggregate_type, aggregate_id, payload_json, idempotency_key, schema_version, created_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      )
-      .run(
-        event.eventId,
-        event.roomId,
-        event.roomSeq,
-        event.type,
-        event.actorId,
-        event.aggregateType,
-        event.aggregateId,
-        JSON.stringify(event.payload),
-        event.idempotencyKey,
-        event.schemaVersion,
-        event.createdAt,
-      );
-    this.#insertOutbox({
-      payload: {
-        eventId: event.eventId,
-        roomId: event.roomId,
-        roomSeq: event.roomSeq,
-        type: event.type,
-      },
-      roomId: event.roomId,
-      roomSeq: event.roomSeq,
-      topic: "room.event",
-    });
-    return event;
+  #appendEvent(input: AppendRoomEventInput): RoomEvent {
+    return this.#roomEvents.append(input);
   }
 
   #insertOutbox(input: {
@@ -4333,18 +4326,7 @@ export class RoomKernel {
     roomSeq: number;
     topic: string;
   }): void {
-    this.#database
-      .prepare(
-        "INSERT INTO outbox(outbox_id, room_id, room_seq, topic, payload_json, created_at) VALUES(?, ?, ?, ?, ?, ?)",
-      )
-      .run(
-        this.#createId("outbox"),
-        input.roomId,
-        input.roomSeq,
-        input.topic,
-        JSON.stringify(input.payload),
-        this.#timestamp(),
-      );
+    this.#roomEvents.insertOutbox(input);
   }
 
   #deriveAttention(
@@ -4352,64 +4334,7 @@ export class RoomKernel {
     recipients: MessageRecipient[],
     createdAt: string,
   ): string[] {
-    const activationIds: string[] = [];
-    for (const recipient of recipients) {
-      this.#insertInboxItem({
-        createdAt,
-        event,
-        participantId: recipient.participantId,
-        reason: recipient.reason,
-      });
-
-      const queuedRow = this.#database
-        .prepare(
-          "SELECT * FROM activations WHERE room_id = ? AND participant_id = ? AND state = 'queued'",
-        )
-        .get(event.roomId, recipient.participantId);
-
-      let activationId: string;
-      if (queuedRow) {
-        activationId = text(queuedRow, "activation_id");
-        this.#database
-          .prepare(
-            "UPDATE activations SET to_seq = MAX(to_seq, ?), updated_at = ? WHERE activation_id = ?",
-          )
-          .run(event.roomSeq, createdAt, activationId);
-      } else {
-        activationId = this.#createId("activation");
-        this.#database
-          .prepare(
-            "INSERT INTO activations(activation_id, room_id, participant_id, from_seq, to_seq, reason, state, available_at, available_at_ms, attempt_count, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, 'queued', ?, ?, 0, ?, ?)",
-          )
-          .run(
-            activationId,
-            event.roomId,
-            recipient.participantId,
-            event.roomSeq,
-            event.roomSeq,
-            recipient.reason,
-            createdAt,
-            this.#now().getTime(),
-            createdAt,
-            createdAt,
-          );
-      }
-      activationIds.push(activationId);
-      const wakeHint = WakeHintSchema.parse({
-        activationId,
-        participantId: recipient.participantId,
-        roomId: event.roomId,
-        headCursor: event.roomSeq,
-        reason: recipient.reason,
-      });
-      this.#insertOutbox({
-        payload: wakeHint,
-        roomId: event.roomId,
-        roomSeq: event.roomSeq,
-        topic: "activation.requested",
-      });
-    }
-    return activationIds;
+    return this.#roomEvents.deriveAttention(event, recipients, createdAt);
   }
 
   #insertInboxItem(input: {
@@ -4418,19 +4343,7 @@ export class RoomKernel {
     participantId: string;
     reason: ActivationReason;
   }): void {
-    this.#database
-      .prepare(
-        "INSERT INTO inbox_items(inbox_item_id, room_id, participant_id, event_id, event_seq, reason, state, created_at) VALUES(?, ?, ?, ?, ?, ?, 'pending', ?)",
-      )
-      .run(
-        this.#createId("inbox"),
-        input.event.roomId,
-        input.participantId,
-        input.event.eventId,
-        input.event.roomSeq,
-        input.reason,
-        input.createdAt,
-      );
+    this.#roomEvents.insertInboxItem(input);
   }
 
   #transitionOwnedTask(
@@ -5520,25 +5433,6 @@ export class RoomKernel {
     return event;
   }
 
-  #normalizeRecipients(
-    roomId: string,
-    actorId: string,
-    recipients: MessageRecipient[],
-  ): MessageRecipient[] {
-    const normalized = new Map<string, MessageRecipient>();
-    for (const recipient of recipients) {
-      if (recipient.participantId === actorId) continue;
-      this.#requireMember(roomId, recipient.participantId);
-      normalized.set(recipient.participantId, {
-        participantId: recipient.participantId,
-        reason: ActivationReasonSchema.parse(recipient.reason),
-      });
-    }
-    return [...normalized.values()].sort((left, right) =>
-      left.participantId.localeCompare(right.participantId),
-    );
-  }
-
   #roomAgentRecipients(
     roomId: string,
     reason: ActivationReason,
@@ -5790,17 +5684,7 @@ export class RoomKernel {
   }
 
   #requireMember(roomId: string, principalId: string): void {
-    this.#requireRoom(roomId);
-    const membership = this.#database
-      .prepare(
-        "SELECT 1 AS present FROM memberships WHERE room_id = ? AND principal_id = ?",
-      )
-      .get(roomId, principalId);
-    if (!membership) {
-      throw new ForbiddenError(
-        `principal ${principalId} is not a member of room ${roomId}`,
-      );
-    }
+    requireRoomMember(this.#database, roomId, principalId);
   }
 
   #requireTaskRow(taskId: string): Row {
@@ -5959,19 +5843,7 @@ export class RoomKernel {
   }
 
   #eventFromRow(row: Row): RoomEvent {
-    return RoomEventSchema.parse({
-      eventId: text(row, "event_id"),
-      roomId: text(row, "room_id"),
-      roomSeq: integer(row, "room_seq"),
-      type: text(row, "type"),
-      actorId: text(row, "actor_id"),
-      aggregateType: text(row, "aggregate_type"),
-      aggregateId: text(row, "aggregate_id"),
-      payload: jsonObject(row, "payload_json"),
-      idempotencyKey: text(row, "idempotency_key"),
-      schemaVersion: integer(row, "schema_version"),
-      createdAt: text(row, "created_at"),
-    });
+    return this.#roomEvents.eventFromRow(row);
   }
 
   #taskFromRow(row: Row): Task {

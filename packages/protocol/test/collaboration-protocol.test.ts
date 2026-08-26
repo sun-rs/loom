@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   MembershipRoleSchema,
+  MessageSchema,
   RoomKindSchema,
   RoomMembershipSchema,
   RoomSchema,
@@ -59,6 +60,24 @@ test("Workspace, Room roles, and Thread are strict provider-independent collabor
       principalId: "principal-alice",
       role: "admin",
       roomId: "room-core",
+    },
+  );
+  assert.deepEqual(
+    MessageSchema.parse({
+      actorId: "principal-alice",
+      body: "Canonical collaboration state",
+      createdAt: "2026-08-26T00:00:00.000Z",
+      messageId: "message-root",
+      roomId: "room-core",
+      roomSeq: 1,
+    }),
+    {
+      actorId: "principal-alice",
+      body: "Canonical collaboration state",
+      createdAt: "2026-08-26T00:00:00.000Z",
+      messageId: "message-root",
+      roomId: "room-core",
+      roomSeq: 1,
     },
   );
   assert.deepEqual(

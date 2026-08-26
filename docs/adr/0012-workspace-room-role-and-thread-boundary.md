@@ -1,6 +1,6 @@
 # ADR-0012：Workspace、Room Role 与 Thread 最小边界
 
-状态：Accepted / P1 protocol schema 与 Kernel schema v7 migration implemented / P2–P3 pending（2026-08-26）
+状态：Accepted / P1–P2 implemented / P3 pending（2026-08-26）
 
 ## 背景
 
@@ -90,10 +90,10 @@ schema v7 迁移旧数据时：
 
 1. **P0（已完成）**：冻结对象、owner 与迁移规则；daemon v4 只能消费 workspace mount identity。
 2. **P1（已完成，schema v7）**：严格 Workspace、RoomKind、MembershipRole、Thread protocol schemas；Room→Workspace、role、Thread/root/reply 复合 FK；可证明 Human owner 的 legacy migration，以及无法证明时的 fail-closed gate。新 Room 目前进入显式 legacy Workspace，只有 Human 可以创建并成为 owner。
-3. **P2（Kernel/API）**：Workspace/Room discovery、角色管理、message send、thread create/reply；全部要求认证、freshness 与 idempotency。
+3. **P2（已完成，Kernel/API v2）**：Workspace/Room discovery、成员读取/添加/移除/角色管理、Message 有界分页读取/发送、Thread 读取/创建/回复；全部要求认证，写命令要求 freshness 与 idempotency。owner/admin 权限与最后 Human owner 不变量在同一 transaction 内校验；有 active Task/InputRequest/Activation/RuntimeProcess 的成员不能被静默移除。跨 Room root/thread 引用、跨命令幂等键复用、stale role mutation 均 fail closed。原 Client API v1 保持兼容窄 surface，不以扩展 strict capability 的方式静默破坏旧客户端。
 4. **P3（Client E2）**：Human 创建 Workspace/Room、加入两个 Agent、发消息/Task、Thread 回复，断线重连后完全由 canonical sync 恢复。
 
-P2–P3 未完成前，前端不得自行实现 Workspace/role/thread 命令状态，daemon config 也不得被描述为 Workspace 管理面。schema v7 的 Workspace 业务容器不等于仍待实现的 canonical WorkspaceDefinition/mount control object。
+P3 未完成前，前端不得自行实现 Workspace/role/thread 命令状态，daemon config 也不得被描述为 Workspace 管理面。schema v7 的 Workspace 业务容器与 P2 discovery API 不等于仍待实现的 Workspace create/archive 或 canonical WorkspaceDefinition/mount control object。
 
 ## 后果
 

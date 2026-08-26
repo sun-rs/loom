@@ -6,12 +6,16 @@ import type {
   ExecutionPolicyRevision,
   InboxState,
   InputRequest,
+  Message,
   ParticipantKind,
   PlacementDecision,
   Room,
+  RoomMembership,
   RoomEvent,
   RuntimeRecoveryDescriptor,
   Task,
+  Thread,
+  Workspace,
 } from "@rah-os/protocol";
 
 export type Principal = {
@@ -184,6 +188,31 @@ export type MessageMutationResult = {
   activationIds: string[];
 };
 
+export type MessagePage = {
+  cursorAfter: number;
+  hasMore: boolean;
+  messages: Message[];
+};
+
+export type RoomMembershipMutationResult = {
+  deduplicated: boolean;
+  event: RoomEvent;
+  membership: RoomMembership;
+};
+
+export type RoomMembershipRemovalResult = {
+  deduplicated: boolean;
+  event: RoomEvent;
+  removedPrincipalId: string;
+};
+
+export type ThreadMutationResult = {
+  activationIds: string[];
+  deduplicated: boolean;
+  event: RoomEvent;
+  thread: Thread;
+};
+
 export type TaskMutationResult = {
   deduplicated: boolean;
   event: RoomEvent;
@@ -209,7 +238,11 @@ export type {
   Activation,
   ActivationReason,
   InputRequest,
+  Message,
   Room,
+  RoomMembership,
   RoomEvent,
   Task,
+  Thread,
+  Workspace,
 };

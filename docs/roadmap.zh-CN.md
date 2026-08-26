@@ -1,6 +1,6 @@
 # RAH OS 实施路线与门禁
 
-状态：**provisional**。独立 `@rah-os/core`、Task Coordination v1、schema v7 Workspace/Room/Role/Thread 存储边界、atomic Placement launch claim 与 MultiLaneAgentHost 已通过 local gate；可执行 daemon config v4 又通过双 participant、双 immutable profile、Placement-selected external Worker E2。Host→Worker 无 Agent PAT delegation、instance generation、deadline、content-free wake、跨进程 CLI/SIGTERM/restart，以及 Codex/Kimi/OpenCode/Claude Code Sonnet compatibility delivery gate 已达到 E2 local。Workspace/Room/Role/Thread 管理 API、canonical WorkspaceDefinition/mount/Capacity control object、真实 mixed CLI v4 certification、可安装 packaging、剩余 Client/control/hint API、Windows recovery和 supervisor artifact lifecycle 尚未通过。
+状态：**provisional**。独立 `@rah-os/core`、Task Coordination v1、schema v7 与 collaboration P2 Workspace/Room/Role/Message/Thread Core + Client API、atomic Placement launch claim 与 MultiLaneAgentHost 已通过 local gate；可执行 daemon config v4 又通过双 participant、双 immutable profile、Placement-selected external Worker E2。Host→Worker 无 Agent PAT delegation、instance generation、deadline、content-free wake、跨进程 CLI/SIGTERM/restart，以及 Codex/Kimi/OpenCode/Claude Code Sonnet compatibility delivery gate 已达到 E2 local。P3 Workspace/Room create 与浏览器纵向 E2、canonical WorkspaceDefinition/mount/Capacity control object、真实 mixed CLI v4 certification、可安装 packaging、剩余 Client/control/hint API、Windows recovery 和 supervisor artifact lifecycle 尚未通过。
 
 ## Phase 0：仓库与协议基线
 
@@ -33,7 +33,7 @@
 
 ## Phase 2：本机 AgentHost
 
-当前增量：`@rah-os/core` 已提供 headless lifecycle/command/query/MultiLane 组合边界；Kernel schema v7 已拥有 Workspace 业务容器、RoomKind、MembershipRole 与 Thread FK，但管理 API 尚未开始。`@rah-os/daemon` 组合 compatibility config v2、single-profile v3 与 multi-participant/multi-profile v4。v4 精确校验 Host credential scope，启动时 probe/freeze 每个 active profile revision，发布 redacted workspace-aware Offers，由 Kernel Placement 选择 `runtimeOfferId`，再由 bounded MultiLane runner 启动 scoped Worker。Worker grant 不需要 Agent PAT；旧 daemon generation、过期 lease/run 或 revoked credential 都会 fence。canonical WorkspaceDefinition/mount/Capacity、mixed adapter/real CLI v4 recovery certification、Windows recovery、supervisor result GC、Keychain、launchd、签名/安装和 control endpoint 尚未提供。
+当前增量：`@rah-os/core` 已提供 headless lifecycle/command/query/MultiLane 组合边界；Kernel schema v7 与 P2 API 已拥有 Workspace/Room discovery、MembershipRole 管理、Message/Thread command/query 与 Thread FK，Human Client 使用同一 canonical owner。`@rah-os/daemon` 组合 compatibility config v2、single-profile v3 与 multi-participant/multi-profile v4。v4 精确校验 Host credential scope，启动时 probe/freeze 每个 active profile revision，发布 redacted workspace-aware Offers，由 Kernel Placement 选择 `runtimeOfferId`，再由 bounded MultiLane runner 启动 scoped Worker。Worker grant 不需要 Agent PAT；旧 daemon generation、过期 lease/run 或 revoked credential 都会 fence。Workspace/Room create/archive、canonical WorkspaceDefinition/mount/Capacity、mixed adapter/real CLI v4 recovery certification、Windows recovery、supervisor result GC、Keychain、launchd、签名/安装和 control endpoint 尚未提供。
 
 - Fake adapter 完整覆盖 start/resume/cancel/reap。
 - content-free wake WebSocket + reconnect pull backstop。
@@ -54,8 +54,8 @@
 - 已完成 slice：Task Coordination v1 的 assigned/open `todo`、Room Agent 广播与 atomic single-winner claim、`claimed -> in_progress -> waiting_input/blocked/submitted -> completed|cancelled`、release/assign/unblock/cancel、older same-Room dependency、dependency-ready wake、独立 claim lease、sidecar heartbeat、activation-scoped query、过期显式 reclaim、跨 RunAttempt canonical resume/稳定幂等重放、causal Worker command、process exit 与 Task completion 分离、未提交 Task 的 Activation completion proof/durable retry。
 - 已完成 slice：InputRequest `pending -> resolved`、Task `waiting_input -> todo`、claim release、designated human Inbox、无模型等待、resolve 后 Inbox/Activation/Outbox 唤醒、跨 Activation Task scope 与 completion proof。
 - 下一步：Task 父子关系/Artifact/Review 与更完整 crash recovery matrix；同一 Task 继续保持 single writer。
-- 已完成 slice：Client API v1 health/capabilities、Room `sync/ack` delivery proof、Task/InputRequest list、Task create/assign/unblock/cancel/complete、designated-responder resolve 与 daemon lifecycle/E2。
-- InputRequest cancel/expire、structured answer、通知升级，以及 message/Inbox/Artifact/Review 等剩余 Human Client command surface。
+- 已完成 slice：Client API v2 health/capabilities 与 v1 compatibility、Workspace/Room discovery、成员增删/角色、Message/Thread read/write、Room `sync/ack` delivery proof、Task/InputRequest list、Task create/assign/unblock/cancel/complete、designated-responder resolve 与 daemon lifecycle/E2。
+- InputRequest cancel/expire、structured answer、通知升级，以及 Workspace/Room create/archive、Inbox/Artifact/Review 等剩余 Human Client command surface。
 - 显式 artifact registry。
 - frozen review evidence。
 - worktree lease 和 verifier。

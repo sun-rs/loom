@@ -8,8 +8,17 @@ import {
   ClientAcknowledgeRequestSchema,
   ClientAcknowledgeResponseSchema,
   ClientHealthResponseSchema,
+  ClientHealthV1ResponseSchema,
   ClientInputRequestsListRequestSchema,
   ClientInputRequestsListResponseSchema,
+  ClientMessagePostRequestSchema,
+  ClientMessagesListRequestSchema,
+  ClientRoomMemberAddRequestSchema,
+  ClientRoomMemberRemoveRequestSchema,
+  ClientRoomsListRequestSchema,
+  ClientThreadCreateRequestSchema,
+  ClientThreadReplyRequestSchema,
+  ClientWorkspacesListRequestSchema,
   ClientRoomSyncRequestSchema,
   ClientRoomSyncResponseSchema,
   ClientTasksListRequestSchema,
@@ -45,8 +54,8 @@ import {
   WorkerTaskSubmitRequestSchema,
 } from "../src/index.ts";
 
-test("Client API v1 contracts are strict, actor-free, and transport-neutral", () => {
-  assert.equal(CLIENT_API_VERSION, 1);
+test("Client API v1/v2 contracts are strict, actor-free, and transport-neutral", () => {
+  assert.equal(CLIENT_API_VERSION, 2);
   assert.deepEqual(
     ClientRoomSyncRequestSchema.parse({
       afterSeq: 3,
@@ -66,6 +75,94 @@ test("Client API v1 contracts are strict, actor-free, and transport-neutral", ()
       actorId: "injected-human",
       consumerId: "browser-main",
       roomId: "room-1",
+    }),
+  );
+
+  assert.deepEqual(ClientWorkspacesListRequestSchema.parse({}), {});
+  assert.deepEqual(
+    ClientRoomsListRequestSchema.parse({ workspaceId: "workspace-1" }),
+    { workspaceId: "workspace-1" },
+  );
+  assert.deepEqual(
+    ClientRoomMemberAddRequestSchema.parse({
+      basedOnRoomSeq: 9,
+      idempotencyKey: "member-add-1",
+      principalId: "principal-bob",
+      role: "member",
+      roomId: "room-1",
+    }),
+    {
+      basedOnRoomSeq: 9,
+      idempotencyKey: "member-add-1",
+      principalId: "principal-bob",
+      role: "member",
+      roomId: "room-1",
+    },
+  );
+  assert.deepEqual(
+    ClientMessagePostRequestSchema.parse({
+      basedOnRoomSeq: 9,
+      body: "Room-owned message",
+      idempotencyKey: "message-post-1",
+      roomId: "room-1",
+    }),
+    {
+      basedOnRoomSeq: 9,
+      body: "Room-owned message",
+      idempotencyKey: "message-post-1",
+      recipients: [],
+      roomId: "room-1",
+    },
+  );
+  assert.deepEqual(
+    ClientRoomMemberRemoveRequestSchema.parse({
+      basedOnRoomSeq: 10,
+      idempotencyKey: "member-remove-1",
+      principalId: "principal-bob",
+      roomId: "room-1",
+    }),
+    {
+      basedOnRoomSeq: 10,
+      idempotencyKey: "member-remove-1",
+      principalId: "principal-bob",
+      roomId: "room-1",
+    },
+  );
+  assert.deepEqual(
+    ClientMessagesListRequestSchema.parse({
+      roomId: "room-1",
+      threadId: "thread-1",
+    }),
+    {
+      afterSeq: 0,
+      limit: 100,
+      roomId: "room-1",
+      threadId: "thread-1",
+    },
+  );
+  assert.deepEqual(
+    ClientThreadCreateRequestSchema.parse({
+      basedOnRoomSeq: 10,
+      idempotencyKey: "thread-create-1",
+      roomId: "room-1",
+      rootMessageId: "message-root",
+    }),
+    {
+      basedOnRoomSeq: 10,
+      idempotencyKey: "thread-create-1",
+      recipientIds: [],
+      roomId: "room-1",
+      rootMessageId: "message-root",
+    },
+  );
+  assert.throws(() =>
+    ClientThreadReplyRequestSchema.parse({
+      actorId: "injected-human",
+      basedOnRoomSeq: 11,
+      body: "reply",
+      idempotencyKey: "thread-reply-1",
+      roomId: "room-1",
+      threadId: "thread-1",
     }),
   );
   assert.throws(() =>
@@ -111,16 +208,24 @@ test("Client API v1 contracts are strict, actor-free, and transport-neutral", ()
   );
 
   const health = ClientHealthResponseSchema.parse({
-    apiVersion: 1,
+    apiVersion: 2,
     buildVersion: "0.1.0",
     capabilities: {
       cursorAcknowledge: true,
       hints: false,
       inputRequestRead: true,
       inputRequestResolve: true,
+      memberRead: true,
+      memberWrite: true,
+      messageRead: true,
+      messageWrite: true,
+      roomRead: true,
       roomSync: true,
       taskRead: true,
       taskWrite: true,
+      threadRead: true,
+      threadWrite: true,
+      workspaceRead: true,
     },
     kernelSchemaVersion: 3,
     protocolVersion: 1,
@@ -130,6 +235,25 @@ test("Client API v1 contracts are strict, actor-free, and transport-neutral", ()
   assert.equal(health.capabilities.hints, false);
   assert.throws(() =>
     ClientHealthResponseSchema.parse({ ...health, hostToken: "secret" }),
+  );
+  assert.equal(
+    ClientHealthV1ResponseSchema.parse({
+      apiVersion: 1,
+      buildVersion: "0.1.0",
+      capabilities: {
+        cursorAcknowledge: true,
+        hints: false,
+        inputRequestRead: true,
+        inputRequestResolve: true,
+        roomSync: true,
+        taskRead: true,
+        taskWrite: true,
+      },
+      kernelSchemaVersion: 7,
+      protocolVersion: 1,
+      state: "online",
+    }).apiVersion,
+    1,
   );
 
   const syncResponse = ClientRoomSyncResponseSchema.parse({

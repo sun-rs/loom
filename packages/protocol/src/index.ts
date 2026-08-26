@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { IdentifierSchema, TimestampSchema } from "./common.ts";
 import { RoomSchema } from "./collaboration.ts";
+import { RoomEventSchema, type RoomEvent } from "./room-event.ts";
 import {
   TaskSchema,
   TaskStateSchema,
@@ -13,6 +14,7 @@ export { TaskSchema, TaskStateSchema };
 export type { Task, TaskState };
 export {
   MembershipRoleSchema,
+  MessageSchema,
   RoomKindSchema,
   RoomMembershipSchema,
   RoomSchema,
@@ -22,6 +24,7 @@ export {
 } from "./collaboration.ts";
 export type {
   MembershipRole,
+  Message,
   Room,
   RoomKind,
   RoomMembership,
@@ -29,6 +32,10 @@ export type {
   Workspace,
   WorkspaceState,
 } from "./collaboration.ts";
+export * from "./client-collaboration.ts";
+export * from "./client-health.ts";
+export { RoomEventSchema } from "./room-event.ts";
+export type { RoomEvent } from "./room-event.ts";
 
 export const ParticipantKindSchema = z.enum(["human", "agent", "service"]);
 export type ParticipantKind = z.infer<typeof ParticipantKindSchema>;
@@ -47,23 +54,6 @@ export const ActivationReasonSchema = z.enum([
   "manual",
 ]);
 export type ActivationReason = z.infer<typeof ActivationReasonSchema>;
-
-export const RoomEventSchema = z
-  .object({
-    eventId: IdentifierSchema,
-    roomId: IdentifierSchema,
-    roomSeq: z.number().int().positive(),
-    type: z.string().regex(/^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/),
-    actorId: IdentifierSchema,
-    aggregateType: IdentifierSchema,
-    aggregateId: IdentifierSchema,
-    payload: z.record(z.string(), z.unknown()),
-    idempotencyKey: IdentifierSchema,
-    schemaVersion: z.number().int().positive(),
-    createdAt: TimestampSchema,
-  })
-  .strict();
-export type RoomEvent = z.infer<typeof RoomEventSchema>;
 
 export const ActivationStateSchema = z.enum([
   "queued",
@@ -1394,8 +1384,6 @@ export type ActivationCredentialScope = z.infer<
   typeof ActivationCredentialScopeSchema
 >;
 
-export const CLIENT_API_VERSION = 1 as const;
-
 export const ClientRoomSyncRequestSchema = z
   .object({
     afterSeq: z.number().int().nonnegative().optional(),
@@ -1666,28 +1654,6 @@ export const ClientInputRequestsListResponseSchema = z
 export type ClientInputRequestsListResponse = z.infer<
   typeof ClientInputRequestsListResponseSchema
 >;
-
-export const ClientHealthResponseSchema = z
-  .object({
-    apiVersion: z.literal(CLIENT_API_VERSION),
-    buildVersion: z.string().min(1),
-    capabilities: z
-      .object({
-        cursorAcknowledge: z.boolean(),
-        hints: z.boolean(),
-        inputRequestRead: z.boolean(),
-        inputRequestResolve: z.boolean(),
-        roomSync: z.boolean(),
-        taskRead: z.boolean(),
-        taskWrite: z.boolean(),
-      })
-      .strict(),
-    kernelSchemaVersion: z.number().int().positive(),
-    protocolVersion: z.number().int().positive(),
-    state: z.enum(["failed", "offline", "online", "starting"]),
-  })
-  .strict();
-export type ClientHealthResponse = z.infer<typeof ClientHealthResponseSchema>;
 
 export const WorkerAcknowledgeResponseSchema = z
   .object({

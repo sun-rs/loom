@@ -1,6 +1,6 @@
 # Client、Daemon 与部署边界
 
-状态：本机 daemon core 已有独立 composition/CLI entrypoint、严格配置、Host generation fencing、deadline、Outbox wake、Worker delivery/Task/InputRequest command，以及 versioned loopback Human Client API；fake daemon 已通过经 Client API resolve 的无 listening InputRequest gate。逃逸 descendant containment、完整 `RahClient`/control API、Artifact/Review workflow、CORS/LAN/hint、launchd/install/signing、Keychain、supervisor artifact GC 与 UI 尚未实现。
+状态：本机 daemon core 已有独立 composition/CLI entrypoint、严格配置、Host generation fencing、deadline、Outbox wake、Worker delivery/Task/InputRequest command，以及 collaboration P2 versioned loopback Human Client API；fake daemon 已通过经 Client API resolve 的无 listening InputRequest gate。P3 浏览器纵向 E2、完整 `RahClient`/control API、Artifact/Review workflow、CORS/LAN/hint、launchd/install/signing、Keychain、supervisor artifact GC 与 UI 尚未实现。
 
 ## 1. 产品形态不改变核心 owner
 
@@ -56,7 +56,7 @@ interface RahClient {
 
 建议实现 `HttpRahClient`、`DesktopRahClient` 和 `FakeRahClient`。Electron IPC、WKWebView message handler 或测试 fake 都只是 transport adapter；它们不能复制 command handler 或 projection。
 
-当前 `ClientApplicationService` 已实现上述 contract 的第一段：health/capabilities、Room `sync/ack`、Task/InputRequest list 和 InputRequest resolve。尚无通用 `execute`、Room discovery、Inbox、message、Task mutation、Artifact/Review 或 `subscribeHints`，因此不能把这一 slice 称为完整 UI SDK。
+当前 `ClientApplicationService` 已实现上述 contract 的 collaboration P2 段：health/capabilities、Workspace/Room discovery、Room `sync/ack`、成员读取/添加/移除/角色、Message 读取/发送、Thread 读取/创建/回复、Task/InputRequest list 与 mutation。尚无独立 `RahClient` package、Workspace/Room create/archive、Inbox query/resolve、Artifact/Review、Run Inspector 或 `subscribeHints`，因此不能把这一 slice 称为完整 UI SDK。
 
 ## 4. 通信协议
 
@@ -79,7 +79,7 @@ connect/reconnect
 
 WebSocket 在线不证明没有漏事件；hint 丢失时由 sync/reconciliation 恢复。Mac App 不得拥有一套只走 Electron IPC 的业务协议，Web/PWA 也不得拥有另一套 HTTP 业务协议。
 
-当前 HTTP API 使用 `/v1/client`，数据 route 每次认证 principal PAT。sync/ack 还校验当前 credential/Room/consumer 实际收到的 cursor；service restart 不会推进 durable ack，客户端只需重新 sync。Worker `/v1/worker` 使用另一端口和短命 Activation bearer，不能被 Human client 复用。
+当前 HTTP API 的 collaboration surface 使用 `/v2/client`；原 `/v1/client` Task/InputRequest/sync/ack 与窄 health contract 保持兼容。数据 route 每次认证 principal PAT。sync/ack 还校验当前 credential/Room/consumer 实际收到的 cursor；service restart 不会推进 durable ack，客户端只需重新 sync。Worker `/v1/worker` 使用另一端口和短命 Activation bearer，不能被 Human client 复用。
 
 ## 5. Capability 与版本协商
 
@@ -134,7 +134,7 @@ AgentHost 必须独立于窗口：
 
 上面的三段状态是正常 signal shutdown。管理面撤销 Host credential 时，Kernel 会直接 fence credential 并把 Host 标记为 `offline`；该路径可以跳过 drain，进行中的 RunAttempt 若无法再写 terminal proof，将按既有 lease expiry → orphan/quarantine → recovery 规则对账，不能把 revoke 伪装成正常完成。
 
-Unix socket 只是同一台机器上的启动协调，不是业务 fencing token，也不是跨机器分布式锁。Kernel 中的 daemon generation、Activation/RuntimeProcess lease 才保护业务 lane。当前 daemon compatibility config v2、single-profile config v3、placement-managed multi-profile config v4、Kernel schema fence、Client API v1 health/capability handshake 与升级 drain deadline 已存在；但尚无 launchd plist、签名安装包、Keychain token loader、daemon control API 或 UI 兼容矩阵，因此仍不能称为可安装的 Mac 后台产品。
+Unix socket 只是同一台机器上的启动协调，不是业务 fencing token，也不是跨机器分布式锁。Kernel 中的 daemon generation、Activation/RuntimeProcess lease 才保护业务 lane。当前 daemon compatibility config v2、single-profile config v3、placement-managed multi-profile config v4、Kernel schema fence、Client API v1/v2 health/capability handshake 与升级 drain deadline 已存在；但尚无 launchd plist、签名安装包、Keychain token loader、daemon control API 或 UI 兼容矩阵，因此仍不能称为可安装的 Mac 后台产品。
 
 ## 7. 可信局域网部署
 

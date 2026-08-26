@@ -13,16 +13,24 @@ test("Client API authenticates humans and exposes canonical Room work without ow
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
   const service = new ClientApplicationService({
     health: () => ({
-      apiVersion: 1,
+      apiVersion: 2,
       buildVersion: "test-build",
       capabilities: {
         cursorAcknowledge: true,
         hints: false,
         inputRequestRead: true,
         inputRequestResolve: true,
+        memberRead: true,
+        memberWrite: true,
+        messageRead: true,
+        messageWrite: true,
+        roomRead: true,
         roomSync: true,
         taskRead: true,
         taskWrite: true,
+        threadRead: true,
+        threadWrite: true,
+        workspaceRead: true,
       },
       kernelSchemaVersion: 3,
       protocolVersion: 1,
@@ -122,6 +130,13 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     assert.equal(health.apiVersion, 1);
     assert.equal(health.state, "online");
     assert.equal("hostToken" in health, false);
+    assert.equal("memberWrite" in health.capabilities, false);
+
+    const healthV2Response = await fetch(`${service.origin}/v2/client/health`);
+    assert.equal(healthV2Response.status, 200);
+    const healthV2 = await jsonObject(healthV2Response);
+    assert.equal(healthV2.apiVersion, 2);
+    assert.equal(healthV2.capabilities.memberWrite, true);
 
     const request = async (
       path: string,
@@ -139,6 +154,14 @@ test("Client API authenticates humans and exposes canonical Room work without ow
         method: "POST",
       });
 
+    const legacyP2Route = await request(
+      "/v1/client/workspaces/list",
+      {},
+      human.accessToken,
+    );
+    assert.equal(legacyP2Route.status, 404);
+    assert.equal(await responseErrorCode(legacyP2Route), "not_found");
+
     const unauthenticated = await request("/v1/client/rooms/sync", {
       consumerId: "browser-main",
       roomId: room.roomId,
@@ -153,6 +176,150 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     );
     assert.equal(nonMember.status, 403);
     assert.equal(await responseErrorCode(nonMember), "forbidden");
+
+    const workspacesResponse = await request(
+      "/v2/client/workspaces/list",
+      {},
+      human.accessToken,
+    );
+    assert.equal(workspacesResponse.status, 200);
+    const workspaces = await jsonObject(workspacesResponse);
+    assert.equal(workspaces.workspaces[0]?.workspaceId, room.workspaceId);
+
+    const roomsResponse = await request(
+      "/v2/client/rooms/list",
+      { workspaceId: room.workspaceId },
+      human.accessToken,
+    );
+    assert.equal(roomsResponse.status, 200);
+    const rooms = await jsonObject(roomsResponse);
+    assert.equal(rooms.rooms[0]?.roomId, room.roomId);
+
+    const membersResponse = await request(
+      "/v2/client/rooms/members/list",
+      { roomId: room.roomId },
+      human.accessToken,
+    );
+    assert.equal(membersResponse.status, 200);
+    const members = await jsonObject(membersResponse);
+    assert.equal(members.memberships.length, 3);
+
+    const postedResponse = await request(
+      "/v2/client/messages/post",
+      {
+        basedOnRoomSeq: requested.event.roomSeq,
+        body: "Open a canonical Thread from the Human client",
+        idempotencyKey: "client-message-posted",
+        recipients: [
+          {
+            participantId: agent.principal.principalId,
+            reason: "mention",
+          },
+        ],
+        roomId: room.roomId,
+      },
+      human.accessToken,
+    );
+    assert.equal(postedResponse.status, 200);
+    const posted = await jsonObject(postedResponse);
+    assert.equal(posted.event.type, "message.posted");
+    assert.equal(posted.activationIds.length, 1);
+
+    const threadResponse = await request(
+      "/v2/client/threads/create",
+      {
+        basedOnRoomSeq: posted.event.roomSeq,
+        idempotencyKey: "client-thread-created",
+        recipientIds: [agent.principal.principalId],
+        roomId: room.roomId,
+        rootMessageId: posted.event.aggregateId,
+      },
+      human.accessToken,
+    );
+    assert.equal(threadResponse.status, 200);
+    const thread = await jsonObject(threadResponse);
+    assert.equal(thread.thread.rootMessageId, posted.event.aggregateId);
+
+    const replyResponse = await request(
+      "/v2/client/threads/reply",
+      {
+        basedOnRoomSeq: thread.event.roomSeq,
+        body: "The reply is still a Room Message.",
+        idempotencyKey: "client-thread-replied",
+        recipientIds: [agent.principal.principalId],
+        roomId: room.roomId,
+        threadId: thread.thread.threadId,
+      },
+      memberHuman.accessToken,
+    );
+    assert.equal(replyResponse.status, 200);
+    const reply = await jsonObject(replyResponse);
+    assert.equal(reply.event.payload.threadId, thread.thread.threadId);
+
+    const messagesResponse = await request(
+      "/v2/client/messages/list",
+      { roomId: room.roomId, threadId: thread.thread.threadId },
+      human.accessToken,
+    );
+    assert.equal(messagesResponse.status, 200);
+    const messages = await jsonObject(messagesResponse);
+    assert.equal(messages.messages[0]?.messageId, reply.event.aggregateId);
+
+    const threadsResponse = await request(
+      "/v2/client/threads/list",
+      { roomId: room.roomId },
+      human.accessToken,
+    );
+    assert.equal(threadsResponse.status, 200);
+    const threads = await jsonObject(threadsResponse);
+    assert.equal(threads.threads[0]?.replyCount, 1);
+
+    const roleResponse = await request(
+      "/v2/client/rooms/members/role",
+      {
+        basedOnRoomSeq: reply.event.roomSeq,
+        idempotencyKey: "client-member-promoted",
+        principalId: memberHuman.principal.principalId,
+        role: "admin",
+        roomId: room.roomId,
+      },
+      human.accessToken,
+    );
+    assert.equal(roleResponse.status, 200);
+    const role = await jsonObject(roleResponse);
+    assert.equal(role.membership.role, "admin");
+
+    const addedResponse = await request(
+      "/v2/client/rooms/members/add",
+      {
+        basedOnRoomSeq: role.event.roomSeq,
+        idempotencyKey: "client-other-member-added",
+        principalId: otherHuman.principal.principalId,
+        role: "member",
+        roomId: room.roomId,
+      },
+      memberHuman.accessToken,
+    );
+    assert.equal(addedResponse.status, 200);
+    const added = await jsonObject(addedResponse);
+    assert.equal(
+      added.membership.principalId,
+      otherHuman.principal.principalId,
+    );
+
+    const removedResponse = await request(
+      "/v2/client/rooms/members/remove",
+      {
+        basedOnRoomSeq: added.event.roomSeq,
+        idempotencyKey: "client-other-member-removed",
+        principalId: otherHuman.principal.principalId,
+        roomId: room.roomId,
+      },
+      memberHuman.accessToken,
+    );
+    assert.equal(removedResponse.status, 200);
+    const removed = await jsonObject(removedResponse);
+    assert.equal(removed.removedPrincipalId, otherHuman.principal.principalId);
 
     const agentPatRejected = await request(
       "/v1/client/tasks/list",

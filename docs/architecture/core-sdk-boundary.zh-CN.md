@@ -1,6 +1,6 @@
 # RAH Core SDK 边界
 
-状态：**v0.1 implemented / Task Coordination v1 / schema v7 collaboration boundary / daemon v4 fake E2**（2026-08-26）。`@rah-os/core` 已成为 daemon 可直接嵌入的稳定组合边界；它不依赖 HTTP、WebSocket、MCP、UI 或任何 Provider transcript parser。fake 多 Agent 门禁已证明不同 Agent 并发、单 Agent 串行、开放 Task 单 winner、Task 显式验收与 Room 权威判定；schema v7 已建立 Workspace/Room/Role/Thread 存储边界；可执行 config v4 进一步证明同一 Host 的两个 participant 由 Kernel Placement 路由到两个 immutable Runtime Profile。它仍不是 Workspace 管理 API、canonical WorkspaceDefinition/mount/Capacity 管理面或真实多 CLI certification。
+状态：**v0.1 implemented / Task Coordination v1 / collaboration P2 / daemon v4 fake E2**（2026-08-26）。`@rah-os/core` 已成为 daemon 可直接嵌入的稳定组合边界；它不依赖 HTTP、WebSocket、MCP、UI 或任何 Provider transcript parser。fake 多 Agent 门禁已证明不同 Agent 并发、单 Agent 串行、开放 Task 单 winner、Task 显式验收与 Room 权威判定；schema v7 与 P2 已建立 Workspace/Room discovery、Role/Message/Thread canonical command/query 边界；可执行 config v4 进一步证明同一 Host 的两个 participant 由 Kernel Placement 路由到两个 immutable Runtime Profile。它仍不是 Workspace create/archive、canonical WorkspaceDefinition/mount/Capacity 管理面或真实多 CLI certification。
 
 ## 1. Core 是什么
 
@@ -24,7 +24,7 @@ application-service / HTTP / SSE / MCP / CLI / Web / Mac / iOS
 | Core owner      | 权威事实                                                                                               |
 | --------------- | ------------------------------------------------------------------------------------------------------ |
 | Identity/ACL    | Principal、Room membership、authenticated actor/Host/Worker scope                                      |
-| Collaboration   | RoomEvent、Inbox、cursor、content-free Outbox                                                          |
+| Collaboration   | Workspace/Room discovery、Role、Message、Thread、RoomEvent、Inbox、cursor、content-free Outbox         |
 | Business flow   | Task、InputRequest 及其显式 command/event 状态机                                                       |
 | Scheduling      | Activation、Agent/Policy revision、RuntimeOffer observation、Placement、capacity/workspace reservation |
 | Execution proof | RunAttempt、RuntimeProcess、lease、terminal proof、retry/quarantine/recovery                           |
@@ -83,6 +83,7 @@ Runtime 插槽只需实现 `RuntimeAdapter` 的 probe/start/reap/cancel/recover�
 - [x] open Task 跨 Kernel connection 原子竞争，loser 可完成 Activation；
 - [x] release/assign/block/unblock/cancel 与 immutable dependency ready 派生；
 - [x] Worker/Client versioned application-service command surface；
+- [x] Workspace/Room discovery、成员增删/角色、Message/Thread 的 causal/idempotent Core 与 Client API；
 - [ ] durable control-Room CapacityPool/WorkspaceDefinition 管理面。
 
 上述未完成门禁补齐之前，可以称“Core SDK 与可执行 daemon 的多 Agent fake business flow 已成立”，不能称“完整多 CLI 生产 daemon 已收口”。

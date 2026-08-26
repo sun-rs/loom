@@ -1,6 +1,6 @@
 # Daemon Core 运行架构
 
-状态：独立 `@rah-os/core`、Task Coordination v1、InputRequest 无 listening 恢复、versioned Human Client API 与 schema v7 Workspace/Room/Role/Thread 存储边界已达到 local gate；可执行 daemon config v4 已通过双 participant、双不可变 Runtime Profile、Placement-selected external Worker E2。安装、完整客户端/管理面、canonical WorkspaceDefinition/mount/Capacity 与真实 mixed CLI v4 certification 尚未收口。
+状态：独立 `@rah-os/core`、Task Coordination v1、InputRequest 无 listening 恢复、collaboration P2 Human Client API 与 schema v7 Workspace/Room/Role/Message/Thread 边界已达到 local gate；可执行 daemon config v4 已通过双 participant、双不可变 Runtime Profile、Placement-selected external Worker E2。安装、P3 客户端纵向 E2、Workspace create/archive、canonical WorkspaceDefinition/mount/Capacity 与真实 mixed CLI v4 certification 尚未收口。
 
 ## 1. Composition 与 owner
 
@@ -58,12 +58,12 @@ Message transaction 原子写入 `activation.requested` Outbox。dispatcher 通�
 
 ```text
 principal PAT
-  -> /v1/client/health|rooms/*|tasks/list|create|assign|unblock|cancel|complete|input-requests/*
+  -> /v2/client/health|workspaces/*|rooms/*|messages/*|threads/*|tasks/*|input-requests/*
   -> per-request authenticated actor
   -> Room ACL + canonical Kernel query/command
 ```
 
-Client 和 Worker 使用独立端口与 authority。Client body 不能选择 actor/responder；Worker token 也不能升级为 Human PAT。当前 API v1 提供 content-free health/capabilities、Room `sync/ack`、Task/InputRequest list、Task create/assign/unblock/cancel/complete 和 designated-responder resolve。
+Client 和 Worker 使用独立端口与 authority。Client body 不能选择 actor/responder；Worker token 也不能升级为 Human PAT。当前 API v2 提供 content-free health/capabilities、Workspace/Room discovery、Room `sync/ack`、成员读取/添加/移除/角色、Message 分页读取/发送、Thread 读取/创建/回复、Task/InputRequest list、Task create/assign/unblock/cancel/complete 和 designated-responder resolve；v1 的原有窄 surface 继续兼容，但不伪装支持 P2 capability。
 
 Client continuation/ack 只能使用已持久确认或由当前 credential/consumer 实际收到的 cursor；daemon 重启会清空未确认的 delivery proof，因此客户端从 durable ack 位置重同步。当前只允许 loopback，未开放 CORS/hint/LAN，也尚未接入 raft-ui。完整决策见 [ADR-0008](../adr/0008-versioned-human-client-application-service.md)。
 

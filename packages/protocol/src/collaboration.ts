@@ -56,6 +56,19 @@ export const RoomMembershipSchema = z
   .strict();
 export type RoomMembership = z.infer<typeof RoomMembershipSchema>;
 
+export const MessageSchema = z
+  .object({
+    actorId: IdentifierSchema,
+    body: z.string().min(1),
+    createdAt: TimestampSchema,
+    messageId: IdentifierSchema,
+    roomId: IdentifierSchema,
+    roomSeq: z.number().int().positive(),
+    threadId: IdentifierSchema.optional(),
+  })
+  .strict();
+export type Message = z.infer<typeof MessageSchema>;
+
 export const ThreadSchema = z
   .object({
     createdAt: TimestampSchema,

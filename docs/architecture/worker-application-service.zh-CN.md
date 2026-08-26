@@ -47,7 +47,7 @@ RoomKernel 始终是业务 owner。HTTP service 只做认证、scope、输入验
 
 Task command 的 `basedOnRoomSeq` 必须是同一 credential 已经收到的 sync cursor，或前一个成功 Task command 返回的 event sequence。Task 必须属于 grant 固定的 Room，且关联 Task 的 canonical event 必须通过 Inbox 实际投递并位于本次 Activation range；仅猜到 ID 不构成权限。open Task 候选可读取并竞争 claim，但 claim 成功后的 mutation 必须持有当前 participant 的 active claim。业务幂等键应稳定绑定 Task/operation，不能绑定易失的 CLI session 或 RunAttempt。恢复 RunAttempt 先通过 `tasks/get` 读取 canonical projection；幂等 replay 不要求复用旧执行的 causal cursor，尚未落账的新步骤仍受当前 Room freshness 约束。
 
-`request-input` 只接受 question，不允许 Worker 选择 responder。Kernel 将 Task creator 固定为当前 designated responder，原子创建 InputRequest、清除 claim 并把 Task 置为 `waiting_input`；该 response 会让 service 停止 sidecar heartbeat。人类 resolve 不属于 Worker bearer surface，而是经独立 `/v1/client/input-requests/resolve` 使用 principal PAT；两种 authority 不可互换。
+`request-input` 只接受 question，不允许 Worker 选择 responder。Kernel 将 Task creator 固定为当前 designated responder，原子创建 InputRequest、清除 claim 并把 Task 置为 `waiting_input`；该 response 会让 service 停止 sidecar heartbeat。人类 resolve 不属于 Worker bearer surface，而是经独立 `/v2/client/input-requests/resolve`（兼容 v1）使用 principal PAT；两种 authority 不可互换。
 
 `input-status` 只返回 latest `inputRequestId/taskId/state`，明确排除 question/answer。它用于 Worker 在 InputRequest 已 commit、原 Activation ack 前崩溃后的新 session：确认 pause 已持久化，补 ack 后退出。answer 只有在 `input.resolved` 真正进入该 execution 的 Activation range 时才由 `sync` 交付。
 

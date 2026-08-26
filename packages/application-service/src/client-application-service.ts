@@ -17,8 +17,22 @@ import {
   ClientAcknowledgeResponseSchema,
   ClientErrorResponseSchema,
   ClientHealthResponseSchema,
+  ClientHealthV1ResponseSchema,
   ClientInputRequestsListRequestSchema,
   ClientInputRequestsListResponseSchema,
+  ClientMessageMutationResponseSchema,
+  ClientMessagePostRequestSchema,
+  ClientMessagesListRequestSchema,
+  ClientMessagesListResponseSchema,
+  ClientRoomMemberAddRequestSchema,
+  ClientRoomMemberMutationResponseSchema,
+  ClientRoomMemberRemoveRequestSchema,
+  ClientRoomMemberRemoveResponseSchema,
+  ClientRoomMemberRoleRequestSchema,
+  ClientRoomMembersListRequestSchema,
+  ClientRoomMembersListResponseSchema,
+  ClientRoomsListRequestSchema,
+  ClientRoomsListResponseSchema,
   ClientRoomSyncRequestSchema,
   ClientRoomSyncResponseSchema,
   ClientTasksListRequestSchema,
@@ -30,6 +44,13 @@ import {
   ClientTaskCreateRequestSchema,
   ClientTaskMutationResponseSchema,
   ClientTaskUnblockRequestSchema,
+  ClientThreadCreateRequestSchema,
+  ClientThreadCreateResponseSchema,
+  ClientThreadReplyRequestSchema,
+  ClientThreadsListRequestSchema,
+  ClientThreadsListResponseSchema,
+  ClientWorkspacesListRequestSchema,
+  ClientWorkspacesListResponseSchema,
   InputRequestResolveRequestSchema,
   InputRequestResolveResponseSchema,
   type ClientHealthResponse,
@@ -54,18 +75,31 @@ class HttpRequestError extends Error {
 }
 
 const MAX_BODY_BYTES = 64 * 1_024;
-const CLIENT_HEALTH_ROUTE = "/v1/client/health";
-const CLIENT_DATA_ROUTES = new Set([
-  "/v1/client/input-requests/list",
-  "/v1/client/input-requests/resolve",
-  "/v1/client/rooms/acknowledge",
-  "/v1/client/rooms/sync",
-  "/v1/client/tasks/list",
-  "/v1/client/tasks/assign",
-  "/v1/client/tasks/cancel",
-  "/v1/client/tasks/complete",
-  "/v1/client/tasks/create",
-  "/v1/client/tasks/unblock",
+const CLIENT_V1_DATA_PATHS = new Set([
+  "/input-requests/list",
+  "/input-requests/resolve",
+  "/rooms/acknowledge",
+  "/rooms/sync",
+  "/tasks/list",
+  "/tasks/assign",
+  "/tasks/cancel",
+  "/tasks/complete",
+  "/tasks/create",
+  "/tasks/unblock",
+]);
+const CLIENT_V2_DATA_PATHS = new Set([
+  ...CLIENT_V1_DATA_PATHS,
+  "/messages/list",
+  "/messages/post",
+  "/rooms/list",
+  "/rooms/members/add",
+  "/rooms/members/list",
+  "/rooms/members/remove",
+  "/rooms/members/role",
+  "/threads/create",
+  "/threads/list",
+  "/threads/reply",
+  "/workspaces/list",
 ]);
 const MAX_DELIVERED_CURSORS_PER_CONSUMER = 1_024;
 
@@ -150,8 +184,8 @@ export class ClientApplicationService {
     request: IncomingMessage,
     response: ServerResponse,
   ): Promise<void> {
-    const route = request.url;
-    if (route === CLIENT_HEALTH_ROUTE) {
+    const route = resolveClientRoute(request.url);
+    if (route?.path === "/health") {
       if (request.method !== "GET") {
         throw new HttpRequestError(
           "method_not_allowed",
@@ -159,14 +193,38 @@ export class ClientApplicationService {
           405,
         );
       }
+      const currentHealth = ClientHealthResponseSchema.parse(this.#health());
       writeJson(
         response,
         200,
-        ClientHealthResponseSchema.parse(this.#health()),
+        route.apiVersion === 1
+          ? ClientHealthV1ResponseSchema.parse({
+              apiVersion: 1,
+              buildVersion: currentHealth.buildVersion,
+              capabilities: {
+                cursorAcknowledge: currentHealth.capabilities.cursorAcknowledge,
+                hints: currentHealth.capabilities.hints,
+                inputRequestRead: currentHealth.capabilities.inputRequestRead,
+                inputRequestResolve:
+                  currentHealth.capabilities.inputRequestResolve,
+                roomSync: currentHealth.capabilities.roomSync,
+                taskRead: currentHealth.capabilities.taskRead,
+                taskWrite: currentHealth.capabilities.taskWrite,
+              },
+              kernelSchemaVersion: currentHealth.kernelSchemaVersion,
+              protocolVersion: currentHealth.protocolVersion,
+              state: currentHealth.state,
+            })
+          : currentHealth,
       );
       return;
     }
-    if (route === undefined || !CLIENT_DATA_ROUTES.has(route)) {
+    if (
+      route === undefined ||
+      !(
+        route.apiVersion === 1 ? CLIENT_V1_DATA_PATHS : CLIENT_V2_DATA_PATHS
+      ).has(route.path)
+    ) {
       throw new HttpRequestError("not_found", "route was not found", 404);
     }
     if (request.method !== "POST") {
@@ -180,7 +238,152 @@ export class ClientApplicationService {
     const session = this.#authenticate(request);
     const actor = session.actor;
     const body = await readJsonObject(request);
-    if (route === "/v1/client/rooms/sync") {
+    const path = route.path;
+    if (path === "/workspaces/list") {
+      parseClientRequest(ClientWorkspacesListRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientWorkspacesListResponseSchema.parse({
+          workspaces: this.#kernel.listWorkspaces(actor),
+        }),
+      );
+      return;
+    }
+    if (path === "/rooms/list") {
+      const command = parseClientRequest(ClientRoomsListRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientRoomsListResponseSchema.parse({
+          rooms: this.#kernel.listRooms(actor, {
+            ...(command.workspaceId === undefined
+              ? {}
+              : { workspaceId: command.workspaceId }),
+          }),
+        }),
+      );
+      return;
+    }
+    if (path === "/rooms/members/list") {
+      const command = parseClientRequest(
+        ClientRoomMembersListRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientRoomMembersListResponseSchema.parse({
+          memberships: this.#kernel.listRoomMemberships(actor, command),
+        }),
+      );
+      return;
+    }
+    if (path === "/rooms/members/add") {
+      const command = parseClientRequest(
+        ClientRoomMemberAddRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientRoomMemberMutationResponseSchema.parse(
+          this.#kernel.addRoomMember(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/rooms/members/role") {
+      const command = parseClientRequest(
+        ClientRoomMemberRoleRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientRoomMemberMutationResponseSchema.parse(
+          this.#kernel.setRoomMemberRole(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/rooms/members/remove") {
+      const command = parseClientRequest(
+        ClientRoomMemberRemoveRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientRoomMemberRemoveResponseSchema.parse(
+          this.#kernel.removeRoomMember(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/messages/list") {
+      const command = parseClientRequest(ClientMessagesListRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientMessagesListResponseSchema.parse(
+          this.#kernel.listMessages(actor, {
+            afterSeq: command.afterSeq,
+            limit: command.limit,
+            roomId: command.roomId,
+            ...(command.threadId === undefined
+              ? {}
+              : { threadId: command.threadId }),
+          }),
+        ),
+      );
+      return;
+    }
+    if (path === "/messages/post") {
+      const command = parseClientRequest(ClientMessagePostRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientMessageMutationResponseSchema.parse(
+          this.#kernel.postMessage(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/threads/list") {
+      const command = parseClientRequest(ClientThreadsListRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientThreadsListResponseSchema.parse({
+          threads: this.#kernel.listThreads(actor, command),
+        }),
+      );
+      return;
+    }
+    if (path === "/threads/create") {
+      const command = parseClientRequest(ClientThreadCreateRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientThreadCreateResponseSchema.parse(
+          this.#kernel.createThread(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/threads/reply") {
+      const command = parseClientRequest(ClientThreadReplyRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientMessageMutationResponseSchema.parse(
+          this.#kernel.replyThread(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/rooms/sync") {
       const command = parseClientRequest(ClientRoomSyncRequestSchema, body);
       const deliveryKey = this.#deliveryKey(session, command);
       const knownCursors = this.#deliveredCursors.get(deliveryKey);
@@ -207,7 +410,7 @@ export class ClientApplicationService {
       writeJson(response, 200, ClientRoomSyncResponseSchema.parse(delivery));
       return;
     }
-    if (route === "/v1/client/rooms/acknowledge") {
+    if (path === "/rooms/acknowledge") {
       const command = parseClientRequest(ClientAcknowledgeRequestSchema, body);
       const deliveryKey = this.#deliveryKey(session, command);
       const durableCursor = this.#kernel.sync(actor, {
@@ -236,7 +439,7 @@ export class ClientApplicationService {
       );
       return;
     }
-    if (route === "/v1/client/tasks/list") {
+    if (path === "/tasks/list") {
       const command = parseClientRequest(ClientTasksListRequestSchema, body);
       writeJson(
         response,
@@ -247,7 +450,7 @@ export class ClientApplicationService {
       );
       return;
     }
-    if (route === "/v1/client/tasks/create") {
+    if (path === "/tasks/create") {
       const command = parseClientRequest(ClientTaskCreateRequestSchema, body);
       writeJson(
         response,
@@ -272,7 +475,7 @@ export class ClientApplicationService {
       );
       return;
     }
-    if (route === "/v1/client/tasks/assign") {
+    if (path === "/tasks/assign") {
       const command = parseClientRequest(ClientTaskAssignRequestSchema, body);
       writeJson(
         response,
@@ -283,7 +486,7 @@ export class ClientApplicationService {
       );
       return;
     }
-    if (route === "/v1/client/tasks/unblock") {
+    if (path === "/tasks/unblock") {
       const command = parseClientRequest(ClientTaskUnblockRequestSchema, body);
       writeJson(
         response,
@@ -294,7 +497,7 @@ export class ClientApplicationService {
       );
       return;
     }
-    if (route === "/v1/client/tasks/cancel") {
+    if (path === "/tasks/cancel") {
       const command = parseClientRequest(ClientTaskCancelRequestSchema, body);
       writeJson(
         response,
@@ -305,7 +508,7 @@ export class ClientApplicationService {
       );
       return;
     }
-    if (route === "/v1/client/tasks/complete") {
+    if (path === "/tasks/complete") {
       const command = parseClientRequest(ClientTaskCompleteRequestSchema, body);
       writeJson(
         response,
@@ -316,7 +519,7 @@ export class ClientApplicationService {
       );
       return;
     }
-    if (route === "/v1/client/input-requests/list") {
+    if (path === "/input-requests/list") {
       const command = parseClientRequest(
         ClientInputRequestsListRequestSchema,
         body,
@@ -447,6 +650,18 @@ export class ClientApplicationService {
       }),
     );
   }
+}
+
+function resolveClientRoute(
+  url: string | undefined,
+): { apiVersion: 1 | 2; path: string } | undefined {
+  if (url?.startsWith("/v1/client/") === true) {
+    return { apiVersion: 1, path: url.slice("/v1/client".length) };
+  }
+  if (url?.startsWith("/v2/client/") === true) {
+    return { apiVersion: 2, path: url.slice("/v2/client".length) };
+  }
+  return undefined;
 }
 
 async function readJsonObject(

@@ -1,6 +1,6 @@
 # ADR-0008：版本化 Human Client Application Service
 
-状态：Accepted（loopback Client API + daemon E2 local，2026-08-26）
+状态：Accepted（collaboration P2 loopback Client API + daemon E2 local，2026-08-26）
 
 ## 背景
 
@@ -13,22 +13,24 @@ Room-first Kernel 已经拥有 principal authentication、Room ACL、ordered eve
 1. 新增独立 `ClientApplicationService`。它与 `WorkerApplicationService` 可以在同一 daemon process 中共享一个 `RoomKernel`，但使用独立监听端口、路由和 bearer authority：
 
    ```text
-   Human principal PAT -> /v1/client/* -> AuthenticatedActorContext -> RoomKernel
+   Human principal PAT -> /v1|v2/client/* -> AuthenticatedActorContext -> RoomKernel
    Host-derived WAT    -> /v1/worker/* -> WorkerExecutionContext    -> RoomKernel
    ```
 
    Client service 不持有第二套 Room/Task/InputRequest 状态，不接受任意 SQL、shell command、actor、responder 或 Worker scope。
 
-2. 当前 Client API 版本为 `1`，实现以下最小 surface：
+2. 当前 Client API 版本为 `2`。v1 保留原 Task/InputRequest/sync/ack 路由和窄 health capability；collaboration P2 的新增路由与扩展 capability 只在 v2 暴露，避免严格 v1 客户端因未知字段被静默破坏。v2 surface 为：
 
-   | Route                                    | Authority / result                                   |
-   | ---------------------------------------- | ---------------------------------------------------- |
-   | `GET /v1/client/health`                  | content-free build/protocol/schema/capability/state  |
-   | `POST /v1/client/rooms/sync`             | authenticated member snapshot + ordered Room delta   |
-   | `POST /v1/client/rooms/acknowledge`      | explicit durable receipt acknowledgement             |
-   | `POST /v1/client/tasks/list`             | canonical Room Task projection                       |
-   | `POST /v1/client/input-requests/list`    | canonical projection，可选 `pending/resolved` filter |
-   | `POST /v1/client/input-requests/resolve` | designated-responder causal/idempotent resolution    |
+   | Route family                                       | Authority / result                                                     |
+   | -------------------------------------------------- | ---------------------------------------------------------------------- |
+   | `GET /v2/client/health`                            | content-free build/protocol/schema/capability/state                    |
+   | `POST .../workspaces/list`, `.../rooms/list`       | authenticated principal 可见的 Workspace/Room discovery                |
+   | `POST .../rooms/sync`, `.../rooms/acknowledge`     | authenticated member snapshot、ordered delta 与 durable receipt ack    |
+   | `POST .../rooms/members/*`                         | Room ACL 下的 list/add/remove/role，写入要求 causal/idempotent command |
+   | `POST .../messages/list`, `.../messages/post`      | paginated canonical Message query/send 与 durable attention 派生       |
+   | `POST .../threads/list`, `.../create`, `.../reply` | Room-owned Thread/query/reply，不接受 Provider session identity        |
+   | `POST .../tasks/*`                                 | canonical Task list/create/assign/unblock/cancel/complete              |
+   | `POST .../input-requests/list`, `.../resolve`      | canonical projection 与 designated-responder causal resolution         |
 
    数据 route 每次都重新认证 principal PAT；actor 来自 credential，不来自 body。Room membership、designated responder、fresh context 与 idempotency 继续由 Kernel 强制。health 无需 bearer，但 schema 严格且不返回 Host ID、participant ID、token、路径或 Room 数据。
 
@@ -49,16 +51,16 @@ Room-first Kernel 已经拥有 principal authentication、Room ACL、ordered eve
 
 ## 证据
 
-- protocol fixture 证明 Client API v1 schema 严格、transport-neutral，拒绝 `actorId/responderId` 注入和越界 page size；
-- standalone HTTP fixture 证明无 token=401、非成员=403、错误 responder=403、stale context=409，并覆盖分页 sync、显式 ack、durable ack 幂等、Task/InputRequest 查询和 resolution；
+- protocol fixture 证明 Client API v1/v2 schema 严格、transport-neutral，拒绝 `actorId/responderId` 注入和越界 page size；
+- standalone HTTP fixture 证明无 token=401、非成员=403、错误 responder=403、stale context=409，并覆盖 Workspace/Room discovery、成员角色、Message/Thread、分页 sync、显式 ack、durable ack 幂等、Task/InputRequest 查询和 resolution；
 - 同一 fixture 证明 invented continuation/ack 被拒绝，且 health 不泄露 credential；
 - daemon InputRequest fixture 中，Human 使用 Client API 完成 list → sync → resolve；等待期间无新 RunAttempt，resolution 后 content-free wake 拉起新 CLI session 并提交原 Task；
 - daemon lifecycle fixture 证明 Client endpoint 仅在 daemon 运行期间存在，并随 shutdown 关闭。
 
 ## 声明边界
 
-- 当前不是完整 `RahClient`：没有 Room discovery、message、Task create/complete/reassign、Inbox ack、Artifact/Review、hint subscription 或 daemon control command。
+- 当前不是完整 `RahClient`：尚无 Workspace/Room create/archive、Inbox query/resolve、Artifact/Review、Run Inspector、hint subscription 或 daemon control command；现有 HTTP schema/route 是 SDK 的可执行 contract，不是 UI state owner。
 - 当前 loopback HTTP 可供本机 shell、测试和未来 desktop bridge 使用；尚不能声明 raft-ui、普通浏览器或 iOS PWA 已接通。
 - principal provisioning/revocation 管理面、Keychain、device pairing、CORS/TLS/LAN、rate limit 与审计导出尚未实现。
 - Client delivery proof 当前是 daemon-memory evidence；重启后的预期恢复动作是重同步，不是确认旧 HTTP response。
-- API v1 与 daemon config v2 是不同版本轴；Kernel schema 当前为 v3，也独立演进。
+- Client API v1/v2 与 daemon config v2/v3/v4 是不同版本轴；Kernel schema 当前为 v7，也独立演进。
