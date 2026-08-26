@@ -1,6 +1,6 @@
 # Daemon Core 运行架构
 
-状态：独立 `@rah-os/core`、Task Coordination v1、InputRequest 无 listening 恢复与 versioned Human Client API 已达到 E2 local；可执行 daemon config v4 已通过双 participant、双不可变 Runtime Profile、Placement-selected external Worker E2。安装、完整客户端/管理面、canonical Workspace/Capacity 与真实 mixed CLI v4 certification 尚未收口。
+状态：独立 `@rah-os/core`、Task Coordination v1、InputRequest 无 listening 恢复、versioned Human Client API 与 schema v7 Workspace/Room/Role/Thread 存储边界已达到 local gate；可执行 daemon config v4 已通过双 participant、双不可变 Runtime Profile、Placement-selected external Worker E2。安装、完整客户端/管理面、canonical WorkspaceDefinition/mount/Capacity 与真实 mixed CLI v4 certification 尚未收口。
 
 ## 1. Composition 与 owner
 
@@ -86,7 +86,7 @@ Client continuation/ack 只能使用已持久确认或由当前 credential/consu
 Daemon core 下一步不是 UI，也不是更多 JSONL parser，而是：
 
 1. InputRequest cancel/expire/structured answer、Artifact/Review application commands与更完整的 Task crash/recovery matrix；
-2. ADR-0009 的 atomic launch claim、可信启动期 capacity、MultiLaneAgentHost 与 placement-managed config v4 fake E2 已完成；下一步按 [Runtime Registry 与多 Lane 调度架构](./runtime-registry-and-multi-lane-scheduling.zh-CN.md) 完成 canonical Workspace/Capacity control object、mixed-adapter recovery 与 opt-in real CLI v4 certification；
+2. ADR-0009 的 atomic launch claim、可信启动期 capacity、MultiLaneAgentHost 与 placement-managed config v4 fake E2 已完成；下一步按 [Runtime Registry 与多 Lane 调度架构](./runtime-registry-and-multi-lane-scheduling.zh-CN.md) 完成 canonical WorkspaceDefinition/mount/Capacity control object、mixed-adapter recovery 与 opt-in real CLI v4 certification；
 3. daemon control API、结构化日志、SSE/WebSocket content-free hint 与 supervisor artifact GC；
 4. Keychain、launchd、签名/公证和升级兼容 gate；
 5. 以现有 versioned Client API 为基础补齐 `RahClient` contract，并接入 UI；不得让 UI 直连 SQLite。

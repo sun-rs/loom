@@ -426,6 +426,27 @@ test("initialization migrates schema v2 Tasks to waiting_input without losing ro
       next_seq INTEGER NOT NULL DEFAULT 1 CHECK (next_seq > 0),
       created_at TEXT NOT NULL
     ) STRICT;
+    CREATE TABLE memberships (
+      room_id TEXT NOT NULL REFERENCES rooms(room_id),
+      principal_id TEXT NOT NULL REFERENCES principals(principal_id),
+      joined_at TEXT NOT NULL,
+      PRIMARY KEY (room_id, principal_id)
+    ) STRICT;
+    CREATE TABLE room_events (
+      event_id TEXT PRIMARY KEY,
+      room_id TEXT NOT NULL REFERENCES rooms(room_id),
+      room_seq INTEGER NOT NULL CHECK (room_seq > 0),
+      type TEXT NOT NULL,
+      actor_id TEXT NOT NULL REFERENCES principals(principal_id),
+      aggregate_type TEXT NOT NULL,
+      aggregate_id TEXT NOT NULL,
+      payload_json TEXT NOT NULL,
+      idempotency_key TEXT NOT NULL,
+      schema_version INTEGER NOT NULL CHECK (schema_version > 0),
+      created_at TEXT NOT NULL,
+      UNIQUE (room_id, room_seq),
+      UNIQUE (room_id, idempotency_key)
+    ) STRICT;
     CREATE TABLE tasks (
       task_id TEXT PRIMARY KEY,
       room_id TEXT NOT NULL REFERENCES rooms(room_id),
@@ -448,7 +469,15 @@ test("initialization migrates schema v2 Tasks to waiting_input without losing ro
       ('human-v2', 'human-v2', 'human', '2026-08-25T00:00:00.000Z'),
       ('agent-v2', 'agent-v2', 'agent', '2026-08-25T00:00:00.000Z');
     INSERT INTO rooms VALUES(
-      'room-v2', 'room-v2', 'Room v2', 1, '2026-08-25T00:00:00.000Z'
+      'room-v2', 'room-v2', 'Room v2', 2, '2026-08-25T00:00:00.000Z'
+    );
+    INSERT INTO memberships VALUES
+      ('room-v2', 'human-v2', '2026-08-25T00:00:00.000Z'),
+      ('room-v2', 'agent-v2', '2026-08-25T00:00:00.000Z');
+    INSERT INTO room_events VALUES(
+      'event-room-v2', 'room-v2', 1, 'room.created', 'human-v2', 'room',
+      'room-v2', '{}', 'room.create:room-v2', 1,
+      '2026-08-25T00:00:00.000Z'
     );
     INSERT INTO tasks(
       task_id, room_id, creator_id, assignee_id, title, state, created_at, updated_at
@@ -523,6 +552,27 @@ test("schema v5 Task coordination migration preserves InputRequest foreign keys"
       next_seq INTEGER NOT NULL DEFAULT 1 CHECK (next_seq > 0),
       created_at TEXT NOT NULL
     ) STRICT;
+    CREATE TABLE memberships (
+      room_id TEXT NOT NULL REFERENCES rooms(room_id),
+      principal_id TEXT NOT NULL REFERENCES principals(principal_id),
+      joined_at TEXT NOT NULL,
+      PRIMARY KEY (room_id, principal_id)
+    ) STRICT;
+    CREATE TABLE room_events (
+      event_id TEXT PRIMARY KEY,
+      room_id TEXT NOT NULL REFERENCES rooms(room_id),
+      room_seq INTEGER NOT NULL CHECK (room_seq > 0),
+      type TEXT NOT NULL,
+      actor_id TEXT NOT NULL REFERENCES principals(principal_id),
+      aggregate_type TEXT NOT NULL,
+      aggregate_id TEXT NOT NULL,
+      payload_json TEXT NOT NULL,
+      idempotency_key TEXT NOT NULL,
+      schema_version INTEGER NOT NULL CHECK (schema_version > 0),
+      created_at TEXT NOT NULL,
+      UNIQUE (room_id, room_seq),
+      UNIQUE (room_id, idempotency_key)
+    ) STRICT;
     CREATE TABLE tasks (
       task_id TEXT PRIMARY KEY,
       room_id TEXT NOT NULL REFERENCES rooms(room_id),
@@ -559,7 +609,15 @@ test("schema v5 Task coordination migration preserves InputRequest foreign keys"
       ('human-v5', 'human-v5', 'human', '2026-08-25T00:00:00.000Z'),
       ('agent-v5', 'agent-v5', 'agent', '2026-08-25T00:00:00.000Z');
     INSERT INTO rooms VALUES(
-      'room-v5', 'room-v5', 'Room v5', 1, '2026-08-25T00:00:00.000Z'
+      'room-v5', 'room-v5', 'Room v5', 2, '2026-08-25T00:00:00.000Z'
+    );
+    INSERT INTO memberships VALUES
+      ('room-v5', 'human-v5', '2026-08-25T00:00:00.000Z'),
+      ('room-v5', 'agent-v5', '2026-08-25T00:00:00.000Z');
+    INSERT INTO room_events VALUES(
+      'event-room-v5', 'room-v5', 1, 'room.created', 'human-v5', 'room',
+      'room-v5', '{}', 'room.create:room-v5', 1,
+      '2026-08-25T00:00:00.000Z'
     );
     INSERT INTO tasks(
       task_id, room_id, creator_id, assignee_id, title, state, created_at, updated_at

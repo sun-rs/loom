@@ -8,6 +8,7 @@ import type {
   InputRequest,
   ParticipantKind,
   PlacementDecision,
+  Room,
   RoomEvent,
   RuntimeRecoveryDescriptor,
   Task,
@@ -137,12 +138,6 @@ export type RuntimeProcessRecord = {
   terminatedAt?: string;
 };
 
-export type Room = {
-  roomId: string;
-  slug: string;
-  name: string;
-};
-
 export type InboxItem = {
   inboxItemId: string;
   roomId: string;
@@ -210,4 +205,11 @@ export type TaskCreateMutationResult = TaskMutationResult & {
   activationIds: string[];
 };
 
-export type { Activation, ActivationReason, InputRequest, RoomEvent, Task };
+export type {
+  Activation,
+  ActivationReason,
+  InputRequest,
+  Room,
+  RoomEvent,
+  Task,
+};

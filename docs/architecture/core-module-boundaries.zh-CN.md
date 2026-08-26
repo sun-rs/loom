@@ -22,9 +22,13 @@ Task Coordination v1 收口后，`RoomKernel` 同时承载认证、Room、Task�
 ```text
 @rah-os/protocol/src/index.ts     public compatibility surface
   ├── common.ts                   internal identifier/time primitives
+  ├── collaboration.ts            Workspace/Room/Role/Thread schemas
   └── task.ts                     Task state + projection validation
 
 @rah-os/kernel/src/room-kernel.ts public facade + command transaction owner
+  ├── collaboration-policy.ts     Human owner invariant
+  ├── collaboration-projection.ts Room normalization/read projection
+  ├── schema.ts                   schema v7 + fail-closed legacy migration
   ├── task-projection.ts          canonical Task read projection only
   ├── sqlite-row.ts               strict SQLite value decoding
   └── canonical-digest.ts         one canonical serialization/digest rule

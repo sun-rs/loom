@@ -1,3 +1,7 @@
+import type { DatabaseSync } from "node:sqlite";
+
+export const LEGACY_WORKSPACE_ID = "workspace_legacy";
+
 export const SCHEMA_SQL = `
 PRAGMA journal_mode = WAL;
 PRAGMA foreign_keys = ON;
@@ -49,17 +53,32 @@ CREATE TABLE IF NOT EXISTS agent_host_credentials (
 CREATE INDEX IF NOT EXISTS idx_agent_host_credentials_active
   ON agent_host_credentials(host_id, revoked_at);
 
-CREATE TABLE IF NOT EXISTS rooms (
-  room_id TEXT PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS workspaces (
+  workspace_id TEXT PRIMARY KEY,
   slug TEXT NOT NULL UNIQUE,
   name TEXT NOT NULL,
+  state TEXT NOT NULL CHECK (state IN ('active', 'archived')),
+  created_at TEXT NOT NULL,
+  archived_at TEXT,
+  CHECK ((state = 'active' AND archived_at IS NULL) OR (state = 'archived' AND archived_at IS NOT NULL))
+) STRICT;
+
+CREATE TABLE IF NOT EXISTS rooms (
+  room_id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(workspace_id),
+  kind TEXT NOT NULL CHECK (kind IN ('channel', 'direct', 'control')),
+  slug TEXT NOT NULL,
+  name TEXT NOT NULL,
   next_seq INTEGER NOT NULL DEFAULT 1 CHECK (next_seq > 0),
-  created_at TEXT NOT NULL
+  created_at TEXT NOT NULL,
+  archived_at TEXT,
+  UNIQUE (workspace_id, slug)
 ) STRICT;
 
 CREATE TABLE IF NOT EXISTS memberships (
   room_id TEXT NOT NULL REFERENCES rooms(room_id),
   principal_id TEXT NOT NULL REFERENCES principals(principal_id),
+  role TEXT NOT NULL CHECK (role IN ('owner', 'admin', 'member')),
   joined_at TEXT NOT NULL,
   PRIMARY KEY (room_id, principal_id)
 ) STRICT;
@@ -68,8 +87,24 @@ CREATE TABLE IF NOT EXISTS messages (
   message_id TEXT PRIMARY KEY,
   room_id TEXT NOT NULL REFERENCES rooms(room_id),
   actor_id TEXT NOT NULL REFERENCES principals(principal_id),
+  thread_id TEXT,
   body TEXT NOT NULL,
-  created_at TEXT NOT NULL
+  created_at TEXT NOT NULL,
+  UNIQUE (room_id, message_id),
+  FOREIGN KEY (room_id, thread_id) REFERENCES threads(room_id, thread_id)
+) STRICT;
+
+CREATE TABLE IF NOT EXISTS threads (
+  thread_id TEXT PRIMARY KEY,
+  room_id TEXT NOT NULL REFERENCES rooms(room_id),
+  root_message_id TEXT NOT NULL,
+  created_by TEXT NOT NULL REFERENCES principals(principal_id),
+  reply_count INTEGER NOT NULL DEFAULT 0 CHECK (reply_count >= 0),
+  created_at TEXT NOT NULL,
+  last_reply_at TEXT,
+  UNIQUE (room_id, thread_id),
+  UNIQUE (root_message_id),
+  FOREIGN KEY (room_id, root_message_id) REFERENCES messages(room_id, message_id)
 ) STRICT;
 
 CREATE TABLE IF NOT EXISTS tasks (
@@ -415,3 +450,187 @@ CREATE INDEX IF NOT EXISTS idx_inbox_participant_state
 CREATE INDEX IF NOT EXISTS idx_outbox_unpublished
   ON outbox(published_at, available_at_ms, lease_until_ms, outbox_seq);
 `;
+
+export function migrateCollaborationSchemaV7(
+  database: DatabaseSync,
+  timestamp: string,
+): void {
+  const roomColumns = database.prepare("PRAGMA table_info(rooms)").all();
+  const hasWorkspaceColumn = roomColumns.some(
+    (row) => (row as { name: unknown }).name === "workspace_id",
+  );
+  if (hasWorkspaceColumn) {
+    database
+      .prepare(
+        `INSERT OR IGNORE INTO workspaces(
+           workspace_id, slug, name, state, created_at
+         ) VALUES(?, 'legacy', 'Legacy Workspace', 'active', ?)`,
+      )
+      .run(LEGACY_WORKSPACE_ID, timestamp);
+    return;
+  }
+
+  const legacyRooms = database
+    .prepare(
+      `SELECT rooms.room_id, room_events.actor_id, principals.kind
+       FROM rooms
+       LEFT JOIN room_events
+         ON room_events.event_id = (
+           SELECT candidate.event_id
+           FROM room_events AS candidate
+           WHERE candidate.room_id = rooms.room_id
+             AND candidate.type = 'room.created'
+           ORDER BY candidate.room_seq, candidate.event_id
+           LIMIT 1
+         )
+       LEFT JOIN principals ON principals.principal_id = room_events.actor_id
+       ORDER BY rooms.room_id`,
+    )
+    .all();
+  const owners = legacyRooms.map((row) => {
+    const roomId = requiredString(row, "room_id");
+    const actorId = optionalString(row, "actor_id");
+    const kind = optionalString(row, "kind");
+    const isMember =
+      actorId !== undefined &&
+      database
+        .prepare(
+          "SELECT 1 AS present FROM memberships WHERE room_id = ? AND principal_id = ?",
+        )
+        .get(roomId, actorId) !== undefined;
+    if (actorId === undefined || kind !== "human" || !isMember) {
+      throw new Error(
+        `legacy Room ${roomId} has no provable Human owner; migration fails closed`,
+      );
+    }
+    return { actorId, roomId };
+  });
+
+  database.exec("PRAGMA foreign_keys = OFF");
+  try {
+    database.exec(`
+      BEGIN IMMEDIATE;
+      CREATE TEMP TABLE collaboration_v7_owners (
+        room_id TEXT PRIMARY KEY,
+        principal_id TEXT NOT NULL
+      ) STRICT;
+    `);
+    const insertOwner = database.prepare(
+      "INSERT INTO collaboration_v7_owners(room_id, principal_id) VALUES(?, ?)",
+    );
+    for (const owner of owners) insertOwner.run(owner.roomId, owner.actorId);
+    database
+      .prepare(
+        `INSERT OR IGNORE INTO workspaces(
+           workspace_id, slug, name, state, created_at
+         ) VALUES(?, 'legacy', 'Legacy Workspace', 'active', ?)`,
+      )
+      .run(LEGACY_WORKSPACE_ID, timestamp);
+    database.exec(`
+      CREATE TABLE rooms_collaboration_v7 (
+        room_id TEXT PRIMARY KEY,
+        workspace_id TEXT NOT NULL REFERENCES workspaces(workspace_id),
+        kind TEXT NOT NULL CHECK (kind IN ('channel', 'direct', 'control')),
+        slug TEXT NOT NULL,
+        name TEXT NOT NULL,
+        next_seq INTEGER NOT NULL DEFAULT 1 CHECK (next_seq > 0),
+        created_at TEXT NOT NULL,
+        archived_at TEXT,
+        UNIQUE (workspace_id, slug)
+      ) STRICT;
+      INSERT INTO rooms_collaboration_v7(
+        room_id, workspace_id, kind, slug, name, next_seq, created_at
+      )
+      SELECT
+        room_id, '${LEGACY_WORKSPACE_ID}', 'channel', slug, name, next_seq,
+        created_at
+      FROM rooms;
+
+      CREATE TABLE memberships_collaboration_v7 (
+        room_id TEXT NOT NULL REFERENCES rooms(room_id),
+        principal_id TEXT NOT NULL REFERENCES principals(principal_id),
+        role TEXT NOT NULL CHECK (role IN ('owner', 'admin', 'member')),
+        joined_at TEXT NOT NULL,
+        PRIMARY KEY (room_id, principal_id)
+      ) STRICT;
+      INSERT INTO memberships_collaboration_v7(
+        room_id, principal_id, role, joined_at
+      )
+      SELECT
+        memberships.room_id,
+        memberships.principal_id,
+        CASE WHEN collaboration_v7_owners.principal_id IS NULL
+          THEN 'member' ELSE 'owner' END,
+        memberships.joined_at
+      FROM memberships
+      LEFT JOIN collaboration_v7_owners
+        ON collaboration_v7_owners.room_id = memberships.room_id
+       AND collaboration_v7_owners.principal_id = memberships.principal_id;
+
+      CREATE TABLE messages_collaboration_v7 (
+        message_id TEXT PRIMARY KEY,
+        room_id TEXT NOT NULL REFERENCES rooms(room_id),
+        actor_id TEXT NOT NULL REFERENCES principals(principal_id),
+        thread_id TEXT,
+        body TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        UNIQUE (room_id, message_id),
+        FOREIGN KEY (room_id, thread_id) REFERENCES threads(room_id, thread_id)
+      ) STRICT;
+      INSERT INTO messages_collaboration_v7(
+        message_id, room_id, actor_id, body, created_at
+      )
+      SELECT message_id, room_id, actor_id, body, created_at FROM messages;
+
+      DROP TABLE threads;
+      DROP TABLE messages;
+      DROP TABLE memberships;
+      DROP TABLE rooms;
+      ALTER TABLE rooms_collaboration_v7 RENAME TO rooms;
+      ALTER TABLE memberships_collaboration_v7 RENAME TO memberships;
+      ALTER TABLE messages_collaboration_v7 RENAME TO messages;
+      CREATE TABLE threads (
+        thread_id TEXT PRIMARY KEY,
+        room_id TEXT NOT NULL REFERENCES rooms(room_id),
+        root_message_id TEXT NOT NULL,
+        created_by TEXT NOT NULL REFERENCES principals(principal_id),
+        reply_count INTEGER NOT NULL DEFAULT 0 CHECK (reply_count >= 0),
+        created_at TEXT NOT NULL,
+        last_reply_at TEXT,
+        UNIQUE (room_id, thread_id),
+        UNIQUE (root_message_id),
+        FOREIGN KEY (room_id, root_message_id)
+          REFERENCES messages(room_id, message_id)
+      ) STRICT;
+      DROP TABLE collaboration_v7_owners;
+    `);
+    const foreignKeyFailures = database
+      .prepare("PRAGMA foreign_key_check")
+      .all();
+    if (foreignKeyFailures.length > 0) {
+      throw new Error(
+        `schema v7 migration violated ${String(foreignKeyFailures.length)} foreign key constraint(s)`,
+      );
+    }
+    database.exec("COMMIT");
+  } catch (error) {
+    if (database.isTransaction) database.exec("ROLLBACK");
+    throw error;
+  } finally {
+    database.exec("PRAGMA foreign_keys = ON");
+  }
+}
+
+function requiredString(row: object, field: string): string {
+  const value = (row as Record<string, unknown>)[field];
+  if (typeof value !== "string" || value.length === 0) {
+    throw new Error(`invalid ${field} in schema v7 migration`);
+  }
+  return value;
+}
+
+function optionalString(row: object, field: string): string | undefined {
+  const value = (row as Record<string, unknown>)[field];
+  if (value === null || value === undefined) return undefined;
+  return requiredString(row, field);
+}

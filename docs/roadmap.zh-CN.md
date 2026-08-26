@@ -1,6 +1,6 @@
 # RAH OS 实施路线与门禁
 
-状态：**provisional**。独立 `@rah-os/core`、Task Coordination v1、atomic Placement launch claim 与 MultiLaneAgentHost 已通过 fake 多 Agent并发/开放任务竞争/串行/restart/quarantine business gate；可执行 daemon config v4 又通过双 participant、双 immutable profile、Placement-selected external Worker E2。Host→Worker 无 Agent PAT delegation、instance generation、deadline、content-free wake、跨进程 CLI/SIGTERM/restart，以及 Codex/Kimi/OpenCode/Claude Code Sonnet compatibility delivery gate 已达到 E2 local。canonical Workspace/Capacity control object、真实 mixed CLI v4 certification、可安装 packaging、剩余 Client/control/hint API、Windows recovery和 supervisor artifact lifecycle 尚未通过。
+状态：**provisional**。独立 `@rah-os/core`、Task Coordination v1、schema v7 Workspace/Room/Role/Thread 存储边界、atomic Placement launch claim 与 MultiLaneAgentHost 已通过 local gate；可执行 daemon config v4 又通过双 participant、双 immutable profile、Placement-selected external Worker E2。Host→Worker 无 Agent PAT delegation、instance generation、deadline、content-free wake、跨进程 CLI/SIGTERM/restart，以及 Codex/Kimi/OpenCode/Claude Code Sonnet compatibility delivery gate 已达到 E2 local。Workspace/Room/Role/Thread 管理 API、canonical WorkspaceDefinition/mount/Capacity control object、真实 mixed CLI v4 certification、可安装 packaging、剩余 Client/control/hint API、Windows recovery和 supervisor artifact lifecycle 尚未通过。
 
 ## Phase 0：仓库与协议基线
 
@@ -33,7 +33,7 @@
 
 ## Phase 2：本机 AgentHost
 
-当前增量：`@rah-os/core` 已提供 headless lifecycle/command/query/MultiLane 组合边界；`@rah-os/daemon` 通过它组合 compatibility config v2、single-profile v3 与 multi-participant/multi-profile v4。v4 精确校验 Host credential scope，启动时 probe/freeze 每个 active profile revision，发布 redacted workspace-aware Offers，由 Kernel Placement 选择 `runtimeOfferId`，再由 bounded MultiLane runner 启动 scoped Worker。Worker grant 不需要 Agent PAT；旧 daemon generation、过期 lease/run 或 revoked credential 都会 fence。canonical Workspace/Capacity、mixed adapter/real CLI v4 recovery certification、Windows recovery、supervisor result GC、Keychain、launchd、签名/安装和 control endpoint 尚未提供。
+当前增量：`@rah-os/core` 已提供 headless lifecycle/command/query/MultiLane 组合边界；Kernel schema v7 已拥有 Workspace 业务容器、RoomKind、MembershipRole 与 Thread FK，但管理 API 尚未开始。`@rah-os/daemon` 组合 compatibility config v2、single-profile v3 与 multi-participant/multi-profile v4。v4 精确校验 Host credential scope，启动时 probe/freeze 每个 active profile revision，发布 redacted workspace-aware Offers，由 Kernel Placement 选择 `runtimeOfferId`，再由 bounded MultiLane runner 启动 scoped Worker。Worker grant 不需要 Agent PAT；旧 daemon generation、过期 lease/run 或 revoked credential 都会 fence。canonical WorkspaceDefinition/mount/Capacity、mixed adapter/real CLI v4 recovery certification、Windows recovery、supervisor result GC、Keychain、launchd、签名/安装和 control endpoint 尚未提供。
 
 - Fake adapter 完整覆盖 start/resume/cancel/reap。
 - content-free wake WebSocket + reconnect pull backstop。
@@ -42,7 +42,7 @@
 - 每 Agent 串行 lane。
 - L0 通用进程适配器、L1 ACP/稳定协议适配器、L2 可选原生诊断适配器。
 - `AgentDefinition`、版本化 `RuntimeProfile`、`ModelSelector` 与 Provider session 解耦。
-- ADR-0009 的 R0–R3 fake Core path 与 config v4 placement-managed daemon slice 已完成：除 strict planner、immutable Offer/Placement provenance 与 crash reconciliation 外，Kernel 现有 atomic launch claim、默认 fail-closed 的可信启动期 capacity policy及 `MultiLaneAgentHost`。组合 E2 证明不同 Agent 并发、同 Agent 串行、restart recovery、quarantine 隔离，以及两个 executable participant 按 policy 进入不同 profile。R1/R4 仍属 provisional，因为 Host 自报 pool label、未持久化 hold、canonical Workspace/model execution和 durable control-Room CapacityPool 尚未收口；这些边界完成前不得宣称生产多 CLI router 已完成。
+- ADR-0009 的 R0–R3 fake Core path 与 config v4 placement-managed daemon slice 已完成：除 strict planner、immutable Offer/Placement provenance 与 crash reconciliation 外，Kernel 现有 atomic launch claim、默认 fail-closed 的可信启动期 capacity policy及 `MultiLaneAgentHost`。组合 E2 证明不同 Agent 并发、同 Agent 串行、restart recovery、quarantine 隔离，以及两个 executable participant 按 policy 进入不同 profile。R1/R4 仍属 provisional，因为 Host 自报 pool label、未持久化 hold、canonical WorkspaceDefinition/mount/model execution和 durable control-Room CapacityPool 尚未收口；这些边界完成前不得宣称生产多 CLI router 已完成。
 - 端到端投递证明链，不以 spawn/exit/通知成功替代 read/ack。
 
 真实 CLI gate 顺序：Codex→OpenCode→Kimi→Claude Sonnet。真实 gate 只在明确请求时运行。

@@ -1,6 +1,6 @@
 # RAH Core SDK 边界
 
-状态：**v0.1 implemented / Task Coordination v1 / daemon v4 fake E2**（2026-08-26）。`@rah-os/core` 已成为 daemon 可直接嵌入的稳定组合边界；它不依赖 HTTP、WebSocket、MCP、UI 或任何 Provider transcript parser。fake 多 Agent 门禁已证明不同 Agent 并发、单 Agent 串行、开放 Task 单 winner、Task 显式验收与 Room 权威判定；可执行 config v4 进一步证明同一 Host 的两个 participant 由 Kernel Placement 路由到两个 immutable Runtime Profile。它仍不是 canonical Workspace/Capacity 管理面或真实多 CLI certification。
+状态：**v0.1 implemented / Task Coordination v1 / schema v7 collaboration boundary / daemon v4 fake E2**（2026-08-26）。`@rah-os/core` 已成为 daemon 可直接嵌入的稳定组合边界；它不依赖 HTTP、WebSocket、MCP、UI 或任何 Provider transcript parser。fake 多 Agent 门禁已证明不同 Agent 并发、单 Agent 串行、开放 Task 单 winner、Task 显式验收与 Room 权威判定；schema v7 已建立 Workspace/Room/Role/Thread 存储边界；可执行 config v4 进一步证明同一 Host 的两个 participant 由 Kernel Placement 路由到两个 immutable Runtime Profile。它仍不是 Workspace 管理 API、canonical WorkspaceDefinition/mount/Capacity 管理面或真实多 CLI certification。
 
 ## 1. Core 是什么
 

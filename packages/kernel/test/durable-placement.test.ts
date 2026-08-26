@@ -242,9 +242,9 @@ function addAgent(
   return participant.principalId;
 }
 
-test("Kernel schema v6 owns Task coordination and immutable Placement projections", () => {
+test("Kernel schema v7 owns collaboration, Task coordination, and immutable Placement projections", () => {
   const fixture = createFixture();
-  assert.equal(KERNEL_SCHEMA_VERSION, 6);
+  assert.equal(KERNEL_SCHEMA_VERSION, 7);
   assert.equal(
     fixture.agentDefinition.currentRevisionId,
     fixture.agentDefinitionRevision.agentDefinitionRevisionId,
@@ -277,6 +277,27 @@ test("schema v3 RunAttempts migrate to nullable placement provenance without dat
       name TEXT NOT NULL,
       next_seq INTEGER NOT NULL DEFAULT 1 CHECK (next_seq > 0),
       created_at TEXT NOT NULL
+    ) STRICT;
+    CREATE TABLE memberships (
+      room_id TEXT NOT NULL REFERENCES rooms(room_id),
+      principal_id TEXT NOT NULL REFERENCES principals(principal_id),
+      joined_at TEXT NOT NULL,
+      PRIMARY KEY (room_id, principal_id)
+    ) STRICT;
+    CREATE TABLE room_events (
+      event_id TEXT PRIMARY KEY,
+      room_id TEXT NOT NULL REFERENCES rooms(room_id),
+      room_seq INTEGER NOT NULL CHECK (room_seq > 0),
+      type TEXT NOT NULL,
+      actor_id TEXT NOT NULL REFERENCES principals(principal_id),
+      aggregate_type TEXT NOT NULL,
+      aggregate_id TEXT NOT NULL,
+      payload_json TEXT NOT NULL,
+      idempotency_key TEXT NOT NULL,
+      schema_version INTEGER NOT NULL CHECK (schema_version > 0),
+      created_at TEXT NOT NULL,
+      UNIQUE (room_id, room_seq),
+      UNIQUE (room_id, idempotency_key)
     ) STRICT;
     CREATE TABLE activations (
       activation_id TEXT PRIMARY KEY,
@@ -313,9 +334,18 @@ test("schema v3 RunAttempts migrate to nullable placement provenance without dat
       UNIQUE (activation_id, attempt_number)
     ) STRICT;
     INSERT INTO principals VALUES
+      ('human-v3', 'human-v3', 'human', '2026-08-26T00:00:00.000Z'),
       ('agent-v3', 'agent-v3', 'agent', '2026-08-26T00:00:00.000Z');
     INSERT INTO rooms VALUES
-      ('room-v3', 'room-v3', 'Room v3', 1, '2026-08-26T00:00:00.000Z');
+      ('room-v3', 'room-v3', 'Room v3', 2, '2026-08-26T00:00:00.000Z');
+    INSERT INTO memberships VALUES
+      ('room-v3', 'human-v3', '2026-08-26T00:00:00.000Z'),
+      ('room-v3', 'agent-v3', '2026-08-26T00:00:00.000Z');
+    INSERT INTO room_events VALUES(
+      'event-room-v3', 'room-v3', 1, 'room.created', 'human-v3', 'room',
+      'room-v3', '{}', 'room.create:room-v3', 1,
+      '2026-08-26T00:00:00.000Z'
+    );
     INSERT INTO activations VALUES(
       'activation-v3', 'room-v3', 'agent-v3', 1, 1, 'mention', 'leased',
       'host-v3', '2026-08-26T00:05:00.000Z', 1787702700000,

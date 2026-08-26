@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { IdentifierSchema, TimestampSchema } from "./common.ts";
+import { RoomSchema } from "./collaboration.ts";
 import {
   TaskSchema,
   TaskStateSchema,
@@ -10,6 +11,24 @@ import {
 
 export { TaskSchema, TaskStateSchema };
 export type { Task, TaskState };
+export {
+  MembershipRoleSchema,
+  RoomKindSchema,
+  RoomMembershipSchema,
+  RoomSchema,
+  ThreadSchema,
+  WorkspaceSchema,
+  WorkspaceStateSchema,
+} from "./collaboration.ts";
+export type {
+  MembershipRole,
+  Room,
+  RoomKind,
+  RoomMembership,
+  Thread,
+  Workspace,
+  WorkspaceState,
+} from "./collaboration.ts";
 
 export const ParticipantKindSchema = z.enum(["human", "agent", "service"]);
 export type ParticipantKind = z.infer<typeof ParticipantKindSchema>;
@@ -1570,15 +1589,6 @@ export const PrincipalSchema = z
   })
   .strict();
 export type Principal = z.infer<typeof PrincipalSchema>;
-
-export const RoomSchema = z
-  .object({
-    roomId: IdentifierSchema,
-    slug: IdentifierSchema,
-    name: IdentifierSchema,
-  })
-  .strict();
-export type Room = z.infer<typeof RoomSchema>;
 
 export const RoomSnapshotSchema = z
   .object({

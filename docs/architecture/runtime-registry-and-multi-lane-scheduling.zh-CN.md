@@ -1,6 +1,6 @@
 # Runtime Registry 与多 Lane 调度架构
 
-状态：**Accepted in stages / R0–R3 implemented / narrow R2a–R2b implemented / R5 config v4 fake slice implemented / R1–R4 provisional**（2026-08-26）。严格 protocol schemas、pure placement planner、Kernel schema v6 Placement projections、control Room 配置修订、trusted immutable Offer evidence、durable Placement/RunAttempt provenance、atomic placement launch claim、可信启动期 capacity policy、MultiLaneAgentHost、Host-local immutable Runtime Profile/Probe Registry、spawn-time secret binding，以及 daemon config v4 的双 participant/双 profile Placement-selected external Worker E2 已通过本机门禁。durable PlacementHold、control-Room CapacityPool、canonical Workspace mount、model execution binding、mixed-adapter recovery 与 real CLI v4 certification尚未完成。
+状态：**Accepted in stages / R0–R3 implemented / narrow R2a–R2b implemented / R5 config v4 fake slice implemented / R1–R4 provisional**（2026-08-26）。严格 protocol schemas、pure placement planner、Kernel schema v7（保留 Placement projections并新增 Workspace/Room/Role/Thread 存储边界）、control Room 配置修订、trusted immutable Offer evidence、durable Placement/RunAttempt provenance、atomic placement launch claim、可信启动期 capacity policy、MultiLaneAgentHost、Host-local immutable Runtime Profile/Probe Registry、spawn-time secret binding，以及 daemon config v4 的双 participant/双 profile Placement-selected external Worker E2 已通过本机门禁。durable PlacementHold、control-Room CapacityPool、canonical WorkspaceDefinition/mount、model execution binding、mixed-adapter recovery 与 real CLI v4 certification尚未完成。
 
 ## 1. 要解决的问题
 
@@ -522,7 +522,7 @@ v4 的 `host.maxConcurrent` 与每个 Offer `maxConcurrent` 同时进入 trusted
 
 状态：**provisional / R1.1 本机证据子集 + R3 fake launch 已实现**。Kernel scheduler/atomic launch 已接入 `MultiLaneAgentHost` fake Core path，但尚未接入当前单 lane daemon；旧 `leaseNextActivation` 路径继续作为 compatibility path。Host 自写 certified capability/isolation/model binding 已被可信 catalog 门禁拒绝；每个新 Placement 冻结不可变 Offer observation 与所有 candidate snapshot digest。启动期 capacity policy 仍不是 durable control-Room CapacityPool，`probed`、hold 与 canonical workspace/model execution 也尚未达到生产多 lane 证据。
 
-- Kernel schema v5 增加 AgentDefinition/Policy/Offer observation/Placement（当前全库 schema v6 继续保留）；Agent/policy mutation 通过 control Room 事件记账；
+- Kernel schema v5 增加 AgentDefinition/Policy/Offer observation/Placement（当前全库 schema v7 继续保留，并加入 collaboration boundary）；Agent/policy mutation 通过 control Room 事件记账；
 - RunAttempt 冻结 provenance；
 - 现有单 profile fixture 通过 compatibility adapter 保持行为。
 
@@ -558,7 +558,7 @@ v4 的 `host.maxConcurrent` 与每个 Offer `maxConcurrent` 同时进入 trusted
 
 门禁证据：以真实 v1 DDL/trigger/fixture 建库后的 v1→v2 数据迁移与 FK 完整性、不可伪造/不可更新/不可删除 probe、caller-mutated revision 拒绝、start 前 replacement 拒绝且不读取 credential/prepare run、credential-load 间隙 replacement 被 supervisor 拒绝且未执行并可由 direct reap/旧 descriptor recovery 验证 `RAH_START_FAILED` terminal proof、unknown recovery、latest-failure activation fence、secret 延迟/有界读取、缺失/多余/prototype slot、单次、重复长 secret、正向/反向/链式/32-pattern dense overlap secret 跨 chunk、Unicode code point 拆包/普通 Unicode safe boundary、EOF partial overlap 与 64-pattern/64-KiB near-match 线性资源门禁的流式截断前脱敏、旧 revision recovery routing，以及 daemon v3 在无 Activation 时不读 Provider secret、收到 Activation 后才读取、确定性 active-revision 切换 fixture 中旧 lane 未创建 RunAttempt且 Offer 变 `unavailable`、Kernel Offer JSON 不含本地路径/secret、删除 executable 后 live Offer 变 `unavailable`、shutdown head 为 `unavailable`。
 
-边界：config v3 继续复用 single-participant compatibility `AgentHost`；config v4 才消费 placement-managed atomic launch claim。v4 Offer 虽携带 immutable startup workspace descriptor，但仍没有 canonical Workspace、model binding 或 admin CapacityPool。因此当前证据只代表本机 fake 多 Agent调度闭环，不代表生产多 CLI router。
+边界：config v3 继续复用 single-participant compatibility `AgentHost`；config v4 才消费 placement-managed atomic launch claim。v4 Offer 虽携带 immutable startup workspace descriptor，但仍没有 canonical WorkspaceDefinition/mount mapping、model binding 或 admin CapacityPool。因此当前证据只代表本机 fake 多 Agent调度闭环，不代表生产多 CLI router。
 
 ### R3：MultiLaneAgentHost + fake runtimes
 

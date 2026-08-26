@@ -64,11 +64,16 @@ import {
   issueAuthenticatedWorkerExecutionContext,
 } from "./auth.ts";
 import { canonicalDigest, canonicalValue } from "./canonical-digest.ts";
+import { requireHumanRoomOwner } from "./collaboration-policy.ts";
+import {
+  newLegacyRoom,
+  roomProjectionFromRow,
+} from "./collaboration-projection.ts";
 import {
   planNextPlacement,
   type PlacementPlannerInput,
 } from "./placement-planner.ts";
-import { SCHEMA_SQL } from "./schema.ts";
+import { migrateCollaborationSchemaV7, SCHEMA_SQL } from "./schema.ts";
 import {
   integer,
   jsonObject,
@@ -108,7 +113,7 @@ import type {
 const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 6;
+export const KERNEL_SCHEMA_VERSION = 7;
 
 export function computeRuntimeCertificationDigest(
   certification: Omit<RuntimeCertification, "certificationDigest">,
@@ -366,6 +371,7 @@ export class RoomKernel {
       }
     }
     this.#database.exec(SCHEMA_SQL);
+    migrateCollaborationSchemaV7(this.#database, this.#timestamp());
     const hostColumns = this.#database
       .prepare("PRAGMA table_info(agent_hosts)")
       .all();
@@ -722,31 +728,42 @@ export class RoomKernel {
   ): Room {
     return this.#transaction(() => {
       const actorId = this.#requireAuthenticatedActor(actor);
-      const room: Room = {
-        roomId: this.#createId("room"),
-        slug: input.slug.trim(),
-        name: input.name.trim(),
-      };
-      if (room.slug.length === 0 || room.name.length === 0) {
-        throw new Error("room slug and name are required");
-      }
-      const createdAt = this.#timestamp();
+      requireHumanRoomOwner(
+        this.#principalFromRow(this.#requirePrincipal(actorId)),
+      );
+      const room = newLegacyRoom(
+        this.#createId("room"),
+        input,
+        this.#timestamp(),
+      );
       this.#database
         .prepare(
-          "INSERT INTO rooms(room_id, slug, name, next_seq, created_at) VALUES(?, ?, ?, 1, ?)",
+          "INSERT INTO rooms(room_id, workspace_id, kind, slug, name, next_seq, created_at) VALUES(?, ?, ?, ?, ?, 1, ?)",
         )
-        .run(room.roomId, room.slug, room.name, createdAt);
+        .run(
+          room.roomId,
+          room.workspaceId,
+          room.kind,
+          room.slug,
+          room.name,
+          room.createdAt,
+        );
       this.#database
         .prepare(
-          "INSERT INTO memberships(room_id, principal_id, joined_at) VALUES(?, ?, ?)",
+          "INSERT INTO memberships(room_id, principal_id, role, joined_at) VALUES(?, ?, 'owner', ?)",
         )
-        .run(room.roomId, actorId, createdAt);
+        .run(room.roomId, actorId, room.createdAt);
       this.#appendEvent({
         actorId,
         aggregateId: room.roomId,
         aggregateType: "room",
         idempotencyKey: `room.create:${room.roomId}`,
-        payload: { name: room.name, slug: room.slug },
+        payload: {
+          kind: room.kind,
+          name: room.name,
+          slug: room.slug,
+          workspaceId: room.workspaceId,
+        },
         roomId: room.roomId,
         type: "room.created",
       });
@@ -765,7 +782,7 @@ export class RoomKernel {
       const joinedAt = this.#timestamp();
       const result = this.#database
         .prepare(
-          "INSERT OR IGNORE INTO memberships(room_id, principal_id, joined_at) VALUES(?, ?, ?)",
+          "INSERT OR IGNORE INTO memberships(room_id, principal_id, role, joined_at) VALUES(?, ?, 'member', ?)",
         )
         .run(input.roomId, input.principalId, joinedAt);
       if (Number(result.changes) === 0) return;
@@ -5572,11 +5589,7 @@ export class RoomKernel {
       .all(roomId)
       .map((row) => this.#principalFromRow(row));
     return {
-      room: {
-        roomId: text(roomRow, "room_id"),
-        slug: text(roomRow, "slug"),
-        name: text(roomRow, "name"),
-      },
+      room: roomProjectionFromRow(roomRow),
       members,
     };
   }

@@ -1,6 +1,6 @@
 # ADR-0012：Workspace、Room Role 与 Thread 最小边界
 
-状态：Accepted / domain vocabulary frozen / protocol schema 与 Kernel migration pending（2026-08-26）
+状态：Accepted / P1 protocol schema 与 Kernel schema v7 migration implemented / P2–P3 pending（2026-08-26）
 
 ## 背景
 
@@ -88,12 +88,12 @@ schema v7 迁移旧数据时：
 
 ## 分阶段门禁
 
-1. **P0（本 ADR）**：冻结对象、owner 与迁移规则；daemon v4 只能消费 workspace mount identity。
-2. **P1（schema v7）**：Workspace、RoomKind、MembershipRole、Thread/Message FK 与 legacy migration 测试。
+1. **P0（已完成）**：冻结对象、owner 与迁移规则；daemon v4 只能消费 workspace mount identity。
+2. **P1（已完成，schema v7）**：严格 Workspace、RoomKind、MembershipRole、Thread protocol schemas；Room→Workspace、role、Thread/root/reply 复合 FK；可证明 Human owner 的 legacy migration，以及无法证明时的 fail-closed gate。新 Room 目前进入显式 legacy Workspace，只有 Human 可以创建并成为 owner。
 3. **P2（Kernel/API）**：Workspace/Room discovery、角色管理、message send、thread create/reply；全部要求认证、freshness 与 idempotency。
 4. **P3（Client E2）**：Human 创建 Workspace/Room、加入两个 Agent、发消息/Task、Thread 回复，断线重连后完全由 canonical sync 恢复。
 
-P1–P3 未完成前，前端不得自行实现 Workspace/role/thread 状态，daemon config 也不得被描述为 Workspace 管理面。
+P2–P3 未完成前，前端不得自行实现 Workspace/role/thread 命令状态，daemon config 也不得被描述为 Workspace 管理面。schema v7 的 Workspace 业务容器不等于仍待实现的 canonical WorkspaceDefinition/mount control object。
 
 ## 后果
 
