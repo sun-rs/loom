@@ -1,15 +1,16 @@
 import { lstat, mkdir } from "node:fs/promises";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
 import {
   AgentHost,
   AgentHostDaemon,
-  buildRuntimeOfferFromProfile,
   GenericProcessAdapter,
+  MultiLaneAgentHost,
   RuntimeCredentialEnvironmentBinding,
   RuntimeImplementationRegistry,
   RuntimeProfileRegistry,
   UnixSocketInstanceLock,
+  type AgentHostOptions,
   type RuntimeAdapter,
 } from "@rah-os/agent-host";
 import {
@@ -21,20 +22,24 @@ import {
   RahCore,
   type AuthenticatedHostContext,
   RoomKernel,
-  UnauthenticatedError,
 } from "@rah-os/core";
 import {
   CLIENT_API_VERSION,
   type RuntimeRecoveryDescriptor,
-  type RuntimeProfileProbeReport,
   type RuntimeProfileRevision,
+  type WorkspaceMountDescriptor,
 } from "@rah-os/protocol";
 
 import type { DaemonConfig } from "./config.ts";
 import {
+  createRegistryBackedRuntimeRecovery,
+  createRegistryBackedRuntimeRecoveryFromRegistries,
+} from "./registry-runtime-recovery.ts";
+import {
   LocalWakeSignal,
   OutboxWakeDispatcher,
 } from "./outbox-wake-dispatcher.ts";
+import { RuntimeOfferPublisher } from "./runtime-offer-publisher.ts";
 import { FileSecretProvider, type SecretProvider } from "./secret-provider.ts";
 
 export const DAEMON_BUILD_VERSION = "0.1.0";
@@ -43,7 +48,8 @@ export const DAEMON_PROTOCOL_VERSION = 1;
 export type DaemonHealthSnapshot = {
   buildVersion: string;
   hostId: string;
-  participantId: string;
+  participantId?: string;
+  participantIds: string[];
   protocolVersion: number;
   state: "failed" | "offline" | "online" | "starting";
   lastCycleAt?: string;
@@ -51,58 +57,6 @@ export type DaemonHealthSnapshot = {
   lastError?: string;
   startedAt?: string;
 };
-
-export function createRegistryBackedRuntimeRecovery(input: {
-  cwd: string;
-  implementations: RuntimeImplementationRegistry;
-  registry: RuntimeProfileRegistry;
-  supervisorDirectory: string;
-}): {
-  driverIds: readonly string[];
-  resolve(descriptor: RuntimeRecoveryDescriptor): RuntimeAdapter;
-} {
-  return {
-    driverIds: input.implementations.recoveryDrivers(),
-    resolve: (descriptor) => {
-      if (
-        descriptor.runtimeProfileRevisionId === undefined ||
-        descriptor.runtimeProfileDigest === undefined ||
-        descriptor.recoveryImplementationVersion === undefined
-      ) {
-        throw new Error(
-          "registry-backed runtime recovery descriptor lacks immutable profile provenance",
-        );
-      }
-      const recoveryRevision = input.registry.getRevision(
-        descriptor.runtimeProfileRevisionId,
-      );
-      if (recoveryRevision.contentDigest !== descriptor.runtimeProfileDigest) {
-        throw new Error(
-          `runtime recovery profile digest mismatch: ${descriptor.runtimeProfileRevisionId}`,
-        );
-      }
-      const installedRecoveryVersion =
-        input.implementations.recoveryDriverImplementationVersion(
-          descriptor.driver,
-        );
-      if (
-        installedRecoveryVersion !== descriptor.recoveryImplementationVersion
-      ) {
-        throw new Error(
-          `runtime recovery implementation version mismatch: ${descriptor.driver}`,
-        );
-      }
-      return input.implementations.createRecoveryRuntime(
-        recoveryRevision,
-        descriptor.driver,
-        {
-          cwd: input.cwd,
-          supervisorDirectory: input.supervisorDirectory,
-        },
-      );
-    },
-  };
-}
 
 function assertRuntimeProfileRevisionStillActive(
   registry: RuntimeProfileRegistry,
@@ -138,7 +92,10 @@ export class DaemonApplication {
     this.#health = {
       buildVersion: DAEMON_BUILD_VERSION,
       hostId: this.#config.host.hostId,
-      participantId: this.#config.host.participantId,
+      ...(this.#config.schemaVersion === 4
+        ? {}
+        : { participantId: this.#config.host.participantId }),
+      participantIds: configuredParticipantIds(this.#config),
       protocolVersion: DAEMON_PROTOCOL_VERSION,
       state: "offline",
     };
@@ -166,7 +123,7 @@ export class DaemonApplication {
     let kernel: RoomKernel | undefined;
     let clientService: ClientApplicationService | undefined;
     let workerService: WorkerApplicationService | undefined;
-    let runtimeProfileRegistry: RuntimeProfileRegistry | undefined;
+    const runtimeProfileRegistries = new Map<string, RuntimeProfileRegistry>();
     let executionFailure: unknown;
     try {
       await ensureOwnerPrivateDirectory(this.#config.stateDirectory);
@@ -175,6 +132,24 @@ export class DaemonApplication {
       );
       core = RahCore.open({
         databasePath: join(this.#config.stateDirectory, "room.db"),
+        ...(this.#config.schemaVersion === 4
+          ? {
+              placementCapacityPolicy: {
+                defaultMaxConcurrent: this.#config.host.maxConcurrent,
+                hostLimits: [
+                  {
+                    hostId: this.#config.host.hostId,
+                    maxConcurrent: this.#config.host.maxConcurrent,
+                  },
+                ],
+                runtimeProfileLimits: this.#config.runtimes.map((runtime) => ({
+                  hostId: this.#config.host.hostId,
+                  maxConcurrent: runtime.offer.maxConcurrent,
+                  runtimeProfileId: runtime.runtimeProfileId,
+                })),
+              },
+            }
+          : {}),
       });
       kernel = core.kernel;
       const host = kernel.authenticateHostAccessToken(hostAccessToken);
@@ -184,11 +159,11 @@ export class DaemonApplication {
         );
       }
       if (
-        host.participantIds.length !== 1 ||
-        host.participantIds[0] !== this.#config.host.participantId
+        JSON.stringify([...host.participantIds].sort()) !==
+        JSON.stringify(configuredParticipantIds(this.#config))
       ) {
         throw new Error(
-          "daemon core currently requires one Host credential scoped to exactly the configured participant",
+          "configured participant scope does not match the authenticated Host credential",
         );
       }
 
@@ -207,7 +182,9 @@ export class DaemonApplication {
       await workerService.start();
       const activeWorkerService = workerService;
       let runtime: RuntimeAdapter;
-      let runtimeOfferPublisher: RuntimeOfferPublisher | undefined;
+      const runtimeOfferPublishers: RuntimeOfferPublisher[] = [];
+      let placementRuntimeResolver:
+        ((placement: { runtimeOfferId: string }) => RuntimeAdapter) | undefined;
       let runtimeRecoveryDrivers: readonly string[] | undefined;
       let runtimeRecoveryResolver:
         ((descriptor: RuntimeRecoveryDescriptor) => RuntimeAdapter) | undefined;
@@ -252,13 +229,13 @@ export class DaemonApplication {
             ? {}
             : { terminationGraceMs: runtimeOptions.terminationGraceMs }),
         });
-      } else {
+      } else if (this.#config.schemaVersion === 3) {
         const runtimeOptions = this.#config.runtime;
-        runtimeProfileRegistry = new RuntimeProfileRegistry({
-          databasePath: runtimeOptions.registryDatabasePath,
-          hostId: host.hostId,
-        });
-        runtimeProfileRegistry.initialize();
+        const runtimeProfileRegistry = openRuntimeProfileRegistry(
+          runtimeProfileRegistries,
+          runtimeOptions.registryDatabasePath,
+          host.hostId,
+        );
         const activeRevision = runtimeProfileRegistry.getActiveRevision(
           runtimeOptions.runtimeProfileId,
         );
@@ -328,40 +305,182 @@ export class DaemonApplication {
         });
         runtimeRecoveryDrivers = recovery.driverIds;
         runtimeRecoveryResolver = recovery.resolve;
-        runtimeOfferPublisher = new RuntimeOfferPublisher({
-          host,
-          kernel,
-          leaseMs: runtimeOptions.offer.leaseMs,
-          maxConcurrent: runtimeOptions.offer.maxConcurrent,
-          probeReport,
-          revisionIsActive: () => {
-            try {
-              assertRuntimeProfileRevisionStillActive(
-                runtimeProfileRegistry!,
-                activeRevision,
-              );
-              return true;
-            } catch {
-              return false;
-            }
+        runtimeOfferPublishers.push(
+          new RuntimeOfferPublisher({
+            host,
+            kernel,
+            leaseMs: runtimeOptions.offer.leaseMs,
+            maxConcurrent: runtimeOptions.offer.maxConcurrent,
+            probeReport,
+            revisionIsActive: () => {
+              try {
+                assertRuntimeProfileRevisionStillActive(
+                  runtimeProfileRegistry,
+                  activeRevision,
+                );
+                return true;
+              } catch {
+                return false;
+              }
+            },
+            refreshIntervalMs: runtimeOptions.offer.refreshIntervalMs,
+            refreshProbe: async () =>
+              runtimeProfileRegistry.recordProbeReport(
+                await implementations.probeRevision(activeRevision, {
+                  cwd: runtimeOptions.cwd,
+                }),
+              ),
+            runtimeOfferId: runtimeOptions.offer.runtimeOfferId,
+            runtimeProfileRevision: activeRevision,
+          }),
+        );
+      } else {
+        const v4Config = this.#config;
+        const implementations = new RuntimeImplementationRegistry();
+        const runtimesByOfferId = new Map<string, RuntimeAdapter>();
+        const workspaceMountDescriptors: WorkspaceMountDescriptor[] = [
+          {
+            modes: [v4Config.workspace.mode],
+            workspaceDefinitionId: v4Config.workspace.workspaceDefinitionId,
+            workspaceMountDigest: v4Config.workspace.workspaceMountDigest,
+            workspaceMountRevisionId:
+              v4Config.workspace.workspaceMountRevisionId,
           },
-          refreshIntervalMs: runtimeOptions.offer.refreshIntervalMs,
-          refreshProbe: async () =>
-            runtimeProfileRegistry!.recordProbeReport(
-              await implementations.probeRevision(activeRevision, {
-                cwd: runtimeOptions.cwd,
-              }),
-            ),
-          runtimeOfferId: runtimeOptions.offer.runtimeOfferId,
-          runtimeProfileRevision: activeRevision,
+        ];
+        for (const runtimeOptions of v4Config.runtimes) {
+          const runtimeProfileRegistry = openRuntimeProfileRegistry(
+            runtimeProfileRegistries,
+            runtimeOptions.registryDatabasePath,
+            host.hostId,
+          );
+          const activeRevision = runtimeProfileRegistry.getActiveRevision(
+            runtimeOptions.runtimeProfileId,
+          );
+          if (activeRevision === null) {
+            throw new Error(
+              `RuntimeProfile ${runtimeOptions.runtimeProfileId} has no active revision`,
+            );
+          }
+          const probeReport = runtimeProfileRegistry.recordProbeReport(
+            await implementations.probeRevision(activeRevision, {
+              cwd: v4Config.workspace.cwd,
+            }),
+          );
+          if (!probeReport.available) {
+            throw new Error(
+              `active RuntimeProfile probe failed: ${probeReport.failureCode ?? "unavailable"}`,
+            );
+          }
+          const credentialEnvironment = new RuntimeCredentialEnvironmentBinding(
+            {
+              manifest: activeRevision.manifest,
+              resolvers: Object.fromEntries(
+                Object.entries(runtimeOptions.credentialBindings).map(
+                  ([slotId, reference]) => [
+                    slotId,
+                    async () => await this.#secretProvider.load(reference),
+                  ],
+                ),
+              ),
+            },
+          );
+          const configuredRuntime = implementations.createRuntime(
+            activeRevision,
+            probeReport,
+            {
+              activationEnvironment: async (scope) => {
+                const secretLease = await credentialEnvironment.resolve();
+                const credential =
+                  activeWorkerService.issueActivationCredential(host, scope);
+                return {
+                  env: {
+                    ...secretLease.env,
+                    RAH_WORKER_API_URL: activeWorkerService.origin,
+                    RAH_WORKER_TOKEN: credential.accessToken,
+                  },
+                  redactions: [
+                    ...(secretLease.redactions ?? []),
+                    credential.accessToken,
+                  ],
+                  release: () => {
+                    credential.revoke();
+                    secretLease.release?.();
+                  },
+                };
+              },
+              beforeStart: () =>
+                assertRuntimeProfileRevisionStillActive(
+                  runtimeProfileRegistry,
+                  activeRevision,
+                ),
+              cwd: v4Config.workspace.cwd,
+              supervisorDirectory: join(v4Config.stateDirectory, "supervisors"),
+            },
+          );
+          const availability = await configuredRuntime.probe();
+          if (!availability.available) {
+            throw new Error(availability.detail ?? "runtime is unavailable");
+          }
+          runtimesByOfferId.set(
+            runtimeOptions.offer.runtimeOfferId,
+            configuredRuntime,
+          );
+          runtimeOfferPublishers.push(
+            new RuntimeOfferPublisher({
+              host,
+              kernel,
+              leaseMs: runtimeOptions.offer.leaseMs,
+              maxConcurrent: runtimeOptions.offer.maxConcurrent,
+              probeReport,
+              revisionIsActive: () => {
+                try {
+                  assertRuntimeProfileRevisionStillActive(
+                    runtimeProfileRegistry,
+                    activeRevision,
+                  );
+                  return true;
+                } catch {
+                  return false;
+                }
+              },
+              refreshIntervalMs: runtimeOptions.offer.refreshIntervalMs,
+              refreshProbe: async () =>
+                runtimeProfileRegistry.recordProbeReport(
+                  await implementations.probeRevision(activeRevision, {
+                    cwd: v4Config.workspace.cwd,
+                  }),
+                ),
+              runtimeOfferId: runtimeOptions.offer.runtimeOfferId,
+              runtimeProfileRevision: activeRevision,
+              workspaceMountDescriptors,
+            }),
+          );
+        }
+        runtime = runtimesByOfferId.values().next().value!;
+        placementRuntimeResolver = (placement) => {
+          const selected = runtimesByOfferId.get(placement.runtimeOfferId);
+          if (selected === undefined) {
+            throw new Error(
+              `Placement references unconfigured RuntimeOffer ${placement.runtimeOfferId}`,
+            );
+          }
+          return selected;
+        };
+        const recovery = createRegistryBackedRuntimeRecoveryFromRegistries({
+          cwd: v4Config.workspace.cwd,
+          implementations,
+          registries: [...runtimeProfileRegistries.values()],
+          supervisorDirectory: join(v4Config.stateDirectory, "supervisors"),
         });
+        runtimeRecoveryDrivers = recovery.driverIds;
+        runtimeRecoveryResolver = recovery.resolve;
       }
       const availability = await runtime.probe();
       if (!availability.available) {
         throw new Error(availability.detail ?? "runtime is unavailable");
       }
       const wakeSignal = new LocalWakeSignal();
-      const runner = new AgentHost({
+      const runnerOptions = {
         drainTimeoutMs: this.#config.drainTimeoutMs,
         host,
         kernel,
@@ -393,7 +512,18 @@ export class DaemonApplication {
         runtimeRecoveryTimeoutMs: this.#config.runtimeRecoveryTimeoutMs,
         runtimeStartTimeoutMs: this.#config.runtimeStartTimeoutMs,
         wait: async (delayMs, signal) => await wakeSignal.wait(delayMs, signal),
-      });
+      } satisfies AgentHostOptions;
+      const runner =
+        placementRuntimeResolver === undefined
+          ? new AgentHost(runnerOptions)
+          : new MultiLaneAgentHost({
+              ...runnerOptions,
+              capacity:
+                this.#config.schemaVersion === 4
+                  ? this.#config.host.maxConcurrent
+                  : 1,
+              placementRuntimeResolver,
+            });
       const wakeDispatcher = new OutboxWakeDispatcher({
         dispatcherId: `${host.hostId}:${host.instanceId}:wake`,
         kernel,
@@ -411,13 +541,20 @@ export class DaemonApplication {
           hostId: host.hostId,
         }),
         kernel,
-        ...(runtimeOfferPublisher === undefined
+        ...(runtimeOfferPublishers.length === 0
           ? {}
           : {
               lifecycle: {
-                afterOnline: () => runtimeOfferPublisher.publishAvailable(),
-                beforeDraining: () =>
-                  runtimeOfferPublisher.publishUnavailable(),
+                afterOnline: () => {
+                  for (const publisher of runtimeOfferPublishers) {
+                    publisher.publishAvailable();
+                  }
+                },
+                beforeDraining: () => {
+                  for (const publisher of runtimeOfferPublishers) {
+                    publisher.publishUnavailable();
+                  }
+                },
               },
             }),
         metadata: {
@@ -455,12 +592,10 @@ export class DaemonApplication {
       await runCoupledComponents(input.signal, [
         async (signal) => await daemon.run({ signal }),
         async (signal) => await wakeDispatcher.run({ signal }),
-        ...(runtimeOfferPublisher === undefined
-          ? []
-          : [
-              async (signal: AbortSignal) =>
-                await runtimeOfferPublisher.run(signal),
-            ]),
+        ...runtimeOfferPublishers.map(
+          (publisher) => async (signal: AbortSignal) =>
+            await publisher.run(signal),
+        ),
       ]);
     } catch (error) {
       executionFailure = error;
@@ -484,10 +619,12 @@ export class DaemonApplication {
     } catch (error) {
       cleanupErrors.push(error);
     }
-    try {
-      runtimeProfileRegistry?.close();
-    } catch (error) {
-      cleanupErrors.push(error);
+    for (const registry of runtimeProfileRegistries.values()) {
+      try {
+        registry.close();
+      } catch (error) {
+        cleanupErrors.push(error);
+      }
     }
     try {
       core?.close();
@@ -523,119 +660,32 @@ export class DaemonApplication {
   }
 }
 
-class RuntimeOfferPublisher {
-  readonly #host: AuthenticatedHostContext;
-  readonly #kernel: RoomKernel;
-  readonly #leaseMs: number;
-  readonly #maxConcurrent: number;
-  #probeReport: RuntimeProfileProbeReport;
-  readonly #refreshProbe: () => Promise<RuntimeProfileProbeReport>;
-  readonly #revisionIsActive: () => boolean;
-  readonly #refreshIntervalMs: number;
-  readonly #runtimeOfferId: string;
-  readonly #runtimeExecutableIdentity:
-    RuntimeProfileProbeReport["executableIdentity"] | undefined;
-  readonly #runtimeProfileRevision: RuntimeProfileRevision;
-  #lastObservedAtMs = 0;
+function configuredParticipantIds(config: DaemonConfig): string[] {
+  return config.schemaVersion === 4
+    ? [...config.host.participantIds].sort()
+    : [config.host.participantId];
+}
 
-  constructor(input: {
-    host: AuthenticatedHostContext;
-    kernel: RoomKernel;
-    leaseMs: number;
-    maxConcurrent: number;
-    probeReport: RuntimeProfileProbeReport;
-    refreshIntervalMs: number;
-    refreshProbe: () => Promise<RuntimeProfileProbeReport>;
-    revisionIsActive: () => boolean;
-    runtimeOfferId: string;
-    runtimeProfileRevision: RuntimeProfileRevision;
-  }) {
-    this.#host = input.host;
-    this.#kernel = input.kernel;
-    this.#leaseMs = input.leaseMs;
-    this.#maxConcurrent = input.maxConcurrent;
-    this.#probeReport = structuredClone(input.probeReport);
-    this.#refreshIntervalMs = input.refreshIntervalMs;
-    this.#refreshProbe = input.refreshProbe;
-    this.#revisionIsActive = input.revisionIsActive;
-    this.#runtimeOfferId = input.runtimeOfferId;
-    this.#runtimeExecutableIdentity = structuredClone(
-      input.probeReport.executableIdentity,
-    );
-    this.#runtimeProfileRevision = structuredClone(
-      input.runtimeProfileRevision,
-    );
+function openRuntimeProfileRegistry(
+  registries: Map<string, RuntimeProfileRegistry>,
+  databasePath: string,
+  hostId: string,
+): RuntimeProfileRegistry {
+  const registryPath = resolve(databasePath);
+  const existing = registries.get(registryPath);
+  if (existing !== undefined) return existing;
+  const registry = new RuntimeProfileRegistry({
+    databasePath: registryPath,
+    hostId,
+  });
+  try {
+    registry.initialize();
+  } catch (error) {
+    registry.close();
+    throw error;
   }
-
-  async run(signal: AbortSignal): Promise<void> {
-    try {
-      while (!signal.aborted) {
-        await waitForAbortOrDelay(this.#refreshIntervalMs, signal);
-        if (signal.aborted) break;
-        this.#probeReport = await this.#refreshProbe();
-        this.#tryPublish(this.#currentOfferState());
-      }
-    } finally {
-      this.publishUnavailable();
-    }
-  }
-
-  publishAvailable(): boolean {
-    return this.#tryPublish(this.#currentOfferState());
-  }
-
-  publishUnavailable(): boolean {
-    return this.#tryPublish("unavailable");
-  }
-
-  #currentOfferState(): "available" | "unavailable" {
-    const current = this.#probeReport.executableIdentity;
-    const expected = this.#runtimeExecutableIdentity;
-    return this.#revisionIsActive() &&
-      this.#probeReport.available &&
-      current !== undefined &&
-      expected !== undefined &&
-      current.requestedExecutable === expected.requestedExecutable &&
-      current.resolvedExecutablePath === expected.resolvedExecutablePath &&
-      current.contentDigest === expected.contentDigest &&
-      current.byteLength === expected.byteLength
-      ? "available"
-      : "unavailable";
-  }
-
-  #tryPublish(state: "available" | "unavailable"): boolean {
-    try {
-      this.#publish(state);
-      return true;
-    } catch (error) {
-      if (
-        error instanceof UnauthenticatedError &&
-        error.message === "Host daemon instance is not active"
-      ) {
-        return false;
-      }
-      throw error;
-    }
-  }
-
-  #publish(state: "available" | "unavailable"): void {
-    const observedAtMs = Math.max(Date.now(), this.#lastObservedAtMs + 1);
-    this.#lastObservedAtMs = observedAtMs;
-    this.#kernel.publishRuntimeOffer(
-      this.#host,
-      buildRuntimeOfferFromProfile({
-        hostId: this.#host.hostId,
-        hostInstanceId: this.#host.instanceId,
-        leaseUntil: new Date(observedAtMs + this.#leaseMs).toISOString(),
-        maxConcurrent: this.#maxConcurrent,
-        observedAt: new Date(observedAtMs).toISOString(),
-        probeReport: this.#probeReport,
-        runtimeOfferId: this.#runtimeOfferId,
-        runtimeProfileRevision: this.#runtimeProfileRevision,
-        state,
-      }),
-    );
-  }
+  registries.set(registryPath, registry);
+  return registry;
 }
 
 async function ensureOwnerPrivateDirectory(directory: string): Promise<void> {
@@ -688,21 +738,4 @@ async function runCoupledComponents(
   if (!externalSignal.aborted) {
     throw new Error("daemon component stopped before shutdown was requested");
   }
-}
-
-async function waitForAbortOrDelay(
-  delayMs: number,
-  signal: AbortSignal,
-): Promise<void> {
-  if (signal.aborted) return;
-  await new Promise<void>((resolvePromise) => {
-    const timer = setTimeout(finish, delayMs);
-    const onAbort = () => finish();
-    function finish(): void {
-      clearTimeout(timer);
-      signal.removeEventListener("abort", onAbort);
-      resolvePromise();
-    }
-    signal.addEventListener("abort", onAbort, { once: true });
-  });
 }

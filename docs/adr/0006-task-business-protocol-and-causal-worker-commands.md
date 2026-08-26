@@ -43,4 +43,4 @@
 
 - 当前没有 dependency、block/cancel/reassign、Artifact、Review evidence、worktree lease 或 verifier；`waiting_input` 当前只支持 creator responder 与文本 answer。`completed` 只是 creator 的显式验收，不等于完整 review 系统。
 - Worker 只有 activation-scoped 单 Task query，没有通用 list；Room snapshot 也尚未包含 Task projection。过期 claim 恢复需要显式 reclaim command，而不是 heartbeat 复活过期 ownership。
-- 当前只证明本机 SQLite/loopback 单 participant daemon，不证明远端 Host、多租户或 hostile same-user 隔离。
+- 当前已追加证明本机 SQLite/loopback config v4 双 participant daemon；仍不证明远端 Host、多租户、真实 mixed CLI 或 hostile same-user 隔离。

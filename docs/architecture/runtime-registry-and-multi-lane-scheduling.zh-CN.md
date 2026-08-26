@@ -1,6 +1,6 @@
 # Runtime Registry 与多 Lane 调度架构
 
-状态：**Accepted in stages / R0–R3 fake Core path implemented / R1–R1.1 still provisional / narrow R2a–R2b implemented**（2026-08-26）。严格 protocol schemas、pure placement planner、最初在 schema v5 建立且由当前 Kernel schema v6 保留的 Placement projections、control Room 配置修订、trusted immutable Offer evidence、durable Placement/RunAttempt provenance、atomic placement launch claim、可信启动期 capacity policy、MultiLaneAgentHost，以及 Host-local immutable Runtime Profile/Probe Registry、spawn-time secret binding 与 daemon config v3 redacted Offer publisher已通过本机门禁。durable PlacementHold、control-Room CapacityPool、canonical workspace mount、model execution binding与可执行 daemon 多 participant 配置尚未完成。当前 daemon v3 仍只驱动一个 Agent participant 和一个 active Generic process profile；发布 Offer 不等于已经具备多 Agent 动态路由。
+状态：**Accepted in stages / R0–R3 implemented / narrow R2a–R2b implemented / R5 config v4 fake slice implemented / R1–R4 provisional**（2026-08-26）。严格 protocol schemas、pure placement planner、Kernel schema v6 Placement projections、control Room 配置修订、trusted immutable Offer evidence、durable Placement/RunAttempt provenance、atomic placement launch claim、可信启动期 capacity policy、MultiLaneAgentHost、Host-local immutable Runtime Profile/Probe Registry、spawn-time secret binding，以及 daemon config v4 的双 participant/双 profile Placement-selected external Worker E2 已通过本机门禁。durable PlacementHold、control-Room CapacityPool、canonical Workspace mount、model execution binding、mixed-adapter recovery 与 real CLI v4 certification尚未完成。
 
 ## 1. 要解决的问题
 
@@ -459,7 +459,7 @@ MultiLaneAgentHost
 - typed ACP/provider error 可以进入 observation/failure taxonomy；未知 stdout 仍是 diagnostics，不能自动切模型或完成 Task；
 - 跨 offer fallback 只发生在旧 runtime 已有 terminal proof、Task canonical state 允许重试且 policy 明确允许时；每次 fallback 创建新 Placement/RunAttempt。
 
-## 14. Daemon config v3 现状与 v4 目标
+## 14. Daemon config v3 兼容路径与 v4 已实现切片
 
 当前已实现的 config v3 是窄 single-profile bootstrap，只选择一个 stable profile，不内联 command/env：
 
@@ -482,7 +482,11 @@ MultiLaneAgentHost
 }
 ```
 
-R5 的 multi-profile/multi-participant daemon composition 将使用新的 config v4；不得复用 `schemaVersion: 3` 描述另一种 shape。manifest import 必须 canonicalize → validate → digest → create immutable revision；修改文件不会原地覆盖旧 revision。v2 单 runtime 配置应由显式 migration command 导入成一个 profile revision 和一个 pinned policy；不做无法审计的隐式猜测。
+config v4 已使用独立 shape 实现 multi-profile/multi-participant composition：Host credential scope 必须与排序后的 `participantIds` 精确相等；`runtimeProfileId` 与 `runtimeOfferId` 在 config 内唯一；多个 profile 可复用一个去重后的 Host-bound Registry；每个 active revision 启动时重新 probe，并发布同一 startup-owned workspace mount descriptor。Kernel 依据 Agent policy 生成 Placement，daemon 仅按 `runtimeOfferId` 解析 frozen runtime，不能按 config 顺序或轮询先后自行挑选。
+
+v4 的 `host.maxConcurrent` 与每个 Offer `maxConcurrent` 同时进入 trusted startup capacity policy，实际有效容量仍取 Kernel Host/profile/Offer 门禁的最小值。两个 profile 的旧 revision recovery 会按 descriptor 中的 revision/digest/driver version 在已配置 Registry 中解析；未找到或多 Registry 冲突时 fail closed。
+
+当前限制：v4 workspace identity 仍是 trusted startup config，不是 schema v7 的 canonical Workspace 管理面；只支持固定 `in_place` cwd，不支持动态 worktree；model binding 仍未执行；R5 只用两个 immutable fake Generic profiles证明路由和业务链，没有宣称 Codex/Kimi/OpenCode/Claude 的真实 v4 certification。manifest import 仍必须 canonicalize → validate → digest → create immutable revision；v2 单 runtime 配置未来应由显式 migration command 导入，不做无法审计的隐式猜测。
 
 ## 15. 外部项目经验：采用与拒绝
 
@@ -554,7 +558,7 @@ R5 的 multi-profile/multi-participant daemon composition 将使用新的 config
 
 门禁证据：以真实 v1 DDL/trigger/fixture 建库后的 v1→v2 数据迁移与 FK 完整性、不可伪造/不可更新/不可删除 probe、caller-mutated revision 拒绝、start 前 replacement 拒绝且不读取 credential/prepare run、credential-load 间隙 replacement 被 supervisor 拒绝且未执行并可由 direct reap/旧 descriptor recovery 验证 `RAH_START_FAILED` terminal proof、unknown recovery、latest-failure activation fence、secret 延迟/有界读取、缺失/多余/prototype slot、单次、重复长 secret、正向/反向/链式/32-pattern dense overlap secret 跨 chunk、Unicode code point 拆包/普通 Unicode safe boundary、EOF partial overlap 与 64-pattern/64-KiB near-match 线性资源门禁的流式截断前脱敏、旧 revision recovery routing，以及 daemon v3 在无 Activation 时不读 Provider secret、收到 Activation 后才读取、确定性 active-revision 切换 fixture 中旧 lane 未创建 RunAttempt且 Offer 变 `unavailable`、Kernel Offer JSON 不含本地路径/secret、删除 executable 后 live Offer 变 `unavailable`、shutdown head 为 `unavailable`。
 
-边界：config v3 当前仍复用 single-participant compatibility `AgentHost`，Offer 没有 canonical workspace mount、model binding 或 admin CapacityPool，也没有被 placement-managed atomic launch claim 消费。因此 R2b 完成不代表 multi-lane 或生产调度闭环完成。
+边界：config v3 继续复用 single-participant compatibility `AgentHost`；config v4 才消费 placement-managed atomic launch claim。v4 Offer 虽携带 immutable startup workspace descriptor，但仍没有 canonical Workspace、model binding 或 admin CapacityPool。因此当前证据只代表本机 fake 多 Agent调度闭环，不代表生产多 CLI router。
 
 ### R3：MultiLaneAgentHost + fake runtimes
 
@@ -573,6 +577,8 @@ R5 的 multi-profile/multi-participant daemon composition 将使用新的 config
 门禁：不兼容 session 不被 resume；`reasoning=high` 无 mapping 时 hold 而不是拼未知参数；同一目录不会被两个 in-place Run 同时修改。
 
 ### R5：Daemon config v4 与 mixed fake CLI E2
+
+状态：**partial implemented**。config v4、精确多 participant scope、多个 unique profile/offer、workspace-aware Offer、startup capacity、Placement-selected resolver 与两个外部 Fake Worker 的 Room Task E2 已通过。mixed adapter/profile offline/restart matrix 仍待补齐。
 
 - v2 explicit migration；多 participant Host scope；多个 profile/offer；
 - Codex/Kimi/OpenCode/Claude fake wrapper 同 Room 并行工作；pass/fail 只读 Kernel。

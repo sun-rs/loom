@@ -134,6 +134,307 @@ test("daemon config v3 selects one active registry profile without inline comman
   }
 });
 
+test("daemon config v4 binds multiple authorized participants to unique runtime profiles", () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-daemon-config-v4-"));
+  try {
+    const secretPath = join(directory, "host.token");
+    writeFileSync(secretPath, "rah_hat_test\n", { mode: 0o600 });
+    const config = validConfigV4(directory, secretPath);
+
+    assert.deepEqual(DaemonConfigSchema.parse(config), config);
+    assert.throws(
+      () =>
+        DaemonConfigSchema.parse({
+          ...config,
+          host: {
+            ...config.host,
+            participantIds: ["agent-a", "agent-a"],
+          },
+        }),
+      /duplicate value/,
+    );
+    assert.throws(
+      () =>
+        DaemonConfigSchema.parse({
+          ...config,
+          runtimes: [
+            config.runtimes[0],
+            {
+              ...config.runtimes[1],
+              runtimeProfileId: config.runtimes[0]!.runtimeProfileId,
+            },
+          ],
+        }),
+      /duplicate runtimeProfileId/,
+    );
+    assert.throws(
+      () =>
+        DaemonConfigSchema.parse({
+          ...config,
+          runtimes: [
+            config.runtimes[0],
+            {
+              ...config.runtimes[1],
+              offer: {
+                ...config.runtimes[1]!.offer,
+                runtimeOfferId: config.runtimes[0]!.offer.runtimeOfferId,
+              },
+            },
+          ],
+        }),
+      /duplicate runtimeOfferId/,
+    );
+    assert.throws(
+      () =>
+        DaemonConfigSchema.parse({
+          ...config,
+          host: { ...config.host, maxConcurrent: 65 },
+        }),
+      /must not exceed 64/,
+    );
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("daemon v4 executes two participants through placement-selected runtime profiles", async () => {
+  if (process.platform === "win32") return;
+  const directory = mkdtempSync(join(tmpdir(), "rah-daemon-v4-e2e-"));
+  const stateDirectory = join(directory, "state");
+  mkdirSync(stateDirectory, { mode: 0o700 });
+  const databasePath = join(stateDirectory, "room.db");
+  const registryDatabasePath = join(stateDirectory, "runtime-registry.db");
+  const secretPath = join(stateDirectory, "host.token");
+  const hostId = "daemon-v4-host";
+  const seed = new RoomKernel({ databasePath });
+  const shutdown = new AbortController();
+  let running: Promise<void> | undefined;
+  let observer: RoomKernel | undefined;
+  try {
+    seed.initialize();
+    const human = seed.provisionPrincipal({
+      handle: "daemon-v4-human",
+      kind: "human",
+    });
+    const agents = ["a", "b"].map((suffix) =>
+      seed.provisionPrincipal({
+        handle: `daemon-v4-agent-${suffix}`,
+        kind: "agent",
+      }),
+    );
+    const humanActor = seed.authenticateAccessToken(human.accessToken);
+    const room = seed.createRoom(humanActor, {
+      name: "Daemon v4 multi-agent E2E",
+      slug: "daemon-v4-multi-agent-e2e",
+    });
+    for (const agent of agents) {
+      seed.addMember(humanActor, {
+        principalId: agent.principal.principalId,
+        roomId: room.roomId,
+      });
+    }
+
+    const offerIds = ["daemon-v4-offer-a", "daemon-v4-offer-b"];
+    const profileIds = ["daemon-v4-profile-a", "daemon-v4-profile-b"];
+    const tasks = [];
+    for (const [index, agent] of agents.entries()) {
+      const policy = seed.createExecutionPolicy(humanActor, {
+        basedOnRoomSeq: latestRoomSeq(seed, humanActor, room.roomId),
+        controlRoomId: room.roomId,
+        idempotencyKey: `daemon-v4-policy-${String(index)}`,
+        modelIntent: {
+          fallback: "disabled",
+          reasoning: "default",
+          serviceTier: "default",
+        },
+        preferred: [],
+        required: {
+          allowedOfferIds: [offerIds[index]!],
+          allowedProtocolFamilies: ["rah-worker-process/v1"],
+          capabilities: [],
+          minimumIsolation: "none",
+          workspaceMode: "in_place",
+        },
+        retryPolicyRef: {
+          artifactId: `daemon-v4-retry-${String(index)}`,
+          contentDigest: `sha256:${String(index + 1).repeat(64)}`,
+          versionId: `daemon-v4-retry-${String(index)}-v1`,
+        },
+        sessionPolicy: "fresh",
+      }).policy;
+      seed.createAgentDefinition(humanActor, {
+        basedOnRoomSeq: latestRoomSeq(seed, humanActor, room.roomId),
+        controlRoomId: room.roomId,
+        executionPolicyRevisionId: policy.executionPolicyRevisionId,
+        idempotencyKey: `daemon-v4-agent-definition-${String(index)}`,
+        instructionRefs: [],
+        memoryPolicyRef: {
+          artifactId: `daemon-v4-memory-${String(index)}`,
+          contentDigest: `sha256:${String(index + 3).repeat(64)}`,
+          versionId: `daemon-v4-memory-${String(index)}-v1`,
+        },
+        participantId: agent.principal.principalId,
+        role: `daemon v4 worker ${String(index)}`,
+        skillRefs: [],
+      });
+      tasks.push(
+        seed.createTask(humanActor, {
+          assigneeId: agent.principal.principalId,
+          idempotencyKey: `daemon-v4-task-${String(index)}`,
+          roomId: room.roomId,
+          title: `Execute through runtime profile ${String(index)}`,
+        }).task,
+      );
+    }
+
+    const hostCredential = seed.provisionHostCredential({
+      hostId,
+      participantIds: agents.map((agent) => agent.principal.principalId),
+    });
+    writeFileSync(secretPath, `${hostCredential.accessToken}\n`, {
+      mode: 0o600,
+    });
+
+    const profileRegistry = new RuntimeProfileRegistry({
+      databasePath: registryDatabasePath,
+      hostId,
+    });
+    profileRegistry.initialize();
+    const implementations = new RuntimeImplementationRegistry();
+    for (const [index, runtimeProfileId] of profileIds.entries()) {
+      const manifest: RuntimeProfileManifestV2 = {
+        adapter: {
+          config: { terminationGraceMs: 1_000 },
+          executable: process.execPath,
+          fixedArgs: [fakeCliPath],
+          kind: "generic-process/v1",
+        },
+        credentialSlots: [],
+        declaredCapabilities: ["worker_commands"],
+        displayName: `Daemon v4 fake worker ${String(index)}`,
+        manifestVersion: 2,
+        protocolFamily: "rah-worker-process/v1",
+        recoveryDrivers: ["rah-process-supervisor-v1"],
+        runtimeProfileId,
+        staticEnv: { RAH_FAKE_MODE: "worker-task" },
+        workspacePolicy: { allowedModes: ["in_place"] },
+      };
+      const revision = profileRegistry.importManifest(manifest);
+      profileRegistry.recordProbeReport(
+        await implementations.probeRevision(revision, {
+          cwd: stateDirectory,
+        }),
+      );
+      profileRegistry.activateRevision({
+        contentDigest: revision.contentDigest,
+        runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
+      });
+    }
+    profileRegistry.close();
+    seed.close();
+
+    const base = validConfigV4(stateDirectory, secretPath);
+    const config = DaemonConfigSchema.parse({
+      ...base,
+      host: {
+        ...base.host,
+        hostId,
+        participantIds: agents.map((agent) => agent.principal.principalId),
+      },
+      runtimes: profileIds.map((runtimeProfileId, index) => ({
+        credentialBindings: {},
+        kind: "runtime-profile-registry",
+        offer: {
+          leaseMs: 1_000,
+          maxConcurrent: 1,
+          refreshIntervalMs: 100,
+          runtimeOfferId: offerIds[index],
+        },
+        registryDatabasePath,
+        runtimeProfileId,
+      })),
+    });
+    const application = new DaemonApplication({ config });
+    running = application.run({ signal: shutdown.signal });
+    observer = new RoomKernel({ databasePath });
+    observer.initialize();
+    const activeObserver = observer;
+    try {
+      await waitUntil(
+        () =>
+          activeObserver
+            .listTasks(humanActor, { roomId: room.roomId })
+            .every((task) => task.state === "submitted") &&
+          activeObserver
+            .listActivations({ roomId: room.roomId })
+            .every((activation) => activation.state === "completed"),
+        5_000,
+      );
+    } catch (error) {
+      throw new Error(
+        `daemon v4 did not converge: ${JSON.stringify(
+          {
+            activations: activeObserver.listActivations({
+              roomId: room.roomId,
+            }),
+            health: application.health(),
+            hosts: activeObserver.listHosts(),
+            originalError: String(error),
+            placements: activeObserver.listPlacements({ roomId: room.roomId }),
+            runs: activeObserver.listRunAttempts({ roomId: room.roomId }),
+            tasks: activeObserver.listTasks(humanActor, {
+              roomId: room.roomId,
+            }),
+          },
+          null,
+          2,
+        )}`,
+      );
+    }
+
+    assert.deepEqual(
+      application.health().participantIds,
+      agents.map((agent) => agent.principal.principalId).sort(),
+    );
+    assert.deepEqual(
+      activeObserver
+        .listPlacements({ roomId: room.roomId })
+        .map((placement) => placement.runtimeOfferId)
+        .sort(),
+      [...offerIds].sort(),
+    );
+    assert.deepEqual(
+      activeObserver
+        .listRunAttempts({ roomId: room.roomId })
+        .map((attempt) => attempt.participantId)
+        .sort(),
+      agents.map((agent) => agent.principal.principalId).sort(),
+    );
+    assert.deepEqual(
+      activeObserver
+        .listTasks(humanActor, { roomId: room.roomId })
+        .map((task) => task.taskId)
+        .sort(),
+      tasks.map((task) => task.taskId).sort(),
+    );
+
+    shutdown.abort("daemon-v4-e2e-complete");
+    await running;
+    running = undefined;
+    assert.equal(application.health().state, "offline");
+  } finally {
+    shutdown.abort("daemon-v4-test-cleanup");
+    await running?.catch(() => undefined);
+    observer?.close();
+    try {
+      seed.close();
+    } catch {
+      // The seed connection was already closed before daemon startup.
+    }
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
 test("registry-backed daemon recovery resolves the frozen old revision after activation changes", async () => {
   if (process.platform === "win32") return;
   const directory = mkdtempSync(join(tmpdir(), "rah-daemon-old-recovery-"));
@@ -1323,6 +1624,63 @@ function validConfig(stateDirectory: string, secretPath: string) {
     schemaVersion: 2 as const,
     stateDirectory,
   };
+}
+
+function validConfigV4(stateDirectory: string, secretPath: string) {
+  const legacy = validConfig(stateDirectory, secretPath);
+  const runtime = (suffix: "a" | "b") => ({
+    credentialBindings: {},
+    kind: "runtime-profile-registry" as const,
+    offer: {
+      leaseMs: 120_000,
+      maxConcurrent: 1,
+      refreshIntervalMs: 30_000,
+      runtimeOfferId: `offer-config-v4-${suffix}`,
+    },
+    registryDatabasePath: join(stateDirectory, "runtime-registry.db"),
+    runtimeProfileId: `profile-config-v4-${suffix}`,
+  });
+  return {
+    client: legacy.client,
+    drainTimeoutMs: legacy.drainTimeoutMs,
+    host: {
+      credential: { path: secretPath, source: "file" as const },
+      hostId: "config-v4-host",
+      maxConcurrent: 2,
+      participantIds: ["agent-a", "agent-b"],
+    },
+    hostStaleAfterMs: legacy.hostStaleAfterMs,
+    leaseMs: legacy.leaseMs,
+    outboxLeaseMs: legacy.outboxLeaseMs,
+    outboxPollIntervalMs: legacy.outboxPollIntervalMs,
+    outboxRetryAfterMs: legacy.outboxRetryAfterMs,
+    pollIntervalMs: legacy.pollIntervalMs,
+    runtimes: [runtime("a"), runtime("b")],
+    runTimeoutMs: legacy.runTimeoutMs,
+    runtimeCancelTimeoutMs: legacy.runtimeCancelTimeoutMs,
+    runtimeRecoveryTimeoutMs: legacy.runtimeRecoveryTimeoutMs,
+    runtimeStartTimeoutMs: legacy.runtimeStartTimeoutMs,
+    schemaVersion: 4 as const,
+    stateDirectory,
+    taskClaimHeartbeatIntervalMs: legacy.taskClaimHeartbeatIntervalMs,
+    taskClaimLeaseMs: legacy.taskClaimLeaseMs,
+    workspace: {
+      cwd: stateDirectory,
+      mode: "in_place" as const,
+      workspaceDefinitionId: "workspace-config-v4",
+      workspaceMountDigest: `sha256:${"a".repeat(64)}`,
+      workspaceMountRevisionId: "workspace-mount-config-v4-v1",
+    },
+  };
+}
+
+function latestRoomSeq(
+  kernel: RoomKernel,
+  actor: Parameters<RoomKernel["sync"]>[0],
+  roomId: string,
+): number {
+  return kernel.sync(actor, { consumerId: "daemon-test-cursor", roomId })
+    .latestRoomSeq;
 }
 
 async function waitUntil(

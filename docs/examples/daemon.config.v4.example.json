@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 4,
+  "stateDirectory": "/Users/you/Library/Application Support/RAH OS",
+  "client": {
+    "bindHost": "127.0.0.1",
+    "port": 7777
+  },
+  "host": {
+    "hostId": "macbook-multi-agent-host",
+    "participantIds": [
+      "principal_codex_replace_me",
+      "principal_kimi_replace_me"
+    ],
+    "maxConcurrent": 2,
+    "credential": {
+      "source": "file",
+      "path": "/Users/you/.config/rah-os/host.token"
+    }
+  },
+  "workspace": {
+    "workspaceDefinitionId": "workspace_project_replace_me",
+    "workspaceMountRevisionId": "workspace_mount_macbook_v1_replace_me",
+    "workspaceMountDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "mode": "in_place",
+    "cwd": "/Users/you/Code/workspace"
+  },
+  "runtimes": [
+    {
+      "kind": "runtime-profile-registry",
+      "registryDatabasePath": "/Users/you/Library/Application Support/RAH OS/runtime-registry.db",
+      "runtimeProfileId": "codex-profile",
+      "credentialBindings": {},
+      "offer": {
+        "runtimeOfferId": "macbook-codex-offer",
+        "maxConcurrent": 1,
+        "leaseMs": 120000,
+        "refreshIntervalMs": 30000
+      }
+    },
+    {
+      "kind": "runtime-profile-registry",
+      "registryDatabasePath": "/Users/you/Library/Application Support/RAH OS/runtime-registry.db",
+      "runtimeProfileId": "kimi-profile",
+      "credentialBindings": {},
+      "offer": {
+        "runtimeOfferId": "macbook-kimi-offer",
+        "maxConcurrent": 1,
+        "leaseMs": 120000,
+        "refreshIntervalMs": 30000
+      }
+    }
+  ],
+  "hostStaleAfterMs": 60000,
+  "leaseMs": 60000,
+  "leaseRenewIntervalMs": 20000,
+  "pollIntervalMs": 30000,
+  "outboxLeaseMs": 5000,
+  "outboxPollIntervalMs": 250,
+  "outboxRetryAfterMs": 1000,
+  "retryAfterMs": 5000,
+  "runTimeoutMs": 1800000,
+  "drainTimeoutMs": 30000,
+  "runtimeStartTimeoutMs": 30000,
+  "runtimeCancelTimeoutMs": 15000,
+  "runtimeRecoveryTimeoutMs": 60000,
+  "taskClaimLeaseMs": 900000,
+  "taskClaimHeartbeatIntervalMs": 300000
+}

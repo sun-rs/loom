@@ -1,18 +1,18 @@
 # Daemon Core 运行架构
 
-状态：独立 `@rah-os/core`、Task Coordination v1、fake 多 Agent open-Task competition、InputRequest 无 listening 恢复与 versioned Human Client API 已达到 E2 local；可执行 daemon config v3 仍是单 participant 壳，安装、完整客户端/管理面与动态多 runtime 路由尚未收口。
+状态：独立 `@rah-os/core`、Task Coordination v1、InputRequest 无 listening 恢复与 versioned Human Client API 已达到 E2 local；可执行 daemon config v4 已通过双 participant、双不可变 Runtime Profile、Placement-selected external Worker E2。安装、完整客户端/管理面、canonical Workspace/Capacity 与真实 mixed CLI v4 certification 尚未收口。
 
 ## 1. Composition 与 owner
 
 ```text
 rah-os-daemon
-  -> strict DaemonConfig(schemaVersion=2 compatibility | 3 registry-backed)
+  -> strict DaemonConfig(v2 compatibility | v3 single profile | v4 multi profile)
   -> SecretProvider -> authenticated Host instance
   -> RahCore -> RoomKernel(SQLite)
   -> ClientApplicationService(loopback HTTP, principal PAT)
   -> WorkerApplicationService(loopback HTTP)
-  -> GenericProcessAdapter -> Agent CLI
-  -> AgentHost reconciliation
+  -> RuntimeProfileRegistry -> GenericProcessAdapter(s) -> Agent CLIs
+  -> AgentHost compatibility | placement-managed MultiLaneAgentHost
   -> OutboxWakeDispatcher -> content-free LocalWakeSignal
   -> UnixSocketInstanceLock
 ```
@@ -27,8 +27,8 @@ rah-os-daemon
 2. 打开 Kernel，拒绝更新版本的 schema；
 3. 认证 Host token，并验证 config 的 Host/participant 与 credential scope 精确相等；
 4. 启动 loopback Worker service；
-5. probe Runtime command；
-6. 创建 wake dispatcher、AgentHost 与 instance lock；
+5. v2/v3 probe 单 Runtime；v4 打开去重后的 Registry、冻结每个 active revision、probe 并发布带 workspace mount identity 的 Offer；
+6. 创建 wake dispatcher、AgentHost 或 bounded MultiLaneAgentHost 与 instance lock；
 7. 启动独立的 loopback Client service；
 8. 注册带 generation/build/protocol/PID 的 online heartbeat；
 9. 并行运行 reconciliation 与 Outbox publisher。
@@ -69,7 +69,9 @@ Client continuation/ack 只能使用已持久确认或由当前 credential/consu
 
 ## 6. 当前配置与执行限制
 
-- 一个 config = 一个 Host ID = 一个 Agent participant = 一个 Generic process profile；
+- config v2/v3 是一个 Host、一个 participant、一个 runtime 的兼容路径；config v4 是一个 Host、精确 participant scope、多个唯一 profile/offer 与 bounded `maxConcurrent`；
+- v4 不在本地按数组顺序选择 CLI。Kernel 根据 AgentDefinition/ExecutionPolicy、Offer、workspace 与 capacity 创建 Placement，daemon 只用 Placement 的 `runtimeOfferId` 解析 frozen runtime；
+- v4 workspace definition/mount/digest 目前由 trusted startup config 提供并冻结进 Offer/Placement；它不是尚未实现的 Workspace 管理面或动态 worktree lease；
 - runtime `command/args/cwd/env` 是显式 argv，始终 `shell: false`；
 - per-Activation Worker URL/token 由 daemon 注入，profile env 不能覆盖；
 - paid Provider gate 是 opt-in，默认 `npm test` 不调用网络模型；
@@ -84,7 +86,7 @@ Client continuation/ack 只能使用已持久确认或由当前 credential/consu
 Daemon core 下一步不是 UI，也不是更多 JSONL parser，而是：
 
 1. InputRequest cancel/expire/structured answer、Artifact/Review application commands与更完整的 Task crash/recovery matrix；
-2. ADR-0009 的 atomic launch claim、可信启动期 capacity 与 MultiLaneAgentHost fake gate 已完成；下一步按 [Runtime Registry 与多 Lane 调度架构](./runtime-registry-and-multi-lane-scheduling.zh-CN.md) 完成 canonical workspace/capacity control object，再把 placement-managed multi participant runner 接入 daemon config；
+2. ADR-0009 的 atomic launch claim、可信启动期 capacity、MultiLaneAgentHost 与 placement-managed config v4 fake E2 已完成；下一步按 [Runtime Registry 与多 Lane 调度架构](./runtime-registry-and-multi-lane-scheduling.zh-CN.md) 完成 canonical Workspace/Capacity control object、mixed-adapter recovery 与 opt-in real CLI v4 certification；
 3. daemon control API、结构化日志、SSE/WebSocket content-free hint 与 supervisor artifact GC；
 4. Keychain、launchd、签名/公证和升级兼容 gate；
 5. 以现有 versioned Client API 为基础补齐 `RahClient` contract，并接入 UI；不得让 UI 直连 SQLite。

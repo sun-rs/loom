@@ -134,7 +134,7 @@ AgentHost 必须独立于窗口：
 
 上面的三段状态是正常 signal shutdown。管理面撤销 Host credential 时，Kernel 会直接 fence credential 并把 Host 标记为 `offline`；该路径可以跳过 drain，进行中的 RunAttempt 若无法再写 terminal proof，将按既有 lease expiry → orphan/quarantine → recovery 规则对账，不能把 revoke 伪装成正常完成。
 
-Unix socket 只是同一台机器上的启动协调，不是业务 fencing token，也不是跨机器分布式锁。Kernel 中的 daemon generation、Activation/RuntimeProcess lease 才保护业务 lane。当前 daemon compatibility config v2、registry-backed config v3、Kernel schema fence、Client API v1 health/capability handshake 与升级 drain deadline 已存在；但尚无 launchd plist、签名安装包、Keychain token loader、daemon control API 或 UI 兼容矩阵，因此仍不能称为可安装的 Mac 后台产品。
+Unix socket 只是同一台机器上的启动协调，不是业务 fencing token，也不是跨机器分布式锁。Kernel 中的 daemon generation、Activation/RuntimeProcess lease 才保护业务 lane。当前 daemon compatibility config v2、single-profile config v3、placement-managed multi-profile config v4、Kernel schema fence、Client API v1 health/capability handshake 与升级 drain deadline 已存在；但尚无 launchd plist、签名安装包、Keychain token loader、daemon control API 或 UI 兼容矩阵，因此仍不能称为可安装的 Mac 后台产品。
 
 ## 7. 可信局域网部署
 

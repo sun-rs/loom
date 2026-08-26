@@ -2,20 +2,22 @@ export {
   DaemonConfigSchema,
   DaemonConfigV2Schema,
   DaemonConfigV3Schema,
+  DaemonConfigV4Schema,
   HostCredentialReferenceSchema,
 } from "./config.ts";
 export type {
   DaemonConfig,
   DaemonConfigV2,
   DaemonConfigV3,
+  DaemonConfigV4,
   HostCredentialReference,
 } from "./config.ts";
 export {
   DAEMON_BUILD_VERSION,
   DAEMON_PROTOCOL_VERSION,
   DaemonApplication,
-  createRegistryBackedRuntimeRecovery,
 } from "./daemon-application.ts";
+export { createRegistryBackedRuntimeRecovery } from "./registry-runtime-recovery.ts";
 export type { DaemonHealthSnapshot } from "./daemon-application.ts";
 export {
   LocalWakeSignal,

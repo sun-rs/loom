@@ -9,6 +9,7 @@ import type {
   RuntimeProfileManifest,
   RuntimeProfileProbeReport,
   RuntimeProfileRevision,
+  WorkspaceMountDescriptor,
 } from "@rah-os/protocol";
 import {
   RuntimeOfferSchema,
@@ -336,6 +337,7 @@ export function buildRuntimeOfferFromProfile(input: {
   runtimeOfferId: string;
   runtimeProfileRevision: RuntimeProfileRevision;
   state: RuntimeOfferState;
+  workspaceMountDescriptors?: WorkspaceMountDescriptor[];
 }): RuntimeOffer {
   const revision = validateRuntimeProfileRevision(input.runtimeProfileRevision);
   const report = input.probeReport;
@@ -345,6 +347,16 @@ export function buildRuntimeOfferFromProfile(input: {
     );
   }
   validateMatchingProbeReport(revision, report, input.state === "available");
+  const workspaceMountDescriptors = input.workspaceMountDescriptors ?? [];
+  for (const descriptor of workspaceMountDescriptors) {
+    for (const mode of descriptor.modes) {
+      if (!revision.manifest.workspacePolicy.allowedModes.includes(mode)) {
+        throw new Error(
+          `RuntimeProfileRevision ${revision.runtimeProfileRevisionId} does not allow workspace mode ${mode}`,
+        );
+      }
+    }
+  }
   return RuntimeOfferSchema.parse({
     capabilityEvidence: [...revision.manifest.declaredCapabilities]
       .sort()
@@ -368,7 +380,7 @@ export function buildRuntimeOfferFromProfile(input: {
     runtimeProfileId: revision.runtimeProfileId,
     runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
     state: input.state,
-    workspaceMountDescriptors: [],
+    workspaceMountDescriptors,
   });
 }
 

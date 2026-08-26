@@ -28,6 +28,10 @@ Task Coordination v1 收口后，`RoomKernel` 同时承载认证、Room、Task�
   ├── task-projection.ts          canonical Task read projection only
   ├── sqlite-row.ts               strict SQLite value decoding
   └── canonical-digest.ts         one canonical serialization/digest rule
+
+@rah-os/daemon/src/daemon-application.ts composition root only
+  ├── registry-runtime-recovery.ts immutable multi-registry recovery routing
+  └── runtime-offer-publisher.ts   lease refresh + redacted Offer publication
 ```
 
 这一刀有意不搬迁 Task command。Task command 目前深度依赖 membership、causal freshness、event append、attention 派生和同一 SQLite transaction；在没有先定义窄 transaction context 前，机械搬到一个新 class 只会产生隐藏的第二 owner 或 callback soup。
@@ -38,6 +42,12 @@ Task Coordination v1 收口后，`RoomKernel` 同时承载认证、Room、Task�
 
 - `packages/kernel/src/room-kernel.ts` 不得超过 6,925 行；
 - `packages/protocol/src/index.ts` 不得超过 1,800 行。
+
+`packages/daemon/test/source-boundary.test.ts` 进一步约束：
+
+- `packages/daemon/src/daemon-application.ts` 不得超过 800 行。
+
+config v4 引入多 participant、多 profile 和 Placement runtime resolver 后，恢复路由与 RuntimeOffer lease publisher 已从 composition root 提取；后续控制面或 Workspace 能力不能重新堆入该文件。
 
 门禁只防回退，不代表两个文件已经达到最终大小。下一轮加入新 aggregate 前，应优先继续提取现有聚合的 command module，并同步降低阈值。
 

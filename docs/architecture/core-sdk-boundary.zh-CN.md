@@ -1,6 +1,6 @@
 # RAH Core SDK 边界
 
-状态：**v0.1 implemented / Task Coordination v1 implemented / headless Node SDK**（2026-08-26）。`@rah-os/core` 已成为 daemon 可直接嵌入的稳定组合边界；它不依赖 HTTP、WebSocket、MCP、UI 或任何 Provider transcript parser。当前 fake 多 Agent 门禁已证明不同 Agent 并发、单 Agent 串行、开放 Task 单 winner、Task 显式验收与 Room 权威判定。可执行 daemon 的多 participant 配置仍是下一项集成门禁，不能把现有 config v3 描述成已完成动态多 CLI 路由。
+状态：**v0.1 implemented / Task Coordination v1 / daemon v4 fake E2**（2026-08-26）。`@rah-os/core` 已成为 daemon 可直接嵌入的稳定组合边界；它不依赖 HTTP、WebSocket、MCP、UI 或任何 Provider transcript parser。fake 多 Agent 门禁已证明不同 Agent 并发、单 Agent 串行、开放 Task 单 winner、Task 显式验收与 Room 权威判定；可执行 config v4 进一步证明同一 Host 的两个 participant 由 Kernel Placement 路由到两个 immutable Runtime Profile。它仍不是 canonical Workspace/Capacity 管理面或真实多 CLI certification。
 
 ## 1. Core 是什么
 
@@ -78,11 +78,11 @@ Runtime 插槽只需实现 `RuntimeAdapter` 的 probe/start/reap/cancel/recover�
 - [x] A 的 follow-up 在旧 lane 退出前不得并发启动；
 - [x] 跨 Agent Room 事件不造成 Task stale-context 假阳性，发给本 Agent 的新事实仍会 fence；
 - [x] 默认 capacity fail-closed，显式可信 policy 才允许两个 lane；
-- [ ] 可执行 daemon config 支持多 participant + placement-managed runtime；
+- [x] 可执行 daemon config v4 支持多 participant + placement-managed runtime；
 - [x] MultiLane restart/recovery 与单 lane quarantine 隔离的组合 E2；
 - [x] open Task 跨 Kernel connection 原子竞争，loser 可完成 Activation；
 - [x] release/assign/block/unblock/cancel 与 immutable dependency ready 派生；
 - [x] Worker/Client versioned application-service command surface；
 - [ ] durable control-Room CapacityPool/WorkspaceDefinition 管理面。
 
-上述未完成门禁补齐之前，可以称“Core SDK 多 Agent fake business flow 已成立”，不能称“完整多 CLI 生产 daemon 已收口”。
+上述未完成门禁补齐之前，可以称“Core SDK 与可执行 daemon 的多 Agent fake business flow 已成立”，不能称“完整多 CLI 生产 daemon 已收口”。

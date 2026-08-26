@@ -126,8 +126,15 @@ if (mode === "success") {
 ) {
   const baseUrl = process.env.RAH_WORKER_API_URL;
   const token = process.env.RAH_WORKER_TOKEN;
+  const requiredFrom = Number(process.env.RAH_FROM_SEQ);
   const requiredThrough = Number(process.env.RAH_TO_SEQ);
-  if (!baseUrl || !token || !Number.isInteger(requiredThrough)) {
+  if (
+    !baseUrl ||
+    !token ||
+    !Number.isInteger(requiredFrom) ||
+    !Number.isInteger(requiredThrough) ||
+    requiredFrom > requiredThrough
+  ) {
     throw new Error("worker Task API environment is incomplete");
   }
 
@@ -168,8 +175,16 @@ if (mode === "success") {
   if (!delivery || delivery.cursorAfter < requiredThrough) {
     throw new Error("worker Task sync did not reach the Activation range");
   }
-  const taskCreated = events.find((event) => event.type === "task.created");
-  const inputResolved = events.find((event) => event.type === "input.resolved");
+  const activationEvents = events.filter(
+    (event) =>
+      event.roomSeq >= requiredFrom && event.roomSeq <= requiredThrough,
+  );
+  const taskCreated = activationEvents.find(
+    (event) => event.type === "task.created",
+  );
+  const inputResolved = activationEvents.find(
+    (event) => event.type === "input.resolved",
+  );
   const isInputMode =
     mode === "worker-task-input" || mode === "worker-task-input-resume";
   const taskId = taskCreated?.aggregateId ?? inputResolved?.payload?.taskId;

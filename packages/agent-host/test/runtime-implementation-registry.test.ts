@@ -305,6 +305,14 @@ test("active profile projection exposes only a probe reference and redacted desc
       runtimeOfferId: "runtime-offer-main",
       runtimeProfileRevision: active,
       state: "available",
+      workspaceMountDescriptors: [
+        {
+          modes: ["in_place"],
+          workspaceDefinitionId: "workspace-offer",
+          workspaceMountDigest: `sha256:${"a".repeat(64)}`,
+          workspaceMountRevisionId: "workspace-mount-offer-v1",
+        },
+      ],
     });
     assert.deepEqual(offer.probeReportRef, {
       probeDigest: report.probeDigest,
@@ -313,6 +321,37 @@ test("active profile projection exposes only a probe reference and redacted desc
     assert.deepEqual(offer.capabilityEvidence, [
       { capability: "worker_commands", evidence: "declared" },
     ]);
+    assert.deepEqual(offer.workspaceMountDescriptors, [
+      {
+        modes: ["in_place"],
+        workspaceDefinitionId: "workspace-offer",
+        workspaceMountDigest: `sha256:${"a".repeat(64)}`,
+        workspaceMountRevisionId: "workspace-mount-offer-v1",
+      },
+    ]);
+    assert.throws(
+      () =>
+        buildRuntimeOfferFromProfile({
+          hostId: "host-offer",
+          hostInstanceId: "host-instance-offer",
+          leaseUntil: "2026-08-26T00:02:00.000Z",
+          maxConcurrent: 1,
+          observedAt: "2026-08-26T00:00:00.000Z",
+          probeReport: report,
+          runtimeOfferId: "runtime-offer-invalid-workspace",
+          runtimeProfileRevision: active,
+          state: "available",
+          workspaceMountDescriptors: [
+            {
+              modes: ["worktree"],
+              workspaceDefinitionId: "workspace-offer",
+              workspaceMountDigest: `sha256:${"b".repeat(64)}`,
+              workspaceMountRevisionId: "workspace-mount-offer-v2",
+            },
+          ],
+        }),
+      /does not allow workspace mode worktree/,
+    );
     const serialized = JSON.stringify(offer);
     assert.equal(serialized.includes(process.execPath), false);
     assert.equal(serialized.includes("provider-token"), false);

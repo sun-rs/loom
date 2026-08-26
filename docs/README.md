@@ -31,9 +31,11 @@
 25. [ADR-0009：不可变 Runtime Placement 与 Multi-Lane AgentHost](./adr/0009-immutable-runtime-placement-and-multi-lane-host.md)
 26. [ADR-0010：Web/PWA 共享 UI、可移植 Client Core 与薄原生壳](./adr/0010-web-pwa-shared-ui-and-native-shell.md)
 27. [ADR-0011：Task Coordination v1](./adr/0011-task-coordination-v1.md)
-28. [Phase 1 实验证据](./experiments/phase-1-evidence.zh-CN.md)
-29. [Daemon 配置示例](./examples/daemon.config.example.json)
-30. [实施路线与门禁](./roadmap.zh-CN.md)
+28. [ADR-0012：Workspace、Room Role 与 Thread 最小边界](./adr/0012-workspace-room-role-and-thread-boundary.md)
+29. [Phase 1 实验证据](./experiments/phase-1-evidence.zh-CN.md)
+30. [Daemon config v2 兼容示例](./examples/daemon.config.example.json)
+31. [Daemon config v4 多 Agent 示例](./examples/daemon.config.v4.example.json)
+32. [实施路线与门禁](./roadmap.zh-CN.md)
 
 维护规则：
 
