@@ -3,6 +3,7 @@ import {
   type AuthenticatedHostContext,
   type RoomKernel,
 } from "@rah-os/kernel";
+import type { RuntimeRecoveryDescriptor } from "@rah-os/protocol";
 
 import type {
   ActivationEnvelope,
@@ -61,6 +62,10 @@ type AgentHostOptions = {
   runTimeoutMs?: number;
   runtime: RuntimeAdapter;
   runtimeCancelTimeoutMs?: number;
+  runtimeRecoveryDrivers?: readonly string[];
+  runtimeRecoveryResolver?: (
+    descriptor: RuntimeRecoveryDescriptor,
+  ) => RuntimeAdapter;
   runtimeRecoveryTimeoutMs?: number;
   runtimeStartTimeoutMs?: number;
   timeoutWait?: (delayMs: number, signal: AbortSignal) => Promise<void>;
@@ -86,6 +91,9 @@ export class AgentHost {
   readonly #runTimeoutMs: number;
   readonly #runtime: RuntimeAdapter;
   readonly #runtimeCancelTimeoutMs: number;
+  readonly #runtimeRecoveryDrivers: readonly string[];
+  readonly #runtimeRecoveryResolver:
+    ((descriptor: RuntimeRecoveryDescriptor) => RuntimeAdapter) | undefined;
   readonly #runtimeRecoveryTimeoutMs: number;
   readonly #runtimeStartTimeoutMs: number;
   readonly #timeoutWait: (
@@ -157,6 +165,12 @@ export class AgentHost {
     this.#runTimeoutMs = runTimeoutMs;
     this.#runtime = options.runtime;
     this.#runtimeCancelTimeoutMs = runtimeCancelTimeoutMs;
+    this.#runtimeRecoveryDrivers = [
+      ...new Set(
+        options.runtimeRecoveryDrivers ?? options.runtime.recoveryDrivers ?? [],
+      ),
+    ];
+    this.#runtimeRecoveryResolver = options.runtimeRecoveryResolver;
     this.#runtimeRecoveryTimeoutMs = runtimeRecoveryTimeoutMs;
     this.#runtimeStartTimeoutMs = runtimeStartTimeoutMs;
     this.#timeoutWait = options.timeoutWait ?? waitForDelay;
@@ -164,14 +178,12 @@ export class AgentHost {
   }
 
   async reconcileOrphanOnce(): Promise<OrphanRecoveryCycleResult> {
-    const recoveryDrivers = [...new Set(this.#runtime.recoveryDrivers ?? [])];
-    const recover = this.#runtime.recover;
-    if (recover === undefined || recoveryDrivers.length === 0) {
+    if (this.#runtimeRecoveryDrivers.length === 0) {
       return { state: "idle" };
     }
     this.#heartbeat();
     const runtimeProcess = this.#kernel.leaseNextRuntimeRecovery(this.#host, {
-      driverIds: recoveryDrivers,
+      driverIds: [...this.#runtimeRecoveryDrivers],
       leaseMs: this.#leaseMs,
     });
     if (runtimeProcess === null) return { state: "idle" };
@@ -192,9 +204,23 @@ export class AgentHost {
     );
     let exit: RunExit;
     try {
+      const recoveryRuntime =
+        this.#runtimeRecoveryResolver?.(runtimeProcess.recoveryDescriptor) ??
+        this.#runtime;
+      const recover = recoveryRuntime.recover;
+      if (
+        recover === undefined ||
+        !(recoveryRuntime.recoveryDrivers ?? []).includes(
+          runtimeProcess.recoveryDescriptor.driver,
+        )
+      ) {
+        throw new Error(
+          `runtime recovery driver is unavailable: ${runtimeProcess.recoveryDescriptor.driver}`,
+        );
+      }
       exit = await Promise.race([
         withDeadline(
-          recover.call(this.#runtime, {
+          recover.call(recoveryRuntime, {
             recoveryDescriptor: runtimeProcess.recoveryDescriptor,
             runAttemptId: runtimeProcess.runAttemptId,
             runtimeRunId: runtimeProcess.runtimeRunId,

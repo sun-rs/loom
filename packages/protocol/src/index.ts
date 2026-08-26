@@ -269,19 +269,36 @@ export type InputRequestResolveRequest = z.infer<
   typeof InputRequestResolveRequestSchema
 >;
 
+export const ContentDigestSchema = z.string().regex(/^sha256:[a-f0-9]{64}$/);
+export type ContentDigest = z.infer<typeof ContentDigestSchema>;
+
 export const RuntimeRecoveryDescriptorSchema = z
   .object({
     driver: IdentifierSchema,
-    recoveryKey: IdentifierSchema,
     metadata: z.record(z.string(), z.unknown()),
+    recoveryImplementationVersion: IdentifierSchema.optional(),
+    recoveryKey: IdentifierSchema,
+    runtimeProfileDigest: ContentDigestSchema.optional(),
+    runtimeProfileRevisionId: IdentifierSchema.optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((descriptor, context) => {
+    const provenance = [
+      descriptor.recoveryImplementationVersion,
+      descriptor.runtimeProfileDigest,
+      descriptor.runtimeProfileRevisionId,
+    ];
+    const defined = provenance.filter((value) => value !== undefined).length;
+    if (defined !== 0 && defined !== provenance.length) {
+      context.addIssue({
+        code: "custom",
+        message: "runtime recovery provenance must be complete when present",
+      });
+    }
+  });
 export type RuntimeRecoveryDescriptor = z.infer<
   typeof RuntimeRecoveryDescriptorSchema
 >;
-
-export const ContentDigestSchema = z.string().regex(/^sha256:[a-f0-9]{64}$/);
-export type ContentDigest = z.infer<typeof ContentDigestSchema>;
 
 function rejectDuplicateStrings(
   values: readonly string[],
@@ -384,6 +401,387 @@ export const WorkspaceModeSchema = z.enum([
   "ephemeral",
 ]);
 export type WorkspaceMode = z.infer<typeof WorkspaceModeSchema>;
+
+const RuntimeArgumentSchema = z
+  .string()
+  .max(32_768)
+  .refine((value) => !value.includes("\0"), "arguments cannot contain NUL");
+const RuntimeExecutableSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(4_096)
+  .refine(
+    (value) => !/[|;&<>`]/.test(value) && !value.includes("$("),
+    "executable must not be a shell expression",
+  );
+
+function rejectCredentialBearingRuntimeArguments(
+  values: readonly string[],
+  context: z.RefinementCtx,
+): void {
+  values.forEach((value, index) => {
+    const argument = value.trim();
+    if (
+      /^--?[a-z0-9_-]*(?:api[-_]?key|access[-_]?token|token|password|secret|credential)(?:=|$)/i.test(
+        argument,
+      ) ||
+      /^[A-Z0-9_]*(?:API_KEY|TOKEN|PASSWORD|SECRET|CREDENTIAL)[A-Z0-9_]*=/.test(
+        argument,
+      )
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "credential-bearing arguments cannot enter a manifest",
+        path: [index],
+      });
+    }
+  });
+}
+
+export const GenericProcessProfileAdapterConfigSchema = z
+  .object({
+    completedRunRetention: z
+      .number()
+      .int()
+      .nonnegative()
+      .max(10_000)
+      .optional(),
+    diagnosticByteLimit: z
+      .number()
+      .int()
+      .positive()
+      .max(16 * 1_024 * 1_024)
+      .optional(),
+    supervisorControlTimeoutMs: z
+      .number()
+      .int()
+      .positive()
+      .max(10 * 60_000)
+      .optional(),
+    supervisorStartupTimeoutMs: z
+      .number()
+      .int()
+      .positive()
+      .max(10 * 60_000)
+      .optional(),
+    terminationGraceMs: z
+      .number()
+      .int()
+      .nonnegative()
+      .max(10 * 60_000)
+      .optional(),
+  })
+  .strict();
+export type GenericProcessProfileAdapterConfig = z.infer<
+  typeof GenericProcessProfileAdapterConfigSchema
+>;
+
+export const RuntimeProfileManifestV1Schema = z
+  .object({
+    manifestVersion: z.literal(1),
+    runtimeProfileId: IdentifierSchema,
+    displayName: z.string().trim().min(1).max(256),
+    protocolFamily: z.literal("rah-worker-process/v1"),
+    adapter: z
+      .object({
+        kind: z.literal("generic-process/v1"),
+        executable: RuntimeExecutableSchema,
+        fixedArgs: z
+          .array(RuntimeArgumentSchema)
+          .max(256)
+          .superRefine(rejectCredentialBearingRuntimeArguments),
+        config: GenericProcessProfileAdapterConfigSchema,
+      })
+      .strict(),
+    declaredCapabilities: UniqueIdentifierArraySchema.max(256),
+    recoveryDrivers: UniqueIdentifierArraySchema.max(64),
+    workspacePolicy: z
+      .object({
+        allowedModes: z
+          .array(WorkspaceModeSchema)
+          .min(1)
+          .superRefine(rejectDuplicateStrings),
+      })
+      .strict(),
+  })
+  .strict();
+export type RuntimeProfileManifestV1 = z.infer<
+  typeof RuntimeProfileManifestV1Schema
+>;
+
+const RuntimeEnvironmentVariableNameSchema = z
+  .string()
+  .regex(/^[A-Za-z_][A-Za-z0-9_]*$/)
+  .max(256)
+  .refine(
+    (value) => !runtimeEnvironmentVariableIsDaemonOwned(value),
+    "daemon-owned RAH environment variables cannot enter a profile",
+  );
+
+function runtimeEnvironmentVariableIsDaemonOwned(value: string): boolean {
+  const normalized = value.toUpperCase();
+  return (
+    normalized.startsWith("RAH_WORKER_") ||
+    normalized.startsWith("RAH_ACTIVATION_") ||
+    normalized.startsWith("RAH_PROCESS_SUPERVISOR_") ||
+    [
+      "RAH_CONSUMER_ID",
+      "RAH_FROM_SEQ",
+      "RAH_HOST_ID",
+      "RAH_PARTICIPANT_ID",
+      "RAH_ROOM_ID",
+      "RAH_RUN_ATTEMPT_ID",
+      "RAH_TO_SEQ",
+    ].includes(normalized)
+  );
+}
+
+const RuntimeStaticEnvironmentVariableNameSchema =
+  RuntimeEnvironmentVariableNameSchema.refine(
+    (value) =>
+      !/(?:^|_)(?:API_?KEY|ACCESS_?TOKEN|AUTH_?TOKEN|TOKEN|PASSWORD|SECRET|CREDENTIAL)(?:_|$)/i.test(
+        value,
+      ),
+    "credential-bearing environment variables must use credentialSlots",
+  );
+
+export const RuntimeCredentialSlotSchema = z
+  .object({
+    slotId: IdentifierSchema,
+    target: z
+      .object({
+        kind: z.literal("environment"),
+        variable: RuntimeEnvironmentVariableNameSchema,
+      })
+      .strict(),
+  })
+  .strict();
+export type RuntimeCredentialSlot = z.infer<typeof RuntimeCredentialSlotSchema>;
+
+export const RuntimeProfileManifestV2Schema = z
+  .object({
+    manifestVersion: z.literal(2),
+    runtimeProfileId: IdentifierSchema,
+    displayName: z.string().trim().min(1).max(256),
+    protocolFamily: z.literal("rah-worker-process/v1"),
+    adapter: z
+      .object({
+        kind: z.literal("generic-process/v1"),
+        executable: RuntimeExecutableSchema,
+        fixedArgs: z
+          .array(RuntimeArgumentSchema)
+          .max(256)
+          .superRefine(rejectCredentialBearingRuntimeArguments),
+        config: GenericProcessProfileAdapterConfigSchema,
+      })
+      .strict(),
+    staticEnv: z.record(
+      RuntimeStaticEnvironmentVariableNameSchema,
+      z.string().max(32_768),
+    ),
+    credentialSlots: z.array(RuntimeCredentialSlotSchema).max(64),
+    declaredCapabilities: UniqueIdentifierArraySchema.max(256),
+    recoveryDrivers: UniqueIdentifierArraySchema.max(64),
+    workspacePolicy: z
+      .object({
+        allowedModes: z
+          .array(WorkspaceModeSchema)
+          .min(1)
+          .superRefine(rejectDuplicateStrings),
+      })
+      .strict(),
+  })
+  .strict()
+  .superRefine((manifest, context) => {
+    rejectDuplicateStrings(
+      manifest.credentialSlots.map((slot) => slot.slotId),
+      context,
+    );
+    rejectDuplicateStrings(
+      manifest.credentialSlots.map((slot) => slot.target.variable),
+      context,
+    );
+    manifest.credentialSlots.forEach((slot, index) => {
+      if (Object.hasOwn(manifest.staticEnv, slot.target.variable)) {
+        context.addIssue({
+          code: "custom",
+          message: `credential target duplicates staticEnv: ${slot.target.variable}`,
+          path: ["credentialSlots", index, "target", "variable"],
+        });
+      }
+    });
+  });
+export type RuntimeProfileManifestV2 = z.infer<
+  typeof RuntimeProfileManifestV2Schema
+>;
+
+export const RuntimeProfileManifestSchema = z.discriminatedUnion(
+  "manifestVersion",
+  [RuntimeProfileManifestV1Schema, RuntimeProfileManifestV2Schema],
+);
+export type RuntimeProfileManifest = z.infer<
+  typeof RuntimeProfileManifestSchema
+>;
+
+export const RuntimeProfileProbeReportSchema = z
+  .object({
+    reportVersion: z.literal(1),
+    probeReportId: IdentifierSchema,
+    probeDigest: ContentDigestSchema,
+    runtimeProfileId: IdentifierSchema,
+    runtimeProfileRevisionId: IdentifierSchema,
+    runtimeProfileDigest: ContentDigestSchema,
+    adapter: z
+      .object({
+        kind: IdentifierSchema,
+        implementationVersion: IdentifierSchema,
+      })
+      .strict(),
+    available: z.boolean(),
+    failureCode: z
+      .enum([
+        "executable_not_found",
+        "executable_not_executable",
+        "executable_not_regular_file",
+        "recovery_driver_unavailable",
+        "unsupported_adapter",
+      ])
+      .optional(),
+    executableIdentity: z
+      .object({
+        requestedExecutable: z.string().trim().min(1).max(4_096),
+        resolvedExecutablePath: z.string().trim().min(1).max(16_384),
+        contentDigest: ContentDigestSchema,
+        byteLength: z.number().int().nonnegative(),
+      })
+      .strict()
+      .optional(),
+    recoveryDrivers: z
+      .array(
+        z
+          .object({
+            driver: IdentifierSchema,
+            implementationVersion: IdentifierSchema,
+          })
+          .strict(),
+      )
+      .superRefine((drivers, context) =>
+        rejectDuplicateStrings(
+          drivers.map((driver) => driver.driver),
+          context,
+        ),
+      ),
+    observedAt: TimestampSchema,
+  })
+  .strict()
+  .superRefine((report, context) => {
+    if (report.available && report.executableIdentity === undefined) {
+      context.addIssue({
+        code: "custom",
+        message: "available probe reports require executableIdentity",
+        path: ["executableIdentity"],
+      });
+    }
+    if (report.available && report.failureCode !== undefined) {
+      context.addIssue({
+        code: "custom",
+        message: "available probe reports cannot have failureCode",
+        path: ["failureCode"],
+      });
+    }
+    if (!report.available && report.failureCode === undefined) {
+      context.addIssue({
+        code: "custom",
+        message: "unavailable probe reports require failureCode",
+        path: ["failureCode"],
+      });
+    }
+  });
+export type RuntimeProfileProbeReport = z.infer<
+  typeof RuntimeProfileProbeReportSchema
+>;
+
+export const RuntimeProfileRevisionStateSchema = z.enum([
+  "inactive",
+  "active",
+  "deprecated",
+]);
+export type RuntimeProfileRevisionState = z.infer<
+  typeof RuntimeProfileRevisionStateSchema
+>;
+
+export const RuntimeProfileSchema = z
+  .object({
+    runtimeProfileId: IdentifierSchema,
+    activeRevisionId: IdentifierSchema.optional(),
+    createdAt: TimestampSchema,
+    updatedAt: TimestampSchema,
+  })
+  .strict();
+export type RuntimeProfile = z.infer<typeof RuntimeProfileSchema>;
+
+export const RuntimeProfileRevisionSchema = z
+  .object({
+    runtimeProfileRevisionId: IdentifierSchema,
+    runtimeProfileId: IdentifierSchema,
+    revision: z.number().int().positive(),
+    contentDigest: ContentDigestSchema,
+    manifest: RuntimeProfileManifestSchema,
+    state: RuntimeProfileRevisionStateSchema,
+    importedAt: TimestampSchema,
+    activatedAt: TimestampSchema.optional(),
+    deprecatedAt: TimestampSchema.optional(),
+  })
+  .strict()
+  .superRefine((revision, context) => {
+    if (revision.state === "active" && revision.activatedAt === undefined) {
+      context.addIssue({
+        code: "custom",
+        message: "active revisions require activatedAt",
+        path: ["activatedAt"],
+      });
+    }
+    if (
+      revision.state === "deprecated" &&
+      revision.deprecatedAt === undefined
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "deprecated revisions require deprecatedAt",
+        path: ["deprecatedAt"],
+      });
+    }
+  });
+export type RuntimeProfileRevision = z.infer<
+  typeof RuntimeProfileRevisionSchema
+>;
+
+export const RuntimeProfileAuditActionSchema = z.enum([
+  "imported",
+  "probe_recorded",
+  "activated",
+  "deprecated",
+]);
+export type RuntimeProfileAuditAction = z.infer<
+  typeof RuntimeProfileAuditActionSchema
+>;
+
+export const RuntimeProfileAuditEntrySchema = z
+  .object({
+    sequence: z.number().int().positive(),
+    auditEntryId: IdentifierSchema,
+    action: RuntimeProfileAuditActionSchema,
+    runtimeProfileId: IdentifierSchema,
+    runtimeProfileRevisionId: IdentifierSchema,
+    contentDigest: ContentDigestSchema,
+    reason: z.string().trim().min(1).optional(),
+    occurredAt: TimestampSchema,
+  })
+  .strict();
+export type RuntimeProfileAuditEntry = z.infer<
+  typeof RuntimeProfileAuditEntrySchema
+>;
 
 export const IsolationLevelSchema = z.enum([
   "none",
@@ -612,6 +1010,16 @@ export type WorkspaceMountDescriptor = z.infer<
   typeof WorkspaceMountDescriptorSchema
 >;
 
+export const RuntimeProfileProbeReportRefSchema = z
+  .object({
+    probeReportId: IdentifierSchema,
+    probeDigest: ContentDigestSchema,
+  })
+  .strict();
+export type RuntimeProfileProbeReportRef = z.infer<
+  typeof RuntimeProfileProbeReportRefSchema
+>;
+
 export const RuntimeOfferSchema = z
   .object({
     runtimeOfferId: IdentifierSchema,
@@ -620,6 +1028,7 @@ export const RuntimeOfferSchema = z
     runtimeProfileId: IdentifierSchema,
     runtimeProfileRevisionId: IdentifierSchema,
     revisionDigest: ContentDigestSchema,
+    probeReportRef: RuntimeProfileProbeReportRefSchema.optional(),
     protocolFamily: IdentifierSchema,
     certificationRefs: z.array(RuntimeCertificationRefSchema).default([]),
     capabilityEvidence: z.array(RuntimeCapabilityEvidenceSchema),
@@ -665,6 +1074,21 @@ export const RuntimeOfferSchema = z
       ),
       context,
     );
+    const reportsProbedEvidence =
+      offer.capabilityEvidence.some(
+        (evidence) => evidence.evidence === "probed",
+      ) ||
+      offer.isolation.evidence === "probed" ||
+      offer.modelBindingDescriptors.some(
+        (binding) => binding.evidence === "probed",
+      );
+    if (reportsProbedEvidence && offer.probeReportRef === undefined) {
+      context.addIssue({
+        code: "custom",
+        message: "probed evidence requires an immutable probeReportRef",
+        path: ["probeReportRef"],
+      });
+    }
   });
 export type RuntimeOffer = z.infer<typeof RuntimeOfferSchema>;
 

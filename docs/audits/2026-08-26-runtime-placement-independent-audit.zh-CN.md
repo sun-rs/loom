@@ -1,6 +1,6 @@
 # Runtime Placement 与下一阶段独立审计（2026-08-26）
 
-状态：**三路初审与整改后复审完成；R1/R1.1 仍为 provisional，已达到进入窄 R2a 的本机门禁。**
+状态：**R1/R1.1 三路初审与整改复审完成；R2b 经过七轮独立 adversarial 审计，第七轮无 P0/P1/P2 并正式 APPROVE。窄 R2b 已收口，允许进入下一阶段前置实现；这不等同于 MultiLaneAgentHost 已完成。**
 
 ## 1. 审计范围与方法
 
@@ -115,3 +115,51 @@ R2b 再加入严格且版本化的 adapter/recovery driver registry、绑定 pro
 - 审计继续推进到 terminal proof 已提交、但 `finishRunAttempt` 或 `resolveActivationQuarantine` 尚未提交的两个 crash window。expired live Run 现在根据已持久 terminal record 自动结算为 exited/failed 并重排；全部 RuntimeProcess 已 terminal 的 quarantine 则由 startup/schedule/legacy lease 幂等解除。无人值守恢复不再依赖一个已经不存在的 recovery target 或人工 resolve。
 
 三名审计者最终均允许下一步进入 **R2a 的窄范围**：strict `RuntimeProfileManifestV1`、versioned canonical digest、owner-private immutable revision registry、显式 activate/deprecate 与 append-only local audit。这个 verdict 不授权 R2b probe/secret、daemon config v3、multi-lane、admin CapacityPool 或真实付费 CLI gate。
+
+## 8. 审计门禁后的 R2a 推进（历史快照）
+
+审计允许的窄 R2a 已在同一 baseline 后按红→绿测试实现：Host-bound owner-private registry schema v1、strict `RuntimeProfileManifestV1`、`rah/runtime-profile-manifest/v1` canonical digest、idempotent object/file import、immutable semantic revision、显式 activate/deprecate 与 database-enforced append-only local audit。manifest 文件修改创建新 revision，不改写旧行，也不自动激活；registry/manifest path 不进入 revision 或 audit。
+
+本实现没有扩大审计授权：v1 只支持内建 `generic-process/v1` 的无 secret 描述；R2b probe/secret/adapter registry、daemon config v3、Offer publication、MultiLaneAgentHost 与真实 CLI gate 仍未实现。
+
+## 9. R2b 第一、二轮独立审计
+
+R2a 后实现了 registry schema v2、strict manifest v2、immutable ProbeReport、versioned adapter/recovery map、spawn-time credential slot、daemon config v3 与 redacted Offer publisher。独立审计没有直接接受实现完成声明：
+
+- 第一轮 REJECT 发现 `staticEnv` 可持久化 API key、caller-mutated revision 可绕过 probe digest、spawn 不重验 executable、Offer 无限续租旧 probe、diagnostics 先截断后脱敏、recovery 未冻结旧 revision/driver version、prototype slot 绕过、未来 R5 重复使用 config v3，以及伪造的 v1 migration fixture；
+- 整改加入常见 credential-bearing static-env 拒绝、revision digest 重算、spawn preflight、live reprobe、单 secret 截断前脱敏、recovery provenance/old-revision resolver、own-property slot、未来 config v4 和真实 v1 DDL/trigger fixture；
+- 第二轮仍 REJECT：它确定性复现了 preflight check→supervisor launch 间替换 executable、重复长 secret 在截断缩短后泄漏下一份前缀，以及 active revision 切换后冻结 daemon 继续启动 future work；另发现 Worker bearer 未加入 redaction set和 secret file stat→read 无界增长竞态。
+
+第二轮整改把 expected executable identity 传入 supervisor 并在 target spawn 前重验；diagnostics 改为流式、有界、多模式 redactor；AgentHost probe/start 与 Offer refresh 重读 active pointer/state/digest；v2/v3 Worker bearer 加入 redaction set；FileSecretProvider 从已打开 fd 最多读取 65,537 bytes。文档同时明确：同一 OS 用户下最终 check→exec 仍有极窄平台竞态，config v2 legacy recovery descriptor 不含 profile provenance，伪装成普通 static env 的 secret 不在自动分类保证内。
+
+## 10. R2b 第三轮独立审计与继续整改
+
+第三轮确认 executable credential-load 竞态、HMAC terminal proof、重复长 secret、Worker bearer、bounded file read、lifecycle start fence 与旧 revision recovery 已关闭，但仍给出 REJECT：流式 matcher 会让较短 complete secret 抢先于同位置或更早位置的较长 partial secret。审计复现 `['abcdef','abc']` 在 `abc -> def` 分块后输出 `[REDACTED]def`，以及 `['abcdef','bc']` 在 `a -> bc -> def` 后输出 `a[REDACTED]def`。
+
+第三轮后的 matcher 曾改用 leftmost-longest 延迟决策：若更早或同位置仍存在可跨 chunk 完成的长 secret 前缀，就只提交其前方安全文本并保留未决后缀，不接受短匹配。新增门禁覆盖长短前缀重叠、非零 offset、重复长 secret + byte truncation、UTF-8 code point 内分块和 EOF partial suffix。第三轮同时指出 profile pointer 可在 `probe()` 与 `createRunAttempt()` 之间变化；这最多留下一个显式 failed pre-launch RunAttempt，start fence 仍保证不读取 credential、不 prepare/spawn。文档已收窄为这一真实并发边界，不宣称原子阻止 RunAttempt 创建。
+
+## 11. R2b 第四轮独立审计与区间式 redactor 整改
+
+第四轮确认第三轮指定的同起点和长 secret 更早起点 fixtures 已关闭，但继续给出 REJECT：`['abc', 'bcdef']` 对 `abcdef` 会让先选中的短匹配吞掉后一长匹配的起点，输出 `[REDACTED]def`；`['abcdef', 'abc']` 对 EOF `abcd` 会输出 `[REDACTED]d`。这证明 leftmost-longest 仍不足以表达反向、偏移与链式重叠。
+
+整改不再逐个贪心选择 secret，而是在当前有界窗口内找出全部完整匹配，按“有字符相交”合并区间；跨安全提交边界的区间以已脱敏前缀状态延续，因而链式重叠也不需要无界保留历史。非 final drain 保留 `maxSecretLength-1` 个 UTF-16 code units；final drain 把最长 EOF partial suffix 作为待脱敏区间并入同一组件。相邻但不相交的重复 secret 保持各自的 `[REDACTED]`，相交或链式相交的 secret 只产生一个连续脱敏组件。新增失败优先门禁覆盖 `abc -> def -> ghi` 上的 `['abc', 'bcdef', 'efghi']` 链，以及 EOF `abcd` 上的 `['abcdef', 'abc']` overlap。本轮整改完成后仍需第五轮独立复审，本文不提前宣称 APPROVE。
+
+## 12. R2b 第五轮独立审计与资源有界化整改
+
+第五轮 adversarial confidentiality matrix 共 17 组全部通过，但仍给出 REJECT。审计以 32 个合法重叠 patterns（`a` 到 `a × 32`）、32 KiB stdout 和 64-byte diagnostic limit 复现：上一版先物化每个 pattern 的每个 occurrence 再排序，最大 RSS 比基线增加约 119 MB；协议最多允许 64 个 credential slots，因此这是 daemon availability P1，而非单纯性能优化。它同时发现 safe boundary 可能切开与 secret 无关的 UTF-16 surrogate pair，把 `A🔐BBBB` 损坏为 `A��BBBB`。
+
+整改保留相同的区间语义，但 occurrence 只写入窗口等长的 start/end `Uint32Array` 事件计数，再线性扫描生成相交组件；临时空间为 `O(window + components + patterns)`，不再是 `O(chunk × redactionCount)` 个对象。decoder 输出按最多 65,536 code units 分段，实际扫描段下限为 1,024、上限为 65,536，并在 diagnostics 已填满后丢弃后续输出；持久 pending 仍是 secret 前缀窗口，提交边界若落在 surrogate pair 中间则向前后退一个 code unit。新增 dense-overlap 和普通 Unicode boundary 回归测试；本机同一 `/usr/bin/time -l` 测试进程中 dense case 最大 RSS 111,050,752 bytes，空 pattern-run baseline 为 112,492,544 bytes，未再出现 occurrence 数量驱动的峰值增长。本文仍等待第六轮独立复审，不提前宣称 APPROVE。
+
+## 13. R2b 第六轮独立审计与 EOF CPU 线性化整改
+
+第六轮确认 32-pattern/32-KiB 与合法 64-pattern/64-KiB dense fixtures 的 RSS 都回到基线附近，33 组 confidentiality/chunk/discard/Unicode fixtures 全部通过，但仍给出 REJECT。原因是 EOF `partial suffix` 的上一版实现会从最大长度逐一递减，每次重新 `slice()` 并 `startsWith()`；对“长公共前缀、只在最后字符失败”的合法 patterns 形成 `O(patternCount × maxSecretLength²)`。审计实测单个 64-KiB pattern 需 4.57 秒和约 142.5 billion retired instructions，足以阻塞同一 daemon event loop 的 heartbeat、lease renewal 与其他 lane。
+
+整改为每个 pattern 构建 prefix-function failure table，并只在线性扫描末尾至多 `pattern.length-1` 个 code units 时维护 KMP 状态；遇到完整匹配后回退到其最长 proper border，因此仍能识别 self-overlap 的 EOF partial prefix。时间为所有 patterns 的 `O(sum(patternLength))`。failure table 逐 pattern 创建，代码同时持有的 live table 为 `O(maxPatternLength)`；JS GC 可延迟回收，所以物理 RSS 暂时可能反映 `O(sum(patternLength))` 的总 typed-array 分配，但 built-in 合法上限最多约 16 MiB。失败优先门禁最初以 64 个约 8-KiB patterns 和 8-KiB near-match stdout 让旧实现运行 4.24 秒并触发 2 秒 timeout；修复后又把同一门禁加强为 64 个合法 patterns（其中一个达到 65,536 ASCII bytes，其余约 8 KiB）和 65,536-byte near-match stdout。加强后的测试体约 115 ms，完整 `/usr/bin/time -l` 进程为 0.31 秒、约 0.80 billion instructions。本轮仍等待第七轮独立复审，不提前宣称 APPROVE。
+
+## 14. R2b 第七轮独立审计结论
+
+第七轮结论为 **APPROVE**，未发现 P0、P1 或 P2，允许窄 R2b 正式收口。审计复测第六轮两个 CPU fixtures：单个 64-KiB near-match 从 4.57 秒、142.5 billion instructions 降至 0.20 秒、1.65 billion；64 个约 8-KiB patterns 从 4.38 秒、128.8 billion 降至 0.19 秒、1.89 billion。额外合法最大总量——64 个均为 65,536-byte patterns 与 65,536-byte near-match stdout——为 0.26 秒、4.01 billion instructions、最大 RSS 108,183,552 bytes。
+
+独立 confidentiality/KMP-border/chunk/discard/Unicode matrix 33/33 通过；仓库定向验证 14/14 通过，覆盖 terminal proof、profile lifecycle、Worker bearer、bounded file read、prototype-safe slot、旧 revision recovery 与 daemon config v3 E2。审计确认 occurrence 数量不再放大 RSS、KMP mismatch 不重复扫描、full match 正确回退 proper border。唯一 P3 是上一节需要区分 live failure table 与延迟 GC 下的物理 RSS，已按本节前的措辞修正。
+
+仍接受并保留四项明确边界：同 OS user 下最终 executable check→spawn 极窄竞态；probe→createRunAttempt 窗口可能留下 failed pre-launch RunAttempt、但不读 secret 且不 prepare/spawn；owner-controlled `staticEnv` 不属于自动 secret 分类保证；config v3 仍是 single-participant compatibility lane。Generic process 也尚无 OS 级 CPU/memory sandbox。以上都不阻止进入下一阶段，但不得被描述成已经完成 MultiLaneAgentHost 或生产级 hostile-runtime sandbox。

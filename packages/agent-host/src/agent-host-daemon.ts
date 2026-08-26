@@ -27,6 +27,11 @@ export type AgentHostIdentityMetadata = {
   takeoverAfterMs: number;
 };
 
+export type AgentHostDaemonLifecycle = {
+  afterOnline?: () => void;
+  beforeDraining?: () => void;
+};
+
 export class DaemonAlreadyRunningError extends Error {
   constructor(hostId: string) {
     super(`AgentHost daemon ${hostId} is already running`);
@@ -126,6 +131,7 @@ export class AgentHostDaemon {
   readonly #host: AuthenticatedHostContext;
   readonly #instanceLock: AgentHostInstanceLock;
   readonly #kernel: RoomKernel;
+  readonly #lifecycle: AgentHostDaemonLifecycle | undefined;
   readonly #metadata: AgentHostIdentityMetadata | undefined;
   readonly #runner: AgentHostRunner;
   #running = false;
@@ -134,12 +140,14 @@ export class AgentHostDaemon {
     host: AuthenticatedHostContext;
     instanceLock: AgentHostInstanceLock;
     kernel: RoomKernel;
+    lifecycle?: AgentHostDaemonLifecycle;
     metadata?: AgentHostIdentityMetadata;
     runner: AgentHostRunner;
   }) {
     this.#host = input.host;
     this.#instanceLock = input.instanceLock;
     this.#kernel = input.kernel;
+    this.#lifecycle = input.lifecycle;
     this.#metadata = input.metadata;
     this.#runner = input.runner;
     if (input.instanceLock.hostId !== input.host.hostId) {
@@ -157,6 +165,11 @@ export class AgentHostDaemon {
     const workerShutdown = new AbortController();
     const beginDrain = () => {
       try {
+        this.#lifecycle?.beforeDraining?.();
+      } catch {
+        // Offer withdrawal is best effort; process ownership still must drain.
+      }
+      try {
         this.#kernel.heartbeatHost(this.#host, { state: "draining" });
       } catch {
         // Shutdown must continue even when a credential was concurrently revoked.
@@ -172,6 +185,7 @@ export class AgentHostDaemon {
         ...this.#metadata,
         state: "online",
       });
+      this.#lifecycle?.afterOnline?.();
       input.signal.addEventListener("abort", beginDrain, { once: true });
       if (input.signal.aborted) beginDrain();
       await this.#runner.run({ signal: workerShutdown.signal });

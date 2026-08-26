@@ -1,6 +1,8 @@
 import { spawn } from "node:child_process";
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import {
+  constants,
+  createReadStream,
   chmodSync,
   closeSync,
   renameSync,
@@ -8,6 +10,7 @@ import {
   writeFileSync,
   writeSync,
 } from "node:fs";
+import { access, realpath, stat } from "node:fs/promises";
 import { createServer } from "node:net";
 
 const protocol = "rah-process-supervisor-v1";
@@ -53,6 +56,17 @@ try {
   requiredString(config.socketPath, "socketPath");
   requiredString(config.supervisorId, "supervisorId");
   if (!Array.isArray(config.args)) throw new Error("args must be an array");
+  if (config.expectedExecutableIdentity !== undefined) {
+    const identity = config.expectedExecutableIdentity;
+    requiredString(identity.requestedExecutable, "requestedExecutable");
+    requiredString(identity.resolvedExecutablePath, "resolvedExecutablePath");
+    if (!/^sha256:[a-f0-9]{64}$/.test(identity.contentDigest)) {
+      throw new Error("contentDigest must be a SHA-256 digest");
+    }
+    if (!Number.isInteger(identity.byteLength) || identity.byteLength < 0) {
+      throw new Error("byteLength must be a non-negative integer");
+    }
+  }
   for (const [name, value] of [
     ["controlRequestTimeoutMs", config.controlRequestTimeoutMs],
     ["startupTimeoutMs", config.startupTimeoutMs],
@@ -207,7 +221,7 @@ function forwardDiagnostics(source, destination) {
   });
 }
 
-function launchTarget(socket) {
+async function launchTarget(socket) {
   if (phase === "running") {
     response(socket, { ok: true, status: "running" });
     return;
@@ -217,6 +231,16 @@ function launchTarget(socket) {
     return;
   }
   if (launchTimer) clearTimeout(launchTimer);
+  try {
+    await verifyExecutableIdentity();
+  } catch {
+    response(socket, {
+      error: "executable identity changed after probe",
+      ok: false,
+    });
+    finishWithoutLaunch("RAH_START_FAILED");
+    return;
+  }
   try {
     child = spawn(config.command, config.args, {
       cwd: config.cwd,
@@ -254,6 +278,36 @@ function launchTarget(socket) {
     leaderExit = signal === null ? { code } : { code, signal };
     verifyProcessGroupTermination();
   });
+}
+
+async function verifyExecutableIdentity() {
+  const expected = config.expectedExecutableIdentity;
+  if (expected === undefined) return;
+  const resolvedPath = await realpath(config.command);
+  const metadata = await stat(resolvedPath);
+  await access(resolvedPath, constants.X_OK);
+  if (
+    resolvedPath !== expected.resolvedExecutablePath ||
+    !metadata.isFile() ||
+    metadata.size !== expected.byteLength
+  ) {
+    throw new Error("executable identity changed after probe");
+  }
+  const digest = await hashFile(resolvedPath);
+  if (digest !== expected.contentDigest) {
+    throw new Error("executable identity changed after probe");
+  }
+}
+
+async function hashFile(path) {
+  const hash = createHash("sha256");
+  await new Promise((resolvePromise, reject) => {
+    const stream = createReadStream(path);
+    stream.on("data", (chunk) => hash.update(chunk));
+    stream.once("end", resolvePromise);
+    stream.once("error", reject);
+  });
+  return `sha256:${hash.digest("hex")}`;
 }
 
 const server = createServer((socket) => {
@@ -297,7 +351,7 @@ const server = createServer((socket) => {
       return;
     }
     if (command.command === "launch") {
-      launchTarget(socket);
+      void launchTarget(socket);
       return;
     }
     if (command.command !== "terminate") {

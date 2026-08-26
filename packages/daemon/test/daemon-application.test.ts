@@ -10,14 +10,22 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 
+import {
+  RuntimeImplementationRegistry,
+  RuntimeProfileRegistry,
+} from "@rah-os/agent-host";
 import { RoomKernel } from "@rah-os/kernel";
+import type { RuntimeProfileManifestV2 } from "@rah-os/protocol";
 
 import {
   DaemonApplication,
   DaemonConfigSchema,
   FileSecretProvider,
+  createRegistryBackedRuntimeRecovery,
+  type SecretProvider,
 } from "../src/index.ts";
 
 const fakeCliPath = fileURLToPath(
@@ -57,6 +65,155 @@ test("daemon config is strict and file secrets must be owner-private", async () 
       new FileSecretProvider().load({ path: secretPath, source: "file" }),
       /owner-private/,
     );
+    chmodSync(secretPath, 0o600);
+    writeFileSync(secretPath, "x".repeat(65_537));
+    await assert.rejects(
+      new FileSecretProvider().load({ path: secretPath, source: "file" }),
+      /safe byte limit/,
+    );
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("daemon config v3 selects one active registry profile without inline command or env", () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-daemon-config-v3-"));
+  try {
+    const secretPath = join(directory, "host.token");
+    writeFileSync(secretPath, "rah_hat_test\n", { mode: 0o600 });
+    const legacy = validConfig(directory, secretPath);
+    const config = {
+      ...legacy,
+      runtime: {
+        credentialBindings: {
+          "provider-token": { path: secretPath, source: "file" as const },
+        },
+        cwd: directory,
+        kind: "runtime-profile-registry" as const,
+        offer: {
+          leaseMs: 120_000,
+          maxConcurrent: 1 as const,
+          refreshIntervalMs: 30_000,
+          runtimeOfferId: "offer-config-v3",
+        },
+        registryDatabasePath: join(directory, "runtime-registry.db"),
+        runtimeProfileId: "profile-config-v3",
+      },
+      schemaVersion: 3 as const,
+    };
+    assert.deepEqual(DaemonConfigSchema.parse(config), config);
+    assert.throws(() =>
+      DaemonConfigSchema.parse({
+        ...config,
+        runtime: { ...config.runtime, command: process.execPath },
+      }),
+    );
+    assert.throws(() =>
+      DaemonConfigSchema.parse({
+        ...config,
+        runtime: {
+          ...config.runtime,
+          offer: { ...config.runtime.offer, maxConcurrent: 2 },
+        },
+      }),
+    );
+    assert.throws(() =>
+      DaemonConfigSchema.parse({
+        ...config,
+        runtime: {
+          ...config.runtime,
+          offer: {
+            ...config.runtime.offer,
+            refreshIntervalMs: config.runtime.offer.leaseMs,
+          },
+        },
+      }),
+    );
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("registry-backed daemon recovery resolves the frozen old revision after activation changes", async () => {
+  if (process.platform === "win32") return;
+  const directory = mkdtempSync(join(tmpdir(), "rah-daemon-old-recovery-"));
+  try {
+    chmodSync(directory, 0o700);
+    const registry = new RuntimeProfileRegistry({
+      databasePath: join(directory, "runtime-registry.db"),
+      hostId: "daemon-old-recovery-host",
+    });
+    registry.initialize();
+    const implementations = new RuntimeImplementationRegistry();
+    const baseManifest: RuntimeProfileManifestV2 = {
+      adapter: {
+        config: {},
+        executable: process.execPath,
+        fixedArgs: ["-e", "process.exit(0)"],
+        kind: "generic-process/v1",
+      },
+      credentialSlots: [],
+      declaredCapabilities: ["worker_commands"],
+      displayName: "Old recovery revision",
+      manifestVersion: 2,
+      protocolFamily: "rah-worker-process/v1",
+      recoveryDrivers: ["rah-process-supervisor-v1"],
+      runtimeProfileId: "daemon-old-recovery-profile",
+      staticEnv: {},
+      workspacePolicy: { allowedModes: ["in_place"] },
+    };
+    const oldRevision = registry.importManifest(baseManifest);
+    registry.recordProbeReport(
+      await implementations.probeRevision(oldRevision, { cwd: directory }),
+    );
+    registry.activateRevision({
+      contentDigest: oldRevision.contentDigest,
+      runtimeProfileRevisionId: oldRevision.runtimeProfileRevisionId,
+    });
+    const currentRevision = registry.importManifest({
+      ...baseManifest,
+      displayName: "Current recovery revision",
+    });
+    registry.recordProbeReport(
+      await implementations.probeRevision(currentRevision, { cwd: directory }),
+    );
+    registry.activateRevision({
+      contentDigest: currentRevision.contentDigest,
+      runtimeProfileRevisionId: currentRevision.runtimeProfileRevisionId,
+    });
+    assert.equal(
+      registry.getRevision(oldRevision.runtimeProfileRevisionId).state,
+      "inactive",
+    );
+
+    const recovery = createRegistryBackedRuntimeRecovery({
+      cwd: directory,
+      implementations,
+      registry,
+      supervisorDirectory: join(directory, "supervisors"),
+    });
+    const oldRuntime = recovery.resolve({
+      driver: "rah-process-supervisor-v1",
+      metadata: {},
+      recoveryImplementationVersion: "rah-process-supervisor/v1",
+      recoveryKey: "old-supervisor",
+      runtimeProfileDigest: oldRevision.contentDigest,
+      runtimeProfileRevisionId: oldRevision.runtimeProfileRevisionId,
+    });
+    assert.deepEqual(oldRuntime.recoveryDrivers, ["rah-process-supervisor-v1"]);
+    assert.throws(
+      () =>
+        recovery.resolve({
+          driver: "rah-process-supervisor-v1",
+          metadata: {},
+          recoveryImplementationVersion: "rah-process-supervisor/v1",
+          recoveryKey: "forged-old-supervisor",
+          runtimeProfileDigest: currentRevision.contentDigest,
+          runtimeProfileRevisionId: oldRevision.runtimeProfileRevisionId,
+        }),
+      /profile digest mismatch/,
+    );
+    registry.close();
   } finally {
     rmSync(directory, { force: true, recursive: true });
   }
@@ -150,6 +307,282 @@ test("the composed daemon runs a process Worker without an Agent PAT and restart
       seed.close();
     } catch {
       // The seed connection was already closed before the daemon started.
+    }
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("daemon config v3 probes an active profile, publishes a redacted offer, and resolves secrets only at spawn", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-daemon-registry-e2e-"));
+  const stateDirectory = join(directory, "state");
+  mkdirSync(stateDirectory, { mode: 0o700 });
+  const databasePath = join(stateDirectory, "room.db");
+  const registryDatabasePath = join(stateDirectory, "runtime-registry.db");
+  const hostSecretPath = join(stateDirectory, "host.token");
+  const providerSecretPath = join(stateDirectory, "provider.token");
+  const runtimeExecutablePath = join(stateDirectory, "fake-worker");
+  const providerSecret = "provider-secret-never-public";
+  writeFileSync(providerSecretPath, providerSecret, { mode: 0o600 });
+  writeFileSync(
+    runtimeExecutablePath,
+    `#!/bin/sh\nexec ${process.execPath} ${fakeCliPath}\n`,
+    { mode: 0o700 },
+  );
+  const seed = new RoomKernel({ databasePath });
+  const shutdown = new AbortController();
+  let running: Promise<void> | undefined;
+  try {
+    seed.initialize();
+    const human = seed.provisionPrincipal({
+      handle: "daemon-registry-human",
+      kind: "human",
+    });
+    const agent = seed.provisionPrincipal({
+      handle: "daemon-registry-agent",
+      kind: "agent",
+    });
+    const humanActor = seed.authenticateAccessToken(human.accessToken);
+    const room = seed.createRoom(humanActor, {
+      name: "Daemon Registry E2E",
+      slug: "daemon-registry-e2e",
+    });
+    seed.addMember(humanActor, {
+      principalId: agent.principal.principalId,
+      roomId: room.roomId,
+    });
+    const hostCredential = seed.provisionHostCredential({
+      hostId: "daemon-registry-host",
+      participantIds: [agent.principal.principalId],
+    });
+    writeFileSync(hostSecretPath, `${hostCredential.accessToken}\n`, {
+      mode: 0o600,
+    });
+
+    const manifest: RuntimeProfileManifestV2 = {
+      adapter: {
+        config: { terminationGraceMs: 1_000 },
+        executable: runtimeExecutablePath,
+        fixedArgs: [],
+        kind: "generic-process/v1",
+      },
+      credentialSlots: [
+        {
+          slotId: "provider-token",
+          target: { kind: "environment", variable: "PROVIDER_TOKEN" },
+        },
+      ],
+      declaredCapabilities: ["worker_commands"],
+      displayName: "Daemon registry fake worker",
+      manifestVersion: 2,
+      protocolFamily: "rah-worker-process/v1",
+      recoveryDrivers:
+        process.platform === "win32" ? [] : ["rah-process-supervisor-v1"],
+      runtimeProfileId: "daemon-registry-profile",
+      staticEnv: { RAH_FAKE_MODE: "worker-sync" },
+      workspacePolicy: { allowedModes: ["in_place"] },
+    };
+    const profileRegistry = new RuntimeProfileRegistry({
+      databasePath: registryDatabasePath,
+      hostId: "daemon-registry-host",
+    });
+    profileRegistry.initialize();
+    const revision = profileRegistry.importManifest(manifest);
+    const implementations = new RuntimeImplementationRegistry();
+    profileRegistry.recordProbeReport(
+      await implementations.probeRevision(revision, { cwd: stateDirectory }),
+    );
+    profileRegistry.activateRevision({
+      contentDigest: revision.contentDigest,
+      runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
+    });
+    profileRegistry.close();
+
+    const loadedPaths: string[] = [];
+    const fileSecrets = new FileSecretProvider();
+    const recordingSecrets: SecretProvider = {
+      load: async (reference) => {
+        loadedPaths.push(reference.path);
+        return await fileSecrets.load(reference);
+      },
+    };
+    const config = DaemonConfigSchema.parse({
+      ...validConfig(stateDirectory, hostSecretPath),
+      host: {
+        credential: { path: hostSecretPath, source: "file" },
+        hostId: "daemon-registry-host",
+        participantId: agent.principal.principalId,
+      },
+      runtime: {
+        credentialBindings: {
+          "provider-token": { path: providerSecretPath, source: "file" },
+        },
+        cwd: stateDirectory,
+        kind: "runtime-profile-registry",
+        offer: {
+          leaseMs: 1_000,
+          maxConcurrent: 1,
+          refreshIntervalMs: 100,
+          runtimeOfferId: "daemon-registry-offer",
+        },
+        registryDatabasePath,
+        runtimeProfileId: manifest.runtimeProfileId,
+      },
+      schemaVersion: 3,
+    });
+    const application = new DaemonApplication({
+      config,
+      secretProvider: recordingSecrets,
+    });
+    running = application.run({ signal: shutdown.signal });
+    await waitUntil(() => application.health().state === "online");
+    assert.deepEqual(loadedPaths, [hostSecretPath]);
+
+    seed.postMessage(humanActor, {
+      body: "Wake the registry-backed fake worker",
+      idempotencyKey: "daemon-registry-message",
+      recipients: [
+        {
+          participantId: agent.principal.principalId,
+          reason: "mention",
+        },
+      ],
+      roomId: room.roomId,
+    });
+    await waitUntil(
+      () =>
+        seed.listActivations({ roomId: room.roomId })[0]?.state === "completed",
+    );
+    assert.deepEqual(loadedPaths, [hostSecretPath, providerSecretPath]);
+
+    const liveOfferDatabase = new DatabaseSync(databasePath);
+    const lifecycleRegistry = new RuntimeProfileRegistry({
+      databasePath: registryDatabasePath,
+      hostId: "daemon-registry-host",
+    });
+    lifecycleRegistry.initialize();
+    const replacement = lifecycleRegistry.importManifest({
+      ...manifest,
+      displayName: "Daemon registry replacement worker",
+    });
+    lifecycleRegistry.recordProbeReport(
+      await implementations.probeRevision(replacement, { cwd: stateDirectory }),
+    );
+    lifecycleRegistry.activateRevision({
+      contentDigest: replacement.contentDigest,
+      runtimeProfileRevisionId: replacement.runtimeProfileRevisionId,
+    });
+    await waitUntil(() => {
+      const row = liveOfferDatabase
+        .prepare(
+          "SELECT offer_json FROM runtime_offers WHERE runtime_offer_id = ?",
+        )
+        .get("daemon-registry-offer") as { offer_json: string } | undefined;
+      return (
+        row !== undefined &&
+        (JSON.parse(row.offer_json) as { state?: string }).state ===
+          "unavailable"
+      );
+    });
+
+    seed.postMessage(humanActor, {
+      body: "The frozen daemon must not launch after the active revision changes",
+      idempotencyKey: "daemon-registry-lifecycle-fence",
+      recipients: [
+        {
+          participantId: agent.principal.principalId,
+          reason: "mention",
+        },
+      ],
+      roomId: room.roomId,
+    });
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    assert.equal(seed.listRunAttempts({ roomId: room.roomId }).length, 1);
+    assert.equal(
+      seed
+        .listActivations({ roomId: room.roomId })
+        .some((activation) => activation.state === "queued"),
+      true,
+    );
+    assert.deepEqual(loadedPaths, [hostSecretPath, providerSecretPath]);
+
+    lifecycleRegistry.activateRevision({
+      contentDigest: revision.contentDigest,
+      runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
+    });
+    await waitUntil(() => {
+      const row = liveOfferDatabase
+        .prepare(
+          "SELECT offer_json FROM runtime_offers WHERE runtime_offer_id = ?",
+        )
+        .get("daemon-registry-offer") as { offer_json: string } | undefined;
+      return (
+        row !== undefined &&
+        (JSON.parse(row.offer_json) as { state?: string }).state === "available"
+      );
+    });
+    await waitUntil(() =>
+      seed
+        .listActivations({ roomId: room.roomId })
+        .every((activation) => activation.state === "completed"),
+    );
+    assert.deepEqual(loadedPaths, [
+      hostSecretPath,
+      providerSecretPath,
+      providerSecretPath,
+    ]);
+
+    rmSync(runtimeExecutablePath);
+    await waitUntil(() => {
+      const row = liveOfferDatabase
+        .prepare(
+          "SELECT offer_json FROM runtime_offers WHERE runtime_offer_id = ?",
+        )
+        .get("daemon-registry-offer") as { offer_json: string } | undefined;
+      return (
+        row !== undefined &&
+        (JSON.parse(row.offer_json) as { state?: string }).state ===
+          "unavailable"
+      );
+    });
+    lifecycleRegistry.close();
+    liveOfferDatabase.close();
+    const liveRegistry = new RuntimeProfileRegistry({
+      databasePath: registryDatabasePath,
+      hostId: "daemon-registry-host",
+    });
+    liveRegistry.initialize();
+    assert.equal(liveRegistry.listProbeReports().at(-1)?.available, false);
+    liveRegistry.close();
+
+    shutdown.abort("registry-e2e-complete");
+    await running;
+    running = undefined;
+    const raw = new DatabaseSync(databasePath);
+    const offerRow = raw
+      .prepare(
+        "SELECT offer_json FROM runtime_offers WHERE runtime_offer_id = ?",
+      )
+      .get("daemon-registry-offer") as { offer_json: string } | undefined;
+    assert.ok(offerRow);
+    const offer = JSON.parse(offerRow.offer_json) as Record<string, unknown>;
+    assert.equal(offer.state, "unavailable");
+    assert.equal(
+      (offer.probeReportRef as { probeReportId?: string }).probeReportId !==
+        undefined,
+      true,
+    );
+    assert.equal(offerRow.offer_json.includes(providerSecret), false);
+    assert.equal(offerRow.offer_json.includes(providerSecretPath), false);
+    assert.equal(offerRow.offer_json.includes(registryDatabasePath), false);
+    assert.equal(offerRow.offer_json.includes(runtimeExecutablePath), false);
+    raw.close();
+  } finally {
+    shutdown.abort("test-cleanup");
+    if (running !== undefined) await running.catch(() => undefined);
+    try {
+      seed.close();
+    } catch {
+      // The seed is closed below or by a failing setup path.
     }
     rmSync(directory, { force: true, recursive: true });
   }

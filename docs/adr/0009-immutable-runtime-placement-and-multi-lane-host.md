@@ -1,6 +1,6 @@
 # ADR-0009：不可变 Runtime Placement 与 Multi-Lane AgentHost
 
-状态：**Accepted in stages / R0 implemented / R1–R1.1 provisional**（2026-08-26 独立审计整改后）。严格 schemas、pure planner、Kernel schema v5、content-addressed startup-owned certification、immutable Offer observation、durable Placement 与 RunAttempt provenance 已实现，并已关闭 terminal-proof、crash-window、Host/recovery generation、Offer 时序/TTL 和 migration FK 缺陷；admin-owned capacity、probe evidence、durable hold、registry 与 multi-lane 尚未实现。
+状态：**Accepted in stages / R0 implemented / R1–R1.1 provisional / narrow R2a–R2b implemented**（2026-08-26）。严格 schemas、pure planner、Kernel schema v5、content-addressed startup-owned certification、immutable Offer observation、durable Placement/RunAttempt provenance，以及 Host-local immutable Runtime Profile/Probe Registry、spawn-time secret binding、旧 revision recovery provenance/routing 和 daemon config v3 redacted Offer publication 已实现；admin-owned capacity、durable hold、canonical workspace/model binding、atomic multi-lane claim 与 MultiLaneAgentHost 尚未实现。
 
 ## 背景
 
@@ -59,7 +59,7 @@
 
 ## 声明边界
 
-- 当前 R0 已完成；R1/R1.1 provisional 已有 control Room 配置修订、server-bounded/monotonic offer head、Kernel-trusted content-addressed certification、append-only Offer observation、durable PlacementDecision、原子 reservation、定向 Host pull、多个 crash window 的 lease recovery、Host/recovery generation fencing 与 RunAttempt provenance；没有 probe report、Runtime Registry、MultiLaneAgentHost 或 daemon config v3；
+- 当前 R0 已完成；R1/R1.1 provisional 已有 control Room 配置修订、server-bounded/monotonic offer head、Kernel-trusted content-addressed certification、append-only Offer observation、durable PlacementDecision、原子 reservation、定向 Host pull、多个 crash window 的 lease recovery、Host/recovery generation fencing 与 RunAttempt provenance；窄 R2a/R2b 已有 Host-bound owner-private registry、strict v1/v2 manifest/digest、immutable revision/probe、版本化 adapter/recovery resolution、spawn-time secret slot、旧 revision recovery provenance/routing、显式 lifecycle/local audit、daemon config v3 与 redacted Offer publisher；仍没有 authenticated registry admin command、PlacementHold、canonical workspace/model execution、atomic multi-lane claim 或 MultiLaneAgentHost；
 - R1 compatibility scheduler 对 Host/profile/pool 使用显式保守并发上限 `1`；在 canonical Room→WorkspaceDefinition mapping 尚未由 R4 实现前，只接受所有 fresh offer 唯一一致的 workspace identity，多 workspace 输入 fail closed；
 - capability/isolation 的 `certified` 必须引用 Kernel startup catalog 中 subject/digest 匹配的 certification；Host 自报 certified model binding 被拒绝。`probed` 与 pool label 仍只是 Host observation，不能冒充 admin/certification authority；
 - PlacementHold、Agent disable/tombstone、完整 model fallback 与原子 LaneRunner claim 仍是 design-only；

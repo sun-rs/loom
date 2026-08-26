@@ -163,6 +163,296 @@ test("GenericProcessAdapter bounds opaque diagnostics", async () => {
   }
 });
 
+test("GenericProcessAdapter redacts secrets before diagnostic byte truncation", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-process-redaction-"));
+  try {
+    const secret = "SENSITIVE_VALUE";
+    const adapter = new GenericProcessAdapter({
+      activationEnvironment: () => ({
+        env: { RAH_TEST_SECRET: secret },
+        redactions: [secret],
+      }),
+      args: ["-e", "process.stdout.write(process.env.RAH_TEST_SECRET ?? '')"],
+      command: process.execPath,
+      cwd: directory,
+      diagnosticByteLimit: 5,
+    });
+
+    const run = await startProcess(adapter);
+    await adapter.reap(run);
+    const diagnostics = adapter.diagnostics(run);
+
+    assert.equal(diagnostics.stdout, "[REDA");
+    assert.equal(diagnostics.stdout.includes(secret.slice(0, 5)), false);
+    assert.equal(diagnostics.truncated, true);
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("GenericProcessAdapter redacts repeated long secrets without exposing a later prefix", async () => {
+  const directory = mkdtempSync(
+    join(tmpdir(), "rah-os-process-repeat-redaction-"),
+  );
+  try {
+    const secret = "ABCDEFGHIJ1234567890";
+    const adapter = new GenericProcessAdapter({
+      activationEnvironment: () => ({
+        env: { RAH_TEST_SECRET: secret },
+        redactions: [secret],
+      }),
+      args: [
+        "-e",
+        "process.stdout.write((process.env.RAH_TEST_SECRET ?? '').repeat(3))",
+      ],
+      command: process.execPath,
+      cwd: directory,
+      diagnosticByteLimit: 30,
+    });
+
+    const run = await startProcess(adapter);
+    await adapter.reap(run);
+    const diagnostics = adapter.diagnostics(run);
+
+    assert.equal(diagnostics.stdout, "[REDACTED][REDACTED][REDACTED]");
+    assert.equal(diagnostics.stdout.includes("ABCDEFGHI"), false);
+    assert.equal(diagnostics.truncated, true);
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("GenericProcessAdapter defers shorter overlapping secret matches across chunk boundaries", async () => {
+  const directory = mkdtempSync(
+    join(tmpdir(), "rah-os-process-overlap-redaction-"),
+  );
+  try {
+    const adapter = new GenericProcessAdapter({
+      activationEnvironment: () => ({
+        env: {},
+        redactions: ["abcdef", "abc", "bc"],
+      }),
+      args: [
+        "-e",
+        [
+          "process.stdout.write('a')",
+          "setTimeout(() => process.stdout.write('bc'), 10)",
+          "setTimeout(() => process.stdout.write('def'), 20)",
+        ].join(";"),
+      ],
+      command: process.execPath,
+      cwd: directory,
+      diagnosticByteLimit: 64,
+    });
+
+    const run = await startProcess(adapter);
+    await adapter.reap(run);
+    const diagnostics = adapter.diagnostics(run);
+
+    assert.equal(diagnostics.stdout, "[REDACTED]");
+    assert.equal(diagnostics.stdout.includes("def"), false);
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("GenericProcessAdapter redacts shifted and chained overlapping secrets", async () => {
+  const directory = mkdtempSync(
+    join(tmpdir(), "rah-os-process-shifted-overlap-redaction-"),
+  );
+  try {
+    const adapter = new GenericProcessAdapter({
+      activationEnvironment: () => ({
+        env: {},
+        redactions: ["abc", "bcdef", "efghi"],
+      }),
+      args: [
+        "-e",
+        [
+          "process.stdout.write('abc')",
+          "setTimeout(() => process.stdout.write('def'), 10)",
+          "setTimeout(() => process.stdout.write('ghi'), 20)",
+        ].join(";"),
+      ],
+      command: process.execPath,
+      cwd: directory,
+      diagnosticByteLimit: 64,
+    });
+
+    const run = await startProcess(adapter);
+    await adapter.reap(run);
+    const diagnostics = adapter.diagnostics(run);
+
+    assert.equal(diagnostics.stdout, "[REDACTED]");
+    assert.equal(diagnostics.stdout.includes("def"), false);
+    assert.equal(diagnostics.stdout.includes("ghi"), false);
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("GenericProcessAdapter bounds dense overlapping redaction work", async () => {
+  const directory = mkdtempSync(
+    join(tmpdir(), "rah-os-process-dense-overlap-redaction-"),
+  );
+  try {
+    const adapter = new GenericProcessAdapter({
+      activationEnvironment: () => ({
+        env: {},
+        redactions: Array.from({ length: 32 }, (_, index) =>
+          "a".repeat(index + 1),
+        ),
+      }),
+      args: ["-e", "process.stdout.write('a'.repeat(32_768))"],
+      command: process.execPath,
+      cwd: directory,
+      diagnosticByteLimit: 64,
+    });
+
+    const run = await startProcess(adapter);
+    await adapter.reap(run);
+    assert.equal(adapter.diagnostics(run).stdout, "[REDACTED]");
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test(
+  "GenericProcessAdapter bounds EOF partial-prefix matching work",
+  { timeout: 2_000 },
+  async () => {
+    const directory = mkdtempSync(
+      join(tmpdir(), "rah-os-process-eof-prefix-work-"),
+    );
+    try {
+      const adapter = new GenericProcessAdapter({
+        activationEnvironment: () => ({
+          env: {},
+          redactions: Array.from(
+            { length: 64 },
+            (_, index) =>
+              `${"a".repeat(index === 0 ? 65_535 : 8_191)}${String.fromCharCode(33 + index)}`,
+          ),
+        }),
+        args: ["-e", "process.stdout.write('a'.repeat(65_535) + 'c')"],
+        command: process.execPath,
+        cwd: directory,
+        diagnosticByteLimit: 65_536,
+      });
+
+      const run = await startProcess(adapter);
+      await adapter.reap(run);
+      assert.equal(adapter.diagnostics(run).stdout, `${"a".repeat(65_535)}c`);
+    } finally {
+      rmSync(directory, { force: true, recursive: true });
+    }
+  },
+);
+
+test("GenericProcessAdapter redacts a Unicode secret split inside a UTF-8 code point", async () => {
+  const directory = mkdtempSync(
+    join(tmpdir(), "rah-os-process-unicode-redaction-"),
+  );
+  try {
+    const secret = "密钥🔐value";
+    const adapter = new GenericProcessAdapter({
+      activationEnvironment: () => ({
+        env: { RAH_TEST_SECRET: secret },
+        redactions: [secret],
+      }),
+      args: [
+        "-e",
+        [
+          "const value = Buffer.from(process.env.RAH_TEST_SECRET ?? '')",
+          "process.stdout.write(value.subarray(0, 2))",
+          "setTimeout(() => process.stdout.write(value.subarray(2)), 10)",
+        ].join(";"),
+      ],
+      command: process.execPath,
+      cwd: directory,
+      diagnosticByteLimit: 64,
+    });
+
+    const run = await startProcess(adapter);
+    await adapter.reap(run);
+    assert.equal(adapter.diagnostics(run).stdout, "[REDACTED]");
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("GenericProcessAdapter preserves an unrelated Unicode code point at the safe boundary", async () => {
+  const directory = mkdtempSync(
+    join(tmpdir(), "rah-os-process-unicode-boundary-"),
+  );
+  try {
+    const adapter = new GenericProcessAdapter({
+      activationEnvironment: () => ({
+        env: {},
+        redactions: ["XXXXXX"],
+      }),
+      args: ["-e", "process.stdout.write('A🔐BBBB')"],
+      command: process.execPath,
+      cwd: directory,
+      diagnosticByteLimit: 64,
+    });
+
+    const run = await startProcess(adapter);
+    await adapter.reap(run);
+    assert.equal(adapter.diagnostics(run).stdout, "A🔐BBBB");
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("GenericProcessAdapter redacts a secret prefix left pending at EOF", async () => {
+  const directory = mkdtempSync(
+    join(tmpdir(), "rah-os-process-eof-redaction-"),
+  );
+  try {
+    const adapter = new GenericProcessAdapter({
+      activationEnvironment: () => ({
+        env: {},
+        redactions: ["abcdef"],
+      }),
+      args: ["-e", "process.stdout.write('abc')"],
+      command: process.execPath,
+      cwd: directory,
+      diagnosticByteLimit: 64,
+    });
+
+    const run = await startProcess(adapter);
+    await adapter.reap(run);
+    assert.equal(adapter.diagnostics(run).stdout, "[REDACTED]");
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("GenericProcessAdapter merges an EOF secret prefix with an overlapping match", async () => {
+  const directory = mkdtempSync(
+    join(tmpdir(), "rah-os-process-eof-overlap-redaction-"),
+  );
+  try {
+    const adapter = new GenericProcessAdapter({
+      activationEnvironment: () => ({
+        env: {},
+        redactions: ["abcdef", "abc"],
+      }),
+      args: ["-e", "process.stdout.write('abcd')"],
+      command: process.execPath,
+      cwd: directory,
+      diagnosticByteLimit: 64,
+    });
+
+    const run = await startProcess(adapter);
+    await adapter.reap(run);
+    assert.equal(adapter.diagnostics(run).stdout, "[REDACTED]");
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
 test("GenericProcessAdapter bounds retention of completed process runs", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-process-retention-"));
   try {

@@ -1,6 +1,9 @@
-import { lstat, readFile } from "node:fs/promises";
+import { constants } from "node:fs";
+import { open } from "node:fs/promises";
 
 import type { HostCredentialReference } from "./config.ts";
+
+const MAX_SECRET_BYTES = 65_536;
 
 export interface SecretProvider {
   load(reference: HostCredentialReference): Promise<string>;
@@ -11,20 +14,61 @@ export class FileSecretProvider implements SecretProvider {
     if (reference.source !== "file") {
       throw new Error(`unsupported secret source: ${String(reference.source)}`);
     }
-    const metadata = await lstat(reference.path);
-    if (
-      !metadata.isFile() ||
-      metadata.isSymbolicLink() ||
-      (metadata.mode & 0o077) !== 0 ||
-      (typeof process.getuid === "function" &&
-        metadata.uid !== process.getuid())
-    ) {
-      throw new Error(
-        `Host credential file must be an owner-private regular file: ${reference.path}`,
+    let file;
+    try {
+      file = await open(
+        reference.path,
+        constants.O_RDONLY | constants.O_NOFOLLOW,
       );
+      const metadata = await file.stat();
+      if (
+        !metadata.isFile() ||
+        (metadata.mode & 0o077) !== 0 ||
+        (typeof process.getuid === "function" &&
+          metadata.uid !== process.getuid())
+      ) {
+        throw new Error(
+          `Secret file must be an owner-private regular file: ${reference.path}`,
+        );
+      }
+      if (metadata.size > MAX_SECRET_BYTES) {
+        throw new Error("Secret file exceeds the safe byte limit");
+      }
+      const contents = Buffer.allocUnsafe(MAX_SECRET_BYTES + 1);
+      let bytesRead = 0;
+      while (bytesRead < contents.byteLength) {
+        const result = await file.read(
+          contents,
+          bytesRead,
+          contents.byteLength - bytesRead,
+          null,
+        );
+        if (result.bytesRead === 0) break;
+        bytesRead += result.bytesRead;
+      }
+      if (bytesRead > MAX_SECRET_BYTES) {
+        throw new Error("Secret file exceeds the safe byte limit");
+      }
+      const secret = contents.subarray(0, bytesRead).toString("utf8").trim();
+      if (secret.length === 0) throw new Error("Secret file is empty");
+      return secret;
+    } catch (error) {
+      if (hasErrorCode(error, "ELOOP")) {
+        throw new Error(
+          `Secret file must be an owner-private regular file: ${reference.path}`,
+        );
+      }
+      throw error;
+    } finally {
+      await file?.close();
     }
-    const secret = (await readFile(reference.path, "utf8")).trim();
-    if (secret.length === 0) throw new Error("Host credential is empty");
-    return secret;
   }
+}
+
+function hasErrorCode(error: unknown, code: string): boolean {
+  return (
+    error instanceof Error &&
+    "code" in error &&
+    (error as NodeJS.ErrnoException).code === code
+  );
 }

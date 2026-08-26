@@ -1,9 +1,20 @@
-export { DaemonConfigSchema, HostCredentialReferenceSchema } from "./config.ts";
-export type { DaemonConfig, HostCredentialReference } from "./config.ts";
+export {
+  DaemonConfigSchema,
+  DaemonConfigV2Schema,
+  DaemonConfigV3Schema,
+  HostCredentialReferenceSchema,
+} from "./config.ts";
+export type {
+  DaemonConfig,
+  DaemonConfigV2,
+  DaemonConfigV3,
+  HostCredentialReference,
+} from "./config.ts";
 export {
   DAEMON_BUILD_VERSION,
   DAEMON_PROTOCOL_VERSION,
   DaemonApplication,
+  createRegistryBackedRuntimeRecovery,
 } from "./daemon-application.ts";
 export type { DaemonHealthSnapshot } from "./daemon-application.ts";
 export {

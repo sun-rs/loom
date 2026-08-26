@@ -669,7 +669,11 @@ test("AgentHost recovers a leased orphan before restarting its participant lane"
       recoveryDescriptor: {
         driver: "fake-runtime",
         metadata: {},
+        recoveryImplementationVersion: "fake-runtime/v1",
         recoveryKey: "orphaned-fake-run",
+        runtimeProfileDigest:
+          "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        runtimeProfileRevisionId: "legacy-runtime-revision",
       },
       runAttemptId: runAttempt.runAttemptId,
       runtimeRunId: "orphaned-fake-run",
@@ -678,7 +682,11 @@ test("AgentHost recovers a leased orphan before restarting its participant lane"
       recoveryDescriptor: {
         driver: "fake-runtime",
         metadata: {},
+        recoveryImplementationVersion: "fake-runtime/v1",
         recoveryKey: "orphaned-fake-run",
+        runtimeProfileDigest:
+          "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        runtimeProfileRevisionId: "legacy-runtime-revision",
       },
       runAttemptId: runAttempt.runAttemptId,
       runtimeRunId: "orphaned-fake-run",
@@ -698,11 +706,13 @@ test("AgentHost recovers a leased orphan before restarting its participant lane"
       },
     );
     let recoveryMaintenanceCount = 0;
-    const runtime = new FakeRuntimeAdapter({
+    const legacyRecoveryRuntime = new FakeRuntimeAdapter({
       onRecover: async (input) => {
         recoveredRunAttemptId = input.runAttemptId;
         return await delayedRecovery;
       },
+    });
+    const currentRuntime = new FakeRuntimeAdapter({
       onStart: (input) => {
         const delivery = kernel.sync(agentActor, {
           consumerId: input.consumerId,
@@ -730,7 +740,15 @@ test("AgentHost recovers a leased orphan before restarting its participant lane"
         }
         await waitUntilAborted(delayMs, signal);
       },
-      runtime,
+      runtime: currentRuntime,
+      runtimeRecoveryDrivers: ["fake-runtime"],
+      runtimeRecoveryResolver: (descriptor) => {
+        assert.equal(
+          descriptor.runtimeProfileRevisionId,
+          "legacy-runtime-revision",
+        );
+        return legacyRecoveryRuntime;
+      },
     });
 
     const recovery = await host.reconcileOrphanOnce();

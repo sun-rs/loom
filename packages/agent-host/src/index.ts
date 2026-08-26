@@ -7,6 +7,7 @@ export {
 } from "./agent-host-daemon.ts";
 export type {
   AgentHostIdentityMetadata,
+  AgentHostDaemonLifecycle,
   AgentHostInstanceLock,
   AgentHostRunner,
   ShutdownSignalSource,
@@ -18,10 +19,29 @@ export type {
 } from "./agent-host.ts";
 export { FakeRuntimeAdapter } from "./fake-runtime.ts";
 export { GenericProcessAdapter } from "./generic-process-adapter.ts";
+export {
+  buildRuntimeOfferFromProfile,
+  RuntimeCredentialEnvironmentBinding,
+  RuntimeImplementationRegistry,
+} from "./runtime-implementation-registry.ts";
+export type { RuntimeCreationOptions } from "./runtime-implementation-registry.ts";
+export {
+  computeRuntimeProfileProbeDigest,
+  computeRuntimeProfileManifestDigest,
+  normalizeRuntimeProfileManifest,
+  normalizeRuntimeProfileManifestV1,
+  RUNTIME_PROFILE_REGISTRY_SCHEMA_VERSION,
+  RuntimeProfileRegistry,
+  RuntimeProfileRegistryConflictError,
+  RuntimeProfileRegistryNotFoundError,
+  RuntimeProfileRegistrySecurityError,
+} from "./runtime-profile-registry.ts";
+export type { RuntimeProfileProbeObservation } from "./runtime-profile-registry.ts";
 export type {
   ActivationEnvironmentLease,
   GenericProcessAdapterOptions,
   ProcessDiagnostics,
+  RuntimeRecoveryProvenance,
 } from "./generic-process-adapter.ts";
 export type {
   ActivationEnvelope,

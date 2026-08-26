@@ -6,7 +6,7 @@
 
 ```text
 rah-os-daemon
-  -> strict DaemonConfig(schemaVersion=2)
+  -> strict DaemonConfig(schemaVersion=2 compatibility | 3 registry-backed)
   -> SecretProvider -> authenticated Host instance
   -> RoomKernel(SQLite)
   -> ClientApplicationService(loopback HTTP, principal PAT)

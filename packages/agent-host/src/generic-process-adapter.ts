@@ -10,7 +10,13 @@ import { access, lstat, mkdir, readFile, rm } from "node:fs/promises";
 import { createConnection } from "node:net";
 import { tmpdir } from "node:os";
 import { delimiter, isAbsolute, resolve } from "node:path";
+import { StringDecoder } from "node:string_decoder";
 import { fileURLToPath } from "node:url";
+
+import type {
+  RuntimeProfileProbeReport,
+  RuntimeRecoveryDescriptor,
+} from "@rah-os/protocol";
 
 import type {
   ActivationEnvelope,
@@ -24,21 +30,34 @@ import type {
 export type GenericProcessAdapterOptions = {
   activationEnvironment?: (
     input: ActivationEnvelope,
-  ) => ActivationEnvironmentLease;
+  ) => ActivationEnvironmentLease | Promise<ActivationEnvironmentLease>;
   args?: readonly string[];
+  beforeStart?: () => Promise<void> | void;
   command: string;
   completedRunRetention?: number;
   cwd: string;
   diagnosticByteLimit?: number;
   env?: Readonly<Record<string, string>>;
+  expectedExecutableIdentity?: NonNullable<
+    RuntimeProfileProbeReport["executableIdentity"]
+  >;
+  recoveryProvenance?: RuntimeRecoveryProvenance;
   supervisorControlTimeoutMs?: number;
   supervisorDirectory?: string;
   supervisorStartupTimeoutMs?: number;
   terminationGraceMs?: number;
 };
 
+export type RuntimeRecoveryProvenance = Pick<
+  Required<RuntimeRecoveryDescriptor>,
+  "runtimeProfileDigest" | "runtimeProfileRevisionId"
+> & {
+  recoveryDriverImplementationVersions: Readonly<Record<string, string>>;
+};
+
 export type ActivationEnvironmentLease = {
   env: Readonly<Record<string, string>>;
+  redactions?: readonly string[];
   release?: () => void;
 };
 
@@ -72,33 +91,221 @@ const SUPERVISOR_ENTRY_PATH = fileURLToPath(
 );
 const SUPERVISOR_ID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+const MAX_REDACTION_SECRET_BYTES = 65_536;
+const MAX_REDACTION_SCAN_CODE_UNITS = 65_536;
+const MIN_REDACTION_SCAN_CODE_UNITS = 1_024;
 
 class BoundedOutput {
   readonly #byteLimit: number;
   readonly #chunks: Buffer[] = [];
-  #bytes = 0;
+  readonly #decoder = new StringDecoder("utf8");
+  readonly #maxRedactionLength: number;
+  readonly #redactions: readonly string[];
+  readonly #scanCodeUnitLimit: number;
+  #finished = false;
+  #pending = "";
+  #redactedPrefixLength = 0;
+  #storedBytes = 0;
+  #observedBytes = 0;
   truncated = false;
 
-  constructor(byteLimit: number) {
+  constructor(byteLimit: number, redactions: readonly string[]) {
     this.#byteLimit = byteLimit;
+    this.#redactions = [
+      ...new Set(redactions.filter((value) => value !== "")),
+    ].sort((left, right) => right.length - left.length);
+    this.#maxRedactionLength = this.#redactions.reduce(
+      (longest, value) => Math.max(longest, value.length),
+      0,
+    );
+    this.#scanCodeUnitLimit = Math.max(
+      1,
+      Math.min(
+        MAX_REDACTION_SCAN_CODE_UNITS,
+        Math.max(MIN_REDACTION_SCAN_CODE_UNITS, byteLimit),
+      ),
+    );
+    this.#redactions.forEach((value) => {
+      const bytes = Buffer.byteLength(value);
+      if (bytes > MAX_REDACTION_SECRET_BYTES) {
+        throw new Error(
+          "diagnostic redaction value exceeds the safe byte limit",
+        );
+      }
+    });
   }
 
   append(chunk: Buffer | string): void {
+    if (this.#finished) return;
     const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-    const available = this.#byteLimit - this.#bytes;
+    this.#observedBytes += buffer.byteLength;
+    if (this.#observedBytes > this.#byteLimit) this.truncated = true;
+    if (this.#storedBytes >= this.#byteLimit) return;
+    this.#appendDecoded(this.#decoder.write(buffer));
+  }
+
+  finish(): void {
+    if (this.#finished) return;
+    this.#finished = true;
+    if (this.#storedBytes >= this.#byteLimit) {
+      this.#decoder.end();
+      this.#pending = "";
+      this.#redactedPrefixLength = 0;
+      return;
+    }
+    this.#pending += this.#decoder.end();
+    this.#drain(true);
+  }
+
+  text(): string {
+    return Buffer.concat(this.#chunks, this.#storedBytes).toString("utf8");
+  }
+
+  #appendSanitized(value: string): void {
+    if (value.length === 0) return;
+    const available = this.#byteLimit - this.#storedBytes;
     if (available <= 0) {
       this.truncated = true;
       return;
     }
-
-    const accepted = buffer.subarray(0, available);
-    this.#chunks.push(accepted);
-    this.#bytes += accepted.byteLength;
-    if (accepted.byteLength < buffer.byteLength) this.truncated = true;
+    const accepted = truncateUtf8(value, available);
+    const buffer = Buffer.from(accepted);
+    if (buffer.byteLength > 0) {
+      this.#chunks.push(buffer);
+      this.#storedBytes += buffer.byteLength;
+    }
+    if (accepted.length < value.length) this.truncated = true;
   }
 
-  text(): string {
-    return Buffer.concat(this.#chunks, this.#bytes).toString("utf8");
+  #appendDecoded(value: string): void {
+    let offset = 0;
+    while (offset < value.length) {
+      let end = Math.min(value.length, offset + this.#scanCodeUnitLimit);
+      if (
+        end < value.length &&
+        isHighSurrogate(value.charCodeAt(end - 1)) &&
+        isLowSurrogate(value.charCodeAt(end))
+      ) {
+        end -= 1;
+      }
+      this.#pending += value.slice(offset, end);
+      this.#drain(false);
+      offset = end;
+      if (this.#storedBytes >= this.#byteLimit) {
+        this.#pending = "";
+        this.#redactedPrefixLength = 0;
+        return;
+      }
+    }
+  }
+
+  #drain(final: boolean): void {
+    const retainedLength = final
+      ? 0
+      : Math.max(0, this.#maxRedactionLength - 1);
+    let safeLength = final
+      ? this.#pending.length
+      : Math.max(0, this.#pending.length - retainedLength);
+    if (
+      !final &&
+      safeLength > 0 &&
+      safeLength < this.#pending.length &&
+      isHighSurrogate(this.#pending.charCodeAt(safeLength - 1)) &&
+      isLowSurrogate(this.#pending.charCodeAt(safeLength))
+    ) {
+      safeLength -= 1;
+    }
+    if (safeLength === 0) return;
+
+    const previousRedactedPrefixLength = this.#redactedPrefixLength;
+    const components = this.#redactionComponents(final);
+    let cursor = 0;
+    for (const component of components) {
+      if (component.start >= safeLength) break;
+      if (cursor < component.start) {
+        this.#appendSanitized(
+          this.#pending.slice(cursor, Math.min(component.start, safeLength)),
+        );
+      }
+      if (
+        component.start < safeLength &&
+        !(previousRedactedPrefixLength > 0 && component.start === 0)
+      ) {
+        this.#appendSanitized("[REDACTED]");
+      }
+      cursor = Math.min(component.end, safeLength);
+      if (cursor >= safeLength) break;
+    }
+    if (cursor < safeLength) {
+      this.#appendSanitized(this.#pending.slice(cursor, safeLength));
+    }
+
+    this.#redactedPrefixLength = 0;
+    for (const component of components) {
+      if (component.start < safeLength && component.end > safeLength) {
+        this.#redactedPrefixLength = component.end - safeLength;
+        break;
+      }
+    }
+    this.#pending = this.#pending.slice(safeLength);
+  }
+
+  #redactionComponents(
+    includePartialSuffix: boolean,
+  ): Array<{ start: number; end: number }> {
+    const starts = new Uint32Array(this.#pending.length + 1);
+    const ends = new Uint32Array(this.#pending.length + 1);
+    if (this.#redactedPrefixLength > 0) {
+      starts[0] = (starts[0] ?? 0) + 1;
+      const end = Math.min(this.#redactedPrefixLength, this.#pending.length);
+      ends[end] = (ends[end] ?? 0) + 1;
+    }
+    for (const secret of this.#redactions) {
+      let searchFrom = 0;
+      while (searchFrom <= this.#pending.length - secret.length) {
+        const start = this.#pending.indexOf(secret, searchFrom);
+        if (start < 0) break;
+        starts[start] = (starts[start] ?? 0) + 1;
+        const end = start + secret.length;
+        ends[end] = (ends[end] ?? 0) + 1;
+        searchFrom = start + 1;
+      }
+    }
+    if (includePartialSuffix) {
+      const partialLength = this.#pendingSecretPrefixLength();
+      if (partialLength > 0) {
+        const start = this.#pending.length - partialLength;
+        starts[start] = (starts[start] ?? 0) + 1;
+        ends[this.#pending.length] = (ends[this.#pending.length] ?? 0) + 1;
+      }
+    }
+
+    const components: Array<{ start: number; end: number }> = [];
+    let active = 0;
+    let componentStart = -1;
+    for (let position = 0; position <= this.#pending.length; position += 1) {
+      active -= ends[position] ?? 0;
+      if (active === 0 && componentStart >= 0) {
+        components.push({ end: position, start: componentStart });
+        componentStart = -1;
+      }
+      const starting = starts[position] ?? 0;
+      if (starting > 0) {
+        if (active === 0) componentStart = position;
+        active += starting;
+      }
+    }
+    return components;
+  }
+
+  #pendingSecretPrefixLength(): number {
+    return this.#redactions.reduce((longest, secret) => {
+      if (secret.length - 1 <= longest) return longest;
+      return Math.max(
+        longest,
+        longestProperPrefixAtSuffix(secret, this.#pending),
+      );
+    }, 0);
   }
 }
 
@@ -106,14 +313,21 @@ export class GenericProcessAdapter implements RuntimeAdapter {
   readonly recoveryDrivers: readonly string[] =
     process.platform === "win32" ? [] : [SUPERVISOR_DRIVER];
   readonly #activationEnvironment:
-    ((input: ActivationEnvelope) => ActivationEnvironmentLease) | undefined;
+    | ((
+        input: ActivationEnvelope,
+      ) => ActivationEnvironmentLease | Promise<ActivationEnvironmentLease>)
+    | undefined;
   readonly #args: readonly string[];
+  readonly #beforeStart: (() => Promise<void> | void) | undefined;
   readonly #command: string;
   readonly #completedRunIds: string[] = [];
   readonly #completedRunRetention: number;
   readonly #cwd: string;
   readonly #diagnosticByteLimit: number;
   readonly #env: Readonly<Record<string, string>>;
+  readonly #expectedExecutableIdentity:
+    NonNullable<RuntimeProfileProbeReport["executableIdentity"]> | undefined;
+  readonly #recoveryProvenance: RuntimeRecoveryProvenance | undefined;
   readonly #runs = new Map<string, ProcessRun>();
   readonly #supervisorControlTimeoutMs: number;
   readonly #supervisorDirectory: string;
@@ -160,12 +374,21 @@ export class GenericProcessAdapter implements RuntimeAdapter {
     }
 
     this.#args = [...(options.args ?? [])];
+    this.#beforeStart = options.beforeStart;
     this.#activationEnvironment = options.activationEnvironment;
     this.#command = options.command;
     this.#completedRunRetention = options.completedRunRetention ?? 100;
     this.#cwd = options.cwd;
     this.#diagnosticByteLimit = options.diagnosticByteLimit ?? 262_144;
     this.#env = { ...(options.env ?? {}) };
+    this.#expectedExecutableIdentity =
+      options.expectedExecutableIdentity === undefined
+        ? undefined
+        : structuredClone(options.expectedExecutableIdentity);
+    this.#recoveryProvenance =
+      options.recoveryProvenance === undefined
+        ? undefined
+        : structuredClone(options.recoveryProvenance);
     this.#supervisorControlTimeoutMs = supervisorControlTimeoutMs;
     this.#supervisorDirectory = resolve(
       options.supervisorDirectory ??
@@ -182,6 +405,11 @@ export class GenericProcessAdapter implements RuntimeAdapter {
   }
 
   async probe(): Promise<RuntimeAvailability> {
+    try {
+      await this.#beforeStart?.();
+    } catch (error) {
+      return { available: false, detail: errorMessage(error) };
+    }
     const candidates = this.#commandCandidates();
     for (const candidate of candidates) {
       try {
@@ -202,6 +430,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
     input: ActivationEnvelope,
     lifecycle: RuntimeStartLifecycle,
   ): Promise<RunHandle> {
+    await this.#beforeStart?.();
     if (process.platform !== "win32") {
       return await this.#startSupervised(input, lifecycle);
     }
@@ -221,10 +450,26 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       },
       runId,
     };
-    await lifecycle.registerPrepared(runHandle);
-    const stdout = new BoundedOutput(this.#diagnosticByteLimit);
-    const stderr = new BoundedOutput(this.#diagnosticByteLimit);
-    const environmentLease = this.#activationEnvironment?.(input);
+    const environmentLease = await this.#activationEnvironment?.(input);
+    let stdout: BoundedOutput;
+    let stderr: BoundedOutput;
+    try {
+      stdout = new BoundedOutput(
+        this.#diagnosticByteLimit,
+        environmentLease?.redactions ?? [],
+      );
+      stderr = new BoundedOutput(
+        this.#diagnosticByteLimit,
+        environmentLease?.redactions ?? [],
+      );
+    } catch (error) {
+      try {
+        environmentLease?.release?.();
+      } catch {
+        // Preserve the redaction validation failure.
+      }
+      throw error;
+    }
     let released = false;
     const releaseEnvironment = (): void => {
       if (released) return;
@@ -237,6 +482,12 @@ export class GenericProcessAdapter implements RuntimeAdapter {
         );
       }
     };
+    try {
+      await lifecycle.registerPrepared(runHandle);
+    } catch (error) {
+      releaseEnvironment();
+      throw error;
+    }
 
     let child: ChildProcess;
     try {
@@ -284,6 +535,8 @@ export class GenericProcessAdapter implements RuntimeAdapter {
     child.once("close", (code, signal) => {
       run.exited = true;
       releaseEnvironment();
+      stdout.finish();
+      stderr.finish();
       resolveExit(signal === null ? { code } : { code, signal });
       if (spawned) this.#retainCompletedRun(runId);
     });
@@ -438,9 +691,28 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       ),
       supervisorId,
     };
-    const stdout = new BoundedOutput(this.#diagnosticByteLimit);
-    const stderr = new BoundedOutput(this.#diagnosticByteLimit);
-    const environmentLease = this.#activationEnvironment?.(input);
+    let environmentLease: ActivationEnvironmentLease | undefined;
+    let stdout: BoundedOutput;
+    let stderr: BoundedOutput;
+    try {
+      environmentLease = await this.#activationEnvironment?.(input);
+      stdout = new BoundedOutput(
+        this.#diagnosticByteLimit,
+        environmentLease?.redactions ?? [],
+      );
+      stderr = new BoundedOutput(
+        this.#diagnosticByteLimit,
+        environmentLease?.redactions ?? [],
+      );
+    } catch (error) {
+      try {
+        environmentLease?.release?.();
+      } catch {
+        // Preserve the environment/redaction validation failure.
+      }
+      await rm(runDirectory, { force: true, recursive: true });
+      throw error;
+    }
     let released = false;
     const releaseEnvironment = (): void => {
       if (released) return;
@@ -458,6 +730,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       command: this.#command,
       controlRequestTimeoutMs: this.#supervisorControlTimeoutMs,
       cwd: this.#cwd,
+      expectedExecutableIdentity: this.#expectedExecutableIdentity,
       resultPath: descriptor.resultPath,
       runAttemptId: input.runAttemptId,
       runtimeRunId: runId,
@@ -521,6 +794,8 @@ export class GenericProcessAdapter implements RuntimeAdapter {
     child.once("close", async () => {
       run.exited = true;
       releaseEnvironment();
+      stdout.finish();
+      stderr.finish();
       try {
         resolveExit(await this.#readTerminalResult(descriptor, false));
       } catch (error) {
@@ -533,6 +808,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
     const recoveryDescriptor = {
       driver: SUPERVISOR_DRIVER,
       metadata: { controlToken: descriptor.controlToken },
+      ...this.#recoveryDescriptorProvenance(SUPERVISOR_DRIVER),
       recoveryKey: supervisorId,
     };
     try {
@@ -562,6 +838,25 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       }
       throw error;
     }
+  }
+
+  #recoveryDescriptorProvenance(
+    driver: string,
+  ): Partial<RuntimeRecoveryDescriptor> {
+    if (this.#recoveryProvenance === undefined) return {};
+    const recoveryImplementationVersion =
+      this.#recoveryProvenance.recoveryDriverImplementationVersions[driver];
+    if (recoveryImplementationVersion === undefined) {
+      throw new Error(
+        `missing recovery implementation provenance for driver ${driver}`,
+      );
+    }
+    return {
+      recoveryImplementationVersion,
+      runtimeProfileDigest: this.#recoveryProvenance.runtimeProfileDigest,
+      runtimeProfileRevisionId:
+        this.#recoveryProvenance.runtimeProfileRevisionId,
+    };
   }
 
   async #waitForSupervisorReady(
@@ -859,6 +1154,55 @@ export class GenericProcessAdapter implements RuntimeAdapter {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function isHighSurrogate(codeUnit: number): boolean {
+  return codeUnit >= 0xd800 && codeUnit <= 0xdbff;
+}
+
+function isLowSurrogate(codeUnit: number): boolean {
+  return codeUnit >= 0xdc00 && codeUnit <= 0xdfff;
+}
+
+function longestProperPrefixAtSuffix(pattern: string, value: string): number {
+  if (pattern.length <= 1 || value.length === 0) return 0;
+  const failure = new Uint32Array(pattern.length);
+  let matched = 0;
+  for (let index = 1; index < pattern.length; index += 1) {
+    while (matched > 0 && pattern[index] !== pattern[matched]) {
+      matched = failure[matched - 1] ?? 0;
+    }
+    if (pattern[index] === pattern[matched]) matched += 1;
+    failure[index] = matched;
+  }
+
+  matched = 0;
+  const start = Math.max(0, value.length - (pattern.length - 1));
+  for (let index = start; index < value.length; index += 1) {
+    while (matched > 0 && value[index] !== pattern[matched]) {
+      matched = failure[matched - 1] ?? 0;
+    }
+    if (value[index] === pattern[matched]) matched += 1;
+    if (matched === pattern.length) {
+      matched = failure[matched - 1] ?? 0;
+    }
+  }
+  return matched;
+}
+
+function truncateUtf8(value: string, byteLimit: number): string {
+  const buffer = Buffer.from(value);
+  if (buffer.byteLength <= byteLimit) return value;
+
+  const decoder = new TextDecoder("utf-8", { fatal: true });
+  for (let end = byteLimit; end >= Math.max(0, byteLimit - 3); end -= 1) {
+    try {
+      return decoder.decode(buffer.subarray(0, end));
+    } catch {
+      // Retry without the incomplete UTF-8 code point at the boundary.
+    }
+  }
+  return "";
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

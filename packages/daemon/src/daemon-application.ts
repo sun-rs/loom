@@ -4,15 +4,30 @@ import { join } from "node:path";
 import {
   AgentHost,
   AgentHostDaemon,
+  buildRuntimeOfferFromProfile,
   GenericProcessAdapter,
+  RuntimeCredentialEnvironmentBinding,
+  RuntimeImplementationRegistry,
+  RuntimeProfileRegistry,
   UnixSocketInstanceLock,
+  type RuntimeAdapter,
 } from "@rah-os/agent-host";
 import {
   ClientApplicationService,
   WorkerApplicationService,
 } from "@rah-os/application-service";
-import { KERNEL_SCHEMA_VERSION, RoomKernel } from "@rah-os/kernel";
-import { CLIENT_API_VERSION } from "@rah-os/protocol";
+import {
+  AuthenticatedHostContext,
+  KERNEL_SCHEMA_VERSION,
+  RoomKernel,
+  UnauthenticatedError,
+} from "@rah-os/kernel";
+import {
+  CLIENT_API_VERSION,
+  type RuntimeRecoveryDescriptor,
+  type RuntimeProfileProbeReport,
+  type RuntimeProfileRevision,
+} from "@rah-os/protocol";
 
 import type { DaemonConfig } from "./config.ts";
 import {
@@ -35,6 +50,76 @@ export type DaemonHealthSnapshot = {
   lastError?: string;
   startedAt?: string;
 };
+
+export function createRegistryBackedRuntimeRecovery(input: {
+  cwd: string;
+  implementations: RuntimeImplementationRegistry;
+  registry: RuntimeProfileRegistry;
+  supervisorDirectory: string;
+}): {
+  driverIds: readonly string[];
+  resolve(descriptor: RuntimeRecoveryDescriptor): RuntimeAdapter;
+} {
+  return {
+    driverIds: input.implementations.recoveryDrivers(),
+    resolve: (descriptor) => {
+      if (
+        descriptor.runtimeProfileRevisionId === undefined ||
+        descriptor.runtimeProfileDigest === undefined ||
+        descriptor.recoveryImplementationVersion === undefined
+      ) {
+        throw new Error(
+          "registry-backed runtime recovery descriptor lacks immutable profile provenance",
+        );
+      }
+      const recoveryRevision = input.registry.getRevision(
+        descriptor.runtimeProfileRevisionId,
+      );
+      if (recoveryRevision.contentDigest !== descriptor.runtimeProfileDigest) {
+        throw new Error(
+          `runtime recovery profile digest mismatch: ${descriptor.runtimeProfileRevisionId}`,
+        );
+      }
+      const installedRecoveryVersion =
+        input.implementations.recoveryDriverImplementationVersion(
+          descriptor.driver,
+        );
+      if (
+        installedRecoveryVersion !== descriptor.recoveryImplementationVersion
+      ) {
+        throw new Error(
+          `runtime recovery implementation version mismatch: ${descriptor.driver}`,
+        );
+      }
+      return input.implementations.createRecoveryRuntime(
+        recoveryRevision,
+        descriptor.driver,
+        {
+          cwd: input.cwd,
+          supervisorDirectory: input.supervisorDirectory,
+        },
+      );
+    },
+  };
+}
+
+function assertRuntimeProfileRevisionStillActive(
+  registry: RuntimeProfileRegistry,
+  expectedRevision: RuntimeProfileRevision,
+): void {
+  const current = registry.getActiveRevision(expectedRevision.runtimeProfileId);
+  if (
+    current === null ||
+    current.state !== "active" ||
+    current.runtimeProfileRevisionId !==
+      expectedRevision.runtimeProfileRevisionId ||
+    current.contentDigest !== expectedRevision.contentDigest
+  ) {
+    throw new Error(
+      `RuntimeProfile ${expectedRevision.runtimeProfileId} active revision changed; restart the daemon to select the new revision`,
+    );
+  }
+}
 
 export class DaemonApplication {
   readonly #config: DaemonConfig;
@@ -79,6 +164,7 @@ export class DaemonApplication {
     let kernel: RoomKernel | undefined;
     let clientService: ClientApplicationService | undefined;
     let workerService: WorkerApplicationService | undefined;
+    let runtimeProfileRegistry: RuntimeProfileRegistry | undefined;
     let executionFailure: unknown;
     try {
       await ensureOwnerPrivateDirectory(this.#config.stateDirectory);
@@ -118,45 +204,156 @@ export class DaemonApplication {
       });
       await workerService.start();
       const activeWorkerService = workerService;
-      const runtimeOptions = this.#config.runtime;
-      const runtime = new GenericProcessAdapter({
-        activationEnvironment: (scope) => {
-          const credential = activeWorkerService.issueActivationCredential(
-            host,
-            scope,
+      let runtime: RuntimeAdapter;
+      let runtimeOfferPublisher: RuntimeOfferPublisher | undefined;
+      let runtimeRecoveryDrivers: readonly string[] | undefined;
+      let runtimeRecoveryResolver:
+        ((descriptor: RuntimeRecoveryDescriptor) => RuntimeAdapter) | undefined;
+      if (this.#config.schemaVersion === 2) {
+        const runtimeOptions = this.#config.runtime;
+        runtime = new GenericProcessAdapter({
+          activationEnvironment: (scope) => {
+            const credential = activeWorkerService.issueActivationCredential(
+              host,
+              scope,
+            );
+            return {
+              env: {
+                RAH_WORKER_API_URL: activeWorkerService.origin,
+                RAH_WORKER_TOKEN: credential.accessToken,
+              },
+              redactions: [credential.accessToken],
+              release: credential.revoke,
+            };
+          },
+          args: runtimeOptions.args,
+          command: runtimeOptions.command,
+          cwd: runtimeOptions.cwd,
+          ...(runtimeOptions.diagnosticByteLimit === undefined
+            ? {}
+            : { diagnosticByteLimit: runtimeOptions.diagnosticByteLimit }),
+          env: runtimeOptions.env,
+          ...(runtimeOptions.supervisorControlTimeoutMs === undefined
+            ? {}
+            : {
+                supervisorControlTimeoutMs:
+                  runtimeOptions.supervisorControlTimeoutMs,
+              }),
+          supervisorDirectory: join(this.#config.stateDirectory, "supervisors"),
+          ...(runtimeOptions.supervisorStartupTimeoutMs === undefined
+            ? {}
+            : {
+                supervisorStartupTimeoutMs:
+                  runtimeOptions.supervisorStartupTimeoutMs,
+              }),
+          ...(runtimeOptions.terminationGraceMs === undefined
+            ? {}
+            : { terminationGraceMs: runtimeOptions.terminationGraceMs }),
+        });
+      } else {
+        const runtimeOptions = this.#config.runtime;
+        runtimeProfileRegistry = new RuntimeProfileRegistry({
+          databasePath: runtimeOptions.registryDatabasePath,
+          hostId: host.hostId,
+        });
+        runtimeProfileRegistry.initialize();
+        const activeRevision = runtimeProfileRegistry.getActiveRevision(
+          runtimeOptions.runtimeProfileId,
+        );
+        if (activeRevision === null) {
+          throw new Error(
+            `RuntimeProfile ${runtimeOptions.runtimeProfileId} has no active revision`,
           );
-          return {
-            env: {
-              RAH_WORKER_API_URL: activeWorkerService.origin,
-              RAH_WORKER_TOKEN: credential.accessToken,
-            },
-            release: credential.revoke,
-          };
-        },
-        args: runtimeOptions.args,
-        command: runtimeOptions.command,
-        cwd: runtimeOptions.cwd,
-        ...(runtimeOptions.diagnosticByteLimit === undefined
-          ? {}
-          : { diagnosticByteLimit: runtimeOptions.diagnosticByteLimit }),
-        env: runtimeOptions.env,
-        ...(runtimeOptions.supervisorControlTimeoutMs === undefined
-          ? {}
-          : {
-              supervisorControlTimeoutMs:
-                runtimeOptions.supervisorControlTimeoutMs,
-            }),
-        supervisorDirectory: join(this.#config.stateDirectory, "supervisors"),
-        ...(runtimeOptions.supervisorStartupTimeoutMs === undefined
-          ? {}
-          : {
-              supervisorStartupTimeoutMs:
-                runtimeOptions.supervisorStartupTimeoutMs,
-            }),
-        ...(runtimeOptions.terminationGraceMs === undefined
-          ? {}
-          : { terminationGraceMs: runtimeOptions.terminationGraceMs }),
-      });
+        }
+        const implementations = new RuntimeImplementationRegistry();
+        const probeReport = runtimeProfileRegistry.recordProbeReport(
+          await implementations.probeRevision(activeRevision, {
+            cwd: runtimeOptions.cwd,
+          }),
+        );
+        if (!probeReport.available) {
+          throw new Error(
+            `active RuntimeProfile probe failed: ${probeReport.failureCode ?? "unavailable"}`,
+          );
+        }
+        const credentialEnvironment = new RuntimeCredentialEnvironmentBinding({
+          manifest: activeRevision.manifest,
+          resolvers: Object.fromEntries(
+            Object.entries(runtimeOptions.credentialBindings).map(
+              ([slotId, reference]) => [
+                slotId,
+                async () => await this.#secretProvider.load(reference),
+              ],
+            ),
+          ),
+        });
+        runtime = implementations.createRuntime(activeRevision, probeReport, {
+          activationEnvironment: async (scope) => {
+            const secretLease = await credentialEnvironment.resolve();
+            const credential = activeWorkerService.issueActivationCredential(
+              host,
+              scope,
+            );
+            return {
+              env: {
+                ...secretLease.env,
+                RAH_WORKER_API_URL: activeWorkerService.origin,
+                RAH_WORKER_TOKEN: credential.accessToken,
+              },
+              redactions: [
+                ...(secretLease.redactions ?? []),
+                credential.accessToken,
+              ],
+              release: () => {
+                credential.revoke();
+                secretLease.release?.();
+              },
+            };
+          },
+          beforeStart: () =>
+            assertRuntimeProfileRevisionStillActive(
+              runtimeProfileRegistry!,
+              activeRevision,
+            ),
+          cwd: runtimeOptions.cwd,
+          supervisorDirectory: join(this.#config.stateDirectory, "supervisors"),
+        });
+        const recovery = createRegistryBackedRuntimeRecovery({
+          cwd: runtimeOptions.cwd,
+          implementations,
+          registry: runtimeProfileRegistry,
+          supervisorDirectory: join(this.#config.stateDirectory, "supervisors"),
+        });
+        runtimeRecoveryDrivers = recovery.driverIds;
+        runtimeRecoveryResolver = recovery.resolve;
+        runtimeOfferPublisher = new RuntimeOfferPublisher({
+          host,
+          kernel,
+          leaseMs: runtimeOptions.offer.leaseMs,
+          maxConcurrent: runtimeOptions.offer.maxConcurrent,
+          probeReport,
+          revisionIsActive: () => {
+            try {
+              assertRuntimeProfileRevisionStillActive(
+                runtimeProfileRegistry!,
+                activeRevision,
+              );
+              return true;
+            } catch {
+              return false;
+            }
+          },
+          refreshIntervalMs: runtimeOptions.offer.refreshIntervalMs,
+          refreshProbe: async () =>
+            runtimeProfileRegistry!.recordProbeReport(
+              await implementations.probeRevision(activeRevision, {
+                cwd: runtimeOptions.cwd,
+              }),
+            ),
+          runtimeOfferId: runtimeOptions.offer.runtimeOfferId,
+          runtimeProfileRevision: activeRevision,
+        });
+      }
       const availability = await runtime.probe();
       if (!availability.available) {
         throw new Error(availability.detail ?? "runtime is unavailable");
@@ -185,6 +382,12 @@ export class DaemonApplication {
         runTimeoutMs: this.#config.runTimeoutMs,
         runtime,
         runtimeCancelTimeoutMs: this.#config.runtimeCancelTimeoutMs,
+        ...(runtimeRecoveryDrivers === undefined
+          ? {}
+          : { runtimeRecoveryDrivers }),
+        ...(runtimeRecoveryResolver === undefined
+          ? {}
+          : { runtimeRecoveryResolver }),
         runtimeRecoveryTimeoutMs: this.#config.runtimeRecoveryTimeoutMs,
         runtimeStartTimeoutMs: this.#config.runtimeStartTimeoutMs,
         wait: async (delayMs, signal) => await wakeSignal.wait(delayMs, signal),
@@ -206,6 +409,15 @@ export class DaemonApplication {
           hostId: host.hostId,
         }),
         kernel,
+        ...(runtimeOfferPublisher === undefined
+          ? {}
+          : {
+              lifecycle: {
+                afterOnline: () => runtimeOfferPublisher.publishAvailable(),
+                beforeDraining: () =>
+                  runtimeOfferPublisher.publishUnavailable(),
+              },
+            }),
         metadata: {
           buildVersion: DAEMON_BUILD_VERSION,
           processId: process.pid,
@@ -240,6 +452,12 @@ export class DaemonApplication {
       await runCoupledComponents(input.signal, [
         async (signal) => await daemon.run({ signal }),
         async (signal) => await wakeDispatcher.run({ signal }),
+        ...(runtimeOfferPublisher === undefined
+          ? []
+          : [
+              async (signal: AbortSignal) =>
+                await runtimeOfferPublisher.run(signal),
+            ]),
       ]);
     } catch (error) {
       executionFailure = error;
@@ -260,6 +478,11 @@ export class DaemonApplication {
     }
     try {
       await workerService?.close();
+    } catch (error) {
+      cleanupErrors.push(error);
+    }
+    try {
+      runtimeProfileRegistry?.close();
     } catch (error) {
       cleanupErrors.push(error);
     }
@@ -294,6 +517,121 @@ export class DaemonApplication {
       );
     }
     throw executionFailure ?? cleanupFailure;
+  }
+}
+
+class RuntimeOfferPublisher {
+  readonly #host: AuthenticatedHostContext;
+  readonly #kernel: RoomKernel;
+  readonly #leaseMs: number;
+  readonly #maxConcurrent: number;
+  #probeReport: RuntimeProfileProbeReport;
+  readonly #refreshProbe: () => Promise<RuntimeProfileProbeReport>;
+  readonly #revisionIsActive: () => boolean;
+  readonly #refreshIntervalMs: number;
+  readonly #runtimeOfferId: string;
+  readonly #runtimeExecutableIdentity:
+    RuntimeProfileProbeReport["executableIdentity"] | undefined;
+  readonly #runtimeProfileRevision: RuntimeProfileRevision;
+  #lastObservedAtMs = 0;
+
+  constructor(input: {
+    host: AuthenticatedHostContext;
+    kernel: RoomKernel;
+    leaseMs: number;
+    maxConcurrent: number;
+    probeReport: RuntimeProfileProbeReport;
+    refreshIntervalMs: number;
+    refreshProbe: () => Promise<RuntimeProfileProbeReport>;
+    revisionIsActive: () => boolean;
+    runtimeOfferId: string;
+    runtimeProfileRevision: RuntimeProfileRevision;
+  }) {
+    this.#host = input.host;
+    this.#kernel = input.kernel;
+    this.#leaseMs = input.leaseMs;
+    this.#maxConcurrent = input.maxConcurrent;
+    this.#probeReport = structuredClone(input.probeReport);
+    this.#refreshIntervalMs = input.refreshIntervalMs;
+    this.#refreshProbe = input.refreshProbe;
+    this.#revisionIsActive = input.revisionIsActive;
+    this.#runtimeOfferId = input.runtimeOfferId;
+    this.#runtimeExecutableIdentity = structuredClone(
+      input.probeReport.executableIdentity,
+    );
+    this.#runtimeProfileRevision = structuredClone(
+      input.runtimeProfileRevision,
+    );
+  }
+
+  async run(signal: AbortSignal): Promise<void> {
+    try {
+      while (!signal.aborted) {
+        await waitForAbortOrDelay(this.#refreshIntervalMs, signal);
+        if (signal.aborted) break;
+        this.#probeReport = await this.#refreshProbe();
+        this.#tryPublish(this.#currentOfferState());
+      }
+    } finally {
+      this.publishUnavailable();
+    }
+  }
+
+  publishAvailable(): boolean {
+    return this.#tryPublish(this.#currentOfferState());
+  }
+
+  publishUnavailable(): boolean {
+    return this.#tryPublish("unavailable");
+  }
+
+  #currentOfferState(): "available" | "unavailable" {
+    const current = this.#probeReport.executableIdentity;
+    const expected = this.#runtimeExecutableIdentity;
+    return this.#revisionIsActive() &&
+      this.#probeReport.available &&
+      current !== undefined &&
+      expected !== undefined &&
+      current.requestedExecutable === expected.requestedExecutable &&
+      current.resolvedExecutablePath === expected.resolvedExecutablePath &&
+      current.contentDigest === expected.contentDigest &&
+      current.byteLength === expected.byteLength
+      ? "available"
+      : "unavailable";
+  }
+
+  #tryPublish(state: "available" | "unavailable"): boolean {
+    try {
+      this.#publish(state);
+      return true;
+    } catch (error) {
+      if (
+        error instanceof UnauthenticatedError &&
+        error.message === "Host daemon instance is not active"
+      ) {
+        return false;
+      }
+      throw error;
+    }
+  }
+
+  #publish(state: "available" | "unavailable"): void {
+    const observedAtMs = Math.max(Date.now(), this.#lastObservedAtMs + 1);
+    this.#lastObservedAtMs = observedAtMs;
+    this.#kernel.publishRuntimeOffer(
+      this.#host,
+      buildRuntimeOfferFromProfile({
+        hostId: this.#host.hostId,
+        hostInstanceId: this.#host.instanceId,
+        leaseUntil: new Date(observedAtMs + this.#leaseMs).toISOString(),
+        maxConcurrent: this.#maxConcurrent,
+        observedAt: new Date(observedAtMs).toISOString(),
+        probeReport: this.#probeReport,
+        runtimeOfferId: this.#runtimeOfferId,
+        runtimeProfileRevision: this.#runtimeProfileRevision,
+        state,
+      }),
+    );
   }
 }
 
@@ -347,4 +685,21 @@ async function runCoupledComponents(
   if (!externalSignal.aborted) {
     throw new Error("daemon component stopped before shutdown was requested");
   }
+}
+
+async function waitForAbortOrDelay(
+  delayMs: number,
+  signal: AbortSignal,
+): Promise<void> {
+  if (signal.aborted) return;
+  await new Promise<void>((resolvePromise) => {
+    const timer = setTimeout(finish, delayMs);
+    const onAbort = () => finish();
+    function finish(): void {
+      clearTimeout(timer);
+      signal.removeEventListener("abort", onAbort);
+      resolvePromise();
+    }
+    signal.addEventListener("abort", onAbort, { once: true });
+  });
 }

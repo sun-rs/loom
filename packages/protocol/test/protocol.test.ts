@@ -243,14 +243,27 @@ test("Runtime recovery descriptors are opaque protocol data", () => {
   const descriptor = RuntimeRecoveryDescriptorSchema.parse({
     driver: "fake-runtime",
     metadata: { processGroupId: 42 },
+    recoveryImplementationVersion: "fake-runtime/v1",
     recoveryKey: "fake-run-1",
+    runtimeProfileDigest:
+      "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    runtimeProfileRevisionId: "runtime-profile-revision-1",
   });
   assert.equal(descriptor.driver, "fake-runtime");
   assert.equal(descriptor.metadata.processGroupId, 42);
+  assert.equal(descriptor.recoveryImplementationVersion, "fake-runtime/v1");
   assert.throws(() =>
     RuntimeRecoveryDescriptorSchema.parse({
       ...descriptor,
       transcript: "must not enter process recovery metadata",
+    }),
+  );
+  assert.throws(() =>
+    RuntimeRecoveryDescriptorSchema.parse({
+      driver: "fake-runtime",
+      metadata: {},
+      recoveryKey: "fake-run-with-partial-provenance",
+      runtimeProfileRevisionId: "runtime-profile-revision-1",
     }),
   );
 });

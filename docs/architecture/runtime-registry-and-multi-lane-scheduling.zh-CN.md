@@ -1,6 +1,6 @@
 # Runtime Registry 与多 Lane 调度架构
 
-状态：**Accepted in stages / R0 implemented / R1–R1.1 provisional**（2026-08-26 独立审计整改后）。严格 protocol schemas 与 pure placement planner 已实现；Kernel schema v5、control Room 配置修订、content-addressed startup certification、append-only Offer observation、durable Placement/candidate evidence 和 RunAttempt provenance 已通过本机运行安全门禁。admin-owned capacity、immutable probe report 与 durable PlacementHold 尚未完成。Host registry、MultiLaneAgentHost 和 daemon config v3 仍是 design-only。当前 daemon 仍是一个 config 对应一个 Agent participant 与一个 Generic process profile；没有通过后续门禁前，不得宣称 daemon 已具备多 Agent 动态路由。
+状态：**Accepted in stages / R0 implemented / R1–R1.1 provisional / narrow R2a–R2b implemented**（2026-08-26）。严格 protocol schemas、pure placement planner、Kernel schema v5、control Room 配置修订、trusted immutable Offer evidence、durable Placement/RunAttempt provenance，以及 Host-local immutable Runtime Profile/Probe Registry、spawn-time secret binding 与 daemon config v3 redacted Offer publisher 已通过本机门禁。admin-owned capacity、durable PlacementHold、canonical workspace mount、model execution binding、atomic multi-lane claim 与 MultiLaneAgentHost 尚未完成。当前 daemon v3 仍只驱动一个 Agent participant 和一个 active Generic process profile；发布 Offer 不等于已经具备多 Agent 动态路由。
 
 ## 1. 要解决的问题
 
@@ -138,12 +138,14 @@ type RuntimeProfileRevision = {
 
 - 始终是 executable + argv，`shell: false`；禁止 pipe、redirect、`&&`、命令替换和任意 shell string；
 - daemon-owned Worker identity/env 字段不能由 profile 覆盖；
-- secret value 不进入 manifest、digest、Kernel、Room event 或 diagnostics；revision 只引用 SecretProvider slot；
+- built-in credential slot 与 Worker bearer 的 value 不进入 manifest、digest、Kernel 或 Room event，并进入 diagnostics 的流式 redaction set；owner-controlled manifest 若故意把 secret 伪装成普通 `staticEnv`，不在这一保证内；
 - `cwd` 不再等同 profile 的固定项目目录；由 `WorkspaceDefinition + WorkspaceMountRevision + PlacementDecision` 解析。必须支持固定目录的 wrapper 时，将其建模为 exclusive workspace resource；
 - revision 被 RunAttempt、RuntimeProcess 或未终止 recovery descriptor 引用时不可物理删除，只能 deprecate/tombstone；
 - 新 revision 只有在本机验证并由 human/admin 激活后才成为 future offer。文件改变不能静默改变 active Run 的 argv。
 
 Registry 使用 owner-private 独立持久库，例如 `runtime-registry.db`；它不是 Room Kernel 的第二套业务数据库。Kernel 只接收 redacted descriptor 与 digest，不接收本地路径、secret ref 细节或 env value。
+
+窄 R2a 已实现 `RuntimeProfileManifestV1`。R2b 增加 `RuntimeProfileManifestV2` 与 registry schema v2 migration：v2 在同一严格 executable/argv 基线上增加非敏感 `staticEnv` 与只命名 target、不含 value 的 credential slot。daemon-owned authority env、常见 credential-bearing argv/static-env 名称、未知字段、非 owner-private database/manifest、Host identity mismatch 和更新版本 schema 均 fail closed。`staticEnv` 的名称过滤只能阻止显式常见 credential 误配；恶意把 secret 标成普通变量仍属于 owner-controlled manifest 信任边界，不能宣称有通用 secret 分类器。manifest path 与 secret reference/value 不进入 revision、probe 或 audit。
 
 ### 5.2 Protocol family，而不是每 CLI 一套 parser
 
@@ -457,30 +459,30 @@ MultiLaneAgentHost
 - typed ACP/provider error 可以进入 observation/failure taxonomy；未知 stdout 仍是 diagnostics，不能自动切模型或完成 Task；
 - 跨 offer fallback 只发生在旧 runtime 已有 terminal proof、Task canonical state 允许重试且 policy 明确允许时；每次 fallback 创建新 Placement/RunAttempt。
 
-## 14. Daemon config v3 目标
+## 14. Daemon config v3 现状与 v4 目标
 
-单一 `runtime` 节点将被 registry bootstrap 取代：
+当前已实现的 config v3 是窄 single-profile bootstrap，只选择一个 stable profile，不内联 command/env：
 
 ```json
 {
   "schemaVersion": 3,
-  "host": {
-    "hostId": "macbook-host",
-    "credential": { "source": "file", "path": "/owner/private/host.token" }
-  },
-  "client": { "bindHost": "127.0.0.1", "port": 7777 },
-  "runtimeRegistry": {
-    "databasePath": "/owner/private/runtime-registry.db",
-    "manifestPaths": [
-      "/owner/private/runtime-profiles/codex.json",
-      "/owner/private/runtime-profiles/claude.json"
-    ],
-    "hostMaxConcurrent": 4
+  "runtime": {
+    "kind": "runtime-profile-registry",
+    "registryDatabasePath": "/owner/private/runtime-registry.db",
+    "runtimeProfileId": "codex-main",
+    "cwd": "/owner/private/workspace",
+    "credentialBindings": {},
+    "offer": {
+      "runtimeOfferId": "offer-codex-main",
+      "maxConcurrent": 1,
+      "leaseMs": 120000,
+      "refreshIntervalMs": 30000
+    }
   }
 }
 ```
 
-manifest import 必须 canonicalize → validate → digest → create immutable revision；修改文件不会原地覆盖旧 revision。v2 单 runtime 配置应由显式 migration command 导入成一个 profile revision 和一个 pinned policy；不做无法审计的隐式猜测。
+R5 的 multi-profile/multi-participant daemon composition 将使用新的 config v4；不得复用 `schemaVersion: 3` 描述另一种 shape。manifest import 必须 canonicalize → validate → digest → create immutable revision；修改文件不会原地覆盖旧 revision。v2 单 runtime 配置应由显式 migration command 导入成一个 profile revision 和一个 pinned policy；不做无法审计的隐式猜测。
 
 ## 15. 外部项目经验：采用与拒绝
 
@@ -522,15 +524,37 @@ manifest import 必须 canonicalize → validate → digest → create immutable
 
 门禁：revision v2 激活后，已运行 Run 仍引用 v1；Host 在 placement 后、RunAttempt 前崩溃可安全释放并重新 placement；两个并发 schedule tick 只能 reserve 一次，Host 轮询顺序不能决定归属。
 
-实现证据：Kernel 测试覆盖 v3→v5 nullable provenance 与真实 buggy-v4 FK repair、v4 mutable Offer fail-closed/republish、control Room idempotency、跨 Kernel connection single reservation、content-free `placement.ready`、pre-Run/pre-prepare/post-finish/terminal-proof-before-finish/terminal-proof-before-resolve crash recovery、active RuntimeProcess terminal-proof quarantine、旧库 terminal RunAttempt 与 nonterminal RuntimeProcess 冲突时的 retry/lease fail-closed、旧 Kernel 已错误 queued/released/删除 reservation 后的 startup reconciliation 与隐式资源 fencing、Host/direct/recovery generation fencing、Offer 单调更新/future skew/max TTL、content-addressed certification、certified model rejection、future-only catalog removal、immutable observation/candidate digest、retry resource release、Run 终态容量释放、revision provenance，以及无 Placement 的旧单 runtime RunAttempt。startup、schedule 和 legacy lease 都会按 RuntimeProcess 对账：nonterminal process 从其历史 Placement 反向重建 participant、Host、Offer、Profile、Pool 与 in-place Workspace 占用；terminal record 可自动结算未完成的 Run bookkeeping，并幂等解除全部 process 已 terminal 的 quarantine。所有 Placement 资源释放再核验关联 RuntimeProcess 已有 terminal proof。R1 使用 Host/profile/pool cap=`1` 的保守 compatibility 默认；admin capacity、immutable probe report 和动态 certification lifecycle 仍属后续门禁。R4 建立 canonical workspace mapping 前，仅当 fresh offers 暴露唯一一致的 WorkspaceDefinition 时才调度，多 workspace 输入 fail closed，绝不按路径或字符串猜测。详细边界见[独立审计与整改](../audits/2026-08-26-runtime-placement-independent-audit.zh-CN.md)。
+实现证据：Kernel 测试覆盖 v3→v5 nullable provenance 与真实 buggy-v4 FK repair、v4 mutable Offer fail-closed/republish、control Room idempotency、跨 Kernel connection single reservation、content-free `placement.ready`、pre-Run/pre-prepare/post-finish/terminal-proof-before-finish/terminal-proof-before-resolve crash recovery、active RuntimeProcess terminal-proof quarantine、旧库 terminal RunAttempt 与 nonterminal RuntimeProcess 冲突时的 retry/lease fail-closed、旧 Kernel 已错误 queued/released/删除 reservation 后的 startup reconciliation 与隐式资源 fencing、Host/direct/recovery generation fencing、Offer 单调更新/future skew/max TTL、content-addressed certification、certified model rejection、future-only catalog removal、immutable observation/candidate digest、retry resource release、Run 终态容量释放、revision provenance，以及无 Placement 的旧单 runtime RunAttempt。startup、schedule 和 legacy lease 都会按 RuntimeProcess 对账：nonterminal process 从其历史 Placement 反向重建 participant、Host、Offer、Profile、Pool 与 in-place Workspace 占用；terminal record 可自动结算未完成的 Run bookkeeping，并幂等解除全部 process 已 terminal 的 quarantine。所有 Placement 资源释放再核验关联 RuntimeProcess 已有 terminal proof。R1 使用 Host/profile/pool cap=`1` 的保守 compatibility 默认；admin capacity 和动态 certification lifecycle 仍属后续门禁。R4 建立 canonical workspace mapping 前，仅当 fresh offers 暴露唯一一致的 WorkspaceDefinition 时才调度，多 workspace 输入 fail closed，绝不按路径或字符串猜测。详细边界见[独立审计与整改](../audits/2026-08-26-runtime-placement-independent-audit.zh-CN.md)。
 
-### R2：Host-local immutable registry
+### R2a：Host-local immutable registry
 
-- owner-private registry、manifest import/digest、active/deprecate、probe evidence；
-- adapter factory/recovery driver registry；
-- secret slot 与 public descriptor 分离。
+状态：**已实现窄范围**。
 
-门禁：修改 manifest 创建新 revision而非改写旧行；错误 digest、缺 executable、未知 adapter config、secret value 泄漏均被拒绝。
+- registry database 与 manifest file 必须是当前用户所有、owner-private regular file，registry metadata 永久绑定一个 Host ID；
+- strict `RuntimeProfileManifestV1`、`rah/runtime-profile-manifest/v1` domain-separated canonical digest；
+- import object/file 幂等，同一 normalized content 复用 revision，语义变化创建新 revision且不隐式 activate；
+- lifecycle projection 显式 activate/deprecate，旧 active revision 变 inactive 而非删除；
+- SQLite trigger 阻止 revision content update/delete 和 audit update/delete；所有读取重算 manifest digest；
+- file path、env、credential value、secret slot、probe result 不进入 revision/audit。
+
+当前 `import/activate/deprecate` 是 `agent-host` 包内的本机 API，其管理权限仅由当前 OS 用户与 owner-private 文件边界提供；它还不是 Kernel control Room 中经过 Human/Admin 认证、带 actor provenance 的管理命令。后者必须在 daemon integration 阶段单独建模，不能把当前本地调用误称为已完成的远程管理面。
+
+门禁证据：set-like 字段乱序 digest 相同、argv 顺序变化 digest 不同且有固定 golden；双 registry connection import 只产生一条 revision/audit；重启保留 lifecycle；错误 digest、deprecated reactivation、public/symlink storage、Host mismatch 与 newer schema 均拒绝。
+
+### R2b：Adapter、probe 与 secret late binding
+
+状态：**已实现窄范围**。
+
+- 内建 `generic-process/v1` adapter 与 `rah-process-supervisor-v1` recovery driver 通过严格、版本化 map 解析；未知 kind/driver fail closed。registry-backed config v3 创建的 durable recovery descriptor 冻结 profile revision/digest 与 recovery implementation version，compatibility AgentHost 按 descriptor 加载旧 inactive/deprecated revision，而不是按当前 active profile 恢复；config v2 的 legacy descriptor 仍允许无 provenance，不能在存在 nonterminal v2 RuntimeProcess 时直接切换到 v3；
+- 只有 `RuntimeImplementationRegistry` 实际执行后签发的进程内 observation 才能写入 immutable ProbeReport；普通结构相同对象不能伪造。report 绑定 profile revision/digest、adapter implementation version、executable requested/resolved identity、内容 digest/size和 recovery implementation version；
+- v2 activation 只接受该 revision 最新且成功的 probe；较新的失败 probe 会 fence 激活，历史成功不能覆盖当前失败。runtime 创建时重算 manifest digest；AgentHost start 前和 supervisor 真正 launch target 前分别核验 executable realpath/content/size/execute bit。该双重检查关闭可确定的 credential-load 间隙，但同一 OS 用户恶意写入下仍存在最终 check→`exec` 的极窄竞态；更强保证需要 fd/inode/code-signature 等平台 primitive；
+- credential slot binding 在构造时验证 exact own-property slot set，value 只在每次 spawn 前经 `SecretProvider` 解析，且 secret/file 有 64 KiB 上限。FileSecretProvider 最多读取 65,537 bytes 后拒绝，不依赖可竞态的 stat size 作为内存边界。Provider secret 与 Worker bearer 加入 Generic diagnostics 的流式多模式 redactor；redactor分段扫描、只保留 `maxSecretLength-1` 的未决后缀（提交边界遇到 surrogate pair 时额外后退一个 code unit），把所有完整匹配与相交、链式重叠匹配合并为脱敏区间，EOF 时再把仍可能成为 secret 的 partial suffix 合并进去，最后才执行 UTF-8 byte truncation。匹配事件以窗口长度固定的 typed arrays 计数，不为每个 occurrence 分配对象；EOF suffix-prefix 对每个 pattern 使用 prefix-function/KMP 线性判定，不执行逐长度切片比较。临时空间不随 overlap occurrence 数量相乘，near-match CPU 也不再平方退化；未进入 redaction set 的任意输出不受此保证；
+- daemon config v3 只选择 registry database + stable profile ID + local cwd/credential refs。启动时重新 probe active revision，随后从同一 frozen revision 建 adapter；每次 AgentHost probe/start 和 Offer refresh 都重新读取 active pointer/state/digest。revision 被切换或废弃后，旧 daemon 发布 `unavailable`；常规时序在 createRunAttempt 前由 probe 拒绝。若 pointer 恰在 probe 与 createRunAttempt 间改变，start fence 仍保证不读取 credential、不 prepare/launch process，但会留下一个显式 failed RunAttempt；重新选择新 revision 需要重启 daemon；
+- Offer publisher 绑定 authenticated Host generation，每个 refresh interval 重新执行并持久化 probe；executable path/content/size 与 daemon 启动时 identity 任一不一致即发布 `unavailable`，不会无限续租旧成功 probe。drain 前也先发布 `unavailable`。public Offer 只携带 profile/revision digest 与 `probeReportId + probeDigest`，不携带 executable path、slot、secret ref/value 或 static env；manifest 的声明能力仍标成 `declared`，不会因 executable probe 自动升级成 `probed`。
+
+门禁证据：以真实 v1 DDL/trigger/fixture 建库后的 v1→v2 数据迁移与 FK 完整性、不可伪造/不可更新/不可删除 probe、caller-mutated revision 拒绝、start 前 replacement 拒绝且不读取 credential/prepare run、credential-load 间隙 replacement 被 supervisor 拒绝且未执行并可由 direct reap/旧 descriptor recovery 验证 `RAH_START_FAILED` terminal proof、unknown recovery、latest-failure activation fence、secret 延迟/有界读取、缺失/多余/prototype slot、单次、重复长 secret、正向/反向/链式/32-pattern dense overlap secret 跨 chunk、Unicode code point 拆包/普通 Unicode safe boundary、EOF partial overlap 与 64-pattern/64-KiB near-match 线性资源门禁的流式截断前脱敏、旧 revision recovery routing，以及 daemon v3 在无 Activation 时不读 Provider secret、收到 Activation 后才读取、确定性 active-revision 切换 fixture 中旧 lane 未创建 RunAttempt且 Offer 变 `unavailable`、Kernel Offer JSON 不含本地路径/secret、删除 executable 后 live Offer 变 `unavailable`、shutdown head 为 `unavailable`。
+
+边界：config v3 当前仍复用 single-participant compatibility `AgentHost`，Offer 没有 canonical workspace mount、model binding 或 admin CapacityPool，也没有被 placement-managed atomic launch claim 消费。因此 R2b 完成不代表 multi-lane 或生产调度闭环完成。
 
 ### R3：MultiLaneAgentHost + fake runtimes
 
@@ -546,7 +570,7 @@ manifest import 必须 canonicalize → validate → digest → create immutable
 
 门禁：不兼容 session 不被 resume；`reasoning=high` 无 mapping 时 hold 而不是拼未知参数；同一目录不会被两个 in-place Run 同时修改。
 
-### R5：Daemon config v3 与 mixed fake CLI E2
+### R5：Daemon config v4 与 mixed fake CLI E2
 
 - v2 explicit migration；多 participant Host scope；多个 profile/offer；
 - Codex/Kimi/OpenCode/Claude fake wrapper 同 Room 并行工作；pass/fail 只读 Kernel。
