@@ -1,6 +1,6 @@
 # Runtime Registry 与多 Lane 调度架构
 
-状态：**Accepted in stages / R0–R3 fake Core path implemented / R1–R1.1 still provisional / narrow R2a–R2b implemented**（2026-08-26）。严格 protocol schemas、pure placement planner、Kernel schema v5、control Room 配置修订、trusted immutable Offer evidence、durable Placement/RunAttempt provenance、atomic placement launch claim、可信启动期 capacity policy、MultiLaneAgentHost，以及 Host-local immutable Runtime Profile/Probe Registry、spawn-time secret binding 与 daemon config v3 redacted Offer publisher已通过本机门禁。durable PlacementHold、control-Room CapacityPool、canonical workspace mount、model execution binding与可执行 daemon 多 participant 配置尚未完成。当前 daemon v3 仍只驱动一个 Agent participant 和一个 active Generic process profile；发布 Offer 不等于已经具备多 Agent 动态路由。
+状态：**Accepted in stages / R0–R3 fake Core path implemented / R1–R1.1 still provisional / narrow R2a–R2b implemented**（2026-08-26）。严格 protocol schemas、pure placement planner、最初在 schema v5 建立且由当前 Kernel schema v6 保留的 Placement projections、control Room 配置修订、trusted immutable Offer evidence、durable Placement/RunAttempt provenance、atomic placement launch claim、可信启动期 capacity policy、MultiLaneAgentHost，以及 Host-local immutable Runtime Profile/Probe Registry、spawn-time secret binding 与 daemon config v3 redacted Offer publisher已通过本机门禁。durable PlacementHold、control-Room CapacityPool、canonical workspace mount、model execution binding与可执行 daemon 多 participant 配置尚未完成。当前 daemon v3 仍只驱动一个 Agent participant 和一个 active Generic process profile；发布 Offer 不等于已经具备多 Agent 动态路由。
 
 ## 1. 要解决的问题
 
@@ -518,7 +518,7 @@ R5 的 multi-profile/multi-participant daemon composition 将使用新的 config
 
 状态：**provisional / R1.1 本机证据子集 + R3 fake launch 已实现**。Kernel scheduler/atomic launch 已接入 `MultiLaneAgentHost` fake Core path，但尚未接入当前单 lane daemon；旧 `leaseNextActivation` 路径继续作为 compatibility path。Host 自写 certified capability/isolation/model binding 已被可信 catalog 门禁拒绝；每个新 Placement 冻结不可变 Offer observation 与所有 candidate snapshot digest。启动期 capacity policy 仍不是 durable control-Room CapacityPool，`probed`、hold 与 canonical workspace/model execution 也尚未达到生产多 lane 证据。
 
-- Kernel schema v5 增加 AgentDefinition/Policy/Offer observation/Placement；Agent/policy mutation 通过 control Room 事件记账；
+- Kernel schema v5 增加 AgentDefinition/Policy/Offer observation/Placement（当前全库 schema v6 继续保留）；Agent/policy mutation 通过 control Room 事件记账；
 - RunAttempt 冻结 provenance；
 - 现有单 profile fixture 通过 compatibility adapter 保持行为。
 

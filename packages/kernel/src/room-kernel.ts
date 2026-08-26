@@ -98,7 +98,7 @@ import type {
 const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 5;
+export const KERNEL_SCHEMA_VERSION = 6;
 
 export function computeRuntimeCertificationDigest(
   certification: Omit<RuntimeCertification, "certificationDigest">,
@@ -287,6 +287,67 @@ export class RoomKernel {
           ) STRICT;
           INSERT INTO tasks SELECT * FROM tasks_before_waiting_input;
           DROP TABLE tasks_before_waiting_input;
+          COMMIT;
+        `);
+      } catch (error) {
+        if (this.#database.isTransaction) this.#database.exec("ROLLBACK");
+        throw error;
+      } finally {
+        this.#database.exec("PRAGMA foreign_keys = ON");
+      }
+    }
+    const taskColumns = this.#database
+      .prepare("PRAGMA table_info(tasks)")
+      .all();
+    const assigneeColumn = taskColumns.find(
+      (row) => text(row, "name") === "assignee_id",
+    );
+    if (
+      taskColumns.length > 0 &&
+      (assigneeColumn === undefined ||
+        integer(assigneeColumn, "notnull") === 1 ||
+        !taskColumns.some((row) => text(row, "name") === "blocked_reason"))
+    ) {
+      this.#database.exec("PRAGMA foreign_keys = OFF");
+      try {
+        this.#database.exec(`
+          BEGIN IMMEDIATE;
+          CREATE TABLE tasks_coordination_v1 (
+            task_id TEXT PRIMARY KEY,
+            room_id TEXT NOT NULL REFERENCES rooms(room_id),
+            creator_id TEXT NOT NULL REFERENCES principals(principal_id),
+            assignee_id TEXT REFERENCES principals(principal_id),
+            title TEXT NOT NULL,
+            description TEXT,
+            state TEXT NOT NULL CHECK (state IN ('todo', 'claimed', 'in_progress', 'waiting_input', 'blocked', 'submitted', 'completed', 'cancelled')),
+            claimed_by TEXT REFERENCES principals(principal_id),
+            claim_until TEXT,
+            claim_until_ms INTEGER,
+            last_progress TEXT,
+            submission_summary TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            submitted_at TEXT,
+            completed_at TEXT,
+            blocked_reason TEXT,
+            blocked_at TEXT,
+            cancellation_reason TEXT,
+            cancelled_at TEXT
+          ) STRICT;
+          INSERT INTO tasks_coordination_v1(
+            task_id, room_id, creator_id, assignee_id, title, description,
+            state, claimed_by, claim_until, claim_until_ms, last_progress,
+            submission_summary, created_at, updated_at, submitted_at,
+            completed_at
+          )
+          SELECT
+            task_id, room_id, creator_id, assignee_id, title, description,
+            state, claimed_by, claim_until, claim_until_ms, last_progress,
+            submission_summary, created_at, updated_at, submitted_at,
+            completed_at
+          FROM tasks;
+          DROP TABLE tasks;
+          ALTER TABLE tasks_coordination_v1 RENAME TO tasks;
           COMMIT;
         `);
       } catch (error) {
@@ -799,8 +860,9 @@ export class RoomKernel {
   createTask(
     actor: AuthenticatedActorContext,
     input: {
-      assigneeId: string;
+      assigneeId?: string;
       basedOnRoomSeq?: number;
+      dependencyTaskIds?: string[];
       description?: string;
       idempotencyKey: string;
       roomId: string;
@@ -810,13 +872,28 @@ export class RoomKernel {
     return this.#transaction(() => {
       const actorId = this.#requireAuthenticatedActor(actor);
       this.#requireMember(input.roomId, actorId);
-      this.#requireMember(input.roomId, input.assigneeId);
-      const assignee = this.#principalFromRow(
-        this.#requirePrincipal(input.assigneeId),
-      );
-      if (assignee.kind !== "agent") {
-        throw new ForbiddenError("Task assignee must be an Agent principal");
+      if (input.assigneeId !== undefined) {
+        this.#requireMember(input.roomId, input.assigneeId);
+        const assignee = this.#principalFromRow(
+          this.#requirePrincipal(input.assigneeId),
+        );
+        if (assignee.kind !== "agent") {
+          throw new ForbiddenError("Task assignee must be an Agent principal");
+        }
       }
+      const dependencyTaskIds = [...(input.dependencyTaskIds ?? [])].sort();
+      if (new Set(dependencyTaskIds).size !== dependencyTaskIds.length) {
+        throw new ConflictError("Task dependencies must be unique");
+      }
+      const dependencies = dependencyTaskIds.map((dependencyTaskId) => {
+        const dependency = this.#requireTaskRow(dependencyTaskId);
+        if (text(dependency, "room_id") !== input.roomId) {
+          throw new ForbiddenError(
+            `Task dependency ${dependencyTaskId} is outside Room ${input.roomId}`,
+          );
+        }
+        return dependency;
+      });
       const title = input.title.trim();
       if (title.length === 0) throw new Error("task title is required");
       const description = input.description?.trim();
@@ -839,6 +916,7 @@ export class RoomKernel {
             assigneeId: input.assigneeId,
             basedOnRoomSeq: input.basedOnRoomSeq,
             creatorId: actorId,
+            dependencyTaskIds,
             description,
             title,
           },
@@ -862,20 +940,29 @@ export class RoomKernel {
           taskId,
           input.roomId,
           actorId,
-          input.assigneeId,
+          input.assigneeId ?? null,
           title,
           description ?? null,
           createdAt,
           createdAt,
         );
+      const insertDependency = this.#database.prepare(
+        "INSERT INTO task_dependencies(task_id, dependency_task_id, created_at) VALUES(?, ?, ?)",
+      );
+      for (const dependencyTaskId of dependencyTaskIds) {
+        insertDependency.run(taskId, dependencyTaskId, createdAt);
+      }
       const event = this.#appendEvent({
         actorId,
         aggregateId: taskId,
         aggregateType: "task",
         idempotencyKey: input.idempotencyKey,
         payload: {
-          assigneeId: input.assigneeId,
+          ...(input.assigneeId === undefined
+            ? {}
+            : { assigneeId: input.assigneeId }),
           creatorId: actorId,
+          dependencyTaskIds,
           ...(description === undefined ? {} : { description }),
           taskId,
           title,
@@ -886,16 +973,32 @@ export class RoomKernel {
         roomId: input.roomId,
         type: "task.created",
       });
-      const activationIds = this.#deriveAttention(
-        event,
-        [
-          {
-            participantId: input.assigneeId,
-            reason: "task_assigned",
-          },
-        ],
-        createdAt,
+      const isReady = dependencies.every(
+        (dependency) => text(dependency, "state") === "completed",
       );
+      const recipients: MessageRecipient[] = !isReady
+        ? []
+        : input.assigneeId === undefined
+          ? this.#database
+              .prepare(
+                `SELECT principals.principal_id
+                   FROM memberships
+                   JOIN principals ON principals.principal_id = memberships.principal_id
+                   WHERE memberships.room_id = ? AND principals.kind = 'agent'
+                   ORDER BY principals.principal_id`,
+              )
+              .all(input.roomId)
+              .map((row) => ({
+                participantId: text(row, "principal_id"),
+                reason: "task_available" as const,
+              }))
+          : [
+              {
+                participantId: input.assigneeId,
+                reason: "task_assigned",
+              },
+            ];
+      const activationIds = this.#deriveAttention(event, recipients, createdAt);
       return {
         activationIds,
         deduplicated: false,
@@ -1021,6 +1124,32 @@ export class RoomKernel {
       });
       if (replay !== null) return replay;
       this.#assertPositiveTaskLease(input.leaseMs);
+      const existingAssignee = nullableText(taskRow, "assignee_id");
+      if (
+        existingAssignee !== null &&
+        existingAssignee !== scope.participantId
+      ) {
+        throw new LeaseConflictError(
+          `Task ${input.taskId} is owned by another Agent`,
+        );
+      }
+      const incompleteDependency = this.#database
+        .prepare(
+          `SELECT task_dependencies.dependency_task_id
+           FROM task_dependencies
+           JOIN tasks AS dependency
+             ON dependency.task_id = task_dependencies.dependency_task_id
+           WHERE task_dependencies.task_id = ?
+             AND dependency.state <> 'completed'
+           ORDER BY task_dependencies.dependency_task_id
+           LIMIT 1`,
+        )
+        .get(input.taskId);
+      if (incompleteDependency !== undefined) {
+        throw new ConflictError(
+          `Task ${input.taskId} is waiting for dependency ${text(incompleteDependency, "dependency_task_id")}`,
+        );
+      }
       this.#assertWorkerTaskFreshContext(
         scope,
         input.basedOnRoomSeq,
@@ -1053,9 +1182,10 @@ export class RoomKernel {
       const claimUntil = new Date(now.getTime() + input.leaseMs).toISOString();
       this.#database
         .prepare(
-          "UPDATE tasks SET state = 'claimed', claimed_by = ?, claim_until = ?, claim_until_ms = ?, updated_at = ? WHERE task_id = ?",
+          "UPDATE tasks SET state = 'claimed', assignee_id = ?, claimed_by = ?, claim_until = ?, claim_until_ms = ?, updated_at = ? WHERE task_id = ?",
         )
         .run(
+          scope.participantId,
           scope.participantId,
           claimUntil,
           now.getTime() + input.leaseMs,
@@ -1119,6 +1249,130 @@ export class RoomKernel {
       extraPayload: { progress },
       lastProgress: progress,
       nextState: "in_progress",
+    });
+  }
+
+  releaseTask(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: {
+      basedOnRoomSeq: number;
+      idempotencyKey: string;
+      taskId: string;
+    },
+  ): TaskCreateMutationResult {
+    return this.#transaction(() => {
+      const scope = this.#requireAuthenticatedWorkerExecution(execution);
+      const taskRow = this.#requireWorkerTask(scope, input.taskId);
+      const replay = this.#replayWorkerTaskCommand(taskRow, scope, {
+        eventType: "task.released",
+        idempotencyKey: input.idempotencyKey,
+      });
+      if (replay !== null) return { ...replay, activationIds: [] };
+      this.#assertWorkerTaskFreshContext(
+        scope,
+        input.basedOnRoomSeq,
+        input.taskId,
+      );
+      const previousState = text(taskRow, "state");
+      if (previousState !== "claimed" && previousState !== "in_progress") {
+        throw new ConflictError(
+          `Task ${input.taskId} cannot be released from state ${previousState}`,
+        );
+      }
+      this.#requireOwnedTaskClaim(taskRow, scope.participantId, previousState);
+
+      const releasedAt = this.#timestamp();
+      this.#database
+        .prepare(
+          "UPDATE tasks SET state = 'todo', assignee_id = NULL, claimed_by = NULL, claim_until = NULL, claim_until_ms = NULL, updated_at = ? WHERE task_id = ?",
+        )
+        .run(releasedAt, input.taskId);
+      const event = this.#appendWorkerTaskEvent(scope, {
+        basedOnRoomSeq: input.basedOnRoomSeq,
+        eventType: "task.released",
+        idempotencyKey: input.idempotencyKey,
+        payload: {
+          previousAssigneeId: scope.participantId,
+          previousState,
+          releasedAt,
+        },
+        taskId: input.taskId,
+      });
+      const recipients = this.#roomAgentRecipients(
+        scope.roomId,
+        "task_available",
+        scope.participantId,
+      );
+      const activationIds = this.#deriveAttention(
+        event,
+        recipients,
+        releasedAt,
+      );
+      return {
+        activationIds,
+        deduplicated: false,
+        event,
+        task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
+      };
+    });
+  }
+
+  blockTask(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: {
+      basedOnRoomSeq: number;
+      idempotencyKey: string;
+      reason: string;
+      taskId: string;
+    },
+  ): TaskCreateMutationResult {
+    const reason = input.reason.trim();
+    if (reason.length === 0) throw new Error("block reason is required");
+    return this.#transaction(() => {
+      const scope = this.#requireAuthenticatedWorkerExecution(execution);
+      const taskRow = this.#requireWorkerTask(scope, input.taskId);
+      const replay = this.#replayWorkerTaskCommand(taskRow, scope, {
+        eventType: "task.blocked",
+        idempotencyKey: input.idempotencyKey,
+        payload: { reason },
+      });
+      if (replay !== null) return { ...replay, activationIds: [] };
+      this.#assertWorkerTaskFreshContext(
+        scope,
+        input.basedOnRoomSeq,
+        input.taskId,
+      );
+      this.#requireOwnedTaskClaim(taskRow, scope.participantId, "in_progress");
+
+      const blockedAt = this.#timestamp();
+      this.#database
+        .prepare(
+          "UPDATE tasks SET state = 'blocked', claimed_by = NULL, claim_until = NULL, claim_until_ms = NULL, blocked_reason = ?, blocked_at = ?, updated_at = ? WHERE task_id = ?",
+        )
+        .run(reason, blockedAt, blockedAt, input.taskId);
+      const event = this.#appendWorkerTaskEvent(scope, {
+        basedOnRoomSeq: input.basedOnRoomSeq,
+        eventType: "task.blocked",
+        idempotencyKey: input.idempotencyKey,
+        payload: { blockedAt, reason },
+        taskId: input.taskId,
+      });
+      const activationIds = this.#deriveAttention(
+        event,
+        [
+          {
+            participantId: text(taskRow, "creator_id"),
+            reason: "task_updated",
+          },
+        ],
+        blockedAt,
+      );
+      return {
+        activationIds,
+        deduplicated: false,
+        event,
+        task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
+      };
     });
   }
 
@@ -1267,6 +1521,264 @@ export class RoomKernel {
         taskId: input.taskId,
       });
       return {
+        deduplicated: false,
+        event,
+        task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
+      };
+    });
+  }
+
+  assignTask(
+    actor: AuthenticatedActorContext,
+    input: {
+      assigneeId: string;
+      basedOnRoomSeq: number;
+      idempotencyKey: string;
+      taskId: string;
+    },
+  ): TaskCreateMutationResult {
+    return this.#transaction(() => {
+      const actorId = this.#requireAuthenticatedActor(actor);
+      const taskRow = this.#requireTaskRow(input.taskId);
+      const roomId = text(taskRow, "room_id");
+      this.#requireMember(roomId, actorId);
+      if (text(taskRow, "creator_id") !== actorId) {
+        throw new ForbiddenError("only the Task creator can assign it");
+      }
+      this.#requireMember(roomId, input.assigneeId);
+      if (
+        this.#principalFromRow(this.#requirePrincipal(input.assigneeId))
+          .kind !== "agent"
+      ) {
+        throw new ForbiddenError("Task assignee must be an Agent principal");
+      }
+      const previous = this.#findRoomEventByIdempotencyKey(
+        roomId,
+        input.idempotencyKey,
+      );
+      if (previous !== undefined) {
+        const event = this.#assertTaskEventReplay(previous, {
+          actorId,
+          aggregateId: input.taskId,
+          eventType: "task.assigned",
+          payload: { assigneeId: input.assigneeId },
+        });
+        return {
+          activationIds: [],
+          deduplicated: true,
+          event,
+          task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
+        };
+      }
+      this.#assertFreshContext(roomId, actorId, input.basedOnRoomSeq);
+      if (
+        text(taskRow, "state") !== "todo" ||
+        nullableText(taskRow, "claimed_by") !== null
+      ) {
+        throw new ConflictError(
+          `Task ${input.taskId} can only be assigned while unclaimed todo`,
+        );
+      }
+
+      const assignedAt = this.#timestamp();
+      const previousAssigneeId = nullableText(taskRow, "assignee_id");
+      this.#database
+        .prepare(
+          "UPDATE tasks SET assignee_id = ?, updated_at = ? WHERE task_id = ?",
+        )
+        .run(input.assigneeId, assignedAt, input.taskId);
+      const event = this.#appendEvent({
+        actorId,
+        aggregateId: input.taskId,
+        aggregateType: "task",
+        idempotencyKey: input.idempotencyKey,
+        payload: {
+          assigneeId: input.assigneeId,
+          assignedAt,
+          basedOnRoomSeq: input.basedOnRoomSeq,
+          ...(previousAssigneeId === null ? {} : { previousAssigneeId }),
+          taskId: input.taskId,
+        },
+        roomId,
+        type: "task.assigned",
+      });
+      const activationIds = this.#taskDependenciesComplete(input.taskId)
+        ? this.#deriveAttention(
+            event,
+            [
+              {
+                participantId: input.assigneeId,
+                reason: "task_assigned",
+              },
+            ],
+            assignedAt,
+          )
+        : [];
+      return {
+        activationIds,
+        deduplicated: false,
+        event,
+        task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
+      };
+    });
+  }
+
+  unblockTask(
+    actor: AuthenticatedActorContext,
+    input: {
+      basedOnRoomSeq: number;
+      idempotencyKey: string;
+      taskId: string;
+    },
+  ): TaskCreateMutationResult {
+    return this.#transaction(() => {
+      const actorId = this.#requireAuthenticatedActor(actor);
+      const taskRow = this.#requireTaskRow(input.taskId);
+      const roomId = text(taskRow, "room_id");
+      this.#requireMember(roomId, actorId);
+      if (text(taskRow, "creator_id") !== actorId) {
+        throw new ForbiddenError("only the Task creator can unblock it");
+      }
+      const previous = this.#findRoomEventByIdempotencyKey(
+        roomId,
+        input.idempotencyKey,
+      );
+      if (previous !== undefined) {
+        const event = this.#assertTaskEventReplay(previous, {
+          actorId,
+          aggregateId: input.taskId,
+          eventType: "task.unblocked",
+          payload: {},
+        });
+        return {
+          activationIds: [],
+          deduplicated: true,
+          event,
+          task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
+        };
+      }
+      this.#assertFreshContext(roomId, actorId, input.basedOnRoomSeq);
+      if (text(taskRow, "state") !== "blocked") {
+        throw new ConflictError(
+          `Task ${input.taskId} can only be unblocked from blocked`,
+        );
+      }
+
+      const unblockedAt = this.#timestamp();
+      this.#database
+        .prepare(
+          "UPDATE tasks SET state = 'todo', blocked_reason = NULL, blocked_at = NULL, updated_at = ? WHERE task_id = ?",
+        )
+        .run(unblockedAt, input.taskId);
+      const event = this.#appendEvent({
+        actorId,
+        aggregateId: input.taskId,
+        aggregateType: "task",
+        idempotencyKey: input.idempotencyKey,
+        payload: {
+          basedOnRoomSeq: input.basedOnRoomSeq,
+          taskId: input.taskId,
+          unblockedAt,
+        },
+        roomId,
+        type: "task.unblocked",
+      });
+      const assigneeId = nullableText(taskRow, "assignee_id");
+      const recipients =
+        assigneeId === null
+          ? this.#roomAgentRecipients(roomId, "task_available")
+          : [{ participantId: assigneeId, reason: "task_assigned" as const }];
+      const activationIds = this.#deriveAttention(
+        event,
+        recipients,
+        unblockedAt,
+      );
+      return {
+        activationIds,
+        deduplicated: false,
+        event,
+        task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
+      };
+    });
+  }
+
+  cancelTask(
+    actor: AuthenticatedActorContext,
+    input: {
+      basedOnRoomSeq: number;
+      idempotencyKey: string;
+      reason: string;
+      taskId: string;
+    },
+  ): TaskCreateMutationResult {
+    const reason = input.reason.trim();
+    if (reason.length === 0) throw new Error("cancellation reason is required");
+    return this.#transaction(() => {
+      const actorId = this.#requireAuthenticatedActor(actor);
+      const taskRow = this.#requireTaskRow(input.taskId);
+      const roomId = text(taskRow, "room_id");
+      this.#requireMember(roomId, actorId);
+      if (text(taskRow, "creator_id") !== actorId) {
+        throw new ForbiddenError("only the Task creator can cancel it");
+      }
+      const previous = this.#findRoomEventByIdempotencyKey(
+        roomId,
+        input.idempotencyKey,
+      );
+      if (previous !== undefined) {
+        const event = this.#assertTaskEventReplay(previous, {
+          actorId,
+          aggregateId: input.taskId,
+          eventType: "task.cancelled",
+          payload: { reason },
+        });
+        return {
+          activationIds: [],
+          deduplicated: true,
+          event,
+          task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
+        };
+      }
+      this.#assertFreshContext(roomId, actorId, input.basedOnRoomSeq);
+      const previousState = text(taskRow, "state");
+      if (previousState === "completed" || previousState === "cancelled") {
+        throw new ConflictError(
+          `Task ${input.taskId} cannot be cancelled from state ${previousState}`,
+        );
+      }
+
+      const cancelledAt = this.#timestamp();
+      this.#database
+        .prepare(
+          "UPDATE tasks SET state = 'cancelled', claimed_by = NULL, claim_until = NULL, claim_until_ms = NULL, blocked_reason = NULL, blocked_at = NULL, cancellation_reason = ?, cancelled_at = ?, updated_at = ? WHERE task_id = ?",
+        )
+        .run(reason, cancelledAt, cancelledAt, input.taskId);
+      const event = this.#appendEvent({
+        actorId,
+        aggregateId: input.taskId,
+        aggregateType: "task",
+        idempotencyKey: input.idempotencyKey,
+        payload: {
+          basedOnRoomSeq: input.basedOnRoomSeq,
+          cancelledAt,
+          previousState,
+          reason,
+          taskId: input.taskId,
+        },
+        roomId,
+        type: "task.cancelled",
+      });
+      const assigneeId = nullableText(taskRow, "assignee_id");
+      const activationIds =
+        assigneeId === null || assigneeId === actorId
+          ? []
+          : this.#deriveAttention(
+              event,
+              [{ participantId: assigneeId, reason: "task_updated" }],
+              cancelledAt,
+            );
+      return {
+        activationIds,
         deduplicated: false,
         event,
         task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
@@ -1429,6 +1941,28 @@ export class RoomKernel {
           "UPDATE tasks SET state = 'completed', completed_at = ?, updated_at = ? WHERE task_id = ?",
         )
         .run(completedAt, completedAt, input.taskId);
+      const readyTasks = this.#database
+        .prepare(
+          `SELECT candidate.*
+           FROM task_dependencies
+           JOIN tasks AS candidate
+             ON candidate.task_id = task_dependencies.task_id
+           WHERE task_dependencies.dependency_task_id = ?
+             AND candidate.state = 'todo'
+             AND NOT EXISTS (
+               SELECT 1
+               FROM task_dependencies AS remaining
+               JOIN tasks AS dependency
+                 ON dependency.task_id = remaining.dependency_task_id
+               WHERE remaining.task_id = candidate.task_id
+                 AND dependency.state <> 'completed'
+             )
+           ORDER BY candidate.task_id`,
+        )
+        .all(input.taskId);
+      const readyTaskIds = readyTasks.map((readyTask) =>
+        text(readyTask, "task_id"),
+      );
       const event = this.#appendEvent({
         actorId,
         aggregateId: input.taskId,
@@ -1437,11 +1971,35 @@ export class RoomKernel {
         payload: {
           basedOnRoomSeq: input.basedOnRoomSeq,
           completedAt,
+          readyTaskIds,
           taskId: input.taskId,
         },
         roomId,
         type: "task.completed",
       });
+      const recipientMap = new Map<string, MessageRecipient>();
+      for (const readyTask of readyTasks) {
+        const assigneeId = nullableText(readyTask, "assignee_id");
+        const recipients =
+          assigneeId === null
+            ? this.#roomAgentRecipients(roomId, "dependency_resolved")
+            : [
+                {
+                  participantId: assigneeId,
+                  reason: "dependency_resolved" as const,
+                },
+              ];
+        for (const recipient of recipients) {
+          recipientMap.set(recipient.participantId, recipient);
+        }
+      }
+      this.#deriveAttention(
+        event,
+        [...recipientMap.values()].sort((left, right) =>
+          left.participantId.localeCompare(right.participantId),
+        ),
+        completedAt,
+      );
       return {
         deduplicated: false,
         event,
@@ -3443,15 +4001,25 @@ export class RoomKernel {
           `SELECT DISTINCT tasks.task_id, tasks.state
            FROM room_events
            JOIN tasks ON (
-             room_events.type = 'task.created'
+             room_events.type IN ('task.created', 'task.assigned', 'task.unblocked', 'task.released')
              AND tasks.task_id = room_events.aggregate_id
              OR room_events.type = 'input.resolved'
              AND tasks.task_id = json_extract(room_events.payload_json, '$.taskId')
+             OR room_events.type = 'task.completed'
+             AND EXISTS (
+               SELECT 1 FROM json_each(room_events.payload_json, '$.readyTaskIds')
+               WHERE json_each.value = tasks.task_id
+             )
            )
            WHERE room_events.room_id = ?
              AND room_events.room_seq BETWEEN ? AND ?
+             AND EXISTS (
+               SELECT 1 FROM inbox_items
+               WHERE inbox_items.event_id = room_events.event_id
+                 AND inbox_items.participant_id = ?
+             )
              AND tasks.assignee_id = ?
-             AND tasks.state NOT IN ('waiting_input', 'submitted', 'completed')
+             AND tasks.state NOT IN ('waiting_input', 'blocked', 'submitted', 'completed', 'cancelled')
              AND NOT EXISTS (
                SELECT 1 FROM room_events AS requested_input
                WHERE requested_input.room_id = room_events.room_id
@@ -3467,6 +4035,7 @@ export class RoomKernel {
           text(row, "room_id"),
           integer(row, "from_seq"),
           integer(row, "to_seq"),
+          text(row, "participant_id"),
           text(row, "participant_id"),
           integer(row, "to_seq"),
           text(row, "participant_id"),
@@ -3928,7 +4497,12 @@ export class RoomKernel {
     scope: ActivationCredentialScope,
     input: {
       eventType:
-        "task.claimed" | "task.progressed" | "task.started" | "task.submitted";
+        | "task.blocked"
+        | "task.claimed"
+        | "task.progressed"
+        | "task.released"
+        | "task.started"
+        | "task.submitted";
       idempotencyKey: string;
       payload?: Record<string, unknown>;
     },
@@ -3957,7 +4531,12 @@ export class RoomKernel {
     input: {
       basedOnRoomSeq: number;
       eventType:
-        "task.claimed" | "task.progressed" | "task.started" | "task.submitted";
+        | "task.blocked"
+        | "task.claimed"
+        | "task.progressed"
+        | "task.released"
+        | "task.started"
+        | "task.submitted";
       idempotencyKey: string;
       payload: Record<string, unknown>;
       taskId: string;
@@ -4029,7 +4608,7 @@ export class RoomKernel {
              aggregate_type = 'task'
              AND aggregate_id = ?
              AND actor_id = ?
-             AND type IN ('task.claimed', 'task.started', 'task.progressed', 'task.submitted')
+             AND type IN ('task.claimed', 'task.started', 'task.progressed', 'task.blocked', 'task.released', 'task.submitted')
            )
          ORDER BY room_seq DESC
          LIMIT 1`,
@@ -4052,10 +4631,7 @@ export class RoomKernel {
 
   #requireWorkerTask(scope: ActivationCredentialScope, taskId: string): Row {
     const taskRow = this.#requireTaskRow(taskId);
-    if (
-      text(taskRow, "room_id") !== scope.roomId ||
-      text(taskRow, "assignee_id") !== scope.participantId
-    ) {
+    if (text(taskRow, "room_id") !== scope.roomId) {
       throw new ForbiddenError(
         `Task ${taskId} is outside this Worker execution scope`,
       );
@@ -4064,22 +4640,36 @@ export class RoomKernel {
     const delivery = this.#database
       .prepare(
         `SELECT room_seq FROM room_events
-         WHERE room_id = ?
-           AND room_seq BETWEEN ? AND ?
+         JOIN inbox_items
+           ON inbox_items.event_id = room_events.event_id
+          AND inbox_items.participant_id = ?
+         WHERE room_events.room_id = ?
+           AND room_events.room_seq BETWEEN ? AND ?
            AND (
              type = 'task.created'
+             AND aggregate_type = 'task'
+             AND aggregate_id = ?
+             OR type IN ('task.assigned', 'task.unblocked', 'task.released', 'task.cancelled')
              AND aggregate_type = 'task'
              AND aggregate_id = ?
              OR type = 'input.resolved'
              AND aggregate_type = 'input_request'
              AND json_extract(payload_json, '$.taskId') = ?
+             OR type = 'task.completed'
+             AND EXISTS (
+               SELECT 1 FROM json_each(payload_json, '$.readyTaskIds')
+               WHERE json_each.value = ?
+             )
            )
          LIMIT 1`,
       )
       .get(
+        scope.participantId,
         scope.roomId,
         integer(activation, "from_seq"),
         integer(activation, "to_seq"),
+        taskId,
+        taskId,
         taskId,
         taskId,
       );
@@ -4924,6 +5514,43 @@ export class RoomKernel {
     );
   }
 
+  #roomAgentRecipients(
+    roomId: string,
+    reason: ActivationReason,
+    excludedParticipantId?: string,
+  ): MessageRecipient[] {
+    return this.#database
+      .prepare(
+        `SELECT principals.principal_id
+         FROM memberships
+         JOIN principals ON principals.principal_id = memberships.principal_id
+         WHERE memberships.room_id = ? AND principals.kind = 'agent'
+         ORDER BY principals.principal_id`,
+      )
+      .all(roomId)
+      .filter((row) => text(row, "principal_id") !== excludedParticipantId)
+      .map((row) => ({
+        participantId: text(row, "principal_id"),
+        reason,
+      }));
+  }
+
+  #taskDependenciesComplete(taskId: string): boolean {
+    return (
+      this.#database
+        .prepare(
+          `SELECT 1
+           FROM task_dependencies
+           JOIN tasks AS dependency
+             ON dependency.task_id = task_dependencies.dependency_task_id
+           WHERE task_dependencies.task_id = ?
+             AND dependency.state <> 'completed'
+           LIMIT 1`,
+        )
+        .get(taskId) === undefined
+    );
+  }
+
   #snapshot(roomId: string): RoomSnapshot {
     const roomRow = this.#requireRoom(roomId);
     const members = this.#database
@@ -5327,6 +5954,8 @@ export class RoomKernel {
   }
 
   #taskFromRow(row: Row): Task {
+    const taskId = text(row, "task_id");
+    const assigneeId = nullableText(row, "assignee_id");
     const description = nullableText(row, "description");
     const claimedBy = nullableText(row, "claimed_by");
     const claimUntil = nullableText(row, "claim_until");
@@ -5334,13 +5963,24 @@ export class RoomKernel {
     const submissionSummary = nullableText(row, "submission_summary");
     const submittedAt = nullableText(row, "submitted_at");
     const completedAt = nullableText(row, "completed_at");
+    const blockedReason = nullableText(row, "blocked_reason");
+    const blockedAt = nullableText(row, "blocked_at");
+    const cancellationReason = nullableText(row, "cancellation_reason");
+    const cancelledAt = nullableText(row, "cancelled_at");
+    const dependencyTaskIds = this.#database
+      .prepare(
+        "SELECT dependency_task_id FROM task_dependencies WHERE task_id = ? ORDER BY dependency_task_id",
+      )
+      .all(taskId)
+      .map((dependency) => text(dependency, "dependency_task_id"));
     return TaskSchema.parse({
-      taskId: text(row, "task_id"),
+      taskId,
       roomId: text(row, "room_id"),
       creatorId: text(row, "creator_id"),
-      assigneeId: text(row, "assignee_id"),
+      ...(assigneeId === null ? {} : { assigneeId }),
       title: text(row, "title"),
       ...(description === null ? {} : { description }),
+      dependencyTaskIds,
       state: text(row, "state"),
       ...(claimedBy === null ? {} : { claimedBy }),
       ...(claimUntil === null ? {} : { claimUntil }),
@@ -5350,6 +5990,10 @@ export class RoomKernel {
       updatedAt: text(row, "updated_at"),
       ...(submittedAt === null ? {} : { submittedAt }),
       ...(completedAt === null ? {} : { completedAt }),
+      ...(blockedReason === null ? {} : { blockedReason }),
+      ...(blockedAt === null ? {} : { blockedAt }),
+      ...(cancellationReason === null ? {} : { cancellationReason }),
+      ...(cancelledAt === null ? {} : { cancelledAt }),
     });
   }
 

@@ -6,7 +6,9 @@ import test from "node:test";
 
 import {
   computeRuntimeCertificationDigest,
+  LeaseConflictError,
   RoomKernel,
+  StaleContextError,
   type AuthenticatedHostContext,
 } from "@rah-os/kernel";
 import type { RuntimeCertification, RuntimeOffer } from "@rah-os/protocol";
@@ -313,6 +315,80 @@ test("MultiLaneAgentHost preserves concurrent, serial, restart, and quarantine b
       true,
     );
 
+    const openTask = kernel.createTask(humanActor, {
+      idempotencyKey: "multi-lane-open-task",
+      roomId: room.roomId,
+      title: "Exactly one Agent wins this open Task",
+    }).task;
+    const openWinners: string[] = [];
+    const openRuntimeA = new FakeRuntimeAdapter({
+      onStart: (envelope) => {
+        if (attemptOpenTask(kernel, host, envelope, openTask.taskId)) {
+          openWinners.push(envelope.participantId);
+        }
+      },
+    });
+    const openRuntimeB = new FakeRuntimeAdapter({
+      onStart: (envelope) => {
+        if (attemptOpenTask(kernel, host, envelope, openTask.taskId)) {
+          openWinners.push(envelope.participantId);
+        }
+      },
+    });
+    kernel.heartbeatHost(host);
+    const openTaskHost = new MultiLaneAgentHost({
+      capacity: 2,
+      host,
+      kernel,
+      leaseMs: 30_000,
+      pollIntervalMs: 5,
+      runtime: openRuntimeA,
+      placementRuntimeResolver: (placement) =>
+        placement.participantId === agentA.principal.principalId
+          ? openRuntimeA
+          : openRuntimeB,
+    });
+    const openController = new AbortController();
+    const openRunning = openTaskHost.run({ signal: openController.signal });
+    try {
+      await waitUntil(
+        () =>
+          kernel
+            .listTasks(humanActor, { roomId: room.roomId })
+            .find((task) => task.taskId === openTask.taskId)?.state ===
+            "submitted" &&
+          kernel
+            .listActivations({ roomId: room.roomId })
+            .every((activation) => activation.state === "completed"),
+      );
+    } finally {
+      openController.abort();
+      await openRunning;
+    }
+    assert.equal(openRuntimeA.starts.length + openRuntimeB.starts.length, 2);
+    assert.equal(openWinners.length, 1);
+    const openTaskProjection = kernel
+      .listTasks(humanActor, { roomId: room.roomId })
+      .find((task) => task.taskId === openTask.taskId);
+    assert.equal(openTaskProjection?.assigneeId, openWinners[0]);
+    const openClaimEvents = kernel
+      .sync(humanActor, {
+        afterSeq: 0,
+        consumerId: "multi-lane-open-task-audit",
+        roomId: room.roomId,
+      })
+      .events.filter(
+        (event) =>
+          event.type === "task.claimed" &&
+          event.aggregateId === openTask.taskId,
+      );
+    assert.equal(openClaimEvents.length, 1);
+    kernel.completeTask(humanActor, {
+      basedOnRoomSeq: latestRoomSeq(kernel, humanActor, room.roomId),
+      idempotencyKey: "accept:multi-lane-open-task",
+      taskId: openTask.taskId,
+    });
+
     const restartTask = kernel.createTask(humanActor, {
       assigneeId: agentA.principal.principalId,
       idempotencyKey: "multi-lane-restart-task",
@@ -409,8 +485,8 @@ test("MultiLaneAgentHost preserves concurrent, serial, restart, and quarantine b
         ),
       false,
     );
-    assert.equal(kernel.listRunAttempts({ roomId: room.roomId }).length, 5);
-    assert.equal(kernel.listPlacements({ roomId: room.roomId }).length, 5);
+    assert.equal(kernel.listRunAttempts({ roomId: room.roomId }).length, 7);
+    assert.equal(kernel.listPlacements({ roomId: room.roomId }).length, 7);
 
     const quarantinedTask = kernel.createTask(humanActor, {
       assigneeId: agentA.principal.principalId,
@@ -601,6 +677,57 @@ function submitAssignedTask(
     summary: `completed by ${envelope.participantId}`,
     taskId,
   });
+}
+
+function attemptOpenTask(
+  kernel: RoomKernel,
+  host: AuthenticatedHostContext,
+  envelope: ActivationEnvelope,
+  taskId: string,
+): boolean {
+  const execution = kernel.authorizeWorkerExecution(host, {
+    activationId: envelope.activationId,
+    consumerId: envelope.consumerId,
+    hostId: envelope.hostId,
+    participantId: envelope.participantId,
+    roomId: envelope.roomId,
+    runAttemptId: envelope.runAttemptId,
+    toSeq: envelope.toSeq,
+  });
+  const delivered = kernel.syncWorker(execution, {});
+  kernel.acknowledgeWorkerCursor(execution, {
+    throughSeq: delivered.cursorAfter,
+  });
+  let claimed;
+  try {
+    claimed = kernel.claimTask(execution, {
+      basedOnRoomSeq: delivered.cursorAfter,
+      idempotencyKey: `claim:${taskId}:${envelope.participantId}`,
+      leaseMs: 30_000,
+      taskId,
+    });
+  } catch (error) {
+    if (
+      error instanceof LeaseConflictError ||
+      error instanceof StaleContextError
+    ) {
+      return false;
+    }
+    throw error;
+  }
+  const started = kernel.startTask(execution, {
+    basedOnRoomSeq: claimed.event.roomSeq,
+    idempotencyKey: `start:${taskId}:${envelope.participantId}`,
+    leaseMs: 30_000,
+    taskId,
+  });
+  kernel.submitTask(execution, {
+    basedOnRoomSeq: started.event.roomSeq,
+    idempotencyKey: `submit:${taskId}:${envelope.participantId}`,
+    summary: `won and completed by ${envelope.participantId}`,
+    taskId,
+  });
+  return true;
 }
 
 function acknowledgeActivation(

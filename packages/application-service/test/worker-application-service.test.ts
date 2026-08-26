@@ -588,6 +588,108 @@ test("Worker API atomically requests human input and releases its Task claim", a
   }
 });
 
+test("Worker API exposes explicit Task block without inferring it from process state", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-worker-block-api-"));
+  const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+  const service = new WorkerApplicationService({ kernel });
+  try {
+    kernel.initialize();
+    const human = kernel.provisionPrincipal({
+      handle: "worker-block-human",
+      kind: "human",
+    });
+    const agent = kernel.provisionPrincipal({
+      handle: "worker-block-agent",
+      kind: "agent",
+    });
+    const humanActor = kernel.authenticateAccessToken(human.accessToken);
+    const room = kernel.createRoom(humanActor, {
+      name: "Worker block API",
+      slug: "worker-block-api",
+    });
+    kernel.addMember(humanActor, {
+      principalId: agent.principal.principalId,
+      roomId: room.roomId,
+    });
+    const created = kernel.createTask(humanActor, {
+      assigneeId: agent.principal.principalId,
+      idempotencyKey: "worker-block-created",
+      roomId: room.roomId,
+      title: "Block this explicitly",
+    });
+    const host = authenticateHost(
+      kernel,
+      "worker-block-host",
+      agent.principal.principalId,
+    );
+    const activation = kernel.leaseNextActivation(host, { leaseMs: 30_000 });
+    assert.ok(activation);
+    const run = kernel.createRunAttempt(host, {
+      activationId: activation.activationId,
+    });
+    prepareAndMarkRunAttemptRunning(kernel, host, {
+      recoveryDescriptor: fakeRecovery("worker-block-runtime"),
+      runAttemptId: run.runAttemptId,
+      runtimeRunId: "worker-block-runtime",
+    });
+    await service.start();
+    const credential = service.issueActivationCredential(host, {
+      activationId: activation.activationId,
+      consumerId: "worker-block-consumer",
+      hostId: host.hostId,
+      participantId: agent.principal.principalId,
+      roomId: room.roomId,
+      runAttemptId: run.runAttemptId,
+      toSeq: activation.toSeq,
+    });
+    const request = async (path: string, body: Record<string, unknown>) =>
+      await fetch(`${service.origin}${path}`, {
+        body: JSON.stringify(body),
+        headers: {
+          authorization: `Bearer ${credential.accessToken}`,
+          "content-type": "application/json",
+        },
+        method: "POST",
+      });
+    const delivery = await jsonObject(await request("/v1/worker/sync", {}));
+    const claimed = await jsonObject(
+      await request("/v1/worker/tasks/claim", {
+        basedOnRoomSeq: delivery.cursorAfter,
+        idempotencyKey: "worker-block-claim",
+        taskId: created.task.taskId,
+      }),
+    );
+    const started = await jsonObject(
+      await request("/v1/worker/tasks/start", {
+        basedOnRoomSeq: (claimed.event as Record<string, unknown>).roomSeq,
+        idempotencyKey: "worker-block-start",
+        taskId: created.task.taskId,
+      }),
+    );
+    const response = await request("/v1/worker/tasks/block", {
+      basedOnRoomSeq: (started.event as Record<string, unknown>).roomSeq,
+      idempotencyKey: "worker-block-block",
+      reason: "Need a Human decision",
+      taskId: created.task.taskId,
+    });
+    assert.equal(response.status, 200);
+    const blocked = await jsonObject(response);
+    assert.equal((blocked.task as Record<string, unknown>).state, "blocked");
+    assert.deepEqual(blocked.activationIds, [
+      kernel
+        .listActivations({ roomId: room.roomId })
+        .find(
+          (candidate) =>
+            candidate.participantId === human.principal.principalId,
+        )?.activationId,
+    ]);
+  } finally {
+    await service.close();
+    kernel.close();
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
 test("Worker API rejects an expired activation credential", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-worker-expiry-"));
   let nowMs = Date.parse("2026-08-25T00:00:00.000Z");

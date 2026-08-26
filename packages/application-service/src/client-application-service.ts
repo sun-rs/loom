@@ -23,6 +23,13 @@ import {
   ClientRoomSyncResponseSchema,
   ClientTasksListRequestSchema,
   ClientTasksListResponseSchema,
+  ClientTaskAssignRequestSchema,
+  ClientTaskAttentionMutationResponseSchema,
+  ClientTaskCancelRequestSchema,
+  ClientTaskCompleteRequestSchema,
+  ClientTaskCreateRequestSchema,
+  ClientTaskMutationResponseSchema,
+  ClientTaskUnblockRequestSchema,
   InputRequestResolveRequestSchema,
   InputRequestResolveResponseSchema,
   type ClientHealthResponse,
@@ -54,6 +61,11 @@ const CLIENT_DATA_ROUTES = new Set([
   "/v1/client/rooms/acknowledge",
   "/v1/client/rooms/sync",
   "/v1/client/tasks/list",
+  "/v1/client/tasks/assign",
+  "/v1/client/tasks/cancel",
+  "/v1/client/tasks/complete",
+  "/v1/client/tasks/create",
+  "/v1/client/tasks/unblock",
 ]);
 const MAX_DELIVERED_CURSORS_PER_CONSUMER = 1_024;
 
@@ -232,6 +244,75 @@ export class ClientApplicationService {
         ClientTasksListResponseSchema.parse({
           tasks: this.#kernel.listTasks(actor, command),
         }),
+      );
+      return;
+    }
+    if (route === "/v1/client/tasks/create") {
+      const command = parseClientRequest(ClientTaskCreateRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientTaskAttentionMutationResponseSchema.parse(
+          this.#kernel.createTask(actor, {
+            dependencyTaskIds: command.dependencyTaskIds,
+            idempotencyKey: command.idempotencyKey,
+            roomId: command.roomId,
+            title: command.title,
+            ...(command.assigneeId === undefined
+              ? {}
+              : { assigneeId: command.assigneeId }),
+            ...(command.basedOnRoomSeq === undefined
+              ? {}
+              : { basedOnRoomSeq: command.basedOnRoomSeq }),
+            ...(command.description === undefined
+              ? {}
+              : { description: command.description }),
+          }),
+        ),
+      );
+      return;
+    }
+    if (route === "/v1/client/tasks/assign") {
+      const command = parseClientRequest(ClientTaskAssignRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientTaskAttentionMutationResponseSchema.parse(
+          this.#kernel.assignTask(actor, command),
+        ),
+      );
+      return;
+    }
+    if (route === "/v1/client/tasks/unblock") {
+      const command = parseClientRequest(ClientTaskUnblockRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientTaskAttentionMutationResponseSchema.parse(
+          this.#kernel.unblockTask(actor, command),
+        ),
+      );
+      return;
+    }
+    if (route === "/v1/client/tasks/cancel") {
+      const command = parseClientRequest(ClientTaskCancelRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientTaskAttentionMutationResponseSchema.parse(
+          this.#kernel.cancelTask(actor, command),
+        ),
+      );
+      return;
+    }
+    if (route === "/v1/client/tasks/complete") {
+      const command = parseClientRequest(ClientTaskCompleteRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientTaskMutationResponseSchema.parse(
+          this.#kernel.completeTask(actor, command),
+        ),
       );
       return;
     }

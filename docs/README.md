@@ -29,9 +29,10 @@
 23. [ADR-0008：版本化 Human Client Application Service](./adr/0008-versioned-human-client-application-service.md)
 24. [ADR-0009：不可变 Runtime Placement 与 Multi-Lane AgentHost](./adr/0009-immutable-runtime-placement-and-multi-lane-host.md)
 25. [ADR-0010：Web/PWA 共享 UI、可移植 Client Core 与薄原生壳](./adr/0010-web-pwa-shared-ui-and-native-shell.md)
-26. [Phase 1 实验证据](./experiments/phase-1-evidence.zh-CN.md)
-27. [Daemon 配置示例](./examples/daemon.config.example.json)
-28. [实施路线与门禁](./roadmap.zh-CN.md)
+26. [ADR-0011：Task Coordination v1](./adr/0011-task-coordination-v1.md)
+27. [Phase 1 实验证据](./experiments/phase-1-evidence.zh-CN.md)
+28. [Daemon 配置示例](./examples/daemon.config.example.json)
+29. [实施路线与门禁](./roadmap.zh-CN.md)
 
 维护规则：
 

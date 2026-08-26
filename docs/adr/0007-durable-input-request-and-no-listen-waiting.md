@@ -48,5 +48,5 @@ Agent 提问后继续运行 MCP `room_wait`、短轮询或 Provider session，�
 - 当前 designated responder 固定为 Task creator；尚无多人候选、角色/policy routing、InputRequest cancel/expire、表单 schema、附件、敏感答案分级或超时升级。
 - human resolve 已有受认证的 loopback daemon Client API，fake daemon E2 已通过该 transport 完成 `sync -> resolve -> new Activation`；尚未接入 Web/PWA、CORS、LAN 或 push。
 - human Inbox 已 durable；APNs/Web Push/macOS notification publisher 和 UI 尚未实现。
-- Task dependency、block/reassign/cancel、Artifact、Review、worktree lease 与 verifier 仍未实现。
+- Task dependency、block/reassign/cancel 后续已由 [ADR-0011](./0011-task-coordination-v1.md) 实现；Artifact、Review、worktree lease 与 verifier 仍未实现。
 - 真实 Provider 尚未复跑 InputRequest gate；当前只证明确定性本机 fake process 链路。

@@ -42,7 +42,7 @@ outbox_persisted
 - Attention：mention、DM、thread subscription、Task ownership、dependency 和 InputRequest 决定谁进入 Inbox。
 - Activation：优先级、预算、busy lane、去抖和策略决定是否启动模型。
 
-普通状态消息不会自动激活全体 Agent。定向 mention、DM、Task assignment、dependency resolved 和 `input.resolved` 默认产生定向 Activation。
+普通状态消息不会自动激活全体 Agent。定向 mention、DM、Task assignment、dependency resolved 和 `input.resolved` 默认产生定向 Activation。唯一例外是显式 open Task：`task.created` 投递给当前 Room 的全部 Agent member，但这些 Activation 只是候选注意力，Kernel 仍只允许一个 Agent 原子成为 Task owner；loser 不会被 winner 的未完成 Task 阻塞。
 
 ## 3. 合并与串行 lane
 

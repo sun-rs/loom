@@ -242,9 +242,9 @@ function addAgent(
   return participant.principalId;
 }
 
-test("Kernel schema v5 owns immutable Offer observation and Placement projections", () => {
+test("Kernel schema v6 owns Task coordination and immutable Placement projections", () => {
   const fixture = createFixture();
-  assert.equal(KERNEL_SCHEMA_VERSION, 5);
+  assert.equal(KERNEL_SCHEMA_VERSION, 6);
   assert.equal(
     fixture.agentDefinition.currentRevisionId,
     fixture.agentDefinitionRevision.agentDefinitionRevisionId,

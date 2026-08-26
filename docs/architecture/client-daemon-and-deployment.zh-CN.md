@@ -89,7 +89,7 @@ WebSocket 在线不证明没有漏事件；hint 丢失时由 sync/reconciliation
 {
   "apiVersion": 1,
   "buildVersion": "0.1.0",
-  "kernelSchemaVersion": 3,
+  "kernelSchemaVersion": 6,
   "protocolVersion": 1,
   "state": "online",
   "capabilities": {
@@ -98,7 +98,8 @@ WebSocket 在线不证明没有漏事件；hint 丢失时由 sync/reconciliation
     "inputRequestRead": true,
     "inputRequestResolve": true,
     "roomSync": true,
-    "taskRead": true
+    "taskRead": true,
+    "taskWrite": true
   }
 }
 ```

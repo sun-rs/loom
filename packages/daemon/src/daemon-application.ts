@@ -440,6 +440,7 @@ export class DaemonApplication {
             inputRequestResolve: true,
             roomSync: true,
             taskRead: true,
+            taskWrite: true,
           },
           kernelSchemaVersion: KERNEL_SCHEMA_VERSION,
           protocolVersion: DAEMON_PROTOCOL_VERSION,

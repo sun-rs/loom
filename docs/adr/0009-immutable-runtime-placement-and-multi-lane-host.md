@@ -1,6 +1,6 @@
 # ADR-0009：不可变 Runtime Placement 与 Multi-Lane AgentHost
 
-状态：**Accepted in stages / R0–R3 fake Core path implemented / R1–R1.1 provisional / narrow R2a–R2b implemented**（2026-08-26）。严格 schemas、pure planner、Kernel schema v5、content-addressed startup-owned certification、immutable Offer observation、durable Placement/RunAttempt provenance、atomic multi-lane launch claim、可信启动期 capacity policy、MultiLaneAgentHost，以及 Host-local immutable Runtime Profile/Probe Registry、spawn-time secret binding、旧 revision recovery provenance/routing 和 daemon config v3 redacted Offer publication 已实现；durable hold、control-Room CapacityPool、canonical workspace/model binding与可执行 daemon 多 participant 配置尚未实现。
+状态：**Accepted in stages / R0–R3 fake Core path implemented / R1–R1.1 provisional / narrow R2a–R2b implemented**（2026-08-26）。严格 schemas、pure planner、最初在 Kernel schema v5 建立且由当前 schema v6 保留的 Placement projections、content-addressed startup-owned certification、immutable Offer observation、durable Placement/RunAttempt provenance、atomic multi-lane launch claim、可信启动期 capacity policy、MultiLaneAgentHost，以及 Host-local immutable Runtime Profile/Probe Registry、spawn-time secret binding、旧 revision recovery provenance/routing 和 daemon config v3 redacted Offer publication 已实现；durable hold、control-Room CapacityPool、canonical workspace/model binding与可执行 daemon 多 participant 配置尚未实现。
 
 ## 背景
 

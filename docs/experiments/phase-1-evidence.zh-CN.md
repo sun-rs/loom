@@ -75,7 +75,7 @@ InputRequest fixture 让第一个 fake CLI 在 `task.started` 后调用严格 `r
 - 没有验证 worktree、Artifact、Review。
 - Kimi 暴露了真实的 process lifecycle/reap 问题。
 - SQLite 原型不等于生产数据库迁移已经完成。
-- 当前仓库已复现 canonical Task query/list、claim heartbeat、跨 RunAttempt 幂等恢复、InputRequest/`waiting_input` 无 listening 唤醒、最小 `task.claim/start/progress/submit` 与 Human sync/list/resolve transport，但还没有 Task dependency、InputRequest cancel/expire/structured answer、Artifact、Review、完整 Client API/MCP、Host credential 管理面/Keychain、Windows recovery 或完整 coding workflow。
+- 当前仓库已复现 canonical Task query/list、open Task 多 Agent 广播与 single-winner claim、release/block/assign/unblock/cancel、older-Task dependency ready wake、claim heartbeat、跨 RunAttempt 幂等恢复、InputRequest/`waiting_input` 无 listening 唤醒、Worker Task command 与 Human Task/InputRequest transport；但还没有 InputRequest cancel/expire/structured answer、Artifact、Review、完整 Client hint/MCP、Host credential 管理面/Keychain、Windows recovery 或完整 coding workflow。
 - InputRequest gate 目前只使用确定性 fake process；human resolve 已走 authenticated loopback Client API，但尚未证明真实 Provider、Web/PWA/CORS/LAN transport 或系统 push notification。
 - `submitted` 不等于 `completed`；当前只有 creator 的显式完成动作，尚无 frozen review evidence 或 verifier。
 

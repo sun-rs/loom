@@ -14,6 +14,11 @@ import {
   ClientRoomSyncResponseSchema,
   ClientTasksListRequestSchema,
   ClientTasksListResponseSchema,
+  ClientTaskAssignRequestSchema,
+  ClientTaskCancelRequestSchema,
+  ClientTaskCompleteRequestSchema,
+  ClientTaskCreateRequestSchema,
+  ClientTaskUnblockRequestSchema,
   InputRequestSchema,
   InputRequestResolveRequestSchema,
   InputRequestResolveResponseSchema,
@@ -25,14 +30,17 @@ import {
   WorkerErrorResponseSchema,
   WorkerSyncRequestSchema,
   WorkerTaskClaimRequestSchema,
+  WorkerTaskBlockRequestSchema,
   WorkerTaskGetRequestSchema,
   WorkerTaskGetResponseSchema,
   WorkerTaskInputStatusRequestSchema,
   WorkerTaskInputStatusResponseSchema,
   WorkerTaskMutationResponseSchema,
+  WorkerTaskAttentionMutationResponseSchema,
   WorkerTaskProgressRequestSchema,
   WorkerTaskRequestInputRequestSchema,
   WorkerTaskRequestInputResponseSchema,
+  WorkerTaskReleaseRequestSchema,
   WorkerTaskStartRequestSchema,
   WorkerTaskSubmitRequestSchema,
 } from "../src/index.ts";
@@ -112,6 +120,7 @@ test("Client API v1 contracts are strict, actor-free, and transport-neutral", ()
       inputRequestResolve: true,
       roomSync: true,
       taskRead: true,
+      taskWrite: true,
     },
     kernelSchemaVersion: 3,
     protocolVersion: 1,
@@ -303,6 +312,133 @@ test("Task is a strict business projection with an independent claim lease", () 
       state: "submitted",
     }),
   );
+});
+
+test("Task Coordination v1 represents open, blocked, and cancelled work explicitly", () => {
+  const open = TaskSchema.parse({
+    createdAt: "2026-08-25T00:00:00.000Z",
+    creatorId: "human-1",
+    dependencyTaskIds: [],
+    roomId: "room-1",
+    state: "todo",
+    taskId: "task-open",
+    title: "Available to every Room Agent",
+    updatedAt: "2026-08-25T00:00:00.000Z",
+  });
+  assert.equal(open.assigneeId, undefined);
+  assert.throws(() =>
+    TaskSchema.parse({
+      ...open,
+      dependencyTaskIds: ["task-older", "task-older"],
+    }),
+  );
+
+  const blocked = TaskSchema.parse({
+    ...open,
+    assigneeId: "agent-1",
+    blockedAt: "2026-08-25T00:01:00.000Z",
+    blockedReason: "Waiting for an external fact",
+    state: "blocked",
+  });
+  assert.equal(blocked.state, "blocked");
+  assert.throws(() =>
+    TaskSchema.parse({ ...blocked, blockedReason: undefined }),
+  );
+
+  const cancelled = TaskSchema.parse({
+    ...open,
+    cancellationReason: "No longer needed",
+    cancelledAt: "2026-08-25T00:02:00.000Z",
+    state: "cancelled",
+  });
+  assert.equal(cancelled.state, "cancelled");
+  assert.throws(() =>
+    TaskSchema.parse({ ...cancelled, cancellationReason: undefined }),
+  );
+});
+
+test("Task Coordination worker commands are causal and actor-free", () => {
+  assert.deepEqual(
+    WorkerTaskReleaseRequestSchema.parse({
+      basedOnRoomSeq: 12,
+      idempotencyKey: "release-task-1",
+      taskId: "task-1",
+    }),
+    {
+      basedOnRoomSeq: 12,
+      idempotencyKey: "release-task-1",
+      taskId: "task-1",
+    },
+  );
+  assert.deepEqual(
+    WorkerTaskBlockRequestSchema.parse({
+      basedOnRoomSeq: 13,
+      idempotencyKey: "block-task-1",
+      reason: "Need a maintainer decision",
+      taskId: "task-1",
+    }),
+    {
+      basedOnRoomSeq: 13,
+      idempotencyKey: "block-task-1",
+      reason: "Need a maintainer decision",
+      taskId: "task-1",
+    },
+  );
+  assert.throws(() =>
+    WorkerTaskBlockRequestSchema.parse({
+      actorId: "agent-1",
+      basedOnRoomSeq: 13,
+      idempotencyKey: "block-task-1",
+      reason: "Need a maintainer decision",
+      taskId: "task-1",
+    }),
+  );
+});
+
+test("Task Coordination client commands keep actor identity server-owned", () => {
+  assert.deepEqual(
+    ClientTaskCreateRequestSchema.parse({
+      dependencyTaskIds: ["task-older"],
+      idempotencyKey: "create-task-new",
+      roomId: "room-1",
+      title: "Coordinate the next step",
+    }),
+    {
+      dependencyTaskIds: ["task-older"],
+      idempotencyKey: "create-task-new",
+      roomId: "room-1",
+      title: "Coordinate the next step",
+    },
+  );
+  const causal = {
+    basedOnRoomSeq: 12,
+    idempotencyKey: "task-command",
+    taskId: "task-1",
+  };
+  assert.deepEqual(
+    ClientTaskAssignRequestSchema.parse({
+      ...causal,
+      assigneeId: "agent-1",
+    }),
+    { ...causal, assigneeId: "agent-1" },
+  );
+  assert.deepEqual(ClientTaskUnblockRequestSchema.parse(causal), causal);
+  assert.deepEqual(ClientTaskCompleteRequestSchema.parse(causal), causal);
+  assert.deepEqual(
+    ClientTaskCancelRequestSchema.parse({
+      ...causal,
+      reason: "Requirement withdrawn",
+    }),
+    { ...causal, reason: "Requirement withdrawn" },
+  );
+  assert.throws(() =>
+    ClientTaskCancelRequestSchema.parse({
+      ...causal,
+      actorId: "human-injected",
+      reason: "Requirement withdrawn",
+    }),
+  );
+  assert.ok(WorkerTaskAttentionMutationResponseSchema);
 });
 
 test("InputRequest is canonical, targeted, and requires resolution evidence", () => {

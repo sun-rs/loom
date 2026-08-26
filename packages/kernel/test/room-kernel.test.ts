@@ -482,6 +482,129 @@ test("initialization migrates schema v2 Tasks to waiting_input without losing ro
     ).state,
     "waiting_input",
   );
+  const taskColumns = migrated.prepare("PRAGMA table_info(tasks)").all() as {
+    name: string;
+    notnull: number;
+  }[];
+  assert.equal(
+    taskColumns.find((column) => column.name === "assignee_id")?.notnull,
+    0,
+  );
+  assert.ok(taskColumns.some((column) => column.name === "blocked_reason"));
+  assert.ok(
+    migrated
+      .prepare(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'task_dependencies'",
+      )
+      .get(),
+  );
+  assert.deepEqual(migrated.prepare("PRAGMA foreign_key_check").all(), []);
+  migrated.close();
+});
+
+test("schema v5 Task coordination migration preserves InputRequest foreign keys", () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-task-v6-migration-"));
+  temporaryDirectories.push(directory);
+  const databasePath = join(directory, "room.db");
+  const legacy = new DatabaseSync(databasePath);
+  legacy.exec(`
+    PRAGMA foreign_keys = ON;
+    PRAGMA user_version = 5;
+    CREATE TABLE principals (
+      principal_id TEXT PRIMARY KEY,
+      handle TEXT NOT NULL UNIQUE,
+      kind TEXT NOT NULL CHECK (kind IN ('human', 'agent', 'service')),
+      created_at TEXT NOT NULL
+    ) STRICT;
+    CREATE TABLE rooms (
+      room_id TEXT PRIMARY KEY,
+      slug TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      next_seq INTEGER NOT NULL DEFAULT 1 CHECK (next_seq > 0),
+      created_at TEXT NOT NULL
+    ) STRICT;
+    CREATE TABLE tasks (
+      task_id TEXT PRIMARY KEY,
+      room_id TEXT NOT NULL REFERENCES rooms(room_id),
+      creator_id TEXT NOT NULL REFERENCES principals(principal_id),
+      assignee_id TEXT NOT NULL REFERENCES principals(principal_id),
+      title TEXT NOT NULL,
+      description TEXT,
+      state TEXT NOT NULL CHECK (state IN ('todo', 'claimed', 'in_progress', 'waiting_input', 'submitted', 'completed')),
+      claimed_by TEXT REFERENCES principals(principal_id),
+      claim_until TEXT,
+      claim_until_ms INTEGER,
+      last_progress TEXT,
+      submission_summary TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      submitted_at TEXT,
+      completed_at TEXT
+    ) STRICT;
+    CREATE TABLE input_requests (
+      input_request_id TEXT PRIMARY KEY,
+      room_id TEXT NOT NULL REFERENCES rooms(room_id),
+      task_id TEXT NOT NULL REFERENCES tasks(task_id),
+      requester_id TEXT NOT NULL REFERENCES principals(principal_id),
+      responder_id TEXT NOT NULL REFERENCES principals(principal_id),
+      question TEXT NOT NULL,
+      state TEXT NOT NULL CHECK (state IN ('pending', 'resolved')),
+      answer TEXT,
+      resolved_by TEXT REFERENCES principals(principal_id),
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      resolved_at TEXT
+    ) STRICT;
+    INSERT INTO principals VALUES
+      ('human-v5', 'human-v5', 'human', '2026-08-25T00:00:00.000Z'),
+      ('agent-v5', 'agent-v5', 'agent', '2026-08-25T00:00:00.000Z');
+    INSERT INTO rooms VALUES(
+      'room-v5', 'room-v5', 'Room v5', 1, '2026-08-25T00:00:00.000Z'
+    );
+    INSERT INTO tasks(
+      task_id, room_id, creator_id, assignee_id, title, state, created_at, updated_at
+    ) VALUES(
+      'task-v5', 'room-v5', 'human-v5', 'agent-v5', 'Preserve Task',
+      'waiting_input', '2026-08-25T00:00:00.000Z',
+      '2026-08-25T00:00:00.000Z'
+    );
+    INSERT INTO input_requests(
+      input_request_id, room_id, task_id, requester_id, responder_id,
+      question, state, created_at, updated_at
+    ) VALUES(
+      'input-v5', 'room-v5', 'task-v5', 'agent-v5', 'human-v5',
+      'Preserve InputRequest?', 'pending', '2026-08-25T00:00:00.000Z',
+      '2026-08-25T00:00:00.000Z'
+    );
+  `);
+  legacy.close();
+
+  const kernel = new RoomKernel({ databasePath });
+  kernel.initialize();
+  kernel.close();
+
+  const migrated = new DatabaseSync(databasePath);
+  const migratedTask = migrated
+    .prepare(
+      "SELECT task_id, assignee_id, state FROM tasks WHERE task_id = 'task-v5'",
+    )
+    .get() as { assignee_id: string; state: string; task_id: string };
+  assert.equal(migratedTask.task_id, "task-v5");
+  assert.equal(migratedTask.assignee_id, "agent-v5");
+  assert.equal(migratedTask.state, "waiting_input");
+  assert.equal(
+    (
+      migrated
+        .prepare(
+          "SELECT task_id FROM input_requests WHERE input_request_id = 'input-v5'",
+        )
+        .get() as { task_id: string }
+    ).task_id,
+    "task-v5",
+  );
+  migrated
+    .prepare("UPDATE tasks SET assignee_id = NULL WHERE task_id = 'task-v5'")
+    .run();
   assert.deepEqual(migrated.prepare("PRAGMA foreign_key_check").all(), []);
   migrated.close();
 });
@@ -1400,6 +1523,543 @@ test("Task workflow is durable, leased independently, and explicitly completed",
   });
   assert.equal(completed.task.state, "completed");
   assert.equal(completed.event.type, "task.completed");
+
+  kernel.close();
+});
+
+test("an open Task is broadcast but has one atomic owner across Kernel connections", () => {
+  const { agent, clock, databasePath, humanActor, kernel, otherAgent, room } =
+    createFixture();
+  const competingKernel = new RoomKernel({ databasePath, now: clock.now });
+  competingKernel.initialize();
+
+  const firstCredential = kernel.provisionHostCredential({
+    hostId: "open-task-host-a",
+    participantIds: [agent.principalId],
+  });
+  const secondCredential = kernel.provisionHostCredential({
+    hostId: "open-task-host-b",
+    participantIds: [otherAgent.principalId],
+  });
+  const firstHost = kernel.authenticateHostAccessToken(
+    firstCredential.accessToken,
+  );
+  const secondHost = competingKernel.authenticateHostAccessToken(
+    secondCredential.accessToken,
+  );
+  kernel.heartbeatHost(firstHost);
+  competingKernel.heartbeatHost(secondHost);
+
+  const created = kernel.createTask(humanActor, {
+    idempotencyKey: "open-task-created",
+    roomId: room.roomId,
+    title: "Claim this exactly once",
+  });
+  assert.equal(created.task.assigneeId, undefined);
+  assert.equal(created.activationIds.length, 2);
+
+  const firstActivation = kernel.leaseNextActivation(firstHost, {
+    leaseMs: 30_000,
+  });
+  const secondActivation = competingKernel.leaseNextActivation(secondHost, {
+    leaseMs: 30_000,
+  });
+  assert.ok(firstActivation);
+  assert.ok(secondActivation);
+
+  const firstRun = kernel.createRunAttempt(firstHost, {
+    activationId: firstActivation.activationId,
+  });
+  prepareAndMarkRunAttemptRunning(kernel, firstHost, {
+    recoveryDescriptor: fakeRecovery("open-task-runtime-a"),
+    runAttemptId: firstRun.runAttemptId,
+    runtimeRunId: "open-task-runtime-a",
+  });
+  const secondRun = competingKernel.createRunAttempt(secondHost, {
+    activationId: secondActivation.activationId,
+  });
+  prepareAndMarkRunAttemptRunning(competingKernel, secondHost, {
+    recoveryDescriptor: fakeRecovery("open-task-runtime-b"),
+    runAttemptId: secondRun.runAttemptId,
+    runtimeRunId: "open-task-runtime-b",
+  });
+
+  const firstExecution = kernel.authorizeWorkerExecution(firstHost, {
+    activationId: firstActivation.activationId,
+    consumerId: "open-task-consumer-a",
+    hostId: firstHost.hostId,
+    participantId: agent.principalId,
+    roomId: room.roomId,
+    runAttemptId: firstRun.runAttemptId,
+    toSeq: firstActivation.toSeq,
+  });
+  const secondExecution = competingKernel.authorizeWorkerExecution(secondHost, {
+    activationId: secondActivation.activationId,
+    consumerId: "open-task-consumer-b",
+    hostId: secondHost.hostId,
+    participantId: otherAgent.principalId,
+    roomId: room.roomId,
+    runAttemptId: secondRun.runAttemptId,
+    toSeq: secondActivation.toSeq,
+  });
+  const firstDelivery = kernel.syncWorker(firstExecution, {});
+  kernel.acknowledgeWorkerCursor(firstExecution, {
+    throughSeq: firstDelivery.cursorAfter,
+  });
+  const secondDelivery = competingKernel.syncWorker(secondExecution, {});
+  competingKernel.acknowledgeWorkerCursor(secondExecution, {
+    throughSeq: secondDelivery.cursorAfter,
+  });
+
+  const winner = kernel.claimTask(firstExecution, {
+    basedOnRoomSeq: created.event.roomSeq,
+    idempotencyKey: "open-task-claim-a",
+    leaseMs: 30_000,
+    taskId: created.task.taskId,
+  });
+  assert.equal(winner.task.assigneeId, agent.principalId);
+  assert.equal(winner.task.claimedBy, agent.principalId);
+  assert.throws(
+    () =>
+      competingKernel.claimTask(secondExecution, {
+        basedOnRoomSeq: created.event.roomSeq,
+        idempotencyKey: "open-task-claim-b",
+        leaseMs: 30_000,
+        taskId: created.task.taskId,
+      }),
+    LeaseConflictError,
+  );
+  assert.equal(
+    competingKernel.getWorkerTask(secondExecution, {
+      taskId: created.task.taskId,
+    }).assigneeId,
+    agent.principalId,
+  );
+
+  competingKernel.recordRuntimeTermination(secondHost, {
+    exit: { code: 0 },
+    runAttemptId: secondRun.runAttemptId,
+    runtimeRunId: "open-task-runtime-b",
+  });
+  competingKernel.finishRunAttempt(secondHost, {
+    exitCode: 0,
+    runAttemptId: secondRun.runAttemptId,
+    state: "exited",
+  });
+  assert.equal(
+    competingKernel.completeActivation(secondHost, {
+      activationId: secondActivation.activationId,
+      consumerId: "open-task-consumer-b",
+    }).state,
+    "completed",
+  );
+
+  competingKernel.close();
+  kernel.close();
+});
+
+test("releasing an owned Task reopens it and fences the old execution", () => {
+  const { agent, humanActor, kernel, otherAgent, room } = createFixture();
+  const firstHost = authenticateHost(kernel, "release-task-host-a", [
+    agent.principalId,
+  ]);
+  const secondHost = authenticateHost(kernel, "release-task-host-b", [
+    otherAgent.principalId,
+  ]);
+  const created = kernel.createTask(humanActor, {
+    idempotencyKey: "release-task-created",
+    roomId: room.roomId,
+    title: "Release this for another Agent",
+  });
+
+  const firstActivation = kernel.leaseNextActivation(firstHost, {
+    leaseMs: 30_000,
+  });
+  assert.ok(firstActivation);
+  const firstRun = kernel.createRunAttempt(firstHost, {
+    activationId: firstActivation.activationId,
+  });
+  prepareAndMarkRunAttemptRunning(kernel, firstHost, {
+    recoveryDescriptor: fakeRecovery("release-task-runtime-a"),
+    runAttemptId: firstRun.runAttemptId,
+    runtimeRunId: "release-task-runtime-a",
+  });
+  const firstExecution = kernel.authorizeWorkerExecution(firstHost, {
+    activationId: firstActivation.activationId,
+    consumerId: "release-task-consumer-a",
+    hostId: firstHost.hostId,
+    participantId: agent.principalId,
+    roomId: room.roomId,
+    runAttemptId: firstRun.runAttemptId,
+    toSeq: firstActivation.toSeq,
+  });
+  const firstDelivery = kernel.syncWorker(firstExecution, {});
+  kernel.acknowledgeWorkerCursor(firstExecution, {
+    throughSeq: firstDelivery.cursorAfter,
+  });
+  const claimed = kernel.claimTask(firstExecution, {
+    basedOnRoomSeq: created.event.roomSeq,
+    idempotencyKey: "release-task-claim-a",
+    leaseMs: 30_000,
+    taskId: created.task.taskId,
+  });
+  const started = kernel.startTask(firstExecution, {
+    basedOnRoomSeq: claimed.event.roomSeq,
+    idempotencyKey: "release-task-start-a",
+    leaseMs: 30_000,
+    taskId: created.task.taskId,
+  });
+  const released = kernel.releaseTask(firstExecution, {
+    basedOnRoomSeq: started.event.roomSeq,
+    idempotencyKey: "release-task-release-a",
+    taskId: created.task.taskId,
+  });
+  assert.equal(released.task.state, "todo");
+  assert.equal(released.task.assigneeId, undefined);
+  assert.equal(released.task.claimedBy, undefined);
+  assert.equal(released.activationIds.length, 1);
+  assert.equal(
+    kernel.releaseTask(firstExecution, {
+      basedOnRoomSeq: started.event.roomSeq,
+      idempotencyKey: "release-task-release-a",
+      taskId: created.task.taskId,
+    }).deduplicated,
+    true,
+  );
+
+  const secondActivation = kernel.leaseNextActivation(secondHost, {
+    leaseMs: 30_000,
+  });
+  assert.ok(secondActivation);
+  const secondRun = kernel.createRunAttempt(secondHost, {
+    activationId: secondActivation.activationId,
+  });
+  prepareAndMarkRunAttemptRunning(kernel, secondHost, {
+    recoveryDescriptor: fakeRecovery("release-task-runtime-b"),
+    runAttemptId: secondRun.runAttemptId,
+    runtimeRunId: "release-task-runtime-b",
+  });
+  const secondExecution = kernel.authorizeWorkerExecution(secondHost, {
+    activationId: secondActivation.activationId,
+    consumerId: "release-task-consumer-b",
+    hostId: secondHost.hostId,
+    participantId: otherAgent.principalId,
+    roomId: room.roomId,
+    runAttemptId: secondRun.runAttemptId,
+    toSeq: secondActivation.toSeq,
+  });
+  const secondDelivery = kernel.syncWorker(secondExecution, {});
+  kernel.acknowledgeWorkerCursor(secondExecution, {
+    throughSeq: secondDelivery.cursorAfter,
+  });
+  const reclaimed = kernel.claimTask(secondExecution, {
+    basedOnRoomSeq: released.event.roomSeq,
+    idempotencyKey: "release-task-claim-b",
+    leaseMs: 30_000,
+    taskId: created.task.taskId,
+  });
+  assert.equal(reclaimed.task.assigneeId, otherAgent.principalId);
+  assert.throws(
+    () =>
+      kernel.progressTask(firstExecution, {
+        basedOnRoomSeq: reclaimed.event.roomSeq,
+        idempotencyKey: "released-owner-progress",
+        leaseMs: 30_000,
+        progress: "This execution no longer owns the Task",
+        taskId: created.task.taskId,
+      }),
+    StaleContextError,
+  );
+
+  kernel.close();
+});
+
+test("Task creator explicitly assigns, unblocks, and cancels coordination state", () => {
+  const { agent, humanActor, kernel, otherAgent, room } = createFixture();
+  const host = authenticateHost(kernel, "blocked-task-host", [
+    agent.principalId,
+  ]);
+  const created = kernel.createTask(humanActor, {
+    assigneeId: agent.principalId,
+    idempotencyKey: "blocked-task-created",
+    roomId: room.roomId,
+    title: "Block only with explicit evidence",
+  });
+  const activation = kernel.leaseNextActivation(host, { leaseMs: 30_000 });
+  assert.ok(activation);
+  const run = kernel.createRunAttempt(host, {
+    activationId: activation.activationId,
+  });
+  prepareAndMarkRunAttemptRunning(kernel, host, {
+    recoveryDescriptor: fakeRecovery("blocked-task-runtime"),
+    runAttemptId: run.runAttemptId,
+    runtimeRunId: "blocked-task-runtime",
+  });
+  const execution = kernel.authorizeWorkerExecution(host, {
+    activationId: activation.activationId,
+    consumerId: "blocked-task-consumer",
+    hostId: host.hostId,
+    participantId: agent.principalId,
+    roomId: room.roomId,
+    runAttemptId: run.runAttemptId,
+    toSeq: activation.toSeq,
+  });
+  const delivery = kernel.syncWorker(execution, {});
+  kernel.acknowledgeWorkerCursor(execution, {
+    throughSeq: delivery.cursorAfter,
+  });
+  const claimed = kernel.claimTask(execution, {
+    basedOnRoomSeq: created.event.roomSeq,
+    idempotencyKey: "blocked-task-claim",
+    leaseMs: 30_000,
+    taskId: created.task.taskId,
+  });
+  const started = kernel.startTask(execution, {
+    basedOnRoomSeq: claimed.event.roomSeq,
+    idempotencyKey: "blocked-task-start",
+    leaseMs: 30_000,
+    taskId: created.task.taskId,
+  });
+  const blocked = kernel.blockTask(execution, {
+    basedOnRoomSeq: started.event.roomSeq,
+    idempotencyKey: "blocked-task-block",
+    reason: "Need the maintainer to choose an API boundary",
+    taskId: created.task.taskId,
+  });
+  assert.equal(blocked.task.state, "blocked");
+  assert.equal(blocked.task.assigneeId, agent.principalId);
+  assert.equal(blocked.task.claimedBy, undefined);
+  assert.equal(
+    blocked.task.blockedReason,
+    "Need the maintainer to choose an API boundary",
+  );
+  assert.equal(blocked.activationIds.length, 1);
+  assert.equal(
+    kernel.blockTask(execution, {
+      basedOnRoomSeq: started.event.roomSeq,
+      idempotencyKey: "blocked-task-block",
+      reason: "Need the maintainer to choose an API boundary",
+      taskId: created.task.taskId,
+    }).deduplicated,
+    true,
+  );
+
+  const unblocked = kernel.unblockTask(humanActor, {
+    basedOnRoomSeq: blocked.event.roomSeq,
+    idempotencyKey: "blocked-task-unblock",
+    taskId: created.task.taskId,
+  });
+  assert.equal(unblocked.task.state, "todo");
+  assert.equal(unblocked.task.assigneeId, agent.principalId);
+  assert.equal(unblocked.task.blockedReason, undefined);
+  assert.equal(
+    kernel.unblockTask(humanActor, {
+      basedOnRoomSeq: blocked.event.roomSeq,
+      idempotencyKey: "blocked-task-unblock",
+      taskId: created.task.taskId,
+    }).deduplicated,
+    true,
+  );
+
+  const cancelled = kernel.cancelTask(humanActor, {
+    basedOnRoomSeq: unblocked.event.roomSeq,
+    idempotencyKey: "blocked-task-cancel",
+    reason: "The requirement was withdrawn",
+    taskId: created.task.taskId,
+  });
+  assert.equal(cancelled.task.state, "cancelled");
+  assert.equal(
+    cancelled.task.cancellationReason,
+    "The requirement was withdrawn",
+  );
+  assert.equal(
+    kernel.cancelTask(humanActor, {
+      basedOnRoomSeq: unblocked.event.roomSeq,
+      idempotencyKey: "blocked-task-cancel",
+      reason: "The requirement was withdrawn",
+      taskId: created.task.taskId,
+    }).deduplicated,
+    true,
+  );
+  assert.throws(
+    () =>
+      kernel.claimTask(execution, {
+        basedOnRoomSeq: cancelled.event.roomSeq,
+        idempotencyKey: "cancelled-task-claim",
+        leaseMs: 30_000,
+        taskId: created.task.taskId,
+      }),
+    StaleContextError,
+  );
+
+  const open = kernel.createTask(humanActor, {
+    idempotencyKey: "assign-open-task-created",
+    roomId: room.roomId,
+    title: "Assign this open Task",
+  });
+  const assigned = kernel.assignTask(humanActor, {
+    assigneeId: otherAgent.principalId,
+    basedOnRoomSeq: open.event.roomSeq,
+    idempotencyKey: "assign-open-task",
+    taskId: open.task.taskId,
+  });
+  assert.equal(assigned.task.state, "todo");
+  assert.equal(assigned.task.assigneeId, otherAgent.principalId);
+  assert.equal(
+    kernel.assignTask(humanActor, {
+      assigneeId: otherAgent.principalId,
+      basedOnRoomSeq: open.event.roomSeq,
+      idempotencyKey: "assign-open-task",
+      taskId: open.task.taskId,
+    }).deduplicated,
+    true,
+  );
+
+  kernel.close();
+});
+
+test("Task dependencies stay asleep until completion derives one ready Activation", () => {
+  const { agent, humanActor, kernel, otherAgent, otherAgentActor, room } =
+    createFixture();
+  const prerequisite = kernel.createTask(humanActor, {
+    assigneeId: agent.principalId,
+    idempotencyKey: "dependency-prerequisite-created",
+    roomId: room.roomId,
+    title: "Finish the prerequisite",
+  });
+  const dependent = kernel.createTask(humanActor, {
+    assigneeId: otherAgent.principalId,
+    dependencyTaskIds: [prerequisite.task.taskId],
+    idempotencyKey: "dependent-task-created",
+    roomId: room.roomId,
+    title: "Wait for the prerequisite",
+  });
+  const secondDependent = kernel.createTask(humanActor, {
+    assigneeId: otherAgent.principalId,
+    dependencyTaskIds: [prerequisite.task.taskId],
+    idempotencyKey: "second-dependent-task-created",
+    roomId: room.roomId,
+    title: "Share one dependency-ready Inbox item",
+  });
+  assert.deepEqual(dependent.task.dependencyTaskIds, [
+    prerequisite.task.taskId,
+  ]);
+  assert.equal(dependent.activationIds.length, 0);
+  assert.equal(
+    kernel.listInbox(otherAgentActor, { roomId: room.roomId }).length,
+    0,
+  );
+
+  const firstHost = authenticateHost(kernel, "dependency-host-a", [
+    agent.principalId,
+  ]);
+  const firstActivation = kernel.leaseNextActivation(firstHost, {
+    leaseMs: 30_000,
+  });
+  assert.ok(firstActivation);
+  const firstRun = kernel.createRunAttempt(firstHost, {
+    activationId: firstActivation.activationId,
+  });
+  prepareAndMarkRunAttemptRunning(kernel, firstHost, {
+    recoveryDescriptor: fakeRecovery("dependency-runtime-a"),
+    runAttemptId: firstRun.runAttemptId,
+    runtimeRunId: "dependency-runtime-a",
+  });
+  const firstExecution = kernel.authorizeWorkerExecution(firstHost, {
+    activationId: firstActivation.activationId,
+    consumerId: "dependency-consumer-a",
+    hostId: firstHost.hostId,
+    participantId: agent.principalId,
+    roomId: room.roomId,
+    runAttemptId: firstRun.runAttemptId,
+    toSeq: firstActivation.toSeq,
+  });
+  const firstDelivery = kernel.syncWorker(firstExecution, {});
+  kernel.acknowledgeWorkerCursor(firstExecution, {
+    throughSeq: firstDelivery.cursorAfter,
+  });
+  const claimed = kernel.claimTask(firstExecution, {
+    basedOnRoomSeq: prerequisite.event.roomSeq,
+    idempotencyKey: "dependency-prerequisite-claim",
+    leaseMs: 30_000,
+    taskId: prerequisite.task.taskId,
+  });
+  const started = kernel.startTask(firstExecution, {
+    basedOnRoomSeq: claimed.event.roomSeq,
+    idempotencyKey: "dependency-prerequisite-start",
+    leaseMs: 30_000,
+    taskId: prerequisite.task.taskId,
+  });
+  const submitted = kernel.submitTask(firstExecution, {
+    basedOnRoomSeq: started.event.roomSeq,
+    idempotencyKey: "dependency-prerequisite-submit",
+    summary: "The prerequisite is complete",
+    taskId: prerequisite.task.taskId,
+  });
+  const completed = kernel.completeTask(humanActor, {
+    basedOnRoomSeq: submitted.event.roomSeq,
+    idempotencyKey: "dependency-prerequisite-complete",
+    taskId: prerequisite.task.taskId,
+  });
+  assert.deepEqual(
+    completed.event.payload.readyTaskIds,
+    [dependent.task.taskId, secondDependent.task.taskId].sort(),
+  );
+  const dependentInbox = kernel.listInbox(otherAgentActor, {
+    roomId: room.roomId,
+  });
+  assert.equal(dependentInbox.length, 1);
+  assert.equal(dependentInbox[0]?.eventId, completed.event.eventId);
+  assert.equal(dependentInbox[0]?.reason, "dependency_resolved");
+  assert.equal(
+    kernel.completeTask(humanActor, {
+      basedOnRoomSeq: submitted.event.roomSeq,
+      idempotencyKey: "dependency-prerequisite-complete",
+      taskId: prerequisite.task.taskId,
+    }).deduplicated,
+    true,
+  );
+  assert.equal(
+    kernel.listInbox(otherAgentActor, { roomId: room.roomId }).length,
+    1,
+  );
+
+  const secondHost = authenticateHost(kernel, "dependency-host-b", [
+    otherAgent.principalId,
+  ]);
+  const secondActivation = kernel.leaseNextActivation(secondHost, {
+    leaseMs: 30_000,
+  });
+  assert.ok(secondActivation);
+  const secondRun = kernel.createRunAttempt(secondHost, {
+    activationId: secondActivation.activationId,
+  });
+  prepareAndMarkRunAttemptRunning(kernel, secondHost, {
+    recoveryDescriptor: fakeRecovery("dependency-runtime-b"),
+    runAttemptId: secondRun.runAttemptId,
+    runtimeRunId: "dependency-runtime-b",
+  });
+  const secondExecution = kernel.authorizeWorkerExecution(secondHost, {
+    activationId: secondActivation.activationId,
+    consumerId: "dependency-consumer-b",
+    hostId: secondHost.hostId,
+    participantId: otherAgent.principalId,
+    roomId: room.roomId,
+    runAttemptId: secondRun.runAttemptId,
+    toSeq: secondActivation.toSeq,
+  });
+  const secondDelivery = kernel.syncWorker(secondExecution, {});
+  kernel.acknowledgeWorkerCursor(secondExecution, {
+    throughSeq: secondDelivery.cursorAfter,
+  });
+  const dependentClaim = kernel.claimTask(secondExecution, {
+    basedOnRoomSeq: completed.event.roomSeq,
+    idempotencyKey: "dependent-task-claim",
+    leaseMs: 30_000,
+    taskId: dependent.task.taskId,
+  });
+  assert.equal(dependentClaim.task.state, "claimed");
+  assert.equal(dependentClaim.task.claimedBy, otherAgent.principalId);
 
   kernel.close();
 });

@@ -21,14 +21,17 @@ import {
   WorkerSyncRequestSchema,
   WorkerSyncResponseSchema,
   WorkerTaskClaimRequestSchema,
+  WorkerTaskBlockRequestSchema,
   WorkerTaskGetRequestSchema,
   WorkerTaskGetResponseSchema,
   WorkerTaskInputStatusRequestSchema,
   WorkerTaskInputStatusResponseSchema,
   WorkerTaskMutationResponseSchema,
+  WorkerTaskAttentionMutationResponseSchema,
   WorkerTaskProgressRequestSchema,
   WorkerTaskRequestInputRequestSchema,
   WorkerTaskRequestInputResponseSchema,
+  WorkerTaskReleaseRequestSchema,
   WorkerTaskStartRequestSchema,
   WorkerTaskSubmitRequestSchema,
   type ActivationCredentialScope,
@@ -78,9 +81,11 @@ const WORKER_ROUTES = new Set([
   "/v1/worker/acknowledge",
   "/v1/worker/sync",
   "/v1/worker/tasks/claim",
+  "/v1/worker/tasks/block",
   "/v1/worker/tasks/get",
   "/v1/worker/tasks/input-status",
   "/v1/worker/tasks/progress",
+  "/v1/worker/tasks/release",
   "/v1/worker/tasks/request-input",
   "/v1/worker/tasks/start",
   "/v1/worker/tasks/submit",
@@ -300,7 +305,10 @@ export class WorkerApplicationService {
         200,
         route === "/v1/worker/tasks/request-input"
           ? WorkerTaskRequestInputResponseSchema.parse(mutation)
-          : WorkerTaskMutationResponseSchema.parse(mutation),
+          : route === "/v1/worker/tasks/block" ||
+              route === "/v1/worker/tasks/release"
+            ? WorkerTaskAttentionMutationResponseSchema.parse(mutation)
+            : WorkerTaskMutationResponseSchema.parse(mutation),
       );
       return;
     }
@@ -363,6 +371,16 @@ export class WorkerApplicationService {
         ...command,
         leaseMs: this.#taskClaimLeaseMs,
       });
+    }
+    if (route === "/v1/worker/tasks/release") {
+      const command = parseWorkerRequest(WorkerTaskReleaseRequestSchema, body);
+      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      return this.#kernel.releaseTask(grant.execution, command);
+    }
+    if (route === "/v1/worker/tasks/block") {
+      const command = parseWorkerRequest(WorkerTaskBlockRequestSchema, body);
+      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      return this.#kernel.blockTask(grant.execution, command);
     }
     if (route === "/v1/worker/tasks/request-input") {
       const command = parseWorkerRequest(

@@ -22,6 +22,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
         inputRequestResolve: true,
         roomSync: true,
         taskRead: true,
+        taskWrite: true,
       },
       kernelSchemaVersion: 3,
       protocolVersion: 1,
@@ -331,6 +332,53 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     assert.equal(resolved.task.state, "todo");
     assert.ok(Array.isArray(resolved.activationIds));
     assert.equal(resolved.activationIds.length, 1);
+
+    const openTaskResponse = await request(
+      "/v1/client/tasks/create",
+      {
+        idempotencyKey: "client-open-task-created",
+        roomId: room.roomId,
+        title: "Coordinate this through the Client API",
+      },
+      human.accessToken,
+    );
+    assert.equal(openTaskResponse.status, 200);
+    const openTask = await jsonObject(openTaskResponse);
+    assert.equal(openTask.task.state, "todo");
+    assert.equal(openTask.task.assigneeId, undefined);
+    assert.equal(openTask.activationIds.length, 1);
+
+    const assignedResponse = await request(
+      "/v1/client/tasks/assign",
+      {
+        assigneeId: agent.principal.principalId,
+        basedOnRoomSeq: openTask.event.roomSeq,
+        idempotencyKey: "client-open-task-assigned",
+        taskId: openTask.task.taskId,
+      },
+      human.accessToken,
+    );
+    assert.equal(assignedResponse.status, 200);
+    const assigned = await jsonObject(assignedResponse);
+    assert.equal(assigned.task.assigneeId, agent.principal.principalId);
+
+    const cancelledResponse = await request(
+      "/v1/client/tasks/cancel",
+      {
+        basedOnRoomSeq: assigned.event.roomSeq,
+        idempotencyKey: "client-open-task-cancelled",
+        reason: "The experiment is complete",
+        taskId: openTask.task.taskId,
+      },
+      human.accessToken,
+    );
+    assert.equal(cancelledResponse.status, 200);
+    const cancelled = await jsonObject(cancelledResponse);
+    assert.equal(cancelled.task.state, "cancelled");
+    assert.equal(
+      cancelled.task.cancellationReason,
+      "The experiment is complete",
+    );
 
     const noPendingResponse = await request(
       "/v1/client/input-requests/list",

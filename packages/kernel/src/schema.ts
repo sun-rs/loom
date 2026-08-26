@@ -76,10 +76,10 @@ CREATE TABLE IF NOT EXISTS tasks (
   task_id TEXT PRIMARY KEY,
   room_id TEXT NOT NULL REFERENCES rooms(room_id),
   creator_id TEXT NOT NULL REFERENCES principals(principal_id),
-  assignee_id TEXT NOT NULL REFERENCES principals(principal_id),
+  assignee_id TEXT REFERENCES principals(principal_id),
   title TEXT NOT NULL,
   description TEXT,
-  state TEXT NOT NULL CHECK (state IN ('todo', 'claimed', 'in_progress', 'waiting_input', 'submitted', 'completed')),
+  state TEXT NOT NULL CHECK (state IN ('todo', 'claimed', 'in_progress', 'waiting_input', 'blocked', 'submitted', 'completed', 'cancelled')),
   claimed_by TEXT REFERENCES principals(principal_id),
   claim_until TEXT,
   claim_until_ms INTEGER,
@@ -88,7 +88,11 @@ CREATE TABLE IF NOT EXISTS tasks (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   submitted_at TEXT,
-  completed_at TEXT
+  completed_at TEXT,
+  blocked_reason TEXT,
+  blocked_at TEXT,
+  cancellation_reason TEXT,
+  cancelled_at TEXT
 ) STRICT;
 
 CREATE INDEX IF NOT EXISTS idx_tasks_room_state
@@ -96,6 +100,17 @@ CREATE INDEX IF NOT EXISTS idx_tasks_room_state
 
 CREATE INDEX IF NOT EXISTS idx_tasks_assignee_claim
   ON tasks(assignee_id, state, claim_until_ms);
+
+CREATE TABLE IF NOT EXISTS task_dependencies (
+  task_id TEXT NOT NULL REFERENCES tasks(task_id),
+  dependency_task_id TEXT NOT NULL REFERENCES tasks(task_id),
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (task_id, dependency_task_id),
+  CHECK (task_id <> dependency_task_id)
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS idx_task_dependencies_dependency
+  ON task_dependencies(dependency_task_id, task_id);
 
 CREATE TABLE IF NOT EXISTS input_requests (
   input_request_id TEXT PRIMARY KEY,

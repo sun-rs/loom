@@ -1,6 +1,6 @@
 # RAH Core SDK 边界
 
-状态：**v0.1 implemented / headless Node SDK**（2026-08-26）。`@rah-os/core` 已成为 daemon 可直接嵌入的稳定组合边界；它不依赖 HTTP、WebSocket、MCP、UI 或任何 Provider transcript parser。当前 fake 多 Agent 门禁已证明不同 Agent 并发、单 Agent 串行、Task 显式验收与 Room 权威判定。可执行 daemon 的多 participant 配置仍是下一项集成门禁，不能把现有 config v3 描述成已完成动态多 CLI 路由。
+状态：**v0.1 implemented / Task Coordination v1 implemented / headless Node SDK**（2026-08-26）。`@rah-os/core` 已成为 daemon 可直接嵌入的稳定组合边界；它不依赖 HTTP、WebSocket、MCP、UI 或任何 Provider transcript parser。当前 fake 多 Agent 门禁已证明不同 Agent 并发、单 Agent 串行、开放 Task 单 winner、Task 显式验收与 Room 权威判定。可执行 daemon 的多 participant 配置仍是下一项集成门禁，不能把现有 config v3 描述成已完成动态多 CLI 路由。
 
 ## 1. Core 是什么
 
@@ -53,6 +53,8 @@ Runtime 插槽只需实现 `RuntimeAdapter` 的 probe/start/reap/cancel/recover�
 5. 同一 participant 永远最多一个 active lane；后续事件形成 queued follow-up Activation。不同 participant 可并发。
 6. 某 lane hung、retry 或 quarantine 不允许阻塞其他 participant；未证明旧进程终止时只 fence 本 lane，不能释放资源后双开。
 7. Agent 只能把 Task 推到 `submitted`；`completed` 必须由 Task creator 显式验收。Activation completion 也不能代替 Task completion。
+8. open Task 只广播给 Room Agent members；每个 Agent 有独立 Inbox/Activation，但 SQLite transaction 只允许一个 winner 写入 `assigneeId/claimedBy`。同一 Task 仍是 single writer，多 Agent 协作用 dependency/后续 Artifact，而不是共享一个 CLI session。
+9. dependency 只指向同 Room 的既存 Task；未全部 `completed` 时不产生 Activation。最后一个 dependency 完成后，由同一 `task.completed` event 的 `readyTaskIds` 派生一次 durable attention。
 
 `PlacementCapacityPolicy` 是可信的 Core 启动配置，默认各层并发为 `1`，显式配置后才放宽；有效上限仍取 admin Host/profile/pool policy 与 Offer 的最小值。它解决本机嵌入式 Core 的 R3 门禁，但尚不等于未来可在线修改、经 control Room 审计的 `CapacityPoolRevision`。
 
@@ -78,6 +80,9 @@ Runtime 插槽只需实现 `RuntimeAdapter` 的 probe/start/reap/cancel/recover�
 - [x] 默认 capacity fail-closed，显式可信 policy 才允许两个 lane；
 - [ ] 可执行 daemon config 支持多 participant + placement-managed runtime；
 - [x] MultiLane restart/recovery 与单 lane quarantine 隔离的组合 E2；
+- [x] open Task 跨 Kernel connection 原子竞争，loser 可完成 Activation；
+- [x] release/assign/block/unblock/cancel 与 immutable dependency ready 派生；
+- [x] Worker/Client versioned application-service command surface；
 - [ ] durable control-Room CapacityPool/WorkspaceDefinition 管理面。
 
 上述未完成门禁补齐之前，可以称“Core SDK 多 Agent fake business flow 已成立”，不能称“完整多 CLI 生产 daemon 已收口”。

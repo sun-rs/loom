@@ -1,6 +1,6 @@
 # Daemon Core 运行架构
 
-状态：独立 `@rah-os/core`、fake 多 Agent business flow、最小 Task slice、InputRequest 无 listening 恢复与 versioned Human Client API 已达到 E2 local；可执行 daemon config v3 仍是单 participant 壳，安装、完整客户端/管理面与动态多 runtime 路由尚未收口。
+状态：独立 `@rah-os/core`、Task Coordination v1、fake 多 Agent open-Task competition、InputRequest 无 listening 恢复与 versioned Human Client API 已达到 E2 local；可执行 daemon config v3 仍是单 participant 壳，安装、完整客户端/管理面与动态多 runtime 路由尚未收口。
 
 ## 1. Composition 与 owner
 
@@ -43,10 +43,10 @@ Host credential
   -> current Activation + RunAttempt scope
   -> in-memory rah_wat_ token
   -> /v1/worker/sync + acknowledge
-  -> /v1/worker/tasks/get|input-status|claim|start|progress|request-input|submit
+  -> /v1/worker/tasks/get|input-status|claim|start|progress|release|block|request-input|submit
 ```
 
-daemon 不保存 Agent PAT。Worker token 不能调用普通 Agent message、任意 Kernel method或选择 actor、Room、participant、consumer、`toSeq` 与 Task lease。Task endpoint 只能操作本 Activation 已覆盖且分配给当前 participant 的 Task；causal cursor 必须由本 credential 已接收或产生。Host revoke、generation 被接管、lease 过期、run terminal 或 scope 不一致都会 fence token。
+daemon 不保存 Agent PAT。Worker token 不能调用普通 Agent message、任意 Kernel method或选择 actor、Room、participant、consumer、`toSeq` 与 Task lease。Task endpoint 只能查看本 Activation 通过 Inbox 实际投递的 Task；open Task 可由这些候选 Agent 原子竞争，后续 mutation 仍要求当前 participant 拥有 active claim。causal cursor 必须由本 credential 已接收或产生。Host revoke、generation 被接管、lease 过期、run terminal 或 scope 不一致都会 fence token。
 
 ## 4. Wake 与 polling
 
@@ -58,12 +58,12 @@ Message transaction 原子写入 `activation.requested` Outbox。dispatcher 通�
 
 ```text
 principal PAT
-  -> /v1/client/health|rooms/*|tasks/list|input-requests/*
+  -> /v1/client/health|rooms/*|tasks/list|create|assign|unblock|cancel|complete|input-requests/*
   -> per-request authenticated actor
   -> Room ACL + canonical Kernel query/command
 ```
 
-Client 和 Worker 使用独立端口与 authority。Client body 不能选择 actor/responder；Worker token 也不能升级为 Human PAT。当前 API v1 提供 content-free health/capabilities、Room `sync/ack`、Task/InputRequest list 和 designated-responder resolve。
+Client 和 Worker 使用独立端口与 authority。Client body 不能选择 actor/responder；Worker token 也不能升级为 Human PAT。当前 API v1 提供 content-free health/capabilities、Room `sync/ack`、Task/InputRequest list、Task create/assign/unblock/cancel/complete 和 designated-responder resolve。
 
 Client continuation/ack 只能使用已持久确认或由当前 credential/consumer 实际收到的 cursor；daemon 重启会清空未确认的 delivery proof，因此客户端从 durable ack 位置重同步。当前只允许 loopback，未开放 CORS/hint/LAN，也尚未接入 raft-ui。完整决策见 [ADR-0008](../adr/0008-versioned-human-client-application-service.md)。
 
@@ -77,13 +77,13 @@ Client continuation/ack 只能使用已持久确认或由当前 credential/consu
 - 新 RunAttempt 通过 activation-scoped `tasks/get` 读取 canonical projection，重放稳定 Task command 并继续未落账步骤；credential release/fence 会停止旧 heartbeat；
 - `request-input` 原子创建 canonical InputRequest、清除 claim 并把 Task 置为 `waiting_input`；CLI 随即退出。authenticated human 通过 Client API resolve，把 Task 恢复为 `todo`，再由 `input.resolved` Inbox/Activation/Outbox 唤醒新 RunAttempt；
 - CLI 必须能执行 shell/MCP/ACP 动作来调用 Worker API。当前 L0 gate 用 shell 完成 `sync/ack + Task commands`，不解析 CLI 输出；
-- Task 与进程生命周期正交：Agent exit/Activation completion 不会完成 Task；若 Activation 关联的 Task 尚未达到 `waiting_input/submitted/completed`，Kernel 拒绝 completion 并由 AgentHost durable retry；Agent 提交后仍需 creator 的显式 `completeTask`。
+- Task 与进程生命周期正交：Agent exit/Activation completion 不会完成 Task；若 Activation 关联且归当前 Agent 所有的 Task 尚未达到 `waiting_input/blocked/submitted/completed/cancelled`，Kernel 拒绝 completion 并由 AgentHost durable retry；open Task loser 不会被 winner 的 ownership 卡住，Agent 提交后仍需 creator 的显式 `completeTask`。
 
 ## 7. 下一道边界
 
 Daemon core 下一步不是 UI，也不是更多 JSONL parser，而是：
 
-1. Task list/dependency/block/reassign/cancel、InputRequest cancel/expire/structured answer，以及 Artifact/Review application commands；
+1. InputRequest cancel/expire/structured answer、Artifact/Review application commands与更完整的 Task crash/recovery matrix；
 2. ADR-0009 的 atomic launch claim、可信启动期 capacity 与 MultiLaneAgentHost fake gate 已完成；下一步按 [Runtime Registry 与多 Lane 调度架构](./runtime-registry-and-multi-lane-scheduling.zh-CN.md) 完成 canonical workspace/capacity control object，再把 placement-managed multi participant runner 接入 daemon config；
 3. daemon control API、结构化日志、SSE/WebSocket content-free hint 与 supervisor artifact GC；
 4. Keychain、launchd、签名/公证和升级兼容 gate；

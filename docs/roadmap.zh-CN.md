@@ -1,6 +1,6 @@
 # RAH OS 实施路线与门禁
 
-状态：**provisional**。独立 `@rah-os/core`、atomic Placement launch claim 与 MultiLaneAgentHost 已通过 fake 多 Agent并发/串行/restart/quarantine business gate；本机 daemon composition、Host→Worker 无 Agent PAT delegation、instance generation、deadline、topic-filtered Outbox publisher/content-free wake、跨进程 CLI/SIGTERM/restart，以及 Codex/Kimi/OpenCode/Claude Code Sonnet delivery gate 已达到 E2 local。可执行 daemon config v3 仍是单 participant；Task dependency、canonical workspace/capacity control object、多 profile router、可安装 daemon packaging、完整 Client/control/hint API、Windows recovery和 supervisor artifact lifecycle 尚未通过。
+状态：**provisional**。独立 `@rah-os/core`、Task Coordination v1、atomic Placement launch claim 与 MultiLaneAgentHost 已通过 fake 多 Agent并发/开放任务竞争/串行/restart/quarantine business gate；本机 daemon composition、Host→Worker 无 Agent PAT delegation、instance generation、deadline、topic-filtered Outbox publisher/content-free wake、跨进程 CLI/SIGTERM/restart，以及 Codex/Kimi/OpenCode/Claude Code Sonnet delivery gate 已达到 E2 local。可执行 daemon config v3 仍是单 participant；canonical workspace/capacity control object、多 profile router、可安装 daemon packaging、剩余 Client/control/hint API、Windows recovery和 supervisor artifact lifecycle 尚未通过。
 
 ## Phase 0：仓库与协议基线
 
@@ -51,11 +51,11 @@
 
 ## Phase 3：Task、InputRequest、Artifact、Review
 
-- 已完成 slice：Task `todo -> claimed -> in_progress -> submitted -> completed`、独立 claim lease、sidecar heartbeat、activation-scoped query、过期显式 reclaim、跨 RunAttempt canonical resume/稳定幂等重放、causal Worker command、process exit 与 Task completion 分离、未提交 Task 的 Activation completion proof/durable retry。
+- 已完成 slice：Task Coordination v1 的 assigned/open `todo`、Room Agent 广播与 atomic single-winner claim、`claimed -> in_progress -> waiting_input/blocked/submitted -> completed|cancelled`、release/assign/unblock/cancel、older same-Room dependency、dependency-ready wake、独立 claim lease、sidecar heartbeat、activation-scoped query、过期显式 reclaim、跨 RunAttempt canonical resume/稳定幂等重放、causal Worker command、process exit 与 Task completion 分离、未提交 Task 的 Activation completion proof/durable retry。
 - 已完成 slice：InputRequest `pending -> resolved`、Task `waiting_input -> todo`、claim release、designated human Inbox、无模型等待、resolve 后 Inbox/Activation/Outbox 唤醒、跨 Activation Task scope 与 completion proof。
-- 下一步：Task list/dependency、block/reassign/cancel 与更完整 crash recovery matrix。
-- 已完成 slice：Client API v1 health/capabilities、Room `sync/ack` delivery proof、Task/InputRequest list、designated-responder resolve 与 daemon lifecycle/E2。
-- InputRequest cancel/expire、structured answer、通知升级，以及 message/Task/Inbox/Artifact/Review 等完整 Human Client command surface。
+- 下一步：Task 父子关系/Artifact/Review 与更完整 crash recovery matrix；同一 Task 继续保持 single writer。
+- 已完成 slice：Client API v1 health/capabilities、Room `sync/ack` delivery proof、Task/InputRequest list、Task create/assign/unblock/cancel/complete、designated-responder resolve 与 daemon lifecycle/E2。
+- InputRequest cancel/expire、structured answer、通知升级，以及 message/Inbox/Artifact/Review 等剩余 Human Client command surface。
 - 显式 artifact registry。
 - frozen review evidence。
 - worktree lease 和 verifier。

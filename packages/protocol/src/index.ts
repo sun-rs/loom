@@ -10,6 +10,8 @@ export const ActivationReasonSchema = z.enum([
   "mention",
   "dm",
   "task_assigned",
+  "task_available",
+  "task_updated",
   "dependency_resolved",
   "input_requested",
   "input_resolved",
@@ -98,8 +100,10 @@ export const TaskStateSchema = z.enum([
   "claimed",
   "in_progress",
   "waiting_input",
+  "blocked",
   "submitted",
   "completed",
+  "cancelled",
 ]);
 export type TaskState = z.infer<typeof TaskStateSchema>;
 
@@ -108,9 +112,10 @@ export const TaskSchema = z
     taskId: IdentifierSchema,
     roomId: IdentifierSchema,
     creatorId: IdentifierSchema,
-    assigneeId: IdentifierSchema,
+    assigneeId: IdentifierSchema.optional(),
     title: z.string().trim().min(1),
     description: z.string().trim().min(1).optional(),
+    dependencyTaskIds: z.array(IdentifierSchema).default([]),
     state: TaskStateSchema,
     claimedBy: IdentifierSchema.optional(),
     claimUntil: TimestampSchema.optional(),
@@ -120,9 +125,22 @@ export const TaskSchema = z
     updatedAt: TimestampSchema,
     submittedAt: TimestampSchema.optional(),
     completedAt: TimestampSchema.optional(),
+    blockedReason: z.string().trim().min(1).optional(),
+    blockedAt: TimestampSchema.optional(),
+    cancellationReason: z.string().trim().min(1).optional(),
+    cancelledAt: TimestampSchema.optional(),
   })
   .strict()
   .superRefine((task, context) => {
+    if (
+      new Set(task.dependencyTaskIds).size !== task.dependencyTaskIds.length
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "dependencyTaskIds must be unique",
+        path: ["dependencyTaskIds"],
+      });
+    }
     const requiresClaim =
       task.state === "claimed" || task.state === "in_progress";
     if (requiresClaim && task.claimedBy === undefined) {
@@ -151,6 +169,24 @@ export const TaskSchema = z
         code: "custom",
         message: `${task.state} tasks cannot retain claimUntil`,
         path: ["claimUntil"],
+      });
+    }
+    if (
+      task.state !== "todo" &&
+      task.state !== "cancelled" &&
+      task.assigneeId === undefined
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: `${task.state} tasks require assigneeId`,
+        path: ["assigneeId"],
+      });
+    }
+    if (task.claimedBy !== undefined && task.claimedBy !== task.assigneeId) {
+      context.addIssue({
+        code: "custom",
+        message: "claimedBy must match assigneeId",
+        path: ["claimedBy"],
       });
     }
     if (
@@ -185,6 +221,46 @@ export const TaskSchema = z
         code: "custom",
         message: `${task.state} tasks cannot have completedAt`,
         path: ["completedAt"],
+      });
+    }
+    if (
+      task.state === "blocked" &&
+      (task.blockedReason === undefined || task.blockedAt === undefined)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "blocked tasks require blockedReason and blockedAt",
+        path: ["blockedReason"],
+      });
+    }
+    if (
+      task.state !== "blocked" &&
+      (task.blockedReason !== undefined || task.blockedAt !== undefined)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: `${task.state} tasks cannot retain blocked evidence`,
+        path: ["blockedReason"],
+      });
+    }
+    if (
+      task.state === "cancelled" &&
+      (task.cancellationReason === undefined || task.cancelledAt === undefined)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "cancelled tasks require cancellationReason and cancelledAt",
+        path: ["cancellationReason"],
+      });
+    }
+    if (
+      task.state !== "cancelled" &&
+      (task.cancellationReason !== undefined || task.cancelledAt !== undefined)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: `${task.state} tasks cannot retain cancellation evidence`,
+        path: ["cancellationReason"],
       });
     }
   });
@@ -1492,6 +1568,66 @@ export type ClientTasksListRequest = z.infer<
   typeof ClientTasksListRequestSchema
 >;
 
+export const ClientTaskCreateRequestSchema = z
+  .object({
+    assigneeId: IdentifierSchema.optional(),
+    basedOnRoomSeq: z.number().int().nonnegative().optional(),
+    dependencyTaskIds: z.array(IdentifierSchema).default([]),
+    description: z.string().trim().min(1).optional(),
+    idempotencyKey: IdentifierSchema,
+    roomId: IdentifierSchema,
+    title: z.string().trim().min(1),
+  })
+  .strict()
+  .refine(
+    (command) =>
+      new Set(command.dependencyTaskIds).size ===
+      command.dependencyTaskIds.length,
+    {
+      message: "dependencyTaskIds must be unique",
+      path: ["dependencyTaskIds"],
+    },
+  );
+export type ClientTaskCreateRequest = z.infer<
+  typeof ClientTaskCreateRequestSchema
+>;
+
+const ClientTaskCommandBaseSchema = z
+  .object({
+    basedOnRoomSeq: z.number().int().nonnegative(),
+    idempotencyKey: IdentifierSchema,
+    taskId: IdentifierSchema,
+  })
+  .strict();
+
+export const ClientTaskAssignRequestSchema = ClientTaskCommandBaseSchema.extend(
+  {
+    assigneeId: IdentifierSchema,
+  },
+).strict();
+export type ClientTaskAssignRequest = z.infer<
+  typeof ClientTaskAssignRequestSchema
+>;
+
+export const ClientTaskUnblockRequestSchema = ClientTaskCommandBaseSchema;
+export type ClientTaskUnblockRequest = z.infer<
+  typeof ClientTaskUnblockRequestSchema
+>;
+
+export const ClientTaskCompleteRequestSchema = ClientTaskCommandBaseSchema;
+export type ClientTaskCompleteRequest = z.infer<
+  typeof ClientTaskCompleteRequestSchema
+>;
+
+export const ClientTaskCancelRequestSchema = ClientTaskCommandBaseSchema.extend(
+  {
+    reason: z.string().trim().min(1),
+  },
+).strict();
+export type ClientTaskCancelRequest = z.infer<
+  typeof ClientTaskCancelRequestSchema
+>;
+
 export const ClientInputRequestsListRequestSchema = z
   .object({
     roomId: IdentifierSchema,
@@ -1529,6 +1665,18 @@ const WorkerTaskCommandBaseSchema = z
 export const WorkerTaskClaimRequestSchema = WorkerTaskCommandBaseSchema;
 export type WorkerTaskClaimRequest = z.infer<
   typeof WorkerTaskClaimRequestSchema
+>;
+
+export const WorkerTaskReleaseRequestSchema = WorkerTaskCommandBaseSchema;
+export type WorkerTaskReleaseRequest = z.infer<
+  typeof WorkerTaskReleaseRequestSchema
+>;
+
+export const WorkerTaskBlockRequestSchema = WorkerTaskCommandBaseSchema.extend({
+  reason: z.string().trim().min(1),
+}).strict();
+export type WorkerTaskBlockRequest = z.infer<
+  typeof WorkerTaskBlockRequestSchema
 >;
 
 export const WorkerTaskGetRequestSchema = z
@@ -1646,6 +1794,25 @@ export type ClientTasksListResponse = z.infer<
   typeof ClientTasksListResponseSchema
 >;
 
+export const ClientTaskMutationResponseSchema = z
+  .object({
+    deduplicated: z.boolean(),
+    event: RoomEventSchema,
+    task: TaskSchema,
+  })
+  .strict();
+export type ClientTaskMutationResponse = z.infer<
+  typeof ClientTaskMutationResponseSchema
+>;
+
+export const ClientTaskAttentionMutationResponseSchema =
+  ClientTaskMutationResponseSchema.extend({
+    activationIds: z.array(IdentifierSchema),
+  }).strict();
+export type ClientTaskAttentionMutationResponse = z.infer<
+  typeof ClientTaskAttentionMutationResponseSchema
+>;
+
 export const ClientInputRequestsListResponseSchema = z
   .object({ inputRequests: z.array(InputRequestSchema) })
   .strict();
@@ -1665,6 +1832,7 @@ export const ClientHealthResponseSchema = z
         inputRequestResolve: z.boolean(),
         roomSync: z.boolean(),
         taskRead: z.boolean(),
+        taskWrite: z.boolean(),
       })
       .strict(),
     kernelSchemaVersion: z.number().int().positive(),
@@ -1692,6 +1860,14 @@ export const WorkerTaskMutationResponseSchema = z
   .strict();
 export type WorkerTaskMutationResponse = z.infer<
   typeof WorkerTaskMutationResponseSchema
+>;
+
+export const WorkerTaskAttentionMutationResponseSchema =
+  WorkerTaskMutationResponseSchema.extend({
+    activationIds: z.array(IdentifierSchema),
+  }).strict();
+export type WorkerTaskAttentionMutationResponse = z.infer<
+  typeof WorkerTaskAttentionMutationResponseSchema
 >;
 
 export const WorkerTaskRequestInputResponseSchema = z
