@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 
 import {
@@ -18,7 +18,6 @@ import {
   RuntimeOfferSchema,
   RuntimeCertificationSchema,
   RuntimeOfferProjectionSchema,
-  TaskSchema,
   WakeHintSchema,
   type Activation,
   type ActivationCredentialScope,
@@ -64,11 +63,22 @@ import {
   issueAuthenticatedHostContext,
   issueAuthenticatedWorkerExecutionContext,
 } from "./auth.ts";
+import { canonicalDigest, canonicalValue } from "./canonical-digest.ts";
 import {
   planNextPlacement,
   type PlacementPlannerInput,
 } from "./placement-planner.ts";
 import { SCHEMA_SQL } from "./schema.ts";
+import {
+  integer,
+  jsonObject,
+  nullableInteger,
+  nullableText,
+  stringArray,
+  text,
+  type Row,
+} from "./sqlite-row.ts";
+import { taskProjectionFromRow } from "./task-projection.ts";
 import type {
   InboxItem,
   AgentDefinitionContent,
@@ -144,8 +154,6 @@ type MessageRecipient = {
   participantId: string;
   reason: ActivationReason;
 };
-
-type Row = Record<string, null | number | bigint | string | Uint8Array>;
 
 export class RoomKernel {
   readonly databasePath: string;
@@ -5954,47 +5962,7 @@ export class RoomKernel {
   }
 
   #taskFromRow(row: Row): Task {
-    const taskId = text(row, "task_id");
-    const assigneeId = nullableText(row, "assignee_id");
-    const description = nullableText(row, "description");
-    const claimedBy = nullableText(row, "claimed_by");
-    const claimUntil = nullableText(row, "claim_until");
-    const lastProgress = nullableText(row, "last_progress");
-    const submissionSummary = nullableText(row, "submission_summary");
-    const submittedAt = nullableText(row, "submitted_at");
-    const completedAt = nullableText(row, "completed_at");
-    const blockedReason = nullableText(row, "blocked_reason");
-    const blockedAt = nullableText(row, "blocked_at");
-    const cancellationReason = nullableText(row, "cancellation_reason");
-    const cancelledAt = nullableText(row, "cancelled_at");
-    const dependencyTaskIds = this.#database
-      .prepare(
-        "SELECT dependency_task_id FROM task_dependencies WHERE task_id = ? ORDER BY dependency_task_id",
-      )
-      .all(taskId)
-      .map((dependency) => text(dependency, "dependency_task_id"));
-    return TaskSchema.parse({
-      taskId,
-      roomId: text(row, "room_id"),
-      creatorId: text(row, "creator_id"),
-      ...(assigneeId === null ? {} : { assigneeId }),
-      title: text(row, "title"),
-      ...(description === null ? {} : { description }),
-      dependencyTaskIds,
-      state: text(row, "state"),
-      ...(claimedBy === null ? {} : { claimedBy }),
-      ...(claimUntil === null ? {} : { claimUntil }),
-      ...(lastProgress === null ? {} : { lastProgress }),
-      ...(submissionSummary === null ? {} : { submissionSummary }),
-      createdAt: text(row, "created_at"),
-      updatedAt: text(row, "updated_at"),
-      ...(submittedAt === null ? {} : { submittedAt }),
-      ...(completedAt === null ? {} : { completedAt }),
-      ...(blockedReason === null ? {} : { blockedReason }),
-      ...(blockedAt === null ? {} : { blockedAt }),
-      ...(cancellationReason === null ? {} : { cancellationReason }),
-      ...(cancelledAt === null ? {} : { cancelledAt }),
-    });
+    return taskProjectionFromRow(this.#database, row);
   }
 
   #inputRequestFromRow(row: Row): InputRequest {
@@ -6899,25 +6867,6 @@ function agentDefinitionContentFromInput(
   };
 }
 
-function canonicalDigest(value: unknown): string {
-  return `sha256:${createHash("sha256")
-    .update(JSON.stringify(canonicalValue(value)), "utf8")
-    .digest("hex")}`;
-}
-
-function canonicalValue(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(canonicalValue);
-  if (value !== null && typeof value === "object") {
-    return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>)
-        .filter(([, nested]) => nested !== undefined)
-        .sort(([left], [right]) => left.localeCompare(right))
-        .map(([key, nested]) => [key, canonicalValue(nested)]),
-    );
-  }
-  return value;
-}
-
 function eventPayloadText(event: RoomEvent, key: string): string {
   const value = event.payload[key];
   if (typeof value !== "string") {
@@ -6960,53 +6909,4 @@ function capacityLimitMap<T extends { maxConcurrent: number }>(
     result.set(key, limit.maxConcurrent);
   }
   return result;
-}
-
-function text(row: Row, key: string): string {
-  const value = row[key];
-  if (typeof value !== "string") throw new Error(`expected ${key} to be text`);
-  return value;
-}
-
-function nullableText(row: Row, key: string): string | null {
-  const value = row[key];
-  if (value === null || value === undefined) return null;
-  if (typeof value !== "string") throw new Error(`expected ${key} to be text`);
-  return value;
-}
-
-function integer(row: Row, key: string): number {
-  const value = row[key];
-  if (typeof value !== "number" || !Number.isInteger(value)) {
-    throw new Error(`expected ${key} to be an integer`);
-  }
-  return value;
-}
-
-function nullableInteger(row: Row, key: string): number | null {
-  const value = row[key];
-  if (value === null || value === undefined) return null;
-  if (typeof value !== "number" || !Number.isInteger(value)) {
-    throw new Error(`expected ${key} to be an integer`);
-  }
-  return value;
-}
-
-function jsonObject(row: Row, key: string): Record<string, unknown> {
-  const parsed: unknown = JSON.parse(text(row, key));
-  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
-    throw new Error(`expected ${key} to contain a JSON object`);
-  }
-  return parsed as Record<string, unknown>;
-}
-
-function stringArray(row: Row, key: string): string[] {
-  const parsed: unknown = JSON.parse(text(row, key));
-  if (
-    !Array.isArray(parsed) ||
-    parsed.some((value) => typeof value !== "string")
-  ) {
-    throw new Error(`expected ${key} to contain strings`);
-  }
-  return parsed;
 }
