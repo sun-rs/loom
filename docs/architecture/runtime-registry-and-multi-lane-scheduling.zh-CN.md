@@ -1,6 +1,6 @@
 # Runtime Registry 与多 Lane 调度架构
 
-状态：**Accepted in stages / R0 implemented / R1–R1.1 provisional / narrow R2a–R2b implemented**（2026-08-26）。严格 protocol schemas、pure placement planner、Kernel schema v5、control Room 配置修订、trusted immutable Offer evidence、durable Placement/RunAttempt provenance，以及 Host-local immutable Runtime Profile/Probe Registry、spawn-time secret binding 与 daemon config v3 redacted Offer publisher 已通过本机门禁。admin-owned capacity、durable PlacementHold、canonical workspace mount、model execution binding、atomic multi-lane claim 与 MultiLaneAgentHost 尚未完成。当前 daemon v3 仍只驱动一个 Agent participant 和一个 active Generic process profile；发布 Offer 不等于已经具备多 Agent 动态路由。
+状态：**Accepted in stages / R0–R3 fake Core path implemented / R1–R1.1 still provisional / narrow R2a–R2b implemented**（2026-08-26）。严格 protocol schemas、pure placement planner、Kernel schema v5、control Room 配置修订、trusted immutable Offer evidence、durable Placement/RunAttempt provenance、atomic placement launch claim、可信启动期 capacity policy、MultiLaneAgentHost，以及 Host-local immutable Runtime Profile/Probe Registry、spawn-time secret binding 与 daemon config v3 redacted Offer publisher已通过本机门禁。durable PlacementHold、control-Room CapacityPool、canonical workspace mount、model execution binding与可执行 daemon 多 participant 配置尚未完成。当前 daemon v3 仍只驱动一个 Agent participant 和一个 active Generic process profile；发布 Offer 不等于已经具备多 Agent 动态路由。
 
 ## 1. 要解决的问题
 
@@ -516,7 +516,7 @@ R5 的 multi-profile/multi-participant daemon composition 将使用新的 config
 
 ### R1：Kernel schema 与单 runtime compatibility
 
-状态：**provisional / R1.1 本机证据子集已实现**。Kernel 的新 scheduler API 尚未接入当前单 lane daemon；旧 `leaseNextActivation` 路径继续作为 compatibility path。Host 自写 certified capability/isolation/model binding 已被可信 catalog 门禁拒绝；每个新 Placement 冻结不可变 Offer observation 与所有 candidate snapshot digest。`probed`、capacity pool、hold 与 launch claim 仍不是生产级多 lane 证据。
+状态：**provisional / R1.1 本机证据子集 + R3 fake launch 已实现**。Kernel scheduler/atomic launch 已接入 `MultiLaneAgentHost` fake Core path，但尚未接入当前单 lane daemon；旧 `leaseNextActivation` 路径继续作为 compatibility path。Host 自写 certified capability/isolation/model binding 已被可信 catalog 门禁拒绝；每个新 Placement 冻结不可变 Offer observation 与所有 candidate snapshot digest。启动期 capacity policy 仍不是 durable control-Room CapacityPool，`probed`、hold 与 canonical workspace/model execution 也尚未达到生产多 lane 证据。
 
 - Kernel schema v5 增加 AgentDefinition/Policy/Offer observation/Placement；Agent/policy mutation 通过 control Room 事件记账；
 - RunAttempt 冻结 provenance；
@@ -557,6 +557,8 @@ R5 的 multi-profile/multi-participant daemon composition 将使用新的 config
 边界：config v3 当前仍复用 single-participant compatibility `AgentHost`，Offer 没有 canonical workspace mount、model binding 或 admin CapacityPool，也没有被 placement-managed atomic launch claim 消费。因此 R2b 完成不代表 multi-lane 或生产调度闭环完成。
 
 ### R3：MultiLaneAgentHost + fake runtimes
+
+状态：**Core fake gate implemented**。Kernel 原子 launch claim 会在同一事务消费 Placement、续 Activation lease 并创建唯一 RunAttempt；`@rah-os/core` 的 MultiLane runner 使用有界 worker 填充 capacity。组合 E2 已覆盖 A hung 时 B 提交/验收、同一 Agent follow-up 串行、Host 崩溃后先恢复旧 RuntimeProcess 再重试，以及 A quarantine 不阻塞 B。启动期 `PlacementCapacityPolicy` 是可信 admin 输入并默认 fail-closed 为 `1`；它尚不替代未来可审计的 durable CapacityPool control object。
 
 - bounded capacity filler、per-participant LaneRunner、独立 renewal/cancel/recovery；
 - Host/offer/capacity-pool 限额；并发 drain。

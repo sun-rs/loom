@@ -1,0 +1,82 @@
+export { RahCore } from "./core.ts";
+export type {
+  CoreMultiLaneAgentHostOptions,
+  RahCoreOptions,
+  RahCoreState,
+} from "./core.ts";
+
+export { MultiLaneAgentHost } from "@rah-os/agent-host";
+export type {
+  ActivationEnvelope,
+  HostCycleObservation,
+  HostCycleResult,
+  MultiLaneAgentHostOptions,
+  OrphanRecoveryCycleResult,
+  RunExit,
+  RunHandle,
+  RuntimeAdapter,
+  RuntimeAvailability,
+  RuntimeRecoveryInput,
+  RuntimeStartLifecycle,
+} from "@rah-os/agent-host";
+
+export {
+  ConflictError,
+  DeliveryProofError,
+  ExecutionFencedError,
+  ForbiddenError,
+  IdempotencyConflictError,
+  KernelError,
+  KERNEL_SCHEMA_VERSION,
+  LeaseConflictError,
+  NotFoundError,
+  RoomKernel,
+  RuntimeTerminationProofError,
+  StaleContextError,
+  TaskSubmissionProofError,
+  UnauthenticatedError,
+} from "@rah-os/kernel";
+export type {
+  AuthenticatedActorContext,
+  AuthenticatedHostContext,
+  AuthenticatedWorkerExecutionContext,
+  AgentDefinitionContent,
+  AgentDefinitionMutationResult,
+  AgentDefinitionRecord,
+  ExecutionPolicyContent,
+  ExecutionPolicyMutationResult,
+  ExecutionPolicyRecord,
+  HostRecord,
+  InboxItem,
+  InputRequestMutationResult,
+  InputRequestResolveMutationResult,
+  MessageMutationResult,
+  OutboxEntry,
+  PlacementCapacityPolicy,
+  PlacementLaunchClaim,
+  Principal,
+  ProvisionedHostCredential,
+  ProvisionedPrincipal,
+  Room,
+  RoomEvent,
+  RoomKernelOptions,
+  RoomSnapshot,
+  RunAttempt,
+  RuntimeProcessRecord,
+  SyncResult,
+  Task,
+  TaskCreateMutationResult,
+  TaskMutationResult,
+} from "@rah-os/kernel";
+
+export type {
+  Activation,
+  ActivationReason,
+  AgentDefinition,
+  AgentDefinitionRevision,
+  ExecutionPolicyRevision,
+  InputRequest,
+  PlacementDecision,
+  RuntimeOffer,
+  RuntimeOfferProjection,
+} from "@rah-os/protocol";

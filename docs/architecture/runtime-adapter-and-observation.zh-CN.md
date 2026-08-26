@@ -20,7 +20,7 @@ CLI 必须至少能通过 shell、MCP、ACP 或 A2A 中的一种方式调用 RAH
 | ProviderSessionRef     | CLI 返回的 opaque resume handle                                      | Provider adapter   |
 | RunAttempt             | 引用 durable Placement，冻结 profile/model/host/workspace provenance | Kernel             |
 
-Agent 不永久绑定一个 CLI 或模型。ExecutionPolicy 先按 hard capability/security/workspace/model constraint 过滤带 TTL 的 RuntimeOffer，再按显式 preference 评分；RunAttempt 必须引用 durable PlacementDecision，后续修改配置不能篡改历史 provenance。`reasoning=high` 等 portable intent 只有在具体 binding 明确映射时才有效，不能猜测 Provider 参数。严格 schemas、pure planner、durable Placement 与可选 RunAttempt provenance 已在 Kernel R0–R1 实现；当前单 lane AgentHost 仍走无 Placement 的 compatibility path，Host-local registry 与多 lane 接入尚未实现。详细边界见 [Runtime Registry 与多 Lane 调度架构](./runtime-registry-and-multi-lane-scheduling.zh-CN.md) 与 [ADR-0009](../adr/0009-immutable-runtime-placement-and-multi-lane-host.md)。
+Agent 不永久绑定一个 CLI 或模型。ExecutionPolicy 先按 hard capability/security/workspace/model constraint 过滤带 TTL 的 RuntimeOffer，再按显式 preference 评分；RunAttempt 必须引用 durable PlacementDecision，后续修改配置不能篡改历史 provenance。`reasoning=high` 等 portable intent 只有在具体 binding 明确映射时才有效，不能猜测 Provider 参数。严格 schemas、pure planner、durable Placement、atomic launch claim 与 fake MultiLane Core path 已实现；可执行 daemon config v3 仍走无 Placement 的 single-participant compatibility path，canonical workspace/model binding 和动态多 profile 路由尚未实现。详细边界见 [Runtime Registry 与多 Lane 调度架构](./runtime-registry-and-multi-lane-scheduling.zh-CN.md) 与 [ADR-0009](../adr/0009-immutable-runtime-placement-and-multi-lane-host.md)。
 
 ## 3. 三层 Adapter
 

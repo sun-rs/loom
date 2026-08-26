@@ -1,4 +1,7 @@
 export { AgentHost } from "./agent-host.ts";
+export type { AgentHostOptions } from "./agent-host.ts";
+export { MultiLaneAgentHost } from "./multi-lane-agent-host.ts";
+export type { MultiLaneAgentHostOptions } from "./multi-lane-agent-host.ts";
 export {
   AgentHostDaemon,
   DaemonAlreadyRunningError,

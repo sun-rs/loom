@@ -553,6 +553,38 @@ test("Kernel placement is deterministic, pull-order independent, and reserved on
   kernel.close();
 });
 
+test("a Placement launch claim is atomic across concurrent Host workers", () => {
+  const { agentId, clock, databasePath, humanActor, kernel, room } =
+    createFixture();
+  const host = authenticateHost(kernel, "atomic-launch-host", agentId);
+  kernel.publishRuntimeOffer(host, runtimeOffer(host, "atomic-launch-offer"));
+  kernel.postMessage(humanActor, {
+    body: "Launch this placement exactly once",
+    idempotencyKey: "atomic-launch-message",
+    recipients: [{ participantId: agentId, reason: "mention" }],
+    roomId: room.roomId,
+  });
+  const placement = kernel.scheduleNextPlacement({ leaseMs: 5_000 });
+  assert.ok(placement);
+
+  const competingKernel = new RoomKernel({ databasePath, now: clock.now });
+  competingKernel.initialize();
+  const first = kernel.claimNextPlacement(host, { leaseMs: 5_000 });
+  const second = competingKernel.claimNextPlacement(host, { leaseMs: 5_000 });
+
+  assert.equal(first?.placement.placementId, placement.placementId);
+  assert.equal(first?.placement.state, "consumed");
+  assert.equal(first?.activation.activationId, placement.activationId);
+  assert.equal(first?.runAttempt.placement?.placementId, placement.placementId);
+  assert.equal(first?.runAttempt.state, "starting");
+  assert.equal(second, null);
+  assert.equal(kernel.listRunAttempts({ roomId: room.roomId }).length, 1);
+  assert.equal(kernel.pullNextPlacement(host), null);
+
+  competingKernel.close();
+  kernel.close();
+});
+
 test("R1 fails closed when offers expose ambiguous workspace identities", () => {
   const { agentId, humanActor, kernel, room } = createFixture();
   const hostA = authenticateHost(kernel, "host-a", agentId);

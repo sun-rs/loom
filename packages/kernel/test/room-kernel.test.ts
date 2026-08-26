@@ -1466,7 +1466,7 @@ test("delivery proof and exit zero cannot close an Activation with an unfinished
   kernel.close();
 });
 
-test("Task commands reject wrong assignees, stale business context, and active claims", () => {
+test("Task commands reject wrong assignees and relevant stale context without cross-Task blocking", () => {
   const { agent, humanActor, kernel, otherAgent, room } = createFixture();
   const created = kernel.createTask(humanActor, {
     assigneeId: agent.principalId,
@@ -1539,16 +1539,30 @@ test("Task commands reject wrong assignees, stale business context, and active c
     toSeq: activation.toSeq,
   });
 
+  const claimed = kernel.claimTask(execution, {
+    basedOnRoomSeq: created.event.roomSeq,
+    idempotencyKey: "cross-task-safe-claim",
+    leaseMs: 1_000,
+    taskId: created.task.taskId,
+  });
+  assert.equal(claimed.task.state, "claimed");
+
+  kernel.postMessage(humanActor, {
+    body: "This update is directed to the assigned Agent",
+    idempotencyKey: "assigned-agent-context-update",
+    recipients: [{ participantId: agent.principalId, reason: "mention" }],
+    roomId: room.roomId,
+  });
   assert.throws(
     () =>
-      kernel.claimTask(execution, {
-        basedOnRoomSeq: created.event.roomSeq,
-        idempotencyKey: "stale-task-claim",
+      kernel.startTask(execution, {
+        basedOnRoomSeq: claimed.event.roomSeq,
+        idempotencyKey: "relevant-stale-task-start",
         leaseMs: 1_000,
         taskId: created.task.taskId,
       }),
     StaleContextError,
-    "the unrelated human message is a newer business event",
+    "a newer event addressed to this Agent invalidates its older context",
   );
 
   kernel.close();

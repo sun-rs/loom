@@ -1,6 +1,6 @@
 # RAH OS 实施路线与门禁
 
-状态：**provisional**。本机 daemon composition、Host→Worker 无 Agent PAT delegation、instance generation、deadline、topic-filtered Outbox publisher/content-free wake、跨进程 CLI/SIGTERM/restart，以及 Codex/Kimi/OpenCode/Claude Code Sonnet delivery gate 已达到 E2 local；最小 Task state machine、Worker query/command、sidecar heartbeat、跨 RunAttempt resume、InputRequest/`waiting_input` 无 listening 恢复、最小 Human Client API 与窄 RuntimeProfile/Probe registry 已有 fake/local E2，Codex Luna 通过 real Task gate。Task dependency、多 profile/lane router、可安装 daemon packaging、完整 Client/control/hint API、Windows recovery 和 supervisor artifact lifecycle 尚未通过。
+状态：**provisional**。独立 `@rah-os/core`、atomic Placement launch claim 与 MultiLaneAgentHost 已通过 fake 多 Agent并发/串行/restart/quarantine business gate；本机 daemon composition、Host→Worker 无 Agent PAT delegation、instance generation、deadline、topic-filtered Outbox publisher/content-free wake、跨进程 CLI/SIGTERM/restart，以及 Codex/Kimi/OpenCode/Claude Code Sonnet delivery gate 已达到 E2 local。可执行 daemon config v3 仍是单 participant；Task dependency、canonical workspace/capacity control object、多 profile router、可安装 daemon packaging、完整 Client/control/hint API、Windows recovery和 supervisor artifact lifecycle 尚未通过。
 
 ## Phase 0：仓库与协议基线
 
@@ -33,7 +33,7 @@
 
 ## Phase 2：本机 AgentHost
 
-当前增量：`@rah-os/daemon` 已组合严格 compatibility config v2 与 registry-backed config v3、owner-private file secret、Kernel、独立 Client/Worker HTTP、GenericProcess、AgentHost、instance lock、Outbox wake dispatcher 和 redacted RuntimeOffer publisher。Host credential 精确绑定一个 participant，Worker grant 不需要 Agent PAT；Human Client PAT 每次认证且不能注入 actor。旧 daemon generation、过期 lease/run 或 revoked credential 都会 fence。Runtime start/recover/cancel 与 drain 有 deadline。Fake、真实进程、跨进程 daemon 和四种真实 CLI 的 delivery gate 已覆盖主路径；fake 与 Codex Luna 又覆盖最小 Task command。多 profile/lane router、placement-managed launch、Windows recovery、supervisor result GC、Keychain、launchd、签名/安装和 control endpoint 尚未提供。
+当前增量：`@rah-os/core` 已提供 headless lifecycle/command/query/MultiLane 组合边界；`@rah-os/daemon` 通过它打开 Kernel，并组合严格 compatibility config v2 与 registry-backed config v3、owner-private file secret、独立 Client/Worker HTTP、GenericProcess、single-lane AgentHost、instance lock、Outbox wake dispatcher 和 redacted RuntimeOffer publisher。Core fake gate 已覆盖 placement-managed 多 Agent；daemon 配置仍精确绑定一个 participant。Worker grant 不需要 Agent PAT；旧 daemon generation、过期 lease/run 或 revoked credential 都会 fence。多 participant daemon、多 profile router、canonical workspace、Windows recovery、supervisor result GC、Keychain、launchd、签名/安装和 control endpoint 尚未提供。
 
 - Fake adapter 完整覆盖 start/resume/cancel/reap。
 - content-free wake WebSocket + reconnect pull backstop。
@@ -42,7 +42,7 @@
 - 每 Agent 串行 lane。
 - L0 通用进程适配器、L1 ACP/稳定协议适配器、L2 可选原生诊断适配器。
 - `AgentDefinition`、版本化 `RuntimeProfile`、`ModelSelector` 与 Provider session 解耦。
-- ADR-0009 的 R0 已完成，R1/R1.1 为 provisional：严格 schemas 与 pure `planNextPlacement` 已通过 deterministic ordering、hard-over-soft、model binding、runtime-default honesty、capacity/workspace 门禁；Kernel schema v5 已加入 control Room Agent/Policy revision、server-bounded monotonic RuntimeOffer head、content-addressed startup certification、append-only observation、atomic durable Placement、candidate observation digest、capacity/workspace reservation、directed Host pull、完整 terminal-proof/crash reconciliation 与 Host/direct/recovery-generation fencing。窄 R2a/R2b 已完成 Host-local immutable v1/v2 profile/probe registry、版本化 adapter/recovery resolution、latest-probe activation fence、spawn-time secret slot、daemon config v3 与 redacted Offer publication。下一步是 R3 前置的 authenticated registry admin、canonical workspace mount/placement launch contract 与 MultiLaneAgentHost。旧 single-runtime compatibility lease、Host 自造 pool label、未持久化 hold 与非原子 launch claim 均不能作为生产多 lane 证明，禁止直接把 runtime config 改成数组。
+- ADR-0009 的 R0–R3 fake Core path 已完成：除 strict planner、immutable Offer/Placement provenance 与 crash reconciliation 外，Kernel 现有 atomic launch claim、默认 fail-closed 的可信启动期 capacity policy及 `MultiLaneAgentHost`。组合 E2 证明不同 Agent 并发、同 Agent 串行、restart recovery 与 quarantine 隔离。R1/R1.1 仍属 provisional，因为 Host 自报 pool label、未持久化 hold、canonical workspace/model execution和 durable control-Room CapacityPool 尚未收口；这些边界完成前不得直接把 daemon runtime config 改成数组或宣称生产多 CLI router 已完成。
 - 端到端投递证明链，不以 spawn/exit/通知成功替代 read/ack。
 
 真实 CLI gate 顺序：Codex→OpenCode→Kimi→Claude Sonnet。真实 gate 只在明确请求时运行。

@@ -66,6 +66,12 @@ export type RunAttempt = {
   placement?: PlacementDecision;
 };
 
+export type PlacementLaunchClaim = {
+  activation: Activation;
+  placement: PlacementDecision;
+  runAttempt: RunAttempt;
+};
+
 export type ExecutionPolicyContent = Omit<
   ExecutionPolicyRevision,
   | "contentDigest"

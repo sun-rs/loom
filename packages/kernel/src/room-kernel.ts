@@ -82,6 +82,7 @@ import type {
   InputRequestResolveMutationResult,
   MessageMutationResult,
   OutboxEntry,
+  PlacementLaunchClaim,
   Principal,
   ProvisionedHostCredential,
   ProvisionedPrincipal,
@@ -112,10 +113,28 @@ export function computeRuntimeCertificationDigest(
   });
 }
 
-type RoomKernelOptions = {
+export type PlacementCapacityPolicy = {
+  defaultMaxConcurrent?: number;
+  hostLimits?: ReadonlyArray<{
+    hostId: string;
+    maxConcurrent: number;
+  }>;
+  poolLimits?: ReadonlyArray<{
+    capacityPoolId: string;
+    maxConcurrent: number;
+  }>;
+  runtimeProfileLimits?: ReadonlyArray<{
+    hostId: string;
+    maxConcurrent: number;
+    runtimeProfileId: string;
+  }>;
+};
+
+export type RoomKernelOptions = {
   databasePath: string;
   now?: () => Date;
   createId?: (prefix: string) => string;
+  placementCapacityPolicy?: PlacementCapacityPolicy;
   runtimeCertifications?: RuntimeCertification[];
   runtimeOfferClockSkewMs?: number;
   runtimeOfferMaxTtlMs?: number;
@@ -136,12 +155,39 @@ export class RoomKernel {
   readonly #runtimeCertifications: Map<string, RuntimeCertification>;
   readonly #runtimeOfferClockSkewMs: number;
   readonly #runtimeOfferMaxTtlMs: number;
+  readonly #defaultPlacementMaxConcurrent: number;
+  readonly #hostPlacementLimits: Map<string, number>;
+  readonly #poolPlacementLimits: Map<string, number>;
+  readonly #runtimeProfilePlacementLimits: Map<string, number>;
 
   constructor(options: RoomKernelOptions) {
     this.databasePath = options.databasePath;
     this.#now = options.now ?? (() => new Date());
     this.#createId =
       options.createId ?? ((prefix) => `${prefix}_${randomUUID()}`);
+    const placementCapacityPolicy = options.placementCapacityPolicy ?? {};
+    this.#defaultPlacementMaxConcurrent =
+      placementCapacityPolicy.defaultMaxConcurrent ?? 1;
+    assertPositiveCapacityLimit(
+      this.#defaultPlacementMaxConcurrent,
+      "placementCapacityPolicy.defaultMaxConcurrent",
+    );
+    this.#hostPlacementLimits = capacityLimitMap(
+      placementCapacityPolicy.hostLimits ?? [],
+      ({ hostId }) => hostId,
+      "Host",
+    );
+    this.#poolPlacementLimits = capacityLimitMap(
+      placementCapacityPolicy.poolLimits ?? [],
+      ({ capacityPoolId }) => capacityPoolId,
+      "capacity pool",
+    );
+    this.#runtimeProfilePlacementLimits = capacityLimitMap(
+      placementCapacityPolicy.runtimeProfileLimits ?? [],
+      ({ hostId, runtimeProfileId }) =>
+        capacityProfileResourceId(hostId, runtimeProfileId),
+      "runtime profile",
+    );
     this.#runtimeCertifications = new Map();
     for (const untrustedCertification of options.runtimeCertifications ?? []) {
       const parsedCertification = RuntimeCertificationSchema.parse(
@@ -2159,6 +2205,76 @@ export class RoomKernel {
     return row === undefined ? null : this.#placementFromRow(row);
   }
 
+  claimNextPlacement(
+    host: AuthenticatedHostContext,
+    input: { leaseMs: number },
+  ): PlacementLaunchClaim | null {
+    const authenticatedHost = this.#requireAuthenticatedHost(host);
+    if (!Number.isInteger(input.leaseMs) || input.leaseMs <= 0) {
+      throw new Error("leaseMs must be a positive integer");
+    }
+    return this.#transaction(() => {
+      this.#requireAuthenticatedHost(authenticatedHost);
+      const now = this.#now();
+      const placementRow = this.#database
+        .prepare(
+          "SELECT * FROM placements WHERE host_id = ? AND host_instance_id = ? AND state = 'reserved' AND lease_until_ms > ? ORDER BY created_at, placement_id LIMIT 1",
+        )
+        .get(
+          authenticatedHost.hostId,
+          authenticatedHost.instanceId,
+          now.getTime(),
+        );
+      if (placementRow === undefined) return null;
+
+      const activationId = text(placementRow, "activation_id");
+      const activationRow = this.#requireActivationRow(activationId);
+      this.#requireHostParticipant(
+        authenticatedHost,
+        text(activationRow, "participant_id"),
+      );
+      this.#requireActivationLease(activationRow, authenticatedHost.hostId);
+      this.#requireActivationHostGeneration(activationRow, authenticatedHost);
+      if (
+        integer(placementRow, "activation_attempt_number") !==
+        integer(activationRow, "attempt_count")
+      ) {
+        throw new LeaseConflictError(
+          `Placement ${text(placementRow, "placement_id")} no longer matches its Activation attempt`,
+        );
+      }
+
+      const leaseUntil = new Date(now.getTime() + input.leaseMs);
+      this.#database
+        .prepare(
+          "UPDATE activations SET lease_until = ?, lease_until_ms = ?, updated_at = ? WHERE activation_id = ?",
+        )
+        .run(
+          leaseUntil.toISOString(),
+          leaseUntil.getTime(),
+          now.toISOString(),
+          activationId,
+        );
+      const runAttempt = this.#createRunAttemptInTransaction(
+        authenticatedHost,
+        activationId,
+      );
+      const consumedPlacement = this.#database
+        .prepare("SELECT * FROM placements WHERE placement_id = ?")
+        .get(text(placementRow, "placement_id"));
+      if (consumedPlacement === undefined) {
+        throw new NotFoundError("claimed Placement disappeared");
+      }
+      return {
+        activation: this.#activationFromRow(
+          this.#requireActivationRow(activationId),
+        ),
+        placement: this.#placementFromRow(consumedPlacement),
+        runAttempt,
+      };
+    });
+  }
+
   listPlacements(input: { roomId?: string } = {}): PlacementDecision[] {
     const rows =
       input.roomId === undefined
@@ -2278,80 +2394,12 @@ export class RoomKernel {
     input: { activationId: string },
   ): RunAttempt {
     const authenticatedHost = this.#requireAuthenticatedHost(host);
-    const hostId = authenticatedHost.hostId;
-    return this.#transaction(() => {
-      const activation = this.#requireActivationRow(input.activationId);
-      this.#requireHostParticipant(
+    return this.#transaction(() =>
+      this.#createRunAttemptInTransaction(
         authenticatedHost,
-        text(activation, "participant_id"),
-      );
-      this.#requireActivationLease(activation, hostId);
-      const attemptNumber = integer(activation, "attempt_count");
-      const placementRow = this.#database
-        .prepare(
-          "SELECT * FROM placements WHERE activation_id = ? AND state IN ('reserved', 'consumed') ORDER BY created_at DESC LIMIT 1",
-        )
-        .get(input.activationId);
-      if (
-        placementRow !== undefined &&
-        (text(placementRow, "host_id") !== hostId ||
-          text(placementRow, "host_instance_id") !==
-            authenticatedHost.instanceId ||
-          integer(placementRow, "activation_attempt_number") !== attemptNumber)
-      ) {
-        throw new LeaseConflictError(
-          `placement for Activation ${input.activationId} belongs to another Host generation`,
-        );
-      }
-      const existing = this.#database
-        .prepare(
-          "SELECT * FROM run_attempts WHERE activation_id = ? AND attempt_number = ?",
-        )
-        .get(input.activationId, attemptNumber);
-      if (existing) return this.#runAttemptFromRow(existing);
-
-      const placementId =
-        placementRow === undefined ? null : text(placementRow, "placement_id");
-      if (
-        placementRow !== undefined &&
-        text(placementRow, "state") === "reserved"
-      ) {
-        this.#setPlacementState(placementRow, "consumed");
-      }
-
-      const runAttemptId = this.#createId("run");
-      const startedAt = this.#timestamp();
-      this.#database
-        .prepare(
-          "INSERT INTO run_attempts(run_attempt_id, placement_id, activation_id, room_id, participant_id, host_id, attempt_number, state, started_at) VALUES(?, ?, ?, ?, ?, ?, ?, 'starting', ?)",
-        )
-        .run(
-          runAttemptId,
-          placementId,
-          input.activationId,
-          text(activation, "room_id"),
-          text(activation, "participant_id"),
-          hostId,
-          attemptNumber,
-          startedAt,
-        );
-      this.#appendEvent({
-        actorId: SYSTEM_PRINCIPAL_ID,
-        aggregateId: runAttemptId,
-        aggregateType: "run_attempt",
-        idempotencyKey: `run.create:${runAttemptId}`,
-        payload: {
-          activationId: input.activationId,
-          attemptNumber,
-          hostId,
-          runAttemptId,
-          ...(placementId === null ? {} : { placementId }),
-        },
-        roomId: text(activation, "room_id"),
-        type: "run.created",
-      });
-      return this.#runAttemptFromRow(this.#requireRunAttemptRow(runAttemptId));
-    });
+        input.activationId,
+      ),
+    );
   }
 
   prepareRunAttemptRuntime(
@@ -3966,8 +4014,17 @@ export class RoomKernel {
            AND room_seq > ?
            AND type NOT LIKE 'activation.%'
            AND type NOT LIKE 'inbox.%'
+           AND type NOT LIKE 'placement.%'
            AND type NOT LIKE 'run.%'
            AND type NOT LIKE 'runtime_process.%'
+           AND (
+             (aggregate_type = 'task' AND aggregate_id = ?)
+             OR EXISTS (
+               SELECT 1 FROM inbox_items
+               WHERE inbox_items.event_id = room_events.event_id
+                 AND inbox_items.participant_id = ?
+             )
+           )
            AND NOT (
              aggregate_type = 'task'
              AND aggregate_id = ?
@@ -3977,7 +4034,14 @@ export class RoomKernel {
          ORDER BY room_seq DESC
          LIMIT 1`,
       )
-      .get(scope.roomId, basedOnRoomSeq, taskId, scope.participantId);
+      .get(
+        scope.roomId,
+        basedOnRoomSeq,
+        taskId,
+        scope.participantId,
+        taskId,
+        scope.participantId,
+      );
     if (newerBusinessEvent !== undefined) {
       throw new StaleContextError(
         basedOnRoomSeq,
@@ -4684,14 +4748,19 @@ export class RoomKernel {
     >();
     for (const offer of offers) {
       uniqueHosts.set(offer.hostId, {
-        adminMaxConcurrent: 1,
+        adminMaxConcurrent:
+          this.#hostPlacementLimits.get(offer.hostId) ??
+          this.#defaultPlacementMaxConcurrent,
         hostId: offer.hostId,
         reserved: reserved("host", offer.hostId),
       });
       uniqueProfiles.set(
         capacityProfileResourceId(offer.hostId, offer.runtimeProfileId),
         {
-          adminMaxConcurrent: 1,
+          adminMaxConcurrent:
+            this.#runtimeProfilePlacementLimits.get(
+              capacityProfileResourceId(offer.hostId, offer.runtimeProfileId),
+            ) ?? this.#defaultPlacementMaxConcurrent,
           hostId: offer.hostId,
           reserved: reserved(
             "profile",
@@ -4702,7 +4771,9 @@ export class RoomKernel {
       );
       for (const capacityPoolId of offer.capacityPoolIds) {
         uniquePools.set(capacityPoolId, {
-          adminMaxConcurrent: 1,
+          adminMaxConcurrent:
+            this.#poolPlacementLimits.get(capacityPoolId) ??
+            this.#defaultPlacementMaxConcurrent,
           capacityPoolId,
           reserved: reserved("pool", capacityPoolId),
         });
@@ -6065,6 +6136,84 @@ export class RoomKernel {
     });
   }
 
+  #createRunAttemptInTransaction(
+    authenticatedHost: AuthenticatedHostContext,
+    activationId: string,
+  ): RunAttempt {
+    const hostId = authenticatedHost.hostId;
+    const activation = this.#requireActivationRow(activationId);
+    this.#requireHostParticipant(
+      authenticatedHost,
+      text(activation, "participant_id"),
+    );
+    this.#requireActivationLease(activation, hostId);
+    const attemptNumber = integer(activation, "attempt_count");
+    const placementRow = this.#database
+      .prepare(
+        "SELECT * FROM placements WHERE activation_id = ? AND state IN ('reserved', 'consumed') ORDER BY created_at DESC LIMIT 1",
+      )
+      .get(activationId);
+    if (
+      placementRow !== undefined &&
+      (text(placementRow, "host_id") !== hostId ||
+        text(placementRow, "host_instance_id") !==
+          authenticatedHost.instanceId ||
+        integer(placementRow, "activation_attempt_number") !== attemptNumber)
+    ) {
+      throw new LeaseConflictError(
+        `placement for Activation ${activationId} belongs to another Host generation`,
+      );
+    }
+    const existing = this.#database
+      .prepare(
+        "SELECT * FROM run_attempts WHERE activation_id = ? AND attempt_number = ?",
+      )
+      .get(activationId, attemptNumber);
+    if (existing) return this.#runAttemptFromRow(existing);
+
+    const placementId =
+      placementRow === undefined ? null : text(placementRow, "placement_id");
+    if (
+      placementRow !== undefined &&
+      text(placementRow, "state") === "reserved"
+    ) {
+      this.#setPlacementState(placementRow, "consumed");
+    }
+
+    const runAttemptId = this.#createId("run");
+    const startedAt = this.#timestamp();
+    this.#database
+      .prepare(
+        "INSERT INTO run_attempts(run_attempt_id, placement_id, activation_id, room_id, participant_id, host_id, attempt_number, state, started_at) VALUES(?, ?, ?, ?, ?, ?, ?, 'starting', ?)",
+      )
+      .run(
+        runAttemptId,
+        placementId,
+        activationId,
+        text(activation, "room_id"),
+        text(activation, "participant_id"),
+        hostId,
+        attemptNumber,
+        startedAt,
+      );
+    this.#appendEvent({
+      actorId: SYSTEM_PRINCIPAL_ID,
+      aggregateId: runAttemptId,
+      aggregateType: "run_attempt",
+      idempotencyKey: `run.create:${runAttemptId}`,
+      payload: {
+        activationId,
+        attemptNumber,
+        hostId,
+        runAttemptId,
+        ...(placementId === null ? {} : { placementId }),
+      },
+      roomId: text(activation, "room_id"),
+      type: "run.created",
+    });
+    return this.#runAttemptFromRow(this.#requireRunAttemptRow(runAttemptId));
+  }
+
   #timestamp(): string {
     return this.#now().toISOString();
   }
@@ -6138,6 +6287,35 @@ function capacityProfileResourceId(
   runtimeProfileId: string,
 ): string {
   return JSON.stringify([hostId, runtimeProfileId]);
+}
+
+function assertPositiveCapacityLimit(value: number, label: string): void {
+  if (!Number.isSafeInteger(value) || value <= 0) {
+    throw new Error(`${label} must be a positive integer`);
+  }
+}
+
+function capacityLimitMap<T extends { maxConcurrent: number }>(
+  limits: ReadonlyArray<T>,
+  keyOf: (limit: T) => string,
+  label: string,
+): Map<string, number> {
+  const result = new Map<string, number>();
+  for (const limit of limits) {
+    const key = keyOf(limit);
+    if (key.trim().length === 0) {
+      throw new Error(`${label} capacity limit identity must not be empty`);
+    }
+    assertPositiveCapacityLimit(
+      limit.maxConcurrent,
+      `${label} capacity limit ${key}`,
+    );
+    if (result.has(key)) {
+      throw new Error(`duplicate ${label} capacity limit: ${key}`);
+    }
+    result.set(key, limit.maxConcurrent);
+  }
+  return result;
 }
 
 function text(row: Row, key: string): string {

@@ -1,6 +1,6 @@
 # Daemon Core 运行架构
 
-状态：本机单 participant core、最小 Task business slice、InputRequest 无 listening 恢复与 versioned Human Client API 已达到 E2 local；安装、完整客户端/管理面与协作业务尚未收口。
+状态：独立 `@rah-os/core`、fake 多 Agent business flow、最小 Task slice、InputRequest 无 listening 恢复与 versioned Human Client API 已达到 E2 local；可执行 daemon config v3 仍是单 participant 壳，安装、完整客户端/管理面与动态多 runtime 路由尚未收口。
 
 ## 1. Composition 与 owner
 
@@ -8,7 +8,7 @@
 rah-os-daemon
   -> strict DaemonConfig(schemaVersion=2 compatibility | 3 registry-backed)
   -> SecretProvider -> authenticated Host instance
-  -> RoomKernel(SQLite)
+  -> RahCore -> RoomKernel(SQLite)
   -> ClientApplicationService(loopback HTTP, principal PAT)
   -> WorkerApplicationService(loopback HTTP)
   -> GenericProcessAdapter -> Agent CLI
@@ -84,7 +84,7 @@ Client continuation/ack 只能使用已持久确认或由当前 credential/consu
 Daemon core 下一步不是 UI，也不是更多 JSONL parser，而是：
 
 1. Task list/dependency/block/reassign/cancel、InputRequest cancel/expire/structured answer，以及 Artifact/Review application commands；
-2. ADR-0009 R0 pure planner 已完成，R1 Kernel Placement 骨架经过独立审计后的运行安全修复；下一步按 [Runtime Registry 与多 Lane 调度架构](./runtime-registry-and-multi-lane-scheduling.zh-CN.md) 完成 R1.1 trusted evidence/immutable offer observation，再推进 Host-local registry 与 MultiLaneAgentHost；
+2. ADR-0009 的 atomic launch claim、可信启动期 capacity 与 MultiLaneAgentHost fake gate 已完成；下一步按 [Runtime Registry 与多 Lane 调度架构](./runtime-registry-and-multi-lane-scheduling.zh-CN.md) 完成 canonical workspace/capacity control object，再把 placement-managed multi participant runner 接入 daemon config；
 3. daemon control API、结构化日志、SSE/WebSocket content-free hint 与 supervisor artifact GC；
 4. Keychain、launchd、签名/公证和升级兼容 gate；
 5. 以现有 versioned Client API 为基础补齐 `RahClient` contract，并接入 UI；不得让 UI 直连 SQLite。

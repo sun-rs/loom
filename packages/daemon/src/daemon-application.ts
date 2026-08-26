@@ -17,11 +17,12 @@ import {
   WorkerApplicationService,
 } from "@rah-os/application-service";
 import {
-  AuthenticatedHostContext,
   KERNEL_SCHEMA_VERSION,
+  RahCore,
+  type AuthenticatedHostContext,
   RoomKernel,
   UnauthenticatedError,
-} from "@rah-os/kernel";
+} from "@rah-os/core";
 import {
   CLIENT_API_VERSION,
   type RuntimeRecoveryDescriptor,
@@ -161,6 +162,7 @@ export class DaemonApplication {
       startedAt: new Date().toISOString(),
     };
 
+    let core: RahCore | undefined;
     let kernel: RoomKernel | undefined;
     let clientService: ClientApplicationService | undefined;
     let workerService: WorkerApplicationService | undefined;
@@ -171,10 +173,10 @@ export class DaemonApplication {
       const hostAccessToken = await this.#secretProvider.load(
         this.#config.host.credential,
       );
-      kernel = new RoomKernel({
+      core = RahCore.open({
         databasePath: join(this.#config.stateDirectory, "room.db"),
       });
-      kernel.initialize();
+      kernel = core.kernel;
       const host = kernel.authenticateHostAccessToken(hostAccessToken);
       if (host.hostId !== this.#config.host.hostId) {
         throw new Error(
@@ -487,7 +489,7 @@ export class DaemonApplication {
       cleanupErrors.push(error);
     }
     try {
-      kernel?.close();
+      core?.close();
     } catch (error) {
       cleanupErrors.push(error);
     }

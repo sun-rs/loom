@@ -10,6 +10,7 @@
   "dependencies": {
     "@rah-os/agent-host": "*",
     "@rah-os/application-service": "*",
+    "@rah-os/core": "*",
     "@rah-os/kernel": "*",
     "@rah-os/protocol": "*",
     "zod": "^4.4.3"

@@ -1,4 +1,4 @@
-import type { RoomKernel } from "@rah-os/kernel";
+import type { RoomKernel } from "@rah-os/core";
 
 export interface ContentFreeWakePublisher {
   publish(): Promise<void> | void;

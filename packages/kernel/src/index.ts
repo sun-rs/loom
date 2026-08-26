@@ -22,6 +22,10 @@ export {
   KERNEL_SCHEMA_VERSION,
   RoomKernel,
 } from "./room-kernel.ts";
+export type {
+  PlacementCapacityPolicy,
+  RoomKernelOptions,
+} from "./room-kernel.ts";
 export { planNextPlacement } from "./placement-planner.ts";
 export type {
   PlacementActivationCandidate,
@@ -46,6 +50,7 @@ export type {
   InputRequestResolveMutationResult,
   MessageMutationResult,
   OutboxEntry,
+  PlacementLaunchClaim,
   Principal,
   ProvisionedHostCredential,
   ProvisionedPrincipal,
