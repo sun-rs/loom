@@ -37,3 +37,14 @@ export type {
   ConfiguredLocalRuntime,
   ConfiguredLocalRuntimeSnapshot,
 } from "./local-runtime-inventory.ts";
+export {
+  localCliRuntimeSpec,
+  localWorkbenchWorkerPrompt,
+} from "./local-cli-runtime-spec.ts";
+export {
+  prepareLocalWorkbench,
+  type LocalWorkbenchMetadata,
+  type LocalWorkbenchRuntimeSpec,
+  type PreparedLocalWorkbench,
+} from "./local-workbench-bootstrap.ts";
+export { LocalWorkbenchGateway } from "./local-workbench-gateway.ts";

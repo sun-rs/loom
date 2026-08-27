@@ -45,6 +45,8 @@ test("local CLI discovery resolves executable identity and bounded version witho
     assert.equal(claude?.available, false);
     assert.equal(claude?.configured, false);
     assert.equal(claude?.source, "discovered");
+    assert.deepEqual(codex?.modelBindingDescriptors, []);
+    assert.deepEqual(claude?.modelBindingDescriptors, []);
   } finally {
     rmSync(directory, { force: true, recursive: true });
   }

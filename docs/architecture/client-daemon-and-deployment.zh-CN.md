@@ -1,6 +1,6 @@
 # Client、Daemon 与部署边界
 
-状态：本机 daemon core 已有独立 composition/CLI entrypoint、严格配置、Host generation fencing、deadline、Outbox wake、Worker delivery/Task/InputRequest command，以及 collaboration P2/P3 versioned loopback Human API；Workspace Agent 创建、版本化配置、启用/停用/删除已经打通 Kernel→Human API→Web→冻结运行上下文→真实子进程，并通过 daemon restart 与 desktop/mobile browser gate。运行中 drain、skill/memory、Artifact/Review workflow、CORS/LAN/hint、launchd/install/signing、Keychain 与 supervisor artifact GC 尚未实现。
+状态：本机 daemon core 已有独立 composition/CLI entrypoint、严格配置、Host generation fencing、deadline、Outbox wake、Worker delivery/Task/InputRequest command，以及 collaboration P2/P3 versioned loopback Human API；Workspace Agent 创建、版本化配置、启用/停用/删除已经打通 Kernel→Human API→Web→冻结运行上下文→真实子进程，并通过 daemon restart 与 desktop/mobile browser gate。ADR-0017 另提供持久化 production Web build、server-side Human session 与重启恢复入口。运行中 drain、skill/memory、Artifact/Review workflow、正式 LAN pairing/hint、launchd/install/signing、Keychain 与 supervisor artifact GC 尚未实现。
 
 ## 1. 产品形态不改变核心 owner
 
@@ -138,6 +138,8 @@ AgentHost 必须独立于窗口：
 
 Unix socket 只是同一台机器上的启动协调，不是业务 fencing token，也不是跨机器分布式锁。Kernel 中的 daemon generation、Activation/RuntimeProcess lease 才保护业务 lane。当前 daemon compatibility config v2、single-profile config v3、placement-managed multi-profile config v4、Kernel schema fence、Client API v1/v2 health/capability handshake 与升级 drain deadline 已存在；但尚无 launchd plist、签名安装包、Keychain token loader、daemon control API 或 UI 兼容矩阵，因此仍不能称为可安装的 Mac 后台产品。
 
+`npm run start:local-workbench` 是当前正式的本机 Web 入口：它不使用 Vite dev server，不删除状态，并以 loopback static gateway 持有 Human PAT。浏览器只得到随机 HttpOnly Strict session；gateway 同时执行 Host-header、cookie 与 mutation Origin 校验，再把 PAT 注入到 allowlisted Client API。关闭浏览器不会停止后台进程，终止工作台进程则优雅 drain；launchd 尚未接管前，用户仍需保持该进程运行。
+
 ## 7. 可信局域网部署
 
 当前部署假设可以是可信局域网，这允许开发阶段使用私网 HTTP 和简化证书管理，但“网络可信”不等于“调用者身份可信”。以下边界仍不可取消：
@@ -152,7 +154,7 @@ Unix socket 只是同一台机器上的启动协调，不是业务 fencing token
 
 公网、跨组织或不可信 Wi-Fi 部署另行增加 TLS、设备配对、credential rotation/revocation 和更强隔离；不得以未来增强为由跳过当前身份边界。
 
-当前 config 只接受 `127.0.0.1`，也没有发送 CORS header；这是一条刻意窄化的 core boundary，而不是已经完成局域网/浏览器接入。开放 raft-ui 前必须加入明确 allowed origins，禁止 wildcard，并验证浏览器 token storage、CSRF/跨 origin 与 reconnect conformance。
+当前 daemon config 只接受 `127.0.0.1`，也没有发送 CORS header。ADR-0017 的同源 gateway 已完成 loopback 浏览器 token/Host/CSRF 边界，但刻意不开放 LAN。局域网版仍必须加入设备 pairing、TLS、明确 allowed origins 和 credential rotation/revocation；临时 Vite `:lan` fixture 不得作为正式入口。
 
 ## 8. Mac App 适配约束
 

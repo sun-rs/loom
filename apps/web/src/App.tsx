@@ -76,7 +76,7 @@ import {
 } from "./components/workspace-navigation.tsx";
 
 type AppProps = { client?: RahClient };
-declare const __RAH_DEV_PROXY_AUTH__: boolean;
+declare const __RAH_TRUSTED_PROXY_AUTH__: boolean;
 type RoomData = {
   activeMemberIds: string[];
   agentActivity: RoomAgentActivity[];
@@ -91,9 +91,9 @@ type RoomData = {
 
 export function App({ client: injectedClient }: AppProps) {
   const [client, setClient] = useState<RahClient | undefined>(() =>
-    injectedClient === undefined && __RAH_DEV_PROXY_AUTH__
+    injectedClient === undefined && __RAH_TRUSTED_PROXY_AUTH__
       ? new HttpRahClient({
-          accessToken: () => "development-proxy-auth",
+          accessToken: () => "trusted-proxy-auth",
           baseUrl: "",
         })
       : injectedClient,

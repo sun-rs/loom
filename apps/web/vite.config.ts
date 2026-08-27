@@ -3,6 +3,8 @@ import { defineConfig } from "vite";
 
 const daemonTarget = process.env.RAH_DAEMON_URL ?? "http://127.0.0.1:7314";
 const developmentAccessToken = process.env.RAH_DEV_ACCESS_TOKEN;
+const productionTrustedProxyAuth =
+  process.env.RAH_WEB_TRUSTED_PROXY_AUTH === "1";
 
 function daemonProxy() {
   return {
@@ -29,8 +31,9 @@ function daemonProxy() {
 
 export default defineConfig(({ command }) => ({
   define: {
-    __RAH_DEV_PROXY_AUTH__: JSON.stringify(
-      command === "serve" && developmentAccessToken !== undefined,
+    __RAH_TRUSTED_PROXY_AUTH__: JSON.stringify(
+      productionTrustedProxyAuth ||
+        (command === "serve" && developmentAccessToken !== undefined),
     ),
   },
   plugins: [react()],

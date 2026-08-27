@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { IdentifierSchema, TimestampSchema } from "./common.ts";
+import { ModelBindingDescriptorSchema } from "./execution-policy.ts";
 
 export const LocalRuntimeInventoryRequestSchema = z.object({}).strict();
 export type LocalRuntimeInventoryRequest = z.infer<
@@ -23,6 +24,7 @@ export const LocalRuntimeInventoryEntrySchema = z
     displayName: z.string().trim().min(1),
     executable: z.string().trim().min(1),
     failureCode: IdentifierSchema.optional(),
+    modelBindingDescriptors: z.array(ModelBindingDescriptorSchema),
     probeObservedAt: TimestampSchema.optional(),
     resolvedExecutablePath: z.string().trim().min(1).optional(),
     runtimeOfferId: IdentifierSchema.optional(),

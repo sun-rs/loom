@@ -1,12 +1,17 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type {
   ClientAgentGetResponse,
   ClientAgentManageRequest,
   ClientAgentProvisionRequest,
   LocalRuntimeInventoryEntry,
+  ReasoningLevel,
 } from "@rah-os/protocol";
 
+import {
+  normalizeReasoningLevel,
+  supportedReasoningLevels,
+} from "../agent-runtime-capabilities.ts";
 import { useDialogProtocol } from "../dialog-protocol.ts";
 
 export type AgentCreateInput = Omit<
@@ -70,15 +75,22 @@ export function AgentCreateDialog({
   const [runtimeOfferId, setRuntimeOfferId] = useState(
     runtimeOptions[0]?.runtimeOfferId ?? "",
   );
-  const [reasoning, setReasoning] = useState<
-    "default" | "low" | "medium" | "high" | "max"
-  >("default");
+  const [reasoning, setReasoning] = useState<ReasoningLevel>("default");
   const [sessionPolicy, setSessionPolicy] = useState<
     "fresh" | "prefer_resume" | "require_resume"
   >("fresh");
   const [pending, setPending] = useState(false);
   const [actionError, setActionError] = useState<string>();
   const dialogRef = useDialogProtocol({ blocked: pending, onClose });
+  const selectedRuntime = runtimeOptions.find(
+    (runtime) => runtime.runtimeOfferId === runtimeOfferId,
+  );
+  const reasoningOptions = supportedReasoningLevels(selectedRuntime);
+  useEffect(() => {
+    setReasoning((current) =>
+      normalizeReasoningLevel(current, selectedRuntime),
+    );
+  }, [selectedRuntime]);
   const valid =
     displayName.trim() !== "" &&
     /^[\p{L}\p{N}][\p{L}\p{N}._-]*$/u.test(handle.trim()) &&
@@ -239,12 +251,15 @@ export function AgentCreateDialog({
                 }
                 value={reasoning}
               >
-                <option value="default">Runtime 默认</option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="max">Max</option>
+                {reasoningOptions.map((level) => (
+                  <option key={level} value={level}>
+                    {reasoningLabel(level)}
+                  </option>
+                ))}
               </select>
+              {reasoningOptions.length === 1 ? (
+                <small>该 Runtime 尚未发布可执行的模型/推理绑定。</small>
+              ) : null}
             </label>
             <label>
               Session 策略
@@ -320,14 +335,27 @@ export function AgentManageDialog({
       runtimeOptions[0]?.runtimeOfferId ??
       "",
   );
-  const [reasoning, setReasoning] = useState<
-    "default" | "low" | "medium" | "high" | "max"
-  >(policy.modelIntent.reasoning ?? "default");
+  const initialRuntime = runtimeOptions.find(
+    (runtime) => runtime.runtimeOfferId === runtimeOfferId,
+  );
+  const configuredReasoning = policy.modelIntent.reasoning ?? "default";
+  const [reasoning, setReasoning] = useState<ReasoningLevel>(
+    normalizeReasoningLevel(configuredReasoning, initialRuntime),
+  );
   const [sessionPolicy, setSessionPolicy] = useState(policy.sessionPolicy);
   const [pending, setPending] = useState(false);
   const [deleteArmed, setDeleteArmed] = useState(false);
   const [actionError, setActionError] = useState<string>();
   const dialogRef = useDialogProtocol({ blocked: pending, onClose });
+  const selectedRuntime = runtimeOptions.find(
+    (runtime) => runtime.runtimeOfferId === runtimeOfferId,
+  );
+  const reasoningOptions = supportedReasoningLevels(selectedRuntime);
+  useEffect(() => {
+    setReasoning((current) =>
+      normalizeReasoningLevel(current, selectedRuntime),
+    );
+  }, [selectedRuntime]);
   const valid =
     displayName.trim() !== "" &&
     /^[\p{L}\p{N}][\p{L}\p{N}._-]*$/u.test(handle.trim()) &&
@@ -483,12 +511,21 @@ export function AgentManageDialog({
                 }
                 value={reasoning}
               >
-                <option value="default">Runtime 默认</option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="max">Max</option>
+                {reasoningOptions.map((level) => (
+                  <option key={level} value={level}>
+                    {reasoningLabel(level)}
+                  </option>
+                ))}
               </select>
+              {configuredReasoning !== "default" &&
+              reasoningOptions.includes(configuredReasoning) === false ? (
+                <small>
+                  旧配置 {reasoningLabel(configuredReasoning)}
+                  没有 Runtime 证据；保存时将恢复为 Runtime 默认。
+                </small>
+              ) : reasoningOptions.length === 1 ? (
+                <small>该 Runtime 尚未发布可执行的模型/推理绑定。</small>
+              ) : null}
             </label>
             <label>
               Session 策略
@@ -591,4 +628,9 @@ function handleFromName(value: string): string {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function reasoningLabel(reasoning: ReasoningLevel): string {
+  if (reasoning === "default") return "Runtime 默认";
+  return reasoning[0]!.toUpperCase() + reasoning.slice(1);
 }

@@ -7,6 +7,13 @@ const fixtureSource = readFileSync(
   join(import.meta.dirname, "../../../scripts/run-local-cli-web-fixture.mjs"),
   "utf8",
 );
+const runtimeSpecSource = readFileSync(
+  join(
+    import.meta.dirname,
+    "../../../packages/daemon/src/local-cli-runtime-spec.ts",
+  ),
+  "utf8",
+);
 
 test("local CLI Agent catalog belongs to the product Workspace", () => {
   assert.match(
@@ -22,7 +29,8 @@ test("local CLI Agent catalog belongs to the product Workspace", () => {
     fixtureSource,
     /workspaceDefinitionId: productWorkspace\.workspace\.workspaceId/u,
   );
-  assert.match(fixtureSource, /RAH_AGENT_CONTEXT_JSON/u);
+  assert.match(fixtureSource, /localCliRuntimeSpec/u);
+  assert.match(runtimeSpecSource, /RAH_AGENT_CONTEXT_JSON/u);
 });
 
 test("local CLI fixture exposes a same-origin Web entry without announcing a token", () => {

@@ -57,6 +57,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
           configured: true,
           displayName: "Codex",
           executable: "codex",
+          modelBindingDescriptors: [],
           resolvedExecutablePath: "/opt/homebrew/bin/codex",
           runtimeOfferId: "offer-codex",
           runtimeProfileId: "profile-codex",

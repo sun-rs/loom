@@ -49,6 +49,18 @@ ephemeral IDs and loopback origins; the Human PAT stays in the Vite proxy proces
 This gate is also a required CI step, so a pull request cannot pass only on typed
 or fixture-level tests while the real browser business flow is broken.
 
+The persistent production entry has a separate gate:
+
+```text
+npm run test:web:workbench
+```
+
+It builds the trusted-proxy production bundle, starts an owner-private persistent
+state root twice, and uses a fake `codex` executable through the real
+RuntimeProfile/AgentHost/Worker path. Real Chrome must open without a Human token
+form, render the canonical Agent reply after restart, and remain overflow-free at
+390×844. The test never discovers or runs an installed paid Provider.
+
 For exploratory inspection, run:
 
 ```text

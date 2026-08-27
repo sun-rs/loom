@@ -38,10 +38,11 @@
 32. [ADR-0014：Activation-scoped Agent Room reply](./adr/0014-activation-scoped-agent-room-reply.md)
 33. [ADR-0015：Room membership 投递与 Agent activity](./adr/0015-room-membership-delivery-and-agent-activity.md)
 34. [ADR-0016：Workspace Agent 原子创建与冻结运行上下文](./adr/0016-workspace-agent-provisioning-and-runtime-context.md)
-35. [Phase 1 实验证据](./experiments/phase-1-evidence.zh-CN.md)
-36. [Daemon config v2 兼容示例](./examples/daemon.config.example.json)
-37. [Daemon config v4 多 Agent 示例](./examples/daemon.config.v4.example.json)
-38. [实施路线与门禁](./roadmap.zh-CN.md)
+35. [ADR-0017：持久化 loopback 本地工作台](./adr/0017-persistent-loopback-local-workbench.md)
+36. [Phase 1 实验证据](./experiments/phase-1-evidence.zh-CN.md)
+37. [Daemon config v2 兼容示例](./examples/daemon.config.example.json)
+38. [Daemon config v4 多 Agent 示例](./examples/daemon.config.v4.example.json)
+39. [实施路线与门禁](./roadmap.zh-CN.md)
 
 维护规则：
 

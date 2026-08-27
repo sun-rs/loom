@@ -145,6 +145,7 @@ test("Workspace Agent directory is independent from Room membership and reports 
     configured: true,
     displayName: "Fake CLI",
     executable: "fake-cli",
+    modelBindingDescriptors: [],
     resolvedExecutablePath: "/tmp/fake-cli",
     runtimeOfferId: "offer-alice",
     runtimeProfileId: "profile-alice",

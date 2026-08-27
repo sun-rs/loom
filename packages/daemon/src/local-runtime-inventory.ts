@@ -29,6 +29,7 @@ export type ConfiguredLocalRuntime = {
   displayName: string;
   executable: string;
   failureCode?: string;
+  modelBindingDescriptors: LocalRuntimeInventoryEntry["modelBindingDescriptors"];
   probeObservedAt?: string;
   resolvedExecutablePath?: string;
   runtimeOfferId: string;
@@ -51,6 +52,7 @@ export function configuredRuntimeSnapshot(input: {
     available: probeReport.available,
     displayName: runtimeProfileRevision.manifest.displayName,
     executable: runtimeProfileRevision.manifest.adapter.executable,
+    modelBindingDescriptors: [],
     ...(probeReport.failureCode === undefined
       ? {}
       : { failureCode: probeReport.failureCode }),
@@ -168,6 +170,7 @@ export async function discoverKnownLocalClis(
         configured: false,
         displayName,
         executable,
+        modelBindingDescriptors: [],
         ...(resolvedExecutablePath === undefined
           ? {}
           : { resolvedExecutablePath }),
