@@ -1,6 +1,6 @@
 # RAH Core SDK 边界
 
-状态：**v0.1 implemented / Task Coordination v1 / collaboration P2 / daemon v4 fake E2**（2026-08-26）。`@rah-os/core` 已成为 daemon 可直接嵌入的稳定组合边界；它不依赖 HTTP、WebSocket、MCP、UI 或任何 Provider transcript parser。fake 多 Agent 门禁已证明不同 Agent 并发、单 Agent 串行、开放 Task 单 winner、Task 显式验收与 Room 权威判定；schema v7 与 P2 已建立 Workspace/Room discovery、Role/Message/Thread canonical command/query 边界；可执行 config v4 进一步证明同一 Host 的两个 participant 由 Kernel Placement 路由到两个 immutable Runtime Profile。它仍不是 Workspace create/archive、canonical WorkspaceDefinition/mount/Capacity 管理面或真实多 CLI certification。
+状态：**v0.1 local candidate / Task Coordination v1 / collaboration P2–P3 / daemon v4 fake E2**（2026-08-26）。`@rah-os/core` 已成为 daemon 可直接嵌入的源码级组合边界；它不依赖 HTTP、WebSocket、MCP、UI 或任何 Provider transcript parser。P3 local gate 已证明 Human managed create、Agent catalog/onboarding、Message/Thread context、两个 Activation-scoped Agent Room reply、开放 Task 单 winner、双 placement lane、Human completion与 daemon/client reconnect recovery；业务判定不读取 Provider transcript。该 package 仍为 `private`、导出 TypeScript source，并非已版本化发布的公共 SDK，也不代表 Agent provisioning/editor、Workspace archive、canonical WorkspaceDefinition/mount、Artifact/Review 或真实多 CLI certification 已完成。
 
 ## 1. Core 是什么
 
@@ -9,22 +9,23 @@ Core 是一个可单独 import、无界面的业务运行库，而不是 daemon 
 ```text
 @rah-os/protocol
   -> @rah-os/kernel            canonical state + transaction + scheduler
+       -> HumanApplicationPort frozen Human capability facade
   -> @rah-os/agent-host        RuntimeAdapter + lane execution/recovery
-  -> @rah-os/core              stable headless composition SDK
+  -> @rah-os/core              source-level headless composition boundary
        <- daemon / tests / future embedded host
 
 application-service / HTTP / SSE / MCP / CLI / Web / Mac / iOS
   -> replaceable shells around Core contracts
 ```
 
-`RahCore.open()` 持有 SQLite Kernel 生命周期；`core.kernel` 暴露 canonical command/query surface；`core.createMultiLaneAgentHost()` 创建绑定到同一 Kernel 的有界多 lane runner。daemon 已经通过 `RahCore` 打开和关闭业务核心。
+`RahCore.open()` 持有 SQLite Kernel 生命周期；`core.human` 暴露可直接使用、无需 server 的冻结 Human use-case port；`core.createMultiLaneAgentHost()` 创建绑定到同一 Kernel 的有界多 lane runner。daemon 已经通过 `RahCore` 打开和关闭业务核心。`core.kernel` 暂时只是 Host/control/bootstrap 尚未完成 capability 拆分前的可信、experimental composition escape hatch，不是 UI 或 Human transport contract，也不承诺稳定 ABI。
 
 ## 2. Core 拥有什么
 
 | Core owner      | 权威事实                                                                                               |
 | --------------- | ------------------------------------------------------------------------------------------------------ |
 | Identity/ACL    | Principal、Room membership、authenticated actor/Host/Worker scope                                      |
-| Collaboration   | Workspace/Room discovery、Role、Message、Thread、RoomEvent、Inbox、cursor、content-free Outbox         |
+| Collaboration   | Workspace/Room discovery/managed create、Role、Message、Thread、RoomEvent、Inbox、cursor、Outbox       |
 | Business flow   | Task、InputRequest 及其显式 command/event 状态机                                                       |
 | Scheduling      | Activation、Agent/Policy revision、RuntimeOffer observation、Placement、capacity/workspace reservation |
 | Execution proof | RunAttempt、RuntimeProcess、lease、terminal proof、retry/quarantine/recovery                           |
@@ -67,6 +68,8 @@ Runtime 插槽只需实现 `RuntimeAdapter` 的 probe/start/reap/cancel/recover�
 3. 把 content-free hint 当成“立即 pull”的提示；
 4. 把 runtime diagnostics 存到 observation/log 面。
 
+Human HTTP/IPC adapter 只能依赖 `HumanApplicationPort`，不得依赖或保存 `RoomKernel`。嵌入式调用者直接使用 `core.human`；远端 UI 未来通过 `RahClient -> transport adapter -> core.human`。两者调用同一业务 owner，不构成两套 server implementation。完整边界见 [ADR-0013](../adr/0013-human-application-port-and-transport-boundary.md)。
+
 外壳不得持有第二套 Task/session/council 状态机，不得由 provider session ID 决定 Room identity，不得通过解析 CLI 输出推断 `claim/start/submit/complete`。因此新增第 21 个 CLI 的最低成本是一个启动/recovery adapter 与 capability probe，而不是新增一套聊天室消息解析器。
 
 ## 6. v0.1 收口门禁
@@ -84,6 +87,10 @@ Runtime 插槽只需实现 `RuntimeAdapter` 的 probe/start/reap/cancel/recover�
 - [x] release/assign/block/unblock/cancel 与 immutable dependency ready 派生；
 - [x] Worker/Client versioned application-service command surface；
 - [x] Workspace/Room discovery、成员增删/角色、Message/Thread 的 causal/idempotent Core 与 Client API；
-- [ ] durable control-Room CapacityPool/WorkspaceDefinition 管理面。
+- [x] Workspace + 唯一 control Room 原子创建，以及 control-seq fenced channel 创建；
+- [x] control-Room-visible Agent catalog 与 definition-resolved Room onboarding；
+- [x] Human→双 Agent context/开放 Task→单 winner→Human complete→daemon/client reconnect 纵向门禁；
+- [x] frozen `HumanApplicationPort` 可直接嵌入，HTTP adapter 不再获得整个 `RoomKernel`；
+- [x] Agent/Policy mutation 只允许 managed control Room owner/admin，且 policy revision 不能跨 control Room 引用。
 
-上述未完成门禁补齐之前，可以称“Core SDK 与可执行 daemon 的多 Agent fake business flow 已成立”，不能称“完整多 CLI 生产 daemon 已收口”。
+上述门禁允许冻结为“local single-host trusted-config 的多 Agent headless Core candidate”。durable CapacityPool/PlacementHold 不再阻塞 v0.1；Task discussion anchor、Artifact/Review、Human Workspace 到 runtime mount/cwd 的 canonical 映射和真实 mixed CLI v4 certification 进入 v0.2。完整判断见 [v0.1 收口与竞争性独立审计](../audits/2026-08-26-v01-closure-competitive-audit.zh-CN.md)。

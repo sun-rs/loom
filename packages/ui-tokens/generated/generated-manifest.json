@@ -1,0 +1,52 @@
+{
+  "files": [
+    {
+      "bytes": 5780,
+      "outputPath": "channel-extras.css",
+      "sha256": "b65b6a9175a58fff96965d380a81d8b0417c7266c92b07c6626608e487a8db16",
+      "sourcePath": "channel-extras.css"
+    },
+    {
+      "bytes": 8644,
+      "outputPath": "generated/raft-icons.svg",
+      "sha256": "3e2397c584b9a03e11d8314638c73e758f9c31de66d6222af9010695c87832c5",
+      "sourcePath": "generated/raft-icons.svg"
+    },
+    {
+      "bytes": 1982,
+      "outputPath": "generated/raft-official-overlays.css",
+      "sha256": "f389e6850494dc87982f145a65c5e7b3d63fd0ee8566235b9d03688d1623916d",
+      "sourcePath": "generated/raft-official-overlays.css"
+    },
+    {
+      "bytes": 4537,
+      "outputPath": "generated/raft-official-tokens.css",
+      "sha256": "86e95e97cf9a7aa221d2b0caec82e18a5811046ab00916ae41771a05bcf1813b",
+      "sourcePath": "generated/raft-official-tokens.css"
+    },
+    {
+      "bytes": 47762,
+      "outputPath": "styles.css",
+      "sha256": "4e319346acc987b92a065874f82f4ad46c4459c2ef60b67c9adfa4a5d35de8d7",
+      "sourcePath": "styles.css"
+    },
+    {
+      "bytes": 10439,
+      "outputPath": "tokens.brutal.css",
+      "sha256": "4bfede7f21e84ecdbf0ffdd1486388e0962985852528eb662e798875d99f1017",
+      "sourcePath": "tokens.brutal.css"
+    },
+    {
+      "bytes": 34664,
+      "outputPath": "vendor/raft/fonts/raft-quote-glyphs.woff2",
+      "sha256": "1f21c6eaa0000f3329cfcfac966b43d5bebf5aa610303e33294ac31bc6f4bb59",
+      "sourcePath": "vendor/raft/fonts/raft-quote-glyphs.woff2"
+    }
+  ],
+  "schemaVersion": 1,
+  "source": {
+    "dirty": true,
+    "gitHead": "286c3c5d99b56d8be5e3339510de310b4b7fe727",
+    "repository": "raft-ui"
+  }
+}

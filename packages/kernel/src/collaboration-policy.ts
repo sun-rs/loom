@@ -12,6 +12,58 @@ export function requireHumanRoomOwner(principal: Principal): void {
   }
 }
 
+export function requireHumanControlRoomManager(
+  database: DatabaseSync,
+  controlRoomId: string,
+  principalId: string,
+): void {
+  const room = database
+    .prepare("SELECT kind FROM rooms WHERE room_id = ?")
+    .get(controlRoomId);
+  if (room === undefined) {
+    throw new NotFoundError(`room ${controlRoomId} was not found`);
+  }
+  if (text(room, "kind") !== "control") {
+    throw new ForbiddenError(
+      `room ${controlRoomId} is not a managed control Room`,
+    );
+  }
+  const principal = database
+    .prepare("SELECT kind FROM principals WHERE principal_id = ?")
+    .get(principalId);
+  if (principal === undefined) {
+    throw new NotFoundError(`principal ${principalId} was not found`);
+  }
+  if (text(principal, "kind") !== "human") {
+    throw new ForbiddenError(
+      "control object mutations require an authenticated Human member",
+    );
+  }
+  requireRoomManager(database, controlRoomId, principalId);
+}
+
+export function requireExecutionPolicyRevisionControlRoom(
+  database: DatabaseSync,
+  executionPolicyRevisionId: string,
+  controlRoomId: string,
+): void {
+  const row = database
+    .prepare(
+      "SELECT control_room_id FROM execution_policy_revisions WHERE execution_policy_revision_id = ?",
+    )
+    .get(executionPolicyRevisionId);
+  if (row === undefined) {
+    throw new NotFoundError(
+      `execution policy revision ${executionPolicyRevisionId} was not found`,
+    );
+  }
+  if (text(row, "control_room_id") !== controlRoomId) {
+    throw new ForbiddenError(
+      `execution policy revision ${executionPolicyRevisionId} must belong to the same control Room`,
+    );
+  }
+}
+
 export function requireRoomMember(
   database: DatabaseSync,
   roomId: string,

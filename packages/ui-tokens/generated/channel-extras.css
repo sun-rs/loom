@@ -1,0 +1,143 @@
+/* ============================================================
+   频道页扩展组件 —— 任务看板 / 文件列表 / 成员模态 / 设置抽屉
+   仅追加页面级规则；按钮 / chip / 表单 / 模态 / 抽屉基类与
+   设计令牌全部复用 styles.css，不在此另起一套
+   ============================================================ */
+
+/* ---- 面板切换：聊天 / 任务 / 文件 ---- */
+.chan-pane { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.chan-pane[hidden] { display: none; }
+
+/* ---- 看板工具行 ---- */
+.board-toolbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px;
+  border-bottom: var(--bd-heavy);
+  background: var(--paper);
+}
+.toolbar-spacer { flex: 1; }
+.filter-chip {
+  display: inline-flex; align-items: center; gap: 6px; flex: none;
+  border: var(--bd); background: var(--bg);
+  font-size: 12px; font-weight: 700;
+  padding: 4px 10px; cursor: pointer;
+}
+.filter-chip svg { width: 13px; height: 13px; }
+.filter-chip:hover { background: var(--hover-yellow); }
+.view-toggle { display: flex; gap: 8px; flex: none; }
+.view-toggle .sq-btn.is-active { background: var(--yellow); }
+
+/* ---- 五列看板 ---- */
+.kanban {
+  flex: 1; min-height: 0;
+  display: flex; gap: 14px;
+  padding: 16px;
+  overflow-x: auto;
+}
+.kcol { flex: 1 0 232px; min-width: 232px; display: flex; flex-direction: column; min-height: 0; }
+.kcol-head {
+  display: flex; align-items: center; gap: 8px; flex: none;
+  border: var(--bd); box-shadow: var(--shadow-s);
+  padding: 6px 10px;
+  font-size: 13px; font-weight: 700;
+}
+.kcol-head .count { color: var(--ink); font-weight: 700; }
+.kcol-head .fold {
+  margin-left: auto;
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  background: rgba(255, 255, 255, .6);
+  border: var(--bd); cursor: pointer;
+}
+.kcol-head .fold svg { width: 12px; height: 12px; }
+.kcol.is-collapsed .fold svg { transform: rotate(-90deg); }
+.kcol.is-collapsed .kcol-body { display: none; }
+.kcol-body {
+  flex: 1; min-height: 0; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 12px 2px 4px;
+}
+
+/* 任务卡：白底 + 2px 描边 + 小硬阴影 */
+.kcard {
+  background: var(--bg);
+  border: var(--bd); box-shadow: var(--shadow-s);
+  padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.kcard-no { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+.kcard-title { font-size: 13.5px; font-weight: 700; line-height: 1.55; }
+.kcard-foot { display: flex; justify-content: flex-end; }
+
+/* 空列占位：30% 墨色 2px 虚线盒 */
+.kcol-empty {
+  border: 2px dashed rgba(20, 17, 17, .3);
+  border: 2px dashed color-mix(in srgb, var(--ink) 30%, transparent);
+  padding: 22px 12px;
+  text-align: center;
+  font-size: 12.5px; color: var(--muted);
+}
+
+/* 列表视图：列纵向堆叠，卡片整宽 */
+.kanban.list-mode { flex-direction: column; overflow-x: hidden; overflow-y: auto; }
+.kanban.list-mode .kcol { flex: none; min-width: 0; }
+.kanban.list-mode .kcol-body { overflow: visible; }
+
+/* ---- 文件列表 ---- */
+.file-list {
+  flex: 1; min-height: 0; overflow-y: auto;
+  padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.file-row {
+  display: flex; align-items: center; gap: 12px;
+  border: var(--bd); box-shadow: var(--shadow-s);
+  background: var(--bg);
+  padding: 8px 12px;
+}
+.file-thumb {
+  width: 40px; height: 40px; flex: none;
+  background: var(--lavender);
+  border: var(--bd);
+  display: grid; place-items: center;
+}
+.file-thumb svg { width: 20px; height: 20px; }
+.file-info { flex: 1; min-width: 0; }
+.file-info b { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.file-meta { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+.file-actions { display: flex; gap: 6px; flex: none; }
+
+/* ---- 成员模态 ---- */
+.member-row {
+  height: var(--raft-modal-row-height); padding: var(--raft-modal-row-padding);
+  display: flex; align-items: flex-start; gap: 8px;
+  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke;
+  transition-duration: .15s;
+}
+.member-row.is-human { height: var(--raft-modal-human-row-height); }
+.member-row:hover { background: var(--soft-signal); }
+.member-avatar {
+  position: relative; width: 28px; height: 28px; flex: none; margin-top: 4px;
+  padding: 0; border: 0; background: transparent; cursor: pointer;
+}
+.member-avatar .avatar {
+  width: 28px; height: 28px; border: 1px solid var(--black); background: var(--cyan);
+  display: flex; align-items: center; justify-content: center; color: var(--black);
+  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke;
+  transition-duration: .15s;
+}
+.member-avatar:hover .avatar { filter: brightness(.9); }
+.member-avatar .presence { right: -4px; bottom: -4px; width: 10px; height: 10px; border-width: 1px; }
+.member-copy { min-width: 0; flex: 1; }
+.member-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--black); font-size: 14px; line-height: 20px; font-weight: var(--fw-medium); }
+.member-status { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--raft-modal-status-foreground); font-family: var(--mono); font-size: 12px; line-height: 16px; }
+
+/* ---- 390px 响应式 ---- */
+@media (max-width: 760px) {
+  .board-toolbar { padding: 8px 12px; overflow-x: auto; }
+  .board-toolbar .btn { flex: none; }
+  .kanban { padding: 12px; gap: 10px; }
+  .kcol { flex-basis: 78vw; min-width: 78vw; } /* 看板横向滚动，露出下一列边缘 */
+  .file-list { padding: 10px 12px; }
+  .file-row .file-dl { display: none; } /* 窄屏操作只保留「更多」 */
+}

@@ -1,6 +1,6 @@
 # Daemon Core 运行架构
 
-状态：独立 `@rah-os/core`、Task Coordination v1、InputRequest 无 listening 恢复、collaboration P2 Human Client API 与 schema v7 Workspace/Room/Role/Message/Thread 边界已达到 local gate；可执行 daemon config v4 已通过双 participant、双不可变 Runtime Profile、Placement-selected external Worker E2。安装、P3 客户端纵向 E2、Workspace create/archive、canonical WorkspaceDefinition/mount/Capacity 与真实 mixed CLI v4 certification 尚未收口。
+状态：独立 `@rah-os/core`、Task Coordination v1、InputRequest 无 listening 恢复、collaboration P2/P3 Human API 与 schema v8 managed Workspace/Room/Agent catalog/Role/Message/Thread 边界已达到 local gate；可执行 daemon config v4 已通过 Human 驱动的双 participant、双不可变 Runtime Profile、单 winner、验收与重连恢复 E2。安装、Agent provisioning、Workspace archive、canonical WorkspaceDefinition/mount/Capacity 与真实 mixed CLI v4 certification 尚未收口。
 
 ## 1. Composition 与 owner
 
@@ -46,7 +46,7 @@ Host credential
   -> /v1/worker/tasks/get|input-status|claim|start|progress|release|block|request-input|submit
 ```
 
-daemon 不保存 Agent PAT。Worker token 不能调用普通 Agent message、任意 Kernel method或选择 actor、Room、participant、consumer、`toSeq` 与 Task lease。Task endpoint 只能查看本 Activation 通过 Inbox 实际投递的 Task；open Task 可由这些候选 Agent 原子竞争，后续 mutation 仍要求当前 participant 拥有 active claim。causal cursor 必须由本 credential 已接收或产生。Host revoke、generation 被接管、lease 过期、run terminal 或 scope 不一致都会 fence token。
+daemon 不保存 Agent PAT。Worker token 不能调用通用 Agent message、任意 Kernel method或选择 actor、Room、participant、consumer、recipient、`toSeq` 与 Task lease；唯一 Message command 是 [ADR-0014](../adr/0014-activation-scoped-agent-room-reply.md) 定义的无 recipient Activation reply，必须引用已完整投递的固定 `toSeq`。Task endpoint 只能查看本 Activation 通过 Inbox 实际投递的 Task；open Task 可由这些候选 Agent 原子竞争，后续 mutation 仍要求当前 participant 拥有 active claim。causal cursor 必须由本 credential 已接收或产生。Host revoke、generation 被接管、lease 过期、run terminal 或 scope 不一致都会 fence token。
 
 ## 4. Wake 与 polling
 
@@ -58,14 +58,14 @@ Message transaction 原子写入 `activation.requested` Outbox。dispatcher 通�
 
 ```text
 principal PAT
-  -> /v2/client/health|workspaces/*|rooms/*|messages/*|threads/*|tasks/*|input-requests/*
+  -> /v1|v2|v3/client/health|workspaces/*|rooms/*|messages/*|threads/*|tasks/*|input-requests/*
   -> per-request authenticated actor
   -> Room ACL + canonical Kernel query/command
 ```
 
-Client 和 Worker 使用独立端口与 authority。Client body 不能选择 actor/responder；Worker token 也不能升级为 Human PAT。当前 API v2 提供 content-free health/capabilities、Workspace/Room discovery、Room `sync/ack`、成员读取/添加/移除/角色、Message 分页读取/发送、Thread 读取/创建/回复、Task/InputRequest list、Task create/assign/unblock/cancel/complete 和 designated-responder resolve；v1 的原有窄 surface 继续兼容，但不伪装支持 P2 capability。
+Client 和 Worker 使用独立端口与 authority。Client body 不能选择 actor/responder；Worker token 也不能升级为 Human PAT。API v2 提供 P2 discovery/collaboration surface；API v3 新增 managed Workspace/Room create 与显式 `workspaceWrite/roomWrite` capability。v1/v2 的原有 surface 继续兼容，不静默宣称新写能力。
 
-Client continuation/ack 只能使用已持久确认或由当前 credential/consumer 实际收到的 cursor；daemon 重启会清空未确认的 delivery proof，因此客户端从 durable ack 位置重同步。当前只允许 loopback，未开放 CORS/hint/LAN，也尚未接入 raft-ui。完整决策见 [ADR-0008](../adr/0008-versioned-human-client-application-service.md)。
+Client continuation/ack 只能使用已持久确认或由当前 credential/consumer 实际收到的 cursor；daemon 重启会清空未确认的 delivery proof，因此客户端从 durable ack 位置重同步。当前只允许 loopback，未开放 CORS/hint/LAN；Phase 4A Web 通过同源开发代理接入，不代表生产浏览器 transport 已完成。完整决策见 [ADR-0008](../adr/0008-versioned-human-client-application-service.md)。
 
 ## 6. 当前配置与执行限制
 

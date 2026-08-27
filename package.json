@@ -7,16 +7,26 @@
     "node": ">=24.0.0"
   },
   "workspaces": [
+    "apps/*",
     "packages/*"
   ],
   "scripts": {
     "daemon": "node packages/daemon/src/cli.ts",
+    "dev:web": "npm run dev --workspace=@rah-os/web",
+    "dev:web:multi-agent-fixture": "node scripts/run-multi-agent-web-fixture.mjs",
+    "dev:web:multi-agent-fixture:lan": "RAH_WEB_HOST=0.0.0.0 node scripts/run-multi-agent-web-fixture.mjs",
+    "dev:web:local-cli-fixture": "node scripts/run-local-cli-web-fixture.mjs",
+    "build:web": "npm run build --workspace=@rah-os/web",
+    "ui:snapshot:import": "node scripts/import-raft-ui-snapshot.mjs",
+    "ui:snapshot:check": "node --test packages/raft-ui-snapshot/test/snapshot.test.ts",
+    "ui:tokens:generate": "node scripts/generate-ui-tokens.mjs",
+    "ui:tokens:check": "node --test packages/ui-tokens/test/ui-tokens.test.ts",
     "test": "node --test --test-concurrency=1 packages/*/test/*.test.ts",
     "test:real:claude": "RAH_REAL_CLI_GATE=claude node --test packages/daemon/test/real-cli-gate.test.ts",
     "test:real:codex": "RAH_REAL_CLI_GATE=codex node --test packages/daemon/test/real-cli-gate.test.ts",
     "test:real:kimi": "RAH_REAL_CLI_GATE=kimi node --test packages/daemon/test/real-cli-gate.test.ts",
     "test:real:opencode": "RAH_REAL_CLI_GATE=opencode node --test packages/daemon/test/real-cli-gate.test.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && npm run typecheck --workspace=@rah-os/web",
     "check": "npm run typecheck && npm test",
     "format:check": "prettier --check .",
     "format": "prettier --write ."

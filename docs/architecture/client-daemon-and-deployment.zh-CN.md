@@ -1,6 +1,6 @@
 # Client、Daemon 与部署边界
 
-状态：本机 daemon core 已有独立 composition/CLI entrypoint、严格配置、Host generation fencing、deadline、Outbox wake、Worker delivery/Task/InputRequest command，以及 collaboration P2 versioned loopback Human Client API；fake daemon 已通过经 Client API resolve 的无 listening InputRequest gate。P3 浏览器纵向 E2、完整 `RahClient`/control API、Artifact/Review workflow、CORS/LAN/hint、launchd/install/signing、Keychain、supervisor artifact GC 与 UI 尚未实现。
+状态：本机 daemon core 已有独立 composition/CLI entrypoint、严格配置、Host generation fencing、deadline、Outbox wake、Worker delivery/Task/InputRequest command，以及 collaboration P2/P3 versioned loopback Human API；local Fake Agent 已通过双 Agent 开放 Task、Human complete、daemon restart 与 durable client-cursor recovery gate。完整 `RahClient`/control API、Artifact/Review workflow、CORS/LAN/hint、launchd/install/signing、Keychain、supervisor artifact GC 与 UI 尚未实现。
 
 ## 1. 产品形态不改变核心 owner
 
@@ -56,7 +56,7 @@ interface RahClient {
 
 建议实现 `HttpRahClient`、`DesktopRahClient` 和 `FakeRahClient`。Electron IPC、WKWebView message handler 或测试 fake 都只是 transport adapter；它们不能复制 command handler 或 projection。
 
-当前 `ClientApplicationService` 已实现上述 contract 的 collaboration P2 段：health/capabilities、Workspace/Room discovery、Room `sync/ack`、成员读取/添加/移除/角色、Message 读取/发送、Thread 读取/创建/回复、Task/InputRequest list 与 mutation。尚无独立 `RahClient` package、Workspace/Room create/archive、Inbox query/resolve、Artifact/Review、Run Inspector 或 `subscribeHints`，因此不能把这一 slice 称为完整 UI SDK。
+当前 Human HTTP adapter（兼容类名 `ClientApplicationService`）已实现上述 contract 的 collaboration P2/P3 段：v1/v2 compatibility、v3 health/capabilities、Workspace/Room discovery/managed create、Agent catalog/onboarding、Room `sync/ack`、成员角色、Message/Thread、Task/InputRequest command/query。P3 gate 已覆盖 daemon restart 后同 consumer 从 durable cursor 恢复。它只依赖 `HumanApplicationPort`；嵌入式程序可跳过 HTTP 直接调用 `RahCore.human`。独立 typed `RahClient` package 已覆盖现有 v3 route，Web Room slice 使用 `client-core` 做 bounded catch-up 与 ack-after-apply。Workspace/Room archive、Agent provisioning/editor/lifecycle、Inbox query/resolve、Artifact/Review、Run Inspector 与 `subscribeHints` 仍缺失，因此不能把这一 slice 称为完整 UI SDK。
 
 ## 4. 通信协议
 
@@ -78,6 +78,8 @@ connect/reconnect
 ```
 
 WebSocket 在线不证明没有漏事件；hint 丢失时由 sync/reconciliation 恢复。Mac App 不得拥有一套只走 Electron IPC 的业务协议，Web/PWA 也不得拥有另一套 HTTP 业务协议。
+
+在 `subscribeHints` 尚未实现时，Phase 4A Web 使用请求不重叠的 bounded reconciliation 作为可靠性 backstop：未追平时快速继续，追平后前台 5 秒、后台 15 秒，失败指数退避到 30 秒，页面重新可见时立即同步。该策略不承载业务 truth；未来 hint 到达后仍必须回到相同 sync path，polling 继续负责 hint 丢失恢复。
 
 当前 HTTP API 的 collaboration surface 使用 `/v2/client`；原 `/v1/client` Task/InputRequest/sync/ack 与窄 health contract 保持兼容。数据 route 每次认证 principal PAT。sync/ack 还校验当前 credential/Room/consumer 实际收到的 cursor；service restart 不会推进 durable ack，客户端只需重新 sync。Worker `/v1/worker` 使用另一端口和短命 Activation bearer，不能被 Human client 复用。
 
@@ -128,7 +130,7 @@ AgentHost 必须独立于窗口：
 - Host 状态按 `online -> draining -> offline` 发布；运行中续租不会把 `draining` 覆盖回 `online`；
 - 无论 runner 正常返回或失败，最终都会释放本机 instance lock。
 
-`@rah-os/daemon` 在 wrapper 之外补上了可执行 composition root：它统一拥有 Kernel/Worker/Runtime/AgentHost/Outbox publisher 的启动回滚和逆序关闭；一个配置当前只允许一个 Host credential 精确绑定一个 participant。每次进程认证生成新的 instance generation，正常 offline 或超过 `hostStaleAfterMs` 后才能接管，旧 Host 与 Worker authority 随即被 fence。启动、恢复、取消和总 drain 都有显式 deadline。
+`@rah-os/daemon` 在 wrapper 之外补上了可执行 composition root：它统一拥有 Kernel/Worker/Runtime/AgentHost/Outbox publisher 的启动回滚和逆序关闭；compatibility v2/v3 保留单 participant lane，config v4 可以由一个 Host credential 精确绑定 participant allowlist，并运行多 participant、多 immutable runtime profile。每次进程认证生成新的 instance generation，正常 offline 或超过 `hostStaleAfterMs` 后才能接管，旧 Host 与 Worker authority 随即被 fence。启动、恢复、取消和总 drain 都有显式 deadline。
 
 本机 Outbox dispatcher 只消费 `activation.requested`，发布 content-free wake 以中断 Host poll wait；固定 reconciliation interval 仍是 100% hint loss 的恢复路径。独立进程 fixture 已验证关闭 UI 无关的 SIGTERM、Worker delivery 和 restart。
 

@@ -29,12 +29,14 @@ Task Coordination v1 收口后，`RoomKernel` 同时承载认证、Room、Task�
   └── task.ts                     Task state + projection validation
 
 @rah-os/kernel/src/room-kernel.ts public facade + command transaction owner
+  ├── human-application-port.ts   frozen direct/transport Human capability whitelist
   ├── collaboration-service.ts    Workspace/Room/Role/Message/Thread command/query owner
   ├── room-event-writer.ts        event + Inbox/Activation/Outbox atomic derivation
   ├── collaboration-policy.ts     membership/manager/Human owner invariants
   ├── collaboration-projection.ts canonical collaboration read projections
-  ├── schema.ts                   schema v7 + fail-closed legacy migration
+  ├── schema.ts                   schema v8 + fail-closed legacy migration
   ├── task-projection.ts          canonical Task read projection only
+  ├── capacity-policy.ts          pure capacity identity/limit validation
   ├── sqlite-row.ts               strict SQLite value decoding
   └── canonical-digest.ts         one canonical serialization/digest rule
 
@@ -43,7 +45,7 @@ Task Coordination v1 收口后，`RoomKernel` 同时承载认证、Room、Task�
   └── runtime-offer-publisher.ts   lease refresh + redacted Offer publication
 ```
 
-Slice 2 已把现有 Room collaboration command 与 event derivation 按 owner 提取，`RoomKernel` 只在一个 transaction 中委派。Task command 仍有意不搬迁：它目前深度依赖 claim lease、Worker fencing、dependency、InputRequest 与 Run completion proof；在没有先定义窄 transaction context 前，机械搬到新 class 只会产生隐藏的第二 owner 或 callback soup。
+Slice 2 已把现有 Room collaboration command 与 event derivation 按 owner 提取，`RoomKernel` 只在一个 transaction 中委派；纯 Capacity identity/limit policy 也已独立，新增 Activation Room reply 没有提高源码 ratchet。Task command 仍有意不搬迁：它目前深度依赖 claim lease、Worker fencing、dependency、InputRequest 与 Run completion proof；在没有先定义窄 transaction context 前，机械搬到新 class 只会产生隐藏的第二 owner 或 callback soup。
 
 ## 自动门禁
 

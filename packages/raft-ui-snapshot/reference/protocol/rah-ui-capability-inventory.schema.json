@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rah.local/schemas/rah-ui-capability-inventory-v1.json",
+  "title": "RAH OS UI capability inventory v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "uiProtocolVersion", "backendSnapshot", "screenReads", "entries"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "uiProtocolVersion": { "const": 1 },
+    "backendSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "observedOn", "implementedClientApi", "knownMissing"],
+      "properties": {
+        "repository": { "const": "rah_os" },
+        "observedOn": { "type": "string", "format": "date" },
+        "implementedClientApi": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "knownMissing": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      }
+    },
+    "screenReads": {
+      "type": "object",
+      "additionalProperties": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+    },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/entry" }
+    }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["intent", "mode", "owner", "capability", "backendStatus"],
+      "properties": {
+        "intent": { "type": "string", "pattern": "^[a-z][a-z0-9]*\\.[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$" },
+        "mode": { "enum": ["presentation", "read", "command", "native"] },
+        "owner": { "enum": ["client-core", "room-kernel", "agent-host", "account-service", "desktop-shell"] },
+        "capability": { "type": ["string", "null"] },
+        "backendStatus": { "enum": ["not-required", "available-read", "blocked", "provisional"] },
+        "identityRequirements": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}

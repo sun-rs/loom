@@ -26,3 +26,14 @@ export {
 export type { ContentFreeWakePublisher } from "./outbox-wake-dispatcher.ts";
 export { FileSecretProvider } from "./secret-provider.ts";
 export type { SecretProvider } from "./secret-provider.ts";
+export {
+  buildLocalRuntimeInventoryResponse,
+  configuredRuntimeSnapshot,
+  discoverKnownLocalClis,
+  KNOWN_LOCAL_CLIS,
+  mergeLocalRuntimeInventory,
+} from "./local-runtime-inventory.ts";
+export type {
+  ConfiguredLocalRuntime,
+  ConfiguredLocalRuntimeSnapshot,
+} from "./local-runtime-inventory.ts";

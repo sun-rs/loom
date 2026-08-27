@@ -4,7 +4,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { type AuthenticatedHostContext, RoomKernel } from "@rah-os/kernel";
+import {
+  type AuthenticatedHostContext,
+  createHumanApplicationPort,
+  RoomKernel,
+} from "@rah-os/kernel";
 
 import { ClientApplicationService } from "../src/index.ts";
 
@@ -13,9 +17,11 @@ test("Client API authenticates humans and exposes canonical Room work without ow
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
   const service = new ClientApplicationService({
     health: () => ({
-      apiVersion: 2,
+      apiVersion: 3,
       buildVersion: "test-build",
       capabilities: {
+        agentOnboard: true,
+        agentRead: true,
         cursorAcknowledge: true,
         hints: false,
         inputRequestRead: true,
@@ -25,18 +31,38 @@ test("Client API authenticates humans and exposes canonical Room work without ow
         messageRead: true,
         messageWrite: true,
         roomRead: true,
+        roomWrite: true,
         roomSync: true,
         taskRead: true,
         taskWrite: true,
         threadRead: true,
         threadWrite: true,
         workspaceRead: true,
+        workspaceWrite: true,
       },
       kernelSchemaVersion: 3,
       protocolVersion: 1,
       state: "online",
     }),
-    kernel,
+    human: createHumanApplicationPort(kernel),
+    localRuntimeInventory: () => ({
+      hostId: "client-host",
+      restartRequiredToRescan: true,
+      runtimes: [
+        {
+          agentBindings: [],
+          available: true,
+          configured: true,
+          displayName: "Codex",
+          executable: "codex",
+          resolvedExecutablePath: "/opt/homebrew/bin/codex",
+          runtimeOfferId: "offer-codex",
+          runtimeProfileId: "profile-codex",
+          runtimeProfileRevisionId: "revision-codex",
+          source: "configured",
+        },
+      ],
+    }),
   });
   try {
     kernel.initialize();
@@ -57,18 +83,87 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       kind: "agent",
     });
     const humanActor = kernel.authenticateAccessToken(human.accessToken);
-    const room = kernel.createRoom(humanActor, {
+    const workspace = kernel.createWorkspace(humanActor, {
+      idempotencyKey: "client-workspace-created",
+      name: "Client API Workspace",
+      slug: "client-api-workspace",
+    });
+    const controlRoom = workspace.controlRoom;
+    const room = kernel.createWorkspaceRoom(humanActor, {
+      basedOnControlRoomSeq: workspace.event.roomSeq,
+      idempotencyKey: "client-room-created",
+      kind: "channel",
       name: "Client API",
       slug: "client-api",
-    });
-    kernel.addMember(humanActor, {
-      principalId: agent.principal.principalId,
-      roomId: room.roomId,
-    });
+      workspaceId: workspace.workspace.workspaceId,
+    }).room;
+    for (const roomId of [controlRoom.roomId, room.roomId]) {
+      kernel.addMember(humanActor, {
+        principalId: agent.principal.principalId,
+        roomId,
+      });
+    }
     kernel.addMember(humanActor, {
       principalId: memberHuman.principal.principalId,
       roomId: room.roomId,
     });
+    const controlRoomSeq = kernel.sync(humanActor, {
+      afterSeq: 0,
+      consumerId: "client-agent-catalog-setup",
+      roomId: controlRoom.roomId,
+    }).latestRoomSeq;
+    const policy = kernel.createExecutionPolicy(humanActor, {
+      basedOnRoomSeq: controlRoomSeq,
+      controlRoomId: controlRoom.roomId,
+      idempotencyKey: "client-agent-policy-created",
+      modelIntent: {
+        fallback: "disabled",
+        reasoning: "default",
+        serviceTier: "default",
+      },
+      preferred: [],
+      required: {
+        allowedProtocolFamilies: ["rah-worker-process/v1"],
+        capabilities: [
+          { capability: "worker_commands", minimumEvidence: "probed" },
+        ],
+        minimumIsolation: "process",
+        workspaceMode: "in_place",
+      },
+      retryPolicyRef: {
+        artifactId: "client-retry-policy",
+        contentDigest: `sha256:${"a".repeat(64)}`,
+        versionId: "client-retry-policy-v1",
+      },
+      sessionPolicy: "fresh",
+    });
+    const agentDefinition = kernel.createAgentDefinition(humanActor, {
+      basedOnRoomSeq: policy.event.roomSeq,
+      controlRoomId: controlRoom.roomId,
+      executionPolicyRevisionId: policy.policy.executionPolicyRevisionId,
+      idempotencyKey: "client-agent-definition-created",
+      instructionRefs: [],
+      memoryPolicyRef: {
+        artifactId: "client-memory-policy",
+        contentDigest: `sha256:${"b".repeat(64)}`,
+        versionId: "client-memory-policy-v1",
+      },
+      participantId: agent.principal.principalId,
+      role: "Client integration Agent",
+      skillRefs: [],
+    });
+    const agentOnboardRoom = kernel.createWorkspaceRoom(humanActor, {
+      basedOnControlRoomSeq: kernel.sync(humanActor, {
+        afterSeq: 0,
+        consumerId: "client-agent-onboard-room-setup",
+        roomId: controlRoom.roomId,
+      }).latestRoomSeq,
+      idempotencyKey: "client-agent-onboard-room-created",
+      kind: "channel",
+      name: "Client Agent Onboard",
+      slug: "client-agent-onboard",
+      workspaceId: workspace.workspace.workspaceId,
+    }).room;
     const created = kernel.createTask(humanActor, {
       assigneeId: agent.principal.principalId,
       idempotencyKey: "client-task-created",
@@ -137,6 +232,16 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     const healthV2 = await jsonObject(healthV2Response);
     assert.equal(healthV2.apiVersion, 2);
     assert.equal(healthV2.capabilities.memberWrite, true);
+    assert.equal("agentRead" in healthV2.capabilities, false);
+    assert.equal("workspaceWrite" in healthV2.capabilities, false);
+
+    const healthV3Response = await fetch(`${service.origin}/v3/client/health`);
+    assert.equal(healthV3Response.status, 200);
+    const healthV3 = await jsonObject(healthV3Response);
+    assert.equal(healthV3.apiVersion, 3);
+    assert.equal(healthV3.capabilities.agentOnboard, true);
+    assert.equal(healthV3.capabilities.agentRead, true);
+    assert.equal(healthV3.capabilities.workspaceWrite, true);
 
     const request = async (
       path: string,
@@ -154,6 +259,33 @@ test("Client API authenticates humans and exposes canonical Room work without ow
         method: "POST",
       });
 
+    const principalResponse = await request(
+      "/v3/client/principals/me",
+      {},
+      human.accessToken,
+    );
+    assert.equal(principalResponse.status, 200);
+    assert.deepEqual((await jsonObject(principalResponse)).principal, {
+      handle: human.principal.handle,
+      kind: "human",
+      principalId: human.principal.principalId,
+    });
+
+    const unauthenticatedInventory = await request(
+      "/v1/local/runtimes/list",
+      {},
+    );
+    assert.equal(unauthenticatedInventory.status, 401);
+    const inventoryResponse = await request(
+      "/v1/local/runtimes/list",
+      {},
+      human.accessToken,
+    );
+    assert.equal(inventoryResponse.status, 200);
+    const inventory = await jsonObject(inventoryResponse);
+    assert.equal(inventory.hostId, "client-host");
+    assert.equal(inventory.runtimes[0]?.runtimeProfileId, "profile-codex");
+
     const legacyP2Route = await request(
       "/v1/client/workspaces/list",
       {},
@@ -161,6 +293,129 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     );
     assert.equal(legacyP2Route.status, 404);
     assert.equal(await responseErrorCode(legacyP2Route), "not_found");
+
+    const legacyCreateRoute = await request(
+      "/v2/client/workspaces/create",
+      {
+        idempotencyKey: "client-workspace-create-v2",
+        name: "Rejected on v2",
+        slug: "rejected-v2",
+      },
+      human.accessToken,
+    );
+    assert.equal(legacyCreateRoute.status, 404);
+
+    const workspaceCreateResponse = await request(
+      "/v3/client/workspaces/create",
+      {
+        idempotencyKey: "client-workspace-create-v3",
+        name: "Managed Workspace",
+        slug: "managed-workspace",
+      },
+      human.accessToken,
+    );
+    assert.equal(workspaceCreateResponse.status, 200);
+    const workspaceCreated = await jsonObject(workspaceCreateResponse);
+    assert.equal(workspaceCreated.deduplicated, false);
+    assert.equal(
+      workspaceCreated.workspace.controlRoomId,
+      workspaceCreated.controlRoom.roomId,
+    );
+
+    const roomCreateResponse = await request(
+      "/v3/client/rooms/create",
+      {
+        basedOnControlRoomSeq: workspaceCreated.event.roomSeq,
+        idempotencyKey: "client-room-create-v3",
+        kind: "channel",
+        name: "Managed Room",
+        slug: "managed-room",
+        workspaceId: workspaceCreated.workspace.workspaceId,
+      },
+      human.accessToken,
+    );
+    assert.equal(roomCreateResponse.status, 200);
+    const managedRoom = await jsonObject(roomCreateResponse);
+    assert.equal(
+      managedRoom.room.workspaceId,
+      workspaceCreated.workspace.workspaceId,
+    );
+
+    const agentsResponse = await request(
+      "/v3/client/agents/list",
+      { controlRoomId: controlRoom.roomId },
+      human.accessToken,
+    );
+    assert.equal(agentsResponse.status, 200);
+    const agents = await jsonObject(agentsResponse);
+    assert.equal(agents.agents.length, 1);
+    assert.equal(
+      agents.agents[0]?.definition.agentDefinitionId,
+      agentDefinition.definition.agentDefinitionId,
+    );
+    assert.equal(agents.agents[0]?.handle, "client-agent");
+
+    const hiddenAgentsResponse = await request(
+      "/v3/client/agents/list",
+      { controlRoomId: controlRoom.roomId },
+      otherHuman.accessToken,
+    );
+    assert.equal(hiddenAgentsResponse.status, 200);
+    assert.deepEqual((await jsonObject(hiddenAgentsResponse)).agents, []);
+
+    const legacyAgentsResponse = await request(
+      "/v2/client/agents/list",
+      {},
+      human.accessToken,
+    );
+    assert.equal(legacyAgentsResponse.status, 404);
+
+    const onboardResponse = await request(
+      "/v3/client/agents/onboard",
+      {
+        agentDefinitionId: agentDefinition.definition.agentDefinitionId,
+        basedOnRoomSeq: 1,
+        idempotencyKey: "client-agent-onboarded",
+        roomId: agentOnboardRoom.roomId,
+      },
+      human.accessToken,
+    );
+    assert.equal(onboardResponse.status, 200);
+    const onboarded = await jsonObject(onboardResponse);
+    assert.equal(onboarded.membership.principalId, agent.principal.principalId);
+    assert.equal(onboarded.membership.role, "member");
+    assert.equal(
+      (
+        await request(
+          "/v3/client/agents/onboard",
+          {
+            agentDefinitionId: agentDefinition.definition.agentDefinitionId,
+            basedOnRoomSeq: 1,
+            idempotencyKey: "client-agent-onboarded",
+            roomId: agentOnboardRoom.roomId,
+          },
+          human.accessToken,
+        ).then(jsonObject)
+      ).deduplicated,
+      true,
+    );
+    assert.equal(
+      (
+        await request(
+          "/v3/client/rooms/create",
+          {
+            basedOnControlRoomSeq: workspaceCreated.event.roomSeq,
+            idempotencyKey: "client-room-create-v3",
+            kind: "channel",
+            name: "Managed Room",
+            slug: "managed-room",
+            workspaceId: workspaceCreated.workspace.workspaceId,
+          },
+          human.accessToken,
+        ).then(jsonObject)
+      ).deduplicated,
+      true,
+    );
 
     const unauthenticated = await request("/v1/client/rooms/sync", {
       consumerId: "browser-main",
@@ -193,7 +448,11 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     );
     assert.equal(roomsResponse.status, 200);
     const rooms = await jsonObject(roomsResponse);
-    assert.equal(rooms.rooms[0]?.roomId, room.roomId);
+    assert.ok(
+      rooms.rooms.some(
+        (candidate: { roomId?: string }) => candidate.roomId === room.roomId,
+      ),
+    );
 
     const membersResponse = await request(
       "/v2/client/rooms/members/list",
@@ -203,6 +462,23 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     assert.equal(membersResponse.status, 200);
     const members = await jsonObject(membersResponse);
     assert.equal(members.memberships.length, 3);
+
+    const activityResponse = await request(
+      "/v3/client/rooms/agents/activity/list",
+      { roomId: room.roomId },
+      human.accessToken,
+    );
+    const activity = await jsonObject(activityResponse);
+    assert.equal(activityResponse.status, 200, JSON.stringify(activity));
+    assert.equal(activity.agents.length, 1);
+    assert.equal(
+      activity.agents[0]?.participantId,
+      agent.principal.principalId,
+    );
+    assert.equal(activity.agents[0]?.roomId, room.roomId);
+    assert.equal(activity.agents[0]?.state, "working");
+    assert.equal(activity.agents[0]?.activationId, activation.activationId);
+    assert.equal(activity.agents[0]?.runAttemptId, runAttempt.runAttemptId);
 
     const postedResponse = await request(
       "/v2/client/messages/post",
@@ -407,6 +683,23 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       human.accessToken,
     );
     assert.equal(replayedAcknowledgement.status, 200);
+
+    const coldReloadPageResponse = await request(
+      "/v1/client/rooms/sync",
+      {
+        afterSeq: 0,
+        consumerId: "browser-main",
+        limit: 1,
+        roomId: room.roomId,
+      },
+      human.accessToken,
+    );
+    assert.equal(coldReloadPageResponse.status, 200);
+    const coldReloadPage = await jsonObject(coldReloadPageResponse);
+    assert.equal(coldReloadPage.cursorBefore, firstSync.cursorAfter);
+    assert.equal(coldReloadPage.cursorAfter, 1);
+    assert.ok(coldReloadPage.snapshot !== null);
+    assert.equal(coldReloadPage.events.length, 1);
 
     const resumedSyncResponse = await request(
       "/v1/client/rooms/sync",

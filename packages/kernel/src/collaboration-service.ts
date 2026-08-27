@@ -4,6 +4,8 @@ import {
   ActivationReasonSchema,
   MembershipRoleSchema,
   ParticipantKindSchema,
+  RoomSchema,
+  WorkspaceSchema,
   type ActivationReason,
   type MembershipRole,
   type Room,
@@ -34,14 +36,16 @@ import {
   workspaceProjectionFromRow,
 } from "./collaboration-projection.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
-import { integer, type Row } from "./sqlite-row.ts";
+import { integer, text, type Row } from "./sqlite-row.ts";
 import type {
   MessageMutationResult,
   MessagePage,
   Principal,
+  RoomMutationResult,
   RoomMembershipMutationResult,
   RoomMembershipRemovalResult,
   ThreadMutationResult,
+  WorkspaceMutationResult,
 } from "./types.ts";
 
 export type MessageRecipient = {
@@ -65,6 +69,19 @@ export class CollaborationService {
     this.#database = input.database;
     this.#events = input.events;
     this.#now = input.now;
+  }
+
+  requireSameWorkspace(leftRoomId: string, rightRoomId: string): void {
+    const leftWorkspaceId = text(this.#requireRoom(leftRoomId), "workspace_id");
+    const rightWorkspaceId = text(
+      this.#requireRoom(rightRoomId),
+      "workspace_id",
+    );
+    if (leftWorkspaceId !== rightWorkspaceId) {
+      throw new ForbiddenError(
+        `Room ${rightRoomId} belongs to Workspace ${rightWorkspaceId}, not Workspace ${leftWorkspaceId}`,
+      );
+    }
   }
 
   createRoom(actor: Principal, input: { name: string; slug: string }): Room {
@@ -108,6 +125,215 @@ export class CollaborationService {
     return room;
   }
 
+  createWorkspace(
+    actor: Principal,
+    input: { idempotencyKey: string; name: string; slug: string },
+  ): WorkspaceMutationResult {
+    if (actor.kind !== "human") {
+      throw new ForbiddenError("only Human principals can create Workspaces");
+    }
+    const name = this.#requiredLabel(input.name, "workspace name");
+    const slug = this.#requiredLabel(input.slug, "workspace slug");
+    const idempotencyKey = this.#requiredLabel(
+      input.idempotencyKey,
+      "idempotencyKey",
+    );
+    const previous = this.#database
+      .prepare(
+        `SELECT * FROM room_events
+         WHERE actor_id = ? AND idempotency_key = ?
+         ORDER BY created_at, event_id
+         LIMIT 1`,
+      )
+      .get(actor.principalId, idempotencyKey);
+    if (previous !== undefined) {
+      const event = this.#events.eventFromRow(previous);
+      if (
+        event.type !== "workspace.created" ||
+        event.aggregateType !== "workspace" ||
+        event.payload.name !== name ||
+        event.payload.slug !== slug
+      ) {
+        throw this.#idempotencyConflict(idempotencyKey);
+      }
+      const workspace = this.#workspaceFromId(event.aggregateId);
+      if (workspace.controlRoomId === undefined) {
+        throw new ConflictError(
+          `Workspace ${workspace.workspaceId} has no control Room`,
+        );
+      }
+      return {
+        controlRoom: this.#roomFromId(workspace.controlRoomId),
+        deduplicated: true,
+        event,
+        workspace,
+      };
+    }
+    if (
+      this.#database
+        .prepare("SELECT 1 AS present FROM workspaces WHERE slug = ?")
+        .get(slug) !== undefined
+    ) {
+      throw new ConflictError(`Workspace slug ${slug} is already in use`);
+    }
+
+    const createdAt = this.#timestamp();
+    const workspaceId = this.#createId("workspace");
+    const controlRoomId = this.#createId("room");
+    this.#database
+      .prepare(
+        "INSERT INTO workspaces(workspace_id, slug, name, state, created_at) VALUES(?, ?, ?, 'active', ?)",
+      )
+      .run(workspaceId, slug, name, createdAt);
+    this.#database
+      .prepare(
+        "INSERT INTO rooms(room_id, workspace_id, kind, slug, name, next_seq, created_at) VALUES(?, ?, 'control', 'control', ?, 1, ?)",
+      )
+      .run(controlRoomId, workspaceId, `${name} Control`, createdAt);
+    this.#database
+      .prepare(
+        "INSERT INTO memberships(room_id, principal_id, role, joined_at) VALUES(?, ?, 'owner', ?)",
+      )
+      .run(controlRoomId, actor.principalId, createdAt);
+    const event = this.#events.append({
+      actorId: actor.principalId,
+      aggregateId: workspaceId,
+      aggregateType: "workspace",
+      idempotencyKey,
+      payload: { controlRoomId, name, slug },
+      roomId: controlRoomId,
+      type: "workspace.created",
+    });
+    return {
+      controlRoom: this.#roomFromId(controlRoomId),
+      deduplicated: false,
+      event,
+      workspace: this.#workspaceFromId(workspaceId),
+    };
+  }
+
+  createWorkspaceRoom(
+    actor: Principal,
+    input: {
+      basedOnControlRoomSeq: number;
+      idempotencyKey: string;
+      kind: "channel";
+      name: string;
+      slug: string;
+      workspaceId: string;
+    },
+  ): RoomMutationResult {
+    if (actor.kind !== "human") {
+      throw new ForbiddenError("only Human principals can create Rooms");
+    }
+    const workspace = this.#workspaceFromId(input.workspaceId);
+    if (workspace.state !== "active") {
+      throw new ConflictError(`Workspace ${input.workspaceId} is archived`);
+    }
+    if (workspace.controlRoomId === undefined) {
+      throw new ConflictError(
+        `Workspace ${input.workspaceId} is not managed by a control Room`,
+      );
+    }
+    requireRoomManager(
+      this.#database,
+      workspace.controlRoomId,
+      actor.principalId,
+    );
+    if (input.kind !== "channel") {
+      throw new Error("initial managed Room creation only supports channel");
+    }
+    const name = this.#requiredLabel(input.name, "room name");
+    const slug = this.#requiredLabel(input.slug, "room slug");
+    const idempotencyKey = this.#requiredLabel(
+      input.idempotencyKey,
+      "idempotencyKey",
+    );
+    const previous = this.#findEvent(workspace.controlRoomId, idempotencyKey);
+    if (previous !== undefined) {
+      const event = this.#events.eventFromRow(previous);
+      if (
+        event.type !== "workspace.room_created" ||
+        event.actorId !== actor.principalId ||
+        event.aggregateType !== "room" ||
+        event.payload.workspaceId !== input.workspaceId ||
+        event.payload.kind !== input.kind ||
+        event.payload.name !== name ||
+        event.payload.slug !== slug
+      ) {
+        throw this.#idempotencyConflict(idempotencyKey);
+      }
+      return {
+        deduplicated: true,
+        event,
+        room: this.#roomFromId(event.aggregateId),
+      };
+    }
+    this.#assertFreshContext(
+      workspace.controlRoomId,
+      actor,
+      input.basedOnControlRoomSeq,
+    );
+    if (
+      this.#database
+        .prepare(
+          "SELECT 1 AS present FROM rooms WHERE workspace_id = ? AND slug = ?",
+        )
+        .get(input.workspaceId, slug) !== undefined
+    ) {
+      throw new ConflictError(
+        `Room slug ${slug} is already in use in Workspace ${input.workspaceId}`,
+      );
+    }
+
+    const roomId = this.#createId("room");
+    const createdAt = this.#timestamp();
+    this.#database
+      .prepare(
+        "INSERT INTO rooms(room_id, workspace_id, kind, slug, name, next_seq, created_at) VALUES(?, ?, ?, ?, ?, 1, ?)",
+      )
+      .run(roomId, input.workspaceId, input.kind, slug, name, createdAt);
+    this.#database
+      .prepare(
+        "INSERT INTO memberships(room_id, principal_id, role, joined_at) VALUES(?, ?, 'owner', ?)",
+      )
+      .run(roomId, actor.principalId, createdAt);
+    this.#events.append({
+      actorId: actor.principalId,
+      aggregateId: roomId,
+      aggregateType: "room",
+      idempotencyKey: `room.bootstrap:${idempotencyKey}`,
+      payload: {
+        kind: input.kind,
+        name,
+        slug,
+        workspaceId: input.workspaceId,
+      },
+      roomId,
+      type: "room.created",
+    });
+    const event = this.#events.append({
+      actorId: actor.principalId,
+      aggregateId: roomId,
+      aggregateType: "room",
+      idempotencyKey,
+      payload: {
+        basedOnControlRoomSeq: input.basedOnControlRoomSeq,
+        kind: input.kind,
+        name,
+        slug,
+        workspaceId: input.workspaceId,
+      },
+      roomId: workspace.controlRoomId,
+      type: "workspace.room_created",
+    });
+    return {
+      deduplicated: false,
+      event,
+      room: this.#roomFromId(roomId),
+    };
+  }
+
   addMember(
     actorId: string,
     input: { principalId: string; roomId: string },
@@ -141,10 +367,14 @@ export class CollaborationService {
            workspaces.name AS workspace_name,
            workspaces.state AS workspace_state,
            workspaces.created_at AS workspace_created_at,
-           workspaces.archived_at AS workspace_archived_at
+           workspaces.archived_at AS workspace_archived_at,
+           control_room.room_id AS workspace_control_room_id
          FROM workspaces
          JOIN rooms ON rooms.workspace_id = workspaces.workspace_id
          JOIN memberships ON memberships.room_id = rooms.room_id
+         LEFT JOIN rooms AS control_room
+           ON control_room.workspace_id = workspaces.workspace_id
+          AND control_room.kind = 'control'
          WHERE memberships.principal_id = ?
          ORDER BY workspaces.slug, workspaces.workspace_id`,
       )
@@ -682,12 +912,129 @@ export class CollaborationService {
     };
   }
 
+  postActivationMessage(
+    actor: Principal,
+    input: {
+      activationId: string;
+      basedOnRoomSeq: number;
+      body: string;
+      idempotencyKey: string;
+      roomId: string;
+    },
+  ): MessageMutationResult {
+    requireRoomMember(this.#database, input.roomId, actor.principalId);
+    if (actor.kind !== "agent") {
+      throw new ForbiddenError(
+        "Activation-scoped Room replies require an Agent principal",
+      );
+    }
+    const body = input.body.trim();
+    if (body.length === 0) throw new Error("message body is required");
+    if (input.idempotencyKey.trim().length === 0) {
+      throw new Error("idempotencyKey is required");
+    }
+    if (input.activationId.trim().length === 0) {
+      throw new Error("activationId is required");
+    }
+    if (!Number.isInteger(input.basedOnRoomSeq) || input.basedOnRoomSeq < 0) {
+      throw new Error("basedOnRoomSeq must be a non-negative integer");
+    }
+    const previous = this.#database
+      .prepare(
+        "SELECT * FROM room_events WHERE room_id = ? AND idempotency_key = ?",
+      )
+      .get(input.roomId, input.idempotencyKey);
+    if (previous) {
+      const event = this.#events.eventFromRow(previous);
+      if (
+        event.type !== "message.posted" ||
+        event.actorId !== actor.principalId ||
+        event.payload.threadId !== undefined ||
+        event.payload.activationId !== input.activationId ||
+        event.payload.basedOnRoomSeq !== input.basedOnRoomSeq ||
+        event.payload.body !== body ||
+        JSON.stringify(event.payload.recipientIds) !== "[]" ||
+        JSON.stringify(event.payload.recipients) !== "[]"
+      ) {
+        throw new IdempotencyConflictError(
+          `idempotency key ${input.idempotencyKey} was already used for another mutation`,
+        );
+      }
+      return { activationIds: [], deduplicated: true, event };
+    }
+
+    const messageId = this.#createId("message");
+    const createdAt = this.#timestamp();
+    this.#database
+      .prepare(
+        "INSERT INTO messages(message_id, room_id, actor_id, body, created_at) VALUES(?, ?, ?, ?, ?)",
+      )
+      .run(messageId, input.roomId, actor.principalId, body, createdAt);
+    const event = this.#events.append({
+      actorId: actor.principalId,
+      aggregateId: messageId,
+      aggregateType: "message",
+      idempotencyKey: input.idempotencyKey,
+      payload: {
+        activationId: input.activationId,
+        basedOnRoomSeq: input.basedOnRoomSeq,
+        body,
+        messageId,
+        recipientIds: [],
+        recipients: [],
+      },
+      roomId: input.roomId,
+      type: "message.posted",
+    });
+    return { activationIds: [], deduplicated: false, event };
+  }
+
   #findEvent(roomId: string, idempotencyKey: string): Row | undefined {
     return this.#database
       .prepare(
         "SELECT * FROM room_events WHERE room_id = ? AND idempotency_key = ?",
       )
       .get(roomId, idempotencyKey);
+  }
+
+  #roomFromId(roomId: string): Room {
+    const room = this.#database
+      .prepare("SELECT * FROM rooms WHERE room_id = ?")
+      .get(roomId);
+    if (room === undefined) {
+      throw new NotFoundError(`Room ${roomId} was not found`);
+    }
+    return RoomSchema.parse(roomProjectionFromRow(room));
+  }
+
+  #workspaceFromId(workspaceId: string): Workspace {
+    const row = this.#database
+      .prepare(
+        `SELECT
+           workspaces.workspace_id,
+           workspaces.slug AS workspace_slug,
+           workspaces.name AS workspace_name,
+           workspaces.state AS workspace_state,
+           workspaces.created_at AS workspace_created_at,
+           workspaces.archived_at AS workspace_archived_at,
+           control_room.room_id AS workspace_control_room_id
+         FROM workspaces
+         LEFT JOIN rooms AS control_room
+           ON control_room.workspace_id = workspaces.workspace_id
+          AND control_room.kind = 'control'
+         WHERE workspaces.workspace_id = ?`,
+      )
+      .get(workspaceId);
+    if (row === undefined) {
+      throw new NotFoundError(`Workspace ${workspaceId} was not found`);
+    }
+    return WorkspaceSchema.parse(workspaceProjectionFromRow(row));
+  }
+
+  #requiredLabel(value: string, field: string): string {
+    const normalized = value.trim();
+    if (normalized.length === 0) throw new Error(`${field} is required`);
+    return normalized;
   }
 
   #idempotencyConflict(idempotencyKey: string): IdempotencyConflictError {

@@ -148,18 +148,30 @@ function createFixture(
   const humanActor = kernel.authenticateAccessToken(
     humanProvisioning.accessToken,
   );
-  const room = kernel.createRoom(humanActor, {
-    name: "Placement control and work room",
-    slug: "placement-room",
+  const workspace = kernel.createWorkspace(humanActor, {
+    idempotencyKey: "placement-workspace-created",
+    name: "Placement Workspace",
+    slug: "placement-workspace",
   });
-  kernel.addMember(humanActor, {
-    principalId: agentProvisioning.principal.principalId,
-    roomId: room.roomId,
-  });
+  const controlRoom = workspace.controlRoom;
+  const room = kernel.createWorkspaceRoom(humanActor, {
+    basedOnControlRoomSeq: workspace.event.roomSeq,
+    idempotencyKey: "placement-work-room-created",
+    kind: "channel",
+    name: "Placement Work Room",
+    slug: "placement-work-room",
+    workspaceId: workspace.workspace.workspaceId,
+  }).room;
+  for (const roomId of [controlRoom.roomId, room.roomId]) {
+    kernel.addMember(humanActor, {
+      principalId: agentProvisioning.principal.principalId,
+      roomId,
+    });
+  }
 
   const policyMutation = kernel.createExecutionPolicy(humanActor, {
-    basedOnRoomSeq: latestRoomSeq(kernel, humanActor, room.roomId),
-    controlRoomId: room.roomId,
+    basedOnRoomSeq: latestRoomSeq(kernel, humanActor, controlRoom.roomId),
+    controlRoomId: controlRoom.roomId,
     idempotencyKey: "policy-create",
     modelIntent: {
       fallback: "disabled",
@@ -183,8 +195,8 @@ function createFixture(
     sessionPolicy: "fresh",
   });
   const agentMutation = kernel.createAgentDefinition(humanActor, {
-    basedOnRoomSeq: latestRoomSeq(kernel, humanActor, room.roomId),
-    controlRoomId: room.roomId,
+    basedOnRoomSeq: latestRoomSeq(kernel, humanActor, controlRoom.roomId),
+    controlRoomId: controlRoom.roomId,
     executionPolicyRevisionId: policyMutation.policy.executionPolicyRevisionId,
     idempotencyKey: "agent-create",
     instructionRefs: [],
@@ -203,6 +215,7 @@ function createFixture(
     agentDefinitionRevision: agentMutation.revision,
     agentId: agentProvisioning.principal.principalId,
     clock,
+    controlRoom,
     databasePath,
     humanActor,
     kernel,
@@ -224,13 +237,17 @@ function addAgent(
     principalId: participant.principalId,
     roomId: fixture.room.roomId,
   });
+  fixture.kernel.addMember(fixture.humanActor, {
+    principalId: participant.principalId,
+    roomId: fixture.controlRoom.roomId,
+  });
   fixture.kernel.createAgentDefinition(fixture.humanActor, {
     basedOnRoomSeq: latestRoomSeq(
       fixture.kernel,
       fixture.humanActor,
-      fixture.room.roomId,
+      fixture.controlRoom.roomId,
     ),
-    controlRoomId: fixture.room.roomId,
+    controlRoomId: fixture.controlRoom.roomId,
     executionPolicyRevisionId: fixture.policy.executionPolicyRevisionId,
     idempotencyKey,
     instructionRefs: [],
@@ -242,9 +259,9 @@ function addAgent(
   return participant.principalId;
 }
 
-test("Kernel schema v7 owns collaboration, Task coordination, and immutable Placement projections", () => {
+test("Kernel schema v8 owns collaboration, Task coordination, and immutable Placement projections", () => {
   const fixture = createFixture();
-  assert.equal(KERNEL_SCHEMA_VERSION, 7);
+  assert.equal(KERNEL_SCHEMA_VERSION, 8);
   assert.equal(
     fixture.agentDefinition.currentRevisionId,
     fixture.agentDefinitionRevision.agentDefinitionRevisionId,
@@ -485,8 +502,157 @@ test("schema v4 Offer head fails closed until republished as a v5 immutable obse
   migrated.close();
 });
 
+test("control objects require a managed control Room manager and cannot cross policy scope", () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-control-authority-"));
+  temporaryDirectories.push(directory);
+  const kernel = new RoomKernel({
+    databasePath: join(directory, "room.db"),
+  });
+  kernel.initialize();
+  const owner = kernel.provisionPrincipal({
+    handle: "control-owner",
+    kind: "human",
+  });
+  const member = kernel.provisionPrincipal({
+    handle: "control-member",
+    kind: "human",
+  });
+  const agent = kernel.provisionPrincipal({
+    handle: "control-agent",
+    kind: "agent",
+  });
+  const ownerActor = kernel.authenticateAccessToken(owner.accessToken);
+  const memberActor = kernel.authenticateAccessToken(member.accessToken);
+  const agentActor = kernel.authenticateAccessToken(agent.accessToken);
+  const workspaceA = kernel.createWorkspace(ownerActor, {
+    idempotencyKey: "control-workspace-a",
+    name: "Control Workspace A",
+    slug: "control-workspace-a",
+  });
+  const workspaceB = kernel.createWorkspace(ownerActor, {
+    idempotencyKey: "control-workspace-b",
+    name: "Control Workspace B",
+    slug: "control-workspace-b",
+  });
+  const channel = kernel.createWorkspaceRoom(ownerActor, {
+    basedOnControlRoomSeq: workspaceA.event.roomSeq,
+    idempotencyKey: "control-channel-a",
+    kind: "channel",
+    name: "Ordinary Channel",
+    slug: "ordinary-channel",
+    workspaceId: workspaceA.workspace.workspaceId,
+  }).room;
+  for (const roomId of [
+    workspaceA.controlRoom.roomId,
+    workspaceB.controlRoom.roomId,
+  ]) {
+    kernel.addMember(ownerActor, {
+      principalId: agent.principal.principalId,
+      roomId,
+    });
+  }
+  kernel.addMember(ownerActor, {
+    principalId: member.principal.principalId,
+    roomId: workspaceA.controlRoom.roomId,
+  });
+
+  const policyInput = {
+    modelIntent: {
+      fallback: "disabled" as const,
+      reasoning: "default" as const,
+      serviceTier: "default" as const,
+    },
+    preferred: [],
+    required: {
+      allowedProtocolFamilies: ["rah-worker-process/v1"],
+      capabilities: [],
+      minimumIsolation: "none" as const,
+      workspaceMode: "in_place" as const,
+    },
+    retryPolicyRef: {
+      artifactId: "control-retry-policy",
+      contentDigest: digest("c"),
+      versionId: "control-retry-policy-v1",
+    },
+    sessionPolicy: "fresh" as const,
+  };
+  assert.throws(
+    () =>
+      kernel.createExecutionPolicy(memberActor, {
+        ...policyInput,
+        basedOnRoomSeq: latestRoomSeq(
+          kernel,
+          memberActor,
+          workspaceA.controlRoom.roomId,
+        ),
+        controlRoomId: workspaceA.controlRoom.roomId,
+        idempotencyKey: "member-policy-create",
+      }),
+    /owner or admin/i,
+  );
+  assert.throws(
+    () =>
+      kernel.createExecutionPolicy(agentActor, {
+        ...policyInput,
+        basedOnRoomSeq: latestRoomSeq(
+          kernel,
+          agentActor,
+          workspaceA.controlRoom.roomId,
+        ),
+        controlRoomId: workspaceA.controlRoom.roomId,
+        idempotencyKey: "agent-policy-create",
+      }),
+    /authenticated Human/i,
+  );
+  assert.throws(
+    () =>
+      kernel.createExecutionPolicy(ownerActor, {
+        ...policyInput,
+        basedOnRoomSeq: latestRoomSeq(kernel, ownerActor, channel.roomId),
+        controlRoomId: channel.roomId,
+        idempotencyKey: "channel-policy-create",
+      }),
+    /control Room/i,
+  );
+
+  const policy = kernel.createExecutionPolicy(ownerActor, {
+    ...policyInput,
+    basedOnRoomSeq: latestRoomSeq(
+      kernel,
+      ownerActor,
+      workspaceA.controlRoom.roomId,
+    ),
+    controlRoomId: workspaceA.controlRoom.roomId,
+    idempotencyKey: "owner-policy-create",
+  }).policy;
+  assert.throws(
+    () =>
+      kernel.createAgentDefinition(ownerActor, {
+        basedOnRoomSeq: latestRoomSeq(
+          kernel,
+          ownerActor,
+          workspaceB.controlRoom.roomId,
+        ),
+        controlRoomId: workspaceB.controlRoom.roomId,
+        executionPolicyRevisionId: policy.executionPolicyRevisionId,
+        idempotencyKey: "cross-control-agent-create",
+        instructionRefs: [],
+        memoryPolicyRef: {
+          artifactId: "control-memory-policy",
+          contentDigest: digest("d"),
+          versionId: "control-memory-policy-v1",
+        },
+        participantId: agent.principal.principalId,
+        role: "cross-scope agent",
+        skillRefs: [],
+      }),
+    /same control Room/i,
+  );
+  kernel.close();
+});
+
 test("control Room idempotency cannot silently bind the same Agent command to another participant", () => {
-  const { humanActor, kernel, policy, room } = createFixture();
+  const { controlRoom, humanActor, kernel, policy, room } = createFixture();
   const other = kernel.provisionPrincipal({
     handle: "other-idempotency-agent",
     kind: "agent",
@@ -495,12 +661,16 @@ test("control Room idempotency cannot silently bind the same Agent command to an
     principalId: other.principalId,
     roomId: room.roomId,
   });
+  kernel.addMember(humanActor, {
+    principalId: other.principalId,
+    roomId: controlRoom.roomId,
+  });
 
   assert.throws(
     () =>
       kernel.createAgentDefinition(humanActor, {
-        basedOnRoomSeq: latestRoomSeq(kernel, humanActor, room.roomId),
-        controlRoomId: room.roomId,
+        basedOnRoomSeq: latestRoomSeq(kernel, humanActor, controlRoom.roomId),
+        controlRoomId: controlRoom.roomId,
         executionPolicyRevisionId: policy.executionPolicyRevisionId,
         idempotencyKey: "agent-create",
         instructionRefs: [],
@@ -519,8 +689,14 @@ test("control Room idempotency cannot silently bind the same Agent command to an
 });
 
 test("Agent revision digest is computed from normalized immutable content", () => {
-  const { agentDefinitionRevision, humanActor, kernel, policy, room } =
-    createFixture();
+  const {
+    agentDefinitionRevision,
+    controlRoom,
+    humanActor,
+    kernel,
+    policy,
+    room,
+  } = createFixture();
   const other = kernel.provisionPrincipal({
     handle: "normalized-content-agent",
     kind: "agent",
@@ -529,9 +705,13 @@ test("Agent revision digest is computed from normalized immutable content", () =
     principalId: other.principalId,
     roomId: room.roomId,
   });
+  kernel.addMember(humanActor, {
+    principalId: other.principalId,
+    roomId: controlRoom.roomId,
+  });
   const revision = kernel.createAgentDefinition(humanActor, {
-    basedOnRoomSeq: latestRoomSeq(kernel, humanActor, room.roomId),
-    controlRoomId: room.roomId,
+    basedOnRoomSeq: latestRoomSeq(kernel, humanActor, controlRoom.roomId),
+    controlRoomId: controlRoom.roomId,
     executionPolicyRevisionId: policy.executionPolicyRevisionId,
     idempotencyKey: "normalized-agent-create",
     instructionRefs: [],
@@ -1663,7 +1843,8 @@ test("a crash after recovered terminal proof automatically resolves quarantine",
 });
 
 test("terminal RunAttempt releases Kernel capacity for another Agent", () => {
-  const { agentId, clock, humanActor, kernel, policy, room } = createFixture();
+  const { agentId, clock, controlRoom, humanActor, kernel, policy, room } =
+    createFixture();
   const secondAgentProvisioning = kernel.provisionPrincipal({
     handle: "second-agent",
     kind: "agent",
@@ -1673,9 +1854,13 @@ test("terminal RunAttempt releases Kernel capacity for another Agent", () => {
     principalId: secondAgentId,
     roomId: room.roomId,
   });
+  kernel.addMember(humanActor, {
+    principalId: secondAgentId,
+    roomId: controlRoom.roomId,
+  });
   kernel.createAgentDefinition(humanActor, {
-    basedOnRoomSeq: latestRoomSeq(kernel, humanActor, room.roomId),
-    controlRoomId: room.roomId,
+    basedOnRoomSeq: latestRoomSeq(kernel, humanActor, controlRoom.roomId),
+    controlRoomId: controlRoom.roomId,
     executionPolicyRevisionId: policy.executionPolicyRevisionId,
     idempotencyKey: "second-agent-create",
     instructionRefs: [],
@@ -1732,6 +1917,7 @@ test("RunAttempt references frozen placement after Agent and Policy v2 activatio
     agentDefinition,
     agentDefinitionRevision,
     agentId,
+    controlRoom,
     humanActor,
     kernel,
     policy,
@@ -1752,7 +1938,7 @@ test("RunAttempt references frozen placement after Agent and Policy v2 activatio
   });
 
   const policyV2 = kernel.reviseExecutionPolicy(humanActor, {
-    basedOnRoomSeq: latestRoomSeq(kernel, humanActor, room.roomId),
+    basedOnRoomSeq: latestRoomSeq(kernel, humanActor, controlRoom.roomId),
     executionPolicyId: policy.executionPolicyId,
     idempotencyKey: "policy-v2",
     modelIntent: policy.modelIntent,
@@ -1765,7 +1951,7 @@ test("RunAttempt references frozen placement after Agent and Policy v2 activatio
   }).policy;
   const agentV2 = kernel.reviseAgentDefinition(humanActor, {
     agentDefinitionId: agentDefinition.agentDefinitionId,
-    basedOnRoomSeq: latestRoomSeq(kernel, humanActor, room.roomId),
+    basedOnRoomSeq: latestRoomSeq(kernel, humanActor, controlRoom.roomId),
     executionPolicyRevisionId: policyV2.executionPolicyRevisionId,
     idempotencyKey: "agent-v2",
     instructionRefs: agentDefinitionRevision.instructionRefs,

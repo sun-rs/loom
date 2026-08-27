@@ -12,6 +12,8 @@ export {
   TaskSubmissionProofError,
   UnauthenticatedError,
 } from "./errors.ts";
+export { createHumanApplicationPort } from "./human-application-port.ts";
+export type { HumanApplicationPort } from "./human-application-port.ts";
 export {
   AuthenticatedActorContext,
   AuthenticatedHostContext,
@@ -57,6 +59,7 @@ export type {
   ProvisionedHostCredential,
   ProvisionedPrincipal,
   Room,
+  RoomMutationResult,
   RoomMembership,
   RoomMembershipMutationResult,
   RoomMembershipRemovalResult,
@@ -71,4 +74,5 @@ export type {
   Thread,
   ThreadMutationResult,
   Workspace,
+  WorkspaceMutationResult,
 } from "./types.ts";

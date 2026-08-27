@@ -7,6 +7,7 @@ import {
   ActivationSchema,
   AgentDefinitionRevisionSchema,
   AgentDefinitionSchema,
+  AgentCatalogEntrySchema,
   ExecutionPolicyRevisionSchema,
   InboxStateSchema,
   InputRequestSchema,
@@ -23,6 +24,7 @@ import {
   type ActivationReason,
   type AgentDefinition,
   type AgentDefinitionRevision,
+  type AgentCatalogEntry,
   type ExecutionPolicyRevision,
   type InputRequest,
   type InputRequestStatus,
@@ -32,6 +34,7 @@ import {
   type RuntimeCertification,
   type RuntimeOffer,
   type RuntimeOfferProjection,
+  type RoomAgentActivity,
   type Task,
 } from "@rah-os/protocol";
 
@@ -63,7 +66,16 @@ import {
   issueAuthenticatedWorkerExecutionContext,
 } from "./auth.ts";
 import { canonicalDigest, canonicalValue } from "./canonical-digest.ts";
-import { requireRoomMember } from "./collaboration-policy.ts";
+import {
+  assertPositiveCapacityLimit,
+  capacityLimitMap,
+  capacityProfileResourceId,
+} from "./capacity-policy.ts";
+import {
+  requireExecutionPolicyRevisionControlRoom,
+  requireHumanControlRoomManager,
+  requireRoomMember,
+} from "./collaboration-policy.ts";
 import { roomProjectionFromRow } from "./collaboration-projection.ts";
 import {
   CollaborationService,
@@ -87,7 +99,11 @@ import {
   RoomEventWriter,
   type AppendRoomEventInput,
 } from "./room-event-writer.ts";
-import { taskProjectionFromRow } from "./task-projection.ts";
+import * as ar from "./room-agent-service.ts";
+import {
+  taskDependenciesComplete,
+  taskProjectionFromRow,
+} from "./task-projection.ts";
 import type {
   InboxItem,
   AgentDefinitionContent,
@@ -107,6 +123,7 @@ import type {
   ProvisionedHostCredential,
   ProvisionedPrincipal,
   Room,
+  RoomMutationResult,
   RoomMembership,
   RoomMembershipMutationResult,
   RoomMembershipRemovalResult,
@@ -119,12 +136,13 @@ import type {
   Thread,
   ThreadMutationResult,
   Workspace,
+  WorkspaceMutationResult,
 } from "./types.ts";
 
 const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 7;
+export const KERNEL_SCHEMA_VERSION = 8;
 
 export function computeRuntimeCertificationDigest(
   certification: Omit<RuntimeCertification, "certificationDigest">,
@@ -391,6 +409,9 @@ export class RoomKernel {
     }
     this.#database.exec(SCHEMA_SQL);
     migrateCollaborationSchemaV7(this.#database, this.#timestamp());
+    this.#database.exec(
+      "CREATE UNIQUE INDEX IF NOT EXISTS idx_one_control_room_per_workspace ON rooms(workspace_id) WHERE kind = 'control'",
+    );
     const hostColumns = this.#database
       .prepare("PRAGMA table_info(agent_hosts)")
       .all();
@@ -650,6 +671,10 @@ export class RoomKernel {
     return actor;
   }
 
+  getAuthenticatedPrincipal(actor: AuthenticatedActorContext): Principal {
+    const actorId = this.#requireAuthenticatedActor(actor);
+    return this.#principalFromRow(this.#requirePrincipal(actorId));
+  }
   provisionHostCredential(input: {
     hostId: string;
     participantIds: string[];
@@ -754,6 +779,39 @@ export class RoomKernel {
     });
   }
 
+  createWorkspace(
+    actor: AuthenticatedActorContext,
+    input: { idempotencyKey: string; name: string; slug: string },
+  ): WorkspaceMutationResult {
+    return this.#transaction(() => {
+      const actorId = this.#requireAuthenticatedActor(actor);
+      return this.#collaboration.createWorkspace(
+        this.#principalFromRow(this.#requirePrincipal(actorId)),
+        input,
+      );
+    });
+  }
+
+  createWorkspaceRoom(
+    actor: AuthenticatedActorContext,
+    input: {
+      basedOnControlRoomSeq: number;
+      idempotencyKey: string;
+      kind: "channel";
+      name: string;
+      slug: string;
+      workspaceId: string;
+    },
+  ): RoomMutationResult {
+    return this.#transaction(() => {
+      const actorId = this.#requireAuthenticatedActor(actor);
+      return this.#collaboration.createWorkspaceRoom(
+        this.#principalFromRow(this.#requirePrincipal(actorId)),
+        input,
+      );
+    });
+  }
+
   addMember(
     actor: AuthenticatedActorContext,
     input: { principalId: string; roomId: string },
@@ -777,6 +835,17 @@ export class RoomKernel {
     return this.#collaboration.listRooms(
       this.#requireAuthenticatedActor(actor),
       input,
+    );
+  }
+
+  listRoomAgentActivity(
+    actor: AuthenticatedActorContext,
+    input: { roomId: string },
+  ): RoomAgentActivity[] {
+    return ar.listRoomAgentActivity(
+      this.#database,
+      this.#requireAuthenticatedActor(actor),
+      input.roomId,
     );
   }
 
@@ -925,6 +994,48 @@ export class RoomKernel {
       return this.#collaboration.postMessage(
         this.#principalFromRow(this.#requirePrincipal(actorId)),
         input,
+      );
+    });
+  }
+
+  postRoomMessage(
+    actor: AuthenticatedActorContext,
+    input: ar.HumanRoomMessageInput,
+  ): MessageMutationResult {
+    return this.#transaction(() => {
+      const actorId = this.#requireAuthenticatedActor(actor);
+      const principal = this.#principalFromRow(this.#requirePrincipal(actorId));
+      return this.#collaboration.postMessage(principal, {
+        ...input,
+        recipients: ar.humanRoomMessageRecipients(
+          this.#database,
+          principal,
+          input,
+        ),
+      });
+    });
+  }
+
+  postWorkerMessage(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: {
+      basedOnRoomSeq: number;
+      body: string;
+      idempotencyKey: string;
+    },
+  ): MessageMutationResult {
+    return this.#transaction(() => {
+      const scope = this.#requireAuthenticatedWorkerExecution(execution);
+      if (input.basedOnRoomSeq !== scope.toSeq) {
+        throw new StaleContextError(input.basedOnRoomSeq, scope.toSeq);
+      }
+      return this.#collaboration.postActivationMessage(
+        this.#principalFromRow(this.#requirePrincipal(scope.participantId)),
+        {
+          ...input,
+          activationId: scope.activationId,
+          roomId: scope.roomId,
+        },
       );
     });
   }
@@ -1370,7 +1481,8 @@ export class RoomKernel {
         },
         taskId: input.taskId,
       });
-      const recipients = this.#roomAgentRecipients(
+      const recipients = ar.listRoomAgentRecipients(
+        this.#database,
         scope.roomId,
         "task_available",
         scope.participantId,
@@ -1674,7 +1786,10 @@ export class RoomKernel {
         roomId,
         type: "task.assigned",
       });
-      const activationIds = this.#taskDependenciesComplete(input.taskId)
+      const activationIds = taskDependenciesComplete(
+        this.#database,
+        input.taskId,
+      )
         ? this.#deriveAttention(
             event,
             [
@@ -1758,7 +1873,7 @@ export class RoomKernel {
       const assigneeId = nullableText(taskRow, "assignee_id");
       const recipients =
         assigneeId === null
-          ? this.#roomAgentRecipients(roomId, "task_available")
+          ? ar.listRoomAgentRecipients(this.#database, roomId, "task_available")
           : [{ participantId: assigneeId, reason: "task_assigned" as const }];
       const activationIds = this.#deriveAttention(
         event,
@@ -2054,7 +2169,11 @@ export class RoomKernel {
         const assigneeId = nullableText(readyTask, "assignee_id");
         const recipients =
           assigneeId === null
-            ? this.#roomAgentRecipients(roomId, "dependency_resolved")
+            ? ar.listRoomAgentRecipients(
+                this.#database,
+                roomId,
+                "dependency_resolved",
+              )
             : [
                 {
                   participantId: assigneeId,
@@ -2309,6 +2428,14 @@ export class RoomKernel {
     };
   }
 
+  getExecutionPolicyRevision(
+    executionPolicyRevisionId: string,
+  ): ExecutionPolicyRevision {
+    return this.#executionPolicyRevisionFromRow(
+      this.#requireExecutionPolicyRevisionRow(executionPolicyRevisionId),
+    );
+  }
+
   createAgentDefinition(
     actor: AuthenticatedActorContext,
     input: AgentDefinitionContent & {
@@ -2326,7 +2453,11 @@ export class RoomKernel {
       this.#assertIdempotencyKey(input.idempotencyKey);
       this.#requireAgentParticipant(input.participantId);
       this.#requireMember(input.controlRoomId, input.participantId);
-      this.#requireExecutionPolicyRevisionRow(input.executionPolicyRevisionId);
+      requireExecutionPolicyRevisionControlRoom(
+        this.#database,
+        input.executionPolicyRevisionId,
+        input.controlRoomId,
+      );
       const content = agentDefinitionContentFromInput(input);
       const contentDigest = canonicalDigest(content);
       const previous = this.#findRoomEventByIdempotencyKey(
@@ -2418,7 +2549,11 @@ export class RoomKernel {
       const controlRoomId = text(definitionRow, "control_room_id");
       const actorId = this.#requireHumanControlActor(actor, controlRoomId);
       this.#assertIdempotencyKey(input.idempotencyKey);
-      this.#requireExecutionPolicyRevisionRow(input.executionPolicyRevisionId);
+      requireExecutionPolicyRevisionControlRoom(
+        this.#database,
+        input.executionPolicyRevisionId,
+        controlRoomId,
+      );
       const content = agentDefinitionContentFromInput(input);
       const contentDigest = canonicalDigest(content);
       const previous = this.#findRoomEventByIdempotencyKey(
@@ -2492,6 +2627,69 @@ export class RoomKernel {
       ),
       definition: this.#agentDefinitionFromRow(row),
     };
+  }
+
+  listAgentCatalog(
+    actor: AuthenticatedActorContext,
+    input: { controlRoomId?: string } = {},
+  ): AgentCatalogEntry[] {
+    const actorId = this.#requireAuthenticatedActor(actor);
+    if (
+      this.#principalFromRow(this.#requirePrincipal(actorId)).kind !== "human"
+    ) {
+      throw new ForbiddenError(
+        "Agent catalog requires an authenticated Human principal",
+      );
+    }
+    return ar
+      .listAgentCatalogRows(this.#database, actorId, input.controlRoomId)
+      .map((row) =>
+        AgentCatalogEntrySchema.parse({
+          currentRevision: this.#agentDefinitionRevisionFromRow(row),
+          definition: this.#agentDefinitionFromRow(row),
+          handle: text(row, "handle"),
+        }),
+      );
+  }
+
+  onboardAgentToRoom(
+    actor: AuthenticatedActorContext,
+    input: {
+      agentDefinitionId: string;
+      basedOnRoomSeq: number;
+      idempotencyKey: string;
+      roomId: string;
+    },
+  ): RoomMembershipMutationResult {
+    return this.#transaction(() => {
+      const actorId = this.#requireAuthenticatedActor(actor);
+      const principal = this.#principalFromRow(this.#requirePrincipal(actorId));
+      if (principal.kind !== "human") {
+        throw new ForbiddenError(
+          "Agent onboarding requires an authenticated Human principal",
+        );
+      }
+      const definition = this.#agentDefinitionFromRow(
+        this.#requireAgentDefinitionRow(input.agentDefinitionId),
+      );
+      this.#requireMember(definition.controlRoomId, actorId);
+      this.#collaboration.requireSameWorkspace(
+        definition.controlRoomId,
+        input.roomId,
+      );
+      if (definition.state !== "enabled") {
+        throw new ConflictError(
+          `AgentDefinition ${input.agentDefinitionId} is not enabled`,
+        );
+      }
+      return this.#collaboration.addRoomMember(principal, {
+        basedOnRoomSeq: input.basedOnRoomSeq,
+        idempotencyKey: input.idempotencyKey,
+        principalId: definition.participantId,
+        role: "member",
+        roomId: input.roomId,
+      });
+    });
   }
 
   publishRuntimeOffer(
@@ -4651,14 +4849,7 @@ export class RoomKernel {
     controlRoomId: string,
   ): string {
     const actorId = this.#requireAuthenticatedActor(actor);
-    this.#requireMember(controlRoomId, actorId);
-    if (
-      this.#principalFromRow(this.#requirePrincipal(actorId)).kind !== "human"
-    ) {
-      throw new ForbiddenError(
-        "control object mutations require an authenticated Human member",
-      );
-    }
+    requireHumanControlRoomManager(this.#database, controlRoomId, actorId);
     return actorId;
   }
 
@@ -5431,43 +5622,6 @@ export class RoomKernel {
       );
     }
     return event;
-  }
-
-  #roomAgentRecipients(
-    roomId: string,
-    reason: ActivationReason,
-    excludedParticipantId?: string,
-  ): MessageRecipient[] {
-    return this.#database
-      .prepare(
-        `SELECT principals.principal_id
-         FROM memberships
-         JOIN principals ON principals.principal_id = memberships.principal_id
-         WHERE memberships.room_id = ? AND principals.kind = 'agent'
-         ORDER BY principals.principal_id`,
-      )
-      .all(roomId)
-      .filter((row) => text(row, "principal_id") !== excludedParticipantId)
-      .map((row) => ({
-        participantId: text(row, "principal_id"),
-        reason,
-      }));
-  }
-
-  #taskDependenciesComplete(taskId: string): boolean {
-    return (
-      this.#database
-        .prepare(
-          `SELECT 1
-           FROM task_dependencies
-           JOIN tasks AS dependency
-             ON dependency.task_id = task_dependencies.dependency_task_id
-           WHERE task_dependencies.task_id = ?
-             AND dependency.state <> 'completed'
-           LIMIT 1`,
-        )
-        .get(taskId) === undefined
-    );
   }
 
   #snapshot(roomId: string): RoomSnapshot {
@@ -6758,40 +6912,4 @@ function eventPayloadText(event: RoomEvent, key: string): string {
     throw new Error(`expected event payload ${key} to be text`);
   }
   return value;
-}
-
-function capacityProfileResourceId(
-  hostId: string,
-  runtimeProfileId: string,
-): string {
-  return JSON.stringify([hostId, runtimeProfileId]);
-}
-
-function assertPositiveCapacityLimit(value: number, label: string): void {
-  if (!Number.isSafeInteger(value) || value <= 0) {
-    throw new Error(`${label} must be a positive integer`);
-  }
-}
-
-function capacityLimitMap<T extends { maxConcurrent: number }>(
-  limits: ReadonlyArray<T>,
-  keyOf: (limit: T) => string,
-  label: string,
-): Map<string, number> {
-  const result = new Map<string, number>();
-  for (const limit of limits) {
-    const key = keyOf(limit);
-    if (key.trim().length === 0) {
-      throw new Error(`${label} capacity limit identity must not be empty`);
-    }
-    assertPositiveCapacityLimit(
-      limit.maxConcurrent,
-      `${label} capacity limit ${key}`,
-    );
-    if (result.has(key)) {
-      throw new Error(`duplicate ${label} capacity limit: ${key}`);
-    }
-    result.set(key, limit.maxConcurrent);
-  }
-  return result;
 }

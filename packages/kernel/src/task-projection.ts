@@ -4,6 +4,25 @@ import { TaskSchema, type Task } from "@rah-os/protocol";
 
 import { nullableText, text, type Row } from "./sqlite-row.ts";
 
+export function taskDependenciesComplete(
+  database: DatabaseSync,
+  taskId: string,
+): boolean {
+  return (
+    database
+      .prepare(
+        `SELECT 1
+         FROM task_dependencies
+         JOIN tasks AS dependency
+           ON dependency.task_id = task_dependencies.dependency_task_id
+         WHERE task_dependencies.task_id = ?
+           AND dependency.state <> 'completed'
+         LIMIT 1`,
+      )
+      .get(taskId) === undefined
+  );
+}
+
 export function taskProjectionFromRow(database: DatabaseSync, row: Row): Task {
   const taskId = text(row, "task_id");
   const assigneeId = nullableText(row, "assignee_id");

@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RAH OS Room Agent Membership Browser Fixture</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      import React from "react";
+      import { createRoot } from "react-dom/client";
+      import { FakeRahClient, RahClientError } from "@rah-os/client-sdk";
+      import "@rah-os/ui-tokens/styles.css";
+      import "@rah-os/ui-tokens/channel-extras.css";
+      import "../src/product.css";
+      import { App } from "../src/App.tsx";
+
+      const createdAt = "2026-08-27T00:00:00.000Z";
+      const room = {
+        createdAt,
+        kind: "channel",
+        name: "Agent Council",
+        roomId: "room-main",
+        slug: "agent-council",
+        workspaceId: "workspace-main",
+      };
+      const bindings = [
+        {
+          agentDefinitionId: "definition-codex",
+          displayName: "Codex · browser fixture",
+          executable: "codex",
+          handle: "Codex",
+          participantId: "agent-codex",
+          version: "fixture",
+        },
+        {
+          agentDefinitionId: "definition-kimi",
+          displayName: "Kimi CLI · browser fixture",
+          executable: "kimi",
+          handle: "Kimi",
+          participantId: "agent-kimi",
+          version: "fixture",
+        },
+        {
+          agentDefinitionId: "definition-opencode",
+          displayName: "OpenCode · concurrent join fixture",
+          executable: "opencode",
+          handle: "OpenCode",
+          participantId: "agent-opencode",
+          version: "fixture",
+        },
+      ];
+      const fixtureId =
+        new URLSearchParams(location.search).get("run") ?? "default";
+      const storageKey = `rah-os.room-agent-membership.${fixtureId}`;
+      const restoredMembers = sessionStorage.getItem(`${storageKey}.members`);
+      const memberIds = new Set(
+        restoredMembers === null
+          ? ["human-main", "agent-codex"]
+          : JSON.parse(restoredMembers),
+      );
+      const events = restoreArray("events");
+      const messages = restoreArray("messages");
+      const tasks = restoreArray("tasks");
+      const threads = restoreArray("threads");
+      let concurrentJoinPending = !memberIds.has("agent-opencode");
+
+      function restoreArray(name) {
+        return JSON.parse(
+          sessionStorage.getItem(`${storageKey}.${name}`) ?? "[]",
+        );
+      }
+
+      function persistArray(name, values) {
+        sessionStorage.setItem(`${storageKey}.${name}`, JSON.stringify(values));
+      }
+
+      function persistMembers() {
+        persistArray("members", [...memberIds]);
+      }
+
+      function membership(principalId) {
+        return {
+          joinedAt: createdAt,
+          principalId,
+          role: principalId === "human-main" ? "owner" : "member",
+          roomId: room.roomId,
+        };
+      }
+
+      function appendEvent({
+        aggregateId,
+        aggregateType,
+        actorId = "human-main",
+        idempotencyKey,
+        payload,
+        type,
+      }) {
+        const event = {
+          actorId,
+          aggregateId,
+          aggregateType,
+          createdAt,
+          eventId: `event-${String(events.length + 1)}`,
+          idempotencyKey,
+          payload,
+          roomId: room.roomId,
+          roomSeq: events.length + 1,
+          schemaVersion: 1,
+          type,
+        };
+        events.push(event);
+        persistArray("events", events);
+        return event;
+      }
+
+      const client = new FakeRahClient(async (operation, input) => {
+        if (operation === "health")
+          return {
+            apiVersion: 3,
+            buildVersion: "room-agent-browser-fixture",
+            capabilities: {
+              agentOnboard: true,
+              agentRead: false,
+              cursorAcknowledge: true,
+              hints: false,
+              inputRequestRead: true,
+              inputRequestResolve: true,
+              memberRead: true,
+              memberWrite: true,
+              messageRead: true,
+              messageWrite: true,
+              roomRead: true,
+              roomWrite: true,
+              roomSync: true,
+              taskRead: true,
+              taskWrite: true,
+              threadRead: true,
+              threadWrite: true,
+              workspaceRead: true,
+              workspaceWrite: true,
+            },
+            kernelSchemaVersion: 3,
+            protocolVersion: 1,
+            state: "online",
+          };
+        if (operation === "workspace.list")
+          return {
+            workspaces: [
+              {
+                controlRoomId: "control-main",
+                createdAt,
+                name: "RAH Browser Fixture",
+                slug: "rah-browser-fixture",
+                state: "active",
+                workspaceId: "workspace-main",
+              },
+            ],
+          };
+        if (operation === "room.list") return { rooms: [room] };
+        if (operation === "host.runtime.list")
+          return {
+            hostId: "fixture-host",
+            restartRequiredToRescan: true,
+            runtimes: bindings.map((binding) => ({
+              agentBindings: [
+                {
+                  agentDefinitionId: binding.agentDefinitionId,
+                  handle: binding.handle,
+                  participantId: binding.participantId,
+                },
+              ],
+              available: true,
+              configured: true,
+              displayName: binding.displayName,
+              executable: binding.executable,
+              resolvedExecutablePath: `/fixture/${binding.executable}`,
+              runtimeOfferId: `offer-${binding.executable}`,
+              runtimeProfileId: `profile-${binding.executable}`,
+              runtimeProfileRevisionId: `revision-${binding.executable}`,
+              source: "configured",
+              version: binding.version,
+            })),
+          };
+        if (operation === "room.sync") {
+          const afterSeq = input.afterSeq ?? 0;
+          const delivered = events.filter(({ roomSeq }) => roomSeq > afterSeq);
+          return {
+            cursorAfter: delivered.at(-1)?.roomSeq ?? afterSeq,
+            cursorBefore: afterSeq,
+            events: delivered,
+            latestRoomSeq: events.length,
+            snapshot:
+              afterSeq === 0
+                ? {
+                    members: [
+                      {
+                        handle: "Sun",
+                        kind: "human",
+                        principalId: "human-main",
+                      },
+                    ],
+                    room,
+                  }
+                : null,
+          };
+        }
+        if (operation === "room.acknowledge")
+          return { acknowledgedThrough: input.throughSeq };
+        if (operation === "room.member.list")
+          return { memberships: [...memberIds].map(membership) };
+        if (operation === "room.agent.activity.list")
+          return {
+            agents: bindings
+              .filter(({ participantId }) => memberIds.has(participantId))
+              .map(({ participantId }) => ({
+                participantId,
+                roomId: room.roomId,
+                state: "idle",
+                updatedAt: createdAt,
+              })),
+          };
+        if (operation === "message.list") {
+          const page = messages.filter(
+            (message) =>
+              message.roomSeq > input.afterSeq &&
+              (input.threadId === undefined ||
+                message.threadId === input.threadId),
+          );
+          return {
+            cursorAfter: page.at(-1)?.roomSeq ?? input.afterSeq,
+            hasMore: false,
+            messages: page,
+          };
+        }
+        if (operation === "message.post") {
+          const messageId = `message-${String(messages.length + 1)}`;
+          const event = appendEvent({
+            aggregateId: messageId,
+            aggregateType: "message",
+            idempotencyKey: input.idempotencyKey,
+            payload: { body: input.body },
+            type: "message.posted",
+          });
+          messages.push({
+            actorId: "human-main",
+            body: input.body,
+            createdAt,
+            messageId,
+            roomId: room.roomId,
+            roomSeq: event.roomSeq,
+          });
+          const activatedAgents = bindings.filter(({ participantId }) =>
+            memberIds.has(participantId),
+          );
+          for (const binding of activatedAgents) {
+            const replyId = `message-${String(messages.length + 1)}`;
+            const reply = appendEvent({
+              actorId: binding.participantId,
+              aggregateId: replyId,
+              aggregateType: "message",
+              idempotencyKey: `fixture-reply-${event.eventId}-${binding.participantId}`,
+              payload: {
+                activationId: `activation-${event.eventId}-${binding.participantId}`,
+                basedOnRoomSeq: event.roomSeq,
+                body: `已收到 Room 消息。— ${binding.handle}`,
+              },
+              type: "message.posted",
+            });
+            messages.push({
+              actorId: binding.participantId,
+              body: `已收到 Room 消息。— ${binding.handle}`,
+              createdAt,
+              messageId: replyId,
+              roomId: room.roomId,
+              roomSeq: reply.roomSeq,
+            });
+          }
+          persistArray("messages", messages);
+          return {
+            activationIds: activatedAgents.map(
+              ({ participantId }) =>
+                `activation-message-${String(event.roomSeq)}-${participantId}`,
+            ),
+            deduplicated: false,
+            event,
+          };
+        }
+        if (operation === "task.list") return { tasks };
+        if (operation === "task.create") {
+          const taskId = `task-${String(tasks.length + 1)}`;
+          const event = appendEvent({
+            aggregateId: taskId,
+            aggregateType: "task",
+            idempotencyKey: input.idempotencyKey,
+            payload: { title: input.title },
+            type: "task.created",
+          });
+          const task = {
+            ...(input.assigneeId === undefined
+              ? {}
+              : { assigneeId: input.assigneeId }),
+            createdAt,
+            creatorId: "human-main",
+            dependencyTaskIds: input.dependencyTaskIds,
+            ...(input.description === undefined
+              ? {}
+              : { description: input.description }),
+            roomId: room.roomId,
+            state: "todo",
+            taskId,
+            title: input.title,
+            updatedAt: createdAt,
+          };
+          tasks.push(task);
+          persistArray("tasks", tasks);
+          return {
+            activationIds:
+              input.assigneeId === undefined
+                ? [...memberIds]
+                    .filter((principalId) => principalId.startsWith("agent-"))
+                    .map(
+                      (principalId) =>
+                        `activation-task-${String(event.roomSeq)}-${principalId}`,
+                    )
+                : [`activation-task-${String(event.roomSeq)}`],
+            deduplicated: false,
+            event,
+            task,
+          };
+        }
+        if (operation === "thread.list") return { threads };
+        if (operation === "thread.create") {
+          const threadId = `thread-${String(threads.length + 1)}`;
+          const event = appendEvent({
+            aggregateId: threadId,
+            aggregateType: "thread",
+            idempotencyKey: input.idempotencyKey,
+            payload: { rootMessageId: input.rootMessageId },
+            type: "thread.created",
+          });
+          const thread = {
+            createdAt,
+            createdBy: "human-main",
+            replyCount: 0,
+            roomId: room.roomId,
+            rootMessageId: input.rootMessageId,
+            threadId,
+          };
+          threads.push(thread);
+          persistArray("threads", threads);
+          return {
+            activationIds: input.recipientIds.map(
+              (participantId) =>
+                `activation-thread-${String(event.roomSeq)}-${participantId}`,
+            ),
+            deduplicated: false,
+            event,
+            thread,
+          };
+        }
+        if (operation === "thread.reply") {
+          const thread = threads.find(
+            ({ threadId }) => threadId === input.threadId,
+          );
+          if (thread === undefined) throw new Error("unknown fixture Thread");
+          const messageId = `message-${String(messages.length + 1)}`;
+          const event = appendEvent({
+            aggregateId: messageId,
+            aggregateType: "message",
+            idempotencyKey: input.idempotencyKey,
+            payload: { body: input.body, threadId: input.threadId },
+            type: "message.posted",
+          });
+          messages.push({
+            actorId: "human-main",
+            body: input.body,
+            createdAt,
+            messageId,
+            roomId: room.roomId,
+            roomSeq: event.roomSeq,
+            threadId: input.threadId,
+          });
+          thread.lastReplyAt = createdAt;
+          thread.replyCount += 1;
+          persistArray("messages", messages);
+          persistArray("threads", threads);
+          return {
+            activationIds: input.recipientIds.map(
+              (participantId) =>
+                `activation-reply-${String(event.roomSeq)}-${participantId}`,
+            ),
+            deduplicated: false,
+            event,
+          };
+        }
+        if (operation === "agent.onboard") {
+          const binding = bindings.find(
+            ({ agentDefinitionId }) =>
+              agentDefinitionId === input.agentDefinitionId,
+          );
+          if (binding === undefined) throw new Error("unknown fixture Agent");
+          if (
+            binding.participantId === "agent-opencode" &&
+            concurrentJoinPending
+          ) {
+            concurrentJoinPending = false;
+            memberIds.add(binding.participantId);
+            persistMembers();
+            appendEvent({
+              aggregateId: binding.participantId,
+              aggregateType: "membership",
+              idempotencyKey: input.idempotencyKey,
+              payload: { participantId: binding.participantId },
+              type: "membership.added",
+            });
+            throw new RahClientError("conflict", "already a member", 409);
+          }
+          if (memberIds.has(binding.participantId)) {
+            throw new RahClientError("conflict", "already a member", 409);
+          }
+          memberIds.add(binding.participantId);
+          persistMembers();
+          const event = appendEvent({
+            aggregateId: binding.participantId,
+            aggregateType: "membership",
+            idempotencyKey: input.idempotencyKey,
+            payload: { participantId: binding.participantId },
+            type: "membership.added",
+          });
+          return {
+            deduplicated: false,
+            event,
+            membership: membership(binding.participantId),
+          };
+        }
+        if (operation === "room.member.remove") {
+          if (!memberIds.has(input.principalId)) {
+            throw new RahClientError("conflict", "not a member", 409);
+          }
+          memberIds.delete(input.principalId);
+          persistMembers();
+          return {
+            deduplicated: false,
+            event: appendEvent({
+              aggregateId: input.principalId,
+              aggregateType: "membership",
+              idempotencyKey: input.idempotencyKey,
+              payload: { participantId: input.principalId },
+              type: "membership.removed",
+            }),
+            removedPrincipalId: input.principalId,
+          };
+        }
+        throw new Error(`unexpected fixture operation ${operation}`);
+      });
+
+      createRoot(document.getElementById("root")).render(
+        React.createElement(App, { client }),
+      );
+    </script>
+  </body>
+</html>

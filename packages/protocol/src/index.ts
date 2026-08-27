@@ -1,7 +1,11 @@
 import { z } from "zod";
 
 import { IdentifierSchema, TimestampSchema } from "./common.ts";
-import { RoomSchema } from "./collaboration.ts";
+import {
+  ParticipantKindSchema,
+  PrincipalSchema,
+  RoomSchema,
+} from "./collaboration.ts";
 import { RoomEventSchema, type RoomEvent } from "./room-event.ts";
 import {
   TaskSchema,
@@ -15,6 +19,8 @@ export type { Task, TaskState };
 export {
   MembershipRoleSchema,
   MessageSchema,
+  ParticipantKindSchema,
+  PrincipalSchema,
   RoomKindSchema,
   RoomMembershipSchema,
   RoomSchema,
@@ -25,6 +31,8 @@ export {
 export type {
   MembershipRole,
   Message,
+  ParticipantKind,
+  Principal,
   Room,
   RoomKind,
   RoomMembership,
@@ -32,13 +40,9 @@ export type {
   Workspace,
   WorkspaceState,
 } from "./collaboration.ts";
-export * from "./client-collaboration.ts";
-export * from "./client-health.ts";
+export * from "./client.ts";
 export { RoomEventSchema } from "./room-event.ts";
 export type { RoomEvent } from "./room-event.ts";
-
-export const ParticipantKindSchema = z.enum(["human", "agent", "service"]);
-export type ParticipantKind = z.infer<typeof ParticipantKindSchema>;
 
 export const ActivationReasonSchema = z.enum([
   "mention",
@@ -306,6 +310,41 @@ export const AgentDefinitionRevisionSchema = z
   });
 export type AgentDefinitionRevision = z.infer<
   typeof AgentDefinitionRevisionSchema
+>;
+
+export const AgentCatalogEntrySchema = z
+  .object({
+    currentRevision: AgentDefinitionRevisionSchema,
+    definition: AgentDefinitionSchema,
+    handle: IdentifierSchema,
+  })
+  .strict();
+export type AgentCatalogEntry = z.infer<typeof AgentCatalogEntrySchema>;
+
+export const ClientAgentsListRequestSchema = z
+  .object({ controlRoomId: IdentifierSchema })
+  .strict();
+export type ClientAgentsListRequest = z.infer<
+  typeof ClientAgentsListRequestSchema
+>;
+
+export const ClientAgentsListResponseSchema = z
+  .object({ agents: z.array(AgentCatalogEntrySchema) })
+  .strict();
+export type ClientAgentsListResponse = z.infer<
+  typeof ClientAgentsListResponseSchema
+>;
+
+export const ClientAgentOnboardRequestSchema = z
+  .object({
+    agentDefinitionId: IdentifierSchema,
+    basedOnRoomSeq: z.number().int().nonnegative(),
+    idempotencyKey: IdentifierSchema,
+    roomId: IdentifierSchema,
+  })
+  .strict();
+export type ClientAgentOnboardRequest = z.infer<
+  typeof ClientAgentOnboardRequestSchema
 >;
 
 export const CapabilityEvidenceLevelSchema = z.enum([
@@ -1498,6 +1537,17 @@ export type WorkerAcknowledgeRequest = z.infer<
   typeof WorkerAcknowledgeRequestSchema
 >;
 
+export const WorkerMessagePostRequestSchema = z
+  .object({
+    basedOnRoomSeq: z.number().int().nonnegative(),
+    body: z.string().trim().min(1),
+    idempotencyKey: IdentifierSchema,
+  })
+  .strict();
+export type WorkerMessagePostRequest = z.infer<
+  typeof WorkerMessagePostRequestSchema
+>;
+
 const WorkerTaskCommandBaseSchema = z
   .object({
     taskId: IdentifierSchema,
@@ -1569,15 +1619,6 @@ export type WorkerTaskSubmitRequest = z.infer<
   typeof WorkerTaskSubmitRequestSchema
 >;
 
-export const PrincipalSchema = z
-  .object({
-    principalId: IdentifierSchema,
-    handle: IdentifierSchema,
-    kind: ParticipantKindSchema,
-  })
-  .strict();
-export type Principal = z.infer<typeof PrincipalSchema>;
-
 export const RoomSnapshotSchema = z
   .object({
     room: RoomSchema,
@@ -1595,8 +1636,8 @@ export const RoomSyncResponseSchema = z
     events: z.array(RoomEventSchema),
   })
   .strict()
-  .refine((response) => response.cursorBefore <= response.cursorAfter, {
-    message: "cursorBefore must be less than or equal to cursorAfter",
+  .refine((response) => response.cursorBefore <= response.latestRoomSeq, {
+    message: "cursorBefore must be less than or equal to latestRoomSeq",
     path: ["cursorBefore"],
   })
   .refine((response) => response.cursorAfter <= response.latestRoomSeq, {
@@ -1662,6 +1703,17 @@ export const WorkerAcknowledgeResponseSchema = z
   .strict();
 export type WorkerAcknowledgeResponse = z.infer<
   typeof WorkerAcknowledgeResponseSchema
+>;
+
+export const WorkerMessageMutationResponseSchema = z
+  .object({
+    activationIds: z.array(IdentifierSchema),
+    deduplicated: z.boolean(),
+    event: RoomEventSchema,
+  })
+  .strict();
+export type WorkerMessageMutationResponse = z.infer<
+  typeof WorkerMessageMutationResponseSchema
 >;
 
 export const WorkerTaskMutationResponseSchema = z

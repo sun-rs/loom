@@ -146,6 +146,117 @@ test("message mutation atomically derives event, Inbox, Activation, and content-
   kernel.close();
 });
 
+test("a Human Room message wakes every joined Agent by membership", () => {
+  const { agent, humanActor, kernel, otherAgent, room } = createFixture();
+
+  const result = kernel.postRoomMessage(humanActor, {
+    body: "Everyone in this Room should receive the message",
+    idempotencyKey: "room-membership-delivery",
+    recipients: [],
+    roomId: room.roomId,
+  });
+
+  assert.equal(result.activationIds.length, 2);
+  assert.deepEqual(
+    kernel
+      .listActivations({ roomId: room.roomId })
+      .map(({ participantId, reason }) => ({ participantId, reason }))
+      .sort((left, right) =>
+        left.participantId.localeCompare(right.participantId),
+      ),
+    [
+      { participantId: agent.principalId, reason: "room_policy" },
+      { participantId: otherAgent.principalId, reason: "room_policy" },
+    ].sort((left, right) =>
+      left.participantId.localeCompare(right.participantId),
+    ),
+  );
+
+  kernel.close();
+});
+
+test("a Human mention raises one Room Agent attention without filtering delivery", () => {
+  const { agent, humanActor, kernel, otherAgent, room } = createFixture();
+
+  const result = kernel.postRoomMessage(humanActor, {
+    body: "@codex please lead; opencode should still receive the Room message",
+    idempotencyKey: "room-mention-attention",
+    recipients: [{ participantId: agent.principalId, reason: "mention" }],
+    roomId: room.roomId,
+  });
+
+  assert.equal(result.activationIds.length, 2);
+  assert.deepEqual(
+    kernel
+      .listActivations({ roomId: room.roomId })
+      .map(({ participantId, reason }) => ({ participantId, reason }))
+      .sort((left, right) =>
+        left.participantId.localeCompare(right.participantId),
+      ),
+    [
+      { participantId: agent.principalId, reason: "mention" },
+      { participantId: otherAgent.principalId, reason: "room_policy" },
+    ].sort((left, right) =>
+      left.participantId.localeCompare(right.participantId),
+    ),
+  );
+
+  kernel.close();
+});
+
+test("Room Agent activity exposes idle, waking, working, and error without provider output", () => {
+  const { agent, humanActor, kernel, otherAgent, room } = createFixture();
+  assert.deepEqual(
+    kernel
+      .listRoomAgentActivity(humanActor, { roomId: room.roomId })
+      .map(({ participantId, state }) => ({ participantId, state })),
+    [
+      { participantId: agent.principalId, state: "idle" },
+      { participantId: otherAgent.principalId, state: "idle" },
+    ].sort((left, right) =>
+      left.participantId.localeCompare(right.participantId),
+    ),
+  );
+
+  kernel.postRoomMessage(humanActor, {
+    body: "Wake the Room",
+    idempotencyKey: "activity-wake-room",
+    recipients: [],
+    roomId: room.roomId,
+  });
+  assert.deepEqual(
+    kernel
+      .listRoomAgentActivity(humanActor, { roomId: room.roomId })
+      .map(({ state }) => state),
+    ["waking", "waking"],
+  );
+
+  const host = authenticateHost(kernel, "activity-host", [
+    agent.principalId,
+    otherAgent.principalId,
+  ]);
+  const leased = kernel.leaseNextActivation(host, { leaseMs: 30_000 });
+  assert.ok(leased);
+  assert.equal(
+    kernel
+      .listRoomAgentActivity(humanActor, { roomId: room.roomId })
+      .find(({ participantId }) => participantId === leased.participantId)
+      ?.state,
+    "working",
+  );
+  kernel.quarantineActivation(host, {
+    activationId: leased.activationId,
+    error: "runtime reply was not proven",
+  });
+  const failed = kernel
+    .listRoomAgentActivity(humanActor, { roomId: room.roomId })
+    .find(({ participantId }) => participantId === leased.participantId);
+  assert.equal(failed?.state, "error");
+  assert.equal(failed?.lastError, "runtime reply was not proven");
+
+  kernel.close();
+});
+
 test("idempotent retry does not duplicate any derived state", () => {
   const { agent, agentActor, humanActor, kernel, room } = createFixture();
   const command = {

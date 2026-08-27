@@ -58,13 +58,26 @@ test("RahCore is a headless lifecycle boundary over canonical Room state and mul
       handle: "core-agent",
       kind: "agent",
     });
-    const actor = core.kernel.authenticateAccessToken(human.accessToken);
-    const room = core.kernel.createRoom(actor, {
+    const actor = core.human.authenticateHumanAccessToken(human.accessToken);
+    const workspace = core.human.createWorkspace(actor, {
+      idempotencyKey: "core-workspace-create",
+      name: "Core SDK Workspace",
+      slug: "core-sdk-workspace",
+    });
+    const roomCreated = core.human.createRoom(actor, {
+      basedOnControlRoomSeq: workspace.event.roomSeq,
+      idempotencyKey: "core-room-create",
+      kind: "channel",
       name: "Core SDK Room",
       slug: "core-sdk-room",
+      workspaceId: workspace.workspace.workspaceId,
     });
-    core.kernel.addMember(actor, {
+    const room = roomCreated.room;
+    core.human.addRoomMember(actor, {
+      basedOnRoomSeq: 1,
+      idempotencyKey: "core-agent-member-add",
       principalId: agent.principal.principalId,
+      role: "member",
       roomId: room.roomId,
     });
     const credential = core.kernel.provisionHostCredential({
@@ -98,8 +111,49 @@ test("RahCore is a headless lifecycle boundary over canonical Room state and mul
 
     assert.equal(core.state, "open");
     assert.equal(runner.capacity, 2);
+    assert.equal(Object.isFrozen(core.human), true);
+    assert.deepEqual(Object.keys(core.human).sort(), [
+      "acknowledgeCursor",
+      "addRoomMember",
+      "assignTask",
+      "authenticateHumanAccessToken",
+      "cancelTask",
+      "completeTask",
+      "createRoom",
+      "createTask",
+      "createThread",
+      "createWorkspace",
+      "getAuthenticatedPrincipal",
+      "listAgentCatalog",
+      "listInputRequests",
+      "listMessages",
+      "listRoomAgentActivity",
+      "listRoomMemberships",
+      "listRooms",
+      "listTasks",
+      "listThreads",
+      "listWorkspaces",
+      "onboardAgentToRoom",
+      "postRoomMessage",
+      "removeRoomMember",
+      "replyThread",
+      "resolveInputRequest",
+      "setRoomMemberRole",
+      "sync",
+      "unblockTask",
+    ]);
+    assert.equal("provisionHostCredential" in core.human, false);
+    assert.equal("listActivations" in core.human, false);
     assert.equal(
-      core.kernel.sync(actor, {
+      core.human.listWorkspaces(actor)[0]?.controlRoomId,
+      workspace.controlRoom.roomId,
+    );
+    assert.deepEqual(
+      core.human.listRooms(actor).map((visibleRoom) => visibleRoom.roomId),
+      [workspace.controlRoom.roomId, room.roomId],
+    );
+    assert.equal(
+      core.human.sync(actor, {
         afterSeq: 0,
         consumerId: "core-sdk-test",
         roomId: room.roomId,
@@ -109,6 +163,7 @@ test("RahCore is a headless lifecycle boundary over canonical Room state and mul
 
     core.close();
     assert.equal(core.state, "closed");
+    assert.throws(() => core.human, /RahCore is not open/);
     assert.throws(() => core.kernel, /RahCore is not open/);
     assert.throws(() => core.initialize(), /cannot be reopened/);
   } finally {

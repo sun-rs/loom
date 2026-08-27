@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  ClientAgentOnboardRequestSchema,
+  ClientAgentsListRequestSchema,
+  ClientRoomCreateRequestSchema,
+  ClientWorkspaceCreateRequestSchema,
   ActivationCredentialScopeSchema,
   ActivationSchema,
   CLIENT_API_VERSION,
@@ -15,6 +19,8 @@ import {
   ClientMessagesListRequestSchema,
   ClientRoomMemberAddRequestSchema,
   ClientRoomMemberRemoveRequestSchema,
+  ClientRoomAgentActivityListRequestSchema,
+  ClientRoomAgentActivityListResponseSchema,
   ClientRoomsListRequestSchema,
   ClientThreadCreateRequestSchema,
   ClientThreadReplyRequestSchema,
@@ -31,12 +37,16 @@ import {
   InputRequestSchema,
   InputRequestResolveRequestSchema,
   InputRequestResolveResponseSchema,
+  LocalRuntimeInventoryRequestSchema,
+  LocalRuntimeInventoryResponseSchema,
   RoomEventSchema,
   RuntimeRecoveryDescriptorSchema,
   TaskSchema,
   WakeHintSchema,
   WorkerAcknowledgeRequestSchema,
   WorkerErrorResponseSchema,
+  WorkerMessageMutationResponseSchema,
+  WorkerMessagePostRequestSchema,
   WorkerSyncRequestSchema,
   WorkerTaskClaimRequestSchema,
   WorkerTaskBlockRequestSchema,
@@ -54,8 +64,59 @@ import {
   WorkerTaskSubmitRequestSchema,
 } from "../src/index.ts";
 
-test("Client API v1/v2 contracts are strict, actor-free, and transport-neutral", () => {
-  assert.equal(CLIENT_API_VERSION, 2);
+test("local Runtime inventory is strict and distinguishes discovery from configuration", () => {
+  assert.deepEqual(LocalRuntimeInventoryRequestSchema.parse({}), {});
+  assert.throws(() =>
+    LocalRuntimeInventoryRequestSchema.parse({ hostId: "injected" }),
+  );
+  const inventory = LocalRuntimeInventoryResponseSchema.parse({
+    hostId: "macbook-host",
+    restartRequiredToRescan: true,
+    runtimes: [
+      {
+        agentBindings: [],
+        available: true,
+        configured: true,
+        displayName: "Codex",
+        executable: "codex",
+        resolvedExecutablePath: "/opt/homebrew/bin/codex",
+        runtimeOfferId: "offer-codex",
+        runtimeProfileId: "profile-codex",
+        runtimeProfileRevisionId: "revision-codex",
+        source: "configured",
+        version: "codex-cli 0.149.1",
+      },
+      {
+        agentBindings: [],
+        available: false,
+        configured: false,
+        displayName: "Claude Code",
+        executable: "claude",
+        source: "discovered",
+      },
+    ],
+  });
+  assert.equal(inventory.runtimes[0]?.runtimeProfileId, "profile-codex");
+  assert.throws(() =>
+    LocalRuntimeInventoryResponseSchema.parse({
+      hostId: "macbook-host",
+      restartRequiredToRescan: true,
+      runtimes: [
+        {
+          agentBindings: [],
+          available: true,
+          configured: false,
+          displayName: "Codex",
+          executable: "codex",
+          source: "discovered",
+        },
+      ],
+    }),
+  );
+});
+
+test("Client API v1/v2/v3 contracts are strict, actor-free, and transport-neutral", () => {
+  assert.equal(CLIENT_API_VERSION, 3);
   assert.deepEqual(
     ClientRoomSyncRequestSchema.parse({
       afterSeq: 3,
@@ -79,6 +140,24 @@ test("Client API v1/v2 contracts are strict, actor-free, and transport-neutral",
   );
 
   assert.deepEqual(ClientWorkspacesListRequestSchema.parse({}), {});
+  assert.deepEqual(
+    ClientRoomAgentActivityListRequestSchema.parse({ roomId: "room-1" }),
+    { roomId: "room-1" },
+  );
+  assert.deepEqual(
+    ClientRoomAgentActivityListResponseSchema.parse({
+      agents: [
+        {
+          activationId: "activation-1",
+          participantId: "agent-1",
+          roomId: "room-1",
+          state: "waking",
+          updatedAt: "2026-08-27T00:00:00.000Z",
+        },
+      ],
+    }).agents[0]?.state,
+    "waking",
+  );
   assert.deepEqual(
     ClientRoomsListRequestSchema.parse({ workspaceId: "workspace-1" }),
     { workspaceId: "workspace-1" },
@@ -208,9 +287,11 @@ test("Client API v1/v2 contracts are strict, actor-free, and transport-neutral",
   );
 
   const health = ClientHealthResponseSchema.parse({
-    apiVersion: 2,
+    apiVersion: 3,
     buildVersion: "0.1.0",
     capabilities: {
+      agentOnboard: true,
+      agentRead: true,
       cursorAcknowledge: true,
       hints: false,
       inputRequestRead: true,
@@ -220,12 +301,14 @@ test("Client API v1/v2 contracts are strict, actor-free, and transport-neutral",
       messageRead: true,
       messageWrite: true,
       roomRead: true,
+      roomWrite: true,
       roomSync: true,
       taskRead: true,
       taskWrite: true,
       threadRead: true,
       threadWrite: true,
       workspaceRead: true,
+      workspaceWrite: true,
     },
     kernelSchemaVersion: 3,
     protocolVersion: 1,
@@ -264,12 +347,125 @@ test("Client API v1/v2 contracts are strict, actor-free, and transport-neutral",
     snapshot: null,
   });
   assert.equal(syncResponse.cursorAfter, 0);
+  const backwardReplayPage = ClientRoomSyncResponseSchema.parse({
+    cursorAfter: 2,
+    cursorBefore: 3,
+    events: [1, 2].map((roomSeq) => ({
+      actorId: "human-main",
+      aggregateId: `message-${String(roomSeq)}`,
+      aggregateType: "message",
+      createdAt: "2026-08-26T00:00:00.000Z",
+      eventId: `event-${String(roomSeq)}`,
+      idempotencyKey: `event-key-${String(roomSeq)}`,
+      payload: { body: `message ${String(roomSeq)}` },
+      roomId: "room-1",
+      roomSeq,
+      schemaVersion: 1,
+      type: "message.posted",
+    })),
+    latestRoomSeq: 3,
+    snapshot: {
+      members: [{ handle: "human", kind: "human", principalId: "human-main" }],
+      room: {
+        createdAt: "2026-08-26T00:00:00.000Z",
+        kind: "channel",
+        name: "Main Room",
+        roomId: "room-1",
+        slug: "main-room",
+        workspaceId: "workspace-main",
+      },
+    },
+  });
+  assert.equal(backwardReplayPage.cursorBefore, 3);
+  assert.equal(backwardReplayPage.cursorAfter, 2);
   assert.deepEqual(ClientTasksListResponseSchema.parse({ tasks: [] }), {
     tasks: [],
   });
   assert.deepEqual(
     ClientInputRequestsListResponseSchema.parse({ inputRequests: [] }),
     { inputRequests: [] },
+  );
+});
+
+test("Client API v3 creates managed Workspaces and Rooms without caller-selected actors", () => {
+  assert.deepEqual(
+    ClientWorkspaceCreateRequestSchema.parse({
+      idempotencyKey: "workspace-create-main",
+      name: "RAH OS",
+      slug: "rah-os",
+    }),
+    {
+      idempotencyKey: "workspace-create-main",
+      name: "RAH OS",
+      slug: "rah-os",
+    },
+  );
+  assert.deepEqual(
+    ClientRoomCreateRequestSchema.parse({
+      basedOnControlRoomSeq: 1,
+      idempotencyKey: "room-create-engineering",
+      kind: "channel",
+      name: "Engineering",
+      slug: "engineering",
+      workspaceId: "workspace-main",
+    }),
+    {
+      basedOnControlRoomSeq: 1,
+      idempotencyKey: "room-create-engineering",
+      kind: "channel",
+      name: "Engineering",
+      slug: "engineering",
+      workspaceId: "workspace-main",
+    },
+  );
+  assert.throws(() =>
+    ClientWorkspaceCreateRequestSchema.parse({
+      actorId: "principal-forged",
+      idempotencyKey: "workspace-create-main",
+      name: "RAH OS",
+      slug: "rah-os",
+    }),
+  );
+  assert.throws(() =>
+    ClientRoomCreateRequestSchema.parse({
+      basedOnControlRoomSeq: 1,
+      idempotencyKey: "room-create-control",
+      kind: "control",
+      name: "Second Control",
+      slug: "second-control",
+      workspaceId: "workspace-main",
+    }),
+  );
+});
+
+test("Client API v3 Agent catalog onboarding resolves definitions instead of accepting participant injection", () => {
+  assert.throws(() => ClientAgentsListRequestSchema.parse({}));
+  assert.deepEqual(
+    ClientAgentsListRequestSchema.parse({ controlRoomId: "room-control" }),
+    { controlRoomId: "room-control" },
+  );
+  assert.deepEqual(
+    ClientAgentOnboardRequestSchema.parse({
+      agentDefinitionId: "agent-definition-1",
+      basedOnRoomSeq: 1,
+      idempotencyKey: "agent-onboard-1",
+      roomId: "room-work",
+    }),
+    {
+      agentDefinitionId: "agent-definition-1",
+      basedOnRoomSeq: 1,
+      idempotencyKey: "agent-onboard-1",
+      roomId: "room-work",
+    },
+  );
+  assert.throws(() =>
+    ClientAgentOnboardRequestSchema.parse({
+      agentDefinitionId: "agent-definition-1",
+      basedOnRoomSeq: 1,
+      idempotencyKey: "agent-onboard-1",
+      participantId: "injected-agent",
+      roomId: "room-work",
+    }),
   );
 });
 
@@ -345,6 +541,47 @@ test("Worker API contracts are strict protocol-owned schemas", () => {
     throughSeq: 3,
   });
   assert.throws(() => WorkerAcknowledgeRequestSchema.parse({ throughSeq: -1 }));
+  const reply = {
+    basedOnRoomSeq: 3,
+    body: "Activation-scoped Room reply",
+    idempotencyKey: "worker-message-1",
+  };
+  assert.deepEqual(WorkerMessagePostRequestSchema.parse(reply), reply);
+  assert.throws(() =>
+    WorkerMessagePostRequestSchema.parse({
+      ...reply,
+      actorId: "injected-agent",
+      roomId: "injected-room",
+    }),
+  );
+  assert.throws(() =>
+    WorkerMessagePostRequestSchema.parse({ ...reply, body: "   " }),
+  );
+  const messageMutation = WorkerMessageMutationResponseSchema.parse({
+    activationIds: [],
+    deduplicated: false,
+    event: {
+      actorId: "agent-1",
+      aggregateId: "message-1",
+      aggregateType: "message",
+      createdAt: "2026-08-26T00:00:00.000Z",
+      eventId: "event-1",
+      idempotencyKey: "worker-message-1",
+      payload: {
+        activationId: "activation-1",
+        basedOnRoomSeq: 3,
+        body: "Activation-scoped Room reply",
+        messageId: "message-1",
+        recipientIds: [],
+        recipients: [],
+      },
+      roomId: "room-1",
+      roomSeq: 4,
+      schemaVersion: 1,
+      type: "message.posted",
+    },
+  });
+  assert.deepEqual(messageMutation.activationIds, []);
 
   const scope = ActivationCredentialScopeSchema.parse({
     activationId: "activation-1",

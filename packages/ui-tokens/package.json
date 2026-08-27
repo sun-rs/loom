@@ -1,0 +1,11 @@
+{
+  "name": "@rah-os/ui-tokens",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./channel-extras.css": "./generated/channel-extras.css",
+    "./icons.svg": "./generated/generated/raft-icons.svg",
+    "./styles.css": "./generated/styles.css"
+  }
+}

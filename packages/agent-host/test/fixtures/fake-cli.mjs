@@ -175,6 +175,38 @@ if (mode === "success") {
   if (!delivery || delivery.cursorAfter < requiredThrough) {
     throw new Error("worker Task sync did not reach the Activation range");
   }
+  const requiredContextEventTypes = (
+    process.env.RAH_FAKE_REQUIRED_CONTEXT_EVENT_TYPES ?? ""
+  )
+    .split(",")
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+  for (const requiredType of requiredContextEventTypes) {
+    if (!events.some((event) => event.type === requiredType)) {
+      throw new Error(`worker Task context omitted ${requiredType}`);
+    }
+  }
+  const roomReply = process.env.RAH_FAKE_ROOM_REPLY?.trim();
+  if (roomReply) {
+    const activationId = process.env.RAH_ACTIVATION_ID;
+    if (!activationId) {
+      throw new Error("worker Room reply requires RAH_ACTIVATION_ID");
+    }
+    const replied = await request("/v1/worker/messages/post", {
+      basedOnRoomSeq: delivery.cursorAfter,
+      body: roomReply,
+      idempotencyKey: `fake:${activationId}:room-reply`,
+    });
+    if (replied.activationIds.length !== 0) {
+      throw new Error("worker Room reply must not create an activation loop");
+    }
+    process.stdout.write(
+      JSON.stringify({
+        marker: "worker-room-reply-posted",
+        roomSeq: replied.event.roomSeq,
+      }) + "\n",
+    );
+  }
   const activationEvents = events.filter(
     (event) =>
       event.roomSeq >= requiredFrom && event.roomSeq <= requiredThrough,
@@ -188,6 +220,18 @@ if (mode === "success") {
   const isInputMode =
     mode === "worker-task-input" || mode === "worker-task-input-resume";
   const taskId = taskCreated?.aggregateId ?? inputResolved?.payload?.taskId;
+  if (!taskId && roomReply) {
+    await request("/v1/worker/acknowledge", {
+      throughSeq: delivery.cursorAfter,
+    });
+    process.stdout.write(
+      JSON.stringify({
+        deliveredThrough: delivery.cursorAfter,
+        marker: "worker-room-reply-finished",
+      }) + "\n",
+    );
+    process.exit(0);
+  }
   if (!taskId) {
     throw new Error("Activation contains no Task-linked business event");
   }

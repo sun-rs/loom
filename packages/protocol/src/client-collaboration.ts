@@ -1,15 +1,29 @@
 import { z } from "zod";
 
-import { IdentifierSchema } from "./common.ts";
+import { IdentifierSchema, TimestampSchema } from "./common.ts";
 import {
   MembershipRoleSchema,
   MessageSchema,
+  PrincipalSchema,
+  RoomKindSchema,
   RoomMembershipSchema,
   RoomSchema,
   ThreadSchema,
   WorkspaceSchema,
 } from "./collaboration.ts";
 import { RoomEventSchema } from "./room-event.ts";
+
+export const ClientPrincipalMeRequestSchema = z.object({}).strict();
+export type ClientPrincipalMeRequest = z.infer<
+  typeof ClientPrincipalMeRequestSchema
+>;
+
+export const ClientPrincipalMeResponseSchema = z
+  .object({ principal: PrincipalSchema })
+  .strict();
+export type ClientPrincipalMeResponse = z.infer<
+  typeof ClientPrincipalMeResponseSchema
+>;
 
 export const ClientWorkspacesListRequestSchema = z.object({}).strict();
 export type ClientWorkspacesListRequest = z.infer<
@@ -21,6 +35,29 @@ export const ClientWorkspacesListResponseSchema = z
   .strict();
 export type ClientWorkspacesListResponse = z.infer<
   typeof ClientWorkspacesListResponseSchema
+>;
+
+export const ClientWorkspaceCreateRequestSchema = z
+  .object({
+    idempotencyKey: IdentifierSchema,
+    name: IdentifierSchema,
+    slug: IdentifierSchema,
+  })
+  .strict();
+export type ClientWorkspaceCreateRequest = z.infer<
+  typeof ClientWorkspaceCreateRequestSchema
+>;
+
+export const ClientWorkspaceMutationResponseSchema = z
+  .object({
+    controlRoom: RoomSchema,
+    deduplicated: z.boolean(),
+    event: RoomEventSchema,
+    workspace: WorkspaceSchema,
+  })
+  .strict();
+export type ClientWorkspaceMutationResponse = z.infer<
+  typeof ClientWorkspaceMutationResponseSchema
 >;
 
 export const ClientRoomsListRequestSchema = z
@@ -35,6 +72,70 @@ export const ClientRoomsListResponseSchema = z
   .strict();
 export type ClientRoomsListResponse = z.infer<
   typeof ClientRoomsListResponseSchema
+>;
+
+export const ClientRoomCreateRequestSchema = z
+  .object({
+    basedOnControlRoomSeq: z.number().int().nonnegative(),
+    idempotencyKey: IdentifierSchema,
+    kind: RoomKindSchema.refine((kind) => kind === "channel", {
+      message: "initial managed Room creation only supports channel",
+    }),
+    name: IdentifierSchema,
+    slug: IdentifierSchema,
+    workspaceId: IdentifierSchema,
+  })
+  .strict();
+export type ClientRoomCreateRequest = z.infer<
+  typeof ClientRoomCreateRequestSchema
+>;
+
+export const ClientRoomMutationResponseSchema = z
+  .object({
+    deduplicated: z.boolean(),
+    event: RoomEventSchema,
+    room: RoomSchema,
+  })
+  .strict();
+export type ClientRoomMutationResponse = z.infer<
+  typeof ClientRoomMutationResponseSchema
+>;
+
+export const RoomAgentActivityStateSchema = z.enum([
+  "idle",
+  "waking",
+  "working",
+  "error",
+]);
+export type RoomAgentActivityState = z.infer<
+  typeof RoomAgentActivityStateSchema
+>;
+
+export const RoomAgentActivitySchema = z
+  .object({
+    activationId: IdentifierSchema.optional(),
+    lastError: z.string().min(1).optional(),
+    participantId: IdentifierSchema,
+    roomId: IdentifierSchema,
+    runAttemptId: IdentifierSchema.optional(),
+    state: RoomAgentActivityStateSchema,
+    updatedAt: TimestampSchema,
+  })
+  .strict();
+export type RoomAgentActivity = z.infer<typeof RoomAgentActivitySchema>;
+
+export const ClientRoomAgentActivityListRequestSchema = z
+  .object({ roomId: IdentifierSchema })
+  .strict();
+export type ClientRoomAgentActivityListRequest = z.infer<
+  typeof ClientRoomAgentActivityListRequestSchema
+>;
+
+export const ClientRoomAgentActivityListResponseSchema = z
+  .object({ agents: z.array(RoomAgentActivitySchema) })
+  .strict();
+export type ClientRoomAgentActivityListResponse = z.infer<
+  typeof ClientRoomAgentActivityListResponseSchema
 >;
 
 export const ClientRoomMembersListRequestSchema = z

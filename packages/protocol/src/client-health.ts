@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const CLIENT_API_VERSION = 2 as const;
+export const CLIENT_API_VERSION = 3 as const;
 
 const ClientHealthBaseSchema = z.object({
   buildVersion: z.string().min(1),
@@ -27,10 +27,40 @@ export type ClientHealthV1Response = z.infer<
   typeof ClientHealthV1ResponseSchema
 >;
 
+const ClientHealthV2CapabilitiesSchema = z
+  .object({
+    cursorAcknowledge: z.boolean(),
+    hints: z.boolean(),
+    inputRequestRead: z.boolean(),
+    inputRequestResolve: z.boolean(),
+    memberRead: z.boolean(),
+    memberWrite: z.boolean(),
+    messageRead: z.boolean(),
+    messageWrite: z.boolean(),
+    roomRead: z.boolean(),
+    roomSync: z.boolean(),
+    taskRead: z.boolean(),
+    taskWrite: z.boolean(),
+    threadRead: z.boolean(),
+    threadWrite: z.boolean(),
+    workspaceRead: z.boolean(),
+  })
+  .strict();
+
+export const ClientHealthV2ResponseSchema = ClientHealthBaseSchema.extend({
+  apiVersion: z.literal(2),
+  capabilities: ClientHealthV2CapabilitiesSchema,
+}).strict();
+export type ClientHealthV2Response = z.infer<
+  typeof ClientHealthV2ResponseSchema
+>;
+
 export const ClientHealthResponseSchema = ClientHealthBaseSchema.extend({
   apiVersion: z.literal(CLIENT_API_VERSION),
   capabilities: z
     .object({
+      agentOnboard: z.boolean(),
+      agentRead: z.boolean(),
       cursorAcknowledge: z.boolean(),
       hints: z.boolean(),
       inputRequestRead: z.boolean(),
@@ -40,12 +70,14 @@ export const ClientHealthResponseSchema = ClientHealthBaseSchema.extend({
       messageRead: z.boolean(),
       messageWrite: z.boolean(),
       roomRead: z.boolean(),
+      roomWrite: z.boolean(),
       roomSync: z.boolean(),
       taskRead: z.boolean(),
       taskWrite: z.boolean(),
       threadRead: z.boolean(),
       threadWrite: z.boolean(),
       workspaceRead: z.boolean(),
+      workspaceWrite: z.boolean(),
     })
     .strict(),
 }).strict();

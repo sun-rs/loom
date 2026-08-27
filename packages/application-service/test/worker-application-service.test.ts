@@ -47,6 +47,194 @@ function authenticateHost(
   return host;
 }
 
+test("two activation-scoped Workers append causal Room replies without choosing actor or Room", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-worker-message-api-"));
+  const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+  const service = new WorkerApplicationService({ kernel });
+  try {
+    kernel.initialize();
+    const human = kernel.provisionPrincipal({
+      handle: "worker-message-human",
+      kind: "human",
+    });
+    const agents = ["a", "b"].map((suffix) =>
+      kernel.provisionPrincipal({
+        handle: `worker-message-agent-${suffix}`,
+        kind: "agent",
+      }),
+    );
+    const humanActor = kernel.authenticateAccessToken(human.accessToken);
+    const room = kernel.createRoom(humanActor, {
+      name: "Worker Room replies",
+      slug: "worker-room-replies",
+    });
+    for (const agent of agents) {
+      kernel.addMember(humanActor, {
+        principalId: agent.principal.principalId,
+        roomId: room.roomId,
+      });
+    }
+    kernel.postMessage(humanActor, {
+      body: "Please answer independently from the same Room context",
+      idempotencyKey: "worker-message-prompt",
+      recipients: agents.map((agent) => ({
+        participantId: agent.principal.principalId,
+        reason: "mention" as const,
+      })),
+      roomId: room.roomId,
+    });
+
+    const host = kernel.authenticateHostAccessToken(
+      kernel.provisionHostCredential({
+        hostId: "worker-message-host",
+        participantIds: agents.map((agent) => agent.principal.principalId),
+      }).accessToken,
+    );
+    kernel.heartbeatHost(host);
+    await service.start();
+
+    const workers = [];
+    for (const index of agents.keys()) {
+      const activation = kernel.leaseNextActivation(host, { leaseMs: 30_000 });
+      assert.ok(activation);
+      const agent = agents.find(
+        (candidate) =>
+          candidate.principal.principalId === activation.participantId,
+      );
+      assert.ok(agent);
+      const runAttempt = kernel.createRunAttempt(host, {
+        activationId: activation.activationId,
+      });
+      prepareAndMarkRunAttemptRunning(kernel, host, {
+        recoveryDescriptor: fakeRecovery(
+          `worker-message-runtime-${String(index)}`,
+        ),
+        runAttemptId: runAttempt.runAttemptId,
+        runtimeRunId: `worker-message-runtime-${String(index)}`,
+      });
+      const credential = service.issueActivationCredential(host, {
+        activationId: activation.activationId,
+        consumerId: `worker-message-consumer-${String(index)}`,
+        hostId: "worker-message-host",
+        participantId: agent.principal.principalId,
+        roomId: room.roomId,
+        runAttemptId: runAttempt.runAttemptId,
+        toSeq: activation.toSeq,
+      });
+      workers.push({ agent, credential });
+    }
+
+    const request = async (
+      accessToken: string,
+      path: string,
+      body: Record<string, unknown>,
+    ) =>
+      await fetch(`${service.origin}${path}`, {
+        body: JSON.stringify(body),
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          "content-type": "application/json",
+        },
+        method: "POST",
+      });
+    const deliveries = await Promise.all(
+      workers.map(async ({ credential }) => {
+        const response = await request(
+          credential.accessToken,
+          "/v1/worker/sync",
+          {},
+        );
+        assert.equal(response.status, 200);
+        return await jsonObject(response);
+      }),
+    );
+    assert.equal(deliveries[0]?.cursorAfter, deliveries[1]?.cursorAfter);
+    const basedOnRoomSeq = deliveries[0]?.cursorAfter;
+    assert.equal(typeof basedOnRoomSeq, "number");
+
+    const inventedCursor = await request(
+      workers[0]!.credential.accessToken,
+      "/v1/worker/messages/post",
+      {
+        basedOnRoomSeq: Number(basedOnRoomSeq) + 1_000,
+        body: "invented context",
+        idempotencyKey: "worker-message-invented",
+      },
+    );
+    assert.equal(inventedCursor.status, 409);
+    assert.equal(
+      await responseErrorCode(inventedCursor),
+      "causal_cursor_not_delivered",
+    );
+
+    const injectedScope = await request(
+      workers[0]!.credential.accessToken,
+      "/v1/worker/messages/post",
+      {
+        actorId: agents[1]!.principal.principalId,
+        basedOnRoomSeq,
+        body: "injected scope",
+        idempotencyKey: "worker-message-injected",
+        roomId: room.roomId,
+      },
+    );
+    assert.equal(injectedScope.status, 400);
+    assert.equal(await responseErrorCode(injectedScope), "unexpected_field");
+
+    const replies = await Promise.all(
+      workers.map(async ({ agent, credential }, index) => {
+        const response = await request(
+          credential.accessToken,
+          "/v1/worker/messages/post",
+          {
+            basedOnRoomSeq,
+            body: `Canonical reply from ${agent.principal.handle}`,
+            idempotencyKey: `worker-message-reply-${String(index)}`,
+          },
+        );
+        const payload = await jsonObject(response);
+        assert.equal(response.status, 200, JSON.stringify(payload));
+        return payload;
+      }),
+    );
+    assert.deepEqual(
+      replies.map((reply) => reply.deduplicated),
+      [false, false],
+    );
+    assert.deepEqual(
+      replies
+        .map((reply) => (reply.event as Record<string, unknown>).actorId)
+        .sort(),
+      agents.map((agent) => agent.principal.principalId).sort(),
+    );
+
+    const retry = await request(
+      workers[0]!.credential.accessToken,
+      "/v1/worker/messages/post",
+      {
+        basedOnRoomSeq,
+        body: `Canonical reply from ${workers[0]!.agent.principal.handle}`,
+        idempotencyKey: "worker-message-reply-0",
+      },
+    );
+    assert.equal(retry.status, 200);
+    assert.equal((await jsonObject(retry)).deduplicated, true);
+
+    const messages = kernel.listMessages(humanActor, { roomId: room.roomId });
+    assert.deepEqual(
+      messages.messages
+        .slice(-2)
+        .map((message) => message.actorId)
+        .sort(),
+      agents.map((agent) => agent.principal.principalId).sort(),
+    );
+  } finally {
+    await service.close();
+    kernel.close();
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
 test("Worker API only acknowledges cursors delivered to its scoped credential", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-worker-api-"));
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
@@ -1044,6 +1232,14 @@ test("Worker API safely continues an Activation range across sync pages", async 
     assert.equal(firstPage.events.length, 500);
     assert.equal(typeof firstPage.cursorAfter, "number");
     assert.ok((firstPage.cursorAfter as number) < activation.toSeq);
+
+    const partialContextReply = await request("/v1/worker/messages/post", {
+      basedOnRoomSeq: firstPage.cursorAfter,
+      body: "must wait for the complete Activation range",
+      idempotencyKey: "worker-page-partial-reply",
+    });
+    assert.equal(partialContextReply.status, 409);
+    assert.equal(await responseErrorCode(partialContextReply), "stale_context");
 
     const secondResponse = await request("/v1/worker/sync", {
       afterSeq: firstPage.cursorAfter,

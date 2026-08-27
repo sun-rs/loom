@@ -1,6 +1,6 @@
 # 前端平台架构：Web/PWA 优先、共享状态内核与薄原生壳
 
-状态：Phase 4 设计已冻结，生产实现尚未开始。本文只定义未来 owner、依赖方向和验收门禁；当前阶段允许完善 RaftUI evidence、协议 fixture 与 fake client，不允许用 mock page 反向定义 Kernel 业务协议。
+状态：Phase 4A Foundation。Raft UI snapshot→generated `ui-tokens`、覆盖全部现有 v3 route 的 typed `RahClient`、cold-reload-safe ordered client-core 与 Room/Chat/Thread/Task React recovery slice 已经建立；真实 daemon v4 browser gate 已完成双 Agent reply、Task 单 winner、Human complete 与 reload recovery，仍不允许用 mock page 反向定义缺失的 Kernel 业务协议。
 
 ## 1. 目标与非目标
 
@@ -255,16 +255,16 @@ Raft 的 iOS 源码可以用于研究信息架构、native interaction 和 token
 - 无业务 API 被 Service Worker 或 local persistence 变成第二套 canonical cache；
 - 视觉差异、行为差异和暂未实现 capability 都能由自动报告明确区分。
 
-## 12. 当前阶段可以继续做什么
+## 12. 当前阶段继续做什么
 
-在 Phase 4 未开始时，可以且应该完成：
+Phase 4A foundation 已开始。当前 Room slice 已实现有界 snapshot/delta catch-up、ack-after-apply、可跨轮次续页的 Message/Thread projection、Thread create/reply、可见性驱动 reconciliation、失败退避、capability-aware degradation、本机 Runtime inventory、Workspace-scoped Agent 目录与当前 Room 成员管理、membership-driven Message delivery、mention attention、Agent activity、server-owned 当前 Human + canonical role 权限投影、reload-safe `?room=`，以及 390px Room 抽屉和底部主导航。Raft 形态 dialog 复用同一 Escape/焦点闭环协议，不新增视觉分支。Room membership 定义普通聊天的默认投递范围，`@mention` 只提高注意力；只有 Task 模式才提供单一 assignee 或全部成员开放竞争的目标选择。下一批工作是：
 
-1. Raft Admin 及其余已授权 route 的 source extraction、状态矩阵和浏览器 regression；
-2. 将 UI intent 映射成待实现的 typed command inventory，标注 blocked capability，不伪造 adapter；
-3. 设计 `RahClient` contract fixtures、sync/reducer scenario 和 error taxonomy；
-4. 固化 tokens/icons/state metadata 的生成格式与 provenance；
-5. 建立 responsive、keyboard、a11y、performance 的测试 harness；
-6. 用 fake client 验证 component contract，但不接入付费 provider，也不重启用户 live daemon。
+1. 为生产浏览器完成明确 allowed-origin、pairing/token storage、CSRF 与 renderer security；
+2. 增加 content-free SSE/WebSocket hint；当前 polling 只是可靠性 backstop，不能成为实时语义 owner；
+3. 完成 Human Inbox/Activity 与 Task discussion anchor 后再开放对应页面；
+4. Raft Admin 及其余已授权 route 的 source extraction、状态矩阵和浏览器 regression；
+5. 扩展 clean-release provenance、responsive、keyboard、a11y 与 performance gate；
+6. Artifact/Review 形成 Kernel owner 与 typed contract 后再接入 Files/Review。
 
 当前 `raft-ui` 的 RAH capability inventory 是后端就绪度清单，不是 endpoint 设计或隐式 API 承诺。标记为 blocked/provisional 的 intent 必须等 Kernel owner 与 typed contract 成立后再接入；不得为了让静态 UI “能点”而在 adapter 内发明业务语义。
 

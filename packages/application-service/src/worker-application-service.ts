@@ -18,6 +18,8 @@ import {
   WorkerAcknowledgeRequestSchema,
   WorkerAcknowledgeResponseSchema,
   WorkerErrorResponseSchema,
+  WorkerMessageMutationResponseSchema,
+  WorkerMessagePostRequestSchema,
   WorkerSyncRequestSchema,
   WorkerSyncResponseSchema,
   WorkerTaskClaimRequestSchema,
@@ -79,6 +81,7 @@ const DEFAULT_TASK_CLAIM_LEASE_MS = 5 * 60_000;
 
 const WORKER_ROUTES = new Set([
   "/v1/worker/acknowledge",
+  "/v1/worker/messages/post",
   "/v1/worker/sync",
   "/v1/worker/tasks/claim",
   "/v1/worker/tasks/block",
@@ -276,6 +279,19 @@ export class WorkerApplicationService {
       const task = this.#kernel.getWorkerTask(grant.execution, { taskId });
       this.#synchronizeTaskHeartbeat(grant, task);
       writeJson(response, 200, WorkerTaskGetResponseSchema.parse({ task }));
+      return;
+    }
+
+    if (route === "/v1/worker/messages/post") {
+      const command = parseWorkerRequest(WorkerMessagePostRequestSchema, body);
+      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      const mutation = this.#kernel.postWorkerMessage(grant.execution, command);
+      grant.knownRoomSeqs.add(mutation.event.roomSeq);
+      writeJson(
+        response,
+        200,
+        WorkerMessageMutationResponseSchema.parse(mutation),
+      );
       return;
     }
 

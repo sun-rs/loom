@@ -2,7 +2,12 @@ import {
   MultiLaneAgentHost,
   type MultiLaneAgentHostOptions,
 } from "@rah-os/agent-host";
-import { RoomKernel, type RoomKernelOptions } from "@rah-os/kernel";
+import {
+  createHumanApplicationPort,
+  RoomKernel,
+  type HumanApplicationPort,
+  type RoomKernelOptions,
+} from "@rah-os/kernel";
 
 export type RahCoreOptions = RoomKernelOptions;
 
@@ -15,10 +20,12 @@ export type RahCoreState = "created" | "open" | "closed";
 
 export class RahCore {
   readonly #kernel: RoomKernel;
+  readonly #human: HumanApplicationPort;
   #state: RahCoreState = "created";
 
   constructor(options: RahCoreOptions) {
     this.#kernel = new RoomKernel(options);
+    this.#human = createHumanApplicationPort(this.#kernel);
   }
 
   static open(options: RahCoreOptions): RahCore {
@@ -32,6 +39,11 @@ export class RahCore {
   get kernel(): RoomKernel {
     this.#assertOpen();
     return this.#kernel;
+  }
+
+  get human(): HumanApplicationPort {
+    this.#assertOpen();
+    return this.#human;
   }
 
   initialize(): this {

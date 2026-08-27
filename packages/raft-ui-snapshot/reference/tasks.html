@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>任务 · Neo-Brutal 多 Agent 工作台</title>
+<link rel="stylesheet" href="vendor/raft/official-fonts.css">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="tasks.css">
+<link rel="stylesheet" href="ui/raft-ui-runtime.css">
+</head>
+<body data-raft-route="tasks">
+<svg class="svg-defs" aria-hidden="true">
+  <defs>
+    <!-- Exact SVG paths extracted from the authorized live Raft release. -->
+    <symbol id="raft-icon-activity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></symbol>
+    <symbol id="raft-icon-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></symbol>
+    <symbol id="raft-icon-circle-question-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+    <symbol id="raft-icon-hash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/></symbol>
+    <symbol id="raft-icon-message-square" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/></symbol>
+    <symbol id="raft-icon-monitor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></symbol>
+    <symbol id="raft-icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></symbol>
+    <symbol id="raft-icon-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="raft-icon-square-check-big" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10.656V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12.344"/><path d="m9 11 3 3L22 4"/></symbol>
+    <symbol id="raft-icon-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-user-round" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></symbol>
+    <symbol id="i-kanban" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 7v7"/><path d="M12 7v4"/><path d="M16 7v9"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+  </defs>
+</svg>
+
+<div class="tasks-page" id="app">
+  <nav class="rail" aria-label="主导航">
+    <div class="rail-head"><a class="rail-logo" href="slack.html" aria-label="返回聊天">H</a></div>
+    <div class="rail-primary">
+      <a class="rail-btn" href="search.html" title="搜索"><svg><use href="#raft-icon-search"/></svg></a>
+      <a class="rail-btn" href="slack.html" title="聊天"><svg><use href="#raft-icon-message-square"/></svg></a>
+      <a class="rail-btn" href="activity.html" title="动态"><svg><use href="#raft-icon-activity"/></svg></a>
+      <a class="rail-btn is-active" href="tasks.html" title="任务" aria-current="page"><svg><use href="#raft-icon-square-check-big"/></svg></a>
+      <a class="rail-btn" href="agents.html" title="成员"><svg><use href="#raft-icon-users"/></svg></a>
+      <a class="rail-btn" href="computers.html" title="计算机"><svg><use href="#raft-icon-monitor"/></svg></a>
+    </div>
+    <div class="rail-footer-item"><button class="rail-btn" type="button" title="通知"><svg><use href="#raft-icon-bell"/></svg></button></div>
+    <div class="rail-footer-item"><a class="rail-btn" href="#" title="帮助"><svg><use href="#raft-icon-circle-question-mark"/></svg></a></div>
+    <div class="rail-footer-item"><a class="rail-btn" href="settings.html" title="设置"><svg><use href="#raft-icon-settings"/></svg></a></div>
+  </nav>
+
+  <main class="tasks-main">
+    <header class="tasks-head">
+      <span class="tasks-head-badge"><svg><use href="#raft-icon-square-check-big"/></svg></span>
+      <div class="tasks-head-copy">
+        <h1>任务</h1>
+        <p><span id="taskCount">0</span><span id="taskCountSuffix"> / 共 0 个频道任务</span></p>
+      </div>
+    </header>
+
+    <section class="tasks-toolbar" aria-label="任务筛选与视图">
+      <div class="tasks-toolbar-row">
+        <div class="task-filter is-selected" data-filter="channel">
+          <button class="task-filter-trigger" type="button" aria-expanded="false" aria-controls="channelFilterMenu">
+            <svg><use href="#raft-icon-hash"/></svg><span>频道</span><span class="task-filter-count">1</span><svg class="chevron"><use href="#i-chevron-down"/></svg>
+          </button>
+          <div class="task-filter-menu" id="channelFilterMenu" hidden>
+            <header><b>频道</b><button type="button" data-clear="channel">清除</button></header>
+            <div class="task-filter-search"><input type="search" placeholder="搜索…" aria-label="搜索频道"></div>
+            <div class="task-filter-options">
+              <button type="button" class="is-option-selected" data-value="all"><span>#all</span><svg><use href="#i-check"/></svg></button>
+              <button type="button" data-value="onboarding-owner"><span>#onboarding-owner</span></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="task-filter" data-filter="creator">
+          <button class="task-filter-trigger" type="button" aria-expanded="false" aria-controls="creatorFilterMenu">
+            <svg><use href="#i-user-round"/></svg><span>创建者</span><svg class="chevron"><use href="#i-chevron-down"/></svg>
+          </button>
+          <div class="task-filter-menu" id="creatorFilterMenu" hidden>
+            <header><b>创建者</b></header>
+            <div class="task-filter-search"><input type="search" placeholder="搜索…" aria-label="搜索创建者"></div>
+            <div class="task-filter-options">
+              <button type="button" data-value="me"><span class="task-option-icon"><svg><use href="#i-user-round"/></svg></span><span>我创建的</span></button>
+              <button type="button" data-value="alice"><span class="task-option-avatar is-alice">A</span><span>Alice</span></button>
+              <button type="button" data-value="cindy"><span class="task-option-avatar is-cindy">C</span><span>Cindy</span></button>
+              <button type="button" data-value="grok"><span class="task-option-avatar is-grok">G</span><span>Grok</span></button>
+              <button type="button" data-value="kimi"><span class="task-option-avatar is-kimi">K</span><span>Kimi</span></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="task-filter" data-filter="assignee">
+          <button class="task-filter-trigger" type="button" aria-expanded="false" aria-controls="assigneeFilterMenu">
+            <svg><use href="#i-user-round"/></svg><span>负责人</span><svg class="chevron"><use href="#i-chevron-down"/></svg>
+          </button>
+          <div class="task-filter-menu" id="assigneeFilterMenu" hidden>
+            <header><b>负责人</b></header>
+            <div class="task-filter-search"><input type="search" placeholder="搜索…" aria-label="搜索负责人"></div>
+            <div class="task-filter-options">
+              <button type="button" data-value="unassigned"><span class="task-option-icon">—</span><span>未分配</span></button>
+              <button type="button" data-value="alice"><span class="task-option-avatar is-alice">A</span><span>Alice</span></button>
+              <button type="button" data-value="cindy"><span class="task-option-avatar is-cindy">C</span><span>Cindy</span></button>
+              <button type="button" data-value="grok"><span class="task-option-avatar is-grok">G</span><span>Grok</span></button>
+              <button type="button" data-value="kimi"><span class="task-option-avatar is-kimi">K</span><span>Kimi</span></button>
+            </div>
+          </div>
+        </div>
+
+        <button class="tasks-clear" id="clearTaskFilters" type="button">清除筛选</button>
+
+        <div class="tasks-view" role="radiogroup" aria-label="任务视图">
+          <button type="button" role="radio" aria-checked="true" data-view="board"><svg><use href="#i-kanban"/></svg><span>看板</span></button>
+          <button type="button" role="radio" aria-checked="false" data-view="list"><svg><use href="#i-list"/></svg><span>列表</span></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="tasks-content" id="tasksContent">
+      <div class="tasks-empty" id="tasksEmpty">
+        <span class="tasks-empty-icon"><svg><use href="#raft-icon-square-check-big"/></svg></span>
+        <h2 id="tasksEmptyTitle">没有符合此筛选的任务</h2>
+        <p id="tasksEmptyBody">换一个筛选组合，或清除当前选择。</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="ui/raft-ui-runtime.js"></script>
+<script src="ui/raft-ui-reference-adapter.js"></script>
+<script src="ui/raft-ui-primitives.js"></script>
+<script src="ui/raft-ui-shell.js"></script>
+<script src="tasks.js"></script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # RAH OS 实施路线与门禁
 
-状态：**provisional**。独立 `@rah-os/core`、Task Coordination v1、schema v7 与 collaboration P2 Workspace/Room/Role/Message/Thread Core + Client API、atomic Placement launch claim 与 MultiLaneAgentHost 已通过 local gate；可执行 daemon config v4 又通过双 participant、双 immutable profile、Placement-selected external Worker E2。Host→Worker 无 Agent PAT delegation、instance generation、deadline、content-free wake、跨进程 CLI/SIGTERM/restart，以及 Codex/Kimi/OpenCode/Claude Code Sonnet compatibility delivery gate 已达到 E2 local。P3 Workspace/Room create 与浏览器纵向 E2、canonical WorkspaceDefinition/mount/Capacity control object、真实 mixed CLI v4 certification、可安装 packaging、剩余 Client/control/hint API、Windows recovery 和 supervisor artifact lifecycle 尚未通过。
+状态：**v0.1 local candidate / production provisional**。独立 `@rah-os/core`、Task Coordination v1、schema v8 与 collaboration P2/P3 Workspace/Room/Agent catalog/Role/Message/Thread Core + Human API、atomic Placement launch claim 与 MultiLaneAgentHost 已通过 local gate；可执行 daemon config v4 已通过 Human 驱动的双 participant、双 immutable profile、两个 Activation-scoped Agent Room reply、开放 Task 单 winner、验收与重连恢复 E2。Agent/Policy control object 现只允许 managed control Room owner/admin，并禁止跨 control Room policy 引用。Host→Worker 无 Agent PAT delegation、instance generation、deadline、content-free wake、跨进程 CLI/SIGTERM/restart，以及 Codex/Kimi/OpenCode/Claude Code Sonnet compatibility delivery gate 已达到 E2 local。Task discussion anchor、Artifact/Review、Human Workspace 到 runtime mount/cwd 的 canonical 映射、真实 mixed CLI v4/reply certification、可安装 packaging、剩余 Client/control/hint API、Windows recovery 和 supervisor artifact lifecycle 尚未通过。
 
 ## Phase 0：仓库与协议基线
 
@@ -33,7 +33,7 @@
 
 ## Phase 2：本机 AgentHost
 
-当前增量：`@rah-os/core` 已提供 headless lifecycle/command/query/MultiLane 组合边界；Kernel schema v7 与 P2 API 已拥有 Workspace/Room discovery、MembershipRole 管理、Message/Thread command/query 与 Thread FK，Human Client 使用同一 canonical owner。`@rah-os/daemon` 组合 compatibility config v2、single-profile v3 与 multi-participant/multi-profile v4。v4 精确校验 Host credential scope，启动时 probe/freeze 每个 active profile revision，发布 redacted workspace-aware Offers，由 Kernel Placement 选择 `runtimeOfferId`，再由 bounded MultiLane runner 启动 scoped Worker。Worker grant 不需要 Agent PAT；旧 daemon generation、过期 lease/run 或 revoked credential 都会 fence。Workspace/Room create/archive、canonical WorkspaceDefinition/mount/Capacity、mixed adapter/real CLI v4 recovery certification、Windows recovery、supervisor result GC、Keychain、launchd、签名/安装和 control endpoint 尚未提供。
+当前增量：`@rah-os/core` 已提供 headless lifecycle/command/query/MultiLane 源码级组合边界；Kernel schema v8 与 P2/P3 API 已拥有 Workspace/Room discovery/managed create、control Room authority、Agent catalog/onboarding、MembershipRole、Message/Thread、Task 与 durable cursor，Human HTTP adapter 使用同一 `HumanApplicationPort`。`@rah-os/daemon` 组合 compatibility config v2、single-profile v3 与 multi-participant/multi-profile v4；P3 local gate 已串联 Human create/onboard、双 lane context delivery与 canonical Room reply、开放 Task 单 winner、Human completion与 daemon/client reconnect。Worker grant 不需要 Agent PAT；Activation reply 不能选择 actor/Room/recipient，旧 daemon generation、过期 lease/run 或 revoked credential 都会 fence。Workspace archive、Agent provisioning/lifecycle、canonical WorkspaceDefinition/mount、mixed adapter/real CLI v4 recovery/reply certification、Windows recovery、supervisor result GC、Keychain、launchd、签名/安装和 control endpoint 尚未提供。durable CapacityPool/PlacementHold 是未来多 Host 管理面，不再作为 local v0.1 的收口阻塞项。
 
 - Fake adapter 完整覆盖 start/resume/cancel/reap。
 - content-free wake WebSocket + reconnect pull backstop。
@@ -53,8 +53,8 @@
 
 - 已完成 slice：Task Coordination v1 的 assigned/open `todo`、Room Agent 广播与 atomic single-winner claim、`claimed -> in_progress -> waiting_input/blocked/submitted -> completed|cancelled`、release/assign/unblock/cancel、older same-Room dependency、dependency-ready wake、独立 claim lease、sidecar heartbeat、activation-scoped query、过期显式 reclaim、跨 RunAttempt canonical resume/稳定幂等重放、causal Worker command、process exit 与 Task completion 分离、未提交 Task 的 Activation completion proof/durable retry。
 - 已完成 slice：InputRequest `pending -> resolved`、Task `waiting_input -> todo`、claim release、designated human Inbox、无模型等待、resolve 后 Inbox/Activation/Outbox 唤醒、跨 Activation Task scope 与 completion proof。
-- 下一步：Task 父子关系/Artifact/Review 与更完整 crash recovery matrix；同一 Task 继续保持 single writer。
-- 已完成 slice：Client API v2 health/capabilities 与 v1 compatibility、Workspace/Room discovery、成员增删/角色、Message/Thread read/write、Room `sync/ack` delivery proof、Task/InputRequest list、Task create/assign/unblock/cancel/complete、designated-responder resolve 与 daemon lifecycle/E2。
+- 下一步：先给 Task 增加 source Message/Thread 讨论锚点和 Human Inbox/Activity，再完成 Artifact/Review 与更完整 crash recovery matrix；同一 Task 继续保持 single writer。
+- 已完成 slice：Client API v1/v2 compatibility 与 v3 managed create、Workspace/Room discovery、成员增删/角色、Message/Thread read/write、Room `sync/ack` delivery proof、Task/InputRequest list、Task create/assign/unblock/cancel/complete、designated-responder resolve 与 daemon lifecycle/E2。
 - InputRequest cancel/expire、structured answer、通知升级，以及 Workspace/Room create/archive、Inbox/Artifact/Review 等剩余 Human Client command surface。
 - 显式 artifact registry。
 - frozen review evidence。
@@ -70,6 +70,8 @@
 ## Phase 4：最小 Room UI
 
 只在前述 owner 稳定后提供 Room、Thread、Task、Inbox、Run Inspector 和 Review 页面。UI 只消费 canonical snapshot/delta，不解析 Provider 输出。
+
+当前增量：Phase 4A 已导入带 SHA-256 provenance 的 Raft UI reference snapshot，并以七文件 allowlist 生成 product-owned `ui-tokens`，产品不再直接依赖 raw snapshot。`RahClient` 覆盖全部现有 Human API v3 route；`client-core` 已修复稳定 consumer 冷启动时 durable cursor 领先导致的 gap，并提供 Room/Message 有界 catch-up。Web 已接通跨 Workspace product Room discovery/create、Room sync/ack、Message list/post、Thread list/create/reply与 Task list/create/complete，展示 Agent winner/progress/submission，具备无重叠 reconciliation、visibility wake、失败退避、重新连接和 capability-aware degradation。全局 Agent 长期身份目录、Computer/Runtime inventory 和 Room membership 已有独立交互 owner；加入/移出 Agent 只从当前 Room 成员窗口发起。普通聊天现按 Raft channel 语义从 membership 派生全部 Agent delivery，`@mention` 只提升 attention，Agent activity 从 Activation/RunAttempt 推导。无需浏览器 Token 的可重复真实 daemon gate 已完成新建 channel → 加入双 Agent → Human Message → 双 Agent reply → 移出 Agent，并保留 open Task → 单 winner submit → Human complete → reload recovery gate；可信 LAN 可用显式临时命令进行 iOS 实机测试。Files/Human Activity 等缺 capability 的页面保持显式 unavailable，不使用 reference fixture 伪造成功。
 
 - 首先交付纯浏览器、响应式 Web UI 和 `RahClient` contract；
 - 同一 bundle 验证 Mac 浏览器与 iOS Home Screen PWA；

@@ -119,3 +119,7 @@ Codex 实现、OpenCode 审查、Kimi 修复、Claude Sonnet 验收；中途删�
 - B11：才可说有可移植长期记忆。
 - B12：才可说具备生产级副作用恢复基础。
 - 同一场景与至少一个可运行竞品对照：才可升级为 E3 相对优势。
+
+## 6. 当前证据快照
+
+截至 2026-08-26：B1–B3、B5–B6、B10 已有 local E2；B4、B7–B8、B12 为 partial；B9、B11 未实现；全部场景均尚无同条件竞品黑盒 E3。逐项依据、Raft/Multica/热门项目对照和避免夸大的结论见 [v0.1 收口与竞争性独立审计](../audits/2026-08-26-v01-closure-competitive-audit.zh-CN.md)。

@@ -2,12 +2,25 @@ import { z } from "zod";
 
 import { IdentifierSchema, TimestampSchema } from "./common.ts";
 
+export const ParticipantKindSchema = z.enum(["human", "agent", "service"]);
+export type ParticipantKind = z.infer<typeof ParticipantKindSchema>;
+
+export const PrincipalSchema = z
+  .object({
+    principalId: IdentifierSchema,
+    handle: IdentifierSchema,
+    kind: ParticipantKindSchema,
+  })
+  .strict();
+export type Principal = z.infer<typeof PrincipalSchema>;
+
 export const WorkspaceStateSchema = z.enum(["active", "archived"]);
 export type WorkspaceState = z.infer<typeof WorkspaceStateSchema>;
 
 export const WorkspaceSchema = z
   .object({
     archivedAt: TimestampSchema.optional(),
+    controlRoomId: IdentifierSchema.optional(),
     createdAt: TimestampSchema,
     name: IdentifierSchema,
     slug: IdentifierSchema,

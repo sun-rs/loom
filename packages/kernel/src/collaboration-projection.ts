@@ -82,8 +82,10 @@ export function threadProjectionFromRow(row: Row): Thread {
 
 export function workspaceProjectionFromRow(row: Row): Workspace {
   const archivedAt = nullableText(row, "workspace_archived_at");
+  const controlRoomId = nullableText(row, "workspace_control_room_id");
   return WorkspaceSchema.parse({
     ...(archivedAt === null ? {} : { archivedAt }),
+    ...(controlRoomId === null ? {} : { controlRoomId }),
     createdAt: text(row, "workspace_created_at"),
     name: text(row, "workspace_name"),
     slug: text(row, "workspace_slug"),

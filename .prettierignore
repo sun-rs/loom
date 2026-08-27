@@ -1,4 +1,3 @@
-node_modules
-dist
-coverage
-package-lock.json
+apps/web/dist/
+packages/raft-ui-snapshot/reference/
+packages/ui-tokens/generated/

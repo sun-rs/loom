@@ -14,7 +14,7 @@ import {
   type RuntimeAdapter,
 } from "@rah-os/agent-host";
 import {
-  ClientApplicationService,
+  HumanHttpApplicationService,
   WorkerApplicationService,
 } from "@rah-os/application-service";
 import {
@@ -41,6 +41,12 @@ import {
 } from "./outbox-wake-dispatcher.ts";
 import { RuntimeOfferPublisher } from "./runtime-offer-publisher.ts";
 import { FileSecretProvider, type SecretProvider } from "./secret-provider.ts";
+import {
+  buildLocalRuntimeInventoryResponse,
+  configuredRuntimeSnapshot,
+  discoverKnownLocalClis,
+  type ConfiguredLocalRuntimeSnapshot,
+} from "./local-runtime-inventory.ts";
 
 export const DAEMON_BUILD_VERSION = "0.1.0";
 export const DAEMON_PROTOCOL_VERSION = 1;
@@ -121,9 +127,10 @@ export class DaemonApplication {
 
     let core: RahCore | undefined;
     let kernel: RoomKernel | undefined;
-    let clientService: ClientApplicationService | undefined;
+    let clientService: HumanHttpApplicationService | undefined;
     let workerService: WorkerApplicationService | undefined;
     const runtimeProfileRegistries = new Map<string, RuntimeProfileRegistry>();
+    const configuredLocalRuntimes: ConfiguredLocalRuntimeSnapshot[] = [];
     let executionFailure: unknown;
     try {
       await ensureOwnerPrivateDirectory(this.#config.stateDirectory);
@@ -255,6 +262,13 @@ export class DaemonApplication {
             `active RuntimeProfile probe failed: ${probeReport.failureCode ?? "unavailable"}`,
           );
         }
+        configuredLocalRuntimes.push(
+          configuredRuntimeSnapshot({
+            probeReport,
+            runtimeOfferId: runtimeOptions.offer.runtimeOfferId,
+            runtimeProfileRevision: activeRevision,
+          }),
+        );
         const credentialEnvironment = new RuntimeCredentialEnvironmentBinding({
           manifest: activeRevision.manifest,
           resolvers: Object.fromEntries(
@@ -371,6 +385,13 @@ export class DaemonApplication {
               `active RuntimeProfile probe failed: ${probeReport.failureCode ?? "unavailable"}`,
             );
           }
+          configuredLocalRuntimes.push(
+            configuredRuntimeSnapshot({
+              probeReport,
+              runtimeOfferId: runtimeOptions.offer.runtimeOfferId,
+              runtimeProfileRevision: activeRevision,
+            }),
+          );
           const credentialEnvironment = new RuntimeCredentialEnvironmentBinding(
             {
               manifest: activeRevision.manifest,
@@ -480,6 +501,7 @@ export class DaemonApplication {
         throw new Error(availability.detail ?? "runtime is unavailable");
       }
       const wakeSignal = new LocalWakeSignal();
+      const discoveredLocalClis = await discoverKnownLocalClis();
       const runnerOptions = {
         drainTimeoutMs: this.#config.drainTimeoutMs,
         host,
@@ -565,12 +587,14 @@ export class DaemonApplication {
         },
         runner,
       });
-      clientService = new ClientApplicationService({
+      clientService = new HumanHttpApplicationService({
         bindHost: this.#config.client.bindHost,
         health: () => ({
           apiVersion: CLIENT_API_VERSION,
           buildVersion: DAEMON_BUILD_VERSION,
           capabilities: {
+            agentOnboard: true,
+            agentRead: true,
             cursorAcknowledge: true,
             hints: false,
             inputRequestRead: true,
@@ -580,18 +604,28 @@ export class DaemonApplication {
             messageRead: true,
             messageWrite: true,
             roomRead: true,
+            roomWrite: true,
             roomSync: true,
             taskRead: true,
             taskWrite: true,
             threadRead: true,
             threadWrite: true,
             workspaceRead: true,
+            workspaceWrite: true,
           },
           kernelSchemaVersion: KERNEL_SCHEMA_VERSION,
           protocolVersion: DAEMON_PROTOCOL_VERSION,
           state: this.#health.state,
         }),
-        kernel,
+        human: core.human,
+        localRuntimeInventory: (actor) =>
+          buildLocalRuntimeInventoryResponse({
+            actor,
+            configured: configuredLocalRuntimes,
+            discovered: discoveredLocalClis,
+            hostId: host.hostId,
+            kernel: kernel!,
+          }),
         port: this.#config.client.port,
       });
       await clientService.start();

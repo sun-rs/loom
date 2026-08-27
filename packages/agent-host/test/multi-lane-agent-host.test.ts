@@ -57,19 +57,31 @@ test("MultiLaneAgentHost preserves concurrent, serial, restart, and quarantine b
       kind: "agent",
     });
     const humanActor = kernel.authenticateAccessToken(human.accessToken);
-    const room = kernel.createRoom(humanActor, {
+    const workspace = kernel.createWorkspace(humanActor, {
+      idempotencyKey: "multi-lane-workspace-created",
+      name: "Multi-lane core Workspace",
+      slug: "multi-lane-core-workspace",
+    });
+    const controlRoom = workspace.controlRoom;
+    const room = kernel.createWorkspaceRoom(humanActor, {
+      basedOnControlRoomSeq: workspace.event.roomSeq,
+      idempotencyKey: "multi-lane-room-created",
+      kind: "channel",
       name: "Multi-lane core Room",
       slug: "multi-lane-core-room",
-    });
+      workspaceId: workspace.workspace.workspaceId,
+    }).room;
     for (const participant of [agentA.principal, agentB.principal]) {
-      kernel.addMember(humanActor, {
-        principalId: participant.principalId,
-        roomId: room.roomId,
-      });
+      for (const roomId of [controlRoom.roomId, room.roomId]) {
+        kernel.addMember(humanActor, {
+          principalId: participant.principalId,
+          roomId,
+        });
+      }
     }
     const policy = kernel.createExecutionPolicy(humanActor, {
-      basedOnRoomSeq: latestRoomSeq(kernel, humanActor, room.roomId),
-      controlRoomId: room.roomId,
+      basedOnRoomSeq: latestRoomSeq(kernel, humanActor, controlRoom.roomId),
+      controlRoomId: controlRoom.roomId,
       idempotencyKey: "multi-lane-policy",
       modelIntent: {
         fallback: "disabled",
@@ -94,8 +106,8 @@ test("MultiLaneAgentHost preserves concurrent, serial, restart, and quarantine b
     }).policy;
     for (const [index, participant] of [agentA, agentB].entries()) {
       kernel.createAgentDefinition(humanActor, {
-        basedOnRoomSeq: latestRoomSeq(kernel, humanActor, room.roomId),
-        controlRoomId: room.roomId,
+        basedOnRoomSeq: latestRoomSeq(kernel, humanActor, controlRoom.roomId),
+        controlRoomId: controlRoom.roomId,
         executionPolicyRevisionId: policy.executionPolicyRevisionId,
         idempotencyKey: `multi-lane-agent-definition-${String(index)}`,
         instructionRefs: [],

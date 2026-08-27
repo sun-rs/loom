@@ -197,9 +197,9 @@ test("daemon config v4 binds multiple authorized participants to unique runtime 
   }
 });
 
-test("daemon v4 executes two participants through placement-selected runtime profiles", async () => {
+test("Human API drives two Workspace Agents through daemon v4 and reconnect recovery", async () => {
   if (process.platform === "win32") return;
-  const directory = mkdtempSync(join(tmpdir(), "rah-daemon-v4-e2e-"));
+  const directory = mkdtempSync(join(tmpdir(), "rah-daemon-p3c-e2e-"));
   const stateDirectory = join(directory, "state");
   mkdirSync(stateDirectory, { mode: 0o700 });
   const databasePath = join(stateDirectory, "room.db");
@@ -207,7 +207,7 @@ test("daemon v4 executes two participants through placement-selected runtime pro
   const secretPath = join(stateDirectory, "host.token");
   const hostId = "daemon-v4-host";
   const seed = new RoomKernel({ databasePath });
-  const shutdown = new AbortController();
+  let activeShutdown: AbortController | undefined;
   let running: Promise<void> | undefined;
   let observer: RoomKernel | undefined;
   try {
@@ -223,24 +223,26 @@ test("daemon v4 executes two participants through placement-selected runtime pro
       }),
     );
     const humanActor = seed.authenticateAccessToken(human.accessToken);
-    const room = seed.createRoom(humanActor, {
-      name: "Daemon v4 multi-agent E2E",
-      slug: "daemon-v4-multi-agent-e2e",
+    const productWorkspace = seed.createWorkspace(humanActor, {
+      idempotencyKey: "daemon-v4-workspace-created",
+      name: "P3C Workspace",
+      slug: "p3c-workspace",
     });
+    const catalogRoom = productWorkspace.controlRoom;
     for (const agent of agents) {
       seed.addMember(humanActor, {
         principalId: agent.principal.principalId,
-        roomId: room.roomId,
+        roomId: catalogRoom.roomId,
       });
     }
 
     const offerIds = ["daemon-v4-offer-a", "daemon-v4-offer-b"];
     const profileIds = ["daemon-v4-profile-a", "daemon-v4-profile-b"];
-    const tasks = [];
+    const agentDefinitionIds: string[] = [];
     for (const [index, agent] of agents.entries()) {
       const policy = seed.createExecutionPolicy(humanActor, {
-        basedOnRoomSeq: latestRoomSeq(seed, humanActor, room.roomId),
-        controlRoomId: room.roomId,
+        basedOnRoomSeq: latestRoomSeq(seed, humanActor, catalogRoom.roomId),
+        controlRoomId: catalogRoom.roomId,
         idempotencyKey: `daemon-v4-policy-${String(index)}`,
         modelIntent: {
           fallback: "disabled",
@@ -262,9 +264,9 @@ test("daemon v4 executes two participants through placement-selected runtime pro
         },
         sessionPolicy: "fresh",
       }).policy;
-      seed.createAgentDefinition(humanActor, {
-        basedOnRoomSeq: latestRoomSeq(seed, humanActor, room.roomId),
-        controlRoomId: room.roomId,
+      const definition = seed.createAgentDefinition(humanActor, {
+        basedOnRoomSeq: latestRoomSeq(seed, humanActor, catalogRoom.roomId),
+        controlRoomId: catalogRoom.roomId,
         executionPolicyRevisionId: policy.executionPolicyRevisionId,
         idempotencyKey: `daemon-v4-agent-definition-${String(index)}`,
         instructionRefs: [],
@@ -277,14 +279,7 @@ test("daemon v4 executes two participants through placement-selected runtime pro
         role: `daemon v4 worker ${String(index)}`,
         skillRefs: [],
       });
-      tasks.push(
-        seed.createTask(humanActor, {
-          assigneeId: agent.principal.principalId,
-          idempotencyKey: `daemon-v4-task-${String(index)}`,
-          roomId: room.roomId,
-          title: `Execute through runtime profile ${String(index)}`,
-        }).task,
-      );
+      agentDefinitionIds.push(definition.definition.agentDefinitionId);
     }
 
     const hostCredential = seed.provisionHostCredential({
@@ -316,7 +311,10 @@ test("daemon v4 executes two participants through placement-selected runtime pro
         protocolFamily: "rah-worker-process/v1",
         recoveryDrivers: ["rah-process-supervisor-v1"],
         runtimeProfileId,
-        staticEnv: { RAH_FAKE_MODE: "worker-task" },
+        staticEnv: {
+          RAH_FAKE_MODE: "worker-task",
+          RAH_FAKE_ROOM_REPLY: `Canonical daemon reply from Agent ${String(index)}`,
+        },
         workspacePolicy: { allowedModes: ["in_place"] },
       };
       const revision = profileRegistry.importManifest(manifest);
@@ -354,19 +352,200 @@ test("daemon v4 executes two participants through placement-selected runtime pro
         runtimeProfileId,
       })),
     });
-    const application = new DaemonApplication({ config });
-    running = application.run({ signal: shutdown.signal });
+    let application = new DaemonApplication({ config });
+    activeShutdown = new AbortController();
+    running = application.run({ signal: activeShutdown.signal });
     observer = new RoomKernel({ databasePath });
     observer.initialize();
     const activeObserver = observer;
+    await waitUntil(() => application.clientOrigin() !== undefined);
+    const firstOrigin = application.clientOrigin();
+    assert.ok(firstOrigin);
+    const clientRequest = async (
+      origin: string,
+      path: string,
+      body: Record<string, unknown>,
+    ) =>
+      await fetch(`${origin}${path}`, {
+        body: JSON.stringify(body),
+        headers: {
+          authorization: `Bearer ${human.accessToken}`,
+          "content-type": "application/json",
+        },
+        method: "POST",
+      });
+    const requireJson = async <T>(response: Response): Promise<T> => {
+      const body = (await response.json()) as T;
+      assert.equal(response.status, 200, JSON.stringify(body));
+      return body;
+    };
+
+    const runtimeInventory = await requireJson<{
+      hostId: string;
+      runtimes: Array<{
+        agentBindings: Array<{ agentDefinitionId: string }>;
+        runtimeOfferId?: string;
+        runtimeProfileId?: string;
+      }>;
+    }>(await clientRequest(firstOrigin, "/v1/local/runtimes/list", {}));
+    assert.equal(runtimeInventory.hostId, hostId);
+    const configuredInventory = runtimeInventory.runtimes.filter(
+      ({ runtimeProfileId }) => runtimeProfileId !== undefined,
+    );
+    assert.deepEqual(
+      configuredInventory.map(({ runtimeProfileId }) => runtimeProfileId),
+      profileIds,
+    );
+    assert.deepEqual(
+      configuredInventory
+        .flatMap(({ agentBindings }) =>
+          agentBindings.map(({ agentDefinitionId }) => agentDefinitionId),
+        )
+        .sort(),
+      [...agentDefinitionIds].sort(),
+    );
+
+    const controlDelivery = await requireJson<{ latestRoomSeq: number }>(
+      await clientRequest(firstOrigin, "/v3/client/rooms/sync", {
+        consumerId: "p3c-browser-control",
+        roomId: catalogRoom.roomId,
+      }),
+    );
+    const roomCreated = await requireJson<{
+      event: { roomSeq: number };
+      room: { roomId: string };
+    }>(
+      await clientRequest(firstOrigin, "/v3/client/rooms/create", {
+        basedOnControlRoomSeq: controlDelivery.latestRoomSeq,
+        idempotencyKey: "p3c-room-created",
+        kind: "channel",
+        name: "P3C Multi-Agent Room",
+        slug: "p3c-multi-agent-room",
+        workspaceId: productWorkspace.workspace.workspaceId,
+      }),
+    );
+    const roomId = roomCreated.room.roomId;
+
+    const catalog = await requireJson<{
+      agents: Array<{ definition: { agentDefinitionId: string } }>;
+    }>(
+      await clientRequest(firstOrigin, "/v3/client/agents/list", {
+        controlRoomId: catalogRoom.roomId,
+      }),
+    );
+    assert.deepEqual(
+      catalog.agents.map((entry) => entry.definition.agentDefinitionId).sort(),
+      [...agentDefinitionIds].sort(),
+    );
+
+    let roomSeq = 1;
+    for (const [index, agentDefinitionId] of agentDefinitionIds.entries()) {
+      const onboarded = await requireJson<{ event: { roomSeq: number } }>(
+        await clientRequest(firstOrigin, "/v3/client/agents/onboard", {
+          agentDefinitionId,
+          basedOnRoomSeq: roomSeq,
+          idempotencyKey: `p3c-agent-onboard-${String(index)}`,
+          roomId,
+        }),
+      );
+      roomSeq = onboarded.event.roomSeq;
+    }
+
+    const initialDelivery = await requireJson<{
+      cursorAfter: number;
+      latestRoomSeq: number;
+    }>(
+      await clientRequest(firstOrigin, "/v3/client/rooms/sync", {
+        consumerId: "p3c-browser-main",
+        roomId,
+      }),
+    );
+    assert.equal(initialDelivery.latestRoomSeq, roomSeq);
+    await requireJson(
+      await clientRequest(firstOrigin, "/v3/client/rooms/acknowledge", {
+        consumerId: "p3c-browser-main",
+        roomId,
+        throughSeq: initialDelivery.cursorAfter,
+      }),
+    );
+
+    const message = await requireJson<{
+      event: { aggregateId: string; roomSeq: number };
+    }>(
+      await clientRequest(firstOrigin, "/v3/client/messages/post", {
+        basedOnRoomSeq: roomSeq,
+        body: "Two Agents must understand the same canonical Room request",
+        idempotencyKey: "p3c-message-posted",
+        recipients: [],
+        roomId,
+      }),
+    );
+    roomSeq = message.event.roomSeq;
+    await waitUntil(
+      () =>
+        activeObserver
+          .listMessages(humanActor, { roomId })
+          .messages.filter((candidate) =>
+            agents.some(
+              (agent) => agent.principal.principalId === candidate.actorId,
+            ),
+          ).length === agents.length &&
+        activeObserver
+          .listActivations({ roomId })
+          .every((activation) => activation.state === "completed"),
+      5_000,
+    );
+    const postMessageDelivery = await requireJson<{ latestRoomSeq: number }>(
+      await clientRequest(firstOrigin, "/v3/client/rooms/sync", {
+        consumerId: "p3c-browser-main",
+        roomId,
+      }),
+    );
+    roomSeq = postMessageDelivery.latestRoomSeq;
+    const thread = await requireJson<{
+      event: { roomSeq: number };
+      thread: { threadId: string };
+    }>(
+      await clientRequest(firstOrigin, "/v3/client/threads/create", {
+        basedOnRoomSeq: roomSeq,
+        idempotencyKey: "p3c-thread-created",
+        recipientIds: [],
+        roomId,
+        rootMessageId: message.event.aggregateId,
+      }),
+    );
+    roomSeq = thread.event.roomSeq;
+    const reply = await requireJson<{ event: { roomSeq: number } }>(
+      await clientRequest(firstOrigin, "/v3/client/threads/reply", {
+        basedOnRoomSeq: roomSeq,
+        body: "This reply remains independent of every provider session",
+        idempotencyKey: "p3c-thread-replied",
+        recipientIds: [],
+        roomId,
+        threadId: thread.thread.threadId,
+      }),
+    );
+    roomSeq = reply.event.roomSeq;
+    const taskCreated = await requireJson<{
+      event: { roomSeq: number };
+      task: { taskId: string };
+    }>(
+      await clientRequest(firstOrigin, "/v3/client/tasks/create", {
+        basedOnRoomSeq: roomSeq,
+        idempotencyKey: "p3c-open-task-created",
+        roomId,
+        title: "Prove one winner across two daemon lanes",
+      }),
+    );
+    const taskId = taskCreated.task.taskId;
+
     try {
       await waitUntil(
         () =>
+          activeObserver.listTasks(humanActor, { roomId })[0]?.state ===
+            "submitted" &&
           activeObserver
-            .listTasks(humanActor, { roomId: room.roomId })
-            .every((task) => task.state === "submitted") &&
-          activeObserver
-            .listActivations({ roomId: room.roomId })
+            .listActivations({ roomId })
             .every((activation) => activation.state === "completed"),
         5_000,
       );
@@ -375,16 +554,14 @@ test("daemon v4 executes two participants through placement-selected runtime pro
         `daemon v4 did not converge: ${JSON.stringify(
           {
             activations: activeObserver.listActivations({
-              roomId: room.roomId,
+              roomId,
             }),
             health: application.health(),
             hosts: activeObserver.listHosts(),
             originalError: String(error),
-            placements: activeObserver.listPlacements({ roomId: room.roomId }),
-            runs: activeObserver.listRunAttempts({ roomId: room.roomId }),
-            tasks: activeObserver.listTasks(humanActor, {
-              roomId: room.roomId,
-            }),
+            placements: activeObserver.listPlacements({ roomId }),
+            runs: activeObserver.listRunAttempts({ roomId }),
+            tasks: activeObserver.listTasks(humanActor, { roomId }),
           },
           null,
           2,
@@ -397,33 +574,138 @@ test("daemon v4 executes two participants through placement-selected runtime pro
       agents.map((agent) => agent.principal.principalId).sort(),
     );
     assert.deepEqual(
-      activeObserver
-        .listPlacements({ roomId: room.roomId })
-        .map((placement) => placement.runtimeOfferId)
-        .sort(),
+      [
+        ...new Set(
+          activeObserver
+            .listPlacements({ roomId })
+            .map((placement) => placement.runtimeOfferId),
+        ),
+      ].sort(),
       [...offerIds].sort(),
     );
     assert.deepEqual(
-      activeObserver
-        .listRunAttempts({ roomId: room.roomId })
-        .map((attempt) => attempt.participantId)
-        .sort(),
+      [
+        ...new Set(
+          activeObserver
+            .listRunAttempts({ roomId })
+            .map((attempt) => attempt.participantId),
+        ),
+      ].sort(),
       agents.map((agent) => agent.principal.principalId).sort(),
     );
-    assert.deepEqual(
-      activeObserver
-        .listTasks(humanActor, { roomId: room.roomId })
-        .map((task) => task.taskId)
-        .sort(),
-      tasks.map((task) => task.taskId).sort(),
+    const submittedTask = activeObserver.listTasks(humanActor, { roomId })[0];
+    assert.equal(submittedTask?.taskId, taskId);
+    assert.ok(
+      agents.some(
+        (agent) => agent.principal.principalId === submittedTask?.assigneeId,
+      ),
+      "the open Task must have exactly one catalog Agent winner",
+    );
+    const agentReplies = activeObserver
+      .listMessages(humanActor, { roomId })
+      .messages.filter((candidate) =>
+        agents.some(
+          (agent) => agent.principal.principalId === candidate.actorId,
+        ),
+      );
+    assert.equal(
+      agentReplies.length,
+      agents.length * 2,
+      "each daemon lane must reply to the Room Message and the open Task activation",
+    );
+    for (const [index, agent] of agents.entries()) {
+      const participantReplies = agentReplies.filter(
+        (candidate) => candidate.actorId === agent.principal.principalId,
+      );
+      assert.equal(participantReplies.length, 2);
+      assert.ok(
+        participantReplies.every(
+          (candidate) =>
+            candidate.body ===
+            `Canonical daemon reply from Agent ${String(index)}`,
+        ),
+      );
+    }
+
+    const reviewDelivery = await requireJson<{ latestRoomSeq: number }>(
+      await clientRequest(firstOrigin, "/v3/client/rooms/sync", {
+        consumerId: "p3c-human-review",
+        roomId,
+      }),
+    );
+    await requireJson(
+      await clientRequest(firstOrigin, "/v3/client/tasks/complete", {
+        basedOnRoomSeq: reviewDelivery.latestRoomSeq,
+        idempotencyKey: "p3c-task-completed",
+        taskId,
+      }),
+    );
+    assert.equal(
+      activeObserver.listTasks(humanActor, { roomId })[0]?.state,
+      "completed",
     );
 
-    shutdown.abort("daemon-v4-e2e-complete");
+    activeShutdown.abort("p3c-first-daemon-stop");
     await running;
     running = undefined;
+    activeShutdown = undefined;
+    assert.equal(application.health().state, "offline");
+
+    application = new DaemonApplication({ config });
+    activeShutdown = new AbortController();
+    running = application.run({ signal: activeShutdown.signal });
+    await waitUntil(() => application.clientOrigin() !== undefined);
+    const restartedOrigin = application.clientOrigin();
+    assert.ok(restartedOrigin);
+    const recovered = await requireJson<{
+      cursorAfter: number;
+      cursorBefore: number;
+      events: Array<{ type: string }>;
+    }>(
+      await clientRequest(restartedOrigin, "/v3/client/rooms/sync", {
+        consumerId: "p3c-browser-main",
+        roomId,
+      }),
+    );
+    assert.equal(recovered.cursorBefore, initialDelivery.cursorAfter);
+    const recoveredTypes = recovered.events.map((event) => event.type);
+    for (const expectedType of [
+      "message.posted",
+      "thread.created",
+      "task.created",
+      "task.submitted",
+      "task.completed",
+    ]) {
+      assert.ok(
+        recoveredTypes.includes(expectedType),
+        `reconnect must recover ${expectedType}`,
+      );
+    }
+    await requireJson(
+      await clientRequest(restartedOrigin, "/v3/client/rooms/acknowledge", {
+        consumerId: "p3c-browser-main",
+        roomId,
+        throughSeq: recovered.cursorAfter,
+      }),
+    );
+    const completedTasks = await requireJson<{
+      tasks: Array<{ state: string; taskId: string }>;
+    }>(
+      await clientRequest(restartedOrigin, "/v3/client/tasks/list", {
+        roomId,
+      }),
+    );
+    assert.equal(completedTasks.tasks.length, 1);
+    assert.equal(completedTasks.tasks[0]?.taskId, taskId);
+    assert.equal(completedTasks.tasks[0]?.state, "completed");
+
+    activeShutdown.abort("p3c-e2e-complete");
+    await running;
+    running = undefined;
+    activeShutdown = undefined;
     assert.equal(application.health().state, "offline");
   } finally {
-    shutdown.abort("daemon-v4-test-cleanup");
+    activeShutdown?.abort("daemon-v4-test-cleanup");
     await running?.catch(() => undefined);
     observer?.close();
     try {

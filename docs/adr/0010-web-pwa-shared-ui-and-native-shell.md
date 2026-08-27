@@ -1,6 +1,6 @@
 # ADR-0010：Web/PWA 共享 UI、可移植 Client Core 与薄原生壳
 
-状态：**Accepted for Phase 4 / implementation deferred**（2026-08-26）。本文冻结前端边界，但不授权在 Phase 4 前绕过尚未稳定的 Kernel owner、command 或 sync protocol 编写生产 UI。
+状态：**Accepted / Phase 4A Room-Chat-Thread-Task foundation**（2026-08-26）。首个生产壳已按本文边界建立 snapshot→generated ui-tokens、完整现有 v3 RahClient、cold-reload-safe bounded client-core 与 React composition；尚未开放缺少 Kernel owner 的 Inbox/Artifact/Review 等页面。
 
 ## 背景
 
@@ -54,7 +54,7 @@ RAH OS 的早期交付目标是桌面浏览器和安装式 PWA，后续可能增
 
 ## 声明边界
 
-- 本 ADR 是 Phase 4 的输入，不表示生产 UI 已开始或完成；
+- 本 ADR 已进入 Phase 4A 实施，不表示完整生产 Web/PWA 已完成；
 - RaftUI 的像素与交互一致性是 reference conformance，不证明 RAH command 已接入；
 - PWA cache、desktop IPC、native notification 和 push 都不是 canonical data owner；
 - 未来框架替换不能改变 `RahClient`、ordered sync、command identity 或 Room truth；

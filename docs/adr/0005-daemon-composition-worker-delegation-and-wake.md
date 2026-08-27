@@ -25,6 +25,6 @@
 ## 声明边界
 
 - 这完成的是本机 daemon core，不是可安装的 Mac 产品。launchd、Keychain、签名/公证、自动升级、control/health endpoint 和 log rotation 仍未实现。
-- ADR-0006 已实现最小 Task command slice，ADR-0007 已实现确定性本机 InputRequest/`waiting_input` 无 listening 闭环，ADR-0008 已实现 loopback Human sync/list/resolve Client slice；Artifact、Review、Memory、完整 Web/PWA Client/hint surface 及 coding workflow 仍未实现。三种非 Codex CLI 当前只证明 delivery，尚未在新 Task/InputRequest gate 上逐一复跑。
+- ADR-0006 已实现最小 Task command slice，ADR-0007 已实现确定性本机 InputRequest/`waiting_input` 无 listening 闭环，ADR-0008 已实现 loopback Human sync/list/resolve Client slice，ADR-0014 已增加不授予 Agent PAT 的 Activation-scoped Room reply；Artifact、Review、Memory、完整 Web/PWA Client/hint surface 及 coding workflow 仍未实现。真实 Provider 尚未逐一复跑 Task/InputRequest/Room reply 新 gate。
 - Host instance generation 在每次 privileged call 上重新校验；更强的设备证明、远端 Host、细粒度 RuntimeProfile capability 和 hostile same-user isolation 仍在范围外。
 - content-free wake 当前是同进程本机 publisher。未来 WebSocket/SSE/remote transport 必须复用 Outbox lease/ack 语义，不能另建业务队列。

@@ -47,6 +47,7 @@ export type {
   ExecutionPolicyMutationResult,
   ExecutionPolicyRecord,
   HostRecord,
+  HumanApplicationPort,
   InboxItem,
   InputRequestMutationResult,
   InputRequestResolveMutationResult,

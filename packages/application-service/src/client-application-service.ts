@@ -9,28 +9,38 @@ import type { AddressInfo } from "node:net";
 
 import {
   type AuthenticatedActorContext,
+  type HumanApplicationPort,
   KernelError,
-  type RoomKernel,
 } from "@rah-os/kernel";
 import {
   ClientAcknowledgeRequestSchema,
   ClientAcknowledgeResponseSchema,
+  ClientAgentOnboardRequestSchema,
+  ClientAgentsListRequestSchema,
+  ClientAgentsListResponseSchema,
   ClientErrorResponseSchema,
   ClientHealthResponseSchema,
   ClientHealthV1ResponseSchema,
+  ClientHealthV2ResponseSchema,
   ClientInputRequestsListRequestSchema,
   ClientInputRequestsListResponseSchema,
   ClientMessageMutationResponseSchema,
   ClientMessagePostRequestSchema,
   ClientMessagesListRequestSchema,
   ClientMessagesListResponseSchema,
+  ClientPrincipalMeRequestSchema,
+  ClientPrincipalMeResponseSchema,
   ClientRoomMemberAddRequestSchema,
   ClientRoomMemberMutationResponseSchema,
   ClientRoomMemberRemoveRequestSchema,
   ClientRoomMemberRemoveResponseSchema,
   ClientRoomMemberRoleRequestSchema,
+  ClientRoomAgentActivityListRequestSchema,
+  ClientRoomAgentActivityListResponseSchema,
   ClientRoomMembersListRequestSchema,
   ClientRoomMembersListResponseSchema,
+  ClientRoomCreateRequestSchema,
+  ClientRoomMutationResponseSchema,
   ClientRoomsListRequestSchema,
   ClientRoomsListResponseSchema,
   ClientRoomSyncRequestSchema,
@@ -51,15 +61,23 @@ import {
   ClientThreadsListResponseSchema,
   ClientWorkspacesListRequestSchema,
   ClientWorkspacesListResponseSchema,
+  ClientWorkspaceCreateRequestSchema,
+  ClientWorkspaceMutationResponseSchema,
   InputRequestResolveRequestSchema,
   InputRequestResolveResponseSchema,
+  LocalRuntimeInventoryRequestSchema,
+  LocalRuntimeInventoryResponseSchema,
   type ClientHealthResponse,
+  type LocalRuntimeInventoryResponse,
 } from "@rah-os/protocol";
 
 export type ClientApplicationServiceOptions = {
   bindHost?: "127.0.0.1";
   health: () => ClientHealthResponse;
-  kernel: RoomKernel;
+  human: HumanApplicationPort;
+  localRuntimeInventory?: (
+    actor: AuthenticatedActorContext,
+  ) => LocalRuntimeInventoryResponse | Promise<LocalRuntimeInventoryResponse>;
   port?: number;
 };
 
@@ -101,6 +119,15 @@ const CLIENT_V2_DATA_PATHS = new Set([
   "/threads/reply",
   "/workspaces/list",
 ]);
+const CLIENT_V3_DATA_PATHS = new Set([
+  ...CLIENT_V2_DATA_PATHS,
+  "/agents/list",
+  "/agents/onboard",
+  "/principals/me",
+  "/rooms/agents/activity/list",
+  "/rooms/create",
+  "/workspaces/create",
+]);
 const MAX_DELIVERED_CURSORS_PER_CONSUMER = 1_024;
 
 type ClientSession = {
@@ -111,7 +138,13 @@ type ClientSession = {
 export class ClientApplicationService {
   readonly #bindHost: "127.0.0.1";
   readonly #health: () => ClientHealthResponse;
-  readonly #kernel: RoomKernel;
+  readonly #human: HumanApplicationPort;
+  readonly #localRuntimeInventory:
+    | ((
+        actor: AuthenticatedActorContext,
+      ) =>
+        LocalRuntimeInventoryResponse | Promise<LocalRuntimeInventoryResponse>)
+    | undefined;
   readonly #port: number;
   readonly #deliveredCursors = new Map<string, Set<number>>();
   #origin: string | undefined;
@@ -120,7 +153,8 @@ export class ClientApplicationService {
   constructor(options: ClientApplicationServiceOptions) {
     this.#bindHost = options.bindHost ?? "127.0.0.1";
     this.#health = options.health;
-    this.#kernel = options.kernel;
+    this.#human = options.human;
+    this.#localRuntimeInventory = options.localRuntimeInventory;
     this.#port = options.port ?? 0;
     if (
       !Number.isInteger(this.#port) ||
@@ -184,6 +218,31 @@ export class ClientApplicationService {
     request: IncomingMessage,
     response: ServerResponse,
   ): Promise<void> {
+    if (request.url === "/v1/local/runtimes/list") {
+      if (this.#localRuntimeInventory === undefined) {
+        throw new HttpRequestError("not_found", "route was not found", 404);
+      }
+      if (request.method !== "POST") {
+        throw new HttpRequestError(
+          "method_not_allowed",
+          "local Runtime inventory only supports POST",
+          405,
+        );
+      }
+      const actor = this.#authenticate(request).actor;
+      parseClientRequest(
+        LocalRuntimeInventoryRequestSchema,
+        await readJsonObject(request),
+      );
+      writeJson(
+        response,
+        200,
+        LocalRuntimeInventoryResponseSchema.parse(
+          await this.#localRuntimeInventory(actor),
+        ),
+      );
+      return;
+    }
     const route = resolveClientRoute(request.url);
     if (route?.path === "/health") {
       if (request.method !== "GET") {
@@ -215,14 +274,42 @@ export class ClientApplicationService {
               protocolVersion: currentHealth.protocolVersion,
               state: currentHealth.state,
             })
-          : currentHealth,
+          : route.apiVersion === 2
+            ? ClientHealthV2ResponseSchema.parse({
+                ...currentHealth,
+                apiVersion: 2,
+                capabilities: {
+                  cursorAcknowledge:
+                    currentHealth.capabilities.cursorAcknowledge,
+                  hints: currentHealth.capabilities.hints,
+                  inputRequestRead: currentHealth.capabilities.inputRequestRead,
+                  inputRequestResolve:
+                    currentHealth.capabilities.inputRequestResolve,
+                  memberRead: currentHealth.capabilities.memberRead,
+                  memberWrite: currentHealth.capabilities.memberWrite,
+                  messageRead: currentHealth.capabilities.messageRead,
+                  messageWrite: currentHealth.capabilities.messageWrite,
+                  roomRead: currentHealth.capabilities.roomRead,
+                  roomSync: currentHealth.capabilities.roomSync,
+                  taskRead: currentHealth.capabilities.taskRead,
+                  taskWrite: currentHealth.capabilities.taskWrite,
+                  threadRead: currentHealth.capabilities.threadRead,
+                  threadWrite: currentHealth.capabilities.threadWrite,
+                  workspaceRead: currentHealth.capabilities.workspaceRead,
+                },
+              })
+            : currentHealth,
       );
       return;
     }
     if (
       route === undefined ||
       !(
-        route.apiVersion === 1 ? CLIENT_V1_DATA_PATHS : CLIENT_V2_DATA_PATHS
+        route.apiVersion === 1
+          ? CLIENT_V1_DATA_PATHS
+          : route.apiVersion === 2
+            ? CLIENT_V2_DATA_PATHS
+            : CLIENT_V3_DATA_PATHS
       ).has(route.path)
     ) {
       throw new HttpRequestError("not_found", "route was not found", 404);
@@ -239,14 +326,74 @@ export class ClientApplicationService {
     const actor = session.actor;
     const body = await readJsonObject(request);
     const path = route.path;
+    if (path === "/principals/me") {
+      parseClientRequest(ClientPrincipalMeRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientPrincipalMeResponseSchema.parse({
+          principal: this.#human.getAuthenticatedPrincipal(actor),
+        }),
+      );
+      return;
+    }
+    if (path === "/agents/list") {
+      const command = parseClientRequest(ClientAgentsListRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientAgentsListResponseSchema.parse({
+          agents: this.#human.listAgentCatalog(actor, {
+            controlRoomId: command.controlRoomId,
+          }),
+        }),
+      );
+      return;
+    }
+    if (path === "/agents/onboard") {
+      const command = parseClientRequest(ClientAgentOnboardRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientRoomMemberMutationResponseSchema.parse(
+          this.#human.onboardAgentToRoom(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/workspaces/create") {
+      const command = parseClientRequest(
+        ClientWorkspaceCreateRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientWorkspaceMutationResponseSchema.parse(
+          this.#human.createWorkspace(actor, command),
+        ),
+      );
+      return;
+    }
     if (path === "/workspaces/list") {
       parseClientRequest(ClientWorkspacesListRequestSchema, body);
       writeJson(
         response,
         200,
         ClientWorkspacesListResponseSchema.parse({
-          workspaces: this.#kernel.listWorkspaces(actor),
+          workspaces: this.#human.listWorkspaces(actor),
         }),
+      );
+      return;
+    }
+    if (path === "/rooms/create") {
+      const command = parseClientRequest(ClientRoomCreateRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientRoomMutationResponseSchema.parse(
+          this.#human.createRoom(actor, command),
+        ),
       );
       return;
     }
@@ -256,11 +403,25 @@ export class ClientApplicationService {
         response,
         200,
         ClientRoomsListResponseSchema.parse({
-          rooms: this.#kernel.listRooms(actor, {
+          rooms: this.#human.listRooms(actor, {
             ...(command.workspaceId === undefined
               ? {}
               : { workspaceId: command.workspaceId }),
           }),
+        }),
+      );
+      return;
+    }
+    if (path === "/rooms/agents/activity/list") {
+      const command = parseClientRequest(
+        ClientRoomAgentActivityListRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientRoomAgentActivityListResponseSchema.parse({
+          agents: this.#human.listRoomAgentActivity(actor, command),
         }),
       );
       return;
@@ -274,7 +435,7 @@ export class ClientApplicationService {
         response,
         200,
         ClientRoomMembersListResponseSchema.parse({
-          memberships: this.#kernel.listRoomMemberships(actor, command),
+          memberships: this.#human.listRoomMemberships(actor, command),
         }),
       );
       return;
@@ -288,7 +449,7 @@ export class ClientApplicationService {
         response,
         200,
         ClientRoomMemberMutationResponseSchema.parse(
-          this.#kernel.addRoomMember(actor, command),
+          this.#human.addRoomMember(actor, command),
         ),
       );
       return;
@@ -302,7 +463,7 @@ export class ClientApplicationService {
         response,
         200,
         ClientRoomMemberMutationResponseSchema.parse(
-          this.#kernel.setRoomMemberRole(actor, command),
+          this.#human.setRoomMemberRole(actor, command),
         ),
       );
       return;
@@ -316,7 +477,7 @@ export class ClientApplicationService {
         response,
         200,
         ClientRoomMemberRemoveResponseSchema.parse(
-          this.#kernel.removeRoomMember(actor, command),
+          this.#human.removeRoomMember(actor, command),
         ),
       );
       return;
@@ -327,7 +488,7 @@ export class ClientApplicationService {
         response,
         200,
         ClientMessagesListResponseSchema.parse(
-          this.#kernel.listMessages(actor, {
+          this.#human.listMessages(actor, {
             afterSeq: command.afterSeq,
             limit: command.limit,
             roomId: command.roomId,
@@ -345,7 +506,7 @@ export class ClientApplicationService {
         response,
         200,
         ClientMessageMutationResponseSchema.parse(
-          this.#kernel.postMessage(actor, command),
+          this.#human.postRoomMessage(actor, command),
         ),
       );
       return;
@@ -356,7 +517,7 @@ export class ClientApplicationService {
         response,
         200,
         ClientThreadsListResponseSchema.parse({
-          threads: this.#kernel.listThreads(actor, command),
+          threads: this.#human.listThreads(actor, command),
         }),
       );
       return;
@@ -367,7 +528,7 @@ export class ClientApplicationService {
         response,
         200,
         ClientThreadCreateResponseSchema.parse(
-          this.#kernel.createThread(actor, command),
+          this.#human.createThread(actor, command),
         ),
       );
       return;
@@ -378,7 +539,7 @@ export class ClientApplicationService {
         response,
         200,
         ClientMessageMutationResponseSchema.parse(
-          this.#kernel.replyThread(actor, command),
+          this.#human.replyThread(actor, command),
         ),
       );
       return;
@@ -387,7 +548,7 @@ export class ClientApplicationService {
       const command = parseClientRequest(ClientRoomSyncRequestSchema, body);
       const deliveryKey = this.#deliveryKey(session, command);
       const knownCursors = this.#deliveredCursors.get(deliveryKey);
-      const delivery = this.#kernel.sync(actor, {
+      const delivery = this.#human.sync(actor, {
         consumerId: command.consumerId,
         roomId: command.roomId,
         ...(command.afterSeq === undefined
@@ -413,7 +574,7 @@ export class ClientApplicationService {
     if (path === "/rooms/acknowledge") {
       const command = parseClientRequest(ClientAcknowledgeRequestSchema, body);
       const deliveryKey = this.#deliveryKey(session, command);
-      const durableCursor = this.#kernel.sync(actor, {
+      const durableCursor = this.#human.sync(actor, {
         consumerId: command.consumerId,
         limit: 1,
         roomId: command.roomId,
@@ -428,7 +589,7 @@ export class ClientApplicationService {
           409,
         );
       }
-      this.#kernel.acknowledgeCursor(actor, command);
+      this.#human.acknowledgeCursor(actor, command);
       this.#forgetAcknowledgedCursors(deliveryKey, command.throughSeq);
       writeJson(
         response,
@@ -445,7 +606,7 @@ export class ClientApplicationService {
         response,
         200,
         ClientTasksListResponseSchema.parse({
-          tasks: this.#kernel.listTasks(actor, command),
+          tasks: this.#human.listTasks(actor, command),
         }),
       );
       return;
@@ -456,7 +617,7 @@ export class ClientApplicationService {
         response,
         200,
         ClientTaskAttentionMutationResponseSchema.parse(
-          this.#kernel.createTask(actor, {
+          this.#human.createTask(actor, {
             dependencyTaskIds: command.dependencyTaskIds,
             idempotencyKey: command.idempotencyKey,
             roomId: command.roomId,
@@ -481,7 +642,7 @@ export class ClientApplicationService {
         response,
         200,
         ClientTaskAttentionMutationResponseSchema.parse(
-          this.#kernel.assignTask(actor, command),
+          this.#human.assignTask(actor, command),
         ),
       );
       return;
@@ -492,7 +653,7 @@ export class ClientApplicationService {
         response,
         200,
         ClientTaskAttentionMutationResponseSchema.parse(
-          this.#kernel.unblockTask(actor, command),
+          this.#human.unblockTask(actor, command),
         ),
       );
       return;
@@ -503,7 +664,7 @@ export class ClientApplicationService {
         response,
         200,
         ClientTaskAttentionMutationResponseSchema.parse(
-          this.#kernel.cancelTask(actor, command),
+          this.#human.cancelTask(actor, command),
         ),
       );
       return;
@@ -514,7 +675,7 @@ export class ClientApplicationService {
         response,
         200,
         ClientTaskMutationResponseSchema.parse(
-          this.#kernel.completeTask(actor, command),
+          this.#human.completeTask(actor, command),
         ),
       );
       return;
@@ -524,7 +685,7 @@ export class ClientApplicationService {
         ClientInputRequestsListRequestSchema,
         body,
       );
-      const inputRequests = this.#kernel
+      const inputRequests = this.#human
         .listInputRequests(actor, { roomId: command.roomId })
         .filter(
           (inputRequest) =>
@@ -543,7 +704,7 @@ export class ClientApplicationService {
       response,
       200,
       InputRequestResolveResponseSchema.parse(
-        this.#kernel.resolveInputRequest(actor, command),
+        this.#human.resolveInputRequest(actor, command),
       ),
     );
   }
@@ -570,7 +731,7 @@ export class ClientApplicationService {
       );
     }
     return {
-      actor: this.#kernel.authenticateHumanAccessToken(accessToken),
+      actor: this.#human.authenticateHumanAccessToken(accessToken),
       credentialHash: hashToken(accessToken),
     };
   }
@@ -654,12 +815,15 @@ export class ClientApplicationService {
 
 function resolveClientRoute(
   url: string | undefined,
-): { apiVersion: 1 | 2; path: string } | undefined {
+): { apiVersion: 1 | 2 | 3; path: string } | undefined {
   if (url?.startsWith("/v1/client/") === true) {
     return { apiVersion: 1, path: url.slice("/v1/client".length) };
   }
   if (url?.startsWith("/v2/client/") === true) {
     return { apiVersion: 2, path: url.slice("/v2/client".length) };
+  }
+  if (url?.startsWith("/v3/client/") === true) {
+    return { apiVersion: 3, path: url.slice("/v3/client".length) };
   }
   return undefined;
 }

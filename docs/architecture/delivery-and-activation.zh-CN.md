@@ -98,7 +98,7 @@ Agent 向人类提问时：
 
 这条链路现已在 canonical Kernel、Worker HTTP 和完整 fake daemon fixture 中实现。`request-input` 把 Task claim 释放并给 designated human responder 创建 Inbox，但不为 human 创建 Agent Activation；原 RunAttempt 在写入 terminal proof 后结束。authenticated human resolve 原子产生 `input.resolved`、requester Inbox、新 Activation 与 content-free wake，新 CLI session 从 Room event 读取 answer，并继续原 Task。若 human 在旧 CLI 退出前快速回复，`input.requested` 仍证明旧 Activation 已经合法暂停，`input.resolved` 已进入 follow-up Activation；Kernel 不会因为 Task 提前回到 `todo` 而重复原 RunAttempt。
 
-等待期间不运行 LLM turn，也不调用 `room_wait/channel_wait_new`。MCP wait 最多是秒级实验性快路径，不能拥有可靠投递。当前 human 已可通过 loopback Client API sync/list/resolve，fake daemon E2 证明 resolution 会唤醒新 CLI；Web/PWA 接入、content-free hint 与 push notification publisher 尚未实现。
+等待期间不运行 LLM turn，也不调用 `room_wait/channel_wait_new`。MCP wait 最多是秒级实验性快路径，不能拥有可靠投递。当前 Human 已可通过 loopback Client API sync/list/resolve，Phase 4A Web 已完成 Room/Thread/Task recovery slice；fake daemon E2 证明 resolution 会唤醒新 CLI，双 Agent browser gate 又证明 Activation reply 与单 winner Task 可回到同一 Room。content-free browser hint、完整 PWA 与 push notification publisher 尚未实现。
 
 ## 6. 恢复语义
 

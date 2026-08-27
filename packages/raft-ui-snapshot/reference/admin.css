@@ -1,0 +1,361 @@
+@import "generated/raft-official-admin.css";
+
+/* Admin route. Geometry tokens above are generated from Raft's live DOM and
+   computed style; this file owns only composition and interaction states. */
+.page {
+  display: grid;
+  grid-template-columns: var(--rail-w) var(--sidebar-w) minmax(0, 1fr);
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sec-group {
+  padding: 6px 8px 4px;
+  color: var(--ink-40);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+}
+
+.settings-main {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--paper);
+}
+
+.settings-head {
+  display: flex;
+  height: var(--raft-admin-header-height);
+  flex: none;
+  align-items: center;
+  gap: var(--raft-admin-header-gap);
+  padding: var(--raft-admin-header-padding);
+  border-bottom: var(--bd-heavy);
+  background: var(--paper);
+}
+
+.settings-head-icon {
+  display: inline-flex;
+  width: var(--raft-admin-header-icon-size);
+  height: var(--raft-admin-header-icon-size);
+  align-items: center;
+  justify-content: center;
+  border: var(--bd);
+  background: var(--yellow);
+  box-shadow: var(--shadow-s);
+}
+
+.settings-head-icon svg { width: 18px; height: 18px; }
+.settings-head h1 { margin: 0; font-size: 18px; font-weight: var(--fw-bold); }
+
+.settings-wrap {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: var(--raft-admin-content-padding);
+  background: var(--paper);
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.admin-section { margin: 0 0 var(--raft-admin-section-margin); }
+.admin-section-heading {
+  display: flex;
+  min-height: var(--raft-admin-following-section-heading-height);
+  align-items: center;
+  gap: var(--raft-admin-section-heading-gap);
+  margin: 0 0 var(--raft-admin-section-heading-margin);
+  color: var(--raft-admin-section-title-color);
+  font-size: var(--raft-admin-section-title-size);
+  font-weight: var(--raft-admin-section-title-weight);
+  line-height: var(--raft-admin-section-title-line);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+}
+
+.admin-section:first-child .admin-section-heading { min-height: var(--raft-admin-section-heading-height); }
+
+.admin-section-heading svg {
+  width: var(--raft-admin-section-icon-size);
+  height: var(--raft-admin-section-icon-size);
+  flex: none;
+}
+
+.admin-section-heading .count { font-family: var(--mono); font-weight: 400; }
+.admin-card {
+  position: relative;
+  padding: var(--raft-admin-card-padding);
+  border: var(--raft-admin-card-border);
+  background: var(--raft-admin-card-background);
+  box-shadow: var(--raft-admin-card-shadow);
+}
+
+.admin-card-label { margin-bottom: 8px; color: var(--ink-70); font-size: 12px; font-weight: var(--fw-bold); line-height: 16px; }
+
+.admin-toolbar {
+  display: flex;
+  min-width: 0;
+  height: var(--raft-admin-toolbar-height);
+  align-items: stretch;
+  gap: var(--raft-admin-toolbar-gap);
+}
+
+.raft-select { position: relative; min-width: 0; }
+.member-picker { flex: 1; }
+.role-picker { width: var(--raft-admin-role-select-width); height: var(--raft-admin-role-select-height); flex: none; align-self: flex-start; }
+.raft-select-trigger {
+  display: inline-flex;
+  width: 100%;
+  height: var(--raft-admin-role-select-height);
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 12px;
+  border: var(--bd);
+  background: var(--paper);
+  box-shadow: var(--shadow-s);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+}
+
+.member-picker > .raft-select-trigger {
+  height: var(--raft-admin-picker-height);
+  padding: var(--raft-admin-picker-padding);
+  font-size: 12px;
+  font-weight: var(--fw-bold);
+}
+
+.member-picker > .raft-select-trigger:hover:not(:disabled) { background: var(--soft-signal); transform: none; box-shadow: var(--shadow-s); }
+.member-picker.is-open > .raft-select-trigger,
+.member-picker > .raft-select-trigger:active:not(:disabled) { transform: none; box-shadow: var(--shadow-s); }
+
+.raft-select-trigger > span { min-width: 0; overflow: hidden; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+.raft-select-trigger > svg { width: 14px; height: 14px; flex: none; transition: transform var(--transition-fast); }
+.raft-select-trigger:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-m); }
+.raft-select-trigger:active:not(:disabled), .raft-select.is-open .raft-select-trigger { transform: translateY(-1px); box-shadow: var(--shadow-m); }
+.raft-select.is-open .raft-select-trigger > svg { transform: rotate(180deg); }
+.raft-select-trigger:disabled { pointer-events: none; opacity: .4; cursor: not-allowed; transform: none; }
+
+.raft-select-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 80;
+  width: 100%;
+  min-width: 100%;
+  border: var(--bd);
+  background: var(--paper);
+  box-shadow: var(--raft-admin-role-menu-shadow);
+}
+
+.raft-select-panel[hidden] { display: none; }
+.member-picker-panel {
+  top: calc(100% + 8px);
+  right: auto;
+  left: 0;
+  width: min(var(--raft-admin-member-menu-width), calc(100vw - var(--rail-w) - var(--sidebar-w) - 40px));
+  box-shadow: var(--raft-admin-member-menu-shadow);
+}
+
+.role-picker-panel { top: calc(100% + 3px); width: var(--raft-admin-role-menu-width); }
+.role-picker-panel [role="option"]:last-child { height: calc(var(--raft-admin-role-menu-option-height) - 1px); }
+.raft-select-panel-title {
+  display: flex;
+  height: var(--raft-admin-member-menu-header-height);
+  align-items: center;
+  padding: 0 12px;
+  border-bottom: var(--bd);
+  font-size: 12px;
+  font-weight: var(--fw-bold);
+}
+
+.raft-select-search-wrap {
+  display: flex;
+  height: var(--raft-admin-member-menu-search-height);
+  align-items: center;
+  gap: 6px;
+  margin: 8px 8px 9px;
+  padding: 0 8px;
+  border: var(--bd);
+  background: var(--paper);
+}
+
+.raft-select-search-wrap:focus-within { box-shadow: var(--shadow-s); }
+.raft-select-search-wrap svg { width: 14px; height: 14px; flex: none; }
+.raft-select-search-wrap input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; font: inherit; font-size: 12px; }
+.raft-select-list { padding: 0; }
+.raft-select-list [role="option"] {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  height: var(--raft-admin-role-menu-option-height);
+  align-items: center;
+  gap: 8px;
+  padding: var(--raft-admin-role-menu-option-padding);
+  border: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.member-picker-panel .raft-select-list [role="option"] {
+  height: var(--raft-admin-member-menu-option-height);
+  padding: var(--raft-admin-member-menu-option-padding);
+}
+
+.raft-select-list [role="option"]:hover,
+.raft-select-list [role="option"]:focus-visible { background: var(--soft-signal); }
+.raft-select-list [role="option"]:active { background: var(--yellow); }
+.raft-select-list [role="option"][hidden] { display: none; }
+.option-check { display: inline-flex; width: var(--raft-admin-role-menu-check-size); height: var(--raft-admin-role-menu-check-size); visibility: hidden; }
+.option-check svg { width: 100%; height: 100%; }
+[role="option"][aria-selected="true"] .option-check { visibility: visible; }
+.picker-avatar { width: var(--raft-admin-member-menu-avatar-size); height: var(--raft-admin-member-menu-avatar-size); }
+.option-meta { margin-left: auto; color: var(--ink-40); font-family: var(--mono); font-size: 11px; }
+
+.admin-primary { width: auto; height: var(--raft-admin-primary-button-height); flex: none; padding: 8px 12px; font-size: 12px; line-height: 16px; }
+.btn:disabled { pointer-events: none; opacity: .5; cursor: not-allowed; transform: none; box-shadow: var(--shadow-s); }
+.btn[data-pending="true"] { cursor: wait; opacity: .75; }
+
+.member-list {
+  margin-top: var(--raft-admin-member-divider-padding);
+  padding-top: var(--raft-admin-member-divider-padding);
+  border-top: var(--bd);
+}
+
+.member-rows { display: grid; gap: var(--raft-admin-member-list-gap); }
+
+.member-row {
+  display: flex;
+  height: var(--raft-admin-member-row-height);
+  align-items: center;
+  gap: 10px;
+  padding: var(--raft-admin-member-row-padding);
+  border: var(--bd);
+}
+
+.member-avatar { width: var(--raft-admin-member-avatar-size); height: var(--raft-admin-member-avatar-size); }
+.member-copy { display: flex; min-width: 0; flex: 1; flex-wrap: wrap; align-items: baseline; gap: 0 8px; }
+.member-copy b { font-size: 14px; }
+.member-tag { color: var(--ink-50); font-family: var(--mono); font-size: 12px; }
+.member-note { margin-left: auto; color: var(--ink-40); font-size: 12px; }
+.member-actions { margin-left: auto; }
+.btn-sm { height: var(--raft-admin-small-button-height); padding: 4px 8px; font-size: 12px; }
+
+.toggle-card { min-height: var(--raft-admin-toggle-card-height); }
+.admin-check {
+  display: flex;
+  min-height: var(--raft-admin-toggle-label-height);
+  align-items: flex-start;
+  gap: var(--raft-admin-toggle-label-gap);
+  cursor: pointer;
+}
+
+.admin-check input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.check-marker {
+  display: inline-flex;
+  width: var(--raft-admin-toggle-size);
+  height: var(--raft-admin-toggle-size);
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+  border: var(--bd);
+  background: var(--paper);
+  color: transparent;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.check-marker svg { width: 12px; height: 12px; }
+.admin-check input:checked + .check-marker { background: var(--yellow); color: var(--ink); }
+.admin-check input:focus-visible + .check-marker { outline: 2px solid var(--focus-ink); outline-offset: 0; }
+.admin-check b { display: block; font-size: var(--raft-admin-toggle-title-size); line-height: 20px; }
+.admin-check small { display: block; margin-top: 2px; color: var(--ink-70); font-size: var(--raft-admin-toggle-description-size); line-height: 16px; }
+.admin-save { min-height: var(--raft-admin-save-height); padding: 6px 12px; font-size: 12px; line-height: 16px; }
+.toggle-card > .admin-save { margin-top: 12px; }
+
+.empty-card { display: flex; min-height: var(--raft-admin-empty-card-height); align-items: center; }
+.empty-card p,
+.invite-empty p { margin: 0; color: var(--ink-40); font-size: 12px; font-style: italic; line-height: 16px; }
+.invite-card { min-height: var(--raft-admin-invite-card-height); }
+.invite-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--raft-admin-invite-grid-gap); }
+.invite-grid .field { gap: 4px; margin: 0; }
+.invite-grid .field label { color: var(--ink-70); font-size: 12px; line-height: 16px; }
+.invite-grid .input { height: var(--raft-admin-invite-input-height); padding: var(--raft-admin-invite-input-padding); box-shadow: var(--shadow-s); }
+.invite-grid .input:focus { box-shadow: var(--shadow-m); }
+.input[aria-invalid="true"] { border-color: var(--coral); }
+.field-error { margin: 8px 0 0; color: var(--coral); font-size: 12px; font-weight: var(--fw-bold); }
+.invite-card > .admin-save { height: var(--raft-admin-invite-button-height); margin-top: 12px; gap: 6px; }
+.invite-card > .admin-save svg { width: 14px; height: 14px; }
+.invite-empty { margin-top: 16px; padding-top: 16px; border-top: var(--bd); }
+
+.agreement-card { min-height: var(--raft-admin-agreement-card-height); }
+.agreement-fields { display: grid; gap: 12px; margin: 16px 0; padding-top: 16px; border-top: var(--bd); }
+.agreement-fields[hidden] { display: none; }
+.agreement-fields .field { margin: 0; }
+.agreement-fields label span { color: var(--ink-40); font-weight: 400; }
+.agreement-fields textarea { min-height: 156px; resize: vertical; font-family: var(--mono); font-size: 12px; }
+.field-counter { align-self: flex-end; color: var(--ink-50); font-family: var(--mono); font-size: 11px; line-height: 16px; }
+.agreement-preview { padding: 12px; border: 2px solid var(--ink-40); background: var(--cream); }
+.agreement-preview > div { margin-bottom: 8px; color: var(--ink-50); font-size: 11px; font-weight: var(--fw-bold); letter-spacing: var(--tracking-widest); text-transform: uppercase; }
+.agreement-preview p { min-height: 20px; font-size: 14px; line-height: 20px; white-space: pre-wrap; }
+.agreement-actions { display: flex; flex-direction: column; align-items: flex-start; gap: var(--raft-admin-agreement-actions-gap); margin-top: 16px; }
+.agreement-actions p { margin: 0; color: var(--ink-50); font-size: 11px; line-height: 16.5px; }
+
+.admin-feedback { margin: 12px 0 0; padding: 8px 10px; border: var(--bd); background: var(--orange); font-size: 12px; font-weight: var(--fw-bold); line-height: 16px; }
+
+.onboarding-card { min-height: var(--raft-admin-onboarding-card-height); }
+.onboarding-row { display: flex; min-height: var(--raft-admin-onboarding-row-height); align-items: center; justify-content: space-between; gap: 16px; }
+.onboarding-row + .onboarding-row { margin-top: 16px; }
+.onboarding-copy { min-width: 0; flex: 1; }
+.onboarding-copy b { display: block; font-size: 14px; }
+.onboarding-copy small { display: block; margin-top: 2px; color: var(--ink-70); font-size: 12px; line-height: 16px; }
+.onboarding-select { width: var(--raft-admin-wide-select-width); flex: none; }
+.greeting-picker { width: var(--raft-admin-compact-select-width); }
+.onboarding-select .raft-select-panel { top: calc(100% + 4px); }
+.onboarding-card > .admin-save { margin-top: 8px; }
+
+@media (max-width: 760px) {
+  .page { grid-template-columns: 56px minmax(0, 1fr); }
+  .sec-sidebar { display: none; }
+  .settings-head { padding-right: 14px; padding-left: 14px; }
+  .settings-wrap { padding: 14px 12px 56px; }
+  .admin-toolbar { height: auto; flex-wrap: wrap; }
+  .member-picker { width: 100%; flex-basis: 100%; }
+  .member-picker-panel { width: min(var(--raft-admin-member-menu-width), calc(100vw - 88px)); }
+  .role-picker { flex: 1; }
+  .admin-primary { flex: 1; }
+  .member-row { height: auto; min-height: var(--raft-admin-member-row-height); padding: 10px; }
+  .member-note { display: none; }
+  .member-tag { flex-basis: 100%; }
+  .invite-grid { grid-template-columns: 1fr; }
+  .onboarding-row { align-items: stretch; flex-direction: column; }
+  .onboarding-select { width: 100%; }
+}
+
+@media (max-height: 600px) and (min-width: 761px) {
+  .page { grid-template-columns: 50px var(--sidebar-w) minmax(0, 1fr); }
+}

@@ -1,0 +1,111 @@
+/* ============================================================
+   设置页 — 布局与页面级组件
+   仅放页面私有样式；按钮 / chip / 表单件一律复用 styles.css
+   ============================================================ */
+
+/* 页面栅格：共享实测 rail / 设置左导航 / 主区自适应 */
+.page {
+  display: grid;
+  grid-template-columns: var(--rail-w) var(--sidebar-w) minmax(0, 1fr);
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* 左导航分组小标签 */
+.sec-group {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: .06em;
+  padding: 6px 8px 4px;
+}
+
+/* 主区 */
+.settings-main { min-height: 0; overflow: auto; background: var(--bg); }
+.settings-head {
+  padding: 13px 24px;
+  border-bottom: var(--bd-heavy);
+  background: var(--paper);
+}
+.settings-head h1 { font-size: 20px; font-weight: 700; }
+
+.settings-wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 28px 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 卡片 */
+.card {
+  background: var(--bg);
+  border: var(--bd);
+  box-shadow: var(--shadow-m);
+  padding: 18px;
+}
+.card-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+.card-foot { display: flex; justify-content: flex-end; margin-top: 14px; }
+
+/* 资料卡 */
+.profile-top { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.avatar.avatar-xl { width: 64px; height: 64px; }
+.profile-name { font-size: 17px; font-weight: 700; }
+.profile-handle { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-top: 2px; }
+.input-wrap .chip { flex: none; margin-right: 8px; }
+
+/* 已连接账户行 */
+.acct-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+.acct-row + .acct-row { border-top: var(--bd); }
+.acct-icon {
+  width: 36px; height: 36px; flex: none;
+  border: var(--bd); box-shadow: var(--shadow-s);
+  background: var(--bg);
+  display: grid; place-items: center;
+  font-size: 16px; font-weight: 900;
+}
+.acct-icon .acct-svg { width: 18px; height: 18px; }
+.tint-yellow { background: var(--yellow); }
+.tint-gray { background: var(--gray-chip); }
+.tint-lavender { background: var(--lavender); }
+.acct-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+/* 会话行 */
+.session-row { display: flex; align-items: center; gap: 12px; }
+.session-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.session-name { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.session-sub { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+/* 折叠行：修改密码 */
+.collapse {
+  background: var(--bg);
+  border: var(--bd);
+  box-shadow: var(--shadow-m);
+}
+.collapse-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%;
+  background: none; border: 0;
+  padding: 14px 18px;
+  font-size: 14px; font-weight: 700;
+  cursor: pointer; text-align: left;
+}
+.collapse-head .chev { width: 18px; height: 18px; transition: transform .15s ease; }
+.collapse.is-open .collapse-head .chev { transform: rotate(180deg); }
+.collapse-body { display: none; padding: 2px 18px 18px; }
+.collapse.is-open .collapse-body { display: block; }
+
+/* 底部保存 */
+.save-row { display: flex; justify-content: flex-end; }
+
+/* 响应式：隐藏左导航，收紧卡片内边距 */
+@media (max-width: 760px) {
+  .page { grid-template-columns: 56px minmax(0, 1fr); }
+  .sec-sidebar { display: none; }
+  .settings-head { padding: 12px 14px; }
+  .settings-wrap { padding: 16px 14px 56px; }
+  .card { padding: 14px; }
+  .acct-row { flex-wrap: wrap; }
+  .acct-actions { margin-left: auto; }
+}

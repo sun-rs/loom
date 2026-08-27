@@ -206,6 +206,19 @@ export type RoomMembershipRemovalResult = {
   removedPrincipalId: string;
 };
 
+export type WorkspaceMutationResult = {
+  controlRoom: Room;
+  deduplicated: boolean;
+  event: RoomEvent;
+  workspace: Workspace;
+};
+
+export type RoomMutationResult = {
+  deduplicated: boolean;
+  event: RoomEvent;
+  room: Room;
+};
+
 export type ThreadMutationResult = {
   activationIds: string[];
   deduplicated: boolean;
