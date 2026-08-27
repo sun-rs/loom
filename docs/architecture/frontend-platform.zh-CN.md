@@ -1,6 +1,6 @@
 # 前端平台架构：Web/PWA 优先、共享状态内核与薄原生壳
 
-状态：Phase 4A Foundation。Raft UI snapshot→generated `ui-tokens`、覆盖全部现有 v3 route 的 typed `RahClient`、cold-reload-safe ordered client-core 与 Room/Chat/Thread/Task React recovery slice 已经建立；真实 daemon v4 browser gate 已完成双 Agent reply、Task 单 winner、Human complete 与 reload recovery，仍不允许用 mock page 反向定义缺失的 Kernel 业务协议。
+状态：Phase 4A Foundation。Raft UI snapshot→generated `ui-tokens`、覆盖全部现有 v3 route 的 typed `RahClient`、cold-reload-safe ordered client-core 与 Room/Chat/Thread/Task React recovery slice 已经建立；自动真实 Chrome + daemon v4 browser gate 已完成 Room 创建、成员收敛、双 Agent reply、Thread、Task 单 winner、Human complete、reload recovery 与 390x844 验收，仍不允许用 mock page 反向定义缺失的 Kernel 业务协议。
 
 ## 1. 目标与非目标
 
@@ -110,6 +110,8 @@ WebSocket、push 和 desktop notification 全是 hint。UI 不把“socket 当�
 ### 5.3 optimistic update
 
 只对可逆、identity 明确的 command 做 optimistic projection。每次 mutation 必须有稳定 command/idempotency identity；失败恢复该 command 自己的临时投影，不覆盖随后收到的较新 canonical delta。Task 完成、Review 接受、InputRequest resolve 等涉及 authority 的状态以 server event 为最终证据。
+
+所有携带 Room causal sequence 的 UI mutation 先通过 `client-core` 的单一写入屏障追赶到最新 canonical projection，再提交稳定 idempotency key。若提交与并发事件竞速，只有结构化的 `409 stale_context` 可以触发再次追赶与有界重试；permission、validation 和其他失败必须原样返回。不得在 route/component 中复制 retry，也不得把后端的 sequence 校验放宽为 last-write-wins。
 
 ## 6. RaftUI 到生产 UI 的边界
 

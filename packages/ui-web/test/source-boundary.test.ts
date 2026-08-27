@@ -1,15 +1,14 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 
 const repositoryRoot = join(import.meta.dirname, "..", "..", "..");
 
 test("the product UI consumes generated tokens without embedding the Raft reference", () => {
-  const productSource = ["App.tsx", "main.tsx", "product.css"]
-    .map((file) =>
-      readFileSync(join(repositoryRoot, "apps", "web", "src", file), "utf8"),
-    )
+  const productSourceDirectory = join(repositoryRoot, "apps", "web", "src");
+  const productSource = sourceFiles(productSourceDirectory)
+    .map((file) => readFileSync(file, "utf8"))
     .join("\n");
 
   assert.doesNotMatch(productSource, /raft-ui-reference-adapter/);
@@ -25,3 +24,11 @@ test("the product UI consumes generated tokens without embedding the Raft refere
   );
   assert.doesNotMatch(uiWebPackage, /raft-ui-snapshot/);
 });
+
+function sourceFiles(directory: string): string[] {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) return sourceFiles(path);
+    return /\.(?:css|ts|tsx)$/u.test(entry.name) ? [path] : [];
+  });
+}

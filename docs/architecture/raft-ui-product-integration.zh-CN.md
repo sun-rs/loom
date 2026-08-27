@@ -44,18 +44,18 @@ Reference HTML 永远加载 `raft-ui-reference-adapter.js`，不得加载产品 
 
 ## 3. 产品 owner
 
-| Owner              | 当前职责                                                                                      | 禁止职责                                                        |
-| ------------------ | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| `client-sdk`       | typed operation、HTTP/Fake transport、schema validation、structured error                     | Room projection、React、token persistence                       |
-| `client-core`      | ordered sync、bounded catch-up、duplicate replay、gap/divergence fail-closed、ack-after-apply | HTTP path、DOM、业务 authority                                  |
-| `ui-tokens`        | snapshot allowlist 生成的 CSS/font/icon 与 provenance                                         | reference HTML/JS、业务状态、手工分叉来源                       |
-| `ui-web`           | provider-independent Room view model、Raft column mapping                                     | fetch、daemon lifecycle、fixture success                        |
-| `apps/web`         | React composition、draft、tab/selection、same-origin connection                               | canonical Task/Room state、Provider parser、Local Storage token |
-| `raft-ui-snapshot` | immutable reference evidence、生成输入与对照基线                                              | product runtime dependency、live business state、credential     |
+| Owner              | 当前职责                                                                                                               | 禁止职责                                                        |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `client-sdk`       | typed operation、HTTP/Fake transport、schema validation、structured error                                              | Room projection、React、token persistence                       |
+| `client-core`      | ordered sync、bounded catch-up、causal mutation barrier、duplicate replay、gap/divergence fail-closed、ack-after-apply | HTTP path、DOM、业务 authority                                  |
+| `ui-tokens`        | snapshot allowlist 生成的 CSS/font/icon 与 provenance                                                                  | reference HTML/JS、业务状态、手工分叉来源                       |
+| `ui-web`           | provider-independent Room view model、Raft column mapping                                                              | fetch、daemon lifecycle、fixture success                        |
+| `apps/web`         | React composition、draft、tab/selection、same-origin connection                                                        | canonical Task/Room state、Provider parser、Local Storage token |
+| `raft-ui-snapshot` | immutable reference evidence、生成输入与对照基线                                                                       | product runtime dependency、live business state、credential     |
 
 Human PAT 目前只存在于页面内存。Vite development server 用 `RAH_DAEMON_URL` 做 same-origin proxy；真实浏览器 gate 可额外设置只由测试代理读取的 `RAH_DEV_ACCESS_TOKEN`，代理覆盖浏览器的无权限占位 header，PAT 不进入页面、URL、Local Storage 或测试输出。默认 gate 仍绑定 loopback；显式 `dev:web:multi-agent-fixture:lan` 只为可信局域网的 iOS 实机测试临时绑定 `0.0.0.0`，daemon 继续绑定 loopback，并明确把测试期间的 Human authority 暴露风险归给临时 Web origin。生产 build 未配置该变量时仍显示正常认证入口。生产部署必须由 daemon/static server、desktop bridge 或明确 origin policy 提供同一 `RahClient` contract，不能临时放宽为任意 CORS origin。
 
-`RoomSession.snapshot` 是冷启动基线，不是独立维护的 mutable membership projection。Room 成员窗口必须用 `room.member.list` 判断当前成员；Workspace Agent 目录、旧浏览器内存或 Computer/CLI inventory 都不能单独证明“已加入”。`principal.me` 提供 server-owned 当前 Human 身份，UI 再把它与 Room/control Room 的 canonical membership role 结合：只有 owner/admin 才显示可用的成员管理或 Room 创建动作，capability 本身不等于 authority。加入/移除使用 `client-core` ensure command：mutation 冲突后重新读取 canonical membership，只有目标状态已成立才收敛为成功，否则保留原错误；并发 mutation 已推进 Room sequence 时，UI 暂时回到 catch-up 状态，不能拿旧 `basedOnRoomSeq` 继续写入。
+`RoomSession.snapshot` 是冷启动基线，不是独立维护的 mutable membership projection。Room 成员窗口必须用 `room.member.list` 判断当前成员；Workspace Agent 目录、旧浏览器内存或 Computer/CLI inventory 都不能单独证明“已加入”。`principal.me` 提供 server-owned 当前 Human 身份，UI 再把它与 Room/control Room 的 canonical membership role 结合：只有 owner/admin 才显示可用的成员管理或 Room 创建动作，capability 本身不等于 authority。加入/移除使用 `client-core` ensure command：mutation 冲突后重新读取 canonical membership，只有目标状态已成立才收敛为成功，否则保留原错误。所有 Room/control Room 写操作通过 `runRoomMutationAtLatest` 先追平 `RoomSession`，并只对结构化 `409 stale_context` 做有界重试；permission/validation 错误不重试，后端始终是并发裁决者。
 
 ## 4. 首条切片
 
@@ -102,7 +102,7 @@ Human PAT 目前只存在于页面内存。Vite development server 用 `RAH_DAEM
 - client SDK：Fake/HTTP 共用 typed schemas，GET/auth/path/error 有 contract test；
 - client core：cold reload、backward paginated replay、stable consumer、bounded catch-up、no-progress fence、gap、divergence、apply-before-ack 有确定性测试；
 - view model：Message canonical order 与 Task 五列映射有确定性测试；
-- browser：真实 Human API fixture 已验证 Thread create/reply/reload、外部消息 5s reconciliation、认证失败后重新连接；1280px Thread 为 520px 侧列；390x844 已验证无横向 overflow、Room 抽屉可达、重复选择当前 Room 不清空 projection、底部导航可在 Chat/Task/Agents 间切换；
+- browser：`npm run test:web:browser` 自动启动隔离 daemon、两个 Fake CLI runtime、same-origin Vite proxy 与系统 Chrome/Chromium，通过原生 CDP 验证 Workspace Agent/Computer、Room 创建、dialog focus/Escape、成员加入/移除、双 Agent reply、membership-driven delivery、Thread create/reply/count、Task claim/start/progress/submit/Human complete、reload-safe URL，以及 390x844 无横向 overflow 和 Room 抽屉；Human PAT 不进入浏览器，且不启动付费 Provider；
 - no-token browser regression：`apps/web/test/room-agent-membership.html` 通过注入 typed `FakeRahClient`，覆盖互斥移动导航、drawer、Message post/render、成员 Agent 自动回复、Thread create/reply、Task create、mention attention、stale snapshot、正常 join/remove/rejoin、并发 join 409、Room sequence catch-up 与 reload recovery；fixture 不读取 PAT、不启动 CLI，也不进入 production Vite bundle；完整控件—反馈矩阵见 `apps/web/test/README.md`，新启用的控件没有 typed handler 和浏览器断言时不得交付；
-- multi-Agent real-browser sequence：`npm run dev:web:multi-agent-fixture` 只负责启动真实 daemon config v4、测试代理和两个 Fake CLI，验收者仍需在浏览器执行 `apps/web/test/README.md` 的序列（该启动命令本身不是自动断言）；浏览器无须接触 PAT。当前已实测 Workspace Agent 与 Computer owner 分离 → 新建 channel → Room 成员窗口加入 Alice/Kimi → 消息得到 canonical reply → 移出 Agent → open Task 单 winner submitted → Human complete → reload-safe Room URL、dialog keyboard protocol 与 390x844 无横向 overflow；`dev:web:multi-agent-fixture:lan` 另提供明确、临时的 iOS 实机入口；
+- exploratory multi-Agent sequence：`npm run dev:web:multi-agent-fixture` 仍只负责启动真实 daemon config v4、测试代理和两个 Fake CLI，供人工检查与浏览器 DevTools 使用；自动验收使用独立的 `npm run test:web:browser`。浏览器无须接触 PAT；`dev:web:multi-agent-fixture:lan` 另提供明确、临时的 iOS 实机入口；
 - production build：Vite build 必须独立通过，且不需要 sibling `raft-ui`。

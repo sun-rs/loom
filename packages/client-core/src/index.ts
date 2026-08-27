@@ -508,3 +508,48 @@ export class RoomSession {
     return this.#state;
   }
 }
+
+export type RoomMutationSequenceSession = {
+  syncUntilCurrent(options?: { maxPages?: number }): Promise<{
+    caughtUp: boolean;
+    state: { latestRoomSeq: number };
+  }>;
+};
+
+export async function runRoomMutationAtLatest<Result>(input: {
+  maxAttempts?: number;
+  mutate: (basedOnRoomSeq: number) => Promise<Result>;
+  session: RoomMutationSequenceSession;
+}): Promise<Result> {
+  const maxAttempts = input.maxAttempts ?? 3;
+  if (!Number.isInteger(maxAttempts) || maxAttempts < 1 || maxAttempts > 10) {
+    throw new Error("Room mutation maxAttempts must be between 1 and 10");
+  }
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const caughtUp = await input.session.syncUntilCurrent({ maxPages: 10 });
+    if (!caughtUp.caughtUp) {
+      throw new Error("Room mutation requires a complete causal projection");
+    }
+    try {
+      return await input.mutate(caughtUp.state.latestRoomSeq);
+    } catch (failure) {
+      if (!isStaleContextFailure(failure) || attempt === maxAttempts) {
+        throw failure;
+      }
+    }
+  }
+  throw new Error("Room mutation retry loop terminated unexpectedly");
+}
+
+function isStaleContextFailure(
+  failure: unknown,
+): failure is { code: "stale_context"; status: 409 } {
+  return (
+    failure !== null &&
+    typeof failure === "object" &&
+    "code" in failure &&
+    failure.code === "stale_context" &&
+    "status" in failure &&
+    failure.status === 409
+  );
+}

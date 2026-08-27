@@ -32,7 +32,21 @@ Any newly enabled control must first gain a typed fixture handler and a browser 
 
 ## Real daemon browser gate
 
-Run:
+Automated desktop, keyboard, membership, delivery-scope, reload, and mobile
+coverage runs in an installed Chrome/Chromium browser through its native DevTools
+protocol:
+
+```text
+npm run test:web:browser
+```
+
+Set `RAH_BROWSER_EXECUTABLE` when Chrome/Chromium is installed outside the common
+macOS/Linux locations. The gate creates an isolated daemon database, Human
+credential, browser profile, ports, and fake Agent runtimes, then deletes them.
+It never launches a paid provider. Its fixture announcement contains only public
+ephemeral IDs and loopback origins; the Human PAT stays in the Vite proxy process.
+
+For exploratory inspection, run:
 
 ```text
 npm run dev:web:multi-agent-fixture
@@ -56,6 +70,7 @@ Required sequence:
 Workspace Agent directory and read-only Computer/Runtime inventory
 create channel -> add Alice + Kimi from Room members
 Human Message -> Alice + Kimi replies -> remove one Agent
+Thread create -> Human reply -> canonical reply count -> close
 open Task -> one Agent wins -> submitted -> Human complete
 reload -> selected ?room=, Messages, membership, activity, and Task recover
 create/member dialogs -> Tab loop + Escape + trigger focus return

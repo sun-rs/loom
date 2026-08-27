@@ -16,6 +16,9 @@
     "dev:web:multi-agent-fixture": "node scripts/run-multi-agent-web-fixture.mjs",
     "dev:web:multi-agent-fixture:lan": "RAH_WEB_HOST=0.0.0.0 node scripts/run-multi-agent-web-fixture.mjs",
     "dev:web:local-cli-fixture": "node scripts/run-local-cli-web-fixture.mjs",
+    "test:web:browser": "node scripts/run-real-browser-gate.mjs",
+    "test:web:browser-unit": "node --test apps/web/test/real-browser-gate-support.test.ts",
+    "test:web:unit": "node --test apps/web/test/*.test.ts",
     "build:web": "npm run build --workspace=@rah-os/web",
     "ui:snapshot:import": "node scripts/import-raft-ui-snapshot.mjs",
     "ui:snapshot:check": "node --test packages/raft-ui-snapshot/test/snapshot.test.ts",
@@ -27,7 +30,7 @@
     "test:real:kimi": "RAH_REAL_CLI_GATE=kimi node --test packages/daemon/test/real-cli-gate.test.ts",
     "test:real:opencode": "RAH_REAL_CLI_GATE=opencode node --test packages/daemon/test/real-cli-gate.test.ts",
     "typecheck": "tsc --noEmit && npm run typecheck --workspace=@rah-os/web",
-    "check": "npm run typecheck && npm test",
+    "check": "npm run typecheck && npm test && npm run test:web:unit",
     "format:check": "prettier --check .",
     "format": "prettier --write ."
   },
