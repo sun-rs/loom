@@ -16,6 +16,8 @@ import {
   ClientAcknowledgeRequestSchema,
   ClientAcknowledgeResponseSchema,
   ClientAgentOnboardRequestSchema,
+  ClientAgentProvisionRequestSchema,
+  ClientAgentProvisionResponseSchema,
   ClientAgentsListRequestSchema,
   ClientAgentsListResponseSchema,
   ClientErrorResponseSchema,
@@ -123,6 +125,7 @@ const CLIENT_V3_DATA_PATHS = new Set([
   ...CLIENT_V2_DATA_PATHS,
   "/agents/list",
   "/agents/onboard",
+  "/agents/provision",
   "/principals/me",
   "/rooms/agents/activity/list",
   "/rooms/create",
@@ -357,6 +360,25 @@ export class ClientApplicationService {
         200,
         ClientRoomMemberMutationResponseSchema.parse(
           this.#human.onboardAgentToRoom(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/agents/provision") {
+      const command = parseClientRequest(
+        ClientAgentProvisionRequestSchema,
+        body,
+      );
+      const { avatarKey, description, ...required } = command;
+      writeJson(
+        response,
+        200,
+        ClientAgentProvisionResponseSchema.parse(
+          this.#human.provisionWorkspaceAgent(actor, {
+            ...required,
+            ...(avatarKey === undefined ? {} : { avatarKey }),
+            ...(description === undefined ? {} : { description }),
+          }),
         ),
       );
       return;

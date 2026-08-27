@@ -2,6 +2,8 @@ import {
   ClientAcknowledgeRequestSchema,
   ClientAcknowledgeResponseSchema,
   ClientAgentOnboardRequestSchema,
+  ClientAgentProvisionRequestSchema,
+  ClientAgentProvisionResponseSchema,
   ClientAgentsListRequestSchema,
   ClientAgentsListResponseSchema,
   ClientHealthResponseSchema,
@@ -53,6 +55,8 @@ import {
   type ClientAcknowledgeRequest,
   type ClientAcknowledgeResponse,
   type ClientAgentOnboardRequest,
+  type ClientAgentProvisionRequest,
+  type ClientAgentProvisionResponse,
   type ClientAgentsListRequest,
   type ClientAgentsListResponse,
   type ClientHealthResponse,
@@ -112,6 +116,10 @@ export type RahClientOperationMap = {
   "agent.onboard": {
     input: ClientAgentOnboardRequest;
     output: ClientRoomMemberMutationResponse;
+  };
+  "agent.provision": {
+    input: ClientAgentProvisionRequest;
+    output: ClientAgentProvisionResponse;
   };
   health: {
     input: Record<string, never>;
@@ -248,6 +256,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     method: "POST",
     output: ClientRoomMemberMutationResponseSchema,
     path: "/v3/client/agents/onboard",
+  },
+  "agent.provision": {
+    authenticated: true,
+    input: ClientAgentProvisionRequestSchema,
+    method: "POST",
+    output: ClientAgentProvisionResponseSchema,
+    path: "/v3/client/agents/provision",
   },
   health: {
     authenticated: false,

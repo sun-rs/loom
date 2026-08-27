@@ -9,6 +9,7 @@ import {
   createHumanApplicationPort,
   RoomKernel,
 } from "@rah-os/kernel";
+import type { RuntimeOffer } from "@rah-os/protocol";
 
 import { ClientApplicationService } from "../src/index.ts";
 
@@ -22,6 +23,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       capabilities: {
         agentOnboard: true,
         agentRead: true,
+        agentWrite: true,
         cursorAcknowledge: true,
         hints: false,
         inputRequestRead: true,
@@ -175,6 +177,32 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       "client-host",
       agent.principal.principalId,
     );
+    kernel.publishRuntimeOffer(host, {
+      capacityPoolIds: [],
+      capabilityEvidence: [],
+      certificationRefs: [],
+      hostId: host.hostId,
+      hostInstanceId: host.instanceId,
+      isolation: { evidence: "declared", level: "none" },
+      leaseUntil: new Date(Date.now() + 5 * 60_000).toISOString(),
+      maxConcurrent: 2,
+      modelBindingDescriptors: [],
+      observedAt: new Date().toISOString(),
+      protocolFamily: "rah-worker-process/v1",
+      revisionDigest: `sha256:${"c".repeat(64)}`,
+      runtimeOfferId: "offer-codex",
+      runtimeProfileId: "profile-codex",
+      runtimeProfileRevisionId: "revision-codex",
+      state: "available",
+      workspaceMountDescriptors: [
+        {
+          modes: ["in_place"],
+          workspaceDefinitionId: workspace.workspace.workspaceId,
+          workspaceMountDigest: `sha256:${"d".repeat(64)}`,
+          workspaceMountRevisionId: "mount-client-v1",
+        },
+      ],
+    } satisfies RuntimeOffer);
     const activation = kernel.leaseNextActivation(host, { leaseMs: 30_000 });
     assert.ok(activation);
     const runAttempt = kernel.createRunAttempt(host, {
@@ -241,6 +269,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     assert.equal(healthV3.apiVersion, 3);
     assert.equal(healthV3.capabilities.agentOnboard, true);
     assert.equal(healthV3.capabilities.agentRead, true);
+    assert.equal(healthV3.capabilities.agentWrite, true);
     assert.equal(healthV3.capabilities.workspaceWrite, true);
 
     const request = async (
@@ -354,6 +383,34 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       agentDefinition.definition.agentDefinitionId,
     );
     assert.equal(agents.agents[0]?.handle, "client-agent");
+
+    const provisionResponse = await request(
+      "/v3/client/agents/provision",
+      {
+        avatarKey: "robot",
+        basedOnRoomSeq: kernel.sync(humanActor, {
+          afterSeq: 0,
+          consumerId: "client-agent-provision-seq",
+          roomId: controlRoom.roomId,
+        }).latestRoomSeq,
+        controlRoomId: controlRoom.roomId,
+        description: "Production-backed Agent",
+        displayName: "Alice",
+        handle: "client-alice",
+        idempotencyKey: "client-agent-provisioned",
+        instructions: "Read canonical Room state before acting.",
+        modelIntent: { fallback: "disabled" },
+        role: "Engineering Agent",
+        runtimeOfferId: "offer-codex",
+        sessionPolicy: "fresh",
+      },
+      human.accessToken,
+    );
+    assert.equal(provisionResponse.status, 200);
+    const provisioned = await jsonObject(provisionResponse);
+    assert.equal(provisioned.agent.handle, "client-alice");
+    assert.equal(provisioned.agent.currentRevision.displayName, "Alice");
+    assert.equal(provisioned.hostBinding.hostId, host.hostId);
 
     const hiddenAgentsResponse = await request(
       "/v3/client/agents/list",

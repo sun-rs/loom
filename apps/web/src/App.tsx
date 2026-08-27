@@ -44,6 +44,10 @@ import {
 } from "@rah-os/ui-web";
 
 import {
+  AgentCreateDialog,
+  type AgentCreateInput,
+} from "./components/agent-dialogs.tsx";
+import {
   ChatPane,
   TaskPane,
   ThreadPane,
@@ -186,6 +190,7 @@ function WorkspaceScreen({
   const [runtimeInventoryError, setRuntimeInventoryError] = useState<string>();
   const [mobileRoomsOpen, setMobileRoomsOpen] = useState(false);
   const [roomCreateOpen, setRoomCreateOpen] = useState(false);
+  const [agentCreateOpen, setAgentCreateOpen] = useState(false);
   const [roomMembersOpen, setRoomMembersOpen] = useState(false);
   const [roomAgentSelections, setRoomAgentSelections] = useState<
     Record<string, string[]>
@@ -554,6 +559,16 @@ function WorkspaceScreen({
     role: workspaceMembershipRole,
     roomWrite: health?.capabilities.roomWrite === true,
   });
+  const canCreateCurrentWorkspaceAgent =
+    health?.capabilities.agentWrite === true &&
+    (workspaceMembershipRole === "owner" ||
+      workspaceMembershipRole === "admin") &&
+    localRuntimes.some(
+      (runtime) =>
+        runtime.available &&
+        runtime.configured &&
+        runtime.runtimeOfferId !== undefined,
+    );
   const agentDirectory = workspaceAgentDirectory({
     agents: scopedAgentCatalog,
     runtimes: localRuntimes,
@@ -955,17 +970,19 @@ function WorkspaceScreen({
       if (!canCreateCurrentWorkspaceRoom) {
         throw new Error("当前 Human 没有在此 Workspace 创建 Room 的权限");
       }
-      if (activeWorkspace?.controlRoomId === undefined) {
+      const workspace = activeWorkspace;
+      const controlRoomId = workspace?.controlRoomId;
+      if (workspace === undefined || controlRoomId === undefined) {
         throw new Error("当前 Workspace 没有可写 control Room");
       }
-      let controlSession = sessions.current.get(activeWorkspace.controlRoomId);
+      let controlSession = sessions.current.get(controlRoomId);
       if (controlSession === undefined) {
         controlSession = new RoomSession({
           client,
-          consumerId: `${consumerPrefix}-${activeWorkspace.controlRoomId}`,
-          roomId: activeWorkspace.controlRoomId,
+          consumerId: `${consumerPrefix}-${controlRoomId}`,
+          roomId: controlRoomId,
         });
-        sessions.current.set(activeWorkspace.controlRoomId, controlSession);
+        sessions.current.set(controlRoomId, controlSession);
       }
       const idempotencyKey = `web-room-create-${browserOpaqueId()}`;
       const result = await runRoomMutationAtLatest({
@@ -976,7 +993,7 @@ function WorkspaceScreen({
             kind: "channel",
             name: input.name,
             slug: input.slug,
-            workspaceId: activeWorkspace.workspaceId,
+            workspaceId: workspace.workspaceId,
           }),
         session: controlSession,
       });
@@ -995,6 +1012,72 @@ function WorkspaceScreen({
       setTab("chat");
     },
     [activeWorkspace, canCreateCurrentWorkspaceRoom, client, consumerPrefix],
+  );
+
+  const createAgent = useCallback(
+    async (input: AgentCreateInput) => {
+      if (!canCreateCurrentWorkspaceAgent) {
+        throw new Error("需要 Workspace 管理员权限和已验证的可用 Runtime");
+      }
+      const controlRoomId = activeWorkspace?.controlRoomId;
+      if (controlRoomId === undefined) {
+        throw new Error("当前 Workspace 没有可写 control Room");
+      }
+      let controlSession = sessions.current.get(controlRoomId);
+      if (controlSession === undefined) {
+        controlSession = new RoomSession({
+          client,
+          consumerId: `${consumerPrefix}-${controlRoomId}`,
+          roomId: controlRoomId,
+        });
+        sessions.current.set(controlRoomId, controlSession);
+      }
+      const idempotencyKey = `web-agent-provision-${browserOpaqueId()}`;
+      const result = await runRoomMutationAtLatest({
+        mutate: (basedOnRoomSeq) =>
+          client.request("agent.provision", {
+            ...input,
+            basedOnRoomSeq,
+            controlRoomId,
+            idempotencyKey,
+          }),
+        session: controlSession,
+      });
+      setAgentCatalog((current) =>
+        current.some(
+          ({ definition }) =>
+            definition.agentDefinitionId ===
+            result.agent.definition.agentDefinitionId,
+        )
+          ? current
+          : [...current, result.agent],
+      );
+      setAgentCatalogControlRoomId(controlRoomId);
+      setLocalRuntimes((current) =>
+        current.map((runtime) =>
+          runtime.runtimeOfferId !== result.hostBinding.runtimeOfferId ||
+          runtime.agentBindings.some(
+            ({ agentDefinitionId }) =>
+              agentDefinitionId === result.agent.definition.agentDefinitionId,
+          )
+            ? runtime
+            : {
+                ...runtime,
+                agentBindings: [
+                  ...runtime.agentBindings,
+                  {
+                    agentDefinitionId:
+                      result.agent.definition.agentDefinitionId,
+                    handle: result.agent.handle,
+                    participantId: result.agent.definition.participantId,
+                  },
+                ],
+              },
+        ),
+      );
+      setAgentCreateOpen(false);
+    },
+    [activeWorkspace, canCreateCurrentWorkspaceAgent, client, consumerPrefix],
   );
 
   const selectRoomAgents = useCallback(
@@ -1058,7 +1141,11 @@ function WorkspaceScreen({
         />
       ) : null}
       {surface === "agents" ? (
-        <AgentDirectoryPane agents={agentDirectory} />
+        <AgentDirectoryPane
+          agents={agentDirectory}
+          canCreate={canCreateCurrentWorkspaceAgent}
+          onCreate={() => setAgentCreateOpen(true)}
+        />
       ) : surface === "computers" ? (
         <ComputerRuntimePane
           inventoryError={runtimeInventoryError}
@@ -1179,6 +1266,14 @@ function WorkspaceScreen({
           onClose={() => setRoomCreateOpen(false)}
           onCreate={createRoom}
           workspace={activeWorkspace}
+        />
+      ) : null}
+      {agentCreateOpen && activeWorkspace !== undefined ? (
+        <AgentCreateDialog
+          onClose={() => setAgentCreateOpen(false)}
+          onCreate={createAgent}
+          runtimes={localRuntimes}
+          workspaceName={activeWorkspace.name}
         />
       ) : null}
       {roomMembersOpen ? (

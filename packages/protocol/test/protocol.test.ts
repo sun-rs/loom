@@ -292,6 +292,7 @@ test("Client API v1/v2/v3 contracts are strict, actor-free, and transport-neutra
     capabilities: {
       agentOnboard: true,
       agentRead: true,
+      agentWrite: true,
       cursorAcknowledge: true,
       hints: false,
       inputRequestRead: true,

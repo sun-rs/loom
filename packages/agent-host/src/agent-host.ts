@@ -298,6 +298,7 @@ export class AgentHost {
     this.#heartbeat();
     let activation: Activation;
     let runAttempt: RunAttempt | undefined;
+    let agentContext: ActivationEnvelope["agent"];
     let runtime = this.#runtime;
     if (this.#placementRuntimeResolver === undefined) {
       const leased = this.#kernel.leaseNextActivation(this.#host, {
@@ -312,6 +313,7 @@ export class AgentHost {
       });
       if (claim === null) return { state: "idle" };
       activation = claim.activation;
+      agentContext = claim.agentContext;
       runAttempt = claim.runAttempt;
       try {
         runtime = this.#placementRuntimeResolver(claim.placement);
@@ -352,6 +354,7 @@ export class AgentHost {
     });
     const envelope: ActivationEnvelope = {
       activationId: activation.activationId,
+      ...(agentContext === undefined ? {} : { agent: agentContext }),
       consumerId: this.#consumerId,
       fromSeq: activation.fromSeq,
       hostId: this.#hostId,

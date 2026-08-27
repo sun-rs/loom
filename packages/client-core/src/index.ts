@@ -417,6 +417,7 @@ export class RoomSession {
   readonly #consumerId: string;
   readonly #roomId: string;
   #state: RoomProjection;
+  #syncTail: Promise<void> = Promise.resolve();
 
   constructor(options: {
     client: RahClient;
@@ -466,12 +467,24 @@ export class RoomSession {
     });
   }
 
-  async syncOnce(
+  syncOnce(
     options: {
       limit?: number;
       signal?: AbortSignal;
     } = {},
   ): Promise<RoomProjection> {
+    const result = this.#syncTail.then(() => this.#syncOnceSerial(options));
+    this.#syncTail = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    return result;
+  }
+
+  async #syncOnceSerial(options: {
+    limit?: number;
+    signal?: AbortSignal;
+  }): Promise<RoomProjection> {
     const afterSeq = this.#state.cursor;
     const delivery = await this.#client.request(
       "room.sync",

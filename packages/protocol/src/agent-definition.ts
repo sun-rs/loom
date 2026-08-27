@@ -1,0 +1,126 @@
+import { z } from "zod";
+
+import {
+  ContentDigestSchema,
+  IdentifierSchema,
+  TimestampSchema,
+  rejectDuplicateStrings,
+} from "./common.ts";
+
+export const VersionedContentRefSchema = z
+  .object({
+    artifactId: IdentifierSchema,
+    versionId: IdentifierSchema,
+    contentDigest: ContentDigestSchema,
+  })
+  .strict();
+export type VersionedContentRef = z.infer<typeof VersionedContentRefSchema>;
+
+export const AgentDefinitionStateSchema = z.enum([
+  "enabled",
+  "disabled",
+  "tombstoned",
+]);
+export type AgentDefinitionState = z.infer<typeof AgentDefinitionStateSchema>;
+
+export const AgentDefinitionSchema = z
+  .object({
+    agentDefinitionId: IdentifierSchema,
+    participantId: IdentifierSchema,
+    controlRoomId: IdentifierSchema,
+    state: AgentDefinitionStateSchema,
+    currentRevisionId: IdentifierSchema,
+    createdAt: TimestampSchema,
+    updatedAt: TimestampSchema,
+  })
+  .strict()
+  .refine(
+    (definition) =>
+      Date.parse(definition.updatedAt) >= Date.parse(definition.createdAt),
+    {
+      message: "updatedAt must not precede createdAt",
+      path: ["updatedAt"],
+    },
+  );
+export type AgentDefinition = z.infer<typeof AgentDefinitionSchema>;
+
+export const AgentDefinitionRevisionSchema = z
+  .object({
+    agentDefinitionRevisionId: IdentifierSchema,
+    agentDefinitionId: IdentifierSchema,
+    revision: z.number().int().positive(),
+    displayName: z.string().trim().min(1).max(128).optional(),
+    description: z.string().trim().max(2_000).optional(),
+    avatarKey: IdentifierSchema.optional(),
+    role: z.string().trim().min(1),
+    instructions: z
+      .string()
+      .trim()
+      .min(1)
+      .max(64 * 1_024)
+      .optional(),
+    instructionRefs: z.array(VersionedContentRefSchema),
+    skillRefs: z.array(VersionedContentRefSchema),
+    memoryPolicyRef: VersionedContentRefSchema,
+    executionPolicyRevisionId: IdentifierSchema,
+    contentDigest: ContentDigestSchema,
+    createdBy: IdentifierSchema,
+    createdAt: TimestampSchema,
+  })
+  .strict()
+  .superRefine((revision, context) => {
+    const references = [...revision.instructionRefs, ...revision.skillRefs];
+    rejectDuplicateStrings(
+      references.map(
+        (reference) => `${reference.artifactId}:${reference.versionId}`,
+      ),
+      context,
+    );
+  });
+export type AgentDefinitionRevision = z.infer<
+  typeof AgentDefinitionRevisionSchema
+>;
+
+export const AgentRuntimeContextSchema = z
+  .object({
+    agentDefinitionRevision: AgentDefinitionRevisionSchema,
+    participantId: IdentifierSchema,
+    schemaVersion: z.literal(1),
+  })
+  .strict();
+export type AgentRuntimeContext = z.infer<typeof AgentRuntimeContextSchema>;
+
+export const AgentCatalogEntrySchema = z
+  .object({
+    currentRevision: AgentDefinitionRevisionSchema,
+    definition: AgentDefinitionSchema,
+    handle: IdentifierSchema,
+  })
+  .strict();
+export type AgentCatalogEntry = z.infer<typeof AgentCatalogEntrySchema>;
+
+export const ClientAgentsListRequestSchema = z
+  .object({ controlRoomId: IdentifierSchema })
+  .strict();
+export type ClientAgentsListRequest = z.infer<
+  typeof ClientAgentsListRequestSchema
+>;
+
+export const ClientAgentsListResponseSchema = z
+  .object({ agents: z.array(AgentCatalogEntrySchema) })
+  .strict();
+export type ClientAgentsListResponse = z.infer<
+  typeof ClientAgentsListResponseSchema
+>;
+
+export const ClientAgentOnboardRequestSchema = z
+  .object({
+    agentDefinitionId: IdentifierSchema,
+    basedOnRoomSeq: z.number().int().nonnegative(),
+    idempotencyKey: IdentifierSchema,
+    roomId: IdentifierSchema,
+  })
+  .strict();
+export type ClientAgentOnboardRequest = z.infer<
+  typeof ClientAgentOnboardRequestSchema
+>;

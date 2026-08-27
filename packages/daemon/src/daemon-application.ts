@@ -165,14 +165,24 @@ export class DaemonApplication {
           "configured hostId does not match the authenticated Host credential",
         );
       }
-      if (
-        JSON.stringify([...host.participantIds].sort()) !==
-        JSON.stringify(configuredParticipantIds(this.#config))
-      ) {
+      const configuredParticipants = configuredParticipantIds(this.#config);
+      const authorizedParticipants = [...host.participantIds].sort();
+      const scopeMatches =
+        this.#config.schemaVersion === 4
+          ? configuredParticipants.every((participantId) =>
+              authorizedParticipants.includes(participantId),
+            )
+          : JSON.stringify(authorizedParticipants) ===
+            JSON.stringify(configuredParticipants);
+      if (!scopeMatches) {
         throw new Error(
           "configured participant scope does not match the authenticated Host credential",
         );
       }
+      this.#health = {
+        ...this.#health,
+        participantIds: authorizedParticipants,
+      };
 
       workerService = new WorkerApplicationService({
         kernel,
@@ -595,6 +605,7 @@ export class DaemonApplication {
           capabilities: {
             agentOnboard: true,
             agentRead: true,
+            agentWrite: true,
             cursorAcknowledge: true,
             hints: false,
             inputRequestRead: true,

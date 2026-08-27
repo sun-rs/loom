@@ -1,6 +1,16 @@
 import { z } from "zod";
 
-import { IdentifierSchema, TimestampSchema } from "./common.ts";
+import {
+  ContentDigestSchema,
+  IdentifierSchema,
+  TimestampSchema,
+  rejectDuplicateStrings,
+} from "./common.ts";
+import {
+  AgentCatalogEntrySchema,
+  AgentDefinitionRevisionSchema,
+  VersionedContentRefSchema,
+} from "./agent-definition.ts";
 import {
   ParticipantKindSchema,
   PrincipalSchema,
@@ -16,6 +26,9 @@ import {
 
 export { TaskSchema, TaskStateSchema };
 export type { Task, TaskState };
+export * from "./agent-definition.ts";
+export { ContentDigestSchema } from "./common.ts";
+export type { ContentDigest } from "./common.ts";
 export {
   MembershipRoleSchema,
   MessageSchema,
@@ -195,9 +208,6 @@ export type InputRequestResolveRequest = z.infer<
   typeof InputRequestResolveRequestSchema
 >;
 
-export const ContentDigestSchema = z.string().regex(/^sha256:[a-f0-9]{64}$/);
-export type ContentDigest = z.infer<typeof ContentDigestSchema>;
-
 export const RuntimeRecoveryDescriptorSchema = z
   .object({
     driver: IdentifierSchema,
@@ -226,126 +236,9 @@ export type RuntimeRecoveryDescriptor = z.infer<
   typeof RuntimeRecoveryDescriptorSchema
 >;
 
-function rejectDuplicateStrings(
-  values: readonly string[],
-  context: z.RefinementCtx,
-): void {
-  const seen = new Set<string>();
-  values.forEach((value, index) => {
-    if (seen.has(value)) {
-      context.addIssue({
-        code: "custom",
-        message: `duplicate value: ${value}`,
-        path: [index],
-      });
-    }
-    seen.add(value);
-  });
-}
-
 const UniqueIdentifierArraySchema = z
   .array(IdentifierSchema)
   .superRefine(rejectDuplicateStrings);
-
-export const VersionedContentRefSchema = z
-  .object({
-    artifactId: IdentifierSchema,
-    versionId: IdentifierSchema,
-    contentDigest: ContentDigestSchema,
-  })
-  .strict();
-export type VersionedContentRef = z.infer<typeof VersionedContentRefSchema>;
-
-export const AgentDefinitionStateSchema = z.enum([
-  "enabled",
-  "disabled",
-  "tombstoned",
-]);
-export type AgentDefinitionState = z.infer<typeof AgentDefinitionStateSchema>;
-
-export const AgentDefinitionSchema = z
-  .object({
-    agentDefinitionId: IdentifierSchema,
-    participantId: IdentifierSchema,
-    controlRoomId: IdentifierSchema,
-    state: AgentDefinitionStateSchema,
-    currentRevisionId: IdentifierSchema,
-    createdAt: TimestampSchema,
-    updatedAt: TimestampSchema,
-  })
-  .strict()
-  .refine(
-    (definition) =>
-      Date.parse(definition.updatedAt) >= Date.parse(definition.createdAt),
-    {
-      message: "updatedAt must not precede createdAt",
-      path: ["updatedAt"],
-    },
-  );
-export type AgentDefinition = z.infer<typeof AgentDefinitionSchema>;
-
-export const AgentDefinitionRevisionSchema = z
-  .object({
-    agentDefinitionRevisionId: IdentifierSchema,
-    agentDefinitionId: IdentifierSchema,
-    revision: z.number().int().positive(),
-    role: z.string().trim().min(1),
-    instructionRefs: z.array(VersionedContentRefSchema),
-    skillRefs: z.array(VersionedContentRefSchema),
-    memoryPolicyRef: VersionedContentRefSchema,
-    executionPolicyRevisionId: IdentifierSchema,
-    contentDigest: ContentDigestSchema,
-    createdBy: IdentifierSchema,
-    createdAt: TimestampSchema,
-  })
-  .strict()
-  .superRefine((revision, context) => {
-    const references = [...revision.instructionRefs, ...revision.skillRefs];
-    rejectDuplicateStrings(
-      references.map(
-        (reference) => `${reference.artifactId}:${reference.versionId}`,
-      ),
-      context,
-    );
-  });
-export type AgentDefinitionRevision = z.infer<
-  typeof AgentDefinitionRevisionSchema
->;
-
-export const AgentCatalogEntrySchema = z
-  .object({
-    currentRevision: AgentDefinitionRevisionSchema,
-    definition: AgentDefinitionSchema,
-    handle: IdentifierSchema,
-  })
-  .strict();
-export type AgentCatalogEntry = z.infer<typeof AgentCatalogEntrySchema>;
-
-export const ClientAgentsListRequestSchema = z
-  .object({ controlRoomId: IdentifierSchema })
-  .strict();
-export type ClientAgentsListRequest = z.infer<
-  typeof ClientAgentsListRequestSchema
->;
-
-export const ClientAgentsListResponseSchema = z
-  .object({ agents: z.array(AgentCatalogEntrySchema) })
-  .strict();
-export type ClientAgentsListResponse = z.infer<
-  typeof ClientAgentsListResponseSchema
->;
-
-export const ClientAgentOnboardRequestSchema = z
-  .object({
-    agentDefinitionId: IdentifierSchema,
-    basedOnRoomSeq: z.number().int().nonnegative(),
-    idempotencyKey: IdentifierSchema,
-    roomId: IdentifierSchema,
-  })
-  .strict();
-export type ClientAgentOnboardRequest = z.infer<
-  typeof ClientAgentOnboardRequestSchema
->;
 
 export const CapabilityEvidenceLevelSchema = z.enum([
   "declared",
@@ -483,6 +376,7 @@ const RuntimeEnvironmentVariableNameSchema = z
 function runtimeEnvironmentVariableIsDaemonOwned(value: string): boolean {
   const normalized = value.toUpperCase();
   return (
+    normalized.startsWith("RAH_AGENT_") ||
     normalized.startsWith("RAH_WORKER_") ||
     normalized.startsWith("RAH_ACTIVATION_") ||
     normalized.startsWith("RAH_PROCESS_SUPERVISOR_") ||
@@ -946,6 +840,60 @@ export const ExecutionPolicyRevisionSchema = z
   });
 export type ExecutionPolicyRevision = z.infer<
   typeof ExecutionPolicyRevisionSchema
+>;
+
+export const ClientAgentProvisionRequestSchema = z
+  .object({
+    avatarKey: IdentifierSchema.optional(),
+    basedOnRoomSeq: z.number().int().nonnegative(),
+    controlRoomId: IdentifierSchema,
+    description: z.string().trim().max(2_000).optional(),
+    displayName: z.string().trim().min(1).max(128),
+    handle: z
+      .string()
+      .trim()
+      .min(1)
+      .max(64)
+      .regex(/^[\p{L}\p{N}][\p{L}\p{N}._-]*$/u),
+    idempotencyKey: IdentifierSchema,
+    instructions: z
+      .string()
+      .trim()
+      .min(1)
+      .max(64 * 1_024),
+    modelIntent: ModelIntentSchema,
+    role: z.string().trim().min(1).max(512),
+    runtimeOfferId: IdentifierSchema,
+    sessionPolicy: z.enum(["fresh", "prefer_resume", "require_resume"]),
+  })
+  .strict();
+export type ClientAgentProvisionRequest = z.infer<
+  typeof ClientAgentProvisionRequestSchema
+>;
+
+export const WorkspaceAgentHostBindingSchema = z
+  .object({
+    hostId: IdentifierSchema,
+    runtimeOfferId: IdentifierSchema,
+    runtimeProfileId: IdentifierSchema,
+    runtimeProfileRevisionId: IdentifierSchema,
+  })
+  .strict();
+export type WorkspaceAgentHostBinding = z.infer<
+  typeof WorkspaceAgentHostBindingSchema
+>;
+
+export const ClientAgentProvisionResponseSchema = z
+  .object({
+    agent: AgentCatalogEntrySchema,
+    deduplicated: z.boolean(),
+    event: RoomEventSchema,
+    hostBinding: WorkspaceAgentHostBindingSchema,
+    policy: ExecutionPolicyRevisionSchema,
+  })
+  .strict();
+export type ClientAgentProvisionResponse = z.infer<
+  typeof ClientAgentProvisionResponseSchema
 >;
 
 export const RuntimeOfferStateSchema = z.enum([

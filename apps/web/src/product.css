@@ -481,12 +481,33 @@
   gap: 7px;
 }
 
-.rah-dialog form input {
+.rah-dialog form input,
+.rah-dialog form select,
+.rah-dialog form textarea {
   background: var(--bg);
   border: var(--bd);
   box-shadow: var(--shadow-s);
   font: 12px var(--mono);
   padding: 9px 10px;
+}
+
+.rah-dialog form textarea {
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.rah-agent-create-dialog {
+  max-width: 680px;
+}
+
+.rah-agent-create-dialog form {
+  overflow-y: auto;
+}
+
+.rah-agent-form-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .rah-dialog form footer {

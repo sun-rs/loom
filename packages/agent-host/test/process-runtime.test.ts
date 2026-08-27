@@ -140,6 +140,58 @@ test("GenericProcessAdapter launches a Fake CLI and keeps output diagnostic-only
   }
 });
 
+test("GenericProcessAdapter passes the frozen Agent configuration to the real process", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-agent-context-"));
+  try {
+    const adapter = new GenericProcessAdapter({
+      args: [fakeCliPath],
+      command: process.execPath,
+      cwd: directory,
+      env: { RAH_FAKE_MODE: "success" },
+    });
+    const envelope = activationEnvelope();
+    const run = await startProcess(adapter, {
+      ...envelope,
+      agent: {
+        agentDefinitionRevision: {
+          agentDefinitionId: "agent-definition-process-test",
+          agentDefinitionRevisionId: "agent-definition-revision-process-test",
+          contentDigest: `sha256:${"a".repeat(64)}`,
+          createdAt: "2026-08-27T00:00:00.000Z",
+          createdBy: "principal-owner",
+          executionPolicyRevisionId: "execution-policy-process-test",
+          instructionRefs: [],
+          instructions: "Use the canonical Worker API and review carefully.",
+          memoryPolicyRef: {
+            artifactId: "memory-policy",
+            contentDigest: `sha256:${"b".repeat(64)}`,
+            versionId: "room-memory-v1",
+          },
+          revision: 1,
+          role: "Production reviewer",
+          skillRefs: [],
+        },
+        participantId: envelope.participantId,
+        schemaVersion: 1,
+      },
+    });
+    const exit = await adapter.reap(run);
+    const output = JSON.parse(adapter.diagnostics(run).stdout) as {
+      agentInstructions?: string;
+      agentRole?: string;
+    };
+
+    assert.equal(exit.code, 0);
+    assert.equal(output.agentRole, "Production reviewer");
+    assert.equal(
+      output.agentInstructions,
+      "Use the canonical Worker API and review carefully.",
+    );
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
 test("GenericProcessAdapter bounds opaque diagnostics", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-process-output-"));
   try {

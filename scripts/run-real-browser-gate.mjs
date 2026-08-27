@@ -134,6 +134,59 @@ try {
   assert.match(directoryText, /Alice/u);
   assert.match(directoryText, /Kimi/u);
 
+  await clickButton(browser, { text: "创建 Agent" });
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-agent-create-dialog") !== null,
+    "create Agent dialog",
+  );
+  await call(browser, () => {
+    const dialog = document.querySelector(".rah-agent-create-dialog");
+    const inputs = dialog.querySelectorAll("input");
+    const textareas = dialog.querySelectorAll("textarea");
+    const setValue = (element, value) => {
+      const setter = Object.getOwnPropertyDescriptor(
+        element instanceof HTMLTextAreaElement
+          ? HTMLTextAreaElement.prototype
+          : HTMLInputElement.prototype,
+        "value",
+      ).set;
+      setter.call(element, value);
+      element.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+    setValue(inputs[0], "Bob");
+    setValue(inputs[2], "Release reviewer");
+    setValue(textareas[0], "Reviews production releases.");
+    setValue(
+      textareas[1],
+      "Read canonical Room state and return a concise release review.",
+    );
+  });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelectorAll(".rah-agent-create-dialog input")[1]?.value ===
+      "bob",
+    "derived Agent handle",
+  );
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-agent-create-dialog .btn-pink")?.disabled ===
+      false,
+    "valid Agent configuration",
+  );
+  await call(browser, () =>
+    document.querySelector(".rah-agent-create-dialog .btn-pink")?.click(),
+  );
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-agent-create-dialog") === null &&
+      document.querySelector("main")?.textContent?.includes("Bob") === true,
+    "persisted Workspace Agent",
+  );
+
   await clickButton(browser, { title: "计算机" });
   await waitFor(
     browser,

@@ -20,7 +20,7 @@ Changing `run` creates an isolated browser-fixture state.
 | Chat attention         | Type `@Handle`, add/remove a Room Agent          | Mention badge changes attention only; Room membership remains the delivery scope                        |
 | Thread                 | Create and reply                                 | Thread opens, reply renders, composer clears, reply count survives reload                               |
 | Task                   | Create from composer                             | Task appears in the Task board and Task navigation is active                                            |
-| Agent directory        | Open Workspace Agent page                        | Only that Workspace control Room's long-lived identities render; unsupported create is disabled         |
+| Agent directory        | Create/open a Workspace Agent                    | Manager creates a durable identity bound to an available Runtime; reload keeps the new catalog entry    |
 | Computer inventory     | Open Computer page                               | CLI/Runtime evidence renders read-only and never mutates Room membership                                |
 | Room members           | Add/remove/rejoin/concurrent join                | owner/admin + capability controls enabled state; cross-Workspace Agent onboarding fails closed          |
 | Dialog keyboard        | Open create/member dialog; use Tab/Escape        | Focus stays inside, Escape closes when idle, and focus returns to the trigger                           |
@@ -45,6 +45,8 @@ macOS/Linux locations. The gate creates an isolated daemon database, Human
 credential, browser profile, ports, and fake Agent runtimes, then deletes them.
 It never launches a paid provider. Its fixture announcement contains only public
 ephemeral IDs and loopback origins; the Human PAT stays in the Vite proxy process.
+This gate is also a required CI step, so a pull request cannot pass only on typed
+or fixture-level tests while the real browser business flow is broken.
 
 For exploratory inspection, run:
 
@@ -63,6 +65,22 @@ npm run dev:web:multi-agent-fixture:lan
 ```
 
 Open one of the printed `lanOrigins`. This explicitly binds the ephemeral test UI to `0.0.0.0`; stop the command after testing. The daemon remains loopback-only and the PAT remains in the same-origin development proxy, but anyone who can reach that temporary LAN origin can exercise the fixture's Human authority while it is running.
+
+## Installed local CLI inspection
+
+To inspect the same UI against the supported Agent CLIs discovered on this Mac,
+without copying a bearer token into the browser, run:
+
+```text
+npm run dev:web:local-cli-fixture
+```
+
+Open the printed `webOrigin`. The fixture creates the Agent definitions in the
+same product Workspace shown by the page, starts the daemon and same-origin Vite
+proxy, and prints no Human credential. Merely starting it probes executable
+availability; a paid CLI is launched only after a Room action creates work for
+that Agent. Use `npm run dev:web:local-cli-fixture:lan` only for a temporary test
+on a trusted LAN, then open one of its printed `lanOrigins`.
 
 Required sequence:
 

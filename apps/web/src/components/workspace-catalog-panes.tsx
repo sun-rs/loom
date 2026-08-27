@@ -5,8 +5,12 @@ import { Icon } from "./icon.tsx";
 
 export function AgentDirectoryPane({
   agents,
+  canCreate,
+  onCreate,
 }: {
   agents: readonly WorkspaceAgentView[];
+  canCreate: boolean;
+  onCreate: () => void;
 }) {
   return (
     <main className="channel rah-agent-runtime-page">
@@ -25,8 +29,13 @@ export function AgentDirectoryPane({
         <div className="head-actions">
           <button
             className="btn btn-pink"
-            disabled
-            title="AgentDefinition 创建 API 尚未开放"
+            disabled={!canCreate}
+            onClick={onCreate}
+            title={
+              canCreate
+                ? "创建 Workspace Agent"
+                : "需要管理员权限和可用 Runtime"
+            }
           >
             创建 Agent
           </button>
@@ -42,19 +51,21 @@ export function AgentDirectoryPane({
       <section className="rah-runtime-grid rah-scroll-main">
         {agents.length === 0 ? (
           <p className="rah-empty-copy">
-            当前没有可见 AgentDefinition；创建能力尚未开放，不会用 Runtime
-            探测结果伪造 Agent。
+            当前没有可见 AgentDefinition。请先确认 daemon 已探测并启用了真实
+            Runtime，然后创建 Workspace Agent。
           </p>
         ) : null}
         {agents.map((agent) => (
           <article className="rah-runtime-card" key={agent.agentDefinitionId}>
             <header>
               <span className="rah-runtime-icon">
-                {agent.handle.slice(0, 1).toUpperCase()}
+                {agent.displayName.slice(0, 1).toUpperCase()}
               </span>
               <div>
-                <h2>{agent.handle}</h2>
-                <p>{agent.role}</p>
+                <h2>{agent.displayName}</h2>
+                <p>
+                  @{agent.handle} · {agent.role}
+                </p>
               </div>
               <span
                 className={`rah-runtime-state ${agent.state === "enabled" ? "is-online" : "is-offline"}`}
@@ -81,6 +92,12 @@ export function AgentDirectoryPane({
               </div>
             </dl>
             <p className="rah-runtime-note">
+              {agent.description === undefined ? null : (
+                <>
+                  {agent.description}
+                  <br />
+                </>
+              )}
               {agent.runtimeAvailable
                 ? "至少一个已绑定 Runtime 当前可运行。"
                 : "当前没有已验证且可用的 Runtime。"}

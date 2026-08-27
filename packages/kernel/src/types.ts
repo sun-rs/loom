@@ -1,12 +1,15 @@
 import type {
   Activation,
   ActivationReason,
+  AgentCatalogEntry,
   AgentDefinition,
   AgentDefinitionRevision,
+  AgentRuntimeContext,
   ExecutionPolicyRevision,
   InboxState,
   InputRequest,
   Message,
+  ModelIntent,
   ParticipantKind,
   PlacementDecision,
   Room,
@@ -73,6 +76,7 @@ export type RunAttempt = {
 
 export type PlacementLaunchClaim = {
   activation: Activation;
+  agentContext: AgentRuntimeContext;
   placement: PlacementDecision;
   runAttempt: RunAttempt;
 };
@@ -118,6 +122,36 @@ export type AgentDefinitionMutationResult = {
 export type AgentDefinitionRecord = {
   currentRevision: AgentDefinitionRevision;
   definition: AgentDefinition;
+};
+
+export type WorkspaceAgentProvisionInput = {
+  avatarKey?: string;
+  basedOnRoomSeq: number;
+  controlRoomId: string;
+  description?: string;
+  displayName: string;
+  handle: string;
+  idempotencyKey: string;
+  instructions: string;
+  modelIntent: ModelIntent;
+  role: string;
+  runtimeOfferId: string;
+  sessionPolicy: ExecutionPolicyRevision["sessionPolicy"];
+};
+
+export type WorkspaceAgentHostBinding = {
+  hostId: string;
+  runtimeOfferId: string;
+  runtimeProfileId: string;
+  runtimeProfileRevisionId: string;
+};
+
+export type WorkspaceAgentProvisionResult = {
+  agent: AgentCatalogEntry;
+  deduplicated: boolean;
+  event: RoomEvent;
+  hostBinding: WorkspaceAgentHostBinding;
+  policy: ExecutionPolicyRevision;
 };
 
 export type RuntimeProcessRecord = {

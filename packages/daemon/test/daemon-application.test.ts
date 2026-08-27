@@ -351,6 +351,10 @@ test("Human API drives two Workspace Agents through daemon v4 and reconnect reco
         registryDatabasePath,
         runtimeProfileId,
       })),
+      workspace: {
+        ...base.workspace,
+        workspaceDefinitionId: productWorkspace.workspace.workspaceId,
+      },
     });
     let application = new DaemonApplication({ config });
     activeShutdown = new AbortController();
@@ -645,6 +649,30 @@ test("Human API drives two Workspace Agents through daemon v4 and reconnect reco
       "completed",
     );
 
+    const provisionSequence = await requireJson<{ latestRoomSeq: number }>(
+      await clientRequest(firstOrigin, "/v3/client/rooms/sync", {
+        consumerId: "p3c-agent-provision",
+        roomId: catalogRoom.roomId,
+      }),
+    );
+    const provisionedAgent = await requireJson<{
+      agent: { definition: { participantId: string }; handle: string };
+    }>(
+      await clientRequest(firstOrigin, "/v3/client/agents/provision", {
+        basedOnRoomSeq: provisionSequence.latestRoomSeq,
+        controlRoomId: catalogRoom.roomId,
+        displayName: "Review Agent",
+        handle: "review-agent",
+        idempotencyKey: "p3c-agent-provisioned",
+        instructions: "Review canonical Room work before release.",
+        modelIntent: { fallback: "disabled", reasoning: "default" },
+        role: "Release reviewer",
+        runtimeOfferId: offerIds[0],
+        sessionPolicy: "fresh",
+      }),
+    );
+    assert.equal(provisionedAgent.agent.handle, "review-agent");
+
     activeShutdown.abort("p3c-first-daemon-stop");
     await running;
     running = undefined;
@@ -657,6 +685,14 @@ test("Human API drives two Workspace Agents through daemon v4 and reconnect reco
     await waitUntil(() => application.clientOrigin() !== undefined);
     const restartedOrigin = application.clientOrigin();
     assert.ok(restartedOrigin);
+    assert.ok(
+      application
+        .health()
+        .participantIds.includes(
+          provisionedAgent.agent.definition.participantId,
+        ),
+      "a manager-provisioned Agent must survive daemon restart without editing static config",
+    );
     const recovered = await requireJson<{
       cursorAfter: number;
       cursorBefore: number;

@@ -160,6 +160,7 @@ test("Workspace Agent directory is independent from Room membership and reports 
   assert.deepEqual(directory, [
     {
       agentDefinitionId: "definition-alice",
+      displayName: "Alice",
       handle: "Alice",
       participantId: "agent-alice",
       role: "Researcher",
@@ -491,6 +492,7 @@ test("the UI fails closed only on capabilities required for canonical Room recov
     capabilities: {
       agentOnboard: false,
       agentRead: false,
+      agentWrite: false,
       cursorAcknowledge: true,
       hints: false,
       inputRequestRead: false,

@@ -123,6 +123,64 @@ test("RoomSession acknowledges only a validated canonical delivery", async () =>
   assert.equal(invalid.state.acknowledgedThrough, 0);
 });
 
+test("RoomSession serializes overlapping syncs so a late acknowledgement cannot regress state", async () => {
+  const requestedAfterSequences: number[] = [];
+  let syncCalls = 0;
+  let releaseOlderAcknowledgement!: () => void;
+  let markOlderAcknowledgementStarted!: () => void;
+  let markNewerAcknowledgementStarted!: () => void;
+  const olderAcknowledgementGate = new Promise<void>((resolve) => {
+    releaseOlderAcknowledgement = resolve;
+  });
+  const olderAcknowledgementStarted = new Promise<void>((resolve) => {
+    markOlderAcknowledgementStarted = resolve;
+  });
+  const newerAcknowledgementStarted = new Promise<void>((resolve) => {
+    markNewerAcknowledgementStarted = resolve;
+  });
+  const client = new FakeRahClient(async (operation, input) => {
+    if (operation === "room.sync") {
+      const afterSeq = (input as ClientRoomSyncRequest).afterSeq ?? -1;
+      requestedAfterSequences.push(afterSeq);
+      syncCalls += 1;
+      if (syncCalls === 1) return delivery(0, [event(1)], 2);
+      return afterSeq === 0
+        ? delivery(0, [event(1), event(2)], 2)
+        : { ...delivery(1, [event(2)], 2), snapshot: null };
+    }
+    if (operation === "room.acknowledge") {
+      const throughSeq = (input as ClientAcknowledgeRequest).throughSeq;
+      if (throughSeq === 1) {
+        markOlderAcknowledgementStarted();
+        await olderAcknowledgementGate;
+      } else {
+        markNewerAcknowledgementStarted();
+      }
+      return { acknowledgedThrough: throughSeq };
+    }
+    throw new Error(`unexpected operation ${operation}`);
+  });
+  const session = new RoomSession({
+    client,
+    consumerId: "browser-overlap",
+    roomId: "room-main",
+  });
+
+  const older = session.syncOnce();
+  await olderAcknowledgementStarted;
+  const newer = session.syncOnce();
+  await Promise.race([
+    newerAcknowledgementStarted,
+    new Promise((resolve) => setTimeout(resolve, 20)),
+  ]);
+  releaseOlderAcknowledgement();
+  await Promise.all([older, newer]);
+
+  assert.equal(session.state.cursor, 2);
+  assert.equal(session.state.acknowledgedThrough, 2);
+  assert.deepEqual(requestedAfterSequences, [0, 1]);
+});
+
 test("RoomSession cold reload replays from local zero when the durable consumer cursor is ahead", async () => {
   const requestedAfterSequences: number[] = [];
   let syncCount = 0;

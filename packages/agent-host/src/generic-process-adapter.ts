@@ -498,6 +498,9 @@ export class GenericProcessAdapter implements RuntimeAdapter {
           ...process.env,
           ...this.#env,
           ...environmentLease?.env,
+          ...(input.agent === undefined
+            ? {}
+            : { RAH_AGENT_CONTEXT_JSON: JSON.stringify(input.agent) }),
           RAH_ACTIVATION_ID: input.activationId,
           RAH_ACTIVATION_REASON: input.reason,
           RAH_CONSUMER_ID: input.consumerId,
@@ -749,6 +752,9 @@ export class GenericProcessAdapter implements RuntimeAdapter {
           ...process.env,
           ...this.#env,
           ...environmentLease?.env,
+          ...(input.agent === undefined
+            ? {}
+            : { RAH_AGENT_CONTEXT_JSON: JSON.stringify(input.agent) }),
           RAH_ACTIVATION_ID: input.activationId,
           RAH_ACTIVATION_REASON: input.reason,
           RAH_CONSUMER_ID: input.consumerId,

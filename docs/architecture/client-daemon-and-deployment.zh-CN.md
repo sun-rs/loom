@@ -1,6 +1,6 @@
 # Client、Daemon 与部署边界
 
-状态：本机 daemon core 已有独立 composition/CLI entrypoint、严格配置、Host generation fencing、deadline、Outbox wake、Worker delivery/Task/InputRequest command，以及 collaboration P2/P3 versioned loopback Human API；local Fake Agent 已通过双 Agent 开放 Task、Human complete、daemon restart 与 durable client-cursor recovery gate。完整 `RahClient`/control API、Artifact/Review workflow、CORS/LAN/hint、launchd/install/signing、Keychain、supervisor artifact GC 与 UI 尚未实现。
+状态：本机 daemon core 已有独立 composition/CLI entrypoint、严格配置、Host generation fencing、deadline、Outbox wake、Worker delivery/Task/InputRequest command，以及 collaboration P2/P3 versioned loopback Human API；Workspace Agent 原子创建已经打通 Kernel→Human API→Web→冻结运行上下文→真实子进程，并通过 daemon restart 与 desktop/mobile browser gate。Agent 编辑/生命周期、Artifact/Review workflow、CORS/LAN/hint、launchd/install/signing、Keychain 与 supervisor artifact GC 尚未实现。
 
 ## 1. 产品形态不改变核心 owner
 
@@ -56,7 +56,7 @@ interface RahClient {
 
 建议实现 `HttpRahClient`、`DesktopRahClient` 和 `FakeRahClient`。Electron IPC、WKWebView message handler 或测试 fake 都只是 transport adapter；它们不能复制 command handler 或 projection。
 
-当前 Human HTTP adapter（兼容类名 `ClientApplicationService`）已实现上述 contract 的 collaboration P2/P3 段：v1/v2 compatibility、v3 health/capabilities、Workspace/Room discovery/managed create、Agent catalog/onboarding、Room `sync/ack`、成员角色、Message/Thread、Task/InputRequest command/query。P3 gate 已覆盖 daemon restart 后同 consumer 从 durable cursor 恢复。它只依赖 `HumanApplicationPort`；嵌入式程序可跳过 HTTP 直接调用 `RahCore.human`。独立 typed `RahClient` package 已覆盖现有 v3 route，Web Room slice 使用 `client-core` 做 bounded catch-up 与 ack-after-apply。Workspace/Room archive、Agent provisioning/editor/lifecycle、Inbox query/resolve、Artifact/Review、Run Inspector 与 `subscribeHints` 仍缺失，因此不能把这一 slice 称为完整 UI SDK。
+当前 Human HTTP adapter（兼容类名 `ClientApplicationService`）已实现上述 contract 的 collaboration P2/P3 段：v1/v2 compatibility、v3 health/capabilities、Workspace/Room discovery/managed create、Agent catalog/onboarding/provision、Room `sync/ack`、成员角色、Message/Thread、Task/InputRequest command/query。P3 gate 已覆盖 daemon restart 后同 consumer 从 durable cursor 恢复。它只依赖 `HumanApplicationPort`；嵌入式程序可跳过 HTTP 直接调用 `RahCore.human`。独立 typed `RahClient` package 已覆盖现有 v3 route，Web Room slice 使用 `client-core` 做 bounded catch-up、causal mutation barrier 与 ack-after-apply。Workspace/Room archive、Agent editor/lifecycle、Inbox query/resolve、Artifact/Review、Run Inspector 与 `subscribeHints` 仍缺失，因此不能把这一 slice 称为完整 UI SDK。
 
 ## 4. 通信协议
 
@@ -130,7 +130,7 @@ AgentHost 必须独立于窗口：
 - Host 状态按 `online -> draining -> offline` 发布；运行中续租不会把 `draining` 覆盖回 `online`；
 - 无论 runner 正常返回或失败，最终都会释放本机 instance lock。
 
-`@rah-os/daemon` 在 wrapper 之外补上了可执行 composition root：它统一拥有 Kernel/Worker/Runtime/AgentHost/Outbox publisher 的启动回滚和逆序关闭；compatibility v2/v3 保留单 participant lane，config v4 可以由一个 Host credential 精确绑定 participant allowlist，并运行多 participant、多 immutable runtime profile。每次进程认证生成新的 instance generation，正常 offline 或超过 `hostStaleAfterMs` 后才能接管，旧 Host 与 Worker authority 随即被 fence。启动、恢复、取消和总 drain 都有显式 deadline。
+`@rah-os/daemon` 在 wrapper 之外补上了可执行 composition root：它统一拥有 Kernel/Worker/Runtime/AgentHost/Outbox publisher 的启动回滚和逆序关闭；compatibility v2/v3 保留单 participant lane，config v4 的静态 participant 列表必须是 Host credential 当前 scope 的子集，并可运行多 participant、多 immutable runtime profile。Workspace manager 后续创建的动态 Agent 由 Kernel 扩展同一 credential scope，无需 daemon 重启；重启时数据库 scope 仍是权威，静态 config 不会删除它。每次进程认证生成新的 instance generation，正常 offline 或超过 `hostStaleAfterMs` 后才能接管，旧 Host 与 Worker authority 随即被 fence。启动、恢复、取消和总 drain 都有显式 deadline。
 
 本机 Outbox dispatcher 只消费 `activation.requested`，发布 content-free wake 以中断 Host poll wait；固定 reconciliation interval 仍是 100% hint loss 的恢复路径。独立进程 fixture 已验证关闭 UI 无关的 SIGTERM、Worker delivery 和 restart。
 
@@ -145,7 +145,7 @@ Unix socket 只是同一台机器上的启动协调，不是业务 fencing token
 - actor 来自认证 session/host credential，不接受客户端任意 `actorId`；
 - 浏览器入口使用明确的 allowed origins，禁止 wildcard CORS；
 - command 权限由 Room membership/role 检查；
-- 当前 AgentHost credential 固定绑定 host 与 Agent participant 白名单；AgentDefinition/capability 细粒度 scope 是下一层扩展；
+- 当前 AgentHost credential 固定绑定 host，并由 Kernel 持久维护 Agent participant scope；Workspace manager 可以通过原子 provision 扩展 scope，但 AgentDefinition/capability 细粒度最小授权仍是下一层扩展；
 - Kernel API 不提供接受任意 shell 字符串的通用 `/run`；
 - 本机模式默认 bind loopback；局域网监听必须显式启用并显示实际地址；
 - Room event、command actor、Host lease 和外部副作用保留审计记录。

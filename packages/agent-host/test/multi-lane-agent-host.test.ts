@@ -154,6 +154,10 @@ test("MultiLaneAgentHost preserves concurrent, serial, restart, and quarantine b
         return { code: 0 };
       },
       onStart: (envelope) => {
+        assert.equal(
+          envelope.agent?.agentDefinitionRevision.role,
+          "parallel worker 0",
+        );
         if (runtimeA.starts.length === 1) {
           submitAssignedTask(kernel, host, envelope, taskA.taskId);
         } else {

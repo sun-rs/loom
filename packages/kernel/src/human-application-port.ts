@@ -22,6 +22,7 @@ export type HumanApplicationPort = Pick<
   | "listThreads"
   | "listWorkspaces"
   | "onboardAgentToRoom"
+  | "provisionWorkspaceAgent"
   | "removeRoomMember"
   | "replyThread"
   | "resolveInputRequest"
@@ -63,6 +64,8 @@ export function createHumanApplicationPort(
     listWorkspaces: (actor) => kernel.listWorkspaces(actor),
     onboardAgentToRoom: (actor, input) =>
       kernel.onboardAgentToRoom(actor, input),
+    provisionWorkspaceAgent: (actor, input) =>
+      kernel.provisionWorkspaceAgent(actor, input),
     postRoomMessage: (actor, input) => kernel.postRoomMessage(actor, input),
     removeRoomMember: (actor, input) => kernel.removeRoomMember(actor, input),
     replyThread: (actor, input) => kernel.replyThread(actor, input),

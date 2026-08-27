@@ -1,3 +1,4 @@
+import { spawn } from "node:child_process";
 import {
   chmodSync,
   mkdirSync,
@@ -5,8 +6,9 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
-import { tmpdir } from "node:os";
-import { resolve, join } from "node:path";
+import { networkInterfaces, tmpdir } from "node:os";
+import { dirname, resolve, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
   RuntimeImplementationRegistry,
@@ -19,7 +21,17 @@ import {
 } from "@rah-os/daemon";
 import { RoomKernel } from "@rah-os/kernel";
 
+const scriptDirectory = dirname(fileURLToPath(import.meta.url));
+const repositoryDirectory = join(scriptDirectory, "..");
 const workspaceCwd = resolve(process.env.RAH_WORKSPACE_CWD ?? process.cwd());
+const webHost = process.env.RAH_WEB_HOST?.trim() || "127.0.0.1";
+if (/\s/u.test(webHost)) {
+  throw new Error("RAH_WEB_HOST must not contain whitespace");
+}
+const webPort = Number(process.env.RAH_WEB_PORT ?? "4174");
+if (!Number.isInteger(webPort) || webPort < 1 || webPort > 65_535) {
+  throw new Error("RAH_WEB_PORT must be an integer between 1 and 65535");
+}
 const discovered = await discoverKnownLocalClis();
 const installed = discovered.filter((candidate) => candidate.available);
 const profileSpecs = installed.flatMap((candidate) => {
@@ -39,12 +51,13 @@ mkdirSync(stateDirectory, { mode: 0o700 });
 const databasePath = join(stateDirectory, "room.db");
 const registryDatabasePath = join(stateDirectory, "runtime-registry.db");
 const secretPath = join(stateDirectory, "host.token");
-const hostId = "local-cli-web-host";
+const hostId = `local-cli-web-host-${String(process.pid)}`;
 
 let application;
 let running;
 let seed;
 let shutdown;
+let webProcess;
 
 try {
   seed = new RoomKernel({ databasePath });
@@ -64,12 +77,7 @@ try {
     slug: "agent-council",
     workspaceId: productWorkspace.workspace.workspaceId,
   });
-  const catalogWorkspace = seed.createWorkspace(humanActor, {
-    idempotencyKey: "local-cli-web-catalog",
-    name: "Agent Catalog",
-    slug: "agent-catalog",
-  });
-  const catalogRoom = catalogWorkspace.controlRoom;
+  const catalogRoom = productWorkspace.controlRoom;
 
   const participants = [];
   const runtimeDefinitions = [];
@@ -221,7 +229,7 @@ try {
     workspace: {
       cwd: workspaceCwd,
       mode: "in_place",
-      workspaceDefinitionId: "local-cli-workspace-definition",
+      workspaceDefinitionId: productWorkspace.workspace.workspaceId,
       workspaceMountDigest: `sha256:${"a".repeat(64)}`,
       workspaceMountRevisionId: "local-cli-workspace-mount-v1",
     },
@@ -230,21 +238,64 @@ try {
   shutdown = new AbortController();
   running = application.run({ signal: shutdown.signal });
   await waitUntil(() => application.clientOrigin() !== undefined, 10_000);
+  webProcess = spawn(
+    process.execPath,
+    [
+      join(repositoryDirectory, "node_modules/vite/bin/vite.js"),
+      "--host",
+      webHost,
+      "--port",
+      String(webPort),
+      "--strictPort",
+    ],
+    {
+      cwd: join(repositoryDirectory, "apps/web"),
+      env: {
+        ...process.env,
+        RAH_DAEMON_URL: application.clientOrigin(),
+        RAH_DEV_ACCESS_TOKEN: human.accessToken,
+        RAH_WEB_PORT: String(webPort),
+      },
+      stdio: ["ignore", "inherit", "inherit"],
+    },
+  );
+  await waitForHttp(`http://127.0.0.1:${String(webPort)}/`);
+  const lanOrigins =
+    webHost === "0.0.0.0"
+      ? Object.values(networkInterfaces())
+          .flatMap((entries) => entries ?? [])
+          .filter(
+            (entry) =>
+              entry.family === "IPv4" &&
+              !entry.internal &&
+              entry.address !== "0.0.0.0",
+          )
+          .map(({ address }) => `http://${address}:${String(webPort)}`)
+      : [];
   process.stdout.write(
     `RAH_LOCAL_CLI_FIXTURE ${JSON.stringify({
       daemonOrigin: application.clientOrigin(),
-      humanAccessToken: human.accessToken,
+      lanOrigins,
+      listenHost: webHost,
       roomId: productRoom.room.roomId,
       runtimes: profileSpecs.map(({ cliId, displayName }) => ({
         cliId,
         displayName,
       })),
+      webOrigin: `http://127.0.0.1:${String(webPort)}`,
       workspaceCwd,
       workspaceId: productWorkspace.workspace.workspaceId,
     })}\n`,
   );
   await waitForShutdownSignal();
 } finally {
+  if (webProcess?.exitCode === null) {
+    webProcess.kill("SIGTERM");
+    await Promise.race([
+      new Promise((resolvePromise) => webProcess.once("exit", resolvePromise)),
+      new Promise((resolvePromise) => setTimeout(resolvePromise, 5_000)),
+    ]);
+  }
   shutdown?.abort("local-cli-web-fixture-shutdown");
   await running?.catch(() => undefined);
   try {
@@ -335,6 +386,7 @@ function localCliProfile(executable, currentWorkspaceCwd) {
 
 function workerPrompt() {
   return `You are a RAH OS Room worker launched for one durable Activation.
+First parse process.env.RAH_AGENT_CONTEXT_JSON. Its frozen agentDefinitionRevision role, instructions, instructionRefs, skillRefs, and memoryPolicyRef define this Agent for the current RunAttempt. Follow those instructions unless they conflict with the canonical Worker protocol or system safety.
 Treat only the RAH Worker API as collaboration truth. Never expose its bearer token.
 First use a local shell command with Node.js built-in fetch to POST {} to process.env.RAH_WORKER_API_URL + "/v1/worker/sync" with Authorization "Bearer " + process.env.RAH_WORKER_TOKEN and Content-Type application/json. Parse and inspect every delivered canonical Room event through process.env.RAH_TO_SEQ.
 
@@ -357,6 +409,25 @@ async function waitUntil(predicate, timeoutMs) {
   while (!predicate()) {
     if (Date.now() >= deadline) throw new Error("fixture startup timed out");
     await new Promise((resolvePromise) => setTimeout(resolvePromise, 10));
+  }
+}
+
+async function waitForHttp(url, timeoutMs = 10_000) {
+  const deadline = Date.now() + timeoutMs;
+  while (true) {
+    if (webProcess?.exitCode !== null) {
+      throw new Error("Web fixture exited before becoming ready");
+    }
+    try {
+      const response = await fetch(url);
+      if (response.ok) return;
+    } catch {
+      // The loopback listener may not have bound yet.
+    }
+    if (Date.now() >= deadline) {
+      throw new Error("Web fixture startup timed out");
+    }
+    await new Promise((resolvePromise) => setTimeout(resolvePromise, 50));
   }
 }
 

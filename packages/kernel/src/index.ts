@@ -19,11 +19,8 @@ export {
   AuthenticatedHostContext,
   AuthenticatedWorkerExecutionContext,
 } from "./auth.ts";
-export {
-  computeRuntimeCertificationDigest,
-  KERNEL_SCHEMA_VERSION,
-  RoomKernel,
-} from "./room-kernel.ts";
+export { KERNEL_SCHEMA_VERSION, RoomKernel } from "./room-kernel.ts";
+export { computeRuntimeCertificationDigest } from "./runtime-certification.ts";
 export type {
   PlacementCapacityPolicy,
   RoomKernelOptions,
@@ -74,5 +71,8 @@ export type {
   Thread,
   ThreadMutationResult,
   Workspace,
+  WorkspaceAgentHostBinding,
+  WorkspaceAgentProvisionInput,
+  WorkspaceAgentProvisionResult,
   WorkspaceMutationResult,
 } from "./types.ts";

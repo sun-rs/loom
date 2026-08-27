@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import type { Principal, Room, Workspace } from "@rah-os/protocol";
 import {
@@ -140,19 +140,26 @@ export function RoomMembersDialog({
 }) {
   const [pendingAgentId, setPendingAgentId] = useState<string>();
   const [actionError, setActionError] = useState<string>();
+  const mutationPendingRef = useRef(false);
+  const mutationBlocked = pendingAgentId !== undefined;
   const dialogRef = useDialogProtocol({
-    blocked: pendingAgentId !== undefined,
+    blocked: mutationBlocked,
     onClose,
   });
   const humans = members.filter(({ kind }) => kind === "human");
   const joinedAgents = candidates.filter(({ joined }) => joined);
   const availableAgents = candidates.filter(({ joined }) => !joined);
   const mutate = (agent: AgentMembershipIdentity, joined: boolean) => {
+    if (mutationPendingRef.current) return;
+    mutationPendingRef.current = true;
     setPendingAgentId(agent.participantId);
     void (joined ? onRemove(agent) : onAdd(agent))
       .then(() => setActionError(undefined))
       .catch((caught) => setActionError(errorMessage(caught)))
-      .finally(() => setPendingAgentId(undefined));
+      .finally(() => {
+        mutationPendingRef.current = false;
+        setPendingAgentId(undefined);
+      });
   };
   return (
     <div className="rah-dialog-layer" role="presentation">
@@ -217,6 +224,7 @@ export function RoomMembersDialog({
             joinedAgents.map((agent) => (
               <RoomAgentMembershipRow
                 agent={agent}
+                blocked={mutationBlocked}
                 canManage={canRemove}
                 joined
                 key={agent.participantId}
@@ -232,6 +240,7 @@ export function RoomMembersDialog({
             availableAgents.map((agent) => (
               <RoomAgentMembershipRow
                 agent={agent}
+                blocked={mutationBlocked}
                 canManage={canAdd && agent.state === "enabled"}
                 joined={false}
                 key={agent.participantId}
@@ -248,12 +257,14 @@ export function RoomMembersDialog({
 
 function RoomAgentMembershipRow({
   agent,
+  blocked,
   canManage,
   joined,
   onMutate,
   pending,
 }: {
   agent: ReturnType<typeof roomAgentCandidates>[number];
+  blocked: boolean;
   canManage: boolean;
   joined: boolean;
   onMutate: (agent: AgentMembershipIdentity, joined: boolean) => void;
@@ -273,7 +284,7 @@ function RoomAgentMembershipRow({
       </div>
       <button
         className={joined ? "btn" : "btn btn-pink"}
-        disabled={!canManage || pending}
+        disabled={!canManage || blocked}
         onClick={() => onMutate(agent, joined)}
       >
         {pending ? "处理中…" : joined ? "移出 Room" : "加入 Room"}

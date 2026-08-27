@@ -16,6 +16,7 @@
     "dev:web:multi-agent-fixture": "node scripts/run-multi-agent-web-fixture.mjs",
     "dev:web:multi-agent-fixture:lan": "RAH_WEB_HOST=0.0.0.0 node scripts/run-multi-agent-web-fixture.mjs",
     "dev:web:local-cli-fixture": "node scripts/run-local-cli-web-fixture.mjs",
+    "dev:web:local-cli-fixture:lan": "RAH_WEB_HOST=0.0.0.0 node scripts/run-local-cli-web-fixture.mjs",
     "test:web:browser": "node scripts/run-real-browser-gate.mjs",
     "test:web:browser-unit": "node --test apps/web/test/real-browser-gate-support.test.ts",
     "test:web:unit": "node --test apps/web/test/*.test.ts",

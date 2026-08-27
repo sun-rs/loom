@@ -65,6 +65,7 @@ import {
   issueAuthenticatedHostContext,
   issueAuthenticatedWorkerExecutionContext,
 } from "./auth.ts";
+import { authorizedHostParticipantIds } from "./host-authorization.ts";
 import { canonicalDigest, canonicalValue } from "./canonical-digest.ts";
 import {
   assertPositiveCapacityLimit,
@@ -77,6 +78,7 @@ import {
   requireRoomMember,
 } from "./collaboration-policy.ts";
 import { roomProjectionFromRow } from "./collaboration-projection.ts";
+import { agentRuntimeContextFromPlacement } from "./run-agent-context.ts";
 import {
   CollaborationService,
   type MessageRecipient,
@@ -100,10 +102,16 @@ import {
   type AppendRoomEventInput,
 } from "./room-event-writer.ts";
 import * as ar from "./room-agent-service.ts";
+import { computeRuntimeCertificationDigest } from "./runtime-certification.ts";
 import {
   taskDependenciesComplete,
   taskProjectionFromRow,
 } from "./task-projection.ts";
+import {
+  normalizeAgentDefinitionContent,
+  normalizeExecutionPolicyContent,
+  provisionWorkspaceAgentTransaction,
+} from "./workspace-agent-provisioning.ts";
 import type {
   InboxItem,
   AgentDefinitionContent,
@@ -136,6 +144,8 @@ import type {
   Thread,
   ThreadMutationResult,
   Workspace,
+  WorkspaceAgentProvisionInput,
+  WorkspaceAgentProvisionResult,
   WorkspaceMutationResult,
 } from "./types.ts";
 
@@ -143,19 +153,6 @@ const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
 export const KERNEL_SCHEMA_VERSION = 8;
-
-export function computeRuntimeCertificationDigest(
-  certification: Omit<RuntimeCertification, "certificationDigest">,
-): string {
-  return canonicalDigest({
-    domain: "rah/runtime-certification/v1",
-    capabilities: [...certification.capabilities].sort(),
-    certificationId: certification.certificationId,
-    maximumIsolation: certification.maximumIsolation,
-    protocolFamily: certification.protocolFamily,
-    runtimeProfileDigest: certification.runtimeProfileDigest,
-  });
-}
 
 export type PlacementCapacityPolicy = {
   defaultMaxConcurrent?: number;
@@ -2260,7 +2257,7 @@ export class RoomKernel {
         input.controlRoomId,
       );
       this.#assertIdempotencyKey(input.idempotencyKey);
-      const content = executionPolicyContentFromInput(input);
+      const content = normalizeExecutionPolicyContent(input);
       const contentDigest = canonicalDigest(content);
       const previous = this.#findRoomEventByIdempotencyKey(
         input.controlRoomId,
@@ -2348,7 +2345,7 @@ export class RoomKernel {
       const controlRoomId = text(policyRow, "control_room_id");
       const actorId = this.#requireHumanControlActor(actor, controlRoomId);
       this.#assertIdempotencyKey(input.idempotencyKey);
-      const content = executionPolicyContentFromInput(input);
+      const content = normalizeExecutionPolicyContent(input);
       const contentDigest = canonicalDigest(content);
       const previous = this.#findRoomEventByIdempotencyKey(
         controlRoomId,
@@ -2458,7 +2455,7 @@ export class RoomKernel {
         input.executionPolicyRevisionId,
         input.controlRoomId,
       );
-      const content = agentDefinitionContentFromInput(input);
+      const content = normalizeAgentDefinitionContent(input);
       const contentDigest = canonicalDigest(content);
       const previous = this.#findRoomEventByIdempotencyKey(
         input.controlRoomId,
@@ -2554,7 +2551,7 @@ export class RoomKernel {
         input.executionPolicyRevisionId,
         controlRoomId,
       );
-      const content = agentDefinitionContentFromInput(input);
+      const content = normalizeAgentDefinitionContent(input);
       const contentDigest = canonicalDigest(content);
       const previous = this.#findRoomEventByIdempotencyKey(
         controlRoomId,
@@ -2627,6 +2624,29 @@ export class RoomKernel {
       ),
       definition: this.#agentDefinitionFromRow(row),
     };
+  }
+
+  provisionWorkspaceAgent(
+    actor: AuthenticatedActorContext,
+    input: WorkspaceAgentProvisionInput,
+  ): WorkspaceAgentProvisionResult {
+    return this.#transaction(() => {
+      const actorId = this.#requireHumanControlActor(
+        actor,
+        input.controlRoomId,
+      );
+      this.#assertIdempotencyKey(input.idempotencyKey);
+      return provisionWorkspaceAgentTransaction(
+        {
+          actorId,
+          createId: this.#createId,
+          database: this.#database,
+          events: this.#roomEvents,
+          now: this.#now,
+        },
+        input,
+      );
+    });
   }
 
   listAgentCatalog(
@@ -3097,6 +3117,10 @@ export class RoomKernel {
         activation: this.#activationFromRow(
           this.#requireActivationRow(activationId),
         ),
+        agentContext: agentRuntimeContextFromPlacement(
+          this.#database,
+          consumedPlacement,
+        ),
         placement: this.#placementFromRow(consumedPlacement),
         runAttempt,
       };
@@ -3131,7 +3155,10 @@ export class RoomKernel {
   ): HostRecord {
     const authenticatedHost = this.#requireAuthenticatedHostCredential(host);
     const hostId = authenticatedHost.hostId;
-    const participantIds = [...authenticatedHost.participantIds];
+    const participantIds = authorizedHostParticipantIds(
+      this.#database,
+      authenticatedHost,
+    );
     const state = input.state ?? "online";
     if (
       input.takeoverAfterMs !== undefined &&
@@ -3522,7 +3549,10 @@ export class RoomKernel {
     const driverIds = [
       ...new Set(input.driverIds.map((driverId) => driverId.trim())),
     ].filter((driverId) => driverId.length > 0);
-    const participantIds = [...authenticatedHost.participantIds];
+    const participantIds = authorizedHostParticipantIds(
+      this.#database,
+      authenticatedHost,
+    );
     if (driverIds.length === 0 || participantIds.length === 0) return null;
 
     return this.#transaction(() => {
@@ -3904,7 +3934,10 @@ export class RoomKernel {
     if (!Number.isInteger(input.leaseMs) || input.leaseMs <= 0) {
       throw new Error("leaseMs must be a positive integer");
     }
-    const participantIds = [...authenticatedHost.participantIds];
+    const participantIds = authorizedHostParticipantIds(
+      this.#database,
+      authenticatedHost,
+    );
     if (participantIds.length === 0) return null;
 
     return this.#transaction(() => {
@@ -5706,12 +5739,7 @@ export class RoomKernel {
         "SELECT host_id, participant_ids_json FROM agent_host_credentials WHERE credential_id = ? AND revoked_at IS NULL",
       )
       .get(host.credentialId);
-    if (
-      !row ||
-      text(row, "host_id") !== host.hostId ||
-      JSON.stringify(stringArray(row, "participant_ids_json")) !==
-        JSON.stringify(host.participantIds)
-    ) {
+    if (!row || text(row, "host_id") !== host.hostId) {
       throw new UnauthenticatedError("host authentication context is invalid");
     }
     return host;
@@ -5810,7 +5838,11 @@ export class RoomKernel {
     host: AuthenticatedHostContext,
     participantId: string,
   ): void {
-    if (!host.participantIds.includes(participantId)) {
+    if (
+      !authorizedHostParticipantIds(this.#database, host).includes(
+        participantId,
+      )
+    ) {
       throw new ForbiddenError(
         `host ${host.hostId} is not authorized for participant ${participantId}`,
       );
@@ -6880,30 +6912,6 @@ export class RoomKernel {
       throw error;
     }
   }
-}
-
-function executionPolicyContentFromInput(
-  input: ExecutionPolicyContent,
-): ExecutionPolicyContent {
-  return {
-    modelIntent: input.modelIntent,
-    preferred: input.preferred,
-    required: input.required,
-    retryPolicyRef: input.retryPolicyRef,
-    sessionPolicy: input.sessionPolicy,
-  };
-}
-
-function agentDefinitionContentFromInput(
-  input: AgentDefinitionContent,
-): AgentDefinitionContent {
-  return {
-    executionPolicyRevisionId: input.executionPolicyRevisionId,
-    instructionRefs: input.instructionRefs,
-    memoryPolicyRef: input.memoryPolicyRef,
-    role: input.role.trim(),
-    skillRefs: input.skillRefs,
-  };
 }
 
 function eventPayloadText(event: RoomEvent, key: string): string {

@@ -72,6 +72,8 @@ Human PAT 目前只存在于页面内存。Vite development server 用 `RAH_DAEM
 - canonical Thread list/create/reply，并把 reply 从主消息流投影中分离到右侧 Thread；
 - canonical Task list/create；
 - 当前 Workspace 的 Agent 长期身份目录与 daemon-owned Computer/CLI Runtime inventory 分离；Agent list 必须带该 Workspace 的 control Room scope，跨 Workspace onboard 在 Kernel fail closed；RuntimeProfile/Offer/AgentDefinition binding 只读展示，不从 Computer 页修改 Room；
+- Workspace owner/admin 可从 Raft 形态创建窗口提交显示名称、handle、头像 key、角色、描述、指令、RuntimeOffer、推理强度与 session policy；单个 `agent.provision` command 在 Kernel 原子创建长期身份、Definition/Policy 与 Host grant，重载和 daemon restart 后仍存在；
+- Placement launch claim 固化 AgentDefinition revision，AgentHost 把它注入实际 child process 的 `RAH_AGENT_CONTEXT_JSON`；页面表单不是运行时真相，Runtime credential 也不会进入该变量；
 - 从 Room 标题栏/聊天区成员窗口把 Workspace Agent 加入或移出当前 Room；当前状态来自 canonical membership list，重复/并发操作会重新对账；
 - 与 Raft channel 一致，Room membership 同时定义普通 Message 的默认投递范围；composer 不提供逐消息收件人复选框，`@Handle` 只把对应成员的 activation reason 提升为 mention，不过滤其他 Room Agent；
 - Room Agent chip 展示由 canonical Activation/RunAttempt 推导的空闲、唤醒中、工作中或异常，不读取 CLI stdout/JSONL；
@@ -90,7 +92,7 @@ Human PAT 目前只存在于页面内存。Vite development server 用 `RAH_DAEM
 
 - Human Inbox/Activity；
 - Artifact/Review/Files；
-- Search、完整 Members/Agent detail、Computer control/placement、Admin、Settings、Billing；
+- Search、完整 Members/Agent detail、已有 Agent 编辑/停用/删除、skill/memory artifact 管理、Computer control/placement、Admin、Settings、Billing；
 - hint subscription、生产 token pairing、PWA/desktop packaging。
 
 这些缺口按 capability 逐个打开，不以“让按钮看起来能点”为理由在 UI adapter 中发明后端语义。
@@ -102,7 +104,9 @@ Human PAT 目前只存在于页面内存。Vite development server 用 `RAH_DAEM
 - client SDK：Fake/HTTP 共用 typed schemas，GET/auth/path/error 有 contract test；
 - client core：cold reload、backward paginated replay、stable consumer、bounded catch-up、no-progress fence、gap、divergence、apply-before-ack 有确定性测试；
 - view model：Message canonical order 与 Task 五列映射有确定性测试；
-- browser：`npm run test:web:browser` 自动启动隔离 daemon、两个 Fake CLI runtime、same-origin Vite proxy 与系统 Chrome/Chromium，通过原生 CDP 验证 Workspace Agent/Computer、Room 创建、dialog focus/Escape、成员加入/移除、双 Agent reply、membership-driven delivery、Thread create/reply/count、Task claim/start/progress/submit/Human complete、reload-safe URL，以及 390x844 无横向 overflow 和 Room 抽屉；Human PAT 不进入浏览器，且不启动付费 Provider；
+- browser：`npm run test:web:browser` 自动启动隔离 daemon、两个 Fake CLI runtime、same-origin Vite proxy 与系统 Chrome/Chromium，通过原生 CDP 验证 Workspace Agent 创建与重载持久化、Computer inventory、Room 创建、dialog focus/Escape、成员加入/移除、双 Agent reply、membership-driven delivery、Thread create/reply/count、Task claim/start/progress/submit/Human complete、reload-safe URL，以及 390x844 无横向 overflow 和 Room 抽屉；Human PAT 不进入浏览器，且不启动付费 Provider；
+- CI：pull request 和 `main` push 必须执行同一 `npm run test:web:browser`，不能只用 typed/Fake 测试代替真实 Chrome 业务门禁；
 - no-token browser regression：`apps/web/test/room-agent-membership.html` 通过注入 typed `FakeRahClient`，覆盖互斥移动导航、drawer、Message post/render、成员 Agent 自动回复、Thread create/reply、Task create、mention attention、stale snapshot、正常 join/remove/rejoin、并发 join 409、Room sequence catch-up 与 reload recovery；fixture 不读取 PAT、不启动 CLI，也不进入 production Vite bundle；完整控件—反馈矩阵见 `apps/web/test/README.md`，新启用的控件没有 typed handler 和浏览器断言时不得交付；
 - exploratory multi-Agent sequence：`npm run dev:web:multi-agent-fixture` 仍只负责启动真实 daemon config v4、测试代理和两个 Fake CLI，供人工检查与浏览器 DevTools 使用；自动验收使用独立的 `npm run test:web:browser`。浏览器无须接触 PAT；`dev:web:multi-agent-fixture:lan` 另提供明确、临时的 iOS 实机入口；
+- installed local CLI sequence：`npm run dev:web:local-cli-fixture` 把探测到的 Codex/Kimi/OpenCode/Claude AgentDefinition 建在产品 Workspace 的 control Room，并同时启动 same-origin Web 入口；fixture 输出、页面、URL 与 Local Storage 都不含 Human PAT。`:lan` 变体只用于可信局域网，启动只做 executable probe，真正给 Agent 投递工作才可能消耗 provider 额度；
 - production build：Vite build 必须独立通过，且不需要 sibling `raft-ui`。

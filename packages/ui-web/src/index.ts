@@ -45,6 +45,9 @@ export type MobileNavigationDestination = "agents" | "chat" | "rooms" | "tasks";
 
 export type WorkspaceAgentView = {
   agentDefinitionId: string;
+  avatarKey?: string;
+  description?: string;
+  displayName: string;
   handle: string;
   participantId: string;
   role: string;
@@ -108,6 +111,13 @@ export function workspaceAgentDirectory(input: {
       );
       return Object.freeze({
         agentDefinitionId: agent.definition.agentDefinitionId,
+        ...(agent.currentRevision.avatarKey === undefined
+          ? {}
+          : { avatarKey: agent.currentRevision.avatarKey }),
+        ...(agent.currentRevision.description === undefined
+          ? {}
+          : { description: agent.currentRevision.description }),
+        displayName: agent.currentRevision.displayName ?? agent.handle,
         handle: agent.handle,
         participantId: agent.definition.participantId,
         role: agent.currentRevision.role,

@@ -2,6 +2,10 @@ import { spawn } from "node:child_process";
 import { existsSync, writeFileSync } from "node:fs";
 
 const mode = process.env.RAH_FAKE_MODE ?? "success";
+const agentContext =
+  process.env.RAH_AGENT_CONTEXT_JSON === undefined
+    ? undefined
+    : JSON.parse(process.env.RAH_AGENT_CONTEXT_JSON);
 
 if (mode === "ignore-term" || mode === "ignore-term-with-child") {
   process.on("SIGTERM", () => {
@@ -12,6 +16,8 @@ if (mode === "ignore-term" || mode === "ignore-term-with-child") {
 process.stdout.write(
   JSON.stringify({
     activationId: process.env.RAH_ACTIVATION_ID,
+    agentInstructions: agentContext?.agentDefinitionRevision?.instructions,
+    agentRole: agentContext?.agentDefinitionRevision?.role,
     hasSupervisorConfig:
       process.env.RAH_PROCESS_SUPERVISOR_CONFIG !== undefined,
     hasSupervisorToken: process.env.RAH_PROCESS_SUPERVISOR_TOKEN !== undefined,

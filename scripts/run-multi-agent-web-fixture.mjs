@@ -222,7 +222,7 @@ try {
     workspace: {
       cwd: stateDirectory,
       mode: "in_place",
-      workspaceDefinitionId: "web-multi-agent-workspace-definition",
+      workspaceDefinitionId: productWorkspace.workspace.workspaceId,
       workspaceMountDigest: `sha256:${"a".repeat(64)}`,
       workspaceMountRevisionId: "web-multi-agent-workspace-mount-v1",
     },

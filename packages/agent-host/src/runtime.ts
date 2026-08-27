@@ -1,4 +1,8 @@
-import type { Activation, RuntimeRecoveryDescriptor } from "@rah-os/protocol";
+import type {
+  Activation,
+  AgentRuntimeContext,
+  RuntimeRecoveryDescriptor,
+} from "@rah-os/protocol";
 
 export type RuntimeAvailability = {
   available: boolean;
@@ -9,6 +13,7 @@ export type ActivationEnvelope = Pick<
   Activation,
   "activationId" | "fromSeq" | "participantId" | "reason" | "roomId" | "toSeq"
 > & {
+  agent?: AgentRuntimeContext;
   consumerId: string;
   hostId: string;
   runAttemptId: string;
