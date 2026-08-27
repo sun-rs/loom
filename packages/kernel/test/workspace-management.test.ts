@@ -329,7 +329,6 @@ test("a Workspace manager atomically provisions a real runtime-bound Agent", () 
       ],
     };
     kernel.publishRuntimeOffer(host, offer);
-
     const request = {
       avatarKey: "robot",
       basedOnRoomSeq: workspace.event.roomSeq,
@@ -451,6 +450,275 @@ test("a Workspace manager atomically provisions a real runtime-bound Agent", () 
       "the already-running Host context must pick up the manager-granted Agent",
     );
     assert.equal(launch?.runAttempt.state, "starting");
+  } finally {
+    kernel.close();
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("a Workspace manager atomically configures and controls a durable Agent", () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-agent-manage-"));
+  const now = new Date("2026-08-27T01:00:00.000Z");
+  const kernel = new RoomKernel({
+    databasePath: join(directory, "room.db"),
+    now: () => now,
+  });
+  try {
+    kernel.initialize();
+    const owner = kernel.provisionPrincipal({
+      handle: "agent-manager",
+      kind: "human",
+    });
+    const bootstrapAgent = kernel.provisionPrincipal({
+      handle: "bootstrap-agent-manage",
+      kind: "agent",
+    });
+    const ownerActor = kernel.authenticateAccessToken(owner.accessToken);
+    const workspace = kernel.createWorkspace(ownerActor, {
+      idempotencyKey: "agent-manage-workspace",
+      name: "Agent Management",
+      slug: "agent-management",
+    });
+    const host = kernel.authenticateHostAccessToken(
+      kernel.provisionHostCredential({
+        hostId: "agent-manage-host",
+        participantIds: [bootstrapAgent.principal.principalId],
+      }).accessToken,
+    );
+    kernel.heartbeatHost(host);
+    const offer: RuntimeOffer = {
+      capacityPoolIds: [],
+      capabilityEvidence: [],
+      certificationRefs: [],
+      hostId: host.hostId,
+      hostInstanceId: host.instanceId,
+      isolation: { evidence: "declared", level: "none" },
+      leaseUntil: "2026-08-27T01:05:00.000Z",
+      maxConcurrent: 2,
+      modelBindingDescriptors: [],
+      observedAt: now.toISOString(),
+      protocolFamily: "rah-worker-process/v1",
+      revisionDigest: digest("c"),
+      runtimeOfferId: "offer-agent-manage",
+      runtimeProfileId: "profile-agent-manage",
+      runtimeProfileRevisionId: "profile-agent-manage-v1",
+      state: "available",
+      workspaceMountDescriptors: [
+        {
+          modes: ["in_place"],
+          workspaceDefinitionId: workspace.workspace.workspaceId,
+          workspaceMountDigest: digest("d"),
+          workspaceMountRevisionId: "mount-agent-manage-v1",
+        },
+      ],
+    };
+    kernel.publishRuntimeOffer(host, offer);
+    const secondHost = kernel.authenticateHostAccessToken(
+      kernel.provisionHostCredential({
+        hostId: "agent-manage-host-2",
+        participantIds: [bootstrapAgent.principal.principalId],
+      }).accessToken,
+    );
+    kernel.heartbeatHost(secondHost);
+    const secondOffer: RuntimeOffer = {
+      ...offer,
+      hostId: secondHost.hostId,
+      hostInstanceId: secondHost.instanceId,
+      revisionDigest: digest("e"),
+      runtimeOfferId: "offer-agent-manage-2",
+      runtimeProfileId: "profile-agent-manage-2",
+      runtimeProfileRevisionId: "profile-agent-manage-2-v1",
+    };
+    kernel.publishRuntimeOffer(secondHost, secondOffer);
+    const created = kernel.provisionWorkspaceAgent(ownerActor, {
+      basedOnRoomSeq: workspace.event.roomSeq,
+      controlRoomId: workspace.controlRoom.roomId,
+      displayName: "Alice",
+      handle: "alice-manage",
+      idempotencyKey: "agent-manage-provision",
+      instructions: "Implement changes.",
+      modelIntent: { fallback: "disabled" },
+      role: "Engineering Agent",
+      runtimeOfferId: offer.runtimeOfferId,
+      sessionPolicy: "fresh",
+    });
+
+    const configured = kernel.manageWorkspaceAgent(ownerActor, {
+      action: "configure",
+      agentDefinitionId: created.agent.definition.agentDefinitionId,
+      avatarKey: "star",
+      basedOnRoomSeq: created.event.roomSeq,
+      description: "Reviews production changes.",
+      displayName: "Alice Reviewer",
+      handle: "alice-reviewer",
+      idempotencyKey: "agent-manage-configure",
+      instructions: "Review canonical Room work before approval.",
+      modelIntent: { fallback: "disabled", reasoning: "default" },
+      role: "Review Agent",
+      runtimeOfferId: offer.runtimeOfferId,
+      sessionPolicy: "prefer_resume",
+    });
+    assert.equal(configured.deduplicated, false);
+    assert.equal(configured.agent.handle, "alice-reviewer");
+    assert.equal(configured.agent.currentRevision.revision, 2);
+    assert.equal(
+      configured.agent.currentRevision.displayName,
+      "Alice Reviewer",
+    );
+    assert.equal(configured.agent.currentRevision.role, "Review Agent");
+    assert.equal(configured.policy?.revision, 2);
+    assert.equal(configured.event.type, "agent.configured");
+    assert.equal(
+      kernel.manageWorkspaceAgent(ownerActor, {
+        action: "configure",
+        agentDefinitionId: created.agent.definition.agentDefinitionId,
+        avatarKey: "star",
+        basedOnRoomSeq: created.event.roomSeq,
+        description: "Reviews production changes.",
+        displayName: "Alice Reviewer",
+        handle: "alice-reviewer",
+        idempotencyKey: "agent-manage-configure",
+        instructions: "Review canonical Room work before approval.",
+        modelIntent: { fallback: "disabled", reasoning: "default" },
+        role: "Review Agent",
+        runtimeOfferId: offer.runtimeOfferId,
+        sessionPolicy: "prefer_resume",
+      }).deduplicated,
+      true,
+    );
+
+    const roomResult = kernel.createWorkspaceRoom(ownerActor, {
+      basedOnControlRoomSeq: configured.event.roomSeq,
+      idempotencyKey: "agent-manage-room",
+      kind: "channel",
+      name: "Managed Agent Room",
+      slug: "managed-agent-room",
+      workspaceId: workspace.workspace.workspaceId,
+    });
+    kernel.onboardAgentToRoom(ownerActor, {
+      agentDefinitionId: created.agent.definition.agentDefinitionId,
+      basedOnRoomSeq: kernel.sync(ownerActor, {
+        afterSeq: 0,
+        consumerId: "agent-manage-room-onboard",
+        roomId: roomResult.room.roomId,
+      }).latestRoomSeq,
+      idempotencyKey: "agent-manage-room-onboarded",
+      roomId: roomResult.room.roomId,
+    });
+
+    const disabled = kernel.manageWorkspaceAgent(ownerActor, {
+      action: "set_state",
+      agentDefinitionId: created.agent.definition.agentDefinitionId,
+      basedOnRoomSeq: roomResult.event.roomSeq,
+      idempotencyKey: "agent-manage-disable",
+      state: "disabled",
+    });
+    assert.equal(disabled.agent.definition.state, "disabled");
+    assert.equal(disabled.event.type, "agent.disabled");
+    kernel.postRoomMessage(ownerActor, {
+      body: "A disabled Agent must not receive this.",
+      idempotencyKey: "agent-manage-disabled-message",
+      recipients: [],
+      roomId: roomResult.room.roomId,
+    });
+    assert.equal(kernel.scheduleNextPlacement({ leaseMs: 30_000 }), null);
+    const enabled = kernel.manageWorkspaceAgent(ownerActor, {
+      action: "set_state",
+      agentDefinitionId: created.agent.definition.agentDefinitionId,
+      basedOnRoomSeq: disabled.event.roomSeq,
+      idempotencyKey: "agent-manage-enable",
+      state: "enabled",
+    });
+    assert.equal(enabled.agent.definition.state, "enabled");
+    assert.equal(enabled.event.type, "agent.enabled");
+    kernel.postRoomMessage(ownerActor, {
+      body: "The enabled Agent must use revision two.",
+      idempotencyKey: "agent-manage-enabled-message",
+      recipients: [],
+      roomId: roomResult.room.roomId,
+    });
+    const placement = kernel.scheduleNextPlacement({ leaseMs: 30_000 });
+    assert.equal(
+      placement?.agentDefinitionRevisionId,
+      configured.agent.currentRevision.agentDefinitionRevisionId,
+    );
+    const launch = kernel.claimNextPlacement(host, { leaseMs: 30_000 });
+    assert.equal(
+      launch?.agentContext.agentDefinitionRevision.instructions,
+      "Review canonical Room work before approval.",
+    );
+
+    const disposable = kernel.provisionWorkspaceAgent(ownerActor, {
+      basedOnRoomSeq: enabled.event.roomSeq,
+      controlRoomId: workspace.controlRoom.roomId,
+      displayName: "Disposable",
+      handle: "disposable-agent",
+      idempotencyKey: "agent-manage-disposable",
+      instructions: "Temporary work.",
+      modelIntent: { fallback: "disabled" },
+      role: "Temporary Agent",
+      runtimeOfferId: offer.runtimeOfferId,
+      sessionPolicy: "fresh",
+    });
+    const disposableConfigured = kernel.manageWorkspaceAgent(ownerActor, {
+      action: "configure",
+      agentDefinitionId: disposable.agent.definition.agentDefinitionId,
+      basedOnRoomSeq: disposable.event.roomSeq,
+      displayName: "Disposable",
+      handle: "disposable-agent",
+      idempotencyKey: "agent-manage-disposable-rebind",
+      instructions: "Temporary work on the second Host.",
+      modelIntent: { fallback: "disabled" },
+      role: "Temporary Agent",
+      runtimeOfferId: secondOffer.runtimeOfferId,
+      sessionPolicy: "fresh",
+    });
+    assert.equal(
+      kernel
+        .heartbeatHost(host)
+        .participantIds.includes(disposable.agent.definition.participantId),
+      false,
+    );
+    assert.equal(
+      kernel
+        .heartbeatHost(secondHost)
+        .participantIds.includes(disposable.agent.definition.participantId),
+      true,
+    );
+    const disposableDisabled = kernel.manageWorkspaceAgent(ownerActor, {
+      action: "set_state",
+      agentDefinitionId: disposable.agent.definition.agentDefinitionId,
+      basedOnRoomSeq: disposableConfigured.event.roomSeq,
+      idempotencyKey: "agent-manage-disposable-disable",
+      state: "disabled",
+    });
+    const deleted = kernel.manageWorkspaceAgent(ownerActor, {
+      action: "set_state",
+      agentDefinitionId: disposable.agent.definition.agentDefinitionId,
+      basedOnRoomSeq: disposableDisabled.event.roomSeq,
+      idempotencyKey: "agent-manage-disposable-delete",
+      state: "tombstoned",
+    });
+    assert.equal(deleted.agent.definition.state, "tombstoned");
+    assert.equal(deleted.event.type, "agent.tombstoned");
+    assert.equal(
+      kernel
+        .listAgentCatalog(ownerActor, {
+          controlRoomId: workspace.controlRoom.roomId,
+        })
+        .some(
+          ({ definition }) =>
+            definition.agentDefinitionId ===
+            disposable.agent.definition.agentDefinitionId,
+        ),
+      false,
+    );
+    assert.equal(
+      kernel
+        .heartbeatHost(secondHost)
+        .participantIds.includes(disposable.agent.definition.participantId),
+      false,
+    );
   } finally {
     kernel.close();
     rmSync(directory, { force: true, recursive: true });

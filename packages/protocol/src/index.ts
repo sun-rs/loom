@@ -9,8 +9,25 @@ import {
 import {
   AgentCatalogEntrySchema,
   AgentDefinitionRevisionSchema,
-  VersionedContentRefSchema,
 } from "./agent-definition.ts";
+import {
+  CapabilityEvidenceLevelSchema,
+  ExecutionPolicyRevisionSchema,
+  ExplicitReasoningLevelSchema,
+  IsolationLevelSchema,
+  ModelBindingDescriptorSchema,
+  ModelCapabilityClassSchema,
+  ModelIntentSchema,
+  PlacementPreferenceSchema,
+  ReasoningLevelSchema,
+  RuntimeCapabilityEvidenceSchema,
+  RuntimeCapabilityRequirementSchema,
+  RuntimeCertificationRefSchema,
+  RuntimeCertificationSchema,
+  RuntimeModelBindingSchema,
+  ServiceTierSchema,
+  WorkspaceModeSchema,
+} from "./execution-policy.ts";
 import {
   ParticipantKindSchema,
   PrincipalSchema,
@@ -27,6 +44,7 @@ import {
 export { TaskSchema, TaskStateSchema };
 export type { Task, TaskState };
 export * from "./agent-definition.ts";
+export * from "./execution-policy.ts";
 export { ContentDigestSchema } from "./common.ts";
 export type { ContentDigest } from "./common.ts";
 export {
@@ -239,22 +257,6 @@ export type RuntimeRecoveryDescriptor = z.infer<
 const UniqueIdentifierArraySchema = z
   .array(IdentifierSchema)
   .superRefine(rejectDuplicateStrings);
-
-export const CapabilityEvidenceLevelSchema = z.enum([
-  "declared",
-  "probed",
-  "certified",
-]);
-export type CapabilityEvidenceLevel = z.infer<
-  typeof CapabilityEvidenceLevelSchema
->;
-
-export const WorkspaceModeSchema = z.enum([
-  "in_place",
-  "worktree",
-  "ephemeral",
-]);
-export type WorkspaceMode = z.infer<typeof WorkspaceModeSchema>;
 
 const RuntimeArgumentSchema = z
   .string()
@@ -638,210 +640,6 @@ export type RuntimeProfileAuditEntry = z.infer<
   typeof RuntimeProfileAuditEntrySchema
 >;
 
-export const IsolationLevelSchema = z.enum([
-  "none",
-  "process",
-  "platform",
-  "container",
-]);
-export type IsolationLevel = z.infer<typeof IsolationLevelSchema>;
-
-export const ReasoningLevelSchema = z.enum([
-  "default",
-  "low",
-  "medium",
-  "high",
-  "max",
-]);
-export type ReasoningLevel = z.infer<typeof ReasoningLevelSchema>;
-
-export const ExplicitReasoningLevelSchema = z.enum([
-  "low",
-  "medium",
-  "high",
-  "max",
-]);
-export type ExplicitReasoningLevel = z.infer<
-  typeof ExplicitReasoningLevelSchema
->;
-
-export const ServiceTierSchema = z.enum(["default", "fast", "priority"]);
-export type ServiceTier = z.infer<typeof ServiceTierSchema>;
-
-export const ModelCapabilityClassSchema = z.enum([
-  "fast",
-  "balanced",
-  "deep_coding",
-]);
-export type ModelCapabilityClass = z.infer<typeof ModelCapabilityClassSchema>;
-
-export const ModelIntentSchema = z
-  .object({
-    exactBindingIds: UniqueIdentifierArraySchema.min(1).optional(),
-    capabilityClass: ModelCapabilityClassSchema.optional(),
-    reasoning: ReasoningLevelSchema.optional(),
-    serviceTier: ServiceTierSchema.optional(),
-    fallback: z.enum(["disabled", "same_profile", "compatible_offer"]),
-  })
-  .strict()
-  .refine(
-    (intent) =>
-      intent.exactBindingIds === undefined ||
-      intent.capabilityClass === undefined,
-    {
-      message: "exactBindingIds and capabilityClass are mutually exclusive",
-      path: ["capabilityClass"],
-    },
-  );
-export type ModelIntent = z.infer<typeof ModelIntentSchema>;
-
-export const RuntimeCapabilityEvidenceSchema = z
-  .object({
-    capability: IdentifierSchema,
-    evidence: CapabilityEvidenceLevelSchema,
-  })
-  .strict();
-export type RuntimeCapabilityEvidence = z.infer<
-  typeof RuntimeCapabilityEvidenceSchema
->;
-
-export const RuntimeCertificationRefSchema = z
-  .object({
-    certificationId: IdentifierSchema,
-    certificationDigest: ContentDigestSchema,
-  })
-  .strict();
-export type RuntimeCertificationRef = z.infer<
-  typeof RuntimeCertificationRefSchema
->;
-
-export const RuntimeCertificationSchema = z
-  .object({
-    certificationId: IdentifierSchema,
-    certificationDigest: ContentDigestSchema,
-    protocolFamily: IdentifierSchema,
-    runtimeProfileDigest: ContentDigestSchema,
-    capabilities: UniqueIdentifierArraySchema,
-    maximumIsolation: IsolationLevelSchema,
-  })
-  .strict();
-export type RuntimeCertification = z.infer<typeof RuntimeCertificationSchema>;
-
-export const RuntimeCapabilityRequirementSchema = z
-  .object({
-    capability: IdentifierSchema,
-    minimumEvidence: z.enum(["probed", "certified"]),
-  })
-  .strict();
-export type RuntimeCapabilityRequirement = z.infer<
-  typeof RuntimeCapabilityRequirementSchema
->;
-
-const ModelBindingDescriptorFields = {
-  modelBindingId: IdentifierSchema,
-  provider: IdentifierSchema,
-  modelId: IdentifierSchema,
-  capabilityClasses: z
-    .array(ModelCapabilityClassSchema)
-    .superRefine(rejectDuplicateStrings),
-  supportedReasoning: z
-    .array(ExplicitReasoningLevelSchema)
-    .superRefine(rejectDuplicateStrings),
-  supportedServiceTiers: z
-    .array(ServiceTierSchema)
-    .superRefine(rejectDuplicateStrings),
-  evidence: CapabilityEvidenceLevelSchema,
-};
-
-export const ModelBindingDescriptorSchema = z
-  .object(ModelBindingDescriptorFields)
-  .strict();
-export type ModelBindingDescriptor = z.infer<
-  typeof ModelBindingDescriptorSchema
->;
-
-export const RuntimeModelBindingSchema = z
-  .object({
-    ...ModelBindingDescriptorFields,
-    adapterMapping: z
-      .object({
-        kind: IdentifierSchema,
-        config: z.record(z.string(), z.unknown()),
-      })
-      .strict(),
-  })
-  .strict();
-export type RuntimeModelBinding = z.infer<typeof RuntimeModelBindingSchema>;
-
-const PreferenceWeightSchema = z.number().int().positive().max(1_000_000);
-const TargetPreferenceSchema = z
-  .object({
-    criterion: z.enum([
-      "runtime_offer",
-      "runtime_profile",
-      "protocol_family",
-      "model_binding",
-    ]),
-    targetId: IdentifierSchema,
-    weight: PreferenceWeightSchema,
-  })
-  .strict();
-const ScalarPreferenceSchema = z
-  .object({
-    criterion: z.enum(["lower_load", "avoid_structural_failures"]),
-    weight: PreferenceWeightSchema,
-  })
-  .strict();
-
-export const PlacementPreferenceSchema = z.union([
-  TargetPreferenceSchema,
-  ScalarPreferenceSchema,
-]);
-export type PlacementPreference = z.infer<typeof PlacementPreferenceSchema>;
-
-export const ExecutionPolicyRevisionSchema = z
-  .object({
-    executionPolicyId: IdentifierSchema,
-    executionPolicyRevisionId: IdentifierSchema,
-    controlRoomId: IdentifierSchema,
-    revision: z.number().int().positive(),
-    contentDigest: ContentDigestSchema,
-    required: z
-      .object({
-        authorizedHostIds: UniqueIdentifierArraySchema.min(1).optional(),
-        allowedOfferIds: UniqueIdentifierArraySchema.min(1).optional(),
-        allowedProtocolFamilies: UniqueIdentifierArraySchema.min(1),
-        capabilities: z.array(RuntimeCapabilityRequirementSchema),
-        minimumIsolation: IsolationLevelSchema,
-        workspaceMode: WorkspaceModeSchema,
-      })
-      .strict(),
-    preferred: z.array(PlacementPreferenceSchema).max(64),
-    modelIntent: ModelIntentSchema,
-    sessionPolicy: z.enum(["fresh", "prefer_resume", "require_resume"]),
-    retryPolicyRef: VersionedContentRefSchema,
-    createdBy: IdentifierSchema,
-    createdAt: TimestampSchema,
-  })
-  .strict()
-  .superRefine((policy, context) => {
-    rejectDuplicateStrings(
-      policy.required.capabilities.map((requirement) => requirement.capability),
-      context,
-    );
-    rejectDuplicateStrings(
-      policy.preferred.map((preference) =>
-        "targetId" in preference
-          ? `${preference.criterion}:${preference.targetId}`
-          : preference.criterion,
-      ),
-      context,
-    );
-  });
-export type ExecutionPolicyRevision = z.infer<
-  typeof ExecutionPolicyRevisionSchema
->;
-
 export const ClientAgentProvisionRequestSchema = z
   .object({
     avatarKey: IdentifierSchema.optional(),
@@ -894,6 +692,63 @@ export const ClientAgentProvisionResponseSchema = z
   .strict();
 export type ClientAgentProvisionResponse = z.infer<
   typeof ClientAgentProvisionResponseSchema
+>;
+
+export const ClientAgentConfigureRequestSchema =
+  ClientAgentProvisionRequestSchema.omit({ controlRoomId: true }).extend({
+    action: z.literal("configure"),
+    agentDefinitionId: IdentifierSchema,
+  });
+export type ClientAgentConfigureRequest = z.infer<
+  typeof ClientAgentConfigureRequestSchema
+>;
+
+export const ClientAgentStateRequestSchema = z
+  .object({
+    action: z.literal("set_state"),
+    agentDefinitionId: IdentifierSchema,
+    basedOnRoomSeq: z.number().int().nonnegative(),
+    idempotencyKey: IdentifierSchema,
+    state: z.enum(["enabled", "disabled", "tombstoned"]),
+  })
+  .strict();
+export type ClientAgentStateRequest = z.infer<
+  typeof ClientAgentStateRequestSchema
+>;
+
+export const ClientAgentManageRequestSchema = z.discriminatedUnion("action", [
+  ClientAgentConfigureRequestSchema,
+  ClientAgentStateRequestSchema,
+]);
+export type ClientAgentManageRequest = z.infer<
+  typeof ClientAgentManageRequestSchema
+>;
+
+export const ClientAgentManageResponseSchema = z
+  .object({
+    agent: AgentCatalogEntrySchema,
+    deduplicated: z.boolean(),
+    event: RoomEventSchema,
+    hostBinding: WorkspaceAgentHostBindingSchema.optional(),
+    policy: ExecutionPolicyRevisionSchema.optional(),
+  })
+  .strict();
+export type ClientAgentManageResponse = z.infer<
+  typeof ClientAgentManageResponseSchema
+>;
+
+export const ClientAgentGetRequestSchema = z
+  .object({ agentDefinitionId: IdentifierSchema })
+  .strict();
+export type ClientAgentGetRequest = z.infer<typeof ClientAgentGetRequestSchema>;
+export const ClientAgentGetResponseSchema = z
+  .object({
+    agent: AgentCatalogEntrySchema,
+    policy: ExecutionPolicyRevisionSchema,
+  })
+  .strict();
+export type ClientAgentGetResponse = z.infer<
+  typeof ClientAgentGetResponseSchema
 >;
 
 export const RuntimeOfferStateSchema = z.enum([

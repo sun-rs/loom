@@ -4,6 +4,8 @@ import type {
   AgentCatalogEntry,
   AgentDefinition,
   AgentDefinitionRevision,
+  ClientAgentManageRequest,
+  ClientAgentManageResponse,
   AgentRuntimeContext,
   ExecutionPolicyRevision,
   InboxState,
@@ -138,6 +140,9 @@ export type WorkspaceAgentProvisionInput = {
   runtimeOfferId: string;
   sessionPolicy: ExecutionPolicyRevision["sessionPolicy"];
 };
+
+export type WorkspaceAgentManagementInput = ClientAgentManageRequest;
+export type WorkspaceAgentManagementResult = ClientAgentManageResponse;
 
 export type WorkspaceAgentHostBinding = {
   hostId: string;

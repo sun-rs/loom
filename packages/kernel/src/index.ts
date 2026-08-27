@@ -21,6 +21,7 @@ export {
 } from "./auth.ts";
 export { KERNEL_SCHEMA_VERSION, RoomKernel } from "./room-kernel.ts";
 export { computeRuntimeCertificationDigest } from "./runtime-certification.ts";
+export { manageWorkspaceAgentTransaction } from "./workspace-agent-management.ts";
 export type {
   PlacementCapacityPolicy,
   RoomKernelOptions,
@@ -71,6 +72,8 @@ export type {
   Thread,
   ThreadMutationResult,
   Workspace,
+  WorkspaceAgentManagementInput,
+  WorkspaceAgentManagementResult,
   WorkspaceAgentHostBinding,
   WorkspaceAgentProvisionInput,
   WorkspaceAgentProvisionResult,

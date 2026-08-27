@@ -412,6 +412,38 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     assert.equal(provisioned.agent.currentRevision.displayName, "Alice");
     assert.equal(provisioned.hostBinding.hostId, host.hostId);
 
+    const manageResponse = await request(
+      "/v3/client/agents/manage",
+      {
+        action: "configure",
+        agentDefinitionId: provisioned.agent.definition.agentDefinitionId,
+        basedOnRoomSeq: provisioned.event.roomSeq,
+        displayName: "Alice Reviewer",
+        handle: "client-alice-reviewer",
+        idempotencyKey: "client-agent-managed",
+        instructions: "Review canonical Room state before approval.",
+        modelIntent: { fallback: "disabled", reasoning: "high" },
+        role: "Review Agent",
+        runtimeOfferId: "offer-codex",
+        sessionPolicy: "prefer_resume",
+      },
+      human.accessToken,
+    );
+    assert.equal(manageResponse.status, 200);
+    const managed = await jsonObject(manageResponse);
+    assert.equal(managed.agent.handle, "client-alice-reviewer");
+    assert.equal(managed.agent.currentRevision.revision, 2);
+    assert.equal(managed.policy.revision, 2);
+    const agentGetResponse = await request(
+      "/v3/client/agents/get",
+      { agentDefinitionId: provisioned.agent.definition.agentDefinitionId },
+      human.accessToken,
+    );
+    assert.equal(agentGetResponse.status, 200);
+    const agentDetail = await jsonObject(agentGetResponse);
+    assert.equal(agentDetail.agent.currentRevision.revision, 2);
+    assert.equal(agentDetail.policy.modelIntent.reasoning, "high");
+
     const hiddenAgentsResponse = await request(
       "/v3/client/agents/list",
       { controlRoomId: controlRoom.roomId },

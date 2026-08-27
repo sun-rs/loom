@@ -112,11 +112,14 @@ import {
   normalizeExecutionPolicyContent,
   provisionWorkspaceAgentTransaction,
 } from "./workspace-agent-provisioning.ts";
+import {
+  getWorkspaceAgentManagementView,
+  manageWorkspaceAgentTransaction,
+} from "./workspace-agent-management.ts";
 import type {
   InboxItem,
   AgentDefinitionContent,
   AgentDefinitionMutationResult,
-  AgentDefinitionRecord,
   ExecutionPolicyContent,
   ExecutionPolicyMutationResult,
   ExecutionPolicyRecord,
@@ -144,6 +147,8 @@ import type {
   Thread,
   ThreadMutationResult,
   Workspace,
+  WorkspaceAgentManagementInput,
+  WorkspaceAgentManagementResult,
   WorkspaceAgentProvisionInput,
   WorkspaceAgentProvisionResult,
   WorkspaceMutationResult,
@@ -2614,64 +2619,60 @@ export class RoomKernel {
     });
   }
 
-  getAgentDefinition(agentDefinitionId: string): AgentDefinitionRecord {
-    const row = this.#requireAgentDefinitionRow(agentDefinitionId);
-    return {
-      currentRevision: this.#agentDefinitionRevisionFromRow(
-        this.#requireAgentDefinitionRevisionRow(
-          text(row, "current_revision_id"),
-        ),
-      ),
-      definition: this.#agentDefinitionFromRow(row),
-    };
-  }
-
   provisionWorkspaceAgent(
     actor: AuthenticatedActorContext,
     input: WorkspaceAgentProvisionInput,
   ): WorkspaceAgentProvisionResult {
-    return this.#transaction(() => {
-      const actorId = this.#requireHumanControlActor(
-        actor,
-        input.controlRoomId,
-      );
-      this.#assertIdempotencyKey(input.idempotencyKey);
-      return provisionWorkspaceAgentTransaction(
+    return this.#transaction(() =>
+      provisionWorkspaceAgentTransaction(
         {
-          actorId,
+          actorId: this.#requireHumanControlActor(actor, input.controlRoomId),
           createId: this.#createId,
           database: this.#database,
           events: this.#roomEvents,
           now: this.#now,
         },
         input,
-      );
-    });
+      ),
+    );
   }
-
+  manageWorkspaceAgent(
+    actor: AuthenticatedActorContext,
+    input: WorkspaceAgentManagementInput,
+  ): WorkspaceAgentManagementResult {
+    return this.#transaction(() =>
+      manageWorkspaceAgentTransaction(
+        {
+          actorId: this.#requireAuthenticatedActor(actor),
+          createId: this.#createId,
+          database: this.#database,
+          events: this.#roomEvents,
+          now: this.#now,
+        },
+        input,
+      ),
+    );
+  }
+  getWorkspaceAgentManagementView(
+    actor: AuthenticatedActorContext,
+    agentDefinitionId: string,
+  ) {
+    return getWorkspaceAgentManagementView(
+      this.#database,
+      this.#requireAuthenticatedActor(actor),
+      agentDefinitionId,
+    );
+  }
   listAgentCatalog(
     actor: AuthenticatedActorContext,
     input: { controlRoomId?: string } = {},
   ): AgentCatalogEntry[] {
-    const actorId = this.#requireAuthenticatedActor(actor);
-    if (
-      this.#principalFromRow(this.#requirePrincipal(actorId)).kind !== "human"
-    ) {
-      throw new ForbiddenError(
-        "Agent catalog requires an authenticated Human principal",
-      );
-    }
-    return ar
-      .listAgentCatalogRows(this.#database, actorId, input.controlRoomId)
-      .map((row) =>
-        AgentCatalogEntrySchema.parse({
-          currentRevision: this.#agentDefinitionRevisionFromRow(row),
-          definition: this.#agentDefinitionFromRow(row),
-          handle: text(row, "handle"),
-        }),
-      );
+    return ar.listAgentCatalog(
+      this.#database,
+      this.#requireAuthenticatedActor(actor),
+      input.controlRoomId,
+    );
   }
-
   onboardAgentToRoom(
     actor: AuthenticatedActorContext,
     input: {

@@ -2,6 +2,10 @@ import {
   ClientAcknowledgeRequestSchema,
   ClientAcknowledgeResponseSchema,
   ClientAgentOnboardRequestSchema,
+  ClientAgentManageRequestSchema,
+  ClientAgentManageResponseSchema,
+  ClientAgentGetRequestSchema,
+  ClientAgentGetResponseSchema,
   ClientAgentProvisionRequestSchema,
   ClientAgentProvisionResponseSchema,
   ClientAgentsListRequestSchema,
@@ -55,6 +59,10 @@ import {
   type ClientAcknowledgeRequest,
   type ClientAcknowledgeResponse,
   type ClientAgentOnboardRequest,
+  type ClientAgentManageRequest,
+  type ClientAgentManageResponse,
+  type ClientAgentGetRequest,
+  type ClientAgentGetResponse,
   type ClientAgentProvisionRequest,
   type ClientAgentProvisionResponse,
   type ClientAgentsListRequest,
@@ -109,9 +117,17 @@ import {
 import type { ZodType } from "zod";
 
 export type RahClientOperationMap = {
+  "agent.get": {
+    input: ClientAgentGetRequest;
+    output: ClientAgentGetResponse;
+  };
   "agent.list": {
     input: ClientAgentsListRequest;
     output: ClientAgentsListResponse;
+  };
+  "agent.manage": {
+    input: ClientAgentManageRequest;
+    output: ClientAgentManageResponse;
   };
   "agent.onboard": {
     input: ClientAgentOnboardRequest;
@@ -243,12 +259,26 @@ type OperationDefinition = {
 };
 
 const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
+  "agent.get": {
+    authenticated: true,
+    input: ClientAgentGetRequestSchema,
+    method: "POST",
+    output: ClientAgentGetResponseSchema,
+    path: "/v3/client/agents/get",
+  },
   "agent.list": {
     authenticated: true,
     input: ClientAgentsListRequestSchema,
     method: "POST",
     output: ClientAgentsListResponseSchema,
     path: "/v3/client/agents/list",
+  },
+  "agent.manage": {
+    authenticated: true,
+    input: ClientAgentManageRequestSchema,
+    method: "POST",
+    output: ClientAgentManageResponseSchema,
+    path: "/v3/client/agents/manage",
   },
   "agent.onboard": {
     authenticated: true,

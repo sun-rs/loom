@@ -279,6 +279,30 @@
   line-height: 1.45;
 }
 
+.rah-runtime-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.rah-agent-danger-actions {
+  border-top: var(--line) solid var(--ink);
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 16px;
+  padding-top: 16px;
+}
+
+.rah-agent-delete-confirm {
+  background: var(--cream);
+  border: var(--bd);
+  display: grid;
+  gap: 8px;
+  grid-column: 1 / -1;
+  padding: 12px;
+}
+
 .rah-runtime-icon {
   align-items: center;
   background: var(--cyan);

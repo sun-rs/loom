@@ -16,6 +16,10 @@ import {
   ClientAcknowledgeRequestSchema,
   ClientAcknowledgeResponseSchema,
   ClientAgentOnboardRequestSchema,
+  ClientAgentManageRequestSchema,
+  ClientAgentManageResponseSchema,
+  ClientAgentGetRequestSchema,
+  ClientAgentGetResponseSchema,
   ClientAgentProvisionRequestSchema,
   ClientAgentProvisionResponseSchema,
   ClientAgentsListRequestSchema,
@@ -124,6 +128,8 @@ const CLIENT_V2_DATA_PATHS = new Set([
 const CLIENT_V3_DATA_PATHS = new Set([
   ...CLIENT_V2_DATA_PATHS,
   "/agents/list",
+  "/agents/get",
+  "/agents/manage",
   "/agents/onboard",
   "/agents/provision",
   "/principals/me",
@@ -350,6 +356,31 @@ export class ClientApplicationService {
             controlRoomId: command.controlRoomId,
           }),
         }),
+      );
+      return;
+    }
+    if (path === "/agents/get") {
+      const command = parseClientRequest(ClientAgentGetRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientAgentGetResponseSchema.parse(
+          this.#human.getWorkspaceAgentManagementView(
+            actor,
+            command.agentDefinitionId,
+          ),
+        ),
+      );
+      return;
+    }
+    if (path === "/agents/manage") {
+      const command = parseClientRequest(ClientAgentManageRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientAgentManageResponseSchema.parse(
+          this.#human.manageWorkspaceAgent(actor, command),
+        ),
       );
       return;
     }

@@ -21,7 +21,9 @@ const workspace = {
 
 test("RahClient covers every existing Human API v3 operation", () => {
   assert.deepEqual(RAH_CLIENT_OPERATION_NAMES, [
+    "agent.get",
     "agent.list",
+    "agent.manage",
     "agent.onboard",
     "agent.provision",
     "health",
@@ -76,6 +78,11 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
     path: string;
   }> = [
     {
+      input: { agentDefinitionId: "agent-definition" },
+      operation: "agent.get",
+      path: "/v3/client/agents/get",
+    },
+    {
       input: {},
       operation: "host.runtime.list",
       path: "/v1/local/runtimes/list",
@@ -84,6 +91,17 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       input: { controlRoomId: "room-control" },
       operation: "agent.list",
       path: "/v3/client/agents/list",
+    },
+    {
+      input: {
+        action: "set_state",
+        agentDefinitionId: "agent-definition",
+        basedOnRoomSeq: 1,
+        idempotencyKey: "agent-disable",
+        state: "disabled",
+      },
+      operation: "agent.manage",
+      path: "/v3/client/agents/manage",
     },
     {
       input: {

@@ -12,6 +12,7 @@ export type HumanApplicationPort = Pick<
   | "createThread"
   | "createWorkspace"
   | "getAuthenticatedPrincipal"
+  | "getWorkspaceAgentManagementView"
   | "listInputRequests"
   | "listAgentCatalog"
   | "listMessages"
@@ -21,6 +22,7 @@ export type HumanApplicationPort = Pick<
   | "listTasks"
   | "listThreads"
   | "listWorkspaces"
+  | "manageWorkspaceAgent"
   | "onboardAgentToRoom"
   | "provisionWorkspaceAgent"
   | "removeRoomMember"
@@ -51,6 +53,8 @@ export function createHumanApplicationPort(
     createWorkspace: (actor, input) => kernel.createWorkspace(actor, input),
     getAuthenticatedPrincipal: (actor) =>
       kernel.getAuthenticatedPrincipal(actor),
+    getWorkspaceAgentManagementView: (actor, agentDefinitionId) =>
+      kernel.getWorkspaceAgentManagementView(actor, agentDefinitionId),
     listAgentCatalog: (actor, input) => kernel.listAgentCatalog(actor, input),
     listInputRequests: (actor, input) => kernel.listInputRequests(actor, input),
     listMessages: (actor, input) => kernel.listMessages(actor, input),
@@ -62,6 +66,8 @@ export function createHumanApplicationPort(
     listTasks: (actor, input) => kernel.listTasks(actor, input),
     listThreads: (actor, input) => kernel.listThreads(actor, input),
     listWorkspaces: (actor) => kernel.listWorkspaces(actor),
+    manageWorkspaceAgent: (actor, input) =>
+      kernel.manageWorkspaceAgent(actor, input),
     onboardAgentToRoom: (actor, input) =>
       kernel.onboardAgentToRoom(actor, input),
     provisionWorkspaceAgent: (actor, input) =>

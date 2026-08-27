@@ -1,7 +1,11 @@
 import type { DatabaseSync } from "node:sqlite";
 
 import {
+  AgentCatalogEntrySchema,
+  AgentDefinitionRevisionSchema,
+  AgentDefinitionSchema,
   RoomAgentActivitySchema,
+  type AgentCatalogEntry,
   type ActivationReason,
   type RoomAgentActivity,
 } from "@rah-os/protocol";
@@ -9,7 +13,7 @@ import {
 import { ForbiddenError } from "./errors.ts";
 import { requireRoomMember } from "./collaboration-policy.ts";
 import type { MessageRecipient } from "./collaboration-service.ts";
-import { nullableText, text, type Row } from "./sqlite-row.ts";
+import { jsonObject, nullableText, text, type Row } from "./sqlite-row.ts";
 import type { Principal } from "./types.ts";
 
 export type HumanRoomMessageInput = {
@@ -47,6 +51,38 @@ export function listAgentCatalogRows(
     .all(actorId, controlRoomId ?? null, controlRoomId ?? null);
 }
 
+export function listAgentCatalog(
+  database: DatabaseSync,
+  actorId: string,
+  controlRoomId?: string,
+): AgentCatalogEntry[] {
+  const principal = database
+    .prepare("SELECT kind FROM principals WHERE principal_id = ?")
+    .get(actorId);
+  if (principal === undefined || text(principal, "kind") !== "human") {
+    throw new ForbiddenError(
+      "Agent catalog requires an authenticated Human principal",
+    );
+  }
+  return listAgentCatalogRows(database, actorId, controlRoomId).map((row) =>
+    AgentCatalogEntrySchema.parse({
+      currentRevision: AgentDefinitionRevisionSchema.parse(
+        jsonObject(row, "definition_json"),
+      ),
+      definition: AgentDefinitionSchema.parse({
+        agentDefinitionId: text(row, "agent_definition_id"),
+        controlRoomId: text(row, "control_room_id"),
+        createdAt: text(row, "created_at"),
+        currentRevisionId: text(row, "current_revision_id"),
+        participantId: text(row, "participant_id"),
+        state: text(row, "state"),
+        updatedAt: text(row, "updated_at"),
+      }),
+      handle: text(row, "handle"),
+    }),
+  );
+}
+
 export function listRoomAgentRecipients(
   database: DatabaseSync,
   roomId: string,
@@ -58,7 +94,10 @@ export function listRoomAgentRecipients(
       `SELECT principals.principal_id
        FROM memberships
        JOIN principals ON principals.principal_id = memberships.principal_id
+       LEFT JOIN agent_definitions
+         ON agent_definitions.participant_id = principals.principal_id
        WHERE memberships.room_id = ? AND principals.kind = 'agent'
+         AND (agent_definitions.state IS NULL OR agent_definitions.state = 'enabled')
        ORDER BY principals.principal_id`,
     )
     .all(roomId)

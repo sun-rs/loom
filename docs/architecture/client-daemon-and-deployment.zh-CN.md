@@ -1,6 +1,6 @@
 # Client、Daemon 与部署边界
 
-状态：本机 daemon core 已有独立 composition/CLI entrypoint、严格配置、Host generation fencing、deadline、Outbox wake、Worker delivery/Task/InputRequest command，以及 collaboration P2/P3 versioned loopback Human API；Workspace Agent 原子创建已经打通 Kernel→Human API→Web→冻结运行上下文→真实子进程，并通过 daemon restart 与 desktop/mobile browser gate。Agent 编辑/生命周期、Artifact/Review workflow、CORS/LAN/hint、launchd/install/signing、Keychain 与 supervisor artifact GC 尚未实现。
+状态：本机 daemon core 已有独立 composition/CLI entrypoint、严格配置、Host generation fencing、deadline、Outbox wake、Worker delivery/Task/InputRequest command，以及 collaboration P2/P3 versioned loopback Human API；Workspace Agent 创建、版本化配置、启用/停用/删除已经打通 Kernel→Human API→Web→冻结运行上下文→真实子进程，并通过 daemon restart 与 desktop/mobile browser gate。运行中 drain、skill/memory、Artifact/Review workflow、CORS/LAN/hint、launchd/install/signing、Keychain 与 supervisor artifact GC 尚未实现。
 
 ## 1. 产品形态不改变核心 owner
 
@@ -56,7 +56,7 @@ interface RahClient {
 
 建议实现 `HttpRahClient`、`DesktopRahClient` 和 `FakeRahClient`。Electron IPC、WKWebView message handler 或测试 fake 都只是 transport adapter；它们不能复制 command handler 或 projection。
 
-当前 Human HTTP adapter（兼容类名 `ClientApplicationService`）已实现上述 contract 的 collaboration P2/P3 段：v1/v2 compatibility、v3 health/capabilities、Workspace/Room discovery/managed create、Agent catalog/onboarding/provision、Room `sync/ack`、成员角色、Message/Thread、Task/InputRequest command/query。P3 gate 已覆盖 daemon restart 后同 consumer 从 durable cursor 恢复。它只依赖 `HumanApplicationPort`；嵌入式程序可跳过 HTTP 直接调用 `RahCore.human`。独立 typed `RahClient` package 已覆盖现有 v3 route，Web Room slice 使用 `client-core` 做 bounded catch-up、causal mutation barrier 与 ack-after-apply。Workspace/Room archive、Agent editor/lifecycle、Inbox query/resolve、Artifact/Review、Run Inspector 与 `subscribeHints` 仍缺失，因此不能把这一 slice 称为完整 UI SDK。
+当前 Human HTTP adapter（兼容类名 `ClientApplicationService`）已实现上述 contract 的 collaboration P2/P3 段：v1/v2 compatibility、v3 health/capabilities、Workspace/Room discovery/managed create、Agent catalog/onboarding/provision/get/manage、Room `sync/ack`、成员角色、Message/Thread、Task/InputRequest command/query。P3 gate 已覆盖 daemon restart 后同 consumer 从 durable cursor 恢复。它只依赖 `HumanApplicationPort`；嵌入式程序可跳过 HTTP 直接调用 `RahCore.human`。独立 typed `RahClient` package 已覆盖现有 v3 route，Web Room slice 使用 `client-core` 做 bounded catch-up、causal mutation barrier 与 ack-after-apply。Workspace/Room archive、Agent active-work drain、skill/memory、Inbox query/resolve、Artifact/Review、Run Inspector 与 `subscribeHints` 仍缺失，因此不能把这一 slice 称为完整 UI SDK。
 
 ## 4. 通信协议
 

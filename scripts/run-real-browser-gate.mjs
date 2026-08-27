@@ -186,6 +186,59 @@ try {
       document.querySelector("main")?.textContent?.includes("Bob") === true,
     "persisted Workspace Agent",
   );
+  await clickAgentAction(browser, "Bob", "编辑");
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-agent-manage-dialog") !== null,
+    "Agent management dialog",
+  );
+  await call(browser, () => {
+    const dialog = document.querySelector(".rah-agent-manage-dialog");
+    const inputs = dialog.querySelectorAll("input");
+    const setValue = (element, value) => {
+      const setter = Object.getOwnPropertyDescriptor(
+        element instanceof HTMLTextAreaElement
+          ? HTMLTextAreaElement.prototype
+          : HTMLInputElement.prototype,
+        "value",
+      ).set;
+      setter.call(element, value);
+      element.dispatchEvent(new Event("input", { bubbles: true }));
+      element.dispatchEvent(new Event("change", { bubbles: true }));
+    };
+    setValue(inputs[0], "Bob Reviewer");
+    setValue(inputs[1], "bob-reviewer");
+  });
+  await clickButton(browser, { text: "保存更改" });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-agent-manage-dialog") === null &&
+      document.querySelector("main")?.textContent?.includes("Bob Reviewer") ===
+        true,
+    "persisted Agent revision",
+  );
+  await clickAgentAction(browser, "Bob Reviewer", "编辑");
+  await clickButton(browser, { text: "停用 Agent" });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-agent-manage-dialog") === null &&
+      document.querySelector("main")?.textContent?.includes("disabled") ===
+        true,
+    "disabled Agent projection",
+  );
+  await clickAgentAction(browser, "Bob Reviewer", "编辑");
+  await clickButton(browser, { text: "删除 Agent" });
+  await clickButton(browser, { text: "确认删除" });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-agent-manage-dialog") === null &&
+      document.querySelector("main")?.textContent?.includes("Bob Reviewer") ===
+        false,
+    "deleted Agent projection",
+  );
 
   await clickButton(browser, { title: "计算机" });
   await waitFor(
@@ -676,6 +729,38 @@ async function mutateRoomAgent(connection, handle, action, nextAction) {
     `${handle} membership mutation`,
     [handle, nextAction],
   );
+}
+
+async function clickAgentAction(connection, displayName, action) {
+  await waitFor(
+    connection,
+    (name, buttonText) =>
+      [...document.querySelectorAll(".rah-runtime-card")].some(
+        (card) =>
+          card.querySelector("h2")?.textContent === name &&
+          [...card.querySelectorAll("button")].some(
+            (button) => button.textContent?.trim() === buttonText,
+          ),
+      ),
+    `${action} ${displayName}`,
+    [displayName, action],
+  );
+  const clicked = await call(
+    connection,
+    (name, buttonText) => {
+      const card = [...document.querySelectorAll(".rah-runtime-card")].find(
+        (candidate) => candidate.querySelector("h2")?.textContent === name,
+      );
+      const button = [...(card?.querySelectorAll("button") ?? [])].find(
+        (candidate) => candidate.textContent?.trim() === buttonText,
+      );
+      button?.click();
+      return button !== undefined;
+    },
+    displayName,
+    action,
+  );
+  assert.equal(clicked, true);
 }
 
 async function postMessage(connection, body) {

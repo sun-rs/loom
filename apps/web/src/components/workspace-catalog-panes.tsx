@@ -7,10 +7,12 @@ export function AgentDirectoryPane({
   agents,
   canCreate,
   onCreate,
+  onManage,
 }: {
   agents: readonly WorkspaceAgentView[];
   canCreate: boolean;
   onCreate: () => void;
+  onManage: (agentDefinitionId: string) => void;
 }) {
   return (
     <main className="channel rah-agent-runtime-page">
@@ -102,6 +104,15 @@ export function AgentDirectoryPane({
                 ? "至少一个已绑定 Runtime 当前可运行。"
                 : "当前没有已验证且可用的 Runtime。"}
             </p>
+            <footer className="rah-runtime-card-actions">
+              <button
+                className="btn"
+                disabled={!canCreate}
+                onClick={() => onManage(agent.agentDefinitionId)}
+              >
+                编辑
+              </button>
+            </footer>
           </article>
         ))}
       </section>

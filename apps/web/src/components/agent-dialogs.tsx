@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 
 import type {
+  ClientAgentGetResponse,
+  ClientAgentManageRequest,
   ClientAgentProvisionRequest,
   LocalRuntimeInventoryEntry,
 } from "@rah-os/protocol";
@@ -10,6 +12,10 @@ import { useDialogProtocol } from "../dialog-protocol.ts";
 export type AgentCreateInput = Omit<
   ClientAgentProvisionRequest,
   "basedOnRoomSeq" | "controlRoomId" | "idempotencyKey"
+>;
+export type AgentConfigureInput = Omit<
+  Extract<ClientAgentManageRequest, { action: "configure" }>,
+  "action" | "agentDefinitionId" | "basedOnRoomSeq" | "idempotencyKey"
 >;
 
 const RAFT_AVATAR_KEYS = [
@@ -268,6 +274,304 @@ export function AgentCreateDialog({
             </button>
             <button className="btn btn-pink" disabled={pending || !valid}>
               {pending ? "正在创建…" : "创建 Agent"}
+            </button>
+          </footer>
+        </form>
+      </section>
+    </div>
+  );
+}
+
+export function AgentManageDialog({
+  detail,
+  onClose,
+  onConfigure,
+  onState,
+  runtimes,
+}: {
+  detail: ClientAgentGetResponse;
+  onClose: () => void;
+  onConfigure: (input: AgentConfigureInput) => Promise<void>;
+  onState: (state: "disabled" | "enabled" | "tombstoned") => Promise<void>;
+  runtimes: readonly LocalRuntimeInventoryEntry[];
+}) {
+  const revision = detail.agent.currentRevision;
+  const policy = detail.policy;
+  const runtimeOptions = useMemo(
+    () =>
+      runtimes.filter(
+        (runtime) =>
+          runtime.available &&
+          runtime.configured &&
+          runtime.runtimeOfferId !== undefined,
+      ),
+    [runtimes],
+  );
+  const [displayName, setDisplayName] = useState(
+    revision.displayName ?? detail.agent.handle,
+  );
+  const [handle, setHandle] = useState(detail.agent.handle);
+  const [description, setDescription] = useState(revision.description ?? "");
+  const [role, setRole] = useState(revision.role);
+  const [instructions, setInstructions] = useState(revision.instructions ?? "");
+  const [avatarKey, setAvatarKey] = useState(revision.avatarKey ?? "robot");
+  const [runtimeOfferId, setRuntimeOfferId] = useState(
+    policy.required.allowedOfferIds?.[0] ??
+      runtimeOptions[0]?.runtimeOfferId ??
+      "",
+  );
+  const [reasoning, setReasoning] = useState<
+    "default" | "low" | "medium" | "high" | "max"
+  >(policy.modelIntent.reasoning ?? "default");
+  const [sessionPolicy, setSessionPolicy] = useState(policy.sessionPolicy);
+  const [pending, setPending] = useState(false);
+  const [deleteArmed, setDeleteArmed] = useState(false);
+  const [actionError, setActionError] = useState<string>();
+  const dialogRef = useDialogProtocol({ blocked: pending, onClose });
+  const valid =
+    displayName.trim() !== "" &&
+    /^[\p{L}\p{N}][\p{L}\p{N}._-]*$/u.test(handle.trim()) &&
+    role.trim() !== "" &&
+    instructions.trim() !== "" &&
+    runtimeOfferId !== "";
+  const runAction = (action: () => Promise<void>) => {
+    setPending(true);
+    setActionError(undefined);
+    void action()
+      .catch((caught) => setActionError(errorMessage(caught)))
+      .finally(() => setPending(false));
+  };
+
+  return (
+    <div className="rah-dialog-layer" role="presentation">
+      <button
+        aria-label="关闭 Agent 设置窗口"
+        className="rah-dialog-backdrop"
+        disabled={pending}
+        onClick={onClose}
+      />
+      <section
+        aria-labelledby="rah-agent-manage-title"
+        aria-modal="true"
+        className="rah-dialog rah-agent-create-dialog rah-agent-manage-dialog"
+        ref={dialogRef}
+        role="dialog"
+        tabIndex={-1}
+      >
+        <header>
+          <div>
+            <p>AGENT</p>
+            <h2 id="rah-agent-manage-title">设置 {revision.displayName}</h2>
+            <p>
+              @{detail.agent.handle} · 版本 {revision.revision}
+            </p>
+          </div>
+          <button
+            aria-label="关闭"
+            className="sq-btn"
+            disabled={pending}
+            onClick={onClose}
+          >
+            <span className="rah-close-glyph" aria-hidden="true">
+              ×
+            </span>
+          </button>
+        </header>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!valid) return;
+            runAction(() =>
+              onConfigure({
+                avatarKey,
+                ...(description.trim() === ""
+                  ? {}
+                  : { description: description.trim() }),
+                displayName: displayName.trim(),
+                handle: handle.trim(),
+                instructions: instructions.trim(),
+                modelIntent: { ...policy.modelIntent, reasoning },
+                role: role.trim(),
+                runtimeOfferId,
+                sessionPolicy,
+              }),
+            );
+          }}
+        >
+          <div className="rah-agent-form-grid">
+            <label>
+              显示名称
+              <input
+                autoFocus
+                maxLength={128}
+                onChange={(event) => setDisplayName(event.target.value)}
+                value={displayName}
+              />
+            </label>
+            <label>
+              Handle
+              <input
+                maxLength={64}
+                onChange={(event) =>
+                  setHandle(handleFromName(event.target.value))
+                }
+                value={handle}
+              />
+            </label>
+            <label>
+              头像
+              <select
+                onChange={(event) => setAvatarKey(event.target.value)}
+                value={avatarKey}
+              >
+                {RAFT_AVATAR_KEYS.map((key) => (
+                  <option key={key} value={key}>
+                    {key}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Runtime
+              <select
+                onChange={(event) => setRuntimeOfferId(event.target.value)}
+                value={runtimeOfferId}
+              >
+                {runtimeOptions.map((runtime) => (
+                  <option
+                    key={runtime.runtimeOfferId}
+                    value={runtime.runtimeOfferId}
+                  >
+                    {runtime.displayName}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <label>
+            角色
+            <input
+              maxLength={512}
+              onChange={(event) => setRole(event.target.value)}
+              value={role}
+            />
+          </label>
+          <label>
+            描述（可选）
+            <textarea
+              maxLength={2_000}
+              onChange={(event) => setDescription(event.target.value)}
+              rows={2}
+              value={description}
+            />
+          </label>
+          <label>
+            Agent 指令
+            <textarea
+              maxLength={64 * 1_024}
+              onChange={(event) => setInstructions(event.target.value)}
+              rows={6}
+              value={instructions}
+            />
+          </label>
+          <div className="rah-agent-form-grid">
+            <label>
+              推理强度
+              <select
+                onChange={(event) =>
+                  setReasoning(event.target.value as typeof reasoning)
+                }
+                value={reasoning}
+              >
+                <option value="default">Runtime 默认</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="max">Max</option>
+              </select>
+            </label>
+            <label>
+              Session 策略
+              <select
+                onChange={(event) =>
+                  setSessionPolicy(event.target.value as typeof sessionPolicy)
+                }
+                value={sessionPolicy}
+              >
+                <option value="fresh">每次新建</option>
+                <option value="prefer_resume">优先续接</option>
+                <option value="require_resume">必须续接</option>
+              </select>
+            </label>
+          </div>
+          {actionError === undefined ? null : (
+            <p className="rah-dialog-error">{actionError}</p>
+          )}
+          <div className="rah-agent-danger-actions">
+            {detail.agent.definition.state === "enabled" ? (
+              <button
+                className="btn btn-orange"
+                disabled={pending}
+                onClick={() => runAction(() => onState("disabled"))}
+                type="button"
+              >
+                停用 Agent
+              </button>
+            ) : (
+              <>
+                <button
+                  className="btn btn-green"
+                  disabled={pending}
+                  onClick={() => runAction(() => onState("enabled"))}
+                  type="button"
+                >
+                  启用 Agent
+                </button>
+                <button
+                  className="btn btn-red"
+                  disabled={pending}
+                  onClick={() => setDeleteArmed(true)}
+                  type="button"
+                >
+                  删除 Agent
+                </button>
+                {deleteArmed ? (
+                  <div className="rah-agent-delete-confirm">
+                    <strong>
+                      删除后将移出所有 Room，并撤销 Runtime 授权。
+                    </strong>
+                    <button
+                      className="btn btn-red"
+                      disabled={pending}
+                      onClick={() => runAction(() => onState("tombstoned"))}
+                      type="button"
+                    >
+                      确认删除
+                    </button>
+                    <button
+                      className="btn"
+                      disabled={pending}
+                      onClick={() => setDeleteArmed(false)}
+                      type="button"
+                    >
+                      返回
+                    </button>
+                  </div>
+                ) : null}
+              </>
+            )}
+          </div>
+          <footer>
+            <button
+              className="btn"
+              disabled={pending}
+              onClick={onClose}
+              type="button"
+            >
+              取消
+            </button>
+            <button className="btn btn-pink" disabled={pending || !valid}>
+              {pending ? "正在保存…" : "保存更改"}
             </button>
           </footer>
         </form>

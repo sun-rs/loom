@@ -17,6 +17,8 @@ Raft 形态的 Agent 不是聊天页里的临时收件人，也不是 Computer �
 5. Placement 在 launch claim 时解析并冻结确切 AgentDefinition revision。AgentHost 把该上下文放进 `ActivationEnvelope.agent`；通用进程适配器以只读 `RAH_AGENT_CONTEXT_JSON` 注入直接或 supervised 子进程。正式 profile 的 worker contract 必须读取该值，不能依赖 UI 内存或最新可变 definition。
 6. Host credential 的 participant scope 以 Kernel 数据库中的未撤销 credential 为权威。manager provision 可以扩展已有 Host credential；Host 每次受保护操作读取当前 scope，因此无需重启才能运行新 Agent。config v4 的静态 participant 列表只是一组启动必需成员，必须是 credential scope 的子集；数据库中额外的 manager-granted Agent 在 daemon restart 后仍有效。v2/v3 compatibility 继续要求精确单 participant scope。
 7. Web 只通过 typed `RahClient` 调用 provision command。Raft 视觉快照仍只提供 token、图标和交互规格，不成为 Agent 状态 owner。
+8. 已有 Agent 通过单一 `agent.manage` command 原子修订 Definition 与 ExecutionPolicy。handle、显示名称、头像 key、角色、描述、指令、RuntimeOffer、model intent 和 session policy 同步产生新 revision；已经领取的 Placement 保持旧 revision，新 Placement 才读取新 revision。
+9. `enabled / disabled / tombstoned` 是 Kernel-owned 状态。disabled Agent 保留 Room membership 但不再进入普通 Message recipient 集；重新启用后恢复。tombstone 必须从 disabled 且没有 queued/leased/quarantined Activation、未完成 Task 或 active Run 的状态进入，随后原子移除所有 Room membership 并撤销 Host participant scope。UI 不伪造强制终止。
 
 ## 安全与一致性
 
@@ -32,14 +34,15 @@ Raft 形态的 Agent 不是聊天页里的临时收件人，也不是 Computer �
 - process：真实 child process 读取 `RAH_AGENT_CONTEXT_JSON`，并观测到预期 role/instructions。
 - daemon：运行中创建动态 Agent，daemon 用原静态 config 重启后该 Agent 仍在 authenticated scope。
 - browser：桌面和 390×844 页面创建 Agent，重载后仍在 Workspace catalog，并继续通过真实 daemon/fake executable 完成 Room 消息链。
+- management：Kernel/API/SDK/browser 证明配置 revision、停用、启用与删除；停用时不生成新 Activation，重新启用后的 Placement 携带修订后指令。
 
 ## 尚未由本 ADR 完成
 
-- 已有 Agent 的原子编辑、启用/停用、删除与运行中 drain 语义；
+- 运行中 Agent 的显式 drain/cancel 后再停用语义；当前安全地拒绝仍有活动工作的停用或删除；
 - skill/instruction artifact 上传、版本选择、解析与 ContextManifest；
 - private memory policy 编辑和凭据/环境变量安全绑定；
 - Provider 安装、登录探测、RuntimeOffer 管理与 Computer placement 控制；
 - launchd/签名安装包、Keychain、生产 pairing/TLS/allowed-origin LAN 服务；
 - 真实付费 Provider 的自动测试。默认门禁继续只用 fake executable。
 
-因此，本 ADR 证明“创建的 Agent 是持久且能进入真实进程的”，不等于“Agent 管理或正式桌面产品已经与 Raft 全量等价”。
+因此，本 ADR 证明“Agent 是可持久创建、版本化配置、停用/启用/删除且能进入真实进程的”，不等于“技能/记忆管理或正式桌面产品已经与 Raft 全量等价”。

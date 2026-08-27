@@ -11,6 +11,7 @@ import {
 import { HttpRahClient, type RahClient } from "@rah-os/client-sdk";
 import type {
   AgentCatalogEntry,
+  ClientAgentGetResponse,
   ClientHealthResponse,
   LocalRuntimeInventoryEntry,
   MembershipRole,
@@ -45,6 +46,8 @@ import {
 
 import {
   AgentCreateDialog,
+  AgentManageDialog,
+  type AgentConfigureInput,
   type AgentCreateInput,
 } from "./components/agent-dialogs.tsx";
 import {
@@ -191,6 +194,8 @@ function WorkspaceScreen({
   const [mobileRoomsOpen, setMobileRoomsOpen] = useState(false);
   const [roomCreateOpen, setRoomCreateOpen] = useState(false);
   const [agentCreateOpen, setAgentCreateOpen] = useState(false);
+  const [agentManageDetail, setAgentManageDetail] =
+    useState<ClientAgentGetResponse>();
   const [roomMembersOpen, setRoomMembersOpen] = useState(false);
   const [roomAgentSelections, setRoomAgentSelections] = useState<
     Record<string, string[]>
@@ -559,10 +564,12 @@ function WorkspaceScreen({
     role: workspaceMembershipRole,
     roomWrite: health?.capabilities.roomWrite === true,
   });
-  const canCreateCurrentWorkspaceAgent =
+  const canManageCurrentWorkspaceAgent =
     health?.capabilities.agentWrite === true &&
     (workspaceMembershipRole === "owner" ||
-      workspaceMembershipRole === "admin") &&
+      workspaceMembershipRole === "admin");
+  const canCreateCurrentWorkspaceAgent =
+    canManageCurrentWorkspaceAgent &&
     localRuntimes.some(
       (runtime) =>
         runtime.available &&
@@ -1080,6 +1087,164 @@ function WorkspaceScreen({
     [activeWorkspace, canCreateCurrentWorkspaceAgent, client, consumerPrefix],
   );
 
+  const openAgentManagement = useCallback(
+    async (agentDefinitionId: string) => {
+      if (!canManageCurrentWorkspaceAgent) {
+        setError("需要 Workspace 管理员权限才能设置 Agent");
+        return;
+      }
+      try {
+        setAgentManageDetail(
+          await client.request("agent.get", { agentDefinitionId }),
+        );
+      } catch (caught) {
+        setError(errorMessage(caught));
+      }
+    },
+    [canManageCurrentWorkspaceAgent, client],
+  );
+
+  const configureAgent = useCallback(
+    async (input: AgentConfigureInput) => {
+      const detail = agentManageDetail;
+      const controlRoomId = activeWorkspace?.controlRoomId;
+      if (
+        !canManageCurrentWorkspaceAgent ||
+        detail === undefined ||
+        controlRoomId === undefined
+      ) {
+        throw new Error("当前 Agent 设置上下文不可写");
+      }
+      let controlSession = sessions.current.get(controlRoomId);
+      if (controlSession === undefined) {
+        controlSession = new RoomSession({
+          client,
+          consumerId: `${consumerPrefix}-${controlRoomId}`,
+          roomId: controlRoomId,
+        });
+        sessions.current.set(controlRoomId, controlSession);
+      }
+      const result = await runRoomMutationAtLatest({
+        mutate: (basedOnRoomSeq) =>
+          client.request("agent.manage", {
+            ...input,
+            action: "configure",
+            agentDefinitionId: detail.agent.definition.agentDefinitionId,
+            basedOnRoomSeq,
+            idempotencyKey: `web-agent-configure-${browserOpaqueId()}`,
+          }),
+        session: controlSession,
+      });
+      setAgentCatalog((current) =>
+        current.map((agent) =>
+          agent.definition.agentDefinitionId ===
+          result.agent.definition.agentDefinitionId
+            ? result.agent
+            : agent,
+        ),
+      );
+      if (result.hostBinding !== undefined) {
+        setLocalRuntimes((current) =>
+          current.map((runtime) => {
+            const bindings = runtime.agentBindings.filter(
+              ({ agentDefinitionId }) =>
+                agentDefinitionId !== result.agent.definition.agentDefinitionId,
+            );
+            return runtime.runtimeOfferId === result.hostBinding?.runtimeOfferId
+              ? {
+                  ...runtime,
+                  agentBindings: [
+                    ...bindings,
+                    {
+                      agentDefinitionId:
+                        result.agent.definition.agentDefinitionId,
+                      handle: result.agent.handle,
+                      participantId: result.agent.definition.participantId,
+                    },
+                  ],
+                }
+              : { ...runtime, agentBindings: bindings };
+          }),
+        );
+      }
+      setAgentManageDetail(undefined);
+    },
+    [
+      activeWorkspace,
+      agentManageDetail,
+      canManageCurrentWorkspaceAgent,
+      client,
+      consumerPrefix,
+    ],
+  );
+
+  const setAgentState = useCallback(
+    async (state: "disabled" | "enabled" | "tombstoned") => {
+      const detail = agentManageDetail;
+      const controlRoomId = activeWorkspace?.controlRoomId;
+      if (
+        !canManageCurrentWorkspaceAgent ||
+        detail === undefined ||
+        controlRoomId === undefined
+      ) {
+        throw new Error("当前 Agent 设置上下文不可写");
+      }
+      let controlSession = sessions.current.get(controlRoomId);
+      if (controlSession === undefined) {
+        controlSession = new RoomSession({
+          client,
+          consumerId: `${consumerPrefix}-${controlRoomId}`,
+          roomId: controlRoomId,
+        });
+        sessions.current.set(controlRoomId, controlSession);
+      }
+      const result = await runRoomMutationAtLatest({
+        mutate: (basedOnRoomSeq) =>
+          client.request("agent.manage", {
+            action: "set_state",
+            agentDefinitionId: detail.agent.definition.agentDefinitionId,
+            basedOnRoomSeq,
+            idempotencyKey: `web-agent-state-${browserOpaqueId()}`,
+            state,
+          }),
+        session: controlSession,
+      });
+      setAgentCatalog((current) =>
+        state === "tombstoned"
+          ? current.filter(
+              ({ definition }) =>
+                definition.agentDefinitionId !==
+                result.agent.definition.agentDefinitionId,
+            )
+          : current.map((agent) =>
+              agent.definition.agentDefinitionId ===
+              result.agent.definition.agentDefinitionId
+                ? result.agent
+                : agent,
+            ),
+      );
+      if (state === "tombstoned") {
+        setLocalRuntimes((current) =>
+          current.map((runtime) => ({
+            ...runtime,
+            agentBindings: runtime.agentBindings.filter(
+              ({ agentDefinitionId }) =>
+                agentDefinitionId !== result.agent.definition.agentDefinitionId,
+            ),
+          })),
+        );
+      }
+      setAgentManageDetail(undefined);
+    },
+    [
+      activeWorkspace,
+      agentManageDetail,
+      canManageCurrentWorkspaceAgent,
+      client,
+      consumerPrefix,
+    ],
+  );
+
   const selectRoomAgents = useCallback(
     (participantIds: readonly string[]) => {
       if (activeRoomId === undefined) return;
@@ -1145,6 +1310,9 @@ function WorkspaceScreen({
           agents={agentDirectory}
           canCreate={canCreateCurrentWorkspaceAgent}
           onCreate={() => setAgentCreateOpen(true)}
+          onManage={(agentDefinitionId) =>
+            void openAgentManagement(agentDefinitionId)
+          }
         />
       ) : surface === "computers" ? (
         <ComputerRuntimePane
@@ -1274,6 +1442,15 @@ function WorkspaceScreen({
           onCreate={createAgent}
           runtimes={localRuntimes}
           workspaceName={activeWorkspace.name}
+        />
+      ) : null}
+      {agentManageDetail !== undefined ? (
+        <AgentManageDialog
+          detail={agentManageDetail}
+          onClose={() => setAgentManageDetail(undefined)}
+          onConfigure={configureAgent}
+          onState={setAgentState}
+          runtimes={localRuntimes}
         />
       ) : null}
       {roomMembersOpen ? (
