@@ -72,7 +72,7 @@ export function AgentDirectoryPane({
               <span
                 className={`rah-runtime-state ${agent.state === "enabled" ? "is-online" : "is-offline"}`}
               >
-                {agent.state === "enabled" ? "已启用" : agent.state}
+                {agent.state === "enabled" ? "已启用" : "已暂停"}
               </span>
             </header>
             <dl>

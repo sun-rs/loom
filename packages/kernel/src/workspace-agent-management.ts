@@ -18,11 +18,13 @@ import {
 import { canonicalDigest } from "./canonical-digest.ts";
 import { requireHumanControlRoomManager } from "./collaboration-policy.ts";
 import {
+  AgentExecutionPausedError,
   ConflictError,
   IdempotencyConflictError,
   NotFoundError,
   StaleContextError,
 } from "./errors.ts";
+import { eventPayloadOptionalText, eventPayloadText } from "./event-payload.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
 import {
   integer,
@@ -41,6 +43,22 @@ type WorkspaceAgentManagementOwner = {
   events: RoomEventWriter;
   now: () => Date;
 };
+
+export function requireAgentExecutionEnabled(
+  database: DatabaseSync,
+  participantId: string,
+): void {
+  const row = database
+    .prepare(
+      "SELECT state FROM agent_definitions WHERE participant_id = ? LIMIT 1",
+    )
+    .get(participantId);
+  if (row === undefined) return;
+  const state = text(row, "state");
+  if (state !== "enabled") {
+    throw new AgentExecutionPausedError(`Agent ${participantId} is ${state}`);
+  }
+}
 
 export function readAgentDefinition(
   database: DatabaseSync,
@@ -393,7 +411,7 @@ function setAgentState(
     throw new ConflictError("an Agent must be disabled before deletion");
   }
   const participantId = text(definitionRow, "participant_id");
-  if (input.state !== "enabled") {
+  if (input.state === "tombstoned") {
     assertAgentQuiescent(owner.database, participantId);
   }
   const updatedAt = owner.now().toISOString();
@@ -711,26 +729,6 @@ function assertFreshControlRoom(
   if (basedOnRoomSeq !== latestRoomSeq) {
     throw new StaleContextError(basedOnRoomSeq, latestRoomSeq);
   }
-}
-
-function eventPayloadText(event: RoomEvent, key: string): string {
-  const value = event.payload[key];
-  if (typeof value !== "string") {
-    throw new Error(`event payload ${key} must be a string`);
-  }
-  return value;
-}
-
-function eventPayloadOptionalText(
-  event: RoomEvent,
-  key: string,
-): string | undefined {
-  const value = event.payload[key];
-  if (value === undefined) return undefined;
-  if (typeof value !== "string") {
-    throw new Error(`event payload ${key} must be a string`);
-  }
-  return value;
 }
 
 function requireRow(row: Row | undefined, message: string): Row {

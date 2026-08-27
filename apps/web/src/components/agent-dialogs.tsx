@@ -637,7 +637,7 @@ export function AgentManageDialog({
                 onClick={() => runAction(() => onState("disabled"))}
                 type="button"
               >
-                停用 Agent
+                暂停 Agent
               </button>
             ) : (
               <>
@@ -647,7 +647,7 @@ export function AgentManageDialog({
                   onClick={() => runAction(() => onState("enabled"))}
                   type="button"
                 >
-                  启用 Agent
+                  恢复 Agent
                 </button>
                 <button
                   className="btn btn-red"

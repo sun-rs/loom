@@ -18,7 +18,7 @@ Raft 形态的 Agent 不是聊天页里的临时收件人，也不是 Computer �
 6. Host credential 的 participant scope 以 Kernel 数据库中的未撤销 credential 为权威。manager provision 可以扩展已有 Host credential；Host 每次受保护操作读取当前 scope，因此无需重启才能运行新 Agent。config v4 的静态 participant 列表只是一组启动必需成员，必须是 credential scope 的子集；数据库中额外的 manager-granted Agent 在 daemon restart 后仍有效。v2/v3 compatibility 继续要求精确单 participant scope。
 7. Web 只通过 typed `RahClient` 调用 provision command。Raft 视觉快照仍只提供 token、图标和交互规格，不成为 Agent 状态 owner。
 8. 已有 Agent 通过单一 `agent.manage` command 原子修订 Definition 与 ExecutionPolicy。handle、显示名称、头像 key、角色、描述、指令、RuntimeOffer、model intent 和 session policy 同步产生新 revision；已经领取的 Placement 保持旧 revision，新 Placement 才读取新 revision。
-9. `enabled / disabled / tombstoned` 是 Kernel-owned 状态。disabled Agent 保留 Room membership 但不再进入普通 Message recipient 集；重新启用后恢复。tombstone 必须从 disabled 且没有 queued/leased/quarantined Activation、未完成 Task 或 active Run 的状态进入，随后原子移除所有 Room membership 并撤销 Host participant scope。UI 不伪造强制终止。
+9. `enabled / disabled / tombstoned` 是 Kernel-owned 状态。暂停把 Agent 原子改为 disabled，立即阻止新 Message delivery 和 Placement；当前 lane 在 lease maintenance 读取 canonical Agent 状态后受控 cancel，只有 RuntimeProcess terminal proof 成功才把 RunAttempt 记为 cancelled，并将原 Activation 留在 durable queue。恢复为 enabled 后继续排队工作；cancel 无法证明则 quarantine，不能伪造安全暂停。tombstone 必须从 disabled 且没有 queued/leased/quarantined Activation、未完成 Task 或 active Run 的状态进入，随后原子移除所有 Room membership并撤销 Host participant scope。
 
 ## 安全与一致性
 
@@ -34,11 +34,11 @@ Raft 形态的 Agent 不是聊天页里的临时收件人，也不是 Computer �
 - process：真实 child process 读取 `RAH_AGENT_CONTEXT_JSON`，并观测到预期 role/instructions。
 - daemon：运行中创建动态 Agent，daemon 用原静态 config 重启后该 Agent 仍在 authenticated scope。
 - browser：桌面和 390×844 页面创建 Agent，重载后仍在 Workspace catalog，并继续通过真实 daemon/fake executable 完成 Room 消息链。
-- management：Kernel/API/SDK/browser 证明配置 revision、停用、启用与删除；停用时不生成新 Activation，重新启用后的 Placement 携带修订后指令。
+- management：Kernel/API/SDK/browser 证明配置 revision、暂停、恢复与删除；多 Lane Host 门禁另证明运行中暂停会受控 cancel、保存 terminal proof、durable retry，且不阻塞另一 Agent。暂停时不生成新 Activation，恢复后的 Placement 携带修订后指令。
 
 ## 尚未由本 ADR 完成
 
-- 运行中 Agent 的显式 drain/cancel 后再停用语义；当前安全地拒绝仍有活动工作的停用或删除；
+- 独立的“重启当前执行”“清除 Provider session”“取消/重派遗留 Task”管理动作；删除仍要求 Agent 已暂停且所有工作达到安全终态；
 - skill/instruction artifact 上传、版本选择、解析与 ContextManifest；
 - private memory policy 编辑和凭据/环境变量安全绑定；
 - Provider 安装、登录探测、RuntimeOffer 管理与 Computer placement 控制；

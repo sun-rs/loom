@@ -219,14 +219,13 @@ try {
     "persisted Agent revision",
   );
   await clickAgentAction(browser, "Bob Reviewer", "编辑");
-  await clickButton(browser, { text: "停用 Agent" });
+  await clickButton(browser, { text: "暂停 Agent" });
   await waitFor(
     browser,
     () =>
       document.querySelector(".rah-agent-manage-dialog") === null &&
-      document.querySelector("main")?.textContent?.includes("disabled") ===
-        true,
-    "disabled Agent projection",
+      document.querySelector("main")?.textContent?.includes("已暂停") === true,
+    "paused Agent projection",
   );
   await clickAgentAction(browser, "Bob Reviewer", "编辑");
   await clickButton(browser, { text: "删除 Agent" });

@@ -104,8 +104,9 @@ test("MultiLaneAgentHost preserves concurrent, serial, restart, and quarantine b
       },
       sessionPolicy: "fresh",
     }).policy;
+    const agentDefinitionIds: string[] = [];
     for (const [index, participant] of [agentA, agentB].entries()) {
-      kernel.createAgentDefinition(humanActor, {
+      const created = kernel.createAgentDefinition(humanActor, {
         basedOnRoomSeq: latestRoomSeq(kernel, humanActor, controlRoom.roomId),
         controlRoomId: controlRoom.roomId,
         executionPolicyRevisionId: policy.executionPolicyRevisionId,
@@ -120,6 +121,7 @@ test("MultiLaneAgentHost preserves concurrent, serial, restart, and quarantine b
         role: `parallel worker ${String(index)}`,
         skillRefs: [],
       });
+      agentDefinitionIds.push(created.definition.agentDefinitionId);
     }
     const host = authenticateHost(kernel, "multi-lane-host", [
       agentA.principal.principalId,
@@ -174,7 +176,9 @@ test("MultiLaneAgentHost preserves concurrent, serial, restart, and quarantine b
       host,
       kernel,
       leaseMs: 30_000,
+      leaseRenewIntervalMs: 5,
       pollIntervalMs: 5,
+      retryAfterMs: 0,
       runtime: runtimeA,
       placementRuntimeResolver: (placement) =>
         placement.participantId === agentA.principal.principalId
@@ -293,12 +297,61 @@ test("MultiLaneAgentHost preserves concurrent, serial, restart, and quarantine b
         1,
       );
 
-      releaseAgentA();
-      await waitUntil(() =>
+      const disabled = kernel.manageWorkspaceAgent(humanActor, {
+        action: "set_state",
+        agentDefinitionId: agentDefinitionIds[0]!,
+        basedOnRoomSeq: latestRoomSeq(kernel, humanActor, controlRoom.roomId),
+        idempotencyKey: "multi-lane-agent-a-disable-active",
+        state: "disabled",
+      });
+      assert.equal(disabled.agent.definition.state, "disabled");
+      await waitUntil(() => runtimeA.cancellations.length === 1);
+      assert.equal(
+        kernel
+          .listRunAttempts({ roomId: room.roomId })
+          .some(
+            (attempt) =>
+              attempt.participantId === agentA.principal.principalId &&
+              attempt.state === "cancelled",
+          ),
+        true,
+      );
+      assert.equal(
         kernel
           .listActivations({ roomId: room.roomId })
-          .every((activation) => activation.state === "completed"),
+          .some(
+            (activation) =>
+              activation.participantId === agentA.principal.principalId &&
+              activation.state === "queued",
+          ),
+        true,
       );
+      kernel.manageWorkspaceAgent(humanActor, {
+        action: "set_state",
+        agentDefinitionId: agentDefinitionIds[0]!,
+        basedOnRoomSeq: disabled.event.roomSeq,
+        idempotencyKey: "multi-lane-agent-a-enable-after-drain",
+        state: "enabled",
+      });
+
+      releaseAgentA();
+      try {
+        await waitUntil(() =>
+          kernel
+            .listActivations({ roomId: room.roomId })
+            .every((activation) =>
+              ["cancelled", "completed"].includes(activation.state),
+            ),
+        );
+      } catch {
+        assert.fail(
+          JSON.stringify({
+            activations: kernel.listActivations({ roomId: room.roomId }),
+            attempts: kernel.listRunAttempts({ roomId: room.roomId }),
+            runtimeStarts: runtimeA.starts.length,
+          }),
+        );
+      }
       assert.equal(
         kernel
           .listTasks(humanActor, { roomId: room.roomId })
@@ -317,11 +370,12 @@ test("MultiLaneAgentHost preserves concurrent, serial, restart, and quarantine b
     }
 
     assert.equal(kernel.listRunAttempts({ roomId: room.roomId }).length, 3);
-    assert.equal(
+    assert.deepEqual(
       kernel
         .listRunAttempts({ roomId: room.roomId })
-        .every((attempt) => attempt.state === "exited"),
-      true,
+        .map((attempt) => attempt.state)
+        .sort(),
+      ["cancelled", "exited", "exited"],
     );
     assert.equal(kernel.listPlacements({ roomId: room.roomId }).length, 3);
     assert.equal(
@@ -375,7 +429,9 @@ test("MultiLaneAgentHost preserves concurrent, serial, restart, and quarantine b
             "submitted" &&
           kernel
             .listActivations({ roomId: room.roomId })
-            .every((activation) => activation.state === "completed"),
+            .every((activation) =>
+              ["cancelled", "completed"].includes(activation.state),
+            ),
       );
     } finally {
       openController.abort();
@@ -484,7 +540,9 @@ test("MultiLaneAgentHost preserves concurrent, serial, restart, and quarantine b
     assert.equal(
       kernel
         .listActivations({ roomId: room.roomId })
-        .every((activation) => activation.state === "completed"),
+        .every((activation) =>
+          ["cancelled", "completed"].includes(activation.state),
+        ),
       true,
     );
     kernel.completeTask(humanActor, {

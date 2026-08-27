@@ -637,6 +637,25 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
       recipients: [],
       roomId: roomResult.room.roomId,
     });
+    const pausedWithQueuedWork = kernel.manageWorkspaceAgent(ownerActor, {
+      action: "set_state",
+      agentDefinitionId: created.agent.definition.agentDefinitionId,
+      basedOnRoomSeq: enabled.event.roomSeq,
+      idempotencyKey: "agent-manage-pause-queued",
+      state: "disabled",
+    });
+    assert.equal(
+      kernel.leaseNextActivation(host, { leaseMs: 30_000 }),
+      null,
+      "a paused Agent must not churn queued work through the legacy lease path",
+    );
+    const resumedWithQueuedWork = kernel.manageWorkspaceAgent(ownerActor, {
+      action: "set_state",
+      agentDefinitionId: created.agent.definition.agentDefinitionId,
+      basedOnRoomSeq: pausedWithQueuedWork.event.roomSeq,
+      idempotencyKey: "agent-manage-resume-queued",
+      state: "enabled",
+    });
     const placement = kernel.scheduleNextPlacement({ leaseMs: 30_000 });
     assert.equal(
       placement?.agentDefinitionRevisionId,
@@ -649,7 +668,7 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
     );
 
     const disposable = kernel.provisionWorkspaceAgent(ownerActor, {
-      basedOnRoomSeq: enabled.event.roomSeq,
+      basedOnRoomSeq: resumedWithQueuedWork.event.roomSeq,
       controlRoomId: workspace.controlRoom.roomId,
       displayName: "Disposable",
       handle: "disposable-agent",

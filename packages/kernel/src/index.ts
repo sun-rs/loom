@@ -1,4 +1,5 @@
 export {
+  AgentExecutionPausedError,
   ConflictError,
   DeliveryProofError,
   ExecutionFencedError,

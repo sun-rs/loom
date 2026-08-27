@@ -51,6 +51,7 @@ import {
   TaskSubmissionProofError,
   UnauthenticatedError,
 } from "./errors.ts";
+import { eventPayloadText } from "./event-payload.ts";
 import {
   type AuthenticatedActorContext,
   type AuthenticatedHostContext,
@@ -115,6 +116,7 @@ import {
 import {
   getWorkspaceAgentManagementView,
   manageWorkspaceAgentTransaction,
+  requireAgentExecutionEnabled,
 } from "./workspace-agent-management.ts";
 import type {
   InboxItem,
@@ -3953,6 +3955,11 @@ export class RoomKernel {
           `SELECT candidate.*
            FROM activations AS candidate
            WHERE candidate.participant_id IN (${placeholders})
+             AND NOT EXISTS (
+               SELECT 1 FROM agent_definitions AS managed_agent
+               WHERE managed_agent.participant_id = candidate.participant_id
+                 AND managed_agent.state <> 'enabled'
+             )
              AND (
              candidate.state = 'queued'
                AND candidate.available_at_ms <= ?
@@ -4024,6 +4031,7 @@ export class RoomKernel {
       );
       this.#requireActivationLease(row, authenticatedHost.hostId);
       this.#requireActivationHostGeneration(row, authenticatedHost);
+      requireAgentExecutionEnabled(this.#database, text(row, "participant_id"));
       const now = this.#now();
       const leaseUntil = new Date(now.getTime() + input.leaseMs);
       this.#database
@@ -6913,12 +6921,4 @@ export class RoomKernel {
       throw error;
     }
   }
-}
-
-function eventPayloadText(event: RoomEvent, key: string): string {
-  const value = event.payload[key];
-  if (typeof value !== "string") {
-    throw new Error(`expected event payload ${key} to be text`);
-  }
-  return value;
 }

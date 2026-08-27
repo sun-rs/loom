@@ -73,7 +73,7 @@ Reference HTML 永远加载 `raft-ui-reference-adapter.js`，不得加载产品 
 - canonical Task list/create；
 - 当前 Workspace 的 Agent 长期身份目录与 daemon-owned Computer/CLI Runtime inventory 分离；Agent list 必须带该 Workspace 的 control Room scope，跨 Workspace onboard 在 Kernel fail closed；RuntimeProfile/Offer/AgentDefinition binding 只读展示，不从 Computer 页修改 Room；
 - Workspace owner/admin 可从 Raft 形态创建窗口提交显示名称、handle、头像 key、角色、描述、指令、RuntimeOffer、推理强度与 session policy；单个 `agent.provision` command 在 Kernel 原子创建长期身份、Definition/Policy 与 Host grant，重载和 daemon restart 后仍存在；
-- 同一 Agent 设置窗口读取 canonical current Definition/Policy，并用 `agent.manage` 原子保存新 revision；启用、停用与删除均为真实 Kernel 状态，删除会清理 memberships 和 Host scope，活动工作存在时 fail closed；
+- 同一 Agent 设置窗口读取 canonical current Definition/Policy，并用 `agent.manage` 原子保存新 revision；暂停会先阻断新 Placement，再由 AgentHost cancel 当前 lane 并保存 terminal proof，恢复后继续 durable queue；删除会清理 memberships 和 Host scope，非安全终态工作存在时 fail closed；
 - Placement launch claim 固化 AgentDefinition revision，AgentHost 把它注入实际 child process 的 `RAH_AGENT_CONTEXT_JSON`；页面表单不是运行时真相，Runtime credential 也不会进入该变量；
 - Runtime Profile v3 从 Codex/Kimi/OpenCode 的机器可读目录生成 probe-backed model bindings；Agent 模型下拉只展示当前 Offer 的 redacted descriptors，推理档位只展示所选 binding 明确支持的值，Placement 最终把选择转换成 shell-free argv。无证据选项不显示，Claude 当前只使用 Runtime 默认；
 - 从 Room 标题栏/聊天区成员窗口把 Workspace Agent 加入或移出当前 Room；当前状态来自 canonical membership list，重复/并发操作会重新对账；
@@ -94,7 +94,7 @@ Reference HTML 永远加载 `raft-ui-reference-adapter.js`，不得加载产品 
 
 - Human Inbox/Activity；
 - Artifact/Review/Files；
-- Search、完整 Members detail、Agent skill/memory artifact 与运行中 drain 管理、Computer control/placement、Admin、Settings、Billing；
+- Search、完整 Members detail、Agent skill/memory artifact、显式 execution restart/session reset、Computer control/placement、Admin、Settings、Billing；
 - hint subscription、生产 token pairing、PWA/desktop packaging。
 
 这些缺口按 capability 逐个打开，不以“让按钮看起来能点”为理由在 UI adapter 中发明后端语义。

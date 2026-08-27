@@ -26,7 +26,7 @@
 
 - launchd、签名/公证安装包、Keychain 与自动升级；
 - 正式 LAN/iOS pairing；
-- skill/memory ContextManifest、运行中 Agent drain/reset；
+- skill/memory ContextManifest、显式 execution restart/session reset；
 - PWA manifest/service worker 与离线 shell。
 
 因此本 ADR 建立的是“可持续使用、数据不丢、浏览器无 PAT 的本机 production Web 入口”，不是已经签名安装或与 Raft 全功能等价的发布包。

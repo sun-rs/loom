@@ -17,6 +17,7 @@ import {
   NotFoundError,
   StaleContextError,
 } from "./errors.ts";
+import { eventPayloadText } from "./event-payload.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
 import {
   integer,
@@ -597,14 +598,6 @@ function builtinContentRef(
     }),
     versionId,
   };
-}
-
-function eventPayloadText(event: RoomEvent, key: string): string {
-  const value = event.payload[key];
-  if (typeof value !== "string") {
-    throw new Error(`expected event payload ${key} to be text`);
-  }
-  return value;
 }
 
 function requireRow(row: Row | undefined, message: string): Row {

@@ -1,4 +1,5 @@
 import {
+  AgentExecutionPausedError,
   UnauthenticatedError,
   type Activation,
   type AuthenticatedHostContext,
@@ -327,6 +328,34 @@ export class AgentHost {
     }
 
     try {
+      this.#kernel.renewActivationLease(this.#host, {
+        activationId: activation.activationId,
+        leaseMs: this.#leaseMs,
+      });
+    } catch (error) {
+      const agentPaused = error instanceof AgentExecutionPausedError;
+      const stopReason = agentPaused
+        ? error.message
+        : `pre-launch lease validation failed: ${errorMessage(error)}`;
+      if (runAttempt !== undefined) {
+        try {
+          this.#kernel.finishRunAttempt(this.#host, {
+            error: stopReason,
+            runAttemptId: runAttempt.runAttemptId,
+            state: agentPaused ? "cancelled" : "failed",
+          });
+        } catch (error) {
+          return {
+            activationId: activation.activationId,
+            error: `${stopReason}; failed to close pre-launch RunAttempt: ${errorMessage(error)}`,
+            state: "failed",
+          };
+        }
+      }
+      return this.#retryFailedActivation(activation.activationId, stopReason);
+    }
+
+    try {
       const availability = await runtime.probe();
       if (!availability.available) {
         const failure = availability.detail ?? "runtime is unavailable";
@@ -493,8 +522,11 @@ export class AgentHost {
     supervisor.abort();
     await Promise.all([maintenanceOutcome, drainOutcome]);
 
-    if (outcome.kind === "drain_timeout") {
-      const failure = `daemon drain timed out after ${this.#drainTimeoutMs}ms`;
+    if (outcome.kind === "agent_disabled" || outcome.kind === "drain_timeout") {
+      const failure =
+        outcome.kind === "agent_disabled"
+          ? outcome.error
+          : `daemon drain timed out after ${this.#drainTimeoutMs}ms`;
       const termination = await this.#cancelRuntime(runtime, run);
       if (termination.kind === "unproven") {
         const quarantineFailure = `${failure}; runtime termination was not proven: ${termination.error}`;
@@ -855,6 +887,9 @@ export class AgentHost {
           leaseMs: this.#leaseMs,
         });
       } catch (error) {
+        if (error instanceof AgentExecutionPausedError) {
+          return { error: error.message, kind: "agent_disabled" };
+        }
         return {
           error: `lease maintenance failed: ${errorMessage(error)}`,
           kind: "maintenance_failed",
@@ -936,6 +971,7 @@ export class AgentHost {
 }
 
 type RuntimeOutcome =
+  | { error: string; kind: "agent_disabled" }
   | { kind: "drain_timeout" }
   | { exit: RunExit; kind: "exit" }
   | { error: string; kind: "maintenance_failed" }

@@ -21,7 +21,7 @@ Changing `run` creates an isolated browser-fixture state.
 | Thread                 | Create and reply                                 | Thread opens, reply renders, composer clears, reply count survives reload                               |
 | Task                   | Create from composer                             | Task appears in the Task board and Task navigation is active                                            |
 | Agent directory        | Create/open a Workspace Agent                    | Manager creates a durable identity bound to an available Runtime; reload keeps the new catalog entry    |
-| Agent settings         | Edit, disable, enable, or delete                 | Definition/Policy revisions and lifecycle are canonical; active work blocks unsafe disable/delete       |
+| Agent settings         | Edit, pause, resume, or delete                   | Pause stops new placement and safely cancels an active lane; delete still requires fully quiescent work |
 | Computer inventory     | Open Computer page                               | CLI/Runtime evidence renders read-only and never mutates Room membership                                |
 | Room members           | Add/remove/rejoin/concurrent join                | owner/admin + capability controls enabled state; cross-Workspace Agent onboarding fails closed          |
 | Dialog keyboard        | Open create/member dialog; use Tab/Escape        | Focus stays inside, Escape closes when idle, and focus returns to the trigger                           |
