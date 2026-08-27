@@ -3,7 +3,11 @@ import test from "node:test";
 
 import type { LocalRuntimeInventoryEntry } from "@rah-os/protocol";
 
-import { supportedReasoningLevels } from "../src/agent-runtime-capabilities.ts";
+import {
+  normalizeModelBindingId,
+  runtimeModelOptions,
+  supportedReasoningLevels,
+} from "../src/agent-runtime-capabilities.ts";
 
 const runtime = {
   agentBindings: [],
@@ -21,30 +25,48 @@ const runtime = {
 
 test("Agent reasoning choices are derived only from verified runtime bindings", () => {
   assert.deepEqual(supportedReasoningLevels(runtime), ["default"]);
-  assert.deepEqual(
-    supportedReasoningLevels({
-      ...runtime,
-      modelBindingDescriptors: [
-        {
-          capabilityClasses: ["deep_coding"],
-          evidence: "declared",
-          modelBindingId: "declared-only",
-          modelId: "unverified",
-          provider: "example",
-          supportedReasoning: ["max"],
-          supportedServiceTiers: ["default"],
-        },
-        {
-          capabilityClasses: ["deep_coding"],
-          evidence: "probed",
-          modelBindingId: "probed-model",
-          modelId: "verified",
-          provider: "example",
-          supportedReasoning: ["medium", "high"],
-          supportedServiceTiers: ["default"],
-        },
-      ],
-    }),
-    ["default", "medium", "high"],
+  const probedRuntime = {
+    ...runtime,
+    modelBindingDescriptors: [
+      {
+        capabilityClasses: ["deep_coding"],
+        evidence: "declared",
+        modelBindingId: "declared-only",
+        modelId: "unverified",
+        provider: "example",
+        supportedReasoning: ["max"],
+        supportedServiceTiers: ["default"],
+      },
+      {
+        capabilityClasses: ["deep_coding"],
+        evidence: "probed",
+        modelBindingId: "probed-model",
+        modelId: "verified",
+        provider: "example",
+        supportedReasoning: ["medium", "high"],
+        supportedServiceTiers: ["default"],
+      },
+    ],
+  } satisfies LocalRuntimeInventoryEntry;
+  assert.deepEqual(runtimeModelOptions(probedRuntime), [
+    { label: "Runtime 默认", modelBindingId: "runtime_default" },
+    {
+      label: "example / verified",
+      modelBindingId: "probed-model",
+    },
+  ]);
+  assert.deepEqual(supportedReasoningLevels(probedRuntime, "probed-model"), [
+    "default",
+    "medium",
+    "high",
+  ]);
+  assert.deepEqual(supportedReasoningLevels(probedRuntime), ["default"]);
+  assert.equal(
+    normalizeModelBindingId("declared-only", probedRuntime),
+    "runtime_default",
+  );
+  assert.equal(
+    normalizeModelBindingId("probed-model", probedRuntime),
+    "probed-model",
   );
 });

@@ -473,63 +473,134 @@ export type RuntimeProfileManifestV2 = z.infer<
   typeof RuntimeProfileManifestV2Schema
 >;
 
+export const RuntimeProfileManifestV3Schema = z
+  .object({
+    manifestVersion: z.literal(3),
+    runtimeProfileId: IdentifierSchema,
+    displayName: z.string().trim().min(1).max(256),
+    protocolFamily: z.literal("rah-worker-process/v1"),
+    adapter: z
+      .object({
+        kind: z.literal("generic-process/v1"),
+        executable: RuntimeExecutableSchema,
+        fixedArgs: z
+          .array(RuntimeArgumentSchema)
+          .max(256)
+          .superRefine(rejectCredentialBearingRuntimeArguments),
+        config: GenericProcessProfileAdapterConfigSchema,
+      })
+      .strict(),
+    staticEnv: z.record(
+      RuntimeStaticEnvironmentVariableNameSchema,
+      z.string().max(32_768),
+    ),
+    credentialSlots: z.array(RuntimeCredentialSlotSchema).max(64),
+    declaredCapabilities: UniqueIdentifierArraySchema.max(256),
+    recoveryDrivers: UniqueIdentifierArraySchema.max(64),
+    workspacePolicy: z
+      .object({
+        allowedModes: z
+          .array(WorkspaceModeSchema)
+          .min(1)
+          .superRefine(rejectDuplicateStrings),
+      })
+      .strict(),
+    modelCatalogProbe: z.discriminatedUnion("kind", [
+      z.object({ kind: z.literal("codex-cli/v1") }).strict(),
+      z.object({ kind: z.literal("kimi-cli/v1") }).strict(),
+      z.object({ kind: z.literal("opencode-cli/v1") }).strict(),
+    ]),
+  })
+  .strict()
+  .superRefine((manifest, context) => {
+    rejectDuplicateStrings(
+      manifest.credentialSlots.map((slot) => slot.slotId),
+      context,
+    );
+    rejectDuplicateStrings(
+      manifest.credentialSlots.map((slot) => slot.target.variable),
+      context,
+    );
+    manifest.credentialSlots.forEach((slot, index) => {
+      if (Object.hasOwn(manifest.staticEnv, slot.target.variable)) {
+        context.addIssue({
+          code: "custom",
+          message: `credential target duplicates staticEnv: ${slot.target.variable}`,
+          path: ["credentialSlots", index, "target", "variable"],
+        });
+      }
+    });
+  });
+export type RuntimeProfileManifestV3 = z.infer<
+  typeof RuntimeProfileManifestV3Schema
+>;
+
 export const RuntimeProfileManifestSchema = z.discriminatedUnion(
   "manifestVersion",
-  [RuntimeProfileManifestV1Schema, RuntimeProfileManifestV2Schema],
+  [
+    RuntimeProfileManifestV1Schema,
+    RuntimeProfileManifestV2Schema,
+    RuntimeProfileManifestV3Schema,
+  ],
 );
 export type RuntimeProfileManifest = z.infer<
   typeof RuntimeProfileManifestSchema
 >;
 
-export const RuntimeProfileProbeReportSchema = z
+const RuntimeProfileProbeReportFields = {
+  probeReportId: IdentifierSchema,
+  probeDigest: ContentDigestSchema,
+  runtimeProfileId: IdentifierSchema,
+  runtimeProfileRevisionId: IdentifierSchema,
+  runtimeProfileDigest: ContentDigestSchema,
+  adapter: z
+    .object({
+      kind: IdentifierSchema,
+      implementationVersion: IdentifierSchema,
+    })
+    .strict(),
+  available: z.boolean(),
+  failureCode: z
+    .enum([
+      "executable_not_found",
+      "executable_not_executable",
+      "executable_not_regular_file",
+      "model_catalog_probe_failed",
+      "recovery_driver_unavailable",
+      "unsupported_adapter",
+    ])
+    .optional(),
+  executableIdentity: z
+    .object({
+      requestedExecutable: z.string().trim().min(1).max(4_096),
+      resolvedExecutablePath: z.string().trim().min(1).max(16_384),
+      contentDigest: ContentDigestSchema,
+      byteLength: z.number().int().nonnegative(),
+    })
+    .strict()
+    .optional(),
+  recoveryDrivers: z
+    .array(
+      z
+        .object({
+          driver: IdentifierSchema,
+          implementationVersion: IdentifierSchema,
+        })
+        .strict(),
+    )
+    .superRefine((drivers, context) =>
+      rejectDuplicateStrings(
+        drivers.map((driver) => driver.driver),
+        context,
+      ),
+    ),
+  observedAt: TimestampSchema,
+};
+
+export const RuntimeProfileProbeReportV1Schema = z
   .object({
     reportVersion: z.literal(1),
-    probeReportId: IdentifierSchema,
-    probeDigest: ContentDigestSchema,
-    runtimeProfileId: IdentifierSchema,
-    runtimeProfileRevisionId: IdentifierSchema,
-    runtimeProfileDigest: ContentDigestSchema,
-    adapter: z
-      .object({
-        kind: IdentifierSchema,
-        implementationVersion: IdentifierSchema,
-      })
-      .strict(),
-    available: z.boolean(),
-    failureCode: z
-      .enum([
-        "executable_not_found",
-        "executable_not_executable",
-        "executable_not_regular_file",
-        "recovery_driver_unavailable",
-        "unsupported_adapter",
-      ])
-      .optional(),
-    executableIdentity: z
-      .object({
-        requestedExecutable: z.string().trim().min(1).max(4_096),
-        resolvedExecutablePath: z.string().trim().min(1).max(16_384),
-        contentDigest: ContentDigestSchema,
-        byteLength: z.number().int().nonnegative(),
-      })
-      .strict()
-      .optional(),
-    recoveryDrivers: z
-      .array(
-        z
-          .object({
-            driver: IdentifierSchema,
-            implementationVersion: IdentifierSchema,
-          })
-          .strict(),
-      )
-      .superRefine((drivers, context) =>
-        rejectDuplicateStrings(
-          drivers.map((driver) => driver.driver),
-          context,
-        ),
-      ),
-    observedAt: TimestampSchema,
+    ...RuntimeProfileProbeReportFields,
   })
   .strict()
   .superRefine((report, context) => {
@@ -555,6 +626,61 @@ export const RuntimeProfileProbeReportSchema = z
       });
     }
   });
+export type RuntimeProfileProbeReportV1 = z.infer<
+  typeof RuntimeProfileProbeReportV1Schema
+>;
+
+export const RuntimeProfileProbeReportV2Schema = z
+  .object({
+    reportVersion: z.literal(2),
+    ...RuntimeProfileProbeReportFields,
+    modelBindings: z.array(RuntimeModelBindingSchema),
+  })
+  .strict()
+  .superRefine((report, context) => {
+    if (report.available && report.executableIdentity === undefined) {
+      context.addIssue({
+        code: "custom",
+        message: "available probe reports require executableIdentity",
+        path: ["executableIdentity"],
+      });
+    }
+    if (report.available && report.failureCode !== undefined) {
+      context.addIssue({
+        code: "custom",
+        message: "available probe reports cannot have failureCode",
+        path: ["failureCode"],
+      });
+    }
+    if (!report.available && report.failureCode === undefined) {
+      context.addIssue({
+        code: "custom",
+        message: "unavailable probe reports require failureCode",
+        path: ["failureCode"],
+      });
+    }
+    rejectDuplicateStrings(
+      report.modelBindings.map((binding) => binding.modelBindingId),
+      context,
+    );
+    report.modelBindings.forEach((binding, index) => {
+      if (binding.evidence !== "probed") {
+        context.addIssue({
+          code: "custom",
+          message: "Runtime probe model bindings require probed evidence",
+          path: ["modelBindings", index, "evidence"],
+        });
+      }
+    });
+  });
+export type RuntimeProfileProbeReportV2 = z.infer<
+  typeof RuntimeProfileProbeReportV2Schema
+>;
+
+export const RuntimeProfileProbeReportSchema = z.discriminatedUnion(
+  "reportVersion",
+  [RuntimeProfileProbeReportV1Schema, RuntimeProfileProbeReportV2Schema],
+);
 export type RuntimeProfileProbeReport = z.infer<
   typeof RuntimeProfileProbeReportSchema
 >;

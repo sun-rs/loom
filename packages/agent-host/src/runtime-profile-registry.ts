@@ -23,17 +23,20 @@ import {
   type RuntimeProfileAuditEntry,
   type RuntimeProfileManifest,
   type RuntimeProfileManifestV1,
+  type RuntimeModelBinding,
   type RuntimeProfileProbeReport,
   type RuntimeProfileRevision,
 } from "@rah-os/protocol";
 
 import { isIssuedRuntimeProfileProbeObservation } from "./runtime-probe-authority.ts";
 
-export const RUNTIME_PROFILE_REGISTRY_SCHEMA_VERSION = 2;
+export const RUNTIME_PROFILE_REGISTRY_SCHEMA_VERSION = 3;
 const RUNTIME_PROFILE_MANIFEST_V1_DIGEST_DOMAIN =
   "rah/runtime-profile-manifest/v1";
 const RUNTIME_PROFILE_MANIFEST_V2_DIGEST_DOMAIN =
   "rah/runtime-profile-manifest/v2";
+const RUNTIME_PROFILE_MANIFEST_V3_DIGEST_DOMAIN =
+  "rah/runtime-profile-manifest/v3";
 const RUNTIME_PROFILE_PROBE_DIGEST_DOMAIN = "rah/runtime-profile-probe/v1";
 const EMPTY_SHA256_DIGEST = `sha256:${"0".repeat(64)}`;
 
@@ -54,6 +57,7 @@ export type RuntimeProfileProbeObservation = {
   >;
   failureCode?: NonNullable<RuntimeProfileProbeReport["failureCode"]>;
   recoveryDrivers: RuntimeProfileProbeReport["recoveryDrivers"];
+  modelBindings: RuntimeModelBinding[];
   runtimeProfileRevisionId: string;
 };
 
@@ -107,7 +111,9 @@ export function computeRuntimeProfileManifestDigest(
   const domain =
     manifest.manifestVersion === 1
       ? RUNTIME_PROFILE_MANIFEST_V1_DIGEST_DOMAIN
-      : RUNTIME_PROFILE_MANIFEST_V2_DIGEST_DOMAIN;
+      : manifest.manifestVersion === 2
+        ? RUNTIME_PROFILE_MANIFEST_V2_DIGEST_DOMAIN
+        : RUNTIME_PROFILE_MANIFEST_V3_DIGEST_DOMAIN;
   return `sha256:${createHash("sha256")
     .update(
       JSON.stringify(
@@ -122,9 +128,7 @@ export function computeRuntimeProfileManifestDigest(
 }
 
 export function computeRuntimeProfileProbeDigest(
-  uncheckedReport: Omit<RuntimeProfileProbeReport, "probeDigest"> & {
-    probeDigest?: undefined;
-  },
+  uncheckedReport: Record<string, unknown> & { probeDigest?: undefined },
 ): string {
   const parsed = RuntimeProfileProbeReportSchema.parse({
     ...uncheckedReport,
@@ -190,6 +194,7 @@ export class RuntimeProfileRegistry {
       );
     }
     if (version === 1) this.#migrateSchemaV1ToV2();
+    if (version === 2) this.#migrateSchemaV2ToV3();
     this.#database.exec(`
       PRAGMA foreign_keys = ON;
       CREATE TABLE IF NOT EXISTS runtime_registry_metadata (
@@ -211,7 +216,7 @@ export class RuntimeProfileRegistry {
         runtime_profile_id TEXT NOT NULL REFERENCES runtime_profiles(runtime_profile_id),
         revision INTEGER NOT NULL CHECK (revision > 0),
         content_digest TEXT NOT NULL,
-        manifest_version INTEGER NOT NULL CHECK (manifest_version IN (1, 2)),
+        manifest_version INTEGER NOT NULL CHECK (manifest_version IN (1, 2, 3)),
         manifest_json TEXT NOT NULL,
         state TEXT NOT NULL CHECK (state IN ('inactive', 'active', 'deprecated')),
         imported_at TEXT NOT NULL,
@@ -416,7 +421,7 @@ export class RuntimeProfileRegistry {
         );
       }
       const revision = this.#revisionFromRow(row);
-      if (revision.manifest.manifestVersion === 2) {
+      if (revision.manifest.manifestVersion !== 1) {
         const latestProbe = this.#database
           .prepare(
             `SELECT probe_report_id, available
@@ -621,11 +626,12 @@ export class RuntimeProfileRegistry {
           ? {}
           : { failureCode: input.failureCode }),
         observedAt: this.#timestamp(),
+        modelBindings: input.modelBindings,
         probeReportId,
         recoveryDrivers: [...input.recoveryDrivers].sort((left, right) =>
           left.driver.localeCompare(right.driver),
         ),
-        reportVersion: 1 as const,
+        reportVersion: 2 as const,
         runtimeProfileDigest: revision.contentDigest,
         runtimeProfileId: revision.runtimeProfileId,
         runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
@@ -862,7 +868,7 @@ export class RuntimeProfileRegistry {
           runtime_profile_id TEXT NOT NULL REFERENCES runtime_profiles(runtime_profile_id),
           revision INTEGER NOT NULL CHECK (revision > 0),
           content_digest TEXT NOT NULL,
-          manifest_version INTEGER NOT NULL CHECK (manifest_version IN (1, 2)),
+        manifest_version INTEGER NOT NULL CHECK (manifest_version IN (1, 2, 3)),
           manifest_json TEXT NOT NULL,
           state TEXT NOT NULL CHECK (state IN ('inactive', 'active', 'deprecated')),
           imported_at TEXT NOT NULL,
@@ -893,7 +899,87 @@ export class RuntimeProfileRegistry {
         DROP TABLE runtime_profile_audit_entries_v1;
         DROP TABLE runtime_profile_revisions_v1;
         DROP TABLE runtime_profiles_v1;
-        PRAGMA user_version = 2;
+        PRAGMA user_version = 3;
+        COMMIT;
+      `);
+    } catch (error) {
+      this.#database.exec("ROLLBACK");
+      throw error;
+    } finally {
+      this.#database.exec("PRAGMA foreign_keys = ON");
+    }
+  }
+
+  #migrateSchemaV2ToV3(): void {
+    this.#database.exec("PRAGMA foreign_keys = OFF; BEGIN IMMEDIATE;");
+    try {
+      this.#database.exec(`
+        DROP TRIGGER IF EXISTS runtime_profile_revision_content_immutable;
+        DROP TRIGGER IF EXISTS runtime_profile_revision_no_delete;
+        DROP TRIGGER IF EXISTS runtime_profile_audit_no_update;
+        DROP TRIGGER IF EXISTS runtime_profile_audit_no_delete;
+        DROP TRIGGER IF EXISTS runtime_profile_probe_report_no_update;
+        DROP TRIGGER IF EXISTS runtime_profile_probe_report_no_delete;
+
+        ALTER TABLE runtime_profile_audit_entries RENAME TO runtime_profile_audit_entries_v2;
+        ALTER TABLE runtime_profile_probe_reports RENAME TO runtime_profile_probe_reports_v2;
+        ALTER TABLE runtime_profile_revisions RENAME TO runtime_profile_revisions_v2;
+        ALTER TABLE runtime_profiles RENAME TO runtime_profiles_v2;
+
+        CREATE TABLE runtime_profiles (
+          runtime_profile_id TEXT PRIMARY KEY,
+          active_revision_id TEXT REFERENCES runtime_profile_revisions(runtime_profile_revision_id),
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        ) STRICT;
+
+        CREATE TABLE runtime_profile_revisions (
+          runtime_profile_revision_id TEXT PRIMARY KEY,
+          runtime_profile_id TEXT NOT NULL REFERENCES runtime_profiles(runtime_profile_id),
+          revision INTEGER NOT NULL CHECK (revision > 0),
+          content_digest TEXT NOT NULL,
+          manifest_version INTEGER NOT NULL CHECK (manifest_version IN (1, 2, 3)),
+          manifest_json TEXT NOT NULL,
+          state TEXT NOT NULL CHECK (state IN ('inactive', 'active', 'deprecated')),
+          imported_at TEXT NOT NULL,
+          activated_at TEXT,
+          deprecated_at TEXT,
+          UNIQUE (runtime_profile_id, revision),
+          UNIQUE (runtime_profile_id, content_digest)
+        ) STRICT;
+
+        CREATE TABLE runtime_profile_audit_entries (
+          sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+          audit_entry_id TEXT NOT NULL UNIQUE,
+          action TEXT NOT NULL CHECK (action IN ('imported', 'probe_recorded', 'activated', 'deprecated')),
+          runtime_profile_id TEXT NOT NULL REFERENCES runtime_profiles(runtime_profile_id),
+          runtime_profile_revision_id TEXT NOT NULL REFERENCES runtime_profile_revisions(runtime_profile_revision_id),
+          content_digest TEXT NOT NULL,
+          reason TEXT,
+          occurred_at TEXT NOT NULL
+        ) STRICT;
+
+        CREATE TABLE runtime_profile_probe_reports (
+          probe_report_id TEXT PRIMARY KEY,
+          probe_digest TEXT NOT NULL UNIQUE,
+          runtime_profile_id TEXT NOT NULL REFERENCES runtime_profiles(runtime_profile_id),
+          runtime_profile_revision_id TEXT NOT NULL REFERENCES runtime_profile_revisions(runtime_profile_revision_id),
+          runtime_profile_digest TEXT NOT NULL,
+          available INTEGER NOT NULL CHECK (available IN (0, 1)),
+          observed_at TEXT NOT NULL,
+          report_json TEXT NOT NULL
+        ) STRICT;
+
+        INSERT INTO runtime_profiles SELECT * FROM runtime_profiles_v2;
+        INSERT INTO runtime_profile_revisions SELECT * FROM runtime_profile_revisions_v2;
+        INSERT INTO runtime_profile_audit_entries SELECT * FROM runtime_profile_audit_entries_v2;
+        INSERT INTO runtime_profile_probe_reports SELECT * FROM runtime_profile_probe_reports_v2;
+
+        DROP TABLE runtime_profile_audit_entries_v2;
+        DROP TABLE runtime_profile_probe_reports_v2;
+        DROP TABLE runtime_profile_revisions_v2;
+        DROP TABLE runtime_profiles_v2;
+        PRAGMA user_version = 3;
         COMMIT;
       `);
     } catch (error) {

@@ -4,7 +4,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import type { RuntimeProfileManifestV2 } from "@rah-os/protocol";
+import type {
+  ResolvedModel,
+  RuntimeProfileManifestV2,
+  RuntimeProfileManifestV3,
+} from "@rah-os/protocol";
 
 import {
   buildRuntimeOfferFromProfile,
@@ -51,6 +55,111 @@ function manifest(
     ...overrides,
   };
 }
+
+function modelCatalogManifest(executable: string): RuntimeProfileManifestV3 {
+  return {
+    adapter: {
+      config: { diagnosticByteLimit: 262_144, terminationGraceMs: 1_000 },
+      executable,
+      fixedArgs: ["run", "room-prompt"],
+      kind: "generic-process/v1",
+    },
+    credentialSlots: [],
+    declaredCapabilities: ["worker_commands"],
+    displayName: "Fake Codex with model catalog",
+    manifestVersion: 3,
+    modelCatalogProbe: { kind: "codex-cli/v1" },
+    protocolFamily: "rah-worker-process/v1",
+    recoveryDrivers:
+      process.platform === "win32" ? [] : ["rah-process-supervisor-v1"],
+    runtimeProfileId: "fake-codex-model-catalog",
+    staticEnv: {},
+    workspacePolicy: { allowedModes: ["in_place"] },
+  };
+}
+
+test("a v3 model catalog probe drives the exact argv selected by Placement", async () => {
+  const directory = createDirectory();
+  try {
+    const executable = join(directory, "fake-codex.mjs");
+    writeFileSync(
+      executable,
+      `#!/usr/bin/env node
+if (process.argv.slice(2).join(" ") === "debug models --bundled") {
+  process.stdout.write(JSON.stringify({models:[{slug:"gpt-test",visibility:"list",supported_in_api:true,supported_reasoning_levels:[{effort:"high"}],service_tiers:[]}]}));
+} else {
+  process.stdout.write(JSON.stringify(process.argv.slice(2)));
+}
+`,
+      { mode: 0o700 },
+    );
+    chmodSync(executable, 0o700);
+    const profileRegistry = new RuntimeProfileRegistry({
+      databasePath: join(directory, "runtime-registry.db"),
+      hostId: "host-model-catalog",
+    });
+    profileRegistry.initialize();
+    const revision = profileRegistry.importManifest(
+      modelCatalogManifest(executable),
+    );
+    const implementations = new RuntimeImplementationRegistry();
+    const report = profileRegistry.recordProbeReport(
+      await implementations.probeRevision(revision, { cwd: directory }),
+    );
+    assert.equal(report.reportVersion, 2);
+    assert.equal(report.modelBindings[0]?.modelId, "gpt-test");
+    const active = profileRegistry.activateRevision({
+      contentDigest: revision.contentDigest,
+      runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
+    });
+    const binding = report.modelBindings[0]!;
+    const resolvedModel = {
+      modelBindingId: binding.modelBindingId,
+      modelId: binding.modelId,
+      provider: binding.provider,
+      reasoning: "high",
+      source: "explicit_binding",
+    } satisfies ResolvedModel;
+    const runtime = implementations.createRuntime(
+      active,
+      report,
+      { cwd: directory, supervisorDirectory: join(directory, "supervisors") },
+      resolvedModel,
+    );
+    let prepared = false;
+    const run = await runtime.start(
+      {
+        activationId: "activation-model-catalog",
+        consumerId: "consumer-model-catalog",
+        fromSeq: 1,
+        hostId: "host-model-catalog",
+        participantId: "agent-model-catalog",
+        reason: "manual",
+        roomId: "room-model-catalog",
+        runAttemptId: "run-attempt-model-catalog",
+        toSeq: 1,
+      },
+      {
+        registerPrepared: async () => {
+          prepared = true;
+        },
+      },
+    );
+    assert.equal(prepared, true);
+    assert.equal((await runtime.reap(run)).code, 0);
+    assert.deepEqual(JSON.parse(runtime.diagnostics(run).stdout), [
+      "--model",
+      "gpt-test",
+      "--config",
+      "model_reasoning_effort=high",
+      "run",
+      "room-prompt",
+    ]);
+    profileRegistry.close();
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
 
 test("built-in runtime implementations produce profile-bound immutable probe evidence", async () => {
   const directory = createDirectory();

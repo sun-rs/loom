@@ -4,13 +4,14 @@ import {
   chmodSync,
   mkdirSync,
   mkdtempSync,
+  readFileSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { delimiter, dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { HttpRahClient } from "@rah-os/client-sdk";
 
@@ -40,6 +41,7 @@ const fakeCli = join(
   "fixtures",
   "fake-cli.mjs",
 );
+const fakeArgvPath = join(temporaryDirectory, "fake-codex-argv.json");
 const webPort = await availablePort();
 let browser;
 let chrome;
@@ -51,7 +53,16 @@ try {
   const codexPath = join(binDirectory, "codex");
   writeFileSync(
     codexPath,
-    `#!/bin/sh\nexec ${shellQuote(process.execPath)} ${shellQuote(fakeCli)} "$@"\n`,
+    `#!${process.execPath}
+import { writeFileSync } from "node:fs";
+const args = process.argv.slice(2);
+if (args.join(" ") === "debug models --bundled") {
+  process.stdout.write(JSON.stringify({models:[{slug:"gpt-test",visibility:"list",supported_in_api:true,supported_reasoning_levels:[{effort:"high"}],service_tiers:[]}]}));
+} else {
+  writeFileSync(process.env.RAH_FAKE_ARGV_PATH, JSON.stringify(args));
+  await import(${JSON.stringify(pathToFileURL(fakeCli).href)});
+}
+`,
     { mode: 0o700 },
   );
   chmodSync(codexPath, 0o700);
@@ -79,6 +90,42 @@ try {
   });
   assert.equal(agents.agents.length, 1);
   assert.equal(agents.agents[0]?.handle, "Codex");
+  const inventory = await firstSession.client.request("host.runtime.list", {});
+  const runtime = inventory.runtimes.find(
+    ({ runtimeOfferId }) => runtimeOfferId !== undefined,
+  );
+  const modelBinding = runtime?.modelBindingDescriptors.find(
+    ({ modelId }) => modelId === "gpt-test",
+  );
+  assert.notEqual(runtime?.runtimeOfferId, undefined);
+  assert.notEqual(modelBinding, undefined);
+  const agentDetail = await firstSession.client.request("agent.get", {
+    agentDefinitionId: agents.agents[0].definition.agentDefinitionId,
+  });
+  const controlSync = await firstSession.client.request("room.sync", {
+    consumerId: "local-workbench-gate-control",
+    roomId: controlRoom.roomId,
+  });
+  await firstSession.client.request("agent.manage", {
+    action: "configure",
+    agentDefinitionId: agentDetail.agent.definition.agentDefinitionId,
+    avatarKey: agentDetail.agent.currentRevision.avatarKey,
+    basedOnRoomSeq: controlSync.latestRoomSeq,
+    description: agentDetail.agent.currentRevision.description,
+    displayName:
+      agentDetail.agent.currentRevision.displayName ?? agentDetail.agent.handle,
+    handle: agentDetail.agent.handle,
+    idempotencyKey: "local-workbench-gate-model-config",
+    instructions: agentDetail.agent.currentRevision.instructions,
+    modelIntent: {
+      exactBindingIds: [modelBinding.modelBindingId],
+      fallback: "disabled",
+      reasoning: "high",
+    },
+    role: agentDetail.agent.currentRevision.role,
+    runtimeOfferId: runtime.runtimeOfferId,
+    sessionPolicy: agentDetail.policy.sessionPolicy,
+  });
 
   const initialSync = await firstSession.client.request("room.sync", {
     consumerId: "local-workbench-gate-first",
@@ -106,6 +153,14 @@ try {
       ({ body }) => body === "formal-workbench-agent-reply",
     );
   }, 15_000);
+  assert.deepEqual(JSON.parse(readFileSync(fakeArgvPath, "utf8")).slice(0, 6), [
+    "--model",
+    "gpt-test",
+    "--config",
+    "model_reasoning_effort=high",
+    "exec",
+    "--ephemeral",
+  ]);
 
   await terminate(workbench);
   workbench = undefined;
@@ -125,6 +180,13 @@ try {
       "formal-workbench-agent-reply",
     ],
   );
+  const restoredAgent = await secondSession.client.request("agent.get", {
+    agentDefinitionId: agentDetail.agent.definition.agentDefinitionId,
+  });
+  assert.deepEqual(restoredAgent.policy.modelIntent.exactBindingIds, [
+    modelBinding.modelBindingId,
+  ]);
+  assert.equal(restoredAgent.policy.modelIntent.reasoning, "high");
 
   const chromeExecutable = await findChromeExecutable();
   chrome = spawn(
@@ -192,6 +254,35 @@ try {
     `document.body.innerText.includes("formal-workbench-agent-reply")`,
     { description: "restored canonical Agent reply" },
   );
+  await evaluate(
+    browser,
+    `document.querySelector('button[title="Agent 与成员"]')?.click()`,
+  );
+  await waitForBrowserValue(
+    browser,
+    `document.querySelector(".rah-runtime-card") !== null`,
+    { description: "persistent Agent directory" },
+  );
+  await evaluate(
+    browser,
+    `[...document.querySelectorAll("button")].find((button) => button.textContent?.trim() === "编辑")?.click()`,
+  );
+  await waitForBrowserValue(
+    browser,
+    `document.querySelector(".rah-agent-manage-dialog") !== null`,
+    { description: "Agent model settings" },
+  );
+  assert.equal(
+    await evaluate(
+      browser,
+      `[...document.querySelectorAll(".rah-agent-manage-dialog label")].find((label) => label.firstChild?.textContent?.trim() === "模型")?.querySelector("select")?.value`,
+    ),
+    modelBinding.modelBindingId,
+  );
+  await evaluate(
+    browser,
+    `document.querySelector('.rah-agent-manage-dialog button[aria-label="关闭"]')?.click()`,
+  );
   assert.equal(
     await evaluate(
       browser,
@@ -246,6 +337,7 @@ async function startWorkbench() {
         ...process.env,
         PATH: `${binDirectory}${delimiter}${dirname(process.execPath)}`,
         RAH_FAKE_MODE: "worker-task",
+        RAH_FAKE_ARGV_PATH: fakeArgvPath,
         RAH_FAKE_ROOM_REPLY: "formal-workbench-agent-reply",
         RAH_OS_HOME: workbenchHome,
         RAH_WEB_PORT: String(webPort),
@@ -362,8 +454,4 @@ async function terminate(processHandle) {
   await new Promise((resolvePromise) =>
     processHandle.once("exit", resolvePromise),
   );
-}
-
-function shellQuote(value) {
-  return `'${value.replaceAll("'", `'"'"'`)}'`;
 }

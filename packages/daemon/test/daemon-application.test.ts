@@ -1593,7 +1593,6 @@ test("the daemon recovers a committed InputRequest, waits without a model, and r
         activeObserver
           .listActivations({ roomId: room.roomId })
           .some((activation) => activation.state === "completed"),
-      2_000,
     );
     const pending = activeObserver.listInputRequests(humanActor, {
       roomId: room.roomId,

@@ -9,7 +9,9 @@ import type {
 } from "@rah-os/protocol";
 
 import {
+  normalizeModelBindingId,
   normalizeReasoningLevel,
+  runtimeModelOptions,
   supportedReasoningLevels,
 } from "../agent-runtime-capabilities.ts";
 import { useDialogProtocol } from "../dialog-protocol.ts";
@@ -75,6 +77,7 @@ export function AgentCreateDialog({
   const [runtimeOfferId, setRuntimeOfferId] = useState(
     runtimeOptions[0]?.runtimeOfferId ?? "",
   );
+  const [modelBindingId, setModelBindingId] = useState("runtime_default");
   const [reasoning, setReasoning] = useState<ReasoningLevel>("default");
   const [sessionPolicy, setSessionPolicy] = useState<
     "fresh" | "prefer_resume" | "require_resume"
@@ -85,12 +88,23 @@ export function AgentCreateDialog({
   const selectedRuntime = runtimeOptions.find(
     (runtime) => runtime.runtimeOfferId === runtimeOfferId,
   );
-  const reasoningOptions = supportedReasoningLevels(selectedRuntime);
+  const modelOptions = runtimeModelOptions(selectedRuntime);
+  const reasoningOptions = supportedReasoningLevels(
+    selectedRuntime,
+    modelBindingId,
+  );
   useEffect(() => {
-    setReasoning((current) =>
-      normalizeReasoningLevel(current, selectedRuntime),
+    const normalizedBinding = normalizeModelBindingId(
+      modelBindingId,
+      selectedRuntime,
     );
-  }, [selectedRuntime]);
+    if (normalizedBinding !== modelBindingId) {
+      setModelBindingId(normalizedBinding);
+    }
+    setReasoning((current) =>
+      normalizeReasoningLevel(current, selectedRuntime, normalizedBinding),
+    );
+  }, [modelBindingId, selectedRuntime]);
   const valid =
     displayName.trim() !== "" &&
     /^[\p{L}\p{N}][\p{L}\p{N}._-]*$/u.test(handle.trim()) &&
@@ -143,7 +157,7 @@ export function AgentCreateDialog({
               displayName: displayName.trim(),
               handle: handle.trim(),
               instructions: instructions.trim(),
-              modelIntent: { fallback: "disabled", reasoning },
+              modelIntent: modelIntent(modelBindingId, reasoning),
               role: role.trim(),
               runtimeOfferId,
               sessionPolicy,
@@ -212,6 +226,28 @@ export function AgentCreateDialog({
                 ))}
               </select>
             </label>
+            <label>
+              模型
+              <select
+                onChange={(event) => {
+                  const next = event.target.value;
+                  setModelBindingId(next);
+                  setReasoning((current) =>
+                    normalizeReasoningLevel(current, selectedRuntime, next),
+                  );
+                }}
+                value={modelBindingId}
+              >
+                {modelOptions.map((option) => (
+                  <option
+                    key={option.modelBindingId}
+                    value={option.modelBindingId}
+                  >
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
           <label>
             角色
@@ -258,7 +294,7 @@ export function AgentCreateDialog({
                 ))}
               </select>
               {reasoningOptions.length === 1 ? (
-                <small>该 Runtime 尚未发布可执行的模型/推理绑定。</small>
+                <small>当前模型未发布可执行的推理档位，将使用默认值。</small>
               ) : null}
             </label>
             <label>
@@ -338,9 +374,19 @@ export function AgentManageDialog({
   const initialRuntime = runtimeOptions.find(
     (runtime) => runtime.runtimeOfferId === runtimeOfferId,
   );
+  const configuredModelBindingId = policy.modelIntent.exactBindingIds?.[0];
+  const initialModelBindingId = normalizeModelBindingId(
+    configuredModelBindingId,
+    initialRuntime,
+  );
+  const [modelBindingId, setModelBindingId] = useState(initialModelBindingId);
   const configuredReasoning = policy.modelIntent.reasoning ?? "default";
   const [reasoning, setReasoning] = useState<ReasoningLevel>(
-    normalizeReasoningLevel(configuredReasoning, initialRuntime),
+    normalizeReasoningLevel(
+      configuredReasoning,
+      initialRuntime,
+      initialModelBindingId,
+    ),
   );
   const [sessionPolicy, setSessionPolicy] = useState(policy.sessionPolicy);
   const [pending, setPending] = useState(false);
@@ -350,12 +396,23 @@ export function AgentManageDialog({
   const selectedRuntime = runtimeOptions.find(
     (runtime) => runtime.runtimeOfferId === runtimeOfferId,
   );
-  const reasoningOptions = supportedReasoningLevels(selectedRuntime);
+  const modelOptions = runtimeModelOptions(selectedRuntime);
+  const reasoningOptions = supportedReasoningLevels(
+    selectedRuntime,
+    modelBindingId,
+  );
   useEffect(() => {
-    setReasoning((current) =>
-      normalizeReasoningLevel(current, selectedRuntime),
+    const normalizedBinding = normalizeModelBindingId(
+      modelBindingId,
+      selectedRuntime,
     );
-  }, [selectedRuntime]);
+    if (normalizedBinding !== modelBindingId) {
+      setModelBindingId(normalizedBinding);
+    }
+    setReasoning((current) =>
+      normalizeReasoningLevel(current, selectedRuntime, normalizedBinding),
+    );
+  }, [modelBindingId, selectedRuntime]);
   const valid =
     displayName.trim() !== "" &&
     /^[\p{L}\p{N}][\p{L}\p{N}._-]*$/u.test(handle.trim()) &&
@@ -418,7 +475,7 @@ export function AgentManageDialog({
                 displayName: displayName.trim(),
                 handle: handle.trim(),
                 instructions: instructions.trim(),
-                modelIntent: { ...policy.modelIntent, reasoning },
+                modelIntent: modelIntent(modelBindingId, reasoning),
                 role: role.trim(),
                 runtimeOfferId,
                 sessionPolicy,
@@ -475,6 +532,34 @@ export function AgentManageDialog({
                 ))}
               </select>
             </label>
+            <label>
+              模型
+              <select
+                onChange={(event) => {
+                  const next = event.target.value;
+                  setModelBindingId(next);
+                  setReasoning((current) =>
+                    normalizeReasoningLevel(current, selectedRuntime, next),
+                  );
+                }}
+                value={modelBindingId}
+              >
+                {modelOptions.map((option) => (
+                  <option
+                    key={option.modelBindingId}
+                    value={option.modelBindingId}
+                  >
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              {configuredModelBindingId !== undefined &&
+              configuredModelBindingId !== modelBindingId ? (
+                <small>
+                  旧模型绑定没有当前 Runtime 证据；保存时将恢复为 Runtime 默认。
+                </small>
+              ) : null}
+            </label>
           </div>
           <label>
             角色
@@ -524,7 +609,7 @@ export function AgentManageDialog({
                   没有 Runtime 证据；保存时将恢复为 Runtime 默认。
                 </small>
               ) : reasoningOptions.length === 1 ? (
-                <small>该 Runtime 尚未发布可执行的模型/推理绑定。</small>
+                <small>当前模型未发布可执行的推理档位，将使用默认值。</small>
               ) : null}
             </label>
             <label>
@@ -633,4 +718,17 @@ function errorMessage(error: unknown): string {
 function reasoningLabel(reasoning: ReasoningLevel): string {
   if (reasoning === "default") return "Runtime 默认";
   return reasoning[0]!.toUpperCase() + reasoning.slice(1);
+}
+
+function modelIntent(
+  modelBindingId: string,
+  reasoning: ReasoningLevel,
+): ClientAgentProvisionRequest["modelIntent"] {
+  return {
+    fallback: "disabled",
+    ...(modelBindingId === "runtime_default"
+      ? {}
+      : { exactBindingIds: [modelBindingId] }),
+    reasoning,
+  };
 }

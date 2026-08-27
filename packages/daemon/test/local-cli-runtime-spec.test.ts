@@ -26,5 +26,21 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
       "fixed CLI arguments must not claim an unprobed model binding",
     );
   }
+  assert.equal(
+    localCliRuntimeSpec("codex", workspaceCwd)?.modelCatalogProbe?.kind,
+    "codex-cli/v1",
+  );
+  assert.equal(
+    localCliRuntimeSpec("kimi", workspaceCwd)?.modelCatalogProbe?.kind,
+    "kimi-cli/v1",
+  );
+  assert.equal(
+    localCliRuntimeSpec("opencode", workspaceCwd)?.modelCatalogProbe?.kind,
+    "opencode-cli/v1",
+  );
+  assert.equal(
+    localCliRuntimeSpec("claude", workspaceCwd)?.modelCatalogProbe,
+    undefined,
+  );
   assert.equal(localCliRuntimeSpec("unknown", workspaceCwd), undefined);
 });

@@ -1,6 +1,6 @@
 # Runtime Registry 与多 Lane 调度架构
 
-状态：**Accepted in stages / R0–R3 implemented / narrow R2a–R2b implemented / R5 config v4 fake slice implemented / R1–R4 provisional**（2026-08-26）。严格 protocol schemas、pure placement planner、Kernel schema v7（保留 Placement projections并新增 Workspace/Room/Role/Thread 存储边界）、control Room 配置修订、trusted immutable Offer evidence、durable Placement/RunAttempt provenance、atomic placement launch claim、可信启动期 capacity policy、MultiLaneAgentHost、Host-local immutable Runtime Profile/Probe Registry、spawn-time secret binding，以及 daemon config v4 的双 participant/双 profile Placement-selected external Worker E2 已通过本机门禁。durable PlacementHold、control-Room CapacityPool、canonical WorkspaceDefinition/mount、model execution binding、mixed-adapter recovery 与 real CLI v4 certification尚未完成。
+状态：**Accepted in stages / R0–R3 implemented / narrow R2a–R2c implemented / R5 config v4 fake slice implemented / R1–R4 provisional**（2026-08-27）。严格 protocol schemas、pure placement planner、Kernel schema v8、control Room 配置修订、trusted immutable Offer evidence、durable Placement/RunAttempt provenance、atomic placement launch claim、可信启动期 capacity policy、MultiLaneAgentHost、Host-local immutable Runtime Profile/Probe Registry、spawn-time secret binding、probe-backed model catalog/argv binding，以及 daemon config v4 的 Placement-selected external Worker E2 已通过本机门禁。durable PlacementHold、control-Room CapacityPool、canonical WorkspaceDefinition/mount、mixed-adapter recovery 与 paid real CLI v4 certification尚未完成。
 
 ## 1. 要解决的问题
 
@@ -146,6 +146,8 @@ type RuntimeProfileRevision = {
 Registry 使用 owner-private 独立持久库，例如 `runtime-registry.db`；它不是 Room Kernel 的第二套业务数据库。Kernel 只接收 redacted descriptor 与 digest，不接收本地路径、secret ref 细节或 env value。
 
 窄 R2a 已实现 `RuntimeProfileManifestV1`。R2b 增加 `RuntimeProfileManifestV2` 与 registry schema v2 migration：v2 在同一严格 executable/argv 基线上增加非敏感 `staticEnv` 与只命名 target、不含 value 的 credential slot。daemon-owned authority env、常见 credential-bearing argv/static-env 名称、未知字段、非 owner-private database/manifest、Host identity mismatch 和更新版本 schema 均 fail closed。`staticEnv` 的名称过滤只能阻止显式常见 credential 误配；恶意把 secret 标成普通变量仍属于 owner-controlled manifest 信任边界，不能宣称有通用 secret 分类器。manifest path 与 secret reference/value 不进入 revision、probe 或 audit。
+
+R2c 增加 `RuntimeProfileManifestV3`、registry schema v3 migration 与 versioned probe report：profile 只能选择内建的 `codex-cli/v1`、`kimi-cli/v1`、`opencode-cli/v1` 目录探测器，不能注入任意 catalog command。探测器以无 shell、限时、限输出的本机子进程读取 CLI 自己的机器可读目录，裁剪成 `RuntimeModelBinding` 后进入 probe digest；原始 provider 配置与 credential 不持久化。Offer 再删除 `adapterMapping`，只发布 redacted descriptor。Planner 冻结 explicit binding，daemon config v4 按 Placement 为本次 Run 创建 Runtime，并把受验证 mapping 展开成前置 argv。不存在目录、目录失败、binding 不匹配或未声明 reasoning 时均 fail closed；`runtime_default` 仍不发送 selector。schema v2 的 report v1 digest 在升级后保持原值，不能靠添加空字段重写历史。当前 Codex 目录同时提供模型与 reasoning/service-tier 证据；Kimi/OpenCode 只提供模型 selector，因 CLI 目录没有可执行 effort mapping而不发布推理档位；Claude 暂无机器可读目录，保持 v2 Runtime 默认。
 
 ### 5.2 Protocol family，而不是每 CLI 一套 parser
 
@@ -486,7 +488,7 @@ config v4 已使用独立 shape 实现 multi-profile/multi-participant compositi
 
 v4 的 `host.maxConcurrent` 与每个 Offer `maxConcurrent` 同时进入 trusted startup capacity policy，实际有效容量仍取 Kernel Host/profile/Offer 门禁的最小值。两个 profile 的旧 revision recovery 会按 descriptor 中的 revision/digest/driver version 在已配置 Registry 中解析；未找到或多 Registry 冲突时 fail closed。
 
-当前限制：v4 workspace identity 仍是 trusted startup config，不是 schema v7 的 canonical Workspace 管理面；只支持固定 `in_place` cwd，不支持动态 worktree；model binding 仍未执行；R5 只用两个 immutable fake Generic profiles证明路由和业务链，没有宣称 Codex/Kimi/OpenCode/Claude 的真实 v4 certification。manifest import 仍必须 canonicalize → validate → digest → create immutable revision；v2 单 runtime 配置未来应由显式 migration command 导入，不做无法审计的隐式猜测。
+当前限制：v4 workspace identity 仍是 trusted startup config，不是 schema v8 的 canonical Workspace 管理面；只支持固定 `in_place` cwd，不支持动态 worktree；model binding 已在 v3 profile 的本机目录证据与 Generic argv mapping 范围内执行，但尚未覆盖 ACP 动态 config、Claude 目录或跨 Provider fallback；R5 的付费 real CLI 尚未重跑完整 v4/reply certification。manifest import 仍必须 canonicalize → validate → digest → create immutable revision；旧单 runtime配置未来应由显式 migration command 导入，不做无法审计的隐式猜测。
 
 ## 15. 外部项目经验：采用与拒绝
 

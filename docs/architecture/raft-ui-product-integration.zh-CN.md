@@ -75,6 +75,7 @@ Reference HTML 永远加载 `raft-ui-reference-adapter.js`，不得加载产品 
 - Workspace owner/admin 可从 Raft 形态创建窗口提交显示名称、handle、头像 key、角色、描述、指令、RuntimeOffer、推理强度与 session policy；单个 `agent.provision` command 在 Kernel 原子创建长期身份、Definition/Policy 与 Host grant，重载和 daemon restart 后仍存在；
 - 同一 Agent 设置窗口读取 canonical current Definition/Policy，并用 `agent.manage` 原子保存新 revision；启用、停用与删除均为真实 Kernel 状态，删除会清理 memberships 和 Host scope，活动工作存在时 fail closed；
 - Placement launch claim 固化 AgentDefinition revision，AgentHost 把它注入实际 child process 的 `RAH_AGENT_CONTEXT_JSON`；页面表单不是运行时真相，Runtime credential 也不会进入该变量；
+- Runtime Profile v3 从 Codex/Kimi/OpenCode 的机器可读目录生成 probe-backed model bindings；Agent 模型下拉只展示当前 Offer 的 redacted descriptors，推理档位只展示所选 binding 明确支持的值，Placement 最终把选择转换成 shell-free argv。无证据选项不显示，Claude 当前只使用 Runtime 默认；
 - 从 Room 标题栏/聊天区成员窗口把 Workspace Agent 加入或移出当前 Room；当前状态来自 canonical membership list，重复/并发操作会重新对账；
 - 与 Raft channel 一致，Room membership 同时定义普通 Message 的默认投递范围；composer 不提供逐消息收件人复选框，`@Handle` 只把对应成员的 activation reason 提升为 mention，不过滤其他 Room Agent；
 - Room Agent chip 展示由 canonical Activation/RunAttempt 推导的空闲、唤醒中、工作中或异常，不读取 CLI stdout/JSONL；
@@ -111,4 +112,4 @@ Reference HTML 永远加载 `raft-ui-reference-adapter.js`，不得加载产品 
 - exploratory multi-Agent sequence：`npm run dev:web:multi-agent-fixture` 仍只负责启动真实 daemon config v4、测试代理和两个 Fake CLI，供人工检查与浏览器 DevTools 使用；自动验收使用独立的 `npm run test:web:browser`。浏览器无须接触 PAT；`dev:web:multi-agent-fixture:lan` 另提供明确、临时的 iOS 实机入口；
 - installed local CLI sequence：`npm run dev:web:local-cli-fixture` 把探测到的 Codex/Kimi/OpenCode/Claude AgentDefinition 建在产品 Workspace 的 control Room，并同时启动 same-origin Web 入口；fixture 输出、页面、URL 与 Local Storage 都不含 Human PAT。`:lan` 变体只用于可信局域网，启动只做 executable probe，真正给 Agent 投递工作才可能消耗 provider 额度；
 - production build：Vite build 必须独立通过，且不需要 sibling `raft-ui`。
-- persistent production workbench：`npm run test:web:workbench` 使用 owner-private 临时 state、production bundle、loopback gateway、fake Codex 与真实 Chrome，证明 canonical Agent reply、进程重启后的同一 Workspace/Room/Agent/Message 恢复、无 token 输入页，以及 390×844 无横向 overflow。
+- persistent production workbench：`npm run test:web:workbench` 使用 owner-private 临时 state、production bundle、loopback gateway、带 model catalog 的 fake Codex 与真实 Chrome，证明 Agent 模型/推理 Policy 被实际转换成 child argv、canonical Agent reply、进程重启后的同一 Workspace/Room/Agent/Policy/Message 恢复、无 token 输入页，以及 390×844 无横向 overflow。

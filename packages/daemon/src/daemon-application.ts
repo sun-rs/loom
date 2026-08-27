@@ -17,16 +17,11 @@ import {
   HumanHttpApplicationService,
   WorkerApplicationService,
 } from "@rah-os/application-service";
-import {
-  KERNEL_SCHEMA_VERSION,
-  RahCore,
-  type AuthenticatedHostContext,
-  RoomKernel,
-} from "@rah-os/core";
+import { KERNEL_SCHEMA_VERSION, RahCore, RoomKernel } from "@rah-os/core";
 import {
   CLIENT_API_VERSION,
+  type PlacementDecision,
   type RuntimeRecoveryDescriptor,
-  type RuntimeProfileRevision,
   type WorkspaceMountDescriptor,
 } from "@rah-os/protocol";
 
@@ -40,6 +35,10 @@ import {
   OutboxWakeDispatcher,
 } from "./outbox-wake-dispatcher.ts";
 import { RuntimeOfferPublisher } from "./runtime-offer-publisher.ts";
+import {
+  assertRuntimeProfileRevisionStillActive,
+  createConfiguredRuntime,
+} from "./runtime-profile-composition.ts";
 import { FileSecretProvider, type SecretProvider } from "./secret-provider.ts";
 import {
   buildLocalRuntimeInventoryResponse,
@@ -63,24 +62,6 @@ export type DaemonHealthSnapshot = {
   lastError?: string;
   startedAt?: string;
 };
-
-function assertRuntimeProfileRevisionStillActive(
-  registry: RuntimeProfileRegistry,
-  expectedRevision: RuntimeProfileRevision,
-): void {
-  const current = registry.getActiveRevision(expectedRevision.runtimeProfileId);
-  if (
-    current === null ||
-    current.state !== "active" ||
-    current.runtimeProfileRevisionId !==
-      expectedRevision.runtimeProfileRevisionId ||
-    current.contentDigest !== expectedRevision.contentDigest
-  ) {
-    throw new Error(
-      `RuntimeProfile ${expectedRevision.runtimeProfileId} active revision changed; restart the daemon to select the new revision`,
-    );
-  }
-}
 
 export class DaemonApplication {
   readonly #config: DaemonConfig;
@@ -201,7 +182,7 @@ export class DaemonApplication {
       let runtime: RuntimeAdapter;
       const runtimeOfferPublishers: RuntimeOfferPublisher[] = [];
       let placementRuntimeResolver:
-        ((placement: { runtimeOfferId: string }) => RuntimeAdapter) | undefined;
+        ((placement: PlacementDecision) => RuntimeAdapter) | undefined;
       let runtimeRecoveryDrivers: readonly string[] | undefined;
       let runtimeRecoveryResolver:
         ((descriptor: RuntimeRecoveryDescriptor) => RuntimeAdapter) | undefined;
@@ -290,36 +271,16 @@ export class DaemonApplication {
             ),
           ),
         });
-        runtime = implementations.createRuntime(activeRevision, probeReport, {
-          activationEnvironment: async (scope) => {
-            const secretLease = await credentialEnvironment.resolve();
-            const credential = activeWorkerService.issueActivationCredential(
-              host,
-              scope,
-            );
-            return {
-              env: {
-                ...secretLease.env,
-                RAH_WORKER_API_URL: activeWorkerService.origin,
-                RAH_WORKER_TOKEN: credential.accessToken,
-              },
-              redactions: [
-                ...(secretLease.redactions ?? []),
-                credential.accessToken,
-              ],
-              release: () => {
-                credential.revoke();
-                secretLease.release?.();
-              },
-            };
-          },
-          beforeStart: () =>
-            assertRuntimeProfileRevisionStillActive(
-              runtimeProfileRegistry!,
-              activeRevision,
-            ),
+        runtime = createConfiguredRuntime({
+          credentialEnvironment,
           cwd: runtimeOptions.cwd,
+          host,
+          implementations,
+          probeReport,
+          runtimeProfileRegistry,
+          runtimeProfileRevision: activeRevision,
           supervisorDirectory: join(this.#config.stateDirectory, "supervisors"),
+          workerService: activeWorkerService,
         });
         const recovery = createRegistryBackedRuntimeRecovery({
           cwd: runtimeOptions.cwd,
@@ -361,7 +322,11 @@ export class DaemonApplication {
       } else {
         const v4Config = this.#config;
         const implementations = new RuntimeImplementationRegistry();
-        const runtimesByOfferId = new Map<string, RuntimeAdapter>();
+        const runtimesByOfferId = new Map<
+          string,
+          (placement: PlacementDecision) => RuntimeAdapter
+        >();
+        let defaultRuntime: RuntimeAdapter | undefined;
         const workspaceMountDescriptors: WorkspaceMountDescriptor[] = [
           {
             modes: [v4Config.workspace.mode],
@@ -415,46 +380,32 @@ export class DaemonApplication {
               ),
             },
           );
-          const configuredRuntime = implementations.createRuntime(
-            activeRevision,
-            probeReport,
-            {
-              activationEnvironment: async (scope) => {
-                const secretLease = await credentialEnvironment.resolve();
-                const credential =
-                  activeWorkerService.issueActivationCredential(host, scope);
-                return {
-                  env: {
-                    ...secretLease.env,
-                    RAH_WORKER_API_URL: activeWorkerService.origin,
-                    RAH_WORKER_TOKEN: credential.accessToken,
-                  },
-                  redactions: [
-                    ...(secretLease.redactions ?? []),
-                    credential.accessToken,
-                  ],
-                  release: () => {
-                    credential.revoke();
-                    secretLease.release?.();
-                  },
-                };
-              },
-              beforeStart: () =>
-                assertRuntimeProfileRevisionStillActive(
-                  runtimeProfileRegistry,
-                  activeRevision,
-                ),
+          const createRuntimeForPlacement = (
+            placement?: PlacementDecision,
+          ): RuntimeAdapter =>
+            createConfiguredRuntime({
+              credentialEnvironment,
               cwd: v4Config.workspace.cwd,
+              host,
+              implementations,
+              probeReport,
+              ...(placement?.resolvedModel === undefined
+                ? {}
+                : { resolvedModel: placement.resolvedModel }),
+              runtimeProfileRegistry,
+              runtimeProfileRevision: activeRevision,
               supervisorDirectory: join(v4Config.stateDirectory, "supervisors"),
-            },
-          );
+              workerService: activeWorkerService,
+            });
+          const configuredRuntime = createRuntimeForPlacement();
           const availability = await configuredRuntime.probe();
           if (!availability.available) {
             throw new Error(availability.detail ?? "runtime is unavailable");
           }
+          defaultRuntime ??= configuredRuntime;
           runtimesByOfferId.set(
             runtimeOptions.offer.runtimeOfferId,
-            configuredRuntime,
+            (placement) => createRuntimeForPlacement(placement),
           );
           runtimeOfferPublishers.push(
             new RuntimeOfferPublisher({
@@ -487,7 +438,10 @@ export class DaemonApplication {
             }),
           );
         }
-        runtime = runtimesByOfferId.values().next().value!;
+        if (defaultRuntime === undefined) {
+          throw new Error("daemon config v4 requires at least one Runtime");
+        }
+        runtime = defaultRuntime;
         placementRuntimeResolver = (placement) => {
           const selected = runtimesByOfferId.get(placement.runtimeOfferId);
           if (selected === undefined) {
@@ -495,7 +449,7 @@ export class DaemonApplication {
               `Placement references unconfigured RuntimeOffer ${placement.runtimeOfferId}`,
             );
           }
-          return selected;
+          return selected(placement);
         };
         const recovery = createRegistryBackedRuntimeRecoveryFromRegistries({
           cwd: v4Config.workspace.cwd,

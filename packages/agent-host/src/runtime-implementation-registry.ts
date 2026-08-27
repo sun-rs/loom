@@ -6,6 +6,8 @@ import { delimiter, isAbsolute, resolve } from "node:path";
 import type {
   RuntimeOffer,
   RuntimeOfferState,
+  ResolvedModel,
+  RuntimeModelBinding,
   RuntimeProfileManifest,
   RuntimeProfileProbeReport,
   RuntimeProfileRevision,
@@ -27,6 +29,10 @@ import {
   type RuntimeProfileProbeObservation,
 } from "./runtime-profile-registry.ts";
 import { issueRuntimeProfileProbeObservation } from "./runtime-probe-authority.ts";
+import {
+  probeLocalModelCatalog,
+  resolveModelBindingArguments,
+} from "./model-catalog-probe.ts";
 
 const GENERIC_PROCESS_IMPLEMENTATION_VERSION = "generic-process-adapter/v1";
 const PROCESS_SUPERVISOR_DRIVER = "rah-process-supervisor-v1";
@@ -43,6 +49,7 @@ type RuntimeAdapterImplementation = {
     revision: RuntimeProfileRevision,
     options: RuntimeCreationOptions,
     probeReport?: RuntimeProfileProbeReport,
+    resolvedModel?: ResolvedModel,
   ) => GenericProcessAdapter;
   implementationVersion: string;
   recoveryDrivers: readonly string[];
@@ -59,8 +66,13 @@ export class RuntimeImplementationRegistry {
     const recoveryDrivers =
       process.platform === "win32" ? [] : [PROCESS_SUPERVISOR_DRIVER];
     this.#adapterImplementations.set("generic-process/v1", {
-      create: (revision, options, probeReport) =>
-        createGenericProcessRuntime(revision, options, probeReport),
+      create: (revision, options, probeReport, resolvedModel) =>
+        createGenericProcessRuntime(
+          revision,
+          options,
+          probeReport,
+          resolvedModel,
+        ),
       implementationVersion: GENERIC_PROCESS_IMPLEMENTATION_VERSION,
       recoveryDrivers,
     });
@@ -102,6 +114,7 @@ export class RuntimeImplementationRegistry {
         available: false,
         contentDigest: revision.contentDigest,
         failureCode: "unsupported_adapter",
+        modelBindings: [],
         recoveryDrivers: [],
         runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
       });
@@ -131,6 +144,7 @@ export class RuntimeImplementationRegistry {
         available: false,
         contentDigest: revision.contentDigest,
         failureCode: "recovery_driver_unavailable",
+        modelBindings: [],
         recoveryDrivers,
         runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
       });
@@ -139,8 +153,36 @@ export class RuntimeImplementationRegistry {
     const executable = await resolveExecutableIdentity(
       manifest.adapter.executable,
       input.cwd,
-      manifest.manifestVersion === 2 ? manifest.staticEnv.PATH : undefined,
+      manifest.manifestVersion === 1 ? undefined : manifest.staticEnv.PATH,
     );
+    let modelBindings: RuntimeModelBinding[] = [];
+    if (
+      executable.available &&
+      executable.identity !== undefined &&
+      manifest.manifestVersion === 3
+    ) {
+      try {
+        modelBindings = await probeLocalModelCatalog({
+          cwd: input.cwd,
+          executablePath: executable.identity.resolvedExecutablePath,
+          kind: manifest.modelCatalogProbe.kind,
+        });
+      } catch {
+        return issueRuntimeProfileProbeObservation({
+          adapter: {
+            implementationVersion: adapterImplementation.implementationVersion,
+            kind: manifest.adapter.kind,
+          },
+          available: false,
+          contentDigest: revision.contentDigest,
+          executableIdentity: executable.identity,
+          failureCode: "model_catalog_probe_failed",
+          modelBindings: [],
+          recoveryDrivers,
+          runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
+        });
+      }
+    }
     return issueRuntimeProfileProbeObservation({
       adapter: {
         implementationVersion: adapterImplementation.implementationVersion,
@@ -155,6 +197,7 @@ export class RuntimeImplementationRegistry {
         ? {}
         : { failureCode: executable.failureCode }),
       recoveryDrivers,
+      modelBindings,
       runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
     });
   }
@@ -163,6 +206,7 @@ export class RuntimeImplementationRegistry {
     revision: RuntimeProfileRevision,
     probeReport: RuntimeProfileProbeReport,
     options: RuntimeCreationOptions,
+    resolvedModel?: ResolvedModel,
   ): GenericProcessAdapter {
     revision = validateRuntimeProfileRevision(revision);
     if (revision.state !== "active") {
@@ -179,7 +223,7 @@ export class RuntimeImplementationRegistry {
       );
     }
     validateMatchingProbeReport(revision, probeReport, true);
-    return implementation.create(revision, options, probeReport);
+    return implementation.create(revision, options, probeReport, resolvedModel);
   }
 
   createRecoveryRuntime(
@@ -220,12 +264,20 @@ function createGenericProcessRuntime(
   revision: RuntimeProfileRevision,
   options: RuntimeCreationOptions,
   probeReport?: RuntimeProfileProbeReport,
+  resolvedModel?: ResolvedModel,
 ): GenericProcessAdapter {
   const config = revision.manifest.adapter.config;
   const executableIdentity = probeReport?.executableIdentity;
+  const modelArguments =
+    resolvedModel?.source === "explicit_binding"
+      ? resolveModelBindingArguments(
+          requireModelBinding(probeReport, resolvedModel.modelBindingId),
+          resolvedModel,
+        )
+      : [];
   return new GenericProcessAdapter({
     ...options,
-    args: revision.manifest.adapter.fixedArgs,
+    args: [...modelArguments, ...revision.manifest.adapter.fixedArgs],
     beforeStart: async () => {
       await options.beforeStart?.();
       if (executableIdentity !== undefined) {
@@ -245,9 +297,9 @@ function createGenericProcessRuntime(
       ? {}
       : { diagnosticByteLimit: config.diagnosticByteLimit }),
     env:
-      revision.manifest.manifestVersion === 2
-        ? revision.manifest.staticEnv
-        : {},
+      revision.manifest.manifestVersion === 1
+        ? {}
+        : revision.manifest.staticEnv,
     recoveryProvenance: {
       recoveryDriverImplementationVersions: Object.fromEntries(
         revision.manifest.recoveryDrivers.map((driver) => {
@@ -272,6 +324,24 @@ function createGenericProcessRuntime(
   });
 }
 
+function requireModelBinding(
+  report: RuntimeProfileProbeReport | undefined,
+  modelBindingId: string,
+): RuntimeModelBinding {
+  const binding =
+    report?.reportVersion === 2
+      ? report.modelBindings.find(
+          (candidate) => candidate.modelBindingId === modelBindingId,
+        )
+      : undefined;
+  if (binding === undefined) {
+    throw new Error(
+      `Runtime probe does not contain model binding ${modelBindingId}`,
+    );
+  }
+  return binding;
+}
+
 export class RuntimeCredentialEnvironmentBinding {
   readonly #manifest: RuntimeProfileManifest;
   readonly #resolvers: Readonly<Record<string, () => Promise<string>>>;
@@ -286,9 +356,9 @@ export class RuntimeCredentialEnvironmentBinding {
       input.resolvers,
     );
     const slots =
-      this.#manifest.manifestVersion === 2
-        ? this.#manifest.credentialSlots
-        : [];
+      this.#manifest.manifestVersion === 1
+        ? []
+        : this.#manifest.credentialSlots;
     const slotIds = new Set(slots.map((slot) => slot.slotId));
     for (const slot of slots) {
       if (!Object.hasOwn(this.#resolvers, slot.slotId)) {
@@ -305,7 +375,7 @@ export class RuntimeCredentialEnvironmentBinding {
   async resolve(): Promise<ActivationEnvironmentLease> {
     const env: Record<string, string> = {};
     const redactions: string[] = [];
-    if (this.#manifest.manifestVersion !== 2) return { env, redactions };
+    if (this.#manifest.manifestVersion === 1) return { env, redactions };
     for (const slot of this.#manifest.credentialSlots) {
       if (!Object.hasOwn(this.#resolvers, slot.slotId)) {
         throw new Error(`missing credential slot ${slot.slotId}`);
@@ -368,7 +438,12 @@ export function buildRuntimeOfferFromProfile(input: {
     isolation: { evidence: "declared", level: "none" },
     leaseUntil: input.leaseUntil,
     maxConcurrent: input.maxConcurrent,
-    modelBindingDescriptors: [],
+    modelBindingDescriptors:
+      report.reportVersion === 2
+        ? report.modelBindings.map(({ adapterMapping: _mapping, ...binding }) =>
+            structuredClone(binding),
+          )
+        : [],
     observedAt: input.observedAt,
     probeReportRef: {
       probeDigest: report.probeDigest,
@@ -444,7 +519,12 @@ async function resolveExecutableIdentity(
     } catch {
       continue;
     }
-    const metadata = await stat(resolvedPath);
+    let metadata;
+    try {
+      metadata = await stat(resolvedPath);
+    } catch {
+      continue;
+    }
     if (!metadata.isFile()) {
       lastFailure = "executable_not_regular_file";
       continue;
@@ -455,15 +535,19 @@ async function resolveExecutableIdentity(
       lastFailure = "executable_not_executable";
       continue;
     }
-    return {
-      available: true,
-      identity: {
-        byteLength: metadata.size,
-        contentDigest: await hashFile(resolvedPath),
-        requestedExecutable,
-        resolvedExecutablePath: resolvedPath,
-      },
-    };
+    try {
+      return {
+        available: true,
+        identity: {
+          byteLength: metadata.size,
+          contentDigest: await hashFile(resolvedPath),
+          requestedExecutable,
+          resolvedExecutablePath: resolvedPath,
+        },
+      };
+    } catch {
+      continue;
+    }
   }
   return { available: false, failureCode: lastFailure };
 }

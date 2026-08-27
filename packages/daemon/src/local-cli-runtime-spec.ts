@@ -52,6 +52,7 @@ export function localCliRuntimeSpec(
       executable,
       instructions:
         "Work from canonical Room context, preserve unrelated changes, and provide verified results.",
+      modelCatalogProbe: { kind: "codex-cli/v1" },
       reasoning: "default",
       role: "Codex Agent using the local account and model settings",
       runtimeProfileId: "local-workbench-profile-codex",
@@ -69,6 +70,7 @@ export function localCliRuntimeSpec(
       executable,
       instructions:
         "Use canonical Room context, complete the assigned work, and report explicit evidence.",
+      modelCatalogProbe: { kind: "kimi-cli/v1" },
       reasoning: "default",
       role: "Kimi CLI Agent using the local Coding Plan settings",
       runtimeProfileId: "local-workbench-profile-kimi",
@@ -86,6 +88,7 @@ export function localCliRuntimeSpec(
       executable,
       instructions:
         "Treat canonical Room state as collaboration truth and report only verified outcomes.",
+      modelCatalogProbe: { kind: "opencode-cli/v1" },
       reasoning: "default",
       role: "OpenCode Agent using the configured provider and model",
       runtimeProfileId: "local-workbench-profile-opencode",

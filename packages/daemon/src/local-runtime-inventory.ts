@@ -52,7 +52,12 @@ export function configuredRuntimeSnapshot(input: {
     available: probeReport.available,
     displayName: runtimeProfileRevision.manifest.displayName,
     executable: runtimeProfileRevision.manifest.adapter.executable,
-    modelBindingDescriptors: [],
+    modelBindingDescriptors:
+      probeReport.reportVersion === 2
+        ? probeReport.modelBindings.map(
+            ({ adapterMapping: _mapping, ...descriptor }) => descriptor,
+          )
+        : [],
     ...(probeReport.failureCode === undefined
       ? {}
       : { failureCode: probeReport.failureCode }),

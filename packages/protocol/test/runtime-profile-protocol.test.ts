@@ -5,7 +5,9 @@ import {
   RuntimeOfferSchema,
   RuntimeProfileManifestV1Schema,
   RuntimeProfileManifestV2Schema,
+  RuntimeProfileManifestV3Schema,
   RuntimeProfileProbeReportSchema,
+  RuntimeProfileProbeReportV2Schema,
 } from "../src/index.ts";
 
 const manifest = {
@@ -139,8 +141,34 @@ test("RuntimeProfileManifestV2 names secret slots without accepting secret value
   );
 });
 
+test("RuntimeProfileManifestV3 names a built-in model catalog probe", () => {
+  const parsed = RuntimeProfileManifestV3Schema.parse({
+    ...manifest,
+    credentialSlots: [],
+    manifestVersion: 3,
+    modelCatalogProbe: { kind: "codex-cli/v1" },
+    staticEnv: {},
+  });
+  assert.equal(parsed.modelCatalogProbe.kind, "codex-cli/v1");
+  assert.throws(() =>
+    RuntimeProfileManifestV3Schema.parse({
+      ...parsed,
+      modelCatalogProbe: {
+        args: ["arbitrary-command"],
+        kind: "codex-cli/v1",
+      },
+    }),
+  );
+  assert.throws(() =>
+    RuntimeProfileManifestV3Schema.parse({
+      ...parsed,
+      modelCatalogProbe: { kind: "unknown-cli/v1" },
+    }),
+  );
+});
+
 test("probe reports are strict and probed offers must reference immutable evidence", () => {
-  const report = RuntimeProfileProbeReportSchema.parse({
+  const report = RuntimeProfileProbeReportV2Schema.parse({
     adapter: {
       implementationVersion: "generic-process-adapter/v1",
       kind: "generic-process/v1",
@@ -161,12 +189,31 @@ test("probe reports are strict and probed offers must reference immutable eviden
         implementationVersion: "rah-process-supervisor/v1",
       },
     ],
-    reportVersion: 1,
+    modelBindings: [
+      {
+        adapterMapping: {
+          config: {
+            modelArguments: ["--model", "{modelId}"],
+            reasoningArguments: ["--effort", "{reasoning}"],
+          },
+          kind: "generic-process-argv/v1",
+        },
+        capabilityClasses: ["deep_coding"],
+        evidence: "probed",
+        modelBindingId: "codex:gpt-5.6-luna",
+        modelId: "gpt-5.6-luna",
+        provider: "openai",
+        supportedReasoning: ["low", "medium", "high", "max"],
+        supportedServiceTiers: ["default", "priority"],
+      },
+    ],
+    reportVersion: 2,
     runtimeProfileDigest: `sha256:${"3".repeat(64)}`,
     runtimeProfileId: "codex-main",
     runtimeProfileRevisionId: "codex-main-revision-1",
   });
   assert.equal(report.available, true);
+  assert.equal(report.modelBindings[0]?.modelId, "gpt-5.6-luna");
   assert.throws(() =>
     RuntimeProfileProbeReportSchema.parse({
       ...report,
