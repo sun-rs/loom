@@ -1,0 +1,59 @@
+{
+  "date": "2026-08-30",
+  "environment": "isolated run-multi-agent-web-fixture, fake providers, loopback only",
+  "webOrigin": "http://127.0.0.1:4189",
+  "browser": "Codex in-app Chromium",
+  "desktopViewport": { "width": 1440, "height": 1000 },
+  "mobileViewportObserved": { "width": 390, "height": 844, "scrollWidth": 390 },
+  "steps": [
+    { "action": "pre-implementation entry lookup", "entryCount": 0 },
+    {
+      "action": "desktop save",
+      "revision": 1,
+      "enabled": false,
+      "threshold_bytes": 8192,
+      "interval_ms": 900000
+    },
+    {
+      "action": "reload and reopen Alice",
+      "revision": 1,
+      "threshold_bytes": 8192
+    },
+    { "action": "second tab save", "revision": 2, "threshold_bytes": 16384 },
+    {
+      "action": "stale first tab save",
+      "result": "rejected, draft not committed, localized conflict and Save disabled until explicit reload"
+    },
+    { "action": "explicit reload", "revision": 2, "threshold_bytes": 16384 },
+    {
+      "action": "restore defaults",
+      "revision": 3,
+      "threshold_bytes": 65536,
+      "interval_ms": 3600000
+    },
+    {
+      "action": "additional desktop save",
+      "revision": 4,
+      "threshold_bytes": 12288
+    },
+    { "action": "mobile invalid threshold 4095", "saveEnabled": false },
+    { "action": "mobile save", "revision": 5, "threshold_bytes": 24576 },
+    { "action": "switch to Kimi", "revision": 0, "threshold_bytes": 65536 },
+    {
+      "action": "Escape close",
+      "dialogCount": 0,
+      "focusReturnedTo": "大小提醒设置"
+    }
+  ],
+  "screenshots": [
+    "desktop-conflict.png",
+    "mobile-saved.png",
+    "mobile-other-agent-default.png"
+  ],
+  "limits": [
+    "No paid LLM was invoked in this configuration repair batch.",
+    "No Firefox, physical iPhone, or service deployment certification.",
+    "Uses the existing Raft-styled shared dialog; not a newly measured pixel-equivalent official cleaner settings page.",
+    "Viewport change first targeted the second tab; this was detected and corrected before the final mobile screenshot."
+  ]
+}

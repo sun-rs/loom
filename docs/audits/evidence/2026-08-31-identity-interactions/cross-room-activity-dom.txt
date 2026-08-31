@@ -1,0 +1,78 @@
+- main:
+  - button "打开 Room 列表":
+  - img "Alice 头像"
+  - heading "Alice" [level=1]
+  - tablist:
+    - tab "聊天" [selected]:
+      - text: 聊天
+    - tab "任务":
+      - text: 任务
+    - tab "文件":
+      - text: 文件
+  - article:
+    - generic: S
+    - generic: sun
+    - time: 01:14
+    - paragraph: "Cross-room activity probe: DM response."
+  - article:
+    - button "查看 Alice 动态" [active]:
+      - img "Alice 头像"
+    - button "Alice"
+    - time: 01:14
+    - paragraph: "我是 Alice，当前 Room 的演示 Agent（Fake CLI）。我已收到：“Cross-room activity probe: DM response.”。"
+  - textbox "消息输入框":
+    - /placeholder: 发送消息至 @Alice
+  - button "附件将在 Artifact slice 接入" [disabled]:
+  - checkbox "作为任务"
+  - text: 作为任务
+  - button "发送" [disabled]:
+- main "Agent 详情侧栏":
+  - img "Alice 头像"
+  - heading "Alice" [level=2]
+  - paragraph: Alice deterministic fixture worker
+  - button "给 Alice 发消息":
+  - button "管理 Alice":
+    - generic: ⋮
+  - button "关闭 Agent 侧栏": ×
+  - tablist "Agent 详情":
+    - tab "动态" [selected]:
+      - text: 动态
+    - tab "资料":
+      - text: 资料
+    - tab "聊天":
+      - text: 聊天
+    - tab "提醒":
+      - text: 提醒
+    - tab "工作区":
+      - text: 工作区
+    - tab "应用":
+      - text: 应用
+    - tab "MCP":
+      - text: MCP
+  - region "Alice 动态":
+    - heading "活动诊断" [level=3]
+    - paragraph: 该 Agent 在所有可访问对话中的执行记录
+    - button "复制诊断信息"
+    - article:
+      - time: 00:57:19
+      - generic: 工作中正在检查 Room 消息
+    - article:
+      - time: 00:57:19
+      - text: 思考中
+      - generic: 正在整理对 Room 消息的回复
+    - article:
+      - time: 00:57:19
+      - text: 输出
+      - generic: "我是 Alice，当前 Room 的演示 Agent（Fake CLI）。我已收到：“Identity interaction audit: please reply once.”。"
+    - article:
+      - time: 01:14:25
+      - generic: 工作中正在检查 Room 消息
+    - article:
+      - time: 01:14:25
+      - text: 思考中
+      - generic: 正在整理对 Room 消息的回复
+    - article:
+      - time: 01:14:25
+      - text: 输出
+      - generic: "我是 Alice，当前 Room 的演示 Agent（Fake CLI）。我已收到：“Cross-room activity probe: DM response.”。"
+    - paragraph: 未运行的 Agent 不会显示其他测试环境的历史。动态来自 Provider 的结构化事件，不解析 ANSI。Codex 只显示公开 reasoning summary，原始思维链不会进入该投影。

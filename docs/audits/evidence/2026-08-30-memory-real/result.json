@@ -1,0 +1,599 @@
+{
+  "date": "2026-08-30",
+  "repositoryHead": "72c75938ebeb2e552b34b654cfb763271b224b41",
+  "workingTree": "pre-existing dirty worktree; no production edits in this audit",
+  "limitations": [
+    "bounded seven-turn sample, not statistical reliability",
+    "ordinary memory only; idle maintenance not tested or connected",
+    "no adversarial full-access isolation claim",
+    "no Raft live model comparison: official Computer offline",
+    "Multica source audit only; server was not run"
+  ],
+  "cases": [
+    {
+      "case": "01-training",
+      "outcome": "formed_index_and_notes",
+      "runId": "run_7e5fad84-9710-4692-8dc1-83b755149c6b",
+      "roomId": "room_321b72af-3eea-4ea5-b885-b171713cfb12",
+      "agentId": "principal_4796de1b-9fb6-4192-9750-28ce39ba1a06",
+      "state": "exited",
+      "exitCode": 0,
+      "elapsedSeconds": 25.91,
+      "providerSession": {
+        "participantId": "principal_4796de1b-9fb6-4192-9750-28ce39ba1a06",
+        "provider": "opencode-server/v1",
+        "runtimeProfileRevisionId": "runtime_profile_revision_01b1d854-21ea-4fad-8f86-58bee4b9716e",
+        "workspaceMountRevisionId": "local-cli-workspace-mount-v1",
+        "providerSessionId": "ses_fadd81925ffei1xhD0s627sw2u",
+        "recordedAt": "2026-08-30T10:12:46.607Z",
+        "schemaVersion": 1
+      },
+      "model": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:opencode-cli/v1:deepseek/deepseek-v4-flash",
+        "provider": "deepseek",
+        "modelId": "deepseek/deepseek-v4-flash",
+        "reasoning": "max"
+      },
+      "toolAccessMode": "full_access",
+      "profileRevision": "runtime_profile_revision_01b1d854-21ea-4fad-8f86-58bee4b9716e",
+      "agentDefinitionRevision": "agent_definition_revision_cb4ed8be-768f-45b0-b1e9-184ab05ea7dd",
+      "question": "记忆验收用的虚构项目：鹭灯计划。请记住三个已确认事实：交付暗号是 LUMEN-6724；外壳颜色为海盐绿；只能用于室内演示，禁止户外使用。请按你的记忆规则将项目详情整理到自己的 notes，MEMORY.md 只保留简短索引，方便另一个对话提问。这不是开发任务，不要认领 Task，不修改项目文件。完成后通过聊天室回复确认。",
+      "replies": [
+        {
+          "id": "message_f36e662b-6d4c-4e08-9e8d-8a4880fb3b91",
+          "body": "已收到并记住鹭灯计划的三个事实：交付暗号 LUMEN-6724；外壳颜色海盐绿；仅限室内演示、禁止户外使用。详情已整理到 notes/heron-lamp-project.md，MEMORY.md 只保留了简短索引。未认领 Task，未修改任何项目文件。随时可以提问验收。",
+          "createdAt": "2026-08-30T10:12:42.857Z"
+        }
+      ],
+      "receipt": {
+        "activationId": "activation_d38ed0f8-3ea1-424d-94b6-f8b11fa050e5",
+        "agentDefinitionRevisionId": "agent_definition_revision_cb4ed8be-768f-45b0-b1e9-184ab05ea7dd",
+        "computerHostId": "local-cli-web-host-38285",
+        "materializedAt": "2026-08-30T10:12:21.174Z",
+        "memoryPolicyRef": {
+          "artifactId": "local-cli-memory-opencode",
+          "versionId": "local-cli-memory-opencode-v1",
+          "contentDigest": "sha256:7777777777777777777777777777777777777777777777777777777777777777"
+        },
+        "ownerParticipantId": "principal_4796de1b-9fb6-4192-9750-28ce39ba1a06",
+        "proofScope": "computer_materialized_not_model_read",
+        "receiptId": "sha256:88597130e0147bb76ea851ff1281e1ec1ee0ccebd134e95869589c502b4638b2",
+        "roomId": "room_321b72af-3eea-4ea5-b885-b171713cfb12",
+        "runAttemptId": "run_7e5fad84-9710-4692-8dc1-83b755149c6b",
+        "source": {
+          "cwd": "/tmp/rah-memory-real-4W9u3d/workspace",
+          "realCwd": "/private/tmp/rah-memory-real-4W9u3d/workspace",
+          "resolution": "unconfigured"
+        },
+        "coverage": "index_only",
+        "files": [
+          {
+            "bytes": 145,
+            "contentDigest": "sha256:d5264980e5ef688f02a809b1b66c2e70c1e2061fe05e99953b4320a1435d122d",
+            "modifiedAt": "2026-08-30T10:12:21.161Z",
+            "relativePath": "MEMORY.md"
+          }
+        ],
+        "schemaVersion": 2
+      }
+    },
+    {
+      "case": "02-dm-recall",
+      "outcome": "fresh_dm_recall_correct",
+      "runId": "run_c2c2d555-bb0e-4976-a945-a372973e6a76",
+      "roomId": "room_93833b38-909b-4ccd-8483-bd30268c5df0",
+      "agentId": "principal_4796de1b-9fb6-4192-9750-28ce39ba1a06",
+      "state": "exited",
+      "exitCode": 0,
+      "elapsedSeconds": 15.414,
+      "providerSession": {
+        "participantId": "principal_4796de1b-9fb6-4192-9750-28ce39ba1a06",
+        "provider": "opencode-server/v1",
+        "runtimeProfileRevisionId": "runtime_profile_revision_01b1d854-21ea-4fad-8f86-58bee4b9716e",
+        "workspaceMountRevisionId": "local-cli-workspace-mount-v1",
+        "providerSessionId": "ses_fadd667b9ffebo7E4zn07A6PH6",
+        "recordedAt": "2026-08-30T10:14:26.983Z",
+        "schemaVersion": 1
+      },
+      "model": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:opencode-cli/v1:deepseek/deepseek-v4-flash",
+        "provider": "deepseek",
+        "modelId": "deepseek/deepseek-v4-flash",
+        "reasoning": "max"
+      },
+      "toolAccessMode": "full_access",
+      "profileRevision": "runtime_profile_revision_01b1d854-21ea-4fad-8f86-58bee4b9716e",
+      "agentDefinitionRevision": "agent_definition_revision_cb4ed8be-768f-45b0-b1e9-184ab05ea7dd",
+      "question": "鹭灯计划的交付暗号、外壳颜色和使用限制分别是什么？只依据你已有的记忆回答；不知道就明确说不知道，不猜测，也不要创建 Task。",
+      "replies": [
+        {
+          "id": "message_3b7d18b1-3d19-4684-aac8-10ef2f975002",
+          "body": "根据我的记忆（notes/heron-lamp-project.md），鹭灯计划的三个事实是：\n1. 交付暗号：LUMEN-6724\n2. 外壳颜色：海盐绿\n3. 使用限制：只能用于室内演示，禁止户外使用",
+          "createdAt": "2026-08-30T10:14:24.475Z"
+        }
+      ],
+      "receipt": {
+        "activationId": "activation_03f9c2cd-4cf5-4c2f-9639-4152f92c597d",
+        "agentDefinitionRevisionId": "agent_definition_revision_cb4ed8be-768f-45b0-b1e9-184ab05ea7dd",
+        "computerHostId": "local-cli-web-host-38285",
+        "materializedAt": "2026-08-30T10:14:12.128Z",
+        "memoryPolicyRef": {
+          "artifactId": "local-cli-memory-opencode",
+          "versionId": "local-cli-memory-opencode-v1",
+          "contentDigest": "sha256:7777777777777777777777777777777777777777777777777777777777777777"
+        },
+        "ownerParticipantId": "principal_4796de1b-9fb6-4192-9750-28ce39ba1a06",
+        "proofScope": "computer_materialized_not_model_read",
+        "receiptId": "sha256:5a9d8ffdb350db6a6229e62fab1240ee0c8625b6d73aa6c6eea06e05642fefd8",
+        "roomId": "room_93833b38-909b-4ccd-8483-bd30268c5df0",
+        "runAttemptId": "run_c2c2d555-bb0e-4976-a945-a372973e6a76",
+        "source": {
+          "cwd": "/tmp/rah-memory-real-4W9u3d/workspace",
+          "realCwd": "/private/tmp/rah-memory-real-4W9u3d/workspace",
+          "resolution": "unconfigured"
+        },
+        "coverage": "index_only",
+        "files": [
+          {
+            "bytes": 541,
+            "contentDigest": "sha256:c4283abfdea3172f66358bd1e07b022772c5e4837d60c5d48888cead55bc879d",
+            "modifiedAt": "2026-08-30T10:12:40.492Z",
+            "relativePath": "MEMORY.md"
+          }
+        ],
+        "schemaVersion": 2
+      }
+    },
+    {
+      "case": "03-other-agent",
+      "outcome": "different_agent_unknown",
+      "runId": "run_fe0e12ba-ebb5-4ef1-9101-ac8ea8b1d138",
+      "roomId": "room_e356181f-dafa-4c21-a76c-44ec92da2a09",
+      "agentId": "principal_ae3ffe2c-a32d-4c40-9555-35d2cf2c72e8",
+      "state": "exited",
+      "exitCode": 0,
+      "elapsedSeconds": 23.824,
+      "providerSession": {
+        "participantId": "principal_ae3ffe2c-a32d-4c40-9555-35d2cf2c72e8",
+        "provider": "opencode-server/v1",
+        "runtimeProfileRevisionId": "runtime_profile_revision_01b1d854-21ea-4fad-8f86-58bee4b9716e",
+        "workspaceMountRevisionId": "local-cli-workspace-mount-v1",
+        "providerSessionId": "ses_fadd48f0effelyr7b4dJzLZ05c",
+        "recordedAt": "2026-08-30T10:16:36.468Z",
+        "schemaVersion": 1
+      },
+      "model": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:opencode-cli/v1:deepseek/deepseek-v4-flash",
+        "provider": "deepseek",
+        "modelId": "deepseek/deepseek-v4-flash",
+        "reasoning": "max"
+      },
+      "toolAccessMode": "full_access",
+      "profileRevision": "runtime_profile_revision_01b1d854-21ea-4fad-8f86-58bee4b9716e",
+      "agentDefinitionRevision": "agent_definition_revision_f5e14528-5fe6-4281-87c7-20e7bfea6c07",
+      "question": "鹭灯计划的交付暗号、外壳颜色和使用限制分别是什么？只依据你已有的记忆回答；不知道就明确说不知道，不猜测，也不要创建 Task。",
+      "replies": [
+        {
+          "id": "message_f4b0de79-89a6-4db7-a2cd-d74ebc347a82",
+          "body": "我不知道。我目前的记忆是全新的：MEMORY.md 中没有任何关于「鹭灯计划」的内容，notes/ 目录为空，不存在交付暗号、外壳颜色或使用限制的任何记录。我不猜测，也不为此创建 Task。",
+          "createdAt": "2026-08-30T10:16:26.812Z"
+        }
+      ],
+      "receipt": {
+        "activationId": "activation_f51e0553-7ee2-44a7-95b5-6d38ad447990",
+        "agentDefinitionRevisionId": "agent_definition_revision_f5e14528-5fe6-4281-87c7-20e7bfea6c07",
+        "computerHostId": "local-cli-web-host-38285",
+        "materializedAt": "2026-08-30T10:16:13.116Z",
+        "memoryPolicyRef": {
+          "artifactId": "memory-policy",
+          "versionId": "rah/memory-policy/room-and-private-v1",
+          "contentDigest": "sha256:fc13006d59f2d6687b7131c4fd0f4a74cd6ec0544040b10d61dfd4853c1a43a2"
+        },
+        "ownerParticipantId": "principal_ae3ffe2c-a32d-4c40-9555-35d2cf2c72e8",
+        "proofScope": "computer_materialized_not_model_read",
+        "receiptId": "sha256:ca263fb9032f46f3a66937f18a337ba2ce4f6177e3ef132c55f0853f27da312f",
+        "roomId": "room_e356181f-dafa-4c21-a76c-44ec92da2a09",
+        "runAttemptId": "run_fe0e12ba-ebb5-4ef1-9101-ac8ea8b1d138",
+        "source": {
+          "cwd": "/tmp/rah-memory-real-4W9u3d/workspace",
+          "realCwd": "/private/tmp/rah-memory-real-4W9u3d/workspace",
+          "resolution": "unconfigured"
+        },
+        "coverage": "index_only",
+        "files": [
+          {
+            "bytes": 150,
+            "contentDigest": "sha256:f0ddc4eeddcc06b5239646fab4599f5c7386d52e6e0ddb2093d82f30ffbf1cde",
+            "modifiedAt": "2026-08-30T10:16:13.099Z",
+            "relativePath": "MEMORY.md"
+          }
+        ],
+        "schemaVersion": 2
+      }
+    },
+    {
+      "case": "04-withheld",
+      "outcome": "same_agent_without_files_unknown",
+      "runId": "run_cd4f3447-56a2-4fb9-bd40-d0b13889e63f",
+      "roomId": "room_bd96322c-6492-42ed-8a6d-6920fc126eca",
+      "agentId": "principal_4796de1b-9fb6-4192-9750-28ce39ba1a06",
+      "state": "exited",
+      "exitCode": 0,
+      "elapsedSeconds": 18.892,
+      "providerSession": {
+        "participantId": "principal_4796de1b-9fb6-4192-9750-28ce39ba1a06",
+        "provider": "opencode-server/v1",
+        "runtimeProfileRevisionId": "runtime_profile_revision_01b1d854-21ea-4fad-8f86-58bee4b9716e",
+        "workspaceMountRevisionId": "local-cli-workspace-mount-v1",
+        "providerSessionId": "ses_fadd2f2b3ffebelRNRUHbz5Fa5",
+        "recordedAt": "2026-08-30T10:18:17.105Z",
+        "schemaVersion": 1
+      },
+      "model": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:opencode-cli/v1:deepseek/deepseek-v4-flash",
+        "provider": "deepseek",
+        "modelId": "deepseek/deepseek-v4-flash",
+        "reasoning": "max"
+      },
+      "toolAccessMode": "full_access",
+      "profileRevision": "runtime_profile_revision_01b1d854-21ea-4fad-8f86-58bee4b9716e",
+      "agentDefinitionRevision": "agent_definition_revision_cb4ed8be-768f-45b0-b1e9-184ab05ea7dd",
+      "question": "鹭灯计划的交付暗号、外壳颜色和使用限制分别是什么？只依据你已有的记忆回答；不知道就明确说不知道，不猜测，也不要创建 Task。",
+      "replies": [
+        {
+          "id": "message_056f1765-634b-4e47-878d-a92935776b45",
+          "body": "我没有任何关于“鹭灯计划”的记忆：交付暗号、外壳颜色和使用限制我全都不知道。这是我的首次启动，记忆中没有相关笔记。按你的要求，我不猜测，也不创建 Task。",
+          "createdAt": "2026-08-30T10:18:11.152Z"
+        }
+      ],
+      "receipt": {
+        "activationId": "activation_89bf389f-911c-4c48-9bd0-0c1fc7e3a04e",
+        "agentDefinitionRevisionId": "agent_definition_revision_cb4ed8be-768f-45b0-b1e9-184ab05ea7dd",
+        "computerHostId": "local-cli-web-host-38285",
+        "materializedAt": "2026-08-30T10:17:58.700Z",
+        "memoryPolicyRef": {
+          "artifactId": "local-cli-memory-opencode",
+          "versionId": "local-cli-memory-opencode-v1",
+          "contentDigest": "sha256:7777777777777777777777777777777777777777777777777777777777777777"
+        },
+        "ownerParticipantId": "principal_4796de1b-9fb6-4192-9750-28ce39ba1a06",
+        "proofScope": "computer_materialized_not_model_read",
+        "receiptId": "sha256:f84792111a0875959f1fc1b2c213992bec1348a0a8702dbd770dc80dac07191e",
+        "roomId": "room_bd96322c-6492-42ed-8a6d-6920fc126eca",
+        "runAttemptId": "run_cd4f3447-56a2-4fb9-bd40-d0b13889e63f",
+        "source": {
+          "cwd": "/tmp/rah-memory-real-4W9u3d/workspace",
+          "realCwd": "/private/tmp/rah-memory-real-4W9u3d/workspace",
+          "resolution": "unconfigured"
+        },
+        "coverage": "index_only",
+        "files": [
+          {
+            "bytes": 145,
+            "contentDigest": "sha256:d5264980e5ef688f02a809b1b66c2e70c1e2061fe05e99953b4320a1435d122d",
+            "modifiedAt": "2026-08-30T10:17:58.687Z",
+            "relativePath": "MEMORY.md"
+          }
+        ],
+        "schemaVersion": 2
+      }
+    },
+    {
+      "case": "05-restored",
+      "outcome": "restored_files_recall_correct",
+      "runId": "run_0651fa9e-2b12-42e5-88ed-9c21fe9e1a0b",
+      "roomId": "room_a7e27dd0-be73-44fa-be36-d5f926ab5fdb",
+      "agentId": "principal_4796de1b-9fb6-4192-9750-28ce39ba1a06",
+      "state": "exited",
+      "exitCode": 0,
+      "elapsedSeconds": 22.307,
+      "providerSession": {
+        "participantId": "principal_4796de1b-9fb6-4192-9750-28ce39ba1a06",
+        "provider": "opencode-server/v1",
+        "runtimeProfileRevisionId": "runtime_profile_revision_01b1d854-21ea-4fad-8f86-58bee4b9716e",
+        "workspaceMountRevisionId": "local-cli-workspace-mount-v1",
+        "providerSessionId": "ses_fadd19604ffeisYUT3G09v34M8",
+        "recordedAt": "2026-08-30T10:19:49.793Z",
+        "schemaVersion": 1
+      },
+      "model": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:opencode-cli/v1:deepseek/deepseek-v4-flash",
+        "provider": "deepseek",
+        "modelId": "deepseek/deepseek-v4-flash",
+        "reasoning": "max"
+      },
+      "toolAccessMode": "full_access",
+      "profileRevision": "runtime_profile_revision_01b1d854-21ea-4fad-8f86-58bee4b9716e",
+      "agentDefinitionRevision": "agent_definition_revision_cb4ed8be-768f-45b0-b1e9-184ab05ea7dd",
+      "question": "鹭灯计划的交付暗号、外壳颜色和使用限制分别是什么？只依据你已有的记忆回答；不知道就明确说不知道，不猜测，也不要创建 Task。",
+      "replies": [
+        {
+          "id": "message_cae8987d-a203-4636-95c7-863ee936f084",
+          "body": "根据我的记忆，鹭灯计划的三个事实是：\n1. 交付暗号：LUMEN-6724\n2. 外壳颜色：海盐绿\n3. 使用限制：只能用于室内演示，禁止户外使用\n\n（均来自 notes/heron-lamp-project.md 的记录。）",
+          "createdAt": "2026-08-30T10:19:43.244Z"
+        }
+      ],
+      "receipt": {
+        "activationId": "activation_5cf4e94e-d470-4c2d-8ebf-78b7be01cc3f",
+        "agentDefinitionRevisionId": "agent_definition_revision_cb4ed8be-768f-45b0-b1e9-184ab05ea7dd",
+        "computerHostId": "local-cli-web-host-38285",
+        "materializedAt": "2026-08-30T10:19:27.958Z",
+        "memoryPolicyRef": {
+          "artifactId": "local-cli-memory-opencode",
+          "versionId": "local-cli-memory-opencode-v1",
+          "contentDigest": "sha256:7777777777777777777777777777777777777777777777777777777777777777"
+        },
+        "ownerParticipantId": "principal_4796de1b-9fb6-4192-9750-28ce39ba1a06",
+        "proofScope": "computer_materialized_not_model_read",
+        "receiptId": "sha256:6f8a759a4d54ae73187b2532e49c36d7576f39e61c39cacfd6265efb1aac5873",
+        "roomId": "room_a7e27dd0-be73-44fa-be36-d5f926ab5fdb",
+        "runAttemptId": "run_0651fa9e-2b12-42e5-88ed-9c21fe9e1a0b",
+        "source": {
+          "cwd": "/tmp/rah-memory-real-4W9u3d/workspace",
+          "realCwd": "/private/tmp/rah-memory-real-4W9u3d/workspace",
+          "resolution": "unconfigured"
+        },
+        "coverage": "index_only",
+        "files": [
+          {
+            "bytes": 541,
+            "contentDigest": "sha256:c4283abfdea3172f66358bd1e07b022772c5e4837d60c5d48888cead55bc879d",
+            "modifiedAt": "2026-08-30T10:12:40.492Z",
+            "relativePath": "MEMORY.md"
+          }
+        ],
+        "schemaVersion": 2
+      }
+    },
+    {
+      "case": "06-corrected",
+      "outcome": "correction_written",
+      "runId": "run_84dc6fc8-8271-499a-85d6-5f726c91b44e",
+      "roomId": "room_a7e27dd0-be73-44fa-be36-d5f926ab5fdb",
+      "agentId": "principal_4796de1b-9fb6-4192-9750-28ce39ba1a06",
+      "state": "exited",
+      "exitCode": 0,
+      "elapsedSeconds": 22.978,
+      "providerSession": {
+        "participantId": "principal_4796de1b-9fb6-4192-9750-28ce39ba1a06",
+        "provider": "opencode-server/v1",
+        "runtimeProfileRevisionId": "runtime_profile_revision_01b1d854-21ea-4fad-8f86-58bee4b9716e",
+        "workspaceMountRevisionId": "local-cli-workspace-mount-v1",
+        "providerSessionId": "ses_fadd19604ffeisYUT3G09v34M8",
+        "recordedAt": "2026-08-30T10:20:26.899Z",
+        "schemaVersion": 1
+      },
+      "model": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:opencode-cli/v1:deepseek/deepseek-v4-flash",
+        "provider": "deepseek",
+        "modelId": "deepseek/deepseek-v4-flash",
+        "reasoning": "max"
+      },
+      "toolAccessMode": "full_access",
+      "profileRevision": "runtime_profile_revision_01b1d854-21ea-4fad-8f86-58bee4b9716e",
+      "agentDefinitionRevision": "agent_definition_revision_cb4ed8be-768f-45b0-b1e9-184ab05ea7dd",
+      "question": "更正鹭灯计划：交付暗号已经正式改为 LUMEN-9047，原暗号作废。外壳颜色和使用限制均不变。请更新自己的索引与笔记，清楚区分当前事实与旧版本，不创建 Task、不修改项目文件，然后在聊天室简短确认。",
+      "replies": [
+        {
+          "id": "message_46720f45-1570-42d3-87f5-4ee7425d7d02",
+          "body": "已更新记忆：鹭灯计划交付暗号现为 LUMEN-9047（原 LUMEN-6724 已作废）；外壳颜色（海盐绿）与使用限制（仅限室内演示、禁止户外使用）不变。笔记与索引已更新并区分新旧版本。未创建 Task，未修改项目文件。",
+          "createdAt": "2026-08-30T10:20:23.283Z"
+        }
+      ],
+      "receipt": {
+        "activationId": "activation_6cb8fe75-872b-4aa3-8f83-631878d5cc3b",
+        "agentDefinitionRevisionId": "agent_definition_revision_cb4ed8be-768f-45b0-b1e9-184ab05ea7dd",
+        "computerHostId": "local-cli-web-host-38285",
+        "materializedAt": "2026-08-30T10:20:04.402Z",
+        "memoryPolicyRef": {
+          "artifactId": "local-cli-memory-opencode",
+          "versionId": "local-cli-memory-opencode-v1",
+          "contentDigest": "sha256:7777777777777777777777777777777777777777777777777777777777777777"
+        },
+        "ownerParticipantId": "principal_4796de1b-9fb6-4192-9750-28ce39ba1a06",
+        "proofScope": "computer_materialized_not_model_read",
+        "receiptId": "sha256:1baa5a889159d584773d16ed13019af2a23bc59a46900cf6cd0e7ed649fa8111",
+        "roomId": "room_a7e27dd0-be73-44fa-be36-d5f926ab5fdb",
+        "runAttemptId": "run_84dc6fc8-8271-499a-85d6-5f726c91b44e",
+        "source": {
+          "cwd": "/tmp/rah-memory-real-4W9u3d/workspace",
+          "realCwd": "/private/tmp/rah-memory-real-4W9u3d/workspace",
+          "resolution": "unconfigured"
+        },
+        "coverage": "index_only",
+        "files": [
+          {
+            "bytes": 541,
+            "contentDigest": "sha256:c4283abfdea3172f66358bd1e07b022772c5e4837d60c5d48888cead55bc879d",
+            "modifiedAt": "2026-08-30T10:12:40.492Z",
+            "relativePath": "MEMORY.md"
+          }
+        ],
+        "schemaVersion": 2
+      }
+    },
+    {
+      "case": "07-kimi-transfer",
+      "outcome": "kimi_new_session_corrected_recall",
+      "runId": "run_044bdd68-aa14-4a00-b0e2-b3252e58f236",
+      "roomId": "room_aac09795-5c09-4553-8b67-de0b8ab61670",
+      "agentId": "principal_4796de1b-9fb6-4192-9750-28ce39ba1a06",
+      "state": "exited",
+      "exitCode": 0,
+      "elapsedSeconds": 64.462,
+      "providerSession": {
+        "participantId": "principal_4796de1b-9fb6-4192-9750-28ce39ba1a06",
+        "provider": "kimi-acp/v1",
+        "runtimeProfileRevisionId": "runtime_profile_revision_37710665-d986-4e70-83e7-f80c8cfe0b88",
+        "workspaceMountRevisionId": "local-cli-workspace-mount-v1",
+        "providerSessionId": "session_e0910d9d-0653-4d40-ad7a-7a412397a088",
+        "recordedAt": "2026-08-30T10:26:42.471Z",
+        "schemaVersion": 1
+      },
+      "model": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:kimi-cli/v1:kimi-code/k3",
+        "provider": "kimi-code",
+        "modelId": "kimi-code/k3"
+      },
+      "toolAccessMode": "full_access",
+      "profileRevision": "runtime_profile_revision_37710665-d986-4e70-83e7-f80c8cfe0b88",
+      "agentDefinitionRevision": "agent_definition_revision_d82d7776-3c4b-4c05-8ed8-29d378f14861",
+      "question": "鹭灯计划的交付暗号、外壳颜色和使用限制分别是什么？只依据你已有的记忆回答；不知道就明确说不知道，不猜测，也不要创建 Task。",
+      "replies": [
+        {
+          "id": "message_f8da47c1-523b-4917-8718-7ca7fdf28b7f",
+          "body": "根据我已有的记忆：鹭灯计划的交付暗号是 LUMEN-9047（2026-08-30 正式更换，旧暗号 LUMEN-6724 已作废）；外壳颜色是海盐绿；使用限制是只能用于室内演示，禁止户外使用。",
+          "createdAt": "2026-08-30T10:26:23.584Z"
+        }
+      ],
+      "receipt": {
+        "activationId": "activation_f18f1444-112f-4cdf-a03d-7e7830d1d7f3",
+        "agentDefinitionRevisionId": "agent_definition_revision_d82d7776-3c4b-4c05-8ed8-29d378f14861",
+        "computerHostId": "local-cli-web-host-38285",
+        "materializedAt": "2026-08-30T10:25:38.578Z",
+        "memoryPolicyRef": {
+          "artifactId": "local-cli-memory-opencode",
+          "versionId": "local-cli-memory-opencode-v1",
+          "contentDigest": "sha256:7777777777777777777777777777777777777777777777777777777777777777"
+        },
+        "ownerParticipantId": "principal_4796de1b-9fb6-4192-9750-28ce39ba1a06",
+        "proofScope": "computer_materialized_not_model_read",
+        "receiptId": "sha256:1bbdc0afd262d3f501f61b117b297edb3a95ed11abca61a9ab4211f9697d0a08",
+        "roomId": "room_aac09795-5c09-4553-8b67-de0b8ab61670",
+        "runAttemptId": "run_044bdd68-aa14-4a00-b0e2-b3252e58f236",
+        "source": {
+          "cwd": "/tmp/rah-memory-real-4W9u3d/workspace",
+          "realCwd": "/private/tmp/rah-memory-real-4W9u3d/workspace",
+          "resolution": "unconfigured"
+        },
+        "coverage": "index_only",
+        "files": [
+          {
+            "bytes": 597,
+            "contentDigest": "sha256:17b5def0d5361f27dfcb2d7ac994f20a6d1f32ef9ef4212858b76cac7dbeae9d",
+            "modifiedAt": "2026-08-30T10:20:21.231Z",
+            "relativePath": "MEMORY.md"
+          }
+        ],
+        "schemaVersion": 2
+      }
+    }
+  ],
+  "profiles": [
+    {
+      "profile": "local-workbench-profile-kimi",
+      "revision": "runtime_profile_revision_37710665-d986-4e70-83e7-f80c8cfe0b88",
+      "digest": "sha256:0438c69eadfbcc724142dc9124251c1256ad08971d7104c3dba2e8e1eb84138a",
+      "adapter": "kimi-acp/v1",
+      "config": {
+        "diagnosticByteLimit": 262144,
+        "terminationGraceMs": 5000
+      },
+      "promptSha256": "4c5c0809d8d0a6aded0b7f9076dbd136f894ac4037cffbfe48fa0818db32e0a9",
+      "promptBytes": 12314,
+      "memoryInstructionBytes": 6263,
+      "includesCurrentMemoryInstructions": true,
+      "staticEnvKeys": []
+    },
+    {
+      "profile": "local-workbench-profile-opencode",
+      "revision": "runtime_profile_revision_01b1d854-21ea-4fad-8f86-58bee4b9716e",
+      "digest": "sha256:d947ab5e6ec64b9c1ea6fb9d6936a9ea45a4b672dbe26ad93a46cab0b4913344",
+      "adapter": "opencode-server/v1",
+      "config": {
+        "diagnosticByteLimit": 262144,
+        "terminationGraceMs": 5000
+      },
+      "promptSha256": "4c5c0809d8d0a6aded0b7f9076dbd136f894ac4037cffbfe48fa0818db32e0a9",
+      "promptBytes": 12314,
+      "memoryInstructionBytes": 6263,
+      "includesCurrentMemoryInstructions": true,
+      "staticEnvKeys": []
+    }
+  ],
+  "providerReads": [
+    {
+      "sessionId": "ses_fadd667b9ffebo7E4zn07A6PH6",
+      "userPromptCount": 1,
+      "userPromptAnswerPresent": [false],
+      "reads": [
+        {
+          "tool": "read",
+          "status": "completed",
+          "path": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-os-local-cli-web-X3Gg5B/state/supervisors/agent-memory/8059a373178e34fb7e0c9c146e6772c93ade89a8cac4636c327672fa45547807/MEMORY.md",
+          "outputSha256": "974231717f866305dfd87666c62d7a7cd63c0e0ea3ecb606fba0137a7f0074a4",
+          "hasInitialCode": true,
+          "hasCorrectedCode": false
+        },
+        {
+          "tool": "read",
+          "status": "completed",
+          "path": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-os-local-cli-web-X3Gg5B/state/supervisors/agent-memory/8059a373178e34fb7e0c9c146e6772c93ade89a8cac4636c327672fa45547807/notes/heron-lamp-project.md",
+          "outputSha256": "1a56c30307cad99d31afee53220ae9b5c97cc634ba810eaec81bd2f9c288e307",
+          "hasInitialCode": true,
+          "hasCorrectedCode": false
+        }
+      ]
+    },
+    {
+      "sessionId": "ses_fadd48f0effelyr7b4dJzLZ05c",
+      "exportStatus": "invalid_json_from_cli",
+      "bytes": 65536
+    },
+    {
+      "sessionId": "ses_fadd2f2b3ffebelRNRUHbz5Fa5",
+      "userPromptCount": 1,
+      "userPromptAnswerPresent": [false],
+      "reads": [
+        {
+          "tool": "read",
+          "status": "completed",
+          "path": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-os-local-cli-web-X3Gg5B/state/supervisors/agent-memory/8059a373178e34fb7e0c9c146e6772c93ade89a8cac4636c327672fa45547807/MEMORY.md",
+          "outputSha256": "67d8d2a2fb178dbc7c101d61ea580bf5a3d3be24c57c8f25392081ab2dae1d25",
+          "hasInitialCode": false,
+          "hasCorrectedCode": false
+        }
+      ]
+    },
+    {
+      "sessionId": "ses_fadd19604ffeisYUT3G09v34M8",
+      "exportStatus": "invalid_json_from_cli",
+      "bytes": 65536
+    }
+  ],
+  "taskCount": 0,
+  "browser": {
+    "desktop": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "dpr": 1,
+      "documentScrollWidth": 390,
+      "reloadRecovered": true
+    },
+    "initialScreenshots": "01-05 are functional evidence at natural local viewport, not same-size visual comparison"
+  },
+  "finalFiles": [
+    {
+      "path": "MEMORY.md",
+      "bytes": 575,
+      "sha256": "91baf33880ded528373d29d8215784f611bdaa2dd8b176df81d0288e38e2ad72"
+    },
+    {
+      "path": "notes/heron-lamp-project.md",
+      "bytes": 1261,
+      "sha256": "5cf3595623811ef9c020d034eea5a1a511a82debfef54420f43821a541fbb380"
+    }
+  ]
+}

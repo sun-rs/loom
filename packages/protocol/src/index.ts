@@ -60,6 +60,7 @@ export * from "./execution-policy.ts";
 export * from "./workspace-instruction-pack.ts";
 export * from "./managed-mcp.ts";
 export * from "./runtime-activity.ts";
+export * from "./agent-presence.ts";
 export * from "./review.ts";
 export { ContentDigestSchema } from "./common.ts";
 export type { ContentDigest } from "./common.ts";

@@ -1,0 +1,239 @@
+- navigation "主导航":
+  - button "协作空间：RAH Local Workstation": R
+  - button "搜索":
+  - button "聊天":
+  - button "动态":
+  - button "任务":
+  - button "Agent 与成员":
+  - button "计算机":
+  - button "通知":
+  - button "设置":
+- complementary "Room 列表":
+  - generic: 聊天
+  - button "已收藏" [disabled]:
+    - generic: 已收藏
+  - generic: Workspace
+  - generic: "1"
+  - paragraph: RAH Local Workstation
+  - generic: 频道
+  - generic: "1"
+  - button "新建频道": +
+  - button "# Agent Council":
+    - generic: "#"
+    - text: Agent Council
+  - generic: 私信
+  - generic: "4"
+  - button "私信 Claude":
+    - img "Claude 头像"
+    - generic: Claude
+    - generic: Claude Code Agent using the local account
+  - button "私信 Codex":
+    - img "Codex 头像"
+    - generic: Codex
+    - generic: Codex Agent using the local account and model settings
+  - button "私信 Kimi":
+    - img "Kimi 头像"
+    - generic: Kimi
+    - generic: Kimi CLI Agent using the local Coding Plan settings
+  - button "私信 OpenCode":
+    - img "OpenCode 头像"
+    - generic: OpenCode
+    - generic: OpenCode Agent using the configured provider and model
+- separator "调整聊天边栏宽度"
+- main:
+  - img "OpenCode 头像"
+  - heading "OpenCode" [level=1]
+  - paragraph: 在线
+  - tablist:
+    - tab "聊天" [selected]:
+      - text: 聊天
+    - tab "任务":
+      - text: 任务
+    - tab "文件":
+      - text: 文件
+  - article:
+    - generic: S
+    - generic: sun
+    - time: 01:05
+    - paragraph: 这是一次短交互验收，不是 Task，不要认领任务。只在当前临时工作目录创建 identity-proof.txt，内容为 RAH_IDENTITY_20260831；用文件读取工具读取回来，然后使用 RAH Room 消息工具在本私聊回复 marker 和绝对文件路径。不要操作其他项目，也不要维护长期记忆。完成后停止。
+  - article:
+    - button "查看 OpenCode 动态":
+      - img "OpenCode 头像"
+    - button "OpenCode"
+    - time: 01:05
+    - paragraph:
+      - text: "marker: RAH_IDENTITY_20260831"
+      - text: "file: /private/tmp/rah-identity-real-AWBiRL/identity-proof.txt"
+  - article:
+    - generic: S
+    - generic: sun
+    - time: 01:08
+    - paragraph: 第二次短交互验收，不是 Task。只在当前临时目录创建 identity-proof-2.txt，内容为 RAH_IDENTITY_2；用文件读取工具读取回来，在本私聊回复 marker 和绝对路径。不维护长期记忆，完成后停止。
+  - article:
+    - button "查看 OpenCode 动态" [active]:
+      - img "OpenCode 头像"
+    - button "在消息列中回复":
+    - button "OpenCode"
+    - time: 01:09
+    - paragraph:
+      - text: "marker: RAH_IDENTITY_2"
+      - text: "file: /private/tmp/rah-identity-real-AWBiRL/identity-proof-2.txt"
+  - textbox "消息输入框":
+    - /placeholder: 发送消息至 @OpenCode
+  - button "附件将在 Artifact slice 接入" [disabled]:
+  - checkbox "作为任务"
+  - text: 作为任务
+  - button "发送" [disabled]:
+- main "Agent 详情侧栏":
+  - img "OpenCode 头像"
+  - heading "OpenCode" [level=2]
+  - paragraph: OpenCode Agent using the configured provider and model
+  - button "管理 OpenCode":
+    - generic: ⋮
+  - button "关闭 Agent 侧栏": ×
+  - tablist "Agent 详情":
+    - tab "动态" [selected]:
+      - text: 动态
+    - tab "资料":
+      - text: 资料
+    - tab "聊天":
+      - text: 聊天
+    - tab "提醒":
+      - text: 提醒
+    - tab "工作区":
+      - text: 工作区
+    - tab "应用":
+      - text: 应用
+    - tab "MCP":
+      - text: MCP
+  - region "OpenCode 动态":
+    - heading "活动诊断" [level=3]
+    - paragraph: 该 Agent 在所有可访问对话中的执行记录
+    - button "复制诊断信息"
+    - article:
+      - time: 01:05:59
+      - text: 输出
+      - generic: . No Task claimed, no memory maintained, as instructed.
+    - article:
+      - time: 01:05:59
+      - generic: 工作中模型请求已开始
+    - article:
+      - time: 01:05:59
+      - generic: 空闲工作轮次已完成
+    - article:
+      - time: 01:08:48
+      - generic: 工作中正在启动 OpenCode Runtime
+    - article:
+      - time: 01:08:48
+      - text: 输出
+      - generic: Resume this RAH OS Activation now. Read canonical Room state through the Worker interface and complete the current work.
+    - article:
+      - time: 01:08:48
+      - generic: 工作中模型请求已开始
+    - article:
+      - time: 01:08:49
+      - generic: 工作中模型请求已开始
+    - article:
+      - time: 01:08:49
+      - text: 思考中
+      - generic: The user asks me to resume the RAH OS Activation. I need to read canonical Room state through the Worker interface and complete current work. Let me sync first to see what's new.
+    - article:
+      - time: 01:08:50
+      - generic: Running command"$RAH_WORKER_CLI" worker sync
+    - article:
+      - time: 01:08:50
+      - generic: 工作中bash已完成
+    - article:
+      - time: 01:08:50
+      - generic: 工作中模型请求已开始
+    - article:
+      - time: 01:08:50
+      - generic: 工作中模型请求已开始
+    - article:
+      - time: 01:08:51
+      - text: 思考中
+      - generic: The sync returned events from seq 3 to 11. My actionable range for this activation was fromSeq 2 to toSeq 2, but that was the previous activation run. Now I'm resuming. The sync shows cursorBefore 2, …
+      - button "展开"
+    - article:
+      - time: 01:08:57
+      - generic: Running commandecho "FROM_SEQ=$RAH_FROM_SEQ TO_SEQ=$RAH_TO_SEQ"; echo "ACTIVATION_ID=$RAH_ACTIVATION_ID"; echo "PARTICIPANT=$RAH_PARTICIPANT_ID"
+    - article:
+      - time: 01:08:57
+      - generic: 工作中bash已完成
+    - article:
+      - time: 01:08:57
+      - generic: 工作中模型请求已开始
+    - article:
+      - time: 01:08:57
+      - generic: 工作中模型请求已开始
+    - article:
+      - time: 01:08:57
+      - text: 思考中
+      - generic: "New activation: activation_7b0bd964, actionable range 11-11. Seq 11 is the message from sun asking for the second acceptance test: create identity-proof-2.txt with content RAH_IDENTITY_2 in the curren…"
+      - button "展开"
+    - article:
+      - time: 01:08:58
+      - text: 输出
+      - generic: New activation range is seq 11 — the second acceptance-test message. Creating the file and reading it back.
+    - article:
+      - time: 01:08:58
+      - generic: Writing file/private/tmp/rah-identity-real-AWBiRL/identity-proof-2.txt
+    - article:
+      - time: 01:08:58
+      - generic: 工作中write已完成
+    - article:
+      - time: 01:08:58
+      - generic: 工作中模型请求已开始
+    - article:
+      - time: 01:08:58
+      - generic: 工作中模型请求已开始
+    - article:
+      - time: 01:08:59
+      - generic: Reading file/private/tmp/rah-identity-real-AWBiRL/identity-proof-2.txt
+    - article:
+      - time: 01:08:59
+      - generic: 工作中read已完成
+    - article:
+      - time: 01:09:00
+      - generic: 工作中模型请求已开始
+    - article:
+      - time: 01:09:00
+      - generic: 工作中模型请求已开始
+    - article:
+      - time: 01:09:01
+      - text: "Running command\"$RAH_WORKER_CLI\" worker message-post --body 'marker: RAH_IDENTITY_2 file: /private/tmp/rah-identity-real-AWBiRL/identity-proof-2.txt' --idempotency-key \"activation_7b0bd964-754d-4214-ac05-42b5f144ed7…"
+      - button "展开"
+    - article:
+      - time: 01:09:01
+      - generic: 工作中bash已完成
+    - article:
+      - time: 01:09:01
+      - generic: 工作中模型请求已开始
+    - article:
+      - time: 01:09:01
+      - generic: 工作中模型请求已开始
+    - article:
+      - time: 01:09:02
+      - generic: Running command"$RAH_WORKER_CLI" worker acknowledge --through-seq 11
+    - article:
+      - time: 01:09:02
+      - generic: 工作中bash已完成
+    - article:
+      - time: 01:09:02
+      - generic: 工作中模型请求已开始
+    - article:
+      - time: 01:09:02
+      - generic: 工作中模型请求已开始
+    - article:
+      - time: 01:09:03
+      - text: 输出
+      - generic: "Done. Created `/private/tmp/rah-identity-real-AWBiRL/identity-proof-2.txt` containing `RAH_IDENTITY_2`, read it back, posted the reply (marker + absolute path) at roomSeq 16, and acknowledged through …"
+      - button "展开"
+    - article:
+      - time: 01:09:03
+      - generic: 工作中模型请求已开始
+    - article:
+      - time: 01:09:03
+      - generic: 空闲工作轮次已完成
+    - button "加载更早记录"
+    - paragraph: 未运行的 Agent 不会显示其他测试环境的历史。动态来自 Provider 的结构化事件，不解析 ANSI。Codex 只显示公开 reasoning summary，原始思维链不会进入该投影。

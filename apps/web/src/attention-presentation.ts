@@ -1,16 +1,46 @@
-import type { LocalComputerObservation } from "@rah-os/protocol";
+import type { AgentPresence, LocalComputerObservation } from "@rah-os/protocol";
 
-export function agentConnectionLabel(agent: {
+type PresenceSubject = {
   state: string;
   runtimeAvailable: boolean;
   connectionStatus?: LocalComputerObservation["status"];
-}): string {
-  if (agent.state === "tombstoned") return "已删除";
-  if (agent.state !== "enabled") return "已暂停";
-  if (agent.connectionStatus === "offline") return "离线";
-  if (agent.connectionStatus === "draining") return "正在停止";
-  if (agent.connectionStatus !== "online") return "状态未知";
-  return agent.runtimeAvailable ? "在线" : "不可用";
+  presence?: AgentPresence;
+};
+export function agentPresencePresentation(agent: PresenceSubject) {
+  const fallback = (label: string) => ({
+    activity: "offline" as const,
+    label,
+    pulse: false,
+  });
+  if (agent.state === "tombstoned") return fallback("已删除");
+  if (agent.state !== "enabled") return fallback("已暂停");
+  const presence = agent.presence;
+  if (!presence) {
+    if (agent.connectionStatus === "offline") return fallback("离线");
+    if (agent.connectionStatus === "draining") return fallback("正在停止");
+    return fallback("状态未知");
+  }
+  const labels: Record<AgentPresence["reason"], string> = {
+    idle: "休眠 · 等待唤醒",
+    online: "在线",
+    starting: "正在启动",
+    working: "工作中",
+    thinking: "思考中",
+    error: "运行异常",
+    paused: "已暂停",
+    host_offline: "Computer 离线",
+    host_draining: "Computer 正在停止",
+    unknown: "状态未知",
+  };
+  return {
+    activity: presence.activity,
+    label: labels[presence.reason],
+    pulse: presence.activity === "thinking" || presence.activity === "working",
+  };
+}
+
+export function agentConnectionLabel(agent: PresenceSubject): string {
+  return agentPresencePresentation(agent).label;
 }
 
 export const visibleNavigationDot = (unread: boolean, active: boolean) =>

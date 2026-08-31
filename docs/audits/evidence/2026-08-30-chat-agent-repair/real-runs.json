@@ -1,0 +1,86 @@
+[
+  {
+    "run_attempt_id": "run_688011bc-dfda-4d66-8ca0-4642397f217a",
+    "room_id": "room_8179d887-98ce-4ccb-a0b0-46d18b3666e5",
+    "participant_id": "principal_cb108f81-c8af-47d7-8244-56e9923ceec9",
+    "state": "exited",
+    "exit_code": 0,
+    "started_at": "2026-08-30T15:46:36.089Z",
+    "finished_at": "2026-08-30T15:46:51.925Z",
+    "resolved_model": {
+      "source": "explicit_binding",
+      "modelBindingId": "local:opencode-cli/v1:deepseek/deepseek-v4-flash",
+      "provider": "deepseek",
+      "modelId": "deepseek/deepseek-v4-flash",
+      "reasoning": "max"
+    },
+    "trajectory_count": 667
+  },
+  {
+    "run_attempt_id": "run_54b57a14-992d-4cbd-948e-af449446b9e1",
+    "room_id": "room_51e344d0-24a4-4480-bfeb-3d6c52c53c7b",
+    "participant_id": "principal_cb108f81-c8af-47d7-8244-56e9923ceec9",
+    "state": "exited",
+    "exit_code": 0,
+    "started_at": "2026-08-30T15:47:31.626Z",
+    "finished_at": "2026-08-30T15:47:45.868Z",
+    "resolved_model": {
+      "source": "explicit_binding",
+      "modelBindingId": "local:opencode-cli/v1:deepseek/deepseek-v4-flash",
+      "provider": "deepseek",
+      "modelId": "deepseek/deepseek-v4-flash",
+      "reasoning": "max"
+    },
+    "trajectory_count": 692
+  },
+  {
+    "run_attempt_id": "run_b5d6e20c-88e6-45e9-ada7-b14b3dc59107",
+    "room_id": "room_f925016b-c8c8-477d-b789-6540ea76b2be",
+    "participant_id": "principal_42920cd7-8c50-456d-94d3-2b22e0ef10f6",
+    "state": "exited",
+    "exit_code": 0,
+    "started_at": "2026-08-30T15:55:40.401Z",
+    "finished_at": "2026-08-30T15:56:28.358Z",
+    "resolved_model": {
+      "source": "explicit_binding",
+      "modelBindingId": "local:codex-cli/v1:gpt-5.6-sol",
+      "provider": "openai",
+      "modelId": "gpt-5.6-sol",
+      "reasoning": "low"
+    },
+    "trajectory_count": 19
+  },
+  {
+    "run_attempt_id": "run_5fb1bc99-ee01-423d-9c3e-8ff6da5a2378",
+    "room_id": "room_f7685cf4-1a61-437f-a4ea-0c2f89a3420a",
+    "participant_id": "principal_e44fc8a5-5ff8-47e5-b963-251216fb34ee",
+    "state": "exited",
+    "exit_code": 0,
+    "started_at": "2026-08-30T15:56:35.487Z",
+    "finished_at": "2026-08-30T15:58:05.545Z",
+    "resolved_model": {
+      "source": "explicit_binding",
+      "modelBindingId": "local:kimi-cli/v1:kimi-code/k3",
+      "provider": "kimi-code",
+      "modelId": "kimi-code/k3"
+    },
+    "trajectory_count": 826
+  },
+  {
+    "run_attempt_id": "run_d44cd668-935e-4b16-91cd-7cd514c11913",
+    "room_id": "room_8179d887-98ce-4ccb-a0b0-46d18b3666e5",
+    "participant_id": "principal_cb108f81-c8af-47d7-8244-56e9923ceec9",
+    "state": "exited",
+    "exit_code": 0,
+    "started_at": "2026-08-30T15:58:05.550Z",
+    "finished_at": "2026-08-30T15:58:15.941Z",
+    "resolved_model": {
+      "source": "explicit_binding",
+      "modelBindingId": "local:opencode-cli/v1:deepseek/deepseek-v4-flash",
+      "provider": "deepseek",
+      "modelId": "deepseek/deepseek-v4-flash",
+      "reasoning": "max"
+    },
+    "trajectory_count": 386
+  }
+]

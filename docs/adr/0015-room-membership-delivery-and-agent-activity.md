@@ -27,6 +27,8 @@ Kernel 原有 `postMessage` 是支持显式 recipients 的低层协作原语，�
 
 ## 边界
 
+2026-08-31 补充：[头像 presence 设计](../product/2026-08-31-agent-presence-closure.zh-CN.md)新增独立、只读、无内容的 `agent.presence.list`。上文第4–5项仍约束 Room 业务 activity；头像的在线/思考/工具/错误观察不再冒充该业务状态。它仅对 Human 可见的 Workspace Agent catalog 输出活动枚举与安全原因，不返回不可访问 Room 的身份或诊断内容；Host generation、lease 与进程终止事实覆盖历史轨迹。Provider 结构化事件只细分活进程的可观察状态，不改变 Task、Inbox 或 Activation。前台每秒对账、后台15秒降频，断线/未知不能以已安装 CLI 伪装在线。
+
 - membership delivery 不代表每个 Agent 都必须对每条消息生成文本回复；是否回复由 Agent policy 决定，但每个成员都会获得 durable Inbox/Activation。
 - Agent reply 仍按 [ADR-0014](./0014-activation-scoped-agent-room-reply.md) 使用 activation-scoped 窄命令，不产生 reply loop。
 - `idle` 仅表示当前没有 queued/leased/quarantined Activation，不证明 Provider 在线；Runtime inventory、Host health 与 Agent activity 是三个不同观察面。

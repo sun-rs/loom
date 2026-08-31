@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
 import { RoomFiles } from "./room-files.ts";
+import { readAgentPresence } from "./agent-presence.ts";
 import { DatabaseSync } from "node:sqlite";
 import { GlobalDiscovery } from "./global-discovery.ts";
 import { HumanActivity } from "./human-activity.ts";
@@ -127,6 +128,7 @@ import {
 } from "./run-agent-context.ts";
 import { classifyRunAttemptRuntimeStart } from "./run-attempt-runtime-transition.ts";
 import { runAttemptProjectionFromRow } from "./run-attempt-projection.ts";
+import { runtimeProcessProjectionFromRow } from "./runtime-process-projection.ts";
 import {
   CollaborationService,
   type DirectRoomOpenInput,
@@ -2784,6 +2786,18 @@ export class RoomKernel {
       this.#requireAuthenticatedActor(actor),
       input.controlRoomId,
     );
+  }
+  listAgentPresence(
+    actor: AuthenticatedActorContext,
+    input: { controlRoomId: string },
+  ) {
+    const now = this.#now();
+    return {
+      observedAt: now.toISOString(),
+      agents: this.listAgentCatalog(actor, input).map((agent) =>
+        readAgentPresence(this.#database, agent, now),
+      ),
+    };
   }
   onboardAgentToRoom(
     actor: AuthenticatedActorContext,
@@ -6186,50 +6200,7 @@ export class RoomKernel {
   }
 
   #runtimeProcessFromRow(row: Row): RuntimeProcessRecord {
-    const state = text(row, "state");
-    if (
-      state !== "prepared" &&
-      state !== "active" &&
-      state !== "orphaned" &&
-      state !== "terminated"
-    ) {
-      throw new Error(`unexpected RuntimeProcess state ${state}`);
-    }
-    const exitCode = nullableInteger(row, "exit_code");
-    const exitSignal = nullableText(row, "exit_signal");
-    const terminatedAt = nullableText(row, "terminated_at");
-    const recoveryLeaseOwner = nullableText(row, "recovery_lease_owner");
-    const recoveryLeaseOwnerInstanceId = nullableText(
-      row,
-      "recovery_lease_owner_instance_id",
-    );
-    const recoveryLeaseUntil = nullableText(row, "recovery_lease_until");
-    const recoveryLastError = nullableText(row, "recovery_last_error");
-    return {
-      runtimeProcessId: text(row, "runtime_process_id"),
-      runAttemptId: text(row, "run_attempt_id"),
-      activationId: text(row, "activation_id"),
-      roomId: text(row, "room_id"),
-      participantId: text(row, "participant_id"),
-      launchHostId: text(row, "launch_host_id"),
-      runtimeRunId: text(row, "runtime_run_id"),
-      recoveryDescriptor: RuntimeRecoveryDescriptorSchema.parse(
-        jsonObject(row, "recovery_descriptor_json"),
-      ),
-      state,
-      registeredAt: text(row, "registered_at"),
-      updatedAt: text(row, "updated_at"),
-      recoveryAttemptCount: integer(row, "recovery_attempt_count"),
-      ...(recoveryLeaseOwner === null ? {} : { recoveryLeaseOwner }),
-      ...(recoveryLeaseOwnerInstanceId === null
-        ? {}
-        : { recoveryLeaseOwnerInstanceId }),
-      ...(recoveryLeaseUntil === null ? {} : { recoveryLeaseUntil }),
-      ...(recoveryLastError === null ? {} : { recoveryLastError }),
-      ...(exitCode === null ? {} : { exitCode }),
-      ...(exitSignal === null ? {} : { exitSignal }),
-      ...(terminatedAt === null ? {} : { terminatedAt }),
-    };
+    return runtimeProcessProjectionFromRow(row);
   }
 
   #assertMatchingRuntimeTermination(

@@ -52,6 +52,10 @@ Raft 的前端发布源码是**可见产品行为**的首要证据：触发入�
 
 最新证据：[补强主审报告](../audits/2026-08-31-parity-reinforcement-final-review.zh-CN.md)。每一项明确区分源码合同、隔离后端、真实浏览器和正式部署。
 
+### 2026-08-31 头像实时观察补充
+
+前文“Avatar与Computer统一投影观测”不表示两者状态相同。新`agent.presence.list`将managed Agent的运行状态与Host连通性分离：目录ACL限定可见身份；当前运行/序号/fencing/终止事实限定时效；只返回无内容枚举。官方`Uze/fp/mne`复用、差异与验收见[设计](./2026-08-31-agent-presence-closure.zh-CN.md)及[复核](../audits/2026-08-31-agent-presence-closure-review.zh-CN.md)。本轮仅隔离桌面局部验收，真实Provider全序列、有效390px门禁和external仍未完成；候选总表没有因此变成全站已追踪。
+
 ### Enter 的产品裁决
 
 按用户明确要求，RAH 的 Room/DM/Thread 统一 Enter 发送、Shift+Enter 换行；按钮禁用时键盘不能绕过权限、上传、pending 或 Task 校验；长按重复 Enter 不重复发送。IME 确认键保持输入，不提交。

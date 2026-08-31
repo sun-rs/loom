@@ -9,6 +9,7 @@ import * as React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
   agentConnectionLabel,
+  agentPresencePresentation,
   visibleNavigationDot,
 } from "../../../apps/web/src/attention-presentation.ts";
 import { createLatestRequest } from "../../../apps/web/src/latest-request.ts";
@@ -108,6 +109,12 @@ test("offline Agent renders a persistent gray presence marker instead of removin
     {
       React,
       agentConnectionLabel,
+      agentPresencePresentation,
+      AgentStatusDot: declaration(
+        "apps/web/src/components/agent-status-dot.tsx",
+        "AgentStatusDot",
+        { React },
+      ),
       DEFAULT_AGENT_AVATAR: "test",
       OFFICIAL_AVATAR_PACK: {
         presets: { test: { background: "white", grid: ["1"] } },
@@ -128,7 +135,37 @@ test("offline Agent renders a persistent gray presence marker instead of removin
   );
   assert.match(html, /rah-agent-avatar-presence/);
   assert.match(html, /data-online="false"/);
+  assert.match(html, /data-size="sm"/);
   assert.match(html, /title="离线"/);
+});
+
+test("Agent presence does not inherit navigation-dot absolute positioning", () => {
+  const Dot = declaration(
+    "apps/web/src/components/agent-status-dot.tsx",
+    "AgentStatusDot",
+    { React },
+  );
+  const html = renderToStaticMarkup(
+    React.createElement(Dot, {
+      activity: "thinking",
+      label: "思考中",
+      className: "rah-agent-profile-presence",
+    }),
+  );
+  assert.match(html, /rah-agent-status-dot/);
+  assert.doesNotMatch(html, /\brah-status-dot\b/);
+  assert.match(html, /data-pulse="true"/);
+  assert.match(html, /data-size="md"/);
+  const external = renderToStaticMarkup(
+    React.createElement(Dot, {
+      activity: "thinking",
+      label: "External",
+      className: "test",
+      external: true,
+    }),
+  );
+  assert.match(external, /data-activity="external"/);
+  assert.match(external, /data-pulse="false"/);
 });
 
 test("system notification attention stays visible while the bell is open on desktop and mobile", () => {
@@ -703,6 +740,70 @@ const pendingQuestion = {
   responderId: "human",
   createdAt: "2026-08-31T00:00:00.000Z",
 };
+
+function presenceReadFixture(request) {
+  const f = inboxFixture(request);
+  let state, cleanup;
+  const hook = declaration(
+    "apps/web/src/use-reconciled-query.ts",
+    "useReconciledQuery",
+    {
+      ...f.scope,
+      AbortController,
+      useState: () => [
+        undefined,
+        (value) => {
+          state = typeof value === "function" ? value(state) : value;
+        },
+      ],
+      useEffect: (run) => {
+        cleanup = run();
+      },
+    },
+  );
+  hook({ request }, "agent.presence.list", { controlRoomId: "control" });
+  return { ...f, read: () => state, cleanup: () => cleanup() };
+}
+
+test("presence retries a hung transport, ignores its late result, and polls visible pages once per second", async () => {
+  const hung = deferred();
+  let calls = 0,
+    signal;
+  const f = presenceReadFixture((_, __, options) => {
+    if (++calls === 1) {
+      signal = options.signal;
+      return hung.promise;
+    }
+    return Promise.resolve({ agents: [{ activity: "working" }] });
+  });
+  await f.advance(15000);
+  assert.equal(signal.aborted, true);
+  assert.match(f.read().error, /超时/);
+  await f.advance(1000);
+  assert.equal(calls, 2);
+  assert.equal(f.read().data.agents[0].activity, "working");
+  hung.resolve({ agents: [{ activity: "thinking" }] });
+  await flushMicrotasks();
+  assert.equal(f.read().data.agents[0].activity, "working");
+  f.cleanup();
+  assert.equal(f.timers.size, 0);
+});
+
+test("presence scope cleanup cancels its in-flight deadline and prevents late application", async () => {
+  const hung = deferred();
+  const f = presenceReadFixture(() => hung.promise);
+  f.cleanup();
+  assert.equal(
+    f.timers.size,
+    0,
+    "unmounted/scope-switched query must not retain a deadline",
+  );
+  hung.resolve({ agents: [{ activity: "online" }] });
+  await flushMicrotasks();
+  assert.equal(f.read(), undefined);
+  assert.equal(f.windowEvents.size, 0);
+  assert.equal(f.documentEvents.size, 0);
+});
 
 test("hung Inbox read times out, retries, and cannot later overwrite the retry", async () => {
   const hung = deferred();

@@ -14,7 +14,11 @@ test("Agent presence uses Host connection separately from CLI availability and p
     runtimeAvailable: true,
     connectionStatus: "online",
   } as const;
-  assert.equal(agentConnectionLabel(agent), "在线");
+  assert.equal(
+    agentConnectionLabel(agent),
+    "状态未知",
+    "installed CLI and connected Host are not Agent online evidence",
+  );
   assert.equal(
     agentConnectionLabel({ ...agent, connectionStatus: "offline" }),
     "离线",
@@ -25,7 +29,7 @@ test("Agent presence uses Host connection separately from CLI availability and p
   );
   assert.equal(
     agentConnectionLabel({ ...agent, runtimeAvailable: false }),
-    "不可用",
+    "状态未知",
   );
   assert.equal(agentConnectionLabel({ ...agent, state: "disabled" }), "已暂停");
 });

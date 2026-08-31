@@ -12,6 +12,67 @@ import {
 
 const now = () => Date.parse("2026-08-29T08:00:00.000Z");
 
+test("Codex reasoning has start/end activity without requiring reasoning text", () => {
+  const item = {
+    id: "reasoning-empty",
+    type: "reasoning",
+    content: ["PRIVATE"],
+  };
+  const start = normalizeCodexTrajectoryNotification(
+    { method: "item/started", params: { item } },
+    now,
+  );
+  const end = normalizeCodexTrajectoryNotification(
+    { method: "item/completed", params: { item } },
+    now,
+  );
+  assert.equal((start[0]?.entry as any)?.activity, "thinking");
+  assert.equal((end.at(-1)?.entry as any)?.activity, "working");
+  assert.equal((end.at(-1)?.entry as any)?.detailKind, "thinking_end");
+  assert.doesNotMatch(JSON.stringify([start, end]), /PRIVATE/);
+});
+
+test("current activity is emitted before text debounce and is not a copied transcript", () => {
+  const frames: any[] = [];
+  const writer = new RuntimeTrajectoryWriter((value) =>
+    frames.push(JSON.parse(value)),
+  );
+  writer.emit([
+    {
+      entry: { kind: "thinking", text: "private long thought" },
+      observedAt: new Date(now()).toISOString(),
+    },
+  ]);
+  assert.equal(frames[0]?.entry.kind, "status");
+  assert.equal(frames[0]?.entry.activity, "thinking");
+  assert.doesNotMatch(JSON.stringify(frames[0]), /private long thought/);
+  writer.emit([
+    {
+      entry: { kind: "text", text: "answer" },
+      observedAt: new Date(now()).toISOString(),
+    },
+  ]);
+  assert.equal(frames.at(-1)?.entry.activity, "working");
+  writer.flush();
+});
+
+test("output after compaction-finished changes online back to working immediately", () => {
+  const frames: any[] = [];
+  const writer = new RuntimeTrajectoryWriter((value) =>
+    frames.push(JSON.parse(value)),
+  );
+  const observedAt = new Date(now()).toISOString();
+  writer.emit([
+    { observedAt, entry: { kind: "compaction_started" } },
+    { observedAt, entry: { kind: "compaction_finished" } },
+  ]);
+  writer.emit([
+    { observedAt, entry: { kind: "text", text: "answer after compact" } },
+  ]);
+  assert.equal(frames.at(-1)?.entry.activity, "working");
+  writer.flush();
+});
+
 test("Claude stream-json projects bounded activity without session or tool-result leakage", () => {
   const assistant = normalizeClaudeTrajectoryEvent(
     {
@@ -85,6 +146,16 @@ test("Codex trajectory exposes public reasoning summary but never raw chain-of-t
         kind: "thinking",
         producerFactId: "reasoning-1:item/completed",
         text: "检查了配置\n准备执行测试",
+      },
+      observedAt: "2026-08-29T08:00:00.000Z",
+    },
+    {
+      entry: {
+        kind: "status",
+        activity: "working",
+        detailKind: "thinking_end",
+        detail: "",
+        producerFactId: "reasoning-1:item/completed",
       },
       observedAt: "2026-08-29T08:00:00.000Z",
     },
@@ -272,27 +343,31 @@ test("trajectory text coalesces for 350ms, flushes at boundaries, and never drop
     observedAt: new Date(now()).toISOString(),
   });
   writer.emit([delta("Hello"), delta(" world")]);
-  assert.equal(frames.length, 0);
+  assert.equal(frames.length, 1);
+  assert.equal(frames[0].entry.activity, "working");
   t.mock.timers.tick(349);
-  assert.equal(frames.length, 0);
+  assert.equal(frames.length, 1, "only state, not text, bypasses debounce");
   t.mock.timers.tick(1);
-  assert.equal(frames[0].entry.text, "Hello world");
+  assert.equal(frames[1].entry.text, "Hello world");
   writer.emit([delta("thinking", "thinking"), delta("answer")]);
-  assert.equal(frames[1].entry.text, "thinking");
+  assert.equal(frames[2].entry.activity, "thinking");
+  assert.equal(frames[3].entry.text, "thinking");
+  assert.equal(frames[4].entry.activity, "working");
   writer.emit(kimiPromptCompletionTrajectory("end_turn", now));
-  assert.equal(frames[2].entry.text, "answer");
-  assert.equal(frames[3].entry.kind, "status");
+  assert.equal(frames[5].entry.text, "answer");
+  assert.equal(frames[6].entry.kind, "status");
   const long = "x".repeat(4500);
   writer.emit([delta(long)]);
   writer.flush();
   assert.equal(
     frames
-      .slice(4)
+      .slice(8)
       .map((f) => f.entry.text)
       .join(""),
     long,
   );
-  assert.ok(frames.slice(4).every((f) => f.entry.text.length <= 2000));
+  assert.equal(frames[7].entry.activity, "working");
+  assert.ok(frames.slice(8).every((f) => f.entry.text.length <= 2000));
   const count = frames.length;
   t.mock.timers.tick(1000);
   assert.equal(frames.length, count);

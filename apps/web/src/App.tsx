@@ -845,13 +845,32 @@ function WorkspaceScreen({
         runtime.configured &&
         runtime.runtimeOfferId !== undefined,
     );
+  const presenceQuery = useReconciledQuery(
+    client,
+    "agent.presence.list",
+    {
+      controlRoomId: activeWorkspace?.controlRoomId ?? "unselected",
+    },
+    health?.capabilities.agentPresenceRead === true &&
+      activeWorkspace !== undefined,
+  );
+  const currentPresence = !presenceQuery?.error
+    ? presenceQuery?.data?.agents
+    : undefined;
+  const presenceById = new Map(
+    currentPresence?.map((value) => [value.agentDefinitionId, value]),
+  );
   const agentDirectory = workspaceAgentDirectory({
     agents: scopedAgentCatalog,
     runtimes: localRuntimes,
-  }).map((agent) => ({
-    ...agent,
-    connectionStatus: computer?.status ?? ("unknown" as const),
-  }));
+  }).map((agent) => {
+    const presence = presenceById.get(agent.agentDefinitionId);
+    return {
+      ...agent,
+      ...(presence ? { presence } : {}),
+      connectionStatus: computer?.status ?? ("unknown" as const),
+    };
+  });
   const diagnosticRooms = rooms
     .filter((room) => room.workspaceId === activeWorkspace?.workspaceId)
     .map((room) => {

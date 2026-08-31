@@ -309,6 +309,30 @@ if (mode === "trajectory") {
     (event) =>
       event.roomSeq >= requiredFrom && event.roomSeq <= requiredThrough,
   );
+  // Explicit isolated browser probe: real child -> fd3 -> Host -> Kernel -> UI.
+  // This is deterministic test telemetry, never presented as a real LLM run.
+  if (
+    process.env.RAH_FAKE_PRESENCE_PROBE === "1" &&
+    activationEvents.some(
+      (event) =>
+        event.type === "message.posted" &&
+        event.payload?.body === "[presence-probe]",
+    )
+  ) {
+    for (const entry of [
+      { kind: "status", activity: "thinking", detailKind: "thinking_started" },
+      {
+        kind: "tool_start",
+        toolName: "fixture read",
+        toolInput: "isolated test file",
+      },
+      { kind: "status", activity: "error", detailKind: "runtime_error" },
+      { kind: "status", activity: "online", detailKind: "none" },
+    ]) {
+      publishTrajectory(entry);
+      await new Promise((resolve) => setTimeout(resolve, 20000));
+    }
+  }
   publishTrajectory({
     activity: "working",
     detail: "正在检查 Room 消息",

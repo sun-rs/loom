@@ -609,6 +609,11 @@ CREATE TABLE IF NOT EXISTS run_attempts (
 CREATE INDEX IF NOT EXISTS idx_run_attempts_room_started
   ON run_attempts(room_id, started_at, run_attempt_id);
 
+CREATE INDEX IF NOT EXISTS idx_run_attempts_presence
+  ON run_attempts(participant_id);
+CREATE INDEX IF NOT EXISTS idx_run_attempts_presence_active
+  ON run_attempts(participant_id) WHERE state IN ('starting', 'running', 'orphaned');
+
 CREATE TABLE IF NOT EXISTS run_trajectory_entries (
   server_sequence INTEGER PRIMARY KEY AUTOINCREMENT,
   activity_id TEXT NOT NULL UNIQUE,
@@ -628,6 +633,13 @@ CREATE INDEX IF NOT EXISTS idx_run_trajectory_agent_page
 
 CREATE INDEX IF NOT EXISTS idx_run_trajectory_room_page
   ON run_trajectory_entries(room_id, server_sequence DESC);
+
+-- Current presence skips arbitrarily long text-only streams without rescanning
+-- their payloads every second. Predicate matches the read projection exactly.
+CREATE INDEX IF NOT EXISTS idx_run_trajectory_presence
+  ON run_trajectory_entries(runtime_run_id, producer_sequence DESC)
+  WHERE json_extract(entry_json, '$.subagent') IS NULL
+    AND json_extract(entry_json, '$.kind') IN ('thinking','tool_start','compaction_started','compaction_finished','status');
 
 CREATE TABLE IF NOT EXISTS context_manifests (
   context_manifest_id TEXT PRIMARY KEY,

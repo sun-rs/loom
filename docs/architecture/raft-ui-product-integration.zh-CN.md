@@ -59,6 +59,8 @@ Reference HTML 永远加载 `raft-ui-reference-adapter.js`，不得加载产品 
 
 ## 4. 首条切片
 
+2026-08-31消息渲染稳定性补充：`MessageMarkdown`拥有固定的React renderer组件身份，文件打开回调通过Context更新；状态对账或虚拟列表重新测量不得卸载不变消息的图片、代码或Mermaid iframe，不得重置图表/源码选择。动态高度仍由既有`MessageTimeline`测量，不增加第二套滚动校准。`test:web:message-timeline`包含20次父组件刷新、媒体身份/选择、正文更新与最新回调的浏览器回归；不能仅以某一帧出现SVG/iframe验收稳定性。
+
 已接入：
 
 - Human PAT 内存连接；

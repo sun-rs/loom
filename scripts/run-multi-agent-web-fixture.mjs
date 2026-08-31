@@ -263,6 +263,9 @@ try {
       recoveryDrivers: ["rah-process-supervisor-v1"],
       runtimeProfileId,
       staticEnv: {
+        ...(process.env.RAH_FIXTURE_PRESENCE_PROBE === "1"
+          ? { RAH_FAKE_PRESENCE_PROBE: "1" }
+          : {}),
         RAH_FAKE_AUTO_TASK_MARKER: "[TASK]",
         RAH_FAKE_MODE:
           process.env.RAH_FIXTURE_FIRST_AGENT_INPUT === "1" && index === 0
@@ -357,7 +360,8 @@ try {
     outboxPollIntervalMs: 20,
     outboxRetryAfterMs: 1_000,
     pollIntervalMs: 20,
-    runTimeoutMs: 30_000,
+    runTimeoutMs:
+      process.env.RAH_FIXTURE_PRESENCE_PROBE === "1" ? 120_000 : 30_000,
     runtimeCancelTimeoutMs: 10_000,
     runtimeRecoveryTimeoutMs: 30_000,
     runtimes: profileIds.map((runtimeProfileId, index) => ({

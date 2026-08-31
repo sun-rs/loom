@@ -413,16 +413,53 @@
 }
 
 .rah-agent-avatar-presence {
-  bottom: -3px;
-  height: 9px;
+  bottom: 0;
   position: absolute;
-  right: -3px;
-  width: 9px;
+  right: 0;
+  transform: translate(50%, 50%);
 }
 .rah-agent-online-state i[data-online="false"],
 .rah-agent-avatar-presence[data-online="false"],
 .rah-agent-computer-label i[data-online="false"] {
   background: var(--presence-off);
+}
+
+/* Raft Uze/fp: identical managed colors; external cyan is an identity override. */
+.rah-agent-status-dot[data-size="sm"] {
+  width: 8px;
+  height: 8px;
+}
+.rah-agent-status-dot[data-size="md"] {
+  width: 10px;
+  height: 10px;
+}
+.rah-agent-status-dot[data-size="lg"] {
+  width: 11px;
+  height: 11px;
+}
+.rah-agent-status-dot[data-activity="offline"] {
+  background: var(--presence-off);
+}
+.rah-agent-status-dot[data-activity="online"] {
+  background: var(--mint);
+}
+.rah-agent-status-dot[data-activity="thinking"],
+.rah-agent-status-dot[data-activity="working"] {
+  background: var(--yellow);
+}
+.rah-agent-status-dot[data-activity="error"] {
+  background: var(--orange);
+}
+.rah-agent-status-dot[data-activity="external"] {
+  background: var(--cyan);
+}
+.rah-agent-status-dot[data-pulse="true"] {
+  animation: rah-trajectory-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rah-agent-status-dot[data-pulse="true"] {
+    animation: none;
+  }
 }
 
 .rah-agent-profile-pane,

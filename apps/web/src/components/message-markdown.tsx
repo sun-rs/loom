@@ -1,12 +1,14 @@
 import {
   Children,
+  createContext,
   isValidElement,
+  useContext,
   useEffect,
   useId,
   useRef,
   useState,
 } from "react";
-import type { ReactElement, ReactNode } from "react";
+import type { ComponentPropsWithoutRef, ReactElement, ReactNode } from "react";
 import Markdown from "react-markdown";
 import type { Components } from "react-markdown";
 import rehypeKatex from "rehype-katex";
@@ -47,62 +49,73 @@ const rehypePlugins: NonNullable<
   [rehypeKatex, { output: "htmlAndMathml", strict: "warn" }],
 ];
 
+type OpenFile = (path: string) => void | Promise<void>;
+const OpenFileContext = createContext<OpenFile | undefined>(undefined);
+
+function MarkdownLink({ children, href }: ComponentPropsWithoutRef<"a">) {
+  const onOpenFile = useContext(OpenFileContext);
+  return (
+    <MessageLink href={href} onOpenFile={onOpenFile}>
+      {children}
+    </MessageLink>
+  );
+}
+
+// These are React component types, not formatting callbacks. Recreating them
+// during polling remounts images, code blocks and sandboxed Mermaid iframes.
+// Context keeps file actions current without changing any component identity.
+const markdownComponents: Components = {
+  a: MarkdownLink,
+  blockquote: ({ children }) => <blockquote>{children}</blockquote>,
+  code: ({ children, className }) => (
+    <code className={className}>{children}</code>
+  ),
+  img: ({ alt, src, title }) =>
+    typeof src === "string" && src !== "" ? (
+      <img
+        alt={alt ?? ""}
+        decoding="async"
+        loading="lazy"
+        referrerPolicy="no-referrer"
+        src={src}
+        title={title ?? undefined}
+      />
+    ) : (
+      <span className="rah-markdown-image-blocked">[图片地址已阻止]</span>
+    ),
+  pre: ({ children }) => <MarkdownPre>{children}</MarkdownPre>,
+  table: ({ children }) => (
+    <div className="rah-markdown-table-scroll">
+      <table>{children}</table>
+    </div>
+  ),
+};
+
 export function MessageMarkdown({
   onOpenFile,
   source,
 }: {
-  onOpenFile?: (path: string) => void | Promise<void>;
+  onOpenFile?: OpenFile;
   source: string;
 }) {
-  const components: Components = {
-    a: ({ children, href }) => (
-      <MessageLink href={href} onOpenFile={onOpenFile}>
-        {children}
-      </MessageLink>
-    ),
-    blockquote: ({ children }) => <blockquote>{children}</blockquote>,
-    code: ({ children, className }) => {
-      if (className?.includes("math-inline") === true) {
-        return <code className={className}>{children}</code>;
-      }
-      return <code className={className}>{children}</code>;
-    },
-    img: ({ alt, src, title }) =>
-      typeof src === "string" && src !== "" ? (
-        <img
-          alt={alt ?? ""}
-          decoding="async"
-          loading="lazy"
-          referrerPolicy="no-referrer"
-          src={src}
-          title={title ?? undefined}
-        />
-      ) : (
-        <span className="rah-markdown-image-blocked">[图片地址已阻止]</span>
-      ),
-    pre: ({ children }) => <MarkdownPre>{children}</MarkdownPre>,
-    table: ({ children }) => (
-      <div className="rah-markdown-table-scroll">
-        <table>{children}</table>
-      </div>
-    ),
-  };
   return (
-    <div
-      className="rah-message-markdown"
-      data-raft-markdown-content=""
-      translate="no"
-    >
-      <Markdown
-        components={components}
-        rehypePlugins={rehypePlugins}
-        remarkPlugins={remarkPlugins}
-        skipHtml
-        urlTransform={transformMessageUrl}
+    <OpenFileContext.Provider value={onOpenFile}>
+      <div
+        className="rah-message-markdown"
+        data-raft-markdown-content=""
+        translate="no"
       >
-        {source}
-      </Markdown>
-    </div>
+        <Markdown
+          components={markdownComponents}
+          rehypePlugins={rehypePlugins}
+          remarkPlugins={remarkPlugins}
+          skipHtml
+          urlTransform={transformMessageUrl}
+        >
+          {source}
+        </Markdown>
+      </div>
+    </OpenFileContext.Provider>
   );
 }
 

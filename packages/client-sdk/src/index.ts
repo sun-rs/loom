@@ -2,6 +2,10 @@ import {
   ClientAgentActivityListRequestSchema,
   ClientAgentActivityListResponseSchema,
   ClientAgentTrajectoryListRequestSchema,
+  ClientAgentPresenceListRequestSchema,
+  ClientAgentPresenceListResponseSchema,
+  type ClientAgentPresenceListRequest,
+  type ClientAgentPresenceListResponse,
   ClientAgentTrajectoryListResponseSchema,
   ClientAcknowledgeRequestSchema,
   ClientAcknowledgeResponseSchema,
@@ -233,6 +237,10 @@ export type RahClientOperationMap = AgentWorkspaceOperationMap &
     "agent.trajectory.list": {
       input: ClientAgentTrajectoryListRequest;
       output: ClientAgentTrajectoryListResponse;
+    };
+    "agent.presence.list": {
+      input: ClientAgentPresenceListRequest;
+      output: ClientAgentPresenceListResponse;
     };
     "agent.get": {
       input: ClientAgentGetRequest;
@@ -480,6 +488,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     method: "POST",
     output: ClientAgentTrajectoryListResponseSchema,
     path: "/v3/client/agents/trajectory/list",
+  },
+  "agent.presence.list": {
+    authenticated: true,
+    input: ClientAgentPresenceListRequestSchema,
+    method: "POST",
+    output: ClientAgentPresenceListResponseSchema,
+    path: "/v3/client/agents/presence/list",
   },
   "agent.get": {
     authenticated: true,

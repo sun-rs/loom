@@ -25,6 +25,8 @@ import {
   ClientAgentActivityListRequestSchema,
   ClientAgentActivityListResponseSchema,
   ClientAgentTrajectoryListRequestSchema,
+  ClientAgentPresenceListRequestSchema,
+  ClientAgentPresenceListResponseSchema,
   ClientAgentTrajectoryListResponseSchema,
   ClientAcknowledgeRequestSchema,
   ClientAcknowledgeResponseSchema,
@@ -243,6 +245,7 @@ const CLIENT_V3_DATA_PATHS = new Set([
   ...CLIENT_V2_DATA_PATHS,
   "/agents/activity/list",
   "/agents/trajectory/list",
+  "/agents/presence/list",
   "/agents/list",
   "/agents/get",
   "/agents/memory/get",
@@ -900,6 +903,20 @@ export class ClientApplicationService {
               : { beforeActivityId: command.beforeActivityId }),
             limit: command.limit,
           }),
+        ),
+      );
+      return;
+    }
+    if (path === "/agents/presence/list") {
+      const command = parseClientRequest(
+        ClientAgentPresenceListRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientAgentPresenceListResponseSchema.parse(
+          this.#human.listAgentPresence(actor, command),
         ),
       );
       return;

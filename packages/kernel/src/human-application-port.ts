@@ -17,6 +17,7 @@ export type HumanApplicationPort = Pick<
   | "getWorkspaceAgentManagementView"
   | "listAgentActivity"
   | "listAgentTrajectory"
+  | "listAgentPresence"
   | "listInputRequests"
   | "listAgentCatalog"
   | "listMessages"
@@ -99,6 +100,7 @@ export function createHumanApplicationPort(
     listAgentActivity: (actor, input) => kernel.listAgentActivity(actor, input),
     listAgentTrajectory: (actor, input) =>
       kernel.listAgentTrajectory(actor, input),
+    listAgentPresence: (actor, input) => kernel.listAgentPresence(actor, input),
     listAgentCatalog: (actor, input) => kernel.listAgentCatalog(actor, input),
     listInputRequests: (actor, input) => kernel.listInputRequests(actor, input),
     listManagedMcpAssignments: (actor, input) =>

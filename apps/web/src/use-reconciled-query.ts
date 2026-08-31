@@ -3,7 +3,7 @@ import type { RahClient, RahClientOperationMap } from "@rah-os/client-sdk";
 
 // Read-model reconciliation only. Never writes a business acknowledgement.
 export function useReconciledQuery<
-  K extends "host.runtime.list" | "activity.list",
+  K extends "host.runtime.list" | "activity.list" | "agent.presence.list",
 >(
   client: RahClient,
   operation: K,
@@ -22,18 +22,27 @@ export function useReconciledQuery<
     let stopped = false,
       pending = false;
     let timer: ReturnType<typeof setTimeout>;
+    let deadline: ReturnType<typeof setTimeout> | undefined;
     let controller: AbortController | undefined;
     const load = async () => {
       if (stopped || pending) return;
       clearTimeout(timer);
       pending = true;
-      controller = new AbortController();
-      const deadline = setTimeout(() => controller?.abort(), 15_000);
+      const request = new AbortController();
+      controller = request;
       try {
-        const data = await client.request(operation, JSON.parse(key)[1], {
-          signal: controller.signal,
-        });
-        if (!stopped && !controller.signal.aborted)
+        const data = await Promise.race([
+          client.request(operation, JSON.parse(key)[1], {
+            signal: request.signal,
+          }),
+          new Promise<never>((_, reject) => {
+            deadline = setTimeout(() => {
+              request.abort();
+              reject(new Error("读取超时"));
+            }, 15_000);
+          }),
+        ]);
+        if (!stopped && !request.signal.aborted)
           setState({ client, key, data });
       } catch (error) {
         if (!stopped)
@@ -49,7 +58,11 @@ export function useReconciledQuery<
         if (!stopped)
           timer = setTimeout(
             load,
-            document.visibilityState === "visible" ? 5000 : 15000,
+            document.visibilityState === "visible"
+              ? operation === "agent.presence.list"
+                ? 1000
+                : 5000
+              : 15000,
           );
       }
     };
@@ -62,6 +75,7 @@ export function useReconciledQuery<
     return () => {
       stopped = true;
       clearTimeout(timer);
+      clearTimeout(deadline);
       controller?.abort();
       window.removeEventListener("focus", focus);
       document.removeEventListener("visibilitychange", focus);

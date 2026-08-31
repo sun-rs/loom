@@ -22,11 +22,13 @@ import {
 import { activityPresentation } from "../identity-presentation.ts";
 import {
   agentConnectionLabel,
+  agentPresencePresentation,
   computerStatusLabel,
 } from "../attention-presentation.ts";
 import { mergeTrajectoryWindow } from "../agent-trajectory-window.ts";
 import { renderAgentActivityDiagnostics } from "../agent-activity-diagnostics.ts";
 import { Icon } from "./icon.tsx";
+import { AgentStatusDot } from "./agent-status-dot.tsx";
 import { AgentMemoryConfigDialog } from "./agent-memory-config-dialog.tsx";
 import { AgentRolePermissions } from "./agent-role-permissions.tsx";
 import { AgentWorkspaceBrowser } from "./agent-workspace-browser.tsx";
@@ -1287,9 +1289,9 @@ function AgentProfilePane({
           <h3>{agent.displayName}</h3>
           <p>@{agent.handle}</p>
           <span className="rah-agent-online-state">
-            <i
-              aria-hidden="true"
-              data-online={agentConnectionLabel(agent) === "在线"}
+            <AgentStatusDot
+              className="rah-agent-profile-presence"
+              {...agentPresencePresentation(agent)}
             />
             {agentAvailabilityLabel(agent)}
           </span>
@@ -1774,6 +1776,7 @@ export function AgentAvatar({
     | "runtimeAvailable"
     | "state"
     | "connectionStatus"
+    | "presence"
   >;
   size: "header" | "profile" | "sidebar";
 }) {
@@ -1811,11 +1814,10 @@ export function AgentAvatar({
           }),
         )}
       </span>
-      <i
+      <AgentStatusDot
         className="rah-agent-avatar-presence"
-        data-online={agentConnectionLabel(agent) === "在线"}
-        title={agentConnectionLabel(agent)}
-        aria-label={agentConnectionLabel(agent)}
+        size={size === "sidebar" ? "sm" : "md"}
+        {...agentPresencePresentation(agent)}
       />
     </span>
   );

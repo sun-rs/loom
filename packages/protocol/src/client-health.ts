@@ -61,6 +61,7 @@ export const ClientHealthResponseSchema = ClientHealthBaseSchema.extend({
     .object({
       agentOnboard: z.boolean(),
       agentRead: z.boolean(),
+      agentPresenceRead: z.boolean().optional(),
       agentWrite: z.boolean(),
       fileShare: z.boolean().optional(),
       cursorAcknowledge: z.boolean(),

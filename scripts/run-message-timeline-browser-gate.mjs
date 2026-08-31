@@ -141,12 +141,26 @@ try {
     `prepended history must keep the DOM bounded, got ${String(anchorAfter.domRows)} rows`,
   );
   assert.deepEqual(browserErrors, []);
+  await page.goto(`${origin}/test/message-markdown-stability.html`, {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("button", { name: "开始回归", exact: true }).click();
+  await page.waitForFunction(() => {
+    const status = document.querySelector('[role="status"]')?.textContent;
+    return status?.includes("PASS") || status?.includes("FAIL");
+  });
+  const markdown = JSON.parse(await page.getByRole("status").textContent());
+  assert.equal(markdown.result, "PASS", JSON.stringify(markdown));
+  assert.equal(markdown.refreshes, 20);
+  assert.deepEqual(markdown.failures, []);
+  assert.deepEqual(browserErrors, []);
   console.log(
     JSON.stringify({
       anchorDelta: anchorAfter.offset - anchorBefore.offset,
       browser: await findChromeExecutable(),
       domRows: anchorAfter.domRows,
       logicalMessages: 10_050,
+      markdown,
       viewport: "1440x1000",
     }),
   );

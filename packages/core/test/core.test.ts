@@ -133,6 +133,7 @@ test("RahCore is a headless lifecycle boundary over canonical Room state and mul
       "getWorkspaceAgentManagementView",
       "listAgentActivity",
       "listAgentCatalog",
+      "listAgentPresence",
       "listAgentTrajectory",
       "listGlobalTasks",
       "listHumanActivity",

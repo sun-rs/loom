@@ -827,6 +827,18 @@ test("Agent activity pages canonical cross-Room history without leaking inaccess
       runAttemptId: runAttempt.runAttemptId,
       runtimeRunId,
     });
+    const presence = () =>
+      kernel.listAgentPresence(ownerActor, {
+        controlRoomId: workspace.controlRoom.roomId,
+      }).agents[0]!;
+    assert.equal(presence().activity, "working");
+    assert.equal(presence().reason, "starting");
+    assert.equal(
+      kernel.listAgentPresence(outsiderActor, {
+        controlRoomId: workspace.controlRoom.roomId,
+      }).agents.length,
+      0,
+    );
     assert.deepEqual(
       kernel.appendRunTrajectory(host, {
         entry: {
@@ -859,6 +871,8 @@ test("Agent activity pages canonical cross-Room history without leaking inaccess
       agentDefinitionId: definition.definition.agentDefinitionId,
       limit: 1,
     });
+    assert.equal(presence().activity, "working");
+    assert.doesNotMatch(JSON.stringify(presence()), /rg -n TODO|Activity Lab/);
     assert.equal(trajectoryFirstPage.activities.length, 1);
     assert.equal(trajectoryFirstPage.activities[0]?.entry.kind, "tool_start");
     assert.equal(
@@ -881,6 +895,53 @@ test("Agent activity pages canonical cross-Room history without leaking inaccess
       0,
       "a control-Room viewer must not learn trajectory from an inaccessible work Room",
     );
+    kernel.appendRunTrajectory(host, {
+      entry: {
+        kind: "status",
+        activity: "thinking",
+        detailKind: "thinking_started",
+      },
+      observedAt: "2026-08-27T00:00:10.000Z",
+      producerSequence: 3,
+      runAttemptId: runAttempt.runAttemptId,
+      runtimeRunId,
+    });
+    assert.equal(
+      presence().activity,
+      "thinking",
+      "prepared runtime events already carry the current Run identity",
+    );
+    kernel.appendRunTrajectory(host, {
+      entry: {
+        kind: "status",
+        activity: "working",
+        detailKind: "thinking_end",
+      },
+      observedAt: "2026-08-27T00:00:11.000Z",
+      producerSequence: 5,
+      runAttemptId: runAttempt.runAttemptId,
+      runtimeRunId,
+    });
+    kernel.appendRunTrajectory(host, {
+      entry: { kind: "thinking", text: "private old thought" },
+      observedAt: "2026-08-27T00:00:10.000Z",
+      producerSequence: 4,
+      runAttemptId: runAttempt.runAttemptId,
+      runtimeRunId,
+    });
+    assert.equal(
+      presence().activity,
+      "working",
+      "late lower producer sequence cannot revive thinking",
+    );
+    const viewerPresence = kernel.listAgentPresence(viewerActor, {
+      controlRoomId: workspace.controlRoom.roomId,
+    });
+    assert.equal(viewerPresence.agents[0]?.activity, "working");
+    assert.doesNotMatch(
+      JSON.stringify(viewerPresence),
+      /private old thought|Activity Lab|runtime-run/,
+    );
     kernel.recordRuntimeTermination(host, {
       exit: { code: 1 },
       runAttemptId: runAttempt.runAttemptId,
@@ -892,6 +953,11 @@ test("Agent activity pages canonical cross-Room history without leaking inaccess
       runAttemptId: runAttempt.runAttemptId,
       state: "failed",
     });
+    assert.equal(
+      presence().activity,
+      "error",
+      "terminal failure replaces historical working",
+    );
 
     const firstPage = kernel.listAgentActivity(ownerActor, {
       agentDefinitionId: definition.definition.agentDefinitionId,

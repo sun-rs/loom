@@ -52,6 +52,7 @@ export type MobileNavigationDestination =
   "agents" | "chat" | "notifications" | "rooms" | "settings" | "tasks";
 
 export type WorkspaceAgentView = {
+  presence?: import("@rah-os/protocol").AgentPresence;
   agentDefinitionId: string;
   agentDefinitionRevisionId?: string;
   avatarKey?: string;

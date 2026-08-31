@@ -81,6 +81,11 @@ export function normalizeCodexTrajectoryNotification(frame, now = Date.now) {
     );
   }
   if (method === "item/started") {
+    if (itemType === "reasoning")
+      return trajectory(
+        statusEntry("thinking", "thinking_started", "", producerFactId),
+        observedAt,
+      );
     const tool = codexTool(itemType, item);
     return tool === undefined
       ? []
@@ -101,9 +106,15 @@ export function normalizeCodexTrajectoryNotification(frame, now = Date.now) {
       ? item.summary.filter((value) => typeof value === "string").join("\n")
       : "";
     const text = bounded(summary, MAX_TEXT);
-    return text === ""
-      ? []
-      : trajectory({ kind: "thinking", producerFactId, text }, observedAt);
+    return [
+      ...(text === ""
+        ? []
+        : trajectory({ kind: "thinking", producerFactId, text }, observedAt)),
+      ...trajectory(
+        statusEntry("working", "thinking_end", "", producerFactId),
+        observedAt,
+      ),
+    ];
   }
   if (itemType === "agentMessage") {
     const text = bounded(string(item.text) ?? "", MAX_TEXT);
@@ -559,6 +570,7 @@ export class RuntimeTrajectoryWriter {
   #write;
   #pending;
   #timer;
+  #activity;
 
   constructor(write = defaultWrite) {
     this.#write = write;
@@ -571,6 +583,22 @@ export class RuntimeTrajectoryWriter {
         this.flush();
         this.#writeRecord(record);
         continue;
+      }
+      // Port of Raft Computer trajectoryActivityProjection/queueTrajectoryText:
+      // current state is observable before the coalesced text is emitted.
+      const activity = entry.kind === "thinking" ? "thinking" : "working";
+      if (!entry.subagent && this.#activity !== activity) {
+        this.flush();
+        this.#writeRecord({
+          observedAt: record.observedAt,
+          entry: statusEntry(
+            activity,
+            entry.kind === "thinking"
+              ? "thinking_started"
+              : "model_response_started",
+            "",
+          ),
+        });
       }
       // Raft Computer 1.0.18 queueTrajectoryText: 350ms debounce and same-lineage
       // coalescing. Unlike its 2000-char truncation, flush bounded segments so
@@ -615,6 +643,17 @@ export class RuntimeTrajectoryWriter {
   }
 
   #writeRecord(record) {
+    if (!record.entry.subagent) {
+      if (record.entry.kind === "status")
+        this.#activity = record.entry.activity;
+      if (record.entry.kind === "compaction_finished")
+        this.#activity = "online";
+      if (
+        record.entry.kind === "tool_start" ||
+        record.entry.kind === "compaction_started"
+      )
+        this.#activity = "working";
+    }
     this.#sequence += 1;
     try {
       this.#write(

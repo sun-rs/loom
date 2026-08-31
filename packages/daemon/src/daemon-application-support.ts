@@ -107,6 +107,7 @@ export function createDaemonHumanClientService(input: {
       capabilities: {
         agentOnboard: true,
         agentRead: true,
+        agentPresenceRead: true,
         agentWrite: true,
         fileShare: true,
         cursorAcknowledge: true,

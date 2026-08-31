@@ -1,0 +1,82 @@
+[
+  {
+    "message_id": "message_f32c88d9-903a-42ec-99ed-010c0553d14e",
+    "room_id": "room_8179d887-98ce-4ccb-a0b0-46d18b3666e5",
+    "actor_id": "principal_15bf7a55-3196-454b-98ef-1982aee41ef9",
+    "thread_id": null,
+    "body": "这是一次很短的普通对话验收，不创建或认领 Task。只在当前工作目录创建 parity-note.txt，内容为 PARITY-830-ALPHA，然后实际读取该文件。请通过 rah worker message-post 在当前私信简短回复你读到的内容，不做其他项目修改。",
+    "created_at": "2026-08-30T15:46:36.031Z"
+  },
+  {
+    "message_id": "message_d92c35ee-bb01-4282-a79d-64abcec15b5f",
+    "room_id": "room_8179d887-98ce-4ccb-a0b0-46d18b3666e5",
+    "actor_id": "principal_cb108f81-c8af-47d7-8244-56e9923ceec9",
+    "thread_id": null,
+    "body": "已读取 parity-note.txt，内容为：PARITY-830-ALPHA",
+    "created_at": "2026-08-30T15:46:48.745Z"
+  },
+  {
+    "message_id": "message_0cb30e0c-e535-4d7b-bb85-e38a29534c91",
+    "room_id": "room_51e344d0-24a4-4480-bfeb-3d6c52c53c7b",
+    "actor_id": "principal_15bf7a55-3196-454b-98ef-1982aee41ef9",
+    "thread_id": null,
+    "body": "普通短对话验收，不创建 Task。请实际读取当前目录的 parity-note.txt，仅在这一个文件追加一行 PARITY-830-BETA，再读取核对。通过 rah worker message-post 在此频道简短报告两行内容，勿向原私信发布。",
+    "created_at": "2026-08-30T15:47:31.596Z"
+  },
+  {
+    "message_id": "message_fcd82f14-16a9-4bed-be07-d661816aaf82",
+    "room_id": "room_51e344d0-24a4-4480-bfeb-3d6c52c53c7b",
+    "actor_id": "principal_cb108f81-c8af-47d7-8244-56e9923ceec9",
+    "thread_id": null,
+    "body": "已读取并核对 parity-note.txt，当前两行内容为：PARITY-830-ALPHA、PARITY-830-BETA",
+    "created_at": "2026-08-30T15:47:43.381Z"
+  },
+  {
+    "message_id": "message_0991ee61-d59e-493e-bc6d-6228d4fe7317",
+    "room_id": "room_f925016b-c8c8-477d-b789-6540ea76b2be",
+    "actor_id": "principal_15bf7a55-3196-454b-98ef-1982aee41ef9",
+    "thread_id": null,
+    "body": "普通短对话验收，不创建或认领 Task。请实际读取当前工作目录的 parity-note.txt，不修改文件。通过 rah worker message-post 在当前私信简短回复文件的两行内容，并以 CODEX-READ-OK 结尾。",
+    "created_at": "2026-08-30T15:55:40.324Z"
+  },
+  {
+    "message_id": "message_113db08b-e6c5-4e7e-b823-22c3ddd5101c",
+    "room_id": "room_f925016b-c8c8-477d-b789-6540ea76b2be",
+    "actor_id": "principal_42920cd7-8c50-456d-94d3-2b22e0ef10f6",
+    "thread_id": null,
+    "body": "PARITY-830-ALPHA\nPARITY-830-BETA\nCODEX-READ-OK",
+    "created_at": "2026-08-30T15:56:12.255Z"
+  },
+  {
+    "message_id": "message_dde2d0cc-c71e-470c-8bfe-05b4c0d2312c",
+    "room_id": "room_f7685cf4-1a61-437f-a4ea-0c2f89a3420a",
+    "actor_id": "principal_15bf7a55-3196-454b-98ef-1982aee41ef9",
+    "thread_id": null,
+    "body": "普通短对话验收，不创建或认领 Task。请实际读取当前工作目录的 parity-note.txt，不修改文件。通过 rah worker message-post 在当前私信简短回复文件两行内容，以 KIMI-READ-OK 结尾。",
+    "created_at": "2026-08-30T15:56:35.448Z"
+  },
+  {
+    "message_id": "message_6191d691-600a-405a-b693-2936435f058f",
+    "room_id": "room_8179d887-98ce-4ccb-a0b0-46d18b3666e5",
+    "actor_id": "principal_15bf7a55-3196-454b-98ef-1982aee41ef9",
+    "thread_id": null,
+    "body": "普通短对话验收。请只使用 read 工具读取当前目录 parity-note.txt，并通过 rah worker message-post 在本私信回复 OPENCODE-PATH-OK。不要修改文件，不创建 Task。",
+    "created_at": "2026-08-30T15:57:30.180Z"
+  },
+  {
+    "message_id": "message_191d241c-1351-4a2b-827f-2bd26eef8f4a",
+    "room_id": "room_f7685cf4-1a61-437f-a4ea-0c2f89a3420a",
+    "actor_id": "principal_e44fc8a5-5ff8-47e5-b963-251216fb34ee",
+    "thread_id": null,
+    "body": "已读取 parity-note.txt（未修改），两行内容：\nPARITY-830-ALPHA\nPARITY-830-BETA\nKIMI-READ-OK",
+    "created_at": "2026-08-30T15:57:37.867Z"
+  },
+  {
+    "message_id": "message_ca8c4428-ff7d-474c-b2b6-fd3d6ce64e47",
+    "room_id": "room_8179d887-98ce-4ccb-a0b0-46d18b3666e5",
+    "actor_id": "principal_cb108f81-c8af-47d7-8244-56e9923ceec9",
+    "thread_id": null,
+    "body": "OPENCODE-PATH-OK",
+    "created_at": "2026-08-30T15:58:13.092Z"
+  }
+]

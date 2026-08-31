@@ -4,6 +4,12 @@
 
 Raft 产品行为的首要监督基线：[Raft 官方教程监督基线](./product/raft-official-tutorial-supervision.zh-CN.md)。
 
+最新正式发布：[修复后正式重启验收](./audits/2026-08-31-formal-restart-after-rendering-fix.zh-CN.md)。按用户常驻要求，每批修复后安全重启并检查正式新页；本次图表稳定性与managed presence已部署4173，额外修复重启后历史已结束Run误报unknown。数据/配置/私有文件与备份一致；不宣称全站收口。
+
+用户反馈后的最新纠正：[消息图表闪动、测试环境误交付与行为合同覆盖账目](./audits/2026-08-31-rendering-regression-and-contract-coverage.zh-CN.md)。图表/图片因renderer身份变化反复重挂载，已按失败浏览器回归修复；4198的探针、图表样本和回复来自Fake CLI隔离环境，不是正常产品工作记录。旧74项母版意图与当前1836个源码候选不能作为产品完成率；近期去重11组详细合同逐项列出前端、后端及双边限制。其部署状态由上方重启报告更新。
+
+Agent头像presence：[先行设计](./product/2026-08-31-agent-presence-closure.zh-CN.md)与[第一批施工复核](./audits/2026-08-31-agent-presence-closure-review.zh-CN.md)。接通无内容当前状态、运行/Host事实优先级与共享头像；隔离桌面已观察思考/工作/异常/在线/退出及头像hover/click。现已正式部署，但真实模型全状态、有效390px证据及external仍未收口；不能用部署扩大局部验收结论。
+
 最新状态点审查与发布：[七种颜色、分型合同与正式重启核验](./audits/2026-08-31-status-dot-audit.zh-CN.md)。区分导航未读、Computer 连通性、Agent presence 与动态诊断；修正输出/动作/错误/压缩完成颜色及呼吸动画。备份后重启持久 4173，真实桌面/390px、私聊、头像交互、资料弹层与动态核验通过所列用例；最终802项测试800通过2跳过。头像实时 thinking/error/external 仍未实现，不宣称全状态一致。
 
 最新修复与独立裁决：[前后端补强交付与主审复核](./audits/2026-08-31-parity-reinforcement-final-review.zh-CN.md)。按[前次第三方问题基线](./audits/2026-08-31-third-party-parity-final-review.zh-CN.md)完成A–F及浏览器追加反例修复，三路独立源码/真实回调/1440×900与390×844浏览器复验。发布隔离、Host观测、未读/系统通知、InputRequest异步到达、Activity消息列导航及文件树细节已获所列证据；官方非空树、真实Host停机/Provider仍未覆盖。该报告当时的旧4173阻塞及未部署状态，已由上方状态点发布核验更新；不据此次发布扩大为全站一致。

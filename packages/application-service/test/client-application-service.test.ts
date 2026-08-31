@@ -955,6 +955,39 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     assert.equal(hiddenAgentsResponse.status, 200);
     assert.deepEqual((await jsonObject(hiddenAgentsResponse)).agents, []);
 
+    const presenceResponse = await request(
+      "/v3/client/agents/presence/list",
+      { controlRoomId: controlRoom.roomId },
+      human.accessToken,
+    );
+    assert.equal(presenceResponse.status, 200);
+    const presenceBody = await jsonObject(presenceResponse);
+    assert.ok(presenceBody.agents.length > 0);
+    for (const presence of presenceBody.agents) {
+      assert.deepEqual(Object.keys(presence).sort(), [
+        "activity",
+        "agentDefinitionId",
+        "reason",
+      ]);
+    }
+    const hiddenPresenceResponse = await request(
+      "/v3/client/agents/presence/list",
+      { controlRoomId: controlRoom.roomId },
+      otherHuman.accessToken,
+    );
+    assert.equal(hiddenPresenceResponse.status, 200);
+    assert.deepEqual((await jsonObject(hiddenPresenceResponse)).agents, []);
+    assert.equal(
+      (
+        await request(
+          "/v3/client/agents/presence/list",
+          { controlRoomId: controlRoom.roomId },
+          "invalid-token",
+        )
+      ).status,
+      401,
+    );
+
     const legacyAgentsResponse = await request(
       "/v2/client/agents/list",
       {},
