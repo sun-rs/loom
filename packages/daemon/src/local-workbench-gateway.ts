@@ -135,6 +135,8 @@ export class LocalWorkbenchGateway {
       server.close((error) =>
         error === undefined ? resolvePromise() : reject(error),
       );
+      // Match the LAN gateway: a stalled browser request cannot prevent Core drain.
+      server.closeAllConnections();
     });
   }
 
@@ -216,6 +218,8 @@ export class LocalWorkbenchGateway {
       );
       upstream.once("error", reject);
       request.once("error", reject);
+      // Release the daemon-side request when its browser goes away, including stop().
+      response.once("close", () => upstream.destroy());
       request.pipe(upstream);
     });
   }

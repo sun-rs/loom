@@ -150,6 +150,59 @@ async function requestBody(request: IncomingMessage): Promise<string> {
   return Buffer.concat(chunks).toString("utf8");
 }
 
+test("shutdown closes a stalled browser request and its upstream before draining Core", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-gateway-stop-"));
+  writeFileSync(join(directory, "index.html"), "RAH OS");
+  let received!: () => void;
+  let disconnected!: () => void;
+  const arrived = new Promise<void>((resolve) => {
+    received = resolve;
+  });
+  const gone = new Promise<void>((resolve) => {
+    disconnected = resolve;
+  });
+  const upstream = createServer((request) => {
+    request.socket.once("close", disconnected);
+    received();
+    // Deliberately never finish this response: a browser must not own Core exit.
+  });
+  const gateway = new LocalWorkbenchGateway({
+    accessToken: "test-only-token",
+    daemonOrigin: await listen(upstream),
+    port: 0,
+    staticDirectory: directory,
+  });
+  let request: ReturnType<typeof httpGet> | undefined;
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await gateway.start();
+    const root = await fetch(gateway.origin);
+    await root.text();
+    const cookie = root.headers.get("set-cookie")!.split(";", 1)[0]!;
+    request = httpGet(`${gateway.origin}/v3/client/health`, {
+      headers: { cookie },
+    });
+    request.on("error", () => undefined);
+    await arrived;
+    await Promise.race([
+      Promise.all([gateway.stop(), gone]),
+      new Promise<never>((_, reject) => {
+        timeout = setTimeout(
+          () => reject(new Error("gateway shutdown held by open HTTP request")),
+          500,
+        );
+      }),
+    ]);
+  } finally {
+    clearTimeout(timeout);
+    request?.destroy();
+    upstream.closeAllConnections();
+    await close(upstream);
+    await gateway.stop();
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 async function listen(
   server: ReturnType<typeof createServer>,
 ): Promise<string> {

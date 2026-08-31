@@ -30,6 +30,8 @@
 
 校验涵盖 HTML/CSS 引用及存在 manifest 时的静态/动态依赖闭合；拒绝非普通文件、缺失资源及被篡改的既有快照。旧无 manifest 输入只具备较弱的 HTML/CSS 校验。冻结不构成针对同一 OS 用户的安全隔离，采集期间也未实现跨进程构建锁；不能将 hash 自身当成完整发布、签名或并发构建证明。
 
+受控重启又复现旧 loopback gateway 被未结束 HTTP 请求阻塞：`server.close` 已停止监听但迟迟不完成，导致 Core 的 drain 未开始。loopback 现与 LAN gateway 一致，在停止监听后关闭现存连接；浏览器响应关闭时销毁对应上游请求。此操作只结束 transport，不宣称回滚已接受的业务 mutation。真实临时 HTTP 测试令上游永不响应，证明 gateway stop 与上游释放在有限时间内完成；不可让浏览器决定 daemon 是否退出。
+
 对应方案及独立证据：[补强设计](../product/2026-08-31-parity-reinforcement-plan.zh-CN.md)、[源码复审](../audits/2026-08-31-parity-reinforcement-source-review.zh-CN.md)。普通构建测试通过不等于旧正式进程已切换；重启仍需授权、任务检查、一致性备份及新页验收。
 
 ### 2026-08-30：启动时的 RuntimeProfile / Offer 修订迁移
