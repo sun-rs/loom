@@ -4,9 +4,9 @@
 
 Raft 产品行为的首要监督基线：[Raft 官方教程监督基线](./product/raft-official-tutorial-supervision.zh-CN.md)。
 
-最新状态点审查：[七种颜色与分型合同](./audits/2026-08-31-status-dot-audit.zh-CN.md)。区分导航未读、Computer 连通性、Agent presence 与动态诊断；修正输出/动作/错误/压缩完成颜色及呼吸动画。头像实时 thinking/error/external 仍未实现，不宣称全状态一致。提交后的正式重启需独立实页核验。
+最新状态点审查与发布：[七种颜色、分型合同与正式重启核验](./audits/2026-08-31-status-dot-audit.zh-CN.md)。区分导航未读、Computer 连通性、Agent presence 与动态诊断；修正输出/动作/错误/压缩完成颜色及呼吸动画。备份后重启持久 4173，真实桌面/390px、私聊、头像交互、资料弹层与动态核验通过所列用例；最终802项测试800通过2跳过。头像实时 thinking/error/external 仍未实现，不宣称全状态一致。
 
-最新修复与独立裁决：[前后端补强交付与主审复核](./audits/2026-08-31-parity-reinforcement-final-review.zh-CN.md)。按[前次第三方问题基线](./audits/2026-08-31-third-party-parity-final-review.zh-CN.md)完成A–F及浏览器追加反例修复，三路独立源码/真实回调/1440×900与390×844浏览器复验。发布隔离、Host观测、未读/系统通知、InputRequest异步到达、Activity消息列导航及文件树细节已获所列证据；官方非空树、真实Host停机/Provider与正式部署仍未完成。旧4173仍服务共享dist且最后GET正文超时，需授权受控重启；不得据隔离通过宣称正式交付或全站一致。
+最新修复与独立裁决：[前后端补强交付与主审复核](./audits/2026-08-31-parity-reinforcement-final-review.zh-CN.md)。按[前次第三方问题基线](./audits/2026-08-31-third-party-parity-final-review.zh-CN.md)完成A–F及浏览器追加反例修复，三路独立源码/真实回调/1440×900与390×844浏览器复验。发布隔离、Host观测、未读/系统通知、InputRequest异步到达、Activity消息列导航及文件树细节已获所列证据；官方非空树、真实Host停机/Provider仍未覆盖。该报告当时的旧4173阻塞及未部署状态，已由上方状态点发布核验更新；不据此次发布扩大为全站一致。
 
 当前施工准则：[Raft 前端行为合同 → 本地能力映射](./product/raft-frontend-local-contract.zh-CN.md)。以官方请求/显示/交互为合同，不复制中央服务器拓扑；已冻结当前23个发布文件，源码语义追踪尚未全站完成。纠正旧动态链接“只解析 metadata”的表述；Enter 已修正为 Room/DM/Thread 共享发送规则。实测见[本轮核验](./audits/2026-08-31-frontend-local-contract-verification.zh-CN.md)。
 
