@@ -1,0 +1,1462 @@
+/*
+ * Product-owned Raft Members projection.
+ * Geometry variables come only from the generated official Members contract
+ * (Raft build 666bab60d8658d9e382e2c286ce1e423231e8f31).
+ */
+
+.rah-agent-directory-page {
+  overflow: hidden;
+  position: relative;
+}
+
+.rah-agent-directory-body {
+  display: grid;
+  flex: 1;
+  grid-template-columns: var(--rah-agent-sidebar-width) minmax(0, 1fr);
+  min-height: 0;
+}
+
+.rah-agent-directory-list {
+  background: var(--cream);
+  border-right: var(--bd);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.rah-agent-sidebar-head {
+  align-items: center;
+  border-bottom: var(--bd);
+  display: flex;
+  flex: none;
+  height: var(--raft-members-sidebar-header-height);
+  padding: var(--raft-members-sidebar-header-padding);
+}
+
+.rah-agent-sidebar-head h1 {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 28px;
+}
+
+.rah-agent-sidebar-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--raft-members-sidebar-body-padding);
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+  scrollbar-width: thin;
+}
+
+.rah-agent-relationship,
+.rah-agent-member-row {
+  align-items: center;
+  background: transparent;
+  border: 2px solid transparent;
+  display: flex;
+  gap: 8px;
+  height: var(--raft-members-sidebar-row-height);
+  padding: var(--raft-members-sidebar-row-padding);
+  text-align: left;
+  width: 100%;
+}
+
+.rah-agent-relationship:disabled {
+  color: var(--ink);
+  opacity: 1;
+}
+
+.rah-agent-relationship svg {
+  height: 16px;
+  width: 16px;
+}
+
+.rah-agent-sidebar-section {
+  margin-top: 8px;
+}
+
+.rah-agent-sidebar-section > header {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+  height: 24px;
+  padding-inline: 8px;
+}
+
+.rah-agent-sidebar-section > header > svg {
+  height: 12px;
+  transform: rotate(90deg);
+  width: 12px;
+}
+
+.rah-agent-sidebar-section > header > b {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.rah-agent-sidebar-section > header > span {
+  color: var(--ink-40);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.rah-agent-create-control {
+  margin-left: auto;
+  position: relative;
+}
+
+.rah-agent-create-control > button {
+  background: transparent;
+  border: 0;
+  font-size: 20px;
+  height: 24px;
+  line-height: 20px;
+  width: 24px;
+}
+
+.rah-agent-create-control > button:not(:disabled):hover,
+.rah-agent-create-control > button[aria-expanded="true"] {
+  background: var(--ink-05);
+}
+
+.rah-agent-create-menu {
+  background: var(--bg);
+  border: var(--bd);
+  box-shadow: var(--shadow-s);
+  display: grid;
+  padding-block: 4px;
+  position: absolute;
+  right: -8px;
+  top: 28px;
+  width: 194px;
+  z-index: 30;
+}
+
+.rah-agent-create-menu button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  display: flex;
+  font-size: 13px;
+  font-weight: 650;
+  gap: 10px;
+  min-height: 36px;
+  padding: 7px 12px;
+  text-align: left;
+}
+
+.rah-agent-create-menu button:not(:disabled):hover {
+  background: var(--yellow-soft);
+}
+
+.rah-agent-create-menu button:disabled {
+  color: var(--ink-40);
+  cursor: not-allowed;
+}
+
+.rah-agent-create-menu svg {
+  height: 14px;
+  width: 14px;
+}
+
+.rah-agent-computer-label {
+  align-items: center;
+  color: var(--ink-40);
+  display: flex;
+  font: 10px/15px var(--mono);
+  gap: 5px;
+  height: 19px;
+  overflow: hidden;
+  padding-inline: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rah-agent-computer-label i {
+  background: var(--mint);
+  border: 1px solid var(--black);
+  border-radius: 50%;
+  flex: none;
+  height: 6px;
+  width: 6px;
+}
+
+.rah-agent-member-row > span:nth-child(2) {
+  align-items: baseline;
+  display: flex;
+  flex: 1;
+  gap: 6px;
+  min-width: 0;
+}
+
+.rah-agent-member-row b,
+.rah-agent-human-row b {
+  font-size: 13px;
+  line-height: 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rah-agent-member-row small,
+.rah-agent-human-row small {
+  color: var(--ink-40);
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rah-agent-member-row:not(.is-selected):hover {
+  background: var(--bg);
+  border: var(--bd);
+  box-shadow: var(--shadow-s);
+}
+
+.rah-agent-member-row.is-selected {
+  background: var(--pink);
+  border: var(--bd);
+  box-shadow: var(--shadow-s);
+}
+
+.rah-agent-human-section {
+  margin-top: 12px;
+}
+
+.rah-agent-human-row {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  height: var(--raft-members-sidebar-row-height);
+  padding: var(--raft-members-sidebar-row-padding);
+}
+
+.rah-agent-human-avatar {
+  align-items: center;
+  background: var(--orange);
+  border: 1px solid var(--black);
+  display: flex;
+  flex: none;
+  font: 700 10px/1 var(--mono);
+  height: var(--raft-members-sidebar-avatar-size);
+  justify-content: center;
+  width: var(--raft-members-sidebar-avatar-size);
+}
+
+.rah-agent-sidebar-resizer {
+  bottom: 0;
+  cursor: col-resize;
+  left: calc(var(--rah-agent-sidebar-width) - 4px);
+  position: absolute;
+  top: 0;
+  touch-action: none;
+  width: var(--raft-members-resizer-width);
+  z-index: 20;
+}
+
+.rah-agent-sidebar-resizer:hover,
+.rah-agent-sidebar-resizer.is-dragging,
+.rah-agent-sidebar-resizer:focus-visible {
+  background: color-mix(in srgb, var(--black) 12%, transparent);
+}
+
+.rah-agent-selection-empty {
+  align-items: center;
+  color: var(--ink-40);
+  display: flex;
+  font-size: 18px;
+  font-weight: 700;
+  justify-content: center;
+}
+
+.rah-agent-detail-panel {
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.rah-agent-detail-head {
+  align-items: center;
+  background: var(--bg);
+  border-bottom: var(--bd);
+  display: flex;
+  flex: none;
+  gap: 12px;
+  height: var(--raft-members-detail-header-height);
+  padding: var(--raft-members-detail-header-padding);
+}
+
+.rah-agent-detail-identity {
+  min-width: 0;
+}
+
+.rah-agent-detail-identity h2 {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rah-agent-detail-identity p {
+  color: var(--ink-40);
+  font: 10px/15px var(--mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rah-agent-head-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.rah-agent-head-actions .sq-btn {
+  height: var(--raft-members-header-button-size);
+  width: var(--raft-members-header-button-size);
+}
+
+.rah-agent-overflow-glyph {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.rah-agent-mobile-back,
+.rah-agent-header-message {
+  display: none;
+}
+
+.rah-agent-tabs-frame {
+  background: var(--bg);
+  border-bottom: var(--bd);
+  flex: none;
+  height: var(--raft-members-tabs-frame-height);
+  overflow: hidden;
+}
+
+.rah-agent-detail-tabs {
+  border-bottom: 0;
+  height: var(--raft-members-tab-height);
+  overflow: hidden;
+  width: max-content;
+}
+
+.rah-agent-detail-tabs .tab {
+  flex: 0 0 76px;
+  height: var(--raft-members-tab-height);
+  padding: var(--raft-members-tab-padding);
+  width: 76px;
+}
+
+.rah-agent-detail-tabs .tab:nth-child(5) {
+  flex-basis: 88px;
+  width: 88px;
+}
+
+.rah-agent-detail-tabs .tab:last-child {
+  flex-basis: 78px;
+  width: 78px;
+}
+
+.rah-agent-avatar {
+  background: var(--rah-avatar-background, var(--cyan));
+  border: var(--bd);
+  display: block;
+  flex: none;
+  image-rendering: pixelated;
+  position: relative;
+}
+
+.rah-agent-avatar.is-sidebar {
+  height: var(--raft-members-sidebar-avatar-size);
+  width: var(--raft-members-sidebar-avatar-size);
+}
+
+.rah-agent-avatar.is-header {
+  height: var(--raft-members-detail-avatar-size);
+  width: var(--raft-members-detail-avatar-size);
+}
+
+.rah-agent-avatar.is-profile {
+  height: var(--raft-members-profile-avatar-size);
+  width: var(--raft-members-profile-avatar-size);
+}
+
+.rah-agent-avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  height: 100%;
+  width: 100%;
+}
+
+.rah-agent-avatar-grid i {
+  display: block;
+}
+
+.rah-agent-avatar-presence,
+.rah-agent-online-state i,
+.rah-agent-activity-list article > i {
+  background: var(--mint);
+  border: 1px solid var(--black);
+  border-radius: 50%;
+}
+
+.rah-agent-avatar-presence {
+  bottom: -3px;
+  height: 9px;
+  position: absolute;
+  right: -3px;
+  width: 9px;
+}
+.rah-agent-online-state i[data-online="false"],
+.rah-agent-avatar-presence[data-online="false"],
+.rah-agent-computer-label i[data-online="false"] {
+  background: var(--presence-off);
+}
+
+.rah-agent-profile-pane,
+.rah-agent-activity-pane,
+.rah-agent-chat-pane,
+.rah-agent-mcp-pane,
+.rah-agent-capability-pane {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+  scrollbar-width: thin;
+}
+
+.rah-agent-profile-hero {
+  align-items: center;
+  display: flex;
+  gap: var(--raft-members-profile-hero-gap);
+  height: var(--raft-members-profile-hero-height);
+  padding: var(--raft-members-profile-hero-padding);
+}
+
+.rah-agent-profile-hero h3 {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 23px;
+}
+
+.rah-agent-profile-hero p {
+  color: var(--ink-40);
+  font: 14px/20px var(--mono);
+}
+
+.rah-agent-online-state {
+  align-items: center;
+  color: var(--ink-50);
+  display: flex;
+  font-size: 12px;
+  gap: 5px;
+  line-height: 18px;
+}
+
+.rah-agent-online-state i {
+  height: 8px;
+  width: 8px;
+}
+
+.rah-agent-profile-field {
+  min-height: var(--raft-members-display-section-height);
+  padding: var(--raft-members-display-section-padding);
+}
+
+.rah-agent-profile-field + .rah-agent-profile-field {
+  min-height: var(--raft-members-description-section-height);
+  padding: var(--raft-members-description-section-padding);
+}
+
+.rah-agent-profile-field h3,
+.rah-agent-profile-section > h3,
+.rah-agent-profile-section > .field-label-row h3 {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.rah-agent-profile-field p {
+  font-size: 14px;
+  line-height: 20px;
+  margin-top: 4px;
+}
+
+.rah-agent-profile-field p.is-empty,
+.rah-agent-profile-status {
+  color: var(--ink-40);
+}
+
+.rah-agent-profile-section {
+  border-top: 1px solid var(--ink-10);
+  padding: 16px 20px;
+}
+
+.rah-agent-profile-section > h3 {
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.rah-agent-profile-section > h3 span {
+  color: var(--ink-40);
+  font-family: var(--mono);
+  font-weight: 400;
+}
+
+.rah-agent-role-block > span,
+.rah-agent-info-grid dt,
+.rah-agent-runtime-chips span {
+  color: var(--ink-40);
+  display: block;
+  font-size: 10px;
+  line-height: 15px;
+}
+
+.rah-agent-role-block strong {
+  background: var(--purple);
+  border: var(--bd);
+  display: inline-flex;
+  font-size: 12px;
+  margin-top: 5px;
+  min-height: 24px;
+  padding: 2px 8px;
+}
+
+.rah-agent-info-grid {
+  display: grid;
+  gap: 16px 32px;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 16px;
+}
+
+.rah-agent-info-grid > div:first-child {
+  grid-column: 1 / -1;
+}
+
+.rah-agent-info-grid dd {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+  margin-top: 4px;
+}
+
+.rah-agent-info-grid small {
+  color: var(--ink-40);
+  font-family: var(--mono);
+  font-weight: 400;
+}
+
+.rah-agent-runtime-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.rah-agent-runtime-chips strong {
+  border: var(--bd);
+  display: inline-flex;
+  font-size: 12px;
+  line-height: 16px;
+  margin-top: 4px;
+  min-height: 24px;
+  padding: 2px 8px;
+}
+
+.rah-agent-runtime-chips strong.is-cyan {
+  background: var(--cyan);
+}
+
+.rah-agent-runtime-chips strong.is-lavender {
+  background: var(--purple);
+}
+
+.rah-agent-runtime-chips strong.is-yellow {
+  background: var(--yellow);
+}
+
+.rah-agent-runtime-chips strong.is-orange {
+  background: var(--orange);
+}
+
+.rah-agent-profile-status {
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.rah-agent-profile-status.is-error {
+  color: var(--coral);
+}
+
+.rah-agent-skill-list {
+  display: grid;
+  gap: 8px;
+}
+
+.rah-agent-skill-list article {
+  border: 1px solid color-mix(in srgb, var(--black) 20%, transparent);
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px;
+}
+
+.rah-agent-skill-list span {
+  color: var(--ink-40);
+  font: 10px/1.5 var(--mono);
+}
+
+.rah-agent-profile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 29px;
+}
+
+.rah-agent-profile-actions button {
+  align-items: center;
+  background: var(--bg);
+  border: var(--bd);
+  box-shadow: var(--shadow-s);
+  display: flex;
+  font-size: 14px;
+  font-weight: 700;
+  height: var(--raft-members-action-button-height);
+  justify-content: center;
+  padding: 8px 16px;
+  width: 100%;
+}
+
+.rah-agent-profile-actions button.is-orange {
+  background: var(--orange);
+}
+
+.rah-agent-profile-actions button.is-red {
+  background: var(--coral);
+  margin-top: 24px;
+}
+
+.rah-agent-activity-pane,
+.rah-agent-chat-pane,
+.rah-agent-mcp-pane {
+  display: flex;
+  flex-direction: column;
+}
+
+.rah-agent-chat-group {
+  border-bottom: 1px solid var(--ink-10);
+  padding: 0 20px 16px;
+}
+
+.rah-agent-chat-title {
+  align-items: center;
+  border-bottom: var(--bd);
+  display: flex;
+  height: 40px;
+  padding: 0 20px;
+}
+
+.rah-agent-chat-compose {
+  align-items: center;
+  background: var(--pink);
+  border: var(--bd);
+  box-shadow: var(--shadow-s);
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 700;
+  gap: 6px;
+  margin-left: auto;
+  min-height: 28px;
+  padding: 4px 9px;
+}
+
+.rah-agent-chat-compose:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--pink) 85%, white);
+}
+
+.rah-agent-chat-compose:active:not(:disabled) {
+  box-shadow: none;
+  transform: translate(2px, 2px);
+}
+
+.rah-agent-chat-compose > svg {
+  height: 14px;
+  width: 14px;
+}
+
+.rah-agent-chat-title h3 {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.rah-agent-chat-group > header {
+  padding: 14px 0 10px;
+}
+
+.rah-agent-chat-group > header h3 {
+  color: var(--ink-50);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.rah-agent-chat-group > header p {
+  color: var(--ink-40);
+  font-size: 11px;
+  line-height: 16px;
+  margin-top: 3px;
+}
+
+.rah-agent-chat-status {
+  color: var(--ink-40);
+  font-size: 12px;
+  line-height: 18px;
+  padding: 10px 20px 18px;
+}
+
+.rah-agent-chat-room-list {
+  display: grid;
+  gap: 8px;
+}
+
+.rah-agent-chat-room-list button {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--ink-30);
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  min-height: 58px;
+  padding: 8px 12px;
+  text-align: left;
+  width: 100%;
+}
+
+.rah-agent-chat-room-list button:hover {
+  background: var(--bg);
+  border: var(--bd);
+  box-shadow: var(--shadow-s);
+}
+
+.rah-agent-chat-room-list button:active {
+  box-shadow: none;
+  transform: translate(2px, 2px);
+}
+
+.rah-agent-chat-room-list button > svg {
+  height: 16px;
+  width: 16px;
+}
+
+.rah-agent-chat-room-list button > span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rah-agent-chat-room-list button b {
+  font-size: 13px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rah-agent-chat-room-list button small {
+  color: var(--ink-40);
+  font: 10px/1.4 var(--mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rah-agent-chat-room-list button i {
+  border: 1px solid color-mix(in srgb, var(--black) 20%, transparent);
+  color: var(--ink-40);
+  font: normal 10px/1.4 var(--mono);
+  padding: 2px 6px;
+}
+
+.rah-agent-chat-empty {
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--black) 15%, transparent);
+  color: var(--ink-40);
+  display: flex;
+  gap: 10px;
+  min-height: 52px;
+  padding: 8px 12px;
+}
+
+.rah-agent-chat-empty > svg {
+  flex: none;
+  height: 16px;
+  width: 16px;
+}
+
+.rah-agent-chat-empty > div {
+  display: grid;
+  gap: 2px;
+}
+
+.rah-agent-chat-empty b {
+  font-size: 12px;
+}
+
+.rah-agent-chat-empty span {
+  font-size: 10px;
+  line-height: 14px;
+}
+
+.rah-agent-activity-pane > header,
+.rah-agent-mcp-pane > header {
+  align-items: center;
+  border-bottom: 1px solid var(--ink-10);
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 20px;
+}
+
+.rah-agent-activity-pane > header h3,
+.rah-agent-mcp-pane > header h3 {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.rah-agent-activity-pane > header p,
+.rah-agent-mcp-pane > header p {
+  color: var(--ink-40);
+  font: 10px/1.5 var(--mono);
+}
+
+.rah-agent-activity-list article {
+  align-items: start;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 64px 9px minmax(0, 1fr);
+  padding: 6px 12px;
+  transition: background-color 120ms ease;
+}
+
+.rah-agent-activity-list article:hover {
+  background: var(--ink-05);
+}
+
+.rah-agent-activity-list time,
+.rah-agent-activity-list article span {
+  color: var(--ink-40);
+  font: 10px/1.5 var(--mono);
+}
+
+.rah-agent-activity-list article > i {
+  height: 8px;
+  margin-top: 4px;
+  width: 8px;
+}
+
+.rah-agent-activity-list article > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.rah-agent-activity-list article span {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.rah-agent-activity-expand {
+  background: transparent;
+  border: 0;
+  color: var(--ink-40);
+  cursor: pointer;
+  font: 10px/1.5 var(--mono);
+  justify-self: start;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.rah-agent-activity-expand:hover {
+  color: var(--ink);
+}
+
+.rah-agent-activity-list article.is-error > i {
+  background: var(--orange);
+}
+
+.rah-agent-activity-list article.is-active > i {
+  background: var(--yellow);
+}
+
+.rah-agent-activity-list article.is-success > i {
+  background: var(--green);
+}
+
+.rah-agent-activity-list article.is-warning > i {
+  background: var(--orange);
+}
+
+.rah-agent-activity-list article.is-neutral > i {
+  background: var(--presence-off);
+}
+
+.rah-agent-activity-list article.is-output > i {
+  background: var(--cyan);
+}
+
+.rah-agent-activity-list article.is-action > i {
+  background: var(--trajectory-action);
+}
+
+.rah-agent-activity-list article > i[data-pulse="true"] {
+  animation: rah-trajectory-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes rah-trajectory-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rah-agent-activity-list article > i[data-pulse="true"] {
+    animation: none;
+  }
+}
+
+.rah-agent-activity-note,
+.rah-agent-activity-empty {
+  border-top: 1px solid var(--ink-10);
+  color: var(--ink-40);
+  font: 10px/1.6 var(--mono);
+  margin-top: auto;
+  padding: 12px 20px;
+}
+
+.rah-agent-mcp-list article {
+  align-items: start;
+  border-bottom: 1px solid var(--ink-10);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  padding: 12px 20px;
+}
+
+.rah-agent-mcp-list article > div {
+  display: grid;
+  gap: 3px;
+}
+
+.rah-agent-mcp-list time,
+.rah-agent-mcp-list span {
+  color: var(--ink-40);
+  font: 10px/1.5 var(--mono);
+}
+
+.rah-agent-mcp-list code {
+  font: 11px/1.4 var(--mono);
+}
+
+.rah-agent-mcp-list strong {
+  border: 1px solid var(--ink);
+  font: 10px/1.4 var(--mono);
+  padding: 2px 6px;
+}
+
+.rah-agent-mcp-list strong.is-completed {
+  background: var(--green);
+}
+
+.rah-agent-mcp-list strong.is-failed {
+  background: var(--coral);
+}
+
+/* Raft live runtime editor: max-w-md, card-brutal p-6, gap-4. */
+.rah-dialog.rah-runtime-edit-dialog {
+  border: var(--bd);
+  box-shadow: var(--shadow-m);
+  padding: 24px;
+  width: 448px;
+  max-width: 100%;
+  min-width: 0;
+  overflow: auto;
+}
+.rah-runtime-edit-dialog > header {
+  border: 0;
+  padding: 0;
+  margin-bottom: 16px;
+}
+.rah-runtime-edit-dialog > header h2 {
+  font-size: 18px;
+  font-weight: 700;
+}
+.rah-runtime-edit-dialog form {
+  padding: 0;
+}
+.rah-runtime-edit-field > b {
+  display: block;
+  font-size: 14px;
+  line-height: 20px;
+  margin-bottom: 4px;
+}
+.rah-runtime-edit-field em {
+  color: var(--pink);
+  font-style: normal;
+}
+.rah-runtime-picker {
+  width: 100%;
+}
+.rah-runtime-picker .task-filter-trigger {
+  width: 100%;
+  min-height: 40px;
+  height: auto;
+  padding: 8px 12px;
+  background: var(--bg);
+  border: var(--bd);
+  box-shadow: var(--shadow-s);
+  font-size: 14px;
+  line-height: 20px;
+  text-align: left;
+}
+.rah-runtime-picker .task-filter-trigger > svg:last-child {
+  margin-left: auto;
+  width: 14px;
+  height: 14px;
+}
+.rah-runtime-edit-note {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--ink-50);
+}
+.rah-profile-edit {
+  display: inline-flex;
+  vertical-align: middle;
+  border: 0;
+  background: transparent;
+  color: var(--ink-40);
+  padding: 2px 4px;
+}
+.rah-profile-edit svg {
+  width: 12px;
+  height: 12px;
+}
+.rah-profile-edit:hover:not(:disabled) {
+  background: var(--ink-05);
+  color: var(--ink);
+}
+.rah-agent-profile-actions button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-m);
+}
+.rah-agent-profile-actions button:active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: var(--shadow-press);
+}
+/* Empty activity is part of its parent's scroll area, never a second nested scroller. */
+.rah-agent-activity-pane > .rah-agent-capability-pane {
+  flex: none;
+  min-height: 220px;
+  overflow: visible;
+}
+
+.rah-agent-mcp-list strong.is-pending {
+  background: var(--yellow);
+}
+
+.rah-agent-activity-pane > .btn,
+.rah-agent-mcp-pane > .btn {
+  margin: 14px 20px 0;
+}
+
+.rah-agent-memory-pane {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.rah-agent-memory-pane > header {
+  align-items: center;
+  border-bottom: var(--bd);
+  display: flex;
+  flex: none;
+  justify-content: space-between;
+  min-height: 52px;
+  padding: 8px 16px;
+}
+
+.rah-agent-memory-pane > header > div,
+.rah-agent-memory-pane > header span {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.rah-agent-memory-pane > header span {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.rah-agent-memory-pane > header svg {
+  height: 20px;
+  width: 20px;
+}
+
+.rah-agent-memory-pane > header small,
+.rah-agent-memory-state {
+  color: var(--ink-40);
+  font: 10px/1.4 var(--mono);
+}
+
+.rah-agent-memory-state {
+  background: var(--green);
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  padding: 2px 7px;
+}
+
+.rah-agent-memory-status {
+  color: var(--ink-40);
+  padding: 20px;
+}
+
+.rah-agent-memory-empty {
+  align-items: center;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 260px;
+  padding: 32px;
+  text-align: center;
+}
+
+.rah-agent-memory-empty svg {
+  height: 40px;
+  margin-bottom: 10px;
+  width: 40px;
+}
+
+.rah-agent-memory-empty p {
+  color: var(--ink-40);
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.rah-agent-memory-browser {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 230px minmax(0, 1fr);
+  min-height: 260px;
+}
+
+.rah-agent-memory-browser > nav {
+  background: var(--cream);
+  border-right: var(--bd);
+  overflow: auto;
+  padding: 8px;
+}
+
+.rah-agent-memory-browser > nav button {
+  align-items: center;
+  background: transparent;
+  border: 2px solid transparent;
+  display: flex;
+  gap: 8px;
+  min-height: 42px;
+  padding: 6px 8px;
+  text-align: left;
+  width: 100%;
+}
+
+.rah-agent-memory-browser > nav button:hover {
+  background: var(--ink-05);
+}
+
+.rah-agent-memory-browser > nav button[aria-current="true"] {
+  background: var(--pink);
+  border-color: var(--ink);
+  box-shadow: var(--shadow-s);
+}
+
+.rah-agent-memory-browser > nav svg {
+  flex: none;
+  height: 16px;
+  width: 16px;
+}
+
+.rah-agent-memory-browser > nav span {
+  display: grid;
+  min-width: 0;
+}
+
+.rah-agent-memory-browser > nav b {
+  font: 11px/1.4 var(--mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rah-agent-memory-browser > nav small,
+.rah-agent-memory-browser > article > header small {
+  color: var(--ink-40);
+  font: 9px/1.4 var(--mono);
+}
+
+.rah-agent-memory-browser > article {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.rah-agent-memory-browser > article > header {
+  align-items: center;
+  border-bottom: 1px solid var(--ink-10);
+  display: flex;
+  justify-content: space-between;
+  min-height: 38px;
+  padding: 6px 12px;
+}
+
+.rah-agent-memory-browser pre {
+  flex: 1;
+  font: 12px/1.6 var(--mono);
+  margin: 0;
+  overflow: auto;
+  padding: 14px;
+  white-space: pre-wrap;
+}
+
+.rah-agent-memory-browser > article > p {
+  color: var(--ink-40);
+  padding: 16px;
+}
+
+.rah-agent-memory-danger {
+  border-top: var(--bd);
+  display: flex;
+  flex: none;
+  justify-content: flex-end;
+  padding: 10px 14px;
+}
+
+.rah-agent-memory-danger > div {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.rah-agent-memory-danger > div > span {
+  display: grid;
+  gap: 2px;
+  margin-right: auto;
+}
+
+.rah-agent-memory-danger small {
+  color: var(--ink-40);
+  font: 9px/1.4 var(--mono);
+}
+
+.rah-agent-memory-danger .danger {
+  background: var(--coral);
+}
+
+.rah-agent-capability-pane {
+  align-items: center;
+  color: var(--ink-40);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 280px;
+  padding: 32px;
+  text-align: center;
+}
+
+.rah-agent-capability-pane > svg {
+  height: 44px;
+  margin-bottom: 12px;
+  width: 44px;
+}
+
+.rah-agent-capability-pane h3 {
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.rah-agent-capability-pane p {
+  font-size: 13px;
+  line-height: 1.6;
+  margin-top: 6px;
+  max-width: 520px;
+}
+
+@media (max-width: 700px) {
+  .rah-product-shell:has(.rah-agent-directory-page.is-mobile-detail-open)
+    > .rah-mobile-nav {
+    display: none;
+  }
+
+  .rah-product-shell > .rah-agent-directory-page.is-mobile-detail-open {
+    padding-bottom: 0;
+  }
+
+  .rah-agent-directory-body {
+    display: block;
+  }
+
+  .rah-agent-directory-list {
+    border-right: 0;
+    height: 100%;
+  }
+
+  .rah-agent-sidebar-head {
+    height: 62px;
+  }
+
+  .rah-agent-sidebar-scroll {
+    padding-bottom: calc(var(--rah-mobile-nav-h) + 16px);
+  }
+
+  .rah-agent-detail-panel,
+  .rah-agent-sidebar-resizer {
+    display: none;
+  }
+
+  .rah-agent-directory-page.is-mobile-detail-open .rah-agent-directory-list {
+    display: none;
+  }
+
+  .rah-agent-directory-page.is-mobile-detail-open .rah-agent-detail-panel {
+    display: flex;
+    height: 100%;
+  }
+
+  .rah-agent-detail-head {
+    gap: 10px;
+    height: 76px;
+    padding: 10px 12px;
+  }
+
+  .rah-agent-mobile-back,
+  .rah-agent-header-message {
+    display: grid;
+  }
+
+  .rah-agent-mobile-back svg {
+    transform: rotate(180deg);
+  }
+
+  .rah-agent-detail-identity {
+    flex: 1;
+  }
+
+  .rah-agent-detail-identity h2 {
+    font-size: 16px;
+  }
+
+  .rah-agent-tabs-frame {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .rah-agent-tabs-frame::-webkit-scrollbar {
+    display: none;
+  }
+
+  .rah-agent-detail-tabs {
+    overflow: visible;
+  }
+
+  .rah-agent-detail-tabs .tab {
+    flex-basis: 88px;
+    width: 88px;
+  }
+
+  .rah-agent-detail-tabs .tab:nth-child(5) {
+    flex-basis: 96px;
+    width: 96px;
+  }
+
+  .rah-agent-profile-hero {
+    height: auto;
+    min-height: 136px;
+  }
+
+  .rah-agent-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rah-agent-info-grid > div:first-child {
+    grid-column: auto;
+  }
+
+  .rah-agent-runtime-chips {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rah-agent-activity-pane > header,
+  .rah-agent-mcp-pane > header {
+    align-items: flex-start;
+    padding: 10px 14px;
+  }
+
+  .rah-agent-activity-list article {
+    gap: 8px;
+    grid-template-columns: 62px 8px minmax(0, 1fr);
+    padding: 9px 14px;
+  }
+
+  .rah-agent-mcp-list article {
+    gap: 8px;
+    grid-template-columns: 62px minmax(0, 1fr);
+    padding: 10px 14px;
+  }
+
+  .rah-agent-mcp-list article > strong {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .rah-agent-chat-title {
+    height: 44px;
+    padding-inline: 14px;
+  }
+
+  .rah-agent-chat-group {
+    padding-inline: 14px;
+  }
+
+  .rah-agent-memory-browser {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .rah-agent-memory-browser > nav {
+    border-bottom: var(--bd);
+    border-right: 0;
+    flex: none;
+    max-height: 150px;
+  }
+
+  .rah-agent-memory-danger > div {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .rah-agent-memory-danger > div > span {
+    flex-basis: 100%;
+  }
+}

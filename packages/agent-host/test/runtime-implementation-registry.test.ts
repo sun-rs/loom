@@ -1,5 +1,12 @@
 import assert from "node:assert/strict";
-import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  mkdtempSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -8,6 +15,7 @@ import type {
   ResolvedModel,
   RuntimeProfileManifestV2,
   RuntimeProfileManifestV3,
+  ToolAccessMode,
 } from "@rah-os/protocol";
 
 import {
@@ -78,6 +86,439 @@ function modelCatalogManifest(executable: string): RuntimeProfileManifestV3 {
   };
 }
 
+function kimiModelCatalogManifest(
+  executable: string,
+): RuntimeProfileManifestV3 {
+  return {
+    ...modelCatalogManifest(executable),
+    displayName: "Fake Kimi with model catalog",
+    modelCatalogProbe: { kind: "kimi-cli/v1" },
+    runtimeProfileId: "fake-kimi-model-catalog",
+  };
+}
+
+function kimiAcpManifest(executable: string): RuntimeProfileManifestV3 {
+  return {
+    ...kimiModelCatalogManifest(executable),
+    adapter: {
+      config: { diagnosticByteLimit: 262_144, terminationGraceMs: 1_000 },
+      executable,
+      fixedArgs: ["canonical room worker prompt"],
+      kind: "kimi-acp/v1",
+    },
+    runtimeProfileId: "fake-kimi-acp",
+    staticEnv: {},
+  };
+}
+
+function codexAppServerManifest(executable: string): RuntimeProfileManifestV3 {
+  return {
+    ...modelCatalogManifest(executable),
+    adapter: {
+      config: { diagnosticByteLimit: 262_144, terminationGraceMs: 1_000 },
+      executable,
+      fixedArgs: ["canonical room worker prompt"],
+      kind: "codex-app-server/v1",
+    },
+    runtimeProfileId: "fake-codex-app-server",
+    staticEnv: {},
+  };
+}
+
+test("Codex app-server implementation drives an unattended policy-bound turn without owning Room state", async () => {
+  const directory = createDirectory();
+  try {
+    const executable = join(directory, "fake-codex-app-server.mjs");
+    writeFileSync(
+      executable,
+      `#!/usr/bin/env node
+import { appendFileSync } from "node:fs";
+import { createInterface } from "node:readline";
+const args = process.argv.slice(2);
+if (args.join(" ") === "debug models" || args.join(" ") === "debug models --bundled") {
+  process.stdout.write(JSON.stringify({models:[{slug:"gpt-test",visibility:"list",supported_in_api:true,supported_reasoning_levels:[{effort:"low"},{effort:"high"}],service_tiers:[]}]}));
+  process.exit(0);
+}
+if (args[0] !== "app-server" || args.at(-2) !== "--listen" || args.at(-1) !== "stdio://") process.exit(64);
+const record = (value) => appendFileSync(process.env.FAKE_CODEX_RECORD_PATH, JSON.stringify(value) + "\\n");
+record({activationId:process.env.RAH_ACTIVATION_ID,args});
+const rl = createInterface({ input: process.stdin });
+const send = (value) => process.stdout.write(JSON.stringify(value) + "\\n");
+const approvalResponses = new Set();
+let turnRequestId;
+rl.on("line", (line) => {
+  const frame = JSON.parse(line); record(frame);
+  if (frame.method === "initialize") send({jsonrpc:"2.0",id:frame.id,result:{codexHome:process.cwd(),platformFamily:"unix",platformOs:"macos",userAgent:"fake-codex/1"}});
+  else if (frame.method === "initialized") {}
+  else if (frame.method === "thread/start") send({jsonrpc:"2.0",id:frame.id,result:{thread:{id:"codex-thread-local-only"}}});
+  else if (frame.method === "turn/start") {
+    turnRequestId = frame.id;
+    send({jsonrpc:"2.0",id:frame.id,result:{turn:{id:"turn-1",status:"inProgress"}}});
+    send({jsonrpc:"2.0",method:"turn/started",params:{threadId:"codex-thread-local-only",turn:{id:"turn-1",status:"inProgress"}}});
+    send({jsonrpc:"2.0",method:"item/started",params:{threadId:"codex-thread-local-only",turnId:"turn-1",item:{id:"command-1",type:"commandExecution",command:"npm test"}}});
+    send({jsonrpc:"2.0",method:"item/completed",params:{threadId:"codex-thread-local-only",turnId:"turn-1",item:{id:"reasoning-1",type:"reasoning",summary:["公开推理摘要"],content:["PRIVATE_CHAIN_OF_THOUGHT"]}}});
+    send({jsonrpc:"2.0",method:"item/completed",params:{threadId:"codex-thread-local-only",turnId:"turn-1",item:{id:"message-1",type:"agentMessage",text:"canonical reply"}}});
+    send({jsonrpc:"2.0",id:701,method:"item/commandExecution/requestApproval",params:{threadId:"codex-thread-local-only",turnId:"turn-1",itemId:"command-1",startedAtMs:1}});
+    send({jsonrpc:"2.0",id:702,method:"item/fileChange/requestApproval",params:{threadId:"codex-thread-local-only",turnId:"turn-1",itemId:"patch-1",startedAtMs:2}});
+    send({jsonrpc:"2.0",id:703,method:"item/permissions/requestApproval",params:{threadId:"codex-thread-local-only",turnId:"turn-1",itemId:"permissions-1",startedAtMs:3,cwd:process.cwd(),permissions:{network:{enabled:true},fileSystem:{read:[process.cwd()],write:[process.cwd()]},futurePermission:{enabled:true}}}});
+  } else if (frame.id === 701 || frame.id === 702 || frame.id === 703) {
+    approvalResponses.add(frame.id); record({approvalResponse:frame});
+    if (approvalResponses.size === 3) send({jsonrpc:"2.0",method:"turn/completed",params:{threadId:"codex-thread-local-only",turn:{id:"turn-1",status:"completed"}}});
+  }
+});
+`,
+      { mode: 0o700 },
+    );
+    chmodSync(executable, 0o700);
+    const profileRegistry = new RuntimeProfileRegistry({
+      databasePath: join(directory, "runtime-registry.db"),
+      hostId: "host-codex-app-server",
+    });
+    profileRegistry.initialize();
+    const implementations = new RuntimeImplementationRegistry();
+    const revision = profileRegistry.importManifest(
+      codexAppServerManifest(executable),
+    );
+    const report = profileRegistry.recordProbeReport(
+      await implementations.probeRevision(revision, { cwd: directory }),
+    );
+    const active = profileRegistry.activateRevision({
+      contentDigest: revision.contentDigest,
+      runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
+    });
+    const binding =
+      report.reportVersion === 2 ? report.modelBindings[0] : undefined;
+    assert.notEqual(binding, undefined);
+    const runPolicy = async (
+      mode: ToolAccessMode | undefined,
+      suffix: string,
+    ) => {
+      const policyRecordPath = join(directory, `app-server-${suffix}.json`);
+      const runtime = implementations.createRuntime(
+        active,
+        report,
+        {
+          activationEnvironment: () => ({
+            args: ["-c", 'mcp_servers.rah.url="http://127.0.0.1:43111/mcp"'],
+            env: { FAKE_CODEX_RECORD_PATH: policyRecordPath },
+          }),
+          cwd: directory,
+          supervisorDirectory: join(directory, "supervisors"),
+        },
+        {
+          modelBindingId: binding!.modelBindingId,
+          modelId: binding!.modelId,
+          provider: binding!.provider,
+          reasoning: "high",
+          source: "explicit_binding",
+        },
+        mode,
+      );
+      const trajectory: unknown[] = [];
+      const run = await runtime.start(
+        {
+          activationId: `activation-codex-${suffix}`,
+          consumerId: `consumer-codex-${suffix}`,
+          fromSeq: 4,
+          hostId: "host-codex-app-server",
+          participantId: "agent-codex-app-server",
+          reason: "manual",
+          roomId: "room-codex-app-server",
+          runAttemptId: `run-codex-${suffix}`,
+          toSeq: 9,
+        },
+        {
+          recordTrajectory: async (activity) => {
+            trajectory.push(activity);
+          },
+          registerPrepared: async () => {},
+        },
+      );
+      assert.equal((await runtime.reap(run)).code, 0);
+      return {
+        frames: readFileSync(policyRecordPath, "utf8")
+          .trim()
+          .split("\n")
+          .map((line) => JSON.parse(line)),
+        trajectory,
+      };
+    };
+
+    const fullAccess = await runPolicy("full_access", "full-access");
+    const frames = fullAccess.frames;
+    assert.equal(frames[0].activationId, "activation-codex-full-access");
+    assert.deepEqual(frames[0].args, [
+      "app-server",
+      "-c",
+      'mcp_servers.rah.url="http://127.0.0.1:43111/mcp"',
+      "--listen",
+      "stdio://",
+    ]);
+    const threadStart = frames.find((frame) => frame.method === "thread/start");
+    assert.equal(threadStart.params.approvalPolicy, "never");
+    assert.equal(threadStart.params.sandbox, "danger-full-access");
+    assert.equal(threadStart.params.model, "gpt-test");
+    assert.equal(threadStart.params.config.model_reasoning_effort, "high");
+    assert.equal(
+      threadStart.params.developerInstructions,
+      "canonical room worker prompt",
+    );
+    const turnStart = frames.find((frame) => frame.method === "turn/start");
+    assert.equal(turnStart.params.threadId, "codex-thread-local-only");
+    assert.equal(turnStart.params.effort, "high");
+    const approvalResponses = frames
+      .filter((frame) => frame.approvalResponse !== undefined)
+      .map((frame) => frame.approvalResponse);
+    assert.deepEqual(
+      approvalResponses.find((frame) => frame.id === 701).result,
+      { decision: "accept" },
+    );
+    assert.deepEqual(
+      approvalResponses.find((frame) => frame.id === 702).result,
+      { decision: "accept" },
+    );
+    assert.deepEqual(
+      approvalResponses.find((frame) => frame.id === 703).result,
+      {
+        permissions: {
+          fileSystem: {
+            read: [realpathSync(directory)],
+            write: [realpathSync(directory)],
+          },
+          network: { enabled: true },
+        },
+        scope: "turn",
+      },
+    );
+    assert.match(JSON.stringify(fullAccess.trajectory), /公开推理摘要/u);
+    assert.match(JSON.stringify(fullAccess.trajectory), /canonical reply/u);
+    assert.doesNotMatch(
+      JSON.stringify(fullAccess.trajectory),
+      /PRIVATE_CHAIN_OF_THOUGHT/u,
+    );
+    assert.deepEqual(
+      fullAccess.trajectory.map((activity: any) => activity.producerSequence),
+      [...Array(fullAccess.trajectory.length)].map((_, index) => index + 1),
+    );
+
+    const defaultFrames = (await runPolicy(undefined, "raft-default")).frames;
+    const defaultThreadStart = defaultFrames.find(
+      (frame) => frame.method === "thread/start",
+    );
+    assert.equal(defaultThreadStart.params.approvalPolicy, "never");
+    assert.equal(defaultThreadStart.params.sandbox, "danger-full-access");
+    const defaultApprovals = defaultFrames
+      .filter((frame) => frame.approvalResponse !== undefined)
+      .map((frame) => frame.approvalResponse);
+    assert.deepEqual(
+      defaultApprovals.find((frame) => frame.id === 701).result,
+      { decision: "accept" },
+    );
+    assert.deepEqual(
+      defaultApprovals.find((frame) => frame.id === 702).result,
+      { decision: "accept" },
+    );
+    assert.deepEqual(
+      defaultApprovals.find((frame) => frame.id === 703).result,
+      {
+        permissions: {
+          fileSystem: {
+            read: [realpathSync(directory)],
+            write: [realpathSync(directory)],
+          },
+          network: { enabled: true },
+        },
+        scope: "turn",
+      },
+    );
+
+    await assert.rejects(
+      runPolicy("read_only", "read-only"),
+      /standard Raft policy requires full_access/u,
+    );
+    profileRegistry.close();
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("Kimi ACP implementation drives model, effort, permission, and terminal RPC without owning Room state", async () => {
+  const directory = createDirectory();
+  try {
+    const executable = join(directory, "fake-kimi-acp.mjs");
+    const recordPath = join(directory, "acp-record.json");
+    const mcpConfigPath = join(directory, "mcp.json");
+    writeFileSync(
+      mcpConfigPath,
+      JSON.stringify({
+        mcpServers: {
+          rah_managed: {
+            transport: "http",
+            url: "http://127.0.0.1:3456/mcp",
+          },
+        },
+      }),
+      { mode: 0o600 },
+    );
+    writeFileSync(
+      executable,
+      `#!/usr/bin/env node
+import { appendFileSync } from "node:fs";
+import { createInterface } from "node:readline";
+const record = (value) => appendFileSync(process.env.FAKE_ACP_RECORD_PATH, JSON.stringify(value) + "\\n");
+if (process.argv.slice(2).join(" ") === "provider list --json") {
+  process.stdout.write(JSON.stringify({models:{"kimi-code/k3":{defaultEffort:"high",displayName:"K3",provider:"managed:kimi-code",supportEfforts:["low","high","max"]}},providers:{}}));
+  process.exit(0);
+}
+if (process.argv[2] !== "acp") process.exit(64);
+const rl = createInterface({ input: process.stdin });
+let sessionId = "";
+let promptRequestId = null;
+const send = (value) => process.stdout.write(JSON.stringify(value) + "\\n");
+rl.on("line", (line) => {
+  const frame = JSON.parse(line); record(frame);
+  if (frame.method === "initialize") send({jsonrpc:"2.0",id:frame.id,result:{protocolVersion:1,agentCapabilities:{mcpCapabilities:{http:true,sse:false}}}});
+  else if (frame.method === "session/new") { sessionId = "acp-local-only"; send({jsonrpc:"2.0",id:frame.id,result:{sessionId}}); }
+  else if (frame.method === "session/set_model") send({jsonrpc:"2.0",id:frame.id,result:{} });
+  else if (frame.method === "session/set_config_option") send({jsonrpc:"2.0",id:frame.id,result:{configOptions:[{id:"thinking",currentValue:frame.params.value}]}});
+  else if (frame.method === "session/prompt") {
+    promptRequestId = frame.id;
+    send({jsonrpc:"2.0",method:"session/update",params:{sessionId,update:{sessionUpdate:"agent_thought_chunk",messageId:"thought-1",content:{type:"text",text:"分析任务"}}}});
+    send({jsonrpc:"2.0",method:"session/update",params:{sessionId,update:{sessionUpdate:"tool_call",toolCallId:"tool-1",title:"运行测试",status:"in_progress",rawInput:{command:"npm test"}}}});
+    send({jsonrpc:"2.0",method:"session/update",params:{sessionId,update:{sessionUpdate:"agent_message_chunk",messageId:"message-1",content:{type:"text",text:"Kimi canonical reply"}}}});
+    send({jsonrpc:"2.0",id:"permission-1",method:"session/request_permission",params:{sessionId,options:[{optionId:"persist",kind:"allow_always"},{optionId:"once",kind:"allow_once"},{optionId:"reject",kind:"reject_once"}]}});
+  }
+  else if (frame.id === "permission-1") send({jsonrpc:"2.0",id:"terminal-create-1",method:"terminal/create",params:{sessionId,command:process.execPath,args:["-e","process.stdout.write(process.env.RAH_ACTIVATION_ID ?? '')"]}});
+  else if (frame.id === "terminal-create-1") send({jsonrpc:"2.0",id:"terminal-wait-1",method:"terminal/wait_for_exit",params:{sessionId,terminalId:frame.result.terminalId}});
+  else if (frame.id === "terminal-wait-1") send({jsonrpc:"2.0",id:"terminal-output-1",method:"terminal/output",params:{sessionId,terminalId:"rah-acp-terminal-1"}});
+  else if (frame.id === "terminal-output-1") { record({terminalOutput:frame.result.output}); send({jsonrpc:"2.0",id:promptRequestId,result:{stopReason:"end_turn"}}); }
+});
+`,
+      { mode: 0o700 },
+    );
+    chmodSync(executable, 0o700);
+    const profileRegistry = new RuntimeProfileRegistry({
+      databasePath: join(directory, "runtime-registry.db"),
+      hostId: "host-kimi-acp",
+    });
+    profileRegistry.initialize();
+    const implementations = new RuntimeImplementationRegistry();
+    const revision = profileRegistry.importManifest(
+      kimiAcpManifest(executable),
+    );
+    const report = profileRegistry.recordProbeReport(
+      await implementations.probeRevision(revision, { cwd: directory }),
+    );
+    const active = profileRegistry.activateRevision({
+      contentDigest: revision.contentDigest,
+      runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
+    });
+    const binding =
+      report.reportVersion === 2 ? report.modelBindings[0] : undefined;
+    assert.notEqual(binding, undefined);
+    assert.throws(
+      () =>
+        implementations.createRuntime(
+          active,
+          report,
+          {
+            cwd: directory,
+            supervisorDirectory: join(directory, "restricted-supervisors"),
+          },
+          undefined,
+          "read_only",
+        ),
+      /restricted execution fails closed/u,
+    );
+    const runtime = implementations.createRuntime(
+      active,
+      report,
+      {
+        activationEnvironment: () => ({
+          args: ["--mcp-config-file", mcpConfigPath],
+          env: { FAKE_ACP_RECORD_PATH: recordPath },
+        }),
+        cwd: directory,
+        supervisorDirectory: join(directory, "supervisors"),
+      },
+      {
+        modelBindingId: binding!.modelBindingId,
+        modelId: binding!.modelId,
+        provider: binding!.provider,
+        reasoning: "max",
+        source: "explicit_binding",
+      },
+      "full_access",
+    );
+    const trajectory: unknown[] = [];
+    const run = await runtime.start(
+      {
+        activationId: "activation-kimi-acp",
+        consumerId: "consumer-kimi-acp",
+        fromSeq: 3,
+        hostId: "host-kimi-acp",
+        participantId: "agent-kimi-acp",
+        reason: "manual",
+        roomId: "room-kimi-acp",
+        runAttemptId: "run-kimi-acp",
+        toSeq: 7,
+      },
+      {
+        recordTrajectory: async (activity) => {
+          trajectory.push(activity);
+        },
+        registerPrepared: async () => {},
+      },
+    );
+    assert.equal((await runtime.reap(run)).code, 0);
+    const frames = readFileSync(recordPath, "utf8")
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line));
+    assert.equal(
+      frames.find((frame) => frame.method === "session/new").params.cwd,
+      realpathSync(directory),
+    );
+    assert.deepEqual(
+      frames.find((frame) => frame.method === "session/new").params.mcpServers,
+      [
+        {
+          headers: [],
+          name: "rah_managed",
+          type: "http",
+          url: "http://127.0.0.1:3456/mcp",
+        },
+      ],
+    );
+    assert.equal(
+      frames.find((frame) => frame.method === "session/set_model").params
+        .modelId,
+      "kimi-code/k3",
+    );
+    assert.equal(
+      frames.find((frame) => frame.method === "session/set_config_option")
+        .params.value,
+      "max",
+    );
+    assert.deepEqual(
+      frames.find((frame) => frame.id === "permission-1").result,
+      {
+        outcome: { optionId: "once", outcome: "selected" },
+      },
+    );
+    assert.equal(
+      frames.find((frame) => frame.terminalOutput !== undefined).terminalOutput,
+      "activation-kimi-acp",
+    );
+    assert.match(JSON.stringify(trajectory), /分析任务/u);
+    assert.match(JSON.stringify(trajectory), /运行测试/u);
+    assert.match(JSON.stringify(trajectory), /Kimi canonical reply/u);
+    profileRegistry.close();
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
 test("a v3 model catalog probe drives the exact argv selected by Placement", async () => {
   const directory = createDirectory();
   try {
@@ -125,6 +566,7 @@ if (process.argv.slice(2).join(" ") === "debug models --bundled") {
       report,
       { cwd: directory, supervisorDirectory: join(directory, "supervisors") },
       resolvedModel,
+      "full_access",
     );
     let prepared = false;
     const run = await runtime.start(
@@ -152,9 +594,125 @@ if (process.argv.slice(2).join(" ") === "debug models --bundled") {
       "gpt-test",
       "--config",
       "model_reasoning_effort=high",
+      "--sandbox",
+      "danger-full-access",
       "run",
       "room-prompt",
     ]);
+    profileRegistry.close();
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("Kimi Placement effort reaches the CLI through its native process environment", async () => {
+  const directory = createDirectory();
+  try {
+    const executable = join(directory, "fake-kimi.mjs");
+    writeFileSync(
+      executable,
+      `#!/usr/bin/env node
+const args = process.argv.slice(2);
+if (args.join(" ") === "provider list --json") {
+  process.stdout.write(JSON.stringify({models:{"kimi-code/k3":{defaultEffort:"high",displayName:"K3",provider:"managed:kimi-code",supportEfforts:["low","high","max"]}},providers:{}}));
+} else {
+  process.stdout.write(JSON.stringify({args,effort:process.env.KIMI_MODEL_THINKING_EFFORT}));
+}
+`,
+      { mode: 0o700 },
+    );
+    chmodSync(executable, 0o700);
+    const profileRegistry = new RuntimeProfileRegistry({
+      databasePath: join(directory, "runtime-registry.db"),
+      hostId: "host-kimi-model-catalog",
+    });
+    profileRegistry.initialize();
+    const revision = profileRegistry.importManifest(
+      kimiModelCatalogManifest(executable),
+    );
+    const implementations = new RuntimeImplementationRegistry();
+    const report = profileRegistry.recordProbeReport(
+      await implementations.probeRevision(revision, { cwd: directory }),
+    );
+    assert.equal(report.reportVersion, 2);
+    const active = profileRegistry.activateRevision({
+      contentDigest: revision.contentDigest,
+      runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
+    });
+    const binding = report.modelBindings[0]!;
+    const runtime = implementations.createRuntime(
+      active,
+      report,
+      { cwd: directory, supervisorDirectory: join(directory, "supervisors") },
+      {
+        modelBindingId: binding.modelBindingId,
+        modelId: binding.modelId,
+        provider: binding.provider,
+        reasoning: "max",
+        source: "explicit_binding",
+      },
+      "full_access",
+    );
+    const run = await runtime.start(
+      {
+        activationId: "activation-kimi-model-catalog",
+        consumerId: "consumer-kimi-model-catalog",
+        fromSeq: 1,
+        hostId: "host-kimi-model-catalog",
+        participantId: "agent-kimi-model-catalog",
+        reason: "manual",
+        roomId: "room-kimi-model-catalog",
+        runAttemptId: "run-attempt-kimi-model-catalog",
+        toSeq: 1,
+      },
+      { registerPrepared: async () => {} },
+    );
+    assert.equal((await runtime.reap(run)).code, 0);
+    assert.deepEqual(JSON.parse(runtime.diagnostics(run).stdout), {
+      args: ["--model", "kimi-code/k3", "--yolo", "run", "room-prompt"],
+      effort: "max",
+    });
+    profileRegistry.close();
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("a failed optional model catalog degrades to provider default without disabling the runtime", async () => {
+  const directory = createDirectory();
+  try {
+    const executable = join(directory, "fake-catalog-failure.mjs");
+    writeFileSync(
+      executable,
+      `#!/usr/bin/env node
+process.stderr.write("catalog temporarily unavailable\\n");
+process.exitCode = 1;
+`,
+      { mode: 0o700 },
+    );
+    const profileRegistry = new RuntimeProfileRegistry({
+      databasePath: join(directory, "runtime-registry.db"),
+      hostId: "host-catalog-fallback",
+    });
+    profileRegistry.initialize();
+    const revision = profileRegistry.importManifest(
+      modelCatalogManifest(executable),
+    );
+    const implementations = new RuntimeImplementationRegistry();
+    const report = profileRegistry.recordProbeReport(
+      await implementations.probeRevision(revision, { cwd: directory }),
+    );
+    assert.equal(report.available, true);
+    assert.equal(report.failureCode, undefined);
+    assert.equal(report.reportVersion, 2);
+    if (report.reportVersion !== 2) throw new Error("expected v2 probe");
+    assert.deepEqual(report.modelBindings, []);
+    assert.doesNotThrow(() =>
+      profileRegistry.activateRevision({
+        contentDigest: revision.contentDigest,
+        runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
+      }),
+    );
     profileRegistry.close();
   } finally {
     rmSync(directory, { force: true, recursive: true });
@@ -438,6 +996,11 @@ test("active profile projection exposes only a probe reference and redacted desc
         workspaceMountRevisionId: "workspace-mount-offer-v1",
       },
     ]);
+    assert.deepEqual(
+      offer.supportedToolAccessModes,
+      ["full_access"],
+      "a legacy generic profile without a verified Provider mapping must not claim restricted execution",
+    );
     assert.throws(
       () =>
         buildRuntimeOfferFromProfile({

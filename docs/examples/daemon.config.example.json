@@ -37,7 +37,7 @@
       "--skip-git-repo-check",
       "--sandbox",
       "danger-full-access",
-      "Read RAH_WORKER_API_URL and RAH_WORKER_TOKEN from the environment. Pull and acknowledge the assigned Room range, then execute its Task through the strict Worker Task endpoints. Treat stdout as diagnostics only."
+      "Use one activation-scoped `rah worker` command at a time. Start with `rah worker sync`, execute Room or Task actions only through that fixed CLI surface, and finish with `rah worker acknowledge --through-seq <original-cursorAfter>`. Never read or print the credential file. Treat stdout as diagnostics only."
     ],
     "cwd": "/Users/you/Code/workspace",
     "env": {},

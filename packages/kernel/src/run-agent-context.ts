@@ -6,8 +6,43 @@ import {
   type AgentRuntimeContext,
 } from "@rah-os/protocol";
 
-import { ConflictError, NotFoundError } from "./errors.ts";
-import { jsonObject, text, type Row } from "./sqlite-row.ts";
+import { ConflictError, LeaseConflictError, NotFoundError } from "./errors.ts";
+import { integer, jsonObject, text, type Row } from "./sqlite-row.ts";
+import type { AuthenticatedHostContext } from "./auth.ts";
+import { bindManagedAgentMemoryHome } from "./agent-memory-home.ts";
+
+/** Called inside RunAttempt's existing Kernel transaction, after lease checks. */
+export function prepareRunPlacement(
+  database: DatabaseSync,
+  activation: Row,
+  host: AuthenticatedHostContext,
+  now: string,
+): Row | undefined {
+  bindManagedAgentMemoryHome(
+    database,
+    text(activation, "participant_id"),
+    host.hostId,
+    now,
+  );
+  const activationId = text(activation, "activation_id");
+  const placement = database
+    .prepare(
+      "SELECT * FROM placements WHERE activation_id = ? AND state IN ('reserved', 'consumed') ORDER BY created_at DESC LIMIT 1",
+    )
+    .get(activationId);
+  if (
+    placement !== undefined &&
+    (text(placement, "host_id") !== host.hostId ||
+      text(placement, "host_instance_id") !== host.instanceId ||
+      integer(placement, "activation_attempt_number") !==
+        integer(activation, "attempt_count"))
+  ) {
+    throw new LeaseConflictError(
+      `placement for Activation ${activationId} belongs to another Host generation`,
+    );
+  }
+  return placement;
+}
 
 export function agentRuntimeContextFromPlacement(
   database: DatabaseSync,
@@ -29,7 +64,10 @@ export function agentRuntimeContextFromPlacement(
   );
   const definition = database
     .prepare(
-      "SELECT participant_id FROM agent_definitions WHERE agent_definition_id = ?",
+      `SELECT agent_definitions.participant_id, principals.handle
+         FROM agent_definitions
+         JOIN principals ON principals.principal_id = agent_definitions.participant_id
+        WHERE agent_definitions.agent_definition_id = ?`,
     )
     .get(revision.agentDefinitionId);
   const participantId = text(placement, "participant_id");
@@ -43,6 +81,7 @@ export function agentRuntimeContextFromPlacement(
   }
   return AgentRuntimeContextSchema.parse({
     agentDefinitionRevision: revision,
+    handle: text(definition, "handle"),
     participantId,
     schemaVersion: 1,
   });

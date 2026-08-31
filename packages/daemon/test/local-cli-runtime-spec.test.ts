@@ -10,8 +10,84 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
   const workspaceCwd = "/tmp/rah-workspace";
   const prompt = localWorkbenchWorkerPrompt();
   assert.match(prompt, /RAH_AGENT_CONTEXT_JSON/u);
-  assert.match(prompt, /RAH_WORKER_API_URL/u);
+  assert.match(prompt, /RAH_CONTEXT_MANIFEST_JSON/u);
+  assert.match(prompt, /RAH_AGENT_MEMORY_INDEX/u);
+  assert.match(prompt, /RAH_AGENT_MEMORY_BOOTSTRAP_JSON/u);
+  assert.match(prompt, /RAH_AGENT_MEMORY_SOURCE_FILE/u);
+  assert.match(prompt, /launch provenance.*not proof/isu);
+  assert.doesNotMatch(prompt, /writing.*index tags.*selecting notes/isu);
+  assert.match(prompt, /read the complete original MEMORY\.md/isu);
+  assert.match(prompt, /status "verbatim".*complete, unchanged index/isu);
+  assert.doesNotMatch(prompt, /Project hints are optional relevance clues/u);
+  assert.match(prompt, /RAH_AGENT_APP_INBOX_JSON/u);
+  assert.match(prompt, /typed Computer-local App Inbox.*not a Room Message/isu);
+  assert.match(prompt, /MEMORY\.md.*self-sufficient as a recovery point/isu);
+  assert.match(prompt, /notes\/.*relative to that memory directory/isu);
+  assert.match(prompt, /only the additional notes needed for this turn/isu);
+  assert.match(prompt, /64 KiB threshold.*not a target or token budget/isu);
+  assert.doesNotMatch(prompt, /4 KiB.*writing target|512.*block/isu);
+  assert.match(
+    prompt,
+    /After updating notes, update the index in MEMORY\.md/isu,
+  );
+  assert.match(
+    prompt,
+    /User preferences.*World\/project context.*Work history/isu,
+  );
+  assert.match(
+    prompt,
+    /canonical Room\/Task\/ACL state remains authoritative/isu,
+  );
+  assert.match(prompt, /Never copy credentials, access tokens, private keys/u);
+  assert.match(prompt, /Before a long task.*Active Context/isu);
+  assert.doesNotMatch(
+    prompt,
+    /only when.*durable.*useful beyond the current Room.*safe to retain/isu,
+  );
+  assert.doesNotMatch(
+    prompt,
+    /Do not persist.*current date or time.*one-off query.*failed lookup.*test probe.*raw transcript/isu,
+  );
+  assert.match(prompt, /across Rooms, RuntimeProfiles, models/isu);
+  assert.match(prompt, /RAH_FROM_SEQ/u);
+  assert.match(prompt, /RAH_TO_SEQ/u);
+  assert.match(
+    prompt,
+    /before RAH_FROM_SEQ.*context only.*must not.*business action/isu,
+  );
+  assert.match(
+    prompt,
+    /assigned to process\.env\.RAH_PARTICIPANT_ID.*unassigned/isu,
+  );
+  assert.match(
+    prompt,
+    /ordinary conversation.*must remain a message.*not a Task/isu,
+  );
+  assert.match(prompt, /tool use.*does not make.*Task/isu);
+  assert.match(prompt, /long-running.*persistent changes.*progress.*review/isu);
+  assert.match(
+    prompt,
+    /After task-claim-message succeeds.*event\.roomSeq.*task-start.*task-progress.*task-submit/isu,
+  );
+  assert.match(
+    prompt,
+    /task-claim-message.*conflict.*acknowledge.*must not duplicate/isu,
+  );
+  assert.match(prompt, /collaboratorIds.*must not claim/isu);
+  assert.match(prompt, /task\.submitted.*reviewerIds/isu);
+  assert.match(
+    prompt,
+    /task\.submitted.*task-review.*approved.*changes_requested/isu,
+  );
   assert.match(prompt, /canonical Room/u);
+  assert.match(prompt, /RAH_WORKER_CLI.*worker sync/u);
+  assert.match(prompt, /RAH_WORKER_CLI.*worker message-post/u);
+  assert.match(prompt, /RAH_WORKER_CLI.*worker task-submit/u);
+  assert.match(prompt, /RAH_WORKER_CLI.*worker acknowledge/u);
+  assert.doesNotMatch(prompt, /RAH_WORKER_API_URL/u);
+  assert.doesNotMatch(prompt, /RAH_WORKER_TOKEN/u);
+  assert.doesNotMatch(prompt, /\/v1\/worker/u);
+  assert.doesNotMatch(prompt, /Authorization/u);
 
   for (const executable of ["codex", "kimi", "opencode", "claude"]) {
     const spec = localCliRuntimeSpec(executable, workspaceCwd);
@@ -31,16 +107,77 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
     "codex-cli/v1",
   );
   assert.equal(
+    localCliRuntimeSpec("codex", workspaceCwd)?.adapterKind,
+    "codex-app-server/v1",
+  );
+  assert.deepEqual(localCliRuntimeSpec("codex", workspaceCwd)?.args, [prompt]);
+  assert.equal(
     localCliRuntimeSpec("kimi", workspaceCwd)?.modelCatalogProbe?.kind,
     "kimi-cli/v1",
   );
+  assert.equal(
+    localCliRuntimeSpec("kimi", workspaceCwd)?.adapterKind,
+    "kimi-acp/v1",
+  );
+  assert.deepEqual(localCliRuntimeSpec("kimi", workspaceCwd)?.args, [prompt]);
   assert.equal(
     localCliRuntimeSpec("opencode", workspaceCwd)?.modelCatalogProbe?.kind,
     "opencode-cli/v1",
   );
   assert.equal(
-    localCliRuntimeSpec("claude", workspaceCwd)?.modelCatalogProbe,
-    undefined,
+    localCliRuntimeSpec("opencode", workspaceCwd)?.adapterKind,
+    "opencode-server/v1",
+  );
+  assert.deepEqual(localCliRuntimeSpec("opencode", workspaceCwd)?.args, [
+    prompt,
+  ]);
+  assert.equal(
+    localCliRuntimeSpec("claude", workspaceCwd)?.modelCatalogProbe?.kind,
+    "claude-cli/v1",
+  );
+  const claudeSpec = localCliRuntimeSpec("claude", workspaceCwd)!;
+  assert.equal(claudeSpec.adapterKind, "claude-stream-json/v1");
+  assert.deepEqual(claudeSpec.args, [prompt]);
+  assert.equal(claudeSpec.args.includes("--model"), false);
+  assert.equal(claudeSpec.args.includes("--effort"), false);
+  assert.equal(
+    claudeSpec.args.includes("--dangerously-skip-permissions"),
+    false,
+  );
+  assert.equal(claudeSpec.args.includes("--permission-mode"), false);
+  assert.doesNotMatch(claudeSpec.displayName, /Sonnet|low/u);
+  assert.equal(
+    localCliRuntimeSpec("codex", workspaceCwd)?.args.includes("--sandbox"),
+    false,
+  );
+  assert.equal(
+    localCliRuntimeSpec("kimi", workspaceCwd)?.args.includes("--auto"),
+    false,
+  );
+  for (const executable of ["claude", "codex", "kimi", "opencode"]) {
+    assert.equal(
+      localCliRuntimeSpec(executable, workspaceCwd)?.toolAccessMode,
+      "full_access",
+      `${executable} must use the Raft-compatible unattended default`,
+    );
+  }
+  assert.equal(
+    localCliRuntimeSpec("opencode", workspaceCwd)?.args.includes("--auto"),
+    false,
+  );
+  assert.deepEqual(
+    Object.fromEntries(
+      ["claude", "codex", "kimi", "opencode"].map((executable) => [
+        executable,
+        localCliRuntimeSpec(executable, workspaceCwd)?.managedMcpAdapter?.kind,
+      ]),
+    ),
+    {
+      claude: "claude-cli/v1",
+      codex: "codex-cli/v1",
+      kimi: "kimi-cli/v1",
+      opencode: "opencode-cli/v1",
+    },
   );
   assert.equal(localCliRuntimeSpec("unknown", workspaceCwd), undefined);
 });

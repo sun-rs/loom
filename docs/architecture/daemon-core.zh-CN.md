@@ -1,6 +1,6 @@
 # Daemon Core 运行架构
 
-状态：独立 `@rah-os/core`、Task Coordination v1、InputRequest 无 listening 恢复、collaboration P2/P3 Human API 与 schema v8 managed Workspace/Room/Agent catalog/Role/Message/Thread 边界已达到 local gate；可执行 daemon config v4 已通过 Human 驱动的双 participant、双不可变 Runtime Profile、单 winner、验收与重连恢复 E2。安装、Agent provisioning、Workspace archive、canonical WorkspaceDefinition/mount/Capacity 与真实 mixed CLI v4 certification 尚未收口。
+状态：独立 `@rah-os/core`、Task Coordination v1、InputRequest 无 listening 恢复、collaboration P2/P3 Human API 与 schema v9 managed Workspace/Room/Agent catalog/Role/Message/Thread 边界已达到 local gate；可执行 daemon config v4 已通过 Human 驱动的双 participant、双不可变 Runtime Profile、单 winner、验收与重连恢复 E2。安装、Agent provisioning、Workspace archive、canonical WorkspaceDefinition/mount/Capacity 与真实 mixed CLI v4 certification 尚未收口。
 
 ## 1. Composition 与 owner
 
@@ -48,6 +48,8 @@ Host credential
 
 daemon 不保存 Agent PAT。Worker token 不能调用通用 Agent message、任意 Kernel method或选择 actor、Room、participant、consumer、recipient、`toSeq` 与 Task lease；唯一 Message command 是 [ADR-0014](../adr/0014-activation-scoped-agent-room-reply.md) 定义的无 recipient Activation reply，必须引用已完整投递的固定 `toSeq`。Task endpoint 只能查看本 Activation 通过 Inbox 实际投递的 Task；open Task 可由这些候选 Agent 原子竞争，后续 mutation 仍要求当前 participant 拥有 active claim。causal cursor 必须由本 credential 已接收或产生。Host revoke、generation 被接管、lease 过期、run terminal 或 scope 不一致都会 fence token。
 
+Worker bearer 不再作为明文环境变量传给 Provider。AgentHost 在 owner-private credential root 下为每个 Activation 创建唯一 `0700` 目录、`0600` session file 和不含 token 的 `0700` `rah` wrapper；把该目录置于最终 child `PATH` 首位，并注入 Worker origin、session-file path 与非敏感的绝对 `RAH_WORKER_CLI` 路径。Agent prompt 使用 `"$RAH_WORKER_CLI" worker ...`，不依赖 Provider tool shell 是否保留 PATH。Worker CLI 只暴露严格 allowlist 的 Room/Task application commands，SEA 使用同一实现的精确内部 dispatch；Provider 无需直接读取 credential 或构造 HTTP。环境合并后再次剔除 legacy raw token/token-file、静态 wrapper path 与内部 tool-bin hint。release 同时尝试 Server revoke 与本地清理，任一失败不阻止另一项。Host/进程崩溃后的遗留文件清扫与 supervised target 自清理仍需单独恢复门禁，不能由正常 exit 测试外推；Windows CLI wrapper 尚未实现。
+
 ## 4. Wake 与 polling
 
 Message transaction 原子写入 `activation.requested` Outbox。dispatcher 通过 topic filter lease 条目，先发布无正文 wake，再 ack Outbox；失败则 durable retry。LocalWakeSignal 只提前结束 `AgentHost.wait()`。即使所有 wake 丢失，Host 仍在 `pollIntervalMs` 内主动 reconciliation。
@@ -78,7 +80,7 @@ Client continuation/ack 只能使用已持久确认或由当前 credential/consu
 - `taskClaimLeaseMs` 是 daemon-owned Task claim 时限；`taskClaimHeartbeatIntervalMs` 驱动 Worker service sidecar 自动续租，不占模型 token，也不追加 Room event；
 - 新 RunAttempt 通过 activation-scoped `tasks/get` 读取 canonical projection，重放稳定 Task command 并继续未落账步骤；credential release/fence 会停止旧 heartbeat；
 - `request-input` 原子创建 canonical InputRequest、清除 claim 并把 Task 置为 `waiting_input`；CLI 随即退出。authenticated human 通过 Client API resolve，把 Task 恢复为 `todo`，再由 `input.resolved` Inbox/Activation/Outbox 唤醒新 RunAttempt；
-- CLI 必须能执行 shell/MCP/ACP 动作来调用 Worker API。当前 L0 gate 用 shell 完成 `sync/ack + Task commands`，不解析 CLI 输出；
+- CLI 必须能执行受限 CLI/MCP/ACP 动作来调用 Worker API。当前 L0 gate 使用 activation-scoped `rah worker` wrapper 完成 `sync/ack + Task commands`，不解析 Provider 输出；
 - Task 与进程生命周期正交：Agent exit/Activation completion 不会完成 Task；若 Activation 关联且归当前 Agent 所有的 Task 尚未达到 `waiting_input/blocked/submitted/completed/cancelled`，Kernel 拒绝 completion 并由 AgentHost durable retry；open Task loser 不会被 winner 的 ownership 卡住，Agent 提交后仍需 creator 的显式 `completeTask`。
 
 ## 7. 下一道边界

@@ -1,5 +1,6 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import { webBuildOutput } from "./build-output.ts";
 
 const daemonTarget = process.env.RAH_DAEMON_URL ?? "http://127.0.0.1:7314";
 const developmentAccessToken = process.env.RAH_DEV_ACCESS_TOKEN;
@@ -30,6 +31,11 @@ function daemonProxy() {
 }
 
 export default defineConfig(({ command }) => ({
+  build: {
+    assetsInlineLimit: 0,
+    manifest: true,
+    outDir: webBuildOutput(productionTrustedProxyAuth),
+  },
   define: {
     __RAH_TRUSTED_PROXY_AUTH__: JSON.stringify(
       productionTrustedProxyAuth ||

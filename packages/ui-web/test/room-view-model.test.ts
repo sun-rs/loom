@@ -12,7 +12,10 @@ import type {
 import {
   activeMobileNavigation,
   canCreateWorkspaceRoom,
+  canHumanCancelTask,
   canHumanCompleteTask,
+  canHumanReopenTask,
+  canHumanSetTaskAssignee,
   canManageRoomMembers,
   canOnboardWorkspaceAgent,
   createRoomViewModel,
@@ -27,7 +30,9 @@ import {
   roomSelectionSearch,
   roomSlugFromName,
   selectProductRooms,
-  taskAssigneeForSelectedAgents,
+  taskReviewStatus,
+  taskParticipantsForSelection,
+  threadRootSelectionFromSearch,
   workspaceAgentDirectory,
 } from "../src/index.ts";
 
@@ -38,6 +43,7 @@ test("mobile navigation has exactly one active destination while the Room drawer
     activeMobileNavigation({
       activeSurface: "room",
       activeTab: "chat",
+      notificationsOpen: false,
       roomsOpen: false,
     }),
     "chat",
@@ -46,6 +52,7 @@ test("mobile navigation has exactly one active destination while the Room drawer
     activeMobileNavigation({
       activeSurface: "room",
       activeTab: "chat",
+      notificationsOpen: false,
       roomsOpen: true,
     }),
     "rooms",
@@ -54,6 +61,7 @@ test("mobile navigation has exactly one active destination while the Room drawer
     activeMobileNavigation({
       activeSurface: "agents",
       activeTab: "files",
+      notificationsOpen: false,
       roomsOpen: true,
     }),
     "rooms",
@@ -62,6 +70,7 @@ test("mobile navigation has exactly one active destination while the Room drawer
     activeMobileNavigation({
       activeSurface: "agents",
       activeTab: "files",
+      notificationsOpen: false,
       roomsOpen: false,
     }),
     "agents",
@@ -70,9 +79,28 @@ test("mobile navigation has exactly one active destination while the Room drawer
     activeMobileNavigation({
       activeSurface: "computers",
       activeTab: "chat",
+      notificationsOpen: false,
       roomsOpen: false,
     }),
     undefined,
+  );
+  assert.equal(
+    activeMobileNavigation({
+      activeSurface: "settings",
+      activeTab: "chat",
+      notificationsOpen: false,
+      roomsOpen: false,
+    }),
+    "settings",
+  );
+  assert.equal(
+    activeMobileNavigation({
+      activeSurface: "settings",
+      activeTab: "chat",
+      notificationsOpen: true,
+      roomsOpen: true,
+    }),
+    "notifications",
   );
 });
 
@@ -90,6 +118,31 @@ test("Room selection has a reload-safe URL projection", () => {
   assert.equal(
     roomSelectionSearch("room with spaces"),
     "?room=room+with+spaces",
+  );
+  assert.equal(
+    roomSelectionSearch("room-main", "message-main"),
+    "?room=room-main&thread=room-main%3Amessage-main",
+  );
+  assert.equal(
+    threadRootSelectionFromSearch(
+      "?room=room-main&thread=room-main%3Amessage-main",
+      "room-main",
+    ),
+    "message-main",
+  );
+  assert.equal(
+    threadRootSelectionFromSearch(
+      "?room=room-other&thread=room-other%3Amessage-main",
+      "room-main",
+    ),
+    undefined,
+  );
+  assert.equal(
+    threadRootSelectionFromSearch(
+      "?room=room-main&thread=message-main",
+      "room-main",
+    ),
+    undefined,
   );
 });
 
@@ -161,12 +214,17 @@ test("Workspace Agent directory is independent from Room membership and reports 
   assert.deepEqual(directory, [
     {
       agentDefinitionId: "definition-alice",
+      agentDefinitionRevisionId: "definition-alice-v1",
+      createdAt,
+      createdBy: "human-main",
       displayName: "Alice",
+      executionPolicyRevisionId: "policy-v1",
       handle: "Alice",
       participantId: "agent-alice",
       role: "Researcher",
       runtimeAvailable: true,
       runtimeLabels: ["Fake CLI"],
+      skillRefs: [],
       state: "enabled",
     },
   ]);
@@ -224,24 +282,40 @@ test("Room membership drives Message delivery while mentions only raise attentio
     mentionedRoomAgentIds({ agents, body: "@Kimi-extra should not match" }),
     [],
   );
-  assert.equal(
-    taskAssigneeForSelectedAgents({
+  assert.deepEqual(
+    taskParticipantsForSelection({
       availableAgents: agents,
-      selectedParticipantIds: ["agent-codex"],
+      assigneeId: "agent-codex",
+      collaboratorIds: ["agent-kimi"],
+      reviewerIds: ["agent-kimi"],
     }),
-    "agent-codex",
+    {
+      assigneeId: "agent-codex",
+      collaboratorIds: ["agent-kimi"],
+      reviewerIds: ["agent-kimi"],
+    },
   );
-  assert.equal(
-    taskAssigneeForSelectedAgents({
+  assert.deepEqual(
+    taskParticipantsForSelection({
       availableAgents: agents,
-      selectedParticipantIds: ["agent-codex", "agent-kimi"],
+      collaboratorIds: [],
+      reviewerIds: [],
     }),
-    undefined,
+    { collaboratorIds: [], reviewerIds: [] },
   );
   assert.throws(() =>
-    taskAssigneeForSelectedAgents({
+    taskParticipantsForSelection({
       availableAgents: agents,
-      selectedParticipantIds: [],
+      collaboratorIds: ["agent-kimi"],
+      reviewerIds: [],
+    }),
+  );
+  assert.throws(() =>
+    taskParticipantsForSelection({
+      assigneeId: "agent-codex",
+      availableAgents: agents,
+      collaboratorIds: ["agent-codex"],
+      reviewerIds: [],
     }),
   );
 });
@@ -249,14 +323,19 @@ test("Room membership drives Message delivery while mentions only raise attentio
 function task(taskId: string, state: Task["state"]): Task {
   const submitted = state === "submitted" || state === "completed";
   return {
+    collaboratorIds: [],
     createdAt,
     creatorId: "human-main",
     dependencyTaskIds: [],
     roomId: "room-main",
+    sourceMessageId: `message-${taskId}`,
     state,
     taskId,
+    taskNumber: 1,
+    threadId: `thread-${taskId}`,
     title: taskId,
     updatedAt: createdAt,
+    reviewerIds: [],
     ...(state === "claimed" || state === "in_progress"
       ? {
           assigneeId: "agent-main",
@@ -399,6 +478,142 @@ test("Human completion is offered only for a caught-up submitted Task", () => {
     }),
     false,
   );
+
+  const reviewedTask = {
+    ...task("review-gated", "submitted"),
+    reviewerIds: ["agent-reviewer"],
+  };
+  const submission = {
+    createdAt,
+    messageId: "message-submission",
+    producerId: "agent-main",
+    roomId: "room-main",
+    submissionDigest: "a".repeat(64),
+    submissionId: "submission-main",
+    submissionNumber: 1,
+    summary: "ready for review",
+    taskId: reviewedTask.taskId,
+  };
+  assert.equal(
+    canHumanCompleteTask({
+      caughtUp: true,
+      currentPrincipalId: "human-main",
+      submissions: [submission],
+      task: reviewedTask,
+      taskWrite: true,
+    }),
+    false,
+  );
+  const review = {
+    createdAt,
+    disposition: "approved" as const,
+    messageId: "message-review",
+    reviewId: "review-main",
+    reviewerId: "agent-reviewer",
+    roomId: "room-main",
+    submissionDigest: submission.submissionDigest,
+    submissionId: submission.submissionId,
+    summary: "approved with evidence",
+    taskId: reviewedTask.taskId,
+  };
+  assert.deepEqual(
+    taskReviewStatus({
+      reviews: [review],
+      submissions: [submission],
+      task: reviewedTask,
+    }).approvedReviewerIds,
+    ["agent-reviewer"],
+  );
+  assert.equal(
+    canHumanCompleteTask({
+      caughtUp: true,
+      currentPrincipalId: "human-main",
+      reviews: [review],
+      submissions: [submission],
+      task: reviewedTask,
+      taskWrite: true,
+    }),
+    true,
+  );
+});
+
+test("Task Closed controls belong only to the caught-up Human creator", () => {
+  assert.equal(
+    canHumanCancelTask({
+      caughtUp: true,
+      currentPrincipalId: "human-main",
+      task: task("close-running", "in_progress"),
+      taskWrite: true,
+    }),
+    true,
+  );
+  assert.equal(
+    canHumanCancelTask({
+      caughtUp: true,
+      currentPrincipalId: "human-main",
+      task: task("close-done", "completed"),
+      taskWrite: true,
+    }),
+    false,
+  );
+  assert.equal(
+    canHumanReopenTask({
+      caughtUp: true,
+      currentPrincipalId: "human-main",
+      task: task("reopen-closed", "cancelled"),
+      taskWrite: true,
+    }),
+    true,
+  );
+  assert.equal(
+    canHumanReopenTask({
+      caughtUp: false,
+      currentPrincipalId: "human-main",
+      task: task("reopen-stale", "cancelled"),
+      taskWrite: true,
+    }),
+    false,
+  );
+});
+
+test("Task owner selection is available only to the creator on an unclaimed todo", () => {
+  const open = task("owner-open", "todo");
+  assert.equal(
+    canHumanSetTaskAssignee({
+      caughtUp: true,
+      currentPrincipalId: "human-main",
+      task: open,
+      taskWrite: true,
+    }),
+    true,
+  );
+  assert.equal(
+    canHumanSetTaskAssignee({
+      caughtUp: false,
+      currentPrincipalId: "human-main",
+      task: open,
+      taskWrite: true,
+    }),
+    false,
+  );
+  assert.equal(
+    canHumanSetTaskAssignee({
+      caughtUp: true,
+      currentPrincipalId: "human-main",
+      task: task("owner-active", "in_progress"),
+      taskWrite: true,
+    }),
+    false,
+  );
+  assert.equal(
+    canHumanSetTaskAssignee({
+      caughtUp: true,
+      currentPrincipalId: "human-other",
+      task: open,
+      taskWrite: true,
+    }),
+    false,
+  );
 });
 
 test("write controls require both daemon capabilities and canonical manager roles", () => {
@@ -498,6 +713,8 @@ test("the UI fails closed only on capabilities required for canonical Room recov
       hints: false,
       inputRequestRead: false,
       inputRequestResolve: false,
+      managedMcpRead: false,
+      managedMcpWrite: false,
       memberRead: false,
       memberWrite: false,
       messageRead: false,

@@ -7,10 +7,13 @@ import type {
   Principal,
   Room,
   Task,
+  TaskReview,
+  TaskSubmission,
   Workspace,
 } from "@rah-os/protocol";
 
 export type RoomMessageView = {
+  attachments?: readonly import("@rah-os/protocol").Attachment[];
   actorId: string;
   author: string;
   body: string;
@@ -22,7 +25,11 @@ export type RoomMessageView = {
 export type TaskColumnId =
   "closed" | "done" | "in-progress" | "review" | "todo";
 
-export type RoomTaskView = Task & { assigneeLabel?: string };
+export type RoomTaskView = Task & {
+  assigneeLabel?: string;
+  collaboratorLabels: readonly string[];
+  reviewerLabels: readonly string[];
+};
 
 export type TaskColumnView = {
   id: TaskColumnId;
@@ -41,31 +48,51 @@ export type RoomAgentTarget = {
   participantId: string;
 };
 
-export type MobileNavigationDestination = "agents" | "chat" | "rooms" | "tasks";
+export type MobileNavigationDestination =
+  "agents" | "chat" | "notifications" | "rooms" | "settings" | "tasks";
 
 export type WorkspaceAgentView = {
   agentDefinitionId: string;
+  agentDefinitionRevisionId?: string;
   avatarKey?: string;
+  createdAt: string;
+  createdBy: string;
   description?: string;
   displayName: string;
+  executionPolicyRevisionId: string;
   handle: string;
   participantId: string;
   role: string;
   runtimeAvailable: boolean;
+  connectionStatus?: "online" | "offline" | "draining" | "unknown";
   runtimeLabels: readonly string[];
+  skillRefs: readonly AgentCatalogEntry["currentRevision"]["skillRefs"][number][];
   state: AgentCatalogEntry["definition"]["state"];
 };
 
 export type RoomAgentCandidate = WorkspaceAgentView & { joined: boolean };
 
 export function activeMobileNavigation(input: {
-  activeSurface: "agents" | "computers" | "room";
+  activeSurface:
+    | "agents"
+    | "computers"
+    | "room"
+    | "settings"
+    | "tasks"
+    | "search"
+    | "activity";
   activeTab: "chat" | "files" | "tasks";
+  notificationsOpen: boolean;
   roomsOpen: boolean;
 }): MobileNavigationDestination | undefined {
+  if (input.notificationsOpen) return "notifications";
   if (input.roomsOpen) return "rooms";
   if (input.activeSurface === "agents") return "agents";
+  if (input.activeSurface === "settings") return "settings";
   if (input.activeSurface === "computers") return undefined;
+  if (input.activeSurface === "tasks") return "tasks";
+  if (input.activeSurface === "search" || input.activeSurface === "activity")
+    return undefined;
   if (input.activeTab === "chat") return "chat";
   if (input.activeTab === "tasks") return "tasks";
   return undefined;
@@ -84,10 +111,28 @@ export function roomSelectionFromSearch(search: string): string | undefined {
   return roomId === undefined || roomId.length === 0 ? undefined : roomId;
 }
 
-export function roomSelectionSearch(roomId: string): string {
+export function roomSelectionSearch(
+  roomId: string,
+  threadRootMessageId?: string,
+): string {
   const search = new URLSearchParams();
   search.set("room", roomId);
+  if (threadRootMessageId !== undefined) {
+    search.set("thread", `${roomId}:${threadRootMessageId}`);
+  }
   return `?${search.toString()}`;
+}
+
+export function threadRootSelectionFromSearch(
+  search: string,
+  roomId: string,
+): string | undefined {
+  const value = new URLSearchParams(search).get("thread")?.trim();
+  if (value === undefined || value.length === 0) return undefined;
+  const prefix = `${roomId}:`;
+  if (!value.startsWith(prefix)) return undefined;
+  const rootMessageId = value.slice(prefix.length).trim();
+  return rootMessageId.length === 0 ? undefined : rootMessageId;
 }
 
 export function opaqueIdFromBytes(bytes: Uint8Array): string {
@@ -111,13 +156,19 @@ export function workspaceAgentDirectory(input: {
       );
       return Object.freeze({
         agentDefinitionId: agent.definition.agentDefinitionId,
+        agentDefinitionRevisionId:
+          agent.currentRevision.agentDefinitionRevisionId,
         ...(agent.currentRevision.avatarKey === undefined
           ? {}
           : { avatarKey: agent.currentRevision.avatarKey }),
         ...(agent.currentRevision.description === undefined
           ? {}
           : { description: agent.currentRevision.description }),
+        createdAt: agent.definition.createdAt,
+        createdBy: agent.currentRevision.createdBy,
         displayName: agent.currentRevision.displayName ?? agent.handle,
+        executionPolicyRevisionId:
+          agent.currentRevision.executionPolicyRevisionId,
         handle: agent.handle,
         participantId: agent.definition.participantId,
         role: agent.currentRevision.role,
@@ -129,6 +180,7 @@ export function workspaceAgentDirectory(input: {
             ...new Set(boundRuntimes.map(({ displayName }) => displayName)),
           ].sort(),
         ),
+        skillRefs: Object.freeze([...agent.currentRevision.skillRefs]),
         state: agent.definition.state,
       });
     })
@@ -191,19 +243,52 @@ export function mentionedRoomAgentIds(input: {
     .sort();
 }
 
-export function taskAssigneeForSelectedAgents(input: {
+export type TaskParticipantSelection = {
+  assigneeId?: string;
+  collaboratorIds: string[];
+  reviewerIds: string[];
+};
+
+export function taskParticipantsForSelection(input: {
   availableAgents: readonly RoomAgentTarget[];
-  selectedParticipantIds: readonly string[];
-}): string | undefined {
-  const selected = validateSelectedRoomAgents(input);
-  if (input.availableAgents.length === 0 && selected.length === 0) {
-    return undefined;
+  assigneeId?: string;
+  collaboratorIds: readonly string[];
+  reviewerIds: readonly string[];
+}): TaskParticipantSelection {
+  const collaboratorIds = validateSelectedRoomAgents({
+    availableAgents: input.availableAgents,
+    selectedParticipantIds: input.collaboratorIds,
+  });
+  const reviewerIds = validateSelectedRoomAgents({
+    availableAgents: input.availableAgents,
+    selectedParticipantIds: input.reviewerIds,
+  });
+  if (
+    input.assigneeId !== undefined &&
+    !input.availableAgents.some(
+      ({ participantId }) => participantId === input.assigneeId,
+    )
+  ) {
+    throw new Error(`Agent ${input.assigneeId} is not a member of this Room`);
   }
-  if (selected.length === 1) return selected[0];
-  if (selected.length === input.availableAgents.length) return undefined;
-  throw new Error(
-    "Task v1 仅支持指定一个 Agent，或开放给当前 Room 的全部 Agents",
-  );
+  if (
+    input.assigneeId === undefined &&
+    (collaboratorIds.length > 0 || reviewerIds.length > 0)
+  ) {
+    throw new Error("协作者和审阅者需要一个明确的任务负责人");
+  }
+  if (
+    input.assigneeId !== undefined &&
+    (collaboratorIds.includes(input.assigneeId) ||
+      reviewerIds.includes(input.assigneeId))
+  ) {
+    throw new Error("任务负责人不能同时出现在协作者或审阅者中");
+  }
+  return {
+    ...(input.assigneeId === undefined ? {} : { assigneeId: input.assigneeId }),
+    collaboratorIds,
+    reviewerIds,
+  };
 }
 
 function validateSelectedRoomAgents(input: {
@@ -222,7 +307,71 @@ function validateSelectedRoomAgents(input: {
   return selected;
 }
 
+export type TaskReviewStatus = {
+  approvedReviewerIds: readonly string[];
+  currentSubmission?: TaskSubmission;
+  requiredReviewerIds: readonly string[];
+  satisfied: boolean;
+};
+
+export function taskReviewStatus(input: {
+  reviews: readonly TaskReview[];
+  submissions: readonly TaskSubmission[];
+  task: Task;
+}): TaskReviewStatus {
+  const requiredReviewerIds = [...input.task.reviewerIds].sort();
+  const currentSubmission = input.submissions
+    .filter(({ taskId }) => taskId === input.task.taskId)
+    .sort((left, right) => right.submissionNumber - left.submissionNumber)[0];
+  const approved = new Set(
+    currentSubmission === undefined
+      ? []
+      : input.reviews
+          .filter(
+            (review) =>
+              review.submissionId === currentSubmission.submissionId &&
+              review.disposition === "approved",
+          )
+          .map(({ reviewerId }) => reviewerId),
+  );
+  const approvedReviewerIds = requiredReviewerIds.filter((reviewerId) =>
+    approved.has(reviewerId),
+  );
+  return {
+    approvedReviewerIds,
+    ...(currentSubmission === undefined ? {} : { currentSubmission }),
+    requiredReviewerIds,
+    satisfied:
+      requiredReviewerIds.length === 0 ||
+      (currentSubmission !== undefined &&
+        approvedReviewerIds.length === requiredReviewerIds.length),
+  };
+}
+
 export function canHumanCompleteTask(input: {
+  caughtUp: boolean;
+  currentPrincipalId: string | undefined;
+  reviews?: readonly TaskReview[];
+  submissions?: readonly TaskSubmission[];
+  task: Task;
+  taskWrite: boolean;
+}): boolean {
+  const review = taskReviewStatus({
+    reviews: input.reviews ?? [],
+    submissions: input.submissions ?? [],
+    task: input.task,
+  });
+  return (
+    input.caughtUp &&
+    input.taskWrite &&
+    input.task.state === "submitted" &&
+    input.currentPrincipalId !== undefined &&
+    input.task.creatorId === input.currentPrincipalId &&
+    review.satisfied
+  );
+}
+
+export function canHumanCancelTask(input: {
   caughtUp: boolean;
   currentPrincipalId: string | undefined;
   task: Task;
@@ -231,7 +380,39 @@ export function canHumanCompleteTask(input: {
   return (
     input.caughtUp &&
     input.taskWrite &&
-    input.task.state === "submitted" &&
+    input.currentPrincipalId !== undefined &&
+    input.task.creatorId === input.currentPrincipalId &&
+    input.task.state !== "completed" &&
+    input.task.state !== "cancelled"
+  );
+}
+
+export function canHumanReopenTask(input: {
+  caughtUp: boolean;
+  currentPrincipalId: string | undefined;
+  task: Task;
+  taskWrite: boolean;
+}): boolean {
+  return (
+    input.caughtUp &&
+    input.taskWrite &&
+    input.currentPrincipalId !== undefined &&
+    input.task.creatorId === input.currentPrincipalId &&
+    input.task.state === "cancelled"
+  );
+}
+
+export function canHumanSetTaskAssignee(input: {
+  caughtUp: boolean;
+  currentPrincipalId: string | undefined;
+  task: Task;
+  taskWrite: boolean;
+}): boolean {
+  return (
+    input.caughtUp &&
+    input.taskWrite &&
+    input.task.state === "todo" &&
+    input.task.claimedBy === undefined &&
     input.currentPrincipalId !== undefined &&
     input.task.creatorId === input.currentPrincipalId
   );
@@ -342,6 +523,16 @@ export function createRoomViewModel(input: {
         return Object.freeze({
           ...task,
           ...(assigneeLabel === undefined ? {} : { assigneeLabel }),
+          collaboratorLabels: Object.freeze(
+            (task.collaboratorIds ?? []).map(
+              (participantId) => handles.get(participantId) ?? participantId,
+            ),
+          ),
+          reviewerLabels: Object.freeze(
+            (task.reviewerIds ?? []).map(
+              (participantId) => handles.get(participantId) ?? participantId,
+            ),
+          ),
         });
       });
 
@@ -354,6 +545,9 @@ export function createRoomViewModel(input: {
             actorId: message.actorId,
             author: handles.get(message.actorId) ?? message.actorId,
             body: message.body,
+            ...(message.attachments?.length
+              ? { attachments: message.attachments }
+              : {}),
             createdAt: message.createdAt,
             messageId: message.messageId,
             roomSeq: message.roomSeq,

@@ -61,12 +61,17 @@ InputRequest fixture 让第一个 fake CLI 在 `task.started` 后调用严格 `r
 
 2026-08-25 又以 `gpt-5.6-luna` 明确 opt-in 运行 Codex CLI 0.149.1，约 45.5 秒完成同一 Task gate。测试等待 canonical Task projection=`submitted` 与 Activation=`completed`；Codex 的 prose、stdout、stderr、thinking 和 tool stream 均不参与判定。Kimi、OpenCode、Claude Code 本轮没有重复付费跑 Task gate，因此它们在当前 TypeScript 实现上的证据仍只到 delivery，不能沿用旧 harness 结果冒充新实现证明。
 
+2026-08-29 又明确 opt-in 运行三 CLI 语义门禁：Codex `0.149.1` / `gpt-5.6-sol` low、Kimi `0.38.0` / `kimi-code/k3`、OpenCode `1.18.22` / `deepseek/deepseek-v4-flash` max。约 220.4 秒内完成两段同 Room 实验：普通 UTC 日期问题得到三条 canonical Room Message 且 Task 数保持为零；随后未由 Human 勾选 Task 的持久落盘、验证、进度和验收请求只生成一个自动 Task、一个 assignee、一个执行结果和同一 Task Thread 中的 progress/submission 两条回复。门禁还核对了工作区文件的精确内容，竞争失败的 Agent 不写顶层替代答复。默认测试仍跳过真实 Provider，只有显式 `npm run test:real:multi-cli` 才运行。
+
+同日又从正式 Web fixture 做真实浏览器验收，而不是只调用测试 API：Human 把 Codex、Kimi、OpenCode 加入同一 Room；普通日期问题得到三条 Agent 回复并在 Tasks 页显示“暂无任务”；未勾选 Task 的持久修改请求由 Kimi 唯一认领并进入 `submitted`，看板、Chat anchor 和 Thread 的两条回复均来自 canonical projection。SQLite 证据为一个 `source_message_id` 只对应一个 Task、Thread `reply_count=2` 且 `distinct_actors=1`；工作区 `RAH_BROWSER_TASK_PROOF.txt` 的内容精确为 `RAH OS browser Task intent gate`。Agents → Kimi → 动态展示真实完成记录，并注明投影来自 Provider 结构化事件。桌面与 `390x844` 共用同一路径，移动端 Room 抽屉、Task 看板和 Thread 均可操作；浏览器控制台没有 error/warning。
+
 ## 证明了什么
 
 - CLI 只要能调用 shell 或 MCP，就可以服从统一 Room 业务协议。
 - Provider session ID 不必成为协作聚合根。
 - Task completion 可以与 process exit 分离。
 - 独立 cursor 可以让多个 Agent 在同一 Room 中增量理解历史。
+- 普通 Message 与自动 Task 的语义分界已在三家真实 CLI 和正式 Web 浏览器链路中共同验证；`source_message_id` 的唯一约束确实把并发判断收敛为一个 owner。
 
 ## 没有证明什么
 

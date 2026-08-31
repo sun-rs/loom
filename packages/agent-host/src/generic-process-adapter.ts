@@ -11,12 +11,14 @@ import { createConnection } from "node:net";
 import { tmpdir } from "node:os";
 import { delimiter, isAbsolute, resolve } from "node:path";
 import { StringDecoder } from "node:string_decoder";
+import { isSea } from "node:sea";
 import { fileURLToPath } from "node:url";
 
 import type {
   RuntimeProfileProbeReport,
   RuntimeRecoveryDescriptor,
 } from "@rah-os/protocol";
+import { RuntimeTrajectoryAppendInputSchema } from "@rah-os/protocol";
 
 import type {
   ActivationEnvelope,
@@ -26,6 +28,21 @@ import type {
   RuntimeAvailability,
   RuntimeStartLifecycle,
 } from "./runtime.ts";
+import {
+  LEGACY_RAH_WORKER_TOKEN_ENV,
+  LEGACY_RAH_WORKER_TOKEN_FILE_ENV,
+  RAH_AGENT_TOOL_BIN_ENV,
+  RAH_WORKER_API_URL_ENV,
+  RAH_WORKER_CLI_ENV,
+  RAH_WORKER_SESSION_FILE_ENV,
+} from "./worker-credential-file.ts";
+import {
+  RAH_AGENT_APP_INBOX_JSON_ENV,
+  RAH_AGENT_MEMORY_DIR_ENV,
+  RAH_AGENT_MEMORY_INDEX_ENV,
+} from "./agent-memory-workspace.ts";
+import { RAH_AGENT_MEMORY_BOOTSTRAP_JSON_ENV } from "./agent-memory-bootstrap.ts";
+import { RAH_AGENT_MEMORY_SOURCE_FILE_ENV } from "./agent-memory-project.ts";
 
 export type GenericProcessAdapterOptions = {
   activationEnvironment?: (
@@ -42,11 +59,27 @@ export type GenericProcessAdapterOptions = {
     RuntimeProfileProbeReport["executableIdentity"]
   >;
   recoveryProvenance?: RuntimeRecoveryProvenance;
+  recordProviderSessionEvidence?: (
+    input: ActivationEnvelope,
+    evidence: RuntimeProviderSessionEvidence,
+  ) => Promise<void> | void;
   supervisorControlTimeoutMs?: number;
   supervisorDirectory?: string;
   supervisorStartupTimeoutMs?: number;
   terminationGraceMs?: number;
 };
+
+/**
+ * Host-private Provider continuity evidence. This frame shares the native
+ * driver's fd3 transport but is intercepted before canonical trajectory
+ * parsing, so Provider session identity never becomes Room or UI truth.
+ */
+export type RuntimeProviderSessionEvidence = Readonly<{
+  protocol: "rah-provider-session/v1";
+  provider: string;
+  providerSessionId: string;
+  state: "ready";
+}>;
 
 export type RuntimeRecoveryProvenance = Pick<
   Required<RuntimeRecoveryDescriptor>,
@@ -56,9 +89,11 @@ export type RuntimeRecoveryProvenance = Pick<
 };
 
 export type ActivationEnvironmentLease = {
+  args?: readonly string[];
+  diagnostics?: readonly string[];
   env: Readonly<Record<string, string>>;
   redactions?: readonly string[];
-  release?: () => void;
+  release?: () => Promise<void> | void;
 };
 
 export type ProcessDiagnostics = {
@@ -68,6 +103,7 @@ export type ProcessDiagnostics = {
 };
 
 type ProcessRun = {
+  activity: RuntimeTrajectoryCollector;
   child: ChildProcess;
   exitPromise: Promise<RunExit>;
   exited: boolean;
@@ -94,6 +130,117 @@ const SUPERVISOR_ID_PATTERN =
 const MAX_REDACTION_SECRET_BYTES = 65_536;
 const MAX_REDACTION_SCAN_CODE_UNITS = 65_536;
 const MIN_REDACTION_SCAN_CODE_UNITS = 1_024;
+const MAX_ACTIVITY_LINE_BYTES = 16_384;
+const MAX_ACTIVITY_BUFFER_BYTES = 65_536;
+
+class RuntimeTrajectoryCollector {
+  readonly #activation: ActivationEnvelope;
+  readonly #decoder = new StringDecoder("utf8");
+  readonly #diagnostics: BoundedOutput;
+  readonly #lifecycle: RuntimeStartLifecycle;
+  readonly #runAttemptId: string;
+  readonly #runtimeRunId: string;
+  readonly #recordProviderSessionEvidence:
+    GenericProcessAdapterOptions["recordProviderSessionEvidence"] | undefined;
+  #buffer = "";
+  #finished = false;
+  #queue = Promise.resolve();
+
+  constructor(input: {
+    activation: ActivationEnvelope;
+    diagnostics: BoundedOutput;
+    lifecycle: RuntimeStartLifecycle;
+    recordProviderSessionEvidence?: GenericProcessAdapterOptions["recordProviderSessionEvidence"];
+    runAttemptId: string;
+    runtimeRunId: string;
+  }) {
+    this.#activation = input.activation;
+    this.#diagnostics = input.diagnostics;
+    this.#lifecycle = input.lifecycle;
+    this.#runAttemptId = input.runAttemptId;
+    this.#runtimeRunId = input.runtimeRunId;
+    this.#recordProviderSessionEvidence = input.recordProviderSessionEvidence;
+  }
+
+  append(chunk: Buffer | string): void {
+    if (
+      this.#finished ||
+      (this.#lifecycle.recordTrajectory === undefined &&
+        this.#recordProviderSessionEvidence === undefined)
+    ) {
+      return;
+    }
+    const value = Buffer.isBuffer(chunk)
+      ? this.#decoder.write(chunk)
+      : String(chunk);
+    this.#buffer += value;
+    if (Buffer.byteLength(this.#buffer) > MAX_ACTIVITY_BUFFER_BYTES) {
+      this.#diagnostics.append(
+        "[rah-os] runtime trajectory frame buffer exceeded its safe limit\n",
+      );
+      this.#buffer = "";
+      return;
+    }
+    this.#drainLines();
+  }
+
+  async finish(): Promise<void> {
+    if (this.#finished) return await this.#queue;
+    this.#finished = true;
+    if (
+      this.#lifecycle.recordTrajectory !== undefined ||
+      this.#recordProviderSessionEvidence !== undefined
+    ) {
+      this.#buffer += this.#decoder.end();
+      this.#drainLines();
+      if (this.#buffer.trim() !== "") this.#enqueue(this.#buffer);
+      this.#buffer = "";
+    }
+    await this.#queue;
+  }
+
+  #drainLines(): void {
+    for (;;) {
+      const newline = this.#buffer.indexOf("\n");
+      if (newline < 0) return;
+      const line = this.#buffer.slice(0, newline);
+      this.#buffer = this.#buffer.slice(newline + 1);
+      if (line.trim() !== "") this.#enqueue(line);
+    }
+  }
+
+  #enqueue(line: string): void {
+    if (Buffer.byteLength(line) > MAX_ACTIVITY_LINE_BYTES) {
+      this.#diagnostics.append(
+        "[rah-os] ignored an oversized runtime trajectory frame\n",
+      );
+      return;
+    }
+    this.#queue = this.#queue.then(async () => {
+      try {
+        const frame = JSON.parse(line) as unknown;
+        const providerSession = parseProviderSessionEvidence(frame);
+        if (providerSession !== null) {
+          await this.#recordProviderSessionEvidence?.(
+            this.#activation,
+            providerSession,
+          );
+          return;
+        }
+        const activity = RuntimeTrajectoryAppendInputSchema.parse({
+          ...(typeof frame === "object" && frame !== null ? frame : {}),
+          runAttemptId: this.#runAttemptId,
+          runtimeRunId: this.#runtimeRunId,
+        });
+        await this.#lifecycle.recordTrajectory?.(activity);
+      } catch (error) {
+        this.#diagnostics.append(
+          `[rah-os] ignored runtime trajectory frame: ${errorMessage(error)}\n`,
+        );
+      }
+    });
+  }
+}
 
 class BoundedOutput {
   readonly #byteLimit: number;
@@ -328,6 +475,8 @@ export class GenericProcessAdapter implements RuntimeAdapter {
   readonly #expectedExecutableIdentity:
     NonNullable<RuntimeProfileProbeReport["executableIdentity"]> | undefined;
   readonly #recoveryProvenance: RuntimeRecoveryProvenance | undefined;
+  readonly #recordProviderSessionEvidence:
+    GenericProcessAdapterOptions["recordProviderSessionEvidence"] | undefined;
   readonly #runs = new Map<string, ProcessRun>();
   readonly #supervisorControlTimeoutMs: number;
   readonly #supervisorDirectory: string;
@@ -389,6 +538,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       options.recoveryProvenance === undefined
         ? undefined
         : structuredClone(options.recoveryProvenance);
+    this.#recordProviderSessionEvidence = options.recordProviderSessionEvidence;
     this.#supervisorControlTimeoutMs = supervisorControlTimeoutMs;
     this.#supervisorDirectory = resolve(
       options.supervisorDirectory ??
@@ -451,6 +601,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       runId,
     };
     const environmentLease = await this.#activationEnvironment?.(input);
+    let launchArgs: readonly string[];
     let stdout: BoundedOutput;
     let stderr: BoundedOutput;
     try {
@@ -462,20 +613,22 @@ export class GenericProcessAdapter implements RuntimeAdapter {
         this.#diagnosticByteLimit,
         environmentLease?.redactions ?? [],
       );
+      launchArgs = activationArguments(this.#args, environmentLease?.args);
+      appendActivationDiagnostics(stderr, environmentLease?.diagnostics);
     } catch (error) {
       try {
-        environmentLease?.release?.();
+        await environmentLease?.release?.();
       } catch {
         // Preserve the redaction validation failure.
       }
       throw error;
     }
     let released = false;
-    const releaseEnvironment = (): void => {
+    const releaseEnvironment = async (): Promise<void> => {
       if (released) return;
       released = true;
       try {
-        environmentLease?.release?.();
+        await environmentLease?.release?.();
       } catch (error) {
         stderr.append(
           `[rah-os] activation environment release failed: ${errorMessage(error)}\n`,
@@ -485,48 +638,45 @@ export class GenericProcessAdapter implements RuntimeAdapter {
     try {
       await lifecycle.registerPrepared(runHandle);
     } catch (error) {
-      releaseEnvironment();
+      await releaseEnvironment();
       throw error;
     }
 
     let child: ChildProcess;
     try {
-      child = spawn(this.#command, this.#args, {
+      child = spawn(this.#command, launchArgs, {
         cwd: this.#cwd,
         detached: process.platform !== "win32",
-        env: {
-          ...process.env,
-          ...this.#env,
-          ...environmentLease?.env,
-          ...(input.agent === undefined
-            ? {}
-            : { RAH_AGENT_CONTEXT_JSON: JSON.stringify(input.agent) }),
-          RAH_ACTIVATION_ID: input.activationId,
-          RAH_ACTIVATION_REASON: input.reason,
-          RAH_CONSUMER_ID: input.consumerId,
-          RAH_FROM_SEQ: String(input.fromSeq),
-          RAH_HOST_ID: input.hostId,
-          RAH_PARTICIPANT_ID: input.participantId,
-          RAH_ROOM_ID: input.roomId,
-          RAH_RUN_ATTEMPT_ID: input.runAttemptId,
-          RAH_TO_SEQ: String(input.toSeq),
-        },
+        env: this.#createActivationProcessEnvironment(input, environmentLease),
         shell: false,
-        stdio: ["ignore", "pipe", "pipe"],
+        stdio: ["ignore", "pipe", "pipe", "pipe"],
       });
     } catch (error) {
-      releaseEnvironment();
+      await releaseEnvironment();
       throw error;
     }
 
     child.stdout?.on("data", (chunk: Buffer) => stdout.append(chunk));
     child.stderr?.on("data", (chunk: Buffer) => stderr.append(chunk));
+    const activity = new RuntimeTrajectoryCollector({
+      activation: input,
+      diagnostics: stderr,
+      lifecycle,
+      recordProviderSessionEvidence: this.#recordProviderSessionEvidence,
+      runAttemptId: input.runAttemptId,
+      runtimeRunId: runId,
+    });
+    (child.stdio[3] as NodeJS.ReadableStream | null)?.on(
+      "data",
+      (chunk: Buffer) => activity.append(chunk),
+    );
 
     let resolveExit!: (exit: RunExit) => void;
     const exitPromise = new Promise<RunExit>((resolvePromise) => {
       resolveExit = resolvePromise;
     });
     const run: ProcessRun = {
+      activity,
       child,
       exitPromise,
       exited: false,
@@ -535,9 +685,10 @@ export class GenericProcessAdapter implements RuntimeAdapter {
     };
 
     let spawned = false;
-    child.once("close", (code, signal) => {
+    child.once("close", async (code, signal) => {
       run.exited = true;
-      releaseEnvironment();
+      await releaseEnvironment();
+      await activity.finish();
       stdout.finish();
       stderr.finish();
       resolveExit(signal === null ? { code } : { code, signal });
@@ -551,11 +702,11 @@ export class GenericProcessAdapter implements RuntimeAdapter {
           spawned = true;
           resolvePromise();
         });
-        child.once("error", (error) => {
+        child.once("error", async (error) => {
           if (spawned) {
             stderr.append(`[rah-os] process error: ${error.message}\n`);
           } else {
-            releaseEnvironment();
+            await releaseEnvironment();
             reject(error);
           }
         });
@@ -584,12 +735,14 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       return await run.exitPromise;
     }
 
-    this.#signal(run, "SIGTERM");
+    // Let a structured adapter translate the graceful signal into its native
+    // Provider cancellation before the hard deadline targets descendants.
+    this.#signalLeader(run, "SIGTERM");
     if (await this.#waitForExit(run, this.#terminationGraceMs)) {
       return await run.exitPromise;
     }
 
-    this.#signal(run, "SIGKILL");
+    this.#signalGroup(run, "SIGKILL");
     return await run.exitPromise;
   }
 
@@ -695,6 +848,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       supervisorId,
     };
     let environmentLease: ActivationEnvironmentLease | undefined;
+    let launchArgs: readonly string[];
     let stdout: BoundedOutput;
     let stderr: BoundedOutput;
     try {
@@ -707,9 +861,11 @@ export class GenericProcessAdapter implements RuntimeAdapter {
         this.#diagnosticByteLimit,
         environmentLease?.redactions ?? [],
       );
+      launchArgs = activationArguments(this.#args, environmentLease?.args);
+      appendActivationDiagnostics(stderr, environmentLease?.diagnostics);
     } catch (error) {
       try {
-        environmentLease?.release?.();
+        await environmentLease?.release?.();
       } catch {
         // Preserve the environment/redaction validation failure.
       }
@@ -717,11 +873,11 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       throw error;
     }
     let released = false;
-    const releaseEnvironment = (): void => {
+    const releaseEnvironment = async (): Promise<void> => {
       if (released) return;
       released = true;
       try {
-        environmentLease?.release?.();
+        await environmentLease?.release?.();
       } catch (error) {
         stderr.append(
           `[rah-os] activation environment release failed: ${errorMessage(error)}\n`,
@@ -729,7 +885,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       }
     };
     const supervisorConfig = {
-      args: this.#args,
+      args: launchArgs,
       command: this.#command,
       controlRequestTimeoutMs: this.#supervisorControlTimeoutMs,
       cwd: this.#cwd,
@@ -745,39 +901,44 @@ export class GenericProcessAdapter implements RuntimeAdapter {
 
     let child: ChildProcess;
     try {
-      child = spawn(process.execPath, [SUPERVISOR_ENTRY_PATH], {
-        cwd: this.#cwd,
-        detached: true,
-        env: {
-          ...process.env,
-          ...this.#env,
-          ...environmentLease?.env,
-          ...(input.agent === undefined
-            ? {}
-            : { RAH_AGENT_CONTEXT_JSON: JSON.stringify(input.agent) }),
-          RAH_ACTIVATION_ID: input.activationId,
-          RAH_ACTIVATION_REASON: input.reason,
-          RAH_CONSUMER_ID: input.consumerId,
-          RAH_FROM_SEQ: String(input.fromSeq),
-          RAH_HOST_ID: input.hostId,
-          RAH_PARTICIPANT_ID: input.participantId,
-          RAH_PROCESS_SUPERVISOR_CONFIG: JSON.stringify(supervisorConfig),
-          RAH_PROCESS_SUPERVISOR_TOKEN: descriptor.controlToken,
-          RAH_ROOM_ID: input.roomId,
-          RAH_RUN_ATTEMPT_ID: input.runAttemptId,
-          RAH_TO_SEQ: String(input.toSeq),
+      child = spawn(
+        process.execPath,
+        isSea() ? ["__runtime-process-supervisor"] : [SUPERVISOR_ENTRY_PATH],
+        {
+          cwd: this.#cwd,
+          detached: true,
+          env: {
+            ...this.#createActivationProcessEnvironment(
+              input,
+              environmentLease,
+            ),
+            RAH_PROCESS_SUPERVISOR_CONFIG: JSON.stringify(supervisorConfig),
+            RAH_PROCESS_SUPERVISOR_TOKEN: descriptor.controlToken,
+          },
+          shell: false,
+          stdio: ["ignore", "pipe", "pipe", "pipe", "pipe"],
         },
-        shell: false,
-        stdio: ["ignore", "pipe", "pipe", "pipe"],
-      });
+      );
     } catch (error) {
-      releaseEnvironment();
+      await releaseEnvironment();
       await rm(runDirectory, { force: true, recursive: true });
       throw error;
     }
 
     child.stdout?.on("data", (chunk: Buffer) => stdout.append(chunk));
     child.stderr?.on("data", (chunk: Buffer) => stderr.append(chunk));
+    const activity = new RuntimeTrajectoryCollector({
+      activation: input,
+      diagnostics: stderr,
+      lifecycle,
+      recordProviderSessionEvidence: this.#recordProviderSessionEvidence,
+      runAttemptId: input.runAttemptId,
+      runtimeRunId: runId,
+    });
+    (child.stdio[4] as NodeJS.ReadableStream | null)?.on(
+      "data",
+      (chunk: Buffer) => activity.append(chunk),
+    );
 
     let resolveExit!: (exit: RunExit) => void;
     let rejectExit!: (error: unknown) => void;
@@ -789,6 +950,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
     );
     void exitPromise.catch(() => undefined);
     const run: ProcessRun = {
+      activity,
       child,
       exitPromise,
       exited: false,
@@ -799,7 +961,8 @@ export class GenericProcessAdapter implements RuntimeAdapter {
     let durablePrepared = false;
     child.once("close", async () => {
       run.exited = true;
-      releaseEnvironment();
+      await releaseEnvironment();
+      await activity.finish();
       stdout.finish();
       stderr.finish();
       try {
@@ -831,7 +994,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
         await this.#requestSupervisorControl(descriptor, "terminate").catch(
           () => child.kill("SIGKILL"),
         );
-        releaseEnvironment();
+        await releaseEnvironment();
         await rm(runDirectory, { force: true, recursive: true });
       } else {
         stderr.append(
@@ -844,6 +1007,60 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       }
       throw error;
     }
+  }
+
+  #createActivationProcessEnvironment(
+    input: ActivationEnvelope,
+    environmentLease: ActivationEnvironmentLease | undefined,
+  ): NodeJS.ProcessEnv {
+    const inheritedEnvironment: NodeJS.ProcessEnv = {
+      ...process.env,
+      ...this.#env,
+    };
+    delete inheritedEnvironment[LEGACY_RAH_WORKER_TOKEN_ENV];
+    delete inheritedEnvironment[RAH_WORKER_API_URL_ENV];
+    delete inheritedEnvironment[RAH_WORKER_SESSION_FILE_ENV];
+    delete inheritedEnvironment[LEGACY_RAH_WORKER_TOKEN_FILE_ENV];
+    delete inheritedEnvironment[RAH_AGENT_TOOL_BIN_ENV];
+    delete inheritedEnvironment[RAH_WORKER_CLI_ENV];
+    delete inheritedEnvironment.RAH_AGENT_CONTEXT_JSON;
+    delete inheritedEnvironment.RAH_CONTEXT_MANIFEST_JSON;
+    delete inheritedEnvironment[RAH_AGENT_MEMORY_DIR_ENV];
+    delete inheritedEnvironment[RAH_AGENT_MEMORY_INDEX_ENV];
+    delete inheritedEnvironment[RAH_AGENT_MEMORY_BOOTSTRAP_JSON_ENV];
+    delete inheritedEnvironment[RAH_AGENT_MEMORY_SOURCE_FILE_ENV];
+    delete inheritedEnvironment[RAH_AGENT_APP_INBOX_JSON_ENV];
+    delete inheritedEnvironment.RAH_AGENT_INBOX_API_URL;
+    delete inheritedEnvironment.RAH_AGENT_INBOX_SESSION_FILE;
+    delete inheritedEnvironment.RAH_AGENT_INBOX_CLI;
+    const environment: NodeJS.ProcessEnv = {
+      ...inheritedEnvironment,
+      ...environmentLease?.env,
+      ...(input.agent === undefined
+        ? {}
+        : { RAH_AGENT_CONTEXT_JSON: JSON.stringify(input.agent) }),
+      ...(input.contextManifest === undefined
+        ? {}
+        : {
+            RAH_CONTEXT_MANIFEST_JSON: JSON.stringify(input.contextManifest),
+          }),
+      RAH_ACTIVATION_ID: input.activationId,
+      RAH_ACTIVATION_REASON: input.reason,
+      RAH_CONSUMER_ID: input.consumerId,
+      RAH_FROM_SEQ: String(input.fromSeq),
+      RAH_HOST_ID: input.hostId,
+      RAH_PARTICIPANT_ID: input.participantId,
+      RAH_ROOM_ID: input.roomId,
+      RAH_RUN_ATTEMPT_ID: input.runAttemptId,
+      RAH_TO_SEQ: String(input.toSeq),
+    };
+    delete environment[LEGACY_RAH_WORKER_TOKEN_ENV];
+    const toolDirectory = environment[RAH_AGENT_TOOL_BIN_ENV];
+    delete environment[RAH_AGENT_TOOL_BIN_ENV];
+    if (toolDirectory !== undefined) {
+      environment.PATH = `${toolDirectory}${delimiter}${environment.PATH ?? ""}`;
+    }
+    return environment;
   }
 
   #recoveryDescriptorProvenance(
@@ -1125,7 +1342,23 @@ export class GenericProcessAdapter implements RuntimeAdapter {
     }
   }
 
-  #signal(run: ProcessRun, signal: NodeJS.Signals): void {
+  #signalLeader(run: ProcessRun, signal: NodeJS.Signals): void {
+    const pid = run.child.pid;
+    if (pid === undefined || pid <= 0) {
+      throw new Error("cannot signal a process without a valid pid");
+    }
+
+    try {
+      run.child.kill(signal);
+    } catch (error) {
+      if (error instanceof Error && "code" in error && error.code === "ESRCH") {
+        return;
+      }
+      throw error;
+    }
+  }
+
+  #signalGroup(run: ProcessRun, signal: NodeJS.Signals): void {
     const pid = run.child.pid;
     if (pid === undefined || pid <= 0) {
       throw new Error("cannot signal a process without a valid pid");
@@ -1160,6 +1393,80 @@ export class GenericProcessAdapter implements RuntimeAdapter {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function parseProviderSessionEvidence(
+  value: unknown,
+): RuntimeProviderSessionEvidence | null {
+  if (!isRecord(value) || value.protocol !== "rah-provider-session/v1") {
+    return null;
+  }
+  if (
+    Object.keys(value).sort().join("\0") !==
+      ["protocol", "provider", "providerSessionId", "state"]
+        .sort()
+        .join("\0") ||
+    value.state !== "ready" ||
+    !isSafeProviderSessionText(value.provider, 512) ||
+    !isSafeProviderSessionText(value.providerSessionId, 4_096)
+  ) {
+    throw new Error("invalid Provider session evidence frame");
+  }
+  return {
+    protocol: "rah-provider-session/v1",
+    provider: value.provider,
+    providerSessionId: value.providerSessionId,
+    state: "ready",
+  };
+}
+
+function isSafeProviderSessionText(
+  value: unknown,
+  lengthLimit: number,
+): value is string {
+  return (
+    typeof value === "string" &&
+    value.trim() !== "" &&
+    value.length <= lengthLimit &&
+    !/[\u0000-\u001f\u007f]/u.test(value)
+  );
+}
+
+function activationArguments(
+  fixed: readonly string[],
+  activation: readonly string[] | undefined,
+): readonly string[] {
+  const combined = [...fixed, ...(activation ?? [])];
+  if (combined.length > 512) {
+    throw new Error("runtime argument count exceeds the safe limit");
+  }
+  let bytes = 0;
+  for (const argument of combined) {
+    if (typeof argument !== "string" || argument.includes("\0")) {
+      throw new Error("runtime arguments must be NUL-free strings");
+    }
+    bytes += Buffer.byteLength(argument);
+    if (bytes > 256 * 1_024) {
+      throw new Error("runtime arguments exceed the safe byte limit");
+    }
+  }
+  return combined;
+}
+
+function appendActivationDiagnostics(
+  diagnostics: BoundedOutput,
+  lines: readonly string[] | undefined,
+): void {
+  if (lines === undefined) return;
+  if (lines.length > 32) {
+    throw new Error("activation setup diagnostics exceed the safe count");
+  }
+  for (const line of lines) {
+    if (typeof line !== "string" || line.includes("\0")) {
+      throw new Error("activation setup diagnostics must be NUL-free strings");
+    }
+    diagnostics.append(`[rah-os] ${line.slice(0, 2_048)}\n`);
+  }
 }
 
 function isHighSurrogate(codeUnit: number): boolean {

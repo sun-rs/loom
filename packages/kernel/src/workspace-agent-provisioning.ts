@@ -19,6 +19,7 @@ import {
 } from "./errors.ts";
 import { eventPayloadText } from "./event-payload.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
+import { assertRuntimeOfferSupportsToolAccess } from "./runtime-offer-tool-access.ts";
 import {
   integer,
   jsonObject,
@@ -150,6 +151,10 @@ export function provisionWorkspaceAgentTransaction(
       `RuntimeOffer ${offer.runtimeOfferId} is not mounted for Workspace ${workspaceId}`,
     );
   }
+  assertRuntimeOfferSupportsToolAccess(
+    offer,
+    normalized.toolAccessMode ?? "full_access",
+  );
 
   const createdAt = owner.now().toISOString();
   const participantId = owner.createId("principal");
@@ -198,6 +203,7 @@ export function provisionWorkspaceAgentTransaction(
       { backoff: "bounded", maxAttempts: 3 },
     ),
     sessionPolicy: normalized.sessionPolicy,
+    toolAccessMode: normalized.toolAccessMode ?? "full_access",
   };
   const policy = ExecutionPolicyRevisionSchema.parse({
     ...policyContent,
@@ -365,6 +371,10 @@ export function normalizeExecutionPolicyContent(
     required: input.required,
     retryPolicyRef: input.retryPolicyRef,
     sessionPolicy: input.sessionPolicy,
+    // Raft's Computer runtime is intentionally unattended and starts with
+    // full tool access. Restricted modes remain explicit RAH OS policy
+    // revisions; they are never inferred or silently upgraded by an adapter.
+    toolAccessMode: input.toolAccessMode ?? "full_access",
   };
 }
 
@@ -439,15 +449,9 @@ function grantHostParticipant(
     .run(JSON.stringify(participantIds), credentialId);
   database
     .prepare(
-      "UPDATE agent_hosts SET participant_ids_json = ?, last_seen_at = ?, last_seen_ms = ? WHERE host_id = ? AND credential_id = ?",
+      "UPDATE agent_hosts SET participant_ids_json = ? WHERE host_id = ? AND credential_id = ?",
     )
-    .run(
-      JSON.stringify(participantIds),
-      createdAt,
-      nowMs,
-      hostId,
-      credentialId,
-    );
+    .run(JSON.stringify(participantIds), hostId, credentialId);
 }
 
 function workspaceAgentProvisionResult(
@@ -519,7 +523,24 @@ function workspaceAgentProvisionResult(
 
 function normalizeWorkspaceAgentProvisionInput(
   input: WorkspaceAgentProvisionInput,
-): WorkspaceAgentProvisionInput {
+): WorkspaceAgentProvisionInput & {
+  sessionPolicy: "prefer_resume";
+  toolAccessMode: "full_access";
+} {
+  if (
+    input.sessionPolicy !== undefined &&
+    input.sessionPolicy !== "prefer_resume"
+  ) {
+    throw new Error(
+      "standard Raft policy owns Provider session reuse automatically",
+    );
+  }
+  if (
+    input.toolAccessMode !== undefined &&
+    input.toolAccessMode !== "full_access"
+  ) {
+    throw new Error("standard Raft policy requires full_access");
+  }
   const handle = requiredBoundedText(input.handle, "handle", 64);
   if (!/^[\p{L}\p{N}][\p{L}\p{N}._-]*$/u.test(handle)) {
     throw new Error(
@@ -565,7 +586,10 @@ function normalizeWorkspaceAgentProvisionInput(
       "runtimeOfferId",
       512,
     ),
-    sessionPolicy: input.sessionPolicy,
+    // Provider sessions are a Raft-style runtime detail: reuse when proven,
+    // otherwise cold-start. Human clients never select a competing policy.
+    sessionPolicy: "prefer_resume",
+    toolAccessMode: "full_access",
   };
 }
 

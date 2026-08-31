@@ -10,7 +10,154 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { discoverKnownLocalClis } from "../src/local-runtime-inventory.ts";
+import {
+  buildLocalRuntimeInventoryResponse,
+  discoverKnownLocalClis,
+  mergeLocalRuntimeInventory,
+} from "../src/local-runtime-inventory.ts";
+
+test("configured Runtime availability follows the current canonical Offer", () => {
+  const response = buildLocalRuntimeInventoryResponse({
+    actor: {} as never,
+    configured: [
+      {
+        available: true,
+        displayName: "Codex",
+        executable: "codex",
+        modelBindingDescriptors: [],
+        runtimeOfferId: "runtime-offer-codex",
+        runtimeProfileId: "runtime-profile-codex",
+        runtimeProfileRevisionId: "runtime-profile-revision-codex",
+      },
+    ],
+    discovered: [],
+    hostId: "host-1",
+    kernel: {
+      listAgentCatalog: () => [],
+      listHosts: () => [],
+      runtimeOfferIsCurrentlyAvailable: () => false,
+    } as never,
+  });
+
+  assert.equal(response.runtimes[0]?.available, false);
+});
+
+test("Computer connection is heartbeat evidence, independent of CLI readiness", () => {
+  const now = new Date("2026-08-31T00:01:00Z");
+  let state = "online",
+    lastSeenAt = now.toISOString();
+  const input = {
+    actor: {} as never,
+    configured: [],
+    discovered: [],
+    hostId: "host-1",
+    now,
+    kernel: {
+      listAgentCatalog: () => [],
+      listHosts: () => [
+        {
+          hostId: "host-1",
+          instanceId: "generation-1",
+          state,
+          lastSeenAt,
+          buildVersion: "test",
+        },
+      ],
+    } as never,
+  };
+  assert.equal(
+    buildLocalRuntimeInventoryResponse(input).computer?.status,
+    "online",
+  );
+  lastSeenAt = "2026-08-31T00:00:00Z";
+  assert.equal(
+    buildLocalRuntimeInventoryResponse(input).computer?.status,
+    "offline",
+  );
+  lastSeenAt = now.toISOString();
+  state = "draining";
+  assert.equal(
+    buildLocalRuntimeInventoryResponse(input).computer?.status,
+    "draining",
+  );
+  state = "offline";
+  assert.equal(
+    buildLocalRuntimeInventoryResponse(input).computer?.status,
+    "offline",
+  );
+});
+
+test("configured Runtime identity suppresses the discovery alias for the same executable", () => {
+  const resolvedExecutablePath = "/opt/local/bin/codex-real";
+  const inventory = mergeLocalRuntimeInventory({
+    configured: [
+      {
+        agentBindings: [],
+        available: true,
+        displayName: "Codex · local account default",
+        executable: resolvedExecutablePath,
+        modelBindingDescriptors: [],
+        resolvedExecutablePath,
+        runtimeOfferId: "runtime-offer-codex",
+        runtimeProfileId: "runtime-profile-codex",
+        runtimeProfileRevisionId: "runtime-profile-revision-codex",
+      },
+    ],
+    discovered: [
+      {
+        agentBindings: [],
+        available: true,
+        configured: false,
+        displayName: "Codex",
+        executable: "codex",
+        modelBindingDescriptors: [],
+        resolvedExecutablePath,
+        source: "discovered",
+        version: "codex-cli 0.149.1",
+      },
+    ],
+  });
+
+  assert.equal(inventory.length, 1);
+  assert.equal(inventory[0]?.source, "configured");
+  assert.equal(inventory[0]?.version, "codex-cli 0.149.1");
+});
+
+test("configured and discovered Runtimes remain distinct when their resolved executables differ", () => {
+  const inventory = mergeLocalRuntimeInventory({
+    configured: [
+      {
+        agentBindings: [],
+        available: true,
+        displayName: "Codex · pinned install",
+        executable: "codex",
+        modelBindingDescriptors: [],
+        resolvedExecutablePath: "/Applications/RAH/bin/codex",
+        runtimeOfferId: "runtime-offer-codex",
+        runtimeProfileId: "runtime-profile-codex",
+        runtimeProfileRevisionId: "runtime-profile-revision-codex",
+      },
+    ],
+    discovered: [
+      {
+        agentBindings: [],
+        available: true,
+        configured: false,
+        displayName: "Codex",
+        executable: "codex",
+        modelBindingDescriptors: [],
+        resolvedExecutablePath: "/opt/homebrew/bin/codex",
+        source: "discovered",
+      },
+    ],
+  });
+
+  assert.equal(inventory.length, 2);
+  assert.deepEqual(
+    inventory.map(({ source }) => source),
+    ["configured", "discovered"],
+  );
+});
 
 test("local CLI discovery resolves executable identity and bounded version without a shell", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-local-cli-discovery-"));
@@ -30,7 +177,10 @@ test("local CLI discovery resolves executable identity and bounded version witho
 
     const inventory = await discoverKnownLocalClis({
       environment: { PATH: directory },
-      versionTimeoutMs: 2_000,
+      // This is the positive-path assertion, not the timeout gate. Keep enough
+      // headroom for a fully loaded serial suite; production discovery remains
+      // independently bounded by its 2s default.
+      versionTimeoutMs: 10_000,
     });
     const codex = inventory.find(({ executable }) => executable === "codex");
     const kimi = inventory.find(({ executable }) => executable === "kimi");

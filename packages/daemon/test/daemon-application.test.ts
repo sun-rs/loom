@@ -47,6 +47,50 @@ test("daemon config is strict and file secrets must be owner-private", async () 
     assert.throws(() =>
       DaemonConfigSchema.parse({ ...config, schemaVersion: 1 }),
     );
+    const managedMcpConfig = {
+      ...config,
+      managedMcpExecutors: [
+        {
+          bearerToken: { path: secretPath, source: "file" as const },
+          executorRef: "room-tools",
+          transport: {
+            kind: "streamable-http" as const,
+            url: "https://mcp.example.test/mcp",
+          },
+        },
+      ],
+    };
+    assert.deepEqual(
+      DaemonConfigSchema.parse(managedMcpConfig),
+      managedMcpConfig,
+    );
+    assert.throws(
+      () =>
+        DaemonConfigSchema.parse({
+          ...managedMcpConfig,
+          managedMcpExecutors: [
+            managedMcpConfig.managedMcpExecutors[0],
+            managedMcpConfig.managedMcpExecutors[0],
+          ],
+        }),
+      /duplicate managed MCP executorRef/u,
+    );
+    assert.throws(
+      () =>
+        DaemonConfigSchema.parse({
+          ...managedMcpConfig,
+          managedMcpExecutors: [
+            {
+              executorRef: "cleartext-remote",
+              transport: {
+                kind: "streamable-http",
+                url: "http://mcp.example.test/mcp",
+              },
+            },
+          ],
+        }),
+      /HTTPS or loopback HTTP/u,
+    );
     assert.throws(() =>
       DaemonConfigSchema.parse({
         ...config,
@@ -263,6 +307,10 @@ test("Human API drives two Workspace Agents through daemon v4 and reconnect reco
           versionId: `daemon-v4-retry-${String(index)}-v1`,
         },
         sessionPolicy: "fresh",
+        // This fixture is an intentionally provider-neutral generic process;
+        // restricted defaults fail closed because it publishes no native
+        // sandbox mapping.
+        toolAccessMode: "full_access",
       }).policy;
       const definition = seed.createAgentDefinition(humanActor, {
         basedOnRoomSeq: latestRoomSeq(seed, humanActor, catalogRoom.roomId),
@@ -598,6 +646,7 @@ test("Human API drives two Workspace Agents through daemon v4 and reconnect reco
       agents.map((agent) => agent.principal.principalId).sort(),
     );
     const submittedTask = activeObserver.listTasks(humanActor, { roomId })[0];
+    assert.ok(submittedTask);
     assert.equal(submittedTask?.taskId, taskId);
     assert.ok(
       agents.some(
@@ -607,10 +656,12 @@ test("Human API drives two Workspace Agents through daemon v4 and reconnect reco
     );
     const agentReplies = activeObserver
       .listMessages(humanActor, { roomId })
-      .messages.filter((candidate) =>
-        agents.some(
-          (agent) => agent.principal.principalId === candidate.actorId,
-        ),
+      .messages.filter(
+        (candidate) =>
+          candidate.threadId === undefined &&
+          agents.some(
+            (agent) => agent.principal.principalId === candidate.actorId,
+          ),
       );
     assert.equal(
       agentReplies.length,
@@ -630,6 +681,18 @@ test("Human API drives two Workspace Agents through daemon v4 and reconnect reco
         ),
       );
     }
+    assert.deepEqual(
+      activeObserver
+        .listMessages(humanActor, {
+          roomId,
+          threadId: submittedTask.threadId,
+        })
+        .messages.map(({ body }) => body),
+      [
+        "Fake Worker verified the daemon Task command path",
+        "Fake Worker completed the durable Task protocol",
+      ],
+    );
 
     const reviewDelivery = await requireJson<{ latestRoomSeq: number }>(
       await clientRequest(firstOrigin, "/v3/client/rooms/sync", {
@@ -668,7 +731,6 @@ test("Human API drives two Workspace Agents through daemon v4 and reconnect reco
         modelIntent: { fallback: "disabled", reasoning: "default" },
         role: "Release reviewer",
         runtimeOfferId: offerIds[0],
-        sessionPolicy: "fresh",
       }),
     );
     assert.equal(provisionedAgent.agent.handle, "review-agent");

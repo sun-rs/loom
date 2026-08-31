@@ -8,7 +8,11 @@ import test from "node:test";
 import { WorkerApplicationService } from "@rah-os/application-service";
 import { RoomKernel } from "@rah-os/kernel";
 
-import { AgentHost, GenericProcessAdapter } from "../src/index.ts";
+import {
+  AgentHost,
+  createWorkerToolTransportEnvironment,
+  GenericProcessAdapter,
+} from "../src/index.ts";
 
 const fakeCliPath = fileURLToPath(
   new URL("./fixtures/fake-cli.mjs", import.meta.url),
@@ -61,24 +65,23 @@ test("an external process proves Room delivery through a scoped Worker API", asy
 
     let issuedToken: string | undefined;
     const runtime = new GenericProcessAdapter({
-      activationEnvironment: (input) => {
+      activationEnvironment: async (input) => {
         const credential = service.issueActivationCredential(
           hostContext,
           input,
         );
         issuedToken = credential.accessToken;
-        return {
-          env: {
-            RAH_WORKER_API_URL: service.origin,
-            RAH_WORKER_TOKEN: credential.accessToken,
-          },
-          release: credential.revoke,
-        };
+        return await createWorkerToolTransportEnvironment({
+          credentialDirectory: join(directory, "worker-credentials"),
+          revokeCredential: credential.revoke,
+          workerAccessToken: credential.accessToken,
+          workerApiOrigin: service.origin,
+        });
       },
       args: [fakeCliPath],
       command: process.execPath,
       cwd: directory,
-      env: { RAH_FAKE_MODE: "worker-sync" },
+      env: { RAH_FAKE_MODE: "worker-cli-sync" },
     });
     const host = new AgentHost({
       host: hostContext,
@@ -98,7 +101,7 @@ test("an external process proves Room delivery through a scoped Worker API", asy
       runtime.diagnostics({
         runId: result.state === "completed" ? result.runId : "unreachable",
       }).stdout,
-      /worker-sync-finished/,
+      /worker-cli-sync-finished/,
     );
     assert.ok(issuedToken);
     const revokedResponse = await fetch(`${service.origin}/v1/worker/sync`, {

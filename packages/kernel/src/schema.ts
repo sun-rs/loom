@@ -53,10 +53,70 @@ CREATE TABLE IF NOT EXISTS agent_host_credentials (
 CREATE INDEX IF NOT EXISTS idx_agent_host_credentials_active
   ON agent_host_credentials(host_id, revoked_at);
 
+CREATE TABLE IF NOT EXISTS agent_memory_homes (
+  participant_id TEXT PRIMARY KEY REFERENCES principals(principal_id),
+  owner_host_id TEXT,
+  state TEXT NOT NULL CHECK (state IN ('bound', 'conflicted')),
+  bound_at TEXT NOT NULL,
+  CHECK ((state = 'bound' AND owner_host_id IS NOT NULL) OR (state = 'conflicted' AND owner_host_id IS NULL))
+) STRICT;
+
+CREATE TABLE IF NOT EXISTS agent_exclusive_operation_leases (
+  lease_id TEXT PRIMARY KEY,
+  operation_id TEXT NOT NULL UNIQUE,
+  participant_id TEXT NOT NULL REFERENCES principals(principal_id),
+  kind TEXT NOT NULL CHECK (kind IN ('memory_maintenance', 'memory_reset', 'execution_restart', 'task_reassignment')),
+  owner_host_id TEXT NOT NULL,
+  owner_host_instance_id TEXT NOT NULL,
+  state TEXT NOT NULL CHECK (state IN ('active', 'released')),
+  acquired_at TEXT NOT NULL,
+  renewed_at TEXT NOT NULL,
+  lease_until TEXT NOT NULL,
+  lease_until_ms INTEGER NOT NULL,
+  released_at TEXT,
+  CHECK ((state = 'active' AND released_at IS NULL) OR (state = 'released' AND released_at IS NOT NULL))
+) STRICT;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_one_active_agent_exclusive_operation
+  ON agent_exclusive_operation_leases(participant_id)
+  WHERE state = 'active';
+
+CREATE INDEX IF NOT EXISTS idx_agent_exclusive_operation_owner
+  ON agent_exclusive_operation_leases(owner_host_id, owner_host_instance_id, state, lease_until_ms);
+
+CREATE TABLE IF NOT EXISTS computer_operations (
+  operation_id TEXT PRIMARY KEY,
+  host_id TEXT NOT NULL REFERENCES agent_hosts(host_id),
+  idempotency_key TEXT NOT NULL,
+  action TEXT NOT NULL CHECK (action IN ('restart', 'upgrade')),
+  target_build_version TEXT,
+  state TEXT NOT NULL CHECK (state IN ('pending', 'claimed', 'in_progress', 'awaiting_reconnect', 'succeeded', 'failed')),
+  phase TEXT CHECK (phase IN ('draining', 'downloading', 'verifying', 'staging', 'replacing', 'restarting')),
+  claimed_credential_id TEXT,
+  claimed_host_instance_id TEXT,
+  ready_host_instance_id TEXT,
+  observed_build_version TEXT,
+  failure_code TEXT CHECK (failure_code IN ('control_unavailable', 'download_failed', 'identity_attestation_failed', 'replacement_failed', 'staging_failed', 'unsupported_operation', 'verification_failed', 'version_attestation_failed')),
+  requested_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  completed_at TEXT,
+  UNIQUE (host_id, idempotency_key),
+  CHECK ((action = 'restart' AND target_build_version IS NULL) OR (action = 'upgrade' AND target_build_version IS NOT NULL)),
+  CHECK ((state IN ('succeeded', 'failed') AND completed_at IS NOT NULL) OR (state NOT IN ('succeeded', 'failed') AND completed_at IS NULL))
+) STRICT;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_one_active_computer_operation_per_host
+  ON computer_operations(host_id)
+  WHERE state NOT IN ('succeeded', 'failed');
+
+CREATE INDEX IF NOT EXISTS idx_computer_operations_host_state
+  ON computer_operations(host_id, state, requested_at, operation_id);
+
 CREATE TABLE IF NOT EXISTS workspaces (
   workspace_id TEXT PRIMARY KEY,
   slug TEXT NOT NULL UNIQUE,
   name TEXT NOT NULL,
+  avatar_key TEXT,
   state TEXT NOT NULL CHECK (state IN ('active', 'archived')),
   created_at TEXT NOT NULL,
   archived_at TEXT,
@@ -69,6 +129,8 @@ CREATE TABLE IF NOT EXISTS rooms (
   kind TEXT NOT NULL CHECK (kind IN ('channel', 'direct', 'control')),
   slug TEXT NOT NULL,
   name TEXT NOT NULL,
+  description TEXT,
+  visibility TEXT NOT NULL DEFAULT 'private' CHECK (visibility IN ('public', 'private')),
   next_seq INTEGER NOT NULL DEFAULT 1 CHECK (next_seq > 0),
   created_at TEXT NOT NULL,
   archived_at TEXT,
@@ -81,6 +143,15 @@ CREATE TABLE IF NOT EXISTS memberships (
   role TEXT NOT NULL CHECK (role IN ('owner', 'admin', 'member')),
   joined_at TEXT NOT NULL,
   PRIMARY KEY (room_id, principal_id)
+) STRICT;
+
+CREATE TABLE IF NOT EXISTS direct_room_pairs (
+  workspace_id TEXT NOT NULL REFERENCES workspaces(workspace_id),
+  left_principal_id TEXT NOT NULL REFERENCES principals(principal_id),
+  right_principal_id TEXT NOT NULL REFERENCES principals(principal_id),
+  room_id TEXT NOT NULL UNIQUE REFERENCES rooms(room_id),
+  PRIMARY KEY (workspace_id, left_principal_id, right_principal_id),
+  CHECK (left_principal_id < right_principal_id)
 ) STRICT;
 
 CREATE TABLE IF NOT EXISTS messages (
@@ -112,6 +183,9 @@ CREATE TABLE IF NOT EXISTS tasks (
   room_id TEXT NOT NULL REFERENCES rooms(room_id),
   creator_id TEXT NOT NULL REFERENCES principals(principal_id),
   assignee_id TEXT REFERENCES principals(principal_id),
+  task_number INTEGER NOT NULL CHECK (task_number > 0),
+  source_message_id TEXT NOT NULL,
+  thread_id TEXT NOT NULL,
   title TEXT NOT NULL,
   description TEXT,
   state TEXT NOT NULL CHECK (state IN ('todo', 'claimed', 'in_progress', 'waiting_input', 'blocked', 'submitted', 'completed', 'cancelled')),
@@ -127,7 +201,14 @@ CREATE TABLE IF NOT EXISTS tasks (
   blocked_reason TEXT,
   blocked_at TEXT,
   cancellation_reason TEXT,
-  cancelled_at TEXT
+  cancelled_at TEXT,
+  UNIQUE (room_id, task_number),
+  UNIQUE (source_message_id),
+  UNIQUE (thread_id),
+  FOREIGN KEY (room_id, source_message_id)
+    REFERENCES messages(room_id, message_id),
+  FOREIGN KEY (room_id, thread_id)
+    REFERENCES threads(room_id, thread_id)
 ) STRICT;
 
 CREATE INDEX IF NOT EXISTS idx_tasks_room_state
@@ -146,6 +227,56 @@ CREATE TABLE IF NOT EXISTS task_dependencies (
 
 CREATE INDEX IF NOT EXISTS idx_task_dependencies_dependency
   ON task_dependencies(dependency_task_id, task_id);
+
+CREATE TABLE IF NOT EXISTS task_participants (
+  task_id TEXT NOT NULL REFERENCES tasks(task_id),
+  participant_id TEXT NOT NULL REFERENCES principals(principal_id),
+  role TEXT NOT NULL CHECK (role IN ('collaborator', 'reviewer')),
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (task_id, participant_id, role)
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS idx_task_participants_participant
+  ON task_participants(participant_id, role, task_id);
+
+CREATE TABLE IF NOT EXISTS task_submissions (
+  submission_id TEXT PRIMARY KEY,
+  task_id TEXT NOT NULL REFERENCES tasks(task_id),
+  room_id TEXT NOT NULL REFERENCES rooms(room_id),
+  submission_number INTEGER NOT NULL CHECK (submission_number > 0),
+  producer_id TEXT NOT NULL REFERENCES principals(principal_id),
+  summary TEXT NOT NULL,
+  message_id TEXT NOT NULL,
+  submission_digest TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  UNIQUE (task_id, submission_number),
+  UNIQUE (message_id),
+  FOREIGN KEY (room_id, message_id)
+    REFERENCES messages(room_id, message_id)
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS idx_task_submissions_task
+  ON task_submissions(task_id, submission_number DESC);
+
+CREATE TABLE IF NOT EXISTS task_reviews (
+  review_id TEXT PRIMARY KEY,
+  task_id TEXT NOT NULL REFERENCES tasks(task_id),
+  room_id TEXT NOT NULL REFERENCES rooms(room_id),
+  submission_id TEXT NOT NULL REFERENCES task_submissions(submission_id),
+  submission_digest TEXT NOT NULL,
+  reviewer_id TEXT NOT NULL REFERENCES principals(principal_id),
+  disposition TEXT NOT NULL CHECK (disposition IN ('approved', 'changes_requested')),
+  summary TEXT NOT NULL,
+  message_id TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  UNIQUE (submission_id, reviewer_id),
+  UNIQUE (message_id),
+  FOREIGN KEY (room_id, message_id)
+    REFERENCES messages(room_id, message_id)
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS idx_task_reviews_task
+  ON task_reviews(task_id, created_at, review_id);
 
 CREATE TABLE IF NOT EXISTS input_requests (
   input_request_id TEXT PRIMARY KEY,
@@ -224,6 +355,24 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_one_queued_activation_per_lane
 CREATE INDEX IF NOT EXISTS idx_activation_lease_queue
   ON activations(state, available_at_ms, lease_until_ms, created_at);
 
+CREATE TABLE IF NOT EXISTS activation_cancellation_requests (
+  request_id TEXT PRIMARY KEY,
+  activation_id TEXT NOT NULL REFERENCES activations(activation_id),
+  activation_attempt_number INTEGER NOT NULL CHECK (activation_attempt_number > 0),
+  room_id TEXT NOT NULL REFERENCES rooms(room_id),
+  task_id TEXT NOT NULL REFERENCES tasks(task_id),
+  participant_id TEXT NOT NULL REFERENCES principals(principal_id),
+  requested_by TEXT NOT NULL REFERENCES principals(principal_id),
+  reason TEXT NOT NULL,
+  requested_at TEXT NOT NULL,
+  resolved_at TEXT,
+  UNIQUE (activation_id, activation_attempt_number)
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS idx_activation_cancellation_unresolved_task
+  ON activation_cancellation_requests(task_id, activation_id)
+  WHERE resolved_at IS NULL;
+
 CREATE TABLE IF NOT EXISTS execution_policies (
   execution_policy_id TEXT PRIMARY KEY,
   control_room_id TEXT NOT NULL REFERENCES rooms(room_id),
@@ -265,6 +414,79 @@ CREATE TABLE IF NOT EXISTS agent_definition_revisions (
   created_at TEXT NOT NULL,
   UNIQUE (agent_definition_id, revision)
 ) STRICT;
+
+CREATE TABLE IF NOT EXISTS managed_mcp_servers (
+  mcp_server_id TEXT PRIMARY KEY,
+  control_room_id TEXT NOT NULL REFERENCES rooms(room_id),
+  current_config_version INTEGER NOT NULL CHECK (current_config_version > 0),
+  current_revision_id TEXT NOT NULL UNIQUE,
+  state TEXT NOT NULL CHECK (state IN ('enabled', 'disabled')),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+) STRICT;
+
+CREATE TABLE IF NOT EXISTS managed_mcp_server_revisions (
+  managed_mcp_server_revision_id TEXT PRIMARY KEY,
+  mcp_server_id TEXT NOT NULL REFERENCES managed_mcp_servers(mcp_server_id),
+  config_version INTEGER NOT NULL CHECK (config_version > 0),
+  content_digest TEXT NOT NULL,
+  definition_json TEXT NOT NULL,
+  created_by TEXT NOT NULL REFERENCES principals(principal_id),
+  created_at TEXT NOT NULL,
+  UNIQUE (mcp_server_id, config_version)
+) STRICT;
+
+CREATE TABLE IF NOT EXISTS managed_mcp_assignments (
+  managed_mcp_assignment_id TEXT PRIMARY KEY,
+  participant_id TEXT NOT NULL REFERENCES principals(principal_id),
+  mcp_server_id TEXT NOT NULL REFERENCES managed_mcp_servers(mcp_server_id),
+  current_assignment_version INTEGER NOT NULL CHECK (current_assignment_version > 0),
+  current_revision_id TEXT NOT NULL UNIQUE,
+  enabled INTEGER NOT NULL CHECK (enabled IN (0, 1)),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  UNIQUE (participant_id, mcp_server_id)
+) STRICT;
+
+CREATE TABLE IF NOT EXISTS managed_mcp_assignment_revisions (
+  managed_mcp_assignment_revision_id TEXT PRIMARY KEY,
+  managed_mcp_assignment_id TEXT NOT NULL REFERENCES managed_mcp_assignments(managed_mcp_assignment_id),
+  assignment_version INTEGER NOT NULL CHECK (assignment_version > 0),
+  allowed_tool_names_json TEXT NOT NULL,
+  created_by TEXT NOT NULL REFERENCES principals(principal_id),
+  created_at TEXT NOT NULL,
+  UNIQUE (managed_mcp_assignment_id, assignment_version)
+) STRICT;
+
+CREATE TABLE IF NOT EXISTS managed_mcp_calls (
+  managed_mcp_call_id TEXT PRIMARY KEY,
+  run_attempt_id TEXT NOT NULL REFERENCES run_attempts(run_attempt_id),
+  participant_id TEXT NOT NULL REFERENCES principals(principal_id),
+  room_id TEXT NOT NULL REFERENCES rooms(room_id),
+  mcp_server_id TEXT NOT NULL REFERENCES managed_mcp_servers(mcp_server_id),
+  tool_name TEXT NOT NULL,
+  config_version INTEGER NOT NULL CHECK (config_version > 0),
+  assignment_version INTEGER NOT NULL CHECK (assignment_version > 0),
+  arguments_digest TEXT NOT NULL,
+  state TEXT NOT NULL CHECK (state IN ('pending', 'completed', 'failed')),
+  is_error INTEGER CHECK (is_error IN (0, 1)),
+  result_digest TEXT,
+  failure_code TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  completed_at TEXT,
+  CHECK ((state = 'pending' AND completed_at IS NULL) OR
+         (state <> 'pending' AND completed_at IS NOT NULL))
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS idx_managed_mcp_assignments_participant
+  ON managed_mcp_assignments(participant_id, enabled, mcp_server_id);
+
+CREATE INDEX IF NOT EXISTS idx_managed_mcp_calls_run
+  ON managed_mcp_calls(run_attempt_id, created_at, managed_mcp_call_id);
+
+CREATE INDEX IF NOT EXISTS idx_managed_mcp_calls_participant
+  ON managed_mcp_calls(participant_id, created_at, managed_mcp_call_id);
 
 CREATE TABLE IF NOT EXISTS runtime_offers (
   runtime_offer_id TEXT PRIMARY KEY,
@@ -386,6 +608,34 @@ CREATE TABLE IF NOT EXISTS run_attempts (
 
 CREATE INDEX IF NOT EXISTS idx_run_attempts_room_started
   ON run_attempts(room_id, started_at, run_attempt_id);
+
+CREATE TABLE IF NOT EXISTS run_trajectory_entries (
+  server_sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+  activity_id TEXT NOT NULL UNIQUE,
+  run_attempt_id TEXT NOT NULL REFERENCES run_attempts(run_attempt_id),
+  runtime_run_id TEXT NOT NULL,
+  room_id TEXT NOT NULL REFERENCES rooms(room_id),
+  participant_id TEXT NOT NULL REFERENCES principals(principal_id),
+  producer_sequence INTEGER NOT NULL CHECK (producer_sequence > 0),
+  observed_at TEXT NOT NULL,
+  entry_json TEXT NOT NULL,
+  recorded_at TEXT NOT NULL,
+  UNIQUE (runtime_run_id, producer_sequence)
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS idx_run_trajectory_agent_page
+  ON run_trajectory_entries(participant_id, server_sequence DESC);
+
+CREATE INDEX IF NOT EXISTS idx_run_trajectory_room_page
+  ON run_trajectory_entries(room_id, server_sequence DESC);
+
+CREATE TABLE IF NOT EXISTS context_manifests (
+  context_manifest_id TEXT PRIMARY KEY,
+  run_attempt_id TEXT NOT NULL UNIQUE REFERENCES run_attempts(run_attempt_id),
+  content_digest TEXT NOT NULL,
+  manifest_json TEXT NOT NULL,
+  created_at TEXT NOT NULL
+) STRICT;
 
 CREATE TABLE IF NOT EXISTS runtime_processes (
   runtime_process_id TEXT PRIMARY KEY,
@@ -618,6 +868,25 @@ export function migrateCollaborationSchemaV7(
     throw error;
   } finally {
     database.exec("PRAGMA foreign_keys = ON");
+  }
+}
+
+export function migrateRoomMetadataV14(database: DatabaseSync): void {
+  const roomColumns = database.prepare("PRAGMA table_info(rooms)").all();
+  if (
+    !roomColumns.some((row) => requiredString(row, "name") === "description")
+  ) {
+    database.exec("ALTER TABLE rooms ADD COLUMN description TEXT");
+  }
+  if (
+    !roomColumns.some((row) => requiredString(row, "name") === "visibility")
+  ) {
+    database.exec(
+      "ALTER TABLE rooms ADD COLUMN visibility TEXT NOT NULL DEFAULT 'private' CHECK (visibility IN ('public', 'private'))",
+    );
+    database.exec(
+      "UPDATE rooms SET visibility = 'public' WHERE kind = 'channel'",
+    );
   }
 }
 

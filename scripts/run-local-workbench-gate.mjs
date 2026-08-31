@@ -11,7 +11,7 @@ import {
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { delimiter, dirname, join } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
 import { HttpRahClient } from "@rah-os/client-sdk";
 
@@ -41,7 +41,10 @@ const fakeCli = join(
   "fixtures",
   "fake-cli.mjs",
 );
-const fakeArgvPath = join(temporaryDirectory, "fake-codex-argv.json");
+const fakeCodexProtocolPath = join(
+  temporaryDirectory,
+  "fake-codex-protocol.jsonl",
+);
 const webPort = await availablePort();
 let browser;
 let chrome;
@@ -54,13 +57,39 @@ try {
   writeFileSync(
     codexPath,
     `#!${process.execPath}
-import { writeFileSync } from "node:fs";
+import { appendFileSync } from "node:fs";
+import { spawn } from "node:child_process";
+import { createInterface } from "node:readline";
 const args = process.argv.slice(2);
 if (args.join(" ") === "debug models --bundled") {
   process.stdout.write(JSON.stringify({models:[{slug:"gpt-test",visibility:"list",supported_in_api:true,supported_reasoning_levels:[{effort:"high"}],service_tiers:[]}]}));
 } else {
-  writeFileSync(process.env.RAH_FAKE_ARGV_PATH, JSON.stringify(args));
-  await import(${JSON.stringify(pathToFileURL(fakeCli).href)});
+  if (args.join(" ") !== "app-server --listen stdio://") process.exit(64);
+  const record = (value) => appendFileSync(process.env.RAH_FAKE_CODEX_PROTOCOL_PATH, JSON.stringify(value) + "\\n");
+  const send = (value) => process.stdout.write(JSON.stringify(value) + "\\n");
+  record({args});
+  const lines = createInterface({input:process.stdin});
+  lines.on("line", (line) => {
+    const frame = JSON.parse(line);
+    record(frame);
+    if (frame.method === "initialize") {
+      send({jsonrpc:"2.0",id:frame.id,result:{userAgent:"local-workbench-gate-codex/1"}});
+    } else if (frame.method === "thread/start") {
+      send({jsonrpc:"2.0",id:frame.id,result:{thread:{id:"local-workbench-thread"}}});
+    } else if (frame.method === "thread/resume") {
+      send({jsonrpc:"2.0",id:frame.id,result:{thread:{id:frame.params.threadId}}});
+    } else if (frame.method === "turn/start") {
+      send({jsonrpc:"2.0",id:frame.id,result:{turn:{id:"local-workbench-turn",status:"inProgress"}}});
+      const worker = spawn(process.execPath, [${JSON.stringify(fakeCli)}], {
+        env: process.env,
+        stdio: ["ignore", "ignore", "inherit"],
+      });
+      worker.once("exit", (code) => {
+        const status = code === 0 ? "completed" : "failed";
+        send({jsonrpc:"2.0",method:"turn/completed",params:{threadId:"local-workbench-thread",turn:{id:"local-workbench-turn",status}}});
+      });
+    }
+  });
 }
 `,
     { mode: 0o700 },
@@ -124,7 +153,6 @@ if (args.join(" ") === "debug models --bundled") {
     },
     role: agentDetail.agent.currentRevision.role,
     runtimeOfferId: runtime.runtimeOfferId,
-    sessionPolicy: agentDetail.policy.sessionPolicy,
   });
 
   const initialSync = await firstSession.client.request("room.sync", {
@@ -153,14 +181,24 @@ if (args.join(" ") === "debug models --bundled") {
       ({ body }) => body === "formal-workbench-agent-reply",
     );
   }, 15_000);
-  assert.deepEqual(JSON.parse(readFileSync(fakeArgvPath, "utf8")).slice(0, 6), [
-    "--model",
-    "gpt-test",
-    "--config",
-    "model_reasoning_effort=high",
-    "exec",
-    "--ephemeral",
+  const codexProtocol = readFileSync(fakeCodexProtocolPath, "utf8")
+    .trim()
+    .split("\n")
+    .map((line) => JSON.parse(line));
+  assert.deepEqual(codexProtocol[0]?.args, [
+    "app-server",
+    "--listen",
+    "stdio://",
   ]);
+  const threadStart = codexProtocol.find(
+    ({ method }) => method === "thread/start",
+  );
+  assert.equal(threadStart?.params.approvalPolicy, "never");
+  assert.equal(threadStart?.params.sandbox, "danger-full-access");
+  assert.equal(threadStart?.params.model, "gpt-test");
+  assert.equal(threadStart?.params.config.model_reasoning_effort, "high");
+  const turnStart = codexProtocol.find(({ method }) => method === "turn/start");
+  assert.equal(turnStart?.params.effort, "high");
 
   await terminate(workbench);
   workbench = undefined;
@@ -187,6 +225,39 @@ if (args.join(" ") === "debug models --bundled") {
     modelBinding.modelBindingId,
   ]);
   assert.equal(restoredAgent.policy.modelIntent.reasoning, "high");
+  const resumedSync = await secondSession.client.request("room.sync", {
+    consumerId: "local-workbench-gate-resumed",
+    roomId: second.descriptor.defaultRoomId,
+  });
+  await secondSession.client.request("message.post", {
+    basedOnRoomSeq: resumedSync.latestRoomSeq,
+    body: "Prove that the Provider thread resumes after a daemon restart.",
+    idempotencyKey: "local-workbench-gate-resumed-message",
+    recipients: [],
+    roomId: second.descriptor.defaultRoomId,
+  });
+  await waitUntil(async () => {
+    const messages = await secondSession.client.request("message.list", {
+      roomId: second.descriptor.defaultRoomId,
+    });
+    return (
+      messages.messages.filter(
+        ({ body }) => body === "formal-workbench-agent-reply",
+      ).length === 2
+    );
+  }, 15_000);
+  const resumedProtocol = readFileSync(fakeCodexProtocolPath, "utf8")
+    .trim()
+    .split("\n")
+    .map((line) => JSON.parse(line));
+  assert.equal(
+    resumedProtocol.filter(({ method }) => method === "thread/start").length,
+    1,
+  );
+  const threadResume = resumedProtocol.find(
+    ({ method }) => method === "thread/resume",
+  );
+  assert.equal(threadResume?.params.threadId, "local-workbench-thread");
 
   const chromeExecutable = await findChromeExecutable();
   chrome = spawn(
@@ -258,14 +329,28 @@ if (args.join(" ") === "debug models --bundled") {
     browser,
     `document.querySelector('button[title="Agent 与成员"]')?.click()`,
   );
-  await waitForBrowserValue(
-    browser,
-    `document.querySelector(".rah-runtime-card") !== null`,
-    { description: "persistent Agent directory" },
-  );
+  try {
+    await waitForBrowserValue(
+      browser,
+      `document.querySelector(".rah-agent-detail-panel") !== null`,
+      { description: "persistent Agent directory" },
+    );
+  } catch (error) {
+    const pageState = await evaluate(
+      browser,
+      `({
+        body: document.body.innerText.slice(0, 2000),
+        buttons: [...document.querySelectorAll("button")].map((button) => ({disabled: button.disabled, title: button.title})).filter(({title}) => title),
+        href: location.href
+      })`,
+    );
+    throw new Error(
+      `${error instanceof Error ? error.message : String(error)}: ${JSON.stringify(pageState)}`,
+    );
+  }
   await evaluate(
     browser,
-    `[...document.querySelectorAll("button")].find((button) => button.textContent?.trim() === "编辑")?.click()`,
+    `document.querySelector('.rah-agent-detail-head button[title="Agent 菜单"]')?.click()`,
   );
   await waitForBrowserValue(
     browser,
@@ -278,6 +363,13 @@ if (args.join(" ") === "debug models --bundled") {
       `[...document.querySelectorAll(".rah-agent-manage-dialog label")].find((label) => label.firstChild?.textContent?.trim() === "模型")?.querySelector("select")?.value`,
     ),
     modelBinding.modelBindingId,
+  );
+  assert.equal(
+    await evaluate(
+      browser,
+      `[...document.querySelectorAll(".rah-agent-manage-dialog label")].some((label) => /权限|访问模式|沙箱/.test(label.firstChild?.textContent ?? ""))`,
+    ),
+    false,
   );
   await evaluate(
     browser,
@@ -315,6 +407,7 @@ if (args.join(" ") === "debug models --bundled") {
       agentReply: true,
       browser: chromeExecutable,
       persistentRestart: true,
+      providerSessionResume: true,
       productionBuild: true,
       viewport: "390x844",
     })}\n`,
@@ -337,7 +430,7 @@ async function startWorkbench() {
         ...process.env,
         PATH: `${binDirectory}${delimiter}${dirname(process.execPath)}`,
         RAH_FAKE_MODE: "worker-task",
-        RAH_FAKE_ARGV_PATH: fakeArgvPath,
+        RAH_FAKE_CODEX_PROTOCOL_PATH: fakeCodexProtocolPath,
         RAH_FAKE_ROOM_REPLY: "formal-workbench-agent-reply",
         RAH_OS_HOME: workbenchHome,
         RAH_WEB_PORT: String(webPort),

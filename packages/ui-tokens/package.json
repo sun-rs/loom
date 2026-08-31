@@ -4,8 +4,17 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./activity.css": "./generated/activity.css",
+    "./search.css": "./generated/search.css",
+    "./avatar-pack.json": "./generated/generated/raft-official-avatar-pack.json",
     "./channel-extras.css": "./generated/channel-extras.css",
+    "./computers.css": "./generated/generated/raft-official-computers.css",
     "./icons.svg": "./generated/generated/raft-icons.svg",
-    "./styles.css": "./generated/styles.css"
+    "./discovery-icons.svg": "./src/discovery-icons.svg",
+    "./interaction-icons.svg": "./src/interaction-icons.svg",
+    "./members.css": "./generated/generated/raft-official-members-page.css",
+    "./overlays.css": "./generated/generated/raft-official-overlays.css",
+    "./styles.css": "./generated/styles.css",
+    "./tasks.css": "./generated/generated/raft-official-tasks.css"
   }
 }

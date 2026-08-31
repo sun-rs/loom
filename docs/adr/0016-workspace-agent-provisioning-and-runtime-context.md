@@ -19,6 +19,7 @@ Raft 形态的 Agent 不是聊天页里的临时收件人，也不是 Computer �
 7. Web 只通过 typed `RahClient` 调用 provision command。Raft 视觉快照仍只提供 token、图标和交互规格，不成为 Agent 状态 owner。
 8. 已有 Agent 通过单一 `agent.manage` command 原子修订 Definition 与 ExecutionPolicy。handle、显示名称、头像 key、角色、描述、指令、RuntimeOffer、model intent 和 session policy 同步产生新 revision；已经领取的 Placement 保持旧 revision，新 Placement 才读取新 revision。
 9. `enabled / disabled / tombstoned` 是 Kernel-owned 状态。暂停把 Agent 原子改为 disabled，立即阻止新 Message delivery 和 Placement；当前 lane 在 lease maintenance 读取 canonical Agent 状态后受控 cancel，只有 RuntimeProcess terminal proof 成功才把 RunAttempt 记为 cancelled，并将原 Activation 留在 durable queue。恢复为 enabled 后继续排队工作；cancel 无法证明则 quarantine，不能伪造安全暂停。tombstone 必须从 disabled 且没有 queued/leased/quarantined Activation、未完成 Task 或 active Run 的状态进入，随后原子移除所有 Room membership并撤销 Host participant scope。
+10. 标准产品直接采用 Raft 的无人值守 Computer 权限协议：Agent 创建/设置页不显示 CLI 权限选择，新 Agent 与每次 configure 生成的 ExecutionPolicy 固定为 `full_access`，标准 RuntimeOffer 也只发布该值。Codex 映射为 `approvalPolicy=never + danger-full-access`，Claude、Kimi、OpenCode 等映射为当前版本已验证的最高自治参数；Provider 即使继续发出 approval RPC，也只有身份匹配的当前 turn 可以自动获准，重复 ID 内容冲突或外来 thread/turn 一律 fail closed。旧 durable policy 的宽 enum 只用于读取历史数据，下一次 configure 收敛为 `full_access`，不能重新进入新 client contract。这里的 CLI 自治绝不授予 Workspace 管理、Room membership、MCP assignment 或 App 安装权限；这些仍由 Kernel ACL 独立决定。真正需要人类判断的业务输入进入 durable `InputRequest`，不能依赖浏览器在线。
 
 ## 安全与一致性
 
@@ -39,7 +40,7 @@ Raft 形态的 Agent 不是聊天页里的临时收件人，也不是 Computer �
 ## 尚未由本 ADR 完成
 
 - 独立的“重启当前执行”“清除 Provider session”“取消/重派遗留 Task”管理动作；删除仍要求 Agent 已暂停且所有工作达到安全终态；
-- skill/instruction artifact 上传、版本选择、解析与 ContextManifest；
+- Workspace instruction pack 的受限协议、hash 与可回滚安装器，以及每 RunAttempt 的 ContextManifest v1 引用冻结已经实现；skill/instruction Artifact 上传、版本选择、Server assignment、内容解析与 Host materialization proof 仍未实现；
 - private memory policy 编辑和凭据/环境变量安全绑定；
 - Provider 安装、登录探测、RuntimeOffer 管理与 Computer placement 控制；
 - launchd/签名安装包、Keychain、生产 pairing/TLS/allowed-origin LAN 服务；

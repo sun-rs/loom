@@ -1,4 +1,5 @@
 import { z } from "zod";
+export * from "./client-discovery.ts";
 
 import {
   ContentDigestSchema,
@@ -25,7 +26,9 @@ import {
   RuntimeCertificationRefSchema,
   RuntimeCertificationSchema,
   RuntimeModelBindingSchema,
+  RaftUnattendedToolAccessModeSchema,
   ServiceTierSchema,
+  ToolAccessModeSchema,
   WorkspaceModeSchema,
 } from "./execution-policy.ts";
 import {
@@ -34,7 +37,9 @@ import {
   RoomSchema,
 } from "./collaboration.ts";
 import { RoomEventSchema, type RoomEvent } from "./room-event.ts";
+import { ManagedMcpRuntimeAdapterSchema } from "./managed-mcp.ts";
 import {
+  addTaskParticipantSelectionIssues,
   TaskSchema,
   TaskStateSchema,
   type Task,
@@ -43,8 +48,19 @@ import {
 
 export { TaskSchema, TaskStateSchema };
 export type { Task, TaskState };
+export * from "./activation.ts";
+export * from "./agent-memory.ts";
+export * from "./agent-memory-config.ts";
+export * from "./agent-app-inbox.ts";
+export * from "./agent-memory-project.ts";
+export * from "./agent-exclusive-operation.ts";
 export * from "./agent-definition.ts";
+export * from "./context-manifest.ts";
 export * from "./execution-policy.ts";
+export * from "./workspace-instruction-pack.ts";
+export * from "./managed-mcp.ts";
+export * from "./runtime-activity.ts";
+export * from "./review.ts";
 export { ContentDigestSchema } from "./common.ts";
 export type { ContentDigest } from "./common.ts";
 export {
@@ -55,6 +71,7 @@ export {
   RoomKindSchema,
   RoomMembershipSchema,
   RoomSchema,
+  RoomVisibilitySchema,
   ThreadSchema,
   WorkspaceSchema,
   WorkspaceStateSchema,
@@ -67,82 +84,15 @@ export type {
   Room,
   RoomKind,
   RoomMembership,
+  RoomVisibility,
   Thread,
   Workspace,
   WorkspaceState,
 } from "./collaboration.ts";
 export * from "./client.ts";
+export * from "./client-task.ts";
 export { RoomEventSchema } from "./room-event.ts";
 export type { RoomEvent } from "./room-event.ts";
-
-export const ActivationReasonSchema = z.enum([
-  "mention",
-  "dm",
-  "task_assigned",
-  "task_available",
-  "task_updated",
-  "dependency_resolved",
-  "input_requested",
-  "input_resolved",
-  "thread_subscription",
-  "room_policy",
-  "manual",
-]);
-export type ActivationReason = z.infer<typeof ActivationReasonSchema>;
-
-export const ActivationStateSchema = z.enum([
-  "queued",
-  "leased",
-  "quarantined",
-  "completed",
-  "cancelled",
-]);
-export type ActivationState = z.infer<typeof ActivationStateSchema>;
-
-export const ActivationSchema = z
-  .object({
-    activationId: IdentifierSchema,
-    roomId: IdentifierSchema,
-    participantId: IdentifierSchema,
-    fromSeq: z.number().int().positive(),
-    toSeq: z.number().int().positive(),
-    reason: ActivationReasonSchema,
-    state: ActivationStateSchema,
-    leaseOwner: IdentifierSchema.optional(),
-    leaseUntil: TimestampSchema.optional(),
-    attemptCount: z.number().int().nonnegative(),
-    availableAt: TimestampSchema.optional(),
-    lastError: z.string().min(1).optional(),
-    createdAt: TimestampSchema,
-    updatedAt: TimestampSchema,
-  })
-  .strict()
-  .refine((activation) => activation.fromSeq <= activation.toSeq, {
-    message: "fromSeq must be less than or equal to toSeq",
-    path: ["fromSeq"],
-  })
-  .refine(
-    (activation) =>
-      activation.state !== "leased" ||
-      (activation.leaseOwner !== undefined &&
-        activation.leaseUntil !== undefined),
-    {
-      message: "leased activations require leaseOwner and leaseUntil",
-      path: ["leaseOwner"],
-    },
-  );
-export type Activation = z.infer<typeof ActivationSchema>;
-
-export const WakeHintSchema = z
-  .object({
-    activationId: IdentifierSchema,
-    participantId: IdentifierSchema,
-    roomId: IdentifierSchema,
-    headCursor: z.number().int().positive(),
-    reason: ActivationReasonSchema,
-  })
-  .strict();
-export type WakeHint = z.infer<typeof WakeHintSchema>;
 
 export const InboxStateSchema = z.enum(["pending", "acknowledged"]);
 export type InboxState = z.infer<typeof InboxStateSchema>;
@@ -440,6 +390,7 @@ export const RuntimeProfileManifestV2Schema = z
     credentialSlots: z.array(RuntimeCredentialSlotSchema).max(64),
     declaredCapabilities: UniqueIdentifierArraySchema.max(256),
     recoveryDrivers: UniqueIdentifierArraySchema.max(64),
+    managedMcpAdapter: ManagedMcpRuntimeAdapterSchema.optional(),
     workspacePolicy: z
       .object({
         allowedModes: z
@@ -481,7 +432,13 @@ export const RuntimeProfileManifestV3Schema = z
     protocolFamily: z.literal("rah-worker-process/v1"),
     adapter: z
       .object({
-        kind: z.literal("generic-process/v1"),
+        kind: z.enum([
+          "generic-process/v1",
+          "claude-stream-json/v1",
+          "codex-app-server/v1",
+          "kimi-acp/v1",
+          "opencode-server/v1",
+        ]),
         executable: RuntimeExecutableSchema,
         fixedArgs: z
           .array(RuntimeArgumentSchema)
@@ -497,6 +454,7 @@ export const RuntimeProfileManifestV3Schema = z
     credentialSlots: z.array(RuntimeCredentialSlotSchema).max(64),
     declaredCapabilities: UniqueIdentifierArraySchema.max(256),
     recoveryDrivers: UniqueIdentifierArraySchema.max(64),
+    managedMcpAdapter: ManagedMcpRuntimeAdapterSchema.optional(),
     workspacePolicy: z
       .object({
         allowedModes: z
@@ -506,6 +464,7 @@ export const RuntimeProfileManifestV3Schema = z
       })
       .strict(),
     modelCatalogProbe: z.discriminatedUnion("kind", [
+      z.object({ kind: z.literal("claude-cli/v1") }).strict(),
       z.object({ kind: z.literal("codex-cli/v1") }).strict(),
       z.object({ kind: z.literal("kimi-cli/v1") }).strict(),
       z.object({ kind: z.literal("opencode-cli/v1") }).strict(),
@@ -513,6 +472,49 @@ export const RuntimeProfileManifestV3Schema = z
   })
   .strict()
   .superRefine((manifest, context) => {
+    if (
+      manifest.adapter.kind === "claude-stream-json/v1" &&
+      manifest.modelCatalogProbe.kind !== "claude-cli/v1"
+    ) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "claude-stream-json/v1 requires the claude-cli/v1 model catalog probe",
+        path: ["modelCatalogProbe", "kind"],
+      });
+    }
+    if (
+      manifest.adapter.kind === "kimi-acp/v1" &&
+      manifest.modelCatalogProbe.kind !== "kimi-cli/v1"
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "kimi-acp/v1 requires the kimi-cli/v1 model catalog probe",
+        path: ["modelCatalogProbe", "kind"],
+      });
+    }
+    if (
+      manifest.adapter.kind === "codex-app-server/v1" &&
+      manifest.modelCatalogProbe.kind !== "codex-cli/v1"
+    ) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "codex-app-server/v1 requires the codex-cli/v1 model catalog probe",
+        path: ["modelCatalogProbe", "kind"],
+      });
+    }
+    if (
+      manifest.adapter.kind === "opencode-server/v1" &&
+      manifest.modelCatalogProbe.kind !== "opencode-cli/v1"
+    ) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "opencode-server/v1 requires the opencode-cli/v1 model catalog probe",
+        path: ["modelCatalogProbe", "kind"],
+      });
+    }
     rejectDuplicateStrings(
       manifest.credentialSlots.map((slot) => slot.slotId),
       context,
@@ -788,7 +790,13 @@ export const ClientAgentProvisionRequestSchema = z
     modelIntent: ModelIntentSchema,
     role: z.string().trim().min(1).max(512),
     runtimeOfferId: IdentifierSchema,
-    sessionPolicy: z.enum(["fresh", "prefer_resume", "require_resume"]),
+    // Raft owns Provider session reuse automatically. The product does not
+    // expose fresh/required as per-Agent controls; this optional literal is
+    // retained only so older clients may state the automatic policy.
+    sessionPolicy: z.literal("prefer_resume").optional(),
+    // Optional only for wire compatibility. Raft does not expose a per-Agent
+    // CLI permission selector; every new policy is unattended full access.
+    toolAccessMode: RaftUnattendedToolAccessModeSchema.optional(),
   })
   .strict();
 export type ClientAgentProvisionRequest = z.infer<
@@ -863,6 +871,7 @@ export type ClientAgentManageResponse = z.infer<
   typeof ClientAgentManageResponseSchema
 >;
 
+export * from "./agent-workspace.ts";
 export const ClientAgentGetRequestSchema = z
   .object({ agentDefinitionId: IdentifierSchema })
   .strict();
@@ -870,6 +879,7 @@ export type ClientAgentGetRequest = z.infer<typeof ClientAgentGetRequestSchema>;
 export const ClientAgentGetResponseSchema = z
   .object({
     agent: AgentCatalogEntrySchema,
+    membershipRole: z.enum(["owner", "admin", "member"]).optional(),
     policy: ExecutionPolicyRevisionSchema,
   })
   .strict();
@@ -933,6 +943,13 @@ export const RuntimeOfferSchema = z
     capacityPoolIds: UniqueIdentifierArraySchema,
     maxConcurrent: z.number().int().positive(),
     state: RuntimeOfferStateSchema,
+    // Optional on the wire only for durable Offers accepted before this
+    // capability was published. Absence means full-access only.
+    supportedToolAccessModes: z
+      .array(ToolAccessModeSchema)
+      .min(1)
+      .superRefine(rejectDuplicateStrings)
+      .optional(),
     observedVersion: z.string().trim().min(1).optional(),
     observedAt: TimestampSchema,
     leaseUntil: TimestampSchema,
@@ -1064,6 +1081,7 @@ export const PlacementHardRejectionReasonSchema = z.enum([
   "offer_unavailable",
   "offer_not_allowed",
   "protocol_unsupported",
+  "tool_access_unsupported",
   "capability_missing",
   "capability_evidence_insufficient",
   "isolation_insufficient",
@@ -1225,6 +1243,9 @@ export const PlacementDecisionSchema = z
     candidateSetDigest: ContentDigestSchema,
     candidateEvidence: z.array(PlacementCandidateEvidenceSchema).min(1),
     state: z.enum(["reserved", "consumed", "released"]),
+    // Durable placements created before provider-native access selection used
+    // the historical full-access launch flags.
+    toolAccessMode: ToolAccessModeSchema.default("full_access"),
     leaseUntil: TimestampSchema,
     createdAt: TimestampSchema,
   })
@@ -1373,20 +1394,15 @@ export type ClientAcknowledgeRequest = z.infer<
   typeof ClientAcknowledgeRequestSchema
 >;
 
-export const ClientTasksListRequestSchema = z
-  .object({ roomId: IdentifierSchema })
-  .strict();
-export type ClientTasksListRequest = z.infer<
-  typeof ClientTasksListRequestSchema
->;
-
 export const ClientTaskCreateRequestSchema = z
   .object({
     assigneeId: IdentifierSchema.optional(),
     basedOnRoomSeq: z.number().int().nonnegative().optional(),
+    collaboratorIds: z.array(IdentifierSchema).optional(),
     dependencyTaskIds: z.array(IdentifierSchema).default([]),
     description: z.string().trim().min(1).optional(),
     idempotencyKey: IdentifierSchema,
+    reviewerIds: z.array(IdentifierSchema).optional(),
     roomId: IdentifierSchema,
     title: z.string().trim().min(1),
   })
@@ -1399,9 +1415,55 @@ export const ClientTaskCreateRequestSchema = z
       message: "dependencyTaskIds must be unique",
       path: ["dependencyTaskIds"],
     },
+  )
+  .superRefine((command, context) =>
+    addTaskParticipantSelectionIssues(
+      {
+        assigneeId: command.assigneeId,
+        collaboratorIds: command.collaboratorIds ?? [],
+        reviewerIds: command.reviewerIds ?? [],
+      },
+      context,
+    ),
   );
 export type ClientTaskCreateRequest = z.infer<
   typeof ClientTaskCreateRequestSchema
+>;
+
+export const ClientTaskConvertRequestSchema = z
+  .object({
+    assigneeId: IdentifierSchema.optional(),
+    basedOnRoomSeq: z.number().int().nonnegative(),
+    collaboratorIds: z.array(IdentifierSchema).optional(),
+    dependencyTaskIds: z.array(IdentifierSchema).default([]),
+    description: z.string().trim().min(1).optional(),
+    idempotencyKey: IdentifierSchema,
+    messageId: IdentifierSchema,
+    reviewerIds: z.array(IdentifierSchema).optional(),
+    roomId: IdentifierSchema,
+  })
+  .strict()
+  .refine(
+    (command) =>
+      new Set(command.dependencyTaskIds).size ===
+      command.dependencyTaskIds.length,
+    {
+      message: "dependencyTaskIds must be unique",
+      path: ["dependencyTaskIds"],
+    },
+  )
+  .superRefine((command, context) =>
+    addTaskParticipantSelectionIssues(
+      {
+        assigneeId: command.assigneeId,
+        collaboratorIds: command.collaboratorIds ?? [],
+        reviewerIds: command.reviewerIds ?? [],
+      },
+      context,
+    ),
+  );
+export type ClientTaskConvertRequest = z.infer<
+  typeof ClientTaskConvertRequestSchema
 >;
 
 const ClientTaskCommandBaseSchema = z
@@ -1419,6 +1481,11 @@ export const ClientTaskAssignRequestSchema = ClientTaskCommandBaseSchema.extend(
 ).strict();
 export type ClientTaskAssignRequest = z.infer<
   typeof ClientTaskAssignRequestSchema
+>;
+
+export const ClientTaskUnassignRequestSchema = ClientTaskCommandBaseSchema;
+export type ClientTaskUnassignRequest = z.infer<
+  typeof ClientTaskUnassignRequestSchema
 >;
 
 export const ClientTaskUnblockRequestSchema = ClientTaskCommandBaseSchema;
@@ -1488,6 +1555,18 @@ const WorkerTaskCommandBaseSchema = z
 export const WorkerTaskClaimRequestSchema = WorkerTaskCommandBaseSchema;
 export type WorkerTaskClaimRequest = z.infer<
   typeof WorkerTaskClaimRequestSchema
+>;
+
+export const WorkerTaskClaimMessageRequestSchema = z
+  .object({
+    basedOnRoomSeq: z.number().int().nonnegative(),
+    idempotencyKey: IdentifierSchema,
+    messageId: IdentifierSchema,
+    rationale: z.string().trim().min(1).max(2_000),
+  })
+  .strict();
+export type WorkerTaskClaimMessageRequest = z.infer<
+  typeof WorkerTaskClaimMessageRequestSchema
 >;
 
 export const WorkerTaskReleaseRequestSchema = WorkerTaskCommandBaseSchema;
@@ -1590,13 +1669,6 @@ export const ClientAcknowledgeResponseSchema = z
   .strict();
 export type ClientAcknowledgeResponse = z.infer<
   typeof ClientAcknowledgeResponseSchema
->;
-
-export const ClientTasksListResponseSchema = z
-  .object({ tasks: z.array(TaskSchema) })
-  .strict();
-export type ClientTasksListResponse = z.infer<
-  typeof ClientTasksListResponseSchema
 >;
 
 export const ClientTaskMutationResponseSchema = z
@@ -1722,3 +1794,4 @@ export type WorkerErrorResponse = ErrorResponse;
 
 export const ClientErrorResponseSchema = ErrorResponseSchema;
 export type ClientErrorResponse = z.infer<typeof ClientErrorResponseSchema>;
+export * from "./room-files.ts";

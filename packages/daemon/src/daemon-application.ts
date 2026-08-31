@@ -1,11 +1,14 @@
-import { lstat, mkdir } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 
 import {
   AgentHost,
   AgentHostDaemon,
+  AgentMemoryCoordinator,
+  combineActivationEnvironmentLeases,
   GenericProcessAdapter,
+  createWorkerToolTransportEnvironment,
   MultiLaneAgentHost,
+  ManagedMcpRuntimeProxyRegistry,
   RuntimeCredentialEnvironmentBinding,
   RuntimeImplementationRegistry,
   RuntimeProfileRegistry,
@@ -17,9 +20,8 @@ import {
   HumanHttpApplicationService,
   WorkerApplicationService,
 } from "@rah-os/application-service";
-import { KERNEL_SCHEMA_VERSION, RahCore, RoomKernel } from "@rah-os/core";
+import { RahCore, RoomKernel } from "@rah-os/core";
 import {
-  CLIENT_API_VERSION,
   type PlacementDecision,
   type RuntimeRecoveryDescriptor,
   type WorkspaceMountDescriptor,
@@ -41,11 +43,21 @@ import {
 } from "./runtime-profile-composition.ts";
 import { FileSecretProvider, type SecretProvider } from "./secret-provider.ts";
 import {
-  buildLocalRuntimeInventoryResponse,
   configuredRuntimeSnapshot,
   discoverKnownLocalClis,
   type ConfiguredLocalRuntimeSnapshot,
 } from "./local-runtime-inventory.ts";
+import { createConfiguredManagedMcpExecutor } from "./managed-mcp-executor-composition.ts";
+import type { NodeManagedMcpExecutorRegistry } from "./managed-mcp-executor-registry.ts";
+import {
+  configuredParticipantIds,
+  createDaemonAgentMemoryCoordinator,
+  createDaemonHumanClientService,
+  ensureOwnerPrivateDirectory,
+  errorMessage,
+  openRuntimeProfileRegistry,
+  runCoupledComponents,
+} from "./daemon-application-support.ts";
 
 export const DAEMON_BUILD_VERSION = "0.1.0";
 export const DAEMON_PROTOCOL_VERSION = 1;
@@ -58,7 +70,7 @@ export type DaemonHealthSnapshot = {
   protocolVersion: number;
   state: "failed" | "offline" | "online" | "starting";
   lastCycleAt?: string;
-  lastCycleState?: "completed" | "failed" | "recovered";
+  lastCycleState?: "cancelled" | "completed" | "failed" | "recovered";
   lastError?: string;
   startedAt?: string;
 };
@@ -109,14 +121,21 @@ export class DaemonApplication {
     let core: RahCore | undefined;
     let kernel: RoomKernel | undefined;
     let clientService: HumanHttpApplicationService | undefined;
+    let agentMemoryCoordinator: AgentMemoryCoordinator | undefined;
+    let managedMcpExecutor: NodeManagedMcpExecutorRegistry | undefined;
     let workerService: WorkerApplicationService | undefined;
     const runtimeProfileRegistries = new Map<string, RuntimeProfileRegistry>();
+    const managedMcpProxyRegistry = new ManagedMcpRuntimeProxyRegistry();
     const configuredLocalRuntimes: ConfiguredLocalRuntimeSnapshot[] = [];
     let executionFailure: unknown;
     try {
       await ensureOwnerPrivateDirectory(this.#config.stateDirectory);
       const hostAccessToken = await this.#secretProvider.load(
         this.#config.host.credential,
+      );
+      managedMcpExecutor = await createConfiguredManagedMcpExecutor(
+        this.#config,
+        this.#secretProvider,
       );
       core = RahCore.open({
         databasePath: join(this.#config.stateDirectory, "room.db"),
@@ -167,6 +186,7 @@ export class DaemonApplication {
 
       workerService = new WorkerApplicationService({
         kernel,
+        managedMcpExecutor,
         ...(this.#config.taskClaimHeartbeatIntervalMs === undefined
           ? {}
           : {
@@ -179,6 +199,12 @@ export class DaemonApplication {
       });
       await workerService.start();
       const activeWorkerService = workerService;
+      agentMemoryCoordinator = createDaemonAgentMemoryCoordinator({
+        host,
+        kernel,
+        stateDirectory: this.#config.stateDirectory,
+      });
+      const activeAgentMemoryCoordinator = agentMemoryCoordinator;
       let runtime: RuntimeAdapter;
       const runtimeOfferPublishers: RuntimeOfferPublisher[] = [];
       let placementRuntimeResolver:
@@ -189,19 +215,56 @@ export class DaemonApplication {
       if (this.#config.schemaVersion === 2) {
         const runtimeOptions = this.#config.runtime;
         runtime = new GenericProcessAdapter({
-          activationEnvironment: (scope) => {
-            const credential = activeWorkerService.issueActivationCredential(
-              host,
-              scope,
-            );
-            return {
-              env: {
-                RAH_WORKER_API_URL: activeWorkerService.origin,
-                RAH_WORKER_TOKEN: credential.accessToken,
-              },
-              redactions: [credential.accessToken],
-              release: credential.revoke,
-            };
+          activationEnvironment: async (scope) => {
+            const leases = [];
+            try {
+              if (scope.agent !== undefined) {
+                leases.push(
+                  await activeAgentMemoryCoordinator.prepareRuntimeActivation(
+                    scope.agent,
+                    {
+                      activationId: scope.activationId,
+                      computerHostId: scope.hostId,
+                      roomId: scope.roomId,
+                      runAttemptId: scope.runAttemptId,
+                    },
+                    { cwd: runtimeOptions.cwd },
+                  ),
+                );
+              }
+              const credential = activeWorkerService.issueActivationCredential(
+                host,
+                scope,
+              );
+              leases.push(
+                await createWorkerToolTransportEnvironment({
+                  credentialDirectory: join(
+                    this.#config.stateDirectory,
+                    "worker-credentials",
+                  ),
+                  revokeCredential: credential.revoke,
+                  workerAccessToken: credential.accessToken,
+                  workerApiOrigin: activeWorkerService.origin,
+                }),
+              );
+              return combineActivationEnvironmentLeases(
+                leases,
+                "legacy local Runtime activation environment release failed",
+              );
+            } catch (error) {
+              try {
+                await combineActivationEnvironmentLeases(
+                  leases,
+                  "legacy local Runtime activation setup cleanup failed",
+                ).release?.();
+              } catch (cleanupError) {
+                throw new AggregateError(
+                  [error, cleanupError],
+                  "legacy local Runtime activation setup and cleanup failed",
+                );
+              }
+              throw error;
+            }
           },
           args: runtimeOptions.args,
           command: runtimeOptions.command,
@@ -272,10 +335,12 @@ export class DaemonApplication {
           ),
         });
         runtime = createConfiguredRuntime({
+          agentMemoryCoordinator: activeAgentMemoryCoordinator,
           credentialEnvironment,
           cwd: runtimeOptions.cwd,
           host,
           implementations,
+          managedMcpProxyRegistry,
           probeReport,
           runtimeProfileRegistry,
           runtimeProfileRevision: activeRevision,
@@ -350,11 +415,21 @@ export class DaemonApplication {
               `RuntimeProfile ${runtimeOptions.runtimeProfileId} has no active revision`,
             );
           }
-          const probeReport = runtimeProfileRegistry.recordProbeReport(
-            await implementations.probeRevision(activeRevision, {
-              cwd: v4Config.workspace.cwd,
-            }),
-          );
+          const probeReport =
+            v4Config.startupProbeMode === "reuse-latest"
+              ? runtimeProfileRegistry.getLatestProbeReport(
+                  activeRevision.runtimeProfileRevisionId,
+                )
+              : runtimeProfileRegistry.recordProbeReport(
+                  await implementations.probeRevision(activeRevision, {
+                    cwd: v4Config.workspace.cwd,
+                  }),
+                );
+          if (probeReport === null) {
+            throw new Error(
+              `active RuntimeProfile ${activeRevision.runtimeProfileRevisionId} has no prepared probe report`,
+            );
+          }
           if (!probeReport.available) {
             throw new Error(
               `active RuntimeProfile probe failed: ${probeReport.failureCode ?? "unavailable"}`,
@@ -380,23 +455,67 @@ export class DaemonApplication {
               ),
             },
           );
+          const placementKernel = kernel;
+          if (placementKernel === undefined) {
+            throw new Error("config v4 requires an initialized RoomKernel");
+          }
           const createRuntimeForPlacement = (
             placement?: PlacementDecision,
-          ): RuntimeAdapter =>
-            createConfiguredRuntime({
+          ): RuntimeAdapter => {
+            let placementProbeReport = probeReport;
+            if (placement?.runtimeOfferObservationId !== undefined) {
+              const observation = placementKernel.getRuntimeOfferObservation(
+                placement.runtimeOfferObservationId,
+              );
+              if (
+                observation.runtimeOfferId !== placement.runtimeOfferId ||
+                observation.runtimeProfileRevisionId !==
+                  placement.runtimeProfileRevisionId ||
+                (placement.runtimeOfferSnapshotDigest !== undefined &&
+                  observation.runtimeOfferSnapshotDigest !==
+                    placement.runtimeOfferSnapshotDigest)
+              ) {
+                throw new Error(
+                  `Placement ${placement.placementId} does not match its immutable RuntimeOffer observation`,
+                );
+              }
+              const probeReportRef = observation.probeReportRef;
+              if (probeReportRef === undefined) {
+                throw new Error(
+                  `Placement ${placement.placementId} RuntimeOffer observation has no probe evidence`,
+                );
+              }
+              placementProbeReport = runtimeProfileRegistry.getProbeReport(
+                probeReportRef.probeReportId,
+              );
+              if (
+                placementProbeReport.probeDigest !== probeReportRef.probeDigest
+              ) {
+                throw new Error(
+                  `Placement ${placement.placementId} RuntimeOffer probe digest does not match the registry`,
+                );
+              }
+            }
+            return createConfiguredRuntime({
+              agentMemoryCoordinator: activeAgentMemoryCoordinator,
               credentialEnvironment,
               cwd: v4Config.workspace.cwd,
               host,
               implementations,
-              probeReport,
+              managedMcpProxyRegistry,
+              probeReport: placementProbeReport,
               ...(placement?.resolvedModel === undefined
                 ? {}
                 : { resolvedModel: placement.resolvedModel }),
+              ...(placement?.toolAccessMode === undefined
+                ? {}
+                : { toolAccessMode: placement.toolAccessMode }),
               runtimeProfileRegistry,
               runtimeProfileRevision: activeRevision,
               supervisorDirectory: join(v4Config.stateDirectory, "supervisors"),
               workerService: activeWorkerService,
             });
+          };
           const configuredRuntime = createRuntimeForPlacement();
           const availability = await configuredRuntime.probe();
           if (!availability.available) {
@@ -551,47 +670,18 @@ export class DaemonApplication {
         },
         runner,
       });
-      clientService = new HumanHttpApplicationService({
-        bindHost: this.#config.client.bindHost,
-        health: () => ({
-          apiVersion: CLIENT_API_VERSION,
-          buildVersion: DAEMON_BUILD_VERSION,
-          capabilities: {
-            agentOnboard: true,
-            agentRead: true,
-            agentWrite: true,
-            cursorAcknowledge: true,
-            hints: false,
-            inputRequestRead: true,
-            inputRequestResolve: true,
-            memberRead: true,
-            memberWrite: true,
-            messageRead: true,
-            messageWrite: true,
-            roomRead: true,
-            roomWrite: true,
-            roomSync: true,
-            taskRead: true,
-            taskWrite: true,
-            threadRead: true,
-            threadWrite: true,
-            workspaceRead: true,
-            workspaceWrite: true,
-          },
-          kernelSchemaVersion: KERNEL_SCHEMA_VERSION,
-          protocolVersion: DAEMON_PROTOCOL_VERSION,
-          state: this.#health.state,
-        }),
+      clientService = createDaemonHumanClientService({
+        agentMemoryCoordinator: activeAgentMemoryCoordinator,
+        buildVersion: DAEMON_BUILD_VERSION,
+        config: this.#config,
+        configuredLocalRuntimes,
+        discoveredLocalClis,
+        healthState: () => this.#health.state,
+        host,
         human: core.human,
-        localRuntimeInventory: (actor) =>
-          buildLocalRuntimeInventoryResponse({
-            actor,
-            configured: configuredLocalRuntimes,
-            discovered: discoveredLocalClis,
-            hostId: host.hostId,
-            kernel: kernel!,
-          }),
-        port: this.#config.client.port,
+        kernel,
+        managedMcpAdministration: managedMcpExecutor,
+        protocolVersion: DAEMON_PROTOCOL_VERSION,
       });
       await clientService.start();
       this.#clientOrigin = clientService.origin;
@@ -622,7 +712,22 @@ export class DaemonApplication {
       this.#clientOrigin = undefined;
     }
     try {
+      await agentMemoryCoordinator?.close();
+    } catch (error) {
+      cleanupErrors.push(error);
+    }
+    try {
+      await managedMcpProxyRegistry.close();
+    } catch (error) {
+      cleanupErrors.push(error);
+    }
+    try {
       await workerService?.close();
+    } catch (error) {
+      cleanupErrors.push(error);
+    }
+    try {
+      await managedMcpExecutor?.close();
     } catch (error) {
       cleanupErrors.push(error);
     }
@@ -664,85 +769,5 @@ export class DaemonApplication {
       );
     }
     throw executionFailure ?? cleanupFailure;
-  }
-}
-
-function configuredParticipantIds(config: DaemonConfig): string[] {
-  return config.schemaVersion === 4
-    ? [...config.host.participantIds].sort()
-    : [config.host.participantId];
-}
-
-function openRuntimeProfileRegistry(
-  registries: Map<string, RuntimeProfileRegistry>,
-  databasePath: string,
-  hostId: string,
-): RuntimeProfileRegistry {
-  const registryPath = resolve(databasePath);
-  const existing = registries.get(registryPath);
-  if (existing !== undefined) return existing;
-  const registry = new RuntimeProfileRegistry({
-    databasePath: registryPath,
-    hostId,
-  });
-  try {
-    registry.initialize();
-  } catch (error) {
-    registry.close();
-    throw error;
-  }
-  registries.set(registryPath, registry);
-  return registry;
-}
-
-async function ensureOwnerPrivateDirectory(directory: string): Promise<void> {
-  await mkdir(directory, { mode: 0o700, recursive: true });
-  const metadata = await lstat(directory);
-  if (
-    !metadata.isDirectory() ||
-    metadata.isSymbolicLink() ||
-    (metadata.mode & 0o077) !== 0 ||
-    (typeof process.getuid === "function" && metadata.uid !== process.getuid())
-  ) {
-    throw new Error(
-      `daemon state directory must be owner-private: ${directory}`,
-    );
-  }
-}
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
-
-async function runCoupledComponents(
-  externalSignal: AbortSignal,
-  components: Array<(signal: AbortSignal) => Promise<void>>,
-): Promise<void> {
-  const shutdown = new AbortController();
-  const onExternalAbort = () => shutdown.abort(externalSignal.reason);
-  externalSignal.addEventListener("abort", onExternalAbort, { once: true });
-  if (externalSignal.aborted) onExternalAbort();
-  const tracked = components.map(async (component) => {
-    try {
-      await component(shutdown.signal);
-      return { ok: true as const };
-    } catch (error) {
-      return { error, ok: false as const };
-    }
-  });
-  const first = await Promise.race(tracked);
-  shutdown.abort("daemon component stopped");
-  const settled = await Promise.all(tracked);
-  externalSignal.removeEventListener("abort", onExternalAbort);
-  const failures = settled.flatMap((result) =>
-    result.ok ? [] : [result.error],
-  );
-  if (!first.ok) throw first.error;
-  if (failures.length === 1) throw failures[0];
-  if (failures.length > 1) {
-    throw new AggregateError(failures, "daemon components failed");
-  }
-  if (!externalSignal.aborted) {
-    throw new Error("daemon component stopped before shutdown was requested");
   }
 }

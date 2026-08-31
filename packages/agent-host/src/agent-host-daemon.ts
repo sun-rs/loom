@@ -1,6 +1,11 @@
 import { createHash } from "node:crypto";
 import { chmod, lstat, mkdir, rm } from "node:fs/promises";
-import { createConnection, createServer, type Server } from "node:net";
+import {
+  createConnection,
+  createServer,
+  type Server,
+  type Socket,
+} from "node:net";
 import { join } from "node:path";
 
 import type { AuthenticatedHostContext, RoomKernel } from "@rah-os/kernel";
@@ -43,15 +48,22 @@ export class UnixSocketInstanceLock implements AgentHostInstanceLock {
   readonly hostId: string;
   readonly socketPath: string;
   readonly #directory: string;
+  readonly #handleConnection: (socket: Socket) => void;
   #acquiring = false;
   #server: Server | undefined;
 
-  constructor(input: { directory: string; hostId: string }) {
+  constructor(input: {
+    directory: string;
+    handleConnection?: (socket: Socket) => void;
+    hostId: string;
+  }) {
     const directory = input.directory.trim();
     const hostId = input.hostId.trim();
     if (directory.length === 0) throw new Error("lock directory is required");
     if (hostId.length === 0) throw new Error("hostId is required");
     this.#directory = directory;
+    this.#handleConnection =
+      input.handleConnection ?? ((socket) => socket.end());
     this.hostId = hostId;
     const lockId = createHash("sha256")
       .update(hostId, "utf8")
@@ -72,7 +84,13 @@ export class UnixSocketInstanceLock implements AgentHostInstanceLock {
     this.#acquiring = true;
     try {
       await this.#prepareDirectory();
-      const candidate = createServer((socket) => socket.end());
+      const candidate = createServer((socket) => {
+        try {
+          this.#handleConnection(socket);
+        } catch {
+          socket.destroy();
+        }
+      });
       try {
         await listen(candidate, this.socketPath);
       } catch (error) {

@@ -141,9 +141,14 @@ export type RoomCatchUpResult = {
 export type MessageCatchUpResult = {
   complete: boolean;
   cursorAfter: number;
+  cursorBefore: number;
+  hasEarlier: boolean;
   messages: readonly Message[];
   pages: number;
 };
+
+/** Raft's bounded latest/backward Message window. */
+export const RAFT_MESSAGE_PAGE_SIZE = 50;
 
 export async function listMessagesBounded(
   client: RahClient,
@@ -156,7 +161,7 @@ export async function listMessagesBounded(
     threadId?: string;
   },
 ): Promise<MessageCatchUpResult> {
-  const limit = options.limit ?? 500;
+  const limit = options.limit ?? RAFT_MESSAGE_PAGE_SIZE;
   const maxPages = options.maxPages ?? 10;
   const afterSeq = options.afterSeq ?? 0;
   if (!Number.isInteger(afterSeq) || afterSeq < 0) {
@@ -171,6 +176,8 @@ export async function listMessagesBounded(
 
   const messages: Message[] = [];
   let cursorAfter = afterSeq;
+  let cursorBefore = afterSeq;
+  let hasEarlier = afterSeq > 0;
   for (let pages = 1; pages <= maxPages; pages += 1) {
     const page = await client.request(
       "message.list",
@@ -205,10 +212,22 @@ export async function listMessagesBounded(
     if (page.cursorAfter !== expectedCursor) {
       throw new Error("Message page cursor does not match its contents");
     }
-    if (!page.hasMore) {
+    const expectedCursorBefore = page.messages.at(0)?.roomSeq ?? cursorAfter;
+    if (page.cursorBefore !== expectedCursorBefore) {
+      throw new Error(
+        "Message page backward cursor does not match its contents",
+      );
+    }
+    if (messages.length === page.messages.length) {
+      cursorBefore = page.cursorBefore;
+      hasEarlier = page.hasMoreBefore;
+    }
+    if (!page.hasMoreAfter) {
       return Object.freeze({
         complete: true,
         cursorAfter: page.cursorAfter,
+        cursorBefore,
+        hasEarlier,
         messages: Object.freeze(messages),
         pages,
       });
@@ -222,6 +241,8 @@ export async function listMessagesBounded(
   return Object.freeze({
     complete: false,
     cursorAfter,
+    cursorBefore,
+    hasEarlier,
     messages: Object.freeze(messages),
     pages: maxPages,
   });
@@ -233,6 +254,9 @@ export class MessageSession {
   readonly #threadId: string | undefined;
   #complete = false;
   #cursorAfter = 0;
+  #cursorBefore = 0;
+  #hasEarlier = false;
+  #initialized = false;
   #messages: readonly Message[] = Object.freeze([]);
 
   constructor(options: {
@@ -249,6 +273,8 @@ export class MessageSession {
     return Object.freeze({
       complete: this.#complete,
       cursorAfter: this.#cursorAfter,
+      cursorBefore: this.#cursorBefore,
+      hasEarlier: this.#hasEarlier,
       messages: this.#messages,
     });
   }
@@ -260,6 +286,49 @@ export class MessageSession {
       signal?: AbortSignal;
     } = {},
   ): Promise<MessageCatchUpResult> {
+    if (!this.#initialized) {
+      const limit = options.limit ?? RAFT_MESSAGE_PAGE_SIZE;
+      if (!Number.isInteger(limit) || limit <= 0 || limit > 500) {
+        throw new Error("Message page limit must be between 1 and 500");
+      }
+      const page = await this.#client.request(
+        "message.list",
+        {
+          limit,
+          roomId: this.#roomId,
+          ...(this.#threadId === undefined ? {} : { threadId: this.#threadId }),
+        },
+        options.signal === undefined ? undefined : { signal: options.signal },
+      );
+      validateMessagePage(page.messages, {
+        roomId: this.#roomId,
+        ...(this.#threadId === undefined ? {} : { threadId: this.#threadId }),
+      });
+      const expectedBefore = page.messages.at(0)?.roomSeq ?? 0;
+      const expectedAfter = page.messages.at(-1)?.roomSeq ?? 0;
+      if (
+        page.cursorBefore !== expectedBefore ||
+        page.cursorAfter !== expectedAfter
+      ) {
+        throw new Error(
+          "Latest Message window cursor does not match its contents",
+        );
+      }
+      this.#initialized = true;
+      this.#complete = !page.hasMoreAfter;
+      this.#cursorBefore = page.cursorBefore;
+      this.#cursorAfter = page.cursorAfter;
+      this.#hasEarlier = page.hasMoreBefore;
+      this.#messages = Object.freeze([...page.messages]);
+      return Object.freeze({
+        complete: this.#complete,
+        cursorAfter: this.#cursorAfter,
+        cursorBefore: this.#cursorBefore,
+        hasEarlier: this.#hasEarlier,
+        messages: this.#messages,
+        pages: 1,
+      });
+    }
     const result = await listMessagesBounded(this.#client, {
       afterSeq: this.#cursorAfter,
       roomId: this.#roomId,
@@ -271,15 +340,124 @@ export class MessageSession {
     this.#complete = result.complete;
     this.#cursorAfter = result.cursorAfter;
     if (result.messages.length > 0) {
-      this.#messages = Object.freeze([...this.#messages, ...result.messages]);
+      if (this.#messages.length === 0) {
+        this.#cursorBefore = result.cursorBefore;
+        this.#hasEarlier = result.hasEarlier;
+      }
+      this.#messages = mergeMessageWindow(this.#messages, result.messages);
     }
     return Object.freeze({
       complete: result.complete,
       cursorAfter: this.#cursorAfter,
+      cursorBefore: this.#cursorBefore,
+      hasEarlier: this.#hasEarlier,
       messages: this.#messages,
       pages: result.pages,
     });
   }
+
+  async loadEarlier(
+    options: { limit?: number; signal?: AbortSignal } = {},
+  ): Promise<MessageCatchUpResult> {
+    if (!this.#initialized) return this.syncUntilCurrent(options);
+    if (!this.#hasEarlier) {
+      return Object.freeze({
+        complete: this.#complete,
+        cursorAfter: this.#cursorAfter,
+        cursorBefore: this.#cursorBefore,
+        hasEarlier: false,
+        messages: this.#messages,
+        pages: 0,
+      });
+    }
+    const limit = options.limit ?? RAFT_MESSAGE_PAGE_SIZE;
+    if (!Number.isInteger(limit) || limit <= 0 || limit > 500) {
+      throw new Error("Message page limit must be between 1 and 500");
+    }
+    const requestedBefore = this.#cursorBefore;
+    const page = await this.#client.request(
+      "message.list",
+      {
+        beforeSeq: requestedBefore,
+        limit,
+        roomId: this.#roomId,
+        ...(this.#threadId === undefined ? {} : { threadId: this.#threadId }),
+      },
+      options.signal === undefined ? undefined : { signal: options.signal },
+    );
+    validateMessagePage(page.messages, {
+      beforeSeq: requestedBefore,
+      roomId: this.#roomId,
+      ...(this.#threadId === undefined ? {} : { threadId: this.#threadId }),
+    });
+    const expectedBefore = page.messages.at(0)?.roomSeq ?? requestedBefore;
+    const expectedAfter = page.messages.at(-1)?.roomSeq ?? requestedBefore;
+    if (
+      page.cursorBefore !== expectedBefore ||
+      page.cursorAfter !== expectedAfter
+    ) {
+      throw new Error(
+        "Earlier Message window cursor does not match its contents",
+      );
+    }
+    if (page.hasMoreBefore && page.cursorBefore === requestedBefore) {
+      throw new Error("Earlier Message pagination made no progress");
+    }
+    this.#cursorBefore = page.cursorBefore;
+    this.#hasEarlier = page.hasMoreBefore;
+    this.#messages = mergeMessageWindow(page.messages, this.#messages);
+    return Object.freeze({
+      complete: this.#complete,
+      cursorAfter: this.#cursorAfter,
+      cursorBefore: this.#cursorBefore,
+      hasEarlier: this.#hasEarlier,
+      messages: this.#messages,
+      pages: 1,
+    });
+  }
+}
+
+function validateMessagePage(
+  messages: readonly Message[],
+  expected: { beforeSeq?: number; roomId: string; threadId?: string },
+): void {
+  let previousSequence = 0;
+  for (const message of messages) {
+    if (message.roomId !== expected.roomId) {
+      throw new Error("Message page belongs to another Room");
+    }
+    if (
+      expected.threadId !== undefined &&
+      message.threadId !== expected.threadId
+    ) {
+      throw new Error("Message page belongs to another Thread");
+    }
+    if (message.roomSeq <= previousSequence) {
+      throw new Error("Message page is not strictly ordered");
+    }
+    if (
+      expected.beforeSeq !== undefined &&
+      message.roomSeq >= expected.beforeSeq
+    ) {
+      throw new Error("Earlier Message page crossed its before cursor");
+    }
+    previousSequence = message.roomSeq;
+  }
+}
+
+function mergeMessageWindow(
+  left: readonly Message[],
+  right: readonly Message[],
+): readonly Message[] {
+  const byId = new Map(left.map((message) => [message.messageId, message]));
+  for (const message of right) byId.set(message.messageId, message);
+  return Object.freeze(
+    [...byId.values()].sort(
+      (first, second) =>
+        first.roomSeq - second.roomSeq ||
+        first.messageId.localeCompare(second.messageId),
+    ),
+  );
 }
 
 export type ConsumerIdStorage = {

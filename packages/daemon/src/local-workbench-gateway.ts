@@ -8,7 +8,14 @@ import {
   type ServerResponse,
 } from "node:http";
 import { randomBytes, timingSafeEqual } from "node:crypto";
-import { extname, isAbsolute, relative, resolve, sep } from "node:path";
+import {
+  basename,
+  extname,
+  isAbsolute,
+  relative,
+  resolve,
+  sep,
+} from "node:path";
 
 const SESSION_COOKIE = "rah_workbench_session";
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
@@ -141,6 +148,13 @@ export class LocalWorkbenchGateway {
       return;
     }
     const requestUrl = new URL(request.url ?? "/", this.origin);
+    if (requestUrl.pathname === "/_rah/health" && request.method === "GET") {
+      sendJson(response, 200, {
+        service: "rah-os-local-core",
+        state: "online",
+      });
+      return;
+    }
     if (isApiPath(requestUrl.pathname)) {
       if (!this.#hasSession(request.headers.cookie)) {
         sendText(response, 401, "Local workbench session required");
@@ -156,6 +170,10 @@ export class LocalWorkbenchGateway {
     }
     if (/^\/v\d+(?:\/|$)/u.test(requestUrl.pathname)) {
       sendText(response, 404, "Unknown API route");
+      return;
+    }
+    if (requestUrl.pathname.startsWith("/_rah/")) {
+      sendText(response, 404, "LAN gateway route unavailable");
       return;
     }
     await this.#serveStatic(request, response, requestUrl.pathname);
@@ -253,7 +271,9 @@ export class LocalWorkbenchGateway {
     } else {
       response.setHeader(
         "cache-control",
-        "public, max-age=31536000, immutable",
+        revalidatedShellFile(staticPath)
+          ? "no-cache"
+          : "public, max-age=31536000, immutable",
       );
     }
     if (request.method === "HEAD") {
@@ -267,6 +287,10 @@ export class LocalWorkbenchGateway {
       stream.pipe(response);
     });
   }
+}
+
+function revalidatedShellFile(path: string): boolean {
+  return ["manifest.webmanifest", "sw.js"].includes(basename(path));
 }
 
 function isApiPath(pathname: string): boolean {
@@ -330,5 +354,18 @@ function sendText(
   response.setHeader("cache-control", "no-store");
   response.setHeader("content-type", "text/plain; charset=utf-8");
   response.setHeader("x-content-type-options", "nosniff");
+  response.end(body);
+}
+
+function sendJson(
+  response: ServerResponse,
+  statusCode: number,
+  value: unknown,
+): void {
+  const body = Buffer.from(JSON.stringify(value));
+  response.statusCode = statusCode;
+  response.setHeader("cache-control", "no-store");
+  response.setHeader("content-type", "application/json; charset=utf-8");
+  response.setHeader("content-length", String(body.byteLength));
   response.end(body);
 }

@@ -93,4 +93,4 @@ Human HTTP/IPC adapter 只能依赖 `HumanApplicationPort`，不得依赖或保�
 - [x] frozen `HumanApplicationPort` 可直接嵌入，HTTP adapter 不再获得整个 `RoomKernel`；
 - [x] Agent/Policy mutation 只允许 managed control Room owner/admin，且 policy revision 不能跨 control Room 引用。
 
-上述门禁允许冻结为“local single-host trusted-config 的多 Agent headless Core candidate”。durable CapacityPool/PlacementHold 不再阻塞 v0.1；Task discussion anchor、Artifact/Review、Human Workspace 到 runtime mount/cwd 的 canonical 映射和真实 mixed CLI v4 certification 进入 v0.2。完整判断见 [v0.1 收口与竞争性独立审计](../audits/2026-08-26-v01-closure-competitive-audit.zh-CN.md)。
+上述门禁允许冻结为“local single-host trusted-config 的多 Agent headless Core candidate”。durable CapacityPool/PlacementHold 不再阻塞 v0.1；Task discussion anchor 已在 schema v9 接通，已有 Message 转 Task、Artifact/Review、Human Workspace 到 runtime mount/cwd 的 canonical 映射和真实 mixed CLI v4 certification 进入 v0.2。完整判断见 [v0.1 收口与竞争性独立审计](../audits/2026-08-26-v01-closure-competitive-audit.zh-CN.md)。

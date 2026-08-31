@@ -11,7 +11,7 @@ Task Coordination v1 收口后，`RoomKernel` 同时承载认证、Room、Task�
 ## 不变量
 
 1. SQLite Room state 仍是唯一业务真相；拆分不得建立第二个 Task store、缓存状态机或 UI truth。
-2. `RoomKernel` 仍是当前公开 facade 与 transaction owner；协作权限/freshness/命令由一个 `CollaborationService` 实现，Room event 与 Inbox/Activation/Outbox 派生由一个 transaction-scoped `RoomEventWriter` 实现，不复制第二套 owner。
+2. `RoomKernel` 仍是当前公开 facade；每个 mutation 只能有一个明确的 transaction owner。协作权限/freshness/命令由 `CollaborationService` 实现，Provider 运行轨迹由 `RuntimeTrajectoryService` 实现，Room event 与 Inbox/Activation/Outbox 派生由 transaction-scoped `RoomEventWriter` 实现，不复制第二套 owner。
 3. 领域 schema 可以从协议入口移到领域模块，但 `@rah-os/protocol` 的公开导出保持兼容。
 4. 投影模块只能把 canonical row 转为协议对象。它可以执行构成该投影所需的只读查询，不能提交事务或改变业务状态。
 5. 通用 SQLite row decoder 和 canonical digest 属于基础机制；领域模块复用它们，不复制各自的宽松解析器或摘要算法。
@@ -34,7 +34,10 @@ Task Coordination v1 收口后，`RoomKernel` 同时承载认证、Room、Task�
   ├── room-event-writer.ts        event + Inbox/Activation/Outbox atomic derivation
   ├── collaboration-policy.ts     membership/manager/Human owner invariants
   ├── collaboration-projection.ts canonical collaboration read projections
-  ├── schema.ts                   schema v8 + fail-closed legacy migration
+  ├── schema.ts                   schema v11 canonical table declarations
+  ├── context-manifest.ts         ContextManifest canonical digest、持久化与读回校验
+  ├── run-attempt-projection.ts   RunAttempt + Placement + ContextManifest 只读投影
+  ├── task-anchor.ts              Task Message/Thread projection + fail-closed v9 migration
   ├── task-projection.ts          canonical Task read projection only
   ├── capacity-policy.ts          pure capacity identity/limit validation
   ├── sqlite-row.ts               strict SQLite value decoding
@@ -45,7 +48,7 @@ Task Coordination v1 收口后，`RoomKernel` 同时承载认证、Room、Task�
   └── runtime-offer-publisher.ts   lease refresh + redacted Offer publication
 ```
 
-Slice 2 已把现有 Room collaboration command 与 event derivation 按 owner 提取，`RoomKernel` 只在一个 transaction 中委派；纯 Capacity identity/limit policy 也已独立，新增 Activation Room reply 没有提高源码 ratchet。Task command 仍有意不搬迁：它目前深度依赖 claim lease、Worker fencing、dependency、InputRequest 与 Run completion proof；在没有先定义窄 transaction context 前，机械搬到新 class 只会产生隐藏的第二 owner 或 callback soup。
+Slice 2 已把现有 Room collaboration command 与 event derivation 按 owner 提取；纯 Capacity identity/limit policy 也已独立。Activation/WakeHint schema 已进入 `activation.ts`，运行轨迹的 Host/代际围栏、事务、持久化和 ACL 分页由 `RuntimeTrajectoryService` 单独拥有；`RoomKernel` 只保留稳定 facade。Actor/Host credential 数据库认证则回到 `auth.ts` 的单一 owner。Task command 仍有意不搬迁：它目前深度依赖 claim lease、Worker fencing、dependency、InputRequest 与 Run completion proof；在没有先定义窄 transaction context 前，机械搬到新 class 只会产生隐藏的第二 owner 或 callback soup。
 
 ## 自动门禁
 
@@ -60,7 +63,7 @@ Slice 2 已把现有 Room collaboration command 与 event derivation 按 owner �
 
 config v4 引入多 participant、多 profile 和 Placement runtime resolver 后，恢复路由与 RuntimeOffer lease publisher 已从 composition root 提取；后续控制面或 Workspace 能力不能重新堆入该文件。
 
-门禁只防回退，不代表两个文件已经达到最终大小。当前 `RoomKernel` 已继续保持在 6,925 行以内，protocol entry 通过 `room-event.ts` 与 `client-collaboration.ts` 保持在 1,800 行以内；下一轮加入新 aggregate 前仍应同步降低阈值。
+门禁只防回退，不代表两个文件已经达到最终大小。当前 `RoomKernel` 已继续保持在 6,925 行以内，protocol entry 通过 `room-event.ts`、`client-collaboration.ts` 与 `activation.ts` 保持在 1,800 行以内；下一轮加入新 aggregate 前仍应同步降低阈值。
 
 ## 下一轮拆分判据
 

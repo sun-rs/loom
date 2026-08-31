@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RAH OS Message Timeline Browser Fixture</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22/>"
+    />
+    <style>
+      html,
+      body,
+      #root {
+        height: 100%;
+        margin: 0;
+      }
+
+      #root > .chan-pane {
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      import React, { useState } from "react";
+      import { createRoot } from "react-dom/client";
+      import "@rah-os/ui-tokens/styles.css";
+      import "@rah-os/ui-tokens/channel-extras.css";
+      import "../src/product.css";
+      import { ChatPane } from "../src/components/conversation-panes.tsx";
+      import { ComposerDraftProvider } from "../src/components/composer-draft-provider.tsx";
+
+      const initialCount = 10_000;
+      const prependCount = 50;
+
+      function createMessage(index) {
+        const paragraph =
+          index % 11 === 0
+            ? " Dynamic height row with enough text to wrap across several lines and exercise measured message layout."
+            : "";
+        return {
+          actorId: "timeline-human",
+          author: index % 2 === 0 ? "Alice" : "Hakase",
+          body: `Timeline fixture ${String(index).padStart(5, "0")}.${paragraph}`,
+          createdAt: new Date(
+            Date.UTC(2026, 7, 29, 0, 0, 0) + index * 1_000,
+          ).toISOString(),
+          messageId: `timeline-${String(index)}`,
+          roomSeq: Math.max(1, index + prependCount),
+        };
+      }
+
+      function Fixture() {
+        const [messages, setMessages] = useState(() =>
+          Array.from({ length: initialCount }, (_, index) =>
+            createMessage(index + 1),
+          ),
+        );
+        const [hasEarlierMessages, setHasEarlierMessages] = useState(true);
+        return React.createElement(ChatPane, {
+          agents: [],
+          canCreateTask: false,
+          canPost: true,
+          canReadThreads: false,
+          canWriteThreads: false,
+          earlierMessagesLoading: false,
+          hasEarlierMessages,
+          loading: false,
+          messageAgents: [],
+          messages,
+          onManageAgents() {},
+          async onConvertToTask() {},
+          async onLoadEarlier() {
+            setMessages((current) => [
+              ...Array.from({ length: prependCount }, (_, index) =>
+                createMessage(index - prependCount + 1),
+              ),
+              ...current,
+            ]);
+            setHasEarlierMessages(false);
+          },
+          async onOpenThread() {},
+          onSelectedAgentIdsChange() {},
+          async onSubmit() {},
+          roomId: "timeline-room",
+          roomName: "timeline-room",
+          selectedAgentIds: [],
+          tasks: [],
+          threadReplyPreviews: [],
+          threads: [],
+        });
+      }
+
+      createRoot(document.getElementById("root")).render(
+        React.createElement(
+          ComposerDraftProvider,
+          null,
+          React.createElement(Fixture),
+        ),
+      );
+    </script>
+  </body>
+</html>

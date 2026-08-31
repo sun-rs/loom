@@ -1,4 +1,5 @@
 export {
+  ActivationCancellationRequestedError,
   AgentExecutionPausedError,
   ConflictError,
   DeliveryProofError,
@@ -15,13 +16,35 @@ export {
 } from "./errors.ts";
 export { createHumanApplicationPort } from "./human-application-port.ts";
 export type { HumanApplicationPort } from "./human-application-port.ts";
+export { createComputerApplicationPort } from "./computer-application-port.ts";
+export type { ComputerApplicationPort } from "./computer-application-port.ts";
 export {
   AuthenticatedActorContext,
   AuthenticatedHostContext,
   AuthenticatedWorkerExecutionContext,
 } from "./auth.ts";
 export { KERNEL_SCHEMA_VERSION, RoomKernel } from "./room-kernel.ts";
+export { ManagedMcpService } from "./managed-mcp-service.ts";
+export { TaskReviewService } from "./task-review-service.ts";
+export type { TaskReviewMutationResult } from "./task-review-service.ts";
+export type {
+  ManagedMcpAssignmentRecord,
+  ManagedMcpAssignmentMutationResult,
+  ManagedMcpAuthorizedCall,
+  ManagedMcpServerRecord,
+  ManagedMcpServerMutationResult,
+} from "./managed-mcp-service.ts";
 export { computeRuntimeCertificationDigest } from "./runtime-certification.ts";
+export { ComputerOperationStore } from "./computer-operation-store.ts";
+export type {
+  ComputerOperationAcknowledgeInput,
+  ComputerOperationAction,
+  ComputerOperationFailureCode,
+  ComputerOperationPhase,
+  ComputerOperationRecord,
+  ComputerOperationState,
+  ComputerOperationStoreOptions,
+} from "./computer-operation-store.ts";
 export { manageWorkspaceAgentTransaction } from "./workspace-agent-management.ts";
 export type {
   PlacementCapacityPolicy,

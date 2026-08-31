@@ -1,0 +1,13 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 512 512"
+  role="img"
+  aria-label="RAH OS"
+>
+  <rect width="512" height="512" rx="72" fill="#ffd440" />
+  <rect x="64" y="64" width="384" height="384" fill="#111" />
+  <path
+    d="M142 352V160h79q40 0 63 21t23 57q0 24-11 41t-31 27l48 46h-65l-40-41h-13v41h-53zm53-89h23q35 0 35-26 0-25-35-25h-23v51zm127 89V160h53v192h-53z"
+    fill="#ffd440"
+  />
+</svg>

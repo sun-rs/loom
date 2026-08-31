@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 import { constants, createReadStream } from "node:fs";
 import { access, realpath, stat } from "node:fs/promises";
 import { delimiter, isAbsolute, resolve } from "node:path";
+import { isSea } from "node:sea";
+import { fileURLToPath } from "node:url";
 
 import type {
   RuntimeOffer,
@@ -11,6 +13,7 @@ import type {
   RuntimeProfileManifest,
   RuntimeProfileProbeReport,
   RuntimeProfileRevision,
+  ToolAccessMode,
   WorkspaceMountDescriptor,
 } from "@rah-os/protocol";
 import {
@@ -30,19 +33,49 @@ import {
 } from "./runtime-profile-registry.ts";
 import { issueRuntimeProfileProbeObservation } from "./runtime-probe-authority.ts";
 import {
-  probeLocalModelCatalog,
+  LocalModelCatalogProbeCache,
   resolveModelBindingArguments,
+  resolveModelBindingEnvironment,
 } from "./model-catalog-probe.ts";
+import {
+  resolveRuntimeToolAccessLaunch,
+  supportedRuntimeToolAccessModes,
+} from "./runtime-tool-access.ts";
+import {
+  ProviderSessionStore,
+  type ProviderSessionKey,
+} from "./provider-session-store.ts";
+import type { ActivationEnvelope } from "./runtime.ts";
 
 const GENERIC_PROCESS_IMPLEMENTATION_VERSION = "generic-process-adapter/v1";
+const CLAUDE_STREAM_JSON_IMPLEMENTATION_VERSION =
+  "claude-stream-json-driver/v1";
+const CODEX_APP_SERVER_IMPLEMENTATION_VERSION = "codex-app-server-driver/v1";
+const KIMI_ACP_IMPLEMENTATION_VERSION = "kimi-acp-driver/v1";
+const OPENCODE_SERVER_IMPLEMENTATION_VERSION = "opencode-server-driver/v1";
 const PROCESS_SUPERVISOR_DRIVER = "rah-process-supervisor-v1";
 const PROCESS_SUPERVISOR_IMPLEMENTATION_VERSION = "rah-process-supervisor/v1";
 const MAX_CREDENTIAL_BYTES = 65_536;
+const sharedDefaultModelCatalogProbeCache = new LocalModelCatalogProbeCache();
+const CLAUDE_STREAM_JSON_DRIVER_PATH = fileURLToPath(
+  new URL("./claude-stream-json-driver.mjs", import.meta.url),
+);
+const CODEX_APP_SERVER_DRIVER_PATH = fileURLToPath(
+  new URL("./codex-app-server-driver.mjs", import.meta.url),
+);
+const KIMI_ACP_DRIVER_PATH = fileURLToPath(
+  new URL("./kimi-acp-driver.mjs", import.meta.url),
+);
+const OPENCODE_SERVER_DRIVER_PATH = fileURLToPath(
+  new URL("./opencode-server-driver.mjs", import.meta.url),
+);
 
 export type RuntimeCreationOptions = Pick<
   GenericProcessAdapterOptions,
   "activationEnvironment" | "beforeStart" | "cwd" | "supervisorDirectory"
->;
+> & {
+  providerSessionStore?: ProviderSessionStore;
+};
 
 type RuntimeAdapterImplementation = {
   create: (
@@ -50,30 +83,88 @@ type RuntimeAdapterImplementation = {
     options: RuntimeCreationOptions,
     probeReport?: RuntimeProfileProbeReport,
     resolvedModel?: ResolvedModel,
+    toolAccessMode?: ToolAccessMode,
   ) => GenericProcessAdapter;
   implementationVersion: string;
   recoveryDrivers: readonly string[];
 };
 
 export class RuntimeImplementationRegistry {
+  readonly #modelCatalogProbeCache: LocalModelCatalogProbeCache;
   readonly #adapterImplementations = new Map<
     string,
     RuntimeAdapterImplementation
   >();
   readonly #recoveryDriverVersions = new Map<string, string>();
 
-  constructor() {
+  constructor(
+    input: { modelCatalogProbeCache?: LocalModelCatalogProbeCache } = {},
+  ) {
+    // Multiple registries participate in one Local Core cold start (bootstrap
+    // and daemon composition). Reuse catalog evidence by executable digest,
+    // kind and cwd while each registry still revalidates executable identity.
+    this.#modelCatalogProbeCache =
+      input.modelCatalogProbeCache ?? sharedDefaultModelCatalogProbeCache;
     const recoveryDrivers =
       process.platform === "win32" ? [] : [PROCESS_SUPERVISOR_DRIVER];
     this.#adapterImplementations.set("generic-process/v1", {
-      create: (revision, options, probeReport, resolvedModel) =>
+      create: (revision, options, probeReport, resolvedModel, toolAccessMode) =>
         createGenericProcessRuntime(
           revision,
           options,
           probeReport,
           resolvedModel,
+          toolAccessMode,
         ),
       implementationVersion: GENERIC_PROCESS_IMPLEMENTATION_VERSION,
+      recoveryDrivers,
+    });
+    this.#adapterImplementations.set("claude-stream-json/v1", {
+      create: (revision, options, probeReport, resolvedModel, toolAccessMode) =>
+        createClaudeStreamJsonRuntime(
+          revision,
+          options,
+          probeReport,
+          resolvedModel,
+          toolAccessMode,
+        ),
+      implementationVersion: CLAUDE_STREAM_JSON_IMPLEMENTATION_VERSION,
+      recoveryDrivers,
+    });
+    this.#adapterImplementations.set("codex-app-server/v1", {
+      create: (revision, options, probeReport, resolvedModel, toolAccessMode) =>
+        createCodexAppServerRuntime(
+          revision,
+          options,
+          probeReport,
+          resolvedModel,
+          toolAccessMode,
+        ),
+      implementationVersion: CODEX_APP_SERVER_IMPLEMENTATION_VERSION,
+      recoveryDrivers,
+    });
+    this.#adapterImplementations.set("kimi-acp/v1", {
+      create: (revision, options, probeReport, resolvedModel, toolAccessMode) =>
+        createKimiAcpRuntime(
+          revision,
+          options,
+          probeReport,
+          resolvedModel,
+          toolAccessMode,
+        ),
+      implementationVersion: KIMI_ACP_IMPLEMENTATION_VERSION,
+      recoveryDrivers,
+    });
+    this.#adapterImplementations.set("opencode-server/v1", {
+      create: (revision, options, probeReport, resolvedModel, toolAccessMode) =>
+        createOpenCodeServerRuntime(
+          revision,
+          options,
+          probeReport,
+          resolvedModel,
+          toolAccessMode,
+        ),
+      implementationVersion: OPENCODE_SERVER_IMPLEMENTATION_VERSION,
       recoveryDrivers,
     });
     if (process.platform !== "win32") {
@@ -162,21 +253,27 @@ export class RuntimeImplementationRegistry {
       manifest.manifestVersion === 3
     ) {
       try {
-        modelBindings = await probeLocalModelCatalog({
+        modelBindings = await this.#modelCatalogProbeCache.probe({
           cwd: input.cwd,
+          executableContentDigest: executable.identity.contentDigest,
           executablePath: executable.identity.resolvedExecutablePath,
           kind: manifest.modelCatalogProbe.kind,
         });
       } catch {
+        // A machine-readable catalog is optional capability evidence. The
+        // exact executable identity and recovery implementation have already
+        // passed their hard gates, so a transient/offline catalog failure
+        // must not take the entire runtime (or Local Core) down. With no
+        // bindings the planner can only use the provider's default model and
+        // cannot fabricate model/effort argv.
         return issueRuntimeProfileProbeObservation({
           adapter: {
             implementationVersion: adapterImplementation.implementationVersion,
             kind: manifest.adapter.kind,
           },
-          available: false,
+          available: executable.available,
           contentDigest: revision.contentDigest,
           executableIdentity: executable.identity,
-          failureCode: "model_catalog_probe_failed",
           modelBindings: [],
           recoveryDrivers,
           runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
@@ -207,6 +304,7 @@ export class RuntimeImplementationRegistry {
     probeReport: RuntimeProfileProbeReport,
     options: RuntimeCreationOptions,
     resolvedModel?: ResolvedModel,
+    toolAccessMode?: ToolAccessMode,
   ): GenericProcessAdapter {
     revision = validateRuntimeProfileRevision(revision);
     if (revision.state !== "active") {
@@ -223,7 +321,13 @@ export class RuntimeImplementationRegistry {
       );
     }
     validateMatchingProbeReport(revision, probeReport, true);
-    return implementation.create(revision, options, probeReport, resolvedModel);
+    return implementation.create(
+      revision,
+      options,
+      probeReport,
+      resolvedModel,
+      toolAccessMode,
+    );
   }
 
   createRecoveryRuntime(
@@ -265,6 +369,7 @@ function createGenericProcessRuntime(
   options: RuntimeCreationOptions,
   probeReport?: RuntimeProfileProbeReport,
   resolvedModel?: ResolvedModel,
+  toolAccessMode?: ToolAccessMode,
 ): GenericProcessAdapter {
   const config = revision.manifest.adapter.config;
   const executableIdentity = probeReport?.executableIdentity;
@@ -275,9 +380,26 @@ function createGenericProcessRuntime(
           resolvedModel,
         )
       : [];
+  const modelEnvironment =
+    resolvedModel?.source === "explicit_binding"
+      ? resolveModelBindingEnvironment(
+          requireModelBinding(probeReport, resolvedModel.modelBindingId),
+          resolvedModel,
+        )
+      : {};
+  const toolAccessLaunch = resolveRuntimeToolAccessLaunch(
+    revision.manifest.manifestVersion === 3
+      ? revision.manifest.modelCatalogProbe.kind
+      : undefined,
+    toolAccessMode ?? "full_access",
+  );
   return new GenericProcessAdapter({
     ...options,
-    args: [...modelArguments, ...revision.manifest.adapter.fixedArgs],
+    args: [
+      ...modelArguments,
+      ...toolAccessLaunch.args,
+      ...revision.manifest.adapter.fixedArgs,
+    ],
     beforeStart: async () => {
       await options.beforeStart?.();
       if (executableIdentity !== undefined) {
@@ -298,8 +420,12 @@ function createGenericProcessRuntime(
       : { diagnosticByteLimit: config.diagnosticByteLimit }),
     env:
       revision.manifest.manifestVersion === 1
-        ? {}
-        : revision.manifest.staticEnv,
+        ? { ...modelEnvironment, ...toolAccessLaunch.env }
+        : {
+            ...revision.manifest.staticEnv,
+            ...modelEnvironment,
+            ...toolAccessLaunch.env,
+          },
     recoveryProvenance: {
       recoveryDriverImplementationVersions: Object.fromEntries(
         revision.manifest.recoveryDrivers.map((driver) => {
@@ -312,6 +438,595 @@ function createGenericProcessRuntime(
       runtimeProfileDigest: revision.contentDigest,
       runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
     },
+    ...(config.supervisorControlTimeoutMs === undefined
+      ? {}
+      : { supervisorControlTimeoutMs: config.supervisorControlTimeoutMs }),
+    ...(config.supervisorStartupTimeoutMs === undefined
+      ? {}
+      : { supervisorStartupTimeoutMs: config.supervisorStartupTimeoutMs }),
+    ...(config.terminationGraceMs === undefined
+      ? {}
+      : { terminationGraceMs: config.terminationGraceMs }),
+  });
+}
+
+/**
+ * Raft-compatible Claude Code stream-json lifecycle with stronger input
+ * acceptance and cancellation/session evidence. Provider session identity is
+ * Host-private and can never reconstruct canonical Room history.
+ */
+function createClaudeStreamJsonRuntime(
+  revision: RuntimeProfileRevision,
+  options: RuntimeCreationOptions,
+  probeReport?: RuntimeProfileProbeReport,
+  resolvedModel?: ResolvedModel,
+  toolAccessMode?: ToolAccessMode,
+): GenericProcessAdapter {
+  if (revision.manifest.manifestVersion !== 3) {
+    throw new Error(
+      "claude-stream-json/v1 requires RuntimeProfile manifest v3",
+    );
+  }
+  if (revision.manifest.modelCatalogProbe.kind !== "claude-cli/v1") {
+    throw new Error(
+      "claude-stream-json/v1 requires the claude-cli/v1 capability probe",
+    );
+  }
+  if (revision.manifest.adapter.fixedArgs.length !== 1) {
+    throw new Error(
+      "claude-stream-json/v1 requires exactly one fixed Room worker prompt",
+    );
+  }
+  const mode = toolAccessMode ?? "full_access";
+  if (mode !== "full_access") {
+    throw new Error(
+      `claude-stream-json/v1 standard Raft policy requires full_access; received ${mode}`,
+    );
+  }
+  const executableIdentity = probeReport?.executableIdentity;
+  const config = revision.manifest.adapter.config;
+  const {
+    activationEnvironment: baseActivationEnvironment,
+    providerSessionStore,
+    ...processOptions
+  } = options;
+  const args = [
+    isSea() ? "__claude-stream-json-driver" : CLAUDE_STREAM_JSON_DRIVER_PATH,
+    "--executable",
+    executableIdentity?.resolvedExecutablePath ??
+      revision.manifest.adapter.executable,
+    "--tool-access-mode",
+    mode,
+    "--prompt",
+    revision.manifest.adapter.fixedArgs[0]!,
+  ];
+  if (resolvedModel?.source === "explicit_binding") {
+    requireModelBinding(probeReport, resolvedModel.modelBindingId);
+    args.push("--model", resolvedModel.modelId);
+    if (
+      resolvedModel.reasoning !== undefined &&
+      resolvedModel.reasoning !== "default"
+    ) {
+      args.push("--effort", resolvedModel.reasoning);
+    }
+  }
+  return new GenericProcessAdapter({
+    ...processOptions,
+    activationEnvironment: async (input) => {
+      const lease = (await baseActivationEnvironment?.(input)) ?? { env: {} };
+      const key = providerSessionKey(input, revision, "claude-stream-json/v1");
+      if (providerSessionStore === undefined || key === undefined) return lease;
+      const previous = await providerSessionStore.load(key);
+      if (previous === null) return lease;
+      return {
+        ...lease,
+        args: [
+          ...(lease.args ?? []),
+          "--resume-session",
+          previous.providerSessionId,
+        ],
+      };
+    },
+    args,
+    beforeStart: async () => {
+      await options.beforeStart?.();
+      if (executableIdentity !== undefined) {
+        await assertExecutableIdentityCurrent(executableIdentity);
+      }
+    },
+    command: process.execPath,
+    ...(config.completedRunRetention === undefined
+      ? {}
+      : { completedRunRetention: config.completedRunRetention }),
+    ...(config.diagnosticByteLimit === undefined
+      ? {}
+      : { diagnosticByteLimit: config.diagnosticByteLimit }),
+    env: { ...revision.manifest.staticEnv },
+    recoveryProvenance: {
+      recoveryDriverImplementationVersions: Object.fromEntries(
+        revision.manifest.recoveryDrivers.map((driver) => {
+          if (driver !== PROCESS_SUPERVISOR_DRIVER) {
+            throw new Error(`unsupported runtime recovery driver: ${driver}`);
+          }
+          return [driver, PROCESS_SUPERVISOR_IMPLEMENTATION_VERSION];
+        }),
+      ),
+      runtimeProfileDigest: revision.contentDigest,
+      runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
+    },
+    ...(providerSessionStore === undefined
+      ? {}
+      : {
+          recordProviderSessionEvidence: async (input, evidence) => {
+            if (evidence.provider !== "claude-stream-json/v1") {
+              throw new Error(
+                `unexpected Provider session evidence: ${evidence.provider}`,
+              );
+            }
+            const key = providerSessionKey(
+              input,
+              revision,
+              "claude-stream-json/v1",
+            );
+            if (key !== undefined) {
+              await providerSessionStore.record(
+                key,
+                evidence.providerSessionId,
+              );
+            }
+          },
+        }),
+    ...(config.supervisorControlTimeoutMs === undefined
+      ? {}
+      : { supervisorControlTimeoutMs: config.supervisorControlTimeoutMs }),
+    ...(config.supervisorStartupTimeoutMs === undefined
+      ? {}
+      : { supervisorStartupTimeoutMs: config.supervisorStartupTimeoutMs }),
+    ...(config.terminationGraceMs === undefined
+      ? {}
+      : { terminationGraceMs: config.terminationGraceMs }),
+  });
+}
+
+/**
+ * Native Codex app-server lifecycle aligned with the current generated
+ * protocol plus Raft and Multica's unattended approval handling. Provider
+ * thread identity is a Host-private continuity cache and turn identity stays
+ * process-local; Room -> Inbox -> Activation remains the only durable business
+ * lifecycle.
+ */
+function createCodexAppServerRuntime(
+  revision: RuntimeProfileRevision,
+  options: RuntimeCreationOptions,
+  probeReport?: RuntimeProfileProbeReport,
+  resolvedModel?: ResolvedModel,
+  toolAccessMode?: ToolAccessMode,
+): GenericProcessAdapter {
+  if (revision.manifest.manifestVersion !== 3) {
+    throw new Error("codex-app-server/v1 requires RuntimeProfile manifest v3");
+  }
+  if (revision.manifest.modelCatalogProbe.kind !== "codex-cli/v1") {
+    throw new Error(
+      "codex-app-server/v1 requires the codex-cli/v1 capability probe",
+    );
+  }
+  if (revision.manifest.adapter.fixedArgs.length !== 1) {
+    throw new Error(
+      "codex-app-server/v1 requires exactly one fixed Room worker prompt",
+    );
+  }
+  const mode = toolAccessMode ?? "full_access";
+  if (mode !== "full_access") {
+    throw new Error(
+      `codex-app-server/v1 standard Raft policy requires full_access; received ${mode}`,
+    );
+  }
+  const executableIdentity = probeReport?.executableIdentity;
+  const config = revision.manifest.adapter.config;
+  const {
+    activationEnvironment: baseActivationEnvironment,
+    providerSessionStore,
+    ...processOptions
+  } = options;
+  const args = [
+    isSea() ? "__codex-app-server-driver" : CODEX_APP_SERVER_DRIVER_PATH,
+    "--executable",
+    executableIdentity?.resolvedExecutablePath ??
+      revision.manifest.adapter.executable,
+    "--tool-access-mode",
+    mode,
+    "--prompt",
+    revision.manifest.adapter.fixedArgs[0]!,
+  ];
+  if (resolvedModel?.source === "explicit_binding") {
+    requireModelBinding(probeReport, resolvedModel.modelBindingId);
+    args.push("--model", resolvedModel.modelId);
+    if (
+      resolvedModel.reasoning !== undefined &&
+      resolvedModel.reasoning !== "default"
+    ) {
+      args.push("--reasoning", resolvedModel.reasoning);
+    }
+  }
+  return new GenericProcessAdapter({
+    ...processOptions,
+    activationEnvironment: async (input) => {
+      const lease = (await baseActivationEnvironment?.(input)) ?? { env: {} };
+      const key = providerSessionKey(input, revision, "codex-app-server/v1");
+      if (providerSessionStore === undefined || key === undefined) return lease;
+      const previous = await providerSessionStore.load(key);
+      if (previous === null) return lease;
+      return {
+        ...lease,
+        args: [
+          ...(lease.args ?? []),
+          "--resume-session",
+          previous.providerSessionId,
+        ],
+      };
+    },
+    args,
+    beforeStart: async () => {
+      await options.beforeStart?.();
+      if (executableIdentity !== undefined) {
+        await assertExecutableIdentityCurrent(executableIdentity);
+      }
+    },
+    command: process.execPath,
+    ...(config.completedRunRetention === undefined
+      ? {}
+      : { completedRunRetention: config.completedRunRetention }),
+    ...(config.diagnosticByteLimit === undefined
+      ? {}
+      : { diagnosticByteLimit: config.diagnosticByteLimit }),
+    env: { ...revision.manifest.staticEnv },
+    recoveryProvenance: {
+      recoveryDriverImplementationVersions: Object.fromEntries(
+        revision.manifest.recoveryDrivers.map((driver) => {
+          if (driver !== PROCESS_SUPERVISOR_DRIVER) {
+            throw new Error(`unsupported runtime recovery driver: ${driver}`);
+          }
+          return [driver, PROCESS_SUPERVISOR_IMPLEMENTATION_VERSION];
+        }),
+      ),
+      runtimeProfileDigest: revision.contentDigest,
+      runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
+    },
+    ...(providerSessionStore === undefined
+      ? {}
+      : {
+          recordProviderSessionEvidence: async (input, evidence) => {
+            if (evidence.provider !== "codex-app-server/v1") {
+              throw new Error(
+                `unexpected Provider session evidence: ${evidence.provider}`,
+              );
+            }
+            const key = providerSessionKey(
+              input,
+              revision,
+              "codex-app-server/v1",
+            );
+            if (key !== undefined) {
+              await providerSessionStore.record(
+                key,
+                evidence.providerSessionId,
+              );
+            }
+          },
+        }),
+    ...(config.supervisorControlTimeoutMs === undefined
+      ? {}
+      : { supervisorControlTimeoutMs: config.supervisorControlTimeoutMs }),
+    ...(config.supervisorStartupTimeoutMs === undefined
+      ? {}
+      : { supervisorStartupTimeoutMs: config.supervisorStartupTimeoutMs }),
+    ...(config.terminationGraceMs === undefined
+      ? {}
+      : { terminationGraceMs: config.terminationGraceMs }),
+  });
+}
+
+function providerSessionKey(
+  input: ActivationEnvelope,
+  revision: RuntimeProfileRevision,
+  provider: string,
+): ProviderSessionKey | undefined {
+  const context = input.contextManifest;
+  const placement = context?.placement;
+  if (context === undefined || placement === undefined) return undefined;
+  if (
+    context.activationId !== input.activationId ||
+    context.participantId !== input.participantId ||
+    context.roomId !== input.roomId ||
+    context.runAttemptId !== input.runAttemptId
+  ) {
+    throw new Error(
+      "Provider session context identity does not match activation",
+    );
+  }
+  if (
+    placement.runtimeProfileRevisionId !== revision.runtimeProfileRevisionId ||
+    placement.runtimeProfileDigest !== revision.contentDigest
+  ) {
+    throw new Error(
+      "Provider session placement does not match the configured RuntimeProfile",
+    );
+  }
+  return {
+    participantId: input.participantId,
+    provider,
+    runtimeProfileRevisionId: placement.runtimeProfileRevisionId,
+    workspaceMountRevisionId: placement.workspaceMountRevisionId,
+  };
+}
+
+/**
+ * Structured port of Multica's Kimi ACP lifecycle at commit
+ * 64ec7f54163d918d5d7fd4dcae857f241b7842d0. Provider session continuity is
+ * Host-private transport evidence; the durable product owner remains the
+ * Room -> Inbox -> Activation chain.
+ */
+function createKimiAcpRuntime(
+  revision: RuntimeProfileRevision,
+  options: RuntimeCreationOptions,
+  probeReport?: RuntimeProfileProbeReport,
+  resolvedModel?: ResolvedModel,
+  toolAccessMode?: ToolAccessMode,
+): GenericProcessAdapter {
+  if (revision.manifest.manifestVersion !== 3) {
+    throw new Error("kimi-acp/v1 requires RuntimeProfile manifest v3");
+  }
+  if (revision.manifest.modelCatalogProbe.kind !== "kimi-cli/v1") {
+    throw new Error("kimi-acp/v1 requires the kimi-cli/v1 capability probe");
+  }
+  if (revision.manifest.adapter.fixedArgs.length !== 1) {
+    throw new Error(
+      "kimi-acp/v1 requires exactly one fixed Room worker prompt",
+    );
+  }
+  const mode = toolAccessMode ?? "full_access";
+  // The ACP client currently has a truthful headless policy only for full
+  // access. Restricted modes fail closed instead of claiming a sandbox the
+  // installed Kimi runtime does not provide.
+  if (mode !== "full_access") {
+    throw new Error(
+      `kimi-acp/v1 does not yet enforce ${mode}; restricted execution fails closed`,
+    );
+  }
+  const executableIdentity = probeReport?.executableIdentity;
+  const config = revision.manifest.adapter.config;
+  const {
+    activationEnvironment: baseActivationEnvironment,
+    providerSessionStore,
+    ...processOptions
+  } = options;
+  const args = [
+    isSea() ? "__kimi-acp-driver" : KIMI_ACP_DRIVER_PATH,
+    "--executable",
+    executableIdentity?.resolvedExecutablePath ??
+      revision.manifest.adapter.executable,
+    "--tool-access-mode",
+    mode,
+    "--prompt",
+    revision.manifest.adapter.fixedArgs[0]!,
+  ];
+  if (resolvedModel?.source === "explicit_binding") {
+    requireModelBinding(probeReport, resolvedModel.modelBindingId);
+    args.push("--model", resolvedModel.modelId);
+    if (
+      resolvedModel.reasoning !== undefined &&
+      resolvedModel.reasoning !== "default"
+    ) {
+      args.push("--thinking-level", resolvedModel.reasoning);
+    }
+  }
+  return new GenericProcessAdapter({
+    ...processOptions,
+    activationEnvironment: async (input) => {
+      const lease = (await baseActivationEnvironment?.(input)) ?? { env: {} };
+      const key = providerSessionKey(input, revision, "kimi-acp/v1");
+      if (providerSessionStore === undefined || key === undefined) return lease;
+      const previous = await providerSessionStore.load(key);
+      if (previous === null) return lease;
+      return {
+        ...lease,
+        args: [
+          ...(lease.args ?? []),
+          "--resume-session",
+          previous.providerSessionId,
+        ],
+      };
+    },
+    args,
+    beforeStart: async () => {
+      await options.beforeStart?.();
+      if (executableIdentity !== undefined) {
+        await assertExecutableIdentityCurrent(executableIdentity);
+      }
+    },
+    command: process.execPath,
+    ...(config.completedRunRetention === undefined
+      ? {}
+      : { completedRunRetention: config.completedRunRetention }),
+    ...(config.diagnosticByteLimit === undefined
+      ? {}
+      : { diagnosticByteLimit: config.diagnosticByteLimit }),
+    env: { ...revision.manifest.staticEnv },
+    recoveryProvenance: {
+      recoveryDriverImplementationVersions: Object.fromEntries(
+        revision.manifest.recoveryDrivers.map((driver) => {
+          if (driver !== PROCESS_SUPERVISOR_DRIVER) {
+            throw new Error(`unsupported runtime recovery driver: ${driver}`);
+          }
+          return [driver, PROCESS_SUPERVISOR_IMPLEMENTATION_VERSION];
+        }),
+      ),
+      runtimeProfileDigest: revision.contentDigest,
+      runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
+    },
+    ...(providerSessionStore === undefined
+      ? {}
+      : {
+          recordProviderSessionEvidence: async (input, evidence) => {
+            if (evidence.provider !== "kimi-acp/v1") {
+              throw new Error(
+                `unexpected Provider session evidence: ${evidence.provider}`,
+              );
+            }
+            const key = providerSessionKey(input, revision, "kimi-acp/v1");
+            if (key !== undefined) {
+              await providerSessionStore.record(
+                key,
+                evidence.providerSessionId,
+              );
+            }
+          },
+        }),
+    ...(config.supervisorControlTimeoutMs === undefined
+      ? {}
+      : { supervisorControlTimeoutMs: config.supervisorControlTimeoutMs }),
+    ...(config.supervisorStartupTimeoutMs === undefined
+      ? {}
+      : { supervisorStartupTimeoutMs: config.supervisorStartupTimeoutMs }),
+    ...(config.terminationGraceMs === undefined
+      ? {}
+      : { terminationGraceMs: config.terminationGraceMs }),
+  });
+}
+
+/**
+ * Current OpenCode local-server/session transport. It keeps Provider session
+ * identity in the Host-private continuity store, uses the official HTTP/SSE
+ * control plane for prompt/permission/abort, and leaves Room/Message truth to
+ * the Worker API. This deliberately supersedes Raft and Multica's thinner
+ * per-turn `opencode run` wrapper while preserving their unattended policy.
+ */
+function createOpenCodeServerRuntime(
+  revision: RuntimeProfileRevision,
+  options: RuntimeCreationOptions,
+  probeReport?: RuntimeProfileProbeReport,
+  resolvedModel?: ResolvedModel,
+  toolAccessMode?: ToolAccessMode,
+): GenericProcessAdapter {
+  if (revision.manifest.manifestVersion !== 3) {
+    throw new Error("opencode-server/v1 requires RuntimeProfile manifest v3");
+  }
+  if (revision.manifest.modelCatalogProbe.kind !== "opencode-cli/v1") {
+    throw new Error(
+      "opencode-server/v1 requires the opencode-cli/v1 capability probe",
+    );
+  }
+  if (revision.manifest.adapter.fixedArgs.length !== 1) {
+    throw new Error(
+      "opencode-server/v1 requires exactly one fixed Room worker prompt",
+    );
+  }
+  const mode = toolAccessMode ?? "full_access";
+  if (mode !== "full_access") {
+    throw new Error(
+      `opencode-server/v1 standard Raft policy requires full_access; received ${mode}`,
+    );
+  }
+  const executableIdentity = probeReport?.executableIdentity;
+  const config = revision.manifest.adapter.config;
+  const {
+    activationEnvironment: baseActivationEnvironment,
+    providerSessionStore,
+    ...processOptions
+  } = options;
+  const args = [
+    isSea() ? "__opencode-server-driver" : OPENCODE_SERVER_DRIVER_PATH,
+    "--executable",
+    executableIdentity?.resolvedExecutablePath ??
+      revision.manifest.adapter.executable,
+    "--tool-access-mode",
+    mode,
+    "--prompt",
+    revision.manifest.adapter.fixedArgs[0]!,
+  ];
+  if (resolvedModel?.source === "explicit_binding") {
+    requireModelBinding(probeReport, resolvedModel.modelBindingId);
+    args.push("--model", resolvedModel.modelId);
+    if (
+      resolvedModel.reasoning !== undefined &&
+      resolvedModel.reasoning !== "default"
+    ) {
+      args.push("--variant", resolvedModel.reasoning);
+    }
+  }
+  const toolAccess = resolveRuntimeToolAccessLaunch(
+    revision.manifest.modelCatalogProbe.kind,
+    mode,
+  );
+  return new GenericProcessAdapter({
+    ...processOptions,
+    activationEnvironment: async (input) => {
+      const lease = (await baseActivationEnvironment?.(input)) ?? { env: {} };
+      const key = providerSessionKey(input, revision, "opencode-server/v1");
+      if (providerSessionStore === undefined || key === undefined) return lease;
+      const previous = await providerSessionStore.load(key);
+      if (previous === null) return lease;
+      return {
+        ...lease,
+        args: [
+          ...(lease.args ?? []),
+          "--resume-session",
+          previous.providerSessionId,
+        ],
+      };
+    },
+    args,
+    beforeStart: async () => {
+      await options.beforeStart?.();
+      if (executableIdentity !== undefined) {
+        await assertExecutableIdentityCurrent(executableIdentity);
+      }
+    },
+    command: process.execPath,
+    ...(config.completedRunRetention === undefined
+      ? {}
+      : { completedRunRetention: config.completedRunRetention }),
+    ...(config.diagnosticByteLimit === undefined
+      ? {}
+      : { diagnosticByteLimit: config.diagnosticByteLimit }),
+    env: {
+      ...revision.manifest.staticEnv,
+      ...toolAccess.env,
+    },
+    recoveryProvenance: {
+      recoveryDriverImplementationVersions: Object.fromEntries(
+        revision.manifest.recoveryDrivers.map((driver) => {
+          if (driver !== PROCESS_SUPERVISOR_DRIVER) {
+            throw new Error(`unsupported runtime recovery driver: ${driver}`);
+          }
+          return [driver, PROCESS_SUPERVISOR_IMPLEMENTATION_VERSION];
+        }),
+      ),
+      runtimeProfileDigest: revision.contentDigest,
+      runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
+    },
+    ...(providerSessionStore === undefined
+      ? {}
+      : {
+          recordProviderSessionEvidence: async (input, evidence) => {
+            if (evidence.provider !== "opencode-server/v1") {
+              throw new Error(
+                `unexpected Provider session evidence: ${evidence.provider}`,
+              );
+            }
+            const key = providerSessionKey(
+              input,
+              revision,
+              "opencode-server/v1",
+            );
+            if (key !== undefined) {
+              await providerSessionStore.record(
+                key,
+                evidence.providerSessionId,
+              );
+            }
+          },
+        }),
     ...(config.supervisorControlTimeoutMs === undefined
       ? {}
       : { supervisorControlTimeoutMs: config.supervisorControlTimeoutMs }),
@@ -455,6 +1170,12 @@ export function buildRuntimeOfferFromProfile(input: {
     runtimeProfileId: revision.runtimeProfileId,
     runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
     state: input.state,
+    supportedToolAccessModes: supportedRuntimeToolAccessModes(
+      revision.manifest.adapter.kind,
+      revision.manifest.manifestVersion === 3
+        ? revision.manifest.modelCatalogProbe.kind
+        : undefined,
+    ),
     workspaceMountDescriptors,
   });
 }

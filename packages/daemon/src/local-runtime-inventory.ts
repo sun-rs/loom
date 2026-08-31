@@ -3,6 +3,7 @@ import { constants } from "node:fs";
 import { access, realpath, stat } from "node:fs/promises";
 import { delimiter, isAbsolute, join } from "node:path";
 import { promisify } from "node:util";
+import { arch, hostname, platform } from "node:os";
 
 import {
   LocalRuntimeInventoryEntrySchema,
@@ -12,6 +13,7 @@ import {
   type RuntimeProfileProbeReport,
   type RuntimeProfileRevision,
 } from "@rah-os/protocol";
+import { supportedRuntimeToolAccessModes } from "@rah-os/agent-host";
 import type { AuthenticatedActorContext, RoomKernel } from "@rah-os/kernel";
 
 const execFileAsync = promisify(execFile);
@@ -35,6 +37,7 @@ export type ConfiguredLocalRuntime = {
   runtimeOfferId: string;
   runtimeProfileId: string;
   runtimeProfileRevisionId: string;
+  supportedToolAccessModes?: LocalRuntimeInventoryEntry["supportedToolAccessModes"];
 };
 
 export type ConfiguredLocalRuntimeSnapshot = Omit<
@@ -73,6 +76,14 @@ export function configuredRuntimeSnapshot(input: {
     runtimeOfferId,
     runtimeProfileId: runtimeProfileRevision.runtimeProfileId,
     runtimeProfileRevisionId: runtimeProfileRevision.runtimeProfileRevisionId,
+    supportedToolAccessModes: [
+      ...supportedRuntimeToolAccessModes(
+        runtimeProfileRevision.manifest.adapter.kind,
+        runtimeProfileRevision.manifest.manifestVersion === 3
+          ? runtimeProfileRevision.manifest.modelCatalogProbe.kind
+          : undefined,
+      ),
+    ],
   };
 }
 
@@ -82,14 +93,48 @@ export function buildLocalRuntimeInventoryResponse(input: {
   discovered: readonly LocalRuntimeInventoryEntry[];
   hostId: string;
   kernel: RoomKernel;
+  now?: Date;
+  staleAfterMs?: number;
 }): LocalRuntimeInventoryResponse {
   const catalog = input.kernel.listAgentCatalog(input.actor);
+  const now = input.now ?? new Date();
+  const staleAfterMs = input.staleAfterMs ?? 30_000;
+  const host = input.kernel
+    .listHosts()
+    .find((host) => host.hostId === input.hostId);
+  const age = host ? now.getTime() - Date.parse(host.lastSeenAt) : Infinity;
   return LocalRuntimeInventoryResponseSchema.parse({
     hostId: input.hostId,
+    computer: {
+      displayName: hostname().replace(/\.local$/, ""),
+      hostname: hostname(),
+      os: `${platform()} ${arch()}`,
+      observedAt: now.toISOString(),
+      staleAfterMs,
+      status: !host
+        ? "unknown"
+        : host.state === "offline"
+          ? "offline"
+          : age < 0 || !Number.isFinite(age)
+            ? "unknown"
+            : age >= staleAfterMs
+              ? "offline"
+              : host.state,
+      ...(host
+        ? {
+            lastSeenAt: host.lastSeenAt,
+            instanceId: host.instanceId,
+            ...(host.buildVersion ? { buildVersion: host.buildVersion } : {}),
+          }
+        : {}),
+    },
     restartRequiredToRescan: true,
     runtimes: mergeLocalRuntimeInventory({
       configured: input.configured.map((runtime) => ({
         ...runtime,
+        available:
+          runtime.available &&
+          input.kernel.runtimeOfferIsCurrentlyAvailable(runtime.runtimeOfferId),
         agentBindings: catalog.flatMap((entry) => {
           const policy = input.kernel.getExecutionPolicyRevision(
             entry.currentRevision.executionPolicyRevisionId,
@@ -116,13 +161,12 @@ export function mergeLocalRuntimeInventory(input: {
   configured: readonly ConfiguredLocalRuntime[];
   discovered: readonly LocalRuntimeInventoryEntry[];
 }): LocalRuntimeInventoryEntry[] {
-  const matchedExecutables = new Set(
-    input.configured.map((runtime) => runtime.executable),
-  );
+  const matchedDiscoveryEntries = new Set<LocalRuntimeInventoryEntry>();
   const configured = input.configured.map((runtime) => {
-    const discovery = input.discovered.find(
-      (entry) => entry.executable === runtime.executable,
+    const discovery = input.discovered.find((entry) =>
+      runtimeInventoryEntriesMatch(runtime, entry),
     );
+    if (discovery !== undefined) matchedDiscoveryEntries.add(discovery);
     return LocalRuntimeInventoryEntrySchema.parse({
       ...runtime,
       configured: true,
@@ -138,10 +182,23 @@ export function mergeLocalRuntimeInventory(input: {
   });
   return [
     ...configured,
-    ...input.discovered.filter(
-      ({ executable }) => !matchedExecutables.has(executable),
-    ),
+    ...input.discovered.filter((entry) => !matchedDiscoveryEntries.has(entry)),
   ];
+}
+
+function runtimeInventoryEntriesMatch(
+  configured: ConfiguredLocalRuntime,
+  discovered: LocalRuntimeInventoryEntry,
+): boolean {
+  if (
+    configured.resolvedExecutablePath !== undefined &&
+    discovered.resolvedExecutablePath !== undefined
+  ) {
+    return (
+      configured.resolvedExecutablePath === discovered.resolvedExecutablePath
+    );
+  }
+  return configured.executable === discovered.executable;
 }
 
 export async function discoverKnownLocalClis(

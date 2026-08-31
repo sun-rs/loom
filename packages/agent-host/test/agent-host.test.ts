@@ -197,7 +197,11 @@ test("AgentHost does not complete an Activation from exit zero without delivery 
 test("AgentHost durably requeues an Activation after a runtime failure", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-agent-host-retry-"));
   try {
-    const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+    let nowMs = Date.parse("2026-08-28T00:00:00.000Z");
+    const kernel = new RoomKernel({
+      databasePath: join(directory, "room.db"),
+      now: () => new Date(nowMs),
+    });
     kernel.initialize();
     const humanProvisioning = kernel.provisionPrincipal({
       handle: "retry-human",
@@ -232,6 +236,7 @@ test("AgentHost durably requeues an Activation after a runtime failure", async (
 
     const runtime = new FakeRuntimeAdapter();
     runtime.enqueueExit({ code: 1 });
+    runtime.enqueueExit({ code: 1 });
     const host = new AgentHost({
       host: authenticateHost(kernel, "retry-host", [
         agentProvisioning.principal.principalId,
@@ -250,6 +255,22 @@ test("AgentHost durably requeues an Activation after a runtime failure", async (
     const runAttempt = kernel.listRunAttempts({ roomId: room.roomId })[0];
     assert.equal(runAttempt?.state, "exited");
     assert.equal(runAttempt?.exitCode, 1);
+
+    assert.equal(
+      Date.parse(activation?.availableAt ?? ""),
+      nowMs + 1_000,
+      "the first failure uses the configured base delay",
+    );
+    nowMs += 1_000;
+    const second = await host.reconcileOnce();
+    assert.equal(second.state, "failed");
+    const retried = kernel.listActivations({ roomId: room.roomId })[0];
+    assert.equal(retried?.attemptCount, 2);
+    assert.equal(
+      Date.parse(retried?.availableAt ?? ""),
+      nowMs + 2_000,
+      "consecutive failures back off instead of creating a retry storm",
+    );
 
     kernel.close();
   } finally {
@@ -877,6 +898,121 @@ test("AgentHost renews the Activation lease while a runtime is still running", a
     assert.equal(result.state, "completed");
 
     competingKernel.close();
+    kernel.close();
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("AgentHost terminates a cancelled Task runtime before reopening its Activation lane", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-agent-host-cancel-"));
+  try {
+    const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+    kernel.initialize();
+    const humanProvisioning = kernel.provisionPrincipal({
+      handle: "cancel-runtime-human",
+      kind: "human",
+    });
+    const agentProvisioning = kernel.provisionPrincipal({
+      handle: "cancel-runtime-agent",
+      kind: "agent",
+    });
+    const humanActor = kernel.authenticateAccessToken(
+      humanProvisioning.accessToken,
+    );
+    const room = kernel.createRoom(humanActor, {
+      name: "Cancel active runtime",
+      slug: "cancel-active-runtime",
+    });
+    kernel.addMember(humanActor, {
+      principalId: agentProvisioning.principal.principalId,
+      roomId: room.roomId,
+    });
+    const task = kernel.createTask(humanActor, {
+      assigneeId: agentProvisioning.principal.principalId,
+      idempotencyKey: "cancel-runtime-task",
+      roomId: room.roomId,
+      title: "Stop this long-running job",
+    });
+    const authenticatedHost = authenticateHost(kernel, "cancel-runtime-host", [
+      agentProvisioning.principal.principalId,
+    ]);
+    let cancelIssued = false;
+    const runtime = new FakeRuntimeAdapter({
+      onReap: async () =>
+        await new Promise(() => {
+          // The process intentionally stays live until AgentHost cancels it.
+        }),
+      onStart: (input) => {
+        const execution = kernel.authorizeWorkerExecution(authenticatedHost, {
+          activationId: input.activationId,
+          consumerId: input.consumerId,
+          hostId: input.hostId,
+          participantId: input.participantId,
+          roomId: input.roomId,
+          runAttemptId: input.runAttemptId,
+          toSeq: input.toSeq,
+        });
+        const delivered = kernel.syncWorker(execution, {});
+        kernel.acknowledgeWorkerCursor(execution, {
+          throughSeq: delivered.cursorAfter,
+        });
+        const claimed = kernel.claimTask(execution, {
+          basedOnRoomSeq: delivered.cursorAfter,
+          idempotencyKey: "cancel-runtime-claim",
+          leaseMs: 30_000,
+          taskId: task.task.taskId,
+        });
+        kernel.startTask(execution, {
+          basedOnRoomSeq: claimed.event.roomSeq,
+          idempotencyKey: "cancel-runtime-start",
+          leaseMs: 30_000,
+          taskId: task.task.taskId,
+        });
+      },
+    });
+    const host = new AgentHost({
+      host: authenticatedHost,
+      kernel,
+      leaseMs: 30_000,
+      leaseRenewIntervalMs: 10,
+      maintenanceWait: async (_delayMs, signal) => {
+        if (!cancelIssued) {
+          cancelIssued = true;
+          const latest = kernel.sync(humanActor, {
+            consumerId: "cancel-runtime-human-sync",
+            roomId: room.roomId,
+          }).cursorAfter;
+          kernel.cancelTask(humanActor, {
+            basedOnRoomSeq: latest,
+            idempotencyKey: "cancel-runtime-stop",
+            reason: "Human explicitly closed the long-running Task",
+            taskId: task.task.taskId,
+          });
+          return;
+        }
+        await waitUntilAborted(10, signal);
+      },
+      runtime,
+      timeoutWait: waitUntilAborted,
+    });
+
+    const result = await host.reconcileOnce();
+    assert.equal(result.state, "cancelled");
+    assert.equal(runtime.cancellations.length, 1);
+    assert.equal(
+      kernel.listRuntimeProcesses({ roomId: room.roomId })[0]?.state,
+      "terminated",
+    );
+    assert.equal(
+      kernel.listRunAttempts({ roomId: room.roomId })[0]?.state,
+      "cancelled",
+    );
+    assert.equal(
+      kernel.listActivations({ roomId: room.roomId })[0]?.state,
+      "queued",
+    );
+
     kernel.close();
   } finally {
     rmSync(directory, { force: true, recursive: true });

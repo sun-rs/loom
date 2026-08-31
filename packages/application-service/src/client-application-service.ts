@@ -1,5 +1,14 @@
 import { createHash } from "node:crypto";
 import {
+  AGENT_WORKSPACE_PATHS,
+  routeAgentWorkspace,
+  type AgentWorkspaceReadPort,
+} from "./client-agent-workspace-routes.ts";
+import {
+  DISCOVERY_DATA_PATHS,
+  routeDiscovery,
+} from "./client-discovery-routes.ts";
+import {
   createServer,
   type IncomingMessage,
   type Server,
@@ -13,13 +22,30 @@ import {
   KernelError,
 } from "@rah-os/kernel";
 import {
+  ClientAgentActivityListRequestSchema,
+  ClientAgentActivityListResponseSchema,
+  ClientAgentTrajectoryListRequestSchema,
+  ClientAgentTrajectoryListResponseSchema,
   ClientAcknowledgeRequestSchema,
   ClientAcknowledgeResponseSchema,
   ClientAgentOnboardRequestSchema,
+  ClientAgentRoomsListRequestSchema,
+  ClientAgentRoomsListResponseSchema,
   ClientAgentManageRequestSchema,
   ClientAgentManageResponseSchema,
   ClientAgentGetRequestSchema,
   ClientAgentGetResponseSchema,
+  ClientAgentMemoryGetRequestSchema,
+  ClientAgentMemoryConfigGetRequestSchema,
+  ClientAgentMemoryConfigPatchRequestSchema,
+  ClientAgentMemoryConfigResponseSchema,
+  type AgentMemoryConfigSnapshot,
+  type AgentMemoryConfigPatch,
+  ClientAgentMemoryGetResponseSchema,
+  ClientAgentMemoryReadRequestSchema,
+  ClientAgentMemoryReadResponseSchema,
+  ClientAgentMemoryResetRequestSchema,
+  ClientAgentMemoryResetResponseSchema,
   ClientAgentProvisionRequestSchema,
   ClientAgentProvisionResponseSchema,
   ClientAgentsListRequestSchema,
@@ -34,8 +60,28 @@ import {
   ClientMessagePostRequestSchema,
   ClientMessagesListRequestSchema,
   ClientMessagesListResponseSchema,
+  ClientManagedMcpAssignmentCreateRequestSchema,
+  ClientManagedMcpAssignmentMutationResponseSchema,
+  ClientManagedMcpAssignmentReviseRequestSchema,
+  ClientManagedMcpAssignmentsListRequestSchema,
+  ClientManagedMcpAssignmentsListResponseSchema,
+  ClientManagedMcpAssignmentStateRequestSchema,
+  ClientManagedMcpExecutorDiscoverRequestSchema,
+  ClientManagedMcpExecutorDiscoverResponseSchema,
+  ClientManagedMcpExecutorsListRequestSchema,
+  ClientManagedMcpExecutorsListResponseSchema,
+  ClientManagedMcpServerCreateRequestSchema,
+  ClientManagedMcpServerMutationResponseSchema,
+  ClientManagedMcpServerReviseRequestSchema,
+  ClientManagedMcpServersListRequestSchema,
+  ClientManagedMcpServersListResponseSchema,
+  ClientManagedMcpServerStateRequestSchema,
+  ClientManagedMcpUsageListRequestSchema,
+  ClientManagedMcpUsageListResponseSchema,
   ClientPrincipalMeRequestSchema,
   ClientPrincipalMeResponseSchema,
+  ClientDirectRoomOpenRequestSchema,
+  ClientDirectRoomOpenResponseSchema,
   ClientRoomMemberAddRequestSchema,
   ClientRoomMemberMutationResponseSchema,
   ClientRoomMemberRemoveRequestSchema,
@@ -46,6 +92,7 @@ import {
   ClientRoomMembersListRequestSchema,
   ClientRoomMembersListResponseSchema,
   ClientRoomCreateRequestSchema,
+  ClientRoomUpdateRequestSchema,
   ClientRoomMutationResponseSchema,
   ClientRoomsListRequestSchema,
   ClientRoomsListResponseSchema,
@@ -53,12 +100,17 @@ import {
   ClientRoomSyncResponseSchema,
   ClientTasksListRequestSchema,
   ClientTasksListResponseSchema,
+  ClientTaskReviewEvidenceListRequestSchema,
+  ClientTaskReviewEvidenceListResponseSchema,
   ClientTaskAssignRequestSchema,
   ClientTaskAttentionMutationResponseSchema,
   ClientTaskCancelRequestSchema,
+  ClientTaskReopenRequestSchema,
   ClientTaskCompleteRequestSchema,
+  ClientTaskConvertRequestSchema,
   ClientTaskCreateRequestSchema,
   ClientTaskMutationResponseSchema,
+  ClientTaskUnassignRequestSchema,
   ClientTaskUnblockRequestSchema,
   ClientThreadCreateRequestSchema,
   ClientThreadCreateResponseSchema,
@@ -68,24 +120,82 @@ import {
   ClientWorkspacesListRequestSchema,
   ClientWorkspacesListResponseSchema,
   ClientWorkspaceCreateRequestSchema,
+  ClientWorkspaceUpdateRequestSchema,
   ClientWorkspaceMutationResponseSchema,
   InputRequestResolveRequestSchema,
   InputRequestResolveResponseSchema,
   LocalRuntimeInventoryRequestSchema,
   LocalRuntimeInventoryResponseSchema,
   type ClientHealthResponse,
+  type AgentMemoryMaterializedFile,
+  type AgentMemoryWorkspaceSnapshot,
   type LocalRuntimeInventoryResponse,
 } from "@rah-os/protocol";
 
+import type { ManagedMcpAdministrationPort } from "./managed-mcp-executor.ts";
+
 export type ClientApplicationServiceOptions = {
+  agentMemoryAdministration?: AgentMemoryAdministrationPort;
   bindHost?: "127.0.0.1";
   health: () => ClientHealthResponse;
   human: HumanApplicationPort;
   localRuntimeInventory?: (
     actor: AuthenticatedActorContext,
   ) => LocalRuntimeInventoryResponse | Promise<LocalRuntimeInventoryResponse>;
+  managedMcpAdministration?: ManagedMcpAdministrationPort;
   port?: number;
 };
+
+export type AgentMemoryAdministrationPort = Readonly<{
+  computerHostId: string;
+  workspace?: AgentWorkspaceReadPort;
+  getCleanerConfig?(
+    ownerParticipantId: string,
+  ): AgentMemoryConfigSnapshot | Promise<AgentMemoryConfigSnapshot>;
+  patchCleanerConfig?(
+    ownerParticipantId: string,
+    patch: AgentMemoryConfigPatch,
+  ): AgentMemoryConfigSnapshot | Promise<AgentMemoryConfigSnapshot>;
+  inspectWorkspace(
+    ownerParticipantId: string,
+  ): Promise<AgentMemoryWorkspaceSnapshot> | AgentMemoryWorkspaceSnapshot;
+  readWorkspaceFile(
+    ownerParticipantId: string,
+    relativePath: string,
+  ):
+    | Promise<
+        Readonly<{
+          content: string;
+          file: AgentMemoryMaterializedFile;
+          ownerParticipantId: string;
+        }>
+      >
+    | Readonly<{
+        content: string;
+        file: AgentMemoryMaterializedFile;
+        ownerParticipantId: string;
+      }>;
+  resetWorkspace(
+    ownerParticipantId: string,
+    idempotencyKey: string,
+  ):
+    | Promise<
+        Readonly<{
+          deduplicated: boolean;
+          operationId: string;
+          ownerParticipantId: string;
+          providerContinuityRecords: number;
+          resetAtMs: number;
+        }>
+      >
+    | Readonly<{
+        deduplicated: boolean;
+        operationId: string;
+        ownerParticipantId: string;
+        providerContinuityRecords: number;
+        resetAtMs: number;
+      }>;
+}>;
 
 class HttpRequestError extends Error {
   readonly code: string;
@@ -98,7 +208,7 @@ class HttpRequestError extends Error {
   }
 }
 
-const MAX_BODY_BYTES = 64 * 1_024;
+const MAX_BODY_BYTES = 1_024 * 1_024;
 const CLIENT_V1_DATA_PATHS = new Set([
   "/input-requests/list",
   "/input-requests/resolve",
@@ -107,6 +217,7 @@ const CLIENT_V1_DATA_PATHS = new Set([
   "/tasks/list",
   "/tasks/assign",
   "/tasks/cancel",
+  "/tasks/reopen",
   "/tasks/complete",
   "/tasks/create",
   "/tasks/unblock",
@@ -126,16 +237,44 @@ const CLIENT_V2_DATA_PATHS = new Set([
   "/workspaces/list",
 ]);
 const CLIENT_V3_DATA_PATHS = new Set([
+  ...AGENT_WORKSPACE_PATHS,
+  ...FILE_DATA_PATHS,
+  ...DISCOVERY_DATA_PATHS,
   ...CLIENT_V2_DATA_PATHS,
+  "/agents/activity/list",
+  "/agents/trajectory/list",
   "/agents/list",
   "/agents/get",
+  "/agents/memory/get",
+  "/agents/memory/config/get",
+  "/agents/memory/config/patch",
+  "/agents/memory/read",
+  "/agents/memory/reset",
+  "/agents/rooms/list",
   "/agents/manage",
   "/agents/onboard",
   "/agents/provision",
+  "/managed-mcp/assignments/create",
+  "/managed-mcp/assignments/list",
+  "/managed-mcp/assignments/revise",
+  "/managed-mcp/assignments/state",
+  "/managed-mcp/executors/discover",
+  "/managed-mcp/executors/list",
+  "/managed-mcp/servers/create",
+  "/managed-mcp/servers/list",
+  "/managed-mcp/servers/revise",
+  "/managed-mcp/servers/state",
+  "/managed-mcp/usage/list",
+  "/tasks/reviews/list",
   "/principals/me",
   "/rooms/agents/activity/list",
   "/rooms/create",
+  "/rooms/direct/open",
+  "/rooms/update",
+  "/tasks/convert",
+  "/tasks/unassign",
   "/workspaces/create",
+  "/workspaces/update",
 ]);
 const MAX_DELIVERED_CURSORS_PER_CONSUMER = 1_024;
 
@@ -145,6 +284,8 @@ type ClientSession = {
 };
 
 export class ClientApplicationService {
+  readonly #agentMemoryAdministration:
+    AgentMemoryAdministrationPort | undefined;
   readonly #bindHost: "127.0.0.1";
   readonly #health: () => ClientHealthResponse;
   readonly #human: HumanApplicationPort;
@@ -154,16 +295,19 @@ export class ClientApplicationService {
       ) =>
         LocalRuntimeInventoryResponse | Promise<LocalRuntimeInventoryResponse>)
     | undefined;
+  readonly #managedMcpAdministration: ManagedMcpAdministrationPort | undefined;
   readonly #port: number;
   readonly #deliveredCursors = new Map<string, Set<number>>();
   #origin: string | undefined;
   #server: Server | undefined;
 
   constructor(options: ClientApplicationServiceOptions) {
+    this.#agentMemoryAdministration = options.agentMemoryAdministration;
     this.#bindHost = options.bindHost ?? "127.0.0.1";
     this.#health = options.health;
     this.#human = options.human;
     this.#localRuntimeInventory = options.localRuntimeInventory;
+    this.#managedMcpAdministration = options.managedMcpAdministration;
     this.#port = options.port ?? 0;
     if (
       !Number.isInteger(this.#port) ||
@@ -189,7 +333,7 @@ export class ClientApplicationService {
         this.#writeError(response, error);
       });
     });
-    server.requestTimeout = 5_000;
+    server.requestTimeout = 120_000;
     server.headersTimeout = 5_000;
 
     await new Promise<void>((resolvePromise, reject) => {
@@ -227,6 +371,26 @@ export class ClientApplicationService {
     request: IncomingMessage,
     response: ServerResponse,
   ): Promise<void> {
+    const fileMatch = /^\/v3\/client\/files\/content\/([a-f0-9-]{36})$/.exec(
+      request.url ?? "",
+    );
+    if (fileMatch) {
+      if (request.method !== "PUT" && request.method !== "GET")
+        throw new HttpRequestError(
+          "method_not_allowed",
+          "file content supports PUT / GET",
+          405,
+        );
+      await transferFile(
+        this.#human,
+        this.#authenticate(request).actor,
+        fileMatch[1]!,
+        request,
+        response,
+        writeJson,
+      );
+      return;
+    }
     if (request.url === "/v1/local/runtimes/list") {
       if (this.#localRuntimeInventory === undefined) {
         throw new HttpRequestError("not_found", "route was not found", 404);
@@ -335,6 +499,212 @@ export class ClientApplicationService {
     const actor = session.actor;
     const body = await readJsonObject(request);
     const path = route.path;
+    if (AGENT_WORKSPACE_PATHS.includes(path)) {
+      writeJson(
+        response,
+        200,
+        await routeAgentWorkspace(
+          this.#human,
+          actor,
+          path,
+          body,
+          this.#agentMemoryAdministration?.workspace,
+          parseClientRequest,
+        ),
+      );
+      return;
+    }
+    if (FILE_DATA_PATHS.includes(path)) {
+      writeJson(
+        response,
+        200,
+        routeFiles(this.#human, actor, path, body, parseClientRequest),
+      );
+      return;
+    }
+    if (DISCOVERY_DATA_PATHS.includes(path)) {
+      writeJson(
+        response,
+        200,
+        routeDiscovery(this.#human, actor, path, body, parseClientRequest),
+      );
+      return;
+    }
+    if (path === "/managed-mcp/executors/list") {
+      const command = parseClientRequest(
+        ClientManagedMcpExecutorsListRequestSchema,
+        body,
+      );
+      this.#human.listManagedMcpServers(actor, {
+        controlRoomId: command.controlRoomId,
+      });
+      writeJson(
+        response,
+        200,
+        ClientManagedMcpExecutorsListResponseSchema.parse({
+          executors: this.#requireManagedMcpAdministration().listExecutors(),
+        }),
+      );
+      return;
+    }
+    if (path === "/managed-mcp/executors/discover") {
+      const command = parseClientRequest(
+        ClientManagedMcpExecutorDiscoverRequestSchema,
+        body,
+      );
+      this.#human.listManagedMcpServers(actor, {
+        controlRoomId: command.controlRoomId,
+      });
+      writeJson(
+        response,
+        200,
+        ClientManagedMcpExecutorDiscoverResponseSchema.parse({
+          tools: await this.#requireManagedMcpAdministration().discover(
+            command.executorRef,
+            { signal: AbortSignal.timeout(30_000) },
+          ),
+        }),
+      );
+      return;
+    }
+    if (path === "/managed-mcp/servers/list") {
+      const command = parseClientRequest(
+        ClientManagedMcpServersListRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientManagedMcpServersListResponseSchema.parse({
+          servers: this.#human.listManagedMcpServers(actor, command),
+        }),
+      );
+      return;
+    }
+    if (path === "/managed-mcp/servers/create") {
+      const command = parseClientRequest(
+        ClientManagedMcpServerCreateRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientManagedMcpServerMutationResponseSchema.parse(
+          this.#human.createManagedMcpServer(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/managed-mcp/servers/revise") {
+      const command = parseClientRequest(
+        ClientManagedMcpServerReviseRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientManagedMcpServerMutationResponseSchema.parse(
+          this.#human.reviseManagedMcpServer(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/managed-mcp/servers/state") {
+      const command = parseClientRequest(
+        ClientManagedMcpServerStateRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientManagedMcpServerMutationResponseSchema.parse(
+          this.#human.setManagedMcpServerState(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/managed-mcp/assignments/list") {
+      const command = parseClientRequest(
+        ClientManagedMcpAssignmentsListRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientManagedMcpAssignmentsListResponseSchema.parse({
+          assignments: this.#human.listManagedMcpAssignments(actor, {
+            controlRoomId: command.controlRoomId,
+            ...(command.participantId === undefined
+              ? {}
+              : { participantId: command.participantId }),
+          }),
+        }),
+      );
+      return;
+    }
+    if (path === "/managed-mcp/assignments/create") {
+      const command = parseClientRequest(
+        ClientManagedMcpAssignmentCreateRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientManagedMcpAssignmentMutationResponseSchema.parse(
+          this.#human.assignManagedMcpServer(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/managed-mcp/assignments/revise") {
+      const command = parseClientRequest(
+        ClientManagedMcpAssignmentReviseRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientManagedMcpAssignmentMutationResponseSchema.parse(
+          this.#human.reviseManagedMcpAssignment(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/managed-mcp/assignments/state") {
+      const command = parseClientRequest(
+        ClientManagedMcpAssignmentStateRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientManagedMcpAssignmentMutationResponseSchema.parse(
+          this.#human.setManagedMcpAssignmentState(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/managed-mcp/usage/list") {
+      const command = parseClientRequest(
+        ClientManagedMcpUsageListRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientManagedMcpUsageListResponseSchema.parse(
+          this.#human.listManagedMcpUsage(actor, {
+            ...(command.beforeCallId === undefined
+              ? {}
+              : { beforeCallId: command.beforeCallId }),
+            controlRoomId: command.controlRoomId,
+            ...(command.limit === undefined ? {} : { limit: command.limit }),
+            participantId: command.participantId,
+          }),
+        ),
+      );
+      return;
+    }
     if (path === "/principals/me") {
       parseClientRequest(ClientPrincipalMeRequestSchema, body);
       writeJson(
@@ -373,6 +743,181 @@ export class ClientApplicationService {
       );
       return;
     }
+    if (
+      path === "/agents/memory/config/get" ||
+      path === "/agents/memory/config/patch"
+    ) {
+      const command = path.endsWith("/patch")
+        ? parseClientRequest(ClientAgentMemoryConfigPatchRequestSchema, body)
+        : parseClientRequest(ClientAgentMemoryConfigGetRequestSchema, body);
+      const owner = this.#agentMemoryOwner(actor, command.agentDefinitionId);
+      const administration = this.#requireAgentMemoryAdministration();
+      if (
+        !administration.getCleanerConfig ||
+        !administration.patchCleanerConfig
+      )
+        throw new HttpRequestError(
+          "unavailable",
+          "Computer cleaner configuration is unavailable",
+          503,
+        );
+      try {
+        const config =
+          "patch" in command
+            ? await administration.patchCleanerConfig(
+                owner,
+                ClientAgentMemoryConfigPatchRequestSchema.parse(body).patch,
+              )
+            : await administration.getCleanerConfig(owner);
+        writeJson(
+          response,
+          200,
+          ClientAgentMemoryConfigResponseSchema.parse({
+            computerHostId: administration.computerHostId,
+            config,
+          }),
+        );
+      } catch (error) {
+        if (
+          error &&
+          typeof error === "object" &&
+          "code" in error &&
+          error.code === "agent_memory_config_conflict"
+        )
+          throw new HttpRequestError(
+            "agent_memory_config_conflict",
+            "Cleaner configuration changed; reload before saving",
+            409,
+          );
+        throw error;
+      }
+      return;
+    }
+    if (path === "/agents/memory/get") {
+      const command = parseClientRequest(
+        ClientAgentMemoryGetRequestSchema,
+        body,
+      );
+      const ownerParticipantId = this.#agentMemoryOwner(
+        actor,
+        command.agentDefinitionId,
+      );
+      const administration = this.#requireAgentMemoryAdministration();
+      writeJson(
+        response,
+        200,
+        ClientAgentMemoryGetResponseSchema.parse({
+          computerHostId: administration.computerHostId,
+          memory: await administration.inspectWorkspace(ownerParticipantId),
+        }),
+      );
+      return;
+    }
+    if (path === "/agents/memory/read") {
+      const command = parseClientRequest(
+        ClientAgentMemoryReadRequestSchema,
+        body,
+      );
+      const ownerParticipantId = this.#agentMemoryOwner(
+        actor,
+        command.agentDefinitionId,
+      );
+      const administration = this.#requireAgentMemoryAdministration();
+      writeJson(
+        response,
+        200,
+        ClientAgentMemoryReadResponseSchema.parse({
+          computerHostId: administration.computerHostId,
+          ...(await administration.readWorkspaceFile(
+            ownerParticipantId,
+            command.relativePath,
+          )),
+        }),
+      );
+      return;
+    }
+    if (path === "/agents/memory/reset") {
+      const command = parseClientRequest(
+        ClientAgentMemoryResetRequestSchema,
+        body,
+      );
+      const ownerParticipantId = this.#agentMemoryOwner(
+        actor,
+        command.agentDefinitionId,
+      );
+      const administration = this.#requireAgentMemoryAdministration();
+      const receipt = await administration.resetWorkspace(
+        ownerParticipantId,
+        command.idempotencyKey,
+      );
+      writeJson(
+        response,
+        200,
+        ClientAgentMemoryResetResponseSchema.parse({
+          computerHostId: administration.computerHostId,
+          deduplicated: receipt.deduplicated,
+          operationId: receipt.operationId,
+          ownerParticipantId: receipt.ownerParticipantId,
+          providerContinuityRecords: receipt.providerContinuityRecords,
+          resetAt: new Date(receipt.resetAtMs).toISOString(),
+        }),
+      );
+      return;
+    }
+    if (path === "/agents/activity/list") {
+      const command = parseClientRequest(
+        ClientAgentActivityListRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientAgentActivityListResponseSchema.parse(
+          this.#human.listAgentActivity(actor, {
+            agentDefinitionId: command.agentDefinitionId,
+            ...(command.beforeActivityId === undefined
+              ? {}
+              : { beforeActivityId: command.beforeActivityId }),
+            limit: command.limit,
+          }),
+        ),
+      );
+      return;
+    }
+    if (path === "/agents/trajectory/list") {
+      const command = parseClientRequest(
+        ClientAgentTrajectoryListRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientAgentTrajectoryListResponseSchema.parse(
+          this.#human.listAgentTrajectory(actor, {
+            agentDefinitionId: command.agentDefinitionId,
+            ...(command.beforeActivityId === undefined
+              ? {}
+              : { beforeActivityId: command.beforeActivityId }),
+            limit: command.limit,
+          }),
+        ),
+      );
+      return;
+    }
+    if (path === "/agents/rooms/list") {
+      const command = parseClientRequest(
+        ClientAgentRoomsListRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientAgentRoomsListResponseSchema.parse({
+          rooms: this.#human.listWorkspaceAgentRooms(actor, command),
+        }),
+      );
+      return;
+    }
     if (path === "/agents/manage") {
       const command = parseClientRequest(ClientAgentManageRequestSchema, body);
       writeJson(
@@ -400,7 +945,7 @@ export class ClientApplicationService {
         ClientAgentProvisionRequestSchema,
         body,
       );
-      const { avatarKey, description, ...required } = command;
+      const { avatarKey, description, toolAccessMode, ...required } = command;
       writeJson(
         response,
         200,
@@ -409,6 +954,7 @@ export class ClientApplicationService {
             ...required,
             ...(avatarKey === undefined ? {} : { avatarKey }),
             ...(description === undefined ? {} : { description }),
+            ...(toolAccessMode === undefined ? {} : { toolAccessMode }),
           }),
         ),
       );
@@ -424,6 +970,20 @@ export class ClientApplicationService {
         200,
         ClientWorkspaceMutationResponseSchema.parse(
           this.#human.createWorkspace(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/workspaces/update") {
+      const command = parseClientRequest(
+        ClientWorkspaceUpdateRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientWorkspaceMutationResponseSchema.parse(
+          this.#human.updateWorkspace(actor, command),
         ),
       );
       return;
@@ -447,6 +1007,31 @@ export class ClientApplicationService {
         ClientRoomMutationResponseSchema.parse(
           this.#human.createRoom(actor, command),
         ),
+      );
+      return;
+    }
+    if (path === "/rooms/update") {
+      const command = parseClientRequest(ClientRoomUpdateRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientRoomMutationResponseSchema.parse(
+          this.#human.updateWorkspaceRoom(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/rooms/direct/open") {
+      const command = parseClientRequest(
+        ClientDirectRoomOpenRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientDirectRoomOpenResponseSchema.parse({
+          room: this.#human.openDirectRoom(actor, command),
+        }),
       );
       return;
     }
@@ -542,7 +1127,12 @@ export class ClientApplicationService {
         200,
         ClientMessagesListResponseSchema.parse(
           this.#human.listMessages(actor, {
-            afterSeq: command.afterSeq,
+            ...(command.afterSeq === undefined
+              ? {}
+              : { afterSeq: command.afterSeq }),
+            ...(command.beforeSeq === undefined
+              ? {}
+              : { beforeSeq: command.beforeSeq }),
             limit: command.limit,
             roomId: command.roomId,
             ...(command.threadId === undefined
@@ -664,6 +1254,50 @@ export class ClientApplicationService {
       );
       return;
     }
+    if (path === "/tasks/reviews/list") {
+      const command = parseClientRequest(
+        ClientTaskReviewEvidenceListRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientTaskReviewEvidenceListResponseSchema.parse({
+          reviews: this.#human.listTaskReviews(actor, command),
+          submissions: this.#human.listTaskSubmissions(actor, command),
+        }),
+      );
+      return;
+    }
+    if (path === "/tasks/convert") {
+      const command = parseClientRequest(ClientTaskConvertRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientTaskAttentionMutationResponseSchema.parse(
+          this.#human.createTask(actor, {
+            basedOnRoomSeq: command.basedOnRoomSeq,
+            ...(command.collaboratorIds === undefined
+              ? {}
+              : { collaboratorIds: command.collaboratorIds }),
+            dependencyTaskIds: command.dependencyTaskIds,
+            idempotencyKey: command.idempotencyKey,
+            roomId: command.roomId,
+            ...(command.reviewerIds === undefined
+              ? {}
+              : { reviewerIds: command.reviewerIds }),
+            sourceMessageId: command.messageId,
+            ...(command.assigneeId === undefined
+              ? {}
+              : { assigneeId: command.assigneeId }),
+            ...(command.description === undefined
+              ? {}
+              : { description: command.description }),
+          }),
+        ),
+      );
+      return;
+    }
     if (path === "/tasks/create") {
       const command = parseClientRequest(ClientTaskCreateRequestSchema, body);
       writeJson(
@@ -671,9 +1305,15 @@ export class ClientApplicationService {
         200,
         ClientTaskAttentionMutationResponseSchema.parse(
           this.#human.createTask(actor, {
+            ...(command.collaboratorIds === undefined
+              ? {}
+              : { collaboratorIds: command.collaboratorIds }),
             dependencyTaskIds: command.dependencyTaskIds,
             idempotencyKey: command.idempotencyKey,
             roomId: command.roomId,
+            ...(command.reviewerIds === undefined
+              ? {}
+              : { reviewerIds: command.reviewerIds }),
             title: command.title,
             ...(command.assigneeId === undefined
               ? {}
@@ -700,6 +1340,17 @@ export class ClientApplicationService {
       );
       return;
     }
+    if (path === "/tasks/unassign") {
+      const command = parseClientRequest(ClientTaskUnassignRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientTaskAttentionMutationResponseSchema.parse(
+          this.#human.unassignTask(actor, command),
+        ),
+      );
+      return;
+    }
     if (path === "/tasks/unblock") {
       const command = parseClientRequest(ClientTaskUnblockRequestSchema, body);
       writeJson(
@@ -718,6 +1369,17 @@ export class ClientApplicationService {
         200,
         ClientTaskAttentionMutationResponseSchema.parse(
           this.#human.cancelTask(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/tasks/reopen") {
+      const command = parseClientRequest(ClientTaskReopenRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientTaskAttentionMutationResponseSchema.parse(
+          this.#human.reopenTask(actor, command),
         ),
       );
       return;
@@ -823,6 +1485,36 @@ export class ClientApplicationService {
     if (cursors.size === 0) this.#deliveredCursors.delete(key);
   }
 
+  #agentMemoryOwner(
+    actor: AuthenticatedActorContext,
+    agentDefinitionId: string,
+  ): string {
+    return this.#human.getWorkspaceAgentManagementView(actor, agentDefinitionId)
+      .agent.definition.participantId;
+  }
+
+  #requireAgentMemoryAdministration(): AgentMemoryAdministrationPort {
+    if (this.#agentMemoryAdministration === undefined) {
+      throw new HttpRequestError(
+        "agent_memory_unavailable",
+        "Agent Memory administration is unavailable on this Computer",
+        503,
+      );
+    }
+    return this.#agentMemoryAdministration;
+  }
+
+  #requireManagedMcpAdministration(): ManagedMcpAdministrationPort {
+    if (this.#managedMcpAdministration === undefined) {
+      throw new HttpRequestError(
+        "managed_mcp_unavailable",
+        "managed MCP administration is unavailable",
+        503,
+      );
+    }
+    return this.#managedMcpAdministration;
+  }
+
   #writeError(response: ServerResponse, error: unknown): void {
     if (response.headersSent) {
       response.destroy();
@@ -892,7 +1584,7 @@ async function readJsonObject(
     if (bytes > MAX_BODY_BYTES) {
       throw new HttpRequestError(
         "body_too_large",
-        "request body exceeds 64 KiB",
+        "request body exceeds 1 MiB",
         413,
       );
     }
@@ -969,3 +1661,8 @@ function writeJson(
 function hashToken(accessToken: string): string {
   return createHash("sha256").update(accessToken, "utf8").digest("hex");
 }
+import {
+  FILE_DATA_PATHS,
+  routeFiles,
+  transferFile,
+} from "./client-file-routes.ts";

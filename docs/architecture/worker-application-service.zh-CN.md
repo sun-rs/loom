@@ -1,6 +1,6 @@
 # Worker Application Service
 
-状态：`sync/ack`、Activation-scoped Room reply、Task `claim/start/progress/release/block/request-input/submit` 与 InputRequest 无 listening 恢复已达到本机 E2；Human Task coordination 与 InputRequest resolve 已由独立 Client service 提供。Artifact/Review command、远端 transport 和 production daemon endpoint 尚未实现。
+状态：`sync/ack`、Activation-scoped Room reply、Task `claim/start/progress/release/block/request-input/submit/review`、activation-scoped `rah worker` CLI 与 InputRequest 无 listening 恢复已达到本机 E2；Human Task coordination、Review evidence query 与 InputRequest resolve 已由独立 Client service 提供。Artifact command、跨机器 Worker transport 和 production LAN endpoint 尚未实现；managed MCP 已有 version-fenced 窄调用面。
 
 ## 1. 目的与 owner
 
@@ -10,7 +10,8 @@
 AgentHost lease Activation
   -> issue per-Activation credential
   -> spawn GenericProcessAdapter
-  -> POST /v1/worker/sync
+  -> install token-free `rah` wrapper and publish absolute `RAH_WORKER_CLI`
+  -> `"$RAH_WORKER_CLI" worker sync` -> POST /v1/worker/sync
   -> Kernel returns canonical Room snapshot/delta
   -> POST /v1/worker/acknowledge
   -> Kernel persists consumer cursor
@@ -21,6 +22,8 @@ AgentHost lease Activation
   -> optional POST /v1/worker/tasks/input-status
   -> POST /v1/worker/tasks/claim|start|progress|release|block|request-input|submit
   -> Kernel persists Task projection + Room events
+  -> selected reviewer receives task.submitted and POST /v1/worker/tasks/review
+  -> Kernel persists immutable Review bound to the current TaskSubmission
   -> process exits; credential revoked
   -> AgentHost verifies delivery proof and completes Activation
 ```
@@ -29,26 +32,27 @@ RoomKernel 始终是业务 owner。HTTP service 只做认证、scope、输入验
 
 ## 2. 当前接口
 
-| Endpoint                              | 客户端可提交字段                             | 服务端固定字段                                            |
-| ------------------------------------- | -------------------------------------------- | --------------------------------------------------------- |
-| `POST /v1/worker/sync`                | 可选 `afterSeq`                              | actor、Room、consumer、Activation participant、`toSeq`    |
-| `POST /v1/worker/acknowledge`         | `throughSeq`                                 | actor、Room、consumer                                     |
-| `POST /v1/worker/messages/post`       | `basedOnRoomSeq`、`body`、`idempotencyKey`   | actor、Room、Activation、空 recipients                    |
-| `POST /v1/worker/tasks/get`           | `taskId`                                     | actor、Room、Inbox delivery、Activation range             |
-| `POST /v1/worker/tasks/input-status`  | `taskId`                                     | actor、Room、Inbox delivery、redacted latest InputRequest |
-| `POST /v1/worker/tasks/claim`         | `taskId`、`idempotencyKey`、`basedOnRoomSeq` | actor、Room、assignee、claim lease                        |
-| `POST /v1/worker/tasks/start`         | `taskId`、`idempotencyKey`、`basedOnRoomSeq` | actor、Room、assignee、claim lease                        |
-| `POST /v1/worker/tasks/progress`      | 前述字段 + `progress`                        | actor、Room、assignee、claim lease                        |
-| `POST /v1/worker/tasks/release`       | 前述基础字段                                 | actor、Room、owned claim                                  |
-| `POST /v1/worker/tasks/block`         | 前述基础字段 + `reason`                      | actor、Room、owned in-progress claim                      |
-| `POST /v1/worker/tasks/request-input` | 前述基础字段 + `question`                    | actor、Room、assignee、creator responder                  |
-| `POST /v1/worker/tasks/submit`        | 前述基础字段 + `summary`                     | actor、Room、assignee                                     |
+| Endpoint                              | 客户端可提交字段                                                       | 服务端固定字段                                            |
+| ------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------- |
+| `POST /v1/worker/sync`                | 可选 `afterSeq`                                                        | actor、Room、consumer、Activation participant、`toSeq`    |
+| `POST /v1/worker/acknowledge`         | `throughSeq`                                                           | actor、Room、consumer                                     |
+| `POST /v1/worker/messages/post`       | `basedOnRoomSeq`、`body`、`idempotencyKey`                             | actor、Room、Activation、空 recipients                    |
+| `POST /v1/worker/tasks/get`           | `taskId`                                                               | actor、Room、Inbox delivery、Activation range             |
+| `POST /v1/worker/tasks/input-status`  | `taskId`                                                               | actor、Room、Inbox delivery、redacted latest InputRequest |
+| `POST /v1/worker/tasks/claim`         | `taskId`、`idempotencyKey`、`basedOnRoomSeq`                           | actor、Room、assignee、claim lease                        |
+| `POST /v1/worker/tasks/start`         | `taskId`、`idempotencyKey`、`basedOnRoomSeq`                           | actor、Room、assignee、claim lease                        |
+| `POST /v1/worker/tasks/progress`      | 前述字段 + `progress`                                                  | actor、Room、assignee、claim lease                        |
+| `POST /v1/worker/tasks/release`       | 前述基础字段                                                           | actor、Room、owned claim                                  |
+| `POST /v1/worker/tasks/block`         | 前述基础字段 + `reason`                                                | actor、Room、owned in-progress claim                      |
+| `POST /v1/worker/tasks/request-input` | 前述基础字段 + `question`                                              | actor、Room、assignee、creator responder                  |
+| `POST /v1/worker/tasks/submit`        | 前述基础字段 + `summary`                                               | actor、Room、assignee                                     |
+| `POST /v1/worker/tasks/review`        | `taskId`、`basedOnRoomSeq`、`idempotencyKey`、`disposition`、`summary` | actor、Room、reviewer、当前 frozen submission             |
 
 `afterSeq` 只有在同一 credential 曾收到过该 cursor 时才可用。这既支持分页，也防止 worker 直接跳到 Activation head。每次 sync 又被 grant 的 `toSeq` 硬截断，因此运行期间新到达的消息会留给 follow-up Activation，旧 credential 不会越界读取。`throughSeq` 必须是 service 已经向该 credential 返回过的 `cursorAfter`；任意自报序号以 `409` 拒绝。
 
 所有公开 request/response/error envelope 与 credential scope 均由 `@rah-os/protocol` 的严格 Zod schema 拥有；application service 不再维护第二套字段定义。以后新增 Task/Artifact/Review endpoint 也必须先增加 protocol schema 和 conformance test。
 
-Room reply 要求 `basedOnRoomSeq` 已由当前 bearer 实际收到且精确等于 Activation `toSeq`。它不接受 actor、Room、recipient、Thread 或 Task 字段；Kernel 固定使用 grant participant/Room/Activation，写入 `message.posted` 并返回空 `activationIds`。两个 execution 可以基于同一个 immutable Activation head 并发追加各自回复，不因另一条并行回复先落账而丢失。详细边界见 [ADR-0014](../adr/0014-activation-scoped-agent-room-reply.md)。
+Room reply 要求 `basedOnRoomSeq` 已由当前 bearer 实际收到且精确等于 Activation `toSeq`。它不接受 actor、Room、recipient、Thread 或 Task 字段；Kernel 固定使用 grant participant/Room/Activation。Kernel 从 `toSeq` 对应因果事件读取当前 participant 的 canonical recipient reason；只有 `thread_subscription` 才提取 `threadId`，在同一事务把回复写入该 Thread 并更新回复计数，CLI 不能猜测或覆盖 Thread。路由不能只读 Activation 初始 reason，因为 queued lane 会合并后续事件；例如根消息先建立 `room_policy` Activation、Thread 消息随后扩展 `toSeq` 时，仍必须按最新 Thread 事件投递。其他 Activation 写入 Room 根消息。两种路径都返回空 `activationIds`，避免 Agent 回复递归唤醒。两个 execution 可以基于同一个 immutable Activation head 并发追加各自回复，不因另一条并行回复先落账而丢失。详细边界见 [ADR-0014](../adr/0014-activation-scoped-agent-room-reply.md)。
 
 Task command 的 `basedOnRoomSeq` 必须是同一 credential 已经收到的 sync cursor，或前一个成功 Task command 返回的 event sequence。Task 必须属于 grant 固定的 Room，且关联 Task 的 canonical event 必须通过 Inbox 实际投递并位于本次 Activation range；仅猜到 ID 不构成权限。open Task 候选可读取并竞争 claim，但 claim 成功后的 mutation 必须持有当前 participant 的 active claim。业务幂等键应稳定绑定 Task/operation，不能绑定易失的 CLI session 或 RunAttempt。恢复 RunAttempt 先通过 `tasks/get` 读取 canonical projection；幂等 replay 不要求复用旧执行的 causal cursor，尚未落账的新步骤仍受当前 Room freshness 约束。
 
@@ -56,29 +60,37 @@ Task command 的 `basedOnRoomSeq` 必须是同一 credential 已经收到的 syn
 
 `input-status` 只返回 latest `inputRequestId/taskId/state`，明确排除 question/answer。它用于 Worker 在 InputRequest 已 commit、原 Activation ack 前崩溃后的新 session：确认 pause 已持久化，补 ack 后退出。answer 只有在 `input.resolved` 真正进入该 execution 的 Activation range 时才由 `sync` 交付。
 
-当前没有通用 `/run`、通用 Message RPC、任意 Kernel method、任意 Room ID 或 shell endpoint，也没有 Task list、Artifact/Review endpoint。Worker 已增加严格的 Activation reply、`release` 与 `block` command；后续命令仍须逐个加入严格 schema，不能开放反射式 RPC。
+当前没有通用 `/run`、通用 Message RPC、任意 Kernel method、任意 Room ID 或 shell endpoint，也没有 Task list 或 Artifact endpoint。Review 只有绑定 `task_review` Activation 与当前 submission 的严格 command；后续命令仍须逐个加入严格 schema，不能开放反射式 RPC。
 
-## 3. Credential 边界
+## 3. `rah worker` transport
+
+Provider 不需要也不应手写 bearer HTTP。AgentHost 为每个 Activation 在 credential 目录生成 mode `0700`、不含 token 的 `rah` wrapper，将目录置于最终 child `PATH` 首位，并以 `RAH_WORKER_CLI` 发布同一 wrapper 的绝对路径；standing prompt 固定调用 `"$RAH_WORKER_CLI" worker ...`，不依赖 Provider 的 login shell 是否保留 PATH。wrapper 调用固定的 TypeScript CLI，SEA 则经精确 `__worker-cli` 分派进入同一实现。CLI 只允许上表对应的 `sync/ack/message/task` 命令，把 flag 映射为严格 JSON；它拒绝重复/未知 flag、任意 URL、非 owner-private session file、超限参数与超限/非 JSON 响应，并使用 30 秒请求 deadline。Provider 看不到内部 tool-bin hint，不能通过 RuntimeProfile 注入 daemon-owned `RAH_AGENT_*` 或 `RAH_WORKER_*` 变量。
+
+该 transport 只是 Worker application service 的本地客户端，不成为新的业务 owner。默认 standing prompt 和真实 CLI opt-in gate 都只教 Agent 逐条调用绝对 `RAH_WORKER_CLI`；受控 fake 外部进程与真实 Codex/Kimi/OpenCode 已实际通过 wrapper 完成 canonical Message/Task/ack。standing prompt 明确规定普通讨论只 `message-post` 一次；`task-claim-message` 成功后必须在同一 Activation 继续 `task-start -> work -> task-progress -> task-submit`，竞争冲突方 ack 原 cursor 后退出，不发布竞争性答复。被选中的 reviewer 必须使用 `task-review`，不能把 `message-post` 冒充 Review；`changes_requested` 唤醒 owner 产生新 submission。Windows wrapper、Artifact 命令与完整跨机器故障门禁仍未实现。
+
+## 4. Credential 边界
 
 - token 使用 256-bit 随机值，service 只在内存中保存 SHA-256 hash；
 - grant 由当前 authenticated Host instance 派生，固定绑定 Host credential/generation、Activation、Room、participant、consumer、RunAttempt 和目标序号；daemon 不持有 Agent PAT，也不会得到通用 Agent actor authority；
 - 每次请求都重新验证 Activation lease、当前 RunAttempt 和 RuntimeProcess 状态；lease 过期、执行代次变化或 terminal proof 写入后，即使 token 尚未过 TTL 也返回 `execution_fenced`；
 - profile env 与 worker request 都不能覆盖这些 server-owned 字段；
-- token 有绝对 TTL，进程 exit 或 spawn failure 时由 environment lease 立即 revoke；
+- token 有绝对 TTL；AgentHost 将它写入每 Activation 唯一 `0700` 目录内的 `0600` session file，并在该目录生成 token-free `rah` wrapper。Provider 只收到 session-file path、Worker origin 与非敏感 wrapper 绝对路径，不收到明文 bearer 或内部 tool-bin hint。进程 exit 或 spawn failure 时 environment lease 同时尝试立即 revoke 与删除精确目录；
 - claim/start/progress 成功后，service 用当前 execution grant 在 `taskClaimHeartbeatIntervalMs` 周期自动续租到 `taskClaimLeaseMs`；timer 不调用模型、不写 Room event，在 release、block、request-input、submit、credential revoke/expiry、execution fence 或 service close 时停止；
 - service 固定监听 `127.0.0.1` 的随机端口，响应带 `Cache-Control: no-store`；
 - 请求体上限 64 KiB，只接受 endpoint 白名单字段。
 
 loopback 不是身份。Bearer scope 才是当前隔离边界；token 泄露给同一用户下的恶意本机进程仍属于尚未解决的主机隔离问题。未来可评估 Unix domain socket、peer credential、macOS sandbox/Keychain，但不能因此把 SQLite 暴露给 worker。
 
-## 4. 已证明与未证明
+## 5. 已证明与未证明
 
 确定性 fixture 已证明：
 
 - AgentHost 拉起一个真实 Node 子进程；
-- 子进程只靠临时 token 完成安全 continuation 的 `sync/ack`；另有 501 条消息跨 500-event 页上限的确定性测试，证明多页 cursor 只能沿已投递位置前进；
+- 子进程通过 token-free `rah` wrapper 的绝对 `RAH_WORKER_CLI` 完成安全 continuation 的 `sync/ack`，并主动拒绝 legacy raw token 环境；另有 501 条消息跨 500-event 页上限的确定性测试，证明多页 cursor 只能沿已投递位置前进；
 - 同一子进程通过四个窄 endpoint 完成 Task `claim/start/progress/submit`，Task projection 与 event chain 是唯一 pass/fail 依据；
+- owner submission 原子冻结为 TaskSubmission，reviewer 只能对 Activation 实际投递的当前 submission 写一次 `approved|changes_requested` Review；旧 Review 不能完成新 submission；
 - 两个独立 Worker execution 基于同一 Activation head 各写一条 canonical Room reply，actor/Room 由服务端固定，reply 不创建 Activation loop；
+- `thread_subscription` Worker reply 由 Kernel 根据 Activation 因果事件固定写入原 Thread，更新 `reply_count/last_reply_at`，而请求仍无法注入 `threadId`；该路径另经真实 Codex Direct Room 浏览器主链验证；
 - strict Worker endpoint 已验证显式 `block(reason)` 会释放 claim、写 canonical evidence 并通知 creator；进程状态本身不会推断 block；
 - activation-scoped query 返回 canonical Task projection；短 claim lease 下等待超过原 lease 后，后续 command 仍因 sidecar heartbeat 成功；
 - 第一个 RunAttempt 在 `task.started` 后失败时，第二个 RunAttempt 可查询 projection、重放旧步骤并继续，最终不产生重复业务事件；
@@ -90,4 +102,4 @@ loopback 不是身份。Bearer scope 才是当前隔离边界；token 泄露给�
 - 未投递 cursor、伪造 continuation/Room 字段、过期 token、过期 Activation lease 和 terminal execution 的 token 均被拒绝；
 - spawn failure 也会释放 credential environment lease。
 
-POSIX Generic process 的 identity-safe Host-exit recovery 已由独立受控 fixture 证明；Host token 只存 hash，已签发 context 会在每次 Kernel Host 操作时重新校验，credential revoke 或 daemon generation 接管会立即 fence 旧 Host/Worker context。fake MultiLane gate 已证明两个 Agent 都能回复同一 Room、竞争同一 open Task 时只有一个 owner且 loser 可正常结束；dependency 未就绪不 wake，最后一个 dependency 完成后从 canonical event 派生 Activation。真实 Codex/OpenCode/Kimi/Claude Code Sonnet 均已通过相同 `sync/ack` 链路，其中 Codex Luna 已进一步通过完整 Task gate；真实 Provider 尚未复跑 Activation reply。尚缺：InputRequest cancel/expire/structured answer、Artifact/Review、MCP/CLI façade、剩余 Human Client command/hint surface、Host credential 的受认证管理 API/Keychain 存储/轮换审计、Windows recovery 和完整故障矩阵。
+POSIX Generic process 的 identity-safe Host-exit recovery 已由独立受控 fixture 证明；Host token 只存 hash，已签发 context 会在每次 Kernel Host 操作时重新校验，credential revoke 或 daemon generation 接管会立即 fence 旧 Host/Worker context。fake MultiLane gate 已证明两个 Agent 都能回复同一 Room、竞争同一 open Task 时只有一个 owner且 loser 可正常结束；dependency 未就绪不 wake，最后一个 dependency 完成后从 canonical event 派生 Activation。2026-08-29 的隔离付费门禁已让 Codex `gpt-5.6-sol/low`、Kimi `kimi-code/k3` 与 OpenCode `deepseek/deepseek-v4-flash/max` 在同一 Room 先完成普通 Message 三回复且零 Task，再对持久执行请求并发判定并收敛为一个 `submitted` Task、一个 owner 和两条同 owner Thread 回复；结论来自 Kernel Message/Task/Inbox 和工作区文件，不来自 stdout。正式 Web fixture 又从 Human 浏览器操作复现同一链路、Agent Activity 与 Kimi owner/Alice reviewer 的 frozen TaskSubmission/Review/Human completion。它不证明 Kimi effort、InputRequest 或 Artifact/frozen diff。尚缺：InputRequest cancel/expire/structured answer、Artifact、剩余 Human Client command/hint surface、Host credential 的受认证管理 API/Keychain 存储/轮换审计、Windows recovery 和完整故障矩阵。

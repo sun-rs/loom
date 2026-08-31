@@ -12,11 +12,72 @@ import {
 import type { RuntimeOffer } from "@rah-os/protocol";
 
 import { ClientApplicationService } from "../src/index.ts";
+import { AgentMemoryConfigStore } from "../../agent-host/src/agent-memory-config-store.ts";
 
 test("Client API authenticates humans and exposes canonical Room work without owning it", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-client-api-"));
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+  let memoryResetCalls = 0;
+  const memoryConfigs = new AgentMemoryConfigStore(join(directory, "memory"));
   const service = new ClientApplicationService({
+    agentMemoryAdministration: {
+      computerHostId: "client-host",
+      workspace: {
+        list: async (owner, path) => ({
+          rootKind: "agent-home",
+          rootPath: `/fixture/${owner}`,
+          state: "ready",
+          path,
+          entries: [],
+          truncated: false,
+        }),
+        read: async (_owner, path) => ({
+          path,
+          content: "fixture file",
+          encoding: "utf-8",
+          mimeType: "text/plain",
+          size: 12,
+        }),
+      },
+      getCleanerConfig: (owner) => memoryConfigs.get(owner),
+      patchCleanerConfig: (owner, patch) => memoryConfigs.patch(owner, patch),
+      inspectWorkspace: async (ownerParticipantId) => ({
+        files: [
+          {
+            bytes: 24,
+            contentDigest: `sha256:${"e".repeat(64)}`,
+            modifiedAt: "2026-08-30T12:00:00.000Z",
+            relativePath: "MEMORY.md",
+          },
+        ],
+        indexOverThreshold: false,
+        noteCount: 0,
+        ownerParticipantId,
+        schemaVersion: 1,
+        state: "ready",
+        thresholdBytes: 65_536,
+      }),
+      readWorkspaceFile: async (ownerParticipantId, relativePath) => ({
+        content: "# Client Agent\n- durable\n",
+        file: {
+          bytes: 24,
+          contentDigest: `sha256:${"e".repeat(64)}`,
+          modifiedAt: "2026-08-30T12:00:00.000Z",
+          relativePath,
+        },
+        ownerParticipantId,
+      }),
+      resetWorkspace: async (ownerParticipantId, idempotencyKey) => {
+        memoryResetCalls += 1;
+        return {
+          deduplicated: memoryResetCalls > 1,
+          operationId: `memory-reset-${idempotencyKey}`,
+          ownerParticipantId,
+          providerContinuityRecords: 1,
+          resetAtMs: Date.parse("2026-08-30T12:00:00.000Z"),
+        };
+      },
+    },
     health: () => ({
       apiVersion: 3,
       buildVersion: "test-build",
@@ -28,6 +89,8 @@ test("Client API authenticates humans and exposes canonical Room work without ow
         hints: false,
         inputRequestRead: true,
         inputRequestResolve: true,
+        managedMcpRead: true,
+        managedMcpWrite: true,
         memberRead: true,
         memberWrite: true,
         messageRead: true,
@@ -66,6 +129,22 @@ test("Client API authenticates humans and exposes canonical Room work without ow
         },
       ],
     }),
+    managedMcpAdministration: {
+      discover: async (executorRef) => [
+        {
+          description: `Discovered through ${executorRef}`,
+          inputSchema: { type: "object" },
+          runtimeName: "room_snapshot",
+          toolName: "room.snapshot",
+        },
+      ],
+      listExecutors: () => [
+        {
+          executorRef: "executor-room-tools",
+          transportKind: "streamable-http",
+        },
+      ],
+    },
   });
   try {
     kernel.initialize();
@@ -271,6 +350,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     assert.equal(healthV3.capabilities.agentOnboard, true);
     assert.equal(healthV3.capabilities.agentRead, true);
     assert.equal(healthV3.capabilities.agentWrite, true);
+    assert.equal(healthV3.capabilities.managedMcpWrite, true);
     assert.equal(healthV3.capabilities.workspaceWrite, true);
 
     const request = async (
@@ -300,6 +380,260 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       kind: "human",
       principalId: human.principal.principalId,
     });
+
+    const globalInput = { workspaceId: workspace.workspace.workspaceId };
+    for (const [path, body] of [
+      ["/tasks/global", globalInput],
+      ["/search", { ...globalInput, query: "" }],
+      ["/activity/list", globalInput],
+    ] as const) {
+      assert.equal((await request(`/v3/client${path}`, body)).status, 401);
+      assert.equal(
+        (await request(`/v3/client${path}`, body, agent.accessToken)).status,
+        401,
+      );
+      assert.equal(
+        (
+          await request(
+            `/v3/client${path}`,
+            { ...body, actorId: human.principal.principalId },
+            human.accessToken,
+          )
+        ).status,
+        400,
+      );
+      assert.equal(
+        (await request(`/v3/client${path}`, body, human.accessToken)).status,
+        200,
+      );
+      assert.equal(
+        (await request(`/v2/client${path}`, body, human.accessToken)).status,
+        404,
+      );
+    }
+    const globalTasks = await jsonObject(
+      await request("/v3/client/tasks/global", globalInput, human.accessToken),
+    );
+    assert.ok(globalTasks.tasks.length > 0);
+    const taskAnchor = globalTasks.tasks[0].task;
+    const context = await request(
+      "/v3/client/messages/context",
+      { messageId: taskAnchor.sourceMessageId },
+      human.accessToken,
+    );
+    assert.equal(context.status, 200);
+    assert.equal(
+      (await jsonObject(context)).message.messageId,
+      taskAnchor.sourceMessageId,
+    );
+    assert.equal(
+      (
+        await request(
+          "/v3/client/messages/context",
+          { messageId: taskAnchor.sourceMessageId },
+          otherHuman.accessToken,
+        )
+      ).status,
+      403,
+    );
+    const follow = await request(
+      "/v3/client/activity/follow",
+      {
+        roomId: taskAnchor.roomId,
+        threadId: taskAnchor.threadId,
+        following: true,
+      },
+      human.accessToken,
+    );
+    assert.equal(follow.status, 200);
+    const globalActivity = await jsonObject(
+      await request("/v3/client/activity/list", globalInput, human.accessToken),
+    );
+    const card = globalActivity.items[0];
+    assert.ok(card);
+    const mark = await request(
+      "/v3/client/activity/mark",
+      {
+        roomId: card.roomId,
+        ...(card.threadId ? { threadId: card.threadId } : {}),
+        throughSeq: card.latestSeq,
+        action: "read",
+      },
+      human.accessToken,
+    );
+    assert.equal(mark.status, 200);
+
+    const memoryResponse = await request(
+      "/v3/client/agents/memory/get",
+      { agentDefinitionId: agentDefinition.definition.agentDefinitionId },
+      human.accessToken,
+    );
+    assert.equal(memoryResponse.status, 200);
+    const memory = await jsonObject(memoryResponse);
+    assert.equal(memory.computerHostId, "client-host");
+    const workspaceInput = {
+      agentDefinitionId: agentDefinition.definition.agentDefinitionId,
+      path: "",
+      includeHidden: false,
+    };
+    const workspaceResponse = await request(
+      "/v3/client/agents/workspace/list",
+      workspaceInput,
+      human.accessToken,
+    );
+    assert.equal(workspaceResponse.status, 200);
+    assert.equal(
+      (await jsonObject(workspaceResponse)).rootPath,
+      `/fixture/${agent.principal.principalId}`,
+    );
+    assert.equal(
+      (
+        await request(
+          "/v3/client/agents/workspace/list",
+          workspaceInput,
+          otherHuman.accessToken,
+        )
+      ).status,
+      403,
+    );
+    assert.equal(
+      (
+        await request(
+          "/v3/client/agents/workspace/read",
+          { ...workspaceInput, includeHidden: undefined, path: "../outside" },
+          human.accessToken,
+        )
+      ).status,
+      400,
+    );
+    const management = await jsonObject(
+      await request(
+        "/v3/client/agents/get",
+        { agentDefinitionId: agentDefinition.definition.agentDefinitionId },
+        human.accessToken,
+      ),
+    );
+    assert.equal(management.membershipRole, "member");
+    assert.equal(memory.memory.ownerParticipantId, agent.principal.principalId);
+    assert.equal(memory.memory.files[0]?.relativePath, "MEMORY.md");
+    const configGet = "/v3/client/agents/memory/config/get";
+    const sequenceBeforeConfig = kernel.sync(humanActor, {
+      roomId: controlRoom.roomId,
+      consumerId: "config-sequence-proof",
+    }).latestRoomSeq;
+    const configPatch = "/v3/client/agents/memory/config/patch";
+    const configIdentity = {
+      agentDefinitionId: agentDefinition.definition.agentDefinitionId,
+    };
+    assert.equal((await request(configGet, configIdentity)).status, 401);
+    assert.equal(
+      (await request(configGet, configIdentity, otherHuman.accessToken)).status,
+      403,
+    );
+    assert.equal(
+      (
+        await request(
+          configPatch,
+          {
+            ...configIdentity,
+            patch: { expectedRevision: 0, set: { enabled: false } },
+          },
+          otherHuman.accessToken,
+        )
+      ).status,
+      403,
+    );
+    // Human API rejects Agent credentials at authentication, before owner lookup.
+    assert.equal(
+      (await request(configGet, configIdentity, agent.accessToken)).status,
+      401,
+    );
+    assert.equal(
+      (
+        await jsonObject(
+          await request(configGet, configIdentity, human.accessToken),
+        )
+      ).config.revision,
+      0,
+    );
+    const savedConfig = await request(
+      configPatch,
+      {
+        ...configIdentity,
+        patch: { expectedRevision: 0, set: { threshold_bytes: 8192 } },
+      },
+      human.accessToken,
+    );
+    assert.equal(savedConfig.status, 200);
+    assert.equal(
+      (await jsonObject(savedConfig)).config.effective.threshold_bytes,
+      8192,
+    );
+    const staleConfig = await request(
+      configPatch,
+      {
+        ...configIdentity,
+        patch: { expectedRevision: 0, set: { enabled: false } },
+      },
+      human.accessToken,
+    );
+    assert.equal(staleConfig.status, 409);
+    assert.equal(
+      await responseErrorCode(staleConfig),
+      "agent_memory_config_conflict",
+    );
+    assert.equal(
+      (
+        await request(
+          configPatch,
+          {
+            ...configIdentity,
+            patch: { expectedRevision: 1, set: { interval_ms: 1 } },
+          },
+          human.accessToken,
+        )
+      ).status,
+      400,
+    );
+    assert.equal(
+      (
+        await jsonObject(
+          await request(configGet, configIdentity, human.accessToken),
+        )
+      ).config.revision,
+      1,
+    );
+
+    const memoryFileResponse = await request(
+      "/v3/client/agents/memory/read",
+      {
+        agentDefinitionId: agentDefinition.definition.agentDefinitionId,
+        relativePath: "MEMORY.md",
+      },
+      human.accessToken,
+    );
+    assert.equal(
+      kernel.sync(humanActor, {
+        roomId: controlRoom.roomId,
+        consumerId: "config-sequence-proof",
+      }).latestRoomSeq,
+      sequenceBeforeConfig,
+    );
+    assert.equal(memoryFileResponse.status, 200);
+    assert.match((await jsonObject(memoryFileResponse)).content, /durable/u);
+
+    const memoryResetResponse = await request(
+      "/v3/client/agents/memory/reset",
+      {
+        agentDefinitionId: agentDefinition.definition.agentDefinitionId,
+        confirmation: "RESET_AGENT_MEMORY",
+        idempotencyKey: "client-memory-reset-1",
+      },
+      human.accessToken,
+    );
+    assert.equal(memoryResetResponse.status, 200);
+    assert.equal((await jsonObject(memoryResetResponse)).deduplicated, false);
+    assert.equal(memoryResetCalls, 1);
 
     const unauthenticatedInventory = await request(
       "/v1/local/runtimes/list",
@@ -370,6 +704,60 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       managedRoom.room.workspaceId,
       workspaceCreated.workspace.workspaceId,
     );
+    const roomUpdateResponse = await request(
+      "/v3/client/rooms/update",
+      {
+        basedOnRoomSeq: 1,
+        description: "Updated through the Human client API.",
+        idempotencyKey: "client-room-update-v3",
+        name: "Managed Room Updated",
+        roomId: managedRoom.room.roomId,
+        visibility: "private",
+      },
+      human.accessToken,
+    );
+    assert.equal(roomUpdateResponse.status, 200);
+    const updatedManagedRoom = await jsonObject(roomUpdateResponse);
+    assert.equal(updatedManagedRoom.room.name, "Managed Room Updated");
+    assert.equal(
+      updatedManagedRoom.room.description,
+      "Updated through the Human client API.",
+    );
+
+    const directRoomResponse = await request(
+      "/v3/client/rooms/direct/open",
+      {
+        basedOnControlRoomSeq: kernel.sync(humanActor, {
+          afterSeq: 0,
+          consumerId: "client-direct-room-head",
+          roomId: controlRoom.roomId,
+        }).latestRoomSeq,
+        idempotencyKey: "client-direct-room-opened",
+        peerPrincipalId: agent.principal.principalId,
+        workspaceId: workspace.workspace.workspaceId,
+      },
+      human.accessToken,
+    );
+    assert.equal(directRoomResponse.status, 200);
+    const directRoom = await jsonObject(directRoomResponse);
+    assert.equal(directRoom.room.kind, "direct");
+    assert.equal(directRoom.room.name, agent.principal.handle);
+    assert.equal(
+      (
+        await request(
+          "/v3/client/rooms/direct/open",
+          {
+            basedOnControlRoomSeq: 0,
+            idempotencyKey: "client-direct-room-opened-again",
+            peerPrincipalId: agent.principal.principalId,
+            workspaceId: workspace.workspace.workspaceId,
+          },
+          human.accessToken,
+        ).then(jsonObject)
+      ).room.roomId,
+      directRoom.room.roomId,
+      "open-or-create does not require a fresh write cursor for an existing pair",
+    );
 
     const agentsResponse = await request(
       "/v3/client/agents/list",
@@ -384,6 +772,121 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       agentDefinition.definition.agentDefinitionId,
     );
     assert.equal(agents.agents[0]?.handle, "client-agent");
+
+    const mcpServerCreateResponse = await request(
+      "/v3/client/managed-mcp/servers/create",
+      {
+        basedOnRoomSeq: kernel.sync(humanActor, {
+          afterSeq: 0,
+          consumerId: "client-managed-mcp-server-seq",
+          roomId: controlRoom.roomId,
+        }).latestRoomSeq,
+        controlRoomId: controlRoom.roomId,
+        definition: {
+          executorRef: "executor-room-tools",
+          runtimeName: "room_tools",
+          serverName: "RAH Room tools",
+          tools: [
+            {
+              inputSchema: { type: "object" },
+              runtimeName: "room_snapshot",
+              toolName: "room.snapshot",
+            },
+          ],
+        },
+        idempotencyKey: "client-managed-mcp-server-create",
+        mcpServerId: "mcp-room-tools",
+      },
+      human.accessToken,
+    );
+    assert.equal(mcpServerCreateResponse.status, 200);
+    const mcpServerCreated = await jsonObject(mcpServerCreateResponse);
+    assert.equal(mcpServerCreated.event.type, "mcp_server.created");
+    assert.equal(mcpServerCreated.server.configVersion, 1);
+
+    const mcpExecutorsResponse = await request(
+      "/v3/client/managed-mcp/executors/list",
+      { controlRoomId: controlRoom.roomId },
+      human.accessToken,
+    );
+    assert.equal(mcpExecutorsResponse.status, 200);
+    assert.deepEqual((await jsonObject(mcpExecutorsResponse)).executors, [
+      {
+        executorRef: "executor-room-tools",
+        transportKind: "streamable-http",
+      },
+    ]);
+    const mcpDiscoverResponse = await request(
+      "/v3/client/managed-mcp/executors/discover",
+      {
+        controlRoomId: controlRoom.roomId,
+        executorRef: "executor-room-tools",
+      },
+      human.accessToken,
+    );
+    assert.equal(mcpDiscoverResponse.status, 200);
+    assert.equal(
+      (await jsonObject(mcpDiscoverResponse)).tools[0]?.toolName,
+      "room.snapshot",
+    );
+
+    const mcpAssignmentCreateResponse = await request(
+      "/v3/client/managed-mcp/assignments/create",
+      {
+        allowedToolNames: ["room.snapshot"],
+        basedOnRoomSeq: mcpServerCreated.event.roomSeq,
+        idempotencyKey: "client-managed-mcp-assignment-create",
+        mcpServerId: "mcp-room-tools",
+        participantId: agent.principal.principalId,
+      },
+      human.accessToken,
+    );
+    assert.equal(mcpAssignmentCreateResponse.status, 200);
+    const mcpAssignmentCreated = await jsonObject(mcpAssignmentCreateResponse);
+    assert.equal(mcpAssignmentCreated.assignment.assignmentVersion, 1);
+
+    const mcpServersResponse = await request(
+      "/v3/client/managed-mcp/servers/list",
+      { controlRoomId: controlRoom.roomId },
+      human.accessToken,
+    );
+    assert.equal(mcpServersResponse.status, 200);
+    assert.equal((await jsonObject(mcpServersResponse)).servers.length, 1);
+    const mcpAssignmentsResponse = await request(
+      "/v3/client/managed-mcp/assignments/list",
+      { controlRoomId: controlRoom.roomId },
+      human.accessToken,
+    );
+    assert.equal(mcpAssignmentsResponse.status, 200);
+    assert.equal(
+      (await jsonObject(mcpAssignmentsResponse)).assignments.length,
+      1,
+    );
+    const mcpUsageResponse = await request(
+      "/v3/client/managed-mcp/usage/list",
+      {
+        controlRoomId: controlRoom.roomId,
+        participantId: agent.principal.principalId,
+      },
+      human.accessToken,
+    );
+    assert.equal(mcpUsageResponse.status, 200);
+    assert.deepEqual((await jsonObject(mcpUsageResponse)).calls, []);
+    const hiddenMcpResponse = await request(
+      "/v3/client/managed-mcp/servers/list",
+      { controlRoomId: controlRoom.roomId },
+      otherHuman.accessToken,
+    );
+    assert.equal(hiddenMcpResponse.status, 403);
+    const hiddenMcpUsageResponse = await request(
+      "/v3/client/managed-mcp/usage/list",
+      {
+        controlRoomId: controlRoom.roomId,
+        participantId: agent.principal.principalId,
+      },
+      otherHuman.accessToken,
+    );
+    assert.equal(hiddenMcpUsageResponse.status, 403);
 
     const provisionResponse = await request(
       "/v3/client/agents/provision",
@@ -403,7 +906,6 @@ test("Client API authenticates humans and exposes canonical Room work without ow
         modelIntent: { fallback: "disabled" },
         role: "Engineering Agent",
         runtimeOfferId: "offer-codex",
-        sessionPolicy: "fresh",
       },
       human.accessToken,
     );
@@ -474,6 +976,65 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     const onboarded = await jsonObject(onboardResponse);
     assert.equal(onboarded.membership.principalId, agent.principal.principalId);
     assert.equal(onboarded.membership.role, "member");
+    const agentRoomsResponse = await request(
+      "/v3/client/agents/rooms/list",
+      { agentDefinitionId: agentDefinition.definition.agentDefinitionId },
+      human.accessToken,
+    );
+    assert.equal(agentRoomsResponse.status, 200);
+    assert.deepEqual(
+      (await jsonObject(agentRoomsResponse)).rooms.map(
+        (room: { roomId: string }) => room.roomId,
+      ),
+      [agentOnboardRoom.roomId, room.roomId, directRoom.room.roomId],
+    );
+    const hiddenAgentRoomsResponse = await request(
+      "/v3/client/agents/rooms/list",
+      { agentDefinitionId: agentDefinition.definition.agentDefinitionId },
+      otherHuman.accessToken,
+    );
+    assert.equal(hiddenAgentRoomsResponse.status, 404);
+    const agentActivityResponse = await request(
+      "/v3/client/agents/activity/list",
+      {
+        agentDefinitionId: agentDefinition.definition.agentDefinitionId,
+        limit: 1,
+      },
+      human.accessToken,
+    );
+    assert.equal(agentActivityResponse.status, 200);
+    const agentActivity = await jsonObject(agentActivityResponse);
+    assert.equal(agentActivity.activities.length, 1);
+    assert.equal(
+      agentActivity.activities[0].participantId,
+      agent.principal.principalId,
+    );
+    assert.equal("payload" in agentActivity.activities[0], false);
+    const hiddenAgentActivityResponse = await request(
+      "/v3/client/agents/activity/list",
+      { agentDefinitionId: agentDefinition.definition.agentDefinitionId },
+      otherHuman.accessToken,
+    );
+    assert.equal(hiddenAgentActivityResponse.status, 404);
+    const agentTrajectoryResponse = await request(
+      "/v3/client/agents/trajectory/list",
+      {
+        agentDefinitionId: agentDefinition.definition.agentDefinitionId,
+        limit: 50,
+      },
+      human.accessToken,
+    );
+    assert.equal(agentTrajectoryResponse.status, 200);
+    assert.deepEqual(
+      (await jsonObject(agentTrajectoryResponse)).activities,
+      [],
+    );
+    const hiddenAgentTrajectoryResponse = await request(
+      "/v3/client/agents/trajectory/list",
+      { agentDefinitionId: agentDefinition.definition.agentDefinitionId },
+      otherHuman.accessToken,
+    );
+    assert.equal(hiddenAgentTrajectoryResponse.status, 404);
     assert.equal(
       (
         await request(
@@ -638,12 +1199,59 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     );
     assert.equal(threadsResponse.status, 200);
     const threads = await jsonObject(threadsResponse);
-    assert.equal(threads.threads[0]?.replyCount, 1);
+    assert.equal(
+      threads.threads.find(
+        (candidate: { threadId?: unknown }) =>
+          candidate.threadId === thread.thread.threadId,
+      )?.replyCount,
+      1,
+    );
+
+    const convertedResponse = await request(
+      "/v3/client/tasks/convert",
+      {
+        basedOnRoomSeq: reply.event.roomSeq,
+        idempotencyKey: "client-message-converted-to-task",
+        messageId: posted.event.aggregateId,
+        roomId: room.roomId,
+      },
+      human.accessToken,
+    );
+    assert.equal(convertedResponse.status, 200);
+    const converted = await jsonObject(convertedResponse);
+    assert.equal(converted.task.sourceMessageId, posted.event.aggregateId);
+    assert.equal(converted.task.threadId, thread.thread.threadId);
+    assert.equal(converted.task.taskNumber, 2);
+    const channelMessages = await request(
+      "/v3/client/messages/list",
+      { roomId: room.roomId },
+      human.accessToken,
+    ).then(jsonObject);
+    assert.equal(
+      channelMessages.messages.filter(
+        (candidate: { messageId?: unknown }) =>
+          candidate.messageId === posted.event.aggregateId,
+      ).length,
+      1,
+    );
+
+    const replyConversionRejected = await request(
+      "/v3/client/tasks/convert",
+      {
+        basedOnRoomSeq: converted.event.roomSeq,
+        idempotencyKey: "client-reply-converted-to-task",
+        messageId: reply.event.aggregateId,
+        roomId: room.roomId,
+      },
+      human.accessToken,
+    );
+    assert.equal(replyConversionRejected.status, 409);
+    assert.equal(await responseErrorCode(replyConversionRejected), "conflict");
 
     const roleResponse = await request(
       "/v2/client/rooms/members/role",
       {
-        basedOnRoomSeq: reply.event.roomSeq,
+        basedOnRoomSeq: converted.event.roomSeq,
         idempotencyKey: "client-member-promoted",
         principalId: memberHuman.principal.principalId,
         role: "admin",
@@ -811,6 +1419,17 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     assert.ok(Array.isArray(tasks.tasks));
     assert.equal(tasks.tasks[0]?.state, "waiting_input");
 
+    const reviewEvidenceResponse = await request(
+      "/v3/client/tasks/reviews/list",
+      { roomId: room.roomId },
+      human.accessToken,
+    );
+    assert.equal(reviewEvidenceResponse.status, 200);
+    assert.deepEqual(await jsonObject(reviewEvidenceResponse), {
+      reviews: [],
+      submissions: [],
+    });
+
     const pendingResponse = await request(
       "/v1/client/input-requests/list",
       { roomId: room.roomId, state: "pending" },
@@ -912,10 +1531,24 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     const assigned = await jsonObject(assignedResponse);
     assert.equal(assigned.task.assigneeId, agent.principal.principalId);
 
+    const unassignedResponse = await request(
+      "/v3/client/tasks/unassign",
+      {
+        basedOnRoomSeq: assigned.event.roomSeq,
+        idempotencyKey: "client-open-task-unassigned",
+        taskId: openTask.task.taskId,
+      },
+      human.accessToken,
+    );
+    assert.equal(unassignedResponse.status, 200);
+    const unassigned = await jsonObject(unassignedResponse);
+    assert.equal(unassigned.task.assigneeId, undefined);
+    assert.equal(unassigned.event.type, "task.unassigned");
+
     const cancelledResponse = await request(
       "/v1/client/tasks/cancel",
       {
-        basedOnRoomSeq: assigned.event.roomSeq,
+        basedOnRoomSeq: unassigned.event.roomSeq,
         idempotencyKey: "client-open-task-cancelled",
         reason: "The experiment is complete",
         taskId: openTask.task.taskId,
@@ -929,6 +1562,20 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       cancelled.task.cancellationReason,
       "The experiment is complete",
     );
+    const reopenedResponse = await request(
+      "/v1/client/tasks/reopen",
+      {
+        basedOnRoomSeq: cancelled.event.roomSeq,
+        idempotencyKey: "client-open-task-reopened",
+        taskId: openTask.task.taskId,
+      },
+      human.accessToken,
+    );
+    assert.equal(reopenedResponse.status, 200);
+    const reopened = await jsonObject(reopenedResponse);
+    assert.equal(reopened.event.type, "task.reopened");
+    assert.equal(reopened.task.state, "todo");
+    assert.equal(reopened.task.cancellationReason, undefined);
 
     const noPendingResponse = await request(
       "/v1/client/input-requests/list",

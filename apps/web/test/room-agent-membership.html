@@ -127,6 +127,8 @@
               hints: false,
               inputRequestRead: true,
               inputRequestResolve: true,
+              managedMcpRead: false,
+              managedMcpWrite: false,
               memberRead: true,
               memberWrite: true,
               messageRead: true,
@@ -222,6 +224,63 @@
                 updatedAt: createdAt,
               })),
           };
+        if (operation === "agent.trajectory.list") {
+          const binding = bindings.find(
+            ({ agentDefinitionId }) =>
+              agentDefinitionId === input.agentDefinitionId,
+          );
+          return {
+            activities:
+              binding === undefined
+                ? []
+                : [
+                    {
+                      activityId: `activity-${binding.agentDefinitionId}`,
+                      entry: {
+                        kind: "thinking",
+                        producerFactId: "thinking-1",
+                        text: "正在检查 Room 消息",
+                      },
+                      observedAt: createdAt,
+                      participantId: binding.participantId,
+                      producerSequence: 1,
+                      recordedAt: createdAt,
+                      roomId: room.roomId,
+                      runAttemptId: `run-${binding.agentDefinitionId}`,
+                      runtimeRunId: `runtime-run-${binding.agentDefinitionId}`,
+                      serverSequence: 1,
+                    },
+                    {
+                      activityId: `activity-reply-${binding.agentDefinitionId}`,
+                      entry: {
+                        kind: "text",
+                        producerFactId: "message-1",
+                        text: "已完成 Room 工作",
+                      },
+                      observedAt: createdAt,
+                      participantId: binding.participantId,
+                      producerSequence: 2,
+                      recordedAt: createdAt,
+                      roomId: room.roomId,
+                      runAttemptId: `run-${binding.agentDefinitionId}`,
+                      runtimeRunId: `runtime-run-${binding.agentDefinitionId}`,
+                      serverSequence: 2,
+                    },
+                  ],
+          };
+        }
+        if (operation === "agent.room.list") {
+          const binding = bindings.find(
+            ({ agentDefinitionId }) =>
+              agentDefinitionId === input.agentDefinitionId,
+          );
+          return {
+            rooms:
+              binding !== undefined && memberIds.has(binding.participantId)
+                ? [room]
+                : [],
+          };
+        }
         if (operation === "message.list") {
           const page = messages.filter(
             (message) =>
@@ -289,14 +348,103 @@
           };
         }
         if (operation === "task.list") return { tasks };
-        if (operation === "task.create") {
+        if (operation === "task.convert") {
+          const sourceMessage = messages.find(
+            ({ messageId }) => messageId === input.messageId,
+          );
+          if (sourceMessage === undefined)
+            throw new Error("unknown fixture Message");
+          if (sourceMessage.threadId !== undefined)
+            throw new Error("Only a top-level Message can become a Task");
+          if (
+            tasks.some(
+              ({ sourceMessageId }) => sourceMessageId === input.messageId,
+            )
+          )
+            throw new Error("Message is already a Task");
           const taskId = `task-${String(tasks.length + 1)}`;
+          let thread = threads.find(
+            ({ rootMessageId }) => rootMessageId === input.messageId,
+          );
+          if (thread === undefined) {
+            thread = {
+              createdAt,
+              createdBy: "human-main",
+              replyCount: 0,
+              roomId: room.roomId,
+              rootMessageId: input.messageId,
+              threadId: `thread-${String(threads.length + 1)}`,
+            };
+            threads.push(thread);
+          }
+          const taskNumber = tasks.length + 1;
           const event = appendEvent({
             aggregateId: taskId,
             aggregateType: "task",
             idempotencyKey: input.idempotencyKey,
-            payload: { title: input.title },
+            payload: {
+              sourceMessageId: input.messageId,
+              taskNumber,
+              threadId: thread.threadId,
+              title: sourceMessage.body,
+            },
             type: "task.created",
+          });
+          const task = {
+            createdAt,
+            creatorId: "human-main",
+            dependencyTaskIds: input.dependencyTaskIds,
+            roomId: room.roomId,
+            sourceMessageId: input.messageId,
+            state: "todo",
+            taskId,
+            taskNumber,
+            threadId: thread.threadId,
+            title: sourceMessage.body,
+            updatedAt: createdAt,
+          };
+          tasks.push(task);
+          persistArray("tasks", tasks);
+          persistArray("threads", threads);
+          return {
+            activationIds: [],
+            deduplicated: false,
+            event,
+            task,
+          };
+        }
+        if (operation === "task.create") {
+          const taskId = `task-${String(tasks.length + 1)}`;
+          const sourceMessageId = `message-${String(messages.length + 1)}`;
+          const threadId = `thread-${String(threads.length + 1)}`;
+          const taskNumber = tasks.length + 1;
+          const event = appendEvent({
+            aggregateId: taskId,
+            aggregateType: "task",
+            idempotencyKey: input.idempotencyKey,
+            payload: {
+              sourceMessageId,
+              taskNumber,
+              threadId,
+              title: input.title,
+            },
+            type: "task.created",
+          });
+          messages.push({
+            actorId: "human-main",
+            body: input.title,
+            createdAt,
+            messageId: sourceMessageId,
+            roomId: room.roomId,
+            roomSeq: event.roomSeq,
+          });
+          threads.push({
+            createdAt,
+            createdBy: "human-main",
+            replyCount: 0,
+            roomId: room.roomId,
+            rootMessageId: sourceMessageId,
+            threadId,
           });
           const task = {
             ...(input.assigneeId === undefined
@@ -309,13 +457,18 @@
               ? {}
               : { description: input.description }),
             roomId: room.roomId,
+            sourceMessageId,
             state: "todo",
             taskId,
+            taskNumber,
+            threadId,
             title: input.title,
             updatedAt: createdAt,
           };
           tasks.push(task);
+          persistArray("messages", messages);
           persistArray("tasks", tasks);
+          persistArray("threads", threads);
           return {
             activationIds:
               input.assigneeId === undefined

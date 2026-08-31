@@ -1,7 +1,14 @@
 import { z } from "zod";
 
-import { IdentifierSchema, TimestampSchema } from "./common.ts";
-import { ModelBindingDescriptorSchema } from "./execution-policy.ts";
+import {
+  IdentifierSchema,
+  TimestampSchema,
+  rejectDuplicateStrings,
+} from "./common.ts";
+import {
+  ModelBindingDescriptorSchema,
+  ToolAccessModeSchema,
+} from "./execution-policy.ts";
 
 export const LocalRuntimeInventoryRequestSchema = z.object({}).strict();
 export type LocalRuntimeInventoryRequest = z.infer<
@@ -31,6 +38,11 @@ export const LocalRuntimeInventoryEntrySchema = z
     runtimeProfileId: IdentifierSchema.optional(),
     runtimeProfileRevisionId: IdentifierSchema.optional(),
     source: z.enum(["configured", "discovered"]),
+    supportedToolAccessModes: z
+      .array(ToolAccessModeSchema)
+      .min(1)
+      .superRefine(rejectDuplicateStrings)
+      .optional(),
     version: z.string().trim().min(1).optional(),
   })
   .strict()
@@ -57,10 +69,27 @@ export type LocalRuntimeInventoryEntry = z.infer<
 export const LocalRuntimeInventoryResponseSchema = z
   .object({
     hostId: IdentifierSchema,
+    computer: z
+      .object({
+        displayName: z.string().min(1),
+        hostname: z.string().min(1),
+        os: z.string().min(1),
+        status: z.enum(["online", "draining", "offline", "unknown"]),
+        observedAt: TimestampSchema,
+        lastSeenAt: TimestampSchema.optional(),
+        instanceId: IdentifierSchema.optional(),
+        buildVersion: z.string().optional(),
+        staleAfterMs: z.number().int().positive(),
+      })
+      .strict()
+      .optional(),
     restartRequiredToRescan: z.literal(true),
     runtimes: z.array(LocalRuntimeInventoryEntrySchema),
   })
   .strict();
 export type LocalRuntimeInventoryResponse = z.infer<
   typeof LocalRuntimeInventoryResponseSchema
+>;
+export type LocalComputerObservation = NonNullable<
+  LocalRuntimeInventoryResponse["computer"]
 >;

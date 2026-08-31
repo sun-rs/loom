@@ -6,8 +6,10 @@ import { join } from "node:path";
 import test, { afterEach } from "node:test";
 
 import {
+  ActivationCancellationRequestedError,
   AuthenticatedHostContext,
   ConflictError,
+  ExecutionFencedError,
   ForbiddenError,
   IdempotencyConflictError,
   KERNEL_SCHEMA_VERSION,
@@ -88,6 +90,7 @@ function createFixture() {
     clock,
     databasePath,
     human,
+    humanAccessToken: humanProvisioning.accessToken,
     humanActor,
     kernel,
     otherAgent,
@@ -631,6 +634,31 @@ test("initialization migrates schema v2 Tasks to waiting_input without losing ro
     0,
   );
   assert.ok(taskColumns.some((column) => column.name === "blocked_reason"));
+  assert.ok(taskColumns.some((column) => column.name === "task_number"));
+  const anchoredTask = migrated
+    .prepare(
+      "SELECT task_number, source_message_id, thread_id FROM tasks WHERE task_id = 'task-v2'",
+    )
+    .get() as {
+    source_message_id: string;
+    task_number: number;
+    thread_id: string;
+  };
+  assert.equal(anchoredTask.task_number, 1);
+  assert.ok(
+    migrated
+      .prepare(
+        "SELECT 1 FROM messages WHERE message_id = ? AND room_id = 'room-v2'",
+      )
+      .get(anchoredTask.source_message_id),
+  );
+  assert.ok(
+    migrated
+      .prepare(
+        "SELECT 1 FROM threads WHERE thread_id = ? AND root_message_id = ?",
+      )
+      .get(anchoredTask.thread_id, anchoredTask.source_message_id),
+  );
   assert.ok(
     migrated
       .prepare(
@@ -1569,6 +1597,9 @@ test("Task workflow is durable, leased independently, and explicitly completed",
     title: "Implement Task state machine",
   });
   assert.equal(created.task.state, "todo");
+  assert.equal(created.task.taskNumber, 1);
+  assert.ok(created.task.sourceMessageId);
+  assert.ok(created.task.threadId);
   assert.equal(created.event.type, "task.created");
   assert.equal(created.activationIds.length, 1);
   assert.equal(kernel.listTasks(agentActor, { roomId: room.roomId }).length, 1);
@@ -1583,7 +1614,26 @@ test("Task workflow is durable, leased independently, and explicitly completed",
   });
   assert.equal(repeatedCreate.deduplicated, true);
   assert.equal(repeatedCreate.task.taskId, created.task.taskId);
+  assert.equal(
+    repeatedCreate.task.sourceMessageId,
+    created.task.sourceMessageId,
+  );
+  assert.equal(repeatedCreate.task.threadId, created.task.threadId);
   assert.equal(kernel.listTasks(agentActor, { roomId: room.roomId }).length, 1);
+  assert.equal(
+    kernel
+      .listMessages(humanActor, { roomId: room.roomId })
+      .messages.filter(
+        ({ messageId }) => messageId === created.task.sourceMessageId,
+      ).length,
+    1,
+  );
+  assert.equal(
+    kernel
+      .listThreads(humanActor, { roomId: room.roomId })
+      .filter(({ threadId }) => threadId === created.task.threadId).length,
+    1,
+  );
   assert.throws(
     () =>
       kernel.createTask(humanActor, {
@@ -1650,6 +1700,25 @@ test("Task workflow is durable, leased independently, and explicitly completed",
   });
   assert.equal(progressed.task.lastProgress, "Kernel and protocol tests pass");
   assert.equal(progressed.event.type, "task.progressed");
+  assert.deepEqual(
+    kernel
+      .listMessages(humanActor, {
+        roomId: room.roomId,
+        threadId: created.task.threadId,
+      })
+      .messages.map(({ actorId, body, threadId }) => ({
+        actorId,
+        body,
+        threadId,
+      })),
+    [
+      {
+        actorId: agent.principalId,
+        body: "Kernel and protocol tests pass",
+        threadId: created.task.threadId,
+      },
+    ],
+  );
 
   const submitted = kernel.submitTask(execution, {
     basedOnRoomSeq: progressed.event.roomSeq,
@@ -1660,6 +1729,15 @@ test("Task workflow is durable, leased independently, and explicitly completed",
   assert.equal(submitted.task.state, "submitted");
   assert.equal(submitted.task.claimedBy, undefined);
   assert.equal(submitted.event.type, "task.submitted");
+  assert.deepEqual(
+    kernel
+      .listMessages(humanActor, {
+        roomId: room.roomId,
+        threadId: created.task.threadId,
+      })
+      .messages.map(({ body }) => body),
+    ["Kernel and protocol tests pass", "Implemented and verified"],
+  );
 
   kernel.recordRuntimeTermination(host, {
     exit: { code: 0 },
@@ -1692,6 +1770,743 @@ test("Task workflow is durable, leased independently, and explicitly completed",
   });
   assert.equal(completed.task.state, "completed");
   assert.equal(completed.event.type, "task.completed");
+
+  kernel.close();
+});
+
+test("an assigned Task has one claim owner plus canonical collaborators and reviewers", () => {
+  const { agent, humanActor, kernel, otherAgent, otherAgentActor, room } =
+    createFixture();
+  const reviewerProvisioning = kernel.provisionPrincipal({
+    handle: "reviewer",
+    kind: "agent",
+  });
+  const reviewer = reviewerProvisioning.principal;
+  const reviewerActor = kernel.authenticateAccessToken(
+    reviewerProvisioning.accessToken,
+  );
+  kernel.addMember(humanActor, {
+    principalId: reviewer.principalId,
+    roomId: room.roomId,
+  });
+
+  const created = kernel.createTask(humanActor, {
+    assigneeId: agent.principalId,
+    collaboratorIds: [otherAgent.principalId],
+    idempotencyKey: "task-roles-create",
+    reviewerIds: [reviewer.principalId],
+    roomId: room.roomId,
+    title: "Implement, assist, and review one durable change",
+  });
+  assert.deepEqual(created.task.collaboratorIds, [otherAgent.principalId]);
+  assert.deepEqual(created.task.reviewerIds, [reviewer.principalId]);
+  assert.deepEqual(created.event.payload.collaboratorIds, [
+    otherAgent.principalId,
+  ]);
+  assert.deepEqual(created.event.payload.reviewerIds, [reviewer.principalId]);
+  assert.equal(created.activationIds.length, 2);
+  assert.deepEqual(
+    kernel
+      .listInbox(otherAgentActor, { roomId: room.roomId })
+      .map(({ reason }) => reason),
+    ["task_collaboration"],
+  );
+  assert.deepEqual(
+    kernel.listInbox(reviewerActor, { roomId: room.roomId }),
+    [],
+    "reviewers must not run before the owner submits",
+  );
+
+  assert.throws(
+    () =>
+      kernel.createTask(humanActor, {
+        collaboratorIds: [otherAgent.principalId],
+        idempotencyKey: "task-roles-open-ambiguous",
+        roomId: room.roomId,
+        title: "An open Task cannot predeclare collaborators",
+      }),
+    ConflictError,
+  );
+  assert.throws(
+    () =>
+      kernel.createTask(humanActor, {
+        assigneeId: agent.principalId,
+        collaboratorIds: [agent.principalId],
+        idempotencyKey: "task-roles-owner-overlap",
+        roomId: room.roomId,
+        title: "The owner cannot duplicate a secondary role",
+      }),
+    ConflictError,
+  );
+
+  const ownerHost = authenticateHost(kernel, "task-role-owner-host", [
+    agent.principalId,
+  ]);
+  const ownerActivation = kernel.leaseNextActivation(ownerHost, {
+    leaseMs: 30_000,
+  });
+  assert.ok(ownerActivation);
+  const ownerRun = kernel.createRunAttempt(ownerHost, {
+    activationId: ownerActivation.activationId,
+  });
+  prepareAndMarkRunAttemptRunning(kernel, ownerHost, {
+    recoveryDescriptor: fakeRecovery("task-role-owner-runtime"),
+    runAttemptId: ownerRun.runAttemptId,
+    runtimeRunId: "task-role-owner-runtime",
+  });
+  const ownerExecution = kernel.authorizeWorkerExecution(ownerHost, {
+    activationId: ownerActivation.activationId,
+    consumerId: "task-role-owner-consumer",
+    hostId: ownerHost.hostId,
+    participantId: agent.principalId,
+    roomId: room.roomId,
+    runAttemptId: ownerRun.runAttemptId,
+    toSeq: ownerActivation.toSeq,
+  });
+  const ownerDelivery = kernel.syncWorker(ownerExecution, {});
+  kernel.acknowledgeWorkerCursor(ownerExecution, {
+    throughSeq: ownerDelivery.cursorAfter,
+  });
+  const claimed = kernel.claimTask(ownerExecution, {
+    basedOnRoomSeq: created.event.roomSeq,
+    idempotencyKey: "task-roles-claim",
+    leaseMs: 30_000,
+    taskId: created.task.taskId,
+  });
+  const started = kernel.startTask(ownerExecution, {
+    basedOnRoomSeq: claimed.event.roomSeq,
+    idempotencyKey: "task-roles-start",
+    leaseMs: 30_000,
+    taskId: created.task.taskId,
+  });
+  const submitted = kernel.submitTask(ownerExecution, {
+    basedOnRoomSeq: started.event.roomSeq,
+    idempotencyKey: "task-roles-submit",
+    summary: "Owner implementation is ready for independent review",
+    taskId: created.task.taskId,
+  });
+  assert.equal(submitted.task.state, "submitted");
+  kernel.recordRuntimeTermination(ownerHost, {
+    exit: { code: 0 },
+    runAttemptId: ownerRun.runAttemptId,
+    runtimeRunId: "task-role-owner-runtime",
+  });
+  kernel.finishRunAttempt(ownerHost, {
+    exitCode: 0,
+    runAttemptId: ownerRun.runAttemptId,
+    state: "exited",
+  });
+  kernel.completeActivation(ownerHost, {
+    activationId: ownerActivation.activationId,
+    consumerId: "task-role-owner-consumer",
+  });
+  assert.deepEqual(
+    kernel
+      .listInbox(reviewerActor, { roomId: room.roomId })
+      .map(({ reason }) => reason),
+    ["task_review"],
+  );
+
+  const reviewerHost = authenticateHost(kernel, "task-role-reviewer-host", [
+    reviewer.principalId,
+  ]);
+  const reviewerActivation = kernel.leaseNextActivation(reviewerHost, {
+    leaseMs: 30_000,
+  });
+  assert.ok(reviewerActivation);
+  const reviewerRun = kernel.createRunAttempt(reviewerHost, {
+    activationId: reviewerActivation.activationId,
+  });
+  prepareAndMarkRunAttemptRunning(kernel, reviewerHost, {
+    recoveryDescriptor: fakeRecovery("task-role-reviewer-runtime"),
+    runAttemptId: reviewerRun.runAttemptId,
+    runtimeRunId: "task-role-reviewer-runtime",
+  });
+  const reviewerExecution = kernel.authorizeWorkerExecution(reviewerHost, {
+    activationId: reviewerActivation.activationId,
+    consumerId: "task-role-reviewer-consumer",
+    hostId: reviewerHost.hostId,
+    participantId: reviewer.principalId,
+    roomId: room.roomId,
+    runAttemptId: reviewerRun.runAttemptId,
+    toSeq: reviewerActivation.toSeq,
+  });
+  const reviewerDelivery = kernel.syncWorker(reviewerExecution, {});
+  kernel.acknowledgeWorkerCursor(reviewerExecution, {
+    throughSeq: reviewerDelivery.cursorAfter,
+  });
+  assert.equal(
+    kernel.getWorkerTask(reviewerExecution, { taskId: created.task.taskId })
+      .state,
+    "submitted",
+  );
+  const latestBeforeReview = kernel.sync(humanActor, {
+    consumerId: "task-role-human-review",
+    roomId: room.roomId,
+  }).latestRoomSeq;
+  assert.throws(
+    () =>
+      kernel.completeTask(humanActor, {
+        basedOnRoomSeq: latestBeforeReview,
+        idempotencyKey: "task-roles-complete-before-review",
+        taskId: created.task.taskId,
+      }),
+    ConflictError,
+    "a Task with declared reviewers cannot complete before frozen review evidence",
+  );
+  const changesRequested = kernel.taskReviews.reviewTask(reviewerExecution, {
+    basedOnRoomSeq: reviewerActivation.toSeq,
+    disposition: "changes_requested",
+    idempotencyKey: "task-roles-review-changes-requested",
+    summary: "Changes requested: add the missing independent gate evidence.",
+    taskId: created.task.taskId,
+  });
+  assert.equal(changesRequested.review.disposition, "changes_requested");
+  assert.equal(changesRequested.task.state, "todo");
+  assert.equal(changesRequested.task.assigneeId, agent.principalId);
+  assert.equal(changesRequested.task.submissionSummary, undefined);
+  assert.equal(changesRequested.activationIds.length, 2);
+  kernel.recordRuntimeTermination(reviewerHost, {
+    exit: { code: 0 },
+    runAttemptId: reviewerRun.runAttemptId,
+    runtimeRunId: "task-role-reviewer-runtime",
+  });
+  kernel.finishRunAttempt(reviewerHost, {
+    exitCode: 0,
+    runAttemptId: reviewerRun.runAttemptId,
+    state: "exited",
+  });
+  kernel.completeActivation(reviewerHost, {
+    activationId: reviewerActivation.activationId,
+    consumerId: "task-role-reviewer-consumer",
+  });
+
+  const revisionOwnerHost = authenticateHost(
+    kernel,
+    "task-role-owner-revision-host",
+    [agent.principalId],
+  );
+  const revisionOwnerActivation = kernel.leaseNextActivation(
+    revisionOwnerHost,
+    { leaseMs: 30_000 },
+  );
+  assert.ok(revisionOwnerActivation);
+  const revisionOwnerRun = kernel.createRunAttempt(revisionOwnerHost, {
+    activationId: revisionOwnerActivation.activationId,
+  });
+  prepareAndMarkRunAttemptRunning(kernel, revisionOwnerHost, {
+    recoveryDescriptor: fakeRecovery("task-role-owner-revision-runtime"),
+    runAttemptId: revisionOwnerRun.runAttemptId,
+    runtimeRunId: "task-role-owner-revision-runtime",
+  });
+  const revisionOwnerExecution = kernel.authorizeWorkerExecution(
+    revisionOwnerHost,
+    {
+      activationId: revisionOwnerActivation.activationId,
+      consumerId: "task-role-owner-revision-consumer",
+      hostId: revisionOwnerHost.hostId,
+      participantId: agent.principalId,
+      roomId: room.roomId,
+      runAttemptId: revisionOwnerRun.runAttemptId,
+      toSeq: revisionOwnerActivation.toSeq,
+    },
+  );
+  const revisionOwnerDelivery = kernel.syncWorker(revisionOwnerExecution, {});
+  kernel.acknowledgeWorkerCursor(revisionOwnerExecution, {
+    throughSeq: revisionOwnerDelivery.cursorAfter,
+  });
+  const revisionClaimed = kernel.claimTask(revisionOwnerExecution, {
+    basedOnRoomSeq: changesRequested.event.roomSeq,
+    idempotencyKey: "task-roles-revision-claim",
+    leaseMs: 30_000,
+    taskId: created.task.taskId,
+  });
+  const revisionStarted = kernel.startTask(revisionOwnerExecution, {
+    basedOnRoomSeq: revisionClaimed.event.roomSeq,
+    idempotencyKey: "task-roles-revision-start",
+    leaseMs: 30_000,
+    taskId: created.task.taskId,
+  });
+  const resubmitted = kernel.submitTask(revisionOwnerExecution, {
+    basedOnRoomSeq: revisionStarted.event.roomSeq,
+    idempotencyKey: "task-roles-revision-submit",
+    summary: "Revision includes the independent gate evidence.",
+    taskId: created.task.taskId,
+  });
+  kernel.recordRuntimeTermination(revisionOwnerHost, {
+    exit: { code: 0 },
+    runAttemptId: revisionOwnerRun.runAttemptId,
+    runtimeRunId: "task-role-owner-revision-runtime",
+  });
+  kernel.finishRunAttempt(revisionOwnerHost, {
+    exitCode: 0,
+    runAttemptId: revisionOwnerRun.runAttemptId,
+    state: "exited",
+  });
+  kernel.completeActivation(revisionOwnerHost, {
+    activationId: revisionOwnerActivation.activationId,
+    consumerId: "task-role-owner-revision-consumer",
+  });
+
+  const revisionReviewerHost = authenticateHost(
+    kernel,
+    "task-role-reviewer-revision-host",
+    [reviewer.principalId],
+  );
+  const revisionReviewerActivation = kernel.leaseNextActivation(
+    revisionReviewerHost,
+    { leaseMs: 30_000 },
+  );
+  assert.ok(revisionReviewerActivation);
+  const revisionReviewerRun = kernel.createRunAttempt(revisionReviewerHost, {
+    activationId: revisionReviewerActivation.activationId,
+  });
+  prepareAndMarkRunAttemptRunning(kernel, revisionReviewerHost, {
+    recoveryDescriptor: fakeRecovery("task-role-reviewer-revision-runtime"),
+    runAttemptId: revisionReviewerRun.runAttemptId,
+    runtimeRunId: "task-role-reviewer-revision-runtime",
+  });
+  const revisionReviewerExecution = kernel.authorizeWorkerExecution(
+    revisionReviewerHost,
+    {
+      activationId: revisionReviewerActivation.activationId,
+      consumerId: "task-role-reviewer-revision-consumer",
+      hostId: revisionReviewerHost.hostId,
+      participantId: reviewer.principalId,
+      roomId: room.roomId,
+      runAttemptId: revisionReviewerRun.runAttemptId,
+      toSeq: revisionReviewerActivation.toSeq,
+    },
+  );
+  const revisionReviewerDelivery = kernel.syncWorker(
+    revisionReviewerExecution,
+    {},
+  );
+  kernel.acknowledgeWorkerCursor(revisionReviewerExecution, {
+    throughSeq: revisionReviewerDelivery.cursorAfter,
+  });
+  const review = kernel.taskReviews.reviewTask(revisionReviewerExecution, {
+    basedOnRoomSeq: revisionReviewerActivation.toSeq,
+    disposition: "approved",
+    idempotencyKey: "task-roles-review-approved",
+    summary: "Review passed: the revised evidence matches the requested scope.",
+    taskId: created.task.taskId,
+  });
+  assert.equal(review.review.disposition, "approved");
+  assert.equal(review.review.reviewerId, reviewer.principalId);
+  assert.equal(review.review.submissionDigest.startsWith("sha256:"), true);
+  assert.equal(review.review.submissionId, review.submission.submissionId);
+  assert.equal(
+    review.submission.messageId,
+    resubmitted.event.payload.messageId,
+  );
+  assert.notEqual(
+    review.submission.submissionDigest,
+    changesRequested.submission.submissionDigest,
+  );
+  assert.deepEqual(
+    kernel.taskReviews
+      .listTaskReviews(humanActor, {
+        roomId: room.roomId,
+        taskId: created.task.taskId,
+      })
+      .map(({ disposition, submissionId }) => ({
+        disposition,
+        submissionId,
+      })),
+    [
+      {
+        disposition: "changes_requested",
+        submissionId: changesRequested.submission.submissionId,
+      },
+      {
+        disposition: "approved",
+        submissionId: review.submission.submissionId,
+      },
+    ],
+  );
+  const completed = kernel.completeTask(humanActor, {
+    basedOnRoomSeq: review.event.roomSeq,
+    idempotencyKey: "task-roles-complete-after-review",
+    taskId: created.task.taskId,
+  });
+  assert.equal(completed.task.state, "completed");
+  assert.deepEqual(
+    kernel
+      .listMessages(humanActor, {
+        roomId: room.roomId,
+        threadId: created.task.threadId,
+      })
+      .messages.map(({ actorId, body, threadId }) => ({
+        actorId,
+        body,
+        threadId,
+      })),
+    [
+      {
+        actorId: agent.principalId,
+        body: "Owner implementation is ready for independent review",
+        threadId: created.task.threadId,
+      },
+      {
+        actorId: reviewer.principalId,
+        body: "Changes requested: add the missing independent gate evidence.",
+        threadId: created.task.threadId,
+      },
+      {
+        actorId: agent.principalId,
+        body: "Revision includes the independent gate evidence.",
+        threadId: created.task.threadId,
+      },
+      {
+        actorId: reviewer.principalId,
+        body: "Review passed: the revised evidence matches the requested scope.",
+        threadId: created.task.threadId,
+      },
+    ],
+  );
+
+  kernel.close();
+});
+
+test("schema v16 backfills frozen evidence for legacy submitted Tasks", () => {
+  const { agent, databasePath, humanAccessToken, humanActor, kernel, room } =
+    createFixture();
+  const created = kernel.createTask(humanActor, {
+    assigneeId: agent.principalId,
+    idempotencyKey: "legacy-review-task-create",
+    roomId: room.roomId,
+    title: "Preserve an existing submitted Task",
+  });
+  const host = authenticateHost(kernel, "legacy-review-owner-host", [
+    agent.principalId,
+  ]);
+  const activation = kernel.leaseNextActivation(host, { leaseMs: 30_000 });
+  assert.ok(activation);
+  const run = kernel.createRunAttempt(host, {
+    activationId: activation.activationId,
+  });
+  prepareAndMarkRunAttemptRunning(kernel, host, {
+    recoveryDescriptor: fakeRecovery("legacy-review-owner-runtime"),
+    runAttemptId: run.runAttemptId,
+    runtimeRunId: "legacy-review-owner-runtime",
+  });
+  const execution = kernel.authorizeWorkerExecution(host, {
+    activationId: activation.activationId,
+    consumerId: "legacy-review-owner-consumer",
+    hostId: host.hostId,
+    participantId: agent.principalId,
+    roomId: room.roomId,
+    runAttemptId: run.runAttemptId,
+    toSeq: activation.toSeq,
+  });
+  const delivery = kernel.syncWorker(execution, {});
+  kernel.acknowledgeWorkerCursor(execution, {
+    throughSeq: delivery.cursorAfter,
+  });
+  const claimed = kernel.claimTask(execution, {
+    basedOnRoomSeq: created.event.roomSeq,
+    idempotencyKey: "legacy-review-task-claim",
+    leaseMs: 30_000,
+    taskId: created.task.taskId,
+  });
+  const started = kernel.startTask(execution, {
+    basedOnRoomSeq: claimed.event.roomSeq,
+    idempotencyKey: "legacy-review-task-start",
+    leaseMs: 30_000,
+    taskId: created.task.taskId,
+  });
+  const submitted = kernel.submitTask(execution, {
+    basedOnRoomSeq: started.event.roomSeq,
+    idempotencyKey: "legacy-review-task-submit",
+    summary: "Legacy evidence remains reviewable after migration",
+    taskId: created.task.taskId,
+  });
+  assert.equal(submitted.task.state, "submitted");
+  kernel.close();
+
+  const database = new DatabaseSync(databasePath);
+  database.exec("PRAGMA foreign_keys = ON; DELETE FROM task_submissions;");
+  database.exec("PRAGMA user_version = 15");
+  database.close();
+
+  const reopened = new RoomKernel({ databasePath });
+  reopened.initialize();
+  const reopenedHuman = reopened.authenticateAccessToken(humanAccessToken);
+  const submissions = reopened.taskReviews.listTaskSubmissions(reopenedHuman, {
+    roomId: room.roomId,
+    taskId: created.task.taskId,
+  });
+  assert.equal(submissions.length, 1);
+  assert.equal(submissions[0]?.messageId, submitted.event.payload.messageId);
+  assert.equal(submissions[0]?.summary, submitted.event.payload.summary);
+  assert.equal(submissions[0]?.submissionDigest.startsWith("sha256:"), true);
+  reopened.close();
+});
+
+test("one Agent can atomically promote a causal Human message into a claimed Task", () => {
+  const { agent, humanActor, kernel, otherAgent, room } = createFixture();
+  const casual = kernel.postRoomMessage(humanActor, {
+    body: "What time is it?",
+    idempotencyKey: "ordinary-tool-question",
+    recipients: [],
+    roomId: room.roomId,
+  });
+  assert.deepEqual(kernel.listTasks(humanActor, { roomId: room.roomId }), []);
+  const durableWork = kernel.postRoomMessage(humanActor, {
+    body: "Implement the migration, run the full gate, and report review evidence",
+    idempotencyKey: "durable-work-message",
+    recipients: [],
+    roomId: room.roomId,
+  });
+
+  const ownerHost = authenticateHost(kernel, "message-claim-owner-host", [
+    agent.principalId,
+  ]);
+  const ownerActivation = kernel.leaseNextActivation(ownerHost, {
+    leaseMs: 30_000,
+  });
+  assert.ok(ownerActivation);
+  assert.equal(ownerActivation.fromSeq, casual.event.roomSeq);
+  assert.equal(ownerActivation.toSeq, durableWork.event.roomSeq);
+  const ownerRun = kernel.createRunAttempt(ownerHost, {
+    activationId: ownerActivation.activationId,
+  });
+  prepareAndMarkRunAttemptRunning(kernel, ownerHost, {
+    recoveryDescriptor: fakeRecovery("message-claim-owner-runtime"),
+    runAttemptId: ownerRun.runAttemptId,
+    runtimeRunId: "message-claim-owner-runtime",
+  });
+  const ownerExecution = kernel.authorizeWorkerExecution(ownerHost, {
+    activationId: ownerActivation.activationId,
+    consumerId: "message-claim-owner-consumer",
+    hostId: ownerHost.hostId,
+    participantId: agent.principalId,
+    roomId: room.roomId,
+    runAttemptId: ownerRun.runAttemptId,
+    toSeq: ownerActivation.toSeq,
+  });
+  const ownerDelivery = kernel.syncWorker(ownerExecution, {});
+  kernel.acknowledgeWorkerCursor(ownerExecution, {
+    throughSeq: ownerDelivery.cursorAfter,
+  });
+  const promoted = kernel.claimMessageAsTask(ownerExecution, {
+    basedOnRoomSeq: durableWork.event.roomSeq,
+    idempotencyKey: "message-claim-owner",
+    leaseMs: 30_000,
+    messageId: durableWork.event.aggregateId,
+    rationale: "Persistent edits, multiple gates, progress, and review",
+  });
+  assert.equal(promoted.event.type, "task.created");
+  assert.equal(promoted.task.state, "claimed");
+  assert.equal(promoted.task.assigneeId, agent.principalId);
+  assert.equal(promoted.task.claimedBy, agent.principalId);
+  assert.equal(promoted.task.sourceMessageId, durableWork.event.aggregateId);
+  assert.equal(promoted.event.payload.autoClaimed, true);
+  assert.equal(
+    promoted.event.payload.classificationRationale,
+    "Persistent edits, multiple gates, progress, and review",
+  );
+
+  const competitorHost = authenticateHost(
+    kernel,
+    "message-claim-competitor-host",
+    [otherAgent.principalId],
+  );
+  const competitorActivation = kernel.leaseNextActivation(competitorHost, {
+    leaseMs: 30_000,
+  });
+  assert.ok(competitorActivation);
+  const competitorRun = kernel.createRunAttempt(competitorHost, {
+    activationId: competitorActivation.activationId,
+  });
+  prepareAndMarkRunAttemptRunning(kernel, competitorHost, {
+    recoveryDescriptor: fakeRecovery("message-claim-competitor-runtime"),
+    runAttemptId: competitorRun.runAttemptId,
+    runtimeRunId: "message-claim-competitor-runtime",
+  });
+  const competitorExecution = kernel.authorizeWorkerExecution(competitorHost, {
+    activationId: competitorActivation.activationId,
+    consumerId: "message-claim-competitor-consumer",
+    hostId: competitorHost.hostId,
+    participantId: otherAgent.principalId,
+    roomId: room.roomId,
+    runAttemptId: competitorRun.runAttemptId,
+    toSeq: competitorActivation.toSeq,
+  });
+  const competitorDelivery = kernel.syncWorker(competitorExecution, {});
+  kernel.acknowledgeWorkerCursor(competitorExecution, {
+    throughSeq: competitorDelivery.cursorAfter,
+  });
+  assert.throws(
+    () =>
+      kernel.claimMessageAsTask(competitorExecution, {
+        basedOnRoomSeq: durableWork.event.roomSeq,
+        idempotencyKey: "message-claim-competitor",
+        leaseMs: 30_000,
+        messageId: durableWork.event.aggregateId,
+        rationale: "The same work looked substantial to another Agent",
+      }),
+    ConflictError,
+  );
+
+  const started = kernel.startTask(ownerExecution, {
+    basedOnRoomSeq: promoted.event.roomSeq,
+    idempotencyKey: "message-claim-start",
+    leaseMs: 30_000,
+    taskId: promoted.task.taskId,
+  });
+  const submitted = kernel.submitTask(ownerExecution, {
+    basedOnRoomSeq: started.event.roomSeq,
+    idempotencyKey: "message-claim-submit",
+    summary: "Migration and gates completed with review evidence",
+    taskId: promoted.task.taskId,
+  });
+  assert.equal(submitted.task.state, "submitted");
+
+  kernel.close();
+});
+
+test("Tasks are sequential top-level Messages with one canonical Thread", () => {
+  const { humanActor, kernel, room } = createFixture();
+
+  const first = kernel.createTask(humanActor, {
+    idempotencyKey: "task-anchor-first",
+    roomId: room.roomId,
+    title: "First anchored Task",
+  });
+  const second = kernel.createTask(humanActor, {
+    idempotencyKey: "task-anchor-second",
+    roomId: room.roomId,
+    title: "Second anchored Task",
+  });
+
+  assert.equal(first.task.taskNumber, 1);
+  assert.equal(second.task.taskNumber, 2);
+  assert.deepEqual(
+    kernel
+      .listMessages(humanActor, { roomId: room.roomId })
+      .messages.map(({ body, messageId, threadId }) => ({
+        body,
+        messageId,
+        threadId,
+      })),
+    [
+      {
+        body: "First anchored Task",
+        messageId: first.task.sourceMessageId,
+        threadId: undefined,
+      },
+      {
+        body: "Second anchored Task",
+        messageId: second.task.sourceMessageId,
+        threadId: undefined,
+      },
+    ],
+  );
+  const threadsByRootMessage = new Map(
+    kernel
+      .listThreads(humanActor, { roomId: room.roomId })
+      .map(({ rootMessageId, threadId }) => [rootMessageId, threadId]),
+  );
+  assert.equal(threadsByRootMessage.size, 2);
+  assert.equal(
+    threadsByRootMessage.get(first.task.sourceMessageId),
+    first.task.threadId,
+  );
+  assert.equal(
+    threadsByRootMessage.get(second.task.sourceMessageId),
+    second.task.threadId,
+  );
+
+  kernel.close();
+});
+
+test("an existing top-level Message converts to one Task and reuses its Thread", () => {
+  const { humanActor, kernel, room } = createFixture();
+  const posted = kernel.postRoomMessage(humanActor, {
+    body: "Turn this conversation into tracked work",
+    idempotencyKey: "convert-source-message",
+    recipients: [],
+    roomId: room.roomId,
+  });
+  const existingThread = kernel.createThread(humanActor, {
+    basedOnRoomSeq: posted.event.roomSeq,
+    idempotencyKey: "convert-source-thread",
+    recipientIds: [],
+    roomId: room.roomId,
+    rootMessageId: posted.event.aggregateId,
+  });
+  const reply = kernel.replyThread(humanActor, {
+    basedOnRoomSeq: existingThread.event.roomSeq,
+    body: "Discussion context cannot become the Task anchor",
+    idempotencyKey: "convert-source-reply",
+    recipientIds: [],
+    roomId: room.roomId,
+    threadId: existingThread.thread.threadId,
+  });
+
+  const converted = kernel.createTask(humanActor, {
+    basedOnRoomSeq: reply.event.roomSeq,
+    dependencyTaskIds: [],
+    idempotencyKey: "convert-top-level-message",
+    roomId: room.roomId,
+    sourceMessageId: posted.event.aggregateId,
+  });
+
+  assert.equal(converted.event.type, "task.created");
+  assert.equal(
+    converted.task.title,
+    "Turn this conversation into tracked work",
+  );
+  assert.equal(converted.task.sourceMessageId, posted.event.aggregateId);
+  assert.equal(converted.task.threadId, existingThread.thread.threadId);
+  assert.equal(converted.task.taskNumber, 1);
+  assert.equal(
+    kernel
+      .listMessages(humanActor, { roomId: room.roomId })
+      .messages.filter(
+        ({ messageId }) => messageId === posted.event.aggregateId,
+      ).length,
+    1,
+    "conversion must not duplicate or move the original channel Message",
+  );
+  assert.equal(
+    kernel.listThreads(humanActor, { roomId: room.roomId }).length,
+    1,
+    "conversion must reuse an existing Message Thread",
+  );
+
+  const replayed = kernel.createTask(humanActor, {
+    basedOnRoomSeq: reply.event.roomSeq,
+    dependencyTaskIds: [],
+    idempotencyKey: "convert-top-level-message",
+    roomId: room.roomId,
+    sourceMessageId: posted.event.aggregateId,
+  });
+  assert.equal(replayed.deduplicated, true);
+  assert.equal(replayed.task.taskId, converted.task.taskId);
+
+  assert.throws(
+    () =>
+      kernel.createTask(humanActor, {
+        basedOnRoomSeq: converted.event.roomSeq,
+        idempotencyKey: "convert-top-level-message-twice",
+        roomId: room.roomId,
+        sourceMessageId: posted.event.aggregateId,
+      }),
+    ConflictError,
+  );
+  assert.throws(
+    () =>
+      kernel.createTask(humanActor, {
+        basedOnRoomSeq: converted.event.roomSeq,
+        idempotencyKey: "convert-thread-reply",
+        roomId: room.roomId,
+        sourceMessageId: reply.event.aggregateId,
+      }),
+    ConflictError,
+  );
 
   kernel.close();
 });
@@ -2080,6 +2895,159 @@ test("Task creator explicitly assigns, unblocks, and cancels coordination state"
       basedOnRoomSeq: open.event.roomSeq,
       idempotencyKey: "assign-open-task",
       taskId: open.task.taskId,
+    }).deduplicated,
+    true,
+  );
+
+  const preassigned = kernel.createTask(humanActor, {
+    assigneeId: agent.principalId,
+    basedOnRoomSeq: assigned.event.roomSeq,
+    idempotencyKey: "unassign-task-created",
+    roomId: room.roomId,
+    title: "Release this assignment before work starts",
+  });
+  const unassigned = kernel.unassignTask(humanActor, {
+    basedOnRoomSeq: preassigned.event.roomSeq,
+    idempotencyKey: "unassign-task",
+    taskId: preassigned.task.taskId,
+  });
+  assert.equal(unassigned.event.type, "task.unassigned");
+  assert.equal(unassigned.task.state, "todo");
+  assert.equal(unassigned.task.assigneeId, undefined);
+  assert.equal(unassigned.activationIds.length, 2);
+  assert.equal(
+    kernel.unassignTask(humanActor, {
+      basedOnRoomSeq: preassigned.event.roomSeq,
+      idempotencyKey: "unassign-task",
+      taskId: preassigned.task.taskId,
+    }).deduplicated,
+    true,
+  );
+
+  kernel.close();
+});
+
+test("Human cancellation fences active Task execution before reversible Closed recovery", () => {
+  const { agent, humanActor, kernel, room } = createFixture();
+  const host = authenticateHost(kernel, "cancel-fence-host", [
+    agent.principalId,
+  ]);
+  const created = kernel.createTask(humanActor, {
+    assigneeId: agent.principalId,
+    idempotencyKey: "cancel-fence-created",
+    roomId: room.roomId,
+    title: "Stop the old CLI before reopening",
+  });
+  const activation = kernel.leaseNextActivation(host, { leaseMs: 30_000 });
+  assert.ok(activation);
+  const run = kernel.createRunAttempt(host, {
+    activationId: activation.activationId,
+  });
+  prepareAndMarkRunAttemptRunning(kernel, host, {
+    recoveryDescriptor: fakeRecovery("cancel-fence-runtime"),
+    runAttemptId: run.runAttemptId,
+    runtimeRunId: "cancel-fence-runtime",
+  });
+  const execution = kernel.authorizeWorkerExecution(host, {
+    activationId: activation.activationId,
+    consumerId: "cancel-fence-consumer",
+    hostId: host.hostId,
+    participantId: agent.principalId,
+    roomId: room.roomId,
+    runAttemptId: run.runAttemptId,
+    toSeq: activation.toSeq,
+  });
+  const delivery = kernel.syncWorker(execution, {});
+  kernel.acknowledgeWorkerCursor(execution, {
+    throughSeq: delivery.cursorAfter,
+  });
+  const claimed = kernel.claimTask(execution, {
+    basedOnRoomSeq: created.event.roomSeq,
+    idempotencyKey: "cancel-fence-claim",
+    leaseMs: 30_000,
+    taskId: created.task.taskId,
+  });
+  const started = kernel.startTask(execution, {
+    basedOnRoomSeq: claimed.event.roomSeq,
+    idempotencyKey: "cancel-fence-start",
+    leaseMs: 30_000,
+    taskId: created.task.taskId,
+  });
+
+  const cancelled = kernel.cancelTask(humanActor, {
+    basedOnRoomSeq: started.event.roomSeq,
+    idempotencyKey: "cancel-fence-cancel",
+    reason: "Human stopped the work before assigning it elsewhere",
+    taskId: created.task.taskId,
+  });
+  assert.equal(cancelled.task.state, "cancelled");
+  assert.throws(
+    () =>
+      kernel.progressTask(execution, {
+        basedOnRoomSeq: started.event.roomSeq,
+        idempotencyKey: "cancel-fence-late-progress",
+        leaseMs: 30_000,
+        progress: "This old process must not keep writing",
+        taskId: created.task.taskId,
+      }),
+    ExecutionFencedError,
+  );
+  assert.throws(
+    () =>
+      kernel.renewActivationLease(host, {
+        activationId: activation.activationId,
+        leaseMs: 30_000,
+      }),
+    ActivationCancellationRequestedError,
+  );
+  assert.throws(
+    () =>
+      kernel.reopenTask(humanActor, {
+        basedOnRoomSeq: cancelled.event.roomSeq,
+        idempotencyKey: "cancel-fence-too-early-reopen",
+        taskId: created.task.taskId,
+      }),
+    ConflictError,
+  );
+
+  kernel.recordRuntimeTermination(host, {
+    exit: { code: null, signal: "SIGTERM" },
+    runAttemptId: run.runAttemptId,
+    runtimeRunId: "cancel-fence-runtime",
+  });
+  kernel.finishRunAttempt(host, {
+    error: "Task cancellation requested by its Human creator",
+    exitSignal: "SIGTERM",
+    runAttemptId: run.runAttemptId,
+    state: "cancelled",
+  });
+  const requeued = kernel.resolveActivationCancellation(host, {
+    activationId: activation.activationId,
+  });
+  assert.equal(requeued.state, "queued");
+  assert.equal(requeued.fromSeq, activation.fromSeq);
+  assert.ok(requeued.toSeq >= cancelled.event.roomSeq);
+
+  const latestRoomSeq = kernel.sync(humanActor, {
+    consumerId: "cancel-fence-human-sync",
+    roomId: room.roomId,
+  }).cursorAfter;
+  const reopened = kernel.reopenTask(humanActor, {
+    basedOnRoomSeq: latestRoomSeq,
+    idempotencyKey: "cancel-fence-reopen",
+    taskId: created.task.taskId,
+  });
+  assert.equal(reopened.event.type, "task.reopened");
+  assert.equal(reopened.task.state, "todo");
+  assert.equal(reopened.task.assigneeId, agent.principalId);
+  assert.equal(reopened.task.cancellationReason, undefined);
+  assert.equal(reopened.task.cancelledAt, undefined);
+  assert.equal(reopened.activationIds.length, 1);
+  assert.equal(
+    kernel.reopenTask(humanActor, {
+      basedOnRoomSeq: latestRoomSeq,
+      idempotencyKey: "cancel-fence-reopen",
+      taskId: created.task.taskId,
     }).deduplicated,
     true,
   );

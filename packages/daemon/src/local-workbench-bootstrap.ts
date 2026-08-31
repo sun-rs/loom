@@ -10,15 +10,21 @@ import {
   writeFileSync,
 } from "node:fs";
 import { dirname, join, resolve } from "node:path";
+import { hostname } from "node:os";
 
 import {
   RuntimeImplementationRegistry,
   RuntimeProfileRegistry,
 } from "@rah-os/agent-host";
 import { RoomKernel } from "@rah-os/kernel";
+import type {
+  ManagedMcpRuntimeAdapter,
+  ToolAccessMode,
+} from "@rah-os/protocol";
 import { z } from "zod";
 
 import { DaemonConfigSchema, type DaemonConfigV4 } from "./config.ts";
+import { reconcileLocalWorkbenchRuntimeBindings } from "./local-workbench-runtime-bindings.ts";
 
 const LocalWorkbenchMetadataSchema = z
   .object({
@@ -37,6 +43,12 @@ export type LocalWorkbenchMetadata = z.infer<
 >;
 
 export type LocalWorkbenchRuntimeSpec = {
+  adapterKind:
+    | "claude-stream-json/v1"
+    | "codex-app-server/v1"
+    | "generic-process/v1"
+    | "kimi-acp/v1"
+    | "opencode-server/v1";
   agentHandle: string;
   args: string[];
   avatarKey: string;
@@ -45,12 +57,14 @@ export type LocalWorkbenchRuntimeSpec = {
   displayName: string;
   executable: string;
   instructions: string;
+  managedMcpAdapter?: ManagedMcpRuntimeAdapter;
   modelCatalogProbe?: {
-    kind: "codex-cli/v1" | "kimi-cli/v1" | "opencode-cli/v1";
+    kind: "claude-cli/v1" | "codex-cli/v1" | "kimi-cli/v1" | "opencode-cli/v1";
   };
   reasoning: "default" | "low" | "medium" | "high";
   role: string;
   runtimeProfileId: string;
+  toolAccessMode: ToolAccessMode;
   workspaceCwd: string;
 };
 
@@ -74,7 +88,8 @@ export async function prepareLocalWorkbench(input: {
   validateRuntimeSpecs(input.runtimeSpecs, workspaceCwd);
   assertWorkspaceDirectory(workspaceCwd);
 
-  if (!existsSync(stateDirectory)) {
+  const initializedNow = !existsSync(stateDirectory);
+  if (initializedNow) {
     await initializeState({
       runtimeSpecs: input.runtimeSpecs,
       stateDirectory,
@@ -100,11 +115,23 @@ export async function prepareLocalWorkbench(input: {
     stateDirectory,
   });
   const registryDatabasePath = join(stateDirectory, "runtime-registry.db");
-  await prepareRuntimeRegistry({
-    hostId: metadata.hostId,
+  // initializeState already imported, probed, and activated every runtime in
+  // its atomic staging directory. Probe once again only on a later service
+  // start, where executable identity/catalog refresh is intentional.
+  if (!initializedNow) {
+    await prepareRuntimeRegistry({
+      hostId: metadata.hostId,
+      registryDatabasePath,
+      runtimeSpecs: input.runtimeSpecs,
+      workspaceCwd,
+    });
+  }
+  const runtimeOfferIds = reconcileLocalWorkbenchRuntimeBindings({
+    humanAccessToken,
+    metadata,
     registryDatabasePath,
     runtimeSpecs: input.runtimeSpecs,
-    workspaceCwd,
+    stateDirectory,
   });
   return {
     config: buildConfig({
@@ -112,6 +139,7 @@ export async function prepareLocalWorkbench(input: {
       metadata,
       registryDatabasePath,
       runtimeSpecs: input.runtimeSpecs,
+      runtimeOfferIds,
       stateDirectory,
       workspaceCwd,
     }),
@@ -149,7 +177,7 @@ async function initializeState(input: {
     const actor = kernel.authenticateHumanAccessToken(human.accessToken);
     const workspace = kernel.createWorkspace(actor, {
       idempotencyKey: "local-workbench-workspace-v1",
-      name: "RAH Local Workstation",
+      name: hostname(),
       slug: "rah-local-workstation",
     });
     const defaultRoom = kernel.createWorkspaceRoom(actor, {
@@ -197,6 +225,7 @@ async function initializeState(input: {
           "retry-v1",
         ),
         sessionPolicy: "fresh",
+        toolAccessMode: spec.toolAccessMode,
       }).policy;
       kernel.createAgentDefinition(actor, {
         avatarKey: spec.avatarKey,
@@ -287,11 +316,14 @@ async function prepareRuntimeRegistry(input: {
           },
           executable: spec.executable,
           fixedArgs: spec.args,
-          kind: "generic-process/v1",
+          kind: spec.adapterKind,
         },
         credentialSlots: [],
         declaredCapabilities: ["worker_commands"],
         displayName: spec.displayName,
+        ...(spec.managedMcpAdapter === undefined
+          ? {}
+          : { managedMcpAdapter: spec.managedMcpAdapter }),
         protocolFamily: "rah-worker-process/v1",
         recoveryDrivers:
           process.platform === "win32" ? [] : ["rah-process-supervisor-v1"],
@@ -333,6 +365,7 @@ function buildConfig(input: {
   metadata: LocalWorkbenchMetadata;
   registryDatabasePath: string;
   runtimeSpecs: readonly LocalWorkbenchRuntimeSpec[];
+  runtimeOfferIds: ReadonlyMap<string, string>;
   stateDirectory: string;
   workspaceCwd: string;
 }): DaemonConfigV4 {
@@ -364,12 +397,13 @@ function buildConfig(input: {
         leaseMs: 120_000,
         maxConcurrent: 1,
         refreshIntervalMs: 30_000,
-        runtimeOfferId: runtimeOfferId(spec.cliId),
+        runtimeOfferId: input.runtimeOfferIds.get(spec.cliId),
       },
       registryDatabasePath: input.registryDatabasePath,
       runtimeProfileId: spec.runtimeProfileId,
     })),
     schemaVersion: 4,
+    startupProbeMode: "reuse-latest",
     stateDirectory: input.stateDirectory,
     taskClaimHeartbeatIntervalMs: 5 * 60_000,
     taskClaimLeaseMs: 15 * 60_000,

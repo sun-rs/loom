@@ -1,8 +1,9 @@
 import {
+  ActivationCancellationRequestedError,
   AgentExecutionPausedError,
+  AuthenticatedHostContext,
   UnauthenticatedError,
   type Activation,
-  type AuthenticatedHostContext,
   type RoomKernel,
   type RunAttempt,
 } from "@rah-os/kernel";
@@ -17,6 +18,12 @@ import type {
   RunHandle,
   RuntimeAdapter,
 } from "./runtime.ts";
+import {
+  createKernelAgentHostControlPort,
+  type AgentHostControlPort,
+} from "./agent-host-control.ts";
+
+const MAX_ACTIVATION_RETRY_DELAY_MS = 5 * 60_000;
 
 export type HostCycleResult =
   | { state: "idle" }
@@ -31,6 +38,11 @@ export type HostCycleResult =
       activationId: string;
       error: string;
       state: "failed";
+    }
+  | {
+      activationId: string;
+      reason: string;
+      state: "cancelled";
     };
 
 export type OrphanRecoveryCycleResult =
@@ -55,10 +67,18 @@ export type HostCycleObservation =
       result: Exclude<OrphanRecoveryCycleResult, { state: "idle" }>;
     };
 
+export type AgentHostIdentity = Readonly<{
+  credentialId?: string;
+  hostId: string;
+  instanceId: string;
+  participantIds: readonly string[];
+}>;
+
 export type AgentHostOptions = {
+  control?: AgentHostControlPort;
   drainTimeoutMs?: number;
-  host: AuthenticatedHostContext;
-  kernel: RoomKernel;
+  host: AgentHostIdentity;
+  kernel?: RoomKernel;
   leaseMs: number;
   leaseRenewIntervalMs?: number;
   manageHostLifecycle?: boolean;
@@ -82,10 +102,10 @@ export type AgentHostOptions = {
 
 export class AgentHost {
   readonly #drainTimeoutMs: number;
-  readonly #host: AuthenticatedHostContext;
+  readonly #host: AgentHostIdentity;
   readonly #hostId: string;
   readonly #consumerId: string;
-  readonly #kernel: RoomKernel;
+  readonly #control: AgentHostControlPort;
   readonly #leaseMs: number;
   readonly #leaseRenewIntervalMs: number;
   readonly #manageHostLifecycle: boolean;
@@ -166,7 +186,22 @@ export class AgentHost {
     this.#host = options.host;
     this.#hostId = options.host.hostId;
     this.#consumerId = `${options.host.hostId}:runtime`;
-    this.#kernel = options.kernel;
+    if ((options.kernel === undefined) === (options.control === undefined)) {
+      throw new Error("AgentHost requires exactly one Kernel or control port");
+    }
+    if (options.kernel !== undefined) {
+      if (!(options.host instanceof AuthenticatedHostContext)) {
+        throw new Error(
+          "Kernel-backed AgentHost requires an authenticated Host context",
+        );
+      }
+      this.#control = createKernelAgentHostControlPort(
+        options.kernel,
+        options.host,
+      );
+    } else {
+      this.#control = options.control!;
+    }
     this.#leaseMs = options.leaseMs;
     this.#leaseRenewIntervalMs = leaseRenewIntervalMs;
     this.#manageHostLifecycle = options.manageHostLifecycle ?? true;
@@ -194,8 +229,8 @@ export class AgentHost {
     if (this.#runtimeRecoveryDrivers.length === 0) {
       return { state: "idle" };
     }
-    this.#heartbeat();
-    const runtimeProcess = this.#kernel.leaseNextRuntimeRecovery(this.#host, {
+    await this.#heartbeat();
+    const runtimeProcess = await this.#control.leaseNextRuntimeRecovery({
       driverIds: [...this.#runtimeRecoveryDrivers],
       leaseMs: this.#leaseMs,
     });
@@ -248,7 +283,7 @@ export class AgentHost {
       await recoveryMaintenance;
       const failure = `runtime orphan recovery failed: ${errorMessage(error)}`;
       try {
-        this.#kernel.retryRuntimeRecovery(this.#host, {
+        await this.#control.retryRuntimeRecovery({
           error: failure,
           recoveryAttemptCount: runtimeProcess.recoveryAttemptCount,
           retryAfterMs: this.#retryAfterMs,
@@ -271,12 +306,12 @@ export class AgentHost {
     await recoveryMaintenance;
 
     try {
-      this.#kernel.recordRecoveredRuntimeTermination(this.#host, {
+      await this.#control.recordRecoveredRuntimeTermination({
         exit,
         recoveryAttemptCount: runtimeProcess.recoveryAttemptCount,
         runtimeProcessId: runtimeProcess.runtimeProcessId,
       });
-      this.#kernel.resolveActivationQuarantine(this.#host, {
+      await this.#control.resolveActivationQuarantine({
         activationId: runtimeProcess.activationId,
       });
       return {
@@ -296,20 +331,20 @@ export class AgentHost {
   }
 
   async reconcileOnce(): Promise<HostCycleResult> {
-    this.#heartbeat();
+    await this.#heartbeat();
     let activation: Activation;
     let runAttempt: RunAttempt | undefined;
     let agentContext: ActivationEnvelope["agent"];
     let runtime = this.#runtime;
     if (this.#placementRuntimeResolver === undefined) {
-      const leased = this.#kernel.leaseNextActivation(this.#host, {
+      const leased = await this.#control.leaseNextActivation({
         leaseMs: this.#leaseMs,
       });
       if (leased === null) return { state: "idle" };
       activation = leased;
     } else {
-      this.#kernel.scheduleNextPlacement({ leaseMs: this.#leaseMs });
-      const claim = this.#kernel.claimNextPlacement(this.#host, {
+      await this.#control.scheduleNextPlacement({ leaseMs: this.#leaseMs });
+      const claim = await this.#control.claimNextPlacement({
         leaseMs: this.#leaseMs,
       });
       if (claim === null) return { state: "idle" };
@@ -320,7 +355,7 @@ export class AgentHost {
         runtime = this.#placementRuntimeResolver(claim.placement);
       } catch (error) {
         return this.#failClaimedActivation(
-          activation.activationId,
+          activation,
           runAttempt.runAttemptId,
           `runtime placement resolution failed: ${errorMessage(error)}`,
         );
@@ -328,18 +363,35 @@ export class AgentHost {
     }
 
     try {
-      this.#kernel.renewActivationLease(this.#host, {
+      await this.#control.renewActivationLease({
         activationId: activation.activationId,
         leaseMs: this.#leaseMs,
       });
     } catch (error) {
+      if (error instanceof ActivationCancellationRequestedError) {
+        if (runAttempt !== undefined) {
+          await this.#control.finishRunAttempt({
+            error: error.message,
+            runAttemptId: runAttempt.runAttemptId,
+            state: "cancelled",
+          });
+        }
+        await this.#control.resolveActivationCancellation({
+          activationId: activation.activationId,
+        });
+        return {
+          activationId: activation.activationId,
+          reason: error.message,
+          state: "cancelled",
+        };
+      }
       const agentPaused = error instanceof AgentExecutionPausedError;
       const stopReason = agentPaused
         ? error.message
         : `pre-launch lease validation failed: ${errorMessage(error)}`;
       if (runAttempt !== undefined) {
         try {
-          this.#kernel.finishRunAttempt(this.#host, {
+          await this.#control.finishRunAttempt({
             error: stopReason,
             runAttemptId: runAttempt.runAttemptId,
             state: agentPaused ? "cancelled" : "failed",
@@ -352,7 +404,7 @@ export class AgentHost {
           };
         }
       }
-      return this.#retryFailedActivation(activation.activationId, stopReason);
+      return this.#retryFailedActivation(activation, stopReason);
     }
 
     try {
@@ -360,9 +412,9 @@ export class AgentHost {
       if (!availability.available) {
         const failure = availability.detail ?? "runtime is unavailable";
         return runAttempt === undefined
-          ? this.#retryFailedActivation(activation.activationId, failure)
+          ? this.#retryFailedActivation(activation, failure)
           : this.#failClaimedActivation(
-              activation.activationId,
+              activation,
               runAttempt.runAttemptId,
               failure,
             );
@@ -370,21 +422,57 @@ export class AgentHost {
     } catch (error) {
       const failure = errorMessage(error);
       return runAttempt === undefined
-        ? this.#retryFailedActivation(activation.activationId, failure)
+        ? this.#retryFailedActivation(activation, failure)
         : this.#failClaimedActivation(
-            activation.activationId,
+            activation,
             runAttempt.runAttemptId,
             failure,
           );
     }
 
-    runAttempt ??= this.#kernel.createRunAttempt(this.#host, {
+    try {
+      await this.#control.renewActivationLease({
+        activationId: activation.activationId,
+        leaseMs: this.#leaseMs,
+      });
+    } catch (error) {
+      if (error instanceof ActivationCancellationRequestedError) {
+        if (runAttempt !== undefined) {
+          await this.#control.finishRunAttempt({
+            error: error.message,
+            runAttemptId: runAttempt.runAttemptId,
+            state: "cancelled",
+          });
+        }
+        await this.#control.resolveActivationCancellation({
+          activationId: activation.activationId,
+        });
+        return {
+          activationId: activation.activationId,
+          reason: error.message,
+          state: "cancelled",
+        };
+      }
+      const failure = `pre-start lease validation failed: ${errorMessage(error)}`;
+      return runAttempt === undefined
+        ? this.#retryFailedActivation(activation, failure)
+        : this.#failClaimedActivation(
+            activation,
+            runAttempt.runAttemptId,
+            failure,
+          );
+    }
+
+    runAttempt ??= await this.#control.createRunAttempt({
       activationId: activation.activationId,
     });
     const envelope: ActivationEnvelope = {
       activationId: activation.activationId,
       ...(agentContext === undefined ? {} : { agent: agentContext }),
       consumerId: this.#consumerId,
+      ...(runAttempt.contextManifest === undefined
+        ? {}
+        : { contextManifest: runAttempt.contextManifest }),
       fromSeq: activation.fromSeq,
       hostId: this.#hostId,
       participantId: activation.participantId,
@@ -399,13 +487,16 @@ export class AgentHost {
     try {
       run = await withDeadline(
         runtime.start(envelope, {
+          recordTrajectory: async (activity) => {
+            await this.#control.appendRunTrajectory(activity);
+          },
           registerPrepared: async (candidate) => {
             if (preparedRun !== undefined) {
               throw new Error(
                 "runtime registered more than one prepared handle",
               );
             }
-            this.#kernel.prepareRunAttemptRuntime(this.#host, {
+            await this.#control.prepareRunAttemptRuntime({
               recoveryDescriptor: candidate.recoveryDescriptor ?? {
                 driver: "unrecoverable-runtime",
                 metadata: {},
@@ -430,7 +521,7 @@ export class AgentHost {
           "runtime launch did not match its durably prepared handle",
         );
       }
-      this.#kernel.markRunAttemptRunning(this.#host, {
+      await this.#control.markRunAttemptRunning({
         recoveryDescriptor: run.recoveryDescriptor ?? {
           driver: "unrecoverable-runtime",
           metadata: {},
@@ -451,7 +542,7 @@ export class AgentHost {
             quarantineFailure,
           );
         }
-        const proofFailure = this.#recordTerminationOrQuarantine({
+        const proofFailure = await this.#recordTerminationOrQuarantine({
           activationId: activation.activationId,
           exit: termination.exit,
           failure,
@@ -460,7 +551,7 @@ export class AgentHost {
           runState: "failed",
         });
         if (proofFailure !== null) return proofFailure;
-        this.#kernel.finishRunAttempt(this.#host, {
+        await this.#control.finishRunAttempt({
           error: failure,
           ...(termination.exit.code === null
             ? {}
@@ -471,7 +562,7 @@ export class AgentHost {
           runAttemptId: runAttempt.runAttemptId,
           state: "failed",
         });
-        return this.#retryFailedActivation(activation.activationId, failure);
+        return this.#retryFailedActivation(activation, failure);
       }
       if (startedHandle !== undefined) {
         const termination = await this.#cancelRuntime(runtime, startedHandle);
@@ -484,12 +575,12 @@ export class AgentHost {
           quarantineFailure,
         );
       }
-      this.#kernel.finishRunAttempt(this.#host, {
+      await this.#control.finishRunAttempt({
         error: failure,
         runAttemptId: runAttempt.runAttemptId,
         state: "failed",
       });
-      return this.#retryFailedActivation(activation.activationId, failure);
+      return this.#retryFailedActivation(activation, failure);
     }
 
     if (run === undefined) {
@@ -522,6 +613,44 @@ export class AgentHost {
     supervisor.abort();
     await Promise.all([maintenanceOutcome, drainOutcome]);
 
+    if (outcome.kind === "activation_cancelled") {
+      const termination = await this.#cancelRuntime(runtime, run);
+      if (termination.kind === "unproven") {
+        return this.#quarantineFailedActivation(
+          activation.activationId,
+          `${outcome.error}; runtime termination was not proven: ${termination.error}`,
+        );
+      }
+      const proofFailure = await this.#recordTerminationOrQuarantine({
+        activationId: activation.activationId,
+        exit: termination.exit,
+        failure: outcome.error,
+        run,
+        runAttemptId: runAttempt.runAttemptId,
+        runState: "cancelled",
+      });
+      if (proofFailure !== null) return proofFailure;
+      await this.#control.finishRunAttempt({
+        error: outcome.error,
+        ...(termination.exit.code === null
+          ? {}
+          : { exitCode: termination.exit.code }),
+        ...(termination.exit.signal === undefined
+          ? {}
+          : { exitSignal: termination.exit.signal }),
+        runAttemptId: runAttempt.runAttemptId,
+        state: "cancelled",
+      });
+      await this.#control.resolveActivationCancellation({
+        activationId: activation.activationId,
+      });
+      return {
+        activationId: activation.activationId,
+        reason: outcome.error,
+        state: "cancelled",
+      };
+    }
+
     if (outcome.kind === "agent_disabled" || outcome.kind === "drain_timeout") {
       const failure =
         outcome.kind === "agent_disabled"
@@ -535,7 +664,7 @@ export class AgentHost {
           quarantineFailure,
         );
       }
-      const proofFailure = this.#recordTerminationOrQuarantine({
+      const proofFailure = await this.#recordTerminationOrQuarantine({
         activationId: activation.activationId,
         exit: termination.exit,
         failure,
@@ -544,7 +673,7 @@ export class AgentHost {
         runState: "cancelled",
       });
       if (proofFailure !== null) return proofFailure;
-      this.#kernel.finishRunAttempt(this.#host, {
+      await this.#control.finishRunAttempt({
         error: failure,
         ...(termination.exit.code === null
           ? {}
@@ -555,7 +684,7 @@ export class AgentHost {
         runAttemptId: runAttempt.runAttemptId,
         state: "cancelled",
       });
-      return this.#retryFailedActivation(activation.activationId, failure);
+      return this.#retryFailedActivation(activation, failure);
     }
 
     if (outcome.kind === "timeout") {
@@ -568,7 +697,7 @@ export class AgentHost {
           quarantineFailure,
         );
       }
-      const proofFailure = this.#recordTerminationOrQuarantine({
+      const proofFailure = await this.#recordTerminationOrQuarantine({
         activationId: activation.activationId,
         exit: termination.exit,
         failure,
@@ -577,7 +706,7 @@ export class AgentHost {
         runState: "timed_out",
       });
       if (proofFailure !== null) return proofFailure;
-      this.#kernel.finishRunAttempt(this.#host, {
+      await this.#control.finishRunAttempt({
         error: failure,
         ...(termination.exit.code === null
           ? {}
@@ -588,7 +717,7 @@ export class AgentHost {
         runAttemptId: runAttempt.runAttemptId,
         state: "timed_out",
       });
-      return this.#retryFailedActivation(activation.activationId, failure);
+      return this.#retryFailedActivation(activation, failure);
     }
     if (outcome.kind === "maintenance_failed") {
       const termination = await this.#cancelRuntime(runtime, run);
@@ -599,7 +728,7 @@ export class AgentHost {
           quarantineFailure,
         );
       }
-      const proofFailure = this.#recordTerminationOrQuarantine({
+      const proofFailure = await this.#recordTerminationOrQuarantine({
         activationId: activation.activationId,
         exit: termination.exit,
         failure: outcome.error,
@@ -608,15 +737,12 @@ export class AgentHost {
         runState: "failed",
       });
       if (proofFailure !== null) return proofFailure;
-      this.#kernel.finishRunAttempt(this.#host, {
+      await this.#control.finishRunAttempt({
         error: outcome.error,
         runAttemptId: runAttempt.runAttemptId,
         state: "failed",
       });
-      return this.#retryFailedActivation(
-        activation.activationId,
-        outcome.error,
-      );
+      return this.#retryFailedActivation(activation, outcome.error);
     }
     if (outcome.kind === "reap_failed") {
       const termination = await this.#cancelRuntime(runtime, run);
@@ -627,7 +753,7 @@ export class AgentHost {
           quarantineFailure,
         );
       }
-      const proofFailure = this.#recordTerminationOrQuarantine({
+      const proofFailure = await this.#recordTerminationOrQuarantine({
         activationId: activation.activationId,
         exit: termination.exit,
         failure: outcome.error,
@@ -636,15 +762,12 @@ export class AgentHost {
         runState: "failed",
       });
       if (proofFailure !== null) return proofFailure;
-      this.#kernel.finishRunAttempt(this.#host, {
+      await this.#control.finishRunAttempt({
         error: outcome.error,
         runAttemptId: runAttempt.runAttemptId,
         state: "failed",
       });
-      return this.#retryFailedActivation(
-        activation.activationId,
-        outcome.error,
-      );
+      return this.#retryFailedActivation(activation, outcome.error);
     }
     if (outcome.kind === "stopped") {
       const failure = "runtime supervisor stopped unexpectedly";
@@ -656,7 +779,7 @@ export class AgentHost {
           quarantineFailure,
         );
       }
-      const proofFailure = this.#recordTerminationOrQuarantine({
+      const proofFailure = await this.#recordTerminationOrQuarantine({
         activationId: activation.activationId,
         exit: termination.exit,
         failure,
@@ -665,16 +788,16 @@ export class AgentHost {
         runState: "failed",
       });
       if (proofFailure !== null) return proofFailure;
-      this.#kernel.finishRunAttempt(this.#host, {
+      await this.#control.finishRunAttempt({
         error: failure,
         runAttemptId: runAttempt.runAttemptId,
         state: "failed",
       });
-      return this.#retryFailedActivation(activation.activationId, failure);
+      return this.#retryFailedActivation(activation, failure);
     }
 
     const exit = outcome.exit;
-    const proofFailure = this.#recordTerminationOrQuarantine({
+    const proofFailure = await this.#recordTerminationOrQuarantine({
       activationId: activation.activationId,
       exit,
       failure: "runtime exited but its termination proof was not persisted",
@@ -684,7 +807,7 @@ export class AgentHost {
     });
     if (proofFailure !== null) return proofFailure;
     try {
-      this.#kernel.finishRunAttempt(this.#host, {
+      await this.#control.finishRunAttempt({
         ...(exit.code === null ? {} : { exitCode: exit.code }),
         ...(exit.signal === undefined ? {} : { exitSignal: exit.signal }),
         runAttemptId: runAttempt.runAttemptId,
@@ -692,22 +815,22 @@ export class AgentHost {
       });
       if (exit.code !== 0) {
         return this.#retryFailedActivation(
-          activation.activationId,
+          activation,
           `runtime exited with code ${String(exit.code)}`,
         );
       }
     } catch (error) {
       const failure = errorMessage(error);
-      this.#kernel.finishRunAttempt(this.#host, {
+      await this.#control.finishRunAttempt({
         error: failure,
         runAttemptId: runAttempt.runAttemptId,
         state: "failed",
       });
-      return this.#retryFailedActivation(activation.activationId, failure);
+      return this.#retryFailedActivation(activation, failure);
     }
 
     try {
-      this.#kernel.completeActivation(this.#host, {
+      await this.#control.completeActivation({
         activationId: activation.activationId,
         consumerId: this.#consumerId,
       });
@@ -719,10 +842,7 @@ export class AgentHost {
         state: "completed",
       };
     } catch (error) {
-      return this.#retryFailedActivation(
-        activation.activationId,
-        errorMessage(error),
-      );
+      return this.#retryFailedActivation(activation, errorMessage(error));
     }
   }
 
@@ -735,11 +855,9 @@ export class AgentHost {
     const beginDrain = () => {
       this.#draining = true;
       this.#drainDeadlineAtMs ??= Date.now() + this.#drainTimeoutMs;
-      try {
-        this.#heartbeat();
-      } catch {
+      void this.#heartbeat().catch(() => {
         // An abort listener must never turn shutdown into an uncaught exception.
-      }
+      });
     };
     input.signal.addEventListener("abort", beginDrain, { once: true });
     if (input.signal.aborted) beginDrain();
@@ -762,7 +880,7 @@ export class AgentHost {
       input.signal.removeEventListener("abort", beginDrain);
       if (this.#manageHostLifecycle) {
         try {
-          this.#kernel.heartbeatHost(this.#host, {
+          await this.#control.heartbeatHost({
             state: "offline",
           });
         } catch (error) {
@@ -775,8 +893,8 @@ export class AgentHost {
     }
   }
 
-  #heartbeat(): void {
-    this.#kernel.heartbeatHost(this.#host, {
+  async #heartbeat(): Promise<void> {
+    await this.#control.heartbeatHost({
       state: this.#draining ? "draining" : "online",
     });
   }
@@ -789,15 +907,19 @@ export class AgentHost {
     }
   }
 
-  #retryFailedActivation(
-    activationId: string,
+  async #retryFailedActivation(
+    activation: Pick<Activation, "activationId" | "attemptCount">,
     failure: string,
-  ): HostCycleResult {
+  ): Promise<HostCycleResult> {
+    const { activationId } = activation;
     try {
-      this.#kernel.retryActivation(this.#host, {
+      await this.#control.retryActivation({
         activationId,
         error: failure,
-        retryAfterMs: this.#retryAfterMs,
+        retryAfterMs: activationRetryDelay(
+          this.#retryAfterMs,
+          activation.attemptCount,
+        ),
       });
       return { activationId, error: failure, state: "failed" };
     } catch (retryError) {
@@ -809,13 +931,14 @@ export class AgentHost {
     }
   }
 
-  #failClaimedActivation(
-    activationId: string,
+  async #failClaimedActivation(
+    activation: Pick<Activation, "activationId" | "attemptCount">,
     runAttemptId: string,
     failure: string,
-  ): HostCycleResult {
+  ): Promise<HostCycleResult> {
+    const { activationId } = activation;
     try {
-      this.#kernel.finishRunAttempt(this.#host, {
+      await this.#control.finishRunAttempt({
         error: failure,
         runAttemptId,
         state: "failed",
@@ -827,15 +950,15 @@ export class AgentHost {
         state: "failed",
       };
     }
-    return this.#retryFailedActivation(activationId, failure);
+    return await this.#retryFailedActivation(activation, failure);
   }
 
-  #quarantineFailedActivation(
+  async #quarantineFailedActivation(
     activationId: string,
     failure: string,
-  ): HostCycleResult {
+  ): Promise<HostCycleResult> {
     try {
-      this.#kernel.quarantineActivation(this.#host, {
+      await this.#control.quarantineActivation({
         activationId,
         error: failure,
       });
@@ -849,16 +972,16 @@ export class AgentHost {
     }
   }
 
-  #recordTerminationOrQuarantine(input: {
+  async #recordTerminationOrQuarantine(input: {
     activationId: string;
     exit: RunExit;
     failure: string;
     run: RunHandle;
     runAttemptId: string;
     runState: "exited" | "failed" | "cancelled" | "timed_out";
-  }): HostCycleResult | null {
+  }): Promise<HostCycleResult | null> {
     try {
-      this.#kernel.recordRuntimeTermination(this.#host, {
+      await this.#control.recordRuntimeTermination({
         exit: input.exit,
         runAttemptId: input.runAttemptId,
         runtimeRunId: input.run.runId,
@@ -866,7 +989,7 @@ export class AgentHost {
       return null;
     } catch (error) {
       const quarantineFailure = `${input.failure}; durable runtime termination proof failed: ${errorMessage(error)}`;
-      return this.#quarantineFailedActivation(
+      return await this.#quarantineFailedActivation(
         input.activationId,
         quarantineFailure,
       );
@@ -881,12 +1004,15 @@ export class AgentHost {
       await this.#maintenanceWait(this.#leaseRenewIntervalMs, signal);
       if (signal.aborted) return { kind: "stopped" };
       try {
-        this.#heartbeat();
-        this.#kernel.renewActivationLease(this.#host, {
+        await this.#heartbeat();
+        await this.#control.renewActivationLease({
           activationId,
           leaseMs: this.#leaseMs,
         });
       } catch (error) {
+        if (error instanceof ActivationCancellationRequestedError) {
+          return { error: error.message, kind: "activation_cancelled" };
+        }
         if (error instanceof AgentExecutionPausedError) {
           return { error: error.message, kind: "agent_disabled" };
         }
@@ -908,8 +1034,8 @@ export class AgentHost {
       await this.#maintenanceWait(this.#leaseRenewIntervalMs, signal);
       if (signal.aborted) return { kind: "stopped" };
       try {
-        this.#heartbeat();
-        this.#kernel.renewRuntimeRecoveryLease(this.#host, {
+        await this.#heartbeat();
+        await this.#control.renewRuntimeRecoveryLease({
           leaseMs: this.#leaseMs,
           recoveryAttemptCount,
           runtimeProcessId,
@@ -971,6 +1097,7 @@ export class AgentHost {
 }
 
 type RuntimeOutcome =
+  | { error: string; kind: "activation_cancelled" }
   | { error: string; kind: "agent_disabled" }
   | { kind: "drain_timeout" }
   | { exit: RunExit; kind: "exit" }
@@ -984,6 +1111,16 @@ type RecoveryMaintenanceOutcome =
 
 type TerminationOutcome =
   { exit: RunExit; kind: "terminated" } | { error: string; kind: "unproven" };
+
+function activationRetryDelay(
+  baseDelayMs: number,
+  attemptCount: number,
+): number {
+  if (baseDelayMs === 0) return 0;
+  const exponent = Math.min(Math.max(attemptCount - 1, 0), 30);
+  const maximumDelayMs = Math.max(baseDelayMs, MAX_ACTIVATION_RETRY_DELAY_MS);
+  return Math.min(baseDelayMs * 2 ** exponent, maximumDelayMs);
+}
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);

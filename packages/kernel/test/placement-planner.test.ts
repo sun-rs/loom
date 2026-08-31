@@ -43,6 +43,7 @@ function policy(
     },
     revision: 1,
     sessionPolicy: "fresh",
+    toolAccessMode: "workspace_write",
     ...overrides,
   };
 }
@@ -74,6 +75,7 @@ function offer(
     runtimeProfileId: `profile-${runtimeOfferId}`,
     runtimeProfileRevisionId: `profile-${runtimeOfferId}-v1`,
     state: "available",
+    supportedToolAccessModes: ["read_only", "workspace_write", "full_access"],
     workspaceMountDescriptors: [
       {
         modes: ["in_place"],
@@ -172,6 +174,19 @@ test("hard constraints cannot be outweighed by a preferred unauthorized offer", 
     )?.hardRejectionReasons,
     ["host_unauthorized"],
   );
+});
+
+test("planner rejects an Offer that cannot enforce the durable tool-access policy", () => {
+  const unrestrictedOnly = offer("offer-full-only", {
+    supportedToolAccessModes: ["full_access"],
+  });
+  const result = planNextPlacement(input([unrestrictedOnly]));
+
+  assert.equal(result.selection, undefined);
+  assert.equal(result.holds[0]?.reason, "no_compatible_offer");
+  assert.deepEqual(result.holds[0]?.dependencyKeys, [
+    `tool-access:${unrestrictedOnly.runtimeOfferId}:workspace_write`,
+  ]);
 });
 
 test("planner output is deterministic across input insertion order", () => {

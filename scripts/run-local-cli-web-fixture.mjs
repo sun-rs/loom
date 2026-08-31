@@ -152,7 +152,7 @@ try {
   registry.initialize();
   const implementations = new RuntimeImplementationRegistry();
   for (const { spec } of runtimeDefinitions) {
-    const revision = registry.importManifest({
+    const sharedManifest = {
       adapter: {
         config: {
           diagnosticByteLimit: 262_144,
@@ -160,19 +160,27 @@ try {
         },
         executable: spec.executable,
         fixedArgs: spec.args,
-        kind: "generic-process/v1",
+        kind: spec.adapterKind,
       },
       credentialSlots: [],
       declaredCapabilities: ["worker_commands"],
       displayName: spec.displayName,
-      manifestVersion: 2,
       protocolFamily: "rah-worker-process/v1",
       recoveryDrivers:
         process.platform === "win32" ? [] : ["rah-process-supervisor-v1"],
       runtimeProfileId: spec.runtimeProfileId,
       staticEnv: {},
       workspacePolicy: { allowedModes: ["in_place"] },
-    });
+    };
+    const revision = registry.importManifest(
+      spec.modelCatalogProbe === undefined
+        ? { ...sharedManifest, manifestVersion: 2 }
+        : {
+            ...sharedManifest,
+            manifestVersion: 3,
+            modelCatalogProbe: spec.modelCatalogProbe,
+          },
+    );
     const probe = registry.recordProbeReport(
       await implementations.probeRevision(revision, { cwd: workspaceCwd }),
     );

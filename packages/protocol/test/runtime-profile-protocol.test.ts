@@ -150,6 +150,77 @@ test("RuntimeProfileManifestV3 names a built-in model catalog probe", () => {
     staticEnv: {},
   });
   assert.equal(parsed.modelCatalogProbe.kind, "codex-cli/v1");
+  const claudeStreamJson = RuntimeProfileManifestV3Schema.parse({
+    ...parsed,
+    adapter: {
+      ...parsed.adapter,
+      executable: "claude",
+      fixedArgs: ["room-worker-prompt"],
+      kind: "claude-stream-json/v1",
+    },
+    modelCatalogProbe: { kind: "claude-cli/v1" },
+    runtimeProfileId: "claude-stream-json-main",
+  });
+  assert.equal(claudeStreamJson.adapter.kind, "claude-stream-json/v1");
+  assert.throws(() =>
+    RuntimeProfileManifestV3Schema.parse({
+      ...claudeStreamJson,
+      modelCatalogProbe: { kind: "codex-cli/v1" },
+    }),
+  );
+  const kimiAcp = RuntimeProfileManifestV3Schema.parse({
+    ...parsed,
+    adapter: {
+      ...parsed.adapter,
+      executable: "kimi",
+      fixedArgs: ["room-worker-prompt"],
+      kind: "kimi-acp/v1",
+    },
+    modelCatalogProbe: { kind: "kimi-cli/v1" },
+    runtimeProfileId: "kimi-acp-main",
+  });
+  assert.equal(kimiAcp.adapter.kind, "kimi-acp/v1");
+  const codexAppServer = RuntimeProfileManifestV3Schema.parse({
+    ...parsed,
+    adapter: {
+      ...parsed.adapter,
+      fixedArgs: ["room-worker-prompt"],
+      kind: "codex-app-server/v1",
+    },
+    runtimeProfileId: "codex-app-server-main",
+  });
+  assert.equal(codexAppServer.adapter.kind, "codex-app-server/v1");
+  assert.throws(() =>
+    RuntimeProfileManifestV3Schema.parse({
+      ...codexAppServer,
+      modelCatalogProbe: { kind: "kimi-cli/v1" },
+    }),
+  );
+  const openCodeServer = RuntimeProfileManifestV3Schema.parse({
+    ...parsed,
+    adapter: {
+      ...parsed.adapter,
+      executable: "opencode",
+      fixedArgs: ["room-worker-prompt"],
+      kind: "opencode-server/v1",
+    },
+    modelCatalogProbe: { kind: "opencode-cli/v1" },
+    runtimeProfileId: "opencode-server-main",
+  });
+  assert.equal(openCodeServer.adapter.kind, "opencode-server/v1");
+  assert.throws(() =>
+    RuntimeProfileManifestV3Schema.parse({
+      ...openCodeServer,
+      modelCatalogProbe: { kind: "codex-cli/v1" },
+    }),
+  );
+  assert.equal(
+    RuntimeProfileManifestV3Schema.parse({
+      ...parsed,
+      modelCatalogProbe: { kind: "claude-cli/v1" },
+    }).modelCatalogProbe.kind,
+    "claude-cli/v1",
+  );
   assert.throws(() =>
     RuntimeProfileManifestV3Schema.parse({
       ...parsed,
@@ -200,10 +271,17 @@ test("probe reports are strict and probed offers must reference immutable eviden
         },
         capabilityClasses: ["deep_coding"],
         evidence: "probed",
+        defaultReasoning: "low",
+        displayName: "GPT-5.6 Sol",
         modelBindingId: "codex:gpt-5.6-luna",
         modelId: "gpt-5.6-luna",
         provider: "openai",
-        supportedReasoning: ["low", "medium", "high", "max"],
+        reasoningOptions: [
+          { label: "Low", value: "low" },
+          { label: "Extra high", value: "xhigh" },
+          { label: "Ultra", value: "ultra" },
+        ],
+        supportedReasoning: ["low", "xhigh", "ultra"],
         supportedServiceTiers: ["default", "priority"],
       },
     ],
@@ -214,6 +292,23 @@ test("probe reports are strict and probed offers must reference immutable eviden
   });
   assert.equal(report.available, true);
   assert.equal(report.modelBindings[0]?.modelId, "gpt-5.6-luna");
+  assert.equal(report.modelBindings[0]?.defaultReasoning, "low");
+  assert.deepEqual(report.modelBindings[0]?.supportedReasoning, [
+    "low",
+    "xhigh",
+    "ultra",
+  ]);
+  assert.throws(() =>
+    RuntimeProfileProbeReportV2Schema.parse({
+      ...report,
+      modelBindings: [
+        {
+          ...report.modelBindings[0],
+          supportedReasoning: ["unsafe value"],
+        },
+      ],
+    }),
+  );
   assert.throws(() =>
     RuntimeProfileProbeReportSchema.parse({
       ...report,
@@ -238,6 +333,7 @@ test("probe reports are strict and probed offers must reference immutable eviden
     runtimeProfileId: "codex-main",
     runtimeProfileRevisionId: "codex-main-revision-1",
     state: "available",
+    supportedToolAccessModes: ["read_only", "workspace_write", "full_access"],
     workspaceMountDescriptors: [],
   } as const;
   assert.throws(() => RuntimeOfferSchema.parse(offer));
@@ -250,5 +346,15 @@ test("probe reports are strict and probed offers must reference immutable eviden
       },
     }).probeReportRef?.probeReportId,
     report.probeReportId,
+  );
+  assert.throws(() =>
+    RuntimeOfferSchema.parse({
+      ...offer,
+      probeReportRef: {
+        probeDigest: report.probeDigest,
+        probeReportId: report.probeReportId,
+      },
+      supportedToolAccessModes: ["full_access", "full_access"],
+    }),
   );
 });

@@ -1,6 +1,6 @@
 # Runtime Registry 与多 Lane 调度架构
 
-状态：**Accepted in stages / R0–R3 implemented / narrow R2a–R2c implemented / R5 config v4 fake slice implemented / R1–R4 provisional**（2026-08-27）。严格 protocol schemas、pure placement planner、Kernel schema v8、control Room 配置修订、trusted immutable Offer evidence、durable Placement/RunAttempt provenance、atomic placement launch claim、可信启动期 capacity policy、MultiLaneAgentHost、Host-local immutable Runtime Profile/Probe Registry、spawn-time secret binding、probe-backed model catalog/argv binding，以及 daemon config v4 的 Placement-selected external Worker E2 已通过本机门禁。durable PlacementHold、control-Room CapacityPool、canonical WorkspaceDefinition/mount、mixed-adapter recovery 与 paid real CLI v4 certification尚未完成。
+状态：**Accepted in stages / R0–R3 implemented / narrow R2a–R2c, native Provider resume and cancel implemented / R5 config v4 mixed reply certified / remaining R1–R4 provisional**（2026-08-29）。严格 protocol schemas、pure placement planner、Kernel schema v12、control Room 配置修订、trusted immutable Offer evidence、durable Placement/RunAttempt provenance、atomic placement launch claim、可信启动期 capacity policy、MultiLaneAgentHost、Host-local immutable Runtime Profile/Probe Registry、spawn-time secret binding、probe-backed model catalog/launch binding，以及 daemon config v4 的 Placement-selected external Worker E2 已通过本机门禁。Codex Sol/low、Kimi K3 与 OpenCode DeepSeek V4 Flash/max 又在同一 Room 完成真实 mixed CLI reply certification；Kimi ACP、Codex app-server、OpenCode serve 与 Claude stream-json 均通过 fake native protocol gate 证明 Host 私有 resume-or-fresh 与 Provider-native cancellation，Codex 另通过 daemon-restart gate。durable PlacementHold、control-Room CapacityPool、完整 canonical Workspace mount 管理面、native live input、真实付费 Provider interrupt/watchdog 与 mixed-adapter crash recovery 尚未完成。
 
 ## 1. 要解决的问题
 
@@ -61,6 +61,8 @@ Activation(participant)
 | `RunAttempt`              | 一次实际执行及 frozen provenance                                               | Room Kernel                      |
 
 不能把 `RuntimeOffer` 当 AgentDefinition，也不能把 profile active pointer 当历史证据。Host registry 不拥有 Activation queue；Kernel 不保存 secret value、Provider transcript 或 runtime process 内存。
+
+`RuntimeOffer.supportedToolAccessModes` 是兼容旧持久化数据和第三方 Runtime 的底层能力声明，不是标准产品 UI。Raft-compatible 主路径只发布 `full_access`；缺字段的旧 Offer 也按仅支持 `full_access` 解释。Agent provision/configure 的新 wire contract 只能写入 `full_access`，Placement 必须再次验证，Web 不显示 CLI 权限档位。历史 `workspace_write` / `read_only` 只允许读取和迁移，不能静默降级或重新进入新配置。
 
 ### 3.1 配置事实仍然遵守 Room-first
 
@@ -147,7 +149,15 @@ Registry 使用 owner-private 独立持久库，例如 `runtime-registry.db`；�
 
 窄 R2a 已实现 `RuntimeProfileManifestV1`。R2b 增加 `RuntimeProfileManifestV2` 与 registry schema v2 migration：v2 在同一严格 executable/argv 基线上增加非敏感 `staticEnv` 与只命名 target、不含 value 的 credential slot。daemon-owned authority env、常见 credential-bearing argv/static-env 名称、未知字段、非 owner-private database/manifest、Host identity mismatch 和更新版本 schema 均 fail closed。`staticEnv` 的名称过滤只能阻止显式常见 credential 误配；恶意把 secret 标成普通变量仍属于 owner-controlled manifest 信任边界，不能宣称有通用 secret 分类器。manifest path 与 secret reference/value 不进入 revision、probe 或 audit。
 
-R2c 增加 `RuntimeProfileManifestV3`、registry schema v3 migration 与 versioned probe report：profile 只能选择内建的 `codex-cli/v1`、`kimi-cli/v1`、`opencode-cli/v1` 目录探测器，不能注入任意 catalog command。探测器以无 shell、限时、限输出的本机子进程读取 CLI 自己的机器可读目录，裁剪成 `RuntimeModelBinding` 后进入 probe digest；原始 provider 配置与 credential 不持久化。Offer 再删除 `adapterMapping`，只发布 redacted descriptor。Planner 冻结 explicit binding，daemon config v4 按 Placement 为本次 Run 创建 Runtime，并把受验证 mapping 展开成前置 argv。不存在目录、目录失败、binding 不匹配或未声明 reasoning 时均 fail closed；`runtime_default` 仍不发送 selector。schema v2 的 report v1 digest 在升级后保持原值，不能靠添加空字段重写历史。当前 Codex 目录同时提供模型与 reasoning/service-tier 证据；Kimi/OpenCode 只提供模型 selector，因 CLI 目录没有可执行 effort mapping而不发布推理档位；Claude 暂无机器可读目录，保持 v2 Runtime 默认。
+R2c 增加 `RuntimeProfileManifestV3`、registry schema v3 migration 与 versioned probe report：profile 只能选择内建的 `claude-cli/v1`、`codex-cli/v1`、`kimi-cli/v1`、`opencode-cli/v1` 目录探测器，不能注入任意 catalog command。探测器以无 shell、限时、限输出的本机子进程读取 CLI 自己的机器可读目录或 typed control handshake，裁剪成 `RuntimeModelBinding` 后进入 probe digest；原始 provider 配置、账户响应与 credential 不持久化。Offer 再删除 `adapterMapping`，只发布 redacted descriptor。Planner 冻结 explicit binding，daemon config v4 按 Placement 为本次 Run 创建 Runtime，并把受验证 mapping 展开成前置 argv。不存在目录、目录失败、binding 不匹配或未声明 reasoning 时均 fail closed；`runtime_default` 仍不发送 selector。schema v2 的 report v1 digest 在升级后保持原值，不能靠添加空字段重写历史。
+
+模型目录不是 executable revision：Provider 在同一 CLI 二进制下刷新远端 catalog 时，Offer 可发布新的 immutable observation，不能把整个 Runtime 错误下线。每个 config v4 Placement 通过其冻结的 `runtimeOfferObservationId + runtimeOfferSnapshotDigest` 反查精确 `probeReportId + probeDigest`，本次 Run 只使用该 probe 中的 adapter mapping；目录在 Placement 后再次变化不会偷换已经选择的 model/effort。可执行文件 path/content/size、active profile revision 或 probe availability 变化仍 fail closed。Web 的“Runtime 可用”也只读取当前未过期、Host online 且证据仍可信的 canonical Offer，不使用启动期 discovery 快照。
+
+目录协议把“观察到的能力”和“可执行能力”分开：`reasoningOptions` 保存 CLI/协议发布的原生值、标签、描述和 `defaultReasoning`；`supportedReasoning` 只是已经验证能通过当前 adapter 传递的子集。Web 只用后者生成可选项，Placement 也只接受后者。Provider 新增 `xhigh`、`ultra` 或其他安全 token 时不必升级中央 enum，但 token 必须是最长 64 字符的无空白标识，且不能等于保留值 `default`。当前映射为：Claude 使用 CLI stream-json control initialize，只投影模型字段，并通过 `--model`/`--effort` 执行 per-model 能力；Codex 优先读取可刷新的 `debug models`，失败或无有效目录时回退同一二进制的 `debug models --bundled`，并使用 `--config model_reasoning_effort=...`；OpenCode 从 `models --verbose --pure` 读取 variants 并使用 `--variant`，旧 CLI 或 verbose 失败时退回 `models --pure`，只保留模型 selector；Kimi 从 `provider list --json` 读取 `supportEfforts/defaultEffort`，使用 `--model` 选择模型，并通过 Kimi 0.38.0 自身读取的单次子进程环境变量 `KIMI_MODEL_THINKING_EFFORT` 传递 effort。该映射不修改用户配置文件，并已由受控子进程证明 argv 与环境同时到达 CLI。
+
+Host-local catalog probe 另有 60 秒成功缓存，key 包含 probe kind、绝对 executable path、可执行文件 content digest 与 cwd，并对相同并发探测去重；返回值总是 clone。空结果和失败不缓存。这只是昂贵子进程的加速层，不是 canonical state，也不能延长旧 probe report 的证据寿命。实现来源裁决与证据见 [Provider 模型与 effort 目录审计](../audits/2026-08-28-provider-model-effort-catalog-audit.zh-CN.md)。
+
+工具/文件权限属于 `ExecutionPolicyRevision`，不是 Web 临时状态；该值冻结进 Placement，并由本机或远程 Computer 的同一 Runtime adapter 映射。标准产品不再把 RAH 自研的三档选择暴露给 Agent：Raft-compatible 主路径固定为 `full_access`，UI 不显示权限下拉框，所有标准 RuntimeOffer 只发布该值。Codex native app-server 固定 `approvalPolicy=never + danger-full-access`；Claude native stream-json 固定 `--allow-dangerously-skip-permissions + --dangerously-skip-permissions + --permission-mode bypassPermissions`，并以 exact user-message replay 确认输入；Kimi native ACP 只接受 offered safe permission option。OpenCode native server 不再依赖 Raft 1.0.18 已过时的 `--dangerously-skip-permissions`：新 session 直接写官方全允许 ruleset，launch 同时冻结 `OPENCODE_PERMISSION={"*":"allow"}`，残余 permission request 通过官方 reply API 自动回答 `always`；Provider question 不伪装成人类回答，而是拒绝并要求 Agent 走 Worker 输入协议。Codex approval responder 只在当前 thread/turn 内批准，按 JSON-RPC ID 去重，filesystem/network 仅回授请求中的已知字段且 scope 固定为 turn。旧 `workspace_write/read_only` 只在 durable schema 中保持可读，不能由新 client 写入；下一次 Agent configure 会迁移为 `full_access`。CLI 工具许可不等于 OS isolation，更不等于 Workspace/Room/MCP/App 权限；需要强制隔离时必须另建明确的 RuntimeProfile/container 产品模式，不能在 Raft Agent 页面伪装成同一权限开关。来源与 fake gate 见 [Provider CLI 执行传输与权限审计](../audits/2026-08-28-provider-execution-transport-audit.zh-CN.md)。
 
 ### 5.2 Protocol family，而不是每 CLI 一套 parser
 
@@ -223,7 +233,7 @@ Workspace 同样不允许“双 owner”。Kernel 的 `WorkspaceDefinition` 保�
 type ModelIntent = {
   exactBindingIds?: string[];
   capabilityClass?: "fast" | "balanced" | "deep_coding";
-  reasoning?: "default" | "low" | "medium" | "high" | "max";
+  reasoning?: "default" | ProviderReasoningToken;
   serviceTier?: "default" | "fast" | "priority";
   fallback: "disabled" | "same_profile" | "compatible_offer";
 };
@@ -233,6 +243,12 @@ type RuntimeModelBinding = {
   provider: string;
   modelId: string;
   supportedReasoning: string[];
+  reasoningOptions?: Array<{
+    value: string;
+    label: string;
+    description?: string;
+  }>;
+  defaultReasoning?: string;
   supportedServiceTiers: string[];
   adapterMapping: unknown; // protocol family 的 typed schema
   evidence: "declared" | "probed" | "certified";
@@ -291,7 +307,7 @@ type ExecutionPolicyRevision = {
 
 Task-specific override 将来必须是独立 authenticated human command，受到工作 Room ACL、工作 Room 的 `basedOnRoomSeq`、idempotency 和 Agent policy 上限约束。全局 Agent/policy 更新则以 control Room 为 causal scope。Worker 不能在 request body 中选择 Host/profile/model，也不能把一次 Provider 自荐升级成下一次 placement policy。
 
-`require_resume` 只有在 ProviderSessionRef 与 profile revision、Host/workspace、model binding 和 capability 都兼容时才可 placement；`prefer_resume` 不满足时创建 fresh session；Provider session 丢失不重建 Room truth。
+上面的三值是 Kernel 内部/历史 policy schema，不是标准产品的用户选项。新建与配置 Agent 只接受或规范化为 `prefer_resume`；Web 不显示 Session 策略。真正的 resume 决策由目标 Host 在 Placement 已冻结之后完成：同一 `participant + provider + RuntimeProfile revision + WorkspaceMount revision` 有本地 evidence 时优先恢复，否则 fresh。`fresh` 只保留给旧内部 fixture；`require_resume` 当前 fail closed，不能伪装成已支持能力。Provider session 丢失不重建 Room truth。
 
 ## 9. Placement 算法
 
@@ -333,7 +349,7 @@ Activation candidate 排序固定为：
 5. workspace 不在 Host、workspace mode 不兼容或 exclusive lease 冲突；
 6. Host/offer/capacity pool 已满；
 7. recovery/circuit policy 禁止新 run；
-8. `require_resume` 的 session locality 不满足。
+8. legacy `require_resume` policy（标准产品不再产生）无法被当前 planner 证明。
 
 Hard filter 不通过不能靠权重“勉强运行”。
 
@@ -342,9 +358,8 @@ Hard filter 不通过不能靠权重“勉强运行”。
 只对 feasible offer 评分，建议初版只启用可解释项：
 
 1. policy 明确 pinned/preferred offer/profile；
-2. compatible ProviderSessionRef 与 workspace locality；
-3. preferred protocol/model binding；
-   4.近期 structural start failure penalty；
+2. preferred protocol/model binding；
+3. 近期 structural start failure penalty；
 4. capacity load ratio；
 5. `runtimeOfferId` 稳定 tie-break。
 
@@ -404,7 +419,7 @@ type PlacementDecision = {
 };
 ```
 
-RunAttempt 复制/引用 frozen placement fields，并在 runtime 返回后最多一次附加 opaque ProviderSessionRef。ProviderSessionRef 不能改写 profile/model provenance。profile 被停用、模型下架或 Agent policy 更新，不改变旧 RunAttempt。
+RunAttempt 复制/引用 frozen placement fields。ProviderSessionRef 当前有意不附加到 RunAttempt 或 Kernel：它由执行该 Placement 的 Host/Computer 私有保存，key 固定包含 participant、provider、profile revision 与 mount revision。切换 Host/profile/mount 自然 cold-start；opaque ID 不进入 Room、trajectory、diagnostics 或 UI。profile 被停用、模型下架或 Agent policy 更新，不改变旧 RunAttempt。
 
 ## 11. Unschedulable 不等于失败
 
@@ -488,7 +503,7 @@ config v4 已使用独立 shape 实现 multi-profile/multi-participant compositi
 
 v4 的 `host.maxConcurrent` 与每个 Offer `maxConcurrent` 同时进入 trusted startup capacity policy，实际有效容量仍取 Kernel Host/profile/Offer 门禁的最小值。两个 profile 的旧 revision recovery 会按 descriptor 中的 revision/digest/driver version 在已配置 Registry 中解析；未找到或多 Registry 冲突时 fail closed。
 
-当前限制：v4 workspace identity 仍是 trusted startup config，不是 schema v8 的 canonical Workspace 管理面；只支持固定 `in_place` cwd，不支持动态 worktree；model binding 已在 v3 profile 的本机目录证据与 Generic argv mapping 范围内执行，但尚未覆盖 ACP 动态 config、Claude 目录或跨 Provider fallback；R5 的付费 real CLI 尚未重跑完整 v4/reply certification。manifest import 仍必须 canonicalize → validate → digest → create immutable revision；旧单 runtime配置未来应由显式 migration command 导入，不做无法审计的隐式猜测。
+当前限制：v4 workspace identity 仍以启动配置和 frozen mount revision 为主，只支持固定 `in_place` cwd，不支持动态 worktree；model binding 已在 v3 profile 的 Claude/Codex/Kimi/OpenCode 本机目录证据与 native launch mapping 范围内执行，真实 mixed CLI reply certification 已通过。四个内建 Provider 均已进入 structured adapter：Kimi ACP、Codex app-server、OpenCode serve 和 Claude stream-json 的 fake native gate分别覆盖 session continuity、Provider cancellation、权限与 terminal fence，并证明取消后不写 ready session evidence、外层仍保有 terminal proof。尚未覆盖真实付费 Provider live input/interrupt/watchdog、mixed-adapter crash recovery、server last-known-good refresh 或跨 Provider fallback。manifest import 仍必须 canonicalize → validate → digest → create immutable revision；旧单 runtime配置未来应由显式 migration command 导入，不做无法审计的隐式猜测。
 
 ## 15. 外部项目经验：采用与拒绝
 
@@ -556,7 +571,7 @@ v4 的 `host.maxConcurrent` 与每个 Offer `maxConcurrent` 同时进入 trusted
 - v2 activation 只接受该 revision 最新且成功的 probe；较新的失败 probe 会 fence 激活，历史成功不能覆盖当前失败。runtime 创建时重算 manifest digest；AgentHost start 前和 supervisor 真正 launch target 前分别核验 executable realpath/content/size/execute bit。该双重检查关闭可确定的 credential-load 间隙，但同一 OS 用户恶意写入下仍存在最终 check→`exec` 的极窄竞态；更强保证需要 fd/inode/code-signature 等平台 primitive；
 - credential slot binding 在构造时验证 exact own-property slot set，value 只在每次 spawn 前经 `SecretProvider` 解析，且 secret/file 有 64 KiB 上限。FileSecretProvider 最多读取 65,537 bytes 后拒绝，不依赖可竞态的 stat size 作为内存边界。Provider secret 与 Worker bearer 加入 Generic diagnostics 的流式多模式 redactor；redactor分段扫描、只保留 `maxSecretLength-1` 的未决后缀（提交边界遇到 surrogate pair 时额外后退一个 code unit），把所有完整匹配与相交、链式重叠匹配合并为脱敏区间，EOF 时再把仍可能成为 secret 的 partial suffix 合并进去，最后才执行 UTF-8 byte truncation。匹配事件以窗口长度固定的 typed arrays 计数，不为每个 occurrence 分配对象；EOF suffix-prefix 对每个 pattern 使用 prefix-function/KMP 线性判定，不执行逐长度切片比较。临时空间不随 overlap occurrence 数量相乘，near-match CPU 也不再平方退化；未进入 redaction set 的任意输出不受此保证；
 - daemon config v3 只选择 registry database + stable profile ID + local cwd/credential refs。启动时重新 probe active revision，随后从同一 frozen revision 建 adapter；每次 AgentHost probe/start 和 Offer refresh 都重新读取 active pointer/state/digest。revision 被切换或废弃后，旧 daemon 发布 `unavailable`；常规时序在 createRunAttempt 前由 probe 拒绝。若 pointer 恰在 probe 与 createRunAttempt 间改变，start fence 仍保证不读取 credential、不 prepare/launch process，但会留下一个显式 failed RunAttempt；重新选择新 revision 需要重启 daemon；
-- Offer publisher 绑定 authenticated Host generation，每个 refresh interval 重新执行并持久化 probe；executable path/content/size 与 daemon 启动时 identity 任一不一致即发布 `unavailable`，不会无限续租旧成功 probe。drain 前也先发布 `unavailable`。public Offer 只携带 profile/revision digest 与 `probeReportId + probeDigest`，不携带 executable path、slot、secret ref/value 或 static env；manifest 的声明能力仍标成 `declared`，不会因 executable probe 自动升级成 `probed`。
+- Offer publisher 绑定 authenticated Host generation，每个 refresh interval 重新执行并持久化 probe；executable path/content/size 与 daemon 启动时 identity 任一不一致即发布 `unavailable`，不会无限续租旧成功 probe。同一 executable 的模型目录变化会生成新的可用 Offer observation；config v4 Placement 冻结该 observation，并在 launch 时读取其精确 probe，而不是 daemon 启动期 probe。drain 前先发布 `unavailable`。public Offer 只携带 profile/revision digest 与 `probeReportId + probeDigest`，不携带 executable path、slot、secret ref/value 或 static env；manifest 的声明能力仍标成 `declared`，不会因 executable probe 自动升级成 `probed`。
 
 门禁证据：以真实 v1 DDL/trigger/fixture 建库后的 v1→v2 数据迁移与 FK 完整性、不可伪造/不可更新/不可删除 probe、caller-mutated revision 拒绝、start 前 replacement 拒绝且不读取 credential/prepare run、credential-load 间隙 replacement 被 supervisor 拒绝且未执行并可由 direct reap/旧 descriptor recovery 验证 `RAH_START_FAILED` terminal proof、unknown recovery、latest-failure activation fence、secret 延迟/有界读取、缺失/多余/prototype slot、单次、重复长 secret、正向/反向/链式/32-pattern dense overlap secret 跨 chunk、Unicode code point 拆包/普通 Unicode safe boundary、EOF partial overlap 与 64-pattern/64-KiB near-match 线性资源门禁的流式截断前脱敏、旧 revision recovery routing，以及 daemon v3 在无 Activation 时不读 Provider secret、收到 Activation 后才读取、确定性 active-revision 切换 fixture 中旧 lane 未创建 RunAttempt且 Offer 变 `unavailable`、Kernel Offer JSON 不含本地路径/secret、删除 executable 后 live Offer 变 `unavailable`、shutdown head 为 `unavailable`。
 
@@ -574,7 +589,7 @@ v4 的 `host.maxConcurrent` 与每个 Offer `maxConcurrent` 同时进入 trusted
 ### R4：Workspace/session/model routing
 
 - durable workspace lease；in-place exclusive 与 worktree parallel；
-- ProviderSessionRef compatibility；typed model mapping/fallback。
+- Host-private ProviderSessionRef locality（Codex 已实现固定 profile/mount key；跨 Host 迁移仍待设计）；typed model mapping/fallback。
 
 门禁：不兼容 session 不被 resume；`reasoning=high` 无 mapping 时 hold 而不是拼未知参数；同一目录不会被两个 in-place Run 同时修改。
 
@@ -588,6 +603,8 @@ v4 的 `host.maxConcurrent` 与每个 Offer `maxConcurrent` 同时进入 trusted
 门禁：profile 切换保留 Agent identity/cursor/memory scope；一个 profile offline 时其他 Agent 继续；restart 后旧 revision recovery 与新 revision placement 都正确。
 
 ### R6：opt-in real CLI certification
+
+状态：**worker-compatible mixed reply slice passed / Codex+Kimi+OpenCode+Claude fake native-session and cancellation certified / real interrupt certification pending**。在用户明确授权下，config v4 已让 Codex Sol/low、Kimi K3、OpenCode DeepSeek V4 Flash/max 在同一 Room 各自产生唯一 canonical reply，并核验三个独立 Placement/RunAttempt 的 exact binding 与 exit provenance；四个内建 Provider 的 Host 私有 session 连续性与 cancellation 由不计费 fake protocol gate 证明。Kimi gate 覆盖 ACP cancel/cancelled permission，Codex gate 覆盖 turn/interrupt 与取消后 approval fence，OpenCode gate 覆盖 `/abort` 与取消期 permission reject，Claude gate 覆盖 exact input replay 与 `SIGINT`；全部与外层全 process-group terminal proof 组合。
 
 - 先 Codex，再 Kimi/OpenCode，Claude 只用 Sonnet；
 - 分别标记 Worker-compatible / Session-capable / Interactive / Observable / Certified；

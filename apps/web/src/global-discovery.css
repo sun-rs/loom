@@ -1,0 +1,372 @@
+/* Layout adaptation only. Page chrome, fonts, filters and Activity states are
+   imported from the hashed Raft reference in @rah-os/ui-tokens. */
+.app.rah-global-shell {
+  grid-template-columns: var(--rail-w) minmax(0, 1fr);
+}
+.app.rah-global-shell:has(> .thread) {
+  grid-template-columns: var(--rail-w) minmax(0, 1fr) var(--thread-w, 520px);
+}
+.rah-global-shell > .rah-sidebar-placeholder {
+  display: none;
+}
+.rah-discovery {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.rah-discovery .head-actions {
+  margin-left: auto;
+}
+.rah-discovery .tasks-toolbar {
+  height: auto;
+  min-height: var(--raft-tasks-toolbar-height);
+}
+.rah-discovery .tasks-toolbar-row {
+  flex-wrap: wrap;
+}
+.rah-discovery-pager {
+  display: flex;
+  flex: none;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px;
+  border-top: var(--bd);
+}
+.rah-global-kanban {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+  padding: var(--raft-tasks-content-padding);
+  align-items: start;
+  overflow: auto;
+}
+.rah-global-kanban .kcol {
+  /* Raft live DOM 2026-08-30: w-[320px] border-2 border-black/20 bg-white/30 p-3. */
+  width: 320px;
+  min-width: 320px;
+  flex: none;
+  padding: 12px;
+  border: 2px solid rgb(0 0 0 / 20%);
+  background: rgb(255 255 255 / 30%);
+}
+.rah-global-kanban .kcol-head {
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+  min-height: 0;
+  padding: 0;
+  gap: 8px;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+}
+.rah-global-kanban .kcol-head[aria-expanded="true"] {
+  margin-bottom: 12px;
+}
+.rah-global-kanban .kcol-head[aria-expanded="false"] svg {
+  transform: rotate(-90deg);
+}
+.rah-global-kanban .kcol-head > span:nth-child(2) {
+  color: rgb(0 0 0 / 50%);
+  font-family: var(--mono);
+}
+.rah-global-group-label {
+  border: 1px solid black;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 15px;
+}
+.rah-global-kanban .kcol-body {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  gap: 10px;
+}
+.rah-global-kanban .rah-empty-copy {
+  margin: 0;
+  padding: 20px 12px;
+  border: 2px dashed rgb(0 0 0 / 20%);
+  color: rgb(0 0 0 / 40%);
+  font-size: 14px;
+  line-height: 20px;
+}
+.rah-global-kanban .kcol-head svg {
+  width: 14px;
+  height: 14px;
+  margin-left: auto;
+}
+.rah-global-task-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  padding: 12px;
+  min-height: 0;
+}
+.rah-global-task-card .kcard-title {
+  font-size: 14px;
+  line-height: 20px;
+  margin: 6px 0 12px;
+}
+.rah-global-task-status {
+  float: right;
+  font-size: 12px;
+  line-height: 16px;
+  padding: 2px 8px;
+  box-shadow: var(--shadow-s);
+}
+.rah-discovery .activity-chip.chip-orange {
+  background: var(--orange);
+}
+.rah-discovery .activity-chip.chip-cyan {
+  background: var(--cyan);
+}
+.rah-discovery .activity-chip.chip-purple {
+  background: var(--lavender);
+}
+.rah-discovery .activity-chip.chip-green {
+  background: var(--green);
+}
+.rah-discovery .activity-chip.chip-gray {
+  background: var(--gray-chip);
+}
+.rah-global-task-card:hover {
+  background: var(--ink-05);
+}
+.rah-global-task-card .activity-chip {
+  margin: 4px 4px 0 0;
+}
+.rah-global-kanban.list-mode {
+  display: flex;
+  flex-direction: column;
+}
+.rah-global-kanban.list-mode .kcol {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  padding: 0;
+  background: transparent;
+}
+.rah-global-kanban.list-mode {
+  gap: 24px;
+}
+.rah-global-kanban.list-mode .kcol-body {
+  display: flex;
+  flex-direction: column;
+}
+.rah-search-hit {
+  text-align: left;
+  cursor: pointer;
+}
+.rah-discovery .search-box input {
+  border: 0;
+  outline: none;
+  box-shadow: none;
+  padding: 0;
+  background: transparent;
+}
+.rah-discovery .task-filter-menu {
+  max-height: min(420px, calc(100dvh - 200px));
+  overflow-y: auto;
+}
+.rah-search-hit:hover {
+  background: var(--ink-05);
+}
+.rah-search-hit .result-title {
+  display: block;
+}
+.rah-search-excerpt {
+  display: block;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  line-height: 1.625;
+  color: var(--ink-70);
+}
+.rah-search-excerpt mark {
+  background: var(--yellow);
+  font-weight: 700;
+}
+.rah-search-count {
+  color: var(--muted);
+  font-size: 12px;
+}
+.rah-search-destination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  text-align: left;
+  border: var(--bd);
+  background: var(--bg);
+  cursor: pointer;
+}
+.rah-search-destination:hover {
+  background: var(--ink-05);
+}
+.rah-search-destination svg {
+  width: 18px;
+  height: 18px;
+}
+.rah-select-filter,
+.rah-date-filter summary {
+  display: inline-flex;
+  align-items: center;
+  height: var(--raft-tasks-filter-height);
+  gap: 8px;
+  padding: var(--raft-tasks-filter-padding);
+  border: 2px solid var(--raft-tasks-filter-border-color);
+  color: var(--ink-70);
+  background: var(--bg);
+  font-size: var(--raft-tasks-filter-font-size);
+  font-weight: 700;
+}
+.rah-select-filter select {
+  color: inherit;
+  font: inherit;
+  background: transparent;
+  border: none;
+  min-width: 0;
+}
+.rah-select-filter svg,
+.rah-date-filter svg {
+  width: 14px;
+  height: 14px;
+}
+.rah-date-filter {
+  position: relative;
+}
+.rah-date-filter summary {
+  cursor: pointer;
+}
+.rah-date-filter > div {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 8px);
+  left: 0;
+  background: var(--bg);
+  border: var(--bd);
+  box-shadow: var(--shadow-m);
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+.rah-date-filter label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.rah-date-filter input {
+  border: var(--bd);
+  padding: 4px;
+  min-width: 0;
+}
+.rah-activity-open {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.rah-discovery .feed-card[data-unread="true"] .fc-title {
+  color: var(--ink);
+}
+.rah-unfollow {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+.rah-discovery .fc-actions {
+  flex-direction: column;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.rah-discovery .feed-card:hover .fc-actions,
+.rah-discovery .feed-card:focus-within .fc-actions {
+  opacity: 1;
+}
+.rah-discovery .fc-title svg {
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  vertical-align: -2px;
+  margin-right: 6px;
+  color: var(--muted);
+}
+.rah-discovery .activity-chip.rah-new-message-count {
+  background: var(--pink);
+}
+@media (hover: none) {
+  .rah-discovery .fc-actions {
+    opacity: 1;
+  }
+}
+.rah-message-location {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-bottom: var(--bd);
+  background: var(--soft-signal);
+  font-size: 12px;
+}
+.rah-message-location button {
+  margin-left: auto;
+}
+.rah-thread-follow {
+  margin-left: auto;
+  gap: 4px;
+}
+.rah-thread-follow svg {
+  width: 14px;
+  height: 14px;
+}
+.msg[data-focused="true"] {
+  background: var(--soft-signal);
+  outline: 2px solid var(--yellow);
+  outline-offset: -2px;
+}
+@media (max-width: 760px) {
+  .app.rah-global-shell,
+  .app.rah-global-shell:has(> .thread) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rah-discovery {
+    padding-bottom: calc(var(--rah-mobile-nav-h) + env(safe-area-inset-bottom));
+  }
+  .rah-mobile-nav {
+    overflow-x: auto;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(48px, 1fr);
+    grid-template-columns: none;
+  }
+  .rah-discovery .task-filter-menu {
+    width: min(220px, calc(100vw - 32px));
+  }
+  .rah-discovery .search-icon-box {
+    display: none;
+  }
+  .rah-discovery .result-item {
+    flex-direction: column;
+  }
+  .rah-discovery .result-list {
+    padding: 12px;
+  }
+  .rah-date-filter > div {
+    position: fixed;
+    top: 150px;
+    left: 12px;
+    right: 12px;
+  }
+  .rah-global-kanban.list-mode .kcol {
+    min-width: 0;
+  }
+}

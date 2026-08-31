@@ -2,7 +2,7 @@ import type { DatabaseSync } from "node:sqlite";
 
 import { TaskSchema, type Task } from "@rah-os/protocol";
 
-import { nullableText, text, type Row } from "./sqlite-row.ts";
+import { integer, nullableText, text, type Row } from "./sqlite-row.ts";
 
 export function taskDependenciesComplete(
   database: DatabaseSync,
@@ -43,14 +43,30 @@ export function taskProjectionFromRow(database: DatabaseSync, row: Row): Task {
     )
     .all(taskId)
     .map((dependency) => text(dependency, "dependency_task_id"));
+  const participants = database
+    .prepare(
+      "SELECT participant_id, role FROM task_participants WHERE task_id = ? ORDER BY participant_id, role",
+    )
+    .all(taskId);
+  const collaboratorIds = participants
+    .filter((participant) => text(participant, "role") === "collaborator")
+    .map((participant) => text(participant, "participant_id"));
+  const reviewerIds = participants
+    .filter((participant) => text(participant, "role") === "reviewer")
+    .map((participant) => text(participant, "participant_id"));
   return TaskSchema.parse({
     taskId,
     roomId: text(row, "room_id"),
     creatorId: text(row, "creator_id"),
+    collaboratorIds,
     ...(assigneeId === null ? {} : { assigneeId }),
+    sourceMessageId: text(row, "source_message_id"),
+    taskNumber: integer(row, "task_number"),
+    threadId: text(row, "thread_id"),
     title: text(row, "title"),
     ...(description === null ? {} : { description }),
     dependencyTaskIds,
+    reviewerIds,
     state: text(row, "state"),
     ...(claimedBy === null ? {} : { claimedBy }),
     ...(claimUntil === null ? {} : { claimUntil }),
@@ -65,4 +81,16 @@ export function taskProjectionFromRow(database: DatabaseSync, row: Row): Task {
     ...(cancellationReason === null ? {} : { cancellationReason }),
     ...(cancelledAt === null ? {} : { cancelledAt }),
   });
+}
+
+export function listTaskProjections(
+  database: DatabaseSync,
+  roomId: string,
+): Task[] {
+  return database
+    .prepare(
+      "SELECT * FROM tasks WHERE room_id = ? ORDER BY created_at, task_id",
+    )
+    .all(roomId)
+    .map((row) => taskProjectionFromRow(database, row));
 }

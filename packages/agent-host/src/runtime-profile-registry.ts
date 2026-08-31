@@ -686,6 +686,17 @@ export class RuntimeProfileRegistry {
     return this.#probeReportFromRow(row);
   }
 
+  getLatestProbeReport(
+    runtimeProfileRevisionId: string,
+  ): RuntimeProfileProbeReport | null {
+    const row = this.#database
+      .prepare(
+        "SELECT * FROM runtime_profile_probe_reports WHERE runtime_profile_revision_id = ? ORDER BY rowid DESC LIMIT 1",
+      )
+      .get(runtimeProfileRevisionId);
+    return row === undefined ? null : this.#probeReportFromRow(row);
+  }
+
   listProbeReports(
     runtimeProfileRevisionId?: string,
   ): RuntimeProfileProbeReport[] {

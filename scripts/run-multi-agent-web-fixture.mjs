@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { createServer } from "node:http";
 import {
   chmodSync,
   mkdirSync,
@@ -10,12 +11,16 @@ import { networkInterfaces, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { toNodeHandler } from "@modelcontextprotocol/node";
+import { createMcpHandler, Server } from "@modelcontextprotocol/server";
+
 import {
   RuntimeImplementationRegistry,
   RuntimeProfileRegistry,
 } from "@rah-os/agent-host";
 import { DaemonApplication, DaemonConfigSchema } from "@rah-os/daemon";
 import { RoomKernel } from "@rah-os/kernel";
+import { agentMemoryWorkspacePath } from "../packages/agent-host/src/agent-memory-workspace.ts";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryDirectory = join(scriptDirectory, "..");
@@ -30,7 +35,12 @@ mkdirSync(stateDirectory, { mode: 0o700 });
 const databasePath = join(stateDirectory, "room.db");
 const registryDatabasePath = join(stateDirectory, "runtime-registry.db");
 const secretPath = join(stateDirectory, "host.token");
-const hostId = "web-multi-agent-host";
+const managedMcpSecretPath = join(stateDirectory, "managed-mcp.token");
+const hostId =
+  process.env.RAH_FIXTURE_HOST_ID?.trim() || "web-multi-agent-host";
+if (/\s/u.test(hostId)) {
+  throw new Error("RAH_FIXTURE_HOST_ID must not contain whitespace");
+}
 const offerIds = ["web-multi-agent-offer-a", "web-multi-agent-offer-b"];
 const profileIds = ["web-multi-agent-profile-a", "web-multi-agent-profile-b"];
 const webHost = process.env.RAH_WEB_HOST?.trim() || "127.0.0.1";
@@ -41,8 +51,22 @@ const webPort = Number(process.env.RAH_WEB_PORT ?? "4174");
 if (!Number.isInteger(webPort) || webPort < 1 || webPort > 65_535) {
   throw new Error("RAH_WEB_PORT must be an integer between 1 and 65535");
 }
+const historyMessageCount = Number(
+  process.env.RAH_FIXTURE_HISTORY_MESSAGES ?? "0",
+);
+if (
+  !Number.isInteger(historyMessageCount) ||
+  historyMessageCount < 0 ||
+  historyMessageCount > 10_000
+) {
+  throw new Error(
+    "RAH_FIXTURE_HISTORY_MESSAGES must be an integer between 0 and 10000",
+  );
+}
 
 let application;
+let managedMcpHandler;
+let managedMcpHttpServer;
 let running;
 let seed;
 let shutdown;
@@ -71,10 +95,47 @@ try {
     workspaceId: productWorkspace.workspace.workspaceId,
   });
 
+  for (let index = 1; index <= historyMessageCount; index += 1) {
+    seed.postMessage(humanActor, {
+      basedOnRoomSeq: latestRoomSeq(seed, humanActor, productRoom.room.roomId),
+      body: `History fixture ${String(index).padStart(3, "0")}`,
+      idempotencyKey: `web-history-fixture-${String(index)}`,
+      recipients: [],
+      roomId: productRoom.room.roomId,
+    });
+  }
+
   const agents = ["Alice", "Kimi"].map((handle) =>
     seed.provisionPrincipal({ handle, kind: "agent" }),
   );
   const catalogRoom = productWorkspace.controlRoom;
+  if (process.env.RAH_FIXTURE_WORKSPACE_FILES === "1") {
+    for (const agent of agents) {
+      const home = agentMemoryWorkspacePath(
+        join(stateDirectory, "supervisors", "agent-memory"),
+        agent.principal.principalId,
+      );
+      mkdirSync(join(home, "notes"), { recursive: true, mode: 0o700 });
+      writeFileSync(
+        join(home, "MEMORY.md"),
+        `# ${agent.principal.handle}\n- [Guide](notes/guide.md)\n`,
+        { mode: 0o600 },
+      );
+      writeFileSync(
+        join(home, "notes", "guide.md"),
+        `${agent.principal.handle} private fixture note. Not a real Agent memory acceptance.\n`,
+        { mode: 0o600 },
+      );
+      writeFileSync(join(home, ".settings"), "hidden fixture, no credentials", {
+        mode: 0o600,
+      });
+      writeFileSync(
+        join(home, "preview.html"),
+        "<script>window.__workspaceUnsafe = true</script>",
+        { mode: 0o600 },
+      );
+    }
+  }
   for (const agent of agents) {
     seed.addMember(humanActor, {
       principalId: agent.principal.principalId,
@@ -139,11 +200,46 @@ try {
     roomSeq = onboarded.event.roomSeq;
   }
 
+  seed.postMessage(humanActor, {
+    basedOnRoomSeq: roomSeq,
+    body: [
+      "**Markdown gate**",
+      "",
+      "- canonical list item",
+      "- inline `Room → Agent` flow",
+      "",
+      "| Surface | Owner |",
+      "| --- | --- |",
+      "| Message | Kernel |",
+      "",
+      "Formula: $E = mc^2$",
+      "",
+      "```ts",
+      "const canonical = true;",
+      "```",
+      "",
+      "[Raft reference](https://app.raft.build)",
+      "[Local file](file:///tmp/rah-markdown-gate.ts)",
+      "![RAH icon](/rah-app-icon.svg)",
+      "",
+      "```mermaid",
+      "graph LR",
+      "  Room --> Agent",
+      "```",
+      "",
+      '<script data-markdown-attack="true">globalThis.__rahMarkdownAttack = true</script>',
+    ].join("\n"),
+    idempotencyKey: "web-multi-agent-markdown-message",
+    recipients: [],
+    roomId: productRoom.room.roomId,
+  });
+
   const hostCredential = seed.provisionHostCredential({
     hostId,
     participantIds: agents.map((agent) => agent.principal.principalId),
   });
   writeFileSync(secretPath, `${hostCredential.accessToken}\n`, { mode: 0o600 });
+  writeFileSync(managedMcpSecretPath, "fixture-mcp-secret\n", { mode: 0o600 });
 
   const registry = new RuntimeProfileRegistry({
     databasePath: registryDatabasePath,
@@ -167,8 +263,12 @@ try {
       recoveryDrivers: ["rah-process-supervisor-v1"],
       runtimeProfileId,
       staticEnv: {
-        RAH_FAKE_MODE: "worker-task",
-        RAH_FAKE_ROOM_REPLY: `我已读取同一个 Room 上下文。— ${agents[index].principal.handle}`,
+        RAH_FAKE_AUTO_TASK_MARKER: "[TASK]",
+        RAH_FAKE_MODE:
+          process.env.RAH_FIXTURE_FIRST_AGENT_INPUT === "1" && index === 0
+            ? "worker-task-input"
+            : "worker-task",
+        RAH_FAKE_ROOM_REPLY_MODE: "contextual-demo",
       },
       workspacePolicy: { allowedModes: ["in_place"] },
     });
@@ -184,6 +284,54 @@ try {
   seed.close();
   seed = undefined;
 
+  managedMcpHandler = createMcpHandler(() => {
+    const server = new Server(
+      { name: "rah-web-fixture-mcp", version: "1" },
+      { capabilities: { tools: {} } },
+    );
+    server.setRequestHandler("tools/list", async () => ({
+      tools: [
+        {
+          description: "Echo one value through the managed MCP gate.",
+          inputSchema: {
+            additionalProperties: false,
+            properties: { value: { type: "string" } },
+            required: ["value"],
+            type: "object",
+          },
+          name: "fixture.echo",
+          title: "Fixture Echo",
+        },
+      ],
+    }));
+    server.setRequestHandler("tools/call", async (request) => ({
+      content: [
+        { text: String(request.params.arguments?.value ?? ""), type: "text" },
+      ],
+      isError: false,
+    }));
+    return server;
+  });
+  const managedMcpNodeHandler = toNodeHandler(managedMcpHandler);
+  managedMcpHttpServer = createServer((request, response) => {
+    if (request.headers.authorization !== "Bearer fixture-mcp-secret") {
+      response.writeHead(401).end();
+      return;
+    }
+    if (request.method === undefined || request.url === undefined) {
+      response.writeHead(400).end();
+      return;
+    }
+    void managedMcpNodeHandler(request, response);
+  });
+  await new Promise((resolve) =>
+    managedMcpHttpServer.listen(0, "127.0.0.1", resolve),
+  );
+  const managedMcpAddress = managedMcpHttpServer.address();
+  if (managedMcpAddress === null || typeof managedMcpAddress === "string") {
+    throw new Error("managed MCP fixture did not bind a TCP address");
+  }
+
   const config = DaemonConfigSchema.parse({
     client: { bindHost: "127.0.0.1", port: 0 },
     drainTimeoutMs: 30_000,
@@ -195,6 +343,16 @@ try {
     },
     hostStaleAfterMs: 60_000,
     leaseMs: 30_000,
+    managedMcpExecutors: [
+      {
+        bearerToken: { path: managedMcpSecretPath, source: "file" },
+        executorRef: "fixture-mcp",
+        transport: {
+          kind: "streamable-http",
+          url: `http://127.0.0.1:${String(managedMcpAddress.port)}/mcp`,
+        },
+      },
+    ],
     outboxLeaseMs: 5_000,
     outboxPollIntervalMs: 20,
     outboxRetryAfterMs: 1_000,
@@ -287,6 +445,10 @@ try {
   }
   shutdown?.abort("multi-agent-web-fixture-shutdown");
   await running?.catch(() => undefined);
+  await managedMcpHandler?.close();
+  if (managedMcpHttpServer?.listening) {
+    await new Promise((resolve) => managedMcpHttpServer.close(resolve));
+  }
   try {
     seed?.close();
   } catch {

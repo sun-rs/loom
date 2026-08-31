@@ -1,16 +1,46 @@
 {
   "files": [
     {
+      "bytes": 7285,
+      "outputPath": "activity.css",
+      "sha256": "77f3f1c5c739207200e744db7facf9afe7fb6da89a7bc87d3a386069d2a5897d",
+      "sourcePath": "activity.css"
+    },
+    {
       "bytes": 5780,
       "outputPath": "channel-extras.css",
       "sha256": "b65b6a9175a58fff96965d380a81d8b0417c7266c92b07c6626608e487a8db16",
       "sourcePath": "channel-extras.css"
     },
     {
-      "bytes": 8644,
+      "bytes": 9887,
       "outputPath": "generated/raft-icons.svg",
-      "sha256": "3e2397c584b9a03e11d8314638c73e758f9c31de66d6222af9010695c87832c5",
+      "sha256": "19967aaf3cfbbbe7acf2975dfcf17c9238e2d4dbb3bc18e4695a14f9cc4ca0a8",
       "sourcePath": "generated/raft-icons.svg"
+    },
+    {
+      "bytes": 2984,
+      "outputPath": "generated/raft-official-activity.css",
+      "sha256": "654acaa56eda0fced933cae11b579fc84b23f0590c3b5dee07fa9363d13a8a0f",
+      "sourcePath": "generated/raft-official-activity.css"
+    },
+    {
+      "bytes": 6638,
+      "outputPath": "generated/raft-official-avatar-pack.json",
+      "sha256": "c18ee4d680152c6509ff8abc78aa75e9c26ac66e76b17560ff4f3439d4f39d56",
+      "sourcePath": "generated/raft-official-avatar-pack.json"
+    },
+    {
+      "bytes": 2145,
+      "outputPath": "generated/raft-official-computers.css",
+      "sha256": "7a147667163c29b599ab290de8d377d71bbe34ab39f7abe78f602590ba6654e0",
+      "sourcePath": "generated/raft-official-computers.css"
+    },
+    {
+      "bytes": 1941,
+      "outputPath": "generated/raft-official-members-page.css",
+      "sha256": "dd1ddcab5aee49f77d2b6fc01f28cef66542327a1064d9de92070255fca90d7b",
+      "sourcePath": "generated/raft-official-members-page.css"
     },
     {
       "bytes": 1982,
@@ -19,10 +49,22 @@
       "sourcePath": "generated/raft-official-overlays.css"
     },
     {
+      "bytes": 2387,
+      "outputPath": "generated/raft-official-tasks.css",
+      "sha256": "efb7606e589cdde6dc3d73b6d24cc0dcaf88a01f7297ba6ec4fa0dcaa698a398",
+      "sourcePath": "generated/raft-official-tasks.css"
+    },
+    {
       "bytes": 4537,
       "outputPath": "generated/raft-official-tokens.css",
       "sha256": "86e95e97cf9a7aa221d2b0caec82e18a5811046ab00916ae41771a05bcf1813b",
       "sourcePath": "generated/raft-official-tokens.css"
+    },
+    {
+      "bytes": 5447,
+      "outputPath": "search.css",
+      "sha256": "1640e54c953209639bdc34c2ec5038e7f6db91f1b46dd878aff4f7db408c5612",
+      "sourcePath": "search.css"
     },
     {
       "bytes": 47762,

@@ -2,9 +2,19 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  ClientAgentActivityListRequestSchema,
+  ClientAgentActivityListResponseSchema,
+  ClientAgentManageRequestSchema,
+  ClientAgentProvisionRequestSchema,
+  ClientAgentTrajectoryListRequestSchema,
+  ClientAgentTrajectoryListResponseSchema,
   ClientAgentOnboardRequestSchema,
+  ClientAgentRoomsListRequestSchema,
+  ClientAgentRoomsListResponseSchema,
   ClientAgentsListRequestSchema,
   ClientRoomCreateRequestSchema,
+  ClientDirectRoomOpenRequestSchema,
+  ClientDirectRoomOpenResponseSchema,
   ClientWorkspaceCreateRequestSchema,
   ActivationCredentialScopeSchema,
   ActivationSchema,
@@ -32,7 +42,9 @@ import {
   ClientTaskAssignRequestSchema,
   ClientTaskCancelRequestSchema,
   ClientTaskCompleteRequestSchema,
+  ClientTaskConvertRequestSchema,
   ClientTaskCreateRequestSchema,
+  ClientTaskReopenRequestSchema,
   ClientTaskUnblockRequestSchema,
   InputRequestSchema,
   InputRequestResolveRequestSchema,
@@ -49,6 +61,7 @@ import {
   WorkerMessagePostRequestSchema,
   WorkerSyncRequestSchema,
   WorkerTaskClaimRequestSchema,
+  WorkerTaskClaimMessageRequestSchema,
   WorkerTaskBlockRequestSchema,
   WorkerTaskGetRequestSchema,
   WorkerTaskGetResponseSchema,
@@ -59,10 +72,80 @@ import {
   WorkerTaskProgressRequestSchema,
   WorkerTaskRequestInputRequestSchema,
   WorkerTaskRequestInputResponseSchema,
+  WorkerTaskReviewRequestSchema,
+  WorkerTaskReviewResponseSchema,
   WorkerTaskReleaseRequestSchema,
   WorkerTaskStartRequestSchema,
   WorkerTaskSubmitRequestSchema,
 } from "../src/index.ts";
+
+test("new Agent mutations expose only Raft unattended and automatic session policies", () => {
+  const provision = {
+    basedOnRoomSeq: 1,
+    controlRoomId: "room-control",
+    displayName: "Alice",
+    handle: "alice",
+    idempotencyKey: "agent-alice-create",
+    instructions: "Work from canonical Room state.",
+    modelIntent: { fallback: "disabled" as const },
+    role: "Engineering Agent",
+    runtimeOfferId: "offer-codex",
+  };
+  assert.equal(
+    ClientAgentProvisionRequestSchema.parse(provision).toolAccessMode,
+    undefined,
+  );
+  assert.equal(
+    ClientAgentProvisionRequestSchema.parse({
+      ...provision,
+      toolAccessMode: "full_access",
+    }).toolAccessMode,
+    "full_access",
+  );
+  assert.equal(
+    ClientAgentProvisionRequestSchema.parse(provision).sessionPolicy,
+    undefined,
+  );
+  assert.equal(
+    ClientAgentProvisionRequestSchema.parse({
+      ...provision,
+      sessionPolicy: "prefer_resume",
+    }).sessionPolicy,
+    "prefer_resume",
+  );
+  for (const sessionPolicy of ["fresh", "require_resume"]) {
+    assert.throws(() =>
+      ClientAgentProvisionRequestSchema.parse({
+        ...provision,
+        sessionPolicy,
+      }),
+    );
+    assert.throws(() =>
+      ClientAgentManageRequestSchema.parse({
+        ...provision,
+        action: "configure",
+        agentDefinitionId: "agent-alice",
+        sessionPolicy,
+      }),
+    );
+  }
+  for (const toolAccessMode of ["read_only", "workspace_write"]) {
+    assert.throws(() =>
+      ClientAgentProvisionRequestSchema.parse({
+        ...provision,
+        toolAccessMode,
+      }),
+    );
+    assert.throws(() =>
+      ClientAgentManageRequestSchema.parse({
+        ...provision,
+        action: "configure",
+        agentDefinitionId: "agent-alice",
+        toolAccessMode,
+      }),
+    );
+  }
+});
 
 test("local Runtime inventory is strict and distinguishes discovery from configuration", () => {
   assert.deepEqual(LocalRuntimeInventoryRequestSchema.parse({}), {});
@@ -215,11 +298,25 @@ test("Client API v1/v2/v3 contracts are strict, actor-free, and transport-neutra
       threadId: "thread-1",
     }),
     {
-      afterSeq: 0,
       limit: 100,
       roomId: "room-1",
       threadId: "thread-1",
     },
+  );
+  assert.deepEqual(
+    ClientMessagesListRequestSchema.parse({
+      beforeSeq: 90,
+      limit: 50,
+      roomId: "room-1",
+    }),
+    { beforeSeq: 90, limit: 50, roomId: "room-1" },
+  );
+  assert.throws(() =>
+    ClientMessagesListRequestSchema.parse({
+      afterSeq: 20,
+      beforeSeq: 90,
+      roomId: "room-1",
+    }),
   );
   assert.deepEqual(
     ClientThreadCreateRequestSchema.parse({
@@ -299,6 +396,8 @@ test("Client API v1/v2/v3 contracts are strict, actor-free, and transport-neutra
       hints: false,
       inputRequestRead: true,
       inputRequestResolve: true,
+      managedMcpRead: true,
+      managedMcpWrite: true,
       memberRead: true,
       memberWrite: true,
       messageRead: true,
@@ -441,6 +540,46 @@ test("Client API v3 creates managed Workspaces and Rooms without caller-selected
   );
 });
 
+test("Client API v3 opens a Raft-shaped Direct Room without caller-selected membership", () => {
+  assert.deepEqual(
+    ClientDirectRoomOpenRequestSchema.parse({
+      basedOnControlRoomSeq: 4,
+      idempotencyKey: "direct-open-cindy",
+      peerPrincipalId: "principal-cindy",
+      workspaceId: "workspace-main",
+    }),
+    {
+      basedOnControlRoomSeq: 4,
+      idempotencyKey: "direct-open-cindy",
+      peerPrincipalId: "principal-cindy",
+      workspaceId: "workspace-main",
+    },
+  );
+  assert.deepEqual(
+    ClientDirectRoomOpenResponseSchema.parse({
+      room: {
+        createdAt: "2026-08-29T00:00:00.000Z",
+        kind: "direct",
+        name: "cindy",
+        roomId: "room-direct-cindy",
+        slug: "dm-1234",
+        workspaceId: "workspace-main",
+      },
+    }).room.kind,
+    "direct",
+  );
+  assert.throws(() =>
+    ClientDirectRoomOpenRequestSchema.parse({
+      actorId: "principal-forged",
+      basedOnControlRoomSeq: 4,
+      idempotencyKey: "direct-open-cindy",
+      memberIds: ["principal-cindy", "principal-alice"],
+      peerPrincipalId: "principal-cindy",
+      workspaceId: "workspace-main",
+    }),
+  );
+});
+
 test("Client API v3 Agent catalog onboarding resolves definitions instead of accepting participant injection", () => {
   assert.throws(() => ClientAgentsListRequestSchema.parse({}));
   assert.deepEqual(
@@ -468,6 +607,185 @@ test("Client API v3 Agent catalog onboarding resolves definitions instead of acc
       idempotencyKey: "agent-onboard-1",
       participantId: "injected-agent",
       roomId: "room-work",
+    }),
+  );
+  assert.deepEqual(
+    ClientAgentRoomsListRequestSchema.parse({
+      agentDefinitionId: "agent-definition-1",
+    }),
+    { agentDefinitionId: "agent-definition-1" },
+  );
+  assert.deepEqual(
+    ClientAgentRoomsListResponseSchema.parse({
+      rooms: [
+        {
+          createdAt: "2026-08-28T00:00:00.000Z",
+          kind: "channel",
+          name: "Engineering",
+          roomId: "room-engineering",
+          slug: "engineering",
+          workspaceId: "workspace-main",
+        },
+      ],
+    }).rooms[0]?.roomId,
+    "room-engineering",
+  );
+  assert.throws(() =>
+    ClientAgentRoomsListResponseSchema.parse({
+      rooms: [{ kind: "channel", roomId: "room-incomplete" }],
+    }),
+  );
+});
+
+test("Agent activity is a bounded canonical timeline with an opaque continuation", () => {
+  assert.deepEqual(
+    ClientAgentActivityListRequestSchema.parse({
+      agentDefinitionId: "agent-definition-1",
+    }),
+    { agentDefinitionId: "agent-definition-1", limit: 50 },
+  );
+  assert.deepEqual(
+    ClientAgentActivityListRequestSchema.parse({
+      agentDefinitionId: "agent-definition-1",
+      beforeActivityId: "event-7",
+      limit: 25,
+    }),
+    {
+      agentDefinitionId: "agent-definition-1",
+      beforeActivityId: "event-7",
+      limit: 25,
+    },
+  );
+  assert.throws(() =>
+    ClientAgentActivityListRequestSchema.parse({
+      agentDefinitionId: "agent-definition-1",
+      limit: 101,
+    }),
+  );
+  assert.throws(() =>
+    ClientAgentActivityListRequestSchema.parse({
+      agentDefinitionId: "agent-definition-1",
+      participantId: "injected-agent",
+    }),
+  );
+
+  const response = ClientAgentActivityListResponseSchema.parse({
+    activities: [
+      {
+        activityId: "event-7",
+        aggregateId: "run-1",
+        aggregateType: "run_attempt",
+        createdAt: "2026-08-28T00:00:07.000Z",
+        eventType: "run.started",
+        participantId: "agent-1",
+        relation: "runtime",
+        roomId: "room-engineering",
+        roomKind: "channel",
+        roomName: "Engineering",
+        roomSeq: 7,
+        roomSlug: "engineering",
+        source: "room_event",
+        tone: "active",
+      },
+    ],
+    nextCursor: "event-7",
+  });
+  assert.equal(response.activities[0]?.eventType, "run.started");
+  assert.throws(() =>
+    ClientAgentActivityListResponseSchema.parse({
+      activities: [
+        {
+          ...response.activities[0],
+          payload: { output: "provider transcript must not cross this API" },
+        },
+      ],
+    }),
+  );
+  const toolActivity = ClientAgentActivityListResponseSchema.parse({
+    activities: [
+      {
+        activityId: "managed-mcp-call-1",
+        completedAt: "2026-08-28T00:00:08.000Z",
+        createdAt: "2026-08-28T00:00:07.000Z",
+        isError: false,
+        managedMcpCallId: "managed-mcp-call-1",
+        mcpServerId: "mcp-room-tools",
+        participantId: "agent-1",
+        relation: "tool",
+        roomId: "room-engineering",
+        roomKind: "channel",
+        roomName: "Engineering",
+        roomSlug: "engineering",
+        runAttemptId: "run-1",
+        serverName: "RAH Room tools",
+        source: "managed_mcp_call",
+        state: "completed",
+        tone: "success",
+        toolName: "room.snapshot",
+      },
+    ],
+  }).activities[0];
+  assert.equal(toolActivity?.source, "managed_mcp_call");
+  assert.throws(() =>
+    ClientAgentActivityListResponseSchema.parse({
+      activities: [
+        {
+          ...toolActivity,
+          arguments: { roomId: "secret-room" },
+        },
+      ],
+    }),
+  );
+});
+
+test("Agent runtime trajectory is typed, bounded, and independently pageable", () => {
+  assert.deepEqual(
+    ClientAgentTrajectoryListRequestSchema.parse({
+      agentDefinitionId: "agent-definition-1",
+    }),
+    { agentDefinitionId: "agent-definition-1", limit: 50 },
+  );
+  const response = ClientAgentTrajectoryListResponseSchema.parse({
+    activities: [
+      {
+        activityId: "runtime-activity-1",
+        entry: {
+          kind: "tool_start",
+          producerFactId: "codex-item-1",
+          toolInput: "rg -n TODO src",
+          toolName: "shell",
+        },
+        observedAt: "2026-08-29T01:00:00.000Z",
+        participantId: "agent-1",
+        producerSequence: 1,
+        recordedAt: "2026-08-29T01:00:00.100Z",
+        roomId: "room-1",
+        runAttemptId: "run-1",
+        runtimeRunId: "runtime-1",
+        serverSequence: 7,
+      },
+    ],
+    nextCursor: "runtime-activity-1",
+  });
+  assert.equal(response.activities[0]?.entry.kind, "tool_start");
+  assert.throws(() =>
+    ClientAgentTrajectoryListResponseSchema.parse({
+      activities: [
+        {
+          ...response.activities[0],
+          entry: {
+            kind: "tool_start",
+            toolInput: "x".repeat(4_097),
+            toolName: "shell",
+          },
+        },
+      ],
+    }),
+  );
+  assert.throws(() =>
+    ClientAgentTrajectoryListRequestSchema.parse({
+      agentDefinitionId: "agent-definition-1",
+      participantId: "injected-agent",
     }),
   );
 });
@@ -644,19 +962,38 @@ test("Runtime recovery descriptors are opaque protocol data", () => {
 test("Task is a strict business projection with an independent claim lease", () => {
   const task = TaskSchema.parse({
     assigneeId: "agent-1",
+    collaboratorIds: ["agent-2"],
     claimedBy: "agent-1",
     claimUntil: "2026-08-25T00:05:00.000Z",
     createdAt: "2026-08-25T00:00:00.000Z",
     creatorId: "human-1",
     description: "Implement the narrow protocol",
     roomId: "room-1",
+    sourceMessageId: "message-task-1",
     state: "claimed",
     taskId: "task-1",
+    taskNumber: 1,
+    threadId: "thread-task-1",
     title: "Build Task workflow",
     updatedAt: "2026-08-25T00:00:01.000Z",
+    reviewerIds: ["agent-2"],
   });
 
   assert.equal(task.state, "claimed");
+  assert.equal(task.taskNumber, 1);
+  assert.deepEqual(task.collaboratorIds, ["agent-2"]);
+  assert.deepEqual(task.reviewerIds, ["agent-2"]);
+  assert.throws(() =>
+    TaskSchema.parse({ ...task, collaboratorIds: ["agent-2", "agent-2"] }),
+  );
+  assert.throws(() =>
+    TaskSchema.parse({ ...task, collaboratorIds: ["agent-1"] }),
+  );
+  assert.throws(() =>
+    TaskSchema.parse({ ...task, sourceMessageId: undefined }),
+  );
+  assert.throws(() => TaskSchema.parse({ ...task, taskNumber: undefined }));
+  assert.throws(() => TaskSchema.parse({ ...task, threadId: undefined }));
   assert.throws(() =>
     TaskSchema.parse({ ...task, claimUntil: undefined, claimedBy: undefined }),
   );
@@ -684,12 +1021,20 @@ test("Task Coordination v1 represents open, blocked, and cancelled work explicit
     creatorId: "human-1",
     dependencyTaskIds: [],
     roomId: "room-1",
+    sourceMessageId: "message-task-open",
     state: "todo",
     taskId: "task-open",
+    taskNumber: 1,
+    threadId: "thread-task-open",
     title: "Available to every Room Agent",
     updatedAt: "2026-08-25T00:00:00.000Z",
   });
   assert.equal(open.assigneeId, undefined);
+  assert.deepEqual(open.collaboratorIds, []);
+  assert.deepEqual(open.reviewerIds, []);
+  assert.throws(() =>
+    TaskSchema.parse({ ...open, collaboratorIds: ["agent-1"] }),
+  );
   assert.throws(() =>
     TaskSchema.parse({
       ...open,
@@ -719,9 +1064,55 @@ test("Task Coordination v1 represents open, blocked, and cancelled work explicit
   assert.throws(() =>
     TaskSchema.parse({ ...cancelled, cancellationReason: undefined }),
   );
+
+  assert.deepEqual(
+    ClientTaskReopenRequestSchema.parse({
+      basedOnRoomSeq: 14,
+      idempotencyKey: "reopen-task-1",
+      taskId: "task-open",
+    }),
+    {
+      basedOnRoomSeq: 14,
+      idempotencyKey: "reopen-task-1",
+      taskId: "task-open",
+    },
+  );
+  assert.throws(() =>
+    ClientTaskReopenRequestSchema.parse({
+      actorId: "human-injected",
+      basedOnRoomSeq: 14,
+      idempotencyKey: "reopen-task-1",
+      taskId: "task-open",
+    }),
+  );
 });
 
 test("Task Coordination worker commands are causal and actor-free", () => {
+  assert.deepEqual(
+    WorkerTaskClaimMessageRequestSchema.parse({
+      basedOnRoomSeq: 11,
+      idempotencyKey: "claim-message-1",
+      messageId: "message-1",
+      rationale:
+        "Requires persistent code changes, multiple steps, and final review",
+    }),
+    {
+      basedOnRoomSeq: 11,
+      idempotencyKey: "claim-message-1",
+      messageId: "message-1",
+      rationale:
+        "Requires persistent code changes, multiple steps, and final review",
+    },
+  );
+  assert.throws(() =>
+    WorkerTaskClaimMessageRequestSchema.parse({
+      basedOnRoomSeq: 11,
+      idempotencyKey: "claim-message-1",
+      messageId: "message-1",
+      rationale: "tool use",
+      taskId: "injected-task",
+    }),
+  );
   assert.deepEqual(
     WorkerTaskReleaseRequestSchema.parse({
       basedOnRoomSeq: 12,
@@ -762,23 +1153,82 @@ test("Task Coordination worker commands are causal and actor-free", () => {
 test("Task Coordination client commands keep actor identity server-owned", () => {
   assert.deepEqual(
     ClientTaskCreateRequestSchema.parse({
+      assigneeId: "agent-owner",
+      collaboratorIds: ["agent-collaborator"],
       dependencyTaskIds: ["task-older"],
       idempotencyKey: "create-task-new",
+      reviewerIds: ["agent-reviewer"],
       roomId: "room-1",
       title: "Coordinate the next step",
     }),
     {
+      assigneeId: "agent-owner",
+      collaboratorIds: ["agent-collaborator"],
       dependencyTaskIds: ["task-older"],
       idempotencyKey: "create-task-new",
+      reviewerIds: ["agent-reviewer"],
       roomId: "room-1",
       title: "Coordinate the next step",
     },
+  );
+  assert.throws(() =>
+    ClientTaskCreateRequestSchema.parse({
+      collaboratorIds: ["agent-collaborator"],
+      dependencyTaskIds: [],
+      idempotencyKey: "open-task-cannot-name-collaborators",
+      roomId: "room-1",
+      title: "Ambiguous ownership",
+    }),
+  );
+  assert.throws(() =>
+    ClientTaskCreateRequestSchema.parse({
+      assigneeId: "agent-owner",
+      collaboratorIds: ["agent-owner"],
+      dependencyTaskIds: [],
+      idempotencyKey: "owner-cannot-be-collaborator",
+      roomId: "room-1",
+      title: "Duplicate role",
+    }),
   );
   const causal = {
     basedOnRoomSeq: 12,
     idempotencyKey: "task-command",
     taskId: "task-1",
   };
+  assert.deepEqual(
+    ClientTaskConvertRequestSchema.parse({
+      basedOnRoomSeq: 12,
+      dependencyTaskIds: [],
+      idempotencyKey: "convert-message-to-task",
+      messageId: "message-1",
+      roomId: "room-1",
+    }),
+    {
+      basedOnRoomSeq: 12,
+      dependencyTaskIds: [],
+      idempotencyKey: "convert-message-to-task",
+      messageId: "message-1",
+      roomId: "room-1",
+    },
+  );
+  assert.throws(() =>
+    ClientTaskConvertRequestSchema.parse({
+      actorId: "human-injected",
+      basedOnRoomSeq: 12,
+      idempotencyKey: "convert-message-to-task",
+      messageId: "message-1",
+      roomId: "room-1",
+    }),
+  );
+  assert.throws(() =>
+    ClientTaskConvertRequestSchema.parse({
+      basedOnRoomSeq: 12,
+      idempotencyKey: "convert-message-to-task",
+      messageId: "message-1",
+      roomId: "room-1",
+      title: "The title must come from the canonical Message",
+    }),
+  );
   assert.deepEqual(
     ClientTaskAssignRequestSchema.parse({
       ...causal,
@@ -886,8 +1336,11 @@ test("InputRequest is canonical, targeted, and requires resolution evidence", ()
       createdAt: "2026-08-25T00:00:00.000Z",
       creatorId: "human-1",
       roomId: "room-1",
+      sourceMessageId: "message-task-1",
       state: "todo",
       taskId: "task-1",
+      taskNumber: 1,
+      threadId: "thread-task-1",
       title: "Build Task workflow",
       updatedAt: "2026-08-25T01:00:00.000Z",
     },
@@ -959,8 +1412,11 @@ test("Worker Task commands are strict and carry a causal Room sequence", () => {
       createdAt: "2026-08-25T00:00:00.000Z",
       creatorId: "human-1",
       roomId: "room-1",
+      sourceMessageId: "message-task-1",
       state: "claimed",
       taskId: "task-1",
+      taskNumber: 1,
+      threadId: "thread-task-1",
       title: "Build Task workflow",
       updatedAt: "2026-08-25T00:00:01.000Z",
     },
@@ -1002,13 +1458,109 @@ test("Worker Task commands are strict and carry a causal Room sequence", () => {
       createdAt: "2026-08-25T00:00:00.000Z",
       creatorId: "human-1",
       roomId: "room-1",
+      sourceMessageId: "message-task-1",
       state: "waiting_input",
       taskId: "task-1",
+      taskNumber: 1,
+      threadId: "thread-task-1",
       title: "Build Task workflow",
       updatedAt: "2026-08-25T00:00:02.000Z",
     },
   });
   assert.equal(inputResponse.inputRequest.state, "pending");
+});
+
+test("Task Review freezes one submission and keeps reviewer commands actor-free", () => {
+  const command = {
+    basedOnRoomSeq: 9,
+    disposition: "approved" as const,
+    idempotencyKey: "review-1",
+    summary: "The frozen submission evidence satisfies the requested scope.",
+    taskId: "task-1",
+  };
+  assert.deepEqual(WorkerTaskReviewRequestSchema.parse(command), command);
+  assert.throws(() =>
+    WorkerTaskReviewRequestSchema.parse({
+      ...command,
+      reviewerId: "injected-reviewer",
+    }),
+  );
+  assert.throws(() =>
+    WorkerTaskReviewRequestSchema.parse({
+      ...command,
+      disposition: "commented",
+    }),
+  );
+  const response = WorkerTaskReviewResponseSchema.parse({
+    activationIds: [],
+    deduplicated: false,
+    event: {
+      actorId: "agent-reviewer",
+      aggregateId: "review-1",
+      aggregateType: "review",
+      createdAt: "2026-08-29T00:00:02.000Z",
+      eventId: "event-review-1",
+      idempotencyKey: "review-1",
+      payload: {
+        basedOnRoomSeq: 9,
+        disposition: "approved",
+        messageId: "message-review-1",
+        submissionDigest:
+          "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        submissionId: "submission-1",
+        summary: command.summary,
+        taskId: "task-1",
+      },
+      roomId: "room-1",
+      roomSeq: 10,
+      schemaVersion: 1,
+      type: "review.submitted",
+    },
+    review: {
+      createdAt: "2026-08-29T00:00:02.000Z",
+      disposition: "approved",
+      messageId: "message-review-1",
+      reviewId: "review-1",
+      reviewerId: "agent-reviewer",
+      roomId: "room-1",
+      submissionDigest:
+        "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      submissionId: "submission-1",
+      summary: command.summary,
+      taskId: "task-1",
+    },
+    submission: {
+      createdAt: "2026-08-29T00:00:01.000Z",
+      messageId: "message-submit-1",
+      producerId: "agent-owner",
+      roomId: "room-1",
+      submissionDigest:
+        "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      submissionId: "submission-1",
+      submissionNumber: 1,
+      summary: "Implementation ready",
+      taskId: "task-1",
+    },
+    task: {
+      assigneeId: "agent-owner",
+      collaboratorIds: [],
+      createdAt: "2026-08-29T00:00:00.000Z",
+      creatorId: "human-1",
+      dependencyTaskIds: [],
+      reviewerIds: ["agent-reviewer"],
+      roomId: "room-1",
+      sourceMessageId: "message-root-1",
+      state: "submitted",
+      submissionSummary: "Implementation ready",
+      submittedAt: "2026-08-29T00:00:01.000Z",
+      taskId: "task-1",
+      taskNumber: 1,
+      threadId: "thread-1",
+      title: "Implement feature",
+      updatedAt: "2026-08-29T00:00:01.000Z",
+    },
+  });
+  assert.equal(response.review.submissionId, response.submission.submissionId);
 });
 
 test("Worker Task query is narrow and returns the canonical projection", () => {
@@ -1028,8 +1580,11 @@ test("Worker Task query is narrow and returns the canonical projection", () => {
       createdAt: "2026-08-25T00:00:00.000Z",
       creatorId: "human-1",
       roomId: "room-1",
+      sourceMessageId: "message-task-1",
       state: "todo",
       taskId: "task-1",
+      taskNumber: 1,
+      threadId: "thread-task-1",
       title: "Read canonical state",
       updatedAt: "2026-08-25T00:00:00.000Z",
     },

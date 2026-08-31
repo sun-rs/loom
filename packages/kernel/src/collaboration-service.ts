@@ -2,11 +2,14 @@ import type { DatabaseSync } from "node:sqlite";
 
 import {
   ActivationReasonSchema,
+  ClientWorkspaceUpdateRequestSchema,
   MembershipRoleSchema,
   ParticipantKindSchema,
   RoomSchema,
+  RoomVisibilitySchema,
   WorkspaceSchema,
   type ActivationReason,
+  type Attachment,
   type MembershipRole,
   type Room,
   type RoomMembership,
@@ -51,6 +54,34 @@ import type {
 export type MessageRecipient = {
   participantId: string;
   reason: ActivationReason;
+};
+
+export type WorkspaceRoomCreateInput = {
+  basedOnControlRoomSeq: number;
+  description?: string | undefined;
+  idempotencyKey: string;
+  initialAgentParticipantIds?: string[] | undefined;
+  kind: "channel";
+  name: string;
+  slug: string;
+  visibility?: "public" | "private" | undefined;
+  workspaceId: string;
+};
+
+export type WorkspaceRoomUpdateInput = {
+  basedOnRoomSeq: number;
+  description?: string | undefined;
+  idempotencyKey: string;
+  name: string;
+  roomId: string;
+  visibility: "public" | "private";
+};
+
+export type DirectRoomOpenInput = {
+  basedOnControlRoomSeq: number;
+  idempotencyKey: string;
+  peerPrincipalId: string;
+  workspaceId: string;
 };
 
 export class CollaborationService {
@@ -212,16 +243,61 @@ export class CollaborationService {
     };
   }
 
+  updateWorkspace(
+    actor: Principal,
+    rawInput: import("@rah-os/protocol").ClientWorkspaceUpdateRequest,
+  ): WorkspaceMutationResult {
+    const input = ClientWorkspaceUpdateRequestSchema.parse(rawInput);
+    requireHumanRoomOwner(actor);
+    const workspace = this.#workspaceFromId(input.workspaceId);
+    if (workspace.state !== "active" || !workspace.controlRoomId)
+      throw new ConflictError("Workspace is not active or has no control Room");
+    const roomId = workspace.controlRoomId;
+    requireRoomManager(this.#database, roomId, actor.principalId);
+    const previous = this.#findEvent(roomId, input.idempotencyKey);
+    if (previous !== undefined) {
+      const event = this.#events.eventFromRow(previous);
+      if (
+        event.type !== "workspace.updated" ||
+        event.actorId !== actor.principalId ||
+        event.aggregateId !== input.workspaceId ||
+        event.payload.name !== input.name ||
+        event.payload.avatarKey !== input.avatarKey
+      )
+        throw this.#idempotencyConflict(input.idempotencyKey);
+      return {
+        controlRoom: this.#roomFromId(roomId),
+        deduplicated: true,
+        event,
+        workspace,
+      };
+    }
+    this.#assertFreshContext(roomId, actor, input.basedOnControlRoomSeq);
+    this.#database
+      .prepare(
+        "UPDATE workspaces SET name = ?, avatar_key = ? WHERE workspace_id = ?",
+      )
+      .run(input.name, input.avatarKey, input.workspaceId);
+    const event = this.#events.append({
+      actorId: actor.principalId,
+      aggregateId: input.workspaceId,
+      aggregateType: "workspace",
+      idempotencyKey: input.idempotencyKey,
+      payload: { name: input.name, avatarKey: input.avatarKey },
+      roomId,
+      type: "workspace.updated",
+    });
+    return {
+      controlRoom: this.#roomFromId(roomId),
+      deduplicated: false,
+      event,
+      workspace: this.#workspaceFromId(input.workspaceId),
+    };
+  }
+
   createWorkspaceRoom(
     actor: Principal,
-    input: {
-      basedOnControlRoomSeq: number;
-      idempotencyKey: string;
-      kind: "channel";
-      name: string;
-      slug: string;
-      workspaceId: string;
-    },
+    input: WorkspaceRoomCreateInput,
   ): RoomMutationResult {
     if (actor.kind !== "human") {
       throw new ForbiddenError("only Human principals can create Rooms");
@@ -245,6 +321,22 @@ export class CollaborationService {
     }
     const name = this.#requiredLabel(input.name, "room name");
     const slug = this.#requiredLabel(input.slug, "room slug");
+    const description = input.description?.trim() || undefined;
+    const visibility = RoomVisibilitySchema.parse(
+      input.visibility ?? "private",
+    );
+    const initialAgentParticipantIds = [
+      ...new Set(input.initialAgentParticipantIds ?? []),
+    ].sort();
+    for (const principalId of initialAgentParticipantIds) {
+      const principal = this.#requirePrincipalRow(principalId);
+      if (ParticipantKindSchema.parse(principal.kind) !== "agent") {
+        throw new ForbiddenError(
+          `initial Channel participant ${principalId} is not an Agent`,
+        );
+      }
+      requireRoomMember(this.#database, workspace.controlRoomId, principalId);
+    }
     const idempotencyKey = this.#requiredLabel(
       input.idempotencyKey,
       "idempotencyKey",
@@ -259,7 +351,11 @@ export class CollaborationService {
         event.payload.workspaceId !== input.workspaceId ||
         event.payload.kind !== input.kind ||
         event.payload.name !== name ||
-        event.payload.slug !== slug
+        event.payload.slug !== slug ||
+        event.payload.description !== description ||
+        event.payload.visibility !== visibility ||
+        JSON.stringify(event.payload.initialAgentParticipantIds) !==
+          JSON.stringify(initialAgentParticipantIds)
       ) {
         throw this.#idempotencyConflict(idempotencyKey);
       }
@@ -290,9 +386,18 @@ export class CollaborationService {
     const createdAt = this.#timestamp();
     this.#database
       .prepare(
-        "INSERT INTO rooms(room_id, workspace_id, kind, slug, name, next_seq, created_at) VALUES(?, ?, ?, ?, ?, 1, ?)",
+        "INSERT INTO rooms(room_id, workspace_id, kind, slug, name, description, visibility, next_seq, created_at) VALUES(?, ?, ?, ?, ?, ?, ?, 1, ?)",
       )
-      .run(roomId, input.workspaceId, input.kind, slug, name, createdAt);
+      .run(
+        roomId,
+        input.workspaceId,
+        input.kind,
+        slug,
+        name,
+        description ?? null,
+        visibility,
+        createdAt,
+      );
     this.#database
       .prepare(
         "INSERT INTO memberships(room_id, principal_id, role, joined_at) VALUES(?, ?, 'owner', ?)",
@@ -304,14 +409,51 @@ export class CollaborationService {
       aggregateType: "room",
       idempotencyKey: `room.bootstrap:${idempotencyKey}`,
       payload: {
+        ...(description === undefined ? {} : { description }),
+        initialAgentParticipantIds,
         kind: input.kind,
         name,
         slug,
+        visibility,
         workspaceId: input.workspaceId,
       },
       roomId,
       type: "room.created",
     });
+    const initialMemberIds = new Set(initialAgentParticipantIds);
+    if (visibility === "public") {
+      const workspaceHumans = this.#database
+        .prepare(
+          `SELECT principals.principal_id
+           FROM memberships
+           JOIN principals
+             ON principals.principal_id = memberships.principal_id
+           WHERE memberships.room_id = ?
+             AND principals.kind = 'human'`,
+        )
+        .all(workspace.controlRoomId);
+      for (const row of workspaceHumans) {
+        const principalId = text(row, "principal_id");
+        if (principalId !== actor.principalId)
+          initialMemberIds.add(principalId);
+      }
+    }
+    for (const principalId of [...initialMemberIds].sort()) {
+      this.#database
+        .prepare(
+          "INSERT INTO memberships(room_id, principal_id, role, joined_at) VALUES(?, ?, 'member', ?)",
+        )
+        .run(roomId, principalId, createdAt);
+      this.#events.append({
+        actorId: actor.principalId,
+        aggregateId: principalId,
+        aggregateType: "membership",
+        idempotencyKey: `${idempotencyKey}:initial:${principalId}`,
+        payload: { participantId: principalId, role: "member" },
+        roomId,
+        type: "membership.added",
+      });
+    }
     const event = this.#events.append({
       actorId: actor.principalId,
       aggregateId: roomId,
@@ -319,9 +461,12 @@ export class CollaborationService {
       idempotencyKey,
       payload: {
         basedOnControlRoomSeq: input.basedOnControlRoomSeq,
+        ...(description === undefined ? {} : { description }),
+        initialAgentParticipantIds,
         kind: input.kind,
         name,
         slug,
+        visibility,
         workspaceId: input.workspaceId,
       },
       roomId: workspace.controlRoomId,
@@ -334,10 +479,286 @@ export class CollaborationService {
     };
   }
 
+  updateWorkspaceRoom(
+    actor: Principal,
+    input: WorkspaceRoomUpdateInput,
+  ): RoomMutationResult {
+    if (actor.kind !== "human") {
+      throw new ForbiddenError("only Human principals can update Rooms");
+    }
+    const existing = this.#requireRoom(input.roomId);
+    if (text(existing, "kind") !== "channel") {
+      throw new ConflictError("only managed Channels have editable settings");
+    }
+    requireRoomManager(this.#database, input.roomId, actor.principalId);
+    const name = this.#requiredLabel(input.name, "room name");
+    const description = input.description?.trim() || undefined;
+    const visibility = RoomVisibilitySchema.parse(input.visibility);
+    const idempotencyKey = this.#requiredLabel(
+      input.idempotencyKey,
+      "idempotencyKey",
+    );
+    const previous = this.#findEvent(input.roomId, idempotencyKey);
+    if (previous !== undefined) {
+      const event = this.#events.eventFromRow(previous);
+      if (
+        event.type !== "room.updated" ||
+        event.actorId !== actor.principalId ||
+        event.aggregateType !== "room" ||
+        event.aggregateId !== input.roomId ||
+        event.payload.name !== name ||
+        event.payload.description !== description ||
+        event.payload.visibility !== visibility
+      ) {
+        throw this.#idempotencyConflict(idempotencyKey);
+      }
+      return {
+        deduplicated: true,
+        event,
+        room: this.#roomFromId(input.roomId),
+      };
+    }
+    this.#assertFreshContext(input.roomId, actor, input.basedOnRoomSeq);
+    const previousName = text(existing, "name");
+    const previousDescription =
+      existing.description === null || existing.description === undefined
+        ? undefined
+        : text(existing, "description");
+    const previousVisibility = RoomVisibilitySchema.parse(
+      text(existing, "visibility"),
+    );
+    this.#database
+      .prepare(
+        "UPDATE rooms SET name = ?, description = ?, visibility = ? WHERE room_id = ?",
+      )
+      .run(name, description ?? null, visibility, input.roomId);
+
+    const addedHumanParticipantIds: string[] = [];
+    if (previousVisibility !== "public" && visibility === "public") {
+      const workspace = this.#workspaceFromId(text(existing, "workspace_id"));
+      if (workspace.controlRoomId === undefined) {
+        throw new ConflictError(
+          `Workspace ${workspace.workspaceId} has no control Room`,
+        );
+      }
+      const workspaceHumans = this.#database
+        .prepare(
+          `SELECT principals.principal_id
+           FROM memberships
+           JOIN principals
+             ON principals.principal_id = memberships.principal_id
+           WHERE memberships.room_id = ?
+             AND principals.kind = 'human'
+             AND NOT EXISTS (
+               SELECT 1
+               FROM memberships AS channel_memberships
+               WHERE channel_memberships.room_id = ?
+                 AND channel_memberships.principal_id = principals.principal_id
+             )
+           ORDER BY principals.principal_id`,
+        )
+        .all(workspace.controlRoomId, input.roomId);
+      const joinedAt = this.#timestamp();
+      for (const row of workspaceHumans) {
+        const principalId = text(row, "principal_id");
+        this.#database
+          .prepare(
+            "INSERT INTO memberships(room_id, principal_id, role, joined_at) VALUES(?, ?, 'member', ?)",
+          )
+          .run(input.roomId, principalId, joinedAt);
+        this.#events.append({
+          actorId: actor.principalId,
+          aggregateId: principalId,
+          aggregateType: "membership",
+          idempotencyKey: `${idempotencyKey}:public:${principalId}`,
+          payload: {
+            participantId: principalId,
+            reason: "channel_became_public",
+            role: "member",
+          },
+          roomId: input.roomId,
+          type: "membership.added",
+        });
+        addedHumanParticipantIds.push(principalId);
+      }
+    }
+    const event = this.#events.append({
+      actorId: actor.principalId,
+      aggregateId: input.roomId,
+      aggregateType: "room",
+      idempotencyKey,
+      payload: {
+        addedHumanParticipantIds,
+        basedOnRoomSeq: input.basedOnRoomSeq,
+        ...(description === undefined ? {} : { description }),
+        name,
+        ...(previousDescription === undefined ? {} : { previousDescription }),
+        previousName,
+        previousVisibility,
+        visibility,
+      },
+      roomId: input.roomId,
+      type: "room.updated",
+    });
+    return {
+      deduplicated: false,
+      event,
+      room: this.#roomFromId(input.roomId),
+    };
+  }
+
+  openDirectRoom(actor: Principal, input: DirectRoomOpenInput): Room {
+    if (actor.kind !== "human") {
+      throw new ForbiddenError("only Human principals can open Direct Rooms");
+    }
+    if (input.peerPrincipalId === actor.principalId) {
+      throw new ConflictError(
+        "a principal cannot open a Direct Room with itself",
+      );
+    }
+    const workspace = this.#workspaceFromId(input.workspaceId);
+    if (workspace.state !== "active") {
+      throw new ConflictError(`Workspace ${input.workspaceId} is archived`);
+    }
+    if (workspace.controlRoomId === undefined) {
+      throw new ConflictError(
+        `Workspace ${input.workspaceId} is not managed by a control Room`,
+      );
+    }
+    requireRoomMember(
+      this.#database,
+      workspace.controlRoomId,
+      actor.principalId,
+    );
+    const peer = this.#requirePrincipalRow(input.peerPrincipalId);
+    if (
+      this.#membershipRow(workspace.controlRoomId, input.peerPrincipalId) ===
+      undefined
+    ) {
+      throw new ForbiddenError(
+        `Direct Room peer ${input.peerPrincipalId} must belong to the same Workspace`,
+      );
+    }
+    const idempotencyKey = this.#requiredLabel(
+      input.idempotencyKey,
+      "idempotencyKey",
+    );
+    const previous = this.#findEvent(workspace.controlRoomId, idempotencyKey);
+    if (previous !== undefined) {
+      const event = this.#events.eventFromRow(previous);
+      if (
+        event.type !== "workspace.direct_opened" ||
+        event.actorId !== actor.principalId ||
+        event.aggregateType !== "room" ||
+        event.payload.peerPrincipalId !== input.peerPrincipalId ||
+        event.payload.workspaceId !== input.workspaceId
+      ) {
+        throw this.#idempotencyConflict(idempotencyKey);
+      }
+      return this.#roomFromId(event.aggregateId);
+    }
+
+    const actorSortsFirst =
+      actor.principalId.localeCompare(input.peerPrincipalId) < 0;
+    const leftPrincipalId = actorSortsFirst
+      ? actor.principalId
+      : input.peerPrincipalId;
+    const rightPrincipalId = actorSortsFirst
+      ? input.peerPrincipalId
+      : actor.principalId;
+    const existingPair = this.#database
+      .prepare(
+        `SELECT room_id FROM direct_room_pairs
+         WHERE workspace_id = ?
+           AND left_principal_id = ?
+           AND right_principal_id = ?`,
+      )
+      .get(input.workspaceId, leftPrincipalId, rightPrincipalId);
+    if (existingPair !== undefined) {
+      return this.#roomFromId(text(existingPair, "room_id"));
+    }
+
+    this.#assertFreshContext(
+      workspace.controlRoomId,
+      actor,
+      input.basedOnControlRoomSeq,
+    );
+    const roomId = this.#createId("room");
+    const createdAt = this.#timestamp();
+    const peerIdentity = this.#database
+      .prepare(
+        `SELECT COALESCE(
+           json_extract(agent_revision.definition_json, '$.displayName'),
+           principals.handle
+         ) AS display_name
+         FROM principals
+         LEFT JOIN agent_definitions
+           ON agent_definitions.participant_id = principals.principal_id
+          AND agent_definitions.control_room_id = ?
+         LEFT JOIN agent_definition_revisions AS agent_revision
+           ON agent_revision.agent_definition_revision_id =
+              agent_definitions.current_revision_id
+         WHERE principals.principal_id = ?`,
+      )
+      .get(workspace.controlRoomId, input.peerPrincipalId);
+    const name = this.#requiredLabel(
+      peerIdentity === undefined
+        ? text(peer, "handle")
+        : text(peerIdentity, "display_name"),
+      "peer display name",
+    );
+    const slug = `dm-${roomId}`;
+    this.#database
+      .prepare(
+        "INSERT INTO rooms(room_id, workspace_id, kind, slug, name, next_seq, created_at) VALUES(?, ?, 'direct', ?, ?, 1, ?)",
+      )
+      .run(roomId, input.workspaceId, slug, name, createdAt);
+    const insertMembership = this.#database.prepare(
+      "INSERT INTO memberships(room_id, principal_id, role, joined_at) VALUES(?, ?, 'member', ?)",
+    );
+    insertMembership.run(roomId, actor.principalId, createdAt);
+    insertMembership.run(roomId, input.peerPrincipalId, createdAt);
+    this.#database
+      .prepare(
+        "INSERT INTO direct_room_pairs(workspace_id, left_principal_id, right_principal_id, room_id) VALUES(?, ?, ?, ?)",
+      )
+      .run(input.workspaceId, leftPrincipalId, rightPrincipalId, roomId);
+    this.#events.append({
+      actorId: actor.principalId,
+      aggregateId: roomId,
+      aggregateType: "room",
+      idempotencyKey: `room.bootstrap:${idempotencyKey}`,
+      payload: {
+        kind: "direct",
+        name,
+        participantIds: [leftPrincipalId, rightPrincipalId],
+        slug,
+        workspaceId: input.workspaceId,
+      },
+      roomId,
+      type: "room.created",
+    });
+    this.#events.append({
+      actorId: actor.principalId,
+      aggregateId: roomId,
+      aggregateType: "room",
+      idempotencyKey,
+      payload: {
+        basedOnControlRoomSeq: input.basedOnControlRoomSeq,
+        peerPrincipalId: input.peerPrincipalId,
+        workspaceId: input.workspaceId,
+      },
+      roomId: workspace.controlRoomId,
+      type: "workspace.direct_opened",
+    });
+    return this.#roomFromId(roomId);
+  }
+
   addMember(
     actorId: string,
     input: { principalId: string; roomId: string },
   ): void {
+    this.#assertMutableMembershipRoom(input.roomId);
     requireRoomManager(this.#database, input.roomId, actorId);
     this.#requirePrincipal(input.principalId);
     const joinedAt = this.#timestamp();
@@ -365,6 +786,7 @@ export class CollaborationService {
            workspaces.workspace_id,
            workspaces.slug AS workspace_slug,
            workspaces.name AS workspace_name,
+           workspaces.avatar_key AS workspace_avatar_key,
            workspaces.state AS workspace_state,
            workspaces.created_at AS workspace_created_at,
            workspaces.archived_at AS workspace_archived_at,
@@ -385,9 +807,10 @@ export class CollaborationService {
   listRooms(actorId: string, input: { workspaceId?: string } = {}): Room[] {
     return this.#database
       .prepare(
-        `SELECT rooms.*
+        `SELECT rooms.*, direct_room_pairs.left_principal_id, direct_room_pairs.right_principal_id
          FROM rooms
          JOIN memberships ON memberships.room_id = rooms.room_id
+         LEFT JOIN direct_room_pairs ON direct_room_pairs.room_id = rooms.room_id
          WHERE memberships.principal_id = ?
            AND (? IS NULL OR rooms.workspace_id = ?)
          ORDER BY rooms.slug, rooms.room_id`,
@@ -416,6 +839,7 @@ export class CollaborationService {
       roomId: string;
     },
   ): RoomMembershipMutationResult {
+    this.#assertMutableMembershipRoom(input.roomId);
     const actorRole = requireRoomManager(
       this.#database,
       input.roomId,
@@ -473,6 +897,7 @@ export class CollaborationService {
       roomId: string;
     },
   ): RoomMembershipMutationResult {
+    this.#assertMutableMembershipRoom(input.roomId);
     requireRoomOwner(this.#database, input.roomId, actor.principalId);
     const role = MembershipRoleSchema.parse(input.role);
     this.#requireRolePrincipal(input.principalId, role);
@@ -528,6 +953,7 @@ export class CollaborationService {
       roomId: string;
     },
   ): RoomMembershipRemovalResult {
+    this.#assertMutableMembershipRoom(input.roomId);
     const previous = this.#findEvent(input.roomId, input.idempotencyKey);
     if (previous !== undefined) {
       const event = this.#events.eventFromRow(previous);
@@ -607,46 +1033,125 @@ export class CollaborationService {
     actorId: string,
     input: {
       afterSeq?: number;
+      beforeSeq?: number;
       limit?: number;
       roomId: string;
       threadId?: string;
     },
   ): MessagePage {
     requireRoomMember(this.#database, input.roomId, actorId);
-    const afterSeq = input.afterSeq ?? 0;
     const limit = input.limit ?? 100;
-    if (!Number.isInteger(afterSeq) || afterSeq < 0) {
+    if (
+      input.afterSeq !== undefined &&
+      (!Number.isInteger(input.afterSeq) || input.afterSeq < 0)
+    ) {
       throw new Error("afterSeq must be a non-negative integer");
+    }
+    if (
+      input.beforeSeq !== undefined &&
+      (!Number.isInteger(input.beforeSeq) || input.beforeSeq <= 0)
+    ) {
+      throw new Error("beforeSeq must be a positive integer");
+    }
+    if (input.afterSeq !== undefined && input.beforeSeq !== undefined) {
+      throw new Error(
+        "message pagination accepts either afterSeq or beforeSeq",
+      );
     }
     if (!Number.isInteger(limit) || limit <= 0 || limit > 500) {
       throw new Error("limit must be between 1 and 500");
     }
-    const rows = this.#database
-      .prepare(
-        `SELECT messages.*, room_events.room_seq FROM messages
+    const projectionSql = `WITH projected_messages AS (
+         SELECT messages.*, room_events.room_seq FROM messages
          JOIN room_events
            ON room_events.room_id = messages.room_id
-          AND room_events.aggregate_type = 'message'
-          AND room_events.aggregate_id = messages.message_id
-          AND room_events.type = 'message.posted'
+          AND (
+            room_events.aggregate_type = 'message'
+            AND room_events.aggregate_id = messages.message_id
+            AND room_events.type = 'message.posted'
+            OR room_events.aggregate_type = 'task'
+            AND room_events.type = 'task.created'
+            AND NOT EXISTS (
+              SELECT 1 FROM room_events AS source_message_events
+              WHERE source_message_events.room_id = messages.room_id
+                AND source_message_events.aggregate_type = 'message'
+                AND source_message_events.aggregate_id = messages.message_id
+                AND source_message_events.type = 'message.posted'
+            )
+            AND EXISTS (
+              SELECT 1 FROM tasks
+              WHERE tasks.task_id = room_events.aggregate_id
+                AND tasks.source_message_id = messages.message_id
+            )
+            OR room_events.aggregate_type = 'task'
+            AND room_events.type IN ('task.progressed', 'task.submitted')
+            AND json_extract(room_events.payload_json, '$.messageId') =
+              messages.message_id
+            OR room_events.aggregate_type = 'review'
+            AND room_events.type = 'review.submitted'
+            AND json_extract(room_events.payload_json, '$.messageId') =
+              messages.message_id
+          )
          WHERE messages.room_id = ?
-           AND room_events.room_seq > ?
            AND (? IS NULL OR messages.thread_id = ?)
-         ORDER BY room_events.room_seq, messages.message_id
+       )`;
+    const parameters = [
+      input.roomId,
+      input.threadId ?? null,
+      input.threadId ?? null,
+    ];
+    const direction =
+      input.beforeSeq !== undefined
+        ? "before"
+        : input.afterSeq !== undefined
+          ? "after"
+          : "latest";
+    const boundarySql =
+      direction === "before"
+        ? "WHERE room_seq < ?"
+        : direction === "after"
+          ? "WHERE room_seq > ?"
+          : "";
+    const boundaryParameters =
+      direction === "before"
+        ? [input.beforeSeq!]
+        : direction === "after"
+          ? [input.afterSeq!]
+          : [];
+    const descending = direction !== "after";
+    const rows = this.#database
+      .prepare(
+        `${projectionSql}
+         SELECT * FROM projected_messages
+         ${boundarySql}
+         ORDER BY room_seq ${descending ? "DESC" : "ASC"},
+                  message_id ${descending ? "DESC" : "ASC"}
          LIMIT ?`,
       )
-      .all(
-        input.roomId,
-        afterSeq,
-        input.threadId ?? null,
-        input.threadId ?? null,
-        limit + 1,
-      );
+      .all(...parameters, ...boundaryParameters, limit + 1);
     const pageRows = rows.slice(0, limit);
+    if (descending) pageRows.reverse();
     const messages = pageRows.map((row) => messageProjectionFromRow(row));
+    const requestBoundary = input.beforeSeq ?? input.afterSeq ?? 0;
+    const cursorBefore = messages.at(0)?.roomSeq ?? requestBoundary;
+    const cursorAfter = messages.at(-1)?.roomSeq ?? requestBoundary;
+    const hasMessageAcrossBoundary = (
+      comparator: "<" | ">",
+      boundary: number,
+    ): boolean =>
+      this.#database
+        .prepare(
+          `${projectionSql}
+           SELECT 1 AS present FROM projected_messages
+           WHERE room_seq ${comparator} ?
+           LIMIT 1`,
+        )
+        .get(...parameters, boundary) !== undefined;
     return {
-      cursorAfter: messages.at(-1)?.roomSeq ?? afterSeq,
-      hasMore: rows.length > limit,
+      cursorAfter,
+      cursorBefore,
+      hasMoreAfter: hasMessageAcrossBoundary(">", cursorAfter),
+      hasMoreBefore: hasMessageAcrossBoundary("<", cursorBefore),
       messages,
     };
   }
@@ -837,6 +1342,7 @@ export class CollaborationService {
   postMessage(
     actor: Principal,
     input: {
+      attachments?: Attachment[];
       basedOnRoomSeq?: number;
       body: string;
       idempotencyKey: string;
@@ -846,7 +1352,9 @@ export class CollaborationService {
   ): MessageMutationResult {
     requireRoomMember(this.#database, input.roomId, actor.principalId);
     const body = input.body.trim();
-    if (body.length === 0) throw new Error("message body is required");
+    const attachments = input.attachments ?? [];
+    if (body.length === 0 && attachments.length === 0)
+      throw new Error("message body or attachment is required");
     if (input.idempotencyKey.trim().length === 0) {
       throw new Error("idempotencyKey is required");
     }
@@ -871,6 +1379,8 @@ export class CollaborationService {
         event.actorId !== actor.principalId ||
         event.payload.threadId !== undefined ||
         event.payload.body !== body ||
+        JSON.stringify(event.payload.attachments ?? []) !==
+          JSON.stringify(attachments) ||
         JSON.stringify(event.payload.recipients) !==
           JSON.stringify(recipientPayload)
       ) {
@@ -885,9 +1395,16 @@ export class CollaborationService {
     const createdAt = this.#timestamp();
     this.#database
       .prepare(
-        "INSERT INTO messages(message_id, room_id, actor_id, body, created_at) VALUES(?, ?, ?, ?, ?)",
+        "INSERT INTO messages(message_id, room_id, actor_id, body, created_at, attachments_json) VALUES(?, ?, ?, ?, ?, ?)",
       )
-      .run(messageId, input.roomId, actor.principalId, body, createdAt);
+      .run(
+        messageId,
+        input.roomId,
+        actor.principalId,
+        body,
+        createdAt,
+        JSON.stringify(attachments),
+      );
     const event = this.#events.append({
       actorId: actor.principalId,
       aggregateId: messageId,
@@ -896,6 +1413,7 @@ export class CollaborationService {
       payload: {
         body,
         messageId,
+        ...(attachments.length ? { attachments } : {}),
         ...(input.basedOnRoomSeq === undefined
           ? {}
           : { basedOnRoomSeq: input.basedOnRoomSeq }),
@@ -920,6 +1438,7 @@ export class CollaborationService {
       body: string;
       idempotencyKey: string;
       roomId: string;
+      threadId?: string;
     },
   ): MessageMutationResult {
     requireRoomMember(this.#database, input.roomId, actor.principalId);
@@ -949,7 +1468,7 @@ export class CollaborationService {
       if (
         event.type !== "message.posted" ||
         event.actorId !== actor.principalId ||
-        event.payload.threadId !== undefined ||
+        event.payload.threadId !== input.threadId ||
         event.payload.activationId !== input.activationId ||
         event.payload.basedOnRoomSeq !== input.basedOnRoomSeq ||
         event.payload.body !== body ||
@@ -965,11 +1484,28 @@ export class CollaborationService {
 
     const messageId = this.#createId("message");
     const createdAt = this.#timestamp();
+    if (input.threadId !== undefined) {
+      this.#threadFromRoom(input.threadId, input.roomId);
+    }
     this.#database
       .prepare(
-        "INSERT INTO messages(message_id, room_id, actor_id, body, created_at) VALUES(?, ?, ?, ?, ?)",
+        "INSERT INTO messages(message_id, room_id, actor_id, thread_id, body, created_at) VALUES(?, ?, ?, ?, ?, ?)",
       )
-      .run(messageId, input.roomId, actor.principalId, body, createdAt);
+      .run(
+        messageId,
+        input.roomId,
+        actor.principalId,
+        input.threadId ?? null,
+        body,
+        createdAt,
+      );
+    if (input.threadId !== undefined) {
+      this.#database
+        .prepare(
+          "UPDATE threads SET reply_count = reply_count + 1, last_reply_at = ? WHERE thread_id = ?",
+        )
+        .run(createdAt, input.threadId);
+    }
     const event = this.#events.append({
       actorId: actor.principalId,
       aggregateId: messageId,
@@ -982,6 +1518,7 @@ export class CollaborationService {
         messageId,
         recipientIds: [],
         recipients: [],
+        ...(input.threadId === undefined ? {} : { threadId: input.threadId }),
       },
       roomId: input.roomId,
       type: "message.posted",
@@ -999,7 +1536,11 @@ export class CollaborationService {
 
   #roomFromId(roomId: string): Room {
     const room = this.#database
-      .prepare("SELECT * FROM rooms WHERE room_id = ?")
+      .prepare(
+        `SELECT rooms.*, direct_room_pairs.left_principal_id, direct_room_pairs.right_principal_id
+        FROM rooms LEFT JOIN direct_room_pairs ON direct_room_pairs.room_id = rooms.room_id
+        WHERE rooms.room_id = ?`,
+      )
       .get(roomId);
     if (room === undefined) {
       throw new NotFoundError(`Room ${roomId} was not found`);
@@ -1014,6 +1555,7 @@ export class CollaborationService {
            workspaces.workspace_id,
            workspaces.slug AS workspace_slug,
            workspaces.name AS workspace_name,
+           workspaces.avatar_key AS workspace_avatar_key,
            workspaces.state AS workspace_state,
            workspaces.created_at AS workspace_created_at,
            workspaces.archived_at AS workspace_archived_at,
@@ -1153,6 +1695,12 @@ export class CollaborationService {
     }
     if (basedOnRoomSeq !== latestRoomSeq) {
       throw new StaleContextError(basedOnRoomSeq, latestRoomSeq);
+    }
+  }
+
+  #assertMutableMembershipRoom(roomId: string): void {
+    if (text(this.#requireRoom(roomId), "kind") === "direct") {
+      throw new ConflictError("Direct Room membership is immutable");
     }
   }
 

@@ -4,6 +4,7 @@ export {
   DaemonConfigV3Schema,
   DaemonConfigV4Schema,
   HostCredentialReferenceSchema,
+  ManagedMcpExecutorConfigSchema,
 } from "./config.ts";
 export type {
   DaemonConfig,
@@ -11,6 +12,7 @@ export type {
   DaemonConfigV3,
   DaemonConfigV4,
   HostCredentialReference,
+  ManagedMcpExecutorConfig,
 } from "./config.ts";
 export {
   DAEMON_BUILD_VERSION,
@@ -26,6 +28,8 @@ export {
 export type { ContentFreeWakePublisher } from "./outbox-wake-dispatcher.ts";
 export { FileSecretProvider } from "./secret-provider.ts";
 export type { SecretProvider } from "./secret-provider.ts";
+export { NodeManagedMcpExecutorRegistry } from "./managed-mcp-executor-registry.ts";
+export type { ManagedMcpExecutorConnection } from "./managed-mcp-executor-registry.ts";
 export {
   buildLocalRuntimeInventoryResponse,
   configuredRuntimeSnapshot,
@@ -48,3 +52,67 @@ export {
   type PreparedLocalWorkbench,
 } from "./local-workbench-bootstrap.ts";
 export { LocalWorkbenchGateway } from "./local-workbench-gateway.ts";
+export {
+  startLocalCoreWorkbench,
+  type LocalCoreLanDescriptor,
+  type LocalCoreLoopbackDescriptor,
+  type LocalCoreRuntimeDescriptor,
+  type LocalCoreWorkbenchMode,
+  type RunningLocalCoreWorkbench,
+} from "./local-core-workbench.ts";
+export {
+  runLocalCoreCommand,
+  runLocalCoreService,
+  type LocalCoreCommandRuntime,
+} from "./local-core-cli-dispatch.ts";
+export {
+  inspectLocalCoreProduct,
+  type InspectedLocalCoreProduct,
+} from "./local-core-product.ts";
+export {
+  LanWorkbenchAccessStore,
+  type LanWorkbenchDevice,
+  type LanWorkbenchPairingCode,
+} from "./lan-workbench-access-store.ts";
+export { LanWorkbenchGateway } from "./lan-workbench-gateway.ts";
+export {
+  inspectLanCertificate,
+  provisionLanCertificate,
+  type ProvisionedLanCertificate,
+} from "./lan-certificate-provisioning.ts";
+export {
+  diagnoseLocalCore,
+  type LocalCoreDoctorCheck,
+  type LocalCoreDoctorReport,
+} from "./local-core-doctor.ts";
+export {
+  activateMacOSLocalCoreLaunchAgent,
+  createMacOSLocalCoreLaunchAgentPlan,
+  deactivateMacOSLocalCoreLaunchAgent,
+  describeMacOSLocalCoreRunner,
+  inspectMacOSLocalCoreLaunchAgent,
+  installMacOSLocalCore,
+  proveMacOSLocalCoreReady,
+  stageMacOSLocalCoreLaunchAgent,
+  uninstallMacOSLocalCore,
+  verifyMacOSLocalCoreLaunchAgentPlan,
+} from "./macos-local-core-launch-agent.ts";
+export type {
+  MacOSLocalCoreActivationResult,
+  MacOSLocalCoreInstallationResult,
+  MacOSLocalCoreLaunchAgentPlan,
+  MacOSLocalCoreLaunchAgentPlanOptions,
+  MacOSLocalCoreMode,
+  MacOSLocalCoreStageResult,
+  MacOSLocalCoreUninstallResult,
+} from "./macos-local-core-launch-agent.ts";
+export {
+  MACOS_LOCAL_CORE_INSTALL_USAGE,
+  parseMacOSLocalCoreInstallArguments,
+} from "./macos-local-core-install-command.ts";
+export type { MacOSLocalCoreInstallArguments } from "./macos-local-core-install-command.ts";
+export {
+  runMacOSLocalCoreProductOperator,
+  type MacOSLocalCoreProductOperatorResult,
+  type MacOSLocalCoreProductOperatorRuntime,
+} from "./macos-local-core-product-operator.ts";

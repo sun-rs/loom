@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  ClientRoomCreateRequestSchema,
+  ClientRoomUpdateRequestSchema,
   MembershipRoleSchema,
   MessageSchema,
   RoomKindSchema,
@@ -10,6 +12,39 @@ import {
   ThreadSchema,
   WorkspaceSchema,
 } from "../src/index.ts";
+
+test("managed Channel creation carries Raft metadata and initial Agents", () => {
+  const input = {
+    basedOnControlRoomSeq: 3,
+    description: "Coordinate the release.",
+    idempotencyKey: "create-release-room",
+    initialAgentParticipantIds: ["agent-alice", "agent-kimi"],
+    kind: "channel" as const,
+    name: "Release",
+    slug: "release",
+    visibility: "private" as const,
+    workspaceId: "workspace-main",
+  };
+  assert.deepEqual(ClientRoomCreateRequestSchema.parse(input), input);
+});
+
+test("managed Channel update carries the latest Room sequence and editable Raft metadata", () => {
+  const input = {
+    basedOnRoomSeq: 7,
+    description: "Coordinate the release train.",
+    idempotencyKey: "update-release-room",
+    name: "Release train",
+    roomId: "room-release",
+    visibility: "public" as const,
+  };
+  assert.deepEqual(ClientRoomUpdateRequestSchema.parse(input), input);
+  assert.throws(() =>
+    ClientRoomUpdateRequestSchema.parse({
+      ...input,
+      name: "",
+    }),
+  );
+});
 
 test("Workspace, Room roles, and Thread are strict provider-independent collaboration objects", () => {
   assert.deepEqual(

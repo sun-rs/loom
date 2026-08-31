@@ -20,9 +20,14 @@ import {
   WorkerErrorResponseSchema,
   WorkerMessageMutationResponseSchema,
   WorkerMessagePostRequestSchema,
+  WorkerManagedMcpCallRequestSchema,
+  WorkerManagedMcpCallResponseSchema,
+  WorkerManagedMcpCatalogRequestSchema,
+  WorkerManagedMcpCatalogResponseSchema,
   WorkerSyncRequestSchema,
   WorkerSyncResponseSchema,
   WorkerTaskClaimRequestSchema,
+  WorkerTaskClaimMessageRequestSchema,
   WorkerTaskBlockRequestSchema,
   WorkerTaskGetRequestSchema,
   WorkerTaskGetResponseSchema,
@@ -33,6 +38,8 @@ import {
   WorkerTaskProgressRequestSchema,
   WorkerTaskRequestInputRequestSchema,
   WorkerTaskRequestInputResponseSchema,
+  WorkerTaskReviewRequestSchema,
+  WorkerTaskReviewResponseSchema,
   WorkerTaskReleaseRequestSchema,
   WorkerTaskStartRequestSchema,
   WorkerTaskSubmitRequestSchema,
@@ -40,10 +47,13 @@ import {
   type Task,
 } from "@rah-os/protocol";
 
+import type { ManagedMcpExecutorPort } from "./managed-mcp-executor.ts";
+
 export type { ActivationCredentialScope } from "@rah-os/protocol";
 
 export type IssuedActivationCredential = {
   accessToken: string;
+  expiresAt: string;
   revoke: () => void;
 };
 
@@ -52,6 +62,8 @@ export type WorkerApplicationServiceOptions = {
   now?: () => Date;
   taskClaimHeartbeatIntervalMs?: number;
   taskClaimLeaseMs?: number;
+  managedMcpExecutor?: ManagedMcpExecutorPort;
+  managedMcpTimeoutMs?: number;
 };
 
 type WorkerGrant = {
@@ -75,24 +87,30 @@ class HttpRequestError extends Error {
   }
 }
 
-const MAX_BODY_BYTES = 64 * 1_024;
+const MAX_BODY_BYTES = 128 * 1_024;
 const DEFAULT_CREDENTIAL_TTL_MS = 30 * 60_000;
 const DEFAULT_TASK_CLAIM_LEASE_MS = 5 * 60_000;
+const DEFAULT_MANAGED_MCP_TIMEOUT_MS = 25_000;
 
-const WORKER_ROUTES = new Set([
+export const WORKER_HTTP_ROUTE_PATHS = [
   "/v1/worker/acknowledge",
   "/v1/worker/messages/post",
+  "/v1/worker/mcp/call",
+  "/v1/worker/mcp/tools",
   "/v1/worker/sync",
   "/v1/worker/tasks/claim",
+  "/v1/worker/tasks/claim-message",
   "/v1/worker/tasks/block",
   "/v1/worker/tasks/get",
   "/v1/worker/tasks/input-status",
   "/v1/worker/tasks/progress",
   "/v1/worker/tasks/release",
   "/v1/worker/tasks/request-input",
+  "/v1/worker/tasks/review",
   "/v1/worker/tasks/start",
   "/v1/worker/tasks/submit",
-]);
+] as const;
+const WORKER_ROUTES = new Set<string>(WORKER_HTTP_ROUTE_PATHS);
 
 export class WorkerApplicationService {
   readonly #grants = new Map<string, WorkerGrant>();
@@ -100,11 +118,22 @@ export class WorkerApplicationService {
   readonly #now: () => Date;
   readonly #taskClaimHeartbeatIntervalMs: number;
   readonly #taskClaimLeaseMs: number;
+  readonly #managedMcpExecutor: ManagedMcpExecutorPort | undefined;
+  readonly #managedMcpTimeoutMs: number;
   #origin: string | undefined;
   #server: Server | undefined;
 
   constructor(options: WorkerApplicationServiceOptions) {
     this.#kernel = options.kernel;
+    this.#managedMcpExecutor = options.managedMcpExecutor;
+    this.#managedMcpTimeoutMs =
+      options.managedMcpTimeoutMs ?? DEFAULT_MANAGED_MCP_TIMEOUT_MS;
+    if (
+      !Number.isInteger(this.#managedMcpTimeoutMs) ||
+      this.#managedMcpTimeoutMs <= 0
+    ) {
+      throw new Error("managedMcpTimeoutMs must be a positive integer");
+    }
     this.#now = options.now ?? (() => new Date());
     this.#taskClaimLeaseMs =
       options.taskClaimLeaseMs ?? DEFAULT_TASK_CLAIM_LEASE_MS;
@@ -207,11 +236,12 @@ export class WorkerApplicationService {
 
     const accessToken = `rah_wat_${randomBytes(32).toString("base64url")}`;
     const tokenHash = hashToken(accessToken);
+    const expiresAtMs = this.#now().getTime() + ttlMs;
     this.#grants.set(tokenHash, {
       claimedTaskIds: new Set<string>(),
       deliveredCursors: new Set<number>(),
       execution,
-      expiresAtMs: this.#now().getTime() + ttlMs,
+      expiresAtMs,
       knownRoomSeqs: new Set<number>(),
       scope: {
         activationId: scope.activationId,
@@ -225,6 +255,7 @@ export class WorkerApplicationService {
     });
     return {
       accessToken,
+      expiresAt: new Date(expiresAtMs).toISOString(),
       revoke: () => {
         this.#deleteGrant(tokenHash);
       },
@@ -249,6 +280,86 @@ export class WorkerApplicationService {
 
     const grant = this.#authenticate(request);
     const body = await readJsonObject(request);
+    if (route === "/v1/worker/mcp/tools") {
+      parseWorkerRequest(WorkerManagedMcpCatalogRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        WorkerManagedMcpCatalogResponseSchema.parse(
+          this.#kernel.managedMcp.listCatalog(grant.execution),
+        ),
+      );
+      return;
+    }
+    if (route === "/v1/worker/mcp/call") {
+      const command = parseWorkerRequest(
+        WorkerManagedMcpCallRequestSchema,
+        body,
+      );
+      const authorized = this.#kernel.managedMcp.authorizeCall(
+        grant.execution,
+        command,
+      );
+      const executor = this.#managedMcpExecutor;
+      if (executor === undefined) {
+        this.#kernel.managedMcp.failCall(grant.execution, {
+          failureCode: "executor_unavailable",
+          managedMcpCallId: authorized.call.managedMcpCallId,
+        });
+        throw new HttpRequestError(
+          "managed_mcp_unavailable",
+          "managed MCP executor is unavailable",
+          503,
+        );
+      }
+      const controller = new AbortController();
+      let timer: NodeJS.Timeout | undefined;
+      let result: ReturnType<typeof WorkerManagedMcpCallResponseSchema.parse>;
+      try {
+        result = WorkerManagedMcpCallResponseSchema.parse(
+          await Promise.race([
+            executor.call(
+              { ...authorized.call, executorRef: authorized.executorRef },
+              { signal: controller.signal },
+            ),
+            new Promise<never>((_resolve, reject) => {
+              timer = setTimeout(() => {
+                controller.abort();
+                reject(new ManagedMcpTimeoutError());
+              }, this.#managedMcpTimeoutMs);
+            }),
+          ]),
+        );
+      } catch (error) {
+        const failureCode =
+          error instanceof ManagedMcpTimeoutError
+            ? "timeout"
+            : error instanceof Error && error.name === "ZodError"
+              ? "invalid_result"
+              : "executor_failed";
+        this.#kernel.managedMcp.failCall(grant.execution, {
+          failureCode,
+          managedMcpCallId: authorized.call.managedMcpCallId,
+        });
+        throw new HttpRequestError(
+          failureCode === "timeout"
+            ? "managed_mcp_timeout"
+            : "managed_mcp_failed",
+          failureCode === "timeout"
+            ? "managed MCP call timed out"
+            : "managed MCP call failed",
+          failureCode === "timeout" ? 504 : 502,
+        );
+      } finally {
+        if (timer !== undefined) clearTimeout(timer);
+      }
+      const completed = this.#kernel.managedMcp.completeCall(grant.execution, {
+        managedMcpCallId: authorized.call.managedMcpCallId,
+        result,
+      });
+      writeJson(response, 200, completed);
+      return;
+    }
     if (route === "/v1/worker/sync") {
       const { afterSeq } = parseWorkerRequest(WorkerSyncRequestSchema, body);
       if (afterSeq !== undefined && !grant.deliveredCursors.has(afterSeq)) {
@@ -321,10 +432,12 @@ export class WorkerApplicationService {
         200,
         route === "/v1/worker/tasks/request-input"
           ? WorkerTaskRequestInputResponseSchema.parse(mutation)
-          : route === "/v1/worker/tasks/block" ||
-              route === "/v1/worker/tasks/release"
-            ? WorkerTaskAttentionMutationResponseSchema.parse(mutation)
-            : WorkerTaskMutationResponseSchema.parse(mutation),
+          : route === "/v1/worker/tasks/review"
+            ? WorkerTaskReviewResponseSchema.parse(mutation)
+            : route === "/v1/worker/tasks/block" ||
+                route === "/v1/worker/tasks/release"
+              ? WorkerTaskAttentionMutationResponseSchema.parse(mutation)
+              : WorkerTaskMutationResponseSchema.parse(mutation),
       );
       return;
     }
@@ -364,6 +477,17 @@ export class WorkerApplicationService {
     body: Record<string, unknown>,
     grant: WorkerGrant,
   ) {
+    if (route === "/v1/worker/tasks/claim-message") {
+      const command = parseWorkerRequest(
+        WorkerTaskClaimMessageRequestSchema,
+        body,
+      );
+      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      return this.#kernel.claimMessageAsTask(grant.execution, {
+        ...command,
+        leaseMs: this.#taskClaimLeaseMs,
+      });
+    }
     if (route === "/v1/worker/tasks/claim") {
       const command = parseWorkerRequest(WorkerTaskClaimRequestSchema, body);
       this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
@@ -405,6 +529,11 @@ export class WorkerApplicationService {
       );
       this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
       return this.#kernel.requestTaskInput(grant.execution, command);
+    }
+    if (route === "/v1/worker/tasks/review") {
+      const command = parseWorkerRequest(WorkerTaskReviewRequestSchema, body);
+      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      return this.#kernel.taskReviews.reviewTask(grant.execution, command);
     }
     const command = parseWorkerRequest(WorkerTaskSubmitRequestSchema, body);
     this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
@@ -553,6 +682,8 @@ export class WorkerApplicationService {
   }
 }
 
+class ManagedMcpTimeoutError extends Error {}
+
 async function readJsonObject(
   request: IncomingMessage,
 ): Promise<Record<string, unknown>> {
@@ -564,7 +695,7 @@ async function readJsonObject(
     if (bytes > MAX_BODY_BYTES) {
       throw new HttpRequestError(
         "body_too_large",
-        "request body exceeds 64 KiB",
+        "request body exceeds 128 KiB",
         413,
       );
     }

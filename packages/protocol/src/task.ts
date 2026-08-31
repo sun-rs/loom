@@ -20,10 +20,14 @@ export const TaskSchema = z
     roomId: IdentifierSchema,
     creatorId: IdentifierSchema,
     assigneeId: IdentifierSchema.optional(),
+    collaboratorIds: z.array(IdentifierSchema).default([]),
     title: z.string().trim().min(1),
     description: z.string().trim().min(1).optional(),
     dependencyTaskIds: z.array(IdentifierSchema).default([]),
+    sourceMessageId: IdentifierSchema,
     state: TaskStateSchema,
+    taskNumber: z.number().int().positive(),
+    threadId: IdentifierSchema,
     claimedBy: IdentifierSchema.optional(),
     claimUntil: TimestampSchema.optional(),
     lastProgress: z.string().trim().min(1).optional(),
@@ -36,9 +40,11 @@ export const TaskSchema = z
     blockedAt: TimestampSchema.optional(),
     cancellationReason: z.string().trim().min(1).optional(),
     cancelledAt: TimestampSchema.optional(),
+    reviewerIds: z.array(IdentifierSchema).default([]),
   })
   .strict()
   .superRefine((task, context) => {
+    addTaskParticipantSelectionIssues(task, context);
     if (
       new Set(task.dependencyTaskIds).size !== task.dependencyTaskIds.length
     ) {
@@ -172,3 +178,43 @@ export const TaskSchema = z
     }
   });
 export type Task = z.infer<typeof TaskSchema>;
+
+export function addTaskParticipantSelectionIssues(
+  selection: {
+    assigneeId?: string | undefined;
+    collaboratorIds: readonly string[];
+    reviewerIds: readonly string[];
+  },
+  context: z.RefinementCtx,
+): void {
+  for (const field of ["collaboratorIds", "reviewerIds"] as const) {
+    const participantIds = selection[field];
+    if (new Set(participantIds).size !== participantIds.length) {
+      context.addIssue({
+        code: "custom",
+        message: `${field} must be unique`,
+        path: [field],
+      });
+    }
+    if (
+      selection.assigneeId !== undefined &&
+      participantIds.includes(selection.assigneeId)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: `${field} cannot contain assigneeId`,
+        path: [field],
+      });
+    }
+  }
+  if (
+    selection.assigneeId === undefined &&
+    (selection.collaboratorIds.length > 0 || selection.reviewerIds.length > 0)
+  ) {
+    context.addIssue({
+      code: "custom",
+      message: "collaborators and reviewers require one explicit assignee",
+      path: ["assigneeId"],
+    });
+  }
+}

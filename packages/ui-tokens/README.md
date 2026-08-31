@@ -15,3 +15,12 @@ npm run ui:tokens:check
 dirty state, source paths, output paths, byte counts, and SHA-256 digests. A dirty
 snapshot is acceptable for development evidence but not for a release provenance
 gate.
+
+Global Tasks/Activity/Search reuse 14 allowlisted reference assets, with the
+original bytes verified by the generated manifest. `src/discovery-icons.svg`
+adds the exact `at-sign` (`fFe`) and `refresh-cw` (`lUe`) paths from Raft Web
+`index-WTraJnrd.js` (SHA-256
+`fdba93dedef323ded9aba6f87cc211a25885230cbc0ade677b81b209bc881725`). Its own digest
+is pinned in the token test. These are supplementary exports; the frozen
+reference is not edited. Full provenance and adaptations are described in
+`docs/product/global-discovery-design.zh-CN.md`.

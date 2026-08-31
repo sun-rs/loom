@@ -13,10 +13,17 @@ const snapshotFiles = new Map(
   snapshotManifest.files.map((entry) => [entry.path, entry]),
 );
 const sourcePaths = [
+  "activity.css",
   "channel-extras.css",
   "generated/raft-icons.svg",
+  "generated/raft-official-activity.css",
+  "generated/raft-official-avatar-pack.json",
+  "generated/raft-official-computers.css",
+  "generated/raft-official-members-page.css",
   "generated/raft-official-overlays.css",
+  "generated/raft-official-tasks.css",
   "generated/raft-official-tokens.css",
+  "search.css",
   "styles.css",
   "tokens.brutal.css",
   "vendor/raft/fonts/raft-quote-glyphs.woff2",

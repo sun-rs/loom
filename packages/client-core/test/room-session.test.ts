@@ -361,7 +361,9 @@ test("message queries page deterministically within a bounded budget", async () 
     const roomSeq = request.afterSeq === 0 ? 2 : 5;
     return {
       cursorAfter: roomSeq,
-      hasMore: roomSeq === 2,
+      cursorBefore: roomSeq,
+      hasMoreAfter: roomSeq === 2,
+      hasMoreBefore: request.afterSeq > 0,
       messages: [
         {
           actorId: "human-main",
@@ -394,47 +396,76 @@ test("message queries page deterministically within a bounded budget", async () 
   assert.deepEqual(requestedAfterSequences, [0, 2]);
 });
 
-test("MessageSession resumes bounded message catch-up from its validated cursor", async () => {
-  const requestedAfterSequences: number[] = [];
+test("MessageSession opens the 50-item Raft window, pages upward, and follows new Messages", async () => {
+  const requests: Array<{
+    afterSeq?: number;
+    beforeSeq?: number;
+    limit?: number;
+  }> = [];
   const client = new FakeRahClient(async (operation, input) => {
     if (operation !== "message.list") {
       throw new Error(`unexpected operation ${operation}`);
     }
-    const request = input as { afterSeq: number; roomId: string };
-    requestedAfterSequences.push(request.afterSeq);
-    const roomSeq = request.afterSeq + 1;
+    const request = input as {
+      afterSeq?: number;
+      beforeSeq?: number;
+      limit: number;
+      roomId: string;
+    };
+    requests.push({
+      ...(request.afterSeq === undefined ? {} : { afterSeq: request.afterSeq }),
+      ...(request.beforeSeq === undefined
+        ? {}
+        : { beforeSeq: request.beforeSeq }),
+      limit: request.limit,
+    });
+    const sequences =
+      request.beforeSeq === 3 ? [1, 2] : request.afterSeq === 3 ? [4] : [3];
     return {
-      cursorAfter: roomSeq,
-      hasMore: roomSeq < 3,
-      messages: [
-        {
-          actorId: "human-main",
-          body: `message ${String(roomSeq)}`,
-          createdAt,
-          messageId: `message-${String(roomSeq)}`,
-          roomId: request.roomId,
-          roomSeq,
-        },
-      ],
+      cursorAfter: sequences.at(-1),
+      cursorBefore: sequences[0],
+      hasMoreAfter: request.beforeSeq !== undefined,
+      hasMoreBefore: request.beforeSeq === undefined,
+      messages: sequences.map((roomSeq) => ({
+        actorId: "human-main",
+        body: `message ${String(roomSeq)}`,
+        createdAt,
+        messageId: `message-${String(roomSeq)}`,
+        roomId: request.roomId,
+        roomSeq,
+      })),
     };
   });
   const session = new MessageSession({ client, roomId: "room-main" });
 
-  const partial = await session.syncUntilCurrent({ limit: 1, maxPages: 2 });
-  assert.equal(partial.complete, false);
-  assert.equal(partial.cursorAfter, 2);
+  const latest = await session.syncUntilCurrent({ maxPages: 2 });
+  assert.equal(latest.complete, true);
+  assert.equal(latest.hasEarlier, true);
+  assert.equal(latest.cursorBefore, 3);
   assert.deepEqual(
-    partial.messages.map(({ roomSeq }) => roomSeq),
-    [1, 2],
+    latest.messages.map(({ roomSeq }) => roomSeq),
+    [3],
   );
 
-  const complete = await session.syncUntilCurrent({ limit: 1, maxPages: 2 });
-  assert.equal(complete.complete, true);
-  assert.equal(complete.cursorAfter, 3);
+  const earlier = await session.loadEarlier();
+  assert.equal(earlier.hasEarlier, false);
+  assert.equal(earlier.cursorBefore, 1);
   assert.deepEqual(
-    complete.messages.map(({ roomSeq }) => roomSeq),
+    earlier.messages.map(({ roomSeq }) => roomSeq),
     [1, 2, 3],
   );
+
+  const followed = await session.syncUntilCurrent({ maxPages: 2 });
+  assert.equal(followed.complete, true);
+  assert.equal(followed.cursorAfter, 4);
+  assert.deepEqual(
+    followed.messages.map(({ roomSeq }) => roomSeq),
+    [1, 2, 3, 4],
+  );
   assert.equal(session.state.complete, true);
-  assert.deepEqual(requestedAfterSequences, [0, 1, 2]);
+  assert.deepEqual(requests, [
+    { limit: 50 },
+    { beforeSeq: 3, limit: 50 },
+    { afterSeq: 3, limit: 50 },
+  ]);
 });

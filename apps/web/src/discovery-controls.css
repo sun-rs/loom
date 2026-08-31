@@ -1,0 +1,323 @@
+/* Raft Zd/V9e class values, index-WTraJnrd.js. Portal is a shell adaptation. */
+.rah-discovery-filter .task-filter-trigger > svg:last-child {
+  width: 12px;
+  height: 12px;
+}
+.rah-discovery-popover {
+  position: fixed;
+  z-index: 10000;
+  width: 220px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 24px);
+  display: flex;
+  flex-direction: column;
+  border: 2px solid #000;
+  background: #fff;
+  box-shadow: var(--shadow-m);
+  color: #000;
+}
+.rah-discovery-popover header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid #000;
+}
+.rah-discovery-popover header b {
+  font-size: 10px;
+  line-height: 15px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgb(0 0 0 / 60%);
+}
+.rah-discovery-popover header button {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: rgb(0 0 0 / 60%);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.rah-discovery-popover-search {
+  padding: 8px;
+  border-bottom: 1px solid rgb(0 0 0 / 10%);
+}
+.rah-discovery-popover-search input {
+  width: 100%;
+  min-width: 0;
+  border: 2px solid #000;
+  background: #fff;
+  padding: 4px 8px;
+  font: 12px/16px var(--mono);
+  box-shadow: var(--shadow-s);
+}
+.rah-discovery-popover-options {
+  max-height: 256px;
+  min-height: 0;
+  overflow: auto;
+}
+.rah-discovery-popover-options > button {
+  display: flex;
+  width: 100%;
+  height: 36px;
+  overflow: hidden;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 0;
+  border-bottom: 1px solid rgb(0 0 0 / 10%);
+  padding: 0 12px;
+  text-align: left;
+  font: 700 12px/16px var(--sans);
+  color: #000;
+  background: #fff;
+  cursor: pointer;
+}
+.rah-discovery-popover-options > button:last-child {
+  border-bottom: 0;
+}
+.rah-discovery-popover-options > button:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--yellow) 30%, transparent);
+}
+.rah-discovery-popover-options > button:disabled {
+  cursor: not-allowed;
+  color: rgb(0 0 0 / 30%);
+}
+.rah-discovery-popover-options
+  > button
+  > span:not(.rah-discovery-option-leading) {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rah-discovery-popover .is-italic {
+  font-style: italic;
+}
+.rah-discovery-popover svg {
+  width: 12px;
+  height: 12px;
+  flex: none;
+}
+.rah-discovery-option-leading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+.rah-discovery-option-leading svg {
+  width: 16px;
+  height: 16px;
+}
+.rah-discovery-popover-options > p {
+  padding: 12px;
+  font: 11px/16px var(--mono);
+  color: rgb(0 0 0 / 40%);
+}
+.rah-discovery-filter .task-filter-trigger:disabled {
+  cursor: not-allowed;
+  color: rgb(0 0 0 / 30%);
+  border-color: rgb(0 0 0 / 15%);
+  box-shadow: none;
+}
+.rah-discovery-popover.is-status {
+  width: 140px;
+}
+.rah-discovery-popover.is-status .rah-discovery-popover-options > button {
+  height: auto;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 0;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+}
+.rah-search-channel-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  border: 2px solid #000;
+  padding: 6px 12px;
+  background: var(--yellow);
+  box-shadow: var(--shadow-s);
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 16px;
+  cursor: pointer;
+}
+.rah-search-channel-chip svg {
+  width: 12px;
+  height: 12px;
+}
+.rah-search-channel-chip svg:last-child {
+  width: 10px;
+  height: 10px;
+}
+.rah-discovery.search-main .search-top {
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+}
+.rah-discovery.search-main .search-icon-box {
+  width: 36px;
+  height: 36px;
+}
+.rah-discovery.search-main .search-kbd {
+  text-transform: uppercase;
+}
+.rah-global-task-card:active:not(.is-dragging) {
+  translate: 1px 1px;
+  box-shadow: var(--shadow-press);
+}
+.rah-task-drag-notice {
+  flex: none;
+  font-size: 12px;
+  margin: 0;
+  padding: 4px 16px;
+  color: var(--muted);
+}
+.rah-task-drag-notice:empty {
+  display: none;
+}
+.rah-global-kanban .kcol.is-over {
+  border-color: #000;
+  background: color-mix(in oklab, var(--yellow) 20%, transparent);
+  box-shadow: var(--shadow-s);
+}
+.rah-global-kanban .kcol.is-rejected {
+  border-color: var(--coral);
+  border-style: dashed;
+}
+.rah-global-task-card {
+  position: relative;
+  border: 2px solid #000;
+  background: #fff;
+  padding: 10px 12px;
+  box-shadow: var(--shadow-s);
+  transition:
+    box-shadow 100ms,
+    background 100ms;
+  touch-action: none;
+  cursor: grab;
+}
+.rah-global-task-card:hover {
+  background: #fff;
+  translate: 0 -1px;
+  box-shadow: var(--shadow-m);
+}
+.rah-global-task-card.is-dragging {
+  z-index: 20;
+  opacity: 0.9;
+  cursor: grabbing;
+}
+.rah-global-card-open {
+  display: block;
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  width: 100%;
+  text-align: left;
+  cursor: inherit;
+}
+.rah-global-task-card .kcard-no {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.rah-global-task-card .kcard-no b {
+  font: 700 12px/16px var(--sans);
+  color: rgb(0 0 0 / 60%);
+}
+.rah-global-task-card .kcard-no span {
+  font: 11px/16px var(--mono);
+  color: rgb(0 0 0 / 35%);
+}
+.rah-global-task-card .kcard-title {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow-wrap: anywhere;
+}
+.rah-global-card-description {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: rgb(0 0 0 / 70%);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.rah-global-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+.rah-task-status-picker .task-filter-trigger {
+  margin-top: 2px;
+  min-height: 24px;
+  height: auto;
+  padding: 2px 8px;
+  border: 2px solid #000;
+  gap: 4px;
+  font: 700 12px/16px var(--sans);
+  background: inherit;
+  color: #000;
+  box-shadow: none;
+}
+.rah-task-status-picker .task-filter-trigger:hover {
+  filter: brightness(0.9);
+}
+.rah-task-status-picker .task-filter-trigger svg {
+  width: 10px;
+  height: 10px;
+  opacity: 0.4;
+}
+.rah-task-status-picker.chip-orange {
+  background: var(--orange);
+}
+.rah-task-status-picker.chip-cyan {
+  background: var(--cyan);
+}
+.rah-task-status-picker.chip-purple {
+  background: var(--lavender);
+}
+.rah-task-status-picker.chip-green {
+  background: var(--green);
+}
+.rah-task-status-picker.chip-gray {
+  background: var(--gray-chip);
+}
+.rah-task-drag-handle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.rah-task-drag-handle:focus-visible {
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  clip-path: none;
+  border: 2px solid #000;
+  background: #fff;
+  z-index: 1;
+}
+.rah-task-drag-handle svg {
+  width: 16px;
+  height: 16px;
+}

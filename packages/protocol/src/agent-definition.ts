@@ -84,6 +84,9 @@ export type AgentDefinitionRevision = z.infer<
 export const AgentRuntimeContextSchema = z
   .object({
     agentDefinitionRevision: AgentDefinitionRevisionSchema,
+    // Added to v1 as a backward-compatible field: newly issued launch claims
+    // always freeze it, while an older remote Computer may still omit it.
+    handle: IdentifierSchema.optional(),
     participantId: IdentifierSchema,
     schemaVersion: z.literal(1),
   })

@@ -53,6 +53,7 @@ outbox_persisted
 - Agent 每次运行先 `room_sync`，一次拉取该 cursor 范围内的完整增量。
 - Activation 完成不自动把 Inbox 标为 acknowledged；读取、接受和业务完成分别记录。
 - AgentHost 完成 Activation 前，指定 runtime consumer 必须显式确认 cursor 至少达到该 Activation 的 `toSeq`；process exit 0 不能替代此证明。
+- RuntimeProfile 只描述可执行能力，不能承载 Agent 身份。Kernel 为每次新 launch claim 在 `AgentRuntimeContext` 中冻结 canonical participant handle、Definition revision 与 Policy/Placement；本机和远程 Host 都把同一份 context 注入子进程。旧 v1 Computer 可暂时缺少 handle，新 claim 必须提供。这样多个 Agent 共享同一 Runtime Offer 时不会继承某个种子 Agent 的名称或提示词。
 
 `room_sync` 返回 continuation token，但不能仅因 HTTP/RPC 返回就永久推进消费位置。实现必须采用 client-owned continuation token，或 `deliver -> ackCursor` 两阶段协议；即使响应在服务端提交后丢失，客户端也必须能安全重放同一批事件。
 
@@ -78,6 +79,8 @@ interface RuntimeAdapter {
 `start` 是两阶段协议：runtime 先创建“尚未启动目标”的可恢复 owner，再调用 `registerPrepared` 持久化 descriptor；只有该 callback 成功后才能产生 target side effect。返回 handle 必须与 prepared handle 一致，Kernel 才写 `run.started`。因此 Host 在 launch 前、launch 后/`run.started` 前崩溃，都有可对账的 durable state；准备失败或 handle 不匹配时必须取消已准备 runtime，不能静默遗留进程。
 
 `cancel` 成功返回 terminal `RunExit` 才能作为进程已终止的证明；抛错或无 terminal 结果时，Host 必须把 Activation 隔离，不能立即重排并启动第二个 runtime。
+
+Human 关闭正在执行的 Task 时，Kernel 另写 attempt-scoped `activation_cancellation_requests`，而不是把 UI 的 `cancelled` 投影当成进程终止。未解决请求同时 fence Worker grant 和 Host lease renewal；AgentHost 必须先 cancel Runtime、保存 terminal RuntimeProcess、结束 RunAttempt 并释放 Placement，才能 resolve 请求、合并同 lane queued follow-up 并恢复唯一 queued Activation。`task.reopen` 在 unresolved request 存在时 fail closed。详见 [ADR-0022](../adr/0022-reversible-closed-and-runtime-cancellation-fence.md)。
 
 Host 负责认证连接、capacity、Activation lease、heartbeat、timeout、process group、cancel 和 orphan reap。`resume/liveInput/nativeEvents` 是 capability；不支持时用新 session + Room briefing。
 

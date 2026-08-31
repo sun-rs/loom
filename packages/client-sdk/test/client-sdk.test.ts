@@ -21,38 +21,75 @@ const workspace = {
 
 test("RahClient covers every existing Human API v3 operation", () => {
   assert.deepEqual(RAH_CLIENT_OPERATION_NAMES, [
+    "activity.follow",
+    "activity.list",
+    "activity.mark",
+    "agent.activity.list",
     "agent.get",
     "agent.list",
     "agent.manage",
+    "agent.memory.config.get",
+    "agent.memory.config.patch",
+    "agent.memory.get",
+    "agent.memory.read",
+    "agent.memory.reset",
     "agent.onboard",
     "agent.provision",
+    "agent.room.list",
+    "agent.trajectory.list",
+    "agent.workspace.list",
+    "agent.workspace.read",
+    "file.cancel",
+    "file.list",
+    "file.prepare",
     "health",
     "host.runtime.list",
     "inputRequest.list",
     "inputRequest.resolve",
+    "managedMcp.assignment.create",
+    "managedMcp.assignment.list",
+    "managedMcp.assignment.revise",
+    "managedMcp.assignment.state",
+    "managedMcp.executor.discover",
+    "managedMcp.executor.list",
+    "managedMcp.server.create",
+    "managedMcp.server.list",
+    "managedMcp.server.revise",
+    "managedMcp.server.state",
+    "managedMcp.usage.list",
+    "message.context",
     "message.list",
     "message.post",
     "principal.me",
     "room.acknowledge",
     "room.agent.activity.list",
     "room.create",
+    "room.direct.open",
     "room.list",
     "room.member.add",
     "room.member.list",
     "room.member.remove",
     "room.member.role",
     "room.sync",
+    "room.update",
+    "search",
     "task.assign",
     "task.cancel",
     "task.complete",
+    "task.convert",
     "task.create",
+    "task.global.list",
     "task.list",
+    "task.reopen",
+    "task.review.list",
+    "task.unassign",
     "task.unblock",
     "thread.create",
     "thread.list",
     "thread.reply",
     "workspace.create",
     "workspace.list",
+    "workspace.update",
   ]);
 });
 
@@ -78,9 +115,103 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
     path: string;
   }> = [
     {
+      input: { roomId: "room-main", threadId: "thread-main", following: true },
+      operation: "activity.follow",
+      path: "/v3/client/activity/follow",
+    },
+    {
+      input: { workspaceId: "workspace-main" },
+      operation: "activity.list",
+      path: "/v3/client/activity/list",
+    },
+    {
+      input: { roomId: "room-main", throughSeq: 4, action: "done" },
+      operation: "activity.mark",
+      path: "/v3/client/activity/mark",
+    },
+    {
+      input: { workspaceId: "workspace-main", query: "literal" },
+      operation: "search",
+      path: "/v3/client/search",
+    },
+    {
+      input: { workspaceId: "workspace-main" },
+      operation: "task.global.list",
+      path: "/v3/client/tasks/global",
+    },
+    {
+      input: { messageId: "message-main" },
+      operation: "message.context",
+      path: "/v3/client/messages/context",
+    },
+    {
+      input: { agentDefinitionId: "agent-definition" },
+      operation: "agent.memory.config.get",
+      path: "/v3/client/agents/memory/config/get",
+    },
+    {
+      input: {
+        agentDefinitionId: "agent-definition",
+        patch: { expectedRevision: 0, set: { enabled: false } },
+      },
+      operation: "agent.memory.config.patch",
+      path: "/v3/client/agents/memory/config/patch",
+    },
+    {
+      input: { agentDefinitionId: "agent-definition", limit: 25 },
+      operation: "agent.activity.list",
+      path: "/v3/client/agents/activity/list",
+    },
+    {
+      input: { agentDefinitionId: "agent-definition", limit: 25 },
+      operation: "agent.trajectory.list",
+      path: "/v3/client/agents/trajectory/list",
+    },
+    {
+      input: {
+        agentDefinitionId: "agent-definition",
+        path: "",
+        includeHidden: false,
+      },
+      operation: "agent.workspace.list",
+      path: "/v3/client/agents/workspace/list",
+    },
+    {
+      input: { agentDefinitionId: "agent-definition", path: "notes/guide.md" },
+      operation: "agent.workspace.read",
+      path: "/v3/client/agents/workspace/read",
+    },
+    {
       input: { agentDefinitionId: "agent-definition" },
       operation: "agent.get",
       path: "/v3/client/agents/get",
+    },
+    {
+      input: { agentDefinitionId: "agent-definition" },
+      operation: "agent.memory.get",
+      path: "/v3/client/agents/memory/get",
+    },
+    {
+      input: {
+        agentDefinitionId: "agent-definition",
+        relativePath: "MEMORY.md",
+      },
+      operation: "agent.memory.read",
+      path: "/v3/client/agents/memory/read",
+    },
+    {
+      input: {
+        agentDefinitionId: "agent-definition",
+        confirmation: "RESET_AGENT_MEMORY",
+        idempotencyKey: "memory-reset-1",
+      },
+      operation: "agent.memory.reset",
+      path: "/v3/client/agents/memory/reset",
+    },
+    {
+      input: { agentDefinitionId: "agent-definition" },
+      operation: "agent.room.list",
+      path: "/v3/client/agents/rooms/list",
     },
     {
       input: {},
@@ -126,7 +257,6 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
         modelIntent: { fallback: "disabled" },
         role: "Engineering Agent",
         runtimeOfferId: "offer-codex",
-        sessionPolicy: "fresh",
       },
       operation: "agent.provision",
       path: "/v3/client/agents/provision",
@@ -145,6 +275,128 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       },
       operation: "inputRequest.resolve",
       path: "/v3/client/input-requests/resolve",
+    },
+    {
+      input: {
+        allowedToolNames: ["room.snapshot"],
+        basedOnRoomSeq: 1,
+        idempotencyKey: "mcp-assignment-create",
+        mcpServerId: "mcp-room-tools",
+        participantId: "agent-alice",
+      },
+      operation: "managedMcp.assignment.create",
+      path: "/v3/client/managed-mcp/assignments/create",
+    },
+    {
+      input: { controlRoomId: "room-control" },
+      operation: "managedMcp.assignment.list",
+      path: "/v3/client/managed-mcp/assignments/list",
+    },
+    {
+      input: {
+        allowedToolNames: ["room.snapshot"],
+        basedOnRoomSeq: 2,
+        expectedAssignmentVersion: 1,
+        idempotencyKey: "mcp-assignment-revise",
+        mcpServerId: "mcp-room-tools",
+        participantId: "agent-alice",
+      },
+      operation: "managedMcp.assignment.revise",
+      path: "/v3/client/managed-mcp/assignments/revise",
+    },
+    {
+      input: {
+        basedOnRoomSeq: 3,
+        expectedAssignmentVersion: 2,
+        idempotencyKey: "mcp-assignment-disable",
+        mcpServerId: "mcp-room-tools",
+        participantId: "agent-alice",
+        state: "disabled",
+      },
+      operation: "managedMcp.assignment.state",
+      path: "/v3/client/managed-mcp/assignments/state",
+    },
+    {
+      input: {
+        controlRoomId: "room-control",
+        executorRef: "executor-room-tools",
+      },
+      operation: "managedMcp.executor.discover",
+      path: "/v3/client/managed-mcp/executors/discover",
+    },
+    {
+      input: { controlRoomId: "room-control" },
+      operation: "managedMcp.executor.list",
+      path: "/v3/client/managed-mcp/executors/list",
+    },
+    {
+      input: {
+        basedOnRoomSeq: 1,
+        controlRoomId: "room-control",
+        definition: {
+          executorRef: "executor-room-tools",
+          runtimeName: "room_tools",
+          serverName: "RAH Room tools",
+          tools: [
+            {
+              inputSchema: { type: "object" },
+              runtimeName: "room_snapshot",
+              toolName: "room.snapshot",
+            },
+          ],
+        },
+        idempotencyKey: "mcp-server-create",
+        mcpServerId: "mcp-room-tools",
+      },
+      operation: "managedMcp.server.create",
+      path: "/v3/client/managed-mcp/servers/create",
+    },
+    {
+      input: { controlRoomId: "room-control" },
+      operation: "managedMcp.server.list",
+      path: "/v3/client/managed-mcp/servers/list",
+    },
+    {
+      input: {
+        basedOnRoomSeq: 2,
+        definition: {
+          executorRef: "executor-room-tools",
+          runtimeName: "room_tools",
+          serverName: "RAH Room tools",
+          tools: [
+            {
+              inputSchema: { type: "object" },
+              runtimeName: "room_snapshot",
+              toolName: "room.snapshot",
+            },
+          ],
+        },
+        expectedConfigVersion: 1,
+        idempotencyKey: "mcp-server-revise",
+        mcpServerId: "mcp-room-tools",
+      },
+      operation: "managedMcp.server.revise",
+      path: "/v3/client/managed-mcp/servers/revise",
+    },
+    {
+      input: {
+        basedOnRoomSeq: 3,
+        expectedConfigVersion: 2,
+        idempotencyKey: "mcp-server-disable",
+        mcpServerId: "mcp-room-tools",
+        state: "disabled",
+      },
+      operation: "managedMcp.server.state",
+      path: "/v3/client/managed-mcp/servers/state",
+    },
+    {
+      input: {
+        controlRoomId: "room-control",
+        limit: 50,
+        participantId: "agent-alice",
+      },
+      operation: "managedMcp.usage.list",
+      path: "/v3/client/managed-mcp/usage/list",
     },
     {
       input: { roomId: "room-main" },
@@ -186,6 +438,28 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       },
       operation: "room.create",
       path: "/v3/client/rooms/create",
+    },
+    {
+      input: {
+        basedOnRoomSeq: 2,
+        description: "Planning work",
+        idempotencyKey: "room-update",
+        name: "Planning",
+        roomId: "room-main",
+        visibility: "private",
+      },
+      operation: "room.update",
+      path: "/v3/client/rooms/update",
+    },
+    {
+      input: {
+        basedOnControlRoomSeq: 2,
+        idempotencyKey: "direct-open",
+        peerPrincipalId: "agent-alice",
+        workspaceId: "workspace-main",
+      },
+      operation: "room.direct.open",
+      path: "/v3/client/rooms/direct/open",
     },
     {
       input: { roomId: "room-main" },
@@ -252,6 +526,15 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
     {
       input: {
         basedOnRoomSeq: 1,
+        idempotencyKey: "task-unassign",
+        taskId: "task-main",
+      },
+      operation: "task.unassign",
+      path: "/v3/client/tasks/unassign",
+    },
+    {
+      input: {
+        basedOnRoomSeq: 1,
         idempotencyKey: "task-cancel",
         reason: "No longer needed",
         taskId: "task-main",
@@ -262,11 +545,30 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
     {
       input: {
         basedOnRoomSeq: 1,
+        idempotencyKey: "task-reopen",
+        taskId: "task-main",
+      },
+      operation: "task.reopen",
+      path: "/v3/client/tasks/reopen",
+    },
+    {
+      input: {
+        basedOnRoomSeq: 1,
         idempotencyKey: "task-complete",
         taskId: "task-main",
       },
       operation: "task.complete",
       path: "/v3/client/tasks/complete",
+    },
+    {
+      input: {
+        basedOnRoomSeq: 1,
+        idempotencyKey: "task-convert",
+        messageId: "message-main",
+        roomId: "room-main",
+      },
+      operation: "task.convert",
+      path: "/v3/client/tasks/convert",
     },
     {
       input: {
@@ -282,6 +584,11 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       input: { roomId: "room-main" },
       operation: "task.list",
       path: "/v3/client/tasks/list",
+    },
+    {
+      input: { roomId: "room-main" },
+      operation: "task.review.list",
+      path: "/v3/client/tasks/reviews/list",
     },
     {
       input: {
@@ -326,6 +633,17 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       },
       operation: "workspace.create",
       path: "/v3/client/workspaces/create",
+    },
+    {
+      input: {
+        workspaceId: "workspace-main",
+        name: "Design Lab",
+        avatarKey: "robot",
+        basedOnControlRoomSeq: 1,
+        idempotencyKey: "identity",
+      },
+      operation: "workspace.update",
+      path: "/v3/client/workspaces/update",
     },
     {
       input: {},
@@ -427,6 +745,8 @@ test("health is unauthenticated GET while business operations require a token", 
           hints: false,
           inputRequestRead: true,
           inputRequestResolve: true,
+          managedMcpRead: true,
+          managedMcpWrite: true,
           memberRead: true,
           memberWrite: true,
           messageRead: true,

@@ -34,7 +34,7 @@ Room-first Kernel 已经拥有 principal authentication、Room ACL、ordered eve
 
    v3 另提供 `POST .../workspaces/create` 与 `POST .../rooms/create`。前者原子创建 Workspace、唯一 control Room 和 Human owner；后者只能由 control Room owner/admin 执行，以 `basedOnControlRoomSeq` 做 freshness，并同时记 control ledger 与新 Room 首事件。
 
-   v3 还提供 `POST .../principals/me`、`POST .../agents/list` 与 `POST .../agents/onboard`：`principals/me` 只返回当前 credential 对应的 server-owned Human projection，供客户端把 capability 与 canonical role 结合；Agent list 必须指定当前 Workspace 的 `controlRoomId`，只返回调用 Human 在该 scope 可访问的 AgentDefinition/current revision/handle；onboard 只接受 definition identity，且 definition control Room 与目标 Room 必须属于同一 Workspace，由 Kernel 解析 enabled participant 后加入目标 Room，body 不能注入 `participantId`。
+   v3 还提供 `POST .../principals/me`、`POST .../agents/list`、`POST .../agents/activity/list` 与 `POST .../agents/onboard`：`principals/me` 只返回当前 credential 对应的 server-owned Human projection，供客户端把 capability 与 canonical role 结合；Agent list 必须指定当前 Workspace 的 `controlRoomId`，只返回调用 Human 在该 scope 可访问的 AgentDefinition/current revision/handle；activity list 只接受 definition identity、最多 100 条和服务端验证的 `beforeActivityId`，把调用 Human 当前可见 Room 的 canonical event 与 version-fenced Managed MCP call metadata 合并为跨 Room 时间线，不返回 payload、Provider transcript、stdio、调用参数、凭据或结果正文；onboard 只接受 definition identity，且 definition control Room 与目标 Room 必须属于同一 Workspace，由 Kernel 解析 enabled participant 后加入目标 Room，body 不能注入 `participantId`。
 
    数据 route 每次都重新认证 principal PAT；actor 来自 credential，不来自 body。Room membership、designated responder、fresh context 与 idempotency 继续由 Kernel 强制。health 无需 bearer，但 schema 严格且不返回 Host ID、participant ID、token、路径或 Room 数据。
 
@@ -57,7 +57,7 @@ Room-first Kernel 已经拥有 principal authentication、Room ACL、ordered eve
 ## 证据
 
 - protocol fixture 证明 Client API v1/v2/v3 schema 严格、transport-neutral，拒绝 `actorId/responderId` 注入、第二个 control Room kind 和越界 page size；
-- standalone HTTP fixture 证明 v1/v2 compatibility、v3 managed create、server-owned `principal.me`、Workspace-scoped Agent list/onboard、无 token=401、非成员=403、错误 responder=403、stale context=409，并覆盖 Workspace/Room discovery、成员角色、Message/Thread、分页 sync、显式 ack、durable ack 幂等、Task/InputRequest 查询和 resolution；
+- standalone HTTP fixture 证明 v1/v2 compatibility、v3 managed create、server-owned `principal.me`、Workspace-scoped Agent list/onboard/activity、activity payload exclusion、无 token=401、非成员=403、错误 responder=403、stale context=409，并覆盖 Workspace/Room discovery、成员角色、Message/Thread、分页 sync、显式 ack、durable ack 幂等、Task/InputRequest 查询和 resolution；
 - 同一 fixture 证明 invented continuation/ack 被拒绝，且 health 不泄露 credential；
 - `client-core` fixture 证明同一 consumer 在 durable cursor 已领先时，浏览器冷启动仍从 `afterSeq=0` 取得 snapshot、分页重放、逐页 ack，并拒绝 gap/divergent history；
 - daemon InputRequest fixture 中，Human 使用 Client API 完成 list → sync → resolve；等待期间无新 RunAttempt，resolution 后 content-free wake 拉起新 CLI session 并提交原 Task；
@@ -65,8 +65,8 @@ Room-first Kernel 已经拥有 principal authentication、Room ACL、ordered eve
 
 ## 声明边界
 
-- 当前 `RahClient` 已覆盖全部现有 v3 Human route；尚无后端 owner 的 Workspace/Room archive、Agent provisioning/editor/lifecycle、Inbox query/resolve、Artifact/Review、Run Inspector、hint subscription 或 daemon control command，也不会由 SDK 提前发明。现有 HTTP schema/route 是 SDK 的可执行 contract，不是 UI state owner。
-- 当前 loopback HTTP 可供本机 shell、测试和未来 desktop bridge 使用；尚不能声明 raft-ui、普通浏览器或 iOS PWA 已接通。
-- principal provisioning/revocation 管理面、Keychain、device pairing、CORS/TLS/LAN、rate limit 与审计导出尚未实现。
+- 当前 `RahClient` 已覆盖全部现有 v3 Human route；Agent provisioning/editor/lifecycle、InputRequest list/resolve 和 managed MCP 已有 owner 与产品 UI。尚无后端 owner 的 Workspace/Room archive、通用 Inbox/Notification query、Artifact registry、Run Inspector、hint subscription 或 Agent memory/reset control command，也不会由 SDK 提前发明。
+- loopback 与配对后的 HTTPS LAN/PWA 已接通同一 Web bundle；Human InputRequest 又完成 desktop 与 `390x844` 的真实浏览器闭环。
+- principal provisioning/revocation 的正式 operator 管理面、系统/iOS CA trust 安装、CA 轮换告警、rate limit 与审计导出尚未完成。
 - Client delivery proof 当前是 daemon-memory evidence；重启后的预期恢复动作是重同步，不是确认旧 HTTP response。
 - Client API v1/v2/v3 与 daemon config v2/v3/v4 是不同版本轴；Kernel schema 当前为 v8，也独立演进。

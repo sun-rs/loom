@@ -140,6 +140,119 @@ test("GenericProcessAdapter launches a Fake CLI and keeps output diagnostic-only
   }
 });
 
+test("GenericProcessAdapter transports typed driver trajectory separately from diagnostics", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-process-trajectory-"));
+  try {
+    const adapter = new GenericProcessAdapter({
+      args: [fakeCliPath],
+      command: process.execPath,
+      cwd: directory,
+      env: { RAH_FAKE_MODE: "trajectory" },
+    });
+    const activities: unknown[] = [];
+    const run = await adapter.start(activationEnvelope(), {
+      recordTrajectory: async (activity) => {
+        activities.push(activity);
+      },
+      registerPrepared: async () => undefined,
+    });
+    assert.equal((await adapter.reap(run)).code, 0);
+    assert.deepEqual(
+      activities.map((activity) =>
+        typeof activity === "object" && activity !== null
+          ? (activity as { entry: { kind: string } }).entry.kind
+          : undefined,
+      ),
+      ["status", "tool_start"],
+    );
+    assert.ok(
+      activities.every(
+        (activity) =>
+          typeof activity === "object" &&
+          activity !== null &&
+          (activity as { runAttemptId?: string }).runAttemptId ===
+            "run-process-test" &&
+          (activity as { runtimeRunId?: string }).runtimeRunId === run.runId,
+      ),
+    );
+    assert.doesNotMatch(adapter.diagnostics(run).stdout, /tool_start/u);
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("GenericProcessAdapter keeps Provider session evidence out of canonical trajectory", async () => {
+  const directory = mkdtempSync(
+    join(tmpdir(), "rah-os-provider-session-frame-"),
+  );
+  try {
+    const evidence: unknown[] = [];
+    const trajectory: unknown[] = [];
+    const adapter = new GenericProcessAdapter({
+      args: [fakeCliPath],
+      command: process.execPath,
+      cwd: directory,
+      env: { RAH_FAKE_MODE: "provider-session" },
+      recordProviderSessionEvidence: async (activation, frame) => {
+        evidence.push({ activationId: activation.activationId, frame });
+      },
+    });
+    const run = await adapter.start(activationEnvelope(), {
+      recordTrajectory: async (activity) => {
+        trajectory.push(activity);
+      },
+      registerPrepared: async () => undefined,
+    });
+    assert.equal((await adapter.reap(run)).code, 0);
+    assert.deepEqual(trajectory, []);
+    assert.deepEqual(evidence, [
+      {
+        activationId: "activation-process-test",
+        frame: {
+          protocol: "rah-provider-session/v1",
+          provider: "fixture-provider/v1",
+          providerSessionId: "fixture-provider-session-private",
+          state: "ready",
+        },
+      },
+    ]);
+    assert.doesNotMatch(
+      JSON.stringify(adapter.diagnostics(run)),
+      /fixture-provider-session-private/u,
+    );
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("GenericProcessAdapter applies activation-scoped arguments and sanitized setup diagnostics", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-process-launch-lease-"));
+  try {
+    const adapter = new GenericProcessAdapter({
+      activationEnvironment: () => ({
+        args: ["--managed-mcp", "loopback-runtime"],
+        diagnostics: ["Managed MCP discovery unavailable [reason=fixture]"],
+        env: {},
+      }),
+      args: [fakeCliPath],
+      command: process.execPath,
+      cwd: directory,
+      env: { RAH_FAKE_MODE: "success" },
+    });
+    const run = await startProcess(adapter);
+    assert.equal((await adapter.reap(run)).code, 0);
+    const diagnostics = adapter.diagnostics(run);
+    const output = JSON.parse(diagnostics.stdout) as { argv: string[] };
+    assert.deepEqual(output.argv, ["--managed-mcp", "loopback-runtime"]);
+    assert.match(
+      diagnostics.stderr,
+      /Managed MCP discovery unavailable \[reason=fixture\]/u,
+    );
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
 test("GenericProcessAdapter passes the frozen Agent configuration to the real process", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-agent-context-"));
   try {
@@ -171,18 +284,21 @@ test("GenericProcessAdapter passes the frozen Agent configuration to the real pr
           role: "Production reviewer",
           skillRefs: [],
         },
+        handle: "production-reviewer",
         participantId: envelope.participantId,
         schemaVersion: 1,
       },
     });
     const exit = await adapter.reap(run);
     const output = JSON.parse(adapter.diagnostics(run).stdout) as {
+      agentHandle?: string;
       agentInstructions?: string;
       agentRole?: string;
     };
 
     assert.equal(exit.code, 0);
     assert.equal(output.agentRole, "Production reviewer");
+    assert.equal(output.agentHandle, "production-reviewer");
     assert.equal(
       output.agentInstructions,
       "Use the canonical Worker API and review carefully.",
@@ -541,7 +657,7 @@ test("GenericProcessAdapter releases an Activation environment when spawn fails"
     let releases = 0;
     const adapter = new GenericProcessAdapter({
       activationEnvironment: () => ({
-        env: { RAH_WORKER_TOKEN: "ephemeral-test-token" },
+        env: { TEST_ACTIVATION_TOKEN: "ephemeral-test-token" },
         release: () => {
           releases += 1;
         },
@@ -552,6 +668,128 @@ test("GenericProcessAdapter releases an Activation environment when spawn fails"
 
     await assert.rejects(startProcess(adapter), /ENOENT/);
     assert.equal(releases, 1);
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("GenericProcessAdapter scrubs inherited, static, and leased legacy Worker tokens", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-worker-env-scrub-"));
+  try {
+    const adapter = new GenericProcessAdapter({
+      activationEnvironment: () => ({
+        env: {
+          RAH_WORKER_API_URL: "http://127.0.0.1:43123",
+          RAH_WORKER_TOKEN: "leased-legacy-token",
+          RAH_WORKER_SESSION_FILE: join(directory, "activation-token"),
+        },
+      }),
+      args: [
+        "-e",
+        "process.stdout.write(JSON.stringify({api:process.env.RAH_WORKER_API_URL,cli:process.env.RAH_WORKER_CLI,file:process.env.RAH_WORKER_SESSION_FILE,legacyFile:process.env.RAH_WORKER_TOKEN_FILE,raw:process.env.RAH_WORKER_TOKEN}))",
+      ],
+      command: process.execPath,
+      cwd: directory,
+      env: {
+        RAH_WORKER_API_URL: "https://untrusted-static.example.test",
+        RAH_WORKER_CLI: "/untrusted/static/rah",
+        RAH_WORKER_TOKEN: "static-legacy-token",
+        RAH_WORKER_SESSION_FILE: "/untrusted/static/session",
+        RAH_WORKER_TOKEN_FILE: "/untrusted/static/token",
+      },
+      supervisorDirectory: join(directory, "supervisors"),
+    });
+
+    const run = await startProcess(adapter);
+    assert.equal((await adapter.reap(run)).code, 0);
+    assert.deepEqual(JSON.parse(adapter.diagnostics(run).stdout), {
+      api: "http://127.0.0.1:43123",
+      file: join(directory, "activation-token"),
+    });
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("GenericProcessAdapter scrubs unleased Agent App Inbox and memory bootstrap values", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-app-inbox-env-scrub-"));
+  const inheritedBootstrap = process.env.RAH_AGENT_MEMORY_BOOTSTRAP_JSON;
+  try {
+    process.env.RAH_AGENT_MEMORY_BOOTSTRAP_JSON = "untrusted-parent-memory";
+    for (const staticBootstrap of [undefined, "untrusted-static-memory"]) {
+      const adapter = new GenericProcessAdapter({
+        activationEnvironment: () => ({ env: {} }),
+        args: [
+          "-e",
+          "process.stdout.write(JSON.stringify({appInbox:process.env.RAH_AGENT_APP_INBOX_JSON,bootstrap:process.env.RAH_AGENT_MEMORY_BOOTSTRAP_JSON,sourceFile:process.env.RAH_AGENT_MEMORY_SOURCE_FILE,inboxApi:process.env.RAH_AGENT_INBOX_API_URL,inboxToken:process.env.RAH_AGENT_INBOX_SESSION_FILE,inboxCli:process.env.RAH_AGENT_INBOX_CLI}))",
+        ],
+        command: process.execPath,
+        cwd: directory,
+        env: {
+          RAH_AGENT_APP_INBOX_JSON: "untrusted-static-app-item",
+          RAH_AGENT_MEMORY_SOURCE_FILE: "/untrusted/static/source",
+          RAH_AGENT_INBOX_API_URL: "https://untrusted.example",
+          RAH_AGENT_INBOX_SESSION_FILE: "/untrusted/token",
+          RAH_AGENT_INBOX_CLI: "/untrusted/cli",
+          ...(staticBootstrap === undefined
+            ? {}
+            : { RAH_AGENT_MEMORY_BOOTSTRAP_JSON: staticBootstrap }),
+        },
+        supervisorDirectory: join(directory, "supervisors"),
+      });
+      const run = await startProcess(adapter);
+      assert.equal((await adapter.reap(run)).code, 0);
+      assert.deepEqual(JSON.parse(adapter.diagnostics(run).stdout), {});
+    }
+  } finally {
+    if (inheritedBootstrap === undefined)
+      delete process.env.RAH_AGENT_MEMORY_BOOTSTRAP_JSON;
+    else process.env.RAH_AGENT_MEMORY_BOOTSTRAP_JSON = inheritedBootstrap;
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("GenericProcessAdapter awaits asynchronous Activation environment release before terminal reap", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-process-release-"));
+  try {
+    let releaseCompleted = false;
+    let allowRelease!: () => void;
+    let markReleaseStarted!: () => void;
+    const releaseBarrier = new Promise<void>((resolve) => {
+      allowRelease = resolve;
+    });
+    const releaseStarted = new Promise<void>((resolve) => {
+      markReleaseStarted = resolve;
+    });
+    const adapter = new GenericProcessAdapter({
+      activationEnvironment: () => ({
+        env: {},
+        release: async () => {
+          markReleaseStarted();
+          await releaseBarrier;
+          releaseCompleted = true;
+        },
+      }),
+      args: ["-e", "process.exit(0)"],
+      command: process.execPath,
+      cwd: directory,
+      supervisorDirectory: join(directory, "supervisors"),
+    });
+    const handle = await adapter.start(activationEnvelope(), {
+      registerPrepared: async () => undefined,
+    });
+    const reap = adapter.reap(handle);
+    let reapSettled = false;
+    void reap.finally(() => {
+      reapSettled = true;
+    });
+    await releaseStarted;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    assert.equal(releaseCompleted, false);
+    assert.equal(reapSettled, false);
+    allowRelease();
+    assert.equal((await reap).code, 0);
+    assert.equal(releaseCompleted, true);
   } finally {
     rmSync(directory, { force: true, recursive: true });
   }

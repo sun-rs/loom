@@ -1,5 +1,7 @@
 node_modules/
 dist/
+dist-workbench/
+.workbench-web/
 coverage/
 *.log
 *.db

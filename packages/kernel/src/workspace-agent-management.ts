@@ -16,7 +16,10 @@ import {
 } from "@rah-os/protocol";
 
 import { canonicalDigest } from "./canonical-digest.ts";
-import { requireHumanControlRoomManager } from "./collaboration-policy.ts";
+import {
+  requireHumanControlRoomManager,
+  roomRole,
+} from "./collaboration-policy.ts";
 import {
   AgentExecutionPausedError,
   ConflictError,
@@ -26,6 +29,7 @@ import {
 } from "./errors.ts";
 import { eventPayloadOptionalText, eventPayloadText } from "./event-payload.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
+import { assertRuntimeOfferSupportsToolAccess } from "./runtime-offer-tool-access.ts";
 import {
   integer,
   jsonObject,
@@ -119,6 +123,11 @@ export function getWorkspaceAgentManagementView(
     ),
   );
   return ClientAgentGetResponseSchema.parse({
+    membershipRole: roomRole(
+      database,
+      record.definition.controlRoomId,
+      record.definition.participantId,
+    ),
     agent: {
       currentRevision: record.currentRevision,
       definition: record.definition,
@@ -247,6 +256,12 @@ function configureAgent(
       "policy_json",
     ),
   );
+  // Configuring an Agent is also the migration boundary for historical rows:
+  // Raft's product path has neither per-Agent restricted mode nor a visible
+  // session strategy. Runtime session reuse is automatic and best-effort.
+  const toolAccessMode = "full_access" as const;
+  const sessionPolicy = "prefer_resume" as const;
+  assertRuntimeOfferSupportsToolAccess(offerBinding.offer, toolAccessMode);
   const currentOfferId = currentPolicy.required.allowedOfferIds?.[0];
   let hostChanged = false;
   if (currentOfferId !== undefined) {
@@ -275,7 +290,8 @@ function configureAgent(
       workspaceMode: "in_place" as const,
     },
     retryPolicyRef: currentPolicy.retryPolicyRef,
-    sessionPolicy: input.sessionPolicy,
+    sessionPolicy,
+    toolAccessMode,
   };
   const policy = ExecutionPolicyRevisionSchema.parse({
     ...policyContent,
@@ -668,15 +684,9 @@ function grantHostParticipant(
     .run(JSON.stringify(participantIds), credentialId);
   database
     .prepare(
-      "UPDATE agent_hosts SET participant_ids_json = ?, last_seen_at = ?, last_seen_ms = ? WHERE host_id = ? AND credential_id = ?",
+      "UPDATE agent_hosts SET participant_ids_json = ? WHERE host_id = ? AND credential_id = ?",
     )
-    .run(
-      JSON.stringify(participantIds),
-      updatedAt,
-      updatedAtMs,
-      hostId,
-      credentialId,
-    );
+    .run(JSON.stringify(participantIds), hostId, credentialId);
 }
 
 function revokeHostParticipant(
@@ -702,12 +712,10 @@ function revokeHostParticipant(
       .run(JSON.stringify(participantIds), text(credential, "credential_id"));
     database
       .prepare(
-        "UPDATE agent_hosts SET participant_ids_json = ?, last_seen_at = ?, last_seen_ms = ? WHERE host_id = ? AND credential_id = ?",
+        "UPDATE agent_hosts SET participant_ids_json = ? WHERE host_id = ? AND credential_id = ?",
       )
       .run(
         JSON.stringify(participantIds),
-        updatedAt,
-        updatedAtMs,
         text(credential, "host_id"),
         text(credential, "credential_id"),
       );

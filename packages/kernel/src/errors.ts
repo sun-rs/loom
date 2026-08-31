@@ -36,6 +36,8 @@ export class LeaseConflictError extends ConflictError {}
 
 export class AgentExecutionPausedError extends ConflictError {}
 
+export class ActivationCancellationRequestedError extends ConflictError {}
+
 export class IdempotencyConflictError extends ConflictError {}
 
 export class DeliveryProofError extends KernelError {

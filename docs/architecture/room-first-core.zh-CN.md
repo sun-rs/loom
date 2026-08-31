@@ -45,7 +45,7 @@ RAH OS 不统一：
 | ProviderSessionRef          | Provider           | opaque、可失效           |
 | RunAttempt                  | Room Kernel        | 一次执行尝试的不可变身份 |
 
-Agent 不永久等同于一个 CLI/model。每个 RunAttempt 固定记录实际 RuntimeProfileRevision、model、effort、host、workspace 和可选 ProviderSessionRef。切换模型或 CLI 会创建新 RunAttempt，但 identity、ACL、Task、Room cursor 和 Kernel memory 保持。Provider Session 可以被恢复，Room 不依靠它重建历史。
+Agent 不永久等同于一个 CLI/model。每个 RunAttempt 固定记录实际 RuntimeProfileRevision、model、effort、host 和 workspace。ProviderSessionRef 当前只由实际执行的 Computer/Host 私有保存，不进入 RunAttempt 或 Kernel；切换 Host、RuntimeProfile revision 或 WorkspaceMount revision 会自然 cold-start。切换模型或 CLI 会创建新 RunAttempt，但 identity、ACL、Task、Room cursor 和 Kernel memory 保持。Provider Session 可以被当作 cache 恢复，Room 不依靠它重建历史。
 
 ## 3. Canonical Ledger
 
@@ -92,13 +92,13 @@ actor identity 必须来自认证上下文，工具参数不能指定或冒充 a
 - RunAttempt 描述某个 RuntimeProfile 的一次执行。
 - CLI exit 0 只结束 RunAttempt，不完成 Task。
 - `task.submit` 表示执行者交付审查。
-- `task.complete` 只能由授权 reviewer/human/policy 执行。
+- `task.complete` 当前只能由 Task creator Human 执行；声明 reviewer 时还必须先具备当前 submission 的全部 approved Review。
 
 ## 6. Artifact 与 Review
 
 Artifact 必须显式发布并携带 hash、MIME/kind、producer、Run/Task provenance 和生命周期。裸文件路径不是 artifact truth。
 
-Review 是独立对象，关联 frozen diff、base/head、reviewer、comments、evidence 和 disposition。Reviewer 不依赖实现者隐藏思维或变化中的全局 Git 状态。
+Review v1 已是独立对象，固定关联不可变 TaskSubmission digest、reviewer、evidence summary 和 disposition；`changes_requested` 会重开 Task，新 submission 不继承旧 Review。它尚未关联 frozen diff、base/head 或 canonical Artifact，因此 Reviewer 当前只能验收明确提交的 evidence，不能把变化中的全局 Git 状态当作真相。协议见 [ADR-0021](../adr/0021-frozen-task-submission-and-canonical-review.md)。
 
 ## 7. Runtime 与业务协议边界
 

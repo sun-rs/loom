@@ -1,0 +1,184 @@
+/* Raft live Files DOM/computed styles, 2026-08-31: list p-3/gap-2,
+   row border-2/px-4/py-3, size-14 icon, 14/12px label, size-7 overflow. */
+.rah-room-files {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+}
+.rah-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+}
+.rah-file-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  position: relative;
+  padding: 12px 16px;
+  border: 2px solid rgb(0 0 0 / 30%);
+  background: white;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.rah-file-card:hover {
+  border-color: black;
+  box-shadow: 2px 2px 0 black;
+}
+.rah-file-open {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.rah-file-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border: 2px solid black;
+  flex-shrink: 0;
+}
+.rah-file-icon svg {
+  width: 18px;
+  height: 18px;
+}
+.rah-file-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.rah-file-label strong {
+  font-size: 14px;
+  line-height: 20px;
+  color: black;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.rah-file-label small {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 16px;
+  color: rgb(0 0 0 / 50%);
+}
+.rah-file-overflow {
+  width: 28px;
+  height: 28px;
+  align-self: center;
+  flex-shrink: 0;
+}
+.rah-file-overflow svg {
+  width: 14px;
+  height: 14px;
+}
+.rah-file-menu {
+  position: fixed;
+  min-width: 180px;
+  z-index: 100;
+  border: 2px solid black;
+  background: white;
+  box-shadow: 3px 3px 0 black;
+}
+.rah-file-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.rah-file-menu button {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+.rah-file-menu button:hover,
+.rah-file-menu button:focus-visible {
+  background: rgb(0 0 0 / 5%);
+}
+.rah-file-preview {
+  width: min(1000px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  display: flex;
+  flex-direction: column;
+}
+.rah-file-preview header {
+  flex-shrink: 0;
+  gap: 12px;
+}
+.rah-file-preview h2 {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rah-file-preview-body {
+  padding: 16px;
+  overflow: auto;
+  min-height: 0;
+}
+.rah-file-preview-body img {
+  max-width: 100%;
+  max-height: 75dvh;
+  object-fit: contain;
+  display: block;
+  margin: auto;
+}
+.rah-file-preview-body pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.rah-message-files {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0;
+  max-width: 640px;
+}
+.rah-composer-files {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.rah-file-draft {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid rgb(0 0 0 / 30%);
+  font-size: 12px;
+  max-width: 100%;
+}
+.rah-file-draft > span {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rah-file-draft button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.rah-file-card [role="alert"] {
+  color: #b42318;
+  overflow-wrap: anywhere;
+}

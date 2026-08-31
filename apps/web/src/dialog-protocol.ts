@@ -11,6 +11,7 @@ const FOCUSABLE_SELECTOR = [
 
 export function useDialogProtocol(input: {
   blocked: boolean;
+  initialFocus?: "container" | "first";
   onClose: () => void;
 }) {
   const dialogRef = useRef<HTMLElement>(null);
@@ -21,6 +22,7 @@ export function useDialogProtocol(input: {
       : null,
   );
   const blockedRef = useRef(input.blocked);
+  const initialFocusRef = useRef(input.initialFocus ?? "first");
   const onCloseRef = useRef(input.onClose);
   blockedRef.current = input.blocked;
   onCloseRef.current = input.onClose;
@@ -60,9 +62,17 @@ export function useDialogProtocol(input: {
     document.addEventListener("keydown", handleKeyDown);
     queueMicrotask(() => {
       if (dialogRef.current?.contains(document.activeElement)) return;
-      dialogRef.current
-        ?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)
-        ?.focus();
+      if (initialFocusRef.current === "container") {
+        dialogRef.current?.focus();
+        return;
+      }
+      const marked = dialogRef.current?.querySelector<HTMLElement>(
+        "[data-dialog-initial-focus]",
+      );
+      (
+        marked ??
+        dialogRef.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)
+      )?.focus();
     });
     return () => {
       document.removeEventListener("keydown", handleKeyDown);

@@ -7,60 +7,33 @@ import test from "node:test";
 import { RoomKernel } from "@rah-os/kernel";
 
 import { DaemonApplication, DaemonConfigSchema } from "../src/index.ts";
-
-const cliProfiles: Record<
-  string,
-  { args: (cwd: string, prompt: string) => string[]; command: string }
-> = {
-  claude: {
-    args: (_cwd, prompt) => [
-      "--print",
-      "--safe-mode",
-      "--no-session-persistence",
-      "--dangerously-skip-permissions",
-      "--model",
-      "claude-sonnet-5",
-      "--effort",
-      "low",
-      prompt,
-    ],
-    command: "claude",
-  },
-  codex: {
-    args: (cwd, prompt) => [
-      "exec",
-      "--ephemeral",
-      "--ignore-rules",
-      "--ignore-user-config",
-      "--skip-git-repo-check",
-      "--model",
-      "gpt-5.6-luna",
-      "--sandbox",
-      "danger-full-access",
-      "--cd",
-      cwd,
-      prompt,
-    ],
-    command: "codex",
-  },
-  kimi: {
-    args: (_cwd, prompt) => ["--output-format", "text", "--prompt", prompt],
-    command: "kimi",
-  },
-  opencode: {
-    args: (cwd, prompt) => ["run", "--auto", "--pure", "--dir", cwd, prompt],
-    command: "opencode",
-  },
-};
+import {
+  realCliGateProfile,
+  type RealCliGateName,
+} from "./real-cli-gate-profile.ts";
 
 const selectedGate = process.env.RAH_REAL_CLI_GATE;
 const selectedProfile =
-  selectedGate === undefined ? undefined : cliProfiles[selectedGate];
+  selectedGate === undefined
+    ? undefined
+    : realCliGateProfile(parseGate(selectedGate), {
+        ...(process.env.RAH_REAL_CLI_MODEL === undefined
+          ? {}
+          : { model: process.env.RAH_REAL_CLI_MODEL }),
+        ...(process.env.RAH_REAL_CLI_REASONING === undefined
+          ? {}
+          : { reasoning: process.env.RAH_REAL_CLI_REASONING }),
+      });
 const gateName = selectedGate ?? "real-agent";
+const gateDescription =
+  selectedProfile === undefined
+    ? "real Agent"
+    : `${selectedGate} ${selectedProfile.model}${selectedProfile.reasoning === undefined ? "" : `/${selectedProfile.reasoning}`}`;
+const REAL_CLI_RUN_TIMEOUT_MS = 5 * 60_000;
 
 test(
-  `opt-in ${selectedGate ?? "real Agent"} CLI submits a durable Room Task through the Worker API`,
-  { skip: selectedProfile === undefined, timeout: 180_000 },
+  `opt-in ${gateDescription} CLI submits a durable Room Task through the Worker API`,
+  { skip: selectedProfile === undefined, timeout: 6 * 60_000 },
   async () => {
     assert.ok(selectedProfile, `unsupported RAH_REAL_CLI_GATE=${selectedGate}`);
     const directory = mkdtempSync(join(tmpdir(), "rah-real-codex-"));
@@ -120,7 +93,7 @@ test(
         outboxRetryAfterMs: 1_000,
         pollIntervalMs: 100,
         retryAfterMs: 60_000,
-        runTimeoutMs: 120_000,
+        runTimeoutMs: REAL_CLI_RUN_TIMEOUT_MS,
         runtime: {
           args: selectedProfile.args(stateDirectory, workerPrompt()),
           command: selectedProfile.command,
@@ -166,14 +139,14 @@ test(
         roomId: room.roomId,
       })[0];
       const attempts = activeObserver.listRunAttempts({ roomId: room.roomId });
-      assert.equal(
-        activation?.state,
-        "completed",
-        JSON.stringify({ activation, attempts }, null, 2),
-      );
       const task = activeObserver.listTasks(humanActor, {
         roomId: room.roomId,
       })[0];
+      assert.equal(
+        activation?.state,
+        "completed",
+        JSON.stringify({ activation, attempts, task }, null, 2),
+      );
       assert.equal(
         task?.state,
         "submitted",
@@ -194,25 +167,30 @@ test(
   },
 );
 
+function parseGate(value: string): RealCliGateName {
+  if (["claude", "codex", "kimi", "opencode"].includes(value)) {
+    return value as RealCliGateName;
+  }
+  throw new Error(`unsupported RAH_REAL_CLI_GATE=${value}`);
+}
+
 function workerPrompt(): string {
   return `You are running only as a RAH OS Worker Task protocol gate.
-Do not edit files and do not expose the bearer token in output.
-Use one local shell command with Node.js built-in fetch to:
-1. POST JSON {} to process.env.RAH_WORKER_API_URL + "/v1/worker/sync" with Authorization "Bearer " + process.env.RAH_WORKER_TOKEN and Content-Type application/json.
-2. Parse the response, require response.ok, require cursorAfter >= Number(process.env.RAH_TO_SEQ), and find the event whose type is "task.created". Its aggregateId is taskId.
-3. POST {taskId} to "/v1/worker/tasks/get", require response.ok, and treat response.task as the canonical Task state. If it is already submitted or completed, skip to acknowledgement.
-4. Starting with basedOnRoomSeq=cursorAfter, POST these strict JSON commands in order with the same headers. After each response require response.ok; replace basedOnRoomSeq with response.event.roomSeq only when response.deduplicated is false, because a replayed event may belong to an earlier RunAttempt:
-   - /v1/worker/tasks/claim: {taskId,idempotencyKey:"real:"+taskId+":claim",basedOnRoomSeq}
-   - /v1/worker/tasks/start: {taskId,idempotencyKey:"real:"+taskId+":start",basedOnRoomSeq}
-   - /v1/worker/tasks/progress: add progress:"Real CLI exercised the durable Task protocol" and use idempotencyKey ending ":progress"
-   - /v1/worker/tasks/submit: add summary:"Real CLI completed the durable Task protocol gate" and use idempotencyKey ending ":submit"
-5. POST {"throughSeq": the original sync cursorAfter} to "/v1/worker/acknowledge" and require response.ok.
-6. Exit successfully. Only the durable Task projection and Room events are authoritative; prose and tool output are diagnostics.`;
+Do not edit files, inspect the credential file, call the Worker HTTP endpoints directly, or expose credentials in output. Provider tool shells may rebuild PATH, so invoke the exact absolute path in process.env.RAH_WORKER_CLI. Use one bounded \`"$RAH_WORKER_CLI" worker\` command per tool call and parse its JSON response:
+1. Run \`"$RAH_WORKER_CLI" worker sync\`, require cursorAfter >= Number(process.env.RAH_TO_SEQ), and find the event whose type is "task.created". Its aggregateId is taskId. Preserve this original cursorAfter for acknowledgement.
+2. Run \`"$RAH_WORKER_CLI" worker task-get --task-id <taskId>\` and treat response.task as canonical. If it is already submitted or completed, skip to acknowledgement.
+3. Starting with basedOnRoomSeq=cursorAfter, run these commands in order. After each command, replace basedOnRoomSeq with response.event.roomSeq only when response.deduplicated is false, because a replayed event may belong to an earlier RunAttempt:
+   - \`"$RAH_WORKER_CLI" worker task-claim --task-id <taskId> --idempotency-key real:<taskId>:claim --based-on-room-seq <seq>\`
+   - \`"$RAH_WORKER_CLI" worker task-start --task-id <taskId> --idempotency-key real:<taskId>:start --based-on-room-seq <seq>\`
+   - \`"$RAH_WORKER_CLI" worker task-progress --task-id <taskId> --progress "Real CLI exercised the durable Task protocol" --idempotency-key real:<taskId>:progress --based-on-room-seq <seq>\`
+   - \`"$RAH_WORKER_CLI" worker task-submit --task-id <taskId> --summary "Real CLI completed the durable Task protocol gate" --idempotency-key real:<taskId>:submit --based-on-room-seq <seq>\`
+4. Run \`"$RAH_WORKER_CLI" worker acknowledge --through-seq <original-cursorAfter>\`.
+5. Exit successfully. Only the durable Task projection and Room events are authoritative; prose and tool output are diagnostics.`;
 }
 
 async function waitUntil(
   predicate: () => boolean,
-  timeoutMs = 150_000,
+  timeoutMs = REAL_CLI_RUN_TIMEOUT_MS + 30_000,
 ): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (!predicate()) {

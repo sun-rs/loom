@@ -1,8 +1,10 @@
 import { createHash, randomBytes } from "node:crypto";
+import type { DatabaseSync } from "node:sqlite";
 
 import type { ActivationCredentialScope } from "@rah-os/protocol";
 
 import { UnauthenticatedError } from "./errors.ts";
+import { nullableText, text } from "./sqlite-row.ts";
 
 const AUTHENTICATION_PROOF = Symbol("rah-os-authenticated-actor");
 const issuedContexts = new WeakSet<object>();
@@ -140,6 +142,63 @@ export function isIssuedWorkerExecutionContext(
     value !== null &&
     issuedWorkerExecutionContexts.has(value)
   );
+}
+
+export function requireAuthenticatedActor(
+  database: DatabaseSync,
+  actor: AuthenticatedActorContext,
+): string {
+  if (!isIssuedActorContext(actor)) {
+    throw new UnauthenticatedError("authentication context is invalid");
+  }
+  const row = database
+    .prepare(
+      "SELECT 1 AS present FROM principal_credentials WHERE credential_id = ? AND principal_id = ? AND revoked_at IS NULL",
+    )
+    .get(actor.credentialId, actor.principalId);
+  if (row === undefined) {
+    throw new UnauthenticatedError("authentication context is invalid");
+  }
+  return actor.principalId;
+}
+
+export function requireAuthenticatedHostCredential(
+  database: DatabaseSync,
+  host: AuthenticatedHostContext,
+): AuthenticatedHostContext {
+  if (!isIssuedHostContext(host)) {
+    throw new UnauthenticatedError("host authentication context is invalid");
+  }
+  const row = database
+    .prepare(
+      "SELECT host_id, participant_ids_json FROM agent_host_credentials WHERE credential_id = ? AND revoked_at IS NULL",
+    )
+    .get(host.credentialId);
+  if (row === undefined || text(row, "host_id") !== host.hostId) {
+    throw new UnauthenticatedError("host authentication context is invalid");
+  }
+  return host;
+}
+
+export function requireAuthenticatedHost(
+  database: DatabaseSync,
+  host: AuthenticatedHostContext,
+): AuthenticatedHostContext {
+  const authenticatedHost = requireAuthenticatedHostCredential(database, host);
+  const row = database
+    .prepare(
+      "SELECT credential_id, instance_id, state FROM agent_hosts WHERE host_id = ?",
+    )
+    .get(authenticatedHost.hostId);
+  if (
+    row === undefined ||
+    nullableText(row, "credential_id") !== authenticatedHost.credentialId ||
+    text(row, "instance_id") !== authenticatedHost.instanceId ||
+    text(row, "state") === "offline"
+  ) {
+    throw new UnauthenticatedError("Host daemon instance is not active");
+  }
+  return authenticatedHost;
 }
 
 export function createAccessToken(): string {

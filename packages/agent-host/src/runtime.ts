@@ -1,7 +1,9 @@
 import type {
   Activation,
   AgentRuntimeContext,
+  ContextManifest,
   RuntimeRecoveryDescriptor,
+  RuntimeTrajectoryAppendInput,
 } from "@rah-os/protocol";
 
 export type RuntimeAvailability = {
@@ -14,6 +16,7 @@ export type ActivationEnvelope = Pick<
   "activationId" | "fromSeq" | "participantId" | "reason" | "roomId" | "toSeq"
 > & {
   agent?: AgentRuntimeContext;
+  contextManifest?: ContextManifest;
   consumerId: string;
   hostId: string;
   runAttemptId: string;
@@ -36,6 +39,7 @@ export type RuntimeRecoveryInput = {
 };
 
 export type RuntimeStartLifecycle = {
+  recordTrajectory?(activity: RuntimeTrajectoryAppendInput): Promise<void>;
   registerPrepared(run: RunHandle): Promise<void>;
 };
 

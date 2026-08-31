@@ -235,6 +235,121 @@ test("two activation-scoped Workers append causal Room replies without choosing 
   }
 });
 
+test("a coalesced Activation keeps the Worker reply in its latest originating Thread", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-worker-thread-reply-"));
+  const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+  const service = new WorkerApplicationService({ kernel });
+  try {
+    kernel.initialize();
+    const human = kernel.provisionPrincipal({
+      handle: "worker-thread-human",
+      kind: "human",
+    });
+    const agent = kernel.provisionPrincipal({
+      handle: "worker-thread-agent",
+      kind: "agent",
+    });
+    const humanActor = kernel.authenticateAccessToken(human.accessToken);
+    const room = kernel.createRoom(humanActor, {
+      name: "Worker Thread replies",
+      slug: "worker-thread-replies",
+    });
+    kernel.addMember(humanActor, {
+      principalId: agent.principal.principalId,
+      roomId: room.roomId,
+    });
+    const root = kernel.postMessage(humanActor, {
+      body: "Root message",
+      idempotencyKey: "worker-thread-root",
+      recipients: [
+        {
+          participantId: agent.principal.principalId,
+          reason: "room_policy",
+        },
+      ],
+      roomId: room.roomId,
+    });
+    const created = kernel.createThread(humanActor, {
+      basedOnRoomSeq: root.event.roomSeq,
+      idempotencyKey: "worker-thread-create",
+      recipientIds: [],
+      roomId: room.roomId,
+      rootMessageId: root.event.aggregateId,
+    });
+    kernel.replyThread(humanActor, {
+      basedOnRoomSeq: created.event.roomSeq,
+      body: "Reply in this Thread",
+      idempotencyKey: "worker-thread-human-reply",
+      recipientIds: [agent.principal.principalId],
+      roomId: room.roomId,
+      threadId: created.thread.threadId,
+    });
+
+    const host = authenticateHost(
+      kernel,
+      "worker-thread-host",
+      agent.principal.principalId,
+    );
+    const activation = kernel.leaseNextActivation(host, { leaseMs: 30_000 });
+    assert.ok(activation);
+    const runAttempt = kernel.createRunAttempt(host, {
+      activationId: activation.activationId,
+    });
+    prepareAndMarkRunAttemptRunning(kernel, host, {
+      recoveryDescriptor: fakeRecovery("worker-thread-runtime"),
+      runAttemptId: runAttempt.runAttemptId,
+      runtimeRunId: "worker-thread-runtime",
+    });
+    await service.start();
+    const credential = service.issueActivationCredential(host, {
+      activationId: activation.activationId,
+      consumerId: "worker-thread-consumer",
+      hostId: "worker-thread-host",
+      participantId: agent.principal.principalId,
+      roomId: room.roomId,
+      runAttemptId: runAttempt.runAttemptId,
+      toSeq: activation.toSeq,
+    });
+    const request = async (path: string, body: Record<string, unknown>) =>
+      await fetch(`${service.origin}${path}`, {
+        body: JSON.stringify(body),
+        headers: {
+          authorization: `Bearer ${credential.accessToken}`,
+          "content-type": "application/json",
+        },
+        method: "POST",
+      });
+    const deliveryResponse = await request("/v1/worker/sync", {});
+    assert.equal(deliveryResponse.status, 200);
+    const delivery = await jsonObject(deliveryResponse);
+    const response = await request("/v1/worker/messages/post", {
+      basedOnRoomSeq: delivery.cursorAfter,
+      body: "Canonical Agent Thread reply",
+      idempotencyKey: "worker-thread-agent-reply",
+    });
+    assert.equal(
+      response.status,
+      200,
+      JSON.stringify(await jsonObject(response)),
+    );
+
+    const threadMessages = kernel.listMessages(humanActor, {
+      roomId: room.roomId,
+      threadId: created.thread.threadId,
+    });
+    assert.equal(threadMessages.messages.length, 2);
+    assert.equal(
+      threadMessages.messages[1]?.actorId,
+      agent.principal.principalId,
+    );
+    assert.equal(threadMessages.messages[1]?.threadId, created.thread.threadId);
+  } finally {
+    await service.close();
+    kernel.close();
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
 test("Worker API only acknowledges cursors delivered to its scoped credential", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-worker-api-"));
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
@@ -455,6 +570,10 @@ test("Worker API exposes a causal and execution-fenced Task command surface", as
       handle: "worker-task-agent",
       kind: "agent",
     });
+    const reviewer = kernel.provisionPrincipal({
+      handle: "worker-task-reviewer",
+      kind: "agent",
+    });
     const humanActor = kernel.authenticateAccessToken(human.accessToken);
     const room = kernel.createRoom(humanActor, {
       name: "Worker Task API",
@@ -464,9 +583,14 @@ test("Worker API exposes a causal and execution-fenced Task command surface", as
       principalId: agent.principal.principalId,
       roomId: room.roomId,
     });
+    kernel.addMember(humanActor, {
+      principalId: reviewer.principal.principalId,
+      roomId: room.roomId,
+    });
     const created = kernel.createTask(humanActor, {
       assigneeId: agent.principal.principalId,
       idempotencyKey: "worker-task-created",
+      reviewerIds: [reviewer.principal.principalId],
       roomId: room.roomId,
       title: "Complete the Worker Task protocol",
     });
@@ -608,6 +732,74 @@ test("Worker API exposes a causal and execution-fenced Task command surface", as
     assert.equal(
       kernel.listTasks(humanActor, { roomId: room.roomId })[0]?.state,
       "submitted",
+    );
+
+    const reviewerHost = authenticateHost(
+      kernel,
+      "worker-task-review-host",
+      reviewer.principal.principalId,
+    );
+    const reviewerActivation = kernel.leaseNextActivation(reviewerHost, {
+      leaseMs: 30_000,
+    });
+    assert.ok(reviewerActivation);
+    const reviewerRun = kernel.createRunAttempt(reviewerHost, {
+      activationId: reviewerActivation.activationId,
+    });
+    prepareAndMarkRunAttemptRunning(kernel, reviewerHost, {
+      recoveryDescriptor: fakeRecovery("worker-task-review-runtime"),
+      runAttemptId: reviewerRun.runAttemptId,
+      runtimeRunId: "worker-task-review-runtime",
+    });
+    const reviewerCredential = service.issueActivationCredential(reviewerHost, {
+      activationId: reviewerActivation.activationId,
+      consumerId: "worker-task-review-consumer",
+      hostId: reviewerHost.hostId,
+      participantId: reviewer.principal.principalId,
+      roomId: room.roomId,
+      runAttemptId: reviewerRun.runAttemptId,
+      toSeq: reviewerActivation.toSeq,
+    });
+    const reviewRequest = async (path: string, body: Record<string, unknown>) =>
+      await fetch(`${service.origin}${path}`, {
+        body: JSON.stringify(body),
+        headers: {
+          authorization: `Bearer ${reviewerCredential.accessToken}`,
+          "content-type": "application/json",
+        },
+        method: "POST",
+      });
+    const reviewDelivery = await jsonObject(
+      await reviewRequest("/v1/worker/sync", {}),
+    );
+    const reviewResponse = await reviewRequest("/v1/worker/tasks/review", {
+      basedOnRoomSeq: reviewDelivery.cursorAfter,
+      disposition: "approved",
+      idempotencyKey: "worker-task-review-approved",
+      summary: "The frozen submission evidence passes review.",
+      taskId: created.task.taskId,
+    });
+    assert.equal(reviewResponse.status, 200);
+    const reviewed = await jsonObject(reviewResponse);
+    assert.equal(
+      (reviewed.review as Record<string, unknown>).disposition,
+      "approved",
+    );
+    assert.equal(
+      (reviewed.submission as Record<string, unknown>).submissionDigest,
+      (reviewed.review as Record<string, unknown>).submissionDigest,
+    );
+    const latest = kernel.sync(humanActor, {
+      consumerId: "worker-task-human-review",
+      roomId: room.roomId,
+    }).latestRoomSeq;
+    assert.equal(
+      kernel.completeTask(humanActor, {
+        basedOnRoomSeq: latest,
+        idempotencyKey: "worker-task-complete-after-review",
+        taskId: created.task.taskId,
+      }).task.state,
+      "completed",
     );
   } finally {
     await service.close();

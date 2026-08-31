@@ -14,12 +14,14 @@ import type {
   ModelIntent,
   ParticipantKind,
   PlacementDecision,
+  ContextManifest,
   Room,
   RoomMembership,
   RoomEvent,
   RuntimeRecoveryDescriptor,
   Task,
   Thread,
+  ToolAccessMode,
   Workspace,
 } from "@rah-os/protocol";
 
@@ -73,6 +75,7 @@ export type RunAttempt = {
   exitSignal?: string;
   error?: string;
   finishedAt?: string;
+  contextManifest?: ContextManifest;
   placement?: PlacementDecision;
 };
 
@@ -92,7 +95,8 @@ export type ExecutionPolicyContent = Omit<
   | "executionPolicyId"
   | "executionPolicyRevisionId"
   | "revision"
->;
+  | "toolAccessMode"
+> & { toolAccessMode?: ToolAccessMode };
 
 export type ExecutionPolicyMutationResult = {
   deduplicated: boolean;
@@ -138,7 +142,8 @@ export type WorkspaceAgentProvisionInput = {
   modelIntent: ModelIntent;
   role: string;
   runtimeOfferId: string;
-  sessionPolicy: ExecutionPolicyRevision["sessionPolicy"];
+  sessionPolicy?: "prefer_resume" | undefined;
+  toolAccessMode?: ToolAccessMode;
 };
 
 export type WorkspaceAgentManagementInput = ClientAgentManageRequest;
@@ -229,7 +234,9 @@ export type MessageMutationResult = {
 
 export type MessagePage = {
   cursorAfter: number;
-  hasMore: boolean;
+  cursorBefore: number;
+  hasMoreAfter: boolean;
+  hasMoreBefore: boolean;
   messages: Message[];
 };
 

@@ -34,13 +34,24 @@ export function newLegacyRoom(
 
 export function roomProjectionFromRow(row: Row): Room {
   const archivedAt = nullableText(row, "archived_at");
+  const description = nullableText(row, "description");
+  const visibility = nullableText(row, "visibility");
+  const left = nullableText(row, "left_principal_id");
+  const right = nullableText(row, "right_principal_id");
   return {
     ...(archivedAt === null ? {} : { archivedAt }),
     createdAt: text(row, "created_at"),
+    ...(description === null ? {} : { description }),
+    ...(left === null || right === null
+      ? {}
+      : { directParticipantIds: [left, right] as [string, string] }),
     kind: text(row, "kind") as Room["kind"],
     name: text(row, "name"),
     roomId: text(row, "room_id"),
     slug: text(row, "slug"),
+    ...(visibility === null
+      ? {}
+      : { visibility: visibility as Room["visibility"] }),
     workspaceId: text(row, "workspace_id"),
   };
 }
@@ -48,6 +59,10 @@ export function roomProjectionFromRow(row: Row): Room {
 export function messageProjectionFromRow(row: Row): Message {
   const threadId = nullableText(row, "thread_id");
   return MessageSchema.parse({
+    ...(typeof row.attachments_json === "string" &&
+    row.attachments_json !== "[]"
+      ? { attachments: JSON.parse(row.attachments_json) }
+      : {}),
     actorId: text(row, "actor_id"),
     body: text(row, "body"),
     createdAt: text(row, "created_at"),
@@ -86,6 +101,9 @@ export function workspaceProjectionFromRow(row: Row): Workspace {
   return WorkspaceSchema.parse({
     ...(archivedAt === null ? {} : { archivedAt }),
     ...(controlRoomId === null ? {} : { controlRoomId }),
+    ...(typeof row.workspace_avatar_key === "string"
+      ? { avatarKey: row.workspace_avatar_key }
+      : {}),
     createdAt: text(row, "workspace_created_at"),
     name: text(row, "workspace_name"),
     slug: text(row, "workspace_slug"),

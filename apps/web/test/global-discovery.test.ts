@@ -1,0 +1,100 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {
+  discoveryLocation,
+  highlightParts,
+  raftTaskGroup,
+  globalSurfaceFromSearch,
+  searchDateBound,
+  searchExcerpt,
+  visibleReadFrontier,
+  focusAfterSuccessfulSubmit,
+} from "../src/global-discovery-model.ts";
+test("successful submit exits only its own focused snapshot, not a newer navigation", () => {
+  assert.equal(
+    focusAfterSuccessfulSubmit("old-message", "old-message"),
+    undefined,
+  );
+  assert.equal(
+    focusAfterSuccessfulSubmit("new-message", "old-message"),
+    "new-message",
+  );
+  assert.equal(
+    focusAfterSuccessfulSubmit("new-message", undefined),
+    "new-message",
+  );
+});
+test("global routes preserve Room/thread/message identities without treating DM as a channel Task board", () => {
+  assert.equal(globalSurfaceFromSearch("?surface=tasks"), "tasks");
+  assert.equal(globalSurfaceFromSearch("?surface=evil"), "room");
+  const url = new URL(
+    discoveryLocation({
+      roomId: "room one",
+      messageId: "m+1",
+      rootMessageId: "root&1",
+    }),
+    "http://local",
+  );
+  assert.equal(url.searchParams.get("thread"), "room one:root&1");
+  assert.equal(url.searchParams.get("message"), "m+1");
+  assert.equal(url.searchParams.get("room"), "room one");
+});
+test("Activity Thread deep links retain the Activity filter and background", () => {
+  const url = new URL(
+    discoveryLocation(
+      {
+        roomId: "room-target",
+        rootMessageId: "root-target",
+        messageId: "reply-target",
+        surface: "activity",
+      },
+      "?surface=activity&filter=mentions&room=old",
+    ),
+    "http://local",
+  );
+  assert.equal(url.searchParams.get("surface"), "activity");
+  assert.equal(url.searchParams.get("filter"), "mentions");
+  assert.equal(url.searchParams.get("room"), "room-target");
+  assert.equal(url.searchParams.get("thread"), "room-target:root-target");
+  assert.equal(url.searchParams.get("message"), "reply-target");
+});
+test("Raft five task groups map canonical states; highlight keeps user text inert", () => {
+  assert.equal(raftTaskGroup("waiting_input"), "in-progress");
+  assert.equal(raftTaskGroup("cancelled"), "closed");
+  assert.deepEqual(highlightParts("<script>100%_</script>", "%_"), [
+    { text: "<script>100", match: false },
+    { text: "%_", match: true },
+    { text: "</script>", match: false },
+  ]);
+});
+test("untrusted date links cannot crash Search, and long-message excerpts include the match", () => {
+  assert.equal(searchDateBound("invalid"), undefined);
+  assert.equal(searchDateBound("2026-02-30"), undefined);
+  assert.equal(searchDateBound("2026-13-01"), undefined);
+  assert.ok(searchDateBound("2026-08-30"));
+  const excerpt = searchExcerpt(
+    "a".repeat(9000) + "needle" + "z".repeat(9000),
+    "needle",
+  );
+  assert.ok(excerpt.includes("needle"));
+  assert.ok(excerpt.length <= 1002);
+});
+test("Human read acknowledgement uses visible message sequence, never transport head or virtual overscan", () => {
+  assert.equal(
+    visibleReadFrontier(
+      [
+        { seq: 8, top: 150, bottom: 250 },
+        { seq: 99, top: 900, bottom: 950 },
+      ],
+      { top: 100, bottom: 800 },
+    ),
+    8,
+  );
+  assert.equal(
+    visibleReadFrontier([{ seq: 8, top: 1, bottom: 99 }], {
+      top: 100,
+      bottom: 800,
+    }),
+    0,
+  );
+});

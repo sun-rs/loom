@@ -8,6 +8,7 @@
   },
   "exports": "./src/index.ts",
   "dependencies": {
+    "@modelcontextprotocol/client": "^2.0.0",
     "@rah-os/agent-host": "*",
     "@rah-os/application-service": "*",
     "@rah-os/core": "*",

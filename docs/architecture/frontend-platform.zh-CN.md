@@ -1,6 +1,6 @@
 # 前端平台架构：Web/PWA 优先、共享状态内核与薄原生壳
 
-状态：Phase 4A Foundation。Raft UI snapshot→generated `ui-tokens`、覆盖全部现有 v3 route 的 typed `RahClient`、cold-reload-safe ordered client-core 与 Room/Chat/Thread/Task React recovery slice 已经建立；自动真实 Chrome + daemon v4 browser gate 已完成 Room 创建、成员收敛、双 Agent reply、Thread、Task 单 winner、Human complete、reload recovery 与 390x844 验收，仍不允许用 mock page 反向定义缺失的 Kernel 业务协议。
+状态：Phase 4B Anchored Task。Raft UI snapshot→generated `ui-tokens`、覆盖全部现有 v3 route 的 typed `RahClient`、cold-reload-safe ordered client-core 与 Room/Chat/Thread/Task React recovery slice 已经建立；manifest + Service Worker 提供同 bundle PWA shell，正式 HTTPS LAN gate 已覆盖设备配对、Secure/HttpOnly session、Core restart、service worker ready 与 390x844。Room/Task/Agent 的自动真实 Chrome + daemon v4 gate 继续覆盖 Room 创建、成员收敛、双 Agent reply、Thread、Task 顶层 Message/连续编号/讨论 Thread、单 winner、Human complete 和 reload recovery；独立 Firefox 150 production gate 覆盖 desktop/mobile、Agent/Settings/Room drawer、标准 scrollbar declaration 和 strict-CSP 零错误，并由此将 Zod 固定为 bootstrap-first jitless。仍不允许用 mock page 或离线 cache 反向定义缺失的 Kernel 业务协议。
 
 ## 1. 目标与非目标
 
@@ -124,6 +124,8 @@ RaftUI 保持独立仓库并承担四件事：
 
 生产 `ui-tokens` 只接受 generated artifact，不接受截图目测后在业务页面散写 magic number。不能稳定提取的差异必须标为 approximation；不能把近似值宣称为官方 CSS。
 
+Agents surface 的官方 Members computed-style token 与像素 avatar pack 也必须经过同一 allowlist/generator 进入 `ui-tokens`。产品组件只读取 generated CSS/JSON 和 canonical `AgentDefinition.avatarKey`，不得在 React 页面复制 palette、网格数据或另建一套响应式 avatar 实现。
+
 Raft 官方 bundle 中的 application code 只用作行为证据和协议理解。RAH OS 重写 component logic 并连接 typed `RahClient` intent，因为：
 
 - 官方网络 endpoint、store 和权限模型不是 RAH OS 的；
@@ -189,6 +191,8 @@ PWA 的“可安装”和“离线拥有业务真相”是两回事。初版策�
 
 iOS PWA 被系统回收不影响 AgentHost。恢复页面后重新执行完整 sync，不从 push payload 或本地 timeline cache 重建 truth。
 
+当前 `apps/web/public/sw.js` 已把该策略落实为第一段可执行门禁：`/v*/...` 和 `/_rah/...` 直接 network-only；navigation 只以最后成功的 app shell 作为离线 fallback；hashed script/style/font/image 才 cache-first。它没有 command outbox、Background Sync、IndexedDB timeline 或 API response cache。真实 iOS Home Screen 生命周期和 WebKit gate 尚未完成。
+
 ## 9. Mac 与未来 iOS
 
 ### 9.1 Mac desktop shell
@@ -211,7 +215,7 @@ Raft 的 iOS 源码可以用于研究信息架构、native interaction 和 token
 
 ## 10. 性能预算
 
-下列是 Phase 4 的初始验收目标，必须在固定参考硬件、浏览器版本和 fixture 下记录实测值；当前文档不宣称已经达到：
+下列是 Phase 4 的初始验收目标，必须在固定参考硬件、浏览器版本和 fixture 下记录实测值。10,000 条 Room Message 的有界 DOM/锚点目标已有独立 Chrome 证据；其余预算仍不得在没有测量时宣称达到：
 
 | 场景                    | 初始目标                                                                             |
 | ----------------------- | ------------------------------------------------------------------------------------ |
@@ -222,6 +226,7 @@ Raft 的 iOS 源码可以用于研究信息架构、native interaction 和 token
 | Markdown/diff/search    | 超过基准阈值后移至 Worker 或分片执行，滚动与输入不被阻塞                             |
 | reconnect               | continuation 增量恢复；不得因短暂断线无条件下载全历史                                |
 | 390x844 PWA             | 无横向页面溢出；关键 command、composer 与状态持续可达                                |
+| Agents desktop/PWA      | 320px 可调 Members sidebar、七标签顺序一致；PWA list/detail/back 不复制第二套状态机  |
 
 具体 KiB、耗时和内存数字在 Phase 4 基准机可用后写入 generated budget，不在没有测量前伪造精度。CI ratchet 只允许在附带证据和 ADR 更新时放宽。
 
@@ -259,11 +264,11 @@ Raft 的 iOS 源码可以用于研究信息架构、native interaction 和 token
 
 ## 12. 当前阶段继续做什么
 
-Phase 4A foundation 已开始。当前 Room slice 已实现有界 snapshot/delta catch-up、ack-after-apply、可跨轮次续页的 Message/Thread projection、Thread create/reply、可见性驱动 reconciliation、失败退避、capability-aware degradation、本机 Runtime inventory、Workspace-scoped Agent 目录与当前 Room 成员管理、membership-driven Message delivery、mention attention、Agent activity、server-owned 当前 Human + canonical role 权限投影、reload-safe `?room=`，以及 390px Room 抽屉和底部主导航。Raft 形态 dialog 复用同一 Escape/焦点闭环协议，不新增视觉分支。Room membership 定义普通聊天的默认投递范围，`@mention` 只提高注意力；只有 Task 模式才提供单一 assignee 或全部成员开放竞争的目标选择。下一批工作是：
+Phase 4A foundation 已开始。当前 Room slice 已实现有界 snapshot/delta catch-up、ack-after-apply、可跨轮次续页的 Message/Thread projection、Thread create/reply、可见性驱动 reconciliation、失败退避、capability-aware degradation、本机 Runtime inventory、Workspace-scoped Agent 目录与当前 Room 成员管理、membership-driven Message delivery、mention attention、Agent current status、server-owned 当前 Human + canonical role 权限投影、reload-safe `?room=`，以及 390px Room 抽屉和底部主导航。Message 时间线保留 Raft Chat 的 50 条分页、稳定 Message ID 与 1.2 秒动态测量锚点协议，并用独立虚拟化 owner 约束 Mounted DOM；真实 1440×1000 Chrome fixture 在 10,000 条变高 Message 加载、再向前增加 50 条后保持不超过 80 个 Message DOM 和 2px 锚点预算。Agents 已切换为单一 owner 的 Raft Members 结构：官方头像 preset、320px 可调边栏、七标签、共享组件的 390px list/detail/back、typed `agent.room.list` 聊天目录，以及由 Codex/Kimi/OpenCode/Claude 结构化事件驱动的 typed `agent.trajectory.list` 动态页都进入 protocol/fake gate；关系图、Agent-to-Agent 私信创建、提醒、工作区与应用仍显示明确不可用态。Raft 形态 dialog 复用同一 Escape/焦点闭环协议，不新增视觉分支。Room membership 定义普通聊天的默认投递范围，`@mention` 只提高注意力；只有 Task 模式才提供单一 assignee 或全部成员开放竞争的目标选择。下一批工作是：
 
-1. 为生产浏览器完成明确 allowed-origin、pairing/token storage、CSRF 与 renderer security；
+1. 完成系统/iOS CA trust 安装、CA 轮换/告警与正式安装入口；本地 CA/叶证书 provision、allowed-origin、设备 pairing、server-side token、CSRF/Fetch-Metadata 和 renderer 边界已经由 ADR-0019 落地；
 2. 增加 content-free SSE/WebSocket hint；当前 polling 只是可靠性 backstop，不能成为实时语义 owner；
-3. 完成 Human Inbox/Activity 与 Task discussion anchor 后再开放对应页面；
+3. Human Inbox/InputRequest 与 Activity 已开放并完成 desktop/390x844 真浏览器闭环；下一步增加通用 Notifications、content-free hint 与 typed global deep link；
 4. Raft Admin 及其余已授权 route 的 source extraction、状态矩阵和浏览器 regression；
 5. 扩展 clean-release provenance、responsive、keyboard、a11y 与 performance gate；
 6. Artifact/Review 形成 Kernel owner 与 typed contract 后再接入 Files/Review。

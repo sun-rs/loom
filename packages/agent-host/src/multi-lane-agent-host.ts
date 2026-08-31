@@ -1,12 +1,17 @@
-import { UnauthenticatedError } from "@rah-os/kernel";
+import {
+  UnauthenticatedError,
+  type AuthenticatedHostContext,
+} from "@rah-os/kernel";
 
 import { AgentHost, type AgentHostOptions } from "./agent-host.ts";
 
 export type MultiLaneAgentHostOptions = Omit<
   AgentHostOptions,
-  "manageHostLifecycle"
+  "control" | "kernel" | "manageHostLifecycle"
 > & {
   capacity: number;
+  host: AuthenticatedHostContext;
+  kernel: NonNullable<AgentHostOptions["kernel"]>;
   placementRuntimeResolver: NonNullable<
     AgentHostOptions["placementRuntimeResolver"]
   >;
@@ -14,8 +19,8 @@ export type MultiLaneAgentHostOptions = Omit<
 
 export class MultiLaneAgentHost {
   readonly capacity: number;
-  readonly #host: AgentHostOptions["host"];
-  readonly #kernel: AgentHostOptions["kernel"];
+  readonly #host: AuthenticatedHostContext;
+  readonly #kernel: NonNullable<AgentHostOptions["kernel"]>;
   readonly #workers: AgentHost[];
   #running = false;
 

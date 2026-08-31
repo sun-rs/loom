@@ -1,0 +1,14 @@
+{
+  "upstream": "Raft Computer",
+  "version": "1.0.18",
+  "bundleSha256": "20f16da1a37173925bb8707254329dd6e0df4b694c809c53b3f35f38ab00fd0e",
+  "sourceSlice": "memory-standing-prompt.js",
+  "sourceSliceSha256": "b47ccf545645f927d543aa377d50434b6d0982896c28d7794f1f90b801e97f83",
+  "sourceBytes": 4049,
+  "vendoredFile": "upstream-standing-prompt.ts",
+  "onlyFileChange": "Append a named ESM export footer; original source bytes are unchanged.",
+  "runtimeAdapter": "../agent-memory-prompt.ts",
+  "runtimeDifference": "Replace the opening cwd paragraph with RAH Agent memory directory binding; append separately labelled RAH transport, safety and provenance rules.",
+  "scope": "Two pure memory prompt builders only; not all Raft Computer, cleaner wake, reset transport or Server/Web features.",
+  "authorization": "User-provided private-use authorization; no public redistribution license asserted."
+}

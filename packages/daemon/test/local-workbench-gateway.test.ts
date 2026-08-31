@@ -16,6 +16,7 @@ test("the local workbench gateway keeps Human authority server-side", async () =
     '<!doctype html><div id="root">RAH OS</div>',
   );
   writeFileSync(join(staticDirectory, "assets", "app-deadbeef.js"), "ok");
+  writeFileSync(join(staticDirectory, "sw.js"), "ok");
   const observed: Array<{
     authorization?: string;
     body: string;
@@ -45,6 +46,14 @@ test("the local workbench gateway keeps Human authority server-side", async () =
   try {
     await gateway.start();
     const origin = gateway.origin;
+
+    const health = await fetch(`${origin}/_rah/health`);
+    assert.equal(health.status, 200);
+    assert.deepEqual(await health.json(), {
+      service: "rah-os-local-core",
+      state: "online",
+    });
+    assert.equal(health.headers.get("cache-control"), "no-store");
 
     const root = await fetch(`${origin}/`);
     assert.equal(root.status, 200);
@@ -108,6 +117,14 @@ test("the local workbench gateway keeps Human authority server-side", async () =
     const asset = await fetch(`${origin}/assets/app-deadbeef.js`);
     assert.equal(asset.status, 200);
     assert.match(asset.headers.get("cache-control") ?? "", /immutable/u);
+
+    const serviceWorker = await fetch(`${origin}/sw.js`);
+    assert.equal(serviceWorker.status, 200);
+    assert.equal(serviceWorker.headers.get("cache-control"), "no-cache");
+
+    const LANOnlySession = await fetch(`${origin}/_rah/session`);
+    assert.equal(LANOnlySession.status, 404);
+    assert.equal(LANOnlySession.headers.get("set-cookie"), null);
 
     const spaFallback = await fetch(`${origin}/rooms/room-1`);
     assert.equal(spaFallback.status, 200);

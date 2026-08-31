@@ -130,10 +130,32 @@ function signalChildGroup(signal) {
   }
 }
 
+function signalChildLeader(signal) {
+  const pid = child?.pid;
+  if (pid === undefined || pid <= 0) return;
+  try {
+    process.kill(pid, signal);
+  } catch (error) {
+    if (!(
+      error instanceof Error &&
+      "code" in error &&
+      error.code === "ESRCH"
+    )) {
+      throw error;
+    }
+  }
+}
+
 function requestTermination() {
   if (terminalExit || phase !== "running" || terminationStarted) return;
   terminationStarted = true;
-  signalChildGroup("SIGTERM");
+  // The supervised leader may be a structured Provider adapter. Give it the
+  // first graceful signal so it can translate cancellation into the native
+  // protocol (for example ACP session/cancel or Codex turn/interrupt). Sending
+  // SIGTERM to the whole group here would race that protocol message by also
+  // terminating the Provider child. The hard deadline still targets the full
+  // process group, preserving the no-orphan terminal proof.
+  signalChildLeader("SIGTERM");
   terminationTimer = setTimeout(() => {
     if (!terminalExit) signalChildGroup("SIGKILL");
   }, config.terminationGraceMs);
@@ -221,6 +243,18 @@ function forwardDiagnostics(source, destination) {
   });
 }
 
+function forwardActivity(source) {
+  let available = true;
+  source?.on("data", (chunk) => {
+    if (!available) return;
+    try {
+      writeSync(4, chunk);
+    } catch {
+      available = false;
+    }
+  });
+}
+
 async function launchTarget(socket) {
   if (phase === "running") {
     response(socket, { ok: true, status: "running" });
@@ -247,7 +281,7 @@ async function launchTarget(socket) {
       detached: true,
       env: process.env,
       shell: false,
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: ["ignore", "pipe", "pipe", "pipe"],
     });
   } catch (error) {
     response(socket, {
@@ -260,6 +294,7 @@ async function launchTarget(socket) {
 
   forwardDiagnostics(child.stdout, process.stdout);
   forwardDiagnostics(child.stderr, process.stderr);
+  forwardActivity(child.stdio[3]);
   child.once("error", (error) => {
     if (phase === "prepared") {
       response(socket, {

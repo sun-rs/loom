@@ -259,9 +259,9 @@ function addAgent(
   return participant.principalId;
 }
 
-test("Kernel schema v8 owns collaboration, Task coordination, and immutable Placement projections", () => {
+test("Kernel schema owns anchored Tasks and immutable Placement projections", () => {
   const fixture = createFixture();
-  assert.equal(KERNEL_SCHEMA_VERSION, 8);
+  assert.equal(KERNEL_SCHEMA_VERSION, 22);
   assert.equal(
     fixture.agentDefinition.currentRevisionId,
     fixture.agentDefinitionRevision.agentDefinitionRevisionId,
@@ -272,6 +272,196 @@ test("Kernel schema v8 owns collaboration, Task coordination, and immutable Plac
     fixture.policy.executionPolicyRevisionId,
   );
   fixture.kernel.close();
+});
+
+test("Agent memory home survives restart and prevents silent empty-memory failover", () => {
+  const fixture = createFixture();
+  let kernel = fixture.kernel;
+  const hostA = authenticateHost(kernel, "memory-home-a", fixture.agentId);
+  const hostB = authenticateHost(kernel, "memory-home-b", fixture.agentId);
+  kernel.postMessage(fixture.humanActor, {
+    body: "remember",
+    idempotencyKey: "home-message",
+    roomId: fixture.room.roomId,
+    recipients: [{ participantId: fixture.agentId, reason: "mention" }],
+  });
+  const activation = kernel.leaseNextActivation(hostA, { leaseMs: 30_000 });
+  assert.ok(activation);
+  const run = kernel.createRunAttempt(hostA, {
+    activationId: activation.activationId,
+  });
+  kernel.finishRunAttempt(hostA, {
+    runAttemptId: run.runAttemptId,
+    state: "failed",
+    error: "pre-start failure",
+  });
+  kernel.retryActivation(hostA, {
+    activationId: activation.activationId,
+    retryAfterMs: 0,
+    error: "retry",
+  });
+  assert.equal(
+    kernel.leaseNextActivation(hostB, { leaseMs: 30_000 }),
+    null,
+    "another Computer must not silently seed a new memory",
+  );
+  assert.throws(
+    () =>
+      kernel.acquireAgentExclusiveOperationLease(hostB, {
+        kind: "memory_reset",
+        leaseMs: 30_000,
+        operationId: "foreign-home-reset",
+        participantId: fixture.agentId,
+      }),
+    /memory.*home|memory.*Computer/iu,
+  );
+  kernel.close();
+  kernel = new RoomKernel({
+    databasePath: fixture.databasePath,
+    now: fixture.clock.now,
+  });
+  kernel.initialize();
+  assert.equal(kernel.leaseNextActivation(hostB, { leaseMs: 30_000 }), null);
+  assert.ok(
+    kernel.leaseNextActivation(hostA, { leaseMs: 30_000 }),
+    "home Computer can resume queued work after restart",
+  );
+  kernel.close();
+});
+
+test("Placement planning retains the Agent memory home when a different Computer has an Offer", () => {
+  const fixture = createFixture();
+  const { kernel } = fixture;
+  const hostA = authenticateHost(kernel, "memory-home-a", fixture.agentId);
+  const hostB = authenticateHost(kernel, "memory-home-b", fixture.agentId);
+  kernel.postMessage(fixture.humanActor, {
+    body: "remember",
+    idempotencyKey: "home-message",
+    roomId: fixture.room.roomId,
+    recipients: [{ participantId: fixture.agentId, reason: "mention" }],
+  });
+  const activation = kernel.leaseNextActivation(hostA, { leaseMs: 30_000 });
+  assert.ok(activation);
+  const run = kernel.createRunAttempt(hostA, {
+    activationId: activation.activationId,
+  });
+  kernel.finishRunAttempt(hostA, {
+    runAttemptId: run.runAttemptId,
+    state: "failed",
+    error: "pre-start failure",
+  });
+  kernel.retryActivation(hostA, {
+    activationId: activation.activationId,
+    retryAfterMs: 0,
+    error: "retry",
+  });
+  kernel.publishRuntimeOffer(hostB, runtimeOffer(hostB, "other-home-offer"));
+  assert.equal(kernel.scheduleNextPlacement({ leaseMs: 30_000 }), null);
+  kernel.close();
+});
+
+test("schema upgrade refuses to guess a memory home from conflicting historical Computers", () => {
+  const fixture = createFixture();
+  const { kernel } = fixture;
+  const hostA = authenticateHost(kernel, "history-a", fixture.agentId);
+  const hostB = authenticateHost(kernel, "history-b", fixture.agentId);
+  kernel.postMessage(fixture.humanActor, {
+    body: "historical work",
+    idempotencyKey: "old-work",
+    roomId: fixture.room.roomId,
+    recipients: [{ participantId: fixture.agentId, reason: "mention" }],
+  });
+  const activation = kernel.leaseNextActivation(hostA, { leaseMs: 30_000 });
+  assert.ok(activation);
+  const first = kernel.createRunAttempt(hostA, {
+    activationId: activation.activationId,
+  });
+  kernel.finishRunAttempt(hostA, {
+    runAttemptId: first.runAttemptId,
+    state: "failed",
+    error: "old failure",
+  });
+  kernel.retryActivation(hostA, {
+    activationId: activation.activationId,
+    retryAfterMs: 0,
+    error: "old retry",
+  });
+  kernel.leaseNextActivation(hostA, { leaseMs: 30_000 });
+  const second = kernel.createRunAttempt(hostA, {
+    activationId: activation.activationId,
+  });
+  kernel.finishRunAttempt(hostA, {
+    runAttemptId: second.runAttemptId,
+    state: "failed",
+    error: "old failure",
+  });
+  kernel.retryActivation(hostA, {
+    activationId: activation.activationId,
+    retryAfterMs: 0,
+    error: "old retry",
+  });
+  kernel.close();
+  const legacy = new DatabaseSync(fixture.databasePath);
+  legacy
+    .prepare("UPDATE run_attempts SET host_id = ? WHERE run_attempt_id = ?")
+    .run(hostB.hostId, second.runAttemptId);
+  legacy.exec("DROP TABLE agent_memory_homes; PRAGMA user_version = 18;");
+  legacy.close();
+  const upgraded = new RoomKernel({
+    databasePath: fixture.databasePath,
+    now: fixture.clock.now,
+  });
+  upgraded.initialize();
+  assert.equal(upgraded.leaseNextActivation(hostA, { leaseMs: 30_000 }), null);
+  assert.equal(upgraded.leaseNextActivation(hostB, { leaseMs: 30_000 }), null);
+  assert.throws(
+    () =>
+      upgraded.acquireAgentExclusiveOperationLease(hostA, {
+        kind: "memory_reset",
+        leaseMs: 30_000,
+        operationId: "ambiguous-reset",
+        participantId: fixture.agentId,
+      }),
+    /memory home/iu,
+  );
+  upgraded.close();
+});
+
+test("global Agent operation fence blocks Placement scheduling without dropping queued work", () => {
+  const { agentId, humanActor, kernel, room } = createFixture();
+  const host = authenticateHost(kernel, "exclusive-operation-host", agentId);
+  kernel.publishRuntimeOffer(
+    host,
+    runtimeOffer(host, "exclusive-operation-offer"),
+  );
+  kernel.postMessage(humanActor, {
+    body: "Preserve this queued Activation while memory is reset",
+    idempotencyKey: "exclusive-operation-message",
+    recipients: [{ participantId: agentId, reason: "mention" }],
+    roomId: room.roomId,
+  });
+
+  const fence = kernel.acquireAgentExclusiveOperationLease(host, {
+    kind: "memory_reset",
+    leaseMs: 30_000,
+    operationId: "placement-memory-reset",
+    participantId: agentId,
+  });
+  assert.equal(kernel.scheduleNextPlacement({ leaseMs: 5_000 }), null);
+  assert.equal(
+    kernel.listActivations({ participantId: agentId })[0]?.state,
+    "queued",
+  );
+
+  kernel.releaseAgentExclusiveOperationLease(host, {
+    leaseId: fence.leaseId,
+    operationId: fence.operationId,
+  });
+  assert.equal(
+    kernel.scheduleNextPlacement({ leaseMs: 5_000 })?.participantId,
+    agentId,
+  );
+  kernel.close();
 });
 
 test("schema v3 RunAttempts migrate to nullable placement provenance without data loss", () => {
@@ -787,6 +977,30 @@ test("a Placement launch claim is atomic across concurrent Host workers", () => 
   assert.equal(first?.activation.activationId, placement.activationId);
   assert.equal(first?.runAttempt.placement?.placementId, placement.placementId);
   assert.equal(first?.runAttempt.state, "starting");
+  assert.deepEqual(first?.runAttempt.contextManifest?.eventRanges, [
+    {
+      fromSeq: first?.activation.fromSeq,
+      toSeq: first?.activation.toSeq,
+    },
+  ]);
+  assert.equal(
+    first?.runAttempt.contextManifest?.throughRoomSeq,
+    first?.activation.toSeq,
+  );
+  assert.equal(
+    first?.runAttempt.contextManifest?.agentDefinition
+      ?.agentDefinitionRevisionId,
+    first?.agentContext.agentDefinitionRevision.agentDefinitionRevisionId,
+  );
+  assert.equal(first?.agentContext.handle, "agent");
+  assert.equal(
+    first?.runAttempt.contextManifest?.placement?.workspaceMountRevisionId,
+    first?.placement.workspaceMountRevisionId,
+  );
+  assert.equal(
+    first?.runAttempt.contextManifest?.placement?.runtimeProfileDigest,
+    first?.placement.runtimeProfileDigest,
+  );
   assert.equal(second, null);
   assert.equal(kernel.listRunAttempts({ roomId: room.roomId }).length, 1);
   assert.equal(kernel.pullNextPlacement(host), null);
@@ -1189,6 +1403,10 @@ test("Placement freezes an immutable RuntimeOffer observation", () => {
   assert.ok(frozen.runtimeOfferObservationId);
   assert.ok(frozen.runtimeOfferSnapshotDigest);
   assert.deepEqual(original.resolvedCertifications, [runtimeCertification]);
+  assert.deepEqual(
+    kernel.getRuntimeOfferObservation(frozen.runtimeOfferObservationId),
+    original,
+  );
 
   clock.advance(1_000);
   const refreshed = kernel.publishRuntimeOffer(host, {

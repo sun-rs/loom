@@ -504,6 +504,15 @@ function evaluateOffer(
   if (!policy.required.allowedProtocolFamilies.includes(offer.protocolFamily)) {
     addReason(reasons, "protocol_unsupported");
   }
+  const supportedToolAccessModes = offer.supportedToolAccessModes ?? [
+    "full_access",
+  ];
+  if (!supportedToolAccessModes.includes(policy.toolAccessMode)) {
+    addReason(reasons, "tool_access_unsupported");
+    dependencyKeys.add(
+      `tool-access:${offer.runtimeOfferId}:${policy.toolAccessMode}`,
+    );
+  }
 
   const evidenceByCapability = new Map(
     offer.capabilityEvidence.map((evidence) => [
@@ -818,6 +827,7 @@ export function planNextPlacement(
         runtimeProfileDigest: selected.offer.revisionDigest,
         protocolFamily: selected.offer.protocolFamily,
         resolvedModel: selected.resolvedModel,
+        toolAccessMode: candidate.executionPolicy.toolAccessMode,
         workspaceDefinitionId: candidate.workspaceDefinitionId,
         workspaceMountRevisionId:
           selected.workspaceMount.workspaceMountRevisionId,

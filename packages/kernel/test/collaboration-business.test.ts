@@ -211,19 +211,21 @@ test("Thread replies remain Room-owned and derive durable attention without prov
     });
     assert.equal(
       firstMessagePage.messages[0]?.messageId,
-      root.event.aggregateId,
+      replied.event.aggregateId,
     );
-    assert.equal(firstMessagePage.hasMore, true);
+    assert.equal(firstMessagePage.hasMoreBefore, true);
+    assert.equal(firstMessagePage.hasMoreAfter, false);
     const secondMessagePage = fixture.kernel.listMessages(fixture.ownerActor, {
-      afterSeq: firstMessagePage.cursorAfter,
+      beforeSeq: firstMessagePage.cursorBefore,
       limit: 1,
       roomId: fixture.room.roomId,
     });
     assert.equal(
       secondMessagePage.messages[0]?.messageId,
-      replied.event.aggregateId,
+      root.event.aggregateId,
     );
-    assert.equal(secondMessagePage.hasMore, false);
+    assert.equal(secondMessagePage.hasMoreBefore, false);
+    assert.equal(secondMessagePage.hasMoreAfter, true);
     assert.throws(
       () =>
         fixture.kernel.postMessage(fixture.memberActor, {

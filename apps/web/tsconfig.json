@@ -9,6 +9,7 @@
     "moduleResolution": "Bundler",
     "noEmit": true,
     "noUncheckedIndexedAccess": true,
+    "resolveJsonModule": true,
     "strict": true,
     "target": "ES2024",
     "types": ["vite/client"]

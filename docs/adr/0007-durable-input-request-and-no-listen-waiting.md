@@ -1,6 +1,6 @@
 # ADR-0007：Durable InputRequest 与无 listening 等待
 
-状态：Accepted（InputRequest slice E2 local，2026-08-26）
+状态：Accepted（InputRequest daemon + Web/PWA E2，2026-08-30）
 
 ## 背景
 
@@ -23,7 +23,7 @@ Agent 提问后继续运行 MCP `room_wait`、短轮询或 Provider session，�
 
 2. Worker 的 `tasks/request-input` 是严格 causal command，只允许持有有效 `in_progress` claim 的 Task assignee 调用。在一个 transaction 内，Kernel 创建 pending InputRequest、把 Task 置为 `waiting_input` 并清除 claim、追加唯一 `input.requested` Room event，再给 responder 创建 InboxItem。人类不会因此得到 Agent Activation；Worker service 看到 `waiting_input` 后停止该 Task 的 sidecar heartbeat。
 
-3. `waiting_input` 是当前 Activation 的合法业务停点。Worker 确认原 Activation range 后可以退出，AgentHost 写 terminal proof 并完成 Activation；等待期间没有 RunAttempt、LLM turn、MCP listening 或 timer-owned session。Room event/Inbox 是提醒人的 durable truth，UI push 尚未实现。
+3. `waiting_input` 是当前 Activation 的合法业务停点。Worker 确认原 Activation range 后可以退出，AgentHost 写 terminal proof 并完成 Activation；等待期间没有 RunAttempt、LLM turn、MCP listening 或 timer-owned session。Room event/Inbox 是提醒人的 durable truth；Web/PWA 现在从 canonical InputRequest projection 显示待处理入口，实时 push 仍未实现。
 
 4. 只有 authenticated designated responder 可以 resolve。`resolveInputRequest` 校验 causal cursor 与稳定 idempotency key，在一个 transaction 内冻结 answer/resolver/time、把 Task 恢复为 `todo`、追加 `input.resolved`，并给原 requester 派生 InboxItem、`input_resolved` Activation 与 content-free wake Outbox。answer 位于 canonical Room event，因此新 CLI session 通过 `sync` 读取，不需要旧 transcript。
 
@@ -42,11 +42,12 @@ Agent 提问后继续运行 MCP `room_wait`、短轮询或 Provider session，�
 - migration fixture 保留 v2 Task，并证明新状态约束生效；
 - Worker HTTP fixture 覆盖字段注入拒绝、canonical response、无内容泄露的 status query、幂等 replay 与 heartbeat cleanup；
 - 完整 daemon fixture 第一个 fake CLI 在 InputRequest commit 后、ack 前故障退出；第二个 RunAttempt 通过 status query 补 ack 后退出，且不重复 InputRequest。等待窗口内 RunAttempt 数保持不变；human resolve 再触发新的 Activation/RunAttempt，新 CLI 从 Room event 读取 answer 并提交同一 Task。pass/fail 不读取子进程输出。
+- 隔离的真实浏览器 fixture 在 `1440x1000` 与 `390x844` 完成 Human 创建并指派 Task → fake Runtime 通过 Worker API 请求输入 → Inbox badge/问题投影 → Human causal resolve → 新 Activation → 同一 Task submitted；移动端无水平溢出且回答框获得初始焦点。
 
 ## 声明边界
 
 - 当前 designated responder 固定为 Task creator；尚无多人候选、角色/policy routing、InputRequest cancel/expire、表单 schema、附件、敏感答案分级或超时升级。
-- human resolve 已有受认证的 loopback daemon Client API，fake daemon E2 已通过该 transport 完成 `sync -> resolve -> new Activation`；尚未接入 Web/PWA、CORS、LAN 或 push。
-- human Inbox 已 durable；APNs/Web Push/macOS notification publisher 和 UI 尚未实现。
+- human resolve 已有受认证的 loopback/LAN Client API；Web/PWA 已接入 pending list、designated-responder resolve、Room 打开和 desktop/mobile Inbox，仍没有 structured answer、cancel/expire/escalation。
+- human Inbox 已 durable；当前 UI 只投影 actionable InputRequest。通用通知聚合、APNs/Web Push/macOS publisher 与 content-free hint 尚未实现。
 - Task dependency、block/reassign/cancel 后续已由 [ADR-0011](./0011-task-coordination-v1.md) 实现；Artifact、Review、worktree lease 与 verifier 仍未实现。
 - 真实 Provider 尚未复跑 InputRequest gate；当前只证明确定性本机 fake process 链路。

@@ -155,6 +155,190 @@ test("a Human creates a managed Workspace and Rooms through its control Room", (
   }
 });
 
+test("Channel creation atomically persists metadata and initial Workspace members", () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-room-create-profile-"));
+  const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+  try {
+    kernel.initialize();
+    const owner = kernel.provisionPrincipal({ handle: "owner", kind: "human" });
+    const colleague = kernel.provisionPrincipal({
+      handle: "colleague",
+      kind: "human",
+    });
+    const agent = kernel.provisionPrincipal({ handle: "alice", kind: "agent" });
+    const ownerActor = kernel.authenticateAccessToken(owner.accessToken);
+    const colleagueActor = kernel.authenticateAccessToken(
+      colleague.accessToken,
+    );
+    const workspace = kernel.createWorkspace(ownerActor, {
+      idempotencyKey: "workspace-created",
+      name: "Main",
+      slug: "main",
+    });
+    kernel.addMember(ownerActor, {
+      principalId: colleague.principal.principalId,
+      roomId: workspace.controlRoom.roomId,
+    });
+    kernel.addMember(ownerActor, {
+      principalId: agent.principal.principalId,
+      roomId: workspace.controlRoom.roomId,
+    });
+    const basedOnControlRoomSeq = kernel.sync(ownerActor, {
+      afterSeq: 0,
+      consumerId: "create-profile",
+      roomId: workspace.controlRoom.roomId,
+    }).latestRoomSeq;
+
+    const created = kernel.createWorkspaceRoom(ownerActor, {
+      basedOnControlRoomSeq,
+      description: "Coordinate product work.",
+      idempotencyKey: "room-created",
+      initialAgentParticipantIds: [agent.principal.principalId],
+      kind: "channel",
+      name: "Product",
+      slug: "product",
+      visibility: "public",
+      workspaceId: workspace.workspace.workspaceId,
+    });
+
+    assert.equal(created.room.description, "Coordinate product work.");
+    assert.equal(created.room.visibility, "public");
+    assert.deepEqual(
+      kernel
+        .listRoomMemberships(ownerActor, { roomId: created.room.roomId })
+        .map(({ principalId, role }) => ({ principalId, role })),
+      [
+        { principalId: owner.principal.principalId, role: "owner" },
+        { principalId: agent.principal.principalId, role: "member" },
+        { principalId: colleague.principal.principalId, role: "member" },
+      ].sort(
+        (left, right) =>
+          left.role.localeCompare(right.role) ||
+          left.principalId.localeCompare(right.principalId),
+      ),
+    );
+    assert.equal(
+      kernel
+        .listRooms(colleagueActor, {
+          workspaceId: workspace.workspace.workspaceId,
+        })
+        .some(({ roomId }) => roomId === created.room.roomId),
+      true,
+    );
+  } finally {
+    kernel.close();
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("Channel settings update is atomic, idempotent, stale-safe, and manager-only", () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-room-update-profile-"));
+  const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+  try {
+    kernel.initialize();
+    const owner = kernel.provisionPrincipal({ handle: "owner", kind: "human" });
+    const colleague = kernel.provisionPrincipal({
+      handle: "colleague",
+      kind: "human",
+    });
+    const ownerActor = kernel.authenticateAccessToken(owner.accessToken);
+    const colleagueActor = kernel.authenticateAccessToken(
+      colleague.accessToken,
+    );
+    const workspace = kernel.createWorkspace(ownerActor, {
+      idempotencyKey: "workspace-created-for-update",
+      name: "Main",
+      slug: "main-update",
+    });
+    kernel.addMember(ownerActor, {
+      principalId: colleague.principal.principalId,
+      roomId: workspace.controlRoom.roomId,
+    });
+    const channel = kernel.createWorkspaceRoom(ownerActor, {
+      basedOnControlRoomSeq: kernel.sync(ownerActor, {
+        afterSeq: 0,
+        consumerId: "create-channel-for-update",
+        roomId: workspace.controlRoom.roomId,
+      }).latestRoomSeq,
+      idempotencyKey: "room-created-for-update",
+      kind: "channel",
+      name: "Product",
+      slug: "product-update",
+      visibility: "private",
+      workspaceId: workspace.workspace.workspaceId,
+    });
+
+    assert.throws(
+      () =>
+        kernel.updateWorkspaceRoom(colleagueActor, {
+          basedOnRoomSeq: 1,
+          idempotencyKey: "room-updated-by-member",
+          name: "Forbidden",
+          roomId: channel.room.roomId,
+          visibility: "private",
+        }),
+      /not a member|owner or admin/i,
+    );
+
+    const updated = kernel.updateWorkspaceRoom(ownerActor, {
+      basedOnRoomSeq: 1,
+      description: "Coordinate product work.",
+      idempotencyKey: "room-updated",
+      name: "Product planning",
+      roomId: channel.room.roomId,
+      visibility: "public",
+    });
+    assert.equal(updated.deduplicated, false);
+    assert.equal(updated.event.type, "room.updated");
+    assert.equal(updated.event.roomSeq, 3);
+    assert.deepEqual(
+      {
+        description: updated.room.description,
+        name: updated.room.name,
+        visibility: updated.room.visibility,
+      },
+      {
+        description: "Coordinate product work.",
+        name: "Product planning",
+        visibility: "public",
+      },
+    );
+    assert.equal(
+      kernel
+        .listRoomMemberships(ownerActor, { roomId: channel.room.roomId })
+        .some(
+          ({ principalId }) => principalId === colleague.principal.principalId,
+        ),
+      true,
+    );
+    assert.equal(
+      kernel.updateWorkspaceRoom(ownerActor, {
+        basedOnRoomSeq: 1,
+        description: "Coordinate product work.",
+        idempotencyKey: "room-updated",
+        name: "Product planning",
+        roomId: channel.room.roomId,
+        visibility: "public",
+      }).deduplicated,
+      true,
+    );
+    assert.throws(
+      () =>
+        kernel.updateWorkspaceRoom(ownerActor, {
+          basedOnRoomSeq: 1,
+          idempotencyKey: "room-updated-stale",
+          name: "Stale",
+          roomId: channel.room.roomId,
+          visibility: "public",
+        }),
+      /stale/i,
+    );
+  } finally {
+    kernel.close();
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
 test("an AgentDefinition cannot be onboarded across Workspace boundaries", () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-agent-scope-"));
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
@@ -218,8 +402,9 @@ test("an AgentDefinition cannot be onboarded across Workspace boundaries", () =>
         contentDigest: `sha256:${"a".repeat(64)}`,
         versionId: "workspace-a-retry-policy-v1",
       },
-      sessionPolicy: "fresh",
+      sessionPolicy: "prefer_resume",
     });
+    assert.equal(policy.policy.toolAccessMode, "full_access");
     const definition = kernel.createAgentDefinition(ownerActor, {
       basedOnRoomSeq: policy.event.roomSeq,
       controlRoomId: workspaceA.controlRoom.roomId,
@@ -319,6 +504,7 @@ test("a Workspace manager atomically provisions a real runtime-bound Agent", () 
       runtimeProfileId: "profile-codex",
       runtimeProfileRevisionId: "profile-codex-v1",
       state: "available",
+      supportedToolAccessModes: ["read_only", "workspace_write", "full_access"],
       workspaceMountDescriptors: [
         {
           modes: ["in_place"],
@@ -329,6 +515,14 @@ test("a Workspace manager atomically provisions a real runtime-bound Agent", () 
       ],
     };
     kernel.publishRuntimeOffer(host, offer);
+    const unrestrictedOnlyOffer: RuntimeOffer = {
+      ...offer,
+      runtimeOfferId: "offer-kimi-full-only",
+      runtimeProfileId: "profile-kimi",
+      runtimeProfileRevisionId: "profile-kimi-v1",
+      supportedToolAccessModes: ["full_access"],
+    };
+    kernel.publishRuntimeOffer(host, unrestrictedOnlyOffer);
     const request = {
       avatarKey: "robot",
       basedOnRoomSeq: workspace.event.roomSeq,
@@ -341,15 +535,32 @@ test("a Workspace manager atomically provisions a real runtime-bound Agent", () 
       modelIntent: { fallback: "disabled" as const },
       role: "Engineering Agent",
       runtimeOfferId: offer.runtimeOfferId,
-      sessionPolicy: "fresh" as const,
+      sessionPolicy: "prefer_resume" as const,
     };
 
     assert.throws(
       () => kernel.provisionWorkspaceAgent(outsiderActor, request),
       /not a member|owner or admin/i,
     );
+    assert.throws(() =>
+      kernel.provisionWorkspaceAgent(ownerActor, {
+        ...request,
+        handle: "kimi-restricted-policy-is-not-public",
+        idempotencyKey: "agent-kimi-restricted-policy",
+        runtimeOfferId: unrestrictedOnlyOffer.runtimeOfferId,
+        // Exercise runtime validation with an old client payload.
+        toolAccessMode: "workspace_write",
+      }),
+    );
 
+    const heartbeatBeforeProvision = kernel.listHosts()[0]!.lastSeenAt;
+    now.setTime(now.getTime() + 1000);
     const created = kernel.provisionWorkspaceAgent(ownerActor, request);
+    assert.equal(
+      kernel.listHosts()[0]!.lastSeenAt,
+      heartbeatBeforeProvision,
+      "granting Agent scope must not manufacture a Host heartbeat",
+    );
     assert.equal(created.deduplicated, false);
     assert.equal(created.agent.handle, "alice");
     assert.equal(created.agent.currentRevision.displayName, "Alice");
@@ -427,6 +638,13 @@ test("a Workspace manager atomically provisions a real runtime-bound Agent", () 
       onboarded.membership.principalId,
       created.agent.definition.participantId,
     );
+    assert.deepEqual(
+      kernel.listWorkspaceAgentRooms(ownerActor, {
+        agentDefinitionId: created.agent.definition.agentDefinitionId,
+      }),
+      [room],
+      "the Agent chat directory contains only shared non-control Rooms",
+    );
     kernel.postRoomMessage(ownerActor, {
       body: "Execute this through the selected real Runtime profile.",
       idempotencyKey: "agent-alice-message",
@@ -450,6 +668,317 @@ test("a Workspace manager atomically provisions a real runtime-bound Agent", () 
       "the already-running Host context must pick up the manager-granted Agent",
     );
     assert.equal(launch?.runAttempt.state, "starting");
+  } finally {
+    kernel.close();
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("Agent activity pages canonical cross-Room history without leaking inaccessible Rooms", () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-agent-activity-"));
+  let nowMs = Date.parse("2026-08-28T08:00:00.000Z");
+  const kernel = new RoomKernel({
+    databasePath: join(directory, "room.db"),
+    now: () => new Date(nowMs),
+  });
+  const advance = () => {
+    nowMs += 1_000;
+  };
+  try {
+    kernel.initialize();
+    const owner = kernel.provisionPrincipal({
+      handle: "activity-owner",
+      kind: "human",
+    });
+    const controlViewer = kernel.provisionPrincipal({
+      handle: "activity-control-viewer",
+      kind: "human",
+    });
+    const outsider = kernel.provisionPrincipal({
+      handle: "activity-outsider",
+      kind: "human",
+    });
+    const agent = kernel.provisionPrincipal({
+      handle: "activity-agent",
+      kind: "agent",
+    });
+    const ownerActor = kernel.authenticateAccessToken(owner.accessToken);
+    const viewerActor = kernel.authenticateAccessToken(
+      controlViewer.accessToken,
+    );
+    const outsiderActor = kernel.authenticateAccessToken(outsider.accessToken);
+    const workspace = kernel.createWorkspace(ownerActor, {
+      idempotencyKey: "activity-workspace-created",
+      name: "Activity Workspace",
+      slug: "activity-workspace",
+    });
+    kernel.addMember(ownerActor, {
+      principalId: controlViewer.principal.principalId,
+      roomId: workspace.controlRoom.roomId,
+    });
+    kernel.addMember(ownerActor, {
+      principalId: agent.principal.principalId,
+      roomId: workspace.controlRoom.roomId,
+    });
+    advance();
+    const policy = kernel.createExecutionPolicy(ownerActor, {
+      basedOnRoomSeq: kernel.sync(ownerActor, {
+        afterSeq: 0,
+        consumerId: "activity-policy-sequence",
+        roomId: workspace.controlRoom.roomId,
+      }).latestRoomSeq,
+      controlRoomId: workspace.controlRoom.roomId,
+      idempotencyKey: "activity-policy-created",
+      modelIntent: {
+        fallback: "disabled",
+        reasoning: "default",
+        serviceTier: "default",
+      },
+      preferred: [],
+      required: {
+        allowedProtocolFamilies: ["rah-worker-process/v1"],
+        capabilities: [
+          { capability: "worker_commands", minimumEvidence: "probed" },
+        ],
+        minimumIsolation: "process",
+        workspaceMode: "in_place",
+      },
+      retryPolicyRef: {
+        artifactId: "activity-retry-policy",
+        contentDigest: digest("f"),
+        versionId: "activity-retry-policy-v1",
+      },
+      sessionPolicy: "prefer_resume",
+    });
+    advance();
+    const definition = kernel.createAgentDefinition(ownerActor, {
+      basedOnRoomSeq: policy.event.roomSeq,
+      controlRoomId: workspace.controlRoom.roomId,
+      executionPolicyRevisionId: policy.policy.executionPolicyRevisionId,
+      idempotencyKey: "activity-agent-created",
+      instructionRefs: [],
+      memoryPolicyRef: {
+        artifactId: "activity-memory-policy",
+        contentDigest: digest("e"),
+        versionId: "activity-memory-policy-v1",
+      },
+      participantId: agent.principal.principalId,
+      role: "Activity Agent",
+      skillRefs: [],
+    });
+    advance();
+    const room = kernel.createWorkspaceRoom(ownerActor, {
+      basedOnControlRoomSeq: definition.event.roomSeq,
+      idempotencyKey: "activity-room-created",
+      kind: "channel",
+      name: "Activity Lab",
+      slug: "activity-lab",
+      workspaceId: workspace.workspace.workspaceId,
+    }).room;
+    kernel.onboardAgentToRoom(ownerActor, {
+      agentDefinitionId: definition.definition.agentDefinitionId,
+      basedOnRoomSeq: kernel.sync(ownerActor, {
+        afterSeq: 0,
+        consumerId: "activity-onboard-sequence",
+        roomId: room.roomId,
+      }).latestRoomSeq,
+      idempotencyKey: "activity-agent-onboarded",
+      roomId: room.roomId,
+    });
+    advance();
+    kernel.postRoomMessage(ownerActor, {
+      body: "Read this canonical Room message.",
+      idempotencyKey: "activity-message-posted",
+      recipients: [],
+      roomId: room.roomId,
+    });
+    const host = kernel.authenticateHostAccessToken(
+      kernel.provisionHostCredential({
+        hostId: "activity-host",
+        participantIds: [agent.principal.principalId],
+      }).accessToken,
+    );
+    kernel.heartbeatHost(host);
+    advance();
+    const activation = kernel.leaseNextActivation(host, { leaseMs: 30_000 });
+    assert.ok(activation);
+    advance();
+    const runAttempt = kernel.createRunAttempt(host, {
+      activationId: activation.activationId,
+    });
+    const runtimeRunId = "activity-runtime-run";
+    kernel.prepareRunAttemptRuntime(host, {
+      recoveryDescriptor: {
+        driver: "test-runtime",
+        metadata: {},
+        recoveryKey: runtimeRunId,
+      },
+      runAttemptId: runAttempt.runAttemptId,
+      runtimeRunId,
+    });
+    const firstRuntimeActivity = kernel.appendRunTrajectory(host, {
+      entry: {
+        detailKind: "starting",
+        kind: "status",
+        activity: "working",
+      },
+      observedAt: "2026-08-27T00:00:08.000Z",
+      producerSequence: 1,
+      runAttemptId: runAttempt.runAttemptId,
+      runtimeRunId,
+    });
+    assert.deepEqual(
+      kernel.appendRunTrajectory(host, {
+        entry: {
+          detailKind: "starting",
+          kind: "status",
+          activity: "working",
+        },
+        observedAt: "2026-08-27T00:00:08.000Z",
+        producerSequence: 1,
+        runAttemptId: runAttempt.runAttemptId,
+        runtimeRunId,
+      }),
+      firstRuntimeActivity,
+      "a retried producer sequence must return the same immutable fact",
+    );
+    advance();
+    kernel.appendRunTrajectory(host, {
+      entry: {
+        kind: "tool_start",
+        producerFactId: "tool-item-1",
+        toolInput: "rg -n TODO src",
+        toolName: "shell",
+      },
+      observedAt: "2026-08-27T00:00:09.000Z",
+      producerSequence: 2,
+      runAttemptId: runAttempt.runAttemptId,
+      runtimeRunId,
+    });
+    const trajectoryFirstPage = kernel.listAgentTrajectory(ownerActor, {
+      agentDefinitionId: definition.definition.agentDefinitionId,
+      limit: 1,
+    });
+    assert.equal(trajectoryFirstPage.activities.length, 1);
+    assert.equal(trajectoryFirstPage.activities[0]?.entry.kind, "tool_start");
+    assert.equal(
+      trajectoryFirstPage.activities[0]?.context?.roomId,
+      runAttempt.roomId,
+    );
+    assert.ok(trajectoryFirstPage.activities[0]?.context?.roomName);
+    assert.ok(trajectoryFirstPage.nextCursor);
+    const trajectorySecondPage = kernel.listAgentTrajectory(ownerActor, {
+      agentDefinitionId: definition.definition.agentDefinitionId,
+      beforeActivityId: trajectoryFirstPage.nextCursor,
+      limit: 50,
+    });
+    assert.equal(trajectorySecondPage.activities.length, 1);
+    assert.equal(trajectorySecondPage.activities[0]?.entry.kind, "status");
+    assert.equal(
+      kernel.listAgentTrajectory(viewerActor, {
+        agentDefinitionId: definition.definition.agentDefinitionId,
+      }).activities.length,
+      0,
+      "a control-Room viewer must not learn trajectory from an inaccessible work Room",
+    );
+    kernel.recordRuntimeTermination(host, {
+      exit: { code: 1 },
+      runAttemptId: runAttempt.runAttemptId,
+      runtimeRunId,
+    });
+    advance();
+    kernel.finishRunAttempt(host, {
+      error: "bounded runtime failure",
+      runAttemptId: runAttempt.runAttemptId,
+      state: "failed",
+    });
+
+    const firstPage = kernel.listAgentActivity(ownerActor, {
+      agentDefinitionId: definition.definition.agentDefinitionId,
+      limit: 2,
+    });
+    assert.equal(firstPage.activities.length, 2);
+    assert.ok(firstPage.nextCursor);
+    const secondPage = kernel.listAgentActivity(ownerActor, {
+      agentDefinitionId: definition.definition.agentDefinitionId,
+      beforeActivityId: firstPage.nextCursor,
+      limit: 100,
+    });
+    const activities = [...firstPage.activities, ...secondPage.activities];
+    assert.equal(
+      new Set(activities.map(({ activityId }) => activityId)).size,
+      activities.length,
+      "cursor pagination must not duplicate immutable activity events",
+    );
+    assert.deepEqual(
+      activities.map(({ createdAt }) => createdAt),
+      [...activities.map(({ createdAt }) => createdAt)].sort().reverse(),
+      "the newest canonical facts must render first",
+    );
+    assert.ok(
+      activities.some(
+        ({ eventType, relation, roomId: activityRoomId }) =>
+          eventType === "message.posted" &&
+          relation === "received" &&
+          activityRoomId === room.roomId,
+      ),
+    );
+    assert.ok(
+      activities.some(
+        ({ eventType, relation }) =>
+          eventType === "run.created" && relation === "runtime",
+      ),
+    );
+    assert.ok(
+      activities.some(
+        ({ eventType, tone }) =>
+          eventType === "run.finished" && tone === "error",
+      ),
+      "a failed canonical RunAttempt must not be rendered as successful",
+    );
+    assert.ok(
+      activities.some(
+        ({ eventType, relation, roomId: activityRoomId }) =>
+          eventType === "agent.created" &&
+          relation === "configuration" &&
+          activityRoomId === workspace.controlRoom.roomId,
+      ),
+    );
+    assert.equal(
+      activities.some((activity) => "payload" in activity),
+      false,
+      "provider or event payloads must not cross the activity read model",
+    );
+
+    assert.ok(
+      kernel
+        .listAgentActivity(viewerActor, {
+          agentDefinitionId: definition.definition.agentDefinitionId,
+          limit: 100,
+        })
+        .activities.every(
+          ({ roomId: activityRoomId }) =>
+            activityRoomId === workspace.controlRoom.roomId,
+        ),
+      "a control-Room viewer must not learn activity from an inaccessible work Room",
+    );
+    assert.throws(
+      () =>
+        kernel.listAgentActivity(outsiderActor, {
+          agentDefinitionId: definition.definition.agentDefinitionId,
+          limit: 100,
+        }),
+      /not found/i,
+    );
+    assert.throws(
+      () =>
+        kernel.listAgentActivity(ownerActor, {
+          agentDefinitionId: definition.definition.agentDefinitionId,
+          beforeActivityId: "unknown-activity-cursor",
+          limit: 100,
+        }),
+      /cursor.*not found/i,
+    );
   } finally {
     kernel.close();
     rmSync(directory, { force: true, recursive: true });
@@ -503,6 +1032,7 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
       runtimeProfileId: "profile-agent-manage",
       runtimeProfileRevisionId: "profile-agent-manage-v1",
       state: "available",
+      supportedToolAccessModes: ["full_access"],
       workspaceMountDescriptors: [
         {
           modes: ["in_place"],
@@ -540,9 +1070,22 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
       modelIntent: { fallback: "disabled" },
       role: "Engineering Agent",
       runtimeOfferId: offer.runtimeOfferId,
-      sessionPolicy: "fresh",
+      sessionPolicy: "prefer_resume",
     });
+    assert.equal(created.policy.toolAccessMode, "full_access");
 
+    const fullAccessOnlyOffer: RuntimeOffer = {
+      ...secondOffer,
+      runtimeOfferId: "offer-agent-manage-full-only",
+      runtimeProfileId: "profile-agent-manage-full-only",
+      runtimeProfileRevisionId: "profile-agent-manage-full-only-v1",
+      supportedToolAccessModes: ["full_access"],
+    };
+    kernel.publishRuntimeOffer(secondHost, fullAccessOnlyOffer);
+    const lastSeenBeforeConfigure = kernel
+      .listHosts()
+      .map((host) => [host.hostId, host.lastSeenAt]);
+    now.setTime(now.getTime() + 1000);
     const configured = kernel.manageWorkspaceAgent(ownerActor, {
       action: "configure",
       agentDefinitionId: created.agent.definition.agentDefinitionId,
@@ -558,6 +1101,11 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
       runtimeOfferId: offer.runtimeOfferId,
       sessionPolicy: "prefer_resume",
     });
+    assert.deepEqual(
+      kernel.listHosts().map((host) => [host.hostId, host.lastSeenAt]),
+      lastSeenBeforeConfigure,
+      "configuration is not a Host heartbeat",
+    );
     assert.equal(configured.deduplicated, false);
     assert.equal(configured.agent.handle, "alice-reviewer");
     assert.equal(configured.agent.currentRevision.revision, 2);
@@ -567,6 +1115,7 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
     );
     assert.equal(configured.agent.currentRevision.role, "Review Agent");
     assert.equal(configured.policy?.revision, 2);
+    assert.equal(configured.policy?.toolAccessMode, "full_access");
     assert.equal(configured.event.type, "agent.configured");
     assert.equal(
       kernel.manageWorkspaceAgent(ownerActor, {
@@ -677,8 +1226,12 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
       modelIntent: { fallback: "disabled" },
       role: "Temporary Agent",
       runtimeOfferId: offer.runtimeOfferId,
-      sessionPolicy: "fresh",
+      sessionPolicy: "prefer_resume",
     });
+    const lastSeenBeforeRebind = kernel
+      .listHosts()
+      .map((host) => [host.hostId, host.lastSeenAt]);
+    now.setTime(now.getTime() + 1000);
     const disposableConfigured = kernel.manageWorkspaceAgent(ownerActor, {
       action: "configure",
       agentDefinitionId: disposable.agent.definition.agentDefinitionId,
@@ -690,8 +1243,13 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
       modelIntent: { fallback: "disabled" },
       role: "Temporary Agent",
       runtimeOfferId: secondOffer.runtimeOfferId,
-      sessionPolicy: "fresh",
+      sessionPolicy: "prefer_resume",
     });
+    assert.deepEqual(
+      kernel.listHosts().map((host) => [host.hostId, host.lastSeenAt]),
+      lastSeenBeforeRebind,
+      "rebind does not manufacture a heartbeat for either Host",
+    );
     assert.equal(
       kernel
         .heartbeatHost(host)
@@ -711,6 +1269,10 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
       idempotencyKey: "agent-manage-disposable-disable",
       state: "disabled",
     });
+    const lastSeenBeforeDelete = kernel
+      .listHosts()
+      .map((host) => [host.hostId, host.lastSeenAt]);
+    now.setTime(now.getTime() + 1000);
     const deleted = kernel.manageWorkspaceAgent(ownerActor, {
       action: "set_state",
       agentDefinitionId: disposable.agent.definition.agentDefinitionId,
@@ -718,6 +1280,11 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
       idempotencyKey: "agent-manage-disposable-delete",
       state: "tombstoned",
     });
+    assert.deepEqual(
+      kernel.listHosts().map((host) => [host.hostId, host.lastSeenAt]),
+      lastSeenBeforeDelete,
+      "removal must not revive unrelated Host records",
+    );
     assert.equal(deleted.agent.definition.state, "tombstoned");
     assert.equal(deleted.event.type, "agent.tombstoned");
     assert.equal(

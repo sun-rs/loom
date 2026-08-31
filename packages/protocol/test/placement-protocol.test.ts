@@ -93,8 +93,10 @@ test("execution policies strictly separate hard requirements from typed preferen
     },
     revision: 1,
     sessionPolicy: "fresh",
+    toolAccessMode: "read_only",
   });
   assert.equal(policy.executionPolicyId, "policy-1");
+  assert.equal(policy.toolAccessMode, "read_only");
   assert.equal(policy.preferred[0]?.criterion, "runtime_offer");
   assert.throws(() =>
     ExecutionPolicyRevisionSchema.parse({
@@ -233,12 +235,14 @@ test("PlacementDecision represents runtime default without inventing a model", (
     runtimeProfileRevisionId: "profile-codex-v1",
     schedulerVersion: "placement-planner/v1",
     state: "reserved",
+    toolAccessMode: "read_only",
     workspaceDefinitionId: "workspace-1",
     workspaceMode: "in_place",
     workspaceMountDigest: digest("1"),
     workspaceMountRevisionId: "mount-1-v1",
   });
   assert.equal(decision.resolvedModel.source, "runtime_default");
+  assert.equal(decision.toolAccessMode, "read_only");
   assert.throws(() =>
     PlacementDecisionSchema.parse({
       ...decision,

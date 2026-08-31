@@ -36,24 +36,47 @@ export const IsolationLevelSchema = z.enum([
 ]);
 export type IsolationLevel = z.infer<typeof IsolationLevelSchema>;
 
-export const ReasoningLevelSchema = z.enum([
-  "default",
-  "low",
-  "medium",
-  "high",
-  "max",
+/**
+ * Provider-native tool/file access selected for an Agent activation.
+ *
+ * This is intentionally distinct from `minimumIsolation`: some CLIs expose
+ * an approval policy rather than an operating-system sandbox. Runtime
+ * adapters must map the value honestly to their native controls.
+ */
+export const ToolAccessModeSchema = z.enum([
+  "read_only",
+  "workspace_write",
+  "full_access",
 ]);
-export type ReasoningLevel = z.infer<typeof ReasoningLevelSchema>;
+export type ToolAccessMode = z.infer<typeof ToolAccessModeSchema>;
 
-export const ExplicitReasoningLevelSchema = z.enum([
-  "low",
-  "medium",
-  "high",
-  "max",
-]);
+/**
+ * Raft's standard Computer product path is deliberately unattended. The
+ * wider ToolAccessMode schema remains readable for historical policy rows,
+ * but new Agent product mutations may only write this value.
+ */
+export const RaftUnattendedToolAccessModeSchema = z.literal("full_access");
+export type RaftUnattendedToolAccessMode = z.infer<
+  typeof RaftUnattendedToolAccessModeSchema
+>;
+
+export const ExplicitReasoningLevelSchema = z
+  .string()
+  .min(1)
+  .max(64)
+  .regex(/^[A-Za-z0-9][A-Za-z0-9._-]*$/u)
+  .refine((value) => value !== "default", {
+    message: '"default" is reserved for runtime-owned selection',
+  });
 export type ExplicitReasoningLevel = z.infer<
   typeof ExplicitReasoningLevelSchema
 >;
+
+export const ReasoningLevelSchema = z.union([
+  z.literal("default"),
+  ExplicitReasoningLevelSchema,
+]);
+export type ReasoningLevel = z.infer<typeof ReasoningLevelSchema>;
 
 export const ServiceTierSchema = z.enum(["default", "fast", "priority"]);
 export type ServiceTier = z.infer<typeof ServiceTierSchema>;
@@ -131,6 +154,8 @@ const ModelBindingDescriptorFields = {
   modelBindingId: IdentifierSchema,
   provider: IdentifierSchema,
   modelId: IdentifierSchema,
+  displayName: z.string().trim().min(1).optional(),
+  description: z.string().trim().min(1).optional(),
   capabilityClasses: z
     .array(ModelCapabilityClassSchema)
     .superRefine(rejectDuplicateStrings),
@@ -140,12 +165,64 @@ const ModelBindingDescriptorFields = {
   supportedServiceTiers: z
     .array(ServiceTierSchema)
     .superRefine(rejectDuplicateStrings),
+  reasoningOptions: z
+    .array(
+      z
+        .object({
+          value: ExplicitReasoningLevelSchema,
+          label: z.string().trim().min(1),
+          description: z.string().trim().min(1).optional(),
+        })
+        .strict(),
+    )
+    .superRefine((options, context) =>
+      rejectDuplicateStrings(
+        options.map((option) => option.value),
+        context,
+      ),
+    )
+    .optional(),
+  defaultReasoning: ExplicitReasoningLevelSchema.optional(),
   evidence: CapabilityEvidenceLevelSchema,
 };
 
+function validateModelBindingReasoning(
+  binding: {
+    defaultReasoning?: string | undefined;
+    reasoningOptions?: Array<{ value: string }> | undefined;
+    supportedReasoning: string[];
+  },
+  context: z.RefinementCtx,
+): void {
+  if (binding.reasoningOptions === undefined) return;
+  const observed = new Set(
+    binding.reasoningOptions.map((option) => option.value),
+  );
+  binding.supportedReasoning.forEach((value, index) => {
+    if (!observed.has(value)) {
+      context.addIssue({
+        code: "custom",
+        message: `selectable reasoning value is absent from reasoningOptions: ${value}`,
+        path: ["supportedReasoning", index],
+      });
+    }
+  });
+  if (
+    binding.defaultReasoning !== undefined &&
+    !observed.has(binding.defaultReasoning)
+  ) {
+    context.addIssue({
+      code: "custom",
+      message: "defaultReasoning must appear in reasoningOptions",
+      path: ["defaultReasoning"],
+    });
+  }
+}
+
 export const ModelBindingDescriptorSchema = z
   .object(ModelBindingDescriptorFields)
-  .strict();
+  .strict()
+  .superRefine(validateModelBindingReasoning);
 export type ModelBindingDescriptor = z.infer<
   typeof ModelBindingDescriptorSchema
 >;
@@ -160,7 +237,8 @@ export const RuntimeModelBindingSchema = z
       })
       .strict(),
   })
-  .strict();
+  .strict()
+  .superRefine(validateModelBindingReasoning);
 export type RuntimeModelBinding = z.infer<typeof RuntimeModelBindingSchema>;
 
 const PreferenceWeightSchema = z.number().int().positive().max(1_000_000);
@@ -209,6 +287,10 @@ export const ExecutionPolicyRevisionSchema = z
     preferred: z.array(PlacementPreferenceSchema).max(64),
     modelIntent: ModelIntentSchema,
     sessionPolicy: z.enum(["fresh", "prefer_resume", "require_resume"]),
+    // Legacy policy rows predate this field and launched with full-access
+    // flags. Preserve that behavior when replaying durable state; every new
+    // product mutation writes the field explicitly.
+    toolAccessMode: ToolAccessModeSchema.default("full_access"),
     retryPolicyRef: VersionedContentRefSchema,
     createdBy: IdentifierSchema,
     createdAt: TimestampSchema,

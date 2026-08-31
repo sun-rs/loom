@@ -9,10 +9,12 @@ import type {
 } from "@rah-os/protocol";
 
 import {
+  DEFAULT_TOOL_ACCESS_MODE,
   normalizeModelBindingId,
   normalizeReasoningLevel,
   runtimeModelOptions,
-  supportedReasoningLevels,
+  runtimeReasoningOptions,
+  runtimeToolAccessModes,
 } from "../agent-runtime-capabilities.ts";
 import { useDialogProtocol } from "../dialog-protocol.ts";
 
@@ -47,15 +49,15 @@ const RAFT_AVATAR_KEYS = [
 ] as const;
 
 export function AgentCreateDialog({
+  computerLabel,
   onClose,
   onCreate,
   runtimes,
-  workspaceName,
 }: {
+  computerLabel: string | undefined;
   onClose: () => void;
   onCreate: (input: AgentCreateInput) => Promise<void>;
   runtimes: readonly LocalRuntimeInventoryEntry[];
-  workspaceName: string;
 }) {
   const runtimeOptions = useMemo(
     () =>
@@ -63,7 +65,8 @@ export function AgentCreateDialog({
         (runtime) =>
           runtime.available &&
           runtime.configured &&
-          runtime.runtimeOfferId !== undefined,
+          runtime.runtimeOfferId !== undefined &&
+          runtimeToolAccessModes(runtime).includes(DEFAULT_TOOL_ACCESS_MODE),
       ),
     [runtimes],
   );
@@ -74,14 +77,11 @@ export function AgentCreateDialog({
   const [role, setRole] = useState("");
   const [instructions, setInstructions] = useState("");
   const [avatarKey, setAvatarKey] = useState<string>("robot");
-  const [runtimeOfferId, setRuntimeOfferId] = useState(
-    runtimeOptions[0]?.runtimeOfferId ?? "",
-  );
+  const [runtimeOfferId, setRuntimeOfferId] = useState("");
   const [modelBindingId, setModelBindingId] = useState("runtime_default");
   const [reasoning, setReasoning] = useState<ReasoningLevel>("default");
-  const [sessionPolicy, setSessionPolicy] = useState<
-    "fresh" | "prefer_resume" | "require_resume"
-  >("fresh");
+  const [showMore, setShowMore] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [pending, setPending] = useState(false);
   const [actionError, setActionError] = useState<string>();
   const dialogRef = useDialogProtocol({ blocked: pending, onClose });
@@ -89,7 +89,7 @@ export function AgentCreateDialog({
     (runtime) => runtime.runtimeOfferId === runtimeOfferId,
   );
   const modelOptions = runtimeModelOptions(selectedRuntime);
-  const reasoningOptions = supportedReasoningLevels(
+  const reasoningOptions = runtimeReasoningOptions(
     selectedRuntime,
     modelBindingId,
   );
@@ -108,9 +108,13 @@ export function AgentCreateDialog({
   const valid =
     displayName.trim() !== "" &&
     /^[\p{L}\p{N}][\p{L}\p{N}._-]*$/u.test(handle.trim()) &&
-    role.trim() !== "" &&
-    instructions.trim() !== "" &&
     runtimeOfferId !== "";
+  const effectiveRole =
+    role.trim() || description.trim() || `${displayName.trim()} Agent`;
+  const effectiveInstructions =
+    instructions.trim() ||
+    description.trim() ||
+    "作为通用 Agent，遵循用户指令并清晰报告执行结果。";
 
   return (
     <div className="rah-dialog-layer" role="presentation">
@@ -129,10 +133,7 @@ export function AgentCreateDialog({
         tabIndex={-1}
       >
         <header>
-          <div>
-            <h2 id="rah-agent-create-title">创建 Agent</h2>
-            <p>{workspaceName} · 长期身份与真实 Runtime</p>
-          </div>
+          <h2 id="rah-agent-create-title">创建 AGENT</h2>
           <button
             aria-label="关闭"
             className="sq-btn"
@@ -156,161 +157,181 @@ export function AgentCreateDialog({
                 : { description: description.trim() }),
               displayName: displayName.trim(),
               handle: handle.trim(),
-              instructions: instructions.trim(),
+              instructions: effectiveInstructions,
               modelIntent: modelIntent(modelBindingId, reasoning),
-              role: role.trim(),
+              role: effectiveRole,
               runtimeOfferId,
-              sessionPolicy,
+              toolAccessMode: DEFAULT_TOOL_ACCESS_MODE,
             })
               .then(() => setActionError(undefined))
               .catch((caught) => setActionError(errorMessage(caught)))
               .finally(() => setPending(false));
           }}
         >
-          <div className="rah-agent-form-grid">
-            <label>
-              显示名称
-              <input
-                autoFocus
-                maxLength={128}
-                onChange={(event) => {
-                  const nextName = event.target.value;
-                  setDisplayName(nextName);
-                  if (!handleEdited) setHandle(handleFromName(nextName));
-                }}
-                placeholder="Alice"
-                value={displayName}
-              />
-            </label>
-            <label>
-              Handle
-              <input
-                maxLength={64}
-                onChange={(event) => {
-                  setHandleEdited(true);
-                  setHandle(handleFromName(event.target.value));
-                }}
-                placeholder="alice"
-                value={handle}
-              />
-            </label>
-            <label>
-              头像
-              <select
-                onChange={(event) => setAvatarKey(event.target.value)}
-                value={avatarKey}
-              >
-                {RAFT_AVATAR_KEYS.map((key) => (
-                  <option key={key} value={key}>
-                    {key}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Runtime
-              <select
-                onChange={(event) => setRuntimeOfferId(event.target.value)}
-                value={runtimeOfferId}
-              >
-                {runtimeOptions.length === 0 ? (
-                  <option value="">没有可运行的 Runtime</option>
-                ) : null}
-                {runtimeOptions.map((runtime) => (
-                  <option
-                    key={runtime.runtimeOfferId}
-                    value={runtime.runtimeOfferId}
-                  >
-                    {runtime.displayName}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              模型
-              <select
-                onChange={(event) => {
-                  const next = event.target.value;
-                  setModelBindingId(next);
-                  setReasoning((current) =>
-                    normalizeReasoningLevel(current, selectedRuntime, next),
-                  );
-                }}
-                value={modelBindingId}
-              >
-                {modelOptions.map((option) => (
-                  <option
-                    key={option.modelBindingId}
-                    value={option.modelBindingId}
-                  >
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
           <label>
-            角色
+            计算机 <em>*</em>
+            <select disabled value={computerLabel ?? ""}>
+              {computerLabel === undefined ? (
+                <option value="">没有在线的计算机</option>
+              ) : (
+                <option value={computerLabel}>{computerLabel}</option>
+              )}
+            </select>
+          </label>
+          <label>
+            名称 <em>*</em>
             <input
-              maxLength={512}
-              onChange={(event) => setRole(event.target.value)}
-              placeholder="Engineering Agent"
-              value={role}
+              autoFocus
+              maxLength={128}
+              onChange={(event) => {
+                const nextName = event.target.value;
+                setDisplayName(nextName);
+                if (!handleEdited) setHandle(handleFromName(nextName));
+              }}
+              placeholder="例如 Alice"
+              value={displayName}
             />
           </label>
           <label>
-            描述（可选）
+            描述
             <textarea
-              maxLength={2_000}
+              maxLength={3_000}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="该 Agent 在 Workspace 中承担什么职责"
-              rows={2}
+              placeholder="留空作为通用 Agent，或描述一个角色…"
+              rows={4}
               value={description}
             />
           </label>
           <label>
-            Agent 指令
-            <textarea
-              maxLength={64 * 1_024}
-              onChange={(event) => setInstructions(event.target.value)}
-              placeholder="定义行为边界、工作方法与交付标准"
-              rows={6}
-              value={instructions}
-            />
+            运行时 <em>*</em>
+            <select
+              onChange={(event) => setRuntimeOfferId(event.target.value)}
+              value={runtimeOfferId}
+            >
+              <option value="">请选择…</option>
+              {runtimeOptions.map((runtime) => (
+                <option
+                  key={runtime.runtimeOfferId}
+                  value={runtime.runtimeOfferId}
+                >
+                  {runtime.displayName}
+                </option>
+              ))}
+            </select>
           </label>
-          <div className="rah-agent-form-grid">
-            <label>
-              推理强度
-              <select
-                onChange={(event) =>
-                  setReasoning(event.target.value as typeof reasoning)
-                }
-                value={reasoning}
+          <label>
+            模型
+            <select
+              onChange={(event) => {
+                const next = event.target.value;
+                setModelBindingId(next);
+                setReasoning((current) =>
+                  normalizeReasoningLevel(current, selectedRuntime, next),
+                );
+              }}
+              value={modelBindingId}
+            >
+              {modelOptions.map((option) => (
+                <option
+                  key={option.modelBindingId}
+                  value={option.modelBindingId}
+                >
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            {runtimeOfferId === "" ? (
+              <small>
+                请选择一台在线的 Computer 以及运行时以检查可用模型。
+              </small>
+            ) : null}
+          </label>
+          <button
+            aria-expanded={showMore}
+            className="rah-agent-disclosure"
+            onClick={() => {
+              setShowMore((current) => !current);
+              if (showMore) setShowAdvanced(false);
+            }}
+            type="button"
+          >
+            <span aria-hidden="true">{showMore ? "⌄" : "›"}</span> 更多
+          </button>
+          {showMore ? (
+            <section className="rah-agent-more-fields">
+              <button
+                aria-expanded={showAdvanced}
+                className="rah-agent-disclosure is-nested"
+                onClick={() => setShowAdvanced((current) => !current)}
+                type="button"
               >
-                {reasoningOptions.map((level) => (
-                  <option key={level} value={level}>
-                    {reasoningLabel(level)}
-                  </option>
-                ))}
-              </select>
-              {reasoningOptions.length === 1 ? (
-                <small>当前模型未发布可执行的推理档位，将使用默认值。</small>
+                <span aria-hidden="true">{showAdvanced ? "⌄" : "›"}</span> 高级
+              </button>
+              {showAdvanced ? (
+                <div className="rah-agent-advanced-fields">
+                  <label>
+                    Handle
+                    <input
+                      maxLength={64}
+                      onChange={(event) => {
+                        setHandleEdited(true);
+                        setHandle(handleFromName(event.target.value));
+                      }}
+                      placeholder="alice"
+                      value={handle}
+                    />
+                  </label>
+                  <label>
+                    头像
+                    <select
+                      onChange={(event) => setAvatarKey(event.target.value)}
+                      value={avatarKey}
+                    >
+                      {RAFT_AVATAR_KEYS.map((key) => (
+                        <option key={key} value={key}>
+                          {key}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    人设指令
+                    <input
+                      maxLength={512}
+                      onChange={(event) => setRole(event.target.value)}
+                      placeholder="留空时使用名称与描述"
+                      value={role}
+                    />
+                  </label>
+                  <label>
+                    Agent 指令
+                    <textarea
+                      maxLength={64 * 1_024}
+                      onChange={(event) => setInstructions(event.target.value)}
+                      placeholder="留空时作为通用 Agent"
+                      rows={4}
+                      value={instructions}
+                    />
+                  </label>
+                  <label>
+                    推理强度
+                    <select
+                      onChange={(event) =>
+                        setReasoning(event.target.value as typeof reasoning)
+                      }
+                      value={reasoning}
+                    >
+                      {reasoningOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
               ) : null}
-            </label>
-            <label>
-              Session 策略
-              <select
-                onChange={(event) =>
-                  setSessionPolicy(event.target.value as typeof sessionPolicy)
-                }
-                value={sessionPolicy}
-              >
-                <option value="fresh">每次新建</option>
-                <option value="prefer_resume">优先续接</option>
-                <option value="require_resume">必须续接</option>
-              </select>
-            </label>
-          </div>
+            </section>
+          ) : null}
           {actionError === undefined ? null : (
             <p className="rah-dialog-error">{actionError}</p>
           )}
@@ -354,7 +375,8 @@ export function AgentManageDialog({
         (runtime) =>
           runtime.available &&
           runtime.configured &&
-          runtime.runtimeOfferId !== undefined,
+          runtime.runtimeOfferId !== undefined &&
+          runtimeToolAccessModes(runtime).includes(DEFAULT_TOOL_ACCESS_MODE),
       ),
     [runtimes],
   );
@@ -388,7 +410,6 @@ export function AgentManageDialog({
       initialModelBindingId,
     ),
   );
-  const [sessionPolicy, setSessionPolicy] = useState(policy.sessionPolicy);
   const [pending, setPending] = useState(false);
   const [deleteArmed, setDeleteArmed] = useState(false);
   const [actionError, setActionError] = useState<string>();
@@ -397,7 +418,7 @@ export function AgentManageDialog({
     (runtime) => runtime.runtimeOfferId === runtimeOfferId,
   );
   const modelOptions = runtimeModelOptions(selectedRuntime);
-  const reasoningOptions = supportedReasoningLevels(
+  const reasoningOptions = runtimeReasoningOptions(
     selectedRuntime,
     modelBindingId,
   );
@@ -417,8 +438,11 @@ export function AgentManageDialog({
     displayName.trim() !== "" &&
     /^[\p{L}\p{N}][\p{L}\p{N}._-]*$/u.test(handle.trim()) &&
     role.trim() !== "" &&
-    instructions.trim() !== "" &&
     runtimeOfferId !== "";
+  const effectiveInstructions =
+    instructions.trim() ||
+    revision.instructions?.trim() ||
+    revision.role.trim();
   const runAction = (action: () => Promise<void>) => {
     setPending(true);
     setActionError(undefined);
@@ -474,11 +498,11 @@ export function AgentManageDialog({
                   : { description: description.trim() }),
                 displayName: displayName.trim(),
                 handle: handle.trim(),
-                instructions: instructions.trim(),
+                instructions: effectiveInstructions,
                 modelIntent: modelIntent(modelBindingId, reasoning),
                 role: role.trim(),
                 runtimeOfferId,
-                sessionPolicy,
+                toolAccessMode: DEFAULT_TOOL_ACCESS_MODE,
               }),
             );
           }}
@@ -562,7 +586,7 @@ export function AgentManageDialog({
             </label>
           </div>
           <label>
-            角色
+            人设指令
             <input
               maxLength={512}
               onChange={(event) => setRole(event.target.value)}
@@ -596,14 +620,16 @@ export function AgentManageDialog({
                 }
                 value={reasoning}
               >
-                {reasoningOptions.map((level) => (
-                  <option key={level} value={level}>
-                    {reasoningLabel(level)}
+                {reasoningOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
                   </option>
                 ))}
               </select>
               {configuredReasoning !== "default" &&
-              reasoningOptions.includes(configuredReasoning) === false ? (
+              reasoningOptions.some(
+                (option) => option.value === configuredReasoning,
+              ) === false ? (
                 <small>
                   旧配置 {reasoningLabel(configuredReasoning)}
                   没有 Runtime 证据；保存时将恢复为 Runtime 默认。
@@ -611,19 +637,6 @@ export function AgentManageDialog({
               ) : reasoningOptions.length === 1 ? (
                 <small>当前模型未发布可执行的推理档位，将使用默认值。</small>
               ) : null}
-            </label>
-            <label>
-              Session 策略
-              <select
-                onChange={(event) =>
-                  setSessionPolicy(event.target.value as typeof sessionPolicy)
-                }
-                value={sessionPolicy}
-              >
-                <option value="fresh">每次新建</option>
-                <option value="prefer_resume">优先续接</option>
-                <option value="require_resume">必须续接</option>
-              </select>
             </label>
           </div>
           {actionError === undefined ? null : (

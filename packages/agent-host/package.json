@@ -3,12 +3,21 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "rah-os-computer": "./src/computer-cli.ts",
+    "rah-os-computer-supervisor": "./src/computer-supervisor-cli.ts"
+  },
   "exports": "./src/index.ts",
   "dependencies": {
+    "@modelcontextprotocol/node": "^2.0.0",
+    "@modelcontextprotocol/server": "^2.0.0",
+    "@rah-os/computer-protocol": "*",
+    "@rah-os/k-carrier": "0.1.6-rah.0",
     "@rah-os/kernel": "*",
     "@rah-os/protocol": "*"
   },
   "devDependencies": {
+    "@modelcontextprotocol/client": "^2.0.0",
     "@rah-os/application-service": "*",
     "@rah-os/kernel": "*"
   }
