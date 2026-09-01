@@ -29,6 +29,7 @@ import {
 } from "./errors.ts";
 import { eventPayloadOptionalText, eventPayloadText } from "./event-payload.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
+import { updateAgentProfile } from "./workspace-agent-profile.ts";
 import { assertRuntimeOfferSupportsToolAccess } from "./runtime-offer-tool-access.ts";
 import {
   integer,
@@ -40,7 +41,7 @@ import {
 } from "./sqlite-row.ts";
 import type { AgentDefinitionRecord } from "./types.ts";
 
-type WorkspaceAgentManagementOwner = {
+export type WorkspaceAgentManagementOwner = {
   actorId: string;
   createId: (prefix: string) => string;
   database: DatabaseSync;
@@ -167,6 +168,7 @@ export function manageWorkspaceAgentTransaction(
       event.payload.requestDigest !== requestDigest ||
       ![
         "agent.configured",
+        "agent.profile_updated",
         "agent.enabled",
         "agent.disabled",
         "agent.tombstoned",
@@ -179,6 +181,10 @@ export function manageWorkspaceAgentTransaction(
     return managementResultFromEvent(owner.database, event, true);
   }
   assertFreshControlRoom(owner.database, controlRoomId, input.basedOnRoomSeq);
+  if (input.action === "update_profile") {
+    const event = updateAgentProfile(owner, input, requestDigest);
+    return managementResultFromEvent(owner.database, event, false);
+  }
   if (input.action === "configure") {
     return configureAgent(
       owner,

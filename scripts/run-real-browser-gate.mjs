@@ -357,6 +357,91 @@ try {
       ].some((label) => label.textContent?.trim() === "Alice"),
     "Raft-style open-or-create Agent Direct Room",
   );
+  const directHeaderAvatarBefore = await call(
+    browser,
+    () =>
+      document.querySelector(".rah-direct-header-avatar .rah-agent-avatar-grid")
+        ?.innerHTML ?? "",
+  );
+  assert.notEqual(
+    directHeaderAvatarBefore,
+    "",
+    "Direct Room header must expose the canonical Agent avatar",
+  );
+  await clickButton(browser, { ariaLabel: "打开 Alice Agent 资料" });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-agent-peek .rah-agent-activity-pane") !==
+      null,
+    "Direct Room header avatar opens the shared Agent inspector",
+  );
+  await clickButton(browser, { text: "资料" });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-agent-peek .rah-agent-profile-pane") !==
+      null,
+    "Agent inspector profile tab from Direct Room header",
+  );
+  await clickButton(browser, { ariaLabel: "更换 Alice 头像" });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector('.rah-agent-avatar-picker [role="group"]') !==
+      null,
+    "Raft Agent avatar picker",
+  );
+  await dispatchKey(browser, "Escape", 27);
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-agent-peek .rah-agent-profile-pane") !==
+        null &&
+      document.querySelector(".rah-agent-avatar-picker") === null &&
+      document.activeElement?.getAttribute("aria-label") === "更换 Alice 头像",
+    "avatar picker Escape closes only the picker and restores its trigger",
+  );
+  await clickButton(browser, { ariaLabel: "更换 Alice 头像" });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector('.rah-agent-avatar-picker [role="group"]') !==
+      null,
+    "Raft Agent avatar picker after keyboard dismissal",
+  );
+  const selectedAvatarKey = await call(browser, () => {
+    const selected = document.querySelector(
+      '.rah-agent-avatar-picker button[aria-pressed="true"]',
+    );
+    return selected?.getAttribute("title") ?? "";
+  });
+  const replacementAvatarKey = selectedAvatarKey === "heart" ? "star" : "heart";
+  await clickButton(browser, {
+    ariaLabel: `选择头像 ${replacementAvatarKey}`,
+  });
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-agent-avatar-picker") === null,
+    "canonical Agent avatar revision save",
+  );
+  await clickButton(browser, { ariaLabel: "关闭 Agent 侧栏" });
+  await waitFor(
+    browser,
+    (before) => {
+      const grid = document.querySelector(
+        ".rah-direct-header-avatar .rah-agent-avatar-grid",
+      );
+      return (
+        document.querySelector(".rah-agent-peek") === null &&
+        grid?.innerHTML !== before &&
+        document.activeElement?.getAttribute("aria-label") ===
+          "打开 Alice Agent 资料"
+      );
+    },
+    "avatar reconciliation and focus return to Direct Room header",
+    [directHeaderAvatarBefore],
+  );
   assert.equal(
     await call(
       browser,
@@ -375,6 +460,39 @@ try {
     browser,
     demoRoomReply("Alice", directTrajectoryMessage),
     15_000,
+  );
+  assert.equal(
+    await call(browser, () => {
+      const header = document.querySelector(
+        ".rah-direct-header-avatar .rah-agent-avatar-grid",
+      )?.innerHTML;
+      const message = [...document.querySelectorAll(".msg")]
+        .find(
+          (row) =>
+            row.querySelector(".msg-head")?.textContent?.includes("Alice") ===
+            true,
+        )
+        ?.querySelector(
+          ".rah-message-avatar-trigger .rah-agent-avatar-grid",
+        )?.innerHTML;
+      return header !== undefined && header === message;
+    }),
+    true,
+    "Direct Room header and Agent Message must reconcile the same avatar",
+  );
+  await clickButton(browser, { ariaLabel: "查看 Alice 动态" });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-agent-peek .rah-agent-activity-pane") !==
+      null,
+    "Agent Message avatar opens the same shared inspector",
+  );
+  await clickButton(browser, { ariaLabel: "关闭 Agent 侧栏" });
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-agent-peek") === null,
+    "shared Agent inspector close after Message avatar",
   );
   assert.equal(
     await call(browser, () => {

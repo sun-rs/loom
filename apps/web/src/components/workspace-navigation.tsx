@@ -362,6 +362,7 @@ function UnreadCount({
 export function ChannelHeader({
   onSearch,
   directPeer,
+  onOpenDirectPeer,
   memberCount,
   onManageAgents,
   onOpenRooms,
@@ -369,6 +370,7 @@ export function ChannelHeader({
 }: {
   onSearch: () => void;
   directPeer: WorkspaceAgentView | undefined;
+  onOpenDirectPeer: (agentDefinitionId: string) => void;
   memberCount: number;
   onManageAgents: () => void;
   onOpenRooms: () => void;
@@ -392,7 +394,15 @@ export function ChannelHeader({
               {title.slice(0, 1).toUpperCase()}
             </span>
           ) : (
-            <AgentAvatar agent={directPeer} size="header" />
+            <button
+              aria-label={`打开 ${directPeer.displayName} Agent 资料`}
+              className="rah-direct-header-avatar"
+              onClick={() => onOpenDirectPeer(directPeer.agentDefinitionId)}
+              title="Agent 资料"
+              type="button"
+            >
+              <AgentAvatar agent={directPeer} size="header" />
+            </button>
           )
         ) : (
           <span className="channel-badge">

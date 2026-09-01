@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { ClientAgentProfileRequestSchema } from "./client-agent-profile.ts";
+export * from "./client-agent-profile.ts";
 export * from "./client-discovery.ts";
 
 import {
@@ -854,10 +856,10 @@ export type ClientAgentStateRequest = z.infer<
 export const ClientAgentManageRequestSchema = z.discriminatedUnion("action", [
   ClientAgentConfigureRequestSchema,
   ClientAgentStateRequestSchema,
+  ClientAgentProfileRequestSchema,
 ]);
-export type ClientAgentManageRequest = z.infer<
-  typeof ClientAgentManageRequestSchema
->;
+type ClientAgentManageSchema = typeof ClientAgentManageRequestSchema;
+export type ClientAgentManageRequest = z.infer<ClientAgentManageSchema>;
 
 export const ClientAgentManageResponseSchema = z
   .object({

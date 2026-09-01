@@ -105,6 +105,7 @@ Reference HTML 永远加载 `raft-ui-reference-adapter.js`，不得加载产品 
 - 动态页“复制诊断信息”只从轨迹 discriminated typed record 逐字段生成最多 200 条、64 KiB 的关联摘要，不复制 thinking/text/tool input/result，也不 `JSON.stringify` React state；浏览器拒绝剪贴板时保留页面并显示局部错误。原 `agent.activity.list` 业务审计继续保留为独立 API，但不再冒充 Raft 的 Agent 动态；
 - Agent 像素头像直接消费 allowlisted 官方 avatar preset 与 palette，`avatarKey` 是 canonical identity revision 的一部分；未提供 avatarKey 时只回退到同一官方 preset，不在页面临时绘制字母头像；
 - 资料页通过 `agent.get` 读取 canonical Definition/Policy，明确区分在线、不可用、已暂停和已删除；390×844 使用同一组件树的 list-first → focused detail → back 协议，详情打开时底部主导航让位，七标签在局部横向滚动而不制造 document overflow；
+- Chat 私信顶部头像和 Message Agent 头像共用 App-owned 右侧 `AgentDirectoryPane` 入口，默认进入 Activity；资料头像的官方 preset 修改复用 `agent.manage/update_profile` 的 revision CAS、Room freshness 与幂等事务。Web 只投影 canonical `avatarKey`，不另存头像草稿真相；图片上传在形成授权存储 owner 前保持明确不可用；
 - Room sidebar 只属于 Room surface；Agent、Computer、Settings 各自拥有第二列，避免出现四列叠加和全局分隔线漂移；
 
 尚未接入：

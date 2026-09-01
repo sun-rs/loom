@@ -803,6 +803,24 @@
   gap: 10px;
 }
 
+.rah-direct-header-avatar {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  line-height: 0;
+  padding: 0;
+  transition: filter 120ms ease;
+}
+
+.rah-direct-header-avatar:hover {
+  filter: brightness(0.9);
+}
+
+.rah-direct-header-avatar:focus-visible {
+  outline: 2px solid var(--black);
+  outline-offset: 2px;
+}
+
 .rah-direct-header-fallback {
   flex: 0 0 36px;
   height: 36px;

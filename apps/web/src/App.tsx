@@ -78,6 +78,7 @@ import {
   type AgentCreateInput,
 } from "./components/agent-dialogs.tsx";
 import { AgentRuntimeDialog } from "./components/agent-runtime-dialog.tsx";
+import type { AgentProfileEditInput } from "./agent-profile-edit.ts";
 import {
   ChatPane,
   TaskPane,
@@ -202,6 +203,13 @@ function WorkspaceScreen({
     diagnosticNavigation.current.cancel();
     return ++navigationGeneration.current;
   }, []);
+  const openAgentPeek = useCallback(
+    (agentDefinitionId: string) => {
+      invalidateNavigation();
+      setPeekAgentId(agentDefinitionId);
+    },
+    [invalidateNavigation],
+  );
   const setSurface = useCallback(
     (next: Surface) => {
       invalidateNavigation();
@@ -1825,6 +1833,56 @@ function WorkspaceScreen({
     [canManageCurrentWorkspaceAgent, client],
   );
 
+  const saveAgentProfile = useCallback(
+    async (input: AgentProfileEditInput) => {
+      const controlRoomId = activeWorkspace?.controlRoomId;
+      if (!canManageCurrentWorkspaceAgent || !controlRoomId)
+        throw new Error("当前 Agent 资料不可写");
+      const reconcile = (entry: ClientAgentGetResponse["agent"]) =>
+        setAgentCatalog((current) =>
+          current.map((agent) =>
+            agent.definition.agentDefinitionId ===
+              entry.definition.agentDefinitionId &&
+            agent.currentRevision.revision <= entry.currentRevision.revision
+              ? entry
+              : agent,
+          ),
+        );
+      try {
+        const result = await runRoomMutationAtLatest({
+          session: roomSessionFor(
+            sessions.current,
+            client,
+            consumerPrefix,
+            controlRoomId,
+          ),
+          mutate: (basedOnRoomSeq) =>
+            client.request("agent.manage", {
+              ...input,
+              action: "update_profile",
+              basedOnRoomSeq,
+              idempotencyKey: `web-agent-profile-${browserOpaqueId()}`,
+            }),
+        });
+        reconcile(result.agent);
+      } catch (caught) {
+        try {
+          reconcile(
+            (
+              await client.request("agent.get", {
+                agentDefinitionId: input.agentDefinitionId,
+              })
+            ).agent,
+          );
+        } catch {
+          /* retain last readable projection */
+        }
+        throw caught;
+      }
+    },
+    [activeWorkspace, canManageCurrentWorkspaceAgent, client, consumerPrefix],
+  );
+
   const configureAgent = useCallback(
     async (input: AgentConfigureInput) => {
       const detail = agentManageDetail;
@@ -1973,6 +2031,7 @@ function WorkspaceScreen({
   );
 
   const agentDetailProps = {
+    onSaveProfile: saveAgentProfile,
     agents: agentDirectory,
     canCreate: canCreateCurrentWorkspaceAgent,
     canManage: canManageCurrentWorkspaceAgent,
@@ -2015,8 +2074,7 @@ function WorkspaceScreen({
           runtimes: localRuntimes,
           computerLabel: localRuntimeHostId,
           onOpen: (id) => {
-            invalidateNavigation();
-            setPeekAgentId(id);
+            openAgentPeek(id);
           },
         }}
       >
@@ -2200,6 +2258,7 @@ function WorkspaceScreen({
           ) : (
             <main className="channel">
               <ChannelHeader
+                onOpenDirectPeer={(id) => openAgentPeek(id)}
                 onSearch={() => {
                   const params = new URLSearchParams({
                     surface: "search",

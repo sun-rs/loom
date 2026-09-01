@@ -482,6 +482,107 @@
   padding: var(--raft-members-profile-hero-padding);
 }
 
+.rah-agent-profile-avatar-trigger {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  flex: none;
+  line-height: 0;
+  padding: 0;
+  position: relative;
+}
+
+.rah-agent-profile-avatar-trigger:focus-visible {
+  outline: 2px solid var(--black);
+  outline-offset: 3px;
+}
+
+.rah-agent-profile-avatar-edit {
+  align-items: center;
+  background: rgb(0 0 0 / 48%);
+  color: var(--paper);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  opacity: 0;
+  position: absolute;
+  transition: opacity 120ms ease;
+}
+
+.rah-agent-profile-avatar-edit svg {
+  height: 18px;
+  width: 18px;
+}
+
+.rah-agent-profile-avatar-trigger:hover .rah-agent-profile-avatar-edit,
+.rah-agent-profile-avatar-trigger:focus-visible .rah-agent-profile-avatar-edit {
+  opacity: 1;
+}
+
+.rah-agent-avatar-picker {
+  border-top: 1px solid var(--ink-10);
+  padding: 12px 20px 16px;
+}
+
+.rah-agent-avatar-picker > h3 {
+  color: var(--ink-50);
+  font-size: 12px;
+  line-height: 16px;
+  margin-bottom: 12px;
+}
+
+.rah-agent-avatar-picker > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.rah-agent-avatar-choice,
+.rah-agent-avatar-upload {
+  align-items: center;
+  background: var(--paper);
+  border: 2px solid var(--black);
+  display: inline-flex;
+  height: 40px;
+  justify-content: center;
+  padding: 0;
+  width: 40px;
+}
+
+.rah-agent-avatar-choice {
+  cursor: pointer;
+}
+
+.rah-agent-avatar-choice:hover:not(:disabled),
+.rah-agent-avatar-choice:focus-visible,
+.rah-agent-avatar-choice[data-selected="true"] {
+  background: color-mix(in srgb, var(--pink) 20%, var(--paper));
+  border-color: var(--pink);
+}
+
+.rah-agent-avatar-choice .rah-agent-avatar {
+  border: 0;
+  height: 36px;
+  width: 36px;
+}
+
+.rah-agent-avatar-choice .rah-agent-avatar-presence {
+  display: none;
+}
+
+.rah-product-shell .rah-agent-avatar-upload:disabled {
+  color: var(--ink-40);
+  cursor: not-allowed;
+  font-size: 24px;
+  opacity: 1;
+}
+
+.rah-agent-avatar-picker > p {
+  margin-top: 8px;
+  text-align: center;
+}
+
 .rah-agent-profile-hero h3 {
   font-size: 18px;
   font-weight: 700;

@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties, KeyboardEvent, PointerEvent } from "react";
+import type {
+  CSSProperties,
+  KeyboardEvent,
+  PointerEvent,
+  ReactNode,
+} from "react";
 
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
@@ -10,6 +15,10 @@ import type {
   Principal,
   Room,
   RuntimeTrajectoryRecord,
+} from "@rah-os/protocol";
+import {
+  OFFICIAL_AGENT_AVATAR_KEYS,
+  officialAgentAvatarKey,
 } from "@rah-os/protocol";
 import avatarPack from "@rah-os/ui-tokens/avatar-pack.json";
 import type { WorkspaceAgentView } from "@rah-os/ui-web";
@@ -33,6 +42,7 @@ import { AgentMemoryConfigDialog } from "./agent-memory-config-dialog.tsx";
 import { AgentRolePermissions } from "./agent-role-permissions.tsx";
 import { AgentWorkspaceBrowser } from "./agent-workspace-browser.tsx";
 import { DiagnosticReferences } from "./diagnostic-references.tsx";
+import type { AgentProfileEditInput } from "../agent-profile-edit.ts";
 
 type AgentTab =
   "activity" | "apps" | "chat" | "mcp" | "profile" | "reminders" | "workspace";
@@ -79,6 +89,7 @@ export function AgentDirectoryPane({
   onCreate,
   onManage,
   onEditRuntime,
+  onSaveProfile,
   onOpenDirectRoom,
   onOpenRoom,
   runtimes,
@@ -99,6 +110,7 @@ export function AgentDirectoryPane({
   onCreate: () => void;
   onManage: (agentDefinitionId: string) => void;
   onEditRuntime: (agentDefinitionId: string) => void;
+  onSaveProfile?: (input: AgentProfileEditInput) => Promise<void>;
   onOpenDirectRoom: (peerPrincipalId: string) => Promise<void>;
   onOpenRoom: (roomId: string) => void;
   runtimes: readonly LocalRuntimeInventoryEntry[];
@@ -551,6 +563,7 @@ export function AgentDirectoryPane({
                 onEditRuntime={() =>
                   onEditRuntime(selectedAgent.agentDefinitionId)
                 }
+                {...(onSaveProfile === undefined ? {} : { onSaveProfile })}
                 runtimes={selectedRuntimes}
               />
             ) : tab === "chat" ? (
@@ -1251,6 +1264,7 @@ function AgentProfilePane({
   loading,
   onManage,
   onEditRuntime,
+  onSaveProfile,
   runtimes,
 }: {
   computerLabel: string | undefined;
@@ -1263,6 +1277,7 @@ function AgentProfilePane({
   loading: boolean;
   onManage: () => void;
   onEditRuntime: () => void;
+  onSaveProfile?: (input: AgentProfileEditInput) => Promise<void>;
   runtimes: readonly LocalRuntimeInventoryEntry[];
 }) {
   const runtime = runtimes[0];
@@ -1283,8 +1298,11 @@ function AgentProfilePane({
       : agent.createdBy;
   return (
     <section className="rah-agent-profile-pane rah-scroll-main">
-      <div className="rah-agent-profile-hero">
-        <AgentAvatar agent={agent} size="profile" />
+      <AgentProfileAvatarEditor
+        agent={agent}
+        canManage={canManage}
+        onSaveProfile={onSaveProfile}
+      >
         <div>
           <h3>{agent.displayName}</h3>
           <p>@{agent.handle}</p>
@@ -1296,7 +1314,7 @@ function AgentProfilePane({
             {agentAvailabilityLabel(agent)}
           </span>
         </div>
-      </div>
+      </AgentProfileAvatarEditor>
       <ProfileField
         label="显示名称"
         value={agent.displayName}
@@ -1418,6 +1436,148 @@ function AgentProfilePane({
         </div>
       </section>
     </section>
+  );
+}
+
+function AgentProfileAvatarEditor({
+  agent,
+  canManage,
+  children,
+  onSaveProfile,
+}: {
+  agent: WorkspaceAgentView;
+  canManage: boolean;
+  children: ReactNode;
+  onSaveProfile?: ((input: AgentProfileEditInput) => Promise<void>) | undefined;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string>();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const pickerId = `rah-agent-avatar-picker-${agent.agentDefinitionId}`;
+  const currentAvatarKey = officialAgentAvatarKey(
+    agent.avatarKey,
+    agent.participantId,
+  );
+  const revisionId = agent.agentDefinitionRevisionId;
+  const editable =
+    canManage && onSaveProfile !== undefined && revisionId !== undefined;
+
+  function closePicker(): void {
+    setOpen(false);
+    setError(undefined);
+    requestAnimationFrame(() => triggerRef.current?.focus());
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    const closeAvatarPickerOnEscape = (
+      event: globalThis.KeyboardEvent,
+    ): void => {
+      if (event.key !== "Escape" || pending) return;
+      event.preventDefault();
+      event.stopPropagation();
+      closePicker();
+    };
+    document.addEventListener("keydown", closeAvatarPickerOnEscape, {
+      capture: true,
+    });
+    return () => {
+      document.removeEventListener("keydown", closeAvatarPickerOnEscape, {
+        capture: true,
+      });
+    };
+  }, [open, pending]);
+
+  async function selectAvatar(avatarKey: string): Promise<void> {
+    if (!editable || pending || revisionId === undefined) return;
+    if (avatarKey === currentAvatarKey) {
+      closePicker();
+      return;
+    }
+    setPending(true);
+    setError(undefined);
+    try {
+      await onSaveProfile({
+        agentDefinitionId: agent.agentDefinitionId,
+        expectedRevisionId: revisionId,
+        field: "avatarKey",
+        value: avatarKey,
+      });
+      closePicker();
+    } catch (caught) {
+      setError(errorMessage(caught));
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <>
+      <div className="rah-agent-profile-hero">
+        {editable ? (
+          <button
+            aria-controls={pickerId}
+            aria-expanded={open}
+            aria-label={`更换 ${agent.displayName} 头像`}
+            aria-busy={pending}
+            className="rah-agent-profile-avatar-trigger"
+            disabled={pending}
+            onClick={() => {
+              setError(undefined);
+              setOpen((current) => !current);
+            }}
+            ref={triggerRef}
+            title="更换头像"
+            type="button"
+          >
+            <AgentAvatar agent={agent} size="profile" />
+            <span className="rah-agent-profile-avatar-edit" aria-hidden="true">
+              <Icon name="pencil" />
+            </span>
+          </button>
+        ) : (
+          <AgentAvatar agent={agent} size="profile" />
+        )}
+        {children}
+      </div>
+      {editable && open ? (
+        <section
+          aria-label="选择头像"
+          className="rah-agent-avatar-picker"
+          id={pickerId}
+        >
+          <h3>选择头像</h3>
+          <div aria-label="官方 Agent 头像" role="group">
+            <button
+              aria-label="上传图片暂不可用"
+              className="rah-agent-avatar-upload"
+              disabled
+              title="上传图片暂不可用"
+              type="button"
+            >
+              <span aria-hidden="true">⇧</span>
+            </button>
+            {OFFICIAL_AGENT_AVATAR_KEYS.map((avatarKey) => (
+              <button
+                aria-pressed={avatarKey === currentAvatarKey}
+                aria-label={`选择头像 ${avatarKey}`}
+                className="rah-agent-avatar-choice"
+                data-selected={avatarKey === currentAvatarKey}
+                disabled={pending}
+                key={avatarKey}
+                onClick={() => void selectAvatar(avatarKey)}
+                title={avatarKey}
+                type="button"
+              >
+                <AgentAvatar agent={{ ...agent, avatarKey }} size="header" />
+              </button>
+            ))}
+          </div>
+          {error ? <p role="alert">{error}</p> : null}
+        </section>
+      ) : null}
+    </>
   );
 }
 
@@ -1777,12 +1937,13 @@ export function AgentAvatar({
     | "state"
     | "connectionStatus"
     | "presence"
-  >;
+  > & { participantId?: string };
   size: "header" | "profile" | "sidebar";
 }) {
   const preset =
-    OFFICIAL_AVATAR_PACK.presets[agent.avatarKey ?? DEFAULT_AGENT_AVATAR] ??
-    OFFICIAL_AVATAR_PACK.presets[DEFAULT_AGENT_AVATAR];
+    OFFICIAL_AVATAR_PACK.presets[
+      officialAgentAvatarKey(agent.avatarKey, agent.participantId)
+    ] ?? OFFICIAL_AVATAR_PACK.presets[DEFAULT_AGENT_AVATAR];
   if (preset === undefined) {
     return (
       <span className={`rah-agent-avatar is-${size}`} aria-hidden="true">

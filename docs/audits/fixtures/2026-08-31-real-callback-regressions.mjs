@@ -116,6 +116,7 @@ test("offline Agent renders a persistent gray presence marker instead of removin
         { React },
       ),
       DEFAULT_AGENT_AVATAR: "test",
+      officialAgentAvatarKey: () => "test",
       OFFICIAL_AVATAR_PACK: {
         presets: { test: { background: "white", grid: ["1"] } },
         palette: { 1: "black" },
@@ -557,14 +558,7 @@ for (const latest of ["diagnostic", "DM"])
 test("a new avatar panel selection invalidates an older pending DM instead of being closed by it", async () => {
   const f = mutationScope();
   const direct = callback("openDirectRoom", f.scope)("peer");
-  const { node, source } = find(
-    app,
-    (n, s) =>
-      ts.isPropertyAssignment(n) &&
-      n.name.getText(s) === "onOpen" &&
-      n.initializer.getText(s).includes("setPeekAgentId"),
-  );
-  evaluate(node.initializer.getText(source), f.scope)("new-agent");
+  callback("openAgentPeek", f.scope)("new-agent");
   f.response.resolve({ room: { roomId: "late-dm" } });
   await direct;
   assert.equal(f.nav.state.selected, "original-room");
