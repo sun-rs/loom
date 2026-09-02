@@ -15,7 +15,7 @@ export function AgentRolePermissions({
         <span>
           角色{" "}
           <button
-            className="rah-profile-edit"
+            className="rah-profile-edit rah-interaction-flat"
             aria-label="角色权限"
             title="角色权限"
             onClick={() => setOpen(true)}
@@ -24,6 +24,11 @@ export function AgentRolePermissions({
           </button>
         </span>
         <strong>{permissionRoleLabel(role)}</strong>
+        {role === "member" && (
+          <small className="rah-agent-profile-status">
+            Agent 暂不支持设为管理员
+          </small>
+        )}
       </div>
       {open && <RoleDialog onClose={() => setOpen(false)} />}
     </>

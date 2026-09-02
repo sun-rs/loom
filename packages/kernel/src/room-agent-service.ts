@@ -41,6 +41,16 @@ export type HumanRoomMessageInput = {
   roomId: string;
 };
 
+export type HumanThreadReplyInput = {
+  attachmentIds?: string[] | undefined;
+  basedOnRoomSeq: number;
+  body: string;
+  idempotencyKey: string;
+  recipientIds: string[];
+  roomId: string;
+  threadId: string;
+};
+
 /** Runs inside the Kernel transaction: message, recipients and attachment consumption commit together. */
 export function postHumanRoomMessage(options: {
   actor: AuthenticatedActorContext;
@@ -66,6 +76,36 @@ export function postHumanRoomMessage(options: {
     ...input,
     attachments,
     recipients: humanRoomMessageRecipients(database, principal, input),
+  });
+  if (!result.deduplicated)
+    files.consume(attachments, result.event.aggregateId);
+  return result;
+}
+
+/** Runs inside the Kernel transaction: Thread Message and attachment consumption commit together. */
+export function replyHumanThread(options: {
+  actor: AuthenticatedActorContext;
+  collaboration: CollaborationService;
+  database: DatabaseSync;
+  files: RoomFiles;
+  input: HumanThreadReplyInput;
+  principal: Principal;
+}): MessageMutationResult {
+  const { actor, collaboration, database, files, input, principal } = options;
+  const previous = database
+    .prepare(
+      "SELECT aggregate_id FROM room_events WHERE room_id = ? AND idempotency_key = ? AND type = 'message.posted'",
+    )
+    .get(input.roomId, input.idempotencyKey);
+  const attachments = files.forMessage(
+    actor,
+    input.roomId,
+    input.attachmentIds ?? [],
+    previous ? text(previous, "aggregate_id") : undefined,
+  );
+  const result = collaboration.replyThread(principal, {
+    ...input,
+    attachments,
   });
   if (!result.deduplicated)
     files.consume(attachments, result.event.aggregateId);
@@ -473,7 +513,11 @@ function activityTone(
   eventType: string,
   runState: string | null,
 ): AgentActivityRecord["tone"] {
-  if (eventType === "activation.quarantined" || eventType === "run.orphaned") {
+  if (
+    eventType === "activation.quarantined" ||
+    eventType === "activation.retry_blocked" ||
+    eventType === "run.orphaned"
+  ) {
     return "error";
   }
   if (
@@ -486,6 +530,7 @@ function activityTone(
   }
   if (
     eventType === "activation.leased" ||
+    eventType === "activation.retry_resumed" ||
     eventType === "run.created" ||
     eventType === "run.runtime_prepared" ||
     eventType === "run.started" ||

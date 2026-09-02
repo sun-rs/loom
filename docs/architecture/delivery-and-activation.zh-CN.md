@@ -42,7 +42,15 @@ outbox_persisted
 - Attention：mention、DM、thread subscription、Task ownership、dependency 和 InputRequest 决定谁进入 Inbox。
 - Activation：优先级、预算、busy lane、去抖和策略决定是否启动模型。
 
-普通状态消息不会自动激活全体 Agent。定向 mention、DM、Task assignment、dependency resolved 和 `input.resolved` 默认产生定向 Activation。唯一例外是显式 open Task：`task.created` 投递给当前 Room 的全部 Agent member，但这些 Activation 只是候选注意力，Kernel 仍只允许一个 Agent 原子成为 Task owner；loser 不会被 winner 的未完成 Task 阻塞。
+普通运行状态/trajectory 不会激活 Agent。Human 顶层 Room Message 按 Room membership 投递；Agent 顶层 Message 则给同 Room 内除发送者之外的已启用 Agent 派生注意力，Thread 回复只给 canonical thread subscribers。两者都只是信号而非回复义务，Agent 可以在目标已完成或没有增益时只 ack。定向 mention、DM、Task assignment、dependency resolved 和 `input.resolved` 默认产生定向 Activation。显式 open Task 的 `task.created` 也投递给当前 Room 的全部 Agent member，但这些 Activation 只是候选注意力，Kernel 仍只允许一个 Agent 原子成为 Task owner；loser 不会被 winner 的未完成 Task 阻塞。
+
+### 2.1 Agent Thread subscription
+
+Agent Thread 关注由 Kernel 的 `agent_thread_follows` 持久表拥有，不从浏览器当前页或 Provider transcript 猜测。`thread.created` 的精确收件人、Thread 内的精确 mention，以及 Agent 在 Thread 成功发布的消息都会写入 follow；后续普通 Thread reply 只投递给仍在关注的 enabled Agent。Worker 可以通过 activation-scoped `thread-unfollow` 显式取消关注；该命令携带已投递或本 Activation 已产生的 causal cursor 与稳定幂等键。取消后普通回复不再唤醒它，后续精确 mention 会重新关注并恢复普通投递。
+
+首次 Agent 回复的目标由 causal event 的 canonical `threadId` 决定。`thread.created` 和后续 `message.posted` 使用同一个 route owner，Task Thread 仍以 Task domain 的 canonical threadId 优先。schema 31 初始化会从历史 Agent Thread 消息和含 `recipientIds + threadId` 的事件回填可证明的关注关系；显式 unfollow 记录优先，不能被重复初始化覆盖。
+
+这移植的是 Raft 可见的产品/CLI 合同：官方 Web bundle 暴露 Human follow/unfollow/followed 请求，Agent CLI 合同暴露 `/threads/unfollow`；官方文档明确“参与或被 mention 自动 follow、可 unfollow、后续 mention 可再次触达”。Raft 中央 Server 的数据库实现不可见，因此本地 SQLite 事务、causal guard 与幂等事件属于 RAH OS 的可靠本地映射，不宣称逐字复制未知服务端代码。
 
 ## 3. 合并与串行 lane
 
@@ -114,7 +122,9 @@ Agent 向人类提问时：
 - Agent busy：新事件进入下一次 Activation，不并发注入。
 - CLI 不退出：Host timeout 后 cancel、kill process group、reap 并记录 RunAttempt failure；Task 独立保留。
 - daemon signal 先进入 drain；超过 `drainTimeoutMs` 后才 cancel 当前 runtime。start/recover/cancel 各有独立 deadline，cancel deadline 到期且无 terminal proof 时 quarantine，而不是无限阻塞 shutdown 或伪造退出。
-- Runtime 明确失败时，Host 将 Activation 延迟重排；若已有 queued follow-up，先把范围合并回原 Activation 并取消重复 lane。
+- Runtime 明确失败时，Host 将 Activation 延迟重排；若已有 queued follow-up，先把范围合并回原 Activation 并取消重复 lane。默认退避按 Raft 可见源码使用 10 秒基准、5 分钟封顶。
+- 同一规范化 recoverable Runtime 错误指纹连续出现三次时，Kernel 写入 durable `activation_retry_fences`，把 Activation 保持为 fail-closed `quarantined` 并停止该 Agent lane 的普通 lease/reconcile；前两次和第三次分别留下 `activation.retry_scheduled` / `activation.retry_blocked`。Human 获得指向准确 Room 的系统通知。普通 quarantine 解除不能绕过该 fence，只有显式 Agent restart/reset 的 disable→enable 生命周期合并 follow-up、记录 `activation.retry_resumed` 后才能恢复。Raft 的 `actionRequired` 与 sticky terminal 分支现由结构化 `retryDisposition` 直接进入同一 fail-closed quarantine，不消耗三次指纹计数；普通 retry 使用 10 秒基准、5 分钟封顶和最多 10% 正向 crypto jitter。
+- Reminder 的 `roomId/messageId` 是不可变来源锚点，`targetRoomId` 是触发事实和 owner-only Activation 的目标；`--channel #slug` 只在同一 active Workspace 内解析，并在 schedule 与 fire 两次验证 Reminder owner 的 Room membership。Thread anchor 同时冻结 `threadId/rootMessageId`。同 Room Thread 的 `reminder.fired` 只投影到该 Thread；跨 Room receipt 留在目标 Room，并通过 typed message permalink 回到来源消息/Thread。Reminder mutation 仍不推进 Room seq，只有 fire 写 canonical Room fact。
 - 长 Run 由 Host supervisor 周期 heartbeat 并续租；timeout 时调用 Runtime cancel。只有 cancel 返回 terminal exit 并持久化 termination proof，才记录 `timed_out` 并重排；无法证明终止时隔离 lane。受控 fixture 已验证活动 POSIX process group 的 `SIGTERM`→`SIGKILL`、leader 先退出时的同组 descendant cleanup，以及 AgentHost→外部 worker→Room `sync/ack` delivery proof。跨进程 fixture 在 target launch 后、`run.started` 前硬杀原 AgentHost，随后验证 `starting + prepared` orphan/quarantine、identity-authenticated group cleanup 和签名 result，不依赖持久 PID/PGID；独立 Fake Host/Kernel fixture 验证 recovery lease 跨原到期点续租与 attempt fencing。fake daemon 已验证 canonical Task query、token-free sidecar claim heartbeat、跨 RunAttempt 幂等恢复、InputRequest 无 listening 唤醒及 `claim/start/progress/submit`；Codex Luna gate 已验证真实 CLI 的最小 Task submit。主动 `setsid`/double-fork 的 escape、Windows tree kill、supervisor artifact GC、真实 Provider InputRequest，以及 Artifact/Review 完整链路仍未验证。
 
 ## 7. 因果新鲜度
@@ -126,7 +136,18 @@ Agent 提交 claim、status、artifact 或 answer 等业务 mutation 时携带 `
 3. 创建或扩展 follow-up Activation，让 Agent 重新同步后再提交；
 4. 只有显式策略允许时才能审计式 override。
 
-这吸收了 Raft 的 freshness hold 思路，但把判断放在业务 Kernel，而不是依赖某个 CLI session 是否仍然活着。
+普通 Agent Room reply 直接实现 Raft held-draft 语义：根消息和同 Thread 各自比较最新 `message.posted`；旧草稿写入 `held_message_drafts`，返回有限 `newerMessages`，不进入 canonical Room，并由已落账的 peer Message 产生 follow-up Activation。follow-up 可正常改写、发送保存原稿（再次检查）、保持静默；只有原稿已经再次被 hold、响应明确建议后，才允许显式 send-anyway。保持静默不写假事件，十分钟有效期到达后由 Kernel 维护解析为 expired。Task 等其他 mutation 继续使用 `stale_context`。两类判断都由业务 Kernel 持久执行，不依赖某个 CLI session 是否仍然活着。
+
+### 7.1 Activation 的业务履约证明
+
+`acknowledge` 只证明 Agent 已经读取到指定 Room 序号；Runtime 退出只证明本次进程已经终止。两者都不能证明 reviewer 已审查、复开的 Task 已继续、改派后的新负责人已处理，或驳回后的返工已产生结果。
+
+Task／Review domain 在派生 attention 的同一事务中，把需要强制完成的动作冻结为 `activation_obligations`。当前类型包括：
+
+- `task_review`：绑定 `taskId + submissionId + reviewer participantId + sourceEventId`；只有该 reviewer 对当前 submission 写入 canonical Review，或该 submission 已被后续状态取代，Activation 才可结束；
+- `task_owner_follow_up`：绑定 `taskId + owner participantId + sourceEventId`；复开、改派或 `changes_requested` 后，当前负责人必须把 Task 推进到 `waiting_input`、`blocked`、`submitted`、`completed` 或 `cancelled`，失去该 Task 所有权也可解除旧义务。
+
+`completeActivation` 的顺序固定为 delivery cursor proof → Runtime terminal proof → typed obligations → 兼容旧 Task 入口的 legacy proof。schema 升级会为仍处于 `queued / leased / quarantined` 的旧 Activation 回填可确定的 reviewer／返工义务；已经结束的历史 Activation 不被伪造重开，正式迁移前必须检查是否存在未完成 Task。普通 Room 对话没有业务义务，允许读后静默。
 
 ## 8. Task claim 恢复
 

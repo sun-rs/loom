@@ -63,6 +63,11 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   const productCss = readFileSync(join(sourceDirectory, "product.css"), "utf8");
 
   assert.doesNotMatch(app, /function RoomCreateDialog/u);
+  assert.match(
+    app,
+    /activeThreadId === undefined\s*\? \[\]/u,
+    "an uncreated thread must not reuse root-message context just because both IDs are undefined",
+  );
   assert.doesNotMatch(app, /function RoomMembersDialog/u);
   assert.doesNotMatch(app, /function AgentCreateDialog/u);
   assert.doesNotMatch(app, /function AgentDirectoryPane/u);
@@ -111,7 +116,7 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   assert.match(dialogs, /initialFocus: "container"/u);
   assert.match(
     dialogs,
-    /<button onClick=\{\(\) => setManageMembersOpen[\s\S]*?<span>成员<\/span>[\s\S]*?<span>[\s\S]*?位人类/u,
+    /<button\s+aria-label="管理成员"[\s\S]*?onClick=\{\(\) => setView\("members"\)\}[\s\S]*?<span>成员<\/span>[\s\S]*?<span>[\s\S]*?位人类/u,
     "the entire Raft member summary row must be the disclosure target",
   );
   assert.match(dialogProtocol, /initialFocus\?: "container" \| "first"/u);
@@ -121,12 +126,28 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
     "drawers focus their container while ordinary dialogs may focus the first field",
   );
   assert.match(dialogs, /mutationPendingRef\.current/u);
-  assert.match(dialogs, /disabled=\{!canManage \|\| blocked\}/u);
+  assert.match(
+    dialogs,
+    /aria-label="关闭频道设置"/u,
+    "a full-width mobile settings drawer needs a visible pointer-close action",
+  );
+  assert.match(
+    navigation,
+    /className="sq-btn members"[\s\S]*?aria-label="频道详情与设置"/u,
+    "Room settings retains the mobile-visible members action, not a desktop-only button",
+  );
+  assert.match(dialogs, /disabled=\{!canAdd \|\| mutationBlocked\}/u);
+  assert.match(dialogs, /mutationPendingRef\.current \|\| !canRemove/u);
+  assert.match(dialogs, /key=\{view\}[\s\S]*?onAddSelection=\{addSelection\}/u);
   assert.match(main, /@rah-os\/ui-tokens\/overlays\.css/u);
   assert.match(productCss, /width: var\(--raft-drawer-width\)/u);
   assert.match(productCss, /background: var\(--raft-drawer-background\)/u);
   assert.match(productCss, /box-shadow: var\(--raft-drawer-shadow\)/u);
-  assert.match(productCss, /height: 74px;\s+min-height: 74px;/u);
+  assert.match(
+    productCss,
+    /height: 54px;\s+min-height: 54px;/u,
+    "the settings drawer title matches the measured Raft 54px header",
+  );
   assert.match(
     productCss,
     /\.rah-channel-settings-drawer:focus \{\s+outline: none;/u,
@@ -196,7 +217,7 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   assert.match(navigation, /className="rah-mobile-nav"/u);
   assert.match(navigation, /label="设置"/u);
   assert.match(navigation, /kind === "direct"/u);
-  assert.match(navigation, /label="私信"/u);
+  assert.match(navigation, /<SidebarSection\s+label=\{label\}/u);
   assert.match(roomSidebarResizer, /role="separator"/u);
   assert.match(roomSidebarResizer, /aria-orientation="vertical"/u);
   assert.match(roomSidebarResizer, /setPointerCapture/u);
@@ -284,7 +305,8 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   assert.match(agentSurface, /const MIN_SIDEBAR_WIDTH = 180/u);
   assert.match(agentSurface, /const MAX_SIDEBAR_WIDTH = 400/u);
   assert.match(agentSurface, /const DEFAULT_SIDEBAR_WIDTH = 240/u);
-  assert.match(agentSurface, /setSelectedAgentDefinitionId\(agents\[0\]/u);
+  assert.match(agentSurface, /reconcileAgentRouteIdentity/u);
+  assert.match(agentSurface, /agents\.map\(\(\{ agentDefinitionId \}\)/u);
   assert.match(agentSurface, /选择一个 Agent/u);
   assert.doesNotMatch(agentSurface, /选择一个频道/u);
   assert.match(agentSurface, /rah-agent-mobile-back/u);

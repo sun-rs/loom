@@ -171,6 +171,12 @@ export function nextUnfencedReservedPlacement(
            WHERE operation.participant_id = candidate.participant_id
              AND operation.state = 'active'
          )
+         AND NOT EXISTS (
+           SELECT 1
+           FROM task_reassignment_operations AS reassignment
+           WHERE reassignment.previous_assignee_id = candidate.participant_id
+             AND reassignment.state NOT IN ('assigned', 'failed_closed')
+         )
        ORDER BY candidate.created_at, candidate.placement_id
        LIMIT 1`,
     )
@@ -198,6 +204,12 @@ export function nextUnfencedActivation(
            FROM agent_exclusive_operation_leases AS operation
            WHERE operation.participant_id = candidate.participant_id
              AND operation.state = 'active'
+         )
+         AND NOT EXISTS (
+           SELECT 1
+           FROM task_reassignment_operations AS reassignment
+           WHERE reassignment.previous_assignee_id = candidate.participant_id
+             AND reassignment.state NOT IN ('assigned', 'failed_closed')
          )
          AND (
          candidate.state = 'queued'
@@ -256,6 +268,20 @@ export function acquireAgentExclusiveOperationLease(input: {
   if (competing !== undefined) {
     throw new ConflictError(
       `Agent ${input.command.participantId} is fenced by operation ${text(competing, "operation_id")}`,
+    );
+  }
+  const reassignment = input.database
+    .prepare(
+      `SELECT operation_id
+       FROM task_reassignment_operations
+       WHERE previous_assignee_id = ?
+         AND state NOT IN ('assigned', 'failed_closed')
+       LIMIT 1`,
+    )
+    .get(input.command.participantId);
+  if (reassignment !== undefined) {
+    throw new ConflictError(
+      `Agent ${input.command.participantId} is fenced by Task reassignment ${text(reassignment, "operation_id")}`,
     );
   }
 
@@ -349,7 +375,13 @@ export function activeAgentExclusiveOperationParticipantIds(
 ): string[] {
   return database
     .prepare(
-      "SELECT participant_id FROM agent_exclusive_operation_leases WHERE state = 'active' ORDER BY participant_id",
+      `SELECT participant_id FROM agent_exclusive_operation_leases
+       WHERE state = 'active'
+       UNION
+       SELECT previous_assignee_id AS participant_id
+       FROM task_reassignment_operations
+       WHERE state NOT IN ('assigned', 'failed_closed')
+       ORDER BY participant_id`,
     )
     .all()
     .map((row) => text(row, "participant_id"));
@@ -367,6 +399,20 @@ export function assertAgentHasNoExclusiveOperation(
   if (row !== undefined) {
     throw new LeaseConflictError(
       `Agent ${participantId} is fenced by operation ${text(row, "operation_id")}`,
+    );
+  }
+  const reassignment = database
+    .prepare(
+      `SELECT operation_id
+       FROM task_reassignment_operations
+       WHERE previous_assignee_id = ?
+         AND state NOT IN ('assigned', 'failed_closed')
+       LIMIT 1`,
+    )
+    .get(participantId);
+  if (reassignment !== undefined) {
+    throw new LeaseConflictError(
+      `Agent ${participantId} is fenced by Task reassignment ${text(reassignment, "operation_id")}`,
     );
   }
 }

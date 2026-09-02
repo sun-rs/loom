@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS principals (
   principal_id TEXT PRIMARY KEY,
   handle TEXT NOT NULL UNIQUE,
   kind TEXT NOT NULL CHECK (kind IN ('human', 'agent', 'service')),
+  display_name TEXT,
+  avatar_key TEXT,
   created_at TEXT NOT NULL
 ) STRICT;
 
@@ -83,6 +85,31 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_one_active_agent_exclusive_operation
 
 CREATE INDEX IF NOT EXISTS idx_agent_exclusive_operation_owner
   ON agent_exclusive_operation_leases(owner_host_id, owner_host_instance_id, state, lease_until_ms);
+
+CREATE TABLE IF NOT EXISTS task_reassignment_operations (
+  operation_id TEXT PRIMARY KEY,
+  room_id TEXT NOT NULL REFERENCES rooms(room_id),
+  task_id TEXT NOT NULL REFERENCES tasks(task_id),
+  requested_by TEXT NOT NULL REFERENCES principals(principal_id),
+  previous_assignee_id TEXT NOT NULL REFERENCES principals(principal_id),
+  next_assignee_id TEXT NOT NULL REFERENCES principals(principal_id),
+  idempotency_key TEXT NOT NULL,
+  reason TEXT NOT NULL,
+  state TEXT NOT NULL CHECK (state IN ('requested', 'cancellation_requested', 'runtime_terminal_proven', 'task_reopened_unassigned', 'assigned', 'failed_closed')),
+  cancellation_request_id TEXT REFERENCES activation_cancellation_requests(request_id),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  completed_at TEXT,
+  UNIQUE (room_id, idempotency_key),
+  CHECK ((state IN ('assigned', 'failed_closed') AND completed_at IS NOT NULL) OR (state NOT IN ('assigned', 'failed_closed') AND completed_at IS NULL))
+) STRICT;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_one_active_task_reassignment
+  ON task_reassignment_operations(task_id)
+  WHERE state NOT IN ('assigned', 'failed_closed');
+
+CREATE INDEX IF NOT EXISTS idx_task_reassignment_participant_state
+  ON task_reassignment_operations(previous_assignee_id, state, updated_at);
 
 CREATE TABLE IF NOT EXISTS computer_operations (
   operation_id TEXT PRIMARY KEY,
@@ -178,6 +205,22 @@ CREATE TABLE IF NOT EXISTS threads (
   FOREIGN KEY (room_id, root_message_id) REFERENCES messages(room_id, message_id)
 ) STRICT;
 
+CREATE TABLE IF NOT EXISTS agent_thread_follows (
+  participant_id TEXT NOT NULL REFERENCES principals(principal_id),
+  thread_id TEXT NOT NULL REFERENCES threads(thread_id),
+  following INTEGER NOT NULL CHECK (following IN (0, 1)),
+  source TEXT NOT NULL CHECK (source IN ('mention', 'participation', 'explicit_unfollow')),
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (participant_id, thread_id),
+  CHECK (
+    (following = 0 AND source = 'explicit_unfollow') OR
+    (following = 1 AND source IN ('mention', 'participation'))
+  )
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS idx_agent_thread_follows_delivery
+  ON agent_thread_follows(thread_id, following, participant_id);
+
 CREATE TABLE IF NOT EXISTS tasks (
   task_id TEXT PRIMARY KEY,
   room_id TEXT NOT NULL REFERENCES rooms(room_id),
@@ -258,6 +301,24 @@ CREATE TABLE IF NOT EXISTS task_submissions (
 CREATE INDEX IF NOT EXISTS idx_task_submissions_task
   ON task_submissions(task_id, submission_number DESC);
 
+CREATE TABLE IF NOT EXISTS task_submission_artifacts (
+  submission_id TEXT NOT NULL REFERENCES task_submissions(submission_id),
+  ordinal INTEGER NOT NULL CHECK (ordinal > 0),
+  attachment_id TEXT NOT NULL,
+  task_id TEXT NOT NULL REFERENCES tasks(task_id),
+  producer_id TEXT NOT NULL REFERENCES principals(principal_id),
+  run_attempt_id TEXT NOT NULL,
+  filename TEXT NOT NULL,
+  mime_type TEXT NOT NULL,
+  size INTEGER NOT NULL CHECK (size > 0),
+  sha256 TEXT NOT NULL,
+  PRIMARY KEY (submission_id, ordinal),
+  UNIQUE (submission_id, attachment_id)
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS idx_task_submission_artifacts_attachment
+  ON task_submission_artifacts(attachment_id);
+
 CREATE TABLE IF NOT EXISTS task_reviews (
   review_id TEXT PRIMARY KEY,
   task_id TEXT NOT NULL REFERENCES tasks(task_id),
@@ -316,6 +377,30 @@ CREATE TABLE IF NOT EXISTS room_events (
   UNIQUE (room_id, idempotency_key)
 ) STRICT;
 
+CREATE TABLE IF NOT EXISTS held_message_drafts (
+  held_draft_id TEXT PRIMARY KEY,
+  room_id TEXT NOT NULL REFERENCES rooms(room_id),
+  participant_id TEXT NOT NULL REFERENCES principals(principal_id),
+  activation_id TEXT NOT NULL REFERENCES activations(activation_id),
+  thread_id TEXT REFERENCES threads(thread_id),
+  body TEXT NOT NULL,
+  based_on_room_seq INTEGER NOT NULL CHECK (based_on_room_seq >= 0),
+  seen_up_to_seq INTEGER NOT NULL CHECK (seen_up_to_seq > based_on_room_seq),
+  idempotency_key TEXT NOT NULL,
+  state TEXT NOT NULL CHECK (state IN ('held', 'replaced')),
+  source_held_draft_id TEXT REFERENCES held_message_drafts(held_draft_id),
+  rehold_count INTEGER NOT NULL DEFAULT 1 CHECK (rehold_count > 0),
+  expires_at_ms INTEGER NOT NULL DEFAULT 0 CHECK (expires_at_ms >= 0),
+  resolution_kind TEXT CHECK (resolution_kind IN ('expired', 'reheld', 'revised', 'sent_anyway', 'sent_unchanged')),
+  resolved_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  UNIQUE (room_id, idempotency_key)
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS idx_held_message_drafts_target
+  ON held_message_drafts(room_id, participant_id, thread_id, state, created_at);
+
 CREATE TABLE IF NOT EXISTS inbox_items (
   inbox_item_id TEXT PRIMARY KEY,
   room_id TEXT NOT NULL REFERENCES rooms(room_id),
@@ -354,6 +439,115 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_one_queued_activation_per_lane
 
 CREATE INDEX IF NOT EXISTS idx_activation_lease_queue
   ON activations(state, available_at_ms, lease_until_ms, created_at);
+
+CREATE TABLE IF NOT EXISTS activation_retry_fences (
+  activation_id TEXT PRIMARY KEY REFERENCES activations(activation_id),
+  room_id TEXT NOT NULL REFERENCES rooms(room_id),
+  participant_id TEXT NOT NULL REFERENCES principals(principal_id),
+  state TEXT NOT NULL CHECK (state IN ('observing', 'blocked', 'resolved')),
+  retry_disposition TEXT NOT NULL DEFAULT 'recoverable' CHECK (retry_disposition IN ('recoverable', 'action_required', 'sticky_terminal')),
+  error_fingerprint TEXT NOT NULL,
+  same_error_count INTEGER NOT NULL CHECK (same_error_count >= 0),
+  last_error TEXT NOT NULL,
+  first_observed_at TEXT NOT NULL,
+  last_observed_at TEXT NOT NULL,
+  blocked_at TEXT,
+  resolved_at TEXT,
+  resolution_kind TEXT CHECK (resolution_kind IN ('progress', 'restart'))
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS idx_activation_retry_fences_participant
+  ON activation_retry_fences(participant_id, state, last_observed_at);
+
+CREATE TABLE IF NOT EXISTS reminders (
+  reminder_id TEXT PRIMARY KEY,
+  owner_agent_id TEXT NOT NULL REFERENCES agent_definitions(agent_definition_id),
+  owner_participant_id TEXT NOT NULL REFERENCES principals(principal_id),
+  room_id TEXT NOT NULL REFERENCES rooms(room_id),
+  target_room_id TEXT NOT NULL REFERENCES rooms(room_id),
+  thread_id TEXT REFERENCES threads(thread_id),
+  root_message_id TEXT REFERENCES messages(message_id),
+  title TEXT NOT NULL,
+  fire_at TEXT NOT NULL,
+  fire_at_ms INTEGER NOT NULL,
+  fired_at TEXT,
+  status TEXT NOT NULL CHECK (status IN ('scheduled', 'fired', 'canceled')),
+  message_id TEXT NOT NULL REFERENCES messages(message_id),
+  payload_json TEXT,
+  repeat_rule TEXT,
+  timezone TEXT,
+  version INTEGER NOT NULL CHECK (version > 0),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY (room_id, message_id) REFERENCES messages(room_id, message_id)
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS idx_reminders_due
+  ON reminders(status, fire_at_ms, reminder_id);
+
+CREATE INDEX IF NOT EXISTS idx_reminders_owner
+  ON reminders(owner_agent_id, status, fire_at_ms, reminder_id);
+
+CREATE TABLE IF NOT EXISTS reminder_events (
+  event_id TEXT PRIMARY KEY,
+  reminder_id TEXT NOT NULL REFERENCES reminders(reminder_id),
+  event_type TEXT NOT NULL CHECK (event_type IN ('scheduled', 'fired', 'snoozed', 'updated', 'canceled')),
+  actor_type TEXT NOT NULL CHECK (actor_type IN ('agent', 'human', 'system')),
+  actor_id TEXT REFERENCES principals(principal_id),
+  occurred_at TEXT NOT NULL,
+  next_fire_at TEXT,
+  metadata_json TEXT
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS idx_reminder_events_log
+  ON reminder_events(reminder_id, occurred_at, event_id);
+
+CREATE TABLE IF NOT EXISTS reminder_command_receipts (
+  owner_participant_id TEXT NOT NULL REFERENCES principals(principal_id),
+  idempotency_key TEXT NOT NULL,
+  request_json TEXT NOT NULL,
+  response_json TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (owner_participant_id, idempotency_key)
+) STRICT;
+
+CREATE TABLE IF NOT EXISTS reminder_fire_receipts (
+  occurrence_id TEXT PRIMARY KEY,
+  request_id TEXT NOT NULL UNIQUE,
+  reminder_id TEXT NOT NULL REFERENCES reminders(reminder_id),
+  reminder_version INTEGER NOT NULL CHECK (reminder_version > 0),
+  scheduled_fire_at TEXT NOT NULL,
+  fired_at_client TEXT NOT NULL,
+  catchup INTEGER NOT NULL CHECK (catchup IN (0, 1)),
+  state TEXT NOT NULL CHECK (state IN ('pending', 'delivered', 'exhausted', 'obsolete')),
+  attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+  next_attempt_at_ms INTEGER NOT NULL,
+  deadline_at_ms INTEGER NOT NULL,
+  last_error TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  delivered_at TEXT,
+  UNIQUE (reminder_id, reminder_version)
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS idx_reminder_fire_receipts_pending
+  ON reminder_fire_receipts(state, next_attempt_at_ms, deadline_at_ms, occurrence_id);
+
+CREATE TABLE IF NOT EXISTS activation_obligations (
+  obligation_id TEXT PRIMARY KEY,
+  obligation_key TEXT NOT NULL UNIQUE,
+  activation_id TEXT NOT NULL REFERENCES activations(activation_id),
+  room_id TEXT NOT NULL REFERENCES rooms(room_id),
+  participant_id TEXT NOT NULL REFERENCES principals(principal_id),
+  source_event_id TEXT NOT NULL REFERENCES room_events(event_id),
+  kind TEXT NOT NULL CHECK (kind IN ('task_owner_follow_up', 'task_review')),
+  task_id TEXT NOT NULL REFERENCES tasks(task_id),
+  submission_id TEXT REFERENCES task_submissions(submission_id),
+  created_at TEXT NOT NULL
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS idx_activation_obligations_activation
+  ON activation_obligations(activation_id, kind, created_at);
 
 CREATE TABLE IF NOT EXISTS activation_cancellation_requests (
   request_id TEXT PRIMARY KEY,
@@ -900,6 +1094,84 @@ export function migrateRoomMetadataV14(database: DatabaseSync): void {
       "UPDATE rooms SET visibility = 'public' WHERE kind = 'channel'",
     );
   }
+}
+
+export function migrateActivationRetryFencesV35(database: DatabaseSync): void {
+  const definition = database
+    .prepare(
+      "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'activation_retry_fences'",
+    )
+    .get() as { sql?: unknown } | undefined;
+  const sql = typeof definition?.sql === "string" ? definition.sql : "";
+  if (
+    sql.includes("retry_disposition") &&
+    sql.includes("same_error_count >= 0")
+  ) {
+    return;
+  }
+  database.exec("PRAGMA foreign_keys = OFF");
+  try {
+    database.exec(`
+      BEGIN IMMEDIATE;
+      CREATE TABLE activation_retry_fences_v35 (
+        activation_id TEXT PRIMARY KEY REFERENCES activations(activation_id),
+        room_id TEXT NOT NULL REFERENCES rooms(room_id),
+        participant_id TEXT NOT NULL REFERENCES principals(principal_id),
+        state TEXT NOT NULL CHECK (state IN ('observing', 'blocked', 'resolved')),
+        retry_disposition TEXT NOT NULL DEFAULT 'recoverable' CHECK (retry_disposition IN ('recoverable', 'action_required', 'sticky_terminal')),
+        error_fingerprint TEXT NOT NULL,
+        same_error_count INTEGER NOT NULL CHECK (same_error_count >= 0),
+        last_error TEXT NOT NULL,
+        first_observed_at TEXT NOT NULL,
+        last_observed_at TEXT NOT NULL,
+        blocked_at TEXT,
+        resolved_at TEXT,
+        resolution_kind TEXT CHECK (resolution_kind IN ('progress', 'restart'))
+      ) STRICT;
+      INSERT INTO activation_retry_fences_v35(
+        activation_id, room_id, participant_id, state, retry_disposition,
+        error_fingerprint, same_error_count, last_error, first_observed_at,
+        last_observed_at, blocked_at, resolved_at, resolution_kind
+      )
+      SELECT activation_id, room_id, participant_id, state, 'recoverable',
+             error_fingerprint, same_error_count, last_error, first_observed_at,
+             last_observed_at, blocked_at, resolved_at, resolution_kind
+      FROM activation_retry_fences;
+      DROP TABLE activation_retry_fences;
+      ALTER TABLE activation_retry_fences_v35 RENAME TO activation_retry_fences;
+      CREATE INDEX idx_activation_retry_fences_participant
+        ON activation_retry_fences(participant_id, state, last_observed_at);
+      COMMIT;
+    `);
+  } catch (error) {
+    if (database.isTransaction) database.exec("ROLLBACK");
+    throw error;
+  } finally {
+    database.exec("PRAGMA foreign_keys = ON");
+  }
+}
+
+export function migrateReminderTargetsV36(database: DatabaseSync): void {
+  const columns = database.prepare("PRAGMA table_info(reminders)").all();
+  const names = new Set(columns.map((row) => requiredString(row, "name")));
+  if (!names.has("target_room_id")) {
+    database.exec(
+      "ALTER TABLE reminders ADD COLUMN target_room_id TEXT REFERENCES rooms(room_id)",
+    );
+  }
+  if (!names.has("thread_id")) {
+    database.exec(
+      "ALTER TABLE reminders ADD COLUMN thread_id TEXT REFERENCES threads(thread_id)",
+    );
+  }
+  if (!names.has("root_message_id")) {
+    database.exec(
+      "ALTER TABLE reminders ADD COLUMN root_message_id TEXT REFERENCES messages(message_id)",
+    );
+  }
+  database.exec(
+    "UPDATE reminders SET target_room_id = room_id WHERE target_room_id IS NULL",
+  );
 }
 
 function requiredString(row: object, field: string): string {

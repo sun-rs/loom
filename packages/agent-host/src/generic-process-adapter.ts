@@ -15,6 +15,7 @@ import { isSea } from "node:sea";
 import { fileURLToPath } from "node:url";
 
 import type {
+  RuntimeFailure,
   RuntimeProfileProbeReport,
   RuntimeRecoveryDescriptor,
 } from "@rah-os/protocol";
@@ -28,6 +29,7 @@ import type {
   RuntimeAvailability,
   RuntimeStartLifecycle,
 } from "./runtime.ts";
+import { classifyRuntimeFailure } from "./runtime-error-policy.ts";
 import {
   LEGACY_RAH_WORKER_TOKEN_ENV,
   LEGACY_RAH_WORKER_TOKEN_FILE_ENV,
@@ -145,6 +147,11 @@ class RuntimeTrajectoryCollector {
   #buffer = "";
   #finished = false;
   #queue = Promise.resolve();
+  #terminalFailure: RuntimeFailure | undefined;
+
+  get terminalFailure(): RuntimeFailure | undefined {
+    return this.#terminalFailure;
+  }
 
   constructor(input: {
     activation: ActivationEnvelope;
@@ -232,6 +239,19 @@ class RuntimeTrajectoryCollector {
           runAttemptId: this.#runAttemptId,
           runtimeRunId: this.#runtimeRunId,
         });
+        if (
+          activity.entry.kind === "status" &&
+          activity.entry.activity === "error" &&
+          activity.entry.detailKind === "runtime_error" &&
+          activity.entry.detail !== undefined
+        ) {
+          this.#terminalFailure = classifyRuntimeFailure(activity.entry.detail);
+        } else if (
+          activity.entry.kind !== "status" ||
+          activity.entry.activity !== "error"
+        ) {
+          this.#terminalFailure = undefined;
+        }
         await this.#lifecycle.recordTrajectory?.(activity);
       } catch (error) {
         this.#diagnostics.append(
@@ -691,7 +711,13 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       await activity.finish();
       stdout.finish();
       stderr.finish();
-      resolveExit(signal === null ? { code } : { code, signal });
+      resolveExit({
+        code,
+        ...(activity.terminalFailure === undefined
+          ? {}
+          : { failure: activity.terminalFailure }),
+        ...(signal === null ? {} : { signal }),
+      });
       if (spawned) this.#retainCompletedRun(runId);
     });
 
@@ -966,7 +992,13 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       stdout.finish();
       stderr.finish();
       try {
-        resolveExit(await this.#readTerminalResult(descriptor, false));
+        const terminal = await this.#readTerminalResult(descriptor, false);
+        resolveExit({
+          ...terminal,
+          ...(activity.terminalFailure === undefined
+            ? {}
+            : { failure: activity.terminalFailure }),
+        });
       } catch (error) {
         rejectExit(error);
       }
@@ -1528,5 +1560,13 @@ function isRunExit(value: unknown): value is RunExit {
   if (!(value.signal === undefined || typeof value.signal === "string")) {
     return false;
   }
-  return Object.keys(value).every((key) => key === "code" || key === "signal");
+  if (
+    value.failure !== undefined &&
+    (typeof value.failure !== "object" || value.failure === null)
+  ) {
+    return false;
+  }
+  return Object.keys(value).every((key) =>
+    ["code", "failure", "signal"].includes(key),
+  );
 }

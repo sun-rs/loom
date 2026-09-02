@@ -76,7 +76,7 @@ export function AgentCreateDialog({
   const [description, setDescription] = useState("");
   const [role, setRole] = useState("");
   const [instructions, setInstructions] = useState("");
-  const [avatarKey, setAvatarKey] = useState<string>("robot");
+  const [avatarKey, setAvatarKey] = useState<string>("");
   const [runtimeOfferId, setRuntimeOfferId] = useState("");
   const [modelBindingId, setModelBindingId] = useState("runtime_default");
   const [reasoning, setReasoning] = useState<ReasoningLevel>("default");
@@ -151,7 +151,7 @@ export function AgentCreateDialog({
             if (!valid) return;
             setPending(true);
             void onCreate({
-              avatarKey,
+              ...(avatarKey === "" ? {} : { avatarKey }),
               ...(description.trim() === ""
                 ? {}
                 : { description: description.trim() }),
@@ -287,6 +287,7 @@ export function AgentCreateDialog({
                       onChange={(event) => setAvatarKey(event.target.value)}
                       value={avatarKey}
                     >
+                      <option value="">官方头像库自动分配（优先未使用）</option>
                       {RAFT_AVATAR_KEYS.map((key) => (
                         <option key={key} value={key}>
                           {key}
@@ -387,7 +388,10 @@ export function AgentManageDialog({
   const [description, setDescription] = useState(revision.description ?? "");
   const [role, setRole] = useState(revision.role);
   const [instructions, setInstructions] = useState(revision.instructions ?? "");
-  const [avatarKey, setAvatarKey] = useState(revision.avatarKey ?? "robot");
+  const [avatarKey, setAvatarKey] = useState(
+    revision.avatarKey ??
+      `random:agent:${detail.agent.definition.participantId}`,
+  );
   const [runtimeOfferId, setRuntimeOfferId] = useState(
     policy.required.allowedOfferIds?.[0] ??
       runtimeOptions[0]?.runtimeOfferId ??
@@ -533,6 +537,9 @@ export function AgentManageDialog({
                 onChange={(event) => setAvatarKey(event.target.value)}
                 value={avatarKey}
               >
+                {!RAFT_AVATAR_KEYS.some((key) => key === avatarKey) && (
+                  <option value={avatarKey}>当前头像</option>
+                )}
                 {RAFT_AVATAR_KEYS.map((key) => (
                   <option key={key} value={key}>
                     {key}

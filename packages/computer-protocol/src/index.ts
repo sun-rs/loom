@@ -4,6 +4,7 @@ import {
   ContextManifestSchema,
   PlacementDecisionSchema,
   RuntimeRecoveryDescriptorSchema,
+  RuntimeRetryDispositionSchema,
   RuntimeOfferProjectionSchema,
   RuntimeOfferSchema,
   RuntimeTrajectoryAppendInputSchema,
@@ -454,6 +455,7 @@ export const ComputerExecutionCommandRequestSchema = z.discriminatedUnion(
           .int()
           .nonnegative()
           .max(24 * 60 * 60 * 1_000),
+        retryDisposition: RuntimeRetryDispositionSchema.optional(),
       })
       .strict(),
     z

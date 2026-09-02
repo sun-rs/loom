@@ -1,5 +1,9 @@
 # RAH Core SDK 边界
 
+2026-09-01 typed navigation 增量边界：`NavigationTarget` 是 protocol-owned intent；`HumanNavigation` 在点击时重新检查 canonical existence 与当前 Human ACL，`HumanNotifications` 只持有 Human×Workspace 有界 dismissal preference。daemon shell 可从自己拥有的 current Computer condition 构造通知，但 Web/URL/notification body 不成为业务 owner。`HumanApplicationPort` 新增 resolve/dismissal 三个窄方法；HTTP/SDK 只校验与委派。详见[产品合同](../product/2026-09-01-notifications-typed-navigation-contract.zh-CN.md)。
+
+2026-09-01 增量边界：Human facade 新增 `listMessageSocial/reactMessage/saveMessage/listSavedMessages/getSidebarPreferences/patchSidebarPreferences`。Kernel schema 23 的 `MessageSocial` 是消息回应/私人收藏唯一 owner，`HumanSidebar` 是 Human×Workspace 侧栏排序及个人 Room 显示偏好唯一 owner。后者包含静音普通 Activity 与默认折叠长消息；精确 mention 不被静音。共享回应追加 `message.reaction_changed`，不调用 `deriveAttention`；私人收藏和侧栏/Room 个人偏好不写共享 Room event。HTTP v3 与 RahClient 仅鉴权/校验/委派，Web 不把 localStorage 当业务真相。详见[合同](../product/2026-09-01-message-social-sidebar-contract.zh-CN.md)。
+
 状态：**v0.1 local candidate / Task Coordination v1 / collaboration P2–P3 / daemon v4 fake E2**（2026-08-26）。`@rah-os/core` 已成为 daemon 可直接嵌入的源码级组合边界；它不依赖 HTTP、WebSocket、MCP、UI 或任何 Provider transcript parser。P3 local gate 已证明 Human managed create、Agent catalog/onboarding、Message/Thread context、两个 Activation-scoped Agent Room reply、开放 Task 单 winner、双 placement lane、Human completion与 daemon/client reconnect recovery；业务判定不读取 Provider transcript。该 package 仍为 `private`、导出 TypeScript source，并非已版本化发布的公共 SDK，也不代表 Agent provisioning/editor、Workspace archive、canonical WorkspaceDefinition/mount、Artifact/Review 或真实多 CLI certification 已完成。
 
 ## 1. Core 是什么

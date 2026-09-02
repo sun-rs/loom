@@ -1,5 +1,9 @@
 export { AgentHost } from "./agent-host.ts";
 export {
+  classifyRuntimeFailure,
+  runtimeErrorRetryDelay,
+} from "./runtime-error-policy.ts";
+export {
   agentMemoryWorkspacePath,
   buildRaftCompatibleInitialMemory,
   inspectAgentMemoryIndex,
@@ -58,6 +62,17 @@ export type { NodeKCarrierComputerCommandRuntime } from "./computer-cli-dispatch
 export type { AgentHostIdentity, AgentHostOptions } from "./agent-host.ts";
 export { createKernelAgentHostControlPort } from "./agent-host-control.ts";
 export type { AgentHostControlPort } from "./agent-host-control.ts";
+export {
+  ReminderReconciler,
+  type ReminderReconcilerOptions,
+} from "./reminder-reconciler.ts";
+export {
+  AgentExecutionResetCoordinator,
+  createAgentExecutionResetFenceAcquirer,
+  type AgentExecutionResetFence,
+  type AgentExecutionResetInput,
+  type AgentExecutionResetReceipt,
+} from "./agent-execution-reset-coordinator.ts";
 export {
   createAgentMemoryResetFenceAcquirer,
   DEFAULT_AGENT_MEMORY_RESET_LEASE_MS,

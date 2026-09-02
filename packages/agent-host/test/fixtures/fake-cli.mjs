@@ -6,6 +6,7 @@ import {
   writeFileSync,
   writeSync,
 } from "node:fs";
+import { join } from "node:path";
 
 const mode = process.env.RAH_FAKE_MODE ?? "success";
 const agentContext =
@@ -276,6 +277,17 @@ if (mode === "trajectory") {
     return result;
   };
 
+  const preSyncBarrierPath = process.env.RAH_FAKE_PRE_SYNC_BARRIER_PATH?.trim();
+  if (preSyncBarrierPath && !existsSync(preSyncBarrierPath)) {
+    writeFileSync(
+      `${preSyncBarrierPath}.started`,
+      `${process.env.RAH_ACTIVATION_ID ?? "unknown"}\n`,
+    );
+    while (!existsSync(preSyncBarrierPath)) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+  }
+
   let afterSeq;
   let delivery;
   const events = [];
@@ -377,10 +389,30 @@ if (mode === "trajectory") {
       process.exit(0);
     }
   }
+  const latestRootMessage = findLatestRootMessage(activationEvents);
+  const hasTaskBusinessEvent = activationEvents.some((event) =>
+    [
+      "task.created",
+      "task.assigned",
+      "task.reassigned",
+      "task.unblocked",
+      "task.released",
+      "task.submitted",
+      "review.submitted",
+      "input.resolved",
+    ].includes(event.type),
+  );
   const roomReply =
-    process.env.RAH_FAKE_ROOM_REPLY_MODE === "contextual-demo"
-      ? contextualDemoRoomReply(activationEvents)
-      : process.env.RAH_FAKE_ROOM_REPLY?.trim();
+    autoClaimedTask || hasTaskBusinessEvent
+      ? undefined
+      : process.env.RAH_FAKE_ROOM_REPLY_MODE === "contextual-demo"
+        ? contextualDemoRoomReply(latestRootMessage)
+        : process.env.RAH_FAKE_ROOM_REPLY_MODE === "turn-taking-counter"
+          ? turnTakingCounterRoomReply(latestRootMessage)
+          : typeof latestRootMessage?.payload?.activationId === "string"
+            ? undefined
+            : process.env.RAH_FAKE_ROOM_REPLY?.trim();
+  let roomReplyState;
   if (roomReply) {
     publishTrajectory({
       kind: "thinking",
@@ -396,23 +428,51 @@ if (mode === "trajectory") {
       body: roomReply,
       idempotencyKey: `fake:${activationId}:room-reply`,
     });
-    if (replied.activationIds.length !== 0) {
-      throw new Error("worker Room reply must not create an activation loop");
+    roomReplyState = replied.state === "held" ? "held" : "posted";
+    if (roomReplyState === "held") {
+      process.stdout.write(
+        JSON.stringify({
+          heldDraftId: replied.heldDraftId,
+          marker: "worker-room-reply-held",
+          newerMessageCount: replied.newMessageCount,
+        }) + "\n",
+      );
+    } else {
+      process.stdout.write(
+        JSON.stringify({
+          activationCount: replied.activationIds.length,
+          marker: "worker-room-reply-posted",
+          roomSeq: replied.event.roomSeq,
+        }) + "\n",
+      );
+      publishTrajectory({
+        kind: "text",
+        producerFactId: "fixture:reply:text",
+        text: roomReply,
+      });
+      const reminderTitle = process.env.RAH_FAKE_REMINDER_TITLE?.trim();
+      if (reminderTitle && latestRootMessage) {
+        const reminder = await request("/v1/worker/reminders/schedule", {
+          basedOnRoomSeq: delivery.cursorAfter,
+          delaySeconds: 86_400,
+          idempotencyKey: `fake:${activationId}:reminder`,
+          messageId: latestRootMessage.aggregateId,
+          title: reminderTitle,
+        });
+        process.stdout.write(
+          JSON.stringify({
+            marker: "worker-reminder-scheduled",
+            reminderId: reminder.reminder.reminderId,
+          }) + "\n",
+        );
+      }
     }
-    process.stdout.write(
-      JSON.stringify({
-        marker: "worker-room-reply-posted",
-        roomSeq: replied.event.roomSeq,
-      }) + "\n",
-    );
-    publishTrajectory({
-      kind: "text",
-      producerFactId: "fixture:reply:text",
-      text: roomReply,
-    });
   }
   const taskCreated = activationEvents.find(
     (event) => event.type === "task.created",
+  );
+  const taskReassigned = activationEvents.find(
+    (event) => event.type === "task.reassigned",
   );
   const taskSubmitted = activationEvents.find(
     (event) => event.type === "task.submitted",
@@ -427,6 +487,7 @@ if (mode === "trajectory") {
     mode === "worker-task-input" || mode === "worker-task-input-resume";
   const taskId =
     autoClaimedTask?.task?.taskId ??
+    taskReassigned?.aggregateId ??
     taskCreated?.aggregateId ??
     taskSubmitted?.aggregateId ??
     reviewSubmitted?.payload?.taskId ??
@@ -438,13 +499,25 @@ if (mode === "trajectory") {
     process.stdout.write(
       JSON.stringify({
         deliveredThrough: delivery.cursorAfter,
-        marker: "worker-room-reply-finished",
+        marker:
+          roomReplyState === "held"
+            ? "worker-room-reply-held-finished"
+            : "worker-room-reply-finished",
       }) + "\n",
     );
     process.exit(0);
   }
   if (!taskId) {
-    throw new Error("Activation contains no Task-linked business event");
+    await request("/v1/worker/acknowledge", {
+      throughSeq: delivery.cursorAfter,
+    });
+    process.stdout.write(
+      JSON.stringify({
+        deliveredThrough: delivery.cursorAfter,
+        marker: "worker-attention-acknowledged-without-reply",
+      }) + "\n",
+    );
+    process.exit(0);
   }
   if (
     isInputMode &&
@@ -453,14 +526,18 @@ if (mode === "trajectory") {
   ) {
     throw new Error("resolved human input was not delivered canonically");
   }
+  const participantId = process.env.RAH_PARTICIPANT_ID;
+  if (!participantId) {
+    throw new Error("Worker participant identity is missing");
+  }
   let basedOnRoomSeq = autoClaimedTask?.event?.roomSeq ?? delivery.cursorAfter;
-  const commandId = (operation) => `fake:${taskId}:${operation}`;
+  const commandId = (operation) =>
+    `fake:${participantId}:${taskId}:${operation}`;
   const canonical = await request("/v1/worker/tasks/get", { taskId });
   const inputStatus = isInputMode
     ? await request("/v1/worker/tasks/input-status", { taskId })
     : { inputRequest: null };
 
-  const participantId = process.env.RAH_PARTICIPANT_ID;
   const isCollaborator =
     canonical.task.collaboratorIds?.includes(participantId);
   const isReviewer = canonical.task.reviewerIds?.includes(participantId);
@@ -475,14 +552,14 @@ if (mode === "trajectory") {
         await request("/v1/worker/messages/post", {
           basedOnRoomSeq: delivery.cursorAfter,
           body: "协作证据：Fake Worker 已完成负责人请求的独立检查。",
-          idempotencyKey: `fake:${taskId}:collaboration`,
+          idempotencyKey: commandId("collaboration"),
         });
       }
       if (reviewWorkRequired) {
         await request("/v1/worker/tasks/review", {
           basedOnRoomSeq: delivery.cursorAfter,
           disposition: "approved",
-          idempotencyKey: `fake:${taskId}:review`,
+          idempotencyKey: commandId("review"),
           summary: "审阅通过：提交证据与 Task 范围一致。",
           taskId,
         });
@@ -573,6 +650,22 @@ if (mode === "trajectory") {
     if (!started.deduplicated) {
       basedOnRoomSeq = Math.max(basedOnRoomSeq, started.event.roomSeq);
     }
+    const holdMarker = process.env.RAH_FAKE_TASK_HOLD_MARKER?.trim();
+    const holdMs = Number(process.env.RAH_FAKE_TASK_HOLD_MS ?? "0");
+    if (
+      holdMarker &&
+      canonical.task.title.includes(holdMarker) &&
+      Number.isInteger(holdMs) &&
+      holdMs > 0
+    ) {
+      publishTrajectory({
+        activity: "working",
+        detail: `Holding active Task for ${String(holdMs)}ms`,
+        detailKind: "fixture_task_hold",
+        kind: "status",
+      });
+      await new Promise((resolve) => setTimeout(resolve, holdMs));
+    }
 
     const resumeMarkerPath = process.env.RAH_FAKE_RESUME_MARKER;
     if (isInputMode && !inputResolved) {
@@ -622,6 +715,38 @@ if (mode === "trajectory") {
       if (!progressed.deduplicated) {
         basedOnRoomSeq = Math.max(basedOnRoomSeq, progressed.event.roomSeq);
       }
+      if (process.env.RAH_FAKE_TASK_ARTIFACT === "1") {
+        const artifactPath = join(
+          process.cwd(),
+          `fixture-task-artifact-${taskId}.txt`,
+        );
+        writeFileSync(
+          artifactPath,
+          `Canonical fake Task artifact for ${taskId}\n`,
+        );
+        const workerCli = process.env.RAH_WORKER_CLI;
+        if (!workerCli) {
+          throw new Error("Task artifact fixture requires RAH_WORKER_CLI");
+        }
+        execFileSync(
+          workerCli,
+          [
+            "worker",
+            "artifact-publish",
+            "--task-id",
+            taskId,
+            "--path",
+            artifactPath,
+            "--filename",
+            "browser-gate-task-evidence.txt",
+            "--mime-type",
+            "text/plain",
+            "--idempotency-key",
+            commandId(`artifact:${process.env.RAH_ACTIVATION_ID ?? "run"}`),
+          ],
+          { encoding: "utf8" },
+        );
+      }
       const submitted = await request("/v1/worker/tasks/submit", {
         basedOnRoomSeq,
         idempotencyKey: commandId("submit"),
@@ -652,8 +777,8 @@ if (mode === "trajectory") {
   process.exitCode = 64;
 }
 
-function contextualDemoRoomReply(activationEvents) {
-  const sourceMessage = [...activationEvents]
+function findLatestRootMessage(activationEvents) {
+  return [...activationEvents]
     .reverse()
     .find(
       (event) =>
@@ -661,7 +786,13 @@ function contextualDemoRoomReply(activationEvents) {
         event.payload?.threadId === undefined &&
         typeof event.payload?.body === "string",
     );
+}
+
+function contextualDemoRoomReply(sourceMessage) {
   if (sourceMessage === undefined) return undefined;
+  if (typeof sourceMessage.payload?.activationId === "string") {
+    return undefined;
+  }
   const agentName = agentContext?.handle?.trim() || "Agent";
   const normalizedBody = sourceMessage.payload.body
     .trim()
@@ -672,4 +803,17 @@ function contextualDemoRoomReply(activationEvents) {
       ? `${normalizedBody.slice(0, 119)}…`
       : normalizedBody;
   return `我是 ${agentName}，当前 Room 的演示 Agent（Fake CLI）。我已收到：“${preview}”。`;
+}
+
+function turnTakingCounterRoomReply(sourceMessage) {
+  if (sourceMessage === undefined) return undefined;
+  const body = sourceMessage.payload.body.trim();
+  if (typeof sourceMessage.payload?.activationId !== "string") {
+    return /(?:1|一).*(?:10|十)/su.test(body) ? "1" : undefined;
+  }
+  if (!/^\d+$/u.test(body)) return undefined;
+  const value = Number(body);
+  return Number.isInteger(value) && value >= 1 && value < 10
+    ? String(value + 1)
+    : undefined;
 }

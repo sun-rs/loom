@@ -1,8 +1,53 @@
 # RAH OS 文档
 
+前端鼠标、键盘和触屏状态的当前统一基线：[Raft 前端操作状态合同](./product/2026-09-02-raft-interaction-state-contract.zh-CN.md)、[双边 computed-style 与真实浏览器审计](./audits/2026-09-02-raft-interaction-state-verification.zh-CN.md)。该批把 rail、导航行、平面按钮、brutal 按钮、segmented、消息工具条和输入 focus 收敛为共享协议；条件弹层、逐实例拖拽和缺失发布 chunk 仍须继续追踪，不能据此宣称全站交互 1:1。
+
+核心调度当前最高优先级审计与同日修复复核：[Raft 业务合同、四条 P0 completion-proof 反例、typed obligation、双 Agent 浏览器报数、Thread subscription、Held Draft、Runtime error fingerprint fence、Reminder 与 restart/busy 组合证据](./audits/2026-09-02-core-scheduling-raft-parity-audit.zh-CN.md)。Room / Inbox / Activation 主骨架成立；schema 30–34 依次关闭 typed completion proof、Thread follow、Held Draft、poison retry 主合同和 Reminder authoritative schedule；真实 Worker gate又覆盖报数中途重启及单 Agent busy 跨 Room。schema 35/36 现补齐结构化 Runtime `actionRequired/sticky/recoverable`、正向 jitter、跨 Room Reminder target、Thread receipt 与 reload-safe typed permalink。它关闭本轮列出的精细缺口，但不等于所有 Provider 都能发出结构化错误，也不把本地内部链接、`#room` target 扩大为 Raft 中央公开 URL 或未验证的 DM target。
+
+本轮十二项 Chat / Settings / Presence 缺口的当前裁决：[逐项源码 owner、双边实页、Firefox 桌面/390、正式重启与保留边界](./audits/2026-09-02-chat-settings-presence-closure.zh-CN.md)。本报告关闭的只是用户列出的十二项合同，不扩大为全站或所有权限/异常态 100% 等同。
+
+Settings 当前线上源码/真实 DOM 合同：[Raft Settings → RAH OS 行为合同审计](./audits/2026-09-01-raft-settings-behavior-contract.zh-CN.md)。统一 64/240/62 顶层骨架、粉色选中态、36/18px 页头图标和共享卡片；已移除套餐账单/中央应用商店，保留标明为本地扩展的 LAN 设备。按 Workspace 静音已有 daemon 持久化和 Web Push 投递边界过滤。
+
+Search、Notifications 与 typed deep link：[Raft/Multica 来源、FTS/Push owner、URL/ACL/lifecycle 不变量](./product/2026-09-01-notifications-typed-navigation-contract.zh-CN.md)、[schema 27 正式重启、desktop/390×844、HTTPS LAN/PWA、Firefox transport 与重启消息错误验收](./audits/2026-09-01-notifications-typed-navigation-verification.zh-CN.md)。Search 的 Raft 前端合同及本机 FTS 已接通；Web Push 软件链和 Firefox 正式订阅/transport 已通过，macOS 横幅/点击、Chrome 受控 profile 订阅和 iOS 仍须设备级验收。账号、套餐和资源计费明确不属于 RAH OS。
+
+安全强制改派：[Raft 产品行为、Multica 取舍与本机协议合同](./product/2026-09-01-safe-task-reassignment-contract.zh-CN.md)、[实现缺陷修复与真实 Chromium 验收](./audits/2026-09-01-safe-task-reassignment-verification.zh-CN.md)。运行中 Task 先 fence/终止旧 Runtime，取得 terminal proof 后才唤醒新负责人；浏览器门禁发现并修复跨负责人幂等键碰撞。跨 Computer、真实付费 Provider 服从性与未决 operation 独立恢复 UI 不在本批完成范围。
+
+- [Agent Artifact 来源复用审计](./audits/2026-09-01-agent-artifact-source-reuse-audit.zh-CN.md)
+- [Agent Artifact → TaskSubmission → Room Files 合同](./product/2026-09-01-agent-artifact-task-submission-contract.zh-CN.md)
+
+Thread 附件与长历史：[产品合同](./product/2026-09-01-thread-files-contract.zh-CN.md)、[真实 Chromium 验收](./audits/2026-09-01-thread-files-and-long-history-verification.zh-CN.md)。附件-only Thread 回复、Room/Thread 草稿隔离、同事务 Files 投影已接入；10,050 条虚拟历史锚点复验通过。Worker/Agent Artifact 与 Task submission 仍不据此算完成。
+
+Agent 稳定导航与 MCP 使用页：[源码/产品合同](./product/2026-09-01-agent-navigation-mcp-contract.zh-CN.md)、[真实 Chromium 验收与生命周期二审](./audits/2026-09-01-agent-navigation-mcp-verification.zh-CN.md)。AgentDefinitionId/tab 现在可刷新恢复，目录水合不再误改深链；MCP 复用既有 server/assignment/usage canonical 数据汇总服务器与工具。非空 MCP 双边同前置、提醒和应用仍未据此完成；restart/session已由后续专门合同关闭，full仍禁用。
+
+当前 Agent execution restart / session reset 施工合同：[Raft 产品合同、Multica Provider 经验与 RAH OS 安全底座映射](./product/2026-09-01-agent-execution-reset-contract.zh-CN.md)。首批只开放 `restart` 与 `session`；`full` 在缺少准确 Workspace 所有权、备份和恢复合同前保持禁用。
+
+Agent execution restart / session reset正式验收：[实现、门禁、持久4173重启与桌面/390×844浏览器证据](./audits/2026-09-01-agent-execution-reset-verification.zh-CN.md)。两种模式均走terminal proof、全局Agent fence、canonical disable/enable和不可变receipt；正式浏览器已执行两种模式，Memory逐文件保持。`full`、进程崩溃中点自动恢复和Raft官方服务端内部同构仍不是完成项。
+
+聊天边栏与右侧 Agent 资料页宽度：[Raft 源码、官方实页、真实鼠标拖动、持久化与移动端验收](./audits/2026-09-01-panel-width-parity-verification.zh-CN.md)。聊天列表固定为默认240px、180–320px；资料侧栏为默认380px、300–600px并从左边缘拖动。Firefox已实际拖到两端、刷新验证持久化并在390×844确认满宽；该结论只关闭两个分栏合同，不扩大为Agent全页面一致。
+
+当前最优先的全站裁决：[Raft ↔ RAH OS 全站行为合同与双边差异主审报告](./audits/2026-09-01-full-raft-behavior-parity-audit.zh-CN.md)。三路独立审计加主审复核曾确认正式 `4173` 不在线，因此当时不能宣称正式可用或全站收口；该运行时缺口已在后续首批修复中以持久状态备份、production bundle 启动、`/_rah/health=online` 和正式浏览器重验关闭。报告其余逐项 UI、hover、点击、键盘、状态点、功能语义和前后端缺口仍然有效，不因重新上线自动算完成。
+
+行为登记同步更新：[74项旧意图与 C/A/L/R/D 证据层](./product/raft-behavior-inventory.zh-CN.md)。已纠正空间菜单实际为点击触发、四类状态点独立 owner、Notification 与 InputRequest 分离；消息回应/收藏三按钮、Room 静音和长消息折叠已补真实浏览器与正式部署证据。74项登记不是功能完成率，也不是全站源码覆盖率。
+
+消息回应、收藏和侧栏偏好最新批次：[源码合同](./product/2026-09-01-message-social-sidebar-contract.zh-CN.md)、[浏览器与交付审查](./audits/2026-09-01-message-social-sidebar-verification.zh-CN.md)。回应是共享注解，收藏和排序是当前 Human 的私人数据；新增持久化接口与真实按钮，不触发 Agent 工作。头像改为官方固定预设，不再程序生成图案。下方旧报告的“未接入”及随机图案分配状态被本批对应项替代，其余缺口不自动算完成。
+
+聊天截图差异最新复审：[源码合同与方案](./product/2026-09-01-chat-surface-parity-contract.zh-CN.md)、[逐项修复与真实浏览器核验](./audits/2026-09-01-chat-surface-parity-verification.zh-CN.md)。修正列表文字层级、频道编辑入口、分栏宽度保存、私信状态、空态和头像预览；排序/置顶、回应、收藏及 Room 个人静音/长消息折叠已有持久 owner 和浏览器门禁。消息编辑/删除、高级回应者浮层等剩余项仍使 Chat 不能宣称全量一致。
+
+Agent 字段、头像与模型配置：[设计与边界](./product/2026-09-01-agent-profile-edit-contract.zh-CN.md)、[真实浏览器/持久化/正式重启验收](./audits/2026-09-01-agent-profile-edit-verification.zh-CN.md)。名称/描述新增离线可写、revision 防覆盖的就地编辑；Chat 顶部/Message 头像共用右侧 inspector，资料头像可原子选择官方 preset；模型与 effort 复用已有运行时配置 owner。图片上传仍因缺 canonical 存储 owner 明确不可用，Agent 管理员权限仍受 ADR-0012 限制，不能据此宣称所有红框与 Raft 一致。
+
 这里仅保存能约束代码和验收的长期文档。阶段性讨论、旧 RAH 的 Session/UI 细节和 provider transcript 适配经验不迁入本仓库。
 
+核心调度最新审计与修复状态：[Raft 业务合同一致性审计](./audits/2026-09-02-core-scheduling-raft-parity-audit.zh-CN.md)。completion-proof P0、双 Agent 报数、Thread follow、Held Draft、poison retry、Reminder 主合同、restart/busy 跨 Room，以及本轮 structured Runtime 分支、跨 Room `#channel` target 和 Thread receipt/permalink 已进入工作树并有定向回归；正式全门禁、重启与浏览器结果以审计末尾最新复核为准。未声明 DM Reminder target、公开分享 URL 或所有 Provider 结构化错误覆盖。
+
 Raft 产品行为的首要监督基线：[Raft 官方教程监督基线](./product/raft-official-tutorial-supervision.zh-CN.md)。
+
+工程执行约束：[项目 AGENTS.md](../AGENTS.md)，以本仓库 Room-first、单机核心和用户自管 CLI 为准。2026-08-31 已将既有修复与该约束提交为 `f9b271c`；不是一次新的部署。
+
+Agent 资料最新修复：[源合同与方案](./product/2026-09-01-agent-profile-layout-contract.zh-CN.md)、[颜色/密度/滚动、浏览器与正式重启验收](./audits/2026-09-01-agent-profile-layout-verification.zh-CN.md)。修正无效紫色变量、操作额外间距、图标和窄屏增高；官方按钮同样随资料滚动。安全restart/session缺口已由上方后续验收关闭；问题报告、full reset等仍未完成，不宣称 Agent 页全量一致。
+
+Room成员界面最新修复：[设计合同](./product/2026-08-31-room-members-and-avatar-contract.zh-CN.md)与[浏览器、SQLite及正式重启验收](./audits/2026-08-31-room-members-avatar-verification.zh-CN.md)。统一头像尺寸、Raft随机头像持久分配、独立添加/成员页、来源感知返回及手机设置入口已部署4173；保留频道偏好/生命周期操作等缺口，不声明设置页全量一致。
+
+行为指南最新登记：[74项旧意图迁移与当前前后端接线](./product/raft-behavior-inventory.zh-CN.md)、[Agent AG00–AG08 六列合同](./product/raft-agent-behavior-contract.zh-CN.md)、[源码位置关联](./evidence/raft-behavior-source-links-20260831.json)。本轮同尺寸1049×1172只读双边核对，发现Agent标签URL恢复、聊天tab语义、MCP分组与布局等差异，提醒/应用仍占位；官方非空树依旧缺证。74项登记、23个回调关联均不是功能完成率；不声称全站行为指南已齐。本批仅补文档，未修改生产行为或重启服务。
 
 最新正式发布：[修复后正式重启验收](./audits/2026-08-31-formal-restart-after-rendering-fix.zh-CN.md)。按用户常驻要求，每批修复后安全重启并检查正式新页；本次图表稳定性与managed presence已部署4173，额外修复重启后历史已结束Run误报unknown。数据/配置/私有文件与备份一致；不宣称全站收口。
 

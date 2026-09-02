@@ -20,7 +20,7 @@ import {
 } from "../global-task-actions.ts";
 import {
   raftTaskGroup,
-  type DiscoveryLocation,
+  type DiscoveryNavigationHandler,
 } from "../global-discovery-model.ts";
 import { DiscoveryFilter } from "./discovery-filter.tsx";
 import { TaskCloseDialog } from "./task-dialogs.tsx";
@@ -74,7 +74,7 @@ export function GlobalTaskBoard({
   tasks: GlobalTasksResponse["tasks"];
   principalId: string | undefined;
   view: "board" | "list";
-  onOpen: (location: DiscoveryLocation) => void;
+  onOpen: DiscoveryNavigationHandler;
   onChanged: () => void;
 }) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({
@@ -214,10 +214,13 @@ export function GlobalTaskBoard({
                     onChoose={(target) => choose(task, target)}
                     onOpen={() =>
                       onOpen({
-                        roomId: task.roomId,
-                        messageId: task.sourceMessageId,
-                        rootMessageId: task.sourceMessageId,
-                        task: true,
+                        target: {
+                          kind: "task",
+                          roomId: task.roomId,
+                          rootMessageId: task.sourceMessageId,
+                          taskId: task.taskId,
+                          threadId: task.threadId,
+                        },
                       })
                     }
                   />

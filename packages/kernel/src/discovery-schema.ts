@@ -3,6 +3,12 @@ import type { DatabaseSync } from "node:sqlite";
 // A shared view of the existing canonical Message -> Room event mapping.
 // Never derives sequence or message truth from provider logs.
 export function initializeDiscoverySchema(db: DatabaseSync) {
+  const hadMessageSearch =
+    db
+      .prepare(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'message_search'",
+      )
+      .get() !== undefined;
   db.function("rah_casefold", { deterministic: true }, (value) =>
     String(value ?? "").toLowerCase(),
   );
@@ -12,6 +18,22 @@ export function initializeDiscoverySchema(db: DatabaseSync) {
     CREATE INDEX IF NOT EXISTS idx_room_events_aggregate ON room_events(room_id, aggregate_type, aggregate_id, type);
     CREATE INDEX IF NOT EXISTS idx_tasks_source_message ON tasks(source_message_id);
     CREATE INDEX IF NOT EXISTS idx_room_events_payload_message ON room_events(room_id, json_extract(payload_json, '$.messageId'), type);
+    CREATE VIRTUAL TABLE IF NOT EXISTS message_search USING fts5(
+      body,
+      content='messages',
+      content_rowid='rowid',
+      tokenize='trigram case_sensitive 0'
+    );
+    CREATE TRIGGER IF NOT EXISTS message_search_insert AFTER INSERT ON messages BEGIN
+      INSERT INTO message_search(rowid, body) VALUES (new.rowid, new.body);
+    END;
+    CREATE TRIGGER IF NOT EXISTS message_search_delete AFTER DELETE ON messages BEGIN
+      INSERT INTO message_search(message_search, rowid, body) VALUES('delete', old.rowid, old.body);
+    END;
+    CREATE TRIGGER IF NOT EXISTS message_search_update AFTER UPDATE OF body ON messages BEGIN
+      INSERT INTO message_search(message_search, rowid, body) VALUES('delete', old.rowid, old.body);
+      INSERT INTO message_search(rowid, body) VALUES (new.rowid, new.body);
+    END;
     DROP VIEW IF EXISTS discovery_messages;
     CREATE VIEW discovery_messages AS
       SELECT m.*, m.rowid AS message_order, COALESCE(
@@ -38,6 +60,9 @@ export function initializeDiscoverySchema(db: DatabaseSync) {
       PRIMARY KEY(principal_id, thread_id)
     ) STRICT;
   `);
+  // Backfill once when adopting FTS; ordinary daemon starts never rebuild/hash history.
+  if (!hadMessageSearch)
+    db.exec("INSERT INTO message_search(message_search) VALUES('rebuild')");
   db.function("rah_has_mention", { deterministic: true }, (body, handle) => {
     const escaped = String(handle).replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&");
     return Number(

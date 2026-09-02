@@ -56,8 +56,10 @@ import {
   TaskSchema,
   WakeHintSchema,
   WorkerAcknowledgeRequestSchema,
+  WorkerArtifactPrepareRequestSchema,
   WorkerErrorResponseSchema,
   WorkerMessageMutationResponseSchema,
+  WorkerMessagePostResponseSchema,
   WorkerMessagePostRequestSchema,
   WorkerSyncRequestSchema,
   WorkerTaskClaimRequestSchema,
@@ -77,6 +79,7 @@ import {
   WorkerTaskReleaseRequestSchema,
   WorkerTaskStartRequestSchema,
   WorkerTaskSubmitRequestSchema,
+  TaskSubmissionSchema,
 } from "../src/index.ts";
 
 test("new Agent mutations expose only Raft unattended and automatic session policies", () => {
@@ -279,6 +282,53 @@ test("Client API v1/v2/v3 contracts are strict, actor-free, and transport-neutra
     },
   );
   assert.deepEqual(
+    WorkerMessagePostRequestSchema.parse({
+      basedOnRoomSeq: 9,
+      heldDraftId: "held-draft-1",
+      idempotencyKey: "message-send-draft-1",
+      sendDraft: true,
+    }),
+    {
+      basedOnRoomSeq: 9,
+      heldDraftId: "held-draft-1",
+      idempotencyKey: "message-send-draft-1",
+      sendDraft: true,
+    },
+  );
+  assert.deepEqual(
+    WorkerMessagePostRequestSchema.parse({
+      anyway: true,
+      basedOnRoomSeq: 10,
+      heldDraftId: "held-draft-2",
+      idempotencyKey: "message-send-anyway-1",
+      sendDraft: true,
+    }),
+    {
+      anyway: true,
+      basedOnRoomSeq: 10,
+      heldDraftId: "held-draft-2",
+      idempotencyKey: "message-send-anyway-1",
+      sendDraft: true,
+    },
+  );
+  assert.throws(() =>
+    WorkerMessagePostRequestSchema.parse({
+      anyway: true,
+      basedOnRoomSeq: 10,
+      body: "An ordinary composed reply cannot bypass freshness",
+      idempotencyKey: "message-invalid-anyway",
+    }),
+  );
+  assert.throws(() =>
+    WorkerMessagePostRequestSchema.parse({
+      basedOnRoomSeq: 10,
+      body: "A saved draft supplies its own body",
+      heldDraftId: "held-draft-3",
+      idempotencyKey: "message-invalid-draft-body",
+      sendDraft: true,
+    }),
+  );
+  assert.deepEqual(
     ClientRoomMemberRemoveRequestSchema.parse({
       basedOnRoomSeq: 10,
       idempotencyKey: "member-remove-1",
@@ -339,6 +389,34 @@ test("Client API v1/v2/v3 contracts are strict, actor-free, and transport-neutra
       basedOnRoomSeq: 11,
       body: "reply",
       idempotencyKey: "thread-reply-1",
+      roomId: "room-1",
+      threadId: "thread-1",
+    }),
+  );
+  assert.deepEqual(
+    ClientThreadReplyRequestSchema.parse({
+      attachmentIds: ["attachment-1"],
+      basedOnRoomSeq: 11,
+      body: "",
+      idempotencyKey: "thread-file-reply-1",
+      roomId: "room-1",
+      threadId: "thread-1",
+    }),
+    {
+      attachmentIds: ["attachment-1"],
+      basedOnRoomSeq: 11,
+      body: "",
+      idempotencyKey: "thread-file-reply-1",
+      recipientIds: [],
+      roomId: "room-1",
+      threadId: "thread-1",
+    },
+  );
+  assert.throws(() =>
+    ClientThreadReplyRequestSchema.parse({
+      basedOnRoomSeq: 11,
+      body: "",
+      idempotencyKey: "empty-thread-reply",
       roomId: "room-1",
       threadId: "thread-1",
     }),
@@ -903,6 +981,20 @@ test("Worker API contracts are strict protocol-owned schemas", () => {
     },
   });
   assert.deepEqual(messageMutation.activationIds, []);
+  const heldMessage = WorkerMessagePostResponseSchema.parse({
+    activationIds: [],
+    basedOnRoomSeq: 3,
+    heldDraftId: "held-draft-1",
+    newMessageCount: 1,
+    newerMessages: [messageMutation.event],
+    omittedMessageCount: 0,
+    reason: "newer_messages_available",
+    reholdCount: 1,
+    continueAnywaySuggested: false,
+    seenUpToSeq: 4,
+    state: "held",
+  });
+  assert.equal("state" in heldMessage ? heldMessage.state : undefined, "held");
 
   const scope = ActivationCredentialScopeSchema.parse({
     activationId: "activation-1",
@@ -1468,6 +1560,66 @@ test("Worker Task commands are strict and carry a causal Room sequence", () => {
     },
   });
   assert.equal(inputResponse.inputRequest.state, "pending");
+});
+
+test("Worker Artifact publication freezes Task-scoped evidence without accepting owner scope", () => {
+  const prepared = WorkerArtifactPrepareRequestSchema.parse({
+    filename: "report.md",
+    idempotencyKey: "artifact:task-1:report",
+    mimeType: "text/markdown",
+    size: 12,
+    taskId: "task-1",
+  });
+  assert.deepEqual(prepared, {
+    filename: "report.md",
+    idempotencyKey: "artifact:task-1:report",
+    mimeType: "text/markdown",
+    size: 12,
+    taskId: "task-1",
+  });
+  assert.throws(() =>
+    WorkerArtifactPrepareRequestSchema.parse({
+      ...prepared,
+      producerId: "injected-agent",
+      roomId: "injected-room",
+      runAttemptId: "injected-run",
+    }),
+  );
+
+  const submission = TaskSubmissionSchema.parse({
+    artifacts: [
+      {
+        attachmentId: "attachment-1",
+        filename: "report.md",
+        mimeType: "text/markdown",
+        ordinal: 1,
+        producerId: "agent-1",
+        runAttemptId: "run-1",
+        sha256: "a".repeat(64),
+        size: 12,
+        taskId: "task-1",
+      },
+    ],
+    createdAt: "2026-09-01T00:00:00.000Z",
+    messageId: "message-1",
+    producerId: "agent-1",
+    roomId: "room-1",
+    submissionDigest: `sha256:${"b".repeat(64)}`,
+    submissionId: "submission-1",
+    submissionNumber: 1,
+    summary: "Published the report",
+    taskId: "task-1",
+  });
+  assert.equal(submission.artifacts[0]?.runAttemptId, "run-1");
+  assert.throws(() =>
+    TaskSubmissionSchema.parse({
+      ...submission,
+      artifacts: [
+        submission.artifacts[0],
+        { ...submission.artifacts[0], filename: "duplicate.md" },
+      ],
+    }),
+  );
 });
 
 test("Task Review freezes one submission and keeps reviewer commands actor-free", () => {

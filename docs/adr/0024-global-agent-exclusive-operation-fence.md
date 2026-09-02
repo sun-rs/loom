@@ -1,6 +1,6 @@
 # ADR-0024：全局 Agent 独占管理操作 Fence
 
-状态：Accepted（Kernel + 本机 AgentHost control + Memory reset 产品接线已实现）\
+状态：Accepted（Kernel + 本机 AgentHost control + Memory/reset/restart/Task reassignment 产品接线已实现）\
 日期：2026-08-30
 
 ## 背景
@@ -73,7 +73,7 @@ Host fence 只证明“现在可以独占操作”，不证明 Human 已授权 r
 4. AgentHost control port 暴露同一能力；
 5. 单元/多 Kernel connection/过期 fail-closed/Host generation fencing 测试。
 
-Phase 1 当时不开放 Human reset/reassign/restart UI，也不把 lease expiry 当恢复。随后 Memory reset 已通过 Human application service、正式本机 daemon 与 Agent UI 接通；远程 Computer HTTP transport、operation recovery、execution restart/reassign 和 autonomous maintenance runner 仍是后续接线层。
+Phase 1 当时不开放 Human reset/reassign/restart UI，也不把 lease expiry 当恢复。随后 Memory reset、execution restart/session reset 与安全 Task reassignment 已通过 Human application service、正式本机 daemon 与 Agent/Task UI 接通；远程 Computer HTTP transport、跨进程 operation recovery、full reset 和 autonomous maintenance runner 仍是后续接线层。
 
 ## Phase 1 实现证据
 

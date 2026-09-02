@@ -1252,6 +1252,21 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
       recipients: [],
       roomId: roomResult.room.roomId,
     });
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      const leased = kernel.leaseNextActivation(host, { leaseMs: 30_000 });
+      assert.ok(leased);
+      const failed = kernel.retryActivation(host, {
+        activationId: leased.activationId,
+        error: "provider connection failed",
+        retryAfterMs: 0,
+      });
+      assert.equal(failed.state, attempt < 3 ? "queued" : "quarantined");
+    }
+    assert.equal(
+      kernel.leaseNextActivation(host, { leaseMs: 30_000 }),
+      null,
+      "a repeated identical Runtime failure must fence the Agent lane",
+    );
     const pausedWithQueuedWork = kernel.manageWorkspaceAgent(ownerActor, {
       action: "set_state",
       agentDefinitionId: created.agent.definition.agentDefinitionId,
@@ -1271,6 +1286,16 @@ test("a Workspace manager atomically configures and controls a durable Agent", (
       idempotencyKey: "agent-manage-resume-queued",
       state: "enabled",
     });
+    assert.equal(
+      kernel
+        .sync(ownerActor, {
+          consumerId: "agent-manage-retry-resume-audit",
+          roomId: roomResult.room.roomId,
+        })
+        .events.some((event) => event.type === "activation.retry_resumed"),
+      true,
+      "an explicit Agent restart must release the Raft-style Runtime fence",
+    );
     const placement = kernel.scheduleNextPlacement({ leaseMs: 30_000 });
     assert.equal(
       placement?.agentDefinitionRevisionId,

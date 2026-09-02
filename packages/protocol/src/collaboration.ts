@@ -8,6 +8,11 @@ export type ParticipantKind = z.infer<typeof ParticipantKindSchema>;
 
 export const PrincipalSchema = z
   .object({
+    avatarKey: z
+      .string()
+      .regex(/^[a-z0-9_-]{1,64}$/)
+      .optional(),
+    displayName: z.string().trim().min(1).max(120).optional(),
     principalId: IdentifierSchema,
     handle: IdentifierSchema,
     kind: ParticipantKindSchema,

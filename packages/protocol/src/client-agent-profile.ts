@@ -2,8 +2,6 @@ import { z } from "zod";
 import { IdentifierSchema } from "./common.ts";
 import { OFFICIAL_AGENT_AVATAR_KEYS } from "./official-agent-avatars.ts";
 
-export * from "./official-agent-avatars.ts";
-
 export const ClientAgentProfileRequestSchema = z
   .object({
     action: z.literal("update_profile"),
@@ -35,7 +33,6 @@ export const ClientAgentProfileRequestSchema = z
         message: "头像须来自官方 Agent 头像库",
       });
   });
-
 export type ClientAgentProfileRequest = z.infer<
   typeof ClientAgentProfileRequestSchema
 >;

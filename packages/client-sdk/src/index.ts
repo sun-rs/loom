@@ -4,8 +4,12 @@ import {
   ClientAgentTrajectoryListRequestSchema,
   ClientAgentPresenceListRequestSchema,
   ClientAgentPresenceListResponseSchema,
+  ClientAgentRemindersListRequestSchema,
+  ClientAgentRemindersListResponseSchema,
   type ClientAgentPresenceListRequest,
   type ClientAgentPresenceListResponse,
+  type ClientAgentRemindersListRequest,
+  type ClientAgentRemindersListResponse,
   ClientAgentTrajectoryListResponseSchema,
   ClientAcknowledgeRequestSchema,
   ClientAcknowledgeResponseSchema,
@@ -16,6 +20,8 @@ import {
   ClientAgentManageResponseSchema,
   ClientAgentGetRequestSchema,
   ClientAgentGetResponseSchema,
+  ClientAgentExecutionResetRequestSchema,
+  ClientAgentExecutionResetResponseSchema,
   ClientAgentMemoryGetRequestSchema,
   ClientAgentMemoryConfigGetRequestSchema,
   ClientAgentMemoryConfigPatchRequestSchema,
@@ -59,6 +65,8 @@ import {
   ClientManagedMcpUsageListResponseSchema,
   ClientPrincipalMeRequestSchema,
   ClientPrincipalMeResponseSchema,
+  ClientPrincipalUpdateRequestSchema,
+  ClientPrincipalUpdateResponseSchema,
   ClientDirectRoomOpenRequestSchema,
   ClientDirectRoomOpenResponseSchema,
   ClientRoomSyncRequestSchema,
@@ -85,6 +93,8 @@ import {
   ClientTaskConvertRequestSchema,
   ClientTaskCreateRequestSchema,
   ClientTaskMutationResponseSchema,
+  ClientTaskReassignRequestSchema,
+  ClientTaskReassignmentResponseSchema,
   ClientTaskUnassignRequestSchema,
   ClientTasksListRequestSchema,
   ClientTasksListResponseSchema,
@@ -118,6 +128,8 @@ import {
   type ClientAgentManageResponse,
   type ClientAgentGetRequest,
   type ClientAgentGetResponse,
+  type ClientAgentExecutionResetRequest,
+  type ClientAgentExecutionResetResponse,
   type ClientAgentMemoryGetRequest,
   type ClientAgentMemoryGetResponse,
   type ClientAgentMemoryReadRequest,
@@ -155,6 +167,8 @@ import {
   type ClientManagedMcpUsageListResponse,
   type ClientPrincipalMeRequest,
   type ClientPrincipalMeResponse,
+  type ClientPrincipalUpdateRequest,
+  type ClientPrincipalUpdateResponse,
   type ClientDirectRoomOpenRequest,
   type ClientDirectRoomOpenResponse,
   type ClientRoomSyncRequest,
@@ -181,6 +195,8 @@ import {
   type ClientTaskConvertRequest,
   type ClientTaskCreateRequest,
   type ClientTaskMutationResponse,
+  type ClientTaskReassignRequest,
+  type ClientTaskReassignmentResponse,
   type ClientTaskUnassignRequest,
   type ClientTasksListRequest,
   type ClientTasksListResponse,
@@ -210,6 +226,11 @@ import {
   type RahFileTransport,
 } from "./file-operations.ts";
 export type { RahFileTransport } from "./file-operations.ts";
+import {
+  createProfileImageTransport,
+  type RahProfileImageTransport,
+} from "./profile-image-transport.ts";
+export type { RahProfileImageTransport } from "./profile-image-transport.ts";
 import {
   discoveryOperations,
   type DiscoveryOperationMap,
@@ -242,9 +263,17 @@ export type RahClientOperationMap = AgentWorkspaceOperationMap &
       input: ClientAgentPresenceListRequest;
       output: ClientAgentPresenceListResponse;
     };
+    "agent.reminder.list": {
+      input: ClientAgentRemindersListRequest;
+      output: ClientAgentRemindersListResponse;
+    };
     "agent.get": {
       input: ClientAgentGetRequest;
       output: ClientAgentGetResponse;
+    };
+    "agent.execution.reset": {
+      input: ClientAgentExecutionResetRequest;
+      output: ClientAgentExecutionResetResponse;
     };
     "agent.memory.get": {
       input: ClientAgentMemoryGetRequest;
@@ -350,6 +379,10 @@ export type RahClientOperationMap = AgentWorkspaceOperationMap &
       input: ClientPrincipalMeRequest;
       output: ClientPrincipalMeResponse;
     };
+    "principal.update": {
+      input: ClientPrincipalUpdateRequest;
+      output: ClientPrincipalUpdateResponse;
+    };
     "room.acknowledge": {
       input: ClientAcknowledgeRequest;
       output: ClientAcknowledgeResponse;
@@ -421,6 +454,10 @@ export type RahClientOperationMap = AgentWorkspaceOperationMap &
     "task.list": {
       input: ClientTasksListRequest;
       output: ClientTasksListResponse;
+    };
+    "task.reassign": {
+      input: ClientTaskReassignRequest;
+      output: ClientTaskReassignmentResponse;
     };
     "task.review.list": {
       input: ClientTaskReviewEvidenceListRequest;
@@ -496,6 +533,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     output: ClientAgentPresenceListResponseSchema,
     path: "/v3/client/agents/presence/list",
   },
+  "agent.reminder.list": {
+    authenticated: true,
+    input: ClientAgentRemindersListRequestSchema,
+    method: "POST",
+    output: ClientAgentRemindersListResponseSchema,
+    path: "/v3/client/agents/reminders/list",
+  },
   "agent.get": {
     authenticated: true,
     input: ClientAgentGetRequestSchema,
@@ -509,6 +553,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     method: "POST",
     output: ClientAgentMemoryGetResponseSchema,
     path: "/v3/client/agents/memory/get",
+  },
+  "agent.execution.reset": {
+    authenticated: true,
+    input: ClientAgentExecutionResetRequestSchema,
+    method: "POST",
+    output: ClientAgentExecutionResetResponseSchema,
+    path: "/v3/client/agents/execution/reset",
   },
   "agent.memory.config.get": {
     authenticated: true,
@@ -699,6 +750,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     output: ClientPrincipalMeResponseSchema,
     path: "/v3/client/principals/me",
   },
+  "principal.update": {
+    authenticated: true,
+    input: ClientPrincipalUpdateRequestSchema,
+    method: "POST",
+    output: ClientPrincipalUpdateResponseSchema,
+    path: "/v3/client/principals/update",
+  },
   "room.acknowledge": {
     authenticated: true,
     input: ClientAcknowledgeRequestSchema,
@@ -825,6 +883,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     output: ClientTasksListResponseSchema,
     path: "/v3/client/tasks/list",
   },
+  "task.reassign": {
+    authenticated: true,
+    input: ClientTaskReassignRequestSchema,
+    method: "POST",
+    output: ClientTaskReassignmentResponseSchema,
+    path: "/v3/client/tasks/reassign",
+  },
   "task.review.list": {
     authenticated: true,
     input: ClientTaskReviewEvidenceListRequestSchema,
@@ -896,6 +961,7 @@ export const RAH_CLIENT_OPERATION_NAMES = Object.freeze(
 
 export interface RahClient {
   readonly files?: RahFileTransport;
+  readonly profileImages?: RahProfileImageTransport;
   request<Operation extends RahClientOperation>(
     operation: Operation,
     input: RahClientOperationMap[Operation]["input"],
@@ -943,6 +1009,7 @@ export type RahFetchResponse = {
   json(): Promise<unknown>;
   ok: boolean;
   status: number;
+  text?(): Promise<string>;
 };
 
 export type RahFetch = (
@@ -964,6 +1031,7 @@ export class RahClientError extends Error {
 
 export class HttpRahClient implements RahClient {
   readonly files: RahFileTransport;
+  readonly profileImages: RahProfileImageTransport;
   readonly #accessToken: () => string | undefined;
   readonly #baseUrl: string;
   readonly #fetch: RahFetch;
@@ -978,6 +1046,11 @@ export class HttpRahClient implements RahClient {
     this.#baseUrl = options.baseUrl.replace(/\/$/, "");
     this.#fetch = options.fetch ?? defaultFetch;
     this.files = createFileTransport(
+      this.#baseUrl,
+      this.#accessToken,
+      options.fileFetch,
+    );
+    this.profileImages = createProfileImageTransport(
       this.#baseUrl,
       this.#accessToken,
       options.fileFetch,
@@ -1018,7 +1091,7 @@ export class HttpRahClient implements RahClient {
       `${this.#baseUrl}${definition.path}`,
       init,
     );
-    const payload = await response.json();
+    const payload = await responsePayload(response);
     if (!response.ok) {
       const error = clientError(payload);
       throw new RahClientError(error.code, error.message, response.status);
@@ -1030,6 +1103,23 @@ export class HttpRahClient implements RahClient {
 }
 
 const defaultFetch: RahFetch = async (url, init) => globalThis.fetch(url, init);
+
+async function responsePayload(response: RahFetchResponse): Promise<unknown> {
+  try {
+    if (response.text !== undefined) {
+      return JSON.parse(await response.text()) as unknown;
+    }
+    return await response.json();
+  } catch {
+    throw new RahClientError(
+      response.ok ? "invalid_response" : "http_error",
+      response.ok
+        ? "RAH Client received a malformed response"
+        : `RAH Client request failed with HTTP ${String(response.status)}`,
+      response.status,
+    );
+  }
+}
 
 function clientError(payload: unknown): { code: string; message: string } {
   if (

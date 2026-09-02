@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 
 import {
@@ -47,7 +48,7 @@ function authenticateHost(
   return host;
 }
 
-test("two activation-scoped Workers append causal Room replies without choosing actor or Room", async () => {
+test("Raft-style freshness holds the losing concurrent reply and wakes the peer", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-worker-message-api-"));
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
   const service = new WorkerApplicationService({ kernel });
@@ -93,7 +94,13 @@ test("two activation-scoped Workers append causal Room replies without choosing 
     kernel.heartbeatHost(host);
     await service.start();
 
-    const workers = [];
+    const workers: Array<{
+      activation: { activationId: string; toSeq: number };
+      agent: (typeof agents)[number];
+      consumerId: string;
+      credential: { accessToken: string };
+      runAttempt: { runAttemptId: string };
+    }> = [];
     for (const index of agents.keys()) {
       const activation = kernel.leaseNextActivation(host, { leaseMs: 30_000 });
       assert.ok(activation);
@@ -112,16 +119,23 @@ test("two activation-scoped Workers append causal Room replies without choosing 
         runAttemptId: runAttempt.runAttemptId,
         runtimeRunId: `worker-message-runtime-${String(index)}`,
       });
+      const consumerId = `worker-message-consumer-${String(index)}`;
       const credential = service.issueActivationCredential(host, {
         activationId: activation.activationId,
-        consumerId: `worker-message-consumer-${String(index)}`,
+        consumerId,
         hostId: "worker-message-host",
         participantId: agent.principal.principalId,
         roomId: room.roomId,
         runAttemptId: runAttempt.runAttemptId,
         toSeq: activation.toSeq,
       });
-      workers.push({ agent, credential });
+      workers.push({
+        activation,
+        agent,
+        consumerId,
+        credential,
+        runAttempt,
+      });
     }
 
     const request = async (
@@ -181,34 +195,7 @@ test("two activation-scoped Workers append causal Room replies without choosing 
     assert.equal(injectedScope.status, 400);
     assert.equal(await responseErrorCode(injectedScope), "unexpected_field");
 
-    const replies = await Promise.all(
-      workers.map(async ({ agent, credential }, index) => {
-        const response = await request(
-          credential.accessToken,
-          "/v1/worker/messages/post",
-          {
-            basedOnRoomSeq,
-            body: `Canonical reply from ${agent.principal.handle}`,
-            idempotencyKey: `worker-message-reply-${String(index)}`,
-          },
-        );
-        const payload = await jsonObject(response);
-        assert.equal(response.status, 200, JSON.stringify(payload));
-        return payload;
-      }),
-    );
-    assert.deepEqual(
-      replies.map((reply) => reply.deduplicated),
-      [false, false],
-    );
-    assert.deepEqual(
-      replies
-        .map((reply) => (reply.event as Record<string, unknown>).actorId)
-        .sort(),
-      agents.map((agent) => agent.principal.principalId).sort(),
-    );
-
-    const retry = await request(
+    const firstReply = await request(
       workers[0]!.credential.accessToken,
       "/v1/worker/messages/post",
       {
@@ -217,17 +204,365 @@ test("two activation-scoped Workers append causal Room replies without choosing 
         idempotencyKey: "worker-message-reply-0",
       },
     );
+    const firstPayload = await jsonObject(firstReply);
+    assert.equal(firstReply.status, 200, JSON.stringify(firstPayload));
+    assert.equal(firstPayload.deduplicated, false);
+    assert.equal(Array.isArray(firstPayload.activationIds), true);
+    assert.equal((firstPayload.activationIds as unknown[]).length, 1);
+
+    const heldReply = await request(
+      workers[1]!.credential.accessToken,
+      "/v1/worker/messages/post",
+      {
+        basedOnRoomSeq,
+        body: `Canonical reply from ${workers[1]!.agent.principal.handle}`,
+        idempotencyKey: "worker-message-reply-1",
+      },
+    );
+    const heldPayload = await jsonObject(heldReply);
+    assert.equal(heldReply.status, 200, JSON.stringify(heldPayload));
+    assert.equal(heldPayload.state, "held");
+    assert.equal(heldPayload.reason, "newer_messages_available");
+    assert.equal(heldPayload.basedOnRoomSeq, basedOnRoomSeq);
+    assert.equal(heldPayload.newMessageCount, 1);
+    assert.equal(heldPayload.omittedMessageCount, 0);
+    assert.equal(heldPayload.reholdCount, 1);
+    assert.equal(heldPayload.continueAnywaySuggested, false);
+    assert.equal(Array.isArray(heldPayload.newerMessages), true);
+    assert.equal((heldPayload.newerMessages as unknown[]).length, 1);
+
+    const retry = await request(
+      workers[1]!.credential.accessToken,
+      "/v1/worker/messages/post",
+      {
+        basedOnRoomSeq,
+        body: `Canonical reply from ${workers[1]!.agent.principal.handle}`,
+        idempotencyKey: "worker-message-reply-1",
+      },
+    );
     assert.equal(retry.status, 200);
-    assert.equal((await jsonObject(retry)).deduplicated, true);
+    const retryPayload = await jsonObject(retry);
+    assert.equal(retryPayload.state, "held");
+    assert.equal(retryPayload.heldDraftId, heldPayload.heldDraftId);
 
     const messages = kernel.listMessages(humanActor, { roomId: room.roomId });
-    assert.deepEqual(
-      messages.messages
-        .slice(-2)
-        .map((message) => message.actorId)
-        .sort(),
-      agents.map((agent) => agent.principal.principalId).sort(),
+    assert.equal(messages.messages.length, 2);
+    assert.equal(
+      messages.messages.at(-1)?.actorId,
+      workers[0]!.agent.principal.principalId,
     );
+    assert.equal(
+      kernel
+        .listActivations({ roomId: room.roomId })
+        .some(
+          (activation) =>
+            activation.participantId ===
+              workers[1]!.agent.principal.principalId &&
+            activation.state === "queued",
+        ),
+      true,
+    );
+
+    const heldWorker = workers[1]!;
+    const acknowledged = await request(
+      heldWorker.credential.accessToken,
+      "/v1/worker/acknowledge",
+      { throughSeq: basedOnRoomSeq },
+    );
+    assert.equal(acknowledged.status, 200);
+    kernel.recordRuntimeTermination(host, {
+      exit: { code: 0 },
+      runAttemptId: heldWorker.runAttempt.runAttemptId,
+      runtimeRunId: "worker-message-runtime-1",
+    });
+    kernel.finishRunAttempt(host, {
+      exitCode: 0,
+      runAttemptId: heldWorker.runAttempt.runAttemptId,
+      state: "exited",
+    });
+    kernel.completeActivation(host, {
+      activationId: heldWorker.activation.activationId,
+      consumerId: heldWorker.consumerId,
+    });
+
+    const followUp = kernel.leaseNextActivation(host, { leaseMs: 30_000 });
+    assert.ok(followUp);
+    assert.equal(
+      followUp.participantId,
+      heldWorker.agent.principal.principalId,
+    );
+    const followUpRun = kernel.createRunAttempt(host, {
+      activationId: followUp.activationId,
+    });
+    prepareAndMarkRunAttemptRunning(kernel, host, {
+      recoveryDescriptor: fakeRecovery("worker-message-follow-up-runtime"),
+      runAttemptId: followUpRun.runAttemptId,
+      runtimeRunId: "worker-message-follow-up-runtime",
+    });
+    const followUpCredential = service.issueActivationCredential(host, {
+      activationId: followUp.activationId,
+      consumerId: "worker-message-follow-up-consumer",
+      hostId: "worker-message-host",
+      participantId: heldWorker.agent.principal.principalId,
+      roomId: room.roomId,
+      runAttemptId: followUpRun.runAttemptId,
+      toSeq: followUp.toSeq,
+    });
+    const followUpDeliveryResponse = await request(
+      followUpCredential.accessToken,
+      "/v1/worker/sync",
+      {},
+    );
+    assert.equal(followUpDeliveryResponse.status, 200);
+    const followUpDelivery = await jsonObject(followUpDeliveryResponse);
+    const followUpSeq = followUpDelivery.cursorAfter;
+    assert.equal(typeof followUpSeq, "number");
+
+    const sentUnchangedResponse = await request(
+      followUpCredential.accessToken,
+      "/v1/worker/messages/post",
+      {
+        basedOnRoomSeq: followUpSeq,
+        heldDraftId: heldPayload.heldDraftId,
+        idempotencyKey: "worker-message-send-unchanged",
+        sendDraft: true,
+      },
+    );
+    const sentUnchanged = await jsonObject(sentUnchangedResponse);
+    assert.equal(
+      sentUnchangedResponse.status,
+      200,
+      JSON.stringify(sentUnchanged),
+    );
+    assert.equal(sentUnchanged.deduplicated, false);
+    assert.equal(
+      (sentUnchanged.event as Record<string, unknown>).type,
+      "message.posted",
+    );
+    const sentUnchangedRetryResponse = await request(
+      followUpCredential.accessToken,
+      "/v1/worker/messages/post",
+      {
+        basedOnRoomSeq: followUpSeq,
+        heldDraftId: heldPayload.heldDraftId,
+        idempotencyKey: "worker-message-send-unchanged",
+        sendDraft: true,
+      },
+    );
+    const sentUnchangedRetry = await jsonObject(sentUnchangedRetryResponse);
+    assert.equal(
+      sentUnchangedRetryResponse.status,
+      200,
+      JSON.stringify(sentUnchangedRetry),
+    );
+    assert.equal(sentUnchangedRetry.deduplicated, true);
+
+    kernel.postMessage(humanActor, {
+      body: "Newer context arrived while the follow-up draft was composed",
+      idempotencyKey: "worker-message-newer-context",
+      recipients: [],
+      roomId: room.roomId,
+    });
+    const newlyHeldResponse = await request(
+      followUpCredential.accessToken,
+      "/v1/worker/messages/post",
+      {
+        basedOnRoomSeq: followUpSeq,
+        body: "A second draft that must be checked again",
+        idempotencyKey: "worker-message-held-again-1",
+      },
+    );
+    const newlyHeld = await jsonObject(newlyHeldResponse);
+    assert.equal(newlyHeldResponse.status, 200, JSON.stringify(newlyHeld));
+    assert.equal(newlyHeld.state, "held");
+    assert.equal(newlyHeld.reholdCount, 1);
+    assert.equal(newlyHeld.continueAnywaySuggested, false);
+
+    const prematureAnyway = await request(
+      followUpCredential.accessToken,
+      "/v1/worker/messages/post",
+      {
+        anyway: true,
+        basedOnRoomSeq: followUpSeq,
+        heldDraftId: newlyHeld.heldDraftId,
+        idempotencyKey: "worker-message-premature-anyway",
+        sendDraft: true,
+      },
+    );
+    assert.equal(prematureAnyway.status, 409);
+    assert.equal(await responseErrorCode(prematureAnyway), "conflict");
+
+    const reheldResponse = await request(
+      followUpCredential.accessToken,
+      "/v1/worker/messages/post",
+      {
+        basedOnRoomSeq: followUpSeq,
+        heldDraftId: newlyHeld.heldDraftId,
+        idempotencyKey: "worker-message-held-again-2",
+        sendDraft: true,
+      },
+    );
+    const reheld = await jsonObject(reheldResponse);
+    assert.equal(reheldResponse.status, 200, JSON.stringify(reheld));
+    assert.equal(reheld.state, "held");
+    assert.equal(reheld.reholdCount, 2);
+    assert.equal(reheld.continueAnywaySuggested, true);
+
+    const sentAnywayResponse = await request(
+      followUpCredential.accessToken,
+      "/v1/worker/messages/post",
+      {
+        anyway: true,
+        basedOnRoomSeq: followUpSeq,
+        heldDraftId: reheld.heldDraftId,
+        idempotencyKey: "worker-message-send-anyway",
+        sendDraft: true,
+      },
+    );
+    const sentAnyway = await jsonObject(sentAnywayResponse);
+    assert.equal(sentAnywayResponse.status, 200, JSON.stringify(sentAnyway));
+    assert.equal(sentAnyway.deduplicated, false);
+    assert.equal(
+      (sentAnyway.event as Record<string, unknown>).type,
+      "message.posted",
+    );
+    const sentAnywayRetryResponse = await request(
+      followUpCredential.accessToken,
+      "/v1/worker/messages/post",
+      {
+        anyway: true,
+        basedOnRoomSeq: followUpSeq,
+        heldDraftId: reheld.heldDraftId,
+        idempotencyKey: "worker-message-send-anyway",
+        sendDraft: true,
+      },
+    );
+    const sentAnywayRetry = await jsonObject(sentAnywayRetryResponse);
+    assert.equal(sentAnywayRetryResponse.status, 200);
+    assert.equal(sentAnywayRetry.deduplicated, true);
+
+    kernel.postMessage(humanActor, {
+      body: "Please reconsider once more with this final context",
+      idempotencyKey: "worker-message-revision-context",
+      recipients: [
+        {
+          participantId: heldWorker.agent.principal.principalId,
+          reason: "mention",
+        },
+      ],
+      roomId: room.roomId,
+    });
+    const revisionHeldResponse = await request(
+      followUpCredential.accessToken,
+      "/v1/worker/messages/post",
+      {
+        basedOnRoomSeq: followUpSeq,
+        body: "An obsolete draft that will be revised",
+        idempotencyKey: "worker-message-revision-held",
+      },
+    );
+    const revisionHeld = await jsonObject(revisionHeldResponse);
+    assert.equal(
+      revisionHeldResponse.status,
+      200,
+      JSON.stringify(revisionHeld),
+    );
+    assert.equal(revisionHeld.state, "held");
+
+    const followUpAcknowledged = await request(
+      followUpCredential.accessToken,
+      "/v1/worker/acknowledge",
+      { throughSeq: followUpSeq },
+    );
+    assert.equal(followUpAcknowledged.status, 200);
+    kernel.recordRuntimeTermination(host, {
+      exit: { code: 0 },
+      runAttemptId: followUpRun.runAttemptId,
+      runtimeRunId: "worker-message-follow-up-runtime",
+    });
+    kernel.finishRunAttempt(host, {
+      exitCode: 0,
+      runAttemptId: followUpRun.runAttemptId,
+      state: "exited",
+    });
+    kernel.completeActivation(host, {
+      activationId: followUp.activationId,
+      consumerId: "worker-message-follow-up-consumer",
+    });
+
+    const revisionActivation = kernel.leaseNextActivation(host, {
+      leaseMs: 30_000,
+    });
+    assert.ok(revisionActivation);
+    assert.equal(
+      revisionActivation.participantId,
+      heldWorker.agent.principal.principalId,
+    );
+    const revisionRun = kernel.createRunAttempt(host, {
+      activationId: revisionActivation.activationId,
+    });
+    prepareAndMarkRunAttemptRunning(kernel, host, {
+      recoveryDescriptor: fakeRecovery("worker-message-revision-runtime"),
+      runAttemptId: revisionRun.runAttemptId,
+      runtimeRunId: "worker-message-revision-runtime",
+    });
+    const revisionCredential = service.issueActivationCredential(host, {
+      activationId: revisionActivation.activationId,
+      consumerId: "worker-message-revision-consumer",
+      hostId: "worker-message-host",
+      participantId: heldWorker.agent.principal.principalId,
+      roomId: room.roomId,
+      runAttemptId: revisionRun.runAttemptId,
+      toSeq: revisionActivation.toSeq,
+    });
+    const revisionDeliveryResponse = await request(
+      revisionCredential.accessToken,
+      "/v1/worker/sync",
+      {},
+    );
+    assert.equal(revisionDeliveryResponse.status, 200);
+    const revisionDelivery = await jsonObject(revisionDeliveryResponse);
+    const revisionSeq = revisionDelivery.cursorAfter;
+    assert.equal(typeof revisionSeq, "number");
+    const revisedResponse = await request(
+      revisionCredential.accessToken,
+      "/v1/worker/messages/post",
+      {
+        basedOnRoomSeq: revisionSeq,
+        body: "A revised answer based on the final context",
+        idempotencyKey: "worker-message-revised",
+      },
+    );
+    const revised = await jsonObject(revisedResponse);
+    assert.equal(revisedResponse.status, 200, JSON.stringify(revised));
+    assert.equal(revised.deduplicated, false);
+
+    const auditDatabase = new DatabaseSync(join(directory, "room.db"), {
+      readOnly: true,
+    });
+    try {
+      const resolutions = auditDatabase
+        .prepare(
+          `SELECT idempotency_key, resolution_kind
+           FROM held_message_drafts
+           ORDER BY created_at, held_draft_id`,
+        )
+        .all() as Array<{
+        idempotency_key: string;
+        resolution_kind: string;
+      }>;
+      assert.deepEqual(
+        resolutions.map((row) => [row.idempotency_key, row.resolution_kind]),
+        [
+          ["worker-message-reply-1", "sent_unchanged"],
+          ["worker-message-held-again-1", "reheld"],
+          ["worker-message-held-again-2", "sent_anyway"],
+          ["worker-message-revision-held", "revised"],
+        ],
+      );
+    } finally {
+      auditDatabase.close();
+    }
   } finally {
     await service.close();
     kernel.close();
@@ -327,17 +662,66 @@ test("a coalesced Activation keeps the Worker reply in its latest originating Th
       body: "Canonical Agent Thread reply",
       idempotencyKey: "worker-thread-agent-reply",
     });
-    assert.equal(
-      response.status,
-      200,
-      JSON.stringify(await jsonObject(response)),
+    const responsePayload = await jsonObject(response);
+    assert.equal(response.status, 200, JSON.stringify(responsePayload));
+    assert.ok(
+      typeof responsePayload.event === "object" &&
+        responsePayload.event !== null &&
+        !Array.isArray(responsePayload.event),
     );
+    const responseEvent = responsePayload.event as Record<string, unknown>;
+    assert.equal(typeof responseEvent.roomSeq, "number");
+
+    const unfollowResponse = await request("/v1/worker/threads/unfollow", {
+      basedOnRoomSeq: responseEvent.roomSeq,
+      idempotencyKey: "worker-thread-agent-unfollow",
+      threadId: created.thread.threadId,
+    });
+    const unfollowPayload = await jsonObject(unfollowResponse);
+    assert.equal(unfollowResponse.status, 200, JSON.stringify(unfollowPayload));
+    assert.equal(unfollowPayload.following, false);
+    assert.equal(unfollowPayload.deduplicated, false);
+    assert.ok(
+      typeof unfollowPayload.event === "object" &&
+        unfollowPayload.event !== null &&
+        !Array.isArray(unfollowPayload.event),
+    );
+    const unfollowEvent = unfollowPayload.event as Record<string, unknown>;
+    assert.equal(typeof unfollowEvent.roomSeq, "number");
+
+    const repeatedUnfollow = await request("/v1/worker/threads/unfollow", {
+      basedOnRoomSeq: responseEvent.roomSeq,
+      idempotencyKey: "worker-thread-agent-unfollow",
+      threadId: created.thread.threadId,
+    });
+    assert.equal(repeatedUnfollow.status, 200);
+    assert.equal((await jsonObject(repeatedUnfollow)).deduplicated, true);
+
+    const ordinaryReply = kernel.replyThread(humanActor, {
+      basedOnRoomSeq: unfollowEvent.roomSeq as number,
+      body: "No wake after an explicit unfollow",
+      idempotencyKey: "worker-thread-after-unfollow",
+      recipientIds: [],
+      roomId: room.roomId,
+      threadId: created.thread.threadId,
+    });
+    assert.deepEqual(ordinaryReply.activationIds, []);
+
+    const exactMention = kernel.replyThread(humanActor, {
+      basedOnRoomSeq: ordinaryReply.event.roomSeq,
+      body: "Exact mention restores delivery",
+      idempotencyKey: "worker-thread-exact-remention",
+      recipientIds: [agent.principal.principalId],
+      roomId: room.roomId,
+      threadId: created.thread.threadId,
+    });
+    assert.equal(exactMention.activationIds.length, 1);
 
     const threadMessages = kernel.listMessages(humanActor, {
       roomId: room.roomId,
       threadId: created.thread.threadId,
     });
-    assert.equal(threadMessages.messages.length, 2);
+    assert.equal(threadMessages.messages.length, 4);
     assert.equal(
       threadMessages.messages[1]?.actorId,
       agent.principal.principalId,
@@ -712,6 +1096,44 @@ test("Worker API exposes a causal and execution-fenced Task command surface", as
     assert.equal(repeatedProgress.status, 200);
     assert.equal((await jsonObject(repeatedProgress)).deduplicated, true);
 
+    const preparedArtifactResponse = await request(
+      "/v1/worker/artifacts/prepare",
+      {
+        filename: "worker-evidence.txt",
+        idempotencyKey: "worker-task-artifact",
+        mimeType: "text/plain",
+        size: 18,
+        taskId: created.task.taskId,
+      },
+    );
+    assert.equal(preparedArtifactResponse.status, 200);
+    const preparedArtifact = await jsonObject(preparedArtifactResponse);
+    assert.equal(preparedArtifact.state, "pending");
+    assert.equal(preparedArtifact.taskId, created.task.taskId);
+    const attachmentId = preparedArtifact.attachmentId;
+    assert.equal(typeof attachmentId, "string");
+    const uploadedArtifactResponse = await fetch(
+      `${service.origin}/v1/worker/artifacts/${String(attachmentId)}`,
+      {
+        body: "artifact-evidence!",
+        headers: {
+          authorization: `Bearer ${credential.accessToken}`,
+          "content-type": "application/octet-stream",
+        },
+        method: "PUT",
+      },
+    );
+    assert.equal(uploadedArtifactResponse.status, 200);
+    assert.equal(
+      (await jsonObject(uploadedArtifactResponse)).state,
+      "completed",
+    );
+    assert.equal(
+      kernel.files.list(humanActor, { roomId: room.roomId }).files.length,
+      0,
+      "completed Agent bytes stay hidden until their Task submission commits",
+    );
+
     const submitResponse = await request("/v1/worker/tasks/submit", {
       basedOnRoomSeq: (progressed.event as Record<string, unknown>).roomSeq,
       idempotencyKey: "worker-task-submit",
@@ -732,6 +1154,23 @@ test("Worker API exposes a causal and execution-fenced Task command surface", as
     assert.equal(
       kernel.listTasks(humanActor, { roomId: room.roomId })[0]?.state,
       "submitted",
+    );
+    assert.deepEqual(
+      kernel.files
+        .list(humanActor, { roomId: room.roomId })
+        .files.map(({ attachmentId: id, filename }) => ({ id, filename })),
+      [{ id: attachmentId, filename: "worker-evidence.txt" }],
+    );
+    const [submission] = kernel.taskReviews.listTaskSubmissions(humanActor, {
+      roomId: room.roomId,
+      taskId: created.task.taskId,
+    });
+    assert.ok(submission);
+    assert.equal(submission.artifacts.length, 1);
+    assert.equal(submission.artifacts[0]?.attachmentId, attachmentId);
+    assert.equal(
+      submission.artifacts[0]?.runAttemptId,
+      runAttempt.runAttemptId,
     );
 
     const reviewerHost = authenticateHost(

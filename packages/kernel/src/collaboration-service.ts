@@ -39,7 +39,18 @@ import {
   workspaceProjectionFromRow,
 } from "./collaboration-projection.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
-import { integer, text, type Row } from "./sqlite-row.ts";
+import {
+  followAgentThreadParticipants,
+  listFollowingAgentThreadRecipients,
+} from "./agent-thread-subscriptions.ts";
+import {
+  CONTINUE_ANYWAY_REHOLD_THRESHOLD,
+  HELD_MESSAGE_DRAFT_TTL_MS,
+  requireActiveHeldMessageDraft,
+  resolveHeldMessageDrafts,
+  resolveOneHeldMessageDraft,
+} from "./held-message-drafts.ts";
+import { integer, nullableText, text, type Row } from "./sqlite-row.ts";
 import type {
   MessageMutationResult,
   MessagePage,
@@ -48,6 +59,7 @@ import type {
   RoomMembershipMutationResult,
   RoomMembershipRemovalResult,
   ThreadMutationResult,
+  WorkerMessagePostResult,
   WorkspaceMutationResult,
 } from "./types.ts";
 
@@ -1222,6 +1234,12 @@ export class CollaborationService {
         actor.principalId,
         createdAt,
       );
+    followAgentThreadParticipants(this.#database, {
+      participantIds: recipientIds,
+      source: "mention",
+      threadId,
+      updatedAt: createdAt,
+    });
     const event = this.#events.append({
       actorId: actor.principalId,
       aggregateId: threadId,
@@ -1254,6 +1272,7 @@ export class CollaborationService {
   replyThread(
     actor: Principal,
     input: {
+      attachments?: Attachment[];
       basedOnRoomSeq: number;
       body: string;
       idempotencyKey: string;
@@ -1264,8 +1283,10 @@ export class CollaborationService {
   ): MessageMutationResult {
     requireRoomMember(this.#database, input.roomId, actor.principalId);
     const body = input.body.trim();
-    if (body.length === 0) throw new Error("message body is required");
-    const recipientIds = this.#normalizeRecipientIds(
+    const attachments = input.attachments ?? [];
+    if (body.length === 0 && attachments.length === 0)
+      throw new Error("message body or attachment is required");
+    const requestedRecipientIds = this.#normalizeRecipientIds(
       input.roomId,
       actor.principalId,
       input.recipientIds,
@@ -1278,8 +1299,11 @@ export class CollaborationService {
         event.actorId !== actor.principalId ||
         event.payload.body !== body ||
         event.payload.threadId !== input.threadId ||
-        JSON.stringify(event.payload.recipientIds) !==
-          JSON.stringify(recipientIds)
+        JSON.stringify(event.payload.attachments ?? []) !==
+          JSON.stringify(attachments) ||
+        JSON.stringify(
+          event.payload.requestedRecipientIds ?? event.payload.recipientIds,
+        ) !== JSON.stringify(requestedRecipientIds)
       ) {
         throw this.#idempotencyConflict(input.idempotencyKey);
       }
@@ -1289,9 +1313,41 @@ export class CollaborationService {
     this.#threadFromRoom(input.threadId, input.roomId);
     const messageId = this.#createId("message");
     const createdAt = this.#timestamp();
+    followAgentThreadParticipants(this.#database, {
+      participantIds: requestedRecipientIds,
+      source: "mention",
+      threadId: input.threadId,
+      updatedAt: createdAt,
+    });
+    if (actor.kind === "agent") {
+      followAgentThreadParticipants(this.#database, {
+        participantIds: [actor.principalId],
+        source: "participation",
+        threadId: input.threadId,
+        updatedAt: createdAt,
+      });
+    }
+    const recipientsByParticipant = new Map<string, MessageRecipient>();
+    for (const recipient of listFollowingAgentThreadRecipients(this.#database, {
+      excludedParticipantId: actor.principalId,
+      roomId: input.roomId,
+      threadId: input.threadId,
+    })) {
+      recipientsByParticipant.set(recipient.participantId, recipient);
+    }
+    for (const participantId of requestedRecipientIds) {
+      recipientsByParticipant.set(participantId, {
+        participantId,
+        reason: "thread_subscription",
+      });
+    }
+    const recipients = [...recipientsByParticipant.values()].sort(
+      (left, right) => left.participantId.localeCompare(right.participantId),
+    );
+    const recipientIds = recipients.map(({ participantId }) => participantId);
     this.#database
       .prepare(
-        "INSERT INTO messages(message_id, room_id, actor_id, thread_id, body, created_at) VALUES(?, ?, ?, ?, ?, ?)",
+        "INSERT INTO messages(message_id, room_id, actor_id, thread_id, body, created_at, attachments_json) VALUES(?, ?, ?, ?, ?, ?, ?)",
       )
       .run(
         messageId,
@@ -1300,6 +1356,7 @@ export class CollaborationService {
         input.threadId,
         body,
         createdAt,
+        JSON.stringify(attachments),
       );
     this.#database
       .prepare(
@@ -1314,26 +1371,18 @@ export class CollaborationService {
       payload: {
         basedOnRoomSeq: input.basedOnRoomSeq,
         body,
+        ...(attachments.length ? { attachments } : {}),
         messageId,
+        requestedRecipientIds,
         recipientIds,
-        recipients: recipientIds.map((participantId) => ({
-          participantId,
-          reason: "thread_subscription",
-        })),
+        recipients,
         threadId: input.threadId,
       },
       roomId: input.roomId,
       type: "message.posted",
     });
     return {
-      activationIds: this.#events.deriveAttention(
-        event,
-        recipientIds.map((participantId) => ({
-          participantId,
-          reason: "thread_subscription",
-        })),
-        createdAt,
-      ),
+      activationIds: this.#events.deriveAttention(event, recipients, createdAt),
       deduplicated: false,
       event,
     };
@@ -1435,20 +1484,21 @@ export class CollaborationService {
     input: {
       activationId: string;
       basedOnRoomSeq: number;
-      body: string;
+      body?: string;
+      continueAnyway?: boolean;
+      heldDraftId?: string;
       idempotencyKey: string;
+      recipients: MessageRecipient[];
       roomId: string;
       threadId?: string;
     },
-  ): MessageMutationResult {
+  ): WorkerMessagePostResult {
     requireRoomMember(this.#database, input.roomId, actor.principalId);
     if (actor.kind !== "agent") {
       throw new ForbiddenError(
         "Activation-scoped Room replies require an Agent principal",
       );
     }
-    const body = input.body.trim();
-    if (body.length === 0) throw new Error("message body is required");
     if (input.idempotencyKey.trim().length === 0) {
       throw new Error("idempotencyKey is required");
     }
@@ -1458,6 +1508,19 @@ export class CollaborationService {
     if (!Number.isInteger(input.basedOnRoomSeq) || input.basedOnRoomSeq < 0) {
       throw new Error("basedOnRoomSeq must be a non-negative integer");
     }
+    const createdAt = this.#timestamp();
+    if (input.threadId !== undefined) {
+      this.#threadFromRoom(input.threadId, input.roomId);
+    }
+    const recipients = this.#normalizeRecipients(
+      input.roomId,
+      actor.principalId,
+      input.recipients,
+    );
+    const recipientPayload = recipients.map((recipient) => ({
+      participantId: recipient.participantId,
+      reason: recipient.reason,
+    }));
     const previous = this.#database
       .prepare(
         "SELECT * FROM room_events WHERE room_id = ? AND idempotency_key = ?",
@@ -1471,9 +1534,17 @@ export class CollaborationService {
         event.payload.threadId !== input.threadId ||
         event.payload.activationId !== input.activationId ||
         event.payload.basedOnRoomSeq !== input.basedOnRoomSeq ||
-        event.payload.body !== body ||
-        JSON.stringify(event.payload.recipientIds) !== "[]" ||
-        JSON.stringify(event.payload.recipients) !== "[]"
+        (input.heldDraftId === undefined &&
+          event.payload.body !== input.body?.trim()) ||
+        event.payload.heldDraftId !== input.heldDraftId ||
+        event.payload.continueAnyway !==
+          (input.continueAnyway === true ? true : undefined) ||
+        JSON.stringify(event.payload.recipientIds) !==
+          JSON.stringify(
+            recipients.map((recipient) => recipient.participantId),
+          ) ||
+        JSON.stringify(event.payload.recipients) !==
+          JSON.stringify(recipientPayload)
       ) {
         throw new IdempotencyConflictError(
           `idempotency key ${input.idempotencyKey} was already used for another mutation`,
@@ -1481,12 +1552,128 @@ export class CollaborationService {
       }
       return { activationIds: [], deduplicated: true, event };
     }
+    const sourceHeldDraft =
+      input.heldDraftId === undefined
+        ? undefined
+        : requireActiveHeldMessageDraft(this.#database, {
+            heldDraftId: input.heldDraftId,
+            nowMs: Date.parse(createdAt),
+          });
+    if (
+      sourceHeldDraft !== undefined &&
+      (text(sourceHeldDraft, "room_id") !== input.roomId ||
+        text(sourceHeldDraft, "participant_id") !== actor.principalId ||
+        (nullableText(sourceHeldDraft, "thread_id") ?? undefined) !==
+          input.threadId)
+    ) {
+      throw new ForbiddenError(
+        `Held draft ${input.heldDraftId} does not belong to this Agent reply target`,
+      );
+    }
+    if (input.continueAnyway === true && sourceHeldDraft === undefined) {
+      throw new ConflictError("continueAnyway requires an active held draft");
+    }
+    if (
+      input.continueAnyway === true &&
+      integer(sourceHeldDraft!, "rehold_count") <
+        CONTINUE_ANYWAY_REHOLD_THRESHOLD
+    ) {
+      throw new ConflictError(
+        "A held draft can be sent anyway only after it has been held repeatedly",
+      );
+    }
+    const body =
+      sourceHeldDraft === undefined
+        ? input.body?.trim()
+        : text(sourceHeldDraft, "body");
+    if (body === undefined || body.length === 0) {
+      throw new Error("message body is required");
+    }
+    const previousHeld = this.#database
+      .prepare(
+        "SELECT * FROM held_message_drafts WHERE room_id = ? AND idempotency_key = ?",
+      )
+      .get(input.roomId, input.idempotencyKey);
+    if (previousHeld !== undefined) {
+      if (
+        text(previousHeld, "participant_id") !== actor.principalId ||
+        text(previousHeld, "activation_id") !== input.activationId ||
+        (nullableText(previousHeld, "thread_id") ?? undefined) !==
+          input.threadId ||
+        text(previousHeld, "body") !== body ||
+        integer(previousHeld, "based_on_room_seq") !== input.basedOnRoomSeq ||
+        (nullableText(previousHeld, "source_held_draft_id") ?? undefined) !==
+          input.heldDraftId
+      ) {
+        throw new IdempotencyConflictError(
+          `idempotency key ${input.idempotencyKey} was already used for another mutation`,
+        );
+      }
+      return this.#heldMessageDraftResult(previousHeld);
+    }
+
+    const latestTargetSeq = this.#latestTargetMessageSeq(
+      input.roomId,
+      input.threadId,
+    );
+    if (
+      latestTargetSeq > input.basedOnRoomSeq &&
+      input.continueAnyway !== true
+    ) {
+      const heldDraftId = this.#createId("held_draft");
+      const reholdCount =
+        sourceHeldDraft === undefined
+          ? 1
+          : integer(sourceHeldDraft, "rehold_count") + 1;
+      this.#database
+        .prepare(
+          `INSERT INTO held_message_drafts(
+             held_draft_id, room_id, participant_id, activation_id, thread_id,
+             body, based_on_room_seq, seen_up_to_seq, idempotency_key, state,
+             source_held_draft_id, rehold_count, expires_at_ms,
+             created_at, updated_at
+           ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, 'held', ?, ?, ?, ?, ?)`,
+        )
+        .run(
+          heldDraftId,
+          input.roomId,
+          actor.principalId,
+          input.activationId,
+          input.threadId ?? null,
+          body,
+          input.basedOnRoomSeq,
+          latestTargetSeq,
+          input.idempotencyKey,
+          input.heldDraftId ?? null,
+          reholdCount,
+          Date.parse(createdAt) + HELD_MESSAGE_DRAFT_TTL_MS,
+          createdAt,
+          createdAt,
+        );
+      if (input.heldDraftId !== undefined) {
+        resolveOneHeldMessageDraft(this.#database, {
+          heldDraftId: input.heldDraftId,
+          resolution: "reheld",
+          timestamp: createdAt,
+        });
+      }
+      return this.#heldMessageDraftResult(
+        this.#database
+          .prepare("SELECT * FROM held_message_drafts WHERE held_draft_id = ?")
+          .get(heldDraftId)!,
+      );
+    }
+
+    if (input.threadId !== undefined) {
+      followAgentThreadParticipants(this.#database, {
+        participantIds: [actor.principalId],
+        source: "participation",
+        threadId: input.threadId,
+        updatedAt: createdAt,
+      });
+    }
 
     const messageId = this.#createId("message");
-    const createdAt = this.#timestamp();
-    if (input.threadId !== undefined) {
-      this.#threadFromRoom(input.threadId, input.roomId);
-    }
     this.#database
       .prepare(
         "INSERT INTO messages(message_id, room_id, actor_id, thread_id, body, created_at) VALUES(?, ?, ?, ?, ?, ?)",
@@ -1515,15 +1702,112 @@ export class CollaborationService {
         activationId: input.activationId,
         basedOnRoomSeq: input.basedOnRoomSeq,
         body,
+        ...(input.heldDraftId === undefined
+          ? {}
+          : {
+              heldDraftId: input.heldDraftId,
+              continueAnyway: input.continueAnyway === true ? true : undefined,
+            }),
         messageId,
-        recipientIds: [],
-        recipients: [],
+        recipientIds: recipients.map((recipient) => recipient.participantId),
+        recipients: recipientPayload,
         ...(input.threadId === undefined ? {} : { threadId: input.threadId }),
       },
       roomId: input.roomId,
       type: "message.posted",
     });
-    return { activationIds: [], deduplicated: false, event };
+    resolveHeldMessageDrafts(this.#database, {
+      participantId: actor.principalId,
+      resolution:
+        input.heldDraftId === undefined
+          ? "revised"
+          : input.continueAnyway === true
+            ? "sent_anyway"
+            : "sent_unchanged",
+      roomId: input.roomId,
+      ...(input.threadId === undefined ? {} : { threadId: input.threadId }),
+      timestamp: createdAt,
+    });
+    return {
+      activationIds: this.#events.deriveAttention(event, recipients, createdAt),
+      deduplicated: false,
+      event,
+    };
+  }
+
+  #heldMessageDraftResult(
+    row: Row,
+  ): Extract<WorkerMessagePostResult, { state: "held" }> {
+    const roomId = text(row, "room_id");
+    const threadId = nullableText(row, "thread_id") ?? undefined;
+    const basedOnRoomSeq = integer(row, "based_on_room_seq");
+    const seenUpToSeq = integer(row, "seen_up_to_seq");
+    const parameters: string[] = [roomId];
+    const targetClause =
+      threadId === undefined
+        ? "messages.thread_id IS NULL"
+        : "messages.thread_id = ?";
+    if (threadId !== undefined) parameters.push(threadId);
+    const newerRows = this.#database
+      .prepare(
+        `SELECT room_events.*
+         FROM messages
+         JOIN room_events
+           ON room_events.room_id = messages.room_id
+          AND room_events.aggregate_id = messages.message_id
+          AND room_events.type = 'message.posted'
+         WHERE messages.room_id = ? AND ${targetClause}
+           AND room_events.room_seq > ? AND room_events.room_seq <= ?
+         ORDER BY room_events.room_seq
+         LIMIT 20`,
+      )
+      .all(...parameters, basedOnRoomSeq, seenUpToSeq);
+    const countRow = this.#database
+      .prepare(
+        `SELECT COUNT(*) AS count
+         FROM messages
+         JOIN room_events
+           ON room_events.room_id = messages.room_id
+          AND room_events.aggregate_id = messages.message_id
+          AND room_events.type = 'message.posted'
+         WHERE messages.room_id = ? AND ${targetClause}
+           AND room_events.room_seq > ? AND room_events.room_seq <= ?`,
+      )
+      .get(...parameters, basedOnRoomSeq, seenUpToSeq)!;
+    const newMessageCount = integer(countRow, "count");
+    return {
+      activationIds: [],
+      basedOnRoomSeq,
+      heldDraftId: text(row, "held_draft_id"),
+      newMessageCount,
+      newerMessages: newerRows.map((eventRow) =>
+        this.#events.eventFromRow(eventRow),
+      ),
+      omittedMessageCount: Math.max(0, newMessageCount - newerRows.length),
+      reason: "newer_messages_available",
+      reholdCount: integer(row, "rehold_count"),
+      continueAnywaySuggested:
+        integer(row, "rehold_count") >= CONTINUE_ANYWAY_REHOLD_THRESHOLD,
+      seenUpToSeq,
+      state: "held",
+    };
+  }
+
+  #latestTargetMessageSeq(roomId: string, threadId?: string): number {
+    const row = this.#database
+      .prepare(
+        `SELECT room_events.room_seq
+         FROM messages
+         JOIN room_events
+           ON room_events.room_id = messages.room_id
+          AND room_events.aggregate_id = messages.message_id
+          AND room_events.type = 'message.posted'
+         WHERE messages.room_id = ? AND messages.thread_id IS ?
+         ORDER BY room_events.room_seq DESC
+         LIMIT 1`,
+      )
+      .get(roomId, threadId ?? null);
+    return row === undefined ? 0 : integer(row, "room_seq");
   }
 
   #findEvent(roomId: string, idempotencyKey: string): Row | undefined {

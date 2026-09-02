@@ -32,7 +32,7 @@ type Cursor = {
 };
 export function discoveryPage(
   db: DatabaseSync,
-  table: "messages" | "tasks",
+  table: "messages" | "tasks" | "human_saved_messages",
   actorId: string,
   input: { cursor?: string | undefined; limit?: number | undefined },
 ) {
@@ -41,7 +41,13 @@ export function discoveryPage(
     .update(JSON.stringify([actorId, table, filters]))
     .digest("hex");
   const ceiling = Number(
-    db.prepare(`SELECT COALESCE(MAX(rowid), 0) AS n FROM ${table}`).get()!.n,
+    db
+      .prepare(
+        table === "human_saved_messages"
+          ? "SELECT COALESCE((SELECT seq FROM sqlite_sequence WHERE name='human_saved_messages'),0) AS n"
+          : `SELECT COALESCE(MAX(rowid), 0) AS n FROM ${table}`,
+      )
+      .get()!.n,
   );
   let state: Cursor = { ceiling, before: ceiling + 1, rank: 0, binding };
   if (cursor !== undefined) {
@@ -137,6 +143,13 @@ export class GlobalDiscovery {
       tasks: taken.map((row) => ({
         task: taskProjectionFromRow(this.db, row),
         roomName: row.room_name,
+        target: {
+          kind: "task",
+          roomId: row.room_id,
+          rootMessageId: row.source_message_id,
+          taskId: row.task_id,
+          threadId: row.thread_id,
+        },
       })),
       ...(rows.length > p.limit
         ? { nextCursor: p.next(integer(taken.at(-1)!, "position")) }
@@ -172,6 +185,12 @@ export class GlobalDiscovery {
       "m.room_seq IS NOT NULL",
     ];
     const args: SQLInputValue[] = [input.workspaceId, actorId, p.ceiling, q];
+    if ([...q].length >= 3) {
+      where.push(
+        "m.message_order IN (SELECT rowid FROM message_search WHERE message_search MATCH ?)",
+      );
+      args.push(`"${q.replaceAll('"', '""')}"`);
+    }
     selectIds(where, args, "m.room_id", input.roomIds);
     selectIds(where, args, "m.actor_id", input.senderIds);
     if (input.senderKind) {
@@ -220,6 +239,17 @@ export class GlobalDiscovery {
         message: messageProjectionFromRow(row),
         roomName: row.room_name,
         senderName: row.sender_name,
+        target: {
+          kind: "message",
+          roomId: row.room_id,
+          messageId: row.message_id,
+          ...(row.thread_id === null
+            ? {}
+            : {
+                threadId: row.thread_id,
+                rootMessageId: row.root_message_id,
+              }),
+        },
         ...(row.root_message_id === null
           ? {}
           : { rootMessageId: row.root_message_id }),

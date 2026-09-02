@@ -58,11 +58,11 @@ export function readAgentPresence(
   if (host.state === "offline" || age >= 30_000)
     return result("offline", "host_offline");
   if (host.state === "draining") return result("offline", "host_draining");
-  if (!run) return result("offline", "idle");
+  if (!run) return result("online", "online");
   // Finished execution is durable evidence, not an observation owned by the
   // incumbent Host generation. A healthy restart must not erase that fact.
   if (["exited", "cancelled"].includes(String(run.state)))
-    return result("offline", "idle");
+    return result("online", "online");
   if (run.host_instance_id != null && run.host_instance_id !== host.instance_id)
     return result("offline", "unknown");
   if (["failed", "timed_out", "orphaned"].includes(String(run.state)))
@@ -70,7 +70,7 @@ export function readAgentPresence(
   if (run.process_state === "terminated")
     return run.process_exit_code != null && Number(run.process_exit_code) !== 0
       ? result("error", "error")
-      : result("offline", "idle");
+      : result("online", "online");
   if (run.lease_until_ms == null || Number(run.lease_until_ms) <= now.getTime())
     return result("offline", "unknown");
   // Producer order, not arrival timestamp: delayed old entries stay historical.

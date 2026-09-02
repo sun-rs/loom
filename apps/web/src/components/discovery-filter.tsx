@@ -9,6 +9,8 @@ import {
 import { createPortal } from "react-dom";
 import { Icon } from "./icon.tsx";
 
+export const REACTION_HOVER_CLOSE_MS = 120;
+
 export type DiscoveryOption = {
   id: string;
   label: string;
@@ -30,6 +32,7 @@ export function DiscoveryFilter({
   clearable = true,
   disabled = false,
   triggerLabel = label,
+  triggerAriaLabel,
   showCount = multiple,
   selected = values.length > 0,
   className = "",
@@ -45,24 +48,45 @@ export function DiscoveryFilter({
   clearable?: boolean;
   disabled?: boolean;
   triggerLabel?: string;
+  triggerAriaLabel?: string;
   showCount?: boolean;
   selected?: boolean;
   className?: string;
-  variant?: "selection" | "status";
+  variant?: "selection" | "status" | "reaction" | "sidebar";
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const root = useRef<HTMLDivElement>(null),
     trigger = useRef<HTMLButtonElement>(null),
     menu = useRef<HTMLDivElement>(null);
+  const hoverCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const id = useId();
   const visible = options.filter((option) =>
     option.label.toLocaleLowerCase().includes(query.toLocaleLowerCase()),
   );
+  const cancelHoverClose = () => {
+    if (hoverCloseTimer.current !== null) {
+      clearTimeout(hoverCloseTimer.current);
+      hoverCloseTimer.current = null;
+    }
+  };
   const close = (restore = false) => {
+    cancelHoverClose();
     setOpen(false);
     if (restore) trigger.current?.focus();
   };
+  const containsReactionTarget = (target: EventTarget | null) =>
+    target instanceof Node &&
+    (root.current?.contains(target) || menu.current?.contains(target));
+  const scheduleHoverClose = (relatedTarget: EventTarget | null) => {
+    if (variant !== "reaction" || containsReactionTarget(relatedTarget)) return;
+    cancelHoverClose();
+    hoverCloseTimer.current = setTimeout(
+      () => close(),
+      REACTION_HOVER_CLOSE_MS,
+    );
+  };
+  useEffect(() => cancelHoverClose, []);
   useLayoutEffect(() => {
     if (!open) return;
     const place = () => {
@@ -88,11 +112,15 @@ export function DiscoveryFilter({
     place();
     if (searchable)
       menu.current?.querySelector<HTMLInputElement>("input")?.focus();
-    window.addEventListener("resize", place);
-    window.addEventListener("scroll", place, true);
+    const viewportChanged = () => {
+      if (variant === "reaction") close();
+      else place();
+    };
+    window.addEventListener("resize", viewportChanged);
+    window.addEventListener("scroll", viewportChanged, true);
     return () => {
-      window.removeEventListener("resize", place);
-      window.removeEventListener("scroll", place, true);
+      window.removeEventListener("resize", viewportChanged);
+      window.removeEventListener("scroll", viewportChanged, true);
     };
   }, [open, searchable, variant]);
   useEffect(() => {
@@ -134,11 +162,20 @@ export function DiscoveryFilter({
     <div
       className={`task-filter rah-discovery-filter${selected ? " is-selected" : ""} ${className}`}
       ref={root}
+      onMouseEnter={variant === "reaction" ? cancelHoverClose : undefined}
+      onMouseLeave={
+        variant === "reaction"
+          ? (event) => scheduleHoverClose(event.relatedTarget)
+          : undefined
+      }
     >
       <button
         ref={trigger}
         type="button"
-        className="task-filter-trigger"
+        className={`task-filter-trigger${
+          variant === "sidebar" ? " rah-interaction-flat" : ""
+        }`}
+        aria-label={triggerAriaLabel}
         disabled={disabled}
         aria-expanded={open}
         aria-haspopup="menu"
@@ -167,11 +204,17 @@ export function DiscoveryFilter({
       {open &&
         createPortal(
           <div
-            className={`rah-discovery-popover${variant === "status" ? " is-status" : ""}`}
+            className={`rah-discovery-popover is-${variant}`}
             ref={menu}
             id={id}
             role="menu"
             aria-label={`${label}筛选`}
+            onMouseEnter={variant === "reaction" ? cancelHoverClose : undefined}
+            onMouseLeave={
+              variant === "reaction"
+                ? (event) => scheduleHoverClose(event.relatedTarget)
+                : undefined
+            }
             onKeyDown={(event) => {
               if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
                 if (
@@ -215,7 +258,7 @@ export function DiscoveryFilter({
               }
             }}
           >
-            {variant !== "status" && (
+            {variant === "selection" && (
               <header>
                 <b>{label}</b>
                 {clearable && values.length > 0 && (
@@ -243,7 +286,11 @@ export function DiscoveryFilter({
                   role={multiple ? "menuitemcheckbox" : "menuitemradio"}
                   aria-checked={values.includes(option.id)}
                   disabled={Boolean(option.disabledReason)}
-                  title={option.disabledReason}
+                  title={
+                    option.disabledReason ??
+                    (variant === "reaction" ? option.label : undefined)
+                  }
+                  aria-label={variant === "reaction" ? option.label : undefined}
                   onClick={() => choose(option.id)}
                 >
                   {option.leading && (

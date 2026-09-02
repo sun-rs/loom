@@ -82,8 +82,9 @@ if (args.join(" ") === "debug models --bundled") {
       send({jsonrpc:"2.0",id:frame.id,result:{turn:{id:"local-workbench-turn",status:"inProgress"}}});
       const worker = spawn(process.execPath, [${JSON.stringify(fakeCli)}], {
         env: process.env,
-        stdio: ["ignore", "ignore", "inherit"],
+        stdio: ["ignore", "ignore", "pipe"],
       });
+      worker.stderr.on("data", (chunk) => record({workerStderr:String(chunk)}));
       worker.once("exit", (code) => {
         const status = code === 0 ? "completed" : "failed";
         send({jsonrpc:"2.0",method:"turn/completed",params:{threadId:"local-workbench-thread",turn:{id:"local-workbench-turn",status}}});
@@ -236,16 +237,35 @@ if (args.join(" ") === "debug models --bundled") {
     recipients: [],
     roomId: second.descriptor.defaultRoomId,
   });
-  await waitUntil(async () => {
-    const messages = await secondSession.client.request("message.list", {
-      roomId: second.descriptor.defaultRoomId,
-    });
-    return (
-      messages.messages.filter(
-        ({ body }) => body === "formal-workbench-agent-reply",
-      ).length === 2
+  try {
+    await waitUntil(async () => {
+      const messages = await secondSession.client.request("message.list", {
+        roomId: second.descriptor.defaultRoomId,
+      });
+      return (
+        messages.messages.filter(
+          ({ body }) => body === "formal-workbench-agent-reply",
+        ).length === 2
+      );
+    }, 15_000);
+  } catch (error) {
+    const diagnosticResponse = await fetch(
+      `${second.descriptor.webOrigin}/v3/client/messages/list`,
+      {
+        body: JSON.stringify({ roomId: second.descriptor.defaultRoomId }),
+        headers: {
+          authorization: "Bearer trusted-proxy-auth",
+          "content-type": "application/json",
+          cookie: secondSession.cookie,
+          origin: second.descriptor.webOrigin,
+        },
+        method: "POST",
+      },
     );
-  }, 15_000);
+    throw new Error(
+      `${error instanceof Error ? error.message : String(error)}\nHTTP ${String(diagnosticResponse.status)} ${await diagnosticResponse.text()}\n${second.output()}`,
+    );
+  }
   const resumedProtocol = readFileSync(fakeCodexProtocolPath, "utf8")
     .trim()
     .split("\n")
@@ -375,6 +395,31 @@ if (args.join(" ") === "debug models --bundled") {
     browser,
     `document.querySelector('.rah-agent-manage-dialog button[aria-label="关闭"]')?.click()`,
   );
+  await evaluate(
+    browser,
+    `[...document.querySelectorAll(".rah-agent-detail-tabs button")].find((button) => button.textContent?.trim() === "提醒")?.click()`,
+  );
+  await waitForBrowserValue(
+    browser,
+    `document.querySelector(".rah-agent-reminders-list")?.textContent?.includes("Verify durable Reminder projection") === true`,
+    { description: "durable non-empty Agent Reminder projection" },
+  );
+  assert.match(
+    await evaluate(
+      browser,
+      `document.querySelector(".rah-agent-reminder-reference")?.textContent?.trim() ?? ""`,
+    ),
+    /^消息 #/u,
+  );
+  await evaluate(
+    browser,
+    `document.querySelector(".rah-agent-reminder-reference")?.click()`,
+  );
+  await waitForBrowserValue(
+    browser,
+    `document.querySelector(".rah-agent-detail-panel") === null && document.body.innerText.includes("Prove that the Provider thread resumes after a daemon restart.")`,
+    { description: "typed Reminder source Message navigation" },
+  );
   assert.equal(
     await evaluate(
       browser,
@@ -385,6 +430,79 @@ if (args.join(" ") === "debug models --bundled") {
   assert.equal(
     await evaluate(browser, "document.documentElement.scrollWidth"),
     1_440,
+  );
+  await evaluate(
+    browser,
+    `(() => {
+      const url = new URL(location.href);
+      url.search = new URLSearchParams({room:${JSON.stringify(second.descriptor.defaultRoomId)}}).toString();
+      history.pushState(null, "", url);
+      dispatchEvent(new PopStateEvent("popstate"));
+    })()`,
+  );
+  await waitForBrowserValue(
+    browser,
+    `document.body.innerText.includes("formal-workbench-agent-reply")`,
+    { description: "production Room restored before Core restart" },
+  );
+  await evaluate(
+    browser,
+    `(() => {
+      document.documentElement.dataset.rahRestartProbe = "same-document";
+      window.__rahRepeatedMessageErrors = [];
+      window.__rahRestartObserver = new MutationObserver(() => {
+        for (const element of document.querySelectorAll(".rah-message-action-error")) {
+          const text = element.textContent?.trim();
+          if (text && !window.__rahRepeatedMessageErrors.includes(text)) {
+            window.__rahRepeatedMessageErrors.push(text);
+          }
+        }
+      });
+      window.__rahRestartObserver.observe(document.body, {childList:true, subtree:true});
+    })()`,
+  );
+  await terminate(workbench);
+  workbench = undefined;
+  const third = await startWorkbench();
+  workbench = third.processHandle;
+  assert.equal(third.descriptor.webOrigin, second.descriptor.webOrigin);
+  try {
+    await waitForBrowserValue(
+      browser,
+      `document.documentElement.dataset.rahRestartProbe === "same-document" &&
+        document.querySelector(".rah-error") === null &&
+        document.querySelector(".rah-message-action-error") === null &&
+        document.body.innerText.includes("formal-workbench-agent-reply")`,
+      {
+        description:
+          "already-open production page recovers after Core restart without reload or repeated per-Message errors",
+        timeoutMs: 30_000,
+      },
+    );
+  } catch (error) {
+    const restartState = await evaluate(
+      browser,
+      `({
+        href: location.href,
+        marker: document.documentElement.dataset.rahRestartProbe,
+        globalError: document.querySelector(".rah-error")?.textContent?.trim(),
+        messageErrors: [...document.querySelectorAll(".rah-message-action-error")].map((element) => element.textContent?.trim()),
+        repeatedErrors: window.__rahRepeatedMessageErrors,
+        hasReply: document.body.innerText.includes("formal-workbench-agent-reply"),
+        body: document.body.innerText.slice(0, 2000)
+      })`,
+    );
+    throw new Error(
+      `${error instanceof Error ? error.message : String(error)}: ${JSON.stringify(restartState)}`,
+    );
+  }
+  assert.deepEqual(
+    await evaluate(browser, "window.__rahRepeatedMessageErrors"),
+    [],
+  );
+  await evaluate(
+    browser,
+    `window.__rahRestartObserver?.disconnect(); delete window.__rahRestartObserver`,
   );
   await browser.command("Emulation.setDeviceMetricsOverride", {
     deviceScaleFactor: 1,
@@ -409,6 +527,7 @@ if (args.join(" ") === "debug models --bundled") {
       persistentRestart: true,
       providerSessionResume: true,
       productionBuild: true,
+      seamlessBrowserRestart: true,
       viewport: "390x844",
     })}\n`,
   );
@@ -416,7 +535,13 @@ if (args.join(" ") === "debug models --bundled") {
   browser?.close();
   await terminate(chrome);
   await terminate(workbench);
-  rmSync(temporaryDirectory, { force: true, recursive: true });
+  if (process.env.RAH_KEEP_GATE_TEMP === "1") {
+    process.stderr.write(
+      `RAH_LOCAL_WORKBENCH_GATE_TEMP ${temporaryDirectory}\n`,
+    );
+  } else {
+    rmSync(temporaryDirectory, { force: true, recursive: true });
+  }
 }
 
 async function startWorkbench() {
@@ -431,6 +556,7 @@ async function startWorkbench() {
         PATH: `${binDirectory}${delimiter}${dirname(process.execPath)}`,
         RAH_FAKE_MODE: "worker-task",
         RAH_FAKE_CODEX_PROTOCOL_PATH: fakeCodexProtocolPath,
+        RAH_FAKE_REMINDER_TITLE: "Verify durable Reminder projection",
         RAH_FAKE_ROOM_REPLY: "formal-workbench-agent-reply",
         RAH_OS_HOME: workbenchHome,
         RAH_WEB_PORT: String(webPort),
@@ -455,6 +581,7 @@ async function startWorkbench() {
     if (line !== undefined) {
       return {
         descriptor: JSON.parse(line.slice("RAH_LOCAL_WORKBENCH ".length)),
+        output: () => output,
         processHandle,
       };
     }

@@ -7,6 +7,22 @@ import { GlobalDiscovery } from "./global-discovery.ts";
 import { HumanActivity } from "./human-activity.ts";
 import { initializeDiscoverySchema } from "./discovery-schema.ts";
 import { migrateLegacyTaskSchema } from "./legacy-task-schema.ts";
+import {
+  expireHeldMessageDraftsAt,
+  initializeHeldMessageDrafts,
+} from "./held-message-drafts.ts";
+import { ActivationObligationService } from "./activation-obligation-service.ts";
+import { ReminderService } from "./reminder-service.ts";
+import type { RoomKernelOptions } from "./room-kernel-options.ts";
+export type {
+  PlacementCapacityPolicy,
+  RoomKernelOptions,
+} from "./room-kernel-options.ts";
+import {
+  applyActivationRetryPolicy,
+  isActivationRetryBlocked,
+  resolveActivationRetryFence,
+} from "./activation-retry-fence.ts";
 import type {
   GlobalTasksRequest,
   WorkspaceSearchRequest,
@@ -45,6 +61,7 @@ import {
   type RoomEvent,
   type PlacementDecision,
   type RuntimeRecoveryDescriptor,
+  type RuntimeRetryDisposition,
   type RuntimeTrajectoryAppendInput,
   type RuntimeTrajectoryRecord,
   type RuntimeCertification,
@@ -52,6 +69,7 @@ import {
   type RuntimeOfferProjection,
   type RoomAgentActivity,
   type Task,
+  type WorkerMessagePostRequest,
 } from "@rah-os/protocol";
 
 import {
@@ -65,7 +83,6 @@ import {
   NotFoundError,
   RuntimeTerminationProofError,
   StaleContextError,
-  TaskSubmissionProofError,
   UnauthenticatedError,
 } from "./errors.ts";
 import { eventPayloadText } from "./event-payload.ts";
@@ -143,8 +160,11 @@ import {
 import {
   migrateCollaborationSchemaV7,
   migrateRoomMetadataV14,
+  migrateActivationRetryFencesV35,
+  migrateReminderTargetsV36,
   SCHEMA_SQL,
 } from "./schema.ts";
+import * as agentThreads from "./agent-thread-subscriptions.ts";
 import {
   integer,
   jsonObject,
@@ -171,7 +191,10 @@ import { computeRuntimeCertificationDigest } from "./runtime-certification.ts";
 import { ManagedMcpService } from "./managed-mcp-service.ts";
 import { TaskReviewService } from "./task-review-service.ts";
 import { TaskLifecycleService } from "./task-lifecycle-service.ts";
+import * as principalProfile from "./principal-profile.ts";
+import { createHumanCommandServices } from "./human-command-services.ts";
 import { requireWorkerTaskDelivery } from "./worker-task-scope.ts";
+import * as workerMessages from "./worker-message-routing.ts";
 import {
   listTaskProjections,
   taskDependenciesComplete,
@@ -241,34 +264,7 @@ import type {
 const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 22;
-
-export type PlacementCapacityPolicy = {
-  defaultMaxConcurrent?: number;
-  hostLimits?: ReadonlyArray<{
-    hostId: string;
-    maxConcurrent: number;
-  }>;
-  poolLimits?: ReadonlyArray<{
-    capacityPoolId: string;
-    maxConcurrent: number;
-  }>;
-  runtimeProfileLimits?: ReadonlyArray<{
-    hostId: string;
-    maxConcurrent: number;
-    runtimeProfileId: string;
-  }>;
-};
-
-export type RoomKernelOptions = {
-  databasePath: string;
-  now?: () => Date;
-  createId?: (prefix: string) => string;
-  placementCapacityPolicy?: PlacementCapacityPolicy;
-  runtimeCertifications?: RuntimeCertification[];
-  runtimeOfferClockSkewMs?: number;
-  runtimeOfferMaxTtlMs?: number;
-};
+export const KERNEL_SCHEMA_VERSION = 36;
 
 export class RoomKernel {
   readonly databasePath: string;
@@ -283,12 +279,19 @@ export class RoomKernel {
   readonly #hostPlacementLimits: Map<string, number>;
   readonly #poolPlacementLimits: Map<string, number>;
   readonly #runtimeProfilePlacementLimits: Map<string, number>;
+  readonly #activationObligations: ActivationObligationService;
   readonly #roomEvents: RoomEventWriter;
   readonly #collaboration: CollaborationService;
   readonly #managedMcp: ManagedMcpService;
   readonly files: RoomFiles;
+  readonly messageSocial;
+  readonly humanSidebar;
+  readonly humanNavigation;
+  readonly humanNotifications;
+  readonly reminders: ReminderService;
   readonly #taskReviews: TaskReviewService;
   readonly #taskLifecycle: TaskLifecycleService;
+  readonly taskReassignment;
   readonly #runtimeTrajectory: RuntimeTrajectoryService;
 
   constructor(options: RoomKernelOptions) {
@@ -379,15 +382,47 @@ export class RoomKernel {
         this.#requireHostParticipant(host, participantId),
       transaction: (operation) => this.#transaction(operation),
     });
+    this.#activationObligations = new ActivationObligationService({
+      createId: this.#createId,
+      database: this.#database,
+    });
     this.#roomEvents = new RoomEventWriter({
       createId: this.#createId,
       database: this.#database,
       now: this.#now,
+      obligations: this.#activationObligations,
     });
+    this.reminders = new ReminderService({
+      createId: this.#createId,
+      database: this.#database,
+      events: this.#roomEvents,
+      defaultTimezone: options.reminderDefaultTimezone,
+      fireDeliveryHook: options.reminderFireDeliveryHook,
+      now: this.#now,
+      requireActor: (actor) => this.#requireAuthenticatedActor(actor),
+      requireWorker: (worker) =>
+        this.#requireAuthenticatedWorkerExecution(worker),
+      transaction: (operation) => this.#transaction(operation),
+    });
+    const humanCommands = createHumanCommandServices({
+      createId: this.#createId,
+      database: this.#database,
+      events: this.#roomEvents,
+      now: this.#now,
+      requireActor: (actor) => this.#requireAuthenticatedActor(actor),
+      transaction: (operation) => this.#transaction(operation),
+    });
+    this.humanSidebar = humanCommands.humanSidebar;
+    this.humanNavigation = humanCommands.humanNavigation;
+    this.humanNotifications = humanCommands.humanNotifications;
+    this.messageSocial = humanCommands.messageSocial;
+    this.taskReassignment = humanCommands.taskReassignment;
     this.files = new RoomFiles({
       database: this.#database,
       directory: join(dirname(options.databasePath), "room-files"),
       requireActor: (actor) => this.#requireAuthenticatedActor(actor),
+      requireWorker: (worker) =>
+        this.#requireAuthenticatedWorkerExecution(worker),
       now: this.#now,
     });
     this.#collaboration = new CollaborationService({
@@ -457,9 +492,13 @@ export class RoomKernel {
     }
     migrateLegacyTaskSchema(this.#database);
     this.#database.exec(SCHEMA_SQL);
+    initializeHeldMessageDrafts(this.#database, this.#now());
     migrateCollaborationSchemaV7(this.#database, this.#timestamp());
     migrateTaskAnchorsV9(this.#database, this.#createId, this.#roomEvents);
     migrateRoomMetadataV14(this.#database);
+    migrateActivationRetryFencesV35(this.#database);
+    migrateReminderTargetsV36(this.#database);
+    principalProfile.migrate(this.#database);
     if (
       !this.#database
         .prepare("PRAGMA table_info(workspaces)")
@@ -470,7 +509,10 @@ export class RoomKernel {
     }
     this.files.initialize();
     initializeDiscoverySchema(this.#database);
+    this.humanNotifications.initialize();
     this.#taskReviews.backfillLegacySubmissions();
+    this.#activationObligations.backfillActive();
+    agentThreads.backfillAgentThreadFollows(this.#database, this.#timestamp());
     this.#database.exec(
       "CREATE UNIQUE INDEX IF NOT EXISTS idx_one_control_room_per_workspace ON rooms(workspace_id) WHERE kind = 'control'",
     );
@@ -725,7 +767,7 @@ export class RoomKernel {
 
   authenticateHumanAccessToken(accessToken: string): AuthenticatedActorContext {
     const actor = this.authenticateAccessToken(accessToken);
-    const principal = this.#principalFromRow(
+    const principal = principalProfile.fromRow(
       this.#requirePrincipal(actor.principalId),
     );
     if (principal.kind !== "human") {
@@ -735,9 +777,24 @@ export class RoomKernel {
   }
 
   getAuthenticatedPrincipal(actor: AuthenticatedActorContext): Principal {
-    const actorId = this.#requireAuthenticatedActor(actor);
-    return this.#principalFromRow(this.#requirePrincipal(actorId));
+    return principalProfile.fromRow(
+      this.#requirePrincipal(this.#requireAuthenticatedActor(actor)),
+    );
   }
+
+  updateAuthenticatedPrincipal(
+    actor: AuthenticatedActorContext,
+    rawInput: import("@rah-os/protocol").ClientPrincipalUpdateRequest,
+  ): Principal {
+    return this.#transaction(() =>
+      principalProfile.update(
+        this.#database,
+        this.getAuthenticatedPrincipal(actor),
+        rawInput,
+      ),
+    );
+  }
+
   provisionHostCredential(input: {
     hostId: string;
     participantIds: string[];
@@ -752,7 +809,7 @@ export class RoomKernel {
     const credentialId = this.#createId("host_credential");
     this.#transaction(() => {
       for (const participantId of participantIds) {
-        const principal = this.#principalFromRow(
+        const principal = principalProfile.fromRow(
           this.#requirePrincipal(participantId),
         );
         if (principal.kind !== "agent") {
@@ -1068,21 +1125,18 @@ export class RoomKernel {
 
   replyThread(
     actor: AuthenticatedActorContext,
-    input: {
-      basedOnRoomSeq: number;
-      body: string;
-      idempotencyKey: string;
-      recipientIds: string[];
-      roomId: string;
-      threadId: string;
-    },
+    input: ar.HumanThreadReplyInput,
   ): MessageMutationResult {
-    return this.#transaction(() => {
-      return this.#collaboration.replyThread(
-        this.getAuthenticatedPrincipal(actor),
+    return this.#transaction(() =>
+      ar.replyHumanThread({
+        actor,
+        collaboration: this.#collaboration,
+        database: this.#database,
+        files: this.files,
         input,
-      );
-    });
+        principal: this.getAuthenticatedPrincipal(actor),
+      }),
+    );
   }
 
   postMessage(
@@ -1121,18 +1175,14 @@ export class RoomKernel {
 
   postWorkerMessage(
     execution: AuthenticatedWorkerExecutionContext,
-    input: {
-      basedOnRoomSeq: number;
-      body: string;
-      idempotencyKey: string;
-    },
-  ): MessageMutationResult {
+    input: WorkerMessagePostRequest,
+  ) {
     return this.#transaction(() => {
       const scope = this.#requireAuthenticatedWorkerExecution(execution);
       if (input.basedOnRoomSeq !== scope.toSeq) {
         throw new StaleContextError(input.basedOnRoomSeq, scope.toSeq);
       }
-      let threadId: string | undefined;
+      let taskThreadId: string | undefined;
       const causalEventRow = this.#database
         .prepare("SELECT * FROM room_events WHERE room_id = ? AND room_seq = ?")
         .get(scope.roomId, scope.toSeq);
@@ -1161,36 +1211,59 @@ export class RoomKernel {
         )
         .get(scope.participantId, scope.activationId, scope.roomId);
       if (taskScopedEvent !== undefined) {
-        threadId = text(
+        taskThreadId = text(
           this.#requireTaskRow(text(taskScopedEvent, "aggregate_id")),
           "thread_id",
         );
       }
-      const causalRecipients = causalEvent.payload.recipients;
-      const isThreadSubscription =
-        Array.isArray(causalRecipients) &&
-        causalRecipients.some(
-          (recipient) =>
-            typeof recipient === "object" &&
-            recipient !== null &&
-            (recipient as Record<string, unknown>).participantId ===
-              scope.participantId &&
-            (recipient as Record<string, unknown>).reason ===
-              "thread_subscription",
-        );
-      if (threadId === undefined && isThreadSubscription) {
-        threadId = eventPayloadText(causalEvent, "threadId");
-      }
+      const route = workerMessages.workerReplyRoute({
+        causalEvent,
+        database: this.#database,
+        participantId: scope.participantId,
+        roomId: scope.roomId,
+        ...(taskThreadId === undefined ? {} : { taskThreadId }),
+      });
       return this.#collaboration.postActivationMessage(
-        this.#principalFromRow(this.#requirePrincipal(scope.participantId)),
+        principalProfile.fromRow(this.#requirePrincipal(scope.participantId)),
         {
-          ...input,
           activationId: scope.activationId,
+          basedOnRoomSeq: input.basedOnRoomSeq,
+          idempotencyKey: input.idempotencyKey,
+          recipients: route.recipients,
           roomId: scope.roomId,
-          ...(threadId === undefined ? {} : { threadId }),
+          ...(input.sendDraft === true
+            ? {
+                ...(input.anyway === true ? { continueAnyway: true } : {}),
+                ...(input.heldDraftId === undefined
+                  ? {}
+                  : { heldDraftId: input.heldDraftId }),
+              }
+            : input.body === undefined
+              ? {}
+              : { body: input.body }),
+          ...(route.threadId === undefined ? {} : { threadId: route.threadId }),
         },
       );
     });
+  }
+
+  unfollowWorkerThread(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: {
+      basedOnRoomSeq: number;
+      idempotencyKey: string;
+      threadId: string;
+    },
+  ) {
+    return this.#transaction(() =>
+      agentThreads.unfollowWorkerThreadTransaction({
+        command: input,
+        database: this.#database,
+        events: this.#roomEvents,
+        scope: this.#requireAuthenticatedWorkerExecution(execution),
+        updatedAt: this.#timestamp(),
+      }),
+    );
   }
 
   createTask(
@@ -1289,7 +1362,7 @@ export class RoomKernel {
         "SELECT * FROM input_requests WHERE room_id = ? ORDER BY created_at, input_request_id",
       )
       .all(input.roomId)
-      .map((row) => this.#inputRequestFromRow(row));
+      .map((row) => inputRequestProjectionFromRow(row));
   }
 
   claimMessageAsTask(
@@ -1685,7 +1758,7 @@ export class RoomKernel {
       const taskRow = this.#requireWorkerTask(scope, input.taskId);
       const responderId = text(taskRow, "creator_id");
       if (
-        this.#principalFromRow(this.#requirePrincipal(responderId)).kind !==
+        principalProfile.fromRow(this.#requirePrincipal(responderId)).kind !==
         "human"
       ) {
         throw new ConflictError(
@@ -1705,7 +1778,7 @@ export class RoomKernel {
         return {
           deduplicated: true,
           event,
-          inputRequest: this.#inputRequestFromRow(
+          inputRequest: inputRequestProjectionFromRow(
             this.#requireInputRequestRow(event.aggregateId),
           ),
           task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
@@ -1765,7 +1838,7 @@ export class RoomKernel {
       return {
         deduplicated: false,
         event,
-        inputRequest: this.#inputRequestFromRow(
+        inputRequest: inputRequestProjectionFromRow(
           this.#requireInputRequestRow(inputRequestId),
         ),
         task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
@@ -1799,6 +1872,10 @@ export class RoomKernel {
         input.taskId,
       );
       this.#requireOwnedTaskClaim(taskRow, scope.participantId, "in_progress");
+      const artifactEvidence = this.files.forTaskSubmission(
+        execution,
+        input.taskId,
+      );
 
       const submittedAt = this.#timestamp();
       this.#database
@@ -1812,23 +1889,29 @@ export class RoomKernel {
         taskRow,
         {
           actorId: scope.participantId,
+          attachments: artifactEvidence.attachments,
           body: summary,
           createdAt: submittedAt,
           roomId: scope.roomId,
         },
       );
       const submission = this.#taskReviews.recordSubmission(taskRow, {
+        artifacts: artifactEvidence.references,
         createdAt: submittedAt,
         messageId,
         producerId: scope.participantId,
         summary,
       });
+      this.files.consume(artifactEvidence.attachments, messageId);
       const event = this.#appendWorkerTaskEvent(scope, {
         basedOnRoomSeq: input.basedOnRoomSeq,
         eventType: "task.submitted",
         idempotencyKey: input.idempotencyKey,
         payload: {
           messageId,
+          artifactIds: artifactEvidence.references.map(
+            ({ attachmentId }) => attachmentId,
+          ),
           submissionDigest: submission.submissionDigest,
           submissionId: submission.submissionId,
           summary,
@@ -1843,6 +1926,13 @@ export class RoomKernel {
         )
         .all(input.taskId)
         .map((reviewer) => ({
+          obligations: [
+            {
+              kind: "task_review" as const,
+              submissionId: submission.submissionId,
+              taskId: input.taskId,
+            },
+          ],
           participantId: text(reviewer, "participant_id"),
           reason: "task_review" as const,
         }));
@@ -1874,7 +1964,7 @@ export class RoomKernel {
       }
       this.#requireMember(roomId, input.assigneeId);
       if (
-        this.#principalFromRow(this.#requirePrincipal(input.assigneeId))
+        principalProfile.fromRow(this.#requirePrincipal(input.assigneeId))
           .kind !== "agent"
       ) {
         throw new ForbiddenError("Task assignee must be an Agent principal");
@@ -2116,7 +2206,7 @@ export class RoomKernel {
           activationIds: [],
           deduplicated: true,
           event,
-          inputRequest: this.#inputRequestFromRow(
+          inputRequest: inputRequestProjectionFromRow(
             this.#requireInputRequestRow(input.inputRequestId),
           ),
           task: this.#taskFromRow(this.#requireTaskRow(taskId)),
@@ -2175,7 +2265,7 @@ export class RoomKernel {
         activationIds,
         deduplicated: false,
         event,
-        inputRequest: this.#inputRequestFromRow(
+        inputRequest: inputRequestProjectionFromRow(
           this.#requireInputRequestRow(input.inputRequestId),
         ),
         task: this.#taskFromRow(this.#requireTaskRow(taskId)),
@@ -2352,14 +2442,14 @@ export class RoomKernel {
         `SELECT * FROM activations${where} ORDER BY created_at, activation_id`,
       )
       .all(...parameters)
-      .map((row) => this.#activationFromRow(row));
+      .map((row) => activationProjectionFromRow(row));
   }
 
   listOutbox(): OutboxEntry[] {
     return this.#database
       .prepare("SELECT * FROM outbox ORDER BY outbox_seq")
       .all()
-      .map((row) => this.#outboxFromRow(row));
+      .map((row) => outboxProjectionFromRow(row));
   }
 
   createExecutionPolicy(
@@ -2810,7 +2900,9 @@ export class RoomKernel {
   ): RoomMembershipMutationResult {
     return this.#transaction(() => {
       const actorId = this.#requireAuthenticatedActor(actor);
-      const principal = this.#principalFromRow(this.#requirePrincipal(actorId));
+      const principal = principalProfile.fromRow(
+        this.#requirePrincipal(actorId),
+      );
       if (principal.kind !== "human") {
         throw new ForbiddenError(
           "Agent onboarding requires an authenticated Human principal",
@@ -3280,7 +3372,7 @@ export class RoomKernel {
         throw new NotFoundError("claimed Placement disappeared");
       }
       return {
-        activation: this.#activationFromRow(
+        activation: activationProjectionFromRow(
           this.#requireActivationRow(activationId),
         ),
         agentContext: agentRuntimeContextFromPlacement(
@@ -3346,7 +3438,7 @@ export class RoomKernel {
     }
     return this.#transaction(() => {
       for (const participantId of participantIds) {
-        const principal = this.#principalFromRow(
+        const principal = principalProfile.fromRow(
           this.#requirePrincipal(participantId),
         );
         if (principal.kind !== "agent") {
@@ -4049,7 +4141,7 @@ export class RoomKernel {
           attemptCount,
           outboxId,
         );
-      return this.#outboxFromRow(this.#requireOutboxRow(outboxId));
+      return outboxProjectionFromRow(this.#requireOutboxRow(outboxId));
     });
   }
 
@@ -4060,7 +4152,7 @@ export class RoomKernel {
     return this.#transaction(() => {
       const row = this.#requireOutboxRow(input.outboxId);
       if (nullableText(row, "published_at") !== null) {
-        return this.#outboxFromRow(row);
+        return outboxProjectionFromRow(row);
       }
       this.#requireOutboxLease(row, input.dispatcherId);
       this.#database
@@ -4068,7 +4160,7 @@ export class RoomKernel {
           "UPDATE outbox SET published_at = ?, lease_owner = NULL, lease_until = NULL, lease_until_ms = NULL, last_error = NULL WHERE outbox_id = ?",
         )
         .run(this.#timestamp(), input.outboxId);
-      return this.#outboxFromRow(this.#requireOutboxRow(input.outboxId));
+      return outboxProjectionFromRow(this.#requireOutboxRow(input.outboxId));
     });
   }
 
@@ -4091,7 +4183,7 @@ export class RoomKernel {
           "UPDATE outbox SET available_at_ms = ?, lease_owner = NULL, lease_until = NULL, lease_until_ms = NULL, last_error = ? WHERE outbox_id = ?",
         )
         .run(this.#now().getTime() + input.retryAfterMs, error, input.outboxId);
-      return this.#outboxFromRow(this.#requireOutboxRow(input.outboxId));
+      return outboxProjectionFromRow(this.#requireOutboxRow(input.outboxId));
     });
   }
 
@@ -4113,6 +4205,7 @@ export class RoomKernel {
     return this.#transaction(() => {
       const now = this.#now();
       const nowMs = now.getTime();
+      expireHeldMessageDraftsAt(this.#database, now);
       this.#reconcileUnownedRuntimeProcesses(participantIds, now);
       this.#quarantineExpiredActiveRuns(participantIds, now);
       this.#reconcileProvenActivationQuarantines(participantIds);
@@ -4155,7 +4248,9 @@ export class RoomKernel {
         roomId,
         type: "activation.leased",
       });
-      return this.#activationFromRow(this.#requireActivationRow(activationId));
+      return activationProjectionFromRow(
+        this.#requireActivationRow(activationId),
+      );
     });
   }
 
@@ -4197,7 +4292,7 @@ export class RoomKernel {
           now.toISOString(),
           input.activationId,
         );
-      return this.#activationFromRow(
+      return activationProjectionFromRow(
         this.#requireActivationRow(input.activationId),
       );
     });
@@ -4216,7 +4311,7 @@ export class RoomKernel {
       );
       this.#requireActivationLease(row, authenticatedHost.hostId);
       this.#requireActivationHostGeneration(row, authenticatedHost);
-      return this.#activationFromRow(
+      return activationProjectionFromRow(
         resolveActivationCancellationTransaction({
           activation: row,
           database: this.#database,
@@ -4245,7 +4340,7 @@ export class RoomKernel {
         text(row, "state") === "quarantined" &&
         nullableText(row, "last_error") === error
       ) {
-        return this.#activationFromRow(row);
+        return activationProjectionFromRow(row);
       }
       this.#requireActivationLease(row, authenticatedHost.hostId);
       this.#requireActivationHostGeneration(row, authenticatedHost);
@@ -4299,7 +4394,7 @@ export class RoomKernel {
         roomId: text(row, "room_id"),
         type: "activation.quarantined",
       });
-      return this.#activationFromRow(
+      return activationProjectionFromRow(
         this.#requireActivationRow(input.activationId),
       );
     });
@@ -4328,6 +4423,7 @@ export class RoomKernel {
       activationId: string;
       error: string;
       retryAfterMs: number;
+      retryDisposition?: RuntimeRetryDisposition;
     },
   ): Activation {
     const authenticatedHost = this.#requireAuthenticatedHost(host);
@@ -4356,7 +4452,7 @@ export class RoomKernel {
         text(row, "state") === "queued" &&
         nullableText(row, "last_error") === error
       ) {
-        return this.#activationFromRow(row);
+        return activationProjectionFromRow(row);
       }
       this.#requireActivationLease(row, authenticatedHost.hostId);
       this.#requireActivationHostGeneration(row, authenticatedHost);
@@ -4409,36 +4505,24 @@ export class RoomKernel {
       }
 
       const now = this.#now();
-      const availableAt = new Date(now.getTime() + input.retryAfterMs);
-      this.#database
-        .prepare(
-          "UPDATE activations SET state = 'queued', from_seq = ?, to_seq = ?, lease_owner = NULL, lease_until = NULL, lease_until_ms = NULL, available_at = ?, available_at_ms = ?, last_error = ?, updated_at = ? WHERE activation_id = ?",
-        )
-        .run(
-          fromSeq,
-          toSeq,
-          availableAt.toISOString(),
-          availableAt.getTime(),
-          error,
-          now.toISOString(),
-          input.activationId,
-        );
-      this.#appendEvent({
-        actorId: SYSTEM_PRINCIPAL_ID,
-        aggregateId: input.activationId,
-        aggregateType: "activation",
-        idempotencyKey: `activation.retry:${input.activationId}:${integer(row, "attempt_count")}`,
-        payload: {
-          activationId: input.activationId,
-          availableAt: availableAt.toISOString(),
-          error,
-          hostId: authenticatedHost.hostId,
-          ...(mergedActivationId === undefined ? {} : { mergedActivationId }),
-        },
+      applyActivationRetryPolicy(this.#database, this.#roomEvents, {
+        activationId: input.activationId,
+        attemptCount: integer(row, "attempt_count"),
+        error,
+        fromSeq,
+        hostId: authenticatedHost.hostId,
+        ...(mergedActivationId === undefined ? {} : { mergedActivationId }),
+        now,
+        participantId: text(row, "participant_id"),
+        retryAfterMs: input.retryAfterMs,
+        ...(input.retryDisposition === undefined
+          ? {}
+          : { retryDisposition: input.retryDisposition }),
         roomId: text(row, "room_id"),
-        type: "activation.retry_scheduled",
+        systemPrincipalId: SYSTEM_PRINCIPAL_ID,
+        toSeq,
       });
-      return this.#activationFromRow(
+      return activationProjectionFromRow(
         this.#requireActivationRow(input.activationId),
       );
     });
@@ -4460,7 +4544,7 @@ export class RoomKernel {
       }
       if (text(row, "state") === "completed") {
         this.#requireActivationHostGeneration(row, authenticatedHost);
-        return this.#activationFromRow(row);
+        return activationProjectionFromRow(row);
       }
       this.#requireActivationLease(row, authenticatedHost.hostId);
       this.#requireActivationHostGeneration(row, authenticatedHost);
@@ -4490,59 +4574,13 @@ export class RoomKernel {
           `activation ${input.activationId} has a runtime without terminal proof`,
         );
       }
-      const unfinishedTask = this.#database
-        .prepare(
-          `SELECT DISTINCT tasks.task_id, tasks.state
-           FROM room_events
-           JOIN tasks ON (
-             room_events.type IN ('task.created', 'task.assigned', 'task.unblocked', 'task.released')
-             AND tasks.task_id = room_events.aggregate_id
-             OR room_events.type = 'message.posted'
-             AND room_events.aggregate_type = 'message'
-             AND tasks.source_message_id = room_events.aggregate_id
-             OR room_events.type = 'input.resolved'
-             AND tasks.task_id = json_extract(room_events.payload_json, '$.taskId')
-             OR room_events.type = 'task.completed'
-             AND EXISTS (
-               SELECT 1 FROM json_each(room_events.payload_json, '$.readyTaskIds')
-               WHERE json_each.value = tasks.task_id
-             )
-           )
-           WHERE room_events.room_id = ?
-             AND room_events.room_seq BETWEEN ? AND ?
-             AND EXISTS (
-               SELECT 1 FROM inbox_items
-               WHERE inbox_items.event_id = room_events.event_id
-                 AND inbox_items.participant_id = ?
-             )
-             AND tasks.assignee_id = ?
-             AND tasks.state NOT IN ('waiting_input', 'blocked', 'submitted', 'completed', 'cancelled')
-             AND NOT EXISTS (
-               SELECT 1 FROM room_events AS requested_input
-               WHERE requested_input.room_id = room_events.room_id
-                 AND requested_input.room_seq > ?
-                 AND requested_input.type = 'input.requested'
-                 AND requested_input.actor_id = ?
-                 AND json_extract(requested_input.payload_json, '$.taskId') = tasks.task_id
-             )
-           ORDER BY room_events.room_seq
-           LIMIT 1`,
-        )
-        .get(
-          text(row, "room_id"),
-          integer(row, "from_seq"),
-          integer(row, "to_seq"),
-          text(row, "participant_id"),
-          text(row, "participant_id"),
-          integer(row, "to_seq"),
-          text(row, "participant_id"),
-        );
-      if (unfinishedTask !== undefined) {
-        throw new TaskSubmissionProofError(
-          `activation ${input.activationId} contains unfinished Task ${text(unfinishedTask, "task_id")} in state ${text(unfinishedTask, "state")}`,
-        );
-      }
+      this.#activationObligations.assertSatisfied(input.activationId);
       const updatedAt = this.#timestamp();
+      resolveActivationRetryFence(this.#database, {
+        activationId: input.activationId,
+        resolutionKind: "progress",
+        resolvedAt: updatedAt,
+      });
       this.#database
         .prepare(
           "UPDATE activations SET state = 'completed', lease_owner = NULL, lease_until = NULL, lease_until_ms = NULL, updated_at = ? WHERE activation_id = ?",
@@ -4561,7 +4599,7 @@ export class RoomKernel {
         roomId: text(row, "room_id"),
         type: "activation.finished",
       });
-      return this.#activationFromRow(
+      return activationProjectionFromRow(
         this.#requireActivationRow(input.activationId),
       );
     });
@@ -5052,7 +5090,7 @@ export class RoomKernel {
 
   #requireAgentParticipant(participantId: string): void {
     if (
-      this.#principalFromRow(this.#requirePrincipal(participantId)).kind !==
+      principalProfile.fromRow(this.#requirePrincipal(participantId)).kind !==
       "agent"
     ) {
       throw new ForbiddenError(
@@ -5833,7 +5871,7 @@ export class RoomKernel {
          ORDER BY principals.handle`,
       )
       .all(roomId)
-      .map((row) => this.#principalFromRow(row));
+      .map((row) => principalProfile.fromRow(row));
     return {
       room: roomProjectionFromRow(roomRow),
       members,
@@ -5991,7 +6029,7 @@ export class RoomKernel {
     actorId: string,
     basedOnRoomSeq: number | undefined,
   ): void {
-    const actor = this.#principalFromRow(this.#requirePrincipal(actorId));
+    const actor = principalProfile.fromRow(this.#requirePrincipal(actorId));
     const room = this.#requireRoom(roomId);
     const latestRoomSeq = integer(room, "next_seq") - 1;
     if (basedOnRoomSeq === undefined) {
@@ -6171,26 +6209,6 @@ export class RoomKernel {
 
   #taskFromRow(row: Row): Task {
     return taskProjectionFromRow(this.#database, row);
-  }
-
-  #inputRequestFromRow(row: Row): InputRequest {
-    return inputRequestProjectionFromRow(row);
-  }
-
-  #activationFromRow(row: Row): Activation {
-    return activationProjectionFromRow(row);
-  }
-
-  #outboxFromRow(row: Row): OutboxEntry {
-    return outboxProjectionFromRow(row);
-  }
-
-  #principalFromRow(row: Row): Principal {
-    return {
-      principalId: text(row, "principal_id"),
-      handle: text(row, "handle"),
-      kind: ParticipantKindSchema.parse(text(row, "kind")),
-    };
   }
 
   #runAttemptFromRow(row: Row): RunAttempt {
@@ -6378,6 +6396,11 @@ export class RoomKernel {
          FROM activations AS activation
          WHERE activation.participant_id IN (${placeholders})
            AND activation.state = 'quarantined'
+           AND NOT EXISTS (
+             SELECT 1 FROM activation_retry_fences
+             WHERE activation_retry_fences.activation_id = activation.activation_id
+               AND activation_retry_fences.state = 'blocked'
+           )
            AND EXISTS (
              SELECT 1 FROM runtime_processes
              WHERE runtime_processes.activation_id = activation.activation_id
@@ -6404,6 +6427,11 @@ export class RoomKernel {
     const activationId = text(row, "activation_id");
     if (text(row, "state") !== "quarantined") {
       throw new ConflictError(`activation ${activationId} is not quarantined`);
+    }
+    if (isActivationRetryBlocked(this.#database, activationId)) {
+      throw new ConflictError(
+        `activation ${activationId} is blocked after repeated identical Runtime errors; restart the Agent after fixing the Runtime or tooling issue`,
+      );
     }
     const processes = this.#database
       .prepare(
@@ -6472,7 +6500,9 @@ export class RoomKernel {
       roomId: text(row, "room_id"),
       type: "activation.quarantine_resolved",
     });
-    return this.#activationFromRow(this.#requireActivationRow(activationId));
+    return activationProjectionFromRow(
+      this.#requireActivationRow(activationId),
+    );
   }
 
   #quarantineExpiredActiveRuns(participantIds: string[], now: Date): void {
@@ -6844,7 +6874,7 @@ export class RoomKernel {
         startedAt,
       );
     const contextManifest = persistContextManifest(this.#database, {
-      activation: this.#activationFromRow(activation),
+      activation: activationProjectionFromRow(activation),
       ...(placementRow === undefined
         ? {}
         : {

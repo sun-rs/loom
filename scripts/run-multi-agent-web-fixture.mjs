@@ -9,7 +9,7 @@ import {
 } from "node:fs";
 import { networkInterfaces, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { toNodeHandler } from "@modelcontextprotocol/node";
 import { createMcpHandler, Server } from "@modelcontextprotocol/server";
@@ -31,7 +31,9 @@ const fakeCliPath = join(
 const directory = mkdtempSync(join(tmpdir(), "rah-os-multi-agent-web-"));
 chmodSync(directory, 0o700);
 const stateDirectory = join(directory, "state");
+const keepState = process.env.RAH_FIXTURE_KEEP_STATE === "1";
 mkdirSync(stateDirectory, { mode: 0o700 });
+const fakeCatalogCliPath = join(stateDirectory, "fake-cli-with-catalog.mjs");
 const databasePath = join(stateDirectory, "room.db");
 const registryDatabasePath = join(stateDirectory, "runtime-registry.db");
 const secretPath = join(stateDirectory, "host.token");
@@ -63,6 +65,16 @@ if (
     "RAH_FIXTURE_HISTORY_MESSAGES must be an integer between 0 and 10000",
   );
 }
+const onboardAgentCount = Number(
+  process.env.RAH_FIXTURE_ONBOARD_AGENT_COUNT ?? "1",
+);
+if (
+  !Number.isInteger(onboardAgentCount) ||
+  onboardAgentCount < 1 ||
+  onboardAgentCount > 2
+) {
+  throw new Error("RAH_FIXTURE_ONBOARD_AGENT_COUNT must be 1 or 2");
+}
 
 let application;
 let managedMcpHandler;
@@ -73,6 +85,40 @@ let shutdown;
 let webProcess;
 
 try {
+  writeFileSync(
+    fakeCatalogCliPath,
+    `#!/usr/bin/env node
+const command = process.argv.slice(2).join(" ");
+if (command === "debug models" || command === "debug models --bundled") {
+  process.stdout.write(JSON.stringify({
+    models: [
+      {
+        default_reasoning_level: "low",
+        display_name: "Fixture Alpha",
+        service_tiers: [],
+        slug: "fixture-alpha",
+        supported_in_api: true,
+        supported_reasoning_levels: [{ effort: "low" }, { effort: "high" }],
+        visibility: "list",
+      },
+      {
+        default_reasoning_level: "high",
+        display_name: "Fixture Beta",
+        service_tiers: [],
+        slug: "fixture-beta",
+        supported_in_api: true,
+        supported_reasoning_levels: [{ effort: "low" }, { effort: "high" }],
+        visibility: "list",
+      },
+    ],
+  }));
+} else {
+  await import(${JSON.stringify(pathToFileURL(fakeCliPath).href)});
+}
+`,
+    { mode: 0o700 },
+  );
+  chmodSync(fakeCatalogCliPath, 0o700);
   seed = new RoomKernel({ databasePath });
   seed.initialize();
   const human = seed.provisionPrincipal({
@@ -189,7 +235,7 @@ try {
 
   let roomSeq = latestRoomSeq(seed, humanActor, productRoom.room.roomId);
   for (const [index, agentDefinitionId] of agentDefinitionIds
-    .slice(0, 1)
+    .slice(0, onboardAgentCount)
     .entries()) {
     const onboarded = seed.onboardAgentToRoom(humanActor, {
       agentDefinitionId,
@@ -251,14 +297,15 @@ try {
     const revision = registry.importManifest({
       adapter: {
         config: { terminationGraceMs: 1_000 },
-        executable: process.execPath,
-        fixedArgs: [fakeCliPath],
+        executable: fakeCatalogCliPath,
+        fixedArgs: [],
         kind: "generic-process/v1",
       },
       credentialSlots: [],
       declaredCapabilities: ["worker_commands"],
       displayName: `Web multi-Agent fixture ${String(index)}`,
-      manifestVersion: 2,
+      manifestVersion: 3,
+      modelCatalogProbe: { kind: "codex-cli/v1" },
       protocolFamily: "rah-worker-process/v1",
       recoveryDrivers: ["rah-process-supervisor-v1"],
       runtimeProfileId,
@@ -267,11 +314,19 @@ try {
           ? { RAH_FAKE_PRESENCE_PROBE: "1" }
           : {}),
         RAH_FAKE_AUTO_TASK_MARKER: "[TASK]",
+        RAH_FAKE_TASK_ARTIFACT: "1",
+        ...(index === 0
+          ? {
+              RAH_FAKE_TASK_HOLD_MARKER: "[REASSIGN]",
+              RAH_FAKE_TASK_HOLD_MS: "20000",
+            }
+          : {}),
         RAH_FAKE_MODE:
           process.env.RAH_FIXTURE_FIRST_AGENT_INPUT === "1" && index === 0
             ? "worker-task-input"
             : "worker-task",
-        RAH_FAKE_ROOM_REPLY_MODE: "contextual-demo",
+        RAH_FAKE_ROOM_REPLY_MODE:
+          process.env.RAH_FIXTURE_ROOM_REPLY_MODE ?? "contextual-demo",
       },
       workspacePolicy: { allowedModes: ["in_place"] },
     });
@@ -434,6 +489,7 @@ try {
       lanOrigins,
       listenHost: webHost,
       roomId: productRoom.room.roomId,
+      ...(keepState ? { stateDirectory } : {}),
       webOrigin: `http://127.0.0.1:${String(webPort)}`,
       workspaceId: productWorkspace.workspace.workspaceId,
     })}\n`,
@@ -458,7 +514,11 @@ try {
   } catch {
     // The seed connection may already be closed before daemon startup.
   }
-  rmSync(directory, { force: true, recursive: true });
+  if (keepState) {
+    process.stderr.write(`RAH_FIXTURE_STATE_PRESERVED ${stateDirectory}\n`);
+  } else {
+    rmSync(directory, { force: true, recursive: true });
+  }
 }
 
 function latestRoomSeq(kernel, actor, roomId) {

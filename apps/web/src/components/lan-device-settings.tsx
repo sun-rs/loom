@@ -8,6 +8,7 @@ import {
 } from "../lan-access-client.ts";
 import { useDialogProtocol } from "../dialog-protocol.ts";
 import { Icon } from "./icon.tsx";
+import { SettingsPageHeader } from "./settings-primitives.tsx";
 
 export function LanDeviceSettingsContent() {
   const client = useMemo(() => new LanAccessClient(), []);
@@ -91,23 +92,26 @@ export function LanDeviceSettingsContent() {
   return (
     <>
       <section className="rah-settings-content">
-        <header className="rah-settings-page-head">
-          <div>
-            <h1>局域网设备</h1>
+        <SettingsPageHeader
+          badge={
             <span className="rah-count-badge">{activeDevices.length}</span>
-          </div>
-          <button
-            className="btn"
-            disabled={
-              pending ||
-              session?.available !== true ||
-              session.authenticated !== true
-            }
-            onClick={issuePairingCode}
-          >
-            生成配对码
-          </button>
-        </header>
+          }
+          icon="monitor"
+          title="局域网设备"
+          action={
+            <button
+              className="btn"
+              disabled={
+                pending ||
+                session?.available !== true ||
+                session.authenticated !== true
+              }
+              onClick={issuePairingCode}
+            >
+              生成配对码
+            </button>
+          }
+        />
         <div className="rah-settings-scroll rah-scroll-main">
           <p className="rah-settings-intro">
             管理可通过 HTTPS 访问此 RAH Core 的浏览器与 PWA。设备会话属于 LAN

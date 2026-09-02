@@ -19,6 +19,7 @@ export type RoomMessageView = {
   body: string;
   createdAt: string;
   messageId: string;
+  roomId?: string;
   roomSeq: number;
 };
 
@@ -75,6 +76,7 @@ export type RoomAgentCandidate = WorkspaceAgentView & { joined: boolean };
 
 export function activeMobileNavigation(input: {
   activeSurface:
+    | "saved"
     | "agents"
     | "computers"
     | "room"
@@ -419,6 +421,25 @@ export function canHumanSetTaskAssignee(input: {
   );
 }
 
+export function canHumanForceReassignTask(input: {
+  caughtUp: boolean;
+  currentPrincipalId: string | undefined;
+  task: Task;
+  taskReassignment: boolean;
+  taskWrite: boolean;
+}): boolean {
+  return (
+    input.caughtUp &&
+    input.taskReassignment &&
+    input.taskWrite &&
+    input.currentPrincipalId !== undefined &&
+    input.task.creatorId === input.currentPrincipalId &&
+    (input.task.state === "claimed" || input.task.state === "in_progress") &&
+    input.task.assigneeId !== undefined &&
+    input.task.claimedBy === input.task.assigneeId
+  );
+}
+
 function isManagerRole(role: MembershipRole | undefined): boolean {
   return role === "owner" || role === "admin";
 }
@@ -551,6 +572,7 @@ export function createRoomViewModel(input: {
               : {}),
             createdAt: message.createdAt,
             messageId: message.messageId,
+            roomId: message.roomId,
             roomSeq: message.roomSeq,
           }),
         ),

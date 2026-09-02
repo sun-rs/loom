@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
   buildMermaidDocument,
   classifyMessageUrl,
   mermaidConfiguration,
+  splitBareCjkAutolinks,
   transformMessageUrl,
 } from "../src/message-markdown-policy.ts";
 
@@ -62,4 +64,41 @@ test("Mermaid follows the Raft strict renderer and isolates generated SVG with C
   assert.match(document, /img-src data:/u);
   assert.match(document, /<svg viewBox="0 0 120 80">/u);
   assert.doesNotMatch(document, /allow-scripts/u);
+});
+
+test("long message URLs use one continuous Raft-style underline", () => {
+  const css = readFileSync(
+    new URL("../src/product.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    css,
+    /\.rah-message-markdown a,[\s\S]*?text-decoration-skip-ink:\s*none;/u,
+  );
+});
+
+test("bare ASCII URLs stop before adjacent CJK text", () => {
+  const url =
+    "https://raft.build/zh-cn/resources/blog/is-having-agents-in-the-room-meant-to-be-chaotic/";
+  const paragraph = {
+    children: [
+      {
+        children: [{ type: "text", value: `${url}这篇文章的逻辑是什么？` }],
+        type: "link",
+        url: `${url}这篇文章的逻辑是什么？`,
+      },
+    ],
+    type: "paragraph",
+  };
+
+  splitBareCjkAutolinks({ children: [paragraph], type: "root" });
+
+  assert.deepEqual(paragraph.children, [
+    {
+      children: [{ type: "text", value: url }],
+      type: "link",
+      url,
+    },
+    { type: "text", value: "这篇文章的逻辑是什么？" },
+  ]);
 });

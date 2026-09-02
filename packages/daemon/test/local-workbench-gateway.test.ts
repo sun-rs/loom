@@ -40,6 +40,7 @@ test("the local workbench gateway keeps Human authority server-side", async () =
     accessToken: "server-only-human-token",
     daemonOrigin: upstreamOrigin,
     port: 0,
+    sessionToken: "a".repeat(43),
     staticDirectory,
   });
 
@@ -170,6 +171,7 @@ test("shutdown closes a stalled browser request and its upstream before draining
     accessToken: "test-only-token",
     daemonOrigin: await listen(upstream),
     port: 0,
+    sessionToken: "b".repeat(43),
     staticDirectory: directory,
   });
   let request: ReturnType<typeof httpGet> | undefined;
@@ -216,6 +218,73 @@ async function listen(
   }
   return `http://127.0.0.1:${String(address.port)}`;
 }
+
+test("a local workbench browser session survives a gateway restart and stale sessions renew without HTML parsing", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-gateway-session-"));
+  writeFileSync(join(directory, "index.html"), "RAH OS");
+  const upstream = createServer((_request, response) => {
+    response.setHeader("content-type", "application/json");
+    response.end(JSON.stringify({ ok: true }));
+  });
+  const daemonOrigin = await listen(upstream);
+  const sessionToken = "c".repeat(43);
+  let first: LocalWorkbenchGateway | undefined;
+  let second: LocalWorkbenchGateway | undefined;
+  try {
+    first = new LocalWorkbenchGateway({
+      accessToken: "server-token",
+      daemonOrigin,
+      port: 0,
+      sessionToken,
+      staticDirectory: directory,
+    });
+    await first.start();
+    const firstRoot = await fetch(first.origin);
+    const originalCookie = firstRoot.headers
+      .get("set-cookie")
+      ?.split(";", 1)[0];
+    assert.notEqual(originalCookie, undefined);
+    await first.stop();
+    first = undefined;
+
+    second = new LocalWorkbenchGateway({
+      accessToken: "server-token",
+      daemonOrigin,
+      port: 0,
+      sessionToken,
+      staticDirectory: directory,
+    });
+    await second.start();
+    const resumed = await fetch(`${second.origin}/v3/client/health`, {
+      headers: { cookie: originalCookie! },
+    });
+    assert.equal(resumed.status, 200);
+
+    const stale = await fetch(`${second.origin}/v3/client/health`, {
+      headers: {
+        cookie: "rah_workbench_session=stale",
+        origin: second.origin,
+      },
+    });
+    assert.equal(stale.status, 401);
+    assert.match(stale.headers.get("content-type") ?? "", /application\/json/u);
+    assert.match(
+      stale.headers.get("set-cookie") ?? "",
+      /^rah_workbench_session=/u,
+    );
+    assert.deepEqual(await stale.json(), {
+      error: {
+        code: "session_expired",
+        message: "本地工作台会话已更新，正在重新连接",
+      },
+    });
+  } finally {
+    await first?.stop();
+    await second?.stop();
+    await close(upstream);
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
 
 async function close(server: ReturnType<typeof createServer>): Promise<void> {
   if (!server.listening) return;

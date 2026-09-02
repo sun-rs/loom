@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
-import type { DiscoveryLocation } from "../global-discovery-model.ts";
+import type { DiscoveryNavigationHandler } from "../global-discovery-model.ts";
 import {
   diagnosticReferenceParts,
   type DiagnosticTarget,
@@ -12,7 +12,7 @@ export const DiagnosticNavigationContext = createContext<
   | {
       client: RahClient;
       rooms: readonly DiagnosticRoom[];
-      onOpen: (location: DiscoveryLocation) => void;
+      onOpen: DiscoveryNavigationHandler;
       navigationEpoch: () => number;
       beginNavigation: () => number;
       requestGate: ReturnType<typeof createLatestRequest>;
@@ -40,7 +40,9 @@ export function DiagnosticReferences({ text }: { text: string }) {
     setError(undefined);
     try {
       if (!target.messageId) {
-        context.onOpen({ roomId: target.roomId });
+        await context.onOpen({
+          target: { kind: "room", roomId: target.roomId },
+        });
         return;
       }
       const result = await context.client.request(
@@ -49,12 +51,18 @@ export function DiagnosticReferences({ text }: { text: string }) {
         { signal: request.signal },
       );
       if (request.current())
-        context.onOpen({
-          roomId: result.message.roomId,
-          messageId: result.message.messageId,
-          ...(result.rootMessageId
-            ? { rootMessageId: result.rootMessageId }
-            : {}),
+        await context.onOpen({
+          target: {
+            kind: "message",
+            roomId: result.message.roomId,
+            messageId: result.message.messageId,
+            ...(result.message.threadId === undefined
+              ? {}
+              : { threadId: result.message.threadId }),
+            ...(result.rootMessageId === undefined
+              ? {}
+              : { rootMessageId: result.rootMessageId }),
+          },
         });
     } catch {
       if (request.current()) setError("引用不可用、存在歧义或无权查看");

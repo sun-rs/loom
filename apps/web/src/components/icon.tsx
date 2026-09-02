@@ -30,7 +30,7 @@ export function Icon({
   return (
     <svg aria-hidden="true" className={className}>
       <use
-        href={`${["calendar-range", "bot", "folder-open", "link-2", "blocks", "grip-vertical", "circle-user-round", "eye-off", "x"].includes(mappedName) ? interactionIconsUrl : ["at-sign", "refresh-cw"].includes(mappedName) ? discoveryIconsUrl : raftIconsUrl}#raft-icon-${mappedName}`}
+        href={`${["smile-plus", "pin", "calendar-range", "bot", "folder-open", "link-2", "clock-3", "repeat", "blocks", "grip-vertical", "circle-user-round", "eye-off", "x", "pencil", "rotate-ccw", "bug", "trash-2", "languages", "type", "server", "shield-check", "info", "book-open"].includes(mappedName) ? interactionIconsUrl : ["at-sign", "refresh-cw"].includes(mappedName) ? discoveryIconsUrl : raftIconsUrl}#raft-icon-${mappedName}`}
       />
     </svg>
   );

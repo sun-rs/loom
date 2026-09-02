@@ -26,6 +26,8 @@ export {
 export { KERNEL_SCHEMA_VERSION, RoomKernel } from "./room-kernel.ts";
 export { ManagedMcpService } from "./managed-mcp-service.ts";
 export { TaskReviewService } from "./task-review-service.ts";
+export { ReminderService } from "./reminder-service.ts";
+export type { ReminderReconcileResult } from "./reminder-service.ts";
 export type { TaskReviewMutationResult } from "./task-review-service.ts";
 export type {
   ManagedMcpAssignmentRecord,

@@ -7,10 +7,15 @@ import {
   type RoomEvent,
 } from "@rah-os/protocol";
 
+import type {
+  ActivationObligationService,
+  ActivationObligationSpec,
+} from "./activation-obligation-service.ts";
 import { NotFoundError } from "./errors.ts";
 import { integer, jsonObject, text, type Row } from "./sqlite-row.ts";
 
 export type AttentionRecipient = {
+  obligations?: readonly ActivationObligationSpec[];
   participantId: string;
   reason: ActivationReason;
 };
@@ -29,15 +34,18 @@ export class RoomEventWriter {
   readonly #createId: (prefix: string) => string;
   readonly #database: DatabaseSync;
   readonly #now: () => Date;
+  readonly #obligations: ActivationObligationService;
 
   constructor(input: {
     createId: (prefix: string) => string;
     database: DatabaseSync;
     now: () => Date;
+    obligations: ActivationObligationService;
   }) {
     this.#createId = input.createId;
     this.#database = input.database;
     this.#now = input.now;
+    this.#obligations = input.obligations;
   }
 
   append(input: AppendRoomEventInput): RoomEvent {
@@ -143,6 +151,13 @@ export class RoomEventWriter {
           );
       }
       activationIds.push(activationId);
+      this.#obligations.record({
+        activationId,
+        createdAt,
+        event,
+        participantId: recipient.participantId,
+        specs: recipient.obligations ?? [],
+      });
       this.insertOutbox({
         payload: WakeHintSchema.parse({
           activationId,

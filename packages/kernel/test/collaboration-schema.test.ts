@@ -21,7 +21,7 @@ test("schema v7 migrates legacy Rooms into one Workspace with proven Human owner
 
     const migrated = new DatabaseSync(databasePath);
     migrated.exec("PRAGMA foreign_keys = ON");
-    assert.equal(KERNEL_SCHEMA_VERSION, 22);
+    assert.equal(KERNEL_SCHEMA_VERSION, 36);
     assert.equal(
       (
         migrated.prepare("PRAGMA user_version").get() as {
@@ -80,6 +80,13 @@ test("schema v7 migrates legacy Rooms into one Workspace with proven Human owner
         .all()
         .some((row) => (row as { name: string }).name === "thread_id"),
     );
+    assert.deepEqual(
+      migrated
+        .prepare("PRAGMA table_info(agent_thread_follows)")
+        .all()
+        .map((row) => (row as { name: string }).name),
+      ["participant_id", "thread_id", "following", "source", "updated_at"],
+    );
 
     migrated
       .prepare(
@@ -126,6 +133,30 @@ test("schema v7 migrates legacy Rooms into one Workspace with proven Human owner
     );
     assert.deepEqual(migrated.prepare("PRAGMA foreign_key_check").all(), []);
     migrated.close();
+
+    const reopened = new RoomKernel({ databasePath });
+    reopened.initialize();
+    reopened.close();
+    const backfilled = new DatabaseSync(databasePath);
+    assert.deepEqual(
+      backfilled
+        .prepare(
+          `SELECT participant_id, thread_id, following, source
+           FROM agent_thread_follows
+           ORDER BY participant_id, thread_id`,
+        )
+        .all()
+        .map((row) => ({ ...row })),
+      [
+        {
+          following: 1,
+          participant_id: "agent-legacy",
+          source: "participation",
+          thread_id: "thread-legacy",
+        },
+      ],
+    );
+    backfilled.close();
   } finally {
     rmSync(directory, { force: true, recursive: true });
   }

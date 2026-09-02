@@ -407,7 +407,14 @@ export class ComputerApplicationService {
           };
         case "activation.retry":
           return {
-            activation: this.#computer.retryActivation(session.host, request),
+            activation: this.#computer.retryActivation(session.host, {
+              activationId: request.activationId,
+              error: request.error,
+              retryAfterMs: request.retryAfterMs,
+              ...(request.retryDisposition === undefined
+                ? {}
+                : { retryDisposition: request.retryDisposition }),
+            }),
             kind: request.kind,
           };
         case "activation.quarantine":

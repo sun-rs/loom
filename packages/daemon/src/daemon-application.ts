@@ -3,6 +3,7 @@ import { join } from "node:path";
 import {
   AgentHost,
   AgentHostDaemon,
+  AgentExecutionResetCoordinator,
   AgentMemoryCoordinator,
   combineActivationEnvironmentLeases,
   GenericProcessAdapter,
@@ -29,6 +30,11 @@ import {
 
 import type { DaemonConfig } from "./config.ts";
 import {
+  DAEMON_BUILD_VERSION,
+  DAEMON_PROTOCOL_VERSION,
+  type DaemonHealthSnapshot,
+} from "./daemon-health.ts";
+import {
   createRegistryBackedRuntimeRecovery,
   createRegistryBackedRuntimeRecoveryFromRegistries,
 } from "./registry-runtime-recovery.ts";
@@ -37,6 +43,7 @@ import {
   OutboxWakeDispatcher,
 } from "./outbox-wake-dispatcher.ts";
 import { RuntimeOfferPublisher } from "./runtime-offer-publisher.ts";
+import { createDaemonWebPush } from "./daemon-web-push.ts";
 import {
   assertRuntimeProfileRevisionStillActive,
   createConfiguredRuntime,
@@ -51,7 +58,9 @@ import { createConfiguredManagedMcpExecutor } from "./managed-mcp-executor-compo
 import type { NodeManagedMcpExecutorRegistry } from "./managed-mcp-executor-registry.ts";
 import {
   configuredParticipantIds,
+  createDaemonAgentExecutionResetCoordinator,
   createDaemonAgentMemoryCoordinator,
+  createDaemonReminderReconciler,
   createDaemonHumanClientService,
   ensureOwnerPrivateDirectory,
   errorMessage,
@@ -59,21 +68,11 @@ import {
   runCoupledComponents,
 } from "./daemon-application-support.ts";
 
-export const DAEMON_BUILD_VERSION = "0.1.0";
-export const DAEMON_PROTOCOL_VERSION = 1;
-
-export type DaemonHealthSnapshot = {
-  buildVersion: string;
-  hostId: string;
-  participantId?: string;
-  participantIds: string[];
-  protocolVersion: number;
-  state: "failed" | "offline" | "online" | "starting";
-  lastCycleAt?: string;
-  lastCycleState?: "cancelled" | "completed" | "failed" | "recovered";
-  lastError?: string;
-  startedAt?: string;
-};
+export {
+  DAEMON_BUILD_VERSION,
+  DAEMON_PROTOCOL_VERSION,
+  type DaemonHealthSnapshot,
+} from "./daemon-health.ts";
 
 export class DaemonApplication {
   readonly #config: DaemonConfig;
@@ -122,6 +121,8 @@ export class DaemonApplication {
     let kernel: RoomKernel | undefined;
     let clientService: HumanHttpApplicationService | undefined;
     let agentMemoryCoordinator: AgentMemoryCoordinator | undefined;
+    let agentExecutionResetCoordinator:
+      AgentExecutionResetCoordinator | undefined;
     let managedMcpExecutor: NodeManagedMcpExecutorRegistry | undefined;
     let workerService: WorkerApplicationService | undefined;
     const runtimeProfileRegistries = new Map<string, RuntimeProfileRegistry>();
@@ -183,6 +184,14 @@ export class DaemonApplication {
         ...this.#health,
         participantIds: authorizedParticipants,
       };
+      const webPush = await createDaemonWebPush({
+        host,
+        kernel,
+        leaseMs: this.#config.outboxLeaseMs,
+        pollIntervalMs: this.#config.outboxPollIntervalMs,
+        retryAfterMs: this.#config.outboxRetryAfterMs,
+        stateDirectory: join(this.#config.stateDirectory, "transport"),
+      });
 
       workerService = new WorkerApplicationService({
         kernel,
@@ -205,6 +214,14 @@ export class DaemonApplication {
         stateDirectory: this.#config.stateDirectory,
       });
       const activeAgentMemoryCoordinator = agentMemoryCoordinator;
+      agentExecutionResetCoordinator =
+        createDaemonAgentExecutionResetCoordinator({
+          host,
+          kernel,
+          stateDirectory: this.#config.stateDirectory,
+        });
+      const activeAgentExecutionResetCoordinator =
+        agentExecutionResetCoordinator;
       let runtime: RuntimeAdapter;
       const runtimeOfferPublishers: RuntimeOfferPublisher[] = [];
       let placementRuntimeResolver:
@@ -637,6 +654,12 @@ export class DaemonApplication {
         publisher: wakeSignal,
         retryAfterMs: this.#config.outboxRetryAfterMs,
       });
+      const reminderReconciler = createDaemonReminderReconciler(
+        kernel,
+        (lastError) => {
+          this.#health = { ...this.#health, lastError };
+        },
+      );
       const daemon = new AgentHostDaemon({
         host,
         instanceLock: new UnixSocketInstanceLock({
@@ -671,6 +694,7 @@ export class DaemonApplication {
         runner,
       });
       clientService = createDaemonHumanClientService({
+        agentExecutionResetCoordinator: activeAgentExecutionResetCoordinator,
         agentMemoryCoordinator: activeAgentMemoryCoordinator,
         buildVersion: DAEMON_BUILD_VERSION,
         config: this.#config,
@@ -682,6 +706,7 @@ export class DaemonApplication {
         kernel,
         managedMcpAdministration: managedMcpExecutor,
         protocolVersion: DAEMON_PROTOCOL_VERSION,
+        webPushAdministration: webPush.administration,
       });
       await clientService.start();
       this.#clientOrigin = clientService.origin;
@@ -689,6 +714,8 @@ export class DaemonApplication {
       await runCoupledComponents(input.signal, [
         async (signal) => await daemon.run({ signal }),
         async (signal) => await wakeDispatcher.run({ signal }),
+        async (signal) => await reminderReconciler.run({ signal }),
+        async (signal) => await webPush.dispatcher.run({ signal }),
         ...runtimeOfferPublishers.map(
           (publisher) => async (signal: AbortSignal) =>
             await publisher.run(signal),

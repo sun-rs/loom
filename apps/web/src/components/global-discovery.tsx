@@ -1,14 +1,27 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
-import type { HumanActivityItem, Principal, Room } from "@rah-os/protocol";
+import type {
+  HumanActivityItem,
+  Principal,
+  Room,
+  WorkspaceSearchResponse,
+} from "@rah-os/protocol";
 import { createRoomViewModel } from "@rah-os/ui-web";
 import {
-  type DiscoveryLocation,
+  type DiscoveryNavigationHandler,
   type GlobalSurface,
   highlightParts,
+  groupSearchHits,
+  mergeSearchHits,
   searchDateBound,
   searchExcerpt,
 } from "../global-discovery-model.ts";
+import {
+  addSearchHistory,
+  clearSearchHistory,
+  readFrequentSearches,
+  readSearchHistory,
+} from "../search-history.ts";
 import { useDiscoveryQuery } from "../use-discovery-query.ts";
 import { createLatestRequest } from "../latest-request.ts";
 import {
@@ -30,7 +43,7 @@ type Props = {
   rooms: readonly Room[];
   currentHuman: Principal | undefined;
   surface: GlobalSurface;
-  onOpen: (location: DiscoveryLocation) => void;
+  onOpen: DiscoveryNavigationHandler;
   onPerson: (principalId: string) => Promise<void>;
   onClose: () => void;
   navigationEpoch?: () => number;
@@ -318,6 +331,7 @@ function GlobalTasks({
           <div className="tasks-view" role="radiogroup" aria-label="任务视图">
             {(["board", "list"] as const).map((mode) => (
               <button
+                className="rah-interaction-segment"
                 key={mode}
                 role="radio"
                 aria-checked={view === mode}
@@ -403,6 +417,44 @@ function GlobalSearch({
     },
     !composing && Boolean(query.trim()),
   );
+  const searchScope = JSON.stringify({
+    workspaceId,
+    query,
+    scopes,
+    senderKind,
+    roomIds: params.getAll("channel"),
+    senderIds: params.getAll("sender"),
+    sort: searchSort(query, params.get("sort")),
+    afterBound,
+    beforeBound,
+  });
+  const [searchHits, setSearchHits] = useState<WorkspaceSearchResponse["hits"]>(
+    [],
+  );
+  const [history, setHistory] = useState(() =>
+    readSearchHistory(window.localStorage, workspaceId),
+  );
+  const [frequent, setFrequent] = useState(() =>
+    readFrequentSearches(window.localStorage, workspaceId),
+  );
+  useEffect(() => setSearchHits([]), [searchScope]);
+  useEffect(() => {
+    if (!result.data) return;
+    setSearchHits((current) =>
+      filters.cursor
+        ? mergeSearchHits(current, result.data!.hits)
+        : result.data!.hits,
+    );
+    if (query.trim() && !filters.cursor) {
+      setHistory(addSearchHistory(window.localStorage, workspaceId, query));
+      setFrequent(readFrequentSearches(window.localStorage, workspaceId));
+    }
+  }, [filters.cursor, query, result.data, workspaceId]);
+  useEffect(() => {
+    setHistory(readSearchHistory(window.localStorage, workspaceId));
+    setFrequent(readFrequentSearches(window.localStorage, workspaceId));
+  }, [workspaceId]);
+  const groupedHits = useMemo(() => groupSearchHits(searchHits), [searchHits]);
   const [personError, setPersonError] = useState<string>();
   const box = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -433,9 +485,9 @@ function GlobalSearch({
                 }
               }}
             />
-            <button className="search-kbd" onClick={onClose}>
+            <span className="search-kbd" aria-hidden="true">
               Esc
-            </button>
+            </span>
           </div>
         </div>
       </header>
@@ -578,22 +630,39 @@ function GlobalSearch({
       <Failure error={result.error ?? personError} />
       <section className="search-stage">
         {!query.trim() ? (
-          <Empty
-            icon="search"
-            title="搜索所有内容"
-            detail="搜索频道、私信、人类成员、Agent 和消息历史。"
-          />
+          <div className="rah-search-home">
+            <Empty
+              icon="search"
+              title="搜索所有内容"
+              detail="搜索频道、私信、人类成员、Agent 和消息历史。"
+            />
+            <SearchSuggestions
+              frequent={frequent}
+              history={history}
+              onClear={() => {
+                clearSearchHistory(window.localStorage, workspaceId);
+                setHistory([]);
+                setFrequent([]);
+              }}
+              onSelect={(value) => change("q", [value])}
+            />
+          </div>
         ) : (
           <div className="result-list">
             {result.loading && <p role="status">搜索中…</p>}
             {result.data && (
               <p className="rah-search-count">{result.data.total} 条消息结果</p>
             )}
+            {(result.data?.rooms.length || result.data?.principals.length) && (
+              <h2 className="rah-search-section-title">服务器内容</h2>
+            )}
             {result.data?.rooms.map((room) => (
               <button
                 className="rah-search-destination"
                 key={room.roomId}
-                onClick={() => onOpen({ roomId: room.roomId })}
+                onClick={() =>
+                  onOpen({ target: { kind: "room", roomId: room.roomId } })
+                }
               >
                 <Icon name={room.kind === "direct" ? "chat" : "hash"} />
                 {room.name}
@@ -619,47 +688,17 @@ function GlobalSearch({
                   {person.handle} · {person.kind === "agent" ? "Agent" : "成员"}
                 </button>
               ))}
-            {result.data?.hits.map((hit) => (
-              <button
-                className="result-item rah-search-hit"
-                key={hit.message.messageId}
-                onClick={() =>
-                  onOpen({
-                    roomId: hit.message.roomId,
-                    messageId: hit.message.messageId,
-                    ...(hit.rootMessageId
-                      ? { rootMessageId: hit.rootMessageId }
-                      : {}),
-                  })
-                }
-              >
-                <span className="result-body">
-                  <span className="result-channel">
-                    {rooms.find((room) => room.roomId === hit.message.roomId)
-                      ?.kind === "direct"
-                      ? "@"
-                      : "#"}
-                    {hit.roomName}
-                    {hit.rootMessageId && " · 消息列"}
-                  </span>
-                  <b className="result-title">{hit.senderName}</b>
-                  <span className="rah-search-excerpt">
-                    {highlightParts(
-                      searchExcerpt(hit.message.body, query),
-                      query,
-                    ).map((part, index) =>
-                      part.match ? (
-                        <mark key={index}>{part.text}</mark>
-                      ) : (
-                        part.text
-                      ),
-                    )}
-                  </span>
-                </span>
-                <time className="result-time">
-                  {new Date(hit.message.createdAt).toLocaleString()}
-                </time>
-              </button>
+            {groupedHits.length > 0 && (
+              <h2 className="rah-search-section-title">消息</h2>
+            )}
+            {groupedHits.map((group) => (
+              <SearchResultPanel
+                group={group}
+                key={group.key}
+                onOpen={onOpen}
+                query={query}
+                rooms={rooms}
+              />
             ))}
             {!result.loading &&
               result.data?.total === 0 &&
@@ -671,16 +710,129 @@ function GlobalSearch({
                   detail="尝试其他关键词或清除筛选。"
                 />
               )}
+            {result.data?.nextCursor && (
+              <button
+                className="btn rah-search-load-more"
+                disabled={result.loading}
+                onClick={() => filters.next(result.data!.nextCursor!)}
+              >
+                {result.loading ? "正在加载…" : "加载更多"}
+              </button>
+            )}
           </div>
         )}
       </section>
-      <Pager
-        nextCursor={result.data?.nextCursor}
-        loading={result.loading}
-        previous={filters.previous}
-        next={filters.next}
-      />
     </main>
+  );
+}
+
+function SearchSuggestions({
+  frequent,
+  history,
+  onClear,
+  onSelect,
+}: {
+  frequent: readonly string[];
+  history: readonly string[];
+  onClear: () => void;
+  onSelect: (value: string) => void;
+}) {
+  if (!frequent.length && !history.length) return null;
+  return (
+    <section className="rah-search-suggestions" aria-label="搜索建议">
+      {frequent.length > 0 && (
+        <div>
+          <h2>常用</h2>
+          {frequent.map((value) => (
+            <button
+              className="rah-search-suggestion rah-interaction-flat"
+              key={value}
+              onClick={() => onSelect(value)}
+            >
+              <Icon name="search" /> {value}
+            </button>
+          ))}
+        </div>
+      )}
+      {history.length > 0 && (
+        <div>
+          <header>
+            <h2>搜索历史</h2>
+            <button
+              className="rah-search-clear rah-interaction-flat"
+              onClick={onClear}
+            >
+              清除
+            </button>
+          </header>
+          {history.map((value) => (
+            <button
+              className="rah-search-suggestion rah-interaction-flat"
+              key={value}
+              onClick={() => onSelect(value)}
+            >
+              <Icon name="refresh-cw" /> {value}
+            </button>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function SearchResultPanel({
+  group,
+  onOpen,
+  query,
+  rooms,
+}: {
+  group: ReturnType<typeof groupSearchHits>[number];
+  onOpen: DiscoveryNavigationHandler;
+  query: string;
+  rooms: readonly Room[];
+}) {
+  const first = group.hits[0]!;
+  return (
+    <article className="rah-search-result-panel" data-kind={group.kind}>
+      {group.kind === "thread" && (
+        <header>
+          <span>消息列</span>
+          <b>{first.roomName}</b>
+          <span>{group.hits.length} 条匹配</span>
+          <time>{new Date(first.message.createdAt).toLocaleString()}</time>
+        </header>
+      )}
+      {group.hits.map((hit) => (
+        <button
+          className="result-item rah-search-hit"
+          key={hit.message.messageId}
+          onClick={() => onOpen({ target: hit.target })}
+        >
+          <span className="result-body">
+            <span className="result-channel">
+              {rooms.find((room) => room.roomId === hit.message.roomId)
+                ?.kind === "direct"
+                ? "@"
+                : "#"}
+              {hit.roomName}
+              {hit.rootMessageId && " · 消息列"}
+            </span>
+            <b className="result-title">{hit.senderName}</b>
+            <span className="rah-search-excerpt">
+              {highlightParts(
+                searchExcerpt(hit.message.body, query),
+                query,
+              ).map((part, index) =>
+                part.match ? <mark key={index}>{part.text}</mark> : part.text,
+              )}
+            </span>
+          </span>
+          <time className="result-time">
+            {new Date(hit.message.createdAt).toLocaleString()}
+          </time>
+        </button>
+      ))}
+    </article>
   );
 }
 
@@ -740,13 +892,7 @@ function GlobalActivity({
           { signal: request.signal },
         );
         if (!request.current()) return;
-        onOpen({
-          roomId: item.roomId,
-          messageId: item.latestMessage.messageId,
-          ...(item.rootMessageId
-            ? { rootMessageId: item.rootMessageId, surface: "activity" }
-            : {}),
-        });
+        await onOpen({ target: item.target, surface: "activity" });
         // The mounted conversation acknowledges the messages actually in its viewport.
         return;
       }

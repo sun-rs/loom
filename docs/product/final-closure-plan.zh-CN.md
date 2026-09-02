@@ -2,7 +2,7 @@
 
 状态：执行中，2026-08-30。
 
-当前状态校正：本文部分章节保留早期顺序，不能作为已完成清单。普通 Memory 形成/新会话/跨 Provider 召回已通过本轮真实验收，Memory 文件控制面与安全 reset 已有实现；执行 restart/session reset、idle wake、全局 Tasks/Search/Activity 和 Files 仍未闭合。自定义独立维护上下文已撤回，不再以本文早期设想授权开发。最新证据以[真实记忆与产品对照审计](../audits/2026-08-30-real-memory-acceptance-and-product-audit.zh-CN.md)为准，Memory 后续设计以[Raft 复用计划](./agent-memory-raft-completion-plan.zh-CN.md)为准。
+当前状态校正：本文部分章节保留早期顺序，不能作为已完成清单。普通 Memory 形成/新会话/跨 Provider 召回已通过真实验收，Memory 文件控制面与安全 reset 已有实现；2026-09-01 又完成了本机 Agent 显式 Artifact → TaskSubmission → Thread/Room Files 的 P0 主链。执行 restart/session reset、idle wake、通用 Notifications 等其他 slice 仍未全部闭合。自定义独立维护上下文已撤回，不再以本文早期设想授权开发。Memory 最新证据以[真实记忆与产品对照审计](../audits/2026-08-30-real-memory-acceptance-and-product-audit.zh-CN.md)为准，Artifact 以[产品合同](./2026-09-01-agent-artifact-task-submission-contract.zh-CN.md)和[来源复用审计](../audits/2026-09-01-agent-artifact-source-reuse-audit.zh-CN.md)为准。
 
 目标不是把 Raft 页面做成可点击 mock，而是让同一视觉与交互背后都有唯一 owner、typed contract、持久化恢复和真实 Runtime 证据。授权 Raft 源码优先用于已经成熟的对象语义、页面结构、组件规格与 Runtime 行为；RAH OS 只在本机核心、安全栅栏、无中央账户部署和可验证协议上增加必要 glue。
 
@@ -29,13 +29,13 @@ Agent App Inbox
 
 ## 3. 剩余五项的实施裁决
 
-| Slice                                     | 优先复用 Raft                                                                         | RAH OS 必须拥有                                                                                                               | 当前状态 / 前置                                                 |
-| ----------------------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| Human Inbox + InputRequest                | NotificationCenter、badge、空态、问题卡与回答 dialog                                  | InputRequest projection、designated responder、causal resolve、新 Activation                                                  | **E2 完成**；push/通用通知另属下一行                            |
-| Search + Notifications + global deep link | Search 页面/过滤器/结果行、NotificationCenter、anchor flash 与打开目标交互            | ACL-safe SearchIndex、Notification projection、typed target union、URL codec                                                  | 可推进；先 deep link/notifications，再 FTS search               |
-| 安全强制改派                              | action confirmation 与 owner picker 视觉                                              | durable reassignment operation：cancel request → Runtime terminal proof → reopen/unassign → assign；任何中断都停在安全 Closed | 可推进；复用 ADR-0022 fence，不允许直接覆盖 assignee            |
-| Agent 自治启动和 restart/reset            | Computer App Inbox、active notice、idle restart snapshot、memory workspace/reset 文案 | 与 canonical Activation 共用的 per-Agent maintenance lease；restart terminal proof；双 quarantine reset transport             | Kernel/本机 Host fence 完成；远程 transport/operation/UI 未完成 |
-| Artifact/Files                            | Files tab、artifact row/detail/preview/download 交互                                  | immutable Artifact registry、content digest、MIME/kind、Task/Run provenance、ACL、blob owner、retention                       | 不能只做 UI；需先建立协议与存储 owner                           |
+| Slice                                     | 优先复用 Raft                                                                         | RAH OS 必须拥有                                                                                                               | 当前状态 / 前置                                                              |
+| ----------------------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Human Inbox + InputRequest                | NotificationCenter、badge、空态、问题卡与回答 dialog                                  | InputRequest projection、designated responder、causal resolve、新 Activation                                                  | **E2 完成**；push/通用通知另属下一行                                         |
+| Search + Notifications + global deep link | Search 页面/过滤器/结果行、NotificationCenter、anchor flash 与打开目标交互            | ACL-safe SearchIndex、Notification projection、typed target union、URL codec                                                  | 协议/Kernel/HTTP/SDK/Web 已接；正式浏览器、重启与 OS 通知仍按各自证据裁决    |
+| 安全强制改派                              | action confirmation 与 owner picker 视觉                                              | durable reassignment operation：cancel request → Runtime terminal proof → reopen/unassign → assign；任何中断都停在安全 Closed | 可推进；复用 ADR-0022 fence，不允许直接覆盖 assignee                         |
+| Agent 自治启动和 restart/reset            | Computer App Inbox、active notice、idle restart snapshot、memory workspace/reset 文案 | 与 canonical Activation 共用的 per-Agent maintenance lease；restart terminal proof；双 quarantine reset transport             | Kernel/本机 Host fence 完成；远程 transport/operation/UI 未完成              |
+| Artifact/Files                            | Files tab、artifact row/detail/preview/download 交互                                  | immutable Artifact registry、content digest、MIME/kind、Task/Run provenance、ACL、blob owner、retention                       | **本机 P0 E2 完成**；跨 Computer transport、Range/Finder、frozen diff 未完成 |
 
 ## 4. 具体顺序
 
@@ -61,6 +61,8 @@ requested
 
 先定义稳定目标：`Room`、`Message`、`Thread`、`Task`、`InputRequest`、`Agent`、`Computer`、`Artifact`。URL 只是这个 union 的编码，不是 owner。Notification 只保存 target + category + lifecycle，不复制业务正文；点击时服务端重新做 ACL 与存在性检查。随后增加 content-free hint，polling 保留为可靠性 backstop。
 
+2026-09-01 实施状态：八种 target schema、Kernel click-time resolve/ACL、Human×Workspace 有界 dismissal、daemon current-condition notification、HTTP/SDK、Search/Activity/Tasks/Saved/Human Inbox Web 接线和 reload-safe URL 已落地。Raft 的打开不 dismiss、显式 dismiss、最多 100 key 与 InputRequest 分 owner 保持不变；Multica 只用于耐久隔离/幂等监督。正式产品结论必须读取同批浏览器/重启验收，不能把 unit test 当成发布证据。OS 原生通知订阅不包含在此项中。
+
 ### D. Search
 
 在 Kernel/daemon 建 ACL-safe 搜索投影。首版索引 Room/DM 名称、Message、Task、Agent 与 Artifact metadata；SQLite FTS 只是索引实现，不成为真相。结果携带 typed deep link，点击后由目标页面重新读取 canonical 对象。Raft Search UI、过滤器尺寸和交互可以直接复用，但不能从浏览器本地缓存搜索历史真相。
@@ -71,7 +73,7 @@ requested
 
 ### F. Artifact/Files
 
-先定义 immutable Artifact 与版本：digest、size、MIME/kind、producer Agent、RunAttempt、TaskSubmission、createdAt、storage owner 和 lifecycle。Computer 只上传/下载有能力令牌约束的 blob；Kernel 保存 metadata/ACL/provenance。Files 页面再直接复用 Raft 的 row/detail/preview 规格。裸绝对路径、当前 Git 状态和 Provider 临时附件都不能冒充 Artifact。
+首批已按该边界完成：immutable metadata、digest、size、MIME、producer Agent、Task/RunAttempt、TaskSubmission、Message owner、ACL 与 blob lifecycle 由 Kernel/RoomFiles 持有；Agent 通过 Activation-scoped Worker credential 显式流式上传，`task-submit` 原子绑定，Files 页面复用 Raft row/preview/download/jump 合同。裸绝对路径、当前 Git 状态和 Provider 临时附件都不能冒充 Artifact。尚未实现跨 Computer Blob transport、Range/Finder reveal 与 frozen Git diff/base/head。
 
 ## 5. 收口门禁
 
@@ -86,7 +88,7 @@ requested
 
 ## 6. 当前发布结论
 
-Human Inbox/InputRequest 已有浏览器产品证据；Agent Memory 普通形成、召回、更正、跨 Provider 延续已有真实模型证据，Memory 查看/reset 已有实现。autonomous maintenance、Search/通用 Notifications、全局 Tasks/Activity、强制改派、执行 restart/session reset 和 Artifact/Files 仍不能宣称与 Raft 等效。具体已验证范围见上方最新审计，不能用一个 slice 的成功替代全项目发布验收。
+Human Inbox/InputRequest 已有浏览器产品证据；Agent Memory 普通形成、召回、更正、跨 Provider 延续已有真实模型证据，Memory 查看/reset 已有实现；本机 Agent Artifact → TaskSubmission → Thread/Room Files、execution restart/session reset 与安全强制改派已有严格协议及真实浏览器证据。跨 Computer Artifact、autonomous maintenance、通用 Notifications、full reset 与未决管理 operation 的独立恢复 UI 仍不能宣称与 Raft 等效。具体已验证范围见最新审计，不能用一个 slice 的成功替代全项目发布验收。
 
 ## 7. 2026-08-30 记忆审计后的下一执行批次
 
@@ -95,7 +97,7 @@ Human Inbox/InputRequest 已有浏览器产品证据；Agent Memory 普通形成
 下一批按以下边界推进：
 
 1. **可立即并行设计、顺序落地：** typed deep-link target/URL codec、通用 Notification projection、ACL 重新校验。它们不依赖 Runtime 管理 lease。
-2. **先完成 operation owner 再开放 UI：** 安全强制改派。现有 cancellation fence 和 terminal proof 可复用，但必须增加 durable reassignment operation；当前 `todo + unclaimed` 的普通改负责人不能冒充强制改派。
+2. **已完成本机产品链：** 安全强制改派已有 durable operation、cancellation fence、terminal proof、Human API 与 Web UI；`todo + unclaimed` 的普通改负责人仍是另一条轻量命令，不能冒充强制改派。跨 Computer 与未决 operation 独立恢复 UI 留在后续可靠性批次。
 3. **与记忆 reset 共用一个底座：** Agent exclusive management lease 的 Kernel/本机 Host Phase 1 已完成；下一步是 maintenance lane、restart terminal proof、远程 Computer control transport 与 orphan recovery。完整产品链完成前 restart/reset 按钮保持禁用。
-4. **可先定义协议，不先画假页面：** immutable Artifact metadata/blob/provenance/ACL。完成上传/下载 owner 和冻结证据后再接 Raft Files UI。
-5. **Search 最后接索引：** typed target 与 ACL gate 完成后再建 SQLite FTS projection；FTS 可删除重建，绝不成为 Message/Task/Artifact 真相。
+4. **Artifact 本机 P0 已完成：** immutable metadata/blob/provenance/ACL、上传 owner、冻结 submission evidence 与 Raft Files UI 已接通；后续只按明确需求扩展跨 Computer transport、Range/Finder 或 frozen diff，不另造 Artifact owner。
+5. **Search 不重复造索引：** 审计确认现有 Kernel SQL Search 已做 membership ACL、冻结 cursor 与确定性排序。本批只增加 typed target 和点击时第二道 ACL gate；除非后续真实长库基准证明需要，否则不为“看起来更完整”另造 SQLite FTS。索引永远可删除重建，不能成为 Message/Task/Artifact 真相。

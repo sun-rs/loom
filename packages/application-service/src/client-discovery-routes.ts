@@ -6,12 +6,19 @@ import * as P from "@rah-os/protocol";
 import type { ZodType } from "zod";
 
 export const DISCOVERY_DATA_PATHS = [
+  "/messages/social",
+  "/messages/react",
+  "/messages/save",
+  "/messages/saved",
+  "/sidebar/get",
+  "/sidebar/patch",
   "/tasks/global",
   "/search",
   "/messages/context",
   "/activity/list",
   "/activity/mark",
   "/activity/follow",
+  "/navigation/resolve",
 ];
 
 // Thin adapter. Validation, authentication and errors stay on the shared HTTP path.
@@ -23,6 +30,42 @@ export function routeDiscovery(
   parse: <T>(schema: ZodType<T>, body: Record<string, unknown>) => T,
 ): unknown {
   switch (path) {
+    case "/messages/social":
+      return P.MessageSocialResponseSchema.parse(
+        human.listMessageSocial(
+          actor,
+          parse(P.MessageSocialRequestSchema, body),
+        ),
+      );
+    case "/messages/react":
+      return P.MessageSocialItemSchema.parse(
+        human.reactMessage(actor, parse(P.MessageReactionRequestSchema, body)),
+      );
+    case "/messages/save":
+      return P.MessageSocialItemSchema.parse(
+        human.saveMessage(actor, parse(P.MessageSaveRequestSchema, body)),
+      );
+    case "/messages/saved":
+      return P.SavedMessagesResponseSchema.parse(
+        human.listSavedMessages(
+          actor,
+          parse(P.SavedMessagesRequestSchema, body),
+        ),
+      );
+    case "/sidebar/get":
+      return P.SidebarResponseSchema.parse(
+        human.getSidebarPreferences(
+          actor,
+          parse(P.SidebarGetRequestSchema, body),
+        ),
+      );
+    case "/sidebar/patch":
+      return P.SidebarResponseSchema.parse(
+        human.patchSidebarPreferences(
+          actor,
+          parse(P.SidebarPatchRequestSchema, body),
+        ),
+      );
     case "/tasks/global":
       return P.GlobalTasksResponseSchema.parse(
         human.listGlobalTasks(actor, parse(P.GlobalTasksRequestSchema, body)),
@@ -60,6 +103,13 @@ export function routeDiscovery(
         human.followHumanThread(
           actor,
           parse(P.HumanThreadFollowRequestSchema, body),
+        ),
+      );
+    case "/navigation/resolve":
+      return P.ClientNavigationResolveResponseSchema.parse(
+        human.resolveNavigationTarget(
+          actor,
+          parse(P.ClientNavigationResolveRequestSchema, body),
         ),
       );
     default:

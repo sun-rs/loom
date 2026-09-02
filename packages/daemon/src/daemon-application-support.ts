@@ -1,26 +1,40 @@
+import { createHash } from "node:crypto";
 import { lstat, mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 
 import {
   AgentMemoryCoordinator,
+  AgentExecutionResetCoordinator,
+  createAgentExecutionResetFenceAcquirer,
   createAgentMemoryResetFenceAcquirer,
   createKernelAgentHostControlPort,
   ProviderSessionStore,
+  ReminderReconciler,
   RuntimeProfileRegistry,
 } from "@rah-os/agent-host";
 import {
+  type AgentExecutionAdministrationPort,
   type AgentMemoryAdministrationPort,
   HumanHttpApplicationService,
+  type TaskReassignmentAdministrationPort,
+  type WebPushAdministrationPort,
 } from "@rah-os/application-service";
 import {
   KERNEL_SCHEMA_VERSION,
   type AuthenticatedHostContext,
+  type AuthenticatedActorContext,
   type HumanApplicationPort,
   type RoomKernel,
+  RuntimeTerminationProofError,
+  StaleContextError,
 } from "@rah-os/core";
 import {
   CLIENT_API_VERSION,
+  type ClientAgentExecutionResetRequest,
+  type ClientAgentExecutionResetResponse,
   type ClientHealthResponse,
+  type ClientTaskReassignRequest,
+  type ClientTaskReassignmentResponse,
   type LocalRuntimeInventoryEntry,
 } from "@rah-os/protocol";
 
@@ -30,6 +44,7 @@ import {
   type ConfiguredLocalRuntimeSnapshot,
 } from "./local-runtime-inventory.ts";
 import type { NodeManagedMcpExecutorRegistry } from "./managed-mcp-executor-registry.ts";
+import { ProfileImageStore } from "./profile-image-store.ts";
 
 export function createDaemonAgentMemoryCoordinator(input: {
   host: AuthenticatedHostContext;
@@ -59,6 +74,230 @@ export function createDaemonAgentMemoryCoordinator(input: {
   });
 }
 
+export function createDaemonAgentExecutionResetCoordinator(input: {
+  host: AuthenticatedHostContext;
+  kernel: RoomKernel;
+  stateDirectory: string;
+}): AgentExecutionResetCoordinator {
+  const providerSessions = new ProviderSessionStore({
+    rootDirectory: join(
+      input.stateDirectory,
+      "supervisors",
+      "provider-sessions",
+    ),
+  });
+  return new AgentExecutionResetCoordinator({
+    acquireFence: createAgentExecutionResetFenceAcquirer(
+      createKernelAgentHostControlPort(input.kernel, input.host),
+    ),
+    computerHostId: input.host.hostId,
+    quarantineProviderContinuity: async (ownerParticipantId, operationId) =>
+      await providerSessions.quarantineParticipant(
+        ownerParticipantId,
+        operationId,
+      ),
+    rootDirectory: join(
+      input.stateDirectory,
+      "supervisors",
+      "agent-execution-reset",
+    ),
+  });
+}
+
+export function createDaemonReminderReconciler(
+  kernel: RoomKernel,
+  onFailure: (message: string) => void,
+): ReminderReconciler {
+  return new ReminderReconciler({
+    onError: (error) =>
+      onFailure(`Reminder reconciliation failed: ${errorMessage(error)}`),
+    onResult: (result) => {
+      if (result.exhausted > 0) {
+        onFailure(
+          `${result.exhausted} Reminder delivery receipt(s) exhausted their retry budget`,
+        );
+      }
+    },
+    reconcile: () => kernel.reminders.reconcileDue(),
+  });
+}
+
+export function createDaemonAgentExecutionAdministration(input: {
+  coordinator: Pick<AgentExecutionResetCoordinator, "receipt" | "reset">;
+  human: HumanApplicationPort;
+}): AgentExecutionAdministrationPort {
+  return Object.freeze({
+    reset: async (actor, request) =>
+      await resetAgentExecution(input, actor, request),
+  });
+}
+
+export function createDaemonTaskReassignmentAdministration(input: {
+  human: HumanApplicationPort;
+  pollIntervalMs?: number;
+  timeoutMs?: number;
+}): TaskReassignmentAdministrationPort {
+  const pollIntervalMs = input.pollIntervalMs ?? 50;
+  const timeoutMs = input.timeoutMs ?? 30_000;
+  if (!Number.isInteger(pollIntervalMs) || pollIntervalMs <= 0) {
+    throw new Error("pollIntervalMs must be a positive integer");
+  }
+  if (!Number.isInteger(timeoutMs) || timeoutMs <= 0) {
+    throw new Error("timeoutMs must be a positive integer");
+  }
+  return Object.freeze({
+    reassign: async (actor, request) =>
+      await reassignTaskAfterTerminalProof(
+        input.human,
+        actor,
+        request,
+        pollIntervalMs,
+        timeoutMs,
+      ),
+  });
+}
+
+async function reassignTaskAfterTerminalProof(
+  human: HumanApplicationPort,
+  actor: AuthenticatedActorContext,
+  request: ClientTaskReassignRequest,
+  pollIntervalMs: number,
+  timeoutMs: number,
+): Promise<ClientTaskReassignmentResponse> {
+  const requested = human.requestTaskReassignment(actor, request);
+  if (requested.operation.state === "assigned") return requested;
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    try {
+      return human.continueTaskReassignment(actor, {
+        operationId: requested.operation.operationId,
+      });
+    } catch (error) {
+      if (!(error instanceof RuntimeTerminationProofError)) throw error;
+      if (Date.now() >= deadline) {
+        throw new RuntimeTerminationProofError(
+          `Task reassignment ${requested.operation.operationId} is still waiting for Host terminal proof`,
+        );
+      }
+      await new Promise<void>((resolveDelay) =>
+        setTimeout(resolveDelay, pollIntervalMs),
+      );
+    }
+  }
+}
+
+async function resetAgentExecution(
+  input: {
+    coordinator: Pick<AgentExecutionResetCoordinator, "receipt" | "reset">;
+    human: HumanApplicationPort;
+  },
+  actor: AuthenticatedActorContext,
+  request: ClientAgentExecutionResetRequest,
+): Promise<ClientAgentExecutionResetResponse> {
+  const operationId = executionResetOperationId(request);
+  const existing = await input.coordinator.receipt(operationId);
+  if (existing !== null) {
+    return await input.coordinator.reset({
+      agentDefinitionId: request.agentDefinitionId,
+      mode: request.mode,
+      operationId,
+      ownerParticipantId: existing.ownerParticipantId,
+    });
+  }
+
+  const management = input.human.getWorkspaceAgentManagementView(
+    actor,
+    request.agentDefinitionId,
+  );
+  const ownerParticipantId = management.agent.definition.participantId;
+  let disabled = false;
+  const disabledResult = manageAgentStateAtLatest(input.human, actor, {
+    agentDefinitionId: request.agentDefinitionId,
+    basedOnRoomSeq: request.basedOnRoomSeq,
+    idempotencyKey: `${request.idempotencyKey}:execution-reset:disable`,
+    state: "disabled",
+  });
+  disabled = true;
+  try {
+    const receipt = await input.coordinator.reset(
+      {
+        agentDefinitionId: request.agentDefinitionId,
+        mode: request.mode,
+        operationId,
+        ownerParticipantId,
+      },
+      {
+        afterContinuity: async () => {
+          manageAgentStateAtLatest(input.human, actor, {
+            agentDefinitionId: request.agentDefinitionId,
+            basedOnRoomSeq: disabledResult.event.roomSeq,
+            idempotencyKey: `${request.idempotencyKey}:execution-reset:enable`,
+            state: "enabled",
+          });
+          disabled = false;
+        },
+      },
+    );
+    return receipt;
+  } catch (error) {
+    if (!disabled) throw error;
+    try {
+      manageAgentStateAtLatest(input.human, actor, {
+        agentDefinitionId: request.agentDefinitionId,
+        basedOnRoomSeq: disabledResult.event.roomSeq,
+        idempotencyKey: `${request.idempotencyKey}:execution-reset:restore`,
+        state: "enabled",
+      });
+    } catch (restoreError) {
+      throw new AggregateError(
+        [error, restoreError],
+        "Agent execution reset failed and the Agent could not be re-enabled",
+      );
+    }
+    throw error;
+  }
+}
+
+function executionResetOperationId(
+  request: ClientAgentExecutionResetRequest,
+): string {
+  return `agent_execution_reset_${createHash("sha256")
+    .update(
+      JSON.stringify({
+        agentDefinitionId: request.agentDefinitionId,
+        idempotencyKey: request.idempotencyKey,
+      }),
+    )
+    .digest("hex")}`;
+}
+
+function manageAgentStateAtLatest(
+  human: HumanApplicationPort,
+  actor: AuthenticatedActorContext,
+  input: Readonly<{
+    agentDefinitionId: string;
+    basedOnRoomSeq: number;
+    idempotencyKey: string;
+    state: "disabled" | "enabled";
+  }>,
+) {
+  let basedOnRoomSeq = input.basedOnRoomSeq;
+  for (;;) {
+    try {
+      return human.manageWorkspaceAgent(actor, {
+        action: "set_state",
+        agentDefinitionId: input.agentDefinitionId,
+        basedOnRoomSeq,
+        idempotencyKey: input.idempotencyKey,
+        state: input.state,
+      });
+    } catch (error) {
+      if (!(error instanceof StaleContextError)) throw error;
+      basedOnRoomSeq = error.latestRoomSeq;
+    }
+  }
+}
+
 export function createDaemonAgentMemoryAdministration(
   coordinator: AgentMemoryCoordinator,
   computerHostId: string,
@@ -83,6 +322,7 @@ export function createDaemonAgentMemoryAdministration(
 }
 
 export function createDaemonHumanClientService(input: {
+  agentExecutionResetCoordinator: AgentExecutionResetCoordinator;
   agentMemoryCoordinator: AgentMemoryCoordinator;
   buildVersion: string;
   config: DaemonConfig;
@@ -94,22 +334,36 @@ export function createDaemonHumanClientService(input: {
   kernel: RoomKernel;
   managedMcpAdministration: NodeManagedMcpExecutorRegistry;
   protocolVersion: number;
+  webPushAdministration: WebPushAdministrationPort;
 }): HumanHttpApplicationService {
+  const profileImages = new ProfileImageStore({
+    directory: join(input.config.stateDirectory, "profile-images"),
+  });
   return new HumanHttpApplicationService({
+    agentExecutionAdministration: createDaemonAgentExecutionAdministration({
+      coordinator: input.agentExecutionResetCoordinator,
+      human: input.human,
+    }),
     agentMemoryAdministration: createDaemonAgentMemoryAdministration(
       input.agentMemoryCoordinator,
       input.host.hostId,
     ),
+    taskReassignmentAdministration: createDaemonTaskReassignmentAdministration({
+      human: input.human,
+    }),
     bindHost: input.config.client.bindHost,
     health: () => ({
       apiVersion: CLIENT_API_VERSION,
       buildVersion: input.buildVersion,
       capabilities: {
         agentOnboard: true,
+        agentExecutionReset: true,
         agentRead: true,
         agentPresenceRead: true,
         agentWrite: true,
         fileShare: true,
+        messageSocial: true,
+        sidebarPreferences: true,
         cursorAcknowledge: true,
         hints: false,
         inputRequestRead: true,
@@ -124,11 +378,13 @@ export function createDaemonHumanClientService(input: {
         roomWrite: true,
         roomSync: true,
         taskRead: true,
+        taskReassignment: true,
         taskWrite: true,
         threadRead: true,
         threadWrite: true,
         workspaceRead: true,
         workspaceWrite: true,
+        webPush: true,
       },
       kernelSchemaVersion: KERNEL_SCHEMA_VERSION,
       protocolVersion: input.protocolVersion,
@@ -146,6 +402,12 @@ export function createDaemonHumanClientService(input: {
       }),
     managedMcpAdministration: input.managedMcpAdministration,
     port: input.config.client.port,
+    profileImages: {
+      upload: (_actor, mimeType, chunks) =>
+        profileImages.upload(mimeType, chunks),
+      read: (_actor, avatarKey) => profileImages.read(avatarKey),
+    },
+    webPushAdministration: input.webPushAdministration,
   });
 }
 

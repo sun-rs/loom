@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { ClientAgentProfileRequestSchema } from "./client-agent-profile.ts";
 export * from "./client-agent-profile.ts";
+import { ClientAgentStateRequestSchema } from "./client-agent-state.ts";
+export * from "./client-agent-state.ts";
 export * from "./client-discovery.ts";
 
 import {
@@ -57,6 +59,7 @@ export * from "./agent-app-inbox.ts";
 export * from "./agent-memory-project.ts";
 export * from "./agent-exclusive-operation.ts";
 export * from "./agent-definition.ts";
+export * from "./agent-avatar-pattern.ts";
 export * from "./context-manifest.ts";
 export * from "./execution-policy.ts";
 export * from "./workspace-instruction-pack.ts";
@@ -64,6 +67,7 @@ export * from "./managed-mcp.ts";
 export * from "./runtime-activity.ts";
 export * from "./agent-presence.ts";
 export * from "./review.ts";
+export * from "./reminder.ts";
 export { ContentDigestSchema } from "./common.ts";
 export type { ContentDigest } from "./common.ts";
 export {
@@ -94,6 +98,8 @@ export type {
 } from "./collaboration.ts";
 export * from "./client.ts";
 export * from "./client-task.ts";
+export * from "./worker-message.ts";
+export * from "./worker-thread.ts";
 export { RoomEventSchema } from "./room-event.ts";
 export type { RoomEvent } from "./room-event.ts";
 
@@ -840,26 +846,14 @@ export type ClientAgentConfigureRequest = z.infer<
   typeof ClientAgentConfigureRequestSchema
 >;
 
-export const ClientAgentStateRequestSchema = z
-  .object({
-    action: z.literal("set_state"),
-    agentDefinitionId: IdentifierSchema,
-    basedOnRoomSeq: z.number().int().nonnegative(),
-    idempotencyKey: IdentifierSchema,
-    state: z.enum(["enabled", "disabled", "tombstoned"]),
-  })
-  .strict();
-export type ClientAgentStateRequest = z.infer<
-  typeof ClientAgentStateRequestSchema
->;
-
 export const ClientAgentManageRequestSchema = z.discriminatedUnion("action", [
   ClientAgentConfigureRequestSchema,
   ClientAgentStateRequestSchema,
   ClientAgentProfileRequestSchema,
 ]);
-type ClientAgentManageSchema = typeof ClientAgentManageRequestSchema;
-export type ClientAgentManageRequest = z.infer<ClientAgentManageSchema>;
+export type ClientAgentManageRequest = z.infer<
+  typeof ClientAgentManageRequestSchema
+>;
 
 export const ClientAgentManageResponseSchema = z
   .object({
@@ -875,6 +869,7 @@ export type ClientAgentManageResponse = z.infer<
 >;
 
 export * from "./agent-workspace.ts";
+export * from "./client-task-reassignment.ts";
 export const ClientAgentGetRequestSchema = z
   .object({ agentDefinitionId: IdentifierSchema })
   .strict();
@@ -1536,17 +1531,6 @@ export type WorkerAcknowledgeRequest = z.infer<
   typeof WorkerAcknowledgeRequestSchema
 >;
 
-export const WorkerMessagePostRequestSchema = z
-  .object({
-    basedOnRoomSeq: z.number().int().nonnegative(),
-    body: z.string().trim().min(1),
-    idempotencyKey: IdentifierSchema,
-  })
-  .strict();
-export type WorkerMessagePostRequest = z.infer<
-  typeof WorkerMessagePostRequestSchema
->;
-
 const WorkerTaskCommandBaseSchema = z
   .object({
     taskId: IdentifierSchema,
@@ -1709,17 +1693,6 @@ export type WorkerAcknowledgeResponse = z.infer<
   typeof WorkerAcknowledgeResponseSchema
 >;
 
-export const WorkerMessageMutationResponseSchema = z
-  .object({
-    activationIds: z.array(IdentifierSchema),
-    deduplicated: z.boolean(),
-    event: RoomEventSchema,
-  })
-  .strict();
-export type WorkerMessageMutationResponse = z.infer<
-  typeof WorkerMessageMutationResponseSchema
->;
-
 export const WorkerTaskMutationResponseSchema = z
   .object({
     deduplicated: z.boolean(),
@@ -1798,3 +1771,7 @@ export type WorkerErrorResponse = ErrorResponse;
 export const ClientErrorResponseSchema = ErrorResponseSchema;
 export type ClientErrorResponse = z.infer<typeof ClientErrorResponseSchema>;
 export * from "./room-files.ts";
+export * from "./message-social.ts";
+export * from "./official-agent-avatars.ts";
+export * from "./profile-image.ts";
+export * from "./runtime-failure.ts";

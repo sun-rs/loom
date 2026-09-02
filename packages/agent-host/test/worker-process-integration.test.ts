@@ -119,3 +119,156 @@ test("an external process proves Room delivery through a scoped Worker API", asy
     rmSync(directory, { force: true, recursive: true });
   }
 });
+
+test("two external Agent processes take turns from committed Room replies without collisions", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-worker-turn-taking-"));
+  const databasePath = join(directory, "room.db");
+  let kernel = new RoomKernel({ databasePath });
+  let service = new WorkerApplicationService({ kernel });
+  try {
+    kernel.initialize();
+    const humanProvisioning = kernel.provisionPrincipal({
+      handle: "turn-taking-human",
+      kind: "human",
+    });
+    const agentProvisionings = ["turn-taking-a", "turn-taking-b"].map(
+      (handle) => kernel.provisionPrincipal({ handle, kind: "agent" }),
+    );
+    let humanActor = kernel.authenticateAccessToken(
+      humanProvisioning.accessToken,
+    );
+    const room = kernel.createRoom(humanActor, {
+      name: "Worker turn-taking integration",
+      slug: "worker-turn-taking-integration",
+    });
+    for (const agent of agentProvisionings) {
+      kernel.addMember(humanActor, {
+        principalId: agent.principal.principalId,
+        roomId: room.roomId,
+      });
+    }
+    await service.start();
+
+    const hostAccessTokens = agentProvisionings.map(
+      (agent, index) =>
+        kernel.provisionHostCredential({
+          hostId: `worker-turn-taking-host-${String(index)}`,
+          participantIds: [agent.principal.principalId],
+        }).accessToken,
+    );
+    const createHosts = () =>
+      agentProvisionings.map((_agent, index) => {
+        const hostContext = kernel.authenticateHostAccessToken(
+          hostAccessTokens[index]!,
+        );
+        const runtime = new GenericProcessAdapter({
+          activationEnvironment: async (input) => {
+            const credential = service.issueActivationCredential(
+              hostContext,
+              input,
+            );
+            return await createWorkerToolTransportEnvironment({
+              credentialDirectory: join(
+                directory,
+                `worker-credentials-${String(index)}`,
+              ),
+              revokeCredential: credential.revoke,
+              workerAccessToken: credential.accessToken,
+              workerApiOrigin: service.origin,
+            });
+          },
+          args: [fakeCliPath],
+          command: process.execPath,
+          cwd: directory,
+          env: {
+            RAH_FAKE_MODE: "worker-task",
+            RAH_FAKE_ROOM_REPLY_MODE: "turn-taking-counter",
+          },
+        });
+        return {
+          context: hostContext,
+          runner: new AgentHost({
+            host: hostContext,
+            kernel,
+            leaseMs: 30_000,
+            runtime,
+          }),
+        };
+      });
+    let hostEntries = createHosts();
+
+    kernel.postRoomMessage(humanActor, {
+      body: "请你们两个轮流报数，从1开始直到10",
+      idempotencyKey: "worker-turn-taking-message",
+      roomId: room.roomId,
+    });
+
+    let consecutiveIdleCycles = 0;
+    let restarted = false;
+    for (let cycle = 0; cycle < 30; cycle += 1) {
+      const results = await Promise.all(
+        hostEntries.map(({ runner }) => runner.reconcileOnce()),
+      );
+      consecutiveIdleCycles = results.every((result) => result.state === "idle")
+        ? consecutiveIdleCycles + 1
+        : 0;
+      const numberBodies = roomNumberEvents(kernel, humanActor, room.roomId);
+      if (!restarted && numberBodies.length >= 4) {
+        for (const { context } of hostEntries) {
+          kernel.heartbeatHost(context, { state: "offline" });
+        }
+        await service.close();
+        kernel.close();
+        kernel = new RoomKernel({ databasePath });
+        kernel.initialize();
+        service = new WorkerApplicationService({ kernel });
+        await service.start();
+        humanActor = kernel.authenticateAccessToken(
+          humanProvisioning.accessToken,
+        );
+        hostEntries = createHosts();
+        consecutiveIdleCycles = 0;
+        restarted = true;
+      }
+      if (numberBodies.length >= 10 && consecutiveIdleCycles >= 2) break;
+    }
+
+    const numberEvents = roomNumberEvents(kernel, humanActor, room.roomId);
+    assert.deepEqual(
+      numberEvents.map((event) => event.payload.body),
+      ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+    );
+    assert.equal(new Set(numberEvents.map((event) => event.actorId)).size, 2);
+    assert.equal(restarted, true, "the count must cross a durable restart");
+    for (let index = 1; index < numberEvents.length; index += 1) {
+      assert.notEqual(
+        numberEvents[index]?.actorId,
+        numberEvents[index - 1]?.actorId,
+      );
+    }
+    assert.ok(
+      kernel
+        .listActivations({ roomId: room.roomId })
+        .every((activation) => activation.state === "completed"),
+    );
+  } finally {
+    await service.close();
+    kernel.close();
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+function roomNumberEvents(
+  kernel: RoomKernel,
+  actor: ReturnType<RoomKernel["authenticateAccessToken"]>,
+  roomId: string,
+) {
+  return kernel
+    .sync(actor, { consumerId: "worker-turn-taking-observer", roomId })
+    .events.filter(
+      (event) =>
+        event.type === "message.posted" &&
+        typeof event.payload.body === "string" &&
+        /^\d+$/u.test(event.payload.body),
+    );
+}

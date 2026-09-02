@@ -14,6 +14,7 @@ export const ActivationReasonSchema = z.enum([
   "input_requested",
   "input_resolved",
   "thread_subscription",
+  "reminder",
   "room_policy",
   "manual",
 ]);

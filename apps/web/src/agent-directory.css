@@ -466,6 +466,7 @@
 .rah-agent-activity-pane,
 .rah-agent-chat-pane,
 .rah-agent-mcp-pane,
+.rah-agent-reminders-pane,
 .rah-agent-capability-pane {
   flex: 1;
   min-height: 0;
@@ -475,10 +476,10 @@
 }
 
 .rah-agent-profile-hero {
-  align-items: center;
+  align-items: flex-start;
   display: flex;
   gap: var(--raft-members-profile-hero-gap);
-  height: var(--raft-members-profile-hero-height);
+  min-height: var(--raft-members-profile-hero-height);
   padding: var(--raft-members-profile-hero-padding);
 }
 
@@ -487,7 +488,6 @@
   border: 0;
   cursor: pointer;
   flex: none;
-  line-height: 0;
   padding: 0;
   position: relative;
 }
@@ -543,9 +543,10 @@
   align-items: center;
   background: var(--paper);
   border: 2px solid var(--black);
-  display: inline-flex;
+  display: flex;
   height: 40px;
   justify-content: center;
+  overflow: hidden;
   padding: 0;
   width: 40px;
 }
@@ -575,6 +576,7 @@
   color: var(--ink-40);
   cursor: not-allowed;
   font-size: 24px;
+  font-weight: 700;
   opacity: 1;
 }
 
@@ -583,21 +585,41 @@
   text-align: center;
 }
 
+.rah-agent-profile-identity {
+  flex: 1;
+  min-width: 0;
+}
+
+.rah-agent-profile-heading {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
 .rah-agent-profile-hero h3 {
   font-size: 18px;
   font-weight: 700;
   line-height: 23px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .rah-agent-profile-hero p {
   color: var(--ink-40);
   font: 14px/20px var(--mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .rah-agent-online-state {
   align-items: center;
   color: var(--ink-50);
   display: flex;
+  flex: none;
   font-size: 12px;
   gap: 5px;
   line-height: 18px;
@@ -624,12 +646,21 @@
   font-size: 12px;
   font-weight: 700;
   line-height: 16px;
+  color: var(--ink-50);
+}
+
+.rah-agent-profile-field h3,
+.rah-agent-runtime-section > h3 {
+  align-items: center;
+  display: flex;
+  gap: 8px;
 }
 
 .rah-agent-profile-field p {
   font-size: 14px;
   line-height: 20px;
   margin-top: 4px;
+  overflow-wrap: anywhere;
 }
 
 .rah-agent-profile-field p.is-empty,
@@ -663,7 +694,7 @@
 }
 
 .rah-agent-role-block strong {
-  background: var(--purple);
+  background: var(--lavender);
   border: var(--bd);
   display: inline-flex;
   font-size: 12px;
@@ -673,14 +704,19 @@
 }
 
 .rah-agent-info-grid {
-  display: grid;
-  gap: 16px 32px;
-  grid-template-columns: 1fr 1fr;
-  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 32px;
+  margin-top: 12px;
 }
 
 .rah-agent-info-grid > div:first-child {
-  grid-column: 1 / -1;
+  flex-basis: 100%;
+}
+
+.rah-agent-info-grid > div {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .rah-agent-info-grid dd {
@@ -688,6 +724,7 @@
   font-weight: 700;
   line-height: 20px;
   margin-top: 4px;
+  overflow-wrap: anywhere;
 }
 
 .rah-agent-info-grid small {
@@ -702,14 +739,21 @@
   gap: 12px;
 }
 
+.rah-agent-runtime-chips > div {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .rah-agent-runtime-chips strong {
   border: var(--bd);
-  display: inline-flex;
+  display: inline-block;
   font-size: 12px;
   line-height: 16px;
   margin-top: 4px;
   min-height: 24px;
   padding: 2px 8px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .rah-agent-runtime-chips strong.is-cyan {
@@ -717,7 +761,45 @@
 }
 
 .rah-agent-runtime-chips strong.is-lavender {
-  background: var(--purple);
+  background: var(--lavender);
+}
+
+.rah-product-shell .rah-profile-chip-edit {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+  max-width: 100%;
+}
+.rah-profile-chip-edit:hover strong {
+  text-decoration: underline;
+}
+.rah-profile-chip-edit:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+.rah-profile-field-editor input,
+.rah-profile-field-editor textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px;
+  border: 2px solid var(--ink);
+  font: inherit;
+  color: var(--ink);
+  background: white;
+}
+.rah-profile-field-editor textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+.rah-profile-field-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.rah-profile-field-editor [role="alert"] {
+  color: #a92820;
 }
 
 .rah-agent-runtime-chips strong.is-yellow {
@@ -747,6 +829,7 @@
   display: grid;
   gap: 3px;
   padding: 10px 12px;
+  overflow-wrap: anywhere;
 }
 
 .rah-agent-skill-list span {
@@ -758,7 +841,6 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 29px;
 }
 
 .rah-agent-profile-actions button {
@@ -767,9 +849,11 @@
   border: var(--bd);
   box-shadow: var(--shadow-s);
   display: flex;
+  gap: 8px;
   font-size: 14px;
   font-weight: 700;
-  height: var(--raft-members-action-button-height);
+  line-height: 20px;
+  min-height: var(--raft-members-action-button-height);
   justify-content: center;
   padding: 8px 16px;
   width: 100%;
@@ -781,7 +865,22 @@
 
 .rah-agent-profile-actions button.is-red {
   background: var(--coral);
-  margin-top: 24px;
+}
+
+.rah-agent-profile-actions button > svg {
+  flex: none;
+  height: 14px;
+  width: 14px;
+}
+
+/* Missing capability is explicit, not a faded version of a ready action. */
+.rah-product-shell .rah-agent-profile-actions button.is-unavailable:disabled {
+  opacity: 1;
+  color: var(--ink-50);
+}
+
+.rah-agent-profile-actions button > small {
+  font: 400 10px/14px var(--sans);
 }
 
 .rah-agent-activity-pane,
@@ -1080,42 +1179,107 @@
   padding: 12px 20px;
 }
 
-.rah-agent-mcp-list article {
-  align-items: start;
+.rah-agent-mcp-servers {
+  display: grid;
+}
+
+.rah-agent-mcp-servers > details {
   border-bottom: 1px solid var(--ink-10);
-  display: grid;
-  gap: 12px;
-  grid-template-columns: 72px minmax(0, 1fr) auto;
-  padding: 12px 20px;
 }
 
-.rah-agent-mcp-list article > div {
+.rah-agent-mcp-servers summary {
+  align-items: center;
+  cursor: pointer;
   display: grid;
-  gap: 3px;
+  gap: 10px;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  list-style: none;
+  min-height: 58px;
+  padding: 9px 20px;
 }
 
-.rah-agent-mcp-list time,
-.rah-agent-mcp-list span {
+.rah-agent-mcp-servers summary::-webkit-details-marker {
+  display: none;
+}
+
+.rah-agent-mcp-servers summary > svg {
+  height: 16px;
+  width: 16px;
+}
+
+.rah-agent-mcp-servers summary > span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rah-agent-mcp-servers summary b {
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rah-agent-mcp-servers summary small,
+.rah-agent-mcp-tools small,
+.rah-agent-mcp-tools p,
+.rah-agent-mcp-tools i {
   color: var(--ink-40);
-  font: 10px/1.5 var(--mono);
+  font: 10px/1.45 var(--mono);
 }
 
-.rah-agent-mcp-list code {
-  font: 11px/1.4 var(--mono);
-}
-
-.rah-agent-mcp-list strong {
+.rah-agent-mcp-servers summary strong {
   border: 1px solid var(--ink);
   font: 10px/1.4 var(--mono);
   padding: 2px 6px;
 }
 
-.rah-agent-mcp-list strong.is-completed {
+.rah-agent-mcp-servers summary strong.is-enabled {
   background: var(--green);
 }
 
-.rah-agent-mcp-list strong.is-failed {
-  background: var(--coral);
+.rah-agent-mcp-servers summary strong.is-disabled {
+  background: var(--gray);
+}
+
+.rah-agent-mcp-tools {
+  background: var(--ink-05);
+  border-top: 1px solid var(--ink-10);
+  display: grid;
+  padding: 4px 20px 8px 48px;
+}
+
+.rah-agent-mcp-tools article {
+  align-items: start;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
+  padding: 7px 0;
+}
+
+.rah-agent-mcp-tools article > svg {
+  height: 13px;
+  margin-top: 1px;
+  width: 13px;
+}
+
+.rah-agent-mcp-tools article > span {
+  display: grid;
+  min-width: 0;
+}
+
+.rah-agent-mcp-tools code {
+  font: 11px/1.4 var(--mono);
+  overflow-wrap: anywhere;
+}
+
+.rah-agent-mcp-tools p {
+  margin-top: 2px;
+}
+
+.rah-agent-mcp-tools i {
+  font-style: normal;
+  white-space: nowrap;
 }
 
 /* Raft live runtime editor: max-w-md, card-brutal p-6, gap-4. */
@@ -1204,10 +1368,6 @@
   flex: none;
   min-height: 220px;
   overflow: visible;
-}
-
-.rah-agent-mcp-list strong.is-pending {
-  background: var(--yellow);
 }
 
 .rah-agent-activity-pane > .btn,
@@ -1440,6 +1600,156 @@
   max-width: 520px;
 }
 
+.rah-agent-reminders-pane {
+  background: #fff;
+  padding: 20px;
+}
+
+.rah-agent-reminders-list {
+  display: grid;
+  gap: 12px;
+}
+
+.rah-agent-reminders-list > article {
+  border: var(--bd);
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.rah-agent-reminder-title {
+  min-width: 0;
+}
+
+.rah-agent-reminder-title strong {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.rah-agent-reminder-meta {
+  align-items: center;
+  color: var(--ink-40);
+  display: flex;
+  flex-wrap: wrap;
+  font: 11px/1.5 var(--mono);
+  gap: 8px;
+}
+
+.rah-agent-reminder-relative,
+.rah-agent-reminder-recurrence,
+.rah-agent-reminder-reference {
+  align-items: center;
+  display: inline-flex;
+  gap: 4px;
+}
+
+.rah-agent-reminder-relative {
+  color: var(--ink-60);
+  font-family: var(--sans);
+  font-weight: 600;
+}
+
+.rah-agent-reminder-relative svg {
+  height: 12px;
+  width: 12px;
+}
+
+.rah-agent-reminder-recurrence {
+  background: color-mix(in srgb, var(--lavender) 30%, white);
+  border: 1px solid var(--black);
+  color: var(--ink);
+  max-width: 100%;
+  padding: 2px 6px;
+}
+
+.rah-agent-reminder-recurrence svg,
+.rah-agent-reminder-reference svg {
+  flex: none;
+  height: 11px;
+  width: 11px;
+}
+
+.rah-agent-reminder-reference {
+  align-self: start;
+  background: #fff;
+  border: 1px solid var(--black);
+  color: var(--ink-60);
+  cursor: pointer;
+  font: 11px/1.4 var(--mono);
+  justify-self: start;
+  max-width: 100%;
+  padding: 2px 6px;
+  text-decoration: none;
+}
+
+.rah-agent-reminder-reference:hover {
+  background: color-mix(in srgb, var(--yellow) 30%, white);
+  color: var(--ink);
+}
+
+.rah-agent-reminder-reference span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rah-agent-reminders-loading {
+  color: var(--ink-40);
+  font: 700 11px/1.5 var(--sans);
+  margin: 0 0 12px;
+}
+
+.rah-agent-reminders-empty {
+  align-items: center;
+  color: var(--ink-40);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: center;
+  min-height: 260px;
+  text-align: center;
+}
+
+.rah-agent-reminders-empty > svg {
+  height: 28px;
+  margin-bottom: 10px;
+  width: 28px;
+}
+
+.rah-agent-reminders-empty strong {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.rah-agent-reminders-empty span {
+  font: 11px/1.5 var(--mono);
+  margin-top: 4px;
+}
+
+.rah-agent-reminders-error {
+  background: color-mix(in srgb, var(--orange) 20%, white);
+  border: var(--bd);
+  display: grid;
+  font-size: 12px;
+  gap: 6px;
+  padding: 10px;
+}
+
+.rah-agent-reminders-error .btn {
+  align-items: center;
+  display: inline-flex;
+  font-size: 11px;
+  gap: 4px;
+  justify-self: start;
+  padding: 4px 8px;
+}
+
+.rah-agent-reminders-error .btn svg {
+  height: 12px;
+  width: 12px;
+}
+
 @media (max-width: 700px) {
   .rah-product-shell:has(.rah-agent-directory-page.is-mobile-detail-open)
     > .rah-mobile-nav {
@@ -1527,24 +1837,6 @@
     width: 96px;
   }
 
-  .rah-agent-profile-hero {
-    height: auto;
-    min-height: 136px;
-  }
-
-  .rah-agent-info-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .rah-agent-info-grid > div:first-child {
-    grid-column: auto;
-  }
-
-  .rah-agent-runtime-chips {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .rah-agent-activity-pane > header,
   .rah-agent-mcp-pane > header {
     align-items: flex-start;
@@ -1557,15 +1849,13 @@
     padding: 9px 14px;
   }
 
-  .rah-agent-mcp-list article {
+  .rah-agent-mcp-servers summary {
     gap: 8px;
-    grid-template-columns: 62px minmax(0, 1fr);
-    padding: 10px 14px;
+    padding-inline: 14px;
   }
 
-  .rah-agent-mcp-list article > strong {
-    grid-column: 2;
-    justify-self: start;
+  .rah-agent-mcp-tools {
+    padding-inline: 38px 14px;
   }
 
   .rah-agent-chat-title {

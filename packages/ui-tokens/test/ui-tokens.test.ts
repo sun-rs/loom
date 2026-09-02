@@ -7,13 +7,40 @@ import test from "node:test";
 const packageRoot = join(import.meta.dirname, "..");
 const repositoryRoot = join(packageRoot, "..", "..");
 
-test("interaction icon geometry is frozen from Raft RFe/TFe/yze/cze and the 2026-08-31 Agent tabs live DOM", () => {
+test("interaction icon geometry is frozen from Raft RFe/TFe/yze/cze, Agent tabs, profile, and Reminder live DOM", () => {
   const content = readFileSync(
     join(packageRoot, "src", "interaction-icons.svg"),
   );
+  const source = content.toString("utf8");
+  for (const exactRaftPath of [
+    'd="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"',
+    'd="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"',
+    'd="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0',
+    'd="M16 12h2"',
+    'd="M12 6v6h4"',
+    'd="m17 2 4 4-4 4"',
+  ]) {
+    assert.match(
+      source,
+      new RegExp(exactRaftPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "u"),
+    );
+  }
+  assert.doesNotMatch(
+    source,
+    /raft-icon-shield-check[^<]*>[\s\S]*?m9 12 2 2 4-4/u,
+  );
   assert.equal(
     createHash("sha256").update(content).digest("hex"),
-    "b6615005c2f1c582d5908c50f6c75f9d82917ed23aee0c7d81777922319d81b4",
+    "b18abc7fe96dfc313afaf477e5bffb4cc87bce82b558ac7fe23d719f2795b254",
+  );
+});
+test("quick-reaction sprite is the unchanged official published asset", () => {
+  const content = readFileSync(
+    join(repositoryRoot, "apps/web/src/raft-reaction-sprite.svg"),
+  );
+  assert.equal(
+    createHash("sha256").update(content).digest("hex"),
+    "10912fdacbbfc427fcd1cdd0bc8ad7a2fc0a40fa121ee663f0a8ad19c67499f8",
   );
 });
 

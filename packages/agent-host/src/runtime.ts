@@ -4,6 +4,7 @@ import type {
   ContextManifest,
   RuntimeRecoveryDescriptor,
   RuntimeTrajectoryAppendInput,
+  RuntimeFailure,
 } from "@rah-os/protocol";
 
 export type RuntimeAvailability = {
@@ -29,6 +30,7 @@ export type RunHandle = {
 
 export type RunExit = {
   code: number | null;
+  failure?: RuntimeFailure;
   signal?: string;
 };
 

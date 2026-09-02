@@ -49,11 +49,9 @@ test("workspace hidden-file state uses Raft's distinct eye-off glyph", () => {
 
 test("Agent activity Room navigation delegates to the canonical deep-link owner", () => {
   const app = readFileSync(new URL("../src/App.tsx", import.meta.url), "utf8");
-  const handler = app.match(
-    /onOpenRoom: \(roomId: string\) => \{([^}]+\}[^}]*?)\n    \},/s,
-  )?.[1];
-  assert.ok(
-    handler?.includes("openDiscoveryLocation({ roomId })"),
+  assert.match(
+    app,
+    /openDiscoveryLocation\(\{\s*target: \{ kind: "room", roomId \},/,
     "reset old message/thread focus through the existing navigation owner",
   );
 });

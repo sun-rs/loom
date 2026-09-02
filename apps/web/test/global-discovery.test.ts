@@ -9,7 +9,10 @@ import {
   searchExcerpt,
   visibleReadFrontier,
   focusAfterSuccessfulSubmit,
+  groupSearchHits,
+  mergeSearchHits,
 } from "../src/global-discovery-model.ts";
+import type { WorkspaceSearchResponse } from "@rah-os/protocol";
 test("successful submit exits only its own focused snapshot, not a newer navigation", () => {
   assert.equal(
     focusAfterSuccessfulSubmit("old-message", "old-message"),
@@ -29,9 +32,12 @@ test("global routes preserve Room/thread/message identities without treating DM 
   assert.equal(globalSurfaceFromSearch("?surface=evil"), "room");
   const url = new URL(
     discoveryLocation({
-      roomId: "room one",
-      messageId: "m+1",
-      rootMessageId: "root&1",
+      target: {
+        kind: "message",
+        roomId: "room one",
+        messageId: "m+1",
+        rootMessageId: "root&1",
+      },
     }),
     "http://local",
   );
@@ -43,9 +49,12 @@ test("Activity Thread deep links retain the Activity filter and background", () 
   const url = new URL(
     discoveryLocation(
       {
-        roomId: "room-target",
-        rootMessageId: "root-target",
-        messageId: "reply-target",
+        target: {
+          kind: "message",
+          roomId: "room-target",
+          rootMessageId: "root-target",
+          messageId: "reply-target",
+        },
         surface: "activity",
       },
       "?surface=activity&filter=mentions&room=old",
@@ -96,5 +105,46 @@ test("Human read acknowledgement uses visible message sequence, never transport 
       bottom: 800,
     }),
     0,
+  );
+});
+
+test("Raft Search groups Thread hits and append pagination never duplicates messages", () => {
+  const hit = (
+    messageId: string,
+    rootMessageId?: string,
+  ): WorkspaceSearchResponse["hits"][number] => ({
+    message: {
+      messageId,
+      roomId: "room-a",
+      actorId: "agent-a",
+      body: `body ${messageId}`,
+      createdAt: "2026-09-01T00:00:00.000Z",
+      ...(rootMessageId ? { threadId: "thread-a" } : {}),
+    },
+    roomName: "Design",
+    senderName: "Alice",
+    ...(rootMessageId ? { rootMessageId } : {}),
+    target: {
+      kind: "message",
+      roomId: "room-a",
+      messageId,
+      ...(rootMessageId ? { rootMessageId, threadId: "thread-a" } : {}),
+    },
+  });
+  const root = hit("message-root");
+  const replyOne = hit("message-reply-1", "message-root");
+  const replyTwo = hit("message-reply-2", "message-root");
+  const merged = mergeSearchHits([root, replyOne], [replyOne, replyTwo]);
+  assert.deepEqual(
+    merged.map(({ message }) => message.messageId),
+    ["message-root", "message-reply-1", "message-reply-2"],
+  );
+  const groups = groupSearchHits(merged);
+  assert.equal(groups.length, 2);
+  assert.equal(groups[0]?.kind, "message");
+  assert.equal(groups[1]?.kind, "thread");
+  assert.deepEqual(
+    groups[1]?.hits.map(({ message }) => message.messageId),
+    ["message-reply-1", "message-reply-2"],
   );
 });

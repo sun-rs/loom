@@ -232,6 +232,7 @@ function RuntimePicker({
       </b>
       <DiscoveryFilter
         label={label}
+        triggerAriaLabel={`${label}：${options.find((item) => item.id === value)?.label ?? "配置不可用"}`}
         icon={null}
         values={[value]}
         options={options}

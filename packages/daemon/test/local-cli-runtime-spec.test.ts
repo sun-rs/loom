@@ -82,7 +82,28 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
   assert.match(prompt, /canonical Room/u);
   assert.match(prompt, /RAH_WORKER_CLI.*worker sync/u);
   assert.match(prompt, /RAH_WORKER_CLI.*worker message-post/u);
+  assert.match(
+    prompt,
+    /Agent-originated message.*attention signal.*not.*obligation to reply/isu,
+  );
+  assert.match(prompt, /turn-taking.*newest committed message/isu);
+  assert.match(
+    prompt,
+    /state.*held.*not published.*acknowledge.*follow-up Activation/isu,
+  );
+  assert.match(prompt, /send-draft.*rechecks freshness/isu);
+  assert.match(prompt, /--anyway.*continueAnywaySuggested/isu);
+  assert.match(prompt, /goal.*already complete.*remain silent/isu);
   assert.match(prompt, /RAH_WORKER_CLI.*worker task-submit/u);
+  assert.match(prompt, /task\.reassigned/u);
+  assert.match(
+    prompt,
+    /stable idempotency keys.*participant ID.*Task ID.*operation/isu,
+  );
+  assert.match(
+    prompt,
+    /explicit result file.*artifact-publish.*before.*task-submit/isu,
+  );
   assert.match(prompt, /RAH_WORKER_CLI.*worker acknowledge/u);
   assert.doesNotMatch(prompt, /RAH_WORKER_API_URL/u);
   assert.doesNotMatch(prompt, /RAH_WORKER_TOKEN/u);

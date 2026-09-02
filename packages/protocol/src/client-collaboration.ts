@@ -26,6 +26,26 @@ export type ClientPrincipalMeResponse = z.infer<
   typeof ClientPrincipalMeResponseSchema
 >;
 
+export const ClientPrincipalUpdateRequestSchema = z
+  .object({
+    avatarKey: z
+      .string()
+      .regex(/^[a-z0-9_-]{1,64}$/)
+      .nullable(),
+    displayName: z.string().trim().min(1).max(120),
+  })
+  .strict();
+export type ClientPrincipalUpdateRequest = z.infer<
+  typeof ClientPrincipalUpdateRequestSchema
+>;
+
+export const ClientPrincipalUpdateResponseSchema = z
+  .object({ principal: PrincipalSchema })
+  .strict();
+export type ClientPrincipalUpdateResponse = z.infer<
+  typeof ClientPrincipalUpdateResponseSchema
+>;
+
 export const ClientWorkspacesListRequestSchema = z.object({}).strict();
 export type ClientWorkspacesListRequest = z.infer<
   typeof ClientWorkspacesListRequestSchema
@@ -504,14 +524,19 @@ export type ClientThreadCreateRequest = z.infer<
 
 export const ClientThreadReplyRequestSchema = z
   .object({
+    attachmentIds: z.array(IdentifierSchema).max(10).optional(),
     basedOnRoomSeq: z.number().int().nonnegative(),
-    body: z.string().trim().min(1),
+    body: z.string().trim(),
     idempotencyKey: IdentifierSchema,
     recipientIds: z.array(IdentifierSchema).default([]),
     roomId: IdentifierSchema,
     threadId: IdentifierSchema,
   })
-  .strict();
+  .strict()
+  .refine(
+    (input) => input.body.length > 0 || !!input.attachmentIds?.length,
+    "message body or attachment is required",
+  );
 export type ClientThreadReplyRequest = z.infer<
   typeof ClientThreadReplyRequestSchema
 >;

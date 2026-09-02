@@ -9,6 +9,7 @@ import {
 } from "@rah-os/kernel";
 import type {
   PlacementDecision,
+  RuntimeFailure,
   RuntimeRecoveryDescriptor,
 } from "@rah-os/protocol";
 
@@ -22,8 +23,13 @@ import {
   createKernelAgentHostControlPort,
   type AgentHostControlPort,
 } from "./agent-host-control.ts";
+import {
+  RUNTIME_ERROR_RETRY_JITTER_RATIO,
+  runtimeErrorRetryDelay,
+  runtimeErrorJitterRandom,
+} from "./runtime-error-policy.ts";
 
-const MAX_ACTIVATION_RETRY_DELAY_MS = 5 * 60_000;
+const DEFAULT_ACTIVATION_RETRY_DELAY_MS = 10_000;
 
 export type HostCycleResult =
   | { state: "idle" }
@@ -86,6 +92,8 @@ export type AgentHostOptions = {
   onCycleResult?: (observation: HostCycleObservation) => void;
   pollIntervalMs?: number;
   retryAfterMs?: number;
+  retryJitterRandom?: () => number;
+  retryJitterRatio?: number;
   runTimeoutMs?: number;
   runtime: RuntimeAdapter;
   placementRuntimeResolver?: (placement: PlacementDecision) => RuntimeAdapter;
@@ -119,6 +127,8 @@ export class AgentHost {
   readonly #placementRuntimeResolver:
     ((placement: PlacementDecision) => RuntimeAdapter) | undefined;
   readonly #retryAfterMs: number;
+  readonly #retryJitterRandom: () => number;
+  readonly #retryJitterRatio: number;
   readonly #runTimeoutMs: number;
   readonly #runtime: RuntimeAdapter;
   readonly #runtimeCancelTimeoutMs: number;
@@ -144,7 +154,8 @@ export class AgentHost {
     if (participantIds.length === 0) {
       throw new Error("AgentHost requires at least one participant");
     }
-    const retryAfterMs = options.retryAfterMs ?? 1_000;
+    const retryAfterMs =
+      options.retryAfterMs ?? DEFAULT_ACTIVATION_RETRY_DELAY_MS;
     if (!Number.isInteger(retryAfterMs) || retryAfterMs < 0) {
       throw new Error("retryAfterMs must be a non-negative integer");
     }
@@ -210,6 +221,10 @@ export class AgentHost {
     this.#pollIntervalMs = pollIntervalMs;
     this.#placementRuntimeResolver = options.placementRuntimeResolver;
     this.#retryAfterMs = retryAfterMs;
+    this.#retryJitterRandom =
+      options.retryJitterRandom ?? runtimeErrorJitterRandom;
+    this.#retryJitterRatio =
+      options.retryJitterRatio ?? RUNTIME_ERROR_RETRY_JITTER_RATIO;
     this.#runTimeoutMs = runTimeoutMs;
     this.#runtime = options.runtime;
     this.#runtimeCancelTimeoutMs = runtimeCancelTimeoutMs;
@@ -816,7 +831,9 @@ export class AgentHost {
       if (exit.code !== 0) {
         return this.#retryFailedActivation(
           activation,
-          `runtime exited with code ${String(exit.code)}`,
+          exit.failure?.message ??
+            `runtime exited with code ${String(exit.code)}`,
+          exit.failure,
         );
       }
     } catch (error) {
@@ -910,16 +927,22 @@ export class AgentHost {
   async #retryFailedActivation(
     activation: Pick<Activation, "activationId" | "attemptCount">,
     failure: string,
+    runtimeFailure?: RuntimeFailure,
   ): Promise<HostCycleResult> {
     const { activationId } = activation;
     try {
       await this.#control.retryActivation({
         activationId,
         error: failure,
-        retryAfterMs: activationRetryDelay(
+        retryAfterMs: runtimeErrorRetryDelay(
           this.#retryAfterMs,
           activation.attemptCount,
+          this.#retryJitterRatio,
+          this.#retryJitterRandom,
         ),
+        ...(runtimeFailure === undefined
+          ? {}
+          : { retryDisposition: runtimeFailure.retryDisposition }),
       });
       return { activationId, error: failure, state: "failed" };
     } catch (retryError) {
@@ -1111,16 +1134,6 @@ type RecoveryMaintenanceOutcome =
 
 type TerminationOutcome =
   { exit: RunExit; kind: "terminated" } | { error: string; kind: "unproven" };
-
-function activationRetryDelay(
-  baseDelayMs: number,
-  attemptCount: number,
-): number {
-  if (baseDelayMs === 0) return 0;
-  const exponent = Math.min(Math.max(attemptCount - 1, 0), 30);
-  const maximumDelayMs = Math.max(baseDelayMs, MAX_ACTIVATION_RETRY_DELAY_MS);
-  return Math.min(baseDelayMs * 2 ** exponent, maximumDelayMs);
-}
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);

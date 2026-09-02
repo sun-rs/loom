@@ -5,9 +5,10 @@ import type { Workspace } from "@rah-os/protocol";
 import avatarPack from "@rah-os/ui-tokens/avatar-pack.json";
 import { workspaceInitial } from "../identity-presentation.ts";
 import { useDialogProtocol } from "../dialog-protocol.ts";
-import { AgentAvatar } from "./agent-directory-pane.tsx";
+import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
 
 export function WorkspaceIdentity({
+  computerName,
   workspace,
   workspaces,
   client,
@@ -15,6 +16,7 @@ export function WorkspaceIdentity({
   onUpdated,
   onSelect,
 }: {
+  computerName?: string | undefined;
   workspace: Workspace | undefined;
   workspaces: readonly Workspace[];
   client: RahClient;
@@ -27,23 +29,19 @@ export function WorkspaceIdentity({
     <>
       <button
         className="rail-logo rah-space-mark"
-        aria-label={`协作空间：${workspace?.name ?? "加载中"}`}
-        title={workspace?.name ?? "协作空间"}
+        aria-label={`计算机：${computerName ?? workspace?.name ?? "加载中"}`}
+        title={computerName ?? workspace?.name ?? "计算机"}
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
         {workspace?.avatarKey ? (
-          <AgentAvatar
+          <ProfileImageAvatar
+            avatarKey={workspace.avatarKey}
+            name={workspace.name}
             size="header"
-            agent={{
-              avatarKey: workspace.avatarKey,
-              displayName: workspace.name,
-              runtimeAvailable: false,
-              state: "enabled",
-            }}
           />
         ) : (
-          workspaceInitial(workspace?.name ?? "")
+          workspaceInitial(computerName ?? workspace?.name ?? "")
         )}
       </button>
       {open && workspace ? (
@@ -218,6 +216,9 @@ function WorkspaceIdentityDialog({
               onChange={(e) => setAvatarKey(e.target.value)}
             >
               <option value="">名称首字母</option>
+              {avatarKey && !(avatarKey in avatarPack.presets) ? (
+                <option value={avatarKey}>当前上传头像</option>
+              ) : null}
               {Object.keys(avatarPack.presets).map((key) => (
                 <option value={key} key={key}>
                   {key}

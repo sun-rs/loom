@@ -47,7 +47,7 @@ export function requireWorkerTaskDelivery(
            OR type = 'task.submitted'
            AND aggregate_type = 'task'
            AND aggregate_id = ?
-           OR type IN ('task.assigned', 'task.unblocked', 'task.released', 'task.cancelled')
+           OR type IN ('task.assigned', 'task.reassigned', 'task.reopened', 'task.unblocked', 'task.released', 'task.cancelled')
            AND aggregate_type = 'task'
            AND aggregate_id = ?
            OR type = 'input.resolved'

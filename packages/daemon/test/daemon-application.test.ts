@@ -541,7 +541,7 @@ test("Human API drives two Workspace Agents through daemon v4 and reconnect reco
             agents.some(
               (agent) => agent.principal.principalId === candidate.actorId,
             ),
-          ).length === agents.length &&
+          ).length === 1 &&
         activeObserver
           .listActivations({ roomId })
           .every((activation) => activation.state === "completed"),
@@ -665,22 +665,13 @@ test("Human API drives two Workspace Agents through daemon v4 and reconnect reco
       );
     assert.equal(
       agentReplies.length,
-      agents.length * 2,
-      "each daemon lane must reply to the Room Message and the open Task activation",
+      1,
+      "freshness must publish one concurrent chat reply and hold its stale peer",
     );
-    for (const [index, agent] of agents.entries()) {
-      const participantReplies = agentReplies.filter(
-        (candidate) => candidate.actorId === agent.principal.principalId,
-      );
-      assert.equal(participantReplies.length, 2);
-      assert.ok(
-        participantReplies.every(
-          (candidate) =>
-            candidate.body ===
-            `Canonical daemon reply from Agent ${String(index)}`,
-        ),
-      );
-    }
+    assert.ok(
+      agentReplies[0]?.body === "Canonical daemon reply from Agent 0" ||
+        agentReplies[0]?.body === "Canonical daemon reply from Agent 1",
+    );
     assert.deepEqual(
       activeObserver
         .listMessages(humanActor, {
@@ -1093,6 +1084,7 @@ test("daemon config v3 probes an active profile, publishes a redacted offer, and
         hostId: "daemon-registry-host",
         participantId: agent.principal.principalId,
       },
+      retryAfterMs: 1_000,
       runtime: {
         credentialBindings: {
           "provider-token": { path: providerSecretPath, source: "file" },
@@ -1634,6 +1626,7 @@ test("the daemon recovers a committed InputRequest, waits without a model, and r
         hostId: "daemon-task-input-host",
         participantId: agent.principal.principalId,
       },
+      retryAfterMs: 0,
       runtime: {
         ...validConfig(stateDirectory, secretPath).runtime,
         env: {

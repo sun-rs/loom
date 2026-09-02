@@ -14,6 +14,7 @@ export type HumanApplicationPort = Pick<
   | "createWorkspace"
   | "updateWorkspace"
   | "getAuthenticatedPrincipal"
+  | "updateAuthenticatedPrincipal"
   | "getWorkspaceAgentManagementView"
   | "listAgentActivity"
   | "listAgentTrajectory"
@@ -48,6 +49,16 @@ export type HumanApplicationPort = Pick<
   | "unblockTask"
   | "updateWorkspaceRoom"
 > & {
+  listMessageSocial: RoomKernel["messageSocial"]["list"];
+  reactMessage: RoomKernel["messageSocial"]["react"];
+  saveMessage: RoomKernel["messageSocial"]["save"];
+  listSavedMessages: RoomKernel["messageSocial"]["saved"];
+  getSidebarPreferences: RoomKernel["humanSidebar"]["get"];
+  patchSidebarPreferences: RoomKernel["humanSidebar"]["patch"];
+  resolveNavigationTarget: RoomKernel["humanNavigation"]["resolve"];
+  listNotificationDismissals: RoomKernel["humanNotifications"]["listDismissals"];
+  dismissNotification: RoomKernel["humanNotifications"]["dismiss"];
+  listAgentReminders: RoomKernel["reminders"]["listHuman"];
   prepareFile: RoomKernel["files"]["prepare"];
   uploadFile: RoomKernel["files"]["upload"];
   cancelFile: RoomKernel["files"]["cancel"];
@@ -61,6 +72,8 @@ export type HumanApplicationPort = Pick<
   listManagedMcpUsage: ManagedMcpService["listUsage"];
   listTaskReviews: RoomKernel["taskReviews"]["listRoomReviews"];
   listTaskSubmissions: RoomKernel["taskReviews"]["listRoomSubmissions"];
+  requestTaskReassignment: RoomKernel["taskReassignment"]["request"];
+  continueTaskReassignment: RoomKernel["taskReassignment"]["continue"];
   postRoomMessage: RoomKernel["postRoomMessage"];
   reviseManagedMcpAssignment: ManagedMcpService["reviseAssignment"];
   reviseManagedMcpServer: ManagedMcpService["reviseServer"];
@@ -72,6 +85,24 @@ export function createHumanApplicationPort(
   kernel: RoomKernel,
 ): HumanApplicationPort {
   const port: HumanApplicationPort = {
+    listMessageSocial: (actor, input) =>
+      kernel.messageSocial.list(actor, input),
+    reactMessage: (actor, input) => kernel.messageSocial.react(actor, input),
+    saveMessage: (actor, input) => kernel.messageSocial.save(actor, input),
+    listSavedMessages: (actor, input) =>
+      kernel.messageSocial.saved(actor, input),
+    getSidebarPreferences: (actor, input) =>
+      kernel.humanSidebar.get(actor, input),
+    patchSidebarPreferences: (actor, input) =>
+      kernel.humanSidebar.patch(actor, input),
+    resolveNavigationTarget: (actor, input) =>
+      kernel.humanNavigation.resolve(actor, input),
+    listNotificationDismissals: (actor, input) =>
+      kernel.humanNotifications.listDismissals(actor, input),
+    dismissNotification: (actor, input) =>
+      kernel.humanNotifications.dismiss(actor, input),
+    listAgentReminders: (actor, input) =>
+      kernel.reminders.listHuman(actor, input),
     prepareFile: (actor, input) => kernel.files.prepare(actor, input),
     uploadFile: (actor, id, chunks) => kernel.files.upload(actor, id, chunks),
     cancelFile: (actor, input) => kernel.files.cancel(actor, input),
@@ -95,6 +126,8 @@ export function createHumanApplicationPort(
     updateWorkspace: (actor, input) => kernel.updateWorkspace(actor, input),
     getAuthenticatedPrincipal: (actor) =>
       kernel.getAuthenticatedPrincipal(actor),
+    updateAuthenticatedPrincipal: (actor, input) =>
+      kernel.updateAuthenticatedPrincipal(actor, input),
     getWorkspaceAgentManagementView: (actor, agentDefinitionId) =>
       kernel.getWorkspaceAgentManagementView(actor, agentDefinitionId),
     listAgentActivity: (actor, input) => kernel.listAgentActivity(actor, input),
@@ -139,6 +172,10 @@ export function createHumanApplicationPort(
       kernel.provisionWorkspaceAgent(actor, input),
     postRoomMessage: (actor, input) => kernel.postRoomMessage(actor, input),
     removeRoomMember: (actor, input) => kernel.removeRoomMember(actor, input),
+    requestTaskReassignment: (actor, input) =>
+      kernel.taskReassignment.request(actor, input),
+    continueTaskReassignment: (actor, input) =>
+      kernel.taskReassignment.continue(actor, input),
     reopenTask: (actor, input) => kernel.reopenTask(actor, input),
     reviseManagedMcpAssignment: (actor, input) =>
       kernel.managedMcp.reviseAssignment(actor, input),

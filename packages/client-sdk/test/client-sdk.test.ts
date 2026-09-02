@@ -25,6 +25,7 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "activity.list",
     "activity.mark",
     "agent.activity.list",
+    "agent.execution.reset",
     "agent.get",
     "agent.list",
     "agent.manage",
@@ -36,6 +37,7 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "agent.onboard",
     "agent.presence.list",
     "agent.provision",
+    "agent.reminder.list",
     "agent.room.list",
     "agent.trajectory.list",
     "agent.workspace.list",
@@ -61,7 +63,19 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "message.context",
     "message.list",
     "message.post",
+    "message.react",
+    "message.save",
+    "message.saved",
+    "message.social",
+    "navigation.resolve",
+    "notification.dismiss",
+    "notification.list",
     "principal.me",
+    "principal.update",
+    "push.configuration",
+    "push.subscribe",
+    "push.test",
+    "push.unsubscribe",
     "room.acknowledge",
     "room.agent.activity.list",
     "room.create",
@@ -74,6 +88,8 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "room.sync",
     "room.update",
     "search",
+    "sidebar.get",
+    "sidebar.patch",
     "task.assign",
     "task.cancel",
     "task.complete",
@@ -81,6 +97,7 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "task.create",
     "task.global.list",
     "task.list",
+    "task.reassign",
     "task.reopen",
     "task.review.list",
     "task.unassign",
@@ -146,6 +163,50 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       path: "/v3/client/messages/context",
     },
     {
+      input: { target: { kind: "room", roomId: "room-main" } },
+      operation: "navigation.resolve",
+      path: "/v3/client/navigation/resolve",
+    },
+    {
+      input: { workspaceId: "workspace-main" },
+      operation: "notification.list",
+      path: "/v3/client/notifications/list",
+    },
+    {
+      input: {
+        idempotencyKey: "dismiss-notification",
+        notificationId: "notification-main",
+        workspaceId: "workspace-main",
+      },
+      operation: "notification.dismiss",
+      path: "/v3/client/notifications/dismiss",
+    },
+    {
+      input: {},
+      operation: "push.configuration",
+      path: "/v3/client/push/configuration",
+    },
+    {
+      input: {
+        subscription: {
+          endpoint: "https://push.example/subscription",
+          keys: { auth: "auth_key", p256dh: "public_key" },
+        },
+      },
+      operation: "push.subscribe",
+      path: "/v3/client/push/subscribe",
+    },
+    {
+      input: { endpoint: "https://push.example/subscription" },
+      operation: "push.unsubscribe",
+      path: "/v3/client/push/unsubscribe",
+    },
+    {
+      input: {},
+      operation: "push.test",
+      path: "/v3/client/push/test",
+    },
+    {
       input: { agentDefinitionId: "agent-definition" },
       operation: "agent.memory.config.get",
       path: "/v3/client/agents/memory/config/get",
@@ -174,6 +235,11 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       path: "/v3/client/agents/presence/list",
     },
     {
+      input: { agentDefinitionId: "agent-definition" },
+      operation: "agent.reminder.list",
+      path: "/v3/client/agents/reminders/list",
+    },
+    {
       input: {
         agentDefinitionId: "agent-definition",
         path: "",
@@ -191,6 +257,16 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       input: { agentDefinitionId: "agent-definition" },
       operation: "agent.get",
       path: "/v3/client/agents/get",
+    },
+    {
+      input: {
+        agentDefinitionId: "agent-definition",
+        basedOnRoomSeq: 7,
+        idempotencyKey: "execution-reset-1",
+        mode: "session",
+      },
+      operation: "agent.execution.reset",
+      path: "/v3/client/agents/execution/reset",
     },
     {
       input: { agentDefinitionId: "agent-definition" },
@@ -415,6 +491,11 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       path: "/v3/client/principals/me",
     },
     {
+      input: { avatarKey: "avatar-03", displayName: "Hakase" },
+      operation: "principal.update",
+      path: "/v3/client/principals/update",
+    },
+    {
       input: {
         basedOnRoomSeq: 1,
         body: "Hello",
@@ -556,6 +637,17 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       },
       operation: "task.reopen",
       path: "/v3/client/tasks/reopen",
+    },
+    {
+      input: {
+        assigneeId: "agent-next",
+        basedOnRoomSeq: 1,
+        idempotencyKey: "task-reassign",
+        reason: "Move the remaining work to the available Agent",
+        taskId: "task-main",
+      },
+      operation: "task.reassign",
+      path: "/v3/client/tasks/reassign",
     },
     {
       input: {
@@ -732,6 +824,28 @@ test("HttpRahClient owns route, auth, parsing, and structured errors", async () 
       error instanceof RahClientError &&
       error.code === "forbidden" &&
       error.status === 403,
+  );
+
+  const nonJson = new HttpRahClient({
+    accessToken: () => "human-secret",
+    baseUrl: "http://127.0.0.1:7777",
+    fetch: async () => ({
+      json: async () => {
+        throw new SyntaxError("unexpected character at line 1 column 1");
+      },
+      ok: false,
+      status: 401,
+      text: async () => "Local workbench session required",
+    }),
+  });
+  await assert.rejects(
+    nonJson.request("workspace.list", {}),
+    (error: unknown) =>
+      error instanceof RahClientError &&
+      error.code === "http_error" &&
+      error.status === 401 &&
+      !error.message.includes("JSON") &&
+      !error.message.includes("unexpected character"),
   );
 });
 

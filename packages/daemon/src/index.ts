@@ -25,6 +25,13 @@ export {
   LocalWakeSignal,
   OutboxWakeDispatcher,
 } from "./outbox-wake-dispatcher.ts";
+export { WebPushOutboxDispatcher } from "./web-push-dispatcher.ts";
+export { WebPushStateStore } from "./web-push-state.ts";
+export { ProfileImageStore } from "./profile-image-store.ts";
+export {
+  createNodeWebPushTransport,
+  createWebPushAdministration,
+} from "./web-push-administration.ts";
 export type { ContentFreeWakePublisher } from "./outbox-wake-dispatcher.ts";
 export { FileSecretProvider } from "./secret-provider.ts";
 export type { SecretProvider } from "./secret-provider.ts";

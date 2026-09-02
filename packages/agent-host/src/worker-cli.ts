@@ -1,9 +1,20 @@
 import { constants } from "node:fs";
 import { open } from "node:fs/promises";
-import { isAbsolute } from "node:path";
+import { basename, isAbsolute, resolve } from "node:path";
+import { Readable } from "node:stream";
+import { randomUUID } from "node:crypto";
 import {
   AgentAppInboxAckCommandSchema,
   AgentMemoryConfigSnapshotSchema,
+  MAX_ATTACHMENT_BYTES,
+  WorkerArtifactPrepareRequestSchema,
+  WorkerArtifactUploadSchema,
+  WorkerReminderCancelRequestSchema,
+  WorkerReminderListRequestSchema,
+  WorkerReminderLogRequestSchema,
+  WorkerReminderScheduleRequestSchema,
+  WorkerReminderSnoozeRequestSchema,
+  WorkerReminderUpdateRequestSchema,
 } from "@rah-os/protocol";
 import { parseAgentAppConfig } from "./agent-app-config-cli.ts";
 
@@ -11,6 +22,7 @@ const MAX_TOKEN_BYTES = 65_536;
 const MAX_RESPONSE_BYTES = 512 * 1_024;
 const MAX_ARGUMENT_BYTES = 64 * 1_024;
 const REQUEST_TIMEOUT_MS = 30_000;
+const ARTIFACT_REQUEST_TIMEOUT_MS = 120_000;
 
 export type WorkerCliRuntime = Readonly<{
   env: Readonly<Record<string, string | undefined>>;
@@ -39,6 +51,9 @@ export async function runWorkerCliCommand(
     (arguments_.length === 2 &&
       arguments_[0] === "worker" &&
       (arguments_[1] === "help" || arguments_[1] === "--help")) ||
+    (arguments_.length === 2 &&
+      arguments_[0] === "reminder" &&
+      (arguments_[1] === "help" || arguments_[1] === "--help")) ||
     (arguments_.length === 1 && arguments_[0] === "--help")
   ) {
     runtime.stdout.write(help());
@@ -48,11 +63,8 @@ export async function runWorkerCliCommand(
     const config = arguments_[0] === "app";
     const mutation = config ? parseAgentAppConfig(arguments_) : undefined;
     const inbox = arguments_[0] === "agent" || config;
-    const request = config
-      ? { path: "/v1/agent-config/get", body: {} }
-      : inbox
-        ? parseAgentInboxCommand(arguments_)
-        : parseCommand(arguments_);
+    const artifact =
+      arguments_[0] === "worker" && arguments_[1] === "artifact-publish";
     const origin = workerOrigin(
       inbox
         ? runtime.env.RAH_AGENT_INBOX_API_URL
@@ -97,6 +109,23 @@ export async function runWorkerCliCommand(
         clearTimeout(timeout);
       }
     };
+    if (artifact) {
+      const result = await publishWorkerArtifact(arguments_, {
+        origin,
+        runtime,
+        send,
+        token,
+      });
+      runtime.stdout.write(`${JSON.stringify(result)}\n`);
+      return 0;
+    }
+    const request = config
+      ? { path: "/v1/agent-config/get", body: {} }
+      : inbox
+        ? parseAgentInboxCommand(arguments_)
+        : arguments_[0] === "reminder"
+          ? parseReminderCommand(arguments_)
+          : parseCommand(arguments_);
     let result = await send(request);
     if (mutation) {
       const current = AgentMemoryConfigSnapshotSchema.parse(result);
@@ -110,6 +139,101 @@ export async function runWorkerCliCommand(
   } catch (error) {
     runtime.stderr.write(`rah: ${errorMessage(error)}\n`);
     return 1;
+  }
+}
+
+async function publishWorkerArtifact(
+  arguments_: readonly string[],
+  context: {
+    origin: string;
+    runtime: WorkerCliRuntime;
+    send: (request: { path: string; body: unknown }) => Promise<unknown>;
+    token: string;
+  },
+) {
+  const options = parseOptions(arguments_.slice(2));
+  assertAllowed(options, [
+    "filename",
+    "idempotency-key",
+    "mime-type",
+    "path",
+    "task-id",
+  ]);
+  const sourcePath = resolve(boundedText(options, "path", 4_096));
+  let handle;
+  try {
+    handle = await open(sourcePath, constants.O_RDONLY | constants.O_NOFOLLOW);
+    const metadata = await handle.stat();
+    if (
+      !metadata.isFile() ||
+      metadata.size <= 0 ||
+      metadata.size > MAX_ATTACHMENT_BYTES ||
+      !Number.isSafeInteger(metadata.size)
+    ) {
+      throw new Error(
+        `artifact must be a regular file between 1 and ${String(MAX_ATTACHMENT_BYTES)} bytes`,
+      );
+    }
+    const prepared = WorkerArtifactUploadSchema.parse(
+      await context.send({
+        path: "/v1/worker/artifacts/prepare",
+        body: WorkerArtifactPrepareRequestSchema.parse({
+          filename: options.filename ?? basename(sourcePath),
+          idempotencyKey: boundedText(options, "idempotency-key", 512),
+          mimeType: options["mime-type"] ?? "application/octet-stream",
+          size: metadata.size,
+          taskId: boundedText(options, "task-id", 512),
+        }),
+      }),
+    );
+    if (prepared.state !== "pending") {
+      if (prepared.state === "completed" || prepared.state === "consumed") {
+        return prepared;
+      }
+      throw new Error(
+        `artifact reservation cannot upload from state ${prepared.state}`,
+      );
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(
+      () => controller.abort(new Error("Worker artifact upload timed out")),
+      ARTIFACT_REQUEST_TIMEOUT_MS,
+    );
+    try {
+      const body = Readable.toWeb(
+        handle.createReadStream({ autoClose: false, start: 0 }),
+      );
+      const response = await context.runtime.fetch(
+        `${context.origin}/v1/worker/artifacts/${prepared.attachmentId}`,
+        {
+          body: body as RequestInit["body"],
+          duplex: "half",
+          headers: {
+            authorization: `Bearer ${context.token}`,
+            "content-type": "application/octet-stream",
+          },
+          method: "PUT",
+          signal: controller.signal,
+        } as RequestInit & { duplex: "half" },
+      );
+      const result = await readBoundedJson(response.body);
+      if (!response.ok) {
+        throw new Error(serverErrorMessage(result, response.status));
+      }
+      return WorkerArtifactUploadSchema.parse(result);
+    } finally {
+      clearTimeout(timeout);
+    }
+  } catch (error) {
+    if (hasCode(error, "ELOOP")) {
+      throw new Error(
+        "artifact path must reference a regular non-symlink file",
+      );
+    }
+    throw error;
+  } finally {
+    await handle?.close();
   }
 }
 
@@ -142,7 +266,10 @@ function parseCommand(arguments_: readonly string[]): {
     throw new Error("usage: rah worker <command> [options]");
   }
   const command = arguments_[1];
-  const options = parseOptions(arguments_.slice(2));
+  const options = parseOptions(
+    arguments_.slice(2),
+    command === "message-post" ? ["anyway", "send-draft"] : [],
+  );
   switch (command) {
     case "sync":
       assertAllowed(options, ["after-seq"]);
@@ -160,7 +287,35 @@ function parseCommand(arguments_: readonly string[]): {
         path: "/v1/worker/acknowledge",
       };
     case "message-post":
-      assertAllowed(options, ["based-on-room-seq", "body", "idempotency-key"]);
+      assertAllowed(options, [
+        "anyway",
+        "based-on-room-seq",
+        "body",
+        "held-draft-id",
+        "idempotency-key",
+        "send-draft",
+      ]);
+      if (options["send-draft"] === "true") {
+        if (options.body !== undefined) {
+          throw new Error("--body cannot be combined with --send-draft");
+        }
+        return {
+          body: {
+            ...(options.anyway === "true" ? { anyway: true } : {}),
+            basedOnRoomSeq: nonnegativeInteger(options, "based-on-room-seq"),
+            heldDraftId: boundedText(options, "held-draft-id", 512),
+            idempotencyKey: boundedText(options, "idempotency-key", 512),
+            sendDraft: true,
+          },
+          path: "/v1/worker/messages/post",
+        };
+      }
+      if (options.anyway !== undefined) {
+        throw new Error("--anyway requires --send-draft");
+      }
+      if (options["held-draft-id"] !== undefined) {
+        throw new Error("--held-draft-id requires --send-draft");
+      }
       return {
         body: {
           basedOnRoomSeq: nonnegativeInteger(options, "based-on-room-seq"),
@@ -168,6 +323,20 @@ function parseCommand(arguments_: readonly string[]): {
           idempotencyKey: boundedText(options, "idempotency-key", 512),
         },
         path: "/v1/worker/messages/post",
+      };
+    case "thread-unfollow":
+      assertAllowed(options, [
+        "based-on-room-seq",
+        "idempotency-key",
+        "thread-id",
+      ]);
+      return {
+        body: {
+          basedOnRoomSeq: nonnegativeInteger(options, "based-on-room-seq"),
+          idempotencyKey: boundedText(options, "idempotency-key", 512),
+          threadId: boundedText(options, "thread-id", 512),
+        },
+        path: "/v1/worker/threads/unfollow",
       };
     case "mcp-tools":
       assertAllowed(options, []);
@@ -259,6 +428,210 @@ function parseCommand(arguments_: readonly string[]): {
   }
 }
 
+function parseReminderCommand(arguments_: readonly string[]): {
+  body: Record<string, unknown>;
+  path: string;
+} {
+  const action = arguments_[1];
+  if (arguments_[0] !== "reminder" || action === undefined) {
+    throw new Error("usage: rah reminder <command> [options]");
+  }
+  const options = parseOptions(arguments_.slice(2), ["all"]);
+  const idempotencyKey = () =>
+    options["idempotency-key"] ?? `reminder-command-${randomUUID()}`;
+  if (action === "schedule") {
+    assertAllowed(options, [
+      "based-on-room-seq",
+      "channel",
+      "delay-seconds",
+      "fire-at",
+      "idempotency-key",
+      "message-id",
+      "msg-id",
+      "payload-json",
+      "repeat",
+      "title",
+      "tz",
+    ]);
+    const messageId = options["message-id"]?.trim();
+    const legacyMessageId = options["msg-id"]?.trim();
+    if (
+      messageId !== undefined &&
+      legacyMessageId !== undefined &&
+      messageId !== legacyMessageId
+    ) {
+      throw new Error(
+        "Pass only one message anchor; --msg-id is a deprecated alias for --message-id",
+      );
+    }
+    return {
+      body: WorkerReminderScheduleRequestSchema.parse({
+        basedOnRoomSeq: nonnegativeInteger(options, "based-on-room-seq"),
+        ...(options.channel === undefined
+          ? {}
+          : { channel: boundedText(options, "channel", 512) }),
+        ...(options["fire-at"] === undefined
+          ? {}
+          : { fireAt: isoTimestamp(options, "fire-at") }),
+        idempotencyKey: idempotencyKey(),
+        ...(options["delay-seconds"] === undefined
+          ? {}
+          : {
+              delaySeconds: positiveInteger(options, "delay-seconds"),
+            }),
+        messageId:
+          messageId ??
+          legacyMessageId ??
+          boundedText(options, "message-id", 512),
+        ...(options["payload-json"] === undefined
+          ? {}
+          : { payload: jsonObjectOption(options, "payload-json") }),
+        ...(options.repeat === undefined
+          ? {}
+          : { repeat: boundedText(options, "repeat", 256) }),
+        ...(options.repeat === undefined
+          ? options.tz === undefined
+            ? {}
+            : { timezone: boundedText(options, "tz", 256) }
+          : {
+              timezone:
+                options.tz === undefined
+                  ? Intl.DateTimeFormat().resolvedOptions().timeZone
+                  : boundedText(options, "tz", 256),
+            }),
+        title: boundedText(options, "title", 2_000),
+      }),
+      path: "/v1/worker/reminders/schedule",
+    };
+  }
+  if (action === "list") {
+    assertAllowed(options, ["all", "status"]);
+    return {
+      body: WorkerReminderListRequestSchema.parse({
+        ...(options.all === "true" ? { all: true } : {}),
+        ...(options.status === undefined
+          ? {}
+          : {
+              statuses: boundedText(options, "status", 64)
+                .split(",")
+                .map((status) => status.trim())
+                .filter(Boolean),
+            }),
+      }),
+      path: "/v1/worker/reminders/list",
+    };
+  }
+  if (action === "log") {
+    assertAllowed(options, ["id"]);
+    return {
+      body: WorkerReminderLogRequestSchema.parse({
+        reminderId: boundedText(options, "id", 512),
+      }),
+      path: "/v1/worker/reminders/log",
+    };
+  }
+  if (action === "cancel") {
+    assertAllowed(options, ["id", "idempotency-key"]);
+    return {
+      body: WorkerReminderCancelRequestSchema.parse({
+        idempotencyKey: idempotencyKey(),
+        reminderId: boundedText(options, "id", 512),
+      }),
+      path: "/v1/worker/reminders/cancel",
+    };
+  }
+  if (action === "snooze") {
+    assertAllowed(options, ["by", "id", "idempotency-key"]);
+    return {
+      body: WorkerReminderSnoozeRequestSchema.parse({
+        delaySeconds: durationSeconds(options, "by"),
+        idempotencyKey: idempotencyKey(),
+        reminderId: boundedText(options, "id", 512),
+      }),
+      path: "/v1/worker/reminders/snooze",
+    };
+  }
+  if (action === "update") {
+    assertAllowed(options, [
+      "cadence",
+      "fire-at",
+      "id",
+      "idempotency-key",
+      "in",
+      "title",
+      "tz",
+    ]);
+    return {
+      body: WorkerReminderUpdateRequestSchema.parse({
+        ...(options["fire-at"] === undefined
+          ? {}
+          : { fireAt: isoTimestamp(options, "fire-at") }),
+        idempotencyKey: idempotencyKey(),
+        ...(options.in === undefined
+          ? {}
+          : { delaySeconds: durationSeconds(options, "in") }),
+        reminderId: boundedText(options, "id", 512),
+        ...(options.cadence === undefined
+          ? {}
+          : { repeat: boundedText(options, "cadence", 256) }),
+        ...(options.title === undefined
+          ? {}
+          : { title: boundedText(options, "title", 2_000) }),
+        ...(options.cadence === undefined
+          ? options.tz === undefined
+            ? {}
+            : { timezone: boundedText(options, "tz", 256) }
+          : {
+              timezone:
+                options.tz === undefined
+                  ? Intl.DateTimeFormat().resolvedOptions().timeZone
+                  : boundedText(options, "tz", 256),
+            }),
+      }),
+      path: "/v1/worker/reminders/update",
+    };
+  }
+  throw new Error(`unknown Reminder command: ${action}`);
+}
+
+function durationSeconds(
+  options: Readonly<Record<string, string>>,
+  name: string,
+): number {
+  const source = boundedText(options, name, 64);
+  const match = /^([1-9][0-9]*)([smhd])?$/u.exec(source);
+  if (match === null) {
+    throw new Error(
+      `--${name} must be a positive duration like 30m, 2h, or 1d`,
+    );
+  }
+  const multiplier =
+    match[2] === undefined || match[2] === "s"
+      ? 1
+      : match[2] === "m"
+        ? 60
+        : match[2] === "h"
+          ? 3_600
+          : 86_400;
+  const seconds = Number(match[1]) * multiplier;
+  if (!Number.isSafeInteger(seconds)) {
+    throw new Error(`--${name} is too large`);
+  }
+  return seconds;
+}
+
+function isoTimestamp(
+  options: Readonly<Record<string, string>>,
+  name: string,
+): string {
+  const source = boundedText(options, name, 128);
+  const milliseconds = Date.parse(source);
+  if (!Number.isFinite(milliseconds)) {
+    throw new Error(`--${name} must be an ISO timestamp`);
+  }
+  return new Date(milliseconds).toISOString();
+}
+
 function jsonObjectOption(
   options: Readonly<Record<string, string>>,
   name: string,
@@ -325,14 +698,14 @@ function taskMutation(
   };
 }
 
-function parseOptions(arguments_: readonly string[]): Record<string, string> {
-  if (arguments_.length % 2 !== 0) {
-    throw new Error("every Worker option requires one value");
-  }
+function parseOptions(
+  arguments_: readonly string[],
+  booleanFlags: readonly string[] = [],
+): Record<string, string> {
+  const flags = new Set(booleanFlags);
   const options: Record<string, string> = {};
-  for (let index = 0; index < arguments_.length; index += 2) {
+  for (let index = 0; index < arguments_.length; index += 1) {
     const option = arguments_[index]!;
-    const value = arguments_[index + 1]!;
     if (!option.startsWith("--") || option.length <= 2) {
       throw new Error(`invalid Worker option: ${option}`);
     }
@@ -340,7 +713,16 @@ function parseOptions(arguments_: readonly string[]): Record<string, string> {
     if (Object.hasOwn(options, name)) {
       throw new Error(`duplicate Worker option: --${name}`);
     }
+    if (flags.has(name)) {
+      options[name] = "true";
+      continue;
+    }
+    const value = arguments_[index + 1];
+    if (value === undefined || value.startsWith("--")) {
+      throw new Error(`Worker option --${name} requires one value`);
+    }
     options[name] = value;
+    index += 1;
   }
   return options;
 }
@@ -527,9 +909,18 @@ rah agent inbox check
 rah agent inbox recheck
 rah agent inbox ack --item-id ID --version N
 App Inbox ack confirms a notification, not successful memory cleanup or a Room/Task action.
+rah reminder schedule --title TEXT (--delay-seconds N|--fire-at ISO|--repeat RULE) --message-id ID --based-on-room-seq N [--channel #ROOM] [--tz IANA]
+rah reminder list [--status scheduled,fired,canceled|--all]
+rah reminder cancel --id ID
+rah reminder snooze --id ID --by 30m
+rah reminder update --id ID (--in 30m|--fire-at ISO|--cadence RULE|--title TEXT) [--tz IANA]
+rah reminder log --id ID
 rah worker sync [--after-seq N]
 rah worker acknowledge --through-seq N
 rah worker message-post --body TEXT --based-on-room-seq N --idempotency-key KEY
+rah worker message-post --send-draft --held-draft-id ID [--anyway] --based-on-room-seq N --idempotency-key KEY
+rah worker thread-unfollow --thread-id ID --based-on-room-seq N --idempotency-key KEY
+rah worker artifact-publish --task-id ID --path FILE [--filename NAME] [--mime-type TYPE] --idempotency-key KEY
 rah worker mcp-tools
 rah worker mcp-call --server-id ID --tool-name NAME --config-version N --assignment-version N --arguments-json JSON_OBJECT
 rah worker task-get --task-id ID

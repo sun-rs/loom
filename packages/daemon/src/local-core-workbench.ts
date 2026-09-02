@@ -10,6 +10,7 @@ import { localCliRuntimeSpec } from "./local-cli-runtime-spec.ts";
 import { discoverKnownLocalClis } from "./local-runtime-inventory.ts";
 import { prepareLocalWorkbench } from "./local-workbench-bootstrap.ts";
 import { LocalWorkbenchGateway } from "./local-workbench-gateway.ts";
+import { loadOrCreateLocalWorkbenchSessionToken } from "./local-workbench-session.ts";
 
 const MAXIMUM_TLS_FILE_BYTES = 1024 * 1024;
 // Daemon composition revalidates all configured Runtime executable identities
@@ -138,6 +139,9 @@ export async function startLocalCoreWorkbench(input: {
       gateway = new LocalWorkbenchGateway({
         ...common,
         port: validatePort(input.mode.port, true),
+        sessionToken: loadOrCreateLocalWorkbenchSessionToken({
+          directory: stateDirectory,
+        }),
       });
       await gateway.start();
       return runningWorkbench({

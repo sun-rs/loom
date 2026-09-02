@@ -18,9 +18,10 @@ Raft 当前 Web bundle 将 Task `Closed` 作为可逆状态：`closed` 可以转
 7. lease-expiry 和 proven quarantine recovery 在确认无活动 Runtime 后也会解决对应 cancellation request，防止 AgentHost 崩溃把 Task 永久锁死。
 8. Human Client、SDK、Web/PWA 共用 typed `task.reopen`。Web 使用 Raft 现有 dialog/button/token 协议，关闭原因字段为初始焦点，不使用 `prompt()` 或另一条移动端行为路径。
 
-## 明确不包含
+## 后续实现
 
-- 本 ADR 不允许“强制改派”越过旧 Runtime 的 terminal proof。未来 force reassign 必须组合 cancel/fence/resolve/assign，而不是直接改 `assignee_id`。
+- “强制改派”现已按本 ADR 的限制实现：durable operation 组合 cancel/fence/terminal proof/assign，而不是直接改 `assignee_id`。产品与验收见[安全强制改派合同](../product/2026-09-01-safe-task-reassignment-contract.zh-CN.md)和[真实浏览器验收](../audits/2026-09-01-safe-task-reassignment-verification.zh-CN.md)。
+- 本 ADR 仍不允许任何改派越过旧 Runtime 的 terminal proof。
 - RAH OS 暂不开放 Raft 前端状态图中的任意 Human `todo -> in_progress`；`claimed/in_progress/submitted/completed` 仍由现有 Task business command 和 Review proof 决定。
 - Closed 不是删除。Task anchor、Thread 和不可变 evidence 不会被移除。
 

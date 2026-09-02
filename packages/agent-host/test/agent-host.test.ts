@@ -8,6 +8,7 @@ import { RoomKernel } from "@rah-os/kernel";
 
 import {
   AgentHost,
+  classifyRuntimeFailure,
   FakeRuntimeAdapter,
   type RuntimeAdapter,
 } from "../src/index.ts";
@@ -237,6 +238,7 @@ test("AgentHost durably requeues an Activation after a runtime failure", async (
     const runtime = new FakeRuntimeAdapter();
     runtime.enqueueExit({ code: 1 });
     runtime.enqueueExit({ code: 1 });
+    runtime.enqueueExit({ code: 1 });
     const host = new AgentHost({
       host: authenticateHost(kernel, "retry-host", [
         agentProvisioning.principal.principalId,
@@ -244,6 +246,7 @@ test("AgentHost durably requeues an Activation after a runtime failure", async (
       kernel,
       leaseMs: 30_000,
       retryAfterMs: 1_000,
+      retryJitterRandom: () => 0,
       runtime,
     });
     const result = await host.reconcileOnce();
@@ -271,7 +274,75 @@ test("AgentHost durably requeues an Activation after a runtime failure", async (
       nowMs + 2_000,
       "consecutive failures back off instead of creating a retry storm",
     );
+    nowMs += 2_000;
+    const third = await host.reconcileOnce();
+    assert.equal(third.state, "failed");
+    const fenced = kernel.listActivations({ roomId: room.roomId })[0];
+    assert.equal(fenced?.attemptCount, 3);
+    assert.equal(
+      fenced?.state,
+      "quarantined",
+      "Raft stops restarting after three identical Runtime fingerprints",
+    );
+    assert.deepEqual(await host.reconcileOnce(), { state: "idle" });
 
+    kernel.close();
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("AgentHost forwards a structured action-required failure into immediate durable quarantine", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-agent-host-auth-"));
+  try {
+    const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+    kernel.initialize();
+    const human = kernel.provisionPrincipal({
+      handle: "auth-failure-human",
+      kind: "human",
+    });
+    const agent = kernel.provisionPrincipal({
+      handle: "auth-failure-agent",
+      kind: "agent",
+    });
+    const actor = kernel.authenticateAccessToken(human.accessToken);
+    const room = kernel.createRoom(actor, {
+      name: "Auth failure",
+      slug: "auth-failure",
+    });
+    kernel.addMember(actor, {
+      principalId: agent.principal.principalId,
+      roomId: room.roomId,
+    });
+    kernel.postMessage(actor, {
+      body: "Use the configured runtime",
+      idempotencyKey: "auth-failure-message",
+      recipients: [
+        { participantId: agent.principal.principalId, reason: "mention" },
+      ],
+      roomId: room.roomId,
+    });
+    const runtime = new FakeRuntimeAdapter();
+    runtime.enqueueExit({
+      code: 1,
+      failure: classifyRuntimeFailure("Authentication failed: login required"),
+    });
+    const host = new AgentHost({
+      host: authenticateHost(kernel, "auth-failure-host", [
+        agent.principal.principalId,
+      ]),
+      kernel,
+      leaseMs: 30_000,
+      runtime,
+    });
+
+    const result = await host.reconcileOnce();
+
+    assert.equal(result.state, "failed");
+    const activation = kernel.listActivations({ roomId: room.roomId })[0];
+    assert.equal(activation?.state, "quarantined");
+    assert.equal(activation?.attemptCount, 1);
+    assert.deepEqual(await host.reconcileOnce(), { state: "idle" });
     kernel.close();
   } finally {
     rmSync(directory, { force: true, recursive: true });

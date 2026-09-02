@@ -385,7 +385,7 @@ function buildConfig(input: {
     outboxPollIntervalMs: 100,
     outboxRetryAfterMs: 1_000,
     pollIntervalMs: 250,
-    retryAfterMs: 5_000,
+    retryAfterMs: 10_000,
     runTimeoutMs: 30 * 60_000,
     runtimeCancelTimeoutMs: 20_000,
     runtimeRecoveryTimeoutMs: 60_000,

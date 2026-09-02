@@ -3,10 +3,14 @@ export {
   ClientApplicationService as HumanHttpApplicationService,
 } from "./client-application-service.ts";
 export type {
+  AgentExecutionAdministrationPort,
   AgentMemoryAdministrationPort,
+  TaskReassignmentAdministrationPort,
+  WebPushAdministrationPort,
   ClientApplicationServiceOptions,
   ClientApplicationServiceOptions as HumanHttpApplicationServiceOptions,
 } from "./client-application-service.ts";
+export type { ProfileImageAdministrationPort } from "./client-profile-image-routes.ts";
 export { WorkerApplicationService } from "./worker-application-service.ts";
 export type {
   ManagedMcpAdministrationPort,

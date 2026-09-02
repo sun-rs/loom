@@ -12,6 +12,131 @@ export type TaskCreateInput = {
   title: string;
 };
 
+export function TaskReassignDialog({
+  agents,
+  currentAssigneeId,
+  onClose,
+  onConfirm,
+  taskTitle,
+}: {
+  agents: readonly RoomAgentTarget[];
+  currentAssigneeId: string;
+  onClose: () => void;
+  onConfirm: (assigneeId: string, reason: string) => Promise<void>;
+  taskTitle: string;
+}) {
+  const candidates = agents.filter(
+    ({ participantId }) => participantId !== currentAssigneeId,
+  );
+  const [assigneeId, setAssigneeId] = useState(
+    candidates[0]?.participantId ?? "",
+  );
+  const [reason, setReason] = useState("");
+  const [pending, setPending] = useState(false);
+  const [actionError, setActionError] = useState<string>();
+  const dialogRef = useDialogProtocol({ blocked: pending, onClose });
+  const valid = assigneeId !== "" && reason.trim().length > 0;
+  return (
+    <div className="rah-dialog-layer" role="presentation">
+      <button
+        aria-label="关闭改派任务窗口"
+        className="rah-dialog-backdrop"
+        disabled={pending}
+        onClick={onClose}
+      />
+      <section
+        aria-labelledby="rah-task-reassign-title"
+        aria-modal="true"
+        className="rah-dialog rah-task-reassign-dialog"
+        ref={dialogRef}
+        role="dialog"
+        tabIndex={-1}
+      >
+        <header>
+          <div>
+            <h2 id="rah-task-reassign-title">安全改派</h2>
+            <p>{taskTitle}</p>
+          </div>
+          <button
+            aria-label="关闭"
+            className="sq-btn"
+            disabled={pending}
+            onClick={onClose}
+          >
+            <span className="rah-close-glyph" aria-hidden="true">
+              ×
+            </span>
+          </button>
+        </header>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!valid || pending) return;
+            setPending(true);
+            void onConfirm(assigneeId, reason.trim())
+              .then(() => {
+                setActionError(undefined);
+                onClose();
+              })
+              .catch((caught) => setActionError(errorMessage(caught)))
+              .finally(() => setPending(false));
+          }}
+        >
+          <label>
+            新负责人
+            <select
+              autoFocus
+              data-dialog-initial-focus
+              disabled={pending || candidates.length === 0}
+              onChange={(event) => setAssigneeId(event.target.value)}
+              value={assigneeId}
+            >
+              {candidates.length === 0 ? (
+                <option value="">没有其他可用 Agent</option>
+              ) : null}
+              {candidates.map((agent) => (
+                <option key={agent.participantId} value={agent.participantId}>
+                  {agent.handle}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            改派原因
+            <textarea
+              disabled={pending}
+              onChange={(event) => setReason(event.target.value)}
+              placeholder="说明为什么需要停止当前 Agent 并改派"
+              rows={3}
+              value={reason}
+            />
+          </label>
+          <p className="rah-dialog-help">
+            系统会先阻止旧 Agent 继续执行，等待本地 Runtime
+            的终止证明，再把任务交给新负责人。
+          </p>
+          {actionError === undefined ? null : (
+            <p className="rah-dialog-error">{actionError}</p>
+          )}
+          <footer>
+            <button
+              className="btn"
+              disabled={pending}
+              onClick={onClose}
+              type="button"
+            >
+              取消
+            </button>
+            <button className="btn btn-pink" disabled={pending || !valid}>
+              {pending ? "等待原 Agent 停止…" : "确认改派"}
+            </button>
+          </footer>
+        </form>
+      </section>
+    </div>
+  );
+}
+
 export function TaskCloseDialog({
   onClose,
   onConfirm,

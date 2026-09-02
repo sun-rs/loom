@@ -1,10 +1,14 @@
 import { useState } from "react";
 
-import type { InputRequest, Room } from "@rah-os/protocol";
+import type {
+  InputRequest,
+  NavigationTarget,
+  Room,
+  SystemNotification,
+} from "@rah-os/protocol";
 
 import { useDialogProtocol } from "../dialog-protocol.ts";
 import { Icon } from "./icon.tsx";
-import type { SystemNotice } from "../attention-presentation.ts";
 
 export function HumanInboxCenter({
   error,
@@ -16,7 +20,7 @@ export function HumanInboxCenter({
   rooms,
   systemNotices = [],
   onDismissSystem,
-  onOpenComputer,
+  onOpenSystem,
 }: {
   error: string | undefined;
   loading: boolean;
@@ -25,11 +29,16 @@ export function HumanInboxCenter({
   onResolve: (request: InputRequest, answer: string) => Promise<void>;
   requests: readonly InputRequest[];
   rooms: readonly Room[];
-  systemNotices?: readonly SystemNotice[];
-  onDismissSystem?: (id: string) => void;
-  onOpenComputer?: () => void;
+  systemNotices?: readonly SystemNotification[];
+  onDismissSystem?: (id: string) => Promise<void> | void;
+  onOpenSystem?: (target: NavigationTarget) => Promise<void> | void;
 }) {
   const [answering, setAnswering] = useState<InputRequest>();
+  const dialogRef = useDialogProtocol({
+    blocked: answering !== undefined,
+    initialFocus: "container",
+    onClose,
+  });
   return (
     <>
       <button
@@ -39,8 +48,11 @@ export function HumanInboxCenter({
       />
       <section
         aria-label="Human Inbox"
+        aria-modal="true"
         className="notification-center rah-human-inbox"
+        ref={dialogRef}
         role="dialog"
+        tabIndex={-1}
       >
         <header className="notification-center-head">
           <strong>通知</strong>
@@ -50,19 +62,27 @@ export function HumanInboxCenter({
           {systemNotices.length > 0 && (
             <div className="rah-human-inbox-list">
               {systemNotices.map((notice) => (
-                <article key={notice.id}>
+                <article key={notice.notificationId}>
                   <header>
                     <span>计算机</span>
                   </header>
-                  <strong>{notice.title}</strong>
-                  <p>{notice.body}</p>
+                  <strong>{notice.computerName} 离线</strong>
+                  <p>
+                    这台 Computer 的心跳已停止。请检查该机器上的 RAH OS
+                    服务；CLI 是否已安装不代表连接状态。
+                  </p>
                   <footer>
-                    <button className="btn" onClick={onOpenComputer}>
+                    <button
+                      className="btn"
+                      onClick={() => void onOpenSystem?.(notice.target)}
+                    >
                       查看计算机
                     </button>
                     <button
                       className="btn"
-                      onClick={() => onDismissSystem?.(notice.id)}
+                      onClick={() =>
+                        void onDismissSystem?.(notice.notificationId)
+                      }
                     >
                       忽略此提醒
                     </button>

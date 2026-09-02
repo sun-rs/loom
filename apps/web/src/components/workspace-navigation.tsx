@@ -1,4 +1,17 @@
 import type { Room, Workspace } from "@rah-os/protocol";
+import { DEFAULT_SIDEBAR_PREFERENCES } from "@rah-os/protocol";
+import { useSidebarPreferences } from "./sidebar-preferences.tsx";
+import {
+  SidebarDrag,
+  SidebarDragItem,
+  SidebarDropZone,
+} from "./sidebar-drag.tsx";
+import {
+  sortSidebar,
+  sidebarDrop,
+  type SidebarSectionId,
+} from "../sidebar-order.ts";
+import { DiscoveryFilter } from "./discovery-filter.tsx";
 import { SidebarSection } from "./sidebar-section.tsx";
 import { useRef, useState } from "react";
 import type { ReactNode } from "react";
@@ -9,9 +22,11 @@ import {
 } from "@rah-os/ui-web";
 
 import { AgentAvatar } from "./agent-directory-pane.tsx";
+import { AgentStatusDot } from "./agent-status-dot.tsx";
 import { Icon } from "./icon.tsx";
 import {
   agentConnectionLabel,
+  agentPresencePresentation,
   visibleNavigationDot,
 } from "../attention-presentation.ts";
 
@@ -20,6 +35,7 @@ export type Surface =
   | "agents"
   | "computers"
   | "room"
+  | "saved"
   | "settings"
   | "tasks"
   | "search"
@@ -63,7 +79,7 @@ export function Rail({
           onClick={() => onSelect?.("search")}
         />
         <RailButton
-          active={active === "room"}
+          active={active === "room" || active === "saved"}
           dot={chatUnread}
           icon="chat"
           label="聊天"
@@ -72,6 +88,7 @@ export function Rail({
         <RailButton
           active={active === "activity"}
           dot={activityUnread}
+          keepDotWhileActive
           icon="pulse"
           label="动态"
           onClick={() => onSelect?.("activity")}
@@ -171,11 +188,14 @@ export function RoomSidebar({
   mobileOpen,
   onClose,
   onCreate,
+  onEditRoom,
   onOpenDirectRoom,
   onSelect,
   rooms,
   workspace,
   unreadRooms,
+  onSaved,
+  savedActive = false,
 }: {
   activeRoomId: string | undefined;
   agents: readonly WorkspaceAgentView[];
@@ -185,6 +205,7 @@ export function RoomSidebar({
   mobileOpen: boolean;
   onClose: () => void;
   onCreate: () => void;
+  onEditRoom?: (roomId: string) => void;
   onOpenDirectRoom: (peerPrincipalId: string) => Promise<void>;
   onSelect: (roomId: string) => void;
   rooms: Room[];
@@ -192,19 +213,64 @@ export function RoomSidebar({
   unreadRooms?:
     | readonly { roomId: string; unreadCount: number; hasMention: boolean }[]
     | undefined;
+  onSaved?: (() => void) | undefined;
+  savedActive?: boolean;
 }) {
-  const channels = rooms.filter(({ kind }) => kind !== "direct");
+  const preferences = useSidebarPreferences(),
+    p = preferences?.data?.preferences ?? DEFAULT_SIDEBAR_PREFERENCES;
   const unread = (roomId: string | undefined) =>
     unreadRooms?.find((row) => row.roomId === roomId);
+  const workspaceRooms = rooms.filter(
+    (room) => room.workspaceId === workspace?.workspaceId,
+  );
   const directEntries = directConversationEntries(
     agents,
-    rooms,
+    workspaceRooms,
     currentHumanId,
   );
+  const activeDirectPeer = directEntries.find(
+    (entry) => entry.roomId !== undefined && entry.roomId === activeRoomId,
+  )?.agent;
+  type Entry = {
+    key: string;
+    label: string;
+    room?: Room;
+    direct?: (typeof directEntries)[number];
+  };
+  const all: Entry[] = [
+    ...workspaceRooms
+      .filter((room) => room.kind === "channel")
+      .map((room) => ({ key: `room:${room.roomId}`, label: room.name, room })),
+    ...directEntries.map((entry) => ({
+      key: `peer:${entry.peerPrincipalId ?? entry.key}`,
+      label: entry.label,
+      direct: entry,
+    })),
+  ];
+  const group = (section: SidebarSectionId) =>
+    sortSidebar(
+      all.filter((row) =>
+        section === "pinned"
+          ? p.pinned.includes(row.key)
+          : !p.pinned.includes(row.key) &&
+            (section === "channels" ? !!row.room : !!row.direct),
+      ),
+      section === "pinned"
+        ? p.pinnedSortMode
+        : section === "channels"
+          ? p.channelSortMode
+          : p.dmSortMode,
+      section === "pinned"
+        ? p.pinned
+        : section === "channels"
+          ? p.channelOrder
+          : p.dmOrder,
+      preferences?.data?.recent ?? {},
+    );
   const opening = useRef(false);
   const [openingPeer, setOpeningPeer] = useState<string>();
   const [directError, setDirectError] = useState<string>();
-  async function openPeer(peerId: string): Promise<void> {
+  async function openPeer(peerId: string) {
     if (opening.current) return;
     opening.current = true;
     setOpeningPeer(peerId);
@@ -218,6 +284,105 @@ export function RoomSidebar({
       setOpeningPeer(undefined);
     }
   }
+  const disabled = !preferences?.data || preferences.pending;
+  const drop = (key: string, section: SidebarSectionId, target?: string) => {
+    if (disabled) return;
+    const patch = sidebarDrop(
+      p,
+      key,
+      section,
+      target,
+      group(section).map((e) => e.key),
+    );
+    if (patch) void preferences.patch(patch);
+  };
+  const pin = (key: string) => {
+    if (disabled) return;
+    void preferences.patch({
+      pinned: p.pinned.includes(key)
+        ? p.pinned.filter((id) => id !== key)
+        : [...p.pinned, key],
+    });
+  };
+  const render = (row: Entry, section: SidebarSectionId) => {
+    const room = row.room,
+      entry = row.direct,
+      peer = entry?.agent;
+    return (
+      <SidebarDragItem
+        key={row.key}
+        itemKey={row.key}
+        section={section}
+        disabled={disabled}
+        onPin={() => pin(row.key)}
+        pinned={p.pinned.includes(row.key)}
+      >
+        {room ? (
+          <div className="rah-sidebar-channel-entry">
+            <button
+              className={`channel-row${room.roomId === activeRoomId && !savedActive ? " is-selected" : ""}`}
+              onClick={() => onSelect(room.roomId)}
+            >
+              <Icon
+                name={room.visibility === "private" ? "lock" : "hash"}
+                className="row-icon"
+              />
+              <span className="rah-sidebar-channel-name">{room.name}</span>
+              <UnreadCount value={unread(room.roomId)} />
+            </button>
+            {onEditRoom ? (
+              <button
+                type="button"
+                className="rah-sidebar-channel-edit"
+                aria-label={`设置频道 ${room.name}`}
+                title="频道详情与设置"
+                onClick={() => onEditRoom(room.roomId)}
+              >
+                <Icon name="pencil" />
+              </button>
+            ) : null}
+          </div>
+        ) : entry ? (
+          <button
+            aria-label={`私信 ${entry.label}`}
+            aria-current={
+              entry.roomId !== undefined &&
+              entry.roomId === activeRoomId &&
+              !savedActive
+                ? "page"
+                : undefined
+            }
+            aria-busy={openingPeer === entry.peerPrincipalId}
+            disabled={
+              openingPeer !== undefined ||
+              (entry.roomId === undefined && !canMessage)
+            }
+            className={`channel-row rah-direct-room-row${entry.roomId !== undefined && entry.roomId === activeRoomId && !savedActive ? " is-selected" : ""}`}
+            onClick={() =>
+              entry.roomId !== undefined
+                ? onSelect(entry.roomId)
+                : entry.peerPrincipalId !== undefined
+                  ? void openPeer(entry.peerPrincipalId)
+                  : undefined
+            }
+          >
+            {peer === undefined ? (
+              <span className="rah-direct-room-fallback" aria-hidden="true">
+                {entry.label.slice(0, 1).toUpperCase()}
+              </span>
+            ) : (
+              <AgentAvatar agent={peer} size="sidebar" />
+            )}
+            <span className="rah-direct-row-identity">
+              <span className="rah-direct-row-name">{entry.label}</span>
+              {peer?.description ? <small>{peer.description}</small> : null}
+            </span>
+            <UnreadCount value={unread(entry.roomId)} />
+          </button>
+        ) : null}
+      </SidebarDragItem>
+    );
+  };
   return (
     <aside
       aria-label="Room 列表"
@@ -237,109 +402,124 @@ export function RoomSidebar({
       </header>
       <div className="sidebar-body">
         <section className="side-section">
-          <button className="sidebar-bookmarks" disabled title="收藏尚未接入">
+          <button
+            className={`sidebar-bookmarks${savedActive ? " is-selected" : ""}`}
+            disabled={!onSaved}
+            onClick={onSaved}
+          >
             <Icon name="bookmark" />
-            <span>已收藏</span>
+            <span>已保存</span>
           </button>
         </section>
-        <SidebarSection label="Workspace" count={workspace ? 1 : 0}>
-          <p className="side-hint">
-            {workspace?.name ?? "没有可访问的 Workspace"}
+        {directError && (
+          <p role="alert" className="side-hint">
+            {directError}
           </p>
-        </SidebarSection>
-        <SidebarSection
-          label="频道"
-          count={channels.length}
-          unread={channels.some(
-            (room) => (unread(room.roomId)?.unreadCount ?? 0) > 0,
-          )}
-          action={
-            <button
-              aria-label="新建频道"
-              className="rah-side-create"
-              disabled={!canCreate}
-              onClick={onCreate}
-              title={canCreate ? "新建频道" : "当前 Workspace 不允许创建频道"}
-            >
-              +
-            </button>
-          }
+        )}
+        {preferences?.error && (
+          <p role="alert" className="side-hint">
+            {preferences.error}
+          </p>
+        )}
+        <SidebarDrag
+          onDrop={drop}
+          labels={Object.fromEntries(all.map((row) => [row.key, row.label]))}
         >
-          {channels.map((room) => (
-            <button
-              key={room.roomId}
-              className={`channel-row${room.roomId === activeRoomId ? " is-selected" : ""}`}
-              onClick={() => onSelect(room.roomId)}
-            >
-              <span className="hash">#</span>
-              {room.name}
-              <UnreadCount value={unread(room.roomId)} />
-            </button>
-          ))}
-        </SidebarSection>
-        <SidebarSection
-          label="私信"
-          count={directEntries.length}
-          unread={directEntries.some(
-            (entry) => (unread(entry.roomId)?.unreadCount ?? 0) > 0,
-          )}
-        >
-          {directError && (
-            <p role="alert" className="side-hint">
-              {directError}
-            </p>
-          )}
-          {directEntries.length === 0 ? (
-            <p className="side-hint">暂无可私信的成员</p>
-          ) : (
-            directEntries.map((entry) => {
-              const peer = entry.agent;
-              return (
-                <button
-                  key={entry.key}
-                  aria-label={`私信 ${entry.label}`}
-                  aria-current={
-                    entry.roomId !== undefined && entry.roomId === activeRoomId
-                      ? "page"
-                      : undefined
-                  }
-                  aria-busy={openingPeer === entry.peerPrincipalId}
-                  disabled={
-                    openingPeer !== undefined ||
-                    (entry.roomId === undefined && !canMessage)
-                  }
-                  className={`channel-row rah-direct-room-row${entry.roomId !== undefined && entry.roomId === activeRoomId ? " is-selected" : ""}`}
-                  onClick={() =>
-                    entry.roomId !== undefined
-                      ? onSelect(entry.roomId)
-                      : entry.peerPrincipalId !== undefined
-                        ? void openPeer(entry.peerPrincipalId)
-                        : undefined
+          {(["pinned", "channels", "dms"] as const).map((section) => {
+            const rows = group(section),
+              label =
+                section === "pinned"
+                  ? "已置顶"
+                  : section === "channels"
+                    ? "频道"
+                    : "私信",
+              field =
+                section === "pinned"
+                  ? "pinnedSortMode"
+                  : section === "channels"
+                    ? "channelSortMode"
+                    : "dmSortMode";
+            return (
+              <SidebarDropZone section={section} key={section}>
+                <SidebarSection
+                  label={label}
+                  count={rows.length}
+                  unread={rows.some(
+                    (row) =>
+                      (unread(row.room?.roomId ?? row.direct?.roomId)
+                        ?.unreadCount ?? 0) > 0,
+                  )}
+                  action={
+                    <div className="rah-sidebar-section-actions">
+                      <DiscoveryFilter
+                        label={`${label}排序`}
+                        icon="arrow-up-down"
+                        className="rah-sidebar-sort"
+                        variant="sidebar"
+                        triggerLabel=""
+                        triggerAriaLabel={`${label}排序`}
+                        multiple={false}
+                        searchable={false}
+                        clearable={false}
+                        selected={false}
+                        showCount={false}
+                        disabled={disabled}
+                        values={[p[field]]}
+                        options={[
+                          { id: "manual", label: "手动" },
+                          { id: "recent", label: "最近" },
+                          { id: "az", label: "A-Z" },
+                        ]}
+                        onChange={([mode]) => {
+                          if (mode) void preferences?.patch({ [field]: mode });
+                        }}
+                      />
+                      {section === "channels" && (
+                        <button
+                          aria-label="新建频道"
+                          className="rah-side-create rah-interaction-flat"
+                          disabled={!canCreate}
+                          onClick={onCreate}
+                          title="新建频道"
+                        >
+                          +
+                        </button>
+                      )}
+                    </div>
                   }
                 >
-                  {peer === undefined ? (
-                    <span
-                      className="rah-direct-room-fallback"
-                      aria-hidden="true"
-                    >
-                      {entry.label.slice(0, 1).toUpperCase()}
-                    </span>
+                  {rows.length ? (
+                    rows.map((row) => render(row, section))
                   ) : (
-                    <AgentAvatar agent={peer} size="sidebar" />
+                    <p className="side-hint">
+                      {section === "pinned"
+                        ? "将频道或私信拖到这里置顶"
+                        : section === "channels"
+                          ? "还没有频道"
+                          : "暂无可私信的成员"}
+                    </p>
                   )}
-                  <span>
-                    <b>{entry.label}</b>
-                    {peer?.role === undefined ? null : (
-                      <small>{peer.role}</small>
-                    )}
-                  </span>
-                  <UnreadCount value={unread(entry.roomId)} />
-                </button>
-              );
-            })
-          )}
-        </SidebarSection>
+                </SidebarSection>
+              </SidebarDropZone>
+            );
+          })}
+        </SidebarDrag>
       </div>
+      {activeDirectPeer ? (
+        <footer
+          className="rah-direct-activity-footer"
+          title={agentConnectionLabel(activeDirectPeer)}
+        >
+          <AgentAvatar agent={activeDirectPeer} size="sidebar" />
+          <AgentStatusDot
+            activity={agentPresencePresentation(activeDirectPeer).activity}
+            className="rah-direct-activity-dot"
+            label={agentConnectionLabel(activeDirectPeer)}
+            size="sm"
+          />
+          <span>{agentConnectionLabel(activeDirectPeer)}</span>
+        </footer>
+      ) : null}
     </aside>
   );
 }
@@ -362,17 +542,17 @@ function UnreadCount({
 export function ChannelHeader({
   onSearch,
   directPeer,
-  onOpenDirectPeer,
   memberCount,
   onManageAgents,
+  onOpenDirectPeer,
   onOpenRooms,
   room,
 }: {
   onSearch: () => void;
   directPeer: WorkspaceAgentView | undefined;
-  onOpenDirectPeer: (agentDefinitionId: string) => void;
   memberCount: number;
   onManageAgents: () => void;
+  onOpenDirectPeer: (agentDefinitionId: string) => void;
   onOpenRooms: () => void;
   room: Room | undefined;
 }) {
@@ -409,9 +589,24 @@ export function ChannelHeader({
             <Icon name="hash" />
           </span>
         )}
-        <div className="channel-title">
+        <div className={`channel-title${direct ? " rah-direct-title" : ""}`}>
           <h1>{title}</h1>
-          <p className={`channel-sub${direct ? " rah-direct-status" : ""}`}>
+          <p
+            className={`channel-sub${direct ? " rah-direct-status" : ""}`}
+            data-presence={
+              directPeer
+                ? agentPresencePresentation(directPeer).activity
+                : "offline"
+            }
+          >
+            {direct && directPeer ? (
+              <AgentStatusDot
+                className="rah-header-presence"
+                activity={agentPresencePresentation(directPeer).activity}
+                label={agentConnectionLabel(directPeer)}
+                size="sm"
+              />
+            ) : null}
             {direct
               ? directPeer
                 ? agentConnectionLabel(directPeer)
@@ -431,7 +626,7 @@ export function ChannelHeader({
             <Icon name="search" />
           </button>
           <button
-            className="sq-btn"
+            className="sq-btn members"
             onClick={onManageAgents}
             aria-label="频道详情与设置"
             title={`频道详情与设置（${memberCount} 位成员）`}

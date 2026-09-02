@@ -1,0 +1,263 @@
+/* Raft Bst / Nst structural port. Dimensions use the official avatar contexts. */
+.rah-channel-member-avatars {
+  flex-wrap: wrap;
+  align-items: center;
+}
+.rah-channel-member-avatars .rah-agent-avatar.is-header,
+.rah-channel-member-avatars .rah-channel-human-avatar,
+.rah-channel-member-avatars .rah-channel-member-add {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  box-sizing: border-box;
+}
+.rah-agent-avatar.is-member {
+  width: 28px;
+  height: 28px;
+  border-width: 1px;
+}
+.rah-agent-avatar.is-compact {
+  width: 20px;
+  height: 20px;
+  border-width: 1px;
+}
+.rah-room-member-page-header {
+  background: var(--yellow);
+  min-height: 64px;
+  padding: 12px 16px;
+  border-bottom: 2px solid var(--black);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.rah-room-member-page-header h2 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+}
+.rah-room-member-page-header > button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 21px;
+}
+.rah-room-member-count {
+  background: var(--black);
+  color: white;
+  border-radius: 50%;
+  font: 12px/24px var(--mono);
+  min-width: 24px;
+  text-align: center;
+}
+.rah-room-member-page {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: white;
+  color: var(--black);
+}
+.rah-room-member-search {
+  padding: 12px 16px;
+  border-bottom: 1px solid #1411111a;
+}
+.rah-room-member-search label {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+.rah-room-member-search > div {
+  position: relative;
+}
+.rah-room-member-search svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: #999;
+  stroke-width: 1.7;
+  pointer-events: none;
+}
+.rah-room-member-search input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  border: 2px solid var(--black);
+  box-shadow: 3px 3px 0 var(--black);
+  background: white;
+  font: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  padding: 10px 12px 10px 36px;
+}
+.rah-room-member-page.is-add .rah-room-member-search {
+  border: 0;
+  padding-bottom: 16px;
+}
+.rah-room-add-candidates {
+  margin: 0 16px;
+  border: 2px solid var(--black);
+  box-shadow: 3px 3px 0 var(--black);
+  max-height: 288px;
+  overflow: auto;
+}
+.rah-room-add-candidates h3 {
+  margin: 0;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #666;
+  letter-spacing: 1.2px;
+}
+.rah-room-add-candidate {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  background: white;
+  color: inherit;
+  padding: 8px 12px;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+.rah-room-add-candidate:hover:not(:disabled) {
+  background: #14111108;
+}
+.rah-room-add-candidate > span:last-child {
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.rah-room-add-candidate b {
+  font-size: 14px;
+  font-weight: 500;
+}
+.rah-room-add-candidate small {
+  display: block;
+  font-size: 12px;
+  color: #666;
+}
+.rah-room-member-checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  border: 2px solid var(--black);
+  font-size: 11px;
+  box-sizing: border-box;
+}
+.rah-room-add-candidate[aria-pressed="true"] .rah-room-member-checkbox {
+  background: var(--pink);
+}
+.rah-room-add-candidate:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.rah-room-add-submit {
+  margin: 18px 16px;
+  width: calc(100% - 32px);
+  min-height: 36px;
+}
+.rah-room-member-group {
+  padding: 12px 16px;
+}
+.rah-room-member-group summary {
+  cursor: pointer;
+  font-size: 12px;
+  letter-spacing: 0.6px;
+  padding: 6px 0;
+}
+.rah-room-member-entry,
+.rah-room-member-entry.rah-member-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  margin: 0;
+  border: 0;
+}
+.rah-room-member-entry > .rah-channel-human-avatar {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border-width: 1px;
+  box-shadow: none;
+}
+.rah-room-member-entry > b,
+.rah-room-member-entry
+  > span:not(.rah-room-member-role):not(.rah-channel-human-avatar):not(
+    .rah-agent-avatar
+  ) {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.rah-room-member-entry > .rah-agent-avatar.is-member {
+  flex: 0 0 28px;
+}
+.rah-room-member-entry b {
+  font-size: 14px;
+  font-weight: 500;
+}
+.rah-room-member-entry small {
+  display: block;
+  color: #999;
+  font-size: 12px;
+}
+.rah-room-member-role {
+  flex: 0 0 auto;
+  padding: 1px 6px;
+  border: 1px solid var(--black);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.rah-room-member-role.is-owner {
+  background: var(--yellow);
+}
+.rah-room-member-role.is-admin {
+  background: var(--lavender);
+}
+.rah-room-member-remove {
+  border: 0;
+  text-decoration: underline;
+  color: #666;
+  background: none;
+  font-size: 11px;
+  cursor: pointer;
+}
+.rah-room-members-add {
+  margin: 12px 16px;
+  width: calc(100% - 32px);
+}
+.rah-room-settings-mobile-close {
+  display: none;
+}
+@media (max-width: 600px) {
+  .rah-channel-settings-header {
+    position: relative;
+    padding-right: 56px;
+  }
+  .rah-room-settings-mobile-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    right: 16px;
+    top: 20px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    font-size: 24px;
+  }
+  .rah-channel-settings-layer .rah-channel-settings-drawer {
+    max-width: 100%;
+    width: 100%;
+  }
+}

@@ -7,6 +7,7 @@ import {
   type ActivationCredentialScope,
   type RoomEvent,
   type Task,
+  type TaskArtifactReference,
   type TaskReview,
   type TaskReviewDisposition,
   type TaskSubmission,
@@ -72,6 +73,7 @@ export class TaskReviewService {
   recordSubmission(
     taskRow: Row,
     input: {
+      artifacts?: readonly TaskArtifactReference[];
       createdAt: string;
       messageId: string;
       producerId: string;
@@ -90,9 +92,14 @@ export class TaskReviewService {
         "count",
       ) + 1;
     const submissionId = this.#createId("submission");
+    const artifacts = [...(input.artifacts ?? [])];
     const submissionDigest = canonicalDigest({
       createdAt: input.createdAt,
-      domain: "rah/task-submission/v1",
+      domain:
+        input.artifacts === undefined
+          ? "rah/task-submission/v1"
+          : "rah/task-submission/v2",
+      ...(input.artifacts === undefined ? {} : { artifacts }),
       messageId: input.messageId,
       producerId: input.producerId,
       roomId,
@@ -121,7 +128,28 @@ export class TaskReviewService {
         submissionDigest,
         input.createdAt,
       );
+    const insertArtifact = this.#database.prepare(
+      `INSERT INTO task_submission_artifacts(
+         submission_id, ordinal, attachment_id, task_id, producer_id,
+         run_attempt_id, filename, mime_type, size, sha256
+       ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    );
+    for (const artifact of artifacts) {
+      insertArtifact.run(
+        submissionId,
+        artifact.ordinal,
+        artifact.attachmentId,
+        artifact.taskId,
+        artifact.producerId,
+        artifact.runAttemptId,
+        artifact.filename,
+        artifact.mimeType,
+        artifact.size,
+        artifact.sha256,
+      );
+    }
     return TaskSubmissionSchema.parse({
+      artifacts,
       createdAt: input.createdAt,
       messageId: input.messageId,
       producerId: input.producerId,
@@ -510,7 +538,16 @@ export class TaskReviewService {
   ): string[] {
     const assigneeId = text(taskRow, "assignee_id");
     const recipients = [
-      { participantId: assigneeId, reason: "task_assigned" as const },
+      {
+        obligations: [
+          {
+            kind: "task_owner_follow_up" as const,
+            taskId: text(taskRow, "task_id"),
+          },
+        ],
+        participantId: assigneeId,
+        reason: "task_assigned" as const,
+      },
       ...this.#database
         .prepare(
           "SELECT participant_id FROM task_participants WHERE task_id = ? AND role = 'collaborator' ORDER BY participant_id",
@@ -603,7 +640,25 @@ export class TaskReviewService {
   }
 
   #submissionFromRow(row: Row): TaskSubmission {
+    const artifacts = this.#database
+      .prepare(
+        `SELECT * FROM task_submission_artifacts
+         WHERE submission_id = ? ORDER BY ordinal`,
+      )
+      .all(text(row, "submission_id"))
+      .map((artifact) => ({
+        attachmentId: text(artifact, "attachment_id"),
+        filename: text(artifact, "filename"),
+        mimeType: text(artifact, "mime_type"),
+        ordinal: integer(artifact, "ordinal"),
+        producerId: text(artifact, "producer_id"),
+        runAttemptId: text(artifact, "run_attempt_id"),
+        sha256: text(artifact, "sha256"),
+        size: integer(artifact, "size"),
+        taskId: text(artifact, "task_id"),
+      }));
     return TaskSubmissionSchema.parse({
+      artifacts,
       createdAt: text(row, "created_at"),
       messageId: text(row, "message_id"),
       producerId: text(row, "producer_id"),

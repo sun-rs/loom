@@ -18,8 +18,27 @@ test("Client API authenticates humans and exposes canonical Room work without ow
   const directory = mkdtempSync(join(tmpdir(), "rah-os-client-api-"));
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
   let memoryResetCalls = 0;
+  let executionResetCalls = 0;
+  let taskReassignmentCalls = 0;
+  const pushEndpoints = new Set<string>();
+  let executionResetOwnerParticipantId = "fixture-agent";
   const memoryConfigs = new AgentMemoryConfigStore(join(directory, "memory"));
   const service = new ClientApplicationService({
+    agentExecutionAdministration: {
+      reset: async (_actor, input) => {
+        executionResetCalls += 1;
+        return {
+          agentDefinitionId: input.agentDefinitionId,
+          completedAt: "2026-09-01T02:00:00.000Z",
+          computerHostId: "client-host",
+          deduplicated: executionResetCalls > 1,
+          mode: input.mode,
+          operationId: `execution-reset-${input.idempotencyKey}`,
+          ownerParticipantId: executionResetOwnerParticipantId,
+          providerContinuityRecords: input.mode === "session" ? 1 : 0,
+        };
+      },
+    },
     agentMemoryAdministration: {
       computerHostId: "client-host",
       workspace: {
@@ -78,12 +97,81 @@ test("Client API authenticates humans and exposes canonical Room work without ow
         };
       },
     },
+    taskReassignmentAdministration: {
+      reassign: async (_actor, input) => {
+        taskReassignmentCalls += 1;
+        const timestamp = "2026-09-01T03:00:00.000Z";
+        return {
+          activationIds: ["client-reassignment-activation"],
+          deduplicated: taskReassignmentCalls > 1,
+          event: {
+            actorId: "client-human",
+            aggregateId: input.taskId,
+            aggregateType: "task",
+            createdAt: timestamp,
+            eventId: "client-reassignment-event",
+            idempotencyKey: `${input.idempotencyKey}:assigned`,
+            payload: {},
+            roomId: "client-reassignment-room",
+            roomSeq: input.basedOnRoomSeq + 2,
+            schemaVersion: 1,
+            type: "task.reassigned",
+          },
+          operation: {
+            completedAt: timestamp,
+            createdAt: timestamp,
+            nextAssigneeId: input.assigneeId,
+            operationId: "client-reassignment-operation",
+            previousAssigneeId: "client-previous-agent",
+            reason: input.reason,
+            requestedBy: "client-human",
+            roomId: "client-reassignment-room",
+            state: "assigned" as const,
+            taskId: input.taskId,
+            updatedAt: timestamp,
+          },
+          task: {
+            assigneeId: input.assigneeId,
+            collaboratorIds: [],
+            createdAt: timestamp,
+            creatorId: "client-human",
+            dependencyTaskIds: [],
+            reviewerIds: [],
+            roomId: "client-reassignment-room",
+            sourceMessageId: "client-reassignment-message",
+            state: "todo" as const,
+            taskId: input.taskId,
+            taskNumber: 1,
+            threadId: "client-reassignment-thread",
+            title: "Continue the task safely",
+            updatedAt: timestamp,
+          },
+        };
+      },
+    },
+    webPushAdministration: {
+      configuration: async () => ({
+        applicationServerKey: "AQIDBA",
+        subscriptionCount: pushEndpoints.size,
+        supported: true,
+      }),
+      subscribe: async (_actor, input) => {
+        pushEndpoints.add(input.subscription.endpoint);
+        return { subscribed: true, subscriptionCount: pushEndpoints.size };
+      },
+      unsubscribe: async (_actor, input) => {
+        pushEndpoints.delete(input.endpoint);
+        return { subscribed: false, subscriptionCount: pushEndpoints.size };
+      },
+      test: async () => ({ delivered: pushEndpoints.size }),
+    },
     health: () => ({
       apiVersion: 3,
       buildVersion: "test-build",
       capabilities: {
         agentOnboard: true,
         agentRead: true,
+        agentExecutionReset: true,
         agentWrite: true,
         cursorAcknowledge: true,
         hints: false,
@@ -99,6 +187,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
         roomWrite: true,
         roomSync: true,
         taskRead: true,
+        taskReassignment: true,
         taskWrite: true,
         threadRead: true,
         threadWrite: true,
@@ -112,6 +201,16 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     human: createHumanApplicationPort(kernel),
     localRuntimeInventory: () => ({
       hostId: "client-host",
+      computer: {
+        displayName: "Client Mac",
+        hostname: "client-mac.local",
+        instanceId: "client-instance",
+        lastSeenAt: "2026-09-01T00:00:00.000Z",
+        observedAt: "2026-09-01T00:01:00.000Z",
+        os: "darwin arm64",
+        staleAfterMs: 30_000,
+        status: "offline",
+      },
       restartRequiredToRescan: true,
       runtimes: [
         {
@@ -164,6 +263,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       handle: "client-agent",
       kind: "agent",
     });
+    executionResetOwnerParticipantId = agent.principal.principalId;
     const humanActor = kernel.authenticateAccessToken(human.accessToken);
     const workspace = kernel.createWorkspace(humanActor, {
       idempotencyKey: "client-workspace-created",
@@ -349,6 +449,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     assert.equal(healthV3.apiVersion, 3);
     assert.equal(healthV3.capabilities.agentOnboard, true);
     assert.equal(healthV3.capabilities.agentRead, true);
+    assert.equal(healthV3.capabilities.agentExecutionReset, true);
     assert.equal(healthV3.capabilities.agentWrite, true);
     assert.equal(healthV3.capabilities.managedMcpWrite, true);
     assert.equal(healthV3.capabilities.workspaceWrite, true);
@@ -376,6 +477,19 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     );
     assert.equal(principalResponse.status, 200);
     assert.deepEqual((await jsonObject(principalResponse)).principal, {
+      handle: human.principal.handle,
+      kind: "human",
+      principalId: human.principal.principalId,
+    });
+    const principalUpdateResponse = await request(
+      "/v3/client/principals/update",
+      { avatarKey: "avatar-03", displayName: "Hakase" },
+      human.accessToken,
+    );
+    assert.equal(principalUpdateResponse.status, 200);
+    assert.deepEqual((await jsonObject(principalUpdateResponse)).principal, {
+      avatarKey: "avatar-03",
+      displayName: "Hakase",
       handle: human.principal.handle,
       kind: "human",
       principalId: human.principal.principalId,
@@ -411,6 +525,82 @@ test("Client API authenticates humans and exposes canonical Room work without ow
         404,
       );
     }
+    const navigation = await request(
+      "/v3/client/navigation/resolve",
+      { target: { kind: "room", roomId: room.roomId } },
+      human.accessToken,
+    );
+    assert.equal(navigation.status, 200);
+    assert.deepEqual((await jsonObject(navigation)).target, {
+      kind: "room",
+      roomId: room.roomId,
+    });
+    const notifications = await request(
+      "/v3/client/notifications/list",
+      globalInput,
+      human.accessToken,
+    );
+    assert.equal(notifications.status, 200);
+    const notification = (await jsonObject(notifications)).notifications[0];
+    assert.equal(notification.kind, "computer_offline");
+    assert.deepEqual(notification.target, {
+      kind: "computer",
+      hostId: "client-host",
+    });
+    const pushConfiguration = await request(
+      "/v3/client/push/configuration",
+      {},
+      human.accessToken,
+    );
+    assert.equal(pushConfiguration.status, 200);
+    assert.equal((await jsonObject(pushConfiguration)).subscriptionCount, 0);
+    const pushSubscribe = await request(
+      "/v3/client/push/subscribe",
+      {
+        subscription: {
+          endpoint: "https://push.example/client-device",
+          keys: { auth: "auth_key", p256dh: "public_key" },
+        },
+      },
+      human.accessToken,
+    );
+    assert.equal(pushSubscribe.status, 200);
+    assert.equal((await jsonObject(pushSubscribe)).subscriptionCount, 1);
+    const pushTest = await request(
+      "/v3/client/push/test",
+      {},
+      human.accessToken,
+    );
+    assert.deepEqual(await jsonObject(pushTest), { delivered: 1 });
+    const pushUnsubscribe = await request(
+      "/v3/client/push/unsubscribe",
+      { endpoint: "https://push.example/client-device" },
+      human.accessToken,
+    );
+    assert.equal((await jsonObject(pushUnsubscribe)).subscriptionCount, 0);
+    const dismissed = await request(
+      "/v3/client/notifications/dismiss",
+      {
+        ...globalInput,
+        idempotencyKey: "dismiss-client-offline",
+        notificationId: notification.notificationId,
+      },
+      human.accessToken,
+    );
+    assert.equal(dismissed.status, 200);
+    assert.deepEqual(
+      (
+        await jsonObject(
+          await request(
+            "/v3/client/notifications/list",
+            globalInput,
+            human.accessToken,
+          ),
+        )
+      ).notifications,
+      [],
+      "opening/listing did not dismiss; the explicit command did",
+    );
     const globalTasks = await jsonObject(
       await request("/v3/client/tasks/global", globalInput, human.accessToken),
     );
@@ -634,6 +824,51 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     assert.equal(memoryResetResponse.status, 200);
     assert.equal((await jsonObject(memoryResetResponse)).deduplicated, false);
     assert.equal(memoryResetCalls, 1);
+
+    const executionResetResponse = await request(
+      "/v3/client/agents/execution/reset",
+      {
+        agentDefinitionId: agentDefinition.definition.agentDefinitionId,
+        basedOnRoomSeq: kernel.sync(humanActor, {
+          afterSeq: 0,
+          consumerId: "execution-reset-sequence",
+          roomId: controlRoom.roomId,
+        }).latestRoomSeq,
+        idempotencyKey: "client-execution-reset-1",
+        mode: "session",
+      },
+      human.accessToken,
+    );
+    assert.equal(
+      executionResetResponse.status,
+      200,
+      await executionResetResponse.clone().text(),
+    );
+    const executionReset = await jsonObject(executionResetResponse);
+    assert.equal(executionReset.mode, "session");
+    assert.equal(executionReset.providerContinuityRecords, 1);
+    assert.equal(executionResetCalls, 1);
+
+    const taskReassignmentResponse = await request(
+      "/v3/client/tasks/reassign",
+      {
+        assigneeId: agent.principal.principalId,
+        basedOnRoomSeq: 12,
+        idempotencyKey: "client-task-reassignment-1",
+        reason: "Move the work after stopping the previous Agent",
+        taskId: "client-running-task",
+      },
+      human.accessToken,
+    );
+    assert.equal(
+      taskReassignmentResponse.status,
+      200,
+      await taskReassignmentResponse.clone().text(),
+    );
+    const taskReassignment = await jsonObject(taskReassignmentResponse);
+    assert.equal(taskReassignment.operation.state, "assigned");
+    assert.equal(taskReassignment.task.assigneeId, agent.principal.principalId);
+    assert.equal(taskReassignmentCalls, 1);
 
     const unauthenticatedInventory = await request(
       "/v1/local/runtimes/list",
@@ -1043,6 +1278,13 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       agent.principal.principalId,
     );
     assert.equal("payload" in agentActivity.activities[0], false);
+    const agentRemindersResponse = await request(
+      "/v3/client/agents/reminders/list",
+      { agentDefinitionId: agentDefinition.definition.agentDefinitionId },
+      human.accessToken,
+    );
+    assert.equal(agentRemindersResponse.status, 200);
+    assert.deepEqual((await jsonObject(agentRemindersResponse)).reminders, []);
     const hiddenAgentActivityResponse = await request(
       "/v3/client/agents/activity/list",
       { agentDefinitionId: agentDefinition.definition.agentDefinitionId },

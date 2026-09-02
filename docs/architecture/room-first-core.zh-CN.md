@@ -96,9 +96,9 @@ actor identity 必须来自认证上下文，工具参数不能指定或冒充 a
 
 ## 6. Artifact 与 Review
 
-Artifact 必须显式发布并携带 hash、MIME/kind、producer、Run/Task provenance 和生命周期。裸文件路径不是 artifact truth。
+Artifact 必须显式发布并携带 hash、MIME/kind、producer、Run/Task provenance 和生命周期。裸文件路径不是 artifact truth。当前本机 Agent 已可用 Activation credential 为自己持有的 in-progress Task 显式发布文件；`task.submit` 原子把仍未归属的完成文件绑定到提交 Thread message、冻结进 TaskSubmission v2 digest，并由 Room Files 投影同一 Message owner。
 
-Review v1 已是独立对象，固定关联不可变 TaskSubmission digest、reviewer、evidence summary 和 disposition；`changes_requested` 会重开 Task，新 submission 不继承旧 Review。它尚未关联 frozen diff、base/head 或 canonical Artifact，因此 Reviewer 当前只能验收明确提交的 evidence，不能把变化中的全局 Git 状态当作真相。协议见 [ADR-0021](../adr/0021-frozen-task-submission-and-canonical-review.md)。
+Review v1 已是独立对象，固定关联不可变 TaskSubmission digest、reviewer、evidence summary 和 disposition；`changes_requested` 会重开 Task，新 submission 不继承旧 Review。TaskSubmission v2 已关联 canonical Artifact references，但仍未冻结 Git diff、base/head、构建日志或 verifier result；Reviewer 可以验收明确提交的 Message/Artifact evidence，不能把变化中的全局 Git 状态当作真相。协议见 [ADR-0021](../adr/0021-frozen-task-submission-and-canonical-review.md)。
 
 ## 7. Runtime 与业务协议边界
 

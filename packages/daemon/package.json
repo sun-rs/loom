@@ -14,6 +14,10 @@
     "@rah-os/core": "*",
     "@rah-os/kernel": "*",
     "@rah-os/protocol": "*",
+    "web-push": "^3.6.7",
     "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/web-push": "^3.6.4"
   }
 }

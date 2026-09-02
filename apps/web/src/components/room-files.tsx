@@ -35,24 +35,32 @@ export function FilesProvider({
     </FilesContext.Provider>
   );
 }
-export function useRoomUploads(roomId?: string) {
+export function useRoomUploads(roomId?: string, draftKey = roomId) {
   const context = useContext(FilesContext);
   const rows = useSyncExternalStore(
     context?.uploads.subscribe ?? noopSubscribe,
-    () => context?.uploads.read(roomId) ?? emptyUploads,
+    () => context?.uploads.read(draftKey) ?? emptyUploads,
   );
-  return { rows, store: context?.uploads, enabled: !!context?.client.files };
+  return {
+    draftKey,
+    rows,
+    store: context?.uploads,
+    enabled: !!context?.client.files,
+  };
 }
 const emptyUploads = Object.freeze([]);
 const noopSubscribe = () => () => {};
 export function ComposerFiles({
   roomId,
+  draftKey,
   disabled,
 }: {
   roomId: string | undefined;
+  draftKey?: string | undefined;
   disabled: boolean;
 }) {
-  const { rows, store, enabled } = useRoomUploads(roomId);
+  const uploads = useRoomUploads(roomId, draftKey);
+  const { rows, store, enabled } = uploads;
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string>();
   return (
@@ -67,7 +75,7 @@ export function ComposerFiles({
           if (roomId && store)
             for (const file of event.target.files ?? [])
               void store
-                .add(roomId, file)
+                .add(uploads.draftKey ?? roomId, roomId, file)
                 .catch((e: Error) => setError(e.message));
           event.target.value = "";
         }}
@@ -99,7 +107,9 @@ export function ComposerFiles({
             type="button"
             aria-label={`移除附件 ${row.file.name}`}
             disabled={disabled}
-            onClick={() => roomId && store?.remove(roomId, row.id)}
+            onClick={() =>
+              uploads.draftKey && store?.remove(uploads.draftKey, row.id)
+            }
           >
             ×
           </button>

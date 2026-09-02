@@ -24,7 +24,7 @@ test("activity color overrides are specific enough to beat legacy success and ac
   assert.match(css, /\.rah-agent-activity-list article\.is-active > i,/u);
 });
 
-test("workspace mark follows its name, not an unrelated client computer", () => {
+test("the shared initial presentation accepts the selected Computer name", () => {
   assert.equal(workspaceInitial(" hakase Lab"), "H");
   assert.equal(workspaceInitial("团队"), "团");
   assert.equal(workspaceInitial(""), "?");
@@ -46,7 +46,7 @@ test("workspace identity counts spaces, never Rooms, and uses workspace write au
     new URL("../src/components/workspace-navigation.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(navigation, /label="Workspace" count=\{workspace \? 1 : 0\}/u);
+  assert.doesNotMatch(navigation, /label="Workspace"/u);
   const app = readFileSync(new URL("../src/App.tsx", import.meta.url), "utf8");
   const identity = app.slice(
     app.indexOf("<WorkspaceIdentity"),
@@ -66,11 +66,8 @@ test("sidebar sections share a keyboard-accessible disclosure instead of decorat
     new URL("../src/components/workspace-navigation.tsx", import.meta.url),
     "utf8",
   );
-  for (const label of ["Workspace", "频道", "私信"])
-    assert.match(
-      navigation,
-      new RegExp(`<SidebarSection\\s+label="${label}"`, "u"),
-    );
+  assert.match(navigation, /\["pinned", "channels", "dms"\]/u);
+  assert.match(navigation, /<SidebarSection\s+label=\{label\}/u);
 });
 test("sidebar disclosure SVG has Raft's explicit 12px box, not the browser's 300x150 default", () => {
   const css = readFileSync(
@@ -114,6 +111,42 @@ test("mention edits the active selection, preserves draft and sets a caret", () 
     caret: 6,
   });
 });
+
+test("selecting any Room or DM closes the chat-scoped Agent inspector", () => {
+  const app = readFileSync(new URL("../src/App.tsx", import.meta.url), "utf8");
+  const roomSidebarStart = app.indexOf("<RoomSidebar");
+  const roomSidebarEnd = app.indexOf("{mobileRoomsOpen ?", roomSidebarStart);
+  assert.notEqual(roomSidebarStart, -1);
+  assert.notEqual(roomSidebarEnd, -1);
+  const roomSidebar = app.slice(roomSidebarStart, roomSidebarEnd);
+  const selectionStart = roomSidebar.indexOf("onSelect={(roomId) => {");
+  assert.notEqual(selectionStart, -1);
+  const selection = roomSidebar.slice(
+    selectionStart,
+    roomSidebar.indexOf("rooms={rooms}", selectionStart),
+  );
+  assert.match(selection, /setPeekAgentId\(undefined\)/u);
+});
+
+test("chat-scoped Agent inspector reuses the canonical detail header geometry", () => {
+  const css = readFileSync(
+    new URL("../src/identity-interactions.css", import.meta.url),
+    "utf8",
+  );
+  assert.doesNotMatch(css, /\.rah-agent-peek \.rah-agent-detail-head\s*\{/u);
+});
+
+test("conversation and Agent inspector tab frames end on the same divider", () => {
+  const css = readFileSync(
+    new URL("../src/chat-surface.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    css,
+    /\.rah-product-shell > \.channel:not\(\.rah-agent-peek\) > \.tabs \{\s*height: var\(--raft-members-tabs-frame-height\);\s*\}/u,
+  );
+});
+
 test("short status and tool detail are inline, narrative is a separate expandable body", () => {
   assert.deepEqual(
     activityPresentation({

@@ -1,6 +1,10 @@
 # Raft UI 产品集成边界
 
-状态：**Phase 4B implemented / anchored Task tutorial slice**（2026-08-27）。
+状态：**Phase 4B implemented / anchored Task tutorial slice**（2026-08-27）。下方早期能力清单不作为当前完成率；最新证据按 docs/README 的日期索引读取。
+
+2026-09-01 Chat 补充：官方 bct/$_ 与 1440×1000 DOM 证实普通聊天侧栏默认240px、180–320px约束并保存布局宽度（仅数字，不存业务状态）。此前“默认320px”不是当前官方事实。行字体以computed style为准；头像预览使用独立的活动状态色，不套用完整日志的分类色。参见[聊天差异合同](../product/2026-09-01-chat-surface-parity-contract.zh-CN.md)。
+
+2026-09-01 导航补充：Search/Activity/Tasks/Saved/Notifications 不再各自拼接页面状态，而是共享 protocol `NavigationTarget`。Web URL 只是 reload-safe projection；每次打开目标必须先经 Kernel Human ACL/存在性解析。Raft NotificationCenter 的 open/view/dismiss 交互被结构化移植，但中央套餐/账号条件不进入本机架构。详见[Notifications 与 typed navigation 合同](../product/2026-09-01-notifications-typed-navigation-contract.zh-CN.md)。
 
 ## 1. 决策
 
@@ -92,7 +96,7 @@ Reference HTML 永远加载 `raft-ui-reference-adapter.js`，不得加载产品 
 - Raft 形态 dialog 共用 Escape、Tab/Shift+Tab focus trap、提交期间禁止关闭和关闭后焦点返回协议，不复制第二套视觉样式；普通 modal 可聚焦首个字段，右侧 drawer 按 Raft 实测聚焦自身无可见 outline 的容器，再由 Tab 进入首个控件；
 - 请求完成后才调度下一轮的有界 reconciliation：未追平 250ms、正常前台 5s、后台 15s，失败指数退避到 30s；页面重新可见时立即恢复；
 - required recovery capability fail-closed，Message/Task/Thread 等可选 capability 独立降级；错误保留当前 projection，并提供显式重新连接；
-- Raft `64px rail + 320px sidebar + fluid channel`；
+- Raft `64px rail + 240px default sidebar (180–320px) + fluid channel`；
 - Chat/Task/Files tabs、composer 的“作为任务”；
 - 390px 无横向溢出的响应式壳、底部主导航、可关闭的 Room 抽屉，以及占满可用 viewport 的移动端 Thread；
 - Files capability 缺失时明确不可用，不加载 fixture。
@@ -103,19 +107,20 @@ Reference HTML 永远加载 `raft-ui-reference-adapter.js`，不得加载产品 
 - Agents → 动态通过 typed `agent.trajectory.list` 读取独立的 Kernel runtime trajectory：Provider driver 只把 Codex app-server 与 Kimi ACP 的结构化 thinking/tool/text/status/compaction 事件写入专用 fd3，GenericProcessAdapter 严格校验后绑定 RunAttempt/RuntimeRun 持久化；stdout/stderr/ANSI 仍只是有界 diagnostics。Codex 只允许公开 reasoning summary，原始 reasoning content/textDelta 不跨越归一化边界；
 - 动态首屏取最新 50 条，按 server sequence 正序显示，2 秒可靠性轮询合并去重，活跃窗口最多 500 条；只有用户仍位于底部时才跟随最新，超过 200 字的条目可展开，hover/时间/状态点沿用 Raft 行协议。游标每页重新验证 Human 对实际 Room 的 ACL；
 - 动态页“复制诊断信息”只从轨迹 discriminated typed record 逐字段生成最多 200 条、64 KiB 的关联摘要，不复制 thinking/text/tool input/result，也不 `JSON.stringify` React state；浏览器拒绝剪贴板时保留页面并显示局部错误。原 `agent.activity.list` 业务审计继续保留为独立 API，但不再冒充 Raft 的 Agent 动态；
-- Agent 像素头像直接消费 allowlisted 官方 avatar preset 与 palette，`avatarKey` 是 canonical identity revision 的一部分；未提供 avatarKey 时只回退到同一官方 preset，不在页面临时绘制字母头像；
+- Agent 像素头像直接消费 allowlisted 官方 avatar preset/palette 与稳定 random recipe；新身份由 Kernel 分配不重复 seed。旧 provider 占位 key 以明示映射采用四个官方预设，不重写 canonical revision；显式预设/random key 保持身份。未知 key 稳定回退，不在每次渲染随机重画；
 - 资料页通过 `agent.get` 读取 canonical Definition/Policy，明确区分在线、不可用、已暂停和已删除；390×844 使用同一组件树的 list-first → focused detail → back 协议，详情打开时底部主导航让位，七标签在局部横向滚动而不制造 document overflow；
 - Chat 私信顶部头像和 Message Agent 头像共用 App-owned 右侧 `AgentDirectoryPane` 入口，默认进入 Activity；资料头像的官方 preset 修改复用 `agent.manage/update_profile` 的 revision CAS、Room freshness 与幂等事务。Web 只投影 canonical `avatarKey`，不另存头像草稿真相；图片上传在形成授权存储 owner 前保持明确不可用；
 - Room sidebar 只属于 Room surface；Agent、Computer、Settings 各自拥有第二列，避免出现四列叠加和全局分隔线漂移；
 
 尚未接入：
 
-- Web claim/unclaim 和 Closed 恢复；
-- Human Inbox/Activity；
-- Artifact/Review/Files；
-- Search、关系图、Provider-native tool/file diagnostic timeline、Agent-scoped channel/DM、提醒、工作区文件、应用目录、Agent skill/memory artifact、显式 execution restart/session reset、Computer control/placement、Admin 的其余页面、Billing；
-- MCP executor URL/credential/OAuth 创建与连接、Notion/Linear preset；
-- hint subscription、生产 token pairing、PWA/desktop packaging。
+- Task unblock 的 Human UI、列折叠细节及完整 Closed/恢复双边验收；
+- 独立 Artifact publication、Thread/Task 附件、Finder reveal、完整大文件/类型预览；
+- 关系图、提醒、应用目录、显式 execution restart/session reset、Computer control/placement、Admin 的其余适用页面；Billing 与中央账户明确排除；
+- Agent MCP tab 与官网 Server/tool 分组和诊断语义的完整对齐；MCP executor URL/credential/OAuth 仍只属于可信 daemon 配置，不直接投影给浏览器；
+- 通用 hint/push subscription 与原生 desktop/iOS packaging。已有安装型 PWA shell、正式 loopback/LAN gateway 和 LAN device pairing，不能再登记为整体缺失。
+
+已经接入但仍需继续双边验收：Human Inbox/InputRequest、Activity、Search、Task Review、Room Files、Agent 工作区/记忆、Provider 结构化 tool/file 动态、共同可见 Room/DM、消息回应/收藏、侧栏排序/置顶和 Room 个人静音/长消息折叠。不能把“有 typed owner”外推成视觉和所有失败分支均与官网一致。
 
 这些缺口按 capability 逐个打开，不以“让按钮看起来能点”为理由在 UI adapter 中发明后端语义。
 

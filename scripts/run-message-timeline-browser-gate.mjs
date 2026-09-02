@@ -44,8 +44,19 @@ try {
     viewport: { height: 1_000, width: 1_440 },
   });
   const browserErrors = [];
+  const failedResponses = [];
   page.on("console", (message) => {
-    if (message.type() === "error") browserErrors.push(message.text());
+    if (message.type() === "error") {
+      const location = message.location();
+      browserErrors.push(
+        location.url ? `${message.text()} (${location.url})` : message.text(),
+      );
+    }
+  });
+  page.on("response", (response) => {
+    if (response.status() >= 400) {
+      failedResponses.push(`${String(response.status())} ${response.url()}`);
+    }
   });
   page.on("pageerror", (error) =>
     browserErrors.push(error.stack ?? error.message),
@@ -140,7 +151,10 @@ try {
     anchorAfter.domRows <= 80,
     `prepended history must keep the DOM bounded, got ${String(anchorAfter.domRows)} rows`,
   );
-  assert.deepEqual(browserErrors, []);
+  assert.deepEqual(
+    { browserErrors, failedResponses },
+    { browserErrors: [], failedResponses: [] },
+  );
   await page.goto(`${origin}/test/message-markdown-stability.html`, {
     waitUntil: "networkidle",
   });
@@ -153,7 +167,10 @@ try {
   assert.equal(markdown.result, "PASS", JSON.stringify(markdown));
   assert.equal(markdown.refreshes, 20);
   assert.deepEqual(markdown.failures, []);
-  assert.deepEqual(browserErrors, []);
+  assert.deepEqual(
+    { browserErrors, failedResponses },
+    { browserErrors: [], failedResponses: [] },
+  );
   console.log(
     JSON.stringify({
       anchorDelta: anchorAfter.offset - anchorBefore.offset,

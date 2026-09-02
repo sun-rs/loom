@@ -1357,6 +1357,104 @@ test("a failed Activation is delayed and merges its queued follow-up", () => {
   kernel.close();
 });
 
+test("three identical Activation failures trip a Raft-style retry fingerprint fence", () => {
+  const { agent, humanActor, kernel, room } = createFixture();
+  const retryHost = authenticateHost(kernel, "retry-fence-host", [
+    agent.principalId,
+  ]);
+  kernel.postMessage(humanActor, {
+    body: "Trigger deterministic runtime failure",
+    idempotencyKey: "retry-fence-message",
+    recipients: [{ participantId: agent.principalId, reason: "mention" }],
+    roomId: room.roomId,
+  });
+
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    const leased = kernel.leaseNextActivation(retryHost, { leaseMs: 5_000 });
+    assert.ok(leased);
+    assert.equal(leased.attemptCount, attempt);
+    const result = kernel.retryActivation(retryHost, {
+      activationId: leased.activationId,
+      error: "provider connection failed at 2026-09-02T00:00:00.000Z",
+      retryAfterMs: 0,
+    });
+    assert.equal(result.state, attempt < 3 ? "queued" : "quarantined");
+  }
+
+  assert.equal(kernel.leaseNextActivation(retryHost, { leaseMs: 5_000 }), null);
+  const events = kernel.sync(humanActor, {
+    consumerId: "retry-fence-audit",
+    roomId: room.roomId,
+  }).events;
+  const blocked = events.find(
+    (event) => event.type === "activation.retry_blocked",
+  );
+  assert.ok(blocked);
+  assert.equal(blocked.payload.sameErrorCount, 3);
+  assert.equal(blocked.payload.threshold, 3);
+  assert.equal(typeof blocked.payload.errorFingerprint, "string");
+  const pushes = kernel.humanNotifications.webPush.project({
+    roomId: room.roomId,
+    roomSeq: blocked.roomSeq,
+  });
+  assert.equal(pushes.length, 1);
+  assert.match(pushes[0]?.payload.title ?? "", /停止自动重试/u);
+  assert.equal(pushes[0]?.payload.target.kind, "room");
+  assert.equal(
+    events.filter((event) => event.type === "activation.retry_scheduled")
+      .length,
+    2,
+  );
+
+  kernel.close();
+});
+
+test("action-required and sticky Runtime errors quarantine immediately without consuming the fingerprint counter", () => {
+  for (const retryDisposition of [
+    "action_required",
+    "sticky_terminal",
+  ] as const) {
+    const { agent, humanActor, kernel, room } = createFixture();
+    const retryHost = authenticateHost(
+      kernel,
+      `retry-${retryDisposition}-host`,
+      [agent.principalId],
+    );
+    kernel.postMessage(humanActor, {
+      body: `Trigger ${retryDisposition}`,
+      idempotencyKey: `retry-${retryDisposition}-message`,
+      recipients: [{ participantId: agent.principalId, reason: "mention" }],
+      roomId: room.roomId,
+    });
+    const leased = kernel.leaseNextActivation(retryHost, { leaseMs: 5_000 });
+    assert.ok(leased);
+    const result = kernel.retryActivation(retryHost, {
+      activationId: leased.activationId,
+      error:
+        retryDisposition === "action_required"
+          ? "Authentication failed: please log in first"
+          : "This model is not supported",
+      retryAfterMs: 10_000,
+      retryDisposition,
+    });
+    assert.equal(result.state, "quarantined");
+    const blocked = kernel
+      .sync(humanActor, {
+        consumerId: `retry-${retryDisposition}-audit`,
+        roomId: room.roomId,
+      })
+      .events.find((event) => event.type === "activation.retry_blocked");
+    assert.ok(blocked);
+    assert.equal(blocked.payload.retryDisposition, retryDisposition);
+    assert.equal(blocked.payload.sameErrorCount, 0);
+    assert.equal(
+      blocked.payload.actionRequired,
+      retryDisposition === "action_required",
+    );
+    kernel.close();
+  }
+});
+
 test("Room sync cursors are independent and Inbox acknowledgement is explicit", () => {
   const {
     agent,
@@ -1586,8 +1684,20 @@ test("an Agent mutation based on stale Room context is rejected atomically", () 
   kernel.close();
 });
 
-test("Task workflow is durable, leased independently, and explicitly completed", () => {
+test("Task workflow is durable, leased independently, and explicitly completed", async () => {
   const { agent, agentActor, humanActor, kernel, room } = createFixture();
+
+  const peerProvisioning = kernel.provisionPrincipal({
+    handle: "task-observer",
+    kind: "human",
+  });
+  const peerActor = kernel.authenticateAccessToken(
+    peerProvisioning.accessToken,
+  );
+  kernel.addMember(humanActor, {
+    principalId: peerProvisioning.principal.principalId,
+    roomId: room.roomId,
+  });
 
   const created = kernel.createTask(humanActor, {
     assigneeId: agent.principalId,
@@ -1602,6 +1712,11 @@ test("Task workflow is durable, leased independently, and explicitly completed",
   assert.ok(created.task.threadId);
   assert.equal(created.event.type, "task.created");
   assert.equal(created.activationIds.length, 1);
+  kernel.followHumanThread(peerActor, {
+    roomId: room.roomId,
+    threadId: created.task.threadId,
+    following: true,
+  });
   assert.equal(kernel.listTasks(agentActor, { roomId: room.roomId }).length, 1);
   assert.equal(kernel.listInbox(agentActor, { roomId: room.roomId }).length, 1);
 
@@ -1720,6 +1835,24 @@ test("Task workflow is durable, leased independently, and explicitly completed",
     ],
   );
 
+  const stagedArtifact = kernel.files.prepareWorker(execution, {
+    filename: "verification.txt",
+    idempotencyKey: "task-artifact-1",
+    mimeType: "text/plain",
+    size: 18,
+    taskId: created.task.taskId,
+  });
+  await kernel.files.uploadWorker(
+    execution,
+    stagedArtifact.attachmentId,
+    bytes("artifact-evidence!"),
+  );
+  assert.equal(
+    kernel.files.list(humanActor, { roomId: room.roomId }).files.length,
+    0,
+    "staged Agent bytes are not Room Files before Task submission",
+  );
+
   const submitted = kernel.submitTask(execution, {
     basedOnRoomSeq: progressed.event.roomSeq,
     idempotencyKey: "task-submit-1",
@@ -1729,14 +1862,65 @@ test("Task workflow is durable, leased independently, and explicitly completed",
   assert.equal(submitted.task.state, "submitted");
   assert.equal(submitted.task.claimedBy, undefined);
   assert.equal(submitted.event.type, "task.submitted");
+  const submittedPush = kernel.humanNotifications.webPush.project({
+    roomId: room.roomId,
+    roomSeq: submitted.event.roomSeq,
+  });
+  assert.deepEqual(
+    submittedPush.map(({ principalId }) => principalId).sort(),
+    [humanActor.principalId, peerProvisioning.principal.principalId].sort(),
+  );
+  assert.match(submittedPush[0]!.payload.title, /待审核/u);
+  assert.equal(submittedPush[0]!.payload.target.kind, "task");
   assert.deepEqual(
     kernel
       .listMessages(humanActor, {
         roomId: room.roomId,
         threadId: created.task.threadId,
       })
-      .messages.map(({ body }) => body),
-    ["Kernel and protocol tests pass", "Implemented and verified"],
+      .messages.map(({ attachments, body }) => ({ attachments, body })),
+    [
+      { attachments: undefined, body: "Kernel and protocol tests pass" },
+      {
+        attachments: [
+          {
+            attachmentId: stagedArtifact.attachmentId,
+            filename: "verification.txt",
+            mimeType: "text/plain",
+            sha256:
+              "0d612265f5b74df4d813cf768c288f6dc27872470cd02e763c130b0bdaafbe51",
+            size: 18,
+          },
+        ],
+        body: "Implemented and verified",
+      },
+    ],
+  );
+  const [submissionEvidence] = kernel.taskReviews.listTaskSubmissions(
+    humanActor,
+    { roomId: room.roomId, taskId: created.task.taskId },
+  );
+  assert.equal(submissionEvidence?.artifacts.length, 1);
+  assert.equal(
+    submissionEvidence?.artifacts[0]?.attachmentId,
+    stagedArtifact.attachmentId,
+  );
+  assert.equal(
+    submissionEvidence?.artifacts[0]?.runAttemptId,
+    runAttempt.runAttemptId,
+  );
+  assert.equal(
+    kernel.files.list(humanActor, { roomId: room.roomId }).files[0]?.messageId,
+    submissionEvidence?.messageId,
+  );
+  assert.equal(
+    kernel.submitTask(execution, {
+      basedOnRoomSeq: progressed.event.roomSeq,
+      idempotencyKey: "task-submit-1",
+      summary: "Implemented and verified",
+      taskId: created.task.taskId,
+    }).deduplicated,
+    true,
   );
 
   kernel.recordRuntimeTermination(host, {
@@ -1770,6 +1954,15 @@ test("Task workflow is durable, leased independently, and explicitly completed",
   });
   assert.equal(completed.task.state, "completed");
   assert.equal(completed.event.type, "task.completed");
+  const completedPush = kernel.humanNotifications.webPush.project({
+    roomId: room.roomId,
+    roomSeq: completed.event.roomSeq,
+  });
+  assert.deepEqual(
+    completedPush.map(({ principalId }) => principalId),
+    [peerProvisioning.principal.principalId],
+  );
+  assert.match(completedPush[0]!.payload.title, /已完成/u);
 
   kernel.close();
 });
@@ -1966,6 +2159,15 @@ test("an assigned Task has one claim owner plus canonical collaborators and revi
   assert.equal(changesRequested.task.assigneeId, agent.principalId);
   assert.equal(changesRequested.task.submissionSummary, undefined);
   assert.equal(changesRequested.activationIds.length, 2);
+  const changesRequestedPush = kernel.humanNotifications.webPush.project({
+    roomId: room.roomId,
+    roomSeq: changesRequested.event.roomSeq,
+  });
+  assert.deepEqual(
+    changesRequestedPush.map(({ principalId }) => principalId),
+    [humanActor.principalId],
+  );
+  assert.match(changesRequestedPush[0]!.payload.title, /要求修改/u);
   kernel.recordRuntimeTermination(reviewerHost, {
     exit: { code: 0 },
     runAttemptId: reviewerRun.runAttemptId,
@@ -2769,6 +2971,22 @@ test("Task creator explicitly assigns, unblocks, and cancels coordination state"
     roomId: room.roomId,
     title: "Block only with explicit evidence",
   });
+  const peerProvisioning = kernel.provisionPrincipal({
+    handle: "task-lifecycle-observer",
+    kind: "human",
+  });
+  const peerActor = kernel.authenticateAccessToken(
+    peerProvisioning.accessToken,
+  );
+  kernel.addMember(humanActor, {
+    principalId: peerProvisioning.principal.principalId,
+    roomId: room.roomId,
+  });
+  kernel.followHumanThread(peerActor, {
+    roomId: room.roomId,
+    threadId: created.task.threadId,
+    following: true,
+  });
   const activation = kernel.leaseNextActivation(host, { leaseMs: 30_000 });
   assert.ok(activation);
   const run = kernel.createRunAttempt(host, {
@@ -2818,6 +3036,15 @@ test("Task creator explicitly assigns, unblocks, and cancels coordination state"
     "Need the maintainer to choose an API boundary",
   );
   assert.equal(blocked.activationIds.length, 1);
+  const blockedPush = kernel.humanNotifications.webPush.project({
+    roomId: room.roomId,
+    roomSeq: blocked.event.roomSeq,
+  });
+  assert.deepEqual(
+    blockedPush.map(({ principalId }) => principalId).sort(),
+    [humanActor.principalId, peerProvisioning.principal.principalId].sort(),
+  );
+  assert.match(blockedPush[0]!.payload.title, /已阻塞/u);
   assert.equal(
     kernel.blockTask(execution, {
       basedOnRoomSeq: started.event.roomSeq,
@@ -2852,6 +3079,15 @@ test("Task creator explicitly assigns, unblocks, and cancels coordination state"
     taskId: created.task.taskId,
   });
   assert.equal(cancelled.task.state, "cancelled");
+  const cancelledPush = kernel.humanNotifications.webPush.project({
+    roomId: room.roomId,
+    roomSeq: cancelled.event.roomSeq,
+  });
+  assert.deepEqual(
+    cancelledPush.map(({ principalId }) => principalId),
+    [peerProvisioning.principal.principalId],
+  );
+  assert.match(cancelledPush[0]!.payload.title, /已取消/u);
   assert.equal(
     cancelled.task.cancellationReason,
     "The requirement was withdrawn",
@@ -3047,6 +3283,179 @@ test("Human cancellation fences active Task execution before reversible Closed r
     kernel.reopenTask(humanActor, {
       basedOnRoomSeq: latestRoomSeq,
       idempotencyKey: "cancel-fence-reopen",
+      taskId: created.task.taskId,
+    }).deduplicated,
+    true,
+  );
+
+  kernel.close();
+});
+
+test("durable Task reassignment fences the old Runtime until terminal proof and assigns one new owner", () => {
+  const { agent, humanActor, kernel, otherAgent, room } = createFixture();
+  const oldHost = authenticateHost(kernel, "reassignment-old-host", [
+    agent.principalId,
+  ]);
+  const created = kernel.createTask(humanActor, {
+    assigneeId: agent.principalId,
+    idempotencyKey: "reassignment-created",
+    roomId: room.roomId,
+    title: "Move this running Task without two writers",
+  });
+  const peerProvisioning = kernel.provisionPrincipal({
+    handle: "reassignment-observer",
+    kind: "human",
+  });
+  const peerActor = kernel.authenticateAccessToken(
+    peerProvisioning.accessToken,
+  );
+  kernel.addMember(humanActor, {
+    principalId: peerProvisioning.principal.principalId,
+    roomId: room.roomId,
+  });
+  kernel.followHumanThread(peerActor, {
+    roomId: room.roomId,
+    threadId: created.task.threadId,
+    following: true,
+  });
+  const activation = kernel.leaseNextActivation(oldHost, { leaseMs: 30_000 });
+  assert.ok(activation);
+  const run = kernel.createRunAttempt(oldHost, {
+    activationId: activation.activationId,
+  });
+  prepareAndMarkRunAttemptRunning(kernel, oldHost, {
+    recoveryDescriptor: fakeRecovery("reassignment-runtime"),
+    runAttemptId: run.runAttemptId,
+    runtimeRunId: "reassignment-runtime",
+  });
+  const execution = kernel.authorizeWorkerExecution(oldHost, {
+    activationId: activation.activationId,
+    consumerId: "reassignment-consumer",
+    hostId: oldHost.hostId,
+    participantId: agent.principalId,
+    roomId: room.roomId,
+    runAttemptId: run.runAttemptId,
+    toSeq: activation.toSeq,
+  });
+  const delivery = kernel.syncWorker(execution, {});
+  kernel.acknowledgeWorkerCursor(execution, {
+    throughSeq: delivery.cursorAfter,
+  });
+  const claimed = kernel.claimTask(execution, {
+    basedOnRoomSeq: created.event.roomSeq,
+    idempotencyKey: "reassignment-claim",
+    leaseMs: 30_000,
+    taskId: created.task.taskId,
+  });
+  const started = kernel.startTask(execution, {
+    basedOnRoomSeq: claimed.event.roomSeq,
+    idempotencyKey: "reassignment-start",
+    leaseMs: 30_000,
+    taskId: created.task.taskId,
+  });
+
+  const requested = kernel.taskReassignment.request(humanActor, {
+    assigneeId: otherAgent.principalId,
+    basedOnRoomSeq: started.event.roomSeq,
+    idempotencyKey: "reassignment-request",
+    reason: "The first Agent is unavailable; preserve evidence and hand off",
+    taskId: created.task.taskId,
+  });
+  assert.equal(requested.operation.state, "cancellation_requested");
+  assert.equal(requested.task.state, "cancelled");
+  assert.equal(requested.task.assigneeId, agent.principalId);
+  assert.throws(
+    () => kernel.taskReassignment.continue(humanActor, requested.operation),
+    /terminal proof/,
+  );
+  assert.throws(
+    () =>
+      kernel.progressTask(execution, {
+        basedOnRoomSeq: started.event.roomSeq,
+        idempotencyKey: "reassignment-late-progress",
+        leaseMs: 30_000,
+        progress: "The old owner must stay fenced",
+        taskId: created.task.taskId,
+      }),
+    ExecutionFencedError,
+  );
+
+  kernel.recordRuntimeTermination(oldHost, {
+    exit: { code: null, signal: "SIGTERM" },
+    runAttemptId: run.runAttemptId,
+    runtimeRunId: "reassignment-runtime",
+  });
+  kernel.finishRunAttempt(oldHost, {
+    error: "Task reassignment requested",
+    exitSignal: "SIGTERM",
+    runAttemptId: run.runAttemptId,
+    state: "cancelled",
+  });
+  kernel.resolveActivationCancellation(oldHost, {
+    activationId: activation.activationId,
+  });
+  assert.equal(
+    kernel.leaseNextActivation(oldHost, { leaseMs: 30_000 }),
+    null,
+    "the durable reassignment operation must fence the requeued old lane",
+  );
+
+  const reassigned = kernel.taskReassignment.continue(
+    humanActor,
+    requested.operation,
+  );
+  assert.equal(reassigned.event.type, "task.reassigned");
+  assert.equal(reassigned.operation.state, "assigned");
+  assert.equal(reassigned.task.state, "todo");
+  assert.equal(reassigned.task.assigneeId, otherAgent.principalId);
+  assert.equal(reassigned.activationIds.length, 1);
+  const reassignedPush = kernel.humanNotifications.webPush.project({
+    roomId: room.roomId,
+    roomSeq: reassigned.event.roomSeq,
+  });
+  assert.deepEqual(
+    reassignedPush.map(({ principalId }) => principalId),
+    [peerProvisioning.principal.principalId],
+  );
+  assert.match(reassignedPush[0]!.payload.title, /已改派/u);
+  const newHost = authenticateHost(kernel, "reassignment-new-host", [
+    otherAgent.principalId,
+  ]);
+  const reassignedActivation = kernel.leaseNextActivation(newHost, {
+    leaseMs: 30_000,
+  });
+  assert.ok(reassignedActivation);
+  const reassignedRun = kernel.createRunAttempt(newHost, {
+    activationId: reassignedActivation.activationId,
+  });
+  prepareAndMarkRunAttemptRunning(kernel, newHost, {
+    recoveryDescriptor: fakeRecovery("reassignment-new-runtime"),
+    runAttemptId: reassignedRun.runAttemptId,
+    runtimeRunId: "reassignment-new-runtime",
+  });
+  const reassignedExecution = kernel.authorizeWorkerExecution(newHost, {
+    activationId: reassignedActivation.activationId,
+    consumerId: "reassignment-new-consumer",
+    hostId: newHost.hostId,
+    participantId: otherAgent.principalId,
+    roomId: room.roomId,
+    runAttemptId: reassignedRun.runAttemptId,
+    toSeq: reassignedActivation.toSeq,
+  });
+  kernel.syncWorker(reassignedExecution, {});
+  assert.equal(
+    kernel.getWorkerTask(reassignedExecution, {
+      taskId: created.task.taskId,
+    }).assigneeId,
+    otherAgent.principalId,
+    "task.reassigned must authorize the new owner's task-get before claim",
+  );
+  assert.equal(
+    kernel.taskReassignment.request(humanActor, {
+      assigneeId: otherAgent.principalId,
+      basedOnRoomSeq: started.event.roomSeq,
+      idempotencyKey: "reassignment-request",
+      reason: "The first Agent is unavailable; preserve evidence and hand off",
       taskId: created.task.taskId,
     }).deduplicated,
     true,
@@ -3585,6 +3994,16 @@ test("InputRequest suspends a Task and a human resolution creates a new proven A
   assert.equal(requested.inputRequest.requesterId, agent.principalId);
   assert.equal(requested.inputRequest.responderId, human.principalId);
   assert.equal(requested.event.type, "input.requested");
+  const inputRequestPush = kernel.humanNotifications.webPush.project({
+    roomId: room.roomId,
+    roomSeq: requested.event.roomSeq,
+  });
+  assert.deepEqual(
+    inputRequestPush.map(({ principalId }) => principalId),
+    [human.principalId],
+  );
+  assert.equal(inputRequestPush[0]!.payload.target.kind, "input_request");
+  assert.match(inputRequestPush[0]!.payload.title, /请求输入/u);
   assert.deepEqual(
     kernel.getWorkerTaskInputStatus(firstExecution, {
       taskId: created.task.taskId,
@@ -4064,4 +4483,8 @@ function prepareAndMarkRunAttemptRunning(
 ): void {
   kernel.prepareRunAttemptRuntime(host, input);
   kernel.markRunAttemptRunning(host, input);
+}
+
+async function* bytes(value: string) {
+  yield Buffer.from(value);
 }

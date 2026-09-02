@@ -13,6 +13,7 @@ import type { WorkspaceAgentView } from "@rah-os/ui-web";
 
 import { useDialogProtocol } from "../dialog-protocol.ts";
 import { Icon } from "./icon.tsx";
+import { SettingsPageHeader } from "./settings-primitives.tsx";
 
 type ServerEditorValue = {
   definition: ManagedMcpServerDefinition;
@@ -244,24 +245,25 @@ export function ManagedMcpSettingsContent({
   return (
     <>
       <section className="rah-settings-content">
-        <header className="rah-settings-page-head">
-          <div>
-            <h1>MCP 服务器</h1>
-            <span className="rah-count-badge">{servers.length}</span>
-          </div>
-          <button
-            className="btn"
-            disabled={!canWrite || executors.length === 0}
-            onClick={() => setServerEditor("create")}
-            title={
-              executors.length === 0
-                ? "daemon 尚未配置可用的 MCP executor"
-                : "添加 MCP 服务器"
-            }
-          >
-            添加服务器
-          </button>
-        </header>
+        <SettingsPageHeader
+          badge={<span className="rah-count-badge">{servers.length}</span>}
+          icon="blocks"
+          title="MCP 服务器"
+          action={
+            <button
+              className="btn"
+              disabled={!canWrite || executors.length === 0}
+              onClick={() => setServerEditor("create")}
+              title={
+                executors.length === 0
+                  ? "daemon 尚未配置可用的 MCP executor"
+                  : "添加 MCP 服务器"
+              }
+            >
+              添加服务器
+            </button>
+          }
+        />
         <div className="rah-settings-scroll rah-scroll-main">
           <p className="rah-settings-intro">
             配置此 RAH Workspace 的 MCP 目录、工具白名单和 Agent

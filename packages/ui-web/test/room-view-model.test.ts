@@ -14,6 +14,7 @@ import {
   canCreateWorkspaceRoom,
   canHumanCancelTask,
   canHumanCompleteTask,
+  canHumanForceReassignTask,
   canHumanReopenTask,
   canHumanSetTaskAssignee,
   canManageRoomMembers,
@@ -484,6 +485,7 @@ test("Human completion is offered only for a caught-up submitted Task", () => {
     reviewerIds: ["agent-reviewer"],
   };
   const submission = {
+    artifacts: [],
     createdAt,
     messageId: "message-submission",
     producerId: "agent-main",
@@ -610,6 +612,60 @@ test("Task owner selection is available only to the creator on an unclaimed todo
       caughtUp: true,
       currentPrincipalId: "human-other",
       task: open,
+      taskWrite: true,
+    }),
+    false,
+  );
+});
+
+test("safe Task reassignment is available only to the creator for an actively owned task", () => {
+  const active = task("owner-active-reassignment", "in_progress");
+  assert.equal(
+    canHumanForceReassignTask({
+      caughtUp: true,
+      currentPrincipalId: "human-main",
+      task: active,
+      taskReassignment: true,
+      taskWrite: true,
+    }),
+    true,
+  );
+  assert.equal(
+    canHumanForceReassignTask({
+      caughtUp: true,
+      currentPrincipalId: "human-main",
+      task: active,
+      taskReassignment: false,
+      taskWrite: true,
+    }),
+    false,
+  );
+  assert.equal(
+    canHumanForceReassignTask({
+      caughtUp: false,
+      currentPrincipalId: "human-main",
+      task: active,
+      taskReassignment: true,
+      taskWrite: true,
+    }),
+    false,
+  );
+  assert.equal(
+    canHumanForceReassignTask({
+      caughtUp: true,
+      currentPrincipalId: "human-other",
+      task: active,
+      taskReassignment: true,
+      taskWrite: true,
+    }),
+    false,
+  );
+  assert.equal(
+    canHumanForceReassignTask({
+      caughtUp: true,
+      currentPrincipalId: "human-main",
+      task: task("owner-open-reassignment", "todo"),
+      taskReassignment: true,
       taskWrite: true,
     }),
     false,

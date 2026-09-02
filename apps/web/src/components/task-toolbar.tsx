@@ -101,6 +101,7 @@ export function TaskToolbar({
         <div className="tasks-view" role="radiogroup" aria-label="任务视图">
           {(["board", "list"] as const).map((mode) => (
             <button
+              className="rah-interaction-segment"
               key={mode}
               aria-checked={view === mode}
               onClick={() => onViewChange(mode)}

@@ -23,6 +23,7 @@ import {
   buildMermaidDocument,
   classifyMessageUrl,
   mermaidConfiguration,
+  remarkBareCjkAutolinks,
   transformMessageUrl,
 } from "../message-markdown-policy.ts";
 
@@ -41,7 +42,12 @@ const markdownSchema = {
   },
 };
 
-const remarkPlugins = [remarkGfm, remarkBreaks, remarkMath];
+const remarkPlugins = [
+  remarkGfm,
+  remarkBareCjkAutolinks,
+  remarkBreaks,
+  remarkMath,
+];
 const rehypePlugins: NonNullable<
   Parameters<typeof Markdown>[0]["rehypePlugins"]
 > = [

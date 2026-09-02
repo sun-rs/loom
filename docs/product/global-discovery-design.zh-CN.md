@@ -1,6 +1,6 @@
 # 全局 Tasks / Search / Activity：Raft 对齐设计与施工门槛
 
-状态：2026-08-30，设计及第二次审查先于施工；实现与实际验收见[第二批报告](../audits/2026-08-30-global-discovery-closure.zh-CN.md)。此文不是完成证明。
+状态：2026-09-01。首轮设计及第二次审查先于施工；旧实现证据见[第二批报告](../audits/2026-08-30-global-discovery-closure.zh-CN.md)，后续 Raft Search UI、FTS5 与 typed navigation 收口见[最新产品合同](./2026-09-01-notifications-typed-navigation-contract.zh-CN.md)及[验收报告](../audits/2026-09-01-notifications-typed-navigation-verification.zh-CN.md)。
 
 ## 上游证据与移植边界
 
@@ -22,6 +22,13 @@
 5. 精确上下文只是只读定位窗口，不是第二份实时对话。提交成功后仅退出同一 messageId 的定位窗口，恢复 Room/Thread canonical 消息；迟到的提交不能清除用户新选的目标。虚拟列表负责按消息身份滚动，动态行测量不得把尾部消息推到视口外；用户向上阅读则释放贴底。
 
 施工复审补充：schema v20 的辅助 view 使用索引查回 canonical message sequence；线程跟随/提及资格按 thread 计算一次，避免每条回复重复扫描整列。read/done 仍是 Human 私有持久水位。普通对话由可见 DOM 消息的 canonical sequence 确认已读；virtual overscan 和 event replay 不算阅读。SQL 是本机适配，不声称上游 server 移植。
+
+## 2026-09-01 Search 收口补充
+
+- Web 已移植 Raft 发布包可见的 200ms debounce + AbortController、过期响应丢弃、目录/消息分区、Thread“消息列”聚合、append pagination、workspace-scoped 有界历史/常用查询；
+- schema 27 增加 SQLite FTS5 external-content 索引及 insert/delete/update trigger。3 个以上 Unicode code point 先用 trigram 缩小候选，再作字面量校验；短查询保留有界 CJK fallback；
+- exact/prefix/substring rank 与稳定 identity tie-breaker 是本机可审计适配。Raft server rank 没有出现在授权发布源码中，因此不宣称服务端算法同构；
+- 每个结果使用 `NavigationTarget`，点击仍由 `HumanNavigation.resolve` 重新验证 existence/ACL；Search history 不是 transcript cache，也不能恢复失权结果。
 
 ## 二次审查结论（先于施工）
 

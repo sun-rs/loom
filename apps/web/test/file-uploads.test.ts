@@ -38,6 +38,7 @@ test("upload owner survives composer navigation, but removed generation never re
   const store = new FileUploadStore(client);
   const result = store.add(
     "room-a",
+    "room-a",
     new File(["hello"], "test.txt", { type: "text/plain" }),
   );
   assert.equal(store.read("room-a").length, 1);
@@ -67,11 +68,13 @@ test("ready attachment draft is consumed only by successful submit snapshot", as
   const store = new FileUploadStore(client);
   await store.add(
     "room-a",
+    "room-a",
     new File(["hello"], "test.txt", { type: "text/plain" }),
   );
   const submitted = store.read("room-a");
   assert.equal(submitted[0]?.status, "ready");
   await store.add(
+    "room-a",
     "room-a",
     new File(["hello"], "later.txt", { type: "text/plain" }),
   );
@@ -82,5 +85,52 @@ test("ready attachment draft is consumed only by successful submit snapshot", as
   assert.deepEqual(
     store.read("room-a").map((row) => row.file.name),
     ["later.txt"],
+  );
+});
+
+test("Room and Thread composers reserve in one Room without sharing draft rows", async () => {
+  let next = 0;
+  const base = new FakeRahClient(async (_operation, input) => ({
+    attachmentId: `file-${String(++next)}`,
+    roomId: (input as { roomId: string }).roomId,
+    filename: "test.txt",
+    mimeType: "text/plain",
+    size: 5,
+    expiresAt: "2030-01-01T00:00:00.000Z",
+    state: "completed" as const,
+  }));
+  const client: RahClient = {
+    request: base.request.bind(base),
+    files: {
+      upload: async (attachmentId) => ({
+        attachmentId,
+        roomId: "room-a",
+        filename: "test.txt",
+        mimeType: "text/plain",
+        size: 5,
+        expiresAt: "2030-01-01T00:00:00.000Z",
+        state: "completed" as const,
+      }),
+      download: async () => new Blob(),
+    },
+  };
+  const store = new FileUploadStore(client);
+  await store.add(
+    "room:room-a",
+    "room-a",
+    new File(["hello"], "room.txt", { type: "text/plain" }),
+  );
+  await store.add(
+    "thread:message-root",
+    "room-a",
+    new File(["hello"], "thread.txt", { type: "text/plain" }),
+  );
+  assert.deepEqual(
+    store.read("room:room-a").map((row) => row.file.name),
+    ["room.txt"],
+  );
+  assert.deepEqual(
+    store.read("thread:message-root").map((row) => row.file.name),
+    ["thread.txt"],
   );
 });

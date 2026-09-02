@@ -125,6 +125,51 @@ test("Files are invisible until an atomic canonical message consumes a verified 
   }
 });
 
+test("a Thread reply atomically consumes attachments and projects them in Room Files", async () => {
+  const f = fixture();
+  try {
+    const root = f.kernel.postRoomMessage(f.actor, {
+      roomId: f.roomId,
+      body: "Review this file",
+      basedOnRoomSeq: f.head(),
+      idempotencyKey: "thread-file-root",
+    });
+    const thread = f.kernel.createThread(f.actor, {
+      basedOnRoomSeq: root.event.roomSeq,
+      idempotencyKey: "thread-file-create",
+      recipientIds: [],
+      roomId: f.roomId,
+      rootMessageId: root.event.aggregateId,
+    }).thread;
+    const upload = f.prepare("thread-file-upload");
+    await f.kernel.files.upload(f.actor, upload.attachmentId, bytes("hello"));
+    const input = {
+      attachmentIds: [upload.attachmentId],
+      basedOnRoomSeq: f.head(),
+      body: "",
+      idempotencyKey: "thread-file-reply",
+      recipientIds: [],
+      roomId: f.roomId,
+      threadId: thread.threadId,
+    };
+    const reply = f.kernel.replyThread(f.actor, input);
+    assert.equal(f.kernel.replyThread(f.actor, input).deduplicated, true);
+    const projected = f.kernel.listMessages(f.actor, {
+      roomId: f.roomId,
+      threadId: thread.threadId,
+    }).messages;
+    assert.equal(projected[0]?.body, "");
+    assert.equal(
+      projected[0]?.attachments?.[0]?.attachmentId,
+      upload.attachmentId,
+    );
+    const files = f.kernel.files.list(f.actor, { roomId: f.roomId }).files;
+    assert.equal(files[0]?.messageId, reply.event.aggregateId);
+  } finally {
+    f.close();
+  }
+});
+
 test("expired staged bytes are reclaimed without deleting sent attachments", async () => {
   const f = fixture();
   try {

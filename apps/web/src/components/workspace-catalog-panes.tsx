@@ -105,7 +105,7 @@ export function ComputerRuntimePane({
             {hostId === undefined ? null : (
               <button
                 aria-current={selected ? "page" : undefined}
-                className={`rah-computer-row${selected ? " is-selected" : ""}`}
+                className={`rah-computer-row rah-interaction-row${selected ? " is-selected" : ""}`}
                 onClick={() => setSelected(true)}
                 type="button"
               >

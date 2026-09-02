@@ -1,0 +1,401 @@
+{
+  "schemaVersion": 1,
+  "observedOn": "2026-08-31",
+  "codeRevision": "f9b271c",
+  "candidateIndex": "docs/evidence/raft-interaction-candidates-20260831-current.json",
+  "contractDocument": "docs/product/raft-agent-behavior-contract.zh-CN.md",
+  "warning": "Scoped source-to-contract associations, not complete function, branch, feature, browser or backend coverage. Original evidence and its untraced flags remain frozen. Source ranges are navigation aids; only listed semantic claims are reviewed.",
+  "offsetUnit": "utf16-code-unit",
+  "sources": [
+    {
+      "filename": "AgentDetailPanel-DKwoNvgK.js",
+      "sha256": "b2762e06c521457f40879c6e974d3768fec5dd0bb9d8cb2d03bbb2d6accc2845"
+    },
+    {
+      "filename": "index-BoAC7nSE.js",
+      "sha256": "7328c15614ac53c7cc906e0f56665dd822a4c0ffaa64e4cb6b9a7a76a692b26a"
+    },
+    {
+      "filename": "webAppVersion-CfNNzAIv.js",
+      "sha256": "8f5154529799b7b1ca3d755deb4e71541ed84b30dd1011339620cba9f8ad9b19"
+    }
+  ],
+  "browserObservation": {
+    "engine": "in-app Chromium",
+    "viewportCss": {
+      "width": 1049,
+      "height": 1172
+    },
+    "devicePixelRatio": 2,
+    "official": "https://app.raft.build/s/hakasemac/agent/017e49fc-6e69-47c6-9478-2be7368c50fd",
+    "localOrigin": "http://127.0.0.1:4173",
+    "localAgent": "Codex · native app-server",
+    "sameDataset": false,
+    "officialComputer": "offline",
+    "productionMutationsPerformed": false,
+    "newPaidCliRuns": 0,
+    "limitations": [
+      "Viewport request for 1440x900 failed; use measured 1049x1172 only.",
+      "Different Agent, runtime, history and membership; no pixel-equality claim.",
+      "No new screenshots saved to repository; live screenshots and DOM inspected in this task.",
+      "No Firefox or mobile validation this round."
+    ]
+  },
+  "contracts": [
+    {
+      "id": "AG00",
+      "legacyIntents": ["members.tab.change", "members.participant.select"],
+      "sourceStatus": "scoped-trace",
+      "sourceRanges": [
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "owner": "qc",
+          "startUtf16": 128483,
+          "endUtf16": 144890
+        },
+        {
+          "file": "index-BoAC7nSE.js",
+          "owner": "Ctt",
+          "startUtf16": 2864746,
+          "endUtf16": 2864825
+        }
+      ],
+      "candidates": [
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "startUtf16": 136664
+        }
+      ],
+      "reviewedSemantics": [
+        "tab selection / conditional visibility / URL restore"
+      ],
+      "localFiles": ["apps/web/src/components/agent-directory-pane.tsx"],
+      "browserStatus": "difference-observed",
+      "remaining": [
+        "Full shared Tabs keyboard dependencies and ordering drag behavior remain unverified."
+      ]
+    },
+    {
+      "id": "AG01",
+      "legacyIntents": ["members.profile.update"],
+      "sourceStatus": "scoped-trace",
+      "sourceRanges": [
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "owner": "hc",
+          "startUtf16": 73882,
+          "endUtf16": 105139
+        }
+      ],
+      "candidates": [
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "startUtf16": 87761
+        },
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "startUtf16": 88288
+        },
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "startUtf16": 88460
+        },
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "startUtf16": 88655
+        },
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "startUtf16": 89548
+        },
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "startUtf16": 90133
+        },
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "startUtf16": 90262
+        },
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "startUtf16": 90457
+        },
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "startUtf16": 97150
+        },
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "startUtf16": 98123
+        },
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "startUtf16": 99106
+        }
+      ],
+      "reviewedSemantics": [
+        "inline field edits / runtime edit entry / Computer and creator navigation"
+      ],
+      "localFiles": [
+        "apps/web/src/components/agent-directory-pane.tsx",
+        "apps/web/src/components/agent-dialogs.tsx",
+        "apps/web/src/components/agent-runtime-dialog.tsx"
+      ],
+      "browserStatus": "difference-observed",
+      "remaining": [
+        "Runtime cancellation only; no save or provider reconfiguration was performed.",
+        "Role/permission elevation and full model option branches are not certified."
+      ]
+    },
+    {
+      "id": "AG02",
+      "legacyIntents": ["members.tab.change"],
+      "sourceStatus": "scoped-trace",
+      "sourceRanges": [
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "owner": "Do",
+          "startUtf16": 37858,
+          "endUtf16": 38731
+        },
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "owner": "Oo",
+          "startUtf16": 38731,
+          "endUtf16": 39965
+        },
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "owner": "ko",
+          "startUtf16": 30728,
+          "endUtf16": 31047
+        }
+      ],
+      "candidates": [
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "startUtf16": 143297
+        }
+      ],
+      "reviewedSemantics": [
+        "activity dispatch / history load / reconnection / diagnostic copy entry"
+      ],
+      "localFiles": ["apps/web/src/components/agent-directory-pane.tsx"],
+      "browserStatus": "historical-data-observed",
+      "remaining": [
+        "No new paid CLI run, copy failure test or full live event sequence.",
+        "The copy entry is associated but complete serializer and shared clipboard semantics are not certified."
+      ]
+    },
+    {
+      "id": "AG03",
+      "legacyIntents": ["members.tab.change"],
+      "sourceStatus": "scoped-trace",
+      "sourceRanges": [
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "owner": "xc",
+          "startUtf16": 64062,
+          "endUtf16": 68520
+        },
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "owner": "ec",
+          "startUtf16": 61377,
+          "endUtf16": 62145
+        }
+      ],
+      "candidates": [
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "startUtf16": 66249
+        },
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "startUtf16": 67621
+        }
+      ],
+      "reviewedSemantics": [
+        "channel navigation and expand / Agent-to-Agent activity summary semantics"
+      ],
+      "localFiles": ["apps/web/src/components/agent-directory-pane.tsx"],
+      "browserStatus": "difference-observed",
+      "remaining": [
+        "Official Agent-DM list empty; populated summary contract from source only.",
+        "Do not relax Human ACL to imitate upstream cards."
+      ]
+    },
+    {
+      "id": "AG04",
+      "legacyIntents": ["members.tab.change"],
+      "sourceStatus": "scoped-trace",
+      "sourceRanges": [
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "owner": "Vo",
+          "startUtf16": 43254,
+          "endUtf16": 44875
+        },
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "owner": "Go",
+          "startUtf16": 44875,
+          "endUtf16": 46263
+        },
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "owner": "qc",
+          "startUtf16": 128483,
+          "endUtf16": 144890
+        }
+      ],
+      "candidates": [
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "startUtf16": 44305
+        },
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "startUtf16": 45617
+        }
+      ],
+      "reviewedSemantics": [
+        "scheduled reminder query and live update / reference link / retry"
+      ],
+      "localFiles": ["apps/web/src/components/agent-directory-pane.tsx"],
+      "browserStatus": "placeholder-versus-empty-result",
+      "remaining": [
+        "No creation, recurrence, firing, cancellation or nonempty reference-link test."
+      ]
+    },
+    {
+      "id": "AG05",
+      "legacyIntents": ["members.tab.change"],
+      "sourceStatus": "scoped-trace",
+      "sourceRanges": [
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "owner": "No",
+          "startUtf16": 20829,
+          "endUtf16": 30728
+        }
+      ],
+      "candidates": [],
+      "reviewedSemantics": [
+        "references existing C06-C10 workspace contract; no newly counted event site"
+      ],
+      "localFiles": ["apps/web/src/components/agent-workspace-browser.tsx"],
+      "browserStatus": "official-offline-blocked",
+      "remaining": [
+        "Official nonempty tree unavailable; local root only observed this round.",
+        "Existing shared file-tree contract retains known upstream race caveats."
+      ]
+    },
+    {
+      "id": "AG06",
+      "legacyIntents": ["members.tab.change"],
+      "sourceStatus": "scoped-trace",
+      "sourceRanges": [
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "owner": "fc",
+          "startUtf16": 68520,
+          "endUtf16": 71192
+        }
+      ],
+      "candidates": [
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "startUtf16": 70857
+        }
+      ],
+      "reviewedSemantics": [
+        "active integration grants / revoke entry and reload"
+      ],
+      "localFiles": ["apps/web/src/components/agent-directory-pane.tsx"],
+      "browserStatus": "placeholder-versus-empty-result",
+      "remaining": [
+        "No nonempty grant or revoke action tested.",
+        "Complete confirmation/focus and late-response behavior not certified."
+      ]
+    },
+    {
+      "id": "AG07",
+      "legacyIntents": ["members.tab.change"],
+      "sourceStatus": "scoped-trace",
+      "sourceRanges": [
+        {
+          "file": "webAppVersion-CfNNzAIv.js",
+          "owner": "Ye",
+          "startUtf16": 2735,
+          "endUtf16": 19044
+        }
+      ],
+      "candidates": [
+        {
+          "file": "webAppVersion-CfNNzAIv.js",
+          "startUtf16": 11137
+        },
+        {
+          "file": "webAppVersion-CfNNzAIv.js",
+          "startUtf16": 3628
+        },
+        {
+          "file": "webAppVersion-CfNNzAIv.js",
+          "startUtf16": 3836
+        }
+      ],
+      "reviewedSemantics": [
+        "Agent usage scope vs server-management scope / tool expansion / refresh listeners"
+      ],
+      "localFiles": ["apps/web/src/components/agent-directory-pane.tsx"],
+      "browserStatus": "empty-layout-difference-observed",
+      "remaining": [
+        "No populated usage/tool tooltip/permission failure test.",
+        "Server management actions are outside the Agent tab contract."
+      ]
+    },
+    {
+      "id": "AG08",
+      "legacyIntents": ["members.agent.action"],
+      "sourceStatus": "scoped-trace",
+      "sourceRanges": [
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "owner": "qc",
+          "startUtf16": 128483,
+          "endUtf16": 144890
+        },
+        {
+          "file": "index-BoAC7nSE.js",
+          "owner": "wJe",
+          "startUtf16": 2671193,
+          "endUtf16": 2672787
+        }
+      ],
+      "candidates": [
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "startUtf16": 141641
+        },
+        {
+          "file": "AgentDetailPanel-DKwoNvgK.js",
+          "startUtf16": 142480
+        }
+      ],
+      "reviewedSemantics": [
+        "restart/session/full dialog entry / delete confirmation entry"
+      ],
+      "localFiles": [
+        "apps/web/src/components/agent-directory-pane.tsx",
+        "apps/web/src/components/agent-dialogs.tsx"
+      ],
+      "browserStatus": "official-dialog-cancelled-local-disabled",
+      "remaining": [
+        "Official restart dialog opened then cancelled; no execution.",
+        "Delete entry source only; neither deletion nor reset performed.",
+        "Client reset state does not prove server filesystem behavior."
+      ]
+    }
+  ]
+}

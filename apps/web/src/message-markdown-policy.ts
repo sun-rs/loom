@@ -15,6 +15,46 @@ const externalLinkProtocols = new Set([
 const imageProtocols = new Set(["http:", "https:"]);
 const schemePattern = /^([a-z][a-z\d+.-]*):/iu;
 const unsafeCharactersPattern = /[\u0000-\u001f\u007f]/u;
+const cjkBoundaryPattern =
+  /[\u3000-\u30ff\u3400-\u9fff\uf900-\ufaff\uac00-\ud7af]/u;
+
+type MarkdownTreeNode = {
+  children?: MarkdownTreeNode[];
+  type: string;
+  url?: string;
+  value?: string;
+};
+
+export function splitBareCjkAutolinks(tree: MarkdownTreeNode): void {
+  if (tree.children === undefined) return;
+  const rewritten: MarkdownTreeNode[] = [];
+  for (const child of tree.children) {
+    splitBareCjkAutolinks(child);
+    const label =
+      child.type === "link" && child.children?.length === 1
+        ? child.children[0]?.value
+        : undefined;
+    const boundary = label?.search(cjkBoundaryPattern) ?? -1;
+    if (
+      boundary > 0 &&
+      /^https?:\/\//iu.test(label ?? "") &&
+      child.url === label
+    ) {
+      const url = label!.slice(0, boundary);
+      rewritten.push(
+        { ...child, children: [{ type: "text", value: url }], url },
+        { type: "text", value: label!.slice(boundary) },
+      );
+    } else {
+      rewritten.push(child);
+    }
+  }
+  tree.children = rewritten;
+}
+
+export function remarkBareCjkAutolinks() {
+  return splitBareCjkAutolinks;
+}
 
 export function classifyMessageUrl(url: string): MessageUrlClassification {
   const normalized = url.trim();

@@ -70,7 +70,11 @@ test("presence follows live process/Host lifetime and never resurrects old Run a
     INSERT INTO activations VALUES('a',999999);`);
   const read = () => readAgentPresence(db, agent, new Date(clock));
   try {
-    assert.equal(read().reason, "idle");
+    assert.deepEqual(
+      { activity: read().activity, reason: read().reason },
+      { activity: "online", reason: "online" },
+      "a healthy Host makes its enabled resident Agent ready",
+    );
     db.exec(`INSERT INTO run_attempts VALUES('r','pl','a','p','h','running','runtime');
       INSERT INTO runtime_processes VALUES('r','active',NULL,'runtime');
       INSERT INTO run_trajectory_entries VALUES('runtime','r',5,'{"kind":"status","activity":"thinking"}');`);
@@ -115,7 +119,7 @@ test("presence follows live process/Host lifetime and never resurrects old Run a
     );
     assert.equal(
       read().reason,
-      "idle",
+      "online",
       "terminal proof overrides historical thinking",
     );
     db.exec("UPDATE run_attempts SET state='failed'");
@@ -130,18 +134,18 @@ test("presence follows live process/Host lifetime and never resurrects old Run a
     db.exec(
       "UPDATE run_attempts SET state='exited'; UPDATE runtime_processes SET state='terminated',exit_code=0",
     );
-    assert.equal(read().reason, "idle");
+    assert.equal(read().reason, "online");
     db.exec("UPDATE agent_hosts SET instance_id='g2'");
     assert.equal(
       read().reason,
-      "idle",
-      "a finished Run remains asleep after a healthy Host restart",
+      "online",
+      "a finished Run returns to ready after a healthy Host restart",
     );
     db.exec("UPDATE run_attempts SET state='cancelled'");
     assert.equal(
       read().reason,
-      "idle",
-      "a cancelled Run cannot become unknown merely because the Host restarted",
+      "online",
+      "a cancelled Run returns to ready and cannot become unknown after restart",
     );
     assert.equal(
       readAgentPresence(

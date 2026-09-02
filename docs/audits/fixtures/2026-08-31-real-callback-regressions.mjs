@@ -15,6 +15,7 @@ import {
 import { createLatestRequest } from "../../../apps/web/src/latest-request.ts";
 import { pendingInputRequestsForHuman } from "../../../apps/web/src/human-inbox-projection.ts";
 import { discoveryLocation } from "../../../apps/web/src/global-discovery-model.ts";
+import { navigationPresentation } from "../../../apps/web/src/navigation-target.ts";
 import { normalizeDiscoveryParams } from "../../../apps/web/src/raft-discovery-controls.ts";
 
 const app = "apps/web/src/App.tsx";
@@ -102,6 +103,45 @@ function deferred() {
   return { promise, resolve, reject };
 }
 
+test("profile conflict refreshes canonical revision without pretending the draft was saved", async () => {
+  const old = {
+    definition: { agentDefinitionId: "alice" },
+    currentRevision: { revision: 1 },
+  };
+  const latest = { ...old, currentRevision: { revision: 2 } };
+  let catalog = [old];
+  const conflict = new Error("revision changed");
+  const save = callback("saveAgentProfile", {
+    activeWorkspace: { controlRoomId: "control" },
+    canManageCurrentWorkspaceAgent: true,
+    client: {
+      request: async (operation) => {
+        assert.equal(operation, "agent.get");
+        return { agent: latest };
+      },
+    },
+    consumerPrefix: "test",
+    sessions: { current: new Map() },
+    roomSessionFor: () => ({}),
+    runRoomMutationAtLatest: async () => {
+      throw conflict;
+    },
+    setAgentCatalog: (update) => {
+      catalog = update(catalog);
+    },
+  });
+  await assert.rejects(
+    save({
+      agentDefinitionId: "alice",
+      expectedRevisionId: "revision-1",
+      field: "displayName",
+      value: "draft",
+    }),
+    /revision changed/,
+  );
+  assert.deepEqual(catalog, [latest]);
+});
+
 test("offline Agent renders a persistent gray presence marker instead of removing it", () => {
   const Avatar = declaration(
     "apps/web/src/components/agent-directory-pane.tsx",
@@ -115,8 +155,7 @@ test("offline Agent renders a persistent gray presence marker instead of removin
         "AgentStatusDot",
         { React },
       ),
-      DEFAULT_AGENT_AVATAR: "test",
-      officialAgentAvatarKey: () => "test",
+      agentAvatarPixels: () => ({ background: "white", grid: ["1"] }),
       OFFICIAL_AVATAR_PACK: {
         presets: { test: { background: "white", grid: ["1"] } },
         palette: { 1: "black" },
@@ -242,6 +281,7 @@ function activityScope() {
     roomId: "b",
     latestSeq: 20,
     latestMessage: { messageId: "message-b" },
+    target: { kind: "message", roomId: "b", messageId: "message-b" },
   };
   const scope = {
     window,
@@ -307,8 +347,9 @@ test("separate diagnostic rows share latest navigation intent even if older tran
       request: (_, input) => (input.messageId === "a" ? a.promise : b.promise),
     },
     onOpen: (value) => {
-      opened.push(value.messageId);
+      opened.push(value.target.messageId);
       nav.invalidateNavigation();
+      return Promise.resolve(true);
     },
   };
   const scope = () => ({
@@ -349,10 +390,11 @@ function diagnosticScope(nav, response) {
       beginNavigation: nav.invalidateNavigation,
       requestGate: nav.requests.current,
       client: { request: () => response.promise },
-      onOpen: (target) => {
-        opened.push(target);
-        nav.state.selected = target.roomId;
+      onOpen: (request) => {
+        opened.push(request);
+        nav.state.selected = request.target.roomId;
         nav.scope.setSurface("room");
+        return Promise.resolve(true);
       },
     },
     window: { location: { href: "http://isolated/" } },
@@ -827,7 +869,7 @@ test("hung Inbox read times out, retries, and cannot later overwrite the retry",
   }
 });
 
-test("Activity exact Thread callback keeps the list background and opens the requested identity", () => {
+test("Activity exact Thread callback keeps the list background and opens the requested identity", async () => {
   const nav = navigation();
   const scope = {
     ...nav.scope,
@@ -837,6 +879,11 @@ test("Activity exact Thread callback keeps the list background and opens the req
     },
     discoveryLocation: () =>
       "?surface=activity&room=r&thread=r:root&message=reply",
+    navigationPresentation,
+    client: {
+      request: async (_, input) => ({ target: input.target }),
+    },
+    setNavigationError: noop,
     setFocusedMessageId: noop,
     setActiveThreadRootMessageId: (value) => {
       nav.state.thread = value;
@@ -846,16 +893,20 @@ test("Activity exact Thread callback keeps the list background and opens the req
     },
     setRoomMembersOpen: noop,
     setMobileRoomsOpen: noop,
+    setPeekAgentId: noop,
     setTab: noop,
   };
-  callback(
+  await callback(
     "openDiscoveryLocation",
     scope,
   )({
     surface: "activity",
-    roomId: "r",
-    rootMessageId: "root",
-    messageId: "reply",
+    target: {
+      kind: "message",
+      roomId: "r",
+      rootMessageId: "root",
+      messageId: "reply",
+    },
   });
   assert.equal(nav.state.surface, "activity");
   assert.equal(nav.state.selected, "r");
@@ -882,6 +933,11 @@ function activityRouteFixture(search = "?surface=activity&filter=mentions") {
     ...nav.scope,
     window,
     discoveryLocation,
+    navigationPresentation,
+    client: {
+      request: async (_, input) => ({ target: input.target }),
+    },
+    setNavigationError: noop,
     setFocusedMessageId: (value) => {
       nav.state.focus = value;
     },
@@ -893,6 +949,7 @@ function activityRouteFixture(search = "?surface=activity&filter=mentions") {
     },
     setRoomMembersOpen: noop,
     setMobileRoomsOpen: noop,
+    setPeekAgentId: noop,
     setTab: noop,
   };
   return { nav, window, scope, open: callback("openDiscoveryLocation", scope) };
@@ -922,6 +979,12 @@ test("Activity mark opening a Thread releases pending despite its own route inva
       roomId: "room",
       rootMessageId: "root",
       latestMessage: { messageId: "reply" },
+      target: {
+        kind: "message",
+        roomId: "room",
+        rootMessageId: "root",
+        messageId: "reply",
+      },
     },
     "read",
     true,
@@ -966,6 +1029,12 @@ test("closing the current Thread invalidates an Activity target without strandin
       roomId: "room",
       rootMessageId: "next",
       latestMessage: { messageId: "next-reply" },
+      target: {
+        kind: "message",
+        roomId: "room",
+        rootMessageId: "next",
+        messageId: "next-reply",
+      },
     },
     "read",
     true,
@@ -985,7 +1054,7 @@ test("closing the current Thread invalidates an Activity target without strandin
   );
 });
 
-test("changing Activity filters after a Thread opens preserves the current exact route, not its pre-open snapshot", () => {
+test("changing Activity filters after a Thread opens preserves the current exact route, not its pre-open snapshot", async () => {
   const f = activityRouteFixture();
   const filters = declaration(activity, "useFilters", {
     window: f.window,
@@ -996,11 +1065,14 @@ test("changing Activity filters after a Thread opens preserves the current exact
     ],
     useEffect: noop,
   })("activity");
-  f.open({
+  await f.open({
     surface: "activity",
-    roomId: "room",
-    rootMessageId: "root",
-    messageId: "reply",
+    target: {
+      kind: "message",
+      roomId: "room",
+      rootMessageId: "root",
+      messageId: "reply",
+    },
   });
   filters.change("filter", ["unread"]);
   assert.equal(f.window.location.searchParams.get("filter"), "unread");
@@ -1033,7 +1105,7 @@ test("changing Activity filters after Thread close cannot resurrect stale route 
   assert.equal(f.window.location.searchParams.get("message"), null);
 });
 
-test("clearing Activity filters preserves a currently open exact Thread route", () => {
+test("clearing Activity filters preserves a currently open exact Thread route", async () => {
   const f = activityRouteFixture();
   const filters = declaration(activity, "useFilters", {
     window: f.window,
@@ -1044,11 +1116,14 @@ test("clearing Activity filters preserves a currently open exact Thread route", 
     ],
     useEffect: noop,
   })("activity");
-  f.open({
+  await f.open({
     surface: "activity",
-    roomId: "room",
-    rootMessageId: "root",
-    messageId: "reply",
+    target: {
+      kind: "message",
+      roomId: "room",
+      rootMessageId: "root",
+      messageId: "reply",
+    },
   });
   filters.clear();
   assert.equal(f.window.location.searchParams.get("filter"), null);

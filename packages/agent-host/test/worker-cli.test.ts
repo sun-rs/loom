@@ -69,6 +69,132 @@ test("Worker CLI maps bounded commands to the activation-scoped application port
   }
 });
 
+test("Raft-shaped Reminder CLI maps schedule, recurrence, snooze, and log to Worker authority", async () => {
+  const state = fixture();
+  try {
+    assert.equal(
+      await runWorkerCliCommand(
+        [
+          "reminder",
+          "schedule",
+          "--title",
+          "Publish the report",
+          "--delay-seconds",
+          "1800",
+          "--message-id",
+          "message-7",
+          "--based-on-room-seq",
+          "7",
+          "--repeat",
+          "daily@09:00",
+          "--tz",
+          "Asia/Shanghai",
+          "--idempotency-key",
+          "reminder-schedule-7",
+        ],
+        state.runtime,
+      ),
+      0,
+    );
+    assert.deepEqual(state.requests[0]?.body, {
+      basedOnRoomSeq: 7,
+      delaySeconds: 1_800,
+      idempotencyKey: "reminder-schedule-7",
+      messageId: "message-7",
+      repeat: "daily@09:00",
+      timezone: "Asia/Shanghai",
+      title: "Publish the report",
+    });
+    assert.equal(
+      state.requests[0]?.url,
+      "http://127.0.0.1:43123/v1/worker/reminders/schedule",
+    );
+    assert.equal(
+      await runWorkerCliCommand(
+        ["reminder", "snooze", "--id", "reminder-7", "--by", "2h"],
+        state.runtime,
+      ),
+      0,
+    );
+    assert.equal(
+      state.requests[1]?.url,
+      "http://127.0.0.1:43123/v1/worker/reminders/snooze",
+    );
+    assert.equal(
+      (state.requests[1]?.body as Record<string, unknown>).delaySeconds,
+      7_200,
+    );
+    assert.equal(
+      await runWorkerCliCommand(
+        ["reminder", "log", "--id", "reminder-7"],
+        state.runtime,
+      ),
+      0,
+    );
+    assert.equal(
+      state.requests[2]?.url,
+      "http://127.0.0.1:43123/v1/worker/reminders/log",
+    );
+    assert.equal(
+      await runWorkerCliCommand(
+        ["reminder", "list", "--status", "scheduled,fired"],
+        state.runtime,
+      ),
+      0,
+    );
+    assert.deepEqual(state.requests[3]?.body, {
+      statuses: ["scheduled", "fired"],
+    });
+    assert.equal(
+      await runWorkerCliCommand(
+        [
+          "reminder",
+          "update",
+          "--id",
+          "reminder-7",
+          "--cadence",
+          "weekly:mon,fri@09:00",
+          "--tz",
+          "Asia/Shanghai",
+        ],
+        state.runtime,
+      ),
+      0,
+    );
+    assert.equal(
+      (state.requests[4]?.body as Record<string, unknown>).repeat,
+      "weekly:mon,fri@09:00",
+    );
+    assert.equal(
+      await runWorkerCliCommand(
+        [
+          "reminder",
+          "schedule",
+          "--title",
+          "Cross-room reminder",
+          "--delay-seconds",
+          "30",
+          "--message-id",
+          "message-7",
+          "--based-on-room-seq",
+          "7",
+          "--channel",
+          "#other-room",
+        ],
+        state.runtime,
+      ),
+      0,
+    );
+    assert.equal(state.requests.length, 6);
+    assert.equal(
+      (state.requests[5]?.body as Record<string, unknown>).channel,
+      "#other-room",
+    );
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
 test("Raft-shaped config CLI reads revision before patch and never retries a conflicting write", async () => {
   const state = fixture();
   const calls: { url: string; body: unknown }[] = [];
@@ -149,6 +275,184 @@ test("Worker CLI task submit requires an explicit causal sequence and stable ide
       state.requests[0]?.url,
       "http://127.0.0.1:43123/v1/worker/tasks/submit",
     );
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("Worker CLI exposes Raft-shaped explicit Thread unfollow without routing injection", async () => {
+  const state = fixture();
+  try {
+    assert.equal(
+      await runWorkerCliCommand(
+        [
+          "worker",
+          "thread-unfollow",
+          "--thread-id",
+          "thread-1",
+          "--based-on-room-seq",
+          "8",
+          "--idempotency-key",
+          "thread-unfollow:thread-1:agent-1",
+        ],
+        state.runtime,
+      ),
+      0,
+    );
+    assert.deepEqual(state.requests[0]?.body, {
+      basedOnRoomSeq: 8,
+      idempotencyKey: "thread-unfollow:thread-1:agent-1",
+      threadId: "thread-1",
+    });
+    assert.equal(
+      state.requests[0]?.url,
+      "http://127.0.0.1:43123/v1/worker/threads/unfollow",
+    );
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("Worker CLI exposes Raft-shaped held draft resend and gates send-anyway behind it", async () => {
+  const state = fixture();
+  try {
+    assert.equal(
+      await runWorkerCliCommand(
+        [
+          "worker",
+          "message-post",
+          "--send-draft",
+          "--held-draft-id",
+          "held-draft-2",
+          "--anyway",
+          "--based-on-room-seq",
+          "12",
+          "--idempotency-key",
+          "send-draft:held-draft-2:attempt-3",
+        ],
+        state.runtime,
+      ),
+      0,
+    );
+    assert.deepEqual(state.requests[0]?.body, {
+      anyway: true,
+      basedOnRoomSeq: 12,
+      heldDraftId: "held-draft-2",
+      idempotencyKey: "send-draft:held-draft-2:attempt-3",
+      sendDraft: true,
+    });
+    assert.equal(
+      await runWorkerCliCommand(
+        [
+          "worker",
+          "message-post",
+          "--body",
+          "Bypass this composed text",
+          "--anyway",
+          "--based-on-room-seq",
+          "12",
+          "--idempotency-key",
+          "invalid-anyway",
+        ],
+        state.runtime,
+      ),
+      1,
+    );
+    assert.match(state.stderr(), /--anyway requires --send-draft/u);
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("Worker CLI explicitly publishes a local file without sending its host path to the daemon", async () => {
+  const state = fixture();
+  const filePath = join(state.directory, "evidence.txt");
+  writeFileSync(filePath, "artifact-evidence!", { mode: 0o600 });
+  const requests: Array<{
+    body: string;
+    headers: Headers;
+    method: string | undefined;
+    url: string;
+  }> = [];
+  try {
+    const result = await runWorkerCliCommand(
+      [
+        "worker",
+        "artifact-publish",
+        "--task-id",
+        "task-1",
+        "--path",
+        filePath,
+        "--mime-type",
+        "text/plain",
+        "--idempotency-key",
+        "artifact:task-1:evidence",
+      ],
+      {
+        ...state.runtime,
+        fetch: async (input, init) => {
+          const body =
+            typeof init?.body === "string"
+              ? init.body
+              : Buffer.from(
+                  await new Response(init?.body ?? null).arrayBuffer(),
+                ).toString("utf8");
+          requests.push({
+            body,
+            headers: new Headers(init?.headers),
+            method: init?.method,
+            url: String(input),
+          });
+          return requests.length === 1
+            ? new Response(
+                JSON.stringify({
+                  attachmentId: "attachment-1",
+                  expiresAt: "2026-09-01T01:00:00.000Z",
+                  filename: "evidence.txt",
+                  mimeType: "text/plain",
+                  roomId: "room-1",
+                  size: 18,
+                  state: "pending",
+                  taskId: "task-1",
+                }),
+              )
+            : new Response(
+                JSON.stringify({
+                  attachmentId: "attachment-1",
+                  expiresAt: "2026-09-01T01:00:00.000Z",
+                  filename: "evidence.txt",
+                  mimeType: "text/plain",
+                  roomId: "room-1",
+                  sha256:
+                    "0d612265f5b74df4d813cf768c288f6dc27872470cd02e763c130b0bdaafbe51",
+                  size: 18,
+                  state: "completed",
+                  taskId: "task-1",
+                }),
+              );
+        },
+      },
+    );
+    assert.equal(result, 0, state.stderr());
+    assert.equal(requests.length, 2);
+    assert.equal(
+      requests[0]?.url,
+      "http://127.0.0.1:43123/v1/worker/artifacts/prepare",
+    );
+    assert.deepEqual(JSON.parse(requests[0]!.body), {
+      filename: "evidence.txt",
+      idempotencyKey: "artifact:task-1:evidence",
+      mimeType: "text/plain",
+      size: 18,
+      taskId: "task-1",
+    });
+    assert.equal(requests[0]?.body.includes(filePath), false);
+    assert.equal(requests[1]?.method, "PUT");
+    assert.equal(
+      requests[1]?.url,
+      "http://127.0.0.1:43123/v1/worker/artifacts/attachment-1",
+    );
+    assert.equal(requests[1]?.body, "artifact-evidence!");
   } finally {
     rmSync(state.directory, { force: true, recursive: true });
   }

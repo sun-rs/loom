@@ -16,6 +16,7 @@ import {
 } from "@rah-os/protocol";
 
 import { canonicalDigest } from "./canonical-digest.ts";
+import { resumeBlockedActivationRetryFences } from "./activation-retry-fence.ts";
 import {
   requireHumanControlRoomManager,
   roomRole,
@@ -507,6 +508,32 @@ function setAgentState(
     roomId: controlRoomId,
     type: `agent.${input.state === "tombstoned" ? "tombstoned" : input.state}`,
   });
+  if (input.state === "enabled") {
+    const resumed = resumeBlockedActivationRetryFences(owner.database, {
+      participantId,
+      resumedAt: updatedAt,
+    });
+    for (const retry of resumed) {
+      owner.events.append({
+        actorId: owner.actorId,
+        aggregateId: retry.activationId,
+        aggregateType: "activation",
+        idempotencyKey: `${input.idempotencyKey}:activation-retry-resume:${retry.activationId}`,
+        payload: {
+          activationId: retry.activationId,
+          agentDefinitionId: input.agentDefinitionId,
+          errorFingerprint: retry.errorFingerprint,
+          ...(retry.mergedActivationId === undefined
+            ? {}
+            : { mergedActivationId: retry.mergedActivationId }),
+          participantId,
+          sameErrorCount: retry.sameErrorCount,
+        },
+        roomId: retry.roomId,
+        type: "activation.retry_resumed",
+      });
+    }
+  }
   return managementResultFromEvent(owner.database, event, false);
 }
 

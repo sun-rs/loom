@@ -1,16 +1,26 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
 import type {
+  NavigationTarget,
   Room,
+  RoomEvent,
+  Principal,
   Task,
   TaskReview,
   TaskSubmission,
   Thread,
 } from "@rah-os/protocol";
+import { ChatEmptyState } from "./chat-empty-state.tsx";
+import {
+  useMessageSocial,
+  MessageSocialButtons,
+  MessageReactionSummary,
+} from "./message-social.tsx";
 import {
   canHumanCancelTask,
   canHumanCompleteTask,
+  canHumanForceReassignTask,
   canHumanReopenTask,
   canHumanSetTaskAssignee,
   createRoomViewModel,
@@ -22,6 +32,7 @@ import {
 } from "@rah-os/ui-web";
 
 import { MessageAgentAvatar } from "./agent-message-identity.tsx";
+import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
 import { insertMention } from "../identity-presentation.ts";
 import { Icon } from "./icon.tsx";
 import { MessageMarkdown } from "./message-markdown.tsx";
@@ -35,14 +46,27 @@ import {
   type MessageTimelineHandle,
 } from "./message-timeline.tsx";
 import { TaskToolbar, type TaskViewMode } from "./task-toolbar.tsx";
-import { TaskCloseDialog } from "./task-dialogs.tsx";
+import { TaskCloseDialog, TaskReassignDialog } from "./task-dialogs.tsx";
 import { taskMatchesFilters } from "../task-presentation.ts";
 import { conversationTarget } from "../conversation-target.ts";
 import { useVisibleMessageRead } from "../use-visible-message-read.ts";
 import { useComposerDraft } from "../use-composer-draft.ts";
 import { handleComposerKeyDown } from "../composer-keyboard.ts";
-
-const messageViewKey = (message: { messageId: string }) => message.messageId;
+import { CollapsibleMessage } from "./collapsible-message.tsx";
+import { useSidebarPreferences } from "./sidebar-preferences.tsx";
+import { roomLongMessagesCollapsed } from "../room-preferences.ts";
+import {
+  buildChatTimeline,
+  buildThreadReceiptTimeline,
+  chatDateLabel,
+  chatLocalDateKey,
+  chatTimelineKey,
+  threadReminderReceipts,
+} from "../chat-timeline-presentation.ts";
+import {
+  navigationSearch,
+  shouldHandleClientNavigation,
+} from "../navigation-target.ts";
 
 export type ThreadReplyPreview = {
   author: string;
@@ -66,10 +90,13 @@ export function ChatPane({
   loading,
   messageAgents,
   messages,
+  roomEvents,
+  roomMembers,
   onManageAgents,
   onConvertToTask,
   onLoadEarlier,
   onOpenThread,
+  onOpenTarget,
   onSubmit,
   roomName,
   roomKind,
@@ -91,10 +118,13 @@ export function ChatPane({
   loading: boolean;
   messageAgents: readonly WorkspaceAgentView[];
   messages: ReturnType<typeof createRoomViewModel>["messages"];
+  roomEvents: readonly RoomEvent[];
+  roomMembers: readonly Principal[];
   onManageAgents: () => void;
   onConvertToTask: (messageId: string) => Promise<void>;
   onLoadEarlier: () => Promise<void>;
   onOpenThread: (rootMessageId: string) => Promise<void>;
+  onOpenTarget?: (target: NavigationTarget) => void;
   onSubmit: (
     body: string,
     asTask: boolean,
@@ -108,7 +138,16 @@ export function ChatPane({
   threadReplyPreviews: readonly ThreadReplyPreview[];
   threads: readonly Thread[];
 }) {
-  const fileUploads = useRoomUploads(roomId);
+  const sidebarPreferences = useSidebarPreferences();
+  const collapseLongMessages =
+    roomId === undefined || sidebarPreferences?.data === undefined
+      ? true
+      : roomLongMessagesCollapsed(
+          sidebarPreferences.data.preferences.expandedLongMessages,
+          roomId,
+        );
+  const uploadDraftKey = roomId ? `room:${roomId}` : undefined;
+  const fileUploads = useRoomUploads(roomId, uploadDraftKey);
   const {
     body,
     setBody,
@@ -140,6 +179,11 @@ export function ChatPane({
   }
   const [pending, setPending] = useState(false);
   const [submitError, setSubmitError] = useState<string>();
+  const timelineItems = useMemo(
+    () =>
+      buildChatTimeline({ events: roomEvents, members: roomMembers, messages }),
+    [messages, roomEvents, roomMembers],
+  );
   const messagesRef = useRef<HTMLElement>(null);
   useVisibleMessageRead(messagesRef, roomId, messages, onReadThrough);
   const timelineRef = useRef<MessageTimelineHandle>(null);
@@ -147,6 +191,7 @@ export function ChatPane({
   const previousFocus = useRef(focusedMessageId);
   const activeScrollRoomId = useRef<string | undefined>(undefined);
   const stickToBottom = useRef(true);
+  const [atBottom, setAtBottom] = useState(true);
   useEffect(() => {
     const leftContext =
       previousFocus.current !== undefined && !focusedMessageId;
@@ -174,11 +219,13 @@ export function ChatPane({
     if (element === null || messages.length === 0) return;
     if (focusedMessageId) {
       stickToBottom.current = false;
+      setAtBottom(false);
       return;
     }
     if (activeScrollRoomId.current !== roomId) {
       activeScrollRoomId.current = roomId;
       stickToBottom.current = true;
+      setAtBottom(true);
       timelineRef.current?.scrollToLatest();
       return;
     }
@@ -228,6 +275,7 @@ export function ChatPane({
     const previousScrollHeight = element.scrollHeight;
     const previousScrollTop = element.scrollTop;
     stickToBottom.current = false;
+    setAtBottom(false);
     const anchorMessageId = anchor?.dataset.messageId;
     if (anchorMessageId !== undefined && anchorOffset !== undefined) {
       timelineRef.current?.preserveAnchorOnNextChange(
@@ -300,15 +348,16 @@ export function ChatPane({
           row.attachmentId ? [row.attachmentId] : [],
         ),
       );
-      if (roomId)
+      if (uploadDraftKey)
         fileUploads.store?.accept(
-          roomId,
+          uploadDraftKey,
           submittedFiles.map((row) => row.id),
         );
       requestAnimationFrame(() => {
         if (activeScrollRoomId.current !== roomId || previousFocus.current)
           return;
         stickToBottom.current = true;
+        setAtBottom(true);
         timelineRef.current?.scrollToLatest();
       });
       acceptDraft();
@@ -324,42 +373,46 @@ export function ChatPane({
       <section
         className="messages rah-scroll-main"
         onWheel={(event) => {
-          if (event.deltaY < 0) stickToBottom.current = false;
+          if (event.deltaY < 0) {
+            stickToBottom.current = false;
+            setAtBottom(false);
+          }
         }}
         onTouchMove={() => {
           stickToBottom.current = false;
-        }}
-        onPointerDown={() => {
-          stickToBottom.current = false;
+          setAtBottom(false);
         }}
         onKeyDown={(event) => {
-          if (["ArrowUp", "PageUp", "Home"].includes(event.key))
+          if (["ArrowUp", "PageUp", "Home"].includes(event.key)) {
             stickToBottom.current = false;
-          if (event.key === "End") stickToBottom.current = true;
+            setAtBottom(false);
+          }
+          if (event.key === "End") {
+            stickToBottom.current = true;
+            setAtBottom(true);
+          }
         }}
         onScroll={(event) => {
           const element = event.currentTarget;
-          if (
+          const nextAtBottom =
             element.scrollHeight - element.scrollTop - element.clientHeight <
-            48
-          )
-            stickToBottom.current = true;
+            48;
+          stickToBottom.current = nextAtBottom;
+          setAtBottom(nextAtBottom);
         }}
         ref={messagesRef}
       >
-        {loading && messages.length === 0 ? (
+        {loading && timelineItems.length === 0 ? (
           <p className="rah-empty-copy">正在同步 Room…</p>
         ) : null}
-        {!loading && messages.length === 0 ? (
-          <p className="rah-empty-copy">这个 Room 还没有消息。</p>
-        ) : null}
+        {!loading && timelineItems.length === 0 ? <ChatEmptyState /> : null}
         <MessageTimeline
           followOnAppend={
             !focusedMessageId &&
             stickToBottom.current &&
             !earlierMessagesLoading
           }
-          getItemKey={messageViewKey}
+          getItemKey={chatTimelineKey}
           header={
             hasEarlierMessages ? (
               <button
@@ -372,11 +425,42 @@ export function ChatPane({
               </button>
             ) : undefined
           }
-          items={messages}
+          items={timelineItems}
           ref={timelineRef}
-          renderItem={(message) => {
+          renderItem={(item, itemIndex) => {
+            const previous = timelineItems[itemIndex - 1];
+            const showDate =
+              previous === undefined ||
+              chatLocalDateKey(previous.createdAt) !==
+                chatLocalDateKey(item.createdAt);
+            if (item.kind !== "message") {
+              return (
+                <>
+                  {showDate ? (
+                    <ChatDateDivider label={chatDateLabel(item.createdAt)} />
+                  ) : null}
+                  <p className="rah-chat-system-notice">
+                    {item.kind === "reminder-fired" ? (
+                      <NavigationReceiptLink
+                        {...(onOpenTarget === undefined
+                          ? {}
+                          : { onOpenTarget })}
+                        target={item.target}
+                        text={item.text}
+                      />
+                    ) : (
+                      item.text
+                    )}
+                  </p>
+                </>
+              );
+            }
+            const message = item.message;
             const messageAgent = messageAgents.find(
               ({ participantId }) => participantId === message.actorId,
+            );
+            const messagePrincipal = roomMembers.find(
+              ({ principalId }) => principalId === message.actorId,
             );
             const task = tasks.find(
               ({ sourceMessageId }) => sourceMessageId === message.messageId,
@@ -391,37 +475,60 @@ export function ChatPane({
                     .filter(({ threadId }) => threadId === thread.threadId)
                     .slice(-3);
             return (
-              <MessageArticle
-                onMention={mention}
-                focused={message.messageId === focusedMessageId}
-                message={message}
-                {...(messageAgent === undefined ? {} : { messageAgent })}
-                {...(task === undefined ? {} : { task })}
-                {...(task === undefined && canCreateTask
-                  ? {
-                      convertTaskAction: () =>
-                        onConvertToTask(message.messageId),
-                    }
-                  : {})}
-                {...(canReadThreads && (thread !== undefined || canWriteThreads)
-                  ? {
-                      threadAction: {
-                        onClick: () => void onOpenThread(message.messageId),
-                      },
-                    }
-                  : {})}
-                {...(thread !== undefined && thread.replyCount > 0
-                  ? {
-                      threadReplies: recentThreadReplies,
-                      threadReplyCount: thread.replyCount,
-                    }
-                  : {})}
-              />
+              <>
+                {showDate ? (
+                  <ChatDateDivider label={chatDateLabel(message.createdAt)} />
+                ) : null}
+                <MessageArticle
+                  collapseLongMessages={collapseLongMessages}
+                  onMention={mention}
+                  focused={message.messageId === focusedMessageId}
+                  message={message}
+                  {...(messageAgent === undefined ? {} : { messageAgent })}
+                  {...(messagePrincipal === undefined
+                    ? {}
+                    : { messagePrincipal })}
+                  {...(task === undefined ? {} : { task })}
+                  {...(task === undefined && canCreateTask
+                    ? {
+                        convertTaskAction: () =>
+                          onConvertToTask(message.messageId),
+                      }
+                    : {})}
+                  {...(canReadThreads &&
+                  (thread !== undefined || canWriteThreads)
+                    ? {
+                        threadAction: {
+                          onClick: () => void onOpenThread(message.messageId),
+                        },
+                      }
+                    : {})}
+                  {...(thread !== undefined && thread.replyCount > 0
+                    ? {
+                        threadReplies: recentThreadReplies,
+                        threadReplyCount: thread.replyCount,
+                      }
+                    : {})}
+                />
+              </>
             );
           }}
           scrollElementRef={messagesRef}
         />
       </section>
+      {!focusedMessageId && timelineItems.length > 0 && !atBottom ? (
+        <button
+          className="rah-scroll-to-bottom"
+          onClick={() => {
+            stickToBottom.current = true;
+            setAtBottom(true);
+            timelineRef.current?.scrollToLatest();
+          }}
+          type="button"
+        >
+          <span aria-hidden="true">↓</span> 回到底部
+        </button>
+      ) : null}
       {asTask ? (
         <AgentTargetSelector
           agents={agents}
@@ -467,6 +574,7 @@ export function ChatPane({
           <div className="composer-bar">
             <ComposerFiles
               roomId={roomId}
+              draftKey={uploadDraftKey}
               disabled={pending || asTask || !canPost || !canAttachFiles}
             />
             <span className="composer-spacer" />
@@ -650,21 +758,34 @@ function TaskRoleChoices({
 
 type MessageView = ReturnType<typeof createRoomViewModel>["messages"][number];
 
+function ChatDateDivider({ label }: { label: string }) {
+  return (
+    <div className="rah-chat-date-divider" role="separator">
+      <span aria-hidden="true" />
+      <time>{label}</time>
+    </div>
+  );
+}
+
 function MessageArticle({
+  collapseLongMessages = true,
   focused = false,
   convertTaskAction,
   message,
   messageAgent,
+  messagePrincipal,
   onMention,
   task,
   threadAction,
   threadReplies,
   threadReplyCount,
 }: {
+  collapseLongMessages?: boolean;
   focused?: boolean;
   convertTaskAction?: () => Promise<void>;
   message: MessageView;
   messageAgent?: WorkspaceAgentView | undefined;
+  messagePrincipal?: Principal | undefined;
   onMention?: (handle: string) => void;
   task?: Task;
   threadAction?: { onClick: () => void };
@@ -672,6 +793,7 @@ function MessageArticle({
   threadReplyCount?: number;
 }) {
   const contextMenuRef = useRef<HTMLDivElement>(null);
+  const social = useMessageSocial(message);
   const [contextMenu, setContextMenu] = useState<{
     left: number;
     top: number;
@@ -729,23 +851,34 @@ function MessageArticle({
       }
     >
       {messageAgent === undefined ? (
-        <span className="avatar rah-avatar">
-          {message.author.slice(0, 1).toUpperCase()}
-        </span>
+        messagePrincipal?.avatarKey ? (
+          <ProfileImageAvatar
+            avatarKey={messagePrincipal.avatarKey}
+            name={message.author}
+            size="sidebar"
+          />
+        ) : (
+          <span className="avatar rah-avatar">
+            {message.author.slice(0, 1).toUpperCase()}
+          </span>
+        )
       ) : (
         <MessageAgentAvatar agent={messageAgent} />
       )}
-      {threadAction === undefined ? null : (
+      {threadAction === undefined && !social.enabled ? null : (
         <div className="msg-actions">
-          <button
-            aria-label="在消息列中回复"
-            className="msg-action-btn"
-            onClick={threadAction.onClick}
-            title="在消息列中回复"
-            type="button"
-          >
-            <Icon name="chat" />
-          </button>
+          {threadAction && (
+            <button
+              aria-label="在消息列中回复"
+              className="msg-action-btn"
+              onClick={threadAction.onClick}
+              title="在消息列中回复"
+              type="button"
+            >
+              <Icon name="chat" />
+            </button>
+          )}
+          <MessageSocialButtons view={social} />
         </div>
       )}
       <div className="msg-body">
@@ -769,8 +902,14 @@ function MessageArticle({
             <span>{task.state}</span>
           </div>
         )}
-        <MessageMarkdown source={message.body} />
+        <CollapsibleMessage
+          collapse={collapseLongMessages}
+          messageId={message.messageId}
+        >
+          <MessageMarkdown source={message.body} />
+        </CollapsibleMessage>
         <MessageAttachments attachments={message.attachments} />
+        <MessageReactionSummary view={social} />
         {threadAction === undefined || threadReplyCount === undefined ? null : (
           <button className="thread-preview" onClick={threadAction.onClick}>
             <span className="tp-toggle">
@@ -820,32 +959,52 @@ export function ThreadPane({
   messageAgents = [],
   focusedMessageId,
   onReadThrough,
+  canAttachFiles = false,
   canReply,
   loading,
   onClose,
   onSubmit,
   onFollow,
+  onOpenTarget,
   replies,
+  roomEvents = [],
+  roomId,
   roomKind,
   roomName,
   root,
+  threadId,
 }: {
   messageAgents?: readonly WorkspaceAgentView[];
   focusedMessageId?: string | undefined;
   onReadThrough?: ((throughSeq: number) => Promise<void>) | undefined;
+  canAttachFiles?: boolean;
   canReply: boolean;
   loading: boolean;
   onClose: () => void;
-  onSubmit: (body: string) => Promise<void>;
+  onSubmit: (body: string, attachmentIds?: string[]) => Promise<void>;
   onFollow?: ((following: boolean) => Promise<void>) | undefined;
+  onOpenTarget?: (target: NavigationTarget) => void;
   replies: ReturnType<typeof createRoomViewModel>["messages"];
+  roomEvents?: readonly RoomEvent[];
+  roomId?: string | undefined;
   roomKind?: Room["kind"] | undefined;
   roomName: string | undefined;
   root: MessageView | undefined;
+  threadId?: string | undefined;
 }) {
+  const sidebarPreferences = useSidebarPreferences();
+  const collapseLongMessages =
+    roomId === undefined || sidebarPreferences?.data === undefined
+      ? true
+      : roomLongMessagesCollapsed(
+          sidebarPreferences.data.preferences.expandedLongMessages,
+          roomId,
+        );
   const { body, setBody, acceptDraft } = useComposerDraft(
     root ? `thread:${root.messageId}` : undefined,
   );
+  const uploadDraftKey = root ? `thread:${root.messageId}` : undefined;
+  const fileUploads = useRoomUploads(roomId, uploadDraftKey);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   function mention(handle: string) {
     const element = composerRef.current;
@@ -865,6 +1024,14 @@ export function ThreadPane({
   const [pending, setPending] = useState(false);
   const [submitError, setSubmitError] = useState<string>();
   const [following, setFollowing] = useState<boolean>();
+  const reminderReceipts = useMemo(
+    () => threadReminderReceipts(roomEvents, threadId),
+    [roomEvents, threadId],
+  );
+  const replyTimeline = useMemo(
+    () => buildThreadReceiptTimeline(replies, reminderReceipts),
+    [reminderReceipts, replies],
+  );
   const messagesElement = useRef<HTMLElement>(null);
   useVisibleMessageRead(
     messagesElement,
@@ -906,10 +1073,27 @@ export function ThreadPane({
   async function submit(event: FormEvent) {
     event.preventDefault();
     const value = body.trim();
-    if (value === "" || pending || !canReply) return;
+    if (
+      (value === "" && fileUploads.rows.length === 0) ||
+      pending ||
+      !canReply ||
+      fileUploads.rows.some((row) => row.status !== "ready")
+    )
+      return;
     setPending(true);
     try {
-      await onSubmit(value);
+      const submittedFiles = fileUploads.rows;
+      await onSubmit(
+        value,
+        submittedFiles.flatMap((row) =>
+          row.attachmentId ? [row.attachmentId] : [],
+        ),
+      );
+      if (uploadDraftKey)
+        fileUploads.store?.accept(
+          uploadDraftKey,
+          submittedFiles.map((row) => row.id),
+        );
       acceptDraft();
       setSubmitError(undefined);
     } catch (caught) {
@@ -951,6 +1135,7 @@ export function ThreadPane({
           <p className="rah-empty-copy">原消息尚未载入。</p>
         ) : (
           <MessageArticle
+            collapseLongMessages={collapseLongMessages}
             message={root}
             messageAgent={messageAgents.find(
               (agent) => agent.participantId === root.actorId,
@@ -967,17 +1152,31 @@ export function ThreadPane({
         {loading && replies.length === 0 ? (
           <p className="rah-empty-copy">正在同步 Thread…</p>
         ) : null}
-        {replies.map((message) => (
-          <MessageArticle
-            key={message.messageId}
-            message={message}
-            messageAgent={messageAgents.find(
-              (agent) => agent.participantId === message.actorId,
-            )}
-            onMention={mention}
-            focused={message.messageId === focusedMessageId}
-          />
-        ))}
+        {replyTimeline.map((item) =>
+          item.kind === "reminder-fired" ? (
+            <p
+              className="rah-chat-system-notice"
+              key={`reminder:${item.eventId}`}
+            >
+              <NavigationReceiptLink
+                {...(onOpenTarget === undefined ? {} : { onOpenTarget })}
+                target={item.target}
+                text={item.text}
+              />
+            </p>
+          ) : (
+            <MessageArticle
+              collapseLongMessages={collapseLongMessages}
+              key={item.message.messageId}
+              message={item.message}
+              messageAgent={messageAgents.find(
+                (agent) => agent.participantId === item.message.actorId,
+              )}
+              onMention={mention}
+              focused={item.message.messageId === focusedMessageId}
+            />
+          ),
+        )}
       </section>
       {submitError === undefined ? null : (
         <div className="rah-inline-error">{submitError}</div>
@@ -997,11 +1196,21 @@ export function ThreadPane({
             value={body}
           />
           <div className="composer-bar">
+            <ComposerFiles
+              roomId={roomId}
+              draftKey={uploadDraftKey}
+              disabled={pending || !canReply || !canAttachFiles}
+            />
             <span className="composer-spacer" />
             <button
               className="send-btn"
               type="submit"
-              disabled={!canReply || body.trim() === "" || pending}
+              disabled={
+                !canReply ||
+                (body.trim() === "" && fileUploads.rows.length === 0) ||
+                fileUploads.rows.some((row) => row.status !== "ready") ||
+                pending
+              }
               title="回复"
             >
               <Icon name="send" />
@@ -1013,9 +1222,34 @@ export function ThreadPane({
   );
 }
 
+function NavigationReceiptLink({
+  onOpenTarget,
+  target,
+  text,
+}: {
+  onOpenTarget?: (target: NavigationTarget) => void;
+  target: Extract<NavigationTarget, { kind: "message" }>;
+  text: string;
+}) {
+  return (
+    <a
+      href={navigationSearch({ target })}
+      onClick={(event) => {
+        if (onOpenTarget === undefined || !shouldHandleClientNavigation(event))
+          return;
+        event.preventDefault();
+        onOpenTarget(target);
+      }}
+    >
+      {text}
+    </a>
+  );
+}
+
 export function TaskPane({
   canOpenThread,
   canWrite,
+  canReassign,
   caughtUp,
   columns,
   currentPrincipalId,
@@ -1026,12 +1260,14 @@ export function TaskPane({
   onComplete,
   onOpenThread,
   onReopen,
+  onReassign,
   onSetAssignee,
   reviews,
   submissions,
 }: {
   agents: readonly RoomAgentTarget[];
   canOpenThread: boolean;
+  canReassign: boolean;
   canWrite: boolean;
   caughtUp: boolean;
   columns: ReturnType<typeof createRoomViewModel>["taskColumns"];
@@ -1042,12 +1278,14 @@ export function TaskPane({
   onComplete: (task: Task) => Promise<void>;
   onOpenThread: (task: Task) => Promise<void>;
   onReopen: (task: Task) => Promise<void>;
+  onReassign: (task: Task, assigneeId: string, reason: string) => Promise<void>;
   onSetAssignee: (task: Task, assigneeId: string | undefined) => Promise<void>;
   reviews: readonly TaskReview[];
   submissions: readonly TaskSubmission[];
 }) {
   const [pendingTaskId, setPendingTaskId] = useState<string>();
   const [closingTask, setClosingTask] = useState<Task>();
+  const [reassigningTask, setReassigningTask] = useState<Task>();
   const [ownerMenuTaskId, setOwnerMenuTaskId] = useState<string>();
   const [actionError, setActionError] = useState<string>();
   const [creatorFilterId, setCreatorFilterId] = useState<string>();
@@ -1148,6 +1386,20 @@ export function TaskPane({
       setActionError(undefined);
     } catch (caught) {
       setActionError(errorMessage(caught));
+    } finally {
+      setPendingTaskId(undefined);
+    }
+  }
+
+  async function reassign(task: Task, assigneeId: string, reason: string) {
+    if (pendingTaskId !== undefined) return;
+    setPendingTaskId(task.taskId);
+    try {
+      await onReassign(task, assigneeId, reason);
+      setActionError(undefined);
+    } catch (caught) {
+      setActionError(errorMessage(caught));
+      throw caught;
     } finally {
       setPendingTaskId(undefined);
     }
@@ -1351,6 +1603,21 @@ export function TaskPane({
                             : "确认完成"}
                         </button>
                       ) : null}
+                      {canHumanForceReassignTask({
+                        caughtUp,
+                        currentPrincipalId,
+                        task,
+                        taskReassignment: canReassign,
+                        taskWrite: canWrite,
+                      }) ? (
+                        <button
+                          className="rah-task-status-action rah-task-reassign"
+                          disabled={pendingTaskId !== undefined}
+                          onClick={() => setReassigningTask(task)}
+                        >
+                          安全改派
+                        </button>
+                      ) : null}
                       {canHumanCancelTask({
                         caughtUp,
                         currentPrincipalId,
@@ -1397,6 +1664,18 @@ export function TaskPane({
           onClose={() => setClosingTask(undefined)}
           onConfirm={(reason) => cancel(closingTask, reason)}
           taskTitle={`#${String(closingTask.taskNumber)} ${closingTask.title}`}
+        />
+      )}
+      {reassigningTask === undefined ||
+      reassigningTask.assigneeId === undefined ? null : (
+        <TaskReassignDialog
+          agents={agents}
+          currentAssigneeId={reassigningTask.assigneeId}
+          onClose={() => setReassigningTask(undefined)}
+          onConfirm={(assigneeId, reason) =>
+            reassign(reassigningTask, assigneeId, reason)
+          }
+          taskTitle={`#${String(reassigningTask.taskNumber)} ${reassigningTask.title}`}
         />
       )}
     </div>
@@ -1448,6 +1727,7 @@ export function UnavailablePane({
 function formatTime(value: string) {
   return new Intl.DateTimeFormat("zh-CN", {
     hour: "2-digit",
+    hour12: document.documentElement.dataset.rahTimeFormat === "12",
     minute: "2-digit",
   }).format(new Date(value));
 }

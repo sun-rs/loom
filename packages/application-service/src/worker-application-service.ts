@@ -17,9 +17,20 @@ import {
   ActivationCredentialScopeSchema,
   WorkerAcknowledgeRequestSchema,
   WorkerAcknowledgeResponseSchema,
+  WorkerArtifactPrepareRequestSchema,
+  WorkerArtifactUploadSchema,
   WorkerErrorResponseSchema,
-  WorkerMessageMutationResponseSchema,
+  WorkerMessagePostResponseSchema,
   WorkerMessagePostRequestSchema,
+  WorkerReminderCancelRequestSchema,
+  WorkerReminderListRequestSchema,
+  WorkerReminderListResponseSchema,
+  WorkerReminderLogRequestSchema,
+  WorkerReminderLogResponseSchema,
+  WorkerReminderMutationResponseSchema,
+  WorkerReminderScheduleRequestSchema,
+  WorkerReminderSnoozeRequestSchema,
+  WorkerReminderUpdateRequestSchema,
   WorkerManagedMcpCallRequestSchema,
   WorkerManagedMcpCallResponseSchema,
   WorkerManagedMcpCatalogRequestSchema,
@@ -43,6 +54,8 @@ import {
   WorkerTaskReleaseRequestSchema,
   WorkerTaskStartRequestSchema,
   WorkerTaskSubmitRequestSchema,
+  WorkerThreadUnfollowRequestSchema,
+  WorkerThreadUnfollowResponseSchema,
   type ActivationCredentialScope,
   type Task,
 } from "@rah-os/protocol";
@@ -91,13 +104,23 @@ const MAX_BODY_BYTES = 128 * 1_024;
 const DEFAULT_CREDENTIAL_TTL_MS = 30 * 60_000;
 const DEFAULT_TASK_CLAIM_LEASE_MS = 5 * 60_000;
 const DEFAULT_MANAGED_MCP_TIMEOUT_MS = 25_000;
+const WORKER_ARTIFACT_ROUTE =
+  /^\/v1\/worker\/artifacts\/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/u;
 
 export const WORKER_HTTP_ROUTE_PATHS = [
   "/v1/worker/acknowledge",
+  "/v1/worker/artifacts/prepare",
   "/v1/worker/messages/post",
   "/v1/worker/mcp/call",
   "/v1/worker/mcp/tools",
+  "/v1/worker/reminders/cancel",
+  "/v1/worker/reminders/list",
+  "/v1/worker/reminders/log",
+  "/v1/worker/reminders/schedule",
+  "/v1/worker/reminders/snooze",
+  "/v1/worker/reminders/update",
   "/v1/worker/sync",
+  "/v1/worker/threads/unfollow",
   "/v1/worker/tasks/claim",
   "/v1/worker/tasks/claim-message",
   "/v1/worker/tasks/block",
@@ -172,7 +195,7 @@ export class WorkerApplicationService {
         this.#writeError(response, error);
       });
     });
-    server.requestTimeout = 5_000;
+    server.requestTimeout = 120_000;
     server.headersTimeout = 5_000;
 
     await new Promise<void>((resolvePromise, reject) => {
@@ -266,6 +289,26 @@ export class WorkerApplicationService {
     request: IncomingMessage,
     response: ServerResponse,
   ): Promise<void> {
+    const route = request.url;
+    const artifactMatch =
+      route === undefined ? null : WORKER_ARTIFACT_ROUTE.exec(route);
+    if (artifactMatch !== null) {
+      if (request.method !== "PUT") {
+        throw new HttpRequestError(
+          "method_not_allowed",
+          "artifact upload requires PUT",
+          405,
+        );
+      }
+      const grant = this.#authenticate(request);
+      const upload = await this.#kernel.files.uploadWorker(
+        grant.execution,
+        artifactMatch[1]!,
+        request,
+      );
+      writeJson(response, 200, WorkerArtifactUploadSchema.parse(upload));
+      return;
+    }
     if (request.method !== "POST") {
       throw new HttpRequestError(
         "method_not_allowed",
@@ -273,13 +316,26 @@ export class WorkerApplicationService {
         405,
       );
     }
-    const route = request.url;
     if (route === undefined || !WORKER_ROUTES.has(route)) {
       throw new HttpRequestError("not_found", "route was not found", 404);
     }
 
     const grant = this.#authenticate(request);
     const body = await readJsonObject(request);
+    if (route === "/v1/worker/artifacts/prepare") {
+      const command = parseWorkerRequest(
+        WorkerArtifactPrepareRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        WorkerArtifactUploadSchema.parse(
+          this.#kernel.files.prepareWorker(grant.execution, command),
+        ),
+      );
+      return;
+    }
     if (route === "/v1/worker/mcp/tools") {
       parseWorkerRequest(WorkerManagedMcpCatalogRequestSchema, body);
       writeJson(
@@ -397,11 +453,86 @@ export class WorkerApplicationService {
       const command = parseWorkerRequest(WorkerMessagePostRequestSchema, body);
       this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
       const mutation = this.#kernel.postWorkerMessage(grant.execution, command);
+      if ("event" in mutation) {
+        grant.knownRoomSeqs.add(mutation.event.roomSeq);
+      }
+      writeJson(response, 200, WorkerMessagePostResponseSchema.parse(mutation));
+      return;
+    }
+
+    if (route === "/v1/worker/threads/unfollow") {
+      const command = parseWorkerRequest(
+        WorkerThreadUnfollowRequestSchema,
+        body,
+      );
+      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      const mutation = this.#kernel.unfollowWorkerThread(
+        grant.execution,
+        command,
+      );
       grant.knownRoomSeqs.add(mutation.event.roomSeq);
       writeJson(
         response,
         200,
-        WorkerMessageMutationResponseSchema.parse(mutation),
+        WorkerThreadUnfollowResponseSchema.parse(mutation),
+      );
+      return;
+    }
+
+    if (route === "/v1/worker/reminders/list") {
+      const command = parseWorkerRequest(WorkerReminderListRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        WorkerReminderListResponseSchema.parse({
+          reminders: this.#kernel.reminders.listWorker(
+            grant.execution,
+            command,
+          ),
+        }),
+      );
+      return;
+    }
+    if (route === "/v1/worker/reminders/log") {
+      const command = parseWorkerRequest(WorkerReminderLogRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        WorkerReminderLogResponseSchema.parse(
+          this.#kernel.reminders.log(grant.execution, command),
+        ),
+      );
+      return;
+    }
+    if (route.startsWith("/v1/worker/reminders/")) {
+      let mutation;
+      if (route === "/v1/worker/reminders/schedule") {
+        const command = parseWorkerRequest(
+          WorkerReminderScheduleRequestSchema,
+          body,
+        );
+        this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+        mutation = this.#kernel.reminders.schedule(grant.execution, command);
+      } else if (route === "/v1/worker/reminders/cancel") {
+        mutation = this.#kernel.reminders.cancel(
+          grant.execution,
+          parseWorkerRequest(WorkerReminderCancelRequestSchema, body),
+        );
+      } else if (route === "/v1/worker/reminders/snooze") {
+        mutation = this.#kernel.reminders.snooze(
+          grant.execution,
+          parseWorkerRequest(WorkerReminderSnoozeRequestSchema, body),
+        );
+      } else {
+        mutation = this.#kernel.reminders.update(
+          grant.execution,
+          parseWorkerRequest(WorkerReminderUpdateRequestSchema, body),
+        );
+      }
+      writeJson(
+        response,
+        200,
+        WorkerReminderMutationResponseSchema.parse(mutation),
       );
       return;
     }

@@ -196,6 +196,88 @@
   color: var(--muted);
   font-size: 12px;
 }
+.rah-search-section-title {
+  margin: 20px 0 8px;
+  font: 800 12px/1.2 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.rah-search-result-panel {
+  border: var(--bd);
+  background: var(--bg);
+}
+.rah-search-result-panel + .rah-search-result-panel {
+  margin-top: 10px;
+}
+.rah-search-result-panel > header {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: var(--bd);
+  font-size: 12px;
+}
+.rah-search-result-panel > header span:first-child {
+  padding: 2px 6px;
+  border: var(--bd);
+  background: var(--pink);
+  font-weight: 800;
+}
+.rah-search-result-panel > header time,
+.rah-search-result-panel > header span:nth-last-child(2) {
+  color: var(--muted);
+}
+.rah-search-result-panel .result-item {
+  border: 0;
+  border-bottom: 1px solid var(--line);
+}
+.rah-search-result-panel .result-item:last-child {
+  border-bottom: 0;
+}
+.rah-search-load-more {
+  width: 100%;
+  margin-top: 12px;
+}
+.rah-search-home {
+  width: min(720px, 100%);
+  margin: 0 auto;
+}
+.rah-search-suggestions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  padding: 0 20px 24px;
+}
+.rah-search-suggestions > div {
+  display: flex;
+  flex-direction: column;
+  border-top: var(--bd);
+}
+.rah-search-suggestions header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.rah-search-suggestions h2,
+.rah-search-suggestions header button {
+  margin: 10px 0;
+  font-size: 13px;
+}
+.rah-search-suggestions > div > button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+.rah-search-suggestions svg {
+  width: 15px;
+  height: 15px;
+}
 .rah-search-destination {
   display: flex;
   align-items: center;
@@ -359,6 +441,9 @@
   }
   .rah-discovery .result-list {
     padding: 12px;
+  }
+  .rah-search-suggestions {
+    grid-template-columns: 1fr;
   }
   .rah-date-filter > div {
     position: fixed;

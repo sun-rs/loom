@@ -181,6 +181,39 @@ test("GenericProcessAdapter transports typed driver trajectory separately from d
   }
 });
 
+test("GenericProcessAdapter carries a structured Runtime failure from trajectory into the terminal exit", async () => {
+  const directory = mkdtempSync(
+    join(tmpdir(), "rah-os-process-runtime-error-"),
+  );
+  try {
+    const adapter = new GenericProcessAdapter({
+      args: [
+        "-e",
+        [
+          "const frame={observedAt:new Date().toISOString(),producerSequence:1,entry:{kind:'status',activity:'error',detailKind:'runtime_error',detail:'Authentication failed: please log in first'}};",
+          "process.stdout.write('opaque output\\n');",
+          "process.stderr.write('provider diagnostic\\n');",
+          "require('fs').writeSync(3, JSON.stringify(frame)+'\\n');",
+          "process.exit(1);",
+        ].join(""),
+      ],
+      command: process.execPath,
+      cwd: directory,
+    });
+    const run = await adapter.start(activationEnvelope(), {
+      recordTrajectory: async () => undefined,
+      registerPrepared: async () => undefined,
+    });
+    const exit = await adapter.reap(run);
+    assert.equal(exit.code, 1);
+    assert.equal(exit.failure?.errorClass, "AuthError");
+    assert.equal(exit.failure?.retryDisposition, "action_required");
+    assert.equal(exit.failure?.actionRequired, true);
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
 test("GenericProcessAdapter keeps Provider session evidence out of canonical trajectory", async () => {
   const directory = mkdtempSync(
     join(tmpdir(), "rah-os-provider-session-frame-"),

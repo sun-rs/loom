@@ -17,6 +17,19 @@ export const AttachmentSchema = z
   })
   .strict();
 export type Attachment = z.infer<typeof AttachmentSchema>;
+export const WorkerArtifactPrepareRequestSchema = AttachmentSchema.pick({
+  filename: true,
+  mimeType: true,
+  size: true,
+})
+  .extend({
+    idempotencyKey: IdentifierSchema,
+    taskId: IdentifierSchema,
+  })
+  .strict();
+export type WorkerArtifactPrepareRequest = z.infer<
+  typeof WorkerArtifactPrepareRequestSchema
+>;
 export const FilePrepareRequestSchema = AttachmentSchema.pick({
   filename: true,
   mimeType: true,
@@ -44,6 +57,11 @@ export const FileUploadSchema = FilePrepareRequestSchema.omit({
     ]),
   })
   .strict();
+export const WorkerArtifactUploadSchema = FileUploadSchema.extend({
+  sha256: AttachmentSchema.shape.sha256.optional(),
+  taskId: IdentifierSchema,
+}).strict();
+export type WorkerArtifactUpload = z.infer<typeof WorkerArtifactUploadSchema>;
 export const FileIdRequestSchema = z
   .object({ attachmentId: IdentifierSchema })
   .strict();

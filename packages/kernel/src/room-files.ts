@@ -1,7 +1,10 @@
 import { createHash, randomUUID } from "node:crypto";
 import {
   constants,
+  closeSync,
+  createReadStream,
   mkdirSync,
+  openSync,
   unlinkSync,
   lstatSync,
   existsSync,
@@ -15,9 +18,17 @@ import {
   FileUploadSchema,
   RoomFilesRequestSchema,
   RoomFilesResponseSchema,
+  TaskArtifactReferenceSchema,
+  WorkerArtifactPrepareRequestSchema,
+  WorkerArtifactUploadSchema,
   type Attachment,
+  type ActivationCredentialScope,
+  type TaskArtifactReference,
 } from "@rah-os/protocol";
-import type { AuthenticatedActorContext } from "./auth.ts";
+import type {
+  AuthenticatedActorContext,
+  AuthenticatedWorkerExecutionContext,
+} from "./auth.ts";
 import { requireRoomMember } from "./collaboration-policy.ts";
 import {
   ConflictError,
@@ -34,16 +45,23 @@ export class RoomFiles {
   readonly #db: DatabaseSync;
   readonly #root: string;
   readonly #actor: (actor: AuthenticatedActorContext) => string;
+  readonly #worker: (
+    worker: AuthenticatedWorkerExecutionContext,
+  ) => ActivationCredentialScope;
   readonly #now: () => Date;
   constructor(options: {
     database: DatabaseSync;
     directory: string;
     requireActor: (actor: AuthenticatedActorContext) => string;
+    requireWorker: (
+      worker: AuthenticatedWorkerExecutionContext,
+    ) => ActivationCredentialScope;
     now: () => Date;
   }) {
     this.#db = options.database;
     this.#root = resolve(options.directory);
     this.#actor = options.requireActor;
+    this.#worker = options.requireWorker;
     this.#now = options.now;
   }
   initialize() {
@@ -52,6 +70,8 @@ export class RoomFiles {
       request_key TEXT NOT NULL, filename TEXT NOT NULL, mime_type TEXT NOT NULL, size INTEGER NOT NULL, sha256 TEXT,
       state TEXT NOT NULL, expires_at TEXT NOT NULL, message_id TEXT REFERENCES messages(message_id),
       storage_reclaimed INTEGER NOT NULL DEFAULT 0,
+      task_id TEXT REFERENCES tasks(task_id), run_attempt_id TEXT,
+      created_at TEXT NOT NULL,
       UNIQUE(room_id, actor_id, request_key)
     ) STRICT;
     CREATE INDEX IF NOT EXISTS idx_room_files_message ON room_files(room_id, message_id);`);
@@ -64,6 +84,24 @@ export class RoomFiles {
       this.#db.exec(
         "ALTER TABLE room_files ADD COLUMN storage_reclaimed INTEGER NOT NULL DEFAULT 0",
       );
+    const columns = this.#db.prepare("PRAGMA table_info(room_files)").all();
+    if (!columns.some((row) => row.name === "task_id"))
+      this.#db.exec(
+        "ALTER TABLE room_files ADD COLUMN task_id TEXT REFERENCES tasks(task_id)",
+      );
+    if (!columns.some((row) => row.name === "run_attempt_id"))
+      this.#db.exec("ALTER TABLE room_files ADD COLUMN run_attempt_id TEXT");
+    if (!columns.some((row) => row.name === "created_at")) {
+      this.#db.exec("ALTER TABLE room_files ADD COLUMN created_at TEXT");
+      this.#db
+        .prepare(
+          "UPDATE room_files SET created_at = ? WHERE created_at IS NULL",
+        )
+        .run(this.#now().toISOString());
+    }
+    this.#db.exec(
+      "CREATE INDEX IF NOT EXISTS idx_room_files_task_unbound ON room_files(task_id, actor_id, state, attachment_id) WHERE task_id IS NOT NULL AND message_id IS NULL",
+    );
     this.#db.exec(
       "CREATE INDEX IF NOT EXISTS idx_room_files_reclaim ON room_files(storage_reclaimed, state, expires_at)",
     );
@@ -119,7 +157,7 @@ export class RoomFiles {
     const id = randomUUID();
     this.#db
       .prepare(
-        "INSERT INTO room_files(attachment_id, room_id, actor_id, request_key, filename, mime_type, size, state, expires_at) VALUES(?, ?, ?, ?, ?, ?, ?, 'pending', ?)",
+        "INSERT INTO room_files(attachment_id, room_id, actor_id, request_key, filename, mime_type, size, state, expires_at, created_at) VALUES(?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)",
       )
       .run(
         id,
@@ -130,15 +168,98 @@ export class RoomFiles {
         input.mimeType,
         input.size,
         new Date(this.#now().getTime() + 60 * 60_000).toISOString(),
+        this.#now().toISOString(),
       );
     return this.#uploadView(this.#row(id));
+  }
+  prepareWorker(
+    execution: AuthenticatedWorkerExecutionContext,
+    request: z.input<typeof WorkerArtifactPrepareRequestSchema>,
+  ) {
+    const input = WorkerArtifactPrepareRequestSchema.parse(request);
+    const scope = this.#worker(execution);
+    this.#reclaimExpired();
+    const previous = this.#db
+      .prepare(
+        "SELECT * FROM room_files WHERE room_id = ? AND actor_id = ? AND request_key = ?",
+      )
+      .get(scope.roomId, scope.participantId, input.idempotencyKey);
+    if (previous) {
+      if (
+        previous.filename !== input.filename ||
+        previous.mime_type !== input.mimeType ||
+        previous.size !== input.size ||
+        previous.task_id !== input.taskId ||
+        previous.run_attempt_id !== scope.runAttemptId
+      )
+        throw new IdempotencyConflictError(
+          "artifact idempotency key was used for another publication",
+        );
+      return this.#workerUploadView(this.#expire(previous));
+    }
+    this.#requireActiveTaskOwner(scope, input.taskId);
+    const active = this.#db
+      .prepare(
+        "SELECT COUNT(*) AS count FROM room_files WHERE actor_id = ? AND state IN ('pending','verifying','completed') AND expires_at > ?",
+      )
+      .get(scope.participantId, this.#now().toISOString());
+    if (Number(active?.count) >= 20)
+      throw new ConflictError(
+        "too many pending uploads; submit or abandon existing artifacts first",
+      );
+    const attachmentId = randomUUID();
+    const createdAt = this.#now().toISOString();
+    this.#db
+      .prepare(
+        `INSERT INTO room_files(
+           attachment_id, room_id, actor_id, request_key, filename, mime_type,
+           size, state, expires_at, task_id, run_attempt_id, created_at
+         ) VALUES(?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?)`,
+      )
+      .run(
+        attachmentId,
+        scope.roomId,
+        scope.participantId,
+        input.idempotencyKey,
+        input.filename,
+        input.mimeType,
+        input.size,
+        new Date(this.#now().getTime() + 60 * 60_000).toISOString(),
+        input.taskId,
+        scope.runAttemptId,
+        createdAt,
+      );
+    return this.#workerUploadView(this.#row(attachmentId));
   }
   async upload(
     actor: AuthenticatedActorContext,
     attachmentId: string,
     chunks: AsyncIterable<Uint8Array>,
   ) {
-    const row = this.#owned(actor, attachmentId);
+    return await this.#writeUpload(
+      attachmentId,
+      () => this.#owned(actor, attachmentId),
+      chunks,
+    );
+  }
+  async uploadWorker(
+    execution: AuthenticatedWorkerExecutionContext,
+    attachmentId: string,
+    chunks: AsyncIterable<Uint8Array>,
+  ) {
+    await this.#writeUpload(
+      attachmentId,
+      () => this.#ownedWorker(execution, attachmentId),
+      chunks,
+    );
+    return this.#workerUploadView(this.#row(attachmentId));
+  }
+  async #writeUpload(
+    attachmentId: string,
+    owner: () => Row,
+    chunks?: AsyncIterable<Uint8Array>,
+  ) {
+    const row = owner();
     if (row.state !== "pending")
       throw new ConflictError(
         "upload is not pending (canceled, expired, failed or already uploaded)",
@@ -156,7 +277,7 @@ export class RoomFiles {
       handle = await open(temporary, "wx", 0o600);
       let size = 0;
       const hash = createHash("sha256");
-      for await (const chunk of chunks) {
+      for await (const chunk of chunks ?? []) {
         size += chunk.byteLength;
         if (size > integer(row, "size"))
           throw new ConflictError("attachment size exceeds reserved length");
@@ -181,11 +302,11 @@ export class RoomFiles {
       await handle.close();
       handle = undefined;
       // Recheck membership and cancellation after asynchronous IO; no transaction is held across await.
-      const current = this.#owned(actor, attachmentId);
+      const current = owner();
       if (current.state !== "verifying")
         throw new ConflictError("upload was canceled or expired");
       await rename(temporary, finalPath);
-      const last = this.#owned(actor, attachmentId);
+      const last = owner();
       if (last.state !== "verifying")
         throw new ConflictError("upload was canceled or expired");
       this.#db
@@ -206,6 +327,37 @@ export class RoomFiles {
       await handle?.close();
       await unlink(temporary).catch(() => {});
     }
+  }
+  forTaskSubmission(
+    execution: AuthenticatedWorkerExecutionContext,
+    taskId: string,
+  ): {
+    attachments: Attachment[];
+    references: TaskArtifactReference[];
+  } {
+    const scope = this.#worker(execution);
+    this.#requireActiveTaskOwner(scope, taskId);
+    const rows = this.#db
+      .prepare(
+        `SELECT * FROM room_files
+         WHERE room_id = ? AND actor_id = ? AND task_id = ?
+           AND state = 'completed' AND message_id IS NULL
+         ORDER BY created_at, attachment_id`,
+      )
+      .all(scope.roomId, scope.participantId, taskId);
+    if (rows.length > 10)
+      throw new ConflictError("at most 10 artifacts per Task submission");
+    const attachments = rows.map((row) => this.#attachment(row));
+    const references = rows.map((row, index) =>
+      TaskArtifactReferenceSchema.parse({
+        ...this.#attachment(row),
+        ordinal: index + 1,
+        producerId: scope.participantId,
+        runAttemptId: text(row, "run_attempt_id"),
+        taskId,
+      }),
+    );
+    return { attachments, references };
   }
   cancel(actor: AuthenticatedActorContext, input: { attachmentId: string }) {
     const row = this.#owned(actor, input.attachmentId);
@@ -285,7 +437,24 @@ export class RoomFiles {
     const limit = input.limit ?? 50;
     const rows = this.#db
       .prepare(
-        `SELECT f.*, e.room_seq, m.created_at FROM room_files f JOIN messages m ON m.message_id = f.message_id JOIN room_events e ON e.aggregate_id = m.message_id AND e.room_id = m.room_id AND e.type = 'message.posted' WHERE f.room_id = ? AND f.state = 'consumed' AND (e.room_seq < ? OR (e.room_seq = ? AND f.attachment_id < ?)) ORDER BY e.room_seq DESC, f.attachment_id DESC LIMIT ?`,
+        `WITH file_message_events(room_id, message_id, room_seq) AS (
+           SELECT room_id, aggregate_id, room_seq
+           FROM room_events
+           WHERE type = 'message.posted'
+           UNION ALL
+           SELECT room_id, json_extract(payload_json, '$.messageId'), room_seq
+           FROM room_events
+           WHERE type = 'task.submitted'
+         )
+         SELECT f.*, e.room_seq, m.created_at
+         FROM room_files AS f
+         JOIN messages AS m ON m.message_id = f.message_id
+         JOIN file_message_events AS e
+           ON e.message_id = m.message_id AND e.room_id = m.room_id
+         WHERE f.room_id = ? AND f.state = 'consumed'
+           AND (e.room_seq < ? OR (e.room_seq = ? AND f.attachment_id < ?))
+         ORDER BY e.room_seq DESC, f.attachment_id DESC
+         LIMIT ?`,
       )
       .all(input.roomId, before, before, beforeId, limit + 1);
     const page = rows.slice(0, limit);
@@ -317,20 +486,26 @@ export class RoomFiles {
     if (row.state !== "consumed")
       throw new NotFoundError("file is not attached to a sent message");
     this.#ensureDirectory();
-    const handle = await open(
-      this.#path(attachmentId),
+    const path = this.#path(attachmentId);
+    const descriptor = openSync(
+      path,
       constants.O_RDONLY | constants.O_NOFOLLOW,
     );
     try {
+      // The descriptor is now identity-fixed. Recheck membership before any
+      // stream can emit bytes, then transfer descriptor ownership to it.
       requireRoomMember(this.#db, text(row, "room_id"), this.#actor(actor));
+      return {
+        attachment: this.#attachment(row),
+        stream: createReadStream(path, {
+          autoClose: true,
+          fd: descriptor,
+        }),
+      };
     } catch (error) {
-      await handle.close();
+      closeSync(descriptor);
       throw error;
     }
-    return {
-      attachment: this.#attachment(row),
-      stream: handle.createReadStream({ autoClose: true }),
-    };
   }
   #ensureDirectory() {
     mkdirSync(this.#root, { recursive: true, mode: 0o700 });
@@ -394,6 +569,40 @@ export class RoomFiles {
       throw new ForbiddenError("upload belongs to another member");
     return this.#expire(row);
   }
+  #ownedWorker(
+    execution: AuthenticatedWorkerExecutionContext,
+    attachmentId: string,
+  ) {
+    const scope = this.#worker(execution);
+    const row = this.#row(attachmentId);
+    if (
+      row.room_id !== scope.roomId ||
+      row.actor_id !== scope.participantId ||
+      row.run_attempt_id !== scope.runAttemptId ||
+      typeof row.task_id !== "string"
+    )
+      throw new ForbiddenError(
+        "artifact is outside this Worker execution scope",
+      );
+    this.#requireActiveTaskOwner(scope, text(row, "task_id"));
+    return this.#expire(row);
+  }
+  #requireActiveTaskOwner(
+    scope: ActivationCredentialScope,
+    taskId: string,
+  ): Row {
+    const task = this.#db
+      .prepare("SELECT * FROM tasks WHERE task_id = ?")
+      .get(taskId);
+    if (!task) throw new NotFoundError(`Task ${taskId} was not found`);
+    if (task.room_id !== scope.roomId)
+      throw new ForbiddenError(`Task ${taskId} is outside this Worker Room`);
+    if (task.state !== "in_progress" || task.claimed_by !== scope.participantId)
+      throw new ConflictError(
+        `Task ${taskId} must be in_progress and owned by this Agent`,
+      );
+    return task;
+  }
   #expire(row: Row) {
     if (
       !["consumed", "canceled", "expired", "failed"].includes(
@@ -419,6 +628,13 @@ export class RoomFiles {
       size: row.size,
       state: row.state,
       expiresAt: row.expires_at,
+    });
+  }
+  #workerUploadView(row: Row) {
+    return WorkerArtifactUploadSchema.parse({
+      ...this.#uploadView(row),
+      ...(typeof row.sha256 === "string" ? { sha256: row.sha256 } : {}),
+      taskId: text(row, "task_id"),
     });
   }
   #attachment(row: Row) {

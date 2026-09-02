@@ -60,10 +60,13 @@ export const ClientHealthResponseSchema = ClientHealthBaseSchema.extend({
   capabilities: z
     .object({
       agentOnboard: z.boolean(),
+      agentExecutionReset: z.boolean().optional(),
       agentRead: z.boolean(),
       agentPresenceRead: z.boolean().optional(),
       agentWrite: z.boolean(),
       fileShare: z.boolean().optional(),
+      messageSocial: z.boolean().optional(),
+      sidebarPreferences: z.boolean().optional(),
       cursorAcknowledge: z.boolean(),
       hints: z.boolean(),
       inputRequestRead: z.boolean(),
@@ -78,11 +81,13 @@ export const ClientHealthResponseSchema = ClientHealthBaseSchema.extend({
       roomWrite: z.boolean(),
       roomSync: z.boolean(),
       taskRead: z.boolean(),
+      taskReassignment: z.boolean().optional(),
       taskWrite: z.boolean(),
       threadRead: z.boolean(),
       threadWrite: z.boolean(),
       workspaceRead: z.boolean(),
       workspaceWrite: z.boolean(),
+      webPush: z.boolean().optional(),
     })
     .strict(),
 }).strict();

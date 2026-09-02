@@ -22,10 +22,13 @@ import type {
   Task,
   Thread,
   ToolAccessMode,
+  WorkerMessageHeldResponse,
   Workspace,
 } from "@rah-os/protocol";
 
 export type Principal = {
+  avatarKey?: string;
+  displayName?: string;
   principalId: string;
   handle: string;
   kind: ParticipantKind;
@@ -231,6 +234,9 @@ export type MessageMutationResult = {
   event: RoomEvent;
   activationIds: string[];
 };
+
+export type WorkerMessagePostResult =
+  MessageMutationResult | WorkerMessageHeldResponse;
 
 export type MessagePage = {
   cursorAfter: number;

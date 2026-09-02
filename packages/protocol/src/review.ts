@@ -7,6 +7,7 @@ import {
 } from "./common.ts";
 import { RoomEventSchema } from "./room-event.ts";
 import { TaskSchema } from "./task.ts";
+import { AttachmentSchema } from "./room-files.ts";
 
 export const TaskReviewDispositionSchema = z.enum([
   "approved",
@@ -14,8 +15,17 @@ export const TaskReviewDispositionSchema = z.enum([
 ]);
 export type TaskReviewDisposition = z.infer<typeof TaskReviewDispositionSchema>;
 
+export const TaskArtifactReferenceSchema = AttachmentSchema.extend({
+  ordinal: z.number().int().positive(),
+  producerId: IdentifierSchema,
+  runAttemptId: IdentifierSchema,
+  taskId: IdentifierSchema,
+}).strict();
+export type TaskArtifactReference = z.infer<typeof TaskArtifactReferenceSchema>;
+
 export const TaskSubmissionSchema = z
   .object({
+    artifacts: z.array(TaskArtifactReferenceSchema).max(10).default([]),
     createdAt: TimestampSchema,
     messageId: IdentifierSchema,
     producerId: IdentifierSchema,
@@ -26,7 +36,41 @@ export const TaskSubmissionSchema = z
     summary: z.string().trim().min(1),
     taskId: IdentifierSchema,
   })
-  .strict();
+  .strict()
+  .superRefine((submission, context) => {
+    const ids = new Set<string>();
+    for (const [index, artifact] of submission.artifacts.entries()) {
+      if (artifact.ordinal !== index + 1) {
+        context.addIssue({
+          code: "custom",
+          message: "Artifact ordinals must be contiguous and one-based",
+          path: ["artifacts", index, "ordinal"],
+        });
+      }
+      if (artifact.taskId !== submission.taskId) {
+        context.addIssue({
+          code: "custom",
+          message: "Artifact must belong to the submitted Task",
+          path: ["artifacts", index, "taskId"],
+        });
+      }
+      if (artifact.producerId !== submission.producerId) {
+        context.addIssue({
+          code: "custom",
+          message: "Artifact producer must match the submission producer",
+          path: ["artifacts", index, "producerId"],
+        });
+      }
+      if (ids.has(artifact.attachmentId)) {
+        context.addIssue({
+          code: "custom",
+          message: "TaskSubmission Artifact identities must be unique",
+          path: ["artifacts", index, "attachmentId"],
+        });
+      }
+      ids.add(artifact.attachmentId);
+    }
+  });
 export type TaskSubmission = z.infer<typeof TaskSubmissionSchema>;
 
 export const TaskReviewSchema = z

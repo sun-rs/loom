@@ -8,6 +8,48 @@ import {
 import type { RoomEventWriter } from "./room-event-writer.ts";
 import { integer, text, type Row } from "./sqlite-row.ts";
 
+export function requestActiveTaskExecutionCancellation(input: {
+  actorId: string;
+  createId: (prefix: string) => string;
+  database: DatabaseSync;
+  participantId: string;
+  reason: string;
+  requestedAt: string;
+  roomId: string;
+  taskId: string;
+}): string | undefined {
+  const activation = input.database
+    .prepare(
+      `SELECT * FROM activations
+       WHERE room_id = ? AND participant_id = ? AND state = 'leased'
+       ORDER BY updated_at DESC, activation_id DESC LIMIT 1`,
+    )
+    .get(input.roomId, input.participantId);
+  if (activation === undefined) return undefined;
+  const attemptNumber = integer(activation, "attempt_count");
+  if (attemptNumber <= 0) return undefined;
+  const requestId = input.createId("activation_cancel");
+  input.database
+    .prepare(
+      `INSERT INTO activation_cancellation_requests(
+         request_id, activation_id, activation_attempt_number, room_id,
+         task_id, participant_id, requested_by, reason, requested_at
+       ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .run(
+      requestId,
+      text(activation, "activation_id"),
+      attemptNumber,
+      input.roomId,
+      input.taskId,
+      input.participantId,
+      input.actorId,
+      input.reason,
+      input.requestedAt,
+    );
+  return requestId;
+}
+
 export function unresolvedActivationCancellation(
   database: DatabaseSync,
   activation: Row,

@@ -3,7 +3,11 @@ import type { RahClient, RahClientOperationMap } from "@rah-os/client-sdk";
 
 // Read-model reconciliation only. Never writes a business acknowledgement.
 export function useReconciledQuery<
-  K extends "host.runtime.list" | "activity.list" | "agent.presence.list",
+  K extends
+    | "host.runtime.list"
+    | "activity.list"
+    | "agent.presence.list"
+    | "notification.list",
 >(
   client: RahClient,
   operation: K,

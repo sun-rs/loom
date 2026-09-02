@@ -168,6 +168,9 @@ export function createRemoteComputerAgentHostControlPort(
         error: input.error,
         kind: "activation.retry",
         retryAfterMs: input.retryAfterMs,
+        ...(input.retryDisposition === undefined
+          ? {}
+          : { retryDisposition: input.retryDisposition }),
       });
       if (response.kind !== "activation.retry") throw invalidResponse();
       return response.activation;

@@ -8,8 +8,15 @@ import type {
 import type { WorkspaceAgentView } from "@rah-os/ui-web";
 import { PreviewCard } from "./preview-card.tsx";
 import { AgentAvatar } from "./agent-directory-pane.tsx";
-import { activityPresentation } from "../identity-presentation.ts";
-import { agentConnectionLabel } from "../attention-presentation.ts";
+import { AgentStatusDot } from "./agent-status-dot.tsx";
+import {
+  previewActivityText,
+  previewActivityKind,
+} from "../agent-preview-presentation.ts";
+import {
+  agentConnectionLabel,
+  agentPresencePresentation,
+} from "../attention-presentation.ts";
 
 export const AgentMessageContext = createContext<
   | {
@@ -60,25 +67,39 @@ function AgentPreview({
   const [activities, setActivities] = useState<RuntimeTrajectoryRecord[]>([]);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState(false);
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     setError(false);
-    void Promise.all([
-      client.request(
+    setDetail(undefined);
+    setActivities([]);
+    setProfileLoading(true);
+    setProfileError(false);
+    void client
+      .request(
         "agent.get",
         { agentDefinitionId: agent.agentDefinitionId },
         { signal: controller.signal },
-      ),
-      client.request(
+      )
+      .then((d) => {
+        if (!controller.signal.aborted) setDetail(d);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setProfileError(true);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setProfileLoading(false);
+      });
+    void client
+      .request(
         "agent.trajectory.list",
         { agentDefinitionId: agent.agentDefinitionId, limit: 5 },
         { signal: controller.signal },
-      ),
-    ])
-      .then(([d, a]) => {
+      )
+      .then((a) => {
         if (!controller.signal.aborted) {
-          setDetail(d);
           setActivities(a.activities);
         }
       })
@@ -99,31 +120,56 @@ function AgentPreview({
   const model = runtime?.modelBindingDescriptors.find(
     (m) => m.modelBindingId === bindingId,
   );
+  const modelLabel = profileLoading
+    ? "加载中…"
+    : profileError
+      ? "暂时无法读取"
+      : (model?.displayName ?? model?.modelId ?? bindingId ?? "Runtime 默认");
+  const reasoning = detail?.policy.modelIntent.reasoning;
   return (
     <>
       <div className="rah-agent-preview-identity">
         <AgentAvatar agent={agent} size="profile" />
         <div>
-          <b>{agent.displayName}</b>
-          <small>
-            {agentConnectionLabel(agent)} · @{agent.handle}
-          </small>
-          {agent.description ? <small>{agent.description}</small> : null}
+          <div className="rah-preview-name-line">
+            <b>{agent.displayName}</b>
+            <AgentStatusDot
+              className="rah-preview-presence"
+              activity={agentPresencePresentation(agent).activity}
+              label={agentConnectionLabel(agent)}
+              size="sm"
+            />
+            <small>{agentConnectionLabel(agent)}</small>
+          </div>
+          <small>@{agent.handle}</small>
           <dl>
             <dt>计算机</dt>
-            <dd>{computerLabel ?? "未绑定"}</dd>
+            <dd title={computerLabel}>{computerLabel ?? "未绑定"}</dd>
             <dt>运行时</dt>
-            <dd>{runtime?.displayName ?? "未绑定"}</dd>
-            <dt>模型</dt>
-            <dd>
-              {model?.displayName ??
-                model?.modelId ??
-                bindingId ??
-                "Runtime 默认"}
+            <dd title={runtime?.displayName}>
+              {runtime?.displayName ?? "未绑定"}
             </dd>
+            <dt>模型</dt>
+            <dd title={modelLabel}>{modelLabel}</dd>
+            {reasoning ? (
+              <>
+                <dt>推理强度</dt>
+                <dd title={reasoning}>
+                  {reasoning === "default" ? "默认" : reasoning}
+                </dd>
+              </>
+            ) : null}
           </dl>
         </div>
       </div>
+      {agent.description ? (
+        <div
+          className="rah-agent-preview-description"
+          title={agent.description}
+        >
+          {agent.description}
+        </div>
+      ) : null}
       <section>
         <h4>最近动态</h4>
         {loading ? (
@@ -143,15 +189,14 @@ function AgentPreview({
                     hour12: false,
                   })}
                 </time>
-                <i
-                  data-kind={a.entry.kind}
-                  data-activity={
-                    a.entry.kind === "status" ? a.entry.activity : undefined
-                  }
+                <AgentStatusDot
+                  className="rah-preview-event-dot"
+                  activity={previewActivityKind(a.entry)}
+                  label={previewActivityText(a.entry)}
+                  size="sm"
                 />
-                <span>
-                  {activityPresentation(a.entry).label}{" "}
-                  {activityPresentation(a.entry).detail}
+                <span title={previewActivityText(a.entry)}>
+                  {previewActivityText(a.entry)}
                 </span>
               </div>
             ))

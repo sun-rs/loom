@@ -27,6 +27,8 @@ import {
   ClientAgentTrajectoryListRequestSchema,
   ClientAgentPresenceListRequestSchema,
   ClientAgentPresenceListResponseSchema,
+  ClientAgentRemindersListRequestSchema,
+  ClientAgentRemindersListResponseSchema,
   ClientAgentTrajectoryListResponseSchema,
   ClientAcknowledgeRequestSchema,
   ClientAcknowledgeResponseSchema,
@@ -37,6 +39,8 @@ import {
   ClientAgentManageResponseSchema,
   ClientAgentGetRequestSchema,
   ClientAgentGetResponseSchema,
+  ClientAgentExecutionResetRequestSchema,
+  ClientAgentExecutionResetResponseSchema,
   ClientAgentMemoryGetRequestSchema,
   ClientAgentMemoryConfigGetRequestSchema,
   ClientAgentMemoryConfigPatchRequestSchema,
@@ -58,6 +62,10 @@ import {
   ClientHealthV2ResponseSchema,
   ClientInputRequestsListRequestSchema,
   ClientInputRequestsListResponseSchema,
+  ClientNotificationDismissRequestSchema,
+  ClientNotificationDismissResponseSchema,
+  ClientNotificationListRequestSchema,
+  ClientNotificationListResponseSchema,
   ClientMessageMutationResponseSchema,
   ClientMessagePostRequestSchema,
   ClientMessagesListRequestSchema,
@@ -82,6 +90,8 @@ import {
   ClientManagedMcpUsageListResponseSchema,
   ClientPrincipalMeRequestSchema,
   ClientPrincipalMeResponseSchema,
+  ClientPrincipalUpdateRequestSchema,
+  ClientPrincipalUpdateResponseSchema,
   ClientDirectRoomOpenRequestSchema,
   ClientDirectRoomOpenResponseSchema,
   ClientRoomMemberAddRequestSchema,
@@ -112,6 +122,8 @@ import {
   ClientTaskConvertRequestSchema,
   ClientTaskCreateRequestSchema,
   ClientTaskMutationResponseSchema,
+  ClientTaskReassignRequestSchema,
+  ClientTaskReassignmentResponseSchema,
   ClientTaskUnassignRequestSchema,
   ClientTaskUnblockRequestSchema,
   ClientThreadCreateRequestSchema,
@@ -129,14 +141,39 @@ import {
   LocalRuntimeInventoryRequestSchema,
   LocalRuntimeInventoryResponseSchema,
   type ClientHealthResponse,
+  type ClientAgentExecutionResetRequest,
+  type ClientAgentExecutionResetResponse,
+  type ClientTaskReassignRequest,
+  type ClientTaskReassignmentResponse,
   type AgentMemoryMaterializedFile,
   type AgentMemoryWorkspaceSnapshot,
   type LocalRuntimeInventoryResponse,
 } from "@rah-os/protocol";
 
+import {
+  ClientPushConfigurationRequestSchema,
+  ClientPushConfigurationResponseSchema,
+  ClientPushSubscribeRequestSchema,
+  ClientPushSubscribeResponseSchema,
+  ClientPushTestRequestSchema,
+  ClientPushTestResponseSchema,
+  ClientPushUnsubscribeRequestSchema,
+  ClientPushUnsubscribeResponseSchema,
+  type ClientPushConfigurationResponse,
+  type ClientPushSubscribeRequest,
+  type ClientPushUnsubscribeRequest,
+  type NavigationTarget,
+} from "@rah-os/protocol";
+
 import type { ManagedMcpAdministrationPort } from "./managed-mcp-executor.ts";
+import {
+  ProfileImageRequestError,
+  transferProfileImage,
+  type ProfileImageAdministrationPort,
+} from "./client-profile-image-routes.ts";
 
 export type ClientApplicationServiceOptions = {
+  agentExecutionAdministration?: AgentExecutionAdministrationPort;
   agentMemoryAdministration?: AgentMemoryAdministrationPort;
   bindHost?: "127.0.0.1";
   health: () => ClientHealthResponse;
@@ -146,7 +183,44 @@ export type ClientApplicationServiceOptions = {
   ) => LocalRuntimeInventoryResponse | Promise<LocalRuntimeInventoryResponse>;
   managedMcpAdministration?: ManagedMcpAdministrationPort;
   port?: number;
+  profileImages?: ProfileImageAdministrationPort;
+  taskReassignmentAdministration?: TaskReassignmentAdministrationPort;
+  webPushAdministration?: WebPushAdministrationPort;
 };
+
+export type AgentExecutionAdministrationPort = Readonly<{
+  reset(
+    actor: AuthenticatedActorContext,
+    input: ClientAgentExecutionResetRequest,
+  ):
+    | Promise<ClientAgentExecutionResetResponse>
+    | ClientAgentExecutionResetResponse;
+}>;
+
+export type TaskReassignmentAdministrationPort = Readonly<{
+  reassign(
+    actor: AuthenticatedActorContext,
+    input: ClientTaskReassignRequest,
+  ): Promise<ClientTaskReassignmentResponse> | ClientTaskReassignmentResponse;
+}>;
+
+export type WebPushAdministrationPort = Readonly<{
+  configuration(
+    actor: AuthenticatedActorContext,
+  ): Promise<ClientPushConfigurationResponse> | ClientPushConfigurationResponse;
+  subscribe(
+    actor: AuthenticatedActorContext,
+    input: ClientPushSubscribeRequest,
+  ): Promise<{ subscribed: true; subscriptionCount: number }>;
+  unsubscribe(
+    actor: AuthenticatedActorContext,
+    input: ClientPushUnsubscribeRequest,
+  ): Promise<{ subscribed: false; subscriptionCount: number }>;
+  test(
+    actor: AuthenticatedActorContext,
+    input: { target?: NavigationTarget | undefined },
+  ): Promise<{ delivered: number }>;
+}>;
 
 export type AgentMemoryAdministrationPort = Readonly<{
   computerHostId: string;
@@ -246,8 +320,10 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/agents/activity/list",
   "/agents/trajectory/list",
   "/agents/presence/list",
+  "/agents/reminders/list",
   "/agents/list",
   "/agents/get",
+  "/agents/execution/reset",
   "/agents/memory/get",
   "/agents/memory/config/get",
   "/agents/memory/config/patch",
@@ -257,6 +333,12 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/agents/manage",
   "/agents/onboard",
   "/agents/provision",
+  "/notifications/list",
+  "/notifications/dismiss",
+  "/push/configuration",
+  "/push/subscribe",
+  "/push/unsubscribe",
+  "/push/test",
   "/managed-mcp/assignments/create",
   "/managed-mcp/assignments/list",
   "/managed-mcp/assignments/revise",
@@ -270,11 +352,13 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/managed-mcp/usage/list",
   "/tasks/reviews/list",
   "/principals/me",
+  "/principals/update",
   "/rooms/agents/activity/list",
   "/rooms/create",
   "/rooms/direct/open",
   "/rooms/update",
   "/tasks/convert",
+  "/tasks/reassign",
   "/tasks/unassign",
   "/workspaces/create",
   "/workspaces/update",
@@ -287,6 +371,8 @@ type ClientSession = {
 };
 
 export class ClientApplicationService {
+  readonly #agentExecutionAdministration:
+    AgentExecutionAdministrationPort | undefined;
   readonly #agentMemoryAdministration:
     AgentMemoryAdministrationPort | undefined;
   readonly #bindHost: "127.0.0.1";
@@ -299,19 +385,28 @@ export class ClientApplicationService {
         LocalRuntimeInventoryResponse | Promise<LocalRuntimeInventoryResponse>)
     | undefined;
   readonly #managedMcpAdministration: ManagedMcpAdministrationPort | undefined;
+  readonly #taskReassignmentAdministration:
+    TaskReassignmentAdministrationPort | undefined;
+  readonly #webPushAdministration: WebPushAdministrationPort | undefined;
   readonly #port: number;
+  readonly #profileImages: ProfileImageAdministrationPort | undefined;
   readonly #deliveredCursors = new Map<string, Set<number>>();
   #origin: string | undefined;
   #server: Server | undefined;
 
   constructor(options: ClientApplicationServiceOptions) {
+    this.#agentExecutionAdministration = options.agentExecutionAdministration;
     this.#agentMemoryAdministration = options.agentMemoryAdministration;
     this.#bindHost = options.bindHost ?? "127.0.0.1";
     this.#health = options.health;
     this.#human = options.human;
     this.#localRuntimeInventory = options.localRuntimeInventory;
     this.#managedMcpAdministration = options.managedMcpAdministration;
+    this.#taskReassignmentAdministration =
+      options.taskReassignmentAdministration;
+    this.#webPushAdministration = options.webPushAdministration;
     this.#port = options.port ?? 0;
+    this.#profileImages = options.profileImages;
     if (
       !Number.isInteger(this.#port) ||
       this.#port < 0 ||
@@ -374,6 +469,34 @@ export class ClientApplicationService {
     request: IncomingMessage,
     response: ServerResponse,
   ): Promise<void> {
+    const profileImageMatch =
+      /^\/v3\/client\/profile-images\/content(?:\/([a-z0-9_-]{1,64}))?$/.exec(
+        request.url ?? "",
+      );
+    if (profileImageMatch) {
+      if (this.#profileImages === undefined) {
+        throw new HttpRequestError(
+          "not_found",
+          "profile image storage is unavailable",
+          404,
+        );
+      }
+      try {
+        await transferProfileImage(
+          this.#profileImages,
+          this.#authenticate(request).actor,
+          request,
+          response,
+          profileImageMatch[1],
+        );
+      } catch (error) {
+        if (error instanceof ProfileImageRequestError) {
+          throw new HttpRequestError(error.code, error.message, error.status);
+        }
+        throw error;
+      }
+      return;
+    }
     const fileMatch = /^\/v3\/client\/files\/content\/([a-f0-9-]{36})$/.exec(
       request.url ?? "",
     );
@@ -530,6 +653,118 @@ export class ClientApplicationService {
         response,
         200,
         routeDiscovery(this.#human, actor, path, body, parseClientRequest),
+      );
+      return;
+    }
+    if (path === "/push/configuration") {
+      parseClientRequest(ClientPushConfigurationRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientPushConfigurationResponseSchema.parse(
+          await this.#requireWebPushAdministration().configuration(actor),
+        ),
+      );
+      return;
+    }
+    if (path === "/push/subscribe") {
+      const command = parseClientRequest(
+        ClientPushSubscribeRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientPushSubscribeResponseSchema.parse(
+          await this.#requireWebPushAdministration().subscribe(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/push/unsubscribe") {
+      const command = parseClientRequest(
+        ClientPushUnsubscribeRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientPushUnsubscribeResponseSchema.parse(
+          await this.#requireWebPushAdministration().unsubscribe(
+            actor,
+            command,
+          ),
+        ),
+      );
+      return;
+    }
+    if (path === "/push/test") {
+      const command = parseClientRequest(ClientPushTestRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientPushTestResponseSchema.parse(
+          await this.#requireWebPushAdministration().test(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/notifications/list") {
+      const command = parseClientRequest(
+        ClientNotificationListRequestSchema,
+        body,
+      );
+      const dismissed = new Set(
+        this.#human.listNotificationDismissals(actor, command).notificationIds,
+      );
+      const notifications = this.#localRuntimeInventory
+        ? systemNotifications(
+            LocalRuntimeInventoryResponseSchema.parse(
+              await this.#localRuntimeInventory(actor),
+            ),
+          ).filter(
+            (notification) => !dismissed.has(notification.notificationId),
+          )
+        : [];
+      writeJson(
+        response,
+        200,
+        ClientNotificationListResponseSchema.parse({ notifications }),
+      );
+      return;
+    }
+    if (path === "/notifications/dismiss") {
+      const command = parseClientRequest(
+        ClientNotificationDismissRequestSchema,
+        body,
+      );
+      this.#human.listNotificationDismissals(actor, {
+        workspaceId: command.workspaceId,
+      });
+      const notifications = this.#localRuntimeInventory
+        ? systemNotifications(
+            LocalRuntimeInventoryResponseSchema.parse(
+              await this.#localRuntimeInventory(actor),
+            ),
+          )
+        : [];
+      const candidate = notifications.find(
+        ({ notificationId }) => notificationId === command.notificationId,
+      );
+      if (candidate === undefined || !candidate.dismissible) {
+        throw new HttpRequestError(
+          "notification_unavailable",
+          "notification is no longer available or cannot be dismissed",
+          409,
+        );
+      }
+      this.#human.dismissNotification(actor, command);
+      writeJson(
+        response,
+        200,
+        ClientNotificationDismissResponseSchema.parse({
+          notificationId: command.notificationId,
+        }),
       );
       return;
     }
@@ -719,6 +954,20 @@ export class ClientApplicationService {
       );
       return;
     }
+    if (path === "/principals/update") {
+      const command = parseClientRequest(
+        ClientPrincipalUpdateRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientPrincipalUpdateResponseSchema.parse({
+          principal: this.#human.updateAuthenticatedPrincipal(actor, command),
+        }),
+      );
+      return;
+    }
     if (path === "/agents/list") {
       const command = parseClientRequest(ClientAgentsListRequestSchema, body);
       writeJson(
@@ -742,6 +991,21 @@ export class ClientApplicationService {
             actor,
             command.agentDefinitionId,
           ),
+        ),
+      );
+      return;
+    }
+    if (path === "/agents/execution/reset") {
+      const command = parseClientRequest(
+        ClientAgentExecutionResetRequestSchema,
+        body,
+      );
+      const administration = this.#requireAgentExecutionAdministration();
+      writeJson(
+        response,
+        200,
+        ClientAgentExecutionResetResponseSchema.parse(
+          await administration.reset(actor, command),
         ),
       );
       return;
@@ -883,6 +1147,20 @@ export class ClientApplicationService {
               : { beforeActivityId: command.beforeActivityId }),
             limit: command.limit,
           }),
+        ),
+      );
+      return;
+    }
+    if (path === "/agents/reminders/list") {
+      const command = parseClientRequest(
+        ClientAgentRemindersListRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientAgentRemindersListResponseSchema.parse(
+          this.#human.listAgentReminders(actor, command),
         ),
       );
       return;
@@ -1357,6 +1635,18 @@ export class ClientApplicationService {
       );
       return;
     }
+    if (path === "/tasks/reassign") {
+      const command = parseClientRequest(ClientTaskReassignRequestSchema, body);
+      const administration = this.#requireTaskReassignmentAdministration();
+      writeJson(
+        response,
+        200,
+        ClientTaskReassignmentResponseSchema.parse(
+          await administration.reassign(actor, command),
+        ),
+      );
+      return;
+    }
     if (path === "/tasks/unassign") {
       const command = parseClientRequest(ClientTaskUnassignRequestSchema, body);
       writeJson(
@@ -1521,6 +1811,28 @@ export class ClientApplicationService {
     return this.#agentMemoryAdministration;
   }
 
+  #requireAgentExecutionAdministration(): AgentExecutionAdministrationPort {
+    if (this.#agentExecutionAdministration === undefined) {
+      throw new HttpRequestError(
+        "agent_execution_reset_unavailable",
+        "Agent execution reset is unavailable on this Computer",
+        503,
+      );
+    }
+    return this.#agentExecutionAdministration;
+  }
+
+  #requireTaskReassignmentAdministration(): TaskReassignmentAdministrationPort {
+    if (this.#taskReassignmentAdministration === undefined) {
+      throw new HttpRequestError(
+        "task_reassignment_unavailable",
+        "Safe Task reassignment is unavailable on this Computer",
+        503,
+      );
+    }
+    return this.#taskReassignmentAdministration;
+  }
+
   #requireManagedMcpAdministration(): ManagedMcpAdministrationPort {
     if (this.#managedMcpAdministration === undefined) {
       throw new HttpRequestError(
@@ -1530,6 +1842,17 @@ export class ClientApplicationService {
       );
     }
     return this.#managedMcpAdministration;
+  }
+
+  #requireWebPushAdministration(): WebPushAdministrationPort {
+    if (this.#webPushAdministration === undefined) {
+      throw new HttpRequestError(
+        "web_push_unavailable",
+        "Web Push is unavailable on this Computer",
+        503,
+      );
+    }
+    return this.#webPushAdministration;
   }
 
   #writeError(response: ServerResponse, error: unknown): void {
@@ -1588,6 +1911,37 @@ function resolveClientRoute(
     return { apiVersion: 3, path: url.slice("/v3/client".length) };
   }
   return undefined;
+}
+
+function systemNotifications(
+  inventory: LocalRuntimeInventoryResponse,
+): ReadonlyArray<{
+  computerName: string;
+  dismissible: true;
+  kind: "computer_offline";
+  lastSeenAt?: string;
+  notificationId: string;
+  target: { kind: "computer"; hostId: string };
+}> {
+  const computer = inventory.computer;
+  if (computer?.status !== "offline") return [];
+  const episode = [
+    inventory.hostId,
+    computer.instanceId ?? "unknown",
+    computer.lastSeenAt ?? "unknown",
+  ].join(":");
+  return [
+    {
+      computerName: computer.displayName,
+      dismissible: true,
+      kind: "computer_offline",
+      ...(computer.lastSeenAt === undefined
+        ? {}
+        : { lastSeenAt: computer.lastSeenAt }),
+      notificationId: `computer-offline:${episode}`,
+      target: { kind: "computer", hostId: inventory.hostId },
+    },
+  ];
 }
 
 async function readJsonObject(

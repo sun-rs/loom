@@ -11,10 +11,15 @@ import type {
   ClientAgentGetResponse,
   ClientAgentMemoryGetResponse,
   LocalRuntimeInventoryEntry,
+  ManagedMcpAssignmentRecord,
+  ManagedMcpServerRecord,
   ManagedMcpUsageRecord,
+  NavigationTarget,
   Principal,
   Room,
   RuntimeTrajectoryRecord,
+  Reminder,
+  AgentExecutionResetMode,
 } from "@rah-os/protocol";
 import {
   OFFICIAL_AGENT_AVATAR_KEYS,
@@ -29,6 +34,7 @@ import {
   projectAgentActivityRows,
 } from "../agent-activity-projection.ts";
 import { activityPresentation } from "../identity-presentation.ts";
+import { agentAvatarPixels } from "../agent-avatar-presentation.ts";
 import {
   agentConnectionLabel,
   agentPresencePresentation,
@@ -39,13 +45,30 @@ import { renderAgentActivityDiagnostics } from "../agent-activity-diagnostics.ts
 import { Icon } from "./icon.tsx";
 import { AgentStatusDot } from "./agent-status-dot.tsx";
 import { AgentMemoryConfigDialog } from "./agent-memory-config-dialog.tsx";
+import { AgentExecutionResetDialog } from "./agent-execution-reset-dialog.tsx";
 import { AgentRolePermissions } from "./agent-role-permissions.tsx";
+import { AgentProfileFieldEditor } from "./agent-profile-field.tsx";
+import type { AgentProfileEditInput } from "../agent-profile-edit.ts";
+import {
+  projectAgentMcpServers,
+  type AgentMcpServerView,
+} from "../agent-mcp-projection.ts";
+import { runtimeReasoningOptions } from "../agent-runtime-capabilities.ts";
 import { AgentWorkspaceBrowser } from "./agent-workspace-browser.tsx";
 import { DiagnosticReferences } from "./diagnostic-references.tsx";
-import type { AgentProfileEditInput } from "../agent-profile-edit.ts";
+import { ProfilePanelResizer } from "./profile-panel-resizer.tsx";
+import { useProfilePanelWidth } from "../use-profile-panel-width.ts";
+import {
+  reconcileAgentRouteIdentity,
+  type AgentRouteSelection,
+  type AgentRouteTab,
+} from "../agent-route.ts";
+import {
+  navigationSearch,
+  shouldHandleClientNavigation,
+} from "../navigation-target.ts";
 
-type AgentTab =
-  "activity" | "apps" | "chat" | "mcp" | "profile" | "reminders" | "workspace";
+type AgentTab = AgentRouteTab;
 
 const RAFT_AGENT_TABS: ReadonlyArray<{
   icon: string;
@@ -67,13 +90,13 @@ type OfficialAvatarPack = {
 };
 
 const OFFICIAL_AVATAR_PACK = avatarPack as OfficialAvatarPack;
-const DEFAULT_AGENT_AVATAR = "robot";
 const MIN_SIDEBAR_WIDTH = 180;
 const MAX_SIDEBAR_WIDTH = 400;
 const DEFAULT_SIDEBAR_WIDTH = 240;
 
 export function AgentDirectoryPane({
   initialAgentDefinitionId,
+  initialTab,
   panel = false,
   onClose,
   agents,
@@ -89,12 +112,16 @@ export function AgentDirectoryPane({
   onCreate,
   onManage,
   onEditRuntime,
+  onResetExecution,
   onSaveProfile,
   onOpenDirectRoom,
+  onOpenMessage,
   onOpenRoom,
+  onRouteChange,
   runtimes,
 }: {
-  initialAgentDefinitionId?: string;
+  initialAgentDefinitionId?: string | undefined;
+  initialTab?: AgentTab;
   panel?: boolean;
   onClose?: () => void;
   agents: readonly WorkspaceAgentView[];
@@ -110,16 +137,33 @@ export function AgentDirectoryPane({
   onCreate: () => void;
   onManage: (agentDefinitionId: string) => void;
   onEditRuntime: (agentDefinitionId: string) => void;
+  onResetExecution?:
+    | ((
+        agentDefinitionId: string,
+        mode: AgentExecutionResetMode,
+      ) => Promise<void>)
+    | undefined;
   onSaveProfile?: (input: AgentProfileEditInput) => Promise<void>;
   onOpenDirectRoom: (peerPrincipalId: string) => Promise<void>;
+  onOpenMessage: (
+    target: Extract<NavigationTarget, { kind: "message" }>,
+  ) => void;
   onOpenRoom: (roomId: string) => void;
+  onRouteChange?:
+    | ((
+        selection: AgentRouteSelection,
+        options?: { replace?: boolean },
+      ) => void)
+    | undefined;
   runtimes: readonly LocalRuntimeInventoryEntry[];
 }) {
   const [selectedAgentDefinitionId, setSelectedAgentDefinitionId] = useState<
     string | undefined
   >(initialAgentDefinitionId);
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
-  const [tab, setTab] = useState<AgentTab>(panel ? "activity" : "profile");
+  const [tab, setTab] = useState<AgentTab>(
+    initialTab ?? (panel ? "activity" : "profile"),
+  );
   const panelTrigger = useRef<HTMLElement | null>(
     document.activeElement instanceof HTMLElement
       ? document.activeElement
@@ -146,6 +190,7 @@ export function AgentDirectoryPane({
     };
   }, [panel]);
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
+  const profilePanelWidth = useProfilePanelWidth();
   const [resizing, setResizing] = useState(false);
   const resizeOrigin = useRef<{ clientX: number; width: number } | undefined>(
     undefined,
@@ -154,6 +199,10 @@ export function AgentDirectoryPane({
   const [agentDetailError, setAgentDetailError] = useState<string>();
   const [agentDetailLoading, setAgentDetailLoading] = useState(false);
   const [mcpCalls, setMcpCalls] = useState<ManagedMcpUsageRecord[]>([]);
+  const [mcpServers, setMcpServers] = useState<ManagedMcpServerRecord[]>([]);
+  const [mcpAssignments, setMcpAssignments] = useState<
+    ManagedMcpAssignmentRecord[]
+  >([]);
   const [mcpCursor, setMcpCursor] = useState<string>();
   const [mcpError, setMcpError] = useState<string>();
   const [mcpLoading, setMcpLoading] = useState(false);
@@ -170,6 +219,10 @@ export function AgentDirectoryPane({
   const [agentActivityLoading, setAgentActivityLoading] = useState(false);
   const [activityHistory, setActivityHistory] = useState(false);
   const [activityReload, setActivityReload] = useState(0);
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [remindersError, setRemindersError] = useState<string>();
+  const [remindersLoading, setRemindersLoading] = useState(false);
+  const [remindersReload, setRemindersReload] = useState(0);
   const activityScope = useRef<AbortController | undefined>(undefined);
   const activityHistoryRef = useRef(false);
   const selectedAgent = agents.find(
@@ -196,22 +249,39 @@ export function AgentDirectoryPane({
           ),
     [runtimes, selectedAgent],
   );
+  const mcpServerViews = useMemo(
+    () => projectAgentMcpServers(mcpServers, mcpAssignments, mcpCalls),
+    [mcpAssignments, mcpCalls, mcpServers],
+  );
 
   useEffect(() => {
-    if (selectedAgentDefinitionId === undefined && agents[0] !== undefined) {
-      setSelectedAgentDefinitionId(agents[0].agentDefinitionId);
-      return;
+    if (!panel && initialAgentDefinitionId !== undefined) {
+      setSelectedAgentDefinitionId(initialAgentDefinitionId);
     }
-    if (
-      selectedAgentDefinitionId !== undefined &&
-      !agents.some(
-        ({ agentDefinitionId }) =>
-          agentDefinitionId === selectedAgentDefinitionId,
-      )
-    ) {
-      setSelectedAgentDefinitionId(agents[0]?.agentDefinitionId);
+  }, [initialAgentDefinitionId, panel]);
+
+  useEffect(() => {
+    if (!panel && initialTab !== undefined) setTab(initialTab);
+  }, [initialTab, panel]);
+
+  useEffect(() => {
+    const resolution = reconcileAgentRouteIdentity(
+      selectedAgentDefinitionId,
+      agents.map(({ agentDefinitionId }) => agentDefinitionId),
+    );
+    if (!resolution.replace) return;
+    setSelectedAgentDefinitionId(resolution.agentDefinitionId);
+    setTab("profile");
+    if (!panel) {
+      onRouteChange?.(
+        {
+          agentDefinitionId: resolution.agentDefinitionId,
+          tab: "profile",
+        },
+        { replace: true },
+      );
     }
-  }, [agents, selectedAgentDefinitionId]);
+  }, [agents, onRouteChange, panel, selectedAgentDefinitionId]);
 
   useEffect(() => {
     if (detailAgentId === undefined) {
@@ -272,6 +342,45 @@ export function AgentDirectoryPane({
         if (!controller.signal.aborted) setAgentRoomsLoading(false);
       });
     return () => controller.abort();
+  }, [client, detailAgentId, remindersReload, tab]);
+
+  useEffect(() => {
+    if (tab !== "reminders" || detailAgentId === undefined) return;
+    const controller = new AbortController();
+    let polling = false;
+    setReminders([]);
+    setRemindersError(undefined);
+    setRemindersLoading(true);
+    const refresh = async (initial: boolean): Promise<void> => {
+      if (polling || controller.signal.aborted) return;
+      polling = true;
+      try {
+        const response = await client.request(
+          "agent.reminder.list",
+          { agentDefinitionId: detailAgentId, status: "scheduled" },
+          { signal: controller.signal },
+        );
+        if (!controller.signal.aborted) {
+          setReminders(response.reminders);
+          setRemindersError(undefined);
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setRemindersError(errorMessage(error));
+        }
+      } finally {
+        polling = false;
+        if (initial && !controller.signal.aborted) {
+          setRemindersLoading(false);
+        }
+      }
+    };
+    void refresh(true);
+    const timer = window.setInterval(() => void refresh(false), 2_000);
+    return () => {
+      window.clearInterval(timer);
+      controller.abort();
+    };
   }, [client, detailAgentId, tab]);
 
   useEffect(() => {
@@ -331,11 +440,13 @@ export function AgentDirectoryPane({
     }
     const controller = new AbortController();
     setMcpCalls([]);
+    setMcpServers([]);
+    setMcpAssignments([]);
     setMcpCursor(undefined);
     setMcpError(undefined);
     setMcpLoading(true);
-    void client
-      .request(
+    void Promise.all([
+      client.request(
         "managedMcp.usage.list",
         {
           controlRoomId,
@@ -343,11 +454,25 @@ export function AgentDirectoryPane({
           participantId: detailParticipantId,
         },
         { signal: controller.signal },
-      )
-      .then((response) => {
+      ),
+      client.request(
+        "managedMcp.server.list",
+        { controlRoomId },
+        { signal: controller.signal },
+      ),
+      client.request(
+        "managedMcp.assignment.list",
+        { controlRoomId, participantId: detailParticipantId },
+        { signal: controller.signal },
+      ),
+    ])
+      .then(([usage, serverCatalog, assignmentCatalog]) => {
         if (controller.signal.aborted) return;
-        setMcpCalls(response.calls);
-        setMcpCursor(response.nextCursor);
+        setMcpCalls(usage.calls);
+        setMcpCursor(usage.nextCursor);
+        setMcpServers(serverCatalog.servers);
+        setMcpAssignments(assignmentCatalog.assignments);
+        setMcpError(undefined);
       })
       .catch((error: unknown) => {
         if (!controller.signal.aborted) setMcpError(errorMessage(error));
@@ -425,8 +550,19 @@ export function AgentDirectoryPane({
   function selectAgent(agentDefinitionId: string): void {
     setSelectedAgentDefinitionId(agentDefinitionId);
     setTab("profile");
+    if (!panel) onRouteChange?.({ agentDefinitionId, tab: "profile" });
     setDirectRoomError(undefined);
     setMobileDetailOpen(true);
+  }
+
+  function selectTab(nextTab: AgentTab): void {
+    setTab(nextTab);
+    if (!panel && selectedAgent !== undefined) {
+      onRouteChange?.({
+        agentDefinitionId: selectedAgent.agentDefinitionId,
+        tab: nextTab,
+      });
+    }
   }
 
   async function openSelectedDirectRoom(): Promise<void> {
@@ -483,6 +619,7 @@ export function AgentDirectoryPane({
 
   const rootStyle = {
     "--rah-agent-sidebar-width": `${sidebarWidth}px`,
+    "--rah-agent-profile-panel-width": `${profilePanelWidth.width}px`,
   } as CSSProperties;
 
   return (
@@ -491,6 +628,13 @@ export function AgentDirectoryPane({
       aria-label={panel ? "Agent 详情侧栏" : "Agent 与成员"}
       style={rootStyle}
     >
+      {panel ? (
+        <ProfilePanelResizer
+          onWidthChange={profilePanelWidth.setWidth}
+          onWidthCommit={profilePanelWidth.commit}
+          width={profilePanelWidth.width}
+        />
+      ) : null}
       <section className="rah-agent-directory-body">
         <AgentSidebar
           agents={agents}
@@ -535,7 +679,7 @@ export function AgentDirectoryPane({
               onManage={() => onManage(selectedAgent.agentDefinitionId)}
               onMessage={() => void openSelectedDirectRoom()}
             />
-            <AgentTabList activeTab={tab} onSelect={setTab} />
+            <AgentTabList activeTab={tab} onSelect={selectTab} />
             {tab === "activity" ? (
               <AgentActivityPane
                 onOpenRoom={onOpenRoom}
@@ -551,8 +695,9 @@ export function AgentDirectoryPane({
               />
             ) : tab === "profile" ? (
               <AgentProfilePane
+                key={selectedAgent.agentDefinitionId}
                 computerLabel={computerLabel}
-                onDiagnostics={() => setTab("activity")}
+                onDiagnostics={() => selectTab("activity")}
                 agent={selectedAgent}
                 canManage={canManage}
                 currentHuman={currentHuman}
@@ -563,7 +708,13 @@ export function AgentDirectoryPane({
                 onEditRuntime={() =>
                   onEditRuntime(selectedAgent.agentDefinitionId)
                 }
-                {...(onSaveProfile === undefined ? {} : { onSaveProfile })}
+                onResetExecution={
+                  onResetExecution === undefined
+                    ? undefined
+                    : (mode) =>
+                        onResetExecution(selectedAgent.agentDefinitionId, mode)
+                }
+                onSaveProfile={onSaveProfile}
                 runtimes={selectedRuntimes}
               />
             ) : tab === "chat" ? (
@@ -581,11 +732,11 @@ export function AgentDirectoryPane({
             ) : tab === "mcp" ? (
               canReadManagedMcp ? (
                 <AgentMcpUsagePane
-                  calls={mcpCalls}
                   error={mcpError}
                   hasEarlier={mcpCursor !== undefined}
                   loading={mcpLoading}
                   onLoadEarlier={() => void loadEarlierMcpUsage()}
+                  servers={mcpServerViews}
                 />
               ) : (
                 <AgentCapabilityPane
@@ -594,6 +745,14 @@ export function AgentDirectoryPane({
                   description="当前 Human 没有读取该 Workspace MCP 审计投影的权限。"
                 />
               )
+            ) : tab === "reminders" ? (
+              <AgentRemindersPane
+                error={remindersError}
+                loading={remindersLoading}
+                onOpenMessage={onOpenMessage}
+                onRetry={() => setRemindersReload((value) => value + 1)}
+                reminders={reminders}
+              />
             ) : tab === "workspace" ? (
               <AgentWorkspaceBrowser
                 key={selectedAgent.agentDefinitionId}
@@ -1041,6 +1200,7 @@ function AgentSidebar({
                 aria-expanded={createMenuOpen}
                 aria-haspopup="menu"
                 aria-label="添加 Agent"
+                className="rah-interaction-flat"
                 disabled={!canCreate}
                 onClick={() => setCreateMenuOpen((current) => !current)}
                 title={
@@ -1093,7 +1253,7 @@ function AgentSidebar({
                   ? "page"
                   : undefined
               }
-              className={`rah-agent-member-row${agent.agentDefinitionId === selectedAgentDefinitionId ? " is-selected" : ""}`}
+              className={`rah-agent-member-row rah-interaction-row${agent.agentDefinitionId === selectedAgentDefinitionId ? " is-selected" : ""}`}
               key={agent.agentDefinitionId}
               onClick={() => onSelect(agent.agentDefinitionId)}
             >
@@ -1253,7 +1413,7 @@ function AgentTabList({
   );
 }
 
-function AgentProfilePane({
+export function AgentProfilePane({
   computerLabel,
   onDiagnostics,
   agent,
@@ -1264,6 +1424,7 @@ function AgentProfilePane({
   loading,
   onManage,
   onEditRuntime,
+  onResetExecution,
   onSaveProfile,
   runtimes,
 }: {
@@ -1277,9 +1438,12 @@ function AgentProfilePane({
   loading: boolean;
   onManage: () => void;
   onEditRuntime: () => void;
-  onSaveProfile?: (input: AgentProfileEditInput) => Promise<void>;
+  onResetExecution?:
+    ((mode: AgentExecutionResetMode) => Promise<void>) | undefined;
+  onSaveProfile?: ((input: AgentProfileEditInput) => Promise<void>) | undefined;
   runtimes: readonly LocalRuntimeInventoryEntry[];
 }) {
+  const [resetOpen, setResetOpen] = useState(false);
   const runtime = runtimes[0];
   const bindingId = detail?.policy.modelIntent.exactBindingIds?.[0];
   const binding = runtime?.modelBindingDescriptors.find(
@@ -1291,7 +1455,7 @@ function AgentProfilePane({
     bindingId ??
     detail?.policy.modelIntent.capabilityClass ??
     "Runtime 默认";
-  const reasoning = detail?.policy.modelIntent.reasoning ?? "默认";
+  const reasoning = detail?.policy.modelIntent.reasoning;
   const creator =
     currentHuman?.principalId === agent.createdBy
       ? currentHuman.handle
@@ -1303,27 +1467,33 @@ function AgentProfilePane({
         canManage={canManage}
         onSaveProfile={onSaveProfile}
       >
-        <div>
-          <h3>{agent.displayName}</h3>
+        <div className="rah-agent-profile-identity">
+          <div className="rah-agent-profile-heading">
+            <h3 title={agent.displayName}>{agent.displayName}</h3>
+            <span className="rah-agent-online-state">
+              <AgentStatusDot
+                className="rah-agent-profile-presence"
+                {...agentPresencePresentation(agent)}
+              />
+              {agentAvailabilityLabel(agent)}
+            </span>
+          </div>
           <p>@{agent.handle}</p>
-          <span className="rah-agent-online-state">
-            <AgentStatusDot
-              className="rah-agent-profile-presence"
-              {...agentPresencePresentation(agent)}
-            />
-            {agentAvailabilityLabel(agent)}
-          </span>
         </div>
       </AgentProfileAvatarEditor>
-      <ProfileField
-        label="显示名称"
+      <AgentProfileFieldEditor
+        agentDefinitionId={agent.agentDefinitionId}
+        revisionId={agent.agentDefinitionRevisionId}
+        field="displayName"
         value={agent.displayName}
-        onEdit={canManage ? onManage : undefined}
+        onSave={canManage ? onSaveProfile : undefined}
       />
-      <ProfileField
-        label="描述"
-        value={agent.description ?? "暂无描述"}
-        onEdit={canManage ? onManage : undefined}
+      <AgentProfileFieldEditor
+        agentDefinitionId={agent.agentDefinitionId}
+        revisionId={agent.agentDefinitionRevisionId}
+        field="description"
+        value={agent.description ?? ""}
+        onSave={canManage ? onSaveProfile : undefined}
       />
       <section className="rah-agent-profile-section rah-agent-info-section">
         <h3>信息</h3>
@@ -1344,14 +1514,10 @@ function AgentProfilePane({
         </dl>
       </section>
       <section className="rah-agent-profile-section rah-agent-runtime-section">
-        <details>
-          <summary>人设指令</summary>
-          <p>{agent.role || "未设置"}</p>
-        </details>
         <h3>
           运行时配置{" "}
           <button
-            className="rah-profile-edit"
+            className="rah-profile-edit rah-interaction-flat"
             aria-label="编辑运行时配置"
             disabled={!canManage}
             onClick={onEditRuntime}
@@ -1367,9 +1533,26 @@ function AgentProfilePane({
               label="运行时"
               tone="cyan"
               value={runtime?.displayName ?? "未绑定"}
+              onEdit={canManage ? onEditRuntime : undefined}
             />
-            <ProfileChip label="模型" tone="lavender" value={model} />
-            <ProfileChip label="推理强度" tone="yellow" value={reasoning} />
+            <ProfileChip
+              label="模型"
+              tone="lavender"
+              value={model}
+              onEdit={canManage ? onEditRuntime : undefined}
+            />
+            <ProfileChip
+              label="推理强度"
+              tone="yellow"
+              value={
+                !reasoning || reasoning === "default"
+                  ? "默认"
+                  : (runtimeReasoningOptions(runtime, bindingId).find(
+                      (option) => option.value === reasoning,
+                    )?.label ?? reasoning)
+              }
+              onEdit={canManage ? onEditRuntime : undefined}
+            />
           </div>
         ) : (
           <p className="rah-agent-profile-status is-error">
@@ -1383,11 +1566,9 @@ function AgentProfilePane({
         ) : null}
       </section>
       <section className="rah-agent-profile-section rah-agent-created-section">
-        <h3>
-          已创建的 AGENT <span>0</span>
-        </h3>
+        <h3>已创建的 AGENT</h3>
         <p className="rah-agent-profile-status">
-          Agent 父子关系 canonical projection 尚未接入。
+          暂不支持查看 Agent 创建的成员。
         </p>
       </section>
       <section className="rah-agent-profile-section rah-agent-skills-section">
@@ -1410,31 +1591,62 @@ function AgentProfilePane({
       <section className="rah-agent-profile-section rah-agent-actions-section">
         <h3>操作</h3>
         <div className="rah-agent-profile-actions">
-          <button disabled={!canManage} onClick={onManage}>
+          <button
+            className="rah-interaction-brutal"
+            disabled={!canManage}
+            onClick={onManage}
+          >
+            <Icon name="settings" />
             管理 Agent
           </button>
-          <button disabled title="显式 restart/session reset 后端合同尚未接入">
+          <button
+            className="rah-interaction-brutal"
+            disabled={!canManage || onResetExecution === undefined}
+            onClick={() => setResetOpen(true)}
+            title={
+              onResetExecution === undefined
+                ? "当前 daemon 未开放安全重启与会话重置"
+                : "选择重新启动或清除 Provider 会话后重启"
+            }
+          >
+            <Icon name="rotate-ccw" />
             重启 / 重置
           </button>
           <button
+            className="rah-interaction-brutal"
             onClick={onDiagnostics}
             title="打开跨 Room 动态，在活动诊断中导出元数据"
           >
+            <Icon name="pulse" />
             查看活动诊断
           </button>
-          <button className="is-orange" disabled title="问题报告合同尚未接入">
+          <button
+            className="rah-interaction-brutal is-orange is-unavailable"
+            disabled
+            title="暂不可用：本地问题报告流程尚未接入，不会向 Raft 发送数据"
+          >
+            <Icon name="bug" />
             报告问题
+            <small>暂不可用</small>
           </button>
           <button
-            className="is-red"
+            className="rah-interaction-brutal is-red"
             disabled={!canManage}
             onClick={onManage}
             title="打开管理窗口；须先暂停并确认无在途工作后才能删除"
           >
+            <Icon name="trash-2" />
             删除 Agent
           </button>
         </div>
       </section>
+      {resetOpen && onResetExecution !== undefined ? (
+        <AgentExecutionResetDialog
+          agentName={agent.displayName}
+          onClose={() => setResetOpen(false)}
+          onConfirm={onResetExecution}
+        />
+      ) : null}
     </section>
   );
 }
@@ -1574,38 +1786,14 @@ function AgentProfileAvatarEditor({
               </button>
             ))}
           </div>
-          {error ? <p role="alert">{error}</p> : null}
+          {error ? (
+            <p className="rah-agent-profile-status is-error" role="alert">
+              {error}
+            </p>
+          ) : null}
         </section>
       ) : null}
     </>
-  );
-}
-
-function ProfileField({
-  label,
-  value,
-  onEdit,
-}: {
-  label: string;
-  value: string;
-  onEdit?: (() => void) | undefined;
-}) {
-  return (
-    <section className="rah-agent-profile-field">
-      <h3>
-        {label}{" "}
-        {onEdit ? (
-          <button
-            className="rah-profile-edit"
-            aria-label={`编辑${label}`}
-            onClick={onEdit}
-          >
-            <Icon name="pencil" />
-          </button>
-        ) : null}
-      </h3>
-      <p className={value === "暂无描述" ? "is-empty" : undefined}>{value}</p>
-    </section>
   );
 }
 
@@ -1613,15 +1801,28 @@ function ProfileChip({
   label,
   tone,
   value,
+  onEdit,
 }: {
   label: string;
   tone: "cyan" | "lavender" | "orange" | "yellow";
   value: string;
+  onEdit?: (() => void) | undefined;
 }) {
   return (
     <div>
       <span>{label}</span>
-      <strong className={`is-${tone}`}>{value}</strong>
+      {onEdit ? (
+        <button
+          className="rah-profile-chip-edit"
+          aria-label={`编辑${label}`}
+          title={`编辑${label}`}
+          onClick={onEdit}
+        >
+          <strong className={`is-${tone}`}>{value}</strong>
+        </button>
+      ) : (
+        <strong className={`is-${tone}`}>{value}</strong>
+      )}
     </div>
   );
 }
@@ -1825,53 +2026,81 @@ function AgentTrajectoryRow({
 }
 
 function AgentMcpUsagePane({
-  calls,
   error,
   hasEarlier,
   loading,
   onLoadEarlier,
+  servers,
 }: {
-  calls: readonly ManagedMcpUsageRecord[];
   error: string | undefined;
   hasEarlier: boolean;
   loading: boolean;
   onLoadEarlier: () => void;
+  servers: readonly AgentMcpServerView[];
 }) {
   return (
     <section className="rah-agent-mcp-pane rah-scroll-main">
       <header>
         <div>
-          <h3>MCP 使用记录</h3>
-          <p>仅显示工具、Room、Run 与终态元数据</p>
+          <h3>MCP</h3>
+          <p>已使用的服务器与工具</p>
         </div>
       </header>
       {error === undefined ? null : (
         <div className="rah-inline-error">{error}</div>
       )}
-      {loading && calls.length === 0 ? (
-        <p className="rah-agent-activity-empty">正在读取使用记录…</p>
-      ) : calls.length === 0 ? (
+      {loading && servers.length === 0 ? (
+        <p className="rah-agent-activity-empty">正在读取 MCP 使用情况…</p>
+      ) : servers.length === 0 ? (
         <AgentCapabilityPane
           icon="code-xml"
           title="暂无 MCP 使用记录"
           description="已分配的 MCP 服务器会自动提供给 Agent，调用后显示在这里。"
         />
       ) : (
-        <div className="rah-agent-mcp-list" aria-live="polite">
-          {calls.map((call) => (
-            <article key={call.managedMcpCallId}>
-              <time>{formatActivityTime(call.createdAt)}</time>
-              <div>
-                <b>{call.serverName}</b>
-                <code>{call.toolName}</code>
+        <div className="rah-agent-mcp-servers" aria-live="polite">
+          {servers.map((server) => (
+            <details key={server.mcpServerId}>
+              <summary>
+                <Icon name="blocks" />
                 <span>
-                  Room {call.roomId} · Run {call.runAttemptId}
+                  <b>{server.serverName}</b>
+                  <small>
+                    上次调用 {formatActivityTime(server.lastUsedAt)} · 共
+                    {server.usageCount} 次
+                  </small>
                 </span>
+                <strong
+                  className={
+                    server.serverEnabled && server.assignmentEnabled
+                      ? "is-enabled"
+                      : "is-disabled"
+                  }
+                >
+                  {server.serverEnabled && server.assignmentEnabled
+                    ? server.failedCount > 0
+                      ? `${server.failedCount} 次失败`
+                      : "已连接"
+                    : "已停用"}
+                </strong>
+              </summary>
+              <div className="rah-agent-mcp-tools">
+                {server.tools.map((tool) => (
+                  <article
+                    key={tool.toolName}
+                    title={tool.description ?? tool.title}
+                  >
+                    <Icon name="code-xml" />
+                    <span>
+                      <code>{tool.title ?? tool.toolName}</code>
+                      {tool.title ? <small>{tool.toolName}</small> : null}
+                      {tool.description ? <p>{tool.description}</p> : null}
+                    </span>
+                    <i>{tool.usageCount} 次</i>
+                  </article>
+                ))}
               </div>
-              <strong className={`is-${call.state}`}>
-                {managedMcpUsageLabel(call)}
-              </strong>
-            </article>
+            </details>
           ))}
         </div>
       )}
@@ -1887,21 +2116,146 @@ function AgentMcpUsagePane({
   );
 }
 
+function AgentRemindersPane({
+  error,
+  loading,
+  onOpenMessage,
+  onRetry,
+  reminders,
+}: {
+  error: string | undefined;
+  loading: boolean;
+  onOpenMessage: (
+    target: Extract<NavigationTarget, { kind: "message" }>,
+  ) => void;
+  onRetry: () => void;
+  reminders: readonly Reminder[];
+}) {
+  return (
+    <section className="rah-agent-reminders-pane rah-scroll-main">
+      {loading ? (
+        <p className="rah-agent-reminders-loading">正在读取…</p>
+      ) : null}
+      {error ? (
+        <div className="rah-agent-reminders-error" role="alert">
+          <strong>提醒读取失败</strong>
+          <span>{error}</span>
+          <button className="btn" onClick={onRetry} type="button">
+            <Icon name="refresh-cw" />
+            重试
+          </button>
+        </div>
+      ) : reminders.length === 0 ? (
+        <div className="rah-agent-reminders-empty">
+          <Icon name="bell" />
+          <strong>暂无提醒</strong>
+          <span>该 Agent 尚未安排提醒。</span>
+        </div>
+      ) : (
+        <div className="rah-agent-reminders-list">
+          {reminders.map((reminder) => {
+            const target = {
+              kind: "message",
+              messageId: reminder.msgId,
+              roomId: reminder.roomId,
+              ...(reminder.threadId === undefined
+                ? {}
+                : { threadId: reminder.threadId }),
+              ...(reminder.rootMessageId === undefined
+                ? {}
+                : { rootMessageId: reminder.rootMessageId }),
+            } satisfies Extract<NavigationTarget, { kind: "message" }>;
+            return (
+              <article key={reminder.reminderId}>
+                <div className="rah-agent-reminder-title">
+                  <strong>{reminder.title}</strong>
+                </div>
+                <div className="rah-agent-reminder-meta">
+                  <span className="rah-agent-reminder-relative">
+                    <Icon name="clock-3" />
+                    {relativeReminderTime(reminder.fireAt)}
+                  </span>
+                  <time dateTime={reminder.fireAt}>
+                    {formatReminderDate(reminder.fireAt)}
+                  </time>
+                  {reminder.recurrence === undefined ? null : (
+                    <span
+                      className="rah-agent-reminder-recurrence"
+                      title={reminder.recurrence.description}
+                    >
+                      <Icon name="repeat" />
+                      {reminder.recurrence.description}
+                    </span>
+                  )}
+                </div>
+                <a
+                  className="rah-agent-reminder-reference"
+                  href={navigationSearch({ target })}
+                  onClick={(event) => {
+                    if (!shouldHandleClientNavigation(event)) return;
+                    event.preventDefault();
+                    onOpenMessage(target);
+                  }}
+                  title={`消息 ${reminder.msgId}`}
+                >
+                  <Icon name="link-2" />
+                  <span>消息 #{reminder.msgId.slice(0, 8)}</span>
+                </a>
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function formatReminderDate(value: string): string {
+  return new Intl.DateTimeFormat("zh-CN", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
+function relativeReminderTime(value: string): string {
+  const deltaSeconds = Math.round(
+    (new Date(value).getTime() - Date.now()) / 1_000,
+  );
+  const absoluteSeconds = Math.abs(deltaSeconds);
+  let amount: number;
+  let unit: Intl.RelativeTimeFormatUnit;
+  if (absoluteSeconds < 60) {
+    amount = deltaSeconds;
+    unit = "second";
+  } else if (absoluteSeconds < 3_600) {
+    amount = Math.round(deltaSeconds / 60);
+    unit = "minute";
+  } else if (absoluteSeconds < 86_400) {
+    amount = Math.round(deltaSeconds / 3_600);
+    unit = "hour";
+  } else {
+    amount = Math.round(deltaSeconds / 86_400);
+    unit = "day";
+  }
+  return new Intl.RelativeTimeFormat("zh-CN", { numeric: "auto" }).format(
+    amount,
+    unit,
+  );
+}
+
 function AgentUnavailableTab({
   tab,
 }: {
-  tab: Exclude<AgentTab, "activity" | "chat" | "mcp" | "profile" | "workspace">;
+  tab: Exclude<
+    AgentTab,
+    "activity" | "chat" | "mcp" | "profile" | "reminders" | "workspace"
+  >;
 }) {
   const content = {
     apps: {
       description: "Agent 应用目录尚未形成 canonical API。",
       icon: "link",
       title: "暂无应用",
-    },
-    reminders: {
-      description: "该 Agent 尚未安排提醒；提醒业务协议尚未接入。",
-      icon: "bell",
-      title: "暂无提醒",
     },
   }[tab];
   return <AgentCapabilityPane {...content} />;
@@ -1927,6 +2281,7 @@ function AgentCapabilityPane({
 
 export function AgentAvatar({
   agent,
+  showStatus = true,
   size,
 }: {
   agent: Pick<
@@ -1938,19 +2293,10 @@ export function AgentAvatar({
     | "connectionStatus"
     | "presence"
   > & { participantId?: string };
-  size: "header" | "profile" | "sidebar";
+  showStatus?: boolean;
+  size: "header" | "profile" | "sidebar" | "member" | "compact";
 }) {
-  const preset =
-    OFFICIAL_AVATAR_PACK.presets[
-      officialAgentAvatarKey(agent.avatarKey, agent.participantId)
-    ] ?? OFFICIAL_AVATAR_PACK.presets[DEFAULT_AGENT_AVATAR];
-  if (preset === undefined) {
-    return (
-      <span className={`rah-agent-avatar is-${size}`} aria-hidden="true">
-        {agent.displayName.slice(0, 1).toUpperCase()}
-      </span>
-    );
-  }
+  const preset = agentAvatarPixels(agent.avatarKey, agent.participantId);
   return (
     <span
       aria-label={`${agent.displayName} 头像`}
@@ -1975,25 +2321,19 @@ export function AgentAvatar({
           }),
         )}
       </span>
-      <AgentStatusDot
-        className="rah-agent-avatar-presence"
-        size={size === "sidebar" ? "sm" : "md"}
-        {...agentPresencePresentation(agent)}
-      />
+      {showStatus ? (
+        <AgentStatusDot
+          className="rah-agent-avatar-presence"
+          size={size === "sidebar" ? "sm" : "md"}
+          {...agentPresencePresentation(agent)}
+        />
+      ) : null}
     </span>
   );
 }
 
 function clampSidebarWidth(width: number): number {
   return Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, width));
-}
-
-function managedMcpUsageLabel(call: ManagedMcpUsageRecord): string {
-  if (call.state === "pending") return "调用中";
-  if (call.state === "failed") {
-    return call.failureCode === "timeout" ? "超时" : "失败";
-  }
-  return call.isError ? "工具错误" : "完成";
 }
 
 function formatActivityTime(timestamp: string): string {

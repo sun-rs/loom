@@ -2,6 +2,7 @@ import { z } from "zod";
 import { IdentifierSchema, TimestampSchema } from "./common.ts";
 import { MessageSchema, PrincipalSchema, RoomSchema } from "./collaboration.ts";
 import { TaskSchema } from "./task.ts";
+import { NavigationTargetSchema } from "./client-navigation.ts";
 
 const Page = {
   cursor: z.string().max(2000).optional(),
@@ -19,7 +20,11 @@ export const GlobalTasksRequestSchema = z
   })
   .strict();
 export const GlobalTaskSchema = z
-  .object({ task: TaskSchema, roomName: z.string() })
+  .object({
+    task: TaskSchema,
+    roomName: z.string(),
+    target: NavigationTargetSchema,
+  })
   .strict();
 export const GlobalTasksResponseSchema = z
   .object({
@@ -52,6 +57,7 @@ export const SearchHitSchema = z
     roomName: z.string(),
     senderName: z.string(),
     rootMessageId: IdentifierSchema.optional(),
+    target: NavigationTargetSchema,
   })
   .strict();
 export const WorkspaceSearchResponseSchema = z
@@ -108,6 +114,7 @@ export const HumanActivityItemSchema = z
     hasMention: z.boolean(),
     replyCount: z.number().int().nonnegative(),
     task: TaskSchema.optional(),
+    target: NavigationTargetSchema,
   })
   .strict();
 export const HumanActivityResponseSchema = z

@@ -167,6 +167,48 @@ test("Activity summary is independent of page size/filter and respects read fron
   }
 });
 
+test("muting a Room suppresses ordinary Activity but preserves exact mentions", () => {
+  const f = fixture();
+  try {
+    f.post(f.channel.roomId, "ordinary update", true);
+    f.post(f.second.roomId, "visible elsewhere", true);
+    const key = `room:${f.channel.roomId}`;
+    f.kernel.humanSidebar.patch(f.actor, {
+      workspaceId: f.workspaceId,
+      expectedVersion: 0,
+      idempotencyKey: "mute-channel",
+      patch: { mutedActivity: [key] },
+    });
+    let activity = f.kernel.listHumanActivity(f.actor, {
+      workspaceId: f.workspaceId,
+    });
+    assert.equal(
+      activity.items.some((item) => item.roomId === f.channel.roomId),
+      false,
+    );
+    assert.equal(
+      activity.summary?.rooms.some((room) => room.roomId === f.channel.roomId),
+      false,
+    );
+    f.post(f.channel.roomId, "@human please review", true);
+    activity = f.kernel.listHumanActivity(f.actor, {
+      workspaceId: f.workspaceId,
+    });
+    assert.equal(
+      activity.items.find((item) => item.roomId === f.channel.roomId)
+        ?.hasMention,
+      true,
+    );
+    assert.equal(
+      activity.summary?.rooms.find((room) => room.roomId === f.channel.roomId)
+        ?.hasMention,
+      true,
+    );
+  } finally {
+    f.close();
+  }
+});
+
 test("diagnostic short references require an authorized Room and resolve to exact context", () => {
   const f = fixture();
   try {
@@ -237,6 +279,112 @@ test("Raft Search scopes filter authors and exact self mentions even without key
   }
 });
 
+test("Web Push projection defaults to DM/mention and supports a muted-aware all-message Room opt-in", () => {
+  const f = fixture();
+  try {
+    const ordinary = f.post(f.channel.roomId, "ordinary channel update", true);
+    assert.deepEqual(
+      f.kernel.humanNotifications.webPush.project({
+        roomId: f.channel.roomId,
+        roomSeq: ordinary.event.roomSeq,
+      }),
+      [],
+    );
+    f.kernel.humanSidebar.patch(f.actor, {
+      workspaceId: f.workspaceId,
+      expectedVersion: 0,
+      idempotencyKey: "notify-all-channel",
+      patch: { notifyAllMessages: [`room:${f.channel.roomId}`] },
+    });
+    const optedIn = f.post(f.channel.roomId, "opted-in channel update", true);
+    assert.equal(
+      f.kernel.humanNotifications.webPush.project({
+        roomId: f.channel.roomId,
+        roomSeq: optedIn.event.roomSeq,
+      }).length,
+      1,
+    );
+    f.kernel.humanSidebar.patch(f.actor, {
+      workspaceId: f.workspaceId,
+      expectedVersion: 1,
+      idempotencyKey: "mute-notify-all-channel",
+      patch: { mutedActivity: [`room:${f.channel.roomId}`] },
+    });
+    const mutedOrdinary = f.post(
+      f.channel.roomId,
+      "muted opted-in update",
+      true,
+    );
+    assert.deepEqual(
+      f.kernel.humanNotifications.webPush.project({
+        roomId: f.channel.roomId,
+        roomSeq: mutedOrdinary.event.roomSeq,
+      }),
+      [],
+    );
+    const mention = f.post(f.channel.roomId, "@human please review", true);
+    const mentionPush = f.kernel.humanNotifications.webPush.project({
+      roomId: f.channel.roomId,
+      roomSeq: mention.event.roomSeq,
+    });
+    assert.equal(mentionPush.length, 1);
+    assert.equal(mentionPush[0]?.principalId, f.human.principal.principalId);
+    assert.equal(mentionPush[0]?.payload.target.kind, "message");
+    const direct = f.post(f.direct.roomId, "private update", true);
+    const directPush = f.kernel.humanNotifications.webPush.project({
+      roomId: f.direct.roomId,
+      roomSeq: direct.event.roomSeq,
+    });
+    assert.equal(directPush.length, 1);
+    assert.equal(directPush[0]?.payload.tag, `room:${f.direct.roomId}`);
+    assert.equal(
+      f.kernel.humanNotifications.webPush.project({
+        roomId: f.direct.roomId,
+        roomSeq: direct.event.roomSeq + 99,
+      }).length,
+      0,
+    );
+  } finally {
+    f.close();
+  }
+});
+
+test("Raft server mute suppresses Web Push for the whole Workspace without muting Activity", () => {
+  const f = fixture();
+  try {
+    f.kernel.humanSidebar.patch(f.actor, {
+      workspaceId: f.workspaceId,
+      expectedVersion: 0,
+      idempotencyKey: "mute-workspace-push",
+      patch: { mutedWorkspace: true },
+    });
+    const direct = f.post(f.direct.roomId, "private update", true);
+    const mention = f.post(f.channel.roomId, "@human please review", true);
+    assert.deepEqual(
+      f.kernel.humanNotifications.webPush.project({
+        roomId: f.direct.roomId,
+        roomSeq: direct.event.roomSeq,
+      }),
+      [],
+    );
+    assert.deepEqual(
+      f.kernel.humanNotifications.webPush.project({
+        roomId: f.channel.roomId,
+        roomSeq: mention.event.roomSeq,
+      }),
+      [],
+    );
+    assert.equal(
+      f.kernel.listHumanActivity(f.actor, {
+        workspaceId: f.workspaceId,
+      }).total > 0,
+      true,
+    );
+  } finally {
+    f.close();
+  }
+});
+
 test("default relevance and recent are distinct, stable across pages, and bound to scope", () => {
   const f = fixture();
   try {
@@ -262,6 +410,30 @@ test("default relevance and recent are distinct, stable across pages, and bound 
         sort: "recent",
         cursor: first.nextCursor,
       }),
+    );
+  } finally {
+    f.close();
+  }
+});
+
+test("Search uses the maintained FTS index for long literals and preserves short CJK substring fallback", () => {
+  const f = fixture();
+  try {
+    f.post(f.channel.roomId, "architecture memory architecture durable");
+    f.post(f.channel.roomId, "内存 索引");
+    assert.equal(
+      f.kernel.searchWorkspace(f.actor, {
+        workspaceId: f.workspaceId,
+        query: "architecture memory",
+      }).total,
+      1,
+    );
+    assert.equal(
+      f.kernel.searchWorkspace(f.actor, {
+        workspaceId: f.workspaceId,
+        query: "内存",
+      }).total,
+      1,
     );
   } finally {
     f.close();

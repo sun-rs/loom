@@ -1,4 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
+import type { Attachment } from "@rah-os/protocol";
 
 import { ConflictError, ForbiddenError, NotFoundError } from "./errors.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
@@ -212,13 +213,19 @@ export function createTaskThreadReply(
   database: DatabaseSync,
   createId: CreateId,
   taskRow: Row,
-  input: { actorId: string; body: string; createdAt: string; roomId: string },
+  input: {
+    actorId: string;
+    attachments?: readonly Attachment[];
+    body: string;
+    createdAt: string;
+    roomId: string;
+  },
 ): { messageId: string; threadId: string } {
   const messageId = createId("message");
   const threadId = text(taskRow, "thread_id");
   database
     .prepare(
-      "INSERT INTO messages(message_id, room_id, actor_id, thread_id, body, created_at) VALUES(?, ?, ?, ?, ?, ?)",
+      "INSERT INTO messages(message_id, room_id, actor_id, thread_id, body, attachments_json, created_at) VALUES(?, ?, ?, ?, ?, ?, ?)",
     )
     .run(
       messageId,
@@ -226,6 +233,7 @@ export function createTaskThreadReply(
       input.actorId,
       threadId,
       input.body,
+      JSON.stringify(input.attachments ?? []),
       input.createdAt,
     );
   database

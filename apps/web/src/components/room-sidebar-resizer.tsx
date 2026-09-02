@@ -15,9 +15,11 @@ type DragOrigin = {
 
 export function RoomSidebarResizer({
   onWidthChange,
+  onWidthCommit,
   width,
 }: {
   onWidthChange: (width: number) => void;
+  onWidthCommit?: (width: number) => void;
   width: number;
 }) {
   const dragOrigin = useRef<DragOrigin | undefined>(undefined);
@@ -27,6 +29,7 @@ export function RoomSidebarResizer({
     if (dragOrigin.current?.pointerId !== event.pointerId) return;
     dragOrigin.current = undefined;
     setDragging(false);
+    onWidthCommit?.(width);
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
@@ -37,6 +40,7 @@ export function RoomSidebarResizer({
     if (nextWidth === undefined) return;
     event.preventDefault();
     onWidthChange(nextWidth);
+    onWidthCommit?.(nextWidth);
   };
 
   return (

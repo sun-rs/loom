@@ -1,5 +1,5 @@
 // Raft JI/Z6, index-BoAC7nSE.js @1855376. Keys only: exact visual grids/palette
-// remain ui-tokens assets. finch/mug are upstream reserved, not ordinary choices.
+// remain ui-tokens assets. finch/mug are upstream reserved, not auto-allocated.
 export const OFFICIAL_AGENT_AVATAR_KEYS: readonly string[] = [
   "robot",
   "cat",
@@ -18,12 +18,10 @@ export const OFFICIAL_AGENT_AVATAR_KEYS: readonly string[] = [
   "bell",
   "tree",
 ];
-
 export const OFFICIAL_RESERVED_AVATAR_KEYS: readonly string[] = [
   "finch",
   "mug",
 ];
-
 export function officialAgentAvatarKey(
   key: string | undefined,
   participantId?: string,
@@ -43,6 +41,7 @@ export function officialAgentAvatarKey(
     opencode: "alien",
   };
   if (value && legacy[value]) return legacy[value];
+  // Compatibility selects a fixed library entry, never synthesizes pixels.
   let hash = 0;
   for (const c of value ?? participantId ?? "robot")
     hash = (Math.imul(hash, 31) + c.charCodeAt(0)) >>> 0;

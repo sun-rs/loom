@@ -10,6 +10,7 @@ import {
 } from "@rah-os/protocol";
 
 import { canonicalDigest } from "./canonical-digest.ts";
+import { allocateAgentAvatarKey } from "./agent-avatar-allocation.ts";
 import {
   ConflictError,
   ForbiddenError,
@@ -244,9 +245,9 @@ export function provisionWorkspaceAgentTransaction(
   });
 
   const definitionContent: AgentDefinitionContent = {
-    ...(normalized.avatarKey === undefined
-      ? {}
-      : { avatarKey: normalized.avatarKey }),
+    avatarKey:
+      normalized.avatarKey ??
+      allocateAgentAvatarKey(owner.database, input.controlRoomId),
     ...(normalized.description === undefined
       ? {}
       : { description: normalized.description }),

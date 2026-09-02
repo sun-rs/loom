@@ -236,7 +236,7 @@ if (args.join(" ") === "debug models --bundled") {
   await browser.command("Page.reload", { ignoreCache: true });
   await waitForBrowserValue(
     browser,
-    `location.pathname !== "/_rah/pair" && document.querySelector(".channel-title h1")?.textContent?.trim() === "Agent Council"`,
+    `location.pathname !== "/_rah/pair" && document.querySelector(".rah-settings-page-head h1")?.textContent?.trim() === "局域网设备" && document.body.innerText.includes("Chrome Gate") && document.body.innerText.includes("当前设备")`,
     { description: "persistent paired LAN session", timeoutMs: 20_000 },
   );
 

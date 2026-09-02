@@ -7,7 +7,7 @@ import {
   type Server,
   type ServerResponse,
 } from "node:http";
-import { randomBytes, timingSafeEqual } from "node:crypto";
+import { timingSafeEqual } from "node:crypto";
 import {
   basename,
   extname,
@@ -42,7 +42,7 @@ export class LocalWorkbenchGateway {
   readonly #accessToken: string;
   readonly #daemonOrigin: URL;
   readonly #port: number;
-  readonly #sessionToken = randomBytes(32).toString("base64url");
+  readonly #sessionToken: string;
   readonly #staticDirectory: string;
   #origin: string | undefined;
   #server: Server | undefined;
@@ -51,6 +51,7 @@ export class LocalWorkbenchGateway {
     accessToken: string;
     daemonOrigin: string;
     port: number;
+    sessionToken: string;
     staticDirectory: string;
   }) {
     if (input.accessToken.trim().length === 0) {
@@ -66,6 +67,9 @@ export class LocalWorkbenchGateway {
     if (!isAbsolute(input.staticDirectory)) {
       throw new Error("local workbench static directory must be absolute");
     }
+    if (!/^[A-Za-z0-9_-]{43}$/u.test(input.sessionToken)) {
+      throw new Error("local workbench session token is malformed");
+    }
     const daemonOrigin = new URL(input.daemonOrigin);
     if (
       daemonOrigin.protocol !== "http:" ||
@@ -79,6 +83,7 @@ export class LocalWorkbenchGateway {
     this.#accessToken = input.accessToken;
     this.#daemonOrigin = daemonOrigin;
     this.#port = input.port;
+    this.#sessionToken = input.sessionToken;
     this.#staticDirectory = resolve(input.staticDirectory);
   }
 
@@ -159,19 +164,32 @@ export class LocalWorkbenchGateway {
     }
     if (isApiPath(requestUrl.pathname)) {
       if (!this.#hasSession(request.headers.cookie)) {
-        sendText(response, 401, "Local workbench session required");
+        if (this.#mayRenewSession(request)) this.#setSessionCookie(response);
+        sendJson(response, 401, {
+          error: {
+            code: "session_expired",
+            message: "本地工作台会话已更新，正在重新连接",
+          },
+        });
         return;
       }
       const method = request.method ?? "GET";
       if (!SAFE_METHODS.has(method) && request.headers.origin !== this.origin) {
-        sendText(response, 403, "Cross-origin mutation rejected");
+        sendJson(response, 403, {
+          error: {
+            code: "forbidden",
+            message: "Cross-origin mutation rejected",
+          },
+        });
         return;
       }
       await this.#proxy(request, response, requestUrl);
       return;
     }
     if (/^\/v\d+(?:\/|$)/u.test(requestUrl.pathname)) {
-      sendText(response, 404, "Unknown API route");
+      sendJson(response, 404, {
+        error: { code: "not_found", message: "Unknown API route" },
+      });
       return;
     }
     if (requestUrl.pathname.startsWith("/_rah/")) {
@@ -192,6 +210,20 @@ export class LocalWorkbenchGateway {
     return (
       expectedBytes.length === suppliedBytes.length &&
       timingSafeEqual(expectedBytes, suppliedBytes)
+    );
+  }
+
+  #mayRenewSession(request: IncomingMessage): boolean {
+    return (
+      request.headers.origin === this.origin ||
+      request.headers["sec-fetch-site"] === "same-origin"
+    );
+  }
+
+  #setSessionCookie(response: ServerResponse): void {
+    response.setHeader(
+      "set-cookie",
+      `${SESSION_COOKIE}=${this.#sessionToken}; HttpOnly; SameSite=Strict; Path=/`,
     );
   }
 
@@ -268,10 +300,7 @@ export class LocalWorkbenchGateway {
     response.setHeader("content-security-policy", CONTENT_SECURITY_POLICY);
     if (isIndex) {
       response.setHeader("cache-control", "no-store");
-      response.setHeader(
-        "set-cookie",
-        `${SESSION_COOKIE}=${this.#sessionToken}; HttpOnly; SameSite=Strict; Path=/`,
-      );
+      this.#setSessionCookie(response);
     } else {
       response.setHeader(
         "cache-control",

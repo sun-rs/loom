@@ -1,0 +1,215 @@
+/*
+ * Product-owned interaction state protocol.
+ *
+ * The families below are the narrow RAH projection of Raft's current web
+ * primitives (Button, btn-flat-sm, settings/member rows and segmented
+ * controls). Geometry remains owned by each surface; this file owns only the
+ * pointer, hover, focus, press, selected and disabled state grammar.
+ */
+.rah-product-shell {
+  --rah-interaction-transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --rah-press-transition: 100ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Match Raft/Tailwind preflight so an unclassified button cannot leak the
+   browser's native gray/outset presentation. :where keeps every named
+   component primitive authoritative. */
+:where(.rah-product-shell) :where(button) {
+  appearance: none;
+  background-color: transparent;
+  background-image: none;
+  border: 0 solid transparent;
+  border-radius: 0;
+  color: inherit;
+  font: inherit;
+}
+
+:where(.rah-product-shell) :where(button:not(:disabled)) {
+  cursor: pointer;
+}
+
+/* The Computer/Workspace mark is Raft's 100ms shadow-only trigger, not a
+   generic brutal button: it keeps its position while the shadow grows. */
+.rah-product-shell .rail-logo {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rah-product-shell .rail-logo:hover:not(:disabled) {
+  box-shadow: var(--shadow-m);
+}
+
+.rah-product-shell :is(.sq-btn, .send-btn) {
+  transform: translate(0, 0);
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rah-product-shell :is(.sq-btn, .send-btn):hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.rah-product-shell :is(.sq-btn, .send-btn):active:not(:disabled) {
+  transform: translate(1px, 1px);
+}
+
+/* Current Raft Button primitive: 100ms cubic motion, lift on hover, and a
+   one-pixel press. This upgrades legacy `.btn` call sites without letting
+   pages invent a second button state machine. */
+.rah-product-shell .btn {
+  transform: translate(0, 0);
+  transition: all var(--rah-press-transition);
+}
+
+.rah-product-shell .btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-m);
+}
+
+.rah-product-shell .btn:active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: var(--shadow-press);
+}
+
+/* Legacy token selectors predate disabled guards. Keep their base hard shadow
+   and neutral position instead of letting hover/active leak through. */
+.rah-product-shell :is(.sq-btn, .send-btn, .btn):disabled:hover {
+  transform: translate(0, 0);
+  box-shadow: var(--shadow-s);
+}
+
+.rah-product-shell .rah-settings-form-actions .btn:disabled {
+  opacity: 0.5;
+}
+
+.rah-product-shell .rah-interaction-row {
+  transition-duration: 150ms;
+  transition-property:
+    color, background-color, border-color, outline-color, text-decoration-color,
+    fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rah-product-shell .rah-interaction-row:not(:disabled) {
+  cursor: pointer;
+}
+
+.rah-product-shell
+  .rah-interaction-row:not(:disabled):not(.is-selected):not(.is-active):hover,
+.rah-product-shell
+  .rah-interaction-row:not(:disabled):not(.is-selected):not(.is-active):active {
+  background: var(--bg);
+  border-color: var(--black);
+  box-shadow: var(--shadow-s);
+}
+
+.rah-product-shell .rah-interaction-row.is-selected,
+.rah-product-shell .rah-interaction-row.is-active {
+  transition: none;
+}
+
+.rah-product-shell .rah-interaction-flat {
+  background: transparent;
+  border: 0;
+  transition:
+    color var(--rah-press-transition),
+    background-color var(--rah-press-transition);
+}
+
+.rah-product-shell .rah-interaction-flat:not(:disabled) {
+  cursor: pointer;
+}
+
+.rah-product-shell .rah-interaction-flat:hover:not(:disabled),
+.rah-product-shell .rah-interaction-flat:focus-visible:not(:disabled) {
+  background: var(--ink-05);
+  color: var(--ink);
+}
+
+.rah-product-shell .rah-interaction-flat:active:not(:disabled) {
+  background: var(--ink-10);
+}
+
+.rah-product-shell .rah-interaction-brutal {
+  transform: translate(0, 0);
+  transition: all var(--rah-press-transition);
+}
+
+.rah-product-shell .rah-interaction-brutal:not(:disabled) {
+  cursor: pointer;
+}
+
+.rah-product-shell .rah-interaction-brutal:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-m);
+}
+
+.rah-product-shell .rah-interaction-brutal:active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: var(--shadow-press);
+}
+
+.rah-product-shell .rah-interaction-segment {
+  transition: none;
+}
+
+.rah-product-shell .rah-interaction-segment:not(:disabled) {
+  cursor: pointer;
+}
+
+.rah-product-shell .rah-interaction-segment:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--yellow) 30%, var(--bg));
+}
+
+.rah-product-shell .rah-interaction-segment[aria-checked="true"],
+.rah-product-shell .rah-interaction-segment[aria-pressed="true"] {
+  background: var(--yellow);
+}
+
+/* Current Raft's SegmentedControl and reorderable conversation tabs change
+   immediately. Tabs deliberately keep the default cursor although they stay
+   keyboard/click operable. */
+.rah-product-shell :is(.activity-filter, .rah-interaction-segment, .tab) {
+  transition: none;
+}
+
+.rah-product-shell .tab {
+  cursor: default;
+}
+
+.rah-product-shell .task-filter-trigger {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rah-product-shell .sidebar-bookmarks {
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rah-product-shell .sidebar-bookmarks.is-selected {
+  transition: none;
+}
+
+/* Raft keeps the Activity completion action in the tab order but reveals it
+   on card hover/focus with the 100ms opacity primitive. */
+.rah-product-shell .activity-done {
+  opacity: 0;
+  transition: opacity var(--rah-press-transition);
+}
+
+.rah-product-shell
+  :is(.feed-card:hover, .feed-card:focus-visible, .feed-card:focus-within)
+  .activity-done {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .rah-product-shell .activity-done {
+    opacity: 1;
+  }
+}
+
+/* Tailwind's transition-colors timing is part of the observed Raft shell
+   contract. These legacy primitives predate this protocol but are still the
+   owners for every rail, conversation row and tab instance. */
+.rah-product-shell :is(.rail-btn, .channel-row) {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
