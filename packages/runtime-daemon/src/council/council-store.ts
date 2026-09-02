@@ -17,11 +17,11 @@ import {
   rename as renameAsync,
   rm as rmAsync,
 } from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { setImmediate as yieldToEventLoop } from "node:timers/promises";
+import { resolveRahDataHome } from "../rah-paths.mjs";
 import type {
   CouncilAgent,
   CouncilAgentConfig,
@@ -79,12 +79,8 @@ export type CouncilControlMessage = {
 
 const CLAIM_TTL_MS = 10 * 60 * 1000;
 
-function resolveRahHome(): string {
-  return process.env.RAH_HOME ?? path.join(os.homedir(), ".rah");
-}
-
 function defaultStoreFilePath(): string {
-  return path.join(resolveRahHome(), "council", "councils.json");
+  return path.join(resolveRahDataHome(), "council", "councils.json");
 }
 
 function quarantineCorruptStoreFile(filePath: string, error: unknown): void {

@@ -1,12 +1,12 @@
 import { mkdir, rename, writeFile } from "node:fs/promises";
 import { existsSync, mkdirSync, readFileSync, renameSync } from "node:fs";
 import { randomUUID } from "node:crypto";
-import os from "node:os";
 import path from "node:path";
 import type { ManagedSession, StoredSessionRef, WorkbenchPinnedItemRef } from "@rah/runtime-protocol";
 import { conversationStateFromRuntimeState } from "@rah/runtime-protocol";
 import type { StoredSessionState } from "./session-store";
 import { canonicalDirectoryKey, isReadOnlyReplaySession } from "./workbench-directory-utils";
+import { resolveRahDataHome } from "./rah-paths.mjs";
 
 const SNAPSHOT_FILE = "workbench-state.json";
 const STORAGE_VERSION = 3;
@@ -145,7 +145,7 @@ function normalizePinnedSidebarItems(value: unknown): WorkbenchPinnedItemRef[] {
 }
 
 function resolveRahHome(): string {
-  return process.env.RAH_HOME ?? path.join(os.homedir(), ".rah");
+  return resolveRahDataHome();
 }
 
 function workbenchSessionRef(state: StoredSessionState): StoredSessionRef | null {

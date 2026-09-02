@@ -12,20 +12,29 @@ import {
   unlinkSync,
   writeFileSync,
 } from "node:fs";
-import { homedir, networkInterfaces } from "node:os";
+import { networkInterfaces } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import process from "node:process";
 import { StringDecoder } from "node:string_decoder";
 import { fileURLToPath } from "node:url";
 import { setTimeout as delay } from "node:timers/promises";
 import { promisify } from "node:util";
+import {
+  createRahMacOSServicePlan,
+  installRahMacOSService,
+  uninstallRahMacOSService,
+} from "../packages/runtime-daemon/src/rah-macos-service.mjs";
+import {
+  resolveRahDataHome,
+  resolveRahRuntimeHome as resolveRahRuntimeHomePath,
+} from "../packages/runtime-daemon/src/rah-paths.mjs";
 
 const execFileAsync = promisify(execFile);
 
 const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const DEFAULT_DAEMON_URL = "http://127.0.0.1:43111";
 const DEFAULT_DAEMON_HOST = process.env.RAH_HOST?.trim() || "0.0.0.0";
-const MANAGEMENT_COMMANDS = new Set(["start", "status", "stop", "restart", "logs", "pair", "close", "archive"]);
+const MANAGEMENT_COMMANDS = new Set(["start", "status", "stop", "restart", "logs", "pair", "close", "archive", "service-install", "service-uninstall"]);
 const CLIENT_INDEX_PATH = join(ROOT_DIR, "packages", "client-web", "dist", "index.html");
 const VOLATILE_CODEX_PARENT_ENV_KEYS = new Set([
   "CODEX_CI",
@@ -44,6 +53,8 @@ function printUsage() {
       "  rah logs [--follow]",
       "  rah pair",
       "  rah close <rahSessionId>",
+      "  rah service-install [--replace]",
+      "  rah service-uninstall",
       "  rah council-mcp --council <councilId> --actor <actorId>",
       "",
       "Options:",
@@ -51,6 +62,7 @@ function printUsage() {
       "  --no-build          Skip web build for rah start",
       "  --no-open           Do not open the browser for rah start",
       "  --follow, -f        Follow logs for rah logs",
+      "  --replace           Replace an existing macOS LaunchAgent",
       "  --help              Show this help",
       "",
       "Source workflow:",
@@ -66,9 +78,13 @@ function printUsage() {
 function parseManagementArgs(command, argv) {
   let daemonUrl = DEFAULT_DAEMON_URL;
   let daemonUrlExplicit = false;
-  let build = command === "start" || command === "restart";
+  let build =
+    command === "start" ||
+    command === "restart" ||
+    command === "service-install";
   let open = command === "start";
   let follow = false;
+  let replace = false;
   let sessionId;
   const rest = [...argv];
   if (command === "close" || command === "archive") {
@@ -104,6 +120,10 @@ function parseManagementArgs(command, argv) {
       follow = true;
       continue;
     }
+    if (option === "--replace" && command === "service-install") {
+      replace = true;
+      continue;
+    }
     throw new Error(`Unknown argument: ${option}`);
   }
   return {
@@ -113,6 +133,7 @@ function parseManagementArgs(command, argv) {
     build,
     open,
     follow,
+    replace,
     ...(sessionId ? { sessionId } : {}),
   };
 }
@@ -194,12 +215,11 @@ function daemonPort(daemonUrl) {
 }
 
 function resolveRahRuntimeHome() {
-  return process.env.RAH_HOME ? resolve(process.env.RAH_HOME) : join(homedir(), ".rah", "runtime-daemon");
+  return resolveRahRuntimeHomePath();
 }
 
 function resolveRahAuthHome() {
-  const rahHome = process.env.RAH_HOME ? resolve(process.env.RAH_HOME) : join(homedir(), ".rah");
-  return join(rahHome, "auth");
+  return join(resolveRahDataHome(), "auth");
 }
 
 function readManagementToken() {
@@ -600,6 +620,7 @@ function daemonEnv(port) {
   }
   env.RAH_HOST = DEFAULT_DAEMON_HOST;
   env.RAH_PORT = port;
+  env.RAH_DATA_HOME = resolveRahDataHome({ environment: env });
   return env;
 }
 
@@ -836,6 +857,49 @@ async function showLogs(daemonUrl, follow) {
 }
 
 async function handleManagementCommand(parsed) {
+  if (parsed.command === "service-install") {
+    if (process.platform !== "darwin") {
+      throw new Error("RAH service installation currently requires macOS.");
+    }
+    if (parsed.build) await buildWebClient();
+    const running = await currentRuntimeIdentity(parsed.daemonUrl);
+    if (running && !parsed.replace) {
+      throw new Error(
+        "A source-managed RAH daemon is already running; pass --replace to replace it with the service.",
+      );
+    }
+    const plan = createRahMacOSServicePlan({
+      environment: process.env,
+      host: DEFAULT_DAEMON_HOST,
+      installRoot: ROOT_DIR,
+      port: Number.parseInt(daemonPort(parsed.daemonUrl), 10),
+    });
+    if (running) await stopManagedDaemon(parsed.daemonUrl);
+    const result = await installRahMacOSService({
+      plan,
+      replaceExisting: parsed.replace,
+    });
+    process.stdout.write(
+      `[rah] service ${result.kind}; durable data remains at ${result.dataRoot}\n`,
+    );
+    return;
+  }
+  if (parsed.command === "service-uninstall") {
+    if (process.platform !== "darwin") {
+      throw new Error("RAH service removal currently requires macOS.");
+    }
+    const plan = createRahMacOSServicePlan({
+      environment: process.env,
+      host: DEFAULT_DAEMON_HOST,
+      installRoot: ROOT_DIR,
+      port: Number.parseInt(daemonPort(parsed.daemonUrl), 10),
+    });
+    const result = await uninstallRahMacOSService({ plan });
+    process.stdout.write(
+      `[rah] service uninstalled; durable data preserved at ${result.dataRootPreserved}\n`,
+    );
+    return;
+  }
   if (parsed.command === "start") {
     await ensureDaemon(parsed.daemonUrl, { build: parsed.build, verbose: true });
     process.stdout.write(`Local: ${parsed.daemonUrl.replace(/\/$/, "")}/\n`);

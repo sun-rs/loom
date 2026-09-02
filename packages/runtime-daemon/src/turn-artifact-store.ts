@@ -8,7 +8,6 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { createHash, randomUUID } from "node:crypto";
-import os from "node:os";
 import path from "node:path";
 import type {
   ConversationTurnFileChangesProjection,
@@ -17,6 +16,7 @@ import type {
   TurnFileDiffResponse,
 } from "@rah/runtime-protocol";
 import { parseUnifiedDiff } from "./unified-diff-summary";
+import { resolveRahDataHome } from "./rah-paths.mjs";
 
 const ARTIFACT_VERSION = 2;
 const DEFAULT_MAX_FILE_BYTES = 512 * 1024;
@@ -90,7 +90,7 @@ export function turnArtifactOwnerKey(
 }
 
 function resolveRahHome(): string {
-  return process.env.RAH_HOME ?? path.join(os.homedir(), ".rah");
+  return resolveRahDataHome();
 }
 
 function digest(value: string, length = 32): string {

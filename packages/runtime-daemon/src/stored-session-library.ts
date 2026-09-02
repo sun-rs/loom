@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, renameSync } from "node:fs";
 import { rename, writeFile } from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
 import type {
   ProviderKind,
@@ -9,6 +8,7 @@ import type {
   StoredSessionIdentity,
   StoredSessionRef,
 } from "@rah/runtime-protocol";
+import { resolveRahDataHome } from "./rah-paths.mjs";
 
 const STORAGE_VERSION = 1;
 const STORAGE_FILE = "session-library.json";
@@ -28,7 +28,7 @@ interface StoredSessionLibraryFile {
 }
 
 function resolveRahHome(): string {
-  return process.env.RAH_HOME ?? path.join(os.homedir(), ".rah");
+  return resolveRahDataHome();
 }
 
 function identityKey(identity: StoredSessionIdentity): string {

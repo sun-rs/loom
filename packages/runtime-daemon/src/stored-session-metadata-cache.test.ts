@@ -37,7 +37,11 @@ test("catalog startup ignores snapshots and metadata from an older visibility co
   const previousRahHome = process.env.RAH_HOME;
   process.env.RAH_HOME = tempDir;
   try {
-    const cacheDir = path.join(tempDir, "stored-session-cache");
+    const cacheDir = path.join(
+      tempDir,
+      "runtime-daemon",
+      "stored-session-cache",
+    );
     mkdirSync(cacheDir, { recursive: true });
     writeFileSync(
       path.join(cacheDir, "catalog.json"),
@@ -125,7 +129,12 @@ test("catalog snapshot load and persistence enforce one canonical row per identi
     assert.equal(loaded[0]?.storagePath, "/history/duplicate.jsonl");
     const persisted = JSON.parse(
       readFileSync(
-        path.join(tempDir, "stored-session-cache", "catalog.json"),
+        path.join(
+          tempDir,
+          "runtime-daemon",
+          "stored-session-cache",
+          "catalog.json",
+        ),
         "utf8",
       ),
     ) as { records: StoredSessionCatalogRecord[] };

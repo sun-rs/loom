@@ -1,8 +1,8 @@
 import { mkdir, rename, writeFile } from "node:fs/promises";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import type { RuntimeCompatibilityNoticeStateResponse } from "@rah/runtime-protocol";
+import { resolveRahRuntimeHome } from "./rah-paths.mjs";
 
 const NOTICE_PREFERENCES_FILE = "workbench-notice-preferences.json";
 const STORAGE_VERSION = 1;
@@ -14,7 +14,7 @@ type WorkbenchNoticePreferencesFile = {
 };
 
 function resolveDaemonDir(): string {
-  return path.join(process.env.RAH_HOME ?? path.join(os.homedir(), ".rah"), "runtime-daemon");
+  return resolveRahRuntimeHome();
 }
 
 function validFutureTimestamp(value: unknown, now: Date): string | undefined {

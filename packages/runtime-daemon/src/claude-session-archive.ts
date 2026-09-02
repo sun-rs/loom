@@ -25,6 +25,7 @@ import {
 } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { resolveRahDataHome } from "./rah-paths.mjs";
 import type { StoredSessionRef } from "@rah/runtime-protocol";
 import type { ClaudeStoredSessionRecord } from "./claude-session-files";
 import { movePathToTrash } from "./trash";
@@ -53,7 +54,7 @@ interface ClaudeSessionArchiveManifest {
 }
 
 function resolveRahRoot(): string {
-  return process.env.RAH_HOME ?? path.join(os.homedir(), ".rah");
+  return resolveRahDataHome();
 }
 
 function resolveClaudeConfigRoot(): string {

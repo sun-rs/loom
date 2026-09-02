@@ -3294,7 +3294,9 @@ def main() -> int:
         codex_cache_matches: list[dict[str, Any]] = []
         try:
             cache = json.loads(
-                (rah_home / "stored-session-cache" / "codex.json").read_text(encoding="utf-8")
+                (rah_home / "runtime-daemon" / "stored-session-cache" / "codex.json").read_text(
+                    encoding="utf-8"
+                )
             )
             codex_cache_matches = [
                 {"path": path, **entry}

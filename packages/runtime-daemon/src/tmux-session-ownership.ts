@@ -1,14 +1,14 @@
 import { createHash } from "node:crypto";
-import os from "node:os";
 import path from "node:path";
 
 import type { MuxSessionState } from "./mux-runtime";
+import { resolveRahDataHome } from "./rah-paths.mjs";
 
 export const RAH_TMUX_OWNER_SCOPE_OPTION = "@rah_owner_scope";
 export const RAH_TMUX_OWNER_PID_OPTION = "@rah_owner_pid";
 
 export function resolveRahTmuxOwnerScope(rahHome?: string): string {
-  const root = path.resolve(rahHome ?? path.join(os.homedir(), ".rah"));
+  const root = path.resolve(rahHome ?? resolveRahDataHome());
   return createHash("sha256").update(root).digest("hex").slice(0, 20);
 }
 

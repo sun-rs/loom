@@ -43,6 +43,8 @@ test("rah CLI exposes daemon management without local terminal attach commands",
   assert.match(stdout, /rah start/);
   assert.match(stdout, /rah pair/);
   assert.match(stdout, /rah close <rahSessionId>/);
+  assert.match(stdout, /rah service-install \[--replace\]/);
+  assert.match(stdout, /rah service-uninstall/);
   assert.doesNotMatch(stdout, /rah attach/);
   assert.doesNotMatch(stdout, /rah <provider>/);
 
@@ -152,7 +154,11 @@ test("rah status trusts daemon runtime identity and writes a structured pid reco
     assert.match(stdout, new RegExp(`Daemon: running \\(${daemonUrl}\\)`));
     assert.match(stdout, new RegExp(`Managed pid: ${process.pid}`));
 
-    const recordPath = path.join(rahHome, `daemon-${port}.pid`);
+    const recordPath = path.join(
+      rahHome,
+      "runtime-daemon",
+      `daemon-${port}.pid`,
+    );
     const record = JSON.parse(readFileSync(recordPath, "utf8")) as Record<string, unknown>;
     assert.equal(record.schemaVersion, 1);
     assert.equal(record.name, "rah");

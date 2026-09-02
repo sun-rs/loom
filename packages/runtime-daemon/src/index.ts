@@ -14,3 +14,5 @@ export * from "./workbench-state";
 export * from "./workbench-notice-preferences";
 export * from "./runtime-engine";
 export * from "./http-server";
+export * from "./rah-paths.mjs";
+export * from "./rah-macos-service.mjs";

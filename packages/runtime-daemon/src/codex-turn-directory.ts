@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto";
 import { stat } from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
 import type {
   ConversationTurnDirectoryResponse,
@@ -22,6 +21,7 @@ import {
   terminateBackgroundIpcProcess,
   type BackgroundIpcChild,
 } from "./background-ipc-task";
+import { resolveRahRuntimeHome } from "./rah-paths.mjs";
 import {
   HISTORY_WORKLOAD_PRIORITY,
   sharedHistoryWorkloadScheduler,
@@ -31,10 +31,6 @@ const SUMMARY_PAGE_TEXT_BUDGET_BYTES = 4 * 1024 * 1024;
 const TURN_DIRECTORY_RESPONSE_BYTES = 8 * 1024 * 1024;
 const TURN_SUMMARY_RESPONSE_BYTES = 8 * 1024 * 1024;
 const TURN_LOOKUP_RESPONSE_BYTES = 8 * 1024 * 1024;
-
-function resolveRahRuntimeHome(): string {
-  return process.env.RAH_HOME ?? path.join(os.homedir(), ".rah", "runtime-daemon");
-}
 
 function cacheKey(providerSessionId: string): string {
   return createHash("sha256").update(providerSessionId).digest("hex").slice(0, 32);

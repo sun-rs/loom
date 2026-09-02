@@ -1,5 +1,4 @@
 import { createHash, randomUUID } from "node:crypto";
-import os from "node:os";
 import path from "node:path";
 import {
   appendFile,
@@ -15,6 +14,7 @@ import type {
   ProcessOutputAppend,
   ProcessOutputSnapshot,
 } from "@rah/runtime-protocol";
+import { resolveRahDataHome } from "./rah-paths.mjs";
 
 const STORE_VERSION = 1;
 const DEFAULT_MAX_PENDING_BYTES_PER_ITEM = 1024 * 1024;
@@ -81,7 +81,7 @@ export type StoredProcessOutput = {
 };
 
 function resolveRahHome(): string {
-  return process.env.RAH_HOME ?? path.join(os.homedir(), ".rah");
+  return resolveRahDataHome();
 }
 
 function digest(value: string): string {

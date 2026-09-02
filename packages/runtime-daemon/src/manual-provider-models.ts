@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { mkdir, rename, writeFile } from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
 import type {
   AddManualProviderModelRequest,
@@ -14,6 +13,7 @@ import type {
   SessionReasoningOption,
   SessionReasoningOptionKind,
 } from "@rah/runtime-protocol";
+import { resolveRahRuntimeHome } from "./rah-paths.mjs";
 
 const STORAGE_VERSION = 1;
 const SNAPSHOT_FILE = "manual-provider-models.json";
@@ -52,12 +52,8 @@ type ProviderManualOptionSpec = {
   traits: NonNullable<ModelCapabilityProfile["traits"]>;
 };
 
-function resolveRahHome(): string {
-  return process.env.RAH_HOME ?? path.join(os.homedir(), ".rah");
-}
-
 function defaultRootDir(): string {
-  return path.join(resolveRahHome(), "runtime-daemon");
+  return resolveRahRuntimeHome();
 }
 
 async function writeJsonAtomic(pathname: string, value: unknown): Promise<void> {

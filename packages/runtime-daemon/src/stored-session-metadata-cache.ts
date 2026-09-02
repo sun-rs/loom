@@ -9,7 +9,6 @@ import {
   rename as renameAsync,
   rm as rmAsync,
 } from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
@@ -17,6 +16,7 @@ import type { ProviderKind, StoredSessionRef } from "@rah/runtime-protocol";
 import { streamJsonChunks } from "./json-response-stream";
 import { canonicalizeStoredSessionCatalogRecords } from "./stored-session-catalog-reconciliation";
 import type { StoredSessionCatalogRecord } from "./stored-session-catalog-types";
+import { resolveRahRuntimeHome } from "./rah-paths.mjs";
 
 type StoredSessionMetadataCacheEntry = {
   ref: StoredSessionRef;
@@ -34,16 +34,12 @@ type StoredSessionCatalogSnapshotFile = {
   records: readonly StoredSessionCatalogRecord[];
 };
 
-function resolveRahHome(): string {
-  return process.env.RAH_HOME ?? path.join(os.homedir(), ".rah", "runtime-daemon");
-}
-
-function cacheFilePath(provider: ProviderKind, rootDir = resolveRahHome()): string {
+function cacheFilePath(provider: ProviderKind, rootDir = resolveRahRuntimeHome()): string {
   return path.join(rootDir, "stored-session-cache", `${provider}.json`);
 }
 
 function catalogSnapshotPath(): string {
-  return path.join(resolveRahHome(), "stored-session-cache", "catalog.json");
+  return path.join(resolveRahRuntimeHome(), "stored-session-cache", "catalog.json");
 }
 
 function isStoredSessionCatalogRecord(value: unknown): value is StoredSessionCatalogRecord {

@@ -21,6 +21,7 @@ import {
 } from "./tmux-session-ownership";
 import { resolveBackgroundProcessNice } from "./background-process-priority";
 import { runBackgroundCommand } from "./background-command";
+import { resolveRahDataHome } from "./rah-paths.mjs";
 
 const DEFAULT_COMMAND_TIMEOUT_MS = 10_000;
 const SUBSCRIBE_POLL_INTERVAL_MS = 100;
@@ -232,7 +233,11 @@ export class TmuxMuxBackend implements MuxRuntime {
     this.backgroundNice =
       options.backgroundNice ??
       resolveBackgroundProcessNice(this.baseEnv.RAH_BACKGROUND_PROCESS_NICE);
-    this.ownerScope = options.ownerScope ?? resolveRahTmuxOwnerScope(this.baseEnv.RAH_HOME);
+    this.ownerScope =
+      options.ownerScope ??
+      resolveRahTmuxOwnerScope(
+        resolveRahDataHome({ environment: this.baseEnv }),
+      );
     this.ownerPid = options.ownerPid ?? process.pid;
   }
 

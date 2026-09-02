@@ -17,6 +17,7 @@ import {
 } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { resolveRahRuntimeHome } from "../packages/runtime-daemon/src/rah-paths.mjs";
 import { createCodexStdioAppServerClient } from "../packages/runtime-daemon/src/codex-app-server-client";
 import {
   deleteOpenCodeSession,
@@ -395,7 +396,7 @@ function buildManifest(keepIds: string[]): CleanupManifest {
       )
     : [];
   const legacyNames = ["session", "message", "part", "session_diff", "todo"];
-  const runtimeRoot = path.join(home, ".rah", "runtime-daemon");
+  const runtimeRoot = resolveRahRuntimeHome();
   const derivedNames = [
     "conversation-page-cache",
     "turn-directory",
@@ -988,7 +989,7 @@ function finalizeCleanup(auditDir: string): void {
 
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
-  const runtimeRoot = path.join(os.homedir(), ".rah", "runtime-daemon");
+  const runtimeRoot = resolveRahRuntimeHome();
   if (args.finalizeDir) {
     if (args.apply || args.keepIds.length > 0 || args.resumeDir) {
       throw new Error("--finalize cannot be combined with --apply, --keep, or --resume.");

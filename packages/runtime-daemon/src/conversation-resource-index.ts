@@ -8,7 +8,6 @@ import {
   stat,
   writeFile,
 } from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
 import {
   CONVERSATION_RESOURCE_INDEX_PROTOCOL_VERSION,
@@ -20,6 +19,7 @@ import {
   type ConversationTurnsPageResponse,
 } from "@rah/runtime-protocol";
 import { approximateJsonByteLength } from "./bounded-json-size";
+import { resolveRahRuntimeHome } from "./rah-paths.mjs";
 
 type ConversationResourceFields = Pick<
   ConversationResourceIndexResponse,
@@ -88,9 +88,7 @@ const CODEX_ATTACHMENT_PREAMBLE = "# Files mentioned by the user:";
 const CODEX_IMAGE_REFERENCE = "<image ";
 
 function resolvePersistenceRoot(): string {
-  const runtimeHome =
-    process.env.RAH_HOME ?? path.join(os.homedir(), ".rah", "runtime-daemon");
-  return path.join(runtimeHome, "conversation-resource-index");
+  return path.join(resolveRahRuntimeHome(), "conversation-resource-index");
 }
 
 function cacheFileName(sessionId: string): string {

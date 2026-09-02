@@ -292,7 +292,11 @@ describe("codex stored session discovery", () => {
     );
 
     const childStats = statSync(childPath);
-    const cacheDir = path.join(process.env.RAH_HOME!, "stored-session-cache");
+    const cacheDir = path.join(
+      process.env.RAH_HOME!,
+      "runtime-daemon",
+      "stored-session-cache",
+    );
     mkdirSync(cacheDir, { recursive: true });
     writeFileSync(
       path.join(cacheDir, "codex.json"),
@@ -386,7 +390,11 @@ describe("codex stored session discovery", () => {
     );
 
     const childStats = statSync(childPath);
-    const cacheDir = path.join(process.env.RAH_HOME!, "stored-session-cache");
+    const cacheDir = path.join(
+      process.env.RAH_HOME!,
+      "runtime-daemon",
+      "stored-session-cache",
+    );
     mkdirSync(cacheDir, { recursive: true });
     writeFileSync(
       path.join(cacheDir, "codex.json"),
@@ -468,7 +476,11 @@ describe("codex stored session discovery", () => {
     );
 
     const shellStats = statSync(shellPath);
-    const cacheDir = path.join(process.env.RAH_HOME!, "stored-session-cache");
+    const cacheDir = path.join(
+      process.env.RAH_HOME!,
+      "runtime-daemon",
+      "stored-session-cache",
+    );
     mkdirSync(cacheDir, { recursive: true });
     writeFileSync(
       path.join(cacheDir, "codex.json"),
@@ -574,7 +586,11 @@ describe("codex stored session discovery", () => {
     });
 
     const chatStats = statSync(chatPath);
-    const cacheDir = path.join(process.env.RAH_HOME!, "stored-session-cache");
+    const cacheDir = path.join(
+      process.env.RAH_HOME!,
+      "runtime-daemon",
+      "stored-session-cache",
+    );
     mkdirSync(cacheDir, { recursive: true });
     writeFileSync(
       path.join(cacheDir, "codex.json"),

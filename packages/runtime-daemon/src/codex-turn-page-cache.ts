@@ -9,9 +9,9 @@ import {
   stat,
   writeFile,
 } from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
 import type { CodexAppServerTurnsPage } from "./codex-app-server-turns-page";
+import { resolveRahRuntimeHome } from "./rah-paths.mjs";
 
 const CACHE_VERSION = 2;
 const HISTORICAL_BOUNDARY_BYTES = 64 * 1024;
@@ -58,12 +58,6 @@ export type CodexTurnPageCacheOptions = {
   maxDiskBytes?: number;
   maxDiskEntries?: number;
 };
-
-function resolveRahRuntimeHome(): string {
-  return (
-    process.env.RAH_HOME ?? path.join(os.homedir(), ".rah", "runtime-daemon")
-  );
-}
 
 function hash(value: string, length = 32): string {
   return createHash("sha256").update(value).digest("hex").slice(0, length);

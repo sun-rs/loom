@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
-import { homedir } from "node:os";
 import { basename, extname, join, resolve, sep } from "node:path";
 import type {
   SessionInputAttachment,
@@ -10,6 +9,7 @@ import {
   providerHistoryAttachmentReference,
   resolveProviderHistoryAttachment,
 } from "./provider-history-attachments";
+import { resolveRahDataHome } from "./rah-paths.mjs";
 
 export const MAX_DEVICE_ATTACHMENT_BYTES = 25 * 1024 * 1024;
 
@@ -26,7 +26,7 @@ const MAX_CACHED_ATTACHMENT_RECORDS = 2_048;
 const cachedAttachmentRecords = new Map<string, StoredDeviceAttachment>();
 
 function attachmentRoot(): string {
-  return join(process.env.RAH_HOME ?? join(homedir(), ".rah"), "attachments");
+  return join(resolveRahDataHome(), "attachments");
 }
 
 function normalizeMediaType(value: string | undefined): string {

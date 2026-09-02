@@ -460,6 +460,7 @@ test("Codex turn directory bounds navigation previews independently from turn de
     assert.equal(JSON.stringify(directory).includes(`assistant-${"a".repeat(500)}`), false);
     const cacheDir = path.join(
       process.env.RAH_HOME!,
+      "runtime-daemon",
       "turn-directory",
       "codex",
     );

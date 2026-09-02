@@ -1,11 +1,14 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "allowJs": true,
     "allowImportingTsExtensions": true,
+    "checkJs": true,
     "rootDir": "../../packages",
     "outDir": "./dist"
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "src/**/*.mjs"
   ]
 }

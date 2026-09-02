@@ -20,6 +20,7 @@ import {
   codexLaunchSpec,
   opencodeLaunchSpec,
 } from "./provider-diagnostics";
+import { resolveRahDataHome } from "./rah-paths.mjs";
 import {
   buildOpenCodeProviderModelId,
   normalizeOpenCodeOptionValues,
@@ -204,7 +205,7 @@ function configInlineStringTable(values: Record<string, string> | undefined): st
 }
 
 function resolveRahHome(): string {
-  return process.env.RAH_HOME || path.join(homedir(), ".rah");
+  return resolveRahDataHome();
 }
 
 function appendCodexMcpArgs(args: string[], servers: readonly NativeTuiMcpServerSpec[] | undefined): void {

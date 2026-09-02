@@ -14,8 +14,8 @@ import {
   writeFileSync,
 } from "node:fs";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import os from "node:os";
 import path from "node:path";
+import { resolveRahDataHome } from "./rah-paths.mjs";
 import type {
   DeviceAuthStatusResponse,
   ListTrustedDevicesResponse,
@@ -76,9 +76,7 @@ export interface DeviceAuthManagerOptions {
 }
 
 function resolveRahHome(): string {
-  return process.env.RAH_HOME
-    ? path.resolve(process.env.RAH_HOME)
-    : path.join(os.homedir(), ".rah");
+  return resolveRahDataHome();
 }
 
 function tokenHash(token: string): string {
