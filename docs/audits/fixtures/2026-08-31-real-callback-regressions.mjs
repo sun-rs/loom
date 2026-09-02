@@ -440,7 +440,12 @@ function mutationScope() {
     canCreateCurrentWorkspaceRoom: true,
     roomSessionFor: noop,
     sessions: { current: new Map() },
-    client: {},
+    client: {
+      request: async (operation, input) => {
+        assert.equal(operation, "navigation.resolve");
+        return { target: input.target };
+      },
+    },
     consumerPrefix: "audit",
     runRoomMutationAtLatest: () => response.promise,
     browserOpaqueId: () => "audit",
@@ -453,6 +458,7 @@ function mutationScope() {
       nav.state.peek =
         typeof value === "function" ? value(nav.state.peek) : value;
     },
+    setNavigationError: noop,
     setRoomMembersOpen: noop,
     setThreadMessages: noop,
     setThreadHasEarlierReplies: noop,
@@ -601,7 +607,7 @@ for (const latest of ["diagnostic", "DM"])
 test("a new avatar panel selection invalidates an older pending DM instead of being closed by it", async () => {
   const f = mutationScope();
   const direct = callback("openDirectRoom", f.scope)("peer");
-  callback("openAgentPeek", f.scope)("new-agent");
+  await callback("openAgentPeek", f.scope)("new-agent");
   f.response.resolve({ room: { roomId: "late-dm" } });
   await direct;
   assert.equal(f.nav.state.selected, "original-room");

@@ -228,8 +228,8 @@ destructive full。全库门禁仍被非本批 Thread panel 的进行中类型/�
    P6.7 以 daemon 的 `LocalComputerProfileStore` 单独拥有显示名称／描述，heartbeat 仍只拥有 hostname、OS、
    版本与在线观测；详细证据见
    [P6.7 验收审计](../audits/2026-09-03-computer-durable-profile-verification.zh-CN.md)。
-4. **P1.4 永久删除**：只有显式 FK eraser + blob GC receipt + 崩溃恢复全部红转绿后施工；
-   否则保持设计闸。
+4. **P1.4 永久删除**：`C/A/L/D` 已完成；schema 40 的显式 FK eraser、blob GC receipt、
+   SQL 回滚故障注入和启动恢复均已红转绿。正式持久 Workspace 只做确认层取消验收，实际删除只在隔离状态执行。
 5. **P4.2b/P4.3 外部 Agent/OAuth Apps**：共享 credential/grant owner 有可靠上游来源前保持禁用；
    不拿 CLI/MCP/Skill 重命名冒充。
 
@@ -287,16 +287,16 @@ destructive full。全库门禁仍被非本批 Thread panel 的进行中类型/�
 - intentional difference：Raft 允许离开后既有公开 Thread follow 继续通知；RAH 当前把 Room membership 作为历史与 Thread 的统一 ACL，离开后全部从导航移除。确认文案如实说明该收紧。若以后增加 Workspace-Human/public-thread ACL 与自助 `room.join`，必须另立安全设计，不能在通知层绕过 `requireRoomMember`。
 - evidence：定向自动化 `26/26`；隔离真实浏览器 desktop 与 `390×844` 均 `PASS`，390 页面 `scrollWidth=390`，确认层焦点在“离开”。全量 `npm run check`、产品构建、Firefox 150 桌面/移动门禁和依赖审计通过；正式 `4173` 在活动工作审计与一致性备份后重启，最后一名 Human owner 的退出动作正确禁用并显示原因，归档确认 Escape 仅关闭顶层且焦点返回，`390×844` 的 Room 与设置弹层均无横向溢出，console 无 error/warn。`C/A/L/D` 完成。`R` 覆盖可见触发、请求 shape、颜色、文案、loading 与关闭顺序，不宣称未知 Raft Server 事务等同。
 
-### P1.4 频道永久删除（设计闸已落盘，代码未解锁）
+### P1.4 频道永久删除（`C/A/L/D` 完成）
 
 - upstream：冻结 Raft `index-BoAC7nSE.js` 的 store `deleteChannel: DELETE /channels/${id}`；Channel Settings 的红色 `channel-settings-delete-action`；二级 ConfirmDialog 使用 `channel.edit.confirmDelete/deleteAction/deleting`，成功后关闭设置并导航下一 Channel，否则回 Server Settings。中文确认文案为“「{name}」及其中的所有消息都会被永久删除，且无法撤销。”
 - observed contract：删除不是归档的别名，也没有产品内撤销；触发、确认、loading、error 与成功导航必须沿用共享 ConfirmDialog。仅普通 Channel 的有管理权限 Human 可见；direct/control/系统 Room 不走这条命令。Raft 发布前端没有公开 Server 删除事务，所以这里不能声称后端源码移植。
-- 本地引用图审计：当前 schema 有 `29` 个表以 `NO ACTION` 外键直接指向 `rooms`，且 Message/Thread/Task/Run/File 下面还有二级引用；简单 `DELETE FROM rooms` 必然失败，改成级联迁移又会把未知数据面静默纳入破坏范围。`room_files` 的磁盘字节还不属于 SQLite 事务，必须单独处理崩溃窗口。
+- 本地引用图审计：schema 40 有 `32` 条直接 `NO ACTION -> rooms` 外键，沿反向外键图共有 `52` 张表可达。简单 `DELETE FROM rooms` 必然失败，改成级联迁移又会把未知数据面静默纳入破坏范围。动态 `PRAGMA foreign_key_list` 棘轮现在要求每张可达表显式进入 eraser 或 kind invariant；提交前 `PRAGMA foreign_key_check` 必须为空。
 - retention/export/recovery 裁决：对用户可见语义严格跟 Raft——提交成功后立即不可读、不可搜索、不可导航、不可恢复；不增加伪装成撤销的软删除。导出是删除前独立显式动作，不由删除按钮暗中执行；产品内无恢复，只有操作员在停机状态从完整 RAH state 备份恢复整个状态集。正式 `4173` 永不用于删除验收。
-- 拟定 single owner：新增 actor-free `room.delete` 请求与 `room_deletion_receipts`（仅引用 Workspace/actor，`room_id` 为已删除身份文本而非外键）负责幂等回执；独立 `RoomDeletionService` 在一笔 `BEGIN IMMEDIATE` 中校验 manager、freshness、普通 Channel、无 active work，冻结删除清单，按显式拓扑清除 canonical 行并写回执。`RoomKernel` 只薄转发。`RoomFiles` 在提交前返回内容寻址字节清单，提交后由持久 GC receipt 删除无剩余引用的 blob；崩溃只允许“产品已删除但字节待回收”，不允许 UI 重新看见半删除 Room。
-- failure-first 闸：先写 schema/FK 覆盖测试，要求每个新增的 Room 外键表必须被显式纳入 eraser 或声明保留；覆盖重复请求、同 key 异目标、stale seq、direct/control、active Task/InputRequest/Activation/Run/Runtime/MCP、Thread/Reminder/Search/Activity/Saved/Reaction/File 二级引用、事务中断、提交后 GC 中断与重启续收。未全部为红转绿前，UI 删除入口保持不接线。
+- single owner：actor-free `room.delete` 请求与 `room_deletion_receipts`（仅引用 Workspace/actor，`room_id` 为已删除身份文本而非外键）负责幂等回执；`RoomDeletionService` 在一笔 `BEGIN IMMEDIATE` 中校验 manager、freshness、普通 Channel、无 active work，冻结删除清单，按显式拓扑清除 canonical 行并写回执。`RoomKernel` 只薄转发。`RoomFiles` 持有 per-blob GC receipt 和 exact UUID blob/.part reaper；启动及同请求重放会继续 pending/failed 回收。
+- failure-first：schema/FK 覆盖测试、权限/kind/freshness/active-work、重复请求/同 key 异目标、Message/Thread/Search/Activity/Saved/Reaction/File 二级引用、事务中断回滚、提交后 GC 失败及重启续收均已红转绿。Web 入口只在 manager + caught-up + 普通 Channel 条件下解锁，错误停留在确认层且不会投影删除成功。
 - rollback：SQL 提交前任何失败回滚全部 canonical 行；提交后没有业务回滚，只从 durable GC receipt 继续物理字节回收。删除回执不能持有指向被删 Room 的外键，且必须阻止相同 idempotency key 删除另一个 Room。
-- evidence：`R` 已覆盖请求、颜色、文案、loading、关闭与成功导航的前端合同；本地 FK/文件风险审计完成。当前仅 `design`，没有 `C/A/L/D`，不得宣称删除可用。
+- evidence：定向 protocol/kernel/SDK/application `16/16`，故障注入/GC/跨 Room Reminder target/可达图 `6/6`；Chrome 完整真实浏览器门禁通过 desktop 与 `390×844`；Firefox 150 在隔离真实 Workbench 中创建并实际永久删除临时 Channel，验证二次确认逐字文案、Escape/focus、390px 无溢出、成功导航和 Room list 不可再发现。Raft bundle SHA-256、Multica 显式删除图来源、前后端映射和剩余风险见[产品合同](./2026-09-03-room-permanent-deletion-contract.zh-CN.md)及[验证审计](../audits/2026-09-03-room-permanent-deletion-verification.zh-CN.md)。`R` 只覆盖公开前端合同；后端是 Raft 语义 + Multica 可靠性模式 + RAH local-first SQLite glue，不声称复制未公开 Raft Server。
 
 ### P1.5 Room Agent SOS（已完成）
 

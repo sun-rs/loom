@@ -1144,17 +1144,14 @@ function WorkspaceScreen({
                 const agent = agentDirectory.find(
                   ({ participantId }) => participantId === id,
                 );
-                return agent === undefined
-                  ? []
-                  : [agent.handle, agent.displayName];
+                return agent === undefined ? [] : [agent.handle];
               });
       return {
         kind: room.kind,
-        names: [...new Set([room.slug, room.name])],
+        names: [room.slug],
         ...(room.kind === "direct"
           ? {
-              peerNames:
-                peerNames.length === 0 ? [room.name] : [...new Set(peerNames)],
+              peerNames: [...new Set(peerNames)],
             }
           : {}),
         roomId: room.roomId,
@@ -2384,6 +2381,69 @@ function WorkspaceScreen({
     rooms,
   ]);
 
+  const deleteCurrentRoom = useCallback(async () => {
+    if (activeRoom === undefined || roomData === undefined) return;
+    if (!canManageCurrentRoomMembers) {
+      throw new Error("当前 Human 没有永久删除此频道的权限");
+    }
+    if (!roomData.caughtUp) {
+      throw new Error("Room 尚未追赶到最新位置，暂不能永久删除");
+    }
+    const session = sessions.current.get(activeRoom.roomId);
+    if (session === undefined) {
+      throw new Error("当前 Room 尚未建立 canonical session");
+    }
+    const deletingRoomId = activeRoom.roomId;
+    const deletingWorkspaceId = activeRoom.workspaceId;
+    await runRoomMutationAtLatest({
+      mutate: (basedOnRoomSeq) =>
+        client.request("room.delete", {
+          basedOnRoomSeq,
+          idempotencyKey: `web-room-delete-${browserOpaqueId()}`,
+          roomId: deletingRoomId,
+        }),
+      session,
+    });
+    const remaining = rooms.filter(({ roomId }) => roomId !== deletingRoomId);
+    const nextRoom =
+      remaining.find(
+        ({ kind, workspaceId }) =>
+          workspaceId === deletingWorkspaceId && kind !== "control",
+      ) ??
+      remaining.find(
+        ({ workspaceId }) => workspaceId === deletingWorkspaceId,
+      ) ??
+      remaining[0];
+    invalidateNavigation();
+    sessions.current.delete(deletingRoomId);
+    setRooms(remaining);
+    setArchivedRooms((current) =>
+      current.filter(({ roomId }) => roomId !== deletingRoomId),
+    );
+    setRoomMembersOpen(false);
+    setRoomData(undefined);
+    setActiveThreadRootMessageId(undefined);
+    setThreadMessages([]);
+    setFocusedMessageId(undefined);
+    setActiveRoomId(nextRoom?.roomId);
+    setSurface("room");
+    setTab("chat");
+    if (nextRoom === undefined) {
+      const search = new URLSearchParams(window.location.search);
+      for (const key of ["room", "roomTab", "thread", "message", "target"])
+        search.delete(key);
+      window.history.replaceState(null, "", `?${search}`);
+    }
+    setReload((value) => value + 1);
+  }, [
+    activeRoom,
+    canManageCurrentRoomMembers,
+    client,
+    invalidateNavigation,
+    roomData,
+    rooms,
+  ]);
+
   const createRoom = useCallback(
     async (input: {
       description?: string;
@@ -3601,6 +3661,11 @@ function WorkspaceScreen({
                     activeRoom?.archivedAt === undefined
                   }
                   canLeave={currentRoomLeave.allowed}
+                  canDelete={
+                    canManageCurrentRoomMembers &&
+                    roomData?.caughtUp === true &&
+                    activeRoom?.kind === "channel"
+                  }
                   canManageRoles={
                     canManageCurrentRoomRoles &&
                     activeRoom?.archivedAt === undefined
@@ -3627,6 +3692,7 @@ function WorkspaceScreen({
                   onAdd={onboardAgent}
                   onArchive={() => changeRoomArchiveState(true)}
                   onClose={() => setRoomMembersOpen(false)}
+                  onDelete={deleteCurrentRoom}
                   onLeave={leaveCurrentRoom}
                   onRemove={removeAgent}
                   onResumeAgents={resumeCurrentRoomAgents}

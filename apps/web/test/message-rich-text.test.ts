@@ -11,7 +11,7 @@ const references = {
   agents: [
     {
       agentDefinitionId: "agent-alice",
-      names: ["Alice", "Alice Agent"],
+      handle: "Alice",
       principalId: "participant-alice",
       readState: "read" as const,
     },
@@ -20,14 +20,14 @@ const references = {
   principals: [
     {
       kind: "human" as const,
-      names: ["Hakase"],
+      handle: "Hakase",
       principalId: "human-owner",
       self: true,
     },
     {
       directRoomId: "room-bob-dm",
       kind: "human" as const,
-      names: ["Bob"],
+      handle: "Bob",
       principalId: "human-bob",
       self: false,
     },
@@ -227,14 +227,14 @@ test("unknown typed candidates degrade without inventing a canonical target", ()
   );
 });
 
-test("display aliases only promote when they resolve to one canonical identity", () => {
+test("canonical handles only promote when they resolve to one identity", () => {
   const conflicted = {
     ...references,
     agents: [
       ...references.agents,
       {
         agentDefinitionId: "agent-other-alice",
-        names: ["Other", "Alice"],
+        handle: "alice",
         principalId: "participant-other-alice",
       },
     ],
@@ -257,6 +257,23 @@ test("display aliases only promote when they resolve to one canonical identity",
   );
 });
 
+test("Agent display names are not routing aliases", () => {
+  assert.deepEqual(tokenizeMessageText("@Alice Agent", references), [
+    {
+      agentDefinitionId: "agent-alice",
+      kind: "agent",
+      principalId: "participant-alice",
+      readState: "read",
+      self: false,
+      value: "@Alice",
+    },
+    { kind: "text", value: " Agent" },
+  ]);
+  assert.deepEqual(tokenizeMessageText("@Assistant", references), [
+    { kind: "text", value: "@Assistant" },
+  ]);
+});
+
 test("structured candidates require a complete ending boundary", () => {
   assert.deepEqual(
     tokenizeMessageText(
@@ -270,6 +287,13 @@ test("structured candidates require a complete ending boundary", () => {
       },
     ],
   );
+});
+
+test("schema-invalid display candidates remain literal text instead of crashing render", () => {
+  const oversizedApp = `app:${["com", "x".repeat(301)].join(".")}`;
+  assert.deepEqual(tokenizeMessageText(oversizedApp, references), [
+    { kind: "text", value: oversizedApp },
+  ]);
 });
 
 test("rich references respect word boundaries and do not mistake email addresses for mentions", () => {

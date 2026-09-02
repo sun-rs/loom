@@ -82,6 +82,7 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "room.agent.activity.list",
     "room.archive",
     "room.create",
+    "room.delete",
     "room.direct.open",
     "room.leave",
     "room.list",
@@ -574,6 +575,15 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       },
       operation: "room.create",
       path: "/v3/client/rooms/create",
+    },
+    {
+      input: {
+        basedOnRoomSeq: 2,
+        idempotencyKey: "room-delete",
+        roomId: "room-main",
+      },
+      operation: "room.delete",
+      path: "/v3/client/rooms/delete",
     },
     {
       input: {

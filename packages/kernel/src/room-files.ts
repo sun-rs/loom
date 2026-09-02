@@ -23,6 +23,7 @@ import {
   WorkerArtifactUploadSchema,
   type Attachment,
   type ActivationCredentialScope,
+  type RoomDeletionFileGcSummary,
   type TaskArtifactReference,
 } from "@rah-os/protocol";
 import type {
@@ -120,6 +121,31 @@ export class RoomFiles {
       "UPDATE room_files SET state = 'failed' WHERE state = 'verifying'",
     );
     this.#reclaimExpired();
+    this.#reclaimRoomDeletionRows();
+  }
+
+  reclaimRoomDeletionBlobs(deletionId: string): RoomDeletionFileGcSummary {
+    this.#reclaimRoomDeletionRows(deletionId);
+    return this.roomDeletionGcSummary(deletionId);
+  }
+
+  roomDeletionGcSummary(deletionId: string): RoomDeletionFileGcSummary {
+    const counts = this.#db
+      .prepare(
+        `SELECT
+           COUNT(*) AS total,
+           SUM(CASE WHEN state='pending' THEN 1 ELSE 0 END) AS pending,
+           SUM(CASE WHEN state='reclaimed' THEN 1 ELSE 0 END) AS reclaimed,
+           SUM(CASE WHEN state='failed' THEN 1 ELSE 0 END) AS failed
+         FROM room_file_gc_receipts WHERE deletion_id=?`,
+      )
+      .get(deletionId);
+    return {
+      failed: Number(counts?.failed ?? 0),
+      pending: Number(counts?.pending ?? 0),
+      reclaimed: Number(counts?.reclaimed ?? 0),
+      total: Number(counts?.total ?? 0),
+    };
   }
   prepare(
     actor: AuthenticatedActorContext,
@@ -548,6 +574,68 @@ export class RoomFiles {
           "UPDATE room_files SET storage_reclaimed = 1 WHERE attachment_id = ?",
         )
         .run(id);
+    }
+  }
+  #reclaimRoomDeletionRows(deletionId?: string) {
+    const rows = this.#db
+      .prepare(
+        `SELECT deletion_id,attachment_id
+         FROM room_file_gc_receipts
+         WHERE state IN ('pending','failed')
+           AND (? IS NULL OR deletion_id = ?)
+         ORDER BY created_at,deletion_id,attachment_id`,
+      )
+      .all(deletionId ?? null, deletionId ?? null);
+    for (const row of rows) {
+      const receiptDeletionId = text(row, "deletion_id");
+      const attachmentId = text(row, "attachment_id");
+      const updatedAt = this.#now().toISOString();
+      try {
+        this.#reclaimBlobBytes(attachmentId);
+        this.#db
+          .prepare(
+            `UPDATE room_file_gc_receipts
+             SET state='reclaimed',attempt_count=attempt_count+1,
+                 last_error=NULL,updated_at=?
+             WHERE deletion_id=? AND attachment_id=?`,
+          )
+          .run(updatedAt, receiptDeletionId, attachmentId);
+      } catch (error) {
+        const message = (
+          error instanceof Error ? error.message : String(error)
+        ).slice(0, 2_000);
+        this.#db
+          .prepare(
+            `UPDATE room_file_gc_receipts
+             SET state='failed',attempt_count=attempt_count+1,
+                 last_error=?,updated_at=?
+             WHERE deletion_id=? AND attachment_id=?`,
+          )
+          .run(message, updatedAt, receiptDeletionId, attachmentId);
+      }
+    }
+  }
+  #reclaimBlobBytes(attachmentId: string) {
+    if (!existsSync(this.#root)) return;
+    const root = lstatSync(this.#root);
+    if (
+      !root.isDirectory() ||
+      root.isSymbolicLink() ||
+      (root.mode & 0o077) !== 0
+    ) {
+      throw new ForbiddenError(
+        "blob directory must be an owner-private non-symlink directory",
+      );
+    }
+    for (const path of [
+      this.#path(attachmentId),
+      `${this.#path(attachmentId)}.part`,
+    ]) {
+      try {
+        unlinkSync(path);
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+      }
     }
   }
   #path(id: string) {

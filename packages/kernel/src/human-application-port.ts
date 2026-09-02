@@ -13,6 +13,7 @@ export type HumanApplicationPort = Pick<
   | "createTask"
   | "createThread"
   | "createWorkspace"
+  | "deleteWorkspaceRoom"
   | "updateWorkspace"
   | "getAuthenticatedPrincipal"
   | "updateAuthenticatedPrincipal"
@@ -141,6 +142,8 @@ export function createHumanApplicationPort(
     createTask: (actor, input) => kernel.createTask(actor, input),
     createThread: (actor, input) => kernel.createThread(actor, input),
     createWorkspace: (actor, input) => kernel.createWorkspace(actor, input),
+    deleteWorkspaceRoom: (actor, input) =>
+      kernel.deleteWorkspaceRoom(actor, input),
     updateWorkspace: (actor, input) => kernel.updateWorkspace(actor, input),
     getAuthenticatedPrincipal: (actor) =>
       kernel.getAuthenticatedPrincipal(actor),

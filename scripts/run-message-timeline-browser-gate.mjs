@@ -167,6 +167,74 @@ try {
   assert.equal(markdown.result, "PASS", JSON.stringify(markdown));
   assert.equal(markdown.refreshes, 20);
   assert.deepEqual(markdown.failures, []);
+  const restStyles = await page.evaluate(() => {
+    const read = (selector) => {
+      const element = document.querySelector(selector);
+      assertElement(element, selector);
+      const style = getComputedStyle(element);
+      return {
+        backgroundColor: style.backgroundColor,
+        borderRadius: style.borderRadius,
+        fontSize: style.fontSize,
+      };
+    };
+    function assertElement(element, selector) {
+      if (!(element instanceof HTMLElement))
+        throw new Error(`missing rich reference: ${selector}`);
+    }
+    return {
+      agent: read(".rah-rich-agent-reference"),
+      room: read(".rah-rich-room-reference"),
+      task: read(".rah-rich-task-reference"),
+    };
+  });
+  assert.equal(restStyles.agent.fontSize, "14px");
+  assert.equal(restStyles.task.fontSize, "12.25px");
+  assert.equal(restStyles.task.borderRadius, "0px");
+  await page.locator(".rah-rich-agent-reference").first().hover();
+  const agentHoverColor = await page
+    .locator(".rah-rich-agent-reference")
+    .first()
+    .evaluate((element) => getComputedStyle(element).color);
+  const pink = await page.evaluate(() => {
+    const probe = document.createElement("span");
+    probe.style.color = "var(--pink)";
+    document.body.append(probe);
+    const color = getComputedStyle(probe).color;
+    probe.remove();
+    return color;
+  });
+  assert.equal(agentHoverColor, pink);
+  const resolvedBackground = (value) =>
+    page.evaluate((background) => {
+      const probe = document.createElement("span");
+      probe.style.background = background;
+      document.body.append(probe);
+      const color = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return color;
+    }, value);
+  const yellow = await resolvedBackground("var(--yellow)");
+  const pink60 = await resolvedBackground(
+    "color-mix(in srgb, var(--pink) 60%, transparent)",
+  );
+  const cyan60 = await resolvedBackground(
+    "color-mix(in srgb, var(--cyan) 60%, transparent)",
+  );
+  for (const [selector, expected] of [
+    [".rah-rich-task-reference", yellow],
+    [".rah-rich-room-reference", pink60],
+    [".rah-rich-thread-reference", cyan60],
+    [".rah-rich-computer-reference", cyan60],
+    [".rah-rich-message-reference", yellow],
+  ]) {
+    await page.locator(selector).first().hover();
+    const actual = await page
+      .locator(selector)
+      .first()
+      .evaluate((element) => getComputedStyle(element).backgroundColor);
+    assert.equal(actual, expected, `${selector} hover background`);
+  }
   assert.deepEqual(
     { browserErrors, failedResponses },
     { browserErrors: [], failedResponses: [] },

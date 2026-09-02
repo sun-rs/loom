@@ -4202,13 +4202,19 @@ html[data-rah-live-agent-activity="false"]
   background: var(--orange);
 }
 
+.rah-channel-delete-button {
+  background: var(--coral);
+}
+
 .rah-room-archive-confirm,
+.rah-room-delete-confirm,
 .rah-room-leave-confirm,
 .rah-room-sos-dialog {
   z-index: 120;
 }
 
 .rah-room-archive-confirm .rah-dialog > p,
+.rah-room-delete-confirm .rah-dialog > p,
 .rah-room-leave-confirm .rah-dialog > p {
   font-size: 14px;
   line-height: 1.5;
@@ -4216,6 +4222,7 @@ html[data-rah-live-agent-activity="false"]
 }
 
 .rah-room-archive-confirm .rah-dialog > footer,
+.rah-room-delete-confirm .rah-dialog > footer,
 .rah-room-leave-confirm .rah-dialog > footer {
   display: flex;
   gap: 9px;

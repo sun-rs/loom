@@ -51,6 +51,8 @@ import {
   resolveOneHeldMessageDraft,
 } from "./held-message-drafts.ts";
 import { integer, nullableText, text, type Row } from "./sqlite-row.ts";
+import { assertNoActiveRoomWork } from "./room-lifecycle-policy.ts";
+import { workspaceRoomSlugIsAvailable } from "./message-reference-identity.ts";
 import type {
   MessageMutationResult,
   MessagePage,
@@ -389,11 +391,7 @@ export class CollaborationService {
       input.basedOnControlRoomSeq,
     );
     if (
-      this.#database
-        .prepare(
-          "SELECT 1 AS present FROM rooms WHERE workspace_id = ? AND slug = ?",
-        )
-        .get(input.workspaceId, slug) !== undefined
+      !workspaceRoomSlugIsAvailable(this.#database, input.workspaceId, slug)
     ) {
       throw new ConflictError(
         `Room slug ${slug} is already in use in Workspace ${input.workspaceId}`,
@@ -683,7 +681,7 @@ export class CollaborationService {
     this.#assertFreshContext(input.roomId, actor, input.basedOnRoomSeq);
     const changedAt = this.#timestamp();
     if (archive) {
-      this.#assertNoActiveRoomWork(input.roomId);
+      assertNoActiveRoomWork(this.#database, input.roomId);
     } else {
       this.#database
         .prepare("UPDATE rooms SET archived_at = NULL WHERE room_id = ?")
@@ -2194,56 +2192,6 @@ export class CollaborationService {
     ) {
       throw new ConflictError(
         `principal ${principalId} has active collaboration work in Room ${roomId}`,
-      );
-    }
-  }
-
-  #assertNoActiveRoomWork(roomId: string): void {
-    const checks = [
-      this.#database
-        .prepare(
-          `SELECT 1 AS present FROM tasks
-           WHERE room_id = ? AND state NOT IN ('completed', 'cancelled')
-           LIMIT 1`,
-        )
-        .get(roomId),
-      this.#database
-        .prepare(
-          `SELECT 1 AS present FROM input_requests
-           WHERE room_id = ? AND state = 'pending' LIMIT 1`,
-        )
-        .get(roomId),
-      this.#database
-        .prepare(
-          `SELECT 1 AS present FROM activations
-           WHERE room_id = ? AND state IN ('queued', 'leased', 'quarantined')
-           LIMIT 1`,
-        )
-        .get(roomId),
-      this.#database
-        .prepare(
-          `SELECT 1 AS present FROM run_attempts
-           WHERE room_id = ? AND state IN ('starting', 'running', 'orphaned')
-           LIMIT 1`,
-        )
-        .get(roomId),
-      this.#database
-        .prepare(
-          `SELECT 1 AS present FROM runtime_processes
-           WHERE room_id = ? AND state IN ('prepared', 'active', 'orphaned')
-           LIMIT 1`,
-        )
-        .get(roomId),
-      this.#database
-        .prepare(
-          `SELECT 1 AS present FROM managed_mcp_calls
-           WHERE room_id = ? AND state = 'pending' LIMIT 1`,
-        )
-        .get(roomId),
-    ];
-    if (checks.some((result) => result !== undefined)) {
-      throw new ConflictError(
-        `Room ${roomId} has active collaboration work and cannot be archived`,
       );
     }
   }

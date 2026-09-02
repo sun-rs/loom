@@ -31,6 +31,10 @@ test("message mention grammar never turns protected Markdown into delivery", () 
   const source = [
     "正文 @Alice",
     "`@Code` [@Link](https://example.com/@url)",
+    "[@Reference][who] [@Shortcut]",
+    "[who]: https://example.com/profile",
+    "[@Shortcut]: https://example.com/shortcut",
+    "    @Indented",
     "```txt",
     "@Fence",
     "```",
@@ -41,12 +45,34 @@ test("message mention grammar never turns protected Markdown into delivery", () 
       "Alice",
       "Code",
       "Link",
+      "Reference",
+      "Shortcut",
       "url",
+      "Indented",
       "Fence",
       "Math",
       "auto",
       "Html",
     ]).map(({ handle }) => handle),
     ["Alice"],
+  );
+});
+
+test("message mention masking keeps UTF-16 indexes aligned after emoji", () => {
+  assert.deepEqual(
+    messageMentionCandidates("😀😀😀😀😀😀😀 `@Alice`", ["Alice"]),
+    [],
+  );
+});
+
+test("case or NFKC ambiguous handles fail closed", () => {
+  assert.deepEqual(messageMentionCandidates("@Alice", ["Alice", "alice"]), []);
+  assert.deepEqual(
+    messageMentionCandidates("@Ａlice", ["Alice", "Ａlice"]),
+    [],
+  );
+  assert.equal(
+    messageMentionCandidates("@Alice", ["Alice", "Alice"]).length,
+    1,
   );
 });

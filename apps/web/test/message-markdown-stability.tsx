@@ -1,12 +1,14 @@
 import { useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
+import type { RahClient } from "@rah-os/client-sdk";
 import "@rah-os/ui-tokens/styles.css";
 import "../src/product.css";
 import {
   MessageMarkdown,
   type MessageMarkdownReferences,
 } from "../src/components/message-markdown.tsx";
+import { AgentMessageContext } from "../src/components/agent-message-identity.tsx";
 import { MessageTimeline } from "../src/components/message-timeline.tsx";
 
 const original = [
@@ -22,6 +24,7 @@ const original = [
   "@Hakase dm:@Alice #project-room:abcdef computer:host-mac app:com.example.calendar。",
   "#project-room msg=message-1 #project-room:abcdef msg=message-2。",
   "`@Alice #2 #project-room` 保持代码文字。",
+  "[@Alice #2 #project-room](https://example.com/reference) 保持作者链接。",
   "[打开本地文件](file:///tmp/markdown-regression.ts)",
   "![RAH icon](/rah-app-icon.svg)",
 ].join("\n");
@@ -32,7 +35,7 @@ const references: MessageMarkdownReferences = {
       agentDefinitionId: "agent-alice",
       createdAt: "2026-09-02T00:00:00.000Z",
       createdBy: "human",
-      displayName: "Alice",
+      displayName: "Alice Assistant",
       executionPolicyRevisionId: "policy-alice",
       handle: "Alice",
       participantId: "participant-alice",
@@ -60,12 +63,12 @@ const references: MessageMarkdownReferences = {
   rooms: [
     {
       kind: "channel",
-      names: ["project-room", "Project Room"],
+      names: ["project-room"],
       roomId: "room-project",
     },
     {
       kind: "direct",
-      names: ["dm-alice", "Alice DM"],
+      names: ["dm-alice"],
       peerNames: ["Alice"],
       roomId: "room-alice-dm",
     },
@@ -93,6 +96,10 @@ const references: MessageMarkdownReferences = {
     },
   ],
 };
+
+const previewClient = {
+  request: () => Promise.reject(new Error("fixture has no Agent backend")),
+} as unknown as RahClient;
 
 const frame = () =>
   new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
@@ -208,6 +215,13 @@ function Fixture() {
           ?.textContent === "@Alice",
         "Agent 引用未按目录解析",
       );
+      scroller
+        .current!.querySelector<HTMLButtonElement>(".rah-rich-agent-reference")!
+        .click();
+      check(
+        openedTarget.current === "agent:agent-alice",
+        "Agent 引用未走 inspector owner",
+      );
       const taskReference = scroller.current!.querySelector<HTMLButtonElement>(
         ".rah-rich-task-reference",
       );
@@ -249,6 +263,74 @@ function Fixture() {
           null,
         "Agent mention 已读状态未显示",
       );
+      const resolvedBackground = (value: string) => {
+        const probe = document.createElement("span");
+        probe.style.background = value;
+        document.body.append(probe);
+        const background = getComputedStyle(probe).backgroundColor;
+        probe.remove();
+        return background;
+      };
+      const style = (selector: string) => {
+        const element = scroller.current!.querySelector<HTMLElement>(selector);
+        check(element !== null, `${selector} 缺失，无法核验 computed style`);
+        return element === null ? undefined : getComputedStyle(element);
+      };
+      const agentStyle = style(".rah-rich-agent-reference");
+      check(
+        agentStyle?.fontWeight === "700" &&
+          agentStyle.textDecorationLine.includes("underline") &&
+          agentStyle.textDecorationThickness === "2px" &&
+          agentStyle.textUnderlineOffset === "2px",
+        "Agent mention 字重或下划线协议偏离 Raft",
+      );
+      const taskStyle = style(".rah-rich-task-reference");
+      check(
+        taskStyle?.borderTopWidth === "1px" &&
+          taskStyle.borderRightWidth === "1px" &&
+          taskStyle.paddingLeft === "4px" &&
+          taskStyle.paddingRight === "4px" &&
+          taskStyle.fontWeight === "700" &&
+          taskStyle.backgroundColor ===
+            resolvedBackground(
+              "color-mix(in srgb, var(--yellow) 40%, transparent)",
+            ),
+        "Task chip 外框、比例或常态底色偏离 Raft",
+      );
+      check(
+        style(".rah-rich-room-reference")?.backgroundColor ===
+          resolvedBackground(
+            "color-mix(in srgb, var(--pink) 30%, transparent)",
+          ),
+        "Room 引用常态底色偏离 Raft",
+      );
+      const threadBackground = style(
+        ".rah-rich-thread-reference",
+      )?.backgroundColor;
+      check(
+        threadBackground ===
+          resolvedBackground(
+            "color-mix(in srgb, var(--cyan) 30%, transparent)",
+          ) &&
+          style(".rah-rich-computer-reference")?.backgroundColor ===
+            threadBackground,
+        "Thread/Computer 引用底色协议不一致",
+      );
+      const yellowReferenceBackground = resolvedBackground(
+        "color-mix(in srgb, var(--yellow) 40%, transparent)",
+      );
+      check(
+        style(".rah-rich-app-reference")?.backgroundColor ===
+          yellowReferenceBackground &&
+          style(".rah-rich-message-reference")?.backgroundColor ===
+            yellowReferenceBackground,
+        "App/Message 引用底色协议不一致",
+      );
+      check(
+        style("[data-mention-read-state=read]")?.backgroundColor ===
+          resolvedBackground("var(--green)"),
+        "mention read receipt 未使用 canonical 绿色",
+      );
       const clickReference = (selector: string, expected: string) => {
         scroller.current!.querySelector<HTMLButtonElement>(selector)?.click();
         check(openedTarget.current === expected, `${selector} 未走 typed 导航`);
@@ -263,6 +345,14 @@ function Fixture() {
             element.querySelector("button, mark") === null,
         ),
         "代码节点被富文本引用重写",
+      );
+      const authoredLink = scroller.current!.querySelector<HTMLAnchorElement>(
+        'a[href="https://example.com/reference"]',
+      );
+      check(
+        authoredLink?.textContent === "@Alice #2 #project-room" &&
+          authoredLink.querySelector("button, mark") === null,
+        "作者 Markdown link 被富文本引用二次改写",
       );
       setReport(
         JSON.stringify(
@@ -299,41 +389,52 @@ function Fixture() {
           width: "100%",
         }}
       >
-        <MessageTimeline
-          followOnAppend={false}
-          getItemKey={(item) => item.id}
-          items={[
-            { id: "markdown", body: source },
-            { id: "after", body: "后续消息，不能被图表覆盖" },
-          ]}
-          renderItem={(item) => (
-            <MessageMarkdown
-              source={item.body}
-              references={{
-                ...references,
-                onOpenTarget: (target) => {
-                  openedTarget.current = `${target.kind}:${
-                    target.kind === "task"
-                      ? target.taskId
-                      : target.kind === "thread"
-                        ? target.threadId
-                        : target.kind === "computer"
-                          ? target.hostId
-                          : target.kind === "message"
-                            ? target.messageId
-                            : target.kind === "room"
-                              ? target.roomId
-                              : "target"
-                  }`;
-                },
-              }}
-              onOpenFile={() => {
-                linkRevision.current = revision;
-              }}
-            />
-          )}
-          scrollElementRef={scroller}
-        />
+        <AgentMessageContext.Provider
+          value={{
+            client: previewClient,
+            computerLabel: undefined,
+            onOpen: (agentDefinitionId) => {
+              openedTarget.current = `agent:${agentDefinitionId}`;
+            },
+            runtimes: [],
+          }}
+        >
+          <MessageTimeline
+            followOnAppend={false}
+            getItemKey={(item) => item.id}
+            items={[
+              { id: "markdown", body: source },
+              { id: "after", body: "后续消息，不能被图表覆盖" },
+            ]}
+            renderItem={(item) => (
+              <MessageMarkdown
+                source={item.body}
+                references={{
+                  ...references,
+                  onOpenTarget: (target) => {
+                    openedTarget.current = `${target.kind}:${
+                      target.kind === "task"
+                        ? target.taskId
+                        : target.kind === "thread"
+                          ? target.threadId
+                          : target.kind === "computer"
+                            ? target.hostId
+                            : target.kind === "message"
+                              ? target.messageId
+                              : target.kind === "room"
+                                ? target.roomId
+                                : "target"
+                    }`;
+                  },
+                }}
+                onOpenFile={() => {
+                  linkRevision.current = revision;
+                }}
+              />
+            )}
+            scrollElementRef={scroller}
+          />
+        </AgentMessageContext.Provider>
       </div>
     </>
   );

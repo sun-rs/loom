@@ -300,6 +300,42 @@ export type ClientRoomArchiveRequest = z.infer<
   typeof ClientRoomArchiveRequestSchema
 >;
 
+export const ClientRoomDeleteRequestSchema = ClientRoomLifecycleRequestSchema;
+export type ClientRoomDeleteRequest = z.infer<
+  typeof ClientRoomDeleteRequestSchema
+>;
+
+export const RoomDeletionFileGcSummarySchema = z
+  .object({
+    failed: z.number().int().nonnegative(),
+    pending: z.number().int().nonnegative(),
+    reclaimed: z.number().int().nonnegative(),
+    total: z.number().int().nonnegative(),
+  })
+  .strict()
+  .refine(
+    ({ failed, pending, reclaimed, total }) =>
+      failed + pending + reclaimed === total,
+    { message: "file GC state counts must equal total" },
+  );
+export type RoomDeletionFileGcSummary = z.infer<
+  typeof RoomDeletionFileGcSummarySchema
+>;
+
+export const ClientRoomDeleteResponseSchema = z
+  .object({
+    deduplicated: z.boolean(),
+    deletedAt: TimestampSchema,
+    deletionId: IdentifierSchema,
+    fileGc: RoomDeletionFileGcSummarySchema,
+    roomId: IdentifierSchema,
+    workspaceId: IdentifierSchema,
+  })
+  .strict();
+export type ClientRoomDeleteResponse = z.infer<
+  typeof ClientRoomDeleteResponseSchema
+>;
+
 export const ClientRoomLeaveRequestSchema = ClientRoomLifecycleRequestSchema;
 export type ClientRoomLeaveRequest = z.infer<
   typeof ClientRoomLeaveRequestSchema

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
 import { RoomFiles } from "./room-files.ts";
+import { RoomDeletionService } from "./room-deletion-service.ts";
 import { readAgentPresence } from "./agent-presence.ts";
 import { DatabaseSync } from "node:sqlite";
 import { GlobalDiscovery } from "./global-discovery.ts";
@@ -260,10 +261,14 @@ import type {
 } from "./types.ts";
 import { listWorkspaceMemberGraph as projectWorkspaceMemberGraph } from "./workspace-member-graph.ts";
 import { inImmediateTransaction } from "./sqlite-transaction.ts";
+import {
+  assertMessageReferenceDirectoryIsUnambiguous,
+  principalHandleIsAvailable,
+} from "./message-reference-identity.ts";
 const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 39;
+export const KERNEL_SCHEMA_VERSION = 40;
 export class RoomKernel {
   readonly databasePath: string;
   readonly #database: DatabaseSync;
@@ -280,6 +285,7 @@ export class RoomKernel {
   readonly #activationObligations: ActivationObligationService;
   readonly #roomEvents: RoomEventWriter;
   readonly #collaboration: CollaborationService;
+  readonly #roomDeletion: RoomDeletionService;
   readonly #managedMcp: ManagedMcpService;
   readonly files: RoomFiles;
   readonly followHumanThread;
@@ -437,6 +443,14 @@ export class RoomKernel {
       requireWorker: (worker) =>
         this.#requireAuthenticatedWorkerExecution(worker),
       now: this.#now,
+    });
+    this.#roomDeletion = new RoomDeletionService({
+      createId: this.#createId,
+      database: this.#database,
+      files: this.files,
+      now: this.#now,
+      requireActor: (actor) => this.#requireAuthenticatedActor(actor),
+      transaction: (operation) => this.#transaction(operation),
     });
     this.#collaboration = new CollaborationService({
       createId: this.#createId,
@@ -704,6 +718,7 @@ export class RoomKernel {
         "INSERT OR IGNORE INTO principals(principal_id, handle, kind, created_at) VALUES(?, ?, 'service', ?)",
       )
       .run(SYSTEM_PRINCIPAL_ID, "rah-system", this.#timestamp());
+    assertMessageReferenceDirectoryIsUnambiguous(this.#database);
     this.#database.exec(`PRAGMA user_version = ${KERNEL_SCHEMA_VERSION}`);
     this.#transaction(() => {
       backfillAgentMemoryHomes(this.#database);
@@ -730,6 +745,9 @@ export class RoomKernel {
   }): ProvisionedPrincipal {
     const handle = input.handle.trim();
     if (handle.length === 0) throw new Error("handle is required");
+    if (!principalHandleIsAvailable(this.#database, handle)) {
+      throw new ConflictError(`principal handle ${handle} is already in use`);
+    }
     const kind = ParticipantKindSchema.parse(input.kind);
     const principal: Principal = {
       principalId: this.#createId("principal"),
@@ -962,6 +980,9 @@ export class RoomKernel {
         input,
       ),
     );
+  }
+  deleteWorkspaceRoom(...args: Parameters<RoomDeletionService["delete"]>) {
+    return this.#roomDeletion.delete(...args);
   }
   unarchiveWorkspaceRoom(
     actor: AuthenticatedActorContext,

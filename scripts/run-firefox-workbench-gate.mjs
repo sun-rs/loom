@@ -1654,6 +1654,64 @@ if (args.join(" ") === "--version") {
   await page.getByLabel("返回成员列表", { exact: true }).click();
   await page.locator(".rah-agent-sidebar-head").waitFor();
   assert.equal(await page.locator(".rah-mobile-nav").isVisible(), true);
+
+  // P1.4 uses a disposable secondary Channel to prove the complete Web ->
+  // Client API -> Kernel deletion path. Never run this against the formal
+  // persistent Workspace or a Room that contains user work.
+  await page.setViewportSize({ height: 1_000, width: 1_440 });
+  const disposableRoomUrl = new URL(started.descriptor.webOrigin);
+  disposableRoomUrl.searchParams.set("room", secondaryWorkspace.roomId);
+  await page.goto(disposableRoomUrl.href, { waitUntil: "domcontentloaded" });
+  await page
+    .locator(".channel-title h1", { hasText: "Second Council" })
+    .waitFor({ timeout: 20_000 });
+  await page.getByRole("button", { name: "频道详情与设置" }).click();
+  const deleteRoomButton = page.getByRole("button", {
+    name: "删除频道",
+    exact: true,
+  });
+  await deleteRoomButton.waitFor();
+  await deleteRoomButton.click();
+  const deleteDialog = page.getByRole("dialog", { name: "删除频道" });
+  await deleteDialog.waitFor();
+  assert.equal(
+    await deleteDialog.locator("p").first().textContent(),
+    "「Second Council」及其中的所有消息都会被永久删除，且无法撤销。",
+  );
+  await page.keyboard.press("Escape");
+  await deleteDialog.waitFor({ state: "detached" });
+  assert.equal(
+    await deleteRoomButton.evaluate((node) => node === document.activeElement),
+    true,
+  );
+
+  await page.setViewportSize({ height: 844, width: 390 });
+  await deleteRoomButton.click();
+  await deleteDialog.waitFor();
+  assert.equal(
+    await page.evaluate(() => document.documentElement.scrollWidth),
+    390,
+  );
+  await deleteDialog.getByRole("button", { name: "永久删除" }).click();
+  await deleteDialog.waitFor({ state: "detached", timeout: 20_000 });
+  await page
+    .locator(".channel-title h1", { hasText: "Agent Council" })
+    .waitFor({ timeout: 20_000 });
+  assert.equal(
+    new URL(page.url()).searchParams.get("room") === secondaryWorkspace.roomId,
+    false,
+  );
+  const deletedRoomStillListed = await page.evaluate(async (roomId) => {
+    const response = await fetch("/v3/client/rooms/list", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ workspaceId: undefined }),
+    });
+    if (!response.ok) throw new Error(await response.text());
+    const body = await response.json();
+    return body.rooms.some((room) => room.roomId === roomId);
+  }, secondaryWorkspace.roomId);
+  assert.equal(deletedRoomStillListed, false);
   assert.deepEqual(browserErrors, []);
 
   process.stdout.write(

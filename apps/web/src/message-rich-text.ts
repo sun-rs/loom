@@ -7,12 +7,13 @@ import type {
 import {
   MessageReferenceSchema,
   messageMentionCandidates,
+  messageReferenceNameKey,
 } from "@rah-os/protocol";
 
 export type MessageTextReferenceCatalog = {
   agents?: readonly {
     agentDefinitionId: string;
-    names: readonly string[];
+    handle: string;
     principalId: string;
     readState?: MessageReferenceReadState;
   }[];
@@ -20,7 +21,7 @@ export type MessageTextReferenceCatalog = {
   principals?: readonly {
     directRoomId?: string;
     kind: Extract<ParticipantKind, "agent" | "human">;
-    names: readonly string[];
+    handle: string;
     principalId: string;
     readState?: MessageReferenceReadState;
     self: boolean;
@@ -72,7 +73,7 @@ const messageSuffixPattern = /\s+msg=([a-z0-9_-]+)$/iu;
 const appPattern = /^app:([a-z0-9][a-z0-9_-]*(?:\.[a-z0-9][a-z0-9_-]*)+)$/iu;
 
 function key(value: string): string {
-  return value.normalize("NFKC").toLowerCase();
+  return messageReferenceNameKey(value);
 }
 
 function appendText(tokens: MessageTextToken[], value: string): void {
@@ -221,8 +222,8 @@ export function tokenizeMessageText(
         : [{ candidate: match[0], index: match.index }],
     ),
     ...messageMentionCandidates(value, [
-      ...(references.agents ?? []).flatMap(({ names }) => names),
-      ...(references.principals ?? []).flatMap(({ names }) => names),
+      ...(references.agents ?? []).map(({ handle }) => handle),
+      ...(references.principals ?? []).map(({ handle }) => handle),
     ]).map(({ start, value: candidate }) => ({ candidate, index: start })),
   ].sort(
     (left, right) =>
@@ -248,12 +249,11 @@ export function tokenizeMessageText(
     let token: MessageTextToken | undefined;
     if (candidate.startsWith("@")) {
       const name = candidate.slice(1);
-      const agentMatches = (references.agents ?? []).filter(({ names }) =>
-        names.some((candidateName) => key(candidateName) === key(name)),
+      const agentMatches = (references.agents ?? []).filter(
+        ({ handle }) => key(handle) === key(name),
       );
       const principalMatches = (references.principals ?? []).filter(
-        ({ names }) =>
-          names.some((candidateName) => key(candidateName) === key(name)),
+        ({ handle }) => key(handle) === key(name),
       );
       if (agentMatches.length + principalMatches.length !== 1)
         token = undefined;
@@ -322,10 +322,13 @@ export function tokenizeMessageText(
           : { appId: app[1]!, kind: "app", value: candidate };
     }
     if (token === undefined) continue;
+    const parsed =
+      token.kind === "unresolved"
+        ? { data: token, success: true as const }
+        : MessageReferenceSchema.safeParse(token);
+    if (!parsed.success) continue;
     appendText(tokens, value.slice(offset, index));
-    tokens.push(
-      token.kind === "unresolved" ? token : MessageReferenceSchema.parse(token),
-    );
+    tokens.push(parsed.data);
     offset = index + candidate.length;
   }
   appendText(tokens, value.slice(offset));

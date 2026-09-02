@@ -108,6 +108,8 @@ Review v1 已是独立对象，固定关联不可变 TaskSubmission digest、rev
 
 ## 8. 外部经验的采用边界
 
+Room 生命周期由 Kernel 单一 owner 持有。archive 是带 Room event 的可逆只读状态；永久删除只允许 manager Human 对普通 Channel 执行，并要求最新 Room cursor 与无活动工作。永久删除不写一个随后随 Room 一起消失的事件，而在 Room 外持有幂等删除回执；完整 canonical 引用图在一个事务中清理，本地文件字节由提交后的 durable GC receipt 续收。UI、HTTP、Provider 或文件系统都不能单独宣称 Room 已删除。
+
 - Matrix：Room event、sync cursor 与独立 push plane。
 - Raft：长期 Agent identity、content-free wake、freshness hold 和 delivery proof。
 - OpenClaw：常驻 Gateway、session lane、durable delivery 和实用文件 memory。

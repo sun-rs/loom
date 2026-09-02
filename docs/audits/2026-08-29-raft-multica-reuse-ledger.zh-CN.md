@@ -106,11 +106,37 @@
   `packages/views/rich-content/rich-content.tsx` 与 `server/internal/util/mention.go`；采用 typed identity、
   跳过 code/link/path 和单一 RichContent owner 原则。
 - 性质：`structured-port` + `rah-os-glue`。canonical body 保持原 Markdown；前端只投影当前目录可解析
-  引用。Agent hover/click 复用现有 inspector，Task/Room 走 `NavigationTarget` 和 click-time ACL。
+  引用。`packages/protocol/src/message-reference.ts` 冻结八种 canonical identity；
+  `packages/protocol/src/message-mention.ts` 把正文显示、发送 recipients、Search/Activity/Web Push 收敛为同一
+  Markdown-aware lexer，避免代码/链接示例静默唤醒 Agent。Agent hover 复用现有 inspector，Agent/Task/Room/
+  Thread/Message/Computer 点击都先走 `NavigationTarget` 和 click-time resolver；Room 目录同时使用 slug/name，
+  只有唯一 identity 才升级。
 - 有意差异：Raft Server 搜索源码不可得，且 Raft Web 会 hydrate 整条 Thread。RAH OS 扩展既有
   ACL-safe FTS `threadIds` 过滤、冻结 cursor 和 `message.context`，传输全部命中而非全部历史；不声称复制
   Raft ranker。公式、KaTeX、Shiki、Mermaid sandbox 继续复用现有 renderer，不引入 Multica Issue 模型。
+- 本地 receipt glue：Raft Server 表结构不可得；RAH OS 只以 canonical `message.posted` mention recipient 与
+  `inbox.acknowledged.throughSeq` 投影 read/unread，并要求完整 caught-up replay。它不从正文、hover、在线状态
+  或页面打开猜测已读。
 - 详细合同与门禁见 `docs/product/2026-09-02-message-rich-reference-contract.zh-CN.md`。
+
+### 2026-09-03 普通 Channel 永久删除 structured port
+
+- Raft 来源：冻结 Web bundle `docs/evidence/raft-web-20260831-current/index-BoAC7nSE.js`，SHA-256
+  `7328c15614ac53c7cc906e0f56665dd822a4c0ffaa64e4cb6b9a7a76a692b26a`；采用普通 Channel 红色入口、
+  二次确认、逐字中文文案、`删除中…`、失败保留和成功导航。Raft Server 删除事务未公开，因此不标 direct copy。
+- Multica 来源：`/Users/sun/Code/repos/multica/server/internal/handler/workspace.go` 与
+  `server/pkg/db/queries/workspace_delete.sql`；采用 Application-owned 显式 bottom-up 图、事务、提交前复核和
+  外部清理意图。Multica 的 Workspace/PostgreSQL entity SQL 不复制进 Room Kernel。
+- RAH OS owner：`ClientRoomDeleteRequestSchema` → `RoomDeletionService` → `HumanApplicationPort` →
+  application-service/RahClient → `WorkspaceScreen`/`RoomMembersDialog`；`RoomFiles` 独占本地 blob GC。
+- 性质：前端 `behavior-only/structured-port`，后端 `structured-port + rah-os-glue`。schema 40 以动态
+  `PRAGMA foreign_key_list` 冻结 52 张 Room 可达表；单事务显式 eraser、Room 外幂等回执、per-file durable
+  GC receipt 与启动恢复都是本地实现。Client API 使用统一的 authenticated POST mutation surface，不机械复制
+  Raft 中央 `DELETE /channels/:id` transport。
+- 有意差异：删除回执保留最小 Room identity/audit 元数据；产品内没有 soft undo/单 Room 恢复；direct/control
+  不走该命令；正式用户 Room 永不用于破坏性门禁。
+- 详细合同与证据见 `docs/product/2026-09-03-room-permanent-deletion-contract.zh-CN.md` 与
+  `docs/audits/2026-09-03-room-permanent-deletion-verification.zh-CN.md`。
 
 ## 4. 每个移植提交必须补充的字段
 

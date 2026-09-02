@@ -21,6 +21,7 @@ import {
 import { eventPayloadText } from "./event-payload.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
 import { assertRuntimeOfferSupportsToolAccess } from "./runtime-offer-tool-access.ts";
+import { principalHandleIsAvailable } from "./message-reference-identity.ts";
 import {
   integer,
   jsonObject,
@@ -97,11 +98,7 @@ export function provisionWorkspaceAgentTransaction(
       `Room ${input.controlRoomId} is not a Workspace control Room`,
     );
   }
-  if (
-    owner.database
-      .prepare("SELECT principal_id FROM principals WHERE handle = ?")
-      .get(normalized.handle) !== undefined
-  ) {
+  if (!principalHandleIsAvailable(owner.database, normalized.handle)) {
     throw new ConflictError(
       `principal handle ${normalized.handle} is already in use`,
     );

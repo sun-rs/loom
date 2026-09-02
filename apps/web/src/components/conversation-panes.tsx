@@ -1901,7 +1901,12 @@ export function ThreadPane({
                       {
                         roomId,
                         roomKind,
-                        roomName: roomName ?? roomId,
+                        roomName:
+                          referenceRooms.find(
+                            (candidate) => candidate.roomId === roomId,
+                          )?.names[0] ??
+                          roomName ??
+                          roomId,
                         rootMessageId: root.messageId,
                         threadId,
                       },
@@ -1986,7 +1991,12 @@ export function ThreadPane({
                       {
                         roomId,
                         roomKind,
-                        roomName: roomName ?? roomId,
+                        roomName:
+                          referenceRooms.find(
+                            (candidate) => candidate.roomId === roomId,
+                          )?.names[0] ??
+                          roomName ??
+                          roomId,
                         rootMessageId: root.messageId,
                         threadId,
                       },

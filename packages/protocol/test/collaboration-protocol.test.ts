@@ -4,6 +4,8 @@ import test from "node:test";
 import {
   ClientRoomArchiveRequestSchema,
   ClientRoomCreateRequestSchema,
+  ClientRoomDeleteRequestSchema,
+  ClientRoomDeleteResponseSchema,
   ClientRoomLeaveRequestSchema,
   ClientRoomAgentSosResumeRequestSchema,
   ClientRoomAgentSosStopRequestSchema,
@@ -57,6 +59,7 @@ test("Room lifecycle commands carry freshness and idempotency identities", () =>
     roomId: "room-1",
   };
   assert.deepEqual(ClientRoomArchiveRequestSchema.parse(input), input);
+  assert.deepEqual(ClientRoomDeleteRequestSchema.parse(input), input);
   assert.deepEqual(
     ClientRoomLeaveRequestSchema.parse({
       ...input,
@@ -79,6 +82,30 @@ test("Room lifecycle commands carry freshness and idempotency identities", () =>
       ...input,
       principalId: "must-be-server-owned",
     }),
+  );
+  assert.throws(() =>
+    ClientRoomDeleteRequestSchema.parse({
+      ...input,
+      actorId: "must-be-server-owned",
+    }),
+  );
+  assert.deepEqual(
+    ClientRoomDeleteResponseSchema.parse({
+      deduplicated: false,
+      deletionId: "room-deletion-1",
+      deletedAt: "2026-09-03T00:00:00.000Z",
+      fileGc: { failed: 1, pending: 0, reclaimed: 2, total: 3 },
+      roomId: "room-1",
+      workspaceId: "workspace-1",
+    }),
+    {
+      deduplicated: false,
+      deletionId: "room-deletion-1",
+      deletedAt: "2026-09-03T00:00:00.000Z",
+      fileGc: { failed: 1, pending: 0, reclaimed: 2, total: 3 },
+      roomId: "room-1",
+      workspaceId: "workspace-1",
+    },
   );
 });
 

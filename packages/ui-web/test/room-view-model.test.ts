@@ -290,7 +290,17 @@ test("Room membership drives Message delivery while mentions only raise attentio
   assert.deepEqual(
     mentionedRoomAgentIds({
       agents,
-      body: "`@Kimi` 和 [@Codex](https://example.com) 只是示例",
+      body: "😀😀😀😀😀😀😀 `@Kimi`、[@Codex][who] 和缩进代码只是示例\n\n    @Kimi\n\n[who]: https://example.com",
+    }),
+    [],
+  );
+  assert.deepEqual(
+    mentionedRoomAgentIds({
+      agents: [
+        ...agents,
+        { handle: "kimi", participantId: "agent-other-kimi" },
+      ],
+      body: "@Kimi",
     }),
     [],
   );

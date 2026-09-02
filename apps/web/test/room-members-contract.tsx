@@ -67,6 +67,7 @@ function Fixture() {
   const calls = useRef<string[]>([]);
   const failCindy = useRef(true);
   const leaveCalls = useRef(0);
+  const deleteCalls = useRef(0);
   const sosCalls = useRef<string[]>([]);
   async function run() {
     const failures: string[] = [];
@@ -238,6 +239,32 @@ function Fixture() {
         document.querySelector('[data-room-members-view="settings"]'),
         "恢复成功后只关闭 SOS 层并保留频道设置",
       );
+      button("删除频道")!.click();
+      await frame();
+      check(
+        document.querySelector('[aria-labelledby="rah-room-delete-title"]'),
+        "删除频道必须先显示危险确认层",
+      );
+      check(
+        document.body.textContent?.includes(
+          "「成员回归」及其中的所有消息都会被永久删除，且无法撤销。",
+        ),
+        "永久删除确认必须逐字采用 Raft 产品合同",
+      );
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+      await frame();
+      check(
+        document.activeElement === button("删除频道"),
+        "关闭永久删除确认后必须把焦点还给删除按钮",
+      );
+      button("删除频道")!.click();
+      await frame();
+      button("永久删除")!.click();
+      for (let i = 0; i < 4; i++) await frame();
+      check(deleteCalls.current === 1, "永久删除确认只能提交一次");
+      check(!document.querySelector('[role="dialog"]'), "删除成功必须关闭设置");
+      flushSync(() => setOpen(true));
+      await frame();
       button("退出频道")!.click();
       await frame();
       check(
@@ -304,6 +331,7 @@ function Fixture() {
       {open && (
         <RoomMembersDialog
           canAdd
+          canDelete
           canLeave
           canManageRoles
           canRemove
@@ -340,6 +368,10 @@ function Fixture() {
               })),
           ]}
           onClose={() => setOpen(false)}
+          onDelete={async () => {
+            deleteCalls.current += 1;
+            setOpen(false);
+          }}
           onLeave={async () => {
             leaveCalls.current += 1;
             setOpen(false);

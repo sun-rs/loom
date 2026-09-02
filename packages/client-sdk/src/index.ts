@@ -73,6 +73,8 @@ import {
   ClientRoomSyncResponseSchema,
   ClientRoomArchiveRequestSchema,
   ClientRoomCreateRequestSchema,
+  ClientRoomDeleteRequestSchema,
+  ClientRoomDeleteResponseSchema,
   ClientRoomLeaveRequestSchema,
   ClientRoomAgentSosResponseSchema,
   ClientRoomAgentSosResumeRequestSchema,
@@ -185,6 +187,8 @@ import {
   type ClientRoomSyncResponse,
   type ClientRoomArchiveRequest,
   type ClientRoomCreateRequest,
+  type ClientRoomDeleteRequest,
+  type ClientRoomDeleteResponse,
   type ClientRoomLeaveRequest,
   type ClientRoomAgentSosResponse,
   type ClientRoomAgentSosResumeRequest,
@@ -414,6 +418,10 @@ export type RahClientOperationMap = AgentWorkspaceOperationMap &
     "room.create": {
       input: ClientRoomCreateRequest;
       output: ClientRoomMutationResponse;
+    };
+    "room.delete": {
+      input: ClientRoomDeleteRequest;
+      output: ClientRoomDeleteResponse;
     };
     "room.archive": {
       input: ClientRoomArchiveRequest;
@@ -825,6 +833,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     method: "POST",
     output: ClientRoomMutationResponseSchema,
     path: "/v3/client/rooms/create",
+  },
+  "room.delete": {
+    authenticated: true,
+    input: ClientRoomDeleteRequestSchema,
+    method: "POST",
+    output: ClientRoomDeleteResponseSchema,
+    path: "/v3/client/rooms/delete",
   },
   "room.archive": {
     authenticated: true,

@@ -285,6 +285,7 @@ export function RoomCreateDialog({
 
 export function RoomMembersDialog({
   canAdd,
+  canDelete,
   canLeave,
   canManageRoles,
   canRemove,
@@ -296,6 +297,7 @@ export function RoomMembersDialog({
   onAdd,
   onArchive,
   onClose,
+  onDelete,
   onLeave,
   onRemove,
   onResumeAgents,
@@ -307,6 +309,7 @@ export function RoomMembersDialog({
   leaveUnavailableReason,
 }: {
   canAdd: boolean;
+  canDelete: boolean;
   canLeave: boolean;
   canManageRoles: boolean;
   canRemove: boolean;
@@ -318,6 +321,7 @@ export function RoomMembersDialog({
   onAdd: (agent: AgentMembershipIdentity) => Promise<void>;
   onArchive: () => Promise<void>;
   onClose: () => void;
+  onDelete: () => Promise<void>;
   onLeave: () => Promise<void>;
   onRemove: (agent: AgentMembershipIdentity) => Promise<void>;
   onResumeAgents: (guidance: string) => Promise<void>;
@@ -340,6 +344,9 @@ export function RoomMembersDialog({
   const archiveTriggerRef = useRef<HTMLButtonElement>(null);
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   const leaveTriggerRef = useRef<HTMLButtonElement>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<string>();
+  const deleteTriggerRef = useRef<HTMLButtonElement>(null);
   const [sosOpen, setSosOpen] = useState(false);
   const [sosPhase, setSosPhase] = useState<"confirm" | "stopped">("confirm");
   const [sosGuidance, setSosGuidance] = useState("");
@@ -522,6 +529,27 @@ export function RoomMembersDialog({
   const closeLeaveConfirmation = () => {
     setLeaveConfirmOpen(false);
     requestAnimationFrame(() => leaveTriggerRef.current?.focus());
+  };
+  const deleteRoom = async () => {
+    if (mutationPendingRef.current || !canDelete) return;
+    mutationPendingRef.current = true;
+    setLifecyclePending(true);
+    setDeleteError(undefined);
+    try {
+      await onDelete();
+      setDeleteConfirmOpen(false);
+    } catch (caught) {
+      setDeleteError(errorMessage(caught));
+    } finally {
+      mutationPendingRef.current = false;
+      setLifecyclePending(false);
+    }
+  };
+  const closeDeleteConfirmation = () => {
+    if (lifecyclePending) return;
+    setDeleteConfirmOpen(false);
+    setDeleteError(undefined);
+    requestAnimationFrame(() => deleteTriggerRef.current?.focus());
   };
   const closeSos = () => {
     if (sosStopping || sosResuming) return;
@@ -962,6 +990,18 @@ export function RoomMembersDialog({
                     归档频道
                   </button>
                 )}
+                <button
+                  className="btn rah-channel-delete-button"
+                  disabled={!canDelete || mutationBlocked}
+                  onClick={() => {
+                    setDeleteError(undefined);
+                    setDeleteConfirmOpen(true);
+                  }}
+                  ref={deleteTriggerRef}
+                  type="button"
+                >
+                  删除频道
+                </button>
               </section>
             </div>
           </div>
@@ -981,6 +1021,15 @@ export function RoomMembersDialog({
           name={room?.name ?? "Room"}
           onCancel={closeLeaveConfirmation}
           onConfirm={leave}
+        />
+      ) : null}
+      {deleteConfirmOpen ? (
+        <RoomDeleteConfirmation
+          blocked={lifecyclePending}
+          {...(deleteError === undefined ? {} : { error: deleteError })}
+          name={room?.name ?? "Room"}
+          onCancel={closeDeleteConfirmation}
+          onConfirm={deleteRoom}
         />
       ) : null}
       {sosOpen ? (
@@ -1225,6 +1274,70 @@ function RoomLeaveConfirmation({
             onClick={() => void onConfirm()}
           >
             {blocked ? "正在退出…" : "离开"}
+          </button>
+        </footer>
+      </section>
+    </div>
+  );
+}
+
+function RoomDeleteConfirmation({
+  blocked,
+  error,
+  name,
+  onCancel,
+  onConfirm,
+}: {
+  blocked: boolean;
+  error?: string;
+  name: string;
+  onCancel: () => void;
+  onConfirm: () => Promise<void>;
+}) {
+  const dialogRef = useDialogProtocol({ blocked, onClose: onCancel });
+  return (
+    <div
+      className="rah-dialog-layer rah-room-delete-confirm"
+      role="presentation"
+    >
+      <div aria-hidden="true" className="rah-dialog-backdrop" />
+      <section
+        aria-labelledby="rah-room-delete-title"
+        aria-modal="true"
+        className="rah-dialog"
+        ref={dialogRef}
+        role="dialog"
+        tabIndex={-1}
+      >
+        <header>
+          <h2 id="rah-room-delete-title">删除频道</h2>
+          <button
+            aria-label="关闭"
+            className="sq-btn"
+            disabled={blocked}
+            onClick={onCancel}
+          >
+            ×
+          </button>
+        </header>
+        <p>「{name}」及其中的所有消息都会被永久删除，且无法撤销。</p>
+        {error === undefined ? null : (
+          <p className="rah-dialog-error" role="alert">
+            {error}
+          </p>
+        )}
+        <footer>
+          <button className="btn" disabled={blocked} onClick={onCancel}>
+            取消
+          </button>
+          <button
+            autoFocus
+            className="btn rah-channel-delete-button"
+            data-dialog-initial-focus
+            disabled={blocked}
+            onClick={() => void onConfirm()}
+          >
+            {blocked ? "删除中…" : "永久删除"}
           </button>
         </footer>
       </section>

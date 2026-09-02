@@ -164,6 +164,35 @@ CREATE TABLE IF NOT EXISTS rooms (
   UNIQUE (workspace_id, slug)
 ) STRICT;
 
+CREATE TABLE IF NOT EXISTS room_deletion_receipts (
+  deletion_id TEXT PRIMARY KEY,
+  actor_id TEXT NOT NULL REFERENCES principals(principal_id),
+  workspace_id TEXT NOT NULL REFERENCES workspaces(workspace_id),
+  room_id TEXT NOT NULL,
+  room_name TEXT NOT NULL,
+  room_slug TEXT NOT NULL,
+  based_on_room_seq INTEGER NOT NULL CHECK (based_on_room_seq >= 0),
+  idempotency_key TEXT NOT NULL,
+  file_count INTEGER NOT NULL CHECK (file_count >= 0),
+  deleted_at TEXT NOT NULL,
+  UNIQUE (actor_id, idempotency_key)
+) STRICT;
+
+CREATE TABLE IF NOT EXISTS room_file_gc_receipts (
+  deletion_id TEXT NOT NULL REFERENCES room_deletion_receipts(deletion_id),
+  attachment_id TEXT NOT NULL,
+  state TEXT NOT NULL CHECK (state IN ('pending', 'reclaimed', 'failed')),
+  attempt_count INTEGER NOT NULL DEFAULT 0 CHECK (attempt_count >= 0),
+  last_error TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (deletion_id, attachment_id),
+  UNIQUE (attachment_id)
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS idx_room_file_gc_pending
+  ON room_file_gc_receipts(state, updated_at, deletion_id, attachment_id);
+
 CREATE TABLE IF NOT EXISTS memberships (
   room_id TEXT NOT NULL REFERENCES rooms(room_id),
   principal_id TEXT NOT NULL REFERENCES principals(principal_id),

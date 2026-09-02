@@ -26,6 +26,8 @@ P2 Agent workspace / 本地项目文件当前 owner 合同：[Raft workspace 请
 
 核心调度当前最高优先级审计与同日修复复核：[Raft 业务合同、四条 P0 completion-proof 反例、typed obligation、双 Agent 浏览器报数、Thread subscription、Held Draft、Runtime error fingerprint fence、Reminder 与 restart/busy 组合证据](./audits/2026-09-02-core-scheduling-raft-parity-audit.zh-CN.md)。Room / Inbox / Activation 主骨架成立；schema 30–34 依次关闭 typed completion proof、Thread follow、Held Draft、poison retry 主合同和 Reminder authoritative schedule；真实 Worker gate又覆盖报数中途重启及单 Agent busy 跨 Room。schema 35/36 现补齐结构化 Runtime `actionRequired/sticky/recoverable`、正向 jitter、跨 Room Reminder target、Thread receipt 与 reload-safe typed permalink。它关闭本轮列出的精细缺口，但不等于所有 Provider 都能发出结构化错误，也不把本地内部链接、`#room` target 扩大为 Raft 中央公开 URL 或未验证的 DM target。
 
+普通 Channel 永久删除的 Raft 可见合同、schema 40 显式引用图、文件 GC 回执和崩溃恢复边界：[产品合同](./product/2026-09-03-room-permanent-deletion-contract.zh-CN.md)；实现与 Chrome/Firefox 隔离真删除证据：[验证审计](./audits/2026-09-03-room-permanent-deletion-verification.zh-CN.md)。正式用户 Room 不用于破坏性验收。
+
 本轮十二项 Chat / Settings / Presence 缺口的当前裁决：[逐项源码 owner、双边实页、Firefox 桌面/390、正式重启与保留边界](./audits/2026-09-02-chat-settings-presence-closure.zh-CN.md)。本报告关闭的只是用户列出的十二项合同，不扩大为全站或所有权限/异常态 100% 等同。
 
 Settings 当前线上源码/真实 DOM 合同：[Raft Settings → RAH OS 行为合同审计](./audits/2026-09-01-raft-settings-behavior-contract.zh-CN.md)。统一 64/240/62 顶层骨架、粉色选中态、36/18px 页头图标和共享卡片；已移除套餐账单/中央应用商店，保留标明为本地扩展的 LAN 设备。按 Workspace 静音已有 daemon 持久化和 Web Push 投递边界过滤。
@@ -153,11 +155,12 @@ Raft 官方与 RAH OS 在同一桌面尺寸下完成 Channel、DM、Thread、Tas
 
 消息列的宽度、根消息/回复结构、Agent 与 Human 关注所有权和标题栏操作协议：[消息列（Thread）Raft 对齐合同](./product/2026-09-02-thread-column-parity-contract.zh-CN.md)。
 
-聊天正文中的 Agent/Task/Room 引用、Thread 搜索片段、公式/代码/Mermaid 单一渲染 owner 与
+聊天正文中的 Agent/Human/Room/DM/Task/Thread/Computer/App/Message typed 引用、共享 mention delivery
+语法、canonical read receipt、Thread 搜索片段、公式/代码/Mermaid 单一渲染 owner 与
 Raft/Multica 来源边界：[消息富文本引用、公式与图表合同](./product/2026-09-02-message-rich-reference-contract.zh-CN.md)。
 
 上述合同的 Raft bundle/正式页证据、Multica 交叉依据、RAH OS 实施映射、正式 4173 Chrome 实测与
-剩余非阻断边界：[消息富文本引用与消息列搜索验证报告](./audits/2026-09-02-message-rich-reference-verification.zh-CN.md)。
+独立审计、computed-style/浏览器证据与剩余非阻断边界：[消息富文本引用与消息列搜索验证报告](./audits/2026-09-02-message-rich-reference-verification.zh-CN.md)。
 
 不采信上述结论、重新启动真实 OpenCode fixture 并独立复核官方 Raft live DOM、Channel、DM、Thread、Task、Agent、Computer 与移动端结果的反证审计：[Raft ↔ RAH OS 独立第三方双边审计](./audits/2026-08-29-independent-third-party-bilateral-audit.zh-CN.md)。
 

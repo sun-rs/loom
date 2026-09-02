@@ -255,6 +255,12 @@ test("Raft Search scopes filter authors and exact self mentions even without key
   try {
     f.post(f.channel.roomId, "@human scope needle", true);
     f.post(f.channel.roomId, "@human-neighbor scope needle", true);
+    f.post(f.channel.roomId, "`@human` is code", true);
+    f.post(
+      f.channel.roomId,
+      "[@human](https://example.com/profile) is an authored link",
+      true,
+    );
     f.post(f.second.roomId, "other author");
     const input = {
       workspaceId: f.workspaceId,
@@ -272,7 +278,7 @@ test("Raft Search scopes filter authors and exact self mentions even without key
     );
     assert.equal(
       f.kernel.searchWorkspace(f.actor, { ...input, mentionSelf: false }).total,
-      3,
+      5,
     );
   } finally {
     f.close();
@@ -287,6 +293,18 @@ test("Web Push projection defaults to DM/mention and supports a muted-aware all-
       f.kernel.humanNotifications.webPush.project({
         roomId: f.channel.roomId,
         roomSeq: ordinary.event.roomSeq,
+      }),
+      [],
+    );
+    const codeMention = f.post(
+      f.channel.roomId,
+      "`@human` remains a code example",
+      true,
+    );
+    assert.deepEqual(
+      f.kernel.humanNotifications.webPush.project({
+        roomId: f.channel.roomId,
+        roomSeq: codeMention.event.roomSeq,
       }),
       [],
     );

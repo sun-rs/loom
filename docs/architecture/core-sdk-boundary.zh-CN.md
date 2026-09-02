@@ -1,5 +1,7 @@
 # RAH Core SDK 边界
 
+2026-09-03 Room 永久删除增量边界：`HumanApplicationPort.deleteWorkspaceRoom` 是唯一 Human 能力入口；actor 仍只来自认证上下文。schema 40 的 `RoomDeletionService` 在单一 SQLite 事务中持有普通 Channel 权限、freshness、active-work gate、显式 52 表引用图和幂等删除回执；`RoomFiles` 只在提交后按 durable GC receipt 回收 exact 本地 blob，并在 Kernel 启动时续收。HTTP/SDK/Web 只校验、委派和投影确认状态，不能持有第二套删除图或把 archive 当永久删除。详见[永久删除合同](../product/2026-09-03-room-permanent-deletion-contract.zh-CN.md)。
+
 2026-09-01 typed navigation 增量边界：`NavigationTarget` 是 protocol-owned intent；`HumanNavigation` 在点击时重新检查 canonical existence 与当前 Human ACL，`HumanNotifications` 只持有 Human×Workspace 有界 dismissal preference。daemon shell 可从自己拥有的 current Computer condition 构造通知，但 Web/URL/notification body 不成为业务 owner。`HumanApplicationPort` 新增 resolve/dismissal 三个窄方法；HTTP/SDK 只校验与委派。详见[产品合同](../product/2026-09-01-notifications-typed-navigation-contract.zh-CN.md)。
 
 2026-09-01 增量边界：Human facade 新增 `listMessageSocial/reactMessage/saveMessage/listSavedMessages/getSidebarPreferences/patchSidebarPreferences`。Kernel schema 23 的 `MessageSocial` 是消息回应/私人收藏唯一 owner，`HumanSidebar` 是 Human×Workspace 侧栏排序及个人 Room 显示偏好唯一 owner。后者包含静音普通 Activity 与默认折叠长消息；精确 mention 不被静音。共享回应追加 `message.reaction_changed`，不调用 `deriveAttention`；私人收藏和侧栏/Room 个人偏好不写共享 Room event。HTTP v3 与 RahClient 仅鉴权/校验/委派，Web 不把 localStorage 当业务真相。详见[合同](../product/2026-09-01-message-social-sidebar-contract.zh-CN.md)。

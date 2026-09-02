@@ -1106,6 +1106,57 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     assert.equal(unarchivedManagedRoom.event.type, "room.unarchived");
     assert.equal(unarchivedManagedRoom.room.archivedAt, undefined);
 
+    const roomForDeletionResponse = await request(
+      "/v3/client/rooms/create",
+      {
+        basedOnControlRoomSeq: kernel.sync(humanActor, {
+          consumerId: "client-room-delete-control-head",
+          roomId: workspaceCreated.controlRoom.roomId,
+        }).latestRoomSeq,
+        idempotencyKey: "client-room-delete-create-v3",
+        kind: "channel",
+        name: "Delete through transport",
+        slug: "delete-through-transport",
+        workspaceId: workspaceCreated.workspace.workspaceId,
+      },
+      human.accessToken,
+    );
+    assert.equal(roomForDeletionResponse.status, 200);
+    const roomForDeletion = await jsonObject(roomForDeletionResponse);
+    const roomDeleteInput = {
+      basedOnRoomSeq: kernel.sync(humanActor, {
+        consumerId: "client-room-delete-head",
+        roomId: roomForDeletion.room.roomId,
+      }).latestRoomSeq,
+      idempotencyKey: "client-room-delete-v3",
+      roomId: roomForDeletion.room.roomId,
+    };
+    const roomDeleteResponse = await request(
+      "/v3/client/rooms/delete",
+      roomDeleteInput,
+      human.accessToken,
+    );
+    assert.equal(roomDeleteResponse.status, 200);
+    const deletedRoom = await jsonObject(roomDeleteResponse);
+    assert.equal(deletedRoom.roomId, roomForDeletion.room.roomId);
+    assert.equal(deletedRoom.deduplicated, false);
+    assert.deepEqual(deletedRoom.fileGc, {
+      failed: 0,
+      pending: 0,
+      reclaimed: 0,
+      total: 0,
+    });
+    const roomDeleteReplayResponse = await request(
+      "/v3/client/rooms/delete",
+      roomDeleteInput,
+      human.accessToken,
+    );
+    assert.equal(roomDeleteReplayResponse.status, 200);
+    assert.equal(
+      (await jsonObject(roomDeleteReplayResponse)).deduplicated,
+      true,
+    );
+
     kernel.addMember(humanActor, {
       principalId: memberHuman.principal.principalId,
       roomId: managedRoom.room.roomId,

@@ -11,7 +11,10 @@ import type {
   TaskSubmission,
   Workspace,
 } from "@rah-os/protocol";
-import { messageMentionCandidates } from "@rah-os/protocol";
+import {
+  messageMentionCandidates,
+  messageReferenceNameKey,
+} from "@rah-os/protocol";
 
 export type RoomMessageView = {
   attachments?: readonly import("@rah-os/protocol").Attachment[];
@@ -235,15 +238,23 @@ export function mentionedRoomAgentIds(input: {
   agents: readonly RoomAgentTarget[];
   body: string;
 }): string[] {
+  const agentsByHandle = new Map<string, RoomAgentTarget[]>();
+  for (const agent of input.agents) {
+    const key = messageReferenceNameKey(agent.handle);
+    agentsByHandle.set(key, [...(agentsByHandle.get(key) ?? []), agent]);
+  }
+  const uniqueAgents = [...agentsByHandle.values()].flatMap((agents) =>
+    agents.length === 1 ? agents : [],
+  );
   const mentionedHandles = new Set(
     messageMentionCandidates(
       input.body,
-      input.agents.map(({ handle }) => handle),
-    ).map(({ handle }) => handle.normalize("NFKC").toLowerCase()),
+      uniqueAgents.map(({ handle }) => handle),
+    ).map(({ handle }) => messageReferenceNameKey(handle)),
   );
-  return input.agents
+  return uniqueAgents
     .filter(({ handle }) =>
-      mentionedHandles.has(handle.normalize("NFKC").toLowerCase()),
+      mentionedHandles.has(messageReferenceNameKey(handle)),
     )
     .map(({ participantId }) => participantId)
     .sort();

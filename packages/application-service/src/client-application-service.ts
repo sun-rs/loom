@@ -111,6 +111,8 @@ import {
   ClientRoomMembersListResponseSchema,
   ClientRoomArchiveRequestSchema,
   ClientRoomCreateRequestSchema,
+  ClientRoomDeleteRequestSchema,
+  ClientRoomDeleteResponseSchema,
   ClientRoomLeaveRequestSchema,
   ClientRoomAgentSosResponseSchema,
   ClientRoomAgentSosResumeRequestSchema,
@@ -372,6 +374,7 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/rooms/agents/activity/list",
   "/rooms/archive",
   "/rooms/create",
+  "/rooms/delete",
   "/rooms/direct/open",
   "/rooms/leave",
   "/rooms/sos/resume",
@@ -1364,6 +1367,17 @@ export class ClientApplicationService {
         200,
         ClientRoomMutationResponseSchema.parse(
           this.#human.archiveWorkspaceRoom(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/rooms/delete") {
+      const command = parseClientRequest(ClientRoomDeleteRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientRoomDeleteResponseSchema.parse(
+          this.#human.deleteWorkspaceRoom(actor, command),
         ),
       );
       return;

@@ -402,7 +402,7 @@ export function MessageMarkdown({
           catalog: {
             agents: references.agents.map((agent) => ({
               agentDefinitionId: agent.agentDefinitionId,
-              names: [agent.handle, agent.displayName],
+              handle: agent.handle,
               principalId: agent.participantId,
               ...(references.mentionReadStates?.[agent.participantId] ===
               undefined
@@ -425,27 +425,19 @@ export function MessageMarkdown({
             ]
               .filter(({ kind }) => kind === "human")
               .map((principal) => {
-                const names = [
-                  principal.handle,
-                  ...(principal.displayName === undefined
-                    ? []
-                    : [principal.displayName]),
-                ];
                 const directRoomId = references.rooms.find(
                   ({ kind, peerNames = [] }) =>
                     kind === "direct" &&
-                    peerNames.some((name) =>
-                      names.some(
-                        (candidate) =>
-                          candidate.toLocaleLowerCase() ===
-                          name.toLocaleLowerCase(),
-                      ),
+                    peerNames.some(
+                      (name) =>
+                        name.toLocaleLowerCase() ===
+                        principal.handle.toLocaleLowerCase(),
                     ),
                 )?.roomId;
                 return {
                   ...(directRoomId === undefined ? {} : { directRoomId }),
+                  handle: principal.handle,
                   kind: "human" as const,
-                  names,
                   principalId: principal.principalId,
                   ...(references.mentionReadStates?.[principal.principalId] ===
                   undefined

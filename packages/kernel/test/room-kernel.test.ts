@@ -4322,7 +4322,7 @@ test("cancelling a waiting Task atomically terminates its pending InputRequest",
   kernel.close();
 });
 
-test("schema v39 preserves legacy InputRequests while adding cancellation evidence", () => {
+test("schema v40 preserves legacy InputRequests while adding Room deletion receipts", () => {
   const { agent, databasePath, human, humanActor, kernel, room } =
     createFixture();
   const created = kernel.createTask(humanActor, {
@@ -4394,7 +4394,7 @@ test("schema v39 preserves legacy InputRequests while adding cancellation eviden
         user_version: number;
       }
     ).user_version,
-    39,
+    40,
   );
   assert.deepEqual(
     migrated

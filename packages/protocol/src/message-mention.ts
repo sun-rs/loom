@@ -20,7 +20,10 @@ function maskRange(mask: string[], start: number, end: number): void {
  * instructions and therefore remain masked for every caller.
  */
 function visibleMessageText(source: string): string {
-  const mask = [...source];
+  // RegExp match.index and String#slice are UTF-16 code-unit based. Keep this
+  // mask on the same index system; a code-point spread would shift every range
+  // after an astral character such as an emoji.
+  const mask = source.split("");
   const protectedRanges: Array<[number, number]> = [];
 
   let offset = 0;
@@ -40,6 +43,8 @@ function visibleMessageText(source: string): string {
         marker.length >= fence.length
       )
         fence = undefined;
+    } else if (/^(?: {4}|\t)/u.test(value)) {
+      protectedRanges.push([offset, offset + value.length]);
     }
     offset += value.length;
   }
@@ -53,8 +58,25 @@ function visibleMessageText(source: string): string {
   protect(/(`+)[^\n]*?\1/gu);
   protect(/\$\$[\s\S]*?\$\$|\$(?!\s)[^\n$]*?\$/gu);
   protect(/!?\[[^\]\n]*\]\([^\n)]*\)/gu);
+  protect(/!?\[[^\]\n]*\]\[[^\]\n]*\]/gu);
+  const referenceLabels = new Set<string>();
+  for (const match of source.matchAll(
+    /^ {0,3}\[([^\]\n]+)\]:[^\n]*(?:\r?\n|$)/gmu,
+  )) {
+    if (match.index === undefined) continue;
+    referenceLabels.add(messageReferenceNameKey(match[1]!));
+    protectedRanges.push([match.index, match.index + match[0].length]);
+  }
+  for (const match of source.matchAll(/!?\[([^\]\n]+)\]/gu)) {
+    if (
+      match.index !== undefined &&
+      referenceLabels.has(messageReferenceNameKey(match[1]!))
+    )
+      protectedRanges.push([match.index, match.index + match[0].length]);
+  }
   protect(/<(?:https?:\/\/|mailto:)[^>\n]+>/giu);
   protect(/(?:https?:\/\/|mailto:)[^\s<>()]+/giu);
+  protect(/<!--[\s\S]*?-->/gu);
   protect(/<([A-Za-z][\w:-]*)\b[^>]*>[\s\S]*?<\/\1\s*>/giu);
   protect(/<[^>\n]+>/gu);
   for (const [start, end] of protectedRanges) maskRange(mask, start, end);
@@ -63,6 +85,11 @@ function visibleMessageText(source: string): string {
 
 function escapedPattern(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+}
+
+/** The comparison key shared by delivery, rendering and canonical writers. */
+export function messageReferenceNameKey(value: string): string {
+  return value.trim().normalize("NFKC").toLowerCase();
 }
 
 /**
@@ -76,9 +103,21 @@ export function messageMentionCandidates(
 ): MessageMentionCandidate[] {
   const visible = visibleMessageText(source);
   const candidates: MessageMentionCandidate[] = [];
-  const handles = [...new Set(knownHandles.filter(Boolean))].sort(
-    (left, right) => right.length - left.length || left.localeCompare(right),
-  );
+  const handlesByKey = new Map<string, Set<string>>();
+  for (const handle of knownHandles.filter(Boolean)) {
+    const key = messageReferenceNameKey(handle);
+    const values = handlesByKey.get(key) ?? new Set<string>();
+    values.add(handle);
+    handlesByKey.set(key, values);
+  }
+  // Case/NFKC-equivalent but differently spelled handles are ambiguous. A
+  // mention must fail closed instead of selecting one identity or waking both.
+  const handles = [...handlesByKey.values()]
+    .filter((values) => values.size === 1)
+    .map((values) => [...values][0]!)
+    .sort(
+      (left, right) => right.length - left.length || left.localeCompare(right),
+    );
   for (const handle of handles) {
     const pattern = new RegExp(`@${escapedPattern(handle)}`, "giu");
     const unicodeBoundary = /[^\x00-\x7f]/u.test(handle);

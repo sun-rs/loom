@@ -19,6 +19,14 @@ test("a Human creates a managed Workspace and Rooms through its control Room", (
       handle: "workspace-owner",
       kind: "human",
     });
+    assert.throws(
+      () =>
+        kernel.provisionPrincipal({
+          handle: "WORKSPACE-OWNER",
+          kind: "human",
+        }),
+      /handle .* already in use/i,
+    );
     const outsider = kernel.provisionPrincipal({
       handle: "workspace-outsider",
       kind: "human",
@@ -112,6 +120,18 @@ test("a Human creates a managed Workspace and Rooms through its control Room", (
     assert.equal(roomCreated.room.workspaceId, created.workspace.workspaceId);
     assert.equal(roomCreated.event.roomId, created.controlRoom.roomId);
     assert.equal(roomCreated.event.roomSeq, 2);
+    assert.throws(
+      () =>
+        kernel.createWorkspaceRoom(ownerActor, {
+          basedOnControlRoomSeq: roomCreated.event.roomSeq,
+          idempotencyKey: "room-create-ambiguous-reference",
+          kind: "channel",
+          name: "Ambiguous Engineering",
+          slug: "ENGINEERING",
+          workspaceId: created.workspace.workspaceId,
+        }),
+      /slug .* already in use/i,
+    );
     assert.equal(
       kernel.listRoomMemberships(ownerActor, {
         roomId: roomCreated.room.roomId,
