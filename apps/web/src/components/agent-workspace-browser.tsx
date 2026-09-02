@@ -9,9 +9,12 @@ import type { RahClient } from "@rah-os/client-sdk";
 import type {
   AgentWorkspaceFile,
   AgentWorkspaceListing,
+  AgentWorkspaceRoot,
+  AgentWorkspaceRoots,
 } from "@rah-os/protocol";
 import { Icon } from "./icon.tsx";
 import { FileGlyph } from "./file-glyph.tsx";
+import { MessageMarkdown } from "./message-markdown.tsx";
 import "../agent-workspace.css";
 
 type Entry = AgentWorkspaceListing["entries"][number];
@@ -24,8 +27,20 @@ export function AgentWorkspaceBrowser({
   agentDefinitionId: string;
   memoryControls: ReactNode;
 }) {
-  const [hidden, setHidden] = useState(false),
+  const [hidden, setHidden] = useState(() => {
+      try {
+        return (
+          localStorage.getItem(`rah:workspace-hidden:${agentDefinitionId}`) ===
+          "true"
+        );
+      } catch {
+        return false;
+      }
+    }),
     [revision, setRevision] = useState(0);
+  const [roots, setRoots] = useState<AgentWorkspaceRoots>();
+  const [rootId, setRootId] =
+    useState<AgentWorkspaceRoot["rootId"]>("agent-workspace");
   const [root, setRoot] = useState<AgentWorkspaceListing>();
   const [selected, setSelected] = useState<string>();
   const [file, setFile] = useState<AgentWorkspaceFile>();
@@ -33,6 +48,7 @@ export function AgentWorkspaceBrowser({
     [copy, setCopy] = useState(false);
   const [copyError, setCopyError] = useState<string>();
   const [memoryOpen, setMemoryOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"preview" | "raw">("preview");
   const [treeWidth, setTreeWidth] = useState(256);
   const drag = useRef<{ x: number; width: number } | undefined>(undefined);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
@@ -48,13 +64,42 @@ export function AgentWorkspaceBrowser({
   );
   useEffect(() => {
     const controller = new AbortController();
+    try {
+      setHidden(
+        localStorage.getItem(`rah:workspace-hidden:${agentDefinitionId}`) ===
+          "true",
+      );
+    } catch {
+      setHidden(false);
+    }
+    setRoots(undefined);
+    setRootId("agent-workspace");
+    void client
+      .request(
+        "agent.workspace.roots",
+        { agentDefinitionId },
+        { signal: controller.signal },
+      )
+      .then((value) => {
+        if (!controller.signal.aborted) {
+          setRoots(value);
+          setRootId(value.defaultRootId);
+        }
+      })
+      .catch(() => {
+        /* Compatible default workspace remains available if discovery fails. */
+      });
+    return () => controller.abort();
+  }, [client, agentDefinitionId]);
+  useEffect(() => {
+    const controller = new AbortController();
     setFile(undefined);
     setError(undefined);
     if (selected)
       void client
         .request(
           "agent.workspace.read",
-          { agentDefinitionId, path: selected },
+          { agentDefinitionId, rootId, path: selected },
           { signal: controller.signal },
         )
         .then((value) => {
@@ -67,14 +112,52 @@ export function AgentWorkspaceBrowser({
             );
         });
     return () => controller.abort();
-  }, [client, agentDefinitionId, selected, revision]);
+  }, [client, agentDefinitionId, rootId, selected, revision]);
+  const selectedRoot = roots?.roots.find(
+    (candidate) => candidate.rootId === rootId,
+  );
+  const switchRoot = (next: AgentWorkspaceRoot["rootId"]) => {
+    setRootId(next);
+    setRoot(undefined);
+    setSelected(undefined);
+    setFile(undefined);
+    setError(undefined);
+    setCopy(false);
+    setCopyError(undefined);
+    setViewMode("preview");
+  };
+  const selectFile = (path: string) => {
+    setViewMode("preview");
+    setSelected(path);
+  };
   return (
     <section
       className="rah-workspace-browser"
       style={{ "--rah-tree-width": `${treeWidth}px` } as CSSProperties}
     >
       <header className="rah-workspace-path">
-        <code>{root?.rootPath ?? "Agent 私有目录"}</code>
+        {roots && roots.roots.length > 1 && (
+          <select
+            aria-label="工作区根目录"
+            value={rootId}
+            onChange={(event) =>
+              switchRoot(
+                event.currentTarget.value as AgentWorkspaceRoot["rootId"],
+              )
+            }
+          >
+            {roots.roots.map((candidate) => (
+              <option key={candidate.rootId} value={candidate.rootId}>
+                {candidate.rootKind === "agent-workspace"
+                  ? candidate.label
+                  : `本机项目 · ${candidate.label}`}
+              </option>
+            ))}
+          </select>
+        )}
+        <code>
+          {root?.rootPath ?? selectedRoot?.rootPath ?? "Agent 持久工作区"}
+        </code>
         <button
           title="复制路径"
           aria-label="复制路径"
@@ -114,7 +197,16 @@ export function AgentWorkspaceBrowser({
                 aria-label={hidden ? "已显示隐藏文件" : "已隐藏隐藏文件"}
                 aria-pressed={hidden}
                 onClick={() => {
-                  setHidden(!hidden);
+                  const next = !hidden;
+                  setHidden(next);
+                  try {
+                    localStorage.setItem(
+                      `rah:workspace-hidden:${agentDefinitionId}`,
+                      String(next),
+                    );
+                  } catch {
+                    /* Browser storage denial does not block file browsing. */
+                  }
                   setSelected(undefined);
                 }}
               >
@@ -160,15 +252,16 @@ export function AgentWorkspaceBrowser({
             }}
           >
             <Directory
-              key={`${agentDefinitionId}:${hidden}`}
+              key={`${agentDefinitionId}:${rootId}:${hidden}`}
               revision={revision}
               client={client}
               agentDefinitionId={agentDefinitionId}
+              rootId={rootId}
               path=""
               depth={0}
               hidden={hidden}
               selected={selected}
-              select={setSelected}
+              select={selectFile}
               onRoot={setRoot}
             />
           </div>
@@ -234,6 +327,26 @@ export function AgentWorkspaceBrowser({
             <>
               <header>
                 <code>{selected}</code>
+                {selected.endsWith(".md") && (
+                  <span
+                    className="rah-workspace-view-mode"
+                    role="group"
+                    aria-label="工作区文件查看模式"
+                  >
+                    <button
+                      aria-pressed={viewMode === "raw"}
+                      onClick={() => setViewMode("raw")}
+                    >
+                      源码
+                    </button>
+                    <button
+                      aria-pressed={viewMode === "preview"}
+                      onClick={() => setViewMode("preview")}
+                    >
+                      预览
+                    </button>
+                  </span>
+                )}
                 <button
                   aria-label="关闭文件预览"
                   onClick={() => setSelected(undefined)}
@@ -246,7 +359,13 @@ export function AgentWorkspaceBrowser({
               ) : !file ? (
                 <p role="status">正在读取文件…</p>
               ) : file.encoding === "utf-8" ? (
-                <pre>{file.content}</pre>
+                selected.endsWith(".md") && viewMode === "preview" ? (
+                  <div className="rah-workspace-markdown">
+                    <MessageMarkdown source={file.content ?? ""} />
+                  </div>
+                ) : (
+                  <pre>{file.content}</pre>
+                )
               ) : file.encoding === "base64" &&
                 file.mimeType.startsWith("image/") ? (
                 <img
@@ -268,11 +387,17 @@ export function AgentWorkspaceBrowser({
         </section>
       </div>
       <footer>
-        <p>Agent 私有目录（只读）；不代表当前运行任务的项目 cwd。</p>
-        <details onToggle={(e) => setMemoryOpen(e.currentTarget.open)}>
-          <summary>记忆管理</summary>
-          {memoryOpen && memoryControls}
-        </details>
+        <p>
+          {selectedRoot?.rootKind === "runtime-project"
+            ? "本机运行项目（只读）；来自 daemon 冻结的 workspace cwd，不是 Agent 身份或记忆分区。"
+            : "Agent 持久工作区（只读）；MEMORY.md 与 notes/ 属于该 Agent，不等于本次运行项目。"}
+        </p>
+        {rootId === "agent-workspace" && (
+          <details onToggle={(e) => setMemoryOpen(e.currentTarget.open)}>
+            <summary>记忆管理</summary>
+            {memoryOpen && memoryControls}
+          </details>
+        )}
       </footer>
     </section>
   );
@@ -280,6 +405,7 @@ export function AgentWorkspaceBrowser({
 function Directory({
   client,
   agentDefinitionId,
+  rootId,
   path,
   depth,
   hidden,
@@ -290,6 +416,7 @@ function Directory({
 }: {
   client: RahClient;
   agentDefinitionId: string;
+  rootId: AgentWorkspaceRoot["rootId"];
   path: string;
   depth: number;
   hidden: boolean;
@@ -310,7 +437,7 @@ function Directory({
     void client
       .request(
         "agent.workspace.list",
-        { agentDefinitionId, path, includeHidden: hidden },
+        { agentDefinitionId, rootId, path, includeHidden: hidden },
         { signal: controller.signal },
       )
       .then((value) => {
@@ -323,7 +450,7 @@ function Directory({
         if (!controller.signal.aborted) setError(true);
       });
     return () => controller.abort();
-  }, [client, agentDefinitionId, path, hidden, retry, revision]);
+  }, [client, agentDefinitionId, rootId, path, hidden, retry, revision]);
   if (error && !listing)
     return (
       <div role="alert">
@@ -409,6 +536,7 @@ function Directory({
               <Directory
                 client={client}
                 agentDefinitionId={agentDefinitionId}
+                rootId={rootId}
                 path={entry.path}
                 revision={revision}
                 depth={depth + 1}

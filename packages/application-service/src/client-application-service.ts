@@ -9,6 +9,11 @@ import {
   routeDiscovery,
 } from "./client-discovery-routes.ts";
 import {
+  COMPUTER_PROFILE_PATHS,
+  routeComputerProfile,
+  type ComputerProfileAdministrationPort,
+} from "./client-computer-profile-routes.ts";
+import {
   createServer,
   type IncomingMessage,
   type Server,
@@ -20,6 +25,7 @@ import {
   type AuthenticatedActorContext,
   type HumanApplicationPort,
   KernelError,
+  RuntimeTerminationProofError,
 } from "@rah-os/kernel";
 import {
   ClientAgentActivityListRequestSchema,
@@ -103,7 +109,13 @@ import {
   ClientRoomAgentActivityListResponseSchema,
   ClientRoomMembersListRequestSchema,
   ClientRoomMembersListResponseSchema,
+  ClientRoomArchiveRequestSchema,
   ClientRoomCreateRequestSchema,
+  ClientRoomLeaveRequestSchema,
+  ClientRoomAgentSosResponseSchema,
+  ClientRoomAgentSosResumeRequestSchema,
+  ClientRoomAgentSosStopRequestSchema,
+  ClientRoomUnarchiveRequestSchema,
   ClientRoomUpdateRequestSchema,
   ClientRoomMutationResponseSchema,
   ClientRoomsListRequestSchema,
@@ -136,6 +148,8 @@ import {
   ClientWorkspaceCreateRequestSchema,
   ClientWorkspaceUpdateRequestSchema,
   ClientWorkspaceMutationResponseSchema,
+  ClientWorkspaceMemberGraphRequestSchema,
+  ClientWorkspaceMemberGraphResponseSchema,
   InputRequestResolveRequestSchema,
   InputRequestResolveResponseSchema,
   LocalRuntimeInventoryRequestSchema,
@@ -176,6 +190,7 @@ export type ClientApplicationServiceOptions = {
   agentExecutionAdministration?: AgentExecutionAdministrationPort;
   agentMemoryAdministration?: AgentMemoryAdministrationPort;
   bindHost?: "127.0.0.1";
+  computerProfileAdministration?: ComputerProfileAdministrationPort;
   health: () => ClientHealthResponse;
   human: HumanApplicationPort;
   localRuntimeInventory?: (
@@ -314,6 +329,7 @@ const CLIENT_V2_DATA_PATHS = new Set([
 ]);
 const CLIENT_V3_DATA_PATHS = new Set([
   ...AGENT_WORKSPACE_PATHS,
+  ...COMPUTER_PROFILE_PATHS,
   ...FILE_DATA_PATHS,
   ...DISCOVERY_DATA_PATHS,
   ...CLIENT_V2_DATA_PATHS,
@@ -354,14 +370,20 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/principals/me",
   "/principals/update",
   "/rooms/agents/activity/list",
+  "/rooms/archive",
   "/rooms/create",
   "/rooms/direct/open",
+  "/rooms/leave",
+  "/rooms/sos/resume",
+  "/rooms/sos/stop",
+  "/rooms/unarchive",
   "/rooms/update",
   "/tasks/convert",
   "/tasks/reassign",
   "/tasks/unassign",
   "/workspaces/create",
   "/workspaces/update",
+  "/workspaces/member-graph",
 ]);
 const MAX_DELIVERED_CURSORS_PER_CONSUMER = 1_024;
 
@@ -376,6 +398,8 @@ export class ClientApplicationService {
   readonly #agentMemoryAdministration:
     AgentMemoryAdministrationPort | undefined;
   readonly #bindHost: "127.0.0.1";
+  readonly #computerProfileAdministration:
+    ComputerProfileAdministrationPort | undefined;
   readonly #health: () => ClientHealthResponse;
   readonly #human: HumanApplicationPort;
   readonly #localRuntimeInventory:
@@ -398,6 +422,7 @@ export class ClientApplicationService {
     this.#agentExecutionAdministration = options.agentExecutionAdministration;
     this.#agentMemoryAdministration = options.agentMemoryAdministration;
     this.#bindHost = options.bindHost ?? "127.0.0.1";
+    this.#computerProfileAdministration = options.computerProfileAdministration;
     this.#health = options.health;
     this.#human = options.human;
     this.#localRuntimeInventory = options.localRuntimeInventory;
@@ -653,6 +678,19 @@ export class ClientApplicationService {
         response,
         200,
         routeDiscovery(this.#human, actor, path, body, parseClientRequest),
+      );
+      return;
+    }
+    if (COMPUTER_PROFILE_PATHS.includes(path)) {
+      writeJson(
+        response,
+        200,
+        await routeComputerProfile(
+          actor,
+          body,
+          this.#computerProfileAdministration,
+          parseClientRequest,
+        ),
       );
       return;
     }
@@ -1294,6 +1332,20 @@ export class ClientApplicationService {
       );
       return;
     }
+    if (path === "/workspaces/member-graph") {
+      const command = parseClientRequest(
+        ClientWorkspaceMemberGraphRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientWorkspaceMemberGraphResponseSchema.parse(
+          this.#human.listWorkspaceMemberGraph(actor, command),
+        ),
+      );
+      return;
+    }
     if (path === "/rooms/create") {
       const command = parseClientRequest(ClientRoomCreateRequestSchema, body);
       writeJson(
@@ -1301,6 +1353,70 @@ export class ClientApplicationService {
         200,
         ClientRoomMutationResponseSchema.parse(
           this.#human.createRoom(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/rooms/archive") {
+      const command = parseClientRequest(ClientRoomArchiveRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientRoomMutationResponseSchema.parse(
+          this.#human.archiveWorkspaceRoom(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/rooms/leave") {
+      const command = parseClientRequest(ClientRoomLeaveRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientRoomMemberRemoveResponseSchema.parse(
+          this.#human.leaveRoom(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/rooms/sos/stop") {
+      const command = parseClientRequest(
+        ClientRoomAgentSosStopRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientRoomAgentSosResponseSchema.parse(
+          await stopRoomAgentsAfterTerminalProof(this.#human, actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/rooms/sos/resume") {
+      const command = parseClientRequest(
+        ClientRoomAgentSosResumeRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientRoomAgentSosResponseSchema.parse(
+          this.#human.resumeRoomAgentSos(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/rooms/unarchive") {
+      const command = parseClientRequest(
+        ClientRoomUnarchiveRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientRoomMutationResponseSchema.parse(
+          this.#human.unarchiveWorkspaceRoom(actor, command),
         ),
       );
       return;
@@ -1942,6 +2058,32 @@ function systemNotifications(
       target: { kind: "computer", hostId: inventory.hostId },
     },
   ];
+}
+
+async function stopRoomAgentsAfterTerminalProof(
+  human: HumanApplicationPort,
+  actor: AuthenticatedActorContext,
+  command: Parameters<HumanApplicationPort["requestRoomAgentSos"]>[1],
+) {
+  let result = human.requestRoomAgentSos(actor, command);
+  if (result.operation.state !== "stopping") return result;
+  const deadline = Date.now() + 30_000;
+  for (;;) {
+    try {
+      result = human.continueRoomAgentSos(actor, {
+        operationId: result.operation.operationId,
+      });
+      return result;
+    } catch (error) {
+      if (!(error instanceof RuntimeTerminationProofError)) throw error;
+      if (Date.now() >= deadline) {
+        throw new RuntimeTerminationProofError(
+          `Room Agent SOS ${result.operation.operationId} is still waiting for Host terminal proof`,
+        );
+      }
+      await new Promise<void>((resolveDelay) => setTimeout(resolveDelay, 50));
+    }
+  }
 }
 
 async function readJsonObject(

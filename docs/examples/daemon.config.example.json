@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "stateDirectory": "/Users/you/Library/Application Support/RAH OS",
+  "stateDirectory": "/Users/you/.rah/state",
   "client": {
     "bindHost": "127.0.0.1",
     "port": 7777

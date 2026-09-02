@@ -300,5 +300,21 @@ test("a replacement generation of the same Host cannot release an orphaned opera
     state.kernel.getAgentExclusiveOperationLease(fence.operationId).state,
     "active",
   );
+
+  const recovered = state.kernel.acquireAgentExclusiveOperationLease(
+    replacement,
+    {
+      kind: "execution_restart",
+      leaseMs: 5_000,
+      operationId: fence.operationId,
+      participantId: state.agent.principalId,
+    },
+  );
+  assert.notEqual(recovered.leaseId, fence.leaseId);
+  assert.equal(recovered.ownerHostInstanceId, replacement.instanceId);
+  state.kernel.releaseAgentExclusiveOperationLease(replacement, {
+    leaseId: recovered.leaseId,
+    operationId: recovered.operationId,
+  });
   state.kernel.close();
 });

@@ -3,7 +3,10 @@ import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
 import "@rah-os/ui-tokens/styles.css";
 import "../src/product.css";
-import { MessageMarkdown } from "../src/components/message-markdown.tsx";
+import {
+  MessageMarkdown,
+  type MessageMarkdownReferences,
+} from "../src/components/message-markdown.tsx";
 import { MessageTimeline } from "../src/components/message-timeline.tsx";
 
 const original = [
@@ -15,9 +18,81 @@ const original = [
   "```ts",
   "const canonical = true;",
   "```",
+  "请 @Alice 查看 task #2 和 #project-room。",
+  "@Hakase dm:@Alice #project-room:abcdef computer:host-mac app:com.example.calendar。",
+  "#project-room msg=message-1 #project-room:abcdef msg=message-2。",
+  "`@Alice #2 #project-room` 保持代码文字。",
   "[打开本地文件](file:///tmp/markdown-regression.ts)",
   "![RAH icon](/rah-app-icon.svg)",
 ].join("\n");
+
+const references: MessageMarkdownReferences = {
+  agents: [
+    {
+      agentDefinitionId: "agent-alice",
+      createdAt: "2026-09-02T00:00:00.000Z",
+      createdBy: "human",
+      displayName: "Alice",
+      executionPolicyRevisionId: "policy-alice",
+      handle: "Alice",
+      participantId: "participant-alice",
+      role: "Assistant",
+      runtimeAvailable: true,
+      runtimeLabels: [],
+      skillRefs: [],
+      state: "enabled",
+    },
+  ],
+  computers: [{ hostId: "host-mac", names: ["Mac Studio"] }],
+  currentPrincipal: {
+    handle: "Hakase",
+    kind: "human",
+    principalId: "human-hakase",
+  },
+  mentionReadStates: { "participant-alice": "read" },
+  principals: [
+    {
+      handle: "Hakase",
+      kind: "human",
+      principalId: "human-hakase",
+    },
+  ],
+  rooms: [
+    {
+      kind: "channel",
+      names: ["project-room", "Project Room"],
+      roomId: "room-project",
+    },
+    {
+      kind: "direct",
+      names: ["dm-alice", "Alice DM"],
+      peerNames: ["Alice"],
+      roomId: "room-alice-dm",
+    },
+  ],
+  tasks: [
+    {
+      target: {
+        kind: "task",
+        roomId: "room-project",
+        rootMessageId: "message-task-2",
+        taskId: "task-2",
+        threadId: "thread-task-2",
+      },
+      taskId: "task-2",
+      taskNumber: 2,
+    },
+  ],
+  threads: [
+    {
+      roomId: "room-project",
+      roomKind: "channel",
+      roomName: "project-room",
+      rootMessageId: "message-root",
+      threadId: "thread-abcdef",
+    },
+  ],
+};
 
 const frame = () =>
   new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
@@ -36,6 +111,7 @@ function Fixture() {
   const [running, setRunning] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
   const linkRevision = useRef(-1);
+  const openedTarget = useRef("");
 
   async function run() {
     setRunning(true);
@@ -127,6 +203,67 @@ function Fixture() {
           updated.srcdoc.includes("default-src 'none'"),
         "图表沙箱/CSP边界变化",
       );
+      check(
+        scroller.current!.querySelector(".rah-rich-agent-reference")
+          ?.textContent === "@Alice",
+        "Agent 引用未按目录解析",
+      );
+      const taskReference = scroller.current!.querySelector<HTMLButtonElement>(
+        ".rah-rich-task-reference",
+      );
+      check(taskReference?.textContent === "task #2", "Task 引用未显示");
+      taskReference?.click();
+      check(openedTarget.current === "task:task-2", "Task 引用未走 typed 导航");
+      check(
+        scroller.current!.querySelector(".rah-rich-room-reference")
+          ?.textContent === "#project-room",
+        "Room 引用未按目录解析",
+      );
+      check(
+        scroller.current!.querySelector(".rah-rich-self-reference")
+          ?.textContent === "@Hakase",
+        "当前 Human mention 未使用 Raft 自身标签",
+      );
+      check(
+        scroller.current!.querySelector(".rah-rich-thread-reference")
+          ?.textContent === "#project-room:abcdef",
+        "Thread 引用未按 typed identity 解析",
+      );
+      check(
+        scroller.current!.querySelector(".rah-rich-computer-reference")
+          ?.textContent === "computer:host-mac",
+        "Computer 引用未按 typed identity 解析",
+      );
+      check(
+        scroller.current!.querySelector(".rah-rich-app-reference")
+          ?.textContent === "app:com.example.calendar",
+        "App 引用未按协议显示",
+      );
+      check(
+        scroller.current!.querySelectorAll(".rah-rich-message-reference")
+          .length === 2,
+        "精确消息引用未完整解析",
+      );
+      check(
+        scroller.current!.querySelector("[data-mention-read-state=read]") !==
+          null,
+        "Agent mention 已读状态未显示",
+      );
+      const clickReference = (selector: string, expected: string) => {
+        scroller.current!.querySelector<HTMLButtonElement>(selector)?.click();
+        check(openedTarget.current === expected, `${selector} 未走 typed 导航`);
+      };
+      clickReference(".rah-rich-thread-reference", "thread:thread-abcdef");
+      clickReference(".rah-rich-computer-reference", "computer:host-mac");
+      clickReference(".rah-rich-message-reference", "message:message-1");
+      check(
+        [...scroller.current!.querySelectorAll("code")].some(
+          (element) =>
+            element.textContent === "@Alice #2 #project-room" &&
+            element.querySelector("button, mark") === null,
+        ),
+        "代码节点被富文本引用重写",
+      );
       setReport(
         JSON.stringify(
           {
@@ -172,6 +309,24 @@ function Fixture() {
           renderItem={(item) => (
             <MessageMarkdown
               source={item.body}
+              references={{
+                ...references,
+                onOpenTarget: (target) => {
+                  openedTarget.current = `${target.kind}:${
+                    target.kind === "task"
+                      ? target.taskId
+                      : target.kind === "thread"
+                        ? target.threadId
+                        : target.kind === "computer"
+                          ? target.hostId
+                          : target.kind === "message"
+                            ? target.messageId
+                            : target.kind === "room"
+                              ? target.roomId
+                              : "target"
+                  }`;
+                },
+              }}
               onOpenFile={() => {
                 linkRevision.current = revision;
               }}

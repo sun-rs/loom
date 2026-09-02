@@ -5,7 +5,9 @@ import { tmpdir } from "node:os";
 import test from "node:test";
 import { agentMemoryWorkspacePath } from "../src/agent-memory-workspace.ts";
 import {
+  listWorkspaceRoot,
   listAgentWorkspace,
+  readWorkspaceRoot,
   readAgentWorkspace,
 } from "../src/agent-workspace-browser.ts";
 
@@ -73,5 +75,69 @@ test("Agent workspace is lazy, owner scoped, hidden-aware and bounded; reading n
     await assert.rejects(listAgentWorkspace(root, "alice", "../", true));
   } finally {
     await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("a frozen local project root reuses the bounded browser without accepting client paths", async () => {
+  const project = await mkdtemp(join(tmpdir(), "rah-project-browser-"));
+  const outside = await mkdtemp(join(tmpdir(), "rah-project-outside-"));
+  try {
+    await mkdir(join(project, "src"));
+    await mkdir(join(project, ".git"));
+    await writeFile(join(project, "README.md"), "# RAH\nproject");
+    await writeFile(join(project, "src", "index.ts"), "export {};\n");
+    await writeFile(join(project, ".env"), "TOKEN=hidden");
+    await writeFile(join(project, ".project-note"), "visible by opt-in");
+    await writeFile(join(outside, "escape.md"), "outside");
+    await symlink(join(outside, "escape.md"), join(project, "escape.md"));
+    await link(join(outside, "escape.md"), join(project, "hard.md"));
+
+    const base = {
+      rootDirectory: project,
+      rootId: "runtime-project" as const,
+      rootKind: "runtime-project" as const,
+      rootLabel: "RAH OS",
+    };
+    const listing = await listWorkspaceRoot({
+      ...base,
+      includeHidden: false,
+      path: "",
+    });
+    assert.equal(listing.rootId, "runtime-project");
+    assert.deepEqual(
+      listing.entries.map((entry) => entry.path),
+      ["src", "README.md"],
+    );
+    const hidden = await listWorkspaceRoot({
+      ...base,
+      includeHidden: true,
+      path: "",
+    });
+    assert.ok(hidden.entries.some((entry) => entry.path === ".project-note"));
+    assert.ok(!hidden.entries.some((entry) => entry.path === ".env"));
+    assert.ok(!hidden.entries.some((entry) => entry.path === "escape.md"));
+    assert.ok(!hidden.entries.some((entry) => entry.path === "hard.md"));
+    assert.equal(
+      (
+        await readWorkspaceRoot({
+          ...base,
+          path: "src/index.ts",
+        })
+      ).content,
+      "export {};\n",
+    );
+    await assert.rejects(readWorkspaceRoot({ ...base, path: "../escape.md" }));
+    await assert.rejects(readWorkspaceRoot({ ...base, path: "escape.md" }));
+    await assert.rejects(readWorkspaceRoot({ ...base, path: "hard.md" }));
+    await assert.rejects(
+      listWorkspaceRoot({
+        ...base,
+        includeHidden: true,
+        path: ".git",
+      }),
+    );
+  } finally {
+    await rm(project, { recursive: true, force: true });
+    await rm(outside, { recursive: true, force: true });
   }
 });

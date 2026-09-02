@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import type {
   InputRequest,
@@ -39,6 +39,18 @@ export function HumanInboxCenter({
     initialFocus: "container",
     onClose,
   });
+  useEffect(() => {
+    if (
+      answering !== undefined &&
+      !requests.some(
+        (request) =>
+          request.inputRequestId === answering.inputRequestId &&
+          request.state === "pending",
+      )
+    ) {
+      setAnswering(undefined);
+    }
+  }, [answering, requests]);
   return (
     <>
       <button

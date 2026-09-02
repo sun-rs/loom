@@ -102,12 +102,15 @@ export class HumanNavigation {
     }
     if (target.kind === "input_request") {
       const row = this.#requireRow(
-        "SELECT task_id FROM input_requests WHERE room_id=? AND input_request_id=?",
+        "SELECT task_id,state FROM input_requests WHERE room_id=? AND input_request_id=?",
         target.roomId,
         target.inputRequestId,
       );
       const taskId = text(row, "task_id");
-      if (target.taskId !== undefined && target.taskId !== taskId)
+      if (
+        text(row, "state") !== "pending" ||
+        (target.taskId !== undefined && target.taskId !== taskId)
+      )
         throw new ForbiddenError(
           "input request target is stale or unavailable",
         );

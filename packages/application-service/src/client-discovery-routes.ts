@@ -18,6 +18,9 @@ export const DISCOVERY_DATA_PATHS = [
   "/activity/list",
   "/activity/mark",
   "/activity/follow",
+  "/activity/thread-followers",
+  "/activity/thread-followers/remove",
+  "/activity/thread-followers/restore",
   "/navigation/resolve",
 ];
 
@@ -103,6 +106,27 @@ export function routeDiscovery(
         human.followHumanThread(
           actor,
           parse(P.HumanThreadFollowRequestSchema, body),
+        ),
+      );
+    case "/activity/thread-followers":
+      return P.HumanThreadFollowersResponseSchema.parse(
+        human.getHumanThreadFollowers(
+          actor,
+          parse(P.HumanThreadFollowersRequestSchema, body),
+        ),
+      );
+    case "/activity/thread-followers/remove":
+      return P.HumanThreadFollowerRemoveResponseSchema.parse(
+        human.removeHumanThreadAgentFollower(
+          actor,
+          parse(P.HumanThreadFollowerRemoveRequestSchema, body),
+        ),
+      );
+    case "/activity/thread-followers/restore":
+      return P.HumanThreadFollowerRestoreResponseSchema.parse(
+        human.restoreHumanThreadAgentFollower(
+          actor,
+          parse(P.HumanThreadFollowerRestoreRequestSchema, body),
         ),
       );
     case "/navigation/resolve":

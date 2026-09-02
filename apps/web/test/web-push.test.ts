@@ -4,6 +4,8 @@ import test from "node:test";
 import {
   applicationServerKeyBytes,
   browserPushReconciliation,
+  ensureBrowserPushRegistration,
+  existingBrowserPushRegistration,
   readBrowserPushPreference,
   writeBrowserPushPreference,
 } from "../src/web-push-client.ts";
@@ -94,4 +96,51 @@ test("default Web Push reconciliation requests once on gesture and never revives
     }),
     "none",
   );
+});
+
+test("Raft-style Push status reuses an existing registration without registering again", async () => {
+  let registerCalls = 0;
+  let updateCalls = 0;
+  const registration = {
+    update: async () => {
+      updateCalls += 1;
+      throw new Error("best-effort update failure");
+    },
+  };
+  const serviceWorker = {
+    getRegistration: async (scope: string) => {
+      assert.equal(scope, "/");
+      return registration;
+    },
+    register: async () => {
+      registerCalls += 1;
+      return registration;
+    },
+  };
+
+  assert.equal(
+    await existingBrowserPushRegistration(serviceWorker as never),
+    registration,
+  );
+  assert.equal(registerCalls, 0);
+  assert.equal(updateCalls, 1);
+});
+
+test("Raft-style Push enable registers only when no registration exists", async () => {
+  let registerCalls = 0;
+  const registration = { update: async () => undefined };
+  const serviceWorker = {
+    getRegistration: async () => undefined,
+    register: async (script: string) => {
+      registerCalls += 1;
+      assert.equal(script, "/sw.js");
+      return registration;
+    },
+  };
+
+  assert.equal(
+    await ensureBrowserPushRegistration(serviceWorker as never),
+    registration,
+  );
+  assert.equal(registerCalls, 1);
 });

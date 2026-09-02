@@ -10,6 +10,7 @@ import {
   LocalRuntimeInventoryResponseSchema,
   type LocalRuntimeInventoryEntry,
   type LocalRuntimeInventoryResponse,
+  type LocalComputerProfile,
   type RuntimeProfileProbeReport,
   type RuntimeProfileRevision,
 } from "@rah-os/protocol";
@@ -89,6 +90,7 @@ export function configuredRuntimeSnapshot(input: {
 
 export function buildLocalRuntimeInventoryResponse(input: {
   actor: AuthenticatedActorContext;
+  computerProfile?: LocalComputerProfile;
   configured: readonly ConfiguredLocalRuntimeSnapshot[];
   discovered: readonly LocalRuntimeInventoryEntry[];
   hostId: string;
@@ -103,13 +105,20 @@ export function buildLocalRuntimeInventoryResponse(input: {
     .listHosts()
     .find((host) => host.hostId === input.hostId);
   const age = host ? now.getTime() - Date.parse(host.lastSeenAt) : Infinity;
+  const computerProfile = input.computerProfile;
   return LocalRuntimeInventoryResponseSchema.parse({
     hostId: input.hostId,
     computer: {
-      displayName: hostname().replace(/\.local$/, ""),
+      description: computerProfile?.description ?? null,
+      displayName:
+        computerProfile?.displayName ?? hostname().replace(/\.local$/, ""),
       hostname: hostname(),
       os: `${platform()} ${arch()}`,
       observedAt: now.toISOString(),
+      profileRevision: computerProfile?.revision ?? 0,
+      ...(computerProfile === undefined
+        ? {}
+        : { profileUpdatedAt: computerProfile.updatedAt }),
       staleAfterMs,
       status: !host
         ? "unknown"

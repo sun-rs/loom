@@ -4,6 +4,7 @@ import { extname, join, resolve, sep } from "node:path";
 import type {
   AgentWorkspaceFile,
   AgentWorkspaceListing,
+  AgentWorkspaceRoot,
 } from "../../protocol/src/agent-workspace.ts";
 import { agentMemoryWorkspacePath } from "./agent-memory-workspace.ts";
 
@@ -14,6 +15,7 @@ const NEVER = new Set([
   ".ssh",
   ".slock",
   ".slock-runtime",
+  ".git",
   "node_modules",
   ".rah",
 ]);
@@ -66,9 +68,9 @@ function pathParts(path: string) {
     throw new Error("Workspace path is not permitted");
   return path.split("/").filter(Boolean);
 }
-async function safePath(root: string, owner: string, path: string) {
-  if (!owner.trim()) throw new Error("Agent owner required");
-  const home = agentMemoryWorkspacePath(await realpath(root), owner);
+async function safePath(root: string, path: string) {
+  const home = await realpath(root);
+  if (home === sep) throw new Error("Filesystem root is not a workspace root");
   const parts = pathParts(path);
   // Revalidate every component, including the Agent home; no symlink traversal.
   let target = home;
@@ -95,12 +97,38 @@ export async function listAgentWorkspace(
   path = "",
   includeHidden = false,
 ): Promise<AgentWorkspaceListing> {
+  if (!owner.trim()) throw new Error("Agent owner required");
+  const rootDirectory = agentMemoryWorkspacePath(await realpath(root), owner);
+  return listWorkspaceRoot({
+    rootDirectory,
+    rootId: "agent-workspace",
+    rootKind: "agent-workspace",
+    rootLabel: "Agent 工作区",
+    path,
+    includeHidden,
+  });
+}
+
+export async function listWorkspaceRoot(input: {
+  rootDirectory: string;
+  rootId: AgentWorkspaceRoot["rootId"];
+  rootKind: AgentWorkspaceRoot["rootKind"];
+  rootLabel: string;
+  path?: string;
+  includeHidden?: boolean;
+}): Promise<AgentWorkspaceListing> {
+  if (input.rootId !== input.rootKind)
+    throw new Error("Workspace root id and kind must agree");
+  const path = input.path ?? "";
+  const includeHidden = input.includeHidden ?? false;
   const parts = pathParts(path);
   if (!includeHidden && parts.some((p) => p.startsWith(".")))
     throw new Error("Hidden files are not enabled");
   const result: AgentWorkspaceListing = {
-    rootPath: agentMemoryWorkspacePath(root, owner),
-    rootKind: "agent-home",
+    rootId: input.rootId,
+    rootLabel: input.rootLabel,
+    rootPath: input.rootDirectory,
+    rootKind: input.rootKind,
     state: "ready",
     path,
     entries: [],
@@ -108,7 +136,7 @@ export async function listAgentWorkspace(
   };
   let target: string;
   try {
-    ({ target } = await safePath(root, owner, path));
+    ({ target } = await safePath(input.rootDirectory, path));
   } catch (error) {
     if (path === "" && (error as NodeJS.ErrnoException).code === "ENOENT")
       return { ...result, state: "absent" };
@@ -128,8 +156,9 @@ export async function listAgentWorkspace(
     )
       continue;
     const relative = [...parts, entry.name].join("/");
+    if (secret(relative)) continue;
     try {
-      const checked = await safePath(root, owner, relative);
+      const checked = await safePath(input.rootDirectory, relative);
       const info = await lstat(checked.target);
       result.entries.push({
         name: entry.name,
@@ -143,7 +172,7 @@ export async function listAgentWorkspace(
       /* Deleted entries / unsafe links are not exposed. */
     }
   }
-  await safePath(root, owner, path);
+  await safePath(input.rootDirectory, path);
   result.entries.sort(
     (a, b) =>
       Number(b.isDirectory) - Number(a.isDirectory) ||
@@ -156,9 +185,29 @@ export async function readAgentWorkspace(
   owner: string,
   path: string,
 ): Promise<AgentWorkspaceFile> {
+  if (!owner.trim()) throw new Error("Agent owner required");
+  return readWorkspaceRoot({
+    rootDirectory: agentMemoryWorkspacePath(await realpath(root), owner),
+    rootId: "agent-workspace",
+    rootKind: "agent-workspace",
+    rootLabel: "Agent 工作区",
+    path,
+  });
+}
+
+export async function readWorkspaceRoot(input: {
+  rootDirectory: string;
+  rootId: AgentWorkspaceRoot["rootId"];
+  rootKind: AgentWorkspaceRoot["rootKind"];
+  rootLabel: string;
+  path: string;
+}): Promise<AgentWorkspaceFile> {
+  if (input.rootId !== input.rootKind)
+    throw new Error("Workspace root id and kind must agree");
+  const { path } = input;
   if (!path || secret(path))
     throw new Error("Preview is disabled for sensitive workspace files");
-  const { target } = await safePath(root, owner, path);
+  const { target } = await safePath(input.rootDirectory, path);
   const file = await open(
     target,
     constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK,
@@ -171,6 +220,9 @@ export async function readAgentWorkspace(
     const text = TEXT.has(ext),
       mimeType = IMAGE[ext] ?? "application/octet-stream";
     const base: AgentWorkspaceFile = {
+      rootId: input.rootId,
+      rootKind: input.rootKind,
+      rootLabel: input.rootLabel,
       path,
       size: stat.size,
       content: null,
@@ -196,7 +248,7 @@ export async function readAgentWorkspace(
       size += bytesRead;
     }
     if (size > limit) throw new Error("File grew beyond preview limit");
-    await safePath(root, owner, path);
+    await safePath(input.rootDirectory, path);
     const current = await lstat(target);
     if (
       current.ino !== stat.ino ||

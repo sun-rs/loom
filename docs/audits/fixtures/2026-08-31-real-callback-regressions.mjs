@@ -8,7 +8,6 @@ import ts from "typescript";
 import * as React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
-  agentConnectionLabel,
   agentPresencePresentation,
   visibleNavigationDot,
 } from "../../../apps/web/src/attention-presentation.ts";
@@ -144,11 +143,10 @@ test("profile conflict refreshes canonical revision without pretending the draft
 
 test("offline Agent renders a persistent gray presence marker instead of removing it", () => {
   const Avatar = declaration(
-    "apps/web/src/components/agent-directory-pane.tsx",
+    "apps/web/src/components/agent-avatar.tsx",
     "AgentAvatar",
     {
       React,
-      agentConnectionLabel,
       agentPresencePresentation,
       AgentStatusDot: declaration(
         "apps/web/src/components/agent-status-dot.tsx",
@@ -156,6 +154,8 @@ test("offline Agent renders a persistent gray presence marker instead of removin
         { React },
       ),
       agentAvatarPixels: () => ({ background: "white", grid: ["1"] }),
+      isUploadedProfileImageKey: () => false,
+      profileImageContentPath: () => "/unused-profile-image",
       OFFICIAL_AVATAR_PACK: {
         presets: { test: { background: "white", grid: ["1"] } },
         palette: { 1: "black" },
@@ -455,6 +455,7 @@ function mutationScope() {
     },
     setRoomMembersOpen: noop,
     setThreadMessages: noop,
+    setThreadHasEarlierReplies: noop,
     setRoomData: noop,
     consecutivePollFailures: { current: 0 },
     setActiveRoomId: (value) => {
@@ -618,6 +619,9 @@ test("opening and closing Thread synchronously invalidate an earlier diagnostic 
     errorMessage: String,
     setReload: noop,
     messageContext: undefined,
+    activeThreadRootMessageId: "root",
+    rememberThreadFocus: noop,
+    restoreThreadFocus: noop,
   };
   const first = f.nav.requests.current.begin();
   await callback("openThread", scope)("root");
@@ -1041,7 +1045,9 @@ test("closing the current Thread invalidates an Activity target without strandin
   );
   jsx(app, "onClose", "messageContext?.message.threadId", {
     ...f.scope,
+    activeThreadRootMessageId: "previous",
     messageContext: { message: { threadId: "previous" } },
+    restoreThreadFocus: noop,
   })();
   request.resolve({});
   await opening;

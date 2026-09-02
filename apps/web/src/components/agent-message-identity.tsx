@@ -1,8 +1,15 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
   ClientAgentGetResponse,
   LocalRuntimeInventoryEntry,
+  MessageReferenceReadState,
   RuntimeTrajectoryRecord,
 } from "@rah-os/protocol";
 import type { WorkspaceAgentView } from "@rah-os/ui-web";
@@ -48,6 +55,45 @@ export function MessageAgentAvatar({ agent }: { agent: WorkspaceAgentView }) {
       }
     >
       <AgentAvatar agent={agent} size="sidebar" />
+    </PreviewCard>
+  );
+}
+
+export function MessageAgentReference({
+  agent,
+  children,
+  readState,
+}: {
+  agent: WorkspaceAgentView;
+  children: ReactNode;
+  readState?: MessageReferenceReadState | undefined;
+}) {
+  const context = useContext(AgentMessageContext);
+  return (
+    <PreviewCard
+      label={`查看 ${agent.displayName} 动态`}
+      triggerClassName="rah-rich-agent-reference"
+      className="rah-agent-preview"
+      onClick={() => context?.onOpen(agent.agentDefinitionId)}
+      content={
+        context ? (
+          <AgentPreview
+            agent={agent}
+            client={context.client}
+            runtimes={context.runtimes}
+            computerLabel={context.computerLabel}
+          />
+        ) : null
+      }
+    >
+      {children}
+      {readState === undefined ? null : (
+        <span
+          aria-hidden="true"
+          className="rah-rich-mention-read-dot"
+          data-mention-read-state={readState}
+        />
+      )}
     </PreviewCard>
   );
 }

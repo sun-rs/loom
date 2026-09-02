@@ -87,6 +87,34 @@ test("Computer connection is heartbeat evidence, independent of CLI readiness", 
   );
 });
 
+test("Computer inventory overlays durable user profile without replacing heartbeat evidence", () => {
+  const now = new Date("2026-09-02T08:00:00.000Z");
+  const response = buildLocalRuntimeInventoryResponse({
+    actor: {} as never,
+    computerProfile: {
+      description: "主要开发机",
+      displayName: "RAH Studio",
+      hostId: "host-1",
+      revision: 3,
+      updatedAt: "2026-09-02T07:59:00.000Z",
+    },
+    configured: [],
+    discovered: [],
+    hostId: "host-1",
+    kernel: {
+      listAgentCatalog: () => [],
+      listHosts: () => [],
+    } as never,
+    now,
+  });
+  assert.equal(response.computer?.displayName, "RAH Studio");
+  assert.equal(response.computer?.description, "主要开发机");
+  assert.equal(response.computer?.profileRevision, 3);
+  assert.equal(response.computer?.profileUpdatedAt, "2026-09-02T07:59:00.000Z");
+  assert.equal(response.computer?.observedAt, now.toISOString());
+  assert.equal(response.computer?.status, "unknown");
+});
+
 test("configured Runtime identity suppresses the discovery alias for the same executable", () => {
   const resolvedExecutablePath = "/opt/local/bin/codex-real";
   const inventory = mergeLocalRuntimeInventory({

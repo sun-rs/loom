@@ -3,9 +3,15 @@ import {
   HumanActivityRequestSchema,
   HumanActivityResponseSchema,
   HumanActivityMarkRequestSchema,
+  HumanThreadFollowerRemoveRequestSchema,
+  HumanThreadFollowerRestoreRequestSchema,
+  HumanThreadFollowersRequestSchema,
   HumanThreadFollowRequestSchema,
   type HumanActivityRequest,
   type HumanActivityMarkRequest,
+  type HumanThreadFollowerRemoveRequest,
+  type HumanThreadFollowerRestoreRequest,
+  type HumanThreadFollowersRequest,
   type HumanThreadFollowRequest,
 } from "@rah-os/protocol";
 import {
@@ -13,7 +19,11 @@ import {
   discoveryVisibleRooms,
   requireDiscoveryHuman,
 } from "./global-discovery.ts";
-import { requireRoomMember } from "./collaboration-policy.ts";
+import {
+  requireRoomManager,
+  requireRoomMember,
+  roomRole,
+} from "./collaboration-policy.ts";
 import { messageProjectionFromRow } from "./collaboration-projection.ts";
 import { ForbiddenError } from "./errors.ts";
 import { taskProjectionFromRow } from "./task-projection.ts";
@@ -212,7 +222,7 @@ export class HumanActivity {
     );
     if (input.throughSeq > max)
       throw new Error("activity frontier exceeds visible message sequence");
-    this.db
+    const restored = this.db
       .prepare(
         `INSERT INTO human_activity_frontiers(principal_id, room_id, scope_id, read_seq, done_seq) VALUES(?,?,?,?,?) ON CONFLICT(principal_id, room_id, scope_id) DO UPDATE SET read_seq = MAX(read_seq, excluded.read_seq), done_seq = MAX(done_seq, excluded.done_seq)`,
       )
@@ -243,6 +253,160 @@ export class HumanActivity {
       )
       .run(actorId, input.threadId, Number(input.following));
     return { following: input.following };
+  }
+  followers(actorId: string, request: HumanThreadFollowersRequest) {
+    requireDiscoveryHuman(this.db, actorId);
+    const input = HumanThreadFollowersRequestSchema.parse(request);
+    this.requireScope(actorId, input.roomId, input.threadId);
+    const explicit = this.db
+      .prepare(
+        "SELECT following FROM human_thread_follows WHERE principal_id = ? AND thread_id = ?",
+      )
+      .get(actorId, input.threadId);
+    const implicit = this.db
+      .prepare(
+        `SELECT 1
+         FROM threads
+         JOIN messages AS root ON root.message_id = threads.root_message_id
+         WHERE threads.thread_id = ?
+           AND (threads.created_by = ? OR root.actor_id = ? OR EXISTS(
+             SELECT 1 FROM messages AS reply
+             WHERE reply.thread_id = threads.thread_id AND reply.actor_id = ?
+           ))`,
+      )
+      .get(input.threadId, actorId, actorId, actorId);
+    return {
+      agentParticipantIds: this.db
+        .prepare(
+          `SELECT follows.participant_id
+           FROM agent_thread_follows AS follows
+           JOIN threads ON threads.thread_id = follows.thread_id
+           JOIN memberships
+             ON memberships.room_id = threads.room_id
+            AND memberships.principal_id = follows.participant_id
+           JOIN principals
+             ON principals.principal_id = follows.participant_id
+           LEFT JOIN agent_definitions
+             ON agent_definitions.participant_id = follows.participant_id
+           WHERE follows.thread_id = ?
+             AND follows.following = 1
+             AND principals.kind = 'agent'
+             AND (agent_definitions.state IS NULL OR agent_definitions.state = 'enabled')
+           ORDER BY COALESCE(principals.display_name, principals.handle), follows.participant_id`,
+        )
+        .all(input.threadId)
+        .map((row) => text(row, "participant_id")),
+      canManage: ["owner", "admin"].includes(
+        roomRole(this.db, input.roomId, actorId),
+      ),
+      following:
+        explicit === undefined
+          ? implicit !== undefined
+          : explicit.following === 1,
+    };
+  }
+  removeAgentFollower(
+    actorId: string,
+    request: HumanThreadFollowerRemoveRequest,
+    operation: { undoExpiresAt: string; undoToken: string; updatedAt: string },
+  ) {
+    requireDiscoveryHuman(this.db, actorId);
+    const input = HumanThreadFollowerRemoveRequestSchema.parse(request);
+    this.requireScope(actorId, input.roomId, input.threadId);
+    requireRoomManager(this.db, input.roomId, actorId);
+    this.db
+      .prepare("DELETE FROM agent_thread_follower_undo WHERE expires_at <= ?")
+      .run(operation.updatedAt);
+    const previous = this.db
+      .prepare(
+        `SELECT source FROM agent_thread_follows
+         WHERE thread_id = ? AND participant_id = ? AND following = 1`,
+      )
+      .get(input.threadId, input.participantId);
+    if (previous === undefined) return { removed: false as const };
+    const result = this.db
+      .prepare(
+        `UPDATE agent_thread_follows
+         SET following = 0, source = 'explicit_unfollow', updated_at = ?
+         WHERE thread_id = ? AND participant_id = ? AND following = 1`,
+      )
+      .run(operation.updatedAt, input.threadId, input.participantId);
+    if (result.changes !== 1) return { removed: false as const };
+    this.db
+      .prepare(
+        `INSERT INTO agent_thread_follower_undo(
+           undo_token, actor_id, participant_id, thread_id,
+           previous_source, expires_at, created_at
+         ) VALUES(?,?,?,?,?,?,?)`,
+      )
+      .run(
+        operation.undoToken,
+        actorId,
+        input.participantId,
+        input.threadId,
+        text(previous, "source"),
+        operation.undoExpiresAt,
+        operation.updatedAt,
+      );
+    return {
+      removed: true as const,
+      undoExpiresAt: operation.undoExpiresAt,
+      undoToken: operation.undoToken,
+    };
+  }
+  restoreAgentFollower(
+    actorId: string,
+    request: HumanThreadFollowerRestoreRequest,
+    updatedAt: string,
+  ) {
+    requireDiscoveryHuman(this.db, actorId);
+    const input = HumanThreadFollowerRestoreRequestSchema.parse(request);
+    this.requireScope(actorId, input.roomId, input.threadId);
+    requireRoomManager(this.db, input.roomId, actorId);
+    const undo = this.db
+      .prepare(
+        `SELECT previous_source FROM agent_thread_follower_undo
+         WHERE undo_token = ? AND actor_id = ? AND participant_id = ?
+           AND thread_id = ? AND expires_at > ?`,
+      )
+      .get(
+        input.undoToken,
+        actorId,
+        input.participantId,
+        input.threadId,
+        updatedAt,
+      );
+    if (undo === undefined) return { restored: false };
+    const eligible = this.db
+      .prepare(
+        `SELECT 1 FROM threads
+         JOIN memberships
+           ON memberships.room_id = threads.room_id
+          AND memberships.principal_id = ?
+         JOIN principals ON principals.principal_id = memberships.principal_id
+         LEFT JOIN agent_definitions
+           ON agent_definitions.participant_id = principals.principal_id
+         WHERE threads.thread_id = ? AND threads.room_id = ?
+           AND principals.kind = 'agent'
+           AND (agent_definitions.state IS NULL OR agent_definitions.state = 'enabled')`,
+      )
+      .get(input.participantId, input.threadId, input.roomId);
+    if (eligible === undefined) return { restored: false };
+    const restored = this.db
+      .prepare(
+        `UPDATE agent_thread_follows SET following = 1, source = ?, updated_at = ?
+         WHERE thread_id = ? AND participant_id = ? AND following = 0`,
+      )
+      .run(
+        text(undo, "previous_source"),
+        updatedAt,
+        input.threadId,
+        input.participantId,
+      );
+    this.db
+      .prepare("DELETE FROM agent_thread_follower_undo WHERE undo_token = ?")
+      .run(input.undoToken);
+    return { restored: restored.changes === 1 };
   }
   private requireScope(actorId: string, roomId: string, threadId?: string) {
     requireRoomMember(this.db, roomId, actorId);

@@ -58,7 +58,7 @@ test("narrow profile does not inflate its hero or force creation metadata into o
   assert.match(rule(".rah-agent-profile-hero h3"), /text-overflow: ellipsis/u);
 });
 
-test("execution reset is capability-gated while unavailable report remains non-mutating", () => {
+test("execution reset and local issue report remain capability-gated", () => {
   const source = read("components/agent-directory-pane.tsx");
   const buttons = [
     ...source.matchAll(/<button\b[^>]*>[\s\S]*?<\/button>/gu),
@@ -70,19 +70,16 @@ test("execution reset is capability-gated while unavailable report remains non-m
   assert.doesNotMatch(reset, /暂不可用/u);
   const report = buttons.find((value) => value.includes("报告问题"));
   assert.ok(report);
-  assert.match(report, /\bdisabled\b/u);
-  assert.match(report, /暂不可用/u);
-  assert.doesNotMatch(report, /onClick=/u);
+  assert.match(report, /disabled=\{!canManage\}/u);
+  assert.match(report, /onClick=\{\(\) => setIssueReportOpen\(true\)\}/u);
+  assert.match(report, /不会自动上传/u);
+  assert.doesNotMatch(report, /暂不可用/u);
   const resetDialog = read("components/agent-execution-reset-dialog.tsx");
   assert.match(resetDialog, /mode: "restart"/u);
   assert.match(resetDialog, /mode: "session"/u);
   assert.match(resetDialog, /mode: "full"/u);
-  assert.match(resetDialog, /disabled=\{full\}/u);
-  assert.match(
-    rule(
-      ".rah-product-shell .rah-agent-profile-actions button.is-unavailable:disabled",
-    ),
-    /opacity: 1/u,
-  );
+  assert.match(resetDialog, /fullResetEnabled/u);
+  assert.match(resetDialog, /disabled=\{disabled\}/u);
+  assert.match(resetDialog, /本机项目目录不会被删除/u);
   assert.doesNotMatch(source, /Agent 父子关系 canonical projection 尚未接入/u);
 });

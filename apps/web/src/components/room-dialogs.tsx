@@ -25,10 +25,15 @@ export type AgentMembershipIdentity = Pick<
 
 export function RoomCreateDialog({
   agents,
+  archivedRooms,
+  canUnarchive,
   onClose,
   onCreate,
+  onUnarchive,
 }: {
   agents: readonly WorkspaceAgentView[];
+  archivedRooms: readonly Room[];
+  canUnarchive: boolean;
   onClose: () => void;
   onCreate: (input: {
     description?: string;
@@ -37,6 +42,7 @@ export function RoomCreateDialog({
     slug: string;
     visibility: "private" | "public";
   }) => Promise<void>;
+  onUnarchive: (room: Room) => Promise<void>;
 }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -45,6 +51,8 @@ export function RoomCreateDialog({
   const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
   const [actionError, setActionError] = useState<string>();
+  const [archivedCollision, setArchivedCollision] = useState<Room>();
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const slug = roomSlugFromName(name);
   const valid = name.trim().length > 0 && slug.length > 0;
   const normalizedSearch = memberSearch.trim().toLocaleLowerCase();
@@ -90,6 +98,12 @@ export function RoomCreateDialog({
           onSubmit={(event) => {
             event.preventDefault();
             if (!valid) return;
+            const collision = archivedRooms.find((room) => room.slug === slug);
+            if (collision !== undefined) {
+              setArchivedCollision(collision);
+              setActionError(undefined);
+              return;
+            }
             setPending(true);
             void onCreate({
               ...(description.trim() === ""
@@ -105,13 +119,58 @@ export function RoomCreateDialog({
               .finally(() => setPending(false));
           }}
         >
+          {archivedCollision === undefined ? null : (
+            <section className="rah-room-create-archived-warning" role="status">
+              <p>
+                名称 <b>#{archivedCollision.name}</b> 已被一个已归档的频道占用。
+              </p>
+              <small>
+                {canUnarchive
+                  ? "取消归档可保留其历史记录，或者改用其他名称。"
+                  : "请改用其他名称，或请管理员取消归档。"}
+              </small>
+              <div>
+                {canUnarchive ? (
+                  <button
+                    className="btn btn-green"
+                    disabled={pending}
+                    onClick={() => {
+                      setPending(true);
+                      void onUnarchive(archivedCollision)
+                        .catch((caught) => setActionError(errorMessage(caught)))
+                        .finally(() => setPending(false));
+                    }}
+                    type="button"
+                  >
+                    {pending ? "正在取消归档…" : "取消归档"}
+                  </button>
+                ) : null}
+                <button
+                  className="btn"
+                  disabled={pending}
+                  onClick={() => {
+                    setArchivedCollision(undefined);
+                    setName("");
+                    requestAnimationFrame(() => nameInputRef.current?.focus());
+                  }}
+                  type="button"
+                >
+                  修改名称
+                </button>
+              </div>
+            </section>
+          )}
           <label>
             名称 <em>*</em>
             <input
               autoFocus
-              onChange={(event) => setName(event.target.value)}
+              onChange={(event) => {
+                setName(event.target.value);
+                setArchivedCollision(undefined);
+              }}
               placeholder="例如 ai-research"
               data-dialog-initial-focus
+              ref={nameInputRef}
               required
               value={name}
             />
@@ -226,36 +285,67 @@ export function RoomCreateDialog({
 
 export function RoomMembersDialog({
   canAdd,
+  canLeave,
+  canManageRoles,
   canRemove,
+  canStopAgents,
   canUpdate,
   candidates,
   members,
   memberships = [],
   onAdd,
+  onArchive,
   onClose,
+  onLeave,
   onRemove,
+  onResumeAgents,
+  onRole,
+  onStopAgents,
+  onUnarchive,
   onUpdate,
   room,
+  leaveUnavailableReason,
 }: {
   canAdd: boolean;
+  canLeave: boolean;
+  canManageRoles: boolean;
   canRemove: boolean;
+  canStopAgents: boolean;
   canUpdate: boolean;
   candidates: readonly ReturnType<typeof roomAgentCandidates>[number][];
   members: readonly Principal[];
   memberships?: readonly RoomMembership[];
   onAdd: (agent: AgentMembershipIdentity) => Promise<void>;
+  onArchive: () => Promise<void>;
   onClose: () => void;
+  onLeave: () => Promise<void>;
   onRemove: (agent: AgentMembershipIdentity) => Promise<void>;
+  onResumeAgents: (guidance: string) => Promise<void>;
+  onRole: (principalId: string, role: RoomMembership["role"]) => Promise<void>;
+  onStopAgents: () => Promise<void>;
+  onUnarchive: () => Promise<void>;
   onUpdate: (input: {
     description?: string;
     name: string;
     visibility: "private" | "public";
   }) => Promise<void>;
   room: Room | undefined;
+  leaveUnavailableReason?: string | undefined;
 }) {
   const [pendingAgentId, setPendingAgentId] = useState<string>();
   const sidebarPreferences = useSidebarPreferences();
   const [settingsPending, setSettingsPending] = useState(false);
+  const [lifecyclePending, setLifecyclePending] = useState(false);
+  const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
+  const archiveTriggerRef = useRef<HTMLButtonElement>(null);
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
+  const leaveTriggerRef = useRef<HTMLButtonElement>(null);
+  const [sosOpen, setSosOpen] = useState(false);
+  const [sosPhase, setSosPhase] = useState<"confirm" | "stopped">("confirm");
+  const [sosGuidance, setSosGuidance] = useState("");
+  const [sosStopping, setSosStopping] = useState(false);
+  const [sosResuming, setSosResuming] = useState(false);
+  const sosTriggerRef = useRef<HTMLButtonElement>(null);
   const [actionError, setActionError] = useState<string>();
   const [description, setDescription] = useState(room?.description ?? "");
   const [view, setView] = useState<"settings" | "members" | "add">("settings");
@@ -266,7 +356,13 @@ export function RoomMembersDialog({
     room?.visibility ?? "private",
   );
   const mutationPendingRef = useRef(false);
-  const mutationBlocked = pendingAgentId !== undefined || settingsPending;
+  const mutationBlocked =
+    pendingAgentId !== undefined ||
+    settingsPending ||
+    lifecyclePending ||
+    sosStopping ||
+    sosResuming;
+  const roomArchived = room?.archivedAt !== undefined;
   const dialogRef = useDialogProtocol({
     blocked: mutationBlocked,
     initialFocus: "container",
@@ -349,8 +445,29 @@ export function RoomMembersDialog({
         setPendingAgentId(undefined);
       });
   };
+  const setRole = async (principalId: string, role: RoomMembership["role"]) => {
+    if (mutationPendingRef.current || !canManageRoles) return;
+    mutationPendingRef.current = true;
+    setPendingAgentId(principalId);
+    setActionError(undefined);
+    try {
+      await onRole(principalId, role);
+    } catch (caught) {
+      setActionError(errorMessage(caught));
+      throw caught;
+    } finally {
+      mutationPendingRef.current = false;
+      setPendingAgentId(undefined);
+    }
+  };
   const saveSettings = () => {
-    if (mutationPendingRef.current || !canUpdate || !valid || !settingsDirty)
+    if (
+      mutationPendingRef.current ||
+      !canUpdate ||
+      roomArchived ||
+      !valid ||
+      !settingsDirty
+    )
       return;
     mutationPendingRef.current = true;
     setSettingsPending(true);
@@ -365,6 +482,85 @@ export function RoomMembersDialog({
         mutationPendingRef.current = false;
         setSettingsPending(false);
       });
+  };
+  const changeArchiveState = async (archive: boolean) => {
+    if (mutationPendingRef.current || !canUpdate) return;
+    mutationPendingRef.current = true;
+    setLifecyclePending(true);
+    setActionError(undefined);
+    try {
+      await (archive ? onArchive() : onUnarchive());
+      setArchiveConfirmOpen(false);
+    } catch (caught) {
+      setActionError(errorMessage(caught));
+      throw caught;
+    } finally {
+      mutationPendingRef.current = false;
+      setLifecyclePending(false);
+    }
+  };
+  const closeArchiveConfirmation = () => {
+    setArchiveConfirmOpen(false);
+    requestAnimationFrame(() => archiveTriggerRef.current?.focus());
+  };
+  const leave = async () => {
+    if (mutationPendingRef.current || !canLeave) return;
+    mutationPendingRef.current = true;
+    setLifecyclePending(true);
+    setActionError(undefined);
+    try {
+      await onLeave();
+      setLeaveConfirmOpen(false);
+    } catch (caught) {
+      setActionError(errorMessage(caught));
+      throw caught;
+    } finally {
+      mutationPendingRef.current = false;
+      setLifecyclePending(false);
+    }
+  };
+  const closeLeaveConfirmation = () => {
+    setLeaveConfirmOpen(false);
+    requestAnimationFrame(() => leaveTriggerRef.current?.focus());
+  };
+  const closeSos = () => {
+    if (sosStopping || sosResuming) return;
+    setSosOpen(false);
+    setSosPhase("confirm");
+    setSosGuidance("");
+    requestAnimationFrame(() => sosTriggerRef.current?.focus());
+  };
+  const stopAgents = async () => {
+    if (sosStopping || sosResuming || !canStopAgents) return;
+    setSosStopping(true);
+    setActionError(undefined);
+    try {
+      await onStopAgents();
+      setSosPhase("stopped");
+    } catch (caught) {
+      setActionError(errorMessage(caught));
+      throw caught;
+    } finally {
+      setSosStopping(false);
+    }
+  };
+  const resumeAgents = async () => {
+    const guidance = sosGuidance.trim();
+    if (sosStopping || sosResuming || guidance.length === 0) return;
+    setSosResuming(true);
+    setActionError(undefined);
+    try {
+      await onResumeAgents(guidance);
+      setSosOpen(false);
+      setSosPhase("confirm");
+      setSosGuidance("");
+      requestAnimationFrame(() => sosTriggerRef.current?.focus());
+    } catch (caught) {
+      setActionError(errorMessage(caught));
+      throw caught;
+    } finally {
+      setSosResuming(false);
+    }
   };
   return (
     <div className="rah-channel-settings-layer" role="presentation">
@@ -417,6 +613,7 @@ export function RoomMembersDialog({
             }
             blocked={mutationBlocked}
             canAdd={canAdd}
+            canManageRoles={canManageRoles}
             canRemove={canRemove}
             candidates={candidates}
             humans={humans}
@@ -425,6 +622,7 @@ export function RoomMembersDialog({
             onOpenAdd={openAdd}
             onAddSelection={addSelection}
             onRemove={remove}
+            onRole={setRole}
           />
         ) : (
           <div className="rah-channel-settings-scroll rah-scroll-main">
@@ -486,7 +684,7 @@ export function RoomMembersDialog({
                     名称 <em>*</em>
                   </label>
                   <input
-                    disabled={!canUpdate || mutationBlocked}
+                    disabled={!canUpdate || roomArchived || mutationBlocked}
                     id="rah-channel-name"
                     onChange={(event) => setName(event.target.value)}
                     placeholder="例如 ai-research"
@@ -500,7 +698,7 @@ export function RoomMembersDialog({
                     <span className="rah-channel-settings-optional">可选</span>
                   </label>
                   <textarea
-                    disabled={!canUpdate || mutationBlocked}
+                    disabled={!canUpdate || roomArchived || mutationBlocked}
                     id="rah-channel-description"
                     maxLength={2000}
                     onChange={(event) => setDescription(event.target.value)}
@@ -525,7 +723,11 @@ export function RoomMembersDialog({
                   <button
                     className="btn btn-pink"
                     disabled={
-                      !canUpdate || mutationBlocked || !valid || !settingsDirty
+                      !canUpdate ||
+                      roomArchived ||
+                      mutationBlocked ||
+                      !valid ||
+                      !settingsDirty
                     }
                   >
                     {settingsPending ? "正在保存…" : "保存更改"}
@@ -688,7 +890,7 @@ export function RoomMembersDialog({
                   <button
                     aria-checked={visibility === "public"}
                     className={visibility === "public" ? "is-selected" : ""}
-                    disabled={!canUpdate || mutationBlocked}
+                    disabled={!canUpdate || roomArchived || mutationBlocked}
                     onClick={() => setVisibility("public")}
                     role="radio"
                     type="button"
@@ -698,7 +900,7 @@ export function RoomMembersDialog({
                   <button
                     aria-checked={visibility === "private"}
                     className={visibility === "private" ? "is-selected" : ""}
-                    disabled={!canUpdate || mutationBlocked}
+                    disabled={!canUpdate || roomArchived || mutationBlocked}
                     onClick={() => setVisibility("private")}
                     role="radio"
                     type="button"
@@ -707,9 +909,324 @@ export function RoomMembersDialog({
                   </button>
                 </fieldset>
               </section>
+              <section className="rah-channel-settings-operations">
+                <h3>操作</h3>
+                {!roomArchived ? (
+                  <button
+                    className="btn rah-channel-sos-button"
+                    disabled={!canStopAgents || mutationBlocked}
+                    onClick={() => {
+                      setSosPhase("confirm");
+                      setSosGuidance("");
+                      setSosOpen(true);
+                    }}
+                    ref={sosTriggerRef}
+                    type="button"
+                  >
+                    停止所有 Agent
+                  </button>
+                ) : null}
+                {!roomArchived ? (
+                  <>
+                    <button
+                      className="btn rah-channel-leave-button"
+                      disabled={!canLeave || mutationBlocked}
+                      onClick={() => setLeaveConfirmOpen(true)}
+                      ref={leaveTriggerRef}
+                      type="button"
+                    >
+                      退出频道
+                    </button>
+                    {canLeave || !leaveUnavailableReason ? null : (
+                      <small>{leaveUnavailableReason}</small>
+                    )}
+                  </>
+                ) : null}
+                {roomArchived ? (
+                  <button
+                    className="btn"
+                    disabled={!canUpdate || mutationBlocked}
+                    onClick={() => void changeArchiveState(false)}
+                    type="button"
+                  >
+                    {lifecyclePending ? "正在恢复…" : "取消归档频道"}
+                  </button>
+                ) : (
+                  <button
+                    className="btn rah-channel-archive-button"
+                    disabled={!canUpdate || mutationBlocked}
+                    onClick={() => setArchiveConfirmOpen(true)}
+                    ref={archiveTriggerRef}
+                    type="button"
+                  >
+                    归档频道
+                  </button>
+                )}
+              </section>
             </div>
           </div>
         )}
+      </section>
+      {archiveConfirmOpen ? (
+        <RoomArchiveConfirmation
+          blocked={lifecyclePending}
+          name={room?.name ?? "Room"}
+          onCancel={closeArchiveConfirmation}
+          onConfirm={() => changeArchiveState(true)}
+        />
+      ) : null}
+      {leaveConfirmOpen ? (
+        <RoomLeaveConfirmation
+          blocked={lifecyclePending}
+          name={room?.name ?? "Room"}
+          onCancel={closeLeaveConfirmation}
+          onConfirm={leave}
+        />
+      ) : null}
+      {sosOpen ? (
+        <RoomAgentSosDialog
+          {...(actionError === undefined ? {} : { error: actionError })}
+          guidance={sosGuidance}
+          phase={sosPhase}
+          resuming={sosResuming}
+          roomName={room?.name ?? "Room"}
+          stopping={sosStopping}
+          onClose={closeSos}
+          onGuidance={setSosGuidance}
+          onResume={resumeAgents}
+          onStop={stopAgents}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function RoomAgentSosDialog({
+  error,
+  guidance,
+  onClose,
+  onGuidance,
+  onResume,
+  onStop,
+  phase,
+  resuming,
+  roomName,
+  stopping,
+}: {
+  error?: string;
+  guidance: string;
+  onClose: () => void;
+  onGuidance: (guidance: string) => void;
+  onResume: () => Promise<void>;
+  onStop: () => Promise<void>;
+  phase: "confirm" | "stopped";
+  resuming: boolean;
+  roomName: string;
+  stopping: boolean;
+}) {
+  const blocked = stopping || resuming;
+  const dialogRef = useDialogProtocol({ blocked, onClose });
+  return (
+    <div className="rah-dialog-layer rah-room-sos-dialog" role="presentation">
+      <div aria-hidden="true" className="rah-dialog-backdrop" />
+      <section
+        aria-labelledby="rah-room-sos-title"
+        aria-modal="true"
+        className="rah-dialog"
+        ref={dialogRef}
+        role="dialog"
+        tabIndex={-1}
+      >
+        <header>
+          <h2 id="rah-room-sos-title">
+            {phase === "confirm" ? "停止所有 Agent" : "Agent 已停止"}
+          </h2>
+          <button
+            aria-label="关闭"
+            className="sq-btn"
+            disabled={blocked}
+            onClick={onClose}
+          >
+            ×
+          </button>
+        </header>
+        {error === undefined ? null : (
+          <p className="rah-dialog-error" role="alert">
+            {error}
+          </p>
+        )}
+        {phase === "confirm" ? (
+          <>
+            <p>
+              #{roomName} 中所有正在运行的 Agent
+              都会立即停止。恢复前，你可以提供新的指导。
+            </p>
+            <footer>
+              <button className="btn" disabled={blocked} onClick={onClose}>
+                取消
+              </button>
+              <button
+                autoFocus
+                className="btn rah-channel-sos-button"
+                data-dialog-initial-focus
+                disabled={blocked}
+                onClick={() => void onStop()}
+              >
+                {stopping ? "停止中…" : "立即停止"}
+              </button>
+            </footer>
+          </>
+        ) : (
+          <>
+            <p className="rah-room-sos-success" role="status">
+              所有 Agent 均已停止。
+            </p>
+            <p>提供纠正和新的指导后再恢复全部 Agent。</p>
+            <textarea
+              aria-label="恢复 Agent 的纠正指导"
+              autoFocus
+              data-dialog-initial-focus
+              disabled={blocked}
+              maxLength={4000}
+              onChange={(event) => onGuidance(event.target.value)}
+              placeholder="说明哪里需要纠正，以及接下来应如何继续…"
+              rows={4}
+              value={guidance}
+            />
+            <footer>
+              <button className="btn" disabled={blocked} onClick={onClose}>
+                保持停止
+              </button>
+              <button
+                className="btn rah-room-sos-resume-button"
+                disabled={blocked || guidance.trim().length === 0}
+                onClick={() => void onResume()}
+              >
+                {resuming ? "正在恢复…" : "全部恢复"}
+              </button>
+            </footer>
+          </>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function RoomArchiveConfirmation({
+  blocked,
+  name,
+  onCancel,
+  onConfirm,
+}: {
+  blocked: boolean;
+  name: string;
+  onCancel: () => void;
+  onConfirm: () => Promise<void>;
+}) {
+  const dialogRef = useDialogProtocol({ blocked, onClose: onCancel });
+  return (
+    <div
+      className="rah-dialog-layer rah-room-archive-confirm"
+      role="presentation"
+    >
+      <div aria-hidden="true" className="rah-dialog-backdrop" />
+      <section
+        aria-labelledby="rah-room-archive-title"
+        aria-modal="true"
+        className="rah-dialog"
+        ref={dialogRef}
+        role="dialog"
+        tabIndex={-1}
+      >
+        <header>
+          <h2 id="rah-room-archive-title">归档 #{name}？</h2>
+          <button
+            aria-label="关闭"
+            className="sq-btn"
+            disabled={blocked}
+            onClick={onCancel}
+          >
+            ×
+          </button>
+        </header>
+        <p>
+          成员仍可读取频道和历史记录，但不能再发布内容；频道会从侧栏隐藏，并可稍后恢复。
+        </p>
+        <footer>
+          <button className="btn" disabled={blocked} onClick={onCancel}>
+            取消
+          </button>
+          <button
+            autoFocus
+            className="btn rah-channel-archive-button"
+            data-dialog-initial-focus
+            disabled={blocked}
+            onClick={() => void onConfirm()}
+          >
+            {blocked ? "正在归档…" : "归档频道"}
+          </button>
+        </footer>
+      </section>
+    </div>
+  );
+}
+
+function RoomLeaveConfirmation({
+  blocked,
+  name,
+  onCancel,
+  onConfirm,
+}: {
+  blocked: boolean;
+  name: string;
+  onCancel: () => void;
+  onConfirm: () => Promise<void>;
+}) {
+  const dialogRef = useDialogProtocol({ blocked, onClose: onCancel });
+  return (
+    <div
+      className="rah-dialog-layer rah-room-leave-confirm"
+      role="presentation"
+    >
+      <div aria-hidden="true" className="rah-dialog-backdrop" />
+      <section
+        aria-labelledby="rah-room-leave-title"
+        aria-modal="true"
+        className="rah-dialog"
+        ref={dialogRef}
+        role="dialog"
+        tabIndex={-1}
+      >
+        <header>
+          <h2 id="rah-room-leave-title">退出频道</h2>
+          <button
+            aria-label="关闭"
+            className="sq-btn"
+            disabled={blocked}
+            onClick={onCancel}
+          >
+            ×
+          </button>
+        </header>
+        <p>
+          你将停止接收 #{name}
+          的常规消息，并且在重新加入前无法发送消息。RAH OS 当前按 Room
+          成员资格统一保护历史与消息列；离开后这些内容也会从本地导航中移除，直到管理员重新加入你。
+        </p>
+        <footer>
+          <button className="btn" disabled={blocked} onClick={onCancel}>
+            取消
+          </button>
+          <button
+            autoFocus
+            className="btn rah-channel-leave-button"
+            data-dialog-initial-focus
+            disabled={blocked}
+            onClick={() => void onConfirm()}
+          >
+            {blocked ? "正在退出…" : "离开"}
+          </button>
+        </footer>
       </section>
     </div>
   );

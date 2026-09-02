@@ -349,6 +349,59 @@ test("Web Push projection defaults to DM/mention and supports a muted-aware all-
   }
 });
 
+test("Web Push follows Raft Thread follow state while exact mentions override an unfollow", () => {
+  const f = fixture();
+  try {
+    const task = f.task(f.channel.roomId, "Push follow transitions");
+    const reply = (body: string, key: string) =>
+      f.kernel.replyThread(f.peerActor, {
+        roomId: f.channel.roomId,
+        threadId: task.threadId,
+        body,
+        basedOnRoomSeq: f.head(f.channel.roomId),
+        idempotencyKey: key,
+        recipientIds: [],
+      });
+    const project = (roomSeq: number) =>
+      f.kernel.humanNotifications.webPush.project({
+        roomId: f.channel.roomId,
+        roomSeq,
+      });
+
+    const implicitFollow = reply(
+      "implicit participant update",
+      "push-follow-1",
+    );
+    assert.deepEqual(
+      project(implicitFollow.event.roomSeq).map(
+        ({ principalId }) => principalId,
+      ),
+      [f.human.principal.principalId],
+    );
+
+    f.kernel.followHumanThread(f.actor, {
+      roomId: f.channel.roomId,
+      threadId: task.threadId,
+      following: false,
+    });
+    const unfollowed = reply("ordinary update after unfollow", "push-follow-2");
+    assert.deepEqual(project(unfollowed.event.roomSeq), []);
+
+    const mentioned = reply("@human direct review", "push-follow-3");
+    assert.equal(project(mentioned.event.roomSeq).length, 1);
+
+    f.kernel.followHumanThread(f.actor, {
+      roomId: f.channel.roomId,
+      threadId: task.threadId,
+      following: true,
+    });
+    const refollowed = reply("ordinary update after refollow", "push-follow-4");
+    assert.equal(project(refollowed.event.roomSeq).length, 1);
+  } finally {
+    f.close();
+  }
+});
+
 test("Raft server mute suppresses Web Push for the whole Workspace without muting Activity", () => {
   const f = fixture();
   try {
@@ -435,6 +488,89 @@ test("Search uses the maintained FTS index for long literals and preserves short
       }).total,
       1,
     );
+  } finally {
+    f.close();
+  }
+});
+
+test("Raft multi-term Search matches any literal term, ranks fuller matches first, and freezes rank semantics in cursors", () => {
+  const f = fixture();
+  try {
+    const both = f.post(
+      f.channel.roomId,
+      "任务已经进入队列，等待其他 Agent 认领",
+    );
+    const onlyTask = f.post(f.channel.roomId, "只有任务这个词");
+    const onlyClaim = f.post(f.channel.roomId, "这里只有认领这个词");
+    f.post(f.channel.roomId, "完全无关");
+    const input = {
+      workspaceId: f.workspaceId,
+      query: "任务 认领",
+      limit: 1,
+    };
+    const first = f.kernel.searchWorkspace(f.actor, input);
+    assert.equal(first.total, 3);
+    assert.equal(first.hits[0]?.message.messageId, both.event.aggregateId);
+    const second = f.kernel.searchWorkspace(f.actor, {
+      ...input,
+      cursor: first.nextCursor,
+    });
+    const third = f.kernel.searchWorkspace(f.actor, {
+      ...input,
+      cursor: second.nextCursor,
+    });
+    assert.deepEqual(
+      [second.hits[0]?.message.messageId, third.hits[0]?.message.messageId],
+      [onlyClaim.event.aggregateId, onlyTask.event.aggregateId],
+    );
+    assert.equal(third.nextCursor, undefined);
+    assert.equal(
+      f.kernel.searchWorkspace(f.actor, { ...input, sort: "recent" }).hits[0]
+        ?.message.messageId,
+      onlyClaim.event.aggregateId,
+    );
+    assert.throws(() =>
+      f.kernel.searchWorkspace(f.actor, {
+        ...input,
+        query: "任务",
+        cursor: first.nextCursor,
+      }),
+    );
+  } finally {
+    f.close();
+  }
+});
+
+test("threadIds constrain indexed search to one authorized Thread", () => {
+  const f = fixture();
+  try {
+    const first = f.task(f.channel.roomId, "first searchable thread");
+    const second = f.task(f.channel.roomId, "second searchable thread");
+    f.kernel.replyThread(f.actor, {
+      basedOnRoomSeq: f.head(f.channel.roomId),
+      body: "thread-local needle first",
+      idempotencyKey: "thread-search-first",
+      recipientIds: [],
+      roomId: f.channel.roomId,
+      threadId: first.threadId,
+    });
+    f.kernel.replyThread(f.actor, {
+      basedOnRoomSeq: f.head(f.channel.roomId),
+      body: "thread-local needle second",
+      idempotencyKey: "thread-search-second",
+      recipientIds: [],
+      roomId: f.channel.roomId,
+      threadId: second.threadId,
+    });
+    const result = f.kernel.searchWorkspace(f.actor, {
+      workspaceId: f.workspaceId,
+      query: "thread-local needle",
+      scope: "thread",
+      threadIds: [first.threadId],
+    });
+    assert.equal(result.total, 1);
+    assert.equal(result.hits[0]?.message.threadId, first.threadId);
+    assert.equal(result.hits[0]?.message.body, "thread-local needle first");
   } finally {
     f.close();
   }

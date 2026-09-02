@@ -32,7 +32,7 @@ LAN browser / iOS PWA      external Computer + its Agent CLIs
 - 精确 `https` public origin；
 - 显式 bind host，默认 `0.0.0.0`。
 
-默认由 Core 在 owner-private `RAH_OS_HOME/tls` 下创建一个持久本地 CA，并按 public origin 的精确 hostname/IP 生成独立叶证书；同名有效证书复用，剩余不足 30 天时续签叶证书，不更换 CA。CA private key 永不输出内容或发给浏览器。`npm run provision:lan-tls` 只输出证书路径、SHA-256 fingerprint 和有效期，macOS/iOS 信任安装仍是显式用户动作。调用者也可以同时提供 `RAH_LAN_CERT_PATH` 与 `RAH_LAN_KEY_PATH` 覆盖 managed identity；只提供一项会失败。
+默认由 Core 在 owner-private `RAH_DATA_HOME/tls` 下创建一个持久本地 CA，并按 public origin 的精确 hostname/IP 生成独立叶证书；同名有效证书复用，剩余不足 30 天时续签叶证书，不更换 CA。`RAH_OS_HOME` 只作为旧版本兼容别名。CA private key 永不输出内容或发给浏览器。`npm run provision:lan-tls` 只输出证书路径、SHA-256 fingerprint 和有效期，macOS/iOS 信任安装仍是显式用户动作。调用者也可以同时提供 `RAH_LAN_CERT_PATH` 与 `RAH_LAN_KEY_PATH` 覆盖 managed identity；只提供一项会失败。
 
 LAN edge 在构造时校验证书有效期、SAN/hostname 和公私钥匹配。浏览器首次访问未配对 navigation 时跳转 `/_rah/pair`。本机终端每次启动生成一个 10 分钟一次性配对码；失败尝试按来源地址限制为 5 次/5 分钟。
 

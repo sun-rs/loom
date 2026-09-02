@@ -11,7 +11,7 @@ import type {
   ActivationObligationService,
   ActivationObligationSpec,
 } from "./activation-obligation-service.ts";
-import { NotFoundError } from "./errors.ts";
+import { ConflictError, NotFoundError } from "./errors.ts";
 import { integer, jsonObject, text, type Row } from "./sqlite-row.ts";
 
 export type AttentionRecipient = {
@@ -54,6 +54,9 @@ export class RoomEventWriter {
       .get(input.roomId);
     if (room === undefined) {
       throw new NotFoundError(`room ${input.roomId} was not found`);
+    }
+    if (room.archived_at !== null && room.archived_at !== undefined) {
+      throw new ConflictError(`Room ${input.roomId} is archived and read-only`);
     }
     const roomSeq = integer(room, "next_seq");
     const event = RoomEventSchema.parse({

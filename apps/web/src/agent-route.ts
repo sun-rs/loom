@@ -10,17 +10,35 @@ export const AGENT_ROUTE_TABS = [
 
 export type AgentRouteTab = (typeof AGENT_ROUTE_TABS)[number];
 
-export type AgentRouteSelection = {
-  agentDefinitionId: string | undefined;
-  tab: AgentRouteTab;
-};
+export type AgentRouteSelection =
+  | {
+      agentDefinitionId: undefined;
+      tab: "profile";
+      view: "relationship";
+    }
+  | {
+      agentDefinitionId: string | undefined;
+      tab: AgentRouteTab;
+      view?: "agent";
+    };
 
 const AGENT_ROUTE_TAB_SET = new Set<string>(AGENT_ROUTE_TABS);
+
+export function agentDirectoryRootRoute(): AgentRouteSelection {
+  return { agentDefinitionId: undefined, tab: "profile" };
+}
 
 export function agentRouteFromSearch(search: string): AgentRouteSelection {
   const params = new URLSearchParams(search);
   if (params.get("surface") !== "agents") {
-    return { agentDefinitionId: undefined, tab: "profile" };
+    return agentDirectoryRootRoute();
+  }
+  if (params.get("memberView") === "relationship") {
+    return {
+      agentDefinitionId: undefined,
+      tab: "profile",
+      view: "relationship",
+    };
   }
   const rawAgent = params.get("agent")?.trim();
   const rawTab = params.get("agentTab");
@@ -39,6 +57,10 @@ export function agentRouteSearch(
   selection: AgentRouteSelection,
 ): string {
   const params = new URLSearchParams({ surface: "agents" });
+  if (selection.view === "relationship") {
+    params.set("memberView", "relationship");
+    return `?${params}`;
+  }
   if (selection.agentDefinitionId)
     params.set("agent", selection.agentDefinitionId);
   params.set("agentTab", selection.tab);
@@ -68,4 +90,16 @@ export function reconcileAgentRouteIdentity(
     agentDefinitionId: canonicalAgentDefinitionIds[0],
     replace: true,
   };
+}
+
+export function shouldOpenAgentMobileDetail(input: {
+  agentDefinitionId: string | undefined;
+  panel: boolean;
+  view: AgentRouteSelection["view"];
+}): boolean {
+  return (
+    !input.panel &&
+    input.view !== "relationship" &&
+    input.agentDefinitionId !== undefined
+  );
 }

@@ -42,6 +42,7 @@ export const WorkspaceSearchRequestSchema = z
     workspaceId: IdentifierSchema,
     query: z.string().trim().max(300),
     roomIds: Ids,
+    threadIds: Ids,
     senderIds: Ids,
     senderKind: z.enum(["human", "agent"]).optional(),
     mentionSelf: z.boolean().optional(),
@@ -163,6 +164,47 @@ export const HumanThreadFollowRequestSchema = z
 export const HumanThreadFollowResponseSchema = z
   .object({ following: z.boolean() })
   .strict();
+export const HumanThreadFollowersRequestSchema = z
+  .object({ roomId: IdentifierSchema, threadId: IdentifierSchema })
+  .strict();
+export const HumanThreadFollowersResponseSchema = z
+  .object({
+    agentParticipantIds: z.array(IdentifierSchema),
+    canManage: z.boolean(),
+    following: z.boolean(),
+  })
+  .strict();
+export const HumanThreadFollowerRemoveRequestSchema = z
+  .object({
+    participantId: IdentifierSchema,
+    roomId: IdentifierSchema,
+    threadId: IdentifierSchema,
+  })
+  .strict();
+export const HumanThreadFollowerRemoveResponseSchema = z.discriminatedUnion(
+  "removed",
+  [
+    z
+      .object({
+        removed: z.literal(true),
+        undoExpiresAt: TimestampSchema,
+        undoToken: IdentifierSchema,
+      })
+      .strict(),
+    z.object({ removed: z.literal(false) }).strict(),
+  ],
+);
+export const HumanThreadFollowerRestoreRequestSchema = z
+  .object({
+    participantId: IdentifierSchema,
+    roomId: IdentifierSchema,
+    threadId: IdentifierSchema,
+    undoToken: IdentifierSchema,
+  })
+  .strict();
+export const HumanThreadFollowerRestoreResponseSchema = z
+  .object({ restored: z.boolean() })
+  .strict();
 export type HumanActivityRequest = z.infer<typeof HumanActivityRequestSchema>;
 export type HumanActivityResponse = z.infer<typeof HumanActivityResponseSchema>;
 export type HumanActivityItem = z.infer<typeof HumanActivityItemSchema>;
@@ -171,4 +213,19 @@ export type HumanActivityMarkRequest = z.infer<
 >;
 export type HumanThreadFollowRequest = z.infer<
   typeof HumanThreadFollowRequestSchema
+>;
+export type HumanThreadFollowersRequest = z.infer<
+  typeof HumanThreadFollowersRequestSchema
+>;
+export type HumanThreadFollowerRemoveRequest = z.infer<
+  typeof HumanThreadFollowerRemoveRequestSchema
+>;
+export type HumanThreadFollowerRemoveResponse = z.infer<
+  typeof HumanThreadFollowerRemoveResponseSchema
+>;
+export type HumanThreadFollowerRestoreRequest = z.infer<
+  typeof HumanThreadFollowerRestoreRequestSchema
+>;
+export type HumanThreadFollowerRestoreResponse = z.infer<
+  typeof HumanThreadFollowerRestoreResponseSchema
 >;

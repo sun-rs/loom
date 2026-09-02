@@ -221,6 +221,19 @@ CREATE TABLE IF NOT EXISTS agent_thread_follows (
 CREATE INDEX IF NOT EXISTS idx_agent_thread_follows_delivery
   ON agent_thread_follows(thread_id, following, participant_id);
 
+CREATE TABLE IF NOT EXISTS agent_thread_follower_undo (
+  undo_token TEXT PRIMARY KEY,
+  actor_id TEXT NOT NULL REFERENCES principals(principal_id),
+  participant_id TEXT NOT NULL REFERENCES principals(principal_id),
+  thread_id TEXT NOT NULL REFERENCES threads(thread_id),
+  previous_source TEXT NOT NULL CHECK (previous_source IN ('mention', 'participation')),
+  expires_at TEXT NOT NULL,
+  created_at TEXT NOT NULL
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS idx_agent_thread_follower_undo_expiry
+  ON agent_thread_follower_undo(expires_at);
+
 CREATE TABLE IF NOT EXISTS tasks (
   task_id TEXT PRIMARY KEY,
   room_id TEXT NOT NULL REFERENCES rooms(room_id),
@@ -346,9 +359,12 @@ CREATE TABLE IF NOT EXISTS input_requests (
   requester_id TEXT NOT NULL REFERENCES principals(principal_id),
   responder_id TEXT NOT NULL REFERENCES principals(principal_id),
   question TEXT NOT NULL,
-  state TEXT NOT NULL CHECK (state IN ('pending', 'resolved')),
+  state TEXT NOT NULL CHECK (state IN ('pending', 'resolved', 'cancelled')),
   answer TEXT,
   resolved_by TEXT REFERENCES principals(principal_id),
+  cancelled_at TEXT,
+  cancelled_by TEXT REFERENCES principals(principal_id),
+  cancellation_reason TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   resolved_at TEXT
@@ -566,6 +582,57 @@ CREATE TABLE IF NOT EXISTS activation_cancellation_requests (
 CREATE INDEX IF NOT EXISTS idx_activation_cancellation_unresolved_task
   ON activation_cancellation_requests(task_id, activation_id)
   WHERE resolved_at IS NULL;
+
+CREATE TABLE IF NOT EXISTS room_agent_sos_operations (
+  operation_id TEXT PRIMARY KEY,
+  room_id TEXT NOT NULL REFERENCES rooms(room_id),
+  requested_by TEXT NOT NULL REFERENCES principals(principal_id),
+  idempotency_key TEXT NOT NULL,
+  state TEXT NOT NULL CHECK (state IN ('stopping', 'stopped', 'resumed')),
+  request_event_id TEXT NOT NULL REFERENCES room_events(event_id),
+  stopped_event_id TEXT REFERENCES room_events(event_id),
+  resume_event_id TEXT REFERENCES room_events(event_id),
+  guidance TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  stopped_at TEXT,
+  resumed_at TEXT,
+  UNIQUE (room_id, idempotency_key),
+  CHECK (
+    (state = 'stopping' AND stopped_at IS NULL AND resumed_at IS NULL AND guidance IS NULL AND stopped_event_id IS NULL AND resume_event_id IS NULL) OR
+    (state = 'stopped' AND stopped_at IS NOT NULL AND resumed_at IS NULL AND guidance IS NULL AND stopped_event_id IS NOT NULL AND resume_event_id IS NULL) OR
+    (state = 'resumed' AND stopped_at IS NOT NULL AND resumed_at IS NOT NULL AND guidance IS NOT NULL AND stopped_event_id IS NOT NULL AND resume_event_id IS NOT NULL)
+  )
+) STRICT;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_one_active_room_agent_sos
+  ON room_agent_sos_operations(room_id)
+  WHERE state <> 'resumed';
+
+CREATE TABLE IF NOT EXISTS room_agent_sos_holds (
+  room_id TEXT PRIMARY KEY REFERENCES rooms(room_id),
+  operation_id TEXT NOT NULL UNIQUE REFERENCES room_agent_sos_operations(operation_id),
+  created_at TEXT NOT NULL
+) STRICT;
+
+CREATE TABLE IF NOT EXISTS room_agent_sos_targets (
+  target_id TEXT PRIMARY KEY,
+  operation_id TEXT NOT NULL REFERENCES room_agent_sos_operations(operation_id),
+  activation_id TEXT NOT NULL REFERENCES activations(activation_id),
+  activation_attempt_number INTEGER NOT NULL CHECK (activation_attempt_number > 0),
+  participant_id TEXT NOT NULL REFERENCES principals(principal_id),
+  state TEXT NOT NULL CHECK (state IN ('requested', 'terminal_proven')),
+  requested_at TEXT NOT NULL,
+  resolved_at TEXT,
+  UNIQUE (activation_id, activation_attempt_number),
+  CHECK (
+    (state = 'requested' AND resolved_at IS NULL) OR
+    (state = 'terminal_proven' AND resolved_at IS NOT NULL)
+  )
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS idx_room_agent_sos_targets_operation
+  ON room_agent_sos_targets(operation_id, state, target_id);
 
 CREATE TABLE IF NOT EXISTS execution_policies (
   execution_policy_id TEXT PRIMARY KEY,
@@ -1172,6 +1239,76 @@ export function migrateReminderTargetsV36(database: DatabaseSync): void {
   database.exec(
     "UPDATE reminders SET target_room_id = room_id WHERE target_room_id IS NULL",
   );
+}
+
+export function migrateInputRequestCancellationV38(
+  database: DatabaseSync,
+): void {
+  const definition = database
+    .prepare(
+      "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'input_requests'",
+    )
+    .get() as { sql?: unknown } | undefined;
+  const sql = typeof definition?.sql === "string" ? definition.sql : "";
+  const columns = new Set(
+    database
+      .prepare("PRAGMA table_info(input_requests)")
+      .all()
+      .map((row) => requiredString(row, "name")),
+  );
+  if (
+    sql.includes("'cancelled'") &&
+    columns.has("cancelled_at") &&
+    columns.has("cancelled_by") &&
+    columns.has("cancellation_reason")
+  ) {
+    return;
+  }
+  database.exec("PRAGMA foreign_keys = OFF");
+  try {
+    database.exec(`
+      BEGIN IMMEDIATE;
+      CREATE TABLE input_requests_v38 (
+        input_request_id TEXT PRIMARY KEY,
+        room_id TEXT NOT NULL REFERENCES rooms(room_id),
+        task_id TEXT NOT NULL REFERENCES tasks(task_id),
+        requester_id TEXT NOT NULL REFERENCES principals(principal_id),
+        responder_id TEXT NOT NULL REFERENCES principals(principal_id),
+        question TEXT NOT NULL,
+        state TEXT NOT NULL CHECK (state IN ('pending', 'resolved', 'cancelled')),
+        answer TEXT,
+        resolved_by TEXT REFERENCES principals(principal_id),
+        cancelled_at TEXT,
+        cancelled_by TEXT REFERENCES principals(principal_id),
+        cancellation_reason TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        resolved_at TEXT
+      ) STRICT;
+      INSERT INTO input_requests_v38(
+        input_request_id, room_id, task_id, requester_id, responder_id,
+        question, state, answer, resolved_by, created_at, updated_at,
+        resolved_at
+      )
+      SELECT input_request_id, room_id, task_id, requester_id, responder_id,
+             question, state, answer, resolved_by, created_at, updated_at,
+             resolved_at
+      FROM input_requests;
+      DROP TABLE input_requests;
+      ALTER TABLE input_requests_v38 RENAME TO input_requests;
+      CREATE INDEX idx_input_requests_room_state
+        ON input_requests(room_id, state, created_at, input_request_id);
+      CREATE UNIQUE INDEX idx_one_pending_input_per_task
+        ON input_requests(task_id)
+        WHERE state = 'pending';
+      COMMIT;
+    `);
+  } catch (error) {
+    if (database.isTransaction) database.exec("ROLLBACK");
+    throw error;
+  } finally {
+    database.exec("PRAGMA foreign_keys = ON");
+  }
 }
 
 function requiredString(row: object, field: string): string {

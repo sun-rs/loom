@@ -6,11 +6,13 @@ import {
   AgentDefinitionSchema,
   ClientAgentManageRequestSchema,
   ClientAgentManageResponseSchema,
+  ClientAgentCreatorSchema,
   ClientAgentGetResponseSchema,
   ExecutionPolicyRevisionSchema,
   RuntimeOfferProjectionSchema,
   type ClientAgentManageRequest,
   type ClientAgentManageResponse,
+  type ClientAgentCreator,
   type ClientAgentGetResponse,
   type RoomEvent,
 } from "@rah-os/protocol";
@@ -125,6 +127,12 @@ export function getWorkspaceAgentManagementView(
     ),
   );
   return ClientAgentGetResponseSchema.parse({
+    createdAgents: listCreatedAgentCatalogEntries(
+      database,
+      record.definition.controlRoomId,
+      record.definition.participantId,
+    ),
+    creator: readOriginalAgentCreator(database, agentDefinitionId),
     membershipRole: roomRole(
       database,
       record.definition.controlRoomId,
@@ -136,6 +144,75 @@ export function getWorkspaceAgentManagementView(
       handle: text(principal, "handle"),
     },
     policy,
+  });
+}
+
+function readOriginalAgentCreator(
+  database: DatabaseSync,
+  agentDefinitionId: string,
+): ClientAgentCreator | null {
+  const row = database
+    .prepare(
+      `SELECT principals.*
+       FROM agent_definition_revisions
+       JOIN principals
+         ON principals.principal_id = agent_definition_revisions.created_by
+       WHERE agent_definition_revisions.agent_definition_id = ?
+         AND agent_definition_revisions.revision = 1
+       LIMIT 1`,
+    )
+    .get(agentDefinitionId);
+  if (row === undefined) return null;
+  const kind = text(row, "kind");
+  if (kind !== "human" && kind !== "agent") return null;
+  const avatarKey = nullableText(row, "avatar_key");
+  const displayName = nullableText(row, "display_name");
+  return ClientAgentCreatorSchema.parse({
+    ...(avatarKey === null ? {} : { avatarKey }),
+    ...(displayName === null ? {} : { displayName }),
+    handle: text(row, "handle"),
+    kind,
+    principalId: text(row, "principal_id"),
+  });
+}
+
+function listCreatedAgentCatalogEntries(
+  database: DatabaseSync,
+  controlRoomId: string,
+  creatorParticipantId: string,
+) {
+  const rows = database
+    .prepare(
+      `SELECT agent_definitions.agent_definition_id
+       FROM agent_definitions
+       JOIN agent_definition_revisions AS original_revision
+         ON original_revision.agent_definition_id =
+              agent_definitions.agent_definition_id
+        AND original_revision.revision = 1
+       JOIN principals
+         ON principals.principal_id = agent_definitions.participant_id
+       WHERE agent_definitions.control_room_id = ?
+         AND agent_definitions.state <> 'tombstoned'
+         AND original_revision.created_by = ?
+       ORDER BY principals.handle, agent_definitions.agent_definition_id`,
+    )
+    .all(controlRoomId, creatorParticipantId);
+  return rows.map((row) => {
+    const record = readAgentDefinition(
+      database,
+      text(row, "agent_definition_id"),
+    );
+    const principal = requireRow(
+      database
+        .prepare("SELECT handle FROM principals WHERE principal_id = ?")
+        .get(record.definition.participantId),
+      `principal ${record.definition.participantId} was not found`,
+    );
+    return AgentCatalogEntrySchema.parse({
+      currentRevision: record.currentRevision,
+      definition: record.definition,
+      handle: text(principal, "handle"),
+    });
   });
 }
 

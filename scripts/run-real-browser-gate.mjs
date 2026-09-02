@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -22,6 +29,16 @@ const temporaryDirectory = mkdtempSync(
   join(tmpdir(), "rah-os-real-browser-gate-"),
 );
 const chromeProfileDirectory = join(temporaryDirectory, "chrome-profile");
+const downloadDirectory = join(temporaryDirectory, "downloads");
+mkdirSync(downloadDirectory, { recursive: true });
+const agentAvatarPngPath = join(temporaryDirectory, "agent-avatar.png");
+writeFileSync(
+  agentAvatarPngPath,
+  Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4V7viPwAHwwMjerDEwwAAAABJRU5ErkJggg==",
+    "base64",
+  ),
+);
 const fixturePort = await availablePort();
 const demoRoomReply = (handle, body) =>
   `我是 ${handle}，当前 Room 的演示 Agent（Fake CLI）。我已收到：“${body}”。`;
@@ -107,6 +124,10 @@ try {
     browser.command("Page.enable"),
     browser.command("Runtime.enable"),
   ]);
+  await browser.command("Page.setDownloadBehavior", {
+    behavior: "allow",
+    downloadPath: downloadDirectory,
+  });
   await browser.command("Emulation.setDeviceMetricsOverride", {
     deviceScaleFactor: 1,
     height: 1_000,
@@ -425,6 +446,86 @@ try {
     ["动态", "资料", "聊天", "提醒", "工作区", "应用", "MCP"],
     "Agent detail must preserve the complete Raft tab protocol",
   );
+  await clickButton(browser, { text: "关系图" });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-member-graph-canvas") !== null &&
+      new URL(location.href).searchParams.get("memberView") === "relationship",
+    "Raft relationship graph deep link",
+  );
+  const relationshipNode = await call(browser, () => {
+    const node = document.querySelector(".rah-member-graph-node-trigger");
+    const canvas = document.querySelector(".rah-member-graph-canvas");
+    if (!(node instanceof HTMLElement) || !(canvas instanceof HTMLElement))
+      return null;
+    const nodeBounds = node.getBoundingClientRect();
+    const canvasBounds = canvas.getBoundingClientRect();
+    return {
+      canvas: {
+        x: canvasBounds.left + canvasBounds.width / 2,
+        y: canvasBounds.top + canvasBounds.height / 2,
+      },
+      node: {
+        x: nodeBounds.left + nodeBounds.width / 2,
+        y: nodeBounds.top + nodeBounds.height / 2,
+      },
+      viewBox: document
+        .querySelector(".rah-member-graph-canvas svg")
+        ?.getAttribute("viewBox"),
+    };
+  });
+  assert.notEqual(
+    relationshipNode,
+    null,
+    "relationship graph must render canonical visible members",
+  );
+  await browser.command("Input.dispatchMouseEvent", {
+    type: "mouseMoved",
+    ...relationshipNode.node,
+  });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector('.rah-member-graph-preview[role="tooltip"]') !==
+      null,
+    "relationship node 200ms hover preview",
+  );
+  await dispatchKey(browser, "Escape", 27);
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector('.rah-member-graph-preview[role="tooltip"]') ===
+      null,
+    "relationship node hover Escape close",
+  );
+  await browser.command("Input.dispatchMouseEvent", {
+    deltaX: 0,
+    deltaY: -320,
+    type: "mouseWheel",
+    ...relationshipNode.canvas,
+  });
+  await waitFor(
+    browser,
+    (before) =>
+      document
+        .querySelector(".rah-member-graph-canvas svg")
+        ?.getAttribute("viewBox") !== before,
+    "relationship graph wheel zoom",
+    [relationshipNode.viewBox],
+  );
+  await call(browser, () =>
+    [...document.querySelectorAll(".rah-agent-member-row")]
+      .find((row) => row.querySelector("b")?.textContent === "Alice")
+      ?.click(),
+  );
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-agent-profile-pane") !== null &&
+      new URL(location.href).searchParams.get("memberView") === null,
+    "relationship graph returns to Agent profile",
+  );
   assert.equal(
     await call(browser, () => {
       const separator = document.querySelector(".rah-agent-sidebar-resizer");
@@ -494,6 +595,115 @@ try {
       null,
     "Agent inspector profile tab from Direct Room header",
   );
+  await clickButton(browser, { text: "重启 / 重置" });
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-agent-reset-dialog") !== null,
+    "Raft three-mode Agent reset dialog",
+  );
+  assert.equal(
+    await call(browser, () => {
+      const full = document.querySelector(
+        '.rah-agent-reset-dialog input[value="full"]',
+      );
+      if (!(full instanceof HTMLInputElement)) return null;
+      full.click();
+      return full.disabled;
+    }),
+    false,
+    "full reset is enabled only when the daemon advertises its dedicated capability",
+  );
+  await waitFor(
+    browser,
+    () =>
+      document
+        .querySelector(".rah-agent-reset-warning")
+        ?.textContent?.includes("本机项目目录不会被删除") === true &&
+      document
+        .querySelector(".rah-agent-reset-confirm")
+        ?.classList.contains("is-full") === true,
+    "full reset destructive scope warning",
+  );
+  await dispatchKey(browser, "Escape", 27);
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-agent-reset-dialog") === null &&
+      document.activeElement?.textContent?.trim() === "重启 / 重置",
+    "Agent reset Escape and focus return",
+  );
+  await clickButton(browser, { text: "报告问题" });
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-agent-issue-report-dialog") !== null,
+    "Raft-shaped local Agent issue report dialog",
+  );
+  await dispatchKey(browser, "Escape", 27);
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-agent-issue-report-dialog") === null &&
+      document.activeElement?.textContent?.trim() === "报告问题",
+    "Agent issue report Escape and focus return",
+  );
+  await clickButton(browser, { text: "报告问题" });
+  assert.equal(
+    await call(browser, () => {
+      const dialog = document.querySelector(".rah-agent-issue-report-dialog");
+      const submit = [...(dialog?.querySelectorAll("button") ?? [])].find(
+        (button) => button.textContent?.trim() === "导出到本机",
+      );
+      return submit?.disabled;
+    }),
+    true,
+    "local issue export requires explicit sensitive-data consent",
+  );
+  await call(browser, () => {
+    const dialog = document.querySelector(".rah-agent-issue-report-dialog");
+    const textarea = dialog?.querySelector("textarea");
+    if (textarea instanceof HTMLTextAreaElement) {
+      const setter = Object.getOwnPropertyDescriptor(
+        HTMLTextAreaElement.prototype,
+        "value",
+      )?.set;
+      setter?.call(textarea, "browser gate local diagnostic export");
+      textarea.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    const consent = [
+      ...(dialog?.querySelectorAll('input[type="checkbox"]') ?? []),
+    ].at(-1);
+    if (consent instanceof HTMLInputElement) consent.click();
+  });
+  await clickButton(browser, { text: "导出到本机" });
+  await waitFor(
+    browser,
+    () =>
+      document
+        .querySelector(".rah-agent-issue-report-success")
+        ?.textContent?.includes("已导出到本机") === true,
+    "local Agent issue report success state",
+  );
+  const issueReportPath = await waitForDownloadedIssueReport(downloadDirectory);
+  const issueReport = JSON.parse(readFileSync(issueReportPath, "utf8"));
+  assert.equal(issueReport.schemaVersion, "rah-agent-issue-report-v1");
+  assert.equal(issueReport.disclosure.transport, "local_download");
+  assert.equal(
+    issueReport.issue.description,
+    "browser gate local diagnostic export",
+  );
+  assert.equal(issueReport.logs.activityDiagnostics.included, true);
+  assert.doesNotMatch(
+    JSON.stringify(issueReport),
+    /toolInput|recentMessages|runtimeTranscript|RAH_FAKE/u,
+  );
+  await clickButton(browser, { text: "完成" });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-agent-issue-report-dialog") === null &&
+      document.activeElement?.textContent?.trim() === "报告问题",
+    "close local Agent issue report and restore focus",
+  );
   await clickButton(browser, { ariaLabel: "更换 Alice 头像" });
   await waitFor(
     browser,
@@ -519,6 +729,47 @@ try {
       document.querySelector('.rah-agent-avatar-picker [role="group"]') !==
       null,
     "Raft Agent avatar picker after keyboard dismissal",
+  );
+  await browser.command("DOM.enable");
+  const { root } = await browser.command("DOM.getDocument", { depth: -1 });
+  const { nodeId: avatarInputNodeId } = await browser.command(
+    "DOM.querySelector",
+    {
+      nodeId: root.nodeId,
+      selector: '.rah-agent-avatar-picker input[type="file"]',
+    },
+  );
+  assert.notEqual(avatarInputNodeId, 0, "Agent avatar file input must exist");
+  await browser.command("DOM.setFileInputFiles", {
+    files: [agentAvatarPngPath],
+    nodeId: avatarInputNodeId,
+  });
+  await waitFor(
+    browser,
+    () => {
+      const source = document
+        .querySelector(
+          ".rah-agent-profile-avatar-trigger .rah-profile-image-avatar",
+        )
+        ?.getAttribute("src");
+      return (
+        document.querySelector(".rah-agent-avatar-picker") === null &&
+        typeof source === "string" &&
+        /^\/v3\/client\/profile-images\/content\/upload_png_[a-f0-9]{40}$/u.test(
+          source,
+        )
+      );
+    },
+    "authenticated Agent image upload and canonical avatar reconciliation",
+  );
+  await clickButton(browser, { ariaLabel: "更换 Alice 头像" });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(
+        '.rah-agent-avatar-picker .rah-agent-avatar-upload[data-selected="true"] .rah-profile-image-avatar',
+      ) !== null,
+    "uploaded Agent image selected state after reopening picker",
   );
   const selectedAvatarKey = await call(browser, () => {
     const selected = document.querySelector(
@@ -1305,6 +1556,346 @@ try {
     ),
     /Web multi-Agent fixture/u,
   );
+  assert.equal(
+    await call(browser, () => {
+      const buttons = [
+        ...document.querySelectorAll(".rah-computer-profile-edit"),
+      ];
+      return (
+        buttons.length === 2 &&
+        buttons.every(
+          (button) => button instanceof HTMLButtonElement && !button.disabled,
+        )
+      );
+    }),
+    true,
+    "Computer name and description must both expose Raft edit controls",
+  );
+  await call(browser, () =>
+    document.querySelector('button[aria-label="编辑计算机名称"]')?.click(),
+  );
+  assert.equal(
+    await call(
+      browser,
+      (value) => {
+        const input = document.querySelector('input[aria-label="计算机名称"]');
+        if (!(input instanceof HTMLInputElement)) return false;
+        const setter = Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,
+          "value",
+        )?.set;
+        setter?.call(input, value);
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.focus();
+        return true;
+      },
+      "RAH Gate Computer",
+    ),
+    true,
+  );
+  await dispatchKey(browser, "Enter", 13);
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-computer-detail h1")?.textContent ===
+        "RAH Gate Computer" &&
+      document.querySelector('input[aria-label="计算机名称"]') === null,
+    "Computer name Enter save through durable daemon profile",
+  );
+  await call(browser, () =>
+    document.querySelector('button[aria-label="编辑计算机描述"]')?.click(),
+  );
+  assert.equal(
+    await call(
+      browser,
+      (value) => {
+        const textarea = document.querySelector(
+          'textarea[aria-label="计算机描述"]',
+        );
+        if (!(textarea instanceof HTMLTextAreaElement)) return false;
+        const setter = Object.getOwnPropertyDescriptor(
+          HTMLTextAreaElement.prototype,
+          "value",
+        )?.set;
+        setter?.call(textarea, value);
+        textarea.dispatchEvent(new Event("input", { bubbles: true }));
+        textarea.focus();
+        return true;
+      },
+      "Isolated browser fixture Computer",
+    ),
+    true,
+  );
+  await browser.command("Input.dispatchKeyEvent", {
+    code: "Enter",
+    key: "Enter",
+    modifiers: 4,
+    nativeVirtualKeyCode: 13,
+    type: "keyDown",
+    windowsVirtualKeyCode: 13,
+  });
+  await browser.command("Input.dispatchKeyEvent", {
+    code: "Enter",
+    key: "Enter",
+    modifiers: 4,
+    nativeVirtualKeyCode: 13,
+    type: "keyUp",
+    windowsVirtualKeyCode: 13,
+  });
+  await waitFor(
+    browser,
+    () =>
+      document
+        .querySelector(".rah-computer-detail")
+        ?.textContent?.includes("Isolated browser fixture Computer") === true &&
+      document.querySelector('textarea[aria-label="计算机描述"]') === null,
+    "Computer description Cmd+Enter save through durable daemon profile",
+  );
+  assert.deepEqual(
+    await call(browser, () => {
+      const sidebar = document.querySelector(".rah-computer-sidebar");
+      const separator = document.querySelector(
+        '.rah-computer-sidebar-resizer[role="separator"]',
+      );
+      return {
+        maximum: separator?.getAttribute("aria-valuemax"),
+        minimum: separator?.getAttribute("aria-valuemin"),
+        sidebarWidth: sidebar?.getBoundingClientRect().width,
+        storedWidth: localStorage.getItem("rah:computer-sidebar-width"),
+      };
+    }),
+    {
+      maximum: "520",
+      minimum: "240",
+      sidebarWidth: 320,
+      storedWidth: null,
+    },
+    "Computer must own Raft's independent 320 / 240..520 sidebar contract",
+  );
+  const computerResizeStart = await call(browser, () => {
+    const rectangle = document
+      .querySelector(".rah-computer-sidebar-resizer")
+      ?.getBoundingClientRect();
+    return rectangle
+      ? {
+          x: rectangle.left + rectangle.width / 2,
+          y: rectangle.top + Math.min(240, rectangle.height / 2),
+        }
+      : null;
+  });
+  assert.ok(computerResizeStart);
+  await browser.command("Input.dispatchMouseEvent", {
+    type: "mouseMoved",
+    ...computerResizeStart,
+  });
+  await browser.command("Input.dispatchMouseEvent", {
+    button: "left",
+    clickCount: 1,
+    type: "mousePressed",
+    ...computerResizeStart,
+  });
+  await browser.command("Input.dispatchMouseEvent", {
+    button: "left",
+    type: "mouseMoved",
+    x: computerResizeStart.x + 80,
+    y: computerResizeStart.y,
+  });
+  await browser.command("Input.dispatchMouseEvent", {
+    button: "left",
+    clickCount: 1,
+    type: "mouseReleased",
+    x: computerResizeStart.x + 80,
+    y: computerResizeStart.y,
+  });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-computer-sidebar")?.getBoundingClientRect()
+        .width === 400 &&
+      localStorage.getItem("rah:computer-sidebar-width") === "400",
+    "Computer pointer resize and exact persistence",
+  );
+  await call(browser, () =>
+    document.querySelector(".rah-computer-sidebar-resizer")?.focus(),
+  );
+  await dispatchKey(browser, "Home", 36);
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-computer-sidebar")?.getBoundingClientRect()
+        .width === 240,
+    "Computer keyboard minimum width",
+  );
+  await dispatchKey(browser, "End", 35);
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-computer-sidebar")?.getBoundingClientRect()
+        .width === 520,
+    "Computer keyboard maximum width",
+  );
+  await dispatchKey(browser, "Home", 36);
+  for (let step = 0; step < 10; step += 1) {
+    await dispatchKey(browser, "ArrowRight", 39);
+  }
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-computer-sidebar")?.getBoundingClientRect()
+        .width === 320 &&
+      localStorage.getItem("rah:computer-sidebar-width") === "320",
+    "Computer restored Raft default width",
+  );
+  await call(browser, () => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async (value) => {
+          window.__rahCopiedComputerDiagnostic = value;
+        },
+      },
+    });
+  });
+  const runtimeTrigger = await call(browser, () => {
+    const trigger = document.querySelector(
+      ".rah-computer-runtime-chips > button",
+    );
+    if (!(trigger instanceof HTMLButtonElement)) return null;
+    const rectangle = trigger.getBoundingClientRect();
+    return {
+      label: trigger.getAttribute("aria-label"),
+      x: rectangle.left + rectangle.width / 2,
+      y: rectangle.top + rectangle.height / 2,
+    };
+  });
+  assert.ok(
+    runtimeTrigger,
+    "detected Runtime must expose an inspector trigger",
+  );
+  await browser.command("Input.dispatchMouseEvent", {
+    type: "mouseMoved",
+    x: runtimeTrigger.x,
+    y: runtimeTrigger.y,
+  });
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-computer-runtime-inspector") !== null,
+    "Runtime inspector 200ms hover open",
+  );
+  assert.deepEqual(
+    await call(browser, () => {
+      const panel = document.querySelector(".rah-computer-runtime-inspector");
+      const rectangle = panel?.getBoundingClientRect();
+      return {
+        fits:
+          rectangle !== undefined &&
+          rectangle !== null &&
+          rectangle.left >= 8 &&
+          rectangle.right <= innerWidth - 8,
+        width: rectangle?.width,
+      };
+    }),
+    {
+      fits: true,
+      width: 390,
+    },
+    "desktop Runtime inspector must use Raft's 390px viewport-safe panel",
+  );
+  assert.match(
+    await call(
+      browser,
+      () =>
+        document.querySelector(".rah-computer-runtime-inspector")
+          ?.textContent ?? "",
+    ),
+    /本机探测[\s\S]*Runtime Profile[\s\S]*不包含 Provider 账号配额或凭据/u,
+  );
+  await dispatchKey(browser, "Escape", 27);
+  await waitFor(
+    browser,
+    (label) =>
+      document.querySelector(".rah-computer-runtime-inspector") === null &&
+      document.activeElement?.getAttribute("aria-label") === label,
+    "Runtime inspector Escape close and focus return without reopening",
+    [runtimeTrigger.label],
+  );
+  await call(browser, () => {
+    const trigger = document.querySelector(
+      ".rah-computer-runtime-chips > button",
+    );
+    if (!(trigger instanceof HTMLButtonElement)) return;
+    trigger.click();
+  });
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-computer-runtime-inspector") !== null,
+    "Runtime inspector click pin",
+  );
+  await browser.command("Input.dispatchMouseEvent", {
+    button: "left",
+    clickCount: 1,
+    type: "mousePressed",
+    x: 1_420,
+    y: 980,
+  });
+  await browser.command("Input.dispatchMouseEvent", {
+    button: "left",
+    clickCount: 1,
+    type: "mouseReleased",
+    x: 1_420,
+    y: 980,
+  });
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-computer-runtime-inspector") === null,
+    "Runtime inspector pinned outside close",
+  );
+  await clickButton(browser, { text: "复制诊断信息" });
+  await waitFor(
+    browser,
+    () =>
+      document
+        .querySelector(".rah-computer-diagnostics")
+        ?.textContent?.includes("已复制") === true,
+    "Computer diagnostic copy feedback",
+  );
+  const copiedComputerDiagnostic = await call(
+    browser,
+    () => window.__rahCopiedComputerDiagnostic ?? "",
+  );
+  assert.doesNotMatch(
+    copiedComputerDiagnostic,
+    /participantId|runtimeProfileRevisionId|environment|token|secret/iu,
+  );
+  assert.equal(JSON.parse(copiedComputerDiagnostic).hostId.length > 0, true);
+  const openedComputerAgent = await call(browser, () => {
+    const button = document.querySelector(".rah-computer-agent-list > button");
+    if (!(button instanceof HTMLButtonElement)) return null;
+    const name = button.querySelector("b")?.textContent?.trim();
+    button.click();
+    return name ?? null;
+  });
+  assert.ok(openedComputerAgent, "Computer must list canonical Agent bindings");
+  await waitFor(
+    browser,
+    (name) =>
+      document.querySelector(".rah-agent-profile-pane") !== null &&
+      document
+        .querySelector(".rah-agent-detail-head")
+        ?.textContent?.includes(name) === true &&
+      new URL(location.href).searchParams.get("surface") === "agents",
+    "Computer Agent row typed profile navigation",
+    [openedComputerAgent],
+  );
+  await clickButton(browser, { title: "计算机" });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-computer-detail h1") !== null &&
+      document.querySelector(".rah-computer-sidebar")?.getBoundingClientRect()
+        .width === 320,
+    "Computer selection and width survive Agent navigation",
+  );
 
   await clickButton(browser, { title: "设置" });
   await clickButton(browser, { text: "MCP 服务器" });
@@ -1680,6 +2271,154 @@ try {
   );
 
   await openMessageThread(browser, "browser gate: both agents");
+  const threadGeometry = await call(browser, () => {
+    const panel = document.querySelector('[data-testid="thread-side-column"]');
+    const resizer = document.querySelector(".rah-thread-resizer");
+    const header = document.querySelector(".thread-head");
+    const title = document.querySelector(".rah-thread-title");
+    if (!panel || !resizer || !header || !title) return null;
+    return {
+      headerHeight: header.getBoundingClientRect().height,
+      panelWidth: panel.getBoundingClientRect().width,
+      resizerWidth: resizer.getBoundingClientRect().width,
+      titleFontSize: getComputedStyle(title).fontSize,
+    };
+  });
+  assert.deepEqual(threadGeometry, {
+    headerHeight: 62,
+    panelWidth: 400,
+    resizerWidth: 8,
+    titleFontSize: "16px",
+  });
+  await call(browser, () => {
+    const separator = document.querySelector(".rah-thread-resizer");
+    if (!(separator instanceof HTMLElement)) return false;
+    separator.focus();
+    separator.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, key: "Home" }),
+    );
+    return true;
+  });
+  await waitFor(
+    browser,
+    () =>
+      document
+        .querySelector('[data-testid="thread-side-column"]')
+        ?.getBoundingClientRect().width === 360,
+    "Thread minimum keyboard width",
+  );
+  for (let step = 0; step < 5; step += 1) {
+    await call(browser, () => {
+      document
+        .querySelector(".rah-thread-resizer")
+        ?.dispatchEvent(
+          new KeyboardEvent("keydown", { bubbles: true, key: "ArrowLeft" }),
+        );
+    });
+  }
+  await waitFor(
+    browser,
+    () =>
+      document
+        .querySelector('[data-testid="thread-side-column"]')
+        ?.getBoundingClientRect().width === 400,
+    "Thread restored Raft default width",
+  );
+  const dragStart = await call(browser, () => {
+    const rectangle = document
+      .querySelector(".rah-thread-resizer")
+      ?.getBoundingClientRect();
+    return rectangle
+      ? { x: rectangle.left + rectangle.width / 2, y: rectangle.top + 120 }
+      : null;
+  });
+  assert.ok(dragStart);
+  await browser.command("Input.dispatchMouseEvent", {
+    type: "mouseMoved",
+    x: dragStart.x,
+    y: dragStart.y,
+  });
+  await browser.command("Input.dispatchMouseEvent", {
+    button: "left",
+    clickCount: 1,
+    type: "mousePressed",
+    x: dragStart.x,
+    y: dragStart.y,
+  });
+  await browser.command("Input.dispatchMouseEvent", {
+    button: "left",
+    type: "mouseMoved",
+    x: dragStart.x - 40,
+    y: dragStart.y,
+  });
+  await browser.command("Input.dispatchMouseEvent", {
+    button: "left",
+    clickCount: 1,
+    type: "mouseReleased",
+    x: dragStart.x - 40,
+    y: dragStart.y,
+  });
+  await waitFor(
+    browser,
+    () =>
+      document
+        .querySelector('[data-testid="thread-side-column"]')
+        ?.getBoundingClientRect().width === 440,
+    "Thread pointer drag wider",
+  );
+  const widerDragStart = { x: dragStart.x - 40, y: dragStart.y };
+  await browser.command("Input.dispatchMouseEvent", {
+    button: "left",
+    clickCount: 1,
+    type: "mousePressed",
+    ...widerDragStart,
+  });
+  await browser.command("Input.dispatchMouseEvent", {
+    button: "left",
+    type: "mouseMoved",
+    x: dragStart.x,
+    y: dragStart.y,
+  });
+  await browser.command("Input.dispatchMouseEvent", {
+    button: "left",
+    clickCount: 1,
+    type: "mouseReleased",
+    x: dragStart.x,
+    y: dragStart.y,
+  });
+  await waitFor(
+    browser,
+    () =>
+      document
+        .querySelector('[data-testid="thread-side-column"]')
+        ?.getBoundingClientRect().width === 400,
+    "Thread pointer drag narrower",
+  );
+  await clickButton(browser, { ariaLabel: "消息列操作" });
+  assert.deepEqual(
+    await call(browser, () =>
+      [
+        ...document.querySelectorAll(
+          '.rah-thread-overflow-menu [role="menuitem"]',
+        ),
+      ].map((item) => item.textContent?.trim()),
+    ),
+    ["在消息列中搜索", "在频道中查看", "取消关注消息列"],
+    "a provisional Raft Thread must expose root-message follow state",
+  );
+  await clickButton(browser, { text: "取消关注消息列" });
+  await clickButton(browser, { ariaLabel: "消息列操作" });
+  await waitFor(
+    browser,
+    () =>
+      [
+        ...document.querySelectorAll(
+          '.rah-thread-overflow-menu [role="menuitem"]',
+        ),
+      ].some((item) => item.textContent?.trim() === "关注消息列"),
+    "provisional Thread explicit unfollow",
+  );
+  await clickButton(browser, { text: "关注消息列" });
   await postThreadReply(browser, "browser gate: canonical Thread reply");
   await waitFor(
     browser,
@@ -1689,6 +2428,76 @@ try {
       ),
     "canonical Thread reply",
     ["browser gate: canonical Thread reply"],
+  );
+  await clickButton(browser, { ariaLabel: "消息列操作" });
+  assert.deepEqual(
+    await call(browser, () =>
+      [
+        ...document.querySelectorAll(
+          '.rah-thread-overflow-menu [role="menuitem"]',
+        ),
+      ].map((item) => item.textContent?.trim()),
+    ),
+    ["在消息列中搜索", "在频道中查看", "取消关注消息列"],
+  );
+  await dispatchKey(browser, "Escape", 27);
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-thread-overflow-menu") === null,
+    "Thread operation menu Escape close",
+  );
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(
+        '[data-testid="thread-followers-header-trigger"]',
+      ) !== null,
+    "Agent follower header trigger",
+  );
+  await clickButton(browser, {
+    ariaLabel: await call(browser, () =>
+      document
+        .querySelector('[data-testid="thread-followers-header-trigger"]')
+        ?.getAttribute("aria-label"),
+    ),
+  });
+  const followerRemoveLabel = await call(browser, () =>
+    document
+      .querySelector(".rah-thread-follower-row > button")
+      ?.getAttribute("aria-label"),
+  );
+  assert.ok(followerRemoveLabel?.startsWith("移除 "));
+  await clickButton(browser, { ariaLabel: followerRemoveLabel });
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-thread-follower-undo") !== null,
+    "Agent follower removal Undo",
+  );
+  await clickButton(browser, { text: "撤销" });
+  await waitFor(
+    browser,
+    (ariaLabel) =>
+      document.querySelector(".rah-thread-follower-undo") === null &&
+      [...document.querySelectorAll(".rah-thread-follower-row > button")].some(
+        (button) => button.getAttribute("aria-label") === ariaLabel,
+      ),
+    "Agent follower restore",
+    [followerRemoveLabel],
+  );
+  await clickButton(browser, { ariaLabel: followerRemoveLabel });
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-thread-follower-undo") !== null,
+    "Agent follower second removal Undo",
+  );
+  await delay(5_250);
+  assert.equal(
+    await call(
+      browser,
+      () => document.querySelector(".rah-thread-follower-undo") === null,
+    ),
+    true,
+    "Agent follower Undo must expire after Raft's five-second window",
   );
   await uploadThreadAttachment(browser, "thread-browser-gate.txt");
   await clickButton(browser, { title: "回复" });
@@ -1708,16 +2517,34 @@ try {
       scope: ".thread",
     },
   );
-  await delay(100);
-  assert.equal(
-    await call(
-      browser,
-      () => document.querySelector(".rah-message-context-menu") !== null,
-    ),
-    false,
-    "Thread replies must not expose Convert to Task",
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-message-context-menu") !== null,
+    "Thread reply permalink context menu",
   );
-  await clickButton(browser, { title: "关闭 Thread" });
+  const threadReplyContextItems = await call(browser, () =>
+    [
+      ...document.querySelectorAll(
+        '.rah-message-context-menu [role="menuitem"]',
+      ),
+    ]
+      .map((item) => item.textContent?.trim())
+      .filter(Boolean),
+  );
+  assert.equal(threadReplyContextItems.includes("复制链接"), true);
+  assert.equal(threadReplyContextItems.includes("复制 Markdown"), true);
+  assert.equal(
+    threadReplyContextItems.includes("转为任务"),
+    false,
+    "Thread replies must preserve permalink actions without Convert to Task",
+  );
+  await dispatchKey(browser, "Escape", 27);
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-message-context-menu") === null,
+    "Thread reply context menu Escape close",
+  );
+  await clickButton(browser, { ariaLabel: "关闭消息列" });
   await waitFor(
     browser,
     () => document.querySelector(".thread") === null,
@@ -1797,10 +2624,10 @@ try {
     [selectedRoomId, "browser gate: canonical Thread reply"],
     15_000,
   );
-  await clickButton(browser, { title: "关闭 Thread" });
+  await clickButton(browser, { ariaLabel: "关闭消息列" });
 
   await openMessageContextMenu(browser, "browser gate: both agents");
-  await clickButton(browser, { text: "Convert to Task" });
+  await clickButton(browser, { text: "转为任务" });
   await waitFor(
     browser,
     (title) =>
@@ -1809,8 +2636,12 @@ try {
           message.querySelector(".rah-message-markdown")?.textContent ===
             title &&
           message
-            .querySelector(".rah-message-task-meta")
-            ?.textContent?.includes("Task #1"),
+            .querySelector(".rah-message-task-link")
+            ?.textContent?.includes("#1") === true &&
+          message
+            .querySelector(".rah-message-task-link")
+            ?.textContent?.toLowerCase()
+            .includes("submitted") === false,
       ),
     "converted Message keeps its channel position and gains Task metadata",
     ["browser gate: both agents"],
@@ -1838,7 +2669,7 @@ try {
     "converted Task reuses its existing Thread history",
     ["browser gate: canonical Thread reply"],
   );
-  await clickButton(browser, { title: "关闭 Thread" });
+  await clickButton(browser, { ariaLabel: "关闭消息列" });
   await clickTaskButton(browser, "browser gate: both agents", "确认完成");
 
   await clickButton(browser, { text: "新建任务" });
@@ -1874,8 +2705,12 @@ try {
           message.querySelector(".rah-message-markdown")?.textContent ===
             title &&
           message
-            .querySelector(".rah-message-task-meta")
-            ?.textContent?.includes("Task #2"),
+            .querySelector(".rah-message-task-link")
+            ?.textContent?.includes("#2") === true &&
+          message
+            .querySelector(".rah-message-task-link")
+            ?.textContent?.toLowerCase()
+            .includes("submitted") === false,
       ),
     "Task board create shares the canonical top-level Message anchor",
     ["browser gate: board Task"],
@@ -1925,7 +2760,7 @@ try {
     "Task board Task Human completion",
     ["browser gate: board Task"],
   );
-  await clickButton(browser, { title: "关闭 Thread" });
+  await clickButton(browser, { ariaLabel: "关闭消息列" });
   await browser.command("Emulation.setDeviceMetricsOverride", {
     deviceScaleFactor: 1,
     height: 1_000,
@@ -1989,7 +2824,7 @@ try {
     },
     "owner submission and reviewer evidence in canonical Task Thread",
   );
-  await clickButton(browser, { title: "关闭 Thread" });
+  await clickButton(browser, { ariaLabel: "关闭消息列" });
   await clickTaskButton(browser, "browser gate: frozen Review", "确认完成");
   await waitFor(
     browser,
@@ -2021,8 +2856,12 @@ try {
           message.querySelector(".rah-message-markdown")?.textContent ===
             title &&
           message
-            .querySelector(".rah-message-task-meta")
-            ?.textContent?.includes("Task #"),
+            .querySelector(".rah-message-task-link")
+            ?.textContent?.includes("#") === true &&
+          message
+            .querySelector(".rah-message-task-link")
+            ?.textContent?.toLowerCase()
+            .includes("submitted") === false,
       ),
     "Task remains a top-level Message",
     ["browser gate: durable Task"],
@@ -2083,7 +2922,7 @@ try {
     "Agent artifact attached to canonical Task submission",
     ["browser-gate-task-evidence.txt"],
   );
-  await clickButton(browser, { title: "关闭 Thread" });
+  await clickButton(browser, { ariaLabel: "关闭消息列" });
   await clickTaskButton(browser, "browser gate: durable Task", "确认完成");
   await waitFor(
     browser,
@@ -2125,7 +2964,7 @@ try {
       "Fake Worker completed the durable Task protocol",
     ],
   );
-  await clickButton(browser, { title: "关闭 Thread" });
+  await clickButton(browser, { ariaLabel: "关闭消息列" });
 
   await clickButton(browser, { ariaLabel: "频道详情与设置" });
   await mutateRoomAgent(browser, "Kimi", "移出 Room", "加入 Room");
@@ -2367,6 +3206,12 @@ try {
       "Design Lab",
     "return to Room after owner routing",
   );
+  await clickButton(browser, { title: "计算机" });
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-computer-detail h1") !== null,
+    "Computer before mobile transition",
+  );
 
   await browser.command("Emulation.setDeviceMetricsOverride", {
     deviceScaleFactor: 1,
@@ -2386,6 +3231,70 @@ try {
     })),
     { clientWidth: 390, navVisible: true, scrollWidth: 390 },
     "390x844 shell must expose mobile navigation without horizontal overflow",
+  );
+  assert.deepEqual(
+    await call(browser, () => ({
+      backVisible:
+        document.querySelector(".rah-computer-detail-back")?.getClientRects()
+          .length > 0,
+      detailVisible:
+        document.querySelector(".rah-computer-detail")?.getClientRects()
+          .length > 0,
+      listVisible:
+        document.querySelector(".rah-computer-sidebar")?.getClientRects()
+          .length > 0,
+      scrollWidth: document.documentElement.scrollWidth,
+    })),
+    {
+      backVisible: true,
+      detailVisible: true,
+      listVisible: false,
+      scrollWidth: 390,
+    },
+    "mobile Computer must be detail-first without horizontal overflow",
+  );
+  const mobileRuntimeLabel = await call(
+    browser,
+    () =>
+      document
+        .querySelector(".rah-computer-runtime-chips > button")
+        ?.getAttribute("aria-label") ?? null,
+  );
+  assert.ok(mobileRuntimeLabel);
+  await clickButton(browser, { ariaLabel: mobileRuntimeLabel });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-computer-runtime-inspector-layer") !== null,
+    "mobile Runtime inspector sheet",
+  );
+  assert.deepEqual(
+    await call(browser, () => {
+      const panel = document.querySelector(
+        ".rah-computer-runtime-inspector.is-mobile",
+      );
+      const rectangle = panel?.getBoundingClientRect();
+      return {
+        bottom: rectangle?.bottom,
+        scrollWidth: document.documentElement.scrollWidth,
+        width: rectangle?.width,
+      };
+    }),
+    { bottom: 844, scrollWidth: 390, width: 390 },
+    "mobile Runtime sheet must fill the viewport width and anchor to bottom",
+  );
+  await dispatchKey(browser, "Escape", 27);
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-computer-runtime-inspector-layer") === null,
+    "mobile Runtime sheet Escape close",
+  );
+  await clickButton(browser, { text: "聊天" });
+  await waitFor(
+    browser,
+    () => document.querySelector(".channel-title h1") !== null,
+    "mobile return from Computer to Chat",
   );
   await clickButton(browser, { text: "Rooms" });
   await waitFor(
@@ -2408,6 +3317,29 @@ try {
       document.querySelector(".rah-agent-detail-panel")?.getClientRects()
         .length === 0,
     "mobile Agent list-first surface",
+  );
+  await clickButton(browser, { text: "关系图" });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-member-graph-surface")?.getClientRects()
+        .length > 0 &&
+      document.querySelector(".rah-mobile-nav")?.getClientRects().length === 0,
+    "mobile relationship graph surface",
+  );
+  assert.equal(
+    await call(browser, () => document.documentElement.scrollWidth),
+    390,
+    "mobile relationship graph must not overflow",
+  );
+  await clickButton(browser, { ariaLabel: "返回成员列表" });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-agent-sidebar-head")?.getClientRects()
+        .length > 0 &&
+      document.querySelector(".rah-mobile-nav")?.getClientRects().length > 0,
+    "mobile relationship graph returns to Agent list",
   );
   await call(browser, () =>
     [...document.querySelectorAll(".rah-agent-member-row")]
@@ -2456,6 +3388,67 @@ try {
     await call(browser, () => document.documentElement.scrollWidth),
     390,
     "mobile managed MCP settings must not overflow",
+  );
+
+  await browser.command("Page.navigate", {
+    url: new URL("/test/room-members-contract.html", descriptor.webOrigin).href,
+  });
+  await waitFor(
+    browser,
+    () => document.querySelector("#room-members-report") !== null,
+    "isolated Room members and SOS contract fixture",
+  );
+  await clickButton(browser, { text: "运行成员回归" });
+  await waitFor(
+    browser,
+    () => {
+      const report = document.querySelector(
+        "#room-members-report",
+      )?.textContent;
+      if (!report) return false;
+      try {
+        return JSON.parse(report).result === "PASS";
+      } catch {
+        return false;
+      }
+    },
+    "Room members, lifecycle, and SOS pointer/keyboard contract",
+  );
+  assert.equal(
+    await call(browser, () => document.documentElement.scrollWidth),
+    390,
+    "mobile Room lifecycle fixture must not overflow",
+  );
+
+  await browser.command("Page.navigate", {
+    url: new URL("/test/workspace-roots-contract.html", descriptor.webOrigin)
+      .href,
+  });
+  await waitFor(
+    browser,
+    () => document.querySelector("#workspace-roots-report") !== null,
+    "isolated Agent workspace root contract fixture",
+  );
+  await clickButton(browser, { text: "运行工作区根回归" });
+  await waitFor(
+    browser,
+    () => {
+      const report = document.querySelector(
+        "#workspace-roots-report",
+      )?.textContent;
+      if (!report) return false;
+      try {
+        return JSON.parse(report).result === "PASS";
+      } catch {
+        return false;
+      }
+    },
+    "Agent workspace and runtime project root pointer contract",
+  );
+  assert.equal(
+    await call(browser, () => document.documentElement.scrollWidth),
+    390,
+    "mobile workspace roots fixture must not overflow",
   );
 
   assert.deepEqual(browserErrors, [], "browser console must remain error-free");
@@ -2613,6 +3606,21 @@ async function waitFor(
     description,
     timeoutMs,
   });
+}
+
+async function waitForDownloadedIssueReport(directory, timeoutMs = 10_000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const filename = readdirSync(directory).find(
+      (candidate) =>
+        candidate.startsWith("rah-agent-issue-") &&
+        candidate.endsWith(".json") &&
+        !candidate.endsWith(".crdownload"),
+    );
+    if (filename !== undefined) return join(directory, filename);
+    await delay(50);
+  }
+  throw new Error("Timed out waiting for local Agent issue report download");
 }
 
 async function clickButton(connection, criteria) {

@@ -175,6 +175,19 @@ test("source-backed interaction exceptions stay explicit", () => {
     messageSocialComponent,
     /className="rah-message-reaction-count"/u,
   );
+  assert.match(messageSocialComponent, /createPortal/u);
+  assert.match(
+    messageSocialComponent,
+    /data-message-affordance="reaction-reactors-popover"/u,
+  );
+  assert.match(messageSocialComponent, /onMouseEnter=/u);
+  assert.match(messageSocialComponent, /onMouseLeave=/u);
+  assert.match(messageSocialComponent, /onFocus=/u);
+  assert.match(messageSocialComponent, /onBlur=/u);
+  assert.match(
+    messageSocial,
+    /\.rah-reaction-reactors-popover \{[\s\S]*?position:\s*fixed;[\s\S]*?z-index:\s*80;[\s\S]*?pointer-events:\s*none;[\s\S]*?max-width:\s*280px;[\s\S]*?border:\s*2px solid var\(--black\);[\s\S]*?padding:\s*6px 8px;[\s\S]*?font:\s*700 12px\/20px/u,
+  );
 });
 
 test("navigation and identity controls opt into the shared interaction families", () => {

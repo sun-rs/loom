@@ -102,9 +102,9 @@ export class MessageSocial {
         mine: row.mine === 1,
         actors: db
           .prepare(
-            "SELECT p.principal_id,p.handle FROM message_reactions r JOIN principals p ON p.principal_id=r.principal_id WHERE r.message_id=? AND r.emoji=? ORDER BY p.handle LIMIT 20",
+            "SELECT p.principal_id,p.handle FROM message_reactions r JOIN principals p ON p.principal_id=r.principal_id WHERE r.message_id=? AND r.emoji=? ORDER BY (p.principal_id=?) DESC,p.handle,p.principal_id LIMIT 20",
           )
-          .all(messageId, String(row.emoji))
+          .all(messageId, String(row.emoji), actorId)
           .map((p) => ({ principalId: p.principal_id, name: p.handle })),
       })),
     });
@@ -207,20 +207,51 @@ export class MessageSocial {
       input = P.SavedMessagesRequestSchema.parse(request),
       { database: db } = this.context;
     const p = discoveryPage(db, "human_saved_messages", actorId, input);
-    const from = `FROM human_saved_messages s JOIN discovery_messages m ON m.message_id=s.message_id JOIN rooms r ON r.room_id=m.room_id JOIN principals sender ON sender.principal_id=m.actor_id WHERE s.principal_id=? AND ${discoveryVisibleRooms} AND s.save_order<=?`;
-    const args = [actorId, input.workspaceId, actorId, p.ceiling];
+    const base = `FROM human_saved_messages s JOIN discovery_messages m ON m.message_id=s.message_id JOIN rooms r ON r.room_id=m.room_id JOIN principals sender ON sender.principal_id=m.actor_id WHERE s.principal_id=? AND ${discoveryVisibleRooms} AND s.save_order<=?`;
+    const baseArgs = [actorId, input.workspaceId, actorId, p.ceiling];
+    const filters: string[] = [];
+    const filterArgs: Array<string> = [];
+    if (input.query) {
+      filters.push("instr(rah_casefold(m.body), ?) > 0");
+      filterArgs.push(input.query.toLowerCase());
+    }
+    if (input.channelId) {
+      filters.push("m.room_id = ?");
+      filterArgs.push(input.channelId);
+    }
+    const from = `${base}${filters.length ? ` AND ${filters.join(" AND ")}` : ""}`;
+    const args = [...baseArgs, ...filterArgs];
+    const ascending = input.sortDirection === "asc";
+    const pageBoundary = ascending ? "s.save_order>?" : "s.save_order<?";
+    const pagePosition = ascending ? p.rank : p.before;
+    const order = ascending ? "ASC" : "DESC";
     const rows = db
       .prepare(
-        `SELECT m.*,s.saved_at,s.save_order,r.name AS room_name,sender.handle AS sender_name,(SELECT root_message_id FROM threads WHERE thread_id=m.thread_id) AS root_message_id ${from} AND s.save_order<? ORDER BY s.save_order DESC LIMIT ?`,
+        `SELECT m.*,s.saved_at,s.save_order,r.name AS room_name,r.kind AS room_kind,sender.principal_id AS sender_principal_id,sender.handle AS sender_handle,sender.kind AS sender_kind,sender.display_name AS sender_display_name,sender.avatar_key AS sender_avatar_key,(SELECT root_message_id FROM threads WHERE thread_id=m.thread_id) AS root_message_id ${from} AND ${pageBoundary} ORDER BY s.save_order ${order} LIMIT ?`,
       )
-      .all(...args, p.before, p.limit + 1);
+      .all(...args, pagePosition, p.limit + 1);
     const taken = rows.slice(0, p.limit);
     return P.SavedMessagesResponseSchema.parse({
       total: Number(db.prepare(`SELECT COUNT(*) AS n ${from}`).get(...args)!.n),
+      globalTotal: Number(
+        db.prepare(`SELECT COUNT(*) AS n ${base}`).get(...baseArgs)!.n,
+      ),
       items: taken.map((row) => ({
         message: messageProjectionFromRow(row),
         roomName: row.room_name,
-        senderName: row.sender_name,
+        roomKind: row.room_kind,
+        senderName: row.sender_display_name ?? row.sender_handle,
+        sender: {
+          principalId: row.sender_principal_id,
+          handle: row.sender_handle,
+          kind: row.sender_kind,
+          ...(row.sender_display_name === null
+            ? {}
+            : { displayName: row.sender_display_name }),
+          ...(row.sender_avatar_key === null
+            ? {}
+            : { avatarKey: row.sender_avatar_key }),
+        },
         target: {
           kind: "message",
           roomId: row.room_id,
@@ -236,7 +267,11 @@ export class MessageSocial {
         ...(row.root_message_id ? { rootMessageId: row.root_message_id } : {}),
       })),
       ...(rows.length > p.limit
-        ? { nextCursor: p.next(Number(taken.at(-1)!.save_order)) }
+        ? {
+            nextCursor: ascending
+              ? p.next(p.before, Number(taken.at(-1)!.save_order))
+              : p.next(Number(taken.at(-1)!.save_order)),
+          }
         : {}),
     });
   }

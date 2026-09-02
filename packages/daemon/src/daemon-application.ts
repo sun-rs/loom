@@ -192,7 +192,6 @@ export class DaemonApplication {
         retryAfterMs: this.#config.outboxRetryAfterMs,
         stateDirectory: join(this.#config.stateDirectory, "transport"),
       });
-
       workerService = new WorkerApplicationService({
         kernel,
         managedMcpExecutor,
@@ -208,14 +207,15 @@ export class DaemonApplication {
       });
       await workerService.start();
       const activeWorkerService = workerService;
-      agentMemoryCoordinator = createDaemonAgentMemoryCoordinator({
-        host,
-        kernel,
-        stateDirectory: this.#config.stateDirectory,
-      });
-      const activeAgentMemoryCoordinator = agentMemoryCoordinator;
+      const activeAgentMemoryCoordinator = (agentMemoryCoordinator =
+        createDaemonAgentMemoryCoordinator({
+          config: this.#config,
+          host,
+          kernel,
+        }));
       agentExecutionResetCoordinator =
         createDaemonAgentExecutionResetCoordinator({
+          agentMemoryCoordinator: activeAgentMemoryCoordinator,
           host,
           kernel,
           stateDirectory: this.#config.stateDirectory,

@@ -649,6 +649,53 @@ test("workspace reset requires an exclusive terminal fence and is recoverable", 
   }
 });
 
+test("execution-owned workspace quarantine never touches the runtime project or another Agent", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-memory-full-scope-"));
+  const rootDirectory = join(directory, "agent-memory");
+  const projectDirectory = join(directory, "real-project");
+  await mkdir(projectDirectory, { recursive: true });
+  await writeFile(join(projectDirectory, "do-not-delete.txt"), "project\n");
+  const coordinator = new AgentMemoryCoordinator({
+    projectDirectory,
+    rootDirectory,
+    wake: () => false,
+  });
+  try {
+    const alice = await coordinator.prepareActivation(
+      agent("agent-full-alice"),
+      activation("full-alice-before"),
+    );
+    const bob = await coordinator.prepareActivation(
+      agent("agent-full-bob"),
+      activation("full-bob-before"),
+    );
+    await writeFile(alice.memoryIndexPath, "# Alice secret\n", "utf8");
+    await writeFile(bob.memoryIndexPath, "# Bob survives\n", "utf8");
+
+    const effect = await coordinator.beginWorkspaceResetInsideFence(
+      "agent-full-alice",
+      "execution-full-operation-1",
+    );
+    assert.equal(existsSync(alice.workspacePath), false);
+    assert.equal(existsSync(bob.workspacePath), true);
+    assert.equal(existsSync(join(projectDirectory, "do-not-delete.txt")), true);
+    await effect.rollback();
+    assert.match(readFileSync(alice.memoryIndexPath, "utf8"), /Alice secret/u);
+
+    const committed = await coordinator.beginWorkspaceResetInsideFence(
+      "agent-full-alice",
+      "execution-full-operation-1",
+    );
+    await committed.commit();
+    assert.equal(existsSync(alice.workspacePath), false);
+    assert.match(readFileSync(bob.memoryIndexPath, "utf8"), /Bob survives/u);
+    assert.equal(existsSync(join(projectDirectory, "do-not-delete.txt")), true);
+  } finally {
+    await coordinator.close();
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
 test("workspace reset rolls the memory move back when Provider continuity quarantine fails", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-memory-reset-rollback-"));
   const coordinator = new AgentMemoryCoordinator({

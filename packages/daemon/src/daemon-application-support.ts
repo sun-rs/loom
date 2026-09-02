@@ -15,6 +15,7 @@ import {
 import {
   type AgentExecutionAdministrationPort,
   type AgentMemoryAdministrationPort,
+  type ComputerProfileAdministrationPort,
   HumanHttpApplicationService,
   type TaskReassignmentAdministrationPort,
   type WebPushAdministrationPort,
@@ -27,6 +28,8 @@ import {
   type RoomKernel,
   RuntimeTerminationProofError,
   StaleContextError,
+  ConflictError,
+  IdempotencyConflictError,
 } from "@rah-os/core";
 import {
   CLIENT_API_VERSION,
@@ -35,6 +38,7 @@ import {
   type ClientHealthResponse,
   type ClientTaskReassignRequest,
   type ClientTaskReassignmentResponse,
+  type ClientComputerProfileUpdateRequest,
   type LocalRuntimeInventoryEntry,
 } from "@rah-os/protocol";
 
@@ -45,15 +49,19 @@ import {
 } from "./local-runtime-inventory.ts";
 import type { NodeManagedMcpExecutorRegistry } from "./managed-mcp-executor-registry.ts";
 import { ProfileImageStore } from "./profile-image-store.ts";
+import {
+  LocalComputerProfileStore,
+  LocalComputerProfileStoreError,
+} from "./local-computer-profile-store.ts";
 
 export function createDaemonAgentMemoryCoordinator(input: {
+  config: DaemonConfig;
   host: AuthenticatedHostContext;
   kernel: RoomKernel;
-  stateDirectory: string;
 }): AgentMemoryCoordinator {
   const providerSessions = new ProviderSessionStore({
     rootDirectory: join(
-      input.stateDirectory,
+      input.config.stateDirectory,
       "supervisors",
       "provider-sessions",
     ),
@@ -67,7 +75,15 @@ export function createDaemonAgentMemoryCoordinator(input: {
         ownerParticipantId,
         operationId,
       ),
-    rootDirectory: join(input.stateDirectory, "supervisors", "agent-memory"),
+    projectDirectory:
+      input.config.schemaVersion === 4
+        ? input.config.workspace.cwd
+        : input.config.runtime.cwd,
+    rootDirectory: join(
+      input.config.stateDirectory,
+      "supervisors",
+      "agent-memory",
+    ),
     // Typed App Inbox state is not a Room Message. The next canonical
     // Activation receives it until a dedicated maintenance lane exists.
     wake: () => false,
@@ -75,6 +91,10 @@ export function createDaemonAgentMemoryCoordinator(input: {
 }
 
 export function createDaemonAgentExecutionResetCoordinator(input: {
+  agentMemoryCoordinator: Pick<
+    AgentMemoryCoordinator,
+    "beginWorkspaceResetInsideFence"
+  >;
   host: AuthenticatedHostContext;
   kernel: RoomKernel;
   stateDirectory: string;
@@ -91,6 +111,11 @@ export function createDaemonAgentExecutionResetCoordinator(input: {
       createKernelAgentHostControlPort(input.kernel, input.host),
     ),
     computerHostId: input.host.hostId,
+    quarantineAgentWorkspace: async (ownerParticipantId, operationId) =>
+      await input.agentMemoryCoordinator.beginWorkspaceResetInsideFence(
+        ownerParticipantId,
+        operationId,
+      ),
     quarantineProviderContinuity: async (ownerParticipantId, operationId) =>
       await providerSessions.quarantineParticipant(
         ownerParticipantId,
@@ -305,9 +330,11 @@ export function createDaemonAgentMemoryAdministration(
   return Object.freeze({
     computerHostId,
     workspace: {
-      list: (owner, path, hidden) =>
-        coordinator.browseWorkspace(owner, path, hidden),
-      read: (owner, path) => coordinator.previewWorkspaceFile(owner, path),
+      roots: (owner) => coordinator.workspaceRoots(owner),
+      list: (owner, rootId, path, hidden) =>
+        coordinator.browseWorkspace(owner, rootId, path, hidden),
+      read: (owner, rootId, path) =>
+        coordinator.previewWorkspaceFile(owner, rootId, path),
     },
     getCleanerConfig: (owner) => coordinator.getCleanerConfig(owner),
     patchCleanerConfig: (owner, patch) =>
@@ -318,6 +345,30 @@ export function createDaemonAgentMemoryAdministration(
       await coordinator.readWorkspaceFile(ownerParticipantId, relativePath),
     resetWorkspace: async (ownerParticipantId, idempotencyKey) =>
       await coordinator.resetWorkspace(ownerParticipantId, idempotencyKey),
+  });
+}
+
+export function createDaemonComputerProfileAdministration(
+  store: LocalComputerProfileStore,
+  hostId: string,
+): ComputerProfileAdministrationPort {
+  return Object.freeze({
+    update: (_actor, command: ClientComputerProfileUpdateRequest) => {
+      if (command.hostId !== hostId) {
+        throw new ConflictError(
+          "Computer profile may only update the attached local Computer",
+        );
+      }
+      try {
+        return store.update(command);
+      } catch (error) {
+        if (!(error instanceof LocalComputerProfileStoreError)) throw error;
+        if (error.code === "idempotency_conflict") {
+          throw new IdempotencyConflictError(error.message);
+        }
+        throw new ConflictError(error.message);
+      }
+    },
   });
 }
 
@@ -339,6 +390,9 @@ export function createDaemonHumanClientService(input: {
   const profileImages = new ProfileImageStore({
     directory: join(input.config.stateDirectory, "profile-images"),
   });
+  const computerProfiles = new LocalComputerProfileStore({
+    path: join(input.config.stateDirectory, "computer-profiles.json"),
+  });
   return new HumanHttpApplicationService({
     agentExecutionAdministration: createDaemonAgentExecutionAdministration({
       coordinator: input.agentExecutionResetCoordinator,
@@ -352,15 +406,21 @@ export function createDaemonHumanClientService(input: {
       human: input.human,
     }),
     bindHost: input.config.client.bindHost,
+    computerProfileAdministration: createDaemonComputerProfileAdministration(
+      computerProfiles,
+      input.host.hostId,
+    ),
     health: () => ({
       apiVersion: CLIENT_API_VERSION,
       buildVersion: input.buildVersion,
       capabilities: {
         agentOnboard: true,
         agentExecutionReset: true,
+        agentExecutionFullReset: true,
         agentRead: true,
         agentPresenceRead: true,
         agentWrite: true,
+        computerProfileWrite: true,
         fileShare: true,
         messageSocial: true,
         sidebarPreferences: true,
@@ -375,6 +435,7 @@ export function createDaemonHumanClientService(input: {
         messageRead: true,
         messageWrite: true,
         roomRead: true,
+        roomAgentSos: true,
         roomWrite: true,
         roomSync: true,
         taskRead: true,
@@ -391,15 +452,18 @@ export function createDaemonHumanClientService(input: {
       state: input.healthState(),
     }),
     human: input.human,
-    localRuntimeInventory: (actor) =>
-      buildLocalRuntimeInventoryResponse({
+    localRuntimeInventory: (actor) => {
+      const computerProfile = computerProfiles.read(input.host.hostId);
+      return buildLocalRuntimeInventoryResponse({
         actor,
+        ...(computerProfile === undefined ? {} : { computerProfile }),
         configured: input.configuredLocalRuntimes,
         discovered: input.discoveredLocalClis,
         hostId: input.host.hostId,
         kernel: input.kernel,
         staleAfterMs: input.config.hostStaleAfterMs,
-      }),
+      });
+    },
     managedMcpAdministration: input.managedMcpAdministration,
     port: input.config.client.port,
     profileImages: {

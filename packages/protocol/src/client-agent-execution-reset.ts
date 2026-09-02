@@ -2,7 +2,11 @@ import { z } from "zod";
 
 import { IdentifierSchema, TimestampSchema } from "./common.ts";
 
-export const AgentExecutionResetModeSchema = z.enum(["restart", "session"]);
+export const AgentExecutionResetModeSchema = z.enum([
+  "restart",
+  "session",
+  "full",
+]);
 export type AgentExecutionResetMode = z.infer<
   typeof AgentExecutionResetModeSchema
 >;

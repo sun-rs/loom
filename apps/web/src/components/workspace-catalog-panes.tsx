@@ -1,7 +1,8 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent, PointerEvent } from "react";
 
 import type {
+  ClientComputerProfileUpdateRequest,
   LocalRuntimeInventoryEntry,
   LocalComputerObservation,
 } from "@rah-os/protocol";
@@ -9,12 +10,18 @@ import type { WorkspaceAgentView } from "@rah-os/ui-web";
 import { computerStatusLabel } from "../attention-presentation.ts";
 
 import {
-  clampRoomSidebarWidth,
-  nextRoomSidebarWidth,
-  RAFT_ROOM_SIDEBAR_DEFAULT_WIDTH,
-  RAFT_ROOM_SIDEBAR_MAX_WIDTH,
-  RAFT_ROOM_SIDEBAR_MIN_WIDTH,
-} from "../room-sidebar-resize.ts";
+  clampComputerSidebarWidth,
+  nextComputerSidebarWidth,
+  readComputerSidebarWidth,
+  RAFT_COMPUTER_SIDEBAR_DEFAULT_WIDTH,
+  RAFT_COMPUTER_SIDEBAR_MAX_WIDTH,
+  RAFT_COMPUTER_SIDEBAR_MIN_WIDTH,
+  writeComputerSidebarWidth,
+} from "../computer-sidebar-resize.ts";
+import { localComputerDiagnosticText } from "../computer-runtime-inspector-model.ts";
+import { AgentAvatar } from "./agent-avatar.tsx";
+import { ComputerRuntimeInspector } from "./computer-runtime-inspector.tsx";
+import { ComputerProfileFields } from "./computer-profile-fields.tsx";
 import { Icon } from "./icon.tsx";
 
 export function ComputerRuntimePane({
@@ -23,19 +30,36 @@ export function ComputerRuntimePane({
   runtimes,
   computer,
   agents = [],
+  canEditProfile = false,
+  onOpenAgent,
+  onUpdateComputerProfile,
 }: {
   hostId: string | undefined;
   inventoryError: string | undefined;
   runtimes: readonly LocalRuntimeInventoryEntry[];
   computer?: LocalComputerObservation | undefined;
   agents?: readonly WorkspaceAgentView[];
+  canEditProfile?: boolean;
+  onOpenAgent: (agentDefinitionId: string) => void;
+  onUpdateComputerProfile?: (
+    input: ClientComputerProfileUpdateRequest,
+  ) => Promise<void>;
 }) {
   // Explicit local default. Raft also restores remembered selections; its root route may be empty.
   const [selected, setSelected] = useState(true);
-  const [sidebarWidth, setSidebarWidth] = useState(
-    RAFT_ROOM_SIDEBAR_DEFAULT_WIDTH,
+  const [sidebarWidth, setSidebarWidth] = useState(() =>
+    typeof window === "undefined"
+      ? RAFT_COMPUTER_SIDEBAR_DEFAULT_WIDTH
+      : readComputerSidebarWidth(window.localStorage),
   );
+  const sidebarWidthRef = useRef(sidebarWidth);
   const [resizing, setResizing] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState<
+    "diagnostic" | "doctor" | "error"
+  >();
+  const copyFeedbackTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
   const resizeOrigin = useRef<{ clientX: number; width: number } | undefined>(
     undefined,
   );
@@ -47,10 +71,18 @@ export function ComputerRuntimePane({
   );
   const bindings = uniqueBindings(
     runtimes.filter((runtime) => runtime.configured),
+    agents,
   );
   const rootStyle = {
     "--rah-computer-sidebar-width": `${sidebarWidth}px`,
   } as CSSProperties;
+
+  useEffect(() => () => clearTimeout(copyFeedbackTimer.current), []);
+
+  function applySidebarWidth(width: number): void {
+    sidebarWidthRef.current = width;
+    setSidebarWidth(width);
+  }
 
   function onResizePointerDown(event: PointerEvent<HTMLDivElement>): void {
     if (event.button !== 0) return;
@@ -63,28 +95,50 @@ export function ComputerRuntimePane({
   function onResizePointerMove(event: PointerEvent<HTMLDivElement>): void {
     const origin = resizeOrigin.current;
     if (origin === undefined) return;
-    setSidebarWidth(
-      clampRoomSidebarWidth(origin.width + event.clientX - origin.clientX),
+    applySidebarWidth(
+      clampComputerSidebarWidth(origin.width + event.clientX - origin.clientX),
     );
   }
 
   function onResizePointerEnd(event: PointerEvent<HTMLDivElement>): void {
     resizeOrigin.current = undefined;
     setResizing(false);
+    writeComputerSidebarWidth(window.localStorage, sidebarWidthRef.current);
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
   }
 
   function onResizeKeyDown(event: KeyboardEvent<HTMLDivElement>): void {
-    const width = nextRoomSidebarWidth(sidebarWidth, event.key);
+    const width = nextComputerSidebarWidth(sidebarWidth, event.key);
     if (width === undefined) return;
     event.preventDefault();
-    setSidebarWidth(width);
+    applySidebarWidth(width);
+    writeComputerSidebarWidth(window.localStorage, width);
+  }
+
+  async function copyComputerEvidence(
+    kind: "diagnostic" | "doctor",
+    text: string,
+  ): Promise<void> {
+    clearTimeout(copyFeedbackTimer.current);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyFeedback(kind);
+    } catch {
+      setCopyFeedback("error");
+    }
+    copyFeedbackTimer.current = setTimeout(
+      () => setCopyFeedback(undefined),
+      2_000,
+    );
   }
 
   return (
-    <main className="rah-computer-directory" style={rootStyle}>
+    <main
+      className={`rah-computer-directory${selected ? " is-detail" : " is-list"}`}
+      style={rootStyle}
+    >
       <aside className="rah-computer-sidebar">
         <header>计算机</header>
         <div className="rah-computer-sidebar-body rah-scroll-main">
@@ -129,8 +183,8 @@ export function ComputerRuntimePane({
       <div
         aria-label="调整计算机边栏宽度"
         aria-orientation="vertical"
-        aria-valuemax={RAFT_ROOM_SIDEBAR_MAX_WIDTH}
-        aria-valuemin={RAFT_ROOM_SIDEBAR_MIN_WIDTH}
+        aria-valuemax={RAFT_COMPUTER_SIDEBAR_MAX_WIDTH}
+        aria-valuemin={RAFT_COMPUTER_SIDEBAR_MIN_WIDTH}
         aria-valuenow={sidebarWidth}
         className={`rah-computer-sidebar-resizer${resizing ? " is-dragging" : ""}`}
         onKeyDown={onResizeKeyDown}
@@ -152,6 +206,14 @@ export function ComputerRuntimePane({
       ) : (
         <section className="rah-computer-detail">
           <header className="rah-computer-detail-head">
+            <button
+              aria-label="返回计算机列表"
+              className="rah-computer-detail-back"
+              onClick={() => setSelected(false)}
+              type="button"
+            >
+              <Icon name="arrow-left" />
+            </button>
             <span>
               <Icon name="monitor" />
             </span>
@@ -174,10 +236,12 @@ export function ComputerRuntimePane({
                 )}
               </div>
             </div>
-            <ComputerField label="名称">{computerName}</ComputerField>
-            <ComputerField label="描述" muted>
-              暂无描述
-            </ComputerField>
+            <ComputerProfileFields
+              canEdit={canEditProfile}
+              computer={computer}
+              hostId={hostId}
+              onUpdate={onUpdateComputerProfile}
+            />
             <section className="rah-computer-info">
               <h2>信息</h2>
               <dl>
@@ -205,12 +269,13 @@ export function ComputerRuntimePane({
                   <dt>检测到的运行时</dt>
                   <dd className="rah-computer-runtime-chips">
                     {runtimes.map((runtime) => (
-                      <span
+                      <ComputerRuntimeInspector
                         className={runtime.available ? "" : "is-missing"}
                         key={runtimeInventoryKey(runtime)}
+                        runtime={runtime}
                       >
                         {runtime.displayName}
-                      </span>
+                      </ComputerRuntimeInspector>
                     ))}
                   </dd>
                 </div>
@@ -232,42 +297,23 @@ export function ComputerRuntimePane({
               ) : (
                 <div className="rah-computer-agent-list">
                   {bindings.map((binding) => (
-                    <article key={binding.agentDefinitionId}>
-                      <span>{binding.handle.slice(0, 1).toUpperCase()}</span>
-                      <b>{binding.handle}</b>
+                    <button
+                      aria-label={`打开 ${binding.agent.displayName} Agent 资料`}
+                      key={binding.agentDefinitionId}
+                      onClick={() => onOpenAgent(binding.agentDefinitionId)}
+                      type="button"
+                    >
+                      <AgentAvatar agent={binding.agent} size="member" />
+                      <b>{binding.agent.displayName}</b>
                       <code>{binding.runtimeLabel}</code>
                       <small>
-                        <i
-                          className={
-                            online &&
-                            agents.some(
-                              (agent) =>
-                                agent.agentDefinitionId ===
-                                  binding.agentDefinitionId &&
-                                agent.state === "enabled" &&
-                                agent.runtimeAvailable,
-                            )
-                              ? "is-online"
-                              : ""
-                          }
-                        />
-                        {agents.find(
-                          (agent) =>
-                            agent.agentDefinitionId ===
-                            binding.agentDefinitionId,
-                        )?.state === "disabled"
+                        {binding.agent.state === "disabled"
                           ? "已暂停"
-                          : online &&
-                              agents.some(
-                                (agent) =>
-                                  agent.agentDefinitionId ===
-                                    binding.agentDefinitionId &&
-                                  agent.runtimeAvailable,
-                              )
+                          : online && binding.agent.runtimeAvailable
                             ? "可用"
                             : "不可用"}
                       </small>
-                    </article>
+                    </button>
                   ))}
                 </div>
               )}
@@ -298,28 +344,59 @@ export function ComputerRuntimePane({
                   </article>
                 ))}
               </section>
+              <section className="rah-computer-diagnostics">
+                <h2>本机诊断</h2>
+                <p>
+                  复制经过裁剪的 Computer、Runtime 与 Agent
+                  状态；不包含环境变量、凭据或 Provider 账号。
+                </p>
+                <button
+                  className="btn"
+                  onClick={() =>
+                    void copyComputerEvidence(
+                      "diagnostic",
+                      localComputerDiagnosticText({
+                        agents,
+                        computer,
+                        hostId,
+                        runtimes,
+                      }),
+                    )
+                  }
+                  type="button"
+                >
+                  <Icon name="copy" />
+                  {copyFeedback === "diagnostic" ? "已复制" : "复制诊断信息"}
+                </button>
+                <p>需要进一步检查时，请在 RAH OS 项目目录运行：</p>
+                <div className="rah-computer-command-row">
+                  <code>npm run doctor:local-core</code>
+                  <button
+                    aria-label="复制本机诊断命令"
+                    className="btn"
+                    onClick={() =>
+                      void copyComputerEvidence(
+                        "doctor",
+                        "npm run doctor:local-core",
+                      )
+                    }
+                    type="button"
+                  >
+                    <Icon name="copy" />
+                    {copyFeedback === "doctor" ? "已复制" : "复制"}
+                  </button>
+                </div>
+                {copyFeedback === "error" ? (
+                  <p className="rah-computer-copy-error" role="alert">
+                    无法写入剪贴板，请手动复制。
+                  </p>
+                ) : null}
+              </section>
             </section>
           </div>
         </section>
       )}
     </main>
-  );
-}
-
-function ComputerField({
-  children,
-  label,
-  muted = false,
-}: {
-  children: string;
-  label: string;
-  muted?: boolean;
-}) {
-  return (
-    <section className="rah-computer-field">
-      <h2>{label}</h2>
-      <p className={muted ? "is-muted" : undefined}>{children}</p>
-    </section>
   );
 }
 
@@ -330,18 +407,31 @@ function displayComputerName(hostId: string | undefined): string {
 
 function uniqueBindings(
   runtimes: readonly LocalRuntimeInventoryEntry[],
+  agents: readonly WorkspaceAgentView[],
 ): Array<{
+  agent: WorkspaceAgentView;
   agentDefinitionId: string;
   handle: string;
   runtimeLabel: string;
 }> {
   const bindings = new Map<
     string,
-    { agentDefinitionId: string; handle: string; runtimeLabel: string }
+    {
+      agent: WorkspaceAgentView;
+      agentDefinitionId: string;
+      handle: string;
+      runtimeLabel: string;
+    }
   >();
   for (const runtime of runtimes) {
     for (const binding of runtime.agentBindings) {
+      const agent = agents.find(
+        (candidate) =>
+          candidate.agentDefinitionId === binding.agentDefinitionId,
+      );
+      if (agent === undefined) continue;
       bindings.set(binding.agentDefinitionId, {
+        agent,
         agentDefinitionId: binding.agentDefinitionId,
         handle: binding.handle,
         runtimeLabel: runtime.displayName,

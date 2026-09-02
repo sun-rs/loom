@@ -75,6 +75,18 @@ test("Raft five task groups map canonical states; highlight keeps user text iner
     { text: "%_", match: true },
     { text: "</script>", match: false },
   ]);
+  assert.deepEqual(highlightParts("先处理任务，再等待认领。", "任务 认领"), [
+    { text: "先处理", match: false },
+    { text: "任务", match: true },
+    { text: "，再等待", match: false },
+    { text: "认领", match: true },
+    { text: "。", match: false },
+  ]);
+  assert.deepEqual(highlightParts("a+b and [x]", "a+b [x]"), [
+    { text: "a+b", match: true },
+    { text: " and ", match: false },
+    { text: "[x]", match: true },
+  ]);
 });
 test("untrusted date links cannot crash Search, and long-message excerpts include the match", () => {
   assert.equal(searchDateBound("invalid"), undefined);
@@ -87,6 +99,12 @@ test("untrusted date links cannot crash Search, and long-message excerpts includ
   );
   assert.ok(excerpt.includes("needle"));
   assert.ok(excerpt.length <= 1002);
+  const tokenExcerpt = searchExcerpt(
+    "a".repeat(9000) + "任务" + "z".repeat(9000),
+    "不存在 任务",
+  );
+  assert.ok(tokenExcerpt.includes("任务"));
+  assert.ok(tokenExcerpt.startsWith("…"));
 });
 test("Human read acknowledgement uses visible message sequence, never transport head or virtual overscan", () => {
   assert.equal(

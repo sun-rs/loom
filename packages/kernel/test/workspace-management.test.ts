@@ -339,6 +339,131 @@ test("Channel settings update is atomic, idempotent, stale-safe, and manager-onl
   }
 });
 
+test("Channel archive is reversible, idempotent, read-only, and manager-only", () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-room-archive-"));
+  const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+  try {
+    kernel.initialize();
+    const owner = kernel.provisionPrincipal({ handle: "owner", kind: "human" });
+    const member = kernel.provisionPrincipal({
+      handle: "member",
+      kind: "human",
+    });
+    const ownerActor = kernel.authenticateAccessToken(owner.accessToken);
+    const memberActor = kernel.authenticateAccessToken(member.accessToken);
+    const workspace = kernel.createWorkspace(ownerActor, {
+      idempotencyKey: "archive-workspace",
+      name: "Main",
+      slug: "archive-main",
+    });
+    kernel.addMember(ownerActor, {
+      principalId: member.principal.principalId,
+      roomId: workspace.controlRoom.roomId,
+    });
+    const channel = kernel.createWorkspaceRoom(ownerActor, {
+      basedOnControlRoomSeq: kernel.sync(ownerActor, {
+        afterSeq: 0,
+        consumerId: "archive-create",
+        roomId: workspace.controlRoom.roomId,
+      }).latestRoomSeq,
+      idempotencyKey: "archive-room-create",
+      kind: "channel",
+      name: "Archive me",
+      slug: "archive-me",
+      visibility: "public",
+      workspaceId: workspace.workspace.workspaceId,
+    });
+    const latest = kernel.sync(ownerActor, {
+      afterSeq: 0,
+      consumerId: "archive-latest",
+      roomId: channel.room.roomId,
+    }).latestRoomSeq;
+
+    assert.throws(
+      () =>
+        kernel.archiveWorkspaceRoom(memberActor, {
+          basedOnRoomSeq: latest,
+          idempotencyKey: "archive-member",
+          roomId: channel.room.roomId,
+        }),
+      /owner or admin/i,
+    );
+    const archived = kernel.archiveWorkspaceRoom(ownerActor, {
+      basedOnRoomSeq: latest,
+      idempotencyKey: "archive-room",
+      roomId: channel.room.roomId,
+    });
+    assert.equal(archived.event.type, "room.archived");
+    assert.ok(archived.room.archivedAt);
+    assert.equal(
+      kernel.archiveWorkspaceRoom(ownerActor, {
+        basedOnRoomSeq: latest,
+        idempotencyKey: "archive-room",
+        roomId: channel.room.roomId,
+      }).deduplicated,
+      true,
+    );
+    assert.throws(
+      () =>
+        kernel.postRoomMessage(ownerActor, {
+          body: "must stay read-only",
+          idempotencyKey: "archived-message",
+          recipients: [],
+          roomId: channel.room.roomId,
+        }),
+      /archived/i,
+    );
+    assert.equal(
+      kernel.listMessages(ownerActor, { roomId: channel.room.roomId }).messages
+        .length,
+      0,
+    );
+
+    const unarchived = kernel.unarchiveWorkspaceRoom(ownerActor, {
+      basedOnRoomSeq: archived.event.roomSeq,
+      idempotencyKey: "unarchive-room",
+      roomId: channel.room.roomId,
+    });
+    assert.equal(unarchived.event.type, "room.unarchived");
+    assert.equal(unarchived.room.archivedAt, undefined);
+    assert.equal(
+      kernel.unarchiveWorkspaceRoom(ownerActor, {
+        basedOnRoomSeq: archived.event.roomSeq,
+        idempotencyKey: "unarchive-room",
+        roomId: channel.room.roomId,
+      }).deduplicated,
+      true,
+    );
+    assert.throws(
+      () =>
+        kernel.leaveRoom(memberActor, {
+          basedOnRoomSeq: unarchived.event.roomSeq,
+          idempotencyKey: "member-leave-control-room",
+          roomId: workspace.controlRoom.roomId,
+        }),
+      /regular Channels/i,
+    );
+    const left = kernel.leaveRoom(memberActor, {
+      basedOnRoomSeq: unarchived.event.roomSeq,
+      idempotencyKey: "member-leave-channel",
+      roomId: channel.room.roomId,
+    });
+    assert.equal(left.removedPrincipalId, member.principal.principalId);
+    assert.throws(
+      () =>
+        kernel.leaveRoom(ownerActor, {
+          basedOnRoomSeq: left.event.roomSeq,
+          idempotencyKey: "last-owner-leave-channel",
+          roomId: channel.room.roomId,
+        }),
+      /last owner/i,
+    );
+  } finally {
+    kernel.close();
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
 test("an AgentDefinition cannot be onboarded across Workspace boundaries", () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-agent-scope-"));
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });

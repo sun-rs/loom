@@ -2,6 +2,7 @@ export {
   ClientApplicationService,
   ClientApplicationService as HumanHttpApplicationService,
 } from "./client-application-service.ts";
+export type { ComputerProfileAdministrationPort } from "./client-computer-profile-routes.ts";
 export type {
   AgentExecutionAdministrationPort,
   AgentMemoryAdministrationPort,

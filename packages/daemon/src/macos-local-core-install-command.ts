@@ -3,17 +3,17 @@ import { isAbsolute, resolve } from "node:path";
 export const MACOS_LOCAL_CORE_INSTALL_USAGE = `Usage:
   rah-os-core install --quick-start
   rah-os-core install --mode <loopback|lan> --workspace <absolute-path> [options]
-  rah-os-core uninstall [--home <absolute-path>] [--purge-data]
+  rah-os-core uninstall [--home <absolute-path>]
 
 Source-checkout operator:
   npm run install:core:macos -- --mode <loopback|lan> --workspace <absolute-path> [options]
-  npm run uninstall:core:macos -- [--home <absolute-path>] [--purge-data]
+  npm run uninstall:core:macos -- [--home <absolute-path>]
 
 Options:
   --quick-start                     Create ~/RAH OS Workspace and activate loopback
   --mode <loopback|lan>             Public client edge to run
   --workspace <absolute-path>       Workspace mounted into local Agent runtimes
-  --home <absolute-path>            Persistent RAH OS home (default: Application Support)
+  --home <absolute-path>            Persistent data home (default: ~/.rah)
   --product-directory <absolute>   Immutable Local Core product directory
   --web-port <1-65535>              Loopback Web port (default: 4173)
   --origin <https-origin>           Required exact LAN origin
@@ -25,7 +25,6 @@ Options:
   --replace-loaded                  Explicitly replace a loaded Core; requires activation
   --replace-staged                  Replace a different staged plist
   --uninstall                       Unload Core and remove its LaunchAgent plist
-  --purge-data                      Also remove persistent Core data; requires --uninstall
   --help                            Show this help
 `;
 
@@ -33,7 +32,6 @@ export type MacOSLocalCoreInstallArguments =
   | Readonly<{ help: true }>
   | Readonly<{
       home?: string;
-      purgeData: boolean;
       uninstall: true;
     }>
   | Readonly<{
@@ -82,7 +80,6 @@ export function parseMacOSLocalCoreInstallArguments(
   const flagOptions = new Set([
     "--activate",
     "--help",
-    "--purge-data",
     "--quick-start",
     "--replace-loaded",
     "--replace-staged",
@@ -127,9 +124,7 @@ export function parseMacOSLocalCoreInstallArguments(
   }
 
   if (flags.has("--uninstall")) {
-    const forbiddenFlags = [...flags].filter(
-      (flag) => flag !== "--uninstall" && flag !== "--purge-data",
-    );
+    const forbiddenFlags = [...flags].filter((flag) => flag !== "--uninstall");
     const forbiddenValues = [...values.keys()].filter(
       (option) => option !== "--home",
     );
@@ -139,12 +134,8 @@ export function parseMacOSLocalCoreInstallArguments(
     const home = absoluteOption(values, "--home", false);
     return Object.freeze({
       ...(home === undefined ? {} : { home }),
-      purgeData: flags.has("--purge-data"),
       uninstall: true,
     });
-  }
-  if (flags.has("--purge-data")) {
-    throw new Error("--purge-data requires --uninstall");
   }
 
   const mode = values.get("--mode");

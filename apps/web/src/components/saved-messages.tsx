@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useVirtualizer } from "@tanstack/react-virtual";
+
 import type { RahClient, RahClientOperationMap } from "@rah-os/client-sdk";
+
 import type { DiscoveryNavigationHandler } from "../global-discovery-model.ts";
 import { socialRequestId } from "../message-social-store.ts";
+import { mergeSavedMessages } from "../saved-messages-model.ts";
 import { Icon } from "./icon.tsx";
+import { SavedMessageCard } from "./saved-message-card.tsx";
+
 type Saved = RahClientOperationMap["message.saved"]["output"];
+
 /** Raft SavedPanel: private references, newest saved first, exact message navigation. */
 export function SavedMessagesPane({
   client,
@@ -17,7 +22,11 @@ export function SavedMessagesPane({
   onOpen: DiscoveryNavigationHandler;
   onOpenRooms: () => void;
 }) {
-  const [result, setResult] = useState<Saved>({ items: [], total: 0 }),
+  const [result, setResult] = useState<Saved>({
+      items: [],
+      total: 0,
+      globalTotal: 0,
+    }),
     [pending, setPending] = useState(false),
     [error, setError] = useState<string>(),
     [removing, setRemoving] = useState<string>();
@@ -37,27 +46,24 @@ export function SavedMessagesPane({
         const cursor = reset ? undefined : head.current.nextCursor;
         const page = await client.request("message.saved", {
           workspaceId,
-          limit: 50,
+          query: "",
+          sortDirection: "desc",
+          limit: 20,
           ...(cursor ? { cursor } : {}),
         });
-        if (epoch === generation.current) {
-          const items = reset
+        if (epoch !== generation.current) return;
+        head.current = {
+          ...page,
+          items: reset
             ? page.items
-            : [
-                ...head.current.items,
-                ...page.items.filter(
-                  (row) =>
-                    !head.current.items.some(
-                      (old) => old.message.messageId === row.message.messageId,
-                    ),
-                ),
-              ];
-          head.current = { ...page, items };
-          setResult(head.current);
-        }
-      } catch (e) {
+            : mergeSavedMessages(head.current.items, page.items),
+        };
+        setResult(head.current);
+      } catch (caught) {
         if (epoch === generation.current)
-          setError(e instanceof Error ? e.message : "读取已保存消息失败");
+          setError(
+            caught instanceof Error ? caught.message : "读取已保存消息失败",
+          );
       } finally {
         if (epoch === generation.current) {
           loading.current = false;
@@ -78,20 +84,13 @@ export function SavedMessagesPane({
     if (!result.nextCursor || pending || error || !sentinel.current) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries.some((e) => e.isIntersecting)) void load();
+        if (entries.some((entry) => entry.isIntersecting)) void load();
       },
-      { root: scroll.current, rootMargin: "240px" },
+      { root: scroll.current, rootMargin: "240px 0px", threshold: 0 },
     );
     observer.observe(sentinel.current);
     return () => observer.disconnect();
   }, [result.nextCursor, pending, error, load]);
-  const virtual = useVirtualizer({
-    count: result.items.length,
-    getScrollElement: () => scroll.current,
-    estimateSize: () => 150,
-    overscan: 5,
-    getItemKey: (index) => result.items[index]!.message.messageId,
-  });
   async function remove(row: Saved["items"][number]) {
     if (removing) return;
     setRemoving(row.message.messageId);
@@ -104,115 +103,108 @@ export function SavedMessagesPane({
         saved: false,
         idempotencyKey: socialRequestId(),
       });
-      if (epoch === generation.current) {
-        head.current = {
-          ...head.current,
-          total: Math.max(0, head.current.total - 1),
-          items: head.current.items.filter(
-            (r) => r.message.messageId !== row.message.messageId,
-          ),
-        };
-        setResult(head.current);
-      }
-    } catch (e) {
+      if (epoch !== generation.current) return;
+      head.current = {
+        ...head.current,
+        total: Math.max(0, head.current.total - 1),
+        globalTotal: Math.max(0, head.current.globalTotal - 1),
+        items: head.current.items.filter(
+          ({ message }) => message.messageId !== row.message.messageId,
+        ),
+      };
+      setResult(head.current);
+    } catch (caught) {
       if (epoch === generation.current)
-        setError(e instanceof Error ? e.message : "取消收藏失败");
+        setError(caught instanceof Error ? caught.message : "取消收藏失败");
     } finally {
       if (epoch === generation.current) setRemoving(undefined);
     }
   }
+  const initialLoading = pending && result.items.length === 0;
   return (
     <main className="channel rah-saved-pane">
-      <header className="channel-head">
+      <header className="rah-saved-header">
         <button
-          type="button"
-          className="sq-btn rah-mobile-only"
           aria-label="打开 Room 列表"
+          className="sq-btn rah-mobile-only"
           onClick={onOpenRooms}
+          type="button"
         >
           <Icon name="menu" />
         </button>
-        <Icon name="bookmark" />
-        <strong>已保存</strong>
-        <span>{result.total}</span>
-        <button
-          type="button"
-          className="sq-btn rah-saved-refresh"
-          aria-label="刷新已保存"
-          disabled={pending || !!removing}
-          onClick={() => void load(true)}
-        >
-          <Icon name="refresh-cw" />
-        </button>
+        <span className="rah-saved-header-icon">
+          <Icon name="bookmark" />
+        </span>
+        <span className="rah-saved-header-copy">
+          <strong>已保存</strong>
+          <span>{result.globalTotal} 项</span>
+        </span>
       </header>
-      <div ref={scroll} className="rah-saved-scroll">
-        {error && <p role="alert">{error}</p>}
-        {!pending && !result.items.length && !error && (
+      <div
+        className="rah-saved-scroll"
+        data-testid="saved-list-scroller"
+        ref={scroll}
+      >
+        {error ? (
+          <p className="rah-saved-error" role="alert">
+            {error}
+          </p>
+        ) : null}
+        {initialLoading ? <SavedSkeleton /> : null}
+        {!initialLoading && !result.items.length && !error ? (
           <div className="rah-saved-empty">
             <Icon name="bookmark" />
-            <strong>暂无已保存的消息</strong>
-            <p>将重要消息保存到这里。</p>
+            <strong>暂无收藏的消息</strong>
+            <p>选择消息上的书签图标即可保存。</p>
           </div>
-        )}
-        <div style={{ height: virtual.getTotalSize(), position: "relative" }}>
-          {virtual.getVirtualItems().map((item) => {
-            const row = result.items[item.index]!;
-            return (
+        ) : null}
+        {result.items.length ? (
+          <div className="rah-saved-list">
+            {result.items.map((row) => (
+              <SavedMessageCard
+                key={row.message.messageId}
+                onError={setError}
+                onOpen={() => void onOpen({ target: row.target })}
+                onRemove={() => remove(row)}
+                removing={removing === row.message.messageId}
+                row={row}
+              />
+            ))}
+            {result.nextCursor ? (
               <div
-                key={item.key}
-                ref={virtual.measureElement}
-                data-index={item.index}
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  transform: `translateY(${item.start}px)`,
-                }}
+                aria-live="polite"
+                className="rah-saved-sentinel"
+                data-testid="saved-infinite-scroll-sentinel"
+                ref={sentinel}
               >
-                <article className="rah-saved-card">
-                  <button
-                    type="button"
-                    className="rah-saved-open"
-                    aria-label={`打开已保存消息 ${row.senderName}`}
-                    onClick={() => void onOpen({ target: row.target })}
-                  >
-                    <small>
-                      {row.rootMessageId ? "话题 · " : ""}
-                      {row.roomName}
-                    </small>
-                    <div>
-                      <strong>{row.senderName}</strong>{" "}
-                      <time>
-                        {new Date(row.message.createdAt).toLocaleString()}
-                      </time>
-                    </div>
-                    <p>{row.message.body}</p>
-                  </button>
-                  <button
-                    type="button"
-                    className="rah-saved-remove"
-                    aria-label={`取消收藏 ${row.senderName} 的消息`}
-                    disabled={!!removing}
-                    onClick={() => void remove(row)}
-                  >
-                    <Icon name="bookmark" />
-                  </button>
-                </article>
+                {pending ? (
+                  <span>正在加载更多已保存消息</span>
+                ) : (
+                  <span className="rah-sr-only">正在加载更多已保存消息</span>
+                )}
               </div>
-            );
-          })}
-        </div>
-        <div ref={sentinel}>
-          {pending ? (
-            <p role="status">加载中…</p>
-          ) : result.nextCursor ? (
-            <button type="button" className="btn" onClick={() => void load()}>
-              加载更多
-            </button>
-          ) : null}
-        </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </main>
+  );
+}
+
+function SavedSkeleton() {
+  return (
+    <div aria-busy="true" className="rah-saved-skeleton">
+      {Array.from({ length: 6 }, (_, index) => (
+        <div className="rah-saved-skeleton-card" key={index}>
+          <div>
+            <span className="is-20" />
+            <span className="is-16" />
+            <span className="is-10" />
+          </div>
+          <span className="is-full" />
+          <span className="is-three-fifths" />
+        </div>
+      ))}
+    </div>
   );
 }

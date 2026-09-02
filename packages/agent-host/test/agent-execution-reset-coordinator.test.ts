@@ -101,6 +101,118 @@ test("session reset quarantines Provider continuity exactly once", async () => {
   assert.equal(replay.deduplicated, true);
 });
 
+test("full reset composes workspace and Provider continuity under one execution fence", async () => {
+  const rootDirectory = await mkdtemp(join(tmpdir(), "rah-execution-full-"));
+  const calls: string[] = [];
+  const coordinator = new AgentExecutionResetCoordinator({
+    acquireFence: async () => {
+      calls.push("acquire");
+      return {
+        release: async () => {
+          calls.push("release");
+        },
+      };
+    },
+    computerHostId: "host-local",
+    quarantineAgentWorkspace: async (participantId, operationId) => {
+      calls.push(`workspace:${participantId}:${operationId}`);
+      return {
+        commit: () => {
+          calls.push("workspace:commit");
+        },
+        rollback: async () => {
+          calls.push("workspace:rollback");
+        },
+      };
+    },
+    quarantineProviderContinuity: async () => {
+      calls.push("continuity");
+      return {
+        recordCount: 2,
+        rollback: async () => {
+          calls.push("continuity:rollback");
+        },
+      };
+    },
+    rootDirectory,
+  });
+
+  const result = await coordinator.reset(
+    {
+      agentDefinitionId: "agent-definition-1",
+      mode: "full",
+      operationId: "operation-full-1",
+      ownerParticipantId: "agent-1",
+    },
+    {
+      afterContinuity: async () => {
+        calls.push("enable");
+      },
+    },
+  );
+
+  assert.equal(result.mode, "full");
+  assert.equal(result.providerContinuityRecords, 2);
+  assert.deepEqual(calls, [
+    "acquire",
+    "workspace:agent-1:operation-full-1",
+    "continuity",
+    "enable",
+    "workspace:commit",
+    "release",
+  ]);
+});
+
+test("full reset rolls continuity and workspace back before releasing its fence", async () => {
+  const rootDirectory = await mkdtemp(
+    join(tmpdir(), "rah-execution-full-rollback-"),
+  );
+  const calls: string[] = [];
+  const coordinator = new AgentExecutionResetCoordinator({
+    acquireFence: async () => ({
+      release: async () => {
+        calls.push("release");
+      },
+    }),
+    computerHostId: "host-local",
+    quarantineAgentWorkspace: async () => ({
+      commit: () => {
+        calls.push("workspace:commit");
+      },
+      rollback: async () => {
+        calls.push("workspace:rollback");
+      },
+    }),
+    quarantineProviderContinuity: async () => ({
+      recordCount: 1,
+      rollback: async () => {
+        calls.push("continuity:rollback");
+      },
+    }),
+    rootDirectory,
+  });
+
+  await assert.rejects(
+    coordinator.reset(
+      {
+        agentDefinitionId: "agent-definition-1",
+        mode: "full",
+        operationId: "operation-full-rollback",
+        ownerParticipantId: "agent-1",
+      },
+      {
+        afterContinuity: async () => Promise.reject(new Error("enable failed")),
+      },
+    ),
+    /enable failed/u,
+  );
+  assert.deepEqual(calls, [
+    "continuity:rollback",
+    "workspace:rollback",
+    "release",
+  ]);
+});
+
 test("continuity failure rolls back and releases only after rollback succeeds", async () => {
   const rootDirectory = await mkdtemp(join(tmpdir(), "rah-execution-failure-"));
   const calls: string[] = [];

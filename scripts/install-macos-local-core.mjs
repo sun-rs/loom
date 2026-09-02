@@ -11,6 +11,7 @@ import {
   installMacOSLocalCore,
   inspectLocalCoreProduct,
   parseMacOSLocalCoreInstallArguments,
+  prepareRahDataHome,
   uninstallMacOSLocalCore,
 } from "@rah-os/daemon";
 
@@ -26,7 +27,10 @@ if (process.platform !== "darwin") {
 const userHomeDirectory = homedir();
 const workbenchHome =
   parsed.home ??
-  join(userHomeDirectory, "Library", "Application Support", "RAH OS");
+  (await prepareRahDataHome({
+    environment: process.env,
+    userHomeDirectory,
+  }));
 const label = "dev.rah-os.local-core";
 const plistPath = join(
   userHomeDirectory,
@@ -38,7 +42,6 @@ if ("uninstall" in parsed) {
   const result = await uninstallMacOSLocalCore({
     label,
     plistPath,
-    purgeData: parsed.purgeData,
     workbenchHome,
   });
   process.stdout.write(

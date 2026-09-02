@@ -23,6 +23,10 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
     join(sourceDirectory, "components", "agent-directory-pane.tsx"),
     "utf8",
   );
+  const agentAvatar = readFileSync(
+    join(sourceDirectory, "components", "agent-avatar.tsx"),
+    "utf8",
+  );
   const navigation = readFileSync(
     join(sourceDirectory, "components", "workspace-navigation.tsx"),
     "utf8",
@@ -207,7 +211,11 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   assert.match(agentSurface, /role="menu"/u);
   assert.match(agentSurface, /role="menuitem"/u);
   assert.match(agentSurface, /创建外部 Agent/u);
-  assert.match(catalog, /className="rah-computer-directory"/u);
+  assert.match(
+    catalog,
+    /className=\{`rah-computer-directory\$\{selected \? " is-detail" : " is-list"\}`\}/u,
+  );
+  assert.match(catalog, /style=\{rootStyle\}/u);
   assert.match(catalog, /className="rah-computer-sidebar"/u);
   assert.match(catalog, /className="rah-computer-detail"/u);
   assert.match(catalog, /选择一台计算机/u);
@@ -310,8 +318,12 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   assert.match(agentSurface, /选择一个 Agent/u);
   assert.doesNotMatch(agentSurface, /选择一个频道/u);
   assert.match(agentSurface, /rah-agent-mobile-back/u);
-  assert.match(agentSurface, /function AgentAvatar/u);
-  assert.match(agentSurface, /agent\.avatarKey/u);
+  assert.match(
+    agentSurface,
+    /import \{ AgentAvatar \} from "\.\/agent-avatar\.tsx"/u,
+  );
+  assert.match(agentAvatar, /export function AgentAvatar/u);
+  assert.match(agentAvatar, /agent\.avatarKey/u);
   assert.match(agentSurface, /agent\.get/u);
   assert.match(agentSurface, /agent\.room\.list/u);
   assert.match(agentSurface, /onOpenDirectRoom/u);
@@ -356,6 +368,7 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
 
   const openThreadStart = app.indexOf("const openThread");
   const threadSyncStart = app.indexOf("useEffect", openThreadStart);
+  const ensureActiveThreadStart = app.indexOf("const ensureActiveThread");
   const submitThreadReplyStart = app.indexOf("const submitThreadReply");
   const completeTaskStart = app.indexOf(
     "const completeTask",
@@ -363,7 +376,8 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   );
   assert.ok(openThreadStart >= 0 && threadSyncStart > openThreadStart);
   assert.ok(
-    submitThreadReplyStart > threadSyncStart &&
+    ensureActiveThreadStart > threadSyncStart &&
+      submitThreadReplyStart > ensureActiveThreadStart &&
       completeTaskStart > submitThreadReplyStart,
   );
   assert.doesNotMatch(
@@ -372,13 +386,18 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
     "opening an empty Message Thread must be read-only",
   );
   assert.match(
-    app.slice(submitThreadReplyStart, completeTaskStart),
+    app.slice(ensureActiveThreadStart, submitThreadReplyStart),
     /client\.request\("thread\.create"/u,
-    "the first reply lazily creates the canonical Thread",
+    "the first canonical Thread mutation lazily creates the Thread",
+  );
+  assert.match(
+    app.slice(ensureActiveThreadStart, submitThreadReplyStart),
+    /recipientIds: \[\]/u,
+    "the structural Thread creation must not wake Agents before the reply",
   );
   assert.match(
     app.slice(submitThreadReplyStart, completeTaskStart),
-    /recipientIds: \[\]/u,
-    "the structural Thread creation must not wake Agents before the reply",
+    /await ensureActiveThread\(\)/u,
+    "the first reply reuses the single canonical Thread owner",
   );
 });

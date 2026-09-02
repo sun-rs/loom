@@ -41,6 +41,36 @@ test("workspace fields wait for the canonical edit baseline before accepting cha
     2,
   );
 });
+test("Workspace mark opens Raft's anchored menu before the separate edit dialog", () => {
+  const source = readFileSync(
+    new URL("../src/components/workspace-identity.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(source, /aria-haspopup="menu"/u);
+  assert.match(source, /role="menu"/u);
+  assert.match(source, /className="rah-space-switcher/u);
+  assert.match(source, /document\.addEventListener\("mousedown"/u);
+  assert.match(source, /event\.key === "Escape"/u);
+  assert.match(source, /triggerRef\.current\?\.focus\(\)/u);
+  assert.match(source, /<WorkspaceSwitcherRow/u);
+  assert.match(source, /editOpen && workspace/u);
+  assert.doesNotMatch(
+    source,
+    /open && workspace \? \(\s*<WorkspaceIdentityDialog/u,
+  );
+  const productCss = readFileSync(
+    new URL("../src/product.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    productCss,
+    /@media \(max-width: 700px\)[\s\S]*?\.rah-product-shell > \.rail \{[\s\S]*?position: fixed/u,
+  );
+  assert.match(
+    productCss,
+    /\.rah-product-shell > \.rail > :not\(\.rail-head\) \{\s*display: none/u,
+  );
+});
 test("workspace identity counts spaces, never Rooms, and uses workspace write authority", () => {
   const navigation = readFileSync(
     new URL("../src/components/workspace-navigation.tsx", import.meta.url),

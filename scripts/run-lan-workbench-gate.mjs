@@ -297,7 +297,7 @@ async function startLanWorkbench() {
         PATH: `${binDirectory}${delimiter}${dirname(process.execPath)}`,
         RAH_LAN_BIND_HOST: "127.0.0.1",
         RAH_LAN_ORIGIN: webOrigin,
-        RAH_OS_HOME: workbenchHome,
+        RAH_DATA_HOME: workbenchHome,
         RAH_WORKSPACE_CWD: workspaceCwd,
       },
       stdio: ["ignore", "pipe", "pipe"],

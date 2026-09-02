@@ -5,6 +5,7 @@ import {
   senderKindForScopes,
   searchTimeBounds,
   searchSort,
+  searchShouldRun,
   reconcileSender,
   normalizeDiscoveryParams,
   taskPeopleChoices,
@@ -76,4 +77,12 @@ test("Raft sort defaults to relevance, filtered blank searches use recent, time 
   assert.equal(searchTimeBounds("7d", now).after, "2026-08-23T08:12:00.000Z");
   assert.equal(searchTimeBounds("30d", now).before, now.toISOString());
   assert.deepEqual(searchTimeBounds("evil", now), {});
+  assert.equal(searchShouldRun("", {}), false);
+  assert.equal(searchShouldRun("  ", { timeRange: "any" }), false);
+  assert.equal(searchShouldRun("needle", {}), true);
+  assert.equal(searchShouldRun("", { timeRange: "today" }), true);
+  assert.equal(searchShouldRun("", { scopes: ["mentioned"] }), true);
+  assert.equal(searchShouldRun("", { roomIds: ["room-a"] }), true);
+  assert.equal(searchShouldRun("", { senderIds: ["human-a"] }), true);
+  assert.equal(searchShouldRun("", { after: "2026-09-02T00:00:00Z" }), true);
 });

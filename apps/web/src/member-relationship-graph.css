@@ -1,0 +1,341 @@
+.rah-member-graph-surface {
+  background: var(--bg);
+  min-height: 0;
+  overflow: auto;
+  padding: 16px;
+}
+
+.rah-member-graph-header,
+.rah-member-graph-header > div,
+.rah-member-graph-header > button {
+  align-items: center;
+  display: flex;
+}
+
+.rah-member-graph-header {
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.rah-member-graph-header > div {
+  gap: 8px;
+}
+
+.rah-member-graph-header svg {
+  height: 16px;
+  width: 16px;
+}
+
+.rah-member-graph-header h2 {
+  font-size: 16px;
+}
+
+.rah-member-graph-header span {
+  color: var(--ink-40);
+  font: 12px var(--mono);
+}
+
+.rah-member-graph-header > button {
+  background: var(--bg);
+  gap: 6px;
+}
+
+.rah-member-graph-mobile-back {
+  display: none;
+}
+
+.rah-member-graph-warning {
+  background: var(--orange-soft);
+  border: var(--bd);
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  padding: 8px 10px;
+}
+
+.rah-member-graph-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) 280px;
+}
+
+.rah-member-graph-canvas,
+.rah-member-graph-empty {
+  background: #f8f8f0;
+  border: var(--bd);
+  box-shadow: var(--shadow-s);
+  height: 520px;
+  min-width: 0;
+}
+
+.rah-member-graph-canvas {
+  cursor: grab;
+  overflow: hidden;
+  position: relative;
+  touch-action: none;
+  user-select: none;
+}
+
+.rah-member-graph-canvas:active {
+  cursor: grabbing;
+}
+
+.rah-member-graph-canvas > svg,
+.rah-member-graph-node-layer {
+  height: 100%;
+  inset: 0;
+  position: absolute;
+  width: 100%;
+}
+
+.rah-member-graph-node-layer {
+  pointer-events: none;
+}
+
+.rah-member-graph-node {
+  pointer-events: auto;
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+.rah-member-graph-node-trigger {
+  background: transparent;
+  border: 0;
+  cursor: default;
+  display: block;
+  padding: 0;
+  position: relative;
+  text-align: left;
+}
+
+.rah-member-graph-node-trigger > .rah-agent-avatar,
+.rah-member-graph-human-avatar {
+  border: 1px solid var(--black);
+  border-radius: 50%;
+  height: 36px;
+  overflow: hidden;
+  width: 36px;
+}
+
+.rah-member-graph-node-trigger > .rah-agent-avatar {
+  background: var(--cyan);
+}
+
+.rah-member-graph-human-avatar {
+  align-items: center;
+  background: var(--lavender);
+  display: flex;
+  font: 700 12px/1 var(--mono);
+  justify-content: center;
+}
+
+.rah-member-graph-node-trigger > span:last-child {
+  left: 50%;
+  pointer-events: none;
+  position: absolute;
+  text-align: center;
+  top: 100%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.rah-member-graph-node-trigger > span:last-child b,
+.rah-member-graph-node-trigger > span:last-child small {
+  display: block;
+}
+
+.rah-member-graph-node-trigger > span:last-child b {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.rah-member-graph-node-trigger > span:last-child small {
+  color: var(--ink-50);
+  font: 10px var(--mono);
+}
+
+.rah-member-graph-node-trigger > span:last-child.is-dense {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.rah-member-graph-node-trigger > span:last-child.is-dense.is-agent {
+  left: auto;
+  padding-right: 8px;
+  right: 100%;
+  text-align: right;
+}
+
+.rah-member-graph-node-trigger > span:last-child.is-dense.is-human {
+  padding-left: 8px;
+  text-align: left;
+}
+
+.rah-member-graph-empty {
+  align-items: center;
+  border-style: dashed;
+  box-shadow: none;
+  color: var(--ink-40);
+  display: flex;
+  font-size: 14px;
+  font-weight: 700;
+  justify-content: center;
+}
+
+.rah-member-graph-summary {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.rah-member-graph-counts {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.rah-member-graph-counts > div,
+.rah-member-graph-card {
+  background: var(--bg);
+  border: var(--bd);
+  box-shadow: var(--shadow-s);
+}
+
+.rah-member-graph-counts > div {
+  padding: 8px;
+  text-align: center;
+}
+
+.rah-member-graph-counts b,
+.rah-member-graph-counts span {
+  display: block;
+}
+
+.rah-member-graph-counts b {
+  font-size: 18px;
+}
+
+.rah-member-graph-counts span {
+  color: var(--ink-50);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.rah-member-graph-card {
+  padding: 12px;
+}
+
+.rah-member-graph-card h3 {
+  font-size: 11px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.rah-member-graph-card > i {
+  color: var(--ink-40);
+  font-size: 12px;
+}
+
+.rah-member-graph-summary-row {
+  align-items: center;
+  display: grid;
+  font-size: 12px;
+  gap: 6px;
+  grid-template-columns: 20px minmax(0, 1fr) max-content;
+  min-height: 26px;
+}
+
+.rah-member-graph-summary-row > .rah-agent-avatar,
+.rah-member-graph-summary-row > .rah-member-graph-human-avatar {
+  height: 18px;
+  width: 18px;
+}
+
+.rah-member-graph-summary-row > svg {
+  height: 13px;
+  width: 13px;
+}
+
+.rah-member-graph-summary-row > b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rah-member-graph-summary-row > span {
+  color: var(--ink-50);
+  font: 11px var(--mono);
+}
+
+.rah-member-graph-preview {
+  background: var(--bg);
+  border: var(--bd);
+  box-shadow: var(--shadow-s);
+  z-index: 110;
+}
+
+.rah-member-graph-preview-body {
+  padding: 12px;
+}
+
+.rah-member-graph-preview-body > b,
+.rah-member-graph-preview-body > small {
+  display: block;
+}
+
+.rah-member-graph-preview-body > small,
+.rah-member-graph-preview-body > p {
+  color: var(--ink-50);
+  font: 11px/1.5 var(--mono);
+}
+
+.rah-member-graph-preview-body dl {
+  border-block: 1px solid var(--ink-20);
+  display: grid;
+  font: 11px/1.4 var(--mono);
+  gap: 4px 10px;
+  grid-template-columns: max-content 1fr;
+  margin-block: 8px;
+  padding-block: 8px;
+}
+
+.rah-member-graph-preview-body dt {
+  color: var(--ink-40);
+}
+
+@media (max-width: 900px) {
+  .rah-member-graph-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rah-member-graph-canvas,
+  .rah-member-graph-empty {
+    height: 360px;
+  }
+}
+
+@media (max-width: 700px) {
+  .rah-member-graph-surface {
+    height: 100%;
+    padding: 12px;
+  }
+
+  .rah-member-graph-header {
+    padding-left: 52px;
+  }
+
+  .rah-member-graph-mobile-back {
+    align-items: center;
+    display: inline-flex;
+    height: 34px;
+    justify-content: center;
+    width: 34px;
+  }
+
+  .rah-member-graph-mobile-back svg {
+    transform: rotate(180deg);
+  }
+}

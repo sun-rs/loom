@@ -1,15 +1,12 @@
-import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { startLocalCoreWorkbench } from "@rah-os/daemon";
+import { prepareRahDataHome, startLocalCoreWorkbench } from "@rah-os/daemon";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryDirectory = join(scriptDirectory, "..");
 const workspaceCwd = resolve(process.env.RAH_WORKSPACE_CWD ?? process.cwd());
-const workbenchHome = resolve(
-  process.env.RAH_OS_HOME?.trim() || defaultWorkbenchHome(),
-);
+const workbenchHome = await prepareRahDataHome({ environment: process.env });
 const { snapshotWorkbenchAssets } = await import("./workbench-web-assets.mjs");
 const staticDirectory = await snapshotWorkbenchAssets(
   repositoryDirectory,
@@ -51,12 +48,6 @@ try {
   await waitForShutdownSignal();
 } finally {
   await running.stop();
-}
-
-function defaultWorkbenchHome() {
-  return process.platform === "darwin"
-    ? join(homedir(), "Library", "Application Support", "RAH OS")
-    : join(homedir(), ".local", "share", "rah-os");
 }
 
 function requiredEnvironment(name) {

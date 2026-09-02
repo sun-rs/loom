@@ -1,7 +1,7 @@
 .rah-computer-directory {
   display: grid;
   grid-column: 2 / 4;
-  grid-template-columns: var(--rah-computer-sidebar-width, 240px) minmax(0, 1fr);
+  grid-template-columns: var(--rah-computer-sidebar-width, 320px) minmax(0, 1fr);
   min-width: 0;
   overflow: hidden;
   position: relative;
@@ -113,8 +113,7 @@
 }
 
 .rah-computer-row-icon i,
-.rah-computer-hero i,
-.rah-computer-agent-list i {
+.rah-computer-hero i {
   background: var(--presence-off);
   border: 1px solid var(--black);
   border-radius: 50%;
@@ -130,8 +129,7 @@
 }
 
 .rah-computer-row-icon i.is-online,
-.rah-computer-hero i.is-online,
-.rah-computer-agent-list i.is-online {
+.rah-computer-hero i.is-online {
   background: var(--green);
 }
 
@@ -157,7 +155,7 @@
 .rah-computer-sidebar-resizer {
   bottom: 0;
   cursor: col-resize;
-  left: calc(var(--rah-computer-sidebar-width, 240px) - 4px);
+  left: calc(var(--rah-computer-sidebar-width, 320px) - 4px);
   position: absolute;
   top: 0;
   touch-action: none;
@@ -216,6 +214,10 @@
 .rah-computer-detail-head h1 {
   font-size: 16px;
   line-height: 20px;
+}
+
+.rah-computer-detail-back {
+  display: none;
 }
 
 .rah-computer-detail-scroll {
@@ -286,6 +288,76 @@
   text-transform: uppercase;
 }
 
+.rah-computer-field h2 {
+  align-items: center;
+  display: flex;
+  gap: 5px;
+}
+
+.rah-computer-profile-edit {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--ink-50);
+  display: inline-flex;
+  height: 22px;
+  justify-content: center;
+  padding: 2px;
+  width: 22px;
+}
+
+.rah-computer-profile-edit:hover,
+.rah-computer-profile-edit:focus-visible {
+  color: var(--black);
+}
+
+.rah-computer-profile-edit svg {
+  height: 14px;
+  width: 14px;
+}
+
+.rah-computer-profile-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+  max-width: 620px;
+}
+
+.rah-computer-profile-form input,
+.rah-computer-profile-form textarea {
+  background: var(--bg);
+  border: var(--bd);
+  box-shadow: var(--shadow-s);
+  color: var(--black);
+  font: 14px/20px var(--sans);
+  padding: 8px 10px;
+  width: 100%;
+}
+
+.rah-computer-profile-form textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.rah-computer-profile-count {
+  color: var(--ink-40);
+  font: 11px/16px var(--mono);
+  justify-self: end;
+}
+
+.rah-computer-profile-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.rah-computer-profile-error {
+  color: var(--coral);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
 .rah-computer-field p {
   font-size: 14px;
   line-height: 20px;
@@ -333,15 +405,26 @@
   gap: 6px;
 }
 
-.rah-computer-runtime-chips span {
+.rah-computer-runtime-chips > span,
+.rah-computer-runtime-chips > button {
   background: var(--cyan);
   border: var(--bd);
+  color: var(--black);
   font: 700 11px/16px var(--sans);
   min-height: 24px;
   padding: 2px 8px;
 }
 
-.rah-computer-runtime-chips span.is-missing {
+.rah-computer-runtime-chips > button {
+  cursor: help;
+}
+
+.rah-computer-runtime-chips > button:focus-visible {
+  outline: 2px solid var(--black);
+  outline-offset: 2px;
+}
+
+.rah-computer-runtime-chips > span.is-missing {
   background: var(--gray-chip);
   color: var(--ink-40);
 }
@@ -374,47 +457,41 @@
   gap: 8px;
 }
 
-.rah-computer-agent-list article {
+.rah-computer-agent-list > button {
   align-items: center;
+  background: var(--bg);
   border: 2px solid var(--ink-30);
+  color: var(--black);
   display: flex;
   gap: 12px;
   min-height: var(--raft-computers-agent-row-height);
   padding: var(--raft-computers-agent-row-padding);
+  text-align: left;
+  width: 100%;
 }
 
-.rah-computer-agent-list article > span {
-  align-items: center;
-  background: var(--lavender);
-  border: var(--bd);
-  display: flex;
-  font: 700 12px/1 var(--mono);
-  height: 32px;
-  justify-content: center;
-  width: 32px;
+.rah-computer-agent-list > button:hover,
+.rah-computer-agent-list > button:focus-visible {
+  border-color: var(--black);
+  box-shadow: var(--shadow-s);
 }
 
-.rah-computer-agent-list article b {
+.rah-computer-agent-list > button b {
   font-size: 14px;
 }
 
-.rah-computer-agent-list article code {
+.rah-computer-agent-list > button code {
   color: var(--ink-50);
   font: 11px/16px var(--mono);
 }
 
-.rah-computer-agent-list article small {
+.rah-computer-agent-list > button small {
   align-items: center;
   color: var(--ink-50);
   display: flex;
   font: 11px/16px var(--mono);
   gap: 6px;
   margin-left: auto;
-}
-
-.rah-computer-agent-list article small i {
-  height: 8px;
-  width: 8px;
 }
 
 .rah-computer-runtime-evidence {
@@ -462,6 +539,159 @@
   overflow-wrap: anywhere;
 }
 
+.rah-computer-diagnostics {
+  border-top: 1px solid var(--ink-10);
+  display: grid;
+  gap: 10px;
+  padding-top: 16px;
+}
+
+.rah-computer-diagnostics > p {
+  color: var(--ink-50);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.rah-computer-diagnostics > .btn {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+  justify-self: start;
+}
+
+.rah-computer-diagnostics > .btn svg,
+.rah-computer-command-row .btn svg {
+  height: 14px;
+  width: 14px;
+}
+
+.rah-computer-command-row {
+  align-items: stretch;
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.rah-computer-command-row > code {
+  background: var(--black);
+  border: var(--bd);
+  box-shadow: var(--shadow-s);
+  color: var(--green);
+  flex: 1;
+  font: 12px/18px var(--mono);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding: 8px 12px;
+}
+
+.rah-computer-command-row > .btn {
+  align-items: center;
+  display: inline-flex;
+  gap: 5px;
+}
+
+.rah-computer-copy-error {
+  color: var(--coral) !important;
+  font-weight: 700;
+}
+
+.rah-computer-runtime-inspector {
+  background: var(--bg);
+  border: var(--bd);
+  box-shadow: var(--shadow-l);
+  display: grid;
+  max-height: min(82vh, 620px);
+  overflow: auto;
+  position: fixed;
+  width: min(390px, calc(100vw - 16px));
+  z-index: 80;
+}
+
+.rah-computer-runtime-inspector > header {
+  align-items: center;
+  border-bottom: var(--bd);
+  display: flex;
+  min-height: 54px;
+  padding: 8px 10px 8px 14px;
+}
+
+.rah-computer-runtime-inspector > header > div {
+  display: grid;
+  flex: 1;
+}
+
+.rah-computer-runtime-inspector > header strong {
+  font-size: 14px;
+}
+
+.rah-computer-runtime-inspector > header span {
+  color: var(--ink-40);
+  font: 10px/16px var(--mono);
+}
+
+.rah-computer-runtime-inspector > header button {
+  align-items: center;
+  background: var(--bg);
+  border: var(--bd);
+  display: flex;
+  height: 30px;
+  justify-content: center;
+  width: 30px;
+}
+
+.rah-computer-runtime-inspector > header svg {
+  height: 15px;
+  width: 15px;
+}
+
+.rah-computer-runtime-inspector > dl {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.rah-computer-runtime-inspector > dl > div {
+  display: grid;
+  gap: 2px;
+  grid-template-columns: 112px minmax(0, 1fr);
+}
+
+.rah-computer-runtime-inspector dt {
+  color: var(--ink-50);
+  font-size: 11px;
+}
+
+.rah-computer-runtime-inspector dd {
+  font: 11px/16px var(--mono);
+  overflow-wrap: anywhere;
+}
+
+.rah-computer-runtime-inspector > p {
+  border-top: 1px solid var(--ink-10);
+  color: var(--ink-50);
+  font-size: 11px;
+  line-height: 17px;
+  padding: 12px 14px;
+}
+
+.rah-computer-runtime-inspector-layer {
+  align-items: end;
+  background: color-mix(in srgb, var(--black) 38%, transparent);
+  display: flex;
+  inset: 0;
+  position: fixed;
+  z-index: 79;
+}
+
+.rah-computer-runtime-inspector.is-mobile {
+  border-bottom: 0;
+  left: 0;
+  max-height: 82vh;
+  position: relative;
+  top: auto;
+  width: 100%;
+}
+
 @media (max-width: 700px) {
   .rah-computer-directory {
     grid-column: 1;
@@ -469,8 +699,50 @@
   }
 
   .rah-computer-sidebar-resizer,
-  .rah-computer-empty,
-  .rah-computer-detail {
+  .rah-computer-empty {
     display: none;
+  }
+
+  .rah-computer-directory.is-detail .rah-computer-sidebar,
+  .rah-computer-directory.is-list .rah-computer-detail {
+    display: none;
+  }
+
+  .rah-computer-directory.is-detail .rah-computer-detail,
+  .rah-computer-directory.is-list .rah-computer-sidebar {
+    display: flex;
+  }
+
+  .rah-computer-detail-back {
+    align-items: center;
+    background: var(--bg);
+    border: var(--bd);
+    display: flex;
+    height: 32px;
+    justify-content: center;
+    width: 32px;
+  }
+
+  .rah-computer-detail-back svg {
+    height: 16px;
+    width: 16px;
+  }
+
+  .rah-computer-content-stack {
+    padding-inline: 14px;
+  }
+
+  .rah-computer-agent-list > button {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .rah-computer-agent-list > button small {
+    margin-left: 40px;
+    width: calc(100% - 40px);
+  }
+
+  .rah-computer-command-row {
+    align-items: stretch;
   }
 }

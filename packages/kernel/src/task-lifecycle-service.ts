@@ -79,6 +79,15 @@ export class TaskLifecycleService {
       }
 
       const cancelledAt = this.#now().toISOString();
+      const pendingInputRequest = this.#database
+        .prepare(
+          "SELECT input_request_id FROM input_requests WHERE task_id = ? AND state = 'pending'",
+        )
+        .get(input.taskId);
+      const cancelledInputRequestId =
+        pendingInputRequest === undefined
+          ? undefined
+          : text(pendingInputRequest, "input_request_id");
       const claimedBy = nullableText(taskRow, "claimed_by");
       const cancellationRequestId =
         claimedBy === null
@@ -93,6 +102,22 @@ export class TaskLifecycleService {
               roomId,
               taskId: input.taskId,
             });
+      if (cancelledInputRequestId !== undefined) {
+        this.#database
+          .prepare(
+            `UPDATE input_requests
+             SET state = 'cancelled', cancelled_at = ?, cancelled_by = ?,
+                 cancellation_reason = ?, updated_at = ?
+             WHERE input_request_id = ? AND state = 'pending'`,
+          )
+          .run(
+            cancelledAt,
+            actorId,
+            reason,
+            cancelledAt,
+            cancelledInputRequestId,
+          );
+      }
       this.#database
         .prepare(
           "UPDATE tasks SET state = 'cancelled', claimed_by = NULL, claim_until = NULL, claim_until_ms = NULL, blocked_reason = NULL, blocked_at = NULL, cancellation_reason = ?, cancelled_at = ?, updated_at = ? WHERE task_id = ?",
@@ -106,6 +131,9 @@ export class TaskLifecycleService {
         payload: {
           basedOnRoomSeq: input.basedOnRoomSeq,
           cancelledAt,
+          ...(cancelledInputRequestId === undefined
+            ? {}
+            : { cancelledInputRequestId }),
           ...(cancellationRequestId === undefined
             ? {}
             : { activationCancellationRequestId: cancellationRequestId }),

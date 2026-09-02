@@ -4189,6 +4189,245 @@ test("InputRequest suspends a Task and a human resolution creates a new proven A
   kernel.close();
 });
 
+test("cancelling a waiting Task atomically terminates its pending InputRequest", () => {
+  const { agent, databasePath, human, humanActor, kernel, room } =
+    createFixture();
+  const created = kernel.createTask(humanActor, {
+    assigneeId: agent.principalId,
+    idempotencyKey: "cancel-input-task-create",
+    roomId: room.roomId,
+    title: "Do not leave a ghost Human action",
+  });
+  const host = authenticateHost(kernel, "cancel-input-host", [
+    agent.principalId,
+  ]);
+  const activation = kernel.leaseNextActivation(host, { leaseMs: 30_000 });
+  assert.ok(activation);
+  const run = kernel.createRunAttempt(host, {
+    activationId: activation.activationId,
+  });
+  prepareAndMarkRunAttemptRunning(kernel, host, {
+    recoveryDescriptor: fakeRecovery("cancel-input-runtime"),
+    runAttemptId: run.runAttemptId,
+    runtimeRunId: "cancel-input-runtime",
+  });
+  const execution = kernel.authorizeWorkerExecution(host, {
+    activationId: activation.activationId,
+    consumerId: "cancel-input-consumer",
+    hostId: host.hostId,
+    participantId: agent.principalId,
+    roomId: room.roomId,
+    runAttemptId: run.runAttemptId,
+    toSeq: activation.toSeq,
+  });
+  const delivery = kernel.syncWorker(execution, {});
+  kernel.acknowledgeWorkerCursor(execution, {
+    throughSeq: delivery.cursorAfter,
+  });
+  const claimed = kernel.claimTask(execution, {
+    basedOnRoomSeq: delivery.cursorAfter,
+    idempotencyKey: "cancel-input-task-claim",
+    leaseMs: 30_000,
+    taskId: created.task.taskId,
+  });
+  const started = kernel.startTask(execution, {
+    basedOnRoomSeq: claimed.event.roomSeq,
+    idempotencyKey: "cancel-input-task-start",
+    leaseMs: 30_000,
+    taskId: created.task.taskId,
+  });
+  const requested = kernel.requestTaskInput(execution, {
+    basedOnRoomSeq: started.event.roomSeq,
+    idempotencyKey: "cancel-input-request",
+    question: "Should this work continue?",
+    taskId: created.task.taskId,
+  });
+
+  const cancelled = kernel.cancelTask(humanActor, {
+    basedOnRoomSeq: requested.event.roomSeq,
+    idempotencyKey: "cancel-waiting-input-task",
+    reason: "The requirement was withdrawn",
+    taskId: created.task.taskId,
+  });
+  assert.equal(cancelled.task.state, "cancelled");
+  assert.equal(
+    cancelled.event.payload.cancelledInputRequestId,
+    requested.inputRequest.inputRequestId,
+  );
+  assert.deepEqual(
+    kernel.listInputRequests(humanActor, { roomId: room.roomId })[0],
+    {
+      ...requested.inputRequest,
+      cancelledAt: cancelled.task.cancelledAt,
+      cancelledBy: human.principalId,
+      cancellationReason: "The requirement was withdrawn",
+      state: "cancelled",
+      updatedAt: cancelled.task.cancelledAt,
+    },
+  );
+  assert.throws(
+    () =>
+      kernel.resolveInputRequest(humanActor, {
+        answer: "A cancelled request must stay terminal",
+        basedOnRoomSeq: cancelled.event.roomSeq,
+        idempotencyKey: "resolve-cancelled-input",
+        inputRequestId: requested.inputRequest.inputRequestId,
+      }),
+    ConflictError,
+  );
+  assert.throws(
+    () =>
+      kernel.humanNavigation.resolve(humanActor, {
+        target: {
+          inputRequestId: requested.inputRequest.inputRequestId,
+          kind: "input_request",
+          roomId: room.roomId,
+          taskId: created.task.taskId,
+        },
+      }),
+    ForbiddenError,
+  );
+  assert.equal(
+    kernel.cancelTask(humanActor, {
+      basedOnRoomSeq: requested.event.roomSeq,
+      idempotencyKey: "cancel-waiting-input-task",
+      reason: "The requirement was withdrawn",
+      taskId: created.task.taskId,
+    }).deduplicated,
+    true,
+  );
+
+  const reopened = kernel.reopenTask(humanActor, {
+    basedOnRoomSeq: cancelled.event.roomSeq,
+    idempotencyKey: "reopen-after-cancelled-input",
+    taskId: created.task.taskId,
+  });
+  assert.equal(reopened.task.state, "todo");
+  assert.equal(
+    kernel.listInputRequests(humanActor, { roomId: room.roomId })[0]?.state,
+    "cancelled",
+  );
+  const database = new DatabaseSync(databasePath);
+  assert.equal(
+    (
+      database
+        .prepare(
+          "SELECT COUNT(*) AS count FROM input_requests WHERE task_id = ? AND state = 'pending'",
+        )
+        .get(created.task.taskId) as { count: number }
+    ).count,
+    0,
+  );
+  database.close();
+  kernel.close();
+});
+
+test("schema v39 preserves legacy InputRequests while adding cancellation evidence", () => {
+  const { agent, databasePath, human, humanActor, kernel, room } =
+    createFixture();
+  const created = kernel.createTask(humanActor, {
+    assigneeId: agent.principalId,
+    idempotencyKey: "input-v38-task",
+    roomId: room.roomId,
+    title: "Preserve legacy input",
+  });
+  kernel.close();
+
+  const legacy = new DatabaseSync(databasePath);
+  legacy.exec(`
+    PRAGMA foreign_keys = OFF;
+    BEGIN IMMEDIATE;
+    DROP INDEX idx_input_requests_room_state;
+    DROP INDEX idx_one_pending_input_per_task;
+    ALTER TABLE input_requests RENAME TO input_requests_v38_source;
+    CREATE TABLE input_requests (
+      input_request_id TEXT PRIMARY KEY,
+      room_id TEXT NOT NULL REFERENCES rooms(room_id),
+      task_id TEXT NOT NULL REFERENCES tasks(task_id),
+      requester_id TEXT NOT NULL REFERENCES principals(principal_id),
+      responder_id TEXT NOT NULL REFERENCES principals(principal_id),
+      question TEXT NOT NULL,
+      state TEXT NOT NULL CHECK (state IN ('pending', 'resolved')),
+      answer TEXT,
+      resolved_by TEXT REFERENCES principals(principal_id),
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      resolved_at TEXT
+    ) STRICT;
+  `);
+  legacy
+    .prepare(
+      `INSERT INTO input_requests(
+         input_request_id, room_id, task_id, requester_id, responder_id,
+         question, state, created_at, updated_at
+       ) VALUES(?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
+    )
+    .run(
+      "input-legacy-v37",
+      room.roomId,
+      created.task.taskId,
+      agent.principalId,
+      human.principalId,
+      "Preserve this pending request",
+      "2026-08-25T01:00:00.000Z",
+      "2026-08-25T01:00:00.000Z",
+    );
+  legacy.exec(`
+    DROP TABLE input_requests_v38_source;
+    CREATE INDEX idx_input_requests_room_state
+      ON input_requests(room_id, state, created_at, input_request_id);
+    CREATE UNIQUE INDEX idx_one_pending_input_per_task
+      ON input_requests(task_id) WHERE state = 'pending';
+    PRAGMA user_version = 37;
+    COMMIT;
+    PRAGMA foreign_keys = ON;
+  `);
+  legacy.close();
+
+  const migratedKernel = new RoomKernel({ databasePath });
+  migratedKernel.initialize();
+  migratedKernel.close();
+  const migrated = new DatabaseSync(databasePath);
+  assert.equal(
+    (
+      migrated.prepare("PRAGMA user_version").get() as {
+        user_version: number;
+      }
+    ).user_version,
+    39,
+  );
+  assert.deepEqual(
+    migrated
+      .prepare("PRAGMA table_info(input_requests)")
+      .all()
+      .map((row) => (row as { name: string }).name)
+      .filter((name) => name.startsWith("cancel")),
+    ["cancelled_at", "cancelled_by", "cancellation_reason"],
+  );
+  assert.deepEqual(
+    migrated
+      .prepare(
+        `SELECT input_request_id, state, question, cancelled_at,
+                cancelled_by, cancellation_reason
+         FROM input_requests`,
+      )
+      .all()
+      .map((row) => ({ ...row })),
+    [
+      {
+        cancellation_reason: null,
+        cancelled_at: null,
+        cancelled_by: null,
+        input_request_id: "input-legacy-v37",
+        question: "Preserve this pending request",
+        state: "pending",
+      },
+    ],
+  );
+  assert.deepEqual(migrated.prepare("PRAGMA foreign_key_check").all(), []);
+  migrated.close();
+});
+
 test("the minimal InputRequest policy fails closed when a Task creator is not human", () => {
   const { agent, agentActor, kernel, otherAgent, room } = createFixture();
   const creatorCursor = kernel.sync(agentActor, {

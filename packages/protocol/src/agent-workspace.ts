@@ -10,9 +10,46 @@ const Path = z
       !p.split("/").some((x) => x === ".." || x === "."),
     "relative workspace path required",
   );
+export const AgentWorkspaceRootIdSchema = z.enum([
+  "agent-workspace",
+  "runtime-project",
+]);
+export const AgentWorkspaceRootKindSchema = AgentWorkspaceRootIdSchema;
+export const AgentWorkspaceRootsRequestSchema = z
+  .object({ agentDefinitionId: z.string().min(1) })
+  .strict();
+const AgentWorkspaceRootSchema = z
+  .object({
+    label: z.string().trim().min(1).max(96),
+    rootId: AgentWorkspaceRootIdSchema,
+    rootKind: AgentWorkspaceRootKindSchema,
+    rootPath: z.string().min(1).max(4096),
+    state: z.enum(["absent", "ready"]),
+  })
+  .strict()
+  .refine((root) => root.rootId === root.rootKind, {
+    message: "workspace root id and kind must agree",
+  });
+export const AgentWorkspaceRootsSchema = z
+  .object({
+    defaultRootId: AgentWorkspaceRootIdSchema,
+    roots: z.array(AgentWorkspaceRootSchema).min(1).max(2),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    const ids = value.roots.map((root) => root.rootId);
+    if (new Set(ids).size !== ids.length)
+      context.addIssue({ code: "custom", message: "duplicate workspace root" });
+    if (!ids.includes(value.defaultRootId))
+      context.addIssue({
+        code: "custom",
+        message: "default workspace root is unavailable",
+      });
+  });
 export const AgentWorkspaceListRequestSchema = z
   .object({
     agentDefinitionId: z.string().min(1),
+    rootId: AgentWorkspaceRootIdSchema.default("agent-workspace"),
     path: Path.default(""),
     includeHidden: z.boolean().default(false),
   })
@@ -20,13 +57,16 @@ export const AgentWorkspaceListRequestSchema = z
 export const AgentWorkspaceReadRequestSchema = z
   .object({
     agentDefinitionId: z.string().min(1),
+    rootId: AgentWorkspaceRootIdSchema.default("agent-workspace"),
     path: Path.refine((p) => p.length > 0),
   })
   .strict();
 export const AgentWorkspaceListSchema = z
   .object({
+    rootId: AgentWorkspaceRootIdSchema,
+    rootLabel: z.string().trim().min(1).max(96),
     rootPath: z.string(),
-    rootKind: z.literal("agent-home"),
+    rootKind: AgentWorkspaceRootKindSchema,
     state: z.enum(["absent", "ready"]),
     path: Path,
     truncated: z.boolean(),
@@ -48,6 +88,9 @@ export const AgentWorkspaceListSchema = z
   .strict();
 export const AgentWorkspaceFileSchema = z
   .object({
+    rootId: AgentWorkspaceRootIdSchema,
+    rootLabel: z.string().trim().min(1).max(96),
+    rootKind: AgentWorkspaceRootKindSchema,
     path: Path,
     content: z.string().max(7_000_000).nullable(),
     encoding: z.enum(["utf-8", "base64", "binary"]),
@@ -57,3 +100,5 @@ export const AgentWorkspaceFileSchema = z
   .strict();
 export type AgentWorkspaceListing = z.infer<typeof AgentWorkspaceListSchema>;
 export type AgentWorkspaceFile = z.infer<typeof AgentWorkspaceFileSchema>;
+export type AgentWorkspaceRoot = z.infer<typeof AgentWorkspaceRootSchema>;
+export type AgentWorkspaceRoots = z.infer<typeof AgentWorkspaceRootsSchema>;

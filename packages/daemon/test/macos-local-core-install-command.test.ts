@@ -141,27 +141,13 @@ test("macOS local Core install accepts an immutable product directory", () => {
   );
 });
 
-test("macOS local Core uninstall is explicit and data purge cannot leak into install", () => {
+test("macOS local Core uninstall is explicit and has no data-deletion surface", () => {
   assert.deepEqual(parseMacOSLocalCoreInstallArguments(["--uninstall"]), {
-    purgeData: false,
     uninstall: true,
   });
-  assert.deepEqual(
-    parseMacOSLocalCoreInstallArguments([
-      "--uninstall",
-      "--purge-data",
-      "--home",
-      "/Users/test/Library/Application Support/RAH OS",
-    ]),
-    {
-      home: "/Users/test/Library/Application Support/RAH OS",
-      purgeData: true,
-      uninstall: true,
-    },
-  );
   assert.throws(
     () => parseMacOSLocalCoreInstallArguments(["--purge-data"]),
-    /requires --uninstall/u,
+    /unknown local Core install option/u,
   );
   assert.throws(
     () =>

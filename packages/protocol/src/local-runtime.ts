@@ -71,6 +71,7 @@ export const LocalRuntimeInventoryResponseSchema = z
     hostId: IdentifierSchema,
     computer: z
       .object({
+        description: z.string().max(500).nullable().optional(),
         displayName: z.string().min(1),
         hostname: z.string().min(1),
         os: z.string().min(1),
@@ -78,6 +79,8 @@ export const LocalRuntimeInventoryResponseSchema = z
         observedAt: TimestampSchema,
         lastSeenAt: TimestampSchema.optional(),
         instanceId: IdentifierSchema.optional(),
+        profileRevision: z.number().int().nonnegative().optional(),
+        profileUpdatedAt: TimestampSchema.optional(),
         buildVersion: z.string().optional(),
         staleAfterMs: z.number().int().positive(),
       })

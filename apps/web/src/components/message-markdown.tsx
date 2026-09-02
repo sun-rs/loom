@@ -9,6 +9,14 @@ import {
   useState,
 } from "react";
 import type { ComponentPropsWithoutRef, ReactElement, ReactNode } from "react";
+import type {
+  MessageReference,
+  MessageReferenceReadState,
+  NavigationTarget,
+  Principal,
+  RoomKind,
+} from "@rah-os/protocol";
+import type { WorkspaceAgentView } from "@rah-os/ui-web";
 import Markdown from "react-markdown";
 import type { Components } from "react-markdown";
 import rehypeKatex from "rehype-katex";
@@ -26,6 +34,13 @@ import {
   remarkBareCjkAutolinks,
   transformMessageUrl,
 } from "../message-markdown-policy.ts";
+import {
+  splitSearchText,
+  tokenizeMessageText,
+  type MessageTextReferenceCatalog,
+  type MessageTextToken,
+} from "../message-rich-text.ts";
+import { MessageAgentReference } from "./agent-message-identity.tsx";
 
 const markdownSchema = {
   ...defaultSchema,
@@ -58,6 +73,209 @@ const rehypePlugins: NonNullable<
 type OpenFile = (path: string) => void | Promise<void>;
 const OpenFileContext = createContext<OpenFile | undefined>(undefined);
 
+export type MessageMarkdownReferences = {
+  agents: readonly WorkspaceAgentView[];
+  computers?: readonly { hostId: string; names: readonly string[] }[];
+  currentPrincipal?: Principal | undefined;
+  mentionReadStates?:
+    Readonly<Record<string, MessageReferenceReadState>> | undefined;
+  onOpenTarget?: ((target: NavigationTarget) => void) | undefined;
+  principals?: readonly Principal[];
+  rooms: readonly {
+    kind: RoomKind;
+    names: readonly string[];
+    peerNames?: readonly string[];
+    roomId: string;
+  }[];
+  tasks: readonly {
+    target: Extract<NavigationTarget, { kind: "task" }>;
+    taskId: string;
+    taskNumber: number;
+  }[];
+  threads?: readonly {
+    peerNames?: readonly string[];
+    roomId: string;
+    roomKind: RoomKind;
+    roomName: string;
+    rootMessageId: string;
+    threadId: string;
+  }[];
+};
+
+type RichTextContextValue = {
+  catalog: MessageTextReferenceCatalog;
+  highlightQuery?: string | undefined;
+  references: MessageMarkdownReferences;
+};
+const RichTextContext = createContext<RichTextContextValue | undefined>(
+  undefined,
+);
+
+function MarkdownRichChildren({ children }: { children: ReactNode }) {
+  return Children.map(children, (child) =>
+    typeof child === "string" || typeof child === "number" ? (
+      <MarkdownRichText value={String(child)} />
+    ) : (
+      child
+    ),
+  );
+}
+
+function HighlightedText({ value }: { value: string }) {
+  const query = useContext(RichTextContext)?.highlightQuery;
+  return splitSearchText(value, query).map((segment, index) =>
+    segment.highlighted ? (
+      <mark data-testid="thread-search-fragment-highlight" key={index}>
+        {segment.value}
+      </mark>
+    ) : (
+      segment.value
+    ),
+  );
+}
+
+function MarkdownRichText({ value }: { value: string }) {
+  const context = useContext(RichTextContext);
+  if (context === undefined) return value;
+  return tokenizeMessageText(value, context.catalog).map((token, index) => (
+    <MessageReferenceToken key={index} token={token} />
+  ));
+}
+
+function MentionReadDot({
+  state,
+}: {
+  state: MessageReferenceReadState | undefined;
+}) {
+  return state === undefined ? null : (
+    <span
+      aria-hidden="true"
+      className="rah-rich-mention-read-dot"
+      data-mention-read-state={state}
+    />
+  );
+}
+
+function referenceTarget(
+  token: MessageReference,
+): NavigationTarget | undefined {
+  switch (token.kind) {
+    case "agent":
+      return { agentDefinitionId: token.agentDefinitionId, kind: "agent" };
+    case "human":
+      return token.directRoomId === undefined
+        ? undefined
+        : { kind: "room", roomId: token.directRoomId };
+    case "room":
+      return { kind: "room", roomId: token.roomId };
+    case "thread":
+      return {
+        kind: "thread",
+        roomId: token.roomId,
+        rootMessageId: token.rootMessageId,
+        threadId: token.threadId,
+      };
+    case "task":
+      return {
+        kind: "task",
+        roomId: token.roomId,
+        rootMessageId: token.rootMessageId,
+        taskId: token.taskId,
+        threadId: token.threadId,
+      };
+    case "computer":
+      return { hostId: token.hostId, kind: "computer" };
+    case "message":
+      return {
+        kind: "message",
+        messageId: token.messageId,
+        roomId: token.roomId,
+        ...(token.rootMessageId === undefined || token.threadId === undefined
+          ? {}
+          : {
+              rootMessageId: token.rootMessageId,
+              threadId: token.threadId,
+            }),
+      };
+    case "app":
+      return undefined;
+  }
+}
+
+function referenceClassName(
+  token: Exclude<MessageTextToken, { kind: "text" }>,
+) {
+  if (token.kind === "unresolved")
+    return `rah-rich-reference rah-rich-${token.candidateKind}-reference rah-rich-unresolved-reference`;
+  if (token.kind === "human" && token.self)
+    return "rah-rich-reference rah-rich-self-reference";
+  if (token.kind === "agent" || token.kind === "human")
+    return "rah-rich-agent-reference";
+  return `rah-rich-reference rah-rich-${token.kind}-reference`;
+}
+
+function MessageReferenceToken({ token }: { token: MessageTextToken }) {
+  const context = useContext(RichTextContext);
+  if (token.kind === "text" || context === undefined)
+    return <HighlightedText value={token.value} />;
+  const content = <HighlightedText value={token.value} />;
+  if (token.kind === "agent") {
+    const agent = context.references.agents.find(
+      ({ agentDefinitionId }) => agentDefinitionId === token.agentDefinitionId,
+    );
+    return agent === undefined ? (
+      content
+    ) : (
+      <MessageAgentReference agent={agent} readState={token.readState}>
+        {content}
+      </MessageAgentReference>
+    );
+  }
+  if (token.kind === "unresolved")
+    return (
+      <span
+        aria-disabled="true"
+        className={referenceClassName(token)}
+        title="引用目标当前不可用"
+      >
+        {content}
+      </span>
+    );
+  const target = referenceTarget(token);
+  const className = referenceClassName(token);
+  const readDot =
+    token.kind === "human" ? <MentionReadDot state={token.readState} /> : null;
+  if (token.kind === "app")
+    return (
+      <span className={className} title="仅显示 App 引用">
+        {content}
+      </span>
+    );
+  if (
+    target === undefined ||
+    context.references.onOpenTarget === undefined ||
+    (token.kind === "human" && token.self)
+  )
+    return (
+      <span className={className}>
+        {content}
+        {readDot}
+      </span>
+    );
+  return (
+    <button
+      aria-label={`打开引用 ${token.value}`}
+      className={className}
+      onClick={() => context.references.onOpenTarget?.(target)}
+      title={`打开 ${token.value}`}
+      type="button"
+    >
+      {content}
+      {readDot}
+    </button>
+  );
+}
+
 function MarkdownLink({ children, href }: ComponentPropsWithoutRef<"a">) {
   const onOpenFile = useContext(OpenFileContext);
   return (
@@ -72,9 +290,53 @@ function MarkdownLink({ children, href }: ComponentPropsWithoutRef<"a">) {
 // Context keeps file actions current without changing any component identity.
 const markdownComponents: Components = {
   a: MarkdownLink,
-  blockquote: ({ children }) => <blockquote>{children}</blockquote>,
+  blockquote: ({ children }) => (
+    <blockquote>
+      <MarkdownRichChildren>{children}</MarkdownRichChildren>
+    </blockquote>
+  ),
   code: ({ children, className }) => (
     <code className={className}>{children}</code>
+  ),
+  del: ({ children }) => (
+    <del>
+      <MarkdownRichChildren>{children}</MarkdownRichChildren>
+    </del>
+  ),
+  em: ({ children }) => (
+    <em>
+      <MarkdownRichChildren>{children}</MarkdownRichChildren>
+    </em>
+  ),
+  h1: ({ children }) => (
+    <h1>
+      <MarkdownRichChildren>{children}</MarkdownRichChildren>
+    </h1>
+  ),
+  h2: ({ children }) => (
+    <h2>
+      <MarkdownRichChildren>{children}</MarkdownRichChildren>
+    </h2>
+  ),
+  h3: ({ children }) => (
+    <h3>
+      <MarkdownRichChildren>{children}</MarkdownRichChildren>
+    </h3>
+  ),
+  h4: ({ children }) => (
+    <h4>
+      <MarkdownRichChildren>{children}</MarkdownRichChildren>
+    </h4>
+  ),
+  h5: ({ children }) => (
+    <h5>
+      <MarkdownRichChildren>{children}</MarkdownRichChildren>
+    </h5>
+  ),
+  h6: ({ children }) => (
+    <h6>
+      <MarkdownRichChildren>{children}</MarkdownRichChildren>
+    </h6>
   ),
   img: ({ alt, src, title }) =>
     typeof src === "string" && src !== "" ? (
@@ -90,37 +352,145 @@ const markdownComponents: Components = {
       <span className="rah-markdown-image-blocked">[图片地址已阻止]</span>
     ),
   pre: ({ children }) => <MarkdownPre>{children}</MarkdownPre>,
+  p: ({ children }) => (
+    <p>
+      <MarkdownRichChildren>{children}</MarkdownRichChildren>
+    </p>
+  ),
+  li: ({ children }) => (
+    <li>
+      <MarkdownRichChildren>{children}</MarkdownRichChildren>
+    </li>
+  ),
+  strong: ({ children }) => (
+    <strong>
+      <MarkdownRichChildren>{children}</MarkdownRichChildren>
+    </strong>
+  ),
   table: ({ children }) => (
     <div className="rah-markdown-table-scroll">
       <table>{children}</table>
     </div>
   ),
+  td: ({ children }) => (
+    <td>
+      <MarkdownRichChildren>{children}</MarkdownRichChildren>
+    </td>
+  ),
+  th: ({ children }) => (
+    <th>
+      <MarkdownRichChildren>{children}</MarkdownRichChildren>
+    </th>
+  ),
 };
 
 export function MessageMarkdown({
+  highlightQuery,
   onOpenFile,
+  references,
   source,
 }: {
+  highlightQuery?: string | undefined;
   onOpenFile?: OpenFile;
+  references?: MessageMarkdownReferences | undefined;
   source: string;
 }) {
+  const richText =
+    references === undefined
+      ? undefined
+      : {
+          catalog: {
+            agents: references.agents.map((agent) => ({
+              agentDefinitionId: agent.agentDefinitionId,
+              names: [agent.handle, agent.displayName],
+              principalId: agent.participantId,
+              ...(references.mentionReadStates?.[agent.participantId] ===
+              undefined
+                ? {}
+                : {
+                    readState:
+                      references.mentionReadStates[agent.participantId],
+                  }),
+            })),
+            computers: references.computers ?? [],
+            principals: [
+              ...(references.principals ?? []),
+              ...(references.currentPrincipal === undefined ||
+              references.principals?.some(
+                ({ principalId }) =>
+                  principalId === references.currentPrincipal?.principalId,
+              )
+                ? []
+                : [references.currentPrincipal]),
+            ]
+              .filter(({ kind }) => kind === "human")
+              .map((principal) => {
+                const names = [
+                  principal.handle,
+                  ...(principal.displayName === undefined
+                    ? []
+                    : [principal.displayName]),
+                ];
+                const directRoomId = references.rooms.find(
+                  ({ kind, peerNames = [] }) =>
+                    kind === "direct" &&
+                    peerNames.some((name) =>
+                      names.some(
+                        (candidate) =>
+                          candidate.toLocaleLowerCase() ===
+                          name.toLocaleLowerCase(),
+                      ),
+                    ),
+                )?.roomId;
+                return {
+                  ...(directRoomId === undefined ? {} : { directRoomId }),
+                  kind: "human" as const,
+                  names,
+                  principalId: principal.principalId,
+                  ...(references.mentionReadStates?.[principal.principalId] ===
+                  undefined
+                    ? {}
+                    : {
+                        readState:
+                          references.mentionReadStates[principal.principalId],
+                      }),
+                  self:
+                    principal.principalId ===
+                    references.currentPrincipal?.principalId,
+                };
+              }),
+            rooms: references.rooms,
+            tasks: references.tasks.map(({ target, taskId, taskNumber }) => ({
+              roomId: target.roomId,
+              rootMessageId: target.rootMessageId!,
+              taskId,
+              taskNumber,
+              threadId: target.threadId!,
+            })),
+            threads: references.threads ?? [],
+          },
+          highlightQuery,
+          references,
+        };
   return (
     <OpenFileContext.Provider value={onOpenFile}>
-      <div
-        className="rah-message-markdown"
-        data-raft-markdown-content=""
-        translate="no"
-      >
-        <Markdown
-          components={markdownComponents}
-          rehypePlugins={rehypePlugins}
-          remarkPlugins={remarkPlugins}
-          skipHtml
-          urlTransform={transformMessageUrl}
+      <RichTextContext.Provider value={richText}>
+        <div
+          className="rah-message-markdown"
+          data-raft-markdown-content=""
+          translate="no"
         >
-          {source}
-        </Markdown>
-      </div>
+          <Markdown
+            components={markdownComponents}
+            rehypePlugins={rehypePlugins}
+            remarkPlugins={remarkPlugins}
+            skipHtml
+            urlTransform={transformMessageUrl}
+          >
+            {source}
+          </Markdown>
+        </div>
+      </RichTextContext.Provider>
     </OpenFileContext.Provider>
   );
 }

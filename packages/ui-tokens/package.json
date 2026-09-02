@@ -13,6 +13,7 @@
     "./discovery-icons.svg": "./src/discovery-icons.svg",
     "./interaction-icons.svg": "./src/interaction-icons.svg",
     "./members.css": "./generated/generated/raft-official-members-page.css",
+    "./official-fonts.css": "./generated/vendor/raft/official-fonts.css",
     "./overlays.css": "./generated/generated/raft-official-overlays.css",
     "./styles.css": "./generated/styles.css",
     "./tasks.css": "./generated/generated/raft-official-tasks.css"

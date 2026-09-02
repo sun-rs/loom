@@ -42,6 +42,8 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "agent.trajectory.list",
     "agent.workspace.list",
     "agent.workspace.read",
+    "agent.workspace.roots",
+    "computer.profile.update",
     "file.cancel",
     "file.list",
     "file.prepare",
@@ -78,14 +80,19 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "push.unsubscribe",
     "room.acknowledge",
     "room.agent.activity.list",
+    "room.archive",
     "room.create",
     "room.direct.open",
+    "room.leave",
     "room.list",
     "room.member.add",
     "room.member.list",
     "room.member.remove",
     "room.member.role",
+    "room.sos.resume",
+    "room.sos.stop",
     "room.sync",
+    "room.unarchive",
     "room.update",
     "search",
     "sidebar.get",
@@ -103,10 +110,14 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "task.unassign",
     "task.unblock",
     "thread.create",
+    "thread.follower.remove",
+    "thread.follower.restore",
+    "thread.followers",
     "thread.list",
     "thread.reply",
     "workspace.create",
     "workspace.list",
+    "workspace.member-graph.get",
     "workspace.update",
   ]);
 });
@@ -136,6 +147,30 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       input: { roomId: "room-main", threadId: "thread-main", following: true },
       operation: "activity.follow",
       path: "/v3/client/activity/follow",
+    },
+    {
+      input: { roomId: "room-main", threadId: "thread-main" },
+      operation: "thread.followers",
+      path: "/v3/client/activity/thread-followers",
+    },
+    {
+      input: {
+        participantId: "principal-agent",
+        roomId: "room-main",
+        threadId: "thread-main",
+      },
+      operation: "thread.follower.remove",
+      path: "/v3/client/activity/thread-followers/remove",
+    },
+    {
+      input: {
+        participantId: "principal-agent",
+        roomId: "room-main",
+        threadId: "thread-main",
+        undoToken: "thread-follower-undo",
+      },
+      operation: "thread.follower.restore",
+      path: "/v3/client/activity/thread-followers/restore",
     },
     {
       input: { workspaceId: "workspace-main" },
@@ -210,6 +245,11 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       input: { agentDefinitionId: "agent-definition" },
       operation: "agent.memory.config.get",
       path: "/v3/client/agents/memory/config/get",
+    },
+    {
+      input: { agentDefinitionId: "agent-definition" },
+      operation: "agent.workspace.roots",
+      path: "/v3/client/agents/workspace/roots",
     },
     {
       input: {
@@ -516,6 +556,15 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
     },
     {
       input: {
+        basedOnRoomSeq: 2,
+        idempotencyKey: "room-archive",
+        roomId: "room-main",
+      },
+      operation: "room.archive",
+      path: "/v3/client/rooms/archive",
+    },
+    {
+      input: {
         basedOnControlRoomSeq: 1,
         idempotencyKey: "room-create",
         kind: "channel",
@@ -525,6 +574,15 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       },
       operation: "room.create",
       path: "/v3/client/rooms/create",
+    },
+    {
+      input: {
+        basedOnRoomSeq: 3,
+        idempotencyKey: "room-unarchive",
+        roomId: "room-main",
+      },
+      operation: "room.unarchive",
+      path: "/v3/client/rooms/unarchive",
     },
     {
       input: {
@@ -547,6 +605,34 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       },
       operation: "room.direct.open",
       path: "/v3/client/rooms/direct/open",
+    },
+    {
+      input: {
+        basedOnRoomSeq: 3,
+        idempotencyKey: "room-leave",
+        roomId: "room-main",
+      },
+      operation: "room.leave",
+      path: "/v3/client/rooms/leave",
+    },
+    {
+      input: {
+        basedOnRoomSeq: 4,
+        guidance: "重新读取 Room 后继续。",
+        idempotencyKey: "room-sos-resume",
+        roomId: "room-main",
+      },
+      operation: "room.sos.resume",
+      path: "/v3/client/rooms/sos/resume",
+    },
+    {
+      input: {
+        basedOnRoomSeq: 3,
+        idempotencyKey: "room-sos-stop",
+        roomId: "room-main",
+      },
+      operation: "room.sos.stop",
+      path: "/v3/client/rooms/sos/stop",
     },
     {
       input: { roomId: "room-main" },
@@ -747,6 +833,11 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       input: {},
       operation: "workspace.list",
       path: "/v3/client/workspaces/list",
+    },
+    {
+      input: { workspaceId: "workspace-main" },
+      operation: "workspace.member-graph.get",
+      path: "/v3/client/workspaces/member-graph",
     },
   ];
   const request = client.request.bind(client) as (

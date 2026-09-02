@@ -29,6 +29,12 @@ export function useDialogProtocol(input: {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      const topDialog = [
+        ...document.querySelectorAll<HTMLElement>(
+          '[role="dialog"][aria-modal="true"]',
+        ),
+      ].at(-1);
+      if (topDialog !== dialogRef.current) return;
       if (event.key === "Escape" && !blockedRef.current) {
         event.preventDefault();
         onCloseRef.current();

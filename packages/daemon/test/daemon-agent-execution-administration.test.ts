@@ -153,7 +153,7 @@ function fakeHuman(
 function receipt(
   input: Readonly<{
     agentDefinitionId: string;
-    mode: "restart" | "session";
+    mode: "restart" | "session" | "full";
     operationId: string;
     ownerParticipantId: string;
   }>,
@@ -166,6 +166,6 @@ function receipt(
     mode: input.mode,
     operationId: input.operationId,
     ownerParticipantId: input.ownerParticipantId,
-    providerContinuityRecords: input.mode === "session" ? 1 : 0,
+    providerContinuityRecords: input.mode === "restart" ? 0 : 1,
   };
 }

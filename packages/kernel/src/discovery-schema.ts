@@ -1,4 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
+import { messageHasMention } from "@rah-os/protocol";
 
 // A shared view of the existing canonical Message -> Room event mapping.
 // Never derives sequence or message truth from provider logs.
@@ -64,12 +65,6 @@ export function initializeDiscoverySchema(db: DatabaseSync) {
   if (!hadMessageSearch)
     db.exec("INSERT INTO message_search(message_search) VALUES('rebuild')");
   db.function("rah_has_mention", { deterministic: true }, (body, handle) => {
-    const escaped = String(handle).replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&");
-    return Number(
-      new RegExp(
-        `(^|[^\\p{L}\\p{N}_-])@${escaped}(?![\\p{L}\\p{N}_-])`,
-        "iu",
-      ).test(String(body)),
-    );
+    return Number(messageHasMention(String(body), String(handle)));
   });
 }

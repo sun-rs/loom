@@ -29,10 +29,12 @@ const OPTIONS = [
 
 export function AgentExecutionResetDialog({
   agentName,
+  fullResetEnabled,
   onClose,
   onConfirm,
 }: {
   agentName: string;
+  fullResetEnabled: boolean;
   onClose: () => void;
   onConfirm: (mode: AgentExecutionResetMode) => Promise<void>;
 }) {
@@ -99,19 +101,19 @@ export function AgentExecutionResetDialog({
           <fieldset disabled={pending}>
             <legend className="sr-only">重启方式</legend>
             {OPTIONS.map((option) => {
-              const full = option.mode === "full";
-              const selected = !full && mode === option.mode;
+              const disabled = option.mode === "full" && !fullResetEnabled;
+              const selected = mode === option.mode;
               return (
                 <label
-                  className={`rah-agent-reset-option is-${option.tone}${selected ? " is-selected" : ""}${full ? " is-disabled" : ""}`}
+                  className={`rah-agent-reset-option is-${option.tone}${selected ? " is-selected" : ""}${disabled ? " is-disabled" : ""}`}
                   key={option.mode}
                 >
                   <input
                     checked={selected}
-                    disabled={full}
+                    disabled={disabled}
                     name="agent-reset-mode"
                     onChange={() => {
-                      if (!full) setMode(option.mode);
+                      if (!disabled) setMode(option.mode);
                     }}
                     type="radio"
                     value={option.mode}
@@ -119,14 +121,20 @@ export function AgentExecutionResetDialog({
                   <span>
                     <b>{option.label}</b>
                     <small>{option.description}</small>
-                    {full ? (
-                      <em>本机正式版暂未开放：没有安全的项目文件删除合同。</em>
+                    {disabled ? (
+                      <em>当前 daemon 尚未开放安全的完全重置。</em>
                     ) : null}
                   </span>
                 </label>
               );
             })}
           </fieldset>
+          {mode === "full" ? (
+            <p className="rah-agent-reset-warning" role="note">
+              这会永久删除此 Agent 工作区中的全部文件，包括 MEMORY.md 和
+              notes/，且无法撤销。本机项目目录不会被删除。
+            </p>
+          ) : null}
           {error ? (
             <p className="rah-dialog-error" role="alert">
               {error}
@@ -149,9 +157,11 @@ export function AgentExecutionResetDialog({
               <Icon name="rotate-ccw" />
               {pending
                 ? "重启中…"
-                : mode === "session"
-                  ? "重置会话并重启"
-                  : "重新启动"}
+                : mode === "full"
+                  ? "完全重置并重启"
+                  : mode === "session"
+                    ? "重置会话并重启"
+                    : "重新启动"}
             </button>
           </footer>
         </form>

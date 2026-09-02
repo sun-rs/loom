@@ -27,6 +27,10 @@ const sourcePaths = [
   "styles.css",
   "tokens.brutal.css",
   "vendor/raft/fonts/raft-quote-glyphs.woff2",
+  "vendor/raft/fonts/space-grotesk-latin.woff2",
+  "vendor/raft/fonts/space-mono-400-latin.woff2",
+  "vendor/raft/fonts/space-mono-700-latin.woff2",
+  "vendor/raft/official-fonts.css",
 ];
 
 const files = sourcePaths.map((sourcePath) => {

@@ -23,6 +23,22 @@
   height: 24px;
   flex-shrink: 0;
 }
+.rah-workspace-path > select {
+  min-width: 0;
+  max-width: 180px;
+  height: 28px;
+  flex: 0 1 auto;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  background: var(--white);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+}
+.rah-workspace-path > select:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
 .rah-workspace-path code {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -151,6 +167,32 @@
   padding: 12px;
   border-bottom: 1px solid var(--ink-10);
   font-size: 12px;
+}
+.rah-workspace-view-mode {
+  display: flex;
+  margin-left: auto;
+  border: 1px solid var(--ink);
+}
+.rah-workspace-view-mode > button {
+  min-width: 44px;
+  padding: 3px 6px;
+  border-right: 1px solid var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+}
+.rah-workspace-view-mode > button:last-child {
+  border-right: 0;
+}
+.rah-workspace-view-mode > button[aria-pressed="true"] {
+  background: var(--yellow);
+}
+.rah-workspace-markdown {
+  padding: 16px;
+  overflow-wrap: anywhere;
+}
+.rah-workspace-markdown .rah-message-markdown {
+  font-size: 13px;
+  line-height: 1.55;
 }
 .rah-workspace-preview pre {
   padding: 16px;

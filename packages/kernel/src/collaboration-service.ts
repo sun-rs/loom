@@ -89,6 +89,12 @@ export type WorkspaceRoomUpdateInput = {
   visibility: "public" | "private";
 };
 
+export type WorkspaceRoomLifecycleInput = {
+  basedOnRoomSeq: number;
+  idempotencyKey: string;
+  roomId: string;
+};
+
 export type DirectRoomOpenInput = {
   basedOnControlRoomSeq: number;
   idempotencyKey: string;
@@ -619,6 +625,94 @@ export class CollaborationService {
     };
   }
 
+  archiveWorkspaceRoom(
+    actor: Principal,
+    input: WorkspaceRoomLifecycleInput,
+  ): RoomMutationResult {
+    return this.#changeWorkspaceRoomArchiveState(actor, input, true);
+  }
+
+  unarchiveWorkspaceRoom(
+    actor: Principal,
+    input: WorkspaceRoomLifecycleInput,
+  ): RoomMutationResult {
+    return this.#changeWorkspaceRoomArchiveState(actor, input, false);
+  }
+
+  #changeWorkspaceRoomArchiveState(
+    actor: Principal,
+    input: WorkspaceRoomLifecycleInput,
+    archive: boolean,
+  ): RoomMutationResult {
+    if (actor.kind !== "human") {
+      throw new ForbiddenError("only Human principals can archive Rooms");
+    }
+    const existing = this.#requireRoom(input.roomId);
+    if (text(existing, "kind") !== "channel") {
+      throw new ConflictError("only managed Channels can be archived");
+    }
+    requireRoomManager(this.#database, input.roomId, actor.principalId);
+    const idempotencyKey = this.#requiredLabel(
+      input.idempotencyKey,
+      "idempotencyKey",
+    );
+    const expectedType = archive ? "room.archived" : "room.unarchived";
+    const previous = this.#findEvent(input.roomId, idempotencyKey);
+    if (previous !== undefined) {
+      const event = this.#events.eventFromRow(previous);
+      if (
+        event.type !== expectedType ||
+        event.actorId !== actor.principalId ||
+        event.aggregateType !== "room" ||
+        event.aggregateId !== input.roomId
+      ) {
+        throw this.#idempotencyConflict(idempotencyKey);
+      }
+      return {
+        deduplicated: true,
+        event,
+        room: this.#roomFromId(input.roomId),
+      };
+    }
+    const archivedAt = nullableText(existing, "archived_at");
+    if (archive ? archivedAt !== null : archivedAt === null) {
+      throw new ConflictError(
+        `Room ${input.roomId} is already ${archive ? "archived" : "active"}`,
+      );
+    }
+    this.#assertFreshContext(input.roomId, actor, input.basedOnRoomSeq);
+    const changedAt = this.#timestamp();
+    if (archive) {
+      this.#assertNoActiveRoomWork(input.roomId);
+    } else {
+      this.#database
+        .prepare("UPDATE rooms SET archived_at = NULL WHERE room_id = ?")
+        .run(input.roomId);
+    }
+    const event = this.#events.append({
+      actorId: actor.principalId,
+      aggregateId: input.roomId,
+      aggregateType: "room",
+      idempotencyKey,
+      payload: {
+        basedOnRoomSeq: input.basedOnRoomSeq,
+        changedAt,
+      },
+      roomId: input.roomId,
+      type: expectedType,
+    });
+    if (archive) {
+      this.#database
+        .prepare("UPDATE rooms SET archived_at = ? WHERE room_id = ?")
+        .run(changedAt, input.roomId);
+    }
+    return {
+      deduplicated: false,
+      event,
+      room: this.#roomFromId(input.roomId),
+    };
+  }
+
   openDirectRoom(actor: Principal, input: DirectRoomOpenInput): Room {
     if (actor.kind !== "human") {
       throw new ForbiddenError("only Human principals can open Direct Rooms");
@@ -1028,6 +1122,76 @@ export class CollaborationService {
       deduplicated: false,
       event,
       removedPrincipalId: input.principalId,
+    };
+  }
+
+  leaveRoom(
+    actor: Principal,
+    input: WorkspaceRoomLifecycleInput,
+  ): RoomMembershipRemovalResult {
+    if (actor.kind !== "human") {
+      throw new ForbiddenError("only Human principals can leave Channels");
+    }
+    const room = this.#requireRoom(input.roomId);
+    if (text(room, "kind") !== "channel") {
+      throw new ConflictError("only regular Channels can be left");
+    }
+    const idempotencyKey = this.#requiredLabel(
+      input.idempotencyKey,
+      "idempotencyKey",
+    );
+    const previous = this.#findEvent(input.roomId, idempotencyKey);
+    if (previous !== undefined) {
+      const event = this.#events.eventFromRow(previous);
+      if (
+        event.type !== "membership.removed" ||
+        event.actorId !== actor.principalId ||
+        event.aggregateType !== "membership" ||
+        event.aggregateId !== actor.principalId ||
+        event.payload.participantId !== actor.principalId
+      ) {
+        throw this.#idempotencyConflict(idempotencyKey);
+      }
+      return {
+        deduplicated: true,
+        event,
+        removedPrincipalId: actor.principalId,
+      };
+    }
+
+    const membership = this.#membershipFromIds(input.roomId, actor.principalId);
+    this.#assertFreshContext(input.roomId, actor, input.basedOnRoomSeq);
+    if (membership.role === "owner") {
+      const ownerCount = this.#database
+        .prepare(
+          "SELECT COUNT(*) AS count FROM memberships WHERE room_id = ? AND role = 'owner'",
+        )
+        .get(input.roomId);
+      if (integer(ownerCount!, "count") <= 1) {
+        throw new ConflictError("cannot leave as the last owner of a Room");
+      }
+    }
+    this.#assertNoActiveMembershipWork(input.roomId, actor.principalId);
+    const event = this.#events.append({
+      actorId: actor.principalId,
+      aggregateId: actor.principalId,
+      aggregateType: "membership",
+      idempotencyKey,
+      payload: {
+        basedOnRoomSeq: input.basedOnRoomSeq,
+        participantId: actor.principalId,
+        previousRole: membership.role,
+      },
+      roomId: input.roomId,
+      type: "membership.removed",
+    });
+    this.#database
+      .prepare("DELETE FROM memberships WHERE room_id = ? AND principal_id = ?")
+      .run(input.roomId, actor.principalId);
+    return {
+      deduplicated: false,
+      event,
+      removedPrincipalId: actor.principalId,
     };
   }
 
@@ -2030,6 +2194,56 @@ export class CollaborationService {
     ) {
       throw new ConflictError(
         `principal ${principalId} has active collaboration work in Room ${roomId}`,
+      );
+    }
+  }
+
+  #assertNoActiveRoomWork(roomId: string): void {
+    const checks = [
+      this.#database
+        .prepare(
+          `SELECT 1 AS present FROM tasks
+           WHERE room_id = ? AND state NOT IN ('completed', 'cancelled')
+           LIMIT 1`,
+        )
+        .get(roomId),
+      this.#database
+        .prepare(
+          `SELECT 1 AS present FROM input_requests
+           WHERE room_id = ? AND state = 'pending' LIMIT 1`,
+        )
+        .get(roomId),
+      this.#database
+        .prepare(
+          `SELECT 1 AS present FROM activations
+           WHERE room_id = ? AND state IN ('queued', 'leased', 'quarantined')
+           LIMIT 1`,
+        )
+        .get(roomId),
+      this.#database
+        .prepare(
+          `SELECT 1 AS present FROM run_attempts
+           WHERE room_id = ? AND state IN ('starting', 'running', 'orphaned')
+           LIMIT 1`,
+        )
+        .get(roomId),
+      this.#database
+        .prepare(
+          `SELECT 1 AS present FROM runtime_processes
+           WHERE room_id = ? AND state IN ('prepared', 'active', 'orphaned')
+           LIMIT 1`,
+        )
+        .get(roomId),
+      this.#database
+        .prepare(
+          `SELECT 1 AS present FROM managed_mcp_calls
+           WHERE room_id = ? AND state = 'pending' LIMIT 1`,
+        )
+        .get(roomId),
+    ];
+    if (checks.some((result) => result !== undefined)) {
+      throw new ConflictError(
+        `Room ${roomId} has active collaboration work and cannot be archived`,
       );
     }
   }

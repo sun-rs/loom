@@ -37,6 +37,7 @@ import type {
   ClientAgentGetResponse,
   ClientHealthResponse,
   InputRequest,
+  LocalComputerProfile,
   LocalRuntimeInventoryEntry,
   MembershipRole,
   Message,
@@ -90,6 +91,7 @@ import {
   TaskPane,
   ThreadPane,
   type ThreadReplyPreview,
+  type ThreadSearchMatch,
   UnavailablePane,
 } from "./components/conversation-panes.tsx";
 import { ConnectionScreen } from "./components/connection-screen.tsx";
@@ -107,6 +109,7 @@ import { AgentDirectoryPane } from "./components/agent-directory-pane.tsx";
 import { SettingsSurface } from "./components/settings-surface.tsx";
 import { HumanInboxCenter } from "./components/human-inbox.tsx";
 import { RoomSidebarResizer } from "./components/room-sidebar-resizer.tsx";
+import { ThreadPanelResizer } from "./components/thread-panel-resizer.tsx";
 import {
   ChannelHeader,
   MobileNavigation,
@@ -117,8 +120,15 @@ import {
   type Tab,
 } from "./components/workspace-navigation.tsx";
 import { useRoomSidebarWidth } from "./use-room-sidebar-width.ts";
+import { useThreadPanelWidth } from "./use-thread-panel-width.ts";
+import { useThreadFocusReturn } from "./thread-focus-return.ts";
+import { loadThreadHistoryPages } from "./thread-history.ts";
 import { pendingInputRequestsForHuman } from "./human-inbox-projection.ts";
 import { useReconciledQuery } from "./use-reconciled-query.ts";
+import {
+  canEditRoomMemberRole,
+  canHumanLeaveRoom,
+} from "./room-member-role.ts";
 import { useSystemNotices } from "./use-system-notices.ts";
 import { useDefaultWebPush } from "./use-default-web-push.ts";
 import {
@@ -128,10 +138,12 @@ import {
 import { DiagnosticNavigationContext } from "./components/diagnostic-references.tsx";
 import { createLatestRequest } from "./latest-request.ts";
 import {
+  agentDirectoryRootRoute,
   agentRouteFromSearch,
   agentRouteSearch,
   type AgentRouteSelection,
 } from "./agent-route.ts";
+import { rememberWorkspaceLocation } from "./workspace-switcher-state.ts";
 
 type AppProps = { client?: RahClient };
 declare const __RAH_TRUSTED_PROXY_AUTH__: boolean;
@@ -193,12 +205,19 @@ function WorkspaceScreen({
     setWidth: setRoomSidebarWidth,
     commit: commitRoomSidebarWidth,
   } = useRoomSidebarWidth();
+  const {
+    width: threadPanelWidth,
+    setWidth: setThreadPanelWidth,
+    commit: commitThreadPanelWidth,
+  } = useThreadPanelWidth();
+  const { rememberThreadFocus, restoreThreadFocus } = useThreadFocusReturn();
   const [health, setHealth] = useState<ClientHealthResponse>();
   const [currentPrincipal, setCurrentPrincipal] = useState<Principal>();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string>();
   const [peekAgentId, setPeekAgentId] = useState<string>();
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [archivedRooms, setArchivedRooms] = useState<Room[]>([]);
   const [activeRoomId, setActiveRoomId] = useState<string>();
   const [roomData, setRoomData] = useState<RoomData>();
   const [activeThreadRootMessageId, setActiveThreadRootMessageId] = useState<
@@ -211,6 +230,9 @@ function WorkspaceScreen({
   });
   const [threadMessages, setThreadMessages] = useState<Message[]>([]);
   const [threadLoading, setThreadLoading] = useState(false);
+  const [threadHasEarlierReplies, setThreadHasEarlierReplies] = useState(false);
+  const [threadEarlierRepliesLoading, setThreadEarlierRepliesLoading] =
+    useState(false);
   const [earlierMessagesLoading, setEarlierMessagesLoading] = useState(false);
   const [tab, setTab] = useState<Tab>(() =>
     roomTabFromSearch(window.location.search),
@@ -223,16 +245,38 @@ function WorkspaceScreen({
   const [agentRoute, setAgentRoute] = useState<AgentRouteSelection>(() =>
     agentRouteFromSearch(window.location.search),
   );
+  const [navigationError, setNavigationError] = useState<string>();
   const invalidateNavigation = useCallback(() => {
     diagnosticNavigation.current.cancel();
     return ++navigationGeneration.current;
   }, []);
   const openAgentPeek = useCallback(
-    (agentDefinitionId: string) => {
-      invalidateNavigation();
-      setPeekAgentId(agentDefinitionId);
+    async (agentDefinitionId: string) => {
+      const epoch = invalidateNavigation();
+      setNavigationError(undefined);
+      try {
+        const resolved = await client.request("navigation.resolve", {
+          target: { agentDefinitionId, kind: "agent" },
+        });
+        if (
+          navigationGeneration.current !== epoch ||
+          resolved.target.kind !== "agent"
+        )
+          return false;
+        setPeekAgentId(resolved.target.agentDefinitionId);
+        return true;
+      } catch (failure) {
+        if (navigationGeneration.current === epoch) {
+          setNavigationError(
+            failure instanceof Error
+              ? failure.message
+              : "Agent 已不存在或你已无权访问。",
+          );
+        }
+        return false;
+      }
     },
-    [invalidateNavigation],
+    [client, invalidateNavigation],
   );
   const setSurface = useCallback(
     (next: Surface) => {
@@ -277,7 +321,6 @@ function WorkspaceScreen({
     locationResult.data.message.roomId === activeRoomId
       ? locationResult.data
       : undefined;
-  const [navigationError, setNavigationError] = useState<string>();
   useEffect(() => {
     if (
       focusedMessageId !== undefined &&
@@ -349,6 +392,8 @@ function WorkspaceScreen({
     return () => window.removeEventListener("rah:push-navigate", navigate);
   }, [openDiscoveryLocation]);
   const inventory = useReconciledQuery(client, "host.runtime.list", {});
+  const [computerProfileOverride, setComputerProfileOverride] =
+    useState<LocalComputerProfile>();
   const [localRuntimes, setLocalRuntimes] = useState<
     LocalRuntimeInventoryEntry[]
   >([]);
@@ -356,7 +401,28 @@ function WorkspaceScreen({
     if (inventory?.data) setLocalRuntimes(inventory.data.runtimes);
   }, [inventory?.data]);
   const localRuntimeHostId = inventory?.data?.hostId;
-  const computer = inventory?.error ? undefined : inventory?.data?.computer;
+  const observedComputer = inventory?.error
+    ? undefined
+    : inventory?.data?.computer;
+  useEffect(() => {
+    if (
+      computerProfileOverride !== undefined &&
+      (observedComputer?.profileRevision ?? 0) >=
+        computerProfileOverride.revision
+    ) {
+      setComputerProfileOverride(undefined);
+    }
+  }, [computerProfileOverride, observedComputer?.profileRevision]);
+  const computer =
+    observedComputer === undefined || computerProfileOverride === undefined
+      ? observedComputer
+      : {
+          ...observedComputer,
+          description: computerProfileOverride.description,
+          displayName: computerProfileOverride.displayName,
+          profileRevision: computerProfileOverride.revision,
+          profileUpdatedAt: computerProfileOverride.updatedAt,
+        };
   const runtimeInventoryError = inventory?.error;
   const [agentCatalog, setAgentCatalog] = useState<AgentCatalogEntry[]>([]);
   const [agentCatalogControlRoomId, setAgentCatalogControlRoomId] =
@@ -387,6 +453,8 @@ function WorkspaceScreen({
   const sessions = useRef(new Map<string, RoomSession>());
   const messageSessions = useRef(new Map<string, MessageSession>());
   const threadMessageSessions = useRef(new Map<string, MessageSession>());
+  const threadHistoryLoadingKey = useRef<string | undefined>(undefined);
+  const activeThreadHistoryKey = useRef<string | undefined>(undefined);
   const directRoomOpenRequests = useRef(new Map<string, Promise<Room>>());
   const consecutivePollFailures = useRef(0);
   const consumerPrefix = useMemo(() => browserConsumerId(), []);
@@ -566,6 +634,7 @@ function WorkspaceScreen({
         setWorkspaces(activeWorkspaces);
         if (activeWorkspaces.length === 0) {
           setRooms([]);
+          setArchivedRooms([]);
           setLoading(false);
           return;
         }
@@ -578,6 +647,17 @@ function WorkspaceScreen({
           rooms: roomResult.rooms,
           workspaces: activeWorkspaces,
         });
+        const activeWorkspaceIds = new Set(
+          activeWorkspaces.map(({ workspaceId }) => workspaceId),
+        );
+        setArchivedRooms(
+          roomResult.rooms.filter(
+            (room) =>
+              room.kind === "channel" &&
+              room.archivedAt !== undefined &&
+              activeWorkspaceIds.has(room.workspaceId),
+          ),
+        );
         setRooms(visibleRooms);
         setActiveRoomId((current) => {
           if (
@@ -652,6 +732,25 @@ function WorkspaceScreen({
     focusedMessageId,
     agentRoute,
     globalSurface,
+    surface,
+    tab,
+  ]);
+
+  useEffect(() => {
+    if (activeWorkspace === undefined || currentPrincipal === undefined) return;
+    rememberWorkspaceLocation(
+      window.localStorage,
+      currentPrincipal.principalId,
+      activeWorkspace.workspaceId,
+      window.location.search,
+    );
+  }, [
+    activeRoomId,
+    activeThreadRootMessageId,
+    activeWorkspace,
+    agentRoute,
+    currentPrincipal,
+    focusedMessageId,
     surface,
     tab,
   ]);
@@ -951,6 +1050,12 @@ function WorkspaceScreen({
     memberWrite: health?.capabilities.memberWrite === true,
     role: currentRoomRole,
   });
+  const canManageCurrentRoomRoles = canEditRoomMemberRole({
+    actorRole: currentRoomRole,
+    caughtUp: roomData?.caughtUp === true,
+    memberWrite: health?.capabilities.memberWrite === true,
+    subjectKind: "human",
+  });
   const canOnboardCurrentRoomAgent = canOnboardWorkspaceAgent({
     agentOnboard: health?.capabilities.agentOnboard === true,
     caughtUp: roomData?.caughtUp === true,
@@ -960,6 +1065,15 @@ function WorkspaceScreen({
   const canCreateCurrentWorkspaceRoom = canCreateWorkspaceRoom({
     role: workspaceMembershipRole,
     roomWrite: health?.capabilities.roomWrite === true,
+  });
+  const currentRoomLeave = canHumanLeaveRoom({
+    archived: activeRoom?.archivedAt !== undefined,
+    caughtUp: roomData?.caughtUp === true,
+    memberWrite: health?.capabilities.memberWrite === true,
+    ownerCount:
+      roomData?.memberships.filter(({ role }) => role === "owner").length ?? 0,
+    role: currentRoomRole,
+    roomKind: activeRoom?.kind,
   });
   const canManageCurrentWorkspaceAgent =
     health?.capabilities.agentWrite === true &&
@@ -1018,6 +1132,48 @@ function WorkspaceScreen({
       )?.handle;
       return { ...room, ...(handle ? { peerHandle: handle } : {}) };
     });
+  const messageReferenceRooms = rooms
+    .filter(({ workspaceId }) => workspaceId === activeWorkspace?.workspaceId)
+    .map((room) => {
+      const peerNames =
+        room.kind !== "direct"
+          ? []
+          : (room.directParticipantIds ?? [])
+              .filter((id) => id !== currentPrincipal?.principalId)
+              .flatMap((id) => {
+                const agent = agentDirectory.find(
+                  ({ participantId }) => participantId === id,
+                );
+                return agent === undefined
+                  ? []
+                  : [agent.handle, agent.displayName];
+              });
+      return {
+        kind: room.kind,
+        names: [...new Set([room.slug, room.name])],
+        ...(room.kind === "direct"
+          ? {
+              peerNames:
+                peerNames.length === 0 ? [room.name] : [...new Set(peerNames)],
+            }
+          : {}),
+        roomId: room.roomId,
+      };
+    });
+  const messageReferenceComputers =
+    localRuntimeHostId === undefined
+      ? []
+      : [
+          {
+            hostId: localRuntimeHostId,
+            names: [
+              localRuntimeHostId,
+              ...(computer === undefined
+                ? []
+                : [computer.displayName, computer.hostname]),
+            ],
+          },
+        ];
   const activeDirectPeer =
     activeRoom?.kind === "direct"
       ? agentDirectory.find(({ participantId }) =>
@@ -1078,22 +1234,73 @@ function WorkspaceScreen({
     (thread) => thread.rootMessageId === activeThreadRootMessageId,
   );
   const activeThreadId = activeThread?.threadId;
+  useEffect(() => {
+    activeThreadHistoryKey.current =
+      activeRoomId && activeThreadId
+        ? `${activeRoomId}:${activeThreadId}`
+        : undefined;
+    threadHistoryLoadingKey.current = undefined;
+  }, [activeRoomId, activeThreadId]);
+  const activeThreadTask = roomData?.tasks.find(
+    (task) => task.threadId === activeThreadId,
+  );
+  const threadFollowers = useDiscoveryQuery(
+    client,
+    "thread.followers",
+    {
+      roomId: activeRoomId ?? "room-unavailable",
+      threadId: activeThreadId ?? "thread-unavailable",
+    },
+    activeRoomId !== undefined && activeThreadId !== undefined,
+  );
   const activeThreadRoot = view.messages.find(
     (message) => message.messageId === activeThreadRootMessageId,
   );
+  const activeThreadRootRecord = [
+    ...(roomData?.messages ?? []),
+    ...(messageContext?.rootMessage ? [messageContext.rootMessage] : []),
+  ].find((message) => message.messageId === activeThreadRootMessageId);
+  const canonicalThreadMessages =
+    activeThreadId === undefined
+      ? []
+      : threadMessages.filter((message) => message.threadId === activeThreadId);
+  const contextualThreadMessages =
+    activeThreadId !== undefined &&
+    messageContext?.message.threadId === activeThreadId
+      ? messageContext.messages.filter(
+          (message) => message.threadId === activeThreadId,
+        )
+      : [];
+  const visibleThreadMessages = [
+    ...new Map(
+      [...canonicalThreadMessages, ...contextualThreadMessages].map(
+        (message) => [message.messageId, message],
+      ),
+    ).values(),
+  ].sort((left, right) => (left.roomSeq ?? 0) - (right.roomSeq ?? 0));
   const threadView = createRoomViewModel({
     members: roomData?.members ?? [],
     messages:
-      activeThreadId === undefined
-        ? []
-        : messageContext?.message.threadId === activeThreadId &&
-            messageContext !== undefined
-          ? messageContext.messages
-          : threadMessages.filter(
-              (message) => message.threadId === activeThreadId,
-            ),
+      visibleThreadMessages.length > 0
+        ? visibleThreadMessages
+        : activeThreadId === undefined
+          ? []
+          : messageContext?.message.threadId === activeThreadId &&
+              messageContext !== undefined
+            ? messageContext.messages
+            : [],
     tasks: [],
   });
+  const activeThreadFollowerAgents =
+    threadFollowers.data?.agentParticipantIds.flatMap((participantId) => {
+      const agent = agentDirectory.find(
+        (candidate) => candidate.participantId === participantId,
+      );
+      return agent === undefined ? [] : [agent];
+    }) ?? [];
+  const activeThreadTaskAgent = agentDirectory.find(
+    (agent) => agent.participantId === activeThreadTask?.assigneeId,
+  );
   const submitComposer = useCallback(
     async (
       body: string,
@@ -1110,6 +1317,9 @@ function WorkspaceScreen({
       const id = browserOpaqueId();
       if (!roomData.caughtUp) {
         throw new Error("Room 尚未追赶到最新位置，暂不接受写入");
+      }
+      if (activeRoom.archivedAt !== undefined) {
+        throw new Error("此 Room 已归档，只能读取历史记录");
       }
       const session = sessions.current.get(activeRoom.roomId);
       if (session === undefined) {
@@ -1233,7 +1443,7 @@ function WorkspaceScreen({
   );
 
   const openThread = useCallback(
-    async (rootMessageId: string) => {
+    async (rootMessageId: string, returnFocusTarget?: HTMLElement | null) => {
       if (
         activeRoom === undefined ||
         roomData === undefined ||
@@ -1248,6 +1458,8 @@ function WorkspaceScreen({
           throw new Error("Thread 原消息尚未载入");
         }
         setThreadMessages([]);
+        setThreadHasEarlierReplies(false);
+        rememberThreadFocus(returnFocusTarget);
         invalidateNavigation();
         setActiveThreadRootMessageId(rootMessageId);
         setError(undefined);
@@ -1256,7 +1468,14 @@ function WorkspaceScreen({
         setReload((value) => value + 1);
       }
     },
-    [activeRoom, health, roomData, view.messages, invalidateNavigation],
+    [
+      activeRoom,
+      health,
+      roomData,
+      view.messages,
+      invalidateNavigation,
+      rememberThreadFocus,
+    ],
   );
 
   useEffect(() => {
@@ -1267,6 +1486,7 @@ function WorkspaceScreen({
       !health.capabilities.threadRead
     ) {
       setThreadMessages([]);
+      setThreadHasEarlierReplies(false);
       setThreadLoading(false);
       return;
     }
@@ -1284,12 +1504,16 @@ function WorkspaceScreen({
           });
           threadMessageSessions.current.set(sessionKey, session);
         }
-        const result = await session.syncUntilCurrent({
+        const initial = await session.syncUntilCurrent({
           limit: RAFT_MESSAGE_PAGE_SIZE,
           maxPages: 4,
           signal: controller.signal,
         });
-        setThreadMessages([...result.messages]);
+        let messages = initial.messages;
+        let hasEarlier = initial.hasEarlier;
+        if (controller.signal.aborted) return;
+        setThreadMessages([...messages]);
+        setThreadHasEarlierReplies(hasEarlier);
       } catch (caught) {
         if (!controller.signal.aborted) setError(errorMessage(caught));
       } finally {
@@ -1298,6 +1522,126 @@ function WorkspaceScreen({
     })();
     return () => controller.abort();
   }, [activeRoomId, activeThreadId, client, health, reload]);
+
+  const loadThreadHistory = useCallback(async () => {
+    if (
+      activeRoomId === undefined ||
+      activeThreadId === undefined ||
+      threadHistoryLoadingKey.current === `${activeRoomId}:${activeThreadId}`
+    )
+      return;
+    const sessionKey = `${activeRoomId}:${activeThreadId}`;
+    const session = threadMessageSessions.current.get(sessionKey);
+    if (session === undefined || !session.state.hasEarlier) return;
+    threadHistoryLoadingKey.current = sessionKey;
+    setThreadEarlierRepliesLoading(true);
+    try {
+      const result = await loadThreadHistoryPages(session, {
+        limit: RAFT_MESSAGE_PAGE_SIZE,
+      });
+      if (activeThreadHistoryKey.current === sessionKey) {
+        setThreadMessages([...result.messages]);
+        setThreadHasEarlierReplies(result.hasEarlier);
+      }
+    } catch (caught) {
+      if (activeThreadHistoryKey.current === sessionKey)
+        setError(errorMessage(caught));
+    } finally {
+      if (activeThreadHistoryKey.current === sessionKey)
+        setThreadEarlierRepliesLoading(false);
+      if (threadHistoryLoadingKey.current === sessionKey)
+        threadHistoryLoadingKey.current = undefined;
+    }
+  }, [activeRoomId, activeThreadId]);
+  const loadEarlierThreadMessages = useCallback(
+    () => loadThreadHistory(),
+    [loadThreadHistory],
+  );
+
+  const searchActiveThread = useCallback(
+    async (
+      query: string,
+      signal: AbortSignal,
+    ): Promise<readonly ThreadSearchMatch[]> => {
+      if (
+        activeWorkspace === undefined ||
+        activeRoomId === undefined ||
+        activeThreadId === undefined
+      )
+        return [];
+      const matches: ThreadSearchMatch[] = [];
+      let cursor: string | undefined;
+      do {
+        const page = await client.request(
+          "search",
+          {
+            workspaceId: activeWorkspace.workspaceId,
+            query,
+            limit: 100,
+            roomIds: [activeRoomId],
+            scope: "thread",
+            sort: "recent",
+            threadIds: [activeThreadId],
+            ...(cursor === undefined ? {} : { cursor }),
+          },
+          { signal },
+        );
+        for (const hit of page.hits)
+          if (hit.target.kind === "message")
+            matches.push({
+              messageId: hit.message.messageId,
+              target: hit.target,
+            });
+        cursor = page.nextCursor;
+      } while (cursor !== undefined);
+      return matches.reverse();
+    },
+    [activeRoomId, activeThreadId, activeWorkspace, client],
+  );
+
+  const ensureActiveThread = useCallback(async () => {
+    if (activeThread !== undefined)
+      return { createdRoomSeq: 0, thread: activeThread };
+    if (
+      activeRoom === undefined ||
+      activeThreadRootMessageId === undefined ||
+      roomData === undefined
+    )
+      throw new Error("当前消息列已不可用");
+    if (!roomData.caughtUp)
+      throw new Error("Room 尚未追赶到最新位置，暂不能创建消息列");
+    const session = sessions.current.get(activeRoom.roomId);
+    if (session === undefined)
+      throw new Error("当前 Room 尚未建立 canonical session");
+    const created = await runRoomMutationAtLatest({
+      mutate: (basedOnRoomSeq) =>
+        client.request("thread.create", {
+          basedOnRoomSeq,
+          idempotencyKey: `web-thread-${browserOpaqueId()}`,
+          recipientIds: [],
+          roomId: activeRoom.roomId,
+          rootMessageId: activeThreadRootMessageId,
+        }),
+      session,
+    });
+    setRoomData((current) =>
+      current === undefined
+        ? current
+        : {
+            ...current,
+            latestRoomSeq: Math.max(
+              current.latestRoomSeq,
+              created.event.roomSeq,
+            ),
+            threads: current.threads.some(
+              ({ threadId }) => threadId === created.thread.threadId,
+            )
+              ? current.threads
+              : [...current.threads, created.thread],
+          },
+    );
+    return { createdRoomSeq: created.event.roomSeq, thread: created.thread };
+  }, [activeRoom, activeThread, activeThreadRootMessageId, client, roomData]);
 
   const loadEarlierMessages = useCallback(async () => {
     if (activeRoomId === undefined || earlierMessagesLoading) return;
@@ -1339,43 +1683,10 @@ function WorkspaceScreen({
       if (!roomData.caughtUp) {
         throw new Error("Room 尚未追赶到最新位置，暂不接受 Thread 回复");
       }
+      const { createdRoomSeq, thread } = await ensureActiveThread();
       const session = sessions.current.get(activeRoom.roomId);
-      if (session === undefined) {
+      if (session === undefined)
         throw new Error("当前 Room 尚未建立 canonical session");
-      }
-      let thread = activeThread;
-      let createdRoomSeq = 0;
-      if (thread === undefined) {
-        const created = await runRoomMutationAtLatest({
-          mutate: (basedOnRoomSeq) =>
-            client.request("thread.create", {
-              basedOnRoomSeq,
-              idempotencyKey: `web-thread-${browserOpaqueId()}`,
-              recipientIds: [],
-              roomId: activeRoom.roomId,
-              rootMessageId: activeThreadRootMessageId,
-            }),
-          session,
-        });
-        thread = created.thread;
-        createdRoomSeq = created.event.roomSeq;
-        setRoomData((current) =>
-          current === undefined
-            ? current
-            : {
-                ...current,
-                latestRoomSeq: Math.max(
-                  current.latestRoomSeq,
-                  created.event.roomSeq,
-                ),
-                threads: current.threads.some(
-                  ({ threadId }) => threadId === created.thread.threadId,
-                )
-                  ? current.threads
-                  : [...current.threads, created.thread],
-              },
-        );
-      }
       const idempotencyKey = `web-thread-reply-${browserOpaqueId()}`;
       const replied = await runRoomMutationAtLatest({
         mutate: (basedOnRoomSeq) =>
@@ -1421,14 +1732,15 @@ function WorkspaceScreen({
       setFocusedMessageId((current) =>
         focusAfterSuccessfulSubmit(current, focusedMessageId),
       );
+      threadFollowers.refresh();
       setReload((value) => value + 1);
     },
     [
       activeRoom,
-      activeThread,
       activeThreadRootMessageId,
       availableAgentIds,
       client,
+      ensureActiveThread,
       focusedMessageId,
       health,
       roomData,
@@ -1743,6 +2055,57 @@ function WorkspaceScreen({
     [activeRoom, canManageCurrentRoomMembers, client, roomData],
   );
 
+  const setRoomMemberRole = useCallback(
+    async (principalId: string, role: MembershipRole) => {
+      if (activeRoom === undefined || roomData === undefined) return;
+      if (!canManageCurrentRoomRoles) {
+        throw new Error("只有 Room 所有者可以修改 Human 角色");
+      }
+      if (!roomData.caughtUp) {
+        throw new Error("Room 尚未追赶到最新位置，暂不能修改角色");
+      }
+      const subject = roomData.members.find(
+        (member) => member.principalId === principalId,
+      );
+      if (subject?.kind !== "human") {
+        throw new Error("该入口只管理 Human 的 Room 角色");
+      }
+      const session = sessions.current.get(activeRoom.roomId);
+      if (session === undefined) {
+        throw new Error("当前 Room 尚未建立 canonical session");
+      }
+      const result = await runRoomMutationAtLatest({
+        mutate: (basedOnRoomSeq) =>
+          client.request("room.member.role", {
+            basedOnRoomSeq,
+            idempotencyKey: `web-member-role-${browserOpaqueId()}`,
+            principalId,
+            role,
+            roomId: activeRoom.roomId,
+          }),
+        session,
+      });
+      setRoomData((current) =>
+        current === undefined
+          ? current
+          : {
+              ...current,
+              latestRoomSeq: Math.max(
+                current.latestRoomSeq,
+                result.event.roomSeq,
+              ),
+              memberships: current.memberships.map((membership) =>
+                membership.principalId === result.membership.principalId
+                  ? result.membership
+                  : membership,
+              ),
+            },
+      );
+      setReload((value) => value + 1);
+    },
+    [activeRoom, canManageCurrentRoomRoles, client, roomData],
+  );
+
   const updateRoom = useCallback(
     async (input: {
       description?: string;
@@ -1794,6 +2157,232 @@ function WorkspaceScreen({
     },
     [activeRoom, canManageCurrentRoomMembers, client, roomData],
   );
+
+  const unarchiveRoomFromCreate = useCallback(
+    async (room: Room) => {
+      if (!canCreateCurrentWorkspaceRoom) {
+        throw new Error("当前 Human 没有取消归档此频道的权限");
+      }
+      const session = roomSessionFor(
+        sessions.current,
+        client,
+        consumerPrefix,
+        room.roomId,
+      );
+      const navigationIntent = invalidateNavigation();
+      const result = await runRoomMutationAtLatest({
+        mutate: (basedOnRoomSeq) =>
+          client.request("room.unarchive", {
+            basedOnRoomSeq,
+            idempotencyKey: `web-room-unarchive-${browserOpaqueId()}`,
+            roomId: room.roomId,
+          }),
+        session,
+      });
+      setArchivedRooms((current) =>
+        current.filter(({ roomId }) => roomId !== result.room.roomId),
+      );
+      setRooms((current) =>
+        current.some(({ roomId }) => roomId === result.room.roomId)
+          ? current.map((candidate) =>
+              candidate.roomId === result.room.roomId ? result.room : candidate,
+            )
+          : [...current, result.room],
+      );
+      if (navigationGeneration.current !== navigationIntent) return;
+      setRoomCreateOpen(false);
+      setRoomData(undefined);
+      setActiveThreadRootMessageId(undefined);
+      setThreadMessages([]);
+      setActiveRoomId(result.room.roomId);
+      setSurface("room");
+      setTab("chat");
+    },
+    [
+      canCreateCurrentWorkspaceRoom,
+      client,
+      consumerPrefix,
+      invalidateNavigation,
+    ],
+  );
+
+  const changeRoomArchiveState = useCallback(
+    async (archive: boolean) => {
+      if (activeRoom === undefined || roomData === undefined) return;
+      if (!canManageCurrentRoomMembers) {
+        throw new Error("当前 Human 没有归档或恢复此频道的权限");
+      }
+      if (!roomData.caughtUp) {
+        throw new Error("Room 尚未追赶到最新位置，暂不能改变归档状态");
+      }
+      const session = sessions.current.get(activeRoom.roomId);
+      if (session === undefined) {
+        throw new Error("当前 Room 尚未建立 canonical session");
+      }
+      const result = await runRoomMutationAtLatest({
+        mutate: (basedOnRoomSeq) =>
+          client.request(archive ? "room.archive" : "room.unarchive", {
+            basedOnRoomSeq,
+            idempotencyKey: `web-room-${archive ? "archive" : "unarchive"}-${browserOpaqueId()}`,
+            roomId: activeRoom.roomId,
+          }),
+        session,
+      });
+      setRooms((current) =>
+        current.map((room) =>
+          room.roomId === result.room.roomId ? result.room : room,
+        ),
+      );
+      setArchivedRooms((current) =>
+        archive
+          ? current.some(({ roomId }) => roomId === result.room.roomId)
+            ? current.map((room) =>
+                room.roomId === result.room.roomId ? result.room : room,
+              )
+            : [...current, result.room]
+          : current.filter(({ roomId }) => roomId !== result.room.roomId),
+      );
+      setRoomData((current) =>
+        current === undefined
+          ? current
+          : {
+              ...current,
+              latestRoomSeq: Math.max(
+                current.latestRoomSeq,
+                result.event.roomSeq,
+              ),
+            },
+      );
+      setReload((value) => value + 1);
+    },
+    [activeRoom, canManageCurrentRoomMembers, client, roomData],
+  );
+
+  const stopCurrentRoomAgents = useCallback(async () => {
+    if (activeRoom === undefined || roomData === undefined) return;
+    if (!canManageCurrentRoomMembers) {
+      throw new Error("当前 Human 没有停止此频道 Agent 的权限");
+    }
+    if (!roomData.caughtUp) {
+      throw new Error("Room 尚未追赶到最新位置，暂不能停止 Agent");
+    }
+    const session = sessions.current.get(activeRoom.roomId);
+    if (session === undefined) {
+      throw new Error("当前 Room 尚未建立 canonical session");
+    }
+    const result = await runRoomMutationAtLatest({
+      mutate: (basedOnRoomSeq) =>
+        client.request("room.sos.stop", {
+          basedOnRoomSeq,
+          idempotencyKey: `web-room-sos-stop-${browserOpaqueId()}`,
+          roomId: activeRoom.roomId,
+        }),
+      session,
+    });
+    setRoomData((current) =>
+      current === undefined
+        ? current
+        : {
+            ...current,
+            latestRoomSeq: Math.max(
+              current.latestRoomSeq,
+              result.event.roomSeq,
+            ),
+          },
+    );
+    setReload((value) => value + 1);
+  }, [activeRoom, canManageCurrentRoomMembers, client, roomData]);
+
+  const resumeCurrentRoomAgents = useCallback(
+    async (guidance: string) => {
+      if (activeRoom === undefined || roomData === undefined) return;
+      if (!canManageCurrentRoomMembers) {
+        throw new Error("当前 Human 没有恢复此频道 Agent 的权限");
+      }
+      if (!roomData.caughtUp) {
+        throw new Error("Room 尚未追赶到最新位置，暂不能恢复 Agent");
+      }
+      const session = sessions.current.get(activeRoom.roomId);
+      if (session === undefined) {
+        throw new Error("当前 Room 尚未建立 canonical session");
+      }
+      const result = await runRoomMutationAtLatest({
+        mutate: (basedOnRoomSeq) =>
+          client.request("room.sos.resume", {
+            basedOnRoomSeq,
+            guidance,
+            idempotencyKey: `web-room-sos-resume-${browserOpaqueId()}`,
+            roomId: activeRoom.roomId,
+          }),
+        session,
+      });
+      setRoomData((current) =>
+        current === undefined
+          ? current
+          : {
+              ...current,
+              latestRoomSeq: Math.max(
+                current.latestRoomSeq,
+                result.event.roomSeq,
+              ),
+            },
+      );
+      setReload((value) => value + 1);
+    },
+    [activeRoom, canManageCurrentRoomMembers, client, roomData],
+  );
+
+  const leaveCurrentRoom = useCallback(async () => {
+    if (activeRoom === undefined || roomData === undefined) return;
+    if (!currentRoomLeave.allowed) {
+      throw new Error(currentRoomLeave.reason ?? "当前 Human 不能退出此频道");
+    }
+    const session = sessions.current.get(activeRoom.roomId);
+    if (session === undefined) {
+      throw new Error("当前 Room 尚未建立 canonical session");
+    }
+    const leavingRoomId = activeRoom.roomId;
+    const leavingWorkspaceId = activeRoom.workspaceId;
+    await runRoomMutationAtLatest({
+      mutate: (basedOnRoomSeq) =>
+        client.request("room.leave", {
+          basedOnRoomSeq,
+          idempotencyKey: `web-room-leave-${browserOpaqueId()}`,
+          roomId: leavingRoomId,
+        }),
+      session,
+    });
+    const remaining = rooms.filter(({ roomId }) => roomId !== leavingRoomId);
+    const nextRoom =
+      remaining.find(({ workspaceId }) => workspaceId === leavingWorkspaceId) ??
+      remaining[0];
+    invalidateNavigation();
+    sessions.current.delete(leavingRoomId);
+    setRooms(remaining);
+    setRoomMembersOpen(false);
+    setRoomData(undefined);
+    setActiveThreadRootMessageId(undefined);
+    setThreadMessages([]);
+    setFocusedMessageId(undefined);
+    setActiveRoomId(nextRoom?.roomId);
+    setSurface("room");
+    setTab("chat");
+    if (nextRoom === undefined) {
+      const search = new URLSearchParams(window.location.search);
+      for (const key of ["room", "roomTab", "thread", "message", "target"])
+        search.delete(key);
+      window.history.replaceState(null, "", `?${search}`);
+    }
+    setReload((value) => value + 1);
+  }, [
+    activeRoom,
+    client,
+    currentRoomLeave.allowed,
+    currentRoomLeave.reason,
+    invalidateNavigation,
+    roomData,
+    rooms,
+  ]);
 
   const createRoom = useCallback(
     async (input: {
@@ -2211,7 +2800,7 @@ function WorkspaceScreen({
   );
 
   const resetAgentExecution = useCallback(
-    async (agentDefinitionId: string, mode: "restart" | "session") => {
+    async (agentDefinitionId: string, mode: "restart" | "session" | "full") => {
       const controlRoomId = activeWorkspace?.controlRoomId;
       if (
         !canManageCurrentWorkspaceAgent ||
@@ -2258,6 +2847,7 @@ function WorkspaceScreen({
   const agentDetailProps = {
     initialAgentDefinitionId: agentRoute.agentDefinitionId,
     initialTab: agentRoute.tab,
+    initialView: agentRoute.view,
     onSaveProfile: saveAgentProfile,
     agents: agentDirectory,
     canCreate: canCreateCurrentWorkspaceAgent,
@@ -2271,6 +2861,7 @@ function WorkspaceScreen({
     computerStatus: computer?.status,
     controlRoomId: activeWorkspace?.controlRoomId,
     currentHuman: currentPrincipal,
+    fullResetEnabled: health?.capabilities.agentExecutionFullReset === true,
     onCreate: () => setAgentCreateOpen(true),
     onManage: (id: string) => void openAgentManagement(id),
     onEditRuntime: (id: string) => void openAgentManagement(id, "runtime"),
@@ -2295,6 +2886,7 @@ function WorkspaceScreen({
     },
     onRouteChange: navigateAgentRoute,
     runtimes: localRuntimes,
+    workspaceId: activeWorkspace?.workspaceId,
   };
   const peekOpen = surface === "room" && peekAgentId !== undefined;
   return (
@@ -2331,6 +2923,7 @@ function WorkspaceScreen({
               style={
                 {
                   "--rah-room-sidebar-width": `${roomSidebarWidth}px`,
+                  "--thread-w": `${threadPanelWidth}px`,
                 } as CSSProperties
               }
             >
@@ -2340,7 +2933,11 @@ function WorkspaceScreen({
                     computerName={computer?.displayName}
                     workspace={activeWorkspace}
                     workspaces={workspaces}
+                    rooms={rooms}
                     client={client}
+                    principalId={
+                      currentPrincipal?.principalId ?? "human-unavailable"
+                    }
                     canManage={
                       health?.capabilities.roomWrite === true &&
                       (workspaceMembershipRole === "owner" ||
@@ -2355,16 +2952,45 @@ function WorkspaceScreen({
                         ),
                       )
                     }
-                    onSelect={(workspace) => {
-                      setSelectedWorkspaceId(workspace.workspaceId);
-                      setActiveRoomId(
-                        rooms.find(
-                          (room) => room.workspaceId === workspace.workspaceId,
-                        )?.roomId,
+                    onSelect={(workspace, rememberedSearch) => {
+                      const workspaceRooms = rooms.filter(
+                        (room) => room.workspaceId === workspace.workspaceId,
                       );
-                      setSurface("room");
+                      const rememberedRoomId = rememberedSearch
+                        ? roomSelectionFromSearch(rememberedSearch)
+                        : undefined;
+                      const nextRoomId = workspaceRooms.some(
+                        (room) => room.roomId === rememberedRoomId,
+                      )
+                        ? rememberedRoomId
+                        : workspaceRooms[0]?.roomId;
+                      setSelectedWorkspaceId(workspace.workspaceId);
+                      setActiveRoomId(nextRoomId);
+                      if (rememberedSearch) {
+                        window.history.pushState(null, "", rememberedSearch);
+                        setSurface(globalSurfaceFromSearch(rememberedSearch));
+                        setAgentRoute(agentRouteFromSearch(rememberedSearch));
+                        setTab(roomTabFromSearch(rememberedSearch));
+                        setFocusedMessageId(
+                          new URLSearchParams(rememberedSearch).get(
+                            "message",
+                          ) ?? undefined,
+                        );
+                        setActiveThreadRootMessageId(
+                          nextRoomId === undefined
+                            ? undefined
+                            : threadRootSelectionFromSearch(
+                                rememberedSearch,
+                                nextRoomId,
+                              ),
+                        );
+                      } else {
+                        setSurface("room");
+                        setTab("chat");
+                        setFocusedMessageId(undefined);
+                        setActiveThreadRootMessageId(undefined);
+                      }
                       setPeekAgentId(undefined);
-                      setActiveThreadRootMessageId(undefined);
                     }}
                   />
                 }
@@ -2556,10 +3182,27 @@ function WorkspaceScreen({
                 <AgentDirectoryPane {...agentDetailProps} />
               ) : surface === "computers" ? (
                 <ComputerRuntimePane
+                  canEditProfile={
+                    health?.capabilities.computerProfileWrite === true
+                  }
                   hostId={localRuntimeHostId}
                   computer={computer}
                   agents={agentDirectory}
                   inventoryError={runtimeInventoryError}
+                  onOpenAgent={(agentDefinitionId) => {
+                    navigateAgentRoute({
+                      agentDefinitionId,
+                      tab: "profile",
+                    });
+                    setSurface("agents");
+                  }}
+                  onUpdateComputerProfile={async (input) => {
+                    const result = await client.request(
+                      "computer.profile.update",
+                      input,
+                    );
+                    setComputerProfileOverride(result.computer);
+                  }}
                   runtimes={localRuntimes}
                 />
               ) : (
@@ -2639,6 +3282,7 @@ function WorkspaceScreen({
                     />
                   ) : tab === "chat" ? (
                     <ChatPane
+                      currentPrincipal={currentPrincipal}
                       canAttachFiles={health?.capabilities.fileShare === true}
                       onReadThrough={
                         activeRoomId && (!focusedMessageId || messageContext)
@@ -2654,16 +3298,19 @@ function WorkspaceScreen({
                       focusedMessageId={focusedMessageId}
                       canCreateTask={
                         health?.capabilities.taskWrite === true &&
-                        roomData?.caughtUp === true
+                        roomData?.caughtUp === true &&
+                        activeRoom?.archivedAt === undefined
                       }
                       canPost={
                         health?.capabilities.messageWrite === true &&
-                        roomData?.caughtUp === true
+                        roomData?.caughtUp === true &&
+                        activeRoom?.archivedAt === undefined
                       }
                       canReadThreads={health?.capabilities.threadRead === true}
                       canWriteThreads={
                         health?.capabilities.threadWrite === true &&
-                        roomData?.caughtUp === true
+                        roomData?.caughtUp === true &&
+                        activeRoom?.archivedAt === undefined
                       }
                       loading={loading}
                       messageAgents={agentDirectory}
@@ -2687,6 +3334,9 @@ function WorkspaceScreen({
                       roomName={activeRoom?.name}
                       roomKind={activeRoom?.kind}
                       roomId={activeRoom?.roomId}
+                      referenceComputers={messageReferenceComputers}
+                      referenceEventsComplete={roomData?.caughtUp === true}
+                      referenceRooms={messageReferenceRooms}
                       onSubmit={submitComposer}
                       threads={roomData?.threads ?? []}
                     />
@@ -2703,8 +3353,14 @@ function WorkspaceScreen({
                       canReassign={
                         health?.capabilities.taskReassignment === true
                       }
-                      canWrite={health?.capabilities.taskWrite === true}
-                      caughtUp={roomData?.caughtUp === true}
+                      canWrite={
+                        health?.capabilities.taskWrite === true &&
+                        activeRoom?.archivedAt === undefined
+                      }
+                      caughtUp={
+                        roomData?.caughtUp === true &&
+                        activeRoom?.archivedAt === undefined
+                      }
                       columns={view.taskColumns}
                       currentPrincipalId={currentPrincipal?.principalId}
                       loading={loading}
@@ -2756,7 +3412,18 @@ function WorkspaceScreen({
               {(surface !== "room" && surface !== "activity") ||
               activeThreadRootMessageId === undefined ? null : (
                 <ThreadPane
+                  currentPrincipal={currentPrincipal}
                   messageAgents={agentDirectory}
+                  followers={activeThreadFollowerAgents}
+                  followersCanManage={threadFollowers.data?.canManage === true}
+                  followersError={threadFollowers.error}
+                  followersLoading={threadFollowers.loading}
+                  humanFollowing={
+                    activeThreadId === undefined
+                      ? activeThreadRootRecord?.actorId ===
+                        currentPrincipal?.principalId
+                      : threadFollowers.data?.following
+                  }
                   onReadThrough={
                     activeRoomId && activeThreadId
                       ? async (throughSeq) => {
@@ -2776,33 +3443,104 @@ function WorkspaceScreen({
                   }
                   canAttachFiles={health?.capabilities.fileShare === true}
                   loading={threadLoading}
+                  earlierRepliesLoading={threadEarlierRepliesLoading}
+                  hasEarlierReplies={threadHasEarlierReplies}
                   onClose={() => {
+                    const rootMessageId = activeThreadRootMessageId;
                     invalidateNavigation();
                     setActiveThreadRootMessageId(undefined);
                     if (messageContext?.message.threadId)
                       setFocusedMessageId(undefined);
+                    restoreThreadFocus(rootMessageId);
                   }}
                   onSubmit={submitThreadReply}
                   onFollow={
-                    activeRoomId && activeThreadId
+                    activeRoomId &&
+                    activeThreadRootMessageId &&
+                    (activeThreadId ||
+                      health?.capabilities.threadWrite === true)
                       ? async (following) => {
+                          const { thread } = await ensureActiveThread();
                           await client.request("activity.follow", {
                             roomId: activeRoomId,
-                            threadId: activeThreadId,
+                            threadId: thread.threadId,
                             following,
                           });
+                          threadFollowers.refresh();
                         }
                       : undefined
                   }
+                  onLoadEarlier={loadEarlierThreadMessages}
+                  onRefreshFollowers={threadFollowers.refresh}
+                  onRemoveFollower={
+                    activeRoomId && activeThreadId
+                      ? async (participantId) => {
+                          const result = await client.request(
+                            "thread.follower.remove",
+                            {
+                              participantId,
+                              roomId: activeRoomId,
+                              threadId: activeThreadId,
+                            },
+                          );
+                          threadFollowers.refresh();
+                          return result;
+                        }
+                      : undefined
+                  }
+                  onRestoreFollower={
+                    activeRoomId && activeThreadId
+                      ? async ({ participantId, undoToken }) => {
+                          const result = await client.request(
+                            "thread.follower.restore",
+                            {
+                              participantId,
+                              roomId: activeRoomId,
+                              threadId: activeThreadId,
+                              undoToken,
+                            },
+                          );
+                          if (!result.restored)
+                            throw new Error("撤销期限已过，请重新提及该 Agent");
+                          threadFollowers.refresh();
+                        }
+                      : undefined
+                  }
+                  onSearchThread={searchActiveThread}
                   onOpenTarget={(target) =>
                     void openDiscoveryLocation({ target })
                   }
+                  onViewInChannel={() => {
+                    const rootMessageId = activeThreadRootMessageId;
+                    invalidateNavigation();
+                    setActiveThreadRootMessageId(undefined);
+                    setFocusedMessageId(activeThreadRootMessageId);
+                    restoreThreadFocus(rootMessageId);
+                  }}
                   replies={threadView.messages}
+                  referenceComputers={messageReferenceComputers}
+                  referenceEventsComplete={roomData?.caughtUp === true}
+                  referenceRooms={messageReferenceRooms}
+                  referenceTasks={roomData?.tasks ?? []}
+                  roomMembers={roomData?.members ?? []}
+                  resizer={
+                    <ThreadPanelResizer
+                      onWidthChange={setThreadPanelWidth}
+                      onWidthCommit={commitThreadPanelWidth}
+                      width={threadPanelWidth}
+                    />
+                  }
                   roomEvents={roomData?.roomEvents ?? []}
                   roomId={activeRoomId}
                   roomKind={activeRoom?.kind}
                   roomName={activeRoom?.name}
                   root={activeThreadRoot}
+                  {...(activeThreadTask === undefined
+                    ? {}
+                    : { task: activeThreadTask })}
+                  {...(activeThreadTaskAgent === undefined
+                    ? {}
+                    : { taskAgent: activeThreadTaskAgent })}
                   threadId={activeThreadId}
                 />
               )}
@@ -2811,8 +3549,14 @@ function WorkspaceScreen({
                   agents={agentDirectory.filter(
                     ({ state }) => state === "enabled",
                   )}
+                  archivedRooms={archivedRooms.filter(
+                    ({ workspaceId }) =>
+                      workspaceId === activeWorkspace?.workspaceId,
+                  )}
+                  canUnarchive={canCreateCurrentWorkspaceRoom}
                   onClose={() => setRoomCreateOpen(false)}
                   onCreate={createRoom}
+                  onUnarchive={unarchiveRoomFromCreate}
                 />
               ) : null}
               {taskCreateOpen ? (
@@ -2852,10 +3596,25 @@ function WorkspaceScreen({
               {roomMembersOpen ? (
                 <RoomMembersDialog
                   canAdd={
-                    canOnboardCurrentRoomAgent && roomData?.caughtUp === true
+                    canOnboardCurrentRoomAgent &&
+                    roomData?.caughtUp === true &&
+                    activeRoom?.archivedAt === undefined
+                  }
+                  canLeave={currentRoomLeave.allowed}
+                  canManageRoles={
+                    canManageCurrentRoomRoles &&
+                    activeRoom?.archivedAt === undefined
                   }
                   canRemove={
-                    canManageCurrentRoomMembers && roomData?.caughtUp === true
+                    canManageCurrentRoomMembers &&
+                    roomData?.caughtUp === true &&
+                    activeRoom?.archivedAt === undefined
+                  }
+                  canStopAgents={
+                    canManageCurrentRoomMembers &&
+                    roomData?.caughtUp === true &&
+                    activeRoom?.archivedAt === undefined &&
+                    health?.capabilities.roomAgentSos === true
                   }
                   canUpdate={
                     canManageCurrentRoomMembers && roomData?.caughtUp === true
@@ -2866,9 +3625,16 @@ function WorkspaceScreen({
                     activeMemberIdSet.has(principalId),
                   )}
                   onAdd={onboardAgent}
+                  onArchive={() => changeRoomArchiveState(true)}
                   onClose={() => setRoomMembersOpen(false)}
+                  onLeave={leaveCurrentRoom}
                   onRemove={removeAgent}
+                  onResumeAgents={resumeCurrentRoomAgents}
+                  onRole={setRoomMemberRole}
+                  onStopAgents={stopCurrentRoomAgents}
+                  onUnarchive={() => changeRoomArchiveState(false)}
                   onUpdate={updateRoom}
+                  leaveUnavailableReason={currentRoomLeave.reason}
                   room={activeRoom}
                 />
               ) : null}
@@ -2890,6 +3656,7 @@ function WorkspaceScreen({
                   setActiveThreadRootMessageId(undefined);
                   setMobileRoomsOpen(false);
                   setRoomMembersOpen(false);
+                  setAgentRoute(agentDirectoryRootRoute());
                   setSurface("agents");
                 }}
                 onChat={() => {

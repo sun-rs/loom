@@ -112,3 +112,53 @@ test("Provider sessions can quarantine and roll back every continuity record for
     rmSync(directory, { force: true, recursive: true });
   }
 });
+
+test("Provider continuity quarantine replays the same durable operation after a process restart", async () => {
+  const directory = mkdtempSync(
+    join(tmpdir(), "rah-provider-session-quarantine-replay-"),
+  );
+  const rootDirectory = join(directory, "sessions");
+  const aliceSecondKey = {
+    ...key,
+    provider: "kimi-acp/v1",
+    runtimeProfileRevisionId: "profile-kimi-v1",
+  } as const;
+  try {
+    const first = new ProviderSessionStore({ rootDirectory });
+    await first.record(key, "codex-thread-1");
+    await first.record(aliceSecondKey, "kimi-session-1");
+    const interrupted = await first.quarantineParticipant(
+      "agent-alice",
+      "execution-reset-operation-replay",
+    );
+    assert.equal(interrupted.recordCount, 2);
+
+    const recovered = new ProviderSessionStore({ rootDirectory });
+    const replay = await recovered.quarantineParticipant(
+      "agent-alice",
+      "execution-reset-operation-replay",
+    );
+    assert.equal(replay.recordCount, 2);
+    assert.equal(await recovered.load(key), null);
+    assert.equal(await recovered.load(aliceSecondKey), null);
+    await assert.rejects(
+      recovered.quarantineParticipant(
+        "agent-bob",
+        "execution-reset-operation-replay",
+      ),
+      /different immutable participant/u,
+    );
+
+    await replay.rollback();
+    assert.equal(
+      (await recovered.load(key))?.providerSessionId,
+      "codex-thread-1",
+    );
+    assert.equal(
+      (await recovered.load(aliceSecondKey))?.providerSessionId,
+      "kimi-session-1",
+    );
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});

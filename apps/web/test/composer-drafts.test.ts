@@ -47,11 +47,12 @@ test("both composers use the connected-app draft owner, not storage or component
   assert.match(app, /<\/ComposerDraftProvider>/u);
 });
 
-test("Raft Search stays in its initial state with an empty query even when channel/sender filters exist", () => {
+test("Raft Search enters results for active filters even when the keyword is empty", () => {
   const source = readFileSync(
     new URL("../src/components/global-discovery.tsx", import.meta.url),
     "utf8",
   );
-  assert.doesNotMatch(source, /!query\.trim\(\) && !hasFilters/u);
-  assert.match(source, /!composing && Boolean\(query\.trim\(\)\)/u);
+  assert.match(source, /const searchActive = searchShouldRun\(query/u);
+  assert.match(source, /!composing && searchActive/u);
+  assert.match(source, /!searchActive \? \(/u);
 });

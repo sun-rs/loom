@@ -324,15 +324,20 @@ for (const runnerName of ["run-local-workbench.mjs", "run-lan-workbench.mjs"]) {
           }
         }});
         mock.module("@rah-os/daemon", { namedExports: {
+          prepareRahDataHome: async () => {
+            calls.push("prepare");
+            return "/independent-audit/home";
+          },
           startLocalCoreWorkbench: async options => {
-            assert.deepEqual(calls, ["snapshot"]);
+            assert.deepEqual(calls, ["prepare", "snapshot"]);
             assert.equal(options.staticDirectory, "/independent-audit/frozen-result");
+            assert.equal(options.workbenchHome, "/independent-audit/home");
             calls.push("start");
             throw stopped;
           }
         }});
         await assert.rejects(import(${JSON.stringify(runnerUrl)}), error => error === stopped);
-        assert.deepEqual(calls, ["snapshot", "start"]);
+        assert.deepEqual(calls, ["prepare", "snapshot", "start"]);
       `;
       execFileSync(
         process.execPath,

@@ -26,6 +26,11 @@ export type AgentExecutionProviderContinuityQuarantine = Readonly<{
   rollback(): Promise<void>;
 }>;
 
+export type AgentExecutionWorkspaceQuarantine = Readonly<{
+  commit(): void;
+  rollback(): Promise<void>;
+}>;
+
 export type AgentExecutionResetInput = Readonly<{
   agentDefinitionId: string;
   mode: AgentExecutionResetMode;
@@ -42,6 +47,10 @@ export type AgentExecutionResetCoordinatorOptions = Readonly<{
   ): Promise<AgentExecutionResetFence>;
   computerHostId: string;
   now?: () => Date;
+  quarantineAgentWorkspace?: (
+    ownerParticipantId: string,
+    operationId: string,
+  ) => Promise<AgentExecutionWorkspaceQuarantine>;
   quarantineProviderContinuity(
     ownerParticipantId: string,
     operationId: string,
@@ -136,6 +145,9 @@ export class AgentExecutionResetCoordinator {
   readonly #computerHostId: string;
   readonly #inFlight = new Map<string, InFlight>();
   readonly #now: () => Date;
+  readonly #quarantineAgentWorkspace:
+    | AgentExecutionResetCoordinatorOptions["quarantineAgentWorkspace"]
+    | undefined;
   readonly #quarantineProviderContinuity: AgentExecutionResetCoordinatorOptions["quarantineProviderContinuity"];
   readonly #rootDirectory: string;
 
@@ -146,6 +158,7 @@ export class AgentExecutionResetCoordinator {
       "computerHostId",
     );
     this.#now = options.now ?? (() => new Date());
+    this.#quarantineAgentWorkspace = options.quarantineAgentWorkspace;
     this.#quarantineProviderContinuity = options.quarantineProviderContinuity;
     this.#rootDirectory = options.rootDirectory;
   }
@@ -198,9 +211,21 @@ export class AgentExecutionResetCoordinator {
       input.operationId,
     );
     let continuity: AgentExecutionProviderContinuityQuarantine | undefined;
+    let workspace: AgentExecutionWorkspaceQuarantine | undefined;
     let safeToRelease = input.mode === "restart";
     try {
-      if (input.mode === "session") {
+      if (input.mode === "full") {
+        if (this.#quarantineAgentWorkspace === undefined) {
+          throw new Error(
+            "Full Agent reset requires an Agent workspace quarantine owner",
+          );
+        }
+        workspace = await this.#quarantineAgentWorkspace(
+          input.ownerParticipantId,
+          input.operationId,
+        );
+      }
+      if (input.mode !== "restart") {
         continuity = await this.#quarantineProviderContinuity(
           input.ownerParticipantId,
           input.operationId,
@@ -226,20 +251,32 @@ export class AgentExecutionResetCoordinator {
         providerContinuityRecords: continuity?.recordCount ?? 0,
       });
       await persistReceipt(this.#rootDirectory, receipt);
+      workspace?.commit();
       safeToRelease = true;
       return Object.freeze(receipt);
     } catch (error) {
+      const rollbackErrors: unknown[] = [];
       if (continuity !== undefined) {
         try {
           await continuity.rollback();
-          safeToRelease = true;
         } catch (rollbackError) {
-          throw new AggregateError(
-            [error, rollbackError],
-            "Agent session reset failed and Provider continuity rollback failed",
-          );
+          rollbackErrors.push(rollbackError);
         }
       }
+      if (workspace !== undefined) {
+        try {
+          await workspace.rollback();
+        } catch (rollbackError) {
+          rollbackErrors.push(rollbackError);
+        }
+      }
+      if (rollbackErrors.length > 0) {
+        throw new AggregateError(
+          [error, ...rollbackErrors],
+          "Agent reset failed and rollback could not prove a safe state",
+        );
+      }
+      safeToRelease = true;
       throw error;
     } finally {
       if (safeToRelease) await fence.release();

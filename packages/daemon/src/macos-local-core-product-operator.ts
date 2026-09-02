@@ -18,6 +18,7 @@ import {
   type InspectedLocalCoreProduct,
 } from "./local-core-product.ts";
 import { discoverKnownLocalClis } from "./local-runtime-inventory.ts";
+import { prepareRahDataHome } from "./rah-data-home.ts";
 
 const LOCAL_CORE_LABEL = "dev.rah-os.local-core";
 
@@ -47,7 +48,6 @@ export type MacOSLocalCoreProductOperatorResult =
     }>
   | Readonly<{
       kind: "uninstall";
-      purgeData: boolean;
       result: MacOSLocalCoreUninstallResult;
       workbenchHome: string;
     }>;
@@ -85,7 +85,10 @@ export async function runMacOSLocalCoreProductOperator(
   const userHomeDirectory = resolve(runtime.userHomeDirectory ?? homedir());
   const workbenchHome =
     parsed.home ??
-    join(userHomeDirectory, "Library", "Application Support", "RAH OS");
+    (await prepareRahDataHome({
+      environment: runtime.environment ?? process.env,
+      userHomeDirectory,
+    }));
   const plistPath = join(
     userHomeDirectory,
     "Library",
@@ -96,12 +99,10 @@ export async function runMacOSLocalCoreProductOperator(
     const result = await (runtime.uninstall ?? uninstallMacOSLocalCore)({
       label: LOCAL_CORE_LABEL,
       plistPath,
-      purgeData: parsed.purgeData,
       workbenchHome,
     });
     return Object.freeze({
       kind: "uninstall",
-      purgeData: parsed.purgeData,
       result,
       workbenchHome,
     });

@@ -141,7 +141,7 @@ test("an official avatar profile revision is atomic, stale-safe, and persistent"
   }
 });
 
-test("avatar profile input accepts only ordinary official presets", () => {
+test("avatar profile input accepts official or authenticated upload keys", () => {
   const command = {
     action: "update_profile",
     agentDefinitionId: "agent",
@@ -152,6 +152,13 @@ test("avatar profile input accepts only ordinary official presets", () => {
     value: "heart",
   };
   assert.equal(ClientAgentManageRequestSchema.safeParse(command).success, true);
+  assert.equal(
+    ClientAgentManageRequestSchema.safeParse({
+      ...command,
+      value: `upload_webp_${"c".repeat(40)}`,
+    }).success,
+    true,
+  );
   for (const value of ["not-a-key", "finch", "mug", "pixel:heart"])
     assert.equal(
       ClientAgentManageRequestSchema.safeParse({ ...command, value }).success,

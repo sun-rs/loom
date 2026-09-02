@@ -29,6 +29,7 @@ import {
   senderKindForScopes,
   reconcileSender,
   searchSort,
+  searchShouldRun,
   searchTimeBounds,
   normalizeDiscoveryParams,
   taskPeopleChoices,
@@ -400,6 +401,14 @@ function GlobalSearch({
   const afterBound = rangeBounds.after ?? searchDateBound(date);
   const beforeBound = rangeBounds.before ?? searchDateBound(before, true);
   const [composing, setComposing] = useState(false);
+  const searchActive = searchShouldRun(query, {
+    scopes,
+    roomIds: params.getAll("channel"),
+    senderIds: params.getAll("sender"),
+    timeRange,
+    after: afterBound,
+    before: beforeBound,
+  });
   const result = useDiscoveryQuery(
     client,
     "search",
@@ -415,7 +424,7 @@ function GlobalSearch({
       ...(beforeBound ? { before: beforeBound } : {}),
       ...(filters.cursor ? { cursor: filters.cursor } : {}),
     },
-    !composing && Boolean(query.trim()),
+    !composing && searchActive,
   );
   const searchScope = JSON.stringify({
     workspaceId,
@@ -629,7 +638,7 @@ function GlobalSearch({
       </section>
       <Failure error={result.error ?? personError} />
       <section className="search-stage">
-        {!query.trim() ? (
+        {!searchActive ? (
           <div className="rah-search-home">
             <Empty
               icon="search"

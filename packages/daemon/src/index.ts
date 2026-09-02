@@ -29,6 +29,10 @@ export { WebPushOutboxDispatcher } from "./web-push-dispatcher.ts";
 export { WebPushStateStore } from "./web-push-state.ts";
 export { ProfileImageStore } from "./profile-image-store.ts";
 export {
+  LocalComputerProfileStore,
+  LocalComputerProfileStoreError,
+} from "./local-computer-profile-store.ts";
+export {
   createNodeWebPushTransport,
   createWebPushAdministration,
 } from "./web-push-administration.ts";
@@ -123,3 +127,8 @@ export {
   type MacOSLocalCoreProductOperatorResult,
   type MacOSLocalCoreProductOperatorRuntime,
 } from "./macos-local-core-product-operator.ts";
+export {
+  prepareRahDataHome,
+  resolveRahDataHome,
+  type RahDataHomeOptions,
+} from "./rah-data-home.ts";

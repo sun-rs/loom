@@ -558,7 +558,7 @@ async function startWorkbench() {
         RAH_FAKE_CODEX_PROTOCOL_PATH: fakeCodexProtocolPath,
         RAH_FAKE_REMINDER_TITLE: "Verify durable Reminder projection",
         RAH_FAKE_ROOM_REPLY: "formal-workbench-agent-reply",
-        RAH_OS_HOME: workbenchHome,
+        RAH_DATA_HOME: workbenchHome,
         RAH_WEB_PORT: String(webPort),
         RAH_WORKSPACE_CWD: workspaceCwd,
       },

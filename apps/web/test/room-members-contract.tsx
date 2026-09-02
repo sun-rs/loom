@@ -35,6 +35,11 @@ const human: Principal = {
   handle: "Owner",
   kind: "human",
 };
+const reviewer: Principal = {
+  principalId: "reviewer",
+  handle: "Reviewer",
+  kind: "human",
+};
 const room: Room = {
   roomId: "isolated-room",
   workspaceId: "isolated",
@@ -53,10 +58,16 @@ const button = (label: string) =>
   );
 function Fixture() {
   const [open, setOpen] = useState(true);
+  const [archivedAt, setArchivedAt] = useState<string>();
   const [joined, setJoined] = useState(["Alice", "Kimi"]);
+  const [reviewerRole, setReviewerRole] = useState<"member" | "admin">(
+    "member",
+  );
   const [report, setReport] = useState("等待开始");
   const calls = useRef<string[]>([]);
   const failCindy = useRef(true);
+  const leaveCalls = useRef(0);
+  const sosCalls = useRef<string[]>([]);
   async function run() {
     const failures: string[] = [];
     const check = (value: unknown, message: string) => {
@@ -76,7 +87,7 @@ function Fixture() {
         ),
       ];
       check(
-        tiles.length === 4 &&
+        tiles.length === 5 &&
           tiles.every(
             (el) =>
               el.getBoundingClientRect().width === 36 &&
@@ -125,6 +136,26 @@ function Fixture() {
         document.querySelector('[data-room-members-view="members"]'),
         "从成员页进入后返回成员页",
       );
+      button("编辑 Reviewer 的角色")!.click();
+      await frame();
+      const roleSelect = document.querySelector<HTMLSelectElement>(
+        '[aria-label="Reviewer 的角色"]',
+      );
+      check(roleSelect, "Human 角色编辑必须打开显式选择器");
+      if (roleSelect) {
+        roleSelect.value = "admin";
+        roleSelect.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      button("保存 Reviewer 的角色")!.click();
+      for (let i = 0; i < 4; i++) await frame();
+      check(
+        [...document.querySelectorAll(".rah-room-member-entry")].some(
+          (row) =>
+            row.textContent?.includes("Reviewer") &&
+            row.textContent?.includes("管理员"),
+        ),
+        "角色保存后必须投影 canonical 管理员徽标",
+      );
       button("添加成员")!.click();
       await frame();
       button("选择 Grok")!.click();
@@ -162,6 +193,78 @@ function Fixture() {
         document.documentElement.scrollWidth <= innerWidth,
         "页面不得横向溢出",
       );
+      button("返回频道设置")!.click();
+      await frame();
+      button("停止所有 Agent")!.click();
+      await frame();
+      check(
+        document.querySelector('[aria-labelledby="rah-room-sos-title"]'),
+        "Room SOS 必须先显示橙色确认层",
+      );
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+      await frame();
+      check(
+        document.activeElement === button("停止所有 Agent"),
+        "关闭 SOS 确认后必须把焦点还给触发按钮",
+      );
+      button("停止所有 Agent")!.click();
+      await frame();
+      button("立即停止")!.click();
+      for (let i = 0; i < 4; i++) await frame();
+      const guidance = document.querySelector<HTMLTextAreaElement>(
+        '[aria-label="恢复 Agent 的纠正指导"]',
+      );
+      check(guidance, "停止完成后必须显示纠正指导输入框");
+      check(
+        document.activeElement === guidance,
+        "停止完成后焦点必须进入指导输入框",
+      );
+      if (guidance) {
+        const setter = Object.getOwnPropertyDescriptor(
+          HTMLTextAreaElement.prototype,
+          "value",
+        )?.set;
+        setter?.call(guidance, "按新的分工继续");
+        guidance.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+      await frame();
+      button("全部恢复")!.click();
+      for (let i = 0; i < 4; i++) await frame();
+      check(
+        sosCalls.current.join(",") === "stop,resume:按新的分工继续",
+        "恢复必须在停止完成后携带非空 guidance",
+      );
+      check(
+        document.querySelector('[data-room-members-view="settings"]'),
+        "恢复成功后只关闭 SOS 层并保留频道设置",
+      );
+      button("退出频道")!.click();
+      await frame();
+      check(
+        document.querySelector('[aria-labelledby="rah-room-leave-title"]'),
+        "退出频道必须先显示橙色确认层",
+      );
+      check(
+        document.body.textContent?.includes("停止接收 #成员回归") &&
+          document.body.textContent?.includes("的常规消息"),
+        "确认层必须说明停止常规投递",
+      );
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+      await frame();
+      check(
+        document.querySelector('[data-room-members-view="settings"]'),
+        "Escape 只关闭顶层退出确认，保留频道设置",
+      );
+      check(
+        document.activeElement === button("退出频道"),
+        "关闭确认后必须把焦点还给退出按钮",
+      );
+      button("退出频道")!.click();
+      await frame();
+      button("离开")!.click();
+      for (let i = 0; i < 4; i++) await frame();
+      check(leaveCalls.current === 1, "退出确认只能提交一次");
+      check(!document.querySelector('[role="dialog"]'), "成功后必须关闭设置");
     } catch (e) {
       failures.push(String(e));
     }
@@ -201,14 +304,23 @@ function Fixture() {
       {open && (
         <RoomMembersDialog
           canAdd
+          canLeave
+          canManageRoles
           canRemove
+          canStopAgents
           canUpdate
-          room={room}
+          room={archivedAt === undefined ? room : { ...room, archivedAt }}
           memberships={[
             {
               principalId: "owner",
               roomId: room.roomId,
               role: "owner",
+              joinedAt: room.createdAt,
+            },
+            {
+              principalId: reviewer.principalId,
+              roomId: room.roomId,
+              role: reviewerRole,
               joinedAt: room.createdAt,
             },
           ]}
@@ -218,6 +330,7 @@ function Fixture() {
           }))}
           members={[
             human,
+            reviewer,
             ...agents
               .filter((a) => joined.includes(a.participantId))
               .map((a): Principal => ({
@@ -227,6 +340,18 @@ function Fixture() {
               })),
           ]}
           onClose={() => setOpen(false)}
+          onLeave={async () => {
+            leaveCalls.current += 1;
+            setOpen(false);
+          }}
+          onStopAgents={async () => {
+            sosCalls.current.push("stop");
+          }}
+          onResumeAgents={async (guidance) => {
+            sosCalls.current.push(`resume:${guidance}`);
+          }}
+          onArchive={async () => setArchivedAt(new Date().toISOString())}
+          onUnarchive={async () => setArchivedAt(undefined)}
           onUpdate={async () => {}}
           onAdd={async (a) => {
             calls.current.push(a.participantId);
@@ -240,6 +365,12 @@ function Fixture() {
           onRemove={async (a) =>
             setJoined((ids) => ids.filter((id) => id !== a.participantId))
           }
+          onRole={async (principalId, role) => {
+            if (principalId !== reviewer.principalId || role === "owner") {
+              throw new Error("隔离测试：非预期角色修改");
+            }
+            setReviewerRole(role);
+          }}
         />
       )}
     </>

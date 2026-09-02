@@ -66,28 +66,25 @@ test("embedded product operator installs its verified product without source pat
 
 test("embedded product operator uninstalls without inspecting the product", async () => {
   let inspected = false;
-  const result = await runMacOSLocalCoreProductOperator(
-    ["--uninstall", "--purge-data"],
-    {
-      inspectProduct: async () => {
-        inspected = true;
-        throw new Error("must not inspect");
-      },
-      platform: "darwin",
-      uninstall: async (input) => ({
-        dataPurged: input.purgeData === true,
-        kind: "uninstalled",
-        plistRemoved: true,
-        serviceTarget: "gui/501/dev.rah-os.local-core",
-      }),
-      userHomeDirectory: "/Users/test",
+  const result = await runMacOSLocalCoreProductOperator(["--uninstall"], {
+    inspectProduct: async () => {
+      inspected = true;
+      throw new Error("must not inspect");
     },
-  );
+    platform: "darwin",
+    uninstall: async (input) => ({
+      dataRootPreserved: input.workbenchHome,
+      kind: "uninstalled",
+      plistRemoved: true,
+      serviceTarget: "gui/501/dev.rah-os.local-core",
+    }),
+    userHomeDirectory: "/Users/test",
+  });
   assert.equal(inspected, false);
   assert.equal(result.kind, "uninstall");
   if (result.kind !== "uninstall") throw new Error("expected uninstall result");
-  assert.equal(result.purgeData, true);
-  assert.equal(result.result.dataPurged, true);
+  assert.equal(result.workbenchHome, "/Users/test/.rah");
+  assert.equal(result.result.dataRootPreserved, "/Users/test/.rah");
 });
 
 test("embedded product quick start creates one private workspace and activates loopback", async () => {

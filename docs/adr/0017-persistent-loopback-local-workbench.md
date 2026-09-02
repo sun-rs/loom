@@ -9,13 +9,13 @@
 ## 决策
 
 1. `npm run start:local-workbench` 构建 production Web bundle，并启动独立于浏览器窗口的 loopback daemon + static gateway。关闭或重载页面不停止 AgentHost；终止工作台进程会优雅 drain，数据不删除。
-2. 默认状态位于 macOS `~/Library/Application Support/RAH OS/state`；`RAH_OS_HOME` 只允许显式覆盖根目录。首次引导在同父目录 staging 后原子 rename；既有但缺少合法 metadata 的目录 fail closed，不覆盖未知数据。
+2. 默认 durable root 为 `~/.rah`，当前产品名不进入磁盘身份；`RAH_DATA_HOME` 是规范显式覆盖，`RAH_OS_HOME` 仅作旧版本兼容别名，两者冲突时 fail closed。旧 macOS 默认 `~/Library/Application Support/RAH OS` 在首次无覆盖启动时先做完整冲突预检，再以同卷 rename 进入可恢复 staging 并合并到 `~/.rah`；它可以与旧 RAH 的 `runtime-daemon/`、`auth/` 等目录共存，不覆盖同名文件。
 3. `room.db`、Runtime Registry、Human/Host credential、Workspace/Room/Agent identity 全部跨重启保留。状态目录为 `0700`，secret/metadata 为 `0600`；重启时重新认证并核对 Workspace、Room、Host ID 与 bootstrap participant scope。
 4. 首次引导只为已探测的受支持本机 CLI 建立真实 RuntimeProfile 与长期 Agent。后续 UI 创建的动态 Agent 扩展同一 Host credential scope；daemon config 的 bootstrap participants 仍只是合法子集。
 5. 浏览器只访问 `http://127.0.0.1:<port>`。gateway 检查精确 Host，拒绝未知 API 前缀；index navigation 发行随机 `HttpOnly; SameSite=Strict` 会话 cookie，非安全方法还必须带精确 same-origin `Origin`。gateway 校验会话后才在 server side 覆盖 Authorization 为 Human PAT。
 6. 本 gateway 不提供 LAN bind。临时 iPhone/LAN fixture 仍不得用于产品；正式 HTTPS LAN edge、设备 pairing 与可撤销 session 已由 ADR-0019 的独立 gateway 实现，不能反向放宽本 loopback gateway。
 7. Runtime 自动化测试只使用 fake executable。安装过的真实 CLI 在启动时只做 identity/version 和机器可读 model catalog probe；目录命令不会发送模型请求。只有用户把 Agent 加入 Room 并发送工作后才会实际运行并可能消耗 Provider 额度。
-8. macOS source-checkout operator 现在可以把同一 runner 作为 per-user LaunchAgent staging/activation：plist 固定非 secret 环境、Node/runner/PATH/Workspace/Home，runner 带 SHA-256/size preflight，Web build 在任何 launchctl mutation 前验证，staging 原子发布；activation 还必须取得 `/_rah/health` 的精确、无业务内容证明。已加载服务和不同 staged plist 都要求各自显式 replace flag。公开卸载先证明服务 unloaded 再移除 plist，默认保留 Room/Agent/TLS 数据；只有单独的 `--purge-data` 才删除经 owner-private 校验的 Core 根目录。
+8. macOS source-checkout operator 现在可以把同一 runner 作为 per-user LaunchAgent staging/activation：plist 固定非 secret 环境、Node/runner/PATH/Workspace/Home，runner 带 SHA-256/size preflight，Web build 在任何 launchctl mutation 前验证，staging 原子发布；activation 还必须取得 `/_rah/health` 的精确、无业务内容证明。已加载服务和不同 staged plist 都要求各自显式 replace flag。公开卸载先证明服务 unloaded 再移除 plist，并始终保留 Room/Agent/TLS 数据；服务卸载接口不再提供数据删除参数。
 9. 正式制品路径复用 pinned official Node carrier，构建单一 Local Core SEA；Core service、Worker CLI 和 process supervisor 由同一二进制的严格子命令分发。Web/PWA 静态资源与逐文件 SHA-256 manifest 同目录发布，installer 在形成 launchd plan 前核验二进制和全部资源。此路径不依赖 source checkout、TypeScript、`node_modules` 或仓库脚本；默认 ad-hoc codesign 只证明构建闭环，不替代 Developer ID/notarization。
 10. 客户试用路径由同一已核验 SEA 内置 `install --quick-start`：它只接受一个独立的显式授权，要求至少一个可用且已登录的受支持 CLI，创建 owner-private `~/RAH OS Workspace`，固定 loopback edge 并激活 per-user LaunchAgent。它不开放 LAN、不猜测任意现有目录，也不替代高级 staged/LAN 安装合同。
 11. SEA 自身提供 `install`/`uninstall` operator；客户机安装不再调用仓库脚本。launchd bootstrap 后必须在覆盖 CLI 冷启动探测与 label throttle 的 60 秒窗口内取得精确 gateway health；失败必须自动 bootout 新实例，不能留下 `KeepAlive` 重启循环。模型目录属于可选能力证据：瞬时探测失败时 Runtime 只允许 Provider 默认模型，不能伪造 model/effort 参数，也不能拖垮其他可用 Runtime。

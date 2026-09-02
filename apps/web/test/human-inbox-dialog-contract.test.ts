@@ -17,4 +17,8 @@ test("Human Inbox owns the shared keyboard and focus dialog protocol", () => {
     source,
     /aria-label="Human Inbox"[\s\S]*?aria-modal="true"[\s\S]*?ref=\{dialogRef\}[\s\S]*?role="dialog"[\s\S]*?tabIndex=\{-1\}/u,
   );
+  assert.match(
+    source,
+    /useEffect\(\(\) => \{[\s\S]*?request\.inputRequestId === answering\.inputRequestId[\s\S]*?request\.state === "pending"[\s\S]*?setAnswering\(undefined\);[\s\S]*?\}, \[answering, requests\]\);/u,
+  );
 });

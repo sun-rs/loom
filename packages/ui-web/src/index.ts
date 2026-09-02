@@ -11,6 +11,7 @@ import type {
   TaskSubmission,
   Workspace,
 } from "@rah-os/protocol";
+import { messageMentionCandidates } from "@rah-os/protocol";
 
 export type RoomMessageView = {
   attachments?: readonly import("@rah-os/protocol").Attachment[];
@@ -234,14 +235,16 @@ export function mentionedRoomAgentIds(input: {
   agents: readonly RoomAgentTarget[];
   body: string;
 }): string[] {
+  const mentionedHandles = new Set(
+    messageMentionCandidates(
+      input.body,
+      input.agents.map(({ handle }) => handle),
+    ).map(({ handle }) => handle.normalize("NFKC").toLowerCase()),
+  );
   return input.agents
-    .filter(({ handle }) => {
-      const escapedHandle = handle.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
-      return new RegExp(
-        `(^|[^A-Za-z0-9_.-])@${escapedHandle}(?![A-Za-z0-9_.-])`,
-        "iu",
-      ).test(input.body);
-    })
+    .filter(({ handle }) =>
+      mentionedHandles.has(handle.normalize("NFKC").toLowerCase()),
+    )
     .map(({ participantId }) => participantId)
     .sort();
 }
@@ -486,7 +489,9 @@ export function selectProductRooms(input: {
   );
   return input.rooms.filter(
     (room) =>
-      room.kind !== "control" && activeWorkspaceIds.has(room.workspaceId),
+      room.kind !== "control" &&
+      room.archivedAt === undefined &&
+      activeWorkspaceIds.has(room.workspaceId),
   );
 }
 

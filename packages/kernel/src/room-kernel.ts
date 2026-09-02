@@ -4,7 +4,6 @@ import { RoomFiles } from "./room-files.ts";
 import { readAgentPresence } from "./agent-presence.ts";
 import { DatabaseSync } from "node:sqlite";
 import { GlobalDiscovery } from "./global-discovery.ts";
-import { HumanActivity } from "./human-activity.ts";
 import { initializeDiscoverySchema } from "./discovery-schema.ts";
 import { migrateLegacyTaskSchema } from "./legacy-task-schema.ts";
 import {
@@ -26,9 +25,6 @@ import {
 import type {
   GlobalTasksRequest,
   WorkspaceSearchRequest,
-  HumanActivityRequest,
-  HumanActivityMarkRequest,
-  HumanThreadFollowRequest,
   MessageContextRequest,
 } from "@rah-os/protocol";
 
@@ -151,6 +147,7 @@ import {
   type DirectRoomOpenInput,
   type MessageRecipient,
   type WorkspaceRoomCreateInput,
+  type WorkspaceRoomLifecycleInput,
   type WorkspaceRoomUpdateInput,
 } from "./collaboration-service.ts";
 import {
@@ -161,6 +158,7 @@ import {
   migrateCollaborationSchemaV7,
   migrateRoomMetadataV14,
   migrateActivationRetryFencesV35,
+  migrateInputRequestCancellationV38,
   migrateReminderTargetsV36,
   SCHEMA_SQL,
 } from "./schema.ts";
@@ -260,12 +258,12 @@ import type {
   WorkspaceAgentProvisionResult,
   WorkspaceMutationResult,
 } from "./types.ts";
-
+import { listWorkspaceMemberGraph as projectWorkspaceMemberGraph } from "./workspace-member-graph.ts";
+import { inImmediateTransaction } from "./sqlite-transaction.ts";
 const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 36;
-
+export const KERNEL_SCHEMA_VERSION = 39;
 export class RoomKernel {
   readonly databasePath: string;
   readonly #database: DatabaseSync;
@@ -284,16 +282,22 @@ export class RoomKernel {
   readonly #collaboration: CollaborationService;
   readonly #managedMcp: ManagedMcpService;
   readonly files: RoomFiles;
+  readonly followHumanThread;
+  readonly getHumanThreadFollowers;
   readonly messageSocial;
+  readonly listHumanActivity;
+  readonly markHumanActivity;
+  readonly removeHumanThreadAgentFollower;
+  readonly restoreHumanThreadAgentFollower;
   readonly humanSidebar;
   readonly humanNavigation;
   readonly humanNotifications;
   readonly reminders: ReminderService;
+  readonly roomAgentSos;
   readonly #taskReviews: TaskReviewService;
   readonly #taskLifecycle: TaskLifecycleService;
   readonly taskReassignment;
   readonly #runtimeTrajectory: RuntimeTrajectoryService;
-
   constructor(options: RoomKernelOptions) {
     this.databasePath = options.databasePath;
     this.#now = options.now ?? (() => new Date());
@@ -415,7 +419,16 @@ export class RoomKernel {
     this.humanSidebar = humanCommands.humanSidebar;
     this.humanNavigation = humanCommands.humanNavigation;
     this.humanNotifications = humanCommands.humanNotifications;
+    this.followHumanThread = humanCommands.followHumanThread;
+    this.getHumanThreadFollowers = humanCommands.getHumanThreadFollowers;
+    this.listHumanActivity = humanCommands.listHumanActivity;
+    this.markHumanActivity = humanCommands.markHumanActivity;
     this.messageSocial = humanCommands.messageSocial;
+    this.removeHumanThreadAgentFollower =
+      humanCommands.removeHumanThreadAgentFollower;
+    this.restoreHumanThreadAgentFollower =
+      humanCommands.restoreHumanThreadAgentFollower;
+    this.roomAgentSos = humanCommands.roomAgentSos;
     this.taskReassignment = humanCommands.taskReassignment;
     this.files = new RoomFiles({
       database: this.#database,
@@ -498,6 +511,7 @@ export class RoomKernel {
     migrateRoomMetadataV14(this.#database);
     migrateActivationRetryFencesV35(this.#database);
     migrateReminderTargetsV36(this.#database);
+    migrateInputRequestCancellationV38(this.#database);
     principalProfile.migrate(this.#database);
     if (
       !this.#database
@@ -832,7 +846,6 @@ export class RoomKernel {
     });
     return { accessToken, credentialId, hostId, participantIds };
   }
-
   authenticateHostAccessToken(accessToken: string): AuthenticatedHostContext {
     if (accessToken.trim().length === 0) {
       throw new UnauthenticatedError("host authentication failed");
@@ -850,7 +863,6 @@ export class RoomKernel {
       this.#createId("host_instance"),
     );
   }
-
   revokeHostCredential(credentialId: string): void {
     const normalizedCredentialId = credentialId.trim();
     if (normalizedCredentialId.length === 0) {
@@ -885,7 +897,6 @@ export class RoomKernel {
         );
     });
   }
-
   createRoom(
     actor: AuthenticatedActorContext,
     input: { name: string; slug: string },
@@ -897,7 +908,6 @@ export class RoomKernel {
       ),
     );
   }
-
   createWorkspace(
     actor: AuthenticatedActorContext,
     input: { idempotencyKey: string; name: string; slug: string },
@@ -909,7 +919,6 @@ export class RoomKernel {
       ),
     );
   }
-
   updateWorkspace(
     actor: AuthenticatedActorContext,
     input: import("@rah-os/protocol").ClientWorkspaceUpdateRequest,
@@ -921,7 +930,6 @@ export class RoomKernel {
       ),
     );
   }
-
   createWorkspaceRoom(
     actor: AuthenticatedActorContext,
     input: WorkspaceRoomCreateInput,
@@ -933,7 +941,6 @@ export class RoomKernel {
       ),
     );
   }
-
   updateWorkspaceRoom(
     actor: AuthenticatedActorContext,
     input: WorkspaceRoomUpdateInput,
@@ -945,7 +952,28 @@ export class RoomKernel {
       ),
     );
   }
-
+  archiveWorkspaceRoom(
+    actor: AuthenticatedActorContext,
+    input: WorkspaceRoomLifecycleInput,
+  ): RoomMutationResult {
+    return this.#transaction(() =>
+      this.#collaboration.archiveWorkspaceRoom(
+        this.getAuthenticatedPrincipal(actor),
+        input,
+      ),
+    );
+  }
+  unarchiveWorkspaceRoom(
+    actor: AuthenticatedActorContext,
+    input: WorkspaceRoomLifecycleInput,
+  ): RoomMutationResult {
+    return this.#transaction(() =>
+      this.#collaboration.unarchiveWorkspaceRoom(
+        this.getAuthenticatedPrincipal(actor),
+        input,
+      ),
+    );
+  }
   openDirectRoom(
     actor: AuthenticatedActorContext,
     input: DirectRoomOpenInput,
@@ -957,7 +985,6 @@ export class RoomKernel {
       ),
     );
   }
-
   addMember(
     actor: AuthenticatedActorContext,
     input: { principalId: string; roomId: string },
@@ -967,13 +994,18 @@ export class RoomKernel {
       this.#collaboration.addMember(actorId, input);
     });
   }
-
   listWorkspaces(actor: AuthenticatedActorContext): Workspace[] {
     return this.#collaboration.listWorkspaces(
       this.#requireAuthenticatedActor(actor),
     );
   }
-
+  listWorkspaceMemberGraph(
+    actor: AuthenticatedActorContext,
+    input: { workspaceId: string },
+  ) {
+    const principal = this.getAuthenticatedPrincipal(actor);
+    return projectWorkspaceMemberGraph(this.#database, principal, input);
+  }
   listRooms(
     actor: AuthenticatedActorContext,
     input: { workspaceId?: string } = {},
@@ -1025,7 +1057,6 @@ export class RoomKernel {
       input.roomId,
     );
   }
-
   addRoomMember(
     actor: AuthenticatedActorContext,
     input: {
@@ -1043,7 +1074,6 @@ export class RoomKernel {
       );
     });
   }
-
   setRoomMemberRole(
     actor: AuthenticatedActorContext,
     input: {
@@ -1061,7 +1091,6 @@ export class RoomKernel {
       );
     });
   }
-
   removeRoomMember(
     actor: AuthenticatedActorContext,
     input: {
@@ -1078,7 +1107,17 @@ export class RoomKernel {
       );
     });
   }
-
+  leaveRoom(
+    actor: AuthenticatedActorContext,
+    input: WorkspaceRoomLifecycleInput,
+  ): RoomMembershipRemovalResult {
+    return this.#transaction(() =>
+      this.#collaboration.leaveRoom(
+        this.getAuthenticatedPrincipal(actor),
+        input,
+      ),
+    );
+  }
   listThreads(
     actor: AuthenticatedActorContext,
     input: { roomId: string },
@@ -1088,7 +1127,6 @@ export class RoomKernel {
       input.roomId,
     );
   }
-
   listMessages(
     actor: AuthenticatedActorContext,
     input: {
@@ -1104,7 +1142,6 @@ export class RoomKernel {
       input,
     );
   }
-
   createThread(
     actor: AuthenticatedActorContext,
     input: {
@@ -1122,7 +1159,6 @@ export class RoomKernel {
       );
     });
   }
-
   replyThread(
     actor: AuthenticatedActorContext,
     input: ar.HumanThreadReplyInput,
@@ -1138,7 +1174,6 @@ export class RoomKernel {
       }),
     );
   }
-
   postMessage(
     actor: AuthenticatedActorContext,
     input: {
@@ -1156,7 +1191,6 @@ export class RoomKernel {
       );
     });
   }
-
   postRoomMessage(
     actor: AuthenticatedActorContext,
     input: ar.HumanRoomMessageInput,
@@ -1172,7 +1206,6 @@ export class RoomKernel {
       }),
     );
   }
-
   postWorkerMessage(
     execution: AuthenticatedWorkerExecutionContext,
     input: WorkerMessagePostRequest,
@@ -1246,7 +1279,6 @@ export class RoomKernel {
       );
     });
   }
-
   unfollowWorkerThread(
     execution: AuthenticatedWorkerExecutionContext,
     input: {
@@ -1265,7 +1297,6 @@ export class RoomKernel {
       }),
     );
   }
-
   createTask(
     actor: AuthenticatedActorContext,
     input: TaskCreateCommand,
@@ -1280,14 +1311,12 @@ export class RoomKernel {
       );
     });
   }
-
   listGlobalTasks(actor: AuthenticatedActorContext, input: GlobalTasksRequest) {
     return new GlobalDiscovery(this.#database).tasks(
       this.#requireAuthenticatedActor(actor),
       input,
     );
   }
-
   searchWorkspace(
     actor: AuthenticatedActorContext,
     input: WorkspaceSearchRequest,
@@ -1297,7 +1326,6 @@ export class RoomKernel {
       input,
     );
   }
-
   getMessageContext(
     actor: AuthenticatedActorContext,
     input: MessageContextRequest,
@@ -1307,41 +1335,6 @@ export class RoomKernel {
       input,
     );
   }
-
-  listHumanActivity(
-    actor: AuthenticatedActorContext,
-    input: HumanActivityRequest,
-  ) {
-    return new HumanActivity(this.#database).list(
-      this.#requireAuthenticatedActor(actor),
-      input,
-    );
-  }
-
-  markHumanActivity(
-    actor: AuthenticatedActorContext,
-    input: HumanActivityMarkRequest,
-  ) {
-    return this.#transaction(() =>
-      new HumanActivity(this.#database).mark(
-        this.#requireAuthenticatedActor(actor),
-        input,
-      ),
-    );
-  }
-
-  followHumanThread(
-    actor: AuthenticatedActorContext,
-    input: HumanThreadFollowRequest,
-  ) {
-    return this.#transaction(() =>
-      new HumanActivity(this.#database).follow(
-        this.#requireAuthenticatedActor(actor),
-        input,
-      ),
-    );
-  }
-
   listTasks(
     actor: AuthenticatedActorContext,
     input: { roomId: string },
@@ -1350,7 +1343,6 @@ export class RoomKernel {
     this.#requireMember(input.roomId, actorId);
     return listTaskProjections(this.#database, input.roomId);
   }
-
   listInputRequests(
     actor: AuthenticatedActorContext,
     input: { roomId: string },
@@ -1364,7 +1356,6 @@ export class RoomKernel {
       .all(input.roomId)
       .map((row) => inputRequestProjectionFromRow(row));
   }
-
   claimMessageAsTask(
     execution: AuthenticatedWorkerExecutionContext,
     input: {
@@ -1384,7 +1375,6 @@ export class RoomKernel {
       );
     });
   }
-
   getWorkerTask(
     execution: AuthenticatedWorkerExecutionContext,
     input: { taskId: string },
@@ -1394,7 +1384,6 @@ export class RoomKernel {
       return this.#taskFromRow(this.#requireWorkerTask(scope, input.taskId));
     });
   }
-
   getWorkerTaskInputStatus(
     execution: AuthenticatedWorkerExecutionContext,
     input: { taskId: string },
@@ -6906,20 +6895,10 @@ export class RoomKernel {
     });
     return this.#runAttemptFromRow(this.#requireRunAttemptRow(runAttemptId));
   }
-
   #timestamp(): string {
     return this.#now().toISOString();
   }
-
   #transaction<T>(operation: () => T): T {
-    this.#database.exec("BEGIN IMMEDIATE");
-    try {
-      const result = operation();
-      this.#database.exec("COMMIT");
-      return result;
-    } catch (error) {
-      this.#database.exec("ROLLBACK");
-      throw error;
-    }
+    return inImmediateTransaction(this.#database, operation);
   }
 }

@@ -101,7 +101,34 @@ Run the persistent local production Web workbench from the workspace you want Ag
 RAH_WORKSPACE_CWD=/absolute/workspace/path npm run start:local-workbench
 ```
 
-Open the printed `http://127.0.0.1:4173` URL. Set `RAH_OS_HOME` only when a separate state root is required. Do not use the development `:lan` fixture as a production remote-access endpoint.
+Open the printed `http://127.0.0.1:4173` URL. Durable state defaults to `~/.rah`; set `RAH_DATA_HOME` only when a separate state root is required. `RAH_OS_HOME` remains a compatibility alias. Do not use the development `:lan` fixture as a production remote-access endpoint.
+
+## Durable data and uninstall contract
+
+The source checkout, SEA product, Web bundle, and current application name are replaceable. User
+state is not. The stable default data root is `~/.rah`, intentionally independent of the `RAH OS`
+display name so a future rename, upgrade, reinstall, or checkout deletion does not relocate data.
+
+- `RAH_DATA_HOME` is the canonical override. `RAH_OS_HOME` remains a direct-root compatibility
+  alias; startup fails if both resolve to different directories.
+- RAH OS owns `state/`, `logs/`, `tls/`, `backups/`, and `.local-core-data-v1.json` below the shared
+  root. The older RAH workbench owns `runtime-daemon/`, `auth/`, `council/`, and `attachments/`.
+  Neither product may delete or repurpose the other product's children.
+- Room, Agent, Task, memory, runtime-registry, token, device-pairing, notification, workspace, and TLS
+  identity state must remain below the durable root, never in the repository, application bundle,
+  build output, or LaunchAgent plist.
+- The legacy default `~/Library/Application Support/RAH OS` is migrated only when no explicit root is
+  set. Migration is no-overwrite, rejects links and special files before moving data, records a
+  receipt, and can resume from its staging directory after interruption.
+- Uninstall removes only the LaunchAgent registration and plist. There is no purge flag, and no
+  installer or uninstaller may recursively delete the shared `~/.rah` root. Any future reset command
+  must enumerate only RAH OS-owned paths, preview the deletion, fence active work, and require a
+  separate explicit confirmation.
+
+The normative rules are in
+[`docs/product/2026-09-02-install-data-lifecycle-contract.zh-CN.md`](docs/product/2026-09-02-install-data-lifecycle-contract.zh-CN.md).
+Any change to storage, installation, migration, service management, reset, or product naming must
+update that contract and this README together.
 
 Prepare the same persistent Core for paired LAN browsers and PWA clients. Choose the exact stable IP/hostname first; RAH OS creates one owner-private local CA and a hostname-bound leaf certificate:
 
@@ -156,17 +183,13 @@ Quick start is the customer trial path: it requires at least one supported signe
 
 The embedded installer verifies its product manifest, executable, and every Web asset before forming the launchd plan; it then freezes a non-secret environment and exact SEA digest, atomically publishes the plist, and requires `/_rah/health` after registration. It reports `sourceBound: false`; the repository-level `npm run install:core:macos` command remains only as a development operator. Replacing a loaded Core requires `--activate --replace-loaded`; replacing a different staged plist requires `--replace-staged`. A failed health proof automatically unloads the newly bootstrapped service instead of leaving a `KeepAlive` restart loop. In LAN mode, the initial one-time pairing code is written to the owner-private `core.stdout.log` path printed by the installer.
 
-Uninstalling stops the LaunchAgent and removes its plist while preserving Rooms, Agents, TLS identity and other persistent state by default:
+Uninstalling stops the LaunchAgent and removes its plist while preserving Rooms, Agents, TLS identity and all other persistent state:
 
 ```bash
 /absolute/RAH-OS-Core-0.1.0/bin/rah-os-core uninstall
 ```
 
-Permanent data deletion is a separate explicit authority boundary:
-
-```bash
-/absolute/RAH-OS-Core-0.1.0/bin/rah-os-core uninstall --purge-data
-```
+The uninstall command has no data-deletion flag. Any future reset product must use an independently reviewed, product-owned data inventory; it cannot delete the shared `~/.rah` tree.
 
 The daemon executable accepts a strict config:
 

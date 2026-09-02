@@ -24,3 +24,15 @@ test("selected file and compact pane use the frozen Raft contract", () => {
   assert.match(css, /@container/);
   assert.match(css, /rah-workspace-resizer/);
 });
+
+test("workspace roots keep server-selected paths separate from relative file requests", () => {
+  const source = readFileSync(
+    new URL("../src/components/agent-workspace-browser.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(source, /"agent\.workspace\.roots"/);
+  assert.match(source, /"agent\.workspace\.list"/);
+  assert.match(source, /"agent\.workspace\.read"/);
+  assert.match(source, /rootId/);
+  assert.match(source, /来自 daemon 冻结的 workspace cwd/);
+});

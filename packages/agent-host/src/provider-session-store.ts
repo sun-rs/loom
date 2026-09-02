@@ -14,6 +14,7 @@ import { isAbsolute, join, resolve } from "node:path";
 const MAX_RECORD_BYTES = 16 * 1024;
 const MAX_IDENTIFIER_LENGTH = 512;
 const MAX_SESSION_ID_LENGTH = 4_096;
+const QUARANTINE_MANIFEST_NAME = ".operation-manifest";
 
 export type ProviderSessionKey = Readonly<{
   participantId: string;
@@ -166,10 +167,15 @@ export class ProviderSessionStore {
       quarantineRoot,
       createHash("sha256").update(operationId).digest("hex"),
     );
-    await mkdir(operationDirectory, { mode: 0o700 });
+    await mkdir(operationDirectory, { mode: 0o700, recursive: true });
     await assertPrivateDirectory(
       operationDirectory,
       "Provider session quarantine operation",
+    );
+    await ensureQuarantineManifest(
+      operationDirectory,
+      operationId,
+      participantId,
     );
 
     const candidates: Array<{ name: string; path: string }> = [];
@@ -190,6 +196,29 @@ export class ProviderSessionStore {
     }
 
     const moved: Array<{ originalPath: string; quarantinePath: string }> = [];
+    for (const entry of await readdir(operationDirectory, {
+      withFileTypes: true,
+    })) {
+      if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
+      const quarantinePath = join(operationDirectory, entry.name);
+      const metadata = await lstat(quarantinePath);
+      assertPrivateFile(metadata, quarantinePath);
+      if (metadata.size > MAX_RECORD_BYTES) {
+        throw new Error("Provider session record exceeds its safe byte limit");
+      }
+      const record = validateRecord(
+        JSON.parse(await readFile(quarantinePath, "utf8")),
+      );
+      if (record.participantId !== participantId) {
+        throw new Error(
+          "Provider continuity operation has a different immutable participant",
+        );
+      }
+      moved.push({
+        originalPath: join(this.#rootDirectory, entry.name),
+        quarantinePath,
+      });
+    }
     const rollback = async (): Promise<void> => {
       for (const record of [...moved].reverse()) {
         if (!(await pathExists(record.quarantinePath))) continue;
@@ -205,6 +234,23 @@ export class ProviderSessionStore {
     try {
       for (const candidate of candidates) {
         const quarantinePath = join(operationDirectory, candidate.name);
+        const existing = moved.find(
+          (record) => record.quarantinePath === quarantinePath,
+        );
+        if (existing !== undefined) {
+          const [originalBytes, quarantineBytes] = await Promise.all([
+            readFile(candidate.path),
+            readFile(quarantinePath),
+          ]);
+          if (!originalBytes.equals(quarantineBytes)) {
+            throw new Error(
+              "Provider continuity replay found a conflicting session record",
+            );
+          }
+          await rm(candidate.path);
+          await syncDirectory(this.#rootDirectory);
+          continue;
+        }
         await link(candidate.path, quarantinePath);
         await syncDirectory(operationDirectory);
         moved.push({
@@ -261,6 +307,60 @@ export class ProviderSessionStore {
 
   #recordPath(key: ProviderSessionKey): string {
     return join(this.#rootDirectory, this.#recordName(key));
+  }
+}
+
+async function ensureQuarantineManifest(
+  operationDirectory: string,
+  operationId: string,
+  participantId: string,
+): Promise<void> {
+  const path = join(operationDirectory, QUARANTINE_MANIFEST_NAME);
+  const expected = Object.freeze({
+    operationId,
+    participantId,
+    schemaVersion: 1,
+  });
+  try {
+    const metadata = await lstat(path);
+    assertPrivateFile(metadata, path);
+    if (metadata.size > MAX_RECORD_BYTES) {
+      throw new Error("Provider continuity operation manifest is too large");
+    }
+    const value = JSON.parse(await readFile(path, "utf8")) as Record<
+      string,
+      unknown
+    >;
+    if (
+      value.schemaVersion !== 1 ||
+      value.operationId !== expected.operationId ||
+      value.participantId !== expected.participantId ||
+      Object.keys(value).sort().join("\0") !==
+        ["operationId", "participantId", "schemaVersion"].join("\0")
+    ) {
+      throw new Error(
+        "Provider continuity operation has a different immutable participant",
+      );
+    }
+    return;
+  } catch (error) {
+    if (!isMissing(error)) throw error;
+  }
+
+  const temporaryPath = `${path}.${randomUUID()}.tmp`;
+  let handle;
+  try {
+    handle = await open(temporaryPath, "wx", 0o600);
+    await handle.writeFile(`${JSON.stringify(expected)}\n`, "utf8");
+    await handle.sync();
+    await handle.close();
+    handle = undefined;
+    await rename(temporaryPath, path);
+    await syncDirectory(operationDirectory);
+  } catch (error) {
+    await handle?.close().catch(() => undefined);
+    await rm(temporaryPath, { force: true }).catch(() => undefined);
+    throw error;
   }
 }
 

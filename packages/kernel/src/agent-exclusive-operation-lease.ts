@@ -177,6 +177,10 @@ export function nextUnfencedReservedPlacement(
            WHERE reassignment.previous_assignee_id = candidate.participant_id
              AND reassignment.state NOT IN ('assigned', 'failed_closed')
          )
+         AND NOT EXISTS (
+           SELECT 1 FROM room_agent_sos_holds AS hold
+           WHERE hold.room_id = candidate.room_id
+         )
        ORDER BY candidate.created_at, candidate.placement_id
        LIMIT 1`,
     )
@@ -210,6 +214,10 @@ export function nextUnfencedActivation(
            FROM task_reassignment_operations AS reassignment
            WHERE reassignment.previous_assignee_id = candidate.participant_id
              AND reassignment.state NOT IN ('assigned', 'failed_closed')
+         )
+         AND NOT EXISTS (
+           SELECT 1 FROM room_agent_sos_holds AS hold
+           WHERE hold.room_id = candidate.room_id
          )
          AND (
          candidate.state = 'queued'
@@ -249,14 +257,40 @@ export function acquireAgentExclusiveOperationLease(input: {
       existing.state !== "active" ||
       existing.kind !== input.command.kind ||
       existing.participantId !== input.command.participantId ||
-      existing.ownerHostId !== input.hostId ||
-      existing.ownerHostInstanceId !== input.hostInstanceId
+      existing.ownerHostId !== input.hostId
     ) {
       throw new ConflictError(
         `Agent operation ${input.command.operationId} already has different immutable ownership`,
       );
     }
-    return existing;
+    if (existing.ownerHostInstanceId === input.hostInstanceId) return existing;
+    if (Date.parse(existing.leaseUntil) > input.now.getTime()) {
+      throw new ConflictError(
+        `Agent operation ${input.command.operationId} is still owned by a live Host generation`,
+      );
+    }
+    assertAgentHasNoActiveLane(input.database, input.command.participantId);
+    const recoveredLeaseId = input.createId("agent_exclusive_lease");
+    const renewedAt = input.now.toISOString();
+    const leaseUntil = new Date(
+      input.now.getTime() + input.command.leaseMs,
+    ).toISOString();
+    input.database
+      .prepare(
+        `UPDATE agent_exclusive_operation_leases
+         SET lease_id = ?, owner_host_instance_id = ?, renewed_at = ?,
+             lease_until = ?, lease_until_ms = ?
+         WHERE operation_id = ? AND state = 'active'`,
+      )
+      .run(
+        recoveredLeaseId,
+        input.hostInstanceId,
+        renewedAt,
+        leaseUntil,
+        Date.parse(leaseUntil),
+        input.command.operationId,
+      );
+    return leaseFromRow(requireLeaseRow(input.database, recoveredLeaseId));
   }
 
   assertAgentHasNoActiveLane(input.database, input.command.participantId);

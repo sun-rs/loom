@@ -221,7 +221,9 @@ export function RoomSidebar({
   const unread = (roomId: string | undefined) =>
     unreadRooms?.find((row) => row.roomId === roomId);
   const workspaceRooms = rooms.filter(
-    (room) => room.workspaceId === workspace?.workspaceId,
+    (room) =>
+      room.workspaceId === workspace?.workspaceId &&
+      room.archivedAt === undefined,
   );
   const directEntries = directConversationEntries(
     agents,

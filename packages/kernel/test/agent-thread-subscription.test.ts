@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 
 import { type AuthenticatedHostContext, RoomKernel } from "../src/index.ts";
@@ -110,9 +111,215 @@ test("thread creation keeps the first Worker reply in the Thread and persists Ag
   }
 });
 
+test("Human thread state exposes the Agent follower roster separately from Human follow", () => {
+  const state = fixture();
+  try {
+    const root = state.kernel.postMessage(state.humanActor, {
+      body: "A followed Task thread",
+      idempotencyKey: "thread-roster-root",
+      recipients: [],
+      roomId: state.room.roomId,
+    });
+    const thread = state.kernel.createThread(state.humanActor, {
+      basedOnRoomSeq: root.event.roomSeq,
+      idempotencyKey: "thread-roster-create",
+      recipientIds: [state.agent.principalId],
+      roomId: state.room.roomId,
+      rootMessageId: root.event.aggregateId,
+    });
+
+    assert.deepEqual(
+      state.kernel.getHumanThreadFollowers(state.humanActor, {
+        roomId: state.room.roomId,
+        threadId: thread.thread.threadId,
+      }),
+      {
+        agentParticipantIds: [state.agent.principalId],
+        canManage: true,
+        following: true,
+      },
+    );
+    assert.deepEqual(
+      state.kernel.followHumanThread(state.humanActor, {
+        following: false,
+        roomId: state.room.roomId,
+        threadId: thread.thread.threadId,
+      }),
+      { following: false },
+    );
+    assert.deepEqual(
+      state.kernel.getHumanThreadFollowers(state.humanActor, {
+        roomId: state.room.roomId,
+        threadId: thread.thread.threadId,
+      }),
+      {
+        agentParticipantIds: [state.agent.principalId],
+        canManage: true,
+        following: false,
+      },
+      "Human follow state must not mutate the Agent follower roster",
+    );
+    state.kernel.followHumanThread(state.humanActor, {
+      following: true,
+      roomId: state.room.roomId,
+      threadId: thread.thread.threadId,
+    });
+
+    const removed = state.kernel.removeHumanThreadAgentFollower(
+      state.humanActor,
+      {
+        participantId: state.agent.principalId,
+        roomId: state.room.roomId,
+        threadId: thread.thread.threadId,
+      },
+    );
+    assert.equal(removed.removed, true);
+    if (!removed.removed) assert.fail("expected a Raft-style undo token");
+    assert.match(removed.undoToken, /^thread_follower_undo_/u);
+    assert.deepEqual(
+      state.kernel.getHumanThreadFollowers(state.humanActor, {
+        roomId: state.room.roomId,
+        threadId: thread.thread.threadId,
+      }).agentParticipantIds,
+      [],
+    );
+    const regular = state.kernel.provisionPrincipal({
+      handle: "thread-regular-human",
+      kind: "human",
+    });
+    const regularActor = state.kernel.authenticateAccessToken(
+      regular.accessToken,
+    );
+    state.kernel.addMember(state.humanActor, {
+      principalId: regular.principal.principalId,
+      roomId: state.room.roomId,
+    });
+    assert.throws(
+      () =>
+        state.kernel.removeHumanThreadAgentFollower(regularActor, {
+          participantId: state.agent.principalId,
+          roomId: state.room.roomId,
+          threadId: thread.thread.threadId,
+        }),
+      /owner or admin/u,
+    );
+    const outsider = state.kernel.provisionPrincipal({
+      handle: "thread-outsider-human",
+      kind: "human",
+    });
+    const outsiderActor = state.kernel.authenticateAccessToken(
+      outsider.accessToken,
+    );
+    assert.throws(
+      () =>
+        state.kernel.getHumanThreadFollowers(outsiderActor, {
+          roomId: state.room.roomId,
+          threadId: thread.thread.threadId,
+        }),
+      /member/u,
+    );
+    assert.deepEqual(
+      state.kernel.restoreHumanThreadAgentFollower(state.humanActor, {
+        participantId: state.agent.principalId,
+        roomId: state.room.roomId,
+        threadId: thread.thread.threadId,
+        undoToken: removed.undoToken,
+      }),
+      { restored: true },
+    );
+    assert.deepEqual(
+      state.kernel.getHumanThreadFollowers(state.humanActor, {
+        roomId: state.room.roomId,
+        threadId: thread.thread.threadId,
+      }).agentParticipantIds,
+      [state.agent.principalId],
+    );
+    const removedAgain = state.kernel.removeHumanThreadAgentFollower(
+      state.humanActor,
+      {
+        participantId: state.agent.principalId,
+        roomId: state.room.roomId,
+        threadId: thread.thread.threadId,
+      },
+    );
+    assert.equal(removedAgain.removed, true);
+    if (!removedAgain.removed) assert.fail("expected a second undo token");
+    assert.throws(
+      () =>
+        state.kernel.restoreHumanThreadAgentFollower(regularActor, {
+          participantId: state.agent.principalId,
+          roomId: state.room.roomId,
+          threadId: thread.thread.threadId,
+          undoToken: removedAgain.undoToken,
+        }),
+      /owner or admin/u,
+    );
+    const otherRoot = state.kernel.postMessage(state.humanActor, {
+      body: "Another root",
+      idempotencyKey: "thread-roster-other-root",
+      recipients: [],
+      roomId: state.room.roomId,
+    });
+    const otherThread = state.kernel.createThread(state.humanActor, {
+      basedOnRoomSeq: otherRoot.event.roomSeq,
+      idempotencyKey: "thread-roster-other-create",
+      recipientIds: [],
+      roomId: state.room.roomId,
+      rootMessageId: otherRoot.event.aggregateId,
+    });
+    assert.deepEqual(
+      state.kernel.restoreHumanThreadAgentFollower(state.humanActor, {
+        participantId: state.agent.principalId,
+        roomId: state.room.roomId,
+        threadId: otherThread.thread.threadId,
+        undoToken: removedAgain.undoToken,
+      }),
+      { restored: false },
+      "an undo token cannot be replayed against another Thread",
+    );
+    const legacy = new DatabaseSync(state.databasePath);
+    legacy
+      .prepare(
+        "UPDATE agent_thread_follower_undo SET expires_at = ? WHERE undo_token = ?",
+      )
+      .run("2000-01-01T00:00:00.000Z", removedAgain.undoToken);
+    assert.deepEqual(
+      state.kernel.restoreHumanThreadAgentFollower(state.humanActor, {
+        participantId: state.agent.principalId,
+        roomId: state.room.roomId,
+        threadId: thread.thread.threadId,
+        undoToken: removedAgain.undoToken,
+      }),
+      { restored: false },
+      "an expired undo token cannot restore an Agent follower",
+    );
+    legacy
+      .prepare("DELETE FROM memberships WHERE principal_id = ? AND room_id = ?")
+      .run(state.agent.principalId, state.room.roomId);
+    legacy
+      .prepare(
+        `UPDATE agent_thread_follows
+         SET following = 1, source = 'participation'
+         WHERE participant_id = ? AND thread_id = ?`,
+      )
+      .run(state.agent.principalId, thread.thread.threadId);
+    legacy.close();
+    assert.deepEqual(
+      state.kernel.getHumanThreadFollowers(state.humanActor, {
+        roomId: state.room.roomId,
+        threadId: thread.thread.threadId,
+      }).agentParticipantIds,
+      [],
+    );
+  } finally {
+    state.close();
+  }
+});
+
 function fixture() {
   const directory = mkdtempSync(join(tmpdir(), "rah-agent-thread-follow-"));
-  const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+  const databasePath = join(directory, "room.db");
+  const kernel = new RoomKernel({ databasePath });
   kernel.initialize();
   const human = kernel.provisionPrincipal({
     handle: "thread-human",
@@ -133,6 +340,7 @@ function fixture() {
   });
   return {
     agent: agent.principal,
+    databasePath,
     close: () => {
       kernel.close();
       rmSync(directory, { force: true, recursive: true });

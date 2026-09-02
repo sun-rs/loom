@@ -47,23 +47,134 @@
   height: 100%;
   border: 0;
 }
+.rah-space-identity {
+  position: relative;
+  z-index: 70;
+}
+.rah-space-switcher {
+  position: absolute;
+  top: 4px;
+  left: calc(100% + 8px);
+  z-index: 90;
+  display: flex;
+  width: min(256px, calc(100vw - 72px));
+  max-height: calc(100dvh - 16px);
+  flex-direction: column;
+  overflow: hidden;
+  border: 2px solid var(--ink);
+  outline: 0;
+  background: var(--paper);
+  box-shadow: var(--shadow-m);
+}
+.rah-space-switcher:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+.rah-space-switcher-list {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.rah-space-switcher-row {
+  position: relative;
+  display: flex;
+  min-height: 48px;
+  align-items: stretch;
+  background: var(--paper);
+  transition: opacity var(--rah-interaction-transition);
+}
+.rah-space-switcher-row:hover,
+.rah-space-switcher-row.is-over {
+  background: var(--soft-signal);
+}
+.rah-space-switcher-row.is-dragging {
+  z-index: 2;
+  opacity: 0.6;
+}
+.rah-space-switcher-select {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px 0 12px;
+  text-align: left;
+}
+.rah-space-switcher-select:focus-visible,
+.rah-space-switcher-drag:focus-visible,
+.rah-space-switcher-action:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
+.rah-space-switcher-check {
+  width: 14px;
+  flex: none;
+  font-size: 14px;
+  opacity: 0;
+}
+.rah-space-switcher-check.is-current {
+  opacity: 1;
+}
+.rah-space-switcher-select .rah-agent-avatar,
+.rah-space-switcher-select .rah-settings-avatar {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border: 2px solid var(--ink);
+  box-shadow: none;
+  font-size: 13px;
+}
+.rah-space-switcher-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+.rah-space-switcher-copy > b,
+.rah-space-switcher-copy > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rah-space-switcher-copy > b {
+  font: 600 14px/18px var(--sans);
+}
+.rah-space-switcher-copy > span {
+  color: var(--muted);
+  font: 400 12px/16px var(--mono);
+}
+.rah-space-switcher-select[aria-checked="true"] .rah-space-switcher-copy > b {
+  font-weight: 700;
+}
+.rah-space-switcher-drag {
+  width: 28px;
+  flex: none;
+  touch-action: none;
+  color: var(--muted);
+  cursor: grab;
+  font: 700 18px/1 var(--mono);
+}
+.rah-space-switcher-drag:active {
+  cursor: grabbing;
+}
+.rah-space-switcher-divider {
+  flex: none;
+  border-top: 2px solid var(--ink);
+}
+.rah-space-switcher-action {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  text-align: left;
+  font: 700 14px/20px var(--sans);
+}
+.rah-space-switcher-action:hover {
+  background: var(--pink);
+}
 .rah-space-dialog {
   width: min(400px, calc(100vw - 24px));
-}
-.rah-space-list {
-  padding: 12px;
-  border-bottom: var(--bd);
-}
-.rah-space-list button {
-  width: 100%;
-  text-align: left;
-  padding: 8px;
-  border: 2px solid transparent;
-  background: transparent;
-}
-.rah-space-list button[aria-pressed="true"] {
-  background: var(--pink);
-  border: var(--bd);
 }
 .rah-space-dialog select {
   width: 100%;

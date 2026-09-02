@@ -287,6 +287,30 @@ export type ClientRoomUpdateRequest = z.infer<
   typeof ClientRoomUpdateRequestSchema
 >;
 
+const ClientRoomLifecycleRequestSchema = z
+  .object({
+    basedOnRoomSeq: z.number().int().nonnegative(),
+    idempotencyKey: IdentifierSchema,
+    roomId: IdentifierSchema,
+  })
+  .strict();
+
+export const ClientRoomArchiveRequestSchema = ClientRoomLifecycleRequestSchema;
+export type ClientRoomArchiveRequest = z.infer<
+  typeof ClientRoomArchiveRequestSchema
+>;
+
+export const ClientRoomLeaveRequestSchema = ClientRoomLifecycleRequestSchema;
+export type ClientRoomLeaveRequest = z.infer<
+  typeof ClientRoomLeaveRequestSchema
+>;
+
+export const ClientRoomUnarchiveRequestSchema =
+  ClientRoomLifecycleRequestSchema;
+export type ClientRoomUnarchiveRequest = z.infer<
+  typeof ClientRoomUnarchiveRequestSchema
+>;
+
 export const ClientDirectRoomOpenRequestSchema = z
   .object({
     basedOnControlRoomSeq: z.number().int().nonnegative(),

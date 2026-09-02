@@ -111,6 +111,10 @@ test("product UI assets are a narrow generated projection of the Raft reference"
       "styles.css",
       "tokens.brutal.css",
       "vendor/raft/fonts/raft-quote-glyphs.woff2",
+      "vendor/raft/fonts/space-grotesk-latin.woff2",
+      "vendor/raft/fonts/space-mono-400-latin.woff2",
+      "vendor/raft/fonts/space-mono-700-latin.woff2",
+      "vendor/raft/official-fonts.css",
     ],
   );
 
@@ -132,4 +136,32 @@ test("product UI assets are a narrow generated projection of the Raft reference"
 
   const packageJson = readFileSync(join(packageRoot, "package.json"), "utf8");
   assert.doesNotMatch(packageJson, /raft-ui-snapshot/);
+  assert.match(packageJson, /"\.\/official-fonts\.css"/u);
+});
+
+test("official Raft font mirrors are byte-exact and expose the message reaction metrics", () => {
+  for (const [relativePath, expectedSha256] of [
+    [
+      "vendor/raft/official-fonts.css",
+      "01e31b4f1fb7f6623acbd928a2ae50e29011b26121e6ea39fdc0241f7ac50ad7",
+    ],
+    [
+      "vendor/raft/fonts/space-grotesk-latin.woff2",
+      "a0d054c4af557de20afd6ca59f47ab353bcaec49c63ff04b6c9d39d0f8910557",
+    ],
+    [
+      "vendor/raft/fonts/space-mono-400-latin.woff2",
+      "e0c8e616bda27642f4c3cebaecff6525d901e73afc8a227cbbb0f2af4810f300",
+    ],
+    [
+      "vendor/raft/fonts/space-mono-700-latin.woff2",
+      "af7cf6d2b897ec453acdcdacde4e9bcc8410718af5914de865b453e09f10eebc",
+    ],
+  ] as const) {
+    const content = readFileSync(join(packageRoot, "generated", relativePath));
+    assert.equal(
+      createHash("sha256").update(content).digest("hex"),
+      expectedSha256,
+    );
+  }
 });

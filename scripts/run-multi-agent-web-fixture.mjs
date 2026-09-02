@@ -65,6 +65,14 @@ if (
     "RAH_FIXTURE_HISTORY_MESSAGES must be an integer between 0 and 10000",
   );
 }
+const savedMessageCount = Number(process.env.RAH_FIXTURE_SAVED_MESSAGES ?? "0");
+if (
+  !Number.isInteger(savedMessageCount) ||
+  savedMessageCount < 0 ||
+  savedMessageCount > 25
+) {
+  throw new Error("RAH_FIXTURE_SAVED_MESSAGES must be between 0 and 25");
+}
 const onboardAgentCount = Number(
   process.env.RAH_FIXTURE_ONBOARD_AGENT_COUNT ?? "1",
 );
@@ -149,6 +157,30 @@ if (command === "debug models" || command === "debug models --bundled") {
       recipients: [],
       roomId: productRoom.room.roomId,
     });
+  }
+  if (savedMessageCount > 0) {
+    seed.updateAuthenticatedPrincipal(humanActor, {
+      avatarKey: "portrait_01",
+      displayName: "Sun Fixture",
+    });
+    for (let index = 1; index <= savedMessageCount; index += 1) {
+      const message = seed.postRoomMessage(humanActor, {
+        basedOnRoomSeq: latestRoomSeq(
+          seed,
+          humanActor,
+          productRoom.room.roomId,
+        ),
+        body: `Saved fixture ${String(index)} with **Markdown**`,
+        idempotencyKey: `web-saved-fixture-message-${String(index)}`,
+        roomId: productRoom.room.roomId,
+      });
+      seed.messageSocial.save(humanActor, {
+        idempotencyKey: `web-saved-fixture-save-${String(index)}`,
+        messageId: message.event.aggregateId,
+        roomId: productRoom.room.roomId,
+        saved: true,
+      });
+    }
   }
 
   const agents = ["Alice", "Kimi"].map((handle) =>

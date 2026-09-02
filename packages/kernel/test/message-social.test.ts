@@ -46,10 +46,12 @@ function fixture(databasePath = ":memory:") {
     peer,
     stranger,
     token: a.accessToken,
+    actorId: a.principal.principalId,
     peerId: b.principal.principalId,
     roomId: room.roomId,
     messageId: m.event.aggregateId,
     workspaceId: w.workspace.workspaceId,
+    controlRoomId: w.controlRoom.roomId,
     head,
   };
 }
@@ -87,15 +89,21 @@ test("reactions are explicit shared per-actor sets; replay never toggles and wri
     f.k.messageSocial.react(f.actor, request);
     assert.equal(f.head(f.roomId), before + 2);
     f.k.messageSocial.react(f.peer, { ...request, idempotencyKey: "r2" });
-    assert.equal(
-      f.k.messageSocial
-        .list(f.actor, {
-          roomId: f.roomId,
-          messageIds: [f.messageId],
-        })
-        .items[0]?.reactions.find(({ emoji }) => emoji === "👍")?.count,
-      2,
-    );
+    const actorView = f.k.messageSocial
+      .list(f.actor, {
+        roomId: f.roomId,
+        messageIds: [f.messageId],
+      })
+      .items[0]?.reactions.find(({ emoji }) => emoji === "👍");
+    const peerView = f.k.messageSocial
+      .list(f.peer, {
+        roomId: f.roomId,
+        messageIds: [f.messageId],
+      })
+      .items[0]?.reactions.find(({ emoji }) => emoji === "👍");
+    assert.equal(actorView?.count, 2);
+    assert.equal(actorView?.actors[0]?.principalId, f.actorId);
+    assert.equal(peerView?.actors[0]?.principalId, f.peerId);
     const removed = f.k.messageSocial.react(f.actor, {
       ...request,
       active: false,
@@ -282,6 +290,104 @@ test("saved messages are private, idempotent references and current ACL gates al
     assert.throws(
       () => f.k.messageSocial.save(f.stranger, request),
       /member|unavailable/,
+    );
+  } finally {
+    f.k.close();
+  }
+});
+
+test("saved discovery matches Raft query, Room, sort, totals, and sender metadata", () => {
+  const f = fixture();
+  try {
+    f.k.updateAuthenticatedPrincipal(f.actor, {
+      displayName: "Alice Example",
+      avatarKey: "portrait_01",
+    });
+    const room = f.k.createWorkspaceRoom(f.actor, {
+      workspaceId: f.workspaceId,
+      kind: "channel",
+      name: "second",
+      slug: "second",
+      basedOnControlRoomSeq: f.head(f.controlRoomId),
+      idempotencyKey: "saved-second-room",
+    }).room;
+    const first = f.k.postRoomMessage(f.actor, {
+      roomId: f.roomId,
+      body: "Needle in the first Room",
+      basedOnRoomSeq: f.head(f.roomId),
+      idempotencyKey: "saved-first-message",
+    }).event.aggregateId;
+    const second = f.k.postRoomMessage(f.actor, {
+      roomId: room.roomId,
+      body: "Needle in the second Room",
+      basedOnRoomSeq: f.head(room.roomId),
+      idempotencyKey: "saved-second-message",
+    }).event.aggregateId;
+    for (const [messageId, roomId, key] of [
+      [first, f.roomId, "saved-first"],
+      [second, room.roomId, "saved-second"],
+    ] as const)
+      f.k.messageSocial.save(f.actor, {
+        roomId,
+        messageId,
+        saved: true,
+        idempotencyKey: key,
+      });
+
+    const descending = f.k.messageSocial.saved(f.actor, {
+      workspaceId: f.workspaceId,
+      query: "needle",
+      sortDirection: "desc",
+    });
+    assert.equal(descending.total, 2);
+    assert.equal(descending.globalTotal, 2);
+    assert.deepEqual(
+      descending.items.map(({ message }) => message.messageId),
+      [second, first],
+    );
+    assert.deepEqual(descending.items[0]!.sender, {
+      principalId: f.actor.principalId,
+      handle: "a",
+      kind: "human",
+      displayName: "Alice Example",
+      avatarKey: "portrait_01",
+    });
+    assert.equal(descending.items[0]!.roomKind, "channel");
+
+    const filtered = f.k.messageSocial.saved(f.actor, {
+      workspaceId: f.workspaceId,
+      channelId: f.roomId,
+      query: "FIRST",
+      sortDirection: "asc",
+    });
+    assert.equal(filtered.total, 1);
+    assert.equal(filtered.globalTotal, 2);
+    assert.equal(filtered.items[0]!.message.messageId, first);
+
+    const firstPage = f.k.messageSocial.saved(f.actor, {
+      workspaceId: f.workspaceId,
+      sortDirection: "asc",
+      limit: 1,
+    });
+    assert.equal(firstPage.items[0]!.message.messageId, first);
+    assert.ok(firstPage.nextCursor);
+    assert.equal(
+      f.k.messageSocial.saved(f.actor, {
+        workspaceId: f.workspaceId,
+        sortDirection: "asc",
+        limit: 1,
+        cursor: firstPage.nextCursor,
+      }).items[0]!.message.messageId,
+      second,
+    );
+    assert.throws(
+      () =>
+        f.k.messageSocial.saved(f.actor, {
+          workspaceId: f.workspaceId,
+          sortDirection: "desc",
+          cursor: firstPage.nextCursor,
+        }),
+      /cursor|scope/i,
     );
   } finally {
     f.k.close();

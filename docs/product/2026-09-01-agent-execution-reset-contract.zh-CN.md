@@ -1,6 +1,6 @@
 # Agent execution restart / session reset 产品合同
 
-状态：施工中（本机单 Core 范围）
+状态：`restart/session` 已完成；`full` 进入 2026-09-02 单 fence 补强施工
 
 日期：2026-09-01
 
@@ -11,7 +11,9 @@
 - `restart`：终止当前 Run，并让尚未完成的 canonical Activation 重新调度；保留 Agent 身份、`MEMORY.md + notes/`、Workspace 文件和 Provider continuity。
 - `session`：执行同一终止/重调度链，并隔离该 Agent 的 Provider continuity；保留 Agent 身份、Memory、Workspace 与 Room/Task ledger。下一次 Activation 必须 fresh。
 
-`full` 只保留 Raft 可见选项和破坏范围说明，首批明确禁用。它不能在没有精确 Workspace 所有权、备份和恢复合同前递归删除用户项目 cwd。
+`full` 的精确边界、单 fence saga、崩溃恢复和 failure-first 闸已经另立
+[P4.6 Agent 完全重置合同](./2026-09-02-agent-full-reset-contract.zh-CN.md)。它只处理 Agent-owned
+workspace，永不递归删除用户项目 cwd；本文件以下首批描述仍以 `restart/session` 的已验收合同为准。
 
 RAH OS 的 Runtime 按 Activation 启停，不常驻一个空闲 LLM 进程。因此 Agent 空闲时的 `restart` 不伪造进程：操作完成后保持空闲；下一条 canonical Activation 按原 Provider session 启动。`session` 则按 fresh session 启动。
 
@@ -104,7 +106,7 @@ UI 复用 Raft 三档布局：
 
 - 默认 `restart`；
 - `session` 明确说明保留 Memory/Workspace/Room；
-- `full` 可见但禁用并说明原因；
+- `full` 在 P4.6 capability 完整接线前可见但禁用；接线后仍由同一个 typed operation 提交；
 - pending 期间禁止重复提交；失败留在弹层并显示可重试错误；Escape/取消不发请求，关闭后焦点回触发按钮。
 
 ## 5. 验收

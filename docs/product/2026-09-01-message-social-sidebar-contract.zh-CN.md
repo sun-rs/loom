@@ -33,9 +33,37 @@
   渲染层对全部正计数项逐项 `map`；因此一个身份可在同一消息上同时保留多个不同 emoji，
   但同一身份×同一 emoji 仍是一个集合成员。回应 chip 为 20px 高、4px 圆角、左右
   6px 内距、4px 图标／计数间距；sprite 15×15，计数 12px/700、`Space Mono`、
-  tabular nums。每个 chip 外有 `inline-flex` slot；父摘要 flex-wrap 后才在确实不足宽时换行。
+  tabular nums。`Space Mono` 必须加载 Raft 发布包引用的本地 woff2，不能只声明 family
+  后退回系统字体；每个 chip 外有 `inline-flex` slot；父摘要 flex-wrap 后才在确实不足宽时换行。
 - “已保存”徽标同为 20px 高，1px 黑边、左右 6px 内距，图标 10×10、文字
   10px/700/leading-none；hover 使用 100ms `brightness(.9)`，键盘 focus 为 2px 黑 outline。
+
+### 已保存聚合页合同（2026-09-02 复核）
+
+- Raft `SavedPanel-BvhJ1TDV.js` 的独立页面挂载时固定调用
+  `loadSaved({query:"", sortDirection:"desc"})`，store 每页请求 20 条；请求层另保留
+  `q`、`channelId`、`sort`，但当前独立页面**没有**渲染搜索、Room 筛选或排序控件。
+  RAH 不为追求“功能更多”而自行添加这些不可见控件，只在协议与 Kernel owner 保留等效查询能力。
+- Raft 服务端响应可观察字段为 `saved / hasMore / total / globalTotal`，消息卡片按收藏时间倒序。
+  RAH 的 `message.saved` 对应返回筛选总数 `total` 与当前 Workspace 可见收藏总数
+  `globalTotal`；分页改用冻结、查询范围绑定的 opaque cursor，而不是照抄 offset 漂移。
+- 非空卡片是一个完整点击面：2px `black/30` 边、12px 内距、12px 间距；hover、active、
+  键盘 focus 或右键菜单打开时转黑边和 2px brutal shadow。元信息依次为动态 `#Room`／
+  `@发送者`、可选“消息列”、14×14 `preview-mini` 头像、姓名、相对时间；正文为 14/20，
+  最多三行。点击回到精确 Channel/DM/Thread 消息，不只打开 Room。
+- 卡片右侧移除入口为 28×28、orange/15 底、14px 橙色实心书签，hover 仅
+  `brightness(.9)`；指针/键盘停留显示同色底、2px 黑边、2px shadow 的“从收藏中移除”提示。
+  右键菜单按官方顺序提供“复制链接 / 复制 Markdown / 分隔线 / 从收藏中移除”；链接使用
+  本地 typed message deep link，Markdown 项复制原始消息正文。菜单项按共享 Raft `sr` 使用
+  14/20、500、`8px 12px` 内距和 yellow/30 hover，分隔线为 2px 黑线。冻结 Saved 源码只直接证明
+  backdrop dismiss；RAH 另补 Escape（还焦卡片）、方向键/Home/End、滚动和 resize 关闭作为本地键盘与防悬空增强。
+- 首次加载使用 6 行官方结构 skeleton；空态原文为“暂无收藏的消息 / 选择消息上的书签图标即可保存。”；
+  标题栏为 62px 高、左右 20px，36×36 `size-icon-header` 黄色图标容器和 18px 书签，
+  副标题为“{count} 项”。36px 是 2026-09-02 官方实页 computed style，覆盖早先按类名推断的 40px。
+  滚动容器 16px 内距，无额外“刷新”按钮；无限滚动 sentinel 的 root margin 为 `240px 0px`。
+- Raft 只发布了 Web 请求和投影代码，没有发布 `/channels/saved` 的服务端实现。RAH 的
+  SQLite 私人索引、Unicode-aware lowercase 子串匹配、ACL 重新校验、冻结游标与幂等 receipt 都是
+  `rah-os-glue`；它们实现相同行为边界，但不能记作 Raft 后端 direct copy。
 
 ## 经过复核的本地差异
 
@@ -52,6 +80,11 @@
 ## 验收
 
 新增原样资产：`apps/web/src/raft-reaction-sprite.svg` 来自 `https://app.raft.build/reactions/reaction-sprite.svg`，SHA-256 `10912fdacbbfc427fcd1cdd0bc8ad7a2fc0a40fa121ee663f0a8ad19c67499f8`。七个快捷回应使用该固定 sprite，不依赖 macOS/iOS emoji 字体。`smile-plus`/`pin` 图标来自同一官方 bundle 的 `mBe`/`nBe` 路径；资产哈希回归单独固定。
+
+字体同样从冻结 Raft reference 经生成器窄投影进入产品：`official-fonts.css` 与
+`Space Grotesk`、`Space Mono 400/700` 三份 woff2 均逐字节校验。回应计数实际使用
+`Space Mono 700`；Vite 构建必须产出对应 hashed font asset，浏览器门禁还需等待
+`document.fonts.ready` 并确认该 face 已加载。
 
 测试先行覆盖：重复／反向操作、两位 Human 隔离、越权、Room/Thread 范围、重开数据库、并发版本冲突、取消收藏的旧快照、无额外 Activation；预设原样、分配去重和耗尽。
 

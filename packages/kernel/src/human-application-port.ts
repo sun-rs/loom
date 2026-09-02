@@ -5,6 +5,7 @@ export type HumanApplicationPort = Pick<
   RoomKernel,
   | "acknowledgeCursor"
   | "addRoomMember"
+  | "archiveWorkspaceRoom"
   | "assignTask"
   | "authenticateHumanAccessToken"
   | "cancelTask"
@@ -20,6 +21,7 @@ export type HumanApplicationPort = Pick<
   | "listAgentTrajectory"
   | "listAgentPresence"
   | "listInputRequests"
+  | "leaveRoom"
   | "listAgentCatalog"
   | "listMessages"
   | "listRoomAgentActivity"
@@ -33,19 +35,24 @@ export type HumanApplicationPort = Pick<
   | "listHumanActivity"
   | "markHumanActivity"
   | "followHumanThread"
+  | "getHumanThreadFollowers"
   | "listThreads"
   | "listWorkspaces"
+  | "listWorkspaceMemberGraph"
   | "manageWorkspaceAgent"
   | "onboardAgentToRoom"
   | "openDirectRoom"
   | "provisionWorkspaceAgent"
   | "removeRoomMember"
+  | "removeHumanThreadAgentFollower"
+  | "restoreHumanThreadAgentFollower"
   | "reopenTask"
   | "replyThread"
   | "resolveInputRequest"
   | "setRoomMemberRole"
   | "sync"
   | "unassignTask"
+  | "unarchiveWorkspaceRoom"
   | "unblockTask"
   | "updateWorkspaceRoom"
 > & {
@@ -58,6 +65,9 @@ export type HumanApplicationPort = Pick<
   resolveNavigationTarget: RoomKernel["humanNavigation"]["resolve"];
   listNotificationDismissals: RoomKernel["humanNotifications"]["listDismissals"];
   dismissNotification: RoomKernel["humanNotifications"]["dismiss"];
+  requestRoomAgentSos: RoomKernel["roomAgentSos"]["requestStop"];
+  continueRoomAgentSos: RoomKernel["roomAgentSos"]["continueStop"];
+  resumeRoomAgentSos: RoomKernel["roomAgentSos"]["resume"];
   listAgentReminders: RoomKernel["reminders"]["listHuman"];
   prepareFile: RoomKernel["files"]["prepare"];
   uploadFile: RoomKernel["files"]["upload"];
@@ -101,6 +111,12 @@ export function createHumanApplicationPort(
       kernel.humanNotifications.listDismissals(actor, input),
     dismissNotification: (actor, input) =>
       kernel.humanNotifications.dismiss(actor, input),
+    requestRoomAgentSos: (actor, input) =>
+      kernel.roomAgentSos.requestStop(actor, input),
+    continueRoomAgentSos: (actor, input) =>
+      kernel.roomAgentSos.continueStop(actor, input),
+    resumeRoomAgentSos: (actor, input) =>
+      kernel.roomAgentSos.resume(actor, input),
     listAgentReminders: (actor, input) =>
       kernel.reminders.listHuman(actor, input),
     prepareFile: (actor, input) => kernel.files.prepare(actor, input),
@@ -110,6 +126,8 @@ export function createHumanApplicationPort(
     downloadFile: (actor, id) => kernel.files.download(actor, id),
     acknowledgeCursor: (actor, input) => kernel.acknowledgeCursor(actor, input),
     addRoomMember: (actor, input) => kernel.addRoomMember(actor, input),
+    archiveWorkspaceRoom: (actor, input) =>
+      kernel.archiveWorkspaceRoom(actor, input),
     assignTask: (actor, input) => kernel.assignTask(actor, input),
     assignManagedMcpServer: (actor, input) =>
       kernel.managedMcp.assignServer(actor, input),
@@ -136,6 +154,7 @@ export function createHumanApplicationPort(
     listAgentPresence: (actor, input) => kernel.listAgentPresence(actor, input),
     listAgentCatalog: (actor, input) => kernel.listAgentCatalog(actor, input),
     listInputRequests: (actor, input) => kernel.listInputRequests(actor, input),
+    leaveRoom: (actor, input) => kernel.leaveRoom(actor, input),
     listManagedMcpAssignments: (actor, input) =>
       kernel.managedMcp.listAssignments(actor, input),
     listManagedMcpServers: (actor, input) =>
@@ -157,12 +176,20 @@ export function createHumanApplicationPort(
     listHumanActivity: (actor, input) => kernel.listHumanActivity(actor, input),
     markHumanActivity: (actor, input) => kernel.markHumanActivity(actor, input),
     followHumanThread: (actor, input) => kernel.followHumanThread(actor, input),
+    getHumanThreadFollowers: (actor, input) =>
+      kernel.getHumanThreadFollowers(actor, input),
+    removeHumanThreadAgentFollower: (actor, input) =>
+      kernel.removeHumanThreadAgentFollower(actor, input),
+    restoreHumanThreadAgentFollower: (actor, input) =>
+      kernel.restoreHumanThreadAgentFollower(actor, input),
     listTaskReviews: (actor, input) =>
       kernel.taskReviews.listRoomReviews(actor, input),
     listTaskSubmissions: (actor, input) =>
       kernel.taskReviews.listRoomSubmissions(actor, input),
     listThreads: (actor, input) => kernel.listThreads(actor, input),
     listWorkspaces: (actor) => kernel.listWorkspaces(actor),
+    listWorkspaceMemberGraph: (actor, input) =>
+      kernel.listWorkspaceMemberGraph(actor, input),
     manageWorkspaceAgent: (actor, input) =>
       kernel.manageWorkspaceAgent(actor, input),
     onboardAgentToRoom: (actor, input) =>
@@ -191,6 +218,8 @@ export function createHumanApplicationPort(
       kernel.managedMcp.setServerState(actor, input),
     sync: (actor, input) => kernel.sync(actor, input),
     unassignTask: (actor, input) => kernel.unassignTask(actor, input),
+    unarchiveWorkspaceRoom: (actor, input) =>
+      kernel.unarchiveWorkspaceRoom(actor, input),
     unblockTask: (actor, input) => kernel.unblockTask(actor, input),
     updateWorkspaceRoom: (actor, input) =>
       kernel.updateWorkspaceRoom(actor, input),

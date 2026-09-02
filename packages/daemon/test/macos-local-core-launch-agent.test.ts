@@ -8,7 +8,6 @@ import {
   readFileSync,
   rmSync,
   statSync,
-  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -53,6 +52,8 @@ test("macOS local Core plan freezes a secret-free loopback launchd contract", ()
     ["/opt/homebrew/bin", "/usr/bin"].join(delimiter),
   );
   assert.equal(plan.environment.RAH_WEB_PORT, "4173");
+  assert.equal(plan.environment.RAH_DATA_HOME, join(directory, "RAH OS"));
+  assert.equal(plan.environment.RAH_OS_HOME, undefined);
   assert.equal(
     plan.environment.RAH_WEB_STATIC_DIRECTORY,
     join(directory, "web & dist"),
@@ -379,7 +380,7 @@ test("macOS local Core uninstall unloads before removing plist and preserves dat
         workbenchHome,
       }),
       {
-        dataPurged: false,
+        dataRootPreserved: workbenchHome,
         kind: "uninstalled",
         plistRemoved: true,
         serviceTarget: "gui/501/dev.rah-os.local-core",
@@ -392,74 +393,6 @@ test("macOS local Core uninstall unloads before removing plist and preserves dat
       ["bootout", "gui/501/dev.rah-os.local-core"],
       ["print", "gui/501/dev.rah-os.local-core"],
     ]);
-  } finally {
-    rmSync(directory, { force: true, recursive: true });
-  }
-});
-
-test("macOS local Core purge is explicit, idempotent, and rejects symlinked data", async () => {
-  const directory = mkdtempSync(join(tmpdir(), "rah-local-core-purge-"));
-  try {
-    const plistPath = join(
-      directory,
-      "LaunchAgents",
-      "dev.rah-os.local-core.plist",
-    );
-    const workbenchHome = join(directory, "workbench");
-    mkdirSync(join(directory, "LaunchAgents"), { mode: 0o755 });
-    mkdirSync(workbenchHome, { mode: 0o700 });
-    writeFileSync(join(workbenchHome, "state.db"), "durable", { mode: 0o600 });
-
-    assert.deepEqual(
-      await uninstallMacOSLocalCore({
-        label: "dev.rah-os.local-core",
-        launchctl: new FakeLaunchCtl([113]),
-        plistPath,
-        purgeData: true,
-        userId: 501,
-        workbenchHome,
-      }),
-      {
-        dataPurged: true,
-        kind: "uninstalled",
-        plistRemoved: false,
-        serviceTarget: "gui/501/dev.rah-os.local-core",
-      },
-    );
-    assert.throws(() => statSync(workbenchHome), /ENOENT/u);
-
-    assert.deepEqual(
-      await uninstallMacOSLocalCore({
-        label: "dev.rah-os.local-core",
-        launchctl: new FakeLaunchCtl([113]),
-        plistPath,
-        purgeData: true,
-        userId: 501,
-        workbenchHome,
-      }),
-      {
-        dataPurged: false,
-        kind: "already_absent",
-        plistRemoved: false,
-        serviceTarget: "gui/501/dev.rah-os.local-core",
-      },
-    );
-
-    const realData = join(directory, "real-data");
-    mkdirSync(realData, { mode: 0o700 });
-    symlinkSync(realData, workbenchHome, "dir");
-    await assert.rejects(
-      uninstallMacOSLocalCore({
-        label: "dev.rah-os.local-core",
-        launchctl: new FakeLaunchCtl([113]),
-        plistPath,
-        purgeData: true,
-        userId: 501,
-        workbenchHome,
-      }),
-      /owner-private directory/u,
-    );
-    assert.equal(statSync(realData).isDirectory(), true);
   } finally {
     rmSync(directory, { force: true, recursive: true });
   }

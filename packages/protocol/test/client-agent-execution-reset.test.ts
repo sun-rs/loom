@@ -6,7 +6,7 @@ import {
   ClientAgentExecutionResetResponseSchema,
 } from "../src/index.ts";
 
-test("Agent execution reset exposes Raft restart/session modes without enabling full", () => {
+test("Agent execution reset exposes the complete Raft restart/session/full mode contract", () => {
   assert.deepEqual(
     ClientAgentExecutionResetRequestSchema.parse({
       agentDefinitionId: "agent-definition-1",
@@ -21,12 +21,21 @@ test("Agent execution reset exposes Raft restart/session modes without enabling 
       mode: "session",
     },
   );
+  assert.equal(
+    ClientAgentExecutionResetRequestSchema.parse({
+      agentDefinitionId: "agent-definition-1",
+      basedOnRoomSeq: 42,
+      idempotencyKey: "reset-full-1",
+      mode: "full",
+    }).mode,
+    "full",
+  );
   assert.throws(() =>
     ClientAgentExecutionResetRequestSchema.parse({
       agentDefinitionId: "agent-definition-1",
       basedOnRoomSeq: 42,
-      idempotencyKey: "reset-1",
-      mode: "full",
+      idempotencyKey: "reset-unknown-1",
+      mode: "workspace",
     }),
   );
 });

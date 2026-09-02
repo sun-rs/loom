@@ -9,7 +9,7 @@ function request(input: {
   createdAt: string;
   id: string;
   responderId: string;
-  state?: "pending" | "resolved";
+  state?: "pending" | "resolved" | "cancelled";
 }): InputRequest {
   const state = input.state ?? "pending";
   return {
@@ -28,7 +28,13 @@ function request(input: {
           resolvedAt: input.createdAt,
           resolvedBy: input.responderId,
         }
-      : {}),
+      : state === "cancelled"
+        ? {
+            cancelledAt: input.createdAt,
+            cancelledBy: input.responderId,
+            cancellationReason: "No longer needed",
+          }
+        : {}),
   };
 }
 
@@ -57,6 +63,12 @@ test("Human Inbox contains only pending requests designated to that Human", () =
           id: "resolved",
           responderId: "human-owner",
           state: "resolved",
+        }),
+        request({
+          createdAt: "2026-08-30T10:04:00.000Z",
+          id: "cancelled",
+          responderId: "human-owner",
+          state: "cancelled",
         }),
         newest,
         newest,

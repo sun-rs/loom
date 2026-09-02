@@ -1364,6 +1364,30 @@ test("InputRequest is canonical, targeted, and requires resolution evidence", ()
     InputRequestSchema.parse({ ...pending, answer: "Production" }),
   );
 
+  const cancelled = InputRequestSchema.parse({
+    ...pending,
+    cancelledAt: "2026-08-25T00:30:00.000Z",
+    cancelledBy: "human-1",
+    cancellationReason: "The Task is no longer required",
+    state: "cancelled",
+    updatedAt: "2026-08-25T00:30:00.000Z",
+  });
+  assert.equal(cancelled.state, "cancelled");
+  assert.throws(() =>
+    InputRequestSchema.parse({
+      ...cancelled,
+      cancelledAt: undefined,
+    }),
+  );
+  assert.throws(() =>
+    InputRequestSchema.parse({
+      ...cancelled,
+      answer: "This must not look resolved",
+      resolvedAt: "2026-08-25T00:31:00.000Z",
+      resolvedBy: "human-1",
+    }),
+  );
+
   const resolved = InputRequestSchema.parse({
     ...pending,
     answer: "Use staging first",

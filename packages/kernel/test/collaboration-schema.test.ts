@@ -21,7 +21,7 @@ test("schema v7 migrates legacy Rooms into one Workspace with proven Human owner
 
     const migrated = new DatabaseSync(databasePath);
     migrated.exec("PRAGMA foreign_keys = ON");
-    assert.equal(KERNEL_SCHEMA_VERSION, 36);
+    assert.equal(KERNEL_SCHEMA_VERSION, 39);
     assert.equal(
       (
         migrated.prepare("PRAGMA user_version").get() as {
@@ -86,6 +86,21 @@ test("schema v7 migrates legacy Rooms into one Workspace with proven Human owner
         .all()
         .map((row) => (row as { name: string }).name),
       ["participant_id", "thread_id", "following", "source", "updated_at"],
+    );
+    assert.deepEqual(
+      migrated
+        .prepare("PRAGMA table_info(agent_thread_follower_undo)")
+        .all()
+        .map((row) => (row as { name: string }).name),
+      [
+        "undo_token",
+        "actor_id",
+        "participant_id",
+        "thread_id",
+        "previous_source",
+        "expires_at",
+        "created_at",
+      ],
     );
 
     migrated

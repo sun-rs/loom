@@ -81,7 +81,11 @@ test("slot launcher executes only K slot bytes with fd-only config and no inheri
         assert.equal(childProcessGroup, launched.processId);
         return;
       } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+        if (
+          (error as NodeJS.ErrnoException).code !== "ENOENT" &&
+          !(error instanceof SyntaxError)
+        )
+          throw error;
       }
       await new Promise((resolve) => setTimeout(resolve, 20));
     }

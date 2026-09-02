@@ -160,6 +160,56 @@ test("Room roles are canonical, causal, and preserve at least one Human owner", 
   }
 });
 
+test("a Human can leave only their own regular Channel membership", () => {
+  const fixture = collaborationFixture();
+  try {
+    const before = latestRoomSeq(fixture);
+    const left = fixture.kernel.leaveRoom(fixture.memberActor, {
+      basedOnRoomSeq: before,
+      idempotencyKey: "member-self-leave",
+      roomId: fixture.room.roomId,
+    });
+    assert.equal(left.removedPrincipalId, fixture.member.principal.principalId);
+    assert.equal(left.event.type, "membership.removed");
+    assert.equal(left.event.actorId, fixture.member.principal.principalId);
+    assert.equal(
+      left.event.payload.participantId,
+      fixture.member.principal.principalId,
+    );
+    assert.equal(left.event.payload.previousRole, "member");
+    assert.deepEqual(fixture.kernel.listRooms(fixture.memberActor), []);
+    assert.equal(
+      fixture.kernel.leaveRoom(fixture.memberActor, {
+        basedOnRoomSeq: left.event.roomSeq,
+        idempotencyKey: "member-self-leave",
+        roomId: fixture.room.roomId,
+      }).deduplicated,
+      true,
+      "retry remains idempotent after the membership row is gone",
+    );
+    assert.throws(
+      () =>
+        fixture.kernel.leaveRoom(fixture.ownerActor, {
+          basedOnRoomSeq: left.event.roomSeq,
+          idempotencyKey: "last-owner-self-leave",
+          roomId: fixture.room.roomId,
+        }),
+      /last owner/i,
+    );
+    assert.throws(
+      () =>
+        fixture.kernel.leaveRoom(fixture.agentActor, {
+          basedOnRoomSeq: left.event.roomSeq,
+          idempotencyKey: "agent-self-leave-through-human-port",
+          roomId: fixture.room.roomId,
+        }),
+      /only Human principals/i,
+    );
+  } finally {
+    fixture.close();
+  }
+});
+
 test("Thread replies remain Room-owned and derive durable attention without provider sessions", () => {
   const fixture = collaborationFixture();
   try {

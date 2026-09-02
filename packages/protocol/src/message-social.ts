@@ -1,6 +1,7 @@
 import { z } from "zod";
-import { IdentifierSchema } from "./common.ts";
+import { IdentifierSchema, TimestampSchema } from "./common.ts";
 import { SearchHitSchema } from "./client-discovery.ts";
+import { PrincipalSchema, RoomKindSchema } from "./collaboration.ts";
 
 // Raft $tt: add/remove are explicit intents, never a retry-sensitive toggle.
 export const ReactionEmojiSchema = z
@@ -72,14 +73,24 @@ export const MessageSaveRequestSchema = z
 export const SavedMessagesRequestSchema = z
   .object({
     workspaceId: IdentifierSchema,
+    query: z.string().trim().max(300).optional(),
+    channelId: IdentifierSchema.optional(),
+    sortDirection: z.enum(["asc", "desc"]).default("desc"),
     cursor: z.string().max(2000).optional(),
-    limit: z.number().int().min(1).max(100).optional(),
+    limit: z.number().int().min(1).max(100).default(20),
   })
   .strict();
 export const SavedMessagesResponseSchema = z
   .object({
-    items: z.array(SearchHitSchema.extend({ savedAt: z.string() })),
+    items: z.array(
+      SearchHitSchema.extend({
+        savedAt: TimestampSchema,
+        roomKind: RoomKindSchema,
+        sender: PrincipalSchema,
+      }),
+    ),
     total: z.number().int().nonnegative(),
+    globalTotal: z.number().int().nonnegative(),
     nextCursor: z.string().optional(),
   })
   .strict();
@@ -89,7 +100,7 @@ export type MessageReactionRequest = z.infer<
   typeof MessageReactionRequestSchema
 >;
 export type MessageSaveRequest = z.infer<typeof MessageSaveRequestSchema>;
-export type SavedMessagesRequest = z.infer<typeof SavedMessagesRequestSchema>;
+export type SavedMessagesRequest = z.input<typeof SavedMessagesRequestSchema>;
 
 export const SidebarSortModeSchema = z.enum(["manual", "recent", "az"]);
 const Keys = z

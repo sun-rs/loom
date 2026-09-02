@@ -17,6 +17,8 @@
     "@rah-os/ui-tokens": "*",
     "@rah-os/ui-web": "*",
     "@tanstack/react-virtual": "^3.14.10",
+    "d3-selection": "^3.0.0",
+    "d3-zoom": "^3.0.0",
     "katex": "^0.18.4",
     "mermaid": "^11.17.2",
     "react": "^19.2.8",
@@ -32,6 +34,8 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/d3-selection": "^3.0.11",
+    "@types/d3-zoom": "^3.0.8",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
     "@vitejs/plugin-react": "~6.1.0",

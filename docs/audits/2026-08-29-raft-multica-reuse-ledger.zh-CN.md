@@ -88,6 +88,30 @@
 - 有意排除：Raft 账号、套餐、资源计费、中央 push server；任意 URL payload；从 Provider 日志或浏览器缓存生成通知；把 Push 当 canonical history。
 - 当前门禁：protocol/kernel/daemon/application-service/SDK/Web unit，desktop/390×844 Search/设置页，HTTPS LAN/PWA 配对、Service Worker 和 daemon 重启后的 session persistence。macOS/iOS 真机通知仍须用户授权后各做一次投递/点击证据。
 
+### 2026-09-02 Raft Saved 聚合页 structured port
+
+- 冻结来源：`docs/evidence/raft-web-20260831-current/SavedPanel-BvhJ1TDV.js`，SHA-256 `261c2bd2262c8afe8040486ff2b5dad330badc14c573ee05c2ae522ffbb180cf`；共享 store、图标和导航来自 `index-BoAC7nSE.js`，SHA-256 `7328c15614ac53c7cc906e0f56665dd822a4c0ffaa64e4cb6b9a7a76a692b26a`。
+- 结构化移植：独立页固定空查询和倒序、每页 20、6 行 skeleton、`240px 0px` 无限滚动前探、完整卡片跳转、动态 Room/DM/Thread 元信息、相对时间、移除提示及“复制链接 / 复制 Markdown / 从收藏中移除”右键菜单。
+- RAH OS owner：`packages/protocol/src/message-social.ts`、`packages/kernel/src/message-social.ts`、`apps/web/src/components/saved-messages.tsx`、`apps/web/src/components/saved-message-card.tsx`、`apps/web/src/saved-messages-model.ts`。
+- 本地 glue：Raft 没有发布 `/channels/saved` 服务端源码。RAH 的 Human 私人 SQLite 关联、读取时 ACL 复核、Unicode-aware lowercase 子串匹配、冻结 cursor、幂等写入和 typed 本地 deep link 都是 `rah-os-glue`；只声明外部合同等效，不声明复制 Raft Server。
+- 有意差异：官方 store 对外暴露 offset；RAH 用 scope-bound opaque cursor 防止分页漂移。当前官方账号为空，因此官方实页只验证标题栏和空态；非空卡片由冻结源码合同与本地 3 条真实浏览器 fixture 共同验证。
+
+### 2026-09-02 消息富文本引用与 Thread Search structured port
+
+- Raft 来源：冻结 Web bundle `index-BoAC7nSE.js` SHA-256 `7328c156…` 的 `Brt`、`g9`、
+  `XW`、`Ele/Crt` 与 `_v/Ne`；采用代码保护、已知实体保守解析、Agent/Task/Room 显示样式、身份预览、
+  typed 打开目标和搜索片段高亮。
+- Multica 交叉来源：commit `11861145abc59a0d39c8c8f24ad837d4584e664f` 的
+  `packages/ui/markdown/mentions.ts`、`issue-identifiers.ts`、`Markdown.tsx`、
+  `packages/views/rich-content/rich-content.tsx` 与 `server/internal/util/mention.go`；采用 typed identity、
+  跳过 code/link/path 和单一 RichContent owner 原则。
+- 性质：`structured-port` + `rah-os-glue`。canonical body 保持原 Markdown；前端只投影当前目录可解析
+  引用。Agent hover/click 复用现有 inspector，Task/Room 走 `NavigationTarget` 和 click-time ACL。
+- 有意差异：Raft Server 搜索源码不可得，且 Raft Web 会 hydrate 整条 Thread。RAH OS 扩展既有
+  ACL-safe FTS `threadIds` 过滤、冻结 cursor 和 `message.context`，传输全部命中而非全部历史；不声称复制
+  Raft ranker。公式、KaTeX、Shiki、Mermaid sandbox 继续复用现有 renderer，不引入 Multica Issue 模型。
+- 详细合同与门禁见 `docs/product/2026-09-02-message-rich-reference-contract.zh-CN.md`。
+
 ## 4. 每个移植提交必须补充的字段
 
 每个实际吸收模块在提交前必须在本节或对应 `SOURCE.md` 增加：

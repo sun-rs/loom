@@ -11,6 +11,13 @@ export type BrowserPushStatus = {
 export type BrowserPushReconciliation =
   "none" | "request_on_gesture" | "subscribe" | "unsubscribe";
 
+type BrowserPushServiceWorkerContainer = Pick<
+  ServiceWorkerContainer,
+  "getRegistration" | "register"
+>;
+
+const SERVICE_WORKER_PATH = "/sw.js";
+
 const BROWSER_PUSH_PREFERENCE_KEY = "rah:web-push-desired:v1";
 type PreferenceStorage = Pick<Storage, "getItem" | "setItem">;
 
@@ -71,6 +78,36 @@ export function browserPushSupported() {
   );
 }
 
+/**
+ * Raft's status path reads the existing root registration and never creates a
+ * new one. Re-registering on every focus/visibility refresh is observably
+ * racy in Firefox and can surface a false NetworkError after a successful
+ * test push.
+ */
+export async function existingBrowserPushRegistration(
+  serviceWorker: BrowserPushServiceWorkerContainer = navigator.serviceWorker,
+): Promise<ServiceWorkerRegistration | null> {
+  const registration = (await serviceWorker.getRegistration("/")) ?? null;
+  if (registration) void registration.update().catch(() => undefined);
+  return registration;
+}
+
+/** Register only on an explicit enable path, matching Raft's b4/hce/Lit flow. */
+export async function ensureBrowserPushRegistration(
+  serviceWorker: BrowserPushServiceWorkerContainer = navigator.serviceWorker,
+): Promise<ServiceWorkerRegistration | null> {
+  const existing = await existingBrowserPushRegistration(serviceWorker);
+  if (existing) return existing;
+  try {
+    const registration = await serviceWorker.register(SERVICE_WORKER_PATH);
+    void registration.update().catch(() => undefined);
+    return registration;
+  } catch (failure) {
+    console.error("[Push] Failed to register service worker:", failure);
+    return null;
+  }
+}
+
 export async function readBrowserPushStatus(
   client: RahClient,
 ): Promise<BrowserPushStatus> {
@@ -82,11 +119,11 @@ export async function readBrowserPushStatus(
     };
   const [configuration, registration] = await Promise.all([
     client.request("push.configuration", {}),
-    navigator.serviceWorker.register("/sw.js"),
+    existingBrowserPushRegistration(),
   ]);
   return {
     browserSubscribed: Boolean(
-      await registration.pushManager.getSubscription(),
+      registration && (await registration.pushManager.getSubscription()),
     ),
     configuration,
     permission: Notification.permission,
@@ -104,8 +141,8 @@ export async function enableBrowserPush(
     permission = await Notification.requestPermission();
   if (permission !== "granted") return await readBrowserPushStatus(client);
   const configuration = await client.request("push.configuration", {});
-  const registration = await navigator.serviceWorker.register("/sw.js");
-  await registration.update();
+  const registration = await ensureBrowserPushRegistration();
+  if (!registration) throw new Error("无法注册通知 Service Worker");
   const subscription =
     (await registration.pushManager.getSubscription()) ??
     (await registration.pushManager.subscribe({
@@ -128,8 +165,8 @@ export async function enableBrowserPush(
 
 export async function disableBrowserPush(client: RahClient) {
   if (!browserPushSupported()) return await readBrowserPushStatus(client);
-  const registration = await navigator.serviceWorker.ready;
-  const subscription = await registration.pushManager.getSubscription();
+  const registration = await existingBrowserPushRegistration();
+  const subscription = await registration?.pushManager.getSubscription();
   if (subscription) {
     const endpoint = subscription.endpoint;
     await subscription.unsubscribe();

@@ -1,4 +1,3 @@
-import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 
 import {
@@ -16,6 +15,7 @@ import {
   runMacOSLocalCoreProductOperator,
   type MacOSLocalCoreProductOperatorResult,
 } from "./macos-local-core-product-operator.ts";
+import { resolveRahDataHome } from "./rah-data-home.ts";
 
 export type LocalCoreCommandRuntime = Readonly<{
   environment?: NodeJS.ProcessEnv;
@@ -106,9 +106,7 @@ export async function runLocalCoreService(input: {
 }): Promise<0> {
   const environment = input.environment ?? process.env;
   const staticDirectory = requiredPath(environment, "RAH_WEB_STATIC_DIRECTORY");
-  const workbenchHome = resolve(
-    environment.RAH_OS_HOME?.trim() || defaultWorkbenchHome(),
-  );
+  const workbenchHome = resolveRahDataHome({ environment });
   const workspaceCwd = resolve(
     environment.RAH_WORKSPACE_CWD?.trim() || process.cwd(),
   );
@@ -152,12 +150,6 @@ async function serveUntilShutdown(
   } finally {
     await running.stop();
   }
-}
-
-function defaultWorkbenchHome(): string {
-  return process.platform === "darwin"
-    ? join(homedir(), "Library", "Application Support", "RAH OS")
-    : join(homedir(), ".local", "share", "rah-os");
 }
 
 function requiredPath(environment: NodeJS.ProcessEnv, name: string): string {

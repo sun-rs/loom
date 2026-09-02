@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 import type { RahClient, RahClientOperationMap } from "@rah-os/client-sdk";
 
 type Query =
-  "task.global.list" | "search" | "activity.list" | "message.context";
+  | "task.global.list"
+  | "search"
+  | "activity.list"
+  | "message.context"
+  | "thread.followers";
 export function useDiscoveryQuery<K extends Query>(
   client: RahClient,
   operation: K,

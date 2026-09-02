@@ -1,12 +1,9 @@
-import { homedir } from "node:os";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 
-import { provisionLanCertificate } from "@rah-os/daemon";
+import { prepareRahDataHome, provisionLanCertificate } from "@rah-os/daemon";
 
 const publicOrigin = parsePublicOrigin(requiredEnvironment("RAH_LAN_ORIGIN"));
-const workbenchHome = resolve(
-  process.env.RAH_OS_HOME?.trim() || defaultWorkbenchHome(),
-);
+const workbenchHome = await prepareRahDataHome({ environment: process.env });
 const provisioned = provisionLanCertificate({
   directory: join(workbenchHome, "tls"),
   publicHostname: publicOrigin.hostname,
@@ -47,10 +44,4 @@ function parsePublicOrigin(value) {
     throw new Error("RAH_LAN_ORIGIN must be an exact https origin");
   }
   return { hostname: url.hostname, origin: url.origin };
-}
-
-function defaultWorkbenchHome() {
-  return process.platform === "darwin"
-    ? join(homedir(), "Library", "Application Support", "RAH OS")
-    : join(homedir(), ".local", "share", "rah-os");
 }

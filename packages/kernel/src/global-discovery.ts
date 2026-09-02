@@ -30,11 +30,32 @@ type Cursor = {
   rank: number;
   binding: string;
 };
+const SEARCH_RANK_BINDING = "raft-token-or-v1";
+const MAX_SEARCH_TERMS = 64;
+
+function searchTerms(query: string) {
+  const seen = new Set<string>();
+  return query
+    .trim()
+    .split(/\s+/u)
+    .map((term) => term.toLowerCase())
+    .filter((term) => {
+      if (!term || seen.has(term) || seen.size >= MAX_SEARCH_TERMS)
+        return false;
+      seen.add(term);
+      return true;
+    });
+}
+
 export function discoveryPage(
   db: DatabaseSync,
   table: "messages" | "tasks" | "human_saved_messages",
   actorId: string,
-  input: { cursor?: string | undefined; limit?: number | undefined },
+  input: {
+    cursor?: string | undefined;
+    limit?: number | undefined;
+    bindingVersion?: string | undefined;
+  },
 ) {
   const { cursor, limit = 50, ...filters } = input;
   const binding = createHash("sha256")
@@ -160,11 +181,16 @@ export class GlobalDiscovery {
   search(actorId: string, request: WorkspaceSearchRequest) {
     requireDiscoveryHuman(this.db, actorId);
     const input = WorkspaceSearchRequestSchema.parse(request);
-    const p = discoveryPage(this.db, "messages", actorId, input);
+    const p = discoveryPage(this.db, "messages", actorId, {
+      ...input,
+      bindingVersion: SEARCH_RANK_BINDING,
+    });
     const q = input.query.toLowerCase();
+    const terms = searchTerms(q);
     const directory = this.directory(actorId, input.workspaceId, q);
     const filtered = Boolean(
       input.roomIds?.length ||
+      input.threadIds?.length ||
       input.senderIds?.length ||
       input.senderKind ||
       input.mentionSelf ||
@@ -181,17 +207,23 @@ export class GlobalDiscovery {
     const where = [
       discoveryVisibleRooms,
       "m.message_order <= ?",
-      "instr(rah_casefold(m.body), ?) > 0",
       "m.room_seq IS NOT NULL",
     ];
-    const args: SQLInputValue[] = [input.workspaceId, actorId, p.ceiling, q];
-    if ([...q].length >= 3) {
+    const args: SQLInputValue[] = [input.workspaceId, actorId, p.ceiling];
+    if (terms.length) {
+      where.push(
+        `(${terms.map(() => "instr(rah_casefold(m.body), ?) > 0").join(" OR ")})`,
+      );
+      args.push(...terms);
+    }
+    if (terms.length === 1 && [...terms[0]!].length >= 3) {
       where.push(
         "m.message_order IN (SELECT rowid FROM message_search WHERE message_search MATCH ?)",
       );
-      args.push(`"${q.replaceAll('"', '""')}"`);
+      args.push(`"${terms[0]!.replaceAll('"', '""')}"`);
     }
     selectIds(where, args, "m.room_id", input.roomIds);
+    selectIds(where, args, "m.thread_id", input.threadIds);
     selectIds(where, args, "m.actor_id", input.senderIds);
     if (input.senderKind) {
       where.push("sender.kind = ?");
@@ -220,12 +252,13 @@ export class GlobalDiscovery {
     const total = Number(
       this.db.prepare(`SELECT COUNT(*) AS n ${from}`).get(...args)!.n,
     );
-    // Raft's server ranker is not distributed. Local deterministic exact/prefix/substring rank.
+    // Raft's server ranker is not distributed. Preserve its observable full-term-before-partial
+    // contract with a deterministic local exact/prefix/phrase/distinct-term rank.
     const relevance = Boolean(q) && input.sort !== "recent";
     const rank = relevance
-      ? "CASE WHEN rah_casefold(m.body) = ? THEN 0 WHEN instr(rah_casefold(m.body), ?) = 1 THEN 1 ELSE 2 END"
+      ? `CASE WHEN rah_casefold(m.body) = ? THEN 0 WHEN instr(rah_casefold(m.body), ?) = 1 THEN 1 WHEN instr(rah_casefold(m.body), ?) > 0 THEN 2 ELSE 3 + (${terms.length} - (${terms.map(() => "CASE WHEN instr(rah_casefold(m.body), ?) > 0 THEN 1 ELSE 0 END").join(" + ")})) END`
       : "0";
-    const rankArgs = relevance ? [q, q] : [];
+    const rankArgs = relevance ? [q, q, q, ...terms] : [];
     const rows = this.db
       .prepare(
         `WITH hits AS (SELECT m.*, r.name AS room_name, sender.handle AS sender_name, th.root_message_id, ${rank} AS rank ${from}) SELECT * FROM hits WHERE (rank > ? OR (rank = ? AND message_order < ?)) ORDER BY rank, message_order DESC LIMIT ?`,

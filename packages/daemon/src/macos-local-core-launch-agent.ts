@@ -115,7 +115,7 @@ export function createMacOSLocalCoreLaunchAgentPlan(
   const environment: Record<string, string> = {
     HOME: userHomeDirectory,
     PATH: pathEntries.join(delimiter),
-    RAH_OS_HOME: workbenchHome,
+    RAH_DATA_HOME: workbenchHome,
     RAH_WEB_STATIC_DIRECTORY: staticDirectory,
     RAH_WORKSPACE_CWD: workspaceCwd,
   };
@@ -449,16 +449,15 @@ export async function deactivateMacOSLocalCoreLaunchAgent(input: {
 }
 
 export type MacOSLocalCoreUninstallResult = Readonly<{
-  dataPurged: boolean;
+  dataRootPreserved: string;
   kind: "already_absent" | "uninstalled";
   plistRemoved: boolean;
   serviceTarget: string;
 }>;
 
 /**
- * Removes only the per-user LaunchAgent by default. Persistent Room, Agent,
- * credential-digest and TLS state is deleted only behind the explicit
- * purgeData authority boundary.
+ * Removes only the per-user LaunchAgent. Persistent Room, Agent,
+ * credential-digest and TLS state is never part of service removal.
  */
 export async function uninstallMacOSLocalCore(input: {
   label: string;
@@ -466,7 +465,6 @@ export async function uninstallMacOSLocalCore(input: {
   plistPath: string;
   pollAttempts?: number;
   pollIntervalMs?: number;
-  purgeData?: boolean;
   userId?: number;
   wait?: (delayMs: number) => Promise<void>;
   workbenchHome: string;
@@ -502,14 +500,9 @@ export async function uninstallMacOSLocalCore(input: {
     plistPath,
     "LaunchAgent plist",
   );
-  const dataPurged =
-    input.purgeData === true
-      ? await purgeOwnerPrivateDirectory(workbenchHome)
-      : false;
   return Object.freeze({
-    dataPurged,
-    kind:
-      loaded || plistRemoved || dataPurged ? "uninstalled" : "already_absent",
+    dataRootPreserved: workbenchHome,
+    kind: loaded || plistRemoved ? "uninstalled" : "already_absent",
     plistRemoved,
     serviceTarget,
   });
@@ -907,33 +900,6 @@ async function removeOwnedRegularFile(
   }
   await rm(path);
   await syncDirectory(dirname(path));
-  return true;
-}
-
-async function purgeOwnerPrivateDirectory(path: string): Promise<boolean> {
-  const normalized = resolve(path);
-  if (normalized === "/" || dirname(normalized) === "/") {
-    throw new Error("Core data purge target is too broad");
-  }
-  let metadata;
-  try {
-    metadata = await lstat(normalized);
-  } catch (error) {
-    if (hasCode(error, "ENOENT")) return false;
-    throw error;
-  }
-  if (
-    !metadata.isDirectory() ||
-    metadata.isSymbolicLink() ||
-    (metadata.mode & 0o077) !== 0 ||
-    (typeof process.getuid === "function" && metadata.uid !== process.getuid())
-  ) {
-    throw new Error(
-      "Core data purge target must be an owner-private directory",
-    );
-  }
-  await rm(normalized, { recursive: true });
-  await syncDirectory(dirname(normalized));
   return true;
 }
 

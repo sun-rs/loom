@@ -284,6 +284,17 @@ test("Room membership drives Message delivery while mentions only raise attentio
     [],
   );
   assert.deepEqual(
+    mentionedRoomAgentIds({ agents, body: "请@Kimi处理，@Codex稍后复核" }),
+    ["agent-codex", "agent-kimi"],
+  );
+  assert.deepEqual(
+    mentionedRoomAgentIds({
+      agents,
+      body: "`@Kimi` 和 [@Codex](https://example.com) 只是示例",
+    }),
+    [],
+  );
+  assert.deepEqual(
     taskParticipantsForSelection({
       availableAgents: agents,
       assigneeId: "agent-codex",
@@ -747,6 +758,15 @@ test("product Room selection does not get trapped in an earlier control-only Age
       name: "Agent Council",
       roomId: "agent-council",
       slug: "agent-council",
+      workspaceId: "product",
+    },
+    {
+      archivedAt: "2026-09-02T00:00:00.000Z",
+      createdAt,
+      kind: "channel" as const,
+      name: "Archived Council",
+      roomId: "archived-council",
+      slug: "archived-council",
       workspaceId: "product",
     },
   ];

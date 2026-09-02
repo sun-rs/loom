@@ -3,7 +3,10 @@ import { ClientAgentProfileRequestSchema } from "./client-agent-profile.ts";
 export * from "./client-agent-profile.ts";
 import { ClientAgentStateRequestSchema } from "./client-agent-state.ts";
 export * from "./client-agent-state.ts";
+export * from "./client-computer-profile.ts";
 export * from "./client-discovery.ts";
+export * from "./message-reference.ts";
+export * from "./message-mention.ts";
 
 import {
   ContentDigestSchema,
@@ -41,6 +44,14 @@ import {
   RoomSchema,
 } from "./collaboration.ts";
 import { RoomEventSchema, type RoomEvent } from "./room-event.ts";
+import {
+  InputRequestResolveRequestSchema,
+  InputRequestSchema,
+  InputRequestStateSchema,
+  InputRequestStatusSchema,
+  type InputRequest,
+  type InputRequestStatus,
+} from "./input-request.ts";
 import { ManagedMcpRuntimeAdapterSchema } from "./managed-mcp.ts";
 import {
   addTaskParticipantSelectionIssues,
@@ -68,6 +79,7 @@ export * from "./runtime-activity.ts";
 export * from "./agent-presence.ts";
 export * from "./review.ts";
 export * from "./reminder.ts";
+export * from "./room-agent-sos.ts";
 export { ContentDigestSchema } from "./common.ts";
 export type { ContentDigest } from "./common.ts";
 export {
@@ -100,90 +112,12 @@ export * from "./client.ts";
 export * from "./client-task.ts";
 export * from "./worker-message.ts";
 export * from "./worker-thread.ts";
+export * from "./input-request.ts";
 export { RoomEventSchema } from "./room-event.ts";
 export type { RoomEvent } from "./room-event.ts";
 
 export const InboxStateSchema = z.enum(["pending", "acknowledged"]);
 export type InboxState = z.infer<typeof InboxStateSchema>;
-
-export const InputRequestStateSchema = z.enum(["pending", "resolved"]);
-export type InputRequestState = z.infer<typeof InputRequestStateSchema>;
-
-export const InputRequestSchema = z
-  .object({
-    inputRequestId: IdentifierSchema,
-    roomId: IdentifierSchema,
-    taskId: IdentifierSchema,
-    requesterId: IdentifierSchema,
-    responderId: IdentifierSchema,
-    question: z.string().trim().min(1),
-    state: InputRequestStateSchema,
-    answer: z.string().trim().min(1).optional(),
-    resolvedBy: IdentifierSchema.optional(),
-    createdAt: TimestampSchema,
-    updatedAt: TimestampSchema,
-    resolvedAt: TimestampSchema.optional(),
-  })
-  .strict()
-  .superRefine((request, context) => {
-    const resolutionFields = [
-      request.answer,
-      request.resolvedAt,
-      request.resolvedBy,
-    ];
-    if (
-      request.state === "pending" &&
-      resolutionFields.some((value) => value !== undefined)
-    ) {
-      context.addIssue({
-        code: "custom",
-        message: "pending InputRequests cannot contain resolution evidence",
-        path: ["state"],
-      });
-    }
-    if (
-      request.state === "resolved" &&
-      resolutionFields.some((value) => value === undefined)
-    ) {
-      context.addIssue({
-        code: "custom",
-        message: "resolved InputRequests require complete resolution evidence",
-        path: ["state"],
-      });
-    }
-    if (
-      request.resolvedBy !== undefined &&
-      request.resolvedBy !== request.responderId
-    ) {
-      context.addIssue({
-        code: "custom",
-        message: "InputRequests must be resolved by their responder",
-        path: ["resolvedBy"],
-      });
-    }
-  });
-export type InputRequest = z.infer<typeof InputRequestSchema>;
-
-export const InputRequestStatusSchema = z
-  .object({
-    inputRequestId: IdentifierSchema,
-    taskId: IdentifierSchema,
-    state: InputRequestStateSchema,
-  })
-  .strict();
-export type InputRequestStatus = z.infer<typeof InputRequestStatusSchema>;
-
-export const InputRequestResolveRequestSchema = z
-  .object({
-    answer: z.string().trim().min(1),
-    basedOnRoomSeq: z.number().int().nonnegative(),
-    idempotencyKey: IdentifierSchema,
-    inputRequestId: IdentifierSchema,
-  })
-  .strict();
-export type InputRequestResolveRequest = z.infer<
-  typeof InputRequestResolveRequestSchema
->;
 
 export const RuntimeRecoveryDescriptorSchema = z
   .object({
@@ -869,14 +803,22 @@ export type ClientAgentManageResponse = z.infer<
 >;
 
 export * from "./agent-workspace.ts";
+export * from "./member-graph.ts";
 export * from "./client-task-reassignment.ts";
 export const ClientAgentGetRequestSchema = z
   .object({ agentDefinitionId: IdentifierSchema })
   .strict();
 export type ClientAgentGetRequest = z.infer<typeof ClientAgentGetRequestSchema>;
+export const ClientAgentCreatorSchema = z.discriminatedUnion("kind", [
+  PrincipalSchema.extend({ kind: z.literal("human") }),
+  PrincipalSchema.extend({ kind: z.literal("agent") }),
+]);
+export type ClientAgentCreator = z.infer<typeof ClientAgentCreatorSchema>;
 export const ClientAgentGetResponseSchema = z
   .object({
     agent: AgentCatalogEntrySchema,
+    createdAgents: z.array(AgentCatalogEntrySchema),
+    creator: ClientAgentCreatorSchema.nullable(),
     membershipRole: z.enum(["owner", "admin", "member"]).optional(),
     policy: ExecutionPolicyRevisionSchema,
   })

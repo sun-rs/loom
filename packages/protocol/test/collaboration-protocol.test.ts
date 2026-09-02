@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  ClientRoomArchiveRequestSchema,
   ClientRoomCreateRequestSchema,
+  ClientRoomLeaveRequestSchema,
+  ClientRoomAgentSosResumeRequestSchema,
+  ClientRoomAgentSosStopRequestSchema,
+  ClientRoomUnarchiveRequestSchema,
   ClientRoomUpdateRequestSchema,
   MembershipRoleSchema,
   MessageSchema,
@@ -12,6 +17,70 @@ import {
   ThreadSchema,
   WorkspaceSchema,
 } from "../src/index.ts";
+
+test("Room Agent SOS commands are strict, causal, and require bounded recovery guidance", () => {
+  const stop = {
+    basedOnRoomSeq: 7,
+    idempotencyKey: "room-sos-stop-1",
+    roomId: "room-1",
+  };
+  assert.deepEqual(ClientRoomAgentSosStopRequestSchema.parse(stop), stop);
+  assert.throws(() =>
+    ClientRoomAgentSosStopRequestSchema.parse({
+      ...stop,
+      participantId: "must-remain-room-scoped",
+    }),
+  );
+
+  const resume = {
+    basedOnRoomSeq: 9,
+    guidance: "先读取最新 Room 状态，再按新的分工继续。",
+    idempotencyKey: "room-sos-resume-1",
+    roomId: "room-1",
+  };
+  assert.deepEqual(ClientRoomAgentSosResumeRequestSchema.parse(resume), resume);
+  assert.throws(() =>
+    ClientRoomAgentSosResumeRequestSchema.parse({ ...resume, guidance: "  " }),
+  );
+  assert.throws(() =>
+    ClientRoomAgentSosResumeRequestSchema.parse({
+      ...resume,
+      guidance: "x".repeat(4_001),
+    }),
+  );
+});
+
+test("Room lifecycle commands carry freshness and idempotency identities", () => {
+  const input = {
+    basedOnRoomSeq: 7,
+    idempotencyKey: "room-archive-1",
+    roomId: "room-1",
+  };
+  assert.deepEqual(ClientRoomArchiveRequestSchema.parse(input), input);
+  assert.deepEqual(
+    ClientRoomLeaveRequestSchema.parse({
+      ...input,
+      idempotencyKey: "room-leave-1",
+    }),
+    { ...input, idempotencyKey: "room-leave-1" },
+  );
+  assert.deepEqual(
+    ClientRoomUnarchiveRequestSchema.parse({
+      ...input,
+      idempotencyKey: "room-unarchive-1",
+    }),
+    { ...input, idempotencyKey: "room-unarchive-1" },
+  );
+  assert.throws(() =>
+    ClientRoomArchiveRequestSchema.parse({ ...input, basedOnRoomSeq: -1 }),
+  );
+  assert.throws(() =>
+    ClientRoomLeaveRequestSchema.parse({
+      ...input,
+      principalId: "must-be-server-owned",
+    }),
+  );
+});
 
 test("managed Channel creation carries Raft metadata and initial Agents", () => {
   const input = {

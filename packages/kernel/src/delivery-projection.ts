@@ -20,6 +20,9 @@ export function inputRequestProjectionFromRow(row: Row): InputRequest {
   const answer = nullableText(row, "answer");
   const resolvedBy = nullableText(row, "resolved_by");
   const resolvedAt = nullableText(row, "resolved_at");
+  const cancelledAt = nullableText(row, "cancelled_at");
+  const cancelledBy = nullableText(row, "cancelled_by");
+  const cancellationReason = nullableText(row, "cancellation_reason");
   return InputRequestSchema.parse({
     inputRequestId: text(row, "input_request_id"),
     roomId: text(row, "room_id"),
@@ -30,6 +33,9 @@ export function inputRequestProjectionFromRow(row: Row): InputRequest {
     state: text(row, "state"),
     ...(answer === null ? {} : { answer }),
     ...(resolvedBy === null ? {} : { resolvedBy }),
+    ...(cancelledAt === null ? {} : { cancelledAt }),
+    ...(cancelledBy === null ? {} : { cancelledBy }),
+    ...(cancellationReason === null ? {} : { cancellationReason }),
     createdAt: text(row, "created_at"),
     updatedAt: text(row, "updated_at"),
     ...(resolvedAt === null ? {} : { resolvedAt }),

@@ -94,6 +94,27 @@ export function searchSort(
       : "relevance"
     : "recent";
 }
+export function searchShouldRun(
+  query: string,
+  filters: {
+    scopes?: readonly string[];
+    roomIds?: readonly string[];
+    senderIds?: readonly string[];
+    timeRange?: string;
+    after?: string | undefined;
+    before?: string | undefined;
+  },
+): boolean {
+  return Boolean(
+    query.trim() ||
+    filters.scopes?.length ||
+    filters.roomIds?.length ||
+    filters.senderIds?.length ||
+    (filters.timeRange && filters.timeRange !== "any") ||
+    filters.after ||
+    filters.before,
+  );
+}
 export function searchTimeBounds(
   value: string | null,
   now = new Date(),

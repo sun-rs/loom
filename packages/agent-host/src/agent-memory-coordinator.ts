@@ -1,10 +1,12 @@
 import { createHash, randomUUID } from "node:crypto";
 import {
   listAgentWorkspace,
+  listWorkspaceRoot,
   readAgentWorkspace,
+  readWorkspaceRoot,
 } from "./agent-workspace-browser.ts";
-import { lstat, mkdir, open, readFile, rename } from "node:fs/promises";
-import { basename, dirname, isAbsolute, join, resolve } from "node:path";
+import { lstat, mkdir, open, readFile, realpath } from "node:fs/promises";
+import { basename, isAbsolute, join, resolve } from "node:path";
 
 import type {
   AgentMemoryWorkspaceSnapshot,
@@ -12,6 +14,8 @@ import type {
   AgentRuntimeContext,
   AgentMemoryConfigPatch,
   AgentMemoryConfigSnapshot,
+  AgentWorkspaceRoot,
+  AgentWorkspaceRoots,
 } from "@rah-os/protocol";
 import { AgentMemoryConfigStore } from "./agent-memory-config-store.ts";
 
@@ -30,6 +34,10 @@ import {
   readAgentMemoryWorkspaceFile,
   type AgentMemoryMaterializationIdentity,
 } from "./agent-memory-materialization.ts";
+import {
+  quarantineAgentMemoryWorkspace,
+  type AgentMemoryWorkspaceQuarantine,
+} from "./agent-memory-workspace-quarantine.ts";
 import {
   prepareAgentMemoryRun,
   type PreparedAgentMemoryActivation,
@@ -88,6 +96,7 @@ export class AgentMemoryCoordinator {
       ) => Promise<AgentMemoryProviderContinuityQuarantine>)
     | undefined;
   readonly #now: () => number;
+  readonly #projectDirectory: string | undefined;
   readonly #rootDirectory: string;
   readonly #configs: AgentMemoryConfigStore;
   readonly #resetting = new Set<string>();
@@ -102,6 +111,7 @@ export class AgentMemoryCoordinator {
       operationId: string,
     ) => Promise<AgentMemoryProviderContinuityQuarantine>;
     now?: () => number;
+    projectDirectory?: string;
     rootDirectory: string;
     wake: (
       ownerParticipantId: string,
@@ -112,10 +122,22 @@ export class AgentMemoryCoordinator {
     if (!isAbsolute(options.rootDirectory)) {
       throw new Error("Agent memory coordinator root must be absolute");
     }
+    if (
+      options.projectDirectory !== undefined &&
+      !isAbsolute(options.projectDirectory)
+    ) {
+      throw new Error("Runtime project directory must be absolute");
+    }
     this.#acquireResetFence = options.acquireResetFence;
     this.#quarantineProviderContinuity = options.quarantineProviderContinuity;
     this.#now = options.now ?? Date.now;
     this.#rootDirectory = resolve(options.rootDirectory);
+    this.#projectDirectory =
+      options.projectDirectory === undefined
+        ? undefined
+        : resolve(options.projectDirectory);
+    if (this.#projectDirectory === "/")
+      throw new Error("Filesystem root is not a runtime project");
     this.#configs = new AgentMemoryConfigStore(this.#rootDirectory);
     this.#cleaner = new AgentMemoryCleanerRuntime({ wake: options.wake });
   }
@@ -205,7 +227,49 @@ export class AgentMemoryCoordinator {
     return lease;
   }
 
-  async browseWorkspace(owner: string, path: string, includeHidden: boolean) {
+  async workspaceRoots(owner: string): Promise<AgentWorkspaceRoots> {
+    const participantId = requireParticipantId(owner);
+    const memoryRoot = await realpath(this.#rootDirectory);
+    const agentRoot = agentMemoryWorkspacePath(memoryRoot, participantId);
+    const roots: AgentWorkspaceRoot[] = [
+      {
+        label: "Agent 工作区",
+        rootId: "agent-workspace",
+        rootKind: "agent-workspace",
+        rootPath: agentRoot,
+        state: (await existsDirectory(agentRoot)) ? "ready" : "absent",
+      },
+    ];
+    if (this.#projectDirectory !== undefined) {
+      const projectRoot = await realpath(this.#projectDirectory);
+      roots.push({
+        label: basename(projectRoot) || "本机运行项目",
+        rootId: "runtime-project",
+        rootKind: "runtime-project",
+        rootPath: projectRoot,
+        state: "ready",
+      });
+    }
+    return { defaultRootId: "agent-workspace", roots };
+  }
+
+  async browseWorkspace(
+    owner: string,
+    rootId: AgentWorkspaceRoot["rootId"],
+    path: string,
+    includeHidden: boolean,
+  ) {
+    if (rootId === "runtime-project") {
+      const rootDirectory = await this.#requireProjectDirectory();
+      return listWorkspaceRoot({
+        rootDirectory,
+        rootId,
+        rootKind: rootId,
+        rootLabel: basename(rootDirectory) || "本机运行项目",
+        path,
+        includeHidden,
+      });
+    }
     return listAgentWorkspace(
       this.#rootDirectory,
       requireParticipantId(owner),
@@ -214,12 +278,32 @@ export class AgentMemoryCoordinator {
     );
   }
 
-  async previewWorkspaceFile(owner: string, path: string) {
+  async previewWorkspaceFile(
+    owner: string,
+    rootId: AgentWorkspaceRoot["rootId"],
+    path: string,
+  ) {
+    if (rootId === "runtime-project") {
+      const rootDirectory = await this.#requireProjectDirectory();
+      return readWorkspaceRoot({
+        rootDirectory,
+        rootId,
+        rootKind: rootId,
+        rootLabel: basename(rootDirectory) || "本机运行项目",
+        path,
+      });
+    }
     return readAgentWorkspace(
       this.#rootDirectory,
       requireParticipantId(owner),
       path,
     );
+  }
+
+  async #requireProjectDirectory(): Promise<string> {
+    if (this.#projectDirectory === undefined)
+      throw new Error("此 Computer 尚未配置本机运行项目");
+    return await realpath(this.#projectDirectory);
   }
 
   async inspectWorkspace(
@@ -300,6 +384,71 @@ export class AgentMemoryCoordinator {
     });
   }
 
+  /**
+   * Begins the workspace part of a reset while the caller already owns the
+   * global per-Agent terminal fence. Provider continuity remains the execution
+   * reset coordinator's responsibility so full reset never opens a second
+   * lease window.
+   */
+  async beginWorkspaceResetInsideFence(
+    ownerParticipantId: string,
+    operationId: string,
+  ): Promise<AgentMemoryWorkspaceQuarantine> {
+    if (this.#closed) throw new Error("Agent Memory coordinator is closed");
+    const participantId = requireParticipantId(ownerParticipantId);
+    const resetOperation = requireIdempotencyKey(operationId);
+    if (this.#resetting.has(participantId)) {
+      throw new Error("Agent memory reset is already in progress");
+    }
+    const previousConfig = this.#cleaner.getAppliedConfig(participantId);
+    this.#resetting.add(participantId);
+    this.#cleaner.removeConfig(participantId);
+    let workspace: AgentMemoryWorkspaceQuarantine;
+    try {
+      workspace = await quarantineAgentMemoryWorkspace({
+        now: this.#now,
+        operationId: resetOperation,
+        ownerParticipantId: participantId,
+        rootDirectory: this.#rootDirectory,
+      });
+    } catch (error) {
+      this.#restoreCleanerAfterReset(participantId, previousConfig);
+      this.#resetting.delete(participantId);
+      throw error;
+    }
+
+    let active = true;
+    return Object.freeze({
+      ...workspace,
+      commit: () => {
+        if (!active) return;
+        workspace.commit();
+        active = false;
+        this.#resetting.delete(participantId);
+      },
+      rollback: async () => {
+        if (!active) return;
+        await workspace.rollback();
+        this.#restoreCleanerAfterReset(participantId, previousConfig);
+        active = false;
+        this.#resetting.delete(participantId);
+      },
+    });
+  }
+
+  #restoreCleanerAfterReset(
+    participantId: string,
+    previousConfig: AgentMemoryCleanerConfig | null,
+  ): void {
+    if (previousConfig === null || this.#closed) return;
+    this.#cleaner.applyConfig(
+      cleanerConfig(
+        this.getCleanerConfig(participantId),
+        previousConfig.memoryIndexPath,
+      ),
+    );
+  }
+
   async resetWorkspace(
     ownerParticipantId: string,
     idempotencyKey?: string,
@@ -340,35 +489,14 @@ export class AgentMemoryCoordinator {
         "Agent memory reset could not acquire an exclusive terminal fence",
       );
     }
-    const previousConfig = this.#cleaner.getAppliedConfig(participantId);
-    this.#resetting.add(participantId);
-    this.#cleaner.removeConfig(participantId);
-    let movedFrom: string | undefined;
-    let movedTo: string | undefined;
+    let workspace: AgentMemoryWorkspaceQuarantine | undefined;
     let providerContinuity: AgentMemoryProviderContinuityQuarantine | undefined;
     let safeToReleaseFence = false;
     try {
-      await ensurePrivateDirectory(this.#rootDirectory, "Agent memory root");
-      const workspacePath = agentMemoryWorkspacePath(
-        this.#rootDirectory,
+      workspace = await this.beginWorkspaceResetInsideFence(
         participantId,
+        operationId,
       );
-      const resetAtMs = safeEpoch(this.#now());
-      if (await pathExists(workspacePath)) {
-        await assertPrivateDirectory(workspacePath, "Agent memory workspace");
-        const quarantineRoot = join(this.#rootDirectory, ".quarantine");
-        await ensurePrivateDirectory(
-          quarantineRoot,
-          "Agent memory quarantine root",
-        );
-        movedFrom = workspacePath;
-        movedTo = join(
-          quarantineRoot,
-          `${basename(workspacePath)}.${String(resetAtMs)}.${operationId}`,
-        );
-        await rename(movedFrom, movedTo);
-        await syncDirectory(dirname(movedFrom));
-      }
       providerContinuity = await quarantineProviderContinuity(
         participantId,
         operationId,
@@ -382,14 +510,14 @@ export class AgentMemoryCoordinator {
         );
       }
       const receipt: AgentMemoryResetReceipt =
-        movedTo === undefined
+        workspace.kind === "already_absent"
           ? Object.freeze({
               kind: "already_absent" as const,
               deduplicated: false,
               operationId,
               ownerParticipantId: participantId,
               providerContinuityRecords: providerContinuity.recordCount,
-              resetAtMs,
+              resetAtMs: workspace.resetAtMs,
             })
           : Object.freeze({
               kind: "quarantined" as const,
@@ -397,10 +525,11 @@ export class AgentMemoryCoordinator {
               operationId,
               ownerParticipantId: participantId,
               providerContinuityRecords: providerContinuity.recordCount,
-              quarantinePath: movedTo,
-              resetAtMs,
+              quarantinePath: workspace.quarantinePath!,
+              resetAtMs: workspace.resetAtMs,
             });
       await persistReceipt(this.#rootDirectory, receipt);
+      workspace.commit();
       safeToReleaseFence = true;
       return receipt;
     } catch (error) {
@@ -412,22 +541,9 @@ export class AgentMemoryCoordinator {
           rollbackErrors.push(rollbackError);
         }
       }
-      if (movedFrom !== undefined && movedTo !== undefined) {
+      if (workspace !== undefined) {
         try {
-          await rename(movedTo, movedFrom);
-          await syncDirectory(dirname(movedFrom));
-        } catch (rollbackError) {
-          rollbackErrors.push(rollbackError);
-        }
-      }
-      if (previousConfig !== null && !this.#closed) {
-        try {
-          this.#cleaner.applyConfig(
-            cleanerConfig(
-              this.getCleanerConfig(participantId),
-              previousConfig.memoryIndexPath,
-            ),
-          );
+          await workspace.rollback();
         } catch (rollbackError) {
           rollbackErrors.push(rollbackError);
         }
@@ -441,7 +557,6 @@ export class AgentMemoryCoordinator {
       safeToReleaseFence = true;
       throw error;
     } finally {
-      this.#resetting.delete(participantId);
       if (safeToReleaseFence) await fence.release();
     }
   }
@@ -600,6 +715,14 @@ async function pathExists(path: string): Promise<boolean> {
   }
 }
 
+async function existsDirectory(path: string): Promise<boolean> {
+  if (!(await pathExists(path))) return false;
+  const metadata = await lstat(path);
+  if (!metadata.isDirectory() || metadata.isSymbolicLink())
+    throw new Error(`Agent workspace root is not a directory: ${path}`);
+  return true;
+}
+
 async function syncDirectory(directory: string): Promise<void> {
   const handle = await open(directory, "r");
   try {
@@ -629,13 +752,6 @@ function requireIdempotencyKey(value: string): string {
     /[\u0000-\u001f\u007f]/u.test(value)
   ) {
     throw new Error("Agent memory reset idempotency key is invalid");
-  }
-  return value;
-}
-
-function safeEpoch(value: number): number {
-  if (!Number.isSafeInteger(value) || value < 0) {
-    throw new Error("Agent memory coordinator clock is invalid");
   }
   return value;
 }

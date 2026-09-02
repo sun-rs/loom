@@ -22,7 +22,7 @@ export function PreviewCard({
   className,
 }: {
   label: string;
-  onClick: () => void;
+  onClick?: () => void;
   children: ReactNode;
   content: ReactNode;
   triggerClassName?: string;
@@ -114,10 +114,14 @@ export function PreviewCard({
         onMouseLeave={leave}
         onFocus={enter}
         onBlur={leave}
-        onClick={() => {
-          close();
-          onClick();
-        }}
+        onClick={
+          onClick
+            ? () => {
+                close();
+                onClick();
+              }
+            : undefined
+        }
       >
         {children}
       </button>

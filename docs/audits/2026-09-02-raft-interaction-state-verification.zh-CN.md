@@ -242,8 +242,30 @@ monospace`，tabular nums；本人态 pink/20，过渡 150ms。父 footer 为 fl
 - 本地计算样式门禁同时锁定：chip 20px、4px、0×6px、gap 4px、15px sprite、12px
   leading-none 与 mono tabular count；saved badge 20px、1px 黑边、0×6px、10px 图标与
   10px/700/10px 文字，`filter` 100ms，hover 稳定值 `brightness(.9)`。
+- 首轮严格宽度比对暴露出一个不能靠 CSS family 名判断的差异：本地声明了 `Space Mono`
+  却没有加载 Raft 字体文件，Chromium 的 chip/count 分别是 38.2265625/7.2265625px，
+  而官方为 38.3515625/7.3515625px。现已把冻结 reference 的 `official-fonts.css`、
+  Space Grotesk 与 Space Mono 400/700 纳入 `ui-tokens` 生成清单并由 Web 显式加载；Firefox
+  150 的同一几何以该引擎 1/65536px 量化为 38.350006103515625/7.350006103515625px，
+  严格门禁通过。这是浏览器引擎量化差，不是再次用近似字体或手调宽度。
 - 语义审计：收藏只进入 `human_saved_messages` 私人索引，Agent 不可感知；回应追加
   `message.reaction_changed` 共享注解但不 deriveAttention，不会单独启动 Agent。后续由正常
   工作创建的 Activation 可以在其有界 Room range 中同步到此前回应。Raft 前端还声明了
   bound Agent credential 的 reaction add/remove 能力，但没有发布证据证明 Human 回应会自动
   wake Agent，因此没有擅自增加该策略。
+- 同一已登录 Raft 官方页与重启后正式 RAH 页再做只读／本地可回滚测量。官方与本地快捷
+  回应浮层均为 224×40、2px 黑边、4×6px padding、28×28 按钮、4px radius、18×18
+  sprite、双轴中心偏差 0/0、无按钮边框／阴影；官方源码 hover 是 brutal-pink/20，本地实指针
+  hover 计算为同一 pink/20。正式 Chromium 的本人回应为 38.3515625×20，计数宽
+  7.3515625，和此前官方 Chromium 读数逐值相等；其余 gap/padding/radius/icon/font/transition
+  也逐项相等。正式页同时添加 ✅、❤️ 和收藏后，三项同一 y 坐标；随后全部点击回滚。
+- 本批完整门禁：package 761 项（759 通过、2 项明确 opt-in 跳过），Web 160/160，parity
+  regression 34/34，Firefox 150 桌面 1440×1000 与移动 390×844 真实门禁通过，`npm audit
+--omit=dev` 为 0。全仓 `format:check` 仅被本批范围外、已有未提交的 Room 成员编辑四个文件
+  阻塞；本批全部文本文件的独立 Prettier check 通过，`git diff --check` 通过。
+- 正式重启前在线备份位于 `/Users/sun/Library/Application Support/RAH OS/backups/formal-pre-social-font-20260902-4mT9f7`，
+  Room/Registry 两份 SQLite snapshot 均 `quick_check=ok`。PID 2495 优雅退出后，PID 6808
+  监听 `127.0.0.1:4173`，health online，入口资产为 `/assets/index-D0nUwdRE.js` 与
+  `/assets/index-DgWMX92I.css`。验收回滚后正式库回应/收藏均为 0，26 个 Activation 全部
+  completed、26 个 RunAttempt 全部 exited、26 个 RuntimeProcess 全部 terminated，两库
+  `quick_check=ok`；页面无 alert、JSON.parse、NetworkError、Failed to fetch 或 Client request error。

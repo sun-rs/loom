@@ -31,6 +31,10 @@ test("Direct Room and Message avatars share the Agent inspector and profile pick
   assert.match(profile, /aria-label=\{`更换 \$\{agent\.displayName\} 头像`\}/u);
   assert.match(profile, /OFFICIAL_AGENT_AVATAR_KEYS\.map/u);
   assert.match(profile, /field: "avatarKey"/u);
+  assert.match(profile, /type="file"/u);
+  assert.match(profile, /AGENT_AVATAR_UPLOAD_ACCEPT/u);
+  assert.match(profile, /uploadAgentAvatar/u);
+  assert.doesNotMatch(profile, /上传图片暂不可用/u);
   assert.match(profile, /role="group"/u);
   assert.match(
     profile,

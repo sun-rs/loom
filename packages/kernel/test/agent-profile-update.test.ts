@@ -75,6 +75,16 @@ test("profile edits survive offline hosts/reopen, preserve execution and identit
       modelIntent: { fallback: "disabled" },
       runtimeOfferId: "offer",
     });
+    const initialDetail = kernel.getWorkspaceAgentManagementView(
+      actor,
+      created.agent.definition.agentDefinitionId,
+    );
+    assert.equal(
+      initialDetail.creator?.principalId,
+      owner.principal.principalId,
+    );
+    assert.equal(initialDetail.creator?.kind, "human");
+    assert.deepEqual(initialDetail.createdAgents, []);
     now.setTime(now.getTime() + 600_000); // Host/offer expired: metadata must remain editable.
     const request = ClientAgentManageRequestSchema.parse({
       action: "update_profile",
@@ -186,6 +196,23 @@ test("profile edits survive offline hosts/reopen, preserve execution and identit
         .policy,
       created.policy,
     );
+    const uploadedAvatarKey = `upload_png_${"b".repeat(40)}`;
+    const uploadedAvatarSaved = kernel.manageWorkspaceAgent(
+      actor,
+      ClientAgentManageRequestSchema.parse({
+        ...request,
+        idempotencyKey: "uploaded-avatar",
+        field: "avatarKey",
+        value: uploadedAvatarKey,
+        expectedRevisionId:
+          avatarSaved.agent.currentRevision.agentDefinitionRevisionId,
+        basedOnRoomSeq: avatarSaved.event.roomSeq,
+      }),
+    );
+    assert.equal(
+      uploadedAvatarSaved.agent.currentRevision.avatarKey,
+      uploadedAvatarKey,
+    );
     kernel.close();
     kernel = new RoomKernel(options);
     kernel.initialize();
@@ -194,12 +221,18 @@ test("profile edits survive offline hosts/reopen, preserve execution and identit
       actor,
       request.agentDefinitionId,
     );
-    assert.deepEqual(persisted.agent, avatarSaved.agent);
+    assert.deepEqual(persisted.agent, uploadedAvatarSaved.agent);
     assert.deepEqual(persisted.policy, created.policy);
+    assert.equal(
+      persisted.creator?.principalId,
+      owner.principal.principalId,
+      "profile revisions must not rewrite the immutable creator relationship",
+    );
+    assert.deepEqual(persisted.createdAgents, []);
     const disabled = kernel.manageWorkspaceAgent(actor, {
       action: "set_state",
       agentDefinitionId: request.agentDefinitionId,
-      basedOnRoomSeq: avatarSaved.event.roomSeq,
+      basedOnRoomSeq: uploadedAvatarSaved.event.roomSeq,
       idempotencyKey: "disable",
       state: "disabled",
     });

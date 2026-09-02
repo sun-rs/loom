@@ -2,9 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  agentDirectoryRootRoute,
   agentRouteFromSearch,
   agentRouteSearch,
   reconcileAgentRouteIdentity,
+  shouldOpenAgentMobileDetail,
   type AgentRouteSelection,
 } from "../src/agent-route.ts";
 import { globalSurfaceFromSearch } from "../src/global-discovery-model.ts";
@@ -57,6 +59,26 @@ test("Agent route serialization keeps only canonical Agent navigation state", ()
   );
 });
 
+test("relationship view is a reload-safe Agent surface mutually exclusive with Agent detail", () => {
+  const relationship: AgentRouteSelection = {
+    agentDefinitionId: undefined,
+    tab: "profile",
+    view: "relationship",
+  };
+  const search = agentRouteSearch(
+    "?surface=agents&agent=stale&agentTab=mcp",
+    relationship,
+  );
+  assert.equal(search, "?surface=agents&memberView=relationship");
+  assert.deepEqual(agentRouteFromSearch(search), relationship);
+  assert.deepEqual(
+    agentRouteFromSearch(
+      "?surface=agents&memberView=relationship&agent=ignored&agentTab=chat",
+    ),
+    relationship,
+  );
+});
+
 test("Agent route keeps the requested identity while the canonical directory hydrates", () => {
   assert.deepEqual(reconcileAgentRouteIdentity("agent_definition_alice", []), {
     agentDefinitionId: "agent_definition_alice",
@@ -73,4 +95,46 @@ test("Agent route keeps the requested identity while the canonical directory hyd
     reconcileAgentRouteIdentity(undefined, ["agent_definition_alice"]),
     { agentDefinitionId: "agent_definition_alice", replace: true },
   );
+});
+
+test("a canonical Agent deep link reopens mobile detail after reload", () => {
+  assert.equal(
+    shouldOpenAgentMobileDetail({
+      agentDefinitionId: "agent_definition_alice",
+      panel: false,
+      view: undefined,
+    }),
+    true,
+  );
+  assert.equal(
+    shouldOpenAgentMobileDetail({
+      agentDefinitionId: undefined,
+      panel: false,
+      view: undefined,
+    }),
+    false,
+  );
+  assert.equal(
+    shouldOpenAgentMobileDetail({
+      agentDefinitionId: undefined,
+      panel: false,
+      view: "relationship",
+    }),
+    false,
+  );
+  assert.equal(
+    shouldOpenAgentMobileDetail({
+      agentDefinitionId: "agent_definition_alice",
+      panel: true,
+      view: undefined,
+    }),
+    false,
+  );
+});
+
+test("entering the mobile Agent root does not reopen a stale detail selection", () => {
+  assert.deepEqual(agentDirectoryRootRoute(), {
+    agentDefinitionId: undefined,
+    tab: "profile",
+  });
 });

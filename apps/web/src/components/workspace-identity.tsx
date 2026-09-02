@@ -1,38 +1,155 @@
-import { useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
 import { opaqueIdFromBytes } from "@rah-os/ui-web";
 import type { RahClient } from "@rah-os/client-sdk";
-import type { Workspace } from "@rah-os/protocol";
+import type { Room, Workspace } from "@rah-os/protocol";
 import avatarPack from "@rah-os/ui-tokens/avatar-pack.json";
 import { workspaceInitial } from "../identity-presentation.ts";
 import { useDialogProtocol } from "../dialog-protocol.ts";
+import {
+  moveWorkspaceOrder,
+  readWorkspaceOrder,
+  resolveWorkspaceLocation,
+  writeWorkspaceOrder,
+} from "../workspace-switcher-state.ts";
 import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
 
 export function WorkspaceIdentity({
   computerName,
   workspace,
   workspaces,
+  rooms,
   client,
   canManage,
+  principalId,
   onUpdated,
   onSelect,
 }: {
   computerName?: string | undefined;
   workspace: Workspace | undefined;
   workspaces: readonly Workspace[];
+  rooms: readonly Room[];
   client: RahClient;
   canManage: boolean;
+  principalId: string;
   onUpdated: (workspace: Workspace) => void;
-  onSelect: (workspace: Workspace) => void;
+  onSelect: (workspace: Workspace, rememberedSearch?: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [workspaceOrder, setWorkspaceOrder] = useState<string[]>([]);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor),
+  );
+  useEffect(() => {
+    setWorkspaceOrder(
+      readWorkspaceOrder(window.localStorage, principalId, workspaces),
+    );
+  }, [principalId, workspaces]);
+  const closeMenu = useCallback((returnFocus: boolean) => {
+    setOpen(false);
+    if (returnFocus) requestAnimationFrame(() => triggerRef.current?.focus());
+  }, []);
+  useEffect(() => {
+    if (!open) return;
+    const outside = (event: MouseEvent) => {
+      const target = event.target;
+      if (
+        target instanceof Node &&
+        !menuRef.current?.contains(target) &&
+        !triggerRef.current?.contains(target)
+      )
+        closeMenu(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeMenu(true);
+      }
+    };
+    document.addEventListener("mousedown", outside);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("mousedown", outside);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [closeMenu, open]);
+  useLayoutEffect(() => {
+    if (
+      open &&
+      menuRef.current &&
+      !menuRef.current.contains(document.activeElement)
+    )
+      menuRef.current.focus();
+  }, [open]);
+  const orderedWorkspaces = useMemo(() => {
+    const byId = new Map(workspaces.map((entry) => [entry.workspaceId, entry]));
+    const order =
+      workspaceOrder.length === 0
+        ? readWorkspaceOrder(window.localStorage, principalId, workspaces)
+        : workspaceOrder;
+    return order.flatMap((workspaceId) => {
+      const entry = byId.get(workspaceId);
+      return entry ? [entry] : [];
+    });
+  }, [principalId, workspaceOrder, workspaces]);
+  const reorder = (event: DragEndEvent) => {
+    const overId = event.over?.id;
+    if (overId === undefined) return;
+    const next = moveWorkspaceOrder(
+      workspaceOrder,
+      String(event.active.id),
+      String(overId),
+    );
+    setWorkspaceOrder(next);
+    writeWorkspaceOrder(window.localStorage, principalId, next);
+  };
+  const selectWorkspace = (selected: Workspace) => {
+    const roomIds = new Set(
+      rooms
+        .filter((room) => room.workspaceId === selected.workspaceId)
+        .map((room) => room.roomId),
+    );
+    const remembered = resolveWorkspaceLocation(
+      window.localStorage,
+      principalId,
+      selected.workspaceId,
+      roomIds,
+    );
+    onSelect(selected, remembered);
+    closeMenu(selected.workspaceId === workspace?.workspaceId);
+  };
   return (
-    <>
+    <div className="rah-space-identity">
       <button
+        ref={triggerRef}
         className="rail-logo rah-space-mark"
-        aria-label={`计算机：${computerName ?? workspace?.name ?? "加载中"}`}
-        title={computerName ?? workspace?.name ?? "计算机"}
+        aria-label={`切换协作空间：${workspace?.name ?? computerName ?? "加载中"}`}
+        title={workspace?.name ?? computerName ?? "协作空间"}
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
+        aria-haspopup="menu"
+        aria-controls="rah-workspace-switcher"
       >
         {workspace?.avatarKey ? (
           <ProfileImageAvatar
@@ -45,40 +162,130 @@ export function WorkspaceIdentity({
         )}
       </button>
       {open && workspace ? (
+        <div
+          ref={menuRef}
+          id="rah-workspace-switcher"
+          className="rah-space-switcher"
+          role="menu"
+          aria-label="切换协作空间"
+          tabIndex={-1}
+          onMouseDown={(event) => event.stopPropagation()}
+        >
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={reorder}
+          >
+            <div className="rah-space-switcher-list">
+              {orderedWorkspaces.map((entry) => (
+                <WorkspaceSwitcherRow
+                  key={entry.workspaceId}
+                  current={entry.workspaceId === workspace.workspaceId}
+                  workspace={entry}
+                  onSelect={() => selectWorkspace(entry)}
+                />
+              ))}
+            </div>
+          </DndContext>
+          <div className="rah-space-switcher-divider" />
+          <button
+            type="button"
+            role="menuitem"
+            className="rah-space-switcher-action"
+            onClick={() => {
+              setOpen(false);
+              setEditOpen(true);
+            }}
+          >
+            <span aria-hidden="true">＋</span>
+            管理当前协作空间
+          </button>
+        </div>
+      ) : null}
+      {editOpen && workspace ? (
         <WorkspaceIdentityDialog
           key={workspace.workspaceId}
           workspace={workspace}
-          workspaces={workspaces}
           client={client}
           canManage={canManage}
-          onClose={() => setOpen(false)}
-          onUpdated={onUpdated}
-          onSelect={(w) => {
-            onSelect(w);
-            setOpen(false);
+          onClose={() => {
+            setEditOpen(false);
+            requestAnimationFrame(() => triggerRef.current?.focus());
           }}
+          onUpdated={onUpdated}
         />
       ) : null}
-    </>
+    </div>
+  );
+}
+
+function WorkspaceSwitcherRow({
+  current,
+  workspace,
+  onSelect,
+}: {
+  current: boolean;
+  workspace: Workspace;
+  onSelect: () => void;
+}) {
+  const drag = useDraggable({ id: workspace.workspaceId });
+  const drop = useDroppable({ id: workspace.workspaceId });
+  return (
+    <div
+      ref={(node) => {
+        drag.setNodeRef(node);
+        drop.setNodeRef(node);
+      }}
+      className={`rah-space-switcher-row${drag.isDragging ? " is-dragging" : ""}${drop.isOver ? " is-over" : ""}`}
+    >
+      <button
+        type="button"
+        role="menuitemradio"
+        aria-checked={current}
+        className="rah-space-switcher-select"
+        onClick={onSelect}
+      >
+        <span
+          className={`rah-space-switcher-check${current ? " is-current" : ""}`}
+          aria-hidden="true"
+        >
+          ✓
+        </span>
+        <ProfileImageAvatar
+          avatarKey={workspace.avatarKey}
+          name={workspace.name}
+          size="compact"
+        />
+        <span className="rah-space-switcher-copy">
+          <b>{workspace.name}</b>
+          <span>/{workspace.slug}</span>
+        </span>
+      </button>
+      <button
+        type="button"
+        className="rah-space-switcher-drag"
+        aria-label={`调整 ${workspace.name} 顺序`}
+        {...drag.attributes}
+        {...drag.listeners}
+      >
+        ⠿
+      </button>
+    </div>
   );
 }
 
 function WorkspaceIdentityDialog({
   workspace,
-  workspaces,
   client,
   canManage,
   onClose,
   onUpdated,
-  onSelect,
 }: {
   workspace: Workspace;
-  workspaces: readonly Workspace[];
   client: RahClient;
   canManage: boolean;
   onClose: () => void;
   onUpdated: (workspace: Workspace) => void;
-  onSelect: (workspace: Workspace) => void;
 }) {
   const [name, setName] = useState(workspace.name);
   const [avatarKey, setAvatarKey] = useState(workspace.avatarKey ?? "");
@@ -178,18 +385,6 @@ function WorkspaceIdentityDialog({
             ×
           </button>
         </header>
-        <div className="rah-space-list">
-          {workspaces.map((w) => (
-            <button
-              key={w.workspaceId}
-              aria-pressed={workspace.workspaceId === w.workspaceId}
-              disabled={pending}
-              onClick={() => onSelect(w)}
-            >
-              {workspaceInitial(w.name)} · {w.name}
-            </button>
-          ))}
-        </div>
         <form
           onSubmit={(e) => {
             e.preventDefault();

@@ -71,7 +71,13 @@ import {
   ClientDirectRoomOpenResponseSchema,
   ClientRoomSyncRequestSchema,
   ClientRoomSyncResponseSchema,
+  ClientRoomArchiveRequestSchema,
   ClientRoomCreateRequestSchema,
+  ClientRoomLeaveRequestSchema,
+  ClientRoomAgentSosResponseSchema,
+  ClientRoomAgentSosResumeRequestSchema,
+  ClientRoomAgentSosStopRequestSchema,
+  ClientRoomUnarchiveRequestSchema,
   ClientRoomUpdateRequestSchema,
   ClientRoomAgentActivityListRequestSchema,
   ClientRoomAgentActivityListResponseSchema,
@@ -108,9 +114,13 @@ import {
   ClientThreadsListResponseSchema,
   ClientWorkspacesListRequestSchema,
   ClientWorkspacesListResponseSchema,
+  ClientComputerProfileUpdateRequestSchema,
+  ClientComputerProfileUpdateResponseSchema,
   ClientWorkspaceCreateRequestSchema,
   ClientWorkspaceUpdateRequestSchema,
   ClientWorkspaceMutationResponseSchema,
+  ClientWorkspaceMemberGraphRequestSchema,
+  ClientWorkspaceMemberGraphResponseSchema,
   InputRequestResolveRequestSchema,
   InputRequestResolveResponseSchema,
   LocalRuntimeInventoryRequestSchema,
@@ -173,7 +183,13 @@ import {
   type ClientDirectRoomOpenResponse,
   type ClientRoomSyncRequest,
   type ClientRoomSyncResponse,
+  type ClientRoomArchiveRequest,
   type ClientRoomCreateRequest,
+  type ClientRoomLeaveRequest,
+  type ClientRoomAgentSosResponse,
+  type ClientRoomAgentSosResumeRequest,
+  type ClientRoomAgentSosStopRequest,
+  type ClientRoomUnarchiveRequest,
   type ClientRoomUpdateRequest,
   type ClientRoomAgentActivityListRequest,
   type ClientRoomAgentActivityListResponse,
@@ -213,6 +229,10 @@ import {
   type ClientWorkspaceCreateRequest,
   type ClientWorkspaceUpdateRequest,
   type ClientWorkspaceMutationResponse,
+  type ClientWorkspaceMemberGraphRequest,
+  type ClientWorkspaceMemberGraphResponse,
+  type ClientComputerProfileUpdateRequest,
+  type ClientComputerProfileUpdateResponse,
   type InputRequestResolveRequest,
   type InputRequestResolveResponse,
   type LocalRuntimeInventoryRequest,
@@ -315,6 +335,10 @@ export type RahClientOperationMap = AgentWorkspaceOperationMap &
       input: LocalRuntimeInventoryRequest;
       output: LocalRuntimeInventoryResponse;
     };
+    "computer.profile.update": {
+      input: ClientComputerProfileUpdateRequest;
+      output: ClientComputerProfileUpdateResponse;
+    };
     "inputRequest.list": {
       input: ClientInputRequestsListRequest;
       output: ClientInputRequestsListResponse;
@@ -389,6 +413,26 @@ export type RahClientOperationMap = AgentWorkspaceOperationMap &
     };
     "room.create": {
       input: ClientRoomCreateRequest;
+      output: ClientRoomMutationResponse;
+    };
+    "room.archive": {
+      input: ClientRoomArchiveRequest;
+      output: ClientRoomMutationResponse;
+    };
+    "room.leave": {
+      input: ClientRoomLeaveRequest;
+      output: ClientRoomMemberRemoveResponse;
+    };
+    "room.sos.resume": {
+      input: ClientRoomAgentSosResumeRequest;
+      output: ClientRoomAgentSosResponse;
+    };
+    "room.sos.stop": {
+      input: ClientRoomAgentSosStopRequest;
+      output: ClientRoomAgentSosResponse;
+    };
+    "room.unarchive": {
+      input: ClientRoomUnarchiveRequest;
       output: ClientRoomMutationResponse;
     };
     "room.update": {
@@ -486,6 +530,10 @@ export type RahClientOperationMap = AgentWorkspaceOperationMap &
     "workspace.list": {
       input: ClientWorkspacesListRequest;
       output: ClientWorkspacesListResponse;
+    };
+    "workspace.member-graph.get": {
+      input: ClientWorkspaceMemberGraphRequest;
+      output: ClientWorkspaceMemberGraphResponse;
     };
     "workspace.create": {
       input: ClientWorkspaceCreateRequest;
@@ -638,6 +686,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     output: LocalRuntimeInventoryResponseSchema,
     path: "/v1/local/runtimes/list",
   },
+  "computer.profile.update": {
+    authenticated: true,
+    input: ClientComputerProfileUpdateRequestSchema,
+    method: "POST",
+    output: ClientComputerProfileUpdateResponseSchema,
+    path: "/v3/client/computers/profile/update",
+  },
   "inputRequest.list": {
     authenticated: true,
     input: ClientInputRequestsListRequestSchema,
@@ -770,6 +825,41 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     method: "POST",
     output: ClientRoomMutationResponseSchema,
     path: "/v3/client/rooms/create",
+  },
+  "room.archive": {
+    authenticated: true,
+    input: ClientRoomArchiveRequestSchema,
+    method: "POST",
+    output: ClientRoomMutationResponseSchema,
+    path: "/v3/client/rooms/archive",
+  },
+  "room.leave": {
+    authenticated: true,
+    input: ClientRoomLeaveRequestSchema,
+    method: "POST",
+    output: ClientRoomMemberRemoveResponseSchema,
+    path: "/v3/client/rooms/leave",
+  },
+  "room.sos.resume": {
+    authenticated: true,
+    input: ClientRoomAgentSosResumeRequestSchema,
+    method: "POST",
+    output: ClientRoomAgentSosResponseSchema,
+    path: "/v3/client/rooms/sos/resume",
+  },
+  "room.sos.stop": {
+    authenticated: true,
+    input: ClientRoomAgentSosStopRequestSchema,
+    method: "POST",
+    output: ClientRoomAgentSosResponseSchema,
+    path: "/v3/client/rooms/sos/stop",
+  },
+  "room.unarchive": {
+    authenticated: true,
+    input: ClientRoomUnarchiveRequestSchema,
+    method: "POST",
+    output: ClientRoomMutationResponseSchema,
+    path: "/v3/client/rooms/unarchive",
   },
   "room.update": {
     authenticated: true,
@@ -938,6 +1028,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     method: "POST",
     output: ClientWorkspacesListResponseSchema,
     path: "/v3/client/workspaces/list",
+  },
+  "workspace.member-graph.get": {
+    authenticated: true,
+    input: ClientWorkspaceMemberGraphRequestSchema,
+    method: "POST",
+    output: ClientWorkspaceMemberGraphResponseSchema,
+    path: "/v3/client/workspaces/member-graph",
   },
   "workspace.create": {
     authenticated: true,

@@ -56,12 +56,35 @@ export function unresolvedActivationCancellation(
 ): Row | undefined {
   return database
     .prepare(
-      `SELECT * FROM activation_cancellation_requests
-       WHERE activation_id = ? AND activation_attempt_number = ?
-         AND resolved_at IS NULL
+      `SELECT 'task' AS cancellation_kind, request.*
+       FROM activation_cancellation_requests AS request
+       WHERE request.activation_id = ? AND request.activation_attempt_number = ?
+         AND request.resolved_at IS NULL
+       UNION ALL
+       SELECT
+         'room_sos' AS cancellation_kind,
+         target.target_id AS request_id,
+         target.activation_id,
+         target.activation_attempt_number,
+         operation.room_id,
+         NULL AS task_id,
+         target.participant_id,
+         operation.requested_by,
+         'Room Agent SOS requested by a Human manager' AS reason,
+         target.requested_at,
+         target.resolved_at
+       FROM room_agent_sos_targets AS target
+       JOIN room_agent_sos_operations AS operation
+         ON operation.operation_id = target.operation_id
+       WHERE target.activation_id = ?
+         AND target.activation_attempt_number = ?
+         AND target.state = 'requested'
+         AND operation.state = 'stopping'
        LIMIT 1`,
     )
     .get(
+      text(activation, "activation_id"),
+      integer(activation, "attempt_count"),
       text(activation, "activation_id"),
       integer(activation, "attempt_count"),
     );
@@ -78,6 +101,18 @@ export function resolveRecoveredActivationCancellation(
        SET resolved_at = ?
        WHERE activation_id = ? AND activation_attempt_number = ?
          AND resolved_at IS NULL`,
+    )
+    .run(
+      resolvedAt,
+      text(activation, "activation_id"),
+      integer(activation, "attempt_count"),
+    );
+  database
+    .prepare(
+      `UPDATE room_agent_sos_targets
+       SET state = 'terminal_proven', resolved_at = ?
+       WHERE activation_id = ? AND activation_attempt_number = ?
+         AND state = 'requested'`,
     )
     .run(
       resolvedAt,
@@ -150,6 +185,10 @@ export function resolveActivationCancellationTransaction(input: {
         mergedActivationId,
       );
   }
+  const taskCancellation = text(request, "cancellation_kind") === "task";
+  const cancellationLabel = taskCancellation
+    ? `Task ${text(request, "task_id")} execution cancelled`
+    : "Room Agent SOS execution stopped";
   input.database
     .prepare(
       "UPDATE activations SET state = 'queued', from_seq = ?, to_seq = ?, lease_owner = NULL, lease_until = NULL, lease_until_ms = NULL, available_at = ?, available_at_ms = ?, last_error = ?, updated_at = ? WHERE activation_id = ?",
@@ -159,15 +198,23 @@ export function resolveActivationCancellationTransaction(input: {
       toSeq,
       input.now.toISOString(),
       input.now.getTime(),
-      `Task ${text(request, "task_id")} execution cancelled`,
+      cancellationLabel,
       input.now.toISOString(),
       activationId,
     );
-  input.database
-    .prepare(
-      "UPDATE activation_cancellation_requests SET resolved_at = ? WHERE request_id = ?",
-    )
-    .run(input.now.toISOString(), text(request, "request_id"));
+  if (taskCancellation) {
+    input.database
+      .prepare(
+        "UPDATE activation_cancellation_requests SET resolved_at = ? WHERE request_id = ?",
+      )
+      .run(input.now.toISOString(), text(request, "request_id"));
+  } else {
+    input.database
+      .prepare(
+        "UPDATE room_agent_sos_targets SET state = 'terminal_proven', resolved_at = ? WHERE target_id = ?",
+      )
+      .run(input.now.toISOString(), text(request, "request_id"));
+  }
   input.events.append({
     actorId: input.systemPrincipalId,
     aggregateId: activationId,
@@ -177,7 +224,9 @@ export function resolveActivationCancellationTransaction(input: {
       activationId,
       cancellationRequestId: text(request, "request_id"),
       ...(mergedActivationId === undefined ? {} : { mergedActivationId }),
-      taskId: text(request, "task_id"),
+      ...(taskCancellation
+        ? { taskId: text(request, "task_id") }
+        : { roomAgentSosTargetId: text(request, "request_id") }),
     },
     roomId: text(input.activation, "room_id"),
     type: "activation.cancellation_resolved",

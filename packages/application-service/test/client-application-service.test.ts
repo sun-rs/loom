@@ -19,11 +19,27 @@ test("Client API authenticates humans and exposes canonical Room work without ow
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
   let memoryResetCalls = 0;
   let executionResetCalls = 0;
+  let computerProfileUpdates = 0;
   let taskReassignmentCalls = 0;
   const pushEndpoints = new Set<string>();
   let executionResetOwnerParticipantId = "fixture-agent";
   const memoryConfigs = new AgentMemoryConfigStore(join(directory, "memory"));
   const service = new ClientApplicationService({
+    computerProfileAdministration: {
+      update: async (_actor, input) => {
+        computerProfileUpdates += 1;
+        return {
+          computer: {
+            description: input.description,
+            displayName: input.displayName,
+            hostId: input.hostId,
+            revision: input.expectedRevision + 1,
+            updatedAt: "2026-09-02T08:00:00.000Z",
+          },
+          deduplicated: false,
+        };
+      },
+    },
     agentExecutionAdministration: {
       reset: async (_actor, input) => {
         executionResetCalls += 1;
@@ -35,22 +51,39 @@ test("Client API authenticates humans and exposes canonical Room work without ow
           mode: input.mode,
           operationId: `execution-reset-${input.idempotencyKey}`,
           ownerParticipantId: executionResetOwnerParticipantId,
-          providerContinuityRecords: input.mode === "session" ? 1 : 0,
+          providerContinuityRecords: input.mode === "restart" ? 0 : 1,
         };
       },
     },
     agentMemoryAdministration: {
       computerHostId: "client-host",
       workspace: {
-        list: async (owner, path) => ({
-          rootKind: "agent-home",
+        roots: async (owner) => ({
+          defaultRootId: "agent-workspace",
+          roots: [
+            {
+              rootId: "agent-workspace",
+              rootKind: "agent-workspace",
+              label: "Agent 工作区",
+              rootPath: `/fixture/${owner}`,
+              state: "ready",
+            },
+          ],
+        }),
+        list: async (owner, rootId, path) => ({
+          rootId,
+          rootLabel: "Agent 工作区",
+          rootKind: rootId,
           rootPath: `/fixture/${owner}`,
           state: "ready",
           path,
           entries: [],
           truncated: false,
         }),
-        read: async (_owner, path) => ({
+        read: async (_owner, rootId, path) => ({
+          rootId,
+          rootLabel: "Agent 工作区",
+          rootKind: rootId,
           path,
           content: "fixture file",
           encoding: "utf-8",
@@ -172,6 +205,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
         agentOnboard: true,
         agentRead: true,
         agentExecutionReset: true,
+        agentExecutionFullReset: true,
         agentWrite: true,
         cursorAcknowledge: true,
         hints: false,
@@ -450,6 +484,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     assert.equal(healthV3.capabilities.agentOnboard, true);
     assert.equal(healthV3.capabilities.agentRead, true);
     assert.equal(healthV3.capabilities.agentExecutionReset, true);
+    assert.equal(healthV3.capabilities.agentExecutionFullReset, true);
     assert.equal(healthV3.capabilities.agentWrite, true);
     assert.equal(healthV3.capabilities.managedMcpWrite, true);
     assert.equal(healthV3.capabilities.workspaceWrite, true);
@@ -636,6 +671,16 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       human.accessToken,
     );
     assert.equal(follow.status, 200);
+    const followers = await jsonObject(
+      await request(
+        "/v3/client/activity/thread-followers",
+        { roomId: taskAnchor.roomId, threadId: taskAnchor.threadId },
+        human.accessToken,
+      ),
+    );
+    assert.equal(followers.following, true);
+    assert.equal(followers.canManage, true);
+    assert.ok(Array.isArray(followers.agentParticipantIds));
     const globalActivity = await jsonObject(
       await request("/v3/client/activity/list", globalInput, human.accessToken),
     );
@@ -666,6 +711,16 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       path: "",
       includeHidden: false,
     };
+    const workspaceRootsResponse = await request(
+      "/v3/client/agents/workspace/roots",
+      { agentDefinitionId: agentDefinition.definition.agentDefinitionId },
+      human.accessToken,
+    );
+    assert.equal(workspaceRootsResponse.status, 200);
+    assert.equal(
+      (await jsonObject(workspaceRootsResponse)).defaultRootId,
+      "agent-workspace",
+    );
     const workspaceResponse = await request(
       "/v3/client/agents/workspace/list",
       workspaceInput,
@@ -835,7 +890,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
           roomId: controlRoom.roomId,
         }).latestRoomSeq,
         idempotencyKey: "client-execution-reset-1",
-        mode: "session",
+        mode: "full",
       },
       human.accessToken,
     );
@@ -845,7 +900,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       await executionResetResponse.clone().text(),
     );
     const executionReset = await jsonObject(executionResetResponse);
-    assert.equal(executionReset.mode, "session");
+    assert.equal(executionReset.mode, "full");
     assert.equal(executionReset.providerContinuityRecords, 1);
     assert.equal(executionResetCalls, 1);
 
@@ -869,6 +924,28 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     assert.equal(taskReassignment.operation.state, "assigned");
     assert.equal(taskReassignment.task.assigneeId, agent.principal.principalId);
     assert.equal(taskReassignmentCalls, 1);
+
+    const computerProfileResponse = await request(
+      "/v3/client/computers/profile/update",
+      {
+        description: "Local development Computer",
+        displayName: "RAH Studio",
+        expectedRevision: 0,
+        hostId: "client-host",
+        idempotencyKey: "client-computer-profile-1",
+      },
+      human.accessToken,
+    );
+    assert.equal(
+      computerProfileResponse.status,
+      200,
+      await computerProfileResponse.clone().text(),
+    );
+    assert.equal(
+      (await jsonObject(computerProfileResponse)).computer.displayName,
+      "RAH Studio",
+    );
+    assert.equal(computerProfileUpdates, 1);
 
     const unauthenticatedInventory = await request(
       "/v1/local/runtimes/list",
@@ -939,6 +1016,23 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       managedRoom.room.workspaceId,
       workspaceCreated.workspace.workspaceId,
     );
+    const memberGraphResponse = await request(
+      "/v3/client/workspaces/member-graph",
+      { workspaceId: workspaceCreated.workspace.workspaceId },
+      human.accessToken,
+    );
+    assert.equal(memberGraphResponse.status, 200);
+    const memberGraph = await jsonObject(memberGraphResponse);
+    assert.equal(
+      memberGraph.workspaceId,
+      workspaceCreated.workspace.workspaceId,
+    );
+    assert.deepEqual(
+      memberGraph.channels.map(({ name }: { name: string }) => name),
+      ["Managed Room"],
+    );
+    assert.equal(memberGraph.humans.length, 1);
+    assert.equal(memberGraph.agents.length, 0);
     const roomUpdateResponse = await request(
       "/v3/client/rooms/update",
       {
@@ -957,6 +1051,91 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     assert.equal(
       updatedManagedRoom.room.description,
       "Updated through the Human client API.",
+    );
+    const roomSosStopResponse = await request(
+      "/v3/client/rooms/sos/stop",
+      {
+        basedOnRoomSeq: updatedManagedRoom.event.roomSeq,
+        idempotencyKey: "client-room-sos-stop-v3",
+        roomId: managedRoom.room.roomId,
+      },
+      human.accessToken,
+    );
+    assert.equal(roomSosStopResponse.status, 200);
+    const stoppedManagedRoom = await jsonObject(roomSosStopResponse);
+    assert.equal(stoppedManagedRoom.operation.state, "stopped");
+    assert.equal(stoppedManagedRoom.event.type, "room.agent_sos_stopped");
+    const roomSosResumeResponse = await request(
+      "/v3/client/rooms/sos/resume",
+      {
+        basedOnRoomSeq: stoppedManagedRoom.event.roomSeq,
+        guidance: "先同步最新 Room 事实，再按修正后的计划继续。",
+        idempotencyKey: "client-room-sos-resume-v3",
+        roomId: managedRoom.room.roomId,
+      },
+      human.accessToken,
+    );
+    assert.equal(roomSosResumeResponse.status, 200);
+    const resumedManagedRoom = await jsonObject(roomSosResumeResponse);
+    assert.equal(resumedManagedRoom.operation.state, "resumed");
+    assert.equal(resumedManagedRoom.event.type, "room.agent_sos_resumed");
+    const roomArchiveResponse = await request(
+      "/v3/client/rooms/archive",
+      {
+        basedOnRoomSeq: resumedManagedRoom.event.roomSeq,
+        idempotencyKey: "client-room-archive-v3",
+        roomId: managedRoom.room.roomId,
+      },
+      human.accessToken,
+    );
+    assert.equal(roomArchiveResponse.status, 200);
+    const archivedManagedRoom = await jsonObject(roomArchiveResponse);
+    assert.equal(archivedManagedRoom.event.type, "room.archived");
+    assert.equal(typeof archivedManagedRoom.room.archivedAt, "string");
+    const roomUnarchiveResponse = await request(
+      "/v3/client/rooms/unarchive",
+      {
+        basedOnRoomSeq: archivedManagedRoom.event.roomSeq,
+        idempotencyKey: "client-room-unarchive-v3",
+        roomId: managedRoom.room.roomId,
+      },
+      human.accessToken,
+    );
+    assert.equal(roomUnarchiveResponse.status, 200);
+    const unarchivedManagedRoom = await jsonObject(roomUnarchiveResponse);
+    assert.equal(unarchivedManagedRoom.event.type, "room.unarchived");
+    assert.equal(unarchivedManagedRoom.room.archivedAt, undefined);
+
+    kernel.addMember(humanActor, {
+      principalId: memberHuman.principal.principalId,
+      roomId: managedRoom.room.roomId,
+    });
+    const memberActor = kernel.authenticateAccessToken(memberHuman.accessToken);
+    const leaveResponse = await request(
+      "/v3/client/rooms/leave",
+      {
+        basedOnRoomSeq: kernel.sync(memberActor, {
+          afterSeq: 0,
+          consumerId: "client-room-leave-head",
+          roomId: managedRoom.room.roomId,
+        }).latestRoomSeq,
+        idempotencyKey: "client-room-leave-v3",
+        roomId: managedRoom.room.roomId,
+      },
+      memberHuman.accessToken,
+    );
+    assert.equal(leaveResponse.status, 200);
+    const leftManagedRoom = await jsonObject(leaveResponse);
+    assert.equal(
+      leftManagedRoom.removedPrincipalId,
+      memberHuman.principal.principalId,
+    );
+    assert.equal(leftManagedRoom.event.type, "membership.removed");
+    assert.equal(
+      kernel
+        .listRooms(memberActor)
+        .some(({ roomId }) => roomId === managedRoom.room.roomId),
+      false,
     );
 
     const directRoomResponse = await request(
@@ -977,6 +1156,21 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     const directRoom = await jsonObject(directRoomResponse);
     assert.equal(directRoom.room.kind, "direct");
     assert.equal(directRoom.room.name, agent.principal.handle);
+    const directLeaveResponse = await request(
+      "/v3/client/rooms/leave",
+      {
+        basedOnRoomSeq: kernel.sync(humanActor, {
+          afterSeq: 0,
+          consumerId: "client-direct-leave-head",
+          roomId: directRoom.room.roomId,
+        }).latestRoomSeq,
+        idempotencyKey: "client-direct-leave-rejected",
+        roomId: directRoom.room.roomId,
+      },
+      human.accessToken,
+    );
+    assert.equal(directLeaveResponse.status, 409);
+    assert.equal(await responseErrorCode(directLeaveResponse), "conflict");
     assert.equal(
       (
         await request(

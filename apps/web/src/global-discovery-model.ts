@@ -38,7 +38,11 @@ export function searchExcerpt(
   query: string,
   limit = 1000,
 ): string {
-  const match = body.toLowerCase().indexOf(query.toLowerCase());
+  const lower = body.toLowerCase();
+  const indexes = searchTerms(query)
+    .map((term) => lower.indexOf(term.toLowerCase()))
+    .filter((index) => index >= 0);
+  const match = indexes.length ? Math.min(...indexes) : 0;
   const start = Math.max(0, match - Math.floor(limit / 4));
   return `${start ? "…" : ""}${body.slice(start, start + limit)}${start + limit < body.length ? "…" : ""}`;
 }
@@ -83,22 +87,32 @@ export function highlightParts(
   body: string,
   query: string,
 ): Array<{ text: string; match: boolean }> {
-  if (!query) return [{ text: body, match: false }];
-  const parts: Array<{ text: string; match: boolean }> = [];
-  const lower = body.toLowerCase();
-  const needle = query.toLowerCase();
-  let offset = 0;
-  let index = lower.indexOf(needle);
-  while (index >= 0) {
-    if (index > offset)
-      parts.push({ text: body.slice(offset, index), match: false });
-    parts.push({ text: body.slice(index, index + query.length), match: true });
-    offset = index + query.length;
-    index = lower.indexOf(needle, offset);
-  }
-  if (offset < body.length)
-    parts.push({ text: body.slice(offset), match: false });
-  return parts;
+  const terms = searchTerms(query);
+  if (!terms.length) return [{ text: body, match: false }];
+  // Raft Clt: whitespace terms become one escaped, case-insensitive matcher.
+  const matcher = new RegExp(
+    `(${terms.map((term) => term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`,
+    "gi",
+  );
+  const selected = new Set(terms.map((term) => term.toLowerCase()));
+  return body
+    .split(matcher)
+    .filter(Boolean)
+    .map((text) => ({ text, match: selected.has(text.toLowerCase()) }));
+}
+
+export function searchTerms(query: string): string[] {
+  const seen = new Set<string>();
+  return query
+    .trim()
+    .split(/\s+/u)
+    .map((term) => term.trim())
+    .filter((term) => {
+      const key = term.toLowerCase();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 }
 
 export type SearchResultGroup =

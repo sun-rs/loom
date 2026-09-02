@@ -86,6 +86,27 @@ export const discoveryOperations = {
     authenticated: true,
     method: "POST",
   },
+  "thread.followers": {
+    input: P.HumanThreadFollowersRequestSchema,
+    output: P.HumanThreadFollowersResponseSchema,
+    path: "/v3/client/activity/thread-followers",
+    authenticated: true,
+    method: "POST",
+  },
+  "thread.follower.remove": {
+    input: P.HumanThreadFollowerRemoveRequestSchema,
+    output: P.HumanThreadFollowerRemoveResponseSchema,
+    path: "/v3/client/activity/thread-followers/remove",
+    authenticated: true,
+    method: "POST",
+  },
+  "thread.follower.restore": {
+    input: P.HumanThreadFollowerRestoreRequestSchema,
+    output: P.HumanThreadFollowerRestoreResponseSchema,
+    path: "/v3/client/activity/thread-followers/restore",
+    authenticated: true,
+    method: "POST",
+  },
   "navigation.resolve": {
     input: P.ClientNavigationResolveRequestSchema,
     output: P.ClientNavigationResolveResponseSchema,

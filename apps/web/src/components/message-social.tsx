@@ -2,11 +2,13 @@ import {
   createContext,
   useContext,
   useEffect,
+  useLayoutEffect,
   useState,
   useRef,
   useSyncExternalStore,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import type { RahClient } from "@rah-os/client-sdk";
 import { MessageSocialStore } from "../message-social-store.ts";
 import { DiscoveryFilter } from "./discovery-filter.tsx";
@@ -41,7 +43,13 @@ function BookmarkGlyph({ filled }: { filled: boolean }) {
     </svg>
   );
 }
-function ReactionGlyph({ emoji, size = 18 }: { emoji: string; size?: number }) {
+export function ReactionGlyph({
+  emoji,
+  size = 18,
+}: {
+  emoji: string;
+  size?: number;
+}) {
   const index = QUICK_REACTIONS.indexOf(
     emoji as (typeof QUICK_REACTIONS)[number],
   );
@@ -138,6 +146,26 @@ export function useMessageSocial(message: {
   };
 }
 export type MessageSocialView = ReturnType<typeof useMessageSocial>;
+
+type ReactionActorsPopoverState = Readonly<{
+  emoji: string;
+  visibleNames: readonly string[];
+  hiddenCount: number;
+  anchorX: number;
+  anchorY: number;
+  x: number;
+  y: number;
+}>;
+
+function reactionActorNames(reaction: {
+  mine: boolean;
+  actors: readonly { name: string }[];
+}): string[] {
+  return reaction.actors.map((actor, index) =>
+    reaction.mine && index === 0 ? "你" : actor.name,
+  );
+}
+
 export function MessageSocialButtons({ view }: { view: MessageSocialView }) {
   if (!view.enabled) return null;
   const { data, pending } = view.state ?? {};
@@ -190,6 +218,63 @@ export function MessageReactionSummary({ view }: { view: MessageSocialView }) {
   const saved = view.state?.data?.saved ?? false;
   const reactions = view.state?.data?.reactions ?? [];
   const error = view.state?.error;
+  const [actorsPopover, setActorsPopover] =
+    useState<ReactionActorsPopoverState>();
+  const actorsPopoverRef = useRef<HTMLDivElement>(null);
+
+  const closeActorsPopover = () => setActorsPopover(undefined);
+  const openActorsPopover = (
+    reaction: (typeof reactions)[number],
+    target: HTMLButtonElement,
+  ) => {
+    const bounds = target.getBoundingClientRect();
+    const visibleNames = reactionActorNames(reaction).slice(0, 5);
+    setActorsPopover({
+      emoji: reaction.emoji,
+      visibleNames,
+      hiddenCount: Math.max(0, reaction.count - visibleNames.length),
+      anchorX: bounds.left,
+      anchorY: bounds.bottom + 4,
+      x: bounds.left,
+      y: bounds.bottom + 4,
+    });
+  };
+
+  useLayoutEffect(() => {
+    const tooltip = actorsPopoverRef.current;
+    if (!actorsPopover || !tooltip) return;
+    const bounds = tooltip.getBoundingClientRect();
+    const margin = 8;
+    const x = Math.max(
+      margin,
+      Math.min(
+        actorsPopover.anchorX,
+        window.innerWidth - bounds.width - margin,
+      ),
+    );
+    const y = Math.max(
+      margin,
+      Math.min(
+        actorsPopover.anchorY,
+        window.innerHeight - bounds.height - margin,
+      ),
+    );
+    if (x !== actorsPopover.x || y !== actorsPopover.y) {
+      setActorsPopover({ ...actorsPopover, x, y });
+    }
+  }, [actorsPopover]);
+
+  useEffect(() => {
+    if (!actorsPopover) return;
+    const close = () => setActorsPopover(undefined);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    return () => {
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+    };
+  }, [actorsPopover]);
+
   if (!saved && reactions.length === 0 && error === undefined) return null;
   return (
     <>
@@ -211,30 +296,90 @@ export function MessageReactionSummary({ view }: { view: MessageSocialView }) {
           )}
           {reactions.map((r) => (
             <span className="rah-message-reaction-slot" key={r.emoji}>
-              <button
-                type="button"
-                className="rah-message-reaction"
-                data-message-affordance="reaction-chip"
-                aria-label={`${r.emoji} ${r.count} 个回应`}
-                aria-pressed={r.mine}
-                disabled={view.state?.pending}
-                title={
-                  r.actors.map((p) => p.name).join(", ") +
-                  (r.count > r.actors.length
-                    ? `，另外 ${r.count - r.actors.length} 位成员`
-                    : "")
-                }
-                onClick={() => void view.mutate("reaction", !r.mine, r.emoji)}
-              >
-                <span className="rah-message-reaction-icon">
-                  <ReactionGlyph emoji={r.emoji} size={15} />
-                </span>
-                <span className="rah-message-reaction-count">{r.count}</span>
-              </button>
+              {(() => {
+                const actorNames = reactionActorNames(r);
+                const hiddenCount = Math.max(0, r.count - actorNames.length);
+                const actorSummary =
+                  actorNames.join(", ") +
+                  (hiddenCount > 0
+                    ? `${actorNames.length > 0 ? "，" : ""}另外 ${hiddenCount} 位成员`
+                    : "");
+                return (
+                  <button
+                    type="button"
+                    className="rah-message-reaction"
+                    data-message-affordance="reaction-chip"
+                    aria-label={`${r.emoji} ${r.count} 个回应${actorSummary ? `：${actorSummary}` : ""}`}
+                    aria-describedby={
+                      actorsPopover?.emoji === r.emoji
+                        ? `rah-reaction-actors-${encodeURIComponent(r.emoji)}`
+                        : undefined
+                    }
+                    aria-pressed={r.mine}
+                    disabled={view.state?.pending}
+                    onMouseEnter={(event) =>
+                      openActorsPopover(r, event.currentTarget)
+                    }
+                    onMouseLeave={closeActorsPopover}
+                    onFocus={(event) =>
+                      openActorsPopover(r, event.currentTarget)
+                    }
+                    onBlur={closeActorsPopover}
+                    onClick={() => {
+                      closeActorsPopover();
+                      void view.mutate("reaction", !r.mine, r.emoji);
+                    }}
+                  >
+                    <span className="rah-message-reaction-icon">
+                      <ReactionGlyph emoji={r.emoji} size={15} />
+                    </span>
+                    <span className="rah-message-reaction-count">
+                      {r.count}
+                    </span>
+                  </button>
+                );
+              })()}
             </span>
           ))}
         </div>
       )}
+      {actorsPopover &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            ref={actorsPopoverRef}
+            id={`rah-reaction-actors-${encodeURIComponent(actorsPopover.emoji)}`}
+            role="tooltip"
+            data-message-affordance="reaction-reactors-popover"
+            className="rah-reaction-reactors-popover"
+            style={{ left: actorsPopover.x, top: actorsPopover.y }}
+          >
+            {actorsPopover.visibleNames.length > 0 ? (
+              <div className="rah-reaction-reactors-names">
+                {actorsPopover.visibleNames.map((name, index) => (
+                  <span
+                    className="rah-reaction-reactor-name"
+                    key={`${actorsPopover.emoji}-${index}-${name}`}
+                  >
+                    <span>{name}</span>
+                    {index < actorsPopover.visibleNames.length - 1 ||
+                    actorsPopover.hiddenCount > 0 ? (
+                      <span className="rah-reaction-reactor-separator">, </span>
+                    ) : null}
+                  </span>
+                ))}
+                {actorsPopover.hiddenCount > 0 && (
+                  <span className="rah-reaction-reactors-hidden">
+                    另外 {actorsPopover.hiddenCount} 位成员
+                  </span>
+                )}
+              </div>
+            ) : (
+              <span>{actorsPopover.emoji}</span>
+            )}
+          </div>,
+          document.body,
+        )}
       {error && (
         <div className="rah-message-action-error" role="alert">
           {error}
