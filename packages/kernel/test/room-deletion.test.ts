@@ -151,6 +151,19 @@ test("permanent Room deletion erases canonical and personal projections and repl
       roomId: f.channel.room.roomId,
       saved: true,
     });
+    const sidebarKey = `room:${f.channel.room.roomId}`;
+    f.kernel.humanSidebar.patch(f.ownerActor, {
+      expectedVersion: 0,
+      idempotencyKey: "sidebar-reference",
+      patch: {
+        channelOrder: [sidebarKey],
+        expandedLongMessages: [sidebarKey],
+        mutedActivity: [sidebarKey],
+        notifyAllMessages: [sidebarKey],
+        pinned: [sidebarKey],
+      },
+      workspaceId: f.workspace.workspace.workspaceId,
+    });
     const upload = f.kernel.files.prepare(f.ownerActor, {
       filename: "evidence.txt",
       idempotencyKey: "file",
@@ -208,6 +221,29 @@ test("permanent Room deletion erases canonical and personal projections and repl
       }).items.length,
       0,
     );
+    const auditDatabase = new DatabaseSync(f.databasePath, { readOnly: true });
+    const rawPreferences = JSON.parse(
+      String(
+        auditDatabase
+          .prepare(
+            `SELECT preferences_json FROM human_sidebar_preferences
+             WHERE principal_id=? AND workspace_id=?`,
+          )
+          .get(f.owner.principal.principalId, f.workspace.workspace.workspaceId)
+          ?.preferences_json,
+      ),
+    ) as Record<string, unknown>;
+    auditDatabase.close();
+    assert.equal(rawPreferences.version, 2);
+    for (const field of [
+      "channelOrder",
+      "expandedLongMessages",
+      "mutedActivity",
+      "notifyAllMessages",
+      "pinned",
+    ]) {
+      assert.deepEqual(rawPreferences[field], []);
+    }
     assert.equal(
       f.kernel.searchWorkspace(f.ownerActor, {
         query: "Room content",

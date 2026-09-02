@@ -67,11 +67,22 @@ Raft 的 HTTP method 没有机械复制到 RAH Client API：RAH 的 versioned Cl
 - 定向 protocol/kernel/SDK/application：`16/16` 通过；
 - P1.4 Kernel 故障、GC、跨 Room Reminder、不可复活、FK ratchet：`6/6` 通过；
 - Core facade 与 schema 棘轮：`98/98` 定向通过；
-- Web unit 与 Workbench build：通过；
-- Chrome desktop/mobile：通过；
-- Firefox desktop/mobile + 隔离实际删除：通过；
-- 全库门禁、格式、依赖、正式备份/重启：见本批最终 Git 提交前的尾部复核记录。
+- `npm run check`：全库通过；中途捕获并修正一条已过期的异步 Agent 导航回归夹具，最终 `34/34` parity regression 通过；
+- `npm run format:check`、`git diff --check`、`npm audit --omit=dev`：通过，production dependency vulnerability 为 `0`；
+- Workbench production build：通过；
+- Chrome：`npm run test:web:browser` 单独重跑通过，输出 `RAH_REAL_BROWSER_GATE`，最终 viewport `390×844`；并行运行 Chrome/Firefox 曾使 Chrome 的长门禁在文件菜单处超时，单独重跑排除产品回归；
+- Firefox：`npm run test:web:firefox` 通过，输出 `RAH_FIREFOX_WORKBENCH_GATE`，覆盖 desktop、`390×844` 与隔离实际删除；
+- 重启后的正式页面：Codex 内置真实浏览器打开 `http://127.0.0.1:4173`，核验“删除频道”入口、精确不可撤销文案、二级“永久删除”、Escape 关闭与焦点返回；最后关闭设置，未提交破坏性请求；
+- 正式迁移前活跃工作审计：运行中 Activation、Placement、RunAttempt、RuntimeProcess、MCP、InputRequest、取消、改派和 SOS 均为 `0`；保留一个 durable `submitted` Task，重启前后 identity/state/title 不变；
+- 正式 schema 39 停机备份：`/Users/sun/.rah/backups/pre-p14-room-delete-20260903-EqxXXo`，`room.db`、`runtime-registry.db`、`web-push.db` 均 `quick_check=ok`；
+- 正式 schema 40 重启：PID `54876`，`http://127.0.0.1:4173/` 返回 `200`，`room.db quick_check=ok`，两张 receipt 表存在，待恢复 GC 为 `0`。
 
-## 8. 结论
+## 8. 备份收口记录
+
+- 清理前 `/Users/sun/.rah/backups` 有 50 份目录、约 38 GiB；已精确移除 47 份旧备份，只保留三份近期、数据库可验证的完整快照。
+- schema 40 部署前新增并验证 `pre-p14-room-delete-20260903-EqxXXo` 后，把被替换的 `pre-p66-computer-offline-20260902Tc5HJpC`（852 MiB）和散落的 `pre-discovery-ui-KIflm6`（1 MiB）移动到 macOS 废纸篓，仍可恢复。
+- 当前正式备份集合固定为三份：`pre-p14-room-delete-20260903-EqxXXo`、`pre-p67-computer-profile-20260903-ktjnMv`、`pre-rich-reference-final-20260902-3RfArz`。
+
+## 9. 结论
 
 可以把 P1.4 标记为 `C/A/L/D` 完成。它满足“显式引用清理 + durable 文件 GC 回执 + SQL/进程崩溃恢复”的本地永久删除定义，并保留 Raft 的用户可见合同。不得把这一结论扩大为 Raft 全站后端等价、Workspace 永久删除、跨计算机文件 GC 或可选择恢复。
