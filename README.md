@@ -96,6 +96,31 @@ Important behavior:
   through OpenCode + API providers rather than separate CLI adapters. See
   [`docs/provider-scope-codex-claude-opencode.zh-CN.md`](docs/provider-scope-codex-claude-opencode.zh-CN.md).
 
+## Durable data and uninstall contract
+
+Treat the program checkout or installed application as replaceable and the user's data as durable.
+The stable default data root is `~/.rah`; it deliberately does not contain the current product name,
+so a future rename or reinstall does not relocate user state.
+
+- `RAH_DATA_HOME` is the canonical override. `RAH_HOME` is a compatibility alias; startup fails if
+  both resolve to different directories.
+- This project owns `runtime-daemon/`, `auth/`, `council/`, and `attachments/` below the shared data
+  root. RAH OS owns its separate `state/`, `logs/`, `tls/`, and migration records. Do not let one
+  product delete or repurpose the other product's children.
+- Source code, Web builds, executables, `node_modules`, and LaunchAgent plists are replaceable
+  installation artifacts and must not become the canonical location for Rooms, sessions, identity,
+  credentials, attachments, or runtime history.
+- `rah service-uninstall` removes only the per-user service registration and plist. It never removes
+  `~/.rah` or any child data. A future data-reset command must be separately designed, enumerate only
+  product-owned paths, show a preview, fence active work, and require explicit confirmation.
+- The install path and data root may not be equal or contain one another. Provider CLIs and their
+  accounts remain user-managed and are not installed into this data root by RAH.
+
+The normative lifecycle and migration rules are in
+[`docs/install-data-lifecycle.zh-CN.md`](docs/install-data-lifecycle.zh-CN.md). Changes to storage,
+installation, service management, migration, reset, or product naming must update that contract and
+this README together.
+
 Optional: if you want the global `rah` command to point at this checkout, link it once:
 
 ```bash
