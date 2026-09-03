@@ -91,8 +91,10 @@ RSS 的绝对值仍偏高。`vmmap` 显示较大的 V8/Memory Tag 255 与动态�
    event wake + coarse fallback 关闭空闲高频扫库；短时 CPU 从旧正式实例约 2.4%–4.1% 收敛到
    0.0%–0.2%。1h/24h 斜率门禁仍未完成，见
    [本地 Runtime 留存与空闲调度审计](./2026-09-03-local-runtime-retention-and-idle-audit.zh-CN.md)。
-2. **P1 跨版本 Web bundle 自愈。** 服务升级后旧页面应检测协议/build revision 并一次性提示
-   reload，不能把 Zod/JSON 解析错误复制到每条 Message。
+2. **已关闭：跨版本 Web bundle 自愈。** 后续批次已加入内容确定 build ID、gateway response
+   fence、一次性刷新/继续提示与 typed deep link 保留；双 generation、desktop/390×844 真实浏览器和
+   正式数据重启证据见
+   [Web build recovery 验证审计](./2026-09-03-web-build-recovery-verification.zh-CN.md)。
 3. **已关闭：Registry 历史诊断分页。** 后续批次已增加稳定 keyset cursor、scope fence、
    200 条硬上限与全局顺序索引；不可变证据未删除。
 4. **P2 目录主动刷新。** 当前真实语义是重启扫描；若增加手动/后台刷新，必须继续采用

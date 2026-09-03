@@ -105,18 +105,23 @@ Raft Computer 公开发布物主要使用静态 `RUNTIME_MODELS`，没有可直�
 
 ## 6. 剩余前后端缺口（按当前代码与正式实页重算）
 
-| 优先级 | 缺口                        | 前端                                                                                          | 后端/运行时                                                                   | 当前裁决                                              |
-| ------ | --------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------- |
-| P1     | daemon 常驻内存与长 soak    | 无直接功能缺失                                                                                | P0 探测增长已关闭；正式 RSS 仍约 609MiB，缺 heap owner 分解与 1h/24h 斜率门禁 | 稳定不等于足够轻，继续独立优化                        |
-| P1     | Web bundle 跨版本自愈       | 服务重启后旧页需手动 fresh reload，旧 schema 错误应只显示一次                                 | 缺 build/protocol revision 握手                                               | 不能把解析错误复制进每条 Message                      |
-| P1     | 设备通知最终真机证据        | macOS banner/click、Chrome 新订阅、iOS/PWA 后台/锁屏尚无完整证据矩阵                          | typed Room/DM/mention/Task/InputRequest/Review、mute/self suppression 已有    | 软件链完成，不把 Firefox 单例冒充全设备完成           |
-| P1     | Agent Apps / External Agent | Apps tab 仍是明确空态；External 激活入口禁用                                                  | 缺 OAuth client/grant owner、可撤销外部设备凭据与 purpose fence               | 本地 CLI Agent 主链不受阻，Raft 功能仍不齐            |
-| P1     | InputRequest 扩展生命周期   | 无结构化表单、可选 dismiss/TTL 产品状态                                                       | request/answer/cancel 与 Task cancel 原子闭环已有；自动 expire 无成熟来源     | 保持设计闸，真实需求再开                              |
-| P1     | 消息高级动作                | 翻译、多选转发、部分 stale-safe Task 状态菜单未实现                                           | 缺相应 canonical command/read model                                           | 基础 reply/reaction/bookmark/thread/task 已完成       |
-| P1     | 文件/Artifact 深度          | 部分格式仍只有下载/文本预览；Finder reveal、Range/大媒体、Git diff/build log 专用 viewer 未齐 | Room/DM/Thread/Task/Agent artifact 与本机项目安全浏览主链已有                 | 不影响基本文件闭环，仍是 Raft/工作台深度差距          |
-| P2     | 自定义头像孤儿回收          | 无影响                                                                                        | 内容寻址头像写入已完成，旧无引用 profile blob 尚无安全 GC                     | 会形成缓慢磁盘泄漏，复用本批 receipt/引用复查框架另做 |
-| P2     | 前端首包                    | 首次加载 production 主 chunk 仍超过 Vite 500KiB 警戒线                                        | 无                                                                            | 需要路由/面板级继续懒加载并做冷启动测量               |
-| 证据   | Raft 同前置双边覆盖         | Agent 非空 Workspace、部分 Search/长历史/设备通知仍缺同前置官方在线证据                       | 本地实现已有自动化与正式实页证据                                              | 属于证据缺口，不倒算成功能未实现                      |
+| 优先级 | 缺口                        | 前端                                                                                          | 后端/运行时                                                                | 当前裁决                                              |
+| ------ | --------------------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------- |
+| P1     | daemon 长 soak 证据         | 无直接功能缺失                                                                                | heap/physical owner 已分解，空闲 fallback 已事件化；仍缺 1h/24h 斜率门禁   | 短时 CPU/footprint 已收敛，长期证据继续积累           |
+| P1     | 设备通知最终真机证据        | macOS banner/click、Chrome 新订阅、iOS/PWA 后台/锁屏尚无完整证据矩阵                          | typed Room/DM/mention/Task/InputRequest/Review、mute/self suppression 已有 | 软件链完成，不把 Firefox 单例冒充全设备完成           |
+| P1     | Agent Apps / External Agent | Apps tab 仍是明确空态；External 激活入口禁用                                                  | 缺 OAuth client/grant owner、可撤销外部设备凭据与 purpose fence            | 本地 CLI Agent 主链不受阻，Raft 功能仍不齐            |
+| P1     | InputRequest 扩展生命周期   | 无结构化表单、可选 dismiss/TTL 产品状态                                                       | request/answer/cancel 与 Task cancel 原子闭环已有；自动 expire 无成熟来源  | 保持设计闸，真实需求再开                              |
+| P1     | 消息高级动作                | 翻译、多选转发、部分 stale-safe Task 状态菜单未实现                                           | 缺相应 canonical command/read model                                        | 基础 reply/reaction/bookmark/thread/task 已完成       |
+| P1     | 文件/Artifact 深度          | 部分格式仍只有下载/文本预览；Finder reveal、Range/大媒体、Git diff/build log 专用 viewer 未齐 | Room/DM/Thread/Task/Agent artifact 与本机项目安全浏览主链已有              | 不影响基本文件闭环，仍是 Raft/工作台深度差距          |
+| P2     | 自定义头像孤儿回收          | 无影响                                                                                        | 内容寻址头像写入已完成，旧无引用 profile blob 尚无安全 GC                  | 会形成缓慢磁盘泄漏，复用本批 receipt/引用复查框架另做 |
+| P2     | 前端首包                    | 首次加载 production 主 chunk 仍超过 Vite 500KiB 警戒线                                        | 无                                                                         | 需要路由/面板级继续懒加载并做冷启动测量               |
+| 证据   | Raft 同前置双边覆盖         | Agent 非空 Workspace、部分 Search/长历史/设备通知仍缺同前置官方在线证据                       | 本地实现已有自动化与正式实页证据                                           | 属于证据缺口，不倒算成功能未实现                      |
+
+后续已关闭：Web bundle 跨版本自愈现在具有内容确定 build ID、gateway response fence、一次性刷新/继续提示和
+typed deep link 保留；旧 schema/JSON 错误不会再复制到每条 Message。正式双 generation 切换与 desktop/390×844
+真实 Chrome 证据见 [Web build recovery 验证审计](./2026-09-03-web-build-recovery-verification.zh-CN.md)。daemon
+空闲高频扫库也已由 content-free Outbox wake + 30 秒 fallback 取代，见
+[本地 Runtime 留存与空闲调度审计](./2026-09-03-local-runtime-retention-and-idle-audit.zh-CN.md)。
 
 已关闭、不得再按旧报告重复计为缺口：Room archive/leave/permanent-delete/SOS、成员角色、
 全局 Tasks/Search/Activity、sidebar 排序/拖拽/注意力点、Agent 模型/effort/资料/动态/Memory/
