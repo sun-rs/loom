@@ -1,6 +1,6 @@
 # P5 设备通知 Raft-first 收口计划
 
-状态：软件链与 Firefox 正式实例已收口；设备横幅/点击证据受系统共享屏幕策略阻塞
+状态：软件链与 Firefox/Chrome 正式实例已收口；设备横幅/点击证据受系统共享屏幕策略阻塞
 
 首次落盘：2026-09-02
 
@@ -71,14 +71,14 @@ canonical Room event
 
 ## 4. 验收矩阵
 
-| 层     | 验收                                                         | 当前状态                                            |
-| ------ | ------------------------------------------------------------ | --------------------------------------------------- |
-| `C`    | Raft registration helper 与事件资格 owner 接线               | 完成：状态只读既有 registration，启用时才 ensure    |
-| `A`    | Web/unit、Kernel 资格、daemon 投递/失效订阅、SW typed target | 完成：定向 `261/261`、parity `34/34`、Firefox gate  |
-| `L`    | Firefox 页面按钮、无假错误、订阅持久、desktop/390            | 完成：正式 Firefox 实点无假错误；隔离 gate 覆盖 390 |
-| `R`    | Raft `b4/hce/Lit/Dit/rft/aft` 前端行为合同                   | 源码 offset 已取证                                  |
-| `D`    | 正式 4173 重启后 Firefox 实页                                | 完成：新 PID `63740`，订阅仍存在且页面无假错误      |
-| device | macOS 横幅 + 点击、Chrome、iOS PWA                           | macOS 被“共享屏幕时关闭通知”阻塞；Chrome/iOS 未验收 |
+| 层     | 验收                                                         | 当前状态                                                         |
+| ------ | ------------------------------------------------------------ | ---------------------------------------------------------------- |
+| `C`    | Raft registration helper 与事件资格 owner 接线               | 完成：状态只读既有 registration，启用时才 ensure                 |
+| `A`    | Web/unit、Kernel 资格、daemon 投递/失效订阅、SW typed target | 完成：定向 `261/261`、parity `34/34`、Firefox gate               |
+| `L`    | Firefox 页面按钮、无假错误、订阅持久、desktop/390            | 完成：正式 Firefox 实点无假错误；隔离 gate 覆盖 390              |
+| `R`    | Raft `b4/hce/Lit/Dit/rft/aft` 前端行为合同                   | 源码 offset 已取证                                               |
+| `D`    | 正式 4173 重启后 Firefox 实页                                | 完成：新 PID `63740`，订阅仍存在且页面无假错误                   |
+| device | macOS 横幅 + 点击、Chrome、iOS PWA                           | Chrome 订阅/投递已验收；macOS 横幅被共享屏幕策略阻塞，iOS 未验收 |
 
 `delivered:1` 只表示 push transport 接受；没有横幅和点击证据时不得宣称设备通知完整可用。
 
@@ -104,8 +104,20 @@ canonical Room event
   `1`，且等待并再次读取页面均不再出现 `NetworkError`。此前同请求已由 Firefox Network Monitor
   证明 `/v3/client/push/test` 返回 `200`。
 - device blocker：macOS 全局设置明确为“当镜像或共享屏幕时关闭通知”。自动化验收本身触发该条件；
-  未经用户授权不修改全局偏好，因此本批不能把系统横幅与通知点击标为通过。Chrome 新订阅与 iOS PWA
-  也仍属于独立外部设备动作。
+  未经用户授权不修改全局偏好，因此本批不能把系统横幅与通知点击标为通过。iOS PWA 仍属于独立
+  外部设备动作。
+
+## 4.2 2026-09-03 Chrome 正式补证
+
+- 用户已明确允许在本机 Chrome/Firefox 测试通知。正式 4173 重启后，真实 Chrome
+  通知设置显示权限 `granted`、本机订阅存在、已登记设备数 `2`，说明 Chrome 与
+  既有 Firefox subscription 均由同一持久 owner 恢复。
+- 真实页面点击“发送测试推送”后状态保持已启用且没有 `NetworkError` 等页面错误；
+  同一受保护 `/v3/client/push/test` 路径返回 `200 { delivered: 2 }`，证明 daemon
+  实际接受并投递两个 endpoint，不是页面 toast 模拟。
+- Computer Use 仍构成 macOS 的屏幕共享条件，所以本节只把 Chrome 的权限、订阅、
+  页面动作和 Push transport 标为通过；系统横幅是否展示、点击后 typed target 回跳
+  仍待无屏幕共享时由真实设备补证。
 
 ## 5. 回滚与安全
 

@@ -24,6 +24,9 @@ import {
   resolveActivationRetryFence,
 } from "./activation-retry-fence.ts";
 import type {
+  ClientMessageForwardRequest,
+  ClientMessageForwardResponse,
+  ClientMessageForwardTargetsRequest,
   GlobalTasksRequest,
   WorkspaceSearchRequest,
   MessageContextRequest,
@@ -34,6 +37,9 @@ import {
   AgentDefinitionRevisionSchema,
   AgentDefinitionSchema,
   AgentCatalogEntrySchema,
+  ClientAgentManageRequestSchema,
+  ClientPrincipalUpdateRequestSchema,
+  ClientWorkspaceUpdateRequestSchema,
   ExecutionPolicyRevisionSchema,
   InputRequestStatusSchema,
   ParticipantKindSchema,
@@ -161,6 +167,8 @@ import {
   migrateActivationRetryFencesV35,
   migrateInputRequestCancellationV38,
   migrateReminderTargetsV36,
+  migrateTaskWorkflowStatusV44,
+  migrateMessageForwardingV46,
   SCHEMA_SQL,
 } from "./schema.ts";
 import * as agentThreads from "./agent-thread-subscriptions.ts";
@@ -193,9 +201,14 @@ import {
 } from "./runtime-offer-publication.ts";
 import { computeRuntimeCertificationDigest } from "./runtime-certification.ts";
 import { ManagedMcpService } from "./managed-mcp-service.ts";
+import {
+  MessageForwardDestinationError,
+  MessageForwardingService,
+} from "./message-forwarding-service.ts";
 import { TaskReviewService } from "./task-review-service.ts";
 import { TaskLifecycleService } from "./task-lifecycle-service.ts";
 import * as principalProfile from "./principal-profile.ts";
+import { ProfileImageLifecycleService } from "./profile-image-lifecycle.ts";
 import { createHumanCommandServices } from "./human-command-services.ts";
 import { requireWorkerTaskDelivery } from "./worker-task-scope.ts";
 import * as workerMessages from "./worker-message-routing.ts";
@@ -273,7 +286,7 @@ import {
 const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 43;
+export const KERNEL_SCHEMA_VERSION = 46;
 export class RoomKernel {
   readonly databasePath: string;
   readonly #database: DatabaseSync;
@@ -290,9 +303,11 @@ export class RoomKernel {
   readonly #activationObligations: ActivationObligationService;
   readonly #roomEvents: RoomEventWriter;
   readonly #collaboration: CollaborationService;
+  readonly #messageForwarding: MessageForwardingService;
   readonly #roomDeletion: RoomDeletionService;
   readonly #managedMcp: ManagedMcpService;
   readonly files: RoomFiles;
+  readonly profileImages: ProfileImageLifecycleService;
   readonly followHumanThread;
   readonly getHumanThreadFollowers;
   readonly messageSocial;
@@ -449,6 +464,12 @@ export class RoomKernel {
         this.#requireAuthenticatedWorkerExecution(worker),
       now: this.#now,
     });
+    this.profileImages = new ProfileImageLifecycleService({
+      createId: this.#createId,
+      database: this.#database,
+      now: this.#now,
+      requireActor: (actor) => this.#requireAuthenticatedActor(actor),
+    });
     this.#roomDeletion = new RoomDeletionService({
       createId: this.#createId,
       database: this.#database,
@@ -461,6 +482,13 @@ export class RoomKernel {
       createId: this.#createId,
       database: this.#database,
       events: this.#roomEvents,
+      now: this.#now,
+    });
+    this.#messageForwarding = new MessageForwardingService({
+      createId: this.#createId,
+      database: this.#database,
+      events: this.#roomEvents,
+      files: this.files,
       now: this.#now,
     });
     this.#managedMcp = new ManagedMcpService({
@@ -531,6 +559,8 @@ export class RoomKernel {
     migrateActivationRetryFencesV35(this.#database);
     migrateReminderTargetsV36(this.#database);
     migrateInputRequestCancellationV38(this.#database);
+    migrateTaskWorkflowStatusV44(this.#database);
+    migrateMessageForwardingV46(this.#database);
     principalProfile.migrate(this.#database);
     this.#database
       .prepare(
@@ -752,6 +782,13 @@ export class RoomKernel {
     this.#database.close();
   }
 
+  updateTaskWorkflowStatus(
+    actor: AuthenticatedActorContext,
+    input: Parameters<TaskLifecycleService["updateTaskWorkflowStatus"]>[1],
+  ): ReturnType<TaskLifecycleService["updateTaskWorkflowStatus"]> {
+    return this.#taskLifecycle.updateTaskWorkflowStatus(actor, input);
+  }
+
   provisionPrincipal(input: {
     handle: string;
     kind: "human" | "agent" | "service";
@@ -831,13 +868,21 @@ export class RoomKernel {
     actor: AuthenticatedActorContext,
     rawInput: import("@rah-os/protocol").ClientPrincipalUpdateRequest,
   ): Principal {
-    return this.#transaction(() =>
-      principalProfile.update(
-        this.#database,
-        this.getAuthenticatedPrincipal(actor),
-        rawInput,
-      ),
-    );
+    const input = ClientPrincipalUpdateRequestSchema.parse(rawInput);
+    return this.#transaction(() => {
+      const principal = this.getAuthenticatedPrincipal(actor);
+      this.profileImages.bindReference(
+        principal.principalId,
+        input.avatarKey,
+        input.avatarUploadIntentId,
+      );
+      const updated = principalProfile.update(this.#database, principal, input);
+      this.profileImages.releaseReference(
+        principal.avatarKey,
+        updated.avatarKey,
+      );
+      return updated;
+    });
   }
 
   provisionHostCredential(input: {
@@ -952,14 +997,28 @@ export class RoomKernel {
   }
   updateWorkspace(
     actor: AuthenticatedActorContext,
-    input: import("@rah-os/protocol").ClientWorkspaceUpdateRequest,
+    rawInput: import("@rah-os/protocol").ClientWorkspaceUpdateRequest,
   ): WorkspaceMutationResult {
-    return this.#transaction(() =>
-      this.#collaboration.updateWorkspace(
-        this.getAuthenticatedPrincipal(actor),
-        input,
-      ),
-    );
+    const input = ClientWorkspaceUpdateRequestSchema.parse(rawInput);
+    return this.#transaction(() => {
+      const principal = this.getAuthenticatedPrincipal(actor);
+      const previous = this.#database
+        .prepare("SELECT avatar_key FROM workspaces WHERE workspace_id=?")
+        .get(input.workspaceId);
+      const previousAvatarKey =
+        previous === undefined ? null : nullableText(previous, "avatar_key");
+      this.profileImages.bindReference(
+        principal.principalId,
+        input.avatarKey,
+        input.avatarUploadIntentId,
+      );
+      const result = this.#collaboration.updateWorkspace(principal, input);
+      this.profileImages.releaseReference(
+        previousAvatarKey,
+        result.workspace.avatarKey,
+      );
+      return result;
+    });
   }
   createWorkspaceRoom(
     actor: AuthenticatedActorContext,
@@ -1175,6 +1234,60 @@ export class RoomKernel {
       this.#requireAuthenticatedActor(actor),
       input,
     );
+  }
+  listMessageForwardTargets(
+    actor: AuthenticatedActorContext,
+    input: ClientMessageForwardTargetsRequest,
+  ): Room[] {
+    return this.#messageForwarding.listTargets(
+      this.getAuthenticatedPrincipal(actor),
+      input,
+    );
+  }
+  forwardMessages(
+    actor: AuthenticatedActorContext,
+    input: ClientMessageForwardRequest,
+  ): ClientMessageForwardResponse {
+    const principal = this.getAuthenticatedPrincipal(actor);
+    const prepared = this.#transaction(() =>
+      this.#messageForwarding.prepare(principal, input),
+    );
+    const results: ClientMessageForwardResponse["results"] = [];
+    for (const destinationRoomId of input.destinationRoomIds) {
+      try {
+        const delivered = this.#transaction(() =>
+          this.#messageForwarding.deliver(
+            principal,
+            prepared,
+            destinationRoomId,
+          ),
+        );
+        results.push({
+          deduplicated: delivered.deduplicated,
+          destinationRoomId,
+          messageId: delivered.messageId,
+          status: "delivered",
+        });
+      } catch (error) {
+        const failure =
+          error instanceof MessageForwardDestinationError
+            ? { code: error.code, message: error.message }
+            : error instanceof IdempotencyConflictError
+              ? {
+                  code: "idempotency_conflict" as const,
+                  message: error.message,
+                }
+              : {
+                  code: "delivery_failed" as const,
+                  message:
+                    error instanceof Error
+                      ? error.message.slice(0, 500)
+                      : "message forwarding failed",
+                };
+        results.push({ destinationRoomId, status: "failed", ...failure });
+      }
+    }
+    return this.#messageForwarding.response(input.requestId, results);
   }
   createThread(
     actor: AuthenticatedActorContext,
@@ -2865,20 +2978,41 @@ export class RoomKernel {
   }
   manageWorkspaceAgent(
     actor: AuthenticatedActorContext,
-    input: WorkspaceAgentManagementInput,
+    rawInput: WorkspaceAgentManagementInput,
   ): WorkspaceAgentManagementResult {
-    return this.#transaction(() =>
-      manageWorkspaceAgentTransaction(
+    const input = ClientAgentManageRequestSchema.parse(rawInput);
+    return this.#transaction(() => {
+      const actorId = this.#requireAuthenticatedActor(actor);
+      const current =
+        input.action === "update_profile" && input.field === "avatarKey"
+          ? getWorkspaceAgentManagementView(
+              this.#database,
+              actorId,
+              input.agentDefinitionId,
+            ).agent.currentRevision.avatarKey
+          : undefined;
+      if (input.action === "update_profile" && input.field === "avatarKey") {
+        this.profileImages.bindReference(
+          actorId,
+          input.value,
+          input.avatarUploadIntentId,
+        );
+      }
+      const result = manageWorkspaceAgentTransaction(
         {
-          actorId: this.#requireAuthenticatedActor(actor),
+          actorId,
           createId: this.#createId,
           database: this.#database,
           events: this.#roomEvents,
           now: this.#now,
         },
         input,
-      ),
-    );
+      );
+      if (input.action === "update_profile" && input.field === "avatarKey") {
+        this.profileImages.releaseReference(current, input.value);
+      }
+      return result;
+    });
   }
   getWorkspaceAgentManagementView(
     actor: AuthenticatedActorContext,

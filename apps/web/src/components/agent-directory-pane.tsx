@@ -594,12 +594,7 @@ export function AgentDirectoryPane({
   function closeRelationship(): void {
     setMemberView("agent");
     setMobileDetailOpen(false);
-    if (selectedAgent !== undefined) {
-      onRouteChange?.({
-        agentDefinitionId: selectedAgent.agentDefinitionId,
-        tab: "profile",
-      });
-    }
+    onRouteChange?.({ agentDefinitionId: undefined, tab: "profile" });
   }
 
   function selectTab(nextTab: AgentTab): void {
@@ -671,7 +666,7 @@ export function AgentDirectoryPane({
 
   return (
     <main
-      className={`channel rah-agent-runtime-page rah-agent-directory-page${panel ? " rah-agent-peek is-mobile-detail-open" : mobileDetailOpen ? " is-mobile-detail-open" : ""}`}
+      className={`channel rah-agent-runtime-page rah-agent-directory-page${memberView === "relationship" && !panel ? " is-relationship-view" : ""}${panel ? " rah-agent-peek is-mobile-detail-open" : mobileDetailOpen ? " is-mobile-detail-open" : ""}`}
       aria-label={panel ? "Agent 详情侧栏" : "Agent 与成员"}
       style={rootStyle}
     >
@@ -735,7 +730,13 @@ export function AgentDirectoryPane({
               agent={selectedAgent}
               canMessage={canMessage}
               messagePending={directRoomOpening}
-              onBack={() => setMobileDetailOpen(false)}
+              onBack={() => {
+                setMobileDetailOpen(false);
+                onRouteChange?.({
+                  agentDefinitionId: undefined,
+                  tab: "profile",
+                });
+              }}
               onManage={() => onManage(selectedAgent.agentDefinitionId)}
               onMessage={() => void openSelectedDirectRoom()}
             />

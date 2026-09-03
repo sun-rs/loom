@@ -28,7 +28,19 @@ test("Thread focus falls back only to a connected root message", () => {
 
 test("Thread Escape follows the Raft layer and editable-target contract", () => {
   const pane = read("components/conversation-panes.tsx");
+  const selectionOwner = read("use-message-selection-actions.ts");
   assert.match(pane, /event\.key !== "Escape" \|\| event\.defaultPrevented/u);
+  assert.match(
+    pane,
+    /if \(messageSelection\.active\) return;[\s\S]*?event\.preventDefault\(\);\s*onClose\(\)/u,
+    "message selection is the topmost Thread layer and must consume Escape before the panel",
+  );
+  assert.match(
+    selectionOwner,
+    /shouldExitMessageSelectionOnKeyDown\(\{[\s\S]*?modalOpen: document\.querySelector\('\[aria-modal="true"\]'\) !== null/u,
+    "a modal consumes Escape before the shared message-selection owner",
+  );
+  assert.match(selectionOwner, /selection\.exit\(\)/u);
   assert.match(pane, /threadPanelRef\.current\?\.contains\(target\)/u);
   assert.match(pane, /target instanceof HTMLInputElement/u);
   assert.match(pane, /target instanceof HTMLTextAreaElement/u);

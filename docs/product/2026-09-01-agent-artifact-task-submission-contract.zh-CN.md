@@ -105,5 +105,9 @@ reference。旧 submission 没有 Artifact 时仍可按 v1 证据读取；不得
   并在 `open` 时再次校验 membership；关闭预览后等待仍无 `Failed to fetch`、
   console error 或进程退出。
 
-首批尚未宣称：跨机器 Worker/Blob transport、Range 下载、Finder reveal、
+2026-09-03 已补齐本地 Attachment 的 HTTP Range/206/416 与 SDK fail-closed
+范围读取；来源、owner、失败恢复和浏览器门禁见
+[剩余缺口优先级与 Files 可恢复下载合同](./2026-09-03-remaining-gap-priority-and-file-range-contract.zh-CN.md)。
+
+仍未宣称：跨机器 Worker/Blob transport、Finder reveal、
 自动 cwd 扫描、frozen Git diff/base/head、构建日志或 verifier evidence。

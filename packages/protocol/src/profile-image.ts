@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { IdentifierSchema } from "./common.ts";
+
 export const PROFILE_IMAGE_MIME_TYPES = [
   "image/jpeg",
   "image/png",
@@ -24,6 +26,7 @@ export const ProfileImageUploadResponseSchema = z
     avatarKey: UploadedProfileImageKeySchema,
     mimeType: ProfileImageMimeTypeSchema,
     size: z.number().int().positive().max(PROFILE_IMAGE_MAX_BYTES),
+    uploadIntentId: IdentifierSchema,
   })
   .strict();
 export type ProfileImageUploadResponse = z.infer<

@@ -6,15 +6,21 @@
  * controls). Geometry remains owned by each surface; this file owns only the
  * pointer, hover, focus, press, selected and disabled state grammar.
  */
+.rah-dialog-layer,
 .rah-product-shell {
   --rah-interaction-transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --rah-press-transition: 100ms cubic-bezier(0.4, 0, 0.2, 1);
+  --rah-brutal-lift-rest-shadow: var(--shadow-s);
+  --rah-brutal-lift-hover-transform: translateY(-1px);
+  --rah-brutal-lift-hover-shadow: var(--shadow-m);
+  --rah-brutal-lift-active-transform: translate(1px, 1px);
+  --rah-brutal-lift-active-shadow: var(--shadow-press);
 }
 
 /* Match Raft/Tailwind preflight so an unclassified button cannot leak the
    browser's native gray/outset presentation. :where keeps every named
    component primitive authoritative. */
-:where(.rah-product-shell) :where(button) {
+:where(.rah-product-shell, .rah-dialog-layer) :where(button) {
   appearance: none;
   background-color: transparent;
   background-image: none;
@@ -24,7 +30,7 @@
   font: inherit;
 }
 
-:where(.rah-product-shell) :where(button:not(:disabled)) {
+:where(.rah-product-shell, .rah-dialog-layer) :where(button:not(:disabled)) {
   cursor: pointer;
 }
 
@@ -38,15 +44,18 @@
   box-shadow: var(--shadow-m);
 }
 
+.rah-dialog-layer :is(.sq-btn, .send-btn),
 .rah-product-shell :is(.sq-btn, .send-btn) {
   transform: translate(0, 0);
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.rah-dialog-layer :is(.sq-btn, .send-btn):hover:not(:disabled),
 .rah-product-shell :is(.sq-btn, .send-btn):hover:not(:disabled) {
   transform: translateY(-1px);
 }
 
+.rah-dialog-layer :is(.sq-btn, .send-btn):active:not(:disabled),
 .rah-product-shell :is(.sq-btn, .send-btn):active:not(:disabled) {
   transform: translate(1px, 1px);
 }
@@ -54,16 +63,19 @@
 /* Current Raft Button primitive: 100ms cubic motion, lift on hover, and a
    one-pixel press. This upgrades legacy `.btn` call sites without letting
    pages invent a second button state machine. */
+.rah-dialog-layer .btn,
 .rah-product-shell .btn {
   transform: translate(0, 0);
   transition: all var(--rah-press-transition);
 }
 
+.rah-dialog-layer .btn:hover:not(:disabled),
 .rah-product-shell .btn:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: var(--shadow-m);
 }
 
+.rah-dialog-layer .btn:active:not(:disabled),
 .rah-product-shell .btn:active:not(:disabled) {
   transform: translate(1px, 1px);
   box-shadow: var(--shadow-press);
@@ -71,6 +83,7 @@
 
 /* Legacy token selectors predate disabled guards. Keep their base hard shadow
    and neutral position instead of letting hover/active leak through. */
+.rah-dialog-layer :is(.sq-btn, .send-btn, .btn):disabled:hover,
 .rah-product-shell :is(.sq-btn, .send-btn, .btn):disabled:hover {
   transform: translate(0, 0);
   box-shadow: var(--shadow-s);
@@ -129,8 +142,16 @@
 }
 
 .rah-product-shell .rah-interaction-brutal {
+  box-shadow: var(--rah-brutal-lift-rest-shadow);
   transform: translate(0, 0);
   transition: all var(--rah-press-transition);
+}
+
+/* A computed 4px shadow is not visible when an intermediate list/column clips
+   it. Mark the nearest component-owned host explicitly instead of making every
+   scroll container overflow. */
+.rah-product-shell .rah-interaction-shadow-host {
+  overflow: visible;
 }
 
 .rah-product-shell .rah-interaction-brutal:not(:disabled) {
@@ -138,13 +159,13 @@
 }
 
 .rah-product-shell .rah-interaction-brutal:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-m);
+  transform: var(--rah-brutal-lift-hover-transform);
+  box-shadow: var(--rah-brutal-lift-hover-shadow);
 }
 
 .rah-product-shell .rah-interaction-brutal:active:not(:disabled) {
-  transform: translate(1px, 1px);
-  box-shadow: var(--shadow-press);
+  transform: var(--rah-brutal-lift-active-transform);
+  box-shadow: var(--rah-brutal-lift-active-shadow);
 }
 
 .rah-product-shell .rah-interaction-segment {

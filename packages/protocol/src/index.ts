@@ -56,6 +56,7 @@ import { ManagedMcpRuntimeAdapterSchema } from "./managed-mcp.ts";
 import {
   addTaskParticipantSelectionIssues,
   projectTaskLifecycle,
+  taskWorkflowTransitionOptions,
   taskWorkflowStatus,
   TaskSchema,
   TaskAttentionSchema,
@@ -73,6 +74,7 @@ import {
 
 export {
   projectTaskLifecycle,
+  taskWorkflowTransitionOptions,
   taskWorkflowStatus,
   TaskSchema,
   TaskAttentionSchema,
@@ -109,6 +111,9 @@ export * from "./room-agent-sos.ts";
 export { ContentDigestSchema } from "./common.ts";
 export type { ContentDigest } from "./common.ts";
 export {
+  ForwardedMessageAuthorSnapshotSchema,
+  ForwardedMessageBundleSchema,
+  ForwardedMessageSnapshotSchema,
   MembershipRoleSchema,
   MessageSchema,
   ParticipantKindSchema,
@@ -122,6 +127,9 @@ export {
   WorkspaceStateSchema,
 } from "./collaboration.ts";
 export type {
+  ForwardedMessageAuthorSnapshot,
+  ForwardedMessageBundle,
+  ForwardedMessageSnapshot,
   MembershipRole,
   Message,
   ParticipantKind,

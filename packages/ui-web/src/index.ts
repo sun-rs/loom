@@ -24,6 +24,7 @@ export type RoomMessageView = {
   author: string;
   body: string;
   createdAt: string;
+  forwardedBundle?: import("@rah-os/protocol").ForwardedMessageBundle;
   messageId: string;
   roomId?: string;
   roomSeq: number;
@@ -58,9 +59,9 @@ export const TASK_COLUMN_PRESENTATIONS: Readonly<
 
 /** Shared Raft five-state presentation for every Web Task surface. */
 export function taskStatusPresentation(
-  state: Task["state"],
+  source: Task["state"] | Pick<Task, "state" | "workflowStatus">,
 ): TaskStatusPresentation {
-  const status = taskWorkflowStatus(state);
+  const status = taskWorkflowStatus(source);
   const id: TaskColumnId =
     status === "in_progress"
       ? "in-progress"
@@ -107,7 +108,7 @@ export type RoomAgentTarget = {
 };
 
 export type MobileNavigationDestination =
-  "agents" | "chat" | "notifications" | "rooms" | "settings" | "tasks";
+  "home" | "members" | "settings" | "tasks";
 
 export type WorkspaceAgentView = {
   presence?: import("@rah-os/protocol").AgentPresence;
@@ -141,20 +142,13 @@ export function activeMobileNavigation(input: {
     | "tasks"
     | "search"
     | "activity";
-  activeTab: "chat" | "files" | "tasks";
-  notificationsOpen: boolean;
-  roomsOpen: boolean;
+  homeOpen: boolean;
 }): MobileNavigationDestination | undefined {
-  if (input.notificationsOpen) return "notifications";
-  if (input.roomsOpen) return "rooms";
-  if (input.activeSurface === "agents") return "agents";
+  if (input.homeOpen) return "home";
+  if (input.activeSurface === "agents") return "members";
   if (input.activeSurface === "settings") return "settings";
-  if (input.activeSurface === "computers") return undefined;
+  if (input.activeSurface === "computers") return "settings";
   if (input.activeSurface === "tasks") return "tasks";
-  if (input.activeSurface === "search" || input.activeSurface === "activity")
-    return undefined;
-  if (input.activeTab === "chat") return "chat";
-  if (input.activeTab === "tasks") return "tasks";
   return undefined;
 }
 
@@ -604,7 +598,7 @@ export function createRoomViewModel(input: {
   );
   const tasks = (status: ReturnType<typeof taskWorkflowStatus>) =>
     input.tasks
-      .filter((task) => taskWorkflowStatus(task.state) === status)
+      .filter((task) => taskWorkflowStatus(task) === status)
       .sort((left, right) => left.createdAt.localeCompare(right.createdAt))
       .map((task) => {
         const assigneeLabel =
@@ -640,6 +634,9 @@ export function createRoomViewModel(input: {
               ? { attachments: message.attachments }
               : {}),
             createdAt: message.createdAt,
+            ...(message.forwardedBundle === undefined
+              ? {}
+              : { forwardedBundle: message.forwardedBundle }),
             messageId: message.messageId,
             roomId: message.roomId,
             roomSeq: message.roomSeq,

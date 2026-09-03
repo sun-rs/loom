@@ -39,6 +39,7 @@ test("profile image HTTP transport uploads and serves an authenticated inline im
           avatarKey: "upload_png_0123456789abcdef0123456789abcdef01234567",
           mimeType: "image/png" as const,
           size: PNG.byteLength,
+          uploadIntentId: "profile_image_upload_intent_test",
         };
       },
       read: (_actor, avatarKey) => {
@@ -64,6 +65,7 @@ test("profile image HTTP transport uploads and serves an authenticated inline im
       new Blob([PNG], { type: "image/png" }),
     );
     assert.match(uploaded.avatarKey, /^upload_png_/u);
+    assert.equal(uploaded.uploadIntentId, "profile_image_upload_intent_test");
 
     const withoutAuth = await fetch(
       client.profileImages.url(uploaded.avatarKey),

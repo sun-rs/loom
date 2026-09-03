@@ -15,11 +15,15 @@ export async function uploadAgentAvatar({
   expectedRevisionId: string;
   file: File;
   saveProfile: (input: AgentProfileEditInput) => Promise<void>;
-  upload: (file: File) => Promise<{ avatarKey: string }>;
+  upload: (file: File) => Promise<{
+    avatarKey: string;
+    uploadIntentId: string;
+  }>;
 }): Promise<string> {
-  const { avatarKey } = await upload(file);
+  const { avatarKey, uploadIntentId } = await upload(file);
   await saveProfile({
     agentDefinitionId,
+    avatarUploadIntentId: uploadIntentId,
     expectedRevisionId,
     field: "avatarKey",
     value: avatarKey,

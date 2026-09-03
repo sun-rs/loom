@@ -10,22 +10,25 @@ test("Agent avatar upload stores content before saving the exact canonical revis
   const calls: string[] = [];
   const file = new File(["avatar"], "avatar.png", { type: "image/png" });
   const avatarKey = `upload_png_${"a".repeat(40)}`;
+  const uploadIntentId = "profile_image_upload_intent_avatar";
   const result = await uploadAgentAvatar({
     agentDefinitionId: "agent",
     expectedRevisionId: "revision-7",
     file,
     saveProfile: async (input) => {
-      calls.push(`save:${input.expectedRevisionId}:${input.value}`);
+      calls.push(
+        `save:${input.expectedRevisionId}:${input.value}:${input.avatarUploadIntentId}`,
+      );
     },
     upload: async (candidate) => {
       calls.push(`upload:${candidate.name}`);
-      return { avatarKey };
+      return { avatarKey, uploadIntentId };
     },
   });
   assert.equal(result, avatarKey);
   assert.deepEqual(calls, [
     "upload:avatar.png",
-    `save:revision-7:${avatarKey}`,
+    `save:revision-7:${avatarKey}:${uploadIntentId}`,
   ]);
   assert.equal(
     AGENT_AVATAR_UPLOAD_ACCEPT,

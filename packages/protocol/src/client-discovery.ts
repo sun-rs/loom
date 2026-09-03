@@ -21,6 +21,7 @@ export const GlobalTasksRequestSchema = z
   .strict();
 export const GlobalTaskSchema = z
   .object({
+    canManageAnyTask: z.boolean(),
     task: TaskSchema,
     roomName: z.string(),
     target: NavigationTargetSchema,

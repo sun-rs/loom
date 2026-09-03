@@ -63,6 +63,8 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "managedMcp.server.state",
     "managedMcp.usage.list",
     "message.context",
+    "message.forward",
+    "message.forward.targets",
     "message.list",
     "message.post",
     "message.react",
@@ -110,6 +112,7 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "task.review.list",
     "task.unassign",
     "task.unblock",
+    "task.workflow.update",
     "thread.create",
     "thread.follower.remove",
     "thread.follower.restore",
@@ -733,6 +736,16 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       },
       operation: "task.reopen",
       path: "/v3/client/tasks/reopen",
+    },
+    {
+      input: {
+        basedOnRoomSeq: 1,
+        idempotencyKey: "task-workflow-update",
+        taskId: "task-main",
+        workflowStatus: "in_progress",
+      },
+      operation: "task.workflow.update",
+      path: "/v3/client/tasks/workflow",
     },
     {
       input: {

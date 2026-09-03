@@ -512,8 +512,19 @@ if (args.join(" ") === "debug models --bundled") {
   });
   await waitForBrowserValue(
     browser,
-    `document.querySelector(".rah-mobile-nav") !== null`,
-    { description: "production mobile navigation" },
+    `document.querySelector(".rah-mobile-nav") !== null ||
+      document.querySelector('[aria-label="返回主页"]') !== null`,
+    { description: "production mobile root or Room detail" },
+  );
+  await evaluate(
+    browser,
+    `document.querySelector('[aria-label="返回主页"]')?.click()`,
+  );
+  await waitForBrowserValue(
+    browser,
+    `document.querySelector(".rah-mobile-nav") !== null &&
+      document.querySelector(".rah-mobile-space-mark") !== null`,
+    { description: "production mobile Home navigation and Workspace switcher" },
   );
   assert.equal(
     await evaluate(browser, "document.documentElement.scrollWidth"),

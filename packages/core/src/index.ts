@@ -56,6 +56,8 @@ export type {
   PlacementCapacityPolicy,
   PlacementLaunchClaim,
   Principal,
+  ProfileImageGcReconcileResult,
+  ProfileImageInventoryEntry,
   ProvisionedHostCredential,
   ProvisionedPrincipal,
   Room,

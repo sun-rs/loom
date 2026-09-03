@@ -108,7 +108,7 @@ export function TaskToolbar({
               role="radio"
               type="button"
             >
-              <Icon name={mode === "board" ? "kanban" : "list"} />
+              <Icon name={mode === "board" ? "columns-3" : "layout-list"} />
               <span>{mode === "board" ? "看板" : "列表"}</span>
             </button>
           ))}

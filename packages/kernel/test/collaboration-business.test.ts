@@ -386,6 +386,65 @@ test("Thread replies remain Room-owned and derive durable attention without prov
   }
 });
 
+test("Raft terminal workflow releases membership ownership without rewriting execution evidence", () => {
+  const fixture = collaborationFixture();
+  try {
+    const initiallyRemoved = fixture.kernel.removeRoomMember(
+      fixture.ownerActor,
+      {
+        basedOnRoomSeq: latestRoomSeq(fixture),
+        idempotencyKey: "workflow-terminal-initial-remove",
+        principalId: fixture.agent.principal.principalId,
+        roomId: fixture.room.roomId,
+      },
+    );
+    const dependency = fixture.kernel.createTask(fixture.ownerActor, {
+      idempotencyKey: "workflow-terminal-dependency",
+      roomId: fixture.room.roomId,
+      title: "Keep the assignee activation asleep",
+    });
+    fixture.kernel.addRoomMember(fixture.ownerActor, {
+      basedOnRoomSeq: dependency.event.roomSeq,
+      idempotencyKey: "workflow-terminal-readd",
+      principalId: initiallyRemoved.removedPrincipalId,
+      role: "member",
+      roomId: fixture.room.roomId,
+    });
+    const task = fixture.kernel.createTask(fixture.ownerActor, {
+      assigneeId: fixture.agent.principal.principalId,
+      dependencyTaskIds: [dependency.task.taskId],
+      idempotencyKey: "workflow-terminal-task",
+      roomId: fixture.room.roomId,
+      title: "Close from the Raft board",
+    });
+    assert.deepEqual(task.activationIds, []);
+    const changed = fixture.kernel.updateTaskWorkflowStatus(
+      fixture.ownerActor,
+      {
+        basedOnRoomSeq: task.event.roomSeq,
+        idempotencyKey: "workflow-terminal-done",
+        taskId: task.task.taskId,
+        workflowStatus: "done",
+      },
+    );
+    assert.equal(changed.task.workflowStatus, "done");
+    assert.equal(changed.task.state, "todo");
+    assert.deepEqual(changed.activationIds, []);
+    const removed = fixture.kernel.removeRoomMember(fixture.ownerActor, {
+      basedOnRoomSeq: changed.event.roomSeq,
+      idempotencyKey: "workflow-terminal-remove-assignee",
+      principalId: fixture.agent.principal.principalId,
+      roomId: fixture.room.roomId,
+    });
+    assert.equal(
+      removed.removedPrincipalId,
+      fixture.agent.principal.principalId,
+    );
+  } finally {
+    fixture.close();
+  }
+});
+
 function collaborationFixture() {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-collaboration-p2-"));
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });

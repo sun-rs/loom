@@ -25,6 +25,7 @@ test("the local workbench gateway keeps Human authority server-side", async () =
     authorization?: string;
     body: string;
     method?: string;
+    range?: string;
     url?: string;
   }> = [];
   const upstream = createServer(async (request, response) => {
@@ -34,8 +35,23 @@ test("the local workbench gateway keeps Human authority server-side", async () =
         : { authorization: request.headers.authorization }),
       body: await requestBody(request),
       ...(request.method === undefined ? {} : { method: request.method }),
+      ...(request.headers.range === undefined
+        ? {}
+        : { range: request.headers.range }),
       ...(request.url === undefined ? {} : { url: request.url }),
     });
+    if (
+      request.url === "/v3/client/files/content/attachment-1" &&
+      request.headers.range === "bytes=1-7"
+    ) {
+      response.statusCode = 206;
+      response.setHeader("accept-ranges", "bytes");
+      response.setHeader("content-range", "bytes 1-7/12");
+      response.setHeader("content-length", "7");
+      response.setHeader("content-type", "application/octet-stream");
+      response.end("AH OS T");
+      return;
+    }
     response.setHeader("content-type", "application/json");
     response.end(JSON.stringify({ ok: true }));
   });
@@ -104,6 +120,25 @@ test("the local workbench gateway keeps Human authority server-side", async () =
       url: "/v3/client/health",
     });
 
+    const ranged = await fetch(
+      `${origin}/v3/client/files/content/attachment-1`,
+      {
+        headers: { cookie, range: "bytes=1-7" },
+      },
+    );
+    assert.equal(ranged.status, 206);
+    assert.equal(ranged.headers.get("accept-ranges"), "bytes");
+    assert.equal(ranged.headers.get("content-range"), "bytes 1-7/12");
+    assert.equal(ranged.headers.get("content-length"), "7");
+    assert.equal(await ranged.text(), "AH OS T");
+    assert.deepEqual(observed.at(-1), {
+      authorization: "Bearer server-only-human-token",
+      body: "",
+      method: "GET",
+      range: "bytes=1-7",
+      url: "/v3/client/files/content/attachment-1",
+    });
+
     const rejectedCsrf = await fetch(`${origin}/v3/client/commands/execute`, {
       body: "{}",
       headers: {
@@ -118,7 +153,7 @@ test("the local workbench gateway keeps Human authority server-side", async () =
       rejectedCsrf.headers.get("x-rah-web-build-id"),
       "web-generation-local",
     );
-    assert.equal(observed.length, 1);
+    assert.equal(observed.length, 2);
 
     const acceptedMutation = await fetch(
       `${origin}/v3/client/commands/execute`,
@@ -157,7 +192,7 @@ test("the local workbench gateway keeps Human authority server-side", async () =
       headers: { cookie },
     });
     assert.equal(unknownApi.status, 404);
-    assert.equal(observed.length, 2);
+    assert.equal(observed.length, 3);
   } finally {
     await gateway.stop();
     await close(upstream);

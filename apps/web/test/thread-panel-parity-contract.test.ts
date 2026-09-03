@@ -13,7 +13,7 @@ test("Task messages keep Raft's compact linked marker and omit workflow state", 
   assert.match(source, /className="rah-message-task-link"/u);
   assert.match(
     source,
-    /data-task-status=\{taskStatusPresentation\(task\.state\)\.id\}/u,
+    /data-task-status=\{taskStatusPresentation\(task\)\.id\}/u,
   );
   assert.match(source, /打开任务 #\$\{task\.taskNumber\}/u);
   assert.match(source, /@\{taskAgent\.handle\}/u);

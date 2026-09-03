@@ -68,6 +68,7 @@ export function taskProjectionFromRow(database: DatabaseSync, row: Row): Task {
     dependencyTaskIds,
     reviewerIds,
     state: text(row, "state"),
+    workflowStatus: text(row, "workflow_status"),
     ...(claimedBy === null ? {} : { claimedBy }),
     ...(claimUntil === null ? {} : { claimUntil }),
     ...(lastProgress === null ? {} : { lastProgress }),

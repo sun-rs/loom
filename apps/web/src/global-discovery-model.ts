@@ -76,8 +76,10 @@ export function discoveryLocation(
 }
 // Raft Web vL/hnt: five ordered groups, task number descending within a group.
 // RAH's durable waiting/blocked states project into Raft's in-progress group.
-export function raftTaskGroup(state: Task["state"]) {
-  const status = taskWorkflowStatus(state);
+export function raftTaskGroup(
+  source: Task["state"] | Pick<Task, "state" | "workflowStatus">,
+) {
+  const status = taskWorkflowStatus(source);
   return status === "in_progress"
     ? "in-progress"
     : status === "in_review"

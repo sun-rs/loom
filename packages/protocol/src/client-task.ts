@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { IdentifierSchema } from "./common.ts";
-import { TaskSchema } from "./task.ts";
+import { TaskSchema, TaskWorkflowStatusSchema } from "./task.ts";
 
 export const ClientTasksListRequestSchema = z
   .object({ roomId: IdentifierSchema })
@@ -26,4 +26,16 @@ export const ClientTaskReopenRequestSchema = z
   .strict();
 export type ClientTaskReopenRequest = z.infer<
   typeof ClientTaskReopenRequestSchema
+>;
+
+export const ClientTaskWorkflowUpdateRequestSchema = z
+  .object({
+    basedOnRoomSeq: z.number().int().nonnegative(),
+    idempotencyKey: IdentifierSchema,
+    taskId: IdentifierSchema,
+    workflowStatus: TaskWorkflowStatusSchema,
+  })
+  .strict();
+export type ClientTaskWorkflowUpdateRequest = z.infer<
+  typeof ClientTaskWorkflowUpdateRequestSchema
 >;

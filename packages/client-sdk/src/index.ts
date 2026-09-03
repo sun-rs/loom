@@ -42,6 +42,10 @@ import {
   ClientInputRequestsListRequestSchema,
   ClientInputRequestsListResponseSchema,
   ClientMessageMutationResponseSchema,
+  ClientMessageForwardRequestSchema,
+  ClientMessageForwardResponseSchema,
+  ClientMessageForwardTargetsRequestSchema,
+  ClientMessageForwardTargetsResponseSchema,
   ClientMessagePostRequestSchema,
   ClientMessagesListRequestSchema,
   ClientMessagesListResponseSchema,
@@ -97,6 +101,7 @@ import {
   ClientTaskAssignRequestSchema,
   ClientTaskCancelRequestSchema,
   ClientTaskReopenRequestSchema,
+  ClientTaskWorkflowUpdateRequestSchema,
   ClientTaskCompleteRequestSchema,
   ClientTaskConvertRequestSchema,
   ClientTaskCreateRequestSchema,
@@ -156,6 +161,10 @@ import {
   type ClientInputRequestsListRequest,
   type ClientInputRequestsListResponse,
   type ClientMessageMutationResponse,
+  type ClientMessageForwardRequest,
+  type ClientMessageForwardResponse,
+  type ClientMessageForwardTargetsRequest,
+  type ClientMessageForwardTargetsResponse,
   type ClientMessagePostRequest,
   type ClientMessagesListRequest,
   type ClientMessagesListResponse,
@@ -211,6 +220,7 @@ import {
   type ClientTaskAssignRequest,
   type ClientTaskCancelRequest,
   type ClientTaskReopenRequest,
+  type ClientTaskWorkflowUpdateRequest,
   type ClientTaskCompleteRequest,
   type ClientTaskConvertRequest,
   type ClientTaskCreateRequest,
@@ -399,6 +409,14 @@ export type RahClientOperationMap = AgentWorkspaceOperationMap &
       input: ClientMessagesListRequest;
       output: ClientMessagesListResponse;
     };
+    "message.forward.targets": {
+      input: ClientMessageForwardTargetsRequest;
+      output: ClientMessageForwardTargetsResponse;
+    };
+    "message.forward": {
+      input: ClientMessageForwardRequest;
+      output: ClientMessageForwardResponse;
+    };
     "message.post": {
       input: ClientMessagePostRequest;
       output: ClientMessageMutationResponse;
@@ -497,6 +515,10 @@ export type RahClientOperationMap = AgentWorkspaceOperationMap &
     };
     "task.reopen": {
       input: ClientTaskReopenRequest;
+      output: ClientTaskAttentionMutationResponse;
+    };
+    "task.workflow.update": {
+      input: ClientTaskWorkflowUpdateRequest;
       output: ClientTaskAttentionMutationResponse;
     };
     "task.complete": {
@@ -799,6 +821,20 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     output: ClientMessagesListResponseSchema,
     path: "/v3/client/messages/list",
   },
+  "message.forward.targets": {
+    authenticated: true,
+    input: ClientMessageForwardTargetsRequestSchema,
+    method: "POST",
+    output: ClientMessageForwardTargetsResponseSchema,
+    path: "/v3/client/messages/forward/targets",
+  },
+  "message.forward": {
+    authenticated: true,
+    input: ClientMessageForwardRequestSchema,
+    method: "POST",
+    output: ClientMessageForwardResponseSchema,
+    path: "/v3/client/messages/forward",
+  },
   "message.post": {
     authenticated: true,
     input: ClientMessagePostRequestSchema,
@@ -966,6 +1002,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     method: "POST",
     output: ClientTaskAttentionMutationResponseSchema,
     path: "/v3/client/tasks/reopen",
+  },
+  "task.workflow.update": {
+    authenticated: true,
+    input: ClientTaskWorkflowUpdateRequestSchema,
+    method: "POST",
+    output: ClientTaskAttentionMutationResponseSchema,
+    path: "/v3/client/tasks/workflow",
   },
   "task.complete": {
     authenticated: true,

@@ -29,6 +29,17 @@ test("Files HTTP + SDK roundtrip verifies bytes, Room provenance, authorization 
     }).latestRoomSeq,
     idempotencyKey: "room",
   }).room.roomId;
+  const targetRoomId = kernel.createWorkspaceRoom(actor, {
+    kind: "channel",
+    name: "Forwarded files",
+    slug: "forwarded-files",
+    workspaceId: workspace.workspace.workspaceId,
+    basedOnControlRoomSeq: kernel.sync(actor, {
+      roomId: workspace.controlRoom.roomId,
+      consumerId: "target-head",
+    }).latestRoomSeq,
+    idempotencyKey: "target-room",
+  }).room.roomId;
   const service = new ClientApplicationService({
     human: createHumanApplicationPort(kernel),
     health: () => ({
@@ -95,6 +106,34 @@ test("Files HTTP + SDK roundtrip verifies bytes, Room provenance, authorization 
     assert.equal(files.files[0]?.messageId, sent.event.aggregateId);
     const bytes = await client.files.download(prepared.attachmentId);
     assert.equal(await bytes.text(), await blob.text());
+    const forwarded = await client.request("message.forward", {
+      destinationRoomIds: [targetRoomId],
+      requestId: "forward-file",
+      sourceMessageIds: [sent.event.aggregateId],
+      sourceRoomId: roomId,
+    });
+    assert.equal(forwarded.results[0]?.status, "delivered");
+    const targetMessages = await client.request("message.list", {
+      limit: 50,
+      roomId: targetRoomId,
+    });
+    const projected =
+      targetMessages.messages[0]?.forwardedBundle?.items[0]?.attachments[0];
+    assert.ok(projected);
+    assert.equal(
+      targetMessages.messages[0]?.forwardedBundle?.items[0]?.attachmentPolicy,
+      "projected",
+    );
+    assert.notEqual(projected.attachmentId, prepared.attachmentId);
+    assert.equal(
+      await (await client.files.download(projected.attachmentId)).text(),
+      await blob.text(),
+    );
+    assert.equal(
+      (await client.request("file.list", { roomId: targetRoomId })).files[0]
+        ?.attachmentId,
+      projected.attachmentId,
+    );
     const url = `${service.origin}/v3/client/files/content/${prepared.attachmentId}`;
     assert.equal((await fetch(url)).status, 401);
     const download = await fetch(url, {
@@ -106,7 +145,171 @@ test("Files HTTP + SDK roundtrip verifies bytes, Room provenance, authorization 
     );
     assert.equal(download.headers.get("x-content-type-options"), "nosniff");
     assert.match(download.headers.get("content-disposition")!, /^attachment;/);
-    await download.arrayBuffer();
+    const fullBytes = Buffer.from(await download.arrayBuffer());
+    const previewUrl = `${service.origin}/v3/client/files/preview/${prepared.attachmentId}`;
+    const preview = await fetch(previewUrl, {
+      headers: { authorization: `Bearer ${human.accessToken}` },
+    });
+    assert.equal(preview.status, 200);
+    assert.equal(
+      preview.headers.get("content-type"),
+      "text/plain; charset=utf-8",
+    );
+    assert.equal(preview.headers.get("x-original-content-type"), "text/html");
+    assert.equal(preview.headers.get("x-content-type-options"), "nosniff");
+    assert.equal(preview.headers.get("cache-control"), "private, no-store");
+    assert.match(
+      preview.headers.get("content-security-policy")!,
+      /default-src 'none'/u,
+    );
+    assert.equal(await preview.text(), await blob.text());
+    assert.equal(
+      await client.files.previewText(prepared.attachmentId),
+      await blob.text(),
+    );
+    assert.equal((await fetch(previewUrl)).status, 401);
+    const outsider = kernel.provisionPrincipal({
+      handle: "outsider",
+      kind: "human",
+    });
+    assert.equal(
+      (
+        await fetch(previewUrl, {
+          headers: { authorization: `Bearer ${outsider.accessToken}` },
+        })
+      ).status,
+      403,
+    );
+    const range = await fetch(url, {
+      headers: {
+        authorization: `Bearer ${human.accessToken}`,
+        range: "bytes=1-7",
+      },
+    });
+    assert.equal(range.status, 206);
+    assert.equal(range.headers.get("accept-ranges"), "bytes");
+    assert.equal(
+      range.headers.get("content-range"),
+      `bytes 1-7/${String(fullBytes.length)}`,
+    );
+    assert.equal(range.headers.get("content-length"), "7");
+    assert.deepEqual(
+      Buffer.from(await range.arrayBuffer()),
+      fullBytes.subarray(1, 8),
+    );
+    const sdkRange = await client.files.downloadRange(prepared.attachmentId, {
+      start: 2,
+      end: 9,
+    });
+    assert.deepEqual(
+      Buffer.from(await sdkRange.arrayBuffer()),
+      fullBytes.subarray(2, 10),
+    );
+    const suffix = await fetch(url, {
+      headers: {
+        authorization: `Bearer ${human.accessToken}`,
+        range: "bytes=-6",
+      },
+    });
+    assert.equal(suffix.status, 206);
+    assert.deepEqual(
+      Buffer.from(await suffix.arrayBuffer()),
+      fullBytes.subarray(-6),
+    );
+    const openEnded = await fetch(url, {
+      headers: {
+        authorization: `Bearer ${human.accessToken}`,
+        range: "bytes=8-",
+      },
+    });
+    assert.equal(openEnded.status, 206);
+    assert.equal(
+      openEnded.headers.get("content-range"),
+      `bytes 8-${String(fullBytes.length - 1)}/${String(fullBytes.length)}`,
+    );
+    assert.deepEqual(
+      Buffer.from(await openEnded.arrayBuffer()),
+      fullBytes.subarray(8),
+    );
+    const unsatisfiable = await fetch(url, {
+      headers: {
+        authorization: `Bearer ${human.accessToken}`,
+        range: `bytes=${String(fullBytes.length + 10)}-`,
+      },
+    });
+    assert.equal(unsatisfiable.status, 416);
+    assert.equal(
+      unsatisfiable.headers.get("content-range"),
+      `bytes */${String(fullBytes.length)}`,
+    );
+    const invalidUnit = await fetch(url, {
+      headers: {
+        authorization: `Bearer ${human.accessToken}`,
+        range: "items=0-2",
+      },
+    });
+    assert.equal(invalidUnit.status, 416);
+    assert.equal(
+      invalidUnit.headers.get("content-range"),
+      `bytes */${String(fullBytes.length)}`,
+    );
+    const multiple = await fetch(url, {
+      headers: {
+        authorization: `Bearer ${human.accessToken}`,
+        range: "bytes=0-2,5-7",
+      },
+    });
+    assert.equal(multiple.status, 200);
+    assert.equal(multiple.headers.get("content-range"), null);
+    assert.deepEqual(Buffer.from(await multiple.arrayBuffer()), fullBytes);
+
+    const unsupportedBlob = new Blob(["%PDF-not-a-real-document"]);
+    const unsupported = await client.request("file.prepare", {
+      roomId,
+      filename: "report.pdf",
+      mimeType: "application/pdf",
+      size: unsupportedBlob.size,
+      idempotencyKey: "unsupported-preview",
+    });
+    await client.files.upload(unsupported.attachmentId, unsupportedBlob);
+    await client.request("message.post", {
+      roomId,
+      body: "PDF",
+      attachmentIds: [unsupported.attachmentId],
+      basedOnRoomSeq: kernel.sync(actor, { roomId, consumerId: "head-pdf" })
+        .latestRoomSeq,
+      recipients: [],
+      idempotencyKey: "message-pdf",
+    });
+    const unsupportedPreview = await fetch(
+      `${service.origin}/v3/client/files/preview/${unsupported.attachmentId}`,
+      { headers: { authorization: `Bearer ${human.accessToken}` } },
+    );
+    assert.equal(unsupportedPreview.status, 415);
+
+    const largeBlob = new Blob([new Uint8Array(2 * 1024 * 1024 + 1)]);
+    const large = await client.request("file.prepare", {
+      roomId,
+      filename: "large.log",
+      mimeType: "text/plain",
+      size: largeBlob.size,
+      idempotencyKey: "large-preview",
+    });
+    await client.files.upload(large.attachmentId, largeBlob);
+    await client.request("message.post", {
+      roomId,
+      body: "large",
+      attachmentIds: [large.attachmentId],
+      basedOnRoomSeq: kernel.sync(actor, { roomId, consumerId: "head-large" })
+        .latestRoomSeq,
+      recipients: [],
+      idempotencyKey: "message-large",
+    });
+    const largePreview = await fetch(
+      `${service.origin}/v3/client/files/preview/${large.attachmentId}`,
+      { headers: { authorization: `Bearer ${human.accessToken}` } },
+    );
+    assert.equal(largePreview.status, 413);
     const malformed = await fetch(`${service.origin}/v3/client/files/prepare`, {
       method: "POST",
       headers: {

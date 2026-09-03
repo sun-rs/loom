@@ -11,7 +11,7 @@ export function assertNoActiveRoomWork(
     database
       .prepare(
         `SELECT 1 AS present FROM tasks
-         WHERE room_id = ? AND state NOT IN ('completed', 'cancelled')
+         WHERE room_id = ? AND workflow_status NOT IN ('done', 'closed')
          LIMIT 1`,
       )
       .get(roomId),

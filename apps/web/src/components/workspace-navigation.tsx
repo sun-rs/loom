@@ -192,10 +192,15 @@ export function RoomSidebar({
   canMessage,
   currentHumanId,
   mobileOpen,
-  onClose,
+  mobileWorkspaceIdentity,
+  notificationAttention = false,
+  notificationCount = 0,
+  onActivity,
   onCreate,
   onEditRoom,
+  onNotifications,
   onOpenDirectRoom,
+  onSearch,
   onSelect,
   rooms,
   workspace,
@@ -209,10 +214,15 @@ export function RoomSidebar({
   canMessage: boolean;
   currentHumanId: string | undefined;
   mobileOpen: boolean;
-  onClose: () => void;
+  mobileWorkspaceIdentity?: ReactNode;
+  notificationAttention?: boolean;
+  notificationCount?: number;
+  onActivity: () => void;
   onCreate: () => void;
   onEditRoom?: (roomId: string) => void;
+  onNotifications: () => void;
   onOpenDirectRoom: (peerPrincipalId: string) => Promise<void>;
+  onSearch: () => void;
   onSelect: (roomId: string) => void;
   rooms: Room[];
   workspace: Workspace | undefined;
@@ -400,19 +410,47 @@ export function RoomSidebar({
       className={`sidebar rah-room-sidebar${mobileOpen ? " is-open" : ""}`}
     >
       <header className="sidebar-head">
-        <span className="sidebar-title">聊天</span>
+        <span className="sidebar-title rah-desktop-only">聊天</span>
+        <div className="rah-mobile-home-workspace rah-mobile-only">
+          {mobileWorkspaceIdentity ?? workspace?.name ?? "RAH OS"}
+        </div>
         <button
-          aria-label="关闭 Room 列表"
-          className="sq-btn rah-mobile-only"
-          onClick={onClose}
+          aria-label={
+            notificationCount > 0
+              ? `通知，${notificationCount} 项待处理`
+              : "通知"
+          }
+          className="rah-mobile-home-notifications rah-mobile-only"
+          data-has-unread={notificationAttention || notificationCount > 0}
+          onClick={onNotifications}
+          type="button"
         >
-          <span className="rah-close-glyph" aria-hidden="true">
-            ×
-          </span>
+          <Icon name="bell" />
+          {notificationCount > 0 ? (
+            <span className="rah-mobile-home-notification-badge" aria-hidden>
+              {notificationCount > 99 ? "99+" : notificationCount}
+            </span>
+          ) : null}
         </button>
       </header>
       <div className="sidebar-body">
         <section className="side-section">
+          <button
+            className="sidebar-bookmarks rah-mobile-home-entry rah-mobile-only"
+            onClick={onSearch}
+            type="button"
+          >
+            <Icon name="search" />
+            <span>搜索</span>
+          </button>
+          <button
+            className="sidebar-bookmarks rah-mobile-home-entry rah-mobile-only"
+            onClick={onActivity}
+            type="button"
+          >
+            <Icon name="pulse" />
+            <span>动态</span>
+          </button>
           <button
             className={`sidebar-bookmarks${savedActive ? " is-selected" : ""}`}
             disabled={!onSaved}
@@ -543,11 +581,11 @@ export function ChannelHeader({
   return (
     <header className="channel-head">
       <button
-        aria-label="打开 Room 列表"
-        className="sq-btn rah-mobile-only"
+        aria-label="返回主页"
+        className="sq-btn rah-mobile-only rah-mobile-back"
         onClick={onOpenRooms}
       >
-        <Icon name="menu" />
+        <Icon name="arrow-left" />
       </button>
       <div className={`channel-id${direct ? " is-direct" : ""}`}>
         {direct ? (
@@ -600,7 +638,7 @@ export function ChannelHeader({
       {direct ? null : (
         <div className="head-actions">
           <button
-            className="sq-btn"
+            className="sq-btn rah-panel-header-action"
             onClick={onSearch}
             aria-label="搜索当前对话"
             title="搜索当前对话"
@@ -608,7 +646,7 @@ export function ChannelHeader({
             <Icon name="search" />
           </button>
           <button
-            className="sq-btn members"
+            className="sq-btn rah-panel-header-action rah-channel-options"
             onClick={onManageAgents}
             aria-label="频道详情与设置"
             title={`频道详情与设置（${memberCount} 位成员）`}
@@ -622,67 +660,34 @@ export function ChannelHeader({
 }
 
 export function MobileNavigation({
-  onSearch,
-  onActivity,
   activeSurface,
-  activeTab,
-  notificationCount,
-  notificationAttention = false,
-  notificationsOpen,
   onAgents,
-  onChat,
-  onNotifications,
-  onRooms,
+  onHome,
   onSettings,
   onTasks,
-  roomsOpen,
+  mobileHomeOpen,
+  showMobileNavigation,
 }: {
-  onSearch: () => void;
-  onActivity: () => void;
   activeSurface: Surface;
-  activeTab: Tab;
-  notificationCount: number;
-  notificationAttention?: boolean;
-  notificationsOpen: boolean;
   onAgents: () => void;
-  onChat: () => void;
-  onNotifications: () => void;
-  onRooms: () => void;
+  onHome: () => void;
   onSettings: () => void;
   onTasks: () => void;
-  roomsOpen: boolean;
+  mobileHomeOpen: boolean;
+  showMobileNavigation: boolean;
 }) {
+  if (!showMobileNavigation) return null;
   const activeDestination = activeMobileNavigation({
     activeSurface,
-    activeTab,
-    notificationsOpen,
-    roomsOpen,
+    homeOpen: mobileHomeOpen,
   });
   return (
     <nav className="rah-mobile-nav" aria-label="移动端主导航">
       <MobileNavigationButton
-        active={activeSurface === "search"}
-        icon="search"
-        label="搜索"
-        onClick={onSearch}
-      />
-      <MobileNavigationButton
-        active={activeSurface === "activity"}
-        icon="pulse"
-        label="动态"
-        onClick={onActivity}
-      />
-      <MobileNavigationButton
-        active={activeDestination === "rooms"}
-        icon="menu"
-        label="Rooms"
-        onClick={onRooms}
-      />
-      <MobileNavigationButton
-        active={activeDestination === "chat"}
-        icon="chat"
-        label="聊天"
-        onClick={onChat}
+        active={activeDestination === "home"}
+        icon="home"
+        label="主页"
+        onClick={onHome}
       />
       <MobileNavigationButton
         active={activeDestination === "tasks"}
@@ -691,18 +696,10 @@ export function MobileNavigation({
         onClick={onTasks}
       />
       <MobileNavigationButton
-        active={activeDestination === "agents"}
+        active={activeDestination === "members"}
         icon="members"
-        label="Agents"
+        label="成员"
         onClick={onAgents}
-      />
-      <MobileNavigationButton
-        active={activeDestination === "notifications"}
-        badge={notificationCount}
-        dot={notificationAttention && notificationCount === 0}
-        icon="bell"
-        label="Inbox"
-        onClick={onNotifications}
       />
       <MobileNavigationButton
         active={activeDestination === "settings"}

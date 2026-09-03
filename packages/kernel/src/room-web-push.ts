@@ -149,7 +149,17 @@ export class RoomWebPushProjection {
       .prepare("SELECT * FROM messages WHERE message_id = ?")
       .get(input.event.aggregateId);
     if (!message) return [];
-    const body = text(message, "body").slice(0, 1000);
+    const messageBody = text(message, "body");
+    const forwardedBundleJson = nullableText(message, "forwarded_bundle_json");
+    const forwardedCount =
+      forwardedBundleJson === null
+        ? 0
+        : forwardedBundleItemCount(forwardedBundleJson);
+    const body = (
+      messageBody.trim().length > 0
+        ? messageBody
+        : `转发了 ${String(forwardedCount)} 条消息`
+    ).slice(0, 1000);
     const threadId = nullableText(message, "thread_id") ?? undefined;
     const thread = threadId
       ? this.#database
@@ -434,4 +444,21 @@ export class RoomWebPushProjection {
     const value = event.payload[key];
     return typeof value === "string" && value.length > 0 ? value : undefined;
   }
+}
+
+function forwardedBundleItemCount(value: string): number {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (
+      parsed !== null &&
+      typeof parsed === "object" &&
+      "items" in parsed &&
+      Array.isArray(parsed.items)
+    ) {
+      return parsed.items.length;
+    }
+  } catch {
+    // A malformed canonical row is handled by its owning read path. Push stays bounded.
+  }
+  return 0;
 }

@@ -2155,7 +2155,7 @@ export class CollaborationService {
       .prepare(
         `SELECT 1 AS present FROM tasks
          WHERE room_id = ?
-           AND state NOT IN ('completed', 'cancelled')
+           AND workflow_status NOT IN ('done', 'closed')
            AND (assignee_id = ? OR claimed_by = ?)
          LIMIT 1`,
       )

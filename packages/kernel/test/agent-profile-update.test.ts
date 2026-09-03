@@ -197,12 +197,16 @@ test("profile edits survive offline hosts/reopen, preserve execution and identit
       created.policy,
     );
     const uploadedAvatarKey = `upload_png_${"b".repeat(40)}`;
+    const { uploadIntentId } = kernel.profileImages.recordUpload(actor, {
+      avatarKey: uploadedAvatarKey,
+    });
     const uploadedAvatarSaved = kernel.manageWorkspaceAgent(
       actor,
       ClientAgentManageRequestSchema.parse({
         ...request,
         idempotencyKey: "uploaded-avatar",
         field: "avatarKey",
+        avatarUploadIntentId: uploadIntentId,
         value: uploadedAvatarKey,
         expectedRevisionId:
           avatarSaved.agent.currentRevision.agentDefinitionRevisionId,

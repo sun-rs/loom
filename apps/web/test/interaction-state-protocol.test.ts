@@ -18,7 +18,27 @@ test("the product owns one Raft-derived interaction state protocol", () => {
     protocol,
     /--rah-press-transition:\s*100ms cubic-bezier\(0\.4, 0, 0\.2, 1\)/u,
   );
-  assert.match(protocol, /:where\(\.rah-product-shell\) :where\(button\)/u);
+  assert.match(protocol, /--rah-brutal-lift-rest-shadow:\s*var\(--shadow-s\)/u);
+  assert.match(
+    protocol,
+    /--rah-brutal-lift-hover-transform:\s*translateY\(-1px\)/u,
+  );
+  assert.match(
+    protocol,
+    /--rah-brutal-lift-hover-shadow:\s*var\(--shadow-m\)/u,
+  );
+  assert.match(
+    protocol,
+    /--rah-brutal-lift-active-transform:\s*translate\(1px, 1px\)/u,
+  );
+  assert.match(
+    protocol,
+    /--rah-brutal-lift-active-shadow:\s*var\(--shadow-press\)/u,
+  );
+  assert.match(
+    protocol,
+    /:where\(\.rah-product-shell, \.rah-dialog-layer\) :where\(button\)/u,
+  );
   assert.match(
     protocol,
     /\.rah-interaction-row:not\(:disabled\):not\(\.is-selected\):not\(\.is-active\):hover/u,
@@ -26,6 +46,14 @@ test("the product owns one Raft-derived interaction state protocol", () => {
   assert.match(protocol, /\.rah-interaction-flat:hover/u);
   assert.match(protocol, /\.rah-interaction-brutal:hover/u);
   assert.match(protocol, /\.rah-interaction-brutal:active/u);
+  assert.match(
+    protocol,
+    /\.rah-interaction-brutal\s*\{[\s\S]*?box-shadow:\s*var\(--rah-brutal-lift-rest-shadow\)/u,
+  );
+  assert.match(
+    protocol,
+    /\.rah-interaction-shadow-host\s*\{[\s\S]*?overflow:\s*visible/u,
+  );
   assert.match(protocol, /\.rah-interaction-segment\[aria-checked="true"\]/u);
   assert.match(protocol, /\.rah-product-shell \.rail-logo \{/u);
   assert.match(
@@ -209,6 +237,75 @@ test("navigation and identity controls opt into the shared interaction families"
   assert.match(
     workspaceNavigation,
     /className="rah-side-create rah-interaction-flat"/u,
+  );
+});
+
+test("the Raft strong-lift source inventory and local consumers remain auditable", () => {
+  const evidence = JSON.parse(
+    readFileSync(
+      new URL(
+        "../../../docs/evidence/raft-brutal-lift-inventory-20260903.json",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  ) as {
+    asset: { sha256: string; url: string };
+    occurrences: Array<{
+      activeOffset: 1 | 2;
+      id: string;
+      localDisposition: string;
+    }>;
+    release: { commitSha: string };
+    schemaVersion: number;
+    signature: string[];
+  };
+  const taskBoard = read("components/global-task-board.tsx");
+  const agents = read("components/agent-directory-pane.tsx");
+  const agentStyles = read("agent-directory.css");
+
+  assert.equal(evidence.schemaVersion, 1);
+  assert.equal(
+    evidence.release.commitSha,
+    "16856201b6d089c251967fe2afdb2b0a0dcbb1a0",
+  );
+  assert.equal(
+    evidence.asset.url,
+    "https://app.raft.build/assets/index-Biin3FEA.js",
+  );
+  assert.equal(
+    evidence.asset.sha256,
+    "e798f35bde09eeda2927669406e10718392ff7574796016441def59dbc5b05f9",
+  );
+  assert.deepEqual(evidence.signature, [
+    "shadow-brutal-sm",
+    "transition-all",
+    "duration-100",
+    "hover:-translate-y-[1px]",
+    "hover:shadow-brutal",
+    "active:translate-x-[1px|2px]",
+    "active:translate-y-[1px|2px]",
+    "active:shadow-brutal-active",
+  ]);
+  assert.equal(evidence.occurrences.length, 7);
+  assert.equal(
+    evidence.occurrences.filter((item) => item.activeOffset === 1).length,
+    5,
+  );
+  assert.equal(
+    evidence.occurrences.filter((item) => item.activeOffset === 2).length,
+    2,
+  );
+  assert.equal(
+    evidence.occurrences.find((item) => item.id === "task-card")
+      ?.localDisposition,
+    "adopted",
+  );
+  assert.match(taskBoard, /rah-global-task-card rah-interaction-brutal/u);
+  assert.match(agents, /className="rah-interaction-brutal"/u);
+  assert.doesNotMatch(
+    agentStyles,
+    /\.rah-agent-profile-actions button:(?:hover|active)/u,
   );
 });
 

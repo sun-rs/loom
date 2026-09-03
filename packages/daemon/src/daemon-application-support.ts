@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { lstat, mkdir } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 
 import {
   AgentMemoryCoordinator,
@@ -44,6 +44,7 @@ import {
 
 import type { DaemonConfig } from "./config.ts";
 import { RoomFileGcReconciler } from "./room-file-gc-reconciler.ts";
+import { ProfileImageGcReconciler } from "./profile-image-gc-reconciler.ts";
 import {
   buildLocalRuntimeInventoryResponse,
   type ConfiguredLocalRuntimeSnapshot,
@@ -89,6 +90,17 @@ export function createDaemonAgentMemoryCoordinator(input: {
     // Activation receives it until a dedicated maintenance lane exists.
     wake: () => false,
   });
+}
+
+export function openDaemonProfileImageStore(
+  kernel: RoomKernel,
+): ProfileImageStore {
+  const store = new ProfileImageStore({
+    directory: join(dirname(kernel.databasePath), "profile-images"),
+  });
+  store.reclaimStaleParts({ olderThanMs: Date.now() - 15 * 60_000 });
+  kernel.profileImages.registerInventory(store.inventory());
+  return store;
 }
 
 export function createDaemonAgentExecutionResetCoordinator(input: {
@@ -166,13 +178,40 @@ function createDaemonRoomFileGcReconciler(
   });
 }
 
+function createDaemonProfileImageGcReconciler(
+  kernel: RoomKernel,
+  profileImages: ProfileImageStore,
+  onFailure: (message: string) => void,
+): ProfileImageGcReconciler {
+  return new ProfileImageGcReconciler({
+    onError: (error) =>
+      onFailure(
+        `Profile image GC reconciliation failed: ${errorMessage(error)}`,
+      ),
+    onResult: (result) => {
+      if (result.failed > 0) {
+        onFailure(
+          `${String(result.failed)} profile image GC operation(s) are waiting for retry`,
+        );
+      }
+    },
+    reconcile: () =>
+      kernel.profileImages.reconcile({
+        limit: 50,
+        reclaimBlob: (avatarKey) => profileImages.reclaim(avatarKey),
+      }),
+  });
+}
+
 export function createDaemonBackgroundReconcilerRunners(
   kernel: RoomKernel,
   onFailure: (message: string) => void,
 ): ReadonlyArray<(signal: AbortSignal) => Promise<void>> {
+  const profileImages = openDaemonProfileImageStore(kernel);
   const reconcilers = [
     createDaemonReminderReconciler(kernel, onFailure),
     createDaemonRoomFileGcReconciler(kernel, onFailure),
+    createDaemonProfileImageGcReconciler(kernel, profileImages, onFailure),
   ];
   return reconcilers.map(
     (reconciler) => async (signal: AbortSignal) =>
@@ -466,6 +505,7 @@ export function createDaemonHumanClientService(input: {
         memberRead: true,
         memberWrite: true,
         messageRead: true,
+        messageForward: true,
         messageWrite: true,
         roomRead: true,
         roomAgentSos: true,
@@ -501,7 +541,13 @@ export function createDaemonHumanClientService(input: {
     port: input.config.client.port,
     profileImages: {
       upload: (_actor, mimeType, chunks) =>
-        profileImages.upload(mimeType, chunks),
+        profileImages.upload(
+          mimeType,
+          chunks,
+          ({ avatarKey }) =>
+            input.kernel.profileImages.recordUpload(_actor, { avatarKey })
+              .uploadIntentId,
+        ),
       read: (_actor, avatarKey) => profileImages.read(avatarKey),
     },
     webPushAdministration: input.webPushAdministration,

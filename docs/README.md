@@ -29,13 +29,19 @@ P4.3 Agent Apps：[Raft OAuth client grant 投影/撤销合同、Multica Composi
 
 P4.4 Agent 自定义图片头像：[Raft picker/上传行为、既有 ProfileImageStore 复用、revision 竞态、安全 GC 边界与双浏览器正式验收](./product/2026-09-02-agent-custom-avatar-contract.zh-CN.md)。
 
+Profile Image 上传后未保存、替换后孤儿文件与崩溃恢复的最终闭环：
+[上传意图与引用安全 GC 合同](./product/2026-09-03-profile-image-intent-and-gc-contract.zh-CN.md)、
+[Raft/Multica 来源、10 万行压力、Chrome/Firefox 与正式发布审计](./audits/2026-09-03-profile-image-intent-gc-verification.zh-CN.md)。
+
 P4.5 Agent 问题报告：[Raft 中央 feedback bundle/attestation/upload 合同与 RAH 本地安全诊断导出裁决](./product/2026-09-02-agent-issue-report-contract.zh-CN.md)。
 
 P4.6 Agent 完全重置：[Raft 三档 reset 合同、单 fence workspace/continuity saga 与破坏边界设计](./product/2026-09-02-agent-full-reset-contract.zh-CN.md)。当前仅 `R/design`，正式 full 仍禁用。
 
 后续收口的当前执行真相：[Raft-first 剩余收口重构与补强计划](./product/2026-09-02-raft-first-remaining-closure-plan.zh-CN.md)。它固定了源码复用顺序、证据分层、P0–P6 施工顺序、单一 owner、迁移/回滚和浏览器验收。旧的完成列表是历史快照，不得用来覆盖该计划和当日审计。
 
-Task 状态的长期边界：[Raft 五态工作流、RAH OS 执行阶段与人类注意事项的正交投影](./adr/0027-task-workflow-execution-and-attention-projection.md)。客户端只显示 Raft 五态；认领、运行、等待输入、阻塞原因和取消中的证据保留在独立维度，不得重新变成额外看板列。
+Task 状态的长期边界：[Raft 五态工作流、RAH OS 执行阶段与人类注意事项的正交投影](./adr/0027-task-workflow-execution-and-attention-projection.md)。schema 44 通过 typed `task.workflow.update` 复刻 owner/admin 全五态与普通成员转移图；频道 Task Tab 和全局 Tasks 复用同一 Raft 看板。认领、运行、等待输入、阻塞原因和取消中的证据保留在独立维度，不得重新变成额外看板列、第二套卡片按钮或反向禁用 Raft 菜单。
+
+Task 页面与业务流的当前交付证据：[Raft Task 工作流对齐与正式浏览器审计](./audits/2026-09-03-raft-task-workflow-parity-verification.zh-CN.md)。该报告冻结官方 bundle/DOM/computed-style、五态迁移图、Pencil/hover 尺寸、105.25px 单行盒模型、看板 12px/列表 10px 列头间距、`columns-3/layout-list` 最终14px 图标、28px 标题栏操作、Room 工具栏整件换行、Room/全局编号头 scope、左对齐空分组、列内 `overflow:visible`、共享 brutal 交互协议、Room/全局共用看板、typed 写入不唤醒 Agent、terminal 状态释放协作占用、真实指针 Chrome 桌面/390×844 与正式 4173 重启结果；强上浮族七处源码清单见 [Raft brutal lift 来源证据](./evidence/raft-brutal-lift-inventory-20260903.json)。不把内部执行证据重新包装成第二套公开流程。
 
 本机 Computer 详情当前合同：[P6.6 Computer 侧栏、Runtime inspector、裁剪诊断与 Agent 跳转](./product/2026-09-02-computer-local-detail-contract.zh-CN.md)。当前证据为 `C/A/L/D`；Raft Computer 离线导致同前置非空数据 `R` 不可宣称。正式实例已从本轮验证过的不可变发布物恢复，但并发出现的非本批缺文件／缺导出仍阻塞当前源码整库重建，二者不得混为“全部通过”。
 
@@ -48,6 +54,14 @@ P2 Agent workspace / 本地项目文件当前 owner 合同：[Raft workspace 请
 普通 Channel 永久删除的 Raft 可见合同、schema 40 显式引用图、文件 GC 回执和崩溃恢复边界：[产品合同](./product/2026-09-03-room-permanent-deletion-contract.zh-CN.md)；实现与 Chrome/Firefox 隔离真删除证据：[验证审计](./audits/2026-09-03-room-permanent-deletion-verification.zh-CN.md)。正式用户 Room 不用于破坏性验收。
 
 Room 删除后文件回收的长期运行状态机、Multica 结构性移植、周期 worker、lease/backoff/tombstone 与 schema 42 验收范围：[Reconciler 合同](./product/2026-09-03-room-file-gc-reconciler-contract.zh-CN.md)；实现、迁移、失败注入和浏览器证据：[验证审计](./audits/2026-09-03-room-file-gc-reconciler-verification.zh-CN.md)；10 万回执 CPU/内存/磁盘压力与剩余缺口裁决：[性能审计](./audits/2026-09-03-room-file-gc-performance-and-remaining-gaps.zh-CN.md)。
+
+Files 与 Artifact 预览的 Raft/Multica 分层合同、安全白名单和浏览器验收范围：[Files 与 Artifact 预览收口合同](./product/2026-09-03-file-preview-parity-contract.zh-CN.md)。
+
+Files / Artifact 预览的来源、ACL、安全 renderer、真实 Chrome 与正式发布证据：[Files / Artifact 预览对齐审计](./audits/2026-09-03-file-preview-parity-verification.zh-CN.md)。
+
+消息多选与转发的 Raft 选择状态机、逐目标幂等、快照/ACL 与 RAH 本地附件闸门：[消息多选与转发 Raft-first 合同](./product/2026-09-03-message-selection-forwarding-contract.zh-CN.md)。
+
+转发附件的 Raft `projected` 行为、本地 hard-link 身份、Room ACL、GC 与崩溃孤儿恢复边界：[转发附件 projected identity 与本地 blob 合同](./product/2026-09-04-forwarded-attachment-projection-contract.zh-CN.md)。
 
 本轮十二项 Chat / Settings / Presence 缺口的当前裁决：[逐项源码 owner、双边实页、Firefox 桌面/390、正式重启与保留边界](./audits/2026-09-02-chat-settings-presence-closure.zh-CN.md)。本报告关闭的只是用户列出的十二项合同，不扩大为全站或所有权限/异常态 100% 等同。
 
@@ -176,6 +190,15 @@ Raft 官方与 RAH OS 在同一桌面尺寸下完成 Channel、DM、Thread、Tas
 
 消息列的宽度、根消息/回复结构、Agent 与 Human 关注所有权和标题栏操作协议：[消息列（Thread）Raft 对齐合同](./product/2026-09-02-thread-column-parity-contract.zh-CN.md)。
 
+消息右键选择、Room/Thread 多选工具栏、纯文本 canonical 多目标转发、部分失败重试、请求级快照冻结、
+来源 typed deep link 与附件安全闸门：[设计合同](./product/2026-09-03-message-selection-forwarding-contract.zh-CN.md)、
+[专项实现与浏览器审计](./audits/2026-09-04-message-selection-forwarding-verification.zh-CN.md)。
+
+附件转发不复用源 Room Attachment ID，也不复制数据块；每个目标使用独立确定性 ID 与同 inode
+hard link，并继续复用 Files ACL/预览/下载及 Room 删除 GC：[附件 projected 合同](./product/2026-09-04-forwarded-attachment-projection-contract.zh-CN.md)。
+目标身份/ACL、回滚与孤儿恢复、Chrome/Firefox 门禁和移动空间入口回归的最终记录：
+[附件投影与移动回归审计](./audits/2026-09-04-forwarded-attachment-projection-verification.zh-CN.md)。
+
 Task 紧凑标识与消息列回复头像的精确来源、computed-style、共享头像身份及正式浏览器验收：
 [Task 标识与 Thread 回复头像对齐审计](./audits/2026-09-03-task-marker-and-thread-avatar-verification.zh-CN.md)。
 
@@ -189,6 +212,10 @@ Raft/Multica 来源边界：[消息富文本引用、公式与图表合同](./pr
 频道黄色 `@`、普通/静音频道未读、私信粉色未读与 Workspace 全局 90 秒 Agent 工作条的来源裁决、
 单一 owner、桌面/390px Chrome computed-style 及正式 4173 重启验收：
 [频道提及、私信未读与 Agent 工作条验证](./audits/2026-09-03-sidebar-attention-and-direct-activity-verification.zh-CN.md)。
+
+Raft 767px 移动断点、短窗口 50px/36px rail、四项移动根导航、Room/Agent
+详情显隐，以及 800/768/767/760/701/700px 指针命中扫描：
+[响应式 Shell 对齐审计](./audits/2026-09-04-raft-responsive-shell-verification.zh-CN.md)。
 
 不采信上述结论、重新启动真实 OpenCode fixture 并独立复核官方 Raft live DOM、Channel、DM、Thread、Task、Agent、Computer 与移动端结果的反证审计：[Raft ↔ RAH OS 独立第三方双边审计](./audits/2026-08-29-independent-third-party-bilateral-audit.zh-CN.md)。
 

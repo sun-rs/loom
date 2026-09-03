@@ -18,6 +18,7 @@ export function MessageContextMenu({
   onConvertToTask,
   onError,
   onOpenThread,
+  onSelectMessages,
   social,
   target,
   triggerRef,
@@ -29,6 +30,7 @@ export function MessageContextMenu({
   onConvertToTask?: () => Promise<void>;
   onError: (message: string) => void;
   onOpenThread?: () => void;
+  onSelectMessages?: () => void;
   social: MessageSocialView;
   target: Extract<NavigationTarget, { kind: "message" }>;
   triggerRef: RefObject<HTMLElement | null>;
@@ -105,6 +107,19 @@ export function MessageContextMenu({
         <Icon name="copy" />
         复制 Markdown
       </button>
+      {onSelectMessages ? (
+        <button
+          onClick={() => {
+            onClose();
+            onSelectMessages();
+          }}
+          role="menuitem"
+          type="button"
+        >
+          <Icon name="listcheck" />
+          选择消息
+        </button>
+      ) : null}
       <hr />
       {onOpenThread ? (
         <button

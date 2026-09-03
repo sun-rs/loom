@@ -32,7 +32,7 @@ test("interaction icon geometry is frozen from Raft RFe/TFe/yze/cze/Bw, Agent ta
   );
   assert.equal(
     createHash("sha256").update(content).digest("hex"),
-    "d1ed09eae9d813007320623353571d43272662b7c3f3b3205c917f348fa4c28f",
+    "f1a811d309f01a77444817cfdecd07466e69bd9bb4999ac438efe9ea6029805d",
   );
 });
 test("quick-reaction sprite is the unchanged official published asset", () => {

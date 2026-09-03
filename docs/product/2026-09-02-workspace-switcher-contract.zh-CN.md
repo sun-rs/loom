@@ -17,6 +17,9 @@
 w-64`，最大高度为 viewport 减 16px；移动端挂在标题下方。
 - rail call site，byte offset `2813770..2814300`：左上标识的 tooltip 与可访问名称为当前 Server；
   **点击**切换浮层，不是 hover；桌面浮层是 anchored menu，不是 modal/backdrop。
+- mobile Home call site，byte offset 约 `2779369`，`mobile-server-switcher-menu`：标题是当前 Server
+  名称加 chevron；复用 `Moe`，位置为 `top-full left-2 right-2 mt-1`，最大高度
+  `calc(100dvh - 160px)`；选择使用 `navigationMode: "replace-with-home"`，不恢复桌面的最近详情页。
 - `yoe / iJe / Dm / oJe / lJe / cJe`，byte offset `2641750..2643300`：保存每个 Server
   最近合法路径和每个 rail surface 最近路径；读取时重新验证路径仍属于目标 Server，坏值删除；切换优先恢复，
   否则落默认首页。
@@ -102,3 +105,17 @@ workspace.update remains unchanged
   256px 几何、拖拽重载、最近 Room 恢复与 `390x844` 不溢出；正式状态只有一个 Workspace，因此没有在用户数据上
   制造第二 Workspace 做破坏性拖拽。证据层级为 `C/A/L/D`。Raft 同账号多 Server 实页未再次执行，因此本批不新增
   `R` 声明。
+
+## 7. 2026-09-04 响应式回归修正
+
+响应式 Shell 隐藏整个桌面 rail 后，旧的移动 Workspace 入口也被隐藏，Home 标题只剩静态文字。
+本轮 Firefox 全工作台门禁发现该回归；核对上述 mobile call site 后，先增加失败的组件合同测试，
+再由同一个 `WorkspaceIdentity` 提供 mobile trigger/menu。桌面和移动复用排序、canonical identities、
+outside/Escape/focus owner；使用不同 menu ID，避免两个挂载入口产生重复 ID。移动选择返回 Home，
+桌面仍恢复最近位置。
+
+最新 Firefox 150.0.2 的 `390×844` 实测：标题按钮可点击，菜单左/右各 8px、宽 374px，
+`scrollWidth=390`；Escape 关闭并把焦点返还移动 trigger。桌面 256px 菜单及原有排序、reload、
+最近 Room 恢复门禁继续通过。此前第 6 节“移动只保留顶部 rail 标识”是当时实现，不再是当前移动合同。
+本批正式重启与最终验收记录见
+[附件投影与移动回归审计](../audits/2026-09-04-forwarded-attachment-projection-verification.zh-CN.md)。

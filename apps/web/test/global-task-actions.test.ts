@@ -22,31 +22,42 @@ const task: Task = {
   reviewerIds: [],
   dependencyTaskIds: [],
 };
-test("menu and drag policy preserve execution/review facts and creator ownership", () => {
+
+test("menu and drag policy follow Raft's ordinary graph and manager override", () => {
   assert.equal(
-    globalTaskTransition(task, "closed", "human").operation,
-    "task.cancel",
+    globalTaskTransition(task, "closed", false).operation,
+    "task.workflow.update",
   );
-  assert.ok(globalTaskTransition(task, "done", "human").reason);
-  assert.ok(globalTaskTransition(task, "in-progress", "human").reason);
-  assert.ok(globalTaskTransition(task, "review", "human").reason);
-  assert.ok(globalTaskTransition(task, "closed", "another").reason);
   assert.equal(
-    globalTaskTransition({ ...task, state: "cancelled" }, "todo", "human")
-      .operation,
-    "task.reopen",
+    globalTaskTransition(task, "in-progress", false).operation,
+    "task.workflow.update",
   );
+  assert.ok(globalTaskTransition(task, "done", false).reason);
+  assert.ok(globalTaskTransition(task, "review", false).reason);
+  for (const target of [
+    "todo",
+    "in-progress",
+    "review",
+    "done",
+    "closed",
+  ] as const) {
+    assert.equal(
+      globalTaskTransition(task, target, true).operation,
+      "task.workflow.update",
+    );
+  }
 });
+
 test("global writes synchronize the target Room, retain idempotency on retry, and reject stale cards", async () => {
   const calls: Array<[string, unknown]> = [];
-  let sync = 0,
-    stale = true;
+  let sync = 0;
+  let stale = true;
   const client = {
     request: async (operation: string, input: unknown) => {
       calls.push([operation, input]);
       if (operation === "health") return { capabilities: { taskWrite: true } };
       if (operation === "task.list") return { tasks: [task] };
-      if (operation === "task.cancel" && stale) {
+      if (operation === "task.workflow.update" && stale) {
         stale = false;
         throw { code: "stale_context", status: 409 };
       }
@@ -63,26 +74,25 @@ test("global writes synchronize the target Room, retain idempotency on retry, an
     client,
     task,
     target: "closed",
-    principalId: "human",
-    reason: "audit",
+    canManageAnyTask: true,
     idempotencyKey: "fixed",
     session,
   });
   const writes = calls
-    .filter(([op]) => op === "task.cancel")
+    .filter(([op]) => op === "task.workflow.update")
     .map(([, input]) => input);
   assert.deepEqual(writes, [
     {
       taskId: "task",
       basedOnRoomSeq: 701,
       idempotencyKey: "fixed",
-      reason: "audit",
+      workflowStatus: "closed",
     },
     {
       taskId: "task",
       basedOnRoomSeq: 702,
       idempotencyKey: "fixed",
-      reason: "audit",
+      workflowStatus: "closed",
     },
   ]);
   assert.ok(
@@ -97,19 +107,20 @@ test("global writes synchronize the target Room, retain idempotency on retry, an
       client,
       task: { ...task, state: "claimed" },
       target: "closed",
-      principalId: "human",
-      reason: "audit",
+      canManageAnyTask: true,
       idempotencyKey: "stale",
       session,
     }),
     /变化|刷新/,
   );
 });
-test("blank cancellation, unavailable capability and incomplete review never write", async () => {
+
+test("workflow editing does not invent cancellation or review gates", async () => {
   const calls: string[] = [];
   const submitted = {
     ...task,
     state: "submitted" as const,
+    workflowStatus: "in_review" as const,
     reviewerIds: ["reviewer"],
   };
   const client = {
@@ -117,8 +128,8 @@ test("blank cancellation, unavailable capability and incomplete review never wri
       calls.push(op);
       if (op === "health") return { capabilities: { taskWrite: true } };
       if (op === "task.list") return { tasks: [submitted] };
-      if (op === "task.review.list") return { submissions: [], reviews: [] };
-      throw new Error("unexpected mutation");
+      if (op === "task.workflow.update") return {};
+      throw new Error(`unexpected mutation ${op}`);
     },
   } as unknown as RahClient;
   const session = {
@@ -127,30 +138,16 @@ test("blank cancellation, unavailable capability and incomplete review never wri
       state: { latestRoomSeq: 2 },
     }),
   };
-  await assert.rejects(
-    applyGlobalTaskTransition({
-      client,
-      task: submitted,
-      target: "done",
-      principalId: "human",
-      idempotencyKey: "done",
-      session,
-    }),
-    /审阅/,
-  );
-  await assert.rejects(
-    applyGlobalTaskTransition({
-      client,
-      task,
-      target: "closed",
-      principalId: "human",
-      reason: " ",
-      idempotencyKey: "empty",
-      session,
-    }),
-    /原因/,
-  );
-  assert.ok(
-    calls.every((op) => op !== "task.cancel" && op !== "task.complete"),
-  );
+  await applyGlobalTaskTransition({
+    client,
+    task: submitted,
+    target: "done",
+    canManageAnyTask: true,
+    idempotencyKey: "done",
+    session,
+  });
+  assert.ok(calls.includes("task.workflow.update"));
+  assert.ok(!calls.includes("task.cancel"));
+  assert.ok(!calls.includes("task.complete"));
+  assert.ok(!calls.includes("task.review.list"));
 });

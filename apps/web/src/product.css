@@ -137,6 +137,17 @@
   gap: 6px;
 }
 
+.rah-panel-header-action {
+  height: 28px;
+  padding: 0;
+  width: 28px;
+}
+
+.rah-panel-header-action > svg {
+  height: 14px;
+  width: 14px;
+}
+
 .rah-thread-head-actions .sq-btn,
 .rah-thread-followers-trigger {
   height: 28px;
@@ -355,7 +366,7 @@
   white-space: nowrap;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 767px) {
   .rah-live-agent-activity-footer {
     background: white;
   }
@@ -700,13 +711,15 @@
   background: var(--bg);
   border-bottom: var(--bd-heavy);
   flex: none;
-  height: var(--raft-tasks-toolbar-height);
+  height: auto;
+  min-height: var(--raft-tasks-toolbar-height);
   padding: var(--raft-tasks-toolbar-padding);
 }
 
 .tasks-toolbar-row {
   align-items: center;
   display: flex;
+  flex-wrap: wrap;
   gap: var(--raft-tasks-toolbar-gap);
   width: 100%;
 }
@@ -784,13 +797,19 @@
 }
 
 .rah-task-create {
-  height: var(--raft-tasks-filter-height);
-  padding: var(--raft-tasks-filter-padding);
+  flex: none;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 4px;
+  height: auto;
+  line-height: 16px;
+  padding: 4px 8px;
+  white-space: nowrap;
 }
 
 .rah-task-create svg {
-  height: 14px;
-  width: 14px;
+  height: 12px;
+  width: 12px;
 }
 
 .tasks-view {
@@ -4595,9 +4614,31 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   }
 }
 
-@media (max-width: 700px) {
+/* Raft AppRail compact-height contract from index-BoAC7nSE.js:
+   desktop rail 64 -> 50, shared panel header 62 -> 48, controls 40 -> 36. */
+@media (max-height: 600px) {
+  .rah-product-shell {
+    --head-h: 48px;
+    --rail-w: 50px;
+  }
+
+  .rah-product-shell :is(.rail-logo, .rail-btn) {
+    height: 36px;
+    width: 36px;
+  }
+
+  .rah-product-shell .rail-primary {
+    padding-block: 4px;
+  }
+
+  .rah-product-shell .rail-footer-item {
+    height: 40px;
+  }
+}
+
+@media (max-width: 767px) {
   :root {
-    --rah-mobile-nav-h: 60px;
+    --rah-mobile-nav-h: 52px;
   }
 
   .app.rah-product-shell {
@@ -4611,27 +4652,11 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   }
 
   .rah-product-shell > .rail {
-    display: flex;
-    height: var(--head-h);
-    left: 0;
-    padding: 0;
-    position: fixed;
-    top: 0;
-    width: 56px;
-    z-index: 90;
-  }
-
-  .rah-product-shell > .rail > :not(.rail-head) {
     display: none;
   }
 
-  .rah-product-shell > .channel > .channel-head {
-    padding-left: 64px;
-  }
-
-  .rah-settings-page-head,
-  .rah-settings-mobile-index > header {
-    padding-left: 64px;
+  .rah-desktop-only {
+    display: none;
   }
 
   .rah-mobile-only {
@@ -4640,16 +4665,17 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 
   .rah-product-shell > .rah-room-sidebar {
     bottom: calc(var(--rah-mobile-nav-h) + env(safe-area-inset-bottom));
-    box-shadow: var(--shadow-l);
+    border-right: 0;
+    box-shadow: none;
     display: flex;
     left: 0;
-    max-width: 320px;
+    max-width: none;
     position: fixed;
     top: 0;
-    transform: translateX(calc(-100% - 8px));
-    transition: transform 160ms ease-out;
+    transform: translateX(-100%);
+    transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
     visibility: hidden;
-    width: min(84vw, 320px);
+    width: 100%;
     z-index: 60;
   }
 
@@ -4664,31 +4690,80 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 
   .rah-room-sidebar .sidebar-head {
     align-items: center;
+    background: var(--yellow);
     display: flex;
+    height: var(--head-h);
     justify-content: space-between;
+    padding-inline: 16px;
+  }
+
+  .rah-mobile-home-workspace {
+    align-items: center;
+    max-width: calc(100% - 48px);
+  }
+
+  .rah-mobile-home-notifications {
+    align-items: center;
+    background: transparent;
+    border: 2px solid transparent;
+    height: 32px;
+    justify-content: center;
+    padding: 0;
+    position: relative;
+    width: 32px;
+  }
+
+  .rah-mobile-home-notifications:hover,
+  .rah-mobile-home-notifications:focus-visible {
+    border-color: var(--black);
+    background: white;
+  }
+
+  .rah-mobile-home-notifications > svg {
+    height: 16px;
+    width: 16px;
+  }
+
+  .rah-mobile-home-notification-badge {
+    align-items: center;
+    background: var(--pink);
+    border: 1px solid var(--black);
+    border-radius: 3px;
+    display: flex;
+    font: 700 8px/12px var(--mono);
+    justify-content: center;
+    min-width: 16px;
+    padding-inline: 2px;
+    position: absolute;
+    right: -4px;
+    top: -4px;
+  }
+
+  .rah-room-sidebar .sidebar-body {
+    background: white;
+  }
+
+  .rah-mobile-home-entry {
+    display: flex;
+  }
+
+  .rah-mobile-back > svg {
+    transform: rotate(180deg);
   }
 
   .rah-mobile-backdrop {
-    background: rgb(0 0 0 / 38%);
-    border: 0;
-    bottom: calc(var(--rah-mobile-nav-h) + env(safe-area-inset-bottom));
-    display: block;
-    left: 0;
-    position: fixed;
-    right: 0;
-    top: 0;
-    z-index: 50;
+    display: none;
   }
 
   .rah-mobile-nav {
-    background: var(--yellow);
+    background: white;
     border-top: var(--bd-heavy);
     bottom: 0;
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     left: 0;
     min-height: calc(var(--rah-mobile-nav-h) + env(safe-area-inset-bottom));
-    padding: 4px 6px env(safe-area-inset-bottom);
+    padding: 0 0 env(safe-area-inset-bottom);
     position: fixed;
     right: 0;
     z-index: 70;
@@ -4696,17 +4771,24 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 
   .rah-mobile-nav button {
     align-items: center;
-    background: transparent;
-    border: 2px solid transparent;
+    background: white;
+    border: 0;
+    border-right: var(--bd-heavy);
     display: flex;
     flex-direction: column;
-    font-family: var(--mono);
-    font-size: 9px;
+    font-family: var(--sans);
+    font-size: 10px;
     font-weight: 700;
     gap: 2px;
     justify-content: center;
-    min-height: 48px;
+    min-height: var(--rah-mobile-nav-h);
+    padding: 8px 0;
     position: relative;
+    transition: background-color var(--rah-interaction-transition);
+  }
+
+  .rah-mobile-nav button:last-child {
+    border-right: 0;
   }
 
   .rah-mobile-nav-badge {
@@ -4734,9 +4816,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   }
 
   .rah-mobile-nav button.is-active {
-    background: var(--bg);
-    border: var(--bd);
-    box-shadow: var(--shadow-s);
+    background: var(--yellow);
   }
 
   .rah-mobile-nav svg {
@@ -4744,12 +4824,12 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
     width: 18px;
   }
 
-  .rah-product-shell > .channel {
+  .rah-product-shell.rah-mobile-navigation-visible > .channel {
     padding-bottom: calc(var(--rah-mobile-nav-h) + env(safe-area-inset-bottom));
   }
 
   .rah-product-shell > .thread {
-    bottom: calc(var(--rah-mobile-nav-h) + env(safe-area-inset-bottom));
+    bottom: 0;
     height: auto;
   }
 
@@ -4809,7 +4889,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   }
 
   .rah-settings-page-head {
-    padding: 10px 12px 10px 64px;
+    padding: 10px 12px;
   }
 
   .rah-settings-scroll {
@@ -4878,7 +4958,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
     margin-right: 0;
   }
 
-  .head-actions .sq-btn:not(.members) {
+  .head-actions .sq-btn:not(.rah-channel-options) {
     display: none;
   }
 
@@ -4999,6 +5079,17 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   height: 6px;
   border-radius: 50%;
   background: var(--pink);
+}
+
+@media (max-width: 767px) and (max-height: 600px) {
+  .rah-mobile-nav button {
+    min-height: 36px;
+    padding-block: 8px;
+  }
+
+  .rah-mobile-nav button > svg {
+    display: none;
+  }
 }
 
 @media (min-width: 1280px) {

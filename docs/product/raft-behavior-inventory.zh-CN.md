@@ -1,6 +1,6 @@
 # Raft 行为指南：适用范围与当前实现登记
 
-首次登记：2026-08-31。当前复核：2026-09-02。当前可回退提交基线为
+首次登记：2026-08-31。当前复核：2026-09-04。当前可回退提交基线为
 `023aad7`；该基线的 `npm run check`、format 与 diff 核验已通过。本文是
 持续补全的**产品登记表**，不是全站验收证书，也不修改旧母版
 快照。后续执行顺序由 [Raft-first 剩余收口计划](./2026-09-02-raft-first-remaining-closure-plan.zh-CN.md)
@@ -51,82 +51,82 @@
 
 ## 3. 74 项旧意图迁移表
 
-| ID   | 旧 intent                          | 范围   | 前端   | 后端   | 当前映射、缺口与证据级别                                                                                                                                                |
-| ---- | ---------------------------------- | ------ | ------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| B001 | activity.filter.change             | 适用   | 已接   | 已接   | DISCOVERY；`activity.list`，H；筛选不确认 Inbox                                                                                                                         |
-| B002 | activity.item.open                 | 适用   | 已接   | 已接   | APP/DISCOVERY；`message.context` 精确 Thread，H；旧表仅称 presentation 不充分                                                                                           |
-| B003 | activity.item.complete             | 改造   | 已接   | 已接   | `activity.mark` 处理 read/done；不是旧表的 `inbox.resolve`，H                                                                                                           |
-| B004 | admin.agreement.save               | 待裁决 | 待裁决 | 待裁决 | 社区协议不自动等于本地 Workspace 协议，SETTINGS 无对应入口，N                                                                                                           |
-| B005 | admin.invite.create                | 改造   | 缺失   | 部分   | LAN 设备配对不是邀请另一个 Human；需定义本地身份邀请，N                                                                                                                 |
-| B006 | admin.member-permissions.save      | 改造   | 部分   | 部分   | P1.1 已接 canonical Room Human `owner/admin/member` 查看、编辑、保存/取消、错误与最后 owner 保护；Agent 不获得 Human 管理角色。完整 Workspace 权限矩阵仍未定义          |
-| B007 | admin.onboarding.save              | 待裁决 | 待裁决 | 待裁决 | Workspace onboarding 产品合同待定，N                                                                                                                                    |
-| B008 | admin.role.remove                  | 改造   | 缺失   | 部分   | 固定 Room 角色存在，无自定义角色删除合同，N                                                                                                                             |
-| B009 | admin.role.update                  | 改造   | 部分   | 已接   | Human Room 固定角色 UI 与 causal command 已接；不伪装成可创建/编辑任意角色定义。Raft 中的 Server role 与本地 Room role 边界仍明确保留                                   |
-| B010 | admin.system-channel.save          | 待裁决 | 待裁决 | 待裁决 | managed control Room 不是 Raft 可选系统频道，N                                                                                                                          |
-| B011 | admin.translation.save             | 待裁决 | 待裁决 | 待裁决 | 服务器翻译配置是否适用尚待决定，N                                                                                                                                       |
-| B012 | billing.checkout.configure         | 排除   | 排除   | 排除   | 不复制收费账户/checkout                                                                                                                                                 |
-| B013 | billing.checkout.submit            | 排除   | 排除   | 排除   | 不复制付款链路                                                                                                                                                          |
-| B014 | chat.agents.stop                   | 适用   | 缺失   | 部分   | AGENT 可逐个 pause；缺聊天页按当前执行安全停止的产品动作，N                                                                                                             |
-| B015 | chat.bookmarks.open                | 适用   | 已接   | 已接   | 私人收藏/取消、全局已保存页、20条分页、查询/Room/排序协议、总数、头像与目标元信息、卡片右键菜单、精确消息/Thread deep link 已接；官网独立页本身不显示筛选控件           |
-| B016 | chat.channel.lifecycle             | 适用   | 部分   | 部分   | 可逆归档/取消归档与 actor-owned Human 退出已接；退出守住最后 owner、direct/control 与活动工作。永久删除、公开频道自助重新加入及离开后继续关注公开消息列仍未接，H        |
-| B017 | chat.channel.pin                   | 适用   | 已接   | 已接   | Human×Workspace 私人侧栏偏好、设置页置顶、快捷键及拖拽置顶已接；联合频道/自定义分组不在本项                                                                             |
-| B018 | chat.channel.update                | 适用   | 已接   | 已接   | ROOM→`room.update` 名称/描述/visibility，H；其余设置不含在本项                                                                                                          |
-| B019 | chat.composer.asset.request        | 适用   | 已接   | 已接   | Room/Thread 选文件、prepare/upload/cancel、附件-only Thread 回复与同事务 Files 投影已接；通用拖放仍属交互增量，不再登记 Thread 附件为缺失                               |
-| B020 | chat.file.download                 | 适用   | 已接   | 已接   | FILES→授权 content GET；下载是浏览器文件流，不是 Finder reveal，H                                                                                                       |
-| B021 | chat.file.menu.open                | 适用   | 部分   | 无后端 | FILES 菜单有下载/定位；不能等同全部官方动作，H                                                                                                                          |
-| B022 | chat.file.preview                  | 适用   | 部分   | 已接   | FILES content read；完整类型/大文件/预览交互待补，H                                                                                                                     |
-| B023 | chat.file.reveal                   | 改造   | 缺失   | 缺失   | 浏览器不能直接打开本机 Finder；需窄平台桥或明确替代，N                                                                                                                  |
-| B024 | chat.member.add                    | 适用   | 已接   | 已接   | ROOM→`room.member.add/remove/list`，H                                                                                                                                   |
-| B025 | chat.message.action                | 适用   | 部分   | 部分   | 普通消息 hover/focus 已出现 Thread/回应/收藏三入口；共享回应、私人收藏、已保存回跳和刷新持久化通过浏览器门禁。编辑/删除、完整 picker、回应者浮层与收藏高级菜单仍未齐    |
-| B026 | chat.message.expand.toggle         | 适用   | 已接   | 已接   | Chat/Thread 共用实际高度测量，默认折叠并提供“展开全文/收起”；Human×Workspace Room 偏好可关闭且持久化。正文内部代码/图表 disclosure 仍是独立层次                         |
-| B027 | chat.message.send                  | 适用   | 已接   | 已接   | APP→`message.post/thread.reply`；C01 Enter，历史真实 CLI，H                                                                                                             |
-| B028 | chat.mobile.pane.change            | 适用   | 已接   | 无后端 | APP 共享组件的窄屏 pane；Chrome 持久工作台门禁与 Firefox 均重跑 390×844                                                                                                 |
-| B029 | chat.mobile.route.change           | 适用   | 已接   | 无后端 | Room/Thread/AgentDefinitionId/Agent tab 均有 reload-safe typed URL 投影；390×844 复用同一身份合同，不创建移动端真相                                                     |
-| B030 | chat.pane.change                   | 适用   | 已接   | 无后端 | APP Chat/Tasks/Files 选择，H；tab内容分别验收                                                                                                                           |
-| B031 | chat.room.create                   | 适用   | 已接   | 已接   | ROOM→`room.create`，control Room causal barrier，H                                                                                                                      |
-| B032 | chat.room.select                   | 适用   | 已接   | 已接   | APP→Room/Message session与sync，H                                                                                                                                       |
-| B033 | chat.room.sort                     | 适用   | 已接   | 已接   | 09-01 手动/最近/A-Z、拖拽置顶/移出/组内排序、设置置顶共享 Human×Workspace CAS；浏览器验证刷新保留。联合频道/自定义分组不含本项                                          |
-| B034 | chat.sidebar.resize                | 适用   | 已接   | 无后端 | `room-sidebar-resizer`，pointer/keyboard，H                                                                                                                             |
-| B035 | chat.task.column.toggle            | 适用   | 部分   | 无后端 | TASK 列状态/折叠需按本地与全局分别核对，N                                                                                                                               |
-| B036 | chat.task.create                   | 适用   | 已接   | 已接   | TASK→`task.create/convert`，唯一Message/Thread，H                                                                                                                       |
-| B037 | chat.task.filter.open              | 适用   | 已接   | 无后端 | TASK/DISCOVERY共享筛选popover，H                                                                                                                                        |
-| B038 | chat.task.view.change              | 适用   | 已接   | 无后端 | TASK 看板/列表，H                                                                                                                                                       |
-| B039 | chat.thread.close                  | 适用   | 部分   | 无后端 | APP可关闭 Thread；本轮双边关闭后焦点都落到 `body`，未还给触发按钮。官网桌面 Thread 的 Escape 与 Task detail 的 Escape 也不是同一合同                                    |
-| B040 | chat.thread.open                   | 适用   | 已接   | 已接   | APP→`message.context/thread.list`，并非仅room.sync，H                                                                                                                   |
-| B041 | chat.thread.resize                 | 适用   | 已接   | 无后端 | APP既有splitter/消息窗口测量，H                                                                                                                                         |
-| B042 | computers.agent.open               | 适用   | 缺失   | 已接   | COMPUTER binding 行为article非跳转；Agent get已有，N                                                                                                                    |
-| B043 | computers.command.copy             | 改造   | 缺失   | 无后端 | COMPUTER缺本地恢复命令及复制入口；不直接复制raft重启命令，N                                                                                                             |
-| B044 | computers.computer.action          | 适用   | 缺失   | 部分   | Computer infrastructure存在，Human管理/跨机验收未齐，N                                                                                                                  |
-| B045 | computers.computer.select          | 适用   | 部分   | 已接   | 本地自动显示第一台 Computer；官网直接进入 `/computers` 不自动选中且出现“选择一个频道”的官方缺陷，点击列表项后才显示详情。不能把官网缺陷复制为本地目标；多 Computer 仍缺 |
-| B046 | computers.recovery.toggle          | 改造   | 缺失   | 无后端 | COMPUTER恢复指导展开入口未接，N                                                                                                                                         |
-| B047 | computers.runtime.open             | 适用   | 缺失   | 已接   | COMPUTER Runtime chip为span，catalog/Offer有数据，N                                                                                                                     |
-| B048 | computers.sidebar.resize           | 适用   | 已接   | 无后端 | COMPUTER复用宽度边界/键盘，H                                                                                                                                            |
-| B049 | members.agent.action               | 适用   | 部分   | 已接   | AGENT pause/resume/manage/delete 与 restart/session reset 已走 exclusive fence、terminal proof 与正式重启验收；full reset 仍明确禁用，关系/外部身份动作另列             |
-| B050 | members.member.create              | 适用   | 部分   | 部分   | AGENT managed provision已有；external/Human并非同一入口，H                                                                                                              |
-| B051 | members.member.invite              | 改造   | 缺失   | 缺失   | Human invite尚未接；不以局域网设备配对代替，N                                                                                                                           |
-| B052 | members.participant.select         | 适用   | 部分   | 部分   | AGENT选择已有；Human detail与路由恢复未齐，A                                                                                                                            |
-| B053 | members.profile.update             | 适用   | 部分   | 已接   | Agent 名称/描述/官方头像、runtime/model/effort/mode 已经 revision-CAS 持久并有实页验收；剩余是 Human 资料、Room Human 角色 UI 和自定义图片生命周期                      |
-| B054 | members.relationship.open          | 适用   | 缺失   | 缺失   | AGENT关系图disabled；不能用Room membership假装关系图，N                                                                                                                 |
-| B055 | members.sidebar.resize             | 适用   | 已接   | 无后端 | AGENT splitter，H                                                                                                                                                       |
-| B056 | members.tab.change                 | 适用   | 部分   | 部分   | 七tab可选择≠完成；详见AG00–AG08，A                                                                                                                                      |
-| B057 | search.filter.change               | 适用   | 已接   | 已接   | DISCOVERY→`search`授权筛选，H                                                                                                                                           |
-| B058 | search.filters.clear               | 适用   | 已接   | 已接   | DISCOVERY重置并重新查询，H                                                                                                                                              |
-| B059 | search.query.change                | 适用   | 已接   | 已接   | DISCOVERY→Kernel搜索，H；非上游服务端算法复制                                                                                                                           |
-| B060 | search.sort.change                 | 适用   | 部分   | 部分   | DISCOVERY本地排序合同已有，Raft相关度质量/全边界未验收，H                                                                                                               |
-| B061 | settings.account.connection.change | 排除   | 排除   | 排除   | 不托管CLI账户/登录；本地MCP授权另列，不由本项排除                                                                                                                       |
-| B062 | settings.password.update           | 排除   | 排除   | 排除   | 不复制Raft中央账户密码；保留本地认证/撤销安全要求                                                                                                                       |
-| B063 | settings.preferences.update        | 适用   | 已接   | 已接   | Web Push enable/disable/test、Room 通知偏好、Workspace push 静音、消息字号、12/24小时制和实时状态动画已接；macOS/iOS 横幅仍是设备证据缺口                               |
-| B064 | settings.profile.update            | 改造   | 部分   | 已接   | Workspace profile 复用 `workspace.update` causal mutation；Human 中央账户资料不适用，N                                                                                  |
-| B065 | settings.section.open              | 适用   | 已接   | 无后端 | 12个适用/本地扩展 section 可刷新、前进/后退恢复；账单与应用已移除，N                                                                                                    |
-| B066 | settings.sessions.revoke           | 改造   | 部分   | 部分   | LAN device revoke已有；不等同Raft中央登录session管理，H                                                                                                                 |
-| B067 | shell.navigation.open              | 适用   | 已接   | 无后端 | APP/导航已接主模块；帮助/资源不因此自动完成，H                                                                                                                          |
-| B068 | shell.notification.dismiss         | 改造   | 已接   | 已接   | 显式 dismiss 经 Human×Workspace canonical preference 持久化，最多100；open/view 不写，版本化本机事项可再次出现；InputRequest 仍必须显式 resolve                         |
-| B069 | shell.notification.enable          | 改造   | 已接   | 已接   | 设备偏好默认开启；首次产品click请求未决权限，已授权时启动/focus自动订阅；设置关闭持久opt-out并unsubscribe，禁止自动复活。macOS/iOS各需用户授权后补一次真机投递证据      |
-| B070 | shell.notification.open            | 适用   | 已接   | 已接   | 页内中心/粉点/InputRequest分owner；OS push点击使用same-origin typed target并重验ACL。desktop页内中心hover精确时序仍属鼠标对齐缺口                                       |
-| B071 | shell.workspace.switcher.open      | 适用   | 部分   | 已接   | SPACE有目录/身份编辑 dialog；官网事实是**点击**空间标识打开 anchored switcher（不是 hover），Escape 关闭并还焦点，且记忆各空间最近 URL；本地尚未对齐                    |
-| B072 | tasks.filter.change                | 适用   | 已接   | 已接   | DISCOVERY→`task.global.list`，H                                                                                                                                         |
-| B073 | tasks.filters.clear                | 适用   | 已接   | 已接   | DISCOVERY清理筛选并查询，H                                                                                                                                              |
-| B074 | tasks.view.change                  | 适用   | 已接   | 无后端 | DISCOVERY全局看板/列表，H                                                                                                                                               |
+| ID   | 旧 intent                          | 范围   | 前端   | 后端   | 当前映射、缺口与证据级别                                                                                                                                                                                                        |
+| ---- | ---------------------------------- | ------ | ------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B001 | activity.filter.change             | 适用   | 已接   | 已接   | DISCOVERY；`activity.list`，H；筛选不确认 Inbox                                                                                                                                                                                 |
+| B002 | activity.item.open                 | 适用   | 已接   | 已接   | APP/DISCOVERY；`message.context` 精确 Thread，H；旧表仅称 presentation 不充分                                                                                                                                                   |
+| B003 | activity.item.complete             | 改造   | 已接   | 已接   | `activity.mark` 处理 read/done；不是旧表的 `inbox.resolve`，H                                                                                                                                                                   |
+| B004 | admin.agreement.save               | 待裁决 | 待裁决 | 待裁决 | 社区协议不自动等于本地 Workspace 协议，SETTINGS 无对应入口，N                                                                                                                                                                   |
+| B005 | admin.invite.create                | 改造   | 缺失   | 部分   | LAN 设备配对不是邀请另一个 Human；需定义本地身份邀请，N                                                                                                                                                                         |
+| B006 | admin.member-permissions.save      | 改造   | 部分   | 部分   | P1.1 已接 canonical Room Human `owner/admin/member` 查看、编辑、保存/取消、错误与最后 owner 保护；Agent 不获得 Human 管理角色。完整 Workspace 权限矩阵仍未定义                                                                  |
+| B007 | admin.onboarding.save              | 待裁决 | 待裁决 | 待裁决 | Workspace onboarding 产品合同待定，N                                                                                                                                                                                            |
+| B008 | admin.role.remove                  | 改造   | 缺失   | 部分   | 固定 Room 角色存在，无自定义角色删除合同，N                                                                                                                                                                                     |
+| B009 | admin.role.update                  | 改造   | 部分   | 已接   | Human Room 固定角色 UI 与 causal command 已接；不伪装成可创建/编辑任意角色定义。Raft 中的 Server role 与本地 Room role 边界仍明确保留                                                                                           |
+| B010 | admin.system-channel.save          | 待裁决 | 待裁决 | 待裁决 | managed control Room 不是 Raft 可选系统频道，N                                                                                                                                                                                  |
+| B011 | admin.translation.save             | 待裁决 | 待裁决 | 待裁决 | 服务器翻译配置是否适用尚待决定，N                                                                                                                                                                                               |
+| B012 | billing.checkout.configure         | 排除   | 排除   | 排除   | 不复制收费账户/checkout                                                                                                                                                                                                         |
+| B013 | billing.checkout.submit            | 排除   | 排除   | 排除   | 不复制付款链路                                                                                                                                                                                                                  |
+| B014 | chat.agents.stop                   | 适用   | 缺失   | 部分   | AGENT 可逐个 pause；缺聊天页按当前执行安全停止的产品动作，N                                                                                                                                                                     |
+| B015 | chat.bookmarks.open                | 适用   | 已接   | 已接   | 私人收藏/取消、全局已保存页、20条分页、查询/Room/排序协议、总数、头像与目标元信息、卡片右键菜单、精确消息/Thread deep link 已接；官网独立页本身不显示筛选控件                                                                   |
+| B016 | chat.channel.lifecycle             | 适用   | 部分   | 部分   | 可逆归档/取消归档与 actor-owned Human 退出已接；退出守住最后 owner、direct/control 与活动工作。永久删除、公开频道自助重新加入及离开后继续关注公开消息列仍未接，H                                                                |
+| B017 | chat.channel.pin                   | 适用   | 已接   | 已接   | Human×Workspace 私人侧栏偏好、设置页置顶、快捷键及拖拽置顶已接；联合频道/自定义分组不在本项                                                                                                                                     |
+| B018 | chat.channel.update                | 适用   | 已接   | 已接   | ROOM→`room.update` 名称/描述/visibility，H；其余设置不含在本项                                                                                                                                                                  |
+| B019 | chat.composer.asset.request        | 适用   | 已接   | 已接   | Room/Thread 选文件、prepare/upload/cancel、附件-only Thread 回复与同事务 Files 投影已接；通用拖放仍属交互增量，不再登记 Thread 附件为缺失                                                                                       |
+| B020 | chat.file.download                 | 适用   | 已接   | 已接   | FILES→授权 content GET；下载是浏览器文件流，不是 Finder reveal，H                                                                                                                                                               |
+| B021 | chat.file.menu.open                | 适用   | 部分   | 无后端 | FILES 菜单有下载/定位；不能等同全部官方动作，H                                                                                                                                                                                  |
+| B022 | chat.file.preview                  | 适用   | 部分   | 已接   | FILES content read；完整类型/大文件/预览交互待补，H                                                                                                                                                                             |
+| B023 | chat.file.reveal                   | 改造   | 缺失   | 缺失   | 浏览器不能直接打开本机 Finder；需窄平台桥或明确替代，N                                                                                                                                                                          |
+| B024 | chat.member.add                    | 适用   | 已接   | 已接   | ROOM→`room.member.add/remove/list`，H                                                                                                                                                                                           |
+| B025 | chat.message.action                | 适用   | 部分   | 部分   | 普通消息 hover/focus 有 Thread/回应/收藏和右键菜单；共享回应、私人收藏、已保存回跳、同范围多选及 canonical 文本/附件转发已接（P2.3 本地真实浏览器通过，非官方双边验收）。编辑/删除、完整 picker、回应者浮层与收藏高级菜单仍未齐 |
+| B026 | chat.message.expand.toggle         | 适用   | 已接   | 已接   | Chat/Thread 共用实际高度测量，默认折叠并提供“展开全文/收起”；Human×Workspace Room 偏好可关闭且持久化。正文内部代码/图表 disclosure 仍是独立层次                                                                                 |
+| B027 | chat.message.send                  | 适用   | 已接   | 已接   | APP→`message.post/thread.reply`；C01 Enter，历史真实 CLI，H                                                                                                                                                                     |
+| B028 | chat.mobile.pane.change            | 适用   | 已接   | 无后端 | APP 共享组件的窄屏 pane；Chrome 持久工作台门禁与 Firefox 均重跑 390×844                                                                                                                                                         |
+| B029 | chat.mobile.route.change           | 适用   | 已接   | 无后端 | Room/Thread/AgentDefinitionId/Agent tab 均有 reload-safe typed URL 投影；390×844 复用同一身份合同，不创建移动端真相                                                                                                             |
+| B030 | chat.pane.change                   | 适用   | 已接   | 无后端 | APP Chat/Tasks/Files 选择，H；tab内容分别验收                                                                                                                                                                                   |
+| B031 | chat.room.create                   | 适用   | 已接   | 已接   | ROOM→`room.create`，control Room causal barrier，H                                                                                                                                                                              |
+| B032 | chat.room.select                   | 适用   | 已接   | 已接   | APP→Room/Message session与sync，H                                                                                                                                                                                               |
+| B033 | chat.room.sort                     | 适用   | 已接   | 已接   | 09-01 手动/最近/A-Z、拖拽置顶/移出/组内排序、设置置顶共享 Human×Workspace CAS；浏览器验证刷新保留。联合频道/自定义分组不含本项                                                                                                  |
+| B034 | chat.sidebar.resize                | 适用   | 已接   | 无后端 | `room-sidebar-resizer`，pointer/keyboard，H                                                                                                                                                                                     |
+| B035 | chat.task.column.toggle            | 适用   | 部分   | 无后端 | TASK 列状态/折叠需按本地与全局分别核对，N                                                                                                                                                                                       |
+| B036 | chat.task.create                   | 适用   | 已接   | 已接   | TASK→`task.create/convert`，唯一Message/Thread，H                                                                                                                                                                               |
+| B037 | chat.task.filter.open              | 适用   | 已接   | 无后端 | TASK/DISCOVERY共享筛选popover，H                                                                                                                                                                                                |
+| B038 | chat.task.view.change              | 适用   | 已接   | 无后端 | TASK 看板/列表，H                                                                                                                                                                                                               |
+| B039 | chat.thread.close                  | 适用   | 部分   | 无后端 | APP可关闭 Thread；本轮双边关闭后焦点都落到 `body`，未还给触发按钮。官网桌面 Thread 的 Escape 与 Task detail 的 Escape 也不是同一合同                                                                                            |
+| B040 | chat.thread.open                   | 适用   | 已接   | 已接   | APP→`message.context/thread.list`，并非仅room.sync，H                                                                                                                                                                           |
+| B041 | chat.thread.resize                 | 适用   | 已接   | 无后端 | APP既有splitter/消息窗口测量，H                                                                                                                                                                                                 |
+| B042 | computers.agent.open               | 适用   | 缺失   | 已接   | COMPUTER binding 行为article非跳转；Agent get已有，N                                                                                                                                                                            |
+| B043 | computers.command.copy             | 改造   | 缺失   | 无后端 | COMPUTER缺本地恢复命令及复制入口；不直接复制raft重启命令，N                                                                                                                                                                     |
+| B044 | computers.computer.action          | 适用   | 缺失   | 部分   | Computer infrastructure存在，Human管理/跨机验收未齐，N                                                                                                                                                                          |
+| B045 | computers.computer.select          | 适用   | 部分   | 已接   | 本地自动显示第一台 Computer；官网直接进入 `/computers` 不自动选中且出现“选择一个频道”的官方缺陷，点击列表项后才显示详情。不能把官网缺陷复制为本地目标；多 Computer 仍缺                                                         |
+| B046 | computers.recovery.toggle          | 改造   | 缺失   | 无后端 | COMPUTER恢复指导展开入口未接，N                                                                                                                                                                                                 |
+| B047 | computers.runtime.open             | 适用   | 缺失   | 已接   | COMPUTER Runtime chip为span，catalog/Offer有数据，N                                                                                                                                                                             |
+| B048 | computers.sidebar.resize           | 适用   | 已接   | 无后端 | COMPUTER复用宽度边界/键盘，H                                                                                                                                                                                                    |
+| B049 | members.agent.action               | 适用   | 部分   | 已接   | AGENT pause/resume/manage/delete 与 restart/session reset 已走 exclusive fence、terminal proof 与正式重启验收；full reset 仍明确禁用，关系/外部身份动作另列                                                                     |
+| B050 | members.member.create              | 适用   | 部分   | 部分   | AGENT managed provision已有；external/Human并非同一入口，H                                                                                                                                                                      |
+| B051 | members.member.invite              | 改造   | 缺失   | 缺失   | Human invite尚未接；不以局域网设备配对代替，N                                                                                                                                                                                   |
+| B052 | members.participant.select         | 适用   | 部分   | 部分   | AGENT选择已有；Human detail与路由恢复未齐，A                                                                                                                                                                                    |
+| B053 | members.profile.update             | 适用   | 部分   | 已接   | Agent 名称/描述/官方头像、runtime/model/effort/mode 已经 revision-CAS 持久并有实页验收；剩余是 Human 资料、Room Human 角色 UI 和自定义图片生命周期                                                                              |
+| B054 | members.relationship.open          | 适用   | 缺失   | 缺失   | AGENT关系图disabled；不能用Room membership假装关系图，N                                                                                                                                                                         |
+| B055 | members.sidebar.resize             | 适用   | 已接   | 无后端 | AGENT splitter，H                                                                                                                                                                                                               |
+| B056 | members.tab.change                 | 适用   | 部分   | 部分   | 七tab可选择≠完成；详见AG00–AG08，A                                                                                                                                                                                              |
+| B057 | search.filter.change               | 适用   | 已接   | 已接   | DISCOVERY→`search`授权筛选，H                                                                                                                                                                                                   |
+| B058 | search.filters.clear               | 适用   | 已接   | 已接   | DISCOVERY重置并重新查询，H                                                                                                                                                                                                      |
+| B059 | search.query.change                | 适用   | 已接   | 已接   | DISCOVERY→Kernel搜索，H；非上游服务端算法复制                                                                                                                                                                                   |
+| B060 | search.sort.change                 | 适用   | 部分   | 部分   | DISCOVERY本地排序合同已有，Raft相关度质量/全边界未验收，H                                                                                                                                                                       |
+| B061 | settings.account.connection.change | 排除   | 排除   | 排除   | 不托管CLI账户/登录；本地MCP授权另列，不由本项排除                                                                                                                                                                               |
+| B062 | settings.password.update           | 排除   | 排除   | 排除   | 不复制Raft中央账户密码；保留本地认证/撤销安全要求                                                                                                                                                                               |
+| B063 | settings.preferences.update        | 适用   | 已接   | 已接   | Web Push enable/disable/test、Room 通知偏好、Workspace push 静音、消息字号、12/24小时制和实时状态动画已接；macOS/iOS 横幅仍是设备证据缺口                                                                                       |
+| B064 | settings.profile.update            | 改造   | 部分   | 已接   | Workspace profile 复用 `workspace.update` causal mutation；Human 中央账户资料不适用，N                                                                                                                                          |
+| B065 | settings.section.open              | 适用   | 已接   | 无后端 | 12个适用/本地扩展 section 可刷新、前进/后退恢复；账单与应用已移除，N                                                                                                                                                            |
+| B066 | settings.sessions.revoke           | 改造   | 部分   | 部分   | LAN device revoke已有；不等同Raft中央登录session管理，H                                                                                                                                                                         |
+| B067 | shell.navigation.open              | 适用   | 已接   | 无后端 | APP/导航已接主模块；帮助/资源不因此自动完成，H                                                                                                                                                                                  |
+| B068 | shell.notification.dismiss         | 改造   | 已接   | 已接   | 显式 dismiss 经 Human×Workspace canonical preference 持久化，最多100；open/view 不写，版本化本机事项可再次出现；InputRequest 仍必须显式 resolve                                                                                 |
+| B069 | shell.notification.enable          | 改造   | 已接   | 已接   | 设备偏好默认开启；首次产品click请求未决权限，已授权时启动/focus自动订阅；设置关闭持久opt-out并unsubscribe，禁止自动复活。macOS/iOS各需用户授权后补一次真机投递证据                                                              |
+| B070 | shell.notification.open            | 适用   | 已接   | 已接   | 页内中心/粉点/InputRequest分owner；OS push点击使用same-origin typed target并重验ACL。desktop页内中心hover精确时序仍属鼠标对齐缺口                                                                                               |
+| B071 | shell.workspace.switcher.open      | 适用   | 部分   | 已接   | SPACE有目录/身份编辑 dialog；官网事实是**点击**空间标识打开 anchored switcher（不是 hover），Escape 关闭并还焦点，且记忆各空间最近 URL；本地尚未对齐                                                                            |
+| B072 | tasks.filter.change                | 适用   | 已接   | 已接   | DISCOVERY→`task.global.list`，H                                                                                                                                                                                                 |
+| B073 | tasks.filters.clear                | 适用   | 已接   | 已接   | DISCOVERY清理筛选并查询，H                                                                                                                                                                                                      |
+| B074 | tasks.view.change                  | 适用   | 已接   | 无后端 | DISCOVERY全局看板/列表，H                                                                                                                                                                                                       |
 
 ### 登记表的统计口径
 
@@ -178,6 +178,27 @@
 - Files上传/取消/下载/跳原文、Agent读附件与发布Artifact、Task/Thread附件、私有目录与项目挂载。
 - 单winner Task、helper/reviewer、Human InputRequest、显式Review、安全改派、暂停/重启/reset。
 - 真实Provider工作与恢复、跨Room个人memory、分页锚点/图表稳定性、LAN/PWA生命周期。
+
+### 2026-09-04 消息选择与转发增量
+
+旧 74 项没有把消息选择模式和 canonical 转发拆成独立意图。本轮按官方冻结 bundle 的实际行为补记，
+但不改变 74 行统计口径：
+
+- Room/Thread 选择状态只在 Web 内存中；普通 composer 被选择工具栏替换，切换会话清理；顶层转发
+  dialog 先消费 Escape，第二次 Escape 才退出选择。
+- 选择项必须全部从当前 canonical 已载入消息解析并按 Room seq 排序；有未解析 ID 时复制与转发都
+  fail closed。
+- 目标搜索限同 Workspace、Human 已加入、未归档的 Channel/DM，20 条返回、最多选择 10 个；
+  不自动加入 Room 或创建 DM。
+- 客户端只提交源 ID、目标 ID、附言和稳定 request ID。Kernel 冻结作者/正文/时间/Thread 身份，逐目标
+  独立提交；重试只能是首批目标子集，不得因资料变化产生不同快照。
+- 转发卡片的“查看原消息”走 typed message target 并重新检查源 Room ACL；forward 不是 mention，不唤醒
+  Agent。
+- 当前只开放无附件普通消息；附件、嵌套 bundle、Task/action 和系统事件以结构化错误拒绝。
+
+代码/自动化/Chrome desktop 与 390×844 的证据见
+[消息选择与转发专项审计](../audits/2026-09-04-message-selection-forwarding-verification.zh-CN.md)。这补充了
+Chat 行为合同，不表示完整 emoji picker、编辑/删除或附件转发已经完成。
 
 源码候选索引仍列出13个未归档引用，但2026-09-02已完成第一轮动态触发分类：
 

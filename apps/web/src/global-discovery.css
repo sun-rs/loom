@@ -94,6 +94,7 @@
   color: rgb(0 0 0 / 40%);
   font-size: 14px;
   line-height: 20px;
+  text-align: left;
 }
 .rah-global-kanban .kcol-head svg {
   width: 14px;
@@ -142,6 +143,9 @@
 .rah-global-kanban.list-mode .kcol-body {
   display: flex;
   flex-direction: column;
+}
+.rah-global-kanban.list-mode .kcol-head[aria-expanded="true"] {
+  margin-bottom: 10px;
 }
 .rah-search-hit {
   text-align: left;
@@ -400,19 +404,21 @@
   outline: 2px solid var(--yellow);
   outline-offset: -2px;
 }
-@media (max-width: 760px) {
+@media (max-width: 767px) {
   .app.rah-global-shell,
   .app.rah-global-shell:has(> .thread) {
     grid-template-columns: minmax(0, 1fr);
   }
+  .rah-global-shell .activity-head {
+    background: var(--yellow);
+    padding-inline: 20px;
+  }
+  .rah-global-shell .activity-head > .channel-badge,
+  .rah-global-shell .activity-head .head-actions > .rah-mobile-only {
+    display: none;
+  }
   .rah-discovery {
     padding-bottom: calc(var(--rah-mobile-nav-h) + env(safe-area-inset-bottom));
-  }
-  .rah-mobile-nav {
-    overflow-x: auto;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(48px, 1fr);
-    grid-template-columns: none;
   }
   .rah-discovery .task-filter-menu {
     width: min(220px, calc(100vw - 32px));

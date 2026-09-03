@@ -836,7 +836,14 @@ if (args.join(" ") === "--version") {
   assert.equal(await messageContextMenu.getByRole("menuitemradio").count(), 7);
   assert.deepEqual(
     await messageContextMenu.getByRole("menuitem").allTextContents(),
-    ["复制链接", "复制 Markdown", "在消息列中回复", "从收藏中移除", "转为任务"],
+    [
+      "复制链接",
+      "复制 Markdown",
+      "选择消息",
+      "在消息列中回复",
+      "从收藏中移除",
+      "转为任务",
+    ],
   );
   assert.deepEqual(
     await messageContextMenu.evaluate((element) => {
@@ -896,7 +903,7 @@ if (args.join(" ") === "--version") {
     await message.locator(".msg-actions button.msg-action-btn").last().click();
     await message.locator(".rah-message-saved-badge").waitFor();
   }
-  await page.locator(".sidebar-bookmarks").click();
+  await page.getByRole("button", { exact: true, name: "已保存" }).click();
   const savedCards = page.locator(".rah-saved-card");
   await savedCards.first().waitFor();
   assert.equal(await savedCards.count(), 3);
@@ -1527,7 +1534,7 @@ if (args.join(" ") === "--version") {
   await page.locator(".rah-computer-detail h1").waitFor();
 
   await page.setViewportSize({ height: 844, width: 390 });
-  await page.locator(".rah-mobile-nav").waitFor();
+  await page.locator(".rah-computer-detail-back").waitFor();
   assert.deepEqual(
     await page.evaluate(() => ({
       clientWidth: document.documentElement.clientWidth,
@@ -1536,7 +1543,7 @@ if (args.join(" ") === "--version") {
           0) > 0,
       scrollWidth: document.documentElement.scrollWidth,
     })),
-    { clientWidth: 390, navVisible: true, scrollWidth: 390 },
+    { clientWidth: 390, navVisible: false, scrollWidth: 390 },
   );
   assert.deepEqual(
     await page.evaluate(() => ({
@@ -1578,12 +1585,31 @@ if (args.join(" ") === "--version") {
   );
   await page.keyboard.press("Escape");
   await mobileRuntimeLayer.waitFor({ state: "detached" });
+  await page.getByLabel("返回计算机列表", { exact: true }).click();
+  await page.locator(".rah-mobile-nav").waitFor();
   await page.getByRole("button", { name: "设置", exact: true }).click();
   await page.locator(".rah-settings-mobile-index").waitFor();
-  await workspaceTrigger.click();
-  await workspaceMenu.waitFor();
+  await page.getByRole("button", { name: "主页", exact: true }).click();
+  await page.locator(".rah-room-sidebar.is-open").waitFor();
+  const mobileWorkspaceTrigger = page.locator(".rah-mobile-space-mark");
+  const mobileWorkspaceMenu = page.locator("#rah-mobile-workspace-switcher");
+  await page.waitForFunction(() => {
+    const icons = [
+      ...document.querySelectorAll(".rah-mobile-nav button > svg"),
+    ];
+    return (
+      icons.length === 4 &&
+      icons.every((icon) => {
+        if (!(icon instanceof SVGGraphicsElement)) return false;
+        const bounds = icon.getBBox();
+        return bounds.width > 0 && bounds.height > 0;
+      })
+    );
+  });
+  await mobileWorkspaceTrigger.click();
+  await mobileWorkspaceMenu.waitFor();
   assert.deepEqual(
-    await workspaceMenu.evaluate((element) => {
+    await mobileWorkspaceMenu.evaluate((element) => {
       const rect = element.getBoundingClientRect();
       return {
         fitsViewport: rect.left >= 0 && rect.right <= innerWidth,
@@ -1591,19 +1617,22 @@ if (args.join(" ") === "--version") {
         width: rect.width,
       };
     }),
-    { fitsViewport: true, scrollWidth: 390, width: 256 },
+    { fitsViewport: true, scrollWidth: 390, width: 374 },
   );
   await page.keyboard.press("Escape");
-  await workspaceMenu.waitFor({ state: "detached" });
+  await mobileWorkspaceMenu.waitFor({ state: "detached" });
   await page.waitForFunction(
-    () => document.querySelector(".rah-space-mark") === document.activeElement,
+    () =>
+      document.querySelector(".rah-mobile-space-mark") ===
+      document.activeElement,
   );
   assert.equal(
-    await workspaceTrigger.evaluate(
+    await mobileWorkspaceTrigger.evaluate(
       (element) => element === document.activeElement,
     ),
     true,
   );
+  await page.getByRole("button", { name: "设置", exact: true }).click();
   await page.locator(".rah-settings-mobile-index").waitFor();
   await page
     .locator(".rah-settings-mobile-index")
@@ -1620,15 +1649,16 @@ if (args.join(" ") === "--version") {
     await page.evaluate(() => document.documentElement.scrollWidth),
     390,
   );
-  await page.getByRole("button", { name: "聊天", exact: true }).click();
-  await page.locator(".channel-title h1").waitFor();
-  await page.getByRole("button", { name: "Rooms", exact: true }).click();
+  await page.getByRole("button", { name: "主页", exact: true }).click();
   await page.locator(".rah-room-sidebar.is-open").waitFor();
-  await page.getByLabel("关闭 Room 列表", { exact: true }).click();
   await page
-    .locator(".rah-room-sidebar.is-open")
-    .waitFor({ state: "detached" });
-  await page.getByRole("button", { name: "Agents", exact: true }).click();
+    .locator(".channel-row")
+    .filter({ hasText: "Agent Council" })
+    .click();
+  await page.locator(".channel-title h1").waitFor();
+  await page.getByLabel("返回主页", { exact: true }).click();
+  await page.locator(".rah-room-sidebar.is-open").waitFor();
+  await page.getByRole("button", { name: "成员", exact: true }).click();
   await page.locator(".rah-agent-sidebar-head").waitFor();
   assert.equal(
     await page.locator(".rah-agent-detail-panel").isVisible(),
@@ -1640,7 +1670,7 @@ if (args.join(" ") === "--version") {
     await page.evaluate(() => document.documentElement.scrollWidth),
     390,
   );
-  assert.equal(await page.locator(".rah-mobile-nav").isVisible(), false);
+  assert.equal(await page.locator(".rah-mobile-nav").isVisible(), true);
   await page.getByLabel("返回成员列表", { exact: true }).click();
   await page.locator(".rah-agent-sidebar-head").waitFor();
   assert.equal(await page.locator(".rah-mobile-nav").isVisible(), true);

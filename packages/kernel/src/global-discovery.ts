@@ -11,7 +11,7 @@ import {
   type WorkspaceSearchRequest,
   type MessageContextRequest,
 } from "@rah-os/protocol";
-import { requireRoomMember } from "./collaboration-policy.ts";
+import { requireRoomMember, roomRole } from "./collaboration-policy.ts";
 import {
   messageProjectionFromRow,
   roomProjectionFromRow,
@@ -162,6 +162,9 @@ export class GlobalDiscovery {
     return GlobalTasksResponseSchema.parse({
       total,
       tasks: taken.map((row) => ({
+        canManageAnyTask: ["owner", "admin"].includes(
+          roomRole(this.db, text(row, "room_id"), actorId),
+        ),
         task: taskProjectionFromRow(this.db, row),
         roomName: row.room_name,
         target: {

@@ -3,6 +3,7 @@ import {
   mkdtempSync,
   rmSync,
   existsSync,
+  linkSync,
   mkdirSync,
   symlinkSync,
 } from "node:fs";
@@ -10,6 +11,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { RoomKernel } from "../src/index.ts";
+import { forwardedAttachmentProjectionId } from "../src/room-files.ts";
 
 function fixture() {
   const dir = mkdtempSync(join(tmpdir(), "rah-room-files-"));
@@ -210,6 +212,42 @@ test("expired staged bytes are reclaimed without deleting sent attachments", asy
         }),
       /completed/,
     );
+  } finally {
+    f.close();
+  }
+});
+
+test("startup reconciliation deletes an uncommitted deterministic forward hard link", async () => {
+  const f = fixture();
+  try {
+    const upload = f.prepare("forward-orphan");
+    await f.kernel.files.upload(f.actor, upload.attachmentId, bytes("hello"));
+    f.kernel.postRoomMessage(f.actor, {
+      attachmentIds: [upload.attachmentId],
+      basedOnRoomSeq: f.head(),
+      body: "source",
+      idempotencyKey: "forward-orphan-source",
+      roomId: f.roomId,
+    });
+    const projectedId = forwardedAttachmentProjectionId({
+      actorId: f.kernel.getAuthenticatedPrincipal(f.actor).principalId,
+      destinationRoomId: "room-uncommitted-target",
+      requestId: "forward-orphan-request",
+      sourceAttachmentId: upload.attachmentId,
+    });
+    const sourcePath = join(f.dir, "room-files", upload.attachmentId);
+    const orphanPath = join(f.dir, "room-files", projectedId);
+    linkSync(sourcePath, orphanPath);
+    assert.equal(existsSync(orphanPath), true);
+
+    const recovered = new RoomKernel({ databasePath: f.kernel.databasePath });
+    try {
+      recovered.initialize();
+      assert.equal(existsSync(orphanPath), false);
+      assert.equal(existsSync(sourcePath), true);
+    } finally {
+      recovered.close();
+    }
   } finally {
     f.close();
   }

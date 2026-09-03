@@ -26,6 +26,37 @@ CREATE TABLE IF NOT EXISTS principal_credentials (
 CREATE INDEX IF NOT EXISTS idx_principal_credentials_active
   ON principal_credentials(principal_id, revoked_at);
 
+CREATE TABLE IF NOT EXISTS profile_image_objects (
+  avatar_key TEXT PRIMARY KEY,
+  state TEXT NOT NULL CHECK (state IN ('pending', 'deleting', 'tombstoned')),
+  attempt_count INTEGER NOT NULL DEFAULT 0 CHECK (attempt_count >= 0),
+  last_error TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  next_attempt_at_ms INTEGER NOT NULL CHECK (next_attempt_at_ms >= 0),
+  lease_token TEXT,
+  lease_expires_at_ms INTEGER,
+  tombstone_pass INTEGER NOT NULL DEFAULT -1 CHECK (tombstone_pass >= -1),
+  CHECK (
+    (lease_token IS NULL AND lease_expires_at_ms IS NULL)
+    OR (lease_token IS NOT NULL AND lease_expires_at_ms IS NOT NULL)
+  )
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS idx_profile_image_objects_due
+  ON profile_image_objects(next_attempt_at_ms, created_at, avatar_key, state, lease_expires_at_ms);
+
+CREATE TABLE IF NOT EXISTS profile_image_upload_intents (
+  upload_intent_id TEXT PRIMARY KEY,
+  avatar_key TEXT NOT NULL REFERENCES profile_image_objects(avatar_key),
+  actor_id TEXT NOT NULL REFERENCES principals(principal_id),
+  created_at TEXT NOT NULL,
+  created_at_ms INTEGER NOT NULL CHECK (created_at_ms >= 0)
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS idx_profile_image_upload_intents_key_age
+  ON profile_image_upload_intents(avatar_key, created_at_ms, upload_intent_id);
+
 CREATE TABLE IF NOT EXISTS agent_hosts (
   host_id TEXT PRIMARY KEY,
   credential_id TEXT,
@@ -228,9 +259,23 @@ CREATE TABLE IF NOT EXISTS messages (
   actor_id TEXT NOT NULL REFERENCES principals(principal_id),
   thread_id TEXT,
   body TEXT NOT NULL,
+  forwarded_bundle_json TEXT,
   created_at TEXT NOT NULL,
   UNIQUE (room_id, message_id),
   FOREIGN KEY (room_id, thread_id) REFERENCES threads(room_id, thread_id)
+) STRICT;
+
+CREATE TABLE IF NOT EXISTS message_forward_requests (
+  actor_id TEXT NOT NULL REFERENCES principals(principal_id),
+  request_id TEXT NOT NULL,
+  source_room_id TEXT NOT NULL,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(workspace_id),
+  source_message_ids_json TEXT NOT NULL,
+  destination_room_ids_json TEXT NOT NULL,
+  note TEXT NOT NULL,
+  forwarded_bundle_json TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (actor_id, request_id)
 ) STRICT;
 
 CREATE TABLE IF NOT EXISTS threads (
@@ -286,6 +331,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   title TEXT NOT NULL,
   description TEXT,
   state TEXT NOT NULL CHECK (state IN ('todo', 'claimed', 'in_progress', 'waiting_input', 'blocked', 'submitted', 'completed', 'cancelled')),
+  workflow_status TEXT NOT NULL DEFAULT 'todo' CHECK (workflow_status IN ('todo', 'in_progress', 'in_review', 'done', 'closed')),
   claimed_by TEXT REFERENCES principals(principal_id),
   claim_until TEXT,
   claim_until_ms INTEGER,
@@ -1350,6 +1396,70 @@ export function migrateInputRequestCancellationV38(
   } finally {
     database.exec("PRAGMA foreign_keys = ON");
   }
+}
+
+export function migrateTaskWorkflowStatusV44(database: DatabaseSync): void {
+  const columns = new Set(
+    database
+      .prepare("PRAGMA table_info(tasks)")
+      .all()
+      .map((row) => requiredString(row, "name")),
+  );
+  if (!columns.has("workflow_status")) {
+    database.exec(
+      "ALTER TABLE tasks ADD COLUMN workflow_status TEXT NOT NULL DEFAULT 'todo' CHECK (workflow_status IN ('todo', 'in_progress', 'in_review', 'done', 'closed'))",
+    );
+    database.exec(`
+      UPDATE tasks
+      SET workflow_status = CASE state
+        WHEN 'todo' THEN 'todo'
+        WHEN 'submitted' THEN 'in_review'
+        WHEN 'completed' THEN 'done'
+        WHEN 'cancelled' THEN 'closed'
+        ELSE 'in_progress'
+      END
+    `);
+  }
+  database.exec(`
+    CREATE TRIGGER IF NOT EXISTS trg_tasks_state_workflow_v44
+    AFTER UPDATE OF state ON tasks
+    WHEN NEW.state <> OLD.state
+    BEGIN
+      UPDATE tasks
+      SET workflow_status = CASE NEW.state
+        WHEN 'todo' THEN 'todo'
+        WHEN 'submitted' THEN 'in_review'
+        WHEN 'completed' THEN 'done'
+        WHEN 'cancelled' THEN 'closed'
+        ELSE 'in_progress'
+      END
+      WHERE task_id = NEW.task_id;
+    END
+  `);
+}
+
+export function migrateMessageForwardingV46(database: DatabaseSync): void {
+  const columns = database
+    .prepare("PRAGMA table_info(messages)")
+    .all()
+    .map((row) => requiredString(row, "name"));
+  if (!columns.includes("forwarded_bundle_json")) {
+    database.exec("ALTER TABLE messages ADD COLUMN forwarded_bundle_json TEXT");
+  }
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS message_forward_requests (
+      actor_id TEXT NOT NULL REFERENCES principals(principal_id),
+      request_id TEXT NOT NULL,
+      source_room_id TEXT NOT NULL,
+      workspace_id TEXT NOT NULL REFERENCES workspaces(workspace_id),
+      source_message_ids_json TEXT NOT NULL,
+      destination_room_ids_json TEXT NOT NULL,
+      note TEXT NOT NULL,
+      forwarded_bundle_json TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      PRIMARY KEY (actor_id, request_id)
+    ) STRICT
+  `);
 }
 
 function requiredString(row: object, field: string): string {

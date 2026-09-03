@@ -208,23 +208,15 @@
 .rah-global-task-card {
   position: relative;
   width: 100%;
+  display: block;
+  gap: normal;
+  font: 400 16px/24px var(--sans);
   border: 2px solid #000;
   background: #fff;
   padding: 10px 12px;
-  box-shadow: var(--shadow-s);
-  transition: all 100ms;
-}
-.rah-global-task-card:hover {
-  background: #fff;
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-m);
-}
-.rah-global-task-card:active {
-  transform: translate(1px, 1px);
-  box-shadow: var(--shadow-press);
 }
 .rah-global-card-open {
-  display: block;
+  display: inline-block;
   padding: 0;
   background: none;
   border: 0;
@@ -232,6 +224,15 @@
   width: 100%;
   text-align: left;
   cursor: inherit;
+}
+.rah-global-card-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.rah-global-card-main {
+  min-width: 0;
+  flex: 1;
 }
 .rah-global-task-card .kcard-no {
   display: flex;
@@ -244,7 +245,7 @@
   color: rgb(0 0 0 / 60%);
 }
 .rah-global-task-card .kcard-no span {
-  font: 11px/16px var(--mono);
+  font: 11px/1.5 var(--mono);
   color: rgb(0 0 0 / 35%);
 }
 .rah-global-task-card .kcard-title {
@@ -280,7 +281,7 @@
   border: 2px solid #000;
   gap: 4px;
   font: 700 12px/16px var(--sans);
-  background: inherit;
+  background: var(--bg);
   color: #000;
   box-shadow: none;
 }
@@ -292,18 +293,39 @@
   height: 10px;
   opacity: 0.4;
 }
-.rah-task-status-picker.chip-orange {
+.rah-task-status-picker .task-filter-trigger.chip-orange {
   background: var(--orange);
 }
-.rah-task-status-picker.chip-cyan {
+.rah-task-status-picker .task-filter-trigger.chip-cyan {
   background: var(--cyan);
 }
-.rah-task-status-picker.chip-purple {
+.rah-task-status-picker .task-filter-trigger.chip-purple {
   background: var(--lavender);
 }
-.rah-task-status-picker.chip-green {
+.rah-task-status-picker .task-filter-trigger.chip-green {
   background: var(--green);
 }
-.rah-task-status-picker.chip-gray {
+.rah-task-status-picker .task-filter-trigger.chip-gray {
   background: var(--gray-chip);
+}
+.rah-task-drag-handle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.rah-task-drag-handle:focus-visible {
+  top: 4px;
+  right: 4px;
+  z-index: 2;
+  width: 24px;
+  height: 24px;
+  clip-path: none;
+  border: 2px solid #000;
+  background: #fff;
+}
+.rah-task-drag-handle svg {
+  width: 16px;
+  height: 16px;
 }

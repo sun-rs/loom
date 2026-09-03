@@ -134,22 +134,6 @@
   GC receipt 与启动恢复都是本地实现。Client API 使用统一的 authenticated POST mutation surface，不机械复制
   Raft 中央 `DELETE /channels/:id` transport。
 
-### 2026-09-03 Task 卡片交互与状态编辑 structured port
-
-- 当前在线来源：`https://app.raft.build/assets/index-Biin3FEA.js`，SHA-256
-  `e798f35bde09eeda2927669406e10718392ff7574796016441def59dbc5b05f9`；已登录 Tasks 页面 live DOM、computed
-  style 与 bundle 中 `Ait`（视觉卡片）、`Zit`（DnD 外壳）、`Itt/Ttt`（状态选项）交叉核验。
-- 结构化移植：dnd-kit `transform` 只写入外层 `task-board-draggable-card`；白底、2px 黑边、2px 硬阴影、
-  hover 上移 1px/4px 阴影和 active 压下效果只属于内层卡片。状态触发器采用 Raft 的 10×10、40% opacity
-  Pencil，不再用 chevron；五个公开状态仍完整显示。
-- 后端边界：Raft 当前 owner 因 `capabilities.deleteAnyTask` 为真而获得五状态任意写入；普通账号使用
-  `todo -> in_progress/closed`、`in_progress -> in_review/done/closed`、`in_review -> done/in_progress/closed`
-  等状态图，且未认领的 `todo -> in_progress` 会先 claim。RAH OS 不复制 owner 的宽松写入口：其内部状态还
-  绑定 assignee、claim lease、submission/completion/cancellation evidence 与运行时终止证明，菜单由 typed
-  `globalTaskTransition` 明示可用项和拒绝原因，不能靠前端 PATCH 绕过事实。
-- 本地 owner 与门禁：`GlobalTaskBoard.TaskCard`、`DiscoveryFilter(status)`、`discovery-controls.css`；
-  `task-workflow-parity-contract.test.ts` 冻结双层 DOM、Pencil 和 hover/press 语法，真实浏览器门禁核对桌面与
-  390×844 的尺寸、图标和菜单。
 - 有意差异：删除回执保留最小 Room identity/audit 元数据；产品内没有 soft undo/单 Room 恢复；direct/control
   不走该命令；正式用户 Room 永不用于破坏性门禁。
 - 详细合同与证据见 `docs/product/2026-09-03-room-permanent-deletion-contract.zh-CN.md` 与
@@ -162,6 +146,32 @@
   `51d03a453266d756cbc29e94a847e88231a1dc0ee8a14c8863fa27ade8d9afcf` 只支持启动恢复/人工
   `doctor --cleanup` 基线，不冒充未公开的 Raft Server attachment GC 源码。详见
   `docs/product/2026-09-03-room-file-gc-reconciler-contract.zh-CN.md`。
+
+### 2026-09-03 Task 卡片交互与状态编辑 structured port
+
+- 当前在线来源：`https://app.raft.build/assets/index-Biin3FEA.js`，SHA-256
+  `e798f35bde09eeda2927669406e10718392ff7574796016441def59dbc5b05f9`；已登录 Tasks 页面 live DOM、computed
+  style 与 bundle 中 `Ait`（视觉卡片）、`Zit`（DnD 外壳）、`Itt/Ttt`（状态选项）交叉核验。
+- 结构化移植：dnd-kit `transform` 只写入外层 `task-board-draggable-card`；白底、2px 黑边、2px 硬阴影、
+  hover 上移 1px/4px 阴影和 active 压下效果只属于内层卡片。状态触发器采用 Raft 的 10×10、40% opacity
+  Pencil，不再用 chevron；五个公开状态仍完整显示。
+- 可访问性 glue：Raft 当前 DOM 把拖拽 role/listeners 放在含有子按钮的外壳。RAH OS 同时启用 KeyboardSensor，
+  因此保留外壳 pointer listeners，但把 attributes 与 `setActivatorNodeRef` 绑定到默认视觉隐藏、focus-visible
+  时显形的独立 handle；子按钮 Enter/Space 不会冒泡启动拖拽。
+- 后端边界：Raft 当前 owner 因 `capabilities.deleteAnyTask` 为真而获得五状态任意写入；普通账号使用
+  `todo -> in_progress/closed`、`in_progress -> in_review/done/closed`、`in_review -> done/in_progress/closed`
+  等状态图。RAH OS schema 44 现将 Raft 五态持久化为独立 `workflow_status`，并由 typed
+  `task.workflow.update` 暴露同一 owner/admin 全五态与普通成员转移图；前端不再依据认领、提交或审阅证据
+  灰掉 Raft 可选项。既有执行 state、租约、InputRequest、提交与审阅证据仍由后台 owner 独立保存，不再
+  改变看板业务流。由于 RAH OS 的 assignee 是 Agent 而当前编辑者是 Human，本轮没有把 Human 的
+  `todo -> in_progress` 冒充为 Agent claim；这是已明确记录的本地执行边界，不改变 Raft 可见工作流。
+- 频道 Task Tab 与全局 Tasks 已收敛到同一个 `GlobalTaskBoard`：相同五列、折叠、卡片 hover/press、Pencil
+  状态菜单、Mouse/Touch/Keyboard 拖拽和 typed 写入。原频道卡片上的 RAH 专用“确认完成 / 关闭任务 /
+  重开 / 安全改派”入口已退出主看板；后台强一致性命令继续保留，等待取得 Raft 对应详情入口证据后再接回。
+- 本地 owner 与证据：`GlobalTaskBoard.TaskCard`、`DiscoveryFilter(status)`、`discovery-controls.css`；
+  `task-workflow-parity-contract.test.ts` 冻结双层 DOM、独立 keyboard activator、Pencil 和 hover/press 语法。
+  本轮在正式本机 Workbench 以 Chrome 实测桌面 computed style/菜单及 390×844 卡片边界；通用
+  `test:web:browser` 通过，但尚未把这些 Task 视觉量测固化为专用 browser-gate 断言。
 
 ### 2026-09-03 RuntimeOffer/catalog retention structured port
 
@@ -176,6 +186,65 @@
 - 正式证据：schema 43/registry schema 4 迁移后两库由约 1.00 GiB 降到 40.7 MiB；180 秒
   heartbeat 观测无 child、无 report/observation 增长；Firefox/Chrome 均显示目录采样与最近验证。
   详细结果见 `docs/audits/2026-09-03-runtime-offer-catalog-retention-verification.zh-CN.md`。
+
+### 2026-09-03 Profile Image upload intent / GC structured port
+
+- RAH OS owner：protocol 只传 `avatarKey + uploadIntentId`；Kernel
+  `ProfileImageLifecycleService` 独占 durable intent、引用图、claim/lease/backoff/tombstone；daemon
+  `ProfileImageStore` 独占本地内容寻址字节，`ProfileImageGcReconciler` 只负责 60 秒 cadence。
+- Raft 来源：`docs/evidence/raft-web-20260831-current/AgentDetailPanel-DKwoNvgK.js`，SHA-256
+  `b2762e06c521457f40879c6e974d3768fec5dd0bb9d8cb2d03bbb2d6accc2845`，符号 `Me`。采用 5 MiB、
+  单次上传/绑定产品操作和响应后更新投影；Raft Server 的存储事务及物理 GC 未公开，不宣称复制。
+- Multica 来源：revision `11861145abc59a0d39c8c8f24ad837d4584e664f` 的
+  `server/internal/service/channel_media_reconciler.go`、`server/pkg/db/queries/channel.sql`、
+  `server/cmd/server/source_context_sweeper.go`。性质为 `structured-port`：采用上传前 intent、事务 bind、
+  pending→deleting fence、claim 后引用复核、2 分钟 lease、50/轮、1m..1h backoff、
+  `[15m,1h,6h,24h]` tombstone 与 60 秒 worker；不复制 Go/PostgreSQL 文本。
+- RAH OS glue：SQLite `BEGIN IMMEDIATE` 保证资料 mutation 与 receipt 消费原子；引用图覆盖 Human、
+  Workspace 与所有 Agent revision；本地 `.part`/atomic rename/exact unlink 保持既有 owner。没有引入
+  PostgreSQL、对象存储或中央服务器。
+- 门禁：claim/bind 竞态、actor fence、rollback retry、legacy inventory、delete retry、50 项上界、
+  schema migration、HTTP/SDK/Web 全部通过；10 万行优化后登记约 1.159s、单轮 GC 约 18.96ms、
+  RSS 增量约 45.9MiB；Chrome/Firefox 桌面与 390×844 真实上传通过。完整证据见
+  `docs/audits/2026-09-03-profile-image-intent-gc-verification.zh-CN.md`。
+
+### 2026-09-04 Message selection / canonical forwarding structured port
+
+- Raft 来源：冻结 Web bundle
+  `docs/evidence/raft-web-20260831-current/index-BoAC7nSE.js`（SHA-256
+  `7328c15614ac53c7cc906e0f56665dd822a4c0ffaa64e4cb6b9a7a76a692b26a`）中的选择 scope、
+  unresolved 防线、工具栏、最多 10 目标、20 条目标搜索、`forwarded-bundle`、稳定 request ID 和逐目标
+  结果/重试合同。前端为 `behavior-only/structured-port`，不是复制压缩产物文本。
+- Multica revision `11861145abc59a0d39c8c8f24ad837d4584e664f` 全仓没有聊天消息多选、转发目标
+  搜索或 forwarded bundle owner；没有为满足第二来源而复制其 issue/tag 多选。
+- RAH OS owner：Web `useMessageSelection`/`MessageForwardDialog`；Protocol 与 SDK typed contract；
+  Human Application Service 鉴权；Kernel `MessageForwardingService` 与 schema 46
+  `message_forward_requests`/`messages.forwarded_bundle_json`。性质是
+  `structured-port + rah-os-glue`：采用 Raft 可观察行为，本地 SQLite 完成 ACL、请求级快照冻结、逐目标
+  事务与 durable idempotency。
+- 有意不采用：Raft 中央 server/channel 目录及跨 server 分支；当前附件身份仍 Room-scoped，因此附件、
+  嵌套 bundle、系统/action 来源 fail closed。转发不等于 mention，不生成 Agent Inbox/Activation。
+- 证据：Protocol/Kernel/API/SDK/Web 自动化、schema 45→46、部分成功重试、资料变化快照稳定、头像 GC
+  引用，以及 Chrome desktop/390×844 场景。详见
+  `docs/audits/2026-09-04-message-selection-forwarding-verification.zh-CN.md`。
+
+### 2026-09-04 Forwarded attachment projection structured port
+
+- Raft 来源：同一冻结 Web bundle 的 `attachmentSnapshots`、
+  `attachmentPolicy:"projected"`、`provenanceState:"available"`、只提交源/目标 identity 的
+  `/messages/forward` 请求，以及只对 projected ID 开放附件预览/下载的 renderer。
+- Raft Server blob/数据库源码当前不可得，所以后端不是 `direct-copy`。Multica revision
+  `11861145abc59a0d39c8c8f24ad837d4584e664f` 没有 forwarded bundle owner；只继续使用此前从其
+  media reconciler 结构性移植的 durable Room file-GC 模式。
+- RAH OS owner：`MessageForwardingService` 冻结/映射 bundle；`RoomFiles` 独占确定性目标 ID、
+  源行/字节验证、同目录 hard link、事务失败回滚和启动孤儿清理。性质为
+  `behavior-contract port + rah-os-glue`。
+- 有意差异：当前仅单机 Core、同一私有 filesystem；不声称跨 Computer 文件传输或 Raft 中央对象存储
+  实现。每个目标有独立 Room ACL/GC identity，但共享 inode 数据块，避免最多十目标的字节放大。
+- 合同与测试入口：
+  `docs/product/2026-09-04-forwarded-attachment-projection-contract.zh-CN.md`、
+  `packages/kernel/test/message-forwarding.test.ts`、`packages/kernel/test/room-files.test.ts`、
+  `packages/application-service/test/client-files.test.ts` 与 Web message contract/browser gate。
 
 ## 4. 每个移植提交必须补充的字段
 

@@ -73,6 +73,10 @@ import {
   ClientNotificationListRequestSchema,
   ClientNotificationListResponseSchema,
   ClientMessageMutationResponseSchema,
+  ClientMessageForwardRequestSchema,
+  ClientMessageForwardResponseSchema,
+  ClientMessageForwardTargetsRequestSchema,
+  ClientMessageForwardTargetsResponseSchema,
   ClientMessagePostRequestSchema,
   ClientMessagesListRequestSchema,
   ClientMessagesListResponseSchema,
@@ -132,6 +136,7 @@ import {
   ClientTaskAttentionMutationResponseSchema,
   ClientTaskCancelRequestSchema,
   ClientTaskReopenRequestSchema,
+  ClientTaskWorkflowUpdateRequestSchema,
   ClientTaskCompleteRequestSchema,
   ClientTaskConvertRequestSchema,
   ClientTaskCreateRequestSchema,
@@ -351,6 +356,8 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/agents/manage",
   "/agents/onboard",
   "/agents/provision",
+  "/messages/forward",
+  "/messages/forward/targets",
   "/notifications/list",
   "/notifications/dismiss",
   "/push/configuration",
@@ -384,6 +391,7 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/tasks/convert",
   "/tasks/reassign",
   "/tasks/unassign",
+  "/tasks/workflow",
   "/workspaces/create",
   "/workspaces/update",
   "/workspaces/member-graph",
@@ -525,9 +533,10 @@ export class ClientApplicationService {
       }
       return;
     }
-    const fileMatch = /^\/v3\/client\/files\/content\/([a-f0-9-]{36})$/.exec(
-      request.url ?? "",
-    );
+    const fileMatch =
+      /^\/v3\/client\/files\/(content|preview)\/([a-f0-9-]{36})$/.exec(
+        request.url ?? "",
+      );
     if (fileMatch) {
       if (request.method !== "PUT" && request.method !== "GET")
         throw new HttpRequestError(
@@ -538,10 +547,11 @@ export class ClientApplicationService {
       await transferFile(
         this.#human,
         this.#authenticate(request).actor,
-        fileMatch[1]!,
+        fileMatch[2]!,
         request,
         response,
         writeJson,
+        fileMatch[1] === "preview" ? "preview" : "download",
       );
       return;
     }
@@ -1579,6 +1589,34 @@ export class ClientApplicationService {
       );
       return;
     }
+    if (path === "/messages/forward/targets") {
+      const command = parseClientRequest(
+        ClientMessageForwardTargetsRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientMessageForwardTargetsResponseSchema.parse({
+          rooms: this.#human.listMessageForwardTargets(actor, command),
+        }),
+      );
+      return;
+    }
+    if (path === "/messages/forward") {
+      const command = parseClientRequest(
+        ClientMessageForwardRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientMessageForwardResponseSchema.parse(
+          this.#human.forwardMessages(actor, command),
+        ),
+      );
+      return;
+    }
     if (path === "/threads/list") {
       const command = parseClientRequest(ClientThreadsListRequestSchema, body);
       writeJson(
@@ -1817,6 +1855,20 @@ export class ClientApplicationService {
         200,
         ClientTaskAttentionMutationResponseSchema.parse(
           this.#human.reopenTask(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/tasks/workflow") {
+      const command = parseClientRequest(
+        ClientTaskWorkflowUpdateRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientTaskAttentionMutationResponseSchema.parse(
+          this.#human.updateTaskWorkflowStatus(actor, command),
         ),
       );
       return;

@@ -4,7 +4,11 @@ import {
 } from "@rah-os/protocol";
 export type AgentProfileEditInput = Pick<
   ClientAgentProfileRequest,
-  "agentDefinitionId" | "expectedRevisionId" | "field" | "value"
+  | "agentDefinitionId"
+  | "avatarUploadIntentId"
+  | "expectedRevisionId"
+  | "field"
+  | "value"
 >;
 export type AgentProfileField = ClientAgentProfileRequest["field"];
 

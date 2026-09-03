@@ -12,7 +12,7 @@ import {
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import type { RahClient } from "@rah-os/client-sdk";
-import type { GlobalTasksResponse, Task } from "@rah-os/protocol";
+import type { Task } from "@rah-os/protocol";
 import type { TaskColumnId, TaskColumnView } from "@rah-os/ui-web";
 import {
   globalTaskTransition,
@@ -23,7 +23,6 @@ import {
   type DiscoveryNavigationHandler,
 } from "../global-discovery-model.ts";
 import { DiscoveryFilter } from "./discovery-filter.tsx";
-import { TaskCloseDialog } from "./task-dialogs.tsx";
 import { Icon } from "./icon.tsx";
 
 const ids: TaskColumnId[] = ["todo", "in-progress", "review", "done", "closed"];
@@ -64,16 +63,22 @@ export function GlobalTaskBoard({
   client,
   columns,
   tasks,
-  principalId,
   view,
+  writeEnabled = true,
+  showRoomName = true,
   onOpen,
   onChanged,
 }: {
   client: RahClient;
   columns: readonly TaskColumnView[];
-  tasks: GlobalTasksResponse["tasks"];
-  principalId: string | undefined;
+  tasks: readonly {
+    canManageAnyTask: boolean;
+    roomName: string;
+    task: Task;
+  }[];
   view: "board" | "list";
+  writeEnabled?: boolean;
+  showRoomName?: boolean;
   onOpen: DiscoveryNavigationHandler;
   onChanged: () => void;
 }) {
@@ -83,7 +88,6 @@ export function GlobalTaskBoard({
   });
   const [dragging, setDragging] = useState<Task>();
   const [pending, setPending] = useState<string>();
-  const [closing, setClosing] = useState<Task>();
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   // Direct Raft Vie sensor settings (not a home-grown drag engine).
@@ -94,7 +98,14 @@ export function GlobalTaskBoard({
     }),
     useSensor(KeyboardSensor, { coordinateGetter: groupCoordinates }),
   );
-  async function perform(task: Task, target: TaskColumnId, reason?: string) {
+  const canManage = (task: Task) =>
+    tasks.find((item) => item.task.taskId === task.taskId)?.canManageAnyTask ??
+    false;
+  async function perform(
+    task: Task,
+    target: TaskColumnId,
+    canManageAnyTask: boolean,
+  ) {
     setPending(task.taskId);
     setError("");
     try {
@@ -104,9 +115,8 @@ export function GlobalTaskBoard({
         client,
         task,
         target,
-        principalId,
+        canManageAnyTask,
         idempotencyKey,
-        ...(reason ? { reason } : {}),
       });
       onChanged();
       setNotice(`任务 #${task.taskNumber} 已更新`);
@@ -120,19 +130,16 @@ export function GlobalTaskBoard({
     }
   }
   function choose(task: Task, target: TaskColumnId) {
-    if (raftTaskGroup(task.state) === target) return;
-    const intent = globalTaskTransition(task, target, principalId);
+    if (raftTaskGroup(task) === target) return;
+    const canManageAnyTask = canManage(task);
+    const intent = globalTaskTransition(task, target, canManageAnyTask);
     setNotice("");
     setError("");
     if (!intent.operation) {
       setError(intent.reason ?? "此操作不可用");
       return;
     }
-    if (target === "closed") {
-      setClosing(task);
-      return;
-    }
-    void perform(task, target).catch(() => {});
+    void perform(task, target, canManageAnyTask).catch(() => {});
   }
   return (
     <>
@@ -158,7 +165,8 @@ export function GlobalTaskBoard({
           if (dragging && over) {
             const target = over.id as TaskColumnId;
             setNotice(
-              globalTaskTransition(dragging, target, principalId).reason ??
+              globalTaskTransition(dragging, target, canManage(dragging))
+                .reason ??
                 `释放后${columns.find((column) => column.id === target)?.label}`,
             );
           }
@@ -193,8 +201,11 @@ export function GlobalTaskBoard({
               }
               rejection={
                 dragging
-                  ? globalTaskTransition(dragging, column.id, principalId)
-                      .reason
+                  ? globalTaskTransition(
+                      dragging,
+                      column.id,
+                      canManage(dragging),
+                    ).reason
                   : undefined
               }
             >
@@ -208,9 +219,10 @@ export function GlobalTaskBoard({
                       tasks.find((item) => item.task.taskId === task.taskId)
                         ?.roomName ?? ""
                     }
+                    showRoomName={showRoomName}
                     columns={columns}
-                    principalId={principalId}
-                    disabled={Boolean(pending || closing)}
+                    canManageAnyTask={canManage(task)}
+                    disabled={Boolean(pending) || !writeEnabled}
                     onChoose={(target) => choose(task, target)}
                     onOpen={() =>
                       onOpen({
@@ -232,13 +244,6 @@ export function GlobalTaskBoard({
           ))}
         </div>
       </DndContext>
-      {closing && (
-        <TaskCloseDialog
-          taskTitle={closing.title}
-          onClose={() => setClosing(undefined)}
-          onConfirm={(reason) => perform(closing, "closed", reason)}
-        />
-      )}
     </>
   );
 }
@@ -275,54 +280,91 @@ function TaskGroup({
         <span>{column.tasks.length}</span>
         <Icon name="chevron-down" />
       </button>
-      {!collapsed && <div className="kcol-body">{children}</div>}
+      {!collapsed && (
+        <div className="kcol-body rah-interaction-shadow-host">{children}</div>
+      )}
     </section>
   );
 }
 function TaskCard({
   task,
   roomName,
+  showRoomName,
   columns,
-  principalId,
+  canManageAnyTask,
   disabled,
   onChoose,
   onOpen,
 }: {
   task: Task;
   roomName: string;
+  showRoomName: boolean;
   columns: readonly TaskColumnView[];
-  principalId: string | undefined;
+  canManageAnyTask: boolean;
   disabled: boolean;
   onChoose: (id: TaskColumnId) => void;
   onOpen: () => void;
 }) {
-  const group = raftTaskGroup(task.state),
-    column = columns.find((item) => item.id === group)!;
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({ id: task.taskId, disabled, data: { group } });
+  const group = raftTaskGroup(task),
+    column = columns.find((item) => item.id === group)!,
+    canEdit = Boolean(
+      globalTaskTransition(task, group, canManageAnyTask).operation,
+    );
+  const {
+    attributes,
+    listeners,
+    setActivatorNodeRef,
+    setNodeRef,
+    transform,
+    isDragging,
+  } = useDraggable({
+    id: task.taskId,
+    disabled: disabled || !canEdit,
+    data: { group },
+  });
   return (
     <div
       ref={setNodeRef}
-      {...attributes}
       {...listeners}
       data-task-id={task.taskId}
       data-testid="task-board-draggable-card"
       className={`rah-global-task-drag-shell${isDragging ? " is-dragging" : ""}`}
       style={{ transform: CSS.Translate.toString(transform) }}
     >
-      <div draggable={false} className="kcard rah-global-task-card">
+      <button
+        type="button"
+        ref={setActivatorNodeRef}
+        {...attributes}
+        className="rah-task-drag-handle"
+        aria-label={`移动任务 #${task.taskNumber}`}
+        disabled={disabled || !canEdit}
+      >
+        <Icon name="grip-vertical" />
+      </button>
+      <div
+        draggable={false}
+        className="kcard rah-global-task-card rah-interaction-brutal"
+        data-task-workflow-status={group}
+      >
         <button
           className="rah-global-card-open"
           onClick={onOpen}
           disabled={disabled}
         >
-          <span className="kcard-no">
-            <b>#{roomName}</b> <span>#{task.taskNumber}</span>
-          </span>
-          <p className="kcard-title">{task.title}</p>
-          {task.description && (
-            <p className="rah-global-card-description">{task.description}</p>
-          )}
+          <div className="rah-global-card-row">
+            <div className="rah-global-card-main">
+              <div className="kcard-no">
+                {showRoomName ? <b>#{roomName}</b> : null}
+                <span>#{task.taskNumber}</span>
+              </div>
+              <p className="kcard-title">{task.title}</p>
+              {task.description && (
+                <p className="rah-global-card-description">
+                  {task.description}
+                </p>
+              )}
+            </div>
+          </div>
         </button>
         <div
           className="rah-global-card-footer"
@@ -337,23 +379,18 @@ function TaskCard({
             searchable={false}
             clearable={false}
             variant="status"
-            className={`rah-task-status-picker chip-${column.tone}`}
-            disabled={disabled}
+            className="rah-task-state rah-task-status-picker"
+            triggerClassName={`chip-${column.tone}`}
+            disabled={disabled || !canEdit}
             values={[group]}
             selected={false}
-            options={columns.map((item) => ({
-              id: item.id,
-              label: item.label,
-              ...(item.id !== group
-                ? {
-                    disabledReason: globalTaskTransition(
-                      task,
-                      item.id,
-                      principalId,
-                    ).reason,
-                  }
-                : {}),
-            }))}
+            options={columns
+              .filter(
+                (item) =>
+                  globalTaskTransition(task, item.id, canManageAnyTask)
+                    .operation,
+              )
+              .map((item) => ({ id: item.id, label: item.label }))}
             onChange={(values) => onChoose(values[0] as TaskColumnId)}
           />
         </div>

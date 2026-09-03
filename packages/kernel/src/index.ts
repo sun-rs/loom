@@ -8,6 +8,7 @@ export {
   IdempotencyConflictError,
   KernelError,
   LeaseConflictError,
+  MessageForwardSourceError,
   NotFoundError,
   RuntimeTerminationProofError,
   StaleContextError,
@@ -29,6 +30,10 @@ export { TaskReviewService } from "./task-review-service.ts";
 export { ReminderService } from "./reminder-service.ts";
 export type { ReminderReconcileResult } from "./reminder-service.ts";
 export type { RoomFileGcReconcileResult } from "./room-file-gc.ts";
+export type {
+  ProfileImageGcReconcileResult,
+  ProfileImageInventoryEntry,
+} from "./profile-image-lifecycle.ts";
 export type { TaskReviewMutationResult } from "./task-review-service.ts";
 export type {
   ManagedMcpAssignmentRecord,

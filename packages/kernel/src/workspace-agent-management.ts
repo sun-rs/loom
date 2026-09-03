@@ -674,7 +674,7 @@ function assertAgentQuiescent(database: DatabaseSync, participantId: string) {
     .get(participantId);
   const task = database
     .prepare(
-      "SELECT task_id FROM tasks WHERE assignee_id = ? AND state NOT IN ('completed', 'cancelled') LIMIT 1",
+      "SELECT task_id FROM tasks WHERE assignee_id = ? AND workflow_status NOT IN ('done', 'closed') LIMIT 1",
     )
     .get(participantId);
   const run = database

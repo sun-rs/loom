@@ -64,11 +64,11 @@ test("Workspace mark opens Raft's anchored menu before the separate edit dialog"
   );
   assert.match(
     productCss,
-    /@media \(max-width: 700px\)[\s\S]*?\.rah-product-shell > \.rail \{[\s\S]*?position: fixed/u,
+    /@media \(max-width: 767px\)[\s\S]*?\.rah-product-shell > \.rail \{[\s\S]*?display: none/u,
   );
-  assert.match(
+  assert.doesNotMatch(
     productCss,
-    /\.rah-product-shell > \.rail > :not\(\.rail-head\) \{\s*display: none/u,
+    /\.rah-product-shell > \.rail > :not\(\.rail-head\)/u,
   );
 });
 test("workspace identity counts spaces, never Rooms, and uses workspace write authority", () => {
@@ -83,6 +83,30 @@ test("workspace identity counts spaces, never Rooms, and uses workspace write au
     app.indexOf("onUpdated=", app.indexOf("<WorkspaceIdentity")),
   );
   assert.doesNotMatch(identity, /canManageCurrentWorkspaceAgent/u);
+});
+test("mobile Home reuses the canonical workspace switcher instead of a static label", () => {
+  const identity = readFileSync(
+    new URL("../src/components/workspace-identity.tsx", import.meta.url),
+    "utf8",
+  );
+  const navigation = readFileSync(
+    new URL("../src/components/workspace-navigation.tsx", import.meta.url),
+    "utf8",
+  );
+  const app = readFileSync(new URL("../src/App.tsx", import.meta.url), "utf8");
+  assert.match(identity, /mobile = false/u);
+  assert.match(identity, /rah-mobile-space-mark/u);
+  assert.match(identity, /rah-mobile-workspace-switcher/u);
+  assert.match(navigation, /mobileWorkspaceIdentity\?: ReactNode/u);
+  assert.match(navigation, /\{mobileWorkspaceIdentity \?\?/u);
+  assert.match(
+    app,
+    /mobileWorkspaceIdentity=\{\s*<WorkspaceIdentity \{\.\.\.workspaceIdentityProps\} mobile/u,
+  );
+  assert.doesNotMatch(
+    navigation,
+    /<span className="rah-mobile-home-workspace rah-mobile-only">/u,
+  );
 });
 test("sidebar sections share a keyboard-accessible disclosure instead of decorative arrows", () => {
   const source = readFileSync(

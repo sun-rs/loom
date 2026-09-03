@@ -3,8 +3,10 @@ import {
   constants,
   closeSync,
   createReadStream,
+  linkSync,
   mkdirSync,
   openSync,
+  readdirSync,
   unlinkSync,
   lstatSync,
   existsSync,
@@ -43,6 +45,38 @@ import {
   type RoomFileGcReconcileResult,
 } from "./room-file-gc.ts";
 import type { z } from "zod";
+
+const FORWARDED_ATTACHMENT_ID_DOMAIN =
+  "rah-os:forwarded-attachment-projection:v1";
+
+export function forwardedAttachmentProjectionId(input: {
+  actorId: string;
+  destinationRoomId: string;
+  requestId: string;
+  sourceAttachmentId: string;
+}): string {
+  const digest = createHash("sha256")
+    .update(
+      JSON.stringify([
+        FORWARDED_ATTACHMENT_ID_DOMAIN,
+        input.actorId,
+        input.requestId,
+        input.destinationRoomId,
+        input.sourceAttachmentId,
+      ]),
+    )
+    .digest()
+    .subarray(0, 16);
+  digest[6] = (digest[6]! & 0x0f) | 0x50;
+  digest[8] = (digest[8]! & 0x3f) | 0x80;
+  const hex = digest.toString("hex");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+export type ForwardedAttachmentProjectionSource = {
+  attachment: Attachment;
+  sourceMessageId: string;
+};
 
 // Structural port: Raft reservation/verification contract + Multica local atomic blob publication.
 // This is local disk, not a replacement for the canonical Message / Room ledger.
@@ -131,6 +165,7 @@ export class RoomFiles {
       "UPDATE room_files SET state = 'failed' WHERE state = 'verifying'",
     );
     this.#reclaimExpired();
+    this.#reclaimUnreferencedFinalBlobs();
     this.#roomDeletionGc.initialize();
   }
 
@@ -440,6 +475,129 @@ export class RoomFiles {
         )
         .run(messageId, attachment.attachmentId);
   }
+  projectForwardedAttachments(input: {
+    actorId: string;
+    createdAt: string;
+    destinationMessageId: string;
+    destinationRoomId: string;
+    requestId: string;
+    sourceRoomId: string;
+    sources: readonly ForwardedAttachmentProjectionSource[];
+  }): string[] {
+    if (input.sources.length === 0) return [];
+    if (
+      new Set(input.sources.map(({ attachment }) => attachment.attachmentId))
+        .size !== input.sources.length
+    )
+      throw new ConflictError("forwarded attachments must be distinct");
+    this.#ensureDirectory();
+    const rollbackAttachmentIds: string[] = [];
+    try {
+      for (const source of input.sources) {
+        const sourceRow = this.#row(source.attachment.attachmentId);
+        if (
+          text(sourceRow, "room_id") !== input.sourceRoomId ||
+          text(sourceRow, "message_id") !== source.sourceMessageId ||
+          text(sourceRow, "state") !== "consumed" ||
+          integer(sourceRow, "storage_reclaimed") !== 0 ||
+          text(sourceRow, "filename") !== source.attachment.filename ||
+          text(sourceRow, "mime_type") !== source.attachment.mimeType ||
+          integer(sourceRow, "size") !== source.attachment.size ||
+          text(sourceRow, "sha256") !== source.attachment.sha256
+        ) {
+          throw new ConflictError(
+            "forwarded attachment no longer matches its canonical source message",
+          );
+        }
+        const sourcePath = this.#path(source.attachment.attachmentId);
+        const sourceStat = lstatSync(sourcePath);
+        if (
+          !sourceStat.isFile() ||
+          sourceStat.isSymbolicLink() ||
+          sourceStat.size !== source.attachment.size
+        ) {
+          throw new ConflictError(
+            "forwarded attachment source blob failed validation",
+          );
+        }
+        const attachmentId = forwardedAttachmentProjectionId({
+          actorId: input.actorId,
+          destinationRoomId: input.destinationRoomId,
+          requestId: input.requestId,
+          sourceAttachmentId: source.attachment.attachmentId,
+        });
+        if (
+          this.#db
+            .prepare(
+              "SELECT 1 AS present FROM room_files WHERE attachment_id = ?",
+            )
+            .get(attachmentId) !== undefined
+        ) {
+          throw new ConflictError(
+            "forwarded attachment projection identity is already committed without its message event",
+          );
+        }
+        const destinationPath = this.#path(attachmentId);
+        try {
+          linkSync(sourcePath, destinationPath);
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+          const existing = lstatSync(destinationPath);
+          if (
+            !existing.isFile() ||
+            existing.isSymbolicLink() ||
+            existing.dev !== sourceStat.dev ||
+            existing.ino !== sourceStat.ino
+          ) {
+            throw new ConflictError(
+              "forwarded attachment projection path conflicts with another blob",
+            );
+          }
+        }
+        rollbackAttachmentIds.push(attachmentId);
+        this.#db
+          .prepare(
+            `INSERT INTO room_files(
+               attachment_id,room_id,actor_id,request_key,filename,mime_type,
+               size,sha256,state,expires_at,message_id,storage_reclaimed,created_at
+             ) VALUES(?,?,?,?,?,?,?,?,'consumed',?,?,0,?)`,
+          )
+          .run(
+            attachmentId,
+            input.destinationRoomId,
+            input.actorId,
+            `message.forward:${input.requestId}:${source.attachment.attachmentId}`,
+            source.attachment.filename,
+            source.attachment.mimeType,
+            source.attachment.size,
+            source.attachment.sha256,
+            input.createdAt,
+            input.destinationMessageId,
+            input.createdAt,
+          );
+      }
+      return rollbackAttachmentIds;
+    } catch (error) {
+      this.rollbackUncommittedForwardProjection(rollbackAttachmentIds);
+      throw error;
+    }
+  }
+  rollbackUncommittedForwardProjection(attachmentIds: readonly string[]) {
+    const failures: unknown[] = [];
+    for (const attachmentId of [...attachmentIds].reverse()) {
+      try {
+        unlinkSync(this.#path(attachmentId));
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "ENOENT")
+          failures.push(error);
+      }
+    }
+    if (failures.length > 0)
+      throw new AggregateError(
+        failures,
+        "one or more uncommitted forwarded attachment links could not be removed",
+      );
+  }
   list(
     actor: AuthenticatedActorContext,
     request: z.input<typeof RoomFilesRequestSchema>,
@@ -510,13 +668,27 @@ export class RoomFiles {
         : {}),
     });
   }
-  async download(actor: AuthenticatedActorContext, attachmentId: string) {
+  async download(
+    actor: AuthenticatedActorContext,
+    attachmentId: string,
+    range?: Readonly<{ start: number; end: number }>,
+  ) {
     const row = this.#row(attachmentId);
     requireRoomMember(this.#db, text(row, "room_id"), this.#actor(actor));
     if (row.state !== "consumed")
       throw new NotFoundError("file is not attached to a sent message");
     this.#ensureDirectory();
     const path = this.#path(attachmentId);
+    if (
+      range !== undefined &&
+      (!Number.isSafeInteger(range.start) ||
+        !Number.isSafeInteger(range.end) ||
+        range.start < 0 ||
+        range.end < range.start ||
+        range.end >= integer(row, "size"))
+    ) {
+      throw new ConflictError("file byte range is outside the attachment");
+    }
     const descriptor = openSync(
       path,
       constants.O_RDONLY | constants.O_NOFOLLOW,
@@ -530,6 +702,9 @@ export class RoomFiles {
         stream: createReadStream(path, {
           autoClose: true,
           fd: descriptor,
+          ...(range === undefined
+            ? {}
+            : { start: range.start, end: range.end }),
         }),
       };
     } catch (error) {
@@ -578,6 +753,27 @@ export class RoomFiles {
           "UPDATE room_files SET storage_reclaimed = 1 WHERE attachment_id = ?",
         )
         .run(id);
+    }
+  }
+  #reclaimUnreferencedFinalBlobs() {
+    if (!existsSync(this.#root)) return;
+    this.#ensureDirectory();
+    const referenced = new Set(
+      this.#db
+        .prepare("SELECT attachment_id FROM room_files")
+        .all()
+        .map((row) => text(row, "attachment_id")),
+    );
+    for (const name of readdirSync(this.#root)) {
+      if (!/^[a-f0-9-]{36}$/.test(name) || referenced.has(name)) continue;
+      const candidate = this.#path(name);
+      const stat = lstatSync(candidate);
+      if (!stat.isFile() || stat.isSymbolicLink()) {
+        throw new ForbiddenError(
+          "unreferenced blob path must be a regular non-symlink file",
+        );
+      }
+      unlinkSync(candidate);
     }
   }
   #reclaimBlobBytes(attachmentId: string) {

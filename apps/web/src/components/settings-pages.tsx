@@ -28,6 +28,7 @@ export function AccountSettingsContent({
     principal?.displayName ?? principal?.handle ?? "",
   );
   const [avatarKey, setAvatarKey] = useState(principal?.avatarKey ?? "");
+  const [avatarUploadIntentId, setAvatarUploadIntentId] = useState<string>();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>();
   const profileDirty =
@@ -37,6 +38,7 @@ export function AccountSettingsContent({
   useEffect(() => {
     setDisplayName(principal?.displayName ?? principal?.handle ?? "");
     setAvatarKey(principal?.avatarKey ?? "");
+    setAvatarUploadIntentId(undefined);
   }, [principal]);
   async function save() {
     if (!principal || pending || !displayName.trim()) return;
@@ -45,8 +47,10 @@ export function AccountSettingsContent({
     try {
       const result = await client.request("principal.update", {
         avatarKey: avatarKey || null,
+        ...(avatarUploadIntentId ? { avatarUploadIntentId } : {}),
         displayName,
       });
+      setAvatarUploadIntentId(undefined);
       onUpdated(result.principal);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "保存失败");
@@ -64,6 +68,7 @@ export function AccountSettingsContent({
       if (!client.profileImages) throw new Error("头像存储不可用");
       const result = await client.profileImages.upload(file);
       setAvatarKey(result.avatarKey);
+      setAvatarUploadIntentId(result.uploadIntentId);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "头像上传失败");
     } finally {
@@ -223,12 +228,14 @@ export function WorkspaceProfileSettingsContent({
 }) {
   const [name, setName] = useState(workspace?.name ?? "");
   const [avatarKey, setAvatarKey] = useState(workspace?.avatarKey ?? "");
+  const [avatarUploadIntentId, setAvatarUploadIntentId] = useState<string>();
   const [baseline, setBaseline] = useState<number>();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>();
   useEffect(() => {
     setName(workspace?.name ?? "");
     setAvatarKey(workspace?.avatarKey ?? "");
+    setAvatarUploadIntentId(undefined);
     if (!workspace?.controlRoomId) return;
     const controller = new AbortController();
     void client
@@ -260,12 +267,14 @@ export function WorkspaceProfileSettingsContent({
     try {
       const response = await client.request("workspace.update", {
         avatarKey: avatarKey || null,
+        ...(avatarUploadIntentId ? { avatarUploadIntentId } : {}),
         basedOnControlRoomSeq: baseline,
         idempotencyKey: crypto.randomUUID(),
         name,
         workspaceId: workspace.workspaceId,
       });
       onUpdated(response.workspace);
+      setAvatarUploadIntentId(undefined);
       setBaseline((value) => (value === undefined ? value : value + 1));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "保存失败");
@@ -283,6 +292,7 @@ export function WorkspaceProfileSettingsContent({
       if (!client.profileImages) throw new Error("头像存储不可用");
       const result = await client.profileImages.upload(file);
       setAvatarKey(result.avatarKey);
+      setAvatarUploadIntentId(result.uploadIntentId);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "头像上传失败");
     } finally {

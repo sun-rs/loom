@@ -3,6 +3,129 @@ import { IdentifierSchema, TimestampSchema } from "./common.ts";
 
 // Raft attachmentUploadContract.ts (1.0.18): reservations, verification and 200 MiB.
 export const MAX_ATTACHMENT_BYTES = 200 * 1024 * 1024;
+export const MAX_ATTACHMENT_TEXT_PREVIEW_BYTES = 2 * 1024 * 1024;
+export const AttachmentPreviewKindSchema = z.enum([
+  "image",
+  "markdown",
+  "html",
+  "diff",
+  "csv",
+  "text",
+  "unsupported",
+]);
+export type AttachmentPreviewKind = z.infer<typeof AttachmentPreviewKindSchema>;
+
+const TEXT_PREVIEW_MIME_TYPES = new Set([
+  "application/json",
+  "application/javascript",
+  "application/xml",
+  "application/x-httpd-php",
+  "application/x-sh",
+  "application/x-yaml",
+  "application/yaml",
+  "application/toml",
+  "image/svg+xml",
+]);
+const TEXT_PREVIEW_EXTENSIONS = new Set([
+  "bash",
+  "c",
+  "cc",
+  "cjs",
+  "conf",
+  "cpp",
+  "cs",
+  "css",
+  "env",
+  "gitignore",
+  "go",
+  "h",
+  "hpp",
+  "ini",
+  "java",
+  "js",
+  "jsx",
+  "json",
+  "kt",
+  "less",
+  "log",
+  "lua",
+  "makefile",
+  "mjs",
+  "php",
+  "py",
+  "rb",
+  "rs",
+  "sass",
+  "scss",
+  "sh",
+  "sql",
+  "svg",
+  "swift",
+  "toml",
+  "ts",
+  "tsx",
+  "txt",
+  "vim",
+  "xml",
+  "yaml",
+  "yml",
+  "zsh",
+]);
+const TEXT_PREVIEW_BASENAMES = new Set([
+  ".env",
+  ".gitignore",
+  "dockerfile",
+  "makefile",
+]);
+
+/**
+ * Raft-compatible preview dispatch with Multica's text whitelist kept in one
+ * provider-neutral owner. SVG is deliberately text, not an executable image.
+ */
+export function classifyAttachmentPreview(
+  mimeType: string,
+  filename: string,
+): AttachmentPreviewKind {
+  const normalizedMime = mimeType.toLowerCase().split(";", 1)[0]!.trim();
+  const basename = filename.toLowerCase().split(/[\\/]/u).at(-1)?.trim() ?? "";
+  const dot = basename.lastIndexOf(".");
+  const extension = dot > 0 ? basename.slice(dot + 1) : "";
+  if (/^image\/(png|jpeg|gif|webp)$/u.test(normalizedMime)) return "image";
+  if (
+    normalizedMime === "text/markdown" ||
+    extension === "md" ||
+    extension === "markdown"
+  )
+    return "markdown";
+  if (
+    normalizedMime === "text/x-diff" ||
+    normalizedMime === "text/x-patch" ||
+    extension === "diff" ||
+    extension === "patch"
+  )
+    return "diff";
+  if (
+    normalizedMime === "text/csv" ||
+    normalizedMime === "text/tab-separated-values" ||
+    extension === "csv" ||
+    extension === "tsv"
+  )
+    return "csv";
+  if (
+    normalizedMime === "text/html" ||
+    extension === "html" ||
+    extension === "htm"
+  )
+    return "html";
+  if (
+    normalizedMime.startsWith("text/") ||
+    TEXT_PREVIEW_MIME_TYPES.has(normalizedMime) ||
+    TEXT_PREVIEW_EXTENSIONS.has(extension) ||
+    TEXT_PREVIEW_BASENAMES.has(basename)
+  )
+    return "text";
+  return "unsupported";
+}
 export const AttachmentSchema = z
   .object({
     attachmentId: IdentifierSchema,

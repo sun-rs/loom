@@ -1,0 +1,210 @@
+.rah-message-selection-toolbar {
+  align-items: center;
+  background: var(--paper);
+  border-top: var(--bd-heavy);
+  display: flex;
+  flex: none;
+  gap: 12px;
+  min-height: 84px;
+  padding: 12px;
+  position: relative;
+}
+
+.rah-message-selection-toolbar > strong {
+  font: 700 13px/20px var(--sans);
+  white-space: nowrap;
+}
+
+.rah-message-selection-toolbar > div {
+  display: flex;
+  flex: 1;
+  gap: 6px;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.rah-message-selection-toolbar button {
+  align-items: center;
+  background: white;
+  border: var(--bd);
+  box-shadow: var(--shadow-s);
+  display: inline-flex;
+  font: 700 12px/18px var(--sans);
+  gap: 5px;
+  min-height: 30px;
+  padding: 4px 8px;
+}
+
+.rah-message-selection-toolbar button:hover:not(:disabled) {
+  background: var(--soft-signal);
+  box-shadow: var(--shadow-m);
+}
+
+.rah-message-selection-toolbar button:active:not(:disabled) {
+  box-shadow: none;
+  transform: translate(2px, 2px);
+}
+
+.rah-message-selection-toolbar svg {
+  height: 13px;
+  width: 13px;
+}
+
+.rah-message-selection-toolbar > p {
+  bottom: 2px;
+  color: #8b1b11;
+  font: 10px/14px var(--mono);
+  left: 12px;
+  margin: 0;
+  position: absolute;
+}
+
+.msg[data-selection-active="true"] {
+  cursor: pointer;
+}
+
+.msg[data-selected="true"] {
+  background: color-mix(in srgb, var(--pink) 18%, transparent);
+}
+
+.rah-message-selection-check {
+  align-items: center;
+  display: flex;
+  flex: 0 0 24px;
+  height: 36px;
+  justify-content: center;
+}
+
+.rah-message-selection-check input {
+  height: 16px;
+  margin: 0;
+  width: 16px;
+}
+
+.rah-message-forward-dialog form {
+  min-height: 0;
+  overflow: auto;
+}
+
+.rah-message-forward-targets {
+  border: var(--bd);
+  display: grid;
+  margin: 0;
+  max-height: 260px;
+  overflow: auto;
+  padding: 8px;
+}
+
+.rah-message-forward-targets legend {
+  font: 700 12px/18px var(--sans);
+  padding-inline: 4px;
+}
+
+.rah-message-forward-targets > label {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 8px;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  min-height: 42px;
+  padding: 6px;
+}
+
+.rah-message-forward-targets > label:last-child {
+  border-bottom: 0;
+}
+
+.rah-message-forward-targets small[data-status="delivered"] {
+  color: #317814;
+}
+
+.rah-message-forward-targets small[data-status="failed"] {
+  color: #8b1b11;
+  max-width: 180px;
+}
+
+.rah-forwarded-bundle {
+  border: var(--bd);
+  margin-top: 10px;
+  max-width: 720px;
+}
+
+.rah-forwarded-bundle > header {
+  align-items: center;
+  background: var(--cream);
+  border-bottom: var(--bd);
+  display: flex;
+  gap: 7px;
+  min-height: 34px;
+  padding: 6px 9px;
+}
+
+.rah-forwarded-bundle > header svg {
+  height: 14px;
+  width: 14px;
+}
+
+.rah-forwarded-bundle > header span {
+  color: var(--muted);
+  font: 10px/14px var(--mono);
+  margin-left: auto;
+}
+
+.rah-forwarded-bundle > div > article {
+  align-items: flex-start;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 32px minmax(0, 1fr);
+  padding: 9px;
+}
+
+.rah-forwarded-bundle > div > article:last-child {
+  border-bottom: 0;
+}
+
+.rah-forwarded-bundle > div > article > div > header {
+  align-items: baseline;
+  display: flex;
+  gap: 7px;
+  margin-bottom: 3px;
+}
+
+.rah-forwarded-bundle time {
+  color: var(--muted);
+  font: 10px/14px var(--mono);
+}
+
+.rah-forwarded-bundle article header a {
+  color: var(--muted);
+  font: 10px/14px var(--mono);
+  margin-left: auto;
+}
+
+@media (max-width: 767px) {
+  .rah-message-selection-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .rah-message-selection-toolbar > div {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  }
+
+  .rah-message-selection-toolbar button {
+    justify-content: center;
+    min-width: 0;
+    padding-inline: 4px;
+  }
+
+  .rah-message-selection-toolbar button:nth-child(3) {
+    font-size: 0;
+  }
+
+  .rah-message-selection-toolbar button:nth-child(3) svg {
+    height: 14px;
+    width: 14px;
+  }
+}

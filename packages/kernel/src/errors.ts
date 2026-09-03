@@ -40,6 +40,19 @@ export class ActivationCancellationRequestedError extends ConflictError {}
 
 export class IdempotencyConflictError extends ConflictError {}
 
+export class MessageForwardSourceError extends KernelError {
+  constructor(
+    code:
+      | "action_source_not_supported"
+      | "attachments_not_supported"
+      | "forwarded_source_not_supported"
+      | "system_source_not_supported",
+    message: string,
+  ) {
+    super(message, code);
+  }
+}
+
 export class DeliveryProofError extends KernelError {
   constructor(message: string) {
     super(message, "delivery_not_proven");

@@ -268,6 +268,7 @@ export class RoomDeletionService {
          (SELECT message_id FROM messages WHERE room_id=?)`,
       `DELETE FROM human_saved_messages WHERE message_id IN
          (SELECT message_id FROM messages WHERE room_id=?)`,
+      `DELETE FROM message_forward_requests WHERE source_room_id=?`,
       `DELETE FROM human_thread_follows WHERE thread_id IN
          (SELECT thread_id FROM threads WHERE room_id=?)`,
       `DELETE FROM agent_thread_follower_undo WHERE thread_id IN

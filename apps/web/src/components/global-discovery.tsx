@@ -260,9 +260,7 @@ function GlobalTasks({
     ...(filters.cursor ? { cursor: filters.cursor } : {}),
     limit: 100,
   });
-  const [defaultView] = useState(() =>
-    window.matchMedia("(max-width: 767px)").matches ? "list" : "board",
-  );
+  const defaultView = "board";
   const view =
     params.get("view") === "list"
       ? "list"
@@ -337,7 +335,7 @@ function GlobalTasks({
                 aria-checked={view === mode}
                 onClick={() => change("view", [mode])}
               >
-                <Icon name={mode === "board" ? "kanban" : "list"} />
+                <Icon name={mode === "board" ? "columns-3" : "layout-list"} />
                 {mode === "board" ? "看板" : "列表"}
               </button>
             ))}
@@ -358,7 +356,6 @@ function GlobalTasks({
           client={client}
           columns={columns}
           tasks={tasks}
-          principalId={currentHuman?.principalId}
           view={view as "board" | "list"}
           onOpen={onOpen}
           onChanged={result.refresh}
@@ -1048,14 +1045,14 @@ function GlobalActivity({
                 <span className="fc-chips">
                   {item.task && (
                     <span
-                      className={`activity-chip is-task chip-${taskStatusPresentation(item.task.state).tone}`}
+                      className={`activity-chip is-task chip-${taskStatusPresentation(item.task).tone}`}
                       data-task-workflow-status={
-                        taskStatusPresentation(item.task.state).id
+                        taskStatusPresentation(item.task).id
                       }
                     >
                       <Icon
                         name={
-                          taskStatusPresentation(item.task.state).id === "done"
+                          taskStatusPresentation(item.task).id === "done"
                             ? "check"
                             : "eye"
                         }

@@ -357,6 +357,7 @@ function proxyRequestHeaders(
     ...(source["content-type"] === undefined
       ? {}
       : { "content-type": source["content-type"] }),
+    ...(source.range === undefined ? {} : { range: source.range }),
     authorization: `Bearer ${accessToken}`,
   };
 }
@@ -365,7 +366,13 @@ function copyResponseHeaders(
   source: IncomingHttpHeaders,
   response: ServerResponse,
 ): void {
-  for (const name of ["cache-control", "content-length", "content-type"]) {
+  for (const name of [
+    "accept-ranges",
+    "cache-control",
+    "content-length",
+    "content-range",
+    "content-type",
+  ]) {
     const value = source[name];
     if (value !== undefined) response.setHeader(name, value);
   }

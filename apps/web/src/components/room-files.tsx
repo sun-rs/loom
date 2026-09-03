@@ -10,11 +10,17 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import type { RahClient } from "@rah-os/client-sdk";
-import type { Attachment, RoomFile } from "@rah-os/protocol";
+import {
+  MAX_ATTACHMENT_TEXT_PREVIEW_BYTES,
+  classifyAttachmentPreview,
+  type Attachment,
+  type RoomFile,
+} from "@rah-os/protocol";
 import { FileUploadStore } from "../file-uploads.ts";
 import { useDialogProtocol } from "../dialog-protocol.ts";
 import { Icon } from "./icon.tsx";
 import { FileGlyph } from "./file-glyph.tsx";
+import { AttachmentTextPreview } from "./file-preview-renderers.tsx";
 
 const FilesContext = createContext<{
   client: RahClient;
@@ -238,7 +244,10 @@ function FileCard({
     }
   }
   return (
-    <div className="rah-file-card" ref={root}>
+    <div
+      className={"rah-file-card" + (onSource ? " has-source" : "")}
+      ref={root}
+    >
       <button
         type="button"
         className="rah-file-open"
@@ -280,6 +289,29 @@ function FileCard({
           </small>
         </span>
       </button>
+      {onSource && (
+        <button
+          type="button"
+          className="sq-btn rah-file-direct-action rah-file-source"
+          aria-label={"跳转到 " + file.filename + " 的原消息"}
+          title="跳转到原消息"
+          onClick={onSource}
+        >
+          <Icon name="message-square" />
+        </button>
+      )}
+      {onSource && (
+        <button
+          type="button"
+          className="sq-btn rah-file-direct-action rah-file-download"
+          aria-label={"下载 " + file.filename}
+          title="下载文件"
+          onClick={() => void download()}
+          disabled={pending}
+        >
+          <Icon name="download" />
+        </button>
+      )}
       <button
         ref={trigger}
         type="button"
@@ -346,6 +378,7 @@ function FilePreview({
   onDownload: () => void;
 }) {
   const context = useContext(FilesContext);
+  const kind = classifyAttachmentPreview(file.mimeType, file.filename);
   const [content, setContent] = useState<{
     text?: string;
     image?: string;
@@ -355,26 +388,35 @@ function FilePreview({
   useEffect(() => {
     const controller = new AbortController();
     let url: string | undefined;
-    // Never run HTML/SVG. Large and unsupported files remain downloadable without eager allocation.
-    const raster = /^image\/(png|jpeg|gif|webp)$/.test(file.mimeType);
-    const textual =
-      file.mimeType.startsWith("text/") ||
-      /\.(md|txt|json|csv|log)$/i.test(file.filename);
-    if ((!raster && !textual) || file.size > (raster ? 20 : 2) * 1024 * 1024) {
+    const raster = kind === "image";
+    if (
+      kind === "unsupported" ||
+      file.size >
+        (raster ? 20 * 1024 * 1024 : MAX_ATTACHMENT_TEXT_PREVIEW_BYTES)
+    ) {
       setContent({ error: "此文件不提供内嵌预览，请下载查看。" });
       return () => controller.abort();
     }
-    void context?.client.files
-      ?.download(file.attachmentId, controller.signal)
-      .then(async (blob) => {
+    if (!context?.client.files) {
+      setContent({ error: "当前客户端不提供文件预览。" });
+      return () => controller.abort();
+    }
+    const load = raster
+      ? context.client.files
+          .download(file.attachmentId, controller.signal)
+          .then(async (blob) => {
+            url = URL.createObjectURL(
+              new Blob([blob], { type: file.mimeType }),
+            );
+            return { image: url };
+          })
+      : context.client.files
+          .previewText(file.attachmentId, controller.signal)
+          .then((text) => ({ text }));
+    void load
+      .then((loaded) => {
         if (controller.signal.aborted) return;
-        if (raster) {
-          url = URL.createObjectURL(new Blob([blob], { type: file.mimeType }));
-          setContent({ image: url });
-        } else {
-          const text = await blob.text();
-          if (!controller.signal.aborted) setContent({ text });
-        }
+        setContent(loaded);
       })
       .catch((e: Error) => {
         if (!controller.signal.aborted) setContent({ error: e.message });
@@ -383,8 +425,9 @@ function FilePreview({
       controller.abort();
       if (url) URL.revokeObjectURL(url);
     };
-  }, [context?.client, file]);
-  return (
+  }, [context?.client, file, kind]);
+  // Message rows own layout containment; modal geometry must belong to the viewport.
+  return createPortal(
     <div className="rah-dialog-layer">
       <button
         className="rah-dialog-backdrop"
@@ -419,13 +462,22 @@ function FilePreview({
           ) : content.image ? (
             <img alt={file.filename} src={content.image} />
           ) : content.text !== undefined ? (
-            <pre>{content.text}</pre>
+            kind === "image" || kind === "unsupported" ? (
+              <p>此文件不提供内嵌预览，请下载查看。</p>
+            ) : (
+              <AttachmentTextPreview
+                filename={file.filename}
+                kind={kind}
+                text={content.text}
+              />
+            )
           ) : (
             <p>{content.error}</p>
           )}
         </div>
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 }
 export function RoomFilesPane({

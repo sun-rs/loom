@@ -216,6 +216,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
         memberRead: true,
         memberWrite: true,
         messageRead: true,
+        messageForward: true,
         messageWrite: true,
         roomRead: true,
         roomWrite: true,
@@ -487,6 +488,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     assert.equal(healthV3.capabilities.agentExecutionFullReset, true);
     assert.equal(healthV3.capabilities.agentWrite, true);
     assert.equal(healthV3.capabilities.managedMcpWrite, true);
+    assert.equal(healthV3.capabilities.messageForward, true);
     assert.equal(healthV3.capabilities.workspaceWrite, true);
 
     const request = async (
@@ -1716,6 +1718,66 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     const messages = await jsonObject(messagesResponse);
     assert.equal(messages.messages[0]?.messageId, reply.event.aggregateId);
 
+    const forwardTargetsResponse = await request(
+      "/v3/client/messages/forward/targets",
+      { query: "onboard", sourceRoomId: room.roomId },
+      human.accessToken,
+    );
+    assert.equal(forwardTargetsResponse.status, 200);
+    const forwardTargets = await jsonObject(forwardTargetsResponse);
+    assert.deepEqual(
+      forwardTargets.rooms.map(
+        (candidate: { roomId: string }) => candidate.roomId,
+      ),
+      [agentOnboardRoom.roomId],
+    );
+    const forwardResponse = await request(
+      "/v3/client/messages/forward",
+      {
+        destinationRoomIds: [agentOnboardRoom.roomId],
+        note: "Canonical bundle",
+        requestId: "client-forwarded",
+        sourceMessageIds: [reply.event.aggregateId, posted.event.aggregateId],
+        sourceRoomId: room.roomId,
+      },
+      human.accessToken,
+    );
+    assert.equal(forwardResponse.status, 200);
+    const forwarded = await jsonObject(forwardResponse);
+    assert.equal(forwarded.results[0]?.status, "delivered");
+    const forwardedMessages = await request(
+      "/v3/client/messages/list",
+      { roomId: agentOnboardRoom.roomId },
+      human.accessToken,
+    ).then(jsonObject);
+    assert.equal(forwardedMessages.messages[0]?.body, "Canonical bundle");
+    assert.deepEqual(
+      forwardedMessages.messages[0]?.forwardedBundle?.items.map(
+        (candidate: { body: string }) => candidate.body,
+      ),
+      [
+        "Open a canonical Thread from the Human client",
+        "The reply is still a Room Message.",
+      ],
+    );
+    const nestedForwardResponse = await request(
+      "/v3/client/messages/forward",
+      {
+        destinationRoomIds: [room.roomId],
+        requestId: "client-nested-forward",
+        sourceMessageIds: [forwarded.results[0].messageId],
+        sourceRoomId: agentOnboardRoom.roomId,
+      },
+      human.accessToken,
+    );
+    assert.equal(nestedForwardResponse.status, 409);
+    assert.deepEqual(await jsonObject(nestedForwardResponse), {
+      error: {
+        code: "forwarded_source_not_supported",
+        message: "forwarded source is not supported",
+      },
+    });
+
     const threadsResponse = await request(
       "/v2/client/threads/list",
       { roomId: room.roomId },
@@ -2100,6 +2162,22 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     assert.equal(reopened.event.type, "task.reopened");
     assert.equal(reopened.task.state, "todo");
     assert.equal(reopened.task.cancellationReason, undefined);
+
+    const workflowResponse = await request(
+      "/v3/client/tasks/workflow",
+      {
+        basedOnRoomSeq: reopened.event.roomSeq,
+        idempotencyKey: "client-open-task-workflow-review",
+        taskId: openTask.task.taskId,
+        workflowStatus: "in_review",
+      },
+      human.accessToken,
+    );
+    assert.equal(workflowResponse.status, 200);
+    const workflow = await jsonObject(workflowResponse);
+    assert.equal(workflow.event.type, "task.workflow_updated");
+    assert.equal(workflow.task.workflowStatus, "in_review");
+    assert.equal(workflow.task.state, "todo");
 
     const noPendingResponse = await request(
       "/v1/client/input-requests/list",

@@ -37,7 +37,8 @@
 .rah-sidebar-disclosure:hover {
   color: var(--ink-70);
 }
-.rah-space-mark {
+.rah-space-mark,
+.rah-mobile-space-mark {
   cursor: pointer;
   padding: 0;
   overflow: hidden;
@@ -181,6 +182,48 @@
   border: var(--bd);
   padding: 8px;
   background: var(--bg);
+}
+
+@media (max-width: 767px) {
+  .rah-space-identity.is-mobile {
+    max-width: 100%;
+  }
+
+  .rah-mobile-space-mark {
+    align-items: center;
+    background: var(--black);
+    border: var(--bd);
+    color: var(--yellow);
+    display: flex;
+    font: 700 14px/20px var(--sans);
+    gap: 6px;
+    height: 40px;
+    max-width: 100%;
+    padding-inline: 12px;
+  }
+
+  .rah-mobile-space-mark > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .rah-mobile-space-mark > svg {
+    flex: none;
+    height: 16px;
+    transform: rotate(2deg);
+    width: 16px;
+  }
+
+  .rah-space-identity.is-mobile .rah-space-switcher {
+    left: 8px;
+    max-height: calc(100dvh - 160px);
+    position: fixed;
+    right: 8px;
+    top: calc(var(--head-h) + 4px);
+    width: auto;
+  }
 }
 .rah-message-sender {
   font: inherit;
@@ -432,7 +475,7 @@
     display: none;
   }
 }
-@media (max-width: 700px) {
+@media (max-width: 767px) {
   .app.rah-agent-peek-open {
     grid-template-columns: minmax(0, 1fr);
   }

@@ -25,6 +25,7 @@ export type HumanApplicationPort = Pick<
   | "leaveRoom"
   | "listAgentCatalog"
   | "listMessages"
+  | "listMessageForwardTargets"
   | "listRoomAgentActivity"
   | "listRoomMemberships"
   | "listRooms"
@@ -43,6 +44,7 @@ export type HumanApplicationPort = Pick<
   | "manageWorkspaceAgent"
   | "onboardAgentToRoom"
   | "openDirectRoom"
+  | "forwardMessages"
   | "provisionWorkspaceAgent"
   | "removeRoomMember"
   | "removeHumanThreadAgentFollower"
@@ -56,6 +58,7 @@ export type HumanApplicationPort = Pick<
   | "unarchiveWorkspaceRoom"
   | "unblockTask"
   | "updateWorkspaceRoom"
+  | "updateTaskWorkflowStatus"
 > & {
   listMessageSocial: RoomKernel["messageSocial"]["list"];
   reactMessage: RoomKernel["messageSocial"]["react"];
@@ -124,7 +127,7 @@ export function createHumanApplicationPort(
     uploadFile: (actor, id, chunks) => kernel.files.upload(actor, id, chunks),
     cancelFile: (actor, input) => kernel.files.cancel(actor, input),
     listRoomFiles: (actor, input) => kernel.files.list(actor, input),
-    downloadFile: (actor, id) => kernel.files.download(actor, id),
+    downloadFile: (actor, id, range) => kernel.files.download(actor, id, range),
     acknowledgeCursor: (actor, input) => kernel.acknowledgeCursor(actor, input),
     addRoomMember: (actor, input) => kernel.addRoomMember(actor, input),
     archiveWorkspaceRoom: (actor, input) =>
@@ -165,6 +168,8 @@ export function createHumanApplicationPort(
     listManagedMcpUsage: (actor, input) =>
       kernel.managedMcp.listUsage(actor, input),
     listMessages: (actor, input) => kernel.listMessages(actor, input),
+    listMessageForwardTargets: (actor, input) =>
+      kernel.listMessageForwardTargets(actor, input),
     listRoomAgentActivity: (actor, input) =>
       kernel.listRoomAgentActivity(actor, input),
     listRoomMemberships: (actor, input) =>
@@ -198,6 +203,7 @@ export function createHumanApplicationPort(
     onboardAgentToRoom: (actor, input) =>
       kernel.onboardAgentToRoom(actor, input),
     openDirectRoom: (actor, input) => kernel.openDirectRoom(actor, input),
+    forwardMessages: (actor, input) => kernel.forwardMessages(actor, input),
     provisionWorkspaceAgent: (actor, input) =>
       kernel.provisionWorkspaceAgent(actor, input),
     postRoomMessage: (actor, input) => kernel.postRoomMessage(actor, input),
@@ -226,6 +232,8 @@ export function createHumanApplicationPort(
     unblockTask: (actor, input) => kernel.unblockTask(actor, input),
     updateWorkspaceRoom: (actor, input) =>
       kernel.updateWorkspaceRoom(actor, input),
+    updateTaskWorkflowStatus: (actor, input) =>
+      kernel.updateTaskWorkflowStatus(actor, input),
   };
   return Object.freeze(port);
 }

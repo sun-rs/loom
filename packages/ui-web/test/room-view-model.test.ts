@@ -39,69 +39,48 @@ import {
 
 const createdAt = "2026-08-26T00:00:00.000Z";
 
-test("mobile navigation has exactly one active destination while the Room drawer is open", () => {
+test("mobile navigation exposes only Raft's four root destinations", () => {
   assert.equal(
     activeMobileNavigation({
       activeSurface: "room",
-      activeTab: "chat",
-      notificationsOpen: false,
-      roomsOpen: false,
-    }),
-    "chat",
-  );
-  assert.equal(
-    activeMobileNavigation({
-      activeSurface: "room",
-      activeTab: "chat",
-      notificationsOpen: false,
-      roomsOpen: true,
-    }),
-    "rooms",
-  );
-  assert.equal(
-    activeMobileNavigation({
-      activeSurface: "agents",
-      activeTab: "files",
-      notificationsOpen: false,
-      roomsOpen: true,
-    }),
-    "rooms",
-  );
-  assert.equal(
-    activeMobileNavigation({
-      activeSurface: "agents",
-      activeTab: "files",
-      notificationsOpen: false,
-      roomsOpen: false,
-    }),
-    "agents",
-  );
-  assert.equal(
-    activeMobileNavigation({
-      activeSurface: "computers",
-      activeTab: "chat",
-      notificationsOpen: false,
-      roomsOpen: false,
+      homeOpen: false,
     }),
     undefined,
   );
   assert.equal(
     activeMobileNavigation({
-      activeSurface: "settings",
-      activeTab: "chat",
-      notificationsOpen: false,
-      roomsOpen: false,
+      activeSurface: "room",
+      homeOpen: true,
+    }),
+    "home",
+  );
+  assert.equal(
+    activeMobileNavigation({
+      activeSurface: "agents",
+      homeOpen: true,
+    }),
+    "home",
+  );
+  assert.equal(
+    activeMobileNavigation({
+      activeSurface: "agents",
+      homeOpen: false,
+    }),
+    "members",
+  );
+  assert.equal(
+    activeMobileNavigation({
+      activeSurface: "computers",
+      homeOpen: false,
     }),
     "settings",
   );
   assert.equal(
     activeMobileNavigation({
       activeSurface: "settings",
-      activeTab: "chat",
-      notificationsOpen: true,
-      roomsOpen: true,
+      homeOpen: false,
     }),
-    "notifications",
+    "settings",
   );
 });
 

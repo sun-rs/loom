@@ -4,6 +4,7 @@ import {
   existsSync,
   lstatSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
   renameSync,
   rmSync,
@@ -44,7 +45,15 @@ export class ProfileImageStore {
     requirePrivateDirectory(this.#directory);
   }
 
-  async upload(requestedMimeType: string, chunks: AsyncIterable<Uint8Array>) {
+  async upload(
+    requestedMimeType: string,
+    chunks: AsyncIterable<Uint8Array>,
+    recordIntent: (input: {
+      avatarKey: string;
+      mimeType: ProfileImageMimeType;
+      size: number;
+    }) => Promise<string> | string,
+  ) {
     const parsedMimeType =
       ProfileImageMimeTypeSchema.safeParse(requestedMimeType);
     if (!parsedMimeType.success) {
@@ -82,6 +91,12 @@ export class ProfileImageStore {
     const digest = createHash("sha256").update(bytes).digest("hex");
     const avatarKey = `upload_${kind}_${digest.slice(0, 40)}`;
     UploadedProfileImageKeySchema.parse(avatarKey);
+    // The durable intent must precede publication. If the process exits after
+    // this point, the reconciler can recover the unbound object safely.
+    const uploadIntentId =
+      ProfileImageUploadResponseSchema.shape.uploadIntentId.parse(
+        await recordIntent({ avatarKey, mimeType, size }),
+      );
     const path = this.#path(avatarKey);
     if (existsSync(path)) {
       const metadata = lstatSync(path);
@@ -106,7 +121,60 @@ export class ProfileImageStore {
       avatarKey,
       mimeType,
       size,
+      uploadIntentId,
     });
+  }
+
+  inventory(): ReadonlyArray<{ avatarKey: string; modifiedAtMs: number }> {
+    const entries: Array<{ avatarKey: string; modifiedAtMs: number }> = [];
+    for (const name of readdirSync(this.#directory)) {
+      if (!UploadedProfileImageKeySchema.safeParse(name).success) continue;
+      const path = this.#path(name);
+      const metadata = lstatSync(path);
+      if (!metadata.isFile() || metadata.isSymbolicLink()) continue;
+      entries.push({ avatarKey: name, modifiedAtMs: metadata.mtimeMs });
+    }
+    return entries.sort((left, right) =>
+      left.avatarKey.localeCompare(right.avatarKey),
+    );
+  }
+
+  reclaim(avatarKey: string): void {
+    const canonicalKey = UploadedProfileImageKeySchema.parse(avatarKey);
+    const path = this.#path(canonicalKey);
+    if (!existsSync(path)) return;
+    const metadata = lstatSync(path);
+    if (!metadata.isFile() || metadata.isSymbolicLink()) {
+      throw new Error("profile image path must be a regular file");
+    }
+    rmSync(path);
+  }
+
+  reclaimStaleParts(input: { olderThanMs: number }): number {
+    if (!Number.isSafeInteger(input.olderThanMs) || input.olderThanMs < 0) {
+      throw new Error("profile image part cutoff must be non-negative");
+    }
+    let reclaimed = 0;
+    for (const name of readdirSync(this.#directory)) {
+      if (
+        !/^\.upload_(?:jpeg|png|gif|webp)_[a-f0-9]{40}\.[0-9a-f-]{36}\.part$/u.test(
+          name,
+        )
+      ) {
+        continue;
+      }
+      const path = this.#path(name);
+      const metadata = lstatSync(path);
+      if (
+        metadata.isFile() &&
+        !metadata.isSymbolicLink() &&
+        metadata.mtimeMs <= input.olderThanMs
+      ) {
+        rmSync(path);
+        reclaimed += 1;
+      }
+    }
+    return reclaimed;
   }
 
   read(avatarKey: string) {

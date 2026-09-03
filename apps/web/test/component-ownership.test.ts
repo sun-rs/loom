@@ -51,6 +51,10 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
     join(sourceDirectory, "components", "task-toolbar.tsx"),
     "utf8",
   );
+  const taskBoard = readFileSync(
+    join(sourceDirectory, "components", "global-task-board.tsx"),
+    "utf8",
+  );
   const discoveryFilter = readFileSync(
     join(sourceDirectory, "components", "discovery-filter.tsx"),
     "utf8",
@@ -137,8 +141,8 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   );
   assert.match(
     navigation,
-    /className="sq-btn members"[\s\S]*?aria-label="频道详情与设置"/u,
-    "Room settings retains the mobile-visible members action, not a desktop-only button",
+    /className="sq-btn rah-panel-header-action rah-channel-options"[\s\S]*?aria-label="频道详情与设置"/u,
+    "Room settings retains the protocol-sized mobile-visible channel options action",
   );
   assert.match(dialogs, /disabled=\{!canAdd \|\| mutationBlocked\}/u);
   assert.match(dialogs, /mutationPendingRef\.current \|\| !canRemove/u);
@@ -253,7 +257,8 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   assert.match(messageTimeline, /RAFT_MESSAGE_ANCHOR_SETTLE_MS = 1_200/u);
   assert.match(messageTimeline, /previousItemIndex/u);
   assert.match(messageTimeline, /data-message-timeline-total-count/u);
-  assert.match(conversation, /className=\{`kanban/u);
+  assert.match(conversation, /<GlobalTaskBoard/u);
+  assert.match(taskBoard, /className=\{`kanban/u);
   assert.match(conversation, /<TaskToolbar/u);
   assert.match(taskToolbar, /label="创建者"/u);
   assert.match(taskToolbar, /label="负责人"/u);
@@ -370,15 +375,15 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   const threadSyncStart = app.indexOf("useEffect", openThreadStart);
   const ensureActiveThreadStart = app.indexOf("const ensureActiveThread");
   const submitThreadReplyStart = app.indexOf("const submitThreadReply");
-  const completeTaskStart = app.indexOf(
-    "const completeTask",
+  const onboardAgentStart = app.indexOf(
+    "const onboardAgent",
     submitThreadReplyStart,
   );
   assert.ok(openThreadStart >= 0 && threadSyncStart > openThreadStart);
   assert.ok(
     ensureActiveThreadStart > threadSyncStart &&
       submitThreadReplyStart > ensureActiveThreadStart &&
-      completeTaskStart > submitThreadReplyStart,
+      onboardAgentStart > submitThreadReplyStart,
   );
   assert.doesNotMatch(
     app.slice(openThreadStart, threadSyncStart),
@@ -396,7 +401,7 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
     "the structural Thread creation must not wake Agents before the reply",
   );
   assert.match(
-    app.slice(submitThreadReplyStart, completeTaskStart),
+    app.slice(submitThreadReplyStart, onboardAgentStart),
     /await ensureActiveThread\(\)/u,
     "the first reply reuses the single canonical Thread owner",
   );

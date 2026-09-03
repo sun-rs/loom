@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { IdentifierSchema, TimestampSchema } from "./common.ts";
+import { rejectDuplicateStrings } from "./common.ts";
 import {
   MembershipRoleSchema,
   MessageSchema,
@@ -32,6 +33,7 @@ export const ClientPrincipalUpdateRequestSchema = z
       .string()
       .regex(/^[a-z0-9_-]{1,64}$/)
       .nullable(),
+    avatarUploadIntentId: IdentifierSchema.optional(),
     displayName: z.string().trim().min(1).max(120),
   })
   .strict();
@@ -77,6 +79,7 @@ export const ClientWorkspaceUpdateRequestSchema = z
       .string()
       .regex(/^[a-z0-9_-]{1,64}$/)
       .nullable(),
+    avatarUploadIntentId: IdentifierSchema.optional(),
     basedOnControlRoomSeq: z.number().int().nonnegative(),
     idempotencyKey: IdentifierSchema,
   })
@@ -542,6 +545,78 @@ export const ClientMessagePostRequestSchema = z
   );
 export type ClientMessagePostRequest = z.infer<
   typeof ClientMessagePostRequestSchema
+>;
+
+const UniqueForwardIdentifierArraySchema = z
+  .array(IdentifierSchema)
+  .superRefine(rejectDuplicateStrings);
+
+export const ClientMessageForwardTargetsRequestSchema = z
+  .object({
+    limit: z.number().int().min(1).max(20).default(20),
+    query: z.string().trim().max(200).default(""),
+    sourceRoomId: IdentifierSchema,
+  })
+  .strict();
+export type ClientMessageForwardTargetsRequest = z.infer<
+  typeof ClientMessageForwardTargetsRequestSchema
+>;
+
+export const ClientMessageForwardTargetsResponseSchema = z
+  .object({ rooms: z.array(RoomSchema).max(20) })
+  .strict();
+export type ClientMessageForwardTargetsResponse = z.infer<
+  typeof ClientMessageForwardTargetsResponseSchema
+>;
+
+export const ClientMessageForwardRequestSchema = z
+  .object({
+    destinationRoomIds: UniqueForwardIdentifierArraySchema.min(1).max(10),
+    note: z.string().trim().max(4_000).optional(),
+    requestId: IdentifierSchema,
+    sourceMessageIds: UniqueForwardIdentifierArraySchema.min(1).max(100),
+    sourceRoomId: IdentifierSchema,
+  })
+  .strict();
+export type ClientMessageForwardRequest = z.infer<
+  typeof ClientMessageForwardRequestSchema
+>;
+
+export const ClientMessageForwardResultSchema = z.discriminatedUnion("status", [
+  z
+    .object({
+      deduplicated: z.boolean(),
+      destinationRoomId: IdentifierSchema,
+      messageId: IdentifierSchema,
+      status: z.literal("delivered"),
+    })
+    .strict(),
+  z
+    .object({
+      code: z.enum([
+        "destination_not_available",
+        "destination_read_only",
+        "idempotency_conflict",
+        "delivery_failed",
+      ]),
+      destinationRoomId: IdentifierSchema,
+      message: z.string().min(1).max(500),
+      status: z.literal("failed"),
+    })
+    .strict(),
+]);
+export type ClientMessageForwardResult = z.infer<
+  typeof ClientMessageForwardResultSchema
+>;
+
+export const ClientMessageForwardResponseSchema = z
+  .object({
+    requestId: IdentifierSchema,
+    results: z.array(ClientMessageForwardResultSchema).min(1).max(10),
+  })
+  .strict();
+export type ClientMessageForwardResponse = z.infer<
+  typeof ClientMessageForwardResponseSchema
 >;
 
 export const ClientMessageMutationResponseSchema = z

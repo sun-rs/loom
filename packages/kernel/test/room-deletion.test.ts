@@ -201,6 +201,27 @@ test("permanent Room deletion erases canonical and personal projections and repl
       }).total,
       1,
     );
+    const forwardAudit = new DatabaseSync(f.databasePath);
+    forwardAudit
+      .prepare(
+        `INSERT INTO message_forward_requests(
+           actor_id,request_id,source_room_id,workspace_id,
+           source_message_ids_json,destination_room_ids_json,note,
+           forwarded_bundle_json,created_at
+         ) VALUES(?,?,?,?,?,?,?,?,?)`,
+      )
+      .run(
+        f.owner.principal.principalId,
+        "forward-before-source-delete",
+        f.channel.room.roomId,
+        f.workspace.workspace.workspaceId,
+        JSON.stringify([message.event.aggregateId]),
+        JSON.stringify([]),
+        "",
+        JSON.stringify({ sourceRoomId: f.channel.room.roomId }),
+        "2026-09-04T00:00:00.000Z",
+      );
+    forwardAudit.close();
 
     const input = {
       basedOnRoomSeq: f.head(),
@@ -231,6 +252,16 @@ test("permanent Room deletion erases canonical and personal projections and repl
       0,
     );
     const auditDatabase = new DatabaseSync(f.databasePath, { readOnly: true });
+    assert.equal(
+      Number(
+        auditDatabase
+          .prepare(
+            "SELECT COUNT(*) AS count FROM message_forward_requests WHERE source_room_id=?",
+          )
+          .get(f.channel.room.roomId)?.count ?? 0,
+      ),
+      0,
+    );
     const rawPreferences = JSON.parse(
       String(
         auditDatabase
@@ -688,7 +719,7 @@ test("current schema preserves a schema v40 reclaimed file receipt while adding 
     const audit = new DatabaseSync(f.databasePath, { readOnly: true });
     assert.equal(
       Number(audit.prepare("PRAGMA user_version").get()?.user_version),
-      43,
+      46,
     );
     assert.deepEqual(audit.prepare("PRAGMA foreign_key_check").all(), []);
     assert.deepEqual(
@@ -761,7 +792,7 @@ test("current schema atomically replaces the schema v41 GC scan index", () => {
     const audit = new DatabaseSync(f.databasePath, { readOnly: true });
     assert.equal(
       Number(audit.prepare("PRAGMA user_version").get()?.user_version),
-      43,
+      46,
     );
     assert.deepEqual(
       audit

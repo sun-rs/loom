@@ -930,7 +930,6 @@
   align-items: center;
   background: var(--bg);
   border: var(--bd);
-  box-shadow: var(--shadow-s);
   display: flex;
   gap: 8px;
   font-size: 14px;
@@ -1438,14 +1437,6 @@
   background: var(--ink-05);
   color: var(--ink);
 }
-.rah-agent-profile-actions button:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-m);
-}
-.rah-agent-profile-actions button:active:not(:disabled) {
-  transform: translate(1px, 1px);
-  box-shadow: var(--shadow-press);
-}
 /* Empty activity is part of its parent's scroll area, never a second nested scroller. */
 .rah-agent-activity-pane > .rah-agent-capability-pane {
   flex: none;
@@ -1833,13 +1824,18 @@
   width: 12px;
 }
 
-@media (max-width: 700px) {
-  .rah-product-shell:has(.rah-agent-directory-page.is-mobile-detail-open)
+@media (max-width: 767px) {
+  .rah-product-shell:has(
+      .rah-agent-directory-page.is-mobile-detail-open:not(.is-relationship-view)
+    )
     > .rah-mobile-nav {
     display: none;
   }
 
-  .rah-product-shell > .rah-agent-directory-page.is-mobile-detail-open {
+  .rah-product-shell
+    > .rah-agent-directory-page.is-mobile-detail-open:not(
+      .is-relationship-view
+    ) {
     padding-bottom: 0;
   }
 
@@ -1853,8 +1849,9 @@
   }
 
   .rah-agent-sidebar-head {
+    background: var(--yellow);
     height: 62px;
-    padding-left: 64px;
+    padding-inline: 20px;
   }
 
   .rah-agent-sidebar-scroll {
@@ -1878,7 +1875,7 @@
   .rah-agent-detail-head {
     gap: 10px;
     height: 76px;
-    padding: 10px 12px 10px 64px;
+    padding: 10px 12px;
   }
 
   .rah-agent-mobile-back,

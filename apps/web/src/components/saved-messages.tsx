@@ -125,12 +125,12 @@ export function SavedMessagesPane({
     <main className="channel rah-saved-pane">
       <header className="rah-saved-header">
         <button
-          aria-label="打开 Room 列表"
-          className="sq-btn rah-mobile-only"
+          aria-label="返回主页"
+          className="sq-btn rah-mobile-only rah-mobile-back"
           onClick={onOpenRooms}
           type="button"
         >
-          <Icon name="menu" />
+          <Icon name="arrow-left" />
         </button>
         <span className="rah-saved-header-icon">
           <Icon name="bookmark" />

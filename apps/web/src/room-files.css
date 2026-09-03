@@ -81,6 +81,19 @@
   align-self: center;
   flex-shrink: 0;
 }
+.rah-file-direct-action {
+  width: 28px;
+  height: 28px;
+  align-self: center;
+  flex-shrink: 0;
+}
+.rah-file-direct-action svg {
+  width: 14px;
+  height: 14px;
+}
+.rah-file-card.has-source .rah-file-overflow {
+  display: none;
+}
 .rah-file-overflow svg {
   width: 14px;
   height: 14px;
@@ -144,6 +157,66 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.rah-file-preview-markdown {
+  max-width: 920px;
+  margin: 0 auto;
+}
+.rah-file-preview-html iframe {
+  display: block;
+  width: 100%;
+  min-height: min(70dvh, 720px);
+  border: 2px solid black;
+  background: white;
+}
+.rah-file-preview-text,
+.rah-file-preview-diff pre {
+  margin: 0;
+  font: 13px/1.5 var(--mono);
+}
+.rah-file-preview-truncated {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border: 2px solid black;
+  background: var(--yellow);
+  font-weight: 700;
+}
+.rah-file-preview-diff-line {
+  display: block;
+  min-height: 1.5em;
+}
+.rah-file-preview-diff-line.is-addition {
+  background: rgb(34 197 94 / 14%);
+  color: #14532d;
+}
+.rah-file-preview-diff-line.is-deletion {
+  background: rgb(239 68 68 / 14%);
+  color: #7f1d1d;
+}
+.rah-file-preview-diff-line.is-header,
+.rah-file-preview-diff-line.is-range {
+  background: rgb(59 130 246 / 12%);
+  color: #1e3a8a;
+  font-weight: 700;
+}
+.rah-file-preview-csv {
+  overflow: auto;
+}
+.rah-file-preview-csv table {
+  border-collapse: collapse;
+  min-width: 100%;
+  font: 12px/1.4 var(--mono);
+}
+.rah-file-preview-csv td {
+  max-width: 320px;
+  padding: 6px 8px;
+  border: 1px solid rgb(0 0 0 / 25%);
+  overflow-wrap: anywhere;
+  vertical-align: top;
+}
+.rah-file-preview-csv tr:first-child td {
+  background: var(--yellow);
+  font-weight: 700;
+}
 .rah-message-files {
   display: flex;
   flex-direction: column;
@@ -181,4 +254,16 @@
 .rah-file-card [role="alert"] {
   color: #b42318;
   overflow-wrap: anywhere;
+}
+@media (max-width: 767px) {
+  .rah-file-direct-action {
+    display: none;
+  }
+  .rah-file-card.has-source .rah-file-overflow {
+    display: inline-flex;
+  }
+  .rah-file-preview {
+    width: 100vw;
+    max-height: 100dvh;
+  }
 }

@@ -1,53 +1,41 @@
 import type { RahClient } from "@rah-os/client-sdk";
-import type { Task } from "@rah-os/protocol";
+import {
+  taskWorkflowStatus,
+  taskWorkflowTransitionOptions,
+  type Task,
+  type TaskWorkflowStatus,
+} from "@rah-os/protocol";
 import {
   RoomSession,
   runRoomMutationAtLatest,
   type RoomMutationSequenceSession,
 } from "@rah-os/client-core";
-import {
-  canHumanCancelTask,
-  canHumanReopenTask,
-  canHumanCompleteTask,
-  type TaskColumnId,
-} from "@rah-os/ui-web";
-import { raftTaskGroup } from "./global-discovery-model.ts";
+import type { TaskColumnId } from "@rah-os/ui-web";
 
 type Transition = {
-  operation?: "task.cancel" | "task.reopen" | "task.complete";
+  operation?: "task.workflow.update";
   reason?: string;
 };
-/** UI affordance only. Existing Kernel commands remain the sole state-machine owner. */
+/** Raft exposes one five-state status editor. Execution evidence is orthogonal. */
 export function globalTaskTransition(
   task: Task,
   target: TaskColumnId,
-  principalId: string | undefined,
+  canManageAnyTask: boolean,
 ): Transition {
-  if (raftTaskGroup(task.state) === target) return { reason: "已处于此状态" };
-  const input = {
-    task,
-    currentPrincipalId: principalId,
-    caughtUp: true,
-    taskWrite: true,
-  };
-  if (task.creatorId !== principalId)
-    return { reason: "只有任务创建者可以操作" };
-  if (target === "closed" && canHumanCancelTask(input))
-    return { operation: "task.cancel" };
-  if (target === "todo" && canHumanReopenTask(input))
-    return { operation: "task.reopen" };
-  if (target === "done" && task.state === "submitted")
-    return { operation: "task.complete" };
-  return {
-    reason:
-      target === "in-progress"
-        ? "进行中由 Agent 领取和执行产生"
-        : target === "review"
-          ? "待确认需要 Agent 提交结果"
-          : target === "done"
-            ? "完成需要已提交结果及必要审阅"
-            : "当前状态不能直接转换；请打开任务处理",
-  };
+  return taskWorkflowTransitionOptions(
+    taskWorkflowStatus(task),
+    canManageAnyTask,
+  ).includes(workflowStatus(target))
+    ? { operation: "task.workflow.update" }
+    : { reason: "Raft 当前工作流不允许迁移到此状态" };
+}
+
+function workflowStatus(target: TaskColumnId): TaskWorkflowStatus {
+  return target === "in-progress"
+    ? ("in_progress" as const)
+    : target === "review"
+      ? ("in_review" as const)
+      : target;
 }
 
 /** Global views have no active Room projection: synchronize the card's Room,
@@ -56,16 +44,13 @@ export async function applyGlobalTaskTransition(input: {
   client: RahClient;
   task: Task;
   target: TaskColumnId;
-  principalId: string | undefined;
+  canManageAnyTask: boolean;
   idempotencyKey: string;
-  reason?: string;
   session?: RoomMutationSequenceSession;
 }) {
-  const { client, task, target, principalId, idempotencyKey } = input;
-  const intent = globalTaskTransition(task, target, principalId);
+  const { client, task, target, canManageAnyTask, idempotencyKey } = input;
+  const intent = globalTaskTransition(task, target, canManageAnyTask);
   if (!intent.operation) throw new Error(intent.reason);
-  if (intent.operation === "task.cancel" && !input.reason?.trim())
-    throw new Error("请填写关闭原因");
   const session =
     input.session ??
     new RoomSession({
@@ -85,38 +70,22 @@ export async function applyGlobalTaskTransition(input: {
         !current ||
         current.roomId !== task.roomId ||
         current.state !== task.state ||
+        current.workflowStatus !== task.workflowStatus ||
         current.updatedAt !== task.updatedAt ||
         current.assigneeId !== task.assigneeId
       )
         throw new Error("任务已发生变化，请刷新后重试");
       if (!health.capabilities.taskWrite)
         throw new Error("当前后端未开放任务写入");
-      const allowed = globalTaskTransition(current, target, principalId);
+      const allowed = globalTaskTransition(current, target, canManageAnyTask);
       if (allowed.operation !== intent.operation)
         throw new Error(allowed.reason ?? "任务操作已不可用");
-      const command = { taskId: task.taskId, basedOnRoomSeq, idempotencyKey };
-      if (intent.operation === "task.complete") {
-        const evidence = await client.request("task.review.list", {
-          roomId: task.roomId,
-        });
-        if (
-          !canHumanCompleteTask({
-            task: current,
-            currentPrincipalId: principalId,
-            caughtUp: true,
-            taskWrite: true,
-            ...evidence,
-          })
-        )
-          throw new Error("尚未满足当前提交的审阅要求，请打开任务查看");
-        return client.request("task.complete", command);
-      }
-      return intent.operation === "task.cancel"
-        ? client.request("task.cancel", {
-            ...command,
-            reason: input.reason!.trim(),
-          })
-        : client.request("task.reopen", command);
+      return client.request("task.workflow.update", {
+        taskId: task.taskId,
+        basedOnRoomSeq,
+        idempotencyKey,
+        workflowStatus: workflowStatus(target),
+      });
     },
   });
 }

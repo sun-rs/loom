@@ -29,6 +29,7 @@ import {
   resolveWorkspaceLocation,
   writeWorkspaceOrder,
 } from "../workspace-switcher-state.ts";
+import { Icon } from "./icon.tsx";
 import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
 
 export function WorkspaceIdentity({
@@ -41,6 +42,7 @@ export function WorkspaceIdentity({
   principalId,
   onUpdated,
   onSelect,
+  mobile = false,
 }: {
   computerName?: string | undefined;
   workspace: Workspace | undefined;
@@ -51,12 +53,16 @@ export function WorkspaceIdentity({
   principalId: string;
   onUpdated: (workspace: Workspace) => void;
   onSelect: (workspace: Workspace, rememberedSearch?: string) => void;
+  mobile?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [workspaceOrder, setWorkspaceOrder] = useState<string[]>([]);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const menuId = mobile
+    ? "rah-mobile-workspace-switcher"
+    : "rah-workspace-switcher";
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor),
@@ -136,22 +142,29 @@ export function WorkspaceIdentity({
       selected.workspaceId,
       roomIds,
     );
-    onSelect(selected, remembered);
+    onSelect(selected, mobile ? undefined : remembered);
     closeMenu(selected.workspaceId === workspace?.workspaceId);
   };
   return (
-    <div className="rah-space-identity">
+    <div className={`rah-space-identity${mobile ? " is-mobile" : ""}`}>
       <button
         ref={triggerRef}
-        className="rail-logo rah-space-mark"
+        className={
+          mobile ? "rah-mobile-space-mark" : "rail-logo rah-space-mark"
+        }
         aria-label={`切换协作空间：${workspace?.name ?? computerName ?? "加载中"}`}
         title={workspace?.name ?? computerName ?? "协作空间"}
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="menu"
-        aria-controls="rah-workspace-switcher"
+        aria-controls={menuId}
       >
-        {workspace?.avatarKey ? (
+        {mobile ? (
+          <>
+            <span>{workspace?.name ?? computerName ?? "协作空间"}</span>
+            <Icon name="chevron" />
+          </>
+        ) : workspace?.avatarKey ? (
           <ProfileImageAvatar
             avatarKey={workspace.avatarKey}
             name={workspace.name}
@@ -164,7 +177,7 @@ export function WorkspaceIdentity({
       {open && workspace ? (
         <div
           ref={menuRef}
-          id="rah-workspace-switcher"
+          id={menuId}
           className="rah-space-switcher"
           role="menu"
           aria-label="切换协作空间"

@@ -28,6 +28,35 @@ export const TaskWorkflowStatusSchema = z.enum([
 ]);
 export type TaskWorkflowStatus = z.infer<typeof TaskWorkflowStatusSchema>;
 
+const TASK_WORKFLOW_TRANSITIONS = Object.freeze({
+  todo: Object.freeze(["in_progress", "closed"]),
+  in_progress: Object.freeze(["in_review", "done", "closed"]),
+  in_review: Object.freeze(["done", "in_progress", "closed"]),
+  done: Object.freeze(["todo", "in_progress", "in_review", "closed"]),
+  closed: Object.freeze(["todo", "in_progress"]),
+} as const satisfies Readonly<
+  Record<TaskWorkflowStatus, readonly TaskWorkflowStatus[]>
+>);
+
+const ALL_TASK_WORKFLOW_STATUSES = Object.freeze([
+  "todo",
+  "in_progress",
+  "in_review",
+  "done",
+  "closed",
+] as const satisfies readonly TaskWorkflowStatus[]);
+
+/** Exact Raft Itt/Att menu order. Managers receive all five states; ordinary
+ * editors receive the current state followed by the published transition graph. */
+export function taskWorkflowTransitionOptions(
+  status: TaskWorkflowStatus,
+  canManageAnyTask: boolean,
+): readonly TaskWorkflowStatus[] {
+  return canManageAnyTask
+    ? ALL_TASK_WORKFLOW_STATUSES
+    : Object.freeze([status, ...TASK_WORKFLOW_TRANSITIONS[status]]);
+}
+
 export const TaskExecutionPhaseSchema = z.enum([
   "idle",
   "claimed",
@@ -70,6 +99,7 @@ export const TaskSchema = z
     dependencyTaskIds: z.array(IdentifierSchema).default([]),
     sourceMessageId: IdentifierSchema,
     state: TaskStateSchema,
+    workflowStatus: TaskWorkflowStatusSchema.optional(),
     taskNumber: z.number().int().positive(),
     threadId: IdentifierSchema,
     claimedBy: IdentifierSchema.optional(),
@@ -231,7 +261,15 @@ export type Task = z.infer<typeof TaskSchema>;
  * state. A pending cancellation is supplied by the cancellation-request owner,
  * because it intentionally is not inferred from Task.state alone.
  */
-export function taskWorkflowStatus(state: TaskState): TaskWorkflowStatus {
+export function taskWorkflowStatus(
+  source:
+    | TaskState
+    | { state: TaskState; workflowStatus?: TaskWorkflowStatus | undefined },
+): TaskWorkflowStatus {
+  if (typeof source !== "string" && source.workflowStatus !== undefined) {
+    return source.workflowStatus;
+  }
+  const state = typeof source === "string" ? source : source.state;
   switch (state) {
     case "todo":
       return "todo";
@@ -250,10 +288,10 @@ export function taskWorkflowStatus(state: TaskState): TaskWorkflowStatus {
 }
 
 export function projectTaskLifecycle(
-  task: Pick<Task, "blockedReason" | "state">,
+  task: Pick<Task, "blockedReason" | "state" | "workflowStatus">,
   options: { cancellationPending?: boolean } = {},
 ): TaskLifecycleProjection {
-  const workflowStatus = taskWorkflowStatus(task.state);
+  const workflowStatus = taskWorkflowStatus(task);
   const executionPhase: TaskExecutionPhase = options.cancellationPending
     ? "cancelling"
     : task.state === "claimed"

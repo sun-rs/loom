@@ -648,7 +648,10 @@ try {
         ...document.querySelectorAll(
           ".rah-room-sidebar .rah-direct-room-row .rah-direct-row-name",
         ),
-      ].some((label) => label.textContent?.trim() === "Alice"),
+      ].some((label) => label.textContent?.trim() === "Alice") &&
+      document.querySelector(
+        ".rah-direct-header-avatar .rah-agent-avatar-grid",
+      ) !== null,
     "Raft-style open-or-create Agent Direct Room",
   );
   const directHeaderAvatarBefore = await call(
@@ -795,6 +798,12 @@ try {
       null,
     "Raft Agent avatar picker",
   );
+  const originalAvatarKey = await call(browser, () =>
+    document
+      .querySelector('.rah-agent-avatar-picker button[aria-pressed="true"]')
+      ?.getAttribute("title"),
+  );
+  assert.ok(originalAvatarKey, "current Agent avatar key must be discoverable");
   await dispatchKey(browser, "Escape", 27);
   await waitFor(
     browser,
@@ -854,13 +863,7 @@ try {
       ) !== null,
     "uploaded Agent image selected state after reopening picker",
   );
-  const selectedAvatarKey = await call(browser, () => {
-    const selected = document.querySelector(
-      '.rah-agent-avatar-picker button[aria-pressed="true"]',
-    );
-    return selected?.getAttribute("title") ?? "";
-  });
-  const replacementAvatarKey = selectedAvatarKey === "heart" ? "star" : "heart";
+  const replacementAvatarKey = originalAvatarKey === "star" ? "heart" : "star";
   await clickButton(browser, {
     ariaLabel: `选择头像 ${replacementAvatarKey}`,
   });
@@ -2346,6 +2349,498 @@ try {
     "removed Alice must not produce a contextual reply for the next Room Message",
   );
 
+  await openMessageContextMenu(browser, "browser gate: Kimi only");
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-message-context-menu") !== null,
+    "Room Message selection context menu",
+  );
+  await clickButton(browser, { text: "选择消息" });
+  await waitFor(
+    browser,
+    () =>
+      document
+        .querySelector(".rah-message-selection-toolbar")
+        ?.textContent?.includes("已选择 1 条") === true &&
+      document.querySelector('textarea[aria-label="消息输入框"]') === null,
+    "Room Raft selection mode replaces the composer",
+  );
+  await clickMessageRow(browser, kimiOnlyReply);
+  await waitFor(
+    browser,
+    () =>
+      document
+        .querySelector(".rah-message-selection-toolbar")
+        ?.textContent?.includes("已选择 2 条") === true,
+    "Room selection row click toggles a second canonical Message",
+  );
+  await call(browser, () => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async (value) => {
+          window.__rahCopiedSelection = value;
+        },
+      },
+    });
+  });
+  await clickButton(browser, { text: "复制 Markdown" });
+  await waitFor(
+    browser,
+    (firstBody, secondBody) => {
+      const copied = window.__rahCopiedSelection ?? "";
+      return copied.includes(firstBody) && copied.includes(secondBody);
+    },
+    "Room selection copies canonical Markdown in timeline order",
+    ["browser gate: Kimi only", kimiOnlyReply],
+  );
+  await clickButton(browser, { text: "Agent Council" });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".channel-title h1")?.textContent?.trim() ===
+        "Agent Council" &&
+      document.querySelector(".rah-message-selection-toolbar") === null,
+    "Room switch clears transient message selection",
+  );
+  await clickButton(browser, { text: "Design Lab" });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".channel-title h1")?.textContent?.trim() ===
+      "Design Lab",
+    "return after Room selection cleanup",
+  );
+  await waitForMessage(browser, "browser gate: Kimi only");
+  await openMessageContextMenu(browser, "browser gate: Kimi only");
+  await clickButton(browser, { text: "选择消息" });
+  await dispatchKey(browser, "Escape", 27);
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-message-selection-toolbar") === null &&
+      document.querySelector('textarea[aria-label="消息输入框"]') !== null,
+    "Room selection Escape restores the composer",
+  );
+
+  await openMessageContextMenu(browser, "browser gate: Kimi only");
+  await clickButton(browser, { text: "选择消息" });
+  await clickMessageRow(browser, kimiOnlyReply);
+  await clickButton(browser, { text: "转发" });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(
+        '.rah-message-forward-dialog[role="dialog"][aria-modal="true"]',
+      ) !== null,
+    "canonical Message forward dialog",
+  );
+  await waitFor(
+    browser,
+    () =>
+      [...document.querySelectorAll(".rah-message-forward-targets label")].some(
+        (label) => label.textContent?.includes("Agent Council") === true,
+      ),
+    "same-workspace joined forward targets",
+  );
+  assert.equal(
+    await call(browser, () => {
+      const label = [
+        ...document.querySelectorAll(".rah-message-forward-targets label"),
+      ].find(
+        (candidate) =>
+          candidate.textContent?.includes("Agent Council") === true,
+      );
+      const input = label?.querySelector('input[type="checkbox"]');
+      if (!(input instanceof HTMLInputElement)) return false;
+      input.click();
+      const note = document.querySelector(
+        ".rah-message-forward-dialog textarea",
+      );
+      if (!(note instanceof HTMLTextAreaElement)) return false;
+      const setter = Object.getOwnPropertyDescriptor(
+        HTMLTextAreaElement.prototype,
+        "value",
+      )?.set;
+      setter?.call(note, "browser gate: forwarded bundle");
+      note.dispatchEvent(new Event("input", { bubbles: true }));
+      return true;
+    }),
+    true,
+    "forward target and note must be editable",
+  );
+  await clickButton(browser, { text: "转发 (1)" });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-message-forward-dialog") === null &&
+      document.querySelector(".rah-message-selection-toolbar") === null,
+    "successful forward exits selection and closes the dialog",
+  );
+  await clickButton(browser, { text: "Agent Council" });
+  await waitForMessage(browser, "browser gate: forwarded bundle");
+  await waitFor(
+    browser,
+    (firstBody, secondBody) => {
+      const bundle = document.querySelector(
+        '.msg [data-testid="forwarded-bundle"]',
+      );
+      return (
+        bundle?.textContent?.includes(firstBody) === true &&
+        bundle.textContent.includes(secondBody) &&
+        bundle.querySelectorAll("a").length === 2
+      );
+    },
+    "server-owned forwarded bundle and source permalinks",
+    ["browser gate: Kimi only", kimiOnlyReply],
+  );
+  assert.equal(
+    await call(browser, () => {
+      const link = document.querySelector(
+        '.rah-forwarded-bundle a[href*="message="]',
+      );
+      if (!(link instanceof HTMLAnchorElement)) return false;
+      link.click();
+      return true;
+    }),
+    true,
+    "forwarded source permalink must be actionable",
+  );
+  await waitFor(
+    browser,
+    (body) =>
+      document.querySelector(".channel-title h1")?.textContent?.trim() ===
+        "Design Lab" &&
+      [...document.querySelectorAll(".msg")].some(
+        (message) =>
+          message.textContent?.includes(body) === true &&
+          message.getAttribute("data-focused") === "true",
+      ),
+    "forwarded source deep link re-authorizes and focuses the source Message",
+    ["browser gate: Kimi only"],
+  );
+
+  const forwardedAttachmentFilename = "forwarded-browser-gate.txt";
+  const forwardedAttachmentBody = "browser gate: attached source";
+  const forwardedAttachmentNote = "browser gate: forwarded attachment";
+  await uploadRoomAttachment(browser, forwardedAttachmentFilename);
+  await postMessage(browser, forwardedAttachmentBody);
+  await waitFor(
+    browser,
+    (body, filename) => {
+      const message = [...document.querySelectorAll(".msg")].find(
+        (candidate) =>
+          candidate.querySelector(".rah-message-markdown")?.textContent ===
+          body,
+      );
+      return [
+        ...(message?.querySelectorAll(".rah-file-card strong") ?? []),
+      ].some((element) => element.textContent === filename);
+    },
+    "canonical Room Message attachment before forwarding",
+    [forwardedAttachmentBody, forwardedAttachmentFilename],
+  );
+  const sourceForwardAttachment = await call(
+    browser,
+    async (filename) => {
+      const roomId = new URL(window.location.href).searchParams.get("room");
+      if (!roomId) return null;
+      const result = await fetch("/v3/client/files/list", {
+        body: JSON.stringify({ roomId }),
+        headers: { "content-type": "application/json" },
+        method: "POST",
+      }).then((response) => response.json());
+      const file = result.files?.find(
+        (candidate) => candidate.filename === filename,
+      );
+      return file
+        ? { attachmentId: file.attachmentId, roomId: file.roomId }
+        : null;
+    },
+    forwardedAttachmentFilename,
+  );
+  assert.ok(sourceForwardAttachment?.attachmentId);
+
+  await openMessageContextMenu(browser, forwardedAttachmentBody);
+  await clickButton(browser, { text: "选择消息" });
+  await clickButton(browser, { text: "转发" });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(
+        '.rah-message-forward-dialog[role="dialog"][aria-modal="true"]',
+      ) !== null,
+    "attachment Message forward dialog",
+  );
+  await waitFor(
+    browser,
+    () =>
+      [...document.querySelectorAll(".rah-message-forward-targets label")].some(
+        (label) => label.textContent?.includes("Agent Council") === true,
+      ),
+    "attachment forward target list",
+  );
+  assert.equal(
+    await call(
+      browser,
+      (noteBody) => {
+        const label = [
+          ...document.querySelectorAll(".rah-message-forward-targets label"),
+        ].find(
+          (candidate) =>
+            candidate.textContent?.includes("Agent Council") === true,
+        );
+        const input = label?.querySelector('input[type="checkbox"]');
+        const note = document.querySelector(
+          ".rah-message-forward-dialog textarea",
+        );
+        if (
+          !(input instanceof HTMLInputElement) ||
+          !(note instanceof HTMLTextAreaElement)
+        )
+          return false;
+        input.click();
+        const setter = Object.getOwnPropertyDescriptor(
+          HTMLTextAreaElement.prototype,
+          "value",
+        )?.set;
+        setter?.call(note, noteBody);
+        note.dispatchEvent(new Event("input", { bubbles: true }));
+        return true;
+      },
+      forwardedAttachmentNote,
+    ),
+    true,
+    "attachment forward target and note must be editable",
+  );
+  await clickButton(browser, { text: "转发 (1)" });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-message-forward-dialog") === null &&
+      document.querySelector(".rah-message-selection-toolbar") === null,
+    "attachment forward closes selection surfaces",
+  );
+  await clickButton(browser, { text: "Agent Council" });
+  await waitFor(
+    browser,
+    (noteBody, sourceBody, filename) => {
+      const message = [...document.querySelectorAll(".msg")].find(
+        (candidate) =>
+          candidate.querySelector(".rah-message-markdown")?.textContent ===
+          noteBody,
+      );
+      const bundle = message?.querySelector('[data-testid="forwarded-bundle"]');
+      return (
+        bundle?.textContent?.includes(sourceBody) === true &&
+        [...bundle.querySelectorAll(".rah-file-card strong")].some(
+          (element) => element.textContent === filename,
+        )
+      );
+    },
+    "server-projected forwarded attachment card",
+    [
+      forwardedAttachmentNote,
+      forwardedAttachmentBody,
+      forwardedAttachmentFilename,
+    ],
+  );
+  const targetForwardAttachment = await call(
+    browser,
+    async (filename) => {
+      const roomId = new URL(window.location.href).searchParams.get("room");
+      if (!roomId) return null;
+      const result = await fetch("/v3/client/files/list", {
+        body: JSON.stringify({ roomId }),
+        headers: { "content-type": "application/json" },
+        method: "POST",
+      }).then((response) => response.json());
+      const file = result.files?.find(
+        (candidate) => candidate.filename === filename,
+      );
+      return file
+        ? { attachmentId: file.attachmentId, roomId: file.roomId }
+        : null;
+    },
+    forwardedAttachmentFilename,
+  );
+  assert.ok(targetForwardAttachment?.attachmentId);
+  assert.notEqual(
+    targetForwardAttachment.attachmentId,
+    sourceForwardAttachment.attachmentId,
+    "forwarded attachment must expose a destination-scoped identity",
+  );
+  assert.notEqual(
+    targetForwardAttachment.roomId,
+    sourceForwardAttachment.roomId,
+  );
+  await captureBrowserEvidence(browser, "forwarded-attachment-desktop.png");
+  assert.equal(
+    await call(
+      browser,
+      (noteBody, filename) => {
+        const message = [...document.querySelectorAll(".msg")].find(
+          (candidate) =>
+            candidate.querySelector(".rah-message-markdown")?.textContent ===
+            noteBody,
+        );
+        const card = [
+          ...(message?.querySelectorAll(".rah-file-card") ?? []),
+        ].find(
+          (candidate) =>
+            candidate.querySelector("strong")?.textContent === filename,
+        );
+        const button = card?.querySelector(".rah-file-open");
+        if (!(button instanceof HTMLButtonElement)) return false;
+        button.click();
+        return true;
+      },
+      forwardedAttachmentNote,
+      forwardedAttachmentFilename,
+    ),
+    true,
+    "forwarded attachment preview trigger",
+  );
+  await waitFor(
+    browser,
+    (filename) =>
+      document
+        .querySelector(".rah-file-preview")
+        ?.getAttribute("aria-label") === `预览 ${filename}` &&
+      document
+        .querySelector(".rah-file-preview")
+        ?.textContent?.includes("RAH OS forwarded attachment browser gate") ===
+        true,
+    "forwarded attachment bytes are readable through the projected identity",
+    [forwardedAttachmentFilename],
+  );
+  assert.equal(
+    await call(browser, () => {
+      const layer = document.querySelector(".rah-file-preview")?.parentElement;
+      const bounds = layer?.getBoundingClientRect();
+      return (
+        layer?.parentElement === document.body &&
+        bounds?.left === 0 &&
+        bounds.top === 0 &&
+        bounds.width === innerWidth &&
+        bounds.height === innerHeight
+      );
+    }),
+    true,
+    "attachment preview backdrop covers the viewport, not only its contained message row",
+  );
+  assert.equal(
+    await call(browser, () => {
+      const download = document.querySelector(
+        ".rah-file-preview header > button",
+      );
+      return (
+        download !== null && getComputedStyle(download).borderTopWidth === "0px"
+      );
+    }),
+    true,
+    "portaled preview retains the shared button reset instead of native browser chrome",
+  );
+  await captureBrowserEvidence(browser, "forwarded-attachment-preview.png");
+  await dispatchKey(browser, "Escape", 27);
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-file-preview") === null,
+    "forwarded attachment preview Escape close",
+  );
+  await browser.command("Page.reload", { ignoreCache: true });
+  await waitFor(
+    browser,
+    (noteBody, filename) => {
+      const message = [...document.querySelectorAll(".msg")].find(
+        (candidate) =>
+          candidate.querySelector(".rah-message-markdown")?.textContent ===
+          noteBody,
+      );
+      return [
+        ...(message?.querySelectorAll(".rah-file-card strong") ?? []),
+      ].some((element) => element.textContent === filename);
+    },
+    "forwarded attachment survives a full browser reload",
+    [forwardedAttachmentNote, forwardedAttachmentFilename],
+  );
+  await browser.command("Emulation.setDeviceMetricsOverride", {
+    deviceScaleFactor: 1,
+    height: 844,
+    mobile: true,
+    screenHeight: 844,
+    screenWidth: 390,
+    width: 390,
+  });
+  await waitFor(
+    browser,
+    (noteBody, filename) => {
+      const message = [...document.querySelectorAll(".msg")].find(
+        (candidate) =>
+          candidate.querySelector(".rah-message-markdown")?.textContent ===
+          noteBody,
+      );
+      const card = [
+        ...(message?.querySelectorAll(".rah-file-card") ?? []),
+      ].find(
+        (candidate) =>
+          candidate.querySelector("strong")?.textContent === filename,
+      );
+      const bounds = card?.getBoundingClientRect();
+      return (
+        bounds !== undefined &&
+        bounds.left >= 0 &&
+        bounds.right <= document.documentElement.clientWidth &&
+        document.documentElement.scrollWidth === 390
+      );
+    },
+    "390px forwarded attachment card remains viewport-safe",
+    [forwardedAttachmentNote, forwardedAttachmentFilename],
+  );
+  await captureBrowserEvidence(browser, "forwarded-attachment-mobile.png");
+  await browser.command("Emulation.setDeviceMetricsOverride", {
+    deviceScaleFactor: 1,
+    height: 1_000,
+    mobile: false,
+    screenHeight: 1_000,
+    screenWidth: 1_440,
+    width: 1_440,
+  });
+  assert.equal(
+    await call(
+      browser,
+      (noteBody) => {
+        const message = [...document.querySelectorAll(".msg")].find(
+          (candidate) =>
+            candidate.querySelector(".rah-message-markdown")?.textContent ===
+            noteBody,
+        );
+        const link = message?.querySelector(
+          '.rah-forwarded-bundle a[href*="message="]',
+        );
+        if (!(link instanceof HTMLAnchorElement)) return false;
+        link.click();
+        return true;
+      },
+      forwardedAttachmentNote,
+    ),
+    true,
+    "projected attachment bundle keeps its source permalink",
+  );
+  await waitFor(
+    browser,
+    (body) =>
+      document.querySelector(".channel-title h1")?.textContent?.trim() ===
+        "Design Lab" &&
+      [...document.querySelectorAll(".msg")].some(
+        (message) =>
+          message.querySelector(".rah-message-markdown")?.textContent ===
+            body && message.getAttribute("data-focused") === "true",
+      ),
+    "projected attachment source permalink focuses the source Message",
+    [forwardedAttachmentBody],
+  );
+
   await clickButton(browser, { ariaLabel: "频道详情与设置" });
   await mutateRoomAgent(browser, "Owner Router", "加入 Room", "移出 Room");
   await closeRoomSettings(
@@ -2670,11 +3165,48 @@ try {
     false,
     "Thread replies must preserve permalink actions without Convert to Task",
   );
+  assert.equal(threadReplyContextItems.includes("选择消息"), true);
+  await clickButton(browser, { text: "选择消息" });
+  await waitFor(
+    browser,
+    () =>
+      document
+        .querySelector(".thread .rah-message-selection-toolbar")
+        ?.textContent?.includes("已选择 1 条") === true &&
+      document.querySelector('textarea[aria-label="Thread 回复输入框"]') ===
+        null,
+    "Thread Raft selection mode replaces the composer",
+  );
+  await clickMessageRow(browser, "browser gate: both agents", {
+    scope: ".thread",
+  });
+  await waitFor(
+    browser,
+    () => {
+      const inputs = [
+        ...document.querySelectorAll(
+          '.thread .rah-message-selection-check input[type="checkbox"]',
+        ),
+      ];
+      const countText = document.querySelector(
+        ".thread .rah-message-selection-toolbar > strong",
+      )?.textContent;
+      return (
+        inputs.length >= 2 &&
+        inputs.every((input) => input.checked) &&
+        countText === `已选择 ${String(inputs.length)} 条`
+      );
+    },
+    "Thread root selection atomically includes loaded replies",
+  );
   await dispatchKey(browser, "Escape", 27);
   await waitFor(
     browser,
-    () => document.querySelector(".rah-message-context-menu") === null,
-    "Thread reply context menu Escape close",
+    () =>
+      document.querySelector(".rah-message-selection-toolbar") === null &&
+      document.querySelector('textarea[aria-label="Thread 回复输入框"]') !==
+        null,
+    "Thread selection Escape restores its composer",
   );
   await clickButton(browser, { ariaLabel: "关闭消息列" });
   await waitFor(
@@ -2691,6 +3223,109 @@ try {
       ].some((element) => element.textContent === filename),
     "Thread attachment in canonical Room Files",
     ["thread-browser-gate.txt"],
+  );
+  const browserRange = await call(
+    browser,
+    async (filename) => {
+      const roomId = new URL(window.location.href).searchParams.get("room");
+      if (!roomId) return { error: "room-not-selected" };
+      const listing = await fetch("/v3/client/files/list", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ roomId }),
+      }).then((response) => response.json());
+      const file = listing.files?.find(
+        (candidate) => candidate.filename === filename,
+      );
+      if (!file) return { error: "file-not-found" };
+      const response = await fetch(
+        `/v3/client/files/content/${encodeURIComponent(file.attachmentId)}`,
+        { headers: { range: "bytes=1-7" } },
+      );
+      return {
+        acceptRanges: response.headers.get("accept-ranges"),
+        body: [...new Uint8Array(await response.arrayBuffer())],
+        contentLength: response.headers.get("content-length"),
+        contentRange: response.headers.get("content-range"),
+        status: response.status,
+      };
+    },
+    "thread-browser-gate.txt",
+  );
+  assert.deepEqual(browserRange, {
+    acceptRanges: "bytes",
+    body: [...Buffer.from("AH OS T")],
+    contentLength: "7",
+    contentRange: "bytes 1-7/38",
+    status: 206,
+  });
+  const fileActionLayout = await call(
+    browser,
+    (filename) => {
+      const card = [
+        ...document.querySelectorAll(".rah-room-files .rah-file-card"),
+      ].find(
+        (candidate) =>
+          candidate.querySelector("strong")?.textContent === filename,
+      );
+      const source = card?.querySelector(".rah-file-source");
+      const download = card?.querySelector(".rah-file-download");
+      const overflow = card?.querySelector(".rah-file-overflow");
+      return {
+        downloadVisible:
+          download instanceof HTMLElement &&
+          getComputedStyle(download).display !== "none",
+        overflowVisible:
+          overflow instanceof HTMLElement &&
+          getComputedStyle(overflow).display !== "none",
+        sourceVisible:
+          source instanceof HTMLElement &&
+          getComputedStyle(source).display !== "none",
+      };
+    },
+    "thread-browser-gate.txt",
+  );
+  assert.deepEqual(
+    fileActionLayout,
+    {
+      downloadVisible: true,
+      overflowVisible: false,
+      sourceVisible: true,
+    },
+    "desktop Room Files must use Raft's direct jump/download actions",
+  );
+  await call(
+    browser,
+    (filename) => {
+      const card = [
+        ...document.querySelectorAll(".rah-room-files .rah-file-card"),
+      ].find(
+        (candidate) =>
+          candidate.querySelector("strong")?.textContent === filename,
+      );
+      card?.querySelector(".rah-file-open")?.click();
+    },
+    "thread-browser-gate.txt",
+  );
+  await waitFor(
+    browser,
+    (filename) =>
+      document
+        .querySelector(".rah-file-preview")
+        ?.textContent?.includes("RAH OS Thread attachment browser gate") ===
+        true &&
+      document
+        .querySelector(".rah-file-preview")
+        ?.getAttribute("aria-label") ===
+        "预览 " + filename,
+    "bounded text attachment preview",
+    ["thread-browser-gate.txt"],
+  );
+  await dispatchKey(browser, "Escape", 27);
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-file-preview") === null,
+    "attachment preview Escape close",
   );
   await clickButton(browser, { text: "聊天" });
   await waitFor(
@@ -2825,7 +3460,7 @@ try {
       [...document.querySelectorAll(".kcard")].some(
         (card) =>
           card.querySelector(".kcard-title")?.textContent === title &&
-          card.querySelector(".kcard-no")?.textContent === "#2",
+          card.querySelector(".kcard-no")?.textContent?.includes("#2") === true,
       ),
     "Task board create projects one numbered card",
     ["browser gate: board Task"],
@@ -2927,13 +3562,8 @@ try {
       const evidence = card?.querySelector(".rah-task-review-evidence");
       return (
         card?.getAttribute("data-task-workflow-status") === "review" &&
-        evidence?.getAttribute("data-task-review-status") === "approved" &&
-        /提交 #1 · 审阅 1\/1 · sha256:[a-f0-9]{8}/u.test(
-          evidence?.textContent ?? "",
-        ) &&
-        [...(card?.querySelectorAll("button") ?? [])].some(
-          (button) => button.textContent?.trim() === "确认完成",
-        )
+        evidence === null &&
+        card.textContent?.includes("submitted") === false
       );
     },
     "frozen submission and canonical approved Review",
@@ -3017,17 +3647,6 @@ try {
     await call(
       browser,
       (title) =>
-        [...document.querySelectorAll(".kcard")].find(
-          (card) => card.querySelector(".kcard-title")?.textContent === title,
-        )?.textContent ?? "",
-      "browser gate: durable Task",
-    ),
-    /Fake Worker completed the durable Task protocol/u,
-  );
-  assert.match(
-    await call(
-      browser,
-      (title) =>
         [...document.querySelectorAll(".kcard")]
           .find(
             (card) => card.querySelector(".kcard-title")?.textContent === title,
@@ -3036,6 +3655,42 @@ try {
       "browser gate: durable Task",
     ),
     /^#\d+$/u,
+    "Room Tasks must hide the redundant Room name exactly as Raft channel mode does",
+  );
+  assert.deepEqual(
+    await call(browser, () => {
+      const buttons = [...document.querySelectorAll(".tasks-view button")];
+      const inspect = (button) => {
+        const icon = button?.querySelector("svg");
+        const use = icon?.querySelector("use");
+        const bounds = icon?.getBoundingClientRect();
+        return {
+          height: bounds?.height,
+          href: use?.getAttribute("href")?.split("#").at(-1),
+          width: bounds?.width,
+        };
+      };
+      const empty = document.querySelector(
+        ".rah-global-kanban .rah-empty-copy",
+      );
+      const emptyStyle = empty ? getComputedStyle(empty) : null;
+      return {
+        board: inspect(buttons.find((button) => button.textContent === "看板")),
+        empty: emptyStyle
+          ? {
+              padding: emptyStyle.padding,
+              textAlign: emptyStyle.textAlign,
+            }
+          : null,
+        list: inspect(buttons.find((button) => button.textContent === "列表")),
+      };
+    }),
+    {
+      board: { height: 14, href: "raft-icon-columns-3", width: 14 },
+      empty: { padding: "20px 12px", textAlign: "left" },
+      list: { height: 14, href: "raft-icon-layout-list", width: 14 },
+    },
+    "Room Tasks must use Raft's exact view icons, shared final size, and left-aligned empty group",
   );
   await clickTaskButton(browser, "browser gate: durable Task", "打开讨论");
   await waitFor(
@@ -3080,9 +3735,8 @@ try {
     ["browser-gate-task-evidence.txt"],
   );
   await clickButton(browser, {
-    ariaLabel: "browser-gate-task-evidence.txt 的操作",
+    ariaLabel: "跳转到 browser-gate-task-evidence.txt 的原消息",
   });
-  await clickButton(browser, { text: "跳转到原消息" });
   await waitFor(
     browser,
     (filename, summary) =>
@@ -3111,64 +3765,355 @@ try {
   // opens its Thread. Re-establish the Room Tasks surface before using its
   // toolbar; do not let a stale earlier tab make this later gate accidental.
   await clickButton(browser, { text: "任务" });
-  await clickButton(browser, { text: "新建任务" });
-  await setTaskDialogContent(
-    browser,
-    "browser gate: owner routing",
-    "Human reservation must remain distinct from Agent claim ownership",
-  );
-  await setTaskDialogAssignee(browser, "owner-router");
-  await clickButton(browser, { text: "创建任务" });
+  await expandTaskGroup(browser, "done");
   await waitFor(
     browser,
     (title) =>
       [...document.querySelectorAll(".kcard")].some(
         (card) =>
           card.querySelector(".kcard-title")?.textContent === title &&
-          card.getAttribute("data-task-workflow-status") === "todo" &&
-          card
-            .querySelector(".rah-task-owner-trigger")
-            ?.getAttribute("aria-label")
-            ?.includes("owner-router") === true,
+          card.getAttribute("data-task-workflow-status") === "done" &&
+          card.textContent?.includes("claimed") === false,
       ),
-    "preassigned Human Task reservation",
-    ["browser gate: owner routing"],
+    "completed execution remains a stable Raft status-editing fixture",
+    ["browser gate: both agents"],
   );
-  await clickTaskOwnerTrigger(browser, "browser gate: owner routing");
+
+  const taskCardPointerTarget = await call(
+    browser,
+    (title) => {
+      const card = [...document.querySelectorAll(".rah-global-task-card")].find(
+        (candidate) =>
+          candidate.querySelector(".kcard-title")?.textContent === title,
+      );
+      if (!(card instanceof HTMLElement)) return null;
+      card.scrollIntoView({ block: "nearest", inline: "nearest" });
+      const bounds = card.getBoundingClientRect();
+      return {
+        x: bounds.left + bounds.width / 2,
+        y: bounds.top + bounds.height / 2,
+      };
+    },
+    "browser gate: both agents",
+  );
+  assert.notEqual(
+    taskCardPointerTarget,
+    null,
+    "Raft Task card pointer target must be visible",
+  );
+  await browser.command("Input.dispatchMouseEvent", {
+    type: "mouseMoved",
+    x: 1,
+    y: 1,
+  });
+  await delay(140);
+  const restingTaskCardStyle = await call(
+    browser,
+    (title) => {
+      const card = [...document.querySelectorAll(".rah-global-task-card")].find(
+        (candidate) =>
+          candidate.querySelector(".kcard-title")?.textContent === title,
+      );
+      if (!(card instanceof HTMLElement)) return null;
+      const style = getComputedStyle(card);
+      const body = card.closest(".kcol-body");
+      const open = card.querySelector(".rah-global-card-open");
+      const header = card.querySelector(".kcard-no");
+      const titleNode = card.querySelector(".kcard-title");
+      const footer = card.querySelector(".rah-global-card-footer");
+      const statusButton = footer?.querySelector(".task-filter-trigger");
+      const statusRoot = statusButton?.closest(".rah-task-status-picker");
+      const rect = (node) =>
+        node instanceof HTMLElement
+          ? {
+              height: node.getBoundingClientRect().height,
+              width: node.getBoundingClientRect().width,
+              y: node.getBoundingClientRect().y,
+            }
+          : null;
+      return {
+        bodyOverflow: body ? getComputedStyle(body).overflow : null,
+        borderBottomWidth: style.borderBottomWidth,
+        borderRightWidth: style.borderRightWidth,
+        boxShadow: style.boxShadow,
+        display: style.display,
+        gap: style.gap,
+        height: card.getBoundingClientRect().height,
+        cardRect: rect(card),
+        footerRect: rect(footer),
+        headerRect: rect(header),
+        openDisplay: open ? getComputedStyle(open).display : null,
+        openRect: rect(open),
+        statusButtonBackground:
+          statusButton instanceof HTMLElement
+            ? getComputedStyle(statusButton).backgroundColor
+            : null,
+        statusButtonRect: rect(statusButton),
+        statusButtonToneOwned:
+          statusButton instanceof HTMLElement &&
+          [...statusButton.classList].some((name) => name.startsWith("chip-")),
+        statusRootBackground:
+          statusRoot instanceof HTMLElement
+            ? getComputedStyle(statusRoot).backgroundColor
+            : null,
+        statusRootRect: rect(statusRoot),
+        statusRootToneOwned:
+          statusRoot instanceof HTMLElement &&
+          [...statusRoot.classList].some((name) => name.startsWith("chip-")),
+        titleRect: rect(titleNode),
+        transform: style.transform,
+        transitionDuration: style.transitionDuration,
+      };
+    },
+    "browser gate: both agents",
+  );
+  assert.equal(restingTaskCardStyle?.borderBottomWidth, "2px");
+  assert.equal(restingTaskCardStyle?.borderRightWidth, "2px");
+  assert.equal(restingTaskCardStyle?.bodyOverflow, "visible");
+  assert.equal(restingTaskCardStyle?.display, "block");
+  assert.equal(restingTaskCardStyle?.gap, "normal");
+  assert.equal(restingTaskCardStyle?.openDisplay, "inline-block");
+  assert.equal(
+    restingTaskCardStyle?.statusRootBackground,
+    "rgba(0, 0, 0, 0)",
+    "the unbordered status wrapper must stay transparent across the trigger's top margin",
+  );
+  assert.equal(restingTaskCardStyle?.statusRootToneOwned, false);
+  assert.equal(restingTaskCardStyle?.statusButtonToneOwned, true);
+  assert.notEqual(
+    restingTaskCardStyle?.statusButtonBackground,
+    restingTaskCardStyle?.statusRootBackground,
+  );
+  assert.equal(
+    (restingTaskCardStyle?.statusButtonRect?.y ?? 0) -
+      (restingTaskCardStyle?.statusRootRect?.y ?? 0),
+    2,
+    "Raft's mt-0.5 must remain unpainted above the bordered status trigger",
+  );
+  assert.ok(
+    Math.abs((restingTaskCardStyle?.height ?? 0) - 105.25) <= 0.25,
+    `one-line Raft Task card must keep the source-derived 105.25px border box: ${JSON.stringify(restingTaskCardStyle)}`,
+  );
+  assert.match(restingTaskCardStyle?.boxShadow ?? "", /2px 2px/u);
+  assert.match(
+    restingTaskCardStyle?.transform ?? "",
+    /^(?:none|matrix\(1, 0, 0, 1, 0, 0\))$/u,
+  );
+  assert.equal(restingTaskCardStyle?.transitionDuration, "0.1s");
+  await browser.command("Input.dispatchMouseEvent", {
+    type: "mouseMoved",
+    ...taskCardPointerTarget,
+  });
+  await delay(140);
+  const hoveredTaskCardStyle = await call(
+    browser,
+    (title) => {
+      const card = [...document.querySelectorAll(".rah-global-task-card")].find(
+        (candidate) =>
+          candidate.querySelector(".kcard-title")?.textContent === title,
+      );
+      if (!(card instanceof HTMLElement)) return null;
+      const style = getComputedStyle(card);
+      return {
+        borderBottomWidth: style.borderBottomWidth,
+        borderRightWidth: style.borderRightWidth,
+        boxShadow: style.boxShadow,
+        transform: style.transform,
+      };
+    },
+    "browser gate: both agents",
+  );
+  assert.deepEqual(
+    {
+      borderBottomWidth: hoveredTaskCardStyle?.borderBottomWidth,
+      borderRightWidth: hoveredTaskCardStyle?.borderRightWidth,
+      transform: hoveredTaskCardStyle?.transform,
+    },
+    {
+      borderBottomWidth: "2px",
+      borderRightWidth: "2px",
+      transform: "matrix(1, 0, 0, 1, 0, -1)",
+    },
+    "real pointer hover must lift the Task card without thickening its border",
+  );
+  assert.match(
+    hoveredTaskCardStyle?.boxShadow ?? "",
+    /4px 4px/u,
+    "real pointer hover must expand the Task card's hard shadow",
+  );
+  await browser.command("Input.dispatchMouseEvent", {
+    type: "mouseMoved",
+    x: 1,
+    y: 1,
+  });
+
+  await clickButton(browser, { text: "列表" });
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-global-kanban.list-mode") !== null,
+    "Raft Task list view",
+  );
+  // The layout switch can move a card underneath the stationary pointer.
+  // Re-establish a non-card pointer position before asserting resting styles.
+  await browser.command("Input.dispatchMouseEvent", {
+    type: "mouseMoved",
+    x: 1,
+    y: 1,
+  });
+  await delay(140);
+  const listedTaskCardStyle = await call(
+    browser,
+    (title) => {
+      const card = [...document.querySelectorAll(".rah-global-task-card")].find(
+        (candidate) =>
+          candidate.querySelector(".kcard-title")?.textContent === title,
+      );
+      if (!(card instanceof HTMLElement)) return null;
+      const style = getComputedStyle(card);
+      const body = card.closest(".kcol-body");
+      const group = card.closest(".kcol");
+      const header = group?.querySelector(".kcol-head");
+      const bounds = card.getBoundingClientRect();
+      const firstCardBounds = body
+        ?.querySelector(".rah-global-task-card")
+        ?.getBoundingClientRect();
+      const headerBounds = header?.getBoundingClientRect();
+      const clippingAncestors = [];
+      for (
+        let ancestor = card.parentElement;
+        ancestor && !ancestor.classList.contains("rah-global-kanban");
+        ancestor = ancestor.parentElement
+      ) {
+        const ancestorStyle = getComputedStyle(ancestor);
+        if (
+          ancestorStyle.overflowX !== "visible" ||
+          ancestorStyle.overflowY !== "visible"
+        ) {
+          clippingAncestors.push({
+            className: ancestor.className,
+            overflowX: ancestorStyle.overflowX,
+            overflowY: ancestorStyle.overflowY,
+          });
+        }
+      }
+      return {
+        bodyOverflow: body ? getComputedStyle(body).overflow : null,
+        bodyUsesShadowHost:
+          body?.classList.contains("rah-interaction-shadow-host") ?? false,
+        borderBottomWidth: style.borderBottomWidth,
+        borderRightWidth: style.borderRightWidth,
+        boxShadow: style.boxShadow,
+        clippingAncestors,
+        display: style.display,
+        height: bounds.height,
+        headerGap:
+          headerBounds === undefined || firstCardBounds === undefined
+            ? null
+            : firstCardBounds.top - headerBounds.bottom,
+        physicalHeight: Math.round(bounds.height * devicePixelRatio),
+        physicalVisualHeight: Math.round(
+          (bounds.height + 2) * devicePixelRatio,
+        ),
+        transitionDuration: style.transitionDuration,
+      };
+    },
+    "browser gate: both agents",
+  );
+  assert.deepEqual(
+    {
+      bodyOverflow: listedTaskCardStyle?.bodyOverflow,
+      bodyUsesShadowHost: listedTaskCardStyle?.bodyUsesShadowHost,
+      display: listedTaskCardStyle?.display,
+    },
+    {
+      bodyOverflow: "visible",
+      bodyUsesShadowHost: true,
+      display: "block",
+    },
+    "Task list must retain the same unclipped Raft card structure",
+  );
+  assert.equal(
+    listedTaskCardStyle?.headerGap,
+    10,
+    "Raft list groups use space-y-2.5: exactly 10px from group header to first card",
+  );
+  assert.deepEqual(
+    listedTaskCardStyle?.clippingAncestors,
+    [],
+    "no list-card ancestor below the Tasks scroller may clip the hard shadow",
+  );
+  assert.equal(listedTaskCardStyle?.borderBottomWidth, "2px");
+  assert.equal(listedTaskCardStyle?.borderRightWidth, "2px");
+  assert.match(listedTaskCardStyle?.boxShadow ?? "", /2px 2px/u);
+  assert.equal(listedTaskCardStyle?.transitionDuration, "0.1s");
+  assert.ok(
+    Math.abs(
+      (listedTaskCardStyle?.height ?? 0) -
+        (restingTaskCardStyle?.height ?? Number.POSITIVE_INFINITY),
+    ) <= 0.5,
+    "the same one-line Task must keep its content-derived height in board and list views",
+  );
+  assert.equal(
+    listedTaskCardStyle?.physicalHeight,
+    Math.round(
+      (restingTaskCardStyle?.height ?? Number.POSITIVE_INFINITY) *
+        (await call(browser, () => devicePixelRatio)),
+    ),
+    "board/list border boxes must round to the same device-pixel height",
+  );
+  await clickButton(browser, { text: "看板" });
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-global-kanban.list-mode") === null,
+    "restore Raft Task board view",
+  );
+
+  const taskStatusMenu = await call(
+    browser,
+    (title) => {
+      const card = [...document.querySelectorAll(".kcard")].find(
+        (candidate) =>
+          candidate.querySelector(".kcard-title")?.textContent === title,
+      );
+      const trigger = card?.querySelector(".rah-task-status-picker > button");
+      if (!(trigger instanceof HTMLButtonElement) || trigger.disabled)
+        return false;
+      trigger.click();
+      return true;
+    },
+    "browser gate: both agents",
+  );
+  assert.equal(taskStatusMenu, true, "Raft Task status editor must open");
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-discovery-popover.is-status") !== null,
+    "Raft Task status menu",
+  );
   assert.deepEqual(
     await call(browser, () => {
-      const menu = document.querySelector(".rah-task-owner-menu");
-      const header = menu?.querySelector("header");
-      const option = menu?.querySelector(".rah-task-owner-options > button");
-      if (menu === null || header === null || option === null) return undefined;
-      return {
-        headerHeight: header.getBoundingClientRect().height,
-        menuWidth: menu.getBoundingClientRect().width,
-        optionHeight: option.getBoundingClientRect().height,
-      };
+      const menu = document.querySelector(".rah-discovery-popover.is-status");
+      return [...(menu?.querySelectorAll("[role=menuitemradio]") ?? [])].map(
+        (option) => ({
+          checked: option.getAttribute("aria-checked") === "true",
+          disabled: option.hasAttribute("disabled"),
+          label: option.textContent?.trim().replace("✓", ""),
+        }),
+      );
     }),
-    { headerHeight: 32, menuWidth: 220, optionHeight: 36 },
-    "Task owner menu must consume the pinned Raft Tasks geometry",
+    [
+      { checked: false, disabled: false, label: "待办" },
+      { checked: false, disabled: false, label: "进行中" },
+      { checked: false, disabled: false, label: "待确认" },
+      { checked: true, disabled: false, label: "完成" },
+      { checked: false, disabled: false, label: "已关闭" },
+    ],
+    "Room owner must receive Raft's five status choices in source order",
   );
   await dispatchKey(browser, "Escape", 27);
   await waitFor(
     browser,
-    () => document.querySelector(".rah-task-owner-menu") === null,
-    "Escape closes Task owner menu",
-  );
-  await clickTaskOwnerTrigger(browser, "browser gate: owner routing");
-  await clickTaskOwnerOption(browser, "browser gate: owner routing", "未分配");
-  await waitForTaskOwner(browser, "browser gate: owner routing", "未分配");
-  await clickTaskOwnerTrigger(browser, "browser gate: owner routing");
-  await clickTaskOwnerOption(
-    browser,
-    "browser gate: owner routing",
-    "owner-router",
-  );
-  await waitForTaskOwner(
-    browser,
-    "browser gate: owner routing",
-    "owner-router",
+    () => document.querySelector(".rah-discovery-popover.is-status") === null,
+    "Escape closes Raft Task status menu",
   );
 
   await reloadPage(browser);
@@ -3188,44 +4133,8 @@ try {
   await clickButton(browser, { text: "聊天" });
   await waitForMessage(browser, "browser gate: Kimi only", 15_000);
   await clickButton(browser, { text: "任务" });
-  await waitForTaskOwner(
-    browser,
-    "browser gate: owner routing",
-    "owner-router",
-  );
-  await clickTaskOwnerTrigger(browser, "browser gate: owner routing");
-  await clickTaskOwnerOption(browser, "browser gate: owner routing", "未分配");
-  await waitForTaskOwner(browser, "browser gate: owner routing", "未分配");
-  await clickTaskButton(browser, "browser gate: owner routing", "关闭任务");
-  assert.equal(
-    await call(
-      browser,
-      () =>
-        document.activeElement instanceof HTMLTextAreaElement &&
-        document.activeElement
-          .closest("label")
-          ?.textContent?.includes("关闭原因"),
-    ),
-    true,
-    "Task close dialog must focus the required reason field",
-  );
-  await setTaskCloseReason(
-    browser,
-    "Browser gate verifies reversible Closed state",
-  );
-  assert.equal(
-    await call(browser, () => {
-      const button = document.querySelector(
-        ".rah-task-close-dialog button.btn-pink",
-      );
-      if (!(button instanceof HTMLButtonElement) || button.disabled)
-        return false;
-      button.click();
-      return true;
-    }),
-    true,
-    "Task close dialog confirmation",
-  );
+  await expandTaskGroup(browser, "done");
+  await clickTaskButton(browser, "browser gate: both agents", "关闭任务");
   await waitFor(
     browser,
     (title) =>
@@ -3233,15 +4142,12 @@ try {
         (card) =>
           card.querySelector(".kcard-title")?.textContent === title &&
           card.getAttribute("data-task-workflow-status") === "closed" &&
-          card.textContent?.includes("cancelled") === false &&
-          [...card.querySelectorAll("button")].some(
-            (button) => button.textContent?.trim() === "重开为待办",
-          ),
+          card.textContent?.includes("cancelled") === false,
       ),
-    "Task Closed projection and reversible action",
-    ["browser gate: owner routing"],
+    "Raft Closed projection without a RAH cancellation dialog",
+    ["browser gate: both agents"],
   );
-  await clickTaskButton(browser, "browser gate: owner routing", "重开为待办");
+  await clickTaskButton(browser, "browser gate: both agents", "重开为待办");
   await waitFor(
     browser,
     (title) =>
@@ -3252,86 +4158,14 @@ try {
           !card.textContent?.includes("cancelled"),
       ),
     "Task Closed to Todo recovery",
-    ["browser gate: owner routing"],
+    ["browser gate: both agents"],
   );
 
   await clickButton(browser, { ariaLabel: "频道详情与设置" });
   await mutateRoomAgent(browser, "Kimi", "加入 Room", "移出 Room");
   await closeRoomSettings(
     browser,
-    "Room settings drawer close before safe reassignment",
-  );
-  await clickButton(browser, { text: "任务" });
-  await clickButton(browser, { text: "新建任务" });
-  await setTaskDialogContent(
-    browser,
-    "[REASSIGN] browser gate: stop old owner first",
-    "Alice must stop with terminal proof before Kimi receives ownership.",
-  );
-  await setTaskDialogAssignee(browser, "Alice");
-  await clickButton(browser, { text: "创建任务" });
-  await waitFor(
-    browser,
-    (title) => {
-      const card = [...document.querySelectorAll(".kcard")].find(
-        (candidate) =>
-          candidate.querySelector(".kcard-title")?.textContent === title,
-      );
-      return (
-        card?.getAttribute("data-task-workflow-status") === "in-progress" &&
-        [...(card?.querySelectorAll("button") ?? [])].some(
-          (button) => button.textContent?.trim() === "安全改派",
-        )
-      );
-    },
-    "active Task exposes safe reassignment only after Alice owns it",
-    ["[REASSIGN] browser gate: stop old owner first"],
-    20_000,
-  );
-  await clickTaskButton(
-    browser,
-    "[REASSIGN] browser gate: stop old owner first",
-    "安全改派",
-  );
-  assert.equal(
-    await call(
-      browser,
-      () =>
-        document.activeElement instanceof HTMLSelectElement &&
-        document.activeElement.closest(".rah-task-reassign-dialog") !== null,
-    ),
-    true,
-    "safe reassignment dialog must focus its new-owner selector",
-  );
-  await dispatchKey(browser, "Escape", 27);
-  await waitFor(
-    browser,
-    () => document.querySelector(".rah-task-reassign-dialog") === null,
-    "Escape closes safe reassignment before submission",
-  );
-  await clickTaskButton(
-    browser,
-    "[REASSIGN] browser gate: stop old owner first",
-    "安全改派",
-  );
-  await setTaskReassignment(browser, "Kimi", "Alice is unavailable");
-  await clickButton(browser, { text: "确认改派" });
-  await waitFor(
-    browser,
-    (title) => {
-      const card = [...document.querySelectorAll(".kcard")].find(
-        (candidate) =>
-          candidate.querySelector(".kcard-title")?.textContent === title,
-      );
-      return (
-        card?.textContent?.includes("Agent · Kimi") === true &&
-        (card.getAttribute("data-task-workflow-status") === "in-progress" ||
-          card.getAttribute("data-task-workflow-status") === "review")
-      );
-    },
-    "safe reassignment stops Alice before Kimi owns and executes the Task",
-    ["[REASSIGN] browser gate: stop old owner first"],
-    30_000,
+    "Room settings drawer close after restoring Kimi",
   );
   await clickButton(browser, { title: "聊天" });
   await waitFor(
@@ -3346,6 +4180,115 @@ try {
     browser,
     () => document.querySelector(".rah-computer-detail h1") !== null,
     "Computer before mobile transition",
+  );
+
+  await clickButton(browser, { title: "任务" });
+  await waitFor(
+    browser,
+    () => document.querySelector('main[aria-label="全局任务"]') !== null,
+    "Tasks before responsive boundary scan",
+  );
+  await waitFor(
+    browser,
+    () =>
+      [...document.querySelectorAll(".rah-global-task-card .kcard-title")].some(
+        (title) => title.textContent === "browser gate: both agents",
+      ),
+    "global Task data finishes loading before metadata assertions",
+  );
+  assert.deepEqual(
+    await call(
+      browser,
+      (title) => {
+        const meta = [...document.querySelectorAll(".rah-global-task-card")]
+          .find(
+            (card) => card.querySelector(".kcard-title")?.textContent === title,
+          )
+          ?.querySelector(".kcard-no");
+        return {
+          room: meta?.querySelector("b")?.textContent?.trim() ?? null,
+          taskNumber: meta?.querySelector("span")?.textContent?.trim() ?? null,
+        };
+      },
+      "browser gate: both agents",
+    ),
+    { room: "#Design Lab", taskNumber: "#1" },
+    "global Tasks must retain the Room name exactly as Raft server-wide mode does",
+  );
+  for (const width of [800, 768, 767, 760, 701, 700]) {
+    await browser.command("Emulation.setDeviceMetricsOverride", {
+      deviceScaleFactor: 1,
+      height: 598,
+      mobile: width <= 767,
+      screenHeight: 598,
+      screenWidth: width,
+      width,
+    });
+    await delay(80);
+    const expectedMobile = width <= 767;
+    assert.deepEqual(
+      await call(browser, () => {
+        const rail = document.querySelector(".rail");
+        const railButton = document.querySelector(".rail .rail-btn");
+        const navigation = document.querySelector(".rah-mobile-nav");
+        const taskViewButton = document.querySelector(
+          '.tasks-view button[role="radio"]',
+        );
+        const bounds = taskViewButton?.getBoundingClientRect();
+        const hit = bounds
+          ? document.elementFromPoint(
+              bounds.left + bounds.width / 2,
+              bounds.top + bounds.height / 2,
+            )
+          : null;
+        return {
+          mobileLabels: navigation
+            ? [...navigation.querySelectorAll("button")].map((button) =>
+                button.textContent?.trim(),
+              )
+            : [],
+          navVisible: (navigation?.getClientRects().length ?? 0) > 0,
+          railButtonHeight:
+            railButton instanceof HTMLElement
+              ? railButton.getBoundingClientRect().height
+              : 0,
+          railVisible: (rail?.getClientRects().length ?? 0) > 0,
+          railWidth:
+            rail instanceof HTMLElement
+              ? rail.getBoundingClientRect().width
+              : 0,
+          scrollWidth: document.documentElement.scrollWidth,
+          taskControlReceivesPointer:
+            taskViewButton instanceof HTMLButtonElement &&
+            (hit === taskViewButton ||
+              hit?.closest("button") === taskViewButton),
+        };
+      }),
+      {
+        mobileLabels: ["主页", "任务", "成员", "设置"],
+        navVisible: expectedMobile,
+        railButtonHeight: expectedMobile ? 0 : 36,
+        railVisible: !expectedMobile,
+        railWidth: expectedMobile ? 0 : 50,
+        scrollWidth: width,
+        taskControlReceivesPointer: true,
+      },
+      `${String(width)}x598 must stay in exactly one Raft navigation regime`,
+    );
+  }
+  await browser.command("Emulation.setDeviceMetricsOverride", {
+    deviceScaleFactor: 1,
+    height: 900,
+    mobile: false,
+    screenHeight: 900,
+    screenWidth: 1_440,
+    width: 1_440,
+  });
+  await clickButton(browser, { title: "计算机" });
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-computer-detail h1") !== null,
+    "Computer restored after responsive boundary scan",
   );
 
   await browser.command("Emulation.setDeviceMetricsOverride", {
@@ -3364,8 +4307,8 @@ try {
         document.querySelector(".rah-mobile-nav")?.getClientRects().length > 0,
       scrollWidth: document.documentElement.scrollWidth,
     })),
-    { clientWidth: 390, navVisible: true, scrollWidth: 390 },
-    "390x844 shell must expose mobile navigation without horizontal overflow",
+    { clientWidth: 390, navVisible: false, scrollWidth: 390 },
+    "390x844 Computer detail must hide root navigation without horizontal overflow",
   );
   assert.deepEqual(
     await call(browser, () => ({
@@ -3425,11 +4368,138 @@ try {
       document.querySelector(".rah-computer-runtime-inspector-layer") === null,
     "mobile Runtime sheet Escape close",
   );
-  await clickButton(browser, { text: "聊天" });
+  await browser.command("Emulation.setDeviceMetricsOverride", {
+    deviceScaleFactor: 1,
+    height: 900,
+    mobile: false,
+    screenHeight: 900,
+    screenWidth: 1_440,
+    width: 1_440,
+  });
+  await clickButton(browser, { ariaLabel: "聊天" });
   await waitFor(
     browser,
     () => document.querySelector(".channel-title h1") !== null,
-    "mobile return from Computer to Chat",
+    "desktop return from Computer to Chat",
+  );
+  await clickButton(browser, { text: "任务" });
+  await waitFor(
+    browser,
+    () => document.querySelector(".kanban") !== null,
+    "desktop Room Tasks tab before header action geometry gate",
+  );
+  assert.deepEqual(
+    await call(browser, () => {
+      const action = document.querySelector(
+        'button[aria-label="频道详情与设置"]',
+      );
+      const icon = action?.querySelector("svg");
+      const actionBounds = action?.getBoundingClientRect();
+      const iconBounds = icon?.getBoundingClientRect();
+      return {
+        actionHeight: actionBounds?.height,
+        actionWidth: actionBounds?.width,
+        iconHeight: iconBounds?.height,
+        iconWidth: iconBounds?.width,
+      };
+    }),
+    {
+      actionHeight: 28,
+      actionWidth: 28,
+      iconHeight: 14,
+      iconWidth: 14,
+    },
+    "Room Tasks settings must use Raft's 28px small icon-button protocol",
+  );
+  await browser.command("Emulation.setDeviceMetricsOverride", {
+    deviceScaleFactor: 1,
+    height: 844,
+    mobile: true,
+    screenHeight: 844,
+    screenWidth: 390,
+    width: 390,
+  });
+  await waitFor(
+    browser,
+    () => window.innerWidth === 390,
+    "mobile Room Tasks toolbar viewport",
+  );
+  for (const view of ["列表", "看板"]) {
+    await clickButton(browser, { text: view });
+    assert.deepEqual(
+      await call(browser, () => {
+        const toolbar = document.querySelector(".tasks-toolbar");
+        const create = toolbar?.querySelector(".rah-task-create");
+        const icon = create?.querySelector("svg");
+        const style = create && getComputedStyle(create);
+        const bounds = toolbar?.getBoundingClientRect();
+        const controls = [
+          ...(toolbar?.querySelectorAll(".tasks-toolbar-row > *") ?? []),
+        ].map((element) => element.getBoundingClientRect());
+        return {
+          controlsContained:
+            !!bounds &&
+            controls.every(
+              (rect) =>
+                rect.left >= bounds.left &&
+                rect.right <= bounds.right &&
+                rect.top >= bounds.top &&
+                rect.bottom <= bounds.bottom,
+            ),
+          controlsOverlap: controls.some((a, index) =>
+            controls
+              .slice(index + 1)
+              .some(
+                (b) =>
+                  a.left < b.right &&
+                  a.right > b.left &&
+                  a.top < b.bottom &&
+                  a.bottom > b.top,
+              ),
+          ),
+          createHeight: create?.getBoundingClientRect().height,
+          fontSize: style?.fontSize,
+          iconHeight: icon?.getBoundingClientRect().height,
+          iconWidth: icon?.getBoundingClientRect().width,
+          lineHeight: style?.lineHeight,
+          scrollWidth: document.documentElement.scrollWidth,
+          whiteSpace: style?.whiteSpace,
+        };
+      }),
+      {
+        controlsContained: true,
+        controlsOverlap: false,
+        createHeight: 28,
+        fontSize: "12px",
+        iconHeight: 12,
+        iconWidth: 12,
+        lineHeight: "16px",
+        scrollWidth: 390,
+        whiteSpace: "nowrap",
+      },
+      `mobile Room Tasks ${view} must wrap whole controls without overlap`,
+    );
+  }
+  await clickButton(browser, { text: "聊天" });
+  await waitFor(
+    browser,
+    () => document.querySelector('textarea[aria-label="消息输入框"]') !== null,
+    "desktop Room chat tab before mobile detail gate",
+  );
+  await browser.command("Emulation.setDeviceMetricsOverride", {
+    deviceScaleFactor: 1,
+    height: 844,
+    mobile: true,
+    screenHeight: 844,
+    screenWidth: 390,
+    width: 390,
+  });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector('[aria-label="返回主页"]')?.getClientRects()
+        .length > 0 && document.querySelector(".rah-mobile-nav") === null,
+    "mobile Room detail hides root navigation and exposes back",
   );
   assert.equal(
     await call(browser, () => {
@@ -3478,19 +4548,62 @@ try {
     setter?.call(textarea, "");
     textarea.dispatchEvent(new Event("input", { bubbles: true }));
   });
-  await clickButton(browser, { text: "Rooms" });
+  await openMessageContextMenu(browser, "browser gate: Kimi only");
+  await clickButton(browser, { text: "选择消息" });
   await waitFor(
     browser,
-    () => document.querySelector(".rah-room-sidebar.is-open") !== null,
-    "mobile Rooms drawer",
+    () => {
+      const toolbar = document.querySelector(".rah-message-selection-toolbar");
+      const bounds = toolbar?.getBoundingClientRect();
+      return (
+        bounds !== undefined &&
+        bounds.left >= 0 &&
+        bounds.right <= document.documentElement.clientWidth &&
+        document.documentElement.scrollWidth === 390
+      );
+    },
+    "390px Room selection toolbar remains viewport-safe",
   );
-  await clickButton(browser, { ariaLabel: "关闭 Room 列表" });
+  await clickButton(browser, { text: "转发" });
   await waitFor(
     browser,
-    () => document.querySelector(".rah-room-sidebar.is-open") === null,
-    "mobile Rooms drawer close",
+    () => {
+      const dialog = document.querySelector(".rah-message-forward-dialog");
+      const bounds = dialog?.getBoundingClientRect();
+      return (
+        bounds !== undefined &&
+        bounds.left >= 0 &&
+        bounds.right <= document.documentElement.clientWidth &&
+        bounds.bottom <= document.documentElement.clientHeight
+      );
+    },
+    "390px forward dialog remains viewport-safe",
   );
-  await clickButton(browser, { text: "Agents" });
+  await dispatchKey(browser, "Escape", 27);
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-message-forward-dialog") === null &&
+      document.querySelector(".rah-message-selection-toolbar") !== null,
+    "forward dialog Escape returns to message selection",
+  );
+  await dispatchKey(browser, "Escape", 27);
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-message-selection-toolbar") === null,
+    "mobile Room selection Escape close",
+  );
+  await clickButton(browser, { ariaLabel: "返回主页" });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(".rah-room-sidebar.is-open") !== null &&
+      [...document.querySelectorAll(".rah-mobile-nav button")]
+        .map((button) => button.textContent?.trim())
+        .join("|") === "主页|任务|成员|设置",
+    "mobile Raft home with four root destinations",
+  );
+  await clickButton(browser, { text: "成员" });
   await waitFor(
     browser,
     () =>
@@ -3504,10 +4617,24 @@ try {
   await waitFor(
     browser,
     () =>
-      document.querySelector(".rah-member-graph-surface")?.getClientRects()
-        .length > 0 &&
-      document.querySelector(".rah-mobile-nav")?.getClientRects().length === 0,
+      document.querySelector(".rah-member-graph-surface") !== null &&
+      document
+        .querySelector(".rah-product-shell")
+        ?.classList.contains("rah-mobile-navigation-visible") === true,
     "mobile relationship graph surface",
+  );
+  assert.deepEqual(
+    await call(browser, () => {
+      const graph = document.querySelector(".rah-member-graph-surface");
+      const navigation = document.querySelector(".rah-mobile-nav");
+      return {
+        graphWidth: graph?.getBoundingClientRect().width,
+        navigationDisplay:
+          navigation === null ? null : getComputedStyle(navigation).display,
+      };
+    }),
+    { graphWidth: 390, navigationDisplay: "grid" },
+    "mobile Members root keeps the Raft four-tab navigation visible",
   );
   assert.equal(
     await call(browser, () => document.documentElement.scrollWidth),
@@ -3533,7 +4660,9 @@ try {
     () =>
       document.querySelector(".rah-agent-mobile-back")?.getClientRects()
         .length > 0 &&
-      document.querySelector(".rah-mobile-nav")?.getClientRects().length === 0,
+      (document.querySelector(".rah-mobile-nav") === null ||
+        document.querySelector(".rah-mobile-nav")?.getClientRects().length ===
+          0),
     "mobile focused Agent detail",
   );
   assert.deepEqual(
@@ -4003,6 +5132,37 @@ async function setRoomPreferenceCheckbox(connection, label, checked) {
 }
 
 async function clickTaskButton(connection, title, text) {
+  if (text === "打开讨论") {
+    const opened = await call(
+      connection,
+      (taskTitle) => {
+        const card = [...document.querySelectorAll(".kcard")].find(
+          (candidate) =>
+            candidate.querySelector(".kcard-title")?.textContent === taskTitle,
+        );
+        const button = card?.querySelector(".rah-global-card-open");
+        if (!(button instanceof HTMLButtonElement) || button.disabled)
+          return false;
+        button.click();
+        return true;
+      },
+      title,
+    );
+    assert.equal(opened, true, `Task ${title} card must open its discussion`);
+    return;
+  }
+  const statusLabel =
+    text === "确认完成"
+      ? "完成"
+      : text === "关闭任务"
+        ? "已关闭"
+        : text === "重开为待办"
+          ? "待办"
+          : undefined;
+  if (statusLabel !== undefined) {
+    await selectTaskStatus(connection, title, statusLabel);
+    return;
+  }
   await waitFor(
     connection,
     (taskTitle, buttonText) => {
@@ -4039,7 +5199,96 @@ async function clickTaskButton(connection, title, text) {
   );
 }
 
+async function selectTaskStatus(connection, title, label) {
+  await waitFor(
+    connection,
+    (taskTitle) => {
+      if (document.querySelector(".rah-discovery-popover.is-status") !== null)
+        return true;
+      const card = [...document.querySelectorAll(".kcard")].find(
+        (candidate) =>
+          candidate.querySelector(".kcard-title")?.textContent === taskTitle,
+      );
+      const trigger = card?.querySelector(".rah-task-status-picker > button");
+      if (!(trigger instanceof HTMLButtonElement) || trigger.disabled)
+        return false;
+      if (trigger.getAttribute("aria-expanded") !== "true") trigger.click();
+      return false;
+    },
+    `Task ${title} status editor`,
+    [title],
+  );
+  await waitFor(
+    connection,
+    (optionLabel) =>
+      [
+        ...document.querySelectorAll(
+          ".rah-discovery-popover.is-status [role=menuitemradio]",
+        ),
+      ].some(
+        (option) =>
+          !option.hasAttribute("disabled") &&
+          option.textContent?.trim().replace("✓", "") === optionLabel,
+      ),
+    `Task ${title} Raft status option ${label}`,
+    [label],
+  );
+  const changed = await call(
+    connection,
+    (optionLabel) => {
+      const option = [
+        ...document.querySelectorAll(
+          ".rah-discovery-popover.is-status [role=menuitemradio]",
+        ),
+      ].find(
+        (candidate) =>
+          candidate.textContent?.trim().replace("✓", "") === optionLabel,
+      );
+      if (!(option instanceof HTMLButtonElement) || option.disabled)
+        return false;
+      option.click();
+      return true;
+    },
+    label,
+  );
+  assert.equal(changed, true, `Task ${title} must select ${label}`);
+  const targetGroup =
+    label === "待办"
+      ? "todo"
+      : label === "进行中"
+        ? "in-progress"
+        : label === "待确认"
+          ? "review"
+          : label === "完成"
+            ? "done"
+            : "closed";
+  await expandTaskGroup(connection, targetGroup);
+}
+
+async function expandTaskGroup(connection, group) {
+  await waitFor(
+    connection,
+    (taskGroup) => {
+      const trigger = document.querySelector(
+        `[data-task-group="${taskGroup}"] > .kcol-head`,
+      );
+      if (!(trigger instanceof HTMLButtonElement)) return false;
+      if (trigger.getAttribute("aria-expanded") === "false") {
+        trigger.click();
+        return false;
+      }
+      return true;
+    },
+    `expanded Raft Task group ${group}`,
+    [group],
+  );
+}
+
 async function clickTaskButtonWithPointer(connection, title, text) {
+  if (["确认完成", "关闭任务", "重开为待办"].includes(text)) {
+    await clickTaskButton(connection, title, text);
+    return;
+  }
   assert.equal(
     await call(
       connection,
@@ -4146,6 +5395,72 @@ async function openMessageContextMenu(
   assert.equal(opened, true, `Message ${body} must be visible`);
 }
 
+async function clickMessageRow(
+  connection,
+  body,
+  { scope = ".chan-pane" } = {},
+) {
+  const target = await call(
+    connection,
+    (messageBody, selector) => {
+      const message = [...document.querySelectorAll(`${selector} .msg`)].find(
+        (candidate) =>
+          candidate.querySelector(".rah-message-markdown")?.textContent ===
+          messageBody,
+      );
+      message?.scrollIntoView({ block: "center", inline: "nearest" });
+      const content = message?.querySelector(".rah-message-markdown");
+      if (
+        !(message instanceof HTMLElement) ||
+        !(content instanceof HTMLElement)
+      )
+        return null;
+      for (const bounds of [
+        content.getBoundingClientRect(),
+        message.getBoundingClientRect(),
+      ]) {
+        for (const yRatio of [0.25, 0.5, 0.75]) {
+          for (const xRatio of [0.1, 0.5, 0.9]) {
+            const x = bounds.left + bounds.width * xRatio;
+            const y = bounds.top + bounds.height * yRatio;
+            const hit = document.elementFromPoint(x, y);
+            if (
+              hit instanceof Element &&
+              message.contains(hit) &&
+              hit.closest("a, button, input, label") === null
+            )
+              return { hitTarget: true, x, y };
+          }
+        }
+      }
+      return null;
+    },
+    body,
+    scope,
+  );
+  assert.ok(target, `Message ${body} must expose a pointer target`);
+  assert.equal(target.hitTarget, true);
+  await connection.command("Input.dispatchMouseEvent", {
+    type: "mouseMoved",
+    x: target.x,
+    y: target.y,
+  });
+  await connection.command("Input.dispatchMouseEvent", {
+    button: "left",
+    clickCount: 1,
+    type: "mousePressed",
+    x: target.x,
+    y: target.y,
+  });
+  await connection.command("Input.dispatchMouseEvent", {
+    button: "left",
+    clickCount: 1,
+    type: "mouseReleased",
+    x: target.x,
+    y: target.y,
+  });
+}
+
 async function setDialogInput(connection, index, value) {
   const changed = await call(
     connection,
@@ -4201,30 +5516,6 @@ async function setTaskDialogContent(connection, title, description) {
   );
 }
 
-async function setTaskCloseReason(connection, reason) {
-  assert.equal(
-    await call(
-      connection,
-      (nextReason) => {
-        const textarea = document.querySelector(
-          ".rah-task-close-dialog textarea",
-        );
-        if (!(textarea instanceof HTMLTextAreaElement)) return false;
-        const setter = Object.getOwnPropertyDescriptor(
-          HTMLTextAreaElement.prototype,
-          "value",
-        )?.set;
-        setter?.call(textarea, nextReason);
-        textarea.dispatchEvent(new Event("input", { bubbles: true }));
-        textarea.dispatchEvent(new Event("change", { bubbles: true }));
-        return true;
-      },
-      reason,
-    ),
-    true,
-  );
-}
-
 async function setTaskDialogAssignee(connection, label) {
   assert.equal(
     await call(
@@ -4248,39 +5539,6 @@ async function setTaskDialogAssignee(connection, label) {
     ),
     true,
   );
-}
-
-async function setTaskReassignment(connection, label, reason) {
-  const updated = await call(
-    connection,
-    (nextLabel, nextReason) => {
-      const dialog = document.querySelector(".rah-task-reassign-dialog");
-      const select = dialog?.querySelector("select");
-      const textarea = dialog?.querySelector("textarea");
-      if (!(select instanceof HTMLSelectElement)) return false;
-      if (!(textarea instanceof HTMLTextAreaElement)) return false;
-      const option = [...select.options].find(
-        (candidate) => candidate.textContent?.trim() === nextLabel,
-      );
-      if (option === undefined) return false;
-      const selectSetter = Object.getOwnPropertyDescriptor(
-        HTMLSelectElement.prototype,
-        "value",
-      )?.set;
-      const textareaSetter = Object.getOwnPropertyDescriptor(
-        HTMLTextAreaElement.prototype,
-        "value",
-      )?.set;
-      selectSetter?.call(select, option.value);
-      select.dispatchEvent(new Event("change", { bubbles: true }));
-      textareaSetter?.call(textarea, nextReason);
-      textarea.dispatchEvent(new Event("input", { bubbles: true }));
-      return true;
-    },
-    label,
-    reason,
-  );
-  assert.equal(updated, true, `safe reassignment target ${label}`);
 }
 
 async function setTaskDialogRole(connection, legendText, agentLabel) {
@@ -4310,80 +5568,6 @@ async function setTaskDialogRole(connection, legendText, agentLabel) {
       agentLabel,
     ),
     true,
-  );
-}
-
-async function clickTaskOwnerTrigger(connection, title) {
-  const clicked = await call(
-    connection,
-    (taskTitle) => {
-      const card = [...document.querySelectorAll(".kcard")].find(
-        (candidate) =>
-          candidate.querySelector(".kcard-title")?.textContent === taskTitle,
-      );
-      const trigger = card?.querySelector(".rah-task-owner-trigger");
-      if (!(trigger instanceof HTMLButtonElement) || trigger.disabled)
-        return false;
-      trigger.focus();
-      trigger.click();
-      return true;
-    },
-    title,
-  );
-  assert.equal(clicked, true, `Task ${title} owner trigger`);
-  await waitFor(
-    connection,
-    () => document.querySelector(".rah-task-owner-menu") !== null,
-    `Task ${title} owner menu`,
-  );
-}
-
-async function clickTaskOwnerOption(connection, title, label) {
-  const clicked = await call(
-    connection,
-    (taskTitle, optionLabel) => {
-      const card = [...document.querySelectorAll(".kcard")].find(
-        (candidate) =>
-          candidate.querySelector(".kcard-title")?.textContent === taskTitle,
-      );
-      const option = [
-        ...(card?.querySelectorAll("[role=menuitemradio]") ?? []),
-      ].find(
-        (candidate) =>
-          candidate
-            .querySelector(":scope > span:last-child")
-            ?.textContent?.trim() === optionLabel,
-      );
-      if (!(option instanceof HTMLButtonElement) || option.disabled)
-        return false;
-      option.click();
-      return true;
-    },
-    title,
-    label,
-  );
-  assert.equal(clicked, true, `Task ${title} owner option ${label}`);
-}
-
-async function waitForTaskOwner(connection, title, label) {
-  await waitFor(
-    connection,
-    (taskTitle, ownerLabel) => {
-      const card = [...document.querySelectorAll(".kcard")].find(
-        (candidate) =>
-          candidate.querySelector(".kcard-title")?.textContent === taskTitle,
-      );
-      return (
-        card
-          ?.querySelector(".rah-task-owner-trigger")
-          ?.getAttribute("aria-label") ===
-          `Task #${card.querySelector(".kcard-no")?.textContent?.slice(1)} 负责人：${ownerLabel}` &&
-        card.getAttribute("data-task-workflow-status") === "todo"
-      );
-    },
-    `Task ${title} owner ${label}`,
-    [title, label],
-    15_000,
   );
 }
 
@@ -4550,6 +5734,43 @@ async function postMessage(connection, body) {
   );
   assert.equal(changed, true);
   await clickButton(connection, { title: "发送" });
+}
+
+async function uploadRoomAttachment(connection, filename) {
+  const selected = await call(
+    connection,
+    (name) => {
+      const input = document.querySelector(
+        'form.composer input[aria-label="选择附件"]',
+      );
+      if (!(input instanceof HTMLInputElement)) return false;
+      const transfer = new DataTransfer();
+      transfer.items.add(
+        new File(["RAH OS forwarded attachment browser gate\n"], name, {
+          type: "text/plain",
+        }),
+      );
+      Object.defineProperty(input, "files", {
+        configurable: true,
+        value: transfer.files,
+      });
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+      return true;
+    },
+    filename,
+  );
+  assert.equal(selected, true);
+  await waitFor(
+    connection,
+    (name) =>
+      [...document.querySelectorAll("form.composer .rah-file-draft")].some(
+        (row) =>
+          row.querySelector("span")?.textContent === name &&
+          row.querySelector("small")?.textContent === "已上传",
+      ),
+    `Room attachment upload ${filename}`,
+    [filename],
+  );
 }
 
 async function openMessageThread(connection, body) {
@@ -4825,6 +6046,14 @@ async function dragSidebarRoom(connection, sourceName, targetName) {
     x: points.target.x,
     y: points.target.y,
   });
+  await waitFor(
+    connection,
+    () =>
+      document.querySelector(".rah-sidebar-sortable.is-dragging") === null &&
+      document.querySelector(".rah-sidebar-drag-preview") === null,
+    `Room drag settles ${sourceName} -> ${targetName}`,
+  );
+  await delay(100);
   return dragState;
 }
 
@@ -4841,6 +6070,16 @@ async function dispatchKey(connection, key, virtualKeyCode) {
     type: "keyUp",
     windowsVirtualKeyCode: virtualKeyCode,
   });
+}
+
+async function captureBrowserEvidence(connection, filename) {
+  const directory = process.env.RAH_BROWSER_EVIDENCE_DIRECTORY;
+  if (!directory) return;
+  mkdirSync(directory, { recursive: true });
+  const { data } = await connection.command("Page.captureScreenshot", {
+    format: "png",
+  });
+  writeFileSync(join(directory, filename), Buffer.from(data, "base64"));
 }
 
 async function terminate(processHandle) {

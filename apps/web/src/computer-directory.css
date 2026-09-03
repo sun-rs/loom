@@ -692,7 +692,7 @@
   width: 100%;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 767px) {
   .rah-computer-directory {
     grid-column: 1;
     grid-template-columns: minmax(0, 1fr);

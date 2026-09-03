@@ -36,6 +36,7 @@ export function DiscoveryFilter({
   showCount = multiple,
   selected = values.length > 0,
   className = "",
+  triggerClassName = "",
   variant = "selection",
 }: {
   label: string;
@@ -52,6 +53,7 @@ export function DiscoveryFilter({
   showCount?: boolean;
   selected?: boolean;
   className?: string;
+  triggerClassName?: string;
   variant?: "selection" | "status" | "reaction" | "sidebar";
 }) {
   const [open, setOpen] = useState(false);
@@ -175,7 +177,7 @@ export function DiscoveryFilter({
         type="button"
         className={`task-filter-trigger${
           variant === "sidebar" ? " rah-interaction-flat" : ""
-        }`}
+        }${triggerClassName ? ` ${triggerClassName}` : ""}`}
         aria-label={triggerAriaLabel}
         disabled={disabled}
         aria-expanded={open}

@@ -87,7 +87,7 @@ test("settings shell uses the measured Raft geometry and one shared visual proto
   assert.match(css, /\.rah-settings-mobile-back\s*\{[^}]*display:\s*none/su);
   assert.match(
     css,
-    /@media \(max-width:\s*700px\)[\s\S]*\.rah-settings-mobile-back\s*\{[^}]*display:\s*inline-flex/su,
+    /@media \(max-width:\s*767px\)[\s\S]*\.rah-settings-mobile-back\s*\{[^}]*display:\s*inline-flex/su,
   );
 });
 

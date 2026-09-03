@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-09-03",
+  "release": {
+    "branch": "release/v1.11.0",
+    "builtAt": "2026-09-02T02:33:10Z",
+    "commitSha": "16856201b6d089c251967fe2afdb2b0a0dcbb1a0"
+  },
+  "asset": {
+    "url": "https://app.raft.build/assets/index-Biin3FEA.js",
+    "sha256": "e798f35bde09eeda2927669406e10718392ff7574796016441def59dbc5b05f9"
+  },
+  "stylesheet": {
+    "url": "https://app.raft.build/assets/index-DuTUw-4P.css",
+    "sha256": "a7e5fd8099d6b832e3182ebe8761989eb5268a3a31934830991d281e5efa753e"
+  },
+  "signature": [
+    "shadow-brutal-sm",
+    "transition-all",
+    "duration-100",
+    "hover:-translate-y-[1px]",
+    "hover:shadow-brutal",
+    "active:translate-x-[1px|2px]",
+    "active:translate-y-[1px|2px]",
+    "active:shadow-brutal-active"
+  ],
+  "computedContract": {
+    "restShadow": "2px 2px 0 #141111",
+    "hoverTransform": "translateY(-1px)",
+    "hoverShadow": "4px 4px 0 #141111",
+    "activeShadow": "1px 1px 0 #141111",
+    "transitionDuration": "100ms",
+    "transitionTimingFunction": "cubic-bezier(0.4, 0, 0.2, 1)"
+  },
+  "taskCardGeometry": {
+    "method": "The published Ait markup and published stylesheet were rendered in standards mode in the same Chrome build as the formal RAH OS page.",
+    "viewport": "1440x1000",
+    "sourceBorderBoxHeightCssPx": 105.25,
+    "rahBorderBoxHeightCssPx": 105.25,
+    "devicePixelRatioOneRoundedHeightPx": 105,
+    "devicePixelRatioTwoRoundedHeightPx": 211,
+    "boardHeaderGapCssPx": 12,
+    "listHeaderGapCssPx": 10,
+    "listGroupGapCssPx": 24,
+    "cardGapCssPx": 10,
+    "note": "The height is content-derived rather than a min-height. Compare source and RAH in the same browser engine because glyph metrics can differ fractionally across engines."
+  },
+  "occurrences": [
+    {
+      "id": "device-login-secondary-action",
+      "activeOffset": 1,
+      "localDisposition": "excluded-central-account"
+    },
+    {
+      "id": "connected-app-card-link",
+      "activeOffset": 1,
+      "localDisposition": "excluded-connected-apps"
+    },
+    {
+      "id": "oauth-provider-button",
+      "activeOffset": 2,
+      "localDisposition": "excluded-central-account"
+    },
+    {
+      "id": "email-verification-logout",
+      "activeOffset": 1,
+      "localDisposition": "excluded-central-account"
+    },
+    {
+      "id": "server-selector-card",
+      "activeOffset": 2,
+      "localDisposition": "excluded-central-server-topology"
+    },
+    {
+      "id": "task-card",
+      "activeOffset": 1,
+      "localDisposition": "adopted"
+    },
+    {
+      "id": "mobile-computer-list-item",
+      "activeOffset": 1,
+      "localDisposition": "open-gap-mobile-computer-surface"
+    }
+  ],
+  "notes": [
+    "The seven entries are literal strong-lift signatures in the published JavaScript asset, not a count of every composed Button instance.",
+    "Raft sidebar rows use a different border/background/shadow-only family and must not be upgraded to translateY merely because they also mention shadow-brutal-sm.",
+    "RAH OS intentionally has no Raft central account, connected-app marketplace, or central Server selector surface.",
+    "The Raft mobile Computer card remains a separately tracked responsive-surface gap; the desktop compact Computer row is not the same source component."
+  ]
+}

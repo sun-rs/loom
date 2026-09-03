@@ -31,6 +31,7 @@ export function ComputerRuntimePane({
   computer,
   agents = [],
   canEditProfile = false,
+  onDetailOpenChange,
   onOpenAgent,
   onUpdateComputerProfile,
 }: {
@@ -40,6 +41,7 @@ export function ComputerRuntimePane({
   computer?: LocalComputerObservation | undefined;
   agents?: readonly WorkspaceAgentView[];
   canEditProfile?: boolean;
+  onDetailOpenChange?: ((open: boolean) => void) | undefined;
   onOpenAgent: (agentDefinitionId: string) => void;
   onUpdateComputerProfile?: (
     input: ClientComputerProfileUpdateRequest,
@@ -160,7 +162,10 @@ export function ComputerRuntimePane({
               <button
                 aria-current={selected ? "page" : undefined}
                 className={`rah-computer-row rah-interaction-row${selected ? " is-selected" : ""}`}
-                onClick={() => setSelected(true)}
+                onClick={() => {
+                  setSelected(true);
+                  onDetailOpenChange?.(true);
+                }}
                 type="button"
               >
                 <span className="rah-computer-row-icon">
@@ -209,7 +214,10 @@ export function ComputerRuntimePane({
             <button
               aria-label="返回计算机列表"
               className="rah-computer-detail-back"
-              onClick={() => setSelected(false)}
+              onClick={() => {
+                setSelected(false);
+                onDetailOpenChange?.(false);
+              }}
               type="button"
             >
               <Icon name="arrow-left" />

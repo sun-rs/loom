@@ -88,12 +88,89 @@ export const RoomMembershipSchema = z
   .strict();
 export type RoomMembership = z.infer<typeof RoomMembershipSchema>;
 
+export const ForwardedMessageAuthorSnapshotSchema = z
+  .object({
+    avatarKey: z
+      .string()
+      .regex(/^[a-z0-9_-]{1,64}$/)
+      .optional(),
+    displayName: z.string().trim().min(1).max(120).optional(),
+    handle: IdentifierSchema,
+    kind: ParticipantKindSchema,
+    principalId: IdentifierSchema,
+  })
+  .strict();
+export type ForwardedMessageAuthorSnapshot = z.infer<
+  typeof ForwardedMessageAuthorSnapshotSchema
+>;
+
+export const ForwardedMessageSnapshotSchema = z
+  .object({
+    actor: ForwardedMessageAuthorSnapshotSchema,
+    attachmentPolicy: z.literal("projected").optional(),
+    attachments: z.array(AttachmentSchema).max(10).default([]),
+    body: z.string(),
+    createdAt: TimestampSchema,
+    isThreadChild: z.boolean(),
+    provenanceState: z.literal("available").optional(),
+    sourceMessageId: IdentifierSchema,
+    sourceRoomSeq: z.number().int().positive(),
+    sourceRootMessageId: IdentifierSchema.optional(),
+    sourceThreadId: IdentifierSchema.optional(),
+  })
+  .strict()
+  .superRefine((item, context) => {
+    const hasThreadIdentity =
+      item.sourceRootMessageId !== undefined &&
+      item.sourceThreadId !== undefined;
+    if (item.isThreadChild !== hasThreadIdentity) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "thread child snapshots require both sourceRootMessageId and sourceThreadId",
+      });
+    }
+    if (
+      (item.attachmentPolicy === undefined) !==
+      (item.provenanceState === undefined)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "forwarded attachment policy and provenance state must be projected together",
+      });
+    }
+  });
+export type ForwardedMessageSnapshot = z.infer<
+  typeof ForwardedMessageSnapshotSchema
+>;
+
+export const ForwardedMessageBundleSchema = z
+  .object({
+    items: z.array(ForwardedMessageSnapshotSchema).min(1).max(100),
+    kind: z.literal("forwarded-bundle"),
+    sourceRoom: z
+      .object({
+        kind: RoomKindSchema,
+        name: IdentifierSchema,
+        roomId: IdentifierSchema,
+        slug: IdentifierSchema,
+      })
+      .strict(),
+    version: z.literal(1),
+  })
+  .strict();
+export type ForwardedMessageBundle = z.infer<
+  typeof ForwardedMessageBundleSchema
+>;
+
 export const MessageSchema = z
   .object({
     attachments: z.array(AttachmentSchema).max(10).optional(),
     actorId: IdentifierSchema,
     body: z.string(),
     createdAt: TimestampSchema,
+    forwardedBundle: ForwardedMessageBundleSchema.optional(),
     messageId: IdentifierSchema,
     roomId: IdentifierSchema,
     roomSeq: z.number().int().positive(),
@@ -102,8 +179,10 @@ export const MessageSchema = z
   .strict()
   .refine(
     (message) =>
-      message.body.trim().length > 0 || !!message.attachments?.length,
-    "message body or attachment is required",
+      message.body.trim().length > 0 ||
+      !!message.attachments?.length ||
+      message.forwardedBundle !== undefined,
+    "message body or attachment or forwarded bundle is required",
   );
 export type Message = z.infer<typeof MessageSchema>;
 

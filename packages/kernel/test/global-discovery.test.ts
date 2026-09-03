@@ -607,6 +607,14 @@ test("global Tasks are ACL-filtered Workspace channel tasks, never DM/control ta
     });
     assert.equal(first.total, 2);
     assert.equal(first.tasks[0]?.task.taskId, b.taskId);
+    assert.equal(first.tasks[0]?.canManageAnyTask, true);
+    assert.equal(
+      f.kernel.listGlobalTasks(f.peerActor, {
+        workspaceId: f.workspaceId,
+        limit: 1,
+      }).tasks[0]?.canManageAnyTask,
+      false,
+    );
     f.task(f.channel.roomId, "New after snapshot");
     const next = f.kernel.listGlobalTasks(f.actor, {
       workspaceId: f.workspaceId,

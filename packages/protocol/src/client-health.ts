@@ -78,6 +78,7 @@ export const ClientHealthResponseSchema = ClientHealthBaseSchema.extend({
       memberRead: z.boolean(),
       memberWrite: z.boolean(),
       messageRead: z.boolean(),
+      messageForward: z.boolean().optional(),
       messageWrite: z.boolean(),
       roomRead: z.boolean(),
       roomAgentSos: z.boolean().optional(),

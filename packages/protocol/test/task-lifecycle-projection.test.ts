@@ -3,9 +3,43 @@ import test from "node:test";
 
 import {
   projectTaskLifecycle,
+  taskWorkflowTransitionOptions,
   taskWorkflowStatus,
   type TaskState,
 } from "../src/index.ts";
+
+test("Raft workflow options preserve the ordinary graph and manager override", () => {
+  assert.deepEqual(taskWorkflowTransitionOptions("todo", false), [
+    "todo",
+    "in_progress",
+    "closed",
+  ]);
+  assert.deepEqual(taskWorkflowTransitionOptions("in_review", false), [
+    "in_review",
+    "done",
+    "in_progress",
+    "closed",
+  ]);
+  assert.deepEqual(taskWorkflowTransitionOptions("done", false), [
+    "done",
+    "todo",
+    "in_progress",
+    "in_review",
+    "closed",
+  ]);
+  assert.deepEqual(taskWorkflowTransitionOptions("closed", false), [
+    "closed",
+    "todo",
+    "in_progress",
+  ]);
+  assert.deepEqual(taskWorkflowTransitionOptions("todo", true), [
+    "todo",
+    "in_progress",
+    "in_review",
+    "done",
+    "closed",
+  ]);
+});
 
 test("legacy canonical task states project onto the five Raft workflow states", () => {
   const expected: Record<
@@ -28,6 +62,13 @@ test("legacy canonical task states project onto the five Raft workflow states", 
 });
 
 test("execution and attention remain orthogonal to the public workflow status", () => {
+  assert.deepEqual(
+    projectTaskLifecycle({ state: "submitted", workflowStatus: "in_progress" }),
+    {
+      workflowStatus: "in_progress",
+      executionPhase: "idle",
+    },
+  );
   assert.deepEqual(projectTaskLifecycle({ state: "claimed" }), {
     workflowStatus: "in_progress",
     executionPhase: "claimed",

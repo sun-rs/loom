@@ -11,6 +11,7 @@ export const ClientAgentProfileRequestSchema = z
     basedOnRoomSeq: z.number().int().nonnegative(),
     idempotencyKey: IdentifierSchema,
     field: z.enum(["displayName", "description", "avatarKey"]),
+    avatarUploadIntentId: IdentifierSchema.optional(),
     value: z.string().trim().max(2000),
   })
   .strict()

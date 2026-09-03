@@ -17,6 +17,7 @@ import "./discovery-controls.css";
 import "./identity-interactions.css";
 import "./chat-surface.css";
 import "./message-social.css";
+import "./message-selection.css";
 import "./room-files.css";
 import "./web-build-recovery.css";
 import { applySettingsPreferences } from "./settings-preferences.ts";

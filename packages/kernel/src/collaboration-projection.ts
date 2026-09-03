@@ -58,6 +58,7 @@ export function roomProjectionFromRow(row: Row): Room {
 
 export function messageProjectionFromRow(row: Row): Message {
   const threadId = nullableText(row, "thread_id");
+  const forwardedBundleJson = nullableText(row, "forwarded_bundle_json");
   return MessageSchema.parse({
     ...(typeof row.attachments_json === "string" &&
     row.attachments_json !== "[]"
@@ -66,6 +67,9 @@ export function messageProjectionFromRow(row: Row): Message {
     actorId: text(row, "actor_id"),
     body: text(row, "body"),
     createdAt: text(row, "created_at"),
+    ...(forwardedBundleJson === null
+      ? {}
+      : { forwardedBundle: JSON.parse(forwardedBundleJson) }),
     messageId: text(row, "message_id"),
     roomId: text(row, "room_id"),
     roomSeq: integer(row, "room_seq"),

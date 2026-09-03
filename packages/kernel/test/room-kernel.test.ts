@@ -149,6 +149,85 @@ test("message mutation atomically derives event, Inbox, Activation, and content-
   kernel.close();
 });
 
+test("Task workflow status follows Raft's independently editable five-state board", () => {
+  const { agent, humanActor, kernel, room } = createFixture();
+  const created = kernel.createTask(humanActor, {
+    assigneeId: agent.principalId,
+    idempotencyKey: "workflow-created",
+    roomId: room.roomId,
+    title: "Move through the Raft board",
+  });
+  let basedOnRoomSeq = created.event.roomSeq;
+  const activationsBefore = kernel.listActivations({
+    participantId: agent.principalId,
+    roomId: room.roomId,
+  }).length;
+
+  for (const workflowStatus of [
+    "in_progress",
+    "in_review",
+    "done",
+    "closed",
+    "todo",
+  ] as const) {
+    const changed = kernel.updateTaskWorkflowStatus(humanActor, {
+      basedOnRoomSeq,
+      idempotencyKey: `workflow-${workflowStatus}`,
+      taskId: created.task.taskId,
+      workflowStatus,
+    });
+    assert.equal(changed.task.workflowStatus, workflowStatus);
+    assert.equal(changed.task.state, "todo");
+    assert.equal(changed.event.type, "task.workflow_updated");
+    assert.deepEqual(changed.activationIds, []);
+    assert.equal(
+      kernel.listActivations({
+        participantId: agent.principalId,
+        roomId: room.roomId,
+      }).length,
+      activationsBefore,
+    );
+    basedOnRoomSeq = changed.event.roomSeq;
+  }
+
+  kernel.close();
+});
+
+test("ordinary Task editors follow Raft's transition graph", () => {
+  const { agentActor, humanActor, kernel, room } = createFixture();
+  const created = kernel.createTask(humanActor, {
+    idempotencyKey: "ordinary-workflow-created",
+    roomId: room.roomId,
+    title: "Respect ordinary Raft transitions",
+  });
+  const inProgress = kernel.updateTaskWorkflowStatus(agentActor, {
+    basedOnRoomSeq: created.event.roomSeq,
+    idempotencyKey: "ordinary-workflow-progress",
+    taskId: created.task.taskId,
+    workflowStatus: "in_progress",
+  });
+  assert.equal(inProgress.task.workflowStatus, "in_progress");
+  assert.throws(
+    () =>
+      kernel.updateTaskWorkflowStatus(agentActor, {
+        basedOnRoomSeq: inProgress.event.roomSeq,
+        idempotencyKey: "ordinary-workflow-back-to-todo",
+        taskId: created.task.taskId,
+        workflowStatus: "todo",
+      }),
+    ConflictError,
+  );
+  const review = kernel.updateTaskWorkflowStatus(agentActor, {
+    basedOnRoomSeq: inProgress.event.roomSeq,
+    idempotencyKey: "ordinary-workflow-review",
+    taskId: created.task.taskId,
+    workflowStatus: "in_review",
+  });
+  assert.equal(review.task.workflowStatus, "in_review");
+
+  kernel.close();
+});
+
 test("a Human Room message wakes every joined Agent by membership", () => {
   const { agent, humanActor, kernel, otherAgent, room } = createFixture();
 
@@ -4394,7 +4473,7 @@ test("current schema preserves legacy InputRequests while adding Room deletion r
         user_version: number;
       }
     ).user_version,
-    43,
+    KERNEL_SCHEMA_VERSION,
   );
   assert.deepEqual(
     migrated
@@ -4403,6 +4482,14 @@ test("current schema preserves legacy InputRequests while adding Room deletion r
       .map((row) => (row as { name: string }).name)
       .filter((name) => name.startsWith("cancel")),
     ["cancelled_at", "cancelled_by", "cancellation_reason"],
+  );
+  assert.equal(
+    (
+      migrated.prepare("SELECT workflow_status FROM tasks LIMIT 1").get() as {
+        workflow_status: string;
+      }
+    ).workflow_status,
+    "todo",
   );
   assert.deepEqual(
     migrated

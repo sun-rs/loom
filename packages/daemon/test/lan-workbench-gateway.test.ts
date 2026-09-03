@@ -58,6 +58,7 @@ test("the formal LAN gateway requires TLS pairing and keeps Human authority serv
     authorization?: string;
     body: string;
     method?: string;
+    range?: string;
     url?: string;
   }> = [];
   const upstream = createServer(async (request, response) => {
@@ -67,8 +68,23 @@ test("the formal LAN gateway requires TLS pairing and keeps Human authority serv
         : { authorization: request.headers.authorization }),
       body: await requestBody(request),
       ...(request.method === undefined ? {} : { method: request.method }),
+      ...(request.headers.range === undefined
+        ? {}
+        : { range: request.headers.range }),
       ...(request.url === undefined ? {} : { url: request.url }),
     });
+    if (
+      request.url === "/v3/client/files/content/attachment-1" &&
+      request.headers.range === "bytes=1-7"
+    ) {
+      response.statusCode = 206;
+      response.setHeader("accept-ranges", "bytes");
+      response.setHeader("content-range", "bytes 1-7/12");
+      response.setHeader("content-length", "7");
+      response.setHeader("content-type", "application/octet-stream");
+      response.end("AH OS T");
+      return;
+    }
     response.setHeader("content-type", "application/json");
     response.end(JSON.stringify({ ok: true }));
   });
@@ -209,6 +225,26 @@ test("the formal LAN gateway requires TLS pairing and keeps Human authority serv
       url: "/v3/client/health",
     });
 
+    const ranged = await secureRequest(
+      origin,
+      "/v3/client/files/content/attachment-1",
+      {
+        headers: { cookie, range: "bytes=1-7" },
+      },
+    );
+    assert.equal(ranged.statusCode, 206);
+    assert.equal(ranged.headers["accept-ranges"], "bytes");
+    assert.equal(ranged.headers["content-range"], "bytes 1-7/12");
+    assert.equal(ranged.headers["content-length"], "7");
+    assert.equal(ranged.body, "AH OS T");
+    assert.deepEqual(observed.at(-1), {
+      authorization: "Bearer server-only-human-token",
+      body: "",
+      method: "GET",
+      range: "bytes=1-7",
+      url: "/v3/client/files/content/attachment-1",
+    });
+
     const rejectedCsrf = await secureRequest(
       origin,
       "/v3/client/commands/execute",
@@ -223,7 +259,7 @@ test("the formal LAN gateway requires TLS pairing and keeps Human authority serv
       },
     );
     assert.equal(rejectedCsrf.statusCode, 403);
-    assert.equal(observed.length, 1);
+    assert.equal(observed.length, 2);
 
     const devices = await secureRequest(origin, "/_rah/devices", {
       headers: { cookie },
