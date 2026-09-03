@@ -2,7 +2,7 @@
 
 日期：2026-09-03
 
-当前裁决：**代码和定向性能审计通过；正式重启、全门禁与浏览器复核待本文末次更新。**
+当前裁决：**通过。代码、全门禁、隔离浏览器、正式数据重启与正式浏览器复核均已完成；1h/24h soak 仍作为运行证据继续积累，不阻塞本批发布。**
 
 ## 1. 审计范围
 
@@ -63,4 +63,41 @@ fallback。新隔离 4-runtime 实例连续跨三个 30 秒周期采样：CPU �
 
 ## 5. 正式发布复核
 
-待全门禁、不可变 Web build、active-work 审计、离线备份、正式 4173 优雅重启及 desktop/390×844 实页完成后填写。
+### 5.1 门禁与发布
+
+- `npm run check`：通过；Web/合同 244/244、parity regression 34/34，其余 package suite 同批全绿；
+- `npm run format:check`、`git diff --check`：通过；`npm audit --omit=dev` 为 0 漏洞；
+- `npm run test:web:build-recovery`：真实 Chromium 的 1280×800 与 390×844 均通过，旧 build 提示、继续、刷新及 typed deep link 保留均符合合同；
+- `npm run test:web:workbench`：真实 Chrome 390×844 下 production build、fake Agent reply、持久重启、provider session resume 和浏览器无缝重连通过；
+- `npm run test:web:browser`：真实 Chrome 完成 1440 桌面与 390×844 全行为门禁，无未捕获浏览器异常；
+- 实现提交 `d2cada2` 已推送 `origin/main`。
+
+### 5.2 正式数据与重启
+
+停机前直接读取正式 Room DB：30 个 Activation 全部 `completed`，30 个 run attempt 全部 `exited`，无 pending
+InputRequest、无 active exclusive-operation lease；唯一 Task 为 `submitted`，没有在执行中的工作。随后向 PID 22701
+发送 `SIGTERM`，4173 listener 在 1 秒内退出。
+
+离线备份写入
+`~/.rah/backups/pre-local-runtime-retention-20260903-Bj6cGi`，包含 canonical Room/Task/Memory、附件、凭据配置和
+provider session，刻意排除约 543 MiB 可再生 process output 及派生索引；`room.db`、`runtime-registry.db`、
+`web-push.db` 均通过 `PRAGMA quick_check`。
+
+正式实例随后以 PID 25368、四个本地 runtime 和原 workspace/Room identity 恢复在 `127.0.0.1:4173`。HTTP 200，
+`x-rah-web-build-id=a9c6c707e026e31b98c15320d42dbb6a1e3addd18bf6492b04700faf55a552d8`。正式可见 Chrome 复核：
+
+- 原 Room 历史、链接、消息回复/回应/收藏动作和已提交 Task #1 可读；历史报数 1→10 保持完整；
+- 点击 Agent 姓名得到 `@Kimi `，清空草稿后未产生消息；点击头像打开默认“动态”资料页，动态成功读取跨 Room
+  structured runtime events；切换另一私信后旧资料页关闭且草稿为空；
+- 全局 Tasks 显示 1 个 draggable shell 与 1 个 Pencil 状态入口。
+
+重启后、可见 Chrome 连接且跨过多个 30 秒 reconciliation 周期时，CPU 样本为 0.5%–1.8%，RSS 约
+425 MiB，macOS physical footprint 255.8 MiB、观察峰值 317.8 MiB。相较修复前正式空闲 2.4%–4.1%（短峰
+8.2%）与 417.3 MiB physical footprint，空闲扫描放大已经显著收敛。当前不可变 Web release 恰为 4 代，符合
+默认留存上限。
+
+### 5.3 有限结论
+
+本批可发布，但不把约三分钟正式样本包装成长期 soak。剩余运行证据是 1 小时与 24 小时采样；若出现 physical
+footprint 单调上升或 30 秒边界外持续 CPU 峰值，应以 heap/`vmmap` 和 canonical work counters 联合诊断，不能只看
+RSS。
