@@ -69,6 +69,11 @@ export type RuntimeProfileProbeValidation = {
   validationCount: number;
 };
 
+export type RuntimeProfileProbeReportPage = {
+  nextCursor?: string;
+  reports: readonly RuntimeProfileProbeReport[];
+};
+
 export class RuntimeProfileRegistrySecurityError extends Error {}
 export class RuntimeProfileRegistryConflictError extends Error {}
 export class RuntimeProfileRegistryNotFoundError extends Error {}
@@ -301,6 +306,9 @@ export class RuntimeProfileRegistry {
 
       CREATE INDEX IF NOT EXISTS idx_runtime_profile_probe_reports_revision
         ON runtime_profile_probe_reports(runtime_profile_revision_id, observed_at, probe_report_id);
+
+      CREATE INDEX IF NOT EXISTS idx_runtime_profile_probe_reports_observed
+        ON runtime_profile_probe_reports(observed_at, probe_report_id);
 
       CREATE TABLE IF NOT EXISTS runtime_profile_probe_heads (
         runtime_profile_revision_id TEXT PRIMARY KEY REFERENCES runtime_profile_revisions(runtime_profile_revision_id),
@@ -848,28 +856,105 @@ export class RuntimeProfileRegistry {
   listProbeReports(
     runtimeProfileRevisionId?: string,
   ): RuntimeProfileProbeReport[] {
-    const rows =
-      runtimeProfileRevisionId === undefined
-        ? this.#database
-            .prepare(
-              `SELECT reports.*, payloads.payload_json
-               FROM runtime_profile_probe_reports reports
-               JOIN runtime_profile_probe_payloads payloads
-                 ON payloads.payload_digest = reports.payload_digest
-               ORDER BY reports.observed_at, reports.probe_report_id`,
-            )
-            .all()
-        : this.#database
-            .prepare(
-              `SELECT reports.*, payloads.payload_json
-               FROM runtime_profile_probe_reports reports
-               JOIN runtime_profile_probe_payloads payloads
-                 ON payloads.payload_digest = reports.payload_digest
-               WHERE reports.runtime_profile_revision_id = ?
-               ORDER BY reports.observed_at, reports.probe_report_id`,
-            )
-            .all(runtimeProfileRevisionId);
-    return rows.map((row) => this.#probeReportFromRow(row));
+    return [
+      ...this.listProbeReportPage({
+        limit: 200,
+        ...(runtimeProfileRevisionId === undefined
+          ? {}
+          : { runtimeProfileRevisionId }),
+      }).reports,
+    ];
+  }
+
+  listProbeReportPage(
+    input: {
+      cursor?: string;
+      limit?: number;
+      runtimeProfileRevisionId?: string;
+    } = {},
+  ): RuntimeProfileProbeReportPage {
+    const limit = input.limit ?? 50;
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 200) {
+      throw new RuntimeProfileRegistrySecurityError(
+        "probe report page limit must be an integer from 1 to 200",
+      );
+    }
+    const scope = input.runtimeProfileRevisionId ?? null;
+    const cursor =
+      input.cursor === undefined
+        ? undefined
+        : decodeProbeReportCursor(input.cursor, scope);
+    const select = `SELECT reports.*, payloads.payload_json
+                    FROM runtime_profile_probe_reports reports
+                    JOIN runtime_profile_probe_payloads payloads
+                      ON payloads.payload_digest = reports.payload_digest`;
+    const order = `ORDER BY reports.observed_at, reports.probe_report_id
+                   LIMIT ?`;
+    const rowLimit = limit + 1;
+    let rows: Row[];
+    if (scope === null && cursor === undefined) {
+      rows = this.#database
+        .prepare(`${select} ${order}`)
+        .all(rowLimit) as Row[];
+    } else if (scope !== null && cursor === undefined) {
+      rows = this.#database
+        .prepare(
+          `${select}
+           WHERE reports.runtime_profile_revision_id = ?
+           ${order}`,
+        )
+        .all(scope, rowLimit) as Row[];
+    } else if (scope === null && cursor !== undefined) {
+      rows = this.#database
+        .prepare(
+          `${select}
+           WHERE reports.observed_at > ?
+              OR (reports.observed_at = ? AND reports.probe_report_id > ?)
+           ${order}`,
+        )
+        .all(
+          cursor.observedAt,
+          cursor.observedAt,
+          cursor.probeReportId,
+          rowLimit,
+        ) as Row[];
+    } else {
+      if (scope === null || cursor === undefined) {
+        throw new Error("probe report page query branch is invalid");
+      }
+      rows = this.#database
+        .prepare(
+          `${select}
+           WHERE reports.runtime_profile_revision_id = ?
+             AND (
+               reports.observed_at > ?
+               OR (reports.observed_at = ? AND reports.probe_report_id > ?)
+             )
+           ${order}`,
+        )
+        .all(
+          scope,
+          cursor.observedAt,
+          cursor.observedAt,
+          cursor.probeReportId,
+          rowLimit,
+        ) as Row[];
+    }
+    const pageRows = rows.slice(0, limit);
+    const reports = pageRows.map((row) => this.#probeReportFromRow(row));
+    const last = pageRows.at(-1);
+    return Object.freeze({
+      ...(rows.length <= limit || last === undefined
+        ? {}
+        : {
+            nextCursor: encodeProbeReportCursor({
+              observedAt: text(last, "observed_at"),
+              probeReportId: text(last, "probe_report_id"),
+              runtimeProfileRevisionId: scope,
+            }),
+          }),
+      reports: Object.freeze(reports),
+    });
   }
 
   getProbeValidation(
@@ -1417,6 +1502,80 @@ function requireOwnerPrivateRegularFile(path: string): void {
 function ownedByCurrentUser(metadata: Stats): boolean {
   const currentUserId = process.getuid?.();
   return currentUserId === undefined || metadata.uid === currentUserId;
+}
+
+type RuntimeProfileProbeReportCursor = {
+  observedAt: string;
+  probeReportId: string;
+  runtimeProfileRevisionId: string | null;
+};
+
+function encodeProbeReportCursor(
+  cursor: RuntimeProfileProbeReportCursor,
+): string {
+  return Buffer.from(
+    JSON.stringify({
+      observedAt: cursor.observedAt,
+      probeReportId: cursor.probeReportId,
+      runtimeProfileRevisionId: cursor.runtimeProfileRevisionId,
+      version: 1,
+    }),
+    "utf8",
+  ).toString("base64url");
+}
+
+function decodeProbeReportCursor(
+  cursor: string,
+  expectedRuntimeProfileRevisionId: string | null,
+): RuntimeProfileProbeReportCursor {
+  if (!/^[A-Za-z0-9_-]{1,2048}$/u.test(cursor)) {
+    throw new RuntimeProfileRegistrySecurityError(
+      "probe report cursor is invalid",
+    );
+  }
+  let value: unknown;
+  try {
+    const bytes = Buffer.from(cursor, "base64url");
+    if (bytes.toString("base64url") !== cursor)
+      throw new Error("non-canonical");
+    value = JSON.parse(bytes.toString("utf8"));
+  } catch (error) {
+    throw new RuntimeProfileRegistrySecurityError(
+      "probe report cursor is invalid",
+      { cause: error },
+    );
+  }
+  if (
+    value === null ||
+    typeof value !== "object" ||
+    !("version" in value) ||
+    value.version !== 1 ||
+    !("observedAt" in value) ||
+    typeof value.observedAt !== "string" ||
+    !Number.isFinite(Date.parse(value.observedAt)) ||
+    !("probeReportId" in value) ||
+    typeof value.probeReportId !== "string" ||
+    value.probeReportId.length === 0 ||
+    value.probeReportId.length > 512 ||
+    value.probeReportId.includes("\0") ||
+    !("runtimeProfileRevisionId" in value) ||
+    (value.runtimeProfileRevisionId !== null &&
+      typeof value.runtimeProfileRevisionId !== "string")
+  ) {
+    throw new RuntimeProfileRegistrySecurityError(
+      "probe report cursor is invalid",
+    );
+  }
+  if (value.runtimeProfileRevisionId !== expectedRuntimeProfileRevisionId) {
+    throw new RuntimeProfileRegistrySecurityError(
+      "probe report cursor scope does not match the requested revision",
+    );
+  }
+  return {
+    observedAt: value.observedAt,
+    probeReportId: value.probeReportId,
+    runtimeProfileRevisionId: value.runtimeProfileRevisionId,
+  };
 }
 
 function canonicalValue(value: unknown): unknown {

@@ -336,6 +336,15 @@ for (const runnerName of ["run-local-workbench.mjs", "run-lan-workbench.mjs"]) {
         const stopped = new Error("independent audit stops before daemon startup");
         const calls = [];
         mock.module(${JSON.stringify(snapshotUrl)}, { namedExports: {
+          acquireWorkbenchAssetLease: async (repositoryDirectory, staticDirectory) => {
+            assert.equal(repositoryDirectory, ${JSON.stringify(repositoryDirectory)});
+            assert.equal(staticDirectory, "/independent-audit/frozen-result");
+            calls.push("lease");
+            return { release: async () => calls.push("release") };
+          },
+          pruneWorkbenchAssetSnapshots: async () => {
+            calls.push("prune");
+          },
           snapshotWorkbenchAssets: async (repositoryDirectory, pinnedDirectory) => {
             assert.equal(pinnedDirectory, expectedPinned);
             assert.equal(repositoryDirectory, ${JSON.stringify(repositoryDirectory)});
@@ -343,13 +352,13 @@ for (const runnerName of ["run-local-workbench.mjs", "run-lan-workbench.mjs"]) {
             return "/independent-audit/frozen-result";
           }
         }});
-        mock.module("@rah-os/daemon", { namedExports: {
+        mock.module("@rah-os/daemon/local-workbench", { namedExports: {
           prepareRahDataHome: async () => {
             calls.push("prepare");
             return "/independent-audit/home";
           },
           startLocalCoreWorkbench: async options => {
-            assert.deepEqual(calls, ["prepare", "snapshot"]);
+            assert.deepEqual(calls, ["prepare", "snapshot", "lease"]);
             assert.equal(options.staticDirectory, "/independent-audit/frozen-result");
             assert.equal(options.workbenchHome, "/independent-audit/home");
             calls.push("start");
@@ -357,7 +366,7 @@ for (const runnerName of ["run-local-workbench.mjs", "run-lan-workbench.mjs"]) {
           }
         }});
         await assert.rejects(import(${JSON.stringify(runnerUrl)}), error => error === stopped);
-        assert.deepEqual(calls, ["prepare", "snapshot", "start"]);
+        assert.deepEqual(calls, ["prepare", "snapshot", "lease", "start", "release"]);
       `;
       execFileSync(
         process.execPath,

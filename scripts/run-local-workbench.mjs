@@ -1,8 +1,15 @@
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { prepareRahDataHome, startLocalCoreWorkbench } from "@rah-os/daemon";
-import { snapshotWorkbenchAssets } from "./workbench-web-assets.mjs";
+import {
+  prepareRahDataHome,
+  startLocalCoreWorkbench,
+} from "@rah-os/daemon/local-workbench";
+import {
+  acquireWorkbenchAssetLease,
+  pruneWorkbenchAssetSnapshots,
+  snapshotWorkbenchAssets,
+} from "./workbench-web-assets.mjs";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryDirectory = join(scriptDirectory, "..");
@@ -13,15 +20,21 @@ const staticDirectory = await snapshotWorkbenchAssets(
   process.env.RAH_WEB_STATIC_DIRECTORY,
 );
 const webPort = Number(process.env.RAH_WEB_PORT ?? "4173");
-
-const running = await startLocalCoreWorkbench({
-  environment: process.env,
-  mode: { kind: "loopback", port: webPort },
+const releaseLease = await acquireWorkbenchAssetLease(
+  repositoryDirectory,
   staticDirectory,
-  workbenchHome,
-  workspaceCwd,
-});
+);
+
+let running;
 try {
+  running = await startLocalCoreWorkbench({
+    environment: process.env,
+    mode: { kind: "loopback", port: webPort },
+    staticDirectory,
+    workbenchHome,
+    workspaceCwd,
+  });
+  await pruneWorkbenchAssetSnapshots(repositoryDirectory);
   process.stdout.write(
     `RAH_LOCAL_WORKBENCH ${JSON.stringify(running.descriptor)}\n`,
   );
@@ -30,7 +43,8 @@ try {
   );
   await waitForShutdownSignal();
 } finally {
-  await running.stop();
+  await running?.stop();
+  await releaseLease.release();
 }
 
 async function waitForShutdownSignal() {

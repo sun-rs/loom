@@ -100,19 +100,6 @@
   height: 14px;
   margin-left: auto;
 }
-.rah-global-task-card {
-  display: block;
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
-  padding: 12px;
-  min-height: 0;
-}
-.rah-global-task-card .kcard-title {
-  font-size: 14px;
-  line-height: 20px;
-  margin: 6px 0 12px;
-}
 .rah-global-task-status {
   float: right;
   font-size: 12px;
@@ -134,9 +121,6 @@
 }
 .rah-discovery .activity-chip.chip-gray {
   background: var(--gray-chip);
-}
-.rah-global-task-card:hover {
-  background: var(--ink-05);
 }
 .rah-global-task-card .activity-chip {
   margin: 4px 4px 0 0;

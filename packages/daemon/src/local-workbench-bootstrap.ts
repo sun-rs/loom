@@ -382,9 +382,13 @@ function buildConfig(input: {
     leaseMs: 60_000,
     leaseRenewIntervalMs: 20_000,
     outboxLeaseMs: 5_000,
-    outboxPollIntervalMs: 100,
+    // Interactive latency belongs to the durable Outbox wake bridge. Keep its
+    // SQLite fallback responsive without scanning ten times per second.
+    outboxPollIntervalMs: 250,
     outboxRetryAfterMs: 1_000,
-    pollIntervalMs: 250,
+    // Match the mature event-driven shape used by Raft's wake contract and
+    // Multica's daemon: wake immediately, reconcile coarsely if hints are lost.
+    pollIntervalMs: 30_000,
     retryAfterMs: 10_000,
     runTimeoutMs: 30 * 60_000,
     runtimeCancelTimeoutMs: 20_000,

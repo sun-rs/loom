@@ -589,6 +589,76 @@ test("equivalent probes advance validation freshness without duplicating reports
   raw.close();
 });
 
+test("probe history is cursor-paged and never materializes an unbounded registry", async () => {
+  const { databasePath, registry } = createRegistry();
+  const implementations = new RuntimeImplementationRegistry();
+  for (let index = 0; index < 5; index += 1) {
+    const revision = registry.importManifest(
+      manifestV2({
+        adapter: {
+          ...manifestV2().adapter,
+          executable: process.execPath,
+          fixedArgs: [],
+        },
+        recoveryDrivers:
+          process.platform === "win32" ? [] : ["rah-process-supervisor-v1"],
+        runtimeProfileId: `paged-profile-${String(index)}`,
+      }),
+    );
+    registry.recordProbeReport(
+      await implementations.probeRevision(revision, {
+        cwd: dirname(registry.databasePath),
+      }),
+    );
+  }
+
+  const first = registry.listProbeReportPage({ limit: 2 });
+  assert.ok(first.nextCursor);
+  const firstCursor = first.nextCursor;
+  const second = registry.listProbeReportPage({
+    cursor: firstCursor,
+    limit: 2,
+  });
+  assert.ok(second.nextCursor);
+  const third = registry.listProbeReportPage({
+    cursor: second.nextCursor,
+    limit: 2,
+  });
+  assert.equal(first.reports.length, 2);
+  assert.equal(second.reports.length, 2);
+  assert.equal(third.reports.length, 1);
+  assert.equal(third.nextCursor, undefined);
+  assert.equal(
+    new Set([...first.reports, ...second.reports, ...third.reports]).size,
+    5,
+  );
+  assert.throws(
+    () =>
+      registry.listProbeReportPage({
+        cursor: firstCursor,
+        limit: 2,
+        runtimeProfileRevisionId: second.reports[0]!.runtimeProfileRevisionId,
+      }),
+    /cursor scope/u,
+  );
+  assert.throws(() => registry.listProbeReportPage({ limit: 201 }), /limit/u);
+  registry.close();
+
+  const raw = new DatabaseSync(databasePath);
+  const indexes = raw
+    .prepare("PRAGMA index_list(runtime_profile_probe_reports)")
+    .all() as Array<{
+    name: string;
+  }>;
+  assert.ok(
+    indexes.some(
+      ({ name }) => name === "idx_runtime_profile_probe_reports_observed",
+    ),
+    "global keyset pagination must not scan and sort the full immutable history",
+  );
+  raw.close();
+});
+
 test("an exact schema v1 registry migrates to v3 before accepting probe-backed manifests", async () => {
   const directory = createDirectory();
   const databasePath = join(directory, "runtime-registry.db");

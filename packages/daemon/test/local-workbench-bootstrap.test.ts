@@ -34,6 +34,16 @@ test("local workbench bootstrap is persistent, owner-private, and restart-safe",
     assert.equal(statSync(first.hostSecretPath).mode & 0o777, 0o600);
     assert.equal(first.config.workspace.cwd, workspaceCwd);
     assert.equal(first.config.startupProbeMode, "reuse-latest");
+    assert.equal(
+      first.config.pollIntervalMs,
+      30_000,
+      "idle AgentHost reconciliation should use the Multica-style coarse fallback because durable Outbox wake owns interactive latency",
+    );
+    assert.equal(
+      first.config.outboxPollIntervalMs,
+      250,
+      "the local durable wake bridge should stay responsive without scanning SQLite ten times per second",
+    );
     assert.deepEqual(first.config.host.participantIds, [
       first.metadata.bootstrapParticipantIds[0],
     ]);

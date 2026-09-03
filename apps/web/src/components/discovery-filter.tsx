@@ -64,6 +64,7 @@ export function DiscoveryFilter({
   const visible = options.filter((option) =>
     option.label.toLocaleLowerCase().includes(query.toLocaleLowerCase()),
   );
+  const trailingIcon = variant === "status" ? "pencil" : "chevron-down";
   const cancelHoverClose = () => {
     if (hoverCloseTimer.current !== null) {
       clearTimeout(hoverCloseTimer.current);
@@ -199,7 +200,7 @@ export function DiscoveryFilter({
         {showCount && values.length > 0 && (
           <span className="task-filter-count">{values.length}</span>
         )}
-        <Icon name="chevron-down" />
+        <Icon name={trailingIcon} />
       </button>
       {open &&
         createPortal(

@@ -133,6 +133,23 @@
   `PRAGMA foreign_key_list` 冻结 52 张 Room 可达表；单事务显式 eraser、Room 外幂等回执、per-file durable
   GC receipt 与启动恢复都是本地实现。Client API 使用统一的 authenticated POST mutation surface，不机械复制
   Raft 中央 `DELETE /channels/:id` transport。
+
+### 2026-09-03 Task 卡片交互与状态编辑 structured port
+
+- 当前在线来源：`https://app.raft.build/assets/index-Biin3FEA.js`，SHA-256
+  `e798f35bde09eeda2927669406e10718392ff7574796016441def59dbc5b05f9`；已登录 Tasks 页面 live DOM、computed
+  style 与 bundle 中 `Ait`（视觉卡片）、`Zit`（DnD 外壳）、`Itt/Ttt`（状态选项）交叉核验。
+- 结构化移植：dnd-kit `transform` 只写入外层 `task-board-draggable-card`；白底、2px 黑边、2px 硬阴影、
+  hover 上移 1px/4px 阴影和 active 压下效果只属于内层卡片。状态触发器采用 Raft 的 10×10、40% opacity
+  Pencil，不再用 chevron；五个公开状态仍完整显示。
+- 后端边界：Raft 当前 owner 因 `capabilities.deleteAnyTask` 为真而获得五状态任意写入；普通账号使用
+  `todo -> in_progress/closed`、`in_progress -> in_review/done/closed`、`in_review -> done/in_progress/closed`
+  等状态图，且未认领的 `todo -> in_progress` 会先 claim。RAH OS 不复制 owner 的宽松写入口：其内部状态还
+  绑定 assignee、claim lease、submission/completion/cancellation evidence 与运行时终止证明，菜单由 typed
+  `globalTaskTransition` 明示可用项和拒绝原因，不能靠前端 PATCH 绕过事实。
+- 本地 owner 与门禁：`GlobalTaskBoard.TaskCard`、`DiscoveryFilter(status)`、`discovery-controls.css`；
+  `task-workflow-parity-contract.test.ts` 冻结双层 DOM、Pencil 和 hover/press 语法，真实浏览器门禁核对桌面与
+  390×844 的尺寸、图标和菜单。
 - 有意差异：删除回执保留最小 Room identity/audit 元数据；产品内没有 soft undo/单 Room 恢复；direct/control
   不走该命令；正式用户 Room 永不用于破坏性门禁。
 - 详细合同与证据见 `docs/product/2026-09-03-room-permanent-deletion-contract.zh-CN.md` 与

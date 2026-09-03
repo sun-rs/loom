@@ -68,3 +68,54 @@ test("global Tasks keeps the Raft heading semantics and has no local-only refres
   assert.doesNotMatch(taskSurface, /onRefresh=/u);
   assert.doesNotMatch(taskSurface, /刷新任务/u);
 });
+
+test("global Task cards keep Raft's separate drag and visual interaction layers", async () => {
+  const board = await readFile(
+    new URL("../src/components/global-task-board.tsx", import.meta.url),
+    "utf8",
+  );
+  const filter = await readFile(
+    new URL("../src/components/discovery-filter.tsx", import.meta.url),
+    "utf8",
+  );
+  const styles = await readFile(
+    new URL("../src/discovery-controls.css", import.meta.url),
+    "utf8",
+  );
+  const discoveryStyles = await readFile(
+    new URL("../src/global-discovery.css", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(board, /data-testid="task-board-draggable-card"/u);
+  assert.match(board, /className=\{`rah-global-task-drag-shell/u);
+  assert.match(
+    board,
+    /<div\s+draggable=\{false\}\s+className="kcard rah-global-task-card"/u,
+  );
+  assert.doesNotMatch(
+    board,
+    /className=\{`kcard rah-global-task-card[^`]*`\}[\s\S]{0,160}CSS\.Translate/u,
+  );
+  assert.match(filter, /variant === "status" \? "pencil" : "chevron-down"/u);
+  assert.match(
+    styles,
+    /\.rah-global-task-card\s*\{[\s\S]*?transition:\s*all 100ms;/u,
+  );
+  assert.match(
+    styles,
+    /\.rah-global-task-card:hover\s*\{[\s\S]*?transform:\s*translateY\(-1px\);/u,
+  );
+  assert.match(
+    styles,
+    /\.rah-global-task-card:active\s*\{[\s\S]*?transform:\s*translate\(1px, 1px\);/u,
+  );
+  assert.match(
+    styles,
+    /\.rah-task-status-picker \.task-filter-trigger > svg:last-child\s*\{\s*width: 10px;\s*height: 10px;/u,
+  );
+  assert.doesNotMatch(
+    discoveryStyles,
+    /\.rah-global-task-card(?::hover)?\s*\{/u,
+  );
+});

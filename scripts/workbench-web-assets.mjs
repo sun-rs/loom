@@ -1,18 +1,133 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import {
+  lstat,
   mkdir,
   mkdtemp,
   readdir,
   readFile,
+  stat,
   writeFile,
   rename,
   rm,
 } from "node:fs/promises";
-import { join, posix } from "node:path";
+import { dirname, join, posix, resolve } from "node:path";
 import { webBuildOutput } from "../apps/web/build-output.ts";
 
 // Product builds and validation builds never share an output directory.
 export { webBuildOutput };
+
+const RELEASE_NAME = /^[a-f0-9]{64}$/u;
+const RELEASE_LEASE_SCHEMA_VERSION = 1;
+const DEFAULT_RELEASE_RETENTION = 4;
+const DEFAULT_RELEASE_MINIMUM_AGE_MS = 10 * 60 * 1000;
+
+export async function acquireWorkbenchAssetLease(
+  repositoryDirectory,
+  staticDirectory,
+) {
+  const releases = resolve(repositoryDirectory, ".workbench-web");
+  const release = resolve(staticDirectory);
+  if (
+    dirname(release) !== releases ||
+    !RELEASE_NAME.test(release.slice(releases.length + 1))
+  ) {
+    return Object.freeze({ release: async () => {} });
+  }
+  const releaseMetadata = await lstat(release);
+  if (!releaseMetadata.isDirectory() || releaseMetadata.isSymbolicLink()) {
+    throw new Error("Workbench release lease target must be a real directory");
+  }
+  const leases = join(releases, ".leases");
+  await mkdir(leases, { recursive: true, mode: 0o700 });
+  const leasePath = join(leases, `${String(process.pid)}-${randomUUID()}.json`);
+  await withReleaseStoreLock(releases, async () => {
+    await writeFile(
+      leasePath,
+      JSON.stringify({
+        processId: process.pid,
+        releaseDirectory: release,
+        schemaVersion: RELEASE_LEASE_SCHEMA_VERSION,
+        startedAt: new Date().toISOString(),
+      }),
+      { flag: "wx", mode: 0o600 },
+    );
+  });
+  let released = false;
+  return Object.freeze({
+    async release() {
+      if (released) return;
+      released = true;
+      await withReleaseStoreLock(releases, () =>
+        rm(leasePath, { force: true }),
+      );
+    },
+  });
+}
+
+export async function pruneWorkbenchAssetSnapshots(
+  repositoryDirectory,
+  options = {},
+) {
+  const releases = resolve(repositoryDirectory, ".workbench-web");
+  const retainRecent = boundedInteger(
+    options.retainRecent ?? DEFAULT_RELEASE_RETENTION,
+    "retainRecent",
+    1,
+    32,
+  );
+  const minimumAgeMs = boundedInteger(
+    options.minimumAgeMs ?? DEFAULT_RELEASE_MINIMUM_AGE_MS,
+    "minimumAgeMs",
+    0,
+    7 * 24 * 60 * 60 * 1000,
+  );
+  const now = options.now ?? (() => new Date());
+  await mkdir(releases, { recursive: true });
+  return withReleaseStoreLock(releases, async () => {
+    const liveReleases = await collectLiveReleaseLeases(releases);
+    const entries = await readdir(releases, { withFileTypes: true });
+    const candidates = [];
+    for (const entry of entries) {
+      if (!entry.isDirectory() || !RELEASE_NAME.test(entry.name)) continue;
+      const path = join(releases, entry.name);
+      const metadata = await stat(path);
+      candidates.push({ modifiedAtMs: metadata.mtimeMs, path });
+    }
+    candidates.sort(
+      (left, right) =>
+        right.modifiedAtMs - left.modifiedAtMs ||
+        right.path.localeCompare(left.path),
+    );
+    const retained = new Set(
+      candidates.slice(0, retainRecent).map(({ path }) => path),
+    );
+    const cutoff = now().getTime() - minimumAgeMs;
+    const removedDirectories = [];
+    for (const candidate of candidates) {
+      if (
+        retained.has(candidate.path) ||
+        liveReleases.has(candidate.path) ||
+        candidate.modifiedAtMs > cutoff
+      ) {
+        continue;
+      }
+      const metadata = await lstat(candidate.path);
+      if (!metadata.isDirectory() || metadata.isSymbolicLink()) {
+        throw new Error("Workbench release cleanup target changed type");
+      }
+      await rm(candidate.path, { recursive: true, force: false });
+      removedDirectories.push(candidate.path);
+    }
+    return Object.freeze({
+      removedDirectories: Object.freeze(removedDirectories),
+      retainedDirectories: Object.freeze(
+        candidates
+          .map(({ path }) => path)
+          .filter((path) => !removedDirectories.includes(path)),
+      ),
+    });
+  });
+}
 
 export async function snapshotWorkbenchAssets(
   repositoryDirectory,
@@ -137,4 +252,88 @@ export async function snapshotWorkbenchAssets(
   } finally {
     await rm(staging, { recursive: true, force: true });
   }
+}
+
+async function collectLiveReleaseLeases(releases) {
+  const leases = join(releases, ".leases");
+  await mkdir(leases, { recursive: true, mode: 0o700 });
+  const live = new Set();
+  for (const entry of await readdir(leases, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
+    const leasePath = join(leases, entry.name);
+    let lease;
+    try {
+      lease = JSON.parse(await readFile(leasePath, "utf8"));
+    } catch {
+      await rm(leasePath, { force: true });
+      continue;
+    }
+    const release = resolve(String(lease.releaseDirectory ?? ""));
+    const processId = Number(lease.processId);
+    if (
+      lease.schemaVersion !== RELEASE_LEASE_SCHEMA_VERSION ||
+      !Number.isSafeInteger(processId) ||
+      processId <= 0 ||
+      dirname(release) !== releases ||
+      !RELEASE_NAME.test(release.slice(releases.length + 1)) ||
+      !processIsAlive(processId)
+    ) {
+      await rm(leasePath, { force: true });
+      continue;
+    }
+    live.add(release);
+  }
+  return live;
+}
+
+function processIsAlive(processId) {
+  try {
+    process.kill(processId, 0);
+    return true;
+  } catch (error) {
+    return error?.code === "EPERM";
+  }
+}
+
+async function withReleaseStoreLock(releases, operation) {
+  const lockPath = join(releases, ".gc-lock");
+  const deadline = Date.now() + 5_000;
+  while (true) {
+    try {
+      await writeFile(
+        lockPath,
+        JSON.stringify({ processId: process.pid, startedAt: Date.now() }),
+        { flag: "wx", mode: 0o600 },
+      );
+      break;
+    } catch (error) {
+      if (error?.code !== "EEXIST") throw error;
+      let lock;
+      try {
+        lock = JSON.parse(await readFile(lockPath, "utf8"));
+      } catch {
+        lock = undefined;
+      }
+      if (!processIsAlive(Number(lock?.processId))) {
+        await rm(lockPath, { force: true });
+        continue;
+      }
+      if (Date.now() >= deadline) {
+        throw new Error("Timed out waiting for Workbench release cleanup lock");
+      }
+      await new Promise((resolvePromise) => setTimeout(resolvePromise, 20));
+    }
+  }
+  try {
+    return await operation();
+  } finally {
+    await rm(lockPath, { force: true });
+  }
+}
+
+function boundedInteger(value, name, minimum, maximum) {
+  if (!Number.isSafeInteger(value) || value < minimum || value > maximum) {
+    throw new Error(`${name} must be an integer from ${minimum} to ${maximum}`);
+  }
+  return value;
 }

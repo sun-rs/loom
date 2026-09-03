@@ -87,12 +87,14 @@ RSS 的绝对值仍偏高。`vmmap` 显示较大的 V8/Memory Tag 255 与动态�
 
 ## 7. 剩余缺口
 
-1. **P1 常驻内存 owner 分解与长 soak。** 目前约 609 MiB，虽稳定但不够轻；需建立 1h/24h
-   斜率、堆快照和连接数阶梯门禁。
+1. **P1 长 soak。** 后续审计已完成 heap/physical-footprint owner 分解，并以 Raft/Multica 的
+   event wake + coarse fallback 关闭空闲高频扫库；短时 CPU 从旧正式实例约 2.4%–4.1% 收敛到
+   0.0%–0.2%。1h/24h 斜率门禁仍未完成，见
+   [本地 Runtime 留存与空闲调度审计](./2026-09-03-local-runtime-retention-and-idle-audit.zh-CN.md)。
 2. **P1 跨版本 Web bundle 自愈。** 服务升级后旧页面应检测协议/build revision 并一次性提示
    reload，不能把 Zod/JSON 解析错误复制到每条 Message。
-3. **P1 Registry 历史诊断分页。** 正常路径不会枚举 34k report，但内部
-   `listProbeReports()` 仍可一次性物化全部 envelope；应改为有界 cursor，而不删除不可变证据。
+3. **已关闭：Registry 历史诊断分页。** 后续批次已增加稳定 keyset cursor、scope fence、
+   200 条硬上限与全局顺序索引；不可变证据未删除。
 4. **P2 目录主动刷新。** 当前真实语义是重启扫描；若增加手动/后台刷新，必须继续采用
    Multica 式 single-flight、TTL、LKG，且不得与 30 秒 Offer lease 重新耦合。
 5. **P2 设备级通知闭环。** Chrome 权限请求已证明；OS 横幅、点击 deep link 与 iOS PWA 仍是

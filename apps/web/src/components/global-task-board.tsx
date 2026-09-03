@@ -303,66 +303,60 @@ function TaskCard({
   return (
     <div
       ref={setNodeRef}
+      {...attributes}
       {...listeners}
-      onKeyDown={undefined}
       data-task-id={task.taskId}
-      className={`kcard rah-global-task-card${isDragging ? " is-dragging" : ""}`}
+      data-testid="task-board-draggable-card"
+      className={`rah-global-task-drag-shell${isDragging ? " is-dragging" : ""}`}
       style={{ transform: CSS.Translate.toString(transform) }}
     >
-      <button
-        {...attributes}
-        onKeyDown={(event) => listeners?.onKeyDown?.(event)}
-        className="rah-task-drag-handle"
-        aria-label={`移动任务 #${task.taskNumber}`}
-        disabled={disabled}
-      >
-        <Icon name="grip-vertical" />
-      </button>
-      <button
-        className="rah-global-card-open"
-        onClick={onOpen}
-        disabled={disabled}
-      >
-        <span className="kcard-no">
-          <b>#{roomName}</b> <span>#{task.taskNumber}</span>
-        </span>
-        <p className="kcard-title">{task.title}</p>
-        {task.description && (
-          <p className="rah-global-card-description">{task.description}</p>
-        )}
-      </button>
-      <div
-        className="rah-global-card-footer"
-        onMouseDown={(event) => event.stopPropagation()}
-        onTouchStart={(event) => event.stopPropagation()}
-      >
-        <DiscoveryFilter
-          label={`任务 #${task.taskNumber} 状态`}
-          triggerLabel={column.label}
-          icon={null}
-          multiple={false}
-          searchable={false}
-          clearable={false}
-          variant="status"
-          className={`rah-task-status-picker chip-${column.tone}`}
+      <div draggable={false} className="kcard rah-global-task-card">
+        <button
+          className="rah-global-card-open"
+          onClick={onOpen}
           disabled={disabled}
-          values={[group]}
-          selected={false}
-          options={columns.map((item) => ({
-            id: item.id,
-            label: item.label,
-            ...(item.id !== group
-              ? {
-                  disabledReason: globalTaskTransition(
-                    task,
-                    item.id,
-                    principalId,
-                  ).reason,
-                }
-              : {}),
-          }))}
-          onChange={(values) => onChoose(values[0] as TaskColumnId)}
-        />
+        >
+          <span className="kcard-no">
+            <b>#{roomName}</b> <span>#{task.taskNumber}</span>
+          </span>
+          <p className="kcard-title">{task.title}</p>
+          {task.description && (
+            <p className="rah-global-card-description">{task.description}</p>
+          )}
+        </button>
+        <div
+          className="rah-global-card-footer"
+          onMouseDown={(event) => event.stopPropagation()}
+          onTouchStart={(event) => event.stopPropagation()}
+        >
+          <DiscoveryFilter
+            label={`任务 #${task.taskNumber} 状态`}
+            triggerLabel={column.label}
+            icon={null}
+            multiple={false}
+            searchable={false}
+            clearable={false}
+            variant="status"
+            className={`rah-task-status-picker chip-${column.tone}`}
+            disabled={disabled}
+            values={[group]}
+            selected={false}
+            options={columns.map((item) => ({
+              id: item.id,
+              label: item.label,
+              ...(item.id !== group
+                ? {
+                    disabledReason: globalTaskTransition(
+                      task,
+                      item.id,
+                      principalId,
+                    ).reason,
+                  }
+                : {}),
+            }))}
+            onChange={(values) => onChoose(values[0] as TaskColumnId)}
+          />
+        </div>
       </div>
     </div>
   );

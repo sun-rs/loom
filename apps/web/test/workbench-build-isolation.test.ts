@@ -1,9 +1,19 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mkdtemp, mkdir, writeFile, readFile, rm } from "node:fs/promises";
+import {
+  access,
+  mkdtemp,
+  mkdir,
+  writeFile,
+  readFile,
+  rm,
+  utimes,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
+  acquireWorkbenchAssetLease,
+  pruneWorkbenchAssetSnapshots,
   snapshotWorkbenchAssets,
   webBuildOutput,
 } from "../../../scripts/workbench-web-assets.mjs";
@@ -104,6 +114,53 @@ test("an entry point and generation manifest cannot disagree", async () => {
       snapshotWorkbenchAssets(root),
       /identity does not match/u,
     );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("snapshot retention preserves live leases and only removes old superseded releases", async () => {
+  const root = await mkdtemp(join(tmpdir(), "rah-build-retention-"));
+  try {
+    const source = join(root, "apps/web/dist-workbench");
+    await mkdir(join(source, "assets"), { recursive: true });
+    await writeFile(
+      join(source, "index.html"),
+      '<script src="/assets/a.js"></script>',
+    );
+    await writeFixtureBuildIdentity(source);
+    const releases: string[] = [];
+    for (let index = 0; index < 5; index += 1) {
+      await writeFile(join(source, "assets/a.js"), `version ${String(index)}`);
+      const release = await snapshotWorkbenchAssets(root);
+      releases.push(release);
+      const timestamp = new Date(Date.UTC(2026, 0, 1, 0, index));
+      await utimes(release, timestamp, timestamp);
+    }
+
+    const lease = await acquireWorkbenchAssetLease(root, releases[0]);
+    const firstPrune = await pruneWorkbenchAssetSnapshots(root, {
+      minimumAgeMs: 0,
+      now: () => new Date(Date.UTC(2026, 0, 2)),
+      retainRecent: 2,
+    });
+    assert.deepEqual(
+      new Set(firstPrune.removedDirectories),
+      new Set(releases.slice(1, 3)),
+    );
+    await access(releases[0]);
+    await access(releases[3]);
+    await access(releases[4]);
+
+    await lease.release();
+    const secondPrune = await pruneWorkbenchAssetSnapshots(root, {
+      minimumAgeMs: 0,
+      now: () => new Date(Date.UTC(2026, 0, 2)),
+      retainRecent: 2,
+    });
+    assert.deepEqual(secondPrune.removedDirectories, [releases[0]]);
+    await access(releases[3]);
+    await access(releases[4]);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

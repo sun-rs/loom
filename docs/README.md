@@ -1,5 +1,10 @@
 # RAH OS 文档
 
+本地长期运行最新收口：[事件唤醒、30 秒 reconciliation fallback、probe history cursor 与 Web
+generation lease/保留合同](./product/2026-09-03-local-runtime-retention-and-wake-contract.zh-CN.md)；来源裁决、
+短时 CPU/RSS/physical-footprint 对照、磁盘清理与正式发布状态见
+[验证审计](./audits/2026-09-03-local-runtime-retention-and-idle-audit.zh-CN.md)。
+
 Web 正式发布的跨代际自愈：[Raft 式刷新/继续合同、内容确定 build ID、gateway response fence、
 Service Worker/cache 边界](./product/2026-09-03-web-build-recovery-contract.zh-CN.md)；两次正式
 generation 切换、desktop/390×844 真实 Chrome、typed Notifications deep link、状态备份与
