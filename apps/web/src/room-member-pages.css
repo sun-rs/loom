@@ -11,16 +11,6 @@
   flex: 0 0 36px;
   box-sizing: border-box;
 }
-.rah-agent-avatar.is-member {
-  width: 28px;
-  height: 28px;
-  border-width: 1px;
-}
-.rah-agent-avatar.is-compact {
-  width: 20px;
-  height: 20px;
-  border-width: 1px;
-}
 .rah-room-member-page-header {
   background: var(--yellow);
   min-height: 64px;

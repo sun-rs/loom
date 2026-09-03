@@ -16,6 +16,13 @@
   同一条侧边带线标签。
 - Task 在聊天消息中只显示紧凑关联入口（编号与 Agent），工作流 `submitted` 等状态属于任务页，
   不作为聊天消息徽章重复显示。
+- Task 关联入口复用 Raft `Qet -> jg` 的 `in_review` 样式：内容自适应宽度、20px 高、1px
+  `--ink` 边框、左右 6px、4px 间距、10px/10px 700 字重与 10px 图标；无圆角和阴影，
+  hover 只在 100ms 内降为 90% 亮度。RAH OS 的 `submitted` 在聊天中映射为这一个
+  `in_review` 可见状态；其他本地 Task 状态不能在没有语义映射合同前随意套色。
+- Task 下方的紧凑回复不是第二套消息身份。Raft `ntt/rtt` 先以 `senderId` 解析同一个 Agent，
+  再调用共享头像 owner 的 `compact-list` 尺寸；因此 RAH OS 必须保存每条预览的 `actorId`，
+  用与 Room 正文相同的 `AgentAvatar`/头像键渲染 20×20 紧凑版本，禁止退化成名称首字母。
 - Agent 关注者与当前人类是否关注是两套状态：前者驱动“正在关注的 Agent”弹窗，后者只驱动
   “关注/取消关注消息列”命令。
 - “消息列操作”包括消息列内搜索、回到频道中的根消息、关注/取消关注消息列。
@@ -49,7 +56,8 @@
 ## 回归要求
 
 - 单元合同必须验证宽度边界、键盘方向、持久化、标题入口、根消息分隔结构，以及聊天消息不再
-  输出 Task 工作流状态。
+  输出 Task 工作流状态；同时验证 Task 关联入口的精确尺寸/token，以及回复预览保留
+  `actorId` 并复用共享 Agent 头像。
 - 后端必须验证非成员不可读取、只有 Room owner/admin 可以移除 Agent 关注者，且人类关注切换
   不改变 Agent 关注者名单。
 - `scripts/run-real-browser-gate.mjs` 必须在隔离 Chrome 中验证 400px 默认宽度、360px 键盘

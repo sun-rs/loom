@@ -81,6 +81,7 @@ import { MessageContextMenu } from "./message-context-menu.tsx";
 import { messageMentionReadStateIndex } from "../message-reference-read-state.ts";
 
 export type ThreadReplyPreview = {
+  actorId: string;
   author: string;
   body: string;
   createdAt: string;
@@ -855,6 +856,42 @@ function ChatDateDivider({ label }: { label: string }) {
   );
 }
 
+function ThreadReplyAvatar({
+  actorId,
+  agents,
+  author,
+  principals,
+}: {
+  actorId: string;
+  agents: readonly WorkspaceAgentView[];
+  author: string;
+  principals: readonly Principal[];
+}) {
+  const replyAgent = agents.find(
+    ({ participantId }) => participantId === actorId,
+  );
+  if (replyAgent !== undefined) {
+    return <AgentAvatar agent={replyAgent} showStatus={false} size="compact" />;
+  }
+  const replyPrincipal = principals.find(
+    ({ principalId }) => principalId === actorId,
+  );
+  if (replyPrincipal?.avatarKey) {
+    return (
+      <ProfileImageAvatar
+        avatarKey={replyPrincipal.avatarKey}
+        name={author}
+        size="compact"
+      />
+    );
+  }
+  return (
+    <span className="avatar xs rah-avatar" aria-hidden="true">
+      {author.slice(0, 1).toUpperCase()}
+    </span>
+  );
+}
+
 function MessageArticle({
   collapseLongMessages = true,
   focused = false,
@@ -1031,6 +1068,8 @@ function MessageArticle({
           <button
             aria-label={`打开任务 #${task.taskNumber}：${task.title}`}
             className="rah-message-task-link"
+            data-task-status={task.state}
+            data-testid="message-task-badge"
             disabled={threadAction === undefined}
             onClick={openThreadFromMessage}
             type="button"
@@ -1049,9 +1088,12 @@ function MessageArticle({
             </span>
             {threadReplies?.map((reply) => (
               <span className="tp-line" key={reply.messageId}>
-                <span className="avatar xs rah-avatar" aria-hidden="true">
-                  {reply.author.slice(0, 1).toUpperCase()}
-                </span>
+                <ThreadReplyAvatar
+                  actorId={reply.actorId}
+                  agents={referenceAgents}
+                  author={reply.author}
+                  principals={referencePrincipals}
+                />
                 <b>{reply.author}</b>
                 <span className="tp-text">{reply.body}</span>
                 <time>{formatTime(reply.createdAt)}</time>

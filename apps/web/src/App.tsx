@@ -1200,6 +1200,7 @@ function WorkspaceScreen({
         ? []
         : [
             {
+              actorId: message.actorId,
               author: memberHandleById.get(message.actorId) ?? message.actorId,
               body: message.body,
               createdAt: message.createdAt,

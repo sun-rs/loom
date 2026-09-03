@@ -7,11 +7,46 @@ const read = (path: string) =>
 
 test("Task messages keep Raft's compact linked marker and omit workflow state", () => {
   const source = read("components/conversation-panes.tsx");
+  const css = read("product.css");
   assert.doesNotMatch(source, /<span>Task #\{task\.taskNumber\}<\/span>/u);
   assert.doesNotMatch(source, /<span>\{task\.state\}<\/span>/u);
   assert.match(source, /className="rah-message-task-link"/u);
+  assert.match(source, /data-task-status=\{task\.state\}/u);
   assert.match(source, /打开任务 #\$\{task\.taskNumber\}/u);
   assert.match(source, /@\{taskAgent\.handle\}/u);
+  assert.match(
+    css,
+    /\.rah-message-task-link\s*\{[^}]*height:\s*20px[^}]*font:\s*700 10px\/10px var\(--sans\)[^}]*gap:\s*4px[^}]*padding:\s*0 6px/su,
+  );
+  assert.match(css, /--rah-task-review-ink:\s*var\(--brutal-pink-950\)/u);
+  assert.match(
+    css,
+    /\.rah-message-task-link\s*\{[^}]*border:\s*1px solid var\(--ink\)[^}]*color:\s*var\(--rah-task-review-ink\)/su,
+  );
+  assert.match(
+    css,
+    /\.rah-message-task-link svg\s*\{[^}]*height:\s*10px[^}]*width:\s*10px/su,
+  );
+  assert.match(
+    css,
+    /\.rah-message-task-link:hover:not\(:disabled\)\s*\{[^}]*filter:\s*brightness\(0\.9\)/su,
+  );
+});
+
+test("inline Task replies reuse the canonical Agent avatar identity", () => {
+  const app = read("App.tsx");
+  const source = read("components/conversation-panes.tsx");
+  assert.match(source, /actorId: string/u);
+  assert.match(app, /actorId: message\.actorId/u);
+  assert.match(source, /participantId \}\) => participantId === actorId/u);
+  assert.match(
+    source,
+    /<AgentAvatar[\s\S]*?agent=\{replyAgent\}[\s\S]*?showStatus=\{false\}[\s\S]*?size="compact"/u,
+  );
+  assert.doesNotMatch(
+    source,
+    /className="avatar xs rah-avatar"[\s\S]*?reply\.author\.slice/u,
+  );
 });
 
 test("thread panel exposes the Raft header, history and action contracts", () => {

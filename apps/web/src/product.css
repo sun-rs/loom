@@ -1,5 +1,7 @@
 .rah-product-shell {
   --sidebar-w: var(--rah-room-sidebar-width, 240px);
+  /* Raft in_review Badge foreground (index-BoAC7nSE / Qet + jg). */
+  --rah-task-review-ink: var(--brutal-pink-950);
   /* Raft StatusDot bg-gray-400 (index-BoAC7nSE / O02 live computed style,
      2026-08-31). Supersedes the frozen reference's screenshot-estimated gray. */
   --presence-off: oklch(0.707 0.022 261.325);
@@ -1123,20 +1125,25 @@
 .rah-message-task-link {
   align-items: center;
   background: var(--lavender);
-  border: 1px solid var(--black);
-  color: var(--black);
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  box-shadow: none;
+  box-sizing: border-box;
+  color: var(--rah-task-review-ink);
   cursor: pointer;
-  display: flex;
-  font: 700 10px/14px var(--mono);
-  gap: 3px;
+  display: inline-flex;
+  height: 20px;
+  font: 700 10px/10px var(--sans);
+  gap: 4px;
   margin-top: 5px;
-  padding: 2px 5px;
+  padding: 0 6px;
+  transition: filter 100ms;
   width: max-content;
 }
 
 .rah-message-task-link svg {
-  height: 11px;
-  width: 11px;
+  height: 10px;
+  width: 10px;
 }
 
 .rah-message-task-link:disabled {
@@ -1145,7 +1152,7 @@
 }
 
 .rah-message-task-link:hover:not(:disabled) {
-  box-shadow: var(--shadow-s);
+  filter: brightness(0.9);
 }
 
 .rah-message-context-backdrop {

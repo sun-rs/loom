@@ -155,6 +155,9 @@ Raft 官方与 RAH OS 在同一桌面尺寸下完成 Channel、DM、Thread、Tas
 
 消息列的宽度、根消息/回复结构、Agent 与 Human 关注所有权和标题栏操作协议：[消息列（Thread）Raft 对齐合同](./product/2026-09-02-thread-column-parity-contract.zh-CN.md)。
 
+Task 紧凑标识与消息列回复头像的精确来源、computed-style、共享头像身份及正式浏览器验收：
+[Task 标识与 Thread 回复头像对齐审计](./audits/2026-09-03-task-marker-and-thread-avatar-verification.zh-CN.md)。
+
 聊天正文中的 Agent/Human/Room/DM/Task/Thread/Computer/App/Message typed 引用、共享 mention delivery
 语法、canonical read receipt、Thread 搜索片段、公式/代码/Mermaid 单一渲染 owner 与
 Raft/Multica 来源边界：[消息富文本引用、公式与图表合同](./product/2026-09-02-message-rich-reference-contract.zh-CN.md)。
