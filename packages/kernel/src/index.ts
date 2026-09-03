@@ -28,6 +28,7 @@ export { ManagedMcpService } from "./managed-mcp-service.ts";
 export { TaskReviewService } from "./task-review-service.ts";
 export { ReminderService } from "./reminder-service.ts";
 export type { ReminderReconcileResult } from "./reminder-service.ts";
+export type { RoomFileGcReconcileResult } from "./room-file-gc.ts";
 export type { TaskReviewMutationResult } from "./task-review-service.ts";
 export type {
   ManagedMcpAssignmentRecord,

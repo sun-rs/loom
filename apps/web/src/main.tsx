@@ -18,7 +18,13 @@ import "./identity-interactions.css";
 import "./chat-surface.css";
 import "./message-social.css";
 import "./room-files.css";
+import "./web-build-recovery.css";
 import { applySettingsPreferences } from "./settings-preferences.ts";
+import {
+  currentWebBuildId,
+  installWebBuildRecovery,
+  requestWebBuildRefresh,
+} from "./web-build-recovery.ts";
 
 // The production gateways deliberately omit `unsafe-eval`. Zod's optional
 // object-parser JIT probes `Function("")` during module evaluation unless its
@@ -36,7 +42,14 @@ zodGlobal.__zod_globalConfig = {
 
 applySettingsPreferences(window.localStorage);
 
-void import("./mount-app.tsx").then(({ mountRahApp }) => mountRahApp());
+const webBuildRecovery = installWebBuildRecovery(currentWebBuildId());
+void webBuildRecovery.probeBeforeMount().then(() =>
+  import("./mount-app.tsx")
+    .then(({ mountRahApp }) => mountRahApp())
+    .catch((error: unknown) => {
+      if (!requestWebBuildRefresh(error, "later_action")) throw error;
+    }),
+);
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.addEventListener("message", (event) => {

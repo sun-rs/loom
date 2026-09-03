@@ -261,7 +261,7 @@ function addAgent(
 
 test("Kernel schema owns anchored Tasks and immutable Placement projections", () => {
   const fixture = createFixture();
-  assert.equal(KERNEL_SCHEMA_VERSION, 40);
+  assert.equal(KERNEL_SCHEMA_VERSION, 43);
   assert.equal(
     fixture.agentDefinition.currentRevisionId,
     fixture.agentDefinitionRevision.agentDefinitionRevisionId,
@@ -1416,8 +1416,19 @@ test("Placement freezes an immutable RuntimeOffer observation", () => {
   const refreshedProjection = refreshed as typeof refreshed & {
     runtimeOfferObservationId?: string;
   };
-  assert.notEqual(
+  assert.equal(
     refreshedProjection.runtimeOfferObservationId,
+    frozen.runtimeOfferObservationId,
+  );
+  assert.equal(refreshed.observedAt, "2026-08-26T00:00:01.000Z");
+  clock.advance(1_000);
+  const changed = kernel.publishRuntimeOffer(host, {
+    ...runtimeOffer(host, "immutable-offer"),
+    observedAt: "2026-08-26T00:00:02.000Z",
+    state: "degraded",
+  });
+  assert.notEqual(
+    changed.runtimeOfferObservationId,
     frozen.runtimeOfferObservationId,
   );
   kernel.close();
@@ -1473,6 +1484,56 @@ test("RuntimeOffer observations are monotonic and equal-time conflicts fail clos
     /same timestamp has different content/,
   );
   kernel.close();
+});
+
+test("schema 43 removes only unreferenced RuntimeOffer history and preserves the current head", () => {
+  const { agentId, clock, databasePath, kernel } = createFixture();
+  const host = authenticateHost(kernel, "offer-gc-host", agentId);
+  kernel.publishRuntimeOffer(host, runtimeOffer(host, "offer-gc"));
+  clock.advance(1_000);
+  const current = kernel.publishRuntimeOffer(host, {
+    ...runtimeOffer(host, "offer-gc"),
+    observedAt: "2026-08-26T00:00:01.000Z",
+    state: "degraded",
+  });
+  kernel.close();
+
+  const legacy = new DatabaseSync(databasePath);
+  assert.equal(
+    (
+      legacy
+        .prepare(
+          "SELECT COUNT(*) AS count FROM runtime_offer_observations WHERE runtime_offer_id = 'offer-gc'",
+        )
+        .get() as { count: number }
+    ).count,
+    2,
+  );
+  legacy.exec("PRAGMA user_version = 42");
+  legacy.close();
+
+  const migrated = new RoomKernel({ databasePath, now: clock.now });
+  migrated.initialize();
+  assert.equal(
+    migrated.getRuntimeOfferObservation(current.runtimeOfferObservationId)
+      .runtimeOfferSnapshotDigest,
+    current.runtimeOfferSnapshotDigest,
+  );
+  migrated.close();
+
+  const verified = new DatabaseSync(databasePath);
+  assert.equal(
+    (
+      verified
+        .prepare(
+          "SELECT COUNT(*) AS count FROM runtime_offer_observations WHERE runtime_offer_id = 'offer-gc'",
+        )
+        .get() as { count: number }
+    ).count,
+    1,
+  );
+  assert.deepEqual(verified.prepare("PRAGMA foreign_key_check").all(), []);
+  verified.close();
 });
 
 test("RuntimeOffer time is server-bounded and Placement cannot outlive it", () => {

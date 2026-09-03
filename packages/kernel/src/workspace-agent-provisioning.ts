@@ -5,7 +5,6 @@ import {
   AgentDefinitionRevisionSchema,
   AgentDefinitionSchema,
   ExecutionPolicyRevisionSchema,
-  RuntimeOfferProjectionSchema,
   type RoomEvent,
 } from "@rah-os/protocol";
 
@@ -20,7 +19,10 @@ import {
 } from "./errors.ts";
 import { eventPayloadText } from "./event-payload.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
-import { assertRuntimeOfferSupportsToolAccess } from "./runtime-offer-tool-access.ts";
+import {
+  assertRuntimeOfferSupportsToolAccess,
+  currentRuntimeOfferFromRow,
+} from "./runtime-offer-tool-access.ts";
 import { principalHandleIsAvailable } from "./message-reference-identity.ts";
 import {
   integer,
@@ -110,9 +112,7 @@ export function provisionWorkspaceAgentTransaction(
       .get(normalized.runtimeOfferId),
     `RuntimeOffer ${normalized.runtimeOfferId} was not found`,
   );
-  const offer = RuntimeOfferProjectionSchema.parse(
-    jsonObject(offerRow, "offer_json"),
-  );
+  const offer = currentRuntimeOfferFromRow(offerRow);
   if (
     offer.state !== "available" ||
     Date.parse(offer.leaseUntil) <= owner.now().getTime()

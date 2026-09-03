@@ -55,14 +55,40 @@ import {
 import { ManagedMcpRuntimeAdapterSchema } from "./managed-mcp.ts";
 import {
   addTaskParticipantSelectionIssues,
+  projectTaskLifecycle,
+  taskWorkflowStatus,
   TaskSchema,
+  TaskAttentionSchema,
+  TaskExecutionPhaseSchema,
+  TaskLifecycleProjectionSchema,
   TaskStateSchema,
+  TaskWorkflowStatusSchema,
   type Task,
+  type TaskAttention,
+  type TaskExecutionPhase,
+  type TaskLifecycleProjection,
   type TaskState,
+  type TaskWorkflowStatus,
 } from "./task.ts";
 
-export { TaskSchema, TaskStateSchema };
-export type { Task, TaskState };
+export {
+  projectTaskLifecycle,
+  taskWorkflowStatus,
+  TaskSchema,
+  TaskAttentionSchema,
+  TaskExecutionPhaseSchema,
+  TaskLifecycleProjectionSchema,
+  TaskStateSchema,
+  TaskWorkflowStatusSchema,
+};
+export type {
+  Task,
+  TaskAttention,
+  TaskExecutionPhase,
+  TaskLifecycleProjection,
+  TaskState,
+  TaskWorkflowStatus,
+};
 export * from "./activation.ts";
 export * from "./agent-memory.ts";
 export * from "./agent-memory-config.ts";

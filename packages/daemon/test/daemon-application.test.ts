@@ -1224,7 +1224,12 @@ test("daemon config v3 probes an active profile, publishes a redacted offer, and
       hostId: "daemon-registry-host",
     });
     liveRegistry.initialize();
-    assert.equal(liveRegistry.listProbeReports().at(-1)?.available, false);
+    assert.equal(
+      liveRegistry.getLatestProbeReport(revision.runtimeProfileRevisionId)
+        ?.available,
+      true,
+      "lease withdrawal must not rewrite the immutable catalog probe",
+    );
     liveRegistry.close();
 
     shutdown.abort("registry-e2e-complete");

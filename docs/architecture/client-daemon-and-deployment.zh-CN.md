@@ -158,6 +158,14 @@ attachment/supervisor Keychain 管理不能通过把 secret 作为 `/usr/bin/sec
 
 `npm run start:local-workbench` 是当前正式的本机 Web 入口：它不使用 Vite dev server，不删除状态，并以 loopback static gateway 持有 Human PAT。浏览器只得到 owner-private、随机且跨普通进程重启稳定的 HttpOnly Strict session capability；显式清除本机产品状态才会轮换。gateway 同时执行 Host-header、cookie 与 mutation Origin 校验，再把 PAT 注入到 allowlisted Client API。同源旧 session 会收到结构化 `session_expired` 并在同一响应中续发 cookie，客户端不会把 `text/plain`/HTML 错误泄漏成 `JSON.parse`，也不会把一次 transport failure 复制到每条 Message。关闭浏览器不会停止后台进程，终止工作台进程则优雅 drain；launchd 尚未接管前，用户仍需保持该进程运行。
 
+正式 Web release 还拥有独立的构建代际 fence：Vite 为完整 emitted content 生成确定性
+`webBuildId`，product snapshot 只接受 `.rah-web-build.json` 与 `index.html` meta 唯一且一致的
+构建；loopback/LAN gateway 在静态和 Client API 响应上发送同一
+`x-rah-web-build-id`。旧标签页在 bootstrap、API decode 之前、focus/visibility 和 15 秒有界
+HEAD probe 上发现不同代际，按 Raft 的刷新/继续合同由 Human 决定。刷新只更新同源 Service
+Worker、删除 RAH 自有 cache 并保留 typed query；代际错误不得进入 Room/Message projection。
+详见[Web 构建代际合同](../product/2026-09-03-web-build-recovery-contract.zh-CN.md)。
+
 ## 7. 可信局域网部署
 
 开发 fixture 可以在明确告警下使用临时私网 HTTP；正式产品不能把“局域网可信”当作身份。正式 LAN 路径必须使用 ADR-0019 的 HTTPS edge 与设备配对。以下边界不能取消：
@@ -204,5 +212,6 @@ Web Push/native push 都只是 hint；用户点击或客户端恢复后必须执
 - Web、desktop、PWA 对同一 command 产生相同 domain event；
 - 断开 WebSocket、休眠和丢 hint 后，客户端从已确认 continuation 无丢失恢复；
 - daemon 与 UI 版本不一致时明确协商或拒绝，不静默误解 schema；
+- 同一 gateway 更换 Web release 后，旧标签页必须在业务 parser 前提示刷新，且不得把错误复制进 Message；
 - 浏览器不能冒充另一个 participant，也不能提交任意 shell；
 - 本机、局域网和远端拓扑不改变 Room/Task owner。

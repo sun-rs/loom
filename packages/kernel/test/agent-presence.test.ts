@@ -62,9 +62,9 @@ test("presence follows live process/Host lifetime and never resurrects old Run a
   db.exec(`CREATE TABLE agent_hosts(host_id,instance_id,state,last_seen_ms,participant_ids_json);
     CREATE TABLE placements(placement_id,host_instance_id);
     CREATE TABLE activations(activation_id,lease_until_ms);
-    CREATE TABLE run_attempts(run_attempt_id,placement_id,activation_id,participant_id,host_id,state,runtime_run_id);
+    CREATE TABLE run_attempts(run_attempt_id,placement_id,activation_id,participant_id,host_id,state,runtime_run_id,started_at);
     CREATE TABLE runtime_processes(run_attempt_id,state,exit_code,runtime_run_id);
-    CREATE TABLE run_trajectory_entries(runtime_run_id,run_attempt_id,producer_sequence,entry_json);
+    CREATE TABLE run_trajectory_entries(runtime_run_id,run_attempt_id,producer_sequence,entry_json,observed_at);
     INSERT INTO agent_hosts VALUES('h','g1','online',100000,'["p"]');
     INSERT INTO placements VALUES('pl','g1');
     INSERT INTO activations VALUES('a',999999);`);
@@ -75,12 +75,15 @@ test("presence follows live process/Host lifetime and never resurrects old Run a
       { activity: "online", reason: "online" },
       "a healthy Host makes its enabled resident Agent ready",
     );
-    db.exec(`INSERT INTO run_attempts VALUES('r','pl','a','p','h','running','runtime');
+    db.exec(`INSERT INTO run_attempts VALUES('r','pl','a','p','h','running','runtime','1970-01-01T00:01:30.000Z');
       INSERT INTO runtime_processes VALUES('r','active',NULL,'runtime');
-      INSERT INTO run_trajectory_entries VALUES('runtime','r',5,'{"kind":"status","activity":"thinking"}');`);
-    assert.equal(read().activity, "thinking");
+      INSERT INTO run_trajectory_entries VALUES('runtime','r',5,'{"kind":"status","activity":"thinking"}','1970-01-01T00:01:39.000Z');`);
+    assert.deepEqual(
+      { activity: read().activity, activityAt: read().activityAt },
+      { activity: "thinking", activityAt: "1970-01-01T00:01:39.000Z" },
+    );
     db.exec(
-      `INSERT INTO run_trajectory_entries VALUES('runtime','r',4,'{"kind":"status","activity":"error"}');`,
+      `INSERT INTO run_trajectory_entries VALUES('runtime','r',4,'{"kind":"status","activity":"error"}','1970-01-01T00:01:38.000Z');`,
     );
     assert.equal(
       read().activity,
@@ -88,7 +91,7 @@ test("presence follows live process/Host lifetime and never resurrects old Run a
       "late older provider fact is not current",
     );
     db.exec(
-      `INSERT INTO run_trajectory_entries VALUES('runtime','r',6,'{"kind":"status","activity":"error","subagent":{"subagentType":"child"}}');`,
+      `INSERT INTO run_trajectory_entries VALUES('runtime','r',6,'{"kind":"status","activity":"error","subagent":{"subagentType":"child"}}','1970-01-01T00:01:40.000Z');`,
     );
     assert.equal(
       read().activity,
@@ -124,12 +127,12 @@ test("presence follows live process/Host lifetime and never resurrects old Run a
     );
     db.exec("UPDATE run_attempts SET state='failed'");
     assert.equal(read().activity, "error");
-    db.exec(`INSERT INTO run_attempts VALUES('r2','pl','a','p','h','starting','runtime2');
+    db.exec(`INSERT INTO run_attempts VALUES('r2','pl','a','p','h','starting','runtime2','1970-01-01T00:01:40.000Z');
       INSERT INTO runtime_processes VALUES('r2','prepared',NULL,'runtime2');`);
-    assert.equal(
-      read().reason,
-      "starting",
-      "new Run does not inherit old error",
+    assert.deepEqual(
+      { activityAt: read().activityAt, reason: read().reason },
+      { activityAt: "1970-01-01T00:01:40.000Z", reason: "starting" },
+      "new Run does not inherit old error and carries its activity time",
     );
     db.exec(
       "UPDATE run_attempts SET state='exited'; UPDATE runtime_processes SET state='terminated',exit_code=0",

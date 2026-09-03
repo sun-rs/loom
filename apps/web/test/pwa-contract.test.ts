@@ -32,5 +32,10 @@ test("the Web product exposes one installable PWA shell without caching canonica
   assert.equal(worker.includes("/^\\/v\\d+\\//u"), true);
   assert.match(worker, /pathname\.startsWith\("\/_rah\/"\)/u);
   assert.match(worker, /event\.respondWith\(fetch\(request\)\)/u);
+  assert.match(worker, /OWNED_CACHE_PREFIXES/u);
+  assert.doesNotMatch(
+    worker,
+    /names\s*\.filter\(\(name\) => name !== CACHE_NAME\)/u,
+  );
   assert.doesNotMatch(worker, /indexedDB|localStorage|\/v3\/client.*put/iu);
 });

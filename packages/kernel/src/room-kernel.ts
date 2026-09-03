@@ -186,6 +186,11 @@ import {
   runtimeOfferIsAvailable,
   runtimeOfferObservationFromId,
 } from "./runtime-offer-tool-access.ts";
+import {
+  compactUnreferencedRuntimeOfferObservations,
+  currentRuntimeOfferFromRow,
+  publishRuntimeOffer as publishRuntimeOfferTransaction,
+} from "./runtime-offer-publication.ts";
 import { computeRuntimeCertificationDigest } from "./runtime-certification.ts";
 import { ManagedMcpService } from "./managed-mcp-service.ts";
 import { TaskReviewService } from "./task-review-service.ts";
@@ -268,7 +273,7 @@ import {
 const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 40;
+export const KERNEL_SCHEMA_VERSION = 43;
 export class RoomKernel {
   readonly databasePath: string;
   readonly #database: DatabaseSync;
@@ -527,6 +532,12 @@ export class RoomKernel {
     migrateReminderTargetsV36(this.#database);
     migrateInputRequestCancellationV38(this.#database);
     principalProfile.migrate(this.#database);
+    this.#database
+      .prepare(
+        "INSERT OR IGNORE INTO principals(principal_id, handle, kind, created_at) VALUES(?, ?, 'service', ?)",
+      )
+      .run(SYSTEM_PRINCIPAL_ID, "rah-system", this.#timestamp());
+    assertMessageReferenceDirectoryIsUnambiguous(this.#database);
     if (
       !this.#database
         .prepare("PRAGMA table_info(workspaces)")
@@ -713,12 +724,11 @@ export class RoomKernel {
         "ALTER TABLE placements ADD COLUMN runtime_offer_snapshot_digest TEXT",
       );
     }
-    this.#database
-      .prepare(
-        "INSERT OR IGNORE INTO principals(principal_id, handle, kind, created_at) VALUES(?, ?, 'service', ?)",
-      )
-      .run(SYSTEM_PRINCIPAL_ID, "rah-system", this.#timestamp());
-    assertMessageReferenceDirectoryIsUnambiguous(this.#database);
+    const compactedRuntimeOfferObservationCount =
+      compactUnreferencedRuntimeOfferObservations(
+        this.#database,
+        schemaVersion,
+      );
     this.#database.exec(`PRAGMA user_version = ${KERNEL_SCHEMA_VERSION}`);
     this.#transaction(() => {
       backfillAgentMemoryHomes(this.#database);
@@ -733,6 +743,9 @@ export class RoomKernel {
       this.#quarantineExpiredActiveRuns(participantIds, now);
       this.#reconcileProvenActivationQuarantines(participantIds);
     });
+    if (compactedRuntimeOfferObservationCount > 0) {
+      this.#database.exec("VACUUM");
+    }
   }
 
   close(): void {
@@ -2945,190 +2958,25 @@ export class RoomKernel {
     host: AuthenticatedHostContext,
     untrustedOffer: RuntimeOffer,
   ): RuntimeOfferProjection {
-    const authenticatedHost = this.#requireAuthenticatedHost(host);
-    const reportedOffer = RuntimeOfferSchema.parse(untrustedOffer);
-    if (
-      reportedOffer.hostId !== authenticatedHost.hostId ||
-      reportedOffer.hostInstanceId !== authenticatedHost.instanceId
-    ) {
-      throw new ForbiddenError(
-        "RuntimeOffer must be bound to the authenticated Host generation",
-      );
-    }
-    const resolvedCertifications =
-      this.#resolveTrustedRuntimeOfferEvidence(reportedOffer);
-    const acceptedAt = this.#now();
-    const observedAtMs = Date.parse(reportedOffer.observedAt);
-    if (observedAtMs > acceptedAt.getTime() + this.#runtimeOfferClockSkewMs) {
-      throw new ConflictError(
-        "RuntimeOffer observedAt is too far in the future of Kernel time",
-      );
-    }
-    const reportedLeaseUntilMs = Date.parse(reportedOffer.leaseUntil);
-    if (reportedLeaseUntilMs <= acceptedAt.getTime()) {
-      throw new ConflictError("RuntimeOffer lease is already expired");
-    }
-    const leaseUntilMs = Math.min(
-      reportedLeaseUntilMs,
-      acceptedAt.getTime() + this.#runtimeOfferMaxTtlMs,
+    return publishRuntimeOfferTransaction(
+      {
+        clockSkewMs: this.#runtimeOfferClockSkewMs,
+        createId: this.#createId,
+        database: this.#database,
+        maxTtlMs: this.#runtimeOfferMaxTtlMs,
+        now: this.#now,
+        requireAuthenticatedHost: (candidate) =>
+          this.#requireAuthenticatedHost(candidate),
+        requireRuntimeOfferRow: (runtimeOfferId) =>
+          this.#requireRuntimeOfferRow(runtimeOfferId),
+        resolveTrustedEvidence: (offer) =>
+          this.#resolveTrustedRuntimeOfferEvidence(offer),
+        transaction: (operation) => this.#transaction(operation),
+      },
+      host,
+      untrustedOffer,
     );
-    const offer = RuntimeOfferSchema.parse({
-      ...reportedOffer,
-      leaseUntil: new Date(leaseUntilMs).toISOString(),
-    });
-    const serializedReport = JSON.stringify(reportedOffer);
-    return this.#transaction(() => {
-      this.#requireAuthenticatedHost(authenticatedHost);
-      const existing = this.#database
-        .prepare("SELECT * FROM runtime_offers WHERE runtime_offer_id = ?")
-        .get(offer.runtimeOfferId);
-      if (
-        existing !== undefined &&
-        (text(existing, "host_id") !== offer.hostId ||
-          text(existing, "runtime_profile_id") !== offer.runtimeProfileId ||
-          text(existing, "runtime_profile_revision_id") !==
-            offer.runtimeProfileRevisionId ||
-          text(existing, "revision_digest") !== offer.revisionDigest)
-      ) {
-        throw new ConflictError(
-          `RuntimeOffer ${offer.runtimeOfferId} already belongs to another Host or profile revision`,
-        );
-      }
-      if (existing !== undefined) {
-        const existingObservedAtMs = integer(existing, "observed_at_ms");
-        if (observedAtMs < existingObservedAtMs) {
-          throw new ConflictError(
-            `RuntimeOffer ${offer.runtimeOfferId} observation is older than the current observation`,
-          );
-        }
-        if (observedAtMs === existingObservedAtMs) {
-          const currentObservationId = nullableText(
-            existing,
-            "current_observation_id",
-          );
-          const currentObservation =
-            currentObservationId === null
-              ? undefined
-              : this.#database
-                  .prepare(
-                    "SELECT * FROM runtime_offer_observations WHERE runtime_offer_observation_id = ?",
-                  )
-                  .get(currentObservationId);
-          if (
-            currentObservation === undefined ||
-            text(currentObservation, "report_json") !== serializedReport
-          ) {
-            throw new ConflictError(
-              `RuntimeOffer ${offer.runtimeOfferId} with the same timestamp has different content`,
-            );
-          }
-          return this.#runtimeOfferFromRow(existing);
-        }
-      }
-      const runtimeOfferObservationId = this.#createId(
-        "runtime_offer_observation",
-      );
-      const previousObservationId =
-        existing === undefined
-          ? null
-          : nullableText(existing, "current_observation_id");
-      const previousObservation =
-        previousObservationId === null
-          ? undefined
-          : this.#database
-              .prepare(
-                "SELECT observation_sequence FROM runtime_offer_observations WHERE runtime_offer_observation_id = ?",
-              )
-              .get(previousObservationId);
-      const observationSequence =
-        previousObservation === undefined
-          ? 1
-          : integer(previousObservation, "observation_sequence") + 1;
-      const acceptedAtIso = acceptedAt.toISOString();
-      const runtimeOfferSnapshotDigest = canonicalDigest({
-        domain: "rah/runtime-offer-snapshot/v1",
-        acceptedAt: acceptedAtIso,
-        observationSequence,
-        offer,
-        resolvedCertifications,
-      });
-      const projection = RuntimeOfferProjectionSchema.parse({
-        ...offer,
-        acceptedAt: acceptedAtIso,
-        resolvedCertifications,
-        runtimeOfferObservationId,
-        runtimeOfferSnapshotDigest,
-      });
-      const serializedProjection = JSON.stringify(projection);
-      this.#database
-        .prepare(
-          `INSERT INTO runtime_offer_observations(runtime_offer_observation_id, runtime_offer_id, observation_sequence, runtime_offer_snapshot_digest, host_id, host_instance_id, runtime_profile_revision_id, revision_digest, observed_at, observed_at_ms, accepted_at, accepted_at_ms, lease_until, lease_until_ms, report_json, projection_json)
-           VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        )
-        .run(
-          runtimeOfferObservationId,
-          offer.runtimeOfferId,
-          observationSequence,
-          runtimeOfferSnapshotDigest,
-          offer.hostId,
-          offer.hostInstanceId,
-          offer.runtimeProfileRevisionId,
-          offer.revisionDigest,
-          offer.observedAt,
-          observedAtMs,
-          acceptedAtIso,
-          acceptedAt.getTime(),
-          offer.leaseUntil,
-          leaseUntilMs,
-          serializedReport,
-          serializedProjection,
-        );
-      const updatedAt = acceptedAtIso;
-      this.#database
-        .prepare(
-          `INSERT INTO runtime_offers(runtime_offer_id, current_observation_id, current_snapshot_digest, host_id, host_instance_id, runtime_profile_id, runtime_profile_revision_id, revision_digest, state, observed_at, observed_at_ms, lease_until, lease_until_ms, accepted_at, offer_json, updated_at)
-           VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-           ON CONFLICT(runtime_offer_id) DO UPDATE SET
-             current_observation_id = excluded.current_observation_id,
-             current_snapshot_digest = excluded.current_snapshot_digest,
-             host_id = excluded.host_id,
-             host_instance_id = excluded.host_instance_id,
-             runtime_profile_id = excluded.runtime_profile_id,
-             runtime_profile_revision_id = excluded.runtime_profile_revision_id,
-             revision_digest = excluded.revision_digest,
-             state = excluded.state,
-             observed_at = excluded.observed_at,
-             observed_at_ms = excluded.observed_at_ms,
-             lease_until = excluded.lease_until,
-             lease_until_ms = excluded.lease_until_ms,
-             accepted_at = excluded.accepted_at,
-             offer_json = excluded.offer_json,
-             updated_at = excluded.updated_at`,
-        )
-        .run(
-          offer.runtimeOfferId,
-          runtimeOfferObservationId,
-          runtimeOfferSnapshotDigest,
-          offer.hostId,
-          offer.hostInstanceId,
-          offer.runtimeProfileId,
-          offer.runtimeProfileRevisionId,
-          offer.revisionDigest,
-          offer.state,
-          offer.observedAt,
-          observedAtMs,
-          offer.leaseUntil,
-          leaseUntilMs,
-          acceptedAtIso,
-          serializedProjection,
-          updatedAt,
-        );
-      return this.#runtimeOfferFromRow(
-        this.#requireRuntimeOfferRow(offer.runtimeOfferId),
-      );
-    });
   }
-
   getRuntimeOfferObservation(
     runtimeOfferObservationId: string,
   ): RuntimeOfferProjection {
@@ -5282,7 +5130,7 @@ export class RoomKernel {
   }
 
   #runtimeOfferFromRow(row: Row): RuntimeOfferProjection {
-    return RuntimeOfferProjectionSchema.parse(jsonObject(row, "offer_json"));
+    return currentRuntimeOfferFromRow(row);
   }
 
   #resolveTrustedRuntimeOfferEvidence(

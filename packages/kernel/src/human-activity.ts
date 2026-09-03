@@ -140,7 +140,7 @@ export class HumanActivity {
         ),
         rooms: this.db
           .prepare(
-            `${cte} SELECT room_id, unread_count, has_mention FROM grouped WHERE scope_id = '' AND unread_count > 0 AND (muted = 0 OR has_mention = 1) ORDER BY room_id`,
+            `${cte} SELECT room_id, unread_count, has_mention FROM grouped WHERE scope_id = '' AND unread_count > 0 ORDER BY room_id`,
           )
           .all(...summaryArgs)
           .map((row) => ({

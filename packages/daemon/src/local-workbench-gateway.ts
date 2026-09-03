@@ -17,6 +17,8 @@ import {
   sep,
 } from "node:path";
 
+import { readWebBuildId, WEB_BUILD_HEADER } from "./web-build-metadata.ts";
+
 const SESSION_COOKIE = "rah_workbench_session";
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 const API_PREFIXES = [
@@ -44,6 +46,7 @@ export class LocalWorkbenchGateway {
   readonly #port: number;
   readonly #sessionToken: string;
   readonly #staticDirectory: string;
+  readonly #webBuildId: string | undefined;
   #origin: string | undefined;
   #server: Server | undefined;
 
@@ -85,6 +88,7 @@ export class LocalWorkbenchGateway {
     this.#port = input.port;
     this.#sessionToken = input.sessionToken;
     this.#staticDirectory = resolve(input.staticDirectory);
+    this.#webBuildId = readWebBuildId(this.#staticDirectory);
   }
 
   get origin(): string {
@@ -154,6 +158,7 @@ export class LocalWorkbenchGateway {
       sendText(response, 421, "Misdirected request");
       return;
     }
+    this.#setWebBuildHeader(response);
     const requestUrl = new URL(request.url ?? "/", this.origin);
     if (requestUrl.pathname === "/_rah/health" && request.method === "GET") {
       sendJson(response, 200, {
@@ -243,6 +248,7 @@ export class LocalWorkbenchGateway {
         (upstreamResponse) => {
           response.statusCode = upstreamResponse.statusCode ?? 502;
           copyResponseHeaders(upstreamResponse.headers, response);
+          this.#setWebBuildHeader(response);
           upstreamResponse.once("error", reject);
           upstreamResponse.once("end", resolvePromise);
           upstreamResponse.pipe(response);
@@ -298,6 +304,7 @@ export class LocalWorkbenchGateway {
     response.setHeader("x-frame-options", "DENY");
     response.setHeader("referrer-policy", "no-referrer");
     response.setHeader("content-security-policy", CONTENT_SECURITY_POLICY);
+    this.#setWebBuildHeader(response);
     if (isIndex) {
       response.setHeader("cache-control", "no-store");
       this.#setSessionCookie(response);
@@ -319,6 +326,12 @@ export class LocalWorkbenchGateway {
       stream.once("end", resolvePromise);
       stream.pipe(response);
     });
+  }
+
+  #setWebBuildHeader(response: ServerResponse): void {
+    if (this.#webBuildId !== undefined) {
+      response.setHeader(WEB_BUILD_HEADER, this.#webBuildId);
+    }
   }
 }
 

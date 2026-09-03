@@ -18,6 +18,7 @@ import type {
 } from "@rah-os/protocol";
 import {
   RuntimeOfferSchema,
+  RuntimeProfileProbeReportSchema,
   RuntimeProfileRevisionSchema,
 } from "@rah-os/protocol";
 
@@ -185,6 +186,33 @@ export class RuntimeImplementationRegistry {
 
   recoveryDrivers(): readonly string[] {
     return [...this.#recoveryDriverVersions.keys()].sort();
+  }
+
+  /**
+   * Cheap RuntimeOffer lease validation. This deliberately avoids catalog
+   * discovery and file hashing; every actual process start still executes the
+   * exact SHA-256 fence in assertExecutableIdentityCurrent.
+   */
+  async probeReportAppearsRunnable(
+    revision: RuntimeProfileRevision,
+    probeReport: RuntimeProfileProbeReport,
+  ): Promise<boolean> {
+    revision = validateRuntimeProfileRevision(revision);
+    probeReport = RuntimeProfileProbeReportSchema.parse(probeReport);
+    if (
+      revision.state !== "active" ||
+      !probeReport.available ||
+      probeReport.runtimeProfileRevisionId !==
+        revision.runtimeProfileRevisionId ||
+      probeReport.runtimeProfileDigest !== revision.contentDigest ||
+      probeReport.adapter.kind !== revision.manifest.adapter.kind ||
+      probeReport.executableIdentity === undefined
+    ) {
+      return false;
+    }
+    return await executableIdentityMetadataMatches(
+      probeReport.executableIdentity,
+    );
   }
 
   async probeRevision(
@@ -1292,6 +1320,24 @@ async function assertExecutableIdentityCurrent(expected: {
     }
   } catch {
     throw new Error("runtime executable identity changed after probe");
+  }
+}
+
+async function executableIdentityMetadataMatches(expected: {
+  byteLength: number;
+  resolvedExecutablePath: string;
+}): Promise<boolean> {
+  try {
+    const resolvedPath = await realpath(expected.resolvedExecutablePath);
+    if (resolvedPath !== expected.resolvedExecutablePath) return false;
+    const metadata = await stat(resolvedPath);
+    if (!metadata.isFile() || metadata.size !== expected.byteLength) {
+      return false;
+    }
+    await access(resolvedPath, constants.X_OK);
+    return true;
+  } catch {
+    return false;
   }
 }
 

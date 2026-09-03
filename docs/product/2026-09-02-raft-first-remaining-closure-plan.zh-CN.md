@@ -228,8 +228,12 @@ destructive full。全库门禁仍被非本批 Thread panel 的进行中类型/�
    P6.7 以 daemon 的 `LocalComputerProfileStore` 单独拥有显示名称／描述，heartbeat 仍只拥有 hostname、OS、
    版本与在线观测；详细证据见
    [P6.7 验收审计](../audits/2026-09-03-computer-durable-profile-verification.zh-CN.md)。
-4. **P1.4 永久删除**：`C/A/L/D` 已完成；schema 40 的显式 FK eraser、blob GC receipt、
-   SQL 回滚故障注入和启动恢复均已红转绿。正式持久 Workspace 只做确认层取消验收，实际删除只在隔离状态执行。
+4. **P1.4 永久删除**：schema 40 的显式 FK eraser、blob GC receipt、SQL 回滚故障注入和
+   启动恢复已完成；schema 41 长期运行增量增加独立周期 worker、单条 lease claim、指数退避、
+   tombstone 重删和父回执压缩；schema 42 增加全局/单删除/失败三组精确索引，关闭 10 万
+   due 回执的同步查询放大。已通过全库、Chrome/Firefox、正式迁移、压力基准与
+   跨调度周期运行验收。正式持久 Workspace 只做确认层取消验收，实际删除只在
+   隔离状态执行。
 5. **P4.2b/P4.3 外部 Agent/OAuth Apps**：共享 credential/grant owner 有可靠上游来源前保持禁用；
    不拿 CLI/MCP/Skill 重命名冒充。
 
@@ -297,6 +301,14 @@ destructive full。全库门禁仍被非本批 Thread panel 的进行中类型/�
 - failure-first：schema/FK 覆盖测试、权限/kind/freshness/active-work、重复请求/同 key 异目标、Message/Thread/Search/Activity/Saved/Reaction/File 二级引用、事务中断回滚、提交后 GC 失败及重启续收均已红转绿。Web 入口只在 manager + caught-up + 普通 Channel 条件下解锁，错误停留在确认层且不会投影删除成功。
 - rollback：SQL 提交前任何失败回滚全部 canonical 行；提交后没有业务回滚，只从 durable GC receipt 继续物理字节回收。删除回执不能持有指向被删 Room 的外键，且必须阻止相同 idempotency key 删除另一个 Room。
 - evidence：定向 protocol/kernel/SDK/application `16/16`，故障注入/GC/跨 Room Reminder target/可达图 `6/6`；Chrome 完整真实浏览器门禁通过 desktop 与 `390×844`；Firefox 150 在隔离真实 Workbench 中创建并实际永久删除临时 Channel，验证二次确认逐字文案、Escape/focus、390px 无溢出、成功导航和 Room list 不可再发现。Raft bundle SHA-256、Multica 显式删除图来源、前后端映射和剩余风险见[产品合同](./2026-09-03-room-permanent-deletion-contract.zh-CN.md)及[验证审计](../audits/2026-09-03-room-permanent-deletion-verification.zh-CN.md)。`R` 只覆盖公开前端合同；后端是 Raft 语义 + Multica 可靠性模式 + RAH local-first SQLite glue，不声称复制未公开 Raft Server。
+- schema 41/42 长期运行增量：参考 Multica revision
+  `11861145abc59a0d39c8c8f24ad837d4584e664f` 的 channel-media reconciler，结构性移植为 SQLite
+  单条 `BEGIN IMMEDIATE` claim、2 分钟 lease、1 分钟到 1 小时指数退避、
+  `[15m, 1h, 6h, 24h]` tombstone 和每轮 50 次有界尝试；daemon 每 60 秒独立调度，
+  最终操作行压缩到父删除回执。定向 `14/14`、全库 `826` 项（`824 pass / 2 skip`）、
+  Web `229/229`、回调审计 `34/34`、真实 Chrome/Firefox desktop + `390×844` 和正式
+  schema 40→42 状态迁移和 schema 41→42 索引迁移均通过；详见 [Reconciler 合同](./2026-09-03-room-file-gc-reconciler-contract.zh-CN.md)
+  及[长期运行验证审计](../audits/2026-09-03-room-file-gc-reconciler-verification.zh-CN.md)。
 
 ### P1.5 Room Agent SOS（已完成）
 

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 
 import type { RuntimeOffer } from "@rah-os/protocol";
@@ -9,6 +10,36 @@ import type { RuntimeOffer } from "@rah-os/protocol";
 import { RoomKernel } from "../src/index.ts";
 
 const digest = (character: string) => `sha256:${character.repeat(64)}`;
+
+test("startup rejects a legacy mention directory with ambiguous canonical handles", () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-mention-directory-"));
+  const databasePath = join(directory, "room.db");
+  const kernel = new RoomKernel({ databasePath });
+  try {
+    kernel.initialize();
+    kernel.provisionPrincipal({ handle: "Alice", kind: "agent" });
+    kernel.provisionPrincipal({ handle: "Bob", kind: "agent" });
+    kernel.close();
+
+    const database = new DatabaseSync(databasePath);
+    database
+      .prepare("UPDATE principals SET handle = 'alice' WHERE handle = 'Bob'")
+      .run();
+    database.close();
+
+    const reopened = new RoomKernel({ databasePath });
+    try {
+      assert.throws(
+        () => reopened.initialize(),
+        /ambiguous principal handle identity/i,
+      );
+    } finally {
+      reopened.close();
+    }
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
 
 test("a Human creates a managed Workspace and Rooms through its control Room", () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-workspace-"));

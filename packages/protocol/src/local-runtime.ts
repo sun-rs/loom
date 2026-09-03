@@ -33,6 +33,7 @@ export const LocalRuntimeInventoryEntrySchema = z
     failureCode: IdentifierSchema.optional(),
     modelBindingDescriptors: z.array(ModelBindingDescriptorSchema),
     probeObservedAt: TimestampSchema.optional(),
+    probeValidatedAt: TimestampSchema.optional(),
     resolvedExecutablePath: z.string().trim().min(1).optional(),
     runtimeOfferId: IdentifierSchema.optional(),
     runtimeProfileId: IdentifierSchema.optional(),

@@ -26,6 +26,7 @@ import {
   LanWorkbenchAccessStore,
   type LanWorkbenchDevice,
 } from "./lan-workbench-access-store.ts";
+import { readWebBuildId, WEB_BUILD_HEADER } from "./web-build-metadata.ts";
 
 const SESSION_COOKIE = "rah_lan_session";
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
@@ -66,6 +67,7 @@ export class LanWorkbenchGateway {
   readonly #publicHostname: string;
   readonly #staticDirectory: string;
   readonly #tls: { certificate: Buffer; privateKey: Buffer };
+  readonly #webBuildId: string | undefined;
   #origin: string | undefined;
   #server: HttpsServer | undefined;
 
@@ -129,6 +131,7 @@ export class LanWorkbenchGateway {
     this.#publicHostname = publicHostname;
     this.#staticDirectory = resolve(input.staticDirectory);
     this.#tls = input.tls;
+    this.#webBuildId = readWebBuildId(this.#staticDirectory);
   }
 
   get origin(): string {
@@ -210,6 +213,7 @@ export class LanWorkbenchGateway {
       sendText(response, 421, "Misdirected request");
       return;
     }
+    this.#setWebBuildHeader(response);
     const requestUrl = new URL(request.url ?? "/", this.origin);
     if (requestUrl.pathname.startsWith("/_rah/")) {
       await this.#handleGatewayRoute(request, response, requestUrl);
@@ -396,6 +400,7 @@ export class LanWorkbenchGateway {
         (upstreamResponse) => {
           response.statusCode = upstreamResponse.statusCode ?? 502;
           copyResponseHeaders(upstreamResponse.headers, response);
+          this.#setWebBuildHeader(response);
           upstreamResponse.once("error", reject);
           upstreamResponse.once("end", resolvePromise);
           upstreamResponse.pipe(response);
@@ -453,6 +458,7 @@ export class LanWorkbenchGateway {
           ? "no-cache"
           : "public, max-age=31536000, immutable",
     );
+    this.#setWebBuildHeader(response);
     if (request.method === "HEAD") {
       response.end();
       return;
@@ -463,6 +469,12 @@ export class LanWorkbenchGateway {
       stream.once("end", resolvePromise);
       stream.pipe(response);
     });
+  }
+
+  #setWebBuildHeader(response: ServerResponse): void {
+    if (this.#webBuildId !== undefined) {
+      response.setHeader(WEB_BUILD_HEADER, this.#webBuildId);
+    }
   }
 }
 

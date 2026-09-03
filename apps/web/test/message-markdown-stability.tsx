@@ -10,6 +10,12 @@ import {
 } from "../src/components/message-markdown.tsx";
 import { AgentMessageContext } from "../src/components/agent-message-identity.tsx";
 import { MessageTimeline } from "../src/components/message-timeline.tsx";
+import {
+  ChannelRowIdentity,
+  RoomAttentionBadges,
+} from "../src/components/sidebar-attention.tsx";
+import { WorkspaceActivityFooter } from "../src/components/workspace-activity-footer.tsx";
+import type { WorkspaceAgentView } from "@rah-os/ui-web";
 
 const original = [
   "Markdown 稳定性回归",
@@ -100,6 +106,42 @@ const references: MessageMarkdownReferences = {
 const previewClient = {
   request: () => Promise.reject(new Error("fixture has no Agent backend")),
 } as unknown as RahClient;
+
+const workingAgent = {
+  agentDefinitionId: "agent-working",
+  avatarKey: "skull",
+  connectionStatus: "online",
+  createdAt: "2026-09-03T00:00:00.000Z",
+  createdBy: "human-hakase",
+  displayName: "Working Agent",
+  executionPolicyRevisionId: "policy-working",
+  handle: "WorkingAgent",
+  participantId: "participant-working",
+  presence: {
+    activity: "thinking",
+    activityAt: new Date().toISOString(),
+    agentDefinitionId: "agent-working",
+    reason: "thinking",
+  },
+  role: "Assistant",
+  runtimeAvailable: true,
+  runtimeLabels: [],
+  skillRefs: [],
+  state: "enabled",
+} as WorkspaceAgentView;
+
+const onlineAgent = {
+  ...workingAgent,
+  agentDefinitionId: "agent-online",
+  displayName: "Online Agent",
+  handle: "OnlineAgent",
+  participantId: "participant-online",
+  presence: {
+    activity: "online",
+    agentDefinitionId: "agent-online",
+    reason: "online",
+  },
+} as WorkspaceAgentView;
 
 const frame = () =>
   new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
@@ -380,6 +422,41 @@ function Fixture() {
       </button>
       <pre role="status">{report}</pre>
       <p>父组件刷新：{revision}</p>
+      <div aria-label="Room 注意力标记浏览器样本">
+        <button className="channel-row" data-testid="channel-attention">
+          <ChannelRowIdentity muted={false} name="Channel" />
+          <RoomAttentionBadges
+            kind="channel"
+            value={{ unreadCount: 3, hasMention: true }}
+          />
+        </button>
+        <button className="channel-row" data-testid="quiet-channel-attention">
+          <ChannelRowIdentity muted name="Muted Channel" />
+          <RoomAttentionBadges
+            kind="channel"
+            quiet
+            value={{ unreadCount: 7, hasMention: false }}
+          />
+        </button>
+        <button
+          className="channel-row rah-direct-room-row"
+          data-testid="direct-attention"
+        >
+          <span className="rah-direct-row-identity">
+            <span className="rah-direct-row-name">Direct</span>
+          </span>
+          <RoomAttentionBadges
+            kind="direct"
+            value={{ unreadCount: 4, hasMention: true }}
+          />
+        </button>
+      </div>
+      <div data-testid="direct-activity-working">
+        <WorkspaceActivityFooter agents={[workingAgent]} />
+      </div>
+      <div data-testid="direct-activity-online">
+        <WorkspaceActivityFooter agents={[onlineAgent]} />
+      </div>
       <div
         ref={scroller}
         style={{

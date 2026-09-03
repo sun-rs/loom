@@ -26,6 +26,10 @@ test("the formal LAN gateway requires TLS pairing and keeps Human authority serv
     join(staticDirectory, "index.html"),
     '<!doctype html><div id="root">RAH OS</div>',
   );
+  writeFileSync(
+    join(staticDirectory, ".rah-web-build.json"),
+    JSON.stringify({ schemaVersion: 1, webBuildId: "web-generation-lan" }),
+  );
   writeFileSync(join(staticDirectory, "assets", "app.js"), "ok");
   const keyPath = join(directory, "test.key");
   const certificatePath = join(directory, "test.crt");
@@ -129,6 +133,10 @@ test("the formal LAN gateway requires TLS pairing and keeps Human authority serv
 
     const unauthenticated = await secureRequest(origin, "/v3/client/health");
     assert.equal(unauthenticated.statusCode, 401);
+    assert.equal(
+      unauthenticated.headers["x-rah-web-build-id"],
+      "web-generation-lan",
+    );
     assert.equal(observed.length, 0);
 
     const pairingPage = await secureRequest(origin, "/_rah/pair");
@@ -172,6 +180,10 @@ test("the formal LAN gateway requires TLS pairing and keeps Human authority serv
     });
     assert.equal(authenticatedRoot.statusCode, 200);
     assert.match(authenticatedRoot.body, /RAH OS/u);
+    assert.equal(
+      authenticatedRoot.headers["x-rah-web-build-id"],
+      "web-generation-lan",
+    );
 
     const session = await secureRequest(origin, "/_rah/session", {
       headers: { cookie },
@@ -189,6 +201,7 @@ test("the formal LAN gateway requires TLS pairing and keeps Human authority serv
       },
     });
     assert.equal(proxied.statusCode, 200);
+    assert.equal(proxied.headers["x-rah-web-build-id"], "web-generation-lan");
     assert.deepEqual(observed.at(-1), {
       authorization: "Bearer server-only-human-token",
       body: "",

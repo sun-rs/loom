@@ -39,14 +39,14 @@ const runtimeManifest = {
 const runtimeProfileDigest =
   computeRuntimeProfileManifestDigest(runtimeManifest);
 
-test("a refreshed catalog publishes a new placement-time model contract without withdrawing the executable", async () => {
+test("a lease refresh checks availability without replacing the frozen catalog snapshot", async () => {
   const published: Array<{
     modelBindingDescriptors: Array<{ supportedReasoning: string[] }>;
     state: string;
   }> = [];
   const initial = probeReport("low");
-  const changed = probeReport("ultra");
   const controller = new AbortController();
+  let availabilityChecks = 0;
   const publisher = new RuntimeOfferPublisher({
     host: {
       hostId: "host-1",
@@ -67,9 +67,10 @@ test("a refreshed catalog publishes a new placement-time model contract without 
     maxConcurrent: 1,
     probeReport: initial,
     refreshIntervalMs: 1,
-    refreshProbe: async () => {
+    refreshAvailability: async () => {
+      availabilityChecks += 1;
       controller.abort();
-      return changed;
+      return true;
     },
     revisionIsActive: () => true,
     runtimeOfferId: "offer-1",
@@ -99,8 +100,49 @@ test("a refreshed catalog publishes a new placement-time model contract without 
           supportedReasoning.join(","),
         ),
       ),
-    [["low"], ["ultra"]],
+    [["low"], ["low"]],
   );
+  assert.equal(availabilityChecks, 1);
+});
+
+test("a failed lightweight availability check withdraws the offer without replacing probe evidence", async () => {
+  const published: string[] = [];
+  const controller = new AbortController();
+  const publisher = new RuntimeOfferPublisher({
+    host: {
+      hostId: "host-1",
+      instanceId: "host-instance-1",
+    } as never,
+    kernel: {
+      publishRuntimeOffer: (_actor: unknown, offer: { state: string }) => {
+        published.push(offer.state);
+      },
+    } as never,
+    leaseMs: 1_000,
+    maxConcurrent: 1,
+    probeReport: probeReport("low"),
+    refreshIntervalMs: 1,
+    refreshAvailability: async () => {
+      controller.abort();
+      return false;
+    },
+    revisionIsActive: () => true,
+    runtimeOfferId: "offer-1",
+    runtimeProfileRevision: {
+      activatedAt: "2026-08-28T00:00:00.000Z",
+      contentDigest: runtimeProfileDigest,
+      importedAt: "2026-08-28T00:00:00.000Z",
+      manifest: runtimeManifest,
+      revision: 1,
+      runtimeProfileId: "profile-1",
+      runtimeProfileRevisionId: "profile-revision-1",
+      state: "active",
+    },
+  });
+
+  assert.equal(publisher.publishAvailable(), true);
+  await publisher.run(controller.signal);
+  assert.deepEqual(published, ["available", "unavailable", "unavailable"]);
 });
 
 function probeReport(reasoning: string): RuntimeProfileProbeReport {

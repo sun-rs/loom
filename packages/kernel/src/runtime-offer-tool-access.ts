@@ -9,6 +9,7 @@ import {
 
 import { ConflictError, NotFoundError } from "./errors.ts";
 import { jsonObject, type Row } from "./sqlite-row.ts";
+export { currentRuntimeOfferFromRow } from "./runtime-offer-publication.ts";
 
 /**
  * Older durable Offers did not publish this capability. They are compatible

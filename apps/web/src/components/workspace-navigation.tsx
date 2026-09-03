@@ -21,14 +21,20 @@ import {
   type WorkspaceAgentView,
 } from "@rah-os/ui-web";
 
-import { AgentAvatar } from "./agent-directory-pane.tsx";
+import { AgentAvatar } from "./agent-avatar.tsx";
 import { AgentStatusDot } from "./agent-status-dot.tsx";
 import { Icon } from "./icon.tsx";
+import {
+  ChannelRowIdentity,
+  RoomAttentionBadges,
+} from "./sidebar-attention.tsx";
+import { WorkspaceActivityFooter } from "./workspace-activity-footer.tsx";
 import {
   agentConnectionLabel,
   agentPresencePresentation,
   visibleNavigationDot,
 } from "../attention-presentation.ts";
+import { roomActivityMuted } from "../room-preferences.ts";
 
 export type Tab = "chat" | "files" | "tasks";
 export type Surface =
@@ -230,9 +236,6 @@ export function RoomSidebar({
     workspaceRooms,
     currentHumanId,
   );
-  const activeDirectPeer = directEntries.find(
-    (entry) => entry.roomId !== undefined && entry.roomId === activeRoomId,
-  )?.agent;
   type Entry = {
     key: string;
     label: string;
@@ -310,6 +313,8 @@ export function RoomSidebar({
     const room = row.room,
       entry = row.direct,
       peer = entry?.agent;
+    const channelMuted =
+      room !== undefined && roomActivityMuted(p.mutedActivity, room.roomId);
     return (
       <SidebarDragItem
         key={row.key}
@@ -329,8 +334,12 @@ export function RoomSidebar({
                 name={room.visibility === "private" ? "lock" : "hash"}
                 className="row-icon"
               />
-              <span className="rah-sidebar-channel-name">{room.name}</span>
-              <UnreadCount value={unread(room.roomId)} />
+              <ChannelRowIdentity muted={channelMuted} name={room.name} />
+              <RoomAttentionBadges
+                kind="channel"
+                quiet={channelMuted}
+                value={unread(room.roomId)}
+              />
             </button>
             {onEditRoom ? (
               <button
@@ -379,7 +388,7 @@ export function RoomSidebar({
               <span className="rah-direct-row-name">{entry.label}</span>
               {peer?.description ? <small>{peer.description}</small> : null}
             </span>
-            <UnreadCount value={unread(entry.roomId)} />
+            <RoomAttentionBadges kind="direct" value={unread(entry.roomId)} />
           </button>
         ) : null}
       </SidebarDragItem>
@@ -507,38 +516,9 @@ export function RoomSidebar({
           })}
         </SidebarDrag>
       </div>
-      {activeDirectPeer ? (
-        <footer
-          className="rah-direct-activity-footer"
-          title={agentConnectionLabel(activeDirectPeer)}
-        >
-          <AgentAvatar agent={activeDirectPeer} size="sidebar" />
-          <AgentStatusDot
-            activity={agentPresencePresentation(activeDirectPeer).activity}
-            className="rah-direct-activity-dot"
-            label={agentConnectionLabel(activeDirectPeer)}
-            size="sm"
-          />
-          <span>{agentConnectionLabel(activeDirectPeer)}</span>
-        </footer>
-      ) : null}
+      <WorkspaceActivityFooter agents={agents} />
     </aside>
   );
-}
-
-function UnreadCount({
-  value,
-}: {
-  value: { unreadCount: number; hasMention: boolean } | undefined;
-}) {
-  return value && value.unreadCount > 0 ? (
-    <span
-      className="rah-room-unread"
-      aria-label={`${value.unreadCount} 条未读${value.hasMention ? "，包含提及" : ""}`}
-    >
-      {value.unreadCount > 99 ? "99+" : value.unreadCount}
-    </span>
-  ) : null;
 }
 
 export function ChannelHeader({

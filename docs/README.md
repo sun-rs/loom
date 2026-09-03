@@ -1,5 +1,17 @@
 # RAH OS 文档
 
+Web 正式发布的跨代际自愈：[Raft 式刷新/继续合同、内容确定 build ID、gateway response fence、
+Service Worker/cache 边界](./product/2026-09-03-web-build-recovery-contract.zh-CN.md)；两次正式
+generation 切换、desktop/390×844 真实 Chrome、typed Notifications deep link、状态备份与
+剩余 release GC/RSS 风险见
+[验证审计](./audits/2026-09-03-web-build-recovery-verification.zh-CN.md)。
+
+RuntimeOffer、模型目录发现与探测历史的长期运行收口合同：[lease heartbeat 不启动 Provider
+CLI、能力变化才追加快照、Runtime Registry 内容寻址去重、Room 旧 heartbeat 安全压缩及目录
+新鲜度语义](./product/2026-09-03-runtime-offer-catalog-retention-contract.zh-CN.md)；正式迁移、96.04%
+磁盘回收、零 heartbeat child、Firefox/Chrome 与保留 RSS 风险见
+[验证审计](./audits/2026-09-03-runtime-offer-catalog-retention-verification.zh-CN.md)。
+
 安装、改名与用户数据的当前合同：[稳定 `~/.rah` 根、旧 Application Support 无覆盖迁移、LaunchAgent 卸载永不删除数据](./product/2026-09-02-install-data-lifecycle-contract.zh-CN.md)。`RAH_DATA_HOME` 是规范覆盖，`RAH_OS_HOME` 仅为兼容别名；共享根下禁止通过服务卸载 purge 整棵数据树。
 
 InputRequest 当前收口边界：[Raft 只提供通知/弹层合同、Multica 无直接 typed 生命周期、schema 38 的 Task-cancel 原子终止设计](./product/2026-09-02-input-request-lifecycle-contract.zh-CN.md)。本批只修复 pending request 在 Task 取消后的幽灵动作；自动 TTL、dismiss 即取消和结构化表单没有成熟源码依据，明确延期。
@@ -18,6 +30,8 @@ P4.6 Agent 完全重置：[Raft 三档 reset 合同、单 fence workspace/contin
 
 后续收口的当前执行真相：[Raft-first 剩余收口重构与补强计划](./product/2026-09-02-raft-first-remaining-closure-plan.zh-CN.md)。它固定了源码复用顺序、证据分层、P0–P6 施工顺序、单一 owner、迁移/回滚和浏览器验收。旧的完成列表是历史快照，不得用来覆盖该计划和当日审计。
 
+Task 状态的长期边界：[Raft 五态工作流、RAH OS 执行阶段与人类注意事项的正交投影](./adr/0027-task-workflow-execution-and-attention-projection.md)。客户端只显示 Raft 五态；认领、运行、等待输入、阻塞原因和取消中的证据保留在独立维度，不得重新变成额外看板列。
+
 本机 Computer 详情当前合同：[P6.6 Computer 侧栏、Runtime inspector、裁剪诊断与 Agent 跳转](./product/2026-09-02-computer-local-detail-contract.zh-CN.md)。当前证据为 `C/A/L/D`；Raft Computer 离线导致同前置非空数据 `R` 不可宣称。正式实例已从本轮验证过的不可变发布物恢复，但并发出现的非本批缺文件／缺导出仍阻塞当前源码整库重建，二者不得混为“全部通过”。
 
 P2 Agent workspace / 本地项目文件当前 owner 合同：[Raft workspace 请求、root 区分、AgentHost 路径安全、前端状态机与双边证据限制](./product/2026-09-02-agent-workspace-and-project-files-contract.zh-CN.md)。Raft 的 workspace 是 Agent 持久目录；RAH 的 `runtime-project` 是 daemon 冻结 cwd 的只读本地扩展，绝不能把客户端路径、cwd 或 Memory owner 混成同一身份。
@@ -27,6 +41,8 @@ P2 Agent workspace / 本地项目文件当前 owner 合同：[Raft workspace 请
 核心调度当前最高优先级审计与同日修复复核：[Raft 业务合同、四条 P0 completion-proof 反例、typed obligation、双 Agent 浏览器报数、Thread subscription、Held Draft、Runtime error fingerprint fence、Reminder 与 restart/busy 组合证据](./audits/2026-09-02-core-scheduling-raft-parity-audit.zh-CN.md)。Room / Inbox / Activation 主骨架成立；schema 30–34 依次关闭 typed completion proof、Thread follow、Held Draft、poison retry 主合同和 Reminder authoritative schedule；真实 Worker gate又覆盖报数中途重启及单 Agent busy 跨 Room。schema 35/36 现补齐结构化 Runtime `actionRequired/sticky/recoverable`、正向 jitter、跨 Room Reminder target、Thread receipt 与 reload-safe typed permalink。它关闭本轮列出的精细缺口，但不等于所有 Provider 都能发出结构化错误，也不把本地内部链接、`#room` target 扩大为 Raft 中央公开 URL 或未验证的 DM target。
 
 普通 Channel 永久删除的 Raft 可见合同、schema 40 显式引用图、文件 GC 回执和崩溃恢复边界：[产品合同](./product/2026-09-03-room-permanent-deletion-contract.zh-CN.md)；实现与 Chrome/Firefox 隔离真删除证据：[验证审计](./audits/2026-09-03-room-permanent-deletion-verification.zh-CN.md)。正式用户 Room 不用于破坏性验收。
+
+Room 删除后文件回收的长期运行状态机、Multica 结构性移植、周期 worker、lease/backoff/tombstone 与 schema 42 验收范围：[Reconciler 合同](./product/2026-09-03-room-file-gc-reconciler-contract.zh-CN.md)；实现、迁移、失败注入和浏览器证据：[验证审计](./audits/2026-09-03-room-file-gc-reconciler-verification.zh-CN.md)；10 万回执 CPU/内存/磁盘压力与剩余缺口裁决：[性能审计](./audits/2026-09-03-room-file-gc-performance-and-remaining-gaps.zh-CN.md)。
 
 本轮十二项 Chat / Settings / Presence 缺口的当前裁决：[逐项源码 owner、双边实页、Firefox 桌面/390、正式重启与保留边界](./audits/2026-09-02-chat-settings-presence-closure.zh-CN.md)。本报告关闭的只是用户列出的十二项合同，不扩大为全站或所有权限/异常态 100% 等同。
 
@@ -164,6 +180,10 @@ Raft/Multica 来源边界：[消息富文本引用、公式与图表合同](./pr
 
 上述合同的 Raft bundle/正式页证据、Multica 交叉依据、RAH OS 实施映射、正式 4173 Chrome 实测与
 独立审计、computed-style/浏览器证据与剩余非阻断边界：[消息富文本引用与消息列搜索验证报告](./audits/2026-09-02-message-rich-reference-verification.zh-CN.md)。
+
+频道黄色 `@`、普通/静音频道未读、私信粉色未读与 Workspace 全局 90 秒 Agent 工作条的来源裁决、
+单一 owner、桌面/390px Chrome computed-style 及正式 4173 重启验收：
+[频道提及、私信未读与 Agent 工作条验证](./audits/2026-09-03-sidebar-attention-and-direct-activity-verification.zh-CN.md)。
 
 不采信上述结论、重新启动真实 OpenCode fixture 并独立复核官方 Raft live DOM、Channel、DM、Thread、Task、Agent、Computer 与移动端结果的反证审计：[Raft ↔ RAH OS 独立第三方双边审计](./audits/2026-08-29-independent-third-party-bilateral-audit.zh-CN.md)。
 

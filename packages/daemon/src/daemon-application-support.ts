@@ -43,6 +43,7 @@ import {
 } from "@rah-os/protocol";
 
 import type { DaemonConfig } from "./config.ts";
+import { RoomFileGcReconciler } from "./room-file-gc-reconciler.ts";
 import {
   buildLocalRuntimeInventoryResponse,
   type ConfiguredLocalRuntimeSnapshot,
@@ -129,7 +130,7 @@ export function createDaemonAgentExecutionResetCoordinator(input: {
   });
 }
 
-export function createDaemonReminderReconciler(
+function createDaemonReminderReconciler(
   kernel: RoomKernel,
   onFailure: (message: string) => void,
 ): ReminderReconciler {
@@ -145,6 +146,38 @@ export function createDaemonReminderReconciler(
     },
     reconcile: () => kernel.reminders.reconcileDue(),
   });
+}
+
+function createDaemonRoomFileGcReconciler(
+  kernel: RoomKernel,
+  onFailure: (message: string) => void,
+): RoomFileGcReconciler {
+  return new RoomFileGcReconciler({
+    onError: (error) =>
+      onFailure(`Room file GC reconciliation failed: ${errorMessage(error)}`),
+    onResult: (result) => {
+      if (result.outstandingFailures > 0) {
+        onFailure(
+          `${result.outstandingFailures} Room file GC receipt(s) are waiting for retry`,
+        );
+      }
+    },
+    reconcile: () => kernel.files.reconcileRoomDeletionGc({ limit: 50 }),
+  });
+}
+
+export function createDaemonBackgroundReconcilerRunners(
+  kernel: RoomKernel,
+  onFailure: (message: string) => void,
+): ReadonlyArray<(signal: AbortSignal) => Promise<void>> {
+  const reconcilers = [
+    createDaemonReminderReconciler(kernel, onFailure),
+    createDaemonRoomFileGcReconciler(kernel, onFailure),
+  ];
+  return reconcilers.map(
+    (reconciler) => async (signal: AbortSignal) =>
+      await reconciler.run({ signal }),
+  );
 }
 
 export function createDaemonAgentExecutionAdministration(input: {

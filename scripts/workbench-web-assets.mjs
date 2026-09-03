@@ -37,6 +37,39 @@ export async function snapshotWorkbenchAssets(
   if (!files.some(([path]) => path === "index.html"))
     throw new Error("Product index.html is missing; run build:web:workbench");
   const assets = new Map(files);
+  const metadataBytes = assets.get(".rah-web-build.json");
+  if (metadataBytes === undefined)
+    throw new Error("Product Web build metadata is missing");
+  let webBuildId;
+  try {
+    const metadata = JSON.parse(metadataBytes.toString());
+    if (
+      metadata === null ||
+      typeof metadata !== "object" ||
+      metadata.schemaVersion !== 1 ||
+      typeof metadata.webBuildId !== "string" ||
+      !/^[A-Za-z0-9._:-]{1,128}$/u.test(metadata.webBuildId)
+    ) {
+      throw new Error("invalid Web build metadata");
+    }
+    webBuildId = metadata.webBuildId;
+  } catch (error) {
+    throw new Error("Product Web build metadata is invalid", {
+      cause: error,
+    });
+  }
+  const index = assets.get("index.html").toString();
+  const embeddedBuildIds = Array.from(
+    index.matchAll(
+      /<meta\s+name=["']rah-web-build-id["']\s+content=["']([^"']+)["']\s*\/?\s*>/giu,
+    ),
+    (match) => match[1],
+  );
+  if (embeddedBuildIds.length !== 1 || embeddedBuildIds[0] !== webBuildId) {
+    throw new Error(
+      "Product index.html Web build identity does not match its metadata",
+    );
+  }
   function requireAsset(reference, from = "index.html") {
     if (/^(?:[a-z]+:|\/\/|#)/i.test(reference)) return;
     const localPath = reference.split(/[?#]/)[0];
@@ -47,10 +80,7 @@ export async function snapshotWorkbenchAssets(
     );
     if (!assets.has(path)) throw new Error(`Product asset is missing: ${path}`);
   }
-  for (const match of assets
-    .get("index.html")
-    .toString()
-    .matchAll(/\b(?:src|href)=["']([^"']+)["']/g))
+  for (const match of index.matchAll(/\b(?:src|href)=["']([^"']+)["']/g))
     requireAsset(match[1]);
   const manifestBytes = assets.get(".vite/manifest.json");
   if (manifestBytes) {

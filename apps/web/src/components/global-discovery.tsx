@@ -24,6 +24,7 @@ import {
 } from "../search-history.ts";
 import { useDiscoveryQuery } from "../use-discovery-query.ts";
 import { createLatestRequest } from "../latest-request.ts";
+import { taskStatusPresentation } from "../task-presentation.ts";
 import {
   normalizeScopes,
   senderKindForScopes,
@@ -205,7 +206,7 @@ function Header({
   title: string;
   subtitle: string;
   icon: string;
-  onRefresh: () => void;
+  onRefresh?: (() => void) | undefined;
   onClose: () => void;
 }) {
   return (
@@ -214,17 +215,19 @@ function Header({
         <Icon name={icon} />
       </span>
       <div className="channel-title">
-        <h1>{title}</h1>
+        <h2>{title}</h2>
         <p className="channel-sub">{subtitle}</p>
       </div>
       <div className="head-actions">
-        <button
-          className="sq-btn"
-          aria-label={`刷新${title}`}
-          onClick={onRefresh}
-        >
-          <Icon name="refresh-cw" />
-        </button>
+        {onRefresh === undefined ? null : (
+          <button
+            className="sq-btn"
+            aria-label={`刷新${title}`}
+            onClick={onRefresh}
+          >
+            <Icon name="refresh-cw" />
+          </button>
+        )}
         <button
           className="sq-btn rah-mobile-only"
           aria-label="返回聊天"
@@ -288,10 +291,6 @@ function GlobalTasks({
         title="任务"
         subtitle={`${result.data?.total ?? 0} 个频道任务${result.data?.nextCursor || filters.previous ? ` · 本页 ${tasks.length} 项` : ""}`}
         icon="task"
-        onRefresh={() => {
-          filters.resetPage();
-          result.refresh();
-        }}
         onClose={onClose}
       />
       <section className="tasks-toolbar">
@@ -1049,10 +1048,17 @@ function GlobalActivity({
                 <span className="fc-chips">
                   {item.task && (
                     <span
-                      className={`activity-chip is-task ${item.task.state === "completed" ? "chip-green" : "chip-purple"}`}
+                      className={`activity-chip is-task chip-${taskStatusPresentation(item.task.state).tone}`}
+                      data-task-workflow-status={
+                        taskStatusPresentation(item.task.state).id
+                      }
                     >
                       <Icon
-                        name={item.task.state === "completed" ? "check" : "eye"}
+                        name={
+                          taskStatusPresentation(item.task.state).id === "done"
+                            ? "check"
+                            : "eye"
+                        }
                       />{" "}
                       #{item.task.taskNumber}
                       {item.task.assigneeId

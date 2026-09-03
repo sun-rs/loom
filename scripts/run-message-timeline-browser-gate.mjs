@@ -167,6 +167,228 @@ try {
   assert.equal(markdown.result, "PASS", JSON.stringify(markdown));
   assert.equal(markdown.refreshes, 20);
   assert.deepEqual(markdown.failures, []);
+  const sidebarAttention = await page.evaluate(() => {
+    const channel = document.querySelector('[data-testid="channel-attention"]');
+    const quietChannel = document.querySelector(
+      '[data-testid="quiet-channel-attention"]',
+    );
+    const direct = document.querySelector('[data-testid="direct-attention"]');
+    const mention = channel?.querySelector(".rah-room-mention");
+    const mentionIcon = mention?.querySelector("svg");
+    const channelUnread = channel?.querySelector(".rah-room-unread");
+    const directUnread = direct?.querySelector(".rah-room-unread");
+    const quietUnread = quietChannel?.querySelector(".rah-room-unread");
+    const quietMuted = quietChannel?.querySelector(".rah-room-muted");
+    const quietMutedIcon = quietMuted?.querySelector("svg");
+    const quietName = quietChannel?.querySelector(".rah-sidebar-channel-name");
+    const directAttention = direct?.querySelector(".rah-room-attention");
+    if (
+      !(mention instanceof HTMLElement) ||
+      !(mentionIcon instanceof SVGElement) ||
+      !(channelUnread instanceof HTMLElement) ||
+      !(directUnread instanceof HTMLElement) ||
+      !(quietUnread instanceof HTMLElement) ||
+      !(quietMuted instanceof HTMLElement) ||
+      !(quietMutedIcon instanceof SVGElement) ||
+      !(quietName instanceof HTMLElement) ||
+      !(directAttention instanceof HTMLElement)
+    ) {
+      throw new Error("missing Room attention browser sample");
+    }
+    const mentionStyle = getComputedStyle(mention);
+    const unreadStyle = getComputedStyle(channelUnread);
+    const quietStyle = getComputedStyle(quietUnread);
+    const quietMutedStyle = getComputedStyle(quietMuted);
+    const directAttentionStyle = getComputedStyle(directAttention);
+    const mentionRect = mention.getBoundingClientRect();
+    const iconRect = mentionIcon.getBoundingClientRect();
+    return {
+      channelMentionCount: channel.querySelectorAll(".rah-room-mention").length,
+      directMentionCount: direct.querySelectorAll(".rah-room-mention").length,
+      channelUnreadText: channelUnread.textContent,
+      directUnreadText: directUnread.textContent,
+      quietUnreadText: quietUnread.textContent,
+      quietMutedCount: quietChannel.querySelectorAll(".rah-room-muted").length,
+      directAttention: {
+        alignItems: directAttentionStyle.alignItems,
+        display: directAttentionStyle.display,
+        overflow: directAttentionStyle.overflow,
+      },
+      mention: {
+        backgroundColor: mentionStyle.backgroundColor,
+        borderRadius: mentionStyle.borderRadius,
+        borderWidth: mentionStyle.borderWidth,
+        height: mentionRect.height,
+        iconCenterDeltaX:
+          iconRect.left +
+          iconRect.width / 2 -
+          (mentionRect.left + mentionRect.width / 2),
+        iconCenterDeltaY:
+          iconRect.top +
+          iconRect.height / 2 -
+          (mentionRect.top + mentionRect.height / 2),
+        iconHeight: iconRect.height,
+        iconWidth: iconRect.width,
+        marginLeft: mentionStyle.marginLeft,
+        width: mentionRect.width,
+      },
+      unread: {
+        backgroundColor: unreadStyle.backgroundColor,
+        borderRadius: unreadStyle.borderRadius,
+        borderWidth: unreadStyle.borderWidth,
+        color: unreadStyle.color,
+        fontSize: unreadStyle.fontSize,
+        height: channelUnread.getBoundingClientRect().height,
+      },
+      quietUnread: {
+        backgroundColor: quietStyle.backgroundColor,
+        borderWidth: quietStyle.borderWidth,
+        color: quietStyle.color,
+        fontFamily: quietStyle.fontFamily,
+        fontSize: quietStyle.fontSize,
+        fontWeight: quietStyle.fontWeight,
+        height: quietUnread.getBoundingClientRect().height,
+      },
+      quietMuted: {
+        color: quietMutedStyle.color,
+        gapFromName:
+          quietMuted.getBoundingClientRect().left -
+          quietName.getBoundingClientRect().right,
+        height: quietMuted.getBoundingClientRect().height,
+        iconHeight: quietMutedIcon.getBoundingClientRect().height,
+        iconWidth: quietMutedIcon.getBoundingClientRect().width,
+        width: quietMuted.getBoundingClientRect().width,
+      },
+    };
+  });
+  const yellowAttention = await page.evaluate(() => {
+    const probe = document.createElement("span");
+    probe.style.background = "var(--yellow)";
+    document.body.append(probe);
+    const color = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return color;
+  });
+  const pinkAttention = await page.evaluate(() => {
+    const probe = document.createElement("span");
+    probe.style.background = "var(--pink)";
+    document.body.append(probe);
+    const color = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return color;
+  });
+  assert.deepEqual(
+    {
+      channelMentionCount: sidebarAttention.channelMentionCount,
+      channelUnreadText: sidebarAttention.channelUnreadText,
+      directMentionCount: sidebarAttention.directMentionCount,
+      directUnreadText: sidebarAttention.directUnreadText,
+      quietUnreadText: sidebarAttention.quietUnreadText,
+      quietMutedCount: sidebarAttention.quietMutedCount,
+    },
+    {
+      channelMentionCount: 1,
+      channelUnreadText: "3",
+      directMentionCount: 0,
+      directUnreadText: "4",
+      quietUnreadText: "7",
+      quietMutedCount: 1,
+    },
+  );
+  assert.deepEqual(sidebarAttention.mention, {
+    backgroundColor: yellowAttention,
+    borderRadius: "4px",
+    borderWidth: "1px",
+    height: 16,
+    iconCenterDeltaX: 0,
+    iconCenterDeltaY: 0,
+    iconHeight: 10,
+    iconWidth: 10,
+    marginLeft: "4px",
+    width: 16,
+  });
+  assert.equal(sidebarAttention.unread.backgroundColor, pinkAttention);
+  assert.equal(sidebarAttention.unread.borderRadius, "4px");
+  assert.equal(sidebarAttention.unread.borderWidth, "1px");
+  assert.equal(sidebarAttention.unread.color, "rgb(255, 255, 255)");
+  assert.equal(sidebarAttention.unread.fontSize, "10px");
+  assert.equal(sidebarAttention.unread.height, 16);
+  assert.deepEqual(sidebarAttention.directAttention, {
+    alignItems: "center",
+    // A direct child of the flex row is blockified by CSS Display, so the
+    // computed value is `flex` even though the authored primitive is
+    // `inline-flex`.
+    display: "flex",
+    overflow: "visible",
+  });
+  assert.equal(
+    sidebarAttention.quietUnread.backgroundColor,
+    "rgba(0, 0, 0, 0)",
+  );
+  assert.equal(sidebarAttention.quietUnread.borderWidth, "0px");
+  assert.equal(sidebarAttention.quietUnread.fontSize, "10px");
+  assert.equal(sidebarAttention.quietUnread.fontWeight, "500");
+  assert.equal(sidebarAttention.quietUnread.height, 14);
+  assert.deepEqual(sidebarAttention.quietMuted, {
+    color: "rgba(0, 0, 0, 0.4)",
+    gapFromName: 4,
+    height: 16,
+    iconHeight: 12,
+    iconWidth: 12,
+    width: 16,
+  });
+  const workspaceActivity = await page.evaluate(() => {
+    const working = document.querySelector(
+      '[data-testid="direct-activity-working"] .rah-live-agent-activity-footer',
+    );
+    const online = document.querySelector(
+      '[data-testid="direct-activity-online"] .rah-live-agent-activity-footer',
+    );
+    if (!(working instanceof HTMLElement)) {
+      throw new Error("missing working Direct Room activity strip");
+    }
+    const label = working.querySelector(":scope > span:last-child");
+    const dot = working.querySelector(".rah-live-agent-activity-dot");
+    if (!(label instanceof HTMLElement) || !(dot instanceof HTMLElement)) {
+      throw new Error("incomplete Direct Room activity strip");
+    }
+    const style = getComputedStyle(working);
+    const labelStyle = getComputedStyle(label);
+    return {
+      activity: dot.dataset.activity,
+      backgroundColor: style.backgroundColor,
+      fontSize: labelStyle.fontSize,
+      height: working.getBoundingClientRect().height,
+      label: label.textContent,
+      onlineStripCount: online === null ? 0 : 1,
+      paddingBlock: [style.paddingTop, style.paddingBottom],
+      paddingInline: [style.paddingLeft, style.paddingRight],
+      pulse: dot.dataset.pulse,
+    };
+  });
+  assert.deepEqual(workspaceActivity, {
+    activity: "thinking",
+    backgroundColor: "rgb(255, 250, 239)",
+    fontSize: "14px",
+    height: 48,
+    label: "思考中…",
+    onlineStripCount: 0,
+    paddingBlock: ["8px", "8px"],
+    paddingInline: ["12px", "12px"],
+    pulse: "true",
+  });
+  const disabledWorkspaceActivityDisplay = await page.evaluate(() => {
+    const footer = document.querySelector(
+      '[data-testid="direct-activity-working"] .rah-live-agent-activity-footer',
+    );
+    if (!(footer instanceof HTMLElement))
+      throw new Error("missing work strip preference fixture");
+    document.documentElement.dataset.rahLiveAgentActivity = "false";
+    const display = getComputedStyle(footer).display;
+    document.documentElement.dataset.rahLiveAgentActivity = "true";
+    return display;
+  });
+  assert.equal(disabledWorkspaceActivityDisplay, "none");
   const restStyles = await page.evaluate(() => {
     const read = (selector) => {
       const element = document.querySelector(selector);
@@ -174,6 +396,7 @@ try {
       const style = getComputedStyle(element);
       return {
         backgroundColor: style.backgroundColor,
+        borderWidth: style.borderWidth,
         borderRadius: style.borderRadius,
         fontSize: style.fontSize,
       };
@@ -185,12 +408,19 @@ try {
     return {
       agent: read(".rah-rich-agent-reference"),
       room: read(".rah-rich-room-reference"),
+      self: read(".rah-rich-self-reference"),
       task: read(".rah-rich-task-reference"),
     };
   });
   assert.equal(restStyles.agent.fontSize, "14px");
   assert.equal(restStyles.task.fontSize, "12.25px");
   assert.equal(restStyles.task.borderRadius, "0px");
+  assert.deepEqual(restStyles.self, {
+    backgroundColor: yellowAttention,
+    borderWidth: "1px",
+    borderRadius: "0px",
+    fontSize: "12.25px",
+  });
   await page.locator(".rah-rich-agent-reference").first().hover();
   const agentHoverColor = await page
     .locator(".rah-rich-agent-reference")
@@ -239,6 +469,132 @@ try {
     { browserErrors, failedResponses },
     { browserErrors: [], failedResponses: [] },
   );
+  await page.setViewportSize({ height: 844, width: 390 });
+  const mobileAttention = await page.evaluate(() => {
+    const channel = document.querySelector('[data-testid="channel-attention"]');
+    const quietChannel = document.querySelector(
+      '[data-testid="quiet-channel-attention"]',
+    );
+    const direct = document.querySelector('[data-testid="direct-attention"]');
+    const mention = channel?.querySelector(".rah-room-mention");
+    const mentionIcon = mention?.querySelector("svg");
+    const channelUnread = channel?.querySelector(".rah-room-unread");
+    const directUnread = direct?.querySelector(".rah-room-unread");
+    const quietUnread = quietChannel?.querySelector(".rah-room-unread");
+    const quietMuted = quietChannel?.querySelector(".rah-room-muted");
+    const quietMutedIcon = quietMuted?.querySelector("svg");
+    const directAttention = direct?.querySelector(".rah-room-attention");
+    const footer = document.querySelector(
+      '[data-testid="direct-activity-working"] .rah-live-agent-activity-footer',
+    );
+    if (
+      !(mention instanceof HTMLElement) ||
+      !(mentionIcon instanceof SVGElement) ||
+      !(channelUnread instanceof HTMLElement) ||
+      !(directUnread instanceof HTMLElement) ||
+      !(quietUnread instanceof HTMLElement) ||
+      !(quietMuted instanceof HTMLElement) ||
+      !(quietMutedIcon instanceof SVGElement) ||
+      !(directAttention instanceof HTMLElement) ||
+      !(footer instanceof HTMLElement)
+    )
+      throw new Error("incomplete mobile attention fixture");
+    const mentionRect = mention.getBoundingClientRect();
+    const iconRect = mentionIcon.getBoundingClientRect();
+    const channelUnreadStyle = getComputedStyle(channelUnread);
+    const directUnreadStyle = getComputedStyle(directUnread);
+    const quietUnreadStyle = getComputedStyle(quietUnread);
+    const directAttentionStyle = getComputedStyle(directAttention);
+    const footerStyle = getComputedStyle(footer);
+    return {
+      channelMentionCount:
+        channel?.querySelectorAll(".rah-room-mention").length,
+      channelUnreadText: channelUnread?.textContent,
+      directMentionCount: direct?.querySelectorAll(".rah-room-mention").length,
+      directUnreadText: directUnread?.textContent,
+      quietUnreadText: quietUnread.textContent,
+      quietMutedCount: quietChannel.querySelectorAll(".rah-room-muted").length,
+      quietMutedSize: [quietMuted.offsetWidth, quietMuted.offsetHeight],
+      quietMutedIconSize: [
+        quietMutedIcon.getBoundingClientRect().width,
+        quietMutedIcon.getBoundingClientRect().height,
+      ],
+      mentionSize: [mention.offsetWidth, mention.offsetHeight],
+      mentionIconSize: [iconRect.width, iconRect.height],
+      mentionCenterDelta: [
+        iconRect.left +
+          iconRect.width / 2 -
+          (mentionRect.left + mentionRect.width / 2),
+        iconRect.top +
+          iconRect.height / 2 -
+          (mentionRect.top + mentionRect.height / 2),
+      ],
+      unread: {
+        backgroundColor: channelUnreadStyle.backgroundColor,
+        borderWidth: channelUnreadStyle.borderWidth,
+        color: channelUnreadStyle.color,
+        fontSize: channelUnreadStyle.fontSize,
+        height: channelUnread.offsetHeight,
+      },
+      directUnread: {
+        backgroundColor: directUnreadStyle.backgroundColor,
+        height: directUnread.offsetHeight,
+      },
+      quietUnread: {
+        backgroundColor: quietUnreadStyle.backgroundColor,
+        borderWidth: quietUnreadStyle.borderWidth,
+        height: quietUnread.offsetHeight,
+      },
+      directAttention: {
+        alignItems: directAttentionStyle.alignItems,
+        display: directAttentionStyle.display,
+        overflow: directAttentionStyle.overflow,
+      },
+      footer: {
+        backgroundColor: footerStyle.backgroundColor,
+        height: footer.offsetHeight,
+        paddingBlock: [footerStyle.paddingTop, footerStyle.paddingBottom],
+        paddingInline: [footerStyle.paddingLeft, footerStyle.paddingRight],
+      },
+    };
+  });
+  assert.deepEqual(mobileAttention, {
+    channelMentionCount: 1,
+    channelUnreadText: "3",
+    directMentionCount: 0,
+    directUnreadText: "4",
+    quietUnreadText: "7",
+    quietMutedCount: 1,
+    quietMutedSize: [16, 16],
+    quietMutedIconSize: [12, 12],
+    mentionSize: [16, 16],
+    mentionIconSize: [10, 10],
+    mentionCenterDelta: [0, 0],
+    unread: {
+      backgroundColor: pinkAttention,
+      borderWidth: "1px",
+      color: "rgb(255, 255, 255)",
+      fontSize: "10px",
+      height: 16,
+    },
+    directUnread: { backgroundColor: pinkAttention, height: 16 },
+    quietUnread: {
+      backgroundColor: "rgba(0, 0, 0, 0)",
+      borderWidth: "0px",
+      height: 14,
+    },
+    directAttention: {
+      alignItems: "center",
+      display: "flex",
+      overflow: "visible",
+    },
+    footer: {
+      backgroundColor: "rgb(255, 255, 255)",
+      height: 48,
+      paddingBlock: ["8px", "8px"],
+      paddingInline: ["12px", "12px"],
+    },
+  });
   console.log(
     JSON.stringify({
       anchorDelta: anchorAfter.offset - anchorBefore.offset,
@@ -246,7 +602,11 @@ try {
       domRows: anchorAfter.domRows,
       logicalMessages: 10_050,
       markdown,
-      viewport: "1440x1000",
+      workspaceActivity,
+      disabledWorkspaceActivityDisplay,
+      mobileAttention,
+      sidebarAttention,
+      viewports: ["1440x1000", "390x844"],
     }),
   );
 } finally {

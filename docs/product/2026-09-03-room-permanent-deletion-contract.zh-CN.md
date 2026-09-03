@@ -2,6 +2,11 @@
 
 状态：P1.4 实施基线（2026-09-03）
 
+长期运行增量：本文件的提交边界保持不变；schema 41 已把启动/同请求续收扩展为独立周期
+reconciler、lease/backoff/tombstone 和完成明细压缩；schema 42 用精确作用域 SQL 和三组
+索引关闭大 backlog 查询放大，不改变删除语义。精确状态机见
+[Room 文件 GC 长期运行 Reconciler 合同](./2026-09-03-room-file-gc-reconciler-contract.zh-CN.md)。
+
 ## 1. 产品事实与来源边界
 
 ### 1.1 Raft 可证明的前端合同
@@ -98,9 +103,11 @@ SQLite deferred FK checking；每张表仍由固定、可审计的 `DELETE ... W
 `room_deletion_receipts` 不持有 Room 外键，记录：删除操作 ID、actor、Workspace、原
 Room ID/name/slug、请求基线、幂等键、删除时间、blob 总数，以及当前 GC 汇总。
 
-`room_file_gc_receipts` 只引用删除回执，记录 server-generated attachment ID、状态
-`pending/reclaimed/failed`、尝试次数、最近错误和时间。它不引用已删除的
-`room_files/messages/tasks/rooms`。
+`room_file_gc_receipts` 只引用删除回执，记录 server-generated attachment ID、状态、
+尝试次数、最近错误和时间。schema 40 的 `pending/reclaimed/failed` 基线由 schema 41
+兼容迁移为 `pending/deleting/tombstoned/reclaimed/failed`，并增加 next-attempt、lease 与
+tombstone pass；schema 42 只升级索引/查询路径。完成观察期后 per-file 行压缩进父回执 `gc_reclaimed_count`。它不引用已
+删除的 `room_files/messages/tasks/rooms`。
 
 ### 4.2 提交与恢复
 
@@ -113,8 +120,9 @@ BEGIN IMMEDIATE
   -> 删除 rooms
   -> foreign_key_check
 COMMIT
-  -> 对每条 pending/failed GC receipt 删除 exact blob 与 .part
-  -> 成功标 reclaimed；失败标 failed 并保留错误
+  -> 有界认领到期 GC receipt，删除 exact blob 与 .part
+  -> 成功进入 tombstone 重删；失败保留错误并指数退避
+  -> 观察期完成后汇总进父回执并清除 per-file 热行
 ```
 
 崩溃点语义：
@@ -122,7 +130,8 @@ COMMIT
 - SQL commit 前崩溃：SQLite 整体回滚，Room 仍存在，不能留下成功回执；
 - SQL commit 后、文件删除前崩溃：Room 已永久消失，GC receipt 保持 pending；
 - 删除字节后、标记 reclaimed 前崩溃：重试收到 `ENOENT` 视作幂等成功；
-- 某个文件失败：其他文件继续，失败项下次启动或相同请求重放时重试。
+- 某个文件失败：其他文件继续，失败项由周期 worker 在 backoff 到期后重试；启动和相同
+  请求重放也只处理已经到期的条目，不能绕过退避。
 
 RoomFiles 是本地 blob 唯一 owner。GC 只能处理 UUID 形 server-generated ID，根目录
 必须是 owner-private、非 symlink directory；目标路径只允许该根目录的直接子项。任何

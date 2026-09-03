@@ -14,6 +14,8 @@ import type {
 import {
   messageMentionCandidates,
   messageReferenceNameKey,
+  projectTaskLifecycle,
+  taskWorkflowStatus,
 } from "@rah-os/protocol";
 
 export type RoomMessageView = {
@@ -29,6 +31,57 @@ export type RoomMessageView = {
 
 export type TaskColumnId =
   "closed" | "done" | "in-progress" | "review" | "todo";
+
+export type TaskStatusPresentation = {
+  id: TaskColumnId;
+  label: "已关闭" | "完成" | "进行中" | "待办" | "待确认";
+  tone: "cyan" | "gray" | "green" | "orange" | "purple";
+};
+
+export const TASK_COLUMN_PRESENTATIONS: Readonly<
+  Record<TaskColumnId, TaskStatusPresentation>
+> = Object.freeze({
+  todo: Object.freeze({ id: "todo", label: "待办", tone: "orange" }),
+  "in-progress": Object.freeze({
+    id: "in-progress",
+    label: "进行中",
+    tone: "cyan",
+  }),
+  review: Object.freeze({
+    id: "review",
+    label: "待确认",
+    tone: "purple",
+  }),
+  done: Object.freeze({ id: "done", label: "完成", tone: "green" }),
+  closed: Object.freeze({ id: "closed", label: "已关闭", tone: "gray" }),
+});
+
+/** Shared Raft five-state presentation for every Web Task surface. */
+export function taskStatusPresentation(
+  state: Task["state"],
+): TaskStatusPresentation {
+  const status = taskWorkflowStatus(state);
+  const id: TaskColumnId =
+    status === "in_progress"
+      ? "in-progress"
+      : status === "in_review"
+        ? "review"
+        : status;
+  return TASK_COLUMN_PRESENTATIONS[id];
+}
+
+/** Secondary execution detail; never becomes a sixth Kanban column. */
+export function taskAttentionLabel(
+  task: Pick<Task, "blockedReason" | "state">,
+): string | undefined {
+  const lifecycle = projectTaskLifecycle(task);
+  if (lifecycle.executionPhase === "claimed") return "已认领";
+  if (lifecycle.attention?.kind === "waiting_input") return "等待输入";
+  if (lifecycle.attention?.kind === "blocked") {
+    return `已阻塞：${lifecycle.attention.reason}`;
+  }
+  return undefined;
+}
 
 export type RoomTaskView = Task & {
   assigneeLabel?: string;
@@ -549,9 +602,9 @@ export function createRoomViewModel(input: {
   const handles = new Map(
     input.members.map((member) => [member.principalId, member.handle]),
   );
-  const tasks = (states: readonly Task["state"][]) =>
+  const tasks = (status: ReturnType<typeof taskWorkflowStatus>) =>
     input.tasks
-      .filter((task) => states.includes(task.state))
+      .filter((task) => taskWorkflowStatus(task.state) === status)
       .sort((left, right) => left.createdAt.localeCompare(right.createdAt))
       .map((task) => {
         const assigneeLabel =
@@ -595,36 +648,24 @@ export function createRoomViewModel(input: {
     ),
     taskColumns: Object.freeze([
       Object.freeze({
-        id: "todo" as const,
-        label: "待办",
-        tasks: Object.freeze(tasks(["todo"])),
-        tone: "orange" as const,
+        ...TASK_COLUMN_PRESENTATIONS.todo,
+        tasks: Object.freeze(tasks("todo")),
       }),
       Object.freeze({
-        id: "in-progress" as const,
-        label: "进行中",
-        tasks: Object.freeze(
-          tasks(["claimed", "in_progress", "waiting_input", "blocked"]),
-        ),
-        tone: "cyan" as const,
+        ...TASK_COLUMN_PRESENTATIONS["in-progress"],
+        tasks: Object.freeze(tasks("in_progress")),
       }),
       Object.freeze({
-        id: "review" as const,
-        label: "待确认",
-        tasks: Object.freeze(tasks(["submitted"])),
-        tone: "purple" as const,
+        ...TASK_COLUMN_PRESENTATIONS.review,
+        tasks: Object.freeze(tasks("in_review")),
       }),
       Object.freeze({
-        id: "done" as const,
-        label: "完成",
-        tasks: Object.freeze(tasks(["completed"])),
-        tone: "green" as const,
+        ...TASK_COLUMN_PRESENTATIONS.done,
+        tasks: Object.freeze(tasks("done")),
       }),
       Object.freeze({
-        id: "closed" as const,
-        label: "已关闭",
-        tasks: Object.freeze(tasks(["cancelled"])),
-        tone: "gray" as const,
+        ...TASK_COLUMN_PRESENTATIONS.closed,
+        tasks: Object.freeze(tasks("closed")),
       }),
     ]),
   });

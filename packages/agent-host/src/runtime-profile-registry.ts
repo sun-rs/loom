@@ -30,7 +30,7 @@ import {
 
 import { isIssuedRuntimeProfileProbeObservation } from "./runtime-probe-authority.ts";
 
-export const RUNTIME_PROFILE_REGISTRY_SCHEMA_VERSION = 3;
+export const RUNTIME_PROFILE_REGISTRY_SCHEMA_VERSION = 4;
 const RUNTIME_PROFILE_MANIFEST_V1_DIGEST_DOMAIN =
   "rah/runtime-profile-manifest/v1";
 const RUNTIME_PROFILE_MANIFEST_V2_DIGEST_DOMAIN =
@@ -38,6 +38,8 @@ const RUNTIME_PROFILE_MANIFEST_V2_DIGEST_DOMAIN =
 const RUNTIME_PROFILE_MANIFEST_V3_DIGEST_DOMAIN =
   "rah/runtime-profile-manifest/v3";
 const RUNTIME_PROFILE_PROBE_DIGEST_DOMAIN = "rah/runtime-profile-probe/v1";
+const RUNTIME_PROFILE_PROBE_PAYLOAD_DIGEST_DOMAIN =
+  "rah/runtime-profile-probe-payload/v1";
 const EMPTY_SHA256_DIGEST = `sha256:${"0".repeat(64)}`;
 
 type Row = Record<string, unknown>;
@@ -59,6 +61,12 @@ export type RuntimeProfileProbeObservation = {
   recoveryDrivers: RuntimeProfileProbeReport["recoveryDrivers"];
   modelBindings: RuntimeModelBinding[];
   runtimeProfileRevisionId: string;
+};
+
+export type RuntimeProfileProbeValidation = {
+  lastValidatedAt: string;
+  probeReportId: string;
+  validationCount: number;
 };
 
 export class RuntimeProfileRegistrySecurityError extends Error {}
@@ -148,6 +156,34 @@ export function computeRuntimeProfileProbeDigest(
     .digest("hex")}`;
 }
 
+function runtimeProfileProbePayload(
+  report: RuntimeProfileProbeReport,
+): Record<string, unknown> {
+  const {
+    observedAt: _observedAt,
+    probeDigest: _probeDigest,
+    probeReportId: _probeReportId,
+    ...payload
+  } = report;
+  return payload;
+}
+
+function computeRuntimeProfileProbePayloadDigest(
+  payload: Record<string, unknown>,
+): string {
+  return `sha256:${createHash("sha256")
+    .update(
+      JSON.stringify(
+        canonicalValue({
+          domain: RUNTIME_PROFILE_PROBE_PAYLOAD_DIGEST_DOMAIN,
+          payload,
+        }),
+      ),
+      "utf8",
+    )
+    .digest("hex")}`;
+}
+
 export class RuntimeProfileRegistry {
   readonly databasePath: string;
   readonly hostId: string;
@@ -193,8 +229,14 @@ export class RuntimeProfileRegistry {
         `database uses newer Runtime Registry schema ${String(version)}; this build supports ${String(RUNTIME_PROFILE_REGISTRY_SCHEMA_VERSION)}`,
       );
     }
-    if (version === 1) this.#migrateSchemaV1ToV2();
-    if (version === 2) this.#migrateSchemaV2ToV3();
+    if (version === 1) {
+      this.#migrateSchemaV1ToV2();
+    } else if (version === 2) {
+      this.#migrateSchemaV2ToV3();
+      this.#migrateSchemaV3ToV4();
+    } else if (version === 3) {
+      this.#migrateSchemaV3ToV4();
+    }
     this.#database.exec(`
       PRAGMA foreign_keys = ON;
       CREATE TABLE IF NOT EXISTS runtime_registry_metadata (
@@ -240,6 +282,12 @@ export class RuntimeProfileRegistry {
         occurred_at TEXT NOT NULL
       ) STRICT;
 
+      CREATE TABLE IF NOT EXISTS runtime_profile_probe_payloads (
+        payload_digest TEXT PRIMARY KEY,
+        report_version INTEGER NOT NULL CHECK (report_version IN (1, 2)),
+        payload_json TEXT NOT NULL
+      ) STRICT;
+
       CREATE TABLE IF NOT EXISTS runtime_profile_probe_reports (
         probe_report_id TEXT PRIMARY KEY,
         probe_digest TEXT NOT NULL UNIQUE,
@@ -248,11 +296,18 @@ export class RuntimeProfileRegistry {
         runtime_profile_digest TEXT NOT NULL,
         available INTEGER NOT NULL CHECK (available IN (0, 1)),
         observed_at TEXT NOT NULL,
-        report_json TEXT NOT NULL
+        payload_digest TEXT NOT NULL REFERENCES runtime_profile_probe_payloads(payload_digest)
       ) STRICT;
 
       CREATE INDEX IF NOT EXISTS idx_runtime_profile_probe_reports_revision
         ON runtime_profile_probe_reports(runtime_profile_revision_id, observed_at, probe_report_id);
+
+      CREATE TABLE IF NOT EXISTS runtime_profile_probe_heads (
+        runtime_profile_revision_id TEXT PRIMARY KEY REFERENCES runtime_profile_revisions(runtime_profile_revision_id),
+        probe_report_id TEXT NOT NULL REFERENCES runtime_profile_probe_reports(probe_report_id),
+        last_validated_at TEXT NOT NULL,
+        validation_count INTEGER NOT NULL CHECK (validation_count > 0)
+      ) STRICT;
 
       CREATE TRIGGER IF NOT EXISTS runtime_profile_revision_content_immutable
       BEFORE UPDATE ON runtime_profile_revisions
@@ -294,6 +349,18 @@ export class RuntimeProfileRegistry {
       BEFORE DELETE ON runtime_profile_probe_reports
       BEGIN
         SELECT RAISE(ABORT, 'Runtime Profile probe report is immutable');
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS runtime_profile_probe_payload_no_update
+      BEFORE UPDATE ON runtime_profile_probe_payloads
+      BEGIN
+        SELECT RAISE(ABORT, 'Runtime Profile probe payload is immutable');
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS runtime_profile_probe_payload_no_delete
+      BEFORE DELETE ON runtime_profile_probe_payloads
+      BEGIN
+        SELECT RAISE(ABORT, 'Runtime Profile probe payload is immutable');
       END;
     `);
     this.#database
@@ -424,12 +491,12 @@ export class RuntimeProfileRegistry {
       if (revision.manifest.manifestVersion !== 1) {
         const latestProbe = this.#database
           .prepare(
-            `SELECT probe_report_id, available
-             FROM runtime_profile_probe_reports
-             WHERE runtime_profile_revision_id = ?
-               AND runtime_profile_digest = ?
-             ORDER BY rowid DESC
-             LIMIT 1`,
+            `SELECT reports.probe_report_id, reports.available
+             FROM runtime_profile_probe_heads heads
+             JOIN runtime_profile_probe_reports reports
+               ON reports.probe_report_id = heads.probe_report_id
+             WHERE heads.runtime_profile_revision_id = ?
+               AND reports.runtime_profile_digest = ?`,
           )
           .get(revision.runtimeProfileRevisionId, revision.contentDigest);
         if (latestProbe === undefined) {
@@ -615,8 +682,8 @@ export class RuntimeProfileRegistry {
           `probe recovery drivers do not match RuntimeProfileRevision ${input.runtimeProfileRevisionId}`,
         );
       }
-      const probeReportId = `runtime_profile_probe_${randomUUID()}`;
-      const reportWithoutDigest = {
+      const observedAt = this.#timestamp();
+      const provisionalReport = RuntimeProfileProbeReportSchema.parse({
         adapter: input.adapter,
         available: input.available,
         ...(input.executableIdentity === undefined
@@ -625,9 +692,10 @@ export class RuntimeProfileRegistry {
         ...(input.failureCode === undefined
           ? {}
           : { failureCode: input.failureCode }),
-        observedAt: this.#timestamp(),
+        observedAt,
         modelBindings: input.modelBindings,
-        probeReportId,
+        probeDigest: EMPTY_SHA256_DIGEST,
+        probeReportId: "runtime_profile_probe_payload",
         recoveryDrivers: [...input.recoveryDrivers].sort((left, right) =>
           left.driver.localeCompare(right.driver),
         ),
@@ -635,6 +703,40 @@ export class RuntimeProfileRegistry {
         runtimeProfileDigest: revision.contentDigest,
         runtimeProfileId: revision.runtimeProfileId,
         runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
+      });
+      const payload = runtimeProfileProbePayload(provisionalReport);
+      const payloadJson = JSON.stringify(canonicalValue(payload));
+      const payloadDigest = computeRuntimeProfileProbePayloadDigest(payload);
+      const currentHead = this.#database
+        .prepare(
+          `SELECT reports.*, payloads.payload_json
+           FROM runtime_profile_probe_heads heads
+           JOIN runtime_profile_probe_reports reports
+             ON reports.probe_report_id = heads.probe_report_id
+           JOIN runtime_profile_probe_payloads payloads
+             ON payloads.payload_digest = reports.payload_digest
+           WHERE heads.runtime_profile_revision_id = ?`,
+        )
+        .get(revision.runtimeProfileRevisionId);
+      if (
+        currentHead !== undefined &&
+        text(currentHead, "payload_digest") === payloadDigest
+      ) {
+        this.#database
+          .prepare(
+            `UPDATE runtime_profile_probe_heads
+             SET last_validated_at = ?, validation_count = validation_count + 1
+             WHERE runtime_profile_revision_id = ?`,
+          )
+          .run(observedAt, revision.runtimeProfileRevisionId);
+        return this.#probeReportFromRow(currentHead);
+      }
+
+      const probeReportId = `runtime_profile_probe_${randomUUID()}`;
+      const reportWithoutDigest = {
+        ...payload,
+        observedAt,
+        probeReportId,
       };
       const report = RuntimeProfileProbeReportSchema.parse({
         ...reportWithoutDigest,
@@ -642,10 +744,30 @@ export class RuntimeProfileRegistry {
       });
       this.#database
         .prepare(
+          `INSERT OR IGNORE INTO runtime_profile_probe_payloads(
+             payload_digest, report_version, payload_json
+           ) VALUES(?, ?, ?)`,
+        )
+        .run(payloadDigest, report.reportVersion, payloadJson);
+      const storedPayload = this.#database
+        .prepare(
+          "SELECT payload_json FROM runtime_profile_probe_payloads WHERE payload_digest = ?",
+        )
+        .get(payloadDigest);
+      if (
+        storedPayload === undefined ||
+        text(storedPayload, "payload_json") !== payloadJson
+      ) {
+        throw new RuntimeProfileRegistryConflictError(
+          `RuntimeProfileProbe payload digest collision: ${payloadDigest}`,
+        );
+      }
+      this.#database
+        .prepare(
           `INSERT INTO runtime_profile_probe_reports(
              probe_report_id, probe_digest, runtime_profile_id,
              runtime_profile_revision_id, runtime_profile_digest,
-             available, observed_at, report_json
+             available, observed_at, payload_digest
            ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)`,
         )
         .run(
@@ -656,7 +778,23 @@ export class RuntimeProfileRegistry {
           report.runtimeProfileDigest,
           report.available ? 1 : 0,
           report.observedAt,
-          JSON.stringify(report),
+          payloadDigest,
+        );
+      this.#database
+        .prepare(
+          `INSERT INTO runtime_profile_probe_heads(
+             runtime_profile_revision_id, probe_report_id,
+             last_validated_at, validation_count
+           ) VALUES(?, ?, ?, 1)
+           ON CONFLICT(runtime_profile_revision_id) DO UPDATE SET
+             probe_report_id = excluded.probe_report_id,
+             last_validated_at = excluded.last_validated_at,
+             validation_count = 1`,
+        )
+        .run(
+          report.runtimeProfileRevisionId,
+          report.probeReportId,
+          report.observedAt,
         );
       this.#appendAudit({
         action: "probe_recorded",
@@ -675,7 +813,11 @@ export class RuntimeProfileRegistry {
   getProbeReport(probeReportId: string): RuntimeProfileProbeReport {
     const row = this.#database
       .prepare(
-        "SELECT * FROM runtime_profile_probe_reports WHERE probe_report_id = ?",
+        `SELECT reports.*, payloads.payload_json
+         FROM runtime_profile_probe_reports reports
+         JOIN runtime_profile_probe_payloads payloads
+           ON payloads.payload_digest = reports.payload_digest
+         WHERE reports.probe_report_id = ?`,
       )
       .get(probeReportId);
     if (row === undefined) {
@@ -691,7 +833,13 @@ export class RuntimeProfileRegistry {
   ): RuntimeProfileProbeReport | null {
     const row = this.#database
       .prepare(
-        "SELECT * FROM runtime_profile_probe_reports WHERE runtime_profile_revision_id = ? ORDER BY rowid DESC LIMIT 1",
+        `SELECT reports.*, payloads.payload_json
+         FROM runtime_profile_probe_heads heads
+         JOIN runtime_profile_probe_reports reports
+           ON reports.probe_report_id = heads.probe_report_id
+         JOIN runtime_profile_probe_payloads payloads
+           ON payloads.payload_digest = reports.payload_digest
+         WHERE heads.runtime_profile_revision_id = ?`,
       )
       .get(runtimeProfileRevisionId);
     return row === undefined ? null : this.#probeReportFromRow(row);
@@ -704,15 +852,43 @@ export class RuntimeProfileRegistry {
       runtimeProfileRevisionId === undefined
         ? this.#database
             .prepare(
-              "SELECT * FROM runtime_profile_probe_reports ORDER BY observed_at, probe_report_id",
+              `SELECT reports.*, payloads.payload_json
+               FROM runtime_profile_probe_reports reports
+               JOIN runtime_profile_probe_payloads payloads
+                 ON payloads.payload_digest = reports.payload_digest
+               ORDER BY reports.observed_at, reports.probe_report_id`,
             )
             .all()
         : this.#database
             .prepare(
-              "SELECT * FROM runtime_profile_probe_reports WHERE runtime_profile_revision_id = ? ORDER BY observed_at, probe_report_id",
+              `SELECT reports.*, payloads.payload_json
+               FROM runtime_profile_probe_reports reports
+               JOIN runtime_profile_probe_payloads payloads
+                 ON payloads.payload_digest = reports.payload_digest
+               WHERE reports.runtime_profile_revision_id = ?
+               ORDER BY reports.observed_at, reports.probe_report_id`,
             )
             .all(runtimeProfileRevisionId);
     return rows.map((row) => this.#probeReportFromRow(row));
+  }
+
+  getProbeValidation(
+    runtimeProfileRevisionId: string,
+  ): RuntimeProfileProbeValidation | null {
+    const row = this.#database
+      .prepare(
+        `SELECT probe_report_id, last_validated_at, validation_count
+         FROM runtime_profile_probe_heads
+         WHERE runtime_profile_revision_id = ?`,
+      )
+      .get(runtimeProfileRevisionId);
+    return row === undefined
+      ? null
+      : {
+          lastValidatedAt: text(row, "last_validated_at"),
+          probeReportId: text(row, "probe_report_id"),
+          validationCount: integer(row, "validation_count"),
+        };
   }
 
   #appendAudit(input: {
@@ -801,9 +977,16 @@ export class RuntimeProfileRegistry {
   }
 
   #probeReportFromRow(row: Row): RuntimeProfileProbeReport {
-    const report = RuntimeProfileProbeReportSchema.parse(
-      JSON.parse(text(row, "report_json")),
-    );
+    const payload = JSON.parse(text(row, "payload_json")) as Record<
+      string,
+      unknown
+    >;
+    const report = RuntimeProfileProbeReportSchema.parse({
+      ...payload,
+      observedAt: text(row, "observed_at"),
+      probeDigest: text(row, "probe_digest"),
+      probeReportId: text(row, "probe_report_id"),
+    });
     const { probeDigest: _discarded, ...reportWithoutDigest } = report;
     if (
       report.probeReportId !== text(row, "probe_report_id") ||
@@ -814,6 +997,8 @@ export class RuntimeProfileRegistry {
       report.runtimeProfileDigest !== text(row, "runtime_profile_digest") ||
       report.available !== (integer(row, "available") === 1) ||
       report.observedAt !== text(row, "observed_at") ||
+      computeRuntimeProfileProbePayloadDigest(payload) !==
+        text(row, "payload_digest") ||
       computeRuntimeProfileProbeDigest(reportWithoutDigest) !==
         report.probeDigest
     ) {
@@ -999,6 +1184,205 @@ export class RuntimeProfileRegistry {
     } finally {
       this.#database.exec("PRAGMA foreign_keys = ON");
     }
+  }
+
+  #migrateSchemaV3ToV4(): void {
+    this.#database.exec("PRAGMA foreign_keys = OFF; BEGIN IMMEDIATE;");
+    try {
+      this.#database.exec(`
+        DROP TRIGGER IF EXISTS runtime_profile_probe_report_no_update;
+        DROP TRIGGER IF EXISTS runtime_profile_probe_report_no_delete;
+        DROP INDEX IF EXISTS idx_runtime_profile_probe_reports_revision;
+
+        ALTER TABLE runtime_profile_probe_reports
+          RENAME TO runtime_profile_probe_reports_v3;
+
+        CREATE TABLE runtime_profile_probe_payloads (
+          payload_digest TEXT PRIMARY KEY,
+          report_version INTEGER NOT NULL CHECK (report_version IN (1, 2)),
+          payload_json TEXT NOT NULL
+        ) STRICT;
+
+        CREATE TABLE runtime_profile_probe_reports (
+          probe_report_id TEXT PRIMARY KEY,
+          probe_digest TEXT NOT NULL UNIQUE,
+          runtime_profile_id TEXT NOT NULL REFERENCES runtime_profiles(runtime_profile_id),
+          runtime_profile_revision_id TEXT NOT NULL REFERENCES runtime_profile_revisions(runtime_profile_revision_id),
+          runtime_profile_digest TEXT NOT NULL,
+          available INTEGER NOT NULL CHECK (available IN (0, 1)),
+          observed_at TEXT NOT NULL,
+          payload_digest TEXT NOT NULL REFERENCES runtime_profile_probe_payloads(payload_digest)
+        ) STRICT;
+
+        CREATE INDEX idx_runtime_profile_probe_reports_revision
+          ON runtime_profile_probe_reports(runtime_profile_revision_id, observed_at, probe_report_id);
+
+        CREATE TABLE runtime_profile_probe_heads (
+          runtime_profile_revision_id TEXT PRIMARY KEY REFERENCES runtime_profile_revisions(runtime_profile_revision_id),
+          probe_report_id TEXT NOT NULL REFERENCES runtime_profile_probe_reports(probe_report_id),
+          last_validated_at TEXT NOT NULL,
+          validation_count INTEGER NOT NULL CHECK (validation_count > 0)
+        ) STRICT;
+      `);
+
+      const insertPayload = this.#database.prepare(
+        `INSERT OR IGNORE INTO runtime_profile_probe_payloads(
+           payload_digest, report_version, payload_json
+         ) VALUES(?, ?, ?)`,
+      );
+      const selectPayload = this.#database.prepare(
+        "SELECT payload_json FROM runtime_profile_probe_payloads WHERE payload_digest = ?",
+      );
+      const payloadDigestsByLegacyJson = new Map<string, string>();
+      const legacyPayloadRows = this.#database
+        .prepare(
+          `SELECT DISTINCT json_remove(
+             report_json, '$.probeReportId', '$.probeDigest', '$.observedAt'
+           ) AS legacy_payload_json
+           FROM runtime_profile_probe_reports_v3`,
+        )
+        .all();
+      for (const row of legacyPayloadRows) {
+        const legacyPayloadJson = text(row, "legacy_payload_json");
+        const parsed = RuntimeProfileProbeReportSchema.parse({
+          ...(JSON.parse(legacyPayloadJson) as Record<string, unknown>),
+          observedAt: "1970-01-01T00:00:00.000Z",
+          probeDigest: EMPTY_SHA256_DIGEST,
+          probeReportId: "runtime_profile_probe_migration",
+        });
+        const payload = runtimeProfileProbePayload(parsed);
+        const payloadJson = JSON.stringify(canonicalValue(payload));
+        const payloadDigest = computeRuntimeProfileProbePayloadDigest(payload);
+        insertPayload.run(payloadDigest, parsed.reportVersion, payloadJson);
+        const storedPayload = selectPayload.get(payloadDigest);
+        if (
+          storedPayload === undefined ||
+          text(storedPayload, "payload_json") !== payloadJson
+        ) {
+          throw new RuntimeProfileRegistryConflictError(
+            `RuntimeProfileProbe payload digest collision: ${payloadDigest}`,
+          );
+        }
+        payloadDigestsByLegacyJson.set(legacyPayloadJson, payloadDigest);
+      }
+      const insertReport = this.#database.prepare(
+        `INSERT INTO runtime_profile_probe_reports(
+           probe_report_id, probe_digest, runtime_profile_id,
+           runtime_profile_revision_id, runtime_profile_digest,
+           available, observed_at, payload_digest
+         ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)`,
+      );
+      const upsertHead = this.#database.prepare(
+        `INSERT INTO runtime_profile_probe_heads(
+           runtime_profile_revision_id, probe_report_id,
+           last_validated_at, validation_count
+         ) VALUES(?, ?, ?, ?)
+         ON CONFLICT(runtime_profile_revision_id) DO UPDATE SET
+           probe_report_id = excluded.probe_report_id,
+           last_validated_at = excluded.last_validated_at,
+           validation_count = excluded.validation_count`,
+      );
+      const validationHeads = new Map<
+        string,
+        { count: number; payloadDigest: string }
+      >();
+      const selectLegacyBatch = this.#database.prepare(
+        `SELECT
+           rowid AS legacy_rowid,
+           probe_report_id,
+           probe_digest,
+           runtime_profile_id,
+           runtime_profile_revision_id,
+           runtime_profile_digest,
+           available,
+           observed_at,
+           json_remove(
+             report_json,
+             '$.probeReportId', '$.probeDigest', '$.observedAt'
+           ) AS legacy_payload_json
+         FROM runtime_profile_probe_reports_v3
+         WHERE rowid > ?
+         ORDER BY rowid
+         LIMIT 32`,
+      );
+      let lastRowId = 0;
+      while (true) {
+        const rows = selectLegacyBatch.all(lastRowId);
+        if (rows.length === 0) break;
+        for (const row of rows) {
+          const payloadDigest = payloadDigestsByLegacyJson.get(
+            text(row, "legacy_payload_json"),
+          );
+          if (payloadDigest === undefined) {
+            throw new RuntimeProfileRegistryConflictError(
+              `RuntimeProfileProbeReport ${text(row, "probe_report_id")} has no migrated payload`,
+            );
+          }
+          insertReport.run(
+            text(row, "probe_report_id"),
+            text(row, "probe_digest"),
+            text(row, "runtime_profile_id"),
+            text(row, "runtime_profile_revision_id"),
+            text(row, "runtime_profile_digest"),
+            integer(row, "available"),
+            text(row, "observed_at"),
+            payloadDigest,
+          );
+          const runtimeProfileRevisionId = text(
+            row,
+            "runtime_profile_revision_id",
+          );
+          const previous = validationHeads.get(runtimeProfileRevisionId);
+          const count =
+            previous?.payloadDigest === payloadDigest ? previous.count + 1 : 1;
+          validationHeads.set(runtimeProfileRevisionId, {
+            count,
+            payloadDigest,
+          });
+          upsertHead.run(
+            runtimeProfileRevisionId,
+            text(row, "probe_report_id"),
+            text(row, "observed_at"),
+            count,
+          );
+          lastRowId = integer(row, "legacy_rowid");
+        }
+      }
+
+      const legacyCount = integer(
+        this.#database
+          .prepare(
+            "SELECT COUNT(*) AS count FROM runtime_profile_probe_reports_v3",
+          )
+          .get()!,
+        "count",
+      );
+      const migratedCount = integer(
+        this.#database
+          .prepare(
+            "SELECT COUNT(*) AS count FROM runtime_profile_probe_reports",
+          )
+          .get()!,
+        "count",
+      );
+      if (legacyCount !== migratedCount) {
+        throw new RuntimeProfileRegistryConflictError(
+          "RuntimeProfileProbe migration did not preserve every report envelope",
+        );
+      }
+
+      this.#database.exec(`
+        DROP TABLE runtime_profile_probe_reports_v3;
+        PRAGMA user_version = 4;
+        COMMIT;
+      `);
+    } catch (error) {
+      this.#database.exec("ROLLBACK");
+      throw error;
+    } finally {
+      this.#database.exec("PRAGMA foreign_keys = ON");
+    }
+    this.#database.exec("VACUUM");
   }
 }
 

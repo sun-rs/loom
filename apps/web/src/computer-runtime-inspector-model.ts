@@ -23,6 +23,15 @@ export function runtimeInspectorRows(
     },
     { label: "Offer", value: runtime.runtimeOfferId ?? "未发布" },
     {
+      label: "目录采样",
+      value: runtime.probeObservedAt ?? "尚未采样",
+    },
+    {
+      label: "最近验证",
+      value: runtime.probeValidatedAt ?? runtime.probeObservedAt ?? "尚未验证",
+    },
+    { label: "刷新方式", value: "重启 RAH OS" },
+    {
       label: "已验证模型",
       value: String(
         runtime.modelBindingDescriptors.filter(

@@ -57,7 +57,7 @@ Raft 的 HTTP method 没有机械复制到 RAH Client API：RAH 的 versioned Cl
 
 1. **Raft Server 实现不可见。** 本报告只宣称 Raft 可见行为一致；事务与 GC 是经过测试的本地实现，不冒充上游源码。
 2. **回执有意保留最小审计元数据。** 删除回执保留原 Room ID/name/slug、actor、Workspace、时间和文件数量，但不保留消息正文、Thread、Task 或文件内容；这是幂等/运维审计需要，不是产品恢复入口。
-3. **GC 不是业务提交条件。** 成功可以携带 `failed/pending` 汇总；这时 Room 仍不可恢复，字节由启动恢复或相同请求重放继续清理。若未来要求长期运行实例的定时重试，应由 RoomFiles maintenance owner 增加有界 cadence，不能由页面轮询删除磁盘。
+3. **GC 不是业务提交条件。** 成功可以携带 `failed/pending` 汇总；这时 Room 仍不可恢复。schema 41 已由 Kernel `RoomFileGcService` 持有 durable 状态，daemon 的独立 60 秒 worker 仅负责调度有界重试；页面轮询和 Provider runtime 均不删除磁盘。长期运行证据见[专项验证审计](./2026-09-03-room-file-gc-reconciler-verification.zh-CN.md)。
 4. **Workspace/Principal 删除需另立合同。** 当前 deletion receipt 仍引用 actor 与 Workspace；未来若增加这两类永久删除，必须显式决定回执保留/导出/匿名化，不能临时级联。
 5. **没有选择性撤销。** 仅支持操作员停机后恢复整套经过一致性检查的 state backup；不提供单 Room 恢复或 UI 撤销。
 6. **Direct/control 仍禁止永久删除。** 这是显式 kind invariant，不是遗漏。

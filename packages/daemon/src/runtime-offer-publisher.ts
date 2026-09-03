@@ -15,8 +15,9 @@ export class RuntimeOfferPublisher {
   readonly #kernel: RoomKernel;
   readonly #leaseMs: number;
   readonly #maxConcurrent: number;
-  #probeReport: RuntimeProfileProbeReport;
-  readonly #refreshProbe: () => Promise<RuntimeProfileProbeReport>;
+  readonly #probeReport: RuntimeProfileProbeReport;
+  #available: boolean;
+  readonly #refreshAvailability: () => Promise<boolean>;
   readonly #revisionIsActive: () => boolean;
   readonly #refreshIntervalMs: number;
   readonly #runtimeOfferId: string;
@@ -32,8 +33,8 @@ export class RuntimeOfferPublisher {
     leaseMs: number;
     maxConcurrent: number;
     probeReport: RuntimeProfileProbeReport;
+    refreshAvailability: () => Promise<boolean>;
     refreshIntervalMs: number;
-    refreshProbe: () => Promise<RuntimeProfileProbeReport>;
     revisionIsActive: () => boolean;
     runtimeOfferId: string;
     runtimeProfileRevision: RuntimeProfileRevision;
@@ -44,8 +45,9 @@ export class RuntimeOfferPublisher {
     this.#leaseMs = input.leaseMs;
     this.#maxConcurrent = input.maxConcurrent;
     this.#probeReport = structuredClone(input.probeReport);
+    this.#available = input.probeReport.available;
     this.#refreshIntervalMs = input.refreshIntervalMs;
-    this.#refreshProbe = input.refreshProbe;
+    this.#refreshAvailability = input.refreshAvailability;
     this.#revisionIsActive = input.revisionIsActive;
     this.#runtimeOfferId = input.runtimeOfferId;
     this.#runtimeExecutableIdentity = structuredClone(
@@ -64,7 +66,7 @@ export class RuntimeOfferPublisher {
       while (!signal.aborted) {
         await waitForAbortOrDelay(this.#refreshIntervalMs, signal);
         if (signal.aborted) break;
-        this.#probeReport = await this.#refreshProbe();
+        this.#available = await this.#refreshAvailability();
         this.#tryPublish(this.#currentOfferState());
       }
     } finally {
@@ -84,6 +86,7 @@ export class RuntimeOfferPublisher {
     const current = this.#probeReport.executableIdentity;
     const expected = this.#runtimeExecutableIdentity;
     return this.#revisionIsActive() &&
+      this.#available &&
       this.#probeReport.available &&
       current !== undefined &&
       expected !== undefined &&

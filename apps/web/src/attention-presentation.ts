@@ -6,6 +6,33 @@ type PresenceSubject = {
   connectionStatus?: LocalComputerObservation["status"];
   presence?: AgentPresence;
 };
+
+export type SidebarRoomAttention = {
+  unreadCount: number;
+  hasMention: boolean;
+};
+
+/**
+ * Raft sidebar attention contract: channel mention attention is independent
+ * from its unread count, while Direct Rooms only expose the unread count.
+ */
+export function sidebarRoomAttention(
+  kind: "channel" | "direct",
+  value: SidebarRoomAttention | undefined,
+  quiet = false,
+) {
+  const unreadCount = Math.max(0, Math.floor(value?.unreadCount ?? 0));
+  return {
+    showMention: kind === "channel" && value?.hasMention === true,
+    showMuted: kind === "channel" && quiet,
+    unreadCount,
+    unreadTone:
+      kind === "channel" && quiet ? ("quiet" as const) : ("loud" as const),
+  };
+}
+
+export const RAFT_LIVE_ACTIVITY_TTL_MS = 90_000;
+
 export function agentPresencePresentation(agent: PresenceSubject) {
   const fallback = (label: string) => ({
     activity: "offline" as const,
@@ -24,8 +51,8 @@ export function agentPresencePresentation(agent: PresenceSubject) {
     idle: "休眠 · 等待唤醒",
     online: "在线",
     starting: "正在启动",
-    working: "工作中",
-    thinking: "思考中",
+    working: "工作中…",
+    thinking: "思考中…",
     error: "运行异常",
     paused: "已暂停",
     host_offline: "Computer 离线",
@@ -41,6 +68,44 @@ export function agentPresencePresentation(agent: PresenceSubject) {
 
 export function agentConnectionLabel(agent: PresenceSubject): string {
   return agentPresencePresentation(agent).label;
+}
+
+/** Port of Raft O1/qj: newest Workspace thinking/working activity, expiring after 90s. */
+export function latestWorkspaceActivity<T extends PresenceSubject>(
+  agents: readonly T[],
+  now = Date.now(),
+) {
+  let latest:
+    | {
+        agent: T;
+        activityAt: number;
+        expiresAt: number;
+        presentation: ReturnType<typeof agentPresencePresentation>;
+      }
+    | undefined;
+  for (const agent of agents) {
+    const presentation = agentPresencePresentation(agent);
+    if (
+      presentation.activity !== "thinking" &&
+      presentation.activity !== "working"
+    )
+      continue;
+    const activityAt = Date.parse(agent.presence?.activityAt ?? "");
+    if (
+      !Number.isFinite(activityAt) ||
+      activityAt > now ||
+      now - activityAt >= RAFT_LIVE_ACTIVITY_TTL_MS ||
+      (latest && latest.activityAt >= activityAt)
+    )
+      continue;
+    latest = {
+      agent,
+      activityAt,
+      expiresAt: activityAt + RAFT_LIVE_ACTIVITY_TTL_MS,
+      presentation,
+    };
+  }
+  return latest;
 }
 
 export const visibleNavigationDot = (unread: boolean, active: boolean) =>

@@ -27,6 +27,22 @@ const rooms = [
   { roomId: "bob-room", slug: "dm-bob", name: "Bob", kind: "direct" as const },
 ];
 
+async function writeFixtureBuildIdentity(
+  source: string,
+  webBuildId = "fixture-build",
+) {
+  const indexPath = join(source, "index.html");
+  const index = await readFile(indexPath, "utf8");
+  await writeFile(
+    indexPath,
+    `<meta name="rah-web-build-id" content="${webBuildId}">${index}`,
+  );
+  await writeFile(
+    join(source, ".rah-web-build.json"),
+    JSON.stringify({ schemaVersion: 1, webBuildId }),
+  );
+}
+
 test("audit: a dotted DM handle cannot silently link to its shorter prefix", () => {
   const text = "dm:@Bob.Smith";
   const parts = diagnosticReferenceParts(text, rooms);
@@ -165,6 +181,7 @@ test("audit: frozen assets reject an entry point whose local asset is missing", 
       join(source, "index.html"),
       '<script type="module" src="/assets/missing.js"></script>',
     );
+    await writeFixtureBuildIdentity(source);
     await assert.rejects(snapshotWorkbenchAssets(directory));
   } finally {
     await rm(directory, { recursive: true, force: true });
@@ -184,6 +201,7 @@ test("audit: a present Vite manifest must close over lazy chunks and their asset
       '<script type="module" src="/assets/main.js"></script>',
     );
     await writeFile(join(source, "assets/main.js"), "main");
+    await writeFixtureBuildIdentity(source);
     const entry = {
       file: "assets/main.js",
       isEntry: true,
@@ -232,6 +250,7 @@ test("audit: local URL query and fragment do not become part of an asset filenam
       '<script type="module" src="/assets/main.js?v=one#entry"></script>',
     );
     await writeFile(join(source, "assets/main.js"), "main");
+    await writeFixtureBuildIdentity(source);
     assert.ok(await snapshotWorkbenchAssets(directory));
   } finally {
     await rm(directory, { recursive: true, force: true });
@@ -250,6 +269,7 @@ test("audit: a later mutable build cannot change the frozen release and tamperin
       '<script type="module" src="/assets/main.js"></script>',
     );
     await writeFile(join(source, "assets/main.js"), "version-one");
+    await writeFixtureBuildIdentity(source);
     const frozen = await snapshotWorkbenchAssets(directory);
     await writeFile(join(source, "assets/main.js"), "version-two");
     assert.equal(

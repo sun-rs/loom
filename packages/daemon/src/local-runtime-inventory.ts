@@ -14,7 +14,10 @@ import {
   type RuntimeProfileProbeReport,
   type RuntimeProfileRevision,
 } from "@rah-os/protocol";
-import { supportedRuntimeToolAccessModes } from "@rah-os/agent-host";
+import {
+  supportedRuntimeToolAccessModes,
+  type RuntimeProfileRegistry,
+} from "@rah-os/agent-host";
 import type { AuthenticatedActorContext, RoomKernel } from "@rah-os/kernel";
 
 const execFileAsync = promisify(execFile);
@@ -34,6 +37,7 @@ export type ConfiguredLocalRuntime = {
   failureCode?: string;
   modelBindingDescriptors: LocalRuntimeInventoryEntry["modelBindingDescriptors"];
   probeObservedAt?: string;
+  probeValidatedAt?: string;
   resolvedExecutablePath?: string;
   runtimeOfferId: string;
   runtimeProfileId: string;
@@ -46,8 +50,25 @@ export type ConfiguredLocalRuntimeSnapshot = Omit<
   "agentBindings"
 >;
 
+export function configuredRuntimeSnapshotWithValidation(input: {
+  probeReport: RuntimeProfileProbeReport;
+  registry: Pick<RuntimeProfileRegistry, "getProbeValidation">;
+  runtimeOfferId: string;
+  runtimeProfileRevision: RuntimeProfileRevision;
+}): ConfiguredLocalRuntimeSnapshot {
+  return configuredRuntimeSnapshot({
+    probeReport: input.probeReport,
+    probeValidatedAt: input.registry.getProbeValidation(
+      input.runtimeProfileRevision.runtimeProfileRevisionId,
+    )?.lastValidatedAt,
+    runtimeOfferId: input.runtimeOfferId,
+    runtimeProfileRevision: input.runtimeProfileRevision,
+  });
+}
+
 export function configuredRuntimeSnapshot(input: {
   probeReport: RuntimeProfileProbeReport;
+  probeValidatedAt: string | undefined;
   runtimeOfferId: string;
   runtimeProfileRevision: RuntimeProfileRevision;
 }): ConfiguredLocalRuntimeSnapshot {
@@ -68,6 +89,9 @@ export function configuredRuntimeSnapshot(input: {
     ...(probeReport.observedAt === undefined
       ? {}
       : { probeObservedAt: probeReport.observedAt }),
+    ...(input.probeValidatedAt === undefined
+      ? {}
+      : { probeValidatedAt: input.probeValidatedAt }),
     ...(probeReport.executableIdentity?.resolvedExecutablePath === undefined
       ? {}
       : {

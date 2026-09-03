@@ -1,4 +1,8 @@
-import type { Task, WorkspaceSearchResponse } from "@rah-os/protocol";
+import {
+  taskWorkflowStatus,
+  type Task,
+  type WorkspaceSearchResponse,
+} from "@rah-os/protocol";
 import type { ProductNavigationRequest } from "./navigation-target.ts";
 import { navigationSearch } from "./navigation-target.ts";
 export type GlobalSurface = "tasks" | "search" | "activity";
@@ -73,15 +77,12 @@ export function discoveryLocation(
 // Raft Web vL/hnt: five ordered groups, task number descending within a group.
 // RAH's durable waiting/blocked states project into Raft's in-progress group.
 export function raftTaskGroup(state: Task["state"]) {
-  return state === "todo"
-    ? "todo"
-    : state === "submitted"
+  const status = taskWorkflowStatus(state);
+  return status === "in_progress"
+    ? "in-progress"
+    : status === "in_review"
       ? "review"
-      : state === "completed"
-        ? "done"
-        : state === "cancelled"
-          ? "closed"
-          : "in-progress";
+      : status;
 }
 export function highlightParts(
   body: string,

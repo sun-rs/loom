@@ -47,6 +47,13 @@ test("profile and appearance settings expose the full local Raft contract", () =
       pages,
       new RegExp(sample.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&"), "u"),
     );
+  assert.match(pages, /关闭后隐藏本设备 Room\s+列表底部的瞬态工作条/u);
+  assert.match(pages, /writeLiveAgentActivity/u);
+  const css = read("product.css");
+  assert.match(
+    css,
+    /html\[data-rah-live-agent-activity="false"\][\s\S]*?\.rah-live-agent-activity-footer\s*\{[^}]*display:\s*none;/u,
+  );
 });
 
 test("settings shell uses the measured Raft geometry and one shared visual protocol", () => {

@@ -1,4 +1,5 @@
 const CACHE_NAME = "rah-os-shell-v1";
+const OWNED_CACHE_PREFIXES = ["rah-os-shell-", "rah-os-assets-"];
 const SHELL_RESOURCES = ["/", "/manifest.webmanifest", "/rah-app-icon.svg"];
 
 function targetUrl(target) {
@@ -79,7 +80,11 @@ self.addEventListener("activate", (event) => {
       .then((names) =>
         Promise.all(
           names
-            .filter((name) => name !== CACHE_NAME)
+            .filter(
+              (name) =>
+                name !== CACHE_NAME &&
+                OWNED_CACHE_PREFIXES.some((prefix) => name.startsWith(prefix)),
+            )
             .map((name) => caches.delete(name)),
         ),
       )

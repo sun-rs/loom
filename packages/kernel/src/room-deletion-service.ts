@@ -186,8 +186,8 @@ export class RoomDeletionService {
       const insertGc = this.#database.prepare(
         `INSERT INTO room_file_gc_receipts(
            deletion_id,attachment_id,state,attempt_count,last_error,
-           created_at,updated_at
-         ) VALUES(?,?,'pending',0,NULL,?,?)`,
+           created_at,updated_at,next_attempt_at_ms
+         ) VALUES(?,?,'pending',0,NULL,?,?,?)`,
       );
       for (const attachment of attachments) {
         insertGc.run(
@@ -195,6 +195,7 @@ export class RoomDeletionService {
           text(attachment, "attachment_id"),
           deletedAt,
           deletedAt,
+          Date.parse(deletedAt),
         );
       }
 

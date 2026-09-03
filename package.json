@@ -29,6 +29,7 @@
     "test:web:workbench": "npm run build:web:workbench && node scripts/run-local-workbench-gate.mjs",
     "test:web:lan-workbench": "npm run build:web:workbench && node scripts/run-lan-workbench-gate.mjs",
     "test:web:firefox": "npm run build:web:workbench && node scripts/run-firefox-workbench-gate.mjs",
+    "test:web:build-recovery": "npm run build:web:workbench && node scripts/run-web-build-recovery-browser-gate.mjs",
     "test:web:browser-unit": "node --test apps/web/test/real-browser-gate-support.test.ts",
     "test:computer-sea": "node scripts/test-computer-sea.mjs",
     "test:web:unit": "node --test apps/web/test/*.test.ts",

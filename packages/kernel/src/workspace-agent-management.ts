@@ -9,7 +9,6 @@ import {
   ClientAgentCreatorSchema,
   ClientAgentGetResponseSchema,
   ExecutionPolicyRevisionSchema,
-  RuntimeOfferProjectionSchema,
   type ClientAgentManageRequest,
   type ClientAgentManageResponse,
   type ClientAgentCreator,
@@ -33,7 +32,10 @@ import {
 import { eventPayloadOptionalText, eventPayloadText } from "./event-payload.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
 import { updateAgentProfile } from "./workspace-agent-profile.ts";
-import { assertRuntimeOfferSupportsToolAccess } from "./runtime-offer-tool-access.ts";
+import {
+  assertRuntimeOfferSupportsToolAccess,
+  currentRuntimeOfferFromRow,
+} from "./runtime-offer-tool-access.ts";
 import {
   integer,
   jsonObject,
@@ -621,15 +623,11 @@ function requireAvailableOffer(
 ) {
   const row = requireRow(
     owner.database
-      .prepare(
-        "SELECT offer_json FROM runtime_offers WHERE runtime_offer_id = ?",
-      )
+      .prepare("SELECT * FROM runtime_offers WHERE runtime_offer_id = ?")
       .get(runtimeOfferId),
     `RuntimeOffer ${runtimeOfferId} was not found`,
   );
-  const offer = RuntimeOfferProjectionSchema.parse(
-    jsonObject(row, "offer_json"),
-  );
+  const offer = currentRuntimeOfferFromRow(row);
   if (
     offer.state !== "available" ||
     Date.parse(offer.leaseUntil) <= owner.now().getTime()

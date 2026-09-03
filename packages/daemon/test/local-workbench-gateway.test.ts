@@ -15,6 +15,10 @@ test("the local workbench gateway keeps Human authority server-side", async () =
     join(staticDirectory, "index.html"),
     '<!doctype html><div id="root">RAH OS</div>',
   );
+  writeFileSync(
+    join(staticDirectory, ".rah-web-build.json"),
+    JSON.stringify({ schemaVersion: 1, webBuildId: "web-generation-local" }),
+  );
   writeFileSync(join(staticDirectory, "assets", "app-deadbeef.js"), "ok");
   writeFileSync(join(staticDirectory, "sw.js"), "ok");
   const observed: Array<{
@@ -63,6 +67,10 @@ test("the local workbench gateway keeps Human authority server-side", async () =
       root.headers.get("content-security-policy") ?? "",
       /default-src 'self'/u,
     );
+    assert.equal(
+      root.headers.get("x-rah-web-build-id"),
+      "web-generation-local",
+    );
     const setCookie = root.headers.get("set-cookie") ?? "";
     assert.match(setCookie, /^rah_workbench_session=/u);
     assert.match(setCookie, /HttpOnly/u);
@@ -72,6 +80,10 @@ test("the local workbench gateway keeps Human authority server-side", async () =
 
     const unauthenticated = await fetch(`${origin}/v3/client/health`);
     assert.equal(unauthenticated.status, 401);
+    assert.equal(
+      unauthenticated.headers.get("x-rah-web-build-id"),
+      "web-generation-local",
+    );
     assert.equal(observed.length, 0);
 
     const proxied = await fetch(`${origin}/v3/client/health`, {
@@ -81,6 +93,10 @@ test("the local workbench gateway keeps Human authority server-side", async () =
       },
     });
     assert.equal(proxied.status, 200);
+    assert.equal(
+      proxied.headers.get("x-rah-web-build-id"),
+      "web-generation-local",
+    );
     assert.deepEqual(observed.at(-1), {
       authorization: "Bearer server-only-human-token",
       body: "",
@@ -98,6 +114,10 @@ test("the local workbench gateway keeps Human authority server-side", async () =
       method: "POST",
     });
     assert.equal(rejectedCsrf.status, 403);
+    assert.equal(
+      rejectedCsrf.headers.get("x-rah-web-build-id"),
+      "web-generation-local",
+    );
     assert.equal(observed.length, 1);
 
     const acceptedMutation = await fetch(

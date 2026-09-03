@@ -24,3 +24,8 @@ adds the exact `at-sign` (`fFe`) and `refresh-cw` (`lUe`) paths from Raft Web
 is pinned in the token test. These are supplementary exports; the frozen
 reference is not edited. Full provenance and adaptations are described in
 `docs/product/global-discovery-design.zh-CN.md`.
+
+`src/interaction-icons.svg` also carries Raft's current `bell-off` (`pUe` / `Bw`)
+geometry for muted channel rows. The complete supplementary sprite is SHA-256
+pinned by `packages/ui-tokens/test/ui-tokens.test.ts`; product code never redraws
+that glyph.

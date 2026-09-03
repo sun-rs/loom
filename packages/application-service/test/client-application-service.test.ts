@@ -1444,11 +1444,15 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     const presenceBody = await jsonObject(presenceResponse);
     assert.ok(presenceBody.agents.length > 0);
     for (const presence of presenceBody.agents) {
-      assert.deepEqual(Object.keys(presence).sort(), [
-        "activity",
-        "agentDefinitionId",
-        "reason",
-      ]);
+      assert.deepEqual(
+        Object.keys(presence)
+          .filter((key) => key !== "activityAt")
+          .sort(),
+        ["activity", "agentDefinitionId", "reason"],
+      );
+      if (presence.activityAt !== undefined) {
+        assert.equal(typeof presence.activityAt, "string");
+      }
     }
     const hiddenPresenceResponse = await request(
       "/v3/client/agents/presence/list",

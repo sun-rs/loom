@@ -180,6 +180,89 @@ try {
     },
     "interactive Room sidebar after preference hydration",
   );
+  assert.equal(
+    await call(browser, () => {
+      const textarea = document.querySelector(
+        'textarea[aria-label="消息输入框"]',
+      );
+      if (!(textarea instanceof HTMLTextAreaElement)) return false;
+      textarea.focus();
+      return true;
+    }),
+    true,
+    "Room composer must accept an Agent mention query",
+  );
+  await browser.command("Input.insertText", { text: "@" });
+  await waitFor(
+    browser,
+    () => {
+      const menu = document.querySelector(
+        '.rah-composer-mention-menu[role="listbox"]',
+      );
+      const row = menu?.querySelector('.mention-row[aria-selected="true"]');
+      return (
+        menu !== null &&
+        row?.classList.contains("is-active") === true &&
+        row.querySelector(".rah-agent-avatar") !== null
+      );
+    },
+    "Raft Agent mention autocomplete",
+  );
+  assert.deepEqual(
+    await call(browser, () => {
+      const menu = document.querySelector(".rah-composer-mention-menu");
+      const row = menu?.querySelector('.mention-row[aria-selected="true"]');
+      if (!(menu instanceof HTMLElement) || !(row instanceof HTMLElement))
+        return null;
+      const menuStyle = getComputedStyle(menu);
+      const rowStyle = getComputedStyle(row);
+      const probe = document.createElement("i");
+      probe.style.background = "var(--yellow)";
+      document.body.append(probe);
+      const yellow = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return {
+        activeMatchesYellow: rowStyle.backgroundColor === yellow,
+        agentBadge: row.textContent?.includes("AGENT") === true,
+        borderWidth: menuStyle.borderWidth,
+        hardShadow: menuStyle.boxShadow.includes("4px 4px 0px 0px"),
+      };
+    }),
+    {
+      activeMatchesYellow: true,
+      agentBadge: true,
+      borderWidth: "2px",
+      hardShadow: true,
+    },
+    "mention menu must reuse Raft border, hard shadow and yellow active row",
+  );
+  await dispatchKey(browser, "Enter", 13);
+  await waitFor(
+    browser,
+    () => {
+      const textarea = document.querySelector(
+        'textarea[aria-label="消息输入框"]',
+      );
+      return (
+        textarea instanceof HTMLTextAreaElement &&
+        /^@[\w.-]+ $/u.test(textarea.value) &&
+        document.querySelector(".rah-composer-mention-menu") === null
+      );
+    },
+    "keyboard mention completion without Message submission",
+  );
+  await call(browser, () => {
+    const textarea = document.querySelector(
+      'textarea[aria-label="消息输入框"]',
+    );
+    if (!(textarea instanceof HTMLTextAreaElement)) return;
+    const setter = Object.getOwnPropertyDescriptor(
+      HTMLTextAreaElement.prototype,
+      "value",
+    )?.set;
+    setter?.call(textarea, "");
+    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+  });
   await assertInteractionStateProtocol(browser);
   await waitFor(
     browser,
@@ -2290,6 +2373,55 @@ try {
     resizerWidth: 8,
     titleFontSize: "16px",
   });
+  assert.equal(
+    await call(browser, () => {
+      const textarea = document.querySelector(
+        'textarea[aria-label="Thread 回复输入框"]',
+      );
+      if (!(textarea instanceof HTMLTextAreaElement)) return false;
+      textarea.focus();
+      return true;
+    }),
+    true,
+    "Thread composer must accept an Agent mention query",
+  );
+  await browser.command("Input.insertText", { text: "@" });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(
+        '#thread-composer-mentions.rah-composer-mention-menu[role="listbox"]',
+      ) !== null,
+    "Thread Agent mention autocomplete",
+  );
+  assert.deepEqual(
+    await call(browser, () => {
+      const rows = [
+        ...document.querySelectorAll("#thread-composer-mentions .mention-row"),
+      ];
+      return {
+        activeAgentsOnly: rows.every(
+          (row) => !row.textContent?.includes("Alice"),
+        ),
+        count: rows.length,
+      };
+    }),
+    { activeAgentsOnly: true, count: 2 },
+    "Thread mention candidates must exclude the Agent removed from this Room",
+  );
+  await dispatchKey(browser, "Escape", 27);
+  await call(browser, () => {
+    const textarea = document.querySelector(
+      'textarea[aria-label="Thread 回复输入框"]',
+    );
+    if (!(textarea instanceof HTMLTextAreaElement)) return;
+    const setter = Object.getOwnPropertyDescriptor(
+      HTMLTextAreaElement.prototype,
+      "value",
+    )?.set;
+    setter?.call(textarea, "");
+    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+  });
   await call(browser, () => {
     const separator = document.querySelector(".rah-thread-resizer");
     if (!(separator instanceof HTMLElement)) return false;
@@ -2653,7 +2785,9 @@ try {
       [...document.querySelectorAll(".kcard")].some(
         (card) =>
           card.querySelector(".kcard-title")?.textContent === title &&
-          card.textContent?.includes("submitted"),
+          card.getAttribute("data-task-workflow-status") === "review" &&
+          card.querySelector(".rah-task-state")?.textContent === "待确认" &&
+          card.textContent?.includes("submitted") === false,
       ),
     "converted Message enters the canonical Task workflow",
     ["browser gate: both agents"],
@@ -2722,7 +2856,7 @@ try {
       [...document.querySelectorAll(".kcard")].some(
         (card) =>
           card.querySelector(".kcard-title")?.textContent === title &&
-          card.textContent?.includes("submitted"),
+          card.getAttribute("data-task-workflow-status") === "review",
       ),
     "Task board Task submission",
     ["browser gate: board Task"],
@@ -2755,7 +2889,7 @@ try {
       [...document.querySelectorAll(".kcard")].some(
         (card) =>
           card.querySelector(".kcard-title")?.textContent === title &&
-          card.textContent?.includes("completed"),
+          card.getAttribute("data-task-workflow-status") === "done",
       ),
     "Task board Task Human completion",
     ["browser gate: board Task"],
@@ -2792,7 +2926,7 @@ try {
       );
       const evidence = card?.querySelector(".rah-task-review-evidence");
       return (
-        card?.textContent?.includes("submitted") === true &&
+        card?.getAttribute("data-task-workflow-status") === "review" &&
         evidence?.getAttribute("data-task-review-status") === "approved" &&
         /提交 #1 · 审阅 1\/1 · sha256:[a-f0-9]{8}/u.test(
           evidence?.textContent ?? "",
@@ -2832,7 +2966,7 @@ try {
       [...document.querySelectorAll(".kcard")].some(
         (card) =>
           card.querySelector(".kcard-title")?.textContent === title &&
-          card.textContent?.includes("completed"),
+          card.getAttribute("data-task-workflow-status") === "done",
       ),
     "Human completion after canonical Review",
     ["browser gate: frozen Review"],
@@ -2873,7 +3007,7 @@ try {
       [...document.querySelectorAll(".kcard")].some(
         (card) =>
           card.querySelector(".kcard-title")?.textContent === title &&
-          card.textContent?.includes("submitted"),
+          card.getAttribute("data-task-workflow-status") === "review",
       ),
     "Fake CLI Task submission",
     ["browser gate: durable Task"],
@@ -2930,7 +3064,7 @@ try {
       [...document.querySelectorAll(".kcard")].some(
         (card) =>
           card.querySelector(".kcard-title")?.textContent === title &&
-          card.textContent?.includes("completed"),
+          card.getAttribute("data-task-workflow-status") === "done",
       ),
     "Human Task completion",
     ["browser gate: durable Task"],
@@ -2991,7 +3125,7 @@ try {
       [...document.querySelectorAll(".kcard")].some(
         (card) =>
           card.querySelector(".kcard-title")?.textContent === title &&
-          card.textContent?.includes("todo") === true &&
+          card.getAttribute("data-task-workflow-status") === "todo" &&
           card
             .querySelector(".rah-task-owner-trigger")
             ?.getAttribute("aria-label")
@@ -3098,7 +3232,8 @@ try {
       [...document.querySelectorAll(".kcard")].some(
         (card) =>
           card.querySelector(".kcard-title")?.textContent === title &&
-          card.textContent?.includes("cancelled") &&
+          card.getAttribute("data-task-workflow-status") === "closed" &&
+          card.textContent?.includes("cancelled") === false &&
           [...card.querySelectorAll("button")].some(
             (button) => button.textContent?.trim() === "重开为待办",
           ),
@@ -3113,7 +3248,7 @@ try {
       [...document.querySelectorAll(".kcard")].some(
         (card) =>
           card.querySelector(".kcard-title")?.textContent === title &&
-          card.textContent?.includes("todo") &&
+          card.getAttribute("data-task-workflow-status") === "todo" &&
           !card.textContent?.includes("cancelled"),
       ),
     "Task Closed to Todo recovery",
@@ -3143,7 +3278,7 @@ try {
           candidate.querySelector(".kcard-title")?.textContent === title,
       );
       return (
-        card?.textContent?.includes("in_progress") === true &&
+        card?.getAttribute("data-task-workflow-status") === "in-progress" &&
         [...(card?.querySelectorAll("button") ?? [])].some(
           (button) => button.textContent?.trim() === "安全改派",
         )
@@ -3190,8 +3325,8 @@ try {
       );
       return (
         card?.textContent?.includes("Agent · Kimi") === true &&
-        (card.textContent?.includes("in_progress") === true ||
-          card.textContent?.includes("submitted") === true)
+        (card.getAttribute("data-task-workflow-status") === "in-progress" ||
+          card.getAttribute("data-task-workflow-status") === "review")
       );
     },
     "safe reassignment stops Alice before Kimi owns and executes the Task",
@@ -3296,6 +3431,53 @@ try {
     () => document.querySelector(".channel-title h1") !== null,
     "mobile return from Computer to Chat",
   );
+  assert.equal(
+    await call(browser, () => {
+      const textarea = document.querySelector(
+        'textarea[aria-label="消息输入框"]',
+      );
+      if (!(textarea instanceof HTMLTextAreaElement)) return false;
+      textarea.focus();
+      return true;
+    }),
+    true,
+    "mobile Room composer must accept an Agent mention query",
+  );
+  await browser.command("Input.insertText", { text: "@" });
+  await waitFor(
+    browser,
+    () =>
+      document.querySelector(
+        '#room-composer-mentions.rah-composer-mention-menu[role="listbox"]',
+      ) !== null,
+    "mobile Agent mention autocomplete",
+  );
+  assert.equal(
+    await call(browser, () => {
+      const menu = document.querySelector("#room-composer-mentions");
+      const rectangle = menu?.getBoundingClientRect();
+      return (
+        rectangle !== undefined &&
+        rectangle.left >= 0 &&
+        rectangle.right <= document.documentElement.clientWidth
+      );
+    }),
+    true,
+    "mobile Agent mention menu must remain inside the viewport",
+  );
+  await dispatchKey(browser, "Escape", 27);
+  await call(browser, () => {
+    const textarea = document.querySelector(
+      'textarea[aria-label="消息输入框"]',
+    );
+    if (!(textarea instanceof HTMLTextAreaElement)) return;
+    const setter = Object.getOwnPropertyDescriptor(
+      HTMLTextAreaElement.prototype,
+      "value",
+    )?.set;
+    setter?.call(textarea, "");
+    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+  });
   await clickButton(browser, { text: "Rooms" });
   await waitFor(
     browser,
@@ -4168,8 +4350,9 @@ async function clickTaskOwnerOption(connection, title, label) {
         ...(card?.querySelectorAll("[role=menuitemradio]") ?? []),
       ].find(
         (candidate) =>
-          candidate.querySelector("span:last-child")?.textContent?.trim() ===
-          optionLabel,
+          candidate
+            .querySelector(":scope > span:last-child")
+            ?.textContent?.trim() === optionLabel,
       );
       if (!(option instanceof HTMLButtonElement) || option.disabled)
         return false;
@@ -4195,7 +4378,7 @@ async function waitForTaskOwner(connection, title, label) {
           ?.querySelector(".rah-task-owner-trigger")
           ?.getAttribute("aria-label") ===
           `Task #${card.querySelector(".kcard-no")?.textContent?.slice(1)} 负责人：${ownerLabel}` &&
-        card.textContent?.includes("todo") === true
+        card.getAttribute("data-task-workflow-status") === "todo"
       );
     },
     `Task ${title} owner ${label}`,

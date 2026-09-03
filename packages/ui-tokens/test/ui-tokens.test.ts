@@ -7,7 +7,7 @@ import test from "node:test";
 const packageRoot = join(import.meta.dirname, "..");
 const repositoryRoot = join(packageRoot, "..", "..");
 
-test("interaction icon geometry is frozen from Raft RFe/TFe/yze/cze, Agent tabs, profile, and Reminder live DOM", () => {
+test("interaction icon geometry is frozen from Raft RFe/TFe/yze/cze/Bw, Agent tabs, profile, and Reminder live DOM", () => {
   const content = readFileSync(
     join(packageRoot, "src", "interaction-icons.svg"),
   );
@@ -19,6 +19,7 @@ test("interaction icon geometry is frozen from Raft RFe/TFe/yze/cze, Agent tabs,
     'd="M16 12h2"',
     'd="M12 6v6h4"',
     'd="m17 2 4 4-4 4"',
+    'd="M17 17H4a1 1 0 0 1-.74-1.673C4.59 13.956 6 12.499 6 8a6 6 0 0 1 .258-1.742"',
   ]) {
     assert.match(
       source,
@@ -31,7 +32,7 @@ test("interaction icon geometry is frozen from Raft RFe/TFe/yze/cze, Agent tabs,
   );
   assert.equal(
     createHash("sha256").update(content).digest("hex"),
-    "b18abc7fe96dfc313afaf477e5bffb4cc87bce82b558ac7fe23d719f2795b254",
+    "d1ed09eae9d813007320623353571d43272662b7c3f3b3205c917f348fa4c28f",
   );
 });
 test("quick-reaction sprite is the unchanged official published asset", () => {

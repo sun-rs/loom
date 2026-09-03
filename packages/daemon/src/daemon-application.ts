@@ -50,7 +50,7 @@ import {
 } from "./runtime-profile-composition.ts";
 import { FileSecretProvider, type SecretProvider } from "./secret-provider.ts";
 import {
-  configuredRuntimeSnapshot,
+  configuredRuntimeSnapshotWithValidation,
   discoverKnownLocalClis,
   type ConfiguredLocalRuntimeSnapshot,
 } from "./local-runtime-inventory.ts";
@@ -60,7 +60,7 @@ import {
   configuredParticipantIds,
   createDaemonAgentExecutionResetCoordinator,
   createDaemonAgentMemoryCoordinator,
-  createDaemonReminderReconciler,
+  createDaemonBackgroundReconcilerRunners,
   createDaemonHumanClientService,
   ensureOwnerPrivateDirectory,
   errorMessage,
@@ -334,8 +334,9 @@ export class DaemonApplication {
           );
         }
         configuredLocalRuntimes.push(
-          configuredRuntimeSnapshot({
+          configuredRuntimeSnapshotWithValidation({
             probeReport,
+            registry: runtimeProfileRegistry,
             runtimeOfferId: runtimeOptions.offer.runtimeOfferId,
             runtimeProfileRevision: activeRevision,
           }),
@@ -391,11 +392,10 @@ export class DaemonApplication {
               }
             },
             refreshIntervalMs: runtimeOptions.offer.refreshIntervalMs,
-            refreshProbe: async () =>
-              runtimeProfileRegistry.recordProbeReport(
-                await implementations.probeRevision(activeRevision, {
-                  cwd: runtimeOptions.cwd,
-                }),
+            refreshAvailability: async () =>
+              await implementations.probeReportAppearsRunnable(
+                activeRevision,
+                probeReport,
               ),
             runtimeOfferId: runtimeOptions.offer.runtimeOfferId,
             runtimeProfileRevision: activeRevision,
@@ -453,8 +453,9 @@ export class DaemonApplication {
             );
           }
           configuredLocalRuntimes.push(
-            configuredRuntimeSnapshot({
+            configuredRuntimeSnapshotWithValidation({
               probeReport,
+              registry: runtimeProfileRegistry,
               runtimeOfferId: runtimeOptions.offer.runtimeOfferId,
               runtimeProfileRevision: activeRevision,
             }),
@@ -562,11 +563,10 @@ export class DaemonApplication {
                 }
               },
               refreshIntervalMs: runtimeOptions.offer.refreshIntervalMs,
-              refreshProbe: async () =>
-                runtimeProfileRegistry.recordProbeReport(
-                  await implementations.probeRevision(activeRevision, {
-                    cwd: v4Config.workspace.cwd,
-                  }),
+              refreshAvailability: async () =>
+                await implementations.probeReportAppearsRunnable(
+                  activeRevision,
+                  probeReport,
                 ),
               runtimeOfferId: runtimeOptions.offer.runtimeOfferId,
               runtimeProfileRevision: activeRevision,
@@ -654,12 +654,10 @@ export class DaemonApplication {
         publisher: wakeSignal,
         retryAfterMs: this.#config.outboxRetryAfterMs,
       });
-      const reminderReconciler = createDaemonReminderReconciler(
-        kernel,
-        (lastError) => {
+      const backgroundReconcilerRunners =
+        createDaemonBackgroundReconcilerRunners(kernel, (lastError) => {
           this.#health = { ...this.#health, lastError };
-        },
-      );
+        });
       const daemon = new AgentHostDaemon({
         host,
         instanceLock: new UnixSocketInstanceLock({
@@ -714,7 +712,7 @@ export class DaemonApplication {
       await runCoupledComponents(input.signal, [
         async (signal) => await daemon.run({ signal }),
         async (signal) => await wakeDispatcher.run({ signal }),
-        async (signal) => await reminderReconciler.run({ signal }),
+        ...backgroundReconcilerRunners,
         async (signal) => await webPush.dispatcher.run({ signal }),
         ...runtimeOfferPublishers.map(
           (publisher) => async (signal: AbortSignal) =>

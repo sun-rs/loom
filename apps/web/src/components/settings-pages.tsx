@@ -189,7 +189,10 @@ export function AppearanceSettingsContent() {
       <article className="rah-settings-card rah-settings-toggle-card">
         <div>
           <strong>显示实时 Agent 状态</strong>
-          <p>保留持久化动态记录；此开关只控制本设备的实时状态动画。</p>
+          <p>
+            保留持久化动态记录；关闭后隐藏本设备 Room
+            列表底部的瞬态工作条，并停止实时状态动画。
+          </p>
         </div>
         <label className="rah-settings-switch">
           <input

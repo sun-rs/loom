@@ -43,3 +43,14 @@ test("Room long-message preference keeps the current Raft wording", () => {
   );
   assert.match(source, /通知所有新消息/u);
 });
+
+test("sidebar preferences clear a transient read error after recovery", () => {
+  const source = readFileSync(
+    new URL("../src/components/sidebar-preferences.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    source,
+    /head\.current = next;\s+setData\(next\);\s+setError\(undefined\);/u,
+  );
+});

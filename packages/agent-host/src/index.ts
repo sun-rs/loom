@@ -202,7 +202,10 @@ export {
   RuntimeProfileRegistryNotFoundError,
   RuntimeProfileRegistrySecurityError,
 } from "./runtime-profile-registry.ts";
-export type { RuntimeProfileProbeObservation } from "./runtime-profile-registry.ts";
+export type {
+  RuntimeProfileProbeObservation,
+  RuntimeProfileProbeValidation,
+} from "./runtime-profile-registry.ts";
 export type {
   ActivationEnvironmentLease,
   GenericProcessAdapterOptions,

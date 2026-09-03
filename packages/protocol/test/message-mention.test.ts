@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   messageHasMention,
   messageMentionCandidates,
+  messageMentionQueryAt,
 } from "../src/message-mention.ts";
 
 test("message mention grammar supports CJK prose and dotted handles with stable boundaries", () => {
@@ -63,6 +64,19 @@ test("message mention masking keeps UTF-16 indexes aligned after emoji", () => {
     messageMentionCandidates("😀😀😀😀😀😀😀 `@Alice`", ["Alice"]),
     [],
   );
+});
+
+test("composer mention queries share the canonical visible-prose mask", () => {
+  assert.deepEqual(messageMentionQueryAt("请@Ali", 5), {
+    end: 5,
+    query: "Ali",
+    start: 1,
+  });
+  assert.equal(messageMentionQueryAt("mail@example.com", 8), undefined);
+  assert.equal(messageMentionQueryAt("`@Ali`", 5), undefined);
+  assert.equal(messageMentionQueryAt("```\n@Ali\n```", 8), undefined);
+  assert.equal(messageMentionQueryAt("https://x.test/@Ali", 19), undefined);
+  assert.equal(messageMentionQueryAt("[@Ali](https://x.test)", 5), undefined);
 });
 
 test("case or NFKC ambiguous handles fail closed", () => {

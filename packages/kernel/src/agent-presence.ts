@@ -15,10 +15,12 @@ export function readAgentPresence(
   const result = (
     activity: AgentPresence["activity"],
     reason: AgentPresence["reason"],
+    activityAt?: string,
   ) =>
     AgentPresenceSchema.parse({
       agentDefinitionId: agent.definition.agentDefinitionId,
       activity,
+      ...(activityAt ? { activityAt } : {}),
       reason,
     });
   if (agent.definition.state !== "enabled") return result("offline", "paused");
@@ -80,7 +82,7 @@ export function readAgentPresence(
       : database
           .prepare(
             `
-    SELECT entry_json FROM run_trajectory_entries
+    SELECT entry_json, observed_at FROM run_trajectory_entries
     WHERE runtime_run_id = ? AND run_attempt_id = ?
       AND json_extract(entry_json, '$.subagent') IS NULL
       AND json_extract(entry_json, '$.kind') IN ('thinking','tool_start','compaction_started','compaction_finished','status')
@@ -98,7 +100,12 @@ export function readAgentPresence(
           : activity === "working" && entry.detailKind === "starting"
             ? "starting"
             : activity,
+        String(latest.observed_at),
       );
   }
-  return result("working", run.state === "starting" ? "starting" : "working");
+  return result(
+    "working",
+    run.state === "starting" ? "starting" : "working",
+    String(run.started_at),
+  );
 }

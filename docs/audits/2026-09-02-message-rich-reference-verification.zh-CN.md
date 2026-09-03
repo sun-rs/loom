@@ -27,9 +27,13 @@ RichContent owner 应同时承载 mention、GFM、KaTeX、代码与 Mermaid。
 - `packages/protocol/src/message-reference.ts`：八种严格 discriminated union；禁止 href 猜测；Thread
   parent identity 成对出现。
 - `packages/protocol/src/message-mention.ts`：显示、发送 recipients、Search/Activity 与 Web Push 共用的
-  Markdown-aware mention lexer。中文正文可紧贴 mention；代码、公式、链接、URL、HTML 不唤醒 Agent。
-- `apps/web/src/message-rich-text.ts`：Room slug/name、Principal handle/displayName 只在唯一解析时升级；
-  schema-invalid、歧义、未知 child、错误结束边界都保留文字或 disabled candidate。
+  Markdown-aware mention lexer。中文正文可紧贴 mention；inline/fenced/缩进代码、公式、inline/引用式链接、
+  URL、HTML 不唤醒 Agent；屏蔽区间和 RegExp 统一使用 UTF-16 索引。
+- `messageReferenceNameKey()` 冻结 `trim + NFKC + lowercase`。Principal 只以 canonical handle 参与 `@`，
+  Room 只以 canonical slug 参与 `#`；显示名不再暗中成为第二套路由。Kernel 写入与启动早期目录审计使用同一
+  key，等价 identity 冲突 fail closed。
+- `apps/web/src/message-rich-text.ts`：Principal handle、Room slug 只在唯一解析时升级；schema-invalid、歧义、
+  未知 child、错误结束边界都保留文字或 disabled candidate。
 - `apps/web/src/components/message-markdown.tsx`：只改 ReactMarkdown 产生的 prose text node；authored link、
   inline/fenced code、KaTeX、Shiki 与 Mermaid 不被二次改写。canonical `Message.body` 始终是原 Markdown。
 - Agent mention/头像打开 inspector 前也调用 `navigation.resolve`；Room/Thread/Task/Message/Computer 沿用
@@ -50,6 +54,10 @@ RichContent owner 应同时承载 mention、GFM、KaTeX、代码与 Mermaid。
 | P1   | 每条消息扫描全部 RoomEvent，partial replay 可能误显 unread                                        | caught-up gate + 一次索引 + O(1) per-message lookup                     |
 | P1   | 后置旧 CSS 覆盖新颜色与 read dot                                                                  | 删除重复层叠；浏览器读取最终 computed style                             |
 | P2   | parser 直接构造类型且缺完整结束边界                                                               | `MessageReferenceSchema.safeParse`；后缀边界反例；非法候选不崩溃        |
+| P0   | code-point mask 与 UTF-16 `match.index` 混用，emoji 后的代码可误触发 mention                      | mask 改为 code-unit；加入 emoji 回归                                    |
+| P0   | displayName 可显示为 Agent 引用却不会进入 recipients；等价 handle 可一次唤醒两个 Agent            | `@` 只认 handle；共享 key；发送端歧义过滤；Kernel 写入/启动阻断冲突     |
+| P1   | 缩进代码与 reference-style link 未纳入保护                                                        | protocol lexer 保护两类 CommonMark 区域                                 |
+| P1   | 只真实 hover Agent/Task，未覆盖 Room/Thread/Computer/Message                                      | Chrome 门禁逐一 hover 并读取最终 computed background                    |
 
 独立审计同时确认的正确项保留不动：raw Markdown 不回写；code/authored link 受保护；未知 Thread 不降级为
 父 Room；App 没有本地 surface 时 display-only；非 Agent typed target 已有点击时 Room ACL。
@@ -59,10 +67,19 @@ RichContent owner 应同时承载 mention、GFM、KaTeX、代码与 Mermaid。
 - 定向 protocol/UI/Kernel/Web：共享 mention、八种 identity、目录冲突、边界、read receipt、Search、Push、
   Room/Task 回归全部通过。
 - Chrome 大历史/Markdown gate：10,050 条逻辑消息、27 个 DOM row、anchor delta 0；20 次刷新中 Mermaid、
-  图片和代码块 identity 稳定。全部引用节点、Task/Thread/Computer/Message typed callback、代码保护和最终
-  computed style 均为 `PASS`。
+  图片和代码块 identity 稳定。全部引用节点、Agent/Task/Thread/Computer/Message typed callback、代码保护、
+  最终 computed style 以及 Agent/Task/Room/Thread/Computer/Message 的真实 hover 均为 `PASS`。
 - TypeScript 全仓与 Web typecheck：通过。
-- 最终全门禁、Firefox 与正式 4173 重启/新页面核验结果在本轮末尾追加，不用旧 PID 或旧构建冒充。
+- Firefox 150.0.2 正式 workbench gate：1440x1000 与 390x844 通过；持久数据重开通过。
+- Chrome real-browser gate：390x844 通过；不是 DOM-only 测试。
+- 最终 `npm run check`：Kernel/Protocol 等 819 项中 817 通过、2 项按预期跳过；Web 225/225；真实回调
+  并发回归 34/34。`format:check`、`git diff --check` 与 `npm audit --omit=dev`（0 vulnerability）通过。
+- 正式 `/Users/sun/.rah/state` 在停机前为 `quick_check=ok`、foreign key violation 0，运行中 Activation、
+  RunAttempt、Runtime process、Computer operation、held draft 与 outbox lease 均为 0；canonical handle/slug
+  歧义均为 0。安全重启后 4173 返回 200，原 Workspace、Room、消息与在线 Agent 由同一持久库恢复。
+- 新开的浏览器标签确认加载本轮新 hash，而不是 Service Worker 留存的旧入口：`Agent Council` 与 12 条既有消息
+  恢复，逐消息 `JSON.parse` 错误为 0，页面 alert 为 0。核验同时发现并修复“侧栏偏好首次请求随服务会话
+  轮换失败，后续成功却不清旧警告”；新增恢复回归，成功读取现在明确清除 transient error。
 
 ## 5. 有意边界
 

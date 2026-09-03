@@ -56,7 +56,11 @@ import {
 } from "./message-timeline.tsx";
 import { TaskToolbar, type TaskViewMode } from "./task-toolbar.tsx";
 import { TaskCloseDialog, TaskReassignDialog } from "./task-dialogs.tsx";
-import { taskMatchesFilters } from "../task-presentation.ts";
+import {
+  taskAttentionLabel,
+  taskMatchesFilters,
+  taskStatusPresentation,
+} from "../task-presentation.ts";
 import { conversationTarget } from "../conversation-target.ts";
 import { useVisibleMessageRead } from "../use-visible-message-read.ts";
 import { useComposerDraft } from "../use-composer-draft.ts";
@@ -79,6 +83,10 @@ import {
 import { useMessageContextMenu } from "../use-message-context-menu.ts";
 import { MessageContextMenu } from "./message-context-menu.tsx";
 import { messageMentionReadStateIndex } from "../message-reference-read-state.ts";
+import {
+  ComposerMentionMenu,
+  useComposerMention,
+} from "./composer-mention.tsx";
 
 export type ThreadReplyPreview = {
   actorId: string;
@@ -203,6 +211,21 @@ export function ChatPane({
     acceptDraft,
   } = useComposerDraft(roomId ? `room:${roomId}` : undefined);
   const composerRef = useRef<HTMLTextAreaElement>(null);
+  const composerMentionAgents = useMemo(() => {
+    const participantIds = new Set(
+      agents.map(({ participantId }) => participantId),
+    );
+    return messageAgents.filter(({ participantId }) =>
+      participantIds.has(participantId),
+    );
+  }, [agents, messageAgents]);
+  const composerMention = useComposerMention({
+    agents: composerMentionAgents,
+    body,
+    id: "room-composer-mentions",
+    setBody,
+    textareaRef: composerRef,
+  });
   function mention(handle: string) {
     const element = composerRef.current;
     if (!element || element.disabled) return;
@@ -629,13 +652,35 @@ export function ChatPane({
         <div className="rah-inline-error">{submitError}</div>
       )}
       <form className="composer" onSubmit={submit}>
+        <ComposerMentionMenu
+          activeIndex={composerMention.activeIndex}
+          agents={composerMention.candidates}
+          id="room-composer-mentions"
+          onSelect={composerMention.select}
+          open={composerMention.open}
+        />
         <div className="composer-box">
           <textarea
+            aria-activedescendant={composerMention.activeDescendant}
+            aria-autocomplete="list"
+            aria-controls="room-composer-mentions"
+            aria-expanded={composerMention.open}
             aria-label="消息输入框"
-            onKeyDown={handleComposerKeyDown}
             ref={composerRef}
             disabled={!canPost && !canCreateTask}
-            onChange={(event) => setBody(event.target.value)}
+            onBlur={composerMention.onBlur}
+            onChange={composerMention.onChange}
+            onClick={(event) =>
+              composerMention.onSelectionChange(event.currentTarget)
+            }
+            onFocus={composerMention.onFocus}
+            onKeyDown={(event) => {
+              composerMention.onKeyDown(event);
+              handleComposerKeyDown(event);
+            }}
+            onKeyUp={(event) =>
+              composerMention.onSelectionChange(event.currentTarget)
+            }
             placeholder={`发送消息至 ${conversationTarget(
               roomName === undefined
                 ? undefined
@@ -1068,7 +1113,7 @@ function MessageArticle({
           <button
             aria-label={`打开任务 #${task.taskNumber}：${task.title}`}
             className="rah-message-task-link"
-            data-task-status={task.state}
+            data-task-status={taskStatusPresentation(task.state).id}
             data-testid="message-task-badge"
             disabled={threadAction === undefined}
             onClick={openThreadFromMessage}
@@ -1132,6 +1177,7 @@ function MessageArticle({
 export function ThreadPane({
   currentPrincipal,
   messageAgents = [],
+  mentionAgentIds = [],
   focusedMessageId,
   followers = [],
   followersCanManage = false,
@@ -1172,6 +1218,7 @@ export function ThreadPane({
 }: {
   currentPrincipal?: Principal | undefined;
   messageAgents?: readonly WorkspaceAgentView[];
+  mentionAgentIds?: readonly string[];
   focusedMessageId?: string | undefined;
   followers?: readonly WorkspaceAgentView[];
   followersCanManage?: boolean;
@@ -1245,6 +1292,19 @@ export function ThreadPane({
   const uploadDraftKey = root ? `thread:${root.messageId}` : undefined;
   const fileUploads = useRoomUploads(roomId, uploadDraftKey);
   const composerRef = useRef<HTMLTextAreaElement>(null);
+  const composerMentionAgents = useMemo(() => {
+    const participantIds = new Set(mentionAgentIds);
+    return messageAgents.filter(({ participantId }) =>
+      participantIds.has(participantId),
+    );
+  }, [mentionAgentIds, messageAgents]);
+  const composerMention = useComposerMention({
+    agents: composerMentionAgents,
+    body,
+    id: "thread-composer-mentions",
+    setBody,
+    textareaRef: composerRef,
+  });
   function mention(handle: string) {
     const element = composerRef.current;
     if (!element || element.disabled) return;
@@ -2078,13 +2138,35 @@ export function ThreadPane({
         <div className="rah-inline-error">{submitError}</div>
       )}
       <form className="composer" onSubmit={submit}>
+        <ComposerMentionMenu
+          activeIndex={composerMention.activeIndex}
+          agents={composerMention.candidates}
+          id="thread-composer-mentions"
+          onSelect={composerMention.select}
+          open={composerMention.open}
+        />
         <div className="composer-box">
           <textarea
+            aria-activedescendant={composerMention.activeDescendant}
+            aria-autocomplete="list"
+            aria-controls="thread-composer-mentions"
+            aria-expanded={composerMention.open}
             aria-label="Thread 回复输入框"
-            onKeyDown={handleComposerKeyDown}
             ref={composerRef}
             disabled={!canReply}
-            onChange={(event) => setBody(event.target.value)}
+            onBlur={composerMention.onBlur}
+            onChange={composerMention.onChange}
+            onClick={(event) =>
+              composerMention.onSelectionChange(event.currentTarget)
+            }
+            onFocus={composerMention.onFocus}
+            onKeyDown={(event) => {
+              composerMention.onKeyDown(event);
+              handleComposerKeyDown(event);
+            }}
+            onKeyUp={(event) =>
+              composerMention.onSelectionChange(event.currentTarget)
+            }
             placeholder={
               canReply ? "发送消息至消息列" : "Thread write capability 不可用"
             }
@@ -2161,7 +2243,7 @@ export function TaskPane({
   reviews,
   submissions,
 }: {
-  agents: readonly RoomAgentTarget[];
+  agents: readonly WorkspaceAgentView[];
   canOpenThread: boolean;
   canReassign: boolean;
   canWrite: boolean;
@@ -2342,7 +2424,13 @@ export function TaskPane({
               </header>
               <div className="kcol-body">
                 {column.tasks.map((task) => (
-                  <article className="kcard" key={task.taskId}>
+                  <article
+                    className="kcard"
+                    data-task-workflow-status={
+                      taskStatusPresentation(task.state).id
+                    }
+                    key={task.taskId}
+                  >
                     <span className="kcard-no">#{task.taskNumber}</span>
                     <p className="kcard-title">{task.title}</p>
                     {canHumanSetTaskAssignee({
@@ -2410,9 +2498,11 @@ export function TaskPane({
                                   role="menuitemradio"
                                   type="button"
                                 >
-                                  <span className="rah-task-owner-avatar">
-                                    {agent.handle.slice(0, 1).toUpperCase()}
-                                  </span>
+                                  <AgentAvatar
+                                    agent={agent}
+                                    showStatus={false}
+                                    size="compact"
+                                  />
                                   <span>{agent.handle}</span>
                                 </button>
                               ))}
@@ -2451,9 +2541,19 @@ export function TaskPane({
                       </p>
                     )}
                     <footer className="kcard-foot">
-                      <span className={`chip chip-${column.tone}`}>
-                        {task.state}
+                      <span
+                        className={`chip rah-task-state chip-${taskStatusPresentation(task.state).tone}`}
+                        data-task-workflow-status={
+                          taskStatusPresentation(task.state).id
+                        }
+                      >
+                        {taskStatusPresentation(task.state).label}
                       </span>
+                      {taskAttentionLabel(task) === undefined ? null : (
+                        <span className="rah-task-phase-detail">
+                          {taskAttentionLabel(task)}
+                        </span>
+                      )}
                       {canOpenThread ? (
                         <button
                           className="rah-task-thread"

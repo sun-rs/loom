@@ -61,6 +61,7 @@ export type {
   Room,
   RoomEvent,
   RoomKernelOptions,
+  RoomFileGcReconcileResult,
   RoomSnapshot,
   RunAttempt,
   RuntimeProcessRecord,

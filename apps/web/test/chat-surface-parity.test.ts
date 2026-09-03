@@ -195,14 +195,19 @@ test("Raft focus, message toolbar and channel drawer interactions share the meas
   );
 });
 
-test("active Direct Rooms expose the canonical Agent activity footer", () => {
+test("the Workspace sidebar exposes Raft's transient Agent activity footer", () => {
   const navigation = readFileSync(
     new URL("../src/components/workspace-navigation.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(navigation, /rah-direct-activity-footer/u);
-  assert.match(navigation, /agentConnectionLabel\(activeDirectPeer\)/u);
-  assert.match(navigation, /AgentStatusDot/u);
+  assert.match(navigation, /WorkspaceActivityFooter agents=\{agents\}/u);
+  const footer = readFileSync(
+    new URL("../src/components/workspace-activity-footer.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(footer, /rah-live-agent-activity-footer/u);
+  assert.match(footer, /latestWorkspaceActivity\(agents\)/u);
+  assert.match(footer, /AgentStatusDot/u);
 });
 
 test("uploaded Human profile images project into Room messages", () => {

@@ -5,7 +5,9 @@ import {
   renameSync,
   rmSync,
   symlinkSync,
+  writeFileSync,
 } from "node:fs";
+import { randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -13,6 +15,10 @@ import test from "node:test";
 
 import { RoomKernel } from "../src/index.ts";
 import { ROOM_DELETION_REFERENCED_TABLES } from "../src/room-deletion-service.ts";
+import {
+  ROOM_FILE_GC_GLOBAL_CLAIM_SQL,
+  ROOM_FILE_GC_SCOPED_CLAIM_SQL,
+} from "../src/room-file-gc.ts";
 
 async function* bytes(value: string) {
   yield Buffer.from(value);
@@ -20,10 +26,13 @@ async function* bytes(value: string) {
 
 const digest = (character: string) => `sha256:${character.repeat(64)}`;
 
-function fixture() {
+function fixture(options: { now?: () => Date } = {}) {
   const directory = mkdtempSync(join(tmpdir(), "rah-room-delete-"));
   const databasePath = join(directory, "room.db");
-  const kernel = new RoomKernel({ databasePath });
+  const kernel = new RoomKernel({
+    databasePath,
+    ...(options.now === undefined ? {} : { now: options.now }),
+  });
   kernel.initialize();
   const owner = kernel.provisionPrincipal({ handle: "owner", kind: "human" });
   const member = kernel.provisionPrincipal({ handle: "member", kind: "human" });
@@ -291,8 +300,10 @@ test("permanent Room deletion erases canonical and personal projections and repl
   }
 });
 
-test("failed post-commit blob GC is recovered idempotently on the next Kernel start", async () => {
-  const f = fixture();
+test("failed post-commit blob GC honors backoff and is recovered by a later bounded sweep", async () => {
+  let nowMs = Date.parse("2026-09-03T00:00:00.000Z");
+  const now = () => new Date(nowMs);
+  const f = fixture({ now });
   const originalRoot = join(f.directory, "room-files");
   const heldRoot = join(f.directory, "room-files-held");
   try {
@@ -318,17 +329,44 @@ test("failed post-commit blob GC is recovered idempotently on the next Kernel st
     });
     assert.equal(deleted.fileGc.failed, 1);
     assert.equal(existsSync(join(heldRoot, upload.attachmentId)), true);
-    f.kernel.close();
     rmSync(originalRoot);
     renameSync(heldRoot, originalRoot);
 
-    const reopened = new RoomKernel({ databasePath: f.databasePath });
-    reopened.initialize();
+    assert.deepEqual(
+      f.kernel.files.reclaimRoomDeletionBlobs(deleted.deletionId),
+      {
+        failed: 1,
+        pending: 0,
+        reclaimed: 0,
+        total: 1,
+      },
+    );
+    let database = new DatabaseSync(f.databasePath, { readOnly: true });
+    assert.equal(
+      Number(
+        database
+          .prepare(
+            "SELECT attempt_count FROM room_file_gc_receipts WHERE attachment_id=?",
+          )
+          .get(upload.attachmentId)?.attempt_count,
+      ),
+      1,
+    );
+    database.close();
+
+    nowMs += 60_000;
+    assert.deepEqual(f.kernel.files.reconcileRoomDeletionGc({ limit: 50 }), {
+      attempted: 1,
+      failed: 0,
+      outstandingFailures: 0,
+      reclaimed: 1,
+      remainingDue: 0,
+    });
     assert.equal(existsSync(join(originalRoot, upload.attachmentId)), false);
-    const database = new DatabaseSync(f.databasePath, { readOnly: true });
+    database = new DatabaseSync(f.databasePath, { readOnly: true });
     const receipt = database
       .prepare(
-        "SELECT state,attempt_count,last_error FROM room_file_gc_receipts WHERE attachment_id=?",
+        "SELECT state,attempt_count,last_error,tombstone_pass FROM room_file_gc_receipts WHERE attachment_id=?",
       )
       .get(upload.attachmentId);
     database.close();
@@ -337,15 +375,574 @@ test("failed post-commit blob GC is recovered idempotently on the next Kernel st
       {
         attempt_count: 2,
         last_error: null,
-        state: "reclaimed",
+        state: "tombstoned",
+        tombstone_pass: 0,
       },
     );
-    reopened.close();
   } finally {
     try {
       f.kernel.close();
     } catch {}
     rmSync(f.directory, { force: true, recursive: true });
+  }
+});
+
+test("a tombstone pass reclaims a partial upload that materializes after the first delete", async () => {
+  let nowMs = Date.parse("2026-09-03T00:00:00.000Z");
+  const f = fixture({ now: () => new Date(nowMs) });
+  try {
+    const upload = f.kernel.files.prepare(f.ownerActor, {
+      filename: "late.txt",
+      idempotencyKey: "late-file",
+      mimeType: "text/plain",
+      roomId: f.channel.room.roomId,
+      size: 5,
+    });
+    await f.kernel.files.upload(
+      f.ownerActor,
+      upload.attachmentId,
+      bytes("hello"),
+    );
+    f.kernel.postRoomMessage(f.ownerActor, {
+      attachmentIds: [upload.attachmentId],
+      basedOnRoomSeq: f.head(),
+      body: "",
+      idempotencyKey: "late-file-message",
+      roomId: f.channel.room.roomId,
+    });
+    const deleteInput = {
+      basedOnRoomSeq: f.head(),
+      idempotencyKey: "late-delete",
+      roomId: f.channel.room.roomId,
+    };
+    const deleted = f.kernel.deleteWorkspaceRoom(f.ownerActor, deleteInput);
+
+    const latePart = join(
+      f.directory,
+      "room-files",
+      `${upload.attachmentId}.part`,
+    );
+    writeFileSync(latePart, "late", { mode: 0o600 });
+    nowMs += 14 * 60_000;
+    assert.equal(
+      f.kernel.files.reconcileRoomDeletionGc({ limit: 50 }).attempted,
+      0,
+    );
+    assert.equal(existsSync(latePart), true);
+
+    nowMs += 60_000;
+    assert.deepEqual(f.kernel.files.reconcileRoomDeletionGc({ limit: 50 }), {
+      attempted: 1,
+      failed: 0,
+      outstandingFailures: 0,
+      reclaimed: 1,
+      remainingDue: 0,
+    });
+    assert.equal(existsSync(latePart), false);
+
+    for (const delay of [60 * 60_000, 6 * 60 * 60_000, 24 * 60 * 60_000]) {
+      nowMs += delay;
+      assert.equal(
+        f.kernel.files.reconcileRoomDeletionGc({ limit: 50 }).attempted,
+        1,
+      );
+    }
+    const audit = new DatabaseSync(f.databasePath, { readOnly: true });
+    assert.equal(
+      Number(
+        audit
+          .prepare(
+            "SELECT COUNT(*) AS count FROM room_file_gc_receipts WHERE deletion_id=?",
+          )
+          .get(deleted.deletionId)?.count,
+      ),
+      0,
+    );
+    assert.equal(
+      Number(
+        audit
+          .prepare(
+            "SELECT gc_reclaimed_count FROM room_deletion_receipts WHERE deletion_id=?",
+          )
+          .get(deleted.deletionId)?.gc_reclaimed_count,
+      ),
+      1,
+    );
+    audit.close();
+    assert.deepEqual(
+      f.kernel.deleteWorkspaceRoom(f.ownerActor, deleteInput).fileGc,
+      { failed: 0, pending: 0, reclaimed: 1, total: 1 },
+    );
+  } finally {
+    f.close();
+  }
+});
+
+test("an unexpired GC lease fences another sweep and an expired lease is recovered", () => {
+  let nowMs = Date.parse("2026-09-03T00:00:00.000Z");
+  const f = fixture({ now: () => new Date(nowMs) });
+  try {
+    const attachmentId = randomUUID();
+    const deletionId = "room_deletion_lease_fixture";
+    const database = new DatabaseSync(f.databasePath);
+    database
+      .prepare(
+        `INSERT INTO room_deletion_receipts(
+           deletion_id,actor_id,workspace_id,room_id,room_name,room_slug,
+           based_on_room_seq,idempotency_key,file_count,deleted_at
+         ) VALUES(?,?,?,?,?,?,0,?,1,?)`,
+      )
+      .run(
+        deletionId,
+        f.owner.principal.principalId,
+        f.workspace.workspace.workspaceId,
+        "room_deleted_lease_fixture",
+        "Lease fixture",
+        "lease-fixture",
+        "lease-fixture",
+        new Date(nowMs).toISOString(),
+      );
+    database
+      .prepare(
+        `INSERT INTO room_file_gc_receipts(
+           deletion_id,attachment_id,state,attempt_count,last_error,
+           created_at,updated_at,next_attempt_at_ms,lease_token,
+           lease_expires_at_ms,tombstone_pass
+         ) VALUES(?,?,'deleting',1,NULL,?,?,?,?,?,-1)`,
+      )
+      .run(
+        deletionId,
+        attachmentId,
+        new Date(nowMs).toISOString(),
+        new Date(nowMs).toISOString(),
+        nowMs,
+        "crashed-worker",
+        nowMs + 120_000,
+      );
+    database.close();
+
+    assert.equal(
+      f.kernel.files.reconcileRoomDeletionGc({ limit: 50 }).attempted,
+      0,
+    );
+    nowMs += 120_000;
+    assert.deepEqual(f.kernel.files.reconcileRoomDeletionGc({ limit: 50 }), {
+      attempted: 1,
+      failed: 0,
+      outstandingFailures: 0,
+      reclaimed: 1,
+      remainingDue: 0,
+    });
+  } finally {
+    f.close();
+  }
+});
+
+test("one Room file GC sweep is bounded by attempts even when a backlog remains", () => {
+  const f = fixture();
+  try {
+    const database = new DatabaseSync(f.databasePath);
+    const now = new Date().toISOString();
+    const insert = database.prepare(
+      `INSERT INTO room_files(
+         attachment_id,room_id,actor_id,request_key,filename,mime_type,size,
+         state,expires_at,created_at
+       ) VALUES(?,?,?,?,?,'text/plain',0,'pending',?,?)`,
+    );
+    for (let index = 0; index < 51; index += 1) {
+      insert.run(
+        randomUUID(),
+        f.channel.room.roomId,
+        f.owner.principal.principalId,
+        `bounded-${index}`,
+        `bounded-${index}.txt`,
+        new Date(Date.now() + 60_000).toISOString(),
+        now,
+      );
+    }
+    database.close();
+
+    const deleted = f.kernel.deleteWorkspaceRoom(f.ownerActor, {
+      basedOnRoomSeq: f.head(),
+      idempotencyKey: "bounded-delete",
+      roomId: f.channel.room.roomId,
+    });
+    assert.deepEqual(deleted.fileGc, {
+      failed: 0,
+      pending: 1,
+      reclaimed: 50,
+      total: 51,
+    });
+    assert.deepEqual(f.kernel.files.reconcileRoomDeletionGc({ limit: 50 }), {
+      attempted: 1,
+      failed: 0,
+      outstandingFailures: 0,
+      reclaimed: 1,
+      remainingDue: 0,
+    });
+  } finally {
+    f.close();
+  }
+});
+
+test("Room file GC due selection stays index-backed for global and deletion-scoped sweeps", () => {
+  const f = fixture();
+  try {
+    const database = new DatabaseSync(f.databasePath, { readOnly: true });
+    const globalPlan = database
+      .prepare(`EXPLAIN QUERY PLAN ${ROOM_FILE_GC_GLOBAL_CLAIM_SQL}`)
+      .all(Date.now(), Date.now())
+      .map((row) => String(row.detail))
+      .join("\n");
+    const scopedPlan = database
+      .prepare(`EXPLAIN QUERY PLAN ${ROOM_FILE_GC_SCOPED_CLAIM_SQL}`)
+      .all("room_deletion_fixture", Date.now(), Date.now())
+      .map((row) => String(row.detail))
+      .join("\n");
+    database.close();
+
+    assert.match(globalPlan, /idx_room_file_gc_pending/);
+    assert.match(scopedPlan, /idx_room_file_gc_scoped_due/);
+    assert.doesNotMatch(globalPlan, /SCAN room_file_gc_receipts|TEMP B-TREE/);
+    assert.doesNotMatch(scopedPlan, /SCAN room_file_gc_receipts|TEMP B-TREE/);
+  } finally {
+    f.close();
+  }
+});
+
+test("current schema preserves a schema v40 reclaimed file receipt while adding retry fencing", () => {
+  const f = fixture();
+  const attachmentId = randomUUID();
+  try {
+    const deleted = f.kernel.deleteWorkspaceRoom(f.ownerActor, {
+      basedOnRoomSeq: f.head(),
+      idempotencyKey: "migration-delete",
+      roomId: f.channel.room.roomId,
+    });
+    f.kernel.close();
+
+    const legacy = new DatabaseSync(f.databasePath);
+    legacy.exec(`
+      PRAGMA foreign_keys = OFF;
+      BEGIN IMMEDIATE;
+      DROP INDEX idx_room_file_gc_pending;
+      ALTER TABLE room_file_gc_receipts RENAME TO room_file_gc_receipts_v41;
+      DROP TABLE room_file_gc_receipts_v41;
+      ALTER TABLE room_deletion_receipts RENAME TO room_deletion_receipts_v41;
+      CREATE TABLE room_deletion_receipts (
+        deletion_id TEXT PRIMARY KEY,
+        actor_id TEXT NOT NULL REFERENCES principals(principal_id),
+        workspace_id TEXT NOT NULL REFERENCES workspaces(workspace_id),
+        room_id TEXT NOT NULL,
+        room_name TEXT NOT NULL,
+        room_slug TEXT NOT NULL,
+        based_on_room_seq INTEGER NOT NULL CHECK (based_on_room_seq >= 0),
+        idempotency_key TEXT NOT NULL,
+        file_count INTEGER NOT NULL CHECK (file_count >= 0),
+        deleted_at TEXT NOT NULL,
+        UNIQUE (actor_id, idempotency_key)
+      ) STRICT;
+      INSERT INTO room_deletion_receipts(
+        deletion_id,actor_id,workspace_id,room_id,room_name,room_slug,
+        based_on_room_seq,idempotency_key,file_count,deleted_at
+      )
+      SELECT deletion_id,actor_id,workspace_id,room_id,room_name,room_slug,
+             based_on_room_seq,idempotency_key,1,deleted_at
+      FROM room_deletion_receipts_v41;
+      DROP TABLE room_deletion_receipts_v41;
+      CREATE TABLE room_file_gc_receipts (
+        deletion_id TEXT NOT NULL REFERENCES room_deletion_receipts(deletion_id),
+        attachment_id TEXT NOT NULL,
+        state TEXT NOT NULL CHECK (state IN ('pending', 'reclaimed', 'failed')),
+        attempt_count INTEGER NOT NULL DEFAULT 0 CHECK (attempt_count >= 0),
+        last_error TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (deletion_id, attachment_id),
+        UNIQUE (attachment_id)
+      ) STRICT;
+      CREATE INDEX idx_room_file_gc_pending
+        ON room_file_gc_receipts(state, updated_at, deletion_id, attachment_id);
+      PRAGMA user_version = 40;
+      COMMIT;
+      PRAGMA foreign_keys = ON;
+    `);
+    legacy
+      .prepare(
+        `INSERT INTO room_file_gc_receipts(
+           deletion_id,attachment_id,state,attempt_count,last_error,
+           created_at,updated_at
+         ) VALUES(?,?,'reclaimed',4,NULL,?,?)`,
+      )
+      .run(
+        deleted.deletionId,
+        attachmentId,
+        "2026-09-02T00:00:00.000Z",
+        "2026-09-02T01:00:00.000Z",
+      );
+    legacy.close();
+
+    const migrated = new RoomKernel({ databasePath: f.databasePath });
+    migrated.initialize();
+    migrated.close();
+    const audit = new DatabaseSync(f.databasePath, { readOnly: true });
+    assert.equal(
+      Number(audit.prepare("PRAGMA user_version").get()?.user_version),
+      43,
+    );
+    assert.deepEqual(audit.prepare("PRAGMA foreign_key_check").all(), []);
+    assert.deepEqual(
+      audit
+        .prepare("PRAGMA table_info(room_file_gc_receipts)")
+        .all()
+        .map((row) => String(row.name))
+        .filter((name) =>
+          [
+            "next_attempt_at_ms",
+            "lease_token",
+            "lease_expires_at_ms",
+            "tombstone_pass",
+          ].includes(name),
+        ),
+      [
+        "next_attempt_at_ms",
+        "lease_token",
+        "lease_expires_at_ms",
+        "tombstone_pass",
+      ],
+    );
+    assert.equal(
+      audit
+        .prepare(
+          "SELECT 1 AS present FROM room_file_gc_receipts WHERE attachment_id=?",
+        )
+        .get(attachmentId),
+      undefined,
+    );
+    assert.equal(
+      Number(
+        audit
+          .prepare(
+            "SELECT gc_reclaimed_count FROM room_deletion_receipts WHERE deletion_id=?",
+          )
+          .get(deleted.deletionId)?.gc_reclaimed_count,
+      ),
+      1,
+    );
+    audit.close();
+  } finally {
+    try {
+      f.kernel.close();
+    } catch {}
+    rmSync(f.directory, { force: true, recursive: true });
+  }
+});
+
+test("current schema atomically replaces the schema v41 GC scan index", () => {
+  const f = fixture();
+  try {
+    f.kernel.close();
+    const legacy = new DatabaseSync(f.databasePath);
+    legacy.exec(`
+      DROP INDEX idx_room_file_gc_pending;
+      DROP INDEX idx_room_file_gc_scoped_due;
+      DROP INDEX idx_room_file_gc_failures;
+      CREATE INDEX idx_room_file_gc_pending
+        ON room_file_gc_receipts(
+          state,next_attempt_at_ms,lease_expires_at_ms,deletion_id,attachment_id
+        );
+      PRAGMA user_version=41;
+    `);
+    legacy.close();
+
+    const migrated = new RoomKernel({ databasePath: f.databasePath });
+    migrated.initialize();
+    migrated.close();
+    const audit = new DatabaseSync(f.databasePath, { readOnly: true });
+    assert.equal(
+      Number(audit.prepare("PRAGMA user_version").get()?.user_version),
+      43,
+    );
+    assert.deepEqual(
+      audit
+        .prepare("PRAGMA index_info(idx_room_file_gc_pending)")
+        .all()
+        .map((row) => String(row.name)),
+      [
+        "next_attempt_at_ms",
+        "created_at",
+        "deletion_id",
+        "attachment_id",
+        "state",
+        "lease_expires_at_ms",
+      ],
+    );
+    assert.deepEqual(
+      audit
+        .prepare(
+          "SELECT name FROM sqlite_master WHERE type='index' AND name LIKE 'idx_room_file_gc_%' ORDER BY name",
+        )
+        .all()
+        .map((row) => String(row.name)),
+      [
+        "idx_room_file_gc_failures",
+        "idx_room_file_gc_pending",
+        "idx_room_file_gc_scoped_due",
+      ],
+    );
+    audit.close();
+  } finally {
+    try {
+      f.kernel.close();
+    } catch {}
+    rmSync(f.directory, { force: true, recursive: true });
+  }
+});
+
+test("Room deletion GC rejects a malformed attachment identity even when the blob root is absent", () => {
+  let nowMs = Date.parse("2026-09-03T00:00:00.000Z");
+  const f = fixture({ now: () => new Date(nowMs) });
+  try {
+    const deletionId = "room_deletion_invalid_attachment_fixture";
+    const database = new DatabaseSync(f.databasePath);
+    database
+      .prepare(
+        `INSERT INTO room_deletion_receipts(
+           deletion_id,actor_id,workspace_id,room_id,room_name,room_slug,
+           based_on_room_seq,idempotency_key,file_count,deleted_at
+         ) VALUES(?,?,?,?,?,?,0,?,1,?)`,
+      )
+      .run(
+        deletionId,
+        f.owner.principal.principalId,
+        f.workspace.workspace.workspaceId,
+        "room_deleted_invalid_attachment_fixture",
+        "Invalid attachment fixture",
+        "invalid-attachment-fixture",
+        "invalid-attachment-fixture",
+        new Date(nowMs).toISOString(),
+      );
+    database
+      .prepare(
+        `INSERT INTO room_file_gc_receipts(
+           deletion_id,attachment_id,state,attempt_count,last_error,
+           created_at,updated_at,next_attempt_at_ms
+         ) VALUES(?,?,'pending',0,NULL,?,?,0)`,
+      )
+      .run(
+        deletionId,
+        "../../not-a-server-id",
+        new Date(nowMs).toISOString(),
+        new Date(nowMs).toISOString(),
+      );
+    database.close();
+
+    for (let attempt = 1; attempt <= 12; attempt += 1) {
+      assert.deepEqual(f.kernel.files.reconcileRoomDeletionGc({ limit: 50 }), {
+        attempted: 1,
+        failed: 1,
+        outstandingFailures: 1,
+        reclaimed: 0,
+        remainingDue: 0,
+      });
+      const audit = new DatabaseSync(f.databasePath, { readOnly: true });
+      const row = audit
+        .prepare(
+          `SELECT attempt_count,next_attempt_at_ms
+           FROM room_file_gc_receipts WHERE attachment_id=?`,
+        )
+        .get("../../not-a-server-id");
+      audit.close();
+      const expectedBackoff = Math.min(
+        60_000 * 2 ** (attempt - 1),
+        60 * 60_000,
+      );
+      assert.equal(Number(row?.attempt_count), attempt);
+      assert.equal(Number(row?.next_attempt_at_ms), nowMs + expectedBackoff);
+      nowMs += expectedBackoff;
+    }
+    assert.deepEqual(f.kernel.files.roomDeletionGcSummary(deletionId), {
+      failed: 1,
+      pending: 0,
+      reclaimed: 0,
+      total: 1,
+    });
+  } finally {
+    f.close();
+  }
+});
+
+test("Room deletion GC keeps bytes and backs off when a canonical attachment reference still exists", () => {
+  const f = fixture();
+  try {
+    const upload = f.kernel.files.prepare(f.ownerActor, {
+      filename: "referenced.txt",
+      idempotencyKey: "referenced-file",
+      mimeType: "text/plain",
+      roomId: f.channel.room.roomId,
+      size: 1,
+    });
+    const deletionId = "room_deletion_reference_fixture";
+    const database = new DatabaseSync(f.databasePath);
+    const now = new Date().toISOString();
+    database
+      .prepare(
+        `INSERT INTO room_deletion_receipts(
+           deletion_id,actor_id,workspace_id,room_id,room_name,room_slug,
+           based_on_room_seq,idempotency_key,file_count,deleted_at
+         ) VALUES(?,?,?,?,?,?,0,?,1,?)`,
+      )
+      .run(
+        deletionId,
+        f.owner.principal.principalId,
+        f.workspace.workspace.workspaceId,
+        "room_deleted_reference_fixture",
+        "Reference fixture",
+        "reference-fixture",
+        "reference-fixture",
+        now,
+      );
+    database
+      .prepare(
+        `INSERT INTO room_file_gc_receipts(
+           deletion_id,attachment_id,state,attempt_count,last_error,
+           created_at,updated_at,next_attempt_at_ms
+         ) VALUES(?,?,'pending',0,NULL,?,?,0)`,
+      )
+      .run(deletionId, upload.attachmentId, now, now);
+    database.close();
+
+    assert.deepEqual(f.kernel.files.reconcileRoomDeletionGc({ limit: 50 }), {
+      attempted: 1,
+      failed: 1,
+      outstandingFailures: 1,
+      reclaimed: 0,
+      remainingDue: 0,
+    });
+    const audit = new DatabaseSync(f.databasePath, { readOnly: true });
+    assert.equal(
+      Number(
+        audit
+          .prepare(
+            "SELECT COUNT(*) AS count FROM room_files WHERE attachment_id=?",
+          )
+          .get(upload.attachmentId)?.count,
+      ),
+      1,
+    );
+    assert.match(
+      String(
+        audit
+          .prepare(
+            "SELECT last_error FROM room_file_gc_receipts WHERE attachment_id=?",
+          )
+          .get(upload.attachmentId)?.last_error,
+      ),
+      /still referenced/i,
+    );
+    audit.close();
+  } finally {
+    f.close();
   }
 });
 

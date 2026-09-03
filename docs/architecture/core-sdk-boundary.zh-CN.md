@@ -1,6 +1,15 @@
 # RAH Core SDK 边界
 
-2026-09-03 Room 永久删除增量边界：`HumanApplicationPort.deleteWorkspaceRoom` 是唯一 Human 能力入口；actor 仍只来自认证上下文。schema 40 的 `RoomDeletionService` 在单一 SQLite 事务中持有普通 Channel 权限、freshness、active-work gate、显式 52 表引用图和幂等删除回执；`RoomFiles` 只在提交后按 durable GC receipt 回收 exact 本地 blob，并在 Kernel 启动时续收。HTTP/SDK/Web 只校验、委派和投影确认状态，不能持有第二套删除图或把 archive 当永久删除。详见[永久删除合同](../product/2026-09-03-room-permanent-deletion-contract.zh-CN.md)。
+2026-09-03 RuntimeOffer 长期运行增量边界：`agent-host` 的 Registry schema 4 以内容寻址
+payload、immutable report envelope 和 per-revision validation head 分开目录事实与重复验证；daemon
+的 30 秒 publisher 只做 executable metadata availability heartbeat，不启动 Provider CLI；Kernel
+schema 43 对能力等价的 heartbeat 只推进当前 lease，能力变化才追加不可变 observation。Placement
+继续冻结 observation/digest，真实 spawn 前继续复核 executable SHA-256。客户端只显示
+`probeObservedAt / probeValidatedAt`，不能自行刷新或推断 Provider 目录。详见
+[产品合同](../product/2026-09-03-runtime-offer-catalog-retention-contract.zh-CN.md)与
+[验证审计](../audits/2026-09-03-runtime-offer-catalog-retention-verification.zh-CN.md)。
+
+2026-09-03 Room 永久删除增量边界：`HumanApplicationPort.deleteWorkspaceRoom` 是唯一 Human 能力入口；actor 仍只来自认证上下文。schema 42 的 `RoomDeletionService` 在单一 SQLite 事务中持有普通 Channel 权限、freshness、active-work gate、显式 52 表引用图和幂等删除回执；独立 `RoomFileGcService` 以单条 claim、lease-token、指数退避、tombstone 重删和父回执汇总续收提交后的 exact 本地 blob，并用全局/单删除/失败三组索引约束极端 backlog 的同步查询成本；`RoomFiles` 仍是唯一路径/字节 owner；daemon 只提供一个可取消的 60 秒 cadence。HTTP/SDK/Web 只校验、委派和投影确认状态，不能持有第二套删除图或把 archive 当永久删除。详见[永久删除合同](../product/2026-09-03-room-permanent-deletion-contract.zh-CN.md)和[长期运行 Reconciler 合同](../product/2026-09-03-room-file-gc-reconciler-contract.zh-CN.md)。
 
 2026-09-01 typed navigation 增量边界：`NavigationTarget` 是 protocol-owned intent；`HumanNavigation` 在点击时重新检查 canonical existence 与当前 Human ACL，`HumanNotifications` 只持有 Human×Workspace 有界 dismissal preference。daemon shell 可从自己拥有的 current Computer condition 构造通知，但 Web/URL/notification body 不成为业务 owner。`HumanApplicationPort` 新增 resolve/dismissal 三个窄方法；HTTP/SDK 只校验与委派。详见[产品合同](../product/2026-09-01-notifications-typed-navigation-contract.zh-CN.md)。
 

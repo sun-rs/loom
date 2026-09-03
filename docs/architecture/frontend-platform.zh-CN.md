@@ -193,6 +193,15 @@ iOS PWA 被系统回收不影响 AgentHost。恢复页面后重新执行完整 s
 
 当前 `apps/web/public/sw.js` 已把该策略落实为第一段可执行门禁：`/v*/...` 和 `/_rah/...` 直接 network-only；navigation 只以最后成功的 app shell 作为离线 fallback；hashed script/style/font/image 才 cache-first。它没有 command outbox、Background Sync、IndexedDB timeline 或 API response cache。真实 iOS Home Screen 生命周期和 WebKit gate 尚未完成。
 
+Web 发布还必须处理“旧标签页 + 新 gateway”窗口。product build 把内容确定的 generation 同时
+嵌入 HTML 和发布 metadata；gateway 为所有静态/API 响应返回该 generation。bootstrap 首次
+HEAD probe 与全局 fetch fence 在应用挂载/业务 JSON 解码前阻断 mismatch；运行中的标签页在
+focus、visibility 和 15 秒有界 HEAD probe 上继续检测。可见行为结构性复用 Raft：全页
+刷新/继续 modal、继续后的新版本 banner、同源 Service Worker update、仅清 RAH 自有 cache、
+replace 刷新并保持 typed navigation。动态 import failure 走同一 owner；不允许由页面或消息
+renderer 各自捕获并展示。完整合同见
+[Web 构建代际与旧页面自愈](../product/2026-09-03-web-build-recovery-contract.zh-CN.md)。
+
 ## 9. Mac 与未来 iOS
 
 ### 9.1 Mac desktop shell

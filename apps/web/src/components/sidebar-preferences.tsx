@@ -57,6 +57,7 @@ export function SidebarPreferencesProvider({
         ) {
           head.current = next;
           setData(next);
+          setError(undefined);
         }
       } catch (e) {
         if (alive)

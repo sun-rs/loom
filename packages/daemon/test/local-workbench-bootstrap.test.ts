@@ -126,8 +126,16 @@ test("local workbench bootstrap is persistent, owner-private, and restart-safe",
       registry
         .listAuditEntries(spec.runtimeProfileId)
         .filter(({ action }) => action === "probe_recorded").length,
+      1,
+      "an equivalent restart probe must not duplicate immutable evidence",
+    );
+    assert.equal(
+      registry.getProbeValidation(
+        registry.getActiveRevision(spec.runtimeProfileId)!
+          .runtimeProfileRevisionId,
+      )?.validationCount,
       2,
-      "a later service start deliberately revalidates the runtime once",
+      "a later service start advances the validation head exactly once",
     );
     registry.close();
 

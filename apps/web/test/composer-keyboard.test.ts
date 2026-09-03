@@ -78,6 +78,6 @@ test("Room/DM and Thread composers share one Enter implementation and explicit s
     new URL("../src/components/conversation-panes.tsx", import.meta.url),
     "utf8",
   );
-  assert.equal(source.match(/onKeyDown=\{handleComposerKeyDown\}/g)?.length, 2);
+  assert.equal(source.match(/handleComposerKeyDown\(event\)/g)?.length, 2);
   assert.equal(source.match(/type="submit"/g)?.length, 2);
 });

@@ -7,6 +7,7 @@ export const AgentPresenceSchema = z
   .object({
     agentDefinitionId: IdentifierSchema,
     activity: RuntimeTrajectoryActivitySchema,
+    activityAt: TimestampSchema.optional(),
     reason: z.enum([
       "idle",
       "starting",

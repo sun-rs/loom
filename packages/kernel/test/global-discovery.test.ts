@@ -188,7 +188,8 @@ test("muting a Room suppresses ordinary Activity but preserves exact mentions", 
     );
     assert.equal(
       activity.summary?.rooms.some((room) => room.roomId === f.channel.roomId),
-      false,
+      true,
+      "sidebar keeps a muted channel's quiet unread count",
     );
     f.post(f.channel.roomId, "@human please review", true);
     activity = f.kernel.listHumanActivity(f.actor, {

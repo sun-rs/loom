@@ -5,8 +5,15 @@ export type MessageMentionCandidate = {
   value: string;
 };
 
+export type MessageMentionQuery = {
+  end: number;
+  query: string;
+  start: number;
+};
+
 const blockedLeadingCharacter = /[A-Za-z0-9_.-]/u;
 const blockedUnicodeIdentifierCharacter = /[\p{L}\p{N}_.-]/u;
+const mentionQuery = /^[\p{L}\p{N}_.-]*$/u;
 
 function maskRange(mask: string[], start: number, end: number): void {
   for (let index = start; index < end; index += 1) {
@@ -81,6 +88,29 @@ function visibleMessageText(source: string): string {
   protect(/<[^>\n]+>/gu);
   for (const [start, end] of protectedRanges) maskRange(mask, start, end);
   return mask.join("");
+}
+
+/**
+ * Locates an unfinished mention token at a composer caret using the same
+ * Markdown visibility mask as canonical mention delivery. Autocomplete must
+ * not promise delivery from code, links, URLs, math or HTML that is masked for
+ * the final message parser.
+ */
+export function messageMentionQueryAt(
+  source: string,
+  caret: number,
+): MessageMentionQuery | undefined {
+  if (caret < 0 || caret > source.length) return undefined;
+  const visible = visibleMessageText(source);
+  const beforeCaret = visible.slice(0, caret);
+  const start = beforeCaret.lastIndexOf("@");
+  if (start < 0) return undefined;
+  const previous = visible[start - 1];
+  if (previous !== undefined && blockedLeadingCharacter.test(previous))
+    return undefined;
+  const query = visible.slice(start + 1, caret);
+  if (!mentionQuery.test(query)) return undefined;
+  return { end: caret, query: source.slice(start + 1, caret), start };
 }
 
 function escapedPattern(value: string): string {

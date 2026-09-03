@@ -90,6 +90,9 @@ test("Runtime inspector projects only existing local probe evidence", () => {
     { label: "可执行文件", value: "/opt/local/bin/codex" },
     { label: "Runtime Profile", value: "profile-a" },
     { label: "Offer", value: "offer-a" },
+    { label: "目录采样", value: "尚未采样" },
+    { label: "最近验证", value: "尚未验证" },
+    { label: "刷新方式", value: "重启 RAH OS" },
     { label: "已验证模型", value: "1" },
     { label: "绑定 Agent", value: "1" },
   ]);

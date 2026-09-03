@@ -3409,7 +3409,9 @@ function WorkspaceScreen({
                     />
                   ) : tab === "tasks" ? (
                     <TaskPane
-                      agents={roomAgents}
+                      agents={agentDirectory.filter(({ participantId }) =>
+                        activeMemberIdSet.has(participantId),
+                      )}
                       canOpenThread={health?.capabilities.threadRead === true}
                       canReassign={
                         health?.capabilities.taskReassignment === true
@@ -3579,6 +3581,7 @@ function WorkspaceScreen({
                     restoreThreadFocus(rootMessageId);
                   }}
                   replies={threadView.messages}
+                  mentionAgentIds={availableAgentIds}
                   referenceComputers={messageReferenceComputers}
                   referenceEventsComplete={roomData?.caughtUp === true}
                   referenceRooms={messageReferenceRooms}

@@ -1,6 +1,6 @@
 # 消息富文本引用、公式与图表合同
 
-状态：typed identity、共享 mention 语法、正文显示、已读投影与点击时 ACL 导航已实现；composer 自动补全仍是后续。本文只约束 RAH OS，不修改旧 `rah` 仓库。
+状态：typed identity、共享 mention 语法、正文显示、已读投影、点击时 ACL 导航与 composer 自动补全已实现。本文只约束 RAH OS，不修改旧 `rah` 仓库。
 
 ## 1. Raft 已确认事实
 
@@ -20,6 +20,10 @@
   `bg-soft-signal/40`，hover 为 `bg-soft-signal`。频道 chip 为 brutal pink 30%，hover 60%。
 - Thread 搜索命中由 `Ele/Crt`（offset `2913732`）用
   `mark[data-testid=thread-search-fragment-highlight]` 与 `bg-soft-signal/70` 包裹，匹配不区分大小写。
+- Room 侧栏注意力是两条独立信号。官方 `met` 频道行（offset `2736299`）同时读取
+  `unreadCounts[channelId]` 与 `mentionFlags[channelId]`：提及当前 Human 时渲染 16×16、1px 黑框、
+  黄色底的 `@`，未读数另以粉底白字计数显示；同 bundle 的 `fet/get` DM 行只读取
+  `unreadCounts[dmId]`，即使 DM 正文提及当前 Human 也不另显示黄色 `@`。
 - Raft 的 Markdown owner 同时启用 GFM、代码渲染、公式与 Mermaid；正式页已观察到标题、表格、
   inline/block math、代码复制，以及 Mermaid 图表/源码/缩放/复制/下载/全屏入口。
 
@@ -49,11 +53,16 @@ ranker 或权限事务被逐行复制；可证明的是以上客户端语法、�
   保存猜测 href。Thread identity 必须同时有 `threadId + rootMessageId`。
 - `packages/protocol/src/message-mention.ts` 是 mention 语法的单一跨层 owner。发送时的 Agent recipients、Kernel
   Search/Activity/Web Push 的 `rah_has_mention` 与 Web 正文显示都复用它：中文正文允许 `请@Alice处理`；邮箱/
-  路径前缀、inline/fenced code、公式、authored Markdown link、URL/autolink 与 HTML 示例都不产生 mention，
-  因而不会发生“正文不高亮但后台已唤醒 Agent”的分裂。
+  路径前缀、inline/fenced/缩进代码、公式、inline/引用式 Markdown link、URL/autolink、HTML 与 comment 示例
+  都不产生 mention，因而不会发生“正文不高亮但后台已唤醒 Agent”的分裂。屏蔽区间与 JS RegExp 都使用
+  UTF-16 code-unit 索引，emoji 不能再把后方代码示例错位成真实 mention。
+- `messageReferenceNameKey()` 冻结 `trim + NFKC + lowercase` 比较键。`@` 只绑定 canonical Principal handle，
+  `#room` 只绑定 canonical Room slug；displayName/name 只负责显示，不能成为第二套路由。大小写或 NFKC 等价但
+  指向不同 identity 的目录必须 fail closed。Kernel 在 Principal/Room 写入时拒绝此类冲突，并在启动早期审计
+  旧数据库，不能让一次 mention 唤醒两个 Agent。
 - `apps/web/src/message-rich-text.ts` 是其余引用的纯识别 owner，只把目录中**唯一**可解析的候选升级为 typed
-  token。Room 同时使用 immutable `slug` 和显示 `name`；displayName/name 冲突时保持普通文字，不以数组首项
-  猜身份；子 Thread 不存在时也不会退化成可点击父 Room。所有生成 token 都经过
+  token。Principal 使用 handle，Room 使用 immutable slug；冲突时保持普通文字，不以数组首项猜身份；子
+  Thread 不存在时也不会退化成可点击父 Room。所有生成 token 都经过
   `MessageReferenceSchema.safeParse`，超长或协议非法候选保持原文而不会使消息渲染崩溃。
 - `apps/web/src/components/message-markdown.tsx` 仍是唯一 Markdown renderer。它在 Markdown 已解析的
   text node 上投影引用，因此 inline/fenced code 与已有 Markdown link 不会被二次改写；KaTeX、Shiki、
@@ -68,6 +77,10 @@ ranker 或权限事务被逐行复制；可证明的是以上客户端语法、�
 - mention 小圆点只来自 canonical `message.posted.payload.recipients(reason=mention)` 和相同 participant 的
   `inbox.acknowledged.throughSeq`。Web 只在 Room replay 已 `caughtUp` 时投影，并为整批事件建立一次索引、每条
   Message O(1) 读取；正文、在线状态、hover 或“打开了页面”都不能推断已读。read 为 green、unread 为白色。
+- `packages/kernel/src/human-activity.ts` 是 Room 注意力的 canonical 投影 owner，分别返回
+  `unread_count` 与 `has_mention`；Web 的 `sidebarRoomAttention()` 只做有界显示投影，不能从高亮正文重新计算。
+  频道保留黄色 mention 与粉色 unread 两个并列标记；DM 永远只投影粉色 unread。点击/进入 Room 后是否清除
+  继续由 canonical read frontier 决定，React 本地状态或 timeout 不能提前抹除。
 - Thread 搜索通过现有 `/v3/client/search`、SQLite FTS5、冻结 cursor 与 Room membership ACL；新增
   `threadIds` 只缩小范围，不建立第二个搜索数据库。客户端按 100 个匹配一页读到 cursor 尾部，传输
   的是命中消息而非整条 Thread 历史；点击未在窗口中的命中时，复用 `message.context` 定位。
@@ -79,34 +92,46 @@ ranker 或权限事务被逐行复制；可证明的是以上客户端语法、�
 
 ## 4. 语法与可见样式矩阵
 
-| 文本                                        | identity / 行为                       | Raft 对齐显示                                         |
-| ------------------------------------------- | ------------------------------------- | ----------------------------------------------------- |
-| `@Agent`、`@Human`                          | Principal；唯一目录匹配；Agent 可预览 | 14px 继承正文、700、2px/offset 2px 下划线；hover pink |
-| 当前 Human 的 `@self`                       | Human principal；不把自己导航成 DM    | solid yellow                                          |
-| `#room-slug`、`dm:@peer`                    | Room                                  | pink 30%，hover 60%，1px 黑框                         |
-| `#room:threadShort`、`dm:@peer:threadShort` | Thread + root Message                 | cyan 30%，hover 60%                                   |
-| `task #N`、当前 Room 已知 `#N`              | Task + canonical Thread/root          | yellow 40%，hover solid yellow                        |
-| `computer:host`                             | 当前可见本机 Host                     | cyan 30%，hover 60%                                   |
-| `app:reverse.dns.id`                        | App identity；当前 display-only       | yellow 40%                                            |
-| `#room msg=id` 及带 Thread 变体             | exact Message；点击时查存在性/ACL     | yellow 40%，hover solid yellow                        |
+| 文本                                        | identity / 行为                       | Raft 对齐显示                                                                            |
+| ------------------------------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `@Agent`、`@Human`                          | Principal；唯一目录匹配；Agent 可预览 | 14px 继承正文、700、2px/offset 2px 下划线；hover pink                                    |
+| 当前 Human 的 `@self`                       | Human principal；不把自己导航成 DM    | solid yellow                                                                             |
+| `#room-slug`、`dm:@peer`                    | Room                                  | pink 30%，hover 60%，1px 黑框                                                            |
+| `#room:threadShort`、`dm:@peer:threadShort` | Thread + root Message                 | cyan 30%，hover 60%                                                                      |
+| `task #N`、当前 Room 已知 `#N`              | Task + canonical Thread/root          | yellow 40%，hover solid yellow                                                           |
+| `computer:host`                             | 当前可见本机 Host                     | cyan 30%，hover 60%                                                                      |
+| `app:reverse.dns.id`                        | App identity；当前 display-only       | yellow 40%                                                                               |
+| `#room msg=id` 及带 Thread 变体             | exact Message；点击时查存在性/ACL     | yellow 40%，hover solid yellow                                                           |
+| 频道侧栏 `hasMention + unreadCount`         | 当前 Human 的 canonical Room 注意力   | 16px 黄色 `@` + 未读数；静音频道另显示 16/12px `bell-off` 与灰色 quiet count；标记可并列 |
+| DM 侧栏 `unreadCount`                       | 当前 Human 的 canonical DM 未读       | 仅粉底白字未读数；不显示频道 `@` 标记                                                    |
 
 所有 chip 共用 1px 黑框、水平 4px padding、`0.875em`、700、`1.3em` line-height、零圆角；CSS 只保留一组
 最终规则，浏览器门禁读取 computed style，不能用“源码里曾出现目标规则”代替实际层叠结果。
 
 ## 5. 回归与剩余边界
 
-- `packages/protocol/test/message-mention.test.ts`：中文相邻 mention、dotted handle、邮箱/路径边界，以及
-  code/math/link/URL/HTML 不产生 delivery。
+- `packages/protocol/test/message-mention.test.ts`：中文相邻 mention、dotted handle、邮箱/路径边界、emoji 后
+  UTF-16 索引、大小写/NFKC 歧义，以及 code/math/inline+reference link/URL/HTML 不产生 delivery。
 - `apps/web/test/message-rich-text.test.ts`：Agent/Human/DM/Task/Room/Thread/Computer/App/Message 解析、
-  slug≠name、冲突别名、完整结束边界、schema-invalid 安全降级、大小写保真高亮。
+  slug≠name、canonical handle、完整结束边界、schema-invalid 安全降级、大小写保真高亮。
+- `packages/kernel/test/workspace-management.test.ts`：新写入拒绝等价 handle/slug；启动拒绝旧库中的歧义
+  canonical handle 目录。
 - `packages/kernel/test/global-discovery.test.ts`：Thread 精确范围和 ACL-safe 索引。
 - `apps/web/test/message-markdown-stability.tsx`：真实浏览器验证全部引用节点、typed Task/Thread/Computer/
-  Message 导航、mention read-state、最终 computed style、代码不被改写，并继续证明轮询不重建 Mermaid
-  iframe/图片/代码块。
+  Agent/Task/Thread/Computer/Message 导航、mention read-state、全部可交互引用的最终 computed style 与真实
+  hover、代码不被改写，并继续证明轮询不重建 Mermaid iframe/图片/代码块。
 - `apps/web/test/thread-panel-parity-contract.test.ts`：Thread Search 不再触发完整历史 hydration，并存在
   fragment highlight。
+- `apps/web/test/sidebar-attention.test.ts`：频道 mention/count 相互独立，静音频道保留灰色 quiet count，DM 即使
+  `hasMention=true` 也只显示 loud count；`scripts/run-message-timeline-browser-gate.mjs` 在真实 Chrome 以桌面和
+  390×844 检查 16px 黄色 marker、10px 居中图标、两种 count、黑框、圆角和 Direct Row 最终层叠结果。
 
-仍未新增 composer 的 typed mention 自动补全，也没有把显示层目录解析冒充 canonical 写入格式。跨 Room
-Thread 的短 ID 不会为了“看起来可点”而预载全 Workspace Thread 或猜测目标；只有当前已装载的唯一 Thread
-目录会升级，精确 Message 点击仍由 daemon 解析。若后续加入补全或全局引用目录，必须复用同一协议、分页/
-ACL 和原始 `Message.body`，不能建立第二套 mention identity。
+composer 的 typed Agent mention 自动补全现已按 Raft 实测的 `.mention-menu/.mention-row` 合同接入：Room、DM
+和 Thread 共用一个输入所有者，候选只来自当前 Room 的 active canonical Agent 成员，显示正式头像；方向键、
+Enter/Tab 和 Escape 都不建立第二条发送路径。补全触发器复用 `message-mention.ts` 的 Markdown 可见正文 mask，
+不会在 inline/fenced code、公式、链接、URL 或 HTML 中承诺实际不会投递的 mention；它只替换光标所在的未完成
+`@token`。最终收件人仍由同一 protocol lexer 从原始 `Message.body` 解析，显示层候选不能冒充 canonical 写入格式。
+
+跨 Room Thread 的短 ID 不会为了“看起来可点”而预载全 Workspace Thread 或猜测目标；只有当前已装载的唯一
+Thread 目录会升级，精确 Message 点击仍由 daemon 解析。若后续加入全局引用目录，必须复用同一协议、分页/ACL
+和原始 `Message.body`，不能建立第二套 mention identity。

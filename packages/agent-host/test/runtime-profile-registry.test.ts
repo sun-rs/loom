@@ -510,7 +510,12 @@ test("v2 revisions require immutable matching probe evidence before activation",
   assert.throws(() =>
     raw
       .prepare(
-        "UPDATE runtime_profile_probe_reports SET report_json = '{}' WHERE probe_report_id = ?",
+        `UPDATE runtime_profile_probe_payloads
+         SET payload_json = '{}'
+         WHERE payload_digest = (
+           SELECT payload_digest FROM runtime_profile_probe_reports
+           WHERE probe_report_id = ?
+         )`,
       )
       .run(report.probeReportId),
   );
@@ -520,6 +525,66 @@ test("v2 revisions require immutable matching probe evidence before activation",
         "DELETE FROM runtime_profile_probe_reports WHERE probe_report_id = ?",
       )
       .run(report.probeReportId),
+  );
+  raw.close();
+});
+
+test("equivalent probes advance validation freshness without duplicating reports or audits", async () => {
+  const { advance, databasePath, registry } = createRegistry();
+  const revision = registry.importManifest(
+    manifestV2({
+      adapter: {
+        ...manifestV2().adapter,
+        executable: process.execPath,
+        fixedArgs: [],
+      },
+      recoveryDrivers:
+        process.platform === "win32" ? [] : ["rah-process-supervisor-v1"],
+    }),
+  );
+  const implementations = new RuntimeImplementationRegistry();
+  const first = registry.recordProbeReport(
+    await implementations.probeRevision(revision, {
+      cwd: dirname(databasePath),
+    }),
+  );
+  advance(30_000);
+  const second = registry.recordProbeReport(
+    await implementations.probeRevision(revision, {
+      cwd: dirname(databasePath),
+    }),
+  );
+
+  assert.equal(second.probeReportId, first.probeReportId);
+  assert.equal(second.observedAt, first.observedAt);
+  assert.equal(
+    registry.listProbeReports(revision.runtimeProfileRevisionId).length,
+    1,
+  );
+  assert.deepEqual(
+    registry.getProbeValidation(revision.runtimeProfileRevisionId),
+    {
+      lastValidatedAt: "2026-08-26T00:00:30.000Z",
+      probeReportId: first.probeReportId,
+      validationCount: 2,
+    },
+  );
+  assert.equal(
+    registry
+      .listAuditEntries(revision.runtimeProfileId)
+      .filter(({ action }) => action === "probe_recorded").length,
+    1,
+  );
+  registry.close();
+
+  const raw = new DatabaseSync(databasePath);
+  assert.equal(
+    (
+      raw
+        .prepare("SELECT COUNT(*) AS count FROM runtime_profile_probe_payloads")
+        .get() as { count: number }
+    ).count,
+    1,
   );
   raw.close();
 });
@@ -701,7 +766,7 @@ test("an exact schema v1 registry migrates to v3 before accepting probe-backed m
   verified.close();
 });
 
-test("an exact schema v2 registry preserves v1 probe digests while migrating to v3", () => {
+test("an exact schema v2 registry preserves probe envelopes while payload-deduping into v4", () => {
   const directory = createDirectory();
   const databasePath = join(directory, "runtime-registry.db");
   writeFileSync(databasePath, "", { mode: 0o600 });
@@ -792,6 +857,15 @@ test("an exact schema v2 registry preserves v1 probe digests while migrating to 
     ...reportWithoutDigest,
     probeDigest: computeRuntimeProfileProbeDigest(reportWithoutDigest),
   };
+  const repeatedReportWithoutDigest = {
+    ...reportWithoutDigest,
+    observedAt: "2026-08-26T00:00:30.000Z",
+    probeReportId: "legacy-v1-probe-report-repeat",
+  };
+  const repeatedReport = {
+    ...repeatedReportWithoutDigest,
+    probeDigest: computeRuntimeProfileProbeDigest(repeatedReportWithoutDigest),
+  };
   legacy
     .prepare(
       "INSERT INTO runtime_registry_metadata(singleton, registry_id, host_id, created_at) VALUES(1, ?, ?, ?)",
@@ -853,6 +927,23 @@ test("an exact schema v2 registry preserves v1 probe digests while migrating to 
       legacyReport.observedAt,
       JSON.stringify(legacyReport),
     );
+  legacy
+    .prepare(
+      `INSERT INTO runtime_profile_probe_reports(
+        probe_report_id, probe_digest, runtime_profile_id,
+        runtime_profile_revision_id, runtime_profile_digest,
+        available, observed_at, report_json
+      ) VALUES(?, ?, ?, ?, ?, 1, ?, ?)`,
+    )
+    .run(
+      repeatedReport.probeReportId,
+      repeatedReport.probeDigest,
+      repeatedReport.runtimeProfileId,
+      repeatedReport.runtimeProfileRevisionId,
+      repeatedReport.runtimeProfileDigest,
+      repeatedReport.observedAt,
+      JSON.stringify(repeatedReport),
+    );
   legacy.close();
 
   const migrated = new RuntimeProfileRegistry({
@@ -865,8 +956,36 @@ test("an exact schema v2 registry preserves v1 probe digests while migrating to 
     legacyReport.probeDigest,
   );
   assert.equal(
+    migrated.getProbeReport(repeatedReport.probeReportId).probeDigest,
+    repeatedReport.probeDigest,
+  );
+  assert.deepEqual(migrated.getProbeValidation(legacyRevisionId), {
+    lastValidatedAt: repeatedReport.observedAt,
+    probeReportId: repeatedReport.probeReportId,
+    validationCount: 2,
+  });
+  assert.equal(
     migrated.getActiveRevision(legacyManifest.runtimeProfileId)?.contentDigest,
     legacyDigest,
   );
   migrated.close();
+
+  const verified = new DatabaseSync(databasePath);
+  assert.equal(
+    (
+      verified
+        .prepare("SELECT COUNT(*) AS count FROM runtime_profile_probe_reports")
+        .get() as { count: number }
+    ).count,
+    2,
+  );
+  assert.equal(
+    (
+      verified
+        .prepare("SELECT COUNT(*) AS count FROM runtime_profile_probe_payloads")
+        .get() as { count: number }
+    ).count,
+    1,
+  );
+  verified.close();
 });

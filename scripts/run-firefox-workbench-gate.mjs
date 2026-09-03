@@ -1340,6 +1340,11 @@ if (args.join(" ") === "--version") {
   );
   await page.getByRole("tab", { name: "聊天", exact: true }).click();
   await page.locator(".rah-agent-chat-pane").waitFor();
+  await page.waitForFunction(
+    () =>
+      document.querySelectorAll(".rah-agent-chat-room-list button").length ===
+      2,
+  );
   assert.equal(
     await page.locator(".rah-agent-chat-room-list button").count(),
     2,

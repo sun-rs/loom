@@ -174,6 +174,9 @@ CREATE TABLE IF NOT EXISTS room_deletion_receipts (
   based_on_room_seq INTEGER NOT NULL CHECK (based_on_room_seq >= 0),
   idempotency_key TEXT NOT NULL,
   file_count INTEGER NOT NULL CHECK (file_count >= 0),
+  gc_reclaimed_count INTEGER NOT NULL DEFAULT 0 CHECK (
+    gc_reclaimed_count >= 0 AND gc_reclaimed_count <= file_count
+  ),
   deleted_at TEXT NOT NULL,
   UNIQUE (actor_id, idempotency_key)
 ) STRICT;
@@ -181,17 +184,26 @@ CREATE TABLE IF NOT EXISTS room_deletion_receipts (
 CREATE TABLE IF NOT EXISTS room_file_gc_receipts (
   deletion_id TEXT NOT NULL REFERENCES room_deletion_receipts(deletion_id),
   attachment_id TEXT NOT NULL,
-  state TEXT NOT NULL CHECK (state IN ('pending', 'reclaimed', 'failed')),
+  state TEXT NOT NULL CHECK (state IN ('pending', 'deleting', 'tombstoned', 'reclaimed', 'failed')),
   attempt_count INTEGER NOT NULL DEFAULT 0 CHECK (attempt_count >= 0),
   last_error TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
+  next_attempt_at_ms INTEGER NOT NULL DEFAULT 0,
+  lease_token TEXT,
+  lease_expires_at_ms INTEGER,
+  tombstone_pass INTEGER NOT NULL DEFAULT -1 CHECK (tombstone_pass >= -1),
   PRIMARY KEY (deletion_id, attachment_id),
-  UNIQUE (attachment_id)
+  UNIQUE (attachment_id),
+  CHECK (next_attempt_at_ms >= 0),
+  CHECK (
+    (lease_token IS NULL AND lease_expires_at_ms IS NULL)
+    OR (lease_token IS NOT NULL AND lease_expires_at_ms IS NOT NULL)
+  )
 ) STRICT;
 
 CREATE INDEX IF NOT EXISTS idx_room_file_gc_pending
-  ON room_file_gc_receipts(state, updated_at, deletion_id, attachment_id);
+  ON room_file_gc_receipts(next_attempt_at_ms, created_at, deletion_id, attachment_id, state, lease_expires_at_ms);
 
 CREATE TABLE IF NOT EXISTS memberships (
   room_id TEXT NOT NULL REFERENCES rooms(room_id),

@@ -27,6 +27,7 @@ export {
 } from "./outbox-wake-dispatcher.ts";
 export { WebPushOutboxDispatcher } from "./web-push-dispatcher.ts";
 export { WebPushStateStore } from "./web-push-state.ts";
+export { RoomFileGcReconciler } from "./room-file-gc-reconciler.ts";
 export { ProfileImageStore } from "./profile-image-store.ts";
 export {
   LocalComputerProfileStore,
