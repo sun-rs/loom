@@ -21,6 +21,9 @@ import type {
   Reminder,
   AgentExecutionResetMode,
 } from "@rah-os/protocol";
+import { PanelHeaderAction } from "@rah-os/ui-web/neo-brutalist/panel-header-action";
+import { PanelHeader } from "@rah-os/ui-web/neo-brutalist/panel-header";
+import { PanelTabs } from "@rah-os/ui-web/neo-brutalist/panel-tabs";
 import {
   OFFICIAL_AGENT_AVATAR_KEYS,
   isUploadedProfileImageKey,
@@ -41,7 +44,7 @@ import {
 } from "../attention-presentation.ts";
 import { mergeTrajectoryWindow } from "../agent-trajectory-window.ts";
 import { renderAgentActivityDiagnostics } from "../agent-activity-diagnostics.ts";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { AgentStatusDot } from "./agent-status-dot.tsx";
 import { AgentMemoryConfigDialog } from "./agent-memory-config-dialog.tsx";
 import { AgentExecutionResetDialog } from "./agent-execution-reset-dialog.tsx";
@@ -1358,7 +1361,7 @@ function AgentSidebar({
   );
 }
 
-function AgentDetailHeader({
+export function AgentDetailHeader({
   onClose,
   agent,
   canMessage,
@@ -1376,7 +1379,7 @@ function AgentDetailHeader({
   onMessage: () => void;
 }) {
   return (
-    <header className="rah-agent-detail-head">
+    <PanelHeader kind="agent" className="rah-agent-detail-head">
       <button
         aria-label="返回成员列表"
         className="sq-btn rah-agent-mobile-back"
@@ -1390,95 +1393,51 @@ function AgentDetailHeader({
         {agent.description && <p>{agent.description}</p>}
       </div>
       <div className="rah-agent-head-actions">
-        <button
+        <PanelHeaderAction
           aria-label={`给 ${agent.displayName} 发消息`}
-          className="sq-btn rah-agent-header-message"
-          disabled={!canMessage || messagePending}
+          className="rah-agent-header-message"
+          disabled={!canMessage}
+          pending={messagePending}
           onClick={onMessage}
           title="聊天"
         >
           <Icon name="chat" />
-        </button>
-        <button
+        </PanelHeaderAction>
+        <PanelHeaderAction
           aria-label={`管理 ${agent.displayName}`}
-          className="sq-btn"
           onClick={onManage}
           title="Agent 菜单"
         >
           <span className="rah-agent-overflow-glyph" aria-hidden="true">
             ⋮
           </span>
-        </button>
+        </PanelHeaderAction>
         {onClose ? (
-          <button
-            className="sq-btn"
-            aria-label="关闭 Agent 侧栏"
-            onClick={onClose}
-          >
+          <PanelHeaderAction aria-label="关闭 Agent 侧栏" onClick={onClose}>
             ×
-          </button>
+          </PanelHeaderAction>
         ) : null}
       </div>
-    </header>
+    </PanelHeader>
   );
 }
 
-function AgentTabList({
+export function AgentTabList({
   activeTab,
   onSelect,
 }: {
   activeTab: AgentTab;
   onSelect: (tab: AgentTab) => void;
 }) {
-  function onTabKeyDown(
-    event: KeyboardEvent<HTMLButtonElement>,
-    index: number,
-  ): void {
-    let nextIndex: number | undefined;
-    if (event.key === "ArrowRight") {
-      nextIndex = (index + 1) % RAFT_AGENT_TABS.length;
-    } else if (event.key === "ArrowLeft") {
-      nextIndex = (index - 1 + RAFT_AGENT_TABS.length) % RAFT_AGENT_TABS.length;
-    } else if (event.key === "Home") {
-      nextIndex = 0;
-    } else if (event.key === "End") {
-      nextIndex = RAFT_AGENT_TABS.length - 1;
-    }
-    if (nextIndex === undefined) return;
-    event.preventDefault();
-    const next = RAFT_AGENT_TABS[nextIndex];
-    if (next === undefined) return;
-    onSelect(next.id);
-    const tabs =
-      event.currentTarget.parentElement?.querySelectorAll<HTMLElement>(
-        '[role="tab"]',
-      );
-    tabs?.[nextIndex]?.focus();
-  }
-
   return (
-    <div className="rah-agent-tabs-frame">
-      <div
-        aria-label="Agent 详情"
-        className="tabs rah-agent-detail-tabs"
-        role="tablist"
-      >
-        {RAFT_AGENT_TABS.map((item, index) => (
-          <button
-            aria-selected={activeTab === item.id}
-            className={`tab${activeTab === item.id ? " is-active" : ""}`}
-            key={item.id}
-            onClick={() => onSelect(item.id)}
-            onKeyDown={(event) => onTabKeyDown(event, index)}
-            role="tab"
-            tabIndex={activeTab === item.id ? 0 : -1}
-          >
-            <Icon name={item.icon} />
-            {item.label}
-          </button>
-        ))}
-      </div>
-    </div>
+    <PanelTabs
+      label="Agent 详情"
+      className="rah-agent-tabs-frame"
+      listClassName="rah-agent-detail-tabs"
+      items={RAFT_AGENT_TABS}
+      value={activeTab}
+      onSelect={onSelect}
+    />
   );
 }
 

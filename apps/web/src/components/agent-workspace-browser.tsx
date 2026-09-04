@@ -12,7 +12,7 @@ import type {
   AgentWorkspaceRoot,
   AgentWorkspaceRoots,
 } from "@rah-os/protocol";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { FileGlyph } from "./file-glyph.tsx";
 import { MessageMarkdown } from "./message-markdown.tsx";
 import "../agent-workspace.css";

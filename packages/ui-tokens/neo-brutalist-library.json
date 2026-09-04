@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "name": "RAH Neo-Brutalist UI",
+  "version": "1.0.0",
+  "standard": "docs/design/neo-brutalist-ui.md",
+  "decision": "docs/adr/0028-owned-neo-brutalist-ui-library.md",
+  "behaviorRegistry": "docs/product/ui-behavior-registry.json",
+  "stylesheet": "packages/ui-tokens/src/neo-brutalist/index.css",
+  "components": [
+    {
+      "id": "icon",
+      "description": "Official sprite-backed icons; no procedural replacement artwork.",
+      "owner": "packages/ui-web/src/neo-brutalist/icon.tsx",
+      "styles": [],
+      "example": "apps/web/test/ui-foundations.tsx",
+      "behaviors": ["UI001"],
+      "scenarios": ["header-action-states"]
+    },
+    {
+      "id": "panel-header",
+      "description": "Shared fixed-height conversation, agent and thread header slots.",
+      "owner": "packages/ui-web/src/neo-brutalist/panel-header.tsx",
+      "styles": ["packages/ui-tokens/src/neo-brutalist/panel-layout.css"],
+      "example": "apps/web/test/ui-foundations.tsx",
+      "behaviors": ["UI003"],
+      "scenarios": ["panel-header-geometry", "foundation-combinations"]
+    },
+    {
+      "id": "panel-header-action",
+      "description": "Accessible native icon button; pending and disabled prevent activation.",
+      "owner": "packages/ui-web/src/neo-brutalist/panel-header-action.tsx",
+      "styles": [
+        "packages/ui-tokens/src/neo-brutalist/panel-foundations.css",
+        "packages/ui-tokens/src/neo-brutalist/interaction-state.css"
+      ],
+      "example": "apps/web/test/ui-foundations.tsx",
+      "behaviors": ["UI001"],
+      "scenarios": ["header-action-states"]
+    },
+    {
+      "id": "panel-tabs",
+      "description": "Controlled selection with roving focus, wrapping arrows and Home/End.",
+      "owner": "packages/ui-web/src/neo-brutalist/panel-tabs.tsx",
+      "styles": [
+        "packages/ui-tokens/src/neo-brutalist/panel-layout.css",
+        "packages/ui-tokens/src/neo-brutalist/interaction-state.css"
+      ],
+      "example": "apps/web/test/ui-foundations.tsx",
+      "behaviors": ["UI004"],
+      "scenarios": ["panel-tabs-keyboard"]
+    },
+    {
+      "id": "panel-resizer",
+      "description": "Single pointer/capture owner; width bounds and persistence remain caller-owned.",
+      "owner": "packages/ui-web/src/neo-brutalist/panel-resizer.tsx",
+      "styles": ["packages/ui-tokens/src/neo-brutalist/panel-foundations.css"],
+      "example": "apps/web/test/ui-foundations.tsx",
+      "behaviors": ["B034", "B041"],
+      "scenarios": ["splitter-contract"]
+    }
+  ],
+  "templates": [
+    {
+      "id": "conversation-header",
+      "description": "Production Room/DM identity, header actions and controlled conversation tabs.",
+      "owner": "apps/web/src/components/workspace-navigation.tsx",
+      "export": "ChannelHeader",
+      "components": [
+        "icon",
+        "panel-header",
+        "panel-header-action",
+        "panel-tabs"
+      ],
+      "behaviors": ["UI003", "UI004"],
+      "scenarios": ["panel-header-geometry", "panel-tabs-keyboard"],
+      "example": "apps/web/test/ui-foundations.tsx"
+    },
+    {
+      "id": "agent-inspector-header",
+      "description": "Production Agent identity and tabs composed with the same primitives; runtime data remains external.",
+      "owner": "apps/web/src/components/agent-directory-pane.tsx",
+      "export": "AgentDetailHeader / AgentTabList",
+      "components": [
+        "icon",
+        "panel-header",
+        "panel-header-action",
+        "panel-tabs"
+      ],
+      "behaviors": ["UI003", "UI004"],
+      "scenarios": ["panel-header-geometry", "foundation-combinations"],
+      "example": "apps/web/test/ui-foundations.tsx"
+    },
+    {
+      "id": "resizable-workspace",
+      "description": "Actual app composition with Room navigation, Agent inspector and caller-owned width policies; isolated canonical daemon fixture.",
+      "owner": "scripts/ui-shell-browser-scenarios.mjs",
+      "export": "verifyIntegratedShell",
+      "components": ["panel-header", "panel-tabs", "panel-resizer"],
+      "behaviors": ["B034", "B041", "UI003"],
+      "scenarios": ["integrated-shell-layout"],
+      "example": "apps/web/test/ui-foundations.tsx"
+    }
+  ],
+  "remainingMigration": [
+    "Legacy base token fallbacks and extracted semantic aliases still coexist; consolidate only with explicit computed-style regression.",
+    "Page-specific CSS remains in apps/web; Settings, Computer, forms, overlays, empty states and toolbars are not certified migrated by this catalog.",
+    "The component/browser runner is local validation, not automated official bilateral comparison."
+  ]
+}

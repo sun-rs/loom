@@ -1,5 +1,10 @@
 # 前端平台架构：Web/PWA 优先、共享状态内核与薄原生壳
 
+2026-09-04 资源维护政策更新：[ADR 0028](../adr/0028-owned-neo-brutalist-ui-library.md)
+和 [RAH Neo-Brutalist UI](../design/neo-brutalist-ui.md) 取代下文旧 snapshot→generated
+采用描述。资源现在是内部可维护源码，通用展示组件位于 ui-web/src/neo-brutalist；
+不存在外部工作树导入或产品覆盖生成器。旧分层中的协议/业务 owner 保持不变。
+
 状态：Phase 4B Anchored Task。Raft UI snapshot→generated `ui-tokens`、覆盖全部现有 v3 route 的 typed `RahClient`、cold-reload-safe ordered client-core 与 Room/Chat/Thread/Task React recovery slice 已经建立；manifest + Service Worker 提供同 bundle PWA shell，正式 HTTPS LAN gate 已覆盖设备配对、Secure/HttpOnly session、Core restart、service worker ready 与 390x844。Room/Task/Agent 的自动真实 Chrome + daemon v4 gate 继续覆盖 Room 创建、成员收敛、双 Agent reply、Thread、Task 顶层 Message/连续编号/讨论 Thread、单 winner、Human complete 和 reload recovery；独立 Firefox 150 production gate 覆盖 desktop/mobile、Agent/Settings/Room drawer、标准 scrollbar declaration 和 strict-CSP 零错误，并由此将 Zod 固定为 bootstrap-first jitless。仍不允许用 mock page 或离线 cache 反向定义缺失的 Kernel 业务协议。
 
 ## 1. 目标与非目标
@@ -126,7 +131,10 @@ RaftUI 保持独立仓库并承担四件事：
 
 Agents surface 的官方 Members computed-style token 与像素 avatar pack 也必须经过同一 allowlist/generator 进入 `ui-tokens`。产品组件只读取 generated CSS/JSON 和 canonical `AgentDefinition.avatarKey`，不得在 React 页面复制 palette、网格数据或另建一套响应式 avatar 实现。
 
-Raft 官方 bundle 中的 application code 只用作行为证据和协议理解。RAH OS 重写 component logic 并连接 typed `RahClient` intent，因为：
+Raft 官方 bundle 中的网络/store/权限状态机只用作行为证据，不进入生产。
+可清晰分离的展示组件、图标、宽度算法允许固定来源后提取移植；无需一律重写。
+采用方式、片段位置、本地差异必须进入 [机器登记](../product/ui-behavior-registry.json)。
+生产回调继续连接 typed `RahClient` intent，因为：
 
 - 官方网络 endpoint、store 和权限模型不是 RAH OS 的；
 - minified route code 的更新和授权 provenance 难以成为稳定 runtime dependency；
@@ -149,6 +157,21 @@ RAH OS 不得在运行时通过相对路径依赖 sibling `raft-ui` 工作树。
 ### 7.1 全局 shell
 
 全局 grid 明确拥有 rail、sidebar、content、inspector 和 overlay root。边框由相邻区域中的一个 owner 绘制，不允许 rail item 或 route page 临时补线。可拖分隔条是独立 `Splitter` primitive，使用 pointer capture、keyboard step、min/max constraint 和持久化 panel width；缩放时由 CSS grid/flex constraint 重新计算，不用页面绝对坐标硬撑。
+
+B1 已将聊天边栏、Thread 和 Agent inspector 的事件处理收敛为
+`apps/web/src/components/panel-resizer.tsx`；各 `*-resize.ts` 继续拥有宽度策略，
+各 hook 继续拥有持久化。`panel-foundations.css` 拥有共享手柄几何与标题按钮尺寸；
+`interaction-state.css` 仍是颜色/状态语法 owner。`product-styles.ts` 是生产与组件矩阵
+共用的唯一样式装配入口。页面只保留位置、层级与响应式可见性，不重复定义迁移控件。
+B2 首段将 Room / Agent / Thread 标题接入 `PanelHeader`，共享 shell 的 `--head-h`
+轨道与单一底边；`panel-layout.css` 接收官方 Panel slots 的结构性移植。
+旧 `.channel-head` / `.thread-head` / `.tabs` 选择器不再用于迁移过的生产组件，
+冻结 reference 文件不改；页面重复高度/边框覆盖删除。Agent 移动端既有76px组合
+保留为显式变体，不强行套桌面轨道。Room / Agent 共用 `PanelTabs` 的循环焦点、
+Home/End、禁用项跳过及自身横向滚动；选中值和 capability 仍由原页面传入。
+实际应用的 Kernel/daemon 隔离矩阵与组件矩阵使用同一生产入口/样式，测试没有
+另造模拟业务状态机。Settings / Computer / 全局发现及完整 Shell 仍按计划迁移，
+不把 B1/B2 首段当成全站完成。
 
 ### 7.2 overlay
 

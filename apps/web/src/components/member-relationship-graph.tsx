@@ -20,7 +20,7 @@ import type { WorkspaceAgentView } from "@rah-os/ui-web";
 
 import { PreviewCard } from "./preview-card.tsx";
 import { AgentAvatar } from "./agent-avatar.tsx";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import {
   computeMemberGraphLayout,
   MEMBER_GRAPH_HEIGHT as GRAPH_HEIGHT,

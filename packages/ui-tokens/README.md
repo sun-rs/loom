@@ -1,31 +1,35 @@
-# RAH OS UI tokens and generated assets
+# RAH Neo-Brutalist UI — visual resources
 
-This package is the product-owned output boundary between the immutable Raft UI
-reference and RAH OS renderers. `apps/web` may consume these exports; it must not
-import `@rah-os/raft-ui-snapshot` directly.
+This existing package is the maintained visual resource owner for RAH OS.
+Read the [design standard](../../docs/design/neo-brutalist-ui.md) and
+[library catalog](./neo-brutalist-library.json).
 
-Regenerate after intentionally updating the reference snapshot:
+## Use
 
-```bash
-npm run ui:tokens:generate
-npm run ui:tokens:check
+```ts
+import "@rah-os/ui-tokens/neo-brutalist.css";
 ```
 
-`generated/generated-manifest.json` records the exact reference Git identity,
-dirty state, source paths, output paths, byte counts, and SHA-256 digests. A dirty
-snapshot is acceptable for development evidence but not for a release provenance
-gate.
+The entry loads adopted base/family styles and shared interaction/panel protocols
+once. Asset exports remain available for sprites, fonts and avatars. Pages must
+not assemble a second CSS stack. `apps/web/src/product-styles.ts` adds remaining
+page styles until those families migrate. No sibling checkout is required.
 
-Global Tasks/Activity/Search reuse 14 allowlisted reference assets, with the
-original bytes verified by the generated manifest. `src/discovery-icons.svg`
-adds the exact `at-sign` (`fFe`) and `refresh-cw` (`lUe`) paths from Raft Web
-`index-WTraJnrd.js` (SHA-256
-`fdba93dedef323ded9aba6f87cc211a25885230cbc0ade677b81b209bc881725`). Its own digest
-is pinned in the token test. These are supplementary exports; the frozen
-reference is not edited. Full provenance and adaptations are described in
-`docs/product/global-discovery-design.zh-CN.md`.
+## Maintain
 
-`src/interaction-icons.svg` also carries Raft's current `bell-off` (`pUe` / `Bw`)
-geometry for muted channel rows. The complete supplementary sprite is SHA-256
-pinned by `packages/ui-tokens/test/ui-tokens.test.ts`; product code never redraws
-that glyph.
+Edit `src/neo-brutalist` directly. No generator overwrites it from `raft-ui`.
+`adoption.json` records initial snapshot identity and per-file origin hashes
+separately from local changes. `maintained-source` files may change with a reason
+and tests. `immutable-asset` files retain byte identity; a new asset requires new
+source evidence instead of silently changing an old one.
+
+Historical extraction comments in `extracted/` identify origin, not an available
+generator or a ban on maintaining adopted CSS. Reference reconstruction is not
+official source. Frozen evidence retains the original provenance and notices.
+
+`src/discovery-icons.svg` and `src/interaction-icons.svg` preserve additional
+paths from Raft bundles. Their digests/landmarks remain pinned in token tests.
+There is no procedural avatar generator or replacement icon style.
+
+Run `npm run ui:tokens:check` and `npm run check:ui-library`, then the browser
+matrix for visual changes. Never modify frozen reference evidence to pass a test.

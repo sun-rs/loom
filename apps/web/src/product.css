@@ -38,70 +38,13 @@
 }
 
 .rah-room-sidebar-resizer {
-  background: transparent;
-  border: 0;
-  bottom: 0;
-  cursor: col-resize;
   left: calc(var(--rail-w) + var(--sidebar-w) - 4px);
-  outline: 0;
-  position: absolute;
-  top: 0;
-  touch-action: none;
-  width: 8px;
   z-index: 30;
 }
 
-.rah-room-sidebar-resizer::after {
-  background: transparent;
-  bottom: 0;
-  content: "";
-  left: 3px;
-  position: absolute;
-  top: 0;
-  width: 2px;
-}
-
-.rah-room-sidebar-resizer:hover::after,
-.rah-room-sidebar-resizer:focus-visible::after,
-.rah-room-sidebar-resizer.is-dragging::after {
-  background: var(--black);
-}
-
-.rah-room-sidebar-resizer:focus-visible {
-  outline: 2px solid var(--ink);
-  outline-offset: -2px;
-}
-
-/* Raft thread-side-column contract: o7 / $_ in the frozen official bundle.
-   The 8px hit target straddles a stable black divider; dragging never recolors it. */
 .rah-thread-resizer {
-  background: transparent;
-  border: 0;
-  bottom: 0;
-  cursor: col-resize;
   left: -4px;
-  outline: 0;
-  position: absolute;
-  top: 0;
-  touch-action: none;
-  user-select: none;
-  width: 8px;
   z-index: 45;
-}
-
-.rah-thread-resizer:focus-visible {
-  outline: 2px solid var(--black);
-  outline-offset: -2px;
-}
-
-.thread-head {
-  gap: 6px;
-  height: 62px;
-  padding: 0 16px;
-}
-
-.thread-head h2 {
-  font-size: 16px;
 }
 
 .rah-thread-title {
@@ -137,26 +80,9 @@
   gap: 6px;
 }
 
-.rah-panel-header-action {
-  height: 28px;
-  padding: 0;
-  width: 28px;
-}
-
-.rah-panel-header-action > svg {
-  height: 14px;
-  width: 14px;
-}
-
-.rah-thread-head-actions .sq-btn,
 .rah-thread-followers-trigger {
   height: 28px;
   min-height: 28px;
-}
-
-.rah-thread-head-actions .sq-btn {
-  padding: 0;
-  width: 28px;
 }
 
 .rah-thread-overflow > span {
@@ -4950,11 +4876,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
     min-width: 160px;
   }
 
-  .channel-head {
-    padding-inline: 12px;
-  }
-
-  .channel-head > .rah-mobile-only {
+  .rah-conversation-head > .rah-mobile-only {
     margin-right: 0;
   }
 

@@ -22,7 +22,7 @@ import { localComputerDiagnosticText } from "../computer-runtime-inspector-model
 import { AgentAvatar } from "./agent-avatar.tsx";
 import { ComputerRuntimeInspector } from "./computer-runtime-inspector.tsx";
 import { ComputerProfileFields } from "./computer-profile-fields.tsx";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 
 export function ComputerRuntimePane({
   hostId,

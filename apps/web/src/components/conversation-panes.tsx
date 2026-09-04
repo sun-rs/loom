@@ -16,6 +16,8 @@ import type {
 } from "@rah-os/protocol";
 import type { RahClient } from "@rah-os/client-sdk";
 import { ChatEmptyState } from "./chat-empty-state.tsx";
+import { PanelHeader } from "@rah-os/ui-web/neo-brutalist/panel-header";
+import { PanelHeaderAction } from "@rah-os/ui-web/neo-brutalist/panel-header-action";
 import {
   useMessageSocial,
   MessageSocialButtons,
@@ -33,7 +35,7 @@ import { MessageAgentAvatar } from "./agent-message-identity.tsx";
 import { AgentAvatar } from "./agent-avatar.tsx";
 import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
 import { insertMention } from "../identity-presentation.ts";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import {
   MessageMarkdown,
   type MessageMarkdownReferences,
@@ -1831,7 +1833,7 @@ export function ThreadPane({
       ref={threadPanelRef}
     >
       {resizer}
-      <header className="thread-head">
+      <PanelHeader kind="thread" className="rah-thread-head">
         <button
           className="rah-thread-title"
           data-testid="thread-scroll-to-top"
@@ -1942,10 +1944,10 @@ export function ThreadPane({
             </div>
           ) : null}
           <div className="rah-thread-menu-owner" ref={overflowOwnerRef}>
-            <button
+            <PanelHeaderAction
               aria-expanded={overflowOpen}
               aria-label="消息列操作"
-              className="sq-btn rah-thread-overflow"
+              className="rah-thread-overflow"
               data-testid="thread-overflow-trigger"
               onClick={() => {
                 setOverflowOpen((open) => !open);
@@ -1955,7 +1957,7 @@ export function ThreadPane({
               ref={overflowTriggerRef}
             >
               <span aria-hidden="true">⋮</span>
-            </button>
+            </PanelHeaderAction>
             {overflowOpen ? (
               <div
                 className="rah-thread-overflow-menu"
@@ -2003,9 +2005,9 @@ export function ThreadPane({
               </div>
             ) : null}
           </div>
-          <button
+          <PanelHeaderAction
             aria-label="关闭消息列"
-            className="sq-btn rah-thread-close"
+            className="rah-thread-close"
             onClick={onClose}
             title="关闭消息列"
             type="button"
@@ -2013,9 +2015,9 @@ export function ThreadPane({
             <span className="rah-close-glyph" aria-hidden="true">
               ×
             </span>
-          </button>
+          </PanelHeaderAction>
         </div>
-      </header>
+      </PanelHeader>
       {searchOpen ? (
         <div className="rah-thread-search">
           <Icon name="search" />

@@ -5,7 +5,7 @@ import {
   type AgentProfileEditInput,
   type AgentProfileField,
 } from "../agent-profile-edit.ts";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 
 /** Raft hc field editing contract. Parent keys this editor by durable Agent identity. */
 export function AgentProfileFieldEditor({

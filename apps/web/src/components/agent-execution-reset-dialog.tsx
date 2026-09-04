@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import type { AgentExecutionResetMode } from "@rah-os/protocol";
 
 import { useDialogProtocol } from "../dialog-protocol.ts";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 
 const OPTIONS = [
   {

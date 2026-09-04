@@ -1,6 +1,6 @@
 import type { RoomAgentTarget } from "@rah-os/ui-web";
 import { DiscoveryFilter, type DiscoveryOption } from "./discovery-filter.tsx";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 export type TaskViewMode = "board" | "list";
 const UNASSIGNED_FILTER_ID = "__unassigned__";
 

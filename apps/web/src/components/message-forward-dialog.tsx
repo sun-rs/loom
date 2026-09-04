@@ -4,7 +4,7 @@ import type { RahClient } from "@rah-os/client-sdk";
 import type { ClientMessageForwardResult, Room } from "@rah-os/protocol";
 
 import { useDialogProtocol } from "../dialog-protocol.ts";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 
 export function MessageForwardDialog({
   client,

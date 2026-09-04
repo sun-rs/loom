@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useDialogProtocol } from "../dialog-protocol.ts";
 import { permissionRoleLabel } from "../agent-trigger-contract.ts";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 export function AgentRolePermissions({
   role,
 }: {

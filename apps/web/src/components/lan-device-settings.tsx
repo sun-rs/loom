@@ -7,7 +7,7 @@ import {
   type LanPairingCode,
 } from "../lan-access-client.ts";
 import { useDialogProtocol } from "../dialog-protocol.ts";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { SettingsPageHeader } from "./settings-primitives.tsx";
 
 export function LanDeviceSettingsContent() {

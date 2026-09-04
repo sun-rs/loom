@@ -120,7 +120,10 @@ test("Task view toggles use Raft's exact icons and final shared 14px size", asyn
     "utf8",
   );
   const icon = await readFile(
-    new URL("../src/components/icon.tsx", import.meta.url),
+    new URL(
+      "../../../packages/ui-web/src/neo-brutalist/icon.tsx",
+      import.meta.url,
+    ),
     "utf8",
   );
   const styles = await readFile(
@@ -195,7 +198,10 @@ test("global Task cards keep Raft's separate drag and visual interaction layers"
     "utf8",
   );
   const interactionProtocol = await readFile(
-    new URL("../src/interaction-state.css", import.meta.url),
+    new URL(
+      "../../../packages/ui-tokens/src/neo-brutalist/interaction-state.css",
+      import.meta.url,
+    ),
     "utf8",
   );
 

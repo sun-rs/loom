@@ -4,18 +4,19 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./activity.css": "./generated/activity.css",
-    "./search.css": "./generated/search.css",
-    "./avatar-pack.json": "./generated/generated/raft-official-avatar-pack.json",
-    "./channel-extras.css": "./generated/channel-extras.css",
-    "./computers.css": "./generated/generated/raft-official-computers.css",
-    "./icons.svg": "./generated/generated/raft-icons.svg",
+    "./neo-brutalist.css": "./src/neo-brutalist/index.css",
+    "./activity.css": "./src/neo-brutalist/activity.css",
+    "./search.css": "./src/neo-brutalist/search.css",
+    "./avatar-pack.json": "./src/neo-brutalist/extracted/raft-official-avatar-pack.json",
+    "./channel-extras.css": "./src/neo-brutalist/channel-extras.css",
+    "./computers.css": "./src/neo-brutalist/extracted/raft-official-computers.css",
+    "./icons.svg": "./src/neo-brutalist/extracted/raft-icons.svg",
     "./discovery-icons.svg": "./src/discovery-icons.svg",
     "./interaction-icons.svg": "./src/interaction-icons.svg",
-    "./members.css": "./generated/generated/raft-official-members-page.css",
-    "./official-fonts.css": "./generated/vendor/raft/official-fonts.css",
-    "./overlays.css": "./generated/generated/raft-official-overlays.css",
-    "./styles.css": "./generated/styles.css",
-    "./tasks.css": "./generated/generated/raft-official-tasks.css"
+    "./members.css": "./src/neo-brutalist/extracted/raft-official-members-page.css",
+    "./official-fonts.css": "./src/neo-brutalist/vendor/raft/official-fonts.css",
+    "./overlays.css": "./src/neo-brutalist/extracted/raft-official-overlays.css",
+    "./styles.css": "./src/neo-brutalist/styles.css",
+    "./tasks.css": "./src/neo-brutalist/extracted/raft-official-tasks.css"
   }
 }

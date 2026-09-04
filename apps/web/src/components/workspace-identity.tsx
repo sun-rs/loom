@@ -29,7 +29,7 @@ import {
   resolveWorkspaceLocation,
   writeWorkspaceOrder,
 } from "../workspace-switcher-state.ts";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
 
 export function WorkspaceIdentity({

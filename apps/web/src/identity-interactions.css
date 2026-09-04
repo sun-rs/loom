@@ -417,30 +417,8 @@
   min-width: 0;
 }
 .rah-agent-profile-resizer {
-  bottom: 0;
-  cursor: col-resize;
   left: -4px;
-  outline: 0;
-  position: absolute;
-  top: 0;
-  touch-action: none;
-  user-select: none;
-  width: 8px;
   z-index: 10;
-}
-.rah-agent-profile-resizer::after {
-  background: transparent;
-  bottom: 0;
-  content: "";
-  left: 3px;
-  position: absolute;
-  top: 0;
-  width: 2px;
-}
-.rah-agent-profile-resizer:hover::after,
-.rah-agent-profile-resizer.is-dragging::after,
-.rah-agent-profile-resizer:focus-visible::after {
-  background: var(--ink);
 }
 .rah-agent-peek .rah-agent-directory-body {
   display: flex;

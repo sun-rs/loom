@@ -9,7 +9,7 @@ import {
   makeAgentIssueReportFilename,
 } from "../agent-issue-report.ts";
 import { useDialogProtocol } from "../dialog-protocol.ts";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 
 export function AgentIssueReportDialog({
   agent,

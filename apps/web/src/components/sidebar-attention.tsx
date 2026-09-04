@@ -1,6 +1,6 @@
 import type { SidebarRoomAttention } from "../attention-presentation.ts";
 import { sidebarRoomAttention } from "../attention-presentation.ts";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 
 export function ChannelRowIdentity({
   muted,

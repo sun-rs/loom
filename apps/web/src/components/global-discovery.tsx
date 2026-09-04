@@ -37,7 +37,7 @@ import {
 } from "../raft-discovery-controls.ts";
 import { DiscoveryFilter } from "./discovery-filter.tsx";
 import { GlobalTaskBoard } from "./global-task-board.tsx";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 
 type Props = {
   client: RahClient;

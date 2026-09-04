@@ -2852,7 +2852,7 @@ try {
   const threadGeometry = await call(browser, () => {
     const panel = document.querySelector('[data-testid="thread-side-column"]');
     const resizer = document.querySelector(".rah-thread-resizer");
-    const header = document.querySelector(".thread-head");
+    const header = document.querySelector(".rah-thread-head");
     const title = document.querySelector(".rah-thread-title");
     if (!panel || !resizer || !header || !title) return null;
     return {

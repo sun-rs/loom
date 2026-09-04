@@ -1,8 +1,5 @@
 /* index-BoAC7nSE: source-backed ChatPanel/sidebar/RO presentation ports.
    See docs/product/2026-09-01-chat-surface-parity-contract.zh-CN.md. */
-.rah-product-shell > .channel:not(.rah-agent-peek) > .tabs {
-  height: var(--raft-members-tabs-frame-height);
-}
 .rah-room-sidebar .channel-row {
   line-height: 20px;
   font-weight: 500;

@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
 
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 
 const SettingsMobileBackContext = createContext<(() => void) | undefined>(
   undefined,

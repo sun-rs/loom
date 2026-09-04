@@ -1,5 +1,9 @@
 # RAH OS
 
+The maintained frontend standard is [RAH Neo-Brutalist UI](./docs/design/neo-brutalist-ui.md):
+internal assets, shared components, executable templates and linked behavior contracts.
+No external `raft-ui` checkout is needed for build, runtime or library maintenance.
+
 RAH OS is a room-first collaboration kernel for humans and heterogeneous coding agents.
 
 Users install and authenticate their own Agent CLIs. RAH OS discovers, invokes and manages those runtimes; it does not install provider CLIs or configure their accounts. This is distinct from installing the RAH OS Computer service itself.

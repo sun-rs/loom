@@ -3,7 +3,7 @@ import type { RefObject } from "react";
 
 import { navigationSearch } from "../navigation-target.ts";
 import { FloatingContextMenu } from "./floating-context-menu.tsx";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import {
   QUICK_REACTIONS,
   ReactionGlyph,

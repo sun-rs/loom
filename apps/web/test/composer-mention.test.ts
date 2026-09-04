@@ -62,7 +62,7 @@ test("Room, DM and Thread reuse the Raft mention menu and its yellow active row"
   );
   const css = readFileSync(
     new URL(
-      "../../../packages/ui-tokens/generated/styles.css",
+      "../../../packages/ui-tokens/src/neo-brutalist/styles.css",
       import.meta.url,
     ),
     "utf8",

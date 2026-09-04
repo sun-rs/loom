@@ -1,25 +1,4 @@
-import "@rah-os/ui-tokens/official-fonts.css";
-import "@rah-os/ui-tokens/styles.css";
-import "@rah-os/ui-tokens/channel-extras.css";
-import "@rah-os/ui-tokens/computers.css";
-import "@rah-os/ui-tokens/members.css";
-import "@rah-os/ui-tokens/overlays.css";
-import "@rah-os/ui-tokens/tasks.css";
-import "@rah-os/ui-tokens/activity.css";
-import "@rah-os/ui-tokens/search.css";
-import "./interaction-state.css";
-import "./product.css";
-import "./agent-directory.css";
-import "./member-relationship-graph.css";
-import "./computer-directory.css";
-import "./global-discovery.css";
-import "./discovery-controls.css";
-import "./identity-interactions.css";
-import "./chat-surface.css";
-import "./message-social.css";
-import "./message-selection.css";
-import "./room-files.css";
-import "./web-build-recovery.css";
+import "./product-styles.ts";
 import { applySettingsPreferences } from "./settings-preferences.ts";
 import {
   currentWebBuildId,

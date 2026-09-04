@@ -279,17 +279,6 @@
   min-width: 0;
 }
 
-.rah-agent-detail-head {
-  align-items: center;
-  background: var(--bg);
-  border-bottom: var(--bd);
-  display: flex;
-  flex: none;
-  gap: 12px;
-  height: var(--raft-members-detail-header-height);
-  padding: var(--raft-members-detail-header-padding);
-}
-
 .rah-agent-detail-identity {
   min-width: 0;
 }
@@ -317,11 +306,6 @@
   margin-left: auto;
 }
 
-.rah-agent-head-actions .sq-btn {
-  height: var(--raft-members-header-button-size);
-  width: var(--raft-members-header-button-size);
-}
-
 .rah-agent-overflow-glyph {
   font-size: 20px;
   font-weight: 800;
@@ -333,25 +317,8 @@
   display: none;
 }
 
-.rah-agent-tabs-frame {
-  background: var(--bg);
-  border-bottom: var(--bd);
-  flex: none;
-  height: var(--raft-members-tabs-frame-height);
-  overflow: hidden;
-}
-
-.rah-agent-detail-tabs {
-  border-bottom: 0;
-  height: var(--raft-members-tab-height);
-  overflow: hidden;
-  width: max-content;
-}
-
 .rah-agent-detail-tabs .tab {
   flex: 0 0 76px;
-  height: var(--raft-members-tab-height);
-  padding: var(--raft-members-tab-padding);
   width: 76px;
 }
 
@@ -1872,12 +1839,6 @@
     height: 100%;
   }
 
-  .rah-agent-detail-head {
-    gap: 10px;
-    height: 76px;
-    padding: 10px 12px;
-  }
-
   .rah-agent-mobile-back,
   .rah-agent-header-message {
     display: grid;
@@ -1893,19 +1854,6 @@
 
   .rah-agent-detail-identity h2 {
     font-size: 16px;
-  }
-
-  .rah-agent-tabs-frame {
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-
-  .rah-agent-tabs-frame::-webkit-scrollbar {
-    display: none;
-  }
-
-  .rah-agent-detail-tabs {
-    overflow: visible;
   }
 
   .rah-agent-detail-tabs .tab {

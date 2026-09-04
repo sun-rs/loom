@@ -63,7 +63,14 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
     join(sourceDirectory, "components", "message-timeline.tsx"),
     "utf8",
   );
-  const main = readFileSync(join(sourceDirectory, "main.tsx"), "utf8");
+  const main = readFileSync(join(sourceDirectory, "product-styles.ts"), "utf8");
+  const panelResizer = readFileSync(
+    join(
+      sourceDirectory,
+      "../../../packages/ui-web/src/neo-brutalist/panel-resizer.tsx",
+    ),
+    "utf8",
+  );
   const dialogProtocol = readFileSync(
     join(sourceDirectory, "dialog-protocol.ts"),
     "utf8",
@@ -141,13 +148,13 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   );
   assert.match(
     navigation,
-    /className="sq-btn rah-panel-header-action rah-channel-options"[\s\S]*?aria-label="频道详情与设置"/u,
+    /<PanelHeaderAction[\s\S]*?className="rah-channel-options"[\s\S]*?aria-label="频道详情与设置"/u,
     "Room settings retains the protocol-sized mobile-visible channel options action",
   );
   assert.match(dialogs, /disabled=\{!canAdd \|\| mutationBlocked\}/u);
   assert.match(dialogs, /mutationPendingRef\.current \|\| !canRemove/u);
   assert.match(dialogs, /key=\{view\}[\s\S]*?onAddSelection=\{addSelection\}/u);
-  assert.match(main, /@rah-os\/ui-tokens\/overlays\.css/u);
+  assert.match(main, /@rah-os\/ui-tokens\/neo-brutalist\.css/u);
   assert.match(productCss, /width: var\(--raft-drawer-width\)/u);
   assert.match(productCss, /background: var\(--raft-drawer-background\)/u);
   assert.match(productCss, /box-shadow: var\(--raft-drawer-shadow\)/u);
@@ -230,9 +237,10 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   assert.match(navigation, /label="设置"/u);
   assert.match(navigation, /kind === "direct"/u);
   assert.match(navigation, /<SidebarSection\s+label=\{label\}/u);
-  assert.match(roomSidebarResizer, /role="separator"/u);
-  assert.match(roomSidebarResizer, /aria-orientation="vertical"/u);
-  assert.match(roomSidebarResizer, /setPointerCapture/u);
+  assert.match(roomSidebarResizer, /<PanelResizer/u);
+  assert.match(panelResizer, /role="separator"/u);
+  assert.match(panelResizer, /aria-orientation="vertical"/u);
+  assert.match(panelResizer, /setPointerCapture/u);
   assert.match(roomSidebarResizer, /nextRoomSidebarWidth/u);
   assert.doesNotMatch(navigation, /disabled icon="gear"/u);
   assert.match(managedMcpSettings, /managedMcp\.executor\.list/u);

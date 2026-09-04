@@ -16,7 +16,7 @@ import {
   ReleaseNotesSettingsContent,
   WorkspaceProfileSettingsContent,
 } from "./settings-pages.tsx";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { SettingsMobileBackProvider } from "./settings-primitives.tsx";
 import { WebPushSettingsContent } from "./web-push-settings.tsx";
 

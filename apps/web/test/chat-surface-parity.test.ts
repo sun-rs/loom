@@ -148,7 +148,7 @@ test("Direct Room and profile avatars share the Agent detail and canonical avata
 test("Raft focus, message toolbar and channel drawer interactions share the measured contract", () => {
   const tokens = readFileSync(
     new URL(
-      "../../../packages/ui-tokens/generated/styles.css",
+      "../../../packages/ui-tokens/src/neo-brutalist/styles.css",
       import.meta.url,
     ),
     "utf8",

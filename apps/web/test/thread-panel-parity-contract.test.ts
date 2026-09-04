@@ -2,8 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const read = (path: string) =>
-  readFileSync(new URL(`../src/${path}`, import.meta.url), "utf8");
+import { readUiSource as read } from "./ui-source.ts";
 
 test("Task messages keep Raft's compact linked marker and omit workflow state", () => {
   const source = read("components/conversation-panes.tsx");
@@ -75,9 +74,16 @@ test("thread panel exposes the Raft header, history and action contracts", () =>
     css,
     /\.rah-thread-parent\s*\{[^}]*border-bottom:\s*var\(--bd-heavy\)/su,
   );
-  assert.match(css, /\.rah-thread-resizer\s*\{[^}]*width:\s*8px/su);
-  assert.match(css, /\.thread-head\s*\{[^}]*height:\s*62px/su);
-  assert.match(css, /\.thread-head h2\s*\{[^}]*font-size:\s*16px/su);
+  assert.match(
+    read("panel-foundations.css"),
+    /\.rah-panel-resizer\s*\{[^}]*width:\s*8px/su,
+  );
+  assert.match(source, /<PanelHeader kind="thread"/u);
+  assert.match(
+    read("panel-layout.css"),
+    /\.rah-panel-header\s*\{[^}]*height:\s*var\(--head-h\)/su,
+  );
+  assert.match(css, /\.rah-thread-title b\s*\{[^}]*font-size:\s*16px/su);
 });
 
 test("WorkspaceScreen owns one persistent thread-panel width and its resizer", () => {

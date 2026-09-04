@@ -102,6 +102,7 @@ import {
 import { ComputerRuntimePane } from "./components/workspace-catalog-panes.tsx";
 import { AgentDirectoryPane } from "./components/agent-directory-pane.tsx";
 import { SettingsSurface } from "./components/settings-surface.tsx";
+import { ConversationTabs } from "./components/conversation-tabs.tsx";
 import { HumanInboxCenter } from "./components/human-inbox.tsx";
 import { RoomSidebarResizer } from "./components/room-sidebar-resizer.tsx";
 import { ThreadPanelResizer } from "./components/thread-panel-resizer.tsx";
@@ -110,7 +111,6 @@ import {
   MobileNavigation,
   Rail,
   RoomSidebar,
-  TabButton,
   type Surface,
   type Tab,
 } from "./components/workspace-navigation.tsx";
@@ -3094,28 +3094,12 @@ function WorkspaceScreen({
                     onOpenDirectPeer={(id) => openAgentPeek(id)}
                     onOpenRooms={() => setMobileRoomsOpen(true)}
                   />
-                  <div className="tabs" role="tablist">
-                    <TabButton
-                      active={tab === "chat"}
-                      disabled={health?.capabilities.messageRead === false}
-                      icon="chat"
-                      label="聊天"
-                      onClick={() => setTab("chat")}
-                    />
-                    <TabButton
-                      active={tab === "tasks"}
-                      disabled={health?.capabilities.taskRead === false}
-                      icon="listcheck"
-                      label="任务"
-                      onClick={() => setTab("tasks")}
-                    />
-                    <TabButton
-                      active={tab === "files"}
-                      icon="clip"
-                      label="文件"
-                      onClick={() => setTab("files")}
-                    />
-                  </div>
+                  <ConversationTabs
+                    value={tab}
+                    onSelect={setTab}
+                    canReadMessages={health?.capabilities.messageRead !== false}
+                    canReadTasks={health?.capabilities.taskRead !== false}
+                  />
                   {roomData?.caughtUp === false ? (
                     <div className="rah-sync-status">正在追赶 Room 历史…</div>
                   ) : null}

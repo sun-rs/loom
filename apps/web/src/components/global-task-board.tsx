@@ -23,7 +23,7 @@ import {
   type DiscoveryNavigationHandler,
 } from "../global-discovery-model.ts";
 import { DiscoveryFilter } from "./discovery-filter.tsx";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 
 const ids: TaskColumnId[] = ["todo", "in-progress", "review", "done", "closed"];
 // Arrow navigation crosses semantic groups, rather than requiring 13 x 25px nudges.

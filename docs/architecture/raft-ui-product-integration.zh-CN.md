@@ -6,56 +6,33 @@
 
 2026-09-01 导航补充：Search/Activity/Tasks/Saved/Notifications 不再各自拼接页面状态，而是共享 protocol `NavigationTarget`。Web URL 只是 reload-safe projection；每次打开目标必须先经 Kernel Human ACL/存在性解析。Raft NotificationCenter 的 open/view/dismiss 交互被结构化移植，但中央套餐/账号条件不进入本机架构。详见[Notifications 与 typed navigation 合同](../product/2026-09-01-notifications-typed-navigation-contract.zh-CN.md)。
 
-## 1. 决策
+## 1. 当前决策：内部维护，参考证据只读
 
-独立 `/Users/sun/Code/repos/raft-ui` 继续作为授权视觉、DOM、交互和浏览器回归母版，不改造成 RAH OS 产品仓库。RAH OS 通过显式导入器吸收一份版本化快照：
+2026-09-04 起以 [ADR 0028](../adr/0028-owned-neo-brutalist-ui-library.md) 和
+[英文内部标准](../design/neo-brutalist-ui.md) 为准。外部 raft-ui 是临时重建成果，
+不是官方 React 源码，也不是不可修改的长期母版。
 
-```text
-raft-ui reference repository（保持原样）
-  -> allowlist importer
-  -> @rah-os/raft-ui-snapshot
-       reference HTML/JS/CSS   evidence-only
-       protocol inventory      comparison input
-             |
-             v build-time allowlist generator
-       @rah-os/ui-tokens
-       CSS/fonts/icons only
+- ui-tokens/src/neo-brutalist：已吸收的 CSS、字体、图标、头像与共享交互样式。
+- ui-web/src/neo-brutalist：Icon、PanelHeader、PanelHeaderAction、PanelTabs、PanelResizer。
+- apps/web：生产模板组合、路由、既有 typed SDK/client-core 接线及待迁移的页面样式。
+- raft-ui-snapshot：只读历史证据；不再是产品生成输入。
 
-RahClient -> client-core -> @rah-os/ui-web -> apps/web React composition
-                                      ^
-                                      └── 只消费 product-owned ui-tokens，不消费 snapshot/fixture 状态机
-```
+旧 sibling 导入器和覆盖生成器已移除。维护内部源码不需要外部目录，也不编辑历史
+快照。原样资源保留摘要；采用后的 CSS 允许有来源、有测试的修正。模板复用生产
+组件，不导入参考项目模拟状态机。未来比较以内部 catalog 指向的真实 owner 为对象。
 
-这比三种替代方案更安全：
+## 2. 来源与验收
 
-- 不让生产程序在运行时依赖 sibling `raft-ui` 路径，否则安装位置与源工作树会成为隐式配置；
-- 不直接把整个静态 HTML 塞进 React 或 iframe，否则 reference adapter、fixture state 和真实 Room state 会形成双 owner；
-- 不从零重做一套视觉系统，否则已经校准的 Raft 几何、字体、图标和状态会快速漂移。
-
-## 2. 快照身份
-
-`scripts/import-raft-ui-snapshot.mjs` 只接受明确目录和扩展名：
-
-- 12 个参考页面及其本地 CSS/JS；
-- generated CSS/JSON/SVG；
-- UI protocol/runtime evidence；
-- 官方 CSS manifest、CSS 和本地字体；
-- 不导入 `.git`、私密 references、截图、测试结果、Python 环境或官方业务 JS bundle。
-
-`snapshot-manifest.json` 对每个文件记录 path、bytes 和 SHA-256，同时记录源 Git HEAD 与 dirty 状态。当前源工作树含未提交的 UI 校准成果，因此 HEAD 不是充分身份；逐文件 digest 才是精确证据。
-
-Reference HTML 永远加载 `raft-ui-reference-adapter.js`，不得加载产品 adapter。`scripts/generate-ui-tokens.mjs` 只把十一项 allowlisted CSS/font/icon/avatar 输入投影到独立 `@rah-os/ui-tokens`，记录来源和输出 SHA-256；产品代码不得直接导入 snapshot。source-boundary test 阻止 snapshot、HTML、reference adapter 和 sibling path 进入产品 bundle。
+初始来源、快照摘要、资产原始摘要与后续改动说明由
+packages/ui-tokens/adoption.json 保存；当前组件和模板由
+packages/ui-tokens/neo-brutalist-library.json 关联既有行为登记与浏览器场景。
+来源完整性、生产回归、官方双边一致性是不同证据，不得相互代替。
 
 ## 3. 产品 owner
 
-| Owner              | 当前职责                                                                                                               | 禁止职责                                                        |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| `client-sdk`       | typed operation、HTTP/Fake transport、schema validation、structured error                                              | Room projection、React、token persistence                       |
-| `client-core`      | ordered sync、bounded catch-up、causal mutation barrier、duplicate replay、gap/divergence fail-closed、ack-after-apply | HTTP path、DOM、业务 authority                                  |
-| `ui-tokens`        | snapshot allowlist 生成的 CSS/font/icon/avatar preset 与 provenance                                                    | reference HTML/JS、业务状态、手工分叉来源                       |
-| `ui-web`           | provider-independent Room view model、Raft column mapping                                                              | fetch、daemon lifecycle、fixture success                        |
-| `apps/web`         | React composition、draft、tab/selection、same-origin connection                                                        | canonical Task/Room state、Provider parser、Local Storage token |
-| `raft-ui-snapshot` | immutable reference evidence、生成输入与对照基线                                                                       | product runtime dependency、live business state、credential     |
+现有 SDK、client-core、Kernel 权限和持久状态 owner 不变。内部库只处理展示和
+受控交互；页面不新建第二套颜色、拖拽、Tabs 或数据状态机。未迁移页面仍按家族
+逐步收口，不因本次统一入口宣称全站完成。
 
 手工连接模式的 Human PAT 只存在于页面内存。Vite development server 用 `RAH_DAEMON_URL` 做 same-origin proxy；真实浏览器 gate 可额外设置只由测试代理读取的 `RAH_DEV_ACCESS_TOKEN`，代理覆盖浏览器的无权限占位 header，PAT 不进入页面、URL、Local Storage 或测试输出。默认 gate 仍绑定 loopback；显式 `dev:web:multi-agent-fixture:lan` 只为可信局域网的 iOS 实机测试临时绑定 `0.0.0.0`，daemon 继续绑定 loopback，并明确把测试期间的 Human authority 暴露风险归给临时 Web origin。ADR-0017 的 production local workbench 则使用正式 build 与 loopback static gateway：PAT 只在 server side，浏览器持有随机 HttpOnly Strict session，mutation 还受 exact Origin 约束。该 gateway 刻意不支持 LAN；远端入口必须另做 pairing/TLS，而不是放宽 CORS。
 

@@ -7,7 +7,7 @@ import {
   navigationSearch,
   shouldHandleClientNavigation,
 } from "../navigation-target.ts";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { MessageMarkdown } from "./message-markdown.tsx";
 import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
 import { MessageAttachments } from "./room-files.tsx";

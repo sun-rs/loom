@@ -3,9 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "exports": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./neo-brutalist/*": "./src/neo-brutalist/*.tsx"
+  },
+  "peerDependencies": {
+    "react": "^19.2.8"
+  },
   "dependencies": {
     "@rah-os/client-core": "*",
-    "@rah-os/protocol": "*"
+    "@rah-os/protocol": "*",
+    "@rah-os/ui-tokens": "*"
   }
 }

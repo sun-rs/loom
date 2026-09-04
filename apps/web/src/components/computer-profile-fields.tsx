@@ -10,7 +10,7 @@ import {
   normalizeComputerName,
   type ComputerProfileField,
 } from "../computer-profile-edit.ts";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 
 type EditState = {
   baseDescription: string | null;

@@ -1,0 +1,48 @@
+/* Shared geometry only; interaction-state.css remains the state/color owner.
+   Width policies, storage and responsive visibility stay with panel owners. */
+.rah-panel-resizer {
+  background: transparent;
+  border: 0;
+  bottom: 0;
+  cursor: col-resize;
+  outline: 0;
+  position: absolute;
+  top: 0;
+  touch-action: none;
+  user-select: none;
+  width: 8px;
+}
+
+.rah-panel-resizer::after {
+  background: transparent;
+  bottom: 0;
+  content: "";
+  left: 3px;
+  position: absolute;
+  top: 0;
+  width: 2px;
+}
+
+.rah-panel-resizer[data-highlight="true"]:hover::after,
+.rah-panel-resizer[data-highlight="true"]:focus-visible::after,
+.rah-panel-resizer[data-highlight="true"].is-dragging::after {
+  background: var(--ink);
+}
+
+.rah-panel-resizer:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
+
+.rah-panel-header-action {
+  flex-shrink: 0;
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
+  width: 28px;
+}
+
+.rah-panel-header-action > svg {
+  height: 14px;
+  width: 14px;
+}

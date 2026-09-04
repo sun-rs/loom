@@ -1,5 +1,5 @@
 import { useId, useState, type ReactNode } from "react";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 
 export function SidebarSection({
   label,

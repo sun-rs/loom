@@ -1,0 +1,1340 @@
+{
+  "schemaVersion": 1,
+  "milestone": "22086e2b9767343984bb0b5f4d4725240ac09d20",
+  "legacyInventory": "packages/raft-ui-snapshot/reference/protocol/rah-ui-capability-inventory.json",
+  "sources": [
+    {
+      "path": "docs/evidence/raft-web-20260831-current/index-BoAC7nSE.js",
+      "sha256": "7328c15614ac53c7cc906e0f56665dd822a4c0ffaa64e4cb6b9a7a76a692b26a",
+      "id": "raft-web-20260831",
+      "kind": "official-published",
+      "url": "https://app.raft.build/assets/index-BoAC7nSE.js"
+    },
+    {
+      "path": "packages/raft-ui-snapshot/snapshot-manifest.json",
+      "sha256": "9da340b9244aa16fd54de560e2bf5c1d906f8a3dfded49894b90e0a75baa5dbf",
+      "id": "reference-manifest",
+      "kind": "reference-reconstruction"
+    },
+    {
+      "path": "packages/raft-ui-snapshot/reference/styles.css",
+      "sha256": "4e319346acc987b92a065874f82f4ad46c4459c2ef60b67c9adfa4a5d35de8d7",
+      "id": "reference-styles",
+      "kind": "reference-reconstruction"
+    },
+    {
+      "id": "raft-space-font",
+      "kind": "official-published",
+      "path": "packages/raft-ui-snapshot/reference/vendor/raft/fonts/space-grotesk-latin.woff2",
+      "sha256": "a0d054c4af557de20afd6ca59f47ab353bcaec49c63ff04b6c9d39d0f8910557",
+      "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPbF4C_k3HqU.woff2"
+    }
+  ],
+  "adoptions": [
+    {
+      "id": "panel-header-slots",
+      "kind": "extracted-port",
+      "source": "raft-web-20260831",
+      "owner": "packages/ui-tokens/src/neo-brutalist/panel-layout.css",
+      "locator": "CI Panel compoundSlots / header and tabs, shell-header-height",
+      "needles": [
+        "flex h-(--shell-header-height,62px) shrink-0 items-center gap-2",
+        "gap-3 border-b-2 border-black bg-white px-5",
+        "header:[\"[@media(max-height:600px)]:h-12\"]",
+        "tabs:[\"border-b-2 border-black bg-white\""
+      ],
+      "differences": "展示 slot 结构移植到现有 --head-h/--tabs-h，保留 Thread 16px padding 和 Agent 移动端参考组合；不是原样 React。"
+    },
+    {
+      "id": "controlled-panel-tabs",
+      "kind": "rah-local",
+      "owner": "packages/ui-web/src/neo-brutalist/panel-tabs.tsx",
+      "differences": "合并 Room/Agent 的受控 Tabs；参考官方 TabList enableHomeAndEndKeys/loopFocus/disabledIndices，自动激活沿用本地 Agent 行为。只移动本 Tab viewport，不接管选中页/URL/ACL。"
+    },
+    {
+      "id": "font-original",
+      "kind": "official-original",
+      "source": "raft-space-font",
+      "owner": "packages/ui-tokens/src/neo-brutalist/vendor/raft/fonts/space-grotesk-latin.woff2",
+      "differences": "无，原样发布字体；不代表 CSS/React 也是官方原样。"
+    },
+    {
+      "id": "reference-css",
+      "kind": "reference-reconstruction",
+      "source": "reference-styles",
+      "owner": "packages/ui-tokens/src/neo-brutalist/styles.css",
+      "differences": "初始来源为本地 raft-ui 重建 CSS，现已吸收为内部维护源码；不是官方应用源码，不再由快照覆盖生成。"
+    },
+    {
+      "id": "thread-width",
+      "kind": "extracted-port",
+      "source": "raft-web-20260831",
+      "owner": "apps/web/src/thread-panel-resize.ts",
+      "locator": "o7 / $_: default 400, min 360, max=max(400,floor(innerWidth*0.6))",
+      "needles": [
+        "function o7(){return typeof window<\"u\"?Math.max(400,Math.floor(window.innerWidth*.6)):400}",
+        "storageKey:\"slock:threadPanelWidth\",min:360,max:t,defaultWidth:400,direction:\"left\""
+      ],
+      "differences": "宽度策略提取；保留本地存储键、键盘可访问性和受控 React 回调。"
+    },
+    {
+      "id": "shared-splitter",
+      "kind": "rah-local",
+      "owner": "packages/ui-web/src/neo-brutalist/panel-resizer.tsx",
+      "differences": "合并既有三个事件循环，不改变各 panel 的宽度策略/业务 owner；捕获丢失/取消只提交一次。"
+    },
+    {
+      "id": "header-action",
+      "kind": "rah-local",
+      "owner": "packages/ui-web/src/neo-brutalist/panel-header-action.tsx",
+      "differences": "统一现有28px按钮/14px SVG；复用 sq-btn / interaction-state 视觉协议，不引入新样式系统。"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "integrated-shell-layout",
+      "runner": "scripts/run-ui-foundation-browser-gate.mjs",
+      "coverage": [
+        "real-kernel-and-ui",
+        "breakpoint-sides",
+        "short-height",
+        "room-dm-inspector",
+        "header-divider",
+        "close-hit-target",
+        "canonical-read-callback"
+      ]
+    },
+    {
+      "id": "panel-header-geometry",
+      "runner": "scripts/run-ui-foundation-browser-gate.mjs",
+      "coverage": [
+        "compact-height",
+        "shared-divider",
+        "long-name",
+        "non-shrinking-header"
+      ]
+    },
+    {
+      "id": "panel-tabs-keyboard",
+      "runner": "scripts/run-ui-foundation-browser-gate.mjs",
+      "coverage": [
+        "disabled-skip",
+        "roving-tabindex",
+        "home-end",
+        "wrap",
+        "empty",
+        "all-disabled",
+        "independent-groups",
+        "overflow-focus"
+      ]
+    },
+    {
+      "id": "splitter-contract",
+      "runner": "scripts/run-ui-foundation-browser-gate.mjs",
+      "coverage": [
+        "pointer",
+        "keyboard",
+        "cancel",
+        "lost-capture",
+        "bounds",
+        "single-commit",
+        "reverse-direction"
+      ]
+    },
+    {
+      "id": "header-action-states",
+      "runner": "scripts/run-ui-foundation-browser-gate.mjs",
+      "coverage": [
+        "rest",
+        "hover",
+        "press",
+        "focus",
+        "disabled",
+        "loading",
+        "permission-denied",
+        "icon-size",
+        "click-callback"
+      ]
+    },
+    {
+      "id": "foundation-combinations",
+      "runner": "scripts/run-ui-foundation-browser-gate.mjs",
+      "coverage": [
+        "long-name",
+        "empty-data",
+        "inspector-open",
+        "390x844",
+        "700/701",
+        "767/768",
+        "1023/1024",
+        "1279/1280",
+        "short-height"
+      ]
+    }
+  ],
+  "behaviors": [
+    {
+      "id": "B001",
+      "intent": "activity.filter.change",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "DISCOVERY；`activity.list`，H；筛选不确认 Inbox"
+      }
+    },
+    {
+      "id": "B002",
+      "intent": "activity.item.open",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "APP/DISCOVERY；`message.context` 精确 Thread，H；旧表仅称 presentation 不充分"
+      }
+    },
+    {
+      "id": "B003",
+      "intent": "activity.item.complete",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "改造",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "`activity.mark` 处理 read/done；不是旧表的 `inbox.resolve`，H"
+      }
+    },
+    {
+      "id": "B004",
+      "intent": "admin.agreement.save",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "待裁决",
+        "frontend": "待裁决",
+        "backend": "待裁决",
+        "note": "社区协议不自动等于本地 Workspace 协议，SETTINGS 无对应入口，N"
+      }
+    },
+    {
+      "id": "B005",
+      "intent": "admin.invite.create",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "改造",
+        "frontend": "缺失",
+        "backend": "部分",
+        "note": "LAN 设备配对不是邀请另一个 Human；需定义本地身份邀请，N"
+      }
+    },
+    {
+      "id": "B006",
+      "intent": "admin.member-permissions.save",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "改造",
+        "frontend": "部分",
+        "backend": "部分",
+        "note": "P1.1 已接 canonical Room Human `owner/admin/member` 查看、编辑、保存/取消、错误与最后 owner 保护；Agent 不获得 Human 管理角色。完整 Workspace 权限矩阵仍未定义"
+      }
+    },
+    {
+      "id": "B007",
+      "intent": "admin.onboarding.save",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "待裁决",
+        "frontend": "待裁决",
+        "backend": "待裁决",
+        "note": "Workspace onboarding 产品合同待定，N"
+      }
+    },
+    {
+      "id": "B008",
+      "intent": "admin.role.remove",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "改造",
+        "frontend": "缺失",
+        "backend": "部分",
+        "note": "固定 Room 角色存在，无自定义角色删除合同，N"
+      }
+    },
+    {
+      "id": "B009",
+      "intent": "admin.role.update",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "改造",
+        "frontend": "部分",
+        "backend": "已接",
+        "note": "Human Room 固定角色 UI 与 causal command 已接；不伪装成可创建/编辑任意角色定义。Raft 中的 Server role 与本地 Room role 边界仍明确保留"
+      }
+    },
+    {
+      "id": "B010",
+      "intent": "admin.system-channel.save",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "待裁决",
+        "frontend": "待裁决",
+        "backend": "待裁决",
+        "note": "managed control Room 不是 Raft 可选系统频道，N"
+      }
+    },
+    {
+      "id": "B011",
+      "intent": "admin.translation.save",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "待裁决",
+        "frontend": "待裁决",
+        "backend": "待裁决",
+        "note": "服务器翻译配置是否适用尚待决定，N"
+      }
+    },
+    {
+      "id": "B012",
+      "intent": "billing.checkout.configure",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "排除",
+        "frontend": "排除",
+        "backend": "排除",
+        "note": "不复制收费账户/checkout"
+      }
+    },
+    {
+      "id": "B013",
+      "intent": "billing.checkout.submit",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "排除",
+        "frontend": "排除",
+        "backend": "排除",
+        "note": "不复制付款链路"
+      }
+    },
+    {
+      "id": "B014",
+      "intent": "chat.agents.stop",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "缺失",
+        "backend": "部分",
+        "note": "AGENT 可逐个 pause；缺聊天页按当前执行安全停止的产品动作，N"
+      }
+    },
+    {
+      "id": "B015",
+      "intent": "chat.bookmarks.open",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "私人收藏/取消、全局已保存页、20条分页、查询/Room/排序协议、总数、头像与目标元信息、卡片右键菜单、精确消息/Thread deep link 已接；官网独立页本身不显示筛选控件"
+      }
+    },
+    {
+      "id": "B016",
+      "intent": "chat.channel.lifecycle",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "部分",
+        "backend": "部分",
+        "note": "可逆归档/取消归档与 actor-owned Human 退出已接；退出守住最后 owner、direct/control 与活动工作。永久删除、公开频道自助重新加入及离开后继续关注公开消息列仍未接，H"
+      }
+    },
+    {
+      "id": "B017",
+      "intent": "chat.channel.pin",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "Human×Workspace 私人侧栏偏好、设置页置顶、快捷键及拖拽置顶已接；联合频道/自定义分组不在本项"
+      }
+    },
+    {
+      "id": "B018",
+      "intent": "chat.channel.update",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "ROOM→`room.update` 名称/描述/visibility，H；其余设置不含在本项"
+      }
+    },
+    {
+      "id": "B019",
+      "intent": "chat.composer.asset.request",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "Room/Thread 选文件、prepare/upload/cancel、附件-only Thread 回复与同事务 Files 投影已接；通用拖放仍属交互增量，不再登记 Thread 附件为缺失"
+      }
+    },
+    {
+      "id": "B020",
+      "intent": "chat.file.download",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "FILES→授权 content GET；下载是浏览器文件流，不是 Finder reveal，H"
+      }
+    },
+    {
+      "id": "B021",
+      "intent": "chat.file.menu.open",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "部分",
+        "backend": "无后端",
+        "note": "FILES 菜单有下载/定位；不能等同全部官方动作，H"
+      }
+    },
+    {
+      "id": "B022",
+      "intent": "chat.file.preview",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "部分",
+        "backend": "已接",
+        "note": "FILES content read；完整类型/大文件/预览交互待补，H"
+      }
+    },
+    {
+      "id": "B023",
+      "intent": "chat.file.reveal",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "改造",
+        "frontend": "缺失",
+        "backend": "缺失",
+        "note": "浏览器不能直接打开本机 Finder；需窄平台桥或明确替代，N"
+      }
+    },
+    {
+      "id": "B024",
+      "intent": "chat.member.add",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "ROOM→`room.member.add/remove/list`，H"
+      }
+    },
+    {
+      "id": "B025",
+      "intent": "chat.message.action",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "部分",
+        "backend": "部分",
+        "note": "普通消息 hover/focus 有 Thread/回应/收藏和右键菜单；共享回应、私人收藏、已保存回跳、同范围多选及 canonical 文本/附件转发已接（P2.3 本地真实浏览器通过，非官方双边验收）。编辑/删除、完整 picker、回应者浮层与收藏高级菜单仍未齐"
+      }
+    },
+    {
+      "id": "B026",
+      "intent": "chat.message.expand.toggle",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "Chat/Thread 共用实际高度测量，默认折叠并提供“展开全文/收起”；Human×Workspace Room 偏好可关闭且持久化。正文内部代码/图表 disclosure 仍是独立层次"
+      }
+    },
+    {
+      "id": "B027",
+      "intent": "chat.message.send",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "APP→`message.post/thread.reply`；C01 Enter，历史真实 CLI，H"
+      }
+    },
+    {
+      "id": "B028",
+      "intent": "chat.mobile.pane.change",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "无后端",
+        "note": "APP 共享组件的窄屏 pane；Chrome 持久工作台门禁与 Firefox 均重跑 390×844"
+      }
+    },
+    {
+      "id": "B029",
+      "intent": "chat.mobile.route.change",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "无后端",
+        "note": "Room/Thread/AgentDefinitionId/Agent tab 均有 reload-safe typed URL 投影；390×844 复用同一身份合同，不创建移动端真相"
+      }
+    },
+    {
+      "id": "B030",
+      "intent": "chat.pane.change",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "无后端",
+        "note": "APP Chat/Tasks/Files 选择，H；tab内容分别验收"
+      }
+    },
+    {
+      "id": "B031",
+      "intent": "chat.room.create",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "ROOM→`room.create`，control Room causal barrier，H"
+      }
+    },
+    {
+      "id": "B032",
+      "intent": "chat.room.select",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "APP→Room/Message session与sync，H"
+      }
+    },
+    {
+      "id": "B033",
+      "intent": "chat.room.sort",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "09-01 手动/最近/A-Z、拖拽置顶/移出/组内排序、设置置顶共享 Human×Workspace CAS；浏览器验证刷新保留。联合频道/自定义分组不含本项"
+      }
+    },
+    {
+      "id": "B034",
+      "intent": "chat.sidebar.resize",
+      "status": "migrated",
+      "owners": ["apps/web/src/components/room-sidebar-resizer.tsx"],
+      "adoptions": ["shared-splitter"],
+      "scenarios": ["splitter-contract", "foundation-combinations"],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "无后端",
+        "note": "`room-sidebar-resizer`，pointer/keyboard，H"
+      },
+      "currentScope": "仅既有分隔线/拖拽事件 owner 收敛；不代表整个页面验收。"
+    },
+    {
+      "id": "B035",
+      "intent": "chat.task.column.toggle",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "部分",
+        "backend": "无后端",
+        "note": "TASK 列状态/折叠需按本地与全局分别核对，N"
+      }
+    },
+    {
+      "id": "B036",
+      "intent": "chat.task.create",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "TASK→`task.create/convert`，唯一Message/Thread，H"
+      }
+    },
+    {
+      "id": "B037",
+      "intent": "chat.task.filter.open",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "无后端",
+        "note": "TASK/DISCOVERY共享筛选popover，H"
+      }
+    },
+    {
+      "id": "B038",
+      "intent": "chat.task.view.change",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "无后端",
+        "note": "TASK 看板/列表，H"
+      }
+    },
+    {
+      "id": "B039",
+      "intent": "chat.thread.close",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "部分",
+        "backend": "无后端",
+        "note": "APP可关闭 Thread；本轮双边关闭后焦点都落到 `body`，未还给触发按钮。官网桌面 Thread 的 Escape 与 Task detail 的 Escape 也不是同一合同"
+      }
+    },
+    {
+      "id": "B040",
+      "intent": "chat.thread.open",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "APP→`message.context/thread.list`，并非仅room.sync，H"
+      }
+    },
+    {
+      "id": "B041",
+      "intent": "chat.thread.resize",
+      "status": "migrated",
+      "owners": ["apps/web/src/components/thread-panel-resizer.tsx"],
+      "adoptions": ["shared-splitter", "thread-width"],
+      "scenarios": ["splitter-contract", "foundation-combinations"],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "无后端",
+        "note": "APP既有splitter/消息窗口测量，H"
+      },
+      "currentScope": "仅既有分隔线/拖拽事件 owner 收敛；不代表整个页面验收。"
+    },
+    {
+      "id": "B042",
+      "intent": "computers.agent.open",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "缺失",
+        "backend": "已接",
+        "note": "COMPUTER binding 行为article非跳转；Agent get已有，N"
+      }
+    },
+    {
+      "id": "B043",
+      "intent": "computers.command.copy",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "改造",
+        "frontend": "缺失",
+        "backend": "无后端",
+        "note": "COMPUTER缺本地恢复命令及复制入口；不直接复制raft重启命令，N"
+      }
+    },
+    {
+      "id": "B044",
+      "intent": "computers.computer.action",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "缺失",
+        "backend": "部分",
+        "note": "Computer infrastructure存在，Human管理/跨机验收未齐，N"
+      }
+    },
+    {
+      "id": "B045",
+      "intent": "computers.computer.select",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "部分",
+        "backend": "已接",
+        "note": "本地自动显示第一台 Computer；官网直接进入 `/computers` 不自动选中且出现“选择一个频道”的官方缺陷，点击列表项后才显示详情。不能把官网缺陷复制为本地目标；多 Computer 仍缺"
+      }
+    },
+    {
+      "id": "B046",
+      "intent": "computers.recovery.toggle",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "改造",
+        "frontend": "缺失",
+        "backend": "无后端",
+        "note": "COMPUTER恢复指导展开入口未接，N"
+      }
+    },
+    {
+      "id": "B047",
+      "intent": "computers.runtime.open",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "缺失",
+        "backend": "已接",
+        "note": "COMPUTER Runtime chip为span，catalog/Offer有数据，N"
+      }
+    },
+    {
+      "id": "B048",
+      "intent": "computers.sidebar.resize",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "无后端",
+        "note": "COMPUTER复用宽度边界/键盘，H"
+      }
+    },
+    {
+      "id": "B049",
+      "intent": "members.agent.action",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "部分",
+        "backend": "已接",
+        "note": "AGENT pause/resume/manage/delete 与 restart/session reset 已走 exclusive fence、terminal proof 与正式重启验收；full reset 仍明确禁用，关系/外部身份动作另列"
+      }
+    },
+    {
+      "id": "B050",
+      "intent": "members.member.create",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "部分",
+        "backend": "部分",
+        "note": "AGENT managed provision已有；external/Human并非同一入口，H"
+      }
+    },
+    {
+      "id": "B051",
+      "intent": "members.member.invite",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "改造",
+        "frontend": "缺失",
+        "backend": "缺失",
+        "note": "Human invite尚未接；不以局域网设备配对代替，N"
+      }
+    },
+    {
+      "id": "B052",
+      "intent": "members.participant.select",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "部分",
+        "backend": "部分",
+        "note": "AGENT选择已有；Human detail与路由恢复未齐，A"
+      }
+    },
+    {
+      "id": "B053",
+      "intent": "members.profile.update",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "部分",
+        "backend": "已接",
+        "note": "Agent 名称/描述/官方头像、runtime/model/effort/mode 已经 revision-CAS 持久并有实页验收；剩余是 Human 资料、Room Human 角色 UI 和自定义图片生命周期"
+      }
+    },
+    {
+      "id": "B054",
+      "intent": "members.relationship.open",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "缺失",
+        "backend": "缺失",
+        "note": "AGENT关系图disabled；不能用Room membership假装关系图，N"
+      }
+    },
+    {
+      "id": "B055",
+      "intent": "members.sidebar.resize",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "无后端",
+        "note": "AGENT splitter，H"
+      }
+    },
+    {
+      "id": "B056",
+      "intent": "members.tab.change",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "部分",
+        "backend": "部分",
+        "note": "七tab可选择≠完成；详见AG00–AG08，A"
+      }
+    },
+    {
+      "id": "B057",
+      "intent": "search.filter.change",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "DISCOVERY→`search`授权筛选，H"
+      }
+    },
+    {
+      "id": "B058",
+      "intent": "search.filters.clear",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "DISCOVERY重置并重新查询，H"
+      }
+    },
+    {
+      "id": "B059",
+      "intent": "search.query.change",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "DISCOVERY→Kernel搜索，H；非上游服务端算法复制"
+      }
+    },
+    {
+      "id": "B060",
+      "intent": "search.sort.change",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "部分",
+        "backend": "部分",
+        "note": "DISCOVERY本地排序合同已有，Raft相关度质量/全边界未验收，H"
+      }
+    },
+    {
+      "id": "B061",
+      "intent": "settings.account.connection.change",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "排除",
+        "frontend": "排除",
+        "backend": "排除",
+        "note": "不托管CLI账户/登录；本地MCP授权另列，不由本项排除"
+      }
+    },
+    {
+      "id": "B062",
+      "intent": "settings.password.update",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "排除",
+        "frontend": "排除",
+        "backend": "排除",
+        "note": "不复制Raft中央账户密码；保留本地认证/撤销安全要求"
+      }
+    },
+    {
+      "id": "B063",
+      "intent": "settings.preferences.update",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "Web Push enable/disable/test、Room 通知偏好、Workspace push 静音、消息字号、12/24小时制和实时状态动画已接；macOS/iOS 横幅仍是设备证据缺口"
+      }
+    },
+    {
+      "id": "B064",
+      "intent": "settings.profile.update",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "改造",
+        "frontend": "部分",
+        "backend": "已接",
+        "note": "Workspace profile 复用 `workspace.update` causal mutation；Human 中央账户资料不适用，N"
+      }
+    },
+    {
+      "id": "B065",
+      "intent": "settings.section.open",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "无后端",
+        "note": "12个适用/本地扩展 section 可刷新、前进/后退恢复；账单与应用已移除，N"
+      }
+    },
+    {
+      "id": "B066",
+      "intent": "settings.sessions.revoke",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "改造",
+        "frontend": "部分",
+        "backend": "部分",
+        "note": "LAN device revoke已有；不等同Raft中央登录session管理，H"
+      }
+    },
+    {
+      "id": "B067",
+      "intent": "shell.navigation.open",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "无后端",
+        "note": "APP/导航已接主模块；帮助/资源不因此自动完成，H"
+      }
+    },
+    {
+      "id": "B068",
+      "intent": "shell.notification.dismiss",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "改造",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "显式 dismiss 经 Human×Workspace canonical preference 持久化，最多100；open/view 不写，版本化本机事项可再次出现；InputRequest 仍必须显式 resolve"
+      }
+    },
+    {
+      "id": "B069",
+      "intent": "shell.notification.enable",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "改造",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "设备偏好默认开启；首次产品click请求未决权限，已授权时启动/focus自动订阅；设置关闭持久opt-out并unsubscribe，禁止自动复活。macOS/iOS各需用户授权后补一次真机投递证据"
+      }
+    },
+    {
+      "id": "B070",
+      "intent": "shell.notification.open",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "页内中心/粉点/InputRequest分owner；OS push点击使用same-origin typed target并重验ACL。desktop页内中心hover精确时序仍属鼠标对齐缺口"
+      }
+    },
+    {
+      "id": "B071",
+      "intent": "shell.workspace.switcher.open",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "部分",
+        "backend": "已接",
+        "note": "SPACE有目录/身份编辑 dialog；官网事实是**点击**空间标识打开 anchored switcher（不是 hover），Escape 关闭并还焦点，且记忆各空间最近 URL；本地尚未对齐"
+      }
+    },
+    {
+      "id": "B072",
+      "intent": "tasks.filter.change",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "DISCOVERY→`task.global.list`，H"
+      }
+    },
+    {
+      "id": "B073",
+      "intent": "tasks.filters.clear",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "已接",
+        "note": "DISCOVERY清理筛选并查询，H"
+      }
+    },
+    {
+      "id": "B074",
+      "intent": "tasks.view.change",
+      "status": "historical-unreviewed",
+      "owners": [],
+      "adoptions": [],
+      "scenarios": [],
+      "historical": {
+        "milestone": "22086e2",
+        "scope": "适用",
+        "frontend": "已接",
+        "backend": "无后端",
+        "note": "DISCOVERY全局看板/列表，H"
+      }
+    },
+    {
+      "id": "UI001",
+      "intent": "agent.inspector.resize",
+      "status": "migrated",
+      "owners": ["apps/web/src/components/profile-panel-resizer.tsx"],
+      "adoptions": ["shared-splitter"],
+      "scenarios": ["splitter-contract", "foundation-combinations"],
+      "currentScope": "Agent 右侧 inspector，不等同 B055 成员目录左边栏。"
+    },
+    {
+      "id": "UI002",
+      "intent": "panel.header.icon-action",
+      "status": "migrated",
+      "owners": ["packages/ui-web/src/neo-brutalist/panel-header-action.tsx"],
+      "adoptions": ["header-action"],
+      "scenarios": ["header-action-states", "foundation-combinations"],
+      "currentScope": "Room / Agent / Thread 标题栏图标按钮；Computer/Settings 和其余基础控件尚未全部迁移。"
+    },
+    {
+      "id": "UI003",
+      "intent": "conversation.panel.header-layout",
+      "status": "migrated",
+      "owners": [
+        "packages/ui-web/src/neo-brutalist/panel-header.tsx",
+        "packages/ui-tokens/src/neo-brutalist/panel-layout.css"
+      ],
+      "adoptions": ["panel-header-slots"],
+      "scenarios": [
+        "panel-header-geometry",
+        "foundation-combinations",
+        "integrated-shell-layout"
+      ],
+      "currentScope": "Room / Agent / Thread 标题轨道；非全站 Shell，Settings / Computer / 全局发现未迁移。"
+    },
+    {
+      "id": "UI004",
+      "intent": "conversation.panel.tabs",
+      "status": "migrated",
+      "owners": [
+        "packages/ui-web/src/neo-brutalist/panel-tabs.tsx",
+        "apps/web/src/components/conversation-tabs.tsx",
+        "apps/web/src/components/agent-directory-pane.tsx"
+      ],
+      "adoptions": ["controlled-panel-tabs", "panel-header-slots"],
+      "scenarios": [
+        "panel-tabs-keyboard",
+        "foundation-combinations",
+        "integrated-shell-layout"
+      ],
+      "currentScope": "Room 与 Agent 七标签共用焦点及横向滚动协议；原页面的 capability 与 selectTab 回调不变。"
+    }
+  ]
+}

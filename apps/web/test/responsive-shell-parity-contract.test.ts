@@ -2,8 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const readWeb = (path: string) =>
-  readFileSync(new URL(`../src/${path}`, import.meta.url), "utf8");
+import { readUiSource as readWeb } from "./ui-source.ts";
 const readRaftBundle = () =>
   readFileSync(
     new URL(
@@ -136,7 +135,7 @@ test("mobile Home renders the actual Raft house glyph, not a missing SVG referen
 test("channel topbar actions use Raft's small icon-button geometry", () => {
   const raft = readRaftBundle();
   const navigation = readWeb("components/workspace-navigation.tsx");
-  const product = readWeb("product.css");
+  const product = readWeb("panel-foundations.css");
 
   assert.match(
     raft,
@@ -144,7 +143,7 @@ test("channel topbar actions use Raft's small icon-button geometry", () => {
   );
   assert.match(
     navigation,
-    /className="sq-btn rah-panel-header-action rah-channel-options"[\s\S]*?aria-label="频道详情与设置"/u,
+    /<PanelHeaderAction[\s\S]*?className="rah-channel-options"[\s\S]*?aria-label="频道详情与设置"/u,
   );
   assert.doesNotMatch(
     navigation,

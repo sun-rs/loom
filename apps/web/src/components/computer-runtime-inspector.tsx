@@ -15,7 +15,7 @@ import {
   runtimeInspectorRows,
 } from "../computer-runtime-inspector-model.ts";
 import { floatingContextMenuPosition } from "../floating-context-menu-model.ts";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 
 export function ComputerRuntimeInspector({
   children,

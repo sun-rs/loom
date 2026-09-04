@@ -5,7 +5,7 @@ import type { RahClient, RahClientOperationMap } from "@rah-os/client-sdk";
 import type { DiscoveryNavigationHandler } from "../global-discovery-model.ts";
 import { socialRequestId } from "../message-social-store.ts";
 import { mergeSavedMessages } from "../saved-messages-model.ts";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { SavedMessageCard } from "./saved-message-card.tsx";
 
 type Saved = RahClientOperationMap["message.saved"]["output"];

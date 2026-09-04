@@ -15,6 +15,8 @@ Session-first rules or obsolete roadmap restrictions as current requirements.
   `docs/architecture/frontend-platform.zh-CN.md`.
 - UI integration: `docs/architecture/raft-ui-product-integration.zh-CN.md`,
   `docs/product/raft-frontend-local-contract.zh-CN.md`.
+- UI library: `docs/design/neo-brutalist-ui.md` and
+  `docs/adr/0028-owned-neo-brutalist-ui-library.md` (current adoption policy).
 - Upstream reuse: `docs/audits/2026-08-29-raft-multica-reuse-ledger.zh-CN.md`.
 - Memory: `docs/product/agent-memory-raft-baseline.zh-CN.md`; follow the current
   policy-retraction and index-only rollout audits linked from `docs/README.md`.
@@ -78,10 +80,11 @@ Unit and integration tests use fake clocks, temporary databases, and fake runtim
 - `packages/application-service` and `packages/client-sdk` expose authenticated,
   typed facades; `packages/client-core` owns ordered client reconciliation,
   causal command barriers and bounded in-memory projections.
-- `packages/ui-tokens` owns generated visual assets; `packages/ui-web` and
+- `packages/ui-tokens` owns maintained Neo-Brutalist visual sources; `packages/ui-web` and
   `apps/web` own shared presentation and route composition, not Provider parsing.
-- `packages/raft-ui-snapshot` is frozen reference evidence, not a production app
-  dependency. Never import a sibling `raft-ui` working tree at runtime.
+- `packages/raft-ui-snapshot` is frozen reference evidence, not a generator input
+  or production app dependency. Build, runtime and maintenance must not require
+  a sibling `raft-ui` working tree. Use the internal English library catalog.
 - UI and transports consume these owners; they do not recreate business state.
 - Shared Web UI remains browser-safe. Desktop IPC/native bridges implement the same client contract and never create a second command handler.
 - Room Kernel service and AgentHost daemon remain logically independent from every window or renderer lifecycle, even when packaged together.
@@ -139,7 +142,7 @@ explicit implementation/test status. An `onClick` count is not a function count;
 neither an old reference fixture nor a visible tab proves product completeness.
 
 - Extract CSS, icons, fonts, avatars and state parameters from authorized source
-  evidence. Use generated tokens; label unavoidable approximations, never guess
+  evidence. Use the maintained internal tokens; label unavoidable approximations, never guess
   screenshot dimensions and call them extracted specifications.
 - Web/PWA share components, intents and protocol. Responsive layout changes must
   not create a second business path. Native shells remain thin clients.

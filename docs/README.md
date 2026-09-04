@@ -1,5 +1,23 @@
 # RAH OS 文档
 
+内部前端资源和模板统一入口：[RAH Neo-Brutalist UI（英文）](./design/neo-brutalist-ui.md)，
+[资源/组件/模板目录](../packages/ui-tokens/neo-brutalist-library.json)，
+[采用与维护决策 ADR 0028](./adr/0028-owned-neo-brutalist-ui-library.md)。
+外部 raft-ui 不再是构建、运行或维护依赖；历史快照只作证据。
+本批的 TDD、浏览器、正式重启和明确剩余项见
+[内部库采用验收](./audits/2026-09-04-neo-brutalist-library-adoption.md)。
+
+当前 UI 来源、owner 与迁移状态只由 [机器行为登记](./product/ui-behavior-registry.json)
+及其 [生成索引](./product/raft-behavior-inventory.zh-CN.md) 维护。共享层施工顺序、
+TDD 和出口条件见 [UI 收口计划](./architecture/ui-consolidation-plan.zh-CN.md)。
+旧报告中的“最新”“当前”“已通过”均限于各自记录时点，不能据此宣布当前版本一致。
+架构和产品合同仍约束对应 owner；历史测试结论不是当前状态。
+
+A/B1 与 B2 首段的限界、失败记录和可复跑命令见 [UI 收敛验收证据](./audits/2026-09-04-ui-foundation-consolidation.zh-CN.md)。
+
+<details>
+<summary>历史批次与证据索引（不作为当前 UI 完成率）</summary>
+
 本地长期运行最新收口：[事件唤醒、30 秒 reconciliation fallback、probe history cursor 与 Web
 generation lease/保留合同](./product/2026-09-03-local-runtime-retention-and-wake-contract.zh-CN.md)；来源裁决、
 短时 CPU/RSS/physical-footprint 对照、磁盘清理与正式发布状态见
@@ -219,7 +237,9 @@ Raft 767px 移动断点、短窗口 50px/36px rail、四项移动根导航、Roo
 
 不采信上述结论、重新启动真实 OpenCode fixture 并独立复核官方 Raft live DOM、Channel、DM、Thread、Task、Agent、Computer 与移动端结果的反证审计：[Raft ↔ RAH OS 独立第三方双边审计](./audits/2026-08-29-independent-third-party-bilateral-audit.zh-CN.md)。
 
-阅读顺序：
+</details>
+
+架构与历史材料阅读索引：
 
 1. [v0.1 收口与竞争性独立审计](./audits/2026-08-26-v01-closure-competitive-audit.zh-CN.md)
 2. [Runtime Placement 与下一阶段独立审计](./audits/2026-08-26-runtime-placement-independent-audit.zh-CN.md)

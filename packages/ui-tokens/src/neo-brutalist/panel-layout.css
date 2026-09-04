@@ -1,0 +1,69 @@
+/* Display-only port of Raft Panel header/tab slots. Geometry has one owner;
+   existing generated .tab and interaction-state.css own button appearance.
+   Do not reintroduce .channel-head/.thread-head/.tabs baseline overrides. */
+.rah-panel-header {
+  align-items: center;
+  background: var(--bg);
+  border-bottom: var(--bd);
+  display: flex;
+  flex: none;
+  gap: 12px;
+  height: var(--head-h);
+  min-width: 0;
+  padding: 0 20px;
+}
+
+.rah-panel-header[data-header-kind="thread"] {
+  gap: 6px;
+  padding-inline: 16px;
+}
+
+.rah-panel-header .channel-id,
+.rah-panel-header .rah-agent-detail-identity {
+  flex: 1;
+  min-width: 0;
+}
+
+.rah-panel-header .channel-sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rah-panel-tabs {
+  background: var(--bg);
+  border-bottom: var(--bd);
+  flex: none;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.rah-panel-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.rah-panel-tabs-list {
+  border-right: var(--bd);
+  display: flex;
+  height: var(--tabs-h);
+  width: max-content;
+}
+
+.rah-panel-tabs-list > .tab {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .rah-panel-header[data-header-kind="conversation"] {
+    padding-inline: 12px;
+  }
+
+  /* Retained reference mobile Agent composition; not the desktop shell row. */
+  .rah-panel-header[data-header-kind="agent"] {
+    gap: 10px;
+    height: 76px;
+    padding: 10px 12px;
+  }
+}

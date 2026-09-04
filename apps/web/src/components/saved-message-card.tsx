@@ -6,7 +6,7 @@ import {
   savedTargetLabel,
   type SavedMessage,
 } from "../saved-messages-model.ts";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { FloatingContextMenu } from "./floating-context-menu.tsx";
 import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
 

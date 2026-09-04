@@ -2,14 +2,13 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const read = (path: string) =>
-  readFileSync(new URL(`../src/${path}`, import.meta.url), "utf8");
+import { readUiSource as read } from "./ui-source.ts";
 
 test("the product owns one Raft-derived interaction state protocol", () => {
-  const entry = read("main.tsx");
+  const entry = read("product-styles.ts");
   const protocol = read("interaction-state.css");
 
-  assert.match(entry, /import "\.\/interaction-state\.css"/u);
+  assert.match(entry, /@rah-os\/ui-tokens\/neo-brutalist\.css/u);
   assert.match(
     protocol,
     /--rah-interaction-transition:\s*150ms cubic-bezier\(0\.4, 0, 0\.2, 1\)/u,

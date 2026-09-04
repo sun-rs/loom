@@ -53,91 +53,32 @@ test("additional discovery icons retain the paths extracted from the Raft publis
   );
 });
 
-type GeneratedManifest = {
-  files: Array<{
-    bytes: number;
-    outputPath: string;
-    sha256: string;
-    sourcePath: string;
-  }>;
-  schemaVersion: 1;
-  source: {
-    dirty: boolean;
-    gitHead: string;
-    repository: "raft-ui";
-  };
-};
-
-type SnapshotManifest = {
-  files: Array<{ bytes: number; path: string; sha256: string }>;
-  schemaVersion: 1;
-  source: GeneratedManifest["source"];
-};
-
-test("product UI assets are a narrow generated projection of the Raft reference", () => {
-  const generated = JSON.parse(
-    readFileSync(
-      join(packageRoot, "generated", "generated-manifest.json"),
-      "utf8",
-    ),
-  ) as GeneratedManifest;
+test("adopted assets retain origin evidence without requiring mutable CSS to stay frozen", () => {
+  const adoption = JSON.parse(
+    readFileSync(join(packageRoot, "adoption.json"), "utf8"),
+  );
   const snapshot = JSON.parse(
-    readFileSync(
-      join(
-        repositoryRoot,
-        "packages",
-        "raft-ui-snapshot",
-        "snapshot-manifest.json",
-      ),
-      "utf8",
-    ),
-  ) as SnapshotManifest;
-
-  assert.equal(generated.schemaVersion, 1);
-  assert.deepEqual(generated.source, snapshot.source);
-  assert.deepEqual(
-    generated.files.map(({ sourcePath }) => sourcePath),
-    [
-      "activity.css",
-      "channel-extras.css",
-      "generated/raft-icons.svg",
-      "generated/raft-official-activity.css",
-      "generated/raft-official-avatar-pack.json",
-      "generated/raft-official-computers.css",
-      "generated/raft-official-members-page.css",
-      "generated/raft-official-overlays.css",
-      "generated/raft-official-tasks.css",
-      "generated/raft-official-tokens.css",
-      "search.css",
-      "styles.css",
-      "tokens.brutal.css",
-      "vendor/raft/fonts/raft-quote-glyphs.woff2",
-      "vendor/raft/fonts/space-grotesk-latin.woff2",
-      "vendor/raft/fonts/space-mono-400-latin.woff2",
-      "vendor/raft/fonts/space-mono-700-latin.woff2",
-      "vendor/raft/official-fonts.css",
-    ],
+    readFileSync(join(repositoryRoot, adoption.originManifest), "utf8"),
   );
-
-  const snapshotFiles = new Map(
-    snapshot.files.map((entry) => [entry.path, entry]),
-  );
-  for (const entry of generated.files) {
-    assert.doesNotMatch(entry.sourcePath, /\.(?:html|js)$/);
-    assert.equal(entry.sha256, snapshotFiles.get(entry.sourcePath)?.sha256);
-    const content = readFileSync(
-      join(packageRoot, "generated", entry.outputPath),
-    );
-    assert.equal(content.byteLength, entry.bytes);
+  assert.equal(adoption.files.length, 18);
+  assert.deepEqual(adoption.source, snapshot.source);
+  for (const entry of adoption.files) {
+    assert.doesNotMatch(entry.path, /\.(?:html|js)$/);
     assert.equal(
-      createHash("sha256").update(content).digest("hex"),
-      entry.sha256,
+      entry.originSha256,
+      snapshot.files.find(
+        (source: { path: string }) => source.path === entry.originPath,
+      )?.sha256,
     );
+    if (entry.policy === "immutable-asset") {
+      assert.equal(
+        createHash("sha256")
+          .update(readFileSync(join(repositoryRoot, entry.path)))
+          .digest("hex"),
+        entry.originSha256,
+      );
+    }
   }
-
-  const packageJson = readFileSync(join(packageRoot, "package.json"), "utf8");
-  assert.doesNotMatch(packageJson, /raft-ui-snapshot/);
-  assert.match(packageJson, /"\.\/official-fonts\.css"/u);
 });
 
 test("official Raft font mirrors are byte-exact and expose the message reaction metrics", () => {
@@ -159,7 +100,9 @@ test("official Raft font mirrors are byte-exact and expose the message reaction 
       "af7cf6d2b897ec453acdcdacde4e9bcc8410718af5914de865b453e09f10eebc",
     ],
   ] as const) {
-    const content = readFileSync(join(packageRoot, "generated", relativePath));
+    const content = readFileSync(
+      join(packageRoot, "src/neo-brutalist", relativePath),
+    );
     assert.equal(
       createHash("sha256").update(content).digest("hex"),
       expectedSha256,

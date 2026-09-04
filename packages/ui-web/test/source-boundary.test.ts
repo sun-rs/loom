@@ -5,9 +5,12 @@ import test from "node:test";
 
 const repositoryRoot = join(import.meta.dirname, "..", "..", "..");
 
-test("the product UI consumes generated tokens without embedding the Raft reference", () => {
+test("the product UI consumes the maintained library without embedding the Raft reference", () => {
   const productSourceDirectory = join(repositoryRoot, "apps", "web", "src");
-  const productSource = sourceFiles(productSourceDirectory)
+  const productSource = [
+    ...sourceFiles(productSourceDirectory),
+    ...sourceFiles(join(repositoryRoot, "packages/ui-web/src/neo-brutalist")),
+  ]
     .map((file) => readFileSync(file, "utf8"))
     .join("\n");
 
@@ -15,7 +18,7 @@ test("the product UI consumes generated tokens without embedding the Raft refere
   assert.doesNotMatch(productSource, /(?:^|["'])\.\.\/raft-ui/);
   assert.doesNotMatch(productSource, /reference\/[a-z-]+\.html/);
   assert.doesNotMatch(productSource, /raft-ui-snapshot/);
-  assert.match(productSource, /@rah-os\/ui-tokens\/styles\.css/);
+  assert.match(productSource, /@rah-os\/ui-tokens\/neo-brutalist\.css/);
   assert.match(productSource, /@rah-os\/ui-tokens\/icons\.svg/);
 
   const uiWebPackage = readFileSync(

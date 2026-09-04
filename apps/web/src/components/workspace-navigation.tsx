@@ -1,6 +1,8 @@
 import type { Room, Workspace } from "@rah-os/protocol";
 import { DEFAULT_SIDEBAR_PREFERENCES } from "@rah-os/protocol";
 import { useSidebarPreferences } from "./sidebar-preferences.tsx";
+import { PanelHeaderAction } from "@rah-os/ui-web/neo-brutalist/panel-header-action";
+import { PanelHeader } from "@rah-os/ui-web/neo-brutalist/panel-header";
 import {
   SidebarDrag,
   SidebarDragItem,
@@ -23,7 +25,7 @@ import {
 
 import { AgentAvatar } from "./agent-avatar.tsx";
 import { AgentStatusDot } from "./agent-status-dot.tsx";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import {
   ChannelRowIdentity,
   RoomAttentionBadges,
@@ -579,7 +581,7 @@ export function ChannelHeader({
   const direct = room?.kind === "direct";
   const title = directPeer?.displayName ?? room?.name ?? "选择一个 Room";
   return (
-    <header className="channel-head">
+    <PanelHeader kind="conversation" className="rah-conversation-head">
       <button
         aria-label="返回主页"
         className="sq-btn rah-mobile-only rah-mobile-back"
@@ -637,25 +639,24 @@ export function ChannelHeader({
       </div>
       {direct ? null : (
         <div className="head-actions">
-          <button
-            className="sq-btn rah-panel-header-action"
+          <PanelHeaderAction
             onClick={onSearch}
             aria-label="搜索当前对话"
             title="搜索当前对话"
           >
             <Icon name="search" />
-          </button>
-          <button
-            className="sq-btn rah-panel-header-action rah-channel-options"
+          </PanelHeaderAction>
+          <PanelHeaderAction
+            className="rah-channel-options"
             onClick={onManageAgents}
             aria-label="频道详情与设置"
             title={`频道详情与设置（${memberCount} 位成员）`}
           >
             <Icon name="settings" />
-          </button>
+          </PanelHeaderAction>
         </div>
       )}
-    </header>
+    </PanelHeader>
   );
 }
 
@@ -747,33 +748,6 @@ function MobileNavigationButton({
           {badge > 99 ? "99+" : badge}
         </b>
       ) : null}
-    </button>
-  );
-}
-
-export function TabButton({
-  active,
-  disabled = false,
-  icon,
-  label,
-  onClick,
-}: {
-  active: boolean;
-  disabled?: boolean;
-  icon: string;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      className={`tab${active ? " is-active" : ""}`}
-      disabled={disabled}
-      onClick={onClick}
-      role="tab"
-      aria-selected={active}
-    >
-      <Icon name={icon} />
-      {label}
     </button>
   );
 }

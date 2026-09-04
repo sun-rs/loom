@@ -47,7 +47,10 @@ test("attachment preview escapes the message containment through the shared docu
   assert.match(preview, /document\.body,/u);
   assert.match(preview, /useDialogProtocol/u);
   const interactions = readFileSync(
-    join(import.meta.dirname, "..", "src", "interaction-state.css"),
+    join(
+      import.meta.dirname,
+      "../../../packages/ui-tokens/src/neo-brutalist/interaction-state.css",
+    ),
     "utf8",
   );
   assert.match(

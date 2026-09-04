@@ -18,7 +18,7 @@ import {
 } from "@rah-os/protocol";
 import { FileUploadStore } from "../file-uploads.ts";
 import { useDialogProtocol } from "../dialog-protocol.ts";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { FileGlyph } from "./file-glyph.tsx";
 import { AttachmentTextPreview } from "./file-preview-renderers.tsx";
 

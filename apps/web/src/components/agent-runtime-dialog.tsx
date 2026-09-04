@@ -13,7 +13,7 @@ import {
 } from "../agent-runtime-capabilities.ts";
 import { useDialogProtocol } from "../dialog-protocol.ts";
 import { DiscoveryFilter } from "./discovery-filter.tsx";
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import type { AgentConfigureInput } from "./agent-dialogs.tsx";
 
 /** Raft's profile edit entry; the existing agent.manage command owns persistence. */

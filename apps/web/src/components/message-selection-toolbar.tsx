@@ -1,4 +1,4 @@
-import { Icon } from "./icon.tsx";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 
 export function MessageSelectionToolbar({
   allSelected,

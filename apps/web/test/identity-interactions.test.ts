@@ -192,13 +192,14 @@ test("chat-scoped Agent inspector reuses the canonical detail header geometry", 
 
 test("conversation and Agent inspector tab frames end on the same divider", () => {
   const css = readFileSync(
-    new URL("../src/chat-surface.css", import.meta.url),
+    new URL(
+      "../../../packages/ui-tokens/src/neo-brutalist/panel-layout.css",
+      import.meta.url,
+    ),
     "utf8",
   );
-  assert.match(
-    css,
-    /\.rah-product-shell > \.channel:not\(\.rah-agent-peek\) > \.tabs \{\s*height: var\(--raft-members-tabs-frame-height\);\s*\}/u,
-  );
+  assert.match(css, /\.rah-panel-tabs\s*\{[^}]*border-bottom: var\(--bd\);/u);
+  assert.match(css, /\.rah-panel-tabs-list\s*\{[^}]*height: var\(--tabs-h\);/u);
 });
 
 test("short status and tool detail are inline, narrative is a separate expandable body", () => {

@@ -4,8 +4,8 @@
    本文件只允许消费令牌变量，禁止硬编码色值 / 尺寸 / 阴影。
    ============================================================ */
 @import "tokens.brutal.css";
-@import "generated/raft-official-tokens.css";
-@import "generated/raft-official-overlays.css";
+@import "extracted/raft-official-tokens.css";
+@import "extracted/raft-official-overlays.css";
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
