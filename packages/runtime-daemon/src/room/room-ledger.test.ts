@@ -617,6 +617,94 @@ test("RoomLedger bounds message list materialization by serialized bytes", () =>
   }
 });
 
+test("RoomLedger bounds JSON-escaping expansion before message rows enter JavaScript", () => {
+  const context = fixture();
+  try {
+    const escapedBody = "\u0000\n\"\\\t".repeat(20_000);
+    assert.equal(escapedBody.length, 100_000);
+    for (let index = 0; index < 8; index += 1) {
+      context.ledger.postMessage("human-owner", {
+        roomId: "room-general",
+        body: escapedBody,
+        idempotencyKey: `escaped-message-${index}`,
+      });
+    }
+    const page = context.ledger.listMessages("human-owner", "room-general", { limit: 500 });
+    assert.ok(page.messages.length > 0);
+    assert.ok(page.messages.length < 8);
+    assert.ok(Buffer.byteLength(JSON.stringify(page)) <= 1_048_576);
+    const bootstrap = context.ledger.syncRoom("human-owner", {
+      roomId: "room-general",
+      bootstrap: "latest",
+      limit: 500,
+    });
+    assert.ok(Buffer.byteLength(JSON.stringify(bootstrap)) <= 1_048_576);
+  } finally {
+    context.ledger.close();
+    rmSync(context.root, { recursive: true, force: true });
+  }
+});
+
+test("RoomLedger forward and backward message traversal stay frozen across mid-page inserts", () => {
+  const context = fixture();
+  try {
+    for (let index = 1; index <= 9; index += 1) {
+      context.ledger.postMessage("human-owner", {
+        roomId: "room-general",
+        body: `frozen-${index}`,
+        idempotencyKey: `frozen-${index}`,
+      });
+    }
+    const throughRoomSeq = context.ledger.syncRoom("human-owner", {
+      roomId: "room-general",
+      bootstrap: "latest",
+      limit: 1,
+    }).throughSeq;
+
+    const forwardBodies: string[] = [];
+    let forwardAnchor = 0;
+    let forwardHasMore = true;
+    while (forwardHasMore) {
+      const page = context.ledger.listMessages("human-owner", "room-general", {
+        afterRoomSeq: forwardAnchor,
+        throughRoomSeq,
+        limit: 2,
+      });
+      forwardBodies.push(...page.messages.map((message) => message.body));
+      forwardAnchor = page.cursorAfter;
+      forwardHasMore = page.hasMore;
+      if (forwardBodies.length === 2) {
+        context.ledger.postMessage("human-owner", {
+          roomId: "room-general",
+          body: "newer-than-freeze",
+          idempotencyKey: "newer-than-freeze",
+        });
+      }
+    }
+
+    const backwardBodies: string[] = [];
+    let backwardAnchor = throughRoomSeq + 1;
+    let backwardHasMore = true;
+    while (backwardHasMore) {
+      const page = context.ledger.listMessages("human-owner", "room-general", {
+        beforeRoomSeq: backwardAnchor,
+        throughRoomSeq,
+        limit: 2,
+      });
+      backwardBodies.unshift(...page.messages.map((message) => message.body));
+      backwardAnchor = page.cursorAfter;
+      backwardHasMore = page.hasMore;
+    }
+    const expected = Array.from({ length: 9 }, (_, index) => `frozen-${index + 1}`);
+    assert.deepEqual(forwardBodies, expected);
+    assert.deepEqual(backwardBodies, expected);
+    assert.equal(new Set(forwardBodies).size, expected.length);
+  } finally {
+    context.ledger.close();
+    rmSync(context.root, { recursive: true, force: true });
+  }
+});
+
 test("RoomLedger normalizes ignored direct mentions before idempotency hashing", () => {
   const context = fixture();
   try {

@@ -6,6 +6,7 @@ export * from "./conversation-activity";
 export * from "./live-backend-policy";
 export * from "./council";
 export * from "./room";
+export * from "./room-read";
 export * from "./events";
 export * from "./api";
 export * from "./contract";

@@ -202,6 +202,12 @@ export class RoomLedger {
         visibility: request.visibility ?? "private",
         createdAt,
       };
+      const ownerMembership: RoomMembership = {
+        roomId: room.roomId,
+        principalId: actor.principalId,
+        role: "owner",
+        joinedAt: createdAt,
+      };
       this.#database
         .prepare(
           "INSERT INTO rooms(room_id, workspace_key, kind, slug, name, visibility, created_at) VALUES(?, ?, ?, ?, ?, ?, ?)",
@@ -219,7 +225,11 @@ export class RoomLedger {
         .prepare(
           "INSERT INTO room_memberships(room_id, principal_id, role, joined_at) VALUES(?, ?, 'owner', ?)",
         )
-        .run(room.roomId, actorId, createdAt);
+        .run(
+          ownerMembership.roomId,
+          ownerMembership.principalId,
+          ownerMembership.joinedAt,
+        );
       const event = this.#appendEvent({
         roomId: room.roomId,
         actorId,
@@ -228,7 +238,7 @@ export class RoomLedger {
         aggregateId: room.roomId,
         idempotencyKey: request.idempotencyKey,
         createdAt,
-        payload: { room },
+        payload: { room, ownerMembership, ownerPrincipal: actor },
       });
       const result: RoomMutationResult<RoomRecord> = {
         value: room,
@@ -270,7 +280,7 @@ export class RoomLedger {
       if (request.role === "owner" && actorMembership.role !== "owner") {
         throw roomError("forbidden", "Only a Room owner may grant owner role");
       }
-      this.#requirePrincipal(request.principalId);
+      const principal = this.#requirePrincipal(request.principalId);
       this.#requireRoomHead(request.roomId, request.basedOnRoomSeq);
       const room = this.#requireRoom(request.roomId);
       const memberCount = this.#roomMembershipPrincipalIds(request.roomId).length;
@@ -321,7 +331,7 @@ export class RoomLedger {
         aggregateId: request.principalId,
         idempotencyKey: request.idempotencyKey,
         createdAt: membership.joinedAt,
-        payload: { membership },
+        payload: { membership, principal },
       });
       const result: RoomMutationResult<RoomMembership> = {
         value: membership,
@@ -962,7 +972,7 @@ export class RoomLedger {
       .prepare(
         `SELECT * FROM (
            SELECT candidate.*,
-             SUM(length(CAST(candidate.body AS BLOB)) + 512)
+             SUM(length(CAST(json_quote(candidate.body) AS BLOB)) + 512)
                OVER (ORDER BY candidate.room_seq DESC) AS cumulative_bytes
            FROM (
              SELECT * FROM room_messages
@@ -988,7 +998,7 @@ export class RoomLedger {
     const rows = this.#database.prepare(
       `SELECT * FROM (
          SELECT candidate.*,
-           SUM(length(CAST(candidate.body AS BLOB)) + 512)
+           SUM(length(CAST(json_quote(candidate.body) AS BLOB)) + 512)
              OVER (ORDER BY candidate.room_seq ${direction}) AS cumulative_bytes
          FROM (
            SELECT * FROM room_messages
@@ -1390,7 +1400,12 @@ export class RoomLedger {
       this.#database.exec("COMMIT");
       return result;
     } catch (error) {
-      this.#database.exec("ROLLBACK");
+      try {
+        this.#database.exec("ROLLBACK");
+      } catch {
+        // Preserve the operation failure; rollback failure must not replace the
+        // domain/storage error that caused the transaction to abort.
+      }
       throw this.#storageError(error);
     }
   }
@@ -1406,7 +1421,11 @@ export class RoomLedger {
       this.#database.exec("COMMIT");
       return result;
     } catch (error) {
-      this.#database.exec("ROLLBACK");
+      try {
+        this.#database.exec("ROLLBACK");
+      } catch {
+        // Preserve the original read failure for the application boundary.
+      }
       throw this.#storageError(error);
     }
   }
