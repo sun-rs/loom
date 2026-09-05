@@ -1720,6 +1720,133 @@ test("Conversation turn detail hydrates process items without replacing the visi
   );
 });
 
+test("Conversation turn detail preserves a historical Guide at its persisted process boundary", async () => {
+  const user = timelineItem("user", "turn-1", "user", "question");
+  const guide = timelineItem("guide", "turn-1", "user", "guide now");
+  if (
+    user.content.kind !== "timeline" ||
+    user.content.item.kind !== "user_message" ||
+    guide.content.kind !== "timeline" ||
+    guide.content.item.kind !== "user_message"
+  ) {
+    assert.fail("expected user timeline items");
+  }
+  user.content.item.inputPlacement = "turn_start";
+  guide.content.item.inputPlacement = "turn_steer";
+  const processBefore = timelineItem("process-before", "turn-1", "process", "before");
+  const reaction = timelineItem("reaction", "turn-1", "process", "reaction");
+  const processAfter = timelineItem("process-after", "turn-1", "process", "after");
+  const final = timelineItem("final", "turn-1", "final", "answer");
+  const summaryTurn: ConversationTurnProjection = {
+    ...turn("turn-1", [user, final]),
+    itemsView: "summary",
+    finalAnswerItemId: final.id,
+  };
+  const testHarness = harness([page([summaryTurn])]);
+  await ensureConversationLoadedCommand(testHarness.deps, "session-1");
+
+  assert.equal(
+    await loadConversationTurnDetailCommand(
+      {
+        ...testHarness.deps,
+        readTurnDetail: async () => ({
+          sessionId: "session-1",
+          turnId: "turn-1",
+          turn: {
+            ...summaryTurn,
+            items: [user, processBefore, guide, reaction, processAfter, final],
+            itemsView: "full",
+            revision: 2,
+          },
+        }),
+      },
+      "session-1",
+      "turn-1",
+    ),
+    true,
+  );
+
+  const hydrated = testHarness.state().projections.get("session-1")?.conversation?.turns[0];
+  assert.deepEqual(hydrated?.items.map((item) => item.id), [
+    "user",
+    "process-before",
+    "guide",
+    "reaction",
+    "process-after",
+    "final",
+  ]);
+  const feed = conversationTurnsToFeed(hydrated ? [hydrated] : []);
+  const processGroup = conversationDisplayRows(hydrated ? [hydrated] : [], feed).find(
+    (row) => row.kind === "assistant_process_group",
+  );
+  assert.equal(processGroup?.kind, "assistant_process_group");
+  if (processGroup?.kind !== "assistant_process_group") {
+    assert.fail("expected an assistant process group");
+  }
+  assert.deepEqual(
+    processGroup.entries.map((entry) =>
+      entry.kind === "timeline" ? entry.item.text : entry.key
+    ),
+    ["before", "guide now", "reaction", "after"],
+  );
+});
+
+test("Conversation turn detail degrades an unplaced resident Guide to the end of Worked", async () => {
+  const user = timelineItem("user", "turn-1", "user", "question");
+  const guide = timelineItem("guide", "turn-1", "user", "unplaced guide");
+  if (
+    user.content.kind !== "timeline" ||
+    user.content.item.kind !== "user_message" ||
+    guide.content.kind !== "timeline" ||
+    guide.content.item.kind !== "user_message"
+  ) {
+    assert.fail("expected user timeline items");
+  }
+  user.content.item.inputPlacement = "turn_start";
+  guide.content.item.inputPlacement = "turn_steer";
+  guide.content.item.causalAfterItemId = "missing-process-anchor";
+  const processBefore = timelineItem("process-before", "turn-1", "process", "before");
+  const processAfter = timelineItem("process-after", "turn-1", "process", "after");
+  const final = timelineItem("final", "turn-1", "final", "answer");
+  const summaryTurn: ConversationTurnProjection = {
+    ...turn("turn-1", [user, guide, final]),
+    itemsView: "summary",
+    finalAnswerItemId: final.id,
+  };
+  const testHarness = harness([page([summaryTurn])]);
+  await ensureConversationLoadedCommand(testHarness.deps, "session-1");
+
+  assert.equal(
+    await loadConversationTurnDetailCommand(
+      {
+        ...testHarness.deps,
+        readTurnDetail: async () => ({
+          sessionId: "session-1",
+          turnId: "turn-1",
+          turn: {
+            ...summaryTurn,
+            items: [user, processBefore, processAfter, final],
+            itemsView: "full",
+            revision: 2,
+          },
+        }),
+      },
+      "session-1",
+      "turn-1",
+    ),
+    true,
+  );
+
+  const hydrated = testHarness.state().projections.get("session-1")?.conversation?.turns[0];
+  assert.deepEqual(hydrated?.items.map((item) => item.id), [
+    "user",
+    "process-before",
+    "process-after",
+    "guide",
+    "final",
+  ]);
+});
+
 test("Conversation keeps hydrated user image attachments across a summary refresh", async () => {
   const summaryUser = {
     ...timelineItem("user", "turn-1", "user", "question"),

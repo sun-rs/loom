@@ -223,6 +223,107 @@ function lastFinalItem(
   return undefined;
 }
 
+function mergeDetailedUserItem(
+  detailed: ConversationItemProjection,
+  existing: ConversationItemProjection,
+): ConversationItemProjection {
+  if (
+    detailed.content.kind !== "timeline" ||
+    detailed.content.item.kind !== "user_message" ||
+    existing.content.kind !== "timeline" ||
+    existing.content.item.kind !== "user_message"
+  ) {
+    return detailed;
+  }
+  const detailedItem = detailed.content.item;
+  const existingItem = existing.content.item;
+  return {
+    ...detailed,
+    content: {
+      ...detailed.content,
+      item: {
+        ...detailedItem,
+        ...(detailedItem.clientMessageId !== undefined
+          ? { clientMessageId: detailedItem.clientMessageId }
+          : existingItem.clientMessageId !== undefined
+            ? { clientMessageId: existingItem.clientMessageId }
+            : {}),
+        ...(detailedItem.clientTurnId !== undefined
+          ? { clientTurnId: detailedItem.clientTurnId }
+          : existingItem.clientTurnId !== undefined
+            ? { clientTurnId: existingItem.clientTurnId }
+            : {}),
+        ...(detailedItem.inputPlacement !== undefined
+          ? { inputPlacement: detailedItem.inputPlacement }
+          : existingItem.inputPlacement !== undefined
+            ? { inputPlacement: existingItem.inputPlacement }
+            : {}),
+        ...(detailedItem.causalAfterItemId !== undefined
+          ? { causalAfterItemId: detailedItem.causalAfterItemId }
+          : existingItem.causalAfterItemId !== undefined
+            ? { causalAfterItemId: existingItem.causalAfterItemId }
+            : {}),
+      },
+    },
+    revision: Math.max(detailed.revision, existing.revision),
+  };
+}
+
+function mergeTurnDetailItems(
+  current: ConversationTurnProjection,
+  detailedItems: readonly ConversationItemProjection[],
+): ConversationItemProjection[] {
+  const currentMatch = (detailed: ConversationItemProjection) =>
+    current.items.find(
+      (item) => item.role === detailed.role && sameConversationItemIdentity(item, detailed),
+    );
+  const hydratedDetailed = detailedItems.map((detailed) => {
+    const existing = currentMatch(detailed);
+    if (!existing) {
+      return detailed;
+    }
+    if (detailed.role === "process") {
+      return mergeProcessItem(detailed, existing);
+    }
+    if (detailed.role === "user") {
+      return mergeDetailedUserItem(detailed, existing);
+    }
+    return detailed;
+  });
+
+  // Full turn detail is authoritative for persisted order. In particular, an
+  // in-turn Guide must remain between the process items that surrounded it in
+  // provider history. Resident-only items can still exist when a live delta or
+  // optimistic Guide arrived after the detail snapshot. Their exact historical
+  // boundary is unknown, so keep initial input at the turn start and degrade
+  // later user input to the end of Worked, immediately before the final answer.
+  const retained = current.items.filter(
+    (item) =>
+      !detailedItems.some((detailed) => sameConversationItemIdentity(item, detailed)),
+  );
+  const retainedUsers = retained.filter((item) => item.role === "user");
+  const hasDetailedUser = hydratedDetailed.some((item) => item.role === "user");
+  const retainedInitialUsers = hasDetailedUser ? [] : retainedUsers.slice(0, 1);
+  const retainedGuides = hasDetailedUser
+    ? retainedUsers
+    : retainedUsers.slice(retainedInitialUsers.length);
+  const retainedProcess = retained.filter((item) => item.role === "process");
+  const retainedFinal = hydratedDetailed.some((item) => item.role === "final")
+    ? []
+    : retained.filter((item) => item.role === "final");
+
+  const items = [...retainedInitialUsers, ...hydratedDetailed];
+  const finalIndex = items.findIndex((item) => item.role === "final");
+  items.splice(
+    finalIndex >= 0 ? finalIndex : items.length,
+    0,
+    ...retainedProcess,
+    ...retainedGuides,
+  );
+  items.push(...retainedFinal);
+  return orderConversationTurnItems(items);
+}
+
 function mergeTurnWithRetainedItems(
   current: ConversationTurnProjection,
   incoming: ConversationTurnProjection,
@@ -1042,41 +1143,7 @@ function applyTurnDetail(
   const applyToTurn = (
     turn: ConversationTurnProjection,
   ): ConversationTurnProjection => {
-    const existingProcessById = new Map(
-      turn.items.filter((item) => item.role === "process").map((item) => [item.id, item]),
-    );
-    const existingProcessByProviderId = new Map(
-      turn.items
-        .filter((item) => item.role === "process" && item.providerItemId)
-        .map((item) => [item.providerItemId!, item]),
-    );
-    const hydratedProcess = response.turn.items
-      .filter((item) => item.role === "process")
-      .map((item) => {
-        const existing =
-          existingProcessById.get(item.id) ??
-          (item.providerItemId
-            ? existingProcessByProviderId.get(item.providerItemId)
-            : undefined);
-        return existing ? mergeProcessItem(item, existing) : item;
-      });
-    const detailedItems = response.turn.items;
-    const identityIsRepresentedByDetail = (item: ConversationItemProjection): boolean =>
-      detailedItems.some((detailed) => sameConversationItemIdentity(item, detailed));
-    const liveOnlyProcess = turn.items.filter(
-      (item) => item.role === "process" && !identityIsRepresentedByDetail(item),
-    );
-    const detailedLeading = detailedItems.filter(
-      (item) => item.role !== "process" && item.role !== "final",
-    );
-    const detailedFinal = detailedItems.filter((item) => item.role === "final");
-    const leading = detailedLeading.length > 0
-      ? detailedLeading
-      : turn.items.filter((item) => item.role !== "process" && item.role !== "final");
-    const final = detailedFinal.length > 0
-      ? detailedFinal
-      : turn.items.filter((item) => item.role === "final");
-    const items = [...leading, ...hydratedProcess, ...liveOnlyProcess, ...final];
+    const items = mergeTurnDetailItems(turn, response.turn.items);
     const finalItem = lastFinalItem(items);
     // Full turn detail is authoritative for resources. Unioning it with the
     // lightweight summary keeps obsolete inferred outputs/sources alive after

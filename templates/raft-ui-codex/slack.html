@@ -1,0 +1,1019 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>RAH Room · Raft UI study</title>
+<style>
+  :root {
+    color-scheme: light;
+    --ink: #141111;
+    --paper: #fff;
+    --cream: #fffaf0;
+    --yellow: #ffd33d;
+    --yellow-soft: #fff1c5;
+    --pink: #f4769f;
+    --cyan: #35c4df;
+    --lavender: #b9a8ed;
+    --green: #75d89a;
+    --orange: #f4a36d;
+    --muted: #918f8a;
+    --line-soft: rgba(20, 17, 17, .22);
+    --hover: rgba(255, 211, 61, .18);
+    --scroll-thumb: rgba(20, 17, 17, .24);
+    --scroll-thumb-hover: rgba(20, 17, 17, .36);
+    --shadow-s: 2px 2px 0 var(--ink);
+    --shadow-m: 4px 4px 0 var(--ink);
+    --rail: 64px;
+    --sidebar: 240px;
+    --thread: 500px;
+    --header: 60px;
+    --tabs: 40px;
+    font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-synthesis: none;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+  body { color: var(--ink); background: var(--paper); font-size: 14px; }
+  button, textarea { color: inherit; font: inherit; }
+  button { appearance: none; border: 0; background: none; }
+  svg { width: 19px; height: 19px; display: block; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  [hidden] { display: none !important; }
+
+  :is(button, a, textarea):focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+
+  .scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scroll-thumb) transparent;
+  }
+  .scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+  .scroll::-webkit-scrollbar-track { background: transparent; }
+  .scroll::-webkit-scrollbar-thumb {
+    min-height: 32px;
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background: var(--scroll-thumb);
+    background-clip: padding-box;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .scroll:hover { scrollbar-color: var(--scroll-thumb-hover) transparent; }
+    .scroll::-webkit-scrollbar-thumb:hover { background-color: var(--scroll-thumb-hover); }
+  }
+
+  .icon-button,
+  .rail-button,
+  .solid-button,
+  .tab,
+  .sidebar-row,
+  .message,
+  .file-row,
+  .task-card { transition: background-color 80ms linear, box-shadow 80ms linear, transform 80ms linear; }
+
+  .icon-button {
+    min-width: 30px;
+    height: 30px;
+    padding: 4px;
+    border: 2px solid var(--ink);
+    background: var(--paper);
+    box-shadow: var(--shadow-s);
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+  }
+  .icon-button:hover { box-shadow: var(--shadow-m); }
+  .icon-button:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--ink); }
+  .icon-button svg { width: 17px; height: 17px; }
+
+  .shell {
+    position: relative;
+    height: 100dvh;
+    display: grid;
+    grid-template-columns: var(--rail) var(--sidebar) minmax(0, 1fr);
+    overflow: hidden;
+  }
+
+  .sidebar-resizer {
+    position: absolute;
+    z-index: 11;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--rail) + var(--sidebar) - 4px);
+    width: 8px;
+    padding: 0;
+    cursor: col-resize;
+    touch-action: none;
+  }
+  .sidebar-resizer::after {
+    content: "";
+    position: absolute;
+    inset: 0 3px;
+    background: transparent;
+  }
+  .sidebar-resizer:hover::after,
+  .sidebar-resizer:focus-visible::after,
+  body.is-resizing .sidebar-resizer::after { background: var(--ink); }
+  body.is-resizing { cursor: col-resize; user-select: none; }
+
+  /* rail */
+  .rail {
+    min-height: 0;
+    padding: 8px 7px;
+    border-right: 2px solid var(--ink);
+    background: var(--yellow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .brand {
+    width: 42px;
+    height: 42px;
+    margin-bottom: 4px;
+    border: 2px solid var(--ink);
+    background: var(--ink);
+    color: var(--yellow);
+    box-shadow: var(--shadow-s);
+    display: grid;
+    place-items: center;
+    font: 700 20px/1 ui-monospace, monospace;
+  }
+  .rail-button {
+    width: 42px;
+    height: 42px;
+    border: 2px solid transparent;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+  .rail-button:hover { border-color: var(--ink); background: var(--paper); }
+  .rail-button[aria-current="page"] { border-color: var(--ink); background: var(--paper); box-shadow: var(--shadow-s); }
+  .rail-spacer { flex: 1; }
+  .status-dot { position: relative; }
+  .status-dot::after {
+    content: "";
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    width: 7px;
+    height: 7px;
+    border: 1.5px solid var(--ink);
+    border-radius: 50%;
+    background: var(--pink);
+  }
+
+  /* sidebar */
+  .sidebar {
+    min-width: 0;
+    min-height: 0;
+    border-right: 2px solid var(--ink);
+    background: var(--cream);
+    display: grid;
+    grid-template-rows: var(--header) minmax(0, 1fr);
+  }
+  .sidebar-title {
+    padding: 0 18px;
+    border-bottom: 2px solid var(--ink);
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+    font-weight: 750;
+  }
+  .sidebar-scroll { padding: 10px 8px 20px; overflow-y: auto; }
+  .sidebar-section { margin-bottom: 13px; }
+  .section-heading {
+    min-height: 28px;
+    padding: 0 7px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .section-heading .count { color: var(--muted); font-size: 11px; font-weight: 500; }
+  .section-heading .push { margin-left: auto; display: flex; gap: 8px; }
+  .section-heading .push button { padding: 2px; cursor: pointer; opacity: .72; }
+  .section-heading .push button:hover { opacity: 1; background: rgba(20, 17, 17, .06); }
+  .section-hint { margin: 1px 8px 7px 24px; color: #aaa59b; font-size: 12px; line-height: 1.35; }
+
+  .sidebar-row {
+    width: 100%;
+    min-height: 34px;
+    padding: 3px 8px;
+    border: 2px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-align: left;
+    cursor: pointer;
+  }
+  .sidebar-row:hover { border-color: var(--ink); background: var(--paper); box-shadow: var(--shadow-s); }
+  .dm-row:hover,
+  .dm-row:focus-visible { border-color: var(--ink); background: #fff; box-shadow: var(--shadow-s); }
+  .sidebar-row:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--ink); }
+  .sidebar-row.is-selected { border-color: var(--ink); background: var(--pink); box-shadow: var(--shadow-s); font-weight: 700; }
+  .sidebar-row.is-selected:hover { background: var(--pink); }
+  .sidebar-row .row-copy { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .sidebar-row small { color: var(--muted); font-size: 11px; margin-left: 2px; }
+  .hash { width: 18px; text-align: center; font-size: 17px; }
+
+  .avatar {
+    position: relative;
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    border: 2px solid var(--ink);
+    background: var(--lavender);
+    display: grid;
+    place-items: center;
+    font: 800 12px/1 ui-monospace, monospace;
+    image-rendering: pixelated;
+  }
+  .avatar.sm { width: 25px; height: 25px; font-size: 10px; }
+  .avatar.orange { background: #f1ab48; }
+  .avatar.blue { background: #6ec0e9; }
+  .avatar.green { background: #7fd8a0; }
+  .presence {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+    width: 9px;
+    height: 9px;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    background: var(--green);
+  }
+
+  /* room */
+  .stage { min-width: 0; min-height: 0; }
+  .content-grid { height: 100%; display: grid; grid-template-columns: minmax(0, 1fr) var(--thread); }
+  .content-grid.thread-closed { grid-template-columns: minmax(0, 1fr); }
+  .content-grid.thread-closed .thread { display: none; }
+  .room {
+    min-width: 0;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: var(--header) var(--tabs) minmax(0, 1fr) auto;
+    background: var(--paper);
+  }
+  .room-header {
+    min-width: 0;
+    padding: 0 16px;
+    border-bottom: 2px solid var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+  .back-mobile { display: none; }
+  .room-mark {
+    width: 36px;
+    height: 36px;
+    border: 2px solid var(--ink);
+    background: var(--yellow);
+    display: grid;
+    place-items: center;
+  }
+  .room-title { min-width: 0; }
+  .room-title h1 { margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 16px; line-height: 1.15; }
+  .room-title p { margin: 3px 0 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--muted); font: 11px/1.15 ui-monospace, monospace; }
+  .header-actions { margin-left: auto; display: flex; gap: 6px; }
+  .member-button { width: auto; min-width: 46px; grid-auto-flow: column; gap: 4px; padding-inline: 6px; }
+  .member-button span { font: 700 11px/1 ui-monospace, monospace; }
+
+  .tabs {
+    border-bottom: 2px solid var(--ink);
+    display: flex;
+    align-items: stretch;
+  }
+  .tab {
+    position: relative;
+    min-width: 92px;
+    padding: 0 14px;
+    border-right: 2px solid var(--ink);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    background: var(--paper);
+    cursor: pointer;
+    font-weight: 650;
+  }
+  .tab:hover { background: #fffdf4; }
+  .tab[aria-selected="true"] { background: var(--yellow); box-shadow: inset 0 -2px 0 rgba(20,17,17,.12); }
+  .tab svg { width: 15px; height: 15px; }
+
+  .pane { min-height: 0; overflow: hidden; }
+  .chat-pane { height: 100%; }
+  .messages { height: 100%; padding: 14px 14px 30px; overflow-y: auto; }
+  .message {
+    position: relative;
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: 10px;
+    padding: 8px 10px;
+    border: 2px solid transparent;
+  }
+  .message:hover { border-color: var(--ink); background: var(--paper); }
+  .message:hover .message-actions,
+  .message:focus-within .message-actions { display: flex; }
+  .message .avatar { width: 38px; height: 38px; }
+  .message-body { min-width: 0; }
+  .message-head { min-height: 19px; display: flex; align-items: baseline; gap: 7px; }
+  .message-head strong:hover { text-decoration: underline 2px; }
+  .message-head time, .message-head .role { color: var(--muted); font-size: 11px; }
+  .role { padding: 1px 4px; border: 1px solid var(--ink); color: var(--ink) !important; }
+  .message p { margin: 5px 0; line-height: 1.55; }
+  .message ul { margin: 6px 0 4px; padding-left: 20px; line-height: 1.55; }
+  .message-actions {
+    position: absolute;
+    top: -13px;
+    right: 8px;
+    z-index: 2;
+    display: none;
+    border: 2px solid var(--ink);
+    background: var(--paper);
+    box-shadow: var(--shadow-s);
+  }
+  .message-actions button { width: 27px; height: 25px; display: grid; place-items: center; cursor: pointer; }
+  .message-actions button:hover { background: var(--hover); }
+  .message-actions svg { width: 14px; height: 14px; }
+  .mention {
+    width: max-content;
+    margin-top: 7px;
+    padding: 3px 7px;
+    border: 2px solid var(--ink);
+    background: var(--lavender);
+    box-shadow: var(--shadow-s);
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .replies {
+    max-width: 820px;
+    margin-top: 9px;
+    padding: 8px 10px;
+    background: var(--yellow-soft);
+  }
+  .reply-toggle {
+    width: 100%;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .reply-toggle:hover .reply-toggle-label { text-decoration: underline 2px; }
+  .reply-chevron { transition: transform 100ms linear; }
+  .reply-toggle[aria-expanded="true"] .reply-chevron { transform: translateX(2px); }
+  .reply-list { min-width: 0; }
+  .reply-row { margin-top: 6px; display: grid; grid-template-columns: 20px auto minmax(0,1fr) auto; align-items: center; gap: 6px; font-size: 11px; }
+  .reply-row .avatar { width: 19px; height: 19px; border-width: 1.5px; font-size: 8px; }
+  .reply-row span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #69665f; }
+  .reply-row time { color: var(--muted); }
+
+  .bottom-stack { border-top: 2px solid var(--ink); display: flex; flex-direction: column; }
+  .composer { margin: 12px 14px 10px; border: 2px solid var(--ink); background: var(--paper); box-shadow: var(--shadow-s); }
+  .composer textarea { display: block; width: 100%; min-height: 54px; max-height: 150px; padding: 9px 10px; border: 0; outline: none; resize: none; line-height: 1.45; }
+  .composer-tools { min-height: 36px; padding: 4px 7px; display: flex; align-items: center; gap: 5px; }
+  .flat-tool { width: 27px; height: 27px; border: 2px solid var(--ink); display: grid; place-items: center; cursor: pointer; }
+  .flat-tool:hover { background: var(--hover); }
+  .flat-tool svg { width: 15px; height: 15px; }
+  .composer-spacer { flex: 1; }
+  .task-check { display: flex; align-items: center; gap: 5px; color: #5f5d58; font-size: 12px; }
+  .task-check input { width: 14px; height: 14px; accent-color: var(--pink); }
+  .send { background: #f8dbe5; color: #aaa; }
+  .send.is-ready { background: var(--pink); color: var(--ink); }
+  .offline-notice {
+    position: relative;
+    min-height: 50px;
+    margin: 0 14px 10px;
+    padding: 7px 10px;
+    border: 2px solid var(--ink);
+    background: var(--yellow-soft);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 12px;
+  }
+  .offline-notice strong { display: block; }
+  .offline-notice small { display: block; margin-top: 2px; }
+  .notify { margin-left: auto; padding: 7px 17px; border: 2px solid var(--ink); background: var(--pink); box-shadow: var(--shadow-s); font-weight: 750; cursor: pointer; }
+  .notify:active { transform: translate(1px,1px); box-shadow: 1px 1px 0 var(--ink); }
+
+  /* tasks */
+  .tasks-pane, .files-pane { height: 100%; overflow-y: auto; }
+  .task-toolbar { min-height: 56px; padding: 10px 14px; border-bottom: 2px solid var(--ink); display: flex; align-items: center; gap: 10px; }
+  .solid-button { min-height: 32px; padding: 0 12px; border: 2px solid var(--ink); background: var(--paper); box-shadow: var(--shadow-s); font-weight: 700; cursor: pointer; }
+  .solid-button:hover { box-shadow: var(--shadow-m); }
+  .solid-button:active { transform: translate(1px,1px); box-shadow: 1px 1px 0 var(--ink); }
+  .solid-button.pink { background: var(--pink); }
+  .task-toolbar .view-switch { margin-left: auto; display: flex; gap: 6px; }
+  .kanban { min-width: 900px; padding: 15px 14px 30px; display: grid; grid-template-columns: repeat(5, minmax(180px, 1fr)); gap: 14px; align-items: start; }
+  .task-column { border: 2px solid var(--line-soft); padding: 8px; }
+  .column-head { min-height: 28px; display: flex; align-items: center; gap: 6px; font-size: 11px; }
+  .state { padding: 3px 7px; border: 1.5px solid var(--ink); font-weight: 750; }
+  .state.wait { background: var(--orange); }
+  .state.run { background: var(--cyan); }
+  .state.review { background: var(--lavender); }
+  .state.done { background: var(--green); }
+  .state.closed { background: #ddd; }
+  .column-head .count { color: var(--muted); }
+  .task-card { margin-top: 8px; padding: 10px; border: 2px solid var(--ink); background: var(--paper); box-shadow: var(--shadow-s); }
+  .task-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-m); }
+  .task-card small { color: var(--muted); }
+  .task-card p { margin: 8px 0 10px; line-height: 1.4; font-weight: 650; }
+  .task-card footer { display: flex; justify-content: flex-end; }
+
+  /* files */
+  .files-pane { padding: 14px; }
+  .file-row {
+    min-height: 70px;
+    margin-bottom: 10px;
+    padding: 9px 10px;
+    border: 2px solid var(--line-soft);
+    display: grid;
+    grid-template-columns: 46px minmax(0,1fr) auto;
+    align-items: center;
+    gap: 12px;
+  }
+  .file-row:hover { border-color: var(--ink); box-shadow: var(--shadow-s); }
+  .file-icon { width: 46px; height: 46px; border: 2px solid var(--ink); background: var(--paper); display: grid; place-items: center; }
+  .file-copy { min-width: 0; }
+  .file-copy strong { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .file-copy small { display: block; margin-top: 5px; color: var(--muted); font: 11px/1.2 ui-monospace, monospace; }
+  .file-actions { display: flex; gap: 7px; }
+
+  /* thread */
+  .thread { min-width: 0; min-height: 0; border-left: 2px solid var(--ink); display: grid; grid-template-rows: var(--header) minmax(0,1fr) auto; }
+  .thread-header { padding: 0 10px 0 14px; border-bottom: 2px solid var(--ink); display: flex; align-items: center; gap: 7px; }
+  .thread-header strong { font-size: 16px; }
+  .thread-header span { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--muted); }
+  .thread-header-actions { margin-left: auto; display: flex; align-items: center; gap: 7px; }
+  .thread-view {
+    height: 30px;
+    padding: 0 8px;
+    border: 2px solid var(--ink);
+    background: var(--paper);
+    box-shadow: var(--shadow-s);
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .thread-view:hover { background: var(--yellow-soft); box-shadow: var(--shadow-m); }
+  .thread-root { padding-bottom: 14px !important; border-bottom-color: var(--line-soft) !important; }
+  .message.thread-source-flash { animation: thread-source-flash 900ms ease-out; }
+  @keyframes thread-source-flash {
+    0%, 45% { background: var(--yellow-soft); border-color: var(--ink); box-shadow: var(--shadow-s); }
+    100% { background: transparent; border-color: transparent; box-shadow: none; }
+  }
+  .thread-body { min-height: 0; padding: 10px; overflow-y: auto; }
+  .thread-body .message { grid-template-columns: 34px minmax(0,1fr); padding-inline: 4px; }
+  .thread-body .message .avatar { width: 32px; height: 32px; }
+  .thread-composer { margin: 10px; }
+
+  /* modal */
+  .modal-layer { position: fixed; inset: 0; z-index: 20; background: rgba(20,17,17,.24); display: grid; place-items: center; padding: 20px; }
+  .modal { width: min(480px, 100%); border: 2px solid var(--ink); background: var(--paper); box-shadow: 6px 6px 0 var(--ink); }
+  .modal header { min-height: 52px; padding: 0 12px; border-bottom: 2px solid var(--ink); display: flex; align-items: center; }
+  .modal header h2 { margin: 0; font-size: 18px; }
+  .modal header button { margin-left: auto; }
+  .modal-content { padding: 12px; }
+  .member-row { min-height: 55px; padding: 6px; display: flex; align-items: center; gap: 10px; }
+  .member-row:hover { background: var(--yellow-soft); }
+  .member-row strong { display: block; }
+  .member-row small { color: var(--muted); }
+
+  @media (max-width: 1180px) {
+    :root { --thread: 390px; }
+    .content-grid,
+    .content-grid.thread-closed { grid-template-columns: minmax(0, 1fr); }
+    .thread { display: none; }
+    .content-grid:not(.thread-closed) .thread {
+      position: fixed;
+      z-index: 12;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: min(500px, calc(100vw - var(--rail) - var(--sidebar)));
+      min-width: 360px;
+      display: grid;
+      background: var(--paper);
+      box-shadow: -4px 0 0 var(--ink);
+    }
+  }
+
+  @media (max-width: 820px) {
+    :root { --header: 60px; --tabs: 42px; }
+    body { font-size: 14px; }
+    .shell { grid-template-columns: minmax(0,1fr); }
+    .rail, .sidebar, .sidebar-resizer { display: none; }
+    .content-grid, .content-grid.thread-closed { grid-template-columns: minmax(0,1fr); }
+    .thread { display: none; }
+    .content-grid:not(.thread-closed) .thread {
+      left: 0;
+      width: 100vw;
+      min-width: 0;
+      display: grid;
+      box-shadow: none;
+    }
+    .room-header { padding: 0 12px; gap: 8px; }
+    .back-mobile { display: grid; }
+    .room-mark { width: 34px; height: 34px; }
+    .room-title { max-width: 70px; }
+    .room-title h1 { font-size: 15px; }
+    .room-title p { font-size: 10px; }
+    .header-actions { gap: 5px; }
+    .icon-button { min-width: 29px; width: 29px; height: 29px; padding: 4px; box-shadow: var(--shadow-s); }
+    .member-button { width: auto; min-width: 48px; }
+    .tab { min-width: 76px; padding-inline: 10px; }
+    .messages { padding: 12px 8px 22px; }
+    .message { grid-template-columns: 36px minmax(0,1fr); padding: 8px 7px; gap: 8px; }
+    .message .avatar { width: 34px; height: 34px; }
+    .message-actions { right: 5px; }
+    .replies { max-width: 100%; }
+    .reply-row { grid-template-columns: 19px auto minmax(0,1fr); }
+    .reply-row time { display: none; }
+    .bottom-stack { flex-direction: column-reverse; }
+    .composer { margin: 8px 12px 10px; }
+    .composer textarea { height: 46px; min-height: 46px; }
+    .offline-notice { margin: 10px 12px 0; flex-wrap: wrap; }
+    .offline-notice .notify { width: 100%; margin: 0; }
+    .offline-notice #closeNotice { position: absolute; top: 7px; right: 9px; cursor: pointer; }
+    .task-toolbar { flex-wrap: wrap; }
+    .task-toolbar .view-switch { margin-left: 0; }
+    .kanban { min-width: 0; grid-template-columns: 1fr; }
+    .task-column { border-color: transparent; border-bottom-color: var(--line-soft); }
+    .files-pane { padding: 12px; }
+    .file-row { min-height: 82px; grid-template-columns: 48px minmax(0,1fr) auto; }
+    .file-actions { gap: 5px; }
+  }
+
+  @media (max-width: 390px) {
+    .room-header { padding-inline: 10px; }
+    .room-title { max-width: 64px; }
+    .header-actions { gap: 4px; }
+    .tab { min-width: 76px; }
+    .task-toolbar .solid-button { padding-inline: 9px; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" aria-hidden="true" style="position:absolute">
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 15a3 3 0 0 1-3 3H8l-5 3V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3z"/></symbol>
+  <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l2-8 4 16 2-8h6"/></symbol>
+  <symbol id="i-task" viewBox="0 0 24 24"><path d="m4 6 2 2 4-4M13 6h7M4 12l2 2 4-4M13 12h7M4 18l2 2 4-4M13 18h7"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></symbol>
+  <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="1"/><path d="M8 21h8M12 17v4"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.3 9a3 3 0 1 1 4.8 2.4c-1.2.8-2.1 1.3-2.1 3.1M12 18h.01"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a2 2 0 0 0 .4 2.2l.1.1-2.8 2.8-.1-.1a2 2 0 0 0-2.2-.4 2 2 0 0 0-1.2 1.8V22H9.6v-.2A2 2 0 0 0 8.3 20a2 2 0 0 0-2.2.4l-.1.1-2.8-2.8.1-.1a2 2 0 0 0 .4-2.2A2 2 0 0 0 2 14.2V10h.2A2 2 0 0 0 4 8.7a2 2 0 0 0-.4-2.2l-.1-.1 2.8-2.8.1.1a2 2 0 0 0 2.2.4A2 2 0 0 0 9.8 2H14v.2A2 2 0 0 0 15.3 4a2 2 0 0 0 2.2-.4l.1-.1 2.8 2.8-.1.1a2 2 0 0 0-.4 2.2A2 2 0 0 0 22 9.8V14h-.2a2 2 0 0 0-2.4 1z"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="1"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M15 3v18"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1"/></symbol>
+  <symbol id="i-clip" viewBox="0 0 24 24"><path d="m21.4 11.6-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4zM22 2 11 13"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16h16V8z"/><path d="M14 2v6h6"/></symbol>
+  <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></symbol>
+</svg>
+
+<div class="shell">
+  <nav class="rail" aria-label="主导航">
+    <div class="brand" aria-label="RAH">H</div>
+    <button class="rail-button" title="搜索"><svg><use href="#i-search"/></svg></button>
+    <button class="rail-button" aria-current="page" title="聊天"><svg><use href="#i-chat"/></svg></button>
+    <button class="rail-button" title="动态"><svg><use href="#i-pulse"/></svg></button>
+    <button class="rail-button" title="任务"><svg><use href="#i-task"/></svg></button>
+    <button class="rail-button" title="成员"><svg><use href="#i-users"/></svg></button>
+    <button class="rail-button" title="计算机"><svg><use href="#i-monitor"/></svg></button>
+    <div class="rail-spacer"></div>
+    <button class="rail-button" title="通知"><svg><use href="#i-bell"/></svg></button>
+    <button class="rail-button status-dot" title="帮助"><svg><use href="#i-help"/></svg></button>
+    <button class="rail-button" title="设置"><svg><use href="#i-settings"/></svg></button>
+  </nav>
+
+  <aside class="sidebar">
+    <header class="sidebar-title">聊天</header>
+    <div class="sidebar-scroll scroll">
+      <section class="sidebar-section">
+        <div class="section-heading"><svg><use href="#i-bookmark"/></svg>已收藏</div>
+      </section>
+      <section class="sidebar-section">
+        <div class="section-heading">⌄ 已置顶 <span class="count">0</span></div>
+        <p class="section-hint">将频道或私信拖到这里置顶</p>
+      </section>
+      <section class="sidebar-section">
+        <div class="section-heading">⌄ 联合频道 <span class="count">0</span><span class="push"><button aria-label="排序">⇅</button><button aria-label="新建联合频道">＋</button></span></div>
+        <p class="section-hint">还没有联合频道</p>
+      </section>
+      <section class="sidebar-section">
+        <div class="section-heading">⌄ 频道 <span class="count">2</span><span class="push"><button aria-label="排序">⇅</button><button aria-label="新建频道">＋</button></span></div>
+        <button class="sidebar-row"><span class="hash">#</span><span class="row-copy">all</span></button>
+        <button class="sidebar-row is-selected"><svg><use href="#i-lock"/></svg><span class="row-copy">onboarding-owner</span></button>
+      </section>
+      <section class="sidebar-section">
+        <div class="section-heading">⌄ 私信 <span class="count">4</span><span class="push"><button aria-label="排序">⇅</button></span></div>
+        <button class="sidebar-row dm-row"><span class="avatar sm orange">C<i class="presence"></i></span><span class="row-copy"><b>Cindy</b> <small>Onboarding Assistant</small></span></button>
+        <button class="sidebar-row dm-row"><span class="avatar sm">A<i class="presence"></i></span><span class="row-copy"><b>Alice</b></span></button>
+        <button class="sidebar-row dm-row"><span class="avatar sm blue">K<i class="presence"></i></span><span class="row-copy"><b>Kimi</b></span></button>
+        <button class="sidebar-row dm-row"><span class="avatar sm green">G<i class="presence"></i></span><span class="row-copy"><b>Grok</b></span></button>
+      </section>
+    </div>
+  </aside>
+
+  <button class="sidebar-resizer" id="sidebarResizer" role="separator" aria-label="调整聊天边栏宽度" aria-orientation="vertical" aria-valuemin="180" aria-valuemax="420" aria-valuenow="240" title="拖动调整边栏宽度；双击恢复"></button>
+
+  <main class="stage">
+    <div class="content-grid thread-closed" id="contentGrid">
+      <section class="room" aria-label="onboarding-owner 房间">
+        <header class="room-header">
+          <button class="icon-button back-mobile" aria-label="返回"><svg><use href="#i-arrow"/></svg></button>
+          <div class="room-mark"><svg><use href="#i-lock"/></svg></div>
+          <div class="room-title"><h1>onboarding-owner</h1><p>Your private onboarding space</p></div>
+          <div class="header-actions">
+            <button class="icon-button wide-only" aria-label="搜索频道"><svg><use href="#i-search"/></svg></button>
+            <button class="icon-button mobile-hide" aria-label="通知设置"><svg><use href="#i-bell"/></svg></button>
+            <button class="icon-button" id="toggleThread" aria-label="切换消息列" aria-pressed="false"><svg><use href="#i-panel"/></svg></button>
+            <button class="icon-button mobile-hide" aria-label="频道设置"><svg><use href="#i-settings"/></svg></button>
+            <button class="icon-button member-button" id="openMembers" aria-label="查看 3 名成员"><svg><use href="#i-users"/></svg><span>3</span></button>
+          </div>
+        </header>
+
+        <div class="tabs" role="tablist" aria-label="频道内容">
+          <button class="tab" id="tab-chat" role="tab" aria-selected="true" aria-controls="pane-chat" tabindex="0" data-pane="chat"><svg><use href="#i-chat"/></svg>聊天</button>
+          <button class="tab" id="tab-tasks" role="tab" aria-selected="false" aria-controls="pane-tasks" tabindex="-1" data-pane="tasks"><svg><use href="#i-task"/></svg>任务</button>
+          <button class="tab" id="tab-files" role="tab" aria-selected="false" aria-controls="pane-files" tabindex="-1" data-pane="files"><svg><use href="#i-link"/></svg>文件</button>
+        </div>
+
+        <section class="pane chat-pane" id="pane-chat" role="tabpanel" aria-labelledby="tab-chat">
+          <div class="messages scroll" id="messages">
+            <article class="message">
+              <span class="avatar blue">你</span>
+              <div class="message-actions"><button aria-label="在线程中回复"><svg><use href="#i-chat"/></svg></button><button aria-label="添加回应"><svg><use href="#i-plus"/></svg></button><button aria-label="收藏"><svg><use href="#i-bookmark"/></svg></button></div>
+              <div class="message-body">
+                <div class="message-head"><strong>Hakase</strong><span class="role">所有者</span><time>01:07</time></div>
+                <p>从产品推荐的用法看，一个 Agent 是否应该跨多个对话持续工作？我更倾向把 Agent 看作有长期身份的同事，而不是某个项目的临时容器。</p>
+                <button class="mention">◉ #3 @Cindy</button>
+                <div class="replies" data-replies>
+                  <button class="reply-toggle" data-thread="role-boundary" aria-expanded="false" aria-controls="threadBody"><span class="reply-toggle-label">2 条回复</span><span class="reply-chevron">›</span></button>
+                  <div class="reply-list"><div class="reply-row"><span class="avatar orange">C</span><b>Cindy</b><span>我会按长期角色、记忆边界和任务上下文三个层面核对。</span><time>01:08</time></div><div class="reply-row"><span class="avatar orange">C</span><b>Cindy</b><span>结论是：Agent 是协作者，Room 才是工作上下文。</span><time>01:09</time></div></div>
+                </div>
+              </div>
+            </article>
+
+            <article class="message">
+              <span class="avatar">A</span>
+              <div class="message-actions"><button aria-label="在线程中回复"><svg><use href="#i-chat"/></svg></button><button aria-label="添加回应"><svg><use href="#i-plus"/></svg></button><button aria-label="收藏"><svg><use href="#i-bookmark"/></svg></button></div>
+              <div class="message-body">
+                <div class="message-head"><strong>Alice</strong><time>01:08</time></div>
+                <p>方向是对的，但需要补一条边界：长期记忆不应该随对话无限膨胀，它更像短索引与按需展开的 notes。</p>
+                <p><strong>关于上下文代价</strong></p>
+                <ul><li>每次唤醒只携带当前 Room 的必要事实。</li><li>历史证据按需分页，不成为每轮固定成本。</li><li>运行时 Session 是执行细节，不应成为 UI 的顶层身份。</li></ul>
+              </div>
+            </article>
+
+            <article class="message">
+              <span class="avatar blue">你</span>
+              <div class="message-actions"><button aria-label="在线程中回复"><svg><use href="#i-chat"/></svg></button><button aria-label="添加回应"><svg><use href="#i-plus"/></svg></button><button aria-label="收藏"><svg><use href="#i-bookmark"/></svg></button></div>
+              <div class="message-body">
+                <div class="message-head"><strong>Hakase</strong><span class="role">所有者</span><time>01:12</time></div>
+                <p>如果把这个界面用于 RAH Agent OS，我希望消息、任务、文件和审查都围绕同一个 Room 展开，而不是让用户理解 Provider Session。</p>
+                <button class="mention">◉ #4 @Cindy</button>
+                <div class="replies" data-replies>
+                  <button class="reply-toggle" data-thread="room-ledger" aria-expanded="false" aria-controls="threadBody"><span class="reply-toggle-label">13 条回复</span><span class="reply-chevron">›</span></button>
+                  <div class="reply-list">
+                    <div class="reply-row"><span class="avatar orange">C</span><b>Cindy</b><span>Room ledger 可以作为协作事实层，Provider 事件仍由 daemon 归一化。</span><time>01:18</time></div>
+                    <div class="reply-row"><span class="avatar blue">H</span><b>Hakase</b><span>UI 只消费 canonical projection，不解析日志。</span><time>01:19</time></div>
+                    <div class="reply-row" data-extra hidden><span class="avatar">A</span><b>Alice</b><span>任务与文件引用同一个 Room cursor，避免形成第二套时间线。</span><time>01:20</time></div>
+                    <div class="reply-row" data-extra hidden><span class="avatar green">G</span><b>Grok</b><span>消息列保留局部上下文，但身份仍由父 Room 决定。</span><time>01:22</time></div>
+                    <div class="reply-row" data-extra hidden><span class="avatar orange">C</span><b>Cindy</b><span>Provider Session 只进入 Run Inspector，不进入主要导航。</span><time>01:24</time></div>
+                    <div class="reply-row" data-extra hidden><span class="avatar blue">H</span><b>Hakase</b><span>这样可以兼顾协作语义与底层诊断能力。</span><time>01:26</time></div>
+                    <div class="reply-row" data-extra hidden><span class="avatar">A</span><b>Alice</b><span>历史证据向上分页，打开消息列时保留当前阅读锚点。</span><time>01:28</time></div>
+                    <div class="reply-row" data-extra hidden><span class="avatar green">G</span><b>Grok</b><span>线程输入继续复用统一 composer，不创建第二套发送协议。</span><time>01:30</time></div>
+                    <div class="reply-row" data-extra hidden><span class="avatar orange">C</span><b>Cindy</b><span>消息列关闭后，频道正文的位置不能跳回顶部。</span><time>01:31</time></div>
+                    <div class="reply-row" data-extra hidden><span class="avatar blue">H</span><b>Hakase</b><span>窄屏上用覆盖层，宽屏上与正文并列。</span><time>01:33</time></div>
+                    <div class="reply-row" data-extra hidden><span class="avatar">A</span><b>Alice</b><span>键盘焦点在打开后进入关闭按钮，Escape 返回来源摘要。</span><time>01:34</time></div>
+                    <div class="reply-row" data-extra hidden><span class="avatar green">G</span><b>Grok</b><span>根消息和回复必须共享同一个稳定 thread identity。</span><time>01:36</time></div>
+                    <div class="reply-row" data-extra hidden><span class="avatar orange">C</span><b>Cindy</b><span>这就是 Room-first 与原生执行诊断可以同时成立的边界。</span><time>01:38</time></div>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="message">
+              <span class="avatar green">G</span>
+              <div class="message-actions"><button aria-label="在线程中回复"><svg><use href="#i-chat"/></svg></button><button aria-label="添加回应"><svg><use href="#i-plus"/></svg></button><button aria-label="收藏"><svg><use href="#i-bookmark"/></svg></button></div>
+              <div class="message-body"><div class="message-head"><strong>Grok</strong><time>01:14</time></div><p>界面骨架可以复刻，但运行时 owner 不能一并照搬：导航是 Room-first，状态真相仍然必须来自 RAH daemon。</p></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="pane tasks-pane scroll" id="pane-tasks" role="tabpanel" aria-labelledby="tab-tasks" hidden>
+          <div class="task-toolbar"><button class="solid-button">◎ 创建者⌄</button><button class="solid-button">♙ 负责人⌄</button><button class="solid-button pink">＋ 新建任务</button><span class="view-switch"><button class="icon-button" aria-label="看板视图">▥</button><button class="icon-button" aria-label="列表视图">☷</button></span></div>
+          <div class="kanban">
+            <section class="task-column"><header class="column-head"><span class="state wait">待办</span><span class="count">2</span></header><article class="task-card"><small>#21</small><p>给任务看板补上拖拽排序的状态协议</p><footer><span class="state wait">待办</span></footer></article><article class="task-card"><small>#24</small><p>整理本周频道路由异常的用户反馈</p><footer><span class="state wait">待办</span></footer></article></section>
+            <section class="task-column"><header class="column-head"><span class="state run">进行中</span><span class="count">2</span></header><article class="task-card"><small>#19</small><p>重写消息列虚拟滚动，压住长会话卡顿</p><footer><span class="state run">进行中</span></footer></article><article class="task-card"><small>#22</small><p>附件卡片支持图片预览与下载进度</p><footer><span class="state run">进行中</span></footer></article></section>
+            <section class="task-column"><header class="column-head"><span class="state review">待确认</span><span class="count">2</span></header><article class="task-card"><small>#17</small><p>确认新成员引导文案的终稿措辞</p><footer><span class="state review">待确认</span></footer></article><article class="task-card"><small>#20</small><p>核对 390px 下看板横滑与回弹手感</p><footer><span class="state review">待确认</span></footer></article></section>
+            <section class="task-column"><header class="column-head"><span class="state done">完成</span><span class="count">1</span></header><article class="task-card"><small>#15</small><p>频道头部成员按钮接入真实在线计数</p><footer><span class="state done">完成</span></footer></article></section>
+            <section class="task-column"><header class="column-head"><span class="state closed">已关闭</span><span class="count">0</span></header><p class="section-hint">暂无已关闭的任务</p></section>
+          </div>
+        </section>
+
+        <section class="pane files-pane scroll" id="pane-files" role="tabpanel" aria-labelledby="tab-files" hidden>
+          <article class="file-row"><span class="file-icon"><svg><use href="#i-file"/></svg></span><span class="file-copy"><strong>room-first-architecture-v3.md</strong><small>18.2 KB · 08-23 21:14</small></span><span class="file-actions"><button class="icon-button" aria-label="下载 room-first-architecture-v3.md"><svg><use href="#i-download"/></svg></button><button class="icon-button" aria-label="更多操作">•••</button></span></article>
+          <article class="file-row"><span class="file-icon"><svg><use href="#i-file"/></svg></span><span class="file-copy"><strong>kanban-interaction-audit.pdf</strong><small>1.6 MB · 08-23 16:40</small></span><span class="file-actions"><button class="icon-button" aria-label="下载 kanban-interaction-audit.pdf"><svg><use href="#i-download"/></svg></button><button class="icon-button" aria-label="更多操作">•••</button></span></article>
+          <article class="file-row"><span class="file-icon"><svg><use href="#i-file"/></svg></span><span class="file-copy"><strong>channel-icons-export.zip</strong><small>4.1 MB · 08-22 19:02</small></span><span class="file-actions"><button class="icon-button" aria-label="下载 channel-icons-export.zip"><svg><use href="#i-download"/></svg></button><button class="icon-button" aria-label="更多操作">•••</button></span></article>
+          <article class="file-row"><span class="file-icon"><svg><use href="#i-file"/></svg></span><span class="file-copy"><strong>cross-provider-regression.csv</strong><small>9.8 KB · 08-22 11:27</small></span><span class="file-actions"><button class="icon-button" aria-label="下载 cross-provider-regression.csv"><svg><use href="#i-download"/></svg></button><button class="icon-button" aria-label="更多操作">•••</button></span></article>
+          <article class="file-row"><span class="file-icon"><svg><use href="#i-file"/></svg></span><span class="file-copy"><strong>dark-mode-palette.png</strong><small>862 KB · 08-21 23:55</small></span><span class="file-actions"><button class="icon-button" aria-label="下载 dark-mode-palette.png"><svg><use href="#i-download"/></svg></button><button class="icon-button" aria-label="更多操作">•••</button></span></article>
+        </section>
+
+        <div class="bottom-stack" id="bottomStack">
+          <div class="composer"><textarea id="composer" aria-label="消息输入框" placeholder="发送消息至 #onboarding-owner"></textarea><div class="composer-tools"><button class="flat-tool" aria-label="添加图片">▧</button><button class="flat-tool" aria-label="添加附件"><svg><use href="#i-clip"/></svg></button><span class="composer-spacer"></span><label class="task-check"><input type="checkbox">作为任务</label><button class="icon-button send" id="sendMessage" aria-label="发送消息" disabled><svg><use href="#i-send"/></svg></button></div></div>
+          <div class="offline-notice" id="offlineNotice"><svg><use href="#i-bell"/></svg><span><strong>离开后，你的 Agent 仍会继续工作。</strong><small>开启通知，不错过需要你处理的时刻。</small></span><button class="notify">开启通知</button><button aria-label="关闭提示" id="closeNotice">×</button></div>
+        </div>
+      </section>
+
+      <aside class="thread" aria-label="消息列">
+        <header class="thread-header"><strong>消息列</strong><span>← #onboarding-owner</span><div class="thread-header-actions"><button class="thread-view" id="viewInChannel">在频道中查看</button><button class="icon-button" id="closeThread" aria-label="关闭消息列"><svg><use href="#i-x"/></svg></button></div></header>
+        <div class="thread-body scroll" id="threadBody">
+          <article class="message"><span class="avatar blue">你</span><div class="message-body"><div class="message-head"><strong>Hakase</strong><time>01:17</time></div><p>Room-first 是否可以保留原生 Session 作为调试入口？</p></div></article>
+          <article class="message"><span class="avatar orange">C</span><div class="message-body"><div class="message-head"><strong>Cindy</strong><span class="role">Onboarding Assistant</span><time>01:18</time></div><p>可以。主导航使用 Room，原生 Session 作为 Run Inspector 的引用存在：</p><ul><li>Room ledger 保存协作事实。</li><li>RunAttempt 关联 Provider Session。</li><li>诊断页可以打开原生事件，但不把它变成聊天真相。</li></ul></div></article>
+          <article class="message"><span class="avatar">A</span><div class="message-body"><div class="message-head"><strong>Alice</strong><time>01:20</time></div><p>这样既保留调试深度，也不会让用户在顶层 UI 里理解 provider/runtime 的生命周期。</p></div></article>
+        </div>
+        <div class="composer thread-composer"><textarea aria-label="消息列输入框" placeholder="发送消息至消息列"></textarea><div class="composer-tools"><button class="flat-tool" aria-label="添加图片">▧</button><button class="flat-tool" aria-label="添加附件"><svg><use href="#i-clip"/></svg></button><span class="composer-spacer"></span><button class="icon-button send" aria-label="发送到消息列" disabled><svg><use href="#i-send"/></svg></button></div></div>
+      </aside>
+    </div>
+  </main>
+</div>
+
+<div class="modal-layer" id="membersModal" hidden>
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="membersTitle">
+    <header><h2 id="membersTitle">频道成员 · 3</h2><button class="icon-button" id="closeMembers" aria-label="关闭成员窗口"><svg><use href="#i-x"/></svg></button></header>
+    <div class="modal-content"><div class="member-row"><span class="avatar blue">你<i class="presence"></i></span><span><strong>Hakase</strong><small>所有者</small></span></div><div class="member-row"><span class="avatar orange">C<i class="presence"></i></span><span><strong>Cindy</strong><small>Onboarding Assistant</small></span></div><div class="member-row"><span class="avatar">A<i class="presence"></i></span><span><strong>Alice</strong><small>Agent</small></span></div></div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const tabs = [...document.querySelectorAll('[role="tab"]')];
+  const panes = new Map(tabs.map(tab => [tab.dataset.pane, document.getElementById(tab.getAttribute('aria-controls'))]));
+  const bottom = document.getElementById('bottomStack');
+
+  function selectTab(tab, focus = false) {
+    tabs.forEach(item => {
+      const selected = item === tab;
+      item.setAttribute('aria-selected', String(selected));
+      item.tabIndex = selected ? 0 : -1;
+      panes.get(item.dataset.pane).hidden = !selected;
+    });
+    bottom.hidden = tab.dataset.pane !== 'chat';
+    if (focus) tab.focus();
+  }
+
+  tabs.forEach((tab, index) => {
+    tab.addEventListener('click', () => selectTab(tab));
+    tab.addEventListener('keydown', event => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      let next = index;
+      if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+      if (event.key === 'ArrowLeft') next = (index - 1 + tabs.length) % tabs.length;
+      if (event.key === 'Home') next = 0;
+      if (event.key === 'End') next = tabs.length - 1;
+      selectTab(tabs[next], true);
+    });
+  });
+
+  const replyToggles = [...document.querySelectorAll('.reply-toggle')];
+
+  const root = document.documentElement;
+  const resizer = document.getElementById('sidebarResizer');
+  let resizing = false;
+  let dragStartX = 0;
+  let dragStartWidth = 240;
+
+  function currentSidebarWidth() {
+    return Number.parseFloat(getComputedStyle(root).getPropertyValue('--sidebar')) || 240;
+  }
+
+  function sidebarBounds() {
+    const rail = Number.parseFloat(getComputedStyle(root).getPropertyValue('--rail')) || 64;
+    const mainMinimum = innerWidth <= 1180 ? 420 : 520;
+    return { min: 180, max: Math.max(180, Math.min(420, innerWidth - rail - mainMinimum)) };
+  }
+
+  function setSidebarWidth(value) {
+    const bounds = sidebarBounds();
+    const width = Math.round(Math.min(bounds.max, Math.max(bounds.min, value)));
+    root.style.setProperty('--sidebar', `${width}px`);
+    resizer.setAttribute('aria-valuemax', String(bounds.max));
+    resizer.setAttribute('aria-valuenow', String(width));
+  }
+
+  resizer.addEventListener('pointerdown', event => {
+    if (matchMedia('(max-width: 820px)').matches) return;
+    event.preventDefault();
+    resizing = true;
+    dragStartX = event.clientX;
+    dragStartWidth = currentSidebarWidth();
+    document.body.classList.add('is-resizing');
+    resizer.setPointerCapture(event.pointerId);
+  });
+  document.addEventListener('pointermove', event => {
+    if (!resizing) return;
+    setSidebarWidth(dragStartWidth + event.clientX - dragStartX);
+  });
+  function finishResize(event) {
+    if (!resizing) return;
+    resizing = false;
+    document.body.classList.remove('is-resizing');
+    if (event && resizer.hasPointerCapture(event.pointerId)) resizer.releasePointerCapture(event.pointerId);
+  }
+  document.addEventListener('pointerup', finishResize);
+  document.addEventListener('pointercancel', finishResize);
+  resizer.addEventListener('lostpointercapture', () => {
+    if (!resizing) return;
+    resizing = false;
+    document.body.classList.remove('is-resizing');
+  });
+  window.addEventListener('blur', () => {
+    if (!resizing) return;
+    resizing = false;
+    document.body.classList.remove('is-resizing');
+  });
+  resizer.addEventListener('dblclick', () => setSidebarWidth(240));
+  resizer.addEventListener('keydown', event => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    const step = event.shiftKey ? 24 : 8;
+    const bounds = sidebarBounds();
+    if (event.key === 'Home') setSidebarWidth(bounds.min);
+    if (event.key === 'End') setSidebarWidth(bounds.max);
+    if (event.key === 'ArrowLeft') setSidebarWidth(currentSidebarWidth() - step);
+    if (event.key === 'ArrowRight') setSidebarWidth(currentSidebarWidth() + step);
+  });
+
+  const grid = document.getElementById('contentGrid');
+  const threadButton = document.getElementById('toggleThread');
+  const closeThread = document.getElementById('closeThread');
+  const threadBody = document.getElementById('threadBody');
+  const viewInChannel = document.getElementById('viewInChannel');
+  const compactThread = matchMedia('(max-width: 1180px)');
+  let activeThreadToggle = null;
+  let threadSourceMessage = null;
+
+  function setThread(open) {
+    grid.classList.toggle('thread-closed', !open);
+    threadButton.setAttribute('aria-pressed', String(open));
+    if (activeThreadToggle) activeThreadToggle.setAttribute('aria-expanded', String(open));
+    if (open && compactThread.matches) requestAnimationFrame(() => closeThread.focus());
+  }
+
+  function replyAsMessage(row) {
+    const article = document.createElement('article');
+    article.className = 'message';
+    const avatar = row.querySelector('.avatar').cloneNode(true);
+    const body = document.createElement('div');
+    body.className = 'message-body';
+    const head = document.createElement('div');
+    head.className = 'message-head';
+    const author = document.createElement('strong');
+    author.textContent = row.querySelector('b')?.textContent || 'Agent';
+    const time = document.createElement('time');
+    time.textContent = row.querySelector('time')?.textContent || '';
+    const copy = document.createElement('p');
+    copy.textContent = [...row.children].find(node => node.matches('span:not(.avatar)'))?.textContent || '';
+    head.append(author, time);
+    body.append(head, copy);
+    article.append(avatar, body);
+    return article;
+  }
+
+  function openThreadFromSummary(toggle) {
+    if (!toggle) return;
+    if (activeThreadToggle && activeThreadToggle !== toggle) activeThreadToggle.setAttribute('aria-expanded', 'false');
+    activeThreadToggle = toggle;
+    threadSourceMessage = toggle.closest('.message');
+
+    const rootMessage = threadSourceMessage.cloneNode(true);
+    rootMessage.classList.add('thread-root');
+    rootMessage.querySelector('.message-actions')?.remove();
+    rootMessage.querySelector('.mention')?.remove();
+    rootMessage.querySelector('.replies')?.remove();
+
+    const replies = [...toggle.closest('[data-replies]').querySelectorAll('.reply-row')].map(replyAsMessage);
+    threadBody.replaceChildren(rootMessage, ...replies);
+    threadBody.scrollTop = 0;
+    setThread(true);
+  }
+
+  replyToggles.forEach(toggle => toggle.addEventListener('click', () => openThreadFromSummary(toggle)));
+
+  function syncThreadBreakpoint() {
+    setSidebarWidth(currentSidebarWidth());
+  }
+  threadButton.addEventListener('click', () => {
+    if (grid.classList.contains('thread-closed')) openThreadFromSummary(activeThreadToggle || replyToggles.at(-1));
+    else setThread(false);
+  });
+  closeThread.addEventListener('click', () => {
+    setThread(false);
+    (activeThreadToggle || threadButton).focus();
+  });
+  viewInChannel.addEventListener('click', () => {
+    if (!threadSourceMessage) return;
+    const source = threadSourceMessage;
+    setThread(false);
+    source.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    source.classList.remove('thread-source-flash');
+    requestAnimationFrame(() => source.classList.add('thread-source-flash'));
+    setTimeout(() => source.classList.remove('thread-source-flash'), 950);
+    source.querySelector('.reply-toggle')?.focus({ preventScroll: true });
+  });
+  compactThread.addEventListener('change', syncThreadBreakpoint);
+  window.addEventListener('resize', () => setSidebarWidth(currentSidebarWidth()));
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape' || grid.classList.contains('thread-closed')) return;
+    if (!document.getElementById('membersModal').hidden) return;
+    event.preventDefault();
+    setThread(false);
+    (activeThreadToggle || threadButton).focus();
+  });
+  syncThreadBreakpoint();
+
+  const composer = document.getElementById('composer');
+  const send = document.getElementById('sendMessage');
+  function syncComposer() {
+    const ready = composer.value.trim().length > 0;
+    send.disabled = !ready;
+    send.classList.toggle('is-ready', ready);
+  }
+  composer.addEventListener('input', syncComposer);
+  composer.addEventListener('keydown', event => {
+    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+      event.preventDefault();
+      if (!send.disabled) send.click();
+    }
+  });
+  send.addEventListener('click', () => {
+    const text = composer.value.trim();
+    if (!text) return;
+    const article = document.createElement('article');
+    article.className = 'message';
+    article.innerHTML = '<span class="avatar blue">你</span><div class="message-body"><div class="message-head"><strong>你</strong><time>刚刚</time></div><p></p></div>';
+    article.querySelector('p').textContent = text;
+    const messages = document.getElementById('messages');
+    messages.append(article);
+    composer.value = '';
+    syncComposer();
+    messages.scrollTop = messages.scrollHeight;
+    composer.focus();
+  });
+
+  document.getElementById('closeNotice').addEventListener('click', () => document.getElementById('offlineNotice').hidden = true);
+
+  const modal = document.getElementById('membersModal');
+  const opener = document.getElementById('openMembers');
+  const closer = document.getElementById('closeMembers');
+  function openModal() { modal.hidden = false; closer.focus(); }
+  function closeModal() { modal.hidden = true; opener.focus(); }
+  opener.addEventListener('click', openModal);
+  closer.addEventListener('click', closeModal);
+  modal.addEventListener('mousedown', event => { if (event.target === modal) closeModal(); });
+  document.addEventListener('keydown', event => {
+    if (modal.hidden) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeModal();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const focusable = [...modal.querySelectorAll('button, [href], input, textarea, [tabindex]:not([tabindex="-1"])')].filter(node => !node.disabled);
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  });
+
+  syncComposer();
+})();
+</script>
+</body>
+</html>

@@ -2,6 +2,7 @@ node_modules/
 packages/*/node_modules/
 packages/*/dist/
 test-results/
+references/
 .DS_Store
 __pycache__/
 *.py[cod]

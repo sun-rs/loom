@@ -370,7 +370,7 @@ Core design and freeze documents:
 - [Codex Adapter Event Coverage](./docs/codex-event-coverage.md)
 - [Provider Adapter Maintenance](./docs/provider-adapter-maintenance.md)
 - [Provider Capability Matrix](./docs/provider-capability-matrix.md)
-- [Architecture Benchmark (中文)](./docs/architecture-benchmark.zh-CN.md)
+- [RAH Agent OS：Room-first 目标架构与外部对照（中文）](./docs/agent-os-room-first-architecture.zh-CN.md)
 - [Session 入口与权限边界（中文）](./docs/session-entry-capability-boundary.zh-CN.md)
 - [Release Checklist](./docs/release-checklist.md)
 - [UI 回归清单（中文）](./docs/ui-regression-checklist.zh-CN.md)

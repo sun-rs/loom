@@ -448,7 +448,7 @@ RAH 当前 `main` 按 1.0.0 里程碑边界维护：
 3. [RAH Canonical Event Taxonomy](./canonical-event-taxonomy.md)
 4. [Codex Adapter Event Coverage](./codex-event-coverage.md)
 5. [Provider Adapter Maintenance](./provider-adapter-maintenance.md)
-6. [架构对照与强化路线](./architecture-benchmark.zh-CN.md)
+6. [RAH Agent OS：Room-first 目标架构与外部对照](./agent-os-room-first-architecture.zh-CN.md)
 7. [Release Checklist](./release-checklist.md)
 
 如果要动代码：

@@ -26,7 +26,7 @@
 
 - [RAH Agent OS：Room-first 架构与生态借力路线](./agent-os-room-first-architecture.zh-CN.md)
 
-该文档描述长期目标与迁移边界，不代表当前 `main` 已经从 provider-session-first 切换为 Room-first。当前行为仍以上一节和 Provider/历史权威文档为准。
+该文档描述长期目标、外部架构对照与迁移边界，不代表当前 `main` 已经从 provider-session-first 切换为 Room-first。当前行为仍以上一节和 Provider/历史权威文档为准。
 
 ## 2. Provider 与能力边界
 
@@ -46,7 +46,6 @@
 - [History Quality Boundary](./history-quality-boundary.zh-CN.md)
 - [Client Web Store Ownership](./client-web-store-ownership.zh-CN.md)
 - [Workbench Boundary](./workbench-boundary.md)
-- [架构对照与强化路线（含 Herdr）](./architecture-benchmark.zh-CN.md)
 
 ## 4. 发布与回归
 

@@ -2,7 +2,9 @@
 
 > 状态：目标架构提案，不描述当前 `main` 已实现行为。
 >
-> 调研快照：2026-08-23（Asia/Shanghai）。外部项目的能力、许可证和维护状态会变化，实际引入前必须重新核对上游。
+> 调研快照：2026-08-25（Asia/Shanghai）。外部项目的能力、许可证和维护状态会变化，实际引入前必须重新核对上游。
+>
+> 文档所有权：本文同时是长期 Room-first 决策、外部架构对照和迁移路线的唯一 owner；不再另建并行 benchmark 文档。
 
 ## 1. 决策摘要
 
@@ -14,7 +16,8 @@ RAH 的长期第一等对象应从 Provider Session 上移为 `Room`：用户面
 - agent identity 与 provider/runtime 解耦；同一个角色可以在不同 Run 中切换 Codex、Claude Code、Kimi Code、Grok、DeepSeek 等原生 harness。
 - provider/harness 拥有自己的认证、订阅、模型配置、原生 session、内部历史、thinking 和工具呈现。
 - RAH 不再把 provider transcript 解析成 Room 对话真相；原生 session 只作为可附着的诊断/工作现场。
-- agent 通过带 schema 的 MCP/CLI bridge 显式 pull Room 消息并提交结构化消息、任务状态、产物和审查结果。
+- Room 事件在同一事务中派生 durable Inbox 与 Activation；常驻 `AgentHost` 接收不含正文的 wake hint，按需启动或恢复 CLI，agent 醒来后再通过带 schema 的 MCP/CLI bridge 显式同步 Room。
+- MCP/CLI 负责醒来后的协作动作，不负责让模型长期 `listen`。Agent 身份、收件箱和待处理工作在 CLI 进程退出后继续存在。
 - 任意 CLI 至少可以作为 Generic PTY Run 存在；富语义通过 bridge、ACP 或少数受预算约束的原生增强获得。
 
 一句话边界：
@@ -109,8 +112,10 @@ Room ledger 至少拥有以下事件：
 - `message.posted / message.acknowledged`
 - `thread.created`
 - `task.created / task.claimed / task.state_changed`
+- `input.requested / input.resolved`
 - `decision.recorded`
 - `run.requested / run.started / run.status_changed / run.ended`
+- `activation.requested / activation.leased / activation.finished`
 - `artifact.published / artifact.revoked`
 - `review.submitted / review.resolved`
 - `control.requested / control.acknowledged`
@@ -138,11 +143,11 @@ agent 不应在 TUI stdout 中打印一段 JSON 供 RAH 扫描。正确路径是
 
 ```text
 room_join
-room_inbox_pull
+room_sync
 room_message_post
-room_wait_new
 task_claim
 task_update
+input_request
 artifact_publish
 review_submit
 run_set_status
@@ -153,7 +158,7 @@ run_set_status
 不支持 MCP 的 harness 使用同一协议的 CLI facade：
 
 ```bash
-rah room inbox pull --room <id> --after <cursor> --json
+rah room sync <id> --after <cursor> --json
 rah room message post --room <id> --type result --content-file result.md
 rah task claim <task-id>
 rah artifact publish ./report.html --kind interactive-html --task <task-id>
@@ -162,29 +167,44 @@ rah review submit --task <task-id> --file review.json
 
 CLI/MCP 只是两种 transport facade，必须进入同一 Room service，不得维护两套语义。
 
-### 4.4 Pull、wake 与 acknowledgement
+### 4.4 Event、Inbox、Activation 与 wake 必须分层
 
-建议状态分层：
+Room 不能把“消息已保存”“某个 agent 应关注”“需要运行模型”和“某次进程已经接收输入”压成一个状态。推荐因果链是：
 
 ```text
-queued
-  -> available       已进入目标 participant inbox
-  -> wake_injected   只证明 bridge/terminal 收到唤醒
-  -> pulled          agent 已拉取消息正文
-  -> acknowledged    agent 显式接受任务/问题
-  -> responded       已发布对应消息
-  -> verified        满足 Task 的外部验收条件
+room_event committed
+  -> inbox_item pending       哪个 participant 需要关注
+  -> activation queued       是否值得现在运行 agent
+  -> wake_hint delivered     只提示 AgentHost 去拉 activation
+  -> activation leased       Host 取得有期限执行权
+  -> run started/resumed     CLI 被启动或恢复
+  -> room_sync pulled        agent 读取权威正文和 cursor
+  -> acknowledged/responded  agent 显式接受或回复
+  -> verified                满足 Task 的外部验收条件
 ```
 
-- `wake_injected` 不能推进 read/accepted cursor。
-- Generic PTY 文本写入只能声明 `terminal_injected`，不能冒充 harness 已处理。
-- agent 忙碌时消息停留在 inbox；不并发向同一原生 session 注入多个 turn。
-- 不支持运行中 steer 的 harness 把 guide 明确标记为“下一轮待处理”，不能显示成已接受。
+- Room event、Inbox item 与 Activation 必须可持久恢复；WebSocket、SSE、进程内通知和 wake hint 都只是可丢失的加速层。
+- wake hint 默认只携 `activationId/participantId/roomId/headCursor/reason`，不复制消息正文。Host 断线重连后必须主动领取所有 pending activation。
+- `wake_hint delivered`、PTY write、RPC 返回和进程启动都不能推进 pulled/acknowledged cursor。
+- Agent 忙碌时只更新其 pending activation 的 `toCursor/dirtyAfterCursor`，同一 participant lane 不并发启动第二个 Run。
+- 多条快速事件按 recipient 和 Room 合并成一个 activation；agent 一次 `room_sync` 拉取完整增量，不能为每条消息各消耗一次模型 turn。
+- 不支持运行中 steer 的 harness 把新输入留给下一次 activation；支持 live input 的 harness 也只是可选快路径，失败时回到 durable activation。
 - completion 必须来自结构化 task/result/review action 或 verifier，不能由进程退出或 stdout 文案推断。
 
-### 4.5 长 Room 的上下文边界
+### 4.5 不用模型等待人类
 
-`room_inbox_pull` 必须游标分页，不向 agent 每次重发完整历史。可发送：
+正常聊天、提问和任务依赖不得依赖 MCP `room_wait`/`channel_wait_new`：
+
+- agent 向人类提问时创建 durable `InputRequest`，把 Task 标为 `blocked/waiting_input`，然后结束 Run。
+- 人类几分钟、几小时后回复时，`input.resolved` 产生新的 Inbox item 和 Activation，由 Host 重新启动或恢复 agent。
+- agent 等另一个 agent 时声明 Task dependency 并退出；dependency resolved 后由路由器重新激活。
+- 等待期间没有模型 turn、MCP tool call 或 provider session 并发槽被占用。
+
+阻塞式 MCP wait 最多保留为迁移期兼容或明确的秒级机器握手实验，不能成为消息可靠性、未读状态或正常 Council 对话的 owner。当前 `main` 的 Council 热 waiter 仍由现有文档约束；迁移完成后应由 Inbox/Activation 路径取代。
+
+### 4.6 长 Room 的上下文边界
+
+`room_sync` 必须游标分页，不向 agent 每次重发完整历史。可发送：
 
 - cursor 之后的新消息。
 - 当前 participant 的 task/control 变化。
@@ -241,6 +261,26 @@ type RunAttempt = {
 如果 RAH 直接拥有 PTY，则 Herdr/tmux/Orca 只能作为外部终端或诊断工具；如果 Run 由 Herdr server 拥有，RAH 必须通过 Herdr socket/CLI 控制，不能再次打开同一 PTY master。
 
 这条规则避免双 attach、重复输入、scrollback 分叉和 stop 所有权不清。
+
+### 5.4 AgentHost 是常驻者，CLI 不是
+
+每台执行计算机运行一个轻量 `AgentHost`。它维持到 daemon/server 的认证连接、上报容量并领取 Activation，但空闲时不运行模型。Host 的 provider adapter 只统一最小进程能力：
+
+```ts
+interface RuntimeAdapter {
+  probe(profile: RuntimeProfile): Promise<RuntimeAvailability>;
+  start(activation: ActivationEnvelope): Promise<RunHandle>;
+  resume?(activation: ActivationEnvelope, nativeSessionId: string): Promise<RunHandle>;
+  cancel(run: RunHandle): Promise<void>;
+  reap(run: RunHandle): Promise<RunExit>;
+}
+```
+
+- `start/resume` 只负责把稳定的 Room/participant/activation identity 和最小启动契约交给 CLI；正文由 agent 执行 `room_sync` 获取。
+- `resume`、`liveInput`、native history 和 structured events 是 capability，不是所有 adapter 的必选项。
+- CLI 退出后 AgentParticipant、Inbox、Task 和 Activation 仍然存在；下一次可以恢复原生 session，也可以从新 session + Room briefing 继续。
+- stdout、JSONL、thinking 和 tool stream 只进入 diagnostics/Legacy Run Inspector，不得驱动 Room 业务状态。
+- Host 必须拥有 lease、heartbeat、timeout、cancel、process-group cleanup 和 orphan reap；Kimi 等不能干净退出的 CLI 不能把僵尸进程治理推给模型。
 
 ## 6. Artifact 与 Review Plane
 
@@ -316,6 +356,16 @@ RuntimeProfile 应记录 harness、模型、版本、认证 profile、权限和�
 
 路由建议必须可解释且可由用户覆盖。一次 RunAttempt 绑定一个不可变 profile snapshot，不能在执行中偷偷换模型。
 
+### 7.4 Visibility、Attention 与 Activation 不是一回事
+
+Room 成员有权稍后同步一条消息，不代表系统应该立即为每个成员运行一次模型：
+
+- **Visibility**：Room ledger 决定谁有权读取事件。
+- **Attention**：Inbox Router 根据 mention、DM、thread subscription、Task ownership 和明确策略生成收件项。
+- **Activation**：Scheduler 根据优先级、预算、busy lane、去抖与合并规则决定是否启动 Run。
+
+普通 `status` 和 lifecycle telemetry 默认只增加 visibility，不创建全员 activation。`@participant`、DM、Task assignment、dependency resolved 和 `input.resolved` 默认创建定向 activation。Council 广播必须由显式 `@all`、Room policy 或 topic subscription 触发，不能让 agent 的每条回复无条件唤醒所有其它 agent。
+
 ## 8. Room-first UI 信息架构
 
 Room 页面是一等工作面：
@@ -346,6 +396,25 @@ Room Header: 标题 / 成员 / 状态 / 成本 / 菜单
 - stop/restart/replace runtime。
 
 默认 Room feed 不展示 provider thinking、内部工具卡和轮询调用。agent 应显式发布简明计划、假设、证据、进度、阻塞、结果和审查意见。
+
+### 8.1 Raft 风格壳的采用边界
+
+经授权采集并从零实现的可运行参考已迁移到与 RAH 同级的独立仓库 `raft-ui`（从 RAH 根目录看为 `../raft-ui`）。它覆盖 Room
+聊天/线程、Activity、Task、Artifact、Membership、Computer/Runner、设置/管理与 390×844 移动端栈式
+页面，视觉令牌、hover 矩阵和像素回归入口也由该仓库统一维护。
+
+这套参考只决定信息密度、导航层级、视觉令牌与无状态交互，不拥有业务真相。移植到 React 时必须保持：
+
+- 频道/私信视觉语言映射到 `Room/Thread`，不能复活第二套 Conversation store。
+- 成员目录读取 `Membership/AgentParticipant`；Computer 页面读取 runner registry；运行时 badge 读取
+  `RuntimeProfile/RunAttempt` capability snapshot。
+- Task、Artifact、Review 保持独立 canonical object，消息只引用它们。
+- 桌面采用 rail + context sidebar + content + optional thread；移动端改为栈式 header、返回事务、全宽内容与
+  bottom navigation，但两端消费同一 owner 和事件。
+- 当前 provider Session UI 保留为 Legacy Run Inspector；在 Room bridge 与删除旧 parser 的门禁满足前，
+  不用新壳覆盖其 lifecycle/acceptance 语义。
+- 复刻中的滚动容器在产品代码内必须使用既有 `rah-scroll-main / rah-scroll-panel / rah-scroll-code` 协议，
+  不能把模板的全局 scrollbar 规则直接复制进组件。
 
 ## 9. 外部项目能力地图
 
@@ -524,6 +593,93 @@ RAH 可借力：
 
 采用级别：**ACP 与 artifact UI 参考/选择性移植候选**，不使用其 transcript projection 作为 Room truth。
 
+### 9.8 Matrix
+
+来源：
+
+- [Matrix Client-Server Sync](https://spec.matrix.org/v1.19/client-server-api/)
+- [Matrix Push Gateway](https://spec.matrix.org/v1.17/push-gateway-api/)
+
+最有价值：
+
+- Room event history 与 `next_batch/since` 增量 cursor 是权威同步路径。
+- 在线客户端可以 long-poll `/sync`，离线 push 由独立 Push Gateway 承担；push 可以只携 event identity，并要求重复抑制。
+- “同步正文”和“提醒客户端来同步”是两条 transport，但共享同一个 event lineage。
+
+RAH 应吸收 Room cursor、initial snapshot + incremental delta、event-id dedupe 和独立 wake plane。Matrix federation、加密和完整协议面远超 RAH 当前需要，不建议直接把 homeserver 作为本地 Room Kernel。
+
+采用级别：**Room 同步与通知分层的首要协议参考**。
+
+### 9.9 OpenClaw
+
+来源：
+
+- [OpenClaw](https://docs.openclaw.ai/)
+- [Gateway Protocol](https://docs.openclaw.ai/gateway/protocol)
+- [Queue](https://github.com/openclaw/openclaw/blob/main/docs/concepts/queue.md)
+
+最有价值：
+
+- 常驻 Gateway 统一拥有 channel connection、routing、session 和 node transport；模型不负责轮询聊天入口。
+- Gateway WebSocket 是控制面，per-session lane 保证同一 session 同时只有一个 run 修改它。
+- 新消息可以创建、排队或 steer 下一次 agent turn；等待用户时不需要一个 MCP tool turn 常驻。
+
+RAH 应吸收 Gateway/AgentHost、串行 lane、queue mode 和 session routing 的工程边界，但不能把 OpenClaw 自有 agent loop/session store 变成 Room truth，也不能因此放弃原生 CLI harness。
+
+采用级别：**Agent Gateway、queue 与 session lane 的重要实现参考**。
+
+### 9.10 AutoGen Core
+
+来源：
+
+- [Message and Communication](https://microsoft.github.io/autogen/stable/user-guide/core-user-guide/framework/message-and-communication.html)
+- [Distributed Agent Runtime](https://microsoft.github.io/autogen/stable/user-guide/core-user-guide/framework/distributed-agent-runtime.html)
+
+最有价值：
+
+- runtime 拥有 direct message、topic subscription、AgentId 和生命周期，消息到达时才惰性创建 agent instance。
+- 分布式 Host 维持 worker runtime 连接并把消息路由到声明支持该 agent 的 worker。
+- Agent identity 是长期寻址对象，内存对象和执行进程只是按需 materialize 的实例。
+
+这与 RAH 的 `AgentParticipant -> Activation -> RunAttempt` 模型一致。AutoGen distributed runtime 仍是实验能力且主要面向其原生 agent code，不适合直接包装所有 CLI；应吸收 virtual actor 和 topic routing 思路。
+
+采用级别：**消息驱动 Agent Runtime 参考**。
+
+### 9.11 LiveKit Agents
+
+来源：
+
+- [Agent Server Lifecycle](https://docs.livekit.io/agents/server/lifecycle/)
+- [Agent Dispatch](https://docs.livekit.io/agents/server/agent-dispatch/)
+
+最有价值：
+
+- Agent Server 在模型之外常驻注册并等待 dispatch，上报容量和可用性。
+- Server 把 Room job 分配给可用 worker，worker 为每个 job 启动隔离进程；崩溃、drain 和重分配由执行层处理。
+- dispatch identity 与 Room 内 display identity 分离，适合对应 RuntimeProfile 与 AgentParticipant。
+
+LiveKit 面向实时媒体，RAH 不需要引入 WebRTC 作为代码协作底座；应吸收 standby worker、显式 dispatch、job isolation、capacity 和 crash recovery。
+
+采用级别：**AgentHost 与 Activation dispatch 的重要实现参考**。
+
+### 9.12 LangGraph Agent Server 与 Temporal
+
+来源：
+
+- [LangGraph Agent Server](https://docs.langchain.com/langsmith/agent-server)
+- [LangGraph Interrupts](https://docs.langchain.com/oss/python/langgraph/interrupts)
+- [Temporal Durable Execution](https://assets.temporal.io/durable-execution.pdf)
+
+最有价值：
+
+- LangGraph 用 PostgreSQL 持久化 thread/run/checkpoint/task queue，Redis 只承担 signaling、cancel 和 stream pub/sub；worker lease run，同一 thread 串行执行。
+- interrupt 把等待人类输入表示为持久 checkpoint，可以无限期暂停，恢复不要求原执行进程持续占用资源。
+- Temporal 进一步证明“逻辑上长期等待”不等于“工作进程和线程长期常驻”：事件历史保存进度，worker 以后通过 task queue 重建并继续。
+
+RAH 第一阶段不应直接引入整套 LangGraph/Temporal；应吸收 durable queue、lease、checkpoint/blocked state、ephemeral signal 与 durable truth 分离。任务编排复杂到需要跨天补偿、定时器和大量外部 side effect 时，再用 ADR 评估 Temporal。
+
+采用级别：**持久执行和 human-in-the-loop 状态机参考**。
+
 ## 10. 其它成熟项目和协议
 
 ### 10.1 Zed + ACP
@@ -597,16 +753,32 @@ Kangentic 的 board pipeline、worktree、diff、session persistence、handoff�
 
 采用级别：**UX/失败教训参考，不作为核心依赖**。
 
+### 10.7 现有 1.x 架构中必须保留的迁移资产
+
+Room-first 不是否定现有 daemon/provider 工程。旧架构对照文档中仍然有效的结论收口到这里：
+
+- 保留 hapi 式 scanner/hook、晚到 transcript 容忍与 normalize-first 纪律，但只服务 Legacy Run Inspector 和 provider diagnostics，不进入 Room truth。
+- 保留 paseo 式 store-centric owner、history/live cursor、generation 和 optimistic→authoritative handoff；将同样的纪律应用到 Room initial snapshot、增量 cursor、Inbox 与 Activation。
+- 保留 AionUI 式 runtime/session/lifecycle/permission/client factory 分层，用于 ACP sidecar，不把所有 provider 强制迁到 ACP-first。
+- 保留 Herdr 式 server/client、state/runtime/render 分离和 no-god-object 约束；terminal detection 仍不能证明 Room message、Task acknowledgement 或 completion。
+- 现有 Codex/Claude/OpenCode native adapter 在迁移期继续维护 acceptance、history 和 attach，但不得继续扩大成新 CLI 的 transcript parser 模板。
+- diagnostics 只证明 binary/version/basic launch，不能把“CLI 在 PATH”宣传成认证、额度和真实模型可用。
+- provider 漂移优先修改 translator、fixture/corpus 和 smoke；只有稳定 Room/Run fallback 也无法表达时才扩 canonical protocol。
+
+因此迁移策略是重新界定这些资产的职责，而不是重写已经稳定的 Provider Run Inspector。
+
 ## 11. RAH OS 最值得优先增加的大功能
 
-### P0：Room 与 bridge
+### P0：Room、Inbox、Activation 与 AgentHost
 
 - 单 agent Session 与 Council 统一为 Room。
-- 真人/agent membership、mention、thread、inbox cursor。
-- MCP/CLI room bridge 与严格 acknowledgement。
+- 真人/agent membership、mention、thread、durable inbox cursor。
+- event→inbox→activation→wake 的单一因果链、lease、去重、合并和离线恢复。
+- 本机 AgentHost 与 Codex/Claude/Kimi/OpenCode 的 `probe/start/resume/cancel/reap`。
+- MCP/CLI room bridge 与严格 acknowledgement；正常消息投递不依赖模型 wait/listen。
 - RunAttempt 与原生 terminal inspector。
 
-主要来源：Raft、当前 Council、Agent Kanban、Zed/ACP。
+主要来源：Matrix、Raft、OpenClaw、LiveKit、AutoGen、LangGraph、Multica、当前 Council、Agent Kanban、Zed/ACP。
 
 ### P1：Task、Run、worktree、Review
 
@@ -628,7 +800,7 @@ Kangentic 的 board pipeline、worktree、diff、session persistence、handoff�
 ### P3：Remote Runner 与持续工作
 
 - computer/runner registry、在线状态、版本、能力与资源。
-- SSH/remote attach、断线重连、polling backstop。
+- SSH/remote attach、断线重连、pending activation backstop。
 - schedules、reminders、automation trigger。
 - task-scoped credentials 与 sandbox profile。
 
@@ -648,6 +820,8 @@ Kangentic 的 board pipeline、worktree、diff、session persistence、handoff�
 | 能力 | 首选策略 | 不建议 |
 | --- | --- | --- |
 | 多方协作 ledger | RAH 自有，借鉴 Raft | 依赖闭源 hosted core |
+| Inbox/Activation | durable store + transactional outbox + AgentHost lease | MCP listen、纯 Redis Pub/Sub 或进程内事件充当可靠队列 |
+| 在线 wake | Host WebSocket/content-free hint + reconnect pull backstop | 把消息正文或 read cursor 绑定到一次推送成功 |
 | agent-client 富协议 | 官方 ACP SDK/adapter | 自创完整替代协议 |
 | 任意 CLI | Generic PTY + Room CLI bridge | 为每家写 transcript parser |
 | PTY runtime | 现有 RAH 与 Herdr sidecar 做 A/B spike | 双 PTY owner |
@@ -677,12 +851,16 @@ Kangentic 的 board pipeline、worktree、diff、session persistence、handoff�
 ### Phase 1：Room Ledger v1
 
 - 从 Council store 提取 provider-neutral Room/Membership/Message owner。
-- 建立 Room cursor、idempotency、inbox、pull/wait/post。
+- 建立 Room cursor、idempotency、Inbox projection 和 Task/Message command。
+- 每次 mutation 同事务写 projection、append-only Room event 和 Outbox。
 - MCP 与 CLI facade 进入同一 service。
-- current Council 先适配新 ledger，运行控制暂不重写。
+- current Council 先适配新 ledger，现有热 waiter 暂时作为兼容路径，不进入目标协议。
 
-### Phase 2：单 agent Room
+### Phase 2：Activation 与本机 AgentHost
 
+- 建立 durable Activation、per-agent serial lane、lease、heartbeat、dedupe、debounce 和 crash recovery。
+- AgentHost 通过 WebSocket 接收 content-free wake hint，重连后主动补领 pending activation。
+- Codex、Claude、Kimi、OpenCode adapter 只实现最小进程控制；不得以解析 stdout/JSONL 判断业务成功。
 - New Task 创建 Room + 一个 AgentParticipant + 一个 RunAttempt。
 - 原 Session Chat 在 UI 上映射为单 agent Room。
 - provider final 不再自动成为 Room message；agent bridge 显式 post result。
@@ -715,11 +893,14 @@ Kangentic 的 board pipeline、worktree、diff、session persistence、handoff�
 ### 14.1 Room 协议门禁
 
 - 同一 client message 重试只产生一个 Room message。
-- wake injected 不推进 pulled/acknowledged cursor。
+- wake hint delivered 不推进 pulled/acknowledged cursor。
 - agent 忙碌、掉线、重启后 inbox 不丢、不重复消费。
+- Host 离线期间到达的多条消息在重连后合并为可追溯 activation，并由一次 `room_sync` 完整补齐。
+- wake hint 重复、丢失或 Host 在 lease 后崩溃，都不能丢失 Inbox；lease 到期后可以安全重领。
 - 真人和多个 agent 并发 post 后 Room cursor 确定。
 - lifecycle/status telemetry 不触发 agent 互相无限唤醒。
-- 无 MCP 的 CLI 能通过 CLI facade 完成 pull/post/task/artifact/review。
+- 人类延迟回复和 agent dependency 等待不保持模型 turn，不需要 `room_wait/channel_wait_new` 才能恢复。
+- 无 MCP 的 CLI 能通过 CLI facade 完成 sync/post/task/artifact/review。
 
 ### 14.2 Run 门禁
 
@@ -727,6 +908,8 @@ Kangentic 的 board pipeline、worktree、diff、session persistence、handoff�
 - Room 切换、PWA reload、Canvas attach 不会 stop Run。
 - provider session resume 失败时可创建新 Run + handoff，不污染 Room history。
 - runtimeProfile/provider/model/auth source 在 Info 中可追溯。
+- CLI 正常退出、超时、残留子进程和 Host 重启都由 RunAttempt/AgentHost 状态机收口，不能污染 Task 状态。
+- provider 支持 resume/live input 时走 capability 快路径；不支持时新 session + Room briefing 得到相同业务结果。
 
 ### 14.3 Task/Review 门禁
 
@@ -760,7 +943,8 @@ Kangentic 的 board pipeline、worktree、diff、session persistence、handoff�
 RAH OS 不需要重新实现 Orca、Herdr、Raft、Multica、AionUI 和 Routa 的全部功能。最可持续的组合是：
 
 - 用 RAH 自有 Room ledger 持有协作真相。
-- 用 Raft 的 external-agent/聊天室模型约束消息与成员语义。
+- 用 Matrix 的 event/cursor/push 分层约束 Room 同步，用 Raft 的 external-agent/聊天室模型约束消息与成员语义。
+- 用 OpenClaw 的 Gateway/session lane、LiveKit 的 dispatch worker、AutoGen 的 virtual agent 和 LangGraph/Temporal 的 durable execution 约束 Activation 与 AgentHost。
 - 用 ACP/Zed 生态承接结构化 harness UI。
 - 用 Generic PTY，并评估 Herdr sidecar 承担可持久运行现场。
 - 用 Orca 的 Run/Task/Dispatch/Gate、worktree 和 review 经验强化执行编排。
@@ -768,4 +952,4 @@ RAH OS 不需要重新实现 Orca、Herdr、Raft、Multica、AionUI 和 Routa �
 - 用 AionUI/OpenHands 的 artifact/automation UX 丰富网页工作台。
 - 用 A2A/AG-UI 作为未来 connector，而不是新的 canonical owner。
 
-核心防线不变：任何外部项目都不能重新把 provider transcript、终端 screen 或 hosted product 变成 RAH Room 的唯一真相。
+核心防线不变：任何外部项目都不能重新把 provider transcript、终端 screen、MCP listening turn 或 hosted product 变成 RAH Room 的唯一真相。Agent 不等待消息；系统持久化消息，并在需要时重新运行 Agent。
