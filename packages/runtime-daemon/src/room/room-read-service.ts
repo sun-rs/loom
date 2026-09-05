@@ -18,6 +18,7 @@ import {
 
 import type { DeviceAuthPrincipal } from "../device-auth";
 import { RoomActorResolver } from "./room-actor";
+import { ROOM_READ_RESPONSE_BYTE_LIMIT } from "./room-read-budget";
 import { RoomReadCursorCodec } from "./room-read-cursor";
 import type { RoomCursorKeyMaterial } from "./room-read-cursor";
 import { RoomDomainError, roomError } from "./room-errors";
@@ -25,9 +26,10 @@ import type { RoomLedger } from "./room-ledger";
 
 export interface RoomReadServiceOptions {
   cursorKey: RoomCursorKeyMaterial;
+  responseByteLimit?: number;
 }
 
-const ROOM_READ_RESPONSE_BYTE_LIMIT = 1_048_576;
+export { ROOM_READ_RESPONSE_BYTE_LIMIT } from "./room-read-budget";
 
 /**
  * Authenticated application port for Room reads. It is intentionally not an
@@ -38,11 +40,23 @@ export class RoomReadService {
   readonly #ledger: RoomLedger;
   readonly #actors: RoomActorResolver;
   readonly #cursors: RoomReadCursorCodec;
+  readonly #responseByteLimit: number;
 
   constructor(ledger: RoomLedger, options: RoomReadServiceOptions) {
     this.#ledger = ledger;
     this.#actors = new RoomActorResolver(ledger);
     this.#cursors = new RoomReadCursorCodec(options.cursorKey);
+    this.#responseByteLimit = options.responseByteLimit ?? ROOM_READ_RESPONSE_BYTE_LIMIT;
+    if (
+      !Number.isSafeInteger(this.#responseByteLimit) ||
+      this.#responseByteLimit < 1_024 ||
+      this.#responseByteLimit > ROOM_READ_RESPONSE_BYTE_LIMIT
+    ) {
+      throw roomError(
+        "invalid_argument",
+        `Room read responseByteLimit must be between 1024 and ${ROOM_READ_RESPONSE_BYTE_LIMIT}`,
+      );
+    }
   }
 
   bootstrap(
@@ -61,15 +75,20 @@ export class RoomReadService {
     }
     const subject = this.#cursors.subject(actor.principalId);
     const recentMessages = [...result.recentMessages];
+    const initialAnchor = recentMessages[0]?.roomSeq ?? result.throughSeq + 1;
+    const hadMessagesBeforeInitialWindow = this.#ledger.listMessages(
+      actor.principalId,
+      request.roomId,
+      {
+        beforeRoomSeq: initialAnchor,
+        throughRoomSeq: result.throughSeq,
+        limit: 1,
+      },
+    ).messages.length > 0;
+    let removedMessages = 0;
     const buildResponse = (): RoomBootstrapReadResponse => {
       const firstMessage = recentMessages[0];
-      const hasOlderMessages = firstMessage
-        ? this.#ledger.listMessages(actor.principalId, request.roomId, {
-            beforeRoomSeq: firstMessage.roomSeq,
-            throughRoomSeq: result.throughSeq,
-            limit: 1,
-          }).messages.length > 0
-        : false;
+      const hasOlderMessages = removedMessages > 0 || hadMessagesBeforeInitialWindow;
       return {
         mode: "latest_bootstrap",
         snapshot: result.snapshot,
@@ -81,12 +100,12 @@ export class RoomReadService {
           subject,
           position: result.snapshotSeq,
         }),
-        ...(firstMessage && hasOlderMessages
+        ...(hasOlderMessages
           ? {
               olderMessagesCursor: this.#cursors.encodeOlderMessages({
                 roomId: request.roomId,
                 subject,
-                anchor: firstMessage.roomSeq,
+                anchor: firstMessage?.roomSeq ?? result.throughSeq + 1,
                 through: result.throughSeq,
               }),
             }
@@ -94,8 +113,9 @@ export class RoomReadService {
       };
     };
     let response = buildResponse();
-    while (this.#responseBytes(response) > ROOM_READ_RESPONSE_BYTE_LIMIT && recentMessages.length) {
+    while (this.#responseBytes(response) > this.#responseByteLimit && recentMessages.length) {
       recentMessages.shift();
+      removedMessages += 1;
       response = buildResponse();
     }
     this.#requireResponseBudget(response);
@@ -145,9 +165,15 @@ export class RoomReadService {
       };
     };
     let response = buildResponse();
-    while (this.#responseBytes(response) > ROOM_READ_RESPONSE_BYTE_LIMIT && acceptedEvents.length) {
+    while (this.#responseBytes(response) > this.#responseByteLimit && acceptedEvents.length) {
       acceptedEvents.pop();
       response = buildResponse();
+    }
+    if (events.length > 0 && acceptedEvents.length === 0) {
+      throw roomError(
+        "resource_exhausted",
+        "A Room event cannot fit within the configured read response budget",
+      );
     }
     this.#requireResponseBudget(response);
     return response;
@@ -191,9 +217,15 @@ export class RoomReadService {
       };
     };
     let response = buildResponse();
-    while (this.#responseBytes(response) > ROOM_READ_RESPONSE_BYTE_LIMIT && messages.length) {
+    while (this.#responseBytes(response) > this.#responseByteLimit && messages.length) {
       messages.shift();
       response = buildResponse();
+    }
+    if (result.messages.length > 0 && messages.length === 0) {
+      throw roomError(
+        "resource_exhausted",
+        "A Room message cannot fit within the configured read response budget",
+      );
     }
     this.#requireResponseBudget(response);
     return response;
@@ -222,9 +254,15 @@ export class RoomReadService {
       }),
     });
     let response = buildResponse();
-    while (this.#responseBytes(response) > ROOM_READ_RESPONSE_BYTE_LIMIT && acceptedItems.length) {
+    while (this.#responseBytes(response) > this.#responseByteLimit && acceptedItems.length) {
       acceptedItems.pop();
       response = buildResponse();
+    }
+    if (items.length > 0 && acceptedItems.length === 0) {
+      throw roomError(
+        "resource_exhausted",
+        "A Room Inbox item cannot fit within the configured read response budget",
+      );
     }
     this.#requireResponseBudget(response);
     return response;
@@ -247,7 +285,7 @@ export class RoomReadService {
   }
 
   #requireResponseBudget(value: unknown): void {
-    if (this.#responseBytes(value) > ROOM_READ_RESPONSE_BYTE_LIMIT) {
+    if (this.#responseBytes(value) > this.#responseByteLimit) {
       throw roomError("resource_exhausted", "Room read response exceeds the one MiB budget");
     }
   }

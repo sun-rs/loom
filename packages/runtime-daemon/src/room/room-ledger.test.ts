@@ -620,7 +620,7 @@ test("RoomLedger bounds message list materialization by serialized bytes", () =>
 test("RoomLedger bounds JSON-escaping expansion before message rows enter JavaScript", () => {
   const context = fixture();
   try {
-    const escapedBody = "\u0000\n\"\\\t".repeat(20_000);
+    const escapedBody = "\n\"\\\t\b".repeat(20_000);
     assert.equal(escapedBody.length, 100_000);
     for (let index = 0; index < 8; index += 1) {
       context.ledger.postMessage("human-owner", {
@@ -632,6 +632,7 @@ test("RoomLedger bounds JSON-escaping expansion before message rows enter JavaSc
     const page = context.ledger.listMessages("human-owner", "room-general", { limit: 500 });
     assert.ok(page.messages.length > 0);
     assert.ok(page.messages.length < 8);
+    assert.ok(page.messages.every((message) => message.body === escapedBody));
     assert.ok(Buffer.byteLength(JSON.stringify(page)) <= 1_048_576);
     const bootstrap = context.ledger.syncRoom("human-owner", {
       roomId: "room-general",
@@ -639,6 +640,96 @@ test("RoomLedger bounds JSON-escaping expansion before message rows enter JavaSc
       limit: 500,
     });
     assert.ok(Buffer.byteLength(JSON.stringify(bootstrap)) <= 1_048_576);
+    assert.ok(
+      bootstrap.mode === "latest_bootstrap" &&
+      bootstrap.recentMessages.every((message) => message.body === escapedBody),
+    );
+  } finally {
+    context.ledger.close();
+    rmSync(context.root, { recursive: true, force: true });
+  }
+});
+
+test("RoomLedger rejects SQLite-unsafe text and round-trips canonical Unicode", () => {
+  const context = fixture();
+  try {
+    for (const displayName of ["Agent\u0000Name", "Agent\ud800Name", "Agent\udc00Name"]) {
+      assertRoomError(
+        () => context.ledger.provisionPrincipal({
+          principalId: `unsafe-${displayName.charCodeAt(5)}`,
+          handle: `unsafe-${displayName.charCodeAt(5)}`,
+          kind: "agent",
+          displayName,
+        }),
+        "invalid_argument",
+      );
+    }
+    for (const name of ["Room\u0000Name", "Room\ud800Name", "Room\udc00Name"]) {
+      assertRoomError(
+        () => context.ledger.createRoom("human-owner", {
+          roomId: `unsafe-room-${name.charCodeAt(4)}`,
+          workspaceKey: "workspace-main",
+          kind: "channel",
+          slug: `unsafe-room-${name.charCodeAt(4)}`,
+          name,
+          idempotencyKey: `unsafe-room-${name.charCodeAt(4)}`,
+        }),
+        "invalid_argument",
+      );
+    }
+    for (const body of ["body\u0000text", "body\ud800text", "body\udc00text"]) {
+      assertRoomError(
+        () => context.ledger.postMessage("human-owner", {
+          roomId: "room-general",
+          body,
+          idempotencyKey: `unsafe-body-${body.charCodeAt(4)}`,
+        }),
+        "invalid_argument",
+      );
+    }
+
+    const agent = context.ledger.provisionPrincipal({
+      principalId: "agent-unicode",
+      handle: "agent-unicode",
+      kind: "agent",
+      displayName: "Agent 🧭",
+    });
+    const room = context.ledger.createRoom("human-owner", {
+      roomId: "room-unicode",
+      workspaceKey: "workspace-main",
+      kind: "channel",
+      slug: "unicode",
+      name: "Room 🧭\n\"quoted\"",
+      idempotencyKey: "room-unicode",
+    });
+    context.ledger.addMember("human-owner", {
+      roomId: room.value.roomId,
+      principalId: agent.principalId,
+      role: "member",
+      basedOnRoomSeq: room.event.roomSeq,
+      idempotencyKey: "add-agent-unicode",
+    });
+    const body = "Message 🧭\n\"quoted\"\\tab\tbackspace\b";
+    const posted = context.ledger.postMessage("human-owner", {
+      roomId: room.value.roomId,
+      body,
+      idempotencyKey: "message-unicode",
+    });
+    const bootstrap = context.ledger.syncRoom("human-owner", {
+      roomId: room.value.roomId,
+      bootstrap: "latest",
+    });
+    assert.equal(bootstrap.mode, "latest_bootstrap");
+    if (bootstrap.mode !== "latest_bootstrap") throw new Error("expected bootstrap");
+    assert.equal(room.value.name, bootstrap.snapshot.room.name);
+    assert.equal(
+      bootstrap.snapshot.principals.find((principal) => principal.principalId === agent.principalId)
+        ?.displayName,
+      agent.displayName,
+    );
+    assert.equal(posted.value.body, body);
+    assert.equal(posted.event.payload.body, body);
+    assert.equal(bootstrap.recentMessages.at(-1)?.body, body);
   } finally {
     context.ledger.close();
     rmSync(context.root, { recursive: true, force: true });

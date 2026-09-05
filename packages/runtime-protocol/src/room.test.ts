@@ -71,6 +71,24 @@ test("Room message requests expose mentions but not server-owned Attention reaso
     }).mentionedPrincipalIds,
     ["agent-a", "agent-z"],
   );
+  for (const body of ["abc\u0000def", "abc\ud800def", "abc\udc00def"]) {
+    assert.throws(
+      () => validatePostRoomMessageRequest({
+        roomId: "room-general",
+        body,
+        idempotencyKey: "unsafe-message",
+      }),
+      /U\+0000|well-formed Unicode/,
+    );
+  }
+  assert.equal(
+    validatePostRoomMessageRequest({
+      roomId: "room-general",
+      body: "valid emoji: 🧭",
+      idempotencyKey: "emoji-message",
+    }).body,
+    "valid emoji: 🧭",
+  );
 });
 
 test("Room creation normalizes semantic defaults before idempotency", () => {
@@ -111,6 +129,18 @@ test("Room creation normalizes semantic defaults before idempotency", () => {
     }),
     /private until workspace ACL/,
   );
+  for (const name of ["Room\u0000name", "Room\ud800name", "Room\udc00name"]) {
+    assert.throws(
+      () => validateCreateRoomRequest({
+        workspaceKey: "workspace-main",
+        kind: "channel",
+        slug: "unsafe-name",
+        name,
+        idempotencyKey: "unsafe-name",
+      }),
+      /U\+0000|well-formed Unicode/,
+    );
+  }
 });
 
 test("Room sync freezes a bounded cursor window", () => {

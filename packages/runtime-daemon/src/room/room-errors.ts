@@ -1,13 +1,6 @@
-export type RoomErrorCode =
-  | "unauthenticated"
-  | "forbidden"
-  | "not_found"
-  | "conflict"
-  | "stale_context"
-  | "idempotency_conflict"
-  | "resource_exhausted"
-  | "unavailable"
-  | "invalid_argument";
+import type { RoomErrorCode } from "@rah/runtime-protocol";
+
+export type { RoomErrorCode } from "@rah/runtime-protocol";
 
 /** Stable domain error boundary for a future HTTP application port. */
 export class RoomDomainError extends Error {

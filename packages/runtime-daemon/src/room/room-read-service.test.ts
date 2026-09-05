@@ -7,7 +7,10 @@ import test from "node:test";
 import type { DeviceAuthPrincipal } from "../device-auth";
 import { RoomDomainError } from "./room-errors";
 import { RoomLedger } from "./room-ledger";
-import { RoomReadService } from "./room-read-service";
+import {
+  ROOM_READ_RESPONSE_BYTE_LIMIT,
+  RoomReadService,
+} from "./room-read-service";
 
 const CURSOR_KEY = {
   generation: "test-generation-1",
@@ -238,7 +241,7 @@ test("RoomReadService keeps complete transport responses within the one MiB boun
   const context = fixture();
   try {
     const initial = context.service.bootstrap(localPrincipal(), { roomId: "room-general" });
-    const escapedBody = "\u0000\n\"\\\t".repeat(20_000);
+    const escapedBody = "\n\"\\\t\b".repeat(20_000);
     for (let index = 0; index < 8; index += 1) {
       context.ledger.postMessage(context.owner.principalId, {
         roomId: "room-general",
@@ -255,10 +258,13 @@ test("RoomReadService keeps complete transport responses within the one MiB boun
       roomId: "room-general",
       limit: 500,
     });
-    assert.ok(Buffer.byteLength(JSON.stringify(events)) <= 1_048_576);
-    assert.ok(Buffer.byteLength(JSON.stringify(bootstrap)) <= 1_048_576);
+    assert.ok(Buffer.byteLength(JSON.stringify(events)) <= ROOM_READ_RESPONSE_BYTE_LIMIT);
+    assert.ok(Buffer.byteLength(JSON.stringify(bootstrap)) <= ROOM_READ_RESPONSE_BYTE_LIMIT);
     assert.ok(events.events.length < 8);
     assert.ok(bootstrap.recentMessages.length < 8);
+    assert.ok(events.events.every((event) =>
+      event.type !== "message.posted" || event.payload.body === escapedBody));
+    assert.ok(bootstrap.recentMessages.every((message) => message.body === escapedBody));
   } finally {
     context.ledger.close();
     rmSync(context.root, { recursive: true, force: true });
@@ -293,6 +299,39 @@ test("RoomReadService membership events atomically extend the client identity gr
     assert.equal(event.payload.membership.principalId, "agent-new");
     assert.equal(event.payload.principal.principalId, "agent-new");
     assert.equal(event.payload.principal.displayName, "New Agent");
+  } finally {
+    context.ledger.close();
+    rmSync(context.root, { recursive: true, force: true });
+  }
+});
+
+test("RoomReadService returns resource_exhausted instead of a cursor-stalled page", () => {
+  const context = fixture();
+  try {
+    const initial = context.service.bootstrap(localPrincipal(), { roomId: "room-general" });
+    context.ledger.postMessage(context.owner.principalId, {
+      roomId: "room-general",
+      body: "x".repeat(900),
+      idempotencyKey: "oversized-for-tiny-budget",
+    });
+    const constrained = new RoomReadService(context.ledger, {
+      cursorKey: CURSOR_KEY,
+      responseByteLimit: 1_024,
+    });
+
+    assert.throws(
+      () => constrained.readEvents(localPrincipal(), {
+        roomId: "room-general",
+        cursor: initial.eventCursor,
+      }),
+      (error: unknown) =>
+        error instanceof RoomDomainError && error.code === "resource_exhausted",
+    );
+    assert.throws(
+      () => constrained.bootstrap(localPrincipal(), { roomId: "room-general" }),
+      (error: unknown) =>
+        error instanceof RoomDomainError && error.code === "resource_exhausted",
+    );
   } finally {
     context.ledger.close();
     rmSync(context.root, { recursive: true, force: true });

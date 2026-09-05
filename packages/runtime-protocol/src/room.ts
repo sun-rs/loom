@@ -179,6 +179,28 @@ export interface RoomMutationResult<T> {
 
 const IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 
+/**
+ * SQLite TEXT and JSON must observe the same JavaScript string. Embedded NUL
+ * and isolated UTF-16 surrogates do not round-trip through node:sqlite.
+ */
+export function assertRoomTextStorageSafe(value: string, field: string): void {
+  if (value.includes("\u0000")) {
+    throw new Error(`${field} must not contain U+0000`);
+  }
+  for (let index = 0; index < value.length; index += 1) {
+    const codeUnit = value.charCodeAt(index);
+    if (codeUnit >= 0xd800 && codeUnit <= 0xdbff) {
+      const next = value.charCodeAt(index + 1);
+      if (next < 0xdc00 || next > 0xdfff) {
+        throw new Error(`${field} must contain well-formed Unicode`);
+      }
+      index += 1;
+    } else if (codeUnit >= 0xdc00 && codeUnit <= 0xdfff) {
+      throw new Error(`${field} must contain well-formed Unicode`);
+    }
+  }
+}
+
 function requireIdentifier(value: unknown, field: string): asserts value is string {
   if (typeof value !== "string" || !IDENTIFIER.test(value)) {
     throw new Error(`${field} must be a stable identifier`);
@@ -216,6 +238,7 @@ export function validateCreateRoomRequest(value: unknown): CreateRoomRequest {
   if (typeof value.name !== "string" || !value.name.trim() || value.name.trim().length > 120) {
     throw new Error("name must contain 1 to 120 characters");
   }
+  assertRoomTextStorageSafe(value.name, "name");
   if (value.visibility !== undefined && value.visibility !== "private") {
     throw new Error("client-created Rooms are private until workspace ACL is available");
   }
@@ -261,6 +284,7 @@ export function validatePostRoomMessageRequest(value: unknown): PostRoomMessageR
   if (typeof value.body !== "string" || !value.body.trim() || value.body.length > 100_000) {
     throw new Error("body must contain 1 to 100000 characters");
   }
+  assertRoomTextStorageSafe(value.body, "body");
   if (value.mentionedPrincipalIds !== undefined) {
     if (!Array.isArray(value.mentionedPrincipalIds) || value.mentionedPrincipalIds.length > 100) {
       throw new Error("mentionedPrincipalIds must be an array with at most 100 mentions");

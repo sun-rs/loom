@@ -8,6 +8,7 @@ import type {
   RoomRecord,
   RoomSnapshot,
 } from "./room";
+import { assertRoomTextStorageSafe } from "./room";
 
 export type RoomEventDto =
   | RoomCreatedEventDto
@@ -113,6 +114,33 @@ export interface RoomInboxReadResponse {
   items: RoomInboxItem[];
   inboxCursor: string;
 }
+
+export const ROOM_ERROR_CODES = [
+  "unauthenticated",
+  "forbidden",
+  "not_found",
+  "conflict",
+  "stale_context",
+  "idempotency_conflict",
+  "resource_exhausted",
+  "unavailable",
+  "invalid_argument",
+] as const;
+
+export type RoomErrorCode = typeof ROOM_ERROR_CODES[number];
+
+export type RoomReadResponseData =
+  | RoomBootstrapReadResponse
+  | RoomEventReadResponse
+  | RoomOlderMessagesReadResponse
+  | RoomInboxReadResponse;
+
+export type RoomReadHttpEnvelope =
+  | { ok: true; data: RoomReadResponseData }
+  | {
+      ok: false;
+      error: { code: RoomErrorCode | "internal"; message: string };
+    };
 
 const IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 const ATTENTION_REASONS = new Set<RoomAttentionReason>([
@@ -301,6 +329,7 @@ function validateRoomRecord(value: unknown): RoomRecord {
   if (typeof room.name !== "string" || !room.name || room.name.length > 120) {
     throw new Error("RoomRecord.name is invalid");
   }
+  assertRoomTextStorageSafe(room.name, "RoomRecord.name");
   requireTimestamp(room.createdAt, "RoomRecord.createdAt");
   if (room.archivedAt !== undefined) requireTimestamp(room.archivedAt, "RoomRecord.archivedAt");
   return room as unknown as RoomRecord;
@@ -340,6 +369,9 @@ function validatePrincipal(value: unknown): RoomPrincipal {
       !principal.displayName ||
       principal.displayName.length > 120)
   ) throw new Error("RoomPrincipal.displayName is invalid");
+  if (typeof principal.displayName === "string") {
+    assertRoomTextStorageSafe(principal.displayName, "RoomPrincipal.displayName");
+  }
   requireTimestamp(principal.createdAt, "RoomPrincipal.createdAt");
   return principal as unknown as RoomPrincipal;
 }
@@ -418,6 +450,7 @@ export function toRoomEventDto(value: RoomEvent | unknown): RoomEventDto {
     if (typeof payload.body !== "string" || !payload.body || payload.body.length > 100_000) {
       throw new Error("message.posted body is invalid");
     }
+    assertRoomTextStorageSafe(payload.body, "message.posted body");
     requireTimestamp(payload.createdAt, "message.posted createdAt");
     if (payload.createdAt !== base.createdAt) {
       throw new Error("message.posted createdAt must match the event occurrence time");

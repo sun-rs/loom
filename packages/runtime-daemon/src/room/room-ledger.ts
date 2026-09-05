@@ -4,6 +4,7 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 import {
+  assertRoomTextStorageSafe,
   type AcknowledgeRoomMessageRequest,
   type AddRoomMemberRequest,
   type CreateRoomRequest,
@@ -96,6 +97,16 @@ export class RoomLedger {
     const displayName = input.displayName?.trim();
     if (displayName !== undefined && (displayName.length < 1 || displayName.length > 120)) {
       throw roomError("invalid_argument", "displayName must contain 1 to 120 characters");
+    }
+    if (displayName !== undefined) {
+      try {
+        assertRoomTextStorageSafe(displayName, "displayName");
+      } catch (error) {
+        throw roomError(
+          "invalid_argument",
+          error instanceof Error ? error.message : "displayName is not storage-safe",
+        );
+      }
     }
     const existing = this.#database
       .prepare("SELECT * FROM room_principals WHERE principal_id = ?")
