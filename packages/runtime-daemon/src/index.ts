@@ -16,3 +16,4 @@ export * from "./runtime-engine";
 export * from "./http-server";
 export * from "./rah-paths.mjs";
 export * from "./rah-macos-service.mjs";
+export * from "./room/index";

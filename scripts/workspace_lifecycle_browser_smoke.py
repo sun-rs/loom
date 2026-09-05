@@ -361,6 +361,7 @@ def write_turn_change_artifact(
 ) -> None:
     turn_id = f"workspace-lifecycle-{provider_session_id}"
     owner_id = f"provider:codex\0{provider_session_id}"
+    captured_at = time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime())
     changed_paths = [
         "src/pwa-turn-review.ts",
         *[f"src/reply-navigation-fixture-{index:02d}.ts" for index in range(1, 13)],
@@ -410,7 +411,7 @@ def write_turn_change_artifact(
                 "version": 2,
                 "ownerId": owner_id,
                 "turnId": turn_id,
-                "capturedAt": "2026-07-31T10:00:01.000Z",
+                "capturedAt": captured_at,
                 "fileChanges": {
                     "files": changed_files,
                     "totalAdditions": len(changed_files),
@@ -475,9 +476,12 @@ def assert_latest_reply_start_navigation(
     file_changes_footer = page.locator(
         '[data-testid="conversation-turn-file-changes-footer"]:visible'
     ).last
-    if file_changes_footer.count() > 0:
-        file_changes_footer.click(timeout=10_000)
-        expect(file_changes_footer).to_have_text("Collapse files", timeout=10_000)
+    # This fixture always owns a frozen Changed Files artifact. Wait for the
+    # asynchronous resource projection instead of turning an early count() into
+    # an unrelated reply-navigation geometry failure.
+    expect(file_changes_footer).to_be_visible(timeout=20_000)
+    file_changes_footer.click(timeout=10_000)
+    expect(file_changes_footer).to_have_text("Collapse files", timeout=10_000)
     geometry = final_answer.evaluate(
         """
         element => {
@@ -682,6 +686,8 @@ def main() -> int:
     child_workspace.mkdir()
     rah_home = tmp_root / "rah-home"
     codex_home = tmp_root / "codex-home"
+    claude_config_dir = tmp_root / "claude-config"
+    xdg_data_home = tmp_root / "xdg-data"
     fake_codex = tmp_root / "fake-codex.js"
     parent_session_id = str(uuid.uuid4())
     child_session_id = str(uuid.uuid4())
@@ -699,6 +705,8 @@ def main() -> int:
 
     try:
         (codex_home / "sessions").mkdir(parents=True)
+        claude_config_dir.mkdir(parents=True)
+        xdg_data_home.mkdir(parents=True)
         write_fake_codex(fake_codex)
         write_history_fixture(
             codex_home,
@@ -721,6 +729,8 @@ def main() -> int:
             {
                 "RAH_HOME": str(rah_home),
                 "CODEX_HOME": str(codex_home),
+                "CLAUDE_CONFIG_DIR": str(claude_config_dir),
+                "XDG_DATA_HOME": str(xdg_data_home),
                 "RAH_CODEX_BINARY": str(fake_codex),
                 "RAH_CODEX_APP_SERVER_TRANSPORT": "stdio",
                 "MOCK_CODEX_SESSION_ID": str(uuid.uuid4()),

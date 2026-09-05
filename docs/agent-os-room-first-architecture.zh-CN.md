@@ -856,6 +856,11 @@ Room-first 不是否定现有 daemon/provider 工程。旧架构对照文档中�
 - MCP 与 CLI facade 进入同一 service。
 - current Council 先适配新 ledger，现有热 waiter 暂时作为兼容路径，不进入目标协议。
 
+2026-09-05 已完成 Phase 1 的内部第一纵切：provider-neutral Room/Membership/Message/Event/Inbox/Outbox
+协议、SQLite WAL 事务 owner、精确幂等、冻结游标同步和显式 acknowledgement 已进入 daemon，但尚未开放
+HTTP 或替换 Council。当前实现边界、来源和后续门禁见
+[Room Ledger v1：第一条可回滚纵切](./room-ledger-v1.zh-CN.md)。
+
 ### Phase 2：Activation 与本机 AgentHost
 
 - 建立 durable Activation、per-agent serial lane、lease、heartbeat、dedupe、debounce 和 crash recovery。

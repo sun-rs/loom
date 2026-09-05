@@ -25,6 +25,7 @@
 ## 1.1 目标架构提案
 
 - [RAH Agent OS：Room-first 架构与生态借力路线](./agent-os-room-first-architecture.zh-CN.md)
+- [Room Ledger v1：第一条可回滚纵切](./room-ledger-v1.zh-CN.md)
 
 该文档描述长期目标、外部架构对照与迁移边界，不代表当前 `main` 已经从 provider-session-first 切换为 Room-first。当前行为仍以上一节和 Provider/历史权威文档为准。
 
