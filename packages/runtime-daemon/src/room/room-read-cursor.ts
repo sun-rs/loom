@@ -30,7 +30,20 @@ type InboxCursorState = {
   p: number;
 };
 
-type RoomReadCursorState = EventCursorState | OlderMessagesCursorState | InboxCursorState;
+type RoomListCursorState = {
+  v: 1;
+  g: string;
+  k: "rooms";
+  s: string;
+  b: number;
+  t: number;
+};
+
+type RoomReadCursorState =
+  | EventCursorState
+  | OlderMessagesCursorState
+  | InboxCursorState
+  | RoomListCursorState;
 
 const IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 
@@ -149,6 +162,28 @@ export class RoomReadCursorCodec {
     return { position: state.p };
   }
 
+  encodeRooms(input: { subject: string; before: number; through: number }): string {
+    return this.#encode({
+      v: 1,
+      g: this.#generation,
+      k: "rooms",
+      s: input.subject,
+      b: input.before,
+      t: input.through,
+    });
+  }
+
+  decodeRooms(cursor: string, subject: string): { before: number; through: number } {
+    const state = this.#decode(cursor);
+    if (
+      state.k !== "rooms" ||
+      state.s !== subject ||
+      state.b < 1 ||
+      state.b > state.t + 1
+    ) throw this.#invalid();
+    return { before: state.b, through: state.t };
+  }
+
   #encode(state: RoomReadCursorState): string {
     const body = Buffer.from(JSON.stringify(state), "utf8").toString("base64url");
     return `${body}.${this.#mac(body)}`;
@@ -196,6 +231,10 @@ export class RoomReadCursorCodec {
       if (value.k === "inbox") {
         if (!validSequence(value.p)) throw this.#invalid();
         return parsed as InboxCursorState;
+      }
+      if (value.k === "rooms") {
+        if (!validSequence(value.b) || !validSequence(value.t)) throw this.#invalid();
+        return parsed as RoomListCursorState;
       }
       throw this.#invalid();
     } catch (error) {

@@ -8,8 +8,10 @@ import type {
   RoomBootstrapReadResponse,
   RoomEventReadResponse,
   RoomInboxReadResponse,
+  RoomListReadResponse,
   RoomOlderMessagesReadResponse,
 } from "@rah/runtime-protocol";
+import { ROOM_READ_HTTP_STATUS_BY_ERROR_CODE } from "@rah/runtime-protocol";
 
 import type { DeviceAuthPrincipal } from "../device-auth";
 import { roomError, type RoomErrorCode } from "./room-errors";
@@ -59,8 +61,15 @@ const OLDER_MESSAGES: RoomOlderMessagesReadResponse = {
 };
 
 const INBOX: RoomInboxReadResponse = {
+  mode: "inbox_page",
   items: [],
   inboxCursor: "inbox-cursor",
+};
+
+const ROOMS: RoomListReadResponse = {
+  mode: "room_list",
+  items: [],
+  hasMore: false,
 };
 
 function port(overrides: Partial<RoomReadApplicationPort> = {}): RoomReadApplicationPort {
@@ -69,6 +78,7 @@ function port(overrides: Partial<RoomReadApplicationPort> = {}): RoomReadApplica
     readEvents: () => EVENTS,
     readOlderMessages: () => OLDER_MESSAGES,
     readInbox: () => INBOX,
+    listRooms: () => ROOMS,
     ...overrides,
   };
 }
@@ -109,13 +119,14 @@ function realAdapterFixture() {
   };
 }
 
-test("RoomReadHttpAdapter dispatches the four typed read operations", () => {
+test("RoomReadHttpAdapter dispatches the five typed read operations", () => {
   const calls: string[] = [];
   const adapter = new RoomReadHttpAdapter(port({
     bootstrap: () => { calls.push("bootstrap"); return BOOTSTRAP; },
     readEvents: () => { calls.push("events"); return EVENTS; },
     readOlderMessages: () => { calls.push("older_messages"); return OLDER_MESSAGES; },
     readInbox: () => { calls.push("inbox"); return INBOX; },
+    listRooms: () => { calls.push("rooms"); return ROOMS; },
   }));
 
   const responses = [
@@ -126,15 +137,17 @@ test("RoomReadHttpAdapter dispatches the four typed read operations", () => {
       cursor: "older-cursor",
     }),
     adapter.execute(PRINCIPAL, "inbox", {}),
+    adapter.execute(PRINCIPAL, "rooms", {}),
   ];
 
-  assert.deepEqual(calls, ["bootstrap", "events", "older_messages", "inbox"]);
-  assert.deepEqual(responses.map((response) => response.status), [200, 200, 200, 200]);
+  assert.deepEqual(calls, ["bootstrap", "events", "older_messages", "inbox", "rooms"]);
+  assert.deepEqual(responses.map((response) => response.status), [200, 200, 200, 200, 200]);
   assert.deepEqual(responses.map((response) => body(response)), [
     { ok: true, data: BOOTSTRAP },
     { ok: true, data: EVENTS },
     { ok: true, data: OLDER_MESSAGES },
     { ok: true, data: INBOX },
+    { ok: true, data: ROOMS },
   ]);
 });
 
@@ -157,17 +170,8 @@ test("RoomReadHttpAdapter never accepts an unauthenticated application call", ()
 });
 
 test("RoomReadHttpAdapter maps every stable Room error without string matching", () => {
-  const expected: Array<[RoomErrorCode, number]> = [
-    ["unauthenticated", 401],
-    ["forbidden", 403],
-    ["not_found", 404],
-    ["invalid_argument", 400],
-    ["conflict", 409],
-    ["stale_context", 409],
-    ["idempotency_conflict", 409],
-    ["resource_exhausted", 413],
-    ["unavailable", 503],
-  ];
+  const expected = Object.entries(ROOM_READ_HTTP_STATUS_BY_ERROR_CODE)
+    .filter(([code]) => code !== "internal") as Array<[RoomErrorCode, number]>;
 
   for (const [code, status] of expected) {
     const adapter = new RoomReadHttpAdapter(port({

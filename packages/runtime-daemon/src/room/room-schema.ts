@@ -1,4 +1,29 @@
-export const ROOM_LEDGER_SCHEMA_VERSION = 1;
+import type { DatabaseSync } from "node:sqlite";
+
+export const ROOM_LEDGER_SCHEMA_VERSION = 2;
+
+const ROOM_CATALOG_SCHEMA = `
+CREATE TABLE IF NOT EXISTS room_catalog_memberships (
+  catalog_seq INTEGER PRIMARY KEY AUTOINCREMENT,
+  room_id TEXT NOT NULL,
+  principal_id TEXT NOT NULL,
+  UNIQUE (room_id, principal_id),
+  FOREIGN KEY (room_id, principal_id)
+    REFERENCES room_memberships(room_id, principal_id)
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS idx_room_catalog_principal_window
+  ON room_catalog_memberships(principal_id, catalog_seq);
+
+CREATE TABLE IF NOT EXISTS room_direct_pairs (
+  workspace_key TEXT NOT NULL,
+  principal_low TEXT NOT NULL REFERENCES room_principals(principal_id),
+  principal_high TEXT NOT NULL REFERENCES room_principals(principal_id),
+  room_id TEXT NOT NULL UNIQUE REFERENCES rooms(room_id),
+  PRIMARY KEY (workspace_key, principal_low, principal_high),
+  CHECK (principal_low < principal_high)
+) STRICT;
+`;
 
 export const ROOM_LEDGER_SCHEMA = `
 PRAGMA journal_mode = WAL;
@@ -38,6 +63,8 @@ CREATE TABLE IF NOT EXISTS room_memberships (
   joined_at TEXT NOT NULL,
   PRIMARY KEY (room_id, principal_id)
 ) STRICT;
+
+${ROOM_CATALOG_SCHEMA}
 
 CREATE TABLE IF NOT EXISTS room_events (
   event_id TEXT PRIMARY KEY,
@@ -92,6 +119,9 @@ CREATE INDEX IF NOT EXISTS idx_room_inbox_pending
 CREATE INDEX IF NOT EXISTS idx_room_inbox_window
   ON room_inbox_items(participant_id, inbox_seq);
 
+CREATE INDEX IF NOT EXISTS idx_room_inbox_room_pending
+  ON room_inbox_items(participant_id, state, room_id);
+
 CREATE TABLE IF NOT EXISTS room_outbox (
   outbox_seq INTEGER PRIMARY KEY AUTOINCREMENT,
   outbox_id TEXT NOT NULL UNIQUE,
@@ -127,3 +157,39 @@ CREATE TABLE IF NOT EXISTS room_commands (
 
 PRAGMA user_version = ${ROOM_LEDGER_SCHEMA_VERSION};
 `;
+
+/** Transactional, fail-closed migration from the deployed v1 Room ledger. */
+export function migrateRoomLedgerV1ToV2(database: DatabaseSync): void {
+  database.exec("BEGIN IMMEDIATE");
+  try {
+    database.exec(ROOM_CATALOG_SCHEMA);
+    database.exec(`
+      INSERT INTO room_catalog_memberships(room_id, principal_id)
+      SELECT room_id, principal_id
+      FROM room_memberships
+      ORDER BY joined_at, room_id, principal_id;
+
+      INSERT INTO room_direct_pairs(workspace_key, principal_low, principal_high, room_id)
+      SELECT
+        room.workspace_key,
+        MIN(membership.principal_id),
+        MAX(membership.principal_id),
+        room.room_id
+      FROM rooms AS room
+      JOIN room_memberships AS membership ON membership.room_id = room.room_id
+      WHERE room.kind = 'direct'
+      GROUP BY room.room_id, room.workspace_key
+      HAVING COUNT(*) = 2;
+
+      PRAGMA user_version = ${ROOM_LEDGER_SCHEMA_VERSION};
+    `);
+    database.exec("COMMIT");
+  } catch (error) {
+    try {
+      database.exec("ROLLBACK");
+    } catch {
+      // Keep the migration failure as the primary error.
+    }
+    throw error;
+  }
+}

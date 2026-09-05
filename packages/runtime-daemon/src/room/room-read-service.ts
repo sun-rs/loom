@@ -5,6 +5,8 @@ import type {
   RoomEventReadResponse,
   RoomInboxReadRequest,
   RoomInboxReadResponse,
+  RoomListReadRequest,
+  RoomListReadResponse,
   RoomOlderMessagesReadRequest,
   RoomOlderMessagesReadResponse,
 } from "@rah/runtime-protocol";
@@ -13,6 +15,7 @@ import {
   validateRoomBootstrapReadRequest,
   validateRoomEventReadRequest,
   validateRoomInboxReadRequest,
+  validateRoomListReadRequest,
   validateRoomOlderMessagesReadRequest,
 } from "@rah/runtime-protocol";
 
@@ -247,6 +250,7 @@ export class RoomReadService {
     });
     const acceptedItems = [...items];
     const buildResponse = (): RoomInboxReadResponse => ({
+      mode: "inbox_page",
       items: acceptedItems,
       inboxCursor: this.#cursors.encodeInbox({
         subject,
@@ -262,6 +266,50 @@ export class RoomReadService {
       throw roomError(
         "resource_exhausted",
         "A Room Inbox item cannot fit within the configured read response budget",
+      );
+    }
+    this.#requireResponseBudget(response);
+    return response;
+  }
+
+  listRooms(
+    principal: DeviceAuthPrincipal | null,
+    rawRequest: RoomListReadRequest,
+  ): RoomListReadResponse {
+    const actor = this.#actors.resolve(principal);
+    const request = this.#validate(() => validateRoomListReadRequest(rawRequest));
+    const subject = this.#cursors.subject(actor.principalId);
+    const cursor = request.cursor ? this.#cursors.decodeRooms(request.cursor, subject) : undefined;
+    const result = this.#ledger.listRooms(actor.principalId, {
+      ...(cursor
+        ? { beforeCatalogSeq: cursor.before, throughCatalogSeq: cursor.through }
+        : {}),
+      ...(request.limit !== undefined ? { limit: request.limit } : {}),
+    });
+    const acceptedItems = result.items.map(({ catalogSeq: _catalogSeq, ...item }) => item);
+    const buildResponse = (): RoomListReadResponse => ({
+      mode: "room_list",
+      items: acceptedItems,
+      hasMore: result.hasMore || acceptedItems.length < result.items.length,
+      ...(result.hasMore || acceptedItems.length < result.items.length
+        ? {
+            roomListCursor: this.#cursors.encodeRooms({
+              subject,
+              before: result.items[acceptedItems.length - 1]?.catalogSeq ?? result.cursorBefore,
+              through: result.throughCatalogSeq,
+            }),
+          }
+        : {}),
+    });
+    let response = buildResponse();
+    while (this.#responseBytes(response) > this.#responseByteLimit && acceptedItems.length) {
+      acceptedItems.pop();
+      response = buildResponse();
+    }
+    if (result.items.length > 0 && acceptedItems.length === 0) {
+      throw roomError(
+        "resource_exhausted",
+        "A Room catalog item cannot fit within the configured read response budget",
       );
     }
     this.#requireResponseBudget(response);

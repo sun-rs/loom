@@ -204,6 +204,125 @@ test("RoomLedger maps storage uniqueness conflicts to typed domain errors", () =
   }
 });
 
+test("RoomLedger freezes Room catalog pagination and never exposes non-member Rooms", () => {
+  const context = fixture();
+  try {
+    const create = (roomId: string, owner = "human-owner") => context.ledger.createRoom(owner, {
+      roomId,
+      workspaceKey: "workspace-main",
+      kind: "channel",
+      slug: roomId,
+      name: roomId,
+      idempotencyKey: `create-${roomId}`,
+    });
+    create("room-two");
+    context.ledger.createRoom("human-outsider", {
+      roomId: "room-secret",
+      workspaceKey: "workspace-main",
+      kind: "channel",
+      slug: "secret",
+      name: "Secret",
+      idempotencyKey: "create-secret",
+    });
+    create("room-three");
+
+    const first = context.ledger.listRooms("human-owner", { limit: 2 });
+    assert.deepEqual(first.items.map((item) => item.room.roomId), ["room-three", "room-two"]);
+    assert.equal(first.hasMore, true);
+    assert.ok(first.cursorBefore > 0);
+
+    create("room-after-freeze");
+    const second = context.ledger.listRooms("human-owner", {
+      limit: 2,
+      throughCatalogSeq: first.throughCatalogSeq,
+      beforeCatalogSeq: first.cursorBefore,
+    });
+    assert.deepEqual(second.items.map((item) => item.room.roomId), ["room-general"]);
+    assert.equal(second.hasMore, false);
+    assert.equal(
+      [...first.items, ...second.items].some((item) => item.room.roomId === "room-secret"),
+      false,
+    );
+    assert.equal(
+      [...first.items, ...second.items].some((item) => item.room.roomId === "room-after-freeze"),
+      false,
+    );
+    assert.deepEqual(
+      context.ledger.listRooms("human-owner", { limit: 10 }).items.map((item) => item.room.roomId),
+      ["room-after-freeze", "room-three", "room-two", "room-general"],
+    );
+  } finally {
+    context.ledger.close();
+    rmSync(context.root, { recursive: true, force: true });
+  }
+});
+
+test("RoomLedger reserves one Direct Room for each workspace participant pair", () => {
+  const context = fixture();
+  try {
+    context.ledger.provisionPrincipal({
+      principalId: "agent-two",
+      handle: "agent-two",
+      kind: "agent",
+      displayName: "Agent Two",
+    });
+    const first = context.ledger.createRoom("human-owner", {
+      roomId: "direct-one",
+      workspaceKey: "workspace-main",
+      kind: "direct",
+      slug: "direct-one",
+      name: "Owner and Agent One",
+      idempotencyKey: "create-direct-one",
+    });
+    context.ledger.addMember("human-owner", {
+      roomId: "direct-one",
+      principalId: "agent-one",
+      role: "member",
+      basedOnRoomSeq: first.event.roomSeq,
+      idempotencyKey: "complete-direct-one",
+    });
+
+    const duplicate = context.ledger.createRoom("human-owner", {
+      roomId: "direct-duplicate",
+      workspaceKey: "workspace-main",
+      kind: "direct",
+      slug: "direct-duplicate",
+      name: "Duplicate",
+      idempotencyKey: "create-direct-duplicate",
+    });
+    assertRoomError(() => context.ledger.addMember("human-owner", {
+      roomId: "direct-duplicate",
+      principalId: "agent-one",
+      role: "member",
+      basedOnRoomSeq: duplicate.event.roomSeq,
+      idempotencyKey: "complete-direct-duplicate",
+    }), "conflict");
+
+    const otherPair = context.ledger.createRoom("human-owner", {
+      roomId: "direct-two",
+      workspaceKey: "workspace-main",
+      kind: "direct",
+      slug: "direct-two",
+      name: "Owner and Agent Two",
+      idempotencyKey: "create-direct-two",
+    });
+    context.ledger.addMember("human-owner", {
+      roomId: "direct-two",
+      principalId: "agent-two",
+      role: "member",
+      basedOnRoomSeq: otherPair.event.roomSeq,
+      idempotencyKey: "complete-direct-two",
+    });
+    const rooms = context.ledger.listRooms("human-owner", { limit: 10 });
+    const direct = rooms.items.find((item) => item.room.roomId === "direct-one");
+    assert.equal(direct?.directPeer?.principalId, "agent-one");
+    assert.equal(direct?.participantCount, 2);
+  } finally {
+    context.ledger.close();
+    rmSync(context.root, { recursive: true, force: true });
+  }
+});
+
 test("RoomLedger maps transaction admission contention without issuing a stray rollback", () => {
   const context = fixture();
   const blocker = new DatabaseSync(context.databasePath);
@@ -487,13 +606,13 @@ test("RoomLedger uses a global Inbox cursor across Rooms", () => {
   const context = fixture();
   try {
     for (const [roomId, slug, createKey, addKey, postKey] of [
-      ["room-direct-a", "direct-a", "create-a", "add-a", "post-a"],
-      ["room-direct-b", "direct-b", "create-b", "add-b", "post-b"],
+      ["room-channel-a", "channel-a", "create-a", "add-a", "post-a"],
+      ["room-channel-b", "channel-b", "create-b", "add-b", "post-b"],
     ] as const) {
       const room = context.ledger.createRoom("human-owner", {
         roomId,
         workspaceKey: "workspace-main",
-        kind: "direct",
+        kind: "channel",
         slug,
         name: slug,
         idempotencyKey: createKey,
@@ -508,6 +627,7 @@ test("RoomLedger uses a global Inbox cursor across Rooms", () => {
       context.ledger.postMessage("human-owner", {
         roomId,
         body: `message for ${slug}`,
+        mentionedPrincipalIds: ["agent-one"],
         idempotencyKey: postKey,
       });
     }
@@ -1153,7 +1273,7 @@ test("RoomLedger refuses an unsupported future schema before mutating it", () =>
   const databasePath = path.join(root, "room-ledger.sqlite");
   try {
     const database = new DatabaseSync(databasePath);
-    database.exec("PRAGMA user_version = 2");
+    database.exec("PRAGMA user_version = 3");
     database.close();
     assertRoomError(() => new RoomLedger(databasePath), "conflict");
 
@@ -1162,7 +1282,122 @@ test("RoomLedger refuses an unsupported future schema before mutating it", () =>
       const row = verification.prepare("PRAGMA user_version").get() as {
         user_version: number;
       };
-      assert.equal(row.user_version, 2);
+      assert.equal(row.user_version, 3);
+    } finally {
+      verification.close();
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+function createV1RoomSchema(database: DatabaseSync): void {
+  database.exec(`
+    PRAGMA foreign_keys = ON;
+    CREATE TABLE room_principals (
+      principal_id TEXT PRIMARY KEY,
+      handle TEXT NOT NULL UNIQUE,
+      kind TEXT NOT NULL,
+      display_name TEXT,
+      created_at TEXT NOT NULL
+    ) STRICT;
+    CREATE TABLE rooms (
+      room_id TEXT PRIMARY KEY,
+      workspace_key TEXT NOT NULL,
+      kind TEXT NOT NULL,
+      slug TEXT NOT NULL,
+      name TEXT NOT NULL,
+      visibility TEXT NOT NULL,
+      next_seq INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL,
+      archived_at TEXT,
+      UNIQUE (workspace_key, slug)
+    ) STRICT;
+    CREATE TABLE room_memberships (
+      room_id TEXT NOT NULL REFERENCES rooms(room_id),
+      principal_id TEXT NOT NULL REFERENCES room_principals(principal_id),
+      role TEXT NOT NULL,
+      joined_at TEXT NOT NULL,
+      PRIMARY KEY (room_id, principal_id)
+    ) STRICT;
+    INSERT INTO room_principals VALUES
+      ('human-owner', 'owner', 'human', 'Owner', '2026-09-05T08:00:00.000Z'),
+      ('agent-one', 'agent-one', 'agent', 'Agent One', '2026-09-05T08:00:00.000Z');
+    PRAGMA user_version = 1;
+  `);
+}
+
+test("RoomLedger migrates v1 catalogs and Direct pairs transactionally", () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), "rah-room-schema-v1-"));
+  const databasePath = path.join(root, "room-ledger.sqlite");
+  const database = new DatabaseSync(databasePath);
+  createV1RoomSchema(database);
+  database.exec(`
+    INSERT INTO rooms VALUES
+      ('room-channel', 'workspace-main', 'channel', 'channel', 'Channel', 'private', 1, '2026-09-05T08:00:00.000Z', NULL),
+      ('room-direct', 'workspace-main', 'direct', 'direct', 'Direct', 'private', 1, '2026-09-05T08:00:01.000Z', NULL);
+    INSERT INTO room_memberships VALUES
+      ('room-channel', 'human-owner', 'owner', '2026-09-05T08:00:00.000Z'),
+      ('room-direct', 'human-owner', 'owner', '2026-09-05T08:00:01.000Z'),
+      ('room-direct', 'agent-one', 'member', '2026-09-05T08:00:02.000Z');
+  `);
+  database.close();
+
+  try {
+    const ledger = new RoomLedger(databasePath);
+    try {
+      const page = ledger.listRooms("human-owner", { limit: 10 });
+      assert.deepEqual(page.items.map((item) => item.room.roomId), ["room-direct", "room-channel"]);
+      assert.equal(page.items[0]?.directPeer?.principalId, "agent-one");
+    } finally {
+      ledger.close();
+    }
+    const verification = new DatabaseSync(databasePath);
+    try {
+      const version = verification.prepare("PRAGMA user_version").get() as { user_version: number };
+      assert.equal(version.user_version, 2);
+      const catalog = verification.prepare(
+        "SELECT COUNT(*) AS count FROM room_catalog_memberships",
+      ).get() as { count: number };
+      assert.equal(catalog.count, 3);
+      const pairs = verification.prepare("SELECT COUNT(*) AS count FROM room_direct_pairs").get() as {
+        count: number;
+      };
+      assert.equal(pairs.count, 1);
+    } finally {
+      verification.close();
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("RoomLedger rejects duplicate legacy Direct pairs without a partial migration", () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), "rah-room-schema-v1-conflict-"));
+  const databasePath = path.join(root, "room-ledger.sqlite");
+  const database = new DatabaseSync(databasePath);
+  createV1RoomSchema(database);
+  database.exec(`
+    INSERT INTO rooms VALUES
+      ('direct-a', 'workspace-main', 'direct', 'direct-a', 'A', 'private', 1, '2026-09-05T08:00:00.000Z', NULL),
+      ('direct-b', 'workspace-main', 'direct', 'direct-b', 'B', 'private', 1, '2026-09-05T08:00:01.000Z', NULL);
+    INSERT INTO room_memberships VALUES
+      ('direct-a', 'human-owner', 'owner', '2026-09-05T08:00:00.000Z'),
+      ('direct-a', 'agent-one', 'member', '2026-09-05T08:00:00.000Z'),
+      ('direct-b', 'human-owner', 'owner', '2026-09-05T08:00:01.000Z'),
+      ('direct-b', 'agent-one', 'member', '2026-09-05T08:00:01.000Z');
+  `);
+  database.close();
+  try {
+    assertRoomError(() => new RoomLedger(databasePath), "conflict");
+    const verification = new DatabaseSync(databasePath);
+    try {
+      const version = verification.prepare("PRAGMA user_version").get() as { user_version: number };
+      assert.equal(version.user_version, 1);
+      const table = verification.prepare(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'room_direct_pairs'",
+      ).get();
+      assert.equal(table, undefined);
     } finally {
       verification.close();
     }

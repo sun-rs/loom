@@ -18,6 +18,7 @@ export const ROOM_READ_HTTP_ROUTES: Readonly<Record<string, RoomReadHttpOperatio
     "/api/room/v1/events": "events",
     "/api/room/v1/older-messages": "older_messages",
     "/api/room/v1/inbox": "inbox",
+    "/api/room/v1/rooms": "rooms",
   });
 
 function writeRoomReadResponse(

@@ -1,4 +1,5 @@
 export * from "./room-ledger";
+export * from "./room-catalog";
 export * from "./room-actor";
 export * from "./room-errors";
 export * from "./room-read-service";

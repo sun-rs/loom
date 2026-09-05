@@ -237,6 +237,54 @@ test("RoomReadService Inbox is always scoped to the authenticated Human", () => 
   }
 });
 
+test("RoomReadService scopes and freezes opaque Room catalog cursors", () => {
+  const context = fixture();
+  try {
+    for (const suffix of ["two", "three"]) {
+      context.ledger.createRoom(context.owner.principalId, {
+        roomId: `room-${suffix}`,
+        workspaceKey: "workspace-main",
+        kind: "channel",
+        slug: suffix,
+        name: suffix,
+        idempotencyKey: `create-${suffix}`,
+      });
+    }
+    const first = context.service.listRooms(localPrincipal(), { limit: 2 });
+    assert.equal(first.mode, "room_list");
+    assert.deepEqual(first.items.map((item) => item.room.roomId), ["room-three", "room-two"]);
+    assert.equal(first.hasMore, true);
+    assert.ok(first.roomListCursor);
+
+    context.ledger.createRoom(context.owner.principalId, {
+      roomId: "room-late",
+      workspaceKey: "workspace-main",
+      kind: "channel",
+      slug: "late",
+      name: "Late",
+      idempotencyKey: "create-late",
+    });
+    const second = context.service.listRooms({ kind: "management" }, {
+      cursor: first.roomListCursor,
+      limit: 2,
+    });
+    assert.deepEqual(second.items.map((item) => item.room.roomId), ["room-general"]);
+    assert.equal(second.hasMore, false);
+
+    const [body, signature] = first.roomListCursor!.split(".");
+    const tamperedBody = `${body!.slice(0, -1)}${body!.endsWith("A") ? "B" : "A"}`;
+    assert.throws(
+      () => context.service.listRooms(localPrincipal(), {
+        cursor: `${tamperedBody}.${signature}`,
+      }),
+      (error: unknown) => error instanceof RoomDomainError && error.code === "invalid_argument",
+    );
+  } finally {
+    context.ledger.close();
+    rmSync(context.root, { recursive: true, force: true });
+  }
+});
+
 test("RoomReadService keeps complete transport responses within the one MiB boundary", () => {
   const context = fixture();
   try {

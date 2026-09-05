@@ -7,6 +7,7 @@ import { test } from "node:test";
 
 import type {
   RoomBootstrapReadResponse,
+  RoomListReadResponse,
   RoomOlderMessagesReadResponse,
   RoomReadHttpEnvelope,
 } from "@rah/runtime-protocol";
@@ -112,7 +113,7 @@ async function postRoom(args: {
 test("production Room HTTP routes authenticate once and preserve the exact wire envelope", async () => {
   const dataRoot = mkdtempSync(path.join(os.tmpdir(), "rah-room-http-"));
   const roomRoot = path.join(dataRoot, "room");
-  seedRoom(roomRoot);
+  const seedRoomPrincipal = seedRoom(roomRoot);
   const auth = new DeviceAuthManager({ rootDir: path.join(dataRoot, "auth") });
   const authenticate = auth.authenticate.bind(auth);
   let authenticationCalls = 0;
@@ -194,6 +195,20 @@ test("production Room HTTP routes authenticate once and preserve the exact wire 
     assert.equal(inbox.response.status, 200);
     assert.equal(inbox.envelope.ok, true);
 
+    const rooms = await postRoom({
+      port: daemon.port,
+      path: "/api/room/v1/rooms",
+      body: {},
+    });
+    assert.equal(rooms.response.status, 200);
+    assert.equal(rooms.envelope.ok, true);
+    if (!rooms.envelope.ok || rooms.envelope.data.mode !== "room_list") {
+      throw new Error("expected Room list envelope");
+    }
+    const roomsData = rooms.envelope.data as RoomListReadResponse;
+    assert.deepEqual(roomsData.items.map((item) => item.room.roomId), ["room-http"]);
+    assert.equal(roomsData.items[0]?.membership.principalId, seedRoomPrincipal);
+
     const injected = await postRoom({
       port: daemon.port,
       path: "/api/room/v1/bootstrap",
@@ -201,7 +216,7 @@ test("production Room HTTP routes authenticate once and preserve the exact wire 
     });
     assert.equal(injected.response.status, 400);
     assert.deepEqual(injected.envelope.ok, false);
-    assert.equal(authenticationCalls, 5);
+    assert.equal(authenticationCalls, 6);
   } finally {
     await daemon.close();
     rmSync(dataRoot, { recursive: true, force: true });

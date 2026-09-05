@@ -107,26 +107,35 @@ import type {
   RuntimeCompatibilityNoticeStateResponse,
 } from "@rah/runtime-protocol";
 
-const DEFAULT_DAEMON_PORT = 43111;
-export const RAH_AUTH_REQUIRED_EVENT = "rah:auth-required";
+import {
+  buildRequestHeaders,
+  getBaseUrl,
+  isAbortError,
+  RAH_AUTH_REQUIRED_EVENT,
+} from "./api-transport";
+
+export {
+  buildRequestHeaders,
+  getBaseUrl,
+  isAbortError,
+  RAH_AUTH_REQUIRED_EVENT,
+} from "./api-transport";
+export {
+  bootstrapRoom,
+  listRooms,
+  readOlderRoomMessages,
+  readRoomEvents,
+  readRoomInbox,
+  RoomApiError,
+  RoomApiProtocolError,
+} from "./room-api";
+
 type StoredSessionsMode = "all" | "cached" | "recent";
 
 function handleAuthenticatedSocketClose(event: CloseEvent): void {
   if (event.code === 4001 && typeof window !== "undefined") {
     window.dispatchEvent(new Event(RAH_AUTH_REQUIRED_EVENT));
   }
-}
-
-function computeDefaultBaseUrl(): string {
-  if (typeof window === "undefined") {
-    return `http://127.0.0.1:${DEFAULT_DAEMON_PORT}`;
-  }
-  if (window.location.port && window.location.port !== "43112") {
-    return window.location.origin;
-  }
-  const protocol = window.location.protocol === "https:" ? "https:" : "http:";
-  const hostname = window.location.hostname || "127.0.0.1";
-  return `${protocol}//${hostname}:${DEFAULT_DAEMON_PORT}`;
 }
 
 function imagePreviewClientHint(): "local" | "remote" {
@@ -159,46 +168,6 @@ function imagePreviewClientHint(): "local" | "remote" {
 function withImagePreviewClientHint(query: URLSearchParams): URLSearchParams {
   query.set("imagePreviewClient", imagePreviewClientHint());
   return query;
-}
-
-export function getBaseUrl(): string {
-  let configured: string | null = null;
-  try {
-    configured = window.localStorage.getItem("rah.baseUrl");
-  } catch {
-    configured = null;
-  }
-  const trimmed = configured?.trim();
-  if (!trimmed) {
-    return computeDefaultBaseUrl();
-  }
-
-  try {
-    const configuredUrl = new URL(trimmed);
-    const currentHostname = window.location.hostname || "127.0.0.1";
-    if (configuredUrl.hostname !== currentHostname) {
-      return computeDefaultBaseUrl();
-    }
-  } catch {
-    return computeDefaultBaseUrl();
-  }
-
-  return trimmed;
-}
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof DOMException && error.name === "AbortError";
-}
-
-function buildRequestHeaders(init?: RequestInit): Headers {
-  const headers = new Headers(init?.headers ?? {});
-  if (init?.body !== undefined && init.body !== null && !headers.has("content-type")) {
-    headers.set("content-type", "application/json");
-  }
-  if (typeof window !== "undefined" && !headers.has("x-rah-client")) {
-    headers.set("x-rah-client", "web");
-  }
-  return headers;
 }
 
 function extractResponseErrorMessage(response: Response, raw: string): string {

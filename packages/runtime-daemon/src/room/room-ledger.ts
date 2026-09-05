@@ -30,6 +30,11 @@ import {
 } from "@rah/runtime-protocol";
 import { RoomDomainError, roomError } from "./room-errors";
 import {
+  readRoomCatalog,
+  type RoomCatalogLedgerPage,
+  type RoomCatalogReadOptions,
+} from "./room-catalog";
+import {
   eventFromRow,
   inboxFromRow,
   integer,
@@ -42,7 +47,11 @@ import {
   type RoomSqlRow as Row,
   text,
 } from "./room-rows";
-import { ROOM_LEDGER_SCHEMA, ROOM_LEDGER_SCHEMA_VERSION } from "./room-schema";
+import {
+  migrateRoomLedgerV1ToV2,
+  ROOM_LEDGER_SCHEMA,
+  ROOM_LEDGER_SCHEMA_VERSION,
+} from "./room-schema";
 
 export interface RoomLedgerOptions {
   createId?: (prefix: string) => string;
@@ -67,14 +76,20 @@ export class RoomLedger {
       this.#database.prepare("PRAGMA user_version").get() as Row,
       "user_version",
     );
-    if (schemaVersion !== 0 && schemaVersion !== ROOM_LEDGER_SCHEMA_VERSION) {
+    if (schemaVersion !== 0 && schemaVersion !== 1 && schemaVersion !== ROOM_LEDGER_SCHEMA_VERSION) {
       this.#database.close();
       throw roomError(
         "conflict",
-        `Room ledger schema version ${schemaVersion} is newer than supported version ${ROOM_LEDGER_SCHEMA_VERSION}`,
+        `Room ledger schema version ${schemaVersion} is not supported by version ${ROOM_LEDGER_SCHEMA_VERSION}`,
       );
     }
-    this.#database.exec(ROOM_LEDGER_SCHEMA);
+    try {
+      if (schemaVersion === 1) migrateRoomLedgerV1ToV2(this.#database);
+      this.#database.exec(ROOM_LEDGER_SCHEMA);
+    } catch (error) {
+      this.#database.close();
+      throw this.#storageError(error);
+    }
     this.#createId = options.createId ?? ((prefix) => `${prefix}-${randomUUID()}`);
     this.#now = options.now ?? (() => new Date());
   }
@@ -241,6 +256,11 @@ export class RoomLedger {
           ownerMembership.principalId,
           ownerMembership.joinedAt,
         );
+      this.#database
+        .prepare(
+          "INSERT INTO room_catalog_memberships(room_id, principal_id) VALUES(?, ?)",
+        )
+        .run(ownerMembership.roomId, ownerMembership.principalId);
       const event = this.#appendEvent({
         roomId: room.roomId,
         actorId,
@@ -318,6 +338,26 @@ export class RoomLedger {
           `principal ${request.principalId} is already a Room member`,
         );
       }
+      let directPair: [string, string] | undefined;
+      if (room.kind === "direct" && memberCount === 1) {
+        const existingParticipant = this.#roomMembershipPrincipalIds(request.roomId)[0]!;
+        if (existingParticipant === request.principalId) {
+          throw roomError("conflict", "A Direct Room requires two distinct participants");
+        }
+        directPair = existingParticipant < request.principalId
+          ? [existingParticipant, request.principalId]
+          : [request.principalId, existingParticipant];
+        const existingDirect = this.#database.prepare(
+          `SELECT room_id FROM room_direct_pairs
+           WHERE workspace_key = ? AND principal_low = ? AND principal_high = ?`,
+        ).get(room.workspaceKey, directPair[0], directPair[1]) as Row | undefined;
+        if (existingDirect) {
+          throw roomError(
+            "conflict",
+            "A Direct Room already exists for these workspace participants",
+          );
+        }
+      }
       const membership: RoomMembership = {
         roomId: request.roomId,
         principalId: request.principalId,
@@ -334,6 +374,18 @@ export class RoomLedger {
           membership.role,
           membership.joinedAt,
         );
+      this.#database
+        .prepare(
+          "INSERT INTO room_catalog_memberships(room_id, principal_id) VALUES(?, ?)",
+        )
+        .run(membership.roomId, membership.principalId);
+      if (directPair) {
+        this.#database.prepare(
+          `INSERT INTO room_direct_pairs(
+             workspace_key, principal_low, principal_high, room_id
+           ) VALUES(?, ?, ?, ?)`,
+        ).run(room.workspaceKey, directPair[0], directPair[1], room.roomId);
+      }
       const event = this.#appendEvent({
         roomId: request.roomId,
         actorId,
@@ -701,6 +753,15 @@ export class RoomLedger {
       }
       return result;
     });
+  }
+
+  listRooms(
+    actorId: string,
+    options: RoomCatalogReadOptions = {},
+  ): RoomCatalogLedgerPage {
+    this.#requirePrincipal(actorId);
+    return this.#readTransaction(() =>
+      readRoomCatalog(this.#database, actorId, options, ROOM_LIST_LIMIT));
   }
 
   listMessages(

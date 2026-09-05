@@ -5,14 +5,17 @@ import type {
   RoomEventReadResponse,
   RoomInboxReadRequest,
   RoomInboxReadResponse,
+  RoomListReadRequest,
+  RoomListReadResponse,
   RoomOlderMessagesReadRequest,
   RoomOlderMessagesReadResponse,
   RoomReadHttpEnvelope,
   RoomReadResponseData,
 } from "@rah/runtime-protocol";
+import { ROOM_READ_HTTP_STATUS_BY_ERROR_CODE } from "@rah/runtime-protocol";
 
 import type { DeviceAuthPrincipal } from "../device-auth";
-import { RoomDomainError, roomError, type RoomErrorCode } from "./room-errors";
+import { RoomDomainError, roomError } from "./room-errors";
 import { ROOM_READ_HTTP_RESPONSE_BYTE_LIMIT } from "./room-read-budget";
 
 export {
@@ -24,7 +27,8 @@ export type RoomReadHttpOperation =
   | "bootstrap"
   | "events"
   | "older_messages"
-  | "inbox";
+  | "inbox"
+  | "rooms";
 
 export interface RoomReadHttpResponse {
   status: number;
@@ -49,19 +53,11 @@ export interface RoomReadApplicationPort {
     principal: DeviceAuthPrincipal | null,
     request: RoomInboxReadRequest,
   ): RoomInboxReadResponse;
+  listRooms(
+    principal: DeviceAuthPrincipal | null,
+    request: RoomListReadRequest,
+  ): RoomListReadResponse;
 }
-
-const ROOM_ERROR_STATUS: Readonly<Record<RoomErrorCode, number>> = {
-  unauthenticated: 401,
-  forbidden: 403,
-  not_found: 404,
-  invalid_argument: 400,
-  conflict: 409,
-  stale_context: 409,
-  idempotency_conflict: 409,
-  resource_exhausted: 413,
-  unavailable: 503,
-};
 
 const MAX_PUBLIC_ERROR_MESSAGE_LENGTH = 512;
 
@@ -107,6 +103,9 @@ export class RoomReadHttpAdapter {
         case "inbox":
           data = this.#port.readInbox(principal, rawRequest as RoomInboxReadRequest);
           break;
+        case "rooms":
+          data = this.#port.listRooms(principal, rawRequest as RoomListReadRequest);
+          break;
         default:
           throw roomError("invalid_argument", "Unknown Room read operation");
       }
@@ -132,13 +131,16 @@ export class RoomReadHttpAdapter {
   }
 
   #domainError(error: RoomDomainError, statusOverride?: number): RoomReadHttpResponse {
-    return this.#serialize(statusOverride ?? ROOM_ERROR_STATUS[error.code], {
-      ok: false,
-      error: {
-        code: error.code,
-        message: this.#publicMessage(error),
+    return this.#serialize(
+      statusOverride ?? ROOM_READ_HTTP_STATUS_BY_ERROR_CODE[error.code],
+      {
+        ok: false,
+        error: {
+          code: error.code,
+          message: this.#publicMessage(error),
+        },
       },
-    });
+    );
   }
 
   #publicMessage(error: RoomDomainError): string {

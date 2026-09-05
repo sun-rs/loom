@@ -2,10 +2,13 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  ROOM_READ_HTTP_STATUS_BY_ERROR_CODE,
   toRoomEventDto,
+  validateRoomReadHttpEnvelope,
   validateRoomBootstrapReadRequest,
   validateRoomEventReadRequest,
   validateRoomInboxReadRequest,
+  validateRoomListReadRequest,
 } from "./room-read";
 
 const commonEvent = {
@@ -19,6 +22,22 @@ const commonEvent = {
   schemaVersion: 1 as const,
   createdAt: "2026-09-05T08:00:00.000Z",
 };
+
+test("Room read wire status semantics have one immutable protocol owner", () => {
+  assert.equal(Object.isFrozen(ROOM_READ_HTTP_STATUS_BY_ERROR_CODE), true);
+  assert.deepEqual(ROOM_READ_HTTP_STATUS_BY_ERROR_CODE, {
+    unauthenticated: 401,
+    forbidden: 403,
+    not_found: 404,
+    invalid_argument: 400,
+    conflict: 409,
+    stale_context: 409,
+    idempotency_conflict: 409,
+    resource_exhausted: 413,
+    unavailable: 503,
+    internal: 500,
+  });
+});
 
 test("Room read requests never accept browser-controlled actor or Inbox participant identity", () => {
   assert.throws(
@@ -40,6 +59,10 @@ test("Room read requests never accept browser-controlled actor or Inbox particip
     () => validateRoomInboxReadRequest({ participantId: "agent-one" }),
     /unknown field participantId/,
   );
+  assert.throws(
+    () => validateRoomListReadRequest({ actorId: "human-owner" }),
+    /unknown field actorId/,
+  );
 });
 
 test("Room read requests bound opaque cursor and page sizes", () => {
@@ -59,6 +82,7 @@ test("Room read requests bound opaque cursor and page sizes", () => {
     () => validateRoomBootstrapReadRequest({ roomId: "room-general", limit: 501 }),
     /between 1 and 500/,
   );
+  assert.deepEqual(validateRoomListReadRequest({ limit: 20 }), { limit: 20 });
 });
 
 test("Room transport events are a strict discriminated union without command receipts", () => {
@@ -210,4 +234,125 @@ test("Room transport event variants validate the projection evidence they carry"
     },
   });
   assert.equal(acknowledged.type, "message.acknowledged");
+});
+
+test("Room response envelope validates the complete Room-list identity graph", () => {
+  const room = {
+    roomId: "room-general",
+    workspaceKey: "workspace-main",
+    kind: "direct" as const,
+    slug: "general",
+    name: "General",
+    visibility: "private" as const,
+    createdAt: commonEvent.createdAt,
+  };
+  const membership = {
+    roomId: room.roomId,
+    principalId: "human-owner",
+    role: "owner" as const,
+    joinedAt: commonEvent.createdAt,
+  };
+  const directPeer = {
+    principalId: "agent-one",
+    handle: "agent-one",
+    kind: "agent" as const,
+    displayName: "Agent One",
+    createdAt: commonEvent.createdAt,
+  };
+  const envelope = validateRoomReadHttpEnvelope({
+    ok: true,
+    data: {
+      mode: "room_list",
+      items: [{
+        room,
+        membership,
+        latestRoomSeq: 2,
+        participantCount: 2,
+        pendingAttentionCount: 0,
+        directPeer,
+      }],
+      hasMore: true,
+      roomListCursor: "next-page",
+    },
+  }, "room_list");
+  assert.equal(envelope.ok, true);
+
+  assert.throws(
+    () => validateRoomReadHttpEnvelope({
+      ok: true,
+      data: { mode: "room_list", items: [null], hasMore: false },
+    }, "room_list"),
+    /RoomListItem/,
+  );
+  assert.throws(
+    () => validateRoomReadHttpEnvelope({
+      ok: true,
+      data: {
+        mode: "room_list",
+        items: [{
+          room,
+          membership,
+          latestRoomSeq: 2,
+          participantCount: 2,
+          pendingAttentionCount: 0,
+        }],
+        hasMore: false,
+      },
+    }, "room_list"),
+    /peer projection/,
+  );
+  assert.throws(
+    () => validateRoomReadHttpEnvelope({
+      ok: true,
+      data: { mode: "room_list", items: [], hasMore: true },
+    }, "room_list"),
+    /roomListCursor/,
+  );
+  assert.throws(
+    () => validateRoomReadHttpEnvelope({
+      ok: true,
+      data: { mode: "inbox_page", items: [], inboxCursor: "inbox" },
+    }, "room_list"),
+    /expected Room response mode/,
+  );
+});
+
+test("Room response pages cannot claim more data without making progress", () => {
+  assert.throws(
+    () => validateRoomReadHttpEnvelope({
+      ok: true,
+      data: {
+        mode: "event_page",
+        events: [],
+        latestRoomSeq: 0,
+        hasMore: true,
+        eventCursor: "next-event-page",
+      },
+    }, "event_page"),
+    /must make progress/,
+  );
+  assert.throws(
+    () => validateRoomReadHttpEnvelope({
+      ok: true,
+      data: {
+        mode: "older_messages",
+        messages: [],
+        hasMore: true,
+        olderMessagesCursor: "next-message-page",
+      },
+    }, "older_messages"),
+    /must make progress/,
+  );
+  assert.throws(
+    () => validateRoomReadHttpEnvelope({
+      ok: true,
+      data: {
+        mode: "room_list",
+        items: [],
+        hasMore: true,
+        roomListCursor: "next-room-page",
+      },
+    }, "room_list"),
+    /must make progress/,
+  );
 });
