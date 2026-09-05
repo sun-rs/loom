@@ -97,6 +97,7 @@ test("storage layout gives durable owners stable subdirectories", () => {
     councilRoot: join("/data/rah", "council"),
     dataRoot: "/data/rah",
     installRoot: "/opt/rah",
+    roomRoot: join("/data/rah", "room"),
     runtimeRoot: join("/data/rah", "runtime-daemon"),
   });
 });

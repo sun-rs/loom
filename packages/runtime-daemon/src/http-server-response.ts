@@ -18,9 +18,22 @@ export type JsonHandler = (
   body: unknown,
 ) => Promise<void>;
 
+export class HttpRequestBodyError extends Error {
+  readonly kind: "too_large" | "invalid_json";
+
+  constructor(kind: "too_large" | "invalid_json", message: string) {
+    super(message);
+    this.name = "HttpRequestBodyError";
+    this.kind = kind;
+  }
+}
+
 export function requestErrorStatus(error: unknown): number {
   if (error instanceof SessionInputQueueConflictError) {
     return 409;
+  }
+  if (error instanceof HttpRequestBodyError) {
+    return error.kind === "too_large" ? 413 : 400;
   }
   const message = error instanceof Error ? error.message : String(error);
   if (
@@ -93,7 +106,7 @@ export function readJsonBody(
     if (typeof contentLength === "string") {
       const parsed = Number.parseInt(contentLength, 10);
       if (Number.isFinite(parsed) && parsed > maxBytes) {
-        fail(new Error("Request body too large."));
+        fail(new HttpRequestBodyError("too_large", "Request body too large."));
         return;
       }
     }
@@ -105,7 +118,7 @@ export function readJsonBody(
       const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
       totalBytes += buffer.byteLength;
       if (totalBytes > maxBytes) {
-        fail(new Error("Request body too large."));
+        fail(new HttpRequestBodyError("too_large", "Request body too large."));
         return;
       }
       chunks.push(buffer);
@@ -122,7 +135,7 @@ export function readJsonBody(
       try {
         resolve(JSON.parse(Buffer.concat(chunks).toString("utf8")));
       } catch {
-        reject(new Error("Bad Request: invalid JSON body."));
+        reject(new HttpRequestBodyError("invalid_json", "Bad Request: invalid JSON body."));
       }
     });
     req.on("error", (error) => {

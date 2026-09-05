@@ -9,6 +9,11 @@ import { attachWebSocketHandlers } from "./http-server-websocket";
 import { DeviceAuthManager } from "./device-auth";
 import { runBackgroundCommand } from "./background-command";
 import { WorkbenchNoticePreferencesStore } from "./workbench-notice-preferences";
+import { resolveRahDataHome } from "./rah-paths.mjs";
+import {
+  createRoomApplicationRuntime,
+  type RoomApplicationRuntime,
+} from "./room/room-runtime";
 
 export interface RahDaemon {
   host: string;
@@ -108,37 +113,101 @@ export async function startRahDaemon(options?: {
   engine?: RuntimeEngine;
   auth?: DeviceAuthManager | false;
   httpDrainTimeoutMs?: number;
+  roomRoot?: string;
+  roomRuntime?: RoomApplicationRuntime | false;
+  createNoticePreferences?: () => WorkbenchNoticePreferencesStore;
+  attachWebSockets?: typeof attachWebSocketHandlers;
 }): Promise<RahDaemon> {
   const host = options?.host ?? "0.0.0.0";
   const port = options?.port ?? 43111;
-  const engine = options?.engine ?? new RuntimeEngine();
-  const auth = options?.auth === false ? undefined : options?.auth ?? new DeviceAuthManager();
   const httpDrainTimeoutMs = options?.httpDrainTimeoutMs ?? DEFAULT_HTTP_DRAIN_TIMEOUT_MS;
-  const postRoutes = createPostRoutes(engine);
-  const noticePreferences = new WorkbenchNoticePreferencesStore();
-  noticePreferences.load();
+  if (options?.roomRoot !== undefined && options.roomRuntime !== undefined) {
+    throw new Error("roomRoot and roomRuntime cannot both be provided");
+  }
+  let roomRuntime: RoomApplicationRuntime | undefined;
+  let engine: RuntimeEngine | undefined = options?.engine;
+  let auth: DeviceAuthManager | undefined;
+  let postRoutes: ReturnType<typeof createPostRoutes>;
+  let noticePreferences: WorkbenchNoticePreferencesStore;
+  try {
+    roomRuntime = options?.roomRuntime === false
+      ? undefined
+      : options?.roomRuntime ?? await createRoomApplicationRuntime({
+          roomRoot: options?.roomRoot ?? path.join(resolveRahDataHome(), "room"),
+        });
+    engine ??= new RuntimeEngine();
+    auth = options?.auth === false ? undefined : options?.auth ?? new DeviceAuthManager();
+    postRoutes = createPostRoutes(engine);
+    noticePreferences = options?.createNoticePreferences?.() ??
+      new WorkbenchNoticePreferencesStore();
+    noticePreferences.load();
+  } catch (error) {
+    await Promise.allSettled([
+      engine?.shutdown() ?? Promise.resolve(),
+      roomRuntime?.close() ?? Promise.resolve(),
+    ]);
+    throw error;
+  }
+  const ownedEngine = engine;
   let runtimeIdentity: RuntimeIdentityResponse | undefined;
   let closePromise: Promise<void> | undefined;
 
   const server = createServer(async (req, res) => {
     await handleHttpRequest({
-      engine,
+      engine: ownedEngine,
       postRoutes,
       noticePreferences,
       req,
       res,
       runtimeIdentity,
       auth,
+      roomRuntime,
     });
   });
-  const websockets = attachWebSocketHandlers(server, engine, auth);
+  let websockets: ReturnType<typeof attachWebSocketHandlers>;
+  try {
+    websockets = (options?.attachWebSockets ?? attachWebSocketHandlers)(
+      server,
+      ownedEngine,
+      auth,
+    );
+  } catch (error) {
+    await Promise.allSettled([
+      ownedEngine.shutdown(),
+      roomRuntime?.close() ?? Promise.resolve(),
+    ]);
+    throw error;
+  }
 
-  await new Promise<void>((resolve) => {
-    server.listen(port, host, () => resolve());
-  });
-  const address = server.address();
-  const actualPort = typeof address === "object" && address ? address.port : port;
-  runtimeIdentity = await createRuntimeIdentity(actualPort);
+  let actualPort: number;
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const onError = (error: Error) => {
+        server.off("listening", onListening);
+        reject(error);
+      };
+      const onListening = () => {
+        server.off("error", onError);
+        resolve();
+      };
+      server.once("error", onError);
+      server.once("listening", onListening);
+      server.listen(port, host);
+    });
+    const address = server.address();
+    actualPort = typeof address === "object" && address ? address.port : port;
+    runtimeIdentity = await createRuntimeIdentity(actualPort);
+  } catch (error) {
+    if (server.listening) {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+    await Promise.allSettled([
+      websockets.close(),
+      ownedEngine.shutdown(),
+      roomRuntime?.close() ?? Promise.resolve(),
+    ]);
+    throw error;
+  }
 
   return {
     host,
@@ -160,10 +229,17 @@ export async function startRahDaemon(options?: {
           forceDrainTimer.unref?.();
 
           let engineShutdownError: unknown;
-          const engineShutdown = engine.shutdown().catch((error) => {
+          const engineShutdown = ownedEngine.shutdown().catch((error) => {
             engineShutdownError = error;
             console.error("[rah] engine shutdown failed", error);
           });
+
+          let noticeFlushError: unknown;
+          const noticeFlush = Promise.resolve()
+            .then(() => noticePreferences.flush())
+            .catch((error) => {
+              noticeFlushError = error;
+            });
 
           let webSocketCloseError: unknown;
           try {
@@ -171,12 +247,30 @@ export async function startRahDaemon(options?: {
           } catch (error) {
             webSocketCloseError = error;
           }
-          await Promise.all([serverClosed, engineShutdown, noticePreferences.flush()]);
+          await Promise.all([serverClosed, engineShutdown, noticeFlush]);
+          let roomShutdownError: unknown;
+          try {
+            await roomRuntime?.close();
+          } catch (error) {
+            roomShutdownError = error;
+          }
           clearTimeout(forceDrainTimer);
 
-          if (serverCloseError || webSocketCloseError || engineShutdownError) {
+          if (
+            serverCloseError ||
+            webSocketCloseError ||
+            engineShutdownError ||
+            noticeFlushError ||
+            roomShutdownError
+          ) {
             throw new AggregateError(
-              [serverCloseError, webSocketCloseError, engineShutdownError].filter(
+              [
+                serverCloseError,
+                webSocketCloseError,
+                engineShutdownError,
+                noticeFlushError,
+                roomShutdownError,
+              ].filter(
                 (error) => error !== undefined,
               ),
               "RAH shutdown failed.",

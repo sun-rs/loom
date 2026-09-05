@@ -40,6 +40,7 @@ export function resolveRahStorageLayout(options) {
     councilRoot: join(dataRoot, "council"),
     dataRoot,
     installRoot,
+    roomRoot: join(dataRoot, "room"),
     runtimeRoot: join(dataRoot, "runtime-daemon"),
   });
 }

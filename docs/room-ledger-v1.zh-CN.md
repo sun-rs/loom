@@ -1,6 +1,6 @@
 # Room Ledger v1：第一条可回滚纵切
 
-> 状态：已实现内部 Kernel、认证只读 Application Port 与未注册的 HTTP 合同适配器，尚未接入公开 HTTP、Web 页面或 Provider runtime。
+> 状态：已实现内部 Kernel、认证只读 Application Port、生产只读 HTTP 路由与离线 cursor 运维，尚未接入 Web 页面、写入 HTTP、Council 或 Provider runtime。
 >
 > 日期：2026-09-06（Asia/Shanghai）
 
@@ -12,11 +12,12 @@
 - `packages/runtime-daemon/src/room/room-ledger.ts` 持有 SQLite WAL、单调 Room cursor、事务、授权、幂等和投影读取。
 - `packages/runtime-daemon/src/room/room-actor.ts` 把 daemon-owned 设备认证映射到稳定 Local Human Principal；浏览器不能自报 actor。
 - `packages/runtime-protocol/src/room-read.ts` 持有严格可辨识的客户端事件 DTO 和只读请求/响应；`packages/runtime-daemon/src/room/room-read-service.ts` 只接受 daemon 认证上下文，并将内部数字窗口转换为不透明游标。
-- `packages/runtime-daemon/src/room/room-read-http-adapter.ts` 把认证 Principal 与四种只读操作转换为预序列化的 typed HTTP envelope；它尚未注册到生产路由。
+- `packages/runtime-daemon/src/room/room-read-http-adapter.ts` 把认证 Principal 与四种只读操作转换为预序列化的 typed HTTP envelope；`room-read-http-route.ts` 只在严格版本化路径上解析有界请求体并原样写回该 Buffer。
+- `packages/runtime-daemon/src/room/room-runtime.ts` 统一拥有生产数据库、cursor key、只读端口与生命周期；`room-application-lease.ts` 同时锁定“只解析父目录的稳定公开位置”和“当前完整 realpath 物理路径”，两种身份各自在稳定父目录 `.rah-room-locks/` 中以哈希定位 SQLite lease，并按路径排序后用 `BEGIN EXCLUSIVE` 取得；身份相同时自动去重。随后还取得 Room 根内的 `.rah-room-owner.sqlite` lease，它会随数据目录改名而移动，确保活动数据库不能从改名后的新路径被第二个 runtime 打开。
 - `packages/runtime-daemon/src/room/room-cursor-key-store.ts` 持有独立于设备 token 的持久 cursor key/generation；正常重启复用，数据库恢复或回滚后显式轮换，使恢复前 cursor 失效。
-- 当前 Session/Council owner 不变；新 ledger 未接入公开路由，因此可以独立回滚，不影响 1.x 的输入接受、历史和 Provider lifecycle。
+- 当前 Session/Council owner 不变；新路由只有读取能力，现有页面尚不消费它，因此不影响 1.x 的输入接受、历史和 Provider lifecycle。
 
-公开 HTTP 暂不开放。Application Port 已统一注入稳定 Local Human Principal，HTTP 合同适配器会拒绝匿名调用和浏览器传入的 `actorId`/`participantId`，并对最终预序列化 wire envelope 执行 1 MiB 上限；但它尚无生产启动、密钥恢复与主路由接线，不能被页面调用。
+生产只读 HTTP 已开放为四个 `POST /api/room/v1/{bootstrap,events,older-messages,inbox}` 端点。主路由对每个普通请求只调用一次 `DeviceAuthManager.authenticate()`，并把结果注入 Application Port；浏览器不能传入 `actorId`/`participantId`。请求体上限 64 KiB，成功和失败均返回 typed envelope，最终预序列化 Buffer 不再包装或 stringify。它没有写能力，也尚未被 Web 页面调用。
 
 ## 2. 来源登记
 
@@ -49,6 +50,7 @@
 16. HTTP 合同不复用旧服务器的字符串错误推断：九类 RoomDomainError 逐项映射为稳定状态码与 typed error code，未知实现异常只返回泛化 500。`forbidden` 消息统一，不能通过错误正文区分存在但不可访问的 Room。成功 envelope 的固定包装开销由单一预算 owner 计算，Application Port 预留该开销，适配器再对最终 Buffer 做精确复核。
 17. 进入 SQLite TEXT 且参与事件/投影的自由文本共用同一 storage-safe Unicode validator：拒绝 `U+0000` 与孤立 UTF-16 surrogate，保留合法 surrogate pair/emoji 和其他可往返控制字符。Room name、Principal displayName 与 Message body 必须在写入前通过该边界，避免 event JSON 与 SQLite projection 分裂。
 18. 响应预算不能制造“200 但永远不前进”：单个 event/message/Inbox item 在配置预算内无法装入时返回 typed `resource_exhausted`。当最大合法 Principal snapshot 与大正文不能同页时，bootstrap 即使 `recentMessages=[]` 也必须从 `throughSeq + 1` 给出 older-message cursor，使已进入 snapshot 水位的消息仍可回读；event cursor 不能吞掉这段历史。
+19. 生产 Room Application Port 在 `~/.rah/room`（或当前 `RAH_DATA_HOME/room`）独占 `room.db` 与 `cursor-key.json`。同一公开位置和同一物理数据目标都只能有一个跨进程 owner；另一个 daemon 或 `rah room-cursor` 维护进程必须失败。公开位置 lease 锚点通常位于稳定的 `RAH_DATA_HOME/.rah-room-locks/<location-hash>.sqlite`；若 Room 根本身是 symlink，还会在物理目标的稳定父目录取得 `<physical-hash>.sqlite`。外部锚点不属于 Room 数据备份、恢复替换或文件 GC 的目标，运行期间不得替换其稳定父级；根内 `.rah-room-owner.sqlite` 则必须作为 Room 数据集的一部分随目录原子移动。外部双身份锁阻止原路径替换和 alias 绕过，内部锁阻止活动数据根被 rename 后从新路径直接接管，三者共同保证一个数据库只有一个 owner。daemon 先停止接收并排空 HTTP，再关闭 ledger 与 lease；通知偏好落盘、WebSocket、engine 或 Room 任一关闭步骤失败时，其他资源仍必须全部尝试释放，最后统一报告关闭错误。启动初始化或监听失败、遗留 rotation lock、未知 schema 都必须同时释放已取得的 engine/Room owner 并失败关闭。
 
 ## 4. 物理存储决策
 
@@ -56,7 +58,7 @@
 
 Cursor 密钥不复用配对 cookie、Bearer token 或公开配置。Key store 以 owner-only 权限原子落盘；多个 daemon 同时首次启动时通过 no-replace 发布选出唯一赢家，其他进程读取赢家，不能继续持有未落盘 key。损坏状态拒绝静默重建；普通 daemon 重启加载同一 generation，因此已有只读 cursor 可以续页。恢复旧 Room 数据库、从备份替换数据库或有意回退 ledger 时，恢复流程必须以 expected generation 离线轮换 key，并重新启动 Application Port；这会使恢复前可能高于当前数据水位的 cursor 统一失效。
 
-Rotation lock 是已 fsync 的恢复证据，包含 expected/target generation 与目标密钥。进程在 key 发布前或发布后崩溃，后续 `loadOrCreate()` 都失败关闭；显式 `recoverInterruptedRotation(expectedGeneration)` 会分别续做发布或核验已发布目标，然后才清除 lock。16 进程并发轮换只有一个目标能提交，迟到竞争者不能留下伪中断 lock。恢复 API 不会尝试在线热换已经构造的 codec；调用方仍必须先停止全部 Room Application Port。正式文件位置与离线运维入口仍需在主 HTTP 接线批次冻结。
+Rotation lock 是已 fsync 的恢复证据，包含 expected/target generation 与目标密钥。进程在 key 发布前或发布后崩溃，后续 `loadOrCreate()` 都失败关闭；显式 recovery 会分别续做发布或核验已发布目标，然后才清除 lock。16 进程并发轮换只有一个目标能提交，迟到竞争者不能留下伪中断 lock。恢复不会在线热换已经构造的 codec：操作者必须先停止 daemon，再运行 `rah room-cursor status`，随后使用带 `--expected-generation` 的 `rotate` 或 `recover`，最后重新启动 daemon。同一 SQLite exclusive lease 会阻止任何运行中的 Room 端口与维护命令并存；进程被 `SIGKILL` 后，内核自动释放数据库锁，不执行任何带竞态的 stale-file 删除。
 
 没有采用“多个 JSON/JSONL 文件分别落盘”的方案：单条 append-only 文件适合审计，但 projection 与 outbox 分文件时无法获得同一原子提交。未来如需要可导出 append-only audit JSONL；它是 SQLite canonical ledger 的派生物，不反向成为第二个 owner。
 
@@ -90,20 +92,22 @@ Rotation lock 是已 fsync 的恢复证据，包含 expected/target generation �
 - NUL/孤立 surrogate 在协议和 daemon 边界被 typed 拒绝；合法 emoji、引号、反斜线、换行、制表与退格在 Room/Principal/Message 的 event 和 projection 间 byte-exact 往返。
 - rotation 在 lock 发布后、key 发布后的真实子进程 `SIGKILL` 恢复；遗留 lock 启动失败关闭；损坏恢复证据不被自动删除；16 进程并发 rotation 只有一个提交。
 - 500 成员最大身份字段与 100,000 字符高 JSON 转义正文的真实 adapter 组合下，bootstrap 和 older-message 两个 envelope 各自不超过 1 MiB，正文仍可 byte-exact 取回；自定义小预算无法容纳单项时返回 413，而不是重复同一 cursor 的空 200。
+- 真实 HTTP 服务器上的四个版本化只读端点、单次 daemon 认证、64 KiB 请求上限、malformed JSON、匿名请求、actor 注入、原样 Buffer/`content-length` 与 CORS 保留。
+- 同一 Room 数据根的进程内和真实子进程排他；父级/root 级 symlink alias、`room/` 原子替换及 rename→symlink 回旧数据库的组合不能绕过 owner；维护命令在 daemon 运行时拒绝；持锁子进程 `SIGKILL` 后由 SQLite/内核释放；16 个同步恢复竞争者严格只有一个成功；daemon 初始化或监听失败后 engine 与 owner 都释放。
+- `rah room-cursor status/rotate/recover` 只暴露 generation，不输出 secret；rotate 使用 expected-generation compare-and-swap。
 
 隔离性能探针现已可复跑：`npm run benchmark:room-ledger -- 5000 64`。2026-09-05 本机 Node 25.9.0、临时 SQLite、单进程顺序写、64-byte 消息且无 Attention 的三次结果中位数为 1,161.23 ms（约 4,305.77 条/秒）；latest bootstrap 读取 500 条消息中位数为 1.88 ms，完整响应 104,127 bytes；关闭 WAL 后主数据库为 5,054,464 bytes，进程 RSS 相对探针起点增加中位数为 42,893,312 bytes。时间与 RSS 受机器噪声影响，三次样本仍不能用来宣称容量或长期稳定性。
 
 该探针只用于发现明显退化，不是容量承诺，也未覆盖并发 writer、大正文、附件、Inbox fan-out、磁盘耗尽、锁竞争或长时间堆稳定性。现有真实 `SIGKILL` 只覆盖 cursor-key rotation 的两个关键窗口，outbox lease 覆盖关闭/重开恢复；ledger 写事务强杀、磁盘故障和持续运行基线仍未完成。
 
-本批不包含浏览器验收，因为没有新增可见页面或公开路由。后续 HTTP adapter、Council adapter 和 UI 消费 canonical SDK 后，必须补真实桌面与 390×844 浏览器路径；不能用本批单元测试代替页面验收。对于与 Raft 相同的页面和交互，仍必须回到官方同条件浏览器取证；内部组件库只消除 RAH 自身分裂，不自动等于 Raft 证据。
+本批不包含可见页面验收。新增公开路由已通过真实 loopback HTTP 请求，但这不等于浏览器产品流程；UI 消费 canonical SDK 后，必须补真实桌面与 390×844 浏览器路径。对于与 Raft 相同的页面和交互，仍必须回到官方同条件浏览器取证；内部组件库只消除 RAH 自身分裂，不自动等于 Raft 证据。
 
 ## 6. 下一施工顺序
 
-1. 冻结 Room ledger/cursor-key 的生产文件位置与离线恢复运维入口，并把只读 HTTP adapter 注册到 daemon 主路由；路由只能注入 `DeviceAuthManager.authenticate()` 的 Principal，并原样发送适配器已经序列化的 Buffer。
-2. 设计带稳定冻结键的只读 Room list，以及 direct Room 配对唯一性；不能拿不稳定时间或页面本地列表充当 canonical cursor。
-3. 增加真实 outbox dispatcher 的启动/停止、退避与观测；当前 ledger 已具可靠领取协议，但尚没有常驻发布进程。
-4. 从 Council 建立单向兼容 adapter，验证同一消息只写新 ledger 一次；旧 Council store 保持可回滚，不做双向双写。
-5. 再增加 queued Activation/per-participant lane、lease 和 AgentHost；Inbox.available 只作为 durable work 的前置，不等于已经启动模型。
-6. 最后让 Raft 风格 Room 页面消费 canonical SDK。UI 对齐仍需官方同条件浏览器取证和组件状态矩阵，不能把内部模板当绝对标准。
+1. 设计带稳定冻结键的只读 Room list，以及 direct Room 配对唯一性；不能拿不稳定时间或页面本地列表充当 canonical cursor。
+2. 增加真实 outbox dispatcher 的启动/停止、退避与观测；当前 ledger 已具可靠领取协议，但尚没有常驻发布进程。
+3. 从 Council 建立单向兼容 adapter，验证同一消息只写新 ledger 一次；旧 Council store 保持可回滚，不做双向双写。
+4. 再增加 queued Activation/per-participant lane、lease 和 AgentHost；Inbox.available 只作为 durable work 的前置，不等于已经启动模型。
+5. 最后让 Raft 风格 Room 页面消费 canonical SDK。UI 对齐仍需官方同条件浏览器取证和组件状态矩阵，不能把内部模板当绝对标准。
 
-明确仍未实现：public/workspace ACL、control Room、邀请制多 Human、线程/Task/Review、附件与文件引用、Room list、direct 配对去重、正式 dispatcher、公开 HTTP/WS、Council 迁移、Activation/Run、浏览器 UI。此页的“已实现”只指内部 ledger、认证只读 port 与未注册 HTTP 合同，不能外推为 Room-first 产品已经交付。
+明确仍未实现：public/workspace ACL、control Room、邀请制多 Human、线程/Task/Review、附件与文件引用、Room list、direct 配对去重、正式 dispatcher、Room 写入/WS、Council 迁移、Activation/Run、浏览器 UI。此页的“已实现”只指内部 ledger、认证只读 port、生产只读 HTTP 与离线 cursor 生命周期，不能外推为 Room-first 产品已经交付。

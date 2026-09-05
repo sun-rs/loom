@@ -35,6 +35,7 @@ const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const DEFAULT_DAEMON_URL = "http://127.0.0.1:43111";
 const DEFAULT_DAEMON_HOST = process.env.RAH_HOST?.trim() || "0.0.0.0";
 const MANAGEMENT_COMMANDS = new Set(["start", "status", "stop", "restart", "logs", "pair", "close", "archive", "service-install", "service-uninstall"]);
+const ROOM_CURSOR_OPERATIONS = new Set(["status", "rotate", "recover"]);
 const CLIENT_INDEX_PATH = join(ROOT_DIR, "packages", "client-web", "dist", "index.html");
 const VOLATILE_CODEX_PARENT_ENV_KEYS = new Set([
   "CODEX_CI",
@@ -55,6 +56,9 @@ function printUsage() {
       "  rah close <rahSessionId>",
       "  rah service-install [--replace]",
       "  rah service-uninstall",
+      "  rah room-cursor status",
+      "  rah room-cursor rotate --expected-generation <generation>",
+      "  rah room-cursor recover --expected-generation <generation>",
       "  rah council-mcp --council <councilId> --actor <actorId>",
       "",
       "Options:",
@@ -175,6 +179,37 @@ function parseCouncilMcpArgs(argv) {
   };
 }
 
+function parseRoomCursorArgs(argv) {
+  const operation = argv.shift();
+  if (!operation || !ROOM_CURSOR_OPERATIONS.has(operation)) {
+    throw new Error("rah room-cursor requires status, rotate, or recover.");
+  }
+  let expectedGeneration;
+  while (argv.length > 0) {
+    const option = argv.shift();
+    if (option === "--expected-generation") {
+      expectedGeneration = argv.shift();
+      if (!expectedGeneration) {
+        throw new Error("Missing value after --expected-generation.");
+      }
+      continue;
+    }
+    throw new Error(`Unknown argument: ${option}`);
+  }
+  if (operation === "status" && expectedGeneration) {
+    throw new Error("rah room-cursor status does not accept --expected-generation.");
+  }
+  if (operation !== "status" && !expectedGeneration) {
+    throw new Error(`rah room-cursor ${operation} requires --expected-generation.`);
+  }
+  return {
+    help: false,
+    command: "room-cursor",
+    operation,
+    ...(expectedGeneration ? { expectedGeneration } : {}),
+  };
+}
+
 function parseArgs(argv) {
   if (argv.length === 0 || argv.includes("--help")) {
     return { help: true };
@@ -183,6 +218,9 @@ function parseArgs(argv) {
   const command = argv[0];
   if (command === "council-mcp") {
     return parseCouncilMcpArgs(argv.slice(1));
+  }
+  if (command === "room-cursor") {
+    return parseRoomCursorArgs(argv.slice(1));
   }
   if (MANAGEMENT_COMMANDS.has(command)) {
     return {
@@ -856,6 +894,19 @@ async function showLogs(daemonUrl, follow) {
   await runCommand("tail", args, { cwd: ROOT_DIR });
 }
 
+async function runRoomCursorCommand(parsed) {
+  const args = [
+    "--import",
+    "tsx",
+    "scripts/room-cursor-maintenance.ts",
+    parsed.operation,
+  ];
+  if (parsed.expectedGeneration) {
+    args.push("--expected-generation", parsed.expectedGeneration);
+  }
+  await runCommand(process.execPath, args, { cwd: ROOT_DIR });
+}
+
 async function handleManagementCommand(parsed) {
   if (parsed.command === "service-install") {
     if (process.platform !== "darwin") {
@@ -1256,6 +1307,10 @@ async function main() {
   if (parsed.command) {
     if (parsed.command === "council-mcp") {
       await runCouncilMcp(parsed);
+      return;
+    }
+    if (parsed.command === "room-cursor") {
+      await runRoomCursorCommand(parsed);
       return;
     }
     await handleManagementCommand(parsed);

@@ -119,16 +119,20 @@ export class RoomReadHttpAdapter {
       }
       return response;
     } catch (error) {
-      if (error instanceof RoomDomainError) return this.#domainError(error);
-      return this.#serialize(500, {
-        ok: false,
-        error: { code: "internal", message: "Internal Room read failure" },
-      });
+      return this.errorResponse(error);
     }
   }
 
-  #domainError(error: RoomDomainError): RoomReadHttpResponse {
-    return this.#serialize(ROOM_ERROR_STATUS[error.code], {
+  errorResponse(error: unknown, statusOverride?: number): RoomReadHttpResponse {
+    if (error instanceof RoomDomainError) return this.#domainError(error, statusOverride);
+    return this.#serialize(statusOverride ?? 500, {
+      ok: false,
+      error: { code: "internal", message: "Internal Room read failure" },
+    });
+  }
+
+  #domainError(error: RoomDomainError, statusOverride?: number): RoomReadHttpResponse {
+    return this.#serialize(statusOverride ?? ROOM_ERROR_STATUS[error.code], {
       ok: false,
       error: {
         code: error.code,

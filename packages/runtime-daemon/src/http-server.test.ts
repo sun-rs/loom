@@ -148,6 +148,7 @@ describe("startRahDaemon", () => {
       port,
       engine,
       auth: false,
+      roomRuntime: false,
     });
   });
 
@@ -735,6 +736,7 @@ describe("startRahDaemon", () => {
       engine,
       auth: false,
       httpDrainTimeoutMs: 25,
+      roomRuntime: false,
     });
 
     let notifySocketAssigned: (() => void) | undefined;

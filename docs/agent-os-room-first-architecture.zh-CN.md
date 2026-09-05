@@ -856,10 +856,10 @@ Room-first 不是否定现有 daemon/provider 工程。旧架构对照文档中�
 - MCP 与 CLI facade 进入同一 service。
 - current Council 先适配新 ledger，现有热 waiter 暂时作为兼容路径，不进入目标协议。
 
-2026-09-06 已完成 Phase 1 的内部 Kernel、认证只读 Application Port 与未注册 HTTP 合同适配器：provider-neutral
+2026-09-06 已完成 Phase 1 的内部 Kernel、认证只读 Application Port 与生产只读 HTTP 接线：provider-neutral
 Room/Membership/Message/Event/Inbox/Outbox 协议、SQLite WAL 事务 owner、精确幂等、统一 Principal
 身份增量、冻结分页、显式 acknowledgement、签名不透明 cursor 和持久 cursor key/generation 已进入 daemon，
-适配器已冻结 typed error/status 与最终 1 MiB wire envelope；cursor-key rotation 在 key 发布前/后的中断恢复与失败关闭也已有真实 SIGKILL 门禁。它仍未注册公开 HTTP、未冻结生产文件/离线运维入口，也未替换 Council。当前实现边界、来源和后续门禁见
+适配器已冻结 typed error/status 与最终 1 MiB wire envelope；生产数据固定在 `RAH_DATA_HOME/room`，daemon 与离线 `rah room-cursor` 运维共用跨进程排他 owner，cursor-key rotation 在 key 发布前/后的中断恢复与失败关闭也已有真实 SIGKILL 门禁。四个版本化读取端点已经接入主路由，但 Web、写入、WS 与 Council 迁移仍未开始。当前实现边界、来源和后续门禁见
 [Room Ledger v1：第一条可回滚纵切](./room-ledger-v1.zh-CN.md)。
 
 ### Phase 2：Activation 与本机 AgentHost

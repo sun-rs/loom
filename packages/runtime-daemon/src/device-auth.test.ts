@@ -117,6 +117,7 @@ describe("device authentication", () => {
       port,
       engine: new RuntimeEngine(),
       auth,
+      roomRuntime: false,
     });
   });
 

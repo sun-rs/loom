@@ -72,6 +72,13 @@ import {
 } from "./http-server-client-address";
 import { writeHostClipboard } from "./host-clipboard";
 import { DeviceAuthManager, handleDeviceAuthRequest } from "./device-auth";
+import type { RoomApplicationRuntime } from "./room/room-runtime";
+import {
+  handleRoomReadHttpRequest,
+  isRoomReadHttpPath,
+  writeRoomReadHttpFailure,
+} from "./room/room-read-http-route";
+import { roomError } from "./room/room-errors";
 import {
   MAX_DEVICE_ATTACHMENT_BYTES,
   resolveDeviceAttachment,
@@ -602,8 +609,18 @@ export async function handleHttpRequest(args: {
   res: ServerResponse;
   runtimeIdentity?: RuntimeIdentityResponse | undefined;
   auth?: DeviceAuthManager | undefined;
+  roomRuntime?: RoomApplicationRuntime | undefined;
 }): Promise<void> {
-  const { engine, postRoutes, noticePreferences, req, res, runtimeIdentity, auth } = args;
+  const {
+    engine,
+    postRoutes,
+    noticePreferences,
+    req,
+    res,
+    runtimeIdentity,
+    auth,
+    roomRuntime,
+  } = args;
   try {
     if (!req.url || !req.method) {
       writeText(req, res, 400, "Bad Request");
@@ -612,9 +629,22 @@ export async function handleHttpRequest(args: {
 
     const url = new URL(req.url, "http://127.0.0.1");
     const pathname = url.pathname;
+    const isRoomReadRequest = Boolean(
+      roomRuntime && isRoomReadHttpPath(pathname),
+    );
 
     const apiValidationError = validateApiRequest(req, pathname);
     if (apiValidationError) {
+      if (isRoomReadRequest && roomRuntime) {
+        writeRoomReadHttpFailure({
+          adapter: roomRuntime.http,
+          error: roomError("forbidden", apiValidationError),
+          req,
+          res,
+          statusOverride: 403,
+        });
+        return;
+      }
       writeJson(req, res, 403, { error: apiValidationError });
       return;
     }
@@ -635,7 +665,34 @@ export async function handleHttpRequest(args: {
       return;
     }
 
-    if (auth && pathname.startsWith("/api/") && !auth.authenticate(req)) {
+    if (isRoomReadRequest && roomRuntime) {
+      let roomPrincipal;
+      try {
+        roomPrincipal = auth?.authenticate(req) ?? null;
+      } catch {
+        writeRoomReadHttpFailure({
+          adapter: roomRuntime.http,
+          error: new Error("Room device authentication failed"),
+          req,
+          res,
+          statusOverride: 500,
+        });
+        return;
+      }
+      await handleRoomReadHttpRequest({
+        pathname,
+        principal: roomPrincipal,
+        adapter: roomRuntime.http,
+        req,
+        res,
+      });
+      return;
+    }
+
+    const principal = auth && pathname.startsWith("/api/")
+      ? auth.authenticate(req)
+      : null;
+    if (auth && pathname.startsWith("/api/") && !principal) {
       writeJson(req, res, 401, { error: "This device is not trusted by RAH." });
       return;
     }

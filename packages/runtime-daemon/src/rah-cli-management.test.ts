@@ -6,6 +6,8 @@ import path from "node:path";
 import { test } from "node:test";
 import { promisify } from "node:util";
 import assert from "node:assert/strict";
+import { createRoomApplicationRuntime } from "./room/room-runtime";
+import { RoomCursorKeyStore } from "./room/room-cursor-key-store";
 
 const execFileAsync = promisify(execFile);
 
@@ -45,6 +47,7 @@ test("rah CLI exposes daemon management without local terminal attach commands",
   assert.match(stdout, /rah close <rahSessionId>/);
   assert.match(stdout, /rah service-install \[--replace\]/);
   assert.match(stdout, /rah service-uninstall/);
+  assert.match(stdout, /rah room-cursor status/);
   assert.doesNotMatch(stdout, /rah attach/);
   assert.doesNotMatch(stdout, /rah <provider>/);
 
@@ -56,6 +59,69 @@ test("rah CLI exposes daemon management without local terminal attach commands",
       return true;
     },
   );
+});
+
+test("rah room-cursor exposes offline status and compare-and-swap rotation", async () => {
+  const rahHome = mkdtempSync(path.join(os.tmpdir(), "rah-cli-room-cursor-"));
+  const rootDir = process.cwd();
+  const environment = { ...process.env, RAH_DATA_HOME: rahHome, RAH_HOME: "" };
+  try {
+    const status = await execFileAsync(
+      process.execPath,
+      ["bin/rah.mjs", "room-cursor", "status"],
+      { cwd: rootDir, env: environment },
+    );
+    const initial = /Room cursor status: ([A-Za-z0-9._:-]+)/u.exec(status.stdout)?.[1];
+    assert.ok(initial);
+
+    const runtime = await createRoomApplicationRuntime({ roomRoot: path.join(rahHome, "room") });
+    try {
+      await assert.rejects(
+        execFileAsync(
+          process.execPath,
+          ["bin/rah.mjs", "room-cursor", "rotate", "--expected-generation", initial],
+          { cwd: rootDir, env: environment },
+        ),
+        (error: unknown) => {
+          assert.ok(error && typeof error === "object");
+          assert.match(
+            (error as { stderr?: string }).stderr ?? "",
+            /another Room application owner is active/u,
+          );
+          return true;
+        },
+      );
+    } finally {
+      await runtime.close();
+    }
+
+    const rotation = await execFileAsync(
+      process.execPath,
+      ["bin/rah.mjs", "room-cursor", "rotate", "--expected-generation", initial],
+      { cwd: rootDir, env: environment },
+    );
+    const rotated = /Room cursor rotate: ([A-Za-z0-9._:-]+)/u.exec(rotation.stdout)?.[1];
+    assert.ok(rotated);
+    assert.notEqual(rotated, initial);
+
+    const cursorKeyPath = path.join(rahHome, "room", "cursor-key.json");
+    const interrupted = new RoomCursorKeyStore(cursorKeyPath, {
+      onRotationPhase(phase) {
+        if (phase === "locked") throw new Error("simulated maintenance crash");
+      },
+    });
+    assert.throws(() => interrupted.rotate(rotated), /simulated maintenance crash/u);
+    const recovery = await execFileAsync(
+      process.execPath,
+      ["bin/rah.mjs", "room-cursor", "recover", "--expected-generation", rotated],
+      { cwd: rootDir, env: environment },
+    );
+    const recovered = /Room cursor recover: ([A-Za-z0-9._:-]+)/u.exec(recovery.stdout)?.[1];
+    assert.ok(recovered);
+    assert.notEqual(recovered, rotated);
+  } finally {
+    rmSync(rahHome, { recursive: true, force: true });
+  }
 });
 
 test("rah pair authenticates with the local management token", async () => {
