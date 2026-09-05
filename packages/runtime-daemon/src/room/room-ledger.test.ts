@@ -1273,7 +1273,7 @@ test("RoomLedger refuses an unsupported future schema before mutating it", () =>
   const databasePath = path.join(root, "room-ledger.sqlite");
   try {
     const database = new DatabaseSync(databasePath);
-    database.exec("PRAGMA user_version = 3");
+    database.exec("PRAGMA user_version = 4");
     database.close();
     assertRoomError(() => new RoomLedger(databasePath), "conflict");
 
@@ -1282,7 +1282,7 @@ test("RoomLedger refuses an unsupported future schema before mutating it", () =>
       const row = verification.prepare("PRAGMA user_version").get() as {
         user_version: number;
       };
-      assert.equal(row.user_version, 3);
+      assert.equal(row.user_version, 4);
     } finally {
       verification.close();
     }
@@ -1355,7 +1355,7 @@ test("RoomLedger migrates v1 catalogs and Direct pairs transactionally", () => {
     const verification = new DatabaseSync(databasePath);
     try {
       const version = verification.prepare("PRAGMA user_version").get() as { user_version: number };
-      assert.equal(version.user_version, 2);
+      assert.equal(version.user_version, 3);
       const catalog = verification.prepare(
         "SELECT COUNT(*) AS count FROM room_catalog_memberships",
       ).get() as { count: number };

@@ -86,6 +86,13 @@ export interface RoomOutboxEntry {
   leaseToken?: string;
   leaseExpiresAt?: string;
   lastError?: string;
+  quarantinedAt?: string;
+  blockedAt?: string;
+  failureClass?: string;
+  actionRequired?: string;
+  sticky?: boolean;
+  lastAttemptId?: string;
+  deliveryReceipt?: string;
   publishedBy?: string;
   publishedAt?: string;
 }

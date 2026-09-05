@@ -2,11 +2,18 @@ import { chmodSync, mkdirSync } from "node:fs";
 import path from "node:path";
 
 import { RoomApplicationLease } from "./room-application-lease";
+import { RoomActivationLedger } from "./room-activation-ledger";
 import { RoomCursorKeyStore } from "./room-cursor-key-store";
 import { RoomLedger } from "./room-ledger";
+import {
+  RoomOutboxDispatcher,
+  type RoomOutboxDispatchResult,
+  type RoomOutboxDispatcherStatus,
+} from "./room-outbox-dispatcher";
 import { RoomReadHttpAdapter } from "./room-read-http-adapter";
 import { RoomReadService } from "./room-read-service";
 import { canonicalizeRoomRoot } from "./room-storage-path";
+import { RoomWakeHub } from "./room-wake-hub";
 
 export interface RoomStorageLayout {
   roomRoot: string;
@@ -27,6 +34,10 @@ export interface RoomApplicationRuntime {
   readonly layout: RoomStorageLayout;
   readonly cursorGeneration: string;
   readonly http: RoomReadHttpAdapter;
+  readonly activations: RoomActivationLedger;
+  readonly wakeHub: RoomWakeHub;
+  dispatchWakeHints(): Promise<RoomOutboxDispatchResult>;
+  wakeStatus(): RoomOutboxDispatcherStatus;
   close(): Promise<void>;
 }
 
@@ -35,6 +46,9 @@ class OwnedRoomApplicationRuntime implements RoomApplicationRuntime {
   readonly cursorGeneration: string;
   readonly http: RoomReadHttpAdapter;
   readonly #ledger: RoomLedger;
+  readonly activations: RoomActivationLedger;
+  readonly wakeHub: RoomWakeHub;
+  readonly #dispatcher: RoomOutboxDispatcher;
   readonly #lease: RoomApplicationLease;
   #closePromise: Promise<void> | undefined;
 
@@ -44,32 +58,56 @@ class OwnedRoomApplicationRuntime implements RoomApplicationRuntime {
     http: RoomReadHttpAdapter;
     ledger: RoomLedger;
     lease: RoomApplicationLease;
+    activations: RoomActivationLedger;
+    wakeHub: RoomWakeHub;
+    dispatcher: RoomOutboxDispatcher;
   }) {
     this.layout = args.layout;
     this.cursorGeneration = args.cursorGeneration;
     this.http = args.http;
     this.#ledger = args.ledger;
     this.#lease = args.lease;
+    this.activations = args.activations;
+    this.wakeHub = args.wakeHub;
+    this.#dispatcher = args.dispatcher;
+  }
+
+  dispatchWakeHints(): Promise<RoomOutboxDispatchResult> {
+    return this.#dispatcher.dispatchOnce();
+  }
+
+  wakeStatus(): RoomOutboxDispatcherStatus {
+    return this.#dispatcher.status();
   }
 
   close(): Promise<void> {
     if (!this.#closePromise) {
       this.#closePromise = (async () => {
-        let ledgerError: unknown;
+        const errors: unknown[] = [];
+        try {
+          await this.#dispatcher.close();
+        } catch (error) {
+          errors.push(error);
+        }
+        this.wakeHub.close();
+        try {
+          this.activations.close();
+        } catch (error) {
+          errors.push(error);
+        }
         try {
           this.#ledger.close();
         } catch (error) {
-          ledgerError = error;
+          errors.push(error);
         }
-        let leaseError: unknown;
         try {
           await this.#lease.close();
         } catch (error) {
-          leaseError = error;
+          errors.push(error);
         }
-        if (ledgerError || leaseError) {
+        if (errors.length > 0) {
           throw new AggregateError(
-            [ledgerError, leaseError].filter((error) => error !== undefined),
+            errors,
             "Room application runtime shutdown failed",
           );
         }
@@ -81,15 +119,37 @@ class OwnedRoomApplicationRuntime implements RoomApplicationRuntime {
 
 export async function createRoomApplicationRuntime(args: {
   roomRoot: string;
+  dispatcherIdleDelayMs?: number;
 }): Promise<RoomApplicationRuntime> {
   const layout = resolveRoomStorageLayout(args.roomRoot);
   const lease = await RoomApplicationLease.acquire(args.roomRoot);
   let ledger: RoomLedger | undefined;
+  let activations: RoomActivationLedger | undefined;
+  let wakeHub: RoomWakeHub | undefined;
+  let dispatcher: RoomOutboxDispatcher | undefined;
   try {
     mkdirSync(layout.roomRoot, { recursive: true, mode: 0o700 });
     chmodSync(layout.roomRoot, 0o700);
     const cursorKey = new RoomCursorKeyStore(layout.cursorKeyPath).loadOrCreate();
     ledger = new RoomLedger(layout.databasePath);
+    activations = new RoomActivationLedger(layout.databasePath);
+    wakeHub = new RoomWakeHub();
+    dispatcher = new RoomOutboxDispatcher({
+      ledger,
+      ...(args.dispatcherIdleDelayMs !== undefined
+        ? { idleDelayMs: args.dispatcherIdleDelayMs }
+        : {}),
+      publishRoomEvent: (hint, { attemptId }) => {
+        wakeHub!.publish(hint);
+        return { status: "accepted", receiptId: `room-signal-${attemptId}` };
+      },
+      publishInboxWake: (hint) => {
+        const receipt = activations!.enqueue(hint);
+        wakeHub!.publish(hint);
+        return { status: "accepted", receiptId: receipt.receiptId };
+      },
+    });
+    dispatcher.start();
     const service = new RoomReadService(ledger, { cursorKey });
     return new OwnedRoomApplicationRuntime({
       layout,
@@ -97,9 +157,23 @@ export async function createRoomApplicationRuntime(args: {
       http: new RoomReadHttpAdapter(service),
       ledger,
       lease,
+      activations,
+      wakeHub,
+      dispatcher,
     });
   } catch (error) {
     const cleanupErrors: unknown[] = [];
+    try {
+      await dispatcher?.close();
+    } catch (cleanupError) {
+      cleanupErrors.push(cleanupError);
+    }
+    try {
+      wakeHub?.close();
+      activations?.close();
+    } catch (cleanupError) {
+      cleanupErrors.push(cleanupError);
+    }
     try {
       ledger?.close();
     } catch (cleanupError) {

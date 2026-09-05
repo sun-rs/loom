@@ -7,6 +7,8 @@ export * from "./live-backend-policy";
 export * from "./council";
 export * from "./room";
 export * from "./room-read";
+export * from "./room-wake";
+export * from "./room-activation";
 export * from "./events";
 export * from "./api";
 export * from "./contract";

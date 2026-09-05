@@ -115,13 +115,21 @@ export function outboxFromRow(row: RoomSqlRow): RoomOutboxEntry {
   const lastError = optionalText(row, "last_error");
   const publishedBy = optionalText(row, "published_by");
   const publishedAt = optionalText(row, "published_at");
+  const quarantinedAt = optionalText(row, "quarantined_at");
+  const blockedAt = optionalText(row, "blocked_at");
+  const failureClass = optionalText(row, "failure_class");
+  const actionRequired = optionalText(row, "action_required");
+  const lastAttemptId = optionalText(row, "last_attempt_id");
+  const deliveryReceipt = optionalText(row, "delivery_receipt");
   return {
     outboxSeq: integer(row, "outbox_seq"),
     outboxId: text(row, "outbox_id"),
     roomId: text(row, "room_id"),
     roomSeq: integer(row, "room_seq"),
     topic: text(row, "topic") as RoomOutboxEntry["topic"],
-    payload: JSON.parse(text(row, "payload_json")) as Record<string, unknown>,
+    payload: quarantinedAt
+      ? {}
+      : JSON.parse(text(row, "payload_json")) as Record<string, unknown>,
     createdAt: text(row, "created_at"),
     availableAt: text(row, "available_at"),
     attemptCount: integer(row, "attempt_count"),
@@ -129,6 +137,13 @@ export function outboxFromRow(row: RoomSqlRow): RoomOutboxEntry {
     ...(leaseToken ? { leaseToken } : {}),
     ...(leaseExpiresAt ? { leaseExpiresAt } : {}),
     ...(lastError ? { lastError } : {}),
+    ...(quarantinedAt ? { quarantinedAt } : {}),
+    ...(blockedAt ? { blockedAt } : {}),
+    ...(failureClass ? { failureClass } : {}),
+    ...(actionRequired ? { actionRequired } : {}),
+    ...(integer(row, "sticky") === 1 ? { sticky: true } : {}),
+    ...(lastAttemptId ? { lastAttemptId } : {}),
+    ...(deliveryReceipt ? { deliveryReceipt } : {}),
     ...(publishedBy ? { publishedBy } : {}),
     ...(publishedAt ? { publishedAt } : {}),
   };

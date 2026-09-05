@@ -1,4 +1,7 @@
 export * from "./room-ledger";
+export * from "./room-outbox-dispatcher";
+export * from "./room-activation-ledger";
+export * from "./room-wake-hub";
 export * from "./room-catalog";
 export * from "./room-actor";
 export * from "./room-errors";

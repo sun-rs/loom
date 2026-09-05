@@ -12,6 +12,7 @@ import path from "node:path";
 import { test } from "node:test";
 
 import { RoomCursorKeyStore } from "./room-cursor-key-store";
+import { RoomLedger } from "./room-ledger";
 import {
   createRoomApplicationRuntime,
   resolveRoomStorageLayout,
@@ -137,4 +138,61 @@ test("Room runtime fails closed until interrupted cursor rotation is recovered o
   assert.equal(runtime.cursorGeneration, recovered.generation);
   await runtime.close();
   rmSync(base, { recursive: true, force: true });
+});
+
+test("Room runtime drains inbox outbox into durable Activation state before completion", async () => {
+  const base = mkdtempSync(path.join(os.tmpdir(), "rah-room-runtime-activation-"));
+  const roomRoot = path.join(base, "room");
+  const layout = resolveRoomStorageLayout(roomRoot);
+  const ledger = new RoomLedger(layout.databasePath);
+  ledger.provisionPrincipal({ principalId: "human-owner", handle: "owner", kind: "human" });
+  ledger.provisionPrincipal({ principalId: "agent-one", handle: "agent-one", kind: "agent" });
+  const created = ledger.createRoom("human-owner", {
+    roomId: "room-one",
+    workspaceKey: "workspace-one",
+    kind: "channel",
+    slug: "one",
+    name: "One",
+    idempotencyKey: "create-room",
+  });
+  const added = ledger.addMember("human-owner", {
+    roomId: "room-one",
+    principalId: "agent-one",
+    role: "member",
+    basedOnRoomSeq: created.event.roomSeq,
+    idempotencyKey: "add-agent",
+  });
+  ledger.postMessage("human-owner", {
+    roomId: "room-one",
+    body: "wake without copying this body",
+    mentionedPrincipalIds: ["agent-one"],
+    idempotencyKey: "wake-agent",
+  });
+  ledger.close();
+
+  const runtime = await createRoomApplicationRuntime({
+    roomRoot,
+    dispatcherIdleDelayMs: 300_000,
+  });
+  try {
+    await runtime.dispatchWakeHints();
+    const pending = runtime.activations.listPending("agent-one");
+    assert.equal(pending.length, 1);
+    assert.equal(pending[0]?.fromSeq, added.event.roomSeq + 1);
+    assert.equal(pending[0]?.toSeq, added.event.roomSeq + 1);
+    assert.doesNotMatch(JSON.stringify(pending), /wake without copying this body/u);
+  } finally {
+    await runtime.close();
+  }
+
+  const reopened = await createRoomApplicationRuntime({
+    roomRoot,
+    dispatcherIdleDelayMs: 300_000,
+  });
+  try {
+    assert.equal(reopened.activations.listPending("agent-one").length, 1);
+  } finally {
+    await reopened.close();
+    rmSync(base, { recursive: true, force: true });
+  }
 });

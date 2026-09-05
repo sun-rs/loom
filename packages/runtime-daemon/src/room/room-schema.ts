@@ -1,6 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 
-export const ROOM_LEDGER_SCHEMA_VERSION = 2;
+export const ROOM_LEDGER_SCHEMA_VERSION = 3;
 
 const ROOM_CATALOG_SCHEMA = `
 CREATE TABLE IF NOT EXISTS room_catalog_memberships (
@@ -22,6 +22,48 @@ CREATE TABLE IF NOT EXISTS room_direct_pairs (
   room_id TEXT NOT NULL UNIQUE REFERENCES rooms(room_id),
   PRIMARY KEY (workspace_key, principal_low, principal_high),
   CHECK (principal_low < principal_high)
+) STRICT;
+`;
+
+const ROOM_ACTIVATION_SCHEMA = `
+CREATE TABLE IF NOT EXISTS room_activations (
+  activation_seq INTEGER PRIMARY KEY AUTOINCREMENT,
+  activation_id TEXT NOT NULL UNIQUE,
+  room_id TEXT NOT NULL REFERENCES rooms(room_id),
+  participant_id TEXT NOT NULL REFERENCES room_principals(principal_id),
+  from_seq INTEGER NOT NULL CHECK (from_seq > 0),
+  to_seq INTEGER NOT NULL CHECK (to_seq >= from_seq),
+  reason TEXT NOT NULL CHECK (reason IN (
+    'mention', 'direct_message', 'room_policy', 'task_assignment',
+    'dependency_resolved', 'input_resolved'
+  )),
+  state TEXT NOT NULL CHECK (state IN (
+    'queued', 'leased', 'completed', 'quarantined', 'cancelled'
+  )),
+  pulled_through_seq INTEGER NOT NULL DEFAULT 0 CHECK (pulled_through_seq >= 0),
+  available_at TEXT NOT NULL,
+  attempt_count INTEGER NOT NULL DEFAULT 0 CHECK (attempt_count >= 0),
+  lease_owner TEXT,
+  lease_token TEXT,
+  lease_expires_at TEXT,
+  last_error TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS idx_room_activations_claim
+  ON room_activations(state, available_at, participant_id, activation_seq);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_room_activation_one_queued_lane
+  ON room_activations(room_id, participant_id)
+  WHERE state = 'queued';
+
+CREATE TABLE IF NOT EXISTS room_activation_receipts (
+  hint_id TEXT PRIMARY KEY,
+  receipt_id TEXT NOT NULL UNIQUE,
+  activation_id TEXT REFERENCES room_activations(activation_id),
+  participant_id TEXT NOT NULL REFERENCES room_principals(principal_id),
+  created_at TEXT NOT NULL
 ) STRICT;
 `;
 
@@ -136,6 +178,13 @@ CREATE TABLE IF NOT EXISTS room_outbox (
   lease_token TEXT,
   lease_expires_at TEXT,
   last_error TEXT,
+  quarantined_at TEXT,
+  blocked_at TEXT,
+  failure_class TEXT,
+  action_required TEXT,
+  sticky INTEGER NOT NULL DEFAULT 0 CHECK (sticky IN (0, 1)),
+  last_attempt_id TEXT,
+  delivery_receipt TEXT,
   published_by TEXT,
   published_lease_token TEXT,
   published_at TEXT,
@@ -154,6 +203,8 @@ CREATE TABLE IF NOT EXISTS room_commands (
   created_at TEXT NOT NULL,
   PRIMARY KEY (actor_id, idempotency_key)
 ) STRICT;
+
+${ROOM_ACTIVATION_SCHEMA}
 
 PRAGMA user_version = ${ROOM_LEDGER_SCHEMA_VERSION};
 `;
@@ -181,8 +232,48 @@ export function migrateRoomLedgerV1ToV2(database: DatabaseSync): void {
       GROUP BY room.room_id, room.workspace_key
       HAVING COUNT(*) = 2;
 
-      PRAGMA user_version = ${ROOM_LEDGER_SCHEMA_VERSION};
+      PRAGMA user_version = 2;
     `);
+    database.exec("COMMIT");
+  } catch (error) {
+    try {
+      database.exec("ROLLBACK");
+    } catch {
+      // Keep the migration failure as the primary error.
+    }
+    throw error;
+  }
+}
+
+/** Adds fail-closed poison-row isolation without rewriting durable outbox identity. */
+export function migrateRoomLedgerV2ToV3(database: DatabaseSync): void {
+  database.exec("BEGIN IMMEDIATE");
+  try {
+    const table = database
+      .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'room_outbox'")
+      .get() as { name?: string } | undefined;
+    if (table?.name) {
+      const columns = database.prepare("PRAGMA table_info(room_outbox)").all() as Array<{
+        name?: string;
+      }>;
+      const additions = [
+        ["quarantined_at", "TEXT"],
+        ["blocked_at", "TEXT"],
+        ["failure_class", "TEXT"],
+        ["action_required", "TEXT"],
+        ["sticky", "INTEGER NOT NULL DEFAULT 0 CHECK (sticky IN (0, 1))"],
+        ["last_attempt_id", "TEXT"],
+        ["delivery_receipt", "TEXT"],
+      ] as const;
+      const existing = new Set(columns.map((column) => column.name));
+      for (const [name, definition] of additions) {
+        if (!existing.has(name)) {
+          database.exec(`ALTER TABLE room_outbox ADD COLUMN ${name} ${definition}`);
+        }
+      }
+    }
+    database.exec(ROOM_ACTIVATION_SCHEMA);
+    database.exec(`PRAGMA user_version = ${ROOM_LEDGER_SCHEMA_VERSION}`);
     database.exec("COMMIT");
   } catch (error) {
     try {

@@ -40,8 +40,6 @@ import {
   integer,
   membershipFromRow,
   messageFromRow,
-  optionalText,
-  outboxFromRow,
   principalFromRow,
   roomFromRow,
   type RoomSqlRow as Row,
@@ -49,9 +47,11 @@ import {
 } from "./room-rows";
 import {
   migrateRoomLedgerV1ToV2,
+  migrateRoomLedgerV2ToV3,
   ROOM_LEDGER_SCHEMA,
   ROOM_LEDGER_SCHEMA_VERSION,
 } from "./room-schema";
+import { RoomOutboxLedger } from "./room-outbox-ledger";
 
 export interface RoomLedgerOptions {
   createId?: (prefix: string) => string;
@@ -67,6 +67,7 @@ export class RoomLedger {
   readonly #database: DatabaseSync;
   readonly #createId: (prefix: string) => string;
   readonly #now: () => Date;
+  readonly #outbox: RoomOutboxLedger;
   #closed = false;
 
   constructor(databasePath: string, options: RoomLedgerOptions = {}) {
@@ -76,7 +77,12 @@ export class RoomLedger {
       this.#database.prepare("PRAGMA user_version").get() as Row,
       "user_version",
     );
-    if (schemaVersion !== 0 && schemaVersion !== 1 && schemaVersion !== ROOM_LEDGER_SCHEMA_VERSION) {
+    if (
+      schemaVersion !== 0 &&
+      schemaVersion !== 1 &&
+      schemaVersion !== 2 &&
+      schemaVersion !== ROOM_LEDGER_SCHEMA_VERSION
+    ) {
       this.#database.close();
       throw roomError(
         "conflict",
@@ -84,7 +90,12 @@ export class RoomLedger {
       );
     }
     try {
-      if (schemaVersion === 1) migrateRoomLedgerV1ToV2(this.#database);
+      if (schemaVersion === 1) {
+        migrateRoomLedgerV1ToV2(this.#database);
+        migrateRoomLedgerV2ToV3(this.#database);
+      } else if (schemaVersion === 2) {
+        migrateRoomLedgerV2ToV3(this.#database);
+      }
       this.#database.exec(ROOM_LEDGER_SCHEMA);
     } catch (error) {
       this.#database.close();
@@ -92,6 +103,12 @@ export class RoomLedger {
     }
     this.#createId = options.createId ?? ((prefix) => `${prefix}-${randomUUID()}`);
     this.#now = options.now ?? (() => new Date());
+    this.#outbox = new RoomOutboxLedger({
+      database: this.#database,
+      createId: this.#createId,
+      now: this.#now,
+      transaction: <T>(operation: () => T) => this.#transaction(operation),
+    });
   }
 
   provisionPrincipal(input: {
@@ -837,152 +854,49 @@ export class RoomLedger {
   }
 
   listOutbox(options: { afterOutboxSeq?: number; limit?: number } = {}): RoomOutboxEntry[] {
-    const afterOutboxSeq = options.afterOutboxSeq ?? 0;
-    const limit = options.limit ?? ROOM_LIST_LIMIT;
-    if (!Number.isInteger(afterOutboxSeq) || afterOutboxSeq < 0) {
-      throw roomError("invalid_argument", "afterOutboxSeq must be a non-negative integer");
-    }
-    if (!Number.isInteger(limit) || limit < 1 || limit > ROOM_LIST_LIMIT) {
-      throw roomError(
-        "invalid_argument",
-        `outbox limit must be between 1 and ${ROOM_LIST_LIMIT}`,
-      );
-    }
-    return (this.#database
-      .prepare("SELECT * FROM room_outbox WHERE outbox_seq > ? ORDER BY outbox_seq LIMIT ?")
-      .all(afterOutboxSeq, limit) as Row[]).map(outboxFromRow);
+    return this.#outbox.list(options);
   }
 
   claimOutbox(
     workerId: string,
     options: { limit?: number; leaseMs?: number } = {},
   ): RoomOutboxEntry[] {
-    this.#requireWorkerId(workerId);
-    const limit = options.limit ?? 100;
-    const leaseMs = options.leaseMs ?? 30_000;
-    if (!Number.isInteger(limit) || limit < 1 || limit > ROOM_LIST_LIMIT) {
-      throw roomError("invalid_argument", `claim limit must be between 1 and ${ROOM_LIST_LIMIT}`);
-    }
-    if (!Number.isInteger(leaseMs) || leaseMs < 1_000 || leaseMs > 300_000) {
-      throw roomError("invalid_argument", "leaseMs must be between 1000 and 300000");
-    }
-    return this.#transaction(() => {
-      const now = this.#now();
-      const nowText = now.toISOString();
-      const leaseExpiresAt = new Date(now.getTime() + leaseMs).toISOString();
-      const rows = this.#database
-        .prepare(
-          `SELECT outbox_seq, attempt_count FROM room_outbox
-           WHERE published_at IS NULL
-             AND available_at <= ?
-             AND (lease_expires_at IS NULL OR lease_expires_at <= ?)
-           ORDER BY outbox_seq
-           LIMIT ?`,
-        )
-        .all(nowText, nowText, limit) as Row[];
-      const claimed: RoomOutboxEntry[] = [];
-      for (const row of rows) {
-        const outboxSeq = integer(row, "outbox_seq");
-        const leaseToken = `lease-${outboxSeq}-${integer(row, "attempt_count") + 1}`;
-        this.#database
-          .prepare(
-            `UPDATE room_outbox
-             SET lease_owner = ?, lease_token = ?, lease_expires_at = ?,
-                 attempt_count = attempt_count + 1
-             WHERE outbox_seq = ?`,
-          )
-          .run(workerId, leaseToken, leaseExpiresAt, outboxSeq);
-        claimed.push(this.#requireOutbox(outboxSeq));
-      }
-      return claimed;
-    });
+    return this.#outbox.claim(workerId, options);
   }
 
-  completeOutbox(workerId: string, outboxSeq: number, leaseToken: string): RoomOutboxEntry {
-    this.#requireWorkerId(workerId);
-    this.#requireLeaseToken(leaseToken);
-    this.#requireListWindow(outboxSeq, 1, "outboxSeq");
-    if (outboxSeq === 0) throw roomError("invalid_argument", "outboxSeq must be positive");
-    return this.#transaction(() => {
-      const entry = this.#requireOutbox(outboxSeq);
-      if (entry.publishedAt) {
-        if (
-          entry.publishedBy === workerId &&
-          this.#publishedLeaseToken(outboxSeq) === leaseToken
-        ) return entry;
-        throw roomError("conflict", `outbox entry ${outboxSeq} was completed by another worker`);
-      }
-      this.#requireActiveOutboxLease(entry, workerId, leaseToken);
-      this.#database
-        .prepare(
-          `UPDATE room_outbox
-           SET published_at = ?, published_by = ?, published_lease_token = lease_token,
-               lease_owner = NULL, lease_token = NULL, lease_expires_at = NULL,
-               last_error = NULL
-           WHERE outbox_seq = ?`,
-        )
-        .run(this.#timestamp(), workerId, outboxSeq);
-      return this.#requireOutbox(outboxSeq);
-    });
+  completeOutbox(
+    workerId: string,
+    outboxSeq: number,
+    leaseToken: string,
+    deliveryReceipt = leaseToken,
+  ): RoomOutboxEntry {
+    return this.#outbox.complete(workerId, outboxSeq, leaseToken, deliveryReceipt);
   }
 
   failOutbox(
     workerId: string,
     outboxSeq: number,
-    input: { error: string; retryAt: string; leaseToken: string },
+    input: { error: string; retryAt: string; leaseToken: string; failureClass?: string },
   ): RoomOutboxEntry {
-    this.#requireWorkerId(workerId);
-    this.#requireLeaseToken(input.leaseToken);
-    this.#requireListWindow(outboxSeq, 1, "outboxSeq");
-    if (outboxSeq === 0) throw roomError("invalid_argument", "outboxSeq must be positive");
-    const retryAt = new Date(input.retryAt);
-    if (!Number.isFinite(retryAt.getTime())) {
-      throw roomError("invalid_argument", "retryAt must be an ISO timestamp");
-    }
-    if (!input.error.trim()) throw roomError("invalid_argument", "error must not be empty");
-    return this.#transaction(() => {
-      const entry = this.#requireOutbox(outboxSeq);
-      if (entry.publishedAt) {
-        throw roomError("conflict", `outbox entry ${outboxSeq} is already complete`);
-      }
-      this.#requireActiveOutboxLease(entry, workerId, input.leaseToken);
-      this.#database
-        .prepare(
-          `UPDATE room_outbox
-           SET available_at = ?, lease_owner = NULL, lease_token = NULL,
-               lease_expires_at = NULL, last_error = ?
-           WHERE outbox_seq = ?`,
-        )
-        .run(retryAt.toISOString(), input.error.trim().slice(0, 2_000), outboxSeq);
-      return this.#requireOutbox(outboxSeq);
-    });
+    return this.#outbox.fail(workerId, outboxSeq, input);
+  }
+
+  blockOutbox(
+    workerId: string,
+    outboxSeq: number,
+    input: {
+      error: string;
+      failureClass: string;
+      actionRequired: string;
+      sticky: boolean;
+      leaseToken: string;
+    },
+  ): RoomOutboxEntry {
+    return this.#outbox.block(workerId, outboxSeq, input);
   }
 
   prunePublishedOutbox(input: { throughOutboxSeq: number; limit?: number }): number {
-    const limit = input.limit ?? ROOM_LIST_LIMIT;
-    if (!Number.isInteger(input.throughOutboxSeq) || input.throughOutboxSeq < 1) {
-      throw roomError("invalid_argument", "throughOutboxSeq must be a positive integer");
-    }
-    if (!Number.isInteger(limit) || limit < 1 || limit > ROOM_LIST_LIMIT) {
-      throw roomError(
-        "invalid_argument",
-        `prune limit must be between 1 and ${ROOM_LIST_LIMIT}`,
-      );
-    }
-    return this.#transaction(() => {
-      const result = this.#database
-        .prepare(
-          `DELETE FROM room_outbox
-           WHERE outbox_seq IN (
-             SELECT outbox_seq FROM room_outbox
-             WHERE published_at IS NOT NULL AND outbox_seq <= ?
-             ORDER BY outbox_seq
-             LIMIT ?
-           )`,
-        )
-        .run(input.throughOutboxSeq, limit);
-      return Number(result.changes);
-    });
+    return this.#outbox.prune(input);
   }
 
   close(): void {
@@ -1335,55 +1249,6 @@ export class RoomLedger {
       throw roomError("not_found", `message ${messageId} has no acknowledgement event`);
     }
     return eventFromRow(row);
-  }
-
-  #requireOutbox(outboxSeq: number): RoomOutboxEntry {
-    const row = this.#database
-      .prepare("SELECT * FROM room_outbox WHERE outbox_seq = ?")
-      .get(outboxSeq) as Row | undefined;
-    if (!row) throw roomError("not_found", `outbox entry ${outboxSeq} was not found`);
-    return outboxFromRow(row);
-  }
-
-  #requireWorkerId(workerId: string): void {
-    if (!STABLE_IDENTIFIER.test(workerId)) {
-      throw roomError("invalid_argument", "workerId must be a stable identifier");
-    }
-  }
-
-  #requireLeaseToken(leaseToken: string): void {
-    if (!STABLE_IDENTIFIER.test(leaseToken)) {
-      throw roomError("invalid_argument", "leaseToken must be a stable identifier");
-    }
-  }
-
-  #publishedLeaseToken(outboxSeq: number): string | undefined {
-    const row = this.#database
-      .prepare("SELECT published_lease_token FROM room_outbox WHERE outbox_seq = ?")
-      .get(outboxSeq) as Row | undefined;
-    return row ? optionalText(row, "published_lease_token") : undefined;
-  }
-
-  #requireActiveOutboxLease(
-    entry: RoomOutboxEntry,
-    workerId: string,
-    leaseToken: string,
-  ): void {
-    if (entry.leaseOwner !== workerId) {
-      throw roomError(
-        "conflict",
-        `outbox entry ${entry.outboxSeq} is not leased by ${workerId}`,
-      );
-    }
-    if (entry.leaseToken !== leaseToken) {
-      throw roomError(
-        "conflict",
-        `outbox entry ${entry.outboxSeq} is fenced by a newer claim`,
-      );
-    }
-    if (!entry.leaseExpiresAt || entry.leaseExpiresAt <= this.#timestamp()) {
-      throw roomError("conflict", `outbox entry ${entry.outboxSeq} lease has expired`);
-    }
   }
 
   #requirePrincipal(principalId: string): RoomPrincipal {
