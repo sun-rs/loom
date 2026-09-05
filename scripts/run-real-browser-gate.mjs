@@ -1645,7 +1645,8 @@ try {
   assert.equal(
     await call(browser, () => {
       const buttons = [
-        ...document.querySelectorAll(".rah-computer-profile-edit"),
+        document.querySelector('button[aria-label="编辑计算机名称"]'),
+        document.querySelector('button[aria-label="编辑计算机描述"]'),
       ];
       return (
         buttons.length === 2 &&
@@ -1957,7 +1958,9 @@ try {
   const openedComputerAgent = await call(browser, () => {
     const button = document.querySelector(".rah-computer-agent-list > button");
     if (!(button instanceof HTMLButtonElement)) return null;
-    const name = button.querySelector("b")?.textContent?.trim();
+    const name = button
+      .querySelector(".rah-entity-card-name")
+      ?.textContent?.trim();
     button.click();
     return name ?? null;
   });
@@ -3578,15 +3581,18 @@ try {
         ...document.querySelectorAll(".thread .msg .rah-message-markdown"),
       ].map((message) => message.textContent ?? "");
       return (
-        bodies.some((body) =>
+        bodies.filter((body) =>
           body.includes("Fake Worker completed the durable Task protocol"),
+        ).length >= 2 &&
+        bodies.some((body) =>
+          body.includes("要求修改：首个冻结版本缺少独立验收证据。"),
         ) &&
         bodies.some((body) =>
           body.includes("审阅通过：提交证据与 Task 范围一致。"),
         )
       );
     },
-    "owner submission and reviewer evidence in canonical Task Thread",
+    "rejected first submission, revised delivery, and approval in canonical Task Thread",
   );
   await clickButton(browser, { ariaLabel: "关闭消息列" });
   await clickTaskButton(browser, "browser gate: frozen Review", "确认完成");
@@ -3600,6 +3606,16 @@ try {
       ),
     "Human completion after canonical Review",
     ["browser gate: frozen Review"],
+  );
+  assert.deepEqual(
+    await readCanonicalTaskCompletion(browser, "browser gate: frozen Review"),
+    {
+      completedAt: true,
+      completionEvent: true,
+      state: "completed",
+      workflowStatus: "done",
+    },
+    "Human completion must persist the canonical Task and task.completed event",
   );
   await clickButton(browser, { text: "聊天" });
 
@@ -4101,13 +4117,13 @@ try {
       );
     }),
     [
-      { checked: false, disabled: false, label: "待办" },
-      { checked: false, disabled: false, label: "进行中" },
-      { checked: false, disabled: false, label: "待确认" },
+      { checked: false, disabled: true, label: "待办" },
+      { checked: false, disabled: true, label: "进行中" },
+      { checked: false, disabled: true, label: "待确认" },
       { checked: true, disabled: false, label: "完成" },
-      { checked: false, disabled: false, label: "已关闭" },
+      { checked: false, disabled: true, label: "已关闭" },
     ],
-    "Room owner must receive Raft's five status choices in source order",
+    "Room owner must receive Raft's five status choices in source order without fabricating lifecycle transitions",
   );
   await dispatchKey(browser, "Escape", 27);
   await waitFor(
@@ -4132,9 +4148,34 @@ try {
   // the historical Room message is still present.
   await clickButton(browser, { text: "聊天" });
   await waitForMessage(browser, "browser gate: Kimi only", 15_000);
+  await clickButton(browser, { ariaLabel: "频道详情与设置" });
+  await mutateRoomAgent(browser, "Alice", "移出 Room", "加入 Room");
+  await mutateRoomAgent(browser, "Owner Router", "移出 Room", "加入 Room");
+  await closeRoomSettings(
+    browser,
+    "Room settings drawer close before unassigned Task lifecycle",
+  );
   await clickButton(browser, { text: "任务" });
-  await expandTaskGroup(browser, "done");
-  await clickTaskButton(browser, "browser gate: both agents", "关闭任务");
+  await clickButton(browser, { text: "新建任务" });
+  await setTaskDialogContent(
+    browser,
+    "browser gate: close and reopen",
+    "Canonical cancellation and recovery must not reuse a completed Task.",
+  );
+  await clickButton(browser, { text: "创建任务" });
+  await waitFor(
+    browser,
+    (title) =>
+      document.querySelector(".rah-task-create-dialog") === null &&
+      [...document.querySelectorAll(".kcard")].some(
+        (card) =>
+          card.querySelector(".kcard-title")?.textContent === title &&
+          card.getAttribute("data-task-workflow-status") === "todo",
+      ),
+    "unstarted Task for canonical Closed recovery",
+    ["browser gate: close and reopen"],
+  );
+  await clickTaskButton(browser, "browser gate: close and reopen", "关闭任务");
   await waitFor(
     browser,
     (title) =>
@@ -4145,9 +4186,13 @@ try {
           card.textContent?.includes("cancelled") === false,
       ),
     "Raft Closed projection without a RAH cancellation dialog",
-    ["browser gate: both agents"],
+    ["browser gate: close and reopen"],
   );
-  await clickTaskButton(browser, "browser gate: both agents", "重开为待办");
+  await clickTaskButton(
+    browser,
+    "browser gate: close and reopen",
+    "重开为待办",
+  );
   await waitFor(
     browser,
     (title) =>
@@ -4158,14 +4203,28 @@ try {
           !card.textContent?.includes("cancelled"),
       ),
     "Task Closed to Todo recovery",
-    ["browser gate: both agents"],
+    ["browser gate: close and reopen"],
+  );
+  await clickTaskButton(browser, "browser gate: close and reopen", "关闭任务");
+  await waitFor(
+    browser,
+    (title) =>
+      [...document.querySelectorAll(".kcard")].some(
+        (card) =>
+          card.querySelector(".kcard-title")?.textContent === title &&
+          card.getAttribute("data-task-workflow-status") === "closed",
+      ),
+    "reopened Task returns to a terminal state before Agent restoration",
+    ["browser gate: close and reopen"],
   );
 
   await clickButton(browser, { ariaLabel: "频道详情与设置" });
   await mutateRoomAgent(browser, "Kimi", "加入 Room", "移出 Room");
+  await mutateRoomAgent(browser, "Alice", "加入 Room", "移出 Room");
+  await mutateRoomAgent(browser, "Owner Router", "加入 Room", "移出 Room");
   await closeRoomSettings(
     browser,
-    "Room settings drawer close after restoring Kimi",
+    "Room settings drawer close after restoring Task Agents",
   );
   await clickButton(browser, { title: "聊天" });
   await waitFor(
@@ -4188,6 +4247,7 @@ try {
     () => document.querySelector('main[aria-label="全局任务"]') !== null,
     "Tasks before responsive boundary scan",
   );
+  await clickButton(browser, { ariaLabel: "展开完成" });
   await waitFor(
     browser,
     () =>
@@ -4548,7 +4608,7 @@ try {
     setter?.call(textarea, "");
     textarea.dispatchEvent(new Event("input", { bubbles: true }));
   });
-  await openMessageContextMenu(browser, "browser gate: Kimi only");
+  await openMessageContextMenu(browser, "browser gate: attached source");
   await clickButton(browser, { text: "选择消息" });
   await waitFor(
     browser,
@@ -5199,6 +5259,62 @@ async function clickTaskButton(connection, title, text) {
   );
 }
 
+async function readCanonicalTaskCompletion(connection, title) {
+  return call(
+    connection,
+    async (taskTitle) => {
+      const roomId = new URL(window.location.href).searchParams.get("room");
+      if (!roomId) throw new Error("Task completion check has no active Room");
+      const taskResponse = await fetch("/v3/client/tasks/list", {
+        body: JSON.stringify({ roomId }),
+        headers: { "content-type": "application/json" },
+        method: "POST",
+      });
+      if (!taskResponse.ok)
+        throw new Error(`Task list failed with ${taskResponse.status}`);
+      const taskPayload = await taskResponse.json();
+      const task = taskPayload.tasks?.find(
+        (candidate) => candidate.title === taskTitle,
+      );
+      if (!task) throw new Error(`Task ${taskTitle} is absent from task.list`);
+
+      let afterSeq = 0;
+      let completionEvent = false;
+      for (let page = 0; page < 50; page += 1) {
+        const syncResponse = await fetch("/v3/client/rooms/sync", {
+          body: JSON.stringify({
+            afterSeq,
+            consumerId: "browser-gate-task-completion",
+            limit: 500,
+            roomId,
+          }),
+          headers: { "content-type": "application/json" },
+          method: "POST",
+        });
+        if (!syncResponse.ok)
+          throw new Error(`Room sync failed with ${syncResponse.status}`);
+        const sync = await syncResponse.json();
+        completionEvent ||= sync.events?.some(
+          (event) =>
+            event.type === "task.completed" &&
+            event.aggregateId === task.taskId,
+        );
+        if (completionEvent || sync.cursorAfter >= sync.latestRoomSeq) break;
+        if (!(sync.cursorAfter > afterSeq))
+          throw new Error("Room sync cursor did not advance");
+        afterSeq = sync.cursorAfter;
+      }
+      return {
+        completedAt: typeof task.completedAt === "string",
+        completionEvent,
+        state: task.state,
+        workflowStatus: task.workflowStatus,
+      };
+    },
+    title,
+  );
+}
+
 async function selectTaskStatus(connection, title, label) {
   await waitFor(
     connection,
@@ -5369,30 +5485,77 @@ async function openMessageContextMenu(
   body,
   { scope = ".chan-pane" } = {},
 ) {
-  const opened = await call(
+  const positioned = await call(
     connection,
     (messageBody, selector) => {
       const message = [...document.querySelectorAll(`${selector} .msg`)].find(
         (candidate) =>
-          candidate.querySelector(".rah-message-markdown")?.textContent ===
-          messageBody,
+          candidate
+            .querySelector(".rah-message-markdown")
+            ?.textContent?.trim() === messageBody.trim(),
       );
       if (message === undefined) return false;
-      const bounds = message.getBoundingClientRect();
-      message.dispatchEvent(
-        new MouseEvent("contextmenu", {
-          bubbles: true,
-          cancelable: true,
-          clientX: bounds.left + 80,
-          clientY: bounds.top + 20,
-        }),
-      );
+      message.scrollIntoView({ block: "center", inline: "nearest" });
       return true;
     },
     body,
     scope,
   );
-  assert.equal(opened, true, `Message ${body} must be visible`);
+  assert.equal(positioned, true, `Message ${body} must be loaded`);
+  await waitFor(
+    connection,
+    (messageBody, selector) => {
+      const message = [...document.querySelectorAll(`${selector} .msg`)].find(
+        (candidate) =>
+          candidate
+            .querySelector(".rah-message-markdown")
+            ?.textContent?.trim() === messageBody.trim(),
+      );
+      const scroller = message?.closest(".messages");
+      if (message === undefined || scroller === null) return false;
+      const bounds = message.getBoundingClientRect();
+      const viewport = scroller.getBoundingClientRect();
+      return bounds.bottom > viewport.top && bounds.top < viewport.bottom;
+    },
+    `Message ${body} enters the visible virtual range`,
+    [body, scope],
+  );
+  const target = await call(
+    connection,
+    (messageBody, selector) => {
+      const message = [...document.querySelectorAll(`${selector} .msg`)].find(
+        (candidate) =>
+          candidate
+            .querySelector(".rah-message-markdown")
+            ?.textContent?.trim() === messageBody.trim(),
+      );
+      if (message === undefined) return null;
+      const bounds = message.getBoundingClientRect();
+      return { x: bounds.left + 80, y: bounds.top + 20 };
+    },
+    body,
+    scope,
+  );
+  assert.ok(target, `Message ${body} must be actionable`);
+  await connection.command("Input.dispatchMouseEvent", {
+    button: "right",
+    clickCount: 1,
+    type: "mousePressed",
+    x: target.x,
+    y: target.y,
+  });
+  await connection.command("Input.dispatchMouseEvent", {
+    button: "right",
+    clickCount: 1,
+    type: "mouseReleased",
+    x: target.x,
+    y: target.y,
+  });
+  await waitFor(
+    connection,
+    () => document.querySelector('[role="menu"]') !== null,
+    `Message ${body} context menu opens`,
+  );
 }
 
 async function clickMessageRow(

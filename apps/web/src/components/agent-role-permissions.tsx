@@ -8,20 +8,11 @@ export function AgentRolePermissions({
 }: {
   role: "owner" | "admin" | "member" | undefined;
 }) {
-  const [open, setOpen] = useState(false);
   return (
     <>
       <div className="rah-agent-role-block">
         <span>
-          角色{" "}
-          <button
-            className="rah-profile-edit rah-interaction-flat"
-            aria-label="角色权限"
-            title="角色权限"
-            onClick={() => setOpen(true)}
-          >
-            <Icon name="circle-question-mark" />
-          </button>
+          角色 <RolePermissionsHelp subject="agent" />
         </span>
         <strong>{permissionRoleLabel(role)}</strong>
         {role === "member" && (
@@ -30,11 +21,37 @@ export function AgentRolePermissions({
           </small>
         )}
       </div>
-      {open && <RoleDialog onClose={() => setOpen(false)} />}
     </>
   );
 }
-function RoleDialog({ onClose }: { onClose: () => void }) {
+export function RolePermissionsHelp({
+  subject,
+}: {
+  subject: "human" | "agent";
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        className="rah-profile-edit rah-interaction-flat"
+        aria-label="角色权限"
+        title="角色权限"
+        onClick={() => setOpen(true)}
+      >
+        <Icon name="circle-question-mark" />
+      </button>
+      {open && <RoleDialog subject={subject} onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+function RoleDialog({
+  onClose,
+  subject,
+}: {
+  onClose: () => void;
+  subject: "human" | "agent";
+}) {
   const ref = useDialogProtocol({ blocked: false, onClose });
   return createPortal(
     <div className="rah-dialog-layer">
@@ -52,12 +69,22 @@ function RoleDialog({ onClose }: { onClose: () => void }) {
         tabIndex={-1}
       >
         <header>
-          <h2 id="rah-role-title">Agent 角色</h2>
+          <h2 id="rah-role-title">
+            {subject === "human" ? "人类角色" : "Agent 角色"}
+          </h2>
           <button className="sq-btn" aria-label="关闭" onClick={onClose}>
             <Icon name="x" />
           </button>
         </header>
         <div className="rah-role-body">
+          {subject === "human" && (
+            <>
+              <h3>所有者</h3>
+              <p>
+                拥有当前协作空间的管理权限。角色来自协作空间成员记录，不代表操作系统账户或计算机所有权。
+              </p>
+            </>
+          )}
           <h3>成员</h3>
           <p>在已加入的频道和私信中交流、处理任务，不拥有协作空间管理权限。</p>
           <h3>管理员</h3>
@@ -65,10 +92,12 @@ function RoleDialog({ onClose }: { onClose: () => void }) {
             可管理协作空间与成员。当前 RAH OS 仅允许 Human 担任管理员，Agent
             暂不支持提升权限。
           </p>
-          <p>
-            人设指令描述 Agent 如何工作，不授予管理权限，也不改变 CLI
-            的读写权限模式。
-          </p>
+          {subject === "agent" && (
+            <p>
+              人设指令描述 Agent 如何工作，不授予管理权限，也不改变 CLI
+              的读写权限模式。
+            </p>
+          )}
         </div>
       </section>
     </div>,

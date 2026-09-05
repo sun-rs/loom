@@ -16,8 +16,9 @@ function read(storage: Storage, key: string): string | null {
 function write(storage: Storage, key: string, value: string) {
   try {
     storage.setItem(key, value);
+    return true;
   } catch {
-    // Device preferences are best-effort when storage is blocked.
+    return false;
   }
 }
 
@@ -27,8 +28,9 @@ export function readMessageSize(storage: Storage): RahMessageSize {
 }
 
 export function writeMessageSize(storage: Storage, value: RahMessageSize) {
-  write(storage, MESSAGE_SIZE_KEY, value);
+  const saved = write(storage, MESSAGE_SIZE_KEY, value);
   document.documentElement.dataset.rahMessageSize = value;
+  return saved;
 }
 
 export function readLiveAgentActivity(storage: Storage): boolean {
@@ -36,8 +38,9 @@ export function readLiveAgentActivity(storage: Storage): boolean {
 }
 
 export function writeLiveAgentActivity(storage: Storage, value: boolean) {
-  write(storage, LIVE_ACTIVITY_KEY, String(value));
+  const saved = write(storage, LIVE_ACTIVITY_KEY, String(value));
   document.documentElement.dataset.rahLiveAgentActivity = String(value);
+  return saved;
 }
 
 export function readTimeFormat(storage: Storage): RahTimeFormat {
@@ -45,8 +48,9 @@ export function readTimeFormat(storage: Storage): RahTimeFormat {
 }
 
 export function writeTimeFormat(storage: Storage, value: RahTimeFormat) {
-  write(storage, TIME_FORMAT_KEY, value);
+  const saved = write(storage, TIME_FORMAT_KEY, value);
   document.documentElement.dataset.rahTimeFormat = value;
+  return saved;
 }
 
 export function applySettingsPreferences(storage: Storage) {

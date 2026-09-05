@@ -314,38 +314,9 @@
 .rah-saved-pane {
   min-height: 0;
 }
-.rah-saved-header {
-  align-items: center;
-  background: var(--paper);
-  border-bottom: 2px solid var(--black);
-  box-sizing: border-box;
-  display: flex;
-  flex: none;
-  gap: 12px;
-  height: 62px;
-  padding: 0 20px;
-}
-.rah-saved-header-icon {
-  align-items: center;
-  background: var(--yellow);
-  border: 2px solid var(--black);
-  display: inline-flex;
-  flex: 0 0 36px;
-  height: 36px;
-  justify-content: center;
-  width: 36px;
-}
-.rah-saved-header-icon svg {
-  height: 18px;
-  width: 18px;
-}
 .rah-saved-header-copy {
   display: flex;
   flex-direction: column;
-}
-.rah-saved-header-copy strong {
-  font-size: 16px;
-  line-height: 20px;
 }
 .rah-saved-header-copy > span {
   color: var(--ink-40);

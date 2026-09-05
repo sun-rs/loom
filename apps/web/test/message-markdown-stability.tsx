@@ -8,7 +8,7 @@ import {
   MessageMarkdown,
   type MessageMarkdownReferences,
 } from "../src/components/message-markdown.tsx";
-import { AgentMessageContext } from "../src/components/agent-message-identity.tsx";
+import { AgentMessageContext } from "../src/components/workspace-entity-context.tsx";
 import { MessageTimeline } from "../src/components/message-timeline.tsx";
 import {
   ChannelRowIdentity,

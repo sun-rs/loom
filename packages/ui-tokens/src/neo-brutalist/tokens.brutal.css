@@ -164,6 +164,9 @@
   --ink-08: rgba(0,0,0,.08);             /* live: black/8 */
   --ink-05: rgba(0,0,0,.05);             /* live: black/5 */
   --ink-10: rgba(0,0,0,.1);              /* live: black/10 */
+  --ink-20: rgba(0,0,0,.2);
+  --ink-30: rgba(0,0,0,.3);
+  --ink-60: rgba(0,0,0,.6);
   --ink-70: rgba(0,0,0,.7);              /* live: text-black/70 */
 
   /* 滚动条（实测 .scrollbar-quiet：纯黑 alpha 三档，非 --ink 基） */

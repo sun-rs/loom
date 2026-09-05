@@ -17,7 +17,7 @@ See [ADR 0028](../adr/0028-owned-neo-brutalist-ui-library.md).
   owner, including official evidence, applicability and local differences.
 
 The catalog links these records; it does not create another business protocol.
-The initial adoption covers five primitives and three composition templates.
+The maintained catalog covers ten primitives and five composition templates.
 It does **not** certify all pages, states, permissions or official parity.
 
 ## Visual grammar
@@ -53,8 +53,64 @@ is recorded debt, not permission to add another override.
 5. Edit a migrated family's library owner and remove its obsolete page rule.
    Do not fix it with a late `!important`, duplicated selector or new theme.
 
+Identity composition is owned by `apps/web/src/workspace-entities.ts` and its
+application-boundary provider. Consumers resolve stable Human/Agent principal,
+Agent definition, Computer and Runtime bindings there rather than joining names
+or maintaining page-local copies. It is an authorized-input read model, not a
+new backend truth. Missing ownership/creator facts stay unknown. See the
+[staged identity closure plan](./ui-entity-network-closure.md).
+
+The status-dot primitive owns its complete shape/state even without a parent
+page class. The library gate rejects unresolved CSS variable names; real browser
+checks still own scoped cascade, actual values and interaction verification.
+
+Body primitives now include `EntityCard` and `EmptyState`. Cards accept an
+already-authorized identity, runtime subtitle and one trailing presence slot;
+they cannot infer presence from CLI availability. `AgentEntityCard` connects the
+existing view and status projector, not a second data store. Computer and
+created-Agent lists consume this same presentation owner.
+
+`ProfileSection` owns the 20px horizontal / 16px vertical spacing and 1px muted
+divider for the Human profile body. The typed `human.profile` query supplies
+current Workspace membership and immutable creation IDs; the entity directory
+joins those IDs to the authorized catalog. A principal is not a Computer owner.
+Human profile navigation uses principal ID and never creates a self-DM. Fields
+without canonical data (email, hardware ownership) are omitted,
+not filled from OS data. Agent/Computer section adoption is described below;
+the complete Human directory and ownership relations remain separate work.
+
+`ProfileField` owns the multiline description edit state, 3000-character limit,
+Save/Cancel, Escape focus return, pending state and error/draft retention.
+`HumanIdentity` joins authorized candidates through the entity directory and
+opens the same Human route from message avatars, mentions, creators and graph.
+Profile and account edits share `useHumanProfileMutation`; only the existing
+authenticated `principal.update` owner writes identity or image references.
+See [Human page family](human-page-family.md) for source and scope boundaries.
+
+Agent and Computer bodies also consume ProfileSection. The `field` variant owns
+the 4px heading gap; `divided=false` is the Agent inline-field 12px vertical variant.
+Default sections use natural content height with 20px horizontal/16px vertical
+spacing and a 1px muted leading divider. Never restore fixed per-page section
+heights. The title action slot uses the shared edit affordance. Profile/preview
+CSS is maintained here, not layered underneath page-specific overrides.
+See [Agent/Computer family](agent-computer-profile-family.md) for projection,
+permission and local adaptation boundaries. UI009 is a scoped implementation
+record, not a full-product parity certification.
+
+Identity previews use the existing `PreviewCard` lifetime/placement owner and
+the internal `preview.css` frame (background, border, shadow and stacking).
+Agent and graph page-local frame rules were removed. The graph's existing
+compact shadow remains an explicit variant; identity content stays in callers.
+
+Empty states require a named `search` or `profile` context and `fill` or `section`
+placement. Search home fills its remaining stage only when suggestions are
+absent. Profile empty content fills the area **after** the diagnostic toolbar.
+Loading and read failures belong to the caller and must not show a successful
+empty result. Other page families are not silently switched to either context.
+
 Native disabling applies to pointer and keyboard. Tabs use one focus stop,
-wrapping arrows, Home/End and disabled-item skipping. Splitters own pointer
+wrapping arrows, Home/End and disabled-item skipping; these move focus only.
+Enter/Space activates the focused tab (Raft `activateOnFocus=false`). Splitters own pointer
 capture; existing panel policies own bounds and persistence. Room/DM/Thread
 Enter sends; Shift+Enter inserts a line; IME confirmation never sends. The
 composer keeps its existing owner and is not part of this initial move.
@@ -73,7 +129,12 @@ of breakpoints. Review screenshots, geometry, focus, pointer targets and callbac
 assertions. Browser receipts include library source/catalog hashes so moving a
 component cannot hide later evidence drift.
 
-Future bilateral comparisons target these production owners at matching viewport,
+Run `npm run test:web:ui-compare` for the foundation and Shell official-capture
+replays, with generated JSON/Markdown differences, pinned evidence and source hashes.
+See [the comparison and release contract](./ui-evidence-and-release.md). This is
+not a fresh official-site scan, and does not cover all component/mouse states.
+
+Further bilateral comparisons target these production owners at matching viewport,
 font readiness and data preconditions. Official evidence, reconstructed fixtures
 and self-regression have separate labels. An unavailable official state remains
 unverified. Never update a baseline merely to turn a failed comparison green.
@@ -92,7 +153,19 @@ sources through scoped Git changes after dependency and browser checks.
 
 ## Remaining migration
 
-Legacy page CSS in `apps/web` remains active. Settings, Computer, general forms,
-overlays, empty states and toolbars need family-by-family consolidation. The
-existing preview Escape intermittency and automated official bilateral diff
-runner remain open work. This ownership migration does not fix or certify them.
+Legacy page CSS in `apps/web` remains active. Settings, Computer, global
+discovery and Saved/Search header tracks now consume the library. Search retains
+its input composition and uses the compact header action for clear-query;
+Saved retains its title/subtitle composition. Page bodies, general buttons,
+forms, overlays, empty states and toolbars still
+need family-by-family consolidation. Settings shared cards/forms and scoped
+profile drafts now use the internal Settings owner; see
+[Settings family](./settings-page-family.md). Preview pending/open Escape is
+covered by the profile-family regression gate. Expansion of official bilateral
+coverage remains open work; local migration does not certify it.
+The notification read-failure mislabel found in the Shell review is corrected:
+unknown/read failure, unsupported browser, unavailable daemon Push configuration,
+permission and subscription are separate view states. Read-only retry and stale
+response fencing are tested without creating a subscription. This does not
+certify OS notification delivery or all notification settings; see the
+[scoped implementation plan](./ui-secondary-headers-and-push-status.md).

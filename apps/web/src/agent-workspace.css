@@ -30,7 +30,7 @@
   flex: 0 1 auto;
   border: 1px solid var(--ink);
   border-radius: 0;
-  background: var(--white);
+  background: var(--paper);
   color: var(--ink);
   font: inherit;
   font-weight: 700;

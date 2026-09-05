@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Icon } from "./icon.tsx";
 
 export type PanelTab<Id extends string> = {
@@ -9,8 +9,8 @@ export type PanelTab<Id extends string> = {
 };
 
 // Controlled selection: no route, capability, API or loading state is owned here.
-// Raft's TabList contract: loop focus, Home/End and disabledIndices. Automatic
-// activation preserves RAH's existing Agent tabs; both consumers now share it.
+// Raft TabList defaults activateOnFocus=false: navigation only moves focus.
+// Native Enter/Space click activates; selection stays with the product owner.
 export function PanelTabs<Id extends string>({
   label,
   items,
@@ -27,8 +27,12 @@ export function PanelTabs<Id extends string>({
   listClassName?: string;
 }) {
   const buttons = useRef(new Map<Id, HTMLButtonElement>());
+  const [focusedId, setFocusedId] = useState<Id>();
   const enabled = items.filter((item) => !item.disabled);
-  const tabStop = enabled.find((item) => item.id === value) ?? enabled[0];
+  const tabStop =
+    enabled.find((item) => item.id === focusedId) ??
+    enabled.find((item) => item.id === value) ??
+    enabled[0];
   const reveal = (button: HTMLButtonElement) => {
     // Scroll only this tab viewport: scrollIntoView can move the entire chat.
     const viewport = button.closest<HTMLElement>(".rah-panel-tabs");
@@ -45,6 +49,10 @@ export function PanelTabs<Id extends string>({
         aria-label={label}
         className={`rah-panel-tabs-list ${listClassName}`.trim()}
         role="tablist"
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget))
+            setFocusedId(undefined);
+        }}
       >
         {items.map((item) => (
           <button
@@ -53,7 +61,10 @@ export function PanelTabs<Id extends string>({
             disabled={item.disabled}
             key={item.id}
             onClick={() => onSelect(item.id)}
-            onFocus={(event) => reveal(event.currentTarget)}
+            onFocus={(event) => {
+              setFocusedId(item.id);
+              reveal(event.currentTarget);
+            }}
             onKeyDown={(event) => {
               if (event.altKey || event.ctrlKey || event.metaKey) return;
               const index = enabled.findIndex((entry) => entry.id === item.id);
@@ -72,7 +83,6 @@ export function PanelTabs<Id extends string>({
               event.preventDefault();
               const next = enabled[nextIndex]!;
               buttons.current.get(next.id)?.focus({ preventScroll: true });
-              if (next.id !== value) onSelect(next.id);
             }}
             ref={(element) => {
               if (element) buttons.current.set(item.id, element);

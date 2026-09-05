@@ -102,7 +102,7 @@
 
 .rah-message-forward-targets > label {
   align-items: center;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--ink-10);
   display: grid;
   gap: 8px;
   grid-template-columns: auto auto minmax(0, 1fr) auto;
@@ -152,7 +152,7 @@
 
 .rah-forwarded-bundle > div > article {
   align-items: flex-start;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--ink-10);
   display: grid;
   gap: 8px;
   grid-template-columns: 32px minmax(0, 1fr);

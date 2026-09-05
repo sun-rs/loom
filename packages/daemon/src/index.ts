@@ -20,6 +20,7 @@ export {
   DaemonApplication,
 } from "./daemon-application.ts";
 export { createRegistryBackedRuntimeRecovery } from "./registry-runtime-recovery.ts";
+export { GitTaskDeliveryEvidenceCollector } from "./git-task-delivery-evidence.ts";
 export type { DaemonHealthSnapshot } from "./daemon-application.ts";
 export {
   LocalWakeSignal,

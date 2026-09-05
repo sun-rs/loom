@@ -1,5 +1,4 @@
 import { join } from "node:path";
-
 import {
   AgentHost,
   AgentHostDaemon,
@@ -27,7 +26,6 @@ import {
   type RuntimeRecoveryDescriptor,
   type WorkspaceMountDescriptor,
 } from "@rah-os/protocol";
-
 import type { DaemonConfig } from "./config.ts";
 import {
   DAEMON_BUILD_VERSION,
@@ -55,6 +53,7 @@ import {
   type ConfiguredLocalRuntimeSnapshot,
 } from "./local-runtime-inventory.ts";
 import { createConfiguredManagedMcpExecutor } from "./managed-mcp-executor-composition.ts";
+import { GitTaskDeliveryEvidenceCollector } from "./git-task-delivery-evidence.ts";
 import type { NodeManagedMcpExecutorRegistry } from "./managed-mcp-executor-registry.ts";
 import {
   configuredParticipantIds,
@@ -193,6 +192,7 @@ export class DaemonApplication {
         stateDirectory: join(this.#config.stateDirectory, "transport"),
       });
       workerService = new WorkerApplicationService({
+        deliveryEvidenceCollector: new GitTaskDeliveryEvidenceCollector(),
         kernel,
         managedMcpExecutor,
         ...(this.#config.taskClaimHeartbeatIntervalMs === undefined
@@ -249,10 +249,12 @@ export class DaemonApplication {
                   ),
                 );
               }
-              const credential = activeWorkerService.issueActivationCredential(
-                host,
-                scope,
-              );
+              const credential =
+                await activeWorkerService.issueActivationCredentialForWorkspace(
+                  host,
+                  scope,
+                  { workspaceRoot: runtimeOptions.cwd },
+                );
               leases.push(
                 await createWorkerToolTransportEnvironment({
                   credentialDirectory: join(

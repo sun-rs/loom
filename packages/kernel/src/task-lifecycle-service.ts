@@ -1,10 +1,14 @@
 import type { DatabaseSync } from "node:sqlite";
 
+import { taskWorkflowStatus, type TaskWorkflowStatus } from "@rah-os/protocol";
+
 import type { AuthenticatedActorContext } from "./auth.ts";
-import { requireRoomMember, roomRole } from "./collaboration-policy.ts";
+import {
+  requireHumanTaskManager,
+  requireRoomMember,
+} from "./collaboration-policy.ts";
 import {
   ConflictError,
-  ForbiddenError,
   IdempotencyConflictError,
   NotFoundError,
   StaleContextError,
@@ -14,10 +18,6 @@ import type { RoomEventWriter } from "./room-event-writer.ts";
 import { integer, nullableText, text, type Row } from "./sqlite-row.ts";
 import { taskProjectionFromRow } from "./task-projection.ts";
 import type { TaskCreateMutationResult } from "./types.ts";
-import {
-  taskWorkflowTransitionOptions,
-  type TaskWorkflowStatus,
-} from "@rah-os/protocol";
 import { requestActiveTaskExecutionCancellation } from "./activation-cancellation.ts";
 
 export type TaskLifecycleServiceOptions = {
@@ -46,6 +46,45 @@ export class TaskLifecycleService {
     this.#transaction = options.transaction;
   }
 
+  updateTaskWorkflowStatus(
+    actor: AuthenticatedActorContext,
+    input: {
+      basedOnRoomSeq: number;
+      idempotencyKey: string;
+      taskId: string;
+      workflowStatus: TaskWorkflowStatus;
+    },
+    complete: () => TaskCreateMutationResult,
+  ): TaskCreateMutationResult {
+    const actorId = this.#requireActor(actor);
+    const taskRow = this.#requireTask(input.taskId);
+    const roomId = text(taskRow, "room_id");
+    requireRoomMember(this.#database, roomId, actorId);
+    requireHumanTaskManager(
+      this.#database,
+      { creatorId: text(taskRow, "creator_id"), roomId },
+      actorId,
+    );
+    if (input.workflowStatus === "closed") {
+      return this.cancelTask(actor, {
+        basedOnRoomSeq: input.basedOnRoomSeq,
+        idempotencyKey: input.idempotencyKey,
+        reason: "Closed from the Task status menu",
+        taskId: input.taskId,
+      });
+    }
+    if (input.workflowStatus === "todo") {
+      return this.reopenTask(actor, input);
+    }
+    if (input.workflowStatus === "done") return complete();
+    const currentWorkflowStatus = taskWorkflowStatus(
+      taskProjectionFromRow(this.#database, taskRow).state,
+    );
+    throw new ConflictError(
+      `Task ${input.taskId} cannot move from workflow ${currentWorkflowStatus} to ${input.workflowStatus} without the canonical claim, execution, or submission command`,
+    );
+  }
+
   cancelTask(
     actor: AuthenticatedActorContext,
     input: {
@@ -62,9 +101,14 @@ export class TaskLifecycleService {
       const taskRow = this.#requireTask(input.taskId);
       const roomId = text(taskRow, "room_id");
       requireRoomMember(this.#database, roomId, actorId);
-      if (text(taskRow, "creator_id") !== actorId) {
-        throw new ForbiddenError("only the Task creator can cancel it");
-      }
+      requireHumanTaskManager(
+        this.#database,
+        {
+          creatorId: text(taskRow, "creator_id"),
+          roomId,
+        },
+        actorId,
+      );
       const replay = this.#findReplay(roomId, input.idempotencyKey);
       if (replay !== undefined) {
         return this.#taskReplay(
@@ -182,9 +226,14 @@ export class TaskLifecycleService {
       const taskRow = this.#requireTask(input.taskId);
       const roomId = text(taskRow, "room_id");
       requireRoomMember(this.#database, roomId, actorId);
-      if (text(taskRow, "creator_id") !== actorId) {
-        throw new ForbiddenError("only the Task creator can reopen it");
-      }
+      requireHumanTaskManager(
+        this.#database,
+        {
+          creatorId: text(taskRow, "creator_id"),
+          roomId,
+        },
+        actorId,
+      );
       const replay = this.#findReplay(roomId, input.idempotencyKey);
       if (replay !== undefined) {
         return this.#taskReplay(replay, actorId, input.taskId, "task.reopened");
@@ -289,76 +338,6 @@ export class TaskLifecycleService {
     });
   }
 
-  updateTaskWorkflowStatus(
-    actor: AuthenticatedActorContext,
-    input: {
-      basedOnRoomSeq: number;
-      idempotencyKey: string;
-      taskId: string;
-      workflowStatus: TaskWorkflowStatus;
-    },
-  ): TaskCreateMutationResult {
-    return this.#transaction(() => {
-      const actorId = this.#requireActor(actor);
-      const taskRow = this.#requireTask(input.taskId);
-      const roomId = text(taskRow, "room_id");
-      requireRoomMember(this.#database, roomId, actorId);
-      const role = roomRole(this.#database, roomId, actorId);
-      const previousWorkflowStatus = text(
-        taskRow,
-        "workflow_status",
-      ) as TaskWorkflowStatus;
-      const allowed = taskWorkflowTransitionOptions(
-        previousWorkflowStatus,
-        role === "owner" || role === "admin",
-      );
-      if (!allowed.includes(input.workflowStatus)) {
-        throw new ConflictError(
-          `Task ${input.taskId} cannot move from workflow ${previousWorkflowStatus} to ${input.workflowStatus}`,
-        );
-      }
-      const replay = this.#findReplay(roomId, input.idempotencyKey);
-      if (replay !== undefined) {
-        return this.#taskReplay(
-          replay,
-          actorId,
-          input.taskId,
-          "task.workflow_updated",
-        );
-      }
-      this.#assertFresh(roomId, input.basedOnRoomSeq);
-      const updatedAt = this.#now().toISOString();
-      this.#database
-        .prepare(
-          "UPDATE tasks SET workflow_status = ?, updated_at = ? WHERE task_id = ?",
-        )
-        .run(input.workflowStatus, updatedAt, input.taskId);
-      const event = this.#events.append({
-        actorId,
-        aggregateId: input.taskId,
-        aggregateType: "task",
-        idempotencyKey: input.idempotencyKey,
-        payload: {
-          basedOnRoomSeq: input.basedOnRoomSeq,
-          previousWorkflowStatus,
-          taskId: input.taskId,
-          workflowStatus: input.workflowStatus,
-        },
-        roomId,
-        type: "task.workflow_updated",
-      });
-      return {
-        activationIds: [],
-        deduplicated: false,
-        event,
-        task: taskProjectionFromRow(
-          this.#database,
-          this.#requireTask(input.taskId),
-        ),
-      };
-    });
-  }
-
   #assertFresh(roomId: string, basedOnRoomSeq: number): void {
     const room = this.#database
       .prepare("SELECT next_seq FROM rooms WHERE room_id = ?")
@@ -383,7 +362,7 @@ export class TaskLifecycleService {
     row: Row,
     actorId: string,
     taskId: string,
-    eventType: "task.cancelled" | "task.reopened" | "task.workflow_updated",
+    eventType: "task.cancelled" | "task.reopened",
   ): TaskCreateMutationResult {
     const event = this.#events.eventFromRow(row);
     if (

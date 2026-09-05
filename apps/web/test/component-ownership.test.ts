@@ -219,9 +219,13 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   assert.doesNotMatch(agentDialogs, /Session 策略/u);
   assert.doesNotMatch(agentDialogs, /setSessionPolicy/u);
   assert.doesNotMatch(agentSurface, /policy\.toolAccessMode/u);
-  assert.match(agentSurface, /role="menu"/u);
-  assert.match(agentSurface, /role="menuitem"/u);
-  assert.match(agentSurface, /创建外部 Agent/u);
+  const agentSidebar = readFileSync(
+    join(sourceDirectory, "components", "agent-sidebar.tsx"),
+    "utf8",
+  );
+  assert.match(agentSidebar, /role="menu"/u);
+  assert.match(agentSidebar, /role="menuitem"/u);
+  assert.match(agentSidebar, /创建外部 Agent/u);
   assert.match(
     catalog,
     /className=\{`rah-computer-directory\$\{selected \? " is-detail" : " is-list"\}`\}/u,
@@ -321,7 +325,14 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
     );
     previousTabIndex = index;
   }
-  assert.match(agentSurface, /className="rah-agent-sidebar-head"/u);
+  assert.match(
+    agentSurface,
+    /import \{ AgentSidebar \} from "\.\/agent-sidebar\.tsx"/u,
+  );
+  assert.match(
+    readFileSync("apps/web/src/components/agent-sidebar.tsx", "utf8"),
+    /className="rah-agent-sidebar-head"/u,
+  );
   assert.match(agentSurface, /rah-agent-sidebar-resizer/u);
   assert.match(agentSurface, /const MIN_SIDEBAR_WIDTH = 180/u);
   assert.match(agentSurface, /const MAX_SIDEBAR_WIDTH = 400/u);

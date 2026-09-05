@@ -25,6 +25,7 @@ export type HumanApplicationPort = Pick<
   | "leaveRoom"
   | "listAgentCatalog"
   | "listMessages"
+  | "listMessageReferenceReadStates"
   | "listMessageForwardTargets"
   | "listRoomAgentActivity"
   | "listRoomMemberships"
@@ -67,6 +68,7 @@ export type HumanApplicationPort = Pick<
   getSidebarPreferences: RoomKernel["humanSidebar"]["get"];
   patchSidebarPreferences: RoomKernel["humanSidebar"]["patch"];
   resolveNavigationTarget: RoomKernel["humanNavigation"]["resolve"];
+  getHumanProfile: RoomKernel["humanProfiles"]["get"];
   listNotificationDismissals: RoomKernel["humanNotifications"]["listDismissals"];
   dismissNotification: RoomKernel["humanNotifications"]["dismiss"];
   requestRoomAgentSos: RoomKernel["roomAgentSos"]["requestStop"];
@@ -99,6 +101,7 @@ export function createHumanApplicationPort(
   kernel: RoomKernel,
 ): HumanApplicationPort {
   const port: HumanApplicationPort = {
+    getHumanProfile: (actor, input) => kernel.humanProfiles.get(actor, input),
     listMessageSocial: (actor, input) =>
       kernel.messageSocial.list(actor, input),
     reactMessage: (actor, input) => kernel.messageSocial.react(actor, input),
@@ -168,6 +171,8 @@ export function createHumanApplicationPort(
     listManagedMcpUsage: (actor, input) =>
       kernel.managedMcp.listUsage(actor, input),
     listMessages: (actor, input) => kernel.listMessages(actor, input),
+    listMessageReferenceReadStates: (actor, input) =>
+      kernel.listMessageReferenceReadStates(actor, input),
     listMessageForwardTargets: (actor, input) =>
       kernel.listMessageForwardTargets(actor, input),
     listRoomAgentActivity: (actor, input) =>

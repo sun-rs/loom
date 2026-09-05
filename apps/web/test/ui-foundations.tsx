@@ -10,11 +10,19 @@ import { PanelTabs } from "@rah-os/ui-web/neo-brutalist/panel-tabs";
 import {
   AgentDetailHeader,
   AgentTabList,
+  AgentActivityPane,
+  AgentProfilePane,
 } from "../src/components/agent-directory-pane.tsx";
 import type { AgentRouteTab } from "../src/agent-route.ts";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import type { WorkspaceAgentView } from "@rah-os/ui-web";
 import "../src/product-styles.ts";
+import { AgentStatusDot } from "../src/components/agent-status-dot.tsx";
+import { AgentEntityCard } from "../src/components/agent-entity-card.tsx";
+import { EntityCard } from "@rah-os/ui-web/neo-brutalist/entity-card";
+import { PreviewCard } from "../src/components/preview-card.tsx";
+import { AgentPreviewFixture } from "./agent-preview-fixture.tsx";
+import { SettingsFamilyFixture } from "./settings-family-fixture.tsx";
 
 const agent: WorkspaceAgentView = {
   participantId: "fixture-agent",
@@ -40,12 +48,62 @@ function Fixture() {
   const [closed, setClosed] = useState(false);
   const [tab, setTab] = useState<"chat" | "tasks" | "files">("chat");
   const [agentTab, setAgentTab] = useState<AgentRouteTab>("activity");
+  const [bodyState, setBodyState] = useState("empty");
+  const [opened, setOpened] = useState("");
   const click = () => setClicks((n) => n + 1);
+  if (new URLSearchParams(location.search).has("settings-fixture"))
+    return <SettingsFamilyFixture />;
+  const profileState = new URLSearchParams(location.search).get(
+    "profile-state",
+  );
+  if (profileState)
+    return (
+      <AgentProfilePane
+        client={{} as import("@rah-os/client-sdk").RahClient}
+        agent={agent}
+        computerLabel={undefined}
+        directory={[agent]}
+        detail={undefined}
+        error={profileState === "error" ? "Fixture read failure" : undefined}
+        loading={profileState === "loading"}
+        canManage={false}
+        fullResetEnabled={false}
+        onDiagnostics={click}
+        onManage={click}
+        onEditRuntime={click}
+        onSelectAgent={click}
+        runtimes={[]}
+      />
+    );
   return (
     <main
       className="app rah-product-shell"
       style={{ display: "block", minWidth: 0, padding: 20, overflow: "auto" }}
     >
+      <AgentPreviewFixture agent={agent} />
+      <section data-fixture="preview-lifetime">
+        <PreviewCard
+          label="预览时序测试"
+          content={<span>Preview lifetime content</span>}
+        >
+          Preview
+        </PreviewCard>
+      </section>
+      <section data-fixture="status-dots" style={{ display: "flex", gap: 8 }}>
+        {(["sm", "md", "lg"] as const).flatMap((size) =>
+          (["offline", "online", "thinking", "working", "error"] as const).map(
+            (activity) => (
+              <AgentStatusDot
+                key={`${size}-${activity}`}
+                size={size}
+                activity={activity}
+                label={activity}
+                className=""
+              />
+            ),
+          ),
+        )}
+      </section>
       <section
         data-fixture="actions"
         style={{ display: "flex", gap: 16, padding: 8 }}
@@ -118,6 +176,51 @@ function Fixture() {
             <AgentTabList activeTab={agentTab} onSelect={setAgentTab} />
           </div>
         )}
+      </section>
+      <section data-fixture="body-states">
+        <div>
+          {["empty", "loading", "error"].map((state) => (
+            <button
+              type="button"
+              key={state}
+              onClick={() => setBodyState(state)}
+            >
+              body:{state}
+            </button>
+          ))}
+        </div>
+        <div
+          data-fixture="activity-body"
+          style={{ display: "flex", height: 450, minWidth: 0 }}
+        >
+          <AgentActivityPane
+            agent={agent}
+            activities={[]}
+            error={bodyState === "error" ? "没有读取权限" : undefined}
+            loading={bodyState === "loading"}
+            hasEarlier={false}
+            history={false}
+            onLoadEarlier={click}
+            onLatest={click}
+            onOpenRoom={click}
+          />
+        </div>
+        <div data-fixture="entity-cards" style={{ display: "grid", gap: 8 }}>
+          <AgentEntityCard
+            agent={agent}
+            runtimeLabel="Codex CLI"
+            onOpen={setOpened}
+            showStatusLabel
+          />
+          <AgentEntityCard
+            agent={agent}
+            runtimeLabel="Codex CLI"
+            onOpen={() => setOpened("forbidden")}
+            disabled
+          />
+          <EntityCard avatar={null} name="没有导航权限" />
+          <output data-opened>{opened}</output>
+        </div>
       </section>
       {[RoomSidebarResizer, ProfilePanelResizer, ThreadPanelResizer].map(
         (Component, index) => (

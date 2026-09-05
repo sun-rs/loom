@@ -18,23 +18,11 @@
 }
 
 /* ---- 顶部搜索框 ---- */
-.search-top {
-  height: var(--head-h); flex: none;
-  padding: 10px 16px;
-  border-bottom: var(--bd);
-  background: #fff;
-}
 .search-title-slot {
-  display: flex; width: 100%; min-width: 0; align-items: center; gap: 12px;
+  display: flex; flex: 1; min-width: 0; align-items: center; gap: 12px;
 }
-.search-icon-box {
-  width: 40px; height: 40px; flex: none;
-  display: flex; align-items: center; justify-content: center;
-  border: var(--bd); background: var(--yellow);
-}
-.search-icon-box svg { width: 18px; height: 18px; }
 .search-box {
-  height: 40px; min-width: 0; flex: 1;
+  min-height: 40px; min-width: 0; flex: 1;
   display: flex; align-items: center; gap: 8px;
   background: #fff; border: var(--bd); box-shadow: var(--shadow-s);
   padding: 8px 12px;
@@ -43,13 +31,17 @@
 .search-box input {
   flex: 1; min-width: 0;
   border: 0; outline: none; background: transparent;
-  font-family: var(--font); font-size: 14px; line-height: 20px; font-weight: 500;
+  font-family: var(--sans); font-size: 14px; line-height: 20px; font-weight: 500;
 }
 .search-box input::placeholder { color: rgba(0,0,0,.4); }
 .search-kbd {
   flex: none; user-select: none;
-  font-family: var(--font); font-size: 10px; line-height: 14px; font-weight: 700;
+  font-family: var(--sans); font-size: 10px; line-height: 14px; font-weight: 700;
   color: rgba(0,0,0,.5); background: transparent; border: 0; padding: 0;
+}
+/* Raft Search uses hidden sm:inline for the desktop shortcut hint. */
+@media (max-width: 639px) {
+  .search-kbd { display: none; }
 }
 
 /* ---- 过滤器行 ---- */
@@ -99,16 +91,6 @@
   background: #fff;
 }
 
-/* 空状态 */
-.empty-state { margin: auto; text-align: center; padding: 48px 20px; color: rgba(0,0,0,.5); }
-.empty-icon {
-  width: 48px; height: 48px; margin: 0 auto 12px;
-  display: grid; place-items: center;
-}
-.empty-icon svg { width: 48px; height: 48px; color: rgba(0,0,0,.2); }
-.empty-state h1 { font-size: 14px; line-height: 20px; font-weight: 700; }
-.empty-state p { margin-top: 4px; font-size: 12px; line-height: 16px; color: rgba(0,0,0,.4); }
-
 /* 结果列表（演示数据） */
 .result-list {
   padding: 18px 24px 32px;
@@ -137,12 +119,9 @@
 /* ---- 响应式：390px ---- */
 @media (max-width: 760px) {
   .search-app { grid-template-columns: 56px minmax(0, 1fr); }
-  .search-top { padding: 10px 12px; }
   .filter-bar { padding: 10px 14px; }
   /* 过滤器组换行（不能用横向滚动：overflow 会裁掉绝对定位的下拉面板） */
   .filter-bar { flex-wrap: wrap; }
   .search-main .dropdown-panel { width: min(calc(100vw - 32px), 260px); }
   .result-list { padding: 14px; }
-  .empty-state { padding: 32px 16px; }
-  .empty-state h1 { font-size: 18px; }
 }

@@ -1,7 +1,6 @@
 import type { RahClient } from "@rah-os/client-sdk";
 import {
   taskWorkflowStatus,
-  taskWorkflowTransitionOptions,
   type Task,
   type TaskWorkflowStatus,
 } from "@rah-os/protocol";
@@ -16,18 +15,34 @@ type Transition = {
   operation?: "task.workflow.update";
   reason?: string;
 };
-/** Raft exposes one five-state status editor. Execution evidence is orthogonal. */
+/** Raft exposes one five-state editor; the Kernel remains the lifecycle owner. */
 export function globalTaskTransition(
   task: Task,
   target: TaskColumnId,
   canManageAnyTask: boolean,
 ): Transition {
-  return taskWorkflowTransitionOptions(
-    taskWorkflowStatus(task),
-    canManageAnyTask,
-  ).includes(workflowStatus(target))
-    ? { operation: "task.workflow.update" }
-    : { reason: "Raft 当前工作流不允许迁移到此状态" };
+  if (!canManageAnyTask) return { reason: "你没有管理此任务的权限" };
+  const current = taskWorkflowStatus(task.state);
+  const requested = workflowStatus(target);
+  if (requested === current) return { reason: "任务已处于此状态" };
+  if (
+    requested === "closed" &&
+    !["completed", "cancelled"].includes(task.state)
+  )
+    return { operation: "task.workflow.update" };
+  if (requested === "todo" && task.state === "cancelled")
+    return { operation: "task.workflow.update" };
+  if (requested === "done" && task.state === "submitted")
+    return { operation: "task.workflow.update" };
+  if (requested === "in_progress")
+    return { reason: "进行中状态由真实认领与执行产生" };
+  if (requested === "in_review")
+    return { reason: "待确认状态由 Agent 提交冻结成果产生" };
+  if (requested === "done")
+    return { reason: "只有已提交且满足审阅要求的任务才能完成" };
+  if (requested === "todo")
+    return { reason: "只有已关闭且完成停止证明的任务才能重开" };
+  return { reason: "已完成或已关闭的任务不能再次关闭" };
 }
 
 function workflowStatus(target: TaskColumnId): TaskWorkflowStatus {

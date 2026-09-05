@@ -1,5 +1,63 @@
 # RAH OS 文档
 
+当前可靠性主线已进入 E 批：[Search／Tasks／Message 页面族首段收口](./audits/2026-09-05-search-tasks-message-page-family.md)。
+共享命名空态、任务筛选身份、Search 零结果和普通消息操作已经通过真实 Chrome/Firefox 的
+桌面与 390px 组合矩阵；相同 Raft 页面仍以固定官方来源和同前置浏览器比较为准，不把内部
+回归当成官网证明。此前第四批为：[canonical 团队业务闭环验证](./audits/2026-09-05-canonical-team-workflow-verification.zh-CN.md)。
+方案审查、必要助手 Task/依赖、冻结提交、独立 reviewer 首版驳回、数据库重开、返工新 revision、
+Human 验收和下游唤醒已经在同一事实链闭合。上一批的
+[Host 观测冻结证据](./adr/0031-host-observed-frozen-task-delivery-evidence.md)与
+[验证审计](./audits/2026-09-05-frozen-task-delivery-evidence-verification.zh-CN.md)仍是交付对象的基础。
+producer 验证声明没有被冒充为系统证明；没有足够 Raft 官方来源的系统执行 attestation
+仅作为未来可选增强，不新增第二套任务页面。
+上一批的有界 Room history 与 10 万事件证据见
+[ADR-0030](./adr/0030-bounded-room-history-and-visible-receipts.md)和
+[验证审计](./audits/2026-09-05-bounded-room-history-verification.zh-CN.md)。所有与 Raft 相同的页面
+仍须继续做同条件 UI/鼠标/键盘/功能双边验收。
+
+当前页面族：[设置正文与表单计划](./design/settings-page-family.md)，
+[累计修改独立审计、浏览器与发布证据](./audits/2026-09-05-settings-and-cumulative-audit.md)。
+账户、语言与区域、外观、通知、工作区资料及当前成员管理摘要共用内部设置样式 owner；
+表单草稿、异步回执与 Human 资料新鲜度接入既有 canonical owner。
+12 个 RAH 设置区的导航验收不等于管理/MCP/LAN/资源正文全功能已对标；
+当前完整页面族为搜索/任务/消息组合，之后是完整 Human 目录/ACL、Computer 管理与剩余资料能力，系统通知保留设备送达专项验收。
+
+前一页面族：[Agent／Computer 资料与浮窗计划](./design/agent-computer-profile-family.md)，
+[本批独立复核、浏览器与发布证据](./audits/2026-09-05-agent-computer-profile-family.md)。
+资料分区、绑定信息、浮窗尺寸与读取状态共用内部 owner；不等于所有 Agent tab 或 Computer 管理功能完成。
+
+前一页面族：[Human 页面族计划与边界](./design/human-page-family.md)，
+[交付审查](./audits/2026-09-04-human-page-family.md)。成员侧栏、消息头像、提及、
+Agent 创建者和关系图共用 Human 入口；本人描述/头像及账户名编辑共用原 Principal owner。
+角色、加入时间、创建 Agent 仍来自 canonical 事实，历史只读批次见
+[Human 资料与可靠创建关系](./audits/2026-09-04-human-profile-entity-network.md)。
+该批不代表全 Raft 页面完全对齐；后续以顶部最新页面族及机器登记的明确范围为准。
+
+前一批：[共享实体卡片与上下文空态验收](./audits/2026-09-04-ui-body-primitives.md)。
+Computer/已创建 Agent 卡片与 Search/Agent 动态空态已接入内部组件；
+删除旧页面覆盖规则，状态不再由 CLI 可用性推断。完整回归、双浏览器和正式重启后检查通过。
+官方动态空态仍只有源码核对，未宣称双边全站一致。
+
+前一批：[UI 契约与实体信息网首批验收](./audits/2026-09-04-ui-entity-integrity.md)。
+未定义变量门禁、完整状态点、任务身份菜单及 Computer/浮窗绑定统一入口已落地，
+双浏览器与完整回归通过，正式项目已安全重启。后续顺序见
+[实体信息网收口计划](./design/ui-entity-network-closure.md)。
+不推断 Human 的计算机所有权，也不把局部接线称为完整后端身份 API。
+
+前一批：[Saved/Search 标题与通知读取错误态审查](./audits/2026-09-04-secondary-headers-and-push-state.md)。
+Saved/Search 消费共享标题、图标和返回/清空按钮；通知读取失败不再误报 iOS
+不支持或设备数为 0，补入只读重试与旧响应隔离。14 个双浏览器场景通过并已正式重启。
+Firefox 正式订阅读取仍有底层错误，本批仅证明准确展示与隔离重试，不代表通知送达；
+正文组件、完整鼠标状态与新增官网双边覆盖仍待收口。
+
+前一批：[跨页面标题轨道统一与验收](./audits/2026-09-04-shell-header-consolidation.md)。
+Room/Settings/Computer/成员导航/Tasks/Activity 标题与移动返回按钮已消费内部库，
+官方采样回放及双浏览器正式验收均限于报告列出的状态，不能据此宣称全站一致。
+
+上一批：[UI 自动差异工具与安全发布审查](./audits/2026-09-04-ui-evidence-and-safe-release.md)。
+已建立小范围官方采样回放、修正 Tabs 焦点/激活差异，并以失败即停止的保护完成正式重启；
+不代表全站或所有鼠标状态一致。可复跑工具与边界见[对比与发布合同](./design/ui-evidence-and-release.md)。
+
 内部前端资源和模板统一入口：[RAH Neo-Brutalist UI（英文）](./design/neo-brutalist-ui.md)，
 [资源/组件/模板目录](../packages/ui-tokens/neo-brutalist-library.json)，
 [采用与维护决策 ADR 0028](./adr/0028-owned-neo-brutalist-ui-library.md)。
@@ -57,7 +115,14 @@ P4.6 Agent 完全重置：[Raft 三档 reset 合同、单 fence workspace/contin
 
 后续收口的当前执行真相：[Raft-first 剩余收口重构与补强计划](./product/2026-09-02-raft-first-remaining-closure-plan.zh-CN.md)。它固定了源码复用顺序、证据分层、P0–P6 施工顺序、单一 owner、迁移/回滚和浏览器验收。旧的完成列表是历史快照，不得用来覆盖该计划和当日审计。
 
-Task 状态的长期边界：[Raft 五态工作流、RAH OS 执行阶段与人类注意事项的正交投影](./adr/0027-task-workflow-execution-and-attention-projection.md)。schema 44 通过 typed `task.workflow.update` 复刻 owner/admin 全五态与普通成员转移图；频道 Task Tab 和全局 Tasks 复用同一 Raft 看板。认领、运行、等待输入、阻塞原因和取消中的证据保留在独立维度，不得重新变成额外看板列、第二套卡片按钮或反向禁用 Raft 菜单。
+Task 状态的当前长期边界：[canonical Task 生命周期与 Raft 五态看板](./adr/0029-canonical-task-lifecycle-and-raft-board.md)。schema 48 修复并禁止 `Task.state` / `workflowStatus` 分裂；typed `task.workflow.update` 只是 Raft 五态 UI intent，实际 cancel/reopen/complete、Review gate、依赖唤醒与幂等由 Kernel 单一解释。频道 Task Tab 和全局 Tasks 继续复用同一 Raft 看板、顺序、标签、颜色与浮层；无真实认领/提交证据的迁移明确禁用，不能伪造完成。
+
+上述 Task 单一真相批次的实现、TDD、真实 Chrome/Firefox、canonical 业务断言与正式重启证据：
+[2026-09-05 验证审计](./audits/2026-09-05-canonical-task-lifecycle-and-browser-verification.zh-CN.md)。
+2026-09-03 的 Task UI 报告仍保留为历史界面证据，但不得覆盖本报告对完成、关闭、重开、
+Review gate 与依赖唤醒的当前业务裁决。
+
+第三方架构复核后的施工主线：[Task 真相、长历史与交付闭环修复计划](./product/2026-09-05-task-truth-history-and-delivery-repair-plan.zh-CN.md)。顺序固定为 Task 单一真相、有界 Room 历史、冻结交付证据、完整团队闭环，再继续页面族与通知设备验收；同功能 Raft 页面在每批仍承担独立 UI 双边义务。
 
 Task 页面与业务流的当前交付证据：[Raft Task 工作流对齐与正式浏览器审计](./audits/2026-09-03-raft-task-workflow-parity-verification.zh-CN.md)。该报告冻结官方 bundle/DOM/computed-style、五态迁移图、Pencil/hover 尺寸、105.25px 单行盒模型、看板 12px/列表 10px 列头间距、`columns-3/layout-list` 最终14px 图标、28px 标题栏操作、Room 工具栏整件换行、Room/全局编号头 scope、左对齐空分组、列内 `overflow:visible`、共享 brutal 交互协议、Room/全局共用看板、typed 写入不唤醒 Agent、terminal 状态释放协作占用、真实指针 Chrome 桌面/390×844 与正式 4173 重启结果；强上浮族七处源码清单见 [Raft brutal lift 来源证据](./evidence/raft-brutal-lift-inventory-20260903.json)。不把内部执行证据重新包装成第二套公开流程。
 
@@ -282,10 +347,11 @@ Raft 767px 移动断点、短窗口 50px/36px rail、四项移动根导航、Roo
 39. [ADR-0021：冻结 Task 提交与 canonical Review](./adr/0021-frozen-task-submission-and-canonical-review.md)
 40. [ADR-0022：可逆 Closed 与 Runtime cancellation fence](./adr/0022-reversible-closed-and-runtime-cancellation-fence.md)
 41. [ADR-0023：Agent 私有 Memory、App Inbox、维护执行与安全 Reset](./adr/0023-agent-private-memory-app-inbox-and-maintenance.md)
-42. [Phase 1 实验证据](./experiments/phase-1-evidence.zh-CN.md)
-43. [Daemon config v2 兼容示例](./examples/daemon.config.example.json)
-44. [Daemon config v4 多 Agent 示例](./examples/daemon.config.v4.example.json)
-45. [实施路线与门禁](./roadmap.zh-CN.md)
+42. [ADR-0031：Host 观测的冻结 Task 交付证据](./adr/0031-host-observed-frozen-task-delivery-evidence.md)
+43. [Phase 1 实验证据](./experiments/phase-1-evidence.zh-CN.md)
+44. [Daemon config v2 兼容示例](./examples/daemon.config.example.json)
+45. [Daemon config v4 多 Agent 示例](./examples/daemon.config.v4.example.json)
+46. [实施路线与门禁](./roadmap.zh-CN.md)
 
 维护规则：
 

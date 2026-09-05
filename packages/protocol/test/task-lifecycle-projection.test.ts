@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   projectTaskLifecycle,
+  TaskSchema,
   taskWorkflowTransitionOptions,
   taskWorkflowStatus,
   type TaskState,
@@ -61,11 +62,35 @@ test("legacy canonical task states project onto the five Raft workflow states", 
   }
 });
 
-test("execution and attention remain orthogonal to the public workflow status", () => {
+test("the public Task schema rejects a workflow label that contradicts canonical state", () => {
+  const parsed = TaskSchema.safeParse({
+    collaboratorIds: [],
+    createdAt: "2026-09-05T00:00:00.000Z",
+    creatorId: "human",
+    dependencyTaskIds: [],
+    reviewerIds: [],
+    roomId: "room",
+    sourceMessageId: "message",
+    state: "todo",
+    taskId: "task",
+    taskNumber: 1,
+    threadId: "thread",
+    title: "Canonical Task",
+    updatedAt: "2026-09-05T00:00:00.000Z",
+    workflowStatus: "done",
+  });
+  assert.equal(parsed.success, false);
+  assert.match(
+    parsed.error?.issues[0]?.message ?? "",
+    /workflowStatus must match canonical Task state/u,
+  );
+});
+
+test("public workflow status is derived from canonical execution evidence", () => {
   assert.deepEqual(
     projectTaskLifecycle({ state: "submitted", workflowStatus: "in_progress" }),
     {
-      workflowStatus: "in_progress",
+      workflowStatus: "in_review",
       executionPhase: "idle",
     },
   );

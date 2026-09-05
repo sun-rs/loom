@@ -167,6 +167,11 @@ export class LocalWorkbenchGateway {
       });
       return;
     }
+    if (requestUrl.pathname === "/_rah/session" && request.method === "GET") {
+      // Capability discovery is not a LAN session or an authentication grant.
+      sendJson(response, 200, { available: false });
+      return;
+    }
     if (isApiPath(requestUrl.pathname)) {
       if (!this.#hasSession(request.headers.cookie)) {
         if (this.#mayRenewSession(request)) this.#setSessionCookie(response);

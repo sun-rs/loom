@@ -1,5 +1,22 @@
 # RAH Core SDK 边界
 
+2026-09-04 Human 页面族写边界：schema 47 给原 Principal 表增加 nullable description；
+`principal.update` 仍是本人认证、事务与头像 upload-intent 引用绑定的唯一 owner。
+描述最多 3000 字符，trim/清空；旧客户端省略该字段不会擦除描述。新客户端发送
+`expectedProfile`（名称/头像/描述基线），检测旧编辑覆盖并返回 Conflict，完全相同的重试
+允许幂等成功。前端账户页与 Human 详情共享 mutation，切页后迟到成功只能更新同一身份，
+不能抢回路由。没有新 Room 事件、Provider prompt、第二份身份缓存或图数据库。
+全空间移除不能以只删除 control Room membership 冒充；暂不增加此危险操作。
+
+2026-09-04 Human 资料只读边界：`HumanApplicationPort.getHumanProfile` / SDK
+`human.profile` 由 Kernel `HumanProfiles` 投影当前 Principal 和 Workspace control Room
+membership；角色/加入时间不从 OS 或浏览器推断。创建 Agent 关系复用 revision-one
+`listCreatedAgentDefinitionIds`，只返回同 control Room 的非 tombstone ID，最多 500 个并标记截断。
+普通 Human member 不能借该 API 枚举 manager-only Agent 目录。每次请求复核认证及当前成员权限；
+无数据库迁移、Provider 调用、第二份身份存储或新增创建权限。前端在统一实体投影中按 ID 关联，
+不是把 current revision 编辑者当创建者；缺失邮箱和 Computer 所有权保持缺失。
+此处只读阶段未迁移数据库；其后的 description 写边界见本节上方。
+
 2026-09-03 RuntimeOffer 长期运行增量边界：`agent-host` 的 Registry schema 4 以内容寻址
 payload、immutable report envelope 和 per-revision validation head 分开目录事实与重复验证；daemon
 的 30 秒 publisher 只做 executable metadata availability heartbeat，不启动 Provider CLI；Kernel

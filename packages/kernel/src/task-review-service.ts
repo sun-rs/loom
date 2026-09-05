@@ -11,6 +11,7 @@ import {
   type TaskReview,
   type TaskReviewDisposition,
   type TaskSubmission,
+  type TaskSubmissionEvidence,
 } from "@rah-os/protocol";
 
 import type {
@@ -30,6 +31,7 @@ import { createTaskThreadReply } from "./task-anchor.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
 import { integer, jsonObject, text, type Row } from "./sqlite-row.ts";
 import { taskProjectionFromRow } from "./task-projection.ts";
+import { requireWorkerTaskDelivery } from "./worker-task-scope.ts";
 
 export type TaskReviewMutationResult = {
   activationIds: string[];
@@ -75,6 +77,7 @@ export class TaskReviewService {
     input: {
       artifacts?: readonly TaskArtifactReference[];
       createdAt: string;
+      evidence?: TaskSubmissionEvidence;
       messageId: string;
       producerId: string;
       summary: string;
@@ -96,10 +99,13 @@ export class TaskReviewService {
     const submissionDigest = canonicalDigest({
       createdAt: input.createdAt,
       domain:
-        input.artifacts === undefined
-          ? "rah/task-submission/v1"
-          : "rah/task-submission/v2",
+        input.evidence !== undefined
+          ? "rah/task-submission/v3"
+          : input.artifacts === undefined
+            ? "rah/task-submission/v1"
+            : "rah/task-submission/v2",
       ...(input.artifacts === undefined ? {} : { artifacts }),
+      ...(input.evidence === undefined ? {} : { evidence: input.evidence }),
       messageId: input.messageId,
       producerId: input.producerId,
       roomId,
@@ -114,8 +120,8 @@ export class TaskReviewService {
       .prepare(
         `INSERT INTO task_submissions(
            submission_id, task_id, room_id, submission_number, producer_id,
-           summary, message_id, submission_digest, created_at
-         ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           summary, message_id, submission_digest, evidence_json, created_at
+         ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         submissionId,
@@ -126,6 +132,7 @@ export class TaskReviewService {
         input.summary,
         input.messageId,
         submissionDigest,
+        input.evidence === undefined ? null : JSON.stringify(input.evidence),
         input.createdAt,
       );
     const insertArtifact = this.#database.prepare(
@@ -151,6 +158,7 @@ export class TaskReviewService {
     return TaskSubmissionSchema.parse({
       artifacts,
       createdAt: input.createdAt,
+      ...(input.evidence === undefined ? {} : { evidence: input.evidence }),
       messageId: input.messageId,
       producerId: input.producerId,
       roomId,
@@ -374,6 +382,17 @@ export class TaskReviewService {
       .map((row) => this.#reviewFromRow(row));
   }
 
+  getWorkerTaskSubmission(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: { taskId: string },
+  ): TaskSubmission {
+    const scope = this.#requireWorker(execution);
+    requireWorkerTaskDelivery(this.#database, scope, input.taskId);
+    return this.#submissionFromRow(
+      this.#requireCurrentSubmission(input.taskId),
+    );
+  }
+
   listTaskSubmissions(
     actor: AuthenticatedActorContext,
     input: { roomId: string; taskId: string },
@@ -396,36 +415,63 @@ export class TaskReviewService {
 
   listRoomReviews(
     actor: AuthenticatedActorContext,
-    input: { roomId: string },
+    input: { limit?: number; roomId: string; taskIds?: string[] },
   ): TaskReview[] {
     const actorId = this.#requireActor(actor);
     requireRoomMember(this.#database, input.roomId, actorId);
+    const limit = this.#evidencePageLimit(input.limit);
+    if (input.taskIds?.length === 0) return [];
+    const placeholders = input.taskIds?.map(() => "?").join(",");
+    const taskFilter = placeholders
+      ? `AND task_reviews.task_id IN (${placeholders})`
+      : "";
     return this.#database
       .prepare(
-        `SELECT task_reviews.*
-         FROM task_reviews
-         JOIN task_submissions
-           ON task_submissions.submission_id = task_reviews.submission_id
-         WHERE task_reviews.room_id = ?
-         ORDER BY task_reviews.task_id, task_submissions.submission_number,
-                  task_reviews.reviewer_id, task_reviews.review_id`,
+        `SELECT * FROM (
+           SELECT task_reviews.*,
+                  task_submissions.submission_number AS ordered_submission_number
+           FROM task_reviews
+           JOIN task_submissions
+             ON task_submissions.submission_id = task_reviews.submission_id
+           WHERE task_reviews.room_id = ? ${taskFilter}
+           ORDER BY task_reviews.created_at DESC, task_reviews.review_id DESC
+           LIMIT ?
+         )
+         ORDER BY task_id, ordered_submission_number, reviewer_id, review_id`,
       )
-      .all(input.roomId)
+      .all(input.roomId, ...(input.taskIds ?? []), limit)
       .map((row) => this.#reviewFromRow(row));
   }
 
   listRoomSubmissions(
     actor: AuthenticatedActorContext,
-    input: { roomId: string },
+    input: { limit?: number; roomId: string; taskIds?: string[] },
   ): TaskSubmission[] {
     const actorId = this.#requireActor(actor);
     requireRoomMember(this.#database, input.roomId, actorId);
+    const limit = this.#evidencePageLimit(input.limit);
+    if (input.taskIds?.length === 0) return [];
+    const placeholders = input.taskIds?.map(() => "?").join(",");
+    const taskFilter = placeholders ? `AND task_id IN (${placeholders})` : "";
     return this.#database
       .prepare(
-        "SELECT * FROM task_submissions WHERE room_id = ? ORDER BY task_id, submission_number",
+        `SELECT * FROM (
+           SELECT * FROM task_submissions
+           WHERE room_id = ? ${taskFilter}
+           ORDER BY created_at DESC, submission_id DESC
+           LIMIT ?
+         )
+         ORDER BY task_id, submission_number`,
       )
-      .all(input.roomId)
+      .all(input.roomId, ...(input.taskIds ?? []), limit)
       .map((row) => this.#submissionFromRow(row));
+  }
+
+  #evidencePageLimit(limit = 200): number {
+    if (!Number.isInteger(limit) || limit <= 0 || limit > 500) {
+      throw new Error("Task evidence page limit must be between 1 and 500");
+    }
+    return limit;
   }
 
   assertCompletionAllowed(taskId: string): void {
@@ -657,9 +703,15 @@ export class TaskReviewService {
         size: integer(artifact, "size"),
         taskId: text(artifact, "task_id"),
       }));
+    const evidenceJson = row.evidence_json;
+    const evidence =
+      typeof evidenceJson === "string"
+        ? (JSON.parse(evidenceJson) as unknown)
+        : undefined;
     return TaskSubmissionSchema.parse({
       artifacts,
       createdAt: text(row, "created_at"),
+      ...(evidence === undefined ? {} : { evidence }),
       messageId: text(row, "message_id"),
       producerId: text(row, "producer_id"),
       roomId: text(row, "room_id"),

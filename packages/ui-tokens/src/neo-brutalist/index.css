@@ -12,3 +12,8 @@
 @import "interaction-state.css";
 @import "panel-foundations.css";
 @import "panel-layout.css";
+@import "identity.css";
+@import "body-primitives.css";
+@import "profile.css";
+@import "preview.css";
+@import "settings.css";

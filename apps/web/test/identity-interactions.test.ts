@@ -20,8 +20,9 @@ test("activity color overrides are specific enough to beat legacy success and ac
     new URL("../src/identity-interactions.css", import.meta.url),
     "utf8",
   );
-  assert.match(css, /\.rah-agent-activity-list article\.is-text > i,/u);
-  assert.match(css, /\.rah-agent-activity-list article\.is-active > i,/u);
+  assert.match(css, /\.rah-agent-activity-list article\.is-text > i\s*\{/u);
+  assert.match(css, /\.rah-agent-activity-list article\.is-active > i\s*\{/u);
+  assert.doesNotMatch(css, /\.rah-preview-event > i\[data-activity=/u);
 });
 
 test("the shared initial presentation accepts the selected Computer name", () => {

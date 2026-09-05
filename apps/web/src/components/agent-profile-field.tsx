@@ -6,6 +6,7 @@ import {
   type AgentProfileField,
 } from "../agent-profile-edit.ts";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
+import { ProfileSection } from "@rah-os/ui-web/neo-brutalist/profile-section";
 
 /** Raft hc field editing contract. Parent keys this editor by durable Agent identity. */
 export function AgentProfileFieldEditor({
@@ -80,10 +81,15 @@ export function AgentProfileFieldEditor({
     } else if (action === "cancel") close();
   }
   return (
-    <section className="rah-agent-profile-field">
-      <h3>
-        {label}{" "}
-        {!edit && onSave && revisionId !== undefined && (
+    <ProfileSection
+      title={label}
+      variant="field"
+      divided={false}
+      className="rah-agent-profile-field"
+      action={
+        !edit &&
+        onSave &&
+        revisionId !== undefined && (
           <button
             ref={trigger}
             className="rah-profile-edit rah-interaction-flat"
@@ -96,8 +102,9 @@ export function AgentProfileFieldEditor({
           >
             <Icon name="pencil" />
           </button>
-        )}
-      </h3>
+        )
+      }
+    >
       {edit ? (
         <form
           className="rah-profile-field-editor"
@@ -152,6 +159,6 @@ export function AgentProfileFieldEditor({
       ) : (
         <p className={!value ? "is-empty" : undefined}>{value || "暂无描述"}</p>
       )}
-    </section>
+    </ProfileSection>
   );
 }

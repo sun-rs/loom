@@ -124,6 +124,14 @@ test("created Agents come from revision-one identity provenance and exclude tomb
     );
     assert.equal(detail.creator?.principalId, owner.principal.principalId);
     assert.deepEqual(
+      kernel.humanProfiles.get(actor, {
+        workspaceId: workspace.workspace.workspaceId,
+        principalId: owner.principal.principalId,
+      }).createdAgentDefinitionIds,
+      [parentDefinition.definition.agentDefinitionId],
+      "Human and Agent views use the same revision-one creation edge",
+    );
+    assert.deepEqual(
       detail.createdAgents.map((agent) => agent.definition.agentDefinitionId),
       [childDefinition.definition.agentDefinitionId],
     );
@@ -137,6 +145,43 @@ test("created Agents come from revision-one identity provenance and exclude tomb
         kernel.authenticateAccessToken(outsider.accessToken),
         parentDefinition.definition.agentDefinitionId,
       ),
+    );
+
+    kernel.addMember(actor, {
+      roomId: workspace.controlRoom.roomId,
+      principalId: outsider.principal.principalId,
+    });
+    kernel.setRoomMemberRole(actor, {
+      roomId: workspace.controlRoom.roomId,
+      principalId: outsider.principal.principalId,
+      role: "admin",
+      basedOnRoomSeq: currentSeq(),
+      idempotencyKey: "editor-admin",
+    });
+    const editor = kernel.authenticateHumanAccessToken(outsider.accessToken);
+    const edited = kernel.manageWorkspaceAgent(editor, {
+      action: "update_profile",
+      field: "displayName",
+      value: "Edited by admin",
+      agentDefinitionId: parentDefinition.definition.agentDefinitionId,
+      expectedRevisionId: parentDefinition.definition.currentRevisionId,
+      basedOnRoomSeq: currentSeq(),
+      idempotencyKey: "other-editor",
+    });
+    assert.equal(edited.agent.currentRevision.createdBy, editor.principalId);
+    assert.deepEqual(
+      kernel.humanProfiles.get(actor, {
+        workspaceId: workspace.workspace.workspaceId,
+        principalId: actor.principalId,
+      }).createdAgentDefinitionIds,
+      [parentDefinition.definition.agentDefinitionId],
+    );
+    assert.deepEqual(
+      kernel.humanProfiles.get(actor, {
+        workspaceId: workspace.workspace.workspaceId,
+        principalId: editor.principalId,
+      }).createdAgentDefinitionIds,
+      [],
     );
 
     kernel.manageWorkspaceAgent(actor, {

@@ -33,7 +33,14 @@ export function AgentAvatar({
     | "presence"
   > & { participantId?: string };
   showStatus?: boolean;
-  size: "header" | "profile" | "sidebar" | "member" | "compact";
+  size:
+    | "header"
+    | "profile"
+    | "sidebar"
+    | "member"
+    | "compact"
+    | "surface"
+    | "preview";
 }) {
   const uploadedAvatarKey = isUploadedProfileImageKey(agent.avatarKey)
     ? agent.avatarKey

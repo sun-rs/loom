@@ -22,6 +22,10 @@ export type {
 export type {
   ActivationCredentialScope,
   IssuedActivationCredential,
+  TaskDeliveryEvidenceBaseline,
+  TaskDeliveryEvidenceCapture,
+  TaskDeliveryEvidenceCollector,
+  TaskDeliveryEvidenceUnavailableReason,
   WorkerApplicationServiceOptions,
 } from "./worker-application-service.ts";
 export { ComputerApplicationService } from "./computer-application-service.ts";

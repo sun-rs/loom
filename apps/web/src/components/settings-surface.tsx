@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import type { RahClient } from "@rah-os/client-sdk";
-import type { Principal, Workspace } from "@rah-os/protocol";
+import type { Principal, Workspace, MembershipRole } from "@rah-os/protocol";
 import type { WorkspaceAgentView } from "@rah-os/ui-web";
 
 import { LanDeviceSettingsContent } from "./lan-device-settings.tsx";
@@ -13,10 +13,12 @@ import {
   AppearanceSettingsContent,
   DocsSettingsContent,
   FeedbackSettingsContent,
+  LanguageRegionSettingsContent,
   ReleaseNotesSettingsContent,
   WorkspaceProfileSettingsContent,
 } from "./settings-pages.tsx";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
+import { PanelHeader } from "@rah-os/ui-web/neo-brutalist/panel-header";
 import { SettingsMobileBackProvider } from "./settings-primitives.tsx";
 import { WebPushSettingsContent } from "./web-push-settings.tsx";
 
@@ -27,6 +29,7 @@ export type SettingsSection =
   | "about"
   | "docs"
   | "feedback"
+  | "language-region"
   | "lan-devices"
   | "managed-mcp"
   | "notifications"
@@ -48,6 +51,7 @@ const SETTINGS_GROUPS: readonly {
     label: "个人",
     items: [
       { id: "account", icon: "user-round", label: "账户" },
+      { id: "language-region", icon: "languages", label: "语言与区域" },
       { id: "appearance", icon: "type", label: "外观" },
       { id: "notifications", icon: "bell", label: "通知" },
     ],
@@ -101,6 +105,7 @@ export function SettingsSurface({
   consumerPrefix,
   controlRoomId,
   currentPrincipal,
+  membershipRole,
   onWorkspaceUpdated,
   onPrincipalUpdated,
   workspace,
@@ -113,6 +118,7 @@ export function SettingsSurface({
   consumerPrefix: string;
   controlRoomId: string | undefined;
   currentPrincipal: Principal | undefined;
+  membershipRole?: MembershipRole | undefined;
   onWorkspaceUpdated: (workspace: Workspace) => void;
   onPrincipalUpdated: (principal: Principal) => void;
   workspace: Workspace | undefined;
@@ -164,6 +170,8 @@ export function SettingsSurface({
             onUpdated={onPrincipalUpdated}
             principal={currentPrincipal}
           />
+        ) : section === "language-region" ? (
+          <LanguageRegionSettingsContent />
         ) : section === "appearance" ? (
           <AppearanceSettingsContent />
         ) : section === "notifications" ? (
@@ -182,6 +190,7 @@ export function SettingsSurface({
           <AdministrationSettingsContent
             agents={agents}
             principal={currentPrincipal}
+            membershipRole={membershipRole}
           />
         ) : section === "managed-mcp" ? (
           <ManagedMcpSettingsContent
@@ -222,9 +231,9 @@ function SettingsNavigation({
       aria-label="设置导航"
       className={`rah-settings-navigation${className ? ` ${className}` : ""}`}
     >
-      <header>
+      <PanelHeader kind="sidebar">
         <strong>设置</strong>
-      </header>
+      </PanelHeader>
       <nav>
         {SETTINGS_GROUPS.map((group) => (
           <section key={group.label}>

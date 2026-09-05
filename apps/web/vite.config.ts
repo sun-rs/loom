@@ -35,6 +35,28 @@ function daemonProxy() {
 
 const WEB_BUILD_META_PLACEHOLDER = "__RAH_CONTENT_DERIVED_WEB_BUILD_ID__";
 
+// Development has no LAN edge. Match the loopback gateway's read-only
+// capability response instead of making Settings depend on a missing route.
+function loopbackCapabilityPlugin(): Plugin {
+  return {
+    name: "rah-loopback-capability",
+    configureServer(server) {
+      server.middlewares.use((request, response, next) => {
+        if (
+          request.method !== "GET" ||
+          request.url?.split("?", 1)[0] !== "/_rah/session"
+        ) {
+          next();
+          return;
+        }
+        response.setHeader("content-type", "application/json");
+        response.setHeader("cache-control", "no-store");
+        response.end(JSON.stringify({ available: false }));
+      });
+    },
+  };
+}
+
 function webBuildMetadataPlugin(command: "build" | "serve"): Plugin {
   let resolvedConfig: ResolvedConfig | undefined;
   return {
@@ -121,7 +143,11 @@ export default defineConfig(({ command }) => {
           (command === "serve" && developmentAccessToken !== undefined),
       ),
     },
-    plugins: [react(), webBuildMetadataPlugin(command)],
+    plugins: [
+      react(),
+      loopbackCapabilityPlugin(),
+      webBuildMetadataPlugin(command),
+    ],
     server: {
       port: Number(process.env.RAH_WEB_PORT ?? "4173"),
       proxy: {

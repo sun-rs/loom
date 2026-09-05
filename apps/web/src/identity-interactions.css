@@ -258,106 +258,10 @@
   width: 36px;
   height: 36px;
 }
-.rah-agent-preview {
-  position: fixed;
-  z-index: 110;
-  width: 280px;
-  max-height: calc(100dvh - 16px);
-  overflow: auto;
-  background: var(--bg);
-  border: var(--bd);
-  box-shadow: 4px 4px 0 var(--black);
-}
-.rah-agent-preview-identity {
-  display: flex;
-  gap: 12px;
-  padding: 12px;
-}
-.rah-agent-preview-identity > div {
-  flex: 1;
-  min-width: 0;
-}
-.rah-agent-preview-identity .rah-agent-avatar {
-  width: 48px;
-  height: 48px;
-}
-.rah-agent-preview b {
-  font-size: 14px;
-}
-.rah-agent-preview small {
-  display: block;
-  font: 12px/1.4 var(--mono);
-  color: rgb(0 0 0 / 60%);
-  overflow-wrap: anywhere;
-}
-.rah-agent-preview dl {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 4px 8px;
-  margin-top: 8px;
-  border-top: 1px solid var(--ink-20);
-  padding-top: 8px;
-  font: 11px/1.25 var(--mono);
-}
-.rah-agent-preview dt {
-  color: var(--ink-40);
-}
-.rah-agent-preview dd {
-  color: var(--ink-70);
-  overflow-wrap: anywhere;
-}
-.rah-agent-preview > section {
-  border-top: var(--bd);
-  padding: 8px 12px;
-}
-.rah-agent-preview h4 {
-  font-size: 10px;
-  color: var(--ink-50);
-  margin-bottom: 6px;
-}
-.rah-preview-event {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  font-size: 12px;
-  line-height: 1.6;
-}
-.rah-preview-event time {
-  color: var(--ink-40);
-  font: 10px var(--mono);
-  flex: none;
-}
-.rah-preview-event > i {
-  width: 8px;
-  height: 8px;
-  flex: none;
-  border: 1px solid var(--black);
-  border-radius: 50%;
-  background: var(--yellow);
-}
-.rah-preview-event > span {
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  color: var(--ink-70);
-}
-.rah-agent-activity-list article.is-text > i,
-.rah-preview-event > i[data-kind="text"] {
+.rah-agent-activity-list article.is-text > i {
   background: rgb(39 204 243);
 }
-.rah-preview-event > i[data-activity="online"] {
-  background: var(--green);
-}
-.rah-preview-event > i[data-activity="offline"] {
-  background: var(--ink-40);
-}
-.rah-preview-event > i[data-activity="error"] {
-  background: var(--coral);
-}
-.rah-agent-activity-list article.is-active > i,
-.rah-preview-event > i[data-activity="working"],
-.rah-preview-event > i[data-kind="thinking"],
-.rah-preview-event > i[data-kind="tool_start"] {
+.rah-agent-activity-list article.is-active > i {
   background: rgb(255 212 64);
 }
 .rah-agent-activity-list article > .rah-trajectory-content {

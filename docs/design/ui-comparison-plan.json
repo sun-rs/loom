@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "scope": "Four shared components on the production channel composition. Geometry, leaf styles and Tabs End/Home. Not whole-site parity, not identical conversation fixtures, and not mouse/drag/overlay coverage.",
+  "officialCapture": "docs/evidence/raft-ui-foundations-20260904.json",
+  "officialCaptureSha256": "d80b9dac7bbacfb616573381f6d8f1399110a4e77dc7ad038afe4ab27468389d",
+  "localSelectors": {
+    "header": ".rah-conversation-head",
+    "action": ".rah-conversation-head button[aria-label='搜索当前对话']",
+    "icon": ".rah-conversation-head button[aria-label='搜索当前对话'] svg",
+    "tab": "[aria-label='对话内容'] [role='tab']:first-child"
+  },
+  "scenarios": [
+    {
+      "id": "desktop-rest",
+      "keys": [],
+      "pairs": ["header", "action", "icon", "tab"]
+    },
+    {
+      "id": "short-rest",
+      "keys": [],
+      "pairs": ["header", "action", "icon", "tab"]
+    },
+    { "id": "tabs-end", "keys": ["End"], "pairs": ["keyboard"] },
+    { "id": "tabs-home", "keys": ["End", "Home"], "pairs": ["keyboard"] }
+  ]
+}

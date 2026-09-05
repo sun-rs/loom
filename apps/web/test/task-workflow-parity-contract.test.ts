@@ -48,9 +48,9 @@ test("all task surfaces share the five Raft status labels and tones", () => {
       workflowStatus: "in_progress",
     }),
     {
-      id: "in-progress",
-      label: "进行中",
-      tone: "cyan",
+      id: "review",
+      label: "待确认",
+      tone: "purple",
     },
   );
   assert.equal(taskAttentionLabel({ state: "claimed" }), "已认领");
@@ -81,7 +81,7 @@ test("global Tasks keeps the Raft heading semantics and has no local-only refres
     new URL("../src/components/global-discovery.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(source, /<h2>\{title\}<\/h2>/u);
+  assert.match(source, /<h2 className="rah-panel-title">\{title\}<\/h2>/u);
   const taskSurface = source.slice(
     source.indexOf("function GlobalTasks("),
     source.indexOf("function GlobalSearch("),
@@ -298,10 +298,30 @@ test("global Task cards keep Raft's separate drag and visual interaction layers"
   );
   assert.match(
     board,
-    /options=\{columns\s*\.filter\([\s\S]*?globalTaskTransition\(task, item\.id, canManageAnyTask\)[\s\S]*?\.operation,[\s\S]*?\)\s*\.map\(\(item\) => \(\{/u,
+    /options=\{columns\.map\(\(item\) => \{[\s\S]*?id: item\.id,[\s\S]*?label: item\.label,/u,
   );
-  assert.doesNotMatch(board, /disabledReason:\s*globalTaskTransition/u);
+  assert.match(
+    board,
+    /disabled=\{disabled \|\| !canManageAnyTask\}[\s\S]*?item\.id === group \|\| reason === undefined[\s\S]*?\{ disabledReason: reason \}/u,
+    "the manager can inspect the Raft five-state menu even when no canonical transition is available",
+  );
   assert.doesNotMatch(board, /TaskCloseDialog|请填写关闭原因/u);
+});
+
+test("real browser acceptance respects the default-collapsed terminal columns", async () => {
+  const browserGate = await readFile(
+    new URL("../../../scripts/run-real-browser-gate.mjs", import.meta.url),
+    "utf8",
+  );
+
+  const globalMetadataGate = browserGate.slice(
+    browserGate.indexOf('ariaLabel: "展开完成"'),
+    browserGate.indexOf(
+      '"global Tasks must retain the Room name exactly as Raft server-wide mode does"',
+    ),
+  );
+  assert.match(globalMetadataGate, /ariaLabel: "展开完成"/u);
+  assert.match(globalMetadataGate, /rah-global-task-card \.kcard-title/u);
 });
 
 test("global Task status changes use one Raft five-state workflow command", async () => {

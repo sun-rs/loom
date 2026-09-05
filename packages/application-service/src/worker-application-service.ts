@@ -6,6 +6,8 @@ import {
   type ServerResponse,
 } from "node:http";
 import type { AddressInfo } from "node:net";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
 
 import {
   KernelError,
@@ -54,9 +56,12 @@ import {
   WorkerTaskReleaseRequestSchema,
   WorkerTaskStartRequestSchema,
   WorkerTaskSubmitRequestSchema,
+  WorkerTaskSubmissionRequestSchema,
+  WorkerTaskSubmissionResponseSchema,
   WorkerThreadUnfollowRequestSchema,
   WorkerThreadUnfollowResponseSchema,
   type ActivationCredentialScope,
+  type TaskSubmissionRepositoryEvidence,
   type Task,
 } from "@rah-os/protocol";
 
@@ -71,6 +76,7 @@ export type IssuedActivationCredential = {
 };
 
 export type WorkerApplicationServiceOptions = {
+  deliveryEvidenceCollector?: TaskDeliveryEvidenceCollector;
   kernel: RoomKernel;
   now?: () => Date;
   taskClaimHeartbeatIntervalMs?: number;
@@ -79,9 +85,45 @@ export type WorkerApplicationServiceOptions = {
   managedMcpTimeoutMs?: number;
 };
 
+export type TaskDeliveryEvidenceUnavailableReason =
+  | "capture_failed"
+  | "collector_unavailable"
+  | "not_git"
+  | "workspace_not_bound";
+
+export type TaskDeliveryEvidenceBaseline =
+  | {
+      baseCommit: string;
+      repositoryId: `sha256:${string}`;
+      source: "git";
+      workspaceRoot: string;
+    }
+  | {
+      reason: TaskDeliveryEvidenceUnavailableReason;
+      source: "unavailable";
+      workspaceRoot: string;
+    };
+
+export type TaskDeliveryEvidenceCapture = {
+  baseCommit: string;
+  headCommit: string;
+  patch: Uint8Array;
+  repositoryId: `sha256:${string}`;
+};
+
+export type TaskDeliveryEvidenceCollector = {
+  captureBaseline(input: {
+    workspaceRoot: string;
+  }): Promise<TaskDeliveryEvidenceBaseline>;
+  captureSubmission(input: {
+    baseline: Extract<TaskDeliveryEvidenceBaseline, { source: "git" }>;
+  }): Promise<TaskDeliveryEvidenceCapture>;
+};
+
 type WorkerGrant = {
   claimedTaskIds: Set<string>;
   deliveredCursors: Set<number>;
+  deliveryEvidenceBaseline?: TaskDeliveryEvidenceBaseline;
   execution: AuthenticatedWorkerExecutionContext;
   expiresAtMs: number;
   heartbeatTimer?: NodeJS.Timeout;
@@ -132,12 +174,15 @@ export const WORKER_HTTP_ROUTE_PATHS = [
   "/v1/worker/tasks/review",
   "/v1/worker/tasks/start",
   "/v1/worker/tasks/submit",
+  "/v1/worker/tasks/submission",
 ] as const;
 const WORKER_ROUTES = new Set<string>(WORKER_HTTP_ROUTE_PATHS);
 
 export class WorkerApplicationService {
   readonly #grants = new Map<string, WorkerGrant>();
   readonly #kernel: RoomKernel;
+  readonly #deliveryEvidenceCollector:
+    TaskDeliveryEvidenceCollector | undefined;
   readonly #now: () => Date;
   readonly #taskClaimHeartbeatIntervalMs: number;
   readonly #taskClaimLeaseMs: number;
@@ -148,6 +193,7 @@ export class WorkerApplicationService {
 
   constructor(options: WorkerApplicationServiceOptions) {
     this.#kernel = options.kernel;
+    this.#deliveryEvidenceCollector = options.deliveryEvidenceCollector;
     this.#managedMcpExecutor = options.managedMcpExecutor;
     this.#managedMcpTimeoutMs =
       options.managedMcpTimeoutMs ?? DEFAULT_MANAGED_MCP_TIMEOUT_MS;
@@ -237,6 +283,49 @@ export class WorkerApplicationService {
     uncheckedScope: ActivationCredentialScope,
     options: { ttlMs?: number } = {},
   ): IssuedActivationCredential {
+    return this.#issueActivationCredential(host, uncheckedScope, options);
+  }
+
+  async issueActivationCredentialForWorkspace(
+    host: AuthenticatedHostContext,
+    uncheckedScope: ActivationCredentialScope,
+    options: { ttlMs?: number; workspaceRoot: string },
+  ): Promise<IssuedActivationCredential> {
+    const collector = this.#deliveryEvidenceCollector;
+    let baseline: TaskDeliveryEvidenceBaseline;
+    if (collector === undefined) {
+      baseline = {
+        reason: "collector_unavailable",
+        source: "unavailable",
+        workspaceRoot: options.workspaceRoot,
+      };
+    } else {
+      try {
+        baseline = await collector.captureBaseline({
+          workspaceRoot: options.workspaceRoot,
+        });
+      } catch {
+        baseline = {
+          reason: "capture_failed",
+          source: "unavailable",
+          workspaceRoot: options.workspaceRoot,
+        };
+      }
+    }
+    return this.#issueActivationCredential(host, uncheckedScope, {
+      ...(options.ttlMs === undefined ? {} : { ttlMs: options.ttlMs }),
+      deliveryEvidenceBaseline: baseline,
+    });
+  }
+
+  #issueActivationCredential(
+    host: AuthenticatedHostContext,
+    uncheckedScope: ActivationCredentialScope,
+    options: {
+      deliveryEvidenceBaseline?: TaskDeliveryEvidenceBaseline;
+      ttlMs?: number;
+    },
+  ): IssuedActivationCredential {
     if (this.#server === undefined) {
       throw new Error(
         "WorkerApplicationService must start before issuing tokens",
@@ -263,6 +352,9 @@ export class WorkerApplicationService {
     this.#grants.set(tokenHash, {
       claimedTaskIds: new Set<string>(),
       deliveredCursors: new Set<number>(),
+      ...(options.deliveryEvidenceBaseline === undefined
+        ? {}
+        : { deliveryEvidenceBaseline: options.deliveryEvidenceBaseline }),
       execution,
       expiresAtMs,
       knownRoomSeqs: new Set<number>(),
@@ -293,10 +385,23 @@ export class WorkerApplicationService {
     const artifactMatch =
       route === undefined ? null : WORKER_ARTIFACT_ROUTE.exec(route);
     if (artifactMatch !== null) {
+      if (request.method === "GET") {
+        const grant = this.#authenticate(request);
+        const download = await this.#kernel.files.downloadWorkerTaskArtifact(
+          grant.execution,
+          artifactMatch[1]!,
+        );
+        response.statusCode = 200;
+        response.setHeader("content-length", String(download.attachment.size));
+        response.setHeader("content-type", download.attachment.mimeType);
+        response.setHeader("cache-control", "private, no-store");
+        await pipeline(download.stream, response);
+        return;
+      }
       if (request.method !== "PUT") {
         throw new HttpRequestError(
           "method_not_allowed",
-          "artifact upload requires PUT",
+          "artifact content requires GET or PUT",
           405,
         );
       }
@@ -449,6 +554,24 @@ export class WorkerApplicationService {
       return;
     }
 
+    if (route === "/v1/worker/tasks/submission") {
+      const command = parseWorkerRequest(
+        WorkerTaskSubmissionRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        WorkerTaskSubmissionResponseSchema.parse({
+          submission: this.#kernel.taskReviews.getWorkerTaskSubmission(
+            grant.execution,
+            command,
+          ),
+        }),
+      );
+      return;
+    }
+
     if (route === "/v1/worker/messages/post") {
       const command = parseWorkerRequest(WorkerMessagePostRequestSchema, body);
       this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
@@ -555,7 +678,7 @@ export class WorkerApplicationService {
     }
 
     if (route.startsWith("/v1/worker/tasks/")) {
-      const mutation = this.#handleTaskCommand(route, body, grant);
+      const mutation = await this.#handleTaskCommand(route, body, grant);
       grant.knownRoomSeqs.add(mutation.event.roomSeq);
       this.#synchronizeTaskHeartbeat(grant, mutation.task);
       writeJson(
@@ -603,7 +726,7 @@ export class WorkerApplicationService {
     );
   }
 
-  #handleTaskCommand(
+  async #handleTaskCommand(
     route: string,
     body: Record<string, unknown>,
     grant: WorkerGrant,
@@ -668,7 +791,118 @@ export class WorkerApplicationService {
     }
     const command = parseWorkerRequest(WorkerTaskSubmitRequestSchema, body);
     this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
-    return this.#kernel.submitTask(grant.execution, command);
+    const deliveryRepository = await this.#captureTaskDeliveryEvidence(
+      grant,
+      command.taskId,
+      command.idempotencyKey,
+    );
+    return this.#kernel.submitTask(grant.execution, {
+      basedOnRoomSeq: command.basedOnRoomSeq,
+      deliveryRepository,
+      idempotencyKey: command.idempotencyKey,
+      summary: command.summary,
+      taskId: command.taskId,
+      ...(command.verification === undefined
+        ? {}
+        : { verification: command.verification }),
+    });
+  }
+
+  async #captureTaskDeliveryEvidence(
+    grant: WorkerGrant,
+    taskId: string,
+    idempotencyKey: string,
+  ): Promise<TaskSubmissionRepositoryEvidence> {
+    const baseline = grant.deliveryEvidenceBaseline;
+    if (baseline === undefined) {
+      return { reason: "workspace_not_bound", source: "unavailable" };
+    }
+    if (baseline.source === "unavailable") {
+      return { reason: baseline.reason, source: "unavailable" };
+    }
+    const collector = this.#deliveryEvidenceCollector;
+    if (collector === undefined) {
+      return { reason: "collector_unavailable", source: "unavailable" };
+    }
+    let capture: TaskDeliveryEvidenceCapture;
+    try {
+      capture = await collector.captureSubmission({ baseline });
+    } catch {
+      throw new HttpRequestError(
+        "delivery_evidence_capture_failed",
+        "Git delivery evidence could not be frozen; retry after the workspace is stable",
+        503,
+      );
+    }
+    if (
+      capture.baseCommit !== baseline.baseCommit ||
+      capture.repositoryId !== baseline.repositoryId
+    ) {
+      throw new HttpRequestError(
+        "delivery_evidence_identity_changed",
+        "Git repository identity changed during this RunAttempt",
+        409,
+      );
+    }
+    const patchDigest = `sha256:${createHash("sha256")
+      .update(capture.patch)
+      .digest("hex")}` as const;
+    let patchAttachmentId: string | undefined;
+    if (capture.patch.byteLength > 0) {
+      const requestKey = `task-delivery:${createHash("sha256")
+        .update(`${taskId}\u0000${idempotencyKey}`, "utf8")
+        .digest("hex")}`;
+      const prepared = this.#kernel.files.prepareWorker(grant.execution, {
+        filename: "rah-task-delivery.patch",
+        idempotencyKey: requestKey,
+        mimeType: "text/x-diff",
+        size: capture.patch.byteLength,
+        taskId,
+      });
+      patchAttachmentId = prepared.attachmentId;
+      if (prepared.state === "pending") {
+        const uploaded = await this.#kernel.files.uploadWorker(
+          grant.execution,
+          prepared.attachmentId,
+          Readable.from([capture.patch]),
+        );
+        if (uploaded.sha256 !== patchDigest.slice("sha256:".length)) {
+          throw new HttpRequestError(
+            "delivery_evidence_digest_mismatch",
+            "Frozen Git patch digest did not match the stored Artifact",
+            500,
+          );
+        }
+      } else if (
+        prepared.state !== "completed" &&
+        prepared.state !== "consumed"
+      ) {
+        throw new HttpRequestError(
+          "delivery_evidence_artifact_unavailable",
+          `Frozen Git patch Artifact is ${prepared.state}`,
+          409,
+        );
+      } else if (
+        prepared.sha256 !== undefined &&
+        prepared.sha256 !== patchDigest.slice("sha256:".length)
+      ) {
+        throw new HttpRequestError(
+          "delivery_evidence_digest_mismatch",
+          "Frozen Git patch retry did not match the original Artifact",
+          409,
+        );
+      }
+    }
+    return {
+      baseCommit: capture.baseCommit,
+      headCommit: capture.headCommit,
+      ...(patchAttachmentId === undefined ? {} : { patchAttachmentId }),
+      patchDigest,
+      patchSize: capture.patch.byteLength,
+      repositoryId: capture.repositoryId,
+      source: "host_observed",
+      vcs: "git",
+    };
   }
 
   #requireKnownCausalCursor(grant: WorkerGrant, basedOnRoomSeq: number): void {

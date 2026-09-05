@@ -46,7 +46,11 @@ export function validateRegistry(registry, read) {
     if (bytes && digest(bytes) !== source.sha256)
       errors.push(`${source.id}: hash mismatch`);
     if (
-      !["official-published", "reference-reconstruction"].includes(source.kind)
+      ![
+        "official-published",
+        "official-observation",
+        "reference-reconstruction",
+      ].includes(source.kind)
     )
       errors.push(`${source.id}: source kind`);
     if (
@@ -115,6 +119,9 @@ export function validateRegistry(registry, read) {
     for (const id of behavior.adoptions)
       if (!adoptions.has(id))
         errors.push(`${behavior.id}: unknown adoption ${id}`);
+    for (const id of behavior.evidenceSources ?? [])
+      if (!sources.has(id))
+        errors.push(`${behavior.id}: unknown evidence source ${id}`);
     for (const id of behavior.scenarios)
       if (!scenarios.has(id))
         errors.push(`${behavior.id}: unknown scenario ${id}`);

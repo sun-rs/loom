@@ -31,21 +31,31 @@ export function PreviewCard({
   const trigger = useRef<HTMLButtonElement>(null),
     card = useRef<HTMLElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const [open, setOpen] = useState(false),
+  const [phase, setPhase] = useState<"closed" | "pending" | "open">("closed"),
     id = useId();
+  const open = phase === "open";
   const cancel = () => clearTimeout(timer.current);
   const close = () => {
     cancel();
-    setOpen(false);
+    setPhase("closed");
   };
   const enter = () => {
     cancel();
-    timer.current = setTimeout(() => setOpen(true), RAFT_AVATAR_PREVIEW.delay);
+    if (open) return;
+    setPhase("pending");
+    timer.current = setTimeout(
+      () => setPhase("open"),
+      RAFT_AVATAR_PREVIEW.delay,
+    );
   };
   const leave = () => {
     cancel();
+    if (!open) {
+      setPhase("closed");
+      return;
+    }
     timer.current = setTimeout(
-      () => setOpen(false),
+      () => setPhase("closed"),
       RAFT_AVATAR_PREVIEW.closeDelay,
     );
   };
@@ -78,7 +88,7 @@ export function PreviewCard({
     };
   }, [open]);
   useEffect(() => {
-    if (!open) return;
+    if (phase === "closed") return;
     const escape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
@@ -101,7 +111,7 @@ export function PreviewCard({
       document.removeEventListener("pointerdown", outside, true);
       document.removeEventListener("focusin", outside);
     };
-  }, [open]);
+  }, [phase]);
   return (
     <>
       <button
@@ -131,7 +141,7 @@ export function PreviewCard({
             id={id}
             role="tooltip"
             ref={card}
-            className={className}
+            className={`rah-preview-card ${className ?? ""}`.trim()}
             style={{
               position: "fixed",
               width: RAFT_AVATAR_PREVIEW.width,

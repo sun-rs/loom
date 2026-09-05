@@ -14,3 +14,7 @@ packages/agent-host/src/raft-memory/upstream-standing-prompt.ts
 docs/audits/evidence/2026-08-30-memory-real/agent-a-memory/
 # Frozen Raft published JavaScript, analysis only; preserve source hashes/offsets.
 docs/evidence/raft-web-20260831-current/
+docs/evidence/raft-settings-20260905.js
+# Frozen browser observations; the comparison plan pins these exact bytes.
+docs/evidence/raft-ui-foundations-20260904.json
+docs/evidence/raft-ui-shell-20260904.json

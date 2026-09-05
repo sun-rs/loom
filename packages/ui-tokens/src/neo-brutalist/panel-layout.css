@@ -1,6 +1,25 @@
 /* Display-only port of Raft Panel header/tab slots. Geometry has one owner;
    existing generated .tab and interaction-state.css own button appearance.
    Do not reintroduce .channel-head/.thread-head/.tabs baseline overrides. */
+/* Raft AppRail compact-height contract. Page composition cannot override the
+   track independently from the rail. Default values remain in tokens.brutal. */
+@media (max-height: 600px) {
+  .rah-product-shell {
+    --head-h: 48px;
+    --rail-w: 50px;
+  }
+  .rah-product-shell :is(.rail-logo, .rail-btn) {
+    height: 36px;
+    width: 36px;
+  }
+  .rah-product-shell .rail-primary {
+    padding-block: 4px;
+  }
+  .rah-product-shell .rail-footer-item {
+    height: 40px;
+  }
+}
+
 .rah-panel-header {
   align-items: center;
   background: var(--bg);
@@ -16,6 +35,55 @@
 .rah-panel-header[data-header-kind="thread"] {
   gap: 6px;
   padding-inline: 16px;
+}
+
+.rah-panel-header[data-header-kind="sidebar"] {
+  background: var(--cream);
+}
+
+.rah-panel-header[data-header-kind="sidebar"]
+  > :is(h1, strong, .sidebar-title) {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 28px;
+}
+
+.rah-panel-title {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 20px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rah-panel-header-icon {
+  align-items: center;
+  background: var(--yellow);
+  border: var(--bd);
+  box-shadow: none;
+  color: var(--black);
+  display: inline-flex;
+  flex: none;
+  height: 36px;
+  justify-content: center;
+  width: 36px;
+}
+
+.rah-panel-header-icon > svg {
+  height: 18px;
+  stroke-width: 2;
+  width: 18px;
+}
+
+.rah-panel-header-icon[data-glyph-size="14"] > svg {
+  height: 14px;
+  width: 14px;
+}
+
+.rah-panel-header .head-actions {
+  gap: 6px;
 }
 
 .rah-panel-header .channel-id,
@@ -56,10 +124,6 @@
 }
 
 @media (max-width: 767px) {
-  .rah-panel-header[data-header-kind="conversation"] {
-    padding-inline: 12px;
-  }
-
   /* Retained reference mobile Agent composition; not the desktop shell row. */
   .rah-panel-header[data-header-kind="agent"] {
     gap: 10px;

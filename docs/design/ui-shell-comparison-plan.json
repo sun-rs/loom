@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "scope": "Shell header/identity/title subset on actual channel and Settings compositions, including short height and mobile Settings. Official-capture replay, not whole-page/mouse parity.",
+  "officialCapture": "docs/evidence/raft-ui-shell-20260904.json",
+  "officialCaptureSha256": "a3285983d8a3a812672260b5b84762e68e559755a4faec2ee1a6bd4eaf67fa3e",
+  "localSelectors": {
+    "header": ".rah-conversation-head",
+    "heading": ".rah-conversation-head h1",
+    "tile": ".rah-conversation-head .rah-panel-header-icon",
+    "tileIcon": ".rah-conversation-head .rah-panel-header-icon > svg"
+  },
+  "scenarios": [
+    {
+      "id": "settings-mobile",
+      "keys": [],
+      "route": "settings-notifications",
+      "pairs": ["header", "heading"],
+      "localSelectors": {
+        "header": ".rah-settings-page-head",
+        "heading": ".rah-settings-page-head h1",
+        "tile": ".rah-settings-page-icon",
+        "tileIcon": ".rah-settings-page-icon > svg"
+      }
+    },
+    {
+      "id": "settings-short",
+      "keys": [],
+      "route": "settings-notifications",
+      "pairs": ["header", "heading", "tile", "tileIcon"],
+      "localSelectors": {
+        "header": ".rah-settings-page-head",
+        "heading": ".rah-settings-page-head h1",
+        "tile": ".rah-settings-page-icon",
+        "tileIcon": ".rah-settings-page-icon > svg"
+      }
+    },
+    {
+      "id": "settings-desktop",
+      "keys": [],
+      "route": "settings-notifications",
+      "pairs": ["header", "heading", "tile", "tileIcon"],
+      "localSelectors": {
+        "header": ".rah-settings-page-head",
+        "heading": ".rah-settings-page-head h1",
+        "tile": ".rah-settings-page-icon",
+        "tileIcon": ".rah-settings-page-icon > svg"
+      }
+    },
+    {
+      "id": "channel-tile-desktop",
+      "keys": [],
+      "route": "room",
+      "pairs": ["header", "heading", "tile", "tileIcon"]
+    },
+    {
+      "id": "channel-tile-short",
+      "keys": [],
+      "route": "room",
+      "pairs": ["header", "heading", "tile", "tileIcon"]
+    }
+  ]
+}

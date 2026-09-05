@@ -13,6 +13,7 @@ export const PrincipalSchema = z
       .regex(/^[a-z0-9_-]{1,64}$/)
       .optional(),
     displayName: z.string().trim().min(1).max(120).optional(),
+    description: z.string().trim().max(3000).optional(),
     principalId: IdentifierSchema,
     handle: IdentifierSchema,
     kind: ParticipantKindSchema,

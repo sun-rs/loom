@@ -391,6 +391,7 @@ CREATE TABLE IF NOT EXISTS task_submissions (
   summary TEXT NOT NULL,
   message_id TEXT NOT NULL,
   submission_digest TEXT NOT NULL,
+  evidence_json TEXT,
   created_at TEXT NOT NULL,
   UNIQUE (task_id, submission_number),
   UNIQUE (message_id),
@@ -400,6 +401,9 @@ CREATE TABLE IF NOT EXISTS task_submissions (
 
 CREATE INDEX IF NOT EXISTS idx_task_submissions_task
   ON task_submissions(task_id, submission_number DESC);
+
+CREATE INDEX IF NOT EXISTS idx_task_submissions_room_created
+  ON task_submissions(room_id, created_at DESC, submission_id DESC);
 
 CREATE TABLE IF NOT EXISTS task_submission_artifacts (
   submission_id TEXT NOT NULL REFERENCES task_submissions(submission_id),
@@ -438,6 +442,9 @@ CREATE TABLE IF NOT EXISTS task_reviews (
 
 CREATE INDEX IF NOT EXISTS idx_task_reviews_task
   ON task_reviews(task_id, created_at, review_id);
+
+CREATE INDEX IF NOT EXISTS idx_task_reviews_room_created
+  ON task_reviews(room_id, created_at DESC, review_id DESC);
 
 CREATE TABLE IF NOT EXISTS input_requests (
   input_request_id TEXT PRIMARY KEY,
@@ -1054,6 +1061,9 @@ CREATE TABLE IF NOT EXISTS outbox (
 CREATE INDEX IF NOT EXISTS idx_room_events_sequence
   ON room_events(room_id, room_seq);
 
+CREATE INDEX IF NOT EXISTS idx_room_events_message_aggregate
+  ON room_events(room_id, type, aggregate_id, event_id);
+
 CREATE INDEX IF NOT EXISTS idx_inbox_participant_state
   ON inbox_items(room_id, participant_id, state, event_seq);
 
@@ -1436,6 +1446,65 @@ export function migrateTaskWorkflowStatusV44(database: DatabaseSync): void {
       WHERE task_id = NEW.task_id;
     END
   `);
+}
+
+export function migrateTaskWorkflowAuthorityV48(database: DatabaseSync): void {
+  database.exec(`
+    UPDATE tasks
+    SET workflow_status = CASE state
+      WHEN 'todo' THEN 'todo'
+      WHEN 'submitted' THEN 'in_review'
+      WHEN 'completed' THEN 'done'
+      WHEN 'cancelled' THEN 'closed'
+      ELSE 'in_progress'
+    END;
+
+    CREATE TRIGGER IF NOT EXISTS trg_tasks_workflow_authority_v48
+    BEFORE UPDATE OF workflow_status ON tasks
+    WHEN NEW.workflow_status <> CASE NEW.state
+      WHEN 'todo' THEN 'todo'
+      WHEN 'submitted' THEN 'in_review'
+      WHEN 'completed' THEN 'done'
+      WHEN 'cancelled' THEN 'closed'
+      ELSE 'in_progress'
+    END
+    BEGIN
+      SELECT RAISE(ABORT, 'workflow_status must match canonical Task state');
+    END;
+
+    CREATE TRIGGER IF NOT EXISTS trg_tasks_workflow_insert_authority_v48
+    BEFORE INSERT ON tasks
+    WHEN NEW.workflow_status <> CASE NEW.state
+      WHEN 'todo' THEN 'todo'
+      WHEN 'submitted' THEN 'in_review'
+      WHEN 'completed' THEN 'done'
+      WHEN 'cancelled' THEN 'closed'
+      ELSE 'in_progress'
+    END
+    BEGIN
+      SELECT RAISE(ABORT, 'workflow_status must match canonical Task state');
+    END
+  `);
+}
+
+export function migrateBoundedRoomReadsV49(database: DatabaseSync): void {
+  database.exec(`
+    CREATE INDEX IF NOT EXISTS idx_room_events_message_aggregate
+      ON room_events(room_id, type, aggregate_id, event_id);
+    CREATE INDEX IF NOT EXISTS idx_task_submissions_room_created
+      ON task_submissions(room_id, created_at DESC, submission_id DESC);
+    CREATE INDEX IF NOT EXISTS idx_task_reviews_room_created
+      ON task_reviews(room_id, created_at DESC, review_id DESC);
+  `);
+}
+
+export function migrateFrozenTaskSubmissionEvidenceV50(
+  database: DatabaseSync,
+): void {
+  const columns = database.prepare("PRAGMA table_info(task_submissions)").all();
+  if (!columns.some((row) => requiredString(row, "name") === "evidence_json")) {
+    database.exec("ALTER TABLE task_submissions ADD COLUMN evidence_json TEXT");
+  }
 }
 
 export function migrateMessageForwardingV46(database: DatabaseSync): void {

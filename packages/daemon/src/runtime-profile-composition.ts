@@ -26,6 +26,14 @@ import type {
 
 export { assertRuntimeProfileRevisionStillActive };
 
+type RuntimeWorkerService = Pick<
+  WorkerApplicationService,
+  "issueActivationCredential" | "origin"
+> &
+  Partial<
+    Pick<WorkerApplicationService, "issueActivationCredentialForWorkspace">
+  >;
+
 export function createConfiguredRuntime(input: {
   agentMemoryCoordinator?: AgentMemoryCoordinator;
   credentialEnvironment: RuntimeCredentialEnvironmentBinding;
@@ -39,7 +47,7 @@ export function createConfiguredRuntime(input: {
   runtimeProfileRegistry: RuntimeProfileRegistry;
   runtimeProfileRevision: RuntimeProfileRevision;
   supervisorDirectory: string;
-  workerService: WorkerApplicationService;
+  workerService: RuntimeWorkerService;
 }): RuntimeAdapter {
   return input.implementations.createRuntime(
     input.runtimeProfileRevision,
@@ -74,10 +82,18 @@ export function createConfiguredRuntime(input: {
                   ),
             );
           }
-          const credential = input.workerService.issueActivationCredential(
-            input.host,
-            scope,
-          );
+          const credential =
+            typeof input.workerService.issueActivationCredentialForWorkspace ===
+            "function"
+              ? await input.workerService.issueActivationCredentialForWorkspace(
+                  input.host,
+                  scope,
+                  { workspaceRoot: input.cwd },
+                )
+              : input.workerService.issueActivationCredential(
+                  input.host,
+                  scope,
+                );
           const workerLease = await createWorkerToolTransportEnvironment({
             credentialDirectory: join(
               input.supervisorDirectory,

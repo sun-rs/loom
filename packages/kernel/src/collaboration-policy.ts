@@ -101,6 +101,25 @@ export function requireRoomManager(
   return role;
 }
 
+export function requireHumanTaskManager(
+  database: DatabaseSync,
+  input: { creatorId: string; roomId: string },
+  principalId: string,
+): void {
+  const principal = database
+    .prepare("SELECT kind FROM principals WHERE principal_id = ?")
+    .get(principalId);
+  if (principal === undefined) {
+    throw new NotFoundError(`principal ${principalId} was not found`);
+  }
+  if (text(principal, "kind") !== "human") {
+    throw new ForbiddenError("Task status management requires a Human");
+  }
+  if (input.creatorId !== principalId) {
+    requireRoomManager(database, input.roomId, principalId);
+  }
+}
+
 export function requireRoomOwner(
   database: DatabaseSync,
   roomId: string,

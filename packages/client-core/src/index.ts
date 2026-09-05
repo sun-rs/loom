@@ -126,10 +126,13 @@ async function findRoomMembership(
 export type RoomProjection = {
   acknowledgedThrough: number;
   cursor: number;
+  eventFloorSeq: number;
   events: readonly RoomEvent[];
+  historyComplete: boolean;
   latestRoomSeq: number;
   roomId: string;
   snapshot: RoomSnapshot | null;
+  snapshotSeq: number;
 };
 
 export type RoomCatchUpResult = {
@@ -149,6 +152,7 @@ export type MessageCatchUpResult = {
 
 /** Raft's bounded latest/backward Message window. */
 export const RAFT_MESSAGE_PAGE_SIZE = 50;
+export const ROOM_EVENT_WINDOW_SIZE = 2_000;
 
 export async function listMessagesBounded(
   client: RahClient,
@@ -491,23 +495,27 @@ export function createEmptyRoomProjection(roomId: string): RoomProjection {
   return Object.freeze({
     acknowledgedThrough: 0,
     cursor: 0,
+    eventFloorSeq: 0,
     events: Object.freeze([]),
+    historyComplete: true,
     latestRoomSeq: 0,
     roomId,
     snapshot: null,
+    snapshotSeq: 0,
   });
 }
 
 export function applyRoomSync(
   state: RoomProjection,
   delivery: ClientRoomSyncResponse,
-  context: { afterSeq: number },
+  context: { afterSeq: number; bootstrap?: "latest" },
 ): RoomProjection {
   const { afterSeq } = context;
+  const latestBootstrap = context.bootstrap === "latest";
   if (!Number.isInteger(afterSeq) || afterSeq < 0) {
     throw new Error("Room sync afterSeq must be a non-negative integer");
   }
-  if (afterSeq > state.cursor) {
+  if (afterSeq > state.cursor && !latestBootstrap) {
     throw new Error(
       `Room sync gap: local cursor ${String(state.cursor)}, request starts at ${String(afterSeq)}`,
     );
@@ -518,13 +526,13 @@ export function applyRoomSync(
   ) {
     throw new Error("Room sync snapshot belongs to another Room");
   }
-  if (delivery.snapshot !== null && afterSeq !== 0) {
+  if (delivery.snapshot !== null && afterSeq !== 0 && !latestBootstrap) {
     throw new Error("Room sync snapshot is only valid for a zero-based replay");
   }
   if (state.snapshot === null && afterSeq === 0 && delivery.snapshot === null) {
     throw new Error("Room sync cold bootstrap requires a snapshot");
   }
-  if (state.snapshot === null && afterSeq !== 0) {
+  if (state.snapshot === null && afterSeq !== 0 && !latestBootstrap) {
     throw new Error("Room sync cannot continue before snapshot bootstrap");
   }
   if (delivery.cursorAfter < afterSeq) {
@@ -534,11 +542,33 @@ export function applyRoomSync(
     throw new Error("Room sync latest sequence moved backwards");
   }
 
-  const bySequence = new Map(
-    state.events.map((event) => [event.roomSeq, event]),
-  );
-  const events = [...state.events];
-  let cursor = state.cursor;
+  if (latestBootstrap) {
+    if (state.snapshot !== null || state.cursor !== 0) {
+      throw new Error("latest Room bootstrap is only valid for a cold session");
+    }
+    if (
+      delivery.snapshot === null ||
+      delivery.eventFloorSeq !== afterSeq ||
+      delivery.snapshotSeq !== delivery.latestRoomSeq
+    ) {
+      throw new Error(
+        "latest Room bootstrap requires a trusted snapshot boundary",
+      );
+    }
+  }
+  if (
+    !latestBootstrap &&
+    delivery.events.length === 0 &&
+    delivery.cursorAfter === afterSeq &&
+    delivery.latestRoomSeq === state.latestRoomSeq &&
+    delivery.snapshot === null
+  ) {
+    return state;
+  }
+  const retained = latestBootstrap ? [] : state.events;
+  const bySequence = new Map(retained.map((event) => [event.roomSeq, event]));
+  const events = [...retained];
+  let cursor = latestBootstrap ? afterSeq : state.cursor;
   let previousIncomingSequence = afterSeq;
 
   for (const incoming of delivery.events) {
@@ -551,7 +581,7 @@ export function applyRoomSync(
       );
     }
     previousIncomingSequence = incoming.roomSeq;
-    if (incoming.roomSeq <= state.cursor) {
+    if (!latestBootstrap && incoming.roomSeq <= state.cursor) {
       const known = bySequence.get(incoming.roomSeq);
       if (known === undefined || known.eventId !== incoming.eventId) {
         throw new Error(
@@ -581,12 +611,22 @@ export function applyRoomSync(
   ) {
     return state;
   }
+  const excess = Math.max(0, events.length - ROOM_EVENT_WINDOW_SIZE);
+  const retainedEvents = excess === 0 ? events : events.slice(excess);
+  const eventFloorSeq = Math.max(
+    state.eventFloorSeq,
+    latestBootstrap ? afterSeq : 0,
+    excess === 0 ? 0 : (events[excess - 1]?.roomSeq ?? 0),
+  );
   return Object.freeze({
     ...state,
     cursor,
-    events: Object.freeze(events),
+    eventFloorSeq,
+    events: Object.freeze(retainedEvents),
+    historyComplete: eventFloorSeq === 0,
     latestRoomSeq: Math.max(state.latestRoomSeq, delivery.latestRoomSeq),
     snapshot: delivery.snapshot ?? state.snapshot,
+    snapshotSeq: delivery.snapshotSeq ?? state.snapshotSeq,
   });
 }
 
@@ -663,18 +703,29 @@ export class RoomSession {
     limit?: number;
     signal?: AbortSignal;
   }): Promise<RoomProjection> {
+    const cold = this.#state.snapshot === null;
     const afterSeq = this.#state.cursor;
     const delivery = await this.#client.request(
       "room.sync",
       {
-        afterSeq,
+        ...(cold ? { bootstrap: "latest" as const } : { afterSeq }),
         consumerId: this.#consumerId,
         roomId: this.#roomId,
         ...(options.limit === undefined ? {} : { limit: options.limit }),
       },
       options.signal === undefined ? undefined : { signal: options.signal },
     );
-    const projected = applyRoomSync(this.#state, delivery, { afterSeq });
+    const trustedLatestBootstrap =
+      cold &&
+      delivery.eventFloorSeq !== undefined &&
+      delivery.snapshotSeq !== undefined;
+    const applyAfterSeq = trustedLatestBootstrap
+      ? delivery.eventFloorSeq!
+      : afterSeq;
+    const projected = applyRoomSync(this.#state, delivery, {
+      afterSeq: applyAfterSeq,
+      ...(trustedLatestBootstrap ? { bootstrap: "latest" as const } : {}),
+    });
     const receipt = await this.#client.request(
       "room.acknowledge",
       {

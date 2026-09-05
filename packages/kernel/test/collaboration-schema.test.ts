@@ -21,7 +21,7 @@ test("schema v7 migrates legacy Rooms into one Workspace with proven Human owner
 
     const migrated = new DatabaseSync(databasePath);
     migrated.exec("PRAGMA foreign_keys = ON");
-    assert.equal(KERNEL_SCHEMA_VERSION, 46);
+    assert.equal(KERNEL_SCHEMA_VERSION, 50);
     assert.equal(
       (
         migrated.prepare("PRAGMA user_version").get() as {
@@ -45,6 +45,41 @@ test("schema v7 migrates legacy Rooms into one Workspace with proven Human owner
           workspace_id: "workspace_legacy",
         },
       ],
+    );
+    assert.ok(
+      migrated
+        .prepare("PRAGMA index_list(room_events)")
+        .all()
+        .some(
+          (row) =>
+            (row as { name: string }).name ===
+            "idx_room_events_message_aggregate",
+        ),
+    );
+    assert.ok(
+      migrated
+        .prepare("PRAGMA table_info(task_submissions)")
+        .all()
+        .some((row) => (row as { name: string }).name === "evidence_json"),
+    );
+    assert.ok(
+      migrated
+        .prepare("PRAGMA index_list(task_submissions)")
+        .all()
+        .some(
+          (row) =>
+            (row as { name: string }).name ===
+            "idx_task_submissions_room_created",
+        ),
+    );
+    assert.ok(
+      migrated
+        .prepare("PRAGMA index_list(task_reviews)")
+        .all()
+        .some(
+          (row) =>
+            (row as { name: string }).name === "idx_task_reviews_room_created",
+        ),
     );
     assert.deepEqual(
       migrated

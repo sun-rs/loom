@@ -19,6 +19,11 @@ import type {
 import type { WorkspaceAgentView } from "@rah-os/ui-web";
 
 import { PreviewCard } from "./preview-card.tsx";
+import {
+  useHumanIdentity,
+  useWorkspaceEntities,
+} from "./workspace-entity-context.tsx";
+import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
 import { AgentAvatar } from "./agent-avatar.tsx";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import {
@@ -35,20 +40,50 @@ export function MemberRelationshipSurface({
   agents,
   client,
   onBack,
+  onOpenAgent,
   workspaceId,
 }: {
   agents: readonly WorkspaceAgentView[];
   client: RahClient;
   onBack: () => void;
+  onOpenAgent: (id: string) => void;
   workspaceId: string | undefined;
 }) {
-  const [data, setData] = useState<ClientWorkspaceMemberGraphResponse>();
+  const humanIdentity = useHumanIdentity();
+  const entities = useWorkspaceEntities();
+  const actorId = entities?.scope?.actorId;
+  const [result, setResult] = useState<{
+    actorId: string | undefined;
+    workspaceId: string;
+    value: ClientWorkspaceMemberGraphResponse;
+  }>();
+  const raw =
+    result?.actorId === actorId && result?.workspaceId === workspaceId
+      ? result?.value
+      : undefined;
+  const data = useMemo(
+    () =>
+      raw && {
+        ...raw,
+        humans: raw.humans.map((human) => {
+          const person = entities?.person(human.principalId);
+          return person?.kind === "human"
+            ? {
+                ...human,
+                displayName: person.displayName ?? person.handle,
+                handle: person.handle,
+              }
+            : human;
+        }),
+      },
+    [raw, entities],
+  );
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(false);
   const [reload, setReload] = useState(0);
   useEffect(() => {
     if (workspaceId === undefined) {
-      setData(undefined);
+      setResult(undefined);
       setError(undefined);
       return;
     }
@@ -62,7 +97,8 @@ export function MemberRelationshipSurface({
         { signal: controller.signal },
       )
       .then((response) => {
-        if (!controller.signal.aborted) setData(response);
+        if (!controller.signal.aborted)
+          setResult({ actorId, workspaceId, value: response });
       })
       .catch((reason: unknown) => {
         if (!controller.signal.aborted) setError(errorMessage(reason));
@@ -71,7 +107,7 @@ export function MemberRelationshipSurface({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [client, reload, workspaceId]);
+  }, [client, reload, workspaceId, actorId]);
   const members = useMemo(
     () => (data ? [...data.humans, ...data.agents] : []),
     [data],
@@ -128,7 +164,8 @@ export function MemberRelationshipSurface({
       </header>
       {error ? (
         <p className="rah-member-graph-warning" role="status">
-          {error}；已保留上一次成功结果。
+          {error}
+          {data ? "；已保留本工作区上一次成功结果。" : ""}
         </p>
       ) : null}
       {data?.truncated ? (
@@ -137,7 +174,12 @@ export function MemberRelationshipSurface({
         </p>
       ) : null}
       <div className="rah-member-graph-grid">
-        <MemberGraphCanvas data={data} agents={agents} loading={loading} />
+        <MemberGraphCanvas
+          data={data}
+          agents={agents}
+          loading={loading}
+          onOpenAgent={onOpenAgent}
+        />
         <aside className="rah-member-graph-summary" aria-label="关系图摘要">
           <div className="rah-member-graph-counts">
             <GraphMetric label="人类" value={data?.humans.length ?? 0} />
@@ -149,14 +191,20 @@ export function MemberRelationshipSurface({
               <i>暂无成员关系</i>
             ) : (
               mostConnected.map((member) => (
-                <div
+                <button
+                  type="button"
+                  onClick={() =>
+                    member.type === "human"
+                      ? humanIdentity?.onOpenHuman(member.principalId)
+                      : onOpenAgent(member.agentDefinitionId)
+                  }
                   className="rah-member-graph-summary-row"
                   key={memberKey(member)}
                 >
                   <MemberCompactAvatar member={member} agents={agents} />
                   <b>{memberDisplayName(member)}</b>
                   <span>{degrees.get(memberKey(member)) ?? 0}</span>
-                </div>
+                </button>
               ))
             )}
           </GraphSummaryCard>
@@ -185,11 +233,14 @@ function MemberGraphCanvas({
   agents,
   data,
   loading,
+  onOpenAgent,
 }: {
   agents: readonly WorkspaceAgentView[];
   data: ClientWorkspaceMemberGraphResponse | undefined;
   loading: boolean;
+  onOpenAgent: (id: string) => void;
 }) {
+  const humanIdentity = useHumanIdentity();
   const container = useRef<HTMLDivElement>(null);
   const transformRef = useRef<ZoomTransform>(zoomIdentity);
   const [transform, setTransform] = useState<ZoomTransform>(zoomIdentity);
@@ -319,6 +370,11 @@ function MemberGraphCanvas({
               <PreviewCard
                 className="rah-member-graph-preview"
                 label={memberDisplayName(member)}
+                onClick={
+                  member.type === "human"
+                    ? () => humanIdentity?.onOpenHuman(member.principalId)
+                    : () => onOpenAgent(member.agentDefinitionId)
+                }
                 triggerClassName={`rah-member-graph-node-trigger is-${member.type}`}
                 content={
                   <MemberGraphPreview
@@ -355,6 +411,7 @@ function MemberNodeAvatar({
   agents: readonly WorkspaceAgentView[];
   member: Member;
 }) {
+  const entities = useWorkspaceEntities();
   if (member.type === "agent") {
     const agent = agents.find(
       ({ agentDefinitionId }) => agentDefinitionId === member.agentDefinitionId,
@@ -383,10 +440,15 @@ function MemberNodeAvatar({
       />
     );
   }
+  const person =
+    entities?.resolvePerson({ ...member, kind: "human" }) ?? member;
   return (
-    <span className="rah-member-graph-human-avatar" aria-hidden="true">
-      {member.displayName.slice(0, 1).toUpperCase()}
-    </span>
+    <ProfileImageAvatar
+      avatarKey={person.avatarKey}
+      name={person.displayName || person.handle}
+      principalId={person.principalId}
+      size="sidebar"
+    />
   );
 }
 

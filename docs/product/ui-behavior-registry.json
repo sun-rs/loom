@@ -4,6 +4,27 @@
   "legacyInventory": "packages/raft-ui-snapshot/reference/protocol/rah-ui-capability-inventory.json",
   "sources": [
     {
+      "id": "raft-settings-20260905",
+      "kind": "official-published",
+      "path": "docs/evidence/raft-settings-20260905.js",
+      "sha256": "82aeff3dfec47b269824d1d955298b8d429e6c281d0e33691c92d3faa6eb4926",
+      "url": "https://app.raft.build/assets/SettingsPanel-DHSayJ6f.js"
+    },
+    {
+      "id": "raft-settings-live-observation-20260905",
+      "kind": "official-observation",
+      "path": "docs/evidence/raft-settings-live-observation-20260905.json",
+      "sha256": "9230243b4ea2d7a8ae83e39f7ec059195b524bf5264072e2342c481e958e7b48",
+      "url": "https://app.raft.build"
+    },
+    {
+      "id": "raft-human-20260831",
+      "kind": "official-published",
+      "path": "docs/evidence/raft-web-20260831-current/HumanDetailPanel-DvWNsDz9.js",
+      "sha256": "83c31367e48dc1ff6fb75c763ae78fafe16070d53e7d4d58ba16303f7c49bceb",
+      "url": "https://app.raft.build/assets/HumanDetailPanel-DvWNsDz9.js"
+    },
+    {
       "path": "docs/evidence/raft-web-20260831-current/index-BoAC7nSE.js",
       "sha256": "7328c15614ac53c7cc906e0f56665dd822a4c0ffaa64e4cb6b9a7a76a692b26a",
       "id": "raft-web-20260831",
@@ -32,6 +53,90 @@
   ],
   "adoptions": [
     {
+      "id": "settings-family-body",
+      "kind": "extracted-port",
+      "source": "raft-settings-20260905",
+      "owner": "packages/ui-tokens/src/neo-brutalist/settings.css",
+      "locator": "Lc Language & Region / Yc Appearance / Ec Workspace profile / notification section",
+      "needles": [
+        "pointer-events-none -mx-2",
+        "bg-brutal-lime",
+        "data-save-state"
+      ],
+      "differences": "Shared Settings CSS structurally adopted into internal owner, not copied original React. Raft 1.12.0 was also inspected live after unlock. Local device storage, Human CAS, avatar upload intents, canonical Room sequencing and current membership remain RAH-owned; billing/central apps omitted. Translation modes are visibly disabled until a canonical owner exists; Administration and MCP are not claimed feature-equivalent. Current source scope and publication hash: docs/design/settings-page-family.md."
+    },
+    {
+      "id": "profile-family-projection",
+      "kind": "rah-local",
+      "owner": "apps/web/src/agent-runtime-presentation.ts",
+      "differences": "Scoped Agent/Runtime binding projection shared by profile and preview; explicit unknown/error/ambiguous labels. Agent/Computer field/section geometry structurally adopted from published sources reviewed in docs/design/agent-computer-profile-family.md; internal profile/preview styles replace page rules. Computer diagnostics and local-only navigation are intentional adaptations; no invented Human hardware ownership."
+    },
+    {
+      "id": "human-profile-body",
+      "kind": "extracted-port",
+      "source": "raft-human-20260831",
+      "owner": "packages/ui-web/src/neo-brutalist/profile-section.tsx",
+      "locator": "HumanDetailPanel section/divider/createdAgents. Current published ut reverified 2026-09-04; see ui-entity-network-closure.md.",
+      "needles": ["px-5 py-4 border-t border-black/10", "createdAgents"],
+      "differences": "RAH Workspace-scoped membership and revision-one creator edges; local Principal description/avatar edits use existing typed SDK and authenticated metadata owner with optimistic conflict checks. No central email, self-DM, global account removal, hardware ownership or new provisioning authority."
+    },
+    {
+      "id": "entity-card-body",
+      "kind": "extracted-port",
+      "source": "raft-web-20260831",
+      "owner": "packages/ui-web/src/neo-brutalist/entity-card.tsx",
+      "locator": "Shared profile row (live 2026-09-04 hre/X$e), frozen structural landmarks; current source review in docs/evidence/raft-ui-body-20260904.json.",
+      "needles": [
+        "flex min-w-0 flex-wrap items-baseline gap-x-2",
+        "group px-3 py-2",
+        "border-black/30 bg-white"
+      ],
+      "differences": "RAH native button owns the whole hit target, disabled and focus-visible; existing scoped entity read model and presence projector supply slots. No central runtime truth or selection/bulk-action mode imported."
+    },
+    {
+      "id": "contextual-empty-body",
+      "kind": "extracted-port",
+      "source": "raft-web-20260831",
+      "owner": "packages/ui-web/src/neo-brutalist/empty-state.tsx",
+      "locator": "Search home and shared empty component (live pg/Vo), plus official Tasks empty computed tokens. Explicit context and placement; caller still owns error/loading.",
+      "needles": [
+        "px-6 py-12 text-center",
+        "mb-2 text-lg font-display font-semibold text-black/60",
+        "flex h-full flex-col items-center justify-center text-center"
+      ],
+      "differences": "RAH keeps request failures distinct from an empty response. Search home/no-result, global and Room Tasks, Agent Activity and global Activity now consume one named-context owner. Activity diagnostic headers stay mounted; empty content fills the remaining body. Search suggestions replace initial empty content."
+    },
+    {
+      "id": "discovery-control-family",
+      "kind": "extracted-port",
+      "source": "raft-web-20260831",
+      "owner": "apps/web/src/raft-discovery-controls.ts",
+      "locator": "Raft RN/MN/uat/mat/fat and HG Tasks/Search control behavior; published labels and selection ordering.",
+      "needles": [
+        "我创建的",
+        "分配给我的",
+        "相关度",
+        "aria-haspopup",
+        "role:\"menu\""
+      ],
+      "differences": "RAH retains the Raft Tasks/Search control order, sentinel rows, query/sort rules and popover behavior, but resolves people from the canonical Workspace entity graph and executes local typed SDK queries. No Raft central relevance service or simulated reference store is imported."
+    },
+    {
+      "id": "message-social-family",
+      "kind": "extracted-port",
+      "source": "raft-web-20260831",
+      "owner": "apps/web/src/components/message-social.tsx",
+      "locator": "Raft ordinary-message three-action toolbar and seven-item quick-reaction/bookmark affordances.",
+      "needles": [
+        "添加回应",
+        "收藏消息",
+        "smile-plus",
+        "group-hover:opacity-100",
+        "role:\"menuitemradio\""
+      ],
+      "differences": "Raft interaction shape is preserved while shared reactions and private saves are durable RAH Kernel facts. The current scope excludes message edit/delete policy and does not infer business completion from a social action."
+    },
+    {
       "id": "panel-header-slots",
       "kind": "extracted-port",
       "source": "raft-web-20260831",
@@ -49,7 +154,7 @@
       "id": "controlled-panel-tabs",
       "kind": "rah-local",
       "owner": "packages/ui-web/src/neo-brutalist/panel-tabs.tsx",
-      "differences": "合并 Room/Agent 的受控 Tabs；参考官方 TabList enableHomeAndEndKeys/loopFocus/disabledIndices，自动激活沿用本地 Agent 行为。只移动本 Tab viewport，不接管选中页/URL/ACL。"
+      "differences": "合并 Room/Agent 的受控 Tabs；官方 activateOnFocus=false（冻结 bundle 默认值和 2026-09-04 官方键盘实测）要求箭头/Home/End 只移动焦点，Enter/Space 激活。只移动本 Tab viewport，不接管选中页/URL/ACL。双边回放来源见 docs/design/ui-comparison-plan.json。"
     },
     {
       "id": "font-original",
@@ -87,10 +192,101 @@
       "id": "header-action",
       "kind": "rah-local",
       "owner": "packages/ui-web/src/neo-brutalist/panel-header-action.tsx",
-      "differences": "统一现有28px按钮/14px SVG；复用 sq-btn / interaction-state 视觉协议，不引入新样式系统。"
+      "differences": "统一28px按钮/14px SVG，Search清空为官方p-1+12px图标对应24px compact变体；复用 sq-btn / interaction-state 视觉协议，不引入新样式系统。"
+    },
+    {
+      "id": "push-read-presentation",
+      "kind": "rah-local",
+      "owner": "apps/web/src/web-push-presentation.ts",
+      "differences": "仅通知读取状态展示：未知不等于无订阅、不支持或零设备，异常可见且只读重试，复用既有Raft registration helpers与latest-request，非通知投递状态机。"
     }
   ],
   "scenarios": [
+    {
+      "id": "settings-family",
+      "runner": "scripts/run-ui-foundation-browser-gate.mjs",
+      "coverage": [
+        "desktop",
+        "390x844",
+        "pristine-dirty-submit",
+        "background-refresh-draft",
+        "canonical-sequence",
+        "late-entity-switch",
+        "permission-denied",
+        "read-error-retry",
+        "inert-preview",
+        "toggle-keyboard",
+        "language-translation-disabled",
+        "time-format-keyboard-reload",
+        "time-format-storage-failure-retains-dirty",
+        "push-colors-request-feedback"
+      ]
+    },
+    {
+      "id": "profile-read-state",
+      "runner": "scripts/run-ui-foundation-browser-gate.mjs",
+      "coverage": [
+        "loading",
+        "read-error-not-absent-creator",
+        "unloaded",
+        "read-only-actions"
+      ]
+    },
+    {
+      "id": "preview-lifetime",
+      "runner": "scripts/run-ui-foundation-browser-gate.mjs",
+      "coverage": [
+        "pending-escape",
+        "open-escape",
+        "hover-transfer",
+        "outside-dismiss"
+      ]
+    },
+    {
+      "id": "preview-content",
+      "runner": "scripts/run-ui-foundation-browser-gate.mjs",
+      "coverage": [
+        "manager",
+        "creator",
+        "permission-denied-no-trajectory-read",
+        "empty-omission",
+        "profile-error",
+        "activity-error",
+        "unsupported-effort",
+        "retained-preview-presence-refresh",
+        "shared-event-row-geometry",
+        "long-name",
+        "390x844"
+      ]
+    },
+    {
+      "id": "profile-family",
+      "runner": "scripts/run-ui-foundation-browser-gate.mjs",
+      "coverage": [
+        "real-kernel-and-ui",
+        "natural-section-geometry",
+        "computer-agent-roundtrip",
+        "computer-description-save-reload-cancel",
+        "agent-description-save-reload-cancel",
+        "runtime-dialog-dirty-state",
+        "reset-report-cancel",
+        "desktop",
+        "390x844"
+      ]
+    },
+    {
+      "id": "push-read-state",
+      "runner": "scripts/run-ui-foundation-browser-gate.mjs",
+      "coverage": [
+        "pending",
+        "read-failure",
+        "no-false-ios",
+        "unknown-not-zero",
+        "retry",
+        "late-read",
+        "no-subscription-mutation"
+      ]
+    },
     {
       "id": "integrated-shell-layout",
       "runner": "scripts/run-ui-foundation-browser-gate.mjs",
@@ -102,6 +298,24 @@
         "header-divider",
         "close-hit-target",
         "canonical-read-callback"
+      ]
+    },
+    {
+      "id": "discovery-page-family",
+      "runner": "scripts/run-ui-foundation-browser-gate.mjs",
+      "coverage": [
+        "real-kernel-and-ui",
+        "tasks-board-list",
+        "tasks-filter-search",
+        "sentinel-without-avatar",
+        "canonical-agent-avatar",
+        "search-no-result",
+        "shared-empty-contexts",
+        "message-three-action-toolbar",
+        "seven-quick-reactions",
+        "escape-focus-return",
+        "desktop",
+        "390x844"
       ]
     },
     {
@@ -173,6 +387,103 @@
     }
   ],
   "behaviors": [
+    {
+      "id": "UI010",
+      "intent": "settings.page-family",
+      "status": "migrated",
+      "owners": [
+        "packages/ui-tokens/src/neo-brutalist/settings.css",
+        "apps/web/src/components/settings-pages.tsx",
+        "apps/web/src/date-time-presentation.ts",
+        "apps/web/src/workspace-profile-edit.ts",
+        "apps/web/src/components/web-push-settings.tsx"
+      ],
+      "adoptions": ["settings-family-body"],
+      "evidenceSources": ["raft-settings-live-observation-20260905"],
+      "scenarios": [
+        "settings-family",
+        "integrated-shell-layout",
+        "push-read-state"
+      ],
+      "currentScope": "设置共享正文/卡片/表单；账户及空间草稿、版本/旧响应保护，真实消息语法的非交互预览、通知颜色和请求回执、角色来自membership。Raft 1.12.0官网实时只读核验后补回语言与区域：简体中文/设备时区如实只读，共享格式化owner负责跨页面12/24小时制本地偏好，未接入的翻译模式明确禁用。12个RAH设置区导航验收不等于管理/MCP功能全实现；OS/iOS通知送达另验。"
+    },
+    {
+      "id": "UI009",
+      "intent": "identity.agent-computer.profile-family",
+      "status": "migrated",
+      "owners": [
+        "apps/web/src/agent-runtime-presentation.ts",
+        "apps/web/src/components/computer-identity.tsx",
+        "apps/web/src/components/agent-message-identity.tsx",
+        "apps/web/src/components/preview-card.tsx",
+        "apps/web/src/components/agent-directory-pane.tsx",
+        "apps/web/src/components/workspace-catalog-panes.tsx",
+        "packages/ui-web/src/neo-brutalist/profile-section.tsx",
+        "packages/ui-tokens/src/neo-brutalist/profile.css",
+        "packages/ui-tokens/src/neo-brutalist/preview.css"
+      ],
+      "adoptions": [
+        "human-profile-body",
+        "profile-family-projection",
+        "entity-card-body"
+      ],
+      "scenarios": [
+        "preview-lifetime",
+        "preview-content",
+        "profile-read-state",
+        "profile-family"
+      ],
+      "currentScope": "Agent/Computer正文与浮窗共享分区/Runtime含义；权限控制动态读取、空区省略、延迟Escape、Computer身份跳转；本机诊断折叠。保留原canonical命令，不包含完整实时trajectory订阅/全部运行时能力/Computer批量操作或Human硬件所有权。状态migrated不意味着最新官网全状态双边通过。"
+    },
+    {
+      "id": "UI008",
+      "intent": "member.human.profile",
+      "status": "migrated",
+      "owners": [
+        "packages/kernel/src/human-profile.ts",
+        "packages/kernel/src/principal-profile.ts",
+        "apps/web/src/human-profile-hooks.ts",
+        "apps/web/src/components/human-identity.tsx",
+        "apps/web/src/components/human-profile-fields.tsx",
+        "apps/web/src/components/human-profile-pane.tsx",
+        "apps/web/src/components/agent-sidebar.tsx",
+        "apps/web/src/workspace-entities.ts",
+        "packages/ui-web/src/neo-brutalist/profile-section.tsx",
+        "packages/ui-web/src/neo-brutalist/profile-field.tsx"
+      ],
+      "adoptions": ["human-profile-body", "entity-card-body"],
+      "scenarios": ["integrated-shell-layout"],
+      "currentScope": "Human侧栏/消息头像/提及/Agent创建者/关系图统一资料入口；授权资料/创建关系、本人描述与头像编辑、账户名与头像同源更新、旧编辑冲突/失败保留草稿。无self-DM/中央邮箱/全空间移除/计算机所有权或全Human目录；官方源码参考不等同最新官网双边浏览器通过。"
+    },
+    {
+      "id": "UI006",
+      "intent": "profile.entity.card",
+      "status": "migrated",
+      "owners": [
+        "packages/ui-web/src/neo-brutalist/entity-card.tsx",
+        "apps/web/src/components/agent-entity-card.tsx",
+        "packages/ui-tokens/src/neo-brutalist/body-primitives.css"
+      ],
+      "adoptions": ["entity-card-body"],
+      "scenarios": ["foundation-combinations", "integrated-shell-layout"],
+      "currentScope": "Computer、Agent和Human资料中已创建Agent卡片，共享身份/状态槽；不包含批量选择与完整资料section。"
+    },
+    {
+      "id": "UI007",
+      "intent": "surface.contextual-empty-state",
+      "status": "migrated",
+      "owners": [
+        "packages/ui-web/src/neo-brutalist/empty-state.tsx",
+        "packages/ui-tokens/src/neo-brutalist/body-primitives.css"
+      ],
+      "adoptions": ["contextual-empty-body"],
+      "scenarios": [
+        "foundation-combinations",
+        "integrated-shell-layout",
+        "discovery-page-family"
+      ],
+      "currentScope": "搜索首页/无结果、全局与Room任务、Agent动态及全局动态消费同一命名context；加载/错误不冒充空结果。未迁移的MCP/Files等Capability专用空态不在本项范围。"
+    },
     {
       "id": "B001",
       "intent": "activity.filter.change",
@@ -536,10 +847,16 @@
     {
       "id": "B025",
       "intent": "chat.message.action",
-      "status": "historical-unreviewed",
-      "owners": [],
-      "adoptions": [],
-      "scenarios": [],
+      "status": "migrated",
+      "owners": [
+        "apps/web/src/components/message-social.tsx",
+        "apps/web/src/components/message-context-menu.tsx",
+        "apps/web/src/message-social-store.ts",
+        "packages/kernel/src/message-social.ts"
+      ],
+      "adoptions": ["message-social-family"],
+      "scenarios": ["discovery-page-family"],
+      "currentScope": "普通消息hover/focus三按钮、7项快速回应、回应者浮层、私人收藏与上下文菜单接入canonical owner；本登记不宣称消息编辑/删除或所有角色菜单与Raft完全一致。",
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",
@@ -1018,10 +1335,15 @@
     {
       "id": "B057",
       "intent": "search.filter.change",
-      "status": "historical-unreviewed",
-      "owners": [],
-      "adoptions": [],
-      "scenarios": [],
+      "status": "migrated",
+      "owners": [
+        "apps/web/src/components/global-discovery.tsx",
+        "apps/web/src/components/discovery-filter.tsx",
+        "packages/application-service/src/client-discovery-routes.ts"
+      ],
+      "adoptions": ["discovery-control-family"],
+      "scenarios": ["discovery-page-family"],
+      "currentScope": "全局Search的发送者、范围、频道、时间筛选，URL投影和typed本地查询；不包含Raft中央相关度服务。",
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",
@@ -1033,10 +1355,14 @@
     {
       "id": "B058",
       "intent": "search.filters.clear",
-      "status": "historical-unreviewed",
-      "owners": [],
-      "adoptions": [],
-      "scenarios": [],
+      "status": "migrated",
+      "owners": [
+        "apps/web/src/components/global-discovery.tsx",
+        "apps/web/src/raft-discovery-controls.ts"
+      ],
+      "adoptions": ["discovery-control-family"],
+      "scenarios": ["discovery-page-family"],
+      "currentScope": "清除Search筛选但保留当前surface/Room位置；搜索框独立清空并还焦点。",
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",
@@ -1048,10 +1374,14 @@
     {
       "id": "B059",
       "intent": "search.query.change",
-      "status": "historical-unreviewed",
-      "owners": [],
-      "adoptions": [],
-      "scenarios": [],
+      "status": "migrated",
+      "owners": [
+        "apps/web/src/components/global-discovery.tsx",
+        "packages/application-service/src/client-discovery-routes.ts"
+      ],
+      "adoptions": ["discovery-control-family"],
+      "scenarios": ["discovery-page-family", "integrated-shell-layout"],
+      "currentScope": "受控查询、Escape清空并还焦点、历史建议、零结果空态和typed本地检索；IME组合输入及请求loading/error分支仍保留为后续逐状态浏览器覆盖，不声称复制Raft服务端索引算法。",
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",
@@ -1063,10 +1393,15 @@
     {
       "id": "B060",
       "intent": "search.sort.change",
-      "status": "historical-unreviewed",
-      "owners": [],
-      "adoptions": [],
-      "scenarios": [],
+      "status": "migrated",
+      "owners": [
+        "apps/web/src/components/global-discovery.tsx",
+        "apps/web/src/raft-discovery-controls.ts",
+        "packages/application-service/src/client-discovery-routes.ts"
+      ],
+      "adoptions": ["discovery-control-family"],
+      "scenarios": ["discovery-page-family"],
+      "currentScope": "有查询时可选相关度/最新，无查询时固定最新；排序由本地canonical索引执行，不冒充Raft中央搜索质量。",
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",
@@ -1243,10 +1578,16 @@
     {
       "id": "B072",
       "intent": "tasks.filter.change",
-      "status": "historical-unreviewed",
-      "owners": [],
-      "adoptions": [],
-      "scenarios": [],
+      "status": "migrated",
+      "owners": [
+        "apps/web/src/components/global-discovery.tsx",
+        "apps/web/src/components/task-person-options.tsx",
+        "apps/web/src/components/discovery-filter.tsx",
+        "packages/application-service/src/client-discovery-routes.ts"
+      ],
+      "adoptions": ["discovery-control-family"],
+      "scenarios": ["discovery-page-family"],
+      "currentScope": "全局任务频道/创建者/负责人筛选；自我与未分配为无头像sentinel，Agent行来自统一实体网。",
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",
@@ -1258,10 +1599,14 @@
     {
       "id": "B073",
       "intent": "tasks.filters.clear",
-      "status": "historical-unreviewed",
-      "owners": [],
-      "adoptions": [],
-      "scenarios": [],
+      "status": "migrated",
+      "owners": [
+        "apps/web/src/components/global-discovery.tsx",
+        "apps/web/src/raft-discovery-controls.ts"
+      ],
+      "adoptions": ["discovery-control-family"],
+      "scenarios": ["discovery-page-family"],
+      "currentScope": "清除全局任务筛选并保留任务surface；异步结果仍由latest-request隔离。",
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",
@@ -1273,10 +1618,14 @@
     {
       "id": "B074",
       "intent": "tasks.view.change",
-      "status": "historical-unreviewed",
-      "owners": [],
-      "adoptions": [],
-      "scenarios": [],
+      "status": "migrated",
+      "owners": [
+        "apps/web/src/components/global-discovery.tsx",
+        "apps/web/src/components/global-task-board.tsx"
+      ],
+      "adoptions": ["discovery-control-family"],
+      "scenarios": ["discovery-page-family"],
+      "currentScope": "全局任务看板/列表视图和URL投影；只改变展示，不创建第二个Task业务状态。",
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",
@@ -1301,7 +1650,7 @@
       "owners": ["packages/ui-web/src/neo-brutalist/panel-header-action.tsx"],
       "adoptions": ["header-action"],
       "scenarios": ["header-action-states", "foundation-combinations"],
-      "currentScope": "Room / Agent / Thread 标题栏图标按钮；Computer/Settings 和其余基础控件尚未全部迁移。"
+      "currentScope": "Room / Agent / Thread / Computer / Settings / Saved / 全局发现标题及返回，Search清空24px变体；非所有正文按钮。"
     },
     {
       "id": "UI003",
@@ -1317,7 +1666,19 @@
         "foundation-combinations",
         "integrated-shell-layout"
       ],
-      "currentScope": "Room / Agent / Thread 标题轨道；非全站 Shell，Settings / Computer / 全局发现未迁移。"
+      "currentScope": "Room / Agent / Thread / Settings / Computer / Saved / Search / 全局发现主标题，聊天/设置/成员/Computer 侧栏标题及36px图标槽。全部布局组合及正文仍未宣称迁移。"
+    },
+    {
+      "id": "UI005",
+      "intent": "settings.notifications.read-state",
+      "status": "migrated",
+      "owners": [
+        "apps/web/src/web-push-presentation.ts",
+        "apps/web/src/components/web-push-settings.tsx"
+      ],
+      "adoptions": ["push-read-presentation"],
+      "scenarios": ["push-read-state"],
+      "currentScope": "通知检查/失败/不支持的展示与只读重试、过期读取屏蔽；不等于整个设置或OS推送验收。"
     },
     {
       "id": "UI004",

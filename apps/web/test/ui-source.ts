@@ -13,6 +13,7 @@ export function readUiSource(path: string): string {
           "interaction-state.css",
           "panel-layout.css",
           "panel-foundations.css",
+          "settings.css",
         ].includes(path)
       ? `../../../packages/ui-tokens/src/neo-brutalist/${path}`
       : `../src/${path}`;

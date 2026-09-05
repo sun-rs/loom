@@ -6,6 +6,7 @@ import type { RoomEvent } from "@rah-os/protocol";
 import {
   messageMentionReadStateIndex,
   messageMentionReadStates,
+  messageReferenceReadStateRecordsIndex,
 } from "../src/message-reference-read-state.ts";
 
 const event = (
@@ -64,4 +65,22 @@ test("an unacknowledged exact mention remains unread and unrelated receipts do n
     "agent-alice": "unread",
   });
   assert.deepEqual(messageMentionReadStates("missing", events), {});
+});
+
+test("bounded canonical receipt records project to the same Message lookup", () => {
+  assert.deepEqual(
+    messageReferenceReadStateRecordsIndex([
+      {
+        messageId: "message-1",
+        principalId: "agent-alice",
+        readState: "read",
+      },
+      {
+        messageId: "message-1",
+        principalId: "agent-bob",
+        readState: "unread",
+      },
+    ]).get("message-1"),
+    { "agent-alice": "read", "agent-bob": "unread" },
+  );
 });

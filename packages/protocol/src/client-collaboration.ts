@@ -35,6 +35,15 @@ export const ClientPrincipalUpdateRequestSchema = z
       .nullable(),
     avatarUploadIntentId: IdentifierSchema.optional(),
     displayName: z.string().trim().min(1).max(120),
+    description: z.string().trim().max(3000).nullable().optional(),
+    expectedProfile: z
+      .object({
+        displayName: z.string().nullable(),
+        avatarKey: z.string().nullable(),
+        description: z.string().nullable(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 export type ClientPrincipalUpdateRequest = z.infer<

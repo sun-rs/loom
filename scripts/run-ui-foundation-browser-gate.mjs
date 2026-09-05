@@ -1,12 +1,16 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium, firefox } from "playwright";
 import { findChromeExecutable } from "./real-browser-gate-support.mjs";
+import {
+  classifyFoundationBrowserRequest,
+  requiredFoundationFixtureRequests,
+} from "./foundation-browser-request-policy.mjs";
 import {
   checkLibrary,
   libraryInputs,
@@ -15,12 +19,40 @@ import {
 import {
   startShellFixture,
   verifyIntegratedShell,
+  verifySurfaceHeaders,
 } from "./ui-shell-browser-scenarios.mjs";
+import { verifySecondaryHeaders } from "./ui-secondary-header-scenarios.mjs";
+import { verifyHumanProfile } from "./ui-human-browser-scenarios.mjs";
+import { verifyHumanFamily } from "./ui-human-family-browser-scenarios.mjs";
+import {
+  verifyPreviewLifetime,
+  verifyProfileFamily,
+  verifyPreviewContent,
+} from "./ui-profile-family-browser-scenarios.mjs";
+import { verifyPushReadStates } from "./ui-push-browser-scenarios.mjs";
+import {
+  verifySettingsFamily,
+  verifySettingsNavigation,
+} from "./ui-settings-family-browser-scenarios.mjs";
+import {
+  verifyBodyMatrix,
+  verifySearchHomeBody,
+} from "./ui-body-browser-scenarios.mjs";
+import { verifyDiscoveryFamily } from "./ui-discovery-family-browser-scenarios.mjs";
+import {
+  verifyStatusDots,
+  verifyEntitySurfaces,
+} from "./ui-identity-browser-scenarios.mjs";
 import {
   digest,
   registryPath,
   validateRegistry,
 } from "./ui-behavior-registry.mjs";
+import {
+  assertUiEvidenceInputSnapshot,
+  snapshotUiEvidenceInputs,
+  uiContractEvidenceInputPaths,
+} from "./ui-evidence-inputs.mjs";
 
 const registry = JSON.parse(readFileSync(registryPath, "utf8"));
 checkLibrary();
@@ -59,22 +91,10 @@ const receipt = {
   startedAt: new Date().toISOString(),
   // Record exact production/test inputs so an unchanged registry cannot make
   // an old successful receipt look current after implementation changes.
-  inputs: Object.fromEntries(
-    [
-      ...libraryInputs(),
-      ...readdirSync("apps/web/src", { recursive: true })
-        .map(String)
-        .filter((p) => /\.(?:css|ts|tsx)$/.test(p))
-        .map((p) => `apps/web/src/${p}`),
-      "apps/web/test/ui-foundations.tsx",
-      "apps/web/test/ui-foundations.html",
-      "scripts/run-ui-foundation-browser-gate.mjs",
-      "scripts/ui-shell-browser-scenarios.mjs",
-      "package-lock.json",
-    ]
-      .sort()
-      .map((path) => [path, digest(readFileSync(path))]),
-  ),
+  inputs: snapshotUiEvidenceInputs({
+    extraPaths: [...libraryInputs(), ...uiContractEvidenceInputPaths()],
+  }),
+  requestGuards: [],
   results: [],
   output,
 };
@@ -103,28 +123,112 @@ try {
             headless: true,
           })
         : await firefox.launch({ headless: true });
-    const page = await browser.newPage({
+    const errors = [];
+    const rejectedRequests = [];
+    const blockedRequests = [];
+    const observedApiRequests = new Map();
+    const classifyRequest = (request) =>
+      classifyFoundationBrowserRequest({
+        fixtureOrigin: shellFixture?.origin,
+        harnessOrigin: origin,
+        method: request.method(),
+        url: request.url(),
+      });
+    const observeRequest = (request) => {
+      const result = classifyRequest(request);
+      if (result.decision === "allow-api")
+        observedApiRequests.set(
+          result.identity,
+          (observedApiRequests.get(result.identity) ?? 0) + 1,
+        );
+      else if (result.decision === "reject")
+        rejectedRequests.push(`${result.identity} (${result.reason})`);
+    };
+    const routeRequest = (route) => {
+      const result = classifyRequest(route.request());
+      if (result.decision !== "reject") return route.continue();
+      blockedRequests.push(`${result.identity} (${result.reason})`);
+      return route.abort();
+    };
+    const guardPage = async (target) => {
+      target.on("request", observeRequest);
+      await target.route("**/*", routeRequest);
+    };
+    const observeErrors = (target, sink = errors) => {
+      const expectedSandboxServiceWorkerError = (message) =>
+        message.includes(
+          "Service worker is disabled because the context is sandboxed and lacks the 'allow-same-origin' flag",
+        );
+      target.on("pageerror", (error) => {
+        if (!expectedSandboxServiceWorkerError(String(error)))
+          sink.push(String(error));
+      });
+      target.on("console", (message) => {
+        if (
+          message.type() === "error" &&
+          !expectedSandboxServiceWorkerError(message.text())
+        )
+          sink.push(`${message.text()} ${message.location().url}`);
+      });
+      target.on("response", (response) => {
+        if (response.status() >= 400)
+          sink.push(`${response.status()} ${response.url()}`);
+      });
+    };
+    const instrumentedBrowser = {
+      async newContext(options = {}) {
+        const context = await browser.newContext({
+          ...options,
+          serviceWorkers: "block",
+        });
+        context.on("request", observeRequest);
+        await context.route("**/*", routeRequest);
+        return context;
+      },
+      async newPage(options = {}) {
+        const target = await browser.newPage({
+          ...options,
+          serviceWorkers: "block",
+        });
+        await guardPage(target);
+        return target;
+      },
+    };
+    const page = await instrumentedBrowser.newPage({
       viewport: { width: 1440, height: 900 },
     });
-    const errors = [];
-    page.on("pageerror", (error) => errors.push(String(error)));
-    page.on("console", (message) => {
-      if (message.type() === "error") errors.push(message.text());
-    });
-    page.on("response", (response) => {
-      if (response.status() >= 400)
-        errors.push(`${response.status()} ${response.url()}`);
-    });
-    // Fixture may load modules/assets only; accidental production requests fail.
-    await page.route(/\/v[13]\//, (route) => {
-      errors.push(`unexpected API ${route.request().url()}`);
-      return route.abort();
-    });
+    observeErrors(page);
     const scenario = async (id, run) => {
+      await page.evaluate(() => document.fonts.ready);
       await page.goto(`${origin}/test/ui-foundations.html`, {
         waitUntil: "networkidle",
       });
-      await run();
+      await page.evaluate(() => document.fonts.ready);
+      try {
+        await run();
+      } catch (error) {
+        await page.screenshot({
+          path: join(output, `${engine}-${id}-failure.png`),
+        });
+        writeFileSync(
+          join(output, `${engine}-${id}-failure.json`),
+          JSON.stringify(
+            {
+              url: page.url(),
+              errors,
+              blockedRequests,
+              rejectedRequests,
+              body: await page.locator("body").innerText(),
+            },
+            null,
+            2,
+          ),
+        );
+        throw error;
+      }
+      await page.evaluate(() => document.fonts.ready);
+      assert.deepEqual(blockedRequests, []);
+      assert.deepEqual(rejectedRequests, []);
       assert.deepEqual(errors, []);
       receipt.results.push({
         engine,
@@ -133,6 +237,61 @@ try {
         status: "passed",
       });
     };
+    await scenario("preview-lifetime", async () => {
+      // Virtual clock injects instrumentation into future frames. Keep it out
+      // of the production file-preview sandbox exercised by later scenarios.
+      const clockPage = await instrumentedBrowser.newPage();
+      const clockErrors = [];
+      observeErrors(clockPage, clockErrors);
+      try {
+        await clockPage.goto(`${origin}/test/ui-foundations.html`, {
+          waitUntil: "networkidle",
+        });
+        await verifyPreviewLifetime(clockPage);
+      } finally {
+        await clockPage.close();
+      }
+      assert.deepEqual(clockErrors, []);
+    });
+    await scenario("settings-family", async () => {
+      const settingsPage = await instrumentedBrowser.newPage();
+      const settingsErrors = [];
+      observeErrors(settingsPage, settingsErrors);
+      try {
+        await verifySettingsFamily(settingsPage, origin, output, engine);
+      } finally {
+        await settingsPage.close();
+      }
+      assert.deepEqual(settingsErrors, []);
+    });
+    await scenario("preview-content", () =>
+      verifyPreviewContent(page, output, engine),
+    );
+    await scenario("profile-read-state", async () => {
+      for (const state of ["loading", "error", "unloaded"]) {
+        await page.goto(
+          `${origin}/test/ui-foundations.html?profile-state=${state}`,
+          { waitUntil: "networkidle" },
+        );
+        const profile = page.locator(".rah-agent-profile-pane");
+        const text = await profile.textContent();
+        assert.equal(
+          text.includes("未分配创建者"),
+          false,
+          "failed or unknown read cannot claim absent creator",
+        );
+        if (state === "error") assert.ok(text.includes("暂时无法读取创建者"));
+        assert.equal(
+          await profile
+            .getByRole("button", { name: "管理 Agent", exact: true })
+            .isDisabled(),
+          true,
+        );
+      }
+      await page.goto(`${origin}/test/ui-foundations.html`, {
+        waitUntil: "networkidle",
+      });
+    });
     await scenario("panel-header-geometry", async () => {
       await page.setViewportSize({ width: 1440, height: 598 });
       const room = await page.locator(".rah-conversation-head").boundingBox();
@@ -159,6 +318,17 @@ try {
       await chat.focus();
       await page.keyboard.press("ArrowRight");
       assert.equal(
+        await chat.getAttribute("aria-selected"),
+        "true",
+        "arrow moves focus without selection (Raft activateOnFocus=false)",
+      );
+      assert.equal(
+        await page.evaluate(() => document.activeElement?.textContent),
+        "文件",
+        "disabled Tasks skipped",
+      );
+      await page.keyboard.press("Enter");
+      assert.equal(
         await list
           .getByRole("tab", { name: "文件", exact: true })
           .getAttribute("aria-selected"),
@@ -171,8 +341,16 @@ try {
         "one tab stop per group",
       );
       await page.keyboard.press("Home");
+      assert.equal(
+        await chat.getAttribute("aria-selected"),
+        "false",
+        "Home is focus-only",
+      );
+      await page.keyboard.press("Enter");
       assert.equal(await chat.getAttribute("aria-selected"), "true");
       await page.keyboard.press("ArrowLeft");
+      assert.equal(await chat.getAttribute("aria-selected"), "true");
+      await page.keyboard.press("Space");
       assert.equal(
         await list
           .getByRole("tab", { name: "文件", exact: true })
@@ -181,6 +359,7 @@ try {
         "wrap to last enabled item",
       );
       await page.keyboard.press("ArrowRight");
+      await page.keyboard.press("Enter");
       assert.equal(await chat.getAttribute("aria-selected"), "true");
       const agent = page.getByRole("tablist", { name: "Agent 详情" });
       assert.equal(
@@ -194,6 +373,16 @@ try {
       await activity.focus();
       await page.keyboard.press("End");
       const mcp = agent.getByRole("tab", { name: "MCP", exact: true });
+      assert.equal(
+        await activity.getAttribute("aria-selected"),
+        "true",
+        "Agent Tabs also use focus-only navigation",
+      );
+      assert.equal(
+        await mcp.evaluate((e) => document.activeElement === e),
+        true,
+      );
+      await page.keyboard.press("Enter");
       assert.equal(await mcp.getAttribute("aria-selected"), "true");
       assert.equal(
         await mcp.evaluate((e) => {
@@ -211,6 +400,7 @@ try {
         "MCP must become visible and clickable in a narrow inspector",
       );
       await page.keyboard.press("ArrowRight");
+      await page.keyboard.press("Enter");
       assert.equal(await activity.getAttribute("aria-selected"), "true");
       for (const label of ["全部禁用", "空数据"])
         assert.equal(
@@ -447,6 +637,11 @@ try {
       });
     });
     await scenario("foundation-combinations", async () => {
+      await verifyStatusDots(page);
+      await verifyBodyMatrix(page, output, engine);
+      await page.locator("main").evaluate((e) => {
+        e.scrollTop = 0;
+      });
       for (const width of [
         390, 700, 701, 767, 768, 1023, 1024, 1279, 1280, 1440,
       ]) {
@@ -511,8 +706,64 @@ try {
     });
     await scenario("integrated-shell-layout", async () => {
       shellFixture ??= await startShellFixture();
-      await page.unroute(/\/v[13]\//);
       await verifyIntegratedShell(page, shellFixture.origin, output, engine);
+      await verifySurfaceHeaders(page, shellFixture.origin, output, engine);
+      await verifySecondaryHeaders(page, shellFixture.origin, output, engine);
+      await verifyEntitySurfaces(page, shellFixture.origin, output, engine);
+      await verifyHumanProfile(
+        instrumentedBrowser,
+        shellFixture.origin,
+        output,
+        engine,
+      );
+      await verifyHumanFamily(
+        instrumentedBrowser,
+        shellFixture.origin,
+        output,
+        engine,
+      );
+      await verifySearchHomeBody(page, shellFixture.origin, output, engine);
+      await verifySettingsNavigation(page, shellFixture.origin, output, engine);
+    });
+    await scenario("discovery-page-family", async () => {
+      shellFixture ??= await startShellFixture();
+      await verifyDiscoveryFamily(page, shellFixture.origin, output, engine);
+    });
+    await scenario("profile-family", async () => {
+      shellFixture ??= await startShellFixture();
+      await verifyProfileFamily(
+        instrumentedBrowser,
+        shellFixture.origin,
+        output,
+        engine,
+      );
+    });
+    await scenario("push-read-state", async () => {
+      shellFixture ??= await startShellFixture();
+      await verifyPushReadStates(
+        instrumentedBrowser,
+        shellFixture.origin,
+        output,
+        engine,
+      );
+    });
+    for (const identity of requiredFoundationFixtureRequests)
+      assert.ok(
+        (observedApiRequests.get(identity) ?? 0) > 0,
+        `Required fixture request was not observed: ${identity}`,
+      );
+    assert.deepEqual(rejectedRequests, []);
+    assert.deepEqual(blockedRequests, []);
+    assert.deepEqual(errors, []);
+    receipt.requestGuards.push({
+      engine,
+      observedApiRequests: Object.fromEntries(
+        [...observedApiRequests].sort(([left], [right]) =>
+          left.localeCompare(right),
+        ),
+      ),
+      blockedRequests,
+      rejectedRequests,
     });
     await browser.close();
     browser = undefined;
@@ -527,12 +778,9 @@ try {
       "every registered scenario must actually execute",
     );
   }
-  for (const [path, hash] of Object.entries(receipt.inputs))
-    assert.equal(
-      digest(readFileSync(path)),
-      hash,
-      `source changed during test: ${path}`,
-    );
+  assertUiEvidenceInputSnapshot(receipt.inputs, {
+    extraPaths: [...libraryInputs(), ...uiContractEvidenceInputPaths()],
+  });
   assert.equal(
     digest(readFileSync(registryPath)),
     receipt.registrySha256,
@@ -542,6 +790,7 @@ try {
   receipt.error = String(error);
   throw error;
 } finally {
+  receipt.finishedAt = new Date().toISOString();
   await browser?.close();
   await shellFixture?.close();
   server.kill("SIGTERM");

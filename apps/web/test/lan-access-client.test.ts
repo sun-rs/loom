@@ -84,6 +84,10 @@ test("LAN access client uses only same-origin edge routes and never sends a Huma
 });
 
 test("LAN access client feature-detects loopback and rejects malformed edge data", async () => {
+  const loopback = new LanAccessClient({
+    fetch: async () => jsonResponse({ available: false }),
+  });
+  assert.deepEqual(await loopback.session(), { available: false });
   const absent = new LanAccessClient({
     fetch: async () => new Response("Not found", { status: 404 }),
   });

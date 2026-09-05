@@ -14,7 +14,8 @@
       "originSha256": "77f3f1c5c739207200e744db7facf9afe7fb6da89a7bc87d3a386069d2a5897d",
       "policy": "maintained-source",
       "changes": [
-        "Relocate the local activity CSS import to extracted/; declarations unchanged."
+        "Relocate the local activity CSS import to extracted/; declarations unchanged.",
+        "Move Activity header/icon geometry into shared PanelHeader/PanelHeaderIcon; remove fixed-height and duplicate badge rules (2026-09-04 Shell batch)."
       ]
     },
     {
@@ -85,7 +86,9 @@
       "originPath": "search.css",
       "originSha256": "1640e54c953209639bdc34c2ec5038e7f6db91f1b46dd878aff4f7db408c5612",
       "policy": "maintained-source",
-      "changes": []
+      "changes": [
+        "2026-09-04: Search header/tile geometry migrated to shared primitives; preserve flexible source-backed input/clear slot and hide the Esc hint below sm. No query or SDK owner moved."
+      ]
     },
     {
       "path": "packages/ui-tokens/src/neo-brutalist/styles.css",
@@ -93,7 +96,8 @@
       "originSha256": "4e319346acc987b92a065874f82f4ad46c4459c2ef60b67c9adfa4a5d35de8d7",
       "policy": "maintained-source",
       "changes": [
-        "Relocate local CSS imports from generated/ to extracted/; declarations unchanged."
+        "Relocate local CSS imports from generated/ to extracted/; declarations unchanged.",
+        "Remove legacy sidebar/channel header and badge declarations after migrating all production consumers to shared header slots (2026-09-04 Shell batch)."
       ]
     },
     {
@@ -101,7 +105,9 @@
       "originPath": "tokens.brutal.css",
       "originSha256": "4bfede7f21e84ecdbf0ffdd1486388e0962985852528eb662e798875d99f1017",
       "policy": "maintained-source",
-      "changes": []
+      "changes": [
+        "2026-09-04: Complete the existing black-opacity scale at 20/30/60%; unresolved CSS custom properties previously discarded borders and text styles. Guarded by ui-css-contract and real browser card/status assertions."
+      ]
     },
     {
       "path": "packages/ui-tokens/src/neo-brutalist/vendor/raft/fonts/raft-quote-glyphs.woff2",

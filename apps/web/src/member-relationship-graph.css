@@ -46,7 +46,7 @@
 }
 
 .rah-member-graph-warning {
-  background: var(--orange-soft);
+  background: color-mix(in srgb, var(--orange) 20%, var(--paper));
   border: var(--bd);
   font-size: 12px;
   font-weight: 700;
@@ -268,13 +268,6 @@
 .rah-member-graph-summary-row > span {
   color: var(--ink-50);
   font: 11px var(--mono);
-}
-
-.rah-member-graph-preview {
-  background: var(--bg);
-  border: var(--bd);
-  box-shadow: var(--shadow-s);
-  z-index: 110;
 }
 
 .rah-member-graph-preview-body {

@@ -18,6 +18,8 @@ jobs:
       - run: npm run check
       - run: npx playwright install --with-deps firefox
       - run: npm run test:web:foundations
+        timeout-minutes: 8
+      - run: npm run test:web:ui-compare
         timeout-minutes: 3
       - run: npm run test:web:browser
         timeout-minutes: 5

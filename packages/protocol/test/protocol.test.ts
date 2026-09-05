@@ -79,6 +79,7 @@ import {
   WorkerTaskReleaseRequestSchema,
   WorkerTaskStartRequestSchema,
   WorkerTaskSubmitRequestSchema,
+  WorkerTaskSubmissionRequestSchema,
   TaskSubmissionSchema,
 } from "../src/index.ts";
 
@@ -527,6 +528,52 @@ test("Client API v1/v2/v3 contracts are strict, actor-free, and transport-neutra
     snapshot: null,
   });
   assert.equal(syncResponse.cursorAfter, 0);
+  assert.deepEqual(
+    ClientRoomSyncRequestSchema.parse({
+      bootstrap: "latest",
+      consumerId: "browser-long-room",
+      limit: 500,
+      roomId: "room-1",
+    }),
+    {
+      bootstrap: "latest",
+      consumerId: "browser-long-room",
+      limit: 500,
+      roomId: "room-1",
+    },
+  );
+  const latestBootstrap = ClientRoomSyncResponseSchema.parse({
+    cursorAfter: 100_000,
+    cursorBefore: 0,
+    eventFloorSeq: 99_500,
+    events: [],
+    latestRoomSeq: 100_000,
+    snapshot: {
+      members: [{ handle: "human", kind: "human", principalId: "human-main" }],
+      room: {
+        createdAt: "2026-08-26T00:00:00.000Z",
+        kind: "channel",
+        name: "Main Room",
+        roomId: "room-1",
+        slug: "main-room",
+        workspaceId: "workspace-main",
+      },
+    },
+    snapshotSeq: 100_000,
+  });
+  assert.equal(latestBootstrap.eventFloorSeq, 99_500);
+  assert.equal(latestBootstrap.snapshotSeq, 100_000);
+  assert.throws(() =>
+    ClientRoomSyncResponseSchema.parse({
+      cursorAfter: 100_000,
+      cursorBefore: 0,
+      eventFloorSeq: 99_500,
+      events: [],
+      latestRoomSeq: 100_000,
+      snapshot: null,
+      snapshotSeq: 100_000,
+    }),
+  );
   const backwardReplayPage = ClientRoomSyncResponseSchema.parse({
     cursorAfter: 2,
     cursorBefore: 3,
@@ -1625,6 +1672,36 @@ test("Worker Artifact publication freezes Task-scoped evidence without accepting
       },
     ],
     createdAt: "2026-09-01T00:00:00.000Z",
+    evidence: {
+      artifactManifestDigest: `sha256:${"c".repeat(64)}`,
+      repository: {
+        baseCommit: "1".repeat(40),
+        headCommit: "2".repeat(40),
+        patchAttachmentId: "attachment-1",
+        patchDigest: `sha256:${"a".repeat(64)}`,
+        patchSize: 12,
+        repositoryId: `sha256:${"d".repeat(64)}`,
+        source: "host_observed",
+        vcs: "git",
+      },
+      schemaVersion: 1,
+      verification: {
+        artifactIds: ["attachment-1"],
+        source: "producer_declared",
+        status: "passed",
+        summary: "node --test passed",
+      },
+      workspace: {
+        hostId: "host-1",
+        placementId: "placement-1",
+        runAttemptId: "run-1",
+        source: "placement",
+        workspaceDefinitionId: "workspace-definition-1",
+        workspaceMode: "in_place",
+        workspaceMountDigest: `sha256:${"e".repeat(64)}`,
+        workspaceMountRevisionId: "workspace-mount-1",
+      },
+    },
     messageId: "message-1",
     producerId: "agent-1",
     roomId: "room-1",
@@ -1635,6 +1712,11 @@ test("Worker Artifact publication freezes Task-scoped evidence without accepting
     taskId: "task-1",
   });
   assert.equal(submission.artifacts[0]?.runAttemptId, "run-1");
+  assert.equal(submission.evidence?.repository.source, "host_observed");
+  assert.equal(submission.evidence?.verification.source, "producer_declared");
+  if (submission.evidence?.verification.source === "producer_declared") {
+    assert.equal(submission.evidence.verification.status, "passed");
+  }
   assert.throws(() =>
     TaskSubmissionSchema.parse({
       ...submission,
@@ -1642,6 +1724,103 @@ test("Worker Artifact publication freezes Task-scoped evidence without accepting
         submission.artifacts[0],
         { ...submission.artifacts[0], filename: "duplicate.md" },
       ],
+    }),
+  );
+  assert.throws(() =>
+    TaskSubmissionSchema.parse({
+      ...submission,
+      evidence: {
+        ...submission.evidence,
+        repository: {
+          ...submission.evidence?.repository,
+          patchAttachmentId: "missing-attachment",
+        },
+      },
+    }),
+  );
+
+  const userArtifacts = Array.from({ length: 10 }, (_, index) => ({
+    ...submission.artifacts[0]!,
+    attachmentId: `user-artifact-${index + 1}`,
+    filename: `artifact-${index + 1}.md`,
+    ordinal: index + 1,
+  }));
+  const systemPatchArtifact = {
+    ...submission.artifacts[0]!,
+    attachmentId: "system-delivery-patch",
+    filename: "rah-task-delivery.patch",
+    ordinal: 11,
+  };
+  assert.doesNotThrow(() =>
+    TaskSubmissionSchema.parse({
+      ...submission,
+      artifacts: [...userArtifacts, systemPatchArtifact],
+      evidence: {
+        ...submission.evidence,
+        repository: {
+          ...submission.evidence?.repository,
+          patchAttachmentId: systemPatchArtifact.attachmentId,
+        },
+        verification: { source: "not_provided" },
+      },
+    }),
+  );
+  assert.throws(() =>
+    TaskSubmissionSchema.parse({
+      ...submission,
+      artifacts: [...userArtifacts, systemPatchArtifact],
+      evidence: {
+        ...submission.evidence,
+        repository: {
+          reason: "not_git",
+          source: "unavailable",
+        },
+        verification: { source: "not_provided" },
+      },
+    }),
+  );
+});
+
+test("Worker Task submit freezes a producer-declared verification result without accepting attestation fields", () => {
+  const command = WorkerTaskSubmitRequestSchema.parse({
+    basedOnRoomSeq: 9,
+    idempotencyKey: "submit-verified-1",
+    summary: "Implemented the requested change",
+    taskId: "task-1",
+    verification: {
+      artifactIds: ["artifact-1"],
+      status: "passed",
+      summary: "npm test passed",
+    },
+  });
+  assert.deepEqual(command.verification, {
+    artifactIds: ["artifact-1"],
+    status: "passed",
+    summary: "npm test passed",
+  });
+  assert.throws(() =>
+    WorkerTaskSubmitRequestSchema.parse({
+      ...command,
+      verification: {
+        ...command.verification,
+        source: "host_observed",
+      },
+    }),
+  );
+});
+
+test("Worker Task submission evidence lookup accepts only a Task identity", () => {
+  assert.deepEqual(
+    WorkerTaskSubmissionRequestSchema.parse({ taskId: "task-1" }),
+    {
+      taskId: "task-1",
+    },
+  );
+  assert.throws(() =>
+    WorkerTaskSubmissionRequestSchema.parse({
+      roomId: "injected-room",
+      submissionId: "injected-submission",
+      taskId: "task-1",
     }),
   );
 });

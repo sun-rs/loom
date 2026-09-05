@@ -73,6 +73,8 @@ import {
   ClientNotificationListRequestSchema,
   ClientNotificationListResponseSchema,
   ClientMessageMutationResponseSchema,
+  ClientMessageReferenceReadStatesRequestSchema,
+  ClientMessageReferenceReadStatesResponseSchema,
   ClientMessageForwardRequestSchema,
   ClientMessageForwardResponseSchema,
   ClientMessageForwardTargetsRequestSchema,
@@ -140,7 +142,6 @@ import {
   ClientTaskCompleteRequestSchema,
   ClientTaskConvertRequestSchema,
   ClientTaskCreateRequestSchema,
-  ClientTaskMutationResponseSchema,
   ClientTaskReassignRequestSchema,
   ClientTaskReassignmentResponseSchema,
   ClientTaskUnassignRequestSchema,
@@ -358,6 +359,7 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/agents/provision",
   "/messages/forward",
   "/messages/forward/targets",
+  "/messages/reference-read-states",
   "/notifications/list",
   "/notifications/dismiss",
   "/push/configuration",
@@ -1196,7 +1198,7 @@ export class ClientApplicationService {
             ...(command.beforeActivityId === undefined
               ? {}
               : { beforeActivityId: command.beforeActivityId }),
-            limit: command.limit,
+            ...(command.limit === undefined ? {} : { limit: command.limit }),
           }),
         ),
       );
@@ -1230,7 +1232,7 @@ export class ClientApplicationService {
             ...(command.beforeActivityId === undefined
               ? {}
               : { beforeActivityId: command.beforeActivityId }),
-            limit: command.limit,
+            ...(command.limit === undefined ? {} : { limit: command.limit }),
           }),
         ),
       );
@@ -1568,13 +1570,30 @@ export class ClientApplicationService {
             ...(command.beforeSeq === undefined
               ? {}
               : { beforeSeq: command.beforeSeq }),
-            limit: command.limit,
+            ...(command.limit === undefined ? {} : { limit: command.limit }),
             roomId: command.roomId,
             ...(command.threadId === undefined
               ? {}
               : { threadId: command.threadId }),
           }),
         ),
+      );
+      return;
+    }
+    if (path === "/messages/reference-read-states") {
+      const command = parseClientRequest(
+        ClientMessageReferenceReadStatesRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientMessageReferenceReadStatesResponseSchema.parse({
+          readStates: this.#human.listMessageReferenceReadStates(
+            actor,
+            command,
+          ),
+        }),
       );
       return;
     }
@@ -1655,6 +1674,9 @@ export class ClientApplicationService {
       const deliveryKey = this.#deliveryKey(session, command);
       const knownCursors = this.#deliveredCursors.get(deliveryKey);
       const delivery = this.#human.sync(actor, {
+        ...(command.bootstrap === undefined
+          ? {}
+          : { bootstrap: command.bootstrap }),
         consumerId: command.consumerId,
         roomId: command.roomId,
         ...(command.afterSeq === undefined
@@ -1712,7 +1734,13 @@ export class ClientApplicationService {
         response,
         200,
         ClientTasksListResponseSchema.parse({
-          tasks: this.#human.listTasks(actor, command),
+          tasks: this.#human.listTasks(actor, {
+            ...(command.beforeTaskNumber === undefined
+              ? {}
+              : { beforeTaskNumber: command.beforeTaskNumber }),
+            ...(command.limit === undefined ? {} : { limit: command.limit }),
+            roomId: command.roomId,
+          }),
         }),
       );
       return;
@@ -1726,8 +1754,20 @@ export class ClientApplicationService {
         response,
         200,
         ClientTaskReviewEvidenceListResponseSchema.parse({
-          reviews: this.#human.listTaskReviews(actor, command),
-          submissions: this.#human.listTaskSubmissions(actor, command),
+          reviews: this.#human.listTaskReviews(actor, {
+            ...(command.limit === undefined ? {} : { limit: command.limit }),
+            roomId: command.roomId,
+            ...(command.taskIds === undefined
+              ? {}
+              : { taskIds: command.taskIds }),
+          }),
+          submissions: this.#human.listTaskSubmissions(actor, {
+            ...(command.limit === undefined ? {} : { limit: command.limit }),
+            roomId: command.roomId,
+            ...(command.taskIds === undefined
+              ? {}
+              : { taskIds: command.taskIds }),
+          }),
         }),
       );
       return;
@@ -1878,7 +1918,7 @@ export class ClientApplicationService {
       writeJson(
         response,
         200,
-        ClientTaskMutationResponseSchema.parse(
+        ClientTaskAttentionMutationResponseSchema.parse(
           this.#human.completeTask(actor, command),
         ),
       );

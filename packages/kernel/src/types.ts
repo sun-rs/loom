@@ -27,6 +27,7 @@ import type {
 } from "@rah-os/protocol";
 
 export type Principal = {
+  description?: string;
   avatarKey?: string;
   displayName?: string;
   principalId: string;
@@ -224,8 +225,10 @@ export type RoomSnapshot = {
 export type SyncResult = {
   cursorBefore: number;
   cursorAfter: number;
+  eventFloorSeq?: number;
   latestRoomSeq: number;
   snapshot: RoomSnapshot | null;
+  snapshotSeq?: number;
   events: RoomEvent[];
 };
 

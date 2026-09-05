@@ -41,6 +41,7 @@ import {
   type MessageTextToken,
 } from "../message-rich-text.ts";
 import { MessageAgentReference } from "./agent-message-identity.tsx";
+import { HumanIdentity } from "./human-identity.tsx";
 
 const markdownSchema = {
   ...defaultSchema,
@@ -163,9 +164,7 @@ function referenceTarget(
     case "agent":
       return { agentDefinitionId: token.agentDefinitionId, kind: "agent" };
     case "human":
-      return token.directRoomId === undefined
-        ? undefined
-        : { kind: "room", roomId: token.directRoomId };
+      return undefined; // HumanIdentity owns profile navigation, never an implicit DM.
     case "room":
       return { kind: "room", roomId: token.roomId };
     case "thread":
@@ -241,21 +240,39 @@ function MessageReferenceToken({ token }: { token: MessageTextToken }) {
         {content}
       </span>
     );
+  if (token.kind === "human") {
+    const principal = [
+      context.references.currentPrincipal,
+      ...(context.references.principals ?? []),
+    ].find(
+      (person) =>
+        person?.principalId === token.principalId && person.kind === "human",
+    );
+    return principal ? (
+      <HumanIdentity
+        principal={principal}
+        className={referenceClassName(token)}
+      >
+        {content}
+        <MentionReadDot state={token.readState} />
+      </HumanIdentity>
+    ) : (
+      <span className={referenceClassName(token)}>
+        {content}
+        <MentionReadDot state={token.readState} />
+      </span>
+    );
+  }
   const target = referenceTarget(token);
   const className = referenceClassName(token);
-  const readDot =
-    token.kind === "human" ? <MentionReadDot state={token.readState} /> : null;
+  const readDot = null;
   if (token.kind === "app")
     return (
       <span className={className} title="仅显示 App 引用">
         {content}
       </span>
     );
-  if (
-    target === undefined ||
-    context.references.onOpenTarget === undefined ||
-    (token.kind === "human" && token.self)
-  )
+  if (target === undefined || context.references.onOpenTarget === undefined)
     return (
       <span className={className}>
         {content}

@@ -1,8 +1,10 @@
 import type { RoomAgentTarget } from "@rah-os/ui-web";
-import { DiscoveryFilter, type DiscoveryOption } from "./discovery-filter.tsx";
+import { DiscoveryFilter } from "./discovery-filter.tsx";
+import { taskPersonOptions } from "./task-person-options.tsx";
+import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 export type TaskViewMode = "board" | "list";
-const UNASSIGNED_FILTER_ID = "__unassigned__";
+const UNASSIGNED_FILTER_ID = "unassigned";
 
 export function TaskToolbar({
   agents,
@@ -27,22 +29,23 @@ export function TaskToolbar({
   view: TaskViewMode;
   writeEnabled: boolean;
 }) {
-  const options: DiscoveryOption[] = [
+  const entities = useWorkspaceEntities();
+  const people = [
     ...(currentPrincipalId
       ? [
           {
-            id: currentPrincipalId,
-            label: "我",
-            leading: <Icon name="user-round" />,
+            principalId: currentPrincipalId,
+            handle: "我",
+            kind: "human" as const,
           },
         ]
       : []),
     ...[...agents]
       .sort((a, b) => a.handle.localeCompare(b.handle))
       .map((agent) => ({
-        id: agent.participantId,
-        label: agent.handle,
-        leading: <Icon name="bot" />,
+        principalId: agent.participantId,
+        handle: agent.handle,
+        kind: "agent" as const,
       })),
   ];
   const assignee = assigneeId === null ? UNASSIGNED_FILTER_ID : assigneeId;
@@ -54,7 +57,12 @@ export function TaskToolbar({
           icon="circle-user-round"
           multiple={false}
           showCount
-          options={options}
+          options={taskPersonOptions(
+            people,
+            currentPrincipalId,
+            "creator",
+            entities,
+          )}
           values={creatorId ? [creatorId] : []}
           onChange={(values) => onCreatorChange(values[0])}
         />
@@ -62,15 +70,12 @@ export function TaskToolbar({
           label="负责人"
           multiple={false}
           showCount
-          options={[
-            {
-              id: UNASSIGNED_FILTER_ID,
-              label: "未分配",
-              italic: true,
-              leading: "—",
-            },
-            ...options,
-          ]}
+          options={taskPersonOptions(
+            people,
+            currentPrincipalId,
+            "assignee",
+            entities,
+          )}
           values={assignee ? [assignee] : []}
           onChange={(values) =>
             onAssigneeChange(

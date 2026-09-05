@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "kind": "formal-deployed-browser-acceptance-attestation",
+  "startedAt": "2026-09-05T08:06:27.087Z",
+  "finishedAt": "2026-09-05T08:06:45.011Z",
+  "runner": "scripts/run-settings-formal-browser-acceptance.mjs",
+  "ephemeralReceiptDirectory": "rah-settings-formal-2WfXSy",
+  "receiptSha256": "ec1149e6b6b1d0b6b12a9e93c3f7afa343168133b232391d387918810b3f1e8a",
+  "webBuildId": "40cf7cfb910b8e5aaa369c030eeba5f80dde746ef1ce525805c030ae07634d2c",
+  "evidenceInputs": {
+    "runnerSha256": "0f06d942eaf480e45cdf197183b4cbb300b901471e3713ebc4c61cebab3cc5a7",
+    "requestPolicySha256": "d28a2f05ab53fd4a2c58e33ae0d2fb4a31ea8f3ef73786b18eca6b8b54bac846",
+    "requestPolicyTestSha256": "42fe11b94d7eb1959044fed3db160a915b8d52d03b76b80a14e2b81edef325c5"
+  },
+  "deployment": {
+    "pidAtAcceptance": 82039,
+    "verifiedPreRestartBackup": "pre-restart-f31997ea-aa58-457b-aa4c-e36da702ad14"
+  },
+  "results": {
+    "total": 2,
+    "passed": 2,
+    "failed": 0,
+    "engines": ["Chrome 152.0.7977.77", "Firefox 150.0.2"],
+    "observedProjectionRequestKindsPerEngine": 23,
+    "observedReadStateRequestsPerEngine": {
+      "POST /v3/client/rooms/acknowledge": 2
+    },
+    "browserErrors": 0,
+    "unexpectedRequests": 0
+  },
+  "settingsMatrix": {
+    "rahSectionCount": 12,
+    "viewports": ["1440x900", "390x844"],
+    "screenshotCount": 48,
+    "screenshotFilenameAndContentManifestSha256": "847362780e2cf6980670b1450126088d9922b1ea29b847043809fd1d8721855f"
+  },
+  "canonicalContentGuard": {
+    "beforeEqualsAfter": true,
+    "counts": {
+      "principals": 6,
+      "rooms": 6,
+      "messages": 43,
+      "tasks": 2,
+      "room_events": 376
+    },
+    "roomMaximumSequenceCount": 6
+  },
+  "readModelSideEffects": {
+    "humanActivityFrontiers": {
+      "beforeCount": 4,
+      "afterCount": 4,
+      "beforeSha256": "e7acc6e96c1edd0ceffed10fdb8875a797a4f611486b93b31e003938a4a7c670",
+      "afterSha256": "e7acc6e96c1edd0ceffed10fdb8875a797a4f611486b93b31e003938a4a7c670"
+    },
+    "subscriptionCursors": {
+      "beforeCount": 302,
+      "afterCount": 304,
+      "beforeSha256": "74d780ab0e9cf80f37a50bb3f22b870860b463cf4bd6a6726d9174f081901c27",
+      "afterSha256": "4934108923c253676c65bf6fee7ff21aaf1a9171753c49ec8d6bf1125e255b60"
+    },
+    "changed": true
+  },
+  "preservation": {
+    "policy": "compact-attestation-only",
+    "reason": "The complete receipt and 48 screenshots remain temporary to avoid duplicating space-consuming browser artifacts; this file preserves their hashes and the repeatable formal runner."
+  }
+}

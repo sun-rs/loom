@@ -303,16 +303,6 @@
   opacity: 0.45;
 }
 
-.activity-head .channel-title h2 {
-  font-size: var(--raft-activity-title-size);
-  font-weight: var(--fw-bold);
-  line-height: var(--raft-activity-title-line);
-  margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .composer-box textarea:focus-visible {
   box-shadow: none;
   outline: none;
@@ -908,50 +898,11 @@
 
 .tasks-content {
   background: var(--bg);
+  display: flex;
   flex: 1;
   min-height: 0;
   overflow: auto;
   padding: var(--raft-tasks-content-padding);
-}
-
-.tasks-empty {
-  align-items: center;
-  color: var(--ink-60);
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  justify-content: center;
-  padding: var(--raft-tasks-empty-padding);
-  text-align: center;
-  width: 100%;
-}
-
-.tasks-empty-icon {
-  align-items: center;
-  color: var(--ink-40);
-  display: inline-flex;
-  height: var(--raft-tasks-empty-icon-size);
-  justify-content: center;
-  margin-bottom: 16px;
-  width: var(--raft-tasks-empty-icon-size);
-}
-
-.tasks-empty-icon svg {
-  height: 36px;
-  width: 36px;
-}
-
-.tasks-empty h2 {
-  font-size: var(--raft-tasks-empty-title-size);
-  font-weight: var(--fw-semibold);
-  line-height: var(--raft-tasks-empty-title-line);
-  margin-bottom: 8px;
-}
-
-.tasks-empty p {
-  font-size: var(--raft-tasks-empty-body-size);
-  line-height: var(--raft-tasks-empty-body-line);
-  max-width: 32ch;
 }
 
 .rah-thread-parent {
@@ -1939,7 +1890,7 @@ button.rah-rich-reference {
 }
 
 .rah-task-review-evidence {
-  background: var(--bg-soft);
+  background: var(--ink-05);
   border: 1.5px solid var(--black);
   color: var(--muted);
   display: inline-block;
@@ -2043,148 +1994,6 @@ button.rah-rich-reference {
   min-width: 0;
 }
 
-.rah-settings-surface {
-  --rah-settings-header-height: 62px;
-  --rah-settings-sidebar-width: 240px;
-  background: var(--bg);
-  display: grid;
-  grid-column: 2 / 4;
-  grid-template-columns: var(--rah-settings-sidebar-width) minmax(0, 1fr);
-  min-height: 0;
-  min-width: 0;
-}
-.rah-settings-navigation.rah-settings-mobile-index {
-  display: none;
-}
-
-.rah-settings-navigation {
-  background: var(--cream);
-  border-right: var(--bd-heavy);
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.rah-settings-navigation > header {
-  border-bottom: var(--bd-heavy);
-  align-items: center;
-  display: flex;
-  flex: none;
-  height: var(--rah-settings-header-height);
-  padding: 0 16px;
-}
-
-.rah-settings-navigation > header strong {
-  font-size: var(--fs-sidebar-head);
-  font-weight: var(--fw-bold);
-  line-height: 24px;
-}
-
-.rah-settings-navigation nav {
-  flex: 1;
-  overflow: auto;
-  padding: 12px 8px 20px;
-}
-
-.rah-settings-navigation section {
-  display: block;
-  margin-bottom: 12px;
-}
-
-.rah-settings-navigation section > b {
-  color: var(--ink-40);
-  display: block;
-  font: 700 10px/15px var(--sans);
-  letter-spacing: 0.08em;
-  margin-bottom: 4px;
-  padding: 0 8px;
-  text-transform: uppercase;
-}
-
-.rah-settings-navigation section > button {
-  align-items: center;
-  background: transparent;
-  border: 2px solid transparent;
-  color: var(--black);
-  display: flex;
-  font: 500 14px/20px var(--sans);
-  gap: 6px;
-  height: 32px;
-  margin-bottom: 4px;
-  opacity: 1;
-  padding: 4px 8px;
-  text-align: left;
-  width: 100%;
-}
-
-.rah-settings-navigation section > button > svg {
-  flex: none;
-  height: 14px;
-  width: 14px;
-}
-
-.rah-settings-navigation section > button > small {
-  border: 1px solid var(--black);
-  font: 700 8px/1 var(--mono);
-  margin-left: auto;
-  padding: 2px 3px;
-}
-
-.rah-settings-navigation section > button.is-active {
-  background: var(--pink);
-  border-color: var(--black);
-  box-shadow: var(--shadow-s);
-  font-weight: 700;
-  opacity: 1;
-}
-
-.rah-settings-content {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  min-width: 0;
-}
-
-.rah-settings-page-head {
-  align-items: center;
-  background: var(--bg);
-  border-bottom: var(--bd-heavy);
-  display: flex;
-  flex: none;
-  justify-content: space-between;
-  height: var(--rah-settings-header-height);
-  padding: 0 20px;
-}
-
-.rah-settings-page-title {
-  align-items: center;
-  display: flex;
-  gap: 12px;
-  min-width: 0;
-}
-
-.rah-settings-page-icon {
-  align-items: center;
-  background: var(--yellow);
-  border: var(--bd);
-  display: flex;
-  flex: none;
-  height: 36px;
-  justify-content: center;
-  width: 36px;
-}
-
-.rah-settings-page-icon > svg {
-  height: 18px;
-  width: 18px;
-}
-
-.rah-settings-page-head h1 {
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 20px;
-}
-
 .rah-count-badge {
   align-items: center;
   background: var(--paper);
@@ -2197,161 +2006,12 @@ button.rah-rich-reference {
   padding-inline: 4px;
 }
 
-.rah-settings-page-head > .btn {
-  background: var(--bg);
-  font-size: 12px;
-  height: 28px;
-  line-height: 12px;
-  padding-inline: 10px;
-}
-
-.rah-settings-mobile-back {
-  display: none;
-}
-
-.rah-settings-scroll {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-  padding: 16px 20px 32px;
-}
-
-.rah-settings-intro {
-  color: var(--ink-70);
-  font-size: 12px;
-  line-height: 16px;
-  margin-bottom: 16px;
-  max-width: 760px;
-}
-
-.rah-settings-section-label {
-  align-items: center;
-  color: var(--ink-60);
-  display: flex;
-  font: 500 12px/16px var(--sans);
-  gap: 8px;
-  margin: 0 0 12px;
-}
-
-.rah-settings-section-label > svg {
-  height: 16px;
-  width: 16px;
-}
-
-.rah-settings-section-label:not(:first-child) {
-  margin-top: 20px;
-}
-
-.rah-settings-card {
-  background: var(--bg);
-  border: var(--bd);
-  box-shadow: var(--shadow-s);
-  padding: 16px;
-}
-
-.rah-settings-card strong {
-  font-size: 14px;
-}
-
-.rah-settings-card p,
-.rah-settings-footnote {
-  color: var(--ink-50);
-  font-size: 12px;
-  line-height: 18px;
-  margin: 5px 0 0;
-}
-
-.rah-settings-profile-card,
-.rah-settings-member-row,
-.rah-settings-toggle-card {
-  align-items: center;
-  display: flex;
-  gap: 12px;
-}
-
-.rah-settings-profile-editor {
-  max-width: none;
-}
-
-.rah-settings-profile-preview {
-  align-items: center;
-  display: flex;
-  gap: 12px;
-}
-
-.rah-settings-profile-preview > div:last-child {
-  min-width: 0;
-}
-
-.rah-settings-profile-preview p {
-  margin-top: 2px;
-}
-
-.rah-settings-avatar-upload {
-  cursor: pointer;
-  display: block;
-  flex: none;
-  height: 64px;
-  overflow: hidden;
-  position: relative;
-  width: 64px;
-}
-
-.rah-settings-avatar-upload[data-disabled="true"] {
-  cursor: default;
-  opacity: 0.62;
-}
-
-.rah-settings-avatar-upload > .rah-settings-avatar {
-  height: 64px;
-  width: 64px;
-}
-
-.rah-settings-avatar-upload > input {
-  display: none;
-}
-
-.rah-settings-avatar-upload-overlay {
-  align-items: center;
-  background: rgb(0 0 0 / 40%);
-  color: white;
-  display: flex;
-  inset: 0;
-  justify-content: center;
-  opacity: 0;
-  position: absolute;
-  transition: opacity 150ms ease;
-}
-
-.rah-settings-avatar-upload-overlay svg {
-  fill: none;
-  height: 18px;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 2;
-  width: 18px;
-}
-
-.rah-settings-avatar-upload:not([data-disabled="true"]):hover
-  .rah-settings-avatar-upload-overlay,
-.rah-settings-avatar-upload:not([data-disabled="true"]):focus-within
-  .rah-settings-avatar-upload-overlay {
-  opacity: 1;
-}
-
 .rah-profile-image-avatar {
   display: block;
   height: 100%;
   image-rendering: auto;
   object-fit: cover;
   width: 100%;
-}
-
-.rah-settings-profile-card > .rah-count-badge,
-.rah-settings-member-row > :last-child,
-.rah-settings-toggle-card > :last-child {
-  margin-left: auto;
 }
 
 .rah-settings-avatar {
@@ -2366,40 +2026,7 @@ button.rah-rich-reference {
   justify-content: center;
   width: 40px;
 }
-
-.rah-settings-form-card {
-  display: grid;
-  gap: 14px;
-}
-
-.rah-settings-form-card > label {
-  display: grid;
-  font-size: 13px;
-  font-weight: 700;
-  gap: 6px;
-}
-
-.rah-settings-form-card input,
-.rah-settings-form-card select {
-  background: var(--bg);
-  border: var(--bd);
-  box-shadow: var(--shadow-s);
-  font: 14px/20px var(--sans);
-  min-height: 36px;
-  padding: 6px 10px;
-}
-
-.rah-settings-form-card input {
-  height: 40px;
-  padding: 8px 12px;
-}
-
-:is(
-    .rah-settings-form-card,
-    .rah-channel-settings-info,
-    .rah-room-create-dialog form,
-    .rah-dialog form
-  )
+:is(.rah-channel-settings-info, .rah-room-create-dialog form, .rah-dialog form)
   :is(
     input:not([type="checkbox"]):not([type="radio"]),
     textarea,
@@ -2407,252 +2034,6 @@ button.rah-rich-reference {
   ):focus-visible {
   box-shadow: var(--shadow-m);
   outline: none;
-}
-
-.rah-settings-choice-row {
-  border: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 0;
-}
-
-.rah-settings-choice-row legend {
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 6px;
-}
-
-.rah-settings-choice-row .btn[aria-pressed="true"] {
-  background: var(--yellow);
-  box-shadow: var(--shadow-s);
-}
-
-.rah-settings-message-preview {
-  align-items: center;
-  border: var(--bd);
-  display: flex;
-  gap: 10px;
-  padding: 12px;
-}
-
-.rah-settings-message-preview > div:last-child {
-  min-width: 0;
-}
-
-.rah-settings-message-preview p {
-  color: var(--black);
-  font-size: inherit;
-  line-height: 1.4;
-  margin: 2px 0 0;
-}
-
-.rah-settings-preview-meta {
-  align-items: baseline;
-  display: flex;
-  gap: 6px;
-}
-
-.rah-settings-preview-meta span {
-  color: var(--ink-40);
-  font: 10px/1 var(--mono);
-}
-
-.rah-settings-message-preview mark {
-  background: var(--lilac);
-  border: 1px solid var(--black);
-  padding: 1px 3px;
-}
-
-.rah-settings-message-preview code {
-  background: var(--ink-05);
-  font-family: var(--mono);
-  padding-inline: 3px;
-}
-
-.rah-settings-message-preview.is-small {
-  font-size: 12px;
-}
-.rah-settings-message-preview.is-medium {
-  font-size: 14px;
-}
-.rah-settings-message-preview.is-large {
-  font-size: 16px;
-}
-
-.rah-settings-switch {
-  flex: none;
-}
-
-.rah-settings-switch input {
-  position: absolute;
-  opacity: 0;
-}
-
-.rah-settings-switch span {
-  background: var(--bg);
-  border: var(--bd);
-  display: block;
-  height: 24px;
-  padding: 3px;
-  width: 44px;
-}
-
-.rah-settings-switch span::after {
-  background: var(--black);
-  content: "";
-  display: block;
-  height: 14px;
-  transition: transform 120ms ease-out;
-  width: 14px;
-}
-
-.rah-settings-switch input:checked + span {
-  background: var(--yellow);
-}
-
-.rah-settings-switch input:checked + span::after {
-  transform: translateX(20px);
-}
-
-.rah-settings-push-card > header,
-.rah-settings-push-actions,
-.rah-settings-push-card > footer {
-  align-items: center;
-  display: flex;
-  gap: 8px;
-}
-
-.rah-settings-push-card > header {
-  margin-bottom: 12px;
-}
-
-.rah-settings-push-card > header strong {
-  display: block;
-  font: 700 14px/20px var(--sans);
-}
-
-.rah-settings-push-card > header p {
-  line-height: 16px;
-  margin-top: 2px;
-}
-
-.rah-settings-push-card > header .rah-count-badge {
-  background: var(--soft-signal);
-  font: 700 10px/15px var(--sans);
-  height: 27px;
-  padding: 4px 8px;
-}
-
-.rah-settings-push-card > header > div {
-  flex: 1;
-}
-
-.rah-settings-push-actions {
-  margin: 0 0 12px;
-}
-
-.rah-settings-push-card > .rah-settings-permission-note {
-  line-height: 16px;
-  margin: 0 0 12px;
-}
-
-.rah-settings-push-card .rah-settings-push-actions > .btn,
-.rah-settings-push-card > footer > .btn {
-  font: 700 12px/16px var(--sans);
-  height: 32px;
-  padding: 6px 12px;
-}
-
-.rah-settings-push-card > .rah-settings-divider {
-  border-top: 2px solid var(--ink-20);
-  margin: 0;
-  padding-top: 12px;
-}
-
-.rah-settings-check-row {
-  align-items: flex-start;
-  display: flex;
-  gap: 8px;
-}
-
-.rah-settings-check-row > input {
-  appearance: none;
-  background: var(--bg);
-  border: var(--bd);
-  flex: none;
-  height: 16px;
-  margin: 2px 4px 0 0;
-  width: 16px;
-}
-
-.rah-settings-check-row > input:checked {
-  background: var(--yellow);
-  box-shadow: inset 0 0 0 3px var(--bg);
-}
-
-.rah-settings-check-row small {
-  color: var(--ink-40);
-  display: block;
-  font: 12px/16px var(--sans);
-  margin-top: 2px;
-}
-
-.rah-settings-check-row strong {
-  display: block;
-  font: 700 14px/20px var(--sans);
-}
-
-.rah-settings-check-row.is-unavailable {
-  opacity: 0.58;
-}
-
-.rah-settings-push-card > footer {
-  justify-content: flex-end;
-  margin-top: 12px;
-}
-
-.rah-settings-secondary {
-  margin-top: 14px;
-}
-
-.rah-settings-content .btn.pink {
-  background: var(--pink);
-}
-
-.rah-settings-content .btn.lime {
-  background: var(--lime);
-}
-
-.rah-settings-form-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.rah-settings-form-actions .btn {
-  font-size: 12px;
-  height: 32px;
-  padding: 0 12px;
-}
-
-.rah-settings-release {
-  border-left: 4px solid var(--yellow);
-  padding: 4px 16px 16px;
-}
-
-.rah-settings-release time {
-  color: var(--ink-40);
-  font: 11px/16px var(--mono);
-}
-
-.rah-settings-release h2 {
-  font-size: 18px;
-  margin: 4px 0 10px;
-}
-
-.rah-settings-release ul {
-  line-height: 1.7;
-  padding-left: 20px;
 }
 
 html[data-rah-message-size="small"] .msg-body {
@@ -3058,7 +2439,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 
 .rah-agent-danger-actions {
-  border-top: var(--line) solid var(--ink);
+  border-top: var(--bd);
   display: grid;
   gap: 8px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3524,7 +2905,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 
 .rah-agent-issue-report-success > span {
   align-items: center;
-  background: var(--lime);
+  background: var(--green);
   border: var(--bd);
   display: flex;
   height: 48px;
@@ -3609,7 +2990,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 .rah-agent-create-dialog form small {
   border-left: 2px solid var(--ink-10);
   color: var(--ink-40);
-  font-family: var(--font-body);
+  font-family: var(--sans);
   font-size: 10px;
   font-weight: 400;
   padding-left: 8px;
@@ -3695,7 +3076,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 
 .rah-room-create-dialog form input,
 .rah-room-create-dialog form textarea {
-  font-family: var(--font-body);
+  font-family: var(--sans);
   font-size: 13px;
   min-width: 0;
   width: 100%;
@@ -4290,14 +3671,14 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 
 .rah-room-sos-dialog .rah-room-sos-success {
-  background: var(--lime);
+  background: var(--green);
   border: var(--bd);
   font-weight: 700;
   padding: 9px 10px;
 }
 
 .rah-room-sos-resume-button {
-  background: var(--lime);
+  background: var(--green);
 }
 
 .rah-channel-settings-operations > small {
@@ -4540,28 +3921,6 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   }
 }
 
-/* Raft AppRail compact-height contract from index-BoAC7nSE.js:
-   desktop rail 64 -> 50, shared panel header 62 -> 48, controls 40 -> 36. */
-@media (max-height: 600px) {
-  .rah-product-shell {
-    --head-h: 48px;
-    --rail-w: 50px;
-  }
-
-  .rah-product-shell :is(.rail-logo, .rail-btn) {
-    height: 36px;
-    width: 36px;
-  }
-
-  .rah-product-shell .rail-primary {
-    padding-block: 4px;
-  }
-
-  .rah-product-shell .rail-footer-item {
-    height: 40px;
-  }
-}
-
 @media (max-width: 767px) {
   :root {
     --rah-mobile-nav-h: 52px;
@@ -4615,10 +3974,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   }
 
   .rah-room-sidebar .sidebar-head {
-    align-items: center;
     background: var(--yellow);
-    display: flex;
-    height: var(--head-h);
     justify-content: space-between;
     padding-inline: 16px;
   }
@@ -4671,10 +4027,6 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 
   .rah-mobile-home-entry {
     display: flex;
-  }
-
-  .rah-mobile-back > svg {
-    transform: rotate(180deg);
   }
 
   .rah-mobile-backdrop {
@@ -4773,53 +4125,8 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
     padding: 12px;
   }
 
-  .rah-agent-runtime-page,
-  .rah-settings-surface {
+  .rah-agent-runtime-page {
     grid-column: 1;
-  }
-
-  .rah-settings-surface {
-    grid-template-columns: minmax(0, 1fr);
-    padding-bottom: calc(var(--rah-mobile-nav-h) + env(safe-area-inset-bottom));
-  }
-
-  .rah-settings-surface
-    > .rah-settings-navigation:not(.rah-settings-mobile-index) {
-    display: none;
-  }
-
-  .rah-settings-surface[data-mobile-index="true"] > .rah-settings-mobile-index {
-    border-right: 0;
-    display: flex;
-    grid-column: 1;
-  }
-
-  .rah-settings-surface[data-mobile-index="true"] > .rah-settings-content {
-    display: none;
-  }
-
-  .rah-settings-mobile-back {
-    align-items: center;
-    display: inline-flex;
-    flex: none;
-    height: 36px;
-    justify-content: center;
-    padding: 0;
-    width: 36px;
-  }
-
-  .rah-settings-mobile-back > svg {
-    height: 16px;
-    transform: rotate(180deg);
-    width: 16px;
-  }
-
-  .rah-settings-page-head {
-    padding: 10px 12px;
-  }
-
-  .rah-settings-scroll {
-    padding: 12px 10px 24px;
   }
 
   .rah-mcp-server-card > header {

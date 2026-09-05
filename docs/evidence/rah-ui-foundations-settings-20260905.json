@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "kind": "local-browser-run-attestation",
+  "startedAt": "2026-09-05T00:05:32.145Z",
+  "runner": "scripts/run-ui-foundation-browser-gate.mjs",
+  "ephemeralReceiptDirectory": "rah-ui-foundations-UVsyUu",
+  "receiptSha256": "7aa1ce4fc9f86a851b4bd57412e29e24f854bb0cb06150a238d001ab266c71b0",
+  "inputCount": 956,
+  "registrySha256": "64562857904c40f1a0ad3ed0b39d7e87b444ef69c2a652d99bb31596395eb267",
+  "librarySha256": "7e1c37952090916dee50868b4f11d9c2a5ec4f97867816b06c65015adf50fdd1",
+  "evidenceInputs": {
+    "inputFilenameAndContentManifestSha256": "cecfb13d1edd944697f81a6fec999c71c8722c3a369ec228ed7f3c04d53d15b2",
+    "runnerSha256": "119a6d210096404e8fc1e7e651eea368c3205604094c9e81bd0a9a2ba3dc8cc3",
+    "requestPolicySha256": "2f8ef5bd83ec17824fae120e268b45ba9c146d88b8a6c0f66da24a1ed9148bd1",
+    "requestPolicyTestSha256": "35aa1ba0b1fc6b8f45e1b149cc38ca546d127b8e9ef6748a99b1a272f9fb7d20",
+    "importedFormalPolicySha256": "fe678b35735185148ac3270728d524de7a934924dbbfa24716f8a112295a3620"
+  },
+  "results": {
+    "total": 24,
+    "passed": 24,
+    "failed": 0,
+    "engines": ["Chrome 152.0.7977.77", "Firefox 150.0.2"]
+  },
+  "requestGuards": {
+    "engines": 2,
+    "unexpectedRequests": 0,
+    "blockedRequests": 0,
+    "observedApiRequestKinds": {
+      "chrome": 43,
+      "firefox": 42
+    }
+  },
+  "settingsMatrix": {
+    "rahSectionCount": 12,
+    "viewports": ["1440x900", "390x844"],
+    "screenshotCount": 48,
+    "screenshotFilenameAndContentManifestSha256": "5e802bb7e8a763b1fe00a1926210a442784a1db45ac351a97f2a857c386593aa"
+  },
+  "preservation": {
+    "policy": "compact-attestation-only",
+    "reason": "The user requested removal of space-consuming snapshots. The full 124961-byte receipt and 48 Settings screenshots remain temporary run artifacts; this repository stores their content hashes, complete input manifest hash, runner and request-policy hashes, and the repeatable runner instead of duplicating them."
+  }
+}

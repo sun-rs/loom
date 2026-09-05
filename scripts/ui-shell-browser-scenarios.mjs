@@ -164,8 +164,12 @@ export async function verifyIntegratedShell(page, origin, output, engine) {
     await list.getByRole("tab", { name: "动态", exact: true }).focus();
     await page.keyboard.press("End");
     const mcp = list.getByRole("tab", { name: "MCP", exact: true });
+    assert.equal(await mcp.getAttribute("aria-selected"), "false");
+    assert.equal(await mcp.evaluate((e) => document.activeElement === e), true);
+    await page.keyboard.press("Enter");
     assert.equal(await mcp.getAttribute("aria-selected"), "true");
     await page.keyboard.press("Home");
+    await page.keyboard.press("Enter");
     if ([1440, 1024, 767, 390].includes(width))
       await page.screenshot({
         path: join(output, `${engine}-shell-${width}-${height}.png`),
@@ -177,6 +181,7 @@ export async function verifyIntegratedShell(page, origin, output, engine) {
   const roomTabs = page.getByRole("tablist", { name: "对话内容", exact: true });
   await roomTabs.getByRole("tab", { name: "聊天", exact: true }).focus();
   await page.keyboard.press("End");
+  await page.keyboard.press("Enter");
   assert.equal(
     await roomTabs
       .getByRole("tab", { name: "文件", exact: true })
@@ -184,4 +189,132 @@ export async function verifyIntegratedShell(page, origin, output, engine) {
     "true",
   );
   await page.keyboard.press("Home");
+  await page.keyboard.press("Enter");
+}
+
+// Production routes, not fixture copies. Only navigation/read actions are used.
+export async function verifySurfaceHeaders(page, origin, output, engine) {
+  const routes = [
+    [
+      "settings",
+      "&settingsSection=notifications",
+      ".rah-settings-page-head",
+      ".rah-settings-navigation:not(.rah-settings-mobile-index) > header",
+    ],
+    ["room", "", ".rah-conversation-head", ".rah-room-sidebar .sidebar-head"],
+    [
+      "computers",
+      "",
+      ".rah-computer-detail-head",
+      ".rah-computer-sidebar > header",
+    ],
+    ["agents", "", null, ".rah-agent-sidebar-head"],
+    ["tasks", "", ".activity-head", null],
+    ["activity", "", ".activity-head", null],
+  ];
+  for (const [surface, suffix, main, side] of routes) {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`${origin}/?surface=${surface}${suffix}`, {
+      waitUntil: "networkidle",
+    });
+    await page.locator(main ?? side).waitFor();
+    await page.evaluate(() => document.fonts.ready);
+    for (const [width, height] of [
+      [1440, 900],
+      [1440, 598],
+      [768, 598],
+    ]) {
+      await page.setViewportSize({ width, height });
+      for (const selector of [main, side].filter(Boolean)) {
+        const header = page.locator(selector);
+        const bounds = await header.boundingBox();
+        if (!bounds) {
+          await page.screenshot({
+            path: join(
+              output,
+              `${engine}-${surface}-${width}-header-failure.png`,
+            ),
+          });
+          throw new Error(
+            `${surface} ${selector} missing at ${width}x${height}: ${await header.evaluateAll((es) => es.map((e) => ({ html: e.outerHTML.slice(0, 350), display: getComputedStyle(e).display })))}; url=${page.url()}`,
+          );
+        }
+        assert.equal(
+          bounds.height,
+          height <= 600 ? 48 : 62,
+          `${surface} ${selector} ${width}x${height}`,
+        );
+        assert.equal(
+          await header.evaluate((e) => getComputedStyle(e).borderBottomWidth),
+          "2px",
+        );
+      }
+    }
+    if (main) {
+      const tile = page.locator(`${main} .rah-panel-header-icon`);
+      assert.equal(
+        await tile.count(),
+        1,
+        `${surface} must use shared identity slot`,
+      );
+      assert.deepEqual(
+        await tile.evaluate((e) => {
+          const s = getComputedStyle(e);
+          return [s.width, s.height, s.boxShadow];
+        }),
+        ["36px", "36px", "none"],
+      );
+    }
+    await page.screenshot({
+      path: join(output, `${engine}-${surface}-short-header.png`),
+    });
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${origin}/?surface=settings&settingsSection=notifications`, {
+    waitUntil: "networkidle",
+  });
+  await page.evaluate(() => document.fonts.ready);
+  const back = page.getByRole("button", { name: "返回设置", exact: true });
+  await back.waitFor();
+  assert.deepEqual(
+    await back.evaluate((e) => {
+      const r = e.getBoundingClientRect(),
+        s = e.querySelector("svg");
+      return [
+        r.width,
+        r.height,
+        s.getBoundingClientRect().width,
+        getComputedStyle(s).transform,
+        e.contains(
+          document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2),
+        ),
+      ];
+    }),
+    [28, 28, 14, "none", true],
+  );
+  await back.click();
+  await page
+    .locator('.rah-settings-surface[data-mobile-index="true"]')
+    .waitFor();
+  await page
+    .locator(".rah-settings-mobile-index")
+    .getByRole("button", { name: "通知", exact: true })
+    .click();
+  await back.waitFor();
+  // The newly mounted index/page can start a font after the back button exists.
+  // Finish that load before reload; Firefox reports its cancellation as an error.
+  await page.evaluate(() => document.fonts.ready);
+  await page.reload();
+  await back.waitFor();
+  // Header geometry may be ready before notification diagnostics. Let the
+  // status/error text mount before snapshot/navigation so its font is not aborted.
+  await page.waitForFunction(
+    () =>
+      document.querySelector(".rah-settings-push-card .rah-count-badge")
+        ?.textContent !== "正在检查",
+  );
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({
+    path: join(output, `${engine}-settings-mobile-header.png`),
+  });
 }

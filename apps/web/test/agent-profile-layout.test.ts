@@ -4,7 +4,13 @@ import test from "node:test";
 
 const read = (path: string) =>
   readFileSync(new URL(`../src/${path}`, import.meta.url), "utf8");
-const css = read("agent-directory.css");
+const css = readFileSync(
+  new URL(
+    "../../../packages/ui-tokens/src/neo-brutalist/profile.css",
+    import.meta.url,
+  ),
+  "utf8",
+);
 const rule = (selector: string) => {
   const start = css.indexOf(`${selector} {`);
   assert.notEqual(start, -1, `missing ${selector}`);

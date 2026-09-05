@@ -42,15 +42,9 @@ test("Saved card carries Raft metadata, full-card navigation, menu, and removal"
   );
 });
 
-test("Saved visuals keep Raft's measured header, card, and remove-button geometry", () => {
-  assert.match(
-    css,
-    /\.rah-saved-header\s*\{[^}]*height:\s*62px;[^}]*padding:\s*0 20px;/u,
-  );
-  assert.match(
-    css,
-    /\.rah-saved-header-icon\s*\{[^}]*background:\s*var\(--yellow\);[^}]*height:\s*36px;[^}]*width:\s*36px;/u,
-  );
+test("Saved visuals keep the shared measured header, card, and remove-button geometry", () => {
+  assert.match(pane, /<PanelHeader kind="surface"/u);
+  assert.match(pane, /<PanelHeaderIcon name="bookmark"/u);
   assert.match(
     css,
     /\.rah-saved-card\s*\{[^}]*border:\s*2px solid rgb\(0 0 0 \/ 30%\);[^}]*padding:\s*12px;/u,

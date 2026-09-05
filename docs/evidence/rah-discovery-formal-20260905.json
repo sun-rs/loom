@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-09-05T08:04:31.401Z",
+  "origin": "http://127.0.0.1:4173",
+  "webBuildId": "40cf7cfb910b8e5aaa369c030eeba5f80dde746ef1ce525805c030ae07634d2c",
+  "evidenceInputs": {
+    "runnerSha256": "232aeca7b687bf5ef7fca5b86abd961138296a5ea4dcf8ed011517dbd4539dc6",
+    "requestPolicySha256": "d28a2f05ab53fd4a2c58e33ae0d2fb4a31ea8f3ef73786b18eca6b8b54bac846"
+  },
+  "engines": [
+    {
+      "name": "chrome",
+      "version": "152.0.7977.77",
+      "status": "passed"
+    },
+    {
+      "name": "firefox",
+      "version": "150.0.2",
+      "status": "passed"
+    }
+  ],
+  "surfaces": ["tasks", "search", "messages"],
+  "viewports": [1440, 390],
+  "canonicalBeforeAndAfter": {
+    "principals": 6,
+    "rooms": 6,
+    "messages": 43,
+    "tasks": 2,
+    "taskReviews": 0,
+    "taskSubmissions": 2,
+    "messageReactions": 0,
+    "humanSavedMessages": 0,
+    "roomEvents": 376,
+    "equal": true
+  },
+  "readModelSideEffects": {
+    "humanActivityFrontiers": {
+      "beforeCount": 4,
+      "afterCount": 4,
+      "beforeSha256": "e7acc6e96c1edd0ceffed10fdb8875a797a4f611486b93b31e003938a4a7c670",
+      "afterSha256": "e7acc6e96c1edd0ceffed10fdb8875a797a4f611486b93b31e003938a4a7c670"
+    },
+    "subscriptionCursors": {
+      "beforeCount": 300,
+      "afterCount": 302,
+      "beforeSha256": "3ae6cd75dce88b5c3f96a2c9fa2f231d8f143a09702cc6337cf3809485814c60",
+      "afterSha256": "74d780ab0e9cf80f37a50bb3f22b870860b463cf4bd6a6726d9174f081901c27"
+    },
+    "changed": true
+  },
+  "browserErrors": [],
+  "rejectedRequests": [],
+  "screenshots": {
+    "count": 8,
+    "sha256": "24144a3b43bddee8ce82da99ec0546e901083c37ddd1ede5673237101612900d"
+  },
+  "notes": [
+    "The request policy explicitly distinguishes declared projections from normal Room acknowledgement and Activity read-frontier writes.",
+    "Reaction, save, follow, Task mutation, message mutation, and every undeclared API route remain rejected.",
+    "Formal navigation created two transport subscription cursors; the receipt records this allowed read-model side effect instead of calling the whole run read-only.",
+    "The durable evidence is this input/output summary plus the hash-pinned reusable runner; temporary PNG bytes are not a product dependency."
+  ]
+}

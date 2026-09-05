@@ -1,0 +1,85 @@
+.rah-agent-status-dot {
+  display: inline-block;
+  flex-shrink: 0;
+  border: 1px solid var(--black);
+  border-radius: 50%;
+}
+.rah-settings-avatar.is-compact {
+  width: 20px;
+  height: 20px;
+  border-width: 1px;
+  font-size: 12px;
+  line-height: 16px;
+  flex-shrink: 0;
+}
+/* Raft On: surface-list size-8/border-2, with a 28px interior. */
+.rah-settings-avatar.is-sidebar {
+  width: var(--raft-members-sidebar-avatar-size);
+  height: var(--raft-members-sidebar-avatar-size);
+  border-width: 1px;
+  font-size: 10px;
+  box-shadow: none;
+}
+.rah-settings-avatar.is-header {
+  width: var(--raft-members-detail-avatar-size);
+  height: var(--raft-members-detail-avatar-size);
+  box-shadow: none;
+}
+.rah-settings-avatar.is-profile {
+  width: var(--raft-members-profile-avatar-size);
+  height: var(--raft-members-profile-avatar-size);
+  box-shadow: none;
+}
+.rah-agent-avatar.is-surface {
+  width: 32px;
+  height: 32px;
+  border-width: 2px;
+}
+/* Raft compact identity preview uses size-12, not full-profile size-16. */
+.rah-agent-avatar.is-preview {
+  width: 48px;
+  height: 48px;
+}
+/* Raft Uze/fp: identical managed colors; external cyan is an identity override. */
+.rah-agent-status-dot[data-size="sm"] {
+  width: 8px;
+  height: 8px;
+}
+.rah-agent-status-dot[data-size="md"] {
+  width: 10px;
+  height: 10px;
+}
+.rah-agent-status-dot[data-size="lg"] {
+  width: 11px;
+  height: 11px;
+}
+.rah-agent-status-dot[data-activity="offline"] {
+  background: var(--presence-off);
+}
+.rah-agent-status-dot[data-activity="online"] {
+  background: var(--mint);
+}
+.rah-agent-status-dot[data-activity="thinking"],
+.rah-agent-status-dot[data-activity="working"] {
+  background: var(--yellow);
+}
+.rah-agent-status-dot[data-activity="error"] {
+  background: var(--orange);
+}
+.rah-agent-status-dot[data-activity="external"] {
+  background: var(--cyan);
+}
+.rah-agent-status-dot[data-pulse="true"] {
+  animation: rah-status-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rah-agent-status-dot[data-pulse="true"] {
+    animation: none;
+  }
+}
+
+@keyframes rah-status-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}

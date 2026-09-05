@@ -4,7 +4,11 @@ import { IdentifierSchema } from "./common.ts";
 import { TaskSchema, TaskWorkflowStatusSchema } from "./task.ts";
 
 export const ClientTasksListRequestSchema = z
-  .object({ roomId: IdentifierSchema })
+  .object({
+    beforeTaskNumber: z.number().int().positive().optional(),
+    limit: z.number().int().positive().max(500).optional(),
+    roomId: IdentifierSchema,
+  })
   .strict();
 export type ClientTasksListRequest = z.infer<
   typeof ClientTasksListRequestSchema

@@ -23,7 +23,8 @@ afterEach(() => {
 function fixture() {
   const directory = mkdtempSync(join(tmpdir(), "rah-obligation-"));
   temporaryDirectories.push(directory);
-  const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+  const databasePath = join(directory, "room.db");
+  const kernel = new RoomKernel({ databasePath });
   kernel.initialize();
   const humanProvisioning = kernel.provisionPrincipal({
     handle: "owner",
@@ -59,6 +60,7 @@ function fixture() {
     });
   }
   return {
+    databasePath,
     humanActor,
     kernel,
     owner: ownerProvisioning.principal,
@@ -168,6 +170,15 @@ function taskState(
   return task.state;
 }
 
+function latestRoomSeq(
+  kernel: RoomKernel,
+  humanActor: Parameters<RoomKernel["sync"]>[0],
+  roomId: string,
+  consumerId: string,
+): number {
+  return kernel.sync(humanActor, { consumerId, roomId }).latestRoomSeq;
+}
+
 function submitTaskForReview(input: {
   kernel: RoomKernel;
   ownerId: string;
@@ -222,6 +233,283 @@ function submitTaskForReview(input: {
   );
   return { created, ownerHost, submitted };
 }
+
+function submitAssignedTask(input: {
+  host: AuthenticatedHostContext;
+  kernel: RoomKernel;
+  label: string;
+  participantId: string;
+  taskId: string;
+}) {
+  const running = beginNextActivation(
+    input.kernel,
+    input.host,
+    input.participantId,
+    input.label,
+  );
+  const claimed = input.kernel.claimTask(running.execution, {
+    basedOnRoomSeq: running.delivery.cursorAfter,
+    idempotencyKey: `${input.label}-claim`,
+    leaseMs: 30_000,
+    taskId: input.taskId,
+  });
+  const started = input.kernel.startTask(running.execution, {
+    basedOnRoomSeq: claimed.event.roomSeq,
+    idempotencyKey: `${input.label}-start`,
+    leaseMs: 30_000,
+    taskId: input.taskId,
+  });
+  const submitted = input.kernel.submitTask(running.execution, {
+    basedOnRoomSeq: started.event.roomSeq,
+    idempotencyKey: `${input.label}-submit`,
+    summary: `${input.label} frozen delivery`,
+    taskId: input.taskId,
+    verification: {
+      artifactIds: [],
+      status: "passed",
+      summary: `${input.label} verification declared`,
+    },
+  });
+  finishRun(input.kernel, input.host, running);
+  assert.equal(
+    input.kernel.completeActivation(input.host, {
+      activationId: running.activation.activationId,
+      consumerId: running.consumerId,
+    }).state,
+    "completed",
+  );
+  return submitted;
+}
+
+function reviewAssignedTask(input: {
+  disposition: "approved" | "changes_requested";
+  host: AuthenticatedHostContext;
+  kernel: RoomKernel;
+  label: string;
+  reviewerId: string;
+  taskId: string;
+}) {
+  const running = beginNextActivation(
+    input.kernel,
+    input.host,
+    input.reviewerId,
+    input.label,
+  );
+  const reviewed = input.kernel.taskReviews.reviewTask(running.execution, {
+    basedOnRoomSeq: running.activation.toSeq,
+    disposition: input.disposition,
+    idempotencyKey: `${input.label}-review`,
+    summary: `${input.label} independent review`,
+    taskId: input.taskId,
+  });
+  finishRun(input.kernel, input.host, running);
+  assert.equal(
+    input.kernel.completeActivation(input.host, {
+      activationId: running.activation.activationId,
+      consumerId: running.consumerId,
+    }).state,
+    "completed",
+  );
+  return reviewed;
+}
+
+test("the canonical team workflow requires plan review, helper delivery, rework, Human acceptance, and dependency release", () => {
+  const flow = fixture();
+  const { databasePath, humanActor, owner, reviewer, room, secondOwner } = flow;
+  let kernel = flow.kernel;
+  const plan = kernel.createTask(humanActor, {
+    assigneeId: owner.principalId,
+    idempotencyKey: "team-flow-plan-create",
+    reviewerIds: [reviewer.principalId],
+    roomId: room.roomId,
+    title: "Review the implementation plan",
+  });
+  const helper = kernel.createTask(humanActor, {
+    assigneeId: secondOwner.principalId,
+    dependencyTaskIds: [plan.task.taskId],
+    idempotencyKey: "team-flow-helper-create",
+    roomId: room.roomId,
+    title: "Produce the required helper delivery",
+  });
+  const implementation = kernel.createTask(humanActor, {
+    assigneeId: owner.principalId,
+    dependencyTaskIds: [plan.task.taskId, helper.task.taskId],
+    idempotencyKey: "team-flow-implementation-create",
+    reviewerIds: [reviewer.principalId],
+    roomId: room.roomId,
+    title: "Implement against the approved plan and helper delivery",
+  });
+  const downstream = kernel.createTask(humanActor, {
+    assigneeId: secondOwner.principalId,
+    dependencyTaskIds: [implementation.task.taskId],
+    idempotencyKey: "team-flow-downstream-create",
+    roomId: room.roomId,
+    title: "Start only after Human acceptance",
+  });
+  assert.deepEqual(helper.activationIds, []);
+  assert.deepEqual(implementation.activationIds, []);
+  assert.deepEqual(downstream.activationIds, []);
+
+  const ownerHost = authenticateHost(
+    kernel,
+    "team-flow-owner",
+    owner.principalId,
+  );
+  const reviewerHost = authenticateHost(
+    kernel,
+    "team-flow-reviewer",
+    reviewer.principalId,
+  );
+  const helperHost = authenticateHost(
+    kernel,
+    "team-flow-helper",
+    secondOwner.principalId,
+  );
+
+  submitAssignedTask({
+    host: ownerHost,
+    kernel,
+    label: "team-flow-plan",
+    participantId: owner.principalId,
+    taskId: plan.task.taskId,
+  });
+  const planReview = reviewAssignedTask({
+    disposition: "approved",
+    host: reviewerHost,
+    kernel,
+    label: "team-flow-plan",
+    reviewerId: reviewer.principalId,
+    taskId: plan.task.taskId,
+  });
+  const planCompletion = kernel.completeTask(humanActor, {
+    basedOnRoomSeq: latestRoomSeq(
+      kernel,
+      humanActor,
+      room.roomId,
+      "team-flow-plan-human",
+    ),
+    idempotencyKey: "team-flow-plan-human-complete",
+    taskId: plan.task.taskId,
+  });
+  assert.deepEqual(planCompletion.event.payload.readyTaskIds, [
+    helper.task.taskId,
+  ]);
+
+  const helperSubmission = submitAssignedTask({
+    host: helperHost,
+    kernel,
+    label: "team-flow-helper",
+    participantId: secondOwner.principalId,
+    taskId: helper.task.taskId,
+  });
+  const helperCompletion = kernel.completeTask(humanActor, {
+    basedOnRoomSeq: latestRoomSeq(
+      kernel,
+      humanActor,
+      room.roomId,
+      "team-flow-helper-human",
+    ),
+    idempotencyKey: "team-flow-helper-human-complete",
+    taskId: helper.task.taskId,
+  });
+  assert.deepEqual(helperCompletion.event.payload.readyTaskIds, [
+    implementation.task.taskId,
+  ]);
+
+  const firstImplementation = submitAssignedTask({
+    host: ownerHost,
+    kernel,
+    label: "team-flow-implementation-v1",
+    participantId: owner.principalId,
+    taskId: implementation.task.taskId,
+  });
+  const rejected = reviewAssignedTask({
+    disposition: "changes_requested",
+    host: reviewerHost,
+    kernel,
+    label: "team-flow-implementation-v1",
+    reviewerId: reviewer.principalId,
+    taskId: implementation.task.taskId,
+  });
+  assert.equal(rejected.task.state, "todo");
+  assert.notEqual(
+    rejected.submission.submissionId,
+    planReview.submission.submissionId,
+  );
+
+  kernel.close();
+  kernel = new RoomKernel({ databasePath });
+  kernel.initialize();
+  kernel.heartbeatHost(ownerHost);
+  kernel.heartbeatHost(reviewerHost);
+  kernel.heartbeatHost(helperHost);
+  assert.equal(
+    taskState(kernel, humanActor, room.roomId, implementation.task.taskId),
+    "todo",
+  );
+  assert.deepEqual(
+    kernel.taskReviews
+      .listTaskReviews(humanActor, {
+        roomId: room.roomId,
+        taskId: implementation.task.taskId,
+      })
+      .map(({ disposition }) => disposition),
+    ["changes_requested"],
+  );
+
+  const revisedImplementation = submitAssignedTask({
+    host: ownerHost,
+    kernel,
+    label: "team-flow-implementation-v2",
+    participantId: owner.principalId,
+    taskId: implementation.task.taskId,
+  });
+  const approved = reviewAssignedTask({
+    disposition: "approved",
+    host: reviewerHost,
+    kernel,
+    label: "team-flow-implementation-v2",
+    reviewerId: reviewer.principalId,
+    taskId: implementation.task.taskId,
+  });
+  assert.notEqual(
+    revisedImplementation.event.payload.submissionDigest,
+    firstImplementation.event.payload.submissionDigest,
+  );
+  assert.equal(
+    approved.review.submissionDigest,
+    revisedImplementation.event.payload.submissionDigest,
+  );
+  assert.deepEqual(
+    kernel.taskReviews
+      .listTaskReviews(humanActor, {
+        roomId: room.roomId,
+        taskId: implementation.task.taskId,
+      })
+      .map(({ disposition }) => disposition),
+    ["changes_requested", "approved"],
+  );
+
+  const accepted = kernel.completeTask(humanActor, {
+    basedOnRoomSeq: latestRoomSeq(
+      kernel,
+      humanActor,
+      room.roomId,
+      "team-flow-implementation-human",
+    ),
+    idempotencyKey: "team-flow-implementation-human-complete",
+    taskId: implementation.task.taskId,
+  });
+  assert.equal(accepted.task.state, "completed");
+  assert.deepEqual(accepted.event.payload.readyTaskIds, [
+    downstream.task.taskId,
+  ]);
+  assert.ok(
+    kernel.leaseNextActivation(helperHost, { leaseMs: 30_000 }),
+    "the downstream owner wakes only after canonical Human acceptance",
+  );
+  kernel.close();
+});
 
 test("a reviewer cannot complete the task.submitted Activation without a canonical Review", () => {
   const { humanActor, kernel, owner, reviewer, room } = fixture();

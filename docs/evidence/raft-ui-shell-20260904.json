@@ -1,0 +1,200 @@
+{
+  "schemaVersion": 1,
+  "kind": "official-live-capture",
+  "capturedAt": "2026-09-04T06:03:12Z",
+  "timestampMeaning": "Evidence record finalized after this turn's live observations.",
+  "source": {
+    "url": "https://app.raft.build/s/hakasemac/settings/notifications",
+    "channelUrl": "https://app.raft.build/s/hakasemac/channel/ca806598-6298-4b05-bf26-3ec882689449",
+    "scriptUrl": "https://app.raft.build/assets/index-Biin3FEA.js",
+    "scriptSha256": "e798f35bde09eeda2927669406e10718392ff7574796016441def59dbc5b05f9",
+    "browser": "Codex in-app browser",
+    "method": "Read-only DOM/computed styles after real navigation. h-panel-header, size-icon-header; no account or conversation mutation."
+  },
+  "preconditions": "CSS geometry only. Settings notification panel, channel with three enabled tabs. Mobile Settings hides identity tile; only visible header/title are paired there. Not whole-page parity.",
+  "samples": [
+    {
+      "id": "settings-mobile",
+      "environment": {
+        "dpr": 1,
+        "enabledTabs": null,
+        "fonts": "loaded",
+        "height": 844,
+        "width": 390
+      },
+      "observations": {
+        "header": {
+          "borderBottomWidth": "2px",
+          "columnGap": "12px",
+          "height": "62px",
+          "paddingLeft": "20px",
+          "paddingRight": "20px"
+        },
+        "heading": {
+          "fontSize": "16px",
+          "fontWeight": "700",
+          "lineHeight": "20px"
+        },
+        "tile": {
+          "borderTopWidth": "2px",
+          "boxShadow": "none",
+          "height": "36px",
+          "width": "36px"
+        },
+        "tileIcon": {
+          "height": "18px",
+          "strokeWidth": "2px",
+          "width": "18px"
+        }
+      }
+    },
+    {
+      "id": "settings-short",
+      "environment": {
+        "dpr": 1,
+        "enabledTabs": null,
+        "fonts": "loaded",
+        "height": 598,
+        "width": 1440
+      },
+      "observations": {
+        "header": {
+          "borderBottomWidth": "2px",
+          "columnGap": "12px",
+          "height": "48px",
+          "paddingLeft": "20px",
+          "paddingRight": "20px"
+        },
+        "heading": {
+          "fontSize": "16px",
+          "fontWeight": "700",
+          "lineHeight": "20px"
+        },
+        "tile": {
+          "borderTopWidth": "2px",
+          "boxShadow": "none",
+          "height": "36px",
+          "width": "36px"
+        },
+        "tileIcon": {
+          "height": "18px",
+          "strokeWidth": "2px",
+          "width": "18px"
+        }
+      }
+    },
+    {
+      "id": "settings-desktop",
+      "environment": {
+        "dpr": 1,
+        "enabledTabs": null,
+        "fonts": "loaded",
+        "height": 900,
+        "width": 1440
+      },
+      "observations": {
+        "header": {
+          "borderBottomWidth": "2px",
+          "columnGap": "12px",
+          "height": "62px",
+          "paddingLeft": "20px",
+          "paddingRight": "20px"
+        },
+        "heading": {
+          "fontSize": "16px",
+          "fontWeight": "700",
+          "lineHeight": "20px"
+        },
+        "tile": {
+          "borderTopWidth": "2px",
+          "boxShadow": "none",
+          "height": "36px",
+          "width": "36px"
+        },
+        "tileIcon": {
+          "height": "18px",
+          "strokeWidth": "2px",
+          "width": "18px"
+        }
+      }
+    },
+    {
+      "id": "channel-tile-desktop",
+      "environment": {
+        "dpr": 1,
+        "enabledTabs": [
+          "聊天",
+          "任务",
+          "文件"
+        ],
+        "fonts": "loaded",
+        "height": 900,
+        "width": 1440
+      },
+      "observations": {
+        "header": {
+          "borderBottomWidth": "2px",
+          "columnGap": "12px",
+          "height": "62px",
+          "paddingLeft": "20px",
+          "paddingRight": "20px"
+        },
+        "heading": {
+          "fontSize": "16px",
+          "fontWeight": "700",
+          "lineHeight": "20px"
+        },
+        "tile": {
+          "borderTopWidth": "2px",
+          "boxShadow": "none",
+          "height": "36px",
+          "width": "36px"
+        },
+        "tileIcon": {
+          "height": "14px",
+          "strokeWidth": "2px",
+          "width": "14px"
+        }
+      }
+    },
+    {
+      "id": "channel-tile-short",
+      "environment": {
+        "dpr": 1,
+        "enabledTabs": [
+          "聊天",
+          "任务",
+          "文件"
+        ],
+        "fonts": "loaded",
+        "height": 598,
+        "width": 1440
+      },
+      "observations": {
+        "header": {
+          "borderBottomWidth": "2px",
+          "columnGap": "12px",
+          "height": "48px",
+          "paddingLeft": "20px",
+          "paddingRight": "20px"
+        },
+        "heading": {
+          "fontSize": "16px",
+          "fontWeight": "700",
+          "lineHeight": "20px"
+        },
+        "tile": {
+          "borderTopWidth": "2px",
+          "boxShadow": "none",
+          "height": "36px",
+          "width": "36px"
+        },
+        "tileIcon": {
+          "height": "14px",
+          "strokeWidth": "2px",
+          "width": "14px"
+        }
+      }
+    }
+  ]
+}

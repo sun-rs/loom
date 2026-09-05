@@ -42,6 +42,8 @@ import {
   ClientInputRequestsListRequestSchema,
   ClientInputRequestsListResponseSchema,
   ClientMessageMutationResponseSchema,
+  ClientMessageReferenceReadStatesRequestSchema,
+  ClientMessageReferenceReadStatesResponseSchema,
   ClientMessageForwardRequestSchema,
   ClientMessageForwardResponseSchema,
   ClientMessageForwardTargetsRequestSchema,
@@ -68,6 +70,10 @@ import {
   ClientManagedMcpUsageListRequestSchema,
   ClientManagedMcpUsageListResponseSchema,
   ClientPrincipalMeRequestSchema,
+  HumanProfileRequestSchema,
+  HumanProfileResponseSchema,
+  type HumanProfileRequest,
+  type HumanProfileResponse,
   ClientPrincipalMeResponseSchema,
   ClientPrincipalUpdateRequestSchema,
   ClientPrincipalUpdateResponseSchema,
@@ -105,7 +111,6 @@ import {
   ClientTaskCompleteRequestSchema,
   ClientTaskConvertRequestSchema,
   ClientTaskCreateRequestSchema,
-  ClientTaskMutationResponseSchema,
   ClientTaskReassignRequestSchema,
   ClientTaskReassignmentResponseSchema,
   ClientTaskUnassignRequestSchema,
@@ -161,6 +166,8 @@ import {
   type ClientInputRequestsListRequest,
   type ClientInputRequestsListResponse,
   type ClientMessageMutationResponse,
+  type ClientMessageReferenceReadStatesRequest,
+  type ClientMessageReferenceReadStatesResponse,
   type ClientMessageForwardRequest,
   type ClientMessageForwardResponse,
   type ClientMessageForwardTargetsRequest,
@@ -224,7 +231,6 @@ import {
   type ClientTaskCompleteRequest,
   type ClientTaskConvertRequest,
   type ClientTaskCreateRequest,
-  type ClientTaskMutationResponse,
   type ClientTaskReassignRequest,
   type ClientTaskReassignmentResponse,
   type ClientTaskUnassignRequest,
@@ -409,6 +415,10 @@ export type RahClientOperationMap = AgentWorkspaceOperationMap &
       input: ClientMessagesListRequest;
       output: ClientMessagesListResponse;
     };
+    "message.reference.read-state.list": {
+      input: ClientMessageReferenceReadStatesRequest;
+      output: ClientMessageReferenceReadStatesResponse;
+    };
     "message.forward.targets": {
       input: ClientMessageForwardTargetsRequest;
       output: ClientMessageForwardTargetsResponse;
@@ -424,6 +434,10 @@ export type RahClientOperationMap = AgentWorkspaceOperationMap &
     "principal.me": {
       input: ClientPrincipalMeRequest;
       output: ClientPrincipalMeResponse;
+    };
+    "human.profile": {
+      input: HumanProfileRequest;
+      output: HumanProfileResponse;
     };
     "principal.update": {
       input: ClientPrincipalUpdateRequest;
@@ -523,7 +537,7 @@ export type RahClientOperationMap = AgentWorkspaceOperationMap &
     };
     "task.complete": {
       input: ClientTaskCompleteRequest;
-      output: ClientTaskMutationResponse;
+      output: ClientTaskAttentionMutationResponse;
     };
     "task.list": {
       input: ClientTasksListRequest;
@@ -821,6 +835,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     output: ClientMessagesListResponseSchema,
     path: "/v3/client/messages/list",
   },
+  "message.reference.read-state.list": {
+    authenticated: true,
+    input: ClientMessageReferenceReadStatesRequestSchema,
+    method: "POST",
+    output: ClientMessageReferenceReadStatesResponseSchema,
+    path: "/v3/client/messages/reference-read-states",
+  },
   "message.forward.targets": {
     authenticated: true,
     input: ClientMessageForwardTargetsRequestSchema,
@@ -848,6 +869,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     method: "POST",
     output: ClientPrincipalMeResponseSchema,
     path: "/v3/client/principals/me",
+  },
+  "human.profile": {
+    authenticated: true,
+    input: HumanProfileRequestSchema,
+    method: "POST",
+    output: HumanProfileResponseSchema,
+    path: "/v3/client/humans/profile",
   },
   "principal.update": {
     authenticated: true,
@@ -1014,7 +1042,7 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     authenticated: true,
     input: ClientTaskCompleteRequestSchema,
     method: "POST",
-    output: ClientTaskMutationResponseSchema,
+    output: ClientTaskAttentionMutationResponseSchema,
     path: "/v3/client/tasks/complete",
   },
   "task.convert": {

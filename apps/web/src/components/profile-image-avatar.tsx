@@ -3,16 +3,20 @@ import {
   profileImageContentPath,
 } from "@rah-os/protocol";
 
-import { AgentAvatar } from "./agent-directory-pane.tsx";
+import { AgentAvatar } from "./agent-avatar.tsx";
 
 export function ProfileImageAvatar({
   avatarKey,
   name,
   size = "header",
+  kind = "human",
+  principalId,
 }: {
   avatarKey: string | undefined;
   name: string;
   size?: "header" | "profile" | "sidebar" | "member" | "compact";
+  kind?: string;
+  principalId?: string;
 }) {
   if (isUploadedProfileImageKey(avatarKey)) {
     return (
@@ -29,14 +33,15 @@ export function ProfileImageAvatar({
       </span>
     );
   }
-  if (avatarKey) {
+  if (avatarKey || kind === "agent") {
     return (
       <AgentAvatar
         agent={{
-          avatarKey,
+          ...(avatarKey ? { avatarKey } : {}),
           displayName: name,
           runtimeAvailable: false,
           state: "enabled",
+          ...(principalId ? { participantId: principalId } : {}),
         }}
         showStatus={false}
         size={size}
@@ -44,7 +49,11 @@ export function ProfileImageAvatar({
     );
   }
   return (
-    <span aria-hidden="true" className="rah-settings-avatar">
+    <span
+      aria-label={`${name} 头像`}
+      role="img"
+      className={`rah-settings-avatar is-${size}`}
+    >
       {name.slice(0, 1).toUpperCase()}
     </span>
   );

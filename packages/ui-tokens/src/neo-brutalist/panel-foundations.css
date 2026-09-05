@@ -35,6 +35,8 @@
 }
 
 .rah-panel-header-action {
+  color: var(--black);
+  font-size: 12px;
   flex-shrink: 0;
   height: 28px;
   min-height: 28px;
@@ -44,5 +46,17 @@
 
 .rah-panel-header-action > svg {
   height: 14px;
+  stroke-width: 2;
   width: 14px;
+}
+
+/* Raft Search clear: 12px glyph + p-1 + 2px border. Same interaction owner. */
+.rah-panel-header-action[data-action-size="compact"] {
+  height: 24px;
+  min-height: 24px;
+  width: 24px;
+}
+.rah-panel-header-action[data-action-size="compact"] > svg {
+  height: 12px;
+  width: 12px;
 }

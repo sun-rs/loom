@@ -719,7 +719,7 @@ test("current schema preserves a schema v40 reclaimed file receipt while adding 
     const audit = new DatabaseSync(f.databasePath, { readOnly: true });
     assert.equal(
       Number(audit.prepare("PRAGMA user_version").get()?.user_version),
-      46,
+      50,
     );
     assert.deepEqual(audit.prepare("PRAGMA foreign_key_check").all(), []);
     assert.deepEqual(
@@ -792,7 +792,7 @@ test("current schema atomically replaces the schema v41 GC scan index", () => {
     const audit = new DatabaseSync(f.databasePath, { readOnly: true });
     assert.equal(
       Number(audit.prepare("PRAGMA user_version").get()?.user_version),
-      46,
+      50,
     );
     assert.deepEqual(
       audit

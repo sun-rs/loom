@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { MessageReferenceSchema } from "../src/index.ts";
+import {
+  ClientMessageReferenceReadStatesRequestSchema,
+  ClientMessageReferenceReadStatesResponseSchema,
+  MessageReferenceSchema,
+} from "../src/index.ts";
 
 test("message references preserve typed canonical identities instead of display-only hrefs", () => {
   const references = [
@@ -78,5 +82,44 @@ test("message references preserve typed canonical identities instead of display-
       roomKind: "channel",
       value: "#design",
     }),
+  );
+});
+
+test("message reference receipt reads are bounded, unique, and canonical", () => {
+  assert.deepEqual(
+    ClientMessageReferenceReadStatesRequestSchema.parse({
+      messageIds: ["message-1", "message-2"],
+      roomId: "room-1",
+    }),
+    {
+      messageIds: ["message-1", "message-2"],
+      roomId: "room-1",
+    },
+  );
+  assert.throws(() =>
+    ClientMessageReferenceReadStatesRequestSchema.parse({
+      messageIds: ["message-1", "message-1"],
+      roomId: "room-1",
+    }),
+  );
+  assert.deepEqual(
+    ClientMessageReferenceReadStatesResponseSchema.parse({
+      readStates: [
+        {
+          messageId: "message-1",
+          principalId: "agent-alice",
+          readState: "read",
+        },
+      ],
+    }),
+    {
+      readStates: [
+        {
+          messageId: "message-1",
+          principalId: "agent-alice",
+          readState: "read",
+        },
+      ],
+    },
   );
 });

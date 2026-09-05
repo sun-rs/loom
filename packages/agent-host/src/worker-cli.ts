@@ -1,5 +1,5 @@
 import { constants } from "node:fs";
-import { open } from "node:fs/promises";
+import { open, unlink } from "node:fs/promises";
 import { basename, isAbsolute, resolve } from "node:path";
 import { Readable } from "node:stream";
 import { randomUUID } from "node:crypto";
@@ -15,6 +15,7 @@ import {
   WorkerReminderScheduleRequestSchema,
   WorkerReminderSnoozeRequestSchema,
   WorkerReminderUpdateRequestSchema,
+  WorkerTaskSubmitRequestSchema,
 } from "@rah-os/protocol";
 import { parseAgentAppConfig } from "./agent-app-config-cli.ts";
 
@@ -65,6 +66,8 @@ export async function runWorkerCliCommand(
     const inbox = arguments_[0] === "agent" || config;
     const artifact =
       arguments_[0] === "worker" && arguments_[1] === "artifact-publish";
+    const artifactDownload =
+      arguments_[0] === "worker" && arguments_[1] === "artifact-download";
     const origin = workerOrigin(
       inbox
         ? runtime.env.RAH_AGENT_INBOX_API_URL
@@ -114,6 +117,15 @@ export async function runWorkerCliCommand(
         origin,
         runtime,
         send,
+        token,
+      });
+      runtime.stdout.write(`${JSON.stringify(result)}\n`);
+      return 0;
+    }
+    if (artifactDownload) {
+      const result = await downloadWorkerArtifact(arguments_, {
+        origin,
+        runtime,
         token,
       });
       runtime.stdout.write(`${JSON.stringify(result)}\n`);
@@ -233,6 +245,83 @@ async function publishWorkerArtifact(
     }
     throw error;
   } finally {
+    await handle?.close();
+  }
+}
+
+async function downloadWorkerArtifact(
+  arguments_: readonly string[],
+  context: {
+    origin: string;
+    runtime: WorkerCliRuntime;
+    token: string;
+  },
+) {
+  const options = parseOptions(arguments_.slice(2));
+  assertAllowed(options, ["attachment-id", "output"]);
+  const attachmentId = boundedText(options, "attachment-id", 512);
+  const output = resolve(boundedText(options, "output", 4_096));
+  const controller = new AbortController();
+  const timeout = setTimeout(
+    () => controller.abort(new Error("Worker artifact download timed out")),
+    ARTIFACT_REQUEST_TIMEOUT_MS,
+  );
+  let handle;
+  try {
+    const response = await context.runtime.fetch(
+      `${context.origin}/v1/worker/artifacts/${attachmentId}`,
+      {
+        headers: { authorization: `Bearer ${context.token}` },
+        method: "GET",
+        signal: controller.signal,
+      },
+    );
+    if (!response.ok) {
+      const result = await readBoundedJson(response.body);
+      throw new Error(serverErrorMessage(result, response.status));
+    }
+    if (response.body === null) {
+      throw new Error("Worker artifact response had no body");
+    }
+    handle = await open(
+      output,
+      constants.O_CREAT |
+        constants.O_EXCL |
+        constants.O_NOFOLLOW |
+        constants.O_WRONLY,
+      0o600,
+    );
+    const reader = response.body.getReader();
+    let total = 0;
+    while (true) {
+      const next = await reader.read();
+      if (next.done) break;
+      total += next.value.byteLength;
+      if (total > MAX_ATTACHMENT_BYTES) {
+        await reader.cancel("Worker artifact download exceeded its limit");
+        throw new Error("Worker artifact download exceeded its limit");
+      }
+      let offset = 0;
+      while (offset < next.value.byteLength) {
+        const wrote = await handle.write(
+          next.value,
+          offset,
+          next.value.byteLength - offset,
+        );
+        if (wrote.bytesWritten <= 0) {
+          throw new Error("Worker artifact download write made no progress");
+        }
+        offset += wrote.bytesWritten;
+      }
+    }
+    return { attachmentId, output };
+  } catch (error) {
+    await handle?.close().catch(() => {});
+    handle = undefined;
+    await unlink(output).catch(() => {});
+    throw error;
+  } finally {
+    clearTimeout(timeout);
     await handle?.close();
   }
 }
@@ -364,6 +453,8 @@ function parseCommand(arguments_: readonly string[]): {
       };
     case "task-get":
       return taskQuery(options, "/v1/worker/tasks/get");
+    case "task-submission":
+      return taskQuery(options, "/v1/worker/tasks/submission");
     case "task-input-status":
       return taskQuery(options, "/v1/worker/tasks/input-status");
     case "task-claim-message":
@@ -399,7 +490,7 @@ function parseCommand(arguments_: readonly string[]): {
         "question",
       );
     case "task-submit":
-      return taskMutation(options, "/v1/worker/tasks/submit", "summary");
+      return taskSubmitMutation(options);
     case "task-review": {
       assertAllowed(options, [
         "based-on-room-seq",
@@ -698,6 +789,60 @@ function taskMutation(
   };
 }
 
+function taskSubmitMutation(options: Readonly<Record<string, string>>): {
+  body: Record<string, unknown>;
+  path: string;
+} {
+  assertAllowed(options, [
+    "based-on-room-seq",
+    "idempotency-key",
+    "summary",
+    "task-id",
+    "verification-artifact-ids",
+    "verification-status",
+    "verification-summary",
+  ]);
+  const hasVerification =
+    options["verification-artifact-ids"] !== undefined ||
+    options["verification-status"] !== undefined ||
+    options["verification-summary"] !== undefined;
+  const verificationStatus = options["verification-status"];
+  if (
+    hasVerification &&
+    verificationStatus !== "passed" &&
+    verificationStatus !== "failed" &&
+    verificationStatus !== "not_run"
+  ) {
+    throw new Error(
+      "--verification-status must be passed, failed, or not_run when verification is declared",
+    );
+  }
+  return {
+    body: WorkerTaskSubmitRequestSchema.parse({
+      basedOnRoomSeq: nonnegativeInteger(options, "based-on-room-seq"),
+      idempotencyKey: boundedText(options, "idempotency-key", 512),
+      summary: boundedText(options, "summary"),
+      taskId: boundedText(options, "task-id", 512),
+      ...(hasVerification
+        ? {
+            verification: {
+              artifactIds:
+                options["verification-artifact-ids"] === undefined
+                  ? []
+                  : boundedText(options, "verification-artifact-ids", 5_120)
+                      .split(",")
+                      .map((artifactId) => artifactId.trim())
+                      .filter(Boolean),
+              status: verificationStatus,
+              summary: boundedText(options, "verification-summary"),
+            },
+          }
+        : {}),
+    }),
+    path: "/v1/worker/tasks/submit",
+  };
+}
+
 function parseOptions(
   arguments_: readonly string[],
   booleanFlags: readonly string[] = [],
@@ -921,16 +1066,18 @@ rah worker message-post --body TEXT --based-on-room-seq N --idempotency-key KEY
 rah worker message-post --send-draft --held-draft-id ID [--anyway] --based-on-room-seq N --idempotency-key KEY
 rah worker thread-unfollow --thread-id ID --based-on-room-seq N --idempotency-key KEY
 rah worker artifact-publish --task-id ID --path FILE [--filename NAME] [--mime-type TYPE] --idempotency-key KEY
+rah worker artifact-download --attachment-id ID --output FILE
 rah worker mcp-tools
 rah worker mcp-call --server-id ID --tool-name NAME --config-version N --assignment-version N --arguments-json JSON_OBJECT
 rah worker task-get --task-id ID
+rah worker task-submission --task-id ID
 rah worker task-input-status --task-id ID
 rah worker task-claim-message --message-id ID --rationale TEXT --based-on-room-seq N --idempotency-key KEY
 rah worker task-claim|task-start|task-release --task-id ID --based-on-room-seq N --idempotency-key KEY
 rah worker task-progress --task-id ID --progress TEXT --based-on-room-seq N --idempotency-key KEY
 rah worker task-block --task-id ID --reason TEXT --based-on-room-seq N --idempotency-key KEY
 rah worker task-request-input --task-id ID --question TEXT --based-on-room-seq N --idempotency-key KEY
-rah worker task-submit --task-id ID --summary TEXT --based-on-room-seq N --idempotency-key KEY
+rah worker task-submit --task-id ID --summary TEXT [--verification-status passed|failed|not_run --verification-summary TEXT --verification-artifact-ids ID,ID] --based-on-room-seq N --idempotency-key KEY
 rah worker task-review --task-id ID --disposition approved|changes_requested --summary TEXT --based-on-room-seq N --idempotency-key KEY
 `;
 }

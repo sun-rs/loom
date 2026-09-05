@@ -10,6 +10,40 @@ export type MessageReferenceReadState = z.infer<
   typeof MessageReferenceReadStateSchema
 >;
 
+export const ClientMessageReferenceReadStatesRequestSchema = z
+  .object({
+    messageIds: z.array(IdentifierSchema).min(1).max(200),
+    roomId: IdentifierSchema,
+  })
+  .strict()
+  .refine(({ messageIds }) => new Set(messageIds).size === messageIds.length, {
+    message: "messageIds must be unique",
+    path: ["messageIds"],
+  });
+export type ClientMessageReferenceReadStatesRequest = z.infer<
+  typeof ClientMessageReferenceReadStatesRequestSchema
+>;
+
+export const MessageReferenceReadStateRecordSchema = z
+  .object({
+    messageId: IdentifierSchema,
+    principalId: IdentifierSchema,
+    readState: MessageReferenceReadStateSchema,
+  })
+  .strict();
+export type MessageReferenceReadStateRecord = z.infer<
+  typeof MessageReferenceReadStateRecordSchema
+>;
+
+export const ClientMessageReferenceReadStatesResponseSchema = z
+  .object({
+    readStates: z.array(MessageReferenceReadStateRecordSchema),
+  })
+  .strict();
+export type ClientMessageReferenceReadStatesResponse = z.infer<
+  typeof ClientMessageReferenceReadStatesResponseSchema
+>;
+
 const PrincipalReferenceCommon = {
   principalId: IdentifierSchema,
   readState: MessageReferenceReadStateSchema.optional(),

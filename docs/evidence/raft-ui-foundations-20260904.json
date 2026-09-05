@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "kind": "official-live-capture",
+  "capturedAt": "2026-09-04T04:57:28Z",
+  "source": {
+    "url": "https://app.raft.build/s/hakasemac/channel/ca806598-6298-4b05-bf26-3ec882689449",
+    "scriptUrl": "https://app.raft.build/assets/index-Biin3FEA.js",
+    "scriptSha256": "e798f35bde09eeda2927669406e10718392ff7574796016441def59dbc5b05f9",
+    "browser": "Codex in-app browser",
+    "method": "Read-only computed styles and actual keyboard input; no conversation mutations."
+  },
+  "preconditions": "Existing channel, three enabled tabs in Chat/Tasks/Files order; only data-independent component properties. No open inspector. System font fallbacks are not claimed byte-identical across browser engines.",
+  "samples": [
+    {
+      "id": "desktop-rest",
+      "environment": {
+        "dpr": 1,
+        "fonts": "loaded",
+        "height": 900,
+        "width": 1440,
+        "enabledTabs": [
+          "聊天",
+          "任务",
+          "文件"
+        ]
+      },
+      "observations": {
+        "action": {
+          "backgroundColor": "oklch(1 0 0)",
+          "borderTopWidth": "2px",
+          "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(20, 17, 17) 2px 2px 0px 0px",
+          "color": "oklch(0 0 0)",
+          "fontSize": "12px",
+          "height": "28px",
+          "transform": "none",
+          "width": "28px"
+        },
+        "header": {
+          "borderBottomWidth": "2px",
+          "columnGap": "12px",
+          "height": "62px",
+          "paddingLeft": "20px",
+          "paddingRight": "20px"
+        },
+        "icon": {
+          "height": "14px",
+          "strokeWidth": "2px",
+          "width": "14px"
+        },
+        "tab": {
+          "backgroundColor": "oklch(0.883 0.162 91.89)",
+          "columnGap": "6px",
+          "fontSize": "12px",
+          "fontWeight": "600",
+          "height": "28px",
+          "lineHeight": "16px",
+          "paddingLeft": "16px",
+          "paddingRight": "16px"
+        }
+      }
+    },
+    {
+      "id": "short-rest",
+      "environment": {
+        "dpr": 1,
+        "fonts": "loaded",
+        "height": 598,
+        "width": 1440,
+        "enabledTabs": [
+          "聊天",
+          "任务",
+          "文件"
+        ]
+      },
+      "observations": {
+        "action": {
+          "backgroundColor": "oklch(1 0 0)",
+          "borderTopWidth": "2px",
+          "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(20, 17, 17) 2px 2px 0px 0px",
+          "color": "oklch(0 0 0)",
+          "fontSize": "12px",
+          "height": "28px",
+          "transform": "none",
+          "width": "28px"
+        },
+        "header": {
+          "borderBottomWidth": "2px",
+          "columnGap": "12px",
+          "height": "48px",
+          "paddingLeft": "20px",
+          "paddingRight": "20px"
+        },
+        "icon": {
+          "height": "14px",
+          "strokeWidth": "2px",
+          "width": "14px"
+        },
+        "tab": {
+          "backgroundColor": "oklch(0.883 0.162 91.89)",
+          "columnGap": "6px",
+          "fontSize": "12px",
+          "fontWeight": "600",
+          "height": "28px",
+          "lineHeight": "16px",
+          "paddingLeft": "16px",
+          "paddingRight": "16px"
+        }
+      }
+    },
+    {
+      "id": "tabs-end",
+      "environment": {
+        "dpr": 1,
+        "fonts": "loaded",
+        "height": 900,
+        "width": 1440,
+        "enabledTabs": [
+          "聊天",
+          "任务",
+          "文件"
+        ]
+      },
+      "observations": {
+        "keyboard": {
+          "focused": "文件",
+          "selected": "聊天"
+        }
+      }
+    },
+    {
+      "id": "tabs-home",
+      "environment": {
+        "dpr": 1,
+        "fonts": "loaded",
+        "height": 900,
+        "width": 1440,
+        "enabledTabs": [
+          "聊天",
+          "任务",
+          "文件"
+        ]
+      },
+      "observations": {
+        "keyboard": {
+          "focused": "聊天",
+          "selected": "聊天"
+        }
+      }
+    }
+  ]
+}

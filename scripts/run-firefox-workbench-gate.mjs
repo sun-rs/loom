@@ -1486,7 +1486,9 @@ if (args.join(" ") === "--version") {
     .locator(".rah-computer-agent-list > button")
     .first();
   const computerAgentName =
-    (await computerAgentButton.locator("b").textContent())?.trim() ?? "";
+    (
+      await computerAgentButton.locator(".rah-entity-card-name").textContent()
+    )?.trim() ?? "";
   assert.notEqual(computerAgentName, "");
   await computerAgentButton.click();
   await page.locator(".rah-agent-profile-pane").waitFor();

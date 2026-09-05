@@ -11,6 +11,7 @@ import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { MessageMarkdown } from "./message-markdown.tsx";
 import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
 import { MessageAttachments } from "./room-files.tsx";
+import { formatRahDateTime } from "../date-time-presentation.ts";
 
 export function ForwardedMessageBundleView({
   bundle,
@@ -86,9 +87,8 @@ export function ForwardedMessageBundleView({
 }
 
 function formatTime(value: string) {
-  return new Intl.DateTimeFormat("zh-CN", {
+  return formatRahDateTime(value, {
     hour: "2-digit",
-    hour12: document.documentElement.dataset.rahTimeFormat === "12",
     minute: "2-digit",
-  }).format(new Date(value));
+  });
 }

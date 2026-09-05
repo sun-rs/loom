@@ -22,22 +22,6 @@
   background: var(--bg);
 }
 
-/* Live header: 62px = 12 + 36 + 12 + 2px divider. */
-.activity-head {
-  height: var(--raft-activity-header-height);
-  flex: none;
-  gap: var(--raft-activity-header-gap);
-  padding: var(--raft-activity-header-padding);
-}
-.activity-head .channel-badge {
-  width: var(--raft-activity-badge-size);
-  height: var(--raft-activity-badge-size);
-  box-shadow: none;
-}
-.activity-head .channel-title h1 {
-  font-size: var(--raft-activity-title-size);
-  line-height: var(--raft-activity-title-line);
-}
 .activity-head .channel-sub {
   margin-top: 0;
   font-size: var(--raft-activity-subtitle-size);
@@ -90,6 +74,8 @@
 /* Live inbox scroller: p-4; no max-width. Its first row starts at x=rail+16. */
 .feed {
   position: relative;
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-height: 0;
   overflow: auto;
@@ -260,8 +246,6 @@
 
 @media (max-width: 760px) {
   .page { grid-template-columns: 56px minmax(0, 1fr); }
-  .activity-head { padding-inline: 12px; }
-  .activity-head .channel-badge { display: none; }
   .activity-toolbar { padding-inline: 12px; }
   .feed { padding: 12px; }
   .feed-card { padding: 10px; }

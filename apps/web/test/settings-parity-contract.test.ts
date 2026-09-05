@@ -1,14 +1,12 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import test from "node:test";
-
-const read = (path: string) =>
-  readFileSync(new URL(`../src/${path}`, import.meta.url), "utf8");
+import { readUiSource as read } from "./ui-source.ts";
 
 test("settings navigation exposes the applicable Raft contract and omits cloud commerce", () => {
   const surface = read("components/settings-surface.tsx");
   for (const section of [
     "account",
+    "language-region",
     "appearance",
     "notifications",
     "server",
@@ -22,16 +20,39 @@ test("settings navigation exposes the applicable Raft contract and omits cloud c
   ])
     assert.match(surface, new RegExp(`\"${section}\"`, "u"), section);
   assert.doesNotMatch(surface, /套餐|账单|Plan|Billing/u);
-  assert.doesNotMatch(surface, /language-region|语言与区域/u);
+  assert.match(surface, /language-region/u);
+  assert.match(surface, /语言与区域/u);
   assert.doesNotMatch(surface, /label:\s*["']应用["']/u);
   const primitives = read("components/settings-primitives.tsx");
   assert.match(primitives, /SettingsPageHeader/u);
   assert.match(primitives, /data-slock-settings-tab/u);
 });
 
+test("language and region preserves the official form split without faking unavailable translation", () => {
+  const pages = read("components/settings-pages.tsx");
+  const preferences = read("settings-preferences.ts");
+  assert.match(pages, /LanguageRegionSettingsContent/u);
+  assert.match(pages, /显示语言/u);
+  assert.match(pages, /消息翻译/u);
+  assert.match(pages, /日期与时间/u);
+  assert.match(pages, /时区/u);
+  assert.match(pages, /12 小时制/u);
+  assert.match(pages, /24 小时制/u);
+  assert.match(pages, /writeTimeFormat/u);
+  assert.match(pages, /尚未接入消息翻译/u);
+  assert.match(pages, /disabled/u);
+  assert.match(pages, /rah-settings-compact-control/u);
+  assert.match(preferences, /return saved/u);
+  assert.match(
+    read("settings.css"),
+    /\.rah-settings-compact-control\s*\{[^}]*max-width:\s*384px/su,
+  );
+});
+
 test("profile and appearance settings expose the full local Raft contract", () => {
   const pages = read("components/settings-pages.tsx");
-  assert.match(pages, /principal\.update/u);
+  assert.match(pages, /useHumanProfileMutation/u);
+  assert.match(read("human-profile-hooks.ts"), /principal\.update/u);
   assert.match(pages, /显示名称/u);
   assert.match(pages, /aria-label="上传图片"/u);
   assert.match(pages, /type="file"/u);
@@ -59,7 +80,7 @@ test("profile and appearance settings expose the full local Raft contract", () =
 test("settings shell uses the measured Raft geometry and one shared visual protocol", () => {
   const surface = read("components/settings-surface.tsx");
   const primitives = read("components/settings-primitives.tsx");
-  const css = read("product.css");
+  const css = read("settings.css");
   assert.doesNotMatch(surface, /rah-settings-mobile-tabs/u);
   assert.match(surface, /rah-settings-mobile-index/u);
   assert.match(surface, /settingsSectionFromSearch/u);
@@ -67,18 +88,18 @@ test("settings shell uses the measured Raft geometry and one shared visual proto
   assert.match(primitives, /rah-settings-mobile-back/u);
   assert.match(primitives, /返回设置/u);
   assert.match(css, /--rah-settings-sidebar-width:\s*240px/u);
-  assert.match(css, /--rah-settings-header-height:\s*62px/u);
+  assert.match(primitives, /<PanelHeader\s+kind="surface"/u);
   assert.match(
     css,
     /\.rah-settings-navigation section > button\.is-active\s*\{[^}]*background:\s*var\(--pink\)/su,
   );
   assert.match(
-    css,
-    /\.rah-settings-page-icon\s*\{[^}]*height:\s*36px[^}]*width:\s*36px/su,
+    read("panel-layout.css"),
+    /\.rah-panel-header-icon\s*\{[^}]*height:\s*36px[^}]*width:\s*36px/su,
   );
   assert.match(
-    css,
-    /\.rah-settings-page-icon > svg\s*\{[^}]*height:\s*18px[^}]*width:\s*18px/su,
+    read("panel-layout.css"),
+    /\.rah-panel-header-icon > svg\s*\{[^}]*height:\s*18px[^}]*width:\s*18px/su,
   );
   assert.match(
     css,

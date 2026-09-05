@@ -25,21 +25,6 @@
   min-width: 0;
 }
 
-.rah-agent-sidebar-head {
-  align-items: center;
-  border-bottom: var(--bd);
-  display: flex;
-  flex: none;
-  height: var(--raft-members-sidebar-header-height);
-  padding: var(--raft-members-sidebar-header-padding);
-}
-
-.rah-agent-sidebar-head h1 {
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 28px;
-}
-
 .rah-agent-sidebar-scroll {
   flex: 1;
   min-height: 0;
@@ -143,7 +128,7 @@
 }
 
 .rah-agent-create-menu button:not(:disabled):hover {
-  background: var(--yellow-soft);
+  background: var(--soft-signal);
 }
 
 .rah-agent-create-menu button:disabled {
@@ -186,8 +171,7 @@
   min-width: 0;
 }
 
-.rah-agent-member-row b,
-.rah-agent-human-row b {
+.rah-agent-member-row b {
   font-size: 13px;
   line-height: 20px;
   overflow: hidden;
@@ -195,8 +179,7 @@
   white-space: nowrap;
 }
 
-.rah-agent-member-row small,
-.rah-agent-human-row small {
+.rah-agent-member-row small {
   color: var(--ink-40);
   flex: 1;
   font-family: var(--mono);
@@ -223,14 +206,6 @@
 
 .rah-agent-human-section {
   margin-top: 12px;
-}
-
-.rah-agent-human-row {
-  align-items: center;
-  display: flex;
-  gap: 8px;
-  height: var(--raft-members-sidebar-row-height);
-  padding: var(--raft-members-sidebar-row-padding);
 }
 
 .rah-agent-human-avatar {
@@ -380,8 +355,6 @@
   display: block;
 }
 
-.rah-agent-avatar-presence,
-.rah-agent-online-state i,
 .rah-agent-activity-list article > i {
   background: var(--mint);
   border: 1px solid var(--black);
@@ -394,48 +367,8 @@
   right: 0;
   transform: translate(50%, 50%);
 }
-.rah-agent-online-state i[data-online="false"],
-.rah-agent-avatar-presence[data-online="false"],
 .rah-agent-computer-label i[data-online="false"] {
   background: var(--presence-off);
-}
-
-/* Raft Uze/fp: identical managed colors; external cyan is an identity override. */
-.rah-agent-status-dot[data-size="sm"] {
-  width: 8px;
-  height: 8px;
-}
-.rah-agent-status-dot[data-size="md"] {
-  width: 10px;
-  height: 10px;
-}
-.rah-agent-status-dot[data-size="lg"] {
-  width: 11px;
-  height: 11px;
-}
-.rah-agent-status-dot[data-activity="offline"] {
-  background: var(--presence-off);
-}
-.rah-agent-status-dot[data-activity="online"] {
-  background: var(--mint);
-}
-.rah-agent-status-dot[data-activity="thinking"],
-.rah-agent-status-dot[data-activity="working"] {
-  background: var(--yellow);
-}
-.rah-agent-status-dot[data-activity="error"] {
-  background: var(--orange);
-}
-.rah-agent-status-dot[data-activity="external"] {
-  background: var(--cyan);
-}
-.rah-agent-status-dot[data-pulse="true"] {
-  animation: rah-trajectory-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .rah-agent-status-dot[data-pulse="true"] {
-    animation: none;
-  }
 }
 
 .rah-agent-profile-pane,
@@ -449,14 +382,6 @@
   overflow: auto;
   scrollbar-color: var(--scrollbar-thumb) transparent;
   scrollbar-width: thin;
-}
-
-.rah-agent-profile-hero {
-  align-items: flex-start;
-  display: flex;
-  gap: var(--raft-members-profile-hero-gap);
-  min-height: var(--raft-members-profile-hero-height);
-  padding: var(--raft-members-profile-hero-padding);
 }
 
 .rah-agent-profile-avatar-trigger {
@@ -573,363 +498,6 @@
 .rah-agent-avatar-picker > p {
   margin-top: 8px;
   text-align: center;
-}
-
-.rah-agent-profile-identity {
-  flex: 1;
-  min-width: 0;
-}
-
-.rah-agent-profile-heading {
-  align-items: center;
-  display: flex;
-  gap: 8px;
-  min-width: 0;
-}
-
-.rah-agent-profile-hero h3 {
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 23px;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rah-agent-profile-hero p {
-  color: var(--ink-40);
-  font: 14px/20px var(--mono);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rah-agent-online-state {
-  align-items: center;
-  color: var(--ink-50);
-  display: flex;
-  flex: none;
-  font-size: 12px;
-  gap: 5px;
-  line-height: 18px;
-}
-
-.rah-agent-online-state i {
-  height: 8px;
-  width: 8px;
-}
-
-.rah-agent-profile-field {
-  min-height: var(--raft-members-display-section-height);
-  padding: var(--raft-members-display-section-padding);
-}
-
-.rah-agent-profile-field + .rah-agent-profile-field {
-  min-height: var(--raft-members-description-section-height);
-  padding: var(--raft-members-description-section-padding);
-}
-
-.rah-agent-profile-field h3,
-.rah-agent-profile-section > h3,
-.rah-agent-profile-section > .field-label-row h3 {
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 16px;
-  color: var(--ink-50);
-}
-
-.rah-agent-profile-field h3,
-.rah-agent-runtime-section > h3 {
-  align-items: center;
-  display: flex;
-  gap: 8px;
-}
-
-.rah-agent-profile-field p {
-  font-size: 14px;
-  line-height: 20px;
-  margin-top: 4px;
-  overflow-wrap: anywhere;
-}
-
-.rah-agent-profile-field p.is-empty,
-.rah-agent-profile-status {
-  color: var(--ink-40);
-}
-
-.rah-agent-profile-section {
-  border-top: 1px solid var(--ink-10);
-  padding: 16px 20px;
-}
-
-.rah-agent-profile-section > h3 {
-  margin-bottom: 12px;
-  text-transform: uppercase;
-}
-
-.rah-agent-profile-section > h3 span {
-  color: var(--ink-40);
-  font-family: var(--mono);
-  font-weight: 400;
-}
-
-.rah-agent-role-block > span,
-.rah-agent-info-grid dt,
-.rah-agent-runtime-chips span {
-  color: var(--ink-40);
-  display: block;
-  font-size: 10px;
-  line-height: 15px;
-}
-
-.rah-agent-role-block strong {
-  background: var(--lavender);
-  border: var(--bd);
-  display: inline-flex;
-  font-size: 12px;
-  margin-top: 5px;
-  min-height: 24px;
-  padding: 2px 8px;
-}
-
-.rah-agent-info-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 32px;
-  margin-top: 12px;
-}
-
-.rah-agent-info-grid > div:first-child {
-  flex-basis: 100%;
-}
-
-.rah-agent-info-grid > div {
-  min-width: 0;
-  max-width: 100%;
-}
-
-.rah-agent-info-grid dd {
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 20px;
-  margin-top: 4px;
-  overflow-wrap: anywhere;
-}
-
-.rah-agent-info-grid small {
-  color: var(--ink-40);
-  font-family: var(--mono);
-  font-weight: 400;
-}
-
-.rah-agent-creator-identity {
-  align-items: center;
-  display: inline-flex;
-  gap: 6px;
-  max-width: 100%;
-}
-
-.rah-agent-creator-identity > .rah-agent-human-avatar,
-.rah-agent-creator-identity > .rah-agent-avatar {
-  height: 20px;
-  width: 20px;
-}
-
-.rah-agent-creator-identity > b,
-.rah-agent-creator-identity > small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.rah-agent-created-list {
-  display: grid;
-  gap: 8px;
-}
-
-.rah-agent-created-row {
-  align-items: center;
-  background: var(--bg);
-  border: 1px solid color-mix(in srgb, var(--black) 20%, transparent);
-  color: var(--ink);
-  display: grid;
-  gap: 8px;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  min-height: 44px;
-  padding: 6px 8px;
-  text-align: left;
-  width: 100%;
-}
-
-.rah-agent-created-row > span:not(.rah-agent-avatar) {
-  display: grid;
-  min-width: 0;
-}
-
-.rah-agent-created-row b,
-.rah-agent-created-row small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rah-agent-created-row small,
-.rah-agent-created-row em {
-  color: var(--ink-40);
-  font: 400 10px/14px var(--mono);
-}
-
-.rah-agent-created-row em {
-  font-style: normal;
-}
-
-.rah-agent-runtime-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.rah-agent-runtime-chips > div {
-  min-width: 0;
-  max-width: 100%;
-}
-
-.rah-agent-runtime-chips strong {
-  border: var(--bd);
-  display: inline-block;
-  font-size: 12px;
-  line-height: 16px;
-  margin-top: 4px;
-  min-height: 24px;
-  padding: 2px 8px;
-  max-width: 100%;
-  overflow-wrap: anywhere;
-}
-
-.rah-agent-runtime-chips strong.is-cyan {
-  background: var(--cyan);
-}
-
-.rah-agent-runtime-chips strong.is-lavender {
-  background: var(--lavender);
-}
-
-.rah-product-shell .rah-profile-chip-edit {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  text-align: left;
-  max-width: 100%;
-}
-.rah-profile-chip-edit:hover strong {
-  text-decoration: underline;
-}
-.rah-profile-chip-edit:focus-visible {
-  outline: 2px solid var(--ink);
-  outline-offset: 3px;
-}
-.rah-profile-field-editor input,
-.rah-profile-field-editor textarea {
-  box-sizing: border-box;
-  width: 100%;
-  padding: 8px;
-  border: 2px solid var(--ink);
-  font: inherit;
-  color: var(--ink);
-  background: white;
-}
-.rah-profile-field-editor textarea {
-  min-height: 80px;
-  resize: vertical;
-}
-.rah-profile-field-buttons {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-}
-.rah-profile-field-editor [role="alert"] {
-  color: #a92820;
-}
-
-.rah-agent-runtime-chips strong.is-yellow {
-  background: var(--yellow);
-}
-
-.rah-agent-runtime-chips strong.is-orange {
-  background: var(--orange);
-}
-
-.rah-agent-profile-status {
-  font-size: 12px;
-  line-height: 18px;
-}
-
-.rah-agent-profile-status.is-error {
-  color: var(--coral);
-}
-
-.rah-agent-skill-list {
-  display: grid;
-  gap: 8px;
-}
-
-.rah-agent-skill-list article {
-  border: 1px solid color-mix(in srgb, var(--black) 20%, transparent);
-  display: grid;
-  gap: 3px;
-  padding: 10px 12px;
-  overflow-wrap: anywhere;
-}
-
-.rah-agent-skill-list span {
-  color: var(--ink-40);
-  font: 10px/1.5 var(--mono);
-}
-
-.rah-agent-profile-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.rah-agent-profile-actions button {
-  align-items: center;
-  background: var(--bg);
-  border: var(--bd);
-  display: flex;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 20px;
-  min-height: var(--raft-members-action-button-height);
-  justify-content: center;
-  padding: 8px 16px;
-  width: 100%;
-}
-
-.rah-agent-profile-actions button.is-orange {
-  background: var(--orange);
-}
-
-.rah-agent-profile-actions button.is-red {
-  background: var(--coral);
-}
-
-.rah-agent-profile-actions button > svg {
-  flex: none;
-  height: 14px;
-  width: 14px;
-}
-
-/* Missing capability is explicit, not a faded version of a ready action. */
-.rah-product-shell .rah-agent-profile-actions button.is-unavailable:disabled {
-  opacity: 1;
-  color: var(--ink-50);
-}
-
-.rah-agent-profile-actions button > small {
-  font: 400 10px/14px var(--sans);
 }
 
 .rah-agent-activity-pane,
@@ -1288,7 +856,7 @@
 }
 
 .rah-agent-mcp-servers summary strong.is-disabled {
-  background: var(--gray);
+  background: var(--gray-chip);
 }
 
 .rah-agent-mcp-tools {
@@ -1388,29 +956,6 @@
   line-height: 18px;
   color: var(--ink-50);
 }
-.rah-profile-edit {
-  display: inline-flex;
-  vertical-align: middle;
-  border: 0;
-  background: transparent;
-  color: var(--ink-40);
-  padding: 2px 4px;
-}
-.rah-profile-edit svg {
-  width: 12px;
-  height: 12px;
-}
-.rah-profile-edit:hover:not(:disabled) {
-  background: var(--ink-05);
-  color: var(--ink);
-}
-/* Empty activity is part of its parent's scroll area, never a second nested scroller. */
-.rah-agent-activity-pane > .rah-agent-capability-pane {
-  flex: none;
-  min-height: 220px;
-  overflow: visible;
-}
-
 .rah-agent-activity-pane > .btn,
 .rah-agent-mcp-pane > .btn {
   margin: 14px 20px 0;
@@ -1653,7 +1198,7 @@
 
 .rah-agent-reminders-list > article {
   border: var(--bd);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-s);
   display: grid;
   gap: 8px;
   padding: 12px;
@@ -1817,8 +1362,6 @@
 
   .rah-agent-sidebar-head {
     background: var(--yellow);
-    height: 62px;
-    padding-inline: 20px;
   }
 
   .rah-agent-sidebar-scroll {
@@ -1842,10 +1385,6 @@
   .rah-agent-mobile-back,
   .rah-agent-header-message {
     display: grid;
-  }
-
-  .rah-agent-mobile-back svg {
-    transform: rotate(180deg);
   }
 
   .rah-agent-detail-identity {

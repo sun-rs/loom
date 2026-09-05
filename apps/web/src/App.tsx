@@ -31,7 +31,8 @@ import {
 } from "./global-discovery-model.ts";
 import { useDiscoveryQuery } from "./use-discovery-query.ts";
 import { WorkspaceIdentity } from "./components/workspace-identity.tsx";
-import { AgentMessageContext } from "./components/agent-message-identity.tsx";
+import { createWorkspaceEntities } from "./workspace-entities.ts";
+import { WorkspaceEntityProvider } from "./components/workspace-entity-context.tsx";
 import type {
   AgentCatalogEntry,
   ClientAgentGetResponse,
@@ -48,8 +49,6 @@ import type {
   RoomEvent,
   RoomMembership,
   Task,
-  TaskReview,
-  TaskSubmission,
   Thread,
   Workspace,
 } from "@rah-os/protocol";
@@ -139,6 +138,11 @@ import {
   type AgentRouteSelection,
 } from "./agent-route.ts";
 import { rememberWorkspaceLocation } from "./workspace-switcher-state.ts";
+import { getOrCreateBoundedSession } from "./bounded-session-cache.ts";
+import {
+  messageReferenceReadStateRecordsIndex,
+  type MessageReferenceReadStateIndex,
+} from "./message-reference-read-state.ts";
 
 type AppProps = { client?: RahClient };
 declare const __RAH_TRUSTED_PROXY_AUTH__: boolean;
@@ -149,14 +153,34 @@ type RoomData = {
   hasEarlierMessages: boolean;
   latestRoomSeq: number;
   members: Principal[];
+  mentionReadStates: MessageReferenceReadStateIndex;
   memberships: RoomMembership[];
   messages: Message[];
+  referenceEventsComplete: boolean;
   roomEvents: RoomEvent[];
-  reviews: TaskReview[];
-  submissions: TaskSubmission[];
   tasks: Task[];
   threads: Thread[];
 };
+
+async function loadMessageReferenceReadStates(
+  client: RahClient,
+  roomId: string,
+  messages: readonly Message[],
+  signal?: AbortSignal,
+): Promise<MessageReferenceReadStateIndex> {
+  const messageIds = [...new Set(messages.map(({ messageId }) => messageId))];
+  if (messageIds.length === 0) return new Map();
+  const records = [];
+  for (let offset = 0; offset < messageIds.length; offset += 200) {
+    const response = await client.request(
+      "message.reference.read-state.list",
+      { messageIds: messageIds.slice(offset, offset + 200), roomId },
+      signal === undefined ? undefined : { signal },
+    );
+    records.push(...response.readStates);
+  }
+  return messageReferenceReadStateRecordsIndex(records);
+}
 
 export function App({ client: injectedClient }: AppProps) {
   const [client, setClient] = useState<RahClient | undefined>(() =>
@@ -224,6 +248,8 @@ function WorkspaceScreen({
       : threadRootSelectionFromSearch(window.location.search, requestedRoomId);
   });
   const [threadMessages, setThreadMessages] = useState<Message[]>([]);
+  const [threadMentionReadStates, setThreadMentionReadStates] =
+    useState<MessageReferenceReadStateIndex>(new Map());
   const [threadLoading, setThreadLoading] = useState(false);
   const [threadHasEarlierReplies, setThreadHasEarlierReplies] = useState(false);
   const [threadEarlierRepliesLoading, setThreadEarlierRepliesLoading] =
@@ -875,21 +901,20 @@ function WorkspaceScreen({
           maxPages: 4,
           signal: controller.signal,
         });
-        let messageSession = messageSessions.current.get(activeRoomId);
-        if (messageSession === undefined && health.capabilities.messageRead) {
-          messageSession = new MessageSession({
-            client,
-            roomId: activeRoomId,
-          });
-          messageSessions.current.set(activeRoomId, messageSession);
-        }
+        const messageSession = health.capabilities.messageRead
+          ? getOrCreateBoundedSession(
+              messageSessions.current,
+              activeRoomId,
+              () => new MessageSession({ client, roomId: activeRoomId }),
+              8,
+            )
+          : undefined;
         const [
           messageResult,
           taskResult,
           threadResult,
           membershipResult,
           agentActivityResult,
-          reviewEvidenceResult,
         ] = await Promise.all([
           messageSession === undefined
             ? Promise.resolve({
@@ -935,17 +960,13 @@ function WorkspaceScreen({
                 { signal: controller.signal },
               )
             : Promise.resolve({ agents: [] as RoomAgentActivity[] }),
-          health.capabilities.taskRead
-            ? client.request(
-                "task.review.list",
-                { roomId: activeRoomId },
-                { signal: controller.signal },
-              )
-            : Promise.resolve({
-                reviews: [] as TaskReview[],
-                submissions: [] as TaskSubmission[],
-              }),
         ]);
+        const mentionReadStates = await loadMessageReferenceReadStates(
+          client,
+          activeRoomId,
+          messageResult.messages,
+          controller.signal,
+        );
         caughtUp = roomCatchUp.caughtUp && messageResult.complete;
         const knownPrincipals = new Map(
           (roomCatchUp.state.snapshot?.members ?? []).map((principal) => [
@@ -980,11 +1001,11 @@ function WorkspaceScreen({
           hasEarlierMessages: messageResult.hasEarlier,
           latestRoomSeq: roomCatchUp.state.latestRoomSeq,
           members: [...knownPrincipals.values()],
+          mentionReadStates,
           memberships: membershipResult.memberships,
           messages: [...messageResult.messages],
+          referenceEventsComplete: roomCatchUp.state.historyComplete,
           roomEvents: [...roomCatchUp.state.events],
-          reviews: reviewEvidenceResult.reviews,
-          submissions: reviewEvidenceResult.submissions,
           tasks: taskResult.tasks,
           threads: threadResult.threads,
         });
@@ -1122,6 +1143,15 @@ function WorkspaceScreen({
       ...(presence ? { presence } : {}),
       connectionStatus: computer?.status ?? ("unknown" as const),
     };
+  });
+  const entities = createWorkspaceEntities({
+    workspaceId: activeWorkspace?.workspaceId,
+    actorId: currentPrincipal?.principalId,
+    human: currentPrincipal,
+    hostId: localRuntimeHostId,
+    computer,
+    agents: agentDirectory,
+    runtimes: localRuntimes,
   });
   const diagnosticRooms = rooms
     .filter((room) => room.workspaceId === activeWorkspace?.workspaceId)
@@ -1486,6 +1516,7 @@ function WorkspaceScreen({
       !health.capabilities.threadRead
     ) {
       setThreadMessages([]);
+      setThreadMentionReadStates(new Map());
       setThreadHasEarlierReplies(false);
       setThreadLoading(false);
       return;
@@ -1495,15 +1526,17 @@ function WorkspaceScreen({
     void (async () => {
       try {
         const sessionKey = `${activeRoomId}:${activeThreadId}`;
-        let session = threadMessageSessions.current.get(sessionKey);
-        if (session === undefined) {
-          session = new MessageSession({
-            client,
-            roomId: activeRoomId,
-            threadId: activeThreadId,
-          });
-          threadMessageSessions.current.set(sessionKey, session);
-        }
+        const session = getOrCreateBoundedSession(
+          threadMessageSessions.current,
+          sessionKey,
+          () =>
+            new MessageSession({
+              client,
+              roomId: activeRoomId,
+              threadId: activeThreadId,
+            }),
+          8,
+        );
         const initial = await session.syncUntilCurrent({
           limit: RAFT_MESSAGE_PAGE_SIZE,
           maxPages: 4,
@@ -1513,6 +1546,14 @@ function WorkspaceScreen({
         let hasEarlier = initial.hasEarlier;
         if (controller.signal.aborted) return;
         setThreadMessages([...messages]);
+        setThreadMentionReadStates(
+          await loadMessageReferenceReadStates(
+            client,
+            activeRoomId,
+            messages,
+            controller.signal,
+          ),
+        );
         setThreadHasEarlierReplies(hasEarlier);
       } catch (caught) {
         if (!controller.signal.aborted) setError(errorMessage(caught));
@@ -1540,7 +1581,14 @@ function WorkspaceScreen({
         limit: RAFT_MESSAGE_PAGE_SIZE,
       });
       if (activeThreadHistoryKey.current === sessionKey) {
+        const mentionReadStates = await loadMessageReferenceReadStates(
+          client,
+          activeRoomId,
+          result.messages,
+        );
+        if (activeThreadHistoryKey.current !== sessionKey) return;
         setThreadMessages([...result.messages]);
+        setThreadMentionReadStates(mentionReadStates);
         setThreadHasEarlierReplies(result.hasEarlier);
       }
     } catch (caught) {
@@ -1552,7 +1600,7 @@ function WorkspaceScreen({
       if (threadHistoryLoadingKey.current === sessionKey)
         threadHistoryLoadingKey.current = undefined;
     }
-  }, [activeRoomId, activeThreadId]);
+  }, [activeRoomId, activeThreadId, client]);
   const loadEarlierThreadMessages = useCallback(
     () => loadThreadHistory(),
     [loadThreadHistory],
@@ -1652,12 +1700,18 @@ function WorkspaceScreen({
       const result = await session.loadEarlier({
         limit: RAFT_MESSAGE_PAGE_SIZE,
       });
+      const mentionReadStates = await loadMessageReferenceReadStates(
+        client,
+        activeRoomId,
+        result.messages,
+      );
       setRoomData((current) =>
         current === undefined
           ? current
           : {
               ...current,
               hasEarlierMessages: result.hasEarlier,
+              mentionReadStates,
               messages: [...result.messages],
             },
       );
@@ -1666,7 +1720,7 @@ function WorkspaceScreen({
     } finally {
       setEarlierMessagesLoading(false);
     }
-  }, [activeRoomId, earlierMessagesLoading]);
+  }, [activeRoomId, client, earlierMessagesLoading]);
 
   const submitThreadReply = useCallback(
     async (body: string, attachmentIds: string[] = []) => {
@@ -2704,6 +2758,8 @@ function WorkspaceScreen({
   );
 
   const agentDetailProps = {
+    initialHumanPrincipalId:
+      agentRoute.view === "human" ? agentRoute.humanPrincipalId : undefined,
     initialAgentDefinitionId: agentRoute.agentDefinitionId,
     initialTab: agentRoute.tab,
     initialView: agentRoute.view,
@@ -2716,7 +2772,7 @@ function WorkspaceScreen({
       workspaceMembershipRole !== undefined,
     canReadManagedMcp,
     client,
-    computerLabel: localRuntimeHostId,
+    computerLabel: entities.computer?.displayName,
     computerStatus: computer?.status,
     controlRoomId: activeWorkspace?.controlRoomId,
     currentHuman: currentPrincipal,
@@ -2822,12 +2878,38 @@ function WorkspaceScreen({
             requestGate: diagnosticNavigation.current,
           }}
         >
-          <AgentMessageContext.Provider
-            value={{
-              client,
-              runtimes: localRuntimes,
-              computerLabel: computer?.displayName ?? localRuntimeHostId,
-              onOpen: openAgentPeek,
+          <WorkspaceEntityProvider
+            entities={entities}
+            client={client}
+            canManageAgents={canManageCurrentWorkspaceAgent}
+            onOpen={openAgentPeek}
+            onPrincipalUpdated={(principal) =>
+              setCurrentPrincipal((current) =>
+                current?.principalId === principal.principalId
+                  ? principal
+                  : current,
+              )
+            }
+            onOpenDirect={openDirectRoom}
+            onOpenComputer={() => {
+              setPeekAgentId(undefined);
+              setFocusedMessageId(undefined);
+              setActiveThreadRootMessageId(undefined);
+              setRoomMembersOpen(false);
+              setComputerDetailOpen(true);
+              setSurface("computers");
+            }}
+            onOpenHuman={(humanPrincipalId) => {
+              setPeekAgentId(undefined);
+              setRoomMembersOpen(false);
+              setMobileRoomsOpen(false);
+              setSurface("agents");
+              navigateAgentRoute({
+                agentDefinitionId: undefined,
+                humanPrincipalId,
+                tab: "profile",
+                view: "human",
+              });
             }}
           >
             <div
@@ -3018,6 +3100,7 @@ function WorkspaceScreen({
                 />
               ) : surface === "settings" ? (
                 <SettingsSurface
+                  membershipRole={workspaceMembershipRole}
                   agents={agentDirectory}
                   canManageWorkspace={
                     health?.capabilities.roomWrite === true &&
@@ -3030,7 +3113,13 @@ function WorkspaceScreen({
                   consumerPrefix={consumerPrefix}
                   controlRoomId={activeWorkspace?.controlRoomId}
                   currentPrincipal={currentPrincipal}
-                  onPrincipalUpdated={setCurrentPrincipal}
+                  onPrincipalUpdated={(principal) =>
+                    setCurrentPrincipal((current) =>
+                      current?.principalId === principal.principalId
+                        ? principal
+                        : current,
+                    )
+                  }
                   onWorkspaceUpdated={(workspace) =>
                     setWorkspaces((current) =>
                       current.map((item) =>
@@ -3174,6 +3263,11 @@ function WorkspaceScreen({
                       }
                       earlierMessagesLoading={earlierMessagesLoading}
                       messages={view.messages}
+                      {...(roomData?.mentionReadStates === undefined
+                        ? {}
+                        : {
+                            mentionReadStates: roomData.mentionReadStates,
+                          })}
                       roomEvents={roomData?.roomEvents ?? []}
                       roomMembers={roomData?.members ?? []}
                       agents={roomAgents}
@@ -3190,7 +3284,9 @@ function WorkspaceScreen({
                       roomKind={activeRoom?.kind}
                       roomId={activeRoom?.roomId}
                       referenceComputers={messageReferenceComputers}
-                      referenceEventsComplete={roomData?.caughtUp === true}
+                      referenceEventsComplete={
+                        roomData?.referenceEventsComplete === true
+                      }
                       referenceRooms={messageReferenceRooms}
                       onSubmit={submitComposer}
                       threads={roomData?.threads ?? []}
@@ -3379,8 +3475,11 @@ function WorkspaceScreen({
                   }}
                   replies={threadView.messages}
                   mentionAgentIds={availableAgentIds}
+                  mentionReadStates={threadMentionReadStates}
                   referenceComputers={messageReferenceComputers}
-                  referenceEventsComplete={roomData?.caughtUp === true}
+                  referenceEventsComplete={
+                    roomData?.referenceEventsComplete === true
+                  }
                   referenceRooms={messageReferenceRooms}
                   referenceTasks={roomData?.tasks ?? []}
                   roomMembers={roomData?.members ?? []}
@@ -3538,7 +3637,7 @@ function WorkspaceScreen({
                 showMobileNavigation={showMobileNavigation}
               />
             </div>
-          </AgentMessageContext.Provider>
+          </WorkspaceEntityProvider>
         </DiagnosticNavigationContext.Provider>
       </MessageSocialProvider>
     </SidebarPreferencesProvider>
@@ -3555,15 +3654,17 @@ function roomSessionFor(
   consumerPrefix: string,
   roomId: string,
 ): RoomSession {
-  const existing = sessions.get(roomId);
-  if (existing !== undefined) return existing;
-  const session = new RoomSession({
-    client,
-    consumerId: `${consumerPrefix}-${roomId}`,
+  return getOrCreateBoundedSession(
+    sessions,
     roomId,
-  });
-  sessions.set(roomId, session);
-  return session;
+    () =>
+      new RoomSession({
+        client,
+        consumerId: `${consumerPrefix}-${roomId}`,
+        roomId,
+      }),
+    8,
+  );
 }
 
 function browserOpaqueId(): string {

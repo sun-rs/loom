@@ -27,6 +27,7 @@ import {
   type ActivationCredentialScope,
   type RoomDeletionFileGcSummary,
   type TaskArtifactReference,
+  type TaskSubmissionRepositoryEvidence,
 } from "@rah-os/protocol";
 import type {
   AuthenticatedActorContext,
@@ -44,6 +45,7 @@ import {
   RoomFileGcService,
   type RoomFileGcReconcileResult,
 } from "./room-file-gc.ts";
+import { requireWorkerTaskDelivery } from "./worker-task-scope.ts";
 import type { z } from "zod";
 
 const FORWARDED_ATTACHMENT_ID_DOMAIN =
@@ -396,6 +398,7 @@ export class RoomFiles {
   forTaskSubmission(
     execution: AuthenticatedWorkerExecutionContext,
     taskId: string,
+    repository?: TaskSubmissionRepositoryEvidence,
   ): {
     attachments: Attachment[];
     references: TaskArtifactReference[];
@@ -406,11 +409,19 @@ export class RoomFiles {
       .prepare(
         `SELECT * FROM room_files
          WHERE room_id = ? AND actor_id = ? AND task_id = ?
+           AND run_attempt_id = ?
            AND state = 'completed' AND message_id IS NULL
          ORDER BY created_at, attachment_id`,
       )
-      .all(scope.roomId, scope.participantId, taskId);
-    if (rows.length > 10)
+      .all(scope.roomId, scope.participantId, taskId, scope.runAttemptId);
+    const systemAttachmentId =
+      repository?.source === "host_observed"
+        ? repository.patchAttachmentId
+        : undefined;
+    const userArtifactCount = rows.filter(
+      (row) => text(row, "attachment_id") !== systemAttachmentId,
+    ).length;
+    if (userArtifactCount > 10 || rows.length > 11)
       throw new ConflictError("at most 10 artifacts per Task submission");
     const attachments = rows.map((row) => this.#attachment(row));
     const references = rows.map((row, index) =>
@@ -705,6 +716,44 @@ export class RoomFiles {
           ...(range === undefined
             ? {}
             : { start: range.start, end: range.end }),
+        }),
+      };
+    } catch (error) {
+      closeSync(descriptor);
+      throw error;
+    }
+  }
+  async downloadWorkerTaskArtifact(
+    execution: AuthenticatedWorkerExecutionContext,
+    attachmentId: string,
+  ) {
+    const scope = this.#worker(execution);
+    const row = this.#row(attachmentId);
+    if (
+      text(row, "room_id") !== scope.roomId ||
+      typeof row.task_id !== "string"
+    ) {
+      throw new ForbiddenError(
+        "artifact is outside this Worker execution scope",
+      );
+    }
+    requireWorkerTaskDelivery(this.#db, scope, text(row, "task_id"));
+    if (row.state !== "consumed") {
+      throw new NotFoundError("file is not attached to a sent Task submission");
+    }
+    this.#ensureDirectory();
+    const path = this.#path(attachmentId);
+    const descriptor = openSync(
+      path,
+      constants.O_RDONLY | constants.O_NOFOLLOW,
+    );
+    try {
+      requireWorkerTaskDelivery(this.#db, scope, text(row, "task_id"));
+      return {
+        attachment: this.#attachment(row),
+        stream: createReadStream(path, {
+          autoClose: true,
+          fd: descriptor,
         }),
       };
     } catch (error) {

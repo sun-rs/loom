@@ -1,5 +1,11 @@
 import assert from "node:assert/strict";
-import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -280,6 +286,69 @@ test("Worker CLI task submit requires an explicit causal sequence and stable ide
   }
 });
 
+test("Worker CLI exposes the current frozen Task submission without accepting a submission selector", async () => {
+  const state = fixture();
+  try {
+    assert.equal(
+      await runWorkerCliCommand(
+        ["worker", "task-submission", "--task-id", "task-1"],
+        state.runtime,
+      ),
+      0,
+    );
+    assert.deepEqual(state.requests[0]?.body, { taskId: "task-1" });
+    assert.equal(
+      state.requests[0]?.url,
+      "http://127.0.0.1:43123/v1/worker/tasks/submission",
+    );
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("Worker CLI labels verification as a producer declaration and freezes referenced artifacts", async () => {
+  const state = fixture();
+  try {
+    assert.equal(
+      await runWorkerCliCommand(
+        [
+          "worker",
+          "task-submit",
+          "--task-id",
+          "task-1",
+          "--summary",
+          "Implemented and verified",
+          "--verification-status",
+          "passed",
+          "--verification-summary",
+          "npm test passed",
+          "--verification-artifact-ids",
+          "artifact-1,artifact-2",
+          "--based-on-room-seq",
+          "6",
+          "--idempotency-key",
+          "submit:task-1:attempt-1",
+        ],
+        state.runtime,
+      ),
+      0,
+    );
+    assert.deepEqual(state.requests[0]?.body, {
+      basedOnRoomSeq: 6,
+      idempotencyKey: "submit:task-1:attempt-1",
+      summary: "Implemented and verified",
+      taskId: "task-1",
+      verification: {
+        artifactIds: ["artifact-1", "artifact-2"],
+        status: "passed",
+        summary: "npm test passed",
+      },
+    });
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
 test("Worker CLI exposes Raft-shaped explicit Thread unfollow without routing injection", async () => {
   const state = fixture();
   try {
@@ -453,6 +522,45 @@ test("Worker CLI explicitly publishes a local file without sending its host path
       "http://127.0.0.1:43123/v1/worker/artifacts/attachment-1",
     );
     assert.equal(requests[1]?.body, "artifact-evidence!");
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("Worker CLI downloads one frozen Task Artifact without placing bytes in JSON context", async () => {
+  const state = fixture();
+  const output = join(state.directory, "review.patch");
+  let request:
+    { authorization: string | null; method: string; url: string } | undefined;
+  state.runtime.fetch = async (input, init) => {
+    request = {
+      authorization: new Headers(init?.headers).get("authorization"),
+      method: init?.method ?? "GET",
+      url: String(input),
+    };
+    return new Response("frozen patch\n", { status: 200 });
+  };
+  try {
+    assert.equal(
+      await runWorkerCliCommand(
+        [
+          "worker",
+          "artifact-download",
+          "--attachment-id",
+          "11111111-1111-4111-8111-111111111111",
+          "--output",
+          output,
+        ],
+        state.runtime,
+      ),
+      0,
+    );
+    assert.deepEqual(request, {
+      authorization: "Bearer worker-secret",
+      method: "GET",
+      url: "http://127.0.0.1:43123/v1/worker/artifacts/11111111-1111-4111-8111-111111111111",
+    });
+    assert.equal(readFileSync(output, "utf8"), "frozen patch\n");
   } finally {
     rmSync(state.directory, { force: true, recursive: true });
   }

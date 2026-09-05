@@ -307,8 +307,10 @@ function TaskCard({
 }) {
   const group = raftTaskGroup(task),
     column = columns.find((item) => item.id === group)!,
-    canEdit = Boolean(
-      globalTaskTransition(task, group, canManageAnyTask).operation,
+    canEdit = columns.some(
+      (item) =>
+        globalTaskTransition(task, item.id, canManageAnyTask).operation !==
+        undefined,
     );
   const {
     attributes,
@@ -381,16 +383,23 @@ function TaskCard({
             variant="status"
             className="rah-task-state rah-task-status-picker"
             triggerClassName={`chip-${column.tone}`}
-            disabled={disabled || !canEdit}
+            disabled={disabled || !canManageAnyTask}
             values={[group]}
             selected={false}
-            options={columns
-              .filter(
-                (item) =>
-                  globalTaskTransition(task, item.id, canManageAnyTask)
-                    .operation,
-              )
-              .map((item) => ({ id: item.id, label: item.label }))}
+            options={columns.map((item) => {
+              const reason = globalTaskTransition(
+                task,
+                item.id,
+                canManageAnyTask,
+              ).reason;
+              return {
+                id: item.id,
+                label: item.label,
+                ...(item.id === group || reason === undefined
+                  ? {}
+                  : { disabledReason: reason }),
+              };
+            })}
             onChange={(values) => onChoose(values[0] as TaskColumnId)}
           />
         </div>

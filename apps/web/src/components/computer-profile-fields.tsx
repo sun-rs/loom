@@ -11,6 +11,7 @@ import {
   type ComputerProfileField,
 } from "../computer-profile-edit.ts";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
+import { ProfileSection } from "@rah-os/ui-web/neo-brutalist/profile-section";
 
 type EditState = {
   baseDescription: string | null;
@@ -139,13 +140,15 @@ export function ComputerProfileFields({
 
   return (
     <>
-      <section className="rah-computer-field">
-        <h2>
-          名称{" "}
-          {edit === undefined && canEdit && onUpdate !== undefined ? (
+      <ProfileSection
+        title="名称"
+        variant="field"
+        className="rah-computer-field"
+        action={
+          edit === undefined && canEdit && onUpdate !== undefined ? (
             <button
               aria-label="编辑计算机名称"
-              className="rah-computer-profile-edit rah-interaction-flat"
+              className="rah-profile-edit rah-interaction-flat"
               onClick={() => begin("name")}
               ref={nameTrigger}
               title="编辑计算机名称"
@@ -153,8 +156,9 @@ export function ComputerProfileFields({
             >
               <Icon name="pencil" />
             </button>
-          ) : null}
-        </h2>
+          ) : null
+        }
+      >
         {edit?.field === "name" ? (
           <form className="rah-computer-profile-form" onSubmit={submit}>
             <input
@@ -181,14 +185,16 @@ export function ComputerProfileFields({
         ) : (
           <p>{name}</p>
         )}
-      </section>
-      <section className="rah-computer-field">
-        <h2>
-          描述{" "}
-          {edit === undefined && canEdit && onUpdate !== undefined ? (
+      </ProfileSection>
+      <ProfileSection
+        title="描述"
+        variant="field"
+        className="rah-computer-field"
+        action={
+          edit === undefined && canEdit && onUpdate !== undefined ? (
             <button
               aria-label="编辑计算机描述"
-              className="rah-computer-profile-edit rah-interaction-flat"
+              className="rah-profile-edit rah-interaction-flat"
               onClick={() => begin("description")}
               ref={descriptionTrigger}
               title="编辑计算机描述"
@@ -196,8 +202,9 @@ export function ComputerProfileFields({
             >
               <Icon name="pencil" />
             </button>
-          ) : null}
-        </h2>
+          ) : null
+        }
+      >
         {edit?.field === "description" ? (
           <form className="rah-computer-profile-form" onSubmit={submit}>
             <textarea
@@ -226,7 +233,7 @@ export function ComputerProfileFields({
             {description ?? "暂无描述"}
           </p>
         )}
-      </section>
+      </ProfileSection>
     </>
   );
 }

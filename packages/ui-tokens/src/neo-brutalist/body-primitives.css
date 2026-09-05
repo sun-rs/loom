@@ -1,0 +1,147 @@
+/* Inspected Raft hre/X$e and pg/Search home, 2026-09-04. RAH maintained owner. */
+.rah-entity-card {
+  align-items: center;
+  background: var(--bg);
+  border: 2px solid var(--ink-30);
+  color: var(--black);
+  display: flex;
+  gap: 12px;
+  min-width: 0;
+  padding: 8px 12px;
+  text-align: left;
+  width: 100%;
+  transition: border-color 150ms;
+}
+button.rah-entity-card {
+  cursor: pointer;
+}
+button.rah-entity-card:is(:hover, :focus-visible):not(:disabled) {
+  border-color: var(--black);
+  box-shadow: var(--shadow-s);
+}
+button.rah-entity-card:focus-visible {
+  outline: none;
+}
+button.rah-entity-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.rah-entity-card-identity {
+  align-items: baseline;
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  column-gap: 8px;
+  min-width: 0;
+}
+.rah-entity-card-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 700 14px/20px var(--sans);
+}
+.rah-entity-card-subtitle {
+  color: var(--ink-50);
+  font: 400 12px/16px var(--mono);
+  overflow-wrap: anywhere;
+}
+.rah-entity-card-trailing {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 6px;
+}
+.rah-entity-card-status-label {
+  color: var(--ink-50);
+  font: 400 12px/16px var(--mono);
+  max-width: min(32rem, 42vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 639px) {
+  .rah-entity-card-status-label {
+    display: none;
+  }
+}
+
+.rah-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--bg);
+  text-align: center;
+}
+.rah-empty-state[data-placement="fill"] {
+  flex: 1 0 auto;
+}
+.rah-empty-state[data-context="profile"],
+.rah-empty-state[data-context="activity"] {
+  padding: 48px 24px;
+}
+.rah-empty-state[data-context="task"] {
+  padding: var(--raft-tasks-empty-padding);
+}
+.rah-empty-state[data-context="search"] {
+  padding: 0 16px;
+}
+.rah-empty-state[data-context="search"][data-placement="section"] {
+  padding-block: 80px;
+}
+.rah-empty-state-icon {
+  display: inline-flex;
+  color: var(--ink-40);
+  margin-bottom: 16px;
+}
+.rah-empty-state-icon > svg {
+  display: block;
+  width: 36px;
+  height: 36px;
+}
+.rah-empty-state-title {
+  color: var(--ink-60);
+  font: 600 18px/28px var(--sans);
+  margin: 0 0 8px;
+}
+.rah-empty-state-description {
+  color: var(--ink-60);
+  font: 400 14px/22.75px var(--sans);
+  max-width: 32ch;
+  margin: 0 auto;
+}
+.rah-empty-state[data-context="task"] .rah-empty-state-icon > svg {
+  width: var(--raft-tasks-empty-icon-size);
+  height: var(--raft-tasks-empty-icon-size);
+}
+.rah-empty-state[data-context="task"] .rah-empty-state-title {
+  font-size: var(--raft-tasks-empty-title-size);
+  line-height: var(--raft-tasks-empty-title-line);
+}
+.rah-empty-state[data-context="task"] .rah-empty-state-description {
+  font-size: var(--raft-tasks-empty-body-size);
+  line-height: var(--raft-tasks-empty-body-line);
+}
+.rah-empty-state-action {
+  margin-top: 20px;
+}
+.rah-empty-state[data-context="search"] .rah-empty-state-icon {
+  color: var(--ink-20);
+  margin-bottom: 12px;
+}
+.rah-empty-state[data-context="search"] .rah-empty-state-icon > svg {
+  width: 48px;
+  height: 48px;
+}
+.rah-empty-state[data-context="search"] .rah-empty-state-title {
+  color: var(--ink-50);
+  font: 700 14px/20px var(--sans);
+  margin: 0;
+}
+.rah-empty-state[data-context="search"] .rah-empty-state-description {
+  color: var(--ink-40);
+  font: 400 12px/16px var(--sans);
+  margin-top: 4px;
+  max-width: none;
+}

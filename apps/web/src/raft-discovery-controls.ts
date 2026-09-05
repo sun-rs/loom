@@ -5,7 +5,13 @@ export type SearchScope = "mentioned" | "humans" | "agents";
 
 /** Raft HG: pinned self, then unassigned, then the remaining directory. */
 export function taskPeopleChoices(
-  people: readonly { principalId: string; handle: string; kind: string }[],
+  people: readonly {
+    principalId: string;
+    handle: string;
+    kind: string;
+    displayName?: string | undefined;
+    avatarKey?: string | undefined;
+  }[],
   selfId: string | undefined,
   filter: "creator" | "assignee",
 ) {
@@ -17,19 +23,34 @@ export function taskPeopleChoices(
             id: self.principalId,
             label: filter === "creator" ? "我创建的" : "分配给我的",
             kind: self.kind,
+            sentinel: true,
+            avatarKey: undefined,
+            searchText: filter === "creator" ? "我创建的" : "分配给我的",
           },
         ]
       : []),
     ...(filter === "assignee"
-      ? [{ id: "unassigned", label: "未分配", kind: "none" }]
+      ? [
+          {
+            id: "unassigned",
+            label: "未分配",
+            kind: "none",
+            sentinel: true,
+            avatarKey: undefined,
+            searchText: "未分配",
+          },
+        ]
       : []),
     ...people
       .filter((person) => person.principalId !== selfId)
       .sort((a, b) => a.handle.localeCompare(b.handle))
       .map((person) => ({
         id: person.principalId,
-        label: person.handle,
+        label: person.displayName || person.handle,
         kind: person.kind,
+        sentinel: false,
+        avatarKey: person.avatarKey,
+        searchText: `${person.displayName || person.handle} ${person.handle}`,
       })),
   ];
 }

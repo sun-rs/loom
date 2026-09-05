@@ -47,13 +47,33 @@ B1 不等于全部 Shell 完成，组件测试不等于全站双边一致。后�
 Panel header slots 使用共享 shell-header-height、shrink-0、border-b-2，TabList
 支持 Home/End、循环焦点和禁用项跳过。采用这些展示合同，不引入官方 store。
 Room/Agent 的标题、能力闸门和选中回调仍由原页面提供；Thread 弹层状态不迁移。
-共享 Tabs 只拥有焦点/键盘协议，自动激活保留现有 Agent 行为并补足 Room；
+共享 Tabs 只拥有焦点/键盘协议；官方实测 `activateOnFocus=false`，方向键只移动
+焦点，Enter/Space 才选中，Room/Agent 共用此合同；
 能力失效不擅自改 canonical 页面选择，焦点回退到首个可用项。
 
 TDD 先覆盖 Room 禁用项跳过、单一 Tab 停靠点、两组独立、无可用项、窄侧栏末项
 可见、标题不受长内容挤压及矮屏边框对齐。然后复跑完整应用的隔离 daemon
-Chrome/Firefox 场景。Settings、Computer、全局发现的标题迁移仍是后续 B2，
-本段不将其算作完成；同样不宣称所有页面已与官网双边验收。
+Chrome/Firefox 场景。不宣称所有页面已与官网双边验收。
+
+### B2 续段：跨页面标题轨道
+
+Room 导航、Settings、Computer、成员导航、全局 Tasks/Activity 标题消费共享
+PanelHeader；36px 身份图块与 14/18px 图标进入 PanelHeaderIcon。移动返回按钮
+消费 PanelHeaderAction 与官方 arrow-left path，不再旋转替代图标。矮屏的
+48px 标题/50px rail 配置归属内部 panel-layout.css，删除页面固定高度和重复
+图标规则。官方只读采样回放扩展到 Settings/Room；完整跨页面场景仍单独验证。
+Saved/Search 专用标题随后也已消费共享轨道、身份图块和返回按钮；Search 清空动作
+复用 24px 紧凑标题按钮（12px glyph），不新增页面按钮尺寸规则。其余 splitter
+宽度策略及 B3 页面正文仍未收口。
+
+### B2/B3 交接：专用标题与通知读取错误态
+
+依据冻结官方 `SavedPanel` 和 Search `titleSlot` 源码迁移，不改变聚合、搜索和
+导航的 canonical owner。对应源码、TDD 顺序与验收边界见
+[专用标题与通知读取计划](../design/ui-secondary-headers-and-push-status.md)。
+通知读取失败时不再推断 iOS 不支持或设备数为 0；只读重试复用已有读取接口，
+旧响应不能覆盖新状态。默认通知偏好、SDK 和服务端投递机制均未另建。
+此修复不等于系统横幅、iOS 真机或设置页全部状态已经验收。
 
 ## 3. 状态、组合与 TDD
 

@@ -261,7 +261,7 @@ function addAgent(
 
 test("Kernel schema owns anchored Tasks and immutable Placement projections", () => {
   const fixture = createFixture();
-  assert.equal(KERNEL_SCHEMA_VERSION, 46);
+  assert.equal(KERNEL_SCHEMA_VERSION, 50);
   assert.equal(
     fixture.agentDefinition.currentRevisionId,
     fixture.agentDefinitionRevision.agentDefinitionRevisionId,
@@ -271,6 +271,86 @@ test("Kernel schema owns anchored Tasks and immutable Placement projections", ()
       .currentRevision.executionPolicyRevisionId,
     fixture.policy.executionPolicyRevisionId,
   );
+  fixture.kernel.close();
+});
+
+test("Task delivery evidence freezes the exact Placement workspace identity", () => {
+  const fixture = createFixture();
+  const host = authenticateHost(
+    fixture.kernel,
+    "task-evidence-host",
+    fixture.agentId,
+  );
+  const offer = runtimeOffer(host, "task-evidence-offer");
+  fixture.kernel.publishRuntimeOffer(host, offer);
+  const created = fixture.kernel.createTask(fixture.humanActor, {
+    assigneeId: fixture.agentId,
+    idempotencyKey: "task-evidence-created",
+    roomId: fixture.room.roomId,
+    title: "Freeze Placement evidence",
+  });
+  const placement = fixture.kernel.scheduleNextPlacement({ leaseMs: 30_000 });
+  assert.ok(placement);
+  const launch = fixture.kernel.claimNextPlacement(host, { leaseMs: 30_000 });
+  assert.ok(launch);
+  const runtime = {
+    recoveryDescriptor: {
+      driver: "fake-runtime",
+      metadata: {},
+      recoveryKey: "task-evidence-runtime",
+    },
+    runAttemptId: launch.runAttempt.runAttemptId,
+    runtimeRunId: "task-evidence-runtime",
+  };
+  fixture.kernel.prepareRunAttemptRuntime(host, runtime);
+  fixture.kernel.markRunAttemptRunning(host, runtime);
+  const execution = fixture.kernel.authorizeWorkerExecution(host, {
+    activationId: launch.activation.activationId,
+    consumerId: "task-evidence-worker",
+    hostId: host.hostId,
+    participantId: fixture.agentId,
+    roomId: fixture.room.roomId,
+    runAttemptId: launch.runAttempt.runAttemptId,
+    toSeq: launch.activation.toSeq,
+  });
+  const delivery = fixture.kernel.syncWorker(execution, {});
+  fixture.kernel.acknowledgeWorkerCursor(execution, {
+    throughSeq: delivery.cursorAfter,
+  });
+  const claimed = fixture.kernel.claimTask(execution, {
+    basedOnRoomSeq: created.event.roomSeq,
+    idempotencyKey: "task-evidence-claimed",
+    leaseMs: 30_000,
+    taskId: created.task.taskId,
+  });
+  const started = fixture.kernel.startTask(execution, {
+    basedOnRoomSeq: claimed.event.roomSeq,
+    idempotencyKey: "task-evidence-started",
+    leaseMs: 30_000,
+    taskId: created.task.taskId,
+  });
+  fixture.kernel.submitTask(execution, {
+    basedOnRoomSeq: started.event.roomSeq,
+    idempotencyKey: "task-evidence-submitted",
+    summary: "Placement identity frozen",
+    taskId: created.task.taskId,
+  });
+
+  const [submission] = fixture.kernel.taskReviews.listTaskSubmissions(
+    fixture.humanActor,
+    { roomId: fixture.room.roomId, taskId: created.task.taskId },
+  );
+  assert.ok(submission?.evidence);
+  assert.deepEqual(submission.evidence.workspace, {
+    hostId: host.hostId,
+    placementId: placement.placementId,
+    runAttemptId: launch.runAttempt.runAttemptId,
+    source: "placement",
+    workspaceDefinitionId: "workspace-main",
+    workspaceMode: "in_place",
+    workspaceMountDigest: digest("e"),
+    workspaceMountRevisionId: `mount-${offer.runtimeOfferId}-v1`,
+  });
   fixture.kernel.close();
 });
 

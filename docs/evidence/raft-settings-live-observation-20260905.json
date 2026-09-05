@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-09-04T22:34:30Z",
+  "method": "manual-read-only-native-firefox-accessibility",
+  "replayability": "manual-observation-not-automated-replay",
+  "browser": "Firefox",
+  "product": {
+    "name": "Raft",
+    "version": "1.12.0",
+    "origin": "https://app.raft.build"
+  },
+  "source": {
+    "path": "docs/evidence/raft-settings-20260905.js",
+    "sha256": "82aeff3dfec47b269824d1d955298b8d429e6c281d0e33691c92d3faa6eb4926",
+    "publishedAsset": "https://app.raft.build/assets/SettingsPanel-DHSayJ6f.js"
+  },
+  "routeNormalization": "workspace slug omitted; route values are normalized suffixes",
+  "navigation": {
+    "personal": ["Account", "Language & Region", "Appearance", "Notifications"],
+    "workspace": [
+      "Server Profile",
+      "Billing",
+      "Administration",
+      "Apps",
+      "MCP Servers"
+    ],
+    "resources": ["About", "Docs", "Feedback", "Release Notes"]
+  },
+  "routes": [
+    {
+      "routeSuffix": "/settings/account",
+      "observed": ["profile form", "connected accounts", "session action"]
+    },
+    {
+      "routeSuffix": "/settings/language-region",
+      "observed": [
+        "display and translation form",
+        "timezone and time-format form",
+        "bounded form controls"
+      ]
+    },
+    {
+      "routeSuffix": "/settings/appearance",
+      "observed": ["message size", "message preview", "live Agent activity"]
+    },
+    {
+      "routeSuffix": "/settings/notifications",
+      "observed": [
+        "direct messages",
+        "direct mentions",
+        "followed message-column replies",
+        "workspace mute"
+      ]
+    },
+    {
+      "routeSuffix": "/settings/server",
+      "observed": ["server name", "server slug", "save action"]
+    },
+    {
+      "routeSuffix": "/settings/administration",
+      "observed": [
+        "owner and administrator assignment",
+        "system-channel visibility",
+        "invitations and pre-join agreement",
+        "Human onboarding",
+        "Agent greeting",
+        "server translation",
+        "Human-directory privacy"
+      ]
+    },
+    {
+      "routeSuffix": "/settings/mcp-servers",
+      "observed": ["recommended integrations", "configured servers"]
+    },
+    {
+      "routeSuffix": "/settings/about",
+      "observed": ["product version 1.12.0", "application information"]
+    }
+  ],
+  "mutationsPerformed": false,
+  "privateContentRecorded": false
+}

@@ -11,7 +11,6 @@ export function Icon({
 }) {
   const mappedName =
     {
-      "arrow-left": "chevron-right",
       briefcase: "code-xml",
       chat: "message-square",
       chevron: "chevron-right",
@@ -31,7 +30,7 @@ export function Icon({
   return (
     <svg aria-hidden="true" className={className}>
       <use
-        href={`${["house", "smile-plus", "pin", "calendar-range", "bot", "folder-open", "link-2", "clock-3", "repeat", "blocks", "grip-vertical", "circle-user-round", "eye-off", "x", "pencil", "rotate-ccw", "bug", "trash-2", "languages", "type", "server", "shield-check", "info", "book-open", "bell-off", "columns-3", "layout-list"].includes(mappedName) ? interactionIconsUrl : ["at-sign", "refresh-cw"].includes(mappedName) ? discoveryIconsUrl : raftIconsUrl}#raft-icon-${mappedName}`}
+        href={`${["arrow-left", "house", "smile-plus", "pin", "calendar-range", "bot", "folder-open", "link-2", "clock-3", "repeat", "blocks", "grip-vertical", "circle-user-round", "eye-off", "x", "pencil", "rotate-ccw", "bug", "trash-2", "languages", "type", "server", "shield-check", "info", "book-open", "bell-off", "columns-3", "layout-list"].includes(mappedName) ? interactionIconsUrl : ["at-sign", "refresh-cw"].includes(mappedName) ? discoveryIconsUrl : raftIconsUrl}#raft-icon-${mappedName}`}
       />
     </svg>
   );

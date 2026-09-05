@@ -3,6 +3,7 @@ import { DEFAULT_SIDEBAR_PREFERENCES } from "@rah-os/protocol";
 import { useSidebarPreferences } from "./sidebar-preferences.tsx";
 import { PanelHeaderAction } from "@rah-os/ui-web/neo-brutalist/panel-header-action";
 import { PanelHeader } from "@rah-os/ui-web/neo-brutalist/panel-header";
+import { PanelHeaderIcon } from "@rah-os/ui-web/neo-brutalist/panel-header-icon";
 import {
   SidebarDrag,
   SidebarDragItem,
@@ -411,7 +412,7 @@ export function RoomSidebar({
       aria-label="Room 列表"
       className={`sidebar rah-room-sidebar${mobileOpen ? " is-open" : ""}`}
     >
-      <header className="sidebar-head">
+      <PanelHeader kind="sidebar" className="sidebar-head">
         <span className="sidebar-title rah-desktop-only">聊天</span>
         <div className="rah-mobile-home-workspace rah-mobile-only">
           {mobileWorkspaceIdentity ?? workspace?.name ?? "RAH OS"}
@@ -434,7 +435,7 @@ export function RoomSidebar({
             </span>
           ) : null}
         </button>
-      </header>
+      </PanelHeader>
       <div className="sidebar-body">
         <section className="side-section">
           <button
@@ -582,13 +583,13 @@ export function ChannelHeader({
   const title = directPeer?.displayName ?? room?.name ?? "选择一个 Room";
   return (
     <PanelHeader kind="conversation" className="rah-conversation-head">
-      <button
+      <PanelHeaderAction
         aria-label="返回主页"
-        className="sq-btn rah-mobile-only rah-mobile-back"
+        className="rah-mobile-only rah-mobile-back"
         onClick={onOpenRooms}
       >
         <Icon name="arrow-left" />
-      </button>
+      </PanelHeaderAction>
       <div className={`channel-id${direct ? " is-direct" : ""}`}>
         {direct ? (
           directPeer === undefined ? (
@@ -607,12 +608,10 @@ export function ChannelHeader({
             </button>
           )
         ) : (
-          <span className="channel-badge">
-            <Icon name="hash" />
-          </span>
+          <PanelHeaderIcon name="hash" glyphSize={14} />
         )}
         <div className={`channel-title${direct ? " rah-direct-title" : ""}`}>
-          <h1>{title}</h1>
+          <h1 className="rah-panel-title">{title}</h1>
           <p
             className={`channel-sub${direct ? " rah-direct-status" : ""}`}
             data-presence={

@@ -1,6 +1,9 @@
 import { createContext, useContext } from "react";
 
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
+import { PanelHeader } from "@rah-os/ui-web/neo-brutalist/panel-header";
+import { PanelHeaderAction } from "@rah-os/ui-web/neo-brutalist/panel-header-action";
+import { PanelHeaderIcon } from "@rah-os/ui-web/neo-brutalist/panel-header-icon";
 
 const SettingsMobileBackContext = createContext<(() => void) | undefined>(
   undefined,
@@ -33,31 +36,30 @@ export function SettingsPageHeader({
 }) {
   const onMobileBack = useContext(SettingsMobileBackContext);
   return (
-    <header
+    <PanelHeader
+      kind="surface"
       className="rah-settings-page-head"
       data-slock-settings-tab={title}
       data-testid="settings-panel-header"
     >
       <div className="rah-settings-page-title">
         {onMobileBack ? (
-          <button
+          <PanelHeaderAction
             aria-label="返回设置"
-            className="btn rah-settings-mobile-back"
+            className="rah-settings-mobile-back"
             onClick={onMobileBack}
             title="返回设置"
             type="button"
           >
             <Icon name="arrow-left" />
-          </button>
+          </PanelHeaderAction>
         ) : null}
-        <span className="rah-settings-page-icon">
-          <Icon name={icon} />
-        </span>
-        <h1>{title}</h1>
+        <PanelHeaderIcon name={icon} className="rah-settings-page-icon" />
+        <h1 className="rah-panel-title">{title}</h1>
         {badge}
       </div>
       {action}
-    </header>
+    </PanelHeader>
   );
 }
 

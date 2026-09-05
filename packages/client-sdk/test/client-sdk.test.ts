@@ -49,6 +49,7 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "file.prepare",
     "health",
     "host.runtime.list",
+    "human.profile",
     "inputRequest.list",
     "inputRequest.resolve",
     "managedMcp.assignment.create",
@@ -68,6 +69,7 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "message.list",
     "message.post",
     "message.react",
+    "message.reference.read-state.list",
     "message.save",
     "message.saved",
     "message.social",
@@ -528,6 +530,11 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       input: { roomId: "room-main" },
       operation: "message.list",
       path: "/v3/client/messages/list",
+    },
+    {
+      input: { messageIds: ["message-main"], roomId: "room-main" },
+      operation: "message.reference.read-state.list",
+      path: "/v3/client/messages/reference-read-states",
     },
     {
       input: {},

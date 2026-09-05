@@ -1,0 +1,613 @@
+/* HumanDetailPanel ut: px-5/py-4 border-t black/10; identity px-5/py-5. */
+.rah-profile-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--bg);
+}
+.rah-profile-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+}
+.rah-profile-identity > div {
+  flex: 1;
+  min-width: 0;
+}
+.rah-profile-identity h2 {
+  font: 700 18px/1.25 var(--sans);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rah-profile-identity p {
+  color: var(--ink-50);
+  font: 14px/20px var(--mono);
+  overflow-wrap: anywhere;
+}
+.rah-profile-section {
+  border-top: 1px solid var(--ink-10);
+  padding: 16px 20px;
+}
+.rah-profile-section > h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  color: var(--ink-50);
+  font: 700 12px/16px var(--mono);
+}
+.rah-profile-section h3 span {
+  color: var(--ink-40);
+}
+.rah-profile-fields {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+.rah-profile-fields dt {
+  margin: 0 0 4px;
+  color: var(--ink-50);
+  font: 12px/16px var(--sans);
+}
+.rah-profile-fields dd {
+  margin: 0;
+  font: 14px/20px var(--mono);
+  overflow-wrap: anywhere;
+}
+.rah-profile-entity-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.rah-profile-entity-link:hover {
+  text-decoration: underline;
+}
+.rah-profile-role {
+  display: inline-block;
+  border: 2px solid var(--black);
+  padding: 2px 8px;
+  font: 700 12px/16px var(--sans);
+  background: var(--lavender);
+}
+.rah-profile-role[data-role="owner"] {
+  background: var(--orange);
+}
+.rah-profile-role[data-role="admin"] {
+  background: var(--pink);
+}
+.rah-profile-cards {
+  display: grid;
+  gap: 8px;
+}
+.rah-profile-empty {
+  color: var(--ink-40);
+  font: italic 14px/20px var(--sans);
+}
+.rah-profile-notice {
+  padding: 16px 20px;
+  font: 14px/20px var(--sans);
+}
+.rah-profile-notice[role="alert"] {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+.rah-profile-notice[role="alert"] > p {
+  color: var(--coral);
+}
+
+/* HumanDetailPanel description and avatar editing, adapted to canonical Principal. */
+.rah-profile-edit {
+  display: inline-flex;
+  vertical-align: middle;
+  padding: 2px 4px;
+  color: var(--ink-40);
+  background: none;
+  border: 0;
+}
+.rah-profile-edit svg {
+  width: 12px;
+  height: 12px;
+}
+.rah-profile-edit:hover:not(:disabled) {
+  background: var(--ink-05);
+  color: var(--ink);
+}
+.rah-profile-description {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 14px/20px var(--sans);
+}
+.rah-profile-text-editor textarea {
+  display: block;
+  width: 100%;
+  resize: vertical;
+  border: 2px solid var(--black);
+  padding: 8px;
+  background: var(--bg);
+  color: var(--black);
+  font: 14px/20px var(--sans);
+}
+.rah-profile-text-editor > div {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.rah-profile-text-editor footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+  font: 12px/16px var(--mono);
+  color: var(--ink-40);
+}
+.rah-profile-text-editor [role="alert"] {
+  color: var(--coral);
+  overflow-wrap: anywhere;
+}
+.rah-profile-avatar-upload {
+  position: relative;
+  padding: 0;
+  border: 0;
+  background: none;
+  flex-shrink: 0;
+}
+.rah-profile-avatar-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  place-items: center;
+  background: var(--ink-50);
+  color: var(--bg);
+}
+.rah-profile-avatar-overlay svg {
+  width: 20px;
+  height: 20px;
+}
+.rah-profile-avatar-upload:hover > .rah-profile-avatar-overlay,
+.rah-profile-avatar-upload:focus-visible > .rah-profile-avatar-overlay {
+  display: grid;
+}
+.rah-profile-avatar-upload:disabled {
+  cursor: wait;
+  opacity: 0.5;
+}
+.rah-human-identity {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  padding: 0;
+}
+.rah-human-identity small {
+  color: var(--ink-40);
+  font: 12px var(--mono);
+}
+.rah-human-preview-description {
+  border-top: 2px solid var(--black);
+  padding: 12px 16px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 14px/20px var(--mono);
+}
+
+.rah-agent-profile-hero {
+  align-items: flex-start;
+  display: flex;
+  gap: var(--raft-members-profile-hero-gap);
+  padding: var(--raft-members-profile-hero-padding);
+}
+
+.rah-agent-profile-identity {
+  flex: 1;
+  min-width: 0;
+}
+
+.rah-agent-profile-heading {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.rah-agent-profile-hero h3 {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 23px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rah-agent-profile-hero p {
+  color: var(--ink-40);
+  font: 14px/20px var(--mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rah-agent-online-state {
+  align-items: center;
+  color: var(--ink-50);
+  display: flex;
+  flex: none;
+  font-size: 12px;
+  gap: 5px;
+  line-height: 18px;
+}
+
+.rah-agent-online-state i {
+  height: 8px;
+  width: 8px;
+}
+
+.rah-agent-profile-field p {
+  overflow-wrap: anywhere;
+}
+
+.rah-agent-profile-field p.is-empty,
+.rah-agent-profile-status {
+  color: var(--ink-40);
+}
+
+.rah-agent-role-block > span,
+.rah-agent-info-grid dt,
+.rah-agent-runtime-chips span {
+  color: var(--ink-40);
+  display: block;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.rah-agent-role-block strong {
+  background: var(--lavender);
+  border: var(--bd);
+  display: inline-flex;
+  font-size: 12px;
+  margin-top: 5px;
+  min-height: 24px;
+  padding: 2px 8px;
+}
+
+.rah-agent-info-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 32px;
+  margin-top: 12px;
+}
+
+.rah-agent-info-grid > div:first-child {
+  flex-basis: 100%;
+}
+
+.rah-agent-info-grid > div {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.rah-agent-info-grid dd {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+}
+
+.rah-agent-info-grid small {
+  color: var(--ink-40);
+  font-family: var(--mono);
+  font-weight: 400;
+}
+
+.rah-agent-creator-identity {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.rah-agent-creator-identity > .rah-agent-human-avatar,
+.rah-agent-creator-identity > .rah-agent-avatar {
+  height: 20px;
+  width: 20px;
+}
+
+.rah-agent-creator-identity > b,
+.rah-agent-creator-identity > small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rah-agent-created-list {
+  display: grid;
+  gap: 8px;
+}
+
+.rah-agent-runtime-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.rah-agent-runtime-chips > div {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.rah-agent-runtime-chips strong {
+  border: var(--bd);
+  display: inline-block;
+  font-size: 12px;
+  line-height: 16px;
+  margin-top: 4px;
+  min-height: 24px;
+  padding: 2px 8px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.rah-agent-runtime-chips strong.is-cyan {
+  background: var(--cyan);
+}
+
+.rah-agent-runtime-chips strong.is-lavender {
+  background: var(--lavender);
+}
+
+.rah-product-shell .rah-profile-chip-edit {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+  max-width: 100%;
+}
+.rah-profile-chip-edit:hover strong {
+  text-decoration: underline;
+}
+.rah-profile-chip-edit:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+.rah-profile-field-editor input,
+.rah-profile-field-editor textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px;
+  border: 2px solid var(--ink);
+  font: inherit;
+  color: var(--ink);
+  background: white;
+}
+.rah-profile-field-editor textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+.rah-profile-field-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.rah-profile-field-editor [role="alert"] {
+  color: #a92820;
+}
+
+.rah-agent-runtime-chips strong.is-yellow {
+  background: var(--yellow);
+}
+
+.rah-agent-runtime-chips strong.is-orange {
+  background: var(--orange);
+}
+
+.rah-agent-profile-status {
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.rah-agent-profile-status.is-error {
+  color: var(--coral);
+}
+
+.rah-agent-skill-list {
+  display: grid;
+  gap: 8px;
+}
+
+.rah-agent-skill-list article {
+  border: 1px solid color-mix(in srgb, var(--black) 20%, transparent);
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px;
+  overflow-wrap: anywhere;
+}
+
+.rah-agent-skill-list span {
+  color: var(--ink-40);
+  font: 10px/1.5 var(--mono);
+}
+
+.rah-agent-profile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rah-agent-profile-actions button {
+  align-items: center;
+  background: var(--bg);
+  border: var(--bd);
+  display: flex;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+  min-height: var(--raft-members-action-button-height);
+  justify-content: center;
+  padding: 8px 16px;
+  width: 100%;
+}
+
+.rah-agent-profile-actions button.is-orange {
+  background: var(--orange);
+}
+
+.rah-agent-profile-actions button.is-red {
+  background: var(--coral);
+}
+
+.rah-agent-profile-actions button > svg {
+  flex: none;
+  height: 14px;
+  width: 14px;
+}
+
+/* Missing capability is explicit, not a faded version of a ready action. */
+.rah-product-shell .rah-agent-profile-actions button.is-unavailable:disabled {
+  opacity: 1;
+  color: var(--ink-50);
+}
+
+.rah-agent-profile-actions button > small {
+  font: 400 10px/14px var(--sans);
+}
+
+.rah-computer-hero {
+  align-items: flex-start;
+  display: flex;
+  gap: var(--raft-computers-hero-gap);
+  padding: var(--raft-computers-hero-padding);
+}
+
+.rah-computer-hero > span {
+  flex-shrink: 0;
+  align-items: center;
+  background: var(--yellow);
+  border: var(--bd);
+  display: flex;
+  height: var(--raft-computers-hero-icon-size);
+  justify-content: center;
+  width: var(--raft-computers-hero-icon-size);
+}
+
+.rah-computer-hero > span svg {
+  height: 28px;
+  width: 28px;
+}
+
+.rah-computer-hero h2 {
+  font-size: 18px;
+  line-height: 23px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rah-computer-hero p {
+  align-items: center;
+  color: var(--ink-50);
+  display: flex;
+  font: 14px/20px var(--mono);
+  gap: 7px;
+}
+
+.rah-computer-hero p i {
+  height: 9px;
+  width: 9px;
+}
+
+.rah-computer-hero code {
+  color: var(--ink-40);
+  font: 14px/20px var(--mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+.rah-computer-profile-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+  max-width: 620px;
+}
+
+.rah-computer-profile-form input,
+.rah-computer-profile-form textarea {
+  background: var(--bg);
+  border: var(--bd);
+  box-shadow: var(--shadow-s);
+  color: var(--black);
+  font: 14px/20px var(--sans);
+  padding: 8px 10px;
+  width: 100%;
+}
+
+.rah-computer-profile-form textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.rah-computer-profile-count {
+  color: var(--ink-40);
+  font: 11px/16px var(--mono);
+  justify-self: end;
+}
+
+.rah-computer-profile-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.rah-computer-profile-error {
+  color: var(--coral);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.rah-computer-field p.is-muted,
+.rah-computer-hint {
+  color: var(--ink-40);
+  font-style: italic;
+}
+
+.rah-profile-section[data-divided="false"] {
+  border-top: 0;
+}
+.rah-profile-section[data-variant="field"] > h3 {
+  margin-bottom: 4px;
+}
+.rah-profile-section[data-variant="field"][data-divided="false"] {
+  padding-block: 12px;
+}
+.rah-profile-section[data-variant="field"] > p {
+  margin: 0;
+  font: 14px/20px var(--sans);
+}
+.rah-profile-disclosure > summary {
+  cursor: pointer;
+  font: 700 12px/16px var(--mono);
+}
+.rah-profile-disclosure[open] > summary {
+  margin-bottom: 12px;
+}
+.rah-profile-disclosure {
+  margin-bottom: 16px;
+}
+.rah-computer-hero > div {
+  min-width: 0;
+}

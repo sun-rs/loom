@@ -9,7 +9,7 @@ Task 的 Thread 文本可以承载讨论，但一条“审阅通过”消息本�
 
 ## 决策
 
-1. 每次 `task.submit` 原子创建不可变 `TaskSubmission`。它包含递增 submission number、producer、summary、Thread message、时间及 `sha256` canonical digest。2026-09-01 起，新提交使用 v2 digest，并覆盖按稳定 ordinal 排序的显式 Task Artifact references；旧 v1 submission 继续按原 digest 读取，不重算历史证据。
+1. 每次 `task.submit` 原子创建不可变 `TaskSubmission`。它包含递增 submission number、producer、summary、Thread message、时间及 `sha256` canonical digest。2026-09-01 起，新提交使用 v2 digest，并覆盖按稳定 ordinal 排序的显式 Task Artifact references；旧 v1 submission 继续按原 digest 读取，不重算历史证据。2026-09-05 起，本机新提交按 [ADR-0031](./0031-host-observed-frozen-task-delivery-evidence.md) 使用 v3 digest，进一步绑定 Host 观测的 workspace/repository/patch 与分级验证证据；v1/v2 仍保持原样兼容。
 2. 被选中的 reviewer 只有在包含当前 `task.submitted` 的 `task_review` Activation 中才能调用严格的 `task-review` command。请求不接受 actor、Room、submission id 或 digest；服务端从 credential 与当前 Task 解析这些字段。
 3. `Review` 是独立对象，固定引用一份 `TaskSubmission`，disposition 只有 `approved` 或 `changes_requested`。它同时投影为 canonical Task Thread reply，但普通 `message-post` 不能替代 Review。
 4. `changes_requested` 将 Task 重新置为 assigned `todo`、清除执行 claim 与当前提交投影，并唤醒负责人和协作者；负责人必须重新 claim/start/submit，产生新的 submission 与 digest。旧 Review 永远不满足新提交。
@@ -19,7 +19,7 @@ Task 的 Thread 文本可以承载讨论，但一条“审阅通过”消息本�
 
 ## 明确不包含
 
-TaskSubmission v2 的 digest 绑定 Task anchor、submission message、summary 与 canonical Artifact metadata/provenance；Artifact 内容由 RoomFiles 保存的 SHA-256 与不可变 Message owner 证明。它仍不等价于 frozen Git diff，也不包含 base/head、自动工作区文件清单、构建日志或 verifier result。只有 Agent 通过严格 Worker command 显式发布并在提交事务中绑定的文件属于 submission evidence；当前 Git 状态和 Provider transcript 均不属于。
+本段记录 v2 的历史边界：TaskSubmission v2 的 digest 绑定 Task anchor、submission message、summary 与 canonical Artifact metadata/provenance；Artifact 内容由 RoomFiles 保存的 SHA-256 与不可变 Message owner 证明。v2 不等价于 frozen Git diff，也不包含 base/head、自动工作区文件清单、构建日志或 verifier result。新 v3 的扩展、可信度分级和非 Git 降级只由 ADR-0031 定义；当前可变工作区和 Provider transcript 仍不属于冻结证据。
 
 ## 验证
 
@@ -31,4 +31,4 @@ TaskSubmission v2 的 digest 绑定 Task anchor、submission message、summary �
 
 ## 结果
 
-Review 从“Thread 里的一句话”升级为可查询、可围栏、与具体提交绑定的业务事实；显式 Artifact 已进入同一冻结证据，但 frozen diff/verifier 能力仍保持未声明。
+Review 从“Thread 里的一句话”升级为可查询、可围栏、与具体提交绑定的业务事实；显式 Artifact 已进入同一冻结证据。后续 Host 观测的 frozen diff 与 producer-declared verification 由 ADR-0031 增量接管，不能回写或伪造旧提交。

@@ -166,6 +166,12 @@ HEAD probe 上发现不同代际，按 Raft 的刷新/继续合同由 Human 决�
 Worker、删除 RAH 自有 cache 并保留 typed query；代际错误不得进入 Room/Message projection。
 详见[Web 构建代际合同](../product/2026-09-03-web-build-recovery-contract.zh-CN.md)。
 
+开发工作台的人工发布现在统一使用 `restart:local-workbench` 的 fail-closed guard：
+冻结构建校验、exact PID/checkout/listener/database 验证、空闲检查、SQLite online backup
+和文件摘要核验全部成功后才能 SIGTERM。失败不进入 stop，不 force-kill，也不覆盖用户状态。
+这不是新业务状态机或安装版 K upgrade 的替代品，也尚非原子 maintenance lock。
+命令、回滚边界和验收规则见[发布保护合同](../design/ui-evidence-and-release.md)。
+
 ## 7. 可信局域网部署
 
 开发 fixture 可以在明确告警下使用临时私网 HTTP；正式产品不能把“局域网可信”当作身份。正式 LAN 路径必须使用 ADR-0019 的 HTTPS edge 与设备配对。以下边界不能取消：

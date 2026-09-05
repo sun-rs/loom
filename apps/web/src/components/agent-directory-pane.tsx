@@ -24,6 +24,14 @@ import type {
 import { PanelHeaderAction } from "@rah-os/ui-web/neo-brutalist/panel-header-action";
 import { PanelHeader } from "@rah-os/ui-web/neo-brutalist/panel-header";
 import { PanelTabs } from "@rah-os/ui-web/neo-brutalist/panel-tabs";
+import { EmptyState } from "@rah-os/ui-web/neo-brutalist/empty-state";
+import { AgentEntityCard } from "./agent-entity-card.tsx";
+import { HumanProfilePane } from "./human-profile-pane.tsx";
+import { HumanIdentity } from "./human-identity.tsx";
+import { AgentComputerIdentity } from "./computer-identity.tsx";
+import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
+import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
+import { AgentSidebar } from "./agent-sidebar.tsx";
 import {
   OFFICIAL_AGENT_AVATAR_KEYS,
   isUploadedProfileImageKey,
@@ -56,7 +64,9 @@ import {
   projectAgentMcpServers,
   type AgentMcpServerView,
 } from "../agent-mcp-projection.ts";
-import { runtimeReasoningOptions } from "../agent-runtime-capabilities.ts";
+import { runtimeProfilePresentation } from "../agent-runtime-presentation.ts";
+import { formatRahDateTime } from "../date-time-presentation.ts";
+import { ProfileSection } from "@rah-os/ui-web/neo-brutalist/profile-section";
 import { AgentWorkspaceBrowser } from "./agent-workspace-browser.tsx";
 import { AgentAvatar } from "./agent-avatar.tsx";
 import { MemberRelationshipSurface } from "./member-relationship-graph.tsx";
@@ -101,6 +111,7 @@ const DEFAULT_SIDEBAR_WIDTH = 240;
 
 export function AgentDirectoryPane({
   initialAgentDefinitionId,
+  initialHumanPrincipalId,
   initialTab,
   initialView,
   panel = false,
@@ -125,10 +136,10 @@ export function AgentDirectoryPane({
   onOpenMessage,
   onOpenRoom,
   onRouteChange,
-  runtimes,
   workspaceId,
 }: {
   initialAgentDefinitionId?: string | undefined;
+  initialHumanPrincipalId?: string | undefined;
   initialTab?: AgentTab;
   initialView?: AgentRouteSelection["view"];
   panel?: boolean;
@@ -168,14 +179,17 @@ export function AgentDirectoryPane({
   runtimes: readonly LocalRuntimeInventoryEntry[];
   workspaceId: string | undefined;
 }) {
+  const entities = useWorkspaceEntities();
   const [selectedAgentDefinitionId, setSelectedAgentDefinitionId] = useState<
     string | undefined
   >(initialAgentDefinitionId);
-  const [memberView, setMemberView] = useState<"agent" | "relationship">(
-    !panel && initialView === "relationship" ? "relationship" : "agent",
-  );
+  const [memberView, setMemberView] = useState<
+    "agent" | "relationship" | "human"
+  >(!panel && initialView ? initialView : "agent");
+  const [humanId, setHumanId] = useState(initialHumanPrincipalId);
   const [mobileDetailOpen, setMobileDetailOpen] = useState(() =>
     shouldOpenAgentMobileDetail({
+      humanPrincipalId: initialHumanPrincipalId,
       agentDefinitionId: initialAgentDefinitionId,
       panel,
       view: initialView,
@@ -245,9 +259,13 @@ export function AgentDirectoryPane({
   const [remindersReload, setRemindersReload] = useState(0);
   const activityScope = useRef<AbortController | undefined>(undefined);
   const activityHistoryRef = useRef(false);
-  const selectedAgent = agents.find(
-    ({ agentDefinitionId }) => agentDefinitionId === selectedAgentDefinitionId,
-  );
+  const selectedAgent =
+    memberView !== "agent"
+      ? undefined
+      : agents.find(
+          ({ agentDefinitionId }) =>
+            agentDefinitionId === selectedAgentDefinitionId,
+        );
   const detailAgentId = selectedAgent?.agentDefinitionId;
   const detailRevisionId = selectedAgent?.agentDefinitionRevisionId;
   const detailPolicyId = selectedAgent?.executionPolicyRevisionId;
@@ -257,18 +275,10 @@ export function AgentDirectoryPane({
     agentDetail?.agent.definition.agentDefinitionId === detailAgentId
       ? agentDetail
       : undefined;
-  const selectedRuntimes = useMemo(
-    () =>
-      selectedAgent === undefined
-        ? []
-        : runtimes.filter((runtime) =>
-            runtime.agentBindings.some(
-              ({ agentDefinitionId }) =>
-                agentDefinitionId === selectedAgent.agentDefinitionId,
-            ),
-          ),
-    [runtimes, selectedAgent],
-  );
+  const selectedRuntimes =
+    selectedAgent === undefined
+      ? []
+      : (entities?.runtimesForAgent(selectedAgent.agentDefinitionId) ?? []);
   const mcpServerViews = useMemo(
     () => projectAgentMcpServers(mcpServers, mcpAssignments, mcpCalls),
     [mcpAssignments, mcpCalls, mcpServers],
@@ -282,16 +292,18 @@ export function AgentDirectoryPane({
 
   useEffect(() => {
     if (!panel) {
-      setMemberView(initialView === "relationship" ? "relationship" : "agent");
+      setMemberView(initialView ?? "agent");
+      setHumanId(initialHumanPrincipalId);
+      if (initialView === "human") setMobileDetailOpen(true);
     }
-  }, [initialView, panel]);
+  }, [initialView, initialHumanPrincipalId, panel]);
 
   useEffect(() => {
     if (!panel && initialTab !== undefined) setTab(initialTab);
   }, [initialTab, panel]);
 
   useEffect(() => {
-    if (memberView === "relationship") return;
+    if (memberView !== "agent") return;
     const resolution = reconcileAgentRouteIdentity(
       selectedAgentDefinitionId,
       agents.map(({ agentDefinitionId }) => agentDefinitionId),
@@ -583,6 +595,19 @@ export function AgentDirectoryPane({
     setMobileDetailOpen(true);
   }
 
+  function selectHuman(principalId: string): void {
+    if (panel) return;
+    setMemberView("human");
+    setHumanId(principalId);
+    setMobileDetailOpen(true);
+    onRouteChange?.({
+      agentDefinitionId: undefined,
+      humanPrincipalId: principalId,
+      tab: "profile",
+      view: "human",
+    });
+  }
+
   function selectRelationship(): void {
     if (panel) return;
     setMemberView("relationship");
@@ -687,6 +712,8 @@ export function AgentDirectoryPane({
           computerLabel={computerLabel}
           computerStatus={computerStatus}
           currentHuman={currentHuman}
+          onSelectHuman={selectHuman}
+          selectedHumanId={memberView === "human" ? humanId : undefined}
           onCreate={onCreate}
           onRelationship={selectRelationship}
           onSelect={selectAgent}
@@ -717,7 +744,17 @@ export function AgentDirectoryPane({
             agents={agents}
             client={client}
             onBack={closeRelationship}
+            onOpenAgent={selectAgent}
             workspaceId={workspaceId}
+          />
+        ) : memberView === "human" && humanId && !panel ? (
+          <HumanProfilePane
+            key={`${workspaceId}:${humanId}`}
+            client={client}
+            principalId={humanId}
+            workspaceId={workspaceId}
+            onBack={closeRelationship}
+            onOpenAgent={selectAgent}
           />
         ) : agents.length === 0 ? (
           <p className="rah-empty-copy">
@@ -1200,167 +1237,6 @@ function AgentChatRoomGroup({
   );
 }
 
-function AgentSidebar({
-  agents,
-  canCreate,
-  computerLabel,
-  computerStatus,
-  currentHuman,
-  onCreate,
-  onRelationship,
-  onSelect,
-  relationshipSelected,
-  selectedAgentDefinitionId,
-}: {
-  agents: readonly WorkspaceAgentView[];
-  canCreate: boolean;
-  computerLabel: string | undefined;
-  computerStatus?: WorkspaceAgentView["connectionStatus"];
-  currentHuman: Principal | undefined;
-  onCreate: () => void;
-  onRelationship: () => void;
-  onSelect: (agentDefinitionId: string) => void;
-  relationshipSelected: boolean;
-  selectedAgentDefinitionId: string | undefined;
-}) {
-  const [createMenuOpen, setCreateMenuOpen] = useState(false);
-  const createMenuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!createMenuOpen) return;
-    const closeOutside = (event: globalThis.PointerEvent): void => {
-      if (
-        event.target instanceof Node &&
-        !createMenuRef.current?.contains(event.target)
-      ) {
-        setCreateMenuOpen(false);
-      }
-    };
-    const closeOnEscape = (event: globalThis.KeyboardEvent): void => {
-      if (event.key === "Escape") setCreateMenuOpen(false);
-    };
-    window.addEventListener("pointerdown", closeOutside);
-    window.addEventListener("keydown", closeOnEscape);
-    return () => {
-      window.removeEventListener("pointerdown", closeOutside);
-      window.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [createMenuOpen]);
-
-  return (
-    <aside className="rah-agent-directory-list" aria-label="Agent 列表">
-      <header className="rah-agent-sidebar-head">
-        <h1>成员</h1>
-      </header>
-      <div className="rah-agent-sidebar-scroll rah-scroll-main">
-        <button
-          aria-current={relationshipSelected ? "page" : undefined}
-          className={`rah-agent-relationship rah-interaction-row${relationshipSelected ? " is-selected" : ""}`}
-          onClick={onRelationship}
-          type="button"
-        >
-          <Icon name="share-2" />
-          <span>关系图</span>
-        </button>
-        <section className="rah-agent-sidebar-section">
-          <header>
-            <Icon name="chevron" />
-            <b>AGENT</b>
-            <span>{agents.length}</span>
-            <div className="rah-agent-create-control" ref={createMenuRef}>
-              <button
-                aria-expanded={createMenuOpen}
-                aria-haspopup="menu"
-                aria-label="添加 Agent"
-                className="rah-interaction-flat"
-                disabled={!canCreate}
-                onClick={() => setCreateMenuOpen((current) => !current)}
-                title={
-                  canCreate ? "添加 Agent" : "当前 Workspace 不允许创建 Agent"
-                }
-              >
-                +
-              </button>
-              {createMenuOpen ? (
-                <div className="rah-agent-create-menu" role="menu">
-                  <button
-                    onClick={() => {
-                      setCreateMenuOpen(false);
-                      onCreate();
-                    }}
-                    role="menuitem"
-                    type="button"
-                  >
-                    <Icon name="briefcase" />
-                    创建 Agent
-                  </button>
-                  <button
-                    disabled
-                    role="menuitem"
-                    title="外部 Agent 激活协议尚未接入"
-                    type="button"
-                  >
-                    <Icon name="link" />
-                    创建外部 Agent
-                  </button>
-                </div>
-              ) : null}
-            </div>
-          </header>
-          {computerLabel === undefined ? null : (
-            <p className="rah-agent-computer-label">
-              <i
-                data-online={computerStatus === "online"}
-                title={computerStatusLabel(
-                  computerStatus ? { status: computerStatus } : undefined,
-                )}
-              />
-              {computerLabel}
-            </p>
-          )}
-          {agents.map((agent) => (
-            <button
-              aria-current={
-                agent.agentDefinitionId === selectedAgentDefinitionId
-                  ? "page"
-                  : undefined
-              }
-              className={`rah-agent-member-row rah-interaction-row${agent.agentDefinitionId === selectedAgentDefinitionId ? " is-selected" : ""}`}
-              key={agent.agentDefinitionId}
-              onClick={() => onSelect(agent.agentDefinitionId)}
-            >
-              <AgentAvatar agent={agent} size="sidebar" />
-              <span>
-                <b>{agent.displayName}</b>
-                <small>
-                  {agent.description}
-                  {agent.state === "disabled" ? " · 已暂停" : null}
-                </small>
-              </span>
-            </button>
-          ))}
-        </section>
-        <section className="rah-agent-sidebar-section rah-agent-human-section">
-          <header>
-            <Icon name="chevron" />
-            <b>人类</b>
-            <span>{currentHuman === undefined ? 0 : 1}</span>
-          </header>
-          {currentHuman === undefined ? null : (
-            <div className="rah-agent-human-row">
-              <span className="rah-agent-human-avatar" aria-hidden="true">
-                {currentHuman.handle.slice(0, 1).toUpperCase()}
-              </span>
-              <b>{currentHuman.handle}</b>
-              <small>（你）</small>
-            </div>
-          )}
-        </section>
-      </div>
-    </aside>
-  );
-}
-
 export function AgentDetailHeader({
   onClose,
   agent,
@@ -1380,13 +1256,13 @@ export function AgentDetailHeader({
 }) {
   return (
     <PanelHeader kind="agent" className="rah-agent-detail-head">
-      <button
+      <PanelHeaderAction
         aria-label="返回成员列表"
-        className="sq-btn rah-agent-mobile-back"
+        className="rah-agent-mobile-back"
         onClick={onBack}
       >
         <Icon name="arrow-left" />
-      </button>
+      </PanelHeaderAction>
       <AgentAvatar agent={agent} size="header" />
       <div className="rah-agent-detail-identity">
         <h2>{agent.displayName}</h2>
@@ -1479,18 +1355,11 @@ export function AgentProfilePane({
 }) {
   const [resetOpen, setResetOpen] = useState(false);
   const [issueReportOpen, setIssueReportOpen] = useState(false);
-  const runtime = runtimes[0];
-  const bindingId = detail?.policy.modelIntent.exactBindingIds?.[0];
-  const binding = runtime?.modelBindingDescriptors.find(
-    ({ modelBindingId }) => modelBindingId === bindingId,
+  const runtimeView = runtimeProfilePresentation(
+    runtimes,
+    detail?.policy.modelIntent,
+    loading ? "loading" : error ? "error" : "ready",
   );
-  const model =
-    binding?.displayName ??
-    binding?.modelId ??
-    bindingId ??
-    detail?.policy.modelIntent.capabilityClass ??
-    "Runtime 默认";
-  const reasoning = detail?.policy.modelIntent.reasoning;
   const creator = detail?.creator;
   const creatorAgent =
     creator?.kind === "agent"
@@ -1535,13 +1404,14 @@ export function AgentProfilePane({
         value={agent.description ?? ""}
         onSave={canManage ? onSaveProfile : undefined}
       />
-      <section className="rah-agent-profile-section rah-agent-info-section">
-        <h3>信息</h3>
+      <ProfileSection title="信息" className="rah-agent-info-section">
         <AgentRolePermissions role={detail?.membershipRole} />
         <dl className="rah-agent-info-grid">
           <div>
             <dt>计算机</dt>
-            <dd>{computerLabel ?? "未绑定"}</dd>
+            <dd>
+              <AgentComputerIdentity agentId={agent.agentDefinitionId} />
+            </dd>
           </div>
           <div>
             <dt>创建时间</dt>
@@ -1553,19 +1423,28 @@ export function AgentProfilePane({
               {creator === undefined ? (
                 loading ? (
                   "正在读取…"
+                ) : error ? (
+                  "暂时无法读取创建者"
                 ) : (
-                  "未分配创建者"
+                  "创建者尚未加载"
                 )
               ) : creator === null ? (
                 "未分配创建者"
+              ) : creator.kind === "human" ? (
+                <HumanIdentity
+                  principal={creator}
+                  className="rah-agent-creator-identity"
+                />
               ) : (
                 <span className="rah-agent-creator-identity">
                   {creatorAgent === undefined ? (
-                    <span aria-hidden="true" className="rah-agent-human-avatar">
-                      {(creator.displayName ?? creator.handle)
-                        .slice(0, 1)
-                        .toUpperCase()}
-                    </span>
+                    <ProfileImageAvatar
+                      kind="agent"
+                      name={creator.displayName ?? creator.handle}
+                      avatarKey={creator.avatarKey}
+                      principalId={creator.principalId}
+                      size="compact"
+                    />
                   ) : (
                     <AgentAvatar agent={creatorAgent} size="compact" />
                   )}
@@ -1576,10 +1455,11 @@ export function AgentProfilePane({
             </dd>
           </div>
         </dl>
-      </section>
-      <section className="rah-agent-profile-section rah-agent-runtime-section">
-        <h3>
-          运行时配置{" "}
+      </ProfileSection>
+      <ProfileSection
+        title="运行时配置"
+        className="rah-agent-runtime-section"
+        action={
           <button
             className="rah-profile-edit rah-interaction-flat"
             aria-label="编辑运行时配置"
@@ -1588,7 +1468,8 @@ export function AgentProfilePane({
           >
             <Icon name="pencil" />
           </button>
-        </h3>
+        }
+      >
         {loading && detail === undefined ? (
           <p className="rah-agent-profile-status">正在读取 canonical 配置…</p>
         ) : detail !== undefined ? (
@@ -1596,27 +1477,23 @@ export function AgentProfilePane({
             <ProfileChip
               label="运行时"
               tone="cyan"
-              value={runtime?.displayName ?? "未绑定"}
+              value={runtimeView.runtimeLabel}
               onEdit={canManage ? onEditRuntime : undefined}
             />
             <ProfileChip
               label="模型"
               tone="lavender"
-              value={model}
+              value={runtimeView.modelLabel}
               onEdit={canManage ? onEditRuntime : undefined}
             />
-            <ProfileChip
-              label="推理强度"
-              tone="yellow"
-              value={
-                !reasoning || reasoning === "default"
-                  ? "默认"
-                  : (runtimeReasoningOptions(runtime, bindingId).find(
-                      (option) => option.value === reasoning,
-                    )?.label ?? reasoning)
-              }
-              onEdit={canManage ? onEditRuntime : undefined}
-            />
+            {runtimeView.reasoningLabel !== undefined ? (
+              <ProfileChip
+                label="推理强度"
+                tone="yellow"
+                value={runtimeView.reasoningLabel}
+                onEdit={canManage ? onEditRuntime : undefined}
+              />
+            ) : null}
           </div>
         ) : (
           <p className="rah-agent-profile-status is-error">
@@ -1628,45 +1505,41 @@ export function AgentProfilePane({
             刷新失败：{error}（保留上次配置）
           </p>
         ) : null}
-      </section>
-      <section className="rah-agent-profile-section rah-agent-created-section">
-        <h3>
-          已创建的 AGENT <span>{createdAgents.length}</span>
-        </h3>
+      </ProfileSection>
+      <ProfileSection
+        title="已创建的 AGENT"
+        count={detail ? createdAgents.length : undefined}
+        className="rah-agent-created-section"
+      >
         {detail === undefined && loading ? (
           <p className="rah-agent-profile-status">正在读取身份关系…</p>
+        ) : detail === undefined ? (
+          <p className="rah-agent-profile-status is-error">
+            暂时无法读取身份关系
+          </p>
         ) : createdAgents.length === 0 ? (
           <p className="rah-agent-profile-status">暂无已创建的 Agent</p>
         ) : (
           <div className="rah-agent-created-list">
             {createdAgents.map((createdAgent) => (
-              <button
-                className="rah-agent-created-row rah-interaction-row"
+              <AgentEntityCard
                 key={createdAgent.agentDefinitionId}
-                onClick={() => onSelectAgent(createdAgent.agentDefinitionId)}
-                type="button"
-              >
-                <AgentAvatar agent={createdAgent} size="member" />
-                <span>
-                  <b>{createdAgent.displayName}</b>
-                  <small>
-                    {createdAgent.runtimeLabels.join(" · ") ||
-                      `@${createdAgent.handle}`}
-                  </small>
-                </span>
-                <em>{agentAvailabilityLabel(createdAgent)}</em>
-              </button>
+                agent={createdAgent}
+                runtimeLabel={
+                  createdAgent.runtimeLabels.join(" · ") || undefined
+                }
+                onOpen={onSelectAgent}
+              />
             ))}
           </div>
         )}
-      </section>
-      <section className="rah-agent-profile-section rah-agent-skills-section">
-        <h3>
-          技能 <span>({agent.skillRefs.length})</span>
-        </h3>
-        {agent.skillRefs.length === 0 ? (
-          <p className="rah-agent-profile-status">该 Agent 尚未绑定 Skill。</p>
-        ) : (
+      </ProfileSection>
+      {agent.skillRefs.length > 0 ? (
+        <ProfileSection
+          title="技能"
+          count={agent.skillRefs.length}
+          className="rah-agent-skills-section"
+        >
           <div className="rah-agent-skill-list">
             {agent.skillRefs.map((skill) => (
               <article key={`${skill.artifactId}:${skill.versionId}`}>
@@ -1675,10 +1548,9 @@ export function AgentProfilePane({
               </article>
             ))}
           </div>
-        )}
-      </section>
-      <section className="rah-agent-profile-section rah-agent-actions-section">
-        <h3>操作</h3>
+        </ProfileSection>
+      ) : null}
+      <ProfileSection title="操作" className="rah-agent-actions-section">
         <div className="rah-agent-profile-actions">
           <button
             className="rah-interaction-brutal"
@@ -1728,7 +1600,7 @@ export function AgentProfilePane({
             删除 Agent
           </button>
         </div>
-      </section>
+      </ProfileSection>
       {resetOpen && onResetExecution !== undefined ? (
         <AgentExecutionResetDialog
           agentName={agent.displayName}
@@ -1974,7 +1846,7 @@ function ProfileChip({
   );
 }
 
-function AgentActivityPane({
+export function AgentActivityPane({
   onOpenRoom,
   activities,
   agent,
@@ -2051,7 +1923,6 @@ function AgentActivityPane({
       <header>
         <div>
           <h3>活动诊断</h3>
-          <p>该 Agent 在所有可访问对话中的执行记录</p>
         </div>
         <button
           className="btn"
@@ -2074,12 +1945,16 @@ function AgentActivityPane({
         <div className="rah-inline-error">{copyError}</div>
       )}
       {loading && activities.length === 0 ? (
-        <p className="rah-agent-activity-empty">正在读取活动…</p>
-      ) : activities.length === 0 ? (
-        <AgentCapabilityPane
+        <p className="rah-agent-activity-empty" role="status">
+          正在读取活动…
+        </p>
+      ) : activities.length === 0 && error === undefined ? (
+        <EmptyState
+          context="profile"
+          placement="fill"
           icon="pulse"
           title="暂无活动"
-          description="启动 Agent 或在 Room 中向它发送工作后，思考、工具和回复轨迹会显示在这里。"
+          description="启动 Agent 以查看其活动日志。"
         />
       ) : (
         <div className="rah-agent-activity-list" aria-live="polite">
@@ -2104,11 +1979,13 @@ function AgentActivityPane({
           {loading ? "正在读取…" : "加载更早记录"}
         </button>
       ) : null}
-      <p className="rah-agent-activity-note">
-        未运行的 Agent 不会显示其他测试环境的历史。动态来自 Provider
-        的结构化事件，不解析 ANSI。Codex 只显示公开 reasoning
-        summary，原始思维链不会进入该投影。
-      </p>
+      {activities.length > 0 && (
+        <p className="rah-agent-activity-note">
+          未运行的 Agent 不会显示其他测试环境的历史。动态来自 Provider
+          的结构化事件，不解析 ANSI。Codex 只显示公开 reasoning
+          summary，原始思维链不会进入该投影。
+        </p>
+      )}
     </section>
   );
 }
@@ -2358,10 +2235,10 @@ function AgentRemindersPane({
 }
 
 function formatReminderDate(value: string): string {
-  return new Intl.DateTimeFormat("zh-CN", {
+  return formatRahDateTime(value, {
     dateStyle: "medium",
     timeStyle: "short",
-  }).format(new Date(value));
+  });
 }
 
 function relativeReminderTime(value: string): string {
@@ -2433,14 +2310,11 @@ function clampSidebarWidth(width: number): number {
 }
 
 function formatActivityTime(timestamp: string): string {
-  const parsed = new Date(timestamp);
-  return Number.isNaN(parsed.getTime())
-    ? timestamp
-    : parsed.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      });
+  return formatRahDateTime(timestamp, {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
 }
 
 function formatProfileDate(timestamp: string): string {

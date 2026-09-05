@@ -7,7 +7,6 @@ export * from "./client-computer-profile.ts";
 export * from "./client-discovery.ts";
 export * from "./message-reference.ts";
 export * from "./message-mention.ts";
-
 import {
   ContentDigestSchema,
   IdentifierSchema,
@@ -71,6 +70,7 @@ import {
   type TaskState,
   type TaskWorkflowStatus,
 } from "./task.ts";
+import { TaskVerificationDeclarationSchema } from "./review.ts";
 
 export {
   projectTaskLifecycle,
@@ -1350,11 +1350,17 @@ export type ActivationCredentialScope = z.infer<
 export const ClientRoomSyncRequestSchema = z
   .object({
     afterSeq: z.number().int().nonnegative().optional(),
+    bootstrap: z.literal("latest").optional(),
     consumerId: IdentifierSchema,
     limit: z.number().int().positive().max(500).optional(),
     roomId: IdentifierSchema,
   })
-  .strict();
+  .strict()
+  .refine(
+    ({ afterSeq, bootstrap }) =>
+      bootstrap === undefined || afterSeq === undefined,
+    { message: "latest bootstrap cannot include afterSeq" },
+  );
 export type ClientRoomSyncRequest = z.infer<typeof ClientRoomSyncRequestSchema>;
 
 export const ClientAcknowledgeRequestSchema = z
@@ -1584,6 +1590,7 @@ export type WorkerTaskRequestInputRequest = z.infer<
 export const WorkerTaskSubmitRequestSchema = WorkerTaskCommandBaseSchema.extend(
   {
     summary: z.string().trim().min(1),
+    verification: TaskVerificationDeclarationSchema.optional(),
   },
 ).strict();
 export type WorkerTaskSubmitRequest = z.infer<
@@ -1602,8 +1609,10 @@ export const RoomSyncResponseSchema = z
   .object({
     cursorBefore: z.number().int().nonnegative(),
     cursorAfter: z.number().int().nonnegative(),
+    eventFloorSeq: z.number().int().nonnegative().optional(),
     latestRoomSeq: z.number().int().nonnegative(),
     snapshot: RoomSnapshotSchema.nullable(),
+    snapshotSeq: z.number().int().nonnegative().optional(),
     events: z.array(RoomEventSchema),
   })
   .strict()
@@ -1614,7 +1623,44 @@ export const RoomSyncResponseSchema = z
   .refine((response) => response.cursorAfter <= response.latestRoomSeq, {
     message: "cursorAfter must be less than or equal to latestRoomSeq",
     path: ["cursorAfter"],
-  });
+  })
+  .refine(
+    (response) =>
+      response.eventFloorSeq === undefined ||
+      response.eventFloorSeq <= response.cursorAfter,
+    {
+      message: "eventFloorSeq must be less than or equal to cursorAfter",
+      path: ["eventFloorSeq"],
+    },
+  )
+  .refine(
+    (response) =>
+      response.snapshotSeq === undefined ||
+      response.snapshotSeq <= response.latestRoomSeq,
+    {
+      message: "snapshotSeq must be less than or equal to latestRoomSeq",
+      path: ["snapshotSeq"],
+    },
+  )
+  .refine(
+    (response) =>
+      (response.eventFloorSeq === undefined) ===
+      (response.snapshotSeq === undefined),
+    {
+      message: "bounded bootstrap metadata must be complete",
+      path: ["eventFloorSeq"],
+    },
+  )
+  .refine(
+    (response) =>
+      response.eventFloorSeq === undefined ||
+      (response.snapshot !== null &&
+        response.snapshotSeq === response.latestRoomSeq),
+    {
+      message: "bounded bootstrap requires a current Room snapshot",
+      path: ["snapshot"],
+    },
+  );
 export type RoomSyncResponse = z.infer<typeof RoomSyncResponseSchema>;
 
 export const WorkerSyncResponseSchema = RoomSyncResponseSchema;
@@ -1751,3 +1797,4 @@ export * from "./message-social.ts";
 export * from "./official-agent-avatars.ts";
 export * from "./profile-image.ts";
 export * from "./runtime-failure.ts";
+export * from "./human-profile.ts";

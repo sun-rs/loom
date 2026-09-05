@@ -20,6 +20,8 @@ test("interaction icon geometry is frozen from Raft RFe/TFe/yze/cze/Bw, Agent ta
     'd="M12 6v6h4"',
     'd="m17 2 4 4-4 4"',
     'd="M17 17H4a1 1 0 0 1-.74-1.673C4.59 13.956 6 12.499 6 8a6 6 0 0 1 .258-1.742"',
+    'd="m12 19-7-7 7-7"',
+    'd="M19 12H5"',
   ]) {
     assert.match(
       source,
@@ -31,7 +33,16 @@ test("interaction icon geometry is frozen from Raft RFe/TFe/yze/cze/Bw, Agent ta
     /raft-icon-shield-check[^<]*>[\s\S]*?m9 12 2 2 4-4/u,
   );
   assert.equal(
-    createHash("sha256").update(content).digest("hex"),
+    // Keep the entire prior sprite byte-frozen while adopting one verified
+    // arrow-left symbol. Never promote a new whole-file hash to hide drift.
+    createHash("sha256")
+      .update(
+        source.replace(
+          /  <!-- Raft live channel\/settings\/computer mobile back, index-Biin3FEA\.js,[\s\S]*?<symbol id="raft-icon-arrow-left"[\s\S]*?<\/symbol>\n/u,
+          "",
+        ),
+      )
+      .digest("hex"),
     "f1a811d309f01a77444817cfdecd07466e69bd9bb4999ac438efe9ea6029805d",
   );
 });

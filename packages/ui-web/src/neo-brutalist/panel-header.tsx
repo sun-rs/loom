@@ -6,7 +6,7 @@ export function PanelHeader({
   className = "",
   ...props
 }: HTMLAttributes<HTMLElement> & {
-  kind: "conversation" | "agent" | "thread";
+  kind: "conversation" | "agent" | "thread" | "surface" | "sidebar";
 }) {
   return (
     <header

@@ -25,6 +25,25 @@ export function taskDependenciesComplete(
 
 export function taskProjectionFromRow(database: DatabaseSync, row: Row): Task {
   const taskId = text(row, "task_id");
+  const dependencyTaskIds = database
+    .prepare(
+      "SELECT dependency_task_id FROM task_dependencies WHERE task_id = ? ORDER BY dependency_task_id",
+    )
+    .all(taskId)
+    .map((dependency) => text(dependency, "dependency_task_id"));
+  const participants = database
+    .prepare(
+      "SELECT participant_id, role FROM task_participants WHERE task_id = ? ORDER BY participant_id, role",
+    )
+    .all(taskId);
+  return taskProjectionFromRelations(row, dependencyTaskIds, participants);
+}
+
+function taskProjectionFromRelations(
+  row: Row,
+  dependencyTaskIds: string[],
+  participants: Row[],
+): Task {
   const assigneeId = nullableText(row, "assignee_id");
   const description = nullableText(row, "description");
   const claimedBy = nullableText(row, "claimed_by");
@@ -37,17 +56,6 @@ export function taskProjectionFromRow(database: DatabaseSync, row: Row): Task {
   const blockedAt = nullableText(row, "blocked_at");
   const cancellationReason = nullableText(row, "cancellation_reason");
   const cancelledAt = nullableText(row, "cancelled_at");
-  const dependencyTaskIds = database
-    .prepare(
-      "SELECT dependency_task_id FROM task_dependencies WHERE task_id = ? ORDER BY dependency_task_id",
-    )
-    .all(taskId)
-    .map((dependency) => text(dependency, "dependency_task_id"));
-  const participants = database
-    .prepare(
-      "SELECT participant_id, role FROM task_participants WHERE task_id = ? ORDER BY participant_id, role",
-    )
-    .all(taskId);
   const collaboratorIds = participants
     .filter((participant) => text(participant, "role") === "collaborator")
     .map((participant) => text(participant, "participant_id"));
@@ -55,7 +63,7 @@ export function taskProjectionFromRow(database: DatabaseSync, row: Row): Task {
     .filter((participant) => text(participant, "role") === "reviewer")
     .map((participant) => text(participant, "participant_id"));
   return TaskSchema.parse({
-    taskId,
+    taskId: text(row, "task_id"),
     roomId: text(row, "room_id"),
     creatorId: text(row, "creator_id"),
     collaboratorIds,
@@ -87,11 +95,67 @@ export function taskProjectionFromRow(database: DatabaseSync, row: Row): Task {
 export function listTaskProjections(
   database: DatabaseSync,
   roomId: string,
+  options: { beforeTaskNumber?: number; limit?: number } = {},
 ): Task[] {
-  return database
+  const limit = options.limit ?? 200;
+  if (!Number.isInteger(limit) || limit <= 0 || limit > 500) {
+    throw new Error("Task page limit must be between 1 and 500");
+  }
+  if (
+    options.beforeTaskNumber !== undefined &&
+    (!Number.isInteger(options.beforeTaskNumber) ||
+      options.beforeTaskNumber <= 0)
+  ) {
+    throw new Error("beforeTaskNumber must be a positive integer");
+  }
+  const rows = database
     .prepare(
-      "SELECT * FROM tasks WHERE room_id = ? ORDER BY created_at, task_id",
+      `SELECT * FROM tasks
+       WHERE room_id = ? AND (? IS NULL OR task_number < ?)
+       ORDER BY task_number DESC LIMIT ?`,
     )
-    .all(roomId)
-    .map((row) => taskProjectionFromRow(database, row));
+    .all(
+      roomId,
+      options.beforeTaskNumber ?? null,
+      options.beforeTaskNumber ?? null,
+      limit,
+    )
+    .reverse();
+  if (rows.length === 0) return [];
+  const taskIds = rows.map((row) => text(row, "task_id"));
+  const placeholders = taskIds.map(() => "?").join(",");
+  const dependenciesByTask = new Map<string, string[]>();
+  for (const dependency of database
+    .prepare(
+      `SELECT task_id, dependency_task_id FROM task_dependencies
+       WHERE task_id IN (${placeholders})
+       ORDER BY task_id, dependency_task_id`,
+    )
+    .all(...taskIds)) {
+    const taskId = text(dependency, "task_id");
+    const dependencies = dependenciesByTask.get(taskId) ?? [];
+    dependencies.push(text(dependency, "dependency_task_id"));
+    dependenciesByTask.set(taskId, dependencies);
+  }
+  const participantsByTask = new Map<string, Row[]>();
+  for (const participant of database
+    .prepare(
+      `SELECT task_id, participant_id, role FROM task_participants
+       WHERE task_id IN (${placeholders})
+       ORDER BY task_id, participant_id, role`,
+    )
+    .all(...taskIds)) {
+    const taskId = text(participant, "task_id");
+    const participants = participantsByTask.get(taskId) ?? [];
+    participants.push(participant);
+    participantsByTask.set(taskId, participants);
+  }
+  return rows.map((row) => {
+    const taskId = text(row, "task_id");
+    return taskProjectionFromRelations(
+      row,
+      dependenciesByTask.get(taskId) ?? [],
+      participantsByTask.get(taskId) ?? [],
+    );
+  });
 }

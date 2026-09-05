@@ -16,17 +16,6 @@
   min-width: 0;
 }
 
-.rah-computer-sidebar > header {
-  align-items: center;
-  border-bottom: var(--bd);
-  display: flex;
-  flex: none;
-  font-size: 20px;
-  font-weight: 700;
-  height: var(--raft-computers-sidebar-header-height);
-  padding: var(--raft-computers-sidebar-header-padding);
-}
-
 .rah-computer-sidebar-body {
   flex: 1;
   min-height: 0;
@@ -186,36 +175,6 @@
   min-width: 0;
 }
 
-.rah-computer-detail-head {
-  align-items: center;
-  border-bottom: var(--bd);
-  display: flex;
-  flex: none;
-  gap: var(--raft-computers-detail-header-gap);
-  height: var(--raft-computers-detail-header-height);
-  padding: var(--raft-computers-detail-header-padding);
-}
-
-.rah-computer-detail-head > span {
-  align-items: center;
-  background: var(--yellow);
-  border: var(--bd);
-  display: flex;
-  height: var(--raft-computers-detail-header-icon-size);
-  justify-content: center;
-  width: var(--raft-computers-detail-header-icon-size);
-}
-
-.rah-computer-detail-head svg {
-  height: 18px;
-  width: 18px;
-}
-
-.rah-computer-detail-head h1 {
-  font-size: 16px;
-  line-height: 20px;
-}
-
 .rah-computer-detail-back {
   display: none;
 }
@@ -224,179 +183,6 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-}
-
-.rah-computer-hero {
-  align-items: flex-start;
-  border-bottom: 1px solid var(--ink-10);
-  display: flex;
-  gap: var(--raft-computers-hero-gap);
-  height: var(--raft-computers-hero-height);
-  padding: var(--raft-computers-hero-padding);
-}
-
-.rah-computer-hero > span {
-  align-items: center;
-  background: var(--yellow);
-  border: var(--bd);
-  display: flex;
-  height: var(--raft-computers-hero-icon-size);
-  justify-content: center;
-  width: var(--raft-computers-hero-icon-size);
-}
-
-.rah-computer-hero > span svg {
-  height: 28px;
-  width: 28px;
-}
-
-.rah-computer-hero h2 {
-  font-size: 18px;
-  line-height: 23px;
-}
-
-.rah-computer-hero p {
-  align-items: center;
-  color: var(--ink-50);
-  display: flex;
-  font: 12px/20px var(--mono);
-  gap: 7px;
-}
-
-.rah-computer-hero p i {
-  height: 9px;
-  width: 9px;
-}
-
-.rah-computer-hero code {
-  color: var(--ink-40);
-  font: 11px/20px var(--mono);
-}
-
-.rah-computer-field {
-  border-bottom: 1px solid var(--ink-10);
-  min-height: var(--raft-computers-name-section-height);
-  padding: var(--raft-computers-name-section-padding);
-}
-
-.rah-computer-field h2,
-.rah-computer-info > h2,
-.rah-computer-content-stack h2 {
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 16px;
-  text-transform: uppercase;
-}
-
-.rah-computer-field h2 {
-  align-items: center;
-  display: flex;
-  gap: 5px;
-}
-
-.rah-computer-profile-edit {
-  align-items: center;
-  background: transparent;
-  border: 0;
-  color: var(--ink-50);
-  display: inline-flex;
-  height: 22px;
-  justify-content: center;
-  padding: 2px;
-  width: 22px;
-}
-
-.rah-computer-profile-edit:hover,
-.rah-computer-profile-edit:focus-visible {
-  color: var(--black);
-}
-
-.rah-computer-profile-edit svg {
-  height: 14px;
-  width: 14px;
-}
-
-.rah-computer-profile-form {
-  display: grid;
-  gap: 8px;
-  margin-top: 8px;
-  max-width: 620px;
-}
-
-.rah-computer-profile-form input,
-.rah-computer-profile-form textarea {
-  background: var(--bg);
-  border: var(--bd);
-  box-shadow: var(--shadow-s);
-  color: var(--black);
-  font: 14px/20px var(--sans);
-  padding: 8px 10px;
-  width: 100%;
-}
-
-.rah-computer-profile-form textarea {
-  min-height: 92px;
-  resize: vertical;
-}
-
-.rah-computer-profile-count {
-  color: var(--ink-40);
-  font: 11px/16px var(--mono);
-  justify-self: end;
-}
-
-.rah-computer-profile-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.rah-computer-profile-error {
-  color: var(--coral);
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 18px;
-}
-
-.rah-computer-field p {
-  font-size: 14px;
-  line-height: 20px;
-  margin-top: 4px;
-}
-
-.rah-computer-field p.is-muted,
-.rah-computer-hint {
-  color: var(--ink-40);
-  font-style: italic;
-}
-
-.rah-computer-info {
-  border-bottom: 1px solid var(--ink-10);
-  min-height: var(--raft-computers-info-section-height);
-  padding: var(--raft-computers-info-section-padding);
-}
-
-.rah-computer-info > h2 {
-  letter-spacing: var(--tracking-widest);
-  margin-bottom: 12px;
-}
-
-.rah-computer-info dl {
-  display: grid;
-  gap: 12px;
-}
-
-.rah-computer-info dt,
-.rah-computer-runtime-evidence dt {
-  color: var(--ink-50);
-  font-size: 11px;
-  line-height: 16px;
-}
-
-.rah-computer-info dd {
-  font: 13px/20px var(--mono);
-  margin-top: 4px;
-  overflow-wrap: anywhere;
 }
 
 .rah-computer-runtime-chips {
@@ -424,74 +210,14 @@
   outline-offset: 2px;
 }
 
-.rah-computer-runtime-chips > span.is-missing {
+.rah-computer-runtime-chips > .is-missing {
   background: var(--gray-chip);
   color: var(--ink-40);
-}
-
-.rah-computer-content-stack {
-  display: grid;
-  gap: var(--raft-computers-main-stack-gap);
-  padding: var(--raft-computers-main-stack-padding);
-}
-
-.rah-computer-content-stack > header h2 {
-  align-items: center;
-  display: flex;
-  gap: 8px;
-  letter-spacing: var(--tracking-widest);
-}
-
-.rah-computer-content-stack > header svg {
-  height: 14px;
-  width: 14px;
-}
-
-.rah-computer-content-stack > header span {
-  color: var(--ink-40);
-  font: 11px/1 var(--mono);
 }
 
 .rah-computer-agent-list {
   display: grid;
   gap: 8px;
-}
-
-.rah-computer-agent-list > button {
-  align-items: center;
-  background: var(--bg);
-  border: 2px solid var(--ink-30);
-  color: var(--black);
-  display: flex;
-  gap: 12px;
-  min-height: var(--raft-computers-agent-row-height);
-  padding: var(--raft-computers-agent-row-padding);
-  text-align: left;
-  width: 100%;
-}
-
-.rah-computer-agent-list > button:hover,
-.rah-computer-agent-list > button:focus-visible {
-  border-color: var(--black);
-  box-shadow: var(--shadow-s);
-}
-
-.rah-computer-agent-list > button b {
-  font-size: 14px;
-}
-
-.rah-computer-agent-list > button code {
-  color: var(--ink-50);
-  font: 11px/16px var(--mono);
-}
-
-.rah-computer-agent-list > button small {
-  align-items: center;
-  color: var(--ink-50);
-  display: flex;
-  font: 11px/16px var(--mono);
-  gap: 6px;
-  margin-left: auto;
 }
 
 .rah-computer-runtime-evidence {
@@ -714,32 +440,7 @@
   }
 
   .rah-computer-detail-back {
-    align-items: center;
-    background: var(--bg);
-    border: var(--bd);
-    display: flex;
-    height: 32px;
-    justify-content: center;
-    width: 32px;
-  }
-
-  .rah-computer-detail-back svg {
-    height: 16px;
-    width: 16px;
-  }
-
-  .rah-computer-content-stack {
-    padding-inline: 14px;
-  }
-
-  .rah-computer-agent-list > button {
-    align-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  .rah-computer-agent-list > button small {
-    margin-left: 40px;
-    width: calc(100% - 40px);
+    display: inline-flex;
   }
 
   .rah-computer-command-row {

@@ -6,6 +6,7 @@ import * as P from "@rah-os/protocol";
 import type { ZodType } from "zod";
 
 export const DISCOVERY_DATA_PATHS = [
+  "/humans/profile",
   "/messages/social",
   "/messages/react",
   "/messages/save",
@@ -33,6 +34,10 @@ export function routeDiscovery(
   parse: <T>(schema: ZodType<T>, body: Record<string, unknown>) => T,
 ): unknown {
   switch (path) {
+    case "/humans/profile":
+      return P.HumanProfileResponseSchema.parse(
+        human.getHumanProfile(actor, parse(P.HumanProfileRequestSchema, body)),
+      );
     case "/messages/social":
       return P.MessageSocialResponseSchema.parse(
         human.listMessageSocial(

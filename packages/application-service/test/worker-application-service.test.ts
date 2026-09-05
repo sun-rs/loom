@@ -11,7 +11,10 @@ import {
   RuntimeTerminationProofError,
 } from "@rah-os/kernel";
 
-import { WorkerApplicationService } from "../src/index.ts";
+import {
+  type TaskDeliveryEvidenceCollector,
+  WorkerApplicationService,
+} from "../src/index.ts";
 
 async function jsonObject(
   response: Response,
@@ -939,7 +942,30 @@ test("Worker API only acknowledges cursors delivered to its scoped credential", 
 test("Worker API exposes a causal and execution-fenced Task command surface", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-worker-task-api-"));
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+  const deliveryEvidenceCollector: TaskDeliveryEvidenceCollector = {
+    async captureBaseline({ workspaceRoot }) {
+      return {
+        baseCommit: "1".repeat(40),
+        repositoryId: `sha256:${"a".repeat(64)}`,
+        source: "git",
+        workspaceRoot,
+      };
+    },
+    async captureSubmission({ baseline }) {
+      assert.equal(baseline.source, "git");
+      const patch = new TextEncoder().encode(
+        "diff --git a/file.ts b/file.ts\n+verified\n",
+      );
+      return {
+        baseCommit: baseline.baseCommit,
+        headCommit: "2".repeat(40),
+        patch,
+        repositoryId: baseline.repositoryId,
+      };
+    },
+  };
   const service = new WorkerApplicationService({
+    deliveryEvidenceCollector,
     kernel,
     taskClaimHeartbeatIntervalMs: 50,
     taskClaimLeaseMs: 250,
@@ -996,15 +1022,19 @@ test("Worker API exposes a causal and execution-fenced Task command surface", as
       runtimeRunId: "worker-task-runtime",
     });
     await service.start();
-    const credential = service.issueActivationCredential(host, {
-      activationId: activation.activationId,
-      consumerId: "worker-task-consumer",
-      hostId: host.hostId,
-      participantId: agent.principal.principalId,
-      roomId: room.roomId,
-      runAttemptId: runAttempt.runAttemptId,
-      toSeq: activation.toSeq,
-    });
+    const credential = await service.issueActivationCredentialForWorkspace(
+      host,
+      {
+        activationId: activation.activationId,
+        consumerId: "worker-task-consumer",
+        hostId: host.hostId,
+        participantId: agent.principal.principalId,
+        roomId: room.roomId,
+        runAttemptId: runAttempt.runAttemptId,
+        toSeq: activation.toSeq,
+      },
+      { workspaceRoot: directory },
+    );
     const request = async (path: string, body: Record<string, unknown>) =>
       await fetch(`${service.origin}${path}`, {
         body: JSON.stringify(body),
@@ -1128,6 +1158,30 @@ test("Worker API exposes a causal and execution-fenced Task command surface", as
       (await jsonObject(uploadedArtifactResponse)).state,
       "completed",
     );
+    for (let index = 2; index <= 10; index += 1) {
+      const filename = `worker-evidence-${index}.txt`;
+      const prepared = await request("/v1/worker/artifacts/prepare", {
+        filename,
+        idempotencyKey: `worker-task-artifact-${index}`,
+        mimeType: "text/plain",
+        size: 18,
+        taskId: created.task.taskId,
+      });
+      assert.equal(prepared.status, 200);
+      const preparedBody = await jsonObject(prepared);
+      const uploaded = await fetch(
+        `${service.origin}/v1/worker/artifacts/${String(preparedBody.attachmentId)}`,
+        {
+          body: "artifact-evidence!",
+          headers: {
+            authorization: `Bearer ${credential.accessToken}`,
+            "content-type": "application/octet-stream",
+          },
+          method: "PUT",
+        },
+      );
+      assert.equal(uploaded.status, 200);
+    }
     assert.equal(
       kernel.files.list(humanActor, { roomId: room.roomId }).files.length,
       0,
@@ -1139,6 +1193,11 @@ test("Worker API exposes a causal and execution-fenced Task command surface", as
       idempotencyKey: "worker-task-submit",
       summary: "Task protocol implemented and tested",
       taskId: created.task.taskId,
+      verification: {
+        artifactIds: [attachmentId],
+        status: "passed",
+        summary: "Worker API integration passed",
+      },
     });
     assert.equal(submitResponse.status, 200);
     const submitted = await jsonObject(submitResponse);
@@ -1158,19 +1217,66 @@ test("Worker API exposes a causal and execution-fenced Task command surface", as
     assert.deepEqual(
       kernel.files
         .list(humanActor, { roomId: room.roomId })
-        .files.map(({ attachmentId: id, filename }) => ({ id, filename })),
-      [{ id: attachmentId, filename: "worker-evidence.txt" }],
+        .files.map(({ filename }) => filename)
+        .sort(),
+      [
+        "rah-task-delivery.patch",
+        "worker-evidence.txt",
+        ...Array.from(
+          { length: 9 },
+          (_, index) => `worker-evidence-${index + 2}.txt`,
+        ),
+      ].sort(),
     );
     const [submission] = kernel.taskReviews.listTaskSubmissions(humanActor, {
       roomId: room.roomId,
       taskId: created.task.taskId,
     });
     assert.ok(submission);
-    assert.equal(submission.artifacts.length, 1);
-    assert.equal(submission.artifacts[0]?.attachmentId, attachmentId);
+    assert.equal(submission.artifacts.length, 11);
+    const publishedArtifact = submission.artifacts.find(
+      (artifact) => artifact.attachmentId === attachmentId,
+    );
+    assert.ok(publishedArtifact);
+    assert.equal(publishedArtifact.runAttemptId, runAttempt.runAttemptId);
+    assert.equal(submission.evidence?.workspace.source, "run_attempt");
+    assert.equal(submission.evidence?.repository.source, "host_observed");
+    const repositoryEvidence = submission.evidence?.repository;
+    assert.equal(repositoryEvidence?.source, "host_observed");
+    if (repositoryEvidence?.source !== "host_observed") return;
+    assert.equal(repositoryEvidence.baseCommit, "1".repeat(40));
+    assert.equal(repositoryEvidence.headCommit, "2".repeat(40));
     assert.equal(
-      submission.artifacts[0]?.runAttemptId,
-      runAttempt.runAttemptId,
+      submission.artifacts.some(
+        ({ attachmentId: candidate }) =>
+          candidate === repositoryEvidence.patchAttachmentId,
+      ),
+      true,
+    );
+    assert.equal(submission.evidence?.verification.source, "producer_declared");
+    assert.equal(submission.evidence?.verification.status, "passed");
+    const frozenSubmissionResponse = await request(
+      "/v1/worker/tasks/submission",
+      { taskId: created.task.taskId },
+    );
+    assert.equal(frozenSubmissionResponse.status, 200);
+    const frozenSubmission = (await jsonObject(frozenSubmissionResponse))
+      .submission as Record<string, unknown>;
+    assert.equal(
+      frozenSubmission.submissionDigest,
+      submission.submissionDigest,
+    );
+    const patchResponse = await fetch(
+      `${service.origin}/v1/worker/artifacts/${repositoryEvidence.patchAttachmentId}`,
+      {
+        headers: { authorization: `Bearer ${credential.accessToken}` },
+        method: "GET",
+      },
+    );
+    assert.equal(patchResponse.status, 200);
+    assert.equal(
+      await patchResponse.text(),
+      "diff --git a/file.ts b/file.ts\n+verified\n",
     );
 
     const reviewerHost = authenticateHost(

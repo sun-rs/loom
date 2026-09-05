@@ -72,6 +72,12 @@ test("Room projection accepts identical replay and rejects gaps or divergence", 
     afterSeq: 0,
   });
   assert.deepEqual(replay, first);
+  const emptyPoll = applyRoomSync(
+    first,
+    { ...delivery(2, [], 2), snapshot: null },
+    { afterSeq: 2 },
+  );
+  assert.equal(emptyPoll, first);
 
   assert.throws(
     () => applyRoomSync(first, delivery(3, [event(4)]), { afterSeq: 3 }),
@@ -140,7 +146,7 @@ test("RoomSession serializes overlapping syncs so a late acknowledgement cannot 
   });
   const client = new FakeRahClient(async (operation, input) => {
     if (operation === "room.sync") {
-      const afterSeq = (input as ClientRoomSyncRequest).afterSeq ?? -1;
+      const afterSeq = (input as ClientRoomSyncRequest).afterSeq ?? 0;
       requestedAfterSequences.push(afterSeq);
       syncCalls += 1;
       if (syncCalls === 1) return delivery(0, [event(1)], 2);
@@ -187,7 +193,7 @@ test("RoomSession cold reload replays from local zero when the durable consumer 
   const client = new FakeRahClient(async (operation, input) => {
     if (operation === "room.sync") {
       const syncInput = input as ClientRoomSyncRequest;
-      requestedAfterSequences.push(syncInput.afterSeq ?? -1);
+      requestedAfterSequences.push(syncInput.afterSeq ?? 0);
       syncCount += 1;
       if (syncCount === 1) {
         return {
@@ -260,7 +266,7 @@ test("RoomSession retries from the same local cursor when acknowledgement is los
   const client = new FakeRahClient(async (operation, input) => {
     if (operation === "room.sync") {
       requestedAfterSequences.push(
-        (input as ClientRoomSyncRequest).afterSeq ?? -1,
+        (input as ClientRoomSyncRequest).afterSeq ?? 0,
       );
       return delivery(0, [event(1)]);
     }
@@ -291,7 +297,7 @@ test("RoomSession catches up through bounded pages and reports remaining work", 
   const requestedAfterSequences: number[] = [];
   const client = new FakeRahClient(async (operation, input) => {
     if (operation === "room.sync") {
-      const afterSeq = (input as ClientRoomSyncRequest).afterSeq ?? -1;
+      const afterSeq = (input as ClientRoomSyncRequest).afterSeq ?? 0;
       requestedAfterSequences.push(afterSeq);
       return {
         ...delivery(afterSeq, [event(afterSeq + 1)], 3),
@@ -322,6 +328,54 @@ test("RoomSession catches up through bounded pages and reports remaining work", 
   assert.equal(complete.pages, 1);
   assert.equal(complete.state.cursor, 3);
   assert.deepEqual(requestedAfterSequences, [0, 1, 2]);
+});
+
+test("RoomSession cold bootstrap retains only a trusted latest event window", async () => {
+  const total = 100_000;
+  const limit = 500;
+  const requests: ClientRoomSyncRequest[] = [];
+  const client = new FakeRahClient(async (operation, input) => {
+    if (operation === "room.acknowledge") {
+      return {
+        acknowledgedThrough: (input as ClientAcknowledgeRequest).throughSeq,
+      };
+    }
+    assert.equal(operation, "room.sync");
+    const request = input as ClientRoomSyncRequest;
+    requests.push(request);
+    assert.equal(request.bootstrap, "latest");
+    assert.equal(request.afterSeq, undefined);
+    const eventFloorSeq = total - limit;
+    return {
+      cursorAfter: total,
+      cursorBefore: 0,
+      eventFloorSeq,
+      events: Array.from({ length: limit }, (_, index) =>
+        event(eventFloorSeq + index + 1),
+      ),
+      latestRoomSeq: total,
+      snapshot: delivery(0, []).snapshot,
+      snapshotSeq: total,
+    };
+  });
+  const session = new RoomSession({
+    client,
+    consumerId: "browser-long-room",
+    roomId: "room-main",
+  });
+
+  const result = await session.syncUntilCurrent({ limit, maxPages: 100 });
+
+  assert.equal(result.caughtUp, true);
+  assert.equal(result.pages, 1);
+  assert.equal(requests.length, 1);
+  assert.equal(result.state.cursor, total);
+  assert.equal(result.state.events.length, limit);
+  assert.equal(result.state.events[0]?.roomSeq, total - limit + 1);
+  assert.equal(result.state.events.at(-1)?.roomSeq, total);
+  assert.equal(result.state.eventFloorSeq, total - limit);
+  assert.equal(result.state.historyComplete, false);
+  assert.equal(result.state.snapshotSeq, total);
 });
 
 test("RoomSession fails closed when a bounded sync makes no progress behind latest", async () => {

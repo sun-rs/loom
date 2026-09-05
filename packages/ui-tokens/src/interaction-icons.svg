@@ -1,5 +1,11 @@
 <!-- Verbatim geometry from Raft index-WTraJnrd.js: RFe, TFe, yze; circle-user-round also verified in live Search DOM. -->
 <svg xmlns="http://www.w3.org/2000/svg">
+  <!-- Raft live channel/settings/computer mobile back, index-Biin3FEA.js,
+       2026-09-04: verbatim Lucide arrow-left geometry. -->
+  <symbol id="raft-icon-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m12 19-7-7 7-7"/>
+    <path d="M19 12H5"/>
+  </symbol>
   <!-- Raft index-BoAC7nSE y3e / x3e (offset 1834029), mobile Home: verbatim Lucide house geometry. -->
   <symbol id="raft-icon-house" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/>

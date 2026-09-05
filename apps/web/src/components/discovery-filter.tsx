@@ -15,6 +15,8 @@ export type DiscoveryOption = {
   id: string;
   label: string;
   leading?: ReactNode;
+  reserveLeadingSlot?: boolean;
+  searchText?: string;
   italic?: boolean;
   disabledReason?: string;
 };
@@ -64,7 +66,9 @@ export function DiscoveryFilter({
   const hoverCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const id = useId();
   const visible = options.filter((option) =>
-    option.label.toLocaleLowerCase().includes(query.toLocaleLowerCase()),
+    (option.searchText ?? option.label)
+      .toLocaleLowerCase()
+      .includes(query.toLocaleLowerCase()),
   );
   const trailingIcon = variant === "status" ? "pencil" : "chevron-down";
   const cancelHoverClose = () => {
@@ -296,7 +300,7 @@ export function DiscoveryFilter({
                   aria-label={variant === "reaction" ? option.label : undefined}
                   onClick={() => choose(option.id)}
                 >
-                  {option.leading && (
+                  {(option.leading || option.reserveLeadingSlot) && (
                     <span className="rah-discovery-option-leading">
                       {option.leading}
                     </span>

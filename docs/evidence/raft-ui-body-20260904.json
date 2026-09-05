@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "kind": "official-source-review-and-native-browser-observation",
+  "reviewedOn": "2026-09-04",
+  "release": "16856201b6d089c251967fe2afdb2b0a0dcbb1a0",
+  "sources": [
+    {
+      "url": "https://app.raft.build/assets/index-Biin3FEA.js",
+      "sha256": "e798f35bde09eeda2927669406e10718392ff7574796016441def59dbc5b05f9"
+    },
+    {
+      "url": "https://app.raft.build/assets/AgentDetailPanel-BayGfy6W.js",
+      "sha256": "e6ef1e2a3df4585e687d481a1a51f4b43983a8b5d13dcc5a61d652fbed53481f"
+    },
+    {
+      "url": "https://app.raft.build/assets/HumanDetailPanel-p6I0u4UJ.js",
+      "sha256": "fca1dc1f0c7434d33856c716cb6a133904a8bfb275966a762671aaae15778470"
+    },
+    {
+      "url": "https://app.raft.build/assets/MachineDetailPanel-DuFZ_vgC.js",
+      "sha256": "ea64ce261730bd0311f09e677f1d46e8668541bc9480783a6b1542cbb1e49ed1"
+    }
+  ],
+  "contracts": {
+    "entityCard": {
+      "locator": "hre/X$e; Machine Et, Human We, Agent pl",
+      "padding": "8px 12px",
+      "border": "2px black/30",
+      "gap": "12px",
+      "title": "14px/20px bold",
+      "subtitle": "12px/16px mono black/50",
+      "hover": "black border and 2px hard shadow",
+      "identity": "On surface-list avatar: 32px outer size / 2px border / 28px interior; name and runtime; trailing presence independent from runtime availability",
+      "activation": "open selected agent profile by ID; source also has unported bulk-selection variants"
+    },
+    "searchHome": {
+      "locator": "search-home in main bundle",
+      "placement": "remaining scroll stage, centered; suggestions replace initial empty state",
+      "icon": 48,
+      "title": "14px/20px bold black/50",
+      "description": "12px/16px black/40",
+      "iconGap": 12,
+      "descriptionGap": 4
+    },
+    "agentActivityEmpty": {
+      "locator": "Agent Vo -> shared pg; caller retains diagnostic header",
+      "placement": "remaining flex body after the diagnostic toolbar",
+      "padding": "48px 24px",
+      "icon": 36,
+      "iconGap": 16,
+      "title": "18px/28px semibold display black/60",
+      "description": "14px relaxed black/60, max-width 32ch",
+      "titleText": "暂无活动",
+      "descriptionText": "启动 Agent 以查看其活动日志。"
+    }
+  },
+  "browserObservation": {
+    "browser": "user Firefox, native accessibility and screenshots",
+    "search": "Opened official Search and observed no-history centered empty content.",
+    "computer": "Observed five canonical cards with runtime subtitles and trailing presence. Clicked ParityAuditorA and verified navigation to that agent's profile.",
+    "activity": "Opened ParityAuditorA Activity; it has existing history. Empty-state source was inspected, but an empty official Activity state was NOT reproduced.",
+    "limits": "Not a same-viewport automated bilateral computed-style capture; does not certify every profile state or keyboard variant. No official account, agent or conversation data mutated."
+  }
+}

@@ -5,12 +5,14 @@ import type { ComponentPropsWithRef } from "react";
 export function PanelHeaderAction({
   className = "",
   pending = false,
+  size = "header",
   disabled,
   type = "button",
   ...props
 }: ComponentPropsWithRef<"button"> & {
   "aria-label": string;
   pending?: boolean;
+  size?: "header" | "compact";
 }) {
   return (
     <button
@@ -19,6 +21,7 @@ export function PanelHeaderAction({
       className={`sq-btn rah-panel-header-action ${className}`.trim()}
       disabled={disabled || pending}
       aria-busy={pending || undefined}
+      data-action-size={size}
     />
   );
 }

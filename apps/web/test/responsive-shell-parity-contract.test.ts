@@ -32,7 +32,7 @@ test("responsive shell follows Raft's single 767px mobile boundary", () => {
 
 test("short desktop shells use Raft's compact rail geometry", () => {
   const raft = readRaftBundle();
-  const product = readWeb("product.css");
+  const product = readWeb("panel-layout.css");
 
   assert.match(raft, /md:\[@media\(max-height:600px\)\]:w-\[50px\]/u);
   assert.match(raft, /md:\[@media\(max-height:600px\)\]:size-9/u);
@@ -118,7 +118,7 @@ test("mobile Home renders the actual Raft house glyph, not a missing SVG referen
     "utf8",
   );
   assert.match(icon, /home: "house"/u);
-  assert.match(icon, /\["house",/u);
+  assert.match(icon, /\[[^\]]*"house"[^\]]*\]\.includes\(mappedName\)/u);
   const symbol = sprite.match(
     /<symbol id="raft-icon-house"[^>]*>([\s\S]*?)<\/symbol>/u,
   )?.[1];

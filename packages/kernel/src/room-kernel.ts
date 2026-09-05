@@ -13,6 +13,10 @@ import {
 } from "./held-message-drafts.ts";
 import { ActivationObligationService } from "./activation-obligation-service.ts";
 import { ReminderService } from "./reminder-service.ts";
+import {
+  buildTaskSubmissionEvidence,
+  deriveTaskSubmissionWorkspaceEvidence,
+} from "./task-submission-evidence.ts";
 import type { RoomKernelOptions } from "./room-kernel-options.ts";
 export type {
   PlacementCapacityPolicy,
@@ -72,6 +76,8 @@ import {
   type RuntimeOfferProjection,
   type RoomAgentActivity,
   type Task,
+  type TaskSubmissionRepositoryEvidence,
+  type TaskVerificationDeclaration,
   type WorkerMessagePostRequest,
 } from "@rah-os/protocol";
 
@@ -131,6 +137,7 @@ import {
   capacityProfileResourceId,
 } from "./capacity-policy.ts";
 import {
+  requireHumanTaskManager,
   requireExecutionPolicyRevisionControlRoom,
   requireHumanControlRoomManager,
   requireRoomMember,
@@ -167,8 +174,11 @@ import {
   migrateActivationRetryFencesV35,
   migrateInputRequestCancellationV38,
   migrateReminderTargetsV36,
+  migrateTaskWorkflowAuthorityV48,
   migrateTaskWorkflowStatusV44,
   migrateMessageForwardingV46,
+  migrateBoundedRoomReadsV49,
+  migrateFrozenTaskSubmissionEvidenceV50,
   SCHEMA_SQL,
 } from "./schema.ts";
 import * as agentThreads from "./agent-thread-subscriptions.ts";
@@ -185,6 +195,8 @@ import {
   RoomEventWriter,
   type AppendRoomEventInput,
 } from "./room-event-writer.ts";
+import { syncRoomEventWindow } from "./room-sync.ts";
+import { listMessageReferenceReadStates as projectMessageReferenceReadStates } from "./message-reference-read-state.ts";
 import * as ar from "./room-agent-service.ts";
 import {
   RuntimeTrajectoryService,
@@ -286,7 +298,7 @@ import {
 const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 46;
+export const KERNEL_SCHEMA_VERSION = 50;
 export class RoomKernel {
   readonly databasePath: string;
   readonly #database: DatabaseSync;
@@ -317,6 +329,7 @@ export class RoomKernel {
   readonly restoreHumanThreadAgentFollower;
   readonly humanSidebar;
   readonly humanNavigation;
+  readonly humanProfiles;
   readonly humanNotifications;
   readonly reminders: ReminderService;
   readonly roomAgentSos;
@@ -444,6 +457,7 @@ export class RoomKernel {
     });
     this.humanSidebar = humanCommands.humanSidebar;
     this.humanNavigation = humanCommands.humanNavigation;
+    this.humanProfiles = humanCommands.humanProfiles;
     this.humanNotifications = humanCommands.humanNotifications;
     this.followHumanThread = humanCommands.followHumanThread;
     this.getHumanThreadFollowers = humanCommands.getHumanThreadFollowers;
@@ -561,6 +575,9 @@ export class RoomKernel {
     migrateInputRequestCancellationV38(this.#database);
     migrateTaskWorkflowStatusV44(this.#database);
     migrateMessageForwardingV46(this.#database);
+    migrateTaskWorkflowAuthorityV48(this.#database);
+    migrateBoundedRoomReadsV49(this.#database);
+    migrateFrozenTaskSubmissionEvidenceV50(this.#database);
     principalProfile.migrate(this.#database);
     this.#database
       .prepare(
@@ -785,8 +802,14 @@ export class RoomKernel {
   updateTaskWorkflowStatus(
     actor: AuthenticatedActorContext,
     input: Parameters<TaskLifecycleService["updateTaskWorkflowStatus"]>[1],
-  ): ReturnType<TaskLifecycleService["updateTaskWorkflowStatus"]> {
-    return this.#taskLifecycle.updateTaskWorkflowStatus(actor, input);
+  ): TaskCreateMutationResult {
+    return this.#taskLifecycle.updateTaskWorkflowStatus(actor, input, () =>
+      this.completeTask(actor, {
+        basedOnRoomSeq: input.basedOnRoomSeq,
+        idempotencyKey: input.idempotencyKey,
+        taskId: input.taskId,
+      }),
+    );
   }
 
   provisionPrincipal(input: {
@@ -1235,6 +1258,17 @@ export class RoomKernel {
       input,
     );
   }
+
+  listMessageReferenceReadStates(
+    actor: AuthenticatedActorContext,
+    input: { messageIds: string[]; roomId: string },
+  ) {
+    return projectMessageReferenceReadStates(
+      this.#database,
+      this.#requireAuthenticatedActor(actor),
+      input,
+    );
+  }
   listMessageForwardTargets(
     actor: AuthenticatedActorContext,
     input: ClientMessageForwardTargetsRequest,
@@ -1484,11 +1518,11 @@ export class RoomKernel {
   }
   listTasks(
     actor: AuthenticatedActorContext,
-    input: { roomId: string },
+    input: { beforeTaskNumber?: number; limit?: number; roomId: string },
   ): Task[] {
     const actorId = this.#requireAuthenticatedActor(actor);
     this.#requireMember(input.roomId, actorId);
-    return listTaskProjections(this.#database, input.roomId);
+    return listTaskProjections(this.#database, input.roomId, input);
   }
   listInputRequests(
     actor: AuthenticatedActorContext,
@@ -1987,8 +2021,10 @@ export class RoomKernel {
     input: {
       basedOnRoomSeq: number;
       idempotencyKey: string;
+      deliveryRepository?: TaskSubmissionRepositoryEvidence;
       summary: string;
       taskId: string;
+      verification?: TaskVerificationDeclaration;
     },
   ): TaskMutationResult {
     const summary = input.summary.trim();
@@ -1999,7 +2035,7 @@ export class RoomKernel {
       const replay = this.#replayWorkerTaskCommand(taskRow, scope, {
         eventType: "task.submitted",
         idempotencyKey: input.idempotencyKey,
-        payload: { summary },
+        payload: { summary, verification: input.verification ?? null },
       });
       if (replay !== null) return replay;
       this.#assertWorkerTaskFreshContext(
@@ -2011,7 +2047,18 @@ export class RoomKernel {
       const artifactEvidence = this.files.forTaskSubmission(
         execution,
         input.taskId,
+        input.deliveryRepository,
       );
+      const workspaceEvidence = deriveTaskSubmissionWorkspaceEvidence(
+        this.#database,
+        scope,
+      );
+      const evidence = buildTaskSubmissionEvidence({
+        artifacts: artifactEvidence.references,
+        repository: input.deliveryRepository,
+        verification: input.verification,
+        workspace: workspaceEvidence,
+      });
 
       const submittedAt = this.#timestamp();
       this.#database
@@ -2034,6 +2081,7 @@ export class RoomKernel {
       const submission = this.#taskReviews.recordSubmission(taskRow, {
         artifacts: artifactEvidence.references,
         createdAt: submittedAt,
+        evidence,
         messageId,
         producerId: scope.participantId,
         summary,
@@ -2053,6 +2101,7 @@ export class RoomKernel {
           summary,
           submittedAt,
           threadId,
+          verification: input.verification ?? null,
         },
         taskId: input.taskId,
       });
@@ -2416,15 +2465,17 @@ export class RoomKernel {
       idempotencyKey: string;
       taskId: string;
     },
-  ): TaskMutationResult {
+  ): TaskCreateMutationResult {
     return this.#transaction(() => {
       const actorId = this.#requireAuthenticatedActor(actor);
       const taskRow = this.#requireTaskRow(input.taskId);
       const roomId = text(taskRow, "room_id");
       this.#requireMember(roomId, actorId);
-      if (text(taskRow, "creator_id") !== actorId) {
-        throw new ForbiddenError("only the Task creator can complete it");
-      }
+      requireHumanTaskManager(
+        this.#database,
+        { creatorId: text(taskRow, "creator_id"), roomId },
+        actorId,
+      );
       const previous = this.#findRoomEventByIdempotencyKey(
         roomId,
         input.idempotencyKey,
@@ -2437,6 +2488,7 @@ export class RoomKernel {
           payload: { basedOnRoomSeq: input.basedOnRoomSeq },
         });
         return {
+          activationIds: [],
           deduplicated: true,
           event,
           task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
@@ -2526,7 +2578,7 @@ export class RoomKernel {
           recipientMap.set(recipient.participantId, recipient);
         }
       }
-      this.#deriveAttention(
+      const activationIds = this.#deriveAttention(
         event,
         [...recipientMap.values()].sort((left, right) =>
           left.participantId.localeCompare(right.participantId),
@@ -2534,6 +2586,7 @@ export class RoomKernel {
         completedAt,
       );
       return {
+        activationIds,
         deduplicated: false,
         event,
         task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
@@ -4656,6 +4709,7 @@ export class RoomKernel {
   sync(
     actor: AuthenticatedActorContext,
     input: {
+      bootstrap?: "latest";
       consumerId: string;
       roomId: string;
       afterSeq?: number;
@@ -4720,6 +4774,7 @@ export class RoomKernel {
   #syncForParticipant(
     participantId: string,
     input: {
+      bootstrap?: "latest";
       consumerId: string;
       roomId: string;
       afterSeq?: number;
@@ -4728,47 +4783,10 @@ export class RoomKernel {
     },
   ): SyncResult {
     this.#requireMember(input.roomId, participantId);
-    const cursorRow = this.#database
-      .prepare(
-        "SELECT last_seq FROM subscription_cursors WHERE room_id = ? AND participant_id = ? AND consumer_id = ?",
-      )
-      .get(input.roomId, participantId, input.consumerId);
-    const cursorBefore = cursorRow ? integer(cursorRow, "last_seq") : 0;
-    const afterSeq = input.afterSeq ?? cursorBefore;
-    if (!Number.isInteger(afterSeq) || afterSeq < 0) {
-      throw new Error("afterSeq must be a non-negative integer");
-    }
-    const roomRow = this.#requireRoom(input.roomId);
-    const latestRoomSeq = integer(roomRow, "next_seq") - 1;
-    const throughSeq = input.throughSeq ?? latestRoomSeq;
-    if (!Number.isInteger(throughSeq) || throughSeq < 0) {
-      throw new Error("throughSeq must be a non-negative integer");
-    }
-    if (throughSeq > latestRoomSeq) {
-      throw new Error("throughSeq cannot exceed the latest Room sequence");
-    }
-    if (afterSeq > throughSeq) {
-      throw new Error("afterSeq cannot exceed throughSeq");
-    }
-    const limit = input.limit ?? 500;
-    if (!Number.isInteger(limit) || limit <= 0 || limit > 500) {
-      throw new Error("limit must be between 1 and 500");
-    }
-    const events = this.#database
-      .prepare(
-        "SELECT * FROM room_events WHERE room_id = ? AND room_seq > ? AND room_seq <= ? ORDER BY room_seq LIMIT ?",
-      )
-      .all(input.roomId, afterSeq, throughSeq, limit)
-      .map((row) => this.#eventFromRow(row));
-    const cursorAfter = events.at(-1)?.roomSeq ?? afterSeq;
-
-    return {
-      cursorBefore,
-      cursorAfter,
-      latestRoomSeq,
-      snapshot: afterSeq === 0 ? this.#snapshot(input.roomId) : null,
-      events,
-    };
+    return syncRoomEventWindow(this.#database, participantId, input, {
+      eventFromRow: (row) => this.#eventFromRow(row),
+      snapshot: (roomId) => this.#snapshot(roomId),
+    });
   }
 
   #appendEvent(input: AppendRoomEventInput): RoomEvent {

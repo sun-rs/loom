@@ -1,21 +1,19 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react";
+import { useContext, useEffect, useState, type ReactNode } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
   ClientAgentGetResponse,
-  LocalRuntimeInventoryEntry,
   MessageReferenceReadState,
   RuntimeTrajectoryRecord,
 } from "@rah-os/protocol";
 import type { WorkspaceAgentView } from "@rah-os/ui-web";
 import { PreviewCard } from "./preview-card.tsx";
-import { AgentAvatar } from "./agent-directory-pane.tsx";
+import { AgentAvatar } from "./agent-avatar.tsx";
 import { AgentStatusDot } from "./agent-status-dot.tsx";
+import { runtimeProfilePresentation } from "../agent-runtime-presentation.ts";
+import {
+  useWorkspaceEntities,
+  AgentMessageContext,
+} from "./workspace-entity-context.tsx";
 import {
   previewActivityText,
   previewActivityKind,
@@ -24,16 +22,7 @@ import {
   agentConnectionLabel,
   agentPresencePresentation,
 } from "../attention-presentation.ts";
-
-export const AgentMessageContext = createContext<
-  | {
-      client: RahClient;
-      runtimes: readonly LocalRuntimeInventoryEntry[];
-      computerLabel: string | undefined;
-      onOpen: (id: string) => void;
-    }
-  | undefined
->(undefined);
+import { formatRahDateTime } from "../date-time-presentation.ts";
 
 export function MessageAgentAvatar({ agent }: { agent: WorkspaceAgentView }) {
   const context = useContext(AgentMessageContext);
@@ -44,14 +33,7 @@ export function MessageAgentAvatar({ agent }: { agent: WorkspaceAgentView }) {
       className="rah-agent-preview"
       onClick={() => context?.onOpen(agent.agentDefinitionId)}
       content={
-        context ? (
-          <AgentPreview
-            agent={agent}
-            client={context.client}
-            runtimes={context.runtimes}
-            computerLabel={context.computerLabel}
-          />
-        ) : null
+        context ? <AgentPreview agent={agent} client={context.client} /> : null
       }
     >
       <AgentAvatar agent={agent} size="sidebar" />
@@ -76,14 +58,7 @@ export function MessageAgentReference({
       className="rah-agent-preview"
       onClick={() => context?.onOpen(agent.agentDefinitionId)}
       content={
-        context ? (
-          <AgentPreview
-            agent={agent}
-            client={context.client}
-            runtimes={context.runtimes}
-            computerLabel={context.computerLabel}
-          />
-        ) : null
+        context ? <AgentPreview agent={agent} client={context.client} /> : null
       }
     >
       {children}
@@ -101,26 +76,44 @@ export function MessageAgentReference({
 function AgentPreview({
   agent,
   client,
-  runtimes,
-  computerLabel,
 }: {
   agent: WorkspaceAgentView;
   client: RahClient;
-  runtimes: readonly LocalRuntimeInventoryEntry[];
-  computerLabel: string | undefined;
 }) {
+  const entities = useWorkspaceEntities();
+  const context = useContext(AgentMessageContext);
   const [detail, setDetail] = useState<ClientAgentGetResponse>();
-  const [activities, setActivities] = useState<RuntimeTrajectoryRecord[]>([]);
-  const [error, setError] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const activityScope = JSON.stringify([
+    agent.agentDefinitionId,
+    entities?.scope?.actorId,
+    entities?.scope?.workspaceId,
+  ]);
+  const [activityRead, setActivityRead] = useState<{
+    scope: string;
+    client: RahClient;
+    activities: RuntimeTrajectoryRecord[];
+    error: boolean;
+    loading: boolean;
+  }>();
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState(false);
+  const canReadActivity =
+    context?.canManageAgents === true ||
+    (detail?.agent.definition.agentDefinitionId === agent.agentDefinitionId &&
+      detail?.creator?.kind === "human" &&
+      detail.creator.principalId === entities?.scope?.actorId);
+  const currentActivity =
+    canReadActivity &&
+    activityRead?.scope === activityScope &&
+    activityRead.client === client
+      ? activityRead
+      : undefined;
+  const activities = currentActivity?.activities ?? [];
+  const error = currentActivity?.error ?? false;
+  const loading = currentActivity?.loading ?? true;
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true);
-    setError(false);
     setDetail(undefined);
-    setActivities([]);
     setProfileLoading(true);
     setProfileError(false);
     void client
@@ -138,6 +131,27 @@ function AgentPreview({
       .finally(() => {
         if (!controller.signal.aborted) setProfileLoading(false);
       });
+    return () => controller.abort();
+  }, [
+    client,
+    agent.agentDefinitionId,
+    agent.agentDefinitionRevisionId,
+    entities?.scope?.actorId,
+    entities?.scope?.workspaceId,
+  ]);
+  useEffect(() => {
+    const controller = new AbortController();
+    if (!canReadActivity) return () => controller.abort();
+    setActivityRead((old) => ({
+      scope: activityScope,
+      client,
+      activities:
+        old?.scope === activityScope && old.client === client
+          ? old.activities
+          : [],
+      loading: true,
+      error: false,
+    }));
     void client
       .request(
         "agent.trajectory.list",
@@ -146,36 +160,49 @@ function AgentPreview({
       )
       .then((a) => {
         if (!controller.signal.aborted) {
-          setActivities(a.activities);
+          setActivityRead({
+            scope: activityScope,
+            client,
+            activities: a.activities,
+            loading: false,
+            error: false,
+          });
         }
       })
       .catch(() => {
-        if (!controller.signal.aborted) setError(true);
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
+        if (!controller.signal.aborted)
+          setActivityRead({
+            scope: activityScope,
+            client,
+            activities: [],
+            loading: false,
+            error: true,
+          });
       });
     return () => controller.abort();
-  }, [client, agent.agentDefinitionId]);
-  const runtime = runtimes.find((r) =>
-    r.agentBindings.some(
-      (b) => b.agentDefinitionId === agent.agentDefinitionId,
-    ),
+  }, [
+    client,
+    agent.agentDefinitionId,
+    canReadActivity,
+    entities?.scope?.actorId,
+    entities?.scope?.workspaceId,
+    activityScope,
+    // Reuse canonical presence reconciliation; no independent polling clock.
+    // activityAt is not a complete trajectory cursor (documented limitation).
+    agent.presence?.activityAt,
+  ]);
+  const runtimeView = runtimeProfilePresentation(
+    entities?.runtimesForAgent(agent.agentDefinitionId) ?? [],
+    detail?.policy.modelIntent,
+    profileLoading ? "loading" : profileError ? "error" : "ready",
   );
-  const bindingId = detail?.policy.modelIntent.exactBindingIds?.[0];
-  const model = runtime?.modelBindingDescriptors.find(
-    (m) => m.modelBindingId === bindingId,
-  );
-  const modelLabel = profileLoading
-    ? "加载中…"
-    : profileError
-      ? "暂时无法读取"
-      : (model?.displayName ?? model?.modelId ?? bindingId ?? "Runtime 默认");
-  const reasoning = detail?.policy.modelIntent.reasoning;
+  const boundComputer = entities?.computerForAgent(
+    agent.agentDefinitionId,
+  )?.displayName;
   return (
     <>
       <div className="rah-agent-preview-identity">
-        <AgentAvatar agent={agent} size="profile" />
+        <AgentAvatar agent={agent} size="preview" showStatus={false} />
         <div>
           <div className="rah-preview-name-line">
             <b>{agent.displayName}</b>
@@ -190,18 +217,16 @@ function AgentPreview({
           <small>@{agent.handle}</small>
           <dl>
             <dt>计算机</dt>
-            <dd title={computerLabel}>{computerLabel ?? "未绑定"}</dd>
+            <dd title={boundComputer}>{boundComputer ?? "未绑定"}</dd>
             <dt>运行时</dt>
-            <dd title={runtime?.displayName}>
-              {runtime?.displayName ?? "未绑定"}
-            </dd>
+            <dd title={runtimeView.runtimeLabel}>{runtimeView.runtimeLabel}</dd>
             <dt>模型</dt>
-            <dd title={modelLabel}>{modelLabel}</dd>
-            {reasoning ? (
+            <dd title={runtimeView.modelLabel}>{runtimeView.modelLabel}</dd>
+            {runtimeView.reasoningLabel ? (
               <>
                 <dt>推理强度</dt>
-                <dd title={reasoning}>
-                  {reasoning === "default" ? "默认" : reasoning}
+                <dd title={runtimeView.reasoningLabel}>
+                  {runtimeView.reasoningLabel}
                 </dd>
               </>
             ) : null}
@@ -216,38 +241,40 @@ function AgentPreview({
           {agent.description}
         </div>
       ) : null}
-      <section>
-        <h4>最近动态</h4>
-        {loading ? (
-          <p>正在读取动态…</p>
-        ) : error ? (
-          <p>暂时无法读取动态</p>
-        ) : activities.length === 0 ? (
-          <p>暂无已记录动态</p>
-        ) : (
-          activities
-            .toSorted((a, b) => a.serverSequence - b.serverSequence)
-            .slice(-5)
-            .map((a) => (
-              <div className="rah-preview-event" key={a.serverSequence}>
-                <time>
-                  {new Date(a.observedAt).toLocaleTimeString([], {
-                    hour12: false,
-                  })}
-                </time>
-                <AgentStatusDot
-                  className="rah-preview-event-dot"
-                  activity={previewActivityKind(a.entry)}
-                  label={previewActivityText(a.entry)}
-                  size="sm"
-                />
-                <span title={previewActivityText(a.entry)}>
-                  {previewActivityText(a.entry)}
-                </span>
-              </div>
-            ))
-        )}
-      </section>
+      {canReadActivity &&
+      (!loading || activities.length > 0) &&
+      (error || activities.length > 0) ? (
+        <section>
+          <h4>最近动态</h4>
+          {error ? (
+            <p>暂时无法读取动态</p>
+          ) : (
+            activities
+              .toSorted((a, b) => a.serverSequence - b.serverSequence)
+              .slice(-5)
+              .map((a) => (
+                <div className="rah-preview-event" key={a.serverSequence}>
+                  <time>
+                    {formatRahDateTime(a.observedAt, {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                    })}
+                  </time>
+                  <AgentStatusDot
+                    className="rah-preview-event-dot"
+                    activity={previewActivityKind(a.entry)}
+                    label={previewActivityText(a.entry)}
+                    size="sm"
+                  />
+                  <span title={previewActivityText(a.entry)}>
+                    {previewActivityText(a.entry)}
+                  </span>
+                </div>
+              ))
+          )}
+        </section>
+      ) : null}
     </>
   );
 }

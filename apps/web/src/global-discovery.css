@@ -219,7 +219,7 @@
 }
 .rah-search-result-panel .result-item {
   border: 0;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--ink-10);
 }
 .rah-search-result-panel .result-item:last-child {
   border-bottom: 0;
@@ -227,10 +227,6 @@
 .rah-search-load-more {
   width: 100%;
   margin-top: 12px;
-}
-.rah-search-home {
-  width: min(720px, 100%);
-  margin: 0 auto;
 }
 .rah-search-suggestions {
   display: grid;
@@ -413,7 +409,7 @@
     background: var(--yellow);
     padding-inline: 20px;
   }
-  .rah-global-shell .activity-head > .channel-badge,
+  .rah-global-shell .activity-head > .rah-panel-header-icon,
   .rah-global-shell .activity-head .head-actions > .rah-mobile-only {
     display: none;
   }
@@ -422,9 +418,6 @@
   }
   .rah-discovery .task-filter-menu {
     width: min(220px, calc(100vw - 32px));
-  }
-  .rah-discovery .search-icon-box {
-    display: none;
   }
   .rah-discovery .result-item {
     flex-direction: column;

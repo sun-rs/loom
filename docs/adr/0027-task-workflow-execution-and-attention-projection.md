@@ -2,7 +2,7 @@
 
 ## 状态
 
-已接受。
+已被 [ADR-0029](./0029-canonical-task-lifecycle-and-raft-board.md) 取代。第 1–5 条仍作为历史投影背景；第 6–9 条允许独立 `workflow_status` 写入的决定不再有效。
 
 ## 背景
 

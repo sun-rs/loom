@@ -149,7 +149,7 @@ test("message mutation atomically derives event, Inbox, Activation, and content-
   kernel.close();
 });
 
-test("Task workflow status follows Raft's independently editable five-state board", () => {
+test("Task status menu cannot replace canonical execution and submission commands", () => {
   const { agent, humanActor, kernel, room } = createFixture();
   const created = kernel.createTask(humanActor, {
     assigneeId: agent.principalId,
@@ -157,73 +157,64 @@ test("Task workflow status follows Raft's independently editable five-state boar
     roomId: room.roomId,
     title: "Move through the Raft board",
   });
-  let basedOnRoomSeq = created.event.roomSeq;
   const activationsBefore = kernel.listActivations({
     participantId: agent.principalId,
     roomId: room.roomId,
   }).length;
 
-  for (const workflowStatus of [
-    "in_progress",
-    "in_review",
-    "done",
-    "closed",
-    "todo",
-  ] as const) {
-    const changed = kernel.updateTaskWorkflowStatus(humanActor, {
-      basedOnRoomSeq,
-      idempotencyKey: `workflow-${workflowStatus}`,
-      taskId: created.task.taskId,
-      workflowStatus,
-    });
-    assert.equal(changed.task.workflowStatus, workflowStatus);
-    assert.equal(changed.task.state, "todo");
-    assert.equal(changed.event.type, "task.workflow_updated");
-    assert.deepEqual(changed.activationIds, []);
-    assert.equal(
-      kernel.listActivations({
-        participantId: agent.principalId,
-        roomId: room.roomId,
-      }).length,
-      activationsBefore,
+  for (const workflowStatus of ["in_progress", "in_review", "done"] as const) {
+    assert.throws(
+      () =>
+        kernel.updateTaskWorkflowStatus(humanActor, {
+          basedOnRoomSeq: created.event.roomSeq,
+          idempotencyKey: `workflow-${workflowStatus}`,
+          taskId: created.task.taskId,
+          workflowStatus,
+        }),
+      ConflictError,
     );
-    basedOnRoomSeq = changed.event.roomSeq;
   }
+  const [task] = kernel.listTasks(humanActor, { roomId: room.roomId });
+  assert.equal(task?.state, "todo");
+  assert.equal(task?.workflowStatus, "todo");
+  assert.equal(
+    kernel.listActivations({
+      participantId: agent.principalId,
+      roomId: room.roomId,
+    }).length,
+    activationsBefore,
+  );
 
   kernel.close();
 });
 
-test("ordinary Task editors follow Raft's transition graph", () => {
+test("ordinary Task editors cannot use the board to bypass Task ownership", () => {
   const { agentActor, humanActor, kernel, room } = createFixture();
   const created = kernel.createTask(humanActor, {
     idempotencyKey: "ordinary-workflow-created",
     roomId: room.roomId,
     title: "Respect ordinary Raft transitions",
   });
-  const inProgress = kernel.updateTaskWorkflowStatus(agentActor, {
-    basedOnRoomSeq: created.event.roomSeq,
-    idempotencyKey: "ordinary-workflow-progress",
-    taskId: created.task.taskId,
-    workflowStatus: "in_progress",
-  });
-  assert.equal(inProgress.task.workflowStatus, "in_progress");
   assert.throws(
     () =>
       kernel.updateTaskWorkflowStatus(agentActor, {
-        basedOnRoomSeq: inProgress.event.roomSeq,
-        idempotencyKey: "ordinary-workflow-back-to-todo",
+        basedOnRoomSeq: created.event.roomSeq,
+        idempotencyKey: "ordinary-workflow-progress",
         taskId: created.task.taskId,
-        workflowStatus: "todo",
+        workflowStatus: "in_progress",
       }),
-    ConflictError,
+    ForbiddenError,
   );
-  const review = kernel.updateTaskWorkflowStatus(agentActor, {
-    basedOnRoomSeq: inProgress.event.roomSeq,
-    idempotencyKey: "ordinary-workflow-review",
-    taskId: created.task.taskId,
-    workflowStatus: "in_review",
-  });
-  assert.equal(review.task.workflowStatus, "in_review");
+  assert.throws(
+    () =>
+      kernel.updateTaskWorkflowStatus(agentActor, {
+        basedOnRoomSeq: created.event.roomSeq,
+        idempotencyKey: "ordinary-workflow-close",
+        taskId: created.task.taskId,
+        workflowStatus: "closed",
+      }),
+    ForbiddenError,
+  );
 
   kernel.close();
 });
@@ -1602,6 +1593,116 @@ test("Room sync cursors are independent and Inbox acknowledgement is explicit", 
     "acknowledged",
   );
 
+  kernel.close();
+});
+
+test("Human Room sync can bootstrap from a bounded latest snapshot window", () => {
+  const { humanActor, kernel, room } = createFixture();
+  for (let index = 0; index < 8; index += 1) {
+    kernel.postMessage(humanActor, {
+      body: `latest window ${String(index + 1)}`,
+      idempotencyKey: `latest-window-${String(index + 1)}`,
+      recipients: [],
+      roomId: room.roomId,
+    });
+  }
+
+  const delivery = kernel.sync(humanActor, {
+    bootstrap: "latest",
+    consumerId: "browser-latest-window",
+    limit: 3,
+    roomId: room.roomId,
+  });
+
+  assert.ok(delivery.snapshot);
+  assert.equal(delivery.snapshotSeq, delivery.latestRoomSeq);
+  assert.equal(delivery.eventFloorSeq, delivery.latestRoomSeq - 3);
+  assert.equal(delivery.cursorAfter, delivery.latestRoomSeq);
+  assert.deepEqual(
+    delivery.events.map(({ roomSeq }) => roomSeq),
+    [
+      delivery.latestRoomSeq - 2,
+      delivery.latestRoomSeq - 1,
+      delivery.latestRoomSeq,
+    ],
+  );
+  kernel.close();
+});
+
+test("visible Message mention receipts remain exact without replaying Room history", () => {
+  const { agent, agentActor, humanActor, kernel, otherAgent, room } =
+    createFixture();
+  const mentioned = kernel.postMessage(humanActor, {
+    body: "@codex inspect this",
+    idempotencyKey: "bounded-reference-receipt",
+    recipients: [
+      { participantId: agent.principalId, reason: "mention" },
+      { participantId: otherAgent.principalId, reason: "manual" },
+    ],
+    roomId: room.roomId,
+  });
+
+  assert.deepEqual(
+    kernel.listMessageReferenceReadStates(humanActor, {
+      messageIds: [mentioned.event.aggregateId],
+      roomId: room.roomId,
+    }),
+    [
+      {
+        messageId: mentioned.event.aggregateId,
+        principalId: agent.principalId,
+        readState: "unread",
+      },
+    ],
+  );
+
+  kernel.acknowledgeInboxThrough(agentActor, {
+    roomId: room.roomId,
+    throughSeq: mentioned.event.roomSeq,
+  });
+  assert.deepEqual(
+    kernel.listMessageReferenceReadStates(humanActor, {
+      messageIds: [mentioned.event.aggregateId],
+      roomId: room.roomId,
+    }),
+    [
+      {
+        messageId: mentioned.event.aggregateId,
+        principalId: agent.principalId,
+        readState: "read",
+      },
+    ],
+  );
+  kernel.close();
+});
+
+test("Room Task reads are bounded and page backward by canonical task number", () => {
+  const { humanActor, kernel, room } = createFixture();
+  for (let index = 1; index <= 6; index += 1) {
+    kernel.createTask(humanActor, {
+      idempotencyKey: `bounded-task-${String(index)}`,
+      roomId: room.roomId,
+      title: `Bounded Task ${String(index)}`,
+    });
+  }
+
+  const latest = kernel.listTasks(humanActor, {
+    limit: 3,
+    roomId: room.roomId,
+  });
+  assert.deepEqual(
+    latest.map(({ taskNumber }) => taskNumber),
+    [4, 5, 6],
+  );
+  const earlier = kernel.listTasks(humanActor, {
+    beforeTaskNumber: 4,
+    limit: 3,
+    roomId: room.roomId,
+  });
+  assert.deepEqual(
+    earlier.map(({ taskNumber }) => taskNumber),
+    [1, 2, 3],
+  );
   kernel.close();
 });
 
@@ -3629,6 +3730,11 @@ test("Task dependencies stay asleep until completion derives one ready Activatio
   assert.deepEqual(
     completed.event.payload.readyTaskIds,
     [dependent.task.taskId, secondDependent.task.taskId].sort(),
+  );
+  assert.equal(
+    completed.activationIds.length,
+    1,
+    "completion must return the exact dependency-ready Activation receipt",
   );
   const dependentInbox = kernel.listInbox(otherAgentActor, {
     roomId: room.roomId,

@@ -149,7 +149,7 @@ test("offline Agent renders a persistent gray presence marker instead of removin
       React,
       agentPresencePresentation,
       AgentStatusDot: declaration(
-        "apps/web/src/components/agent-status-dot.tsx",
+        "packages/ui-web/src/neo-brutalist/status-dot.tsx",
         "AgentStatusDot",
         { React },
       ),
@@ -181,7 +181,7 @@ test("offline Agent renders a persistent gray presence marker instead of removin
 
 test("Agent presence does not inherit navigation-dot absolute positioning", () => {
   const Dot = declaration(
-    "apps/web/src/components/agent-status-dot.tsx",
+    "packages/ui-web/src/neo-brutalist/status-dot.tsx",
     "AgentStatusDot",
     { React },
   );

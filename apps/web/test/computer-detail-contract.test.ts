@@ -14,12 +14,26 @@ const profileFields = readFileSync(
   new URL("../src/components/computer-profile-fields.tsx", import.meta.url),
   "utf8",
 );
+const browserGate = readFileSync(
+  new URL("../../../scripts/run-real-browser-gate.mjs", import.meta.url),
+  "utf8",
+);
+const firefoxBrowserGate = readFileSync(
+  new URL("../../../scripts/run-firefox-workbench-gate.mjs", import.meta.url),
+  "utf8",
+);
 
 test("Computer pane does not reuse Room dimensions or synthesize Agent avatars", () => {
   assert.doesNotMatch(source, /RAFT_ROOM_SIDEBAR_/u);
   assert.match(source, /readComputerSidebarWidth/u);
-  assert.match(source, /<AgentAvatar/u);
-  assert.match(source, /onOpenAgent\(binding\.agentDefinitionId\)/u);
+  assert.match(source, /<AgentEntityCard/u);
+  assert.match(source, /onOpen=\{onOpenAgent\}/u);
+  const card = readFileSync(
+    new URL("../src/components/agent-entity-card.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(card, /<AgentAvatar/u);
+  assert.match(card, /onOpen\(agent\.agentDefinitionId\)/u);
   assert.doesNotMatch(source, /binding\.handle\.slice\(0, 1\)\.toUpperCase/u);
 });
 
@@ -40,4 +54,16 @@ test("Computer profile uses the durable Raft edit contract", () => {
   assert.match(profileFields, /crypto\.randomUUID\(\)/u);
   assert.match(profileFields, /正在保存/u);
   assert.match(profileFields, /保存失败，草稿已保留/u);
+});
+
+test("real browser acceptance follows the shared profile action contract", () => {
+  assert.match(browserGate, /aria-label="编辑计算机名称"/u);
+  assert.match(browserGate, /aria-label="编辑计算机描述"/u);
+  assert.doesNotMatch(browserGate, /rah-computer-profile-edit/u);
+});
+
+test("real browser acceptance follows the shared Agent entity-card contract", () => {
+  assert.match(browserGate, /rah-entity-card-name/u);
+  assert.match(firefoxBrowserGate, /rah-entity-card-name/u);
+  assert.doesNotMatch(firefoxBrowserGate, /locator\("b"\)/u);
 });

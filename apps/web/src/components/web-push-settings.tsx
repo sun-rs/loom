@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 
 import {
@@ -11,6 +11,8 @@ import {
 } from "../web-push-client.ts";
 import { SettingsPage, SettingsSectionLabel } from "./settings-primitives.tsx";
 import { useSidebarPreferences } from "./sidebar-preferences.tsx";
+import { createLatestRequest } from "../latest-request.ts";
+import { pushSettingsPresentation } from "../web-push-presentation.ts";
 
 export function WebPushSettingsContent({
   client,
@@ -21,7 +23,11 @@ export function WebPushSettingsContent({
 }) {
   const [status, setStatus] = useState<BrowserPushStatus>();
   const [busy, setBusy] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [error, setError] = useState<string>();
+  const [success, setSuccess] = useState<string>();
+  const reads = useRef(createLatestRequest());
+  const writing = useRef(false);
   const [desired, setDesired] = useState(() =>
     readBrowserPushPreference(window.localStorage),
   );
@@ -30,14 +36,26 @@ export function WebPushSettingsContent({
   const [mutedWorkspace, setMutedWorkspace] = useState(canonicalMuted);
   useEffect(() => setMutedWorkspace(canonicalMuted), [canonicalMuted]);
   const refresh = useCallback(async () => {
+    if (writing.current) return;
+    const ticket = reads.current.begin();
+    setChecking(true);
     try {
-      setStatus(await readBrowserPushStatus(client));
+      const next = await readBrowserPushStatus(client);
+      if (!ticket.current()) return;
+      setStatus(next);
       setError(undefined);
     } catch (failure) {
+      if (!ticket.current()) return;
+      setStatus(undefined);
       setError(failure instanceof Error ? failure.message : "无法读取通知状态");
+    } finally {
+      if (ticket.current()) setChecking(false);
     }
   }, [client]);
   useEffect(() => {
+    writing.current = false;
+    setBusy(false);
+    setStatus(undefined);
     void refresh();
     const refreshWhenVisible = () => {
       if (document.visibilityState === "visible") void refresh();
@@ -45,30 +63,49 @@ export function WebPushSettingsContent({
     window.addEventListener("focus", refreshWhenVisible);
     document.addEventListener("visibilitychange", refreshWhenVisible);
     return () => {
+      reads.current.cancel();
       window.removeEventListener("focus", refreshWhenVisible);
       document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
   }, [refresh]);
-  async function action(operation: () => Promise<BrowserPushStatus>) {
+  async function action(
+    operation: () => Promise<BrowserPushStatus | undefined>,
+    successMessage?: string,
+  ) {
+    if (writing.current) return;
+    const ticket = reads.current.begin();
+    writing.current = true;
+    setChecking(false);
     setBusy(true);
+    setSuccess(undefined);
     try {
-      setStatus(await operation());
+      const next = await operation();
+      if (!ticket.current()) return;
+      if (next) setStatus(next);
       setError(undefined);
+      setSuccess(successMessage);
     } catch (failure) {
+      if (!ticket.current()) return;
       setError(failure instanceof Error ? failure.message : "通知操作失败");
     } finally {
-      setBusy(false);
+      if (ticket.current()) {
+        writing.current = false;
+        setBusy(false);
+      }
     }
   }
   const active =
     desired && status?.browserSubscribed && status.permission === "granted";
-  const stateLabel = active
-    ? "已启用"
-    : !desired
-      ? "已停用"
-      : status?.permission === "denied"
-        ? "已拒绝"
-        : "未决定";
+  const presentation = pushSettingsPresentation({
+    status,
+    checking,
+    error,
+    desired,
+    ios:
+      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1),
+  });
+  const disabled = busy || checking || !status?.supported;
   return (
     <SettingsPage icon="bell" label="通知设置" title="通知">
       <SettingsSectionLabel icon="bell">推送通知</SettingsSectionLabel>
@@ -78,7 +115,9 @@ export function WebPushSettingsContent({
             <strong>私信、直接提及以及已关注消息列的回复</strong>
             <p>使用网页推送，即使标签页在后台也能收到通知。</p>
           </div>
-          <span className="rah-count-badge">{stateLabel}</span>
+          <span className="rah-count-badge" aria-live="polite">
+            {presentation.label}
+          </span>
         </header>
         {desired && status?.permission === "denied" ? (
           <p className="rah-settings-permission-note">
@@ -89,7 +128,7 @@ export function WebPushSettingsContent({
           {active ? (
             <button
               className="btn"
-              disabled={busy}
+              disabled={disabled}
               onClick={() => {
                 writeBrowserPushPreference(window.localStorage, false);
                 setDesired(false);
@@ -101,7 +140,7 @@ export function WebPushSettingsContent({
           ) : (
             <button
               className="btn pink"
-              disabled={busy}
+              disabled={disabled}
               onClick={() => {
                 writeBrowserPushPreference(window.localStorage, true);
                 setDesired(true);
@@ -114,30 +153,24 @@ export function WebPushSettingsContent({
           {active ? (
             <button
               className="btn lime"
-              disabled={busy}
+              disabled={disabled}
               onClick={() => {
-                setBusy(true);
-                void client
-                  .request("push.test", {})
-                  .then(({ delivered }) => {
-                    if (delivered === 0)
-                      throw new Error("没有可投递的设备订阅");
-                    setError(undefined);
-                  })
-                  .catch((failure: unknown) =>
-                    setError(
-                      failure instanceof Error
-                        ? failure.message
-                        : "测试通知失败",
-                    ),
-                  )
-                  .finally(() => setBusy(false));
+                void action(async () => {
+                  const { delivered } = await client.request("push.test", {});
+                  if (delivered === 0) throw new Error("没有可投递的设备订阅");
+                  return undefined;
+                }, "已提交测试推送，请检查系统通知。");
               }}
             >
               发送测试推送
             </button>
           ) : null}
         </div>
+        {success ? (
+          <p className="rah-settings-success" role="status">
+            {success}
+          </p>
+        ) : null}
         <div className="rah-settings-divider" />
         <label className="rah-settings-check-row">
           <input
@@ -183,16 +216,21 @@ export function WebPushSettingsContent({
       <article className="rah-settings-card rah-settings-secondary">
         <strong>本机投递诊断</strong>
         <p>
-          权限：{status?.permission ?? "正在检查"} · 此设备订阅：
-          {status?.browserSubscribed ? "存在" : "无"} · 已登记设备数：
-          {status?.configuration?.subscriptionCount ?? 0}
+          权限：{status?.permission ?? (checking ? "正在检查" : "未知")} ·
+          此设备订阅：
+          {presentation.subscription} · 已登记设备数：{presentation.deviceCount}
         </p>
+        <button
+          className="btn"
+          disabled={busy || checking}
+          onClick={() => void refresh()}
+          type="button"
+        >
+          重新检查通知
+        </button>
       </article>
-      {!status?.supported && (
-        <p className="rah-inline-error">
-          iPhone/iPad 需通过 HTTPS 打开 RAH OS、添加到主屏幕，再从主屏幕中的 PWA
-          开启通知；普通浏览器标签页不会获得 iOS Web Push。
-        </p>
+      {presentation.hint && (
+        <p className="rah-inline-error">{presentation.hint}</p>
       )}
       {error && (
         <p className="rah-inline-error" role="alert">

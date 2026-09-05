@@ -1,4 +1,5 @@
 import { execFileSync, spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   existsSync,
   readFileSync,
@@ -530,9 +531,17 @@ if (mode === "trajectory") {
   if (!participantId) {
     throw new Error("Worker participant identity is missing");
   }
+  const commandActivationId = process.env.RAH_ACTIVATION_ID;
+  if (!commandActivationId) {
+    throw new Error("Worker activation identity is missing");
+  }
   let basedOnRoomSeq = autoClaimedTask?.event?.roomSeq ?? delivery.cursorAfter;
   const commandId = (operation) =>
-    `fake:${participantId}:${taskId}:${operation}`;
+    `fake:${createHash("sha256")
+      .update(
+        `${participantId}\0${taskId}\0${commandActivationId}\0${operation}`,
+      )
+      .digest("hex")}`;
   const canonical = await request("/v1/worker/tasks/get", { taskId });
   const inputStatus = isInputMode
     ? await request("/v1/worker/tasks/input-status", { taskId })
@@ -556,11 +565,19 @@ if (mode === "trajectory") {
         });
       }
       if (reviewWorkRequired) {
+        const frozen = await request("/v1/worker/tasks/submission", { taskId });
+        const requestChanges =
+          process.env.RAH_FAKE_REVIEW_FIRST_SUBMISSION ===
+            "changes_requested" && frozen.submission?.submissionNumber === 1;
         await request("/v1/worker/tasks/review", {
           basedOnRoomSeq: delivery.cursorAfter,
-          disposition: "approved",
-          idempotencyKey: commandId("review"),
-          summary: "审阅通过：提交证据与 Task 范围一致。",
+          disposition: requestChanges ? "changes_requested" : "approved",
+          idempotencyKey: commandId(
+            `review:${frozen.submission?.submissionId ?? "missing"}`,
+          ),
+          summary: requestChanges
+            ? "要求修改：首个冻结版本缺少独立验收证据。"
+            : "审阅通过：提交证据与 Task 范围一致。",
           taskId,
         });
       }

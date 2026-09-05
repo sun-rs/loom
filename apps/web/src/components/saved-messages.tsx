@@ -6,6 +6,9 @@ import type { DiscoveryNavigationHandler } from "../global-discovery-model.ts";
 import { socialRequestId } from "../message-social-store.ts";
 import { mergeSavedMessages } from "../saved-messages-model.ts";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
+import { PanelHeader } from "@rah-os/ui-web/neo-brutalist/panel-header";
+import { PanelHeaderIcon } from "@rah-os/ui-web/neo-brutalist/panel-header-icon";
+import { PanelHeaderAction } from "@rah-os/ui-web/neo-brutalist/panel-header-action";
 import { SavedMessageCard } from "./saved-message-card.tsx";
 
 type Saved = RahClientOperationMap["message.saved"]["output"];
@@ -123,23 +126,21 @@ export function SavedMessagesPane({
   const initialLoading = pending && result.items.length === 0;
   return (
     <main className="channel rah-saved-pane">
-      <header className="rah-saved-header">
-        <button
+      <PanelHeader kind="surface" className="rah-saved-header">
+        <PanelHeaderAction
           aria-label="返回主页"
-          className="sq-btn rah-mobile-only rah-mobile-back"
+          className="rah-mobile-only"
           onClick={onOpenRooms}
           type="button"
         >
           <Icon name="arrow-left" />
-        </button>
-        <span className="rah-saved-header-icon">
-          <Icon name="bookmark" />
-        </span>
+        </PanelHeaderAction>
+        <PanelHeaderIcon name="bookmark" className="rah-desktop-only" />
         <span className="rah-saved-header-copy">
-          <strong>已保存</strong>
+          <strong className="rah-panel-title">已保存</strong>
           <span>{result.globalTotal} 项</span>
         </span>
-      </header>
+      </PanelHeader>
       <div
         className="rah-saved-scroll"
         data-testid="saved-list-scroller"

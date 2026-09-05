@@ -76,6 +76,18 @@ test("the local workbench gateway keeps Human authority server-side", async () =
     });
     assert.equal(health.headers.get("cache-control"), "no-store");
 
+    const lanSession = await fetch(`${origin}/_rah/session`);
+    assert.equal(lanSession.status, 200);
+    assert.deepEqual(await lanSession.json(), { available: false });
+    assert.equal(lanSession.headers.get("cache-control"), "no-store");
+    assert.equal(lanSession.headers.get("set-cookie"), null);
+    assert.equal((await fetch(`${origin}/_rah/devices`)).status, 404);
+    assert.equal(
+      (await fetch(`${origin}/_rah/session`, { method: "POST" })).status,
+      404,
+    );
+    assert.equal(observed.length, 0);
+
     const root = await fetch(`${origin}/`);
     assert.equal(root.status, 200);
     assert.match(await root.text(), /RAH OS/u);
@@ -177,10 +189,6 @@ test("the local workbench gateway keeps Human authority server-side", async () =
     const serviceWorker = await fetch(`${origin}/sw.js`);
     assert.equal(serviceWorker.status, 200);
     assert.equal(serviceWorker.headers.get("cache-control"), "no-cache");
-
-    const LANOnlySession = await fetch(`${origin}/_rah/session`);
-    assert.equal(LANOnlySession.status, 404);
-    assert.equal(LANOnlySession.headers.get("set-cookie"), null);
 
     const spaFallback = await fetch(`${origin}/rooms/room-1`);
     assert.equal(spaFallback.status, 200);

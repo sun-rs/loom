@@ -19,10 +19,16 @@ import {
   writeComputerSidebarWidth,
 } from "../computer-sidebar-resize.ts";
 import { localComputerDiagnosticText } from "../computer-runtime-inspector-model.ts";
-import { AgentAvatar } from "./agent-avatar.tsx";
+import { AgentEntityCard } from "./agent-entity-card.tsx";
 import { ComputerRuntimeInspector } from "./computer-runtime-inspector.tsx";
 import { ComputerProfileFields } from "./computer-profile-fields.tsx";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
+import { PanelHeader } from "@rah-os/ui-web/neo-brutalist/panel-header";
+import { PanelHeaderAction } from "@rah-os/ui-web/neo-brutalist/panel-header-action";
+import { PanelHeaderIcon } from "@rah-os/ui-web/neo-brutalist/panel-header-icon";
+import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
+import { ProfileSection } from "@rah-os/ui-web/neo-brutalist/profile-section";
+import { formatRahDateTime } from "../date-time-presentation.ts";
 
 export function ComputerRuntimePane({
   hostId,
@@ -65,16 +71,17 @@ export function ComputerRuntimePane({
   const resizeOrigin = useRef<{ clientX: number; width: number } | undefined>(
     undefined,
   );
-  const computerName = computer?.displayName ?? displayComputerName(hostId);
+  const entities = useWorkspaceEntities();
+  const computerName =
+    entities?.computer?.displayName ??
+    computer?.displayName ??
+    displayComputerName(hostId);
   const statusLabel = computerStatusLabel(computer);
   const online = computer?.status === "online";
   const configuredRuntimes = runtimes.filter(
     ({ available, configured }) => available && configured,
   );
-  const bindings = uniqueBindings(
-    runtimes.filter((runtime) => runtime.configured),
-    agents,
-  );
+  const bindings = entities?.computerAgents() ?? [];
   const rootStyle = {
     "--rah-computer-sidebar-width": `${sidebarWidth}px`,
   } as CSSProperties;
@@ -142,7 +149,9 @@ export function ComputerRuntimePane({
       style={rootStyle}
     >
       <aside className="rah-computer-sidebar">
-        <header>计算机</header>
+        <PanelHeader kind="sidebar">
+          <strong>计算机</strong>
+        </PanelHeader>
         <div className="rah-computer-sidebar-body rah-scroll-main">
           <section>
             <div className="rah-computer-group-head">
@@ -210,8 +219,8 @@ export function ComputerRuntimePane({
         <section className="rah-computer-empty">选择一台计算机</section>
       ) : (
         <section className="rah-computer-detail">
-          <header className="rah-computer-detail-head">
-            <button
+          <PanelHeader kind="surface" className="rah-computer-detail-head">
+            <PanelHeaderAction
               aria-label="返回计算机列表"
               className="rah-computer-detail-back"
               onClick={() => {
@@ -221,12 +230,10 @@ export function ComputerRuntimePane({
               type="button"
             >
               <Icon name="arrow-left" />
-            </button>
-            <span>
-              <Icon name="monitor" />
-            </span>
-            <h1>{computerName}</h1>
-          </header>
+            </PanelHeaderAction>
+            <PanelHeaderIcon name="monitor" />
+            <h1 className="rah-panel-title">{computerName}</h1>
+          </PanelHeader>
           <div className="rah-computer-detail-scroll rah-scroll-main">
             <div className="rah-computer-hero">
               <span>
@@ -250,9 +257,8 @@ export function ComputerRuntimePane({
               hostId={hostId}
               onUpdate={onUpdateComputerProfile}
             />
-            <section className="rah-computer-info">
-              <h2>信息</h2>
-              <dl>
+            <ProfileSection title="信息" className="rah-computer-info">
+              <dl className="rah-profile-fields">
                 <div>
                   <dt>OS</dt>
                   <dd>{computer?.os ?? "—"}</dd>
@@ -260,18 +266,6 @@ export function ComputerRuntimePane({
                 <div>
                   <dt>Computer 版本</dt>
                   <dd>{computer?.buildVersion ?? "—"}</dd>
-                </div>
-                <div>
-                  <dt>最后连接状态观测</dt>
-                  <dd>
-                    {computer?.lastSeenAt
-                      ? new Date(computer.lastSeenAt).toLocaleString()
-                      : "—"}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Host ID</dt>
-                  <dd>{hostId}</dd>
                 </div>
                 <div>
                   <dt>检测到的运行时</dt>
@@ -287,73 +281,81 @@ export function ComputerRuntimePane({
                     ))}
                   </dd>
                 </div>
-                <div>
-                  <dt>可运行 Offer</dt>
-                  <dd>{configuredRuntimes.length}</dd>
-                </div>
               </dl>
-            </section>
-            <section className="rah-computer-content-stack">
-              <header>
-                <h2>
-                  <Icon name="members" /> 这台 Computer 上的 AGENT
-                  <span>{bindings.length}</span>
-                </h2>
-              </header>
+            </ProfileSection>
+            <ProfileSection
+              title="这台 COMPUTER 上的 AGENT"
+              count={bindings.length}
+            >
               {bindings.length === 0 ? (
                 <p className="rah-computer-hint">当前没有绑定的 Agent。</p>
               ) : (
                 <div className="rah-computer-agent-list">
                   {bindings.map((binding) => (
-                    <button
-                      aria-label={`打开 ${binding.agent.displayName} Agent 资料`}
+                    <AgentEntityCard
                       key={binding.agentDefinitionId}
-                      onClick={() => onOpenAgent(binding.agentDefinitionId)}
-                      type="button"
-                    >
-                      <AgentAvatar agent={binding.agent} size="member" />
-                      <b>{binding.agent.displayName}</b>
-                      <code>{binding.runtimeLabel}</code>
-                      <small>
-                        {binding.agent.state === "disabled"
-                          ? "已暂停"
-                          : online && binding.agent.runtimeAvailable
-                            ? "可用"
-                            : "不可用"}
-                      </small>
-                    </button>
+                      agent={binding.agent}
+                      runtimeLabel={binding.runtimeLabel}
+                      showStatusLabel
+                      onOpen={onOpenAgent}
+                    />
                   ))}
                 </div>
               )}
-              <section className="rah-computer-runtime-evidence">
-                <h2>CLI / RUNTIME / OFFER</h2>
-                {runtimes.map((runtime) => (
-                  <article key={runtimeInventoryKey(runtime)}>
-                    <header>
-                      <b>{runtime.displayName}</b>
-                      <span>{runtime.version ?? "版本未知"}</span>
-                    </header>
-                    <dl>
-                      <div>
-                        <dt>Executable</dt>
-                        <dd>
-                          {runtime.resolvedExecutablePath ?? runtime.executable}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>Runtime Profile</dt>
-                        <dd>{runtime.runtimeProfileId ?? "未配置"}</dd>
-                      </div>
-                      <div>
-                        <dt>Offer</dt>
-                        <dd>{runtime.runtimeOfferId ?? "未发布"}</dd>
-                      </div>
-                    </dl>
-                  </article>
-                ))}
-              </section>
+            </ProfileSection>
+            <ProfileSection title="本机诊断">
+              <details className="rah-profile-disclosure">
+                <summary>CLI / Runtime / Offer 详情</summary>
+                <dl className="rah-profile-fields">
+                  <div>
+                    <dt>Host ID</dt>
+                    <dd>{hostId}</dd>
+                  </div>
+                  <div>
+                    <dt>最后连接状态观测</dt>
+                    <dd>
+                      {computer?.lastSeenAt
+                        ? formatRahDateTime(computer.lastSeenAt, {
+                            dateStyle: "short",
+                            timeStyle: "short",
+                          })
+                        : "—"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>可运行 Offer</dt>
+                    <dd>{configuredRuntimes.length}</dd>
+                  </div>
+                </dl>
+                <div className="rah-computer-runtime-evidence">
+                  {runtimes.map((runtime) => (
+                    <article key={runtimeInventoryKey(runtime)}>
+                      <header>
+                        <b>{runtime.displayName}</b>
+                        <span>{runtime.version ?? "版本未知"}</span>
+                      </header>
+                      <dl>
+                        <div>
+                          <dt>Executable</dt>
+                          <dd>
+                            {runtime.resolvedExecutablePath ??
+                              runtime.executable}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Runtime Profile</dt>
+                          <dd>{runtime.runtimeProfileId ?? "未配置"}</dd>
+                        </div>
+                        <div>
+                          <dt>Offer</dt>
+                          <dd>{runtime.runtimeOfferId ?? "未发布"}</dd>
+                        </div>
+                      </dl>
+                    </article>
+                  ))}
+                </div>
+              </details>
               <section className="rah-computer-diagnostics">
-                <h2>本机诊断</h2>
                 <p>
                   复制经过裁剪的 Computer、Runtime 与 Agent
                   状态；不包含环境变量、凭据或 Provider 账号。
@@ -400,7 +402,7 @@ export function ComputerRuntimePane({
                   </p>
                 ) : null}
               </section>
-            </section>
+            </ProfileSection>
           </div>
         </section>
       )}
@@ -411,42 +413,6 @@ export function ComputerRuntimePane({
 function displayComputerName(hostId: string | undefined): string {
   if (hostId === undefined) return "本机 Computer";
   return hostId.startsWith("local-workbench-host-") ? "本机 Computer" : hostId;
-}
-
-function uniqueBindings(
-  runtimes: readonly LocalRuntimeInventoryEntry[],
-  agents: readonly WorkspaceAgentView[],
-): Array<{
-  agent: WorkspaceAgentView;
-  agentDefinitionId: string;
-  handle: string;
-  runtimeLabel: string;
-}> {
-  const bindings = new Map<
-    string,
-    {
-      agent: WorkspaceAgentView;
-      agentDefinitionId: string;
-      handle: string;
-      runtimeLabel: string;
-    }
-  >();
-  for (const runtime of runtimes) {
-    for (const binding of runtime.agentBindings) {
-      const agent = agents.find(
-        (candidate) =>
-          candidate.agentDefinitionId === binding.agentDefinitionId,
-      );
-      if (agent === undefined) continue;
-      bindings.set(binding.agentDefinitionId, {
-        agent,
-        agentDefinitionId: binding.agentDefinitionId,
-        handle: binding.handle,
-        runtimeLabel: runtime.displayName,
-      });
-    }
-  }
-  return [...bindings.values()];
 }
 
 function runtimeInventoryKey(runtime: LocalRuntimeInventoryEntry): string {

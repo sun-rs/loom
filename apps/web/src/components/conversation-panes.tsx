@@ -18,6 +18,7 @@ import type { RahClient } from "@rah-os/client-sdk";
 import { ChatEmptyState } from "./chat-empty-state.tsx";
 import { PanelHeader } from "@rah-os/ui-web/neo-brutalist/panel-header";
 import { PanelHeaderAction } from "@rah-os/ui-web/neo-brutalist/panel-header-action";
+import { EmptyState } from "@rah-os/ui-web/neo-brutalist/empty-state";
 import {
   useMessageSocial,
   MessageSocialButtons,
@@ -32,9 +33,11 @@ import {
 } from "@rah-os/ui-web";
 
 import { MessageAgentAvatar } from "./agent-message-identity.tsx";
+import { HumanIdentity } from "./human-identity.tsx";
 import { AgentAvatar } from "./agent-avatar.tsx";
 import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
 import { insertMention } from "../identity-presentation.ts";
+import { formatRahDateTime } from "../date-time-presentation.ts";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import {
   MessageMarkdown,
@@ -79,7 +82,10 @@ import { MessageContextMenu } from "./message-context-menu.tsx";
 import { MessageSelectionToolbar } from "./message-selection-toolbar.tsx";
 import { MessageForwardDialog } from "./message-forward-dialog.tsx";
 import { ForwardedMessageBundleView } from "./forwarded-message-bundle.tsx";
-import { messageMentionReadStateIndex } from "../message-reference-read-state.ts";
+import {
+  messageMentionReadStateIndex,
+  type MessageReferenceReadStateIndex,
+} from "../message-reference-read-state.ts";
 import { useMessageSelectionActions } from "../use-message-selection-actions.ts";
 import {
   ComposerMentionMenu,
@@ -128,6 +134,7 @@ export function ChatPane({
   roomName,
   roomKind,
   roomId,
+  mentionReadStates: canonicalMentionReadStates,
   referenceRooms = [],
   referenceComputers = [],
   referenceEventsComplete = false,
@@ -170,6 +177,7 @@ export function ChatPane({
   roomName: string | undefined;
   roomKind: Room["kind"] | undefined;
   roomId: string | undefined;
+  mentionReadStates?: MessageReferenceReadStateIndex;
   referenceRooms?: readonly {
     kind: Room["kind"];
     names: readonly string[];
@@ -184,10 +192,11 @@ export function ChatPane({
 }) {
   const mentionReadStatesByMessage = useMemo(
     () =>
-      referenceEventsComplete
+      canonicalMentionReadStates ??
+      (referenceEventsComplete
         ? messageMentionReadStateIndex(roomEvents)
-        : new Map(),
-    [referenceEventsComplete, roomEvents],
+        : new Map()),
+    [canonicalMentionReadStates, referenceEventsComplete, roomEvents],
   );
   const sidebarPreferences = useSidebarPreferences();
   const collapseLongMessages =
@@ -1130,7 +1139,13 @@ function MessageArticle({
         </label>
       ) : null}
       {messageAgent === undefined ? (
-        messagePrincipal?.avatarKey ? (
+        messagePrincipal?.kind === "human" ? (
+          <HumanIdentity
+            principal={messagePrincipal}
+            avatar
+            className="rah-message-avatar-trigger"
+          />
+        ) : messagePrincipal?.avatarKey ? (
           <ProfileImageAvatar
             avatarKey={messagePrincipal.avatarKey}
             name={message.author}
@@ -1312,6 +1327,7 @@ export function ThreadPane({
   onViewInChannel,
   replies,
   referenceComputers = [],
+  mentionReadStates: canonicalMentionReadStates,
   referenceEventsComplete = false,
   roomMembers = [],
   referenceRooms = [],
@@ -1364,6 +1380,7 @@ export function ThreadPane({
   onViewInChannel?: () => void;
   replies: ReturnType<typeof createRoomViewModel>["messages"];
   referenceComputers?: NonNullable<MessageMarkdownReferences["computers"]>;
+  mentionReadStates?: MessageReferenceReadStateIndex;
   referenceEventsComplete?: boolean;
   roomMembers?: readonly Principal[];
   referenceRooms?: readonly {
@@ -1385,10 +1402,11 @@ export function ThreadPane({
 }) {
   const mentionReadStatesByMessage = useMemo(
     () =>
-      referenceEventsComplete
+      canonicalMentionReadStates ??
+      (referenceEventsComplete
         ? messageMentionReadStateIndex(roomEvents)
-        : new Map(),
-    [referenceEventsComplete, roomEvents],
+        : new Map()),
+    [canonicalMentionReadStates, referenceEventsComplete, roomEvents],
   );
   const sidebarPreferences = useSidebarPreferences();
   const collapseLongMessages =
@@ -2506,17 +2524,17 @@ export function TaskPane({
       />
       {visibleTasks.length === 0 && !loading ? (
         <div className="tasks-content">
-          <div className="tasks-empty">
-            <span className="tasks-empty-icon">
-              <Icon name="task" />
-            </span>
-            <h2>{filtersActive ? "没有符合此筛选的任务" : "暂无任务"}</h2>
-            <p>
-              {filtersActive
+          <EmptyState
+            context="task"
+            placement="fill"
+            icon="task"
+            title={filtersActive ? "没有符合此筛选的任务" : "暂无任务"}
+            description={
+              filtersActive
                 ? "换一个筛选组合，或清除当前选择。"
-                : "用「新建任务」按钮创建一个。"}
-            </p>
-          </div>
+                : "用「新建任务」按钮创建一个。"
+            }
+          />
         </div>
       ) : (
         <GlobalTaskBoard
@@ -2559,11 +2577,10 @@ export function UnavailablePane({
 }
 
 function formatTime(value: string) {
-  return new Intl.DateTimeFormat("zh-CN", {
+  return formatRahDateTime(value, {
     hour: "2-digit",
-    hour12: document.documentElement.dataset.rahTimeFormat === "12",
     minute: "2-digit",
-  }).format(new Date(value));
+  });
 }
 
 function errorMessage(error: unknown): string {

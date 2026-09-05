@@ -1,4 +1,26 @@
-import type { MessageReferenceReadState, RoomEvent } from "@rah-os/protocol";
+import type {
+  MessageReferenceReadState,
+  MessageReferenceReadStateRecord,
+  RoomEvent,
+} from "@rah-os/protocol";
+
+export type MessageReferenceReadStateIndex = ReadonlyMap<
+  string,
+  Readonly<Record<string, MessageReferenceReadState>>
+>;
+
+/** Project a bounded canonical API result into the renderer's O(1) lookup. */
+export function messageReferenceReadStateRecordsIndex(
+  records: readonly MessageReferenceReadStateRecord[],
+): MessageReferenceReadStateIndex {
+  const mutable = new Map<string, Record<string, MessageReferenceReadState>>();
+  for (const record of records) {
+    const states = mutable.get(record.messageId) ?? {};
+    states[record.principalId] = record.readState;
+    mutable.set(record.messageId, states);
+  }
+  return mutable;
+}
 
 function stringField(value: unknown, name: string): string | undefined {
   if (typeof value !== "object" || value === null) return undefined;
@@ -28,7 +50,7 @@ export function messageMentionReadStates(
 /** Build once per complete canonical replay, then project each Message in O(1). */
 export function messageMentionReadStateIndex(
   events: readonly RoomEvent[],
-): ReadonlyMap<string, Readonly<Record<string, MessageReferenceReadState>>> {
+): MessageReferenceReadStateIndex {
   const acknowledgedThrough = new Map<string, number>();
   for (const event of events) {
     if (event.type !== "inbox.acknowledged") continue;

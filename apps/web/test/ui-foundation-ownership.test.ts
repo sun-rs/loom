@@ -92,3 +92,74 @@ test("conversation header and Tabs have one presentation/event owner", () => {
   );
   assert.ok(source.includes("disabledIndices:tu"));
 });
+
+test("surface and sidebar headers consume the same track and identity slot", () => {
+  assert.doesNotMatch(read("product.css"), /--head-h:\s*48px/);
+  assert.match(
+    read("panel-layout.css"),
+    /@media \(max-height: 600px\)[\s\S]*--head-h:\s*48px/,
+  );
+  for (const file of [
+    "settings-primitives",
+    "settings-surface",
+    "workspace-catalog-panes",
+    "global-discovery",
+  ])
+    assert.match(read(`components/${file}.tsx`), /<PanelHeader\s/);
+  for (const file of [
+    "settings-primitives",
+    "workspace-catalog-panes",
+    "global-discovery",
+    "workspace-navigation",
+  ])
+    assert.match(read(`components/${file}.tsx`), /<PanelHeaderIcon\s/);
+  for (const file of [
+    "product.css",
+    "computer-directory.css",
+    "agent-directory.css",
+  ])
+    assert.doesNotMatch(
+      read(file),
+      /--rah-settings-header-height|height:\s*var\(--raft-(?:computers|members)-(?:sidebar|detail)-header-height\)/,
+    );
+  assert.doesNotMatch(
+    read("product.css"),
+    /\.rah-settings-mobile-back > svg\s*\{/,
+  );
+});
+
+test("back actions use the official arrow glyph, not a rotated chevron alias", () => {
+  assert.doesNotMatch(
+    read("components/icon.tsx"),
+    /"arrow-left":\s*"chevron-right"/,
+  );
+  const sprite = readFileSync(
+    "packages/ui-tokens/src/interaction-icons.svg",
+    "utf8",
+  );
+  assert.match(sprite, /id="raft-icon-arrow-left"/);
+  assert.match(sprite, /d="m12 19-7-7 7-7"/);
+  assert.match(sprite, /d="M19 12H5"/);
+});
+
+test("Saved and Search use shared headers and remove page-owned track/icon geometry", () => {
+  const saved = read("components/saved-messages.tsx");
+  const search = read("components/global-discovery.tsx");
+  assert.match(
+    saved,
+    /<PanelHeader kind="surface" className="rah-saved-header"/,
+  );
+  assert.match(saved, /<PanelHeaderIcon name="bookmark"/);
+  assert.match(search, /<PanelHeader kind="surface" className="search-top"/);
+  assert.match(search, /<PanelHeaderIcon name="search"/);
+  assert.match(search, /aria-label="返回聊天"/);
+  assert.match(search, /aria-label="清除搜索"/);
+  assert.doesNotMatch(
+    read("message-social.css"),
+    /\.rah-saved-header(?:-icon)?(?: svg)?\s*\{/,
+  );
+  assert.doesNotMatch(
+    readFileSync("packages/ui-tokens/src/neo-brutalist/search.css", "utf8"),
+    /\.(?:search-top|search-icon-box)(?: svg)?\s*\{/,
+  );
+});

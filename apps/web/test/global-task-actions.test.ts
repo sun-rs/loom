@@ -23,29 +23,37 @@ const task: Task = {
   dependencyTaskIds: [],
 };
 
-test("menu and drag policy follow Raft's ordinary graph and manager override", () => {
+test("Raft's five-state editor exposes only canonical Task lifecycle actions", () => {
+  assert.ok(globalTaskTransition(task, "closed", false).reason);
   assert.equal(
-    globalTaskTransition(task, "closed", false).operation,
+    globalTaskTransition(task, "closed", true).operation,
+    "task.workflow.update",
+  );
+  assert.ok(globalTaskTransition(task, "in-progress", true).reason);
+  assert.ok(globalTaskTransition(task, "review", true).reason);
+  assert.ok(globalTaskTransition(task, "done", true).reason);
+  assert.equal(
+    globalTaskTransition(
+      { ...task, state: "submitted", workflowStatus: "in_progress" },
+      "done",
+      true,
+    ).operation,
     "task.workflow.update",
   );
   assert.equal(
-    globalTaskTransition(task, "in-progress", false).operation,
+    globalTaskTransition(
+      {
+        ...task,
+        state: "cancelled",
+        workflowStatus: "done",
+        cancellationReason: "Closed",
+        cancelledAt: "2026-08-30T00:01:00.000Z",
+      },
+      "todo",
+      true,
+    ).operation,
     "task.workflow.update",
   );
-  assert.ok(globalTaskTransition(task, "done", false).reason);
-  assert.ok(globalTaskTransition(task, "review", false).reason);
-  for (const target of [
-    "todo",
-    "in-progress",
-    "review",
-    "done",
-    "closed",
-  ] as const) {
-    assert.equal(
-      globalTaskTransition(task, target, true).operation,
-      "task.workflow.update",
-    );
-  }
 });
 
 test("global writes synchronize the target Room, retain idempotency on retry, and reject stale cards", async () => {
@@ -115,7 +123,7 @@ test("global writes synchronize the target Room, retain idempotency on retry, an
   );
 });
 
-test("workflow editing does not invent cancellation or review gates", async () => {
+test("the five-state UI sends one typed intent for Kernel lifecycle interpretation", async () => {
   const calls: string[] = [];
   const submitted = {
     ...task,

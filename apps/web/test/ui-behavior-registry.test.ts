@@ -26,6 +26,47 @@ test("registry is complete, source-pinned and its human index is generated", asy
   );
 });
 
+test("manual official observations remain hash-pinned without masquerading as published source", () => {
+  const observation = registry.sources.find(
+    (source: { id: string }) =>
+      source.id === "raft-settings-live-observation-20260905",
+  );
+  assert.equal(observation?.kind, "official-observation");
+  assert.match(observation?.sha256 ?? "", /^[a-f0-9]{64}$/u);
+  assert.ok(
+    registry.behaviors
+      .find((behavior: { id: string }) => behavior.id === "UI010")
+      ?.evidenceSources.includes(observation.id),
+  );
+  const payload = JSON.parse(read(observation.path).toString());
+  assert.match(payload.routeNormalization, /slug omitted/u);
+  assert.equal(
+    payload.routes.every(
+      (route: { routeSuffix?: string; route?: string }) =>
+        route.route === undefined &&
+        route.routeSuffix?.startsWith("/settings/"),
+    ),
+    true,
+  );
+  const forbiddenKeys = new Set([
+    "cookie",
+    "email",
+    "principalId",
+    "session",
+    "token",
+    "user",
+    "username",
+    "workspaceSlug",
+  ]);
+  const visit = (value: unknown): boolean =>
+    value !== null && typeof value === "object"
+      ? Object.entries(value).some(
+          ([key, child]) => forbiddenKeys.has(key) || visit(child),
+        )
+      : false;
+  assert.equal(visit(payload), false, "observation contains private key");
+});
+
 for (const [name, mutate, expected] of [
   [
     "source hash drift",
@@ -68,7 +109,8 @@ for (const [name, mutate, expected] of [
   [
     "legacy intent deletion",
     (r: any) => {
-      r.behaviors.shift();
+      // UI-only records can precede the frozen legacy intents; target the ID.
+      r.behaviors = r.behaviors.filter((b: any) => b.id !== "B001");
     },
     /legacy/,
   ],
@@ -78,6 +120,13 @@ for (const [name, mutate, expected] of [
       r.behaviors.find((b: any) => b.scenarios.length).scenarios = ["invented"];
     },
     /scenario/,
+  ],
+  [
+    "missing observation source",
+    (r: any) => {
+      r.behaviors[0].evidenceSources = ["invented-observation"];
+    },
+    /evidence source/,
   ],
   [
     "unproven current pass",

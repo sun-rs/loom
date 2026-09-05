@@ -13,6 +13,12 @@ export type AgentRouteTab = (typeof AGENT_ROUTE_TABS)[number];
 export type AgentRouteSelection =
   | {
       agentDefinitionId: undefined;
+      humanPrincipalId: string;
+      tab: "profile";
+      view: "human";
+    }
+  | {
+      agentDefinitionId: undefined;
       tab: "profile";
       view: "relationship";
     }
@@ -40,6 +46,17 @@ export function agentRouteFromSearch(search: string): AgentRouteSelection {
       view: "relationship",
     };
   }
+  if (params.get("memberView") === "human") {
+    const id = params.get("human")?.trim();
+    return id && id.length <= 512
+      ? {
+          agentDefinitionId: undefined,
+          humanPrincipalId: id,
+          tab: "profile",
+          view: "human",
+        }
+      : agentDirectoryRootRoute();
+  }
   const rawAgent = params.get("agent")?.trim();
   const rawTab = params.get("agentTab");
   return {
@@ -57,6 +74,11 @@ export function agentRouteSearch(
   selection: AgentRouteSelection,
 ): string {
   const params = new URLSearchParams({ surface: "agents" });
+  if (selection.view === "human") {
+    params.set("memberView", "human");
+    params.set("human", selection.humanPrincipalId);
+    return `?${params}`;
+  }
   if (selection.view === "relationship") {
     params.set("memberView", "relationship");
     return `?${params}`;
@@ -93,6 +115,7 @@ export function reconcileAgentRouteIdentity(
 }
 
 export function shouldOpenAgentMobileDetail(input: {
+  humanPrincipalId?: string | undefined;
   agentDefinitionId: string | undefined;
   panel: boolean;
   view: AgentRouteSelection["view"];
@@ -100,6 +123,7 @@ export function shouldOpenAgentMobileDetail(input: {
   return (
     !input.panel &&
     input.view !== "relationship" &&
-    input.agentDefinitionId !== undefined
+    (input.agentDefinitionId !== undefined ||
+      (input.view === "human" && input.humanPrincipalId !== undefined))
   );
 }

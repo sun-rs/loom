@@ -40,6 +40,9 @@ export class LanAccessClient {
       return { available: false };
     }
     const body = await readJson(response);
+    if (response.ok && isRecord(body) && body.available === false) {
+      return { available: false };
+    }
     if (response.status === 401) {
       if (!isRecord(body) || body.authenticated !== false) {
         throw new Error("malformed LAN session response");

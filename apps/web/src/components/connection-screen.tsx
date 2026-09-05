@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { Rail } from "./workspace-navigation.tsx";
+import { PanelHeader } from "@rah-os/ui-web/neo-brutalist/panel-header";
 
 export function ConnectionScreen({
   onConnect,
@@ -12,9 +13,9 @@ export function ConnectionScreen({
     <div className="app thread-hidden rah-product-shell">
       <Rail />
       <aside className="sidebar rah-sidebar-placeholder">
-        <header className="sidebar-head">
+        <PanelHeader kind="sidebar" className="sidebar-head">
           <span className="sidebar-title">RAH OS</span>
-        </header>
+        </PanelHeader>
         <div className="sidebar-body">
           <p className="side-hint">Room-first multi-agent workspace</p>
         </div>

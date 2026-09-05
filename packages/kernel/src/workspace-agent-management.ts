@@ -183,6 +183,32 @@ function listCreatedAgentCatalogEntries(
   controlRoomId: string,
   creatorParticipantId: string,
 ) {
+  return listCreatedAgentDefinitionIds(
+    database,
+    controlRoomId,
+    creatorParticipantId,
+  ).map((id) => {
+    const record = readAgentDefinition(database, id);
+    const principal = requireRow(
+      database
+        .prepare("SELECT handle FROM principals WHERE principal_id = ?")
+        .get(record.definition.participantId),
+      `principal ${record.definition.participantId} was not found`,
+    );
+    return AgentCatalogEntrySchema.parse({
+      ...record,
+      handle: text(principal, "handle"),
+    });
+  });
+}
+
+/** Shared immutable creation edge. Never read the current revision's editor. */
+export function listCreatedAgentDefinitionIds(
+  database: DatabaseSync,
+  controlRoomId: string,
+  creatorParticipantId: string,
+  limit = -1,
+): string[] {
   const rows = database
     .prepare(
       `SELECT agent_definitions.agent_definition_id
@@ -196,26 +222,10 @@ function listCreatedAgentCatalogEntries(
        WHERE agent_definitions.control_room_id = ?
          AND agent_definitions.state <> 'tombstoned'
          AND original_revision.created_by = ?
-       ORDER BY principals.handle, agent_definitions.agent_definition_id`,
+       ORDER BY principals.handle, agent_definitions.agent_definition_id LIMIT ?`,
     )
-    .all(controlRoomId, creatorParticipantId);
-  return rows.map((row) => {
-    const record = readAgentDefinition(
-      database,
-      text(row, "agent_definition_id"),
-    );
-    const principal = requireRow(
-      database
-        .prepare("SELECT handle FROM principals WHERE principal_id = ?")
-        .get(record.definition.participantId),
-      `principal ${record.definition.participantId} was not found`,
-    );
-    return AgentCatalogEntrySchema.parse({
-      currentRevision: record.currentRevision,
-      definition: record.definition,
-      handle: text(principal, "handle"),
-    });
-  });
+    .all(controlRoomId, creatorParticipantId, limit);
+  return rows.map((row) => text(row, "agent_definition_id"));
 }
 
 export function manageWorkspaceAgentTransaction(

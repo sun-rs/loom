@@ -9,6 +9,7 @@ import type {
 
 import { useDialogProtocol } from "../dialog-protocol.ts";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
+import { formatRahDateTime } from "../date-time-presentation.ts";
 
 export function HumanInboxCenter({
   error,
@@ -273,13 +274,10 @@ function HumanInputRequestDialog({
 }
 
 function formatInboxTime(timestamp: string): string {
-  const date = new Date(timestamp);
-  return Number.isNaN(date.getTime())
-    ? timestamp
-    : new Intl.DateTimeFormat(undefined, {
-        hour: "2-digit",
-        minute: "2-digit",
-      }).format(date);
+  return formatRahDateTime(timestamp, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function errorMessage(error: unknown): string {

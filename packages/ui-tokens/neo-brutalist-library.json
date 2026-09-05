@@ -5,20 +5,70 @@
   "standard": "docs/design/neo-brutalist-ui.md",
   "decision": "docs/adr/0028-owned-neo-brutalist-ui-library.md",
   "behaviorRegistry": "docs/product/ui-behavior-registry.json",
+  "comparisonPlan": "docs/design/ui-comparison-plan.json",
   "stylesheet": "packages/ui-tokens/src/neo-brutalist/index.css",
   "components": [
+    {
+      "id": "profile-field",
+      "description": "HumanDetailPanel multiline description port: frozen edit baseline, 3000-character limit, Escape/cancel, pending/error and focus restoration. Mutation stays in the authenticated profile owner.",
+      "owner": "packages/ui-web/src/neo-brutalist/profile-field.tsx",
+      "styles": ["packages/ui-tokens/src/neo-brutalist/profile.css"],
+      "example": "apps/web/src/components/human-profile-fields.tsx",
+      "behaviors": ["UI008"],
+      "scenarios": ["integrated-shell-layout"]
+    },
+    {
+      "id": "profile-section",
+      "description": "Source-backed Human/Agent/Computer natural-height section and field variants with title/count/action slots; canonical identity, membership and permission stay in callers.",
+      "owner": "packages/ui-web/src/neo-brutalist/profile-section.tsx",
+      "styles": ["packages/ui-tokens/src/neo-brutalist/profile.css"],
+      "example": "apps/web/src/components/human-profile-pane.tsx",
+      "behaviors": ["UI008", "UI009"],
+      "scenarios": ["integrated-shell-layout", "profile-family"]
+    },
+    {
+      "id": "entity-card",
+      "description": "Raft hre/X$e structural port: canonical identity slots, single trailing status, native click/disabled, long-name and responsive status label.",
+      "owner": "packages/ui-web/src/neo-brutalist/entity-card.tsx",
+      "styles": ["packages/ui-tokens/src/neo-brutalist/body-primitives.css"],
+      "example": "apps/web/test/ui-foundations.tsx",
+      "behaviors": ["UI006"],
+      "scenarios": ["foundation-combinations", "integrated-shell-layout"]
+    },
+    {
+      "id": "empty-state",
+      "description": "Named Search/profile/Task/Activity contexts with explicit fill/section placement and Raft Task empty tokens; loading and read failure are not empty results.",
+      "owner": "packages/ui-web/src/neo-brutalist/empty-state.tsx",
+      "styles": ["packages/ui-tokens/src/neo-brutalist/body-primitives.css"],
+      "example": "apps/web/test/ui-foundations.tsx",
+      "behaviors": ["UI007"],
+      "scenarios": [
+        "foundation-combinations",
+        "integrated-shell-layout",
+        "discovery-page-family"
+      ]
+    },
+    {
+      "id": "status-dot",
+      "description": "Raft fp structural port: standalone circular, bordered, nonshrinking activity indicator; size/color/pulse have one owner.",
+      "owner": "packages/ui-web/src/neo-brutalist/status-dot.tsx",
+      "styles": ["packages/ui-tokens/src/neo-brutalist/identity.css"],
+      "example": "apps/web/test/ui-foundations.tsx",
+      "behaviors": ["UI002"],
+      "scenarios": ["foundation-combinations"]
+    },
     {
       "id": "icon",
       "description": "Official sprite-backed icons; no procedural replacement artwork.",
       "owner": "packages/ui-web/src/neo-brutalist/icon.tsx",
       "styles": [],
       "example": "apps/web/test/ui-foundations.tsx",
-      "behaviors": ["UI001"],
+      "behaviors": ["UI002"],
       "scenarios": ["header-action-states"]
     },
     {
       "id": "panel-header",
-      "description": "Shared fixed-height conversation, agent and thread header slots.",
+      "description": "Shared conversation, agent, thread, surface and sidebar header tracks; compact-height behavior has one owner.",
       "owner": "packages/ui-web/src/neo-brutalist/panel-header.tsx",
       "styles": ["packages/ui-tokens/src/neo-brutalist/panel-layout.css"],
       "example": "apps/web/test/ui-foundations.tsx",
@@ -26,15 +76,24 @@
       "scenarios": ["panel-header-geometry", "foundation-combinations"]
     },
     {
+      "id": "panel-header-icon",
+      "description": "Non-interactive 36px identity tile with caller-selected official 14px/18px glyph. Not an Agent avatar.",
+      "owner": "packages/ui-web/src/neo-brutalist/panel-header-icon.tsx",
+      "styles": ["packages/ui-tokens/src/neo-brutalist/panel-layout.css"],
+      "example": "apps/web/test/ui-foundations.tsx",
+      "behaviors": ["UI003"],
+      "scenarios": ["integrated-shell-layout", "foundation-combinations"]
+    },
+    {
       "id": "panel-header-action",
-      "description": "Accessible native icon button; pending and disabled prevent activation.",
+      "description": "Accessible native icon button; 28px header and 24px compact-clear sizes share state styling. Pending and disabled prevent activation.",
       "owner": "packages/ui-web/src/neo-brutalist/panel-header-action.tsx",
       "styles": [
         "packages/ui-tokens/src/neo-brutalist/panel-foundations.css",
         "packages/ui-tokens/src/neo-brutalist/interaction-state.css"
       ],
       "example": "apps/web/test/ui-foundations.tsx",
-      "behaviors": ["UI001"],
+      "behaviors": ["UI002"],
       "scenarios": ["header-action-states"]
     },
     {
@@ -60,6 +119,103 @@
     }
   ],
   "templates": [
+    {
+      "id": "discovery-page-family",
+      "description": "Production Search, global/Room Tasks and ordinary-message actions composed from shared Raft-backed controls and canonical local data owners.",
+      "owner": "apps/web/src/components/global-discovery.tsx",
+      "export": "GlobalDiscovery",
+      "components": ["empty-state", "icon", "panel-header"],
+      "styles": [
+        "packages/ui-tokens/src/neo-brutalist/search.css",
+        "packages/ui-tokens/src/neo-brutalist/activity.css",
+        "apps/web/src/discovery-controls.css",
+        "apps/web/src/message-social.css"
+      ],
+      "example": "scripts/ui-discovery-family-browser-scenarios.mjs",
+      "behaviors": [
+        "B025",
+        "B057",
+        "B058",
+        "B059",
+        "B060",
+        "B072",
+        "B073",
+        "B074",
+        "UI007"
+      ],
+      "scenarios": ["discovery-page-family"]
+    },
+    {
+      "id": "settings-family",
+      "description": "Shared Settings cards, forms, preview and notification states backed by local canonical owners.",
+      "owner": "apps/web/src/components/settings-pages.tsx",
+      "export": "AccountSettingsContent / AppearanceSettingsContent / WorkspaceProfileSettingsContent",
+      "components": [
+        "panel-header",
+        "panel-header-icon",
+        "panel-header-action"
+      ],
+      "styles": ["packages/ui-tokens/src/neo-brutalist/settings.css"],
+      "example": "apps/web/test/settings-family-fixture.tsx",
+      "behaviors": ["UI010"],
+      "scenarios": ["settings-family", "integrated-shell-layout"]
+    },
+    {
+      "id": "agent-computer-profile-family",
+      "description": "Canonical binding projection, source-backed natural body geometry, conditional preview and current local host navigation. Runtime diagnostics stay separate from identity and do not become conversation truth.",
+      "owner": "apps/web/src/components/workspace-catalog-panes.tsx",
+      "components": [
+        "profile-section",
+        "entity-card",
+        "status-dot",
+        "panel-header"
+      ],
+      "styles": [
+        "packages/ui-tokens/src/neo-brutalist/profile.css",
+        "packages/ui-tokens/src/neo-brutalist/preview.css"
+      ],
+      "example": "scripts/ui-profile-family-browser-scenarios.mjs",
+      "behaviors": ["UI009"],
+      "scenarios": [
+        "preview-lifetime",
+        "preview-content",
+        "profile-read-state",
+        "profile-family"
+      ]
+    },
+    {
+      "id": "human-profile-family",
+      "description": "Canonical Human identity/edit/creation-card composition and shared preview frame. Existing PreviewCard retains application-side placement/lifetime; identity and mutation do not move into the UI library.",
+      "owner": "apps/web/src/components/human-profile-pane.tsx",
+      "components": [
+        "profile-field",
+        "profile-section",
+        "entity-card",
+        "panel-header",
+        "panel-header-action"
+      ],
+      "styles": [
+        "packages/ui-tokens/src/neo-brutalist/profile.css",
+        "packages/ui-tokens/src/neo-brutalist/preview.css"
+      ],
+      "example": "scripts/ui-human-family-browser-scenarios.mjs",
+      "behaviors": ["UI008"],
+      "scenarios": ["integrated-shell-layout"]
+    },
+    {
+      "id": "secondary-headers",
+      "description": "Actual Saved/Search compositions with standard/compact tracks, mobile back and source-backed clear/IME behavior.",
+      "owner": "scripts/ui-secondary-header-scenarios.mjs",
+      "export": "verifySecondaryHeaders",
+      "components": [
+        "panel-header",
+        "panel-header-icon",
+        "panel-header-action"
+      ],
+      "behaviors": ["UI002", "UI003"],
+      "scenarios": ["integrated-shell-layout"],
+      "example": "apps/web/test/ui-foundations.tsx"
+    },
     {
       "id": "conversation-header",
       "description": "Production Room/DM identity, header actions and controlled conversation tabs.",
@@ -91,6 +247,20 @@
       "example": "apps/web/test/ui-foundations.tsx"
     },
     {
+      "id": "surface-header-families",
+      "description": "Production Room, Settings, Computer, member navigation, Tasks and Activity headers at desktop, short-height and mobile breakpoints.",
+      "owner": "scripts/ui-shell-browser-scenarios.mjs",
+      "export": "verifySurfaceHeaders",
+      "components": [
+        "panel-header",
+        "panel-header-icon",
+        "panel-header-action"
+      ],
+      "behaviors": ["UI002", "UI003"],
+      "scenarios": ["integrated-shell-layout"],
+      "example": "apps/web/test/ui-foundations.tsx"
+    },
+    {
       "id": "resizable-workspace",
       "description": "Actual app composition with Room navigation, Agent inspector and caller-owned width policies; isolated canonical daemon fixture.",
       "owner": "scripts/ui-shell-browser-scenarios.mjs",
@@ -103,7 +273,7 @@
   ],
   "remainingMigration": [
     "Legacy base token fallbacks and extracted semantic aliases still coexist; consolidate only with explicit computed-style regression.",
-    "Page-specific CSS remains in apps/web; Settings, Computer, forms, overlays, empty states and toolbars are not certified migrated by this catalog.",
+    "Search home/no-result, global and Room Task, Agent/global Activity empty bodies plus Computer/created-Agent cards are migrated; MCP/Files capability bodies, general forms, overlays and toolbars remain separate migration work.",
     "The component/browser runner is local validation, not automated official bilateral comparison."
   ]
 }

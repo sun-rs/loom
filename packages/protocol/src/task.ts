@@ -120,6 +120,16 @@ export const TaskSchema = z
   .superRefine((task, context) => {
     addTaskParticipantSelectionIssues(task, context);
     if (
+      task.workflowStatus !== undefined &&
+      task.workflowStatus !== taskWorkflowStatus(task.state)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "workflowStatus must match canonical Task state",
+        path: ["workflowStatus"],
+      });
+    }
+    if (
       new Set(task.dependencyTaskIds).size !== task.dependencyTaskIds.length
     ) {
       context.addIssue({
@@ -253,22 +263,16 @@ export const TaskSchema = z
   });
 export type Task = z.infer<typeof TaskSchema>;
 
-/** Compatibility projection for the existing durable Task.state column.
- *
- * New clients consume this layered read model instead of treating execution
- * evidence as extra Kanban columns. Storage and Room events remain backwards
- * compatible until a dedicated persisted migration can be proven against real
- * state. A pending cancellation is supplied by the cancellation-request owner,
- * because it intentionally is not inferred from Task.state alone.
+/** Canonical projection from durable Task.state into Raft's five UI columns.
+ * `workflowStatus` remains on the wire for compatibility, but never overrides
+ * the business lifecycle owner. A pending cancellation is supplied by the
+ * cancellation-request owner because it is not inferred from Task.state alone.
  */
 export function taskWorkflowStatus(
   source:
     | TaskState
     | { state: TaskState; workflowStatus?: TaskWorkflowStatus | undefined },
 ): TaskWorkflowStatus {
-  if (typeof source !== "string" && source.workflowStatus !== undefined) {
-    return source.workflowStatus;
-  }
   const state = typeof source === "string" ? source : source.state;
   switch (state) {
     case "todo":

@@ -138,3 +138,23 @@ test("entering the mobile Agent root does not reopen a stale detail selection", 
     tab: "profile",
   });
 });
+
+test("Human profile routes preserve principal identity and exclude stale Agent/Room state", () => {
+  const human: AgentRouteSelection = {
+    agentDefinitionId: undefined,
+    humanPrincipalId: "human_owner",
+    tab: "profile",
+    view: "human",
+  };
+  const search = agentRouteSearch(
+    "?surface=agents&agent=old&agentTab=chat&room=old",
+    human,
+  );
+  assert.equal(search, "?surface=agents&memberView=human&human=human_owner");
+  assert.deepEqual(agentRouteFromSearch(search), human);
+  assert.deepEqual(
+    agentRouteFromSearch("?surface=agents&memberView=human&human="),
+    agentDirectoryRootRoute(),
+  );
+  assert.equal(shouldOpenAgentMobileDetail({ ...human, panel: false }), true);
+});

@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { RoomKernel } from "../src/index.ts";
+import { ConflictError, RoomKernel } from "../src/index.ts";
 
 test("Room roles are canonical, causal, and preserve at least one Human owner", () => {
   const fixture = collaborationFixture();
@@ -386,7 +386,7 @@ test("Thread replies remain Room-owned and derive durable attention without prov
   }
 });
 
-test("Raft terminal workflow releases membership ownership without rewriting execution evidence", () => {
+test("canonical Closed keeps membership until Task cancellation delivery completes", () => {
   const fixture = collaborationFixture();
   try {
     const initiallyRemoved = fixture.kernel.removeRoomMember(
@@ -422,23 +422,28 @@ test("Raft terminal workflow releases membership ownership without rewriting exe
       fixture.ownerActor,
       {
         basedOnRoomSeq: task.event.roomSeq,
-        idempotencyKey: "workflow-terminal-done",
+        idempotencyKey: "workflow-terminal-closed",
         taskId: task.task.taskId,
-        workflowStatus: "done",
+        workflowStatus: "closed",
       },
     );
-    assert.equal(changed.task.workflowStatus, "done");
-    assert.equal(changed.task.state, "todo");
-    assert.deepEqual(changed.activationIds, []);
-    const removed = fixture.kernel.removeRoomMember(fixture.ownerActor, {
-      basedOnRoomSeq: changed.event.roomSeq,
-      idempotencyKey: "workflow-terminal-remove-assignee",
-      principalId: fixture.agent.principal.principalId,
-      roomId: fixture.room.roomId,
-    });
+    assert.equal(changed.event.type, "task.cancelled");
+    assert.equal(changed.task.workflowStatus, "closed");
+    assert.equal(changed.task.state, "cancelled");
     assert.equal(
-      removed.removedPrincipalId,
-      fixture.agent.principal.principalId,
+      changed.activationIds.length,
+      1,
+      "the assignee must receive the canonical cancellation fact",
+    );
+    assert.throws(
+      () =>
+        fixture.kernel.removeRoomMember(fixture.ownerActor, {
+          basedOnRoomSeq: changed.event.roomSeq,
+          idempotencyKey: "workflow-terminal-remove-assignee",
+          principalId: fixture.agent.principal.principalId,
+          roomId: fixture.room.roomId,
+        }),
+      ConflictError,
     );
   } finally {
     fixture.close();

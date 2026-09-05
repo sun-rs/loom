@@ -1677,6 +1677,38 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     const posted = await jsonObject(postedResponse);
     assert.equal(posted.event.type, "message.posted");
     assert.equal(posted.activationIds.length, 1);
+    const referenceReadStatesResponse = await request(
+      "/v3/client/messages/reference-read-states",
+      {
+        messageIds: [posted.event.aggregateId],
+        roomId: room.roomId,
+      },
+      human.accessToken,
+    );
+    assert.equal(referenceReadStatesResponse.status, 200);
+    assert.deepEqual(
+      (await jsonObject(referenceReadStatesResponse)).readStates,
+      [
+        {
+          messageId: posted.event.aggregateId,
+          principalId: agent.principal.principalId,
+          readState: "unread",
+        },
+      ],
+    );
+    assert.equal(
+      (
+        await request(
+          "/v3/client/messages/reference-read-states",
+          {
+            messageIds: [posted.event.aggregateId],
+            roomId: room.roomId,
+          },
+          otherHuman.accessToken,
+        )
+      ).status,
+      403,
+    );
 
     const threadResponse = await request(
       "/v2/client/threads/create",
@@ -1944,6 +1976,27 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     assert.ok(typeof firstSync.latestRoomSeq === "number");
     assert.ok(firstSync.cursorAfter < firstSync.latestRoomSeq);
 
+    const latestBootstrapResponse = await request(
+      "/v1/client/rooms/sync",
+      {
+        bootstrap: "latest",
+        consumerId: "browser-latest-window",
+        limit: 2,
+        roomId: room.roomId,
+      },
+      human.accessToken,
+    );
+    assert.equal(latestBootstrapResponse.status, 200);
+    const latestBootstrap = await jsonObject(latestBootstrapResponse);
+    assert.equal(latestBootstrap.cursorAfter, latestBootstrap.latestRoomSeq);
+    assert.equal(latestBootstrap.snapshotSeq, latestBootstrap.latestRoomSeq);
+    assert.equal(
+      latestBootstrap.eventFloorSeq,
+      latestBootstrap.latestRoomSeq - latestBootstrap.events.length,
+    );
+    assert.ok(latestBootstrap.snapshot !== null);
+    assert.ok(latestBootstrap.events.length <= 2);
+
     const acknowledgement = await request(
       "/v1/client/rooms/acknowledge",
       {
@@ -2173,11 +2226,20 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       },
       human.accessToken,
     );
-    assert.equal(workflowResponse.status, 200);
-    const workflow = await jsonObject(workflowResponse);
-    assert.equal(workflow.event.type, "task.workflow_updated");
-    assert.equal(workflow.task.workflowStatus, "in_review");
-    assert.equal(workflow.task.state, "todo");
+    assert.equal(workflowResponse.status, 409);
+    assert.equal(await responseErrorCode(workflowResponse), "conflict");
+    const workflowListResponse = await request(
+      "/v3/client/tasks/list",
+      { roomId: room.roomId },
+      human.accessToken,
+    );
+    assert.equal(workflowListResponse.status, 200);
+    const workflowList = await jsonObject(workflowListResponse);
+    const unchangedTask = workflowList.tasks.find(
+      (task: { taskId: string }) => task.taskId === openTask.task.taskId,
+    );
+    assert.equal(unchangedTask.state, "todo");
+    assert.equal(unchangedTask.workflowStatus, "todo");
 
     const noPendingResponse = await request(
       "/v1/client/input-requests/list",

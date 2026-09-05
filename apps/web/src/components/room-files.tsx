@@ -21,6 +21,7 @@ import { useDialogProtocol } from "../dialog-protocol.ts";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { FileGlyph } from "./file-glyph.tsx";
 import { AttachmentTextPreview } from "./file-preview-renderers.tsx";
+import { formatRahDateTime } from "../date-time-presentation.ts";
 
 const FilesContext = createContext<{
   client: RahClient;
@@ -277,13 +278,12 @@ function FileCard({
                   <circle cx="12" cy="12" r="10" />
                   <path d="M12 6v6h4" />
                 </svg>
-                {new Intl.DateTimeFormat("zh-CN", {
+                {formatRahDateTime(file.createdAt, {
                   month: "long",
                   day: "numeric",
                   hour: "2-digit",
                   minute: "2-digit",
-                  hour12: false,
-                }).format(new Date(file.createdAt))}
+                })}
               </span>
             )}
           </small>

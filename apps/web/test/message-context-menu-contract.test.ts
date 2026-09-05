@@ -85,3 +85,24 @@ test("Raft-projected forwarded attachments reuse the canonical file preview owne
   assert.match(forwarded, /item\.attachmentPolicy === "projected"/u);
   assert.match(forwarded, /attachments=\{item\.attachments\}/u);
 });
+
+test("real browser message menus tolerate layout-only surrounding whitespace", () => {
+  const browserGate = readFileSync(
+    new URL("../../../scripts/run-real-browser-gate.mjs", import.meta.url),
+    "utf8",
+  );
+  const helper = browserGate.slice(
+    browserGate.indexOf("async function openMessageContextMenu("),
+    browserGate.indexOf("async function clickMessageRow("),
+  );
+
+  assert.match(helper, /textContent\?\.trim\(\) === messageBody\.trim\(\)/u);
+  assert.match(
+    helper,
+    /message\.scrollIntoView\(\{ block: "center", inline: "nearest" \}\)/u,
+  );
+  assert.match(helper, /button: "right"/u);
+  assert.match(helper, /type: "mousePressed"/u);
+  assert.match(helper, /type: "mouseReleased"/u);
+  assert.match(helper, /querySelector\('\[role="menu"\]'\)/u);
+});

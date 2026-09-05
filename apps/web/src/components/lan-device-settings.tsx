@@ -9,6 +9,7 @@ import {
 import { useDialogProtocol } from "../dialog-protocol.ts";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { SettingsPageHeader } from "./settings-primitives.tsx";
+import { formatRahDateTime } from "../date-time-presentation.ts";
 
 export function LanDeviceSettingsContent() {
   const client = useMemo(() => new LanAccessClient(), []);
@@ -293,10 +294,10 @@ function DeviceEmptyState({
 }
 
 function formatTimestamp(value: string): string {
-  return new Intl.DateTimeFormat("zh-CN", {
+  return formatRahDateTime(value, {
     dateStyle: "medium",
     timeStyle: "short",
-  }).format(new Date(value));
+  });
 }
 
 function errorMessage(error: unknown): string {

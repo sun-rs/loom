@@ -103,7 +103,7 @@ test("source-backed interaction exceptions stay explicit", () => {
   const messageSocial = read("message-social.css");
   const messageSocialComponent = read("components/message-social.tsx");
   const discoveryFilter = read("components/discovery-filter.tsx");
-  const product = read("product.css");
+  const product = read("settings.css");
 
   assert.match(
     identity,
@@ -220,12 +220,13 @@ test("source-backed interaction exceptions stay explicit", () => {
 test("navigation and identity controls opt into the shared interaction families", () => {
   const settings = read("components/settings-surface.tsx");
   const agents = read("components/agent-directory-pane.tsx");
+  const agentSidebar = read("components/agent-sidebar.tsx");
   const computers = read("components/workspace-catalog-panes.tsx");
   const discoveryFilter = read("components/discovery-filter.tsx");
   const workspaceNavigation = read("components/workspace-navigation.tsx");
 
   assert.match(settings, /rah-interaction-row/u);
-  assert.match(agents, /rah-agent-member-row rah-interaction-row/u);
+  assert.match(agentSidebar, /rah-agent-member-row rah-interaction-row/u);
   assert.match(agents, /rah-profile-edit rah-interaction-flat/u);
   assert.match(agents, /rah-interaction-brutal/u);
   assert.match(computers, /rah-computer-row rah-interaction-row/u);

@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { PanelHeader } from "@rah-os/ui-web/neo-brutalist/panel-header";
+import { EmptyState } from "@rah-os/ui-web/neo-brutalist/empty-state";
+import { PanelHeaderAction } from "@rah-os/ui-web/neo-brutalist/panel-header-action";
+import { PanelHeaderIcon } from "@rah-os/ui-web/neo-brutalist/panel-header-icon";
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
   HumanActivityItem,
@@ -33,11 +37,13 @@ import {
   searchShouldRun,
   searchTimeBounds,
   normalizeDiscoveryParams,
-  taskPeopleChoices,
 } from "../raft-discovery-controls.ts";
 import { DiscoveryFilter } from "./discovery-filter.tsx";
 import { GlobalTaskBoard } from "./global-task-board.tsx";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
+import { taskPersonOptions } from "./task-person-options.tsx";
+import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
+import { formatRahDateTime } from "../date-time-presentation.ts";
 
 type Props = {
   client: RahClient;
@@ -177,25 +183,6 @@ function Failure({ error }: { error?: string | undefined }) {
     </p>
   ) : null;
 }
-function Empty({
-  title,
-  detail,
-  icon,
-}: {
-  title: string;
-  detail: string;
-  icon: string;
-}) {
-  return (
-    <div className="empty-state">
-      <div className="empty-icon">
-        <Icon name={icon} />
-      </div>
-      <h1>{title}</h1>
-      <p>{detail}</p>
-    </div>
-  );
-}
 function Header({
   title,
   subtitle,
@@ -210,33 +197,27 @@ function Header({
   onClose: () => void;
 }) {
   return (
-    <header className="channel-head activity-head">
-      <span className="channel-badge">
-        <Icon name={icon} />
-      </span>
+    <PanelHeader kind="surface" className="activity-head">
+      <PanelHeaderIcon name={icon} />
       <div className="channel-title">
-        <h2>{title}</h2>
+        <h2 className="rah-panel-title">{title}</h2>
         <p className="channel-sub">{subtitle}</p>
       </div>
       <div className="head-actions">
         {onRefresh === undefined ? null : (
-          <button
-            className="sq-btn"
-            aria-label={`刷新${title}`}
-            onClick={onRefresh}
-          >
+          <PanelHeaderAction aria-label={`刷新${title}`} onClick={onRefresh}>
             <Icon name="refresh-cw" />
-          </button>
+          </PanelHeaderAction>
         )}
-        <button
-          className="sq-btn rah-mobile-only"
+        <PanelHeaderAction
+          className="rah-mobile-only"
           aria-label="返回聊天"
           onClick={onClose}
         >
-          <span aria-hidden="true">×</span>
-        </button>
+          <Icon name="x" />
+        </PanelHeaderAction>
       </div>
-    </header>
+    </PanelHeader>
   );
 }
 
@@ -273,16 +254,11 @@ function GlobalTasks({
     messages: [],
     tasks: tasks.map((item) => item.task),
   }).taskColumns;
+  const entities = useWorkspaceEntities();
+  const filtersActive =
+    params.has("channel") || params.has("creator") || params.has("assignee");
   const options = (filter: "creator" | "assignee") =>
-    taskPeopleChoices(people, currentHuman?.principalId, filter).map(
-      (person) => ({
-        ...person,
-        leading:
-          person.kind === "none" ? undefined : (
-            <Icon name={person.kind === "agent" ? "bot" : "user-round"} />
-          ),
-      }),
-    );
+    taskPersonOptions(people, currentHuman?.principalId, filter, entities);
   return (
     <main className="rah-discovery activity-main" aria-label="全局任务">
       <Header
@@ -346,10 +322,16 @@ function GlobalTasks({
       {result.loading && !result.data ? (
         <p role="status">正在加载任务…</p>
       ) : !tasks.length ? (
-        <Empty
+        <EmptyState
+          context="task"
+          placement="fill"
           icon="task"
-          title="没有符合此筛选的任务"
-          detail="换一个筛选组合，或清除当前选择。"
+          title={filtersActive ? "没有符合此筛选的任务" : "暂无任务"}
+          description={
+            filtersActive
+              ? "换一个筛选组合，或清除当前选择。"
+              : "此工作区还没有频道任务。"
+          }
         />
       ) : (
         <GlobalTaskBoard
@@ -467,11 +449,16 @@ function GlobalSearch({
   }, []);
   return (
     <main className="rah-discovery search-main" aria-label="全局搜索">
-      <header className="search-top">
+      <PanelHeader kind="surface" className="search-top">
+        <PanelHeaderAction
+          aria-label="返回聊天"
+          className="rah-mobile-only"
+          onClick={onClose}
+        >
+          <Icon name="arrow-left" />
+        </PanelHeaderAction>
         <div className="search-title-slot">
-          <span className="search-icon-box">
-            <Icon name="search" />
-          </span>
+          <PanelHeaderIcon name="search" />
           <div className="search-box">
             <input
               ref={box}
@@ -490,12 +477,24 @@ function GlobalSearch({
                 }
               }}
             />
+            {query && (
+              <PanelHeaderAction
+                aria-label="清除搜索"
+                size="compact"
+                onClick={() => {
+                  change("q", []);
+                  box.current?.focus();
+                }}
+              >
+                <Icon name="x" />
+              </PanelHeaderAction>
+            )}
             <span className="search-kbd" aria-hidden="true">
               Esc
             </span>
           </div>
         </div>
-      </header>
+      </PanelHeader>
       <section className="filter-bar" aria-label="搜索筛选">
         <DiscoveryFilter
           label="发送者"
@@ -635,12 +634,7 @@ function GlobalSearch({
       <Failure error={result.error ?? personError} />
       <section className="search-stage">
         {!searchActive ? (
-          <div className="rah-search-home">
-            <Empty
-              icon="search"
-              title="搜索所有内容"
-              detail="搜索频道、私信、人类成员、Agent 和消息历史。"
-            />
+          history.length > 0 || frequent.length > 0 ? (
             <SearchSuggestions
               frequent={frequent}
               history={history}
@@ -651,16 +645,24 @@ function GlobalSearch({
               }}
               onSelect={(value) => change("q", [value])}
             />
-          </div>
+          ) : (
+            <EmptyState
+              context="search"
+              placement="fill"
+              icon="search"
+              title="搜索所有内容"
+              description="搜索频道、私信、人类成员、Agent 和消息历史。"
+            />
+          )
         ) : (
           <div className="result-list">
             {result.loading && <p role="status">搜索中…</p>}
             {result.data && (
               <p className="rah-search-count">{result.data.total} 条消息结果</p>
             )}
-            {(result.data?.rooms.length || result.data?.principals.length) && (
-              <h2 className="rah-search-section-title">服务器内容</h2>
-            )}
+            {Boolean(
+              result.data?.rooms.length || result.data?.principals.length,
+            ) && <h2 className="rah-search-section-title">服务器内容</h2>}
             {result.data?.rooms.map((room) => (
               <button
                 className="rah-search-destination"
@@ -709,10 +711,12 @@ function GlobalSearch({
               result.data?.total === 0 &&
               !result.data.rooms.length &&
               !result.data.principals.length && (
-                <Empty
+                <EmptyState
+                  context="search"
+                  placement="section"
                   icon="search"
                   title="没有搜索结果"
-                  detail="尝试其他关键词或清除筛选。"
+                  description="尝试其他关键词或清除筛选。"
                 />
               )}
             {result.data?.nextCursor && (
@@ -804,7 +808,7 @@ function SearchResultPanel({
           <span>消息列</span>
           <b>{first.roomName}</b>
           <span>{group.hits.length} 条匹配</span>
-          <time>{new Date(first.message.createdAt).toLocaleString()}</time>
+          <time>{formatDiscoveryDateTime(first.message.createdAt)}</time>
         </header>
       )}
       {group.hits.map((hit) => (
@@ -833,7 +837,7 @@ function SearchResultPanel({
             </span>
           </span>
           <time className="result-time">
-            {new Date(hit.message.createdAt).toLocaleString()}
+            {formatDiscoveryDateTime(hit.message.createdAt)}
           </time>
         </button>
       ))}
@@ -999,120 +1003,127 @@ function GlobalActivity({
       </section>
       <Failure error={error ?? result.error} />
       <section className="feed">
-        <div className="feed-wrap">
-          {result.loading && !result.data && <p role="status">正在加载动态…</p>}
-          {result.data?.items.map((item) => (
-            <article
-              key={item.key}
-              className="feed-card"
-              data-unread={item.unreadCount > 0}
-            >
-              <button
-                className="fc-content rah-activity-open"
-                onClick={() => void mark(item, "read", true)}
-                disabled={pending !== undefined}
-              >
-                {item.threadId && (
-                  <span className="fc-channel">
-                    {rooms.find((room) => room.roomId === item.roomId)?.kind ===
-                    "direct"
-                      ? "@"
-                      : "#"}
-                    {item.roomName}
-                  </span>
-                )}
-                <span className="fc-heading-row">
-                  <span className="fc-title">
-                    <Icon
-                      name={
-                        item.threadId
-                          ? "chat"
-                          : item.kind === "direct"
-                            ? "at-sign"
-                            : "hash"
-                      }
-                    />
-                    {item.title}
-                  </span>
-                  <time>
-                    {new Date(item.latestMessage.createdAt).toLocaleString()}
-                  </time>
-                </span>
-                <span className="fc-summary">
-                  <strong>{item.senderName}:</strong>{" "}
-                  {item.latestMessage.body.slice(0, 800)}
-                </span>
-                <span className="fc-chips">
-                  {item.task && (
-                    <span
-                      className={`activity-chip is-task chip-${taskStatusPresentation(item.task).tone}`}
-                      data-task-workflow-status={
-                        taskStatusPresentation(item.task).id
-                      }
-                    >
-                      <Icon
-                        name={
-                          taskStatusPresentation(item.task).id === "done"
-                            ? "check"
-                            : "eye"
-                        }
-                      />{" "}
-                      #{item.task.taskNumber}
-                      {item.task.assigneeId
-                        ? ` @${people.find((p) => p.principalId === item.task!.assigneeId)?.handle ?? "Agent"}`
-                        : ""}
-                    </span>
-                  )}
-                  {item.replyCount > 0 && (
-                    <span className="activity-chip">
-                      {item.replyCount} 条回复
-                    </span>
-                  )}
-                  {item.unreadCount > 0 && (
-                    <span className="activity-chip rah-new-message-count">
-                      {item.unreadCount} 条新消息
-                    </span>
-                  )}
-                </span>
-              </button>
-              <div className="fc-actions">
-                <button
-                  className="activity-done"
-                  aria-label={`标记为完成：${item.title.slice(0, 80)}`}
-                  title="标记为完成（处理动态，不改变任务状态）"
-                  disabled={pending !== undefined}
-                  onClick={() => void mark(item, "done")}
-                >
-                  <Icon name="check" />
-                </button>
-                {item.threadId && (
-                  <button
-                    className="rah-unfollow"
-                    aria-label={`取消关注：${item.title.slice(0, 80)}`}
-                    onClick={() => {
-                      void client
-                        .request("activity.follow", {
-                          roomId: item.roomId,
-                          threadId: item.threadId!,
-                          following: false,
-                        })
-                        .then(() => result.refresh())
-                        .catch((failure: unknown) => setError(String(failure)));
-                    }}
-                  >
-                    取消关注
-                  </button>
-                )}
-              </div>
-            </article>
-          ))}
-        </div>
-        {!result.loading && !result.data?.items.length && !result.error && (
-          <Empty
+        {!result.loading && !result.data?.items.length && !result.error ? (
+          <EmptyState
+            context="activity"
+            placement="fill"
             icon="check"
             title="没有待处理动态"
-            detail="频道、私信与关注的消息列的新动态会出现在这里。"
+            description="频道、私信与关注的消息列的新动态会出现在这里。"
           />
+        ) : (
+          <div className="feed-wrap">
+            {result.loading && !result.data && (
+              <p role="status">正在加载动态…</p>
+            )}
+            {result.data?.items.map((item) => (
+              <article
+                key={item.key}
+                className="feed-card"
+                data-unread={item.unreadCount > 0}
+              >
+                <button
+                  className="fc-content rah-activity-open"
+                  onClick={() => void mark(item, "read", true)}
+                  disabled={pending !== undefined}
+                >
+                  {item.threadId && (
+                    <span className="fc-channel">
+                      {rooms.find((room) => room.roomId === item.roomId)
+                        ?.kind === "direct"
+                        ? "@"
+                        : "#"}
+                      {item.roomName}
+                    </span>
+                  )}
+                  <span className="fc-heading-row">
+                    <span className="fc-title">
+                      <Icon
+                        name={
+                          item.threadId
+                            ? "chat"
+                            : item.kind === "direct"
+                              ? "at-sign"
+                              : "hash"
+                        }
+                      />
+                      {item.title}
+                    </span>
+                    <time>
+                      {formatDiscoveryDateTime(item.latestMessage.createdAt)}
+                    </time>
+                  </span>
+                  <span className="fc-summary">
+                    <strong>{item.senderName}:</strong>{" "}
+                    {item.latestMessage.body.slice(0, 800)}
+                  </span>
+                  <span className="fc-chips">
+                    {item.task && (
+                      <span
+                        className={`activity-chip is-task chip-${taskStatusPresentation(item.task).tone}`}
+                        data-task-workflow-status={
+                          taskStatusPresentation(item.task).id
+                        }
+                      >
+                        <Icon
+                          name={
+                            taskStatusPresentation(item.task).id === "done"
+                              ? "check"
+                              : "eye"
+                          }
+                        />{" "}
+                        #{item.task.taskNumber}
+                        {item.task.assigneeId
+                          ? ` @${people.find((p) => p.principalId === item.task!.assigneeId)?.handle ?? "Agent"}`
+                          : ""}
+                      </span>
+                    )}
+                    {item.replyCount > 0 && (
+                      <span className="activity-chip">
+                        {item.replyCount} 条回复
+                      </span>
+                    )}
+                    {item.unreadCount > 0 && (
+                      <span className="activity-chip rah-new-message-count">
+                        {item.unreadCount} 条新消息
+                      </span>
+                    )}
+                  </span>
+                </button>
+                <div className="fc-actions">
+                  <button
+                    className="activity-done"
+                    aria-label={`标记为完成：${item.title.slice(0, 80)}`}
+                    title="标记为完成（处理动态，不改变任务状态）"
+                    disabled={pending !== undefined}
+                    onClick={() => void mark(item, "done")}
+                  >
+                    <Icon name="check" />
+                  </button>
+                  {item.threadId && (
+                    <button
+                      className="rah-unfollow"
+                      aria-label={`取消关注：${item.title.slice(0, 80)}`}
+                      onClick={() => {
+                        void client
+                          .request("activity.follow", {
+                            roomId: item.roomId,
+                            threadId: item.threadId!,
+                            following: false,
+                          })
+                          .then(() => result.refresh())
+                          .catch((failure: unknown) =>
+                            setError(String(failure)),
+                          );
+                      }}
+                    >
+                      取消关注
+                    </button>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
         )}
       </section>
       <Pager
@@ -1123,4 +1134,11 @@ function GlobalActivity({
       />
     </main>
   );
+}
+
+function formatDiscoveryDateTime(value: string): string {
+  return formatRahDateTime(value, {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
 }

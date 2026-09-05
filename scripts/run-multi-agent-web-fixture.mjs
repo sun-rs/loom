@@ -349,6 +349,7 @@ if (command === "debug models" || command === "debug models --bundled") {
         RAH_FAKE_TASK_ARTIFACT: "1",
         ...(index === 0
           ? {
+              RAH_FAKE_REVIEW_FIRST_SUBMISSION: "changes_requested",
               RAH_FAKE_TASK_HOLD_MARKER: "[REASSIGN]",
               RAH_FAKE_TASK_HOLD_MS: "20000",
             }

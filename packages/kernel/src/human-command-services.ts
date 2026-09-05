@@ -4,6 +4,7 @@ import type { AuthenticatedActorContext } from "./auth.ts";
 import { HumanActivity } from "./human-activity.ts";
 import { HumanSidebar } from "./human-sidebar.ts";
 import { HumanNavigation } from "./human-navigation.ts";
+import { HumanProfiles } from "./human-profile.ts";
 import { HumanNotifications } from "./human-notifications.ts";
 import { MessageSocial } from "./message-social.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
@@ -42,6 +43,7 @@ export function createHumanCommandServices(options: {
       input: Parameters<HumanActivity["followers"]>[1],
     ) => humanActivity.followers(options.requireActor(actor), input),
     humanNavigation: new HumanNavigation(context),
+    humanProfiles: new HumanProfiles(context),
     humanNotifications: new HumanNotifications({
       ...context,
       events: options.events,
