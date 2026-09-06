@@ -121,8 +121,17 @@ export {
   RAH_AUTH_REQUIRED_EVENT,
 } from "./api-transport";
 export {
+  acceptRoomTask,
+  acknowledgeRoomMessage,
+  acknowledgeRoomInboxItem,
+  addRoomMember,
   bootstrapRoom,
+  cancelRoomTask,
+  createRoom,
+  createRoomTask,
   listRooms,
+  listRoomTasks,
+  postRoomMessage,
   readOlderRoomMessages,
   readRoomEvents,
   readRoomInbox,

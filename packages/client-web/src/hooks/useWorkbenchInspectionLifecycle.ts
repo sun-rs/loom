@@ -52,6 +52,8 @@ export function workbenchInspectionContextKey(
       ? `canvas:${options.activeCanvasPaneId}:${canvasTargetContextKey(options.activeCanvasTarget)}`
       : options.mode === "council"
         ? `council:${options.selectedCouncilId ?? "landing"}`
+        : options.mode === "room"
+          ? "rooms"
         : options.selectedSessionId
           ? `session:${options.selectedSessionId}`
           : `workspace:${options.selectedWorkspaceDir ?? "home"}`;
@@ -84,7 +86,7 @@ export function inspectionContextReviewOwner(
       ? { kind: "session", sessionId: options.activeCanvasSessionId }
       : null;
   }
-  if (options.mode === "council") {
+  if (options.mode === "council" || options.mode === "room") {
     return null;
   }
   if (options.selectedSessionId) {

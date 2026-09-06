@@ -399,9 +399,9 @@ Room Header: 标题 / 成员 / 状态 / 成本 / 菜单
 
 ### 8.1 Raft 风格壳的采用边界
 
-经授权采集并从零实现的可运行参考已迁移到与 RAH 同级的独立仓库 `raft-ui`（从 RAH 根目录看为 `../raft-ui`）。它覆盖 Room
-聊天/线程、Activity、Task、Artifact、Membership、Computer/Runner、设置/管理与 390×844 移动端栈式
-页面，视觉令牌、hover 矩阵和像素回归入口也由该仓库统一维护。
+历史上，经授权采集并从零实现的可运行参考曾位于与 RAH 同级的 `raft-ui` 工作区。该目录现在只可作为临时取证与历史参考，
+不是生产依赖，也不是长期标准 owner。生产使用的英文 neo-brutalist 组件、视觉令牌、交互状态矩阵与回归入口均由
+RAH 仓库内的 `packages/client-web/src/room-ui`、`docs/ui/evidence` 和机器可校验登记共同维护；外部参考不能绕过来源分类直接进入构建。
 
 这套参考只决定信息密度、导航层级、视觉令牌与无状态交互，不拥有业务真相。移植到 React 时必须保持：
 
@@ -856,11 +856,9 @@ Room-first 不是否定现有 daemon/provider 工程。旧架构对照文档中�
 - MCP 与 CLI facade 进入同一 service。
 - current Council 先适配新 ledger，现有热 waiter 暂时作为兼容路径，不进入目标协议。
 
-2026-09-06 已完成 Phase 1 的内部 Kernel、认证只读 Application Port 与生产只读 HTTP 接线：provider-neutral
-Room/Membership/Message/Event/Inbox/Outbox 协议、SQLite WAL 事务 owner、精确幂等、统一 Principal
-身份增量、冻结分页、显式 acknowledgement、签名不透明 cursor 和持久 cursor key/generation 已进入 daemon，
-适配器已冻结 typed error/status 与最终 1 MiB wire envelope；生产数据固定在 `RAH_DATA_HOME/room`，daemon 与离线 `rah room-cursor` 运维共用跨进程排他 owner，cursor-key rotation 在 key 发布前/后的中断恢复与失败关闭也已有真实 SIGKILL 门禁。五个版本化读取端点已经接入主路由，并提供严格验证的 typed Web SDK；可见 Web 页面、写入、WS 与 Council 迁移仍未开始。当前实现边界、来源和后续门禁见
-[Room Ledger v1：第一条可回滚纵切](./room-ledger-v1.zh-CN.md)。
+2026-09-06 后 Phase 1 已继续扩展到 Human command、Task/Review、Activation/RunAttempt 和可见 Room 页面。历史纵切细节见
+[Room Ledger v1：第一条可回滚纵切](./room-ledger-v1.zh-CN.md)，当前已完成与不能外推的边界见
+[Room-first 当前交付边界](./room-first-delivery-status.zh-CN.md)。生产 AgentHost/Room bridge 尚未完成，因此 Phase 2 不能标记完成。
 
 ### Phase 2：Activation 与本机 AgentHost
 

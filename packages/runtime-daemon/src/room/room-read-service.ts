@@ -9,6 +9,8 @@ import type {
   RoomListReadResponse,
   RoomOlderMessagesReadRequest,
   RoomOlderMessagesReadResponse,
+  RoomTaskListReadRequest,
+  RoomTaskListReadResponse,
 } from "@rah/runtime-protocol";
 import {
   toRoomEventDto,
@@ -17,6 +19,7 @@ import {
   validateRoomInboxReadRequest,
   validateRoomListReadRequest,
   validateRoomOlderMessagesReadRequest,
+  validateRoomTaskListReadRequest,
 } from "@rah/runtime-protocol";
 
 import type { DeviceAuthPrincipal } from "../device-auth";
@@ -241,13 +244,21 @@ export class RoomReadService {
     const actor = this.#actors.resolve(principal);
     const request = this.#validate(() => validateRoomInboxReadRequest(rawRequest));
     const subject = this.#cursors.subject(actor.principalId);
-    const position = request.cursor
-      ? this.#cursors.decodeInbox(request.cursor, subject).position
-      : 0;
-    const items = this.#ledger.listInbox(actor.principalId, {
-      afterInboxSeq: position,
-      ...(request.limit !== undefined ? { limit: request.limit } : {}),
-    });
+    const position = request.start === "latest"
+      ? this.#ledger.inboxHead(actor.principalId)
+      : request.cursor
+        ? this.#cursors.decodeInbox(request.cursor, subject).position
+        : 0;
+    const items = request.start === "latest"
+      ? []
+      : this.#ledger.listInbox(actor.principalId, {
+          afterInboxSeq: position,
+          ...(request.limit !== undefined ? { limit: request.limit } : {}),
+          ...(request.roomId !== undefined ? { roomId: request.roomId } : {}),
+          ...(request.pendingOnly !== undefined ? { pendingOnly: request.pendingOnly } : {}),
+          ...(request.messageIds !== undefined ? { messageIds: request.messageIds } : {}),
+          ...(request.taskIds !== undefined ? { taskIds: request.taskIds } : {}),
+        });
     const acceptedItems = [...items];
     const buildResponse = (): RoomInboxReadResponse => ({
       mode: "inbox_page",
@@ -266,6 +277,57 @@ export class RoomReadService {
       throw roomError(
         "resource_exhausted",
         "A Room Inbox item cannot fit within the configured read response budget",
+      );
+    }
+    this.#requireResponseBudget(response);
+    return response;
+  }
+
+  listTasks(
+    principal: DeviceAuthPrincipal | null,
+    rawRequest: RoomTaskListReadRequest,
+  ): RoomTaskListReadResponse {
+    const actor = this.#actors.resolve(principal);
+    const request = this.#validate(() => validateRoomTaskListReadRequest(rawRequest));
+    const subject = this.#cursors.subject(actor.principalId);
+    const cursor = request.cursor
+      ? this.#cursors.decodeTasks(request.cursor, request.roomId, subject)
+      : undefined;
+    const result = this.#ledger.listTaskPage(actor.principalId, request.roomId, {
+      ...(cursor
+        ? { beforeTaskNumber: cursor.before, throughTaskNumber: cursor.through }
+        : {}),
+      ...(request.limit !== undefined ? { limit: request.limit } : {}),
+    });
+    const items = [...result.items];
+    const buildResponse = (): RoomTaskListReadResponse => {
+      const hasMore = result.hasMore || items.length < result.items.length;
+      return {
+        mode: "task_list",
+        roomId: request.roomId,
+        items,
+        hasMore,
+        ...(hasMore
+          ? {
+              taskListCursor: this.#cursors.encodeTasks({
+                roomId: request.roomId,
+                subject,
+                before: items[0]?.taskNumber ?? result.cursorBefore,
+                through: result.throughTaskNumber,
+              }),
+            }
+          : {}),
+      };
+    };
+    let response = buildResponse();
+    while (this.#responseBytes(response) > this.#responseByteLimit && items.length) {
+      items.shift();
+      response = buildResponse();
+    }
+    if (result.items.length > 0 && items.length === 0) {
+      throw roomError(
+        "resource_exhausted",
+        "A Room Task cannot fit within the configured read response budget",
       );
     }
     this.#requireResponseBudget(response);

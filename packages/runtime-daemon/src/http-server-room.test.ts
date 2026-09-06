@@ -7,6 +7,7 @@ import { test } from "node:test";
 
 import type {
   RoomBootstrapReadResponse,
+  RoomCommandHttpEnvelope,
   RoomListReadResponse,
   RoomOlderMessagesReadResponse,
   RoomReadHttpEnvelope,
@@ -38,6 +39,26 @@ async function freePort(): Promise<number> {
       server.close((error) => error ? reject(error) : resolve(port));
     });
   });
+}
+
+async function postRoomCommand(args: {
+  port: number;
+  path: string;
+  body: unknown;
+}): Promise<{ response: Response; envelope: RoomCommandHttpEnvelope }> {
+  const response = await fetch(`http://127.0.0.1:${args.port}${args.path}`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      origin: `http://127.0.0.1:${args.port}`,
+      "x-rah-client": "web",
+    },
+    body: JSON.stringify(args.body),
+  });
+  return {
+    response,
+    envelope: await response.json() as RoomCommandHttpEnvelope,
+  };
 }
 
 function createIsolatedRuntimeEngine(dataRoot: string): RuntimeEngine {
@@ -209,6 +230,34 @@ test("production Room HTTP routes authenticate once and preserve the exact wire 
     assert.deepEqual(roomsData.items.map((item) => item.room.roomId), ["room-http"]);
     assert.equal(roomsData.items[0]?.membership.principalId, seedRoomPrincipal);
 
+    const posted = await postRoomCommand({
+      port: daemon.port,
+      path: "/api/room/v1/messages/post",
+      body: {
+        roomId: "room-http",
+        body: "authenticated Human command",
+        idempotencyKey: "http-human-post",
+      },
+    });
+    assert.equal(posted.response.status, 200);
+    assert.equal(posted.envelope.ok, true);
+    if (!posted.envelope.ok) throw new Error("expected Room command receipt");
+    assert.equal(posted.envelope.data.operation, "post_message");
+    assert.equal(posted.envelope.data.roomId, "room-http");
+
+    const injectedCommand = await postRoomCommand({
+      port: daemon.port,
+      path: "/api/room/v1/messages/post",
+      body: {
+        roomId: "room-http",
+        body: "actor injection",
+        actorId: "agent-injected",
+        idempotencyKey: "http-injected-post",
+      },
+    });
+    assert.equal(injectedCommand.response.status, 400);
+    assert.equal(injectedCommand.envelope.ok, false);
+
     const injected = await postRoom({
       port: daemon.port,
       path: "/api/room/v1/bootstrap",
@@ -216,7 +265,7 @@ test("production Room HTTP routes authenticate once and preserve the exact wire 
     });
     assert.equal(injected.response.status, 400);
     assert.deepEqual(injected.envelope.ok, false);
-    assert.equal(authenticationCalls, 6);
+    assert.equal(authenticationCalls, 8);
   } finally {
     await daemon.close();
     rmSync(dataRoot, { recursive: true, force: true });

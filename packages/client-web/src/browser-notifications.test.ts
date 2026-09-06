@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import type { RahEvent, SessionSummary } from "@rah/runtime-protocol";
+import type { RahEvent, RoomInboxItem, SessionSummary } from "@rah/runtime-protocol";
 import {
   notificationCandidateFromEvent,
+  notificationCandidateFromRoomInbox,
   notificationDedupKeyFromEvent,
+  roomInboxItemIsPresented,
+  roomInboxItemNeedsNotification,
   shouldNotifyForUnreadEvent,
   textFromCouncilParts,
 } from "./browser-notifications";
@@ -220,5 +223,111 @@ describe("browser notification event policy", () => {
       ]),
       "hello world",
     );
+  });
+
+  test("maps every canonical Room attention reason to a typed deep-link notification", () => {
+    const reasons: RoomInboxItem["reason"][] = [
+      "direct_message",
+      "mention",
+      "room_policy",
+      "task_assignment",
+      "dependency_resolved",
+      "input_resolved",
+    ];
+    for (const [index, reason] of reasons.entries()) {
+      const candidate = notificationCandidateFromRoomInbox({
+        inboxSeq: index + 1,
+        inboxItemId: `inbox-${index}`,
+        roomId: "room-one",
+        participantId: "human-owner",
+        eventId: `event-${index}`,
+        eventSeq: index + 1,
+        aggregateType: "message",
+        aggregateId: `message-${index}`,
+        reason,
+        disposition: reason === "input_resolved" ? "notification" : "activation",
+        state: "pending",
+        createdAt: "2026-09-06T10:00:00.000Z",
+      }, "Agent Council");
+      assert.equal(candidate.target.kind, "room");
+      assert.equal(candidate.target.id, "room-one");
+      assert.equal(candidate.title, "Room: Agent Council");
+      assert.match(candidate.url, /surface=room&roomId=room-one/u);
+      assert.ok(candidate.body.length > 0);
+    }
+  });
+
+  test("uses the canonical Task event type for lifecycle-specific notification copy", () => {
+    const base: RoomInboxItem = {
+      inboxSeq: 1,
+      inboxItemId: "inbox-task",
+      roomId: "room-one",
+      participantId: "human-owner",
+      eventId: "event-task",
+      eventSeq: 9,
+      aggregateType: "review",
+      aggregateId: "review-one",
+      taskId: "task-one",
+      reviewDisposition: "approved",
+      reason: "input_resolved",
+      disposition: "notification",
+      state: "pending",
+      createdAt: "2026-09-06T10:00:00.000Z",
+    };
+    assert.equal(
+      notificationCandidateFromRoomInbox({ ...base, eventType: "review.submitted" }, "Agent Council").body,
+      "A reviewed task is ready for Human acceptance.",
+    );
+    assert.equal(
+      notificationCandidateFromRoomInbox({ ...base, eventType: "task.completed" }, "Agent Council").body,
+      "A task was completed.",
+    );
+    assert.equal(
+      notificationCandidateFromRoomInbox({ ...base, eventType: "task.cancelled" }, "Agent Council").body,
+      "A task was closed.",
+    );
+  });
+
+  test("same-Room attention is hidden only when the exact entity is actually presented", () => {
+    const message: RoomInboxItem = {
+      inboxSeq: 1,
+      inboxItemId: "inbox-message",
+      roomId: "room-one",
+      participantId: "human-owner",
+      eventId: "event-message",
+      eventSeq: 9,
+      aggregateType: "message",
+      aggregateId: "message-one",
+      reason: "mention",
+      disposition: "activation",
+      state: "pending",
+      createdAt: "2026-09-06T10:00:00.000Z",
+    };
+    assert.equal(roomInboxItemIsPresented(message, {
+      roomId: "room-one", tab: "chat", latest: true,
+      entities: [{ type: "message", id: "message-one" }],
+    }), true);
+    assert.equal(roomInboxItemIsPresented(message, {
+      roomId: "room-one", tab: "chat", latest: false,
+      entities: [{ type: "message", id: "message-one" }],
+    }), false);
+    assert.equal(roomInboxItemIsPresented(message, {
+      roomId: "room-one", tab: "tasks", latest: false,
+      entities: [],
+    }), false);
+    assert.equal(roomInboxItemIsPresented(message, {
+      roomId: "room-one", tab: "members", latest: false,
+      entities: [],
+    }), false);
+    assert.equal(roomInboxItemIsPresented(message, {
+      roomId: "room-one", tab: "chat", latest: true,
+      entities: [{ type: "message", id: "different-message" }],
+    }), false);
+    assert.equal(roomInboxItemNeedsNotification(message), true);
+    assert.equal(roomInboxItemNeedsNotification({
+      ...message,
+      state: "acknowledged",
+      acknowledgedAt: "2026-09-06T10:01:00.000Z",
+    }), false);
   });
 });

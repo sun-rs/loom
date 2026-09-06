@@ -37,9 +37,11 @@ export function WorkbenchSidebarShell(props: {
   onWorkspaceSortModeChange: (value: WorkspaceSortMode) => void;
   canvasActive: boolean;
   councilActive: boolean;
+  roomActive: boolean;
   homeActive: boolean;
   mobileCanvasEnabled: boolean;
   onOpenCouncil: () => void;
+  onOpenRooms: () => void;
   onDesktopToggleCanvas: () => void;
   onMobileToggleCanvas: () => void;
   onActivateHistory: (ref: StoredSessionRef) => void;
@@ -70,6 +72,7 @@ export function WorkbenchSidebarShell(props: {
     homeActive: props.homeActive,
     canvasActive: props.canvasActive,
     councilActive: props.councilActive,
+    roomActive: props.roomActive,
     onLoadStoredSessions: props.onLoadStoredSessions,
     onRefreshCouncils: props.onRefreshCouncils,
     onRenameCouncil: props.onRenameCouncil,
@@ -117,6 +120,7 @@ export function WorkbenchSidebarShell(props: {
           <WorkbenchSidebarNavigation
             {...commonNavigationProps}
             onOpenCouncil={props.onOpenCouncil}
+            onOpenRooms={props.onOpenRooms}
             onToggleCanvas={props.onDesktopToggleCanvas}
             onActivateHistory={props.onActivateHistory}
             onActivateRunning={props.onActivateRunning}
@@ -172,6 +176,7 @@ export function WorkbenchSidebarShell(props: {
           {...commonNavigationProps}
           canvasEnabled={props.mobileCanvasEnabled}
           onOpenCouncil={() => runMobileAction(props.onOpenCouncil)}
+          onOpenRooms={() => runMobileAction(props.onOpenRooms)}
           onToggleCanvas={() => runMobileAction(props.onMobileToggleCanvas)}
           onActivateHistory={(ref) => runMobileAction(() => props.onActivateHistory(ref))}
           onActivateRunning={(sessionId) =>

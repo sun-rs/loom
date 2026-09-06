@@ -78,6 +78,11 @@ import {
   isRoomReadHttpPath,
   writeRoomReadHttpFailure,
 } from "./room/room-read-http-route";
+import {
+  handleRoomCommandHttpRequest,
+  isRoomCommandHttpPath,
+  writeRoomCommandHttpFailure,
+} from "./room/room-command-http-route";
 import { roomError } from "./room/room-errors";
 import {
   MAX_DEVICE_ATTACHMENT_BYTES,
@@ -632,12 +637,25 @@ export async function handleHttpRequest(args: {
     const isRoomReadRequest = Boolean(
       roomRuntime && isRoomReadHttpPath(pathname),
     );
+    const isRoomCommandRequest = Boolean(
+      roomRuntime && isRoomCommandHttpPath(pathname),
+    );
 
     const apiValidationError = validateApiRequest(req, pathname);
     if (apiValidationError) {
       if (isRoomReadRequest && roomRuntime) {
         writeRoomReadHttpFailure({
           adapter: roomRuntime.http,
+          error: roomError("forbidden", apiValidationError),
+          req,
+          res,
+          statusOverride: 403,
+        });
+        return;
+      }
+      if (isRoomCommandRequest && roomRuntime) {
+        writeRoomCommandHttpFailure({
+          adapter: roomRuntime.commands,
           error: roomError("forbidden", apiValidationError),
           req,
           res,
@@ -683,6 +701,29 @@ export async function handleHttpRequest(args: {
         pathname,
         principal: roomPrincipal,
         adapter: roomRuntime.http,
+        req,
+        res,
+      });
+      return;
+    }
+    if (isRoomCommandRequest && roomRuntime) {
+      let roomPrincipal;
+      try {
+        roomPrincipal = auth?.authenticate(req) ?? null;
+      } catch {
+        writeRoomCommandHttpFailure({
+          adapter: roomRuntime.commands,
+          error: new Error("Room device authentication failed"),
+          req,
+          res,
+          statusOverride: 500,
+        });
+        return;
+      }
+      await handleRoomCommandHttpRequest({
+        pathname,
+        principal: roomPrincipal,
+        adapter: roomRuntime.commands,
         req,
         res,
       });

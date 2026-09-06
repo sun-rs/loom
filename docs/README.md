@@ -26,8 +26,9 @@
 
 - [RAH Agent OS：Room-first 架构与生态借力路线](./agent-os-room-first-architecture.zh-CN.md)
 - [Room Ledger v1：第一条可回滚纵切](./room-ledger-v1.zh-CN.md)
+- [Room-first 当前交付边界](./room-first-delivery-status.zh-CN.md)
 
-该文档描述长期目标、外部架构对照与迁移边界，不代表当前 `main` 已经从 provider-session-first 切换为 Room-first。当前行为仍以上一节和 Provider/历史权威文档为准。
+前两份文档分别描述长期目标与历史首个纵切；当前完成度、不能外推的边界和下一顺序以“Room-first 当前交付边界”为准。当前 `main` 尚未完成生产 AgentHost，因此不能称为已经整体切换到 Room-first。
 
 ## 2. Provider 与能力边界
 
@@ -56,6 +57,8 @@
 - [Native TUI Real CLI QA](./native-tui-real-cli-qa.zh-CN.md)
 - [Session Control Capability Smoke](./session-control-capability-smoke.zh-CN.md)
 - [Production Regression E2E Suite](./production-regression-e2e-suite.zh-CN.md)
+- [Room UI source adoption and internal ownership](./ui/room-ui-source-adoption.md)
+- [Machine-readable Raft behavior registry](./ui/raft-behavior-registry.json)
 
 ## 维护规则
 

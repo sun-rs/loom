@@ -2,6 +2,7 @@ export type RoomParticipantKind = "human" | "agent" | "service";
 export type RoomKind = "channel" | "direct" | "control";
 export type RoomVisibility = "public" | "private";
 export type RoomMembershipRole = "owner" | "admin" | "member";
+import type { RoomAgentAvatarKey } from "./room-avatar";
 export type RoomAttentionReason =
   | "mention"
   | "direct_message"
@@ -10,11 +11,27 @@ export type RoomAttentionReason =
   | "dependency_resolved"
   | "input_resolved";
 
+/**
+ * Inbox entries are durable user/agent notifications. Only entries explicitly
+ * classified as activation work may create an Agent Activation.
+ */
+export type RoomInboxDisposition = "activation" | "notification";
+
+export type RoomInboxEventType =
+  | "message.posted"
+  | "task.created"
+  | "task.submitted"
+  | "task.completed"
+  | "task.cancelled"
+  | "task.dependency_resolved"
+  | "review.submitted";
+
 export interface RoomPrincipal {
   principalId: string;
   handle: string;
   kind: RoomParticipantKind;
   displayName?: string;
+  avatarKey?: RoomAgentAvatarKey;
   createdAt: string;
 }
 
@@ -42,6 +59,9 @@ export interface RoomMessage {
   roomSeq: number;
   actorId: string;
   body: string;
+  threadId?: string;
+  rootMessageId?: string;
+  replyToMessageId?: string;
   createdAt: string;
 }
 
@@ -66,7 +86,15 @@ export interface RoomInboxItem {
   participantId: string;
   eventId: string;
   eventSeq: number;
+  /** Read-time event classification used for precise notification copy. */
+  eventType?: RoomInboxEventType;
+  aggregateType: "message" | "task" | "review";
+  aggregateId: string;
+  /** Canonical Task target, including Review events whose aggregate is a Review. */
+  taskId?: string;
+  reviewDisposition?: "approved" | "changes_requested";
   reason: RoomAttentionReason;
+  disposition: RoomInboxDisposition;
   state: "pending" | "acknowledged";
   createdAt: string;
   acknowledgedAt?: string;
@@ -119,12 +147,28 @@ export interface PostRoomMessageRequest {
   roomId: string;
   body: string;
   mentionedPrincipalIds?: string[];
+  replyToMessageId?: string;
   idempotencyKey: string;
 }
 
 export interface AcknowledgeRoomMessageRequest {
   roomId: string;
   messageId: string;
+  basedOnRoomSeq: number;
+  idempotencyKey: string;
+}
+
+export interface AcknowledgeRoomInboxItemRequest {
+  roomId: string;
+  inboxItemId: string;
+  eventId: string;
+  basedOnRoomSeq: number;
+  idempotencyKey: string;
+}
+
+export interface AcknowledgeRoomRequest {
+  roomId: string;
+  throughRoomSeq: number;
   basedOnRoomSeq: number;
   idempotencyKey: string;
 }
@@ -283,11 +327,14 @@ export function validatePostRoomMessageRequest(value: unknown): PostRoomMessageR
   requireObject(value, "PostRoomMessageRequest");
   rejectUnknownKeys(
     value,
-    ["roomId", "body", "mentionedPrincipalIds", "idempotencyKey"],
+    ["roomId", "body", "mentionedPrincipalIds", "replyToMessageId", "idempotencyKey"],
     "PostRoomMessageRequest",
   );
   requireIdentifier(value.roomId, "roomId");
   requireIdentifier(value.idempotencyKey, "idempotencyKey");
+  if (value.replyToMessageId !== undefined) {
+    requireIdentifier(value.replyToMessageId, "replyToMessageId");
+  }
   if (typeof value.body !== "string" || !value.body.trim() || value.body.length > 100_000) {
     throw new Error("body must contain 1 to 100000 characters");
   }
@@ -310,6 +357,9 @@ export function validatePostRoomMessageRequest(value: unknown): PostRoomMessageR
     ...(mentionedPrincipalIds && mentionedPrincipalIds.length > 0
       ? { mentionedPrincipalIds: [...mentionedPrincipalIds].sort() }
       : {}),
+    ...(value.replyToMessageId !== undefined
+      ? { replyToMessageId: value.replyToMessageId as string }
+      : {}),
     idempotencyKey: value.idempotencyKey as string,
   };
 }
@@ -330,6 +380,44 @@ export function validateAcknowledgeRoomMessageRequest(
     throw new Error("basedOnRoomSeq must be a non-negative integer");
   }
   return value as unknown as AcknowledgeRoomMessageRequest;
+}
+
+export function validateAcknowledgeRoomInboxItemRequest(
+  value: unknown,
+): AcknowledgeRoomInboxItemRequest {
+  requireObject(value, "AcknowledgeRoomInboxItemRequest");
+  rejectUnknownKeys(
+    value,
+    ["roomId", "inboxItemId", "eventId", "basedOnRoomSeq", "idempotencyKey"],
+    "AcknowledgeRoomInboxItemRequest",
+  );
+  for (const field of ["roomId", "inboxItemId", "eventId", "idempotencyKey"] as const) {
+    requireIdentifier(value[field], field);
+  }
+  if (!Number.isSafeInteger(value.basedOnRoomSeq) || Number(value.basedOnRoomSeq) < 0) {
+    throw new Error("basedOnRoomSeq must be a non-negative safe integer");
+  }
+  return value as unknown as AcknowledgeRoomInboxItemRequest;
+}
+
+export function validateAcknowledgeRoomRequest(value: unknown): AcknowledgeRoomRequest {
+  requireObject(value, "AcknowledgeRoomRequest");
+  rejectUnknownKeys(
+    value,
+    ["roomId", "throughRoomSeq", "basedOnRoomSeq", "idempotencyKey"],
+    "AcknowledgeRoomRequest",
+  );
+  requireIdentifier(value.roomId, "roomId");
+  requireIdentifier(value.idempotencyKey, "idempotencyKey");
+  for (const field of ["throughRoomSeq", "basedOnRoomSeq"] as const) {
+    if (!Number.isSafeInteger(value[field]) || Number(value[field]) < 0) {
+      throw new Error(`${field} must be a non-negative safe integer`);
+    }
+  }
+  if (Number(value.throughRoomSeq) > Number(value.basedOnRoomSeq)) {
+    throw new Error("throughRoomSeq cannot exceed basedOnRoomSeq");
+  }
+  return value as unknown as AcknowledgeRoomRequest;
 }
 
 export function validateSyncRoomRequest(value: unknown): SyncRoomRequest {

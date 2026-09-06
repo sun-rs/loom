@@ -28,6 +28,7 @@ test("Room wake hints are content-free discriminated envelopes", () => {
     eventId: "event-1",
     participantId: "agent-one",
     reason: "mention",
+    disposition: "activation",
     roomId: "room-one",
     roomSeq: 4,
   }), {
@@ -37,6 +38,7 @@ test("Room wake hints are content-free discriminated envelopes", () => {
     eventId: "event-1",
     participantId: "agent-one",
     reason: "mention",
+    disposition: "activation",
     roomId: "room-one",
     roomSeq: 4,
   });
@@ -49,6 +51,7 @@ test("Room wake hints are content-free discriminated envelopes", () => {
       eventId: "event-1",
       participantId: "agent-one",
       reason: "mention",
+      disposition: "activation",
       roomId: "room-one",
       roomSeq: 4,
       body: "secret",

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "artifacts": [
+    {
+      "artifactId": "raft-web-avatar-presets-20260825",
+      "path": "docs/ui/evidence/raft-web-avatar-presets-20260825.json",
+      "sha256": "23e14df58428a6b0c6490c10b4c43ac379287793f940a28ba4ddd6f5548f5392",
+      "sourceType": "official-shipped-bundle",
+      "upstreamIdentifier": "https://app.raft.build/assets/index-WTraJnrd.js",
+      "upstreamVersion": "Raft Web build 666bab60d8658d9e382e2c286ce1e423231e8f31"
+    },
+    {
+      "artifactId": "raft-room-browser-observations-20260906",
+      "path": "docs/ui/evidence/raft-room-browser-observations-20260906.json",
+      "sha256": "b91b1fe44e1b034271cff0140124c4e8cfa657d45dc85c996a6b6d1bb1754ac2",
+      "sourceType": "official-browser-observation",
+      "upstreamIdentifier": "https://app.raft.build",
+      "upstreamVersion": "live-web-observation-2026-09-06"
+    },
+    {
+      "artifactId": "raft-task-public-contract-20260906",
+      "path": "docs/ui/evidence/raft-task-public-contract-20260906.json",
+      "sha256": "67d02ec0d891b1f6f05cadc521284b268f10b4d4227db244708b192e61c60bca",
+      "sourceType": "official-documentation",
+      "upstreamIdentifier": "Raft public documentation, Collaboration / Tasks",
+      "upstreamVersion": "documentation snapshot reviewed 2026-09-06"
+    },
+    {
+      "artifactId": "rah-room-adoption-contract-20260906",
+      "path": "docs/ui/evidence/rah-room-adoption-contract-20260906.json",
+      "sha256": "dbb1d6f9e7fedb12601197edaf5d13b22abf2038d78c51a119f2d2fe8884f433",
+      "sourceType": "rah-owned-design",
+      "upstreamIdentifier": "RAH Room ledger and Room-first architecture",
+      "upstreamVersion": "room-ledger-v1 repository baseline 2026-09-06"
+    }
+  ]
+}

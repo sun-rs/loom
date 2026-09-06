@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "artifactId": "rah-room-adoption-contract-20260906",
+  "source": {
+    "type": "rah-owned-design",
+    "upstreamIdentifier": "RAH Room ledger and Room-first architecture",
+    "upstreamVersion": "room-ledger-v1 repository baseline 2026-09-06",
+    "capturedAt": "2026-09-06T00:00:00.000Z"
+  },
+  "extraction": {
+    "method": "Curated index of RAH-owned protocol boundaries that adapt Raft-visible behavior to the local-first daemon.",
+    "location": "docs/room-ledger-v1.zh-CN.md and docs/agent-os-room-first-architecture.zh-CN.md in this repository.",
+    "content": {
+      "canonicalTaskSemantics": {
+        "owner": "The daemon owns Task lifecycle and persists one canonical state; visible workflow columns are projections.",
+        "boundary": "Provider turn lifecycle, assistant prose, and page-local state cannot complete a Task.",
+        "referenceEvidence": "raft-task-public-contract-20260906/taskSemantics"
+      },
+      "boundedRoomHistory": {
+        "owner": "The daemon exposes revision-keyed, cursor-bounded Room history; the browser owns only an in-memory projection.",
+        "boundary": "No transcript cache in localStorage or IndexedDB becomes conversation truth."
+      },
+      "canonicalCollaborationFlow": {
+        "owner": "Room, Task, Review, Activation, and RunAttempt have distinct daemon owners and typed transitions.",
+        "boundary": "Raft-visible workflow is adopted without importing a simulated reference-project state machine.",
+        "referenceEvidence": "raft-task-public-contract-20260906/taskSemantics"
+      },
+      "roomSystemNotifications": {
+        "owner": "The durable Human Inbox and typed Room links determine notification candidates; browser permission and local preference determine presentation.",
+        "boundary": "A browser visual test cannot establish iOS or private Raft server parity.",
+        "referenceEvidence": "raft-room-browser-observations-20260906/roomNotifications"
+      },
+      "exactPresentationAcknowledgement": {
+        "owner": "The daemon owns exact Inbox acknowledgement; the focused Web projection may request it only for the exact entity currently presented at the canonical Room head.",
+        "boundary": "Chat acknowledges visible messages only at the latest edge. Tasks acknowledges Task/Review attention only when the exact card intersects at least 50% of its board scroll container; mounted but horizontally or vertically offscreen cards remain pending. Members, background documents, stale heads, and historical message windows never acknowledge.",
+        "evidence": "The browser suite proves pending-to-acknowledged for a focused typed Task deep link, proves a 390px horizontally offscreen Task remains pending until scrolled into view, and proves unseen messages remain pending on Members, Tasks, and historical Chat views."
+      }
+    }
+  }
+}

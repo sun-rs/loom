@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import pathlib
+import subprocess
 import tempfile
 import time
 import traceback
@@ -45,6 +46,56 @@ CASE_IDS = [
     "CANVAS-SESSION-DROP-001",
     "CANVAS-PANE-FILE-VIEWER-001",
 ]
+
+ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent
+SOURCE_INPUTS = [
+    "package.json",
+    "packages/client-web/package.json",
+    "packages/client-web/public",
+    "packages/client-web/src",
+    "packages/client-web/vite.config.ts",
+    "packages/runtime-daemon/src",
+    "packages/runtime-protocol/src",
+    "scripts/build-web-client.mjs",
+    "scripts/native_codex_browser_smoke.py",
+    "scripts/native_smoke_process.py",
+    "scripts/workspace_lifecycle_browser_smoke.py",
+]
+
+
+def source_receipt() -> dict[str, Any]:
+    git_head = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=ROOT_DIR,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    if len(git_head) != 40:
+        raise RuntimeError("workspace browser receipt could not resolve Git HEAD")
+    inputs: dict[str, str] = {}
+    for relative in SOURCE_INPUTS:
+        source = ROOT_DIR / relative
+        candidates = (
+            sorted(path for path in source.rglob("*") if path.is_file())
+            if source.is_dir()
+            else [source]
+        )
+        for candidate in candidates:
+            key = candidate.relative_to(ROOT_DIR).as_posix()
+            inputs[key] = hashlib.sha256(candidate.read_bytes()).hexdigest()
+    return {
+        "gitHead": git_head,
+        "sourceInputs": inputs,
+    }
+
+
+def write_manifest(artifact_dir: pathlib.Path, value: dict[str, Any]) -> None:
+    temporary = artifact_dir / "manifest.json.tmp"
+    temporary.write_text(
+        json.dumps(value, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    os.replace(temporary, artifact_dir / "manifest.json")
 
 
 SIDEBAR_VISUAL_METRICS_SCRIPT = """
@@ -656,6 +707,8 @@ def assert_pwa_workbench_header_clear_of_notice(page, page_name: str) -> dict[st
 
 
 def main() -> int:
+    started_at = time.time()
+    receipt = source_receipt()
     try:
         preflight_browser_runtime()
     except Exception as exc:
@@ -3010,10 +3063,17 @@ def main() -> int:
             for path in sorted(artifact_dir.glob("*.png"))
             if path.is_relative_to(pathlib.Path.cwd())
         )
-        print(
-            json.dumps(
-                {
+        result = {
                     "ok": True,
+                    "schemaVersion": 1,
+                    "suite": "workspace-lifecycle-browser",
+                    "startedAt": time.strftime(
+                        "%Y-%m-%dT%H:%M:%SZ", time.gmtime(started_at)
+                    ),
+                    "finishedAt": time.strftime(
+                        "%Y-%m-%dT%H:%M:%SZ", time.gmtime()
+                    ),
+                    **receipt,
                     "baseUrl": base_url,
                     "browser": selected_browser_name(),
                     "headless": browser_headless(),
@@ -3051,11 +3111,9 @@ def main() -> int:
                         "A workspace can be added again after the list becomes empty.",
                         "No browser page errors occur during the lifecycle.",
                     ],
-                },
-                ensure_ascii=False,
-                indent=2,
-            )
-        )
+                }
+        write_manifest(artifact_dir, result)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
     except Exception as exc:
         try:
@@ -3063,10 +3121,17 @@ def main() -> int:
                 save_browser_screenshot(page, artifact_dir, "failure")
         except Exception:
             pass
-        print(
-            json.dumps(
-                {
+        result = {
                     "ok": False,
+                    "schemaVersion": 1,
+                    "suite": "workspace-lifecycle-browser",
+                    "startedAt": time.strftime(
+                        "%Y-%m-%dT%H:%M:%SZ", time.gmtime(started_at)
+                    ),
+                    "finishedAt": time.strftime(
+                        "%Y-%m-%dT%H:%M:%SZ", time.gmtime()
+                    ),
+                    **receipt,
                     "error": str(exc),
                     "traceback": traceback.format_exc(),
                     "baseUrl": base_url,
@@ -3075,12 +3140,9 @@ def main() -> int:
                     "caseIds": CASE_IDS,
                     "pageErrors": page_errors,
                     "artifactDir": str(artifact_dir),
-                },
-                ensure_ascii=False,
-                indent=2,
-            ),
-            file=os.sys.stderr,
-        )
+                }
+        write_manifest(artifact_dir, result)
+        print(json.dumps(result, ensure_ascii=False, indent=2), file=os.sys.stderr)
         return 1
     finally:
         if daemon is not None:

@@ -91,6 +91,26 @@ test("Room message requests expose mentions but not server-owned Attention reaso
   );
 });
 
+test("Room reply requests carry only a stable parent reference", () => {
+  assert.deepEqual(validatePostRoomMessageRequest({
+    roomId: "room-one",
+    body: "reply",
+    replyToMessageId: "message-one",
+    idempotencyKey: "reply-one",
+  }), {
+    roomId: "room-one",
+    body: "reply",
+    replyToMessageId: "message-one",
+    idempotencyKey: "reply-one",
+  });
+  assert.throws(() => validatePostRoomMessageRequest({
+    roomId: "room-one",
+    body: "reply",
+    threadId: "client-forged-thread",
+    idempotencyKey: "reply-two",
+  }), /unknown field threadId/);
+});
+
 test("Room creation normalizes semantic defaults before idempotency", () => {
   const implicit = validateCreateRoomRequest({
     workspaceKey: "workspace-main",

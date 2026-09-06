@@ -1,6 +1,6 @@
 # Room Ledger v1：第一条可回滚纵切
 
-> 状态：已实现内部 Kernel、认证只读 Application Port、可分页 Room 目录、生产只读 HTTP 路由、typed Web SDK 与离线 cursor 运维，尚未接入 Web 页面、写入 HTTP、Council 或 Provider runtime。
+> 状态：历史 Phase 1 纵切设计与证据。后续写入、Task、Activation 和 Web 已继续实现；当前事实见 [Room-first 当前交付边界](./room-first-delivery-status.zh-CN.md)。
 >
 > 日期：2026-09-06（Asia/Shanghai）
 
@@ -16,9 +16,9 @@
 - `packages/client-web/src/room-api.ts` 是 Web/PWA 的 typed Room read SDK；页面不能自行拼 URL、解释非 JSON 错误或注入 actor。
 - `packages/runtime-daemon/src/room/room-runtime.ts` 统一拥有生产数据库、cursor key、只读端口与生命周期；`room-application-lease.ts` 同时锁定“只解析父目录的稳定公开位置”和“当前完整 realpath 物理路径”，两种身份各自在稳定父目录 `.rah-room-locks/` 中以哈希定位 SQLite lease，并按路径排序后用 `BEGIN EXCLUSIVE` 取得；身份相同时自动去重。随后还取得 Room 根内的 `.rah-room-owner.sqlite` lease，它会随数据目录改名而移动，确保活动数据库不能从改名后的新路径被第二个 runtime 打开。
 - `packages/runtime-daemon/src/room/room-cursor-key-store.ts` 持有独立于设备 token 的持久 cursor key/generation；正常重启复用，数据库恢复或回滚后显式轮换，使恢复前 cursor 失效。
-- 当前 Session/Council owner 不变；新路由只有读取能力，现有页面尚不消费它，因此不影响 1.x 的输入接受、历史和 Provider lifecycle。
+- 本文冻结时 Session/Council owner 不变，首批路由只有读取能力；后续生产实现已经增加写入、Task、Activation 与 Room 页面，但仍保持 provider lifecycle 不由页面接管。
 
-生产只读 HTTP 已开放为五个 `POST /api/room/v1/{rooms,bootstrap,events,older-messages,inbox}` 端点。主路由对每个普通请求只调用一次 `DeviceAuthManager.authenticate()`，并把结果注入 Application Port；浏览器不能传入 `actorId`/`participantId`。请求体上限 64 KiB，成功和失败均返回 typed envelope，最终预序列化 Buffer 不再包装或 stringify。它没有写能力；Web 已有 typed SDK，但可见页面尚未消费。
+本文冻结时生产只读 HTTP 开放五个 `POST /api/room/v1/{rooms,bootstrap,events,older-messages,inbox}` 端点。当前版本另有 Task 读取与严格 Human command 路由；所有路由仍由 `DeviceAuthManager.authenticate()` 注入 Principal，浏览器不能传入 `actorId`/`participantId`。
 
 ## 2. 来源登记
 
@@ -37,7 +37,7 @@
 3. 业务投影、RoomEvent、InboxItem、content-free outbox 在一个 `BEGIN IMMEDIATE` 事务中提交；任何失败不允许留下半条事件或半个提醒。命令回执只保存规范化意图摘要与 event 引用，不额外复制消息正文。
 4. Attention 由 daemon 根据 Room 类型和已验证的成员关系推导：direct Room 自动提醒另一位成员，channel 只接受显式 mention；客户端不能提交 `attentionReason` 或任意收件人来伪造 `room_policy` 等系统原因。
 5. wake/outbox 只包含 event/Room/participant/cursor/reason，不包含消息正文。outbox 使用全局单调序号、限时 lease、持久 attempt count、每次领取唯一的 fencing token、延迟重试和发布回执；过期 lease 在 daemon 重启后仍可重新领取。完成/失败必须同时匹配 worker 与 token，旧 attempt 即使复用同名 worker 也不能完成新 lease；相同 claim token 的完成重放幂等。
-6. wake、outbox 发布和 `syncRoom` 均不改变 Inbox acknowledgement。只有显式 `acknowledgeMessage` 可以推进状态，并产生 `message.acknowledged` 事件。ACK 的 `basedOnRoomSeq` 必须已观察目标消息，但不要求等于当前 Room head；不同客户端重复 ACK 返回同一 canonical acknowledgement。
+6. wake、outbox 发布和 `syncRoom` 均不改变 Inbox acknowledgement。只有带精确目标的显式 `acknowledgeMessage` 或 `acknowledgeInboxItem` 命令可以推进状态；消息 ACK 还产生 `message.acknowledged` 事件。ACK 的 `basedOnRoomSeq` 必须已观察目标实体；不同客户端重复相同 ACK 返回同一 canonical acknowledgement。
 7. Membership 写入带 `basedOnRoomSeq`；过期页面不能静默覆盖较新的成员状态。只有 Human 可以创建首版私有 channel/direct Room；成员变更要求 owner/admin，只有 owner 可以授予 owner；direct Room 限两位 participant。同一 workspace 的同一无序 participant pair 只能完成一个 direct Room；第二个未完成壳可以创建，但加入第二位成员时必须冲突并完整回滚。
 8. 客户端请求体不能携 `actorId`。未来 HTTP adapter 必须从 daemon-owned authenticated principal context 注入 actor。Local Human identity 写入 ledger metadata；即使默认 `owner` handle 已占用，也以稳定 principal ID 建立不会碰撞的新 handle。
 9. Inbox 使用独立的全局单调 `inboxSeq` 翻页，不能拿各 Room 可能重复的 `eventSeq` 充当跨 Room cursor。所有普通读取默认且最多返回 500 条；Room 成员最多 500，Principal 字段有固定长度上限。`room_sync`、`listMessages` 和 Application Port 的 1 MiB 约束都针对最终完整 JSON 响应；latest bootstrap 与 event page 是可辨识的两种响应，默认同步不全量驻留长 Room。
@@ -55,6 +55,10 @@
 19. 生产 Room Application Port 在 `~/.rah/room`（或当前 `RAH_DATA_HOME/room`）独占 `room.db` 与 `cursor-key.json`。同一公开位置和同一物理数据目标都只能有一个跨进程 owner；另一个 daemon 或 `rah room-cursor` 维护进程必须失败。公开位置 lease 锚点通常位于稳定的 `RAH_DATA_HOME/.rah-room-locks/<location-hash>.sqlite`；若 Room 根本身是 symlink，还会在物理目标的稳定父目录取得 `<physical-hash>.sqlite`。外部锚点不属于 Room 数据备份、恢复替换或文件 GC 的目标，运行期间不得替换其稳定父级；根内 `.rah-room-owner.sqlite` 则必须作为 Room 数据集的一部分随目录原子移动。外部双身份锁阻止原路径替换和 alias 绕过，内部锁阻止活动数据根被 rename 后从新路径直接接管，三者共同保证一个数据库只有一个 owner。daemon 先停止接收并排空 HTTP，再关闭 ledger 与 lease；通知偏好落盘、WebSocket、engine 或 Room 任一关闭步骤失败时，其他资源仍必须全部尝试释放，最后统一报告关闭错误。启动初始化或监听失败、遗留 rotation lock、未知 schema 都必须同时释放已取得的 engine/Room owner 并失败关闭。
 
 20. Room 目录只投影当前认证 Human 的 Membership，不因 `visibility=public` 暴露未授权 Room；public workspace ACL 在有 canonical workspace membership owner 前保持关闭。目录以不可变 `catalog_seq` 倒序分页，首请求冻结 `throughCatalogSeq`，中途新建或新加入的 Room 只出现在新的分页链。direct 条目从同一 Principal 图投影 `directPeer`，同时携带 participant count、Room head 和当前 Human 的 pending Attention count；页面不得另建人名/头像缓存。
+
+21. Web 的自动 ACK 是精确实体呈现协议，不是打开某个 tab 就清空 Room。文档必须可见且聚焦，projection 必须已观察 canonical head；Chat 还要求 latest 历史窗口和底部，只 ACK 当前渲染消息；Tasks 由滚动容器的 `IntersectionObserver` 维护至少 50% 相交的 Task ID 集合，只 ACK 该集合绑定的 Task/Review Inbox。Members、横向或纵向屏外 Task、旧历史窗口、后台文档、stale head 和非目标实体保持 pending。daemon 仍以 `inboxItemId + eventId + entity + basedOnRoomSeq` 逐项鉴权，浏览器没有通用的“全部已读”捷径。
+
+22. Task 列表是有界看板投影，不是 Review 正文归档。它携带当前 frozen Submission 以及每位 reviewer 的身份、处置、目标 digest 和时间，但不重复 Review summary；否则 100 位 reviewer 的最大合法多字节摘要可让一个 Task 自身超过 1 MiB，从而永久阻塞冻结列表页。Review 正文不截断、不删除，继续由 canonical ledger 保存；后续详情/审阅读取必须使用独立的实体定位与有界分页合同。
 
 ## 4. 物理存储决策
 
@@ -81,7 +85,7 @@ Rotation lock 是已 fsync 的恢复证据，包含 expected/target generation �
 - 两个 Room 产生相同 `eventSeq` 时，Inbox 仍通过全局 `inboxSeq` 无遗漏翻页；
 - stale membership 写入完整回滚；
 - agent 不能创建 Room，admin 不能授予 owner，普通 member 不能改成员，direct Room 不能加入第三人；
-- outbox lease 排他、同名 worker 的旧 fencing token 拒绝、过期后恢复、失败延迟重试、同 claim 完成重放和有界已发布 GC；
+- outbox lease 排他、同名 worker 的旧 fencing token 拒绝、过期后恢复、失败延迟重试、同 claim 完成重放、毒 payload sticky block，以及基于 durable published head 的有界 GC/空闲重启自愈；
 - bootstrap 使用独立消息窗口，完整 sync/listMessages 响应受字节预算约束，超长 Principal 字段被拒绝；
 - 大正文查询在 SQL 读取阶段按 `json_quote(body)` 的真实 JSON 转义体积受预算约束，消息页具有冻结的正向/反向续页语义；
 - 冻结事件与历史链在中途 append 时无重复/遗漏，链结束后的 live cursor 精确接收新增事件；控制字符扩张后的完整 Application response 仍不超过 1 MiB；
@@ -108,7 +112,7 @@ Rotation lock 是已 fsync 的恢复证据，包含 expected/target generation �
 
 本批不包含可见页面验收。新增公开路由已通过真实 loopback HTTP 请求，但这不等于浏览器产品流程；UI 消费 canonical SDK 后，必须补真实桌面与 390×844 浏览器路径。对于与 Raft 相同的页面和交互，仍必须回到官方同条件浏览器取证；内部组件库只消除 RAH 自身分裂，不自动等于 Raft 证据。
 
-## 6. 下一施工顺序
+## 6. 历史下一施工顺序
 
 1. 增加真实 outbox dispatcher 的启动/停止、退避与观测；当前 ledger 已具可靠领取协议，但尚没有常驻发布进程。
 2. 从 Council 建立单向兼容 adapter，验证同一消息只写新 ledger 一次；旧 Council store 保持可回滚，不做双向双写。
@@ -116,4 +120,4 @@ Rotation lock 是已 fsync 的恢复证据，包含 expected/target generation �
 4. 让 Raft 风格 Room 页面消费 canonical SDK。与 Raft 相同的 Room/DM 列表、空态、hover、浮层、拖拽和断点仍需官方同条件浏览器取证与组件状态矩阵；内部组件库负责消除 RAH 自身分裂，但不是官方真相。
 5. public/workspace ACL 与个人 Manual/Recent/A–Z 排序各自建立 owner 后再接 UI，不能把 schema 中的 `public` 或页面本地排序误当已授权业务事实。
 
-明确仍未实现：public/workspace ACL、control Room、邀请制多 Human、线程/Task/Review、附件与文件引用、正式 dispatcher、Room 写入/WS、Council 迁移、Activation/Run、浏览器 UI。Room list 与 direct 配对去重已落在 Kernel/只读 SDK，但尚未接入可见页面；不能外推为 Room-first 产品已经交付。
+本节记录当时的待办，不能作为当前完成度清单。当前未收口项以 [Room-first 当前交付边界](./room-first-delivery-status.zh-CN.md) 为唯一入口；尤其生产 AgentHost、冻结代码交付、ACL/附件/Placement 和全页面官方 UI 取证仍不能外推为已交付。

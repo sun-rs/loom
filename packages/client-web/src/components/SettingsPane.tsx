@@ -1044,8 +1044,8 @@ export function SettingsPane() {
                 onToggle={() => setHideOpenCodeReasoningInChat(!hideOpenCodeReasoningInChat)}
               />
               <SettingsToggleRow
-                label="Notify on unread replies"
-                description="Show a system notification when a session or Council gets a new reply while RAH is hidden or unfocused."
+                label="Notify on work activity"
+                description="Enabled by default. Notify for unread session, Council, Room or DM replies, task attention and permission requests while the target is not focused."
                 checked={browserNotifications.enabled}
                 disabled={
                   browserNotifications.pending ||

@@ -10,6 +10,7 @@ import type {
   RoomInboxReadResponse,
   RoomListReadResponse,
   RoomOlderMessagesReadResponse,
+  RoomTaskListReadResponse,
 } from "@rah/runtime-protocol";
 import { ROOM_READ_HTTP_STATUS_BY_ERROR_CODE } from "@rah/runtime-protocol";
 
@@ -72,6 +73,13 @@ const ROOMS: RoomListReadResponse = {
   hasMore: false,
 };
 
+const TASKS: RoomTaskListReadResponse = {
+  mode: "task_list",
+  roomId: "room-general",
+  items: [],
+  hasMore: false,
+};
+
 function port(overrides: Partial<RoomReadApplicationPort> = {}): RoomReadApplicationPort {
   return {
     bootstrap: () => BOOTSTRAP,
@@ -79,6 +87,7 @@ function port(overrides: Partial<RoomReadApplicationPort> = {}): RoomReadApplica
     readOlderMessages: () => OLDER_MESSAGES,
     readInbox: () => INBOX,
     listRooms: () => ROOMS,
+    listTasks: () => TASKS,
     ...overrides,
   };
 }
@@ -119,7 +128,7 @@ function realAdapterFixture() {
   };
 }
 
-test("RoomReadHttpAdapter dispatches the five typed read operations", () => {
+test("RoomReadHttpAdapter dispatches every typed read operation", () => {
   const calls: string[] = [];
   const adapter = new RoomReadHttpAdapter(port({
     bootstrap: () => { calls.push("bootstrap"); return BOOTSTRAP; },
@@ -127,6 +136,7 @@ test("RoomReadHttpAdapter dispatches the five typed read operations", () => {
     readOlderMessages: () => { calls.push("older_messages"); return OLDER_MESSAGES; },
     readInbox: () => { calls.push("inbox"); return INBOX; },
     listRooms: () => { calls.push("rooms"); return ROOMS; },
+    listTasks: () => { calls.push("tasks"); return TASKS; },
   }));
 
   const responses = [
@@ -138,16 +148,18 @@ test("RoomReadHttpAdapter dispatches the five typed read operations", () => {
     }),
     adapter.execute(PRINCIPAL, "inbox", {}),
     adapter.execute(PRINCIPAL, "rooms", {}),
+    adapter.execute(PRINCIPAL, "tasks", { roomId: "room-general" }),
   ];
 
-  assert.deepEqual(calls, ["bootstrap", "events", "older_messages", "inbox", "rooms"]);
-  assert.deepEqual(responses.map((response) => response.status), [200, 200, 200, 200, 200]);
+  assert.deepEqual(calls, ["bootstrap", "events", "older_messages", "inbox", "rooms", "tasks"]);
+  assert.deepEqual(responses.map((response) => response.status), [200, 200, 200, 200, 200, 200]);
   assert.deepEqual(responses.map((response) => body(response)), [
     { ok: true, data: BOOTSTRAP },
     { ok: true, data: EVENTS },
     { ok: true, data: OLDER_MESSAGES },
     { ok: true, data: INBOX },
     { ok: true, data: ROOMS },
+    { ok: true, data: TASKS },
   ]);
 });
 

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "artifactId": "raft-room-browser-observations-20260906",
+  "source": {
+    "type": "official-browser-observation",
+    "upstreamIdentifier": "https://app.raft.build",
+    "upstreamVersion": "live-web-observation-2026-09-06",
+    "capturedAt": "2026-09-06T00:00:00.000Z"
+  },
+  "extraction": {
+    "method": "Authenticated read-only browser comparison of the official Raft Web product; observations are behavior evidence, not copied source code.",
+    "location": "Official Room/channel, direct-message, task-board, member, and Settings > Notifications surfaces at desktop and narrow viewports.",
+    "content": {
+      "roomShell": {
+        "observed": [
+          "The navigation rail, Room sidebar, conversation surface, and optional detail panel share one continuous divider system.",
+          "The Room sidebar and detail panel have bounded resize behavior; drag state does not introduce a second visual theme.",
+          "Opening another Room or direct message closes detail state that belongs to the previous conversation."
+        ],
+        "scope": "Composition and interaction evidence only. Exact dimensions remain fixture- and browser-acceptance assertions."
+      },
+      "roomTabsEmptyStatesControls": {
+        "observed": [
+          "Chat, Tasks, Files, and member/detail surfaces use a shared tab and toolbar visual language.",
+          "Empty states use a repeated icon, title, and supporting-copy composition rather than page-local placeholder text.",
+          "Hover, focus, disabled, loading, long-label, and narrow-screen states are part of the interaction contract."
+        ],
+        "scope": "No server-side behavior is inferred from visual state alone."
+      },
+      "roomTaskBoard": {
+        "observed": [
+          "The Task board uses five status columns with compact cards whose always-visible face prioritizes Task number, title, status and available actions.",
+          "Delivery or diagnostic detail does not permanently expand every card in the board; RAH-specific frozen evidence remains reachable through an explicit disclosure.",
+          "Moving or accepting a card is a visible command surface, but its business result must still be verified against canonical Task state."
+        ],
+        "scope": "Composition evidence only. RAH's immutable delivery evidence and Human acceptance rules are local-first adaptations, not inferred Raft server behavior."
+      },
+      "roomNotifications": {
+        "observed": [
+          "Raft exposes notification enablement, test notification, and workspace mute controls in Settings.",
+          "Visible settings behavior is evidence for control placement and states; RAH notification delivery remains owned by the local Human Inbox and browser permission boundary."
+        ],
+        "scope": "This observation does not claim parity with Raft iOS delivery or its private server implementation."
+      }
+    }
+  }
+}

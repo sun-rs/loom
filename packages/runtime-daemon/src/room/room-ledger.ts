@@ -1,10 +1,11 @@
-import { createHash, randomUUID } from "node:crypto";
+import { createHash, randomInt, randomUUID } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 import {
-  assertRoomTextStorageSafe,
+  type AcknowledgeRoomRequest,
+  type AcknowledgeRoomInboxItemRequest,
   type AcknowledgeRoomMessageRequest,
   type AddRoomMemberRequest,
   type CreateRoomRequest,
@@ -12,6 +13,7 @@ import {
   type RoomEvent,
   type RoomAttentionReason,
   type RoomInboxItem,
+  type RoomInboxDisposition,
   type RoomMembership,
   type RoomMessage,
   type RoomMessagePage,
@@ -19,11 +21,16 @@ import {
   type RoomOutboxEntry,
   type RoomPrincipal,
   type RoomRecord,
-  type RoomSnapshot,
   type RoomSyncResult,
+  type RoomTask,
+  type RoomTaskMutationResult,
+  type RoomTaskReviewDisposition,
+  type RoomTaskReviewMutationResult,
+  type RoomTaskSubmissionMutationResult,
+  type RoomWorkerExecution,
+  type RoomAgentAvatarKey,
   type SyncRoomRequest,
   validateAddRoomMemberRequest,
-  validateAcknowledgeRoomMessageRequest,
   validateCreateRoomRequest,
   validatePostRoomMessageRequest,
   validateSyncRoomRequest,
@@ -36,7 +43,6 @@ import {
 } from "./room-catalog";
 import {
   eventFromRow,
-  inboxFromRow,
   integer,
   membershipFromRow,
   messageFromRow,
@@ -48,26 +54,40 @@ import {
 import {
   migrateRoomLedgerV1ToV2,
   migrateRoomLedgerV2ToV3,
+  migrateRoomLedgerV3ToV4,
+  migrateRoomLedgerV4ToV5,
+  migrateRoomLedgerV5ToV6,
+  migrateRoomLedgerV6ToV7,
   ROOM_LEDGER_SCHEMA,
   ROOM_LEDGER_SCHEMA_VERSION,
 } from "./room-schema";
 import { RoomOutboxLedger } from "./room-outbox-ledger";
+import { RoomInboxService } from "./room-inbox-service";
+import {
+  RoomMessageReadService,
+  withRoomResponseBytes,
+} from "./room-message-read-service";
+import { RoomPrincipalService } from "./room-principal-service";
+import { RoomTaskService } from "./room-task-service";
 
 export interface RoomLedgerOptions {
   createId?: (prefix: string) => string;
   now?: () => Date;
+  chooseAvatarIndex?: (size: number) => number;
 }
 
 const ROOM_SYNC_RESPONSE_BYTE_LIMIT = 1_048_576;
 const ROOM_LIST_LIMIT = 500;
 const ROOM_MEMBER_LIMIT = 500;
-const STABLE_IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
-
 export class RoomLedger {
   readonly #database: DatabaseSync;
   readonly #createId: (prefix: string) => string;
   readonly #now: () => Date;
   readonly #outbox: RoomOutboxLedger;
+  readonly #inbox: RoomInboxService;
+  readonly #tasks: RoomTaskService;
+  readonly #principals: RoomPrincipalService;
+  readonly #messageReads: RoomMessageReadService;
   #closed = false;
 
   constructor(databasePath: string, options: RoomLedgerOptions = {}) {
@@ -81,6 +101,10 @@ export class RoomLedger {
       schemaVersion !== 0 &&
       schemaVersion !== 1 &&
       schemaVersion !== 2 &&
+      schemaVersion !== 3 &&
+      schemaVersion !== 4 &&
+      schemaVersion !== 5 &&
+      schemaVersion !== 6 &&
       schemaVersion !== ROOM_LEDGER_SCHEMA_VERSION
     ) {
       this.#database.close();
@@ -93,21 +117,100 @@ export class RoomLedger {
       if (schemaVersion === 1) {
         migrateRoomLedgerV1ToV2(this.#database);
         migrateRoomLedgerV2ToV3(this.#database);
+        migrateRoomLedgerV3ToV4(this.#database);
+        migrateRoomLedgerV4ToV5(this.#database);
+        migrateRoomLedgerV5ToV6(this.#database);
+        migrateRoomLedgerV6ToV7(this.#database);
       } else if (schemaVersion === 2) {
         migrateRoomLedgerV2ToV3(this.#database);
+        migrateRoomLedgerV3ToV4(this.#database);
+        migrateRoomLedgerV4ToV5(this.#database);
+        migrateRoomLedgerV5ToV6(this.#database);
+        migrateRoomLedgerV6ToV7(this.#database);
+      } else if (schemaVersion === 3) {
+        migrateRoomLedgerV3ToV4(this.#database);
+        migrateRoomLedgerV4ToV5(this.#database);
+        migrateRoomLedgerV5ToV6(this.#database);
+        migrateRoomLedgerV6ToV7(this.#database);
+      } else if (schemaVersion === 4) {
+        migrateRoomLedgerV4ToV5(this.#database);
+        migrateRoomLedgerV5ToV6(this.#database);
+        migrateRoomLedgerV6ToV7(this.#database);
+      } else if (schemaVersion === 5) {
+        migrateRoomLedgerV5ToV6(this.#database);
+        migrateRoomLedgerV6ToV7(this.#database);
+      } else if (schemaVersion === 6) {
+        migrateRoomLedgerV6ToV7(this.#database);
       }
       this.#database.exec(ROOM_LEDGER_SCHEMA);
     } catch (error) {
       this.#database.close();
       throw this.#storageError(error);
     }
-    this.#createId = options.createId ?? ((prefix) => `${prefix}-${randomUUID()}`);
+    this.#createId =
+      options.createId ?? ((prefix) => `${prefix}-${randomUUID()}`);
     this.#now = options.now ?? (() => new Date());
+    this.#principals = new RoomPrincipalService({
+      database: this.#database,
+      createId: this.#createId,
+      chooseAvatarIndex:
+        options.chooseAvatarIndex ?? ((size) => randomInt(size)),
+      timestamp: () => this.#timestamp(),
+      transaction: <T>(operation: () => T) => this.#transaction(operation),
+      storageError: (error) => this.#storageError(error),
+    });
+    this.#messageReads = new RoomMessageReadService(this.#database);
+    try {
+      this.#principals.backfillAgentAvatarKeys();
+    } catch (error) {
+      this.#database.close();
+      throw this.#storageError(error);
+    }
     this.#outbox = new RoomOutboxLedger({
       database: this.#database,
       createId: this.#createId,
       now: this.#now,
       transaction: <T>(operation: () => T) => this.#transaction(operation),
+    });
+    this.#inbox = new RoomInboxService({
+      database: this.#database,
+      now: this.#now,
+      transaction: <T>(operation: () => T) => this.#transaction(operation),
+      command: (actorId, kind, request) =>
+        this.#command(actorId, kind, request),
+      rememberCommand: (actorId, kind, request, event) =>
+        this.#rememberCommand(actorId, kind, request, event),
+      appendEvent: (input) => this.#appendEvent(input),
+      requireMembership: (roomId, principalId) =>
+        this.#requireMembership(roomId, principalId),
+      requirePrincipal: (principalId) => this.#requirePrincipal(principalId),
+      roomHead: (roomId) => this.#roomHead(roomId),
+      maximumList: ROOM_LIST_LIMIT,
+    });
+    this.#tasks = new RoomTaskService({
+      database: this.#database,
+      createId: this.#createId,
+      now: this.#now,
+      transaction: <T>(operation: () => T) => this.#transaction(operation),
+      command: (actorId, kind, request) =>
+        this.#command(actorId, kind, request),
+      rememberCommand: (actorId, kind, request, event) =>
+        this.#rememberCommand(actorId, kind, request, event),
+      appendEvent: (input) => this.#appendEvent(input),
+      appendAttention: (event, participantId, reason, createdAt, disposition) =>
+        this.#appendAttention(
+          event,
+          participantId,
+          reason,
+          createdAt,
+          disposition,
+        ),
+      ensureThread: (message, createdAt) =>
+        this.#ensureThread(message, createdAt),
+      requireMembership: (roomId, principalId) =>
+        this.#requireMembership(roomId, principalId),
+      requireMessage: (messageId) => this.#requireMessage(messageId),
+      roomHead: (roomId) => this.#roomHead(roomId),
     });
   }
 
@@ -116,104 +219,18 @@ export class RoomLedger {
     handle: string;
     kind: RoomPrincipal["kind"];
     displayName?: string;
+    avatarKey?: RoomAgentAvatarKey;
   }): RoomPrincipal {
-    if (!STABLE_IDENTIFIER.test(input.principalId)) {
-      throw roomError("invalid_argument", "principalId must be a stable identifier");
-    }
-    if (!STABLE_IDENTIFIER.test(input.handle)) {
-      throw roomError("invalid_argument", "handle must be a stable identifier");
-    }
-    if (input.kind !== "human" && input.kind !== "agent" && input.kind !== "service") {
-      throw roomError("invalid_argument", "principal kind must be human, agent, or service");
-    }
-    const displayName = input.displayName?.trim();
-    if (displayName !== undefined && (displayName.length < 1 || displayName.length > 120)) {
-      throw roomError("invalid_argument", "displayName must contain 1 to 120 characters");
-    }
-    if (displayName !== undefined) {
-      try {
-        assertRoomTextStorageSafe(displayName, "displayName");
-      } catch (error) {
-        throw roomError(
-          "invalid_argument",
-          error instanceof Error ? error.message : "displayName is not storage-safe",
-        );
-      }
-    }
-    const existing = this.#database
-      .prepare("SELECT * FROM room_principals WHERE principal_id = ?")
-      .get(input.principalId) as Row | undefined;
-    if (existing) {
-      const principal = principalFromRow(existing);
-      if (
-        principal.handle !== input.handle ||
-        principal.kind !== input.kind ||
-        principal.displayName !== displayName
-      ) {
-        throw roomError(
-          "conflict",
-          `principal ${input.principalId} already has a different definition`,
-        );
-      }
-      return principal;
-    }
-    const handleOwner = this.#principalByHandle(input.handle);
-    if (handleOwner) {
-      throw roomError("conflict", `handle ${input.handle} is already in use`);
-    }
-    const createdAt = this.#timestamp();
-    try {
-      this.#database
-        .prepare(
-          "INSERT INTO room_principals(principal_id, handle, kind, display_name, created_at) VALUES(?, ?, ?, ?, ?)",
-        )
-        .run(input.principalId, input.handle, input.kind, displayName ?? null, createdAt);
-    } catch (error) {
-      throw this.#storageError(error);
-    }
-    return {
-      principalId: input.principalId,
-      handle: input.handle,
-      kind: input.kind,
-      ...(displayName ? { displayName } : {}),
-      createdAt,
-    };
+    return this.#principals.provision(input);
   }
 
-  ensureLocalHumanPrincipal(input: {
-    handle?: string;
-    displayName?: string;
-  } = {}): RoomPrincipal {
-    const existing = this.#database
-      .prepare("SELECT value FROM room_metadata WHERE key = 'local_human_principal_id'")
-      .get() as Row | undefined;
-    if (existing) return this.#requirePrincipal(text(existing, "value"));
-    return this.#transaction(() => {
-      const raced = this.#database
-        .prepare("SELECT value FROM room_metadata WHERE key = 'local_human_principal_id'")
-        .get() as Row | undefined;
-      if (raced) return this.#requirePrincipal(text(raced, "value"));
-      const principalId = this.#createId("principal");
-      const preferredHandle = input.handle ?? "owner";
-      const handle = this.#principalByHandle(preferredHandle)
-        ? `${preferredHandle.slice(0, 110)}-${createHash("sha256")
-            .update(principalId)
-            .digest("hex")
-            .slice(0, 12)}`
-        : preferredHandle;
-      const principal = this.provisionPrincipal({
-        principalId,
-        handle,
-        kind: "human",
-        displayName: input.displayName ?? "Owner",
-      });
-      this.#database
-        .prepare(
-          "INSERT INTO room_metadata(key, value) VALUES('local_human_principal_id', ?)",
-        )
-        .run(principal.principalId);
-      return principal;
-    });
+  ensureLocalHumanPrincipal(
+    input: {
+      handle?: string;
+      displayName?: string;
+    } = {},
+  ): RoomPrincipal {
+    return this.#principals.ensureLocalHuman(input);
   }
 
   createRoom(
@@ -223,7 +240,11 @@ export class RoomLedger {
     const request = this.#validate(() => validateCreateRoomRequest(rawRequest));
     const command = this.#command(actorId, "room.create", request);
     if (command) {
-      return { value: this.#requireRoom(command.aggregateId), event: command, deduplicated: true };
+      return {
+        value: this.#requireRoom(command.aggregateId),
+        event: command,
+        deduplicated: true,
+      };
     }
     const actor = this.#requirePrincipal(actorId);
     if (actor.kind !== "human") {
@@ -233,7 +254,11 @@ export class RoomLedger {
     return this.#transaction(() => {
       const replay = this.#command(actorId, "room.create", request);
       if (replay) {
-        return { value: this.#requireRoom(replay.aggregateId), event: replay, deduplicated: true };
+        return {
+          value: this.#requireRoom(replay.aggregateId),
+          event: replay,
+          deduplicated: true,
+        };
       }
       const createdAt = this.#timestamp();
       const room: RoomRecord = {
@@ -302,7 +327,9 @@ export class RoomLedger {
     actorId: string,
     rawRequest: AddRoomMemberRequest,
   ): RoomMutationResult<RoomMembership> {
-    const request = this.#validate(() => validateAddRoomMemberRequest(rawRequest));
+    const request = this.#validate(() =>
+      validateAddRoomMemberRequest(rawRequest),
+    );
     const command = this.#command(actorId, "room.member.add", request);
     if (command) {
       return {
@@ -322,8 +349,14 @@ export class RoomLedger {
         };
       }
       const actorMembership = this.#requireMembership(request.roomId, actorId);
-      if (actorMembership.role !== "owner" && actorMembership.role !== "admin") {
-        throw roomError("forbidden", "Room membership changes require owner or admin role");
+      if (
+        actorMembership.role !== "owner" &&
+        actorMembership.role !== "admin"
+      ) {
+        throw roomError(
+          "forbidden",
+          "Room membership changes require owner or admin role",
+        );
       }
       if (request.role === "owner" && actorMembership.role !== "owner") {
         throw roomError("forbidden", "Only a Room owner may grant owner role");
@@ -331,7 +364,9 @@ export class RoomLedger {
       const principal = this.#requirePrincipal(request.principalId);
       this.#requireRoomHead(request.roomId, request.basedOnRoomSeq);
       const room = this.#requireRoom(request.roomId);
-      const memberCount = this.#roomMembershipPrincipalIds(request.roomId).length;
+      const memberCount = this.#roomMembershipPrincipalIds(
+        request.roomId,
+      ).length;
       if (room.kind === "direct") {
         if (request.role !== "member") {
           throw roomError(
@@ -340,7 +375,10 @@ export class RoomLedger {
           );
         }
         if (memberCount >= 2) {
-          throw roomError("conflict", "A Direct Room cannot have more than two participants");
+          throw roomError(
+            "conflict",
+            "A Direct Room cannot have more than two participants",
+          );
         }
       }
       if (memberCount >= ROOM_MEMBER_LIMIT) {
@@ -357,17 +395,26 @@ export class RoomLedger {
       }
       let directPair: [string, string] | undefined;
       if (room.kind === "direct" && memberCount === 1) {
-        const existingParticipant = this.#roomMembershipPrincipalIds(request.roomId)[0]!;
+        const existingParticipant = this.#roomMembershipPrincipalIds(
+          request.roomId,
+        )[0]!;
         if (existingParticipant === request.principalId) {
-          throw roomError("conflict", "A Direct Room requires two distinct participants");
+          throw roomError(
+            "conflict",
+            "A Direct Room requires two distinct participants",
+          );
         }
-        directPair = existingParticipant < request.principalId
-          ? [existingParticipant, request.principalId]
-          : [request.principalId, existingParticipant];
-        const existingDirect = this.#database.prepare(
-          `SELECT room_id FROM room_direct_pairs
+        directPair =
+          existingParticipant < request.principalId
+            ? [existingParticipant, request.principalId]
+            : [request.principalId, existingParticipant];
+        const existingDirect = this.#database
+          .prepare(
+            `SELECT room_id FROM room_direct_pairs
            WHERE workspace_key = ? AND principal_low = ? AND principal_high = ?`,
-        ).get(room.workspaceKey, directPair[0], directPair[1]) as Row | undefined;
+          )
+          .get(room.workspaceKey, directPair[0], directPair[1]) as
+          Row | undefined;
         if (existingDirect) {
           throw roomError(
             "conflict",
@@ -397,11 +444,13 @@ export class RoomLedger {
         )
         .run(membership.roomId, membership.principalId);
       if (directPair) {
-        this.#database.prepare(
-          `INSERT INTO room_direct_pairs(
+        this.#database
+          .prepare(
+            `INSERT INTO room_direct_pairs(
              workspace_key, principal_low, principal_high, room_id
            ) VALUES(?, ?, ?, ?)`,
-        ).run(room.workspaceKey, directPair[0], directPair[1], room.roomId);
+          )
+          .run(room.workspaceKey, directPair[0], directPair[1], room.roomId);
       }
       const event = this.#appendEvent({
         roomId: request.roomId,
@@ -427,22 +476,53 @@ export class RoomLedger {
     actorId: string,
     rawRequest: PostRoomMessageRequest,
   ): RoomMutationResult<RoomMessage> {
-    const validatedRequest = this.#validate(() => validatePostRoomMessageRequest(rawRequest));
+    const validatedRequest = this.#validate(() =>
+      validatePostRoomMessageRequest(rawRequest),
+    );
     this.#requireMembership(validatedRequest.roomId, actorId);
     const request = this.#normalizeMessageIntent(validatedRequest);
     const command = this.#command(actorId, "room.message.post", request);
     if (command) {
-      return { value: this.#requireMessage(command.aggregateId), event: command, deduplicated: true };
+      return {
+        value: this.#requireMessage(command.aggregateId),
+        event: command,
+        deduplicated: true,
+      };
     }
 
     return this.#transaction(() => {
       const replay = this.#command(actorId, "room.message.post", request);
       if (replay) {
-        return { value: this.#requireMessage(replay.aggregateId), event: replay, deduplicated: true };
+        return {
+          value: this.#requireMessage(replay.aggregateId),
+          event: replay,
+          deduplicated: true,
+        };
       }
       this.#requireMembership(request.roomId, actorId);
       const room = this.#requireRoom(request.roomId);
-      const attention = this.#messageAttention(room, actorId, request.mentionedPrincipalIds ?? []);
+      const replyTo = request.replyToMessageId
+        ? this.#requireMessage(request.replyToMessageId)
+        : undefined;
+      if (replyTo && replyTo.roomId !== request.roomId) {
+        throw roomError(
+          "invalid_argument",
+          "reply target must belong to the same Room",
+        );
+      }
+      const attention = this.#messageAttention(
+        room,
+        actorId,
+        request.mentionedPrincipalIds ?? [],
+      );
+      if (
+        room.kind !== "direct" &&
+        replyTo &&
+        replyTo.actorId !== actorId &&
+        !attention.some((target) => target.principalId === replyTo.actorId)
+      ) {
+        attention.push({ principalId: replyTo.actorId, reason: "mention" });
+      }
       for (const target of attention) {
         if (target.principalId === actorId) {
           throw roomError(
@@ -453,6 +533,9 @@ export class RoomLedger {
       }
       const createdAt = this.#timestamp();
       const messageId = this.#createId("message");
+      const reference = replyTo
+        ? this.#ensureThread(replyTo, createdAt)
+        : undefined;
       const event = this.#appendEvent({
         roomId: request.roomId,
         actorId,
@@ -465,6 +548,14 @@ export class RoomLedger {
           body: request.body,
           attention,
           createdAt,
+          ...(reference
+            ? {
+                reference: {
+                  ...reference,
+                  replyToMessageId: replyTo!.messageId,
+                },
+              }
+            : {}),
         },
       });
       const message: RoomMessage = {
@@ -473,11 +564,21 @@ export class RoomLedger {
         roomSeq: event.roomSeq,
         actorId,
         body: request.body,
+        ...(reference
+          ? {
+              threadId: reference.threadId,
+              rootMessageId: reference.rootMessageId,
+              replyToMessageId: replyTo!.messageId,
+            }
+          : {}),
         createdAt,
       };
       this.#database
         .prepare(
-          "INSERT INTO room_messages(message_id, room_id, room_seq, actor_id, body, created_at) VALUES(?, ?, ?, ?, ?, ?)",
+          `INSERT INTO room_messages(
+             message_id, room_id, room_seq, actor_id, body,
+             thread_id, root_message_id, reply_to_message_id, created_at
+           ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
         .run(
           message.messageId,
@@ -485,44 +586,18 @@ export class RoomLedger {
           message.roomSeq,
           message.actorId,
           message.body,
+          message.threadId ?? null,
+          message.rootMessageId ?? null,
+          message.replyToMessageId ?? null,
           message.createdAt,
         );
       for (const target of attention) {
-        const inboxItem: Omit<RoomInboxItem, "inboxSeq"> = {
-          inboxItemId: this.#createId("inbox"),
-          roomId: request.roomId,
-          participantId: target.principalId,
-          eventId: event.eventId,
-          eventSeq: event.roomSeq,
-          reason: target.reason,
-          state: "pending",
+        this.#appendAttention(
+          event,
+          target.principalId,
+          target.reason,
           createdAt,
-        };
-        this.#database
-          .prepare(
-            "INSERT INTO room_inbox_items(inbox_item_id, room_id, participant_id, event_id, event_seq, reason, state, created_at) VALUES(?, ?, ?, ?, ?, ?, 'pending', ?)",
-          )
-          .run(
-            inboxItem.inboxItemId,
-            inboxItem.roomId,
-            inboxItem.participantId,
-            inboxItem.eventId,
-            inboxItem.eventSeq,
-            inboxItem.reason,
-            inboxItem.createdAt,
-          );
-        this.#insertOutbox({
-          roomId: request.roomId,
-          roomSeq: event.roomSeq,
-          topic: "inbox.available",
-          payload: {
-            eventId: event.eventId,
-            headCursor: event.roomSeq,
-            participantId: target.principalId,
-            reason: target.reason,
-            roomId: request.roomId,
-          },
-        });
+        );
       }
       const result: RoomMutationResult<RoomMessage> = {
         value: message,
@@ -538,95 +613,21 @@ export class RoomLedger {
     actorId: string,
     rawRequest: AcknowledgeRoomMessageRequest,
   ): RoomMutationResult<RoomInboxItem> {
-    const request = this.#validate(() => validateAcknowledgeRoomMessageRequest(rawRequest));
-    const command = this.#command(actorId, "room.message.acknowledge", request);
-    if (command) {
-      return {
-        value: this.#requireInboxMessage(request.roomId, actorId, request.messageId),
-        event: command,
-        deduplicated: true,
-      };
-    }
+    return this.#inbox.acknowledgeMessage(actorId, rawRequest);
+  }
 
-    return this.#transaction(() => {
-      const replay = this.#command(actorId, "room.message.acknowledge", request);
-      if (replay) {
-        return {
-          value: this.#requireInboxMessage(request.roomId, actorId, request.messageId),
-          event: replay,
-          deduplicated: true,
-        };
-      }
-      this.#requireMembership(request.roomId, actorId);
-      const row = this.#database
-        .prepare(
-          `SELECT inbox.*
-           FROM room_inbox_items AS inbox
-           JOIN room_messages AS message
-             ON message.room_id = inbox.room_id
-            AND message.room_seq = inbox.event_seq
-           WHERE inbox.room_id = ?
-             AND inbox.participant_id = ?
-             AND message.message_id = ?`,
-        )
-        .get(request.roomId, actorId, request.messageId) as Row | undefined;
-      if (!row) {
-        throw roomError(
-          "not_found",
-          `message ${request.messageId} is not pending in principal ${actorId}'s Inbox`,
-        );
-      }
-      const currentRoomSeq = this.#roomHead(request.roomId);
-      const messageRoomSeq = integer(row, "event_seq");
-      if (request.basedOnRoomSeq < messageRoomSeq || request.basedOnRoomSeq > currentRoomSeq) {
-        throw roomError(
-          "stale_context",
-          `acknowledgement cursor ${request.basedOnRoomSeq} did not observe message sequence ${messageRoomSeq} at current sequence ${currentRoomSeq}`,
-        );
-      }
-      if (text(row, "state") === "acknowledged") {
-        const event = this.#requireAcknowledgementEvent(
-          request.roomId,
-          actorId,
-          request.messageId,
-        );
-        const inboxItem = inboxFromRow(row);
-        this.#rememberCommand(actorId, "room.message.acknowledge", request, event);
-        return { value: inboxItem, event, deduplicated: true };
-      }
-      const acknowledgedAt = this.#timestamp();
-      this.#database
-        .prepare(
-          "UPDATE room_inbox_items SET state = 'acknowledged', acknowledged_at = ? WHERE inbox_item_id = ?",
-        )
-        .run(acknowledgedAt, text(row, "inbox_item_id"));
-      const inboxItem = inboxFromRow({
-        ...row,
-        state: "acknowledged",
-        acknowledged_at: acknowledgedAt,
-      });
-      const event = this.#appendEvent({
-        roomId: request.roomId,
-        actorId,
-        type: "message.acknowledged",
-        aggregateType: "message",
-        aggregateId: request.messageId,
-        idempotencyKey: request.idempotencyKey,
-        createdAt: acknowledgedAt,
-        payload: {
-          messageId: request.messageId,
-          participantId: actorId,
-          acknowledgedAt,
-        },
-      });
-      const result: RoomMutationResult<RoomInboxItem> = {
-        value: inboxItem,
-        event,
-        deduplicated: false,
-      };
-      this.#rememberCommand(actorId, "room.message.acknowledge", request, event);
-      return result;
-    });
+  acknowledgeInboxItem(
+    actorId: string,
+    rawRequest: AcknowledgeRoomInboxItemRequest,
+  ): RoomMutationResult<RoomInboxItem> {
+    return this.#inbox.acknowledgeItem(actorId, rawRequest);
+  }
+
+  acknowledgeRoom(
+    actorId: string,
+    rawRequest: AcknowledgeRoomRequest,
+  ): RoomMutationResult<{ acknowledgedCount: number; throughRoomSeq: number }> {
+    return this.#inbox.acknowledgeRoom(actorId, rawRequest);
   }
 
   syncRoom(actorId: string, rawRequest: SyncRoomRequest): RoomSyncResult {
@@ -643,34 +644,45 @@ export class RoomLedger {
       }
       const limit = request.limit ?? ROOM_LIST_LIMIT;
       if (request.bootstrap === "latest") {
-        const snapshot = this.#snapshot(request.roomId);
-        const candidates = this.#readRecentMessages(request.roomId, throughSeq, limit);
-        const emptyBootstrapBytes = Buffer.byteLength(JSON.stringify({
-          mode: "latest_bootstrap",
-          cursorBefore: throughSeq,
-          cursorAfter: throughSeq,
-          latestRoomSeq,
+        const snapshot = this.#messageReads.snapshot(request.roomId);
+        const candidates = this.#messageReads.recentMessages(
+          request.roomId,
           throughSeq,
-          responseBytes: ROOM_SYNC_RESPONSE_BYTE_LIMIT,
-          messageFloorSeq: throughSeq,
-          snapshotSeq: throughSeq,
-          snapshot,
-          recentMessages: [],
-        }));
+          limit,
+        );
+        const emptyBootstrapBytes = Buffer.byteLength(
+          JSON.stringify({
+            mode: "latest_bootstrap",
+            cursorBefore: throughSeq,
+            cursorAfter: throughSeq,
+            latestRoomSeq,
+            throughSeq,
+            responseBytes: ROOM_SYNC_RESPONSE_BYTE_LIMIT,
+            messageFloorSeq: throughSeq,
+            snapshotSeq: throughSeq,
+            snapshot,
+            recentMessages: [],
+          }),
+        );
         const acceptedNewestFirst: RoomMessage[] = [];
         let timelineBytes = 0;
         for (const message of candidates) {
           const messageBytes = Buffer.byteLength(JSON.stringify(message));
           const separatorBytes = acceptedNewestFirst.length ? 1 : 0;
           if (
-            emptyBootstrapBytes + timelineBytes + separatorBytes + messageBytes + 128 >
+            emptyBootstrapBytes +
+              timelineBytes +
+              separatorBytes +
+              messageBytes +
+              128 >
             ROOM_SYNC_RESPONSE_BYTE_LIMIT
-          ) break;
+          )
+            break;
           acceptedNewestFirst.push(message);
           timelineBytes += separatorBytes + messageBytes;
         }
         const recentMessages = acceptedNewestFirst.reverse();
-        let result = this.#withResponseBytes({
+        let result = withRoomResponseBytes({
           mode: "latest_bootstrap" as const,
           cursorBefore: recentMessages[0]?.roomSeq
             ? recentMessages[0].roomSeq - 1
@@ -691,7 +703,7 @@ export class RoomLedger {
           recentMessages.length > 0
         ) {
           recentMessages.shift();
-          result = this.#withResponseBytes({
+          result = withRoomResponseBytes({
             ...result,
             cursorBefore: recentMessages[0]?.roomSeq
               ? recentMessages[0].roomSeq - 1
@@ -714,26 +726,31 @@ export class RoomLedger {
 
       const afterSeq = request.afterSeq ?? 0;
       if (afterSeq > throughSeq) {
-        throw roomError("invalid_argument", "afterSeq cannot exceed throughSeq");
+        throw roomError(
+          "invalid_argument",
+          "afterSeq cannot exceed throughSeq",
+        );
       }
-      const candidates = this.#readEventWindow({
+      const candidates = this.#messageReads.eventWindow({
         roomId: request.roomId,
         afterSeq,
         throughSeq,
         limit,
       });
       const events: RoomEvent[] = [];
-      const emptyPageBytes = Buffer.byteLength(JSON.stringify({
-        mode: "event_page",
-        cursorBefore: afterSeq,
-        cursorAfter: afterSeq,
-        latestRoomSeq,
-        throughSeq,
-        responseBytes: ROOM_SYNC_RESPONSE_BYTE_LIMIT,
-        hasMore: afterSeq < throughSeq,
-        snapshot: null,
-        events: [],
-      }));
+      const emptyPageBytes = Buffer.byteLength(
+        JSON.stringify({
+          mode: "event_page",
+          cursorBefore: afterSeq,
+          cursorAfter: afterSeq,
+          latestRoomSeq,
+          throughSeq,
+          responseBytes: ROOM_SYNC_RESPONSE_BYTE_LIMIT,
+          hasMore: afterSeq < throughSeq,
+          snapshot: null,
+          events: [],
+        }),
+      );
       let eventBytes = 0;
       for (const event of candidates) {
         const serializedBytes = Buffer.byteLength(JSON.stringify(event));
@@ -741,12 +758,13 @@ export class RoomLedger {
         if (
           emptyPageBytes + eventBytes + separatorBytes + serializedBytes + 128 >
           ROOM_SYNC_RESPONSE_BYTE_LIMIT
-        ) break;
+        )
+          break;
         events.push(event);
         eventBytes += separatorBytes + serializedBytes;
       }
       let cursorAfter = events.at(-1)?.roomSeq ?? afterSeq;
-      let result = this.#withResponseBytes({
+      let result = withRoomResponseBytes({
         mode: "event_page" as const,
         cursorBefore: afterSeq,
         cursorAfter,
@@ -757,10 +775,13 @@ export class RoomLedger {
         snapshot: null,
         events,
       });
-      while (result.responseBytes > ROOM_SYNC_RESPONSE_BYTE_LIMIT && events.length > 0) {
+      while (
+        result.responseBytes > ROOM_SYNC_RESPONSE_BYTE_LIMIT &&
+        events.length > 0
+      ) {
         events.pop();
         cursorAfter = events.at(-1)?.roomSeq ?? afterSeq;
-        result = this.#withResponseBytes({
+        result = withRoomResponseBytes({
           ...result,
           cursorAfter,
           hasMore: cursorAfter < throughSeq,
@@ -778,7 +799,8 @@ export class RoomLedger {
   ): RoomCatalogLedgerPage {
     this.#requirePrincipal(actorId);
     return this.#readTransaction(() =>
-      readRoomCatalog(this.#database, actorId, options, ROOM_LIST_LIMIT));
+      readRoomCatalog(this.#database, actorId, options, ROOM_LIST_LIMIT),
+    );
   }
 
   listMessages(
@@ -793,44 +815,86 @@ export class RoomLedger {
   ): RoomMessagePage {
     this.#requireMembership(roomId, actorId);
     const limit = options.limit ?? ROOM_LIST_LIMIT;
-    if (options.afterRoomSeq !== undefined && options.beforeRoomSeq !== undefined) {
-      throw roomError("invalid_argument", "message page cannot mix afterRoomSeq and beforeRoomSeq");
+    if (
+      options.afterRoomSeq !== undefined &&
+      options.beforeRoomSeq !== undefined
+    ) {
+      throw roomError(
+        "invalid_argument",
+        "message page cannot mix afterRoomSeq and beforeRoomSeq",
+      );
     }
     const throughRoomSeq = options.throughRoomSeq ?? this.#roomHead(roomId);
     this.#requireListWindow(throughRoomSeq, limit, "throughRoomSeq");
     if (throughRoomSeq > this.#roomHead(roomId)) {
-      throw roomError("invalid_argument", "throughRoomSeq cannot exceed the Room head");
+      throw roomError(
+        "invalid_argument",
+        "throughRoomSeq cannot exceed the Room head",
+      );
     }
     const backward = options.beforeRoomSeq !== undefined;
-    const anchor = backward ? options.beforeRoomSeq! : options.afterRoomSeq ?? 0;
-    this.#requireListWindow(anchor, limit, backward ? "beforeRoomSeq" : "afterRoomSeq");
+    const anchor = backward
+      ? options.beforeRoomSeq!
+      : (options.afterRoomSeq ?? 0);
+    this.#requireListWindow(
+      anchor,
+      limit,
+      backward ? "beforeRoomSeq" : "afterRoomSeq",
+    );
     if (backward && (anchor < 1 || anchor > throughRoomSeq + 1)) {
-      throw roomError("invalid_argument", "beforeRoomSeq must be within the frozen Room window");
+      throw roomError(
+        "invalid_argument",
+        "beforeRoomSeq must be within the frozen Room window",
+      );
     }
     if (!backward && anchor > throughRoomSeq) {
-      throw roomError("invalid_argument", "afterRoomSeq cannot exceed throughRoomSeq");
+      throw roomError(
+        "invalid_argument",
+        "afterRoomSeq cannot exceed throughRoomSeq",
+      );
     }
-    const messages = this.#readMessagePage(roomId, anchor, throughRoomSeq, limit, backward);
+    const messages = this.#messageReads.messagePage(
+      roomId,
+      anchor,
+      throughRoomSeq,
+      limit,
+      backward,
+    );
     let cursorAfter = backward
-      ? messages[0]?.roomSeq ?? anchor
-      : messages.at(-1)?.roomSeq ?? anchor;
-    let result = this.#withResponseBytes({
-      mode: backward ? "backward" as const : "forward" as const,
+      ? (messages[0]?.roomSeq ?? anchor)
+      : (messages.at(-1)?.roomSeq ?? anchor);
+    let result = withRoomResponseBytes({
+      mode: backward ? ("backward" as const) : ("forward" as const),
       cursorBefore: anchor,
       cursorAfter,
       throughRoomSeq,
-      hasMore: this.#hasMoreMessages(roomId, cursorAfter, throughRoomSeq, backward),
+      hasMore: this.#messageReads.hasMoreMessages(
+        roomId,
+        cursorAfter,
+        throughRoomSeq,
+        backward,
+      ),
       responseBytes: 0,
       messages,
     });
-    while (result.responseBytes > ROOM_SYNC_RESPONSE_BYTE_LIMIT && messages.length > 0) {
+    while (
+      result.responseBytes > ROOM_SYNC_RESPONSE_BYTE_LIMIT &&
+      messages.length > 0
+    ) {
       if (backward) messages.shift();
       else messages.pop();
-      cursorAfter = backward ? messages[0]?.roomSeq ?? anchor : messages.at(-1)?.roomSeq ?? anchor;
-      result = this.#withResponseBytes({
+      cursorAfter = backward
+        ? (messages[0]?.roomSeq ?? anchor)
+        : (messages.at(-1)?.roomSeq ?? anchor);
+      result = withRoomResponseBytes({
         ...result,
         cursorAfter,
-        hasMore: this.#hasMoreMessages(roomId, cursorAfter, throughRoomSeq, backward),
+        hasMore: this.#messageReads.hasMoreMessages(
+          roomId,
+          cursorAfter,
+          throughRoomSeq,
+          backward,
+        ),
         responseBytes: 0,
         messages,
       });
@@ -840,21 +904,97 @@ export class RoomLedger {
 
   listInbox(
     participantId: string,
-    options: { afterInboxSeq?: number; limit?: number } = {},
+    options: {
+      afterInboxSeq?: number;
+      limit?: number;
+      roomId?: string;
+      pendingOnly?: boolean;
+      messageIds?: string[];
+      taskIds?: string[];
+    } = {},
   ): RoomInboxItem[] {
-    this.#requirePrincipal(participantId);
-    const afterInboxSeq = options.afterInboxSeq ?? 0;
-    const limit = options.limit ?? ROOM_LIST_LIMIT;
-    this.#requireListWindow(afterInboxSeq, limit, "afterInboxSeq");
-    return (this.#database
-      .prepare(
-        "SELECT * FROM room_inbox_items WHERE participant_id = ? AND inbox_seq > ? ORDER BY inbox_seq LIMIT ?",
-      )
-      .all(participantId, afterInboxSeq, limit) as Row[]).map(inboxFromRow);
+    return this.#inbox.list(participantId, options);
   }
 
-  listOutbox(options: { afterOutboxSeq?: number; limit?: number } = {}): RoomOutboxEntry[] {
+  inboxHead(participantId: string): number {
+    return this.#inbox.head(participantId);
+  }
+
+  listTasks(actorId: string, roomId: string): RoomTask[] {
+    return this.#tasks.list(actorId, roomId);
+  }
+
+  listTaskPage(
+    actorId: string,
+    roomId: string,
+    options: Parameters<RoomTaskService["listPage"]>[2] = {},
+  ): ReturnType<RoomTaskService["listPage"]> {
+    return this.#tasks.listPage(actorId, roomId, options);
+  }
+
+  createTask(
+    actorId: string,
+    input: Parameters<RoomTaskService["create"]>[1],
+  ): RoomTaskMutationResult {
+    return this.#tasks.create(actorId, input);
+  }
+
+  claimTask(
+    execution: RoomWorkerExecution,
+    input: Parameters<RoomTaskService["claim"]>[1],
+  ): RoomTaskMutationResult {
+    return this.#tasks.claim(execution, input);
+  }
+
+  startTask(
+    execution: RoomWorkerExecution,
+    input: Parameters<RoomTaskService["start"]>[1],
+  ): RoomTaskMutationResult {
+    return this.#tasks.start(execution, input);
+  }
+
+  submitTask(
+    execution: RoomWorkerExecution,
+    input: Parameters<RoomTaskService["submit"]>[1],
+  ): RoomTaskSubmissionMutationResult {
+    return this.#tasks.submit(execution, input);
+  }
+
+  reviewTask(
+    execution: RoomWorkerExecution,
+    input: {
+      taskId: string;
+      basedOnRoomSeq: number;
+      disposition: RoomTaskReviewDisposition;
+      summary: string;
+      idempotencyKey: string;
+    },
+  ): RoomTaskReviewMutationResult {
+    return this.#tasks.review(execution, input);
+  }
+
+  acceptTask(
+    actorId: string,
+    input: Parameters<RoomTaskService["accept"]>[1],
+  ): RoomTaskMutationResult {
+    return this.#tasks.accept(actorId, input);
+  }
+
+  cancelTask(
+    actorId: string,
+    input: Parameters<RoomTaskService["cancel"]>[1],
+  ): RoomTaskMutationResult {
+    return this.#tasks.cancel(actorId, input);
+  }
+
+  listOutbox(
+    options: { afterOutboxSeq?: number; limit?: number } = {},
+  ): RoomOutboxEntry[] {
     return this.#outbox.list(options);
+  }
+
+  publishedOutboxHead(): number {
+    return this.#outbox.publishedHead();
   }
 
   claimOutbox(
@@ -870,13 +1010,23 @@ export class RoomLedger {
     leaseToken: string,
     deliveryReceipt = leaseToken,
   ): RoomOutboxEntry {
-    return this.#outbox.complete(workerId, outboxSeq, leaseToken, deliveryReceipt);
+    return this.#outbox.complete(
+      workerId,
+      outboxSeq,
+      leaseToken,
+      deliveryReceipt,
+    );
   }
 
   failOutbox(
     workerId: string,
     outboxSeq: number,
-    input: { error: string; retryAt: string; leaseToken: string; failureClass?: string },
+    input: {
+      error: string;
+      retryAt: string;
+      leaseToken: string;
+      failureClass?: string;
+    },
   ): RoomOutboxEntry {
     return this.#outbox.fail(workerId, outboxSeq, input);
   }
@@ -895,7 +1045,10 @@ export class RoomLedger {
     return this.#outbox.block(workerId, outboxSeq, input);
   }
 
-  prunePublishedOutbox(input: { throughOutboxSeq: number; limit?: number }): number {
+  prunePublishedOutbox(input: {
+    throughOutboxSeq: number;
+    limit?: number;
+  }): number {
     return this.#outbox.prune(input);
   }
 
@@ -903,124 +1056,6 @@ export class RoomLedger {
     if (this.#closed) return;
     this.#closed = true;
     this.#database.close();
-  }
-
-  #snapshot(roomId: string): RoomSnapshot {
-    const roomRow = this.#database
-      .prepare("SELECT * FROM rooms WHERE room_id = ?")
-      .get(roomId) as Row | undefined;
-    if (!roomRow) throw roomError("not_found", `Room ${roomId} was not found`);
-    const memberships = (this.#database
-      .prepare(
-        "SELECT * FROM room_memberships WHERE room_id = ? ORDER BY joined_at, principal_id",
-      )
-      .all(roomId) as Row[]).map(membershipFromRow);
-    const principals = (this.#database
-      .prepare(
-        "SELECT p.* FROM room_principals p JOIN room_memberships m ON m.principal_id = p.principal_id WHERE m.room_id = ? ORDER BY m.joined_at, p.principal_id",
-      )
-      .all(roomId) as Row[]).map(principalFromRow);
-    return { room: roomFromRow(roomRow), memberships, principals };
-  }
-
-  #readEventWindow(input: {
-    roomId: string;
-    afterSeq: number;
-    throughSeq: number;
-    limit: number;
-  }): RoomEvent[] {
-    return (this.#database
-      .prepare(
-        `SELECT * FROM (
-           SELECT candidate.*,
-             SUM(length(CAST(candidate.payload_json AS BLOB)) + 1024)
-               OVER (ORDER BY candidate.room_seq) AS cumulative_bytes
-           FROM (
-             SELECT * FROM room_events
-             WHERE room_id = ? AND room_seq > ? AND room_seq <= ?
-             ORDER BY room_seq
-             LIMIT ?
-           ) AS candidate
-         ) WHERE cumulative_bytes <= ?
-         ORDER BY room_seq`,
-      )
-      .all(
-        input.roomId,
-        input.afterSeq,
-        input.throughSeq,
-        input.limit,
-        ROOM_SYNC_RESPONSE_BYTE_LIMIT,
-      ) as Row[]).map(eventFromRow);
-  }
-
-  #readRecentMessages(roomId: string, throughSeq: number, limit: number): RoomMessage[] {
-    return (this.#database
-      .prepare(
-        `SELECT * FROM (
-           SELECT candidate.*,
-             SUM(length(CAST(json_quote(candidate.body) AS BLOB)) + 512)
-               OVER (ORDER BY candidate.room_seq DESC) AS cumulative_bytes
-           FROM (
-             SELECT * FROM room_messages
-             WHERE room_id = ? AND room_seq <= ?
-             ORDER BY room_seq DESC
-             LIMIT ?
-           ) AS candidate
-         ) WHERE cumulative_bytes <= ?
-         ORDER BY room_seq DESC`,
-      )
-      .all(roomId, throughSeq, limit, ROOM_SYNC_RESPONSE_BYTE_LIMIT) as Row[]).map(messageFromRow);
-  }
-
-  #readMessagePage(
-    roomId: string,
-    anchor: number,
-    throughRoomSeq: number,
-    limit: number,
-    backward: boolean,
-  ): RoomMessage[] {
-    const comparison = backward ? "<" : ">";
-    const direction = backward ? "DESC" : "ASC";
-    const rows = this.#database.prepare(
-      `SELECT * FROM (
-         SELECT candidate.*,
-           SUM(length(CAST(json_quote(candidate.body) AS BLOB)) + 512)
-             OVER (ORDER BY candidate.room_seq ${direction}) AS cumulative_bytes
-         FROM (
-           SELECT * FROM room_messages
-           WHERE room_id = ? AND room_seq ${comparison} ? AND room_seq <= ?
-           ORDER BY room_seq ${direction}
-           LIMIT ?
-         ) AS candidate
-       ) WHERE cumulative_bytes <= ?
-       ORDER BY room_seq ${direction}`,
-    ).all(roomId, anchor, throughRoomSeq, limit, ROOM_SYNC_RESPONSE_BYTE_LIMIT) as Row[];
-    if (backward) rows.reverse();
-    return rows.map(messageFromRow);
-  }
-
-  #hasMoreMessages(
-    roomId: string,
-    cursor: number,
-    throughRoomSeq: number,
-    backward: boolean,
-  ): boolean {
-    const comparison = backward ? "<" : ">";
-    return Boolean(this.#database.prepare(
-      `SELECT 1 FROM room_messages
-       WHERE room_id = ? AND room_seq ${comparison} ? AND room_seq <= ?
-       LIMIT 1`,
-    ).get(roomId, cursor, throughRoomSeq));
-  }
-
-  #withResponseBytes<T extends { responseBytes: number }>(input: T): T {
-    let result = { ...input, responseBytes: 0 };
-    for (let pass = 0; pass < 8; pass += 1) {
-      const responseBytes = Buffer.byteLength(JSON.stringify(result));
-      if (responseBytes === result.responseBytes) return result;
-      result = { ...result, responseBytes };
-    }
-    return result;
   }
 
   #messageAttention(
@@ -1031,7 +1066,10 @@ export class RoomLedger {
     for (const principalId of mentionedPrincipalIds) {
       this.#requireMembership(room.roomId, principalId);
       if (principalId === actorId) {
-        throw roomError("invalid_argument", "a Room message cannot mention its own actor");
+        throw roomError(
+          "invalid_argument",
+          "a Room message cannot mention its own actor",
+        );
       }
     }
     if (room.kind === "direct") {
@@ -1045,23 +1083,51 @@ export class RoomLedger {
     }));
   }
 
-  #normalizeMessageIntent(request: PostRoomMessageRequest): PostRoomMessageRequest {
-    if (this.#requireRoom(request.roomId).kind !== "direct" || !request.mentionedPrincipalIds) {
+  #normalizeMessageIntent(
+    request: PostRoomMessageRequest,
+  ): PostRoomMessageRequest {
+    if (
+      this.#requireRoom(request.roomId).kind !== "direct" ||
+      !request.mentionedPrincipalIds
+    ) {
       return request;
     }
     return {
       roomId: request.roomId,
       body: request.body,
+      ...(request.replyToMessageId
+        ? { replyToMessageId: request.replyToMessageId }
+        : {}),
       idempotencyKey: request.idempotencyKey,
     };
   }
 
-  #roomMembershipPrincipalIds(roomId: string): string[] {
-    return (this.#database
+  #ensureThread(
+    message: RoomMessage,
+    createdAt: string,
+  ): { threadId: string; rootMessageId: string } {
+    const rootMessageId = message.rootMessageId ?? message.messageId;
+    const row = this.#database
+      .prepare("SELECT thread_id FROM room_threads WHERE root_message_id = ?")
+      .get(rootMessageId) as Row | undefined;
+    if (row) return { threadId: text(row, "thread_id"), rootMessageId };
+    const threadId = this.#createId("thread");
+    this.#database
       .prepare(
-        "SELECT principal_id FROM room_memberships WHERE room_id = ? ORDER BY principal_id",
+        "INSERT INTO room_threads(thread_id, room_id, root_message_id, created_at) VALUES(?, ?, ?, ?)",
       )
-      .all(roomId) as Row[]).map((row) => text(row, "principal_id"));
+      .run(threadId, message.roomId, rootMessageId, createdAt);
+    return { threadId, rootMessageId };
+  }
+
+  #roomMembershipPrincipalIds(roomId: string): string[] {
+    return (
+      this.#database
+        .prepare(
+          "SELECT principal_id FROM room_memberships WHERE room_id = ? ORDER BY principal_id",
+        )
+        .all(roomId) as Row[]
+    ).map((row) => text(row, "principal_id"));
   }
 
   #appendEvent(input: {
@@ -1121,6 +1187,85 @@ export class RoomLedger {
     return event;
   }
 
+  #appendAttention(
+    event: RoomEvent,
+    participantId: string,
+    reason: RoomAttentionReason,
+    createdAt = this.#timestamp(),
+    disposition: RoomInboxDisposition = "activation",
+  ): void {
+    if (participantId === event.actorId) return;
+    this.#requireMembership(event.roomId, participantId);
+    if (
+      event.aggregateType !== "message" &&
+      event.aggregateType !== "task" &&
+      event.aggregateType !== "review"
+    ) {
+      throw roomError(
+        "conflict",
+        `event ${event.eventId} cannot target the Room Inbox`,
+      );
+    }
+    const taskId =
+      event.aggregateType === "task"
+        ? event.aggregateId
+        : event.aggregateType === "review" &&
+            typeof event.payload.taskId === "string"
+          ? event.payload.taskId
+          : undefined;
+    const reviewDisposition =
+      event.type === "review.submitted" &&
+      (event.payload.disposition === "approved" ||
+        event.payload.disposition === "changes_requested")
+        ? event.payload.disposition
+        : undefined;
+    const inboxItem: Omit<RoomInboxItem, "inboxSeq"> = {
+      inboxItemId: this.#createId("inbox"),
+      roomId: event.roomId,
+      participantId,
+      eventId: event.eventId,
+      eventSeq: event.roomSeq,
+      aggregateType: event.aggregateType,
+      aggregateId: event.aggregateId,
+      ...(taskId ? { taskId } : {}),
+      ...(reviewDisposition ? { reviewDisposition } : {}),
+      reason,
+      disposition,
+      state: "pending",
+      createdAt,
+    };
+    this.#database
+      .prepare(
+        `INSERT OR IGNORE INTO room_inbox_items(
+           inbox_item_id, room_id, participant_id, event_id, event_seq,
+           reason, disposition, state, created_at
+         ) VALUES(?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
+      )
+      .run(
+        inboxItem.inboxItemId,
+        inboxItem.roomId,
+        inboxItem.participantId,
+        inboxItem.eventId,
+        inboxItem.eventSeq,
+        inboxItem.reason,
+        inboxItem.disposition,
+        inboxItem.createdAt,
+      );
+    this.#insertOutbox({
+      roomId: event.roomId,
+      roomSeq: event.roomSeq,
+      topic: "inbox.available",
+      payload: {
+        eventId: event.eventId,
+        headCursor: event.roomSeq,
+        participantId,
+        reason,
+        disposition,
+        roomId: event.roomId,
+      },
+    });
+  }
+
   #insertOutbox(input: {
     roomId: string;
     roomSeq: number;
@@ -1158,7 +1303,10 @@ export class RoomLedger {
       .get(actorId, request.idempotencyKey) as Row | undefined;
     if (!row) return undefined;
     const requestHash = canonicalHash(request);
-    if (text(row, "command_kind") !== commandKind || text(row, "request_hash") !== requestHash) {
+    if (
+      text(row, "command_kind") !== commandKind ||
+      text(row, "request_hash") !== requestHash
+    ) {
       throw roomError(
         "idempotency_conflict",
         `idempotency key ${request.idempotencyKey} was already used for a different intent`,
@@ -1199,76 +1347,25 @@ export class RoomLedger {
     const row = this.#database
       .prepare("SELECT * FROM room_messages WHERE message_id = ?")
       .get(messageId) as Row | undefined;
-    if (!row) throw roomError("not_found", `message ${messageId} was not found`);
+    if (!row)
+      throw roomError("not_found", `message ${messageId} was not found`);
     return messageFromRow(row);
-  }
-
-  #requireInboxMessage(
-    roomId: string,
-    participantId: string,
-    messageId: string,
-  ): RoomInboxItem {
-    const row = this.#database
-      .prepare(
-        `SELECT inbox.*
-         FROM room_inbox_items AS inbox
-         JOIN room_messages AS message
-           ON message.room_id = inbox.room_id
-          AND message.room_seq = inbox.event_seq
-         WHERE inbox.room_id = ?
-           AND inbox.participant_id = ?
-           AND message.message_id = ?`,
-      )
-      .get(roomId, participantId, messageId) as Row | undefined;
-    if (!row) {
-      throw roomError(
-        "not_found",
-        `message ${messageId} is not in principal ${participantId}'s Inbox`,
-      );
-    }
-    return inboxFromRow(row);
-  }
-
-  #requireAcknowledgementEvent(
-    roomId: string,
-    actorId: string,
-    messageId: string,
-  ): RoomEvent {
-    const row = this.#database
-      .prepare(
-        `SELECT * FROM room_events
-         WHERE room_id = ?
-           AND actor_id = ?
-           AND type = 'message.acknowledged'
-           AND aggregate_id = ?
-         ORDER BY room_seq
-         LIMIT 1`,
-      )
-      .get(roomId, actorId, messageId) as Row | undefined;
-    if (!row) {
-      throw roomError("not_found", `message ${messageId} has no acknowledgement event`);
-    }
-    return eventFromRow(row);
   }
 
   #requirePrincipal(principalId: string): RoomPrincipal {
     const row = this.#database
       .prepare("SELECT * FROM room_principals WHERE principal_id = ?")
       .get(principalId) as Row | undefined;
-    if (!row) throw roomError("not_found", `principal ${principalId} was not found`);
+    if (!row)
+      throw roomError("not_found", `principal ${principalId} was not found`);
     return principalFromRow(row);
-  }
-
-  #principalByHandle(handle: string): RoomPrincipal | undefined {
-    const row = this.#database
-      .prepare("SELECT * FROM room_principals WHERE handle = ?")
-      .get(handle) as Row | undefined;
-    return row ? principalFromRow(row) : undefined;
   }
 
   #membership(roomId: string, principalId: string): RoomMembership | undefined {
     const row = this.#database
-      .prepare("SELECT * FROM room_memberships WHERE room_id = ? AND principal_id = ?")
+      .prepare(
+        "SELECT * FROM room_memberships WHERE room_id = ? AND principal_id = ?",
+      )
       .get(roomId, principalId) as Row | undefined;
     return row ? membershipFromRow(row) : undefined;
   }
@@ -1276,7 +1373,10 @@ export class RoomLedger {
   #requireMembership(roomId: string, principalId: string): RoomMembership {
     const membership = this.#membership(roomId, principalId);
     if (!membership) {
-      throw roomError("forbidden", `principal ${principalId} is not a Room member`);
+      throw roomError(
+        "forbidden",
+        `principal ${principalId} is not a Room member`,
+      );
     }
     return membership;
   }
@@ -1321,7 +1421,9 @@ export class RoomLedger {
       if (error instanceof RoomDomainError) throw error;
       throw roomError(
         "invalid_argument",
-        error instanceof Error ? error.message : "Room request validation failed",
+        error instanceof Error
+          ? error.message
+          : "Room request validation failed",
       );
     }
   }
@@ -1374,16 +1476,25 @@ export class RoomLedger {
       return roomError("conflict", "Room resource already exists");
     }
     if (/FOREIGN KEY constraint failed/i.test(message)) {
-      return roomError("conflict", "Room resource references unavailable state");
+      return roomError(
+        "conflict",
+        "Room resource references unavailable state",
+      );
     }
     if (/(CHECK|NOT NULL) constraint failed/i.test(message)) {
-      return roomError("invalid_argument", "Room resource violates a storage constraint");
+      return roomError(
+        "invalid_argument",
+        "Room resource violates a storage constraint",
+      );
     }
     if (/(database is locked|database is busy)/i.test(message)) {
       return roomError("unavailable", "Room storage is temporarily busy");
     }
     if (/(database or disk is full|SQLITE_FULL)/i.test(message)) {
-      return roomError("resource_exhausted", "Room storage has no remaining capacity");
+      return roomError(
+        "resource_exhausted",
+        "Room storage has no remaining capacity",
+      );
     }
     return error instanceof Error ? error : new Error(message);
   }

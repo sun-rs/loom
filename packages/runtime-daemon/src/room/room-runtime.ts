@@ -4,6 +4,8 @@ import path from "node:path";
 import { RoomApplicationLease } from "./room-application-lease";
 import { RoomActivationLedger } from "./room-activation-ledger";
 import { RoomCursorKeyStore } from "./room-cursor-key-store";
+import { RoomCommandHttpAdapter } from "./room-command-http-adapter";
+import { RoomCommandService } from "./room-command-service";
 import { RoomLedger } from "./room-ledger";
 import {
   RoomOutboxDispatcher,
@@ -34,6 +36,7 @@ export interface RoomApplicationRuntime {
   readonly layout: RoomStorageLayout;
   readonly cursorGeneration: string;
   readonly http: RoomReadHttpAdapter;
+  readonly commands: RoomCommandHttpAdapter;
   readonly activations: RoomActivationLedger;
   readonly wakeHub: RoomWakeHub;
   dispatchWakeHints(): Promise<RoomOutboxDispatchResult>;
@@ -45,6 +48,7 @@ class OwnedRoomApplicationRuntime implements RoomApplicationRuntime {
   readonly layout: RoomStorageLayout;
   readonly cursorGeneration: string;
   readonly http: RoomReadHttpAdapter;
+  readonly commands: RoomCommandHttpAdapter;
   readonly #ledger: RoomLedger;
   readonly activations: RoomActivationLedger;
   readonly wakeHub: RoomWakeHub;
@@ -56,6 +60,7 @@ class OwnedRoomApplicationRuntime implements RoomApplicationRuntime {
     layout: RoomStorageLayout;
     cursorGeneration: string;
     http: RoomReadHttpAdapter;
+    commands: RoomCommandHttpAdapter;
     ledger: RoomLedger;
     lease: RoomApplicationLease;
     activations: RoomActivationLedger;
@@ -65,6 +70,7 @@ class OwnedRoomApplicationRuntime implements RoomApplicationRuntime {
     this.layout = args.layout;
     this.cursorGeneration = args.cursorGeneration;
     this.http = args.http;
+    this.commands = args.commands;
     this.#ledger = args.ledger;
     this.#lease = args.lease;
     this.activations = args.activations;
@@ -144,17 +150,21 @@ export async function createRoomApplicationRuntime(args: {
         return { status: "accepted", receiptId: `room-signal-${attemptId}` };
       },
       publishInboxWake: (hint) => {
-        const receipt = activations!.enqueue(hint);
+        const receipt = hint.disposition === "activation"
+          ? activations!.enqueue(hint)
+          : { receiptId: `room-notification-${hint.hintId}` };
         wakeHub!.publish(hint);
         return { status: "accepted", receiptId: receipt.receiptId };
       },
     });
     dispatcher.start();
     const service = new RoomReadService(ledger, { cursorKey });
+    const commands = new RoomCommandHttpAdapter(new RoomCommandService(ledger));
     return new OwnedRoomApplicationRuntime({
       layout,
       cursorGeneration: cursorKey.generation,
       http: new RoomReadHttpAdapter(service),
+      commands,
       ledger,
       lease,
       activations,

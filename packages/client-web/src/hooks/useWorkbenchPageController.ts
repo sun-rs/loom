@@ -8,7 +8,7 @@ import {
   type SessionConversationNavigationTarget,
 } from "../session-conversation-navigation";
 
-export type WorkbenchMode = "single" | "canvas" | "council";
+export type WorkbenchMode = "single" | "canvas" | "council" | "room";
 
 type WorkbenchPageControllerOptions = {
   setSelectedSessionId: (sessionId: string | null) => void;
@@ -114,6 +114,22 @@ export function useWorkbenchPageController(options: WorkbenchPageControllerOptio
     options.setLeftOpen(false);
   }, [closeRightPanels, options.setLeftOpen, options.setSelectedCouncilId]);
 
+  const openRooms = useCallback(() => {
+    clearLastHistorySelection();
+    options.setSelectedWorkspaceOnlyDir(null);
+    options.setSelectedSessionId(null);
+    options.setSelectedCouncilId(null);
+    setMode("room");
+    closeRightPanels();
+    options.setLeftOpen(false);
+  }, [
+    closeRightPanels,
+    options.setLeftOpen,
+    options.setSelectedCouncilId,
+    options.setSelectedSessionId,
+    options.setSelectedWorkspaceOnlyDir,
+  ]);
+
   const prepareHistorySession = useCallback(() => {
     markSessionNavigation(null);
     setMode("single");
@@ -171,6 +187,7 @@ export function useWorkbenchPageController(options: WorkbenchPageControllerOptio
     openWorkspace,
     openCouncil,
     openCouncilLanding,
+    openRooms,
     prepareHistorySession,
     enterCanvas,
     exitCanvas,

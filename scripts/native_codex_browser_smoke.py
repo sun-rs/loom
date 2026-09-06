@@ -63,6 +63,11 @@ def browser_supports_mobile_context() -> bool:
 
 def launch_browser(playwright):
     browser_name = selected_browser_name()
+    if browser_name == "chrome":
+        return playwright.chromium.launch(
+            channel="chrome",
+            headless=browser_headless(),
+        )
     browser_types = {
         "chromium": playwright.chromium,
         "firefox": playwright.firefox,
@@ -70,7 +75,7 @@ def launch_browser(playwright):
     }
     browser_type = browser_types.get(browser_name)
     if browser_type is None:
-        expected = ", ".join(sorted(browser_types))
+        expected = ", ".join(sorted([*browser_types, "chrome"]))
         raise RuntimeError(f"unsupported RAH_NATIVE_BROWSER={browser_name!r}; expected one of: {expected}")
     return browser_type.launch(headless=browser_headless())
 

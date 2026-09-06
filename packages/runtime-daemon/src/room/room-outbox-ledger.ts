@@ -43,6 +43,17 @@ export class RoomOutboxLedger {
       .all(afterOutboxSeq, limit) as Row[]).map(outboxFromRow);
   }
 
+  publishedHead(): number {
+    return integer(
+      this.#database
+        .prepare(
+          "SELECT COALESCE(MAX(outbox_seq), 0) AS published_head FROM room_outbox WHERE published_at IS NOT NULL",
+        )
+        .get() as Row,
+      "published_head",
+    );
+  }
+
   claim(
     workerId: string,
     options: { limit?: number; leaseMs?: number } = {},

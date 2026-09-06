@@ -1,4 +1,4 @@
-import type { RoomAttentionReason } from "./room";
+import type { RoomAttentionReason, RoomInboxDisposition } from "./room";
 
 export interface RoomEventWakeHint {
   schema: "rah.room-wake.v1";
@@ -17,6 +17,7 @@ export interface RoomInboxAvailableWakeHint {
   eventId: string;
   participantId: string;
   reason: RoomAttentionReason;
+  disposition: RoomInboxDisposition;
   roomId: string;
   roomSeq: number;
 }
@@ -89,11 +90,14 @@ export function validateRoomWakeHint(value: unknown): RoomWakeHint {
   if (hint.topic === "inbox.available") {
     exactKeys(
       hint,
-      ["schema", "hintId", "topic", "eventId", "participantId", "reason", "roomId", "roomSeq"],
+      ["schema", "hintId", "topic", "eventId", "participantId", "reason", "disposition", "roomId", "roomSeq"],
     );
     if (hint.schema !== "rah.room-wake.v1") throw new Error("RoomWakeHint.schema is invalid");
     if (!ATTENTION_REASONS.has(hint.reason as RoomAttentionReason)) {
       throw new Error("RoomWakeHint.reason is invalid");
+    }
+    if (hint.disposition !== "activation" && hint.disposition !== "notification") {
+      throw new Error("RoomWakeHint.disposition is invalid");
     }
     return {
       schema: "rah.room-wake.v1",
@@ -102,6 +106,7 @@ export function validateRoomWakeHint(value: unknown): RoomWakeHint {
       eventId: identifier(hint.eventId, "eventId"),
       participantId: identifier(hint.participantId, "participantId"),
       reason: hint.reason as RoomAttentionReason,
+      disposition: hint.disposition,
       roomId: identifier(hint.roomId, "roomId"),
       roomSeq: sequence(hint.roomSeq),
     };

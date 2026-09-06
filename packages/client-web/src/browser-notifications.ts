@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import type { CouncilMessagePart, RahEvent, SessionSummary } from "@rah/runtime-protocol";
+import type { CouncilMessagePart, RahEvent, RoomInboxItem, SessionSummary } from "@rah/runtime-protocol";
 import { providerLabel } from "./types";
 
 const NOTIFICATIONS_ENABLED_KEY = "rah-browser-notifications-enabled";
@@ -8,7 +8,7 @@ const NOTIFICATION_SERVICE_WORKER_URL = "/rah-notification-sw.js";
 const MAX_NOTIFIED_KEYS = 500;
 
 export type NotificationTarget = {
-  kind: "session" | "council";
+  kind: "session" | "council" | "room";
   id: string;
 };
 
@@ -22,6 +22,18 @@ export type RahNotificationCandidate = {
   url: string;
 };
 
+export type VisibleRoomNotificationTarget = {
+  roomId: string;
+  tab: "chat" | "tasks" | "members";
+  /** True only while the bounded latest Chat window is mounted. */
+  latest: boolean;
+  /** Exact canonical entities mounted in the active Room surface. */
+  entities: ReadonlyArray<{
+    type: "message" | "task";
+    id: string;
+  }>;
+};
+
 type NotificationEnvironment = {
   activeTargets: readonly NotificationTarget[];
   documentVisible: boolean;
@@ -29,6 +41,7 @@ type NotificationEnvironment = {
 };
 
 let visibleNotificationTargets: NotificationTarget[] = [];
+let visibleRoomNotificationTarget: VisibleRoomNotificationTarget | null = null;
 let notificationWorkerPromise: Promise<ServiceWorkerRegistration | null> | null = null;
 const notifiedKeys = new Set<string>();
 const notifiedKeyOrder: string[] = [];
@@ -284,8 +297,136 @@ export function isBrowserNotificationEnabled(): boolean {
   return (
     isBrowserNotificationSupported() &&
     readBrowserNotificationPermission() === "granted" &&
-    readBoolean(NOTIFICATIONS_ENABLED_KEY, false)
+    readBoolean(NOTIFICATIONS_ENABLED_KEY, true)
   );
+}
+
+/**
+ * Browsers require permission prompts to follow a user gesture. RAH defaults
+ * notifications on and requests permission on the first interaction instead
+ * of silently leaving a fresh install disabled.
+ */
+export function initializeBrowserNotificationPermissionRequest(): () => void {
+  if (!isBrowser() || readBoolean(NOTIFICATIONS_ENABLED_KEY, true) === false) return () => undefined;
+  const permission = readBrowserNotificationPermission();
+  if (permission === "granted") {
+    void ensureRahNotificationServiceWorker();
+    return () => undefined;
+  }
+  if (permission !== "default") return () => undefined;
+  let disposed = false;
+  const request = () => {
+    if (disposed) return;
+    dispose();
+    void Notification.requestPermission().then((permission) => {
+      writeBoolean(NOTIFICATIONS_ENABLED_KEY, permission === "granted");
+      if (permission === "granted") void ensureRahNotificationServiceWorker();
+      dispatchNotificationSettingsEvent();
+    });
+  };
+  const dispose = () => {
+    if (disposed) return;
+    disposed = true;
+    window.removeEventListener("pointerup", request);
+    window.removeEventListener("keyup", request);
+  };
+  window.addEventListener("pointerup", request, { once: true });
+  window.addEventListener("keyup", request, { once: true });
+  return dispose;
+}
+
+export function setVisibleRoomNotificationTarget(target: VisibleRoomNotificationTarget | null): void {
+  visibleRoomNotificationTarget = target;
+}
+
+/**
+ * A focused Room is not automatically read. Suppress a native notification
+ * only when its exact canonical entity is mounted on the matching surface.
+ */
+export function roomInboxItemIsPresented(
+  item: RoomInboxItem,
+  target: VisibleRoomNotificationTarget | null,
+): boolean {
+  if (!target || target.roomId !== item.roomId) return false;
+  if (item.aggregateType === "message") {
+    return target.tab === "chat" && target.latest && target.entities.some(
+      (entity) => entity.type === "message" && entity.id === item.aggregateId,
+    );
+  }
+  if (target.tab !== "tasks") return false;
+  const taskId = item.taskId ?? (item.aggregateType === "task" ? item.aggregateId : null);
+  return Boolean(taskId && target.entities.some(
+    (entity) => entity.type === "task" && entity.id === taskId,
+  ));
+}
+
+export function roomInboxItemNeedsNotification(item: RoomInboxItem): boolean {
+  return item.state === "pending";
+}
+
+export function notificationCandidateFromRoomInbox(
+  item: RoomInboxItem,
+  roomName?: string,
+): RahNotificationCandidate {
+  const label = roomName?.trim() || "Room";
+  const taskBodyByEvent: Partial<Record<NonNullable<RoomInboxItem["eventType"]>, string>> = {
+    "task.created": "A task was assigned to you.",
+    "task.submitted": "A task is ready for review.",
+    "review.submitted": item.reviewDisposition === "approved"
+      ? (item.reason === "input_resolved"
+          ? "A reviewed task is ready for Human acceptance."
+          : "A reviewer approved the task.")
+      : "A reviewer returned the task.",
+    "task.completed": "A task was completed.",
+    "task.cancelled": "A task was closed.",
+    "task.dependency_resolved": "A task dependency was resolved.",
+  };
+  const bodyByReason: Record<RoomInboxItem["reason"], string> = {
+    direct_message: "New direct message.",
+    mention: "You were mentioned in a message.",
+    room_policy: "New Room activity needs your attention.",
+    task_assignment: "A task needs your attention.",
+    dependency_resolved: "A task dependency was resolved.",
+    input_resolved: "Requested input was resolved.",
+  };
+  const query = new URLSearchParams({ surface: "room", roomId: item.roomId });
+  if (item.taskId) {
+    query.set("tab", "tasks");
+    query.set("taskId", item.taskId);
+  } else if (item.aggregateType === "message") {
+    query.set("messageId", item.aggregateId);
+  }
+  return {
+    key: `room:${item.roomId}:inbox:${item.inboxItemId}`,
+    target: { kind: "room", id: item.roomId },
+    title: `Room: ${truncate(label, 48)}`,
+    body: (item.eventType ? taskBodyByEvent[item.eventType] : undefined) ?? bodyByReason[item.reason],
+    url: `/?${query.toString()}`,
+  };
+}
+
+export async function notifyForRoomInboxItems(args: {
+  items: readonly RoomInboxItem[];
+  roomNames?: ReadonlyMap<string, string>;
+}): Promise<boolean> {
+  if (!isBrowser()) return true;
+  if (readBoolean(NOTIFICATIONS_ENABLED_KEY, true) === false) return true;
+  if (!isBrowserNotificationEnabled()) return false;
+  const hasFocus = document.visibilityState === "visible" && document.hasFocus();
+  for (const item of args.items) {
+    if (!roomInboxItemNeedsNotification(item)) continue;
+    if (hasFocus && roomInboxItemIsPresented(item, visibleRoomNotificationTarget)) continue;
+    const candidate = notificationCandidateFromRoomInbox(item, args.roomNames?.get(item.roomId));
+    if (notifiedKeys.has(candidate.key)) continue;
+    try {
+      await showRahNotification(candidate);
+      rememberNotificationKey(candidate.key);
+    } catch (error) {
+      console.warn("[rah] Room notification failed", error);
+      return false;
+    }
+  }
+  return true;
 }
 
 export async function ensureRahNotificationServiceWorker(): Promise<ServiceWorkerRegistration | null> {
@@ -362,13 +503,13 @@ export function useBrowserNotificationSettings(): {
     readBrowserNotificationPermission(),
   );
   const [enabledPreference, setEnabledPreference] = useState<boolean>(() =>
-    readBoolean(NOTIFICATIONS_ENABLED_KEY, false),
+    readBoolean(NOTIFICATIONS_ENABLED_KEY, true),
   );
   const [pending, setPending] = useState(false);
 
   const syncState = useCallback(() => {
     setPermission(readBrowserNotificationPermission());
-    setEnabledPreference(readBoolean(NOTIFICATIONS_ENABLED_KEY, false));
+    setEnabledPreference(readBoolean(NOTIFICATIONS_ENABLED_KEY, true));
   }, []);
 
   useEffect(() => {

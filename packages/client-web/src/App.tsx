@@ -78,7 +78,11 @@ import {
 } from "./session-mode-ui";
 import { resolveSelectedModelDraft } from "./components/SessionModelControls";
 import { deriveComposerSurface } from "./composer-contract";
-import { type NotificationTarget } from "./browser-notifications";
+import {
+  initializeBrowserNotificationPermissionRequest,
+  type NotificationTarget,
+} from "./browser-notifications";
+import { useRoomNotificationMonitor } from "./hooks/useRoomNotificationMonitor";
 import {
   derivePrimaryPaneState,
   deriveWorkbenchSessionCollections,
@@ -124,6 +128,7 @@ import {
   CanvasSessionPane,
   CanvasWorkbench,
   CouncilPage,
+  RoomPage,
   FileReferencePicker,
   InspectorPane,
   NewCouncilDialog,
@@ -166,6 +171,8 @@ type ArchiveConfirmationTarget =
     };
 
 export function App() {
+  useRoomNotificationMonitor();
+  useEffect(() => initializeBrowserNotificationPermissionRequest(), []);
   const {
     init,
     refreshWorkbenchState,
@@ -417,6 +424,10 @@ export function App() {
     setRightOpen,
     setRightSidebarOpen,
   });
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("surface") === "room") pageController.openRooms();
+  }, [pageController.openRooms]);
   const selectNewTaskWorkspace = useCallback((dir: string) => {
     setPendingNewSessionWorkspaceDir(null);
     setNewTaskWorkspaceDir(dir);
@@ -1942,6 +1953,7 @@ export function App() {
         onWorkspaceSortModeChange={setHistoryWorkspaceSortMode}
         canvasActive={workbenchMode === "canvas"}
         councilActive={workbenchMode === "council"}
+        roomActive={workbenchMode === "room"}
         homeActive={workbenchMode === "single" && selectedSessionId === null}
         onOpenCouncil={() => {
           if (workbenchMode === "council") {
@@ -1950,6 +1962,7 @@ export function App() {
           }
           pageController.openCouncilLanding(defaultRunningCouncilId(councils));
         }}
+        onOpenRooms={pageController.openRooms}
         onDesktopToggleCanvas={() => {
           if (workbenchMode === "canvas") {
             exitCanvasMode();
@@ -2233,7 +2246,17 @@ export function App() {
         <div className="flex min-h-0 min-w-0 flex-1">
           {/* Center chat */}
           <main className="flex-1 flex flex-col min-w-0 overflow-x-hidden overflow-y-hidden">
-          {workbenchMode === "council" ? (
+          {workbenchMode === "room" ? (
+            <Suspense
+              fallback={
+                <div className="flex min-h-0 flex-1 items-center justify-center text-xs text-[var(--app-hint)]">
+                  Loading Rooms…
+                </div>
+              }
+            >
+              <RoomPage />
+            </Suspense>
+          ) : workbenchMode === "council" ? (
             <Suspense
               fallback={
                 <div className="flex min-h-0 flex-1 items-center justify-center text-xs text-[var(--app-hint)]">

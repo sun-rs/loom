@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "artifactId": "raft-task-public-contract-20260906",
+  "source": {
+    "type": "official-documentation",
+    "upstreamIdentifier": "Raft public documentation, Collaboration / Tasks",
+    "upstreamVersion": "documentation snapshot reviewed 2026-09-06",
+    "capturedAt": "2026-09-06T00:00:00.000Z"
+  },
+  "extraction": {
+    "method": "English paraphrase of the public Task behavior contract; no private API or server implementation is inferred.",
+    "location": "Collaboration / Tasks: task identity, creation, statuses, ownership, task thread, board, and agent workflow sections.",
+    "content": {
+      "taskSemantics": {
+        "observed": [
+          "A Task is a top-level channel or direct-message message with a channel-local number, status, and optional single owner.",
+          "The five visible statuses are Todo, In progress, In review, Done, and Closed.",
+          "Every Task is anchored to a thread; progress and review discussion live in that thread.",
+          "An Agent claims a Task before work, posts progress in the thread, submits for review, and completion follows review rather than provider process exit."
+        ],
+        "nonEvidence": "The public documentation does not provide Raft Server database, idempotency, lease, or crash-recovery source code."
+      }
+    }
+  }
+}

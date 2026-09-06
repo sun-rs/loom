@@ -10,6 +10,8 @@ import {
   readRoomInbox,
   RoomApiError,
   RoomApiProtocolError,
+  createRoom,
+  postRoomMessage,
 } from "./room-api";
 import {
   listRooms as listRoomsFromPublicApi,
@@ -59,6 +61,57 @@ const SNAPSHOT = {
 
 test("Room typed SDK is exported from the production API entry", () => {
   assert.equal(listRoomsFromPublicApi, listRooms);
+});
+
+test("Room typed SDK validates command receipts instead of trusting HTTP success", async () => {
+  const calls: string[] = [];
+  globalThis.fetch = (async (input) => {
+    calls.push(new URL(String(input)).pathname);
+    const operation = calls.length === 1 ? "create_room" : "post_message";
+    return new Response(JSON.stringify({
+      ok: true,
+      data: {
+        operation,
+        roomId: "room-one",
+        aggregateId: operation === "create_room" ? "room-one" : "message-one",
+        roomSeq: calls.length,
+        deduplicated: false,
+      },
+    }), { status: 200 });
+  }) as typeof fetch;
+
+  await createRoom({
+    roomId: "room-one",
+    workspaceKey: "workspace-main",
+    kind: "channel",
+    slug: "general",
+    name: "General",
+    idempotencyKey: "create-room-one",
+  });
+  await postRoomMessage({
+    roomId: "room-one",
+    body: "hello",
+    idempotencyKey: "post-message-one",
+  });
+  assert.deepEqual(calls, [
+    "/api/room/v1/rooms/create",
+    "/api/room/v1/messages/post",
+  ]);
+
+  globalThis.fetch = (async () => new Response(JSON.stringify({
+    ok: true,
+    data: {
+      operation: "add_member",
+      roomId: "room-one",
+      aggregateId: "message-two",
+      roomSeq: 3,
+      deduplicated: false,
+    },
+  }), { status: 200 })) as typeof fetch;
+  await assert.rejects(
+    postRoomMessage({ roomId: "room-one", body: "bad", idempotencyKey: "bad-receipt" }),
+    RoomApiProtocolError,
+  );
 });
 
 test("Room typed SDK owns all five read routes and shared authenticated transport", async () => {

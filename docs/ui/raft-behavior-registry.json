@@ -1,0 +1,146 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "policy": "official-evidence-first",
+    "evidenceManifest": "docs/ui/evidence/manifest.json",
+    "adoptedAt": "2026-09-06",
+    "reviewCadence": "evaluate when a recorded official artifact or browser observation is superseded; never follow an unrecorded live bundle implicitly",
+    "rollback": "revert the vendored RAH asset or component commit; never load sibling repositories at runtime"
+  },
+  "contracts": [
+    {
+      "id": "agent-avatar-presets",
+      "classification": "extracted-transplanted",
+      "sourceArtifact": "docs/ui/evidence/raft-web-avatar-presets-20260825.json",
+      "sourceSha256": "23e14df58428a6b0c6490c10b4c43ac379287793f940a28ba4ddd6f5548f5392",
+      "sourceLocator": "/extraction/content/presets",
+      "owner": "packages/client-web/src/room-ui/AgentAvatar.tsx",
+      "protocolOwner": "packages/runtime-protocol/src/room-avatar.ts",
+      "tests": [
+        "packages/runtime-protocol/src/room-avatar.test.ts",
+        "packages/runtime-daemon/src/room/room-ledger.test.ts"
+      ]
+    },
+    {
+      "id": "room-shell-and-dividers",
+      "classification": "reference-rebuilt",
+      "sourceArtifact": "docs/ui/evidence/raft-room-browser-observations-20260906.json",
+      "sourceSha256": "b91b1fe44e1b034271cff0140124c4e8cfa657d45dc85c996a6b6d1bb1754ac2",
+      "sourceLocator": "/extraction/content/roomShell",
+      "owner": "packages/client-web/src/room/RoomPage.tsx",
+      "styleOwner": "packages/client-web/src/room-ui/room-neo.css",
+      "tests": ["packages/client-web/src/room-ui-contract.test.ts"],
+      "integrationRunner": "scripts/room_browser_smoke.py"
+    },
+    {
+      "id": "room-tabs-empty-states-and-controls",
+      "classification": "reference-rebuilt",
+      "sourceArtifact": "docs/ui/evidence/raft-room-browser-observations-20260906.json",
+      "sourceSha256": "b91b1fe44e1b034271cff0140124c4e8cfa657d45dc85c996a6b6d1bb1754ac2",
+      "sourceLocator": "/extraction/content/roomTabsEmptyStatesControls",
+      "owner": "packages/client-web/src/room-ui/NeoPrimitives.tsx",
+      "tests": ["packages/client-web/src/room-ui-contract.test.ts"],
+      "integrationRunner": "scripts/room_browser_smoke.py"
+    },
+    {
+      "id": "room-task-board-composition",
+      "classification": "reference-rebuilt",
+      "sourceArtifact": "docs/ui/evidence/raft-room-browser-observations-20260906.json",
+      "sourceSha256": "b91b1fe44e1b034271cff0140124c4e8cfa657d45dc85c996a6b6d1bb1754ac2",
+      "sourceLocator": "/extraction/content/roomTaskBoard",
+      "owner": "packages/client-web/src/room/RoomPage.tsx",
+      "styleOwner": "packages/client-web/src/room-ui/room-neo.css",
+      "tests": ["packages/client-web/src/room-ui-contract.test.ts"],
+      "integrationRunner": "scripts/room_browser_smoke.py"
+    },
+    {
+      "id": "canonical-task-semantics",
+      "classification": "rah-local-adaptation",
+      "sourceArtifact": "docs/ui/evidence/rah-room-adoption-contract-20260906.json",
+      "sourceSha256": "dbb1d6f9e7fedb12601197edaf5d13b22abf2038d78c51a119f2d2fe8884f433",
+      "sourceLocator": "/extraction/content/canonicalTaskSemantics",
+      "supportingEvidence": [
+        {
+          "sourceArtifact": "docs/ui/evidence/raft-task-public-contract-20260906.json",
+          "sourceSha256": "67d02ec0d891b1f6f05cadc521284b268f10b4d4227db244708b192e61c60bca",
+          "sourceLocator": "/extraction/content/taskSemantics"
+        }
+      ],
+      "owner": "packages/runtime-daemon/src/room/room-task-service.ts",
+      "protocolOwner": "packages/runtime-protocol/src/room-task.ts",
+      "tests": ["packages/runtime-daemon/src/room/room-task-service.test.ts"]
+    },
+    {
+      "id": "bounded-room-history",
+      "classification": "rah-local-adaptation",
+      "sourceArtifact": "docs/ui/evidence/rah-room-adoption-contract-20260906.json",
+      "sourceSha256": "dbb1d6f9e7fedb12601197edaf5d13b22abf2038d78c51a119f2d2fe8884f433",
+      "sourceLocator": "/extraction/content/boundedRoomHistory",
+      "owner": "packages/client-web/src/room-projection.ts",
+      "protocolOwner": "packages/runtime-protocol/src/room-read.ts",
+      "tests": [
+        "packages/client-web/src/room-projection.test.ts",
+        "packages/runtime-daemon/src/room/room-read-service.test.ts",
+        "packages/runtime-daemon/src/room/room-task-service.test.ts"
+      ],
+      "integrationRunner": "scripts/room_browser_smoke.py"
+    },
+    {
+      "id": "canonical-collaboration-flow",
+      "classification": "rah-local-adaptation",
+      "sourceArtifact": "docs/ui/evidence/rah-room-adoption-contract-20260906.json",
+      "sourceSha256": "dbb1d6f9e7fedb12601197edaf5d13b22abf2038d78c51a119f2d2fe8884f433",
+      "sourceLocator": "/extraction/content/canonicalCollaborationFlow",
+      "supportingEvidence": [
+        {
+          "sourceArtifact": "docs/ui/evidence/raft-task-public-contract-20260906.json",
+          "sourceSha256": "67d02ec0d891b1f6f05cadc521284b268f10b4d4227db244708b192e61c60bca",
+          "sourceLocator": "/extraction/content/taskSemantics"
+        }
+      ],
+      "owner": "packages/runtime-daemon/src/room/room-task-service.ts",
+      "protocolOwner": "packages/runtime-protocol/src/room-task.ts",
+      "tests": [
+        "packages/runtime-daemon/src/room/room-task-service.test.ts",
+        "packages/runtime-daemon/src/room/room-activation-ledger.test.ts"
+      ],
+      "integrationRunner": "scripts/room_browser_smoke.py"
+    },
+    {
+      "id": "room-system-notifications",
+      "classification": "rah-local-adaptation",
+      "sourceArtifact": "docs/ui/evidence/rah-room-adoption-contract-20260906.json",
+      "sourceSha256": "dbb1d6f9e7fedb12601197edaf5d13b22abf2038d78c51a119f2d2fe8884f433",
+      "sourceLocator": "/extraction/content/roomSystemNotifications",
+      "supportingEvidence": [
+        {
+          "sourceArtifact": "docs/ui/evidence/raft-room-browser-observations-20260906.json",
+          "sourceSha256": "b91b1fe44e1b034271cff0140124c4e8cfa657d45dc85c996a6b6d1bb1754ac2",
+          "sourceLocator": "/extraction/content/roomNotifications"
+        }
+      ],
+      "owner": "packages/client-web/src/hooks/useRoomNotificationMonitor.ts",
+      "protocolOwner": "packages/runtime-protocol/src/room-read.ts",
+      "tests": [
+        "packages/client-web/src/browser-notifications.test.ts",
+        "packages/client-web/src/notification-service-worker.test.ts",
+        "packages/runtime-daemon/src/room/room-task-service.test.ts"
+      ],
+      "integrationRunner": "scripts/room_browser_smoke.py"
+    },
+    {
+      "id": "exact-presentation-acknowledgement",
+      "classification": "rah-local-adaptation",
+      "sourceArtifact": "docs/ui/evidence/rah-room-adoption-contract-20260906.json",
+      "sourceSha256": "dbb1d6f9e7fedb12601197edaf5d13b22abf2038d78c51a119f2d2fe8884f433",
+      "sourceLocator": "/extraction/content/exactPresentationAcknowledgement",
+      "owner": "packages/client-web/src/room/RoomPage.tsx",
+      "protocolOwner": "packages/runtime-protocol/src/room.ts",
+      "tests": [
+        "packages/client-web/src/room-ui-contract.test.ts",
+        "packages/runtime-daemon/src/room/room-ledger.test.ts"
+      ],
+      "integrationRunner": "scripts/room_browser_smoke.py"
+    }
+  ]
+}

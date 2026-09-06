@@ -101,7 +101,7 @@ npm run test:p0:browser
 ```
 
 该 gate 使用隔离的 RAH/Codex home、fake provider、真实生产 Web 构建、真实 daemon 和 Playwright 浏览器执行
-`scripts/workspace_lifecycle_browser_smoke.py`。它不依赖用户历史、账号、网络或 provider quota，因此属于
+`scripts/workspace_lifecycle_browser_smoke.py` 与 `scripts/room_browser_smoke.py`。后者在 CI 模式中关闭系统通知发射，但保留 canonical Task 完成、长历史有界窗口、精确 deep link、分隔线与移动端断言。两者都不依赖用户历史、账号、网络或 provider quota，因此属于
 `test:ci` 的强制门禁。当前固定验证：
 
 1. 初始 0 个工作区时可以从真实 picker 添加目录。

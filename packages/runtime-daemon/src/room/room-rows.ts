@@ -33,11 +33,13 @@ export function integer(row: RoomSqlRow, key: string): number {
 
 export function principalFromRow(row: RoomSqlRow): RoomPrincipal {
   const displayName = optionalText(row, "display_name");
+  const avatarKey = optionalText(row, "avatar_key") as RoomPrincipal["avatarKey"];
   return {
     principalId: text(row, "principal_id"),
     handle: text(row, "handle"),
     kind: text(row, "kind") as RoomPrincipal["kind"],
     ...(displayName ? { displayName } : {}),
+    ...(avatarKey ? { avatarKey } : {}),
     createdAt: text(row, "created_at"),
   };
 }
@@ -82,18 +84,29 @@ export function eventFromRow(row: RoomSqlRow): RoomEvent {
 }
 
 export function messageFromRow(row: RoomSqlRow): RoomMessage {
+  const threadId = optionalText(row, "thread_id");
+  const rootMessageId = optionalText(row, "root_message_id");
+  const replyToMessageId = optionalText(row, "reply_to_message_id");
   return {
     messageId: text(row, "message_id"),
     roomId: text(row, "room_id"),
     roomSeq: integer(row, "room_seq"),
     actorId: text(row, "actor_id"),
     body: text(row, "body"),
+    ...(threadId ? { threadId } : {}),
+    ...(rootMessageId ? { rootMessageId } : {}),
+    ...(replyToMessageId ? { replyToMessageId } : {}),
     createdAt: text(row, "created_at"),
   };
 }
 
 export function inboxFromRow(row: RoomSqlRow): RoomInboxItem {
   const acknowledgedAt = optionalText(row, "acknowledged_at");
+  const eventType = optionalText(row, "event_type") as RoomInboxItem["eventType"];
+  const taskId = optionalText(row, "target_task_id");
+  const reviewDisposition = optionalText(row, "review_disposition") as
+    | RoomInboxItem["reviewDisposition"]
+    | undefined;
   return {
     inboxSeq: integer(row, "inbox_seq"),
     inboxItemId: text(row, "inbox_item_id"),
@@ -101,7 +114,13 @@ export function inboxFromRow(row: RoomSqlRow): RoomInboxItem {
     participantId: text(row, "participant_id"),
     eventId: text(row, "event_id"),
     eventSeq: integer(row, "event_seq"),
+    ...(eventType ? { eventType } : {}),
+    aggregateType: text(row, "event_aggregate_type") as RoomInboxItem["aggregateType"],
+    aggregateId: text(row, "event_aggregate_id"),
+    ...(taskId ? { taskId } : {}),
+    ...(reviewDisposition ? { reviewDisposition } : {}),
     reason: text(row, "reason") as RoomInboxItem["reason"],
+    disposition: text(row, "disposition") as RoomInboxItem["disposition"],
     state: text(row, "state") as RoomInboxItem["state"],
     createdAt: text(row, "created_at"),
     ...(acknowledgedAt ? { acknowledgedAt } : {}),

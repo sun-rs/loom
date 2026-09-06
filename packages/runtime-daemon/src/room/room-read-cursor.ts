@@ -39,11 +39,22 @@ type RoomListCursorState = {
   t: number;
 };
 
+type TaskListCursorState = {
+  v: 1;
+  g: string;
+  k: "tasks";
+  r: string;
+  s: string;
+  b: number;
+  t: number;
+};
+
 type RoomReadCursorState =
   | EventCursorState
   | OlderMessagesCursorState
   | InboxCursorState
-  | RoomListCursorState;
+  | RoomListCursorState
+  | TaskListCursorState;
 
 const IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 
@@ -184,6 +195,38 @@ export class RoomReadCursorCodec {
     return { before: state.b, through: state.t };
   }
 
+  encodeTasks(input: {
+    roomId: string;
+    subject: string;
+    before: number;
+    through: number;
+  }): string {
+    return this.#encode({
+      v: 1,
+      g: this.#generation,
+      k: "tasks",
+      r: input.roomId,
+      s: input.subject,
+      b: input.before,
+      t: input.through,
+    });
+  }
+
+  decodeTasks(cursor: string, roomId: string, subject: string): {
+    before: number;
+    through: number;
+  } {
+    const state = this.#decode(cursor);
+    if (
+      state.k !== "tasks" ||
+      state.r !== roomId ||
+      state.s !== subject ||
+      state.b < 1 ||
+      state.b > state.t + 1
+    ) throw this.#invalid();
+    return { before: state.b, through: state.t };
+  }
+
   #encode(state: RoomReadCursorState): string {
     const body = Buffer.from(JSON.stringify(state), "utf8").toString("base64url");
     return `${body}.${this.#mac(body)}`;
@@ -235,6 +278,15 @@ export class RoomReadCursorCodec {
       if (value.k === "rooms") {
         if (!validSequence(value.b) || !validSequence(value.t)) throw this.#invalid();
         return parsed as RoomListCursorState;
+      }
+      if (value.k === "tasks") {
+        if (
+          typeof value.r !== "string" ||
+          !IDENTIFIER.test(value.r) ||
+          !validSequence(value.b) ||
+          !validSequence(value.t)
+        ) throw this.#invalid();
+        return parsed as TaskListCursorState;
       }
       throw this.#invalid();
     } catch (error) {

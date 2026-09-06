@@ -23,6 +23,11 @@ export const CouncilPage = lazy(async () => ({
   default: (await loadCouncilPage()).CouncilPage,
 }));
 
+const loadRoomPage = () => importWithStaleReload(() => import("./room/RoomPage"));
+export const RoomPage = lazy(async () => ({
+  default: (await loadRoomPage()).RoomPage,
+}));
+
 const loadFileReferencePicker = () =>
   importWithStaleReload(() => import("./components/FileReferencePicker"));
 export const FileReferencePicker = lazy(async () => ({

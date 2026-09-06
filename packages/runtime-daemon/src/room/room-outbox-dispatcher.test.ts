@@ -14,10 +14,9 @@ import {
   type RoomWakePublisher,
 } from "./room-outbox-dispatcher";
 
-function publishers(publish: RoomWakePublisher): Pick<
-  RoomOutboxDispatcherOptions,
-  "publishRoomEvent" | "publishInboxWake"
-> {
+function publishers(
+  publish: RoomWakePublisher,
+): Pick<RoomOutboxDispatcherOptions, "publishRoomEvent" | "publishInboxWake"> {
   return {
     publishRoomEvent: (hint, context) => publish(hint, context),
     publishInboxWake: (hint, context) => publish(hint, context),
@@ -102,15 +101,103 @@ test("Room dispatcher publishes only content-free hints and completes durable ou
       failed: 0,
       blocked: 0,
     });
-    assert.deepEqual(hints.map((hint) => hint.topic), [
-      "room.event",
-      "room.event",
-      "room.event",
-      "inbox.available",
-    ]);
+    assert.deepEqual(
+      hints.map((hint) => hint.topic),
+      ["room.event", "room.event", "room.event", "inbox.available"],
+    );
     assert.doesNotMatch(JSON.stringify(hints), /this body must never/u);
-    assert.equal(context.ledger.listOutbox().every((entry) => Boolean(entry.publishedAt)), true);
+    assert.equal(
+      context.ledger.listOutbox().every((entry) => Boolean(entry.publishedAt)),
+      true,
+    );
     await dispatcher.close();
+  } finally {
+    context.dispose();
+  }
+});
+
+test("Room dispatcher retains only the newest published hint receipts", async () => {
+  const context = fixture();
+  try {
+    for (let index = 0; index < 5; index += 1) {
+      context.ledger.postMessage("human-owner", {
+        roomId: "room-one",
+        body: `retention message ${index}`,
+        idempotencyKey: `retention-message-${index}`,
+      });
+    }
+    const dispatcher = new RoomOutboxDispatcher({
+      ledger: context.ledger,
+      workerId: "dispatcher-retention",
+      batchSize: 6,
+      publishedRetention: 2,
+      pruneBatchSize: 500,
+      ...publishers((_hint, { attemptId }) => ({
+        status: "accepted",
+        receiptId: `receipt-${attemptId}`,
+      })),
+    });
+
+    assert.equal((await dispatcher.dispatchOnce()).published, 6);
+    const retained = context.ledger.listOutbox();
+    assert.deepEqual(
+      retained.map((entry) => entry.outboxSeq),
+      [5, 6],
+    );
+    assert.equal(
+      retained.every((entry) => Boolean(entry.publishedAt)),
+      true,
+    );
+    await dispatcher.close();
+  } finally {
+    context.dispose();
+  }
+});
+
+test("Room dispatcher repairs published receipt retention after an idle restart", async () => {
+  const context = fixture();
+  try {
+    for (let index = 0; index < 5; index += 1) {
+      context.ledger.postMessage("human-owner", {
+        roomId: "room-one",
+        body: `restart retention message ${index}`,
+        idempotencyKey: `restart-retention-message-${index}`,
+      });
+    }
+    const publisher = new RoomOutboxDispatcher({
+      ledger: context.ledger,
+      workerId: "dispatcher-before-restart",
+      batchSize: 6,
+      publishedRetention: 100,
+      ...publishers((_hint, { attemptId }) => ({
+        status: "accepted",
+        receiptId: `receipt-${attemptId}`,
+      })),
+    });
+    assert.equal((await publisher.dispatchOnce()).published, 6);
+    assert.equal(context.ledger.listOutbox().length, 6);
+    await publisher.close();
+
+    const recovered = new RoomOutboxDispatcher({
+      ledger: context.ledger,
+      workerId: "dispatcher-after-restart",
+      publishedRetention: 2,
+      pruneBatchSize: 500,
+      ...publishers(() => {
+        throw new Error("idle recovery must not publish completed entries");
+      }),
+    });
+    assert.deepEqual(await recovered.dispatchOnce(), {
+      claimed: 0,
+      published: 0,
+      failed: 0,
+      blocked: 0,
+    });
+    assert.deepEqual(
+      context.ledger.listOutbox().map((entry) => entry.outboxSeq),
+      [5, 6],
+    );
+    await recovered.close();
   } finally {
     context.dispose();
   }
@@ -165,18 +252,21 @@ test("Room dispatcher persists bounded retry state and recovers after backoff", 
   }
 });
 
-test("Room dispatcher fails closed before malformed payload data reaches a publisher", async () => {
+test("Room dispatcher permanently blocks invalid payload data before publication", async () => {
   const context = fixture();
   try {
     const database = new DatabaseSync(context.databasePath);
-    database.prepare("UPDATE room_outbox SET payload_json = ? WHERE outbox_seq = 1")
-      .run(JSON.stringify({
-        eventId: "event-3",
-        roomId: "room-one",
-        roomSeq: 1,
-        type: "room.created",
-        body: "must not leak",
-      }));
+    database
+      .prepare("UPDATE room_outbox SET payload_json = ? WHERE outbox_seq = 1")
+      .run(
+        JSON.stringify({
+          eventId: "event-3",
+          roomId: "room-one",
+          roomSeq: 1,
+          type: "room.created",
+          body: "must not leak",
+        }),
+      );
     database.close();
     let published = false;
     const dispatcher = new RoomOutboxDispatcher({
@@ -193,11 +283,16 @@ test("Room dispatcher fails closed before malformed payload data reaches a publi
     assert.deepEqual(await dispatcher.dispatchOnce(), {
       claimed: 1,
       published: 0,
-      failed: 1,
-      blocked: 0,
+      failed: 0,
+      blocked: 1,
     });
     assert.equal(published, false);
-    assert.match(context.ledger.listOutbox()[0]?.lastError ?? "", /unknown field body/u);
+    const invalid = context.ledger.listOutbox()[0];
+    assert.match(invalid?.lastError ?? "", /unknown field body/u);
+    assert.equal(invalid?.failureClass, "invalid_payload");
+    assert.equal(invalid?.sticky, true);
+    assert.match(invalid?.actionRequired ?? "", /repair or discard/u);
+    assert.equal((await dispatcher.dispatchOnce()).claimed, 0);
     await dispatcher.close();
   } finally {
     context.dispose();
@@ -213,10 +308,15 @@ test("Room dispatcher shutdown aborts an active publish and leaves durable retry
       workerId: "dispatcher-shutdown",
       idleDelayMs: 10,
       jitterRatio: 0,
-      ...publishers((_hint, { signal }) => new Promise((_resolve, reject) => {
-        entered = true;
-        signal.addEventListener("abort", () => reject(signal.reason), { once: true });
-      })),
+      ...publishers(
+        (_hint, { signal }) =>
+          new Promise((_resolve, reject) => {
+            entered = true;
+            signal.addEventListener("abort", () => reject(signal.reason), {
+              once: true,
+            });
+          }),
+      ),
     });
     dispatcher.start();
     while (!entered) await new Promise((resolve) => setTimeout(resolve, 1));
@@ -275,7 +375,10 @@ test("Room dispatcher claims one entry at a time so slow publication cannot expi
     assert.equal(result.failed, 0);
     assert.equal(result.blocked, 0);
     assert.equal(new Set(published).size, 6);
-    assert.equal(context.ledger.listOutbox().filter((entry) => entry.publishedAt).length, 6);
+    assert.equal(
+      context.ledger.listOutbox().filter((entry) => entry.publishedAt).length,
+      6,
+    );
   } finally {
     context.dispose();
   }
@@ -290,7 +393,8 @@ test("Room ledger quarantines malformed JSON without blocking later outbox work"
       idempotencyKey: "poison-row-later-message",
     });
     const database = new DatabaseSync(context.databasePath);
-    database.prepare("UPDATE room_outbox SET payload_json = ? WHERE outbox_seq = 1")
+    database
+      .prepare("UPDATE room_outbox SET payload_json = ? WHERE outbox_seq = 1")
       .run("not-json");
     database.close();
     const published: string[] = [];

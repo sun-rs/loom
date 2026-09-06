@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { DatabaseSync } from "node:sqlite";
 
 import type { DeviceAuthPrincipal } from "../device-auth";
 import { RoomDomainError } from "./room-errors";
@@ -237,6 +238,35 @@ test("RoomReadService Inbox is always scoped to the authenticated Human", () => 
   }
 });
 
+test("RoomReadService establishes an atomic latest Inbox cursor without replaying backlog", () => {
+  const context = fixture();
+  try {
+    context.ledger.postMessage("agent-one", {
+      roomId: "room-general",
+      body: "old attention",
+      mentionedPrincipalIds: [context.owner.principalId],
+      idempotencyKey: "old-attention",
+    });
+    const baseline = context.service.readInbox(localPrincipal(), { start: "latest" });
+    assert.deepEqual(baseline.items, []);
+    context.ledger.postMessage("agent-one", {
+      roomId: "room-general",
+      body: "new attention",
+      mentionedPrincipalIds: [context.owner.principalId],
+      idempotencyKey: "new-attention",
+    });
+    const after = context.service.readInbox(localPrincipal(), {
+      cursor: baseline.inboxCursor,
+      limit: 10,
+    });
+    assert.equal(after.items.length, 1);
+    assert.equal(after.items[0]?.reason, "mention");
+  } finally {
+    context.ledger.close();
+    rmSync(context.root, { recursive: true, force: true });
+  }
+});
+
 test("RoomReadService scopes and freezes opaque Room catalog cursors", () => {
   const context = fixture();
   try {
@@ -278,6 +308,200 @@ test("RoomReadService scopes and freezes opaque Room catalog cursors", () => {
         cursor: `${tamperedBody}.${signature}`,
       }),
       (error: unknown) => error instanceof RoomDomainError && error.code === "invalid_argument",
+    );
+  } finally {
+    context.ledger.close();
+    rmSync(context.root, { recursive: true, force: true });
+  }
+});
+
+test("RoomReadService bounds Task pages and freezes them across later inserts", () => {
+  const context = fixture();
+  try {
+    context.ledger.provisionPrincipal({
+      principalId: "agent-reviewer",
+      handle: "agent-reviewer",
+      kind: "agent",
+    });
+    let head = context.ledger.addMember(context.owner.principalId, {
+      roomId: "room-general",
+      principalId: "agent-reviewer",
+      role: "member",
+      basedOnRoomSeq: 2,
+      idempotencyKey: "add-agent-reviewer",
+    }).event.roomSeq;
+    for (let index = 1; index <= 5; index += 1) {
+      const source = context.ledger.postMessage(context.owner.principalId, {
+        roomId: "room-general",
+        body: `task source ${index}`,
+        idempotencyKey: `task-source-${index}`,
+      });
+      head = context.ledger.createTask(context.owner.principalId, {
+        roomId: "room-general",
+        sourceMessageId: source.value.messageId,
+        title: `Task ${index}`,
+        assigneeId: "agent-one",
+        reviewerIds: ["agent-reviewer"],
+        basedOnRoomSeq: source.event.roomSeq,
+        idempotencyKey: `task-create-${index}`,
+      }).event.roomSeq;
+    }
+    const first = context.service.listTasks(localPrincipal(), {
+      roomId: "room-general",
+      limit: 2,
+    });
+    assert.deepEqual(first.items.map((task) => task.taskNumber), [4, 5]);
+    assert.equal(first.hasMore, true);
+    assert.ok(first.taskListCursor);
+
+    const lateSource = context.ledger.postMessage(context.owner.principalId, {
+      roomId: "room-general",
+      body: "late task source",
+      idempotencyKey: "late-task-source",
+    });
+    context.ledger.createTask(context.owner.principalId, {
+      roomId: "room-general",
+      sourceMessageId: lateSource.value.messageId,
+      title: "Late Task",
+      assigneeId: "agent-one",
+      reviewerIds: ["agent-reviewer"],
+      basedOnRoomSeq: lateSource.event.roomSeq,
+      idempotencyKey: "late-task-create",
+    });
+    const second = context.service.listTasks(localPrincipal(), {
+      roomId: "room-general",
+      cursor: first.taskListCursor!,
+      limit: 2,
+    });
+    assert.deepEqual(second.items.map((task) => task.taskNumber), [2, 3]);
+    assert.equal(second.hasMore, true);
+    const third = context.service.listTasks(localPrincipal(), {
+      roomId: "room-general",
+      cursor: second.taskListCursor!,
+      limit: 2,
+    });
+    assert.deepEqual(third.items.map((task) => task.taskNumber), [1]);
+    assert.equal(third.hasMore, false);
+    assert.equal(head > 0, true);
+  } finally {
+    context.ledger.close();
+    rmSync(context.root, { recursive: true, force: true });
+  }
+});
+
+test("RoomReadService keeps one maximal-review Task readable without copying Review prose", () => {
+  const context = fixture();
+  try {
+    const reviewerIds: string[] = [];
+    let head = context.service.bootstrap(localPrincipal(), {
+      roomId: "room-general",
+    }).latestRoomSeq;
+    for (let index = 0; index < 100; index += 1) {
+      const principalId = `agent-reviewer-${index}`;
+      reviewerIds.push(principalId);
+      context.ledger.provisionPrincipal({
+        principalId,
+        handle: `reviewer-${index}`,
+        kind: "agent",
+      });
+      head = context.ledger.addMember(context.owner.principalId, {
+        roomId: "room-general",
+        principalId,
+        role: "member",
+        basedOnRoomSeq: head,
+        idempotencyKey: `add-max-reviewer-${index}`,
+      }).event.roomSeq;
+    }
+    const source = context.ledger.postMessage(context.owner.principalId, {
+      roomId: "room-general",
+      body: "maximal review projection",
+      idempotencyKey: "maximal-review-source",
+    });
+    const created = context.ledger.createTask(context.owner.principalId, {
+      roomId: "room-general",
+      sourceMessageId: source.value.messageId,
+      title: "Maximal review projection remains readable",
+      assigneeId: "agent-one",
+      reviewerIds,
+      basedOnRoomSeq: source.event.roomSeq,
+      idempotencyKey: "maximal-review-task",
+    });
+
+    const database = new DatabaseSync(path.join(context.root, "rooms.sqlite"));
+    const submissionId = "submission-maximal-review";
+    const digest = `sha256:${"a".repeat(64)}`;
+    const evidenceDigest = `sha256:${"b".repeat(64)}`;
+    const createdAt = "2026-09-05T08:00:00.000Z";
+    database.exec("BEGIN IMMEDIATE");
+    database
+      .prepare(
+        `UPDATE room_tasks SET state = 'submitted', submission_summary = ?,
+         submitted_at = ?, updated_at = ? WHERE task_id = ?`,
+      )
+      .run("frozen delivery", createdAt, createdAt, created.value.taskId);
+    database
+      .prepare(
+        `INSERT INTO room_task_submissions(
+          submission_id, task_id, room_id, submission_number, submission_digest,
+          producer_id, message_id, summary, evidence_json, evidence_digest, created_at
+        ) VALUES (?, ?, 'room-general', 1, ?, 'agent-one', ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        submissionId,
+        created.value.taskId,
+        digest,
+        source.value.messageId,
+        "frozen delivery",
+        JSON.stringify({
+          schemaVersion: 1,
+          workspaceRoot: "/tmp/maximal-review",
+          baseRevision: "base",
+          headRevision: "head",
+          patchDigest: digest,
+          verificationDigest: evidenceDigest,
+          observedAt: createdAt,
+        }),
+        evidenceDigest,
+        createdAt,
+      );
+    const insertReview = database.prepare(
+      `INSERT INTO room_task_reviews(
+        review_id, task_id, room_id, submission_id, submission_digest,
+        reviewer_id, disposition, summary, message_id, created_at
+      ) VALUES (?, ?, 'room-general', ?, ?, ?, 'approved', ?, ?, ?)`,
+    );
+    for (const [index, reviewerId] of reviewerIds.entries()) {
+      insertReview.run(
+        `maximal-review-${index}`,
+        created.value.taskId,
+        submissionId,
+        digest,
+        reviewerId,
+        "复".repeat(8_192),
+        source.value.messageId,
+        createdAt,
+      );
+    }
+    database.exec("COMMIT");
+    database.close();
+
+    const response = context.service.listTasks(localPrincipal(), {
+      roomId: "room-general",
+      limit: 100,
+    });
+    const task = response.items.find(
+      (candidate) => candidate.taskId === created.value.taskId,
+    );
+    assert.equal(task?.currentReviewStatuses?.length, 100);
+    assert.equal(
+      task?.currentReviewStatuses?.some((review) =>
+        Object.hasOwn(review, "summary"),
+      ),
+      false,
+    );
+    assert.ok(
+      Buffer.byteLength(JSON.stringify(response), "utf8") <=
+        ROOM_READ_RESPONSE_BYTE_LIMIT,
     );
   } finally {
     context.ledger.close();

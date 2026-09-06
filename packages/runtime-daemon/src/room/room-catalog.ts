@@ -5,6 +5,7 @@ import type {
   RoomPrincipal,
   RoomRecord,
 } from "@rah/runtime-protocol";
+import { isRoomAgentAvatarKey } from "@rah/runtime-protocol";
 
 import { roomError } from "./room-errors";
 import {
@@ -102,6 +103,7 @@ export function readRoomCatalog(
        peer.handle AS peer_handle,
        peer.kind AS peer_kind,
        peer.display_name AS peer_display_name,
+       peer.avatar_key AS peer_avatar_key,
        peer.created_at AS peer_created_at
      FROM room_catalog_memberships AS catalog
      JOIN rooms AS room ON room.room_id = catalog.room_id
@@ -125,12 +127,14 @@ export function readRoomCatalog(
   const items = accepted.map((row): RoomCatalogLedgerItem => {
     const peerPrincipalId = optionalText(row, "peer_principal_id");
     const peerDisplayName = optionalText(row, "peer_display_name");
+    const peerAvatarKey = optionalText(row, "peer_avatar_key");
     const directPeer = peerPrincipalId
       ? {
           principalId: peerPrincipalId,
           handle: text(row, "peer_handle"),
           kind: text(row, "peer_kind") as RoomPrincipal["kind"],
           ...(peerDisplayName ? { displayName: peerDisplayName } : {}),
+          ...(isRoomAgentAvatarKey(peerAvatarKey) ? { avatarKey: peerAvatarKey } : {}),
           createdAt: text(row, "peer_created_at"),
         }
       : undefined;

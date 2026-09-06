@@ -9,19 +9,35 @@ import type {
   RoomSnapshot,
 } from "./room";
 import { assertRoomTextStorageSafe } from "./room";
+import { isRoomAgentAvatarKey } from "./room-avatar";
+import type { RoomTaskListItem } from "./room-task";
+import { validateRoomTaskListItem } from "./room-task";
+
+export {
+  validateRoomBootstrapReadRequest,
+  validateRoomEventReadRequest,
+  validateRoomInboxReadRequest,
+  validateRoomListReadRequest,
+  validateRoomOlderMessagesReadRequest,
+  validateRoomTaskListReadRequest,
+} from "./room-read-requests";
 
 export type RoomEventDto =
   | RoomCreatedEventDto
   | RoomMembershipAddedEventDto
   | RoomMessagePostedEventDto
-  | RoomMessageAcknowledgedEventDto;
+  | RoomMessageAcknowledgedEventDto
+  | RoomInboxAcknowledgedEventDto
+  | RoomAcknowledgedEventDto
+  | RoomWorkEventDto;
 
 interface RoomEventDtoBase {
   eventId: string;
   roomId: string;
   roomSeq: number;
   actorId: string;
-  aggregateType: "room" | "membership" | "message";
+  aggregateType:
+    "room" | "membership" | "message" | "inbox" | "task" | "review";
   aggregateId: string;
   schemaVersion: 1;
   createdAt: string;
@@ -50,7 +66,27 @@ export interface RoomMessagePostedEventDto extends RoomEventDtoBase {
     body: string;
     attention: Array<{ principalId: string; reason: RoomAttentionReason }>;
     createdAt: string;
+    taskId?: string;
+    reference?: {
+      threadId: string;
+      rootMessageId: string;
+      replyToMessageId: string;
+    };
   };
+}
+
+export interface RoomWorkEventDto extends RoomEventDtoBase {
+  type:
+    | "task.created"
+    | "task.claimed"
+    | "task.started"
+    | "task.submitted"
+    | "task.completed"
+    | "task.cancelled"
+    | "task.dependency_resolved"
+    | "review.submitted";
+  aggregateType: "task" | "review";
+  payload: Record<string, string | number | string[] | undefined>;
 }
 
 export interface RoomMessageAcknowledgedEventDto extends RoomEventDtoBase {
@@ -58,6 +94,28 @@ export interface RoomMessageAcknowledgedEventDto extends RoomEventDtoBase {
   aggregateType: "message";
   payload: {
     messageId: string;
+    participantId: string;
+    acknowledgedAt: string;
+  };
+}
+
+export interface RoomAcknowledgedEventDto extends RoomEventDtoBase {
+  type: "room.acknowledged";
+  aggregateType: "room";
+  payload: {
+    participantId: string;
+    throughRoomSeq: number;
+    acknowledgedCount: number;
+    acknowledgedAt: string;
+  };
+}
+
+export interface RoomInboxAcknowledgedEventDto extends RoomEventDtoBase {
+  type: "inbox.acknowledged";
+  aggregateType: "inbox";
+  payload: {
+    inboxItemId: string;
+    eventId: string;
     participantId: string;
     acknowledgedAt: string;
   };
@@ -82,10 +140,22 @@ export interface RoomOlderMessagesReadRequest {
 
 export interface RoomInboxReadRequest {
   cursor?: string;
+  /** Establish an empty cursor at the authenticated principal's current Inbox tail. */
+  start?: "latest";
   limit?: number;
+  roomId?: string;
+  pendingOnly?: boolean;
+  messageIds?: string[];
+  taskIds?: string[];
 }
 
 export interface RoomListReadRequest {
+  cursor?: string;
+  limit?: number;
+}
+
+export interface RoomTaskListReadRequest {
+  roomId: string;
   cursor?: string;
   limit?: number;
 }
@@ -137,6 +207,14 @@ export interface RoomListReadResponse {
   roomListCursor?: string;
 }
 
+export interface RoomTaskListReadResponse {
+  mode: "task_list";
+  roomId: string;
+  items: RoomTaskListItem[];
+  hasMore: boolean;
+  taskListCursor?: string;
+}
+
 export const ROOM_ERROR_CODES = [
   "unauthenticated",
   "forbidden",
@@ -149,7 +227,7 @@ export const ROOM_ERROR_CODES = [
   "invalid_argument",
 ] as const;
 
-export type RoomErrorCode = typeof ROOM_ERROR_CODES[number];
+export type RoomErrorCode = (typeof ROOM_ERROR_CODES)[number];
 
 export type RoomReadWireErrorCode = RoomErrorCode | "internal";
 
@@ -178,7 +256,8 @@ export type RoomReadResponseData =
   | RoomEventReadResponse
   | RoomOlderMessagesReadResponse
   | RoomInboxReadResponse
-  | RoomListReadResponse;
+  | RoomListReadResponse
+  | RoomTaskListReadResponse;
 
 export type RoomReadHttpEnvelope =
   | { ok: true; data: RoomReadResponseData }
@@ -199,7 +278,10 @@ const ATTENTION_REASONS = new Set<RoomAttentionReason>([
   "input_resolved",
 ]);
 
-function requireObject(value: unknown, name: string): asserts value is Record<string, unknown> {
+function requireObject(
+  value: unknown,
+  name: string,
+): asserts value is Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new Error(`${name} must be an object`);
   }
@@ -215,19 +297,28 @@ function rejectUnknownKeys(
   if (unknown) throw new Error(`${name} contains unknown field ${unknown}`);
 }
 
-function requireIdentifier(value: unknown, name: string): asserts value is string {
+function requireIdentifier(
+  value: unknown,
+  name: string,
+): asserts value is string {
   if (typeof value !== "string" || !IDENTIFIER.test(value)) {
     throw new Error(`${name} must be a stable identifier`);
   }
 }
 
-function requireSequence(value: unknown, name: string): asserts value is number {
+function requireSequence(
+  value: unknown,
+  name: string,
+): asserts value is number {
   if (!Number.isSafeInteger(value) || Number(value) < 1) {
     throw new Error(`${name} must be a positive safe integer`);
   }
 }
 
-function requireTimestamp(value: unknown, name: string): asserts value is string {
+function requireTimestamp(
+  value: unknown,
+  name: string,
+): asserts value is string {
   if (
     typeof value !== "string" ||
     !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(value) ||
@@ -235,83 +326,6 @@ function requireTimestamp(value: unknown, name: string): asserts value is string
   ) {
     throw new Error(`${name} must be an ISO-8601 UTC timestamp`);
   }
-}
-
-function validateLimit(value: unknown): number | undefined {
-  if (value === undefined) return undefined;
-  if (!Number.isInteger(value) || Number(value) < 1 || Number(value) > 500) {
-    throw new Error("limit must be between 1 and 500");
-  }
-  return Number(value);
-}
-
-function validateCursor(value: unknown, required: boolean): string | undefined {
-  if (value === undefined && !required) return undefined;
-  if (typeof value !== "string" || value.length < 1 || value.length > 4_096) {
-    throw new Error("cursor must contain 1 to 4096 characters");
-  }
-  return value;
-}
-
-function readRequest(
-  value: unknown,
-  name: string,
-  options: { cursor: "required" | "optional" | "forbidden"; room: boolean },
-): { roomId?: string; cursor?: string; limit?: number } {
-  requireObject(value, name);
-  const allowed = [
-    ...(options.room ? ["roomId"] : []),
-    ...(options.cursor === "forbidden" ? [] : ["cursor"]),
-    "limit",
-  ];
-  rejectUnknownKeys(value, allowed, name);
-  if (options.room) requireIdentifier(value.roomId, "roomId");
-  const cursor = options.cursor === "forbidden"
-    ? undefined
-    : validateCursor(value.cursor, options.cursor === "required");
-  const limit = validateLimit(value.limit);
-  return {
-    ...(options.room ? { roomId: value.roomId as string } : {}),
-    ...(cursor ? { cursor } : {}),
-    ...(limit ? { limit } : {}),
-  };
-}
-
-export function validateRoomBootstrapReadRequest(value: unknown): RoomBootstrapReadRequest {
-  return readRequest(value, "RoomBootstrapReadRequest", {
-    cursor: "forbidden",
-    room: true,
-  }) as RoomBootstrapReadRequest;
-}
-
-export function validateRoomEventReadRequest(value: unknown): RoomEventReadRequest {
-  return readRequest(value, "RoomEventReadRequest", {
-    cursor: "required",
-    room: true,
-  }) as RoomEventReadRequest;
-}
-
-export function validateRoomOlderMessagesReadRequest(
-  value: unknown,
-): RoomOlderMessagesReadRequest {
-  return readRequest(value, "RoomOlderMessagesReadRequest", {
-    cursor: "required",
-    room: true,
-  }) as RoomOlderMessagesReadRequest;
-}
-
-export function validateRoomInboxReadRequest(value: unknown): RoomInboxReadRequest {
-  return readRequest(value, "RoomInboxReadRequest", {
-    cursor: "optional",
-    room: false,
-  }) as RoomInboxReadRequest;
-}
-
-export function validateRoomListReadRequest(value: unknown): RoomListReadRequest {
-  return readRequest(value, "RoomListReadRequest", {
-    cursor: "optional",
-    room: false,
-  }) as RoomListReadRequest;
 }
 
 function eventBase(value: Record<string, unknown>): RoomEventDtoBase {
@@ -343,7 +357,10 @@ function eventBase(value: Record<string, unknown>): RoomEventDtoBase {
   if (
     value.aggregateType !== "room" &&
     value.aggregateType !== "membership" &&
-    value.aggregateType !== "message"
+    value.aggregateType !== "message" &&
+    value.aggregateType !== "inbox" &&
+    value.aggregateType !== "task" &&
+    value.aggregateType !== "review"
   ) {
     throw new Error("aggregateType is unsupported");
   }
@@ -368,13 +385,26 @@ function validateRoomRecord(value: unknown): RoomRecord {
   const room = recordPayload(value, "RoomRecord");
   rejectUnknownKeys(
     room,
-    ["roomId", "workspaceKey", "kind", "slug", "name", "visibility", "createdAt", "archivedAt"],
+    [
+      "roomId",
+      "workspaceKey",
+      "kind",
+      "slug",
+      "name",
+      "visibility",
+      "createdAt",
+      "archivedAt",
+    ],
     "RoomRecord",
   );
   requireIdentifier(room.roomId, "RoomRecord.roomId");
   requireIdentifier(room.workspaceKey, "RoomRecord.workspaceKey");
   requireIdentifier(room.slug, "RoomRecord.slug");
-  if (room.kind !== "channel" && room.kind !== "direct" && room.kind !== "control") {
+  if (
+    room.kind !== "channel" &&
+    room.kind !== "direct" &&
+    room.kind !== "control"
+  ) {
     throw new Error("RoomRecord.kind is invalid");
   }
   if (room.visibility !== "public" && room.visibility !== "private") {
@@ -385,20 +415,26 @@ function validateRoomRecord(value: unknown): RoomRecord {
   }
   assertRoomTextStorageSafe(room.name, "RoomRecord.name");
   requireTimestamp(room.createdAt, "RoomRecord.createdAt");
-  if (room.archivedAt !== undefined) requireTimestamp(room.archivedAt, "RoomRecord.archivedAt");
+  if (room.archivedAt !== undefined)
+    requireTimestamp(room.archivedAt, "RoomRecord.archivedAt");
   return room as unknown as RoomRecord;
 }
 
 function validateMembership(value: unknown): RoomMembership {
   const membership = recordPayload(value, "RoomMembership");
-  rejectUnknownKeys(membership, ["roomId", "principalId", "role", "joinedAt"], "RoomMembership");
+  rejectUnknownKeys(
+    membership,
+    ["roomId", "principalId", "role", "joinedAt"],
+    "RoomMembership",
+  );
   requireIdentifier(membership.roomId, "RoomMembership.roomId");
   requireIdentifier(membership.principalId, "RoomMembership.principalId");
   if (
     membership.role !== "owner" &&
     membership.role !== "admin" &&
     membership.role !== "member"
-  ) throw new Error("RoomMembership.role is invalid");
+  )
+    throw new Error("RoomMembership.role is invalid");
   requireTimestamp(membership.joinedAt, "RoomMembership.joinedAt");
   return membership as unknown as RoomMembership;
 }
@@ -407,7 +443,7 @@ function validatePrincipal(value: unknown): RoomPrincipal {
   const principal = recordPayload(value, "RoomPrincipal");
   rejectUnknownKeys(
     principal,
-    ["principalId", "handle", "kind", "displayName", "createdAt"],
+    ["principalId", "handle", "kind", "displayName", "avatarKey", "createdAt"],
     "RoomPrincipal",
   );
   requireIdentifier(principal.principalId, "RoomPrincipal.principalId");
@@ -416,15 +452,28 @@ function validatePrincipal(value: unknown): RoomPrincipal {
     principal.kind !== "human" &&
     principal.kind !== "agent" &&
     principal.kind !== "service"
-  ) throw new Error("RoomPrincipal.kind is invalid");
+  )
+    throw new Error("RoomPrincipal.kind is invalid");
   if (
     principal.displayName !== undefined &&
     (typeof principal.displayName !== "string" ||
       !principal.displayName ||
       principal.displayName.length > 120)
-  ) throw new Error("RoomPrincipal.displayName is invalid");
+  )
+    throw new Error("RoomPrincipal.displayName is invalid");
   if (typeof principal.displayName === "string") {
-    assertRoomTextStorageSafe(principal.displayName, "RoomPrincipal.displayName");
+    assertRoomTextStorageSafe(
+      principal.displayName,
+      "RoomPrincipal.displayName",
+    );
+  }
+  if (principal.avatarKey !== undefined) {
+    if (
+      principal.kind !== "agent" ||
+      !isRoomAgentAvatarKey(principal.avatarKey)
+    ) {
+      throw new Error("RoomPrincipal.avatarKey is invalid");
+    }
   }
   requireTimestamp(principal.createdAt, "RoomPrincipal.createdAt");
   return principal as unknown as RoomPrincipal;
@@ -441,7 +490,8 @@ export function toRoomEventDto(value: RoomEvent | unknown): RoomEventDto {
   const payload = recordPayload(value.payload, "RoomEvent.payload");
 
   if (value.type === "room.created") {
-    if (base.aggregateType !== "room") throw new Error("room.created aggregateType must be room");
+    if (base.aggregateType !== "room")
+      throw new Error("room.created aggregateType must be room");
     rejectUnknownKeys(
       payload,
       ["room", "ownerMembership", "ownerPrincipal"],
@@ -451,7 +501,9 @@ export function toRoomEventDto(value: RoomEvent | unknown): RoomEventDto {
     const ownerMembership = validateMembership(payload.ownerMembership);
     const ownerPrincipal = validatePrincipal(payload.ownerPrincipal);
     if (room.roomId !== base.roomId || base.aggregateId !== base.roomId) {
-      throw new Error("room.created aggregateId and roomId must identify the payload Room");
+      throw new Error(
+        "room.created aggregateId and roomId must identify the payload Room",
+      );
     }
     if (room.createdAt !== base.createdAt) {
       throw new Error("room.created time must match the event occurrence time");
@@ -463,7 +515,8 @@ export function toRoomEventDto(value: RoomEvent | unknown): RoomEventDto {
       ownerMembership.principalId !== ownerPrincipal.principalId ||
       ownerPrincipal.principalId !== base.actorId ||
       ownerPrincipal.kind !== "human"
-    ) throw new Error("room.created owner identity graph is inconsistent");
+    )
+      throw new Error("room.created owner identity graph is inconsistent");
     return {
       ...base,
       aggregateType: "room",
@@ -476,17 +529,30 @@ export function toRoomEventDto(value: RoomEvent | unknown): RoomEventDto {
     if (base.aggregateType !== "membership") {
       throw new Error("membership.added aggregateType must be membership");
     }
-    rejectUnknownKeys(payload, ["membership", "principal"], "membership.added payload");
+    rejectUnknownKeys(
+      payload,
+      ["membership", "principal"],
+      "membership.added payload",
+    );
     const membership = validateMembership(payload.membership);
     const principal = validatePrincipal(payload.principal);
-    if (membership.roomId !== base.roomId || membership.principalId !== base.aggregateId) {
-      throw new Error("membership.added aggregateId must identify the payload membership");
+    if (
+      membership.roomId !== base.roomId ||
+      membership.principalId !== base.aggregateId
+    ) {
+      throw new Error(
+        "membership.added aggregateId must identify the payload membership",
+      );
     }
     if (membership.joinedAt !== base.createdAt) {
-      throw new Error("membership.added time must match the event occurrence time");
+      throw new Error(
+        "membership.added time must match the event occurrence time",
+      );
     }
     if (principal.principalId !== membership.principalId) {
-      throw new Error("membership.added principal must identify the payload membership");
+      throw new Error(
+        "membership.added principal must identify the payload membership",
+      );
     }
     return {
       ...base,
@@ -500,32 +566,85 @@ export function toRoomEventDto(value: RoomEvent | unknown): RoomEventDto {
     if (base.aggregateType !== "message") {
       throw new Error("message.posted aggregateType must be message");
     }
-    rejectUnknownKeys(payload, ["body", "attention", "createdAt"], "message.posted payload");
-    if (typeof payload.body !== "string" || !payload.body || payload.body.length > 100_000) {
+    rejectUnknownKeys(
+      payload,
+      ["body", "attention", "createdAt", "reference", "taskId"],
+      "message.posted payload",
+    );
+    if (
+      typeof payload.body !== "string" ||
+      !payload.body ||
+      payload.body.length > 100_000
+    ) {
       throw new Error("message.posted body is invalid");
     }
     assertRoomTextStorageSafe(payload.body, "message.posted body");
     requireTimestamp(payload.createdAt, "message.posted createdAt");
     if (payload.createdAt !== base.createdAt) {
-      throw new Error("message.posted createdAt must match the event occurrence time");
+      throw new Error(
+        "message.posted createdAt must match the event occurrence time",
+      );
     }
     if (!Array.isArray(payload.attention) || payload.attention.length > 500) {
       throw new Error("message.posted attention is invalid");
     }
     const attention = payload.attention.map((entry, index) => {
       const item = recordPayload(entry, `message.posted attention[${index}]`);
-      rejectUnknownKeys(item, ["principalId", "reason"], `message.posted attention[${index}]`);
-      requireIdentifier(item.principalId, `message.posted attention[${index}].principalId`);
+      rejectUnknownKeys(
+        item,
+        ["principalId", "reason"],
+        `message.posted attention[${index}]`,
+      );
+      requireIdentifier(
+        item.principalId,
+        `message.posted attention[${index}].principalId`,
+      );
       if (!ATTENTION_REASONS.has(item.reason as RoomAttentionReason)) {
         throw new Error(`message.posted attention[${index}].reason is invalid`);
       }
-      return { principalId: item.principalId, reason: item.reason as RoomAttentionReason };
+      return {
+        principalId: item.principalId,
+        reason: item.reason as RoomAttentionReason,
+      };
     });
+    if (payload.taskId !== undefined)
+      requireIdentifier(payload.taskId, "message.posted taskId");
+    let reference: RoomMessagePostedEventDto["payload"]["reference"];
+    if (payload.reference !== undefined) {
+      const rawReference = recordPayload(
+        payload.reference,
+        "message.posted reference",
+      );
+      rejectUnknownKeys(
+        rawReference,
+        ["threadId", "rootMessageId", "replyToMessageId"],
+        "message.posted reference",
+      );
+      requireIdentifier(
+        rawReference.threadId,
+        "message.posted reference.threadId",
+      );
+      requireIdentifier(
+        rawReference.rootMessageId,
+        "message.posted reference.rootMessageId",
+      );
+      requireIdentifier(
+        rawReference.replyToMessageId,
+        "message.posted reference.replyToMessageId",
+      );
+      reference = rawReference as unknown as NonNullable<typeof reference>;
+    }
     return {
       ...base,
       aggregateType: "message",
       type: "message.posted",
-      payload: { body: payload.body, attention, createdAt: payload.createdAt },
+      payload: {
+        body: payload.body,
+        attention,
+        createdAt: payload.createdAt,
+        ...(payload.taskId !== undefined ? { taskId: payload.taskId } : {}),
+        ...(reference ? { reference } : {}),
+      },
     };
   }
 
@@ -539,16 +658,28 @@ export function toRoomEventDto(value: RoomEvent | unknown): RoomEventDto {
       "message.acknowledged payload",
     );
     requireIdentifier(payload.messageId, "message.acknowledged messageId");
-    requireIdentifier(payload.participantId, "message.acknowledged participantId");
-    requireTimestamp(payload.acknowledgedAt, "message.acknowledged acknowledgedAt");
+    requireIdentifier(
+      payload.participantId,
+      "message.acknowledged participantId",
+    );
+    requireTimestamp(
+      payload.acknowledgedAt,
+      "message.acknowledged acknowledgedAt",
+    );
     if (payload.messageId !== base.aggregateId) {
-      throw new Error("message.acknowledged aggregateId must identify the payload message");
+      throw new Error(
+        "message.acknowledged aggregateId must identify the payload message",
+      );
     }
     if (payload.participantId !== base.actorId) {
-      throw new Error("message.acknowledged participant must match the event actor");
+      throw new Error(
+        "message.acknowledged participant must match the event actor",
+      );
     }
     if (payload.acknowledgedAt !== base.createdAt) {
-      throw new Error("message.acknowledged time must match the event occurrence time");
+      throw new Error(
+        "message.acknowledged time must match the event occurrence time",
+      );
     }
     return {
       ...base,
@@ -562,20 +693,263 @@ export function toRoomEventDto(value: RoomEvent | unknown): RoomEventDto {
     };
   }
 
+  if (value.type === "room.acknowledged") {
+    if (base.aggregateType !== "room" || base.aggregateId !== base.roomId) {
+      throw new Error("room.acknowledged aggregate must identify the Room");
+    }
+    rejectUnknownKeys(
+      payload,
+      [
+        "participantId",
+        "throughRoomSeq",
+        "acknowledgedCount",
+        "acknowledgedAt",
+      ],
+      "room.acknowledged payload",
+    );
+    requireIdentifier(payload.participantId, "room.acknowledged participantId");
+    requireNonNegativeSequence(
+      payload.throughRoomSeq,
+      "room.acknowledged throughRoomSeq",
+    );
+    requireNonNegativeSequence(
+      payload.acknowledgedCount,
+      "room.acknowledged acknowledgedCount",
+    );
+    requireTimestamp(
+      payload.acknowledgedAt,
+      "room.acknowledged acknowledgedAt",
+    );
+    if (
+      payload.participantId !== base.actorId ||
+      payload.acknowledgedAt !== base.createdAt
+    ) {
+      throw new Error(
+        "room.acknowledged actor or occurrence time is inconsistent",
+      );
+    }
+    return {
+      ...base,
+      aggregateType: "room",
+      type: "room.acknowledged",
+      payload: {
+        participantId: payload.participantId,
+        throughRoomSeq: payload.throughRoomSeq,
+        acknowledgedCount: payload.acknowledgedCount,
+        acknowledgedAt: payload.acknowledgedAt,
+      },
+    };
+  }
+
+  if (value.type === "inbox.acknowledged") {
+    if (base.aggregateType !== "inbox") {
+      throw new Error("inbox.acknowledged aggregateType must be inbox");
+    }
+    rejectUnknownKeys(
+      payload,
+      ["inboxItemId", "eventId", "participantId", "acknowledgedAt"],
+      "inbox.acknowledged payload",
+    );
+    const inboxItemId = payload.inboxItemId;
+    const eventId = payload.eventId;
+    const participantId = payload.participantId;
+    const acknowledgedAt = payload.acknowledgedAt;
+    requireIdentifier(inboxItemId, "inbox.acknowledged inboxItemId");
+    requireIdentifier(eventId, "inbox.acknowledged eventId");
+    requireIdentifier(participantId, "inbox.acknowledged participantId");
+    requireTimestamp(acknowledgedAt, "inbox.acknowledged acknowledgedAt");
+    if (inboxItemId !== base.aggregateId) {
+      throw new Error(
+        "inbox.acknowledged aggregateId must identify the Inbox item",
+      );
+    }
+    if (participantId !== base.actorId || acknowledgedAt !== base.createdAt) {
+      throw new Error(
+        "inbox.acknowledged actor or occurrence time is inconsistent",
+      );
+    }
+    return {
+      ...base,
+      aggregateType: "inbox",
+      type: "inbox.acknowledged",
+      payload: {
+        inboxItemId,
+        eventId,
+        participantId,
+        acknowledgedAt,
+      },
+    };
+  }
+
+  const taskPayloads: Readonly<Record<string, readonly string[]>> = {
+    "task.created": [
+      "taskId",
+      "taskNumber",
+      "sourceMessageId",
+      "threadId",
+      "assigneeId",
+      "reviewerIds",
+      "dependencyTaskIds",
+    ],
+    "task.claimed": ["taskId", "claimUntil"],
+    "task.started": ["taskId"],
+    "task.submitted": [
+      "taskId",
+      "submissionId",
+      "submissionDigest",
+      "evidenceDigest",
+      "messageId",
+    ],
+    "task.completed": [
+      "taskId",
+      "submissionId",
+      "submissionDigest",
+      "messageId",
+    ],
+    "task.cancelled": ["taskId", "reason"],
+    "task.dependency_resolved": ["taskId", "resolvedDependencyTaskId"],
+    "review.submitted": [
+      "taskId",
+      "submissionId",
+      "submissionDigest",
+      "disposition",
+      "resultingTaskState",
+    ],
+  };
+  const acceptedPayload = taskPayloads[String(value.type)];
+  if (acceptedPayload) {
+    const expectedAggregate =
+      value.type === "review.submitted" ? "review" : "task";
+    if (base.aggregateType !== expectedAggregate) {
+      throw new Error(
+        `${String(value.type)} aggregateType must be ${expectedAggregate}`,
+      );
+    }
+    rejectUnknownKeys(
+      payload,
+      acceptedPayload,
+      `${String(value.type)} payload`,
+    );
+    for (const field of acceptedPayload) {
+      if (payload[field] === undefined) {
+        throw new Error(`${String(value.type)} payload is missing ${field}`);
+      }
+    }
+    const validated: Record<string, string | number | string[] | undefined> =
+      {};
+    for (const [field, fieldValue] of Object.entries(payload)) {
+      if (field === "taskNumber") {
+        requireSequence(fieldValue, `${String(value.type)} taskNumber`);
+        validated[field] = fieldValue;
+      } else if (field === "claimUntil") {
+        requireTimestamp(fieldValue, `${String(value.type)} claimUntil`);
+        validated[field] = fieldValue;
+      } else if (field === "reviewerIds" || field === "dependencyTaskIds") {
+        if (!Array.isArray(fieldValue) || fieldValue.length > 100) {
+          throw new Error(`${String(value.type)} ${field} is invalid`);
+        }
+        for (const identity of fieldValue)
+          requireIdentifier(identity, `${String(value.type)} ${field}[]`);
+        if (new Set(fieldValue).size !== fieldValue.length) {
+          throw new Error(
+            `${String(value.type)} ${field} must not contain duplicates`,
+          );
+        }
+        validated[field] = fieldValue as string[];
+      } else if (field === "reason") {
+        if (
+          typeof fieldValue !== "string" ||
+          !fieldValue ||
+          fieldValue.length > 8_192
+        ) {
+          throw new Error(`${String(value.type)} reason is invalid`);
+        }
+        assertRoomTextStorageSafe(fieldValue, `${String(value.type)} reason`);
+        validated[field] = fieldValue;
+      } else if (field === "submissionDigest" || field === "evidenceDigest") {
+        if (
+          typeof fieldValue !== "string" ||
+          !/^sha256:[a-f0-9]{64}$/u.test(fieldValue)
+        ) {
+          throw new Error(`${String(value.type)} ${field} is invalid`);
+        }
+        validated[field] = fieldValue;
+      } else if (field === "disposition") {
+        if (fieldValue !== "approved" && fieldValue !== "changes_requested") {
+          throw new Error("review.submitted disposition is invalid");
+        }
+        validated[field] = fieldValue;
+      } else if (field === "resultingTaskState") {
+        if (fieldValue !== "todo" && fieldValue !== "submitted") {
+          throw new Error("review.submitted resultingTaskState is invalid");
+        }
+        validated[field] = fieldValue;
+      } else {
+        requireIdentifier(fieldValue, `${String(value.type)} ${field}`);
+        validated[field] = fieldValue;
+      }
+    }
+    if (expectedAggregate === "task" && validated.taskId !== base.aggregateId) {
+      throw new Error(
+        `${String(value.type)} aggregate does not identify its Task`,
+      );
+    }
+    if (value.type === "task.created") {
+      const reviewerIds = validated.reviewerIds as string[];
+      const dependencyTaskIds = validated.dependencyTaskIds as string[];
+      if (reviewerIds.length === 0) {
+        throw new Error("task.created requires at least one reviewer");
+      }
+      if (reviewerIds.includes(validated.assigneeId as string)) {
+        throw new Error("task.created assignee cannot also be a reviewer");
+      }
+      if (dependencyTaskIds.includes(validated.taskId as string)) {
+        throw new Error("task.created cannot depend on itself");
+      }
+    }
+    if (
+      value.type === "review.submitted" &&
+      ((validated.disposition === "approved" &&
+        validated.resultingTaskState !== "submitted") ||
+        (validated.disposition === "changes_requested" &&
+          validated.resultingTaskState !== "todo"))
+    ) {
+      throw new Error(
+        "review.submitted disposition and resultingTaskState are inconsistent",
+      );
+    }
+    return {
+      ...base,
+      aggregateType: expectedAggregate,
+      type: value.type as RoomWorkEventDto["type"],
+      payload: validated,
+    };
+  }
+
   throw new Error(`unsupported Room event type ${String(value.type)}`);
 }
 
-function requireBoolean(value: unknown, name: string): asserts value is boolean {
+function requireBoolean(
+  value: unknown,
+  name: string,
+): asserts value is boolean {
   if (typeof value !== "boolean") throw new Error(`${name} must be a boolean`);
 }
 
-function requireNonNegativeSequence(value: unknown, name: string): asserts value is number {
+function requireNonNegativeSequence(
+  value: unknown,
+  name: string,
+): asserts value is number {
   if (!Number.isSafeInteger(value) || Number(value) < 0) {
     throw new Error(`${name} must be a non-negative safe integer`);
   }
 }
 
-function requireResponseCursor(value: unknown, name: string, optional = false): void {
+function requireResponseCursor(
+  value: unknown,
+  name: string,
+  optional = false,
+): void {
   if (value === undefined && optional) return;
   if (typeof value !== "string" || value.length < 1 || value.length > 4_096) {
     throw new Error(`${name} must contain 1 to 4096 characters`);
@@ -586,17 +960,49 @@ function validateMessage(value: unknown): RoomMessage {
   const message = recordPayload(value, "RoomMessage");
   rejectUnknownKeys(
     message,
-    ["messageId", "roomId", "roomSeq", "actorId", "body", "createdAt"],
+    [
+      "messageId",
+      "roomId",
+      "roomSeq",
+      "actorId",
+      "body",
+      "threadId",
+      "rootMessageId",
+      "replyToMessageId",
+      "createdAt",
+    ],
     "RoomMessage",
   );
   requireIdentifier(message.messageId, "RoomMessage.messageId");
   requireIdentifier(message.roomId, "RoomMessage.roomId");
   requireSequence(message.roomSeq, "RoomMessage.roomSeq");
   requireIdentifier(message.actorId, "RoomMessage.actorId");
-  if (typeof message.body !== "string" || !message.body || message.body.length > 100_000) {
+  if (
+    typeof message.body !== "string" ||
+    !message.body ||
+    message.body.length > 100_000
+  ) {
     throw new Error("RoomMessage.body is invalid");
   }
   assertRoomTextStorageSafe(message.body, "RoomMessage.body");
+  const referenceFields = [
+    message.threadId,
+    message.rootMessageId,
+    message.replyToMessageId,
+  ];
+  const referenceCount = referenceFields.filter(
+    (field) => field !== undefined,
+  ).length;
+  if (referenceCount !== 0 && referenceCount !== 3) {
+    throw new Error("RoomMessage thread reference must be complete");
+  }
+  for (const [index, field] of referenceFields.entries()) {
+    if (field !== undefined)
+      requireIdentifier(
+        field,
+        ["threadId", "rootMessageId", "replyToMessageId"][index]!,
+      );
+  }
   requireTimestamp(message.createdAt, "RoomMessage.createdAt");
   return message as unknown as RoomMessage;
 }
@@ -612,7 +1018,13 @@ function validateInboxItem(value: unknown): RoomInboxItem {
       "participantId",
       "eventId",
       "eventSeq",
+      "eventType",
+      "aggregateType",
+      "aggregateId",
+      "taskId",
+      "reviewDisposition",
       "reason",
+      "disposition",
       "state",
       "createdAt",
       "acknowledgedAt",
@@ -625,9 +1037,108 @@ function validateInboxItem(value: unknown): RoomInboxItem {
   requireIdentifier(item.participantId, "RoomInboxItem.participantId");
   requireIdentifier(item.eventId, "RoomInboxItem.eventId");
   requireSequence(item.eventSeq, "RoomInboxItem.eventSeq");
+  if (
+    item.aggregateType !== "message" &&
+    item.aggregateType !== "task" &&
+    item.aggregateType !== "review"
+  ) {
+    throw new Error("RoomInboxItem.aggregateType is invalid");
+  }
+  requireIdentifier(item.aggregateId, "RoomInboxItem.aggregateId");
+  if (item.taskId !== undefined)
+    requireIdentifier(item.taskId, "RoomInboxItem.taskId");
+  if (
+    item.reviewDisposition !== undefined &&
+    item.reviewDisposition !== "approved" &&
+    item.reviewDisposition !== "changes_requested"
+  )
+    throw new Error("RoomInboxItem.reviewDisposition is invalid");
+  if (
+    (item.aggregateType === "message" && item.taskId !== undefined) ||
+    (item.aggregateType !== "message" && typeof item.taskId !== "string")
+  ) {
+    throw new Error("RoomInboxItem aggregate target is inconsistent");
+  }
+  if (
+    (item.eventType === "review.submitted") !==
+    (typeof item.reviewDisposition === "string")
+  ) {
+    throw new Error("RoomInboxItem Review disposition is inconsistent");
+  }
+  if (
+    item.eventType !== undefined &&
+    item.eventType !== "message.posted" &&
+    item.eventType !== "task.created" &&
+    item.eventType !== "task.submitted" &&
+    item.eventType !== "task.completed" &&
+    item.eventType !== "task.cancelled" &&
+    item.eventType !== "task.dependency_resolved" &&
+    item.eventType !== "review.submitted"
+  )
+    throw new Error("RoomInboxItem.eventType is invalid");
   if (!ATTENTION_REASONS.has(item.reason as RoomAttentionReason)) {
     throw new Error("RoomInboxItem.reason is invalid");
   }
+  if (
+    item.disposition !== "activation" &&
+    item.disposition !== "notification"
+  ) {
+    throw new Error("RoomInboxItem.disposition is invalid");
+  }
+  const validTarget = (() => {
+    switch (item.eventType) {
+      case "message.posted":
+        return (
+          item.aggregateType === "message" &&
+          item.taskId === undefined &&
+          item.reviewDisposition === undefined &&
+          (item.reason === "mention" || item.reason === "direct_message") &&
+          item.disposition === "activation"
+        );
+      case "task.created":
+      case "task.submitted":
+        return (
+          item.aggregateType === "task" &&
+          item.taskId === item.aggregateId &&
+          item.reviewDisposition === undefined &&
+          item.reason === "task_assignment" &&
+          item.disposition === "activation"
+        );
+      case "task.completed":
+      case "task.cancelled":
+        return (
+          item.aggregateType === "task" &&
+          item.taskId === item.aggregateId &&
+          item.reviewDisposition === undefined &&
+          item.reason === "task_assignment" &&
+          item.disposition === "notification"
+        );
+      case "task.dependency_resolved":
+        return (
+          item.aggregateType === "task" &&
+          item.taskId === item.aggregateId &&
+          item.reviewDisposition === undefined &&
+          item.reason === "dependency_resolved" &&
+          item.disposition === "activation"
+        );
+      case "review.submitted":
+        return (
+          item.aggregateType === "review" &&
+          typeof item.taskId === "string" &&
+          ((item.reviewDisposition === "changes_requested" &&
+            item.reason === "task_assignment" &&
+            item.disposition === "activation") ||
+            (item.reviewDisposition === "approved" &&
+              (item.reason === "task_assignment" ||
+                item.reason === "input_resolved") &&
+              item.disposition === "notification"))
+        );
+      default:
+        return false;
+    }
+  })();
+  if (!validTarget)
+    throw new Error("RoomInboxItem event target contract is inconsistent");
   if (item.state !== "pending" && item.state !== "acknowledged") {
     throw new Error("RoomInboxItem.state is invalid");
   }
@@ -636,16 +1147,25 @@ function validateInboxItem(value: unknown): RoomInboxItem {
     requireTimestamp(item.acknowledgedAt, "RoomInboxItem.acknowledgedAt");
   }
   if (
-    (item.state === "acknowledged") !== (typeof item.acknowledgedAt === "string")
-  ) throw new Error("RoomInboxItem acknowledgement state is inconsistent");
+    (item.state === "acknowledged") !==
+    (typeof item.acknowledgedAt === "string")
+  )
+    throw new Error("RoomInboxItem acknowledgement state is inconsistent");
   return item as unknown as RoomInboxItem;
 }
 
 function validateSnapshot(value: unknown): RoomSnapshot {
   const snapshot = recordPayload(value, "RoomSnapshot");
-  rejectUnknownKeys(snapshot, ["room", "memberships", "principals"], "RoomSnapshot");
+  rejectUnknownKeys(
+    snapshot,
+    ["room", "memberships", "principals"],
+    "RoomSnapshot",
+  );
   const room = validateRoomRecord(snapshot.room);
-  if (!Array.isArray(snapshot.memberships) || snapshot.memberships.length > 500) {
+  if (
+    !Array.isArray(snapshot.memberships) ||
+    snapshot.memberships.length > 500
+  ) {
     throw new Error("RoomSnapshot.memberships is invalid");
   }
   if (!Array.isArray(snapshot.principals) || snapshot.principals.length > 500) {
@@ -655,14 +1175,20 @@ function validateSnapshot(value: unknown): RoomSnapshot {
   const principals = snapshot.principals.map(validatePrincipal);
   const membershipIds = new Set<string>();
   for (const membership of memberships) {
-    if (membership.roomId !== room.roomId || membershipIds.has(membership.principalId)) {
+    if (
+      membership.roomId !== room.roomId ||
+      membershipIds.has(membership.principalId)
+    ) {
       throw new Error("RoomSnapshot membership graph is inconsistent");
     }
     membershipIds.add(membership.principalId);
   }
   const principalIds = new Set<string>();
   for (const principal of principals) {
-    if (!membershipIds.has(principal.principalId) || principalIds.has(principal.principalId)) {
+    if (
+      !membershipIds.has(principal.principalId) ||
+      principalIds.has(principal.principalId)
+    ) {
       throw new Error("RoomSnapshot principal graph is inconsistent");
     }
     principalIds.add(principal.principalId);
@@ -678,16 +1204,25 @@ function validateEventDto(value: unknown): RoomEventDto {
   if (Object.hasOwn(candidate, "idempotencyKey")) {
     throw new Error("RoomEventDto cannot expose idempotencyKey");
   }
-  return toRoomEventDto({ ...candidate, idempotencyKey: "transport-validation" });
+  return toRoomEventDto({
+    ...candidate,
+    idempotencyKey: "transport-validation",
+  });
 }
 
-function requireArrayLimit(value: unknown, name: string): asserts value is unknown[] {
+function requireArrayLimit(
+  value: unknown,
+  name: string,
+): asserts value is unknown[] {
   if (!Array.isArray(value) || value.length > 500) {
     throw new Error(`${name} must contain at most 500 items`);
   }
 }
 
-function requireStrictlyIncreasing(values: readonly number[], name: string): void {
+function requireStrictlyIncreasing(
+  values: readonly number[],
+  name: string,
+): void {
   for (let index = 1; index < values.length; index += 1) {
     if (values[index]! <= values[index - 1]!) {
       throw new Error(`${name} must be strictly increasing`);
@@ -716,15 +1251,22 @@ function validateListItem(value: unknown): RoomListItem {
   }
   requireSequence(item.latestRoomSeq, "RoomListItem.latestRoomSeq");
   requireSequence(item.participantCount, "RoomListItem.participantCount");
-  requireNonNegativeSequence(item.pendingAttentionCount, "RoomListItem.pendingAttentionCount");
-  const directPeer = item.directPeer === undefined ? undefined : validatePrincipal(item.directPeer);
+  requireNonNegativeSequence(
+    item.pendingAttentionCount,
+    "RoomListItem.pendingAttentionCount",
+  );
+  const directPeer =
+    item.directPeer === undefined
+      ? undefined
+      : validatePrincipal(item.directPeer);
   if (room.kind !== "direct" && directPeer) {
     throw new Error("Only a Direct Room may carry directPeer");
   }
   if (
     room.kind === "direct" &&
-    ((item.participantCount === 2) !== Boolean(directPeer))
-  ) throw new Error("Direct Room peer projection is inconsistent");
+    (item.participantCount === 2) !== Boolean(directPeer)
+  )
+    throw new Error("Direct Room peer projection is inconsistent");
   if (directPeer?.principalId === membership.principalId) {
     throw new Error("Direct Room peer must differ from the current membership");
   }
@@ -759,16 +1301,29 @@ function validateResponseData(value: unknown): RoomReadResponseData {
     requireSequence(data.latestRoomSeq, "latestRoomSeq");
     const snapshotSeq = data.snapshotSeq;
     const latestRoomSeq = data.latestRoomSeq;
-    if (snapshotSeq > latestRoomSeq) throw new Error("snapshotSeq exceeds Room head");
+    if (snapshotSeq > latestRoomSeq)
+      throw new Error("snapshotSeq exceeds Room head");
     requireArrayLimit(data.recentMessages, "recentMessages");
     const recentMessages = data.recentMessages.map(validateMessage);
-    requireStrictlyIncreasing(recentMessages.map((message) => message.roomSeq), "recentMessages");
-    if (recentMessages.some((message) =>
-      message.roomId !== snapshot.room.roomId || message.roomSeq > snapshotSeq)) {
+    requireStrictlyIncreasing(
+      recentMessages.map((message) => message.roomSeq),
+      "recentMessages",
+    );
+    if (
+      recentMessages.some(
+        (message) =>
+          message.roomId !== snapshot.room.roomId ||
+          message.roomSeq > snapshotSeq,
+      )
+    ) {
       throw new Error("recentMessages fall outside the snapshot window");
     }
     requireResponseCursor(data.eventCursor, "eventCursor");
-    requireResponseCursor(data.olderMessagesCursor, "olderMessagesCursor", true);
+    requireResponseCursor(
+      data.olderMessagesCursor,
+      "olderMessagesCursor",
+      true,
+    );
     return data as unknown as RoomBootstrapReadResponse;
   }
   if (data.mode === "event_page") {
@@ -783,7 +1338,10 @@ function validateResponseData(value: unknown): RoomReadResponseData {
     const latestRoomSeq = data.latestRoomSeq;
     requireBoolean(data.hasMore, "hasMore");
     requireResponseCursor(data.eventCursor, "eventCursor");
-    requireStrictlyIncreasing(events.map((event) => event.roomSeq), "events");
+    requireStrictlyIncreasing(
+      events.map((event) => event.roomSeq),
+      "events",
+    );
     if (data.hasMore && events.length === 0) {
       throw new Error("event page must make progress when hasMore is true");
     }
@@ -800,22 +1358,40 @@ function validateResponseData(value: unknown): RoomReadResponseData {
     );
     requireArrayLimit(data.messages, "messages");
     const messages = data.messages.map(validateMessage);
-    requireStrictlyIncreasing(messages.map((message) => message.roomSeq), "messages");
+    requireStrictlyIncreasing(
+      messages.map((message) => message.roomSeq),
+      "messages",
+    );
     requireBoolean(data.hasMore, "hasMore");
-    requireResponseCursor(data.olderMessagesCursor, "olderMessagesCursor", true);
+    requireResponseCursor(
+      data.olderMessagesCursor,
+      "olderMessagesCursor",
+      true,
+    );
     if (data.hasMore !== (typeof data.olderMessagesCursor === "string")) {
-      throw new Error("olderMessagesCursor must be present exactly when hasMore is true");
+      throw new Error(
+        "olderMessagesCursor must be present exactly when hasMore is true",
+      );
     }
     if (data.hasMore && messages.length === 0) {
-      throw new Error("older message page must make progress when hasMore is true");
+      throw new Error(
+        "older message page must make progress when hasMore is true",
+      );
     }
     return { ...data, messages } as RoomOlderMessagesReadResponse;
   }
   if (data.mode === "inbox_page") {
-    rejectUnknownKeys(data, ["mode", "items", "inboxCursor"], "RoomInboxReadResponse");
+    rejectUnknownKeys(
+      data,
+      ["mode", "items", "inboxCursor"],
+      "RoomInboxReadResponse",
+    );
     requireArrayLimit(data.items, "items");
     const items = data.items.map(validateInboxItem);
-    requireStrictlyIncreasing(items.map((item) => item.inboxSeq), "Inbox items");
+    requireStrictlyIncreasing(
+      items.map((item) => item.inboxSeq),
+      "Inbox items",
+    );
     requireResponseCursor(data.inboxCursor, "inboxCursor");
     return { ...data, items } as RoomInboxReadResponse;
   }
@@ -830,14 +1406,55 @@ function validateResponseData(value: unknown): RoomReadResponseData {
     requireBoolean(data.hasMore, "hasMore");
     requireResponseCursor(data.roomListCursor, "roomListCursor", true);
     if (data.hasMore !== (typeof data.roomListCursor === "string")) {
-      throw new Error("roomListCursor must be present exactly when hasMore is true");
+      throw new Error(
+        "roomListCursor must be present exactly when hasMore is true",
+      );
     }
     if (data.hasMore && items.length === 0) {
       throw new Error("Room list page must make progress when hasMore is true");
     }
     const roomIds = new Set(items.map((item) => item.room.roomId));
-    if (roomIds.size !== items.length) throw new Error("Room list contains duplicate Rooms");
+    if (roomIds.size !== items.length)
+      throw new Error("Room list contains duplicate Rooms");
     return { ...data, items } as RoomListReadResponse;
+  }
+  if (data.mode === "task_list") {
+    rejectUnknownKeys(
+      data,
+      ["mode", "roomId", "items", "hasMore", "taskListCursor"],
+      "RoomTaskListReadResponse",
+    );
+    requireIdentifier(data.roomId, "RoomTaskListReadResponse.roomId");
+    requireArrayLimit(data.items, "RoomTaskListReadResponse.items");
+    const items = data.items.map(validateRoomTaskListItem);
+    if (items.some((task) => task.roomId !== data.roomId)) {
+      throw new Error("Room Task list contains a Task from another Room");
+    }
+    requireStrictlyIncreasing(
+      items.map((task) => task.taskNumber),
+      "Room Tasks",
+    );
+    requireBoolean(data.hasMore, "hasMore");
+    requireResponseCursor(data.taskListCursor, "taskListCursor", true);
+    if (data.hasMore !== (typeof data.taskListCursor === "string")) {
+      throw new Error(
+        "taskListCursor must be present exactly when hasMore is true",
+      );
+    }
+    if (data.hasMore && items.length === 0) {
+      throw new Error(
+        "Room Task list page must make progress when hasMore is true",
+      );
+    }
+    return {
+      mode: "task_list",
+      roomId: data.roomId,
+      items,
+      hasMore: data.hasMore,
+      ...(typeof data.taskListCursor === "string"
+        ? { taskListCursor: data.taskListCursor }
+        : {}),
+    };
   }
   throw new Error("RoomReadResponseData.mode is unsupported");
 }
@@ -856,16 +1473,32 @@ export function validateRoomReadHttpEnvelope(
       throw new Error(`expected Room response mode ${expectedMode}`);
     }
     if (expectedRoomId !== undefined) {
-      if (data.mode === "latest_bootstrap" && data.snapshot.room.roomId !== expectedRoomId) {
-        throw new Error("Room bootstrap response does not match the requested Room");
+      if (
+        data.mode === "latest_bootstrap" &&
+        data.snapshot.room.roomId !== expectedRoomId
+      ) {
+        throw new Error(
+          "Room bootstrap response does not match the requested Room",
+        );
       }
-      if (data.mode === "event_page" && data.events.some((event) =>
-        event.roomId !== expectedRoomId)) {
-        throw new Error("Room event response does not match the requested Room");
+      if (
+        data.mode === "event_page" &&
+        data.events.some((event) => event.roomId !== expectedRoomId)
+      ) {
+        throw new Error(
+          "Room event response does not match the requested Room",
+        );
       }
-      if (data.mode === "older_messages" && data.messages.some((message) =>
-        message.roomId !== expectedRoomId)) {
-        throw new Error("Room message response does not match the requested Room");
+      if (
+        data.mode === "older_messages" &&
+        data.messages.some((message) => message.roomId !== expectedRoomId)
+      ) {
+        throw new Error(
+          "Room message response does not match the requested Room",
+        );
+      }
+      if (data.mode === "task_list" && data.roomId !== expectedRoomId) {
+        throw new Error("Room Task response does not match the requested Room");
       }
     }
     return { ok: true, data };
@@ -875,14 +1508,19 @@ export function validateRoomReadHttpEnvelope(
     const error = recordPayload(envelope.error, "RoomReadHttpEnvelope.error");
     rejectUnknownKeys(error, ["code", "message"], "RoomReadHttpEnvelope.error");
     if (
-      (error.code !== "internal" && !ROOM_ERROR_CODES.includes(error.code as RoomErrorCode)) ||
+      (error.code !== "internal" &&
+        !ROOM_ERROR_CODES.includes(error.code as RoomErrorCode)) ||
       typeof error.message !== "string" ||
       !error.message ||
       error.message.length > 512
-    ) throw new Error("RoomReadHttpEnvelope.error is invalid");
+    )
+      throw new Error("RoomReadHttpEnvelope.error is invalid");
     return {
       ok: false,
-      error: { code: error.code as RoomReadWireErrorCode, message: error.message },
+      error: {
+        code: error.code as RoomReadWireErrorCode,
+        message: error.message,
+      },
     };
   }
   throw new Error("RoomReadHttpEnvelope.ok must be a boolean");

@@ -9,6 +9,8 @@ import type {
   RoomListReadResponse,
   RoomOlderMessagesReadRequest,
   RoomOlderMessagesReadResponse,
+  RoomTaskListReadRequest,
+  RoomTaskListReadResponse,
   RoomReadHttpEnvelope,
   RoomReadResponseData,
 } from "@rah/runtime-protocol";
@@ -28,7 +30,8 @@ export type RoomReadHttpOperation =
   | "events"
   | "older_messages"
   | "inbox"
-  | "rooms";
+  | "rooms"
+  | "tasks";
 
 export interface RoomReadHttpResponse {
   status: number;
@@ -57,6 +60,10 @@ export interface RoomReadApplicationPort {
     principal: DeviceAuthPrincipal | null,
     request: RoomListReadRequest,
   ): RoomListReadResponse;
+  listTasks(
+    principal: DeviceAuthPrincipal | null,
+    request: RoomTaskListReadRequest,
+  ): RoomTaskListReadResponse;
 }
 
 const MAX_PUBLIC_ERROR_MESSAGE_LENGTH = 512;
@@ -105,6 +112,9 @@ export class RoomReadHttpAdapter {
           break;
         case "rooms":
           data = this.#port.listRooms(principal, rawRequest as RoomListReadRequest);
+          break;
+        case "tasks":
+          data = this.#port.listTasks(principal, rawRequest as RoomTaskListReadRequest);
           break;
         default:
           throw roomError("invalid_argument", "Unknown Room read operation");

@@ -1,5 +1,5 @@
 import type { CouncilSnapshot, SessionSummary, StoredSessionRef } from "@rah/runtime-protocol";
-import { Columns3, MessageCircleMore, Settings, SquarePen } from "lucide-react";
+import { Columns3, Hash, MessageCircleMore, Settings, SquarePen } from "lucide-react";
 import { Suspense, lazy, useState } from "react";
 import { CouncilLogo } from "../../CouncilLogo";
 import type { WorkspaceSortMode } from "../../../session-browser";
@@ -27,8 +27,10 @@ export function WorkbenchSidebarNavigation(props: {
   homeActive: boolean;
   canvasActive: boolean;
   councilActive: boolean;
+  roomActive: boolean;
   canvasEnabled?: boolean;
   onOpenCouncil: () => void;
+  onOpenRooms: () => void;
   onToggleCanvas: () => void;
   onActivateHistory: (ref: StoredSessionRef) => void;
   onActivateRunning: (sessionId: string) => void;
@@ -73,6 +75,19 @@ export function WorkbenchSidebarNavigation(props: {
           <SquarePen size={SIDEBAR_VISUAL_PROTOCOL.navigationIconPx} strokeWidth={1.75} />
         </span>
         <span>New task</span>
+      </button>
+      <button
+        type="button"
+        aria-label="Rooms"
+        className={`${SIDEBAR_LAYOUT.navigationItemClassName} ${
+          props.roomActive ? SIDEBAR_LAYOUT.navigationItemActiveClassName : ""
+        }`}
+        onClick={props.onOpenRooms}
+      >
+        <span className={SIDEBAR_LAYOUT.navigationIconClassName}>
+          <Hash size={SIDEBAR_VISUAL_PROTOCOL.navigationIconPx} strokeWidth={1.75} />
+        </span>
+        <span>Rooms</span>
       </button>
       <button
         type="button"
