@@ -1786,6 +1786,7 @@ export * from "./human-profile.ts";
 export * from "./public-channel.ts";
 
 export * from "./worker-message-tools.ts";
+export * from "./worker-task-trajectory.ts";
 export {
   WorkbenchServiceRestartRequestSchema,
   WorkbenchServiceStatusSchema,

@@ -11,6 +11,7 @@ import type {
   NavigationTarget,
   Room,
   RoomEvent,
+  RoomTaskDefaults,
   Principal,
   Task,
   Thread,
@@ -38,6 +39,7 @@ import { HumanIdentity } from "./human-identity.tsx";
 import { AgentAvatar } from "./agent-avatar.tsx";
 import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
 import { insertMention } from "../identity-presentation.ts";
+import { seedTaskParticipantsFromRoomDefaults } from "../room-task-defaults.ts";
 import { formatRahDateTime } from "../date-time-presentation.ts";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import {
@@ -140,6 +142,7 @@ export function ChatPane({
   roomName,
   roomKind,
   roomId,
+  roomTaskDefaults,
   mentionReadStates: canonicalMentionReadStates,
   referenceRooms = [],
   referenceComputers = [],
@@ -185,6 +188,7 @@ export function ChatPane({
   roomName: string | undefined;
   roomKind: Room["kind"] | undefined;
   roomId: string | undefined;
+  roomTaskDefaults?: RoomTaskDefaults | undefined;
   mentionReadStates?: MessageReferenceReadStateIndex;
   referenceRooms?: readonly {
     kind: Room["kind"];
@@ -783,7 +787,29 @@ export function ChatPane({
                     <input
                       checked={asTask}
                       disabled={fileUploads.rows.length > 0 || pending}
-                      onChange={(event) => setAsTask(event.target.checked)}
+                      onChange={(event) => {
+                        if (!event.target.checked) {
+                          setAsTask(false);
+                          return;
+                        }
+                        // ADR-0020 rule 5: the Room defaults are prefilled
+                        // here and immediately shown, never injected server
+                        // side. An edited draft is left untouched.
+                        if (
+                          taskAssigneeId === undefined &&
+                          taskCollaboratorIds.length === 0 &&
+                          taskReviewerIds.length === 0
+                        ) {
+                          const seeded = seedTaskParticipantsFromRoomDefaults({
+                            availableAgents: agents,
+                            taskDefaults: roomTaskDefaults,
+                          });
+                          setTaskAssigneeId(seeded.assigneeId);
+                          setTaskCollaboratorIds(seeded.collaboratorIds);
+                          setTaskReviewerIds(seeded.reviewerIds);
+                        }
+                        setAsTask(true);
+                      }}
                       type="checkbox"
                     />
                     <span className="box" />

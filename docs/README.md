@@ -1,5 +1,7 @@
 # RAH OS 文档
 
+Room 任务默认参与者与监督可见性：[RAH 扩展的 Room 级默认负责人/协作者/审查者预填、工具轨迹标签与脱敏、reviewer 读取 owner 轨迹](audits/2026-09-08-room-task-defaults-and-supervision-visibility.zh-CN.md)。
+
 StandingPromptCompiler：[分层 standing prompt、每次启动由 daemon 编译投递、Provider session 按 prompt 摘要失效](audits/2026-09-08-standing-prompt-compiler.zh-CN.md)。
 
 Agent 协作最小闭环：[同伴消息接单、@mention 寻址、worker task-create 与 Raft 礼仪 prompt 移植，含真实三 CLI 出口链](audits/2026-09-07-agent-collaboration-minimal-loop.zh-CN.md)。

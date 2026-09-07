@@ -2,6 +2,7 @@ import type { DatabaseSync } from "node:sqlite";
 
 import {
   ActivationReasonSchema,
+  ClientRoomSchema,
   ClientWorkspaceUpdateRequestSchema,
   MembershipRoleSchema,
   ParticipantKindSchema,
@@ -10,8 +11,10 @@ import {
   WorkspaceSchema,
   type ActivationReason,
   type Attachment,
+  type ClientRoom,
   type MembershipRole,
   type Room,
+  type RoomTaskDefaults,
   type RoomMembership,
   type Thread,
   type Workspace,
@@ -52,6 +55,11 @@ import {
 } from "./held-message-drafts.ts";
 import { integer, nullableText, text, type Row } from "./sqlite-row.ts";
 import { assertNoActiveRoomWork } from "./room-lifecycle-policy.ts";
+import {
+  dropRoomTaskDefaultParticipant,
+  readRoomTaskDefaults,
+  writeRoomTaskDefaults,
+} from "./room-task-defaults.ts";
 import { workspaceRoomSlugIsAvailable } from "./message-reference-identity.ts";
 import type {
   MessageMutationResult,
@@ -82,12 +90,26 @@ export type WorkspaceRoomCreateInput = {
   workspaceId: string;
 };
 
+function canonicalTaskDefaultsJson(
+  taskDefaults: RoomTaskDefaults | undefined,
+): string {
+  if (taskDefaults === undefined) return JSON.stringify(null);
+  return JSON.stringify({
+    ...(taskDefaults.defaultAssigneeId === undefined
+      ? {}
+      : { defaultAssigneeId: taskDefaults.defaultAssigneeId }),
+    defaultCollaboratorIds: [...taskDefaults.defaultCollaboratorIds].sort(),
+    defaultReviewerIds: [...taskDefaults.defaultReviewerIds].sort(),
+  });
+}
+
 export type WorkspaceRoomUpdateInput = {
   basedOnRoomSeq: number;
   description?: string | undefined;
   idempotencyKey: string;
   name: string;
   roomId: string;
+  taskDefaults?: RoomTaskDefaults | undefined;
   visibility: "public" | "private";
 };
 
@@ -524,7 +546,9 @@ export class CollaborationService {
         event.aggregateId !== input.roomId ||
         event.payload.name !== name ||
         event.payload.description !== description ||
-        event.payload.visibility !== visibility
+        event.payload.visibility !== visibility ||
+        JSON.stringify(event.payload.taskDefaults ?? null) !==
+          canonicalTaskDefaultsJson(input.taskDefaults)
       ) {
         throw this.#idempotencyConflict(idempotencyKey);
       }
@@ -598,6 +622,18 @@ export class CollaborationService {
         addedHumanParticipantIds.push(principalId);
       }
     }
+    const taskDefaults =
+      input.taskDefaults === undefined
+        ? undefined
+        : (writeRoomTaskDefaults(
+            this.#database,
+            input.roomId,
+            input.taskDefaults,
+            this.#timestamp(),
+          ) ?? {
+            defaultCollaboratorIds: [],
+            defaultReviewerIds: [],
+          });
     const event = this.#events.append({
       actorId: actor.principalId,
       aggregateId: input.roomId,
@@ -611,6 +647,7 @@ export class CollaborationService {
         ...(previousDescription === undefined ? {} : { previousDescription }),
         previousName,
         previousVisibility,
+        ...(taskDefaults === undefined ? {} : { taskDefaults }),
         visibility,
       },
       roomId: input.roomId,
@@ -908,7 +945,10 @@ export class CollaborationService {
       .map((row) => workspaceProjectionFromRow(row));
   }
 
-  listRooms(actorId: string, input: { workspaceId?: string } = {}): Room[] {
+  listRooms(
+    actorId: string,
+    input: { workspaceId?: string } = {},
+  ): ClientRoom[] {
     return this.#database
       .prepare(
         `SELECT rooms.*, direct_room_pairs.left_principal_id, direct_room_pairs.right_principal_id
@@ -920,7 +960,7 @@ export class CollaborationService {
          ORDER BY rooms.slug, rooms.room_id`,
       )
       .all(actorId, input.workspaceId ?? null, input.workspaceId ?? null)
-      .map((row) => roomProjectionFromRow(row));
+      .map((row) => this.#withTaskDefaults(roomProjectionFromRow(row)));
   }
 
   listRoomMemberships(actorId: string, roomId: string): RoomMembership[] {
@@ -1116,6 +1156,11 @@ export class CollaborationService {
     this.#database
       .prepare("DELETE FROM memberships WHERE room_id = ? AND principal_id = ?")
       .run(input.roomId, input.principalId);
+    dropRoomTaskDefaultParticipant(
+      this.#database,
+      input.roomId,
+      input.principalId,
+    );
     return {
       deduplicated: false,
       event,
@@ -1186,6 +1231,11 @@ export class CollaborationService {
     this.#database
       .prepare("DELETE FROM memberships WHERE room_id = ? AND principal_id = ?")
       .run(input.roomId, actor.principalId);
+    dropRoomTaskDefaultParticipant(
+      this.#database,
+      input.roomId,
+      actor.principalId,
+    );
     return {
       deduplicated: false,
       event,
@@ -1990,7 +2040,12 @@ export class CollaborationService {
       .get(roomId, idempotencyKey);
   }
 
-  #roomFromId(roomId: string): Room {
+  #withTaskDefaults(room: Room): ClientRoom {
+    const taskDefaults = readRoomTaskDefaults(this.#database, room.roomId);
+    return taskDefaults === undefined ? room : { ...room, taskDefaults };
+  }
+
+  #roomFromId(roomId: string): ClientRoom {
     const room = this.#database
       .prepare(
         `SELECT rooms.*, direct_room_pairs.left_principal_id, direct_room_pairs.right_principal_id
@@ -2001,7 +2056,9 @@ export class CollaborationService {
     if (room === undefined) {
       throw new NotFoundError(`Room ${roomId} was not found`);
     }
-    return RoomSchema.parse(roomProjectionFromRow(room));
+    return ClientRoomSchema.parse(
+      this.#withTaskDefaults(RoomSchema.parse(roomProjectionFromRow(room))),
+    );
   }
 
   #workspaceFromId(workspaceId: string): Workspace {

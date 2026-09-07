@@ -919,3 +919,63 @@ test("Worker message tools use fixed routes and reject actor/Room injection", as
     rmSync(state.directory, { recursive: true, force: true });
   }
 });
+
+test("Worker CLI reads the owner's Task trajectory for a bounded reviewer page", async () => {
+  const state = fixture();
+  try {
+    assert.equal(
+      await runWorkerCliCommand(
+        ["worker", "task-trajectory", "--task-id", "task-1", "--limit", "5"],
+        state.runtime,
+      ),
+      0,
+    );
+    assert.deepEqual(state.requests[0]?.body, { limit: 5, taskId: "task-1" });
+    assert.equal(
+      state.requests[0]?.url,
+      "http://127.0.0.1:43123/v1/worker/tasks/trajectory",
+    );
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("Worker CLI pages Task trajectory without accepting a participant selector", async () => {
+  const state = fixture();
+  try {
+    assert.equal(
+      await runWorkerCliCommand(
+        [
+          "worker",
+          "task-trajectory",
+          "--task-id",
+          "task-1",
+          "--before-sequence",
+          "12",
+        ],
+        state.runtime,
+      ),
+      0,
+    );
+    assert.deepEqual(state.requests[0]?.body, {
+      beforeSequence: 12,
+      taskId: "task-1",
+    });
+    assert.notEqual(
+      await runWorkerCliCommand(
+        [
+          "worker",
+          "task-trajectory",
+          "--task-id",
+          "task-1",
+          "--participant-id",
+          "agent-other",
+        ],
+        state.runtime,
+      ),
+      0,
+    );
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});

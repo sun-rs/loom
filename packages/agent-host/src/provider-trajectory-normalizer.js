@@ -169,13 +169,17 @@ export function normalizeKimiTrajectoryNotification(
   }
   if (kind === "tool_call") {
     const title = bounded(string(update.title) ?? "工具调用", 512);
-    const input = json(update.rawInput, MAX_TOOL_INPUT);
+    const toolName = ACP_TOOL_KINDS[string(update.kind) ?? ""] ?? title;
+    const input =
+      update.rawInput === undefined
+        ? json({ title }, MAX_TOOL_INPUT)
+        : json(acpToolInput(update.rawInput), MAX_TOOL_INPUT);
     return trajectory(
       {
         kind: "tool_start",
         producerFactId,
         ...(input === undefined ? {} : { toolInput: input }),
-        toolName: title,
+        toolName,
       },
       observedAt,
     );
@@ -677,7 +681,15 @@ function codexTool(itemType, item) {
     };
   }
   if (itemType === "fileChange") {
-    return { input: json(item.changes, MAX_TOOL_INPUT), name: "修改文件" };
+    const changes = record(item.changes);
+    const filePath = Object.keys(changes)[0];
+    return {
+      input: json(
+        filePath === undefined ? { changes } : { filePath, changes },
+        MAX_TOOL_INPUT,
+      ),
+      name: "修改文件",
+    };
   }
   if (itemType === "mcpToolCall") {
     const server = string(item.server) ?? "MCP";
@@ -711,7 +723,15 @@ function codexTool(itemType, item) {
       name: "查看图片",
     };
   }
-  if (itemType === "imageGeneration") return { name: "生成图片" };
+  if (itemType === "imageGeneration") {
+    const prompt = string(item.prompt);
+    return {
+      name: "生成图片",
+      ...(prompt === undefined
+        ? {}
+        : { input: bounded(prompt, MAX_TOOL_INPUT) }),
+    };
+  }
   if (itemType === "sleep")
     return { input: json(item, MAX_TOOL_INPUT), name: "等待" };
   return undefined;
@@ -742,6 +762,28 @@ function timestampFrom(params, now) {
     }
   }
   return new Date(now()).toISOString();
+}
+
+// ACP tool kinds are a closed enum; the free-form title stays the fallback.
+const ACP_TOOL_KINDS = {
+  delete: "delete",
+  edit: "edit",
+  execute: "bash",
+  fetch: "webfetch",
+  move: "move",
+  read: "read",
+  search: "grep",
+  think: "think",
+};
+
+function acpToolInput(rawInput) {
+  if (!isRecord(rawInput)) return rawInput;
+  const command = rawInput.command;
+  if (!Array.isArray(command)) return rawInput;
+  return {
+    ...rawInput,
+    command: command.filter((part) => typeof part === "string").join(" "),
+  };
 }
 
 function fact(value, suffix) {

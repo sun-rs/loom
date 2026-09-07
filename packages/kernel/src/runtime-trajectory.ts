@@ -284,7 +284,7 @@ export function listAgentTrajectory(
   });
 }
 
-function trajectoryFromRow(row: Row): RuntimeTrajectoryRecord {
+export function trajectoryFromRow(row: Row): RuntimeTrajectoryRecord {
   return RuntimeTrajectoryRecordSchema.parse({
     activityId: text(row, "activity_id"),
     entry: JSON.parse(text(row, "entry_json")) as unknown,

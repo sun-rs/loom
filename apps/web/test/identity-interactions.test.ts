@@ -240,3 +240,66 @@ test("short status and tool detail are inline, narrative is a separate expandabl
     { label: "输出", detail: "Long answer", block: true },
   );
 });
+
+test("tool labels cover every CLI's tool vocabulary in the Agent activity feed", () => {
+  assert.deepEqual(
+    activityPresentation({
+      kind: "tool_start",
+      toolName: "Bash",
+      toolInput: '{"command":"ls"}',
+    }),
+    { label: "Running command", detail: "ls", block: false },
+  );
+  assert.deepEqual(
+    activityPresentation({
+      kind: "tool_start",
+      toolName: "修改文件",
+      toolInput: '{"filePath":"a.ts","changes":{"a.ts":{"kind":"update"}}}',
+    }),
+    { label: "Editing file", detail: "a.ts", block: false },
+  );
+  assert.deepEqual(
+    activityPresentation({
+      kind: "tool_start",
+      toolName: "edit",
+      toolInput: '{"path":"changed.txt"}',
+    }),
+    { label: "Editing file", detail: "changed.txt", block: false },
+  );
+  assert.deepEqual(
+    activityPresentation({
+      kind: "tool_start",
+      toolName: "bash",
+      toolInput: '{"command":"npm test"}',
+    }),
+    { label: "Running command", detail: "npm test", block: false },
+  );
+  assert.deepEqual(
+    activityPresentation({
+      kind: "tool_start",
+      toolName: "Task",
+      toolInput: '{"description":"review"}',
+    }),
+    {
+      label: "Delegating to subagent",
+      detail: '{"description":"review"}',
+      block: false,
+    },
+  );
+  assert.deepEqual(
+    activityPresentation({
+      kind: "tool_start",
+      toolName: "webfetch",
+      toolInput: '{"url":"https://example.com"}',
+    }),
+    { label: "Fetching web page", detail: "https://example.com", block: false },
+  );
+  assert.deepEqual(
+    activityPresentation({
+      kind: "tool_start",
+      toolName: "NotebookEdit",
+      toolInput: '{"notebook_path":"/tmp/n.ipynb"}',
+    }),
+    { label: "Editing notebook", detail: "/tmp/n.ipynb", block: false },
+  );
+});

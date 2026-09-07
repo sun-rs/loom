@@ -2,6 +2,7 @@ import type {
   Activation,
   ActivationReason,
   AgentCatalogEntry,
+  ClientRoom,
   AgentDefinition,
   AgentDefinitionRevision,
   ClientAgentManageRequest,
@@ -272,7 +273,7 @@ export type WorkspaceMutationResult = {
 export type RoomMutationResult = {
   deduplicated: boolean;
   event: RoomEvent;
-  room: Room;
+  room: ClientRoom;
 };
 
 export type ThreadMutationResult = {

@@ -48,6 +48,8 @@ import {
   WorkerTaskCreateRequestSchema,
   WorkerTaskBlockRequestSchema,
   WorkerTaskGetRequestSchema,
+  WorkerTaskTrajectoryRequestSchema,
+  WorkerTaskTrajectoryResponseSchema,
   WorkerTaskGetResponseSchema,
   WorkerTaskInputStatusRequestSchema,
   WorkerTaskInputStatusResponseSchema,
@@ -183,6 +185,7 @@ export const WORKER_HTTP_ROUTE_PATHS = [
   "/v1/worker/tasks/start",
   "/v1/worker/tasks/submit",
   "/v1/worker/tasks/submission",
+  "/v1/worker/tasks/trajectory",
 ] as const;
 const WORKER_ROUTES = new Set<string>(WORKER_HTTP_ROUTE_PATHS);
 
@@ -559,6 +562,21 @@ export class WorkerApplicationService {
       const task = this.#kernel.getWorkerTask(grant.execution, { taskId });
       this.#synchronizeTaskHeartbeat(grant, task);
       writeJson(response, 200, WorkerTaskGetResponseSchema.parse({ task }));
+      return;
+    }
+
+    if (route === "/v1/worker/tasks/trajectory") {
+      const command = parseWorkerRequest(
+        WorkerTaskTrajectoryRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        WorkerTaskTrajectoryResponseSchema.parse(
+          this.#kernel.listWorkerTaskTrajectory(grant.execution, command),
+        ),
+      );
       return;
     }
 

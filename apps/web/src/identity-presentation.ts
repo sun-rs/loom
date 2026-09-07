@@ -30,6 +30,7 @@ export function activityPresentation(entry: RuntimeTrajectoryRecord["entry"]) {
   if (entry.kind === "tool_start") {
     const labels: Record<string, string> = {
       bash: "Running command",
+      Bash: "Running command",
       shell: "Running command",
       exec_command: "Running command",
       运行命令: "Running command",
@@ -42,8 +43,19 @@ export function activityPresentation(entry: RuntimeTrajectoryRecord["entry"]) {
       Edit: "Editing file",
       修改文件: "Editing file",
       grep: "Searching files",
+      Grep: "Searching files",
       glob: "Finding files",
+      Glob: "Finding files",
+      MultiEdit: "Editing file",
+      NotebookEdit: "Editing notebook",
+      delete: "Deleting file",
+      move: "Moving file",
+      think: "Thinking",
+      webfetch: "Fetching web page",
+      WebFetch: "Fetching web page",
+      WebSearch: "Searching web",
       网页搜索: "Searching web",
+      Task: "Delegating to subagent",
     };
     let detail = entry.toolInput ?? "";
     try {
@@ -55,7 +67,10 @@ export function activityPresentation(entry: RuntimeTrajectoryRecord["entry"]) {
           record.cmd ??
           record.filePath ??
           record.file_path ??
+          record.file ??
           record.path ??
+          record.notebook_path ??
+          record.url ??
           record.query ??
           record.pattern;
         if (typeof summary === "string") detail = summary;

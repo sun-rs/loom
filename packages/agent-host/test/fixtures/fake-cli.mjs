@@ -102,6 +102,34 @@ if (mode === "trajectory") {
       producerSequence: 2,
     })}\n`,
   );
+  const trajectorySecret = process.env.RAH_FAKE_TRAJECTORY_SECRET;
+  if (trajectorySecret) {
+    writeSync(
+      3,
+      `${JSON.stringify({
+        entry: {
+          kind: "tool_start",
+          producerFactId: "fixture-tool-secret",
+          toolInput: `curl -H "authorization: ${trajectorySecret}" https://example.invalid`,
+          toolName: "shell",
+        },
+        observedAt: "2026-08-29T01:00:02.000Z",
+        producerSequence: 3,
+      })}\n`,
+    );
+    writeSync(
+      3,
+      `${JSON.stringify({
+        entry: {
+          kind: "text",
+          producerFactId: "fixture-text-secret",
+          text: `the lease token is ${trajectorySecret}`,
+        },
+        observedAt: "2026-08-29T01:00:03.000Z",
+        producerSequence: 4,
+      })}\n`,
+    );
+  }
   process.exitCode = 0;
 } else if (mode === "provider-session") {
   writeSync(

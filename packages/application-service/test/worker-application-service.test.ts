@@ -1078,6 +1078,17 @@ test("Worker API exposes a causal and execution-fenced Task command surface", as
     const delivery = await jsonObject(deliveryResponse);
     assert.equal(delivery.cursorAfter, created.event.roomSeq);
     const basedOnRoomSeq = delivery.cursorAfter as number;
+    kernel.appendRunTrajectory(host, {
+      entry: {
+        kind: "tool_start",
+        toolInput: "npm test",
+        toolName: "Bash",
+      },
+      observedAt: "2026-09-05T01:02:00.000Z",
+      producerSequence: 1,
+      runAttemptId: runAttempt.runAttemptId,
+      runtimeRunId: "worker-task-runtime",
+    });
 
     const taskQueryResponse = await request("/v1/worker/tasks/get", {
       taskId: created.task.taskId,
@@ -1418,6 +1429,29 @@ test("Worker API exposes a causal and execution-fenced Task command surface", as
     const reviewDelivery = await jsonObject(
       await reviewRequest("/v1/worker/sync", {}),
     );
+    const trajectoryResponse = await reviewRequest(
+      "/v1/worker/tasks/trajectory",
+      { limit: 10, taskId: created.task.taskId },
+    );
+    assert.equal(trajectoryResponse.status, 200);
+    const trajectory = await jsonObject(trajectoryResponse);
+    assert.equal(trajectory.ownerParticipantId, agent.principal.principalId);
+    assert.deepEqual(
+      (trajectory.entries as Array<Record<string, unknown>>).map(
+        (record) => (record.entry as Record<string, unknown>).toolName,
+      ),
+      ["Bash"],
+      "the reviewer reads the owner's recorded commands before reviewing",
+    );
+    const injectedTrajectory = await reviewRequest(
+      "/v1/worker/tasks/trajectory",
+      { participantId: "attacker", taskId: created.task.taskId },
+    );
+    assert.equal(injectedTrajectory.status, 400);
+    assert.equal(
+      await responseErrorCode(injectedTrajectory),
+      "unexpected_field",
+    );
     const reviewResponse = await reviewRequest("/v1/worker/tasks/review", {
       basedOnRoomSeq: reviewDelivery.cursorAfter,
       disposition: "approved",
@@ -1473,6 +1507,18 @@ test("Worker API exposes a causal and execution-fenced Task command surface", as
     });
     assert.equal(createResponse.status, 200);
     const createdByWorker = await jsonObject(createResponse);
+    const unlinkedTrajectory = await reviewRequest(
+      "/v1/worker/tasks/trajectory",
+      {
+        taskId: (createdByWorker.task as Record<string, unknown>)
+          .taskId as string,
+      },
+    );
+    assert.equal(
+      unlinkedTrajectory.status,
+      403,
+      "a reviewer cannot read trajectory for a Task outside its Activation",
+    );
     assert.equal(
       (createdByWorker.event as Record<string, unknown>).type,
       "task.created",

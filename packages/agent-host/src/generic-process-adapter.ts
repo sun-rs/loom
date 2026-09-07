@@ -142,11 +142,57 @@ const MIN_REDACTION_SCAN_CODE_UNITS = 1_024;
 const MAX_ACTIVITY_LINE_BYTES = 16_384;
 const MAX_ACTIVITY_BUFFER_BYTES = 65_536;
 
+/**
+ * Diagnostics redaction for already-decoded trajectory strings. Trajectory
+ * frames arrive whole on their own descriptor, so they need the substitution
+ * BoundedOutput streams, not its incremental scanning machinery.
+ */
+export function redactTrajectoryText(
+  value: string,
+  redactions: readonly string[],
+): string {
+  const secrets = [
+    ...new Set(redactions.filter((secret) => secret !== "")),
+  ].sort((left, right) => right.length - left.length);
+  return secrets.reduce(
+    (text, secret) => text.split(secret).join("[REDACTED]"),
+    value,
+  );
+}
+
+function redactTrajectoryFrame(
+  value: unknown,
+  redactions: readonly string[],
+): unknown {
+  if (redactions.length === 0) return value;
+  if (typeof value === "string") return redactTrajectoryText(value, redactions);
+  if (Array.isArray(value)) {
+    return value.map((item) => redactTrajectoryFrame(item, redactions));
+  }
+  if (typeof value === "object" && value !== null) {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [
+        key,
+        redactTrajectoryFrame(item, redactions),
+      ]),
+    );
+  }
+  return value;
+}
+
+const REDACTED_TRAJECTORY_FIELDS = new Set([
+  "detail",
+  "text",
+  "title",
+  "toolInput",
+]);
+
 class RuntimeTrajectoryCollector {
   readonly #activation: ActivationEnvelope;
   readonly #decoder = new StringDecoder("utf8");
   readonly #diagnostics: BoundedOutput;
   readonly #lifecycle: RuntimeStartLifecycle;
+  readonly #redactions: readonly string[];
   readonly #runAttemptId: string;
   readonly #runtimeRunId: string;
   readonly #recordProviderSessionEvidence:
@@ -165,10 +211,12 @@ class RuntimeTrajectoryCollector {
     diagnostics: BoundedOutput;
     lifecycle: RuntimeStartLifecycle;
     recordProviderSessionEvidence?: GenericProcessAdapterOptions["recordProviderSessionEvidence"];
+    redactions?: readonly string[];
     runAttemptId: string;
     runtimeRunId: string;
   }) {
     this.#activation = input.activation;
+    this.#redactions = input.redactions ?? [];
     this.#diagnostics = input.diagnostics;
     this.#lifecycle = input.lifecycle;
     this.#runAttemptId = input.runAttemptId;
@@ -223,6 +271,25 @@ class RuntimeTrajectoryCollector {
     }
   }
 
+  #redactEntry(frame: Record<string, unknown>): Record<string, unknown> {
+    if (this.#redactions.length === 0) return frame;
+    const entry = frame.entry;
+    if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
+      return frame;
+    }
+    return {
+      ...frame,
+      entry: Object.fromEntries(
+        Object.entries(entry).map(([key, value]) => [
+          key,
+          REDACTED_TRAJECTORY_FIELDS.has(key)
+            ? redactTrajectoryFrame(value, this.#redactions)
+            : value,
+        ]),
+      ),
+    };
+  }
+
   #enqueue(line: string): void {
     if (Buffer.byteLength(line) > MAX_ACTIVITY_LINE_BYTES) {
       this.#diagnostics.append(
@@ -242,7 +309,9 @@ class RuntimeTrajectoryCollector {
           return;
         }
         const activity = RuntimeTrajectoryAppendInputSchema.parse({
-          ...(typeof frame === "object" && frame !== null ? frame : {}),
+          ...(typeof frame === "object" && frame !== null
+            ? this.#redactEntry(frame as Record<string, unknown>)
+            : {}),
           runAttemptId: this.#runAttemptId,
           runtimeRunId: this.#runtimeRunId,
         });
@@ -690,6 +759,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       diagnostics: stderr,
       lifecycle,
       recordProviderSessionEvidence: this.#recordProviderSessionEvidence,
+      redactions: environmentLease?.redactions ?? [],
       runAttemptId: input.runAttemptId,
       runtimeRunId: runId,
     });
@@ -965,6 +1035,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       diagnostics: stderr,
       lifecycle,
       recordProviderSessionEvidence: this.#recordProviderSessionEvidence,
+      redactions: environmentLease?.redactions ?? [],
       runAttemptId: input.runAttemptId,
       runtimeRunId: runId,
     });

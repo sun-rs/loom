@@ -380,7 +380,7 @@ rl.on("line", (line) => {
     } else if (activationId === "activation-kimi-prompt-missing-run" && activeSessionId === "kimi-session-persisted") {
       send({jsonrpc:"2.0",id:frame.id,error:{code:-32000,message:"unknown session " + activeSessionId}});
     } else if (activationId === "activation-kimi-tool-missing-run") {
-      send({jsonrpc:"2.0",method:"session/update",params:{sessionId:activeSessionId,update:{sessionUpdate:"tool_call",toolCallId:"tool-side-effect",title:"write_file",status:"in_progress",rawInput:{path:"changed.txt"}}}});
+      send({jsonrpc:"2.0",method:"session/update",params:{sessionId:activeSessionId,update:{sessionUpdate:"tool_call",toolCallId:"tool-side-effect",kind:"edit",title:"write_file",status:"in_progress",rawInput:{path:"changed.txt"}}}});
       send({jsonrpc:"2.0",id:frame.id,error:{code:-32000,message:"unknown session " + activeSessionId}});
     } else {
       send({jsonrpc:"2.0",method:"session/update",params:{sessionId:activeSessionId,update:{sessionUpdate:"agent_message_chunk",messageId:"current",content:{type:"text",text:"Kimi current reply"}}}});

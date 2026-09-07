@@ -65,6 +65,8 @@ import {
   type ExecutionPolicyRevision,
   type InputRequest,
   type InputRequestStatus,
+  type WorkerTaskTrajectoryRequest,
+  type WorkerTaskTrajectoryResponse,
   type RoomEvent,
   type PlacementDecision,
   type RuntimeRecoveryDescriptor,
@@ -72,6 +74,7 @@ import {
   type RuntimeTrajectoryAppendInput,
   type RuntimeTrajectoryRecord,
   type RuntimeCertification,
+  type ClientRoom,
   type RuntimeOffer,
   type RuntimeOfferProjection,
   type RoomAgentActivity,
@@ -179,6 +182,7 @@ import {
   migrateMessageForwardingV46,
   migrateBoundedRoomReadsV49,
   migrateFrozenTaskSubmissionEvidenceV50,
+  migrateRoomTaskDefaultsV51,
   SCHEMA_SQL,
 } from "./schema.ts";
 import * as agentThreads from "./agent-thread-subscriptions.ts";
@@ -223,6 +227,7 @@ import * as principalProfile from "./principal-profile.ts";
 import { ProfileImageLifecycleService } from "./profile-image-lifecycle.ts";
 import { createHumanCommandServices } from "./human-command-services.ts";
 import { requireWorkerTaskDelivery } from "./worker-task-scope.ts";
+import { listWorkerTaskTrajectory } from "./worker-task-trajectory.ts";
 import * as workerMessages from "./worker-message-routing.ts";
 import {
   listTaskProjectionPage,
@@ -593,6 +598,7 @@ export class RoomKernel {
     migrateTaskWorkflowAuthorityV48(this.#database);
     migrateBoundedRoomReadsV49(this.#database);
     migrateFrozenTaskSubmissionEvidenceV50(this.#database);
+    migrateRoomTaskDefaultsV51(this.#database);
     principalProfile.migrate(this.#database);
     this.#database
       .prepare(
@@ -1140,7 +1146,7 @@ export class RoomKernel {
   listRooms(
     actor: AuthenticatedActorContext,
     input: { workspaceId?: string } = {},
-  ): Room[] {
+  ): ClientRoom[] {
     return this.#collaboration.listRooms(
       this.#requireAuthenticatedActor(actor),
       input,
@@ -1620,6 +1626,18 @@ export class RoomKernel {
       const scope = this.#requireAuthenticatedWorkerExecution(execution);
       return this.#taskFromRow(this.#requireWorkerTask(scope, input.taskId));
     });
+  }
+  listWorkerTaskTrajectory(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: WorkerTaskTrajectoryRequest,
+  ): WorkerTaskTrajectoryResponse {
+    return this.#transaction(() =>
+      listWorkerTaskTrajectory(
+        this.#database,
+        this.#requireAuthenticatedWorkerExecution(execution),
+        input,
+      ),
+    );
   }
   getWorkerTaskInputStatus(
     execution: AuthenticatedWorkerExecutionContext,

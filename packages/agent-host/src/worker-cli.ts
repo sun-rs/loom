@@ -489,6 +489,21 @@ function parseCommand(arguments_: readonly string[]): {
       };
     case "task-get":
       return taskQuery(options, "/v1/worker/tasks/get");
+    case "task-trajectory": {
+      assertAllowed(options, ["before-sequence", "limit", "task-id"]);
+      return {
+        body: {
+          taskId: boundedText(options, "task-id", 512),
+          ...(options["limit"] === undefined
+            ? {}
+            : { limit: positiveInteger(options, "limit") }),
+          ...(options["before-sequence"] === undefined
+            ? {}
+            : { beforeSequence: positiveInteger(options, "before-sequence") }),
+        },
+        path: "/v1/worker/tasks/trajectory",
+      };
+    }
     case "task-submission":
       return taskQuery(options, "/v1/worker/tasks/submission");
     case "task-input-status":
@@ -1129,6 +1144,8 @@ rah worker mcp-tools
 rah worker mcp-call --server-id ID --tool-name NAME --config-version N --assignment-version N --arguments-json JSON_OBJECT
 rah worker task-get --task-id ID
 rah worker task-submission --task-id ID
+rah worker task-trajectory --task-id ID [--limit N] [--before-sequence N]
+Reviewers read the owner's recorded commands and file edits before recording a Review.
 rah worker task-input-status --task-id ID
 rah worker task-create --title TEXT [--assignee PARTICIPANT_ID] --based-on-room-seq N --idempotency-key KEY
 rah worker task-claim-message --message-id ID --rationale TEXT --based-on-room-seq N --idempotency-key KEY

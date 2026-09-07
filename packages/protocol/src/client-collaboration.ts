@@ -15,6 +15,69 @@ import {
 } from "./collaboration.ts";
 import { RoomEventSchema } from "./room-event.ts";
 
+export const RoomTaskDefaultsSchema = z
+  .object({
+    defaultAssigneeId: IdentifierSchema.optional(),
+    defaultCollaboratorIds: z.array(IdentifierSchema).max(50),
+    defaultReviewerIds: z.array(IdentifierSchema).max(50),
+  })
+  .strict()
+  .superRefine((defaults, context) => {
+    for (const field of [
+      "defaultCollaboratorIds",
+      "defaultReviewerIds",
+    ] as const) {
+      const participantIds = defaults[field];
+      if (new Set(participantIds).size !== participantIds.length) {
+        context.addIssue({
+          code: "custom",
+          message: `${field} must be unique`,
+          path: [field],
+        });
+      }
+      if (
+        defaults.defaultAssigneeId !== undefined &&
+        participantIds.includes(defaults.defaultAssigneeId)
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: `${field} cannot contain defaultAssigneeId`,
+          path: [field],
+        });
+      }
+    }
+    const overlap = defaults.defaultCollaboratorIds.filter((participantId) =>
+      defaults.defaultReviewerIds.includes(participantId),
+    );
+    if (overlap.length > 0) {
+      context.addIssue({
+        code: "custom",
+        message: "default participants must be unique across roles",
+        path: ["defaultReviewerIds"],
+      });
+    }
+    if (
+      defaults.defaultAssigneeId === undefined &&
+      (defaults.defaultCollaboratorIds.length > 0 ||
+        defaults.defaultReviewerIds.length > 0)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "default collaborators and reviewers require one explicit defaultAssigneeId",
+        path: ["defaultAssigneeId"],
+      });
+    }
+  });
+export type RoomTaskDefaults = z.infer<typeof RoomTaskDefaultsSchema>;
+
+// Client Room projection: the Kernel Room plus client-only Task composer
+// prefill defaults. The server never injects these into Task creation.
+export const ClientRoomSchema = RoomSchema.extend({
+  taskDefaults: RoomTaskDefaultsSchema.optional(),
+}).strict();
+export type ClientRoom = z.infer<typeof ClientRoomSchema>;
+
 export const ClientPrincipalMeRequestSchema = z.object({}).strict();
 export type ClientPrincipalMeRequest = z.infer<
   typeof ClientPrincipalMeRequestSchema
@@ -99,7 +162,7 @@ export type ClientWorkspaceUpdateRequest = z.infer<
 
 export const ClientWorkspaceMutationResponseSchema = z
   .object({
-    controlRoom: RoomSchema,
+    controlRoom: ClientRoomSchema,
     deduplicated: z.boolean(),
     event: RoomEventSchema,
     workspace: WorkspaceSchema,
@@ -117,7 +180,7 @@ export type ClientRoomsListRequest = z.infer<
 >;
 
 export const ClientRoomsListResponseSchema = z
-  .object({ rooms: z.array(RoomSchema) })
+  .object({ rooms: z.array(ClientRoomSchema) })
   .strict();
 export type ClientRoomsListResponse = z.infer<
   typeof ClientRoomsListResponseSchema
@@ -131,7 +194,7 @@ export type ClientAgentRoomsListRequest = z.infer<
 >;
 
 export const ClientAgentRoomsListResponseSchema = z
-  .object({ rooms: z.array(RoomSchema) })
+  .object({ rooms: z.array(ClientRoomSchema) })
   .strict();
 export type ClientAgentRoomsListResponse = z.infer<
   typeof ClientAgentRoomsListResponseSchema
@@ -292,6 +355,7 @@ export const ClientRoomUpdateRequestSchema = z
     idempotencyKey: IdentifierSchema,
     name: IdentifierSchema,
     roomId: IdentifierSchema,
+    taskDefaults: RoomTaskDefaultsSchema.optional(),
     visibility: RoomVisibilitySchema,
   })
   .strict();
@@ -373,7 +437,7 @@ export type ClientDirectRoomOpenRequest = z.infer<
 
 export const ClientDirectRoomOpenResponseSchema = z
   .object({
-    room: RoomSchema.refine((room) => room.kind === "direct", {
+    room: ClientRoomSchema.refine((room) => room.kind === "direct", {
       message: "opened Room must be direct",
     }),
   })
@@ -386,7 +450,7 @@ export const ClientRoomMutationResponseSchema = z
   .object({
     deduplicated: z.boolean(),
     event: RoomEventSchema,
-    room: RoomSchema,
+    room: ClientRoomSchema,
   })
   .strict();
 export type ClientRoomMutationResponse = z.infer<
@@ -572,7 +636,7 @@ export type ClientMessageForwardTargetsRequest = z.infer<
 >;
 
 export const ClientMessageForwardTargetsResponseSchema = z
-  .object({ rooms: z.array(RoomSchema).max(20) })
+  .object({ rooms: z.array(ClientRoomSchema).max(20) })
   .strict();
 export type ClientMessageForwardTargetsResponse = z.infer<
   typeof ClientMessageForwardTargetsResponseSchema

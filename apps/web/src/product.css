@@ -3837,6 +3837,16 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   box-shadow: var(--shadow-s);
 }
 
+.rah-task-create-defaults {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  font-family: var(--mono);
+  font-size: 10px;
+  gap: 8px;
+  justify-content: space-between;
+}
+
 .rah-agent-target-list {
   flex-wrap: wrap;
   gap: 6px;

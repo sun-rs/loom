@@ -9,6 +9,7 @@ import {
   normalizeOpenCodeTrajectoryEvent,
   RuntimeTrajectoryWriter,
 } from "../src/provider-trajectory-normalizer.js";
+import { redactTrajectoryText } from "../src/generic-process-adapter.ts";
 
 const now = () => Date.parse("2026-08-29T08:00:00.000Z");
 
@@ -375,4 +376,93 @@ test("trajectory text coalesces for 350ms, flushes at boundaries, and never drop
     frames.map((f) => f.producerSequence),
     frames.map((_, i) => i + 1),
   );
+});
+
+test("Kimi ACP tool kinds normalize into canonical tool names with a joined command", () => {
+  const call = (update: Record<string, unknown>) =>
+    normalizeKimiTrajectoryNotification(
+      {
+        method: "session/update",
+        params: { sessionId: "kimi-session", update },
+      },
+      "kimi-session",
+      now,
+    )[0]?.entry as Record<string, unknown> | undefined;
+  assert.deepEqual(
+    call({
+      sessionUpdate: "tool_call",
+      toolCallId: "tool-exec",
+      kind: "execute",
+      title: "Run shell",
+      rawInput: { command: ["/bin/zsh", "-lc", "ls"] },
+    }),
+    {
+      kind: "tool_start",
+      producerFactId: "tool-exec:tool_call",
+      toolInput: JSON.stringify({ command: "/bin/zsh -lc ls" }),
+      toolName: "bash",
+    },
+  );
+  assert.equal(
+    call({
+      sessionUpdate: "tool_call",
+      toolCallId: "tool-edit",
+      kind: "edit",
+      title: "write_file",
+      rawInput: { path: "changed.txt" },
+    })?.toolName,
+    "edit",
+  );
+  assert.deepEqual(
+    call({
+      sessionUpdate: "tool_call",
+      toolCallId: "tool-other",
+      kind: "other",
+      title: "自定义工具",
+    }),
+    {
+      kind: "tool_start",
+      producerFactId: "tool-other:tool_call",
+      toolInput: JSON.stringify({ title: "自定义工具" }),
+      toolName: "自定义工具",
+    },
+  );
+});
+
+test("Codex file changes surface an extractable file path alongside the change map", () => {
+  assert.deepEqual(
+    normalizeCodexTrajectoryNotification(
+      {
+        method: "item/started",
+        params: {
+          item: {
+            changes: { "src/a.ts": { kind: "update" } },
+            id: "change-1",
+            type: "fileChange",
+          },
+        },
+      },
+      now,
+    )[0]?.entry,
+    {
+      kind: "tool_start",
+      producerFactId: "change-1:item/started",
+      toolInput: JSON.stringify({
+        filePath: "src/a.ts",
+        changes: { "src/a.ts": { kind: "update" } },
+      }),
+      toolName: "修改文件",
+    },
+  );
+});
+
+test("trajectory string redaction replaces lease secrets everywhere they appear", () => {
+  assert.equal(
+    redactTrajectoryText("token=SECRET-VALUE and SECRET", [
+      "SECRET",
+      "SECRET-VALUE",
+    ]),
+    "token=[REDACTED] and [REDACTED]",
+  );
+  assert.equal(redactTrajectoryText("plain", []), "plain");
 });

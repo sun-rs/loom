@@ -181,6 +181,64 @@ test("GenericProcessAdapter transports typed driver trajectory separately from d
   }
 });
 
+test("GenericProcessAdapter redacts lease secrets inside recorded trajectory entries", async () => {
+  const directory = mkdtempSync(
+    join(tmpdir(), "rah-os-process-trajectory-redaction-"),
+  );
+  try {
+    const secret = "super-secret-token-123";
+    const adapter = new GenericProcessAdapter({
+      activationEnvironment: () => ({
+        env: {
+          RAH_FAKE_MODE: "trajectory",
+          RAH_FAKE_TRAJECTORY_SECRET: secret,
+        },
+        redactions: [secret],
+      }),
+      args: [fakeCliPath],
+      command: process.execPath,
+      cwd: directory,
+    });
+    const activities: unknown[] = [];
+    const run = await adapter.start(activationEnvelope(), {
+      recordTrajectory: async (activity) => {
+        activities.push(activity);
+      },
+      registerPrepared: async () => undefined,
+    });
+    assert.equal((await adapter.reap(run)).code, 0);
+
+    const entries = activities.map(
+      (activity) =>
+        (activity as { entry: Record<string, unknown> }).entry as Record<
+          string,
+          unknown
+        >,
+    );
+    assert.deepEqual(
+      entries.map((entry) => entry.kind),
+      ["status", "tool_start", "tool_start", "text"],
+    );
+    const toolInput = entries[2]?.toolInput;
+    const text = entries[3]?.text;
+    assert.equal(typeof toolInput, "string");
+    assert.equal(typeof text, "string");
+    assert.ok((toolInput as string).includes("[REDACTED]"));
+    assert.ok((text as string).includes("[REDACTED]"));
+    assert.equal(
+      JSON.stringify(activities).includes(secret),
+      false,
+      "recorded trajectory must never carry the lease secret",
+    );
+
+    const diagnostics = adapter.diagnostics(run);
+    assert.equal(diagnostics.stdout.includes(secret), false);
+    assert.equal(diagnostics.stderr.includes(secret), false);
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
 test("GenericProcessAdapter carries a structured Runtime failure from trajectory into the terminal exit", async () => {
   const directory = mkdtempSync(
     join(tmpdir(), "rah-os-process-runtime-error-"),
