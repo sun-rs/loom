@@ -243,8 +243,11 @@ import {
   type TaskCreateCommand,
 } from "./task-anchor.ts";
 import {
+  assertWorkerTaskFreshContext,
   claimMessageAsTaskTransaction,
+  createWorkerTaskTransaction,
   createTaskMutationTransaction,
+  requireOwnedTaskClaim,
 } from "./task-intent.ts";
 import {
   type TaskUnassignCommand,
@@ -1443,8 +1446,12 @@ export class RoomKernel {
         );
       }
       const route = workerMessages.workerReplyRoute({
+        ...(input.body === undefined ? {} : { body: input.body }),
         causalEvent,
         database: this.#database,
+        ...(input.heldDraftId === undefined
+          ? {}
+          : { heldDraftId: input.heldDraftId }),
         participantId: scope.participantId,
         roomId: scope.roomId,
         ...(taskThreadId === undefined ? {} : { taskThreadId }),
@@ -1567,6 +1574,25 @@ export class RoomKernel {
       .all(input.roomId)
       .map((row) => inputRequestProjectionFromRow(row));
   }
+  createWorkerTask(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: {
+      assigneeId?: string;
+      basedOnRoomSeq: number;
+      idempotencyKey: string;
+      leaseMs: number;
+      title: string;
+    },
+  ): TaskMutationResult {
+    return this.#transaction(() => {
+      const scope = this.#requireAuthenticatedWorkerExecution(execution);
+      return createWorkerTaskTransaction(
+        this.#taskIntentContext(),
+        scope,
+        input,
+      );
+    });
+  }
   claimMessageAsTask(
     execution: AuthenticatedWorkerExecutionContext,
     input: {
@@ -1634,7 +1660,12 @@ export class RoomKernel {
           `Task ${input.taskId} has no renewable claim in state ${state}`,
         );
       }
-      this.#requireOwnedTaskClaim(taskRow, scope.participantId, state);
+      requireOwnedTaskClaim(
+        taskRow,
+        scope.participantId,
+        state,
+        this.#now().getTime(),
+      );
 
       const now = this.#now();
       const claimUntilMs = Math.max(
@@ -1699,7 +1730,8 @@ export class RoomKernel {
           `Task ${input.taskId} is waiting for dependency ${text(incompleteDependency, "dependency_task_id")}`,
         );
       }
-      this.#assertWorkerTaskFreshContext(
+      assertWorkerTaskFreshContext(
+        this.#database,
         scope,
         input.basedOnRoomSeq,
         input.taskId,
@@ -1817,7 +1849,8 @@ export class RoomKernel {
         idempotencyKey: input.idempotencyKey,
       });
       if (replay !== null) return { ...replay, activationIds: [] };
-      this.#assertWorkerTaskFreshContext(
+      assertWorkerTaskFreshContext(
+        this.#database,
         scope,
         input.basedOnRoomSeq,
         input.taskId,
@@ -1828,7 +1861,12 @@ export class RoomKernel {
           `Task ${input.taskId} cannot be released from state ${previousState}`,
         );
       }
-      this.#requireOwnedTaskClaim(taskRow, scope.participantId, previousState);
+      requireOwnedTaskClaim(
+        taskRow,
+        scope.participantId,
+        previousState,
+        this.#now().getTime(),
+      );
 
       const releasedAt = this.#timestamp();
       const previousParticipants = this.#database
@@ -1903,12 +1941,18 @@ export class RoomKernel {
         payload: { reason },
       });
       if (replay !== null) return { ...replay, activationIds: [] };
-      this.#assertWorkerTaskFreshContext(
+      assertWorkerTaskFreshContext(
+        this.#database,
         scope,
         input.basedOnRoomSeq,
         input.taskId,
       );
-      this.#requireOwnedTaskClaim(taskRow, scope.participantId, "in_progress");
+      requireOwnedTaskClaim(
+        taskRow,
+        scope.participantId,
+        "in_progress",
+        this.#now().getTime(),
+      );
 
       const blockedAt = this.#timestamp();
       this.#database
@@ -1988,12 +2032,18 @@ export class RoomKernel {
           task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
         };
       }
-      this.#assertWorkerTaskFreshContext(
+      assertWorkerTaskFreshContext(
+        this.#database,
         scope,
         input.basedOnRoomSeq,
         input.taskId,
       );
-      this.#requireOwnedTaskClaim(taskRow, scope.participantId, "in_progress");
+      requireOwnedTaskClaim(
+        taskRow,
+        scope.participantId,
+        "in_progress",
+        this.#now().getTime(),
+      );
 
       const inputRequestId = this.#createId("input");
       const createdAt = this.#timestamp();
@@ -2072,12 +2122,18 @@ export class RoomKernel {
         payload: { summary, verification: input.verification ?? null },
       });
       if (replay !== null) return replay;
-      this.#assertWorkerTaskFreshContext(
+      assertWorkerTaskFreshContext(
+        this.#database,
         scope,
         input.basedOnRoomSeq,
         input.taskId,
       );
-      this.#requireOwnedTaskClaim(taskRow, scope.participantId, "in_progress");
+      requireOwnedTaskClaim(
+        taskRow,
+        scope.participantId,
+        "in_progress",
+        this.#now().getTime(),
+      );
       const artifactEvidence = this.files.forTaskSubmission(
         execution,
         input.taskId,
@@ -4920,15 +4976,17 @@ export class RoomKernel {
       });
       if (replay !== null) return replay;
       this.#assertPositiveTaskLease(input.leaseMs);
-      this.#assertWorkerTaskFreshContext(
+      assertWorkerTaskFreshContext(
+        this.#database,
         scope,
         input.basedOnRoomSeq,
         input.taskId,
       );
-      this.#requireOwnedTaskClaim(
+      requireOwnedTaskClaim(
         taskRow,
         scope.participantId,
         input.expectedState,
+        this.#now().getTime(),
       );
 
       const now = this.#now();
@@ -5055,100 +5113,8 @@ export class RoomKernel {
     });
   }
 
-  #assertWorkerTaskFreshContext(
-    scope: ActivationCredentialScope,
-    basedOnRoomSeq: number,
-    taskId: string,
-  ): void {
-    if (!Number.isInteger(basedOnRoomSeq) || basedOnRoomSeq < 0) {
-      throw new Error("basedOnRoomSeq must be a non-negative integer");
-    }
-    if (basedOnRoomSeq !== scope.toSeq) {
-      const causalEvent = this.#database
-        .prepare("SELECT * FROM room_events WHERE room_id = ? AND room_seq = ?")
-        .get(scope.roomId, basedOnRoomSeq);
-      const payload = causalEvent
-        ? jsonObject(causalEvent, "payload_json")
-        : {};
-      if (
-        causalEvent === undefined ||
-        text(causalEvent, "actor_id") !== scope.participantId ||
-        text(causalEvent, "aggregate_type") !== "task" ||
-        payload.runAttemptId !== scope.runAttemptId
-      ) {
-        throw new StaleContextError(
-          basedOnRoomSeq,
-          integer(this.#requireRoom(scope.roomId), "next_seq") - 1,
-        );
-      }
-    }
-
-    const newerBusinessEvent = this.#database
-      .prepare(
-        `SELECT room_seq FROM room_events
-         WHERE room_id = ?
-           AND room_seq > ?
-           AND type NOT LIKE 'activation.%'
-           AND type NOT LIKE 'inbox.%'
-           AND type NOT LIKE 'placement.%'
-           AND type NOT LIKE 'run.%'
-           AND type NOT LIKE 'runtime_process.%'
-           AND (
-             (aggregate_type = 'task' AND aggregate_id = ?)
-             OR EXISTS (
-               SELECT 1 FROM inbox_items
-               WHERE inbox_items.event_id = room_events.event_id
-                 AND inbox_items.participant_id = ?
-             )
-           )
-           AND NOT (
-             aggregate_type = 'task'
-             AND aggregate_id = ?
-             AND actor_id = ?
-             AND type IN ('task.claimed', 'task.started', 'task.progressed', 'task.blocked', 'task.released', 'task.submitted')
-           )
-         ORDER BY room_seq DESC
-         LIMIT 1`,
-      )
-      .get(
-        scope.roomId,
-        basedOnRoomSeq,
-        taskId,
-        scope.participantId,
-        taskId,
-        scope.participantId,
-      );
-    if (newerBusinessEvent !== undefined) {
-      throw new StaleContextError(
-        basedOnRoomSeq,
-        integer(newerBusinessEvent, "room_seq"),
-      );
-    }
-  }
-
   #requireWorkerTask(scope: ActivationCredentialScope, taskId: string): Row {
     return requireWorkerTaskDelivery(this.#database, scope, taskId);
-  }
-
-  #requireOwnedTaskClaim(
-    taskRow: Row,
-    participantId: string,
-    expectedState: "claimed" | "in_progress",
-  ): void {
-    const taskId = text(taskRow, "task_id");
-    if (text(taskRow, "state") !== expectedState) {
-      throw new ConflictError(
-        `Task ${taskId} must be ${expectedState} for this command`,
-      );
-    }
-    if (
-      nullableText(taskRow, "claimed_by") !== participantId ||
-      (nullableInteger(taskRow, "claim_until_ms") ?? 0) <= this.#now().getTime()
-    ) {
-      throw new LeaseConflictError(
-        `Agent ${participantId} does not own an active claim for Task ${taskId}`,
-      );
-    }
   }
 
   #assertPositiveTaskLease(leaseMs: number): void {

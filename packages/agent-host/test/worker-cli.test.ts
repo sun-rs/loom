@@ -662,6 +662,78 @@ test("Worker CLI exposes one bounded message-to-Task claim command", async () =>
   }
 });
 
+test("Worker CLI exposes one bounded Task creation command", async () => {
+  const state = fixture();
+  try {
+    assert.equal(
+      await runWorkerCliCommand(
+        [
+          "worker",
+          "task-create",
+          "--title",
+          "Split: migration",
+          "--based-on-room-seq",
+          "6",
+          "--idempotency-key",
+          "create:activation-1",
+        ],
+        state.runtime,
+      ),
+      0,
+    );
+    assert.deepEqual(state.requests[0]?.body, {
+      basedOnRoomSeq: 6,
+      idempotencyKey: "create:activation-1",
+      title: "Split: migration",
+    });
+    assert.equal(
+      state.requests[0]?.url,
+      "http://127.0.0.1:43123/v1/worker/tasks/create",
+    );
+    assert.equal(
+      await runWorkerCliCommand(
+        [
+          "worker",
+          "task-create",
+          "--title",
+          "Split: migration follow-up",
+          "--assignee",
+          "agent-self",
+          "--based-on-room-seq",
+          "7",
+          "--idempotency-key",
+          "create:activation-2",
+        ],
+        state.runtime,
+      ),
+      0,
+    );
+    assert.deepEqual(state.requests[1]?.body, {
+      assigneeId: "agent-self",
+      basedOnRoomSeq: 7,
+      idempotencyKey: "create:activation-2",
+      title: "Split: migration follow-up",
+    });
+    assert.notEqual(
+      await runWorkerCliCommand(
+        [
+          "worker",
+          "task-create",
+          "--based-on-room-seq",
+          "8",
+          "--idempotency-key",
+          "create:activation-3",
+        ],
+        state.runtime,
+      ),
+      0,
+    );
+    assert.equal(state.requests.length, 2);
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
 test("Worker CLI exposes managed MCP catalog and version-fenced calls without routing fields", async () => {
   const state = fixture();
   try {

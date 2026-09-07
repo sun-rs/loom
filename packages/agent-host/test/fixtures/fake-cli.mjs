@@ -273,6 +273,7 @@ if (mode === "trajectory") {
         `worker Task command ${path} failed with HTTP ${response.status}: ${JSON.stringify(result)}`,
       );
       error.status = response.status;
+      error.code = result?.error?.code;
       throw error;
     }
     return result;
@@ -430,12 +431,96 @@ if (mode === "trajectory") {
       process.exit(0);
     }
   }
+  // Deterministic delegation fixture: after auto-claiming the marker message
+  // the lead splits it into one unassigned subtask per helper, then wakes each
+  // helper personally with one @mention note before parking its own parent
+  // Task. Only the Room lead runs this branch (RAH_FAKE_SPLIT_HELPERS).
+  const splitHelpers = (process.env.RAH_FAKE_SPLIT_HELPERS ?? "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+  if (autoClaimedTask && splitHelpers.length > 0) {
+    const activationId = process.env.RAH_ACTIVATION_ID;
+    if (!activationId) {
+      throw new Error("Task split requires RAH_ACTIVATION_ID");
+    }
+    const splitTitles = (process.env.RAH_FAKE_SPLIT_TITLES ?? "")
+      .split(",")
+      .map((value) => value.trim());
+    const parentTaskId = autoClaimedTask.task.taskId;
+    // message-post is an Activation-head command: the Kernel requires the
+    // delivered head, not the Agent's own advancing cursor. task-create
+    // instead follows the Worker prompt and chains each non-deduplicated
+    // response event.roomSeq into the next call.
+    const activationHead = delivery.cursorAfter;
+    let parentCursor = autoClaimedTask.event.roomSeq;
+    const startedParent = await request("/v1/worker/tasks/start", {
+      basedOnRoomSeq: parentCursor,
+      idempotencyKey: `fake:${activationId}:split-parent-start`,
+      taskId: parentTaskId,
+    });
+    if (!startedParent.deduplicated) {
+      parentCursor = Math.max(parentCursor, startedParent.event.roomSeq);
+    }
+    const subtasks = [];
+    let createCursor = activationHead;
+    for (const [index, helper] of splitHelpers.entries()) {
+      const label = String.fromCodePoint(65 + index);
+      const suffix = splitTitles[index] ?? `part ${label}`;
+      const created = await request("/v1/worker/tasks/create", {
+        basedOnRoomSeq: createCursor,
+        idempotencyKey: `fake:${activationId}:subtask:${String(index)}`,
+        title: `Subtask ${label} (@${helper}): ${suffix}`,
+      });
+      if (!created.deduplicated) {
+        createCursor = created.event.roomSeq;
+      }
+      subtasks.push({
+        label,
+        roomSeq: created.event.roomSeq,
+        taskId: created.task.taskId,
+      });
+    }
+    const note = await request("/v1/worker/messages/post", {
+      basedOnRoomSeq: activationHead,
+      body: splitHelpers
+        .map(
+          (helper, index) =>
+            `@${helper} please take Subtask ${String.fromCodePoint(65 + index)}`,
+        )
+        .join(", "),
+      idempotencyKey: `fake:${activationId}:split-note`,
+    });
+    // The parent stays owned by the lead and unfinished, so it must reach a
+    // canonical waiting state: an acknowledged Activation may not leave an
+    // owned Task executing.
+    const blocked = await request("/v1/worker/tasks/block", {
+      basedOnRoomSeq: parentCursor,
+      idempotencyKey: `fake:${activationId}:split-parent-block`,
+      reason: "Waiting for the delegated subtasks",
+      taskId: parentTaskId,
+    });
+    await request("/v1/worker/acknowledge", {
+      throughSeq: delivery.cursorAfter,
+    });
+    process.stdout.write(
+      JSON.stringify({
+        marker: "worker-task-split-finished",
+        noteRoomSeq: note.event?.roomSeq,
+        parentState: blocked.task.state,
+        parentTaskId,
+        subtaskIds: subtasks.map(({ taskId }) => taskId),
+      }) + "\n",
+    );
+    process.exit(0);
+  }
   const latestRootMessage = findLatestRootMessage(activationEvents);
   const hasTaskBusinessEvent = activationEvents.some((event) =>
     [
       "task.created",
       "task.assigned",
       "task.reassigned",
+      "task.reopened",
       "task.unblocked",
       "task.released",
       "task.submitted",
@@ -509,11 +594,22 @@ if (mode === "trajectory") {
       }
     }
   }
-  const taskCreated = activationEvents.find(
+  // One Activation may coalesce several unassigned `task.created` events. When
+  // the fixture runs with attribution enabled, a subtask titled `@handle` is
+  // reserved for that helper: every Agent then claims exactly one distinct
+  // subtask instead of racing for the first created Task.
+  const createdEvents = activationEvents.filter(
     (event) => event.type === "task.created",
   );
+  const taskCreated =
+    process.env.RAH_FAKE_TASK_ATTRIBUTION === "1"
+      ? attributedTaskCreated(createdEvents, agentContext?.handle)
+      : createdEvents[0];
   const taskReassigned = activationEvents.find(
     (event) => event.type === "task.reassigned",
+  );
+  const taskReopened = activationEvents.find(
+    (event) => event.type === "task.reopened",
   );
   const taskSubmitted = activationEvents.find(
     (event) => event.type === "task.submitted",
@@ -529,6 +625,7 @@ if (mode === "trajectory") {
   const taskId =
     autoClaimedTask?.task?.taskId ??
     taskReassigned?.aggregateId ??
+    taskReopened?.aggregateId ??
     taskCreated?.aggregateId ??
     taskSubmitted?.aggregateId ??
     reviewSubmitted?.payload?.taskId ??
@@ -576,10 +673,19 @@ if (mode === "trajectory") {
     throw new Error("Worker activation identity is missing");
   }
   let basedOnRoomSeq = autoClaimedTask?.event?.roomSeq ?? delivery.cursorAfter;
+  // A reopened Task is a new round of owner work: its commands must not
+  // deduplicate against the round that was rejected, even when the same
+  // Activation is retried with the reopen inside its range.
+  const reworkPhase =
+    taskReopened === undefined
+      ? undefined
+      : `rework:${String(taskReopened.roomSeq)}`;
   const commandId = (operation) =>
     `fake:${createHash("sha256")
       .update(
-        `${participantId}\0${taskId}\0${commandActivationId}\0${operation}`,
+        `${participantId}\0${taskId}\0${commandActivationId}\0${
+          reworkPhase === undefined ? operation : `${reworkPhase}:${operation}`
+        }`,
       )
       .digest("hex")}`;
   const canonical = await request("/v1/worker/tasks/get", { taskId });
@@ -690,11 +796,25 @@ if (mode === "trajectory") {
       ? commandId(`restart:${recoveryKey}`)
       : commandId(inputPhase ? `start:${inputPhase}` : "start");
     if (!autoClaimedTask) {
-      const claimed = await request("/v1/worker/tasks/claim", {
-        basedOnRoomSeq,
-        idempotencyKey: claimCommandId,
-        taskId,
-      });
+      let claimed;
+      try {
+        claimed = await request("/v1/worker/tasks/claim", {
+          basedOnRoomSeq,
+          idempotencyKey: claimCommandId,
+          taskId,
+        });
+      } catch (error) {
+        // Another Agent won the same unassigned Task: a lost claim is a
+        // concurrency lock, never a licence to duplicate the work.
+        if (error?.status !== 409 || error?.code !== "conflict") throw error;
+        await request("/v1/worker/acknowledge", {
+          throughSeq: delivery.cursorAfter,
+        });
+        process.stdout.write(
+          JSON.stringify({ marker: "worker-task-claim-lost", taskId }) + "\n",
+        );
+        process.exit(0);
+      }
       if (!claimed.deduplicated) {
         basedOnRoomSeq = Math.max(basedOnRoomSeq, claimed.event.roomSeq);
       }
@@ -832,6 +952,22 @@ if (mode === "trajectory") {
 } else {
   process.stderr.write(`unknown mode ${mode}\n`);
   process.exitCode = 64;
+}
+
+/**
+ * Pick the one `task.created` event this Agent may claim. A title carrying
+ * `@handle` is reserved for that handle; untitled attribution stays open to
+ * anyone, and a Task reserved for a peer is left untouched.
+ */
+function attributedTaskCreated(createdEvents, handle) {
+  const attribution = (event) =>
+    /@([\p{L}\p{N}_-]+)/u.exec(
+      typeof event.payload?.title === "string" ? event.payload.title : "",
+    )?.[1];
+  return (
+    createdEvents.find((event) => attribution(event) === handle) ??
+    createdEvents.find((event) => attribution(event) === undefined)
+  );
 }
 
 function findLatestRootMessage(activationEvents) {

@@ -145,6 +145,7 @@ export type {
 export * from "./client.ts";
 export * from "./client-task.ts";
 export * from "./worker-message.ts";
+export * from "./worker-task-create.ts";
 export * from "./worker-thread.ts";
 export * from "./input-request.ts";
 export { RoomEventSchema } from "./room-event.ts";

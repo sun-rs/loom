@@ -66,6 +66,7 @@ import {
   WorkerSyncRequestSchema,
   WorkerTaskClaimRequestSchema,
   WorkerTaskClaimMessageRequestSchema,
+  WorkerTaskCreateRequestSchema,
   WorkerTaskBlockRequestSchema,
   WorkerTaskGetRequestSchema,
   WorkerTaskGetResponseSchema,
@@ -1292,6 +1293,33 @@ test("Task Coordination worker commands are causal and actor-free", () => {
       messageId: "message-1",
       rationale: "tool use",
       taskId: "injected-task",
+    }),
+  );
+  assert.deepEqual(
+    WorkerTaskCreateRequestSchema.parse({
+      basedOnRoomSeq: 11,
+      idempotencyKey: "create-task-1",
+      title: "Split: migration",
+    }),
+    {
+      basedOnRoomSeq: 11,
+      idempotencyKey: "create-task-1",
+      title: "Split: migration",
+    },
+  );
+  assert.throws(() =>
+    WorkerTaskCreateRequestSchema.parse({
+      basedOnRoomSeq: 11,
+      idempotencyKey: "create-task-1",
+      title: "   ",
+    }),
+  );
+  assert.throws(() =>
+    WorkerTaskCreateRequestSchema.parse({
+      basedOnRoomSeq: 11,
+      creatorId: "agent-injected",
+      idempotencyKey: "create-task-1",
+      title: "Split: migration",
     }),
   );
   assert.deepEqual(

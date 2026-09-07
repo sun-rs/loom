@@ -45,6 +45,7 @@ import {
   WorkerSyncResponseSchema,
   WorkerTaskClaimRequestSchema,
   WorkerTaskClaimMessageRequestSchema,
+  WorkerTaskCreateRequestSchema,
   WorkerTaskBlockRequestSchema,
   WorkerTaskGetRequestSchema,
   WorkerTaskGetResponseSchema,
@@ -171,6 +172,7 @@ export const WORKER_HTTP_ROUTE_PATHS = [
   "/v1/worker/threads/unfollow",
   "/v1/worker/tasks/claim",
   "/v1/worker/tasks/claim-message",
+  "/v1/worker/tasks/create",
   "/v1/worker/tasks/block",
   "/v1/worker/tasks/get",
   "/v1/worker/tasks/input-status",
@@ -774,6 +776,16 @@ export class WorkerApplicationService {
       this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
       return this.#kernel.claimMessageAsTask(grant.execution, {
         ...command,
+        leaseMs: this.#taskClaimLeaseMs,
+      });
+    }
+    if (route === "/v1/worker/tasks/create") {
+      const command = parseWorkerRequest(WorkerTaskCreateRequestSchema, body);
+      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      const { assigneeId, ...rest } = command;
+      return this.#kernel.createWorkerTask(grant.execution, {
+        ...rest,
+        ...(assigneeId === undefined ? {} : { assigneeId }),
         leaseMs: this.#taskClaimLeaseMs,
       });
     }

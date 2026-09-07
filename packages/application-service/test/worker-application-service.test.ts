@@ -203,7 +203,7 @@ test("Raft-style freshness holds the losing concurrent reply and wakes the peer"
       "/v1/worker/messages/post",
       {
         basedOnRoomSeq,
-        body: `Canonical reply from ${workers[0]!.agent.principal.handle}`,
+        body: `Canonical reply from ${workers[0]!.agent.principal.handle} — over to @${workers[1]!.agent.principal.handle}`,
         idempotencyKey: "worker-message-reply-0",
       },
     );
@@ -212,6 +212,21 @@ test("Raft-style freshness holds the losing concurrent reply and wakes the peer"
     assert.equal(firstPayload.deduplicated, false);
     assert.equal(Array.isArray(firstPayload.activationIds), true);
     assert.equal((firstPayload.activationIds as unknown[]).length, 1);
+    assert.deepEqual(
+      (
+        (firstPayload.event as Record<string, unknown>).payload as Record<
+          string,
+          unknown
+        >
+      ).recipients,
+      [
+        {
+          participantId: workers[1]!.agent.principal.principalId,
+          reason: "mention",
+        },
+      ],
+      "an @handle written by a Worker resolves to a mention recipient",
+    );
 
     const heldReply = await request(
       workers[1]!.credential.accessToken,
@@ -1431,6 +1446,40 @@ test("Worker API exposes a causal and execution-fenced Task command surface", as
         taskId: created.task.taskId,
       }).task.state,
       "completed",
+    );
+
+    const prematureCreate = await request("/v1/worker/tasks/create", {
+      basedOnRoomSeq: 9_999,
+      idempotencyKey: "worker-task-create-premature",
+      title: "Split: a parallel subtask",
+    });
+    assert.equal(prematureCreate.status, 409);
+    assert.equal(
+      await responseErrorCode(prematureCreate),
+      "causal_cursor_not_delivered",
+    );
+    const injectedCreate = await request("/v1/worker/tasks/create", {
+      basedOnRoomSeq,
+      creatorId: "attacker-principal",
+      idempotencyKey: "worker-task-create-injected",
+      title: "Split: a parallel subtask",
+    });
+    assert.equal(injectedCreate.status, 400);
+    assert.equal(await responseErrorCode(injectedCreate), "unexpected_field");
+    const createResponse = await request("/v1/worker/tasks/create", {
+      basedOnRoomSeq,
+      idempotencyKey: "worker-task-create",
+      title: "Split: a parallel subtask",
+    });
+    assert.equal(createResponse.status, 200);
+    const createdByWorker = await jsonObject(createResponse);
+    assert.equal(
+      (createdByWorker.event as Record<string, unknown>).type,
+      "task.created",
+    );
+    assert.equal(
+      (createdByWorker.task as Record<string, unknown>).title,
+      "Split: a parallel subtask",
     );
   } finally {
     await service.close();

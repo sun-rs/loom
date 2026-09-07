@@ -73,6 +73,28 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
     prompt,
     /task-claim-message.*conflict.*acknowledge.*must not duplicate/isu,
   );
+  assert.match(
+    prompt,
+    /requires you to take action beyond just replying.*claim/isu,
+  );
+  assert.match(prompt, /Only top-level.*can become Tasks/isu);
+  assert.match(prompt, /from a Human or another Agent/isu);
+  assert.match(prompt, /@<handle>.*message-post/isu);
+  assert.match(prompt, /Mention others, not yourself/iu);
+  assert.match(prompt, /Room is the isolation boundary/iu);
+  assert.match(prompt, /RAH_WORKER_CLI.*worker task-create/u);
+  assert.match(prompt, /task-create.*unassigned.*todo/isu);
+  assert.match(prompt, /cannot assign another participant/isu);
+  assert.match(prompt, /Prefer independent subtasks/iu);
+  assert.match(prompt, /Avoid creating sequential chains/iu);
+  assert.match(prompt, /existing Tasks to avoid duplicates/isu);
+  assert.match(
+    prompt,
+    /task-block.*before acknowledging|cannot acknowledge.*idle/isu,
+  );
+  assert.match(prompt, /roomSeq of.*(reopened|changes_requested).*key/isu);
+  assert.match(prompt, /task\.reopened/u);
+  assert.match(prompt, /Reuse existing Tasks and Threads/iu);
   assert.match(prompt, /collaboratorIds.*must not claim/isu);
   assert.match(prompt, /task\.submitted.*reviewerIds/isu);
   assert.match(
@@ -82,10 +104,11 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
   assert.match(prompt, /canonical Room/u);
   assert.match(prompt, /RAH_WORKER_CLI.*worker sync/u);
   assert.match(prompt, /RAH_WORKER_CLI.*worker message-post/u);
-  assert.match(
-    prompt,
-    /Agent-originated message.*attention signal.*not.*obligation to reply/isu,
-  );
+  assert.match(prompt, /Respect ongoing conversations/iu);
+  assert.match(prompt, /Only the person doing the work should report/iu);
+  assert.match(prompt, /Claim before you start.*concurrency lock/isu);
+  assert.match(prompt, /Before stopping.*blockers you own/isu);
+  assert.match(prompt, /Skip idle narration.*actionable content/isu);
   assert.match(prompt, /turn-taking.*newest committed message/isu);
   assert.match(
     prompt,

@@ -1833,6 +1833,16 @@ export class CollaborationService {
         threadId: input.threadId,
         updatedAt: createdAt,
       });
+      // A mention subscribes the mentioned Agent to the Thread, exactly as a
+      // Human mention does when a Thread reply requests recipients.
+      followAgentThreadParticipants(this.#database, {
+        participantIds: recipients
+          .filter((recipient) => recipient.reason === "mention")
+          .map((recipient) => recipient.participantId),
+        source: "mention",
+        threadId: input.threadId,
+        updatedAt: createdAt,
+      });
     }
 
     const messageId = this.#createId("message");

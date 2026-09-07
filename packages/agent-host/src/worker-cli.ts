@@ -493,6 +493,26 @@ function parseCommand(arguments_: readonly string[]): {
       return taskQuery(options, "/v1/worker/tasks/submission");
     case "task-input-status":
       return taskQuery(options, "/v1/worker/tasks/input-status");
+    case "task-create": {
+      assertAllowed(options, [
+        "assignee",
+        "based-on-room-seq",
+        "idempotency-key",
+        "title",
+      ]);
+      const assignee = options["assignee"];
+      return {
+        body: {
+          basedOnRoomSeq: nonnegativeInteger(options, "based-on-room-seq"),
+          idempotencyKey: boundedText(options, "idempotency-key", 512),
+          title: boundedText(options, "title", 2_000),
+          ...(assignee === undefined
+            ? {}
+            : { assigneeId: boundedText(options, "assignee", 512) }),
+        },
+        path: "/v1/worker/tasks/create",
+      };
+    }
     case "task-claim-message":
       assertAllowed(options, [
         "based-on-room-seq",
@@ -1110,6 +1130,7 @@ rah worker mcp-call --server-id ID --tool-name NAME --config-version N --assignm
 rah worker task-get --task-id ID
 rah worker task-submission --task-id ID
 rah worker task-input-status --task-id ID
+rah worker task-create --title TEXT [--assignee PARTICIPANT_ID] --based-on-room-seq N --idempotency-key KEY
 rah worker task-claim-message --message-id ID --rationale TEXT --based-on-room-seq N --idempotency-key KEY
 rah worker task-claim|task-start|task-release --task-id ID --based-on-room-seq N --idempotency-key KEY
 rah worker task-progress --task-id ID --progress TEXT --based-on-room-seq N --idempotency-key KEY

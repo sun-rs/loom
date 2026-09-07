@@ -5,12 +5,20 @@ import type { ActivationCredentialScope, RoomEvent } from "@rah-os/protocol";
 import {
   ConflictError,
   ForbiddenError,
+  LeaseConflictError,
   NotFoundError,
   StaleContextError,
 } from "./errors.ts";
 import type { MessageRecipient } from "./collaboration-service.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
-import { integer, text, type Row } from "./sqlite-row.ts";
+import {
+  integer,
+  jsonObject,
+  nullableInteger,
+  nullableText,
+  text,
+  type Row,
+} from "./sqlite-row.ts";
 import {
   assertTaskAnchorAvailable,
   createAnchoredTaskProjection,
@@ -178,6 +186,157 @@ export function createTaskMutationTransaction(
   };
 }
 
+export function createWorkerTaskTransaction(
+  context: TaskIntentContext,
+  scope: ActivationCredentialScope,
+  input: {
+    assigneeId?: string;
+    basedOnRoomSeq: number;
+    idempotencyKey: string;
+    leaseMs: number;
+    title: string;
+  },
+): TaskMutationResult {
+  const title = input.title.trim();
+  if (title.length === 0) {
+    throw new Error("task title is required");
+  }
+  if (!Number.isInteger(input.leaseMs) || input.leaseMs <= 0) {
+    throw new Error("Task claim lease must be a positive integer");
+  }
+  if (input.idempotencyKey.trim().length === 0) {
+    throw new Error("idempotencyKey is required");
+  }
+  if (
+    input.assigneeId !== undefined &&
+    input.assigneeId !== scope.participantId
+  ) {
+    throw new ForbiddenError(
+      "Agents may only assign a created Task to themselves",
+    );
+  }
+
+  const previous = findRoomEventByIdempotencyKey(
+    context.database,
+    scope.roomId,
+    input.idempotencyKey,
+  );
+  if (previous !== undefined) {
+    const event = assertTaskEventReplay(context.events.eventFromRow(previous), {
+      actorId: scope.participantId,
+      eventType: "task.created",
+      payload: {
+        assigneeId: input.assigneeId,
+        basedOnRoomSeq: input.basedOnRoomSeq,
+        collaboratorIds: [],
+        creatorId: scope.participantId,
+        dependencyTaskIds: [],
+        description: undefined,
+        reviewerIds: [],
+        title,
+      },
+    });
+    return {
+      deduplicated: true,
+      event,
+      task: taskProjectionFromRow(
+        context.database,
+        requireTaskRow(context.database, event.aggregateId),
+      ),
+    };
+  }
+
+  assertWorkerTaskCreationFreshContext(
+    context.database,
+    scope,
+    input.basedOnRoomSeq,
+  );
+  if (input.assigneeId !== undefined) {
+    requireAgentRoomMember(context.database, scope.roomId, input.assigneeId);
+  }
+  const taskId = context.createId("task");
+  const now = context.now();
+  const createdAt = now.toISOString();
+  const { eventPayload } = createAnchoredTaskProjection(
+    context.database,
+    context.createId,
+    {
+      actorId: scope.participantId,
+      command: {
+        ...(input.assigneeId === undefined
+          ? {}
+          : { assigneeId: input.assigneeId }),
+        basedOnRoomSeq: input.basedOnRoomSeq,
+        collaboratorIds: [],
+        dependencyTaskIds: [],
+        description: undefined,
+        idempotencyKey: input.idempotencyKey,
+        reviewerIds: [],
+        roomId: scope.roomId,
+        title,
+      },
+      createdAt,
+      taskId,
+    },
+  );
+  const claimUntil =
+    input.assigneeId === undefined
+      ? undefined
+      : new Date(now.getTime() + input.leaseMs).toISOString();
+  if (claimUntil !== undefined) {
+    context.database
+      .prepare(
+        "UPDATE tasks SET state = 'claimed', claimed_by = ?, claim_until = ?, claim_until_ms = ?, updated_at = ? WHERE task_id = ?",
+      )
+      .run(
+        scope.participantId,
+        claimUntil,
+        now.getTime() + input.leaseMs,
+        createdAt,
+        taskId,
+      );
+  }
+  const event = context.events.append({
+    actorId: scope.participantId,
+    aggregateId: taskId,
+    aggregateType: "task",
+    idempotencyKey: input.idempotencyKey,
+    payload:
+      claimUntil === undefined
+        ? { ...eventPayload, runAttemptId: scope.runAttemptId }
+        : {
+            ...eventPayload,
+            autoClaimed: true,
+            claimedAt: createdAt,
+            claimedBy: scope.participantId,
+            claimUntil,
+            runAttemptId: scope.runAttemptId,
+          },
+    roomId: scope.roomId,
+    type: "task.created",
+  });
+  if (claimUntil === undefined) {
+    context.events.deriveAttention(
+      event,
+      taskCreationRecipients(
+        context.database,
+        scope.roomId,
+        undefined,
+        [],
+      ).filter((recipient) => recipient.participantId !== scope.participantId),
+      createdAt,
+    );
+  }
+  return {
+    deduplicated: false,
+    event,
+    task: taskProjectionFromRow(
+      context.database,
+      requireTaskRow(context.database, taskId),
+    ),
+  };
+}
+
 export function claimMessageAsTaskTransaction(
   context: TaskIntentContext,
   scope: ActivationCredentialScope,
@@ -236,8 +395,6 @@ export function claimMessageAsTaskTransaction(
     .prepare(
       `SELECT messages.*
        FROM messages
-       JOIN principals
-         ON principals.principal_id = messages.actor_id
        JOIN room_events
          ON room_events.room_id = messages.room_id
         AND room_events.type = 'message.posted'
@@ -249,7 +406,6 @@ export function claimMessageAsTaskTransaction(
        WHERE messages.room_id = ?
          AND messages.message_id = ?
          AND messages.thread_id IS NULL
-         AND principals.kind = 'human'
          AND room_events.room_seq BETWEEN ? AND ?
        LIMIT 1`,
     )
@@ -262,7 +418,7 @@ export function claimMessageAsTaskTransaction(
     );
   if (messageRow === undefined) {
     throw new ForbiddenError(
-      `Message ${input.messageId} is not a causal top-level Human message in this Activation`,
+      `Message ${input.messageId} is not a causal top-level message in this Activation`,
     );
   }
 
@@ -397,5 +553,157 @@ function requireTaskRow(database: DatabaseSync, taskId: string): Row {
   if (row === undefined) {
     throw new NotFoundError(`task ${taskId} was not found`);
   }
+  return row;
+}
+
+function assertWorkerTaskCursorAnchor(
+  database: DatabaseSync,
+  scope: ActivationCredentialScope,
+  basedOnRoomSeq: number,
+): void {
+  if (!Number.isInteger(basedOnRoomSeq) || basedOnRoomSeq < 0) {
+    throw new Error("basedOnRoomSeq must be a non-negative integer");
+  }
+  if (basedOnRoomSeq === scope.toSeq) return;
+  const causalEvent = database
+    .prepare("SELECT * FROM room_events WHERE room_id = ? AND room_seq = ?")
+    .get(scope.roomId, basedOnRoomSeq);
+  const payload = causalEvent ? jsonObject(causalEvent, "payload_json") : {};
+  if (
+    causalEvent === undefined ||
+    text(causalEvent, "actor_id") !== scope.participantId ||
+    text(causalEvent, "aggregate_type") !== "task" ||
+    payload.runAttemptId !== scope.runAttemptId
+  ) {
+    throw new StaleContextError(
+      basedOnRoomSeq,
+      integer(requireRoomRow(database, scope.roomId), "next_seq") - 1,
+    );
+  }
+}
+
+export function assertWorkerTaskCreationFreshContext(
+  database: DatabaseSync,
+  scope: ActivationCredentialScope,
+  basedOnRoomSeq: number,
+): void {
+  assertWorkerTaskCursorAnchor(database, scope, basedOnRoomSeq);
+
+  const newerBusinessEvent = database
+    .prepare(
+      `SELECT room_seq FROM room_events
+       WHERE room_id = ?
+         AND room_seq > ?
+         AND type NOT LIKE 'activation.%'
+         AND type NOT LIKE 'inbox.%'
+         AND type NOT LIKE 'placement.%'
+         AND type NOT LIKE 'run.%'
+         AND type NOT LIKE 'runtime_process.%'
+         AND EXISTS (
+           SELECT 1 FROM inbox_items
+           WHERE inbox_items.event_id = room_events.event_id
+             AND inbox_items.participant_id = ?
+         )
+         AND NOT (
+           aggregate_type = 'task'
+           AND actor_id = ?
+           AND json_extract(payload_json, '$.runAttemptId') = ?
+         )
+       ORDER BY room_seq DESC
+       LIMIT 1`,
+    )
+    .get(
+      scope.roomId,
+      basedOnRoomSeq,
+      scope.participantId,
+      scope.participantId,
+      scope.runAttemptId,
+    );
+  if (newerBusinessEvent !== undefined) {
+    throw new StaleContextError(
+      basedOnRoomSeq,
+      integer(newerBusinessEvent, "room_seq"),
+    );
+  }
+}
+
+export function assertWorkerTaskFreshContext(
+  database: DatabaseSync,
+  scope: ActivationCredentialScope,
+  basedOnRoomSeq: number,
+  taskId: string,
+): void {
+  assertWorkerTaskCursorAnchor(database, scope, basedOnRoomSeq);
+
+  const newerBusinessEvent = database
+    .prepare(
+      `SELECT room_seq FROM room_events
+       WHERE room_id = ?
+         AND room_seq > ?
+         AND type NOT LIKE 'activation.%'
+         AND type NOT LIKE 'inbox.%'
+         AND type NOT LIKE 'placement.%'
+         AND type NOT LIKE 'run.%'
+         AND type NOT LIKE 'runtime_process.%'
+         AND (
+           (aggregate_type = 'task' AND aggregate_id = ?)
+           OR EXISTS (
+             SELECT 1 FROM inbox_items
+             WHERE inbox_items.event_id = room_events.event_id
+               AND inbox_items.participant_id = ?
+           )
+         )
+         AND NOT (
+           aggregate_type = 'task'
+           AND aggregate_id = ?
+           AND actor_id = ?
+           AND type IN ('task.claimed', 'task.started', 'task.progressed', 'task.blocked', 'task.released', 'task.submitted')
+         )
+       ORDER BY room_seq DESC
+       LIMIT 1`,
+    )
+    .get(
+      scope.roomId,
+      basedOnRoomSeq,
+      taskId,
+      scope.participantId,
+      taskId,
+      scope.participantId,
+    );
+  if (newerBusinessEvent !== undefined) {
+    throw new StaleContextError(
+      basedOnRoomSeq,
+      integer(newerBusinessEvent, "room_seq"),
+    );
+  }
+}
+
+export function requireOwnedTaskClaim(
+  taskRow: Row,
+  participantId: string,
+  expectedState: "claimed" | "in_progress",
+  nowMs: number,
+): void {
+  const taskId = text(taskRow, "task_id");
+  if (text(taskRow, "state") !== expectedState) {
+    throw new ConflictError(
+      `Task ${taskId} must be ${expectedState} for this command`,
+    );
+  }
+  if (
+    nullableText(taskRow, "claimed_by") !== participantId ||
+    (nullableInteger(taskRow, "claim_until_ms") ?? 0) <= nowMs
+  ) {
+    throw new LeaseConflictError(
+      `Agent ${participantId} does not own an active claim for Task ${taskId}`,
+    );
+  }
+}
+
+function requireRoomRow(database: DatabaseSync, roomId: string): Row {
+  const row = database
+    .prepare("SELECT * FROM rooms WHERE room_id = ?")
+    .get(roomId);
+  if (!row) throw new NotFoundError(`room ${roomId} was not found`);
   return row;
 }
