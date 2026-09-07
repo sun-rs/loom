@@ -65,9 +65,11 @@ new popup system. Recent trajectory is fetched only for managers/the creator;
 empty recent sections are omitted, while read errors remain distinguishable.
 The shared AgentAvatar has an explicit 48px preview variant; it does not inherit
 or override the full-profile 64px variant through page specificity.
-An open preview refreshes its bounded tail when canonical presence.activityAt
-changes, retaining the old rows during the read and rejecting aborted/old-scope
-responses. This reuses presence reconciliation, not another polling timer.
+An open preview refreshes its bounded tail when presence.trajectoryVersion
+changes (activityAt fallback for older daemons), retaining the old rows during the
+read and rejecting aborted/old-scope responses. The hint reads the existing per-Agent
+trajectory tail server_sequence, including non-status records; it does not change
+activityAt, activity mapping, delivery acknowledgements or Task state. This reuses presence reconciliation, not another polling timer.
 Unknown/failed profile reads never claim that a creator is absent; only an
 explicit null creator does. Both directory profiles and previews resolve Runtime
 bindings through the scoped entity directory, including principal identity checks.
@@ -79,10 +81,9 @@ so its instrumentation cannot enter production sandboxed file previews.
 
 ## Deliberately not closed by this family
 
-- Complete trajectory invalidation while a preview remains open: presence-driven
-  refresh is implemented, but activityAt does not advance for every tool_end,
-  output, system or slock_action record. Complete upstream activity filtering and
-  every provider capability variant remain unclosed.
+- Complete upstream activity filtering and every provider capability variant
+  remain unclosed. The separate open-preview invalidation gap is repaired in
+  [the trajectory refresh audit](../audits/2026-09-07-agent-preview-trajectory-refresh.zh-CN.md).
 - Computer bulk select/create/workspace-scan administration and complete
   start/stop action parity. Existing safe local action owners are unchanged.
 - Human-to-Computer ownership metadata: host presence is not proof of ownership.

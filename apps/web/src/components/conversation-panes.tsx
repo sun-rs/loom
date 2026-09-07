@@ -1,3 +1,4 @@
+import { ComposerDropForm } from "./composer-drop-form.tsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   FormEvent,
@@ -80,6 +81,7 @@ import {
 import { useMessageContextMenu } from "../use-message-context-menu.ts";
 import { MessageContextMenu } from "./message-context-menu.tsx";
 import { MessageSelectionToolbar } from "./message-selection-toolbar.tsx";
+import { TaskParticipantFields } from "./task-participant-fields.tsx";
 import { MessageForwardDialog } from "./message-forward-dialog.tsx";
 import { ForwardedMessageBundleView } from "./forwarded-message-bundle.tsx";
 import {
@@ -91,6 +93,8 @@ import {
   ComposerMentionMenu,
   useComposerMention,
 } from "./composer-mention.tsx";
+import { useDiscoveryQuery } from "../use-discovery-query.ts";
+import { messageTaskMenuAction } from "../message-task-menu-action.ts";
 
 export type ThreadReplyPreview = {
   actorId: string;
@@ -112,6 +116,7 @@ export function ChatPane({
   focusedMessageId,
   onReadThrough,
   agents,
+  canManageAnyTask,
   canCreateTask,
   canForward,
   canPost,
@@ -127,6 +132,7 @@ export function ChatPane({
   roomMembers,
   onManageAgents,
   onConvertToTask,
+  onTaskWorkflow,
   onLoadEarlier,
   onOpenThread,
   onOpenTarget,
@@ -147,6 +153,7 @@ export function ChatPane({
   focusedMessageId?: string | undefined;
   onReadThrough?: ((throughSeq: number) => Promise<void>) | undefined;
   agents: readonly RoomAgentTarget[];
+  canManageAnyTask: boolean;
   canCreateTask: boolean;
   canForward: boolean;
   canPost: boolean;
@@ -162,6 +169,7 @@ export function ChatPane({
   roomMembers: readonly Principal[];
   onManageAgents: () => void;
   onConvertToTask: (messageId: string) => Promise<void>;
+  onTaskWorkflow: (task: Task) => Promise<void>;
   onLoadEarlier: () => Promise<void>;
   onOpenThread: (
     rootMessageId: string,
@@ -566,7 +574,15 @@ export function ChatPane({
                   <ChatDateDivider label={chatDateLabel(message.createdAt)} />
                 ) : null}
                 <MessageArticle
+                  client={client}
+                  canManageTask={
+                    task !== undefined &&
+                    (canManageAnyTask ||
+                      task.creatorId === currentPrincipal?.principalId)
+                  }
                   collapseLongMessages={collapseLongMessages}
+                  contextRoomId={roomId}
+                  contextThreadId={thread?.threadId}
                   onMention={mention}
                   onOpenTarget={onOpenTarget}
                   referenceAgents={messageAgents}
@@ -619,6 +635,9 @@ export function ChatPane({
                     ? {}
                     : { messagePrincipal })}
                   {...(task === undefined ? {} : { task })}
+                  {...(task === undefined
+                    ? {}
+                    : { taskWorkflowAction: () => onTaskWorkflow(task) })}
                   {...(taskAgent === undefined ? {} : { taskAgent })}
                   {...(task === undefined && canCreateTask
                     ? {
@@ -684,7 +703,7 @@ export function ChatPane({
       ) : (
         <>
           {asTask ? (
-            <AgentTargetSelector
+            <TaskParticipantFields
               agents={agents}
               assigneeId={taskAssigneeId}
               collaboratorIds={taskCollaboratorIds}
@@ -709,7 +728,12 @@ export function ChatPane({
           {submitError === undefined ? null : (
             <div className="rah-inline-error">{submitError}</div>
           )}
-          <form className="composer" onSubmit={submit}>
+          <ComposerDropForm
+            roomId={roomId}
+            draftKey={uploadDraftKey}
+            disabled={pending || asTask || !canPost || !canAttachFiles}
+            onSubmit={submit}
+          >
             <ComposerMentionMenu
               activeIndex={composerMention.activeIndex}
               agents={composerMention.candidates}
@@ -782,7 +806,7 @@ export function ChatPane({
                 </button>
               </div>
             </div>
-          </form>
+          </ComposerDropForm>
         </>
       )}
       {messageSelection.forwardOpen && roomId !== undefined ? (
@@ -800,151 +824,6 @@ export function ChatPane({
         />
       ) : null}
     </div>
-  );
-}
-
-function AgentTargetSelector({
-  agents,
-  assigneeId,
-  collaboratorIds,
-  onAssigneeChange,
-  onCollaboratorsChange,
-  onManageAgents,
-  onReviewersChange,
-  reviewerIds,
-  taskTargetIssue,
-}: {
-  agents: readonly RoomAgentTarget[];
-  assigneeId: string | undefined;
-  collaboratorIds: readonly string[];
-  onAssigneeChange: (participantId: string | undefined) => void;
-  onCollaboratorsChange: (participantIds: string[]) => void;
-  onManageAgents: () => void;
-  onReviewersChange: (participantIds: string[]) => void;
-  reviewerIds: readonly string[];
-  taskTargetIssue: string | undefined;
-}) {
-  const collaborators = new Set(collaboratorIds);
-  const reviewers = new Set(reviewerIds);
-  const owner = agents.find(
-    ({ participantId }) => participantId === assigneeId,
-  );
-  const summary =
-    owner === undefined
-      ? agents.length === 0
-        ? "创建未指派任务（当前 Room 无 Agent）"
-        : "开放任务：全部 Room Agents 可竞争，但只有一个 Agent 能认领"
-      : `${owner.handle} 负责 · ${String(collaborators.size)} 协作 · ${String(reviewers.size)} 审阅`;
-  const toggle = (
-    current: Set<string>,
-    participantId: string,
-    onChange: (participantIds: string[]) => void,
-  ) => {
-    const next = new Set(current);
-    if (next.has(participantId)) next.delete(participantId);
-    else next.add(participantId);
-    onChange([...next].sort());
-  };
-  return (
-    <section className="rah-agent-targets" aria-label="任务目标 Agents">
-      <header>
-        <span>
-          <Icon name="members" />
-          任务协作角色
-        </span>
-        {agents.length === 0 ? (
-          <button className="rah-target-link" onClick={onManageAgents}>
-            添加本机 Agent
-          </button>
-        ) : (
-          <label className="rah-task-owner-select">
-            <span>负责人</span>
-            <select
-              aria-label="任务负责人"
-              onChange={(event) =>
-                onAssigneeChange(event.target.value || undefined)
-              }
-              value={assigneeId ?? ""}
-            >
-              <option value="">开放竞争</option>
-              {agents.map((agent) => (
-                <option key={agent.participantId} value={agent.participantId}>
-                  {agent.handle}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-      </header>
-      {agents.length === 0 ? (
-        <p>当前 Room 尚未设置 Agent；消息会保留，但不会拉起任何 CLI。</p>
-      ) : (
-        <div className="rah-task-role-groups">
-          <TaskRoleChoices
-            agents={agents}
-            disabled={assigneeId === undefined}
-            label="协作者"
-            onToggle={(participantId) =>
-              toggle(collaborators, participantId, onCollaboratorsChange)
-            }
-            ownerId={assigneeId}
-            selected={collaborators}
-          />
-          <TaskRoleChoices
-            agents={agents}
-            disabled={assigneeId === undefined}
-            label="审阅者"
-            onToggle={(participantId) =>
-              toggle(reviewers, participantId, onReviewersChange)
-            }
-            ownerId={assigneeId}
-            selected={reviewers}
-          />
-        </div>
-      )}
-      <p className={taskTargetIssue === undefined ? undefined : "is-error"}>
-        {taskTargetIssue ?? summary}
-      </p>
-    </section>
-  );
-}
-
-function TaskRoleChoices({
-  agents,
-  disabled,
-  label,
-  onToggle,
-  ownerId,
-  selected,
-}: {
-  agents: readonly RoomAgentTarget[];
-  disabled: boolean;
-  label: string;
-  onToggle: (participantId: string) => void;
-  ownerId: string | undefined;
-  selected: ReadonlySet<string>;
-}) {
-  return (
-    <fieldset className="rah-task-role-group" disabled={disabled}>
-      <legend>{label}</legend>
-      <div className="rah-agent-target-list">
-        {agents
-          .filter(({ participantId }) => participantId !== ownerId)
-          .map((agent) => (
-            <label
-              className={selected.has(agent.participantId) ? "is-selected" : ""}
-              key={agent.participantId}
-            >
-              <input
-                checked={selected.has(agent.participantId)}
-                onChange={() => onToggle(agent.participantId)}
-                type="checkbox"
-              />
-              <span>{agent.handle}</span>
-            </label>
-          ))}
-      </div>
-    </fieldset>
   );
 }
 
@@ -1011,8 +890,12 @@ function ThreadReplyAvatar({
   );
 }
 
-function MessageArticle({
+export function MessageArticle({
+  client,
+  canManageTask = false,
   collapseLongMessages = true,
+  contextRoomId,
+  contextThreadId,
   focused = false,
   convertTaskAction,
   highlightQuery,
@@ -1033,11 +916,16 @@ function MessageArticle({
   selection,
   task,
   taskAgent,
+  taskWorkflowAction,
   threadAction,
   threadReplies,
   threadReplyCount,
 }: {
+  client: RahClient;
+  canManageTask?: boolean;
   collapseLongMessages?: boolean;
+  contextRoomId?: string | undefined;
+  contextThreadId?: string | undefined;
   focused?: boolean;
   convertTaskAction?: () => Promise<void>;
   highlightQuery?: string | undefined;
@@ -1068,6 +956,7 @@ function MessageArticle({
   };
   task?: Task;
   taskAgent?: WorkspaceAgentView;
+  taskWorkflowAction?: (() => Promise<void>) | undefined;
   threadAction?: {
     onClick: (returnFocusTarget?: HTMLElement | null) => void;
   };
@@ -1086,6 +975,21 @@ function MessageArticle({
   } = useMessageContextMenu<HTMLElement>();
   const [conversionPending, setConversionPending] = useState(false);
   const [conversionError, setConversionError] = useState<string>();
+  const [threadFollowPending, setThreadFollowPending] = useState(false);
+  const [taskActionPending, setTaskActionPending] = useState(false);
+  const threadFollowers = useDiscoveryQuery(
+    client,
+    "thread.followers",
+    {
+      roomId: contextRoomId ?? "room-unavailable",
+      threadId: contextThreadId ?? "thread-unavailable",
+    },
+    contextMenu !== undefined &&
+      contextRoomId !== undefined &&
+      contextThreadId !== undefined,
+  );
+  const taskMenuAction =
+    task === undefined ? undefined : messageTaskMenuAction(task, canManageTask);
   const openThreadFromMessage = () => threadAction?.onClick(messageRef.current);
 
   async function convertToTask() {
@@ -1099,6 +1003,50 @@ function MessageArticle({
       setConversionError(errorMessage(caught));
     } finally {
       setConversionPending(false);
+    }
+  }
+
+  async function toggleThreadFollow() {
+    if (
+      contextRoomId === undefined ||
+      contextThreadId === undefined ||
+      threadFollowers.data === undefined ||
+      threadFollowPending
+    )
+      return;
+    setThreadFollowPending(true);
+    try {
+      await client.request("activity.follow", {
+        following: !threadFollowers.data.following,
+        roomId: contextRoomId,
+        threadId: contextThreadId,
+      });
+      setConversionError(undefined);
+      closeContextMenu();
+    } catch (caught) {
+      setConversionError(errorMessage(caught));
+    } finally {
+      setThreadFollowPending(false);
+    }
+  }
+
+  async function updateTaskWorkflow() {
+    if (
+      taskWorkflowAction === undefined ||
+      taskMenuAction === undefined ||
+      taskMenuAction.kind === "unavailable" ||
+      taskActionPending
+    )
+      return;
+    setTaskActionPending(true);
+    try {
+      await taskWorkflowAction();
+      setConversionError(undefined);
+      closeContextMenu();
+    } catch (caught) {
+      setConversionError(errorMessage(caught));
+    } finally {
+      setTaskActionPending(false);
     }
   }
 
@@ -1282,6 +1230,29 @@ function MessageArticle({
           social={social}
           target={navigationTarget}
           triggerRef={messageRef}
+          {...(contextRoomId === undefined || contextThreadId === undefined
+            ? {}
+            : {
+                threadFollow: {
+                  ...(threadFollowers.data === undefined
+                    ? {}
+                    : { following: threadFollowers.data.following }),
+                  loading: threadFollowers.loading,
+                  onToggle: toggleThreadFollow,
+                  pending: threadFollowPending,
+                },
+              })}
+          {...(taskMenuAction === undefined
+            ? {}
+            : {
+                taskAction: {
+                  ...(taskMenuAction.kind === "unavailable"
+                    ? { disabledReason: taskMenuAction.reason }
+                    : { onAction: updateTaskWorkflow }),
+                  label: taskMenuAction.label,
+                  pending: taskActionPending,
+                },
+              })}
           {...(convertTaskAction === undefined
             ? {}
             : { onConvertToTask: convertToTask })}
@@ -1299,6 +1270,7 @@ function MessageArticle({
 
 export function ThreadPane({
   client,
+  canManageAnyTask,
   currentPrincipal,
   messageAgents = [],
   mentionAgentIds = [],
@@ -1317,6 +1289,7 @@ export function ThreadPane({
   loading,
   onClose,
   onSubmit,
+  onTaskWorkflow,
   onFollow,
   onLoadEarlier,
   onRefreshFollowers,
@@ -1343,6 +1316,7 @@ export function ThreadPane({
   threadId,
 }: {
   client: RahClient;
+  canManageAnyTask: boolean;
   currentPrincipal?: Principal | undefined;
   messageAgents?: readonly WorkspaceAgentView[];
   mentionAgentIds?: readonly string[];
@@ -1361,6 +1335,7 @@ export function ThreadPane({
   loading: boolean;
   onClose: () => void;
   onSubmit: (body: string, attachmentIds?: string[]) => Promise<void>;
+  onTaskWorkflow: (task: Task) => Promise<void>;
   onFollow?: ((following: boolean) => Promise<void>) | undefined;
   onLoadEarlier?: (() => Promise<void>) | undefined;
   onRefreshFollowers?: (() => void) | undefined;
@@ -2118,7 +2093,15 @@ export function ThreadPane({
         ) : (
           <div className="rah-thread-parent" data-testid="thread-panel-parent">
             <MessageArticle
+              client={client}
+              canManageTask={
+                task !== undefined &&
+                (canManageAnyTask ||
+                  task.creatorId === currentPrincipal?.principalId)
+              }
               collapseLongMessages={collapseLongMessages}
+              contextRoomId={roomId}
+              contextThreadId={threadId}
               highlightQuery={searchOpen ? searchQuery : undefined}
               message={root}
               mentionReadStates={mentionReadStatesByMessage.get(root.messageId)}
@@ -2188,6 +2171,9 @@ export function ThreadPane({
                 root.messageId === activeSearchMessageId
               }
               {...(task === undefined ? {} : { task })}
+              {...(task === undefined
+                ? {}
+                : { taskWorkflowAction: () => onTaskWorkflow(task) })}
               {...(taskAgent === undefined ? {} : { taskAgent })}
             />
           </div>
@@ -2228,6 +2214,7 @@ export function ThreadPane({
             </p>
           ) : (
             <MessageArticle
+              client={client}
               collapseLongMessages={collapseLongMessages}
               highlightQuery={searchOpen ? searchQuery : undefined}
               key={item.message.messageId}
@@ -2347,7 +2334,12 @@ export function ThreadPane({
           {submitError === undefined ? null : (
             <div className="rah-inline-error">{submitError}</div>
           )}
-          <form className="composer" onSubmit={submit}>
+          <ComposerDropForm
+            roomId={roomId}
+            draftKey={uploadDraftKey}
+            disabled={pending || !canReply || !canAttachFiles}
+            onSubmit={submit}
+          >
             <ComposerMentionMenu
               activeIndex={composerMention.activeIndex}
               agents={composerMention.candidates}
@@ -2407,7 +2399,7 @@ export function ThreadPane({
                 </button>
               </div>
             </div>
-          </form>
+          </ComposerDropForm>
         </>
       )}
       {messageSelection.forwardOpen && roomId !== undefined ? (
@@ -2461,9 +2453,12 @@ export function TaskPane({
   client,
   columns,
   currentPrincipalId,
+  earlierTasksLoading,
+  hasEarlierTasks,
   loading,
   onChanged,
   onCreate,
+  onLoadEarlierTasks,
   onOpenThread,
   roomName,
 }: {
@@ -2475,9 +2470,12 @@ export function TaskPane({
   client: RahClient;
   columns: ReturnType<typeof createRoomViewModel>["taskColumns"];
   currentPrincipalId: string | undefined;
+  earlierTasksLoading: boolean;
+  hasEarlierTasks: boolean;
   loading: boolean;
   onChanged: () => void;
   onCreate: () => void;
+  onLoadEarlierTasks: () => Promise<void>;
   onOpenThread: (task: Task) => Promise<void>;
   roomName: string;
 }) {
@@ -2522,40 +2520,52 @@ export function TaskPane({
         view={view}
         writeEnabled={canWrite && caughtUp}
       />
-      {visibleTasks.length === 0 && !loading ? (
-        <div className="tasks-content">
-          <EmptyState
-            context="task"
-            placement="fill"
-            icon="task"
-            title={filtersActive ? "没有符合此筛选的任务" : "暂无任务"}
-            description={
-              filtersActive
-                ? "换一个筛选组合，或清除当前选择。"
-                : "用「新建任务」按钮创建一个。"
-            }
+      <div className="rah-room-task-pages">
+        {visibleTasks.length === 0 && !loading ? (
+          <div className="tasks-content">
+            <EmptyState
+              context="task"
+              placement="fill"
+              icon="task"
+              title={filtersActive ? "没有符合此筛选的任务" : "暂无任务"}
+              description={
+                filtersActive
+                  ? "换一个筛选组合，或清除当前选择。"
+                  : "用「新建任务」按钮创建一个。"
+              }
+            />
+          </div>
+        ) : (
+          <GlobalTaskBoard
+            client={client}
+            columns={visibleColumns}
+            tasks={taskItems}
+            view={view}
+            writeEnabled={canWrite && caughtUp}
+            showRoomName={false}
+            onChanged={onChanged}
+            onOpen={async ({ target }) => {
+              if (!canOpenThread || target.kind !== "task") return false;
+              const task = visibleTasks.find(
+                (candidate) => candidate.taskId === target.taskId,
+              );
+              if (task === undefined) return false;
+              await onOpenThread(task);
+              return true;
+            }}
           />
-        </div>
-      ) : (
-        <GlobalTaskBoard
-          client={client}
-          columns={visibleColumns}
-          tasks={taskItems}
-          view={view}
-          writeEnabled={canWrite && caughtUp}
-          showRoomName={false}
-          onChanged={onChanged}
-          onOpen={async ({ target }) => {
-            if (!canOpenThread || target.kind !== "task") return false;
-            const task = visibleTasks.find(
-              (candidate) => candidate.taskId === target.taskId,
-            );
-            if (task === undefined) return false;
-            await onOpenThread(task);
-            return true;
-          }}
-        />
-      )}
+        )}
+        {hasEarlierTasks ? (
+          <button
+            className="rah-message-history-trigger rah-task-history-trigger"
+            disabled={earlierTasksLoading}
+            onClick={() => void onLoadEarlierTasks()}
+            type="button"
+          >
+            {earlierTasksLoading ? "正在载入更早任务…" : "载入更早任务"}
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }

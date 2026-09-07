@@ -225,10 +225,18 @@ import { createHumanCommandServices } from "./human-command-services.ts";
 import { requireWorkerTaskDelivery } from "./worker-task-scope.ts";
 import * as workerMessages from "./worker-message-routing.ts";
 import {
-  listTaskProjections,
+  listTaskProjectionPage,
+  requireRoomTaskProjection,
   taskDependenciesComplete,
   taskProjectionFromRow,
+  type RoomTaskPageRequest,
+  type TaskPage,
 } from "./task-projection.ts";
+import {
+  assertTaskEventReplay,
+  findRoomEventByIdempotencyKey,
+} from "./task-event-replay.ts";
+import { assertInputRequestEventReplay } from "./input-request-event-replay.ts";
 import {
   createTaskThreadReply,
   migrateTaskAnchorsV9,
@@ -330,6 +338,7 @@ export class RoomKernel {
   readonly humanSidebar;
   readonly humanNavigation;
   readonly humanProfiles;
+  readonly publicChannels;
   readonly humanNotifications;
   readonly reminders: ReminderService;
   readonly roomAgentSos;
@@ -448,6 +457,8 @@ export class RoomKernel {
       transaction: (operation) => this.#transaction(operation),
     });
     const humanCommands = createHumanCommandServices({
+      requireWorker: (worker) =>
+        this.#requireAuthenticatedWorkerExecution(worker),
       createId: this.#createId,
       database: this.#database,
       events: this.#roomEvents,
@@ -458,6 +469,7 @@ export class RoomKernel {
     this.humanSidebar = humanCommands.humanSidebar;
     this.humanNavigation = humanCommands.humanNavigation;
     this.humanProfiles = humanCommands.humanProfiles;
+    this.publicChannels = humanCommands.publicChannels;
     this.humanNotifications = humanCommands.humanNotifications;
     this.followHumanThread = humanCommands.followHumanThread;
     this.getHumanThreadFollowers = humanCommands.getHumanThreadFollowers;
@@ -1518,11 +1530,29 @@ export class RoomKernel {
   }
   listTasks(
     actor: AuthenticatedActorContext,
-    input: { beforeTaskNumber?: number; limit?: number; roomId: string },
+    input: RoomTaskPageRequest,
   ): Task[] {
+    return this.listTaskPage(actor, input).tasks;
+  }
+  listTaskPage(
+    actor: AuthenticatedActorContext,
+    input: RoomTaskPageRequest,
+  ): TaskPage {
     const actorId = this.#requireAuthenticatedActor(actor);
     this.#requireMember(input.roomId, actorId);
-    return listTaskProjections(this.#database, input.roomId, input);
+    return listTaskProjectionPage(this.#database, input.roomId, input);
+  }
+  getTask(
+    actor: AuthenticatedActorContext,
+    input: { roomId: string; taskId: string },
+  ): Task {
+    const actorId = this.#requireAuthenticatedActor(actor);
+    this.#requireMember(input.roomId, actorId);
+    return requireRoomTaskProjection(
+      this.#database,
+      input.roomId,
+      input.taskId,
+    );
   }
   listInputRequests(
     actor: AuthenticatedActorContext,
@@ -1935,16 +1965,20 @@ export class RoomKernel {
           `Task ${input.taskId} has no human creator available for input`,
         );
       }
-      const previous = this.#findRoomEventByIdempotencyKey(
+      const previous = findRoomEventByIdempotencyKey(
+        this.#database,
         scope.roomId,
         input.idempotencyKey,
       );
       if (previous !== undefined) {
-        const event = this.#assertInputRequestEventReplay(previous, {
-          actorId: scope.participantId,
-          eventType: "input.requested",
-          payload: { question, taskId: input.taskId },
-        });
+        const event = assertInputRequestEventReplay(
+          this.#eventFromRow(previous),
+          {
+            actorId: scope.participantId,
+            eventType: "input.requested",
+            payload: { question, taskId: input.taskId },
+          },
+        );
         return {
           deduplicated: true,
           event,
@@ -2130,6 +2164,28 @@ export class RoomKernel {
     });
   }
 
+  replayTaskSubmission(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: {
+      idempotencyKey: string;
+      summary: string;
+      taskId: string;
+      verification?: TaskVerificationDeclaration;
+    },
+  ): TaskMutationResult | null {
+    const summary = input.summary.trim();
+    if (summary.length === 0) throw new Error("task summary is required");
+    return this.#transaction(() => {
+      const scope = this.#requireAuthenticatedWorkerExecution(execution);
+      const taskRow = this.#requireWorkerTask(scope, input.taskId);
+      return this.#replayWorkerTaskCommand(taskRow, scope, {
+        eventType: "task.submitted",
+        idempotencyKey: input.idempotencyKey,
+        payload: { summary, verification: input.verification ?? null },
+      });
+    });
+  }
+
   assignTask(
     actor: AuthenticatedActorContext,
     input: {
@@ -2154,12 +2210,13 @@ export class RoomKernel {
       ) {
         throw new ForbiddenError("Task assignee must be an Agent principal");
       }
-      const previous = this.#findRoomEventByIdempotencyKey(
+      const previous = findRoomEventByIdempotencyKey(
+        this.#database,
         roomId,
         input.idempotencyKey,
       );
       if (previous !== undefined) {
-        const event = this.#assertTaskEventReplay(previous, {
+        const event = assertTaskEventReplay(this.#eventFromRow(previous), {
           actorId,
           aggregateId: input.taskId,
           eventType: "task.assigned",
@@ -2257,12 +2314,13 @@ export class RoomKernel {
       if (text(taskRow, "creator_id") !== actorId) {
         throw new ForbiddenError("only the Task creator can unblock it");
       }
-      const previous = this.#findRoomEventByIdempotencyKey(
+      const previous = findRoomEventByIdempotencyKey(
+        this.#database,
         roomId,
         input.idempotencyKey,
       );
       if (previous !== undefined) {
-        const event = this.#assertTaskEventReplay(previous, {
+        const event = assertTaskEventReplay(this.#eventFromRow(previous), {
           actorId,
           aggregateId: input.taskId,
           eventType: "task.unblocked",
@@ -2376,17 +2434,21 @@ export class RoomKernel {
           `only the designated responder can resolve InputRequest ${input.inputRequestId}`,
         );
       }
-      const previous = this.#findRoomEventByIdempotencyKey(
+      const previous = findRoomEventByIdempotencyKey(
+        this.#database,
         roomId,
         input.idempotencyKey,
       );
       if (previous !== undefined) {
-        const event = this.#assertInputRequestEventReplay(previous, {
-          actorId,
-          aggregateId: input.inputRequestId,
-          eventType: "input.resolved",
-          payload: { answer, inputRequestId: input.inputRequestId, taskId },
-        });
+        const event = assertInputRequestEventReplay(
+          this.#eventFromRow(previous),
+          {
+            actorId,
+            aggregateId: input.inputRequestId,
+            eventType: "input.resolved",
+            payload: { answer, inputRequestId: input.inputRequestId, taskId },
+          },
+        );
         return {
           activationIds: [],
           deduplicated: true,
@@ -2476,12 +2538,13 @@ export class RoomKernel {
         { creatorId: text(taskRow, "creator_id"), roomId },
         actorId,
       );
-      const previous = this.#findRoomEventByIdempotencyKey(
+      const previous = findRoomEventByIdempotencyKey(
+        this.#database,
         roomId,
         input.idempotencyKey,
       );
       if (previous !== undefined) {
-        const event = this.#assertTaskEventReplay(previous, {
+        const event = assertTaskEventReplay(this.#eventFromRow(previous), {
           actorId,
           aggregateId: input.taskId,
           eventType: "task.completed",
@@ -2657,7 +2720,8 @@ export class RoomKernel {
       this.#assertIdempotencyKey(input.idempotencyKey);
       const content = normalizeExecutionPolicyContent(input);
       const contentDigest = canonicalDigest(content);
-      const previous = this.#findRoomEventByIdempotencyKey(
+      const previous = findRoomEventByIdempotencyKey(
+        this.#database,
         input.controlRoomId,
         input.idempotencyKey,
       );
@@ -2745,7 +2809,8 @@ export class RoomKernel {
       this.#assertIdempotencyKey(input.idempotencyKey);
       const content = normalizeExecutionPolicyContent(input);
       const contentDigest = canonicalDigest(content);
-      const previous = this.#findRoomEventByIdempotencyKey(
+      const previous = findRoomEventByIdempotencyKey(
+        this.#database,
         controlRoomId,
         input.idempotencyKey,
       );
@@ -2855,7 +2920,8 @@ export class RoomKernel {
       );
       const content = normalizeAgentDefinitionContent(input);
       const contentDigest = canonicalDigest(content);
-      const previous = this.#findRoomEventByIdempotencyKey(
+      const previous = findRoomEventByIdempotencyKey(
+        this.#database,
         input.controlRoomId,
         input.idempotencyKey,
       );
@@ -2951,7 +3017,8 @@ export class RoomKernel {
       );
       const content = normalizeAgentDefinitionContent(input);
       const contentDigest = canonicalDigest(content);
-      const previous = this.#findRoomEventByIdempotencyKey(
+      const previous = findRoomEventByIdempotencyKey(
+        this.#database,
         controlRoomId,
         input.idempotencyKey,
       );
@@ -4937,12 +5004,13 @@ export class RoomKernel {
     },
   ): TaskMutationResult | null {
     const roomId = text(taskRow, "room_id");
-    const previous = this.#findRoomEventByIdempotencyKey(
+    const previous = findRoomEventByIdempotencyKey(
+      this.#database,
       roomId,
       input.idempotencyKey,
     );
     if (previous === undefined) return null;
-    const event = this.#assertTaskEventReplay(previous, {
+    const event = assertTaskEventReplay(this.#eventFromRow(previous), {
       actorId: scope.participantId,
       aggregateId: text(taskRow, "task_id"),
       eventType: input.eventType,
@@ -5799,75 +5867,6 @@ export class RoomKernel {
       offers,
       schedulerVersion,
     };
-  }
-
-  #findRoomEventByIdempotencyKey(
-    roomId: string,
-    idempotencyKey: string,
-  ): Row | undefined {
-    return this.#database
-      .prepare(
-        "SELECT * FROM room_events WHERE room_id = ? AND idempotency_key = ?",
-      )
-      .get(roomId, idempotencyKey);
-  }
-
-  #assertTaskEventReplay(
-    row: Row,
-    expected: {
-      actorId: string;
-      aggregateId?: string;
-      eventType: string;
-      payload: Record<string, unknown>;
-    },
-  ): RoomEvent {
-    const event = this.#eventFromRow(row);
-    const payloadMatches = Object.entries(expected.payload).every(
-      ([key, value]) =>
-        JSON.stringify(event.payload[key]) === JSON.stringify(value),
-    );
-    if (
-      event.type !== expected.eventType ||
-      event.actorId !== expected.actorId ||
-      event.aggregateType !== "task" ||
-      (expected.aggregateId !== undefined &&
-        event.aggregateId !== expected.aggregateId) ||
-      !payloadMatches
-    ) {
-      throw new IdempotencyConflictError(
-        `idempotency key ${event.idempotencyKey} was already used for another mutation`,
-      );
-    }
-    return event;
-  }
-
-  #assertInputRequestEventReplay(
-    row: Row,
-    expected: {
-      actorId: string;
-      aggregateId?: string;
-      eventType: "input.requested" | "input.resolved";
-      payload: Record<string, unknown>;
-    },
-  ): RoomEvent {
-    const event = this.#eventFromRow(row);
-    const payloadMatches = Object.entries(expected.payload).every(
-      ([key, value]) =>
-        JSON.stringify(event.payload[key]) === JSON.stringify(value),
-    );
-    if (
-      event.type !== expected.eventType ||
-      event.actorId !== expected.actorId ||
-      event.aggregateType !== "input_request" ||
-      (expected.aggregateId !== undefined &&
-        event.aggregateId !== expected.aggregateId) ||
-      !payloadMatches
-    ) {
-      throw new IdempotencyConflictError(
-        `idempotency key ${event.idempotencyKey} was already used for another mutation`,
-      );
-    }
-    return event;
   }
 
   #snapshot(roomId: string): RoomSnapshot {

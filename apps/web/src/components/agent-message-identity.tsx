@@ -188,8 +188,9 @@ function AgentPreview({
     entities?.scope?.workspaceId,
     activityScope,
     // Reuse canonical presence reconciliation; no independent polling clock.
-    // activityAt is not a complete trajectory cursor (documented limitation).
-    agent.presence?.activityAt,
+    // Older daemons retain status-driven refresh; current ones invalidate on
+    // every tail change without redefining Agent activity or remounting preview.
+    agent.presence?.trajectoryVersion ?? agent.presence?.activityAt,
   ]);
   const runtimeView = runtimeProfilePresentation(
     entities?.runtimesForAgent(agent.agentDefinitionId) ?? [],

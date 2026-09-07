@@ -307,6 +307,46 @@ if (mode === "trajectory") {
   if (!delivery || delivery.cursorAfter < requiredThrough) {
     throw new Error("worker Task sync did not reach the Activation range");
   }
+  if (
+    process.env.RAH_FAKE_MESSAGE_TOOLS === "1" &&
+    events.some(
+      (event) =>
+        event.type === "message.posted" &&
+        event.payload.body?.includes("[WORKER-TOOLS]"),
+    )
+  ) {
+    const cli = (args) =>
+      JSON.parse(
+        execFileSync(process.env.RAH_WORKER_CLI, ["worker", ...args], {
+          encoding: "utf8",
+        }),
+      );
+    const found = cli([
+      "message-search",
+      "--query",
+      "[WORKER-TOOLS]",
+      "--limit",
+      "1",
+    ]);
+    if (found.messages.length !== 1)
+      throw new Error("Worker search did not find the explicit probe message");
+    const messageId = found.messages[0].messageId;
+    const reacted = cli([
+      "message-react",
+      "--message-id",
+      messageId,
+      "--emoji",
+      "👍",
+      "--active",
+      "true",
+      "--based-on-room-seq",
+      String(requiredThrough),
+      "--idempotency-key",
+      `probe:${messageId}`,
+    ]);
+    if (reacted.reactions[0]?.count !== 1)
+      throw new Error("Worker reaction did not persist");
+  }
   const requiredContextEventTypes = (
     process.env.RAH_FAKE_REQUIRED_CONTEXT_EVENT_TYPES ?? ""
   )

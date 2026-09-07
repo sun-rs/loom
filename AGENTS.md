@@ -28,6 +28,16 @@ reports. Resolve contradictions against code and recent evidence explicitly.
 
 ## Product boundary
 
+Current release scope is one Human with multiple Agents on the local Mac.
+Multi-Human onboarding/invitations, Human-to-Human collaboration, differentiated
+Human Room visibility/participation and nonmember public-Channel parity form one
+future optional project; do not implement or use them as first-release blockers.
+The user's scope decision supersedes older public-Channel closure locks. Preserve
+existing authentication, Agent membership/execution fences and memory isolation.
+Follow `docs/product/single-human-mainline-and-multi-human-backlog.zh-CN.md` for
+scope and the serial mainline construction order; historical audits are evidence,
+not permission to resume deferred work.
+
 RAH OS is room-first. The durable Room ledger, Inbox, Task, Activation, Artifact, Review, and RunAttempt state are authoritative. Provider sessions, transcripts, JSONL, PTY screens, stdout, thinking, and tool streams are diagnostics only.
 
 The permanent causal chain is:

@@ -173,9 +173,11 @@ export async function verifyProfileFamily(browser, origin, output, engine) {
     for (const width of [1440, 390]) {
       await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
       await page.goto(`${origin}/?surface=computers`, {
-        waitUntil: "networkidle",
+        waitUntil: "load",
       });
-      const card = page.locator(".rah-computer-agent-list > button").first();
+      const card = page
+        .locator(".rah-computer-agent-list button.rah-entity-card")
+        .first();
       await card.waitFor();
       const fields = page.locator(".rah-computer-field");
       assert.equal(await fields.count(), 2);
@@ -228,7 +230,8 @@ export async function verifyProfileFamily(browser, origin, output, engine) {
         await description
           .getByRole("button", { name: "编辑计算机描述" })
           .waitFor();
-        await page.reload({ waitUntil: "networkidle" });
+        await page.reload({ waitUntil: "load" });
+        await description.filter({ hasText: "Second line" }).waitFor();
         assert.ok((await description.textContent()).includes("Second line"));
         await description
           .getByRole("button", { name: "编辑计算机描述" })
@@ -276,7 +279,10 @@ export async function verifyProfileFamily(browser, origin, output, engine) {
         await description
           .getByRole("button", { name: "编辑描述", exact: true })
           .waitFor();
-        await page.reload({ waitUntil: "networkidle" });
+        await page.reload({ waitUntil: "load" });
+        await description
+          .filter({ hasText: `Agent family ${engine}` })
+          .waitFor();
         assert.ok(
           (await description.textContent()).includes(`Agent family ${engine}`),
         );

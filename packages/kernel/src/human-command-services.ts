@@ -1,9 +1,13 @@
 import type { DatabaseSync } from "node:sqlite";
 
-import type { AuthenticatedActorContext } from "./auth.ts";
+import type {
+  AuthenticatedActorContext,
+  AuthenticatedWorkerExecutionContext,
+} from "./auth.ts";
 import { HumanActivity } from "./human-activity.ts";
 import { HumanSidebar } from "./human-sidebar.ts";
 import { HumanNavigation } from "./human-navigation.ts";
+import { HumanPublicChannels } from "./public-channel.ts";
 import { HumanProfiles } from "./human-profile.ts";
 import { HumanNotifications } from "./human-notifications.ts";
 import { MessageSocial } from "./message-social.ts";
@@ -16,6 +20,9 @@ import { TaskReassignmentService } from "./task-reassignment-service.ts";
  * individual constructor wiring. Business authority remains in each service.
  */
 export function createHumanCommandServices(options: {
+  requireWorker: (
+    worker: AuthenticatedWorkerExecutionContext,
+  ) => import("@rah-os/protocol").ActivationCredentialScope;
   createId: (prefix: string) => string;
   database: DatabaseSync;
   events: RoomEventWriter;
@@ -44,6 +51,10 @@ export function createHumanCommandServices(options: {
     ) => humanActivity.followers(options.requireActor(actor), input),
     humanNavigation: new HumanNavigation(context),
     humanProfiles: new HumanProfiles(context),
+    publicChannels: new HumanPublicChannels({
+      ...context,
+      events: options.events,
+    }),
     humanNotifications: new HumanNotifications({
       ...context,
       events: options.events,
@@ -60,7 +71,11 @@ export function createHumanCommandServices(options: {
       options.transaction(() =>
         humanActivity.mark(options.requireActor(actor), input),
       ),
-    messageSocial: new MessageSocial({ ...context, events: options.events }),
+    messageSocial: new MessageSocial({
+      ...context,
+      events: options.events,
+      requireWorker: options.requireWorker,
+    }),
     removeHumanThreadAgentFollower: (
       actor: AuthenticatedActorContext,
       input: Parameters<HumanActivity["removeAgentFollower"]>[1],

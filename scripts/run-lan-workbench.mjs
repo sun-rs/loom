@@ -5,9 +5,14 @@ import {
   prepareRahDataHome,
   startLocalCoreWorkbench,
 } from "@rah-os/daemon/local-workbench";
+import { assertRahOsRepositoryIdentity } from "./repository-identity.mjs";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryDirectory = join(scriptDirectory, "..");
+await assertRahOsRepositoryIdentity({
+  commandCwd: process.cwd(),
+  repositoryDirectory,
+});
 const workspaceCwd = resolve(process.env.RAH_WORKSPACE_CWD ?? process.cwd());
 const workbenchHome = await prepareRahDataHome({ environment: process.env });
 const { snapshotWorkbenchAssets } = await import("./workbench-web-assets.mjs");

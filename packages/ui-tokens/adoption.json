@@ -23,7 +23,12 @@
       "originPath": "channel-extras.css",
       "originSha256": "b65b6a9175a58fff96965d380a81d8b0417c7266c92b07c6626608e487a8db16",
       "policy": "maintained-source",
-      "changes": []
+      "changes": [
+        "2026-09-05: Adopt Raft Kst's multi-title Task dialog row, remove-action and add-another geometry into the owned Task family; canonical creation stays in App/Kernel.",
+        "2026-09-06: Add the bounded RAH pre-create collaboration/dependency layout used after the unchanged Kst-shaped primary screen; this is documented local adaptation and does not claim Raft provenance.",
+        "2026-09-07: Structurally port frozen Raft composer file-drop overlay classes into the shared stylesheet; source/conditions in docs/design/composer-file-drop.md. Upload authority remains in FileUploadStore/RoomFiles.",
+        "2026-09-07: Source-derived dual attachment picker variant (26px, 4px padding, 14px icons, 8px gap) reuses shared button states. See docs/design/composer-attachment-pickers.md."
+      ]
     },
     {
       "path": "packages/ui-tokens/src/neo-brutalist/extracted/raft-icons.svg",
@@ -87,7 +92,8 @@
       "originSha256": "1640e54c953209639bdc34c2ec5038e7f6db91f1b46dd878aff4f7db408c5612",
       "policy": "maintained-source",
       "changes": [
-        "2026-09-04: Search header/tile geometry migrated to shared primitives; preserve flexible source-backed input/clear slot and hide the Esc hint below sm. No query or SDK owner moved."
+        "2026-09-04: Search header/tile geometry migrated to shared primitives; preserve flexible source-backed input/clear slot and hide the Esc hint below sm. No query or SDK owner moved.",
+        "2026-09-05: Add the frozen Raft qO/_lt/Alt five-card loading and retryable failure presentation; IME and typed query ownership remain in the product hook."
       ]
     },
     {
@@ -97,7 +103,8 @@
       "policy": "maintained-source",
       "changes": [
         "Relocate local CSS imports from generated/ to extracted/; declarations unchanged.",
-        "Remove legacy sidebar/channel header and badge declarations after migrating all production consumers to shared header slots (2026-09-04 Shell batch)."
+        "Remove legacy sidebar/channel header and badge declarations after migrating all production consumers to shared header slots (2026-09-04 Shell batch).",
+        "2026-09-07: Preserve the empty composer minimum while allowing multiple attachment rows to grow; keep the editor non-shrinking. Browser reproduction showed the previous fixed box collapsed Thread textarea to zero height. This is local layout glue, not source-exact draft tray parity."
       ]
     },
     {

@@ -23,6 +23,10 @@ export function useHumanProfile(
   const subscribePrincipal = identity?.subscribePrincipal;
   const actorId = entities?.scope?.actorId;
   const catalogRevision = entities?.catalogRevision;
+  const directoryObservation = JSON.stringify([
+    entities?.human(principalId),
+    actorId ? entities?.human(actorId)?.membership.role : undefined,
+  ]);
   const [result, setResult] = useState<{
     client: RahClient;
     workspaceId: string;
@@ -94,6 +98,7 @@ export function useHumanProfile(
     workspaceId,
     actorId,
     catalogRevision,
+    directoryObservation,
     capturePrincipal,
     observePrincipal,
     reload,

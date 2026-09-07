@@ -47,7 +47,13 @@ export async function transferFile(
         download.attachment.mimeType,
         download.attachment.filename,
       );
-      if (kind === "image" || kind === "unsupported") {
+      if (
+        kind === "image" ||
+        kind === "unsupported" ||
+        kind === "pdf" ||
+        kind === "video" ||
+        kind === "audio"
+      ) {
         destroyReadable(download.stream);
         writeJson(response, 415, {
           error: {

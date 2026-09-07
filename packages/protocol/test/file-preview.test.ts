@@ -35,12 +35,22 @@ test("attachment preview classification has one bounded cross-layer owner", () =
   );
   assert.equal(
     classifyAttachmentPreview("application/pdf", "report.pdf"),
-    "unsupported",
-    "protected binary media needs a separate streaming capability contract",
+    "pdf",
   );
   assert.equal(
     classifyAttachmentPreview("application/octet-stream", "archive.zip"),
     "unsupported",
   );
   assert.equal(MAX_ATTACHMENT_TEXT_PREVIEW_BYTES, 2 * 1024 * 1024);
+});
+
+test("Raft PDF/audio/video dispatch includes known extensions without making archives previewable", () => {
+  for (const [mime, filename, kind] of [
+    ["application/octet-stream", "report.PDF", "pdf"],
+    ["audio/mpeg", "recording", "audio"],
+    ["application/octet-stream", "recording.wav", "audio"],
+    ["video/webm", "clip", "video"],
+    ["application/octet-stream", "clip.mov", "video"],
+  ])
+    assert.equal(classifyAttachmentPreview(mime!, filename!), kind);
 });

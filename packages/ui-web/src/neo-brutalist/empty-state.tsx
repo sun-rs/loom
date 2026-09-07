@@ -10,7 +10,7 @@ export function EmptyState({
   description,
   action,
 }: {
-  context: "search" | "profile" | "task" | "activity";
+  context: "search" | "profile" | "task" | "activity" | "file";
   placement: "fill" | "section";
   icon: string;
   title: string;

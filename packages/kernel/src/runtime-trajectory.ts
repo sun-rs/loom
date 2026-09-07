@@ -16,6 +16,20 @@ import type {
 import { ConflictError, ForbiddenError, NotFoundError } from "./errors.ts";
 import { text, type Row } from "./sqlite-row.ts";
 
+/** Existing bounded tail identity; deletion may move it backwards or to zero. */
+export function readAgentTrajectoryVersion(
+  database: DatabaseSync,
+  participantId: string,
+): number {
+  const row = database
+    .prepare(
+      `SELECT server_sequence FROM run_trajectory_entries
+       WHERE participant_id = ? ORDER BY server_sequence DESC LIMIT 1`,
+    )
+    .get(participantId);
+  return row ? Number(row.server_sequence) : 0;
+}
+
 export type AgentTrajectoryListInput = {
   agentDefinitionId: string;
   beforeActivityId?: string;

@@ -17,6 +17,7 @@ import { AgentMemoryConfigStore } from "../../agent-host/src/agent-memory-config
 test("Client API authenticates humans and exposes canonical Room work without owning it", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-client-api-"));
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+  let workspaceSummaryCalls = 0;
   let memoryResetCalls = 0;
   let executionResetCalls = 0;
   let computerProfileUpdates = 0;
@@ -58,6 +59,17 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     agentMemoryAdministration: {
       computerHostId: "client-host",
       workspace: {
+        summary: async (owner) => {
+          workspaceSummaryCalls++;
+          return {
+            rootPath: `/fixture/${owner}`,
+            state: "ready",
+            fileCount: 2,
+            totalSizeBytes: 9,
+            lastModified: null,
+            truncated: false,
+          };
+        },
         roots: async (owner) => ({
           defaultRootId: "agent-workspace",
           roots: [
@@ -708,6 +720,44 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     assert.equal(memoryResponse.status, 200);
     const memory = await jsonObject(memoryResponse);
     assert.equal(memory.computerHostId, "client-host");
+    const summaryInput = {
+      agentDefinitionId: agentDefinition.definition.agentDefinitionId,
+    };
+    const summaryResponse = await request(
+      "/v3/client/agents/workspace/summary",
+      summaryInput,
+      human.accessToken,
+    );
+    assert.equal(summaryResponse.status, 200);
+    assert.equal(
+      (await jsonObject(summaryResponse)).rootPath,
+      `/fixture/${agent.principal.principalId}`,
+    );
+    assert.equal(
+      (
+        await request(
+          "/v3/client/agents/workspace/summary",
+          summaryInput,
+          otherHuman.accessToken,
+        )
+      ).status,
+      403,
+    );
+    assert.equal(
+      (
+        await request(
+          "/v3/client/agents/workspace/summary",
+          { ...summaryInput, rootPath: "/" },
+          human.accessToken,
+        )
+      ).status,
+      400,
+    );
+    assert.equal(
+      workspaceSummaryCalls,
+      1,
+      "unauthorized or arbitrary-root input must not reach Host I/O",
+    );
     const workspaceInput = {
       agentDefinitionId: agentDefinition.definition.agentDefinitionId,
       path: "",
@@ -1450,8 +1500,10 @@ test("Client API authenticates humans and exposes canonical Room work without ow
         Object.keys(presence)
           .filter((key) => key !== "activityAt")
           .sort(),
-        ["activity", "agentDefinitionId", "reason"],
+        ["activity", "agentDefinitionId", "reason", "trajectoryVersion"],
       );
+      assert.ok(Number.isSafeInteger(presence.trajectoryVersion));
+      assert.ok(presence.trajectoryVersion >= 0);
       if (presence.activityAt !== undefined) {
         assert.equal(typeof presence.activityAt, "string");
       }
@@ -2240,6 +2292,16 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     );
     assert.equal(unchangedTask.state, "todo");
     assert.equal(unchangedTask.workflowStatus, "todo");
+    const exactTaskResponse = await request(
+      "/v3/client/tasks/get",
+      { roomId: room.roomId, taskId: openTask.task.taskId },
+      human.accessToken,
+    );
+    assert.equal(exactTaskResponse.status, 200);
+    assert.equal(
+      (await jsonObject(exactTaskResponse)).task.taskId,
+      openTask.task.taskId,
+    );
 
     const noPendingResponse = await request(
       "/v1/client/input-requests/list",

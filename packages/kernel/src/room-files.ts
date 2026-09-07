@@ -33,7 +33,10 @@ import type {
   AuthenticatedActorContext,
   AuthenticatedWorkerExecutionContext,
 } from "./auth.ts";
-import { requireRoomMember } from "./collaboration-policy.ts";
+import {
+  requireRoomMember,
+  requireRoomContentReader,
+} from "./collaboration-policy.ts";
 import {
   ConflictError,
   ForbiddenError,
@@ -614,7 +617,7 @@ export class RoomFiles {
     request: z.input<typeof RoomFilesRequestSchema>,
   ) {
     const input = RoomFilesRequestSchema.parse(request);
-    requireRoomMember(this.#db, input.roomId, this.#actor(actor));
+    requireRoomContentReader(this.#db, input.roomId, this.#actor(actor));
     let before = Number.MAX_SAFE_INTEGER;
     let beforeId = "~";
     if (input.cursor) {
@@ -685,7 +688,11 @@ export class RoomFiles {
     range?: Readonly<{ start: number; end: number }>,
   ) {
     const row = this.#row(attachmentId);
-    requireRoomMember(this.#db, text(row, "room_id"), this.#actor(actor));
+    requireRoomContentReader(
+      this.#db,
+      text(row, "room_id"),
+      this.#actor(actor),
+    );
     if (row.state !== "consumed")
       throw new NotFoundError("file is not attached to a sent message");
     this.#ensureDirectory();
@@ -707,7 +714,11 @@ export class RoomFiles {
     try {
       // The descriptor is now identity-fixed. Recheck membership before any
       // stream can emit bytes, then transfer descriptor ownership to it.
-      requireRoomMember(this.#db, text(row, "room_id"), this.#actor(actor));
+      requireRoomContentReader(
+        this.#db,
+        text(row, "room_id"),
+        this.#actor(actor),
+      );
       return {
         attachment: this.#attachment(row),
         stream: createReadStream(path, {

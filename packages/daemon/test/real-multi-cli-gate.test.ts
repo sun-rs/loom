@@ -21,26 +21,43 @@ const ENABLED = process.env.RAH_REAL_MULTI_CLI_GATE === "1";
 const GATE_TIMEOUT_MS = 10 * 60_000;
 
 type ApprovedCli = {
-  executable: "codex" | "kimi" | "opencode";
+  executable: "codex" | "kimi" | "opencode" | "claude";
   modelId: string;
   reasoning: "default" | "low" | "max";
 };
 
-const APPROVED_CLIS: readonly ApprovedCli[] = [
+const ALL_APPROVED_CLIS: readonly ApprovedCli[] = [
+  { executable: "claude", modelId: "claude-sonnet-4-6", reasoning: "low" },
   { executable: "codex", modelId: "gpt-5.6-sol", reasoning: "low" },
-  { executable: "kimi", modelId: "kimi-code/k3", reasoning: "default" },
+  { executable: "kimi", modelId: "kimi-code/k3", reasoning: "low" },
   {
     executable: "opencode",
     modelId: "deepseek/deepseek-v4-flash",
-    reasoning: "max",
+    reasoning: "low",
   },
 ];
+const selectedNames = (
+  process.env.RAH_REAL_CLI_NAMES ?? "codex,kimi,opencode"
+).split(",");
+const APPROVED_CLIS = ALL_APPROVED_CLIS.filter((cli) =>
+  selectedNames.includes(cli.executable),
+);
+if (ENABLED) {
+  assert.equal(
+    APPROVED_CLIS.length,
+    new Set(selectedNames).size,
+    "unknown CLI selection",
+  );
+  if (selectedNames.includes("claude"))
+    process.env.ANTHROPIC_CUSTOM_MODEL_OPTION = "claude-sonnet-4-6";
+}
 
 test(
-  "opt-in Codex, Kimi, and OpenCode keep ordinary chat as Messages and elect one automatic Task owner",
+  `opt-in ${APPROVED_CLIS.map((cli) => cli.executable).join(", ")} keep ordinary chat as Messages and elect one automatic Task owner`,
   { skip: !ENABLED, timeout: GATE_TIMEOUT_MS + 30_000 },
   async () => {
     const directory = mkdtempSync(join(tmpdir(), "rah-real-multi-cli-"));
+    console.log(`RAH_REAL_MULTI_CLI_STATE ${directory}`);
     const stateDirectory = join(directory, "state");
     const workspaceDirectory = join(directory, "workspace");
     mkdirSync(workspaceDirectory, { mode: 0o700 });
@@ -217,7 +234,7 @@ test(
         });
         return (
           replies.length === APPROVED_CLIS.length &&
-          activations.length === APPROVED_CLIS.length &&
+          activations.length >= APPROVED_CLIS.length &&
           activations.every((activation) => activation.state === "completed")
         );
       });
@@ -249,8 +266,18 @@ test(
       const attempts = observer.listRunAttempts({
         roomId: prepared.metadata.defaultRoomId,
       });
-      assert.equal(placements.length, APPROVED_CLIS.length);
-      assert.equal(attempts.length, APPROVED_CLIS.length);
+      // Room-policy replies are also durable context deliveries. They may need
+      // acknowledge-only Runs; exact Run count is not the business invariant.
+      assert.ok(placements.length >= APPROVED_CLIS.length);
+      assert.ok(
+        attempts.length <= APPROVED_CLIS.length ** 2,
+        "ordinary replies must converge to bounded quiescence",
+      );
+      assert.ok(
+        attempts.every(
+          (attempt) => attempt.state === "exited" && attempt.exitCode === 0,
+        ),
+      );
       for (const participantId of participantIds) {
         const expected = expectedByParticipant.get(participantId)!;
         const placement = placements.find(
@@ -371,7 +398,8 @@ test(
       shutdown.abort("real-multi-cli-gate-finished");
       await running?.catch(() => undefined);
       observer?.close();
-      rmSync(directory, { force: true, recursive: true });
+      if (process.env.RAH_REAL_GATE_KEEP !== "1")
+        rmSync(directory, { force: true, recursive: true });
     }
   },
 );

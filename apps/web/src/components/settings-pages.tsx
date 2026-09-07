@@ -649,6 +649,9 @@ export function DocsSettingsContent() {
           项目内的 docs/README.md 是文档入口，包含本机部署、局域网访问、Agent
           CLI 管理、通知与安全边界。
         </p>
+        <a href="/help/local-workbench.html" target="_blank" rel="noreferrer">
+          打开本机操作指南
+        </a>
       </article>
     </SettingsPage>
   );
@@ -656,6 +659,7 @@ export function DocsSettingsContent() {
 
 export function FeedbackSettingsContent() {
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState(false);
   return (
     <SettingsPage icon="message-square" title="反馈">
       <SettingsSectionLabel>诊断反馈</SettingsSectionLabel>
@@ -667,15 +671,27 @@ export function FeedbackSettingsContent() {
         <button
           className="btn"
           onClick={() => {
-            void navigator.clipboard
-              .writeText(`${window.location.origin}/_rah/health`)
-              .then(() => setCopied(true));
+            setError(false);
+            setCopied(false);
+            void Promise.resolve()
+              .then(() =>
+                navigator.clipboard.writeText(
+                  `${window.location.origin}/_rah/health`,
+                ),
+              )
+              .then(() => setCopied(true))
+              .catch(() => setError(true));
           }}
           type="button"
         >
           {copied ? "已复制" : "复制"}
         </button>
       </article>
+      {error && (
+        <p role="alert">
+          无法写入剪贴板，请重试或手动复制：{window.location.origin}/_rah/health
+        </p>
+      )}
     </SettingsPage>
   );
 }

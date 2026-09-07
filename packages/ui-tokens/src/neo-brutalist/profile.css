@@ -81,6 +81,33 @@
 .rah-profile-role[data-role="admin"] {
   background: var(--pink);
 }
+.rah-profile-role-editor {
+  display: grid;
+  gap: 6px;
+  max-width: 220px;
+}
+.rah-profile-role-editor select {
+  border: var(--bd);
+  border-radius: 0;
+  box-shadow: var(--shadow-s);
+  font: inherit;
+  min-height: 32px;
+  padding: 4px 8px;
+}
+.rah-profile-role-actions {
+  display: flex;
+  gap: 6px;
+}
+.rah-profile-role-actions .btn {
+  min-height: 30px;
+  padding: 4px 10px;
+}
+.rah-profile-role-editor [role="alert"] {
+  color: var(--coral);
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0;
+}
 .rah-profile-cards {
   display: grid;
   gap: 8px;
@@ -610,4 +637,59 @@
 }
 .rah-computer-hero > div {
   min-width: 0;
+}
+
+/* Raft 1.0.18 MachineDetailPanel workspace rows: border-2, gap-2, px-3 py-2. */
+.rah-workspace-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 2px solid rgb(0 0 0 / 30%);
+  padding: 8px 12px;
+  margin-top: 6px;
+}
+.rah-workspace-summary-row > svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: rgb(0 0 0 / 40%);
+}
+.rah-workspace-summary-body {
+  min-width: 0;
+  flex: 1;
+}
+.rah-workspace-summary-name {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+.rah-workspace-summary-body p,
+.rah-workspace-summary-body code {
+  display: block;
+  margin: 2px 0 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgb(0 0 0 / 50%);
+  overflow-wrap: anywhere;
+}
+.rah-computer-select-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rah-computer-select-row > button {
+  flex: 1;
+  min-width: 0;
+}
+.rah-computer-bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
 }

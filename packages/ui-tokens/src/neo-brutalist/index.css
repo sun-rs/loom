@@ -17,3 +17,7 @@
 @import "profile.css";
 @import "preview.css";
 @import "settings.css";
+
+@import "./popover.css";
+
+@import "media-preview.css";

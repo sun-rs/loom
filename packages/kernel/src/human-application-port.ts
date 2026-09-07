@@ -16,6 +16,7 @@ export type HumanApplicationPort = Pick<
   | "deleteWorkspaceRoom"
   | "updateWorkspace"
   | "getAuthenticatedPrincipal"
+  | "getTask"
   | "updateAuthenticatedPrincipal"
   | "getWorkspaceAgentManagementView"
   | "listAgentActivity"
@@ -32,6 +33,7 @@ export type HumanApplicationPort = Pick<
   | "listRooms"
   | "listWorkspaceAgentRooms"
   | "listTasks"
+  | "listTaskPage"
   | "listGlobalTasks"
   | "searchWorkspace"
   | "getMessageContext"
@@ -68,7 +70,11 @@ export type HumanApplicationPort = Pick<
   getSidebarPreferences: RoomKernel["humanSidebar"]["get"];
   patchSidebarPreferences: RoomKernel["humanSidebar"]["patch"];
   resolveNavigationTarget: RoomKernel["humanNavigation"]["resolve"];
+  previewChannel: RoomKernel["publicChannels"]["preview"];
+  discoverPublicChannels: RoomKernel["publicChannels"]["list"];
+  joinPublicChannel: RoomKernel["publicChannels"]["join"];
   getHumanProfile: RoomKernel["humanProfiles"]["get"];
+  listWorkspaceHumans: RoomKernel["humanProfiles"]["list"];
   listNotificationDismissals: RoomKernel["humanNotifications"]["listDismissals"];
   dismissNotification: RoomKernel["humanNotifications"]["dismiss"];
   requestRoomAgentSos: RoomKernel["roomAgentSos"]["requestStop"];
@@ -101,7 +107,15 @@ export function createHumanApplicationPort(
   kernel: RoomKernel,
 ): HumanApplicationPort {
   const port: HumanApplicationPort = {
+    previewChannel: (actor, input) =>
+      kernel.publicChannels.preview(actor, input),
+    discoverPublicChannels: (actor, input) =>
+      kernel.publicChannels.list(actor, input),
+    joinPublicChannel: (actor, input) =>
+      kernel.publicChannels.join(actor, input),
     getHumanProfile: (actor, input) => kernel.humanProfiles.get(actor, input),
+    listWorkspaceHumans: (actor, input) =>
+      kernel.humanProfiles.list(actor, input),
     listMessageSocial: (actor, input) =>
       kernel.messageSocial.list(actor, input),
     reactMessage: (actor, input) => kernel.messageSocial.react(actor, input),
@@ -153,6 +167,7 @@ export function createHumanApplicationPort(
     updateWorkspace: (actor, input) => kernel.updateWorkspace(actor, input),
     getAuthenticatedPrincipal: (actor) =>
       kernel.getAuthenticatedPrincipal(actor),
+    getTask: (actor, input) => kernel.getTask(actor, input),
     updateAuthenticatedPrincipal: (actor, input) =>
       kernel.updateAuthenticatedPrincipal(actor, input),
     getWorkspaceAgentManagementView: (actor, agentDefinitionId) =>
@@ -183,6 +198,7 @@ export function createHumanApplicationPort(
     listWorkspaceAgentRooms: (actor, input) =>
       kernel.listWorkspaceAgentRooms(actor, input),
     listTasks: (actor, input) => kernel.listTasks(actor, input),
+    listTaskPage: (actor, input) => kernel.listTaskPage(actor, input),
     listGlobalTasks: (actor, input) => kernel.listGlobalTasks(actor, input),
     searchWorkspace: (actor, input) => kernel.searchWorkspace(actor, input),
     getMessageContext: (actor, input) => kernel.getMessageContext(actor, input),

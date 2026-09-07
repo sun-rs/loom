@@ -31,6 +31,10 @@ test("the formal LAN gateway requires TLS pairing and keeps Human authority serv
     JSON.stringify({ schemaVersion: 1, webBuildId: "web-generation-lan" }),
   );
   writeFileSync(join(staticDirectory, "assets", "app.js"), "ok");
+  writeFileSync(
+    join(staticDirectory, "assets", "pdf.worker.mjs"),
+    "export {}; ",
+  );
   const keyPath = join(directory, "test.key");
   const certificatePath = join(directory, "test.crt");
   execFileSync(
@@ -195,7 +199,20 @@ test("the formal LAN gateway requires TLS pairing and keeps Human authority serv
       headers: { accept: "text/html", cookie },
     });
     assert.equal(authenticatedRoot.statusCode, 200);
+    assert.match(
+      String(authenticatedRoot.headers["content-security-policy"]),
+      /media-src 'self' blob:/u,
+    );
+    assert.match(
+      String(authenticatedRoot.headers["content-security-policy"]),
+      /frame-src 'self';/u,
+    );
     assert.match(authenticatedRoot.body, /RAH OS/u);
+    const workerModule = await secureRequest(origin, "/assets/pdf.worker.mjs", {
+      headers: { cookie },
+    });
+    assert.equal(workerModule.statusCode, 200);
+    assert.match(String(workerModule.headers["content-type"]), /javascript/u);
     assert.equal(
       authenticatedRoot.headers["x-rah-web-build-id"],
       "web-generation-lan",

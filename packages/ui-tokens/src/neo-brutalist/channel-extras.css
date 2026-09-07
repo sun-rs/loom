@@ -83,6 +83,99 @@
 .kanban.list-mode .kcol { flex: none; min-width: 0; }
 .kanban.list-mode .kcol-body { overflow: visible; }
 
+/* ---- Raft Kst multi-title Task dialog ---- */
+.rah-task-create-fields {
+  display: grid;
+  gap: 4px;
+}
+.rah-task-create-row {
+  align-items: center;
+  display: flex;
+  gap: 4px;
+}
+.rah-task-create-row > input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+.rah-task-create-remove {
+  flex: none;
+  height: 34px;
+  padding: 7px;
+  width: 34px;
+}
+.rah-task-create-remove svg {
+  height: 14px;
+  width: 14px;
+}
+.rah-task-create-another {
+  font-size: 12px;
+  justify-self: start;
+  margin-top: 8px;
+  padding: 4px 8px;
+}
+.rah-task-create-another svg {
+  height: 12px;
+  width: 12px;
+}
+.rah-task-create-dialog form {
+  overflow-y: auto;
+}
+.rah-task-create-configuration {
+  display: grid;
+  gap: 12px;
+}
+.rah-task-create-configuration .rah-agent-targets {
+  border: 0;
+  padding: 0;
+}
+.rah-task-dialog-dependencies {
+  border: 1px solid var(--black);
+  margin: 0;
+  min-width: 0;
+  padding: 7px;
+}
+.rah-task-dialog-dependencies legend {
+  font: 700 9px/1 var(--mono);
+  padding: 0 4px;
+  text-transform: uppercase;
+}
+.rah-task-dialog-dependencies > div {
+  display: grid;
+  gap: 5px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+.rah-task-dialog-dependencies label {
+  align-items: center;
+  background: var(--bg);
+  border: 1px solid var(--black);
+  cursor: pointer;
+  display: flex;
+  font: 700 10px/1.3 var(--mono);
+  grid-template-columns: auto minmax(0, 1fr);
+  padding: 6px 7px;
+}
+.rah-task-dialog-dependencies label:has(input:checked) {
+  background: var(--yellow);
+  box-shadow: var(--shadow-s);
+}
+.rah-task-dialog-dependencies label span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rah-task-dialog-dependencies p {
+  color: var(--muted);
+  font: 10px/1.4 var(--mono);
+}
+@media (max-width: 767px) {
+  .rah-task-create-dialog form footer {
+    flex-wrap: wrap;
+  }
+}
+
 /* ---- 文件列表 ---- */
 .file-list {
   flex: 1; min-height: 0; overflow-y: auto;
@@ -141,3 +234,26 @@
   .file-list { padding: 10px 12px; }
   .file-row .file-dl { display: none; } /* 窄屏操作只保留「更多」 */
 }
+
+/* Raft composer drop overlay: source classes/offsets in composer-file-drop.md. */
+.rah-composer-drop-target { position: relative; }
+.rah-composer-drop-overlay {
+  position: absolute; inset: 0; z-index: 30; display: flex;
+  align-items: center; justify-content: center; pointer-events: none;
+  border: 2px dashed var(--pink); background: color-mix(in srgb, var(--pink) 15%, transparent);
+}
+.rah-composer-drop-overlay > span {
+  border: 2px solid #000; background: var(--paper); color: #000;
+  padding: 6px 12px; font-size: 14px; font-weight: 700; line-height: 20px;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.rah-composer-drop-error { display: block; color: var(--ink); font-size: 14px; }
+
+/* Raft Composer btn-brutal-sm bg-white p-1, size-14 icons, gap-2.
+   Shared picker variant; source and conditions in composer-attachment-pickers.md. */
+.rah-composer-pickers { display: flex; align-items: center; gap: 8px; }
+.rah-composer-pickers .rah-composer-picker {
+  width: 26px; height: 26px; padding: 4px; background: var(--paper);
+}
+.rah-composer-pickers .rah-composer-picker svg { width: 14px; height: 14px; }
+.rah-composer-pickers .rah-composer-picker:disabled { opacity: 0.4; pointer-events: none; }

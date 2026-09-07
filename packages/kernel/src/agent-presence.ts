@@ -5,6 +5,7 @@ import {
   type AgentCatalogEntry,
 } from "@rah-os/protocol";
 import { raftTrajectoryActivity } from "./raft-presence-projection.ts";
+import { readAgentTrajectoryVersion } from "./runtime-trajectory.ts";
 
 /** Caller enforces catalog ACL. No new state table or timeline paging. */
 export function readAgentPresence(
@@ -19,6 +20,10 @@ export function readAgentPresence(
   ) =>
     AgentPresenceSchema.parse({
       agentDefinitionId: agent.definition.agentDefinitionId,
+      trajectoryVersion: readAgentTrajectoryVersion(
+        database,
+        agent.definition.participantId,
+      ),
       activity,
       ...(activityAt ? { activityAt } : {}),
       reason,

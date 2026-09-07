@@ -26,11 +26,19 @@ The Room Kernel service and Mac AgentHost daemon are logically independent of ev
 
 ## Repository status
 
+Current release: **one Human, multiple Agents, local Mac**. Multi-Human onboarding,
+collaboration and differentiated Human Room access are a deferred optional project,
+not first-release blockers. [Scope decision and mainline order](./docs/product/single-human-mainline-and-multi-human-backlog.zh-CN.md)
+supersede earlier public-Channel closure priorities; existing authentication and
+Agent execution/memory boundaries remain required.
+
+Current remaining work and evidence limits: [2026-09-06 source audit and construction order](./docs/audits/2026-09-06-current-alignment-and-construction-order.zh-CN.md). Historical capability notes below are not current missing-feature lists; use the dated delivery evidence in [docs/README.md](./docs/README.md).
+
 Agent memory follows the [Raft-baseline-first contract](./docs/product/agent-memory-raft-baseline.zh-CN.md): one persistent Agent-owned `MEMORY.md + notes/`, complete original-index reads, and no automatic text splitting or selection. Optional enhancements must be independently testable and reversible; source reuse, host adaptation and unfinished integration are recorded separately.
 
 Current Runs have a Computer-local App Inbox CLI: `check` only lists notifications, `ack` acknowledges an observed item/version, and explicit `recheck` measures the source. These capabilities expire with the Run and do not carry Room credentials or prove memory quality. A seven-turn real OpenCode/DeepSeek and Kimi experiment now verifies formation, fresh-session recall, file-withholding and different-Agent controls, correction and cross-provider continuity. Autonomous idle maintenance remains unconnected. See the [current real-memory and product audit](./docs/audits/2026-08-30-real-memory-acceptance-and-product-audit.zh-CN.md) for evidence and limits.
 
-Current-status correction: Human Inbox/InputRequest and ordinary Agent file-memory injection are implemented; older roadmap descriptions below must not be read as saying they are absent. The [global discovery batch](./docs/audits/2026-08-30-global-discovery-closure.zh-CN.md) now implements Workspace channel Tasks, ACL-filtered Search with exact message/thread context, and Human Activity with persistent read/done frontiers. Full Raft popup/ranking parity, general Notifications/deep links, execution restart/reset, Files and full management parity remain incomplete. The audits do not certify deployment, all Providers, or complete Raft parity.
+Current-status correction: Human Inbox/InputRequest and ordinary Agent file-memory injection are implemented; older roadmap descriptions below must not be read as saying they are absent. The [global discovery batch](./docs/audits/2026-08-30-global-discovery-closure.zh-CN.md) now implements Workspace channel Tasks, ACL-filtered Search with exact message/thread context, and Human Activity with persistent read/done frontiers. Search, Notifications/typed deep links, execution restart/full reset, Files and Task/Review now have implementation; their complete page-family, device and release acceptance remains bounded by current evidence. The audits do not certify deployment, all Providers, or complete Raft parity.
 
 The next [Raft gap-repair plan](./docs/product/raft-gap-repair-plan.zh-CN.md) passed a separate pre-construction [second review](./docs/audits/2026-08-30-raft-gap-plan-second-review.zh-CN.md). Its first batch adds revision-fenced persistent cleaner configuration through the Human memory pane and Run-scoped `rah app config --app system.cleaner`. Disabling this reminder does not disable memory. This work does not enable autonomous maintenance or deploy changes to the user's running service.
 
@@ -80,14 +88,13 @@ Phase 4B anchored Task slice is now active without modifying the original `raft-
 
 ADR-0009 now includes strict Agent/Policy/Offer/Model/Placement schemas, deterministic planning, immutable Offer/Placement provenance, atomic launch claims, a trusted startup capacity policy, MultiLane execution/recovery, the Host-local immutable Runtime Profile Registry, config v4 placement-managed routing, and probe-backed shell-free model execution binding. An opt-in real config v4 gate has now certified one canonical Room reply from each of Codex Sol/low, Kimi K3, and OpenCode DeepSeek V4 Flash/max with exact Placement/RunAttempt provenance. Fresh-Activation Kimi ACP and Codex app-server native adapters are registered and fake-protocol gated; all built-in local runtimes use Raft-compatible unattended `full_access` by default, while restricted modes remain explicit. RuntimeOffers publish exact supported tool-access modes; provision/manage, Placement and Web all fail closed instead of silently escalating an unsupported restricted policy. Kimi ACP currently advertises only `full_access`. R1/R4 remain provisional because native resume/live input, OpenCode serve, durable PlacementHold, complete Workspace mount/capacity control objects, and mixed-adapter crash recovery are still absent. Configs v2/v3 remain compatibility single-participant lanes. See [ADR-0009](./docs/adr/0009-immutable-runtime-placement-and-multi-lane-host.md), the [Runtime Registry and multi-lane architecture](./docs/architecture/runtime-registry-and-multi-lane-scheduling.zh-CN.md), and the [Provider execution transport audit](./docs/audits/2026-08-28-provider-execution-transport-audit.zh-CN.md) for implemented versus design-only boundaries.
 
-Not yet in scope:
+Current exclusions and release limits:
 
-- complete production Web/PWA product;
-- transcript/thinking/tool normalization;
-- migration of legacy Council or Session data;
-- remote runners;
-- artifact rendering;
-- production authentication.
+- complete production Web/PWA parity is not yet certified;
+- Provider diagnostics never become canonical business truth;
+- migration of legacy Council or Session data is not a requirement;
+- remote Computer product delivery is deferred;
+- Artifact rendering and local/LAN authentication have implementations; current evidence determines their supported scope.
 
 ## Development
 

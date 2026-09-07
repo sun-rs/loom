@@ -23,6 +23,7 @@ import { EntityCard } from "@rah-os/ui-web/neo-brutalist/entity-card";
 import { PreviewCard } from "../src/components/preview-card.tsx";
 import { AgentPreviewFixture } from "./agent-preview-fixture.tsx";
 import { SettingsFamilyFixture } from "./settings-family-fixture.tsx";
+import { WorkspaceSwitcherFixture } from "./workspace-switcher-fixture.tsx";
 
 const agent: WorkspaceAgentView = {
   participantId: "fixture-agent",
@@ -53,6 +54,12 @@ function Fixture() {
   const click = () => setClicks((n) => n + 1);
   if (new URLSearchParams(location.search).has("settings-fixture"))
     return <SettingsFamilyFixture />;
+  if (new URLSearchParams(location.search).has("workspace-switcher-fixture"))
+    return (
+      <WorkspaceSwitcherFixture
+        mobile={new URLSearchParams(location.search).has("mobile")}
+      />
+    );
   const profileState = new URLSearchParams(location.search).get(
     "profile-state",
   );

@@ -508,6 +508,34 @@ test("the canonical team workflow requires plan review, helper delivery, rework,
     kernel.leaseNextActivation(helperHost, { leaseMs: 30_000 }),
     "the downstream owner wakes only after canonical Human acceptance",
   );
+  const evidenceScope = {
+    roomId: room.roomId,
+    taskId: implementation.task.taskId,
+  };
+  const submissionsBefore = kernel.taskReviews.listTaskSubmissions(
+    humanActor,
+    evidenceScope,
+  );
+  const reviewsBefore = kernel.taskReviews.listTaskReviews(
+    humanActor,
+    evidenceScope,
+  );
+  kernel.close();
+  kernel = new RoomKernel({ databasePath });
+  kernel.initialize();
+  assert.equal(
+    taskState(kernel, humanActor, room.roomId, implementation.task.taskId),
+    "completed",
+  );
+  assert.deepEqual(
+    kernel.taskReviews.listTaskSubmissions(humanActor, evidenceScope),
+    submissionsBefore,
+  );
+  assert.deepEqual(
+    kernel.taskReviews.listTaskReviews(humanActor, evidenceScope),
+    reviewsBefore,
+  );
+
   kernel.close();
 });
 

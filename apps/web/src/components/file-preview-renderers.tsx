@@ -14,7 +14,10 @@ export function AttachmentTextPreview({
   text,
 }: {
   filename: string;
-  kind: Exclude<AttachmentPreviewKind, "image" | "unsupported">;
+  kind: Exclude<
+    AttachmentPreviewKind,
+    "image" | "unsupported" | "pdf" | "video" | "audio"
+  >;
   text: string;
 }) {
   if (kind === "markdown") {

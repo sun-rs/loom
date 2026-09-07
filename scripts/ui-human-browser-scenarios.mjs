@@ -39,7 +39,7 @@ export async function verifyHumanProfile(browser, origin, output, engine) {
     for (const width of [1440, 390]) {
       await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
       await page.goto(`${origin}/?surface=agents`, {
-        waitUntil: "networkidle",
+        waitUntil: "load",
       });
       // A fresh mobile root is a list, not the previous Agent detail.
       const human = page.locator(".rah-agent-human-section button");
@@ -95,7 +95,7 @@ export async function verifyHumanProfile(browser, origin, output, engine) {
       await page.screenshot({
         path: join(output, `${engine}-human-${width}.png`),
       });
-      await page.reload({ waitUntil: "networkidle" });
+      await page.reload({ waitUntil: "load" });
       await panel.getByText("加入时间", { exact: true }).waitFor();
       assert.equal(
         new URL(page.url()).searchParams.get("human"),
@@ -117,12 +117,23 @@ export async function verifyHumanProfile(browser, origin, output, engine) {
       }
       await page.goto(
         `${origin}/?surface=agents&memberView=human&human=missing-principal`,
-        { waitUntil: "networkidle" },
+        { waitUntil: "load" },
       );
       await panel.getByRole("alert").waitFor();
       const retry = panel.getByRole("button", { name: "重试", exact: true });
       assert.equal(
-        await retry.evaluate((e) => getComputedStyle(e).borderTopWidth),
+        await (
+          await page.waitForFunction(() => {
+            const retry = [
+              ...document.querySelectorAll('[aria-label="Human 详情"] button'),
+            ].find((button) => button.textContent.trim() === "重试");
+            // A catalog refresh may replace the denied-state node between locator
+            // resolution and evaluation. Measure the current connected node.
+            if (!retry?.isConnected) return false;
+            const border = getComputedStyle(retry).borderTopWidth;
+            return border === "2px" ? border : false;
+          })
+        ).jsonValue(),
         "2px",
         "profile retry uses the maintained button, not an unstyled settings alias",
       );
@@ -153,7 +164,7 @@ export async function verifyHumanProfile(browser, origin, output, engine) {
       }
     }
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto(`${origin}/?surface=agents`, { waitUntil: "networkidle" });
+    await page.goto(`${origin}/?surface=agents`, { waitUntil: "load" });
     let release;
     let started;
     const held = new Promise((resolve) => {

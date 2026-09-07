@@ -784,3 +784,66 @@ test("Worker CLI cancels an oversized response without exposing its credential",
     rmSync(state.directory, { force: true, recursive: true });
   }
 });
+
+test("Worker message tools use fixed routes and reject actor/Room injection", async () => {
+  const state = fixture();
+  try {
+    assert.equal(
+      await runWorkerCliCommand(
+        ["worker", "message-search", "--query", "needle", "--limit", "2"],
+        state.runtime,
+      ),
+      0,
+    );
+    assert.deepEqual(state.requests.at(-1)?.body, {
+      query: "needle",
+      limit: 2,
+    });
+    assert.equal(
+      state.requests.at(-1)?.url,
+      "http://127.0.0.1:43123/v1/worker/messages/search",
+    );
+    assert.equal(
+      await runWorkerCliCommand(
+        [
+          "worker",
+          "message-react",
+          "--message-id",
+          "m1",
+          "--emoji",
+          "👍",
+          "--active",
+          "false",
+          "--based-on-room-seq",
+          "8",
+          "--idempotency-key",
+          "r1",
+        ],
+        state.runtime,
+      ),
+      0,
+    );
+    assert.equal(
+      state.requests.at(-1)?.url,
+      "http://127.0.0.1:43123/v1/worker/messages/react",
+    );
+    assert.deepEqual(state.requests.at(-1)?.body, {
+      messageId: "m1",
+      emoji: "👍",
+      active: false,
+      basedOnRoomSeq: 8,
+      idempotencyKey: "r1",
+    });
+    const count = state.requests.length;
+    assert.equal(
+      await runWorkerCliCommand(
+        ["worker", "message-search", "--query", "needle", "--room-id", "other"],
+        state.runtime,
+      ),
+      1,
+    );
+    assert.equal(state.requests.length, count);
+  } finally {
+    rmSync(state.directory, { recursive: true, force: true });
+  }
+});

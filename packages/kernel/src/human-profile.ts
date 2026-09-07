@@ -64,4 +64,46 @@ export class HumanProfiles {
       });
     });
   }
+
+  list(
+    auth: AuthenticatedActorContext,
+    request: P.WorkspaceHumanDirectoryRequest,
+  ): P.WorkspaceHumanDirectoryResponse {
+    const actorId = this.context.requireActor(auth);
+    const input = P.WorkspaceHumanDirectoryRequestSchema.parse(request);
+    const db = this.context.database;
+    requireDiscoveryHuman(db, actorId);
+    return this.context.transaction(() => {
+      const workspace = db
+        .prepare(
+          "SELECT room_id AS control_room_id FROM rooms WHERE workspace_id=? AND kind='control' AND archived_at IS NULL",
+        )
+        .get(input.workspaceId);
+      if (!workspace)
+        throw new ForbiddenError("Human directory is unavailable");
+      const controlRoomId = text(workspace, "control_room_id");
+      requireRoomMember(db, controlRoomId, actorId);
+      const rows = db
+        .prepare(
+          `SELECT p.*, m.role, m.joined_at
+           FROM memberships m
+           JOIN principals p ON p.principal_id=m.principal_id
+           WHERE m.room_id=? AND p.kind='human'
+           ORDER BY rah_casefold(COALESCE(p.display_name,p.handle)), p.principal_id
+           LIMIT 501`,
+        )
+        .all(controlRoomId);
+      return P.WorkspaceHumanDirectoryResponseSchema.parse({
+        humans: rows.slice(0, 500).map((row) => ({
+          membership: {
+            joinedAt: text(row, "joined_at"),
+            role: text(row, "role"),
+          },
+          principal: principalFromRow(row),
+        })),
+        truncated: rows.length > 500,
+        workspaceId: input.workspaceId,
+      });
+    });
+  }
 }

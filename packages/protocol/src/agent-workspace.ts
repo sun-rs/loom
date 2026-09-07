@@ -102,3 +102,15 @@ export type AgentWorkspaceListing = z.infer<typeof AgentWorkspaceListSchema>;
 export type AgentWorkspaceFile = z.infer<typeof AgentWorkspaceFileSchema>;
 export type AgentWorkspaceRoot = z.infer<typeof AgentWorkspaceRootSchema>;
 export type AgentWorkspaceRoots = z.infer<typeof AgentWorkspaceRootsSchema>;
+
+export const AgentWorkspaceSummarySchema = z
+  .object({
+    rootPath: z.string().max(4096),
+    state: z.enum(["absent", "ready"]),
+    fileCount: z.number().int().nonnegative(),
+    totalSizeBytes: z.number().nonnegative(),
+    lastModified: z.string().nullable(),
+    truncated: z.boolean(),
+  })
+  .strict();
+export type AgentWorkspaceSummary = z.infer<typeof AgentWorkspaceSummarySchema>;

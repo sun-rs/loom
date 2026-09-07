@@ -1,3 +1,6 @@
+import type { AgentResetOperation } from "../agent-reset-batch.ts";
+import type { RahClient } from "@rah-os/client-sdk";
+import { ComputerWorkspaceSummary } from "./computer-workspace-summary.tsx";
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent, PointerEvent } from "react";
 
@@ -19,7 +22,10 @@ import {
   writeComputerSidebarWidth,
 } from "../computer-sidebar-resize.ts";
 import { localComputerDiagnosticText } from "../computer-runtime-inspector-model.ts";
-import { AgentEntityCard } from "./agent-entity-card.tsx";
+import {
+  ComputerAgentControls,
+  type ComputerAgentStateChange,
+} from "./computer-agent-controls.tsx";
 import { ComputerRuntimeInspector } from "./computer-runtime-inspector.tsx";
 import { ComputerProfileFields } from "./computer-profile-fields.tsx";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
@@ -31,6 +37,11 @@ import { ProfileSection } from "@rah-os/ui-web/neo-brutalist/profile-section";
 import { formatRahDateTime } from "../date-time-presentation.ts";
 
 export function ComputerRuntimePane({
+  client,
+  onCreateAgent,
+  onSetAgentState,
+  onResetAgent,
+  fullResetEnabled = false,
   hostId,
   inventoryError,
   runtimes,
@@ -41,6 +52,11 @@ export function ComputerRuntimePane({
   onOpenAgent,
   onUpdateComputerProfile,
 }: {
+  client?: RahClient;
+  onCreateAgent?: (() => void) | undefined;
+  onSetAgentState?: ComputerAgentStateChange | undefined;
+  onResetAgent?: AgentResetOperation | undefined;
+  fullResetEnabled?: boolean | undefined;
   hostId: string | undefined;
   inventoryError: string | undefined;
   runtimes: readonly LocalRuntimeInventoryEntry[];
@@ -283,26 +299,19 @@ export function ComputerRuntimePane({
                 </div>
               </dl>
             </ProfileSection>
-            <ProfileSection
-              title="这台 COMPUTER 上的 AGENT"
-              count={bindings.length}
-            >
-              {bindings.length === 0 ? (
-                <p className="rah-computer-hint">当前没有绑定的 Agent。</p>
-              ) : (
-                <div className="rah-computer-agent-list">
-                  {bindings.map((binding) => (
-                    <AgentEntityCard
-                      key={binding.agentDefinitionId}
-                      agent={binding.agent}
-                      runtimeLabel={binding.runtimeLabel}
-                      showStatusLabel
-                      onOpen={onOpenAgent}
-                    />
-                  ))}
-                </div>
-              )}
-            </ProfileSection>
+            <ComputerAgentControls
+              bindings={bindings}
+              onCreate={onCreateAgent}
+              onOpen={onOpenAgent}
+              onSetState={onSetAgentState}
+              onReset={onResetAgent}
+              fullResetEnabled={fullResetEnabled}
+            />
+            <ComputerWorkspaceSummary
+              client={client}
+              agents={bindings}
+              onOpen={onOpenAgent}
+            />
             <ProfileSection title="本机诊断">
               <details className="rah-profile-disclosure">
                 <summary>CLI / Runtime / Offer 详情</summary>
@@ -378,6 +387,13 @@ export function ComputerRuntimePane({
                   <Icon name="copy" />
                   {copyFeedback === "diagnostic" ? "已复制" : "复制诊断信息"}
                 </button>
+                <a
+                  href="/help/local-workbench.html#recovery"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  本机恢复指南
+                </a>
                 <p>需要进一步检查时，请在 RAH OS 项目目录运行：</p>
                 <div className="rah-computer-command-row">
                   <code>npm run doctor:local-core</code>

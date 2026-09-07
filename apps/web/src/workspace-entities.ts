@@ -3,6 +3,7 @@ import type {
   LocalComputerObservation,
   LocalRuntimeInventoryEntry,
   Principal,
+  WorkspaceHumanMember,
 } from "@rah-os/protocol";
 import type { WorkspaceAgentView } from "@rah-os/ui-web";
 import { selectBoundRuntime } from "./agent-runtime-presentation.ts";
@@ -11,6 +12,7 @@ type Input = {
   workspaceId: string | undefined;
   actorId: string | undefined;
   human: Principal | undefined;
+  humans?: readonly WorkspaceHumanMember[];
   hostId: string | undefined;
   computer: LocalComputerObservation | undefined;
   agents: readonly WorkspaceAgentView[];
@@ -119,8 +121,35 @@ export function createWorkspaceEntities(input: Input) {
     ]),
   );
   const people = new Map<string, PersonIdentity>();
-  if (scoped && input.human && input.human.principalId === input.actorId)
-    people.set(input.human.principalId, input.human);
+  const humans = new Map(
+    (scoped ? (input.humans ?? []) : []).map((member) => [
+      member.principal.principalId,
+      member,
+    ]),
+  );
+  for (const { principal } of humans.values())
+    people.set(principal.principalId, principal);
+  const authenticatedHuman = input.human;
+  if (
+    scoped &&
+    authenticatedHuman?.kind === "human" &&
+    authenticatedHuman.principalId === input.actorId
+  ) {
+    const currentHuman = {
+      ...authenticatedHuman,
+      kind: "human" as const,
+    } satisfies WorkspaceHumanMember["principal"];
+    const membership = humans.get(currentHuman.principalId);
+    if (membership !== undefined)
+      humans.set(currentHuman.principalId, {
+        ...membership,
+        principal: currentHuman,
+      });
+    // The authenticated Principal is also the result target of profile/account
+    // writes and observed profile reads. Do not let an older directory response
+    // overwrite that identity while retaining its Workspace membership facts.
+    people.set(currentHuman.principalId, currentHuman);
+  }
   const edges: Edge[] = [];
   for (const agent of agents.values()) {
     people.set(agent.participantId, {
@@ -182,6 +211,8 @@ export function createWorkspaceEntities(input: Input) {
       : undefined,
     edges: Object.freeze(edges.map((edge) => Object.freeze(edge))),
     agent: (id: string) => agents.get(id),
+    human: (id: string) => humans.get(id),
+    humans: () => [...humans.values()],
     person: (id: string) => people.get(id),
     humanProfile(profile: HumanProfileResponse) {
       if (!scoped || profile.workspaceId !== input.workspaceId)

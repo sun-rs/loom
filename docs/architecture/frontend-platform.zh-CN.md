@@ -308,3 +308,18 @@ Phase 4A foundation 已开始。当前 Room slice 已实现有界 snapshot/delta
 当前 `raft-ui` 的 RAH capability inventory 是后端就绪度清单，不是 endpoint 设计或隐式 API 承诺。标记为 blocked/provisional 的 intent 必须等 Kernel owner 与 typed contract 成立后再接入；不得为了让静态 UI “能点”而在 adapter 内发明业务语义。
 
 这些工作会让 Phase 4 不再从静态 mock 重写一遍，但不会提前夺走 daemon/core 尚未完成的 owner。
+
+## Computer 手动扫描与批量状态操作
+
+`agent.workspace.summary` 由 protocol 定义、AgentHost 读取，application-service 在 I/O 前后
+验证 Agent manager；请求只接受 Agent ID，不接受路径。摘要复用现有 root-scoped reader，
+最多 128 目录，返回 absent/ready 和 truncated，不建立持久文件索引。
+ComputerWorkspaceSummary 只保存当前手动扫描结果；离开范围取消并丢弃晚响应。
+ComputerAgentControls 只组织选择和串行调用既有 agent.manage set_state；失败重试保留同一
+幂等键，成功项以 canonical Agent 状态跳过。启用/停用不代表进程直接启动/终止。
+来源、自动及真实验证边界见[本批审计](../audits/2026-09-07-real-cli-and-computer-closure.zh-CN.md)。
+
+Computer 的批量 restart/session/full 同样复用现有 AgentExecutionResetDialog 和 daemon
+`agent.execution.reset`。当前确认窗口冻结选择与每项幂等键，只缓存已确认成功项；不建立
+持久批量队列。换范围取消后续项，已接受命令由原管理 fence 完成，详见
+[批量重置审计](../audits/2026-09-07-computer-bulk-reset-closure.zh-CN.md)。

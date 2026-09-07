@@ -36,9 +36,16 @@ export function AgentExecutionResetDialog({
   agentName: string;
   fullResetEnabled: boolean;
   onClose: () => void;
-  onConfirm: (mode: AgentExecutionResetMode) => Promise<void>;
+  onConfirm: (
+    mode: AgentExecutionResetMode,
+    idempotencyKey: string,
+  ) => Promise<void>;
 }) {
   const [mode, setMode] = useState<AgentExecutionResetMode>("restart");
+  const [idempotencyKey] = useState(
+    () => `web-agent-execution-reset-${crypto.randomUUID()}`,
+  );
+  const [submitted, setSubmitted] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>();
   const pendingRef = useRef(false);
@@ -48,9 +55,10 @@ export function AgentExecutionResetDialog({
     if (pendingRef.current) return;
     pendingRef.current = true;
     setPending(true);
+    setSubmitted(true);
     setError(undefined);
     try {
-      await onConfirm(mode);
+      await onConfirm(mode, idempotencyKey);
       onClose();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "重置 Agent 失败");
@@ -98,7 +106,7 @@ export function AgentExecutionResetDialog({
             void submit();
           }}
         >
-          <fieldset disabled={pending}>
+          <fieldset disabled={pending || submitted}>
             <legend className="sr-only">重启方式</legend>
             {OPTIONS.map((option) => {
               const disabled = option.mode === "full" && !fullResetEnabled;
@@ -138,6 +146,8 @@ export function AgentExecutionResetDialog({
           {error ? (
             <p className="rah-dialog-error" role="alert">
               {error}
+              <br />
+              重试会确认本次操作结果。如需更换方式，请关闭后重新打开。
             </p>
           ) : null}
           <footer>

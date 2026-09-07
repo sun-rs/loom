@@ -1,3 +1,7 @@
+import {
+  ClientWorkspacesListResponseSchema,
+  ClientManagedMcpExecutorsListResponseSchema,
+} from "@rah-os/protocol";
 import assert from "node:assert/strict";
 import {
   chmodSync,
@@ -46,6 +50,30 @@ else process.exitCode = 2;
       workbenchHome,
       workspaceCwd,
     });
+    await running.stop();
+    writeFileSync(
+      join(workbenchHome, "state", "managed-mcp.json"),
+      JSON.stringify({
+        schemaVersion: 1,
+        executors: [
+          {
+            executorRef: "owner-fixture",
+            transport: {
+              kind: "streamable-http",
+              url: "https://example.invalid/mcp",
+            },
+          },
+        ],
+      }),
+      { mode: 0o600 },
+    );
+    running = await startLocalCoreWorkbench({
+      environment: { ...process.env, PATH: binDirectory },
+      mode: { kind: "loopback", port: 0 },
+      staticDirectory,
+      workbenchHome,
+      workspaceCwd,
+    });
     assert.equal(running.descriptor.persistent, true);
     assert.equal(running.descriptor.runtimes.length, 1);
     assert.equal(running.descriptor.runtimes[0]?.cliId, "codex");
@@ -55,6 +83,37 @@ else process.exitCode = 2;
     );
     const health = await fetch(`${running.descriptor.webOrigin}/_rah/health`);
     assert.equal(health.status, 200);
+    const home = await fetch(running.descriptor.webOrigin);
+    const cookie = home.headers.get("set-cookie")!.split(";")[0]!;
+    const query = async (path: string, body: object) => {
+      const response = await fetch(
+        `${running!.descriptor.webOrigin}/v3/client/${path}`,
+        {
+          method: "POST",
+          headers: {
+            cookie,
+            origin: running!.descriptor.webOrigin,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify(body),
+        },
+      );
+      assert.equal(response.status, 200);
+      return response.json();
+    };
+    const workspace = ClientWorkspacesListResponseSchema.parse(
+      await query("workspaces/list", {}),
+    ).workspaces[0]!;
+    const mcp = ClientManagedMcpExecutorsListResponseSchema.parse(
+      await query("managed-mcp/executors/list", {
+        controlRoomId: workspace.controlRoomId,
+      }),
+    );
+    assert.deepEqual(
+      mcp.executors.map((entry: { executorRef: string }) => entry.executorRef),
+      ["owner-fixture"],
+    );
+    assert.equal(JSON.stringify(mcp).includes("example.invalid"), false);
     assert.deepEqual(await health.json(), {
       service: "rah-os-local-core",
       state: "online",

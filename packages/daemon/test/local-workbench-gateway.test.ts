@@ -21,6 +21,10 @@ test("the local workbench gateway keeps Human authority server-side", async () =
   );
   writeFileSync(join(staticDirectory, "assets", "app-deadbeef.js"), "ok");
   writeFileSync(join(staticDirectory, "sw.js"), "ok");
+  writeFileSync(
+    join(staticDirectory, "assets", "pdf.worker.mjs"),
+    "export {}; ",
+  );
   const observed: Array<{
     authorization?: string;
     body: string;
@@ -90,6 +94,14 @@ test("the local workbench gateway keeps Human authority server-side", async () =
 
     const root = await fetch(`${origin}/`);
     assert.equal(root.status, 200);
+    assert.match(
+      root.headers.get("content-security-policy") ?? "",
+      /media-src 'self' blob:/u,
+    );
+    assert.match(
+      root.headers.get("content-security-policy") ?? "",
+      /frame-src 'self';/u,
+    );
     assert.match(await root.text(), /RAH OS/u);
     assert.match(
       root.headers.get("content-security-policy") ?? "",
@@ -182,6 +194,9 @@ test("the local workbench gateway keeps Human authority server-side", async () =
     assert.equal(acceptedMutation.status, 200);
     assert.equal(observed.at(-1)?.body, '{"type":"test"}');
 
+    const workerModule = await fetch(`${origin}/assets/pdf.worker.mjs`);
+    assert.equal(workerModule.status, 200);
+    assert.match(workerModule.headers.get("content-type") ?? "", /javascript/u);
     const asset = await fetch(`${origin}/assets/app-deadbeef.js`);
     assert.equal(asset.status, 200);
     assert.match(asset.headers.get("cache-control") ?? "", /immutable/u);

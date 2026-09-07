@@ -56,7 +56,7 @@ export async function verifyHumanFamily(browser, origin, output, engine) {
     await edit().waitFor();
   };
   try {
-    await page.goto(`${origin}/?surface=agents`, { waitUntil: "networkidle" });
+    await page.goto(`${origin}/?surface=agents`, { waitUntil: "load" });
     const reading = page.waitForResponse((r) =>
       r.url().endsWith("/humans/profile"),
     );
@@ -126,7 +126,7 @@ export async function verifyHumanFamily(browser, origin, output, engine) {
     await panel.getByRole("alert").waitFor();
     assert.equal(await field().inputValue(), "Keep this failed draft");
     await panel.getByRole("button", { name: "取消", exact: true }).click();
-    await page.reload({ waitUntil: "networkidle" });
+    await page.reload({ waitUntil: "load" });
     await edit().waitFor();
     assert.equal(
       await panel.locator(".rah-profile-description").textContent(),
@@ -271,7 +271,7 @@ export async function verifyHumanFamily(browser, origin, output, engine) {
       await panel.getByRole("button", { name: "取消", exact: true }).click();
     }
     await saveDescription("");
-    await page.reload({ waitUntil: "networkidle" });
+    await page.reload({ waitUntil: "load" });
     await edit().waitFor();
     assert.equal(await panel.getByText("暂无描述", { exact: true }).count(), 1);
 

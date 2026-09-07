@@ -1,6 +1,13 @@
 import * as P from "@rah-os/protocol";
 import type { z } from "zod";
 export const agentWorkspaceOperations = {
+  "agent.workspace.summary": {
+    input: P.AgentWorkspaceRootsRequestSchema,
+    output: P.AgentWorkspaceSummarySchema,
+    path: "/v3/client/agents/workspace/summary",
+    method: "POST",
+    authenticated: true,
+  },
   "agent.workspace.roots": {
     input: P.AgentWorkspaceRootsRequestSchema,
     output: P.AgentWorkspaceRootsSchema,

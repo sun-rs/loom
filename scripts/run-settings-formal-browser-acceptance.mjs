@@ -14,6 +14,7 @@ import {
 } from "./formal-browser-request-policy.mjs";
 import { findChromeExecutable } from "./real-browser-gate-support.mjs";
 import { verifySettingsNavigation } from "./ui-settings-family-browser-scenarios.mjs";
+import { verifyFormalHumanProfile } from "./ui-human-formal-browser-scenarios.mjs";
 
 const { databasePath, origin } = parseFormalBrowserTarget(process.env);
 const output = mkdtempSync(join(tmpdir(), "rah-settings-formal-"));
@@ -78,7 +79,15 @@ function screenshotManifest() {
   const sha256 = createHash("sha256")
     .update(JSON.stringify(entries))
     .digest("hex");
-  return { count: entries.length, sha256 };
+  const humanCaptures = entries
+    .filter(({ name }) => name.includes("-formal-human-"))
+    .map(({ name }) => name);
+  return {
+    count: entries.length,
+    settingsCount: entries.length - humanCaptures.length,
+    humanCaptures,
+    sha256,
+  };
 }
 
 async function readBuildIdentity() {
@@ -169,6 +178,7 @@ for (const engine of ["chrome", "firefox"]) {
   });
   try {
     await verifySettingsNavigation(page, origin, output, engine);
+    await verifyFormalHumanProfile(page, origin, output, engine);
     for (const identity of requiredFormalBrowserRequests)
       assert.ok(
         (observedApiRequests.get(identity) ?? 0) > 0,
@@ -212,7 +222,17 @@ receipt.readStateChanged =
   JSON.stringify(receipt.after.readState) !==
   JSON.stringify(receipt.before.readState);
 receipt.screenshots = screenshotManifest();
-assert.equal(receipt.screenshots.count, 48, "Expected 48 Settings captures");
+assert.equal(
+  receipt.screenshots.settingsCount,
+  48,
+  "Expected 48 Settings captures",
+);
+assert.deepEqual(receipt.screenshots.humanCaptures, [
+  "chrome-formal-human-1440.png",
+  "chrome-formal-human-390.png",
+  "firefox-formal-human-1440.png",
+  "firefox-formal-human-390.png",
+]);
 writeFileSync(
   join(output, "receipt.json"),
   `${JSON.stringify(receipt, null, 2)}\n`,

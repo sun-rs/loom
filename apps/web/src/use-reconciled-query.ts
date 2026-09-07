@@ -4,16 +4,20 @@ import type { RahClient, RahClientOperationMap } from "@rah-os/client-sdk";
 // Read-model reconciliation only. Never writes a business acknowledgement.
 export function useReconciledQuery<
   K extends
+    | "room.preview"
     | "host.runtime.list"
     | "activity.list"
     | "agent.presence.list"
-    | "notification.list",
+    | "notification.list"
+    | "workspace.human.list",
 >(
   client: RahClient,
   operation: K,
   input: RahClientOperationMap[K]["input"],
   enabled = true,
+  refreshKey?: unknown,
 ) {
+  // Refreshing the same scope must retain its read projection and mounted drafts.
   const key = JSON.stringify([operation, input]);
   const [state, setState] = useState<{
     client: RahClient;
@@ -84,7 +88,7 @@ export function useReconciledQuery<
       window.removeEventListener("focus", focus);
       document.removeEventListener("visibilitychange", focus);
     };
-  }, [client, key, enabled, operation]);
+  }, [client, key, enabled, operation, refreshKey]);
   return enabled && state?.client === client && state.key === key
     ? state
     : undefined;

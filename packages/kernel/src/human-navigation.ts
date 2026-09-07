@@ -1,7 +1,10 @@
 import * as P from "@rah-os/protocol";
 
 import type { AuthenticatedActorContext } from "./auth.ts";
-import { requireRoomMember } from "./collaboration-policy.ts";
+import {
+  requireRoomMember,
+  requireRoomContentReader,
+} from "./collaboration-policy.ts";
 import { ForbiddenError } from "./errors.ts";
 import { requireDiscoveryHuman } from "./global-discovery.ts";
 import type { PersonalStateContext } from "./message-social.ts";
@@ -27,7 +30,7 @@ export class HumanNavigation {
     const { target } = P.ClientNavigationResolveRequestSchema.parse(request);
     const db = this.#context.database;
     if (target.kind === "room") {
-      requireRoomMember(db, target.roomId, actorId);
+      requireRoomContentReader(db, target.roomId, actorId);
       this.#requireRow(
         "SELECT room_id FROM rooms WHERE room_id=? AND archived_at IS NULL",
         target.roomId,
@@ -41,7 +44,9 @@ export class HumanNavigation {
       target.kind === "input_request" ||
       target.kind === "artifact"
     ) {
-      requireRoomMember(db, target.roomId, actorId);
+      if (target.kind === "message" || target.kind === "thread")
+        requireRoomContentReader(db, target.roomId, actorId);
+      else requireRoomMember(db, target.roomId, actorId);
     }
     if (target.kind === "message") {
       const row = this.#requireRow(

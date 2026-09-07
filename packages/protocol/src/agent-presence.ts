@@ -8,6 +8,8 @@ export const AgentPresenceSchema = z
     agentDefinitionId: IdentifierSchema,
     activity: RuntimeTrajectoryActivitySchema,
     activityAt: TimestampSchema.optional(),
+    // Content-free tail invalidation hint, never delivery ACK or business state.
+    trajectoryVersion: z.number().int().nonnegative().optional(),
     reason: z.enum([
       "idle",
       "starting",

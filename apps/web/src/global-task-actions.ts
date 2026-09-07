@@ -76,11 +76,14 @@ export async function applyGlobalTaskTransition(input: {
   await runRoomMutationAtLatest({
     session,
     mutate: async (basedOnRoomSeq) => {
-      const [health, list] = await Promise.all([
+      const [health, currentResult] = await Promise.all([
         client.request("health", {}),
-        client.request("task.list", { roomId: task.roomId }),
+        client.request("task.get", {
+          roomId: task.roomId,
+          taskId: task.taskId,
+        }),
       ]);
-      const current = list.tasks.find((item) => item.taskId === task.taskId);
+      const current = currentResult.task;
       if (
         !current ||
         current.roomId !== task.roomId ||

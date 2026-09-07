@@ -44,6 +44,7 @@ import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { taskPersonOptions } from "./task-person-options.tsx";
 import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
 import { formatRahDateTime } from "../date-time-presentation.ts";
+import { SearchResultSkeleton } from "@rah-os/ui-web/neo-brutalist/search-result-skeleton";
 
 type Props = {
   client: RahClient;
@@ -123,8 +124,24 @@ function useFilters(surface: GlobalSurface) {
     // App owns the current target; filter state may predate opening/closing a Thread.
     const current = new URLSearchParams(window.location.search);
     for (const key of surface === "activity"
-      ? ["room", "thread", "message"]
-      : ["room"]) {
+      ? [
+          "room",
+          "thread",
+          "message",
+          "previewRoom",
+          "previewMessage",
+          "previewThread",
+          "previewRoot",
+          "previewTab",
+        ]
+      : [
+          "room",
+          "previewRoom",
+          "previewMessage",
+          "previewThread",
+          "previewRoot",
+          "previewTab",
+        ]) {
       next.delete(key);
       const value = current.get(key);
       if (value) next.set(key, value);
@@ -631,7 +648,7 @@ function GlobalSearch({
           清除筛选
         </button>
       </section>
-      <Failure error={result.error ?? personError} />
+      <Failure error={personError} />
       <section className="search-stage">
         {!searchActive ? (
           history.length > 0 || frequent.length > 0 ? (
@@ -656,7 +673,17 @@ function GlobalSearch({
           )
         ) : (
           <div className="result-list">
-            {result.loading && <p role="status">搜索中…</p>}
+            {result.loading && !result.data ? (
+              <SearchResultSkeleton />
+            ) : result.error && !result.data ? (
+              <section className="rah-search-failure" role="alert">
+                <b>搜索失败</b>
+                <p>无法加载搜索结果。请检查连接后重试。</p>
+                <button className="btn" onClick={result.refresh} type="button">
+                  重试
+                </button>
+              </section>
+            ) : null}
             {result.data && (
               <p className="rah-search-count">{result.data.total} 条消息结果</p>
             )}
@@ -708,6 +735,7 @@ function GlobalSearch({
               />
             ))}
             {!result.loading &&
+              !result.error &&
               result.data?.total === 0 &&
               !result.data.rooms.length &&
               !result.data.principals.length && (

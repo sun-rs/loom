@@ -10,9 +10,14 @@ import {
   pruneWorkbenchAssetSnapshots,
   snapshotWorkbenchAssets,
 } from "./workbench-web-assets.mjs";
+import { assertRahOsRepositoryIdentity } from "./repository-identity.mjs";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryDirectory = join(scriptDirectory, "..");
+await assertRahOsRepositoryIdentity({
+  commandCwd: process.cwd(),
+  repositoryDirectory,
+});
 const workspaceCwd = resolve(process.env.RAH_WORKSPACE_CWD ?? process.cwd());
 const workbenchHome = await prepareRahDataHome({ environment: process.env });
 const staticDirectory = await snapshotWorkbenchAssets(

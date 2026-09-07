@@ -402,6 +402,7 @@ export function createDaemonAgentMemoryAdministration(
   return Object.freeze({
     computerHostId,
     workspace: {
+      summary: (owner) => coordinator.summarizeWorkspace(owner),
       roots: (owner) => coordinator.workspaceRoots(owner),
       list: (owner, rootId, path, hidden) =>
         coordinator.browseWorkspace(owner, rootId, path, hidden),

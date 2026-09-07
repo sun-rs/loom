@@ -64,7 +64,7 @@ test("global writes synchronize the target Room, retain idempotency on retry, an
     request: async (operation: string, input: unknown) => {
       calls.push([operation, input]);
       if (operation === "health") return { capabilities: { taskWrite: true } };
-      if (operation === "task.list") return { tasks: [task] };
+      if (operation === "task.get") return { task };
       if (operation === "task.workflow.update" && stale) {
         stale = false;
         throw { code: "stale_context", status: 409 };
@@ -103,12 +103,12 @@ test("global writes synchronize the target Room, retain idempotency on retry, an
       workflowStatus: "closed",
     },
   ]);
-  assert.ok(
-    calls
-      .filter(([op]) => op === "task.list")
-      .every(
-        ([, input]) => (input as { roomId: string }).roomId === "other-room",
-      ),
+  assert.deepEqual(
+    calls.filter(([op]) => op === "task.get").map(([, input]) => input),
+    [
+      { roomId: "other-room", taskId: "task" },
+      { roomId: "other-room", taskId: "task" },
+    ],
   );
   await assert.rejects(
     applyGlobalTaskTransition({
@@ -135,7 +135,7 @@ test("the five-state UI sends one typed intent for Kernel lifecycle interpretati
     request: async (op: string) => {
       calls.push(op);
       if (op === "health") return { capabilities: { taskWrite: true } };
-      if (op === "task.list") return { tasks: [submitted] };
+      if (op === "task.get") return { task: submitted };
       if (op === "task.workflow.update") return {};
       throw new Error(`unexpected mutation ${op}`);
     },

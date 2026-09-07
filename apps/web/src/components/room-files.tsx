@@ -1,8 +1,11 @@
+import { AttachmentMediaPreview } from "./attachment-media-preview.tsx";
+import { ActionMenu } from "@rah-os/ui-web/neo-brutalist/action-menu";
+import { EmptyState } from "@rah-os/ui-web/neo-brutalist/empty-state";
+import { loadPreviewImage } from "../file-preview-resource.ts";
 import {
   createContext,
   useContext,
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
   useSyncExternalStore,
@@ -13,11 +16,13 @@ import type { RahClient } from "@rah-os/client-sdk";
 import {
   MAX_ATTACHMENT_TEXT_PREVIEW_BYTES,
   classifyAttachmentPreview,
+  attachmentMediaPreview,
   type Attachment,
   type RoomFile,
 } from "@rah-os/protocol";
 import { FileUploadStore } from "../file-uploads.ts";
 import { useDialogProtocol } from "../dialog-protocol.ts";
+import { ComposerAttachmentPickers } from "@rah-os/ui-web/neo-brutalist/composer-attachment-pickers";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { FileGlyph } from "./file-glyph.tsx";
 import { AttachmentTextPreview } from "./file-preview-renderers.tsx";
@@ -68,38 +73,20 @@ export function ComposerFiles({
 }) {
   const uploads = useRoomUploads(roomId, draftKey);
   const { rows, store, enabled } = uploads;
-  const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string>();
   return (
     <div className="rah-composer-files">
-      <input
-        ref={inputRef}
-        type="file"
-        aria-label="选择附件"
-        multiple
-        hidden
-        onChange={(event) => {
-          if (roomId && store)
-            for (const file of event.target.files ?? [])
+      <ComposerAttachmentPickers
+        disabled={disabled || !enabled || !roomId}
+        onFiles={(files) => {
+          setError(undefined);
+          if (!disabled && enabled && roomId && store)
+            for (const file of files)
               void store
                 .add(uploads.draftKey ?? roomId, roomId, file)
                 .catch((e: Error) => setError(e.message));
-          event.target.value = "";
         }}
       />
-      <button
-        className="sq-btn"
-        type="button"
-        aria-label="添加附件"
-        title="添加附件"
-        disabled={disabled || !enabled || !roomId}
-        onClick={() => {
-          setError(undefined);
-          inputRef.current?.click();
-        }}
-      >
-        <Icon name="clip" />
-      </button>
       {rows.map((row) => (
         <span className="rah-file-draft" key={row.id}>
           <span title={row.file.name}>{row.file.name}</span>
@@ -157,75 +144,11 @@ function FileCard({
   const [preview, setPreview] = useState(false);
   const [menu, setMenu] = useState(false);
   const [pending, setPending] = useState(false);
+  const downloadActive = useRef(false);
   const [error, setError] = useState<string>();
-  const root = useRef<HTMLDivElement>(null);
-  const trigger = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-  // Same portal/flip protocol as the existing Raft-derived DiscoveryFilter.
-  useLayoutEffect(() => {
-    if (!menu) return;
-    const place = () => {
-      if (!trigger.current || !menuRef.current) return;
-      const anchor = trigger.current.getBoundingClientRect();
-      const popup = menuRef.current.getBoundingClientRect();
-      const left = Math.max(
-        8,
-        Math.min(anchor.right - popup.width, innerWidth - popup.width - 8),
-      );
-      const top =
-        anchor.bottom + popup.height + 4 < innerHeight - 8
-          ? anchor.bottom + 4
-          : Math.max(8, anchor.top - popup.height - 4);
-      Object.assign(menuRef.current.style, {
-        left: `${left}px`,
-        top: `${top}px`,
-      });
-    };
-    place();
-    window.addEventListener("resize", place);
-    window.addEventListener("scroll", place, true);
-    return () => {
-      window.removeEventListener("resize", place);
-      window.removeEventListener("scroll", place, true);
-    };
-  }, [menu]);
-  useEffect(() => {
-    if (!menu) return;
-    menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
-    const closeOutside = (e: PointerEvent) => {
-      if (
-        !root.current?.contains(e.target as Node) &&
-        !menuRef.current?.contains(e.target as Node)
-      )
-        setMenu(false);
-    };
-    const key = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setMenu(false);
-        trigger.current?.focus();
-      }
-      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-        const rows = [
-          ...(menuRef.current?.querySelectorAll<HTMLElement>(
-            '[role="menuitem"]',
-          ) ?? []),
-        ];
-        if (!rows.length) return;
-        e.preventDefault();
-        const index = rows.indexOf(document.activeElement as HTMLElement);
-        rows[
-          (index + (e.key === "ArrowDown" ? 1 : rows.length - 1)) % rows.length
-        ]?.focus();
-      }
-    };
-    window.addEventListener("pointerdown", closeOutside);
-    window.addEventListener("keydown", key);
-    return () => {
-      window.removeEventListener("pointerdown", closeOutside);
-      window.removeEventListener("keydown", key);
-    };
-  }, [menu]);
   async function download() {
+    if (downloadActive.current) return;
+    downloadActive.current = true;
     setMenu(false);
     setPending(true);
     setError(undefined);
@@ -241,14 +164,12 @@ function FileCard({
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
+      downloadActive.current = false;
       setPending(false);
     }
   }
   return (
-    <div
-      className={"rah-file-card" + (onSource ? " has-source" : "")}
-      ref={root}
-    >
+    <div className={"rah-file-card" + (onSource ? " has-source" : "")}>
       <button
         type="button"
         className="rah-file-open"
@@ -312,55 +233,39 @@ function FileCard({
           <Icon name="download" />
         </button>
       )}
-      <button
-        ref={trigger}
-        type="button"
-        className="sq-btn rah-file-overflow"
-        aria-label={`${file.filename} 的操作`}
-        aria-haspopup="menu"
-        aria-expanded={menu}
-        onClick={() => setMenu((v) => !v)}
-        disabled={pending}
-      >
-        <FileGlyph kind="more" />
-      </button>
-      {menu &&
-        createPortal(
-          <div
-            ref={menuRef}
-            role="menu"
+      <ActionMenu
+        open={menu}
+        onOpenChange={setMenu}
+        label={`${file.filename} 的操作`}
+        className="rah-file-menu"
+        trigger={
+          <button
+            type="button"
+            className="sq-btn rah-file-overflow"
             aria-label={`${file.filename} 的操作`}
-            className="rah-file-menu"
-            onBlur={(e) => {
-              if (!e.currentTarget.contains(e.relatedTarget)) setMenu(false);
-            }}
+            disabled={pending}
           >
-            {onSource && (
-              <button
-                role="menuitem"
-                type="button"
-                onClick={() => {
-                  setMenu(false);
-                  onSource();
-                }}
-              >
-                跳转到原消息
-              </button>
-            )}
-            <button
-              role="menuitem"
-              type="button"
-              onClick={() => void download()}
-            >
-              下载文件
-            </button>
-          </div>,
-          document.body,
-        )}
-      {error && <span role="alert">{error}</span>}
+            <FileGlyph kind="more" />
+          </button>
+        }
+        items={[
+          ...(onSource
+            ? [{ key: "source", label: "跳转到原消息", onSelect: onSource }]
+            : []),
+          {
+            key: "download",
+            label: "下载文件",
+            disabled: pending,
+            onSelect: () => void download(),
+          },
+        ]}
+      />
+      {error && !preview && <span role="alert">{error}</span>}
       {preview && (
         <FilePreview
           file={file}
+          downloadPending={pending}
+          downloadError={error}
           onClose={() => setPreview(false)}
           onDownload={() => void download()}
         />
@@ -370,10 +275,14 @@ function FileCard({
 }
 function FilePreview({
   file,
+  downloadPending,
+  downloadError,
   onClose,
   onDownload,
 }: {
   file: Attachment;
+  downloadPending: boolean;
+  downloadError: string | undefined;
   onClose: () => void;
   onDownload: () => void;
 }) {
@@ -387,7 +296,8 @@ function FilePreview({
   const dialogRef = useDialogProtocol({ blocked: false, onClose });
   useEffect(() => {
     const controller = new AbortController();
-    let url: string | undefined;
+    if (attachmentMediaPreview(file.mimeType, file.filename))
+      return () => controller.abort();
     const raster = kind === "image";
     if (
       kind === "unsupported" ||
@@ -402,14 +312,15 @@ function FilePreview({
       return () => controller.abort();
     }
     const load = raster
-      ? context.client.files
-          .download(file.attachmentId, controller.signal)
-          .then(async (blob) => {
-            url = URL.createObjectURL(
-              new Blob([blob], { type: file.mimeType }),
-            );
-            return { image: url };
-          })
+      ? loadPreviewImage(
+          () =>
+            context.client.files!.download(
+              file.attachmentId,
+              controller.signal,
+            ),
+          file.mimeType,
+          controller.signal,
+        ).then((image) => ({ image }))
       : context.client.files
           .previewText(file.attachmentId, controller.signal)
           .then((text) => ({ text }));
@@ -423,7 +334,6 @@ function FilePreview({
       });
     return () => {
       controller.abort();
-      if (url) URL.revokeObjectURL(url);
     };
   }, [context?.client, file, kind]);
   // Message rows own layout containment; modal geometry must belong to the viewport.
@@ -444,8 +354,8 @@ function FilePreview({
       >
         <header>
           <h2>{file.filename}</h2>
-          <button type="button" onClick={onDownload}>
-            下载
+          <button type="button" onClick={onDownload} disabled={downloadPending}>
+            {downloadPending ? "下载中…" : "下载"}
           </button>
           <button
             type="button"
@@ -457,12 +367,23 @@ function FilePreview({
           </button>
         </header>
         <div className="rah-file-preview-body">
-          {!content ? (
+          {downloadError && <p role="alert">{downloadError}</p>}
+          {attachmentMediaPreview(file.mimeType, file.filename) ? (
+            <AttachmentMediaPreview
+              file={file}
+              media={attachmentMediaPreview(file.mimeType, file.filename)!}
+              client={context?.client}
+            />
+          ) : !content ? (
             <p>正在加载…</p>
           ) : content.image ? (
             <img alt={file.filename} src={content.image} />
           ) : content.text !== undefined ? (
-            kind === "image" || kind === "unsupported" ? (
+            kind === "image" ||
+            kind === "unsupported" ||
+            kind === "pdf" ||
+            kind === "audio" ||
+            kind === "video" ? (
               <p>此文件不提供内嵌预览，请下载查看。</p>
             ) : (
               <AttachmentTextPreview
@@ -562,9 +483,13 @@ export function RoomFilesPane({
             <button onClick={() => setRevision((v) => v + 1)}>重试</button>
           </p>
         ) : !pending && !files.length ? (
-          <p className="rah-empty-copy">
-            暂无文件。在聊天中发送附件后，文件会显示在这里。
-          </p>
+          <EmptyState
+            context="file"
+            placement="fill"
+            icon="clip"
+            title="暂无文件"
+            description="在聊天中添加附件，或将文件拖入消息编辑框。消息发送后文件会显示在这里。"
+          />
         ) : null}
         {pending ? (
           <p role="status">正在加载文件…</p>

@@ -1,4 +1,6 @@
 import {
+  AgentWorkspaceSummarySchema,
+  type AgentWorkspaceSummary,
   AgentWorkspaceListRequestSchema,
   AgentWorkspaceReadRequestSchema,
   AgentWorkspaceRootsRequestSchema,
@@ -16,6 +18,7 @@ import type {
 } from "@rah-os/kernel";
 import type { ZodType } from "zod";
 export type AgentWorkspaceReadPort = {
+  summary?(owner: string): Promise<AgentWorkspaceSummary>;
   roots(owner: string): Promise<AgentWorkspaceRoots>;
   list(
     owner: string,
@@ -31,6 +34,7 @@ export type AgentWorkspaceReadPort = {
 };
 export const AGENT_WORKSPACE_PATHS = [
   "/agents/workspace/roots",
+  "/agents/workspace/summary",
   "/agents/workspace/list",
   "/agents/workspace/read",
 ];
@@ -43,6 +47,17 @@ export async function routeAgentWorkspace(
   parse: <T>(schema: ZodType<T>, body: Record<string, unknown>) => T,
 ) {
   if (!port) throw new Error("此 Computer 尚未提供 Agent 工作区浏览能力");
+  if (path.endsWith("/summary")) {
+    const input = parse(AgentWorkspaceRootsRequestSchema, body);
+    const summary = port.summary;
+    if (!summary) throw new Error("此 Computer 尚未提供工作区扫描能力");
+    return authorizedResult(
+      human,
+      actor,
+      input.agentDefinitionId,
+      async (owner) => AgentWorkspaceSummarySchema.parse(await summary(owner)),
+    );
+  }
   if (path.endsWith("/roots")) {
     const input = parse(AgentWorkspaceRootsRequestSchema, body);
     return authorizedResult(

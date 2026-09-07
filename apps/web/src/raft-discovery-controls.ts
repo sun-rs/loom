@@ -68,10 +68,33 @@ export function normalizeDiscoveryParams(
   if (old.get("surface") !== surface) return next;
   const keys =
     surface === "search"
-      ? ["q", "scope", "channel", "sender", "time", "after", "before", "sort"]
+      ? [
+          "q",
+          "scope",
+          "channel",
+          "sender",
+          "time",
+          "after",
+          "before",
+          "sort",
+          "previewRoom",
+          "previewMessage",
+          "previewThread",
+          "previewRoot",
+          "previewTab",
+        ]
       : surface === "tasks"
         ? ["channel", "creator", "assignee", "view"]
-        : ["filter", "thread", "message"];
+        : [
+            "filter",
+            "thread",
+            "message",
+            "previewRoom",
+            "previewMessage",
+            "previewThread",
+            "previewRoot",
+            "previewTab",
+          ];
   for (const key of keys) {
     const values = old.getAll(key);
     for (const value of surface === "search" &&

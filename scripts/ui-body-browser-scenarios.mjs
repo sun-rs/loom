@@ -4,7 +4,7 @@ import { join } from "node:path";
 export async function verifySearchHomeBody(page, origin, output, engine) {
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
-    await page.goto(`${origin}/?surface=search`, { waitUntil: "networkidle" });
+    await page.goto(`${origin}/?surface=search`, { waitUntil: "load" });
     const stage = page.locator(".search-stage");
     await stage.waitFor();
     // Earlier header scenarios can finish a real debounced search. Establish

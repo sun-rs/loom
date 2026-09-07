@@ -22,6 +22,7 @@ test("interaction icon geometry is frozen from Raft RFe/TFe/yze/cze/Bw, Agent ta
     'd="M17 17H4a1 1 0 0 1-.74-1.673C4.59 13.956 6 12.499 6 8a6 6 0 0 1 .258-1.742"',
     'd="m12 19-7-7 7-7"',
     'd="M19 12H5"',
+    'd="M21 11.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7.5"',
   ]) {
     assert.match(
       source,
@@ -33,14 +34,19 @@ test("interaction icon geometry is frozen from Raft RFe/TFe/yze/cze/Bw, Agent ta
     /raft-icon-shield-check[^<]*>[\s\S]*?m9 12 2 2 4-4/u,
   );
   assert.equal(
-    // Keep the entire prior sprite byte-frozen while adopting one verified
-    // arrow-left symbol. Never promote a new whole-file hash to hide drift.
+    // Keep the entire prior sprite byte-frozen while adopting verified
+    // arrow-left and image-plus symbols. Never promote a new whole-file hash to hide drift.
     createHash("sha256")
       .update(
-        source.replace(
-          /  <!-- Raft live channel\/settings\/computer mobile back, index-Biin3FEA\.js,[\s\S]*?<symbol id="raft-icon-arrow-left"[\s\S]*?<\/symbol>\n/u,
-          "",
-        ),
+        source
+          .replace(
+            /  <!-- Raft index-BVfbaScj\.js v\$e\/y\$e,[\s\S]*?<symbol id="raft-icon-image-plus"[\s\S]*?<\/symbol>\n/u,
+            "",
+          )
+          .replace(
+            /  <!-- Raft live channel\/settings\/computer mobile back, index-Biin3FEA\.js,[\s\S]*?<symbol id="raft-icon-arrow-left"[\s\S]*?<\/symbol>\n/u,
+            "",
+          ),
       )
       .digest("hex"),
     "f1a811d309f01a77444817cfdecd07466e69bd9bb4999ac438efe9ea6029805d",
@@ -119,4 +125,27 @@ test("official Raft font mirrors are byte-exact and expose the message reaction 
       expectedSha256,
     );
   }
+});
+
+test("media picker image-plus retains every path and circle from the fixed official bundle", () => {
+  const bundle = readFileSync(
+    join(
+      repositoryRoot,
+      "docs/evidence/raft-web-20260831-current/index-BoAC7nSE.js",
+    ),
+    "utf8",
+  );
+  const source = bundle.match(/const k3e=(\[.*?\]),\w+=Et\("image-plus"/u)?.[1];
+  assert.ok(source);
+  const sprite = readFileSync(
+    join(packageRoot, "src/interaction-icons.svg"),
+    "utf8",
+  ).match(/<symbol id="raft-icon-image-plus"[\s\S]*?<\/symbol>/u)?.[0];
+  assert.ok(sprite);
+  assert.deepEqual(
+    [...sprite.matchAll(/<path d="([^"]+)"/gu)].map((m) => m[1]),
+    [...source.matchAll(/\["path",\{d:"([^"]+)"/gu)].map((m) => m[1]),
+  );
+  assert.match(source, /\["circle",\{cx:"9",cy:"9",r:"2"/u);
+  assert.match(sprite, /<circle cx="9" cy="9" r="2"/u);
 });

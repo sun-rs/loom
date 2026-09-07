@@ -30,11 +30,13 @@ const API_PREFIXES = [
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
   "base-uri 'none'",
-  "connect-src 'self'",
+  "connect-src 'self' blob:",
   "font-src 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
-  "img-src 'self' data:",
+  "img-src 'self' data: blob:",
+  "media-src 'self' blob:",
+  "frame-src 'self'",
   "object-src 'none'",
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline'",
@@ -390,6 +392,7 @@ function contentType(path: string): string {
       return "text/css; charset=utf-8";
     case ".html":
       return "text/html; charset=utf-8";
+    case ".mjs":
     case ".js":
       return "text/javascript; charset=utf-8";
     case ".json":

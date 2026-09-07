@@ -221,3 +221,13 @@ Web Push/native push 都只是 hint；用户点击或客户端恢复后必须执
 - 同一 gateway 更换 Web release 后，旧标签页必须在业务 parser 前提示刷新，且不得把错误复制进 Message；
 - 浏览器不能冒充另一个 participant，也不能提交任意 shell；
 - 本机、局域网和远端拓扑不改变 Room/Task owner。
+
+## 本机 MCP 配置入口（2026-09-07）
+
+LocalCoreWorkbench 在准备 runtime / 启动 daemon 前读取已初始化 state 目录的
+`managed-mcp.json`。文件仅是本机 composition 输入，采用 `schemaVersion: 1` 与
+`executors` 数组；复用 ManagedMcpExecutorConfigSchema，最多 64 个唯一 executorRef。
+FileSecretProvider 负责 owner-private、nofollow、64 KiB 有界读取，解析失败不回显内容。
+缺文件表示无 executor；非法文件或秘密文件拒绝启动。秘密仅允许绝对路径文件引用，
+不经浏览器传输。现有 Kernel 目录/assignment/usage、daemon MCP registry 与 Provider
+适配继续持有原 owner。配置在 state 内，因此既有备份/重启流程覆盖它；不新增轮询或热更新。

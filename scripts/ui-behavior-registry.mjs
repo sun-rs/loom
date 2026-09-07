@@ -40,7 +40,8 @@ export function validateRegistry(registry, read) {
   const sources = unique(registry.sources, "source");
   const adoptions = unique(registry.adoptions, "adoption");
   const scenarios = unique(registry.scenarios, "scenario");
-  unique(registry.behaviors, "behavior");
+  const behaviors = unique(registry.behaviors, "behavior");
+  const delivery = unique(registry.delivery ?? [], "delivery");
   for (const source of sources.values()) {
     const bytes = safeRead(source.path, "source");
     if (bytes && digest(bytes) !== source.sha256)
@@ -133,6 +134,38 @@ export function validateRegistry(registry, read) {
     )
       errors.push(`${behavior.id}: migrated scope/adoption/scenario required`);
   }
+  for (const item of delivery.values()) {
+    if (!behaviors.has(item.id)) errors.push(`${item.id}: unknown delivery ID`);
+    if (!["applicable", "excluded", "pending"].includes(item.applicability))
+      errors.push(`${item.id}: invalid applicability`);
+    if (
+      ![
+        "needs-decision",
+        "needs-feature",
+        "needs-fix",
+        "needs-verification",
+        "not-applicable",
+        "verified",
+      ].includes(item.state)
+    )
+      errors.push(`${item.id}: invalid delivery state`);
+    if (typeof item.reason !== "string" || item.reason.trim() === "")
+      errors.push(`${item.id}: delivery reason required`);
+    if (item.applicability === "excluded" && item.state !== "not-applicable")
+      errors.push(`${item.id}: excluded delivery must be not-applicable`);
+    if (item.applicability === "pending" && item.state !== "needs-decision")
+      errors.push(`${item.id}: pending delivery must need a decision`);
+    if (
+      item.applicability === "applicable" &&
+      ["needs-decision", "not-applicable"].includes(item.state)
+    )
+      errors.push(`${item.id}: applicable delivery state is inconsistent`);
+  }
+  if (
+    JSON.stringify([...behaviors.keys()].sort()) !==
+    JSON.stringify([...delivery.keys()].sort())
+  )
+    errors.push("delivery coverage mismatch");
   const legacyBytes = safeRead(registry.legacyInventory, "legacy");
   if (legacyBytes) {
     const entries = JSON.parse(legacyBytes.toString()).entries;
@@ -152,6 +185,19 @@ const cell = (value) =>
     .replaceAll("|", "\\|")
     .replaceAll("\n", " ");
 export async function renderRegistry(registry) {
+  const deliveryCounts = Object.fromEntries(
+    [
+      "verified",
+      "needs-fix",
+      "needs-feature",
+      "needs-verification",
+      "needs-decision",
+      "not-applicable",
+    ].map((state) => [
+      state,
+      registry.delivery.filter((item) => item.state === state).length,
+    ]),
+  );
   const lines = [
     "# UI 行为登记（自动生成）",
     "",
@@ -162,6 +208,17 @@ export async function renderRegistry(registry) {
     "`historical-unreviewed` = 旧声明未重新核验；`registered` = 已定位当前 owner；`migrated` = 限定组件已迁移且挂接测试，不等于本轮测试通过，更不等于官网双边一致。实际通过证据来自运行回执。",
     "",
     `旧指南及全部历史注记保留在 Git 里程碑 \`${registry.milestone}\` 和 [历史审计目录](../audits/)。它们不再作为当前通过率。74 项只是旧 intent 覆盖，不是全部产品分母。`,
+    "",
+    "## 当前交付队列",
+    "",
+    `机器分类共 ${registry.delivery.length} 项：限定范围已验证 ${deliveryCounts.verified}；需修复 ${deliveryCounts["needs-fix"]}；需补功能 ${deliveryCounts["needs-feature"]}；需补验证 ${deliveryCounts["needs-verification"]}；待裁决 ${deliveryCounts["needs-decision"]}；明确不适用 ${deliveryCounts["not-applicable"]}。这是队列分类，不是全产品完成率。`,
+    "",
+    "| ID | 适用性 | 当前状态 | 依据 / 下一出口 |",
+    "| --- | --- | --- | --- |",
+    ...registry.delivery.map(
+      (item) =>
+        `| ${item.id} | ${item.applicability} | ${item.state} | ${cell(item.reason)} |`,
+    ),
     "",
     "## 来源及采用方式",
     "",

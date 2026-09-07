@@ -119,3 +119,24 @@ outside/Escape/focus owner；使用不同 menu ID，避免两个挂载入口产�
 最近 Room 恢复门禁继续通过。此前第 6 节“移动只保留顶部 rail 标识”是当时实现，不再是当前移动合同。
 本批正式重启与最终验收记录见
 [附件投影与移动回归审计](../audits/2026-09-04-forwarded-attachment-projection-verification.zh-CN.md)。
+
+## 8. 2026-09-06 完整 App 导航合同补证
+
+组件 fixture 只能证明 switcher 自身会发出 `replace-with-home`，不能证明生产 `App` 没有在接线时
+恢复桌面详情或增加历史记录。当前生产接线把选择意图明确分成两类：
+
+- desktop `restore`：恢复经过 canonical Room 归属校验的最近位置；
+- mobile `replace-with-home`：忽略桌面最近详情，复用既有 Home owner，清除 Thread、消息焦点与成员设置，
+  打开当前 Workspace 的 Room 列表；不新增第二套移动路由。
+
+`scripts/run-firefox-workbench-gate.mjs` 在真实生产 App 中创建两个 canonical Workspace/Room，先为第二个
+Workspace 写入一个真实桌面 Settings 最近位置，再于 `390×844` 从移动 Workspace 菜单切换。验收证明：
+
+1. 进入的是第二 Workspace 的 Room/Home，而不是 remembered Settings；
+2. 切换前后 `history.length` 不增加，受控 Back/Forward 可回到两边准确的 Room；
+3. reload 后仍由 URL 与 canonical Workspace/Room 恢复第二 Workspace；
+4. 移动菜单与桌面菜单仍消费同一 Workspace identity owner。
+
+Chrome/Firefox 的 switcher 组件页面族继续覆盖几何、长名称、外点、Escape/focus、pointer drag 与刷新排序；
+完整 App 的 URL、历史和 hydration 接线由 Firefox 生产门禁补证。顺序和最近位置依然只是当前 Human 浏览器的
+有界导航偏好；Workspace/Room 身份来自 canonical API，本文不把偏好写成 Kernel 事实或跨浏览器同步能力。

@@ -1,3 +1,4 @@
+import { readLocalWorkbenchMcpConfig } from "./local-workbench-mcp-config.ts";
 import { existsSync, lstatSync, readFileSync } from "node:fs";
 import { isAbsolute, join, resolve } from "node:path";
 
@@ -84,6 +85,7 @@ export async function startLocalCoreWorkbench(input: {
     );
   }
 
+  const managedMcpExecutors = await readLocalWorkbenchMcpConfig(stateDirectory);
   const discovered = await discoverKnownLocalClis({ environment });
   const runtimeSpecs = discovered.flatMap((candidate) => {
     if (
@@ -108,7 +110,9 @@ export async function startLocalCoreWorkbench(input: {
     stateDirectory,
     workspaceCwd,
   });
-  const application = new DaemonApplication({ config: prepared.config });
+  const application = new DaemonApplication({
+    config: { ...prepared.config, managedMcpExecutors },
+  });
   const shutdown = new AbortController();
   const applicationRun = application.run({ signal: shutdown.signal });
   let applicationFailure: unknown;

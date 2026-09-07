@@ -16,13 +16,13 @@ import {
 } from "@rah-os/protocol";
 import {
   discoveryPage,
-  discoveryVisibleRooms,
+  discoveryReadableRooms,
   requireDiscoveryHuman,
 } from "./global-discovery.ts";
 import {
+  requireRoomContentReader,
   requireRoomManager,
   requireRoomMember,
-  roomRole,
 } from "./collaboration-policy.ts";
 import { messageProjectionFromRow } from "./collaboration-projection.ts";
 import { ForbiddenError } from "./errors.ts";
@@ -59,14 +59,15 @@ export class HumanActivity {
       JOIN messages root ON root.message_id = th.root_message_id
       LEFT JOIN human_thread_follows follow ON follow.thread_id = th.thread_id AND follow.principal_id = ?
       LEFT JOIN human_activity_frontiers frontier ON frontier.room_id = th.room_id AND frontier.scope_id = th.thread_id AND frontier.principal_id = ?
-      WHERE ${discoveryVisibleRooms} AND (
+      WHERE ${discoveryReadableRooms} AND (
         COALESCE(follow.following,
           th.created_by = ? OR root.actor_id = ?
           OR EXISTS(SELECT 1 FROM messages mine WHERE mine.thread_id = th.thread_id AND mine.actor_id = ? AND mine.rowid <= ?)
           OR EXISTS(SELECT 1 FROM tasks t WHERE t.thread_id = th.thread_id AND t.assignee_id = ?)
         ) = 1 OR EXISTS(SELECT 1 FROM discovery_messages ping WHERE ping.thread_id = th.thread_id
           AND ping.message_order <= ? AND ping.room_seq > COALESCE(frontier.read_seq,0)
-          AND ping.actor_id <> ? AND rah_has_mention(ping.body, ?) = 1)
+          AND ping.actor_id <> ? AND rah_has_mention(ping.body, ?) = 1
+          AND EXISTS(SELECT 1 FROM memberships member WHERE member.room_id=r.room_id AND member.principal_id=?))
       )
     ), eligible AS (
       SELECT m.*, r.name AS room_name, r.kind, COALESCE(m.thread_id,'') AS scope_id,
@@ -74,8 +75,8 @@ export class HumanActivity {
         rah_has_mention(m.body, ?) AS mentioned
       FROM discovery_messages m JOIN rooms r ON r.room_id = m.room_id
       LEFT JOIN human_activity_frontiers f ON f.room_id = m.room_id AND f.scope_id = COALESCE(m.thread_id,'') AND f.principal_id = ?
-      WHERE ${discoveryVisibleRooms} AND m.message_order <= ? AND m.room_seq IS NOT NULL
-        AND (m.thread_id IS NULL OR m.thread_id IN (SELECT thread_id FROM thread_access))
+      WHERE ${discoveryReadableRooms} AND m.message_order <= ? AND m.room_seq IS NOT NULL
+        AND ((m.thread_id IS NULL AND EXISTS(SELECT 1 FROM memberships member WHERE member.room_id=r.room_id AND member.principal_id=?)) OR m.thread_id IN (SELECT thread_id FROM thread_access))
     ), grouped AS (
       SELECT room_id, scope_id, MAX(message_order) AS position, MAX(room_seq) AS latest_seq,
         SUM(CASE WHEN actor_id <> ? AND room_seq > read_seq THEN 1 ELSE 0 END) AS unread_count,
@@ -101,11 +102,13 @@ export class HumanActivity {
       ceiling,
       actorId,
       handle,
+      actorId,
       handle,
       actorId,
       input.workspaceId,
       actorId,
       ceiling,
+      actorId,
       actorId,
       actorId,
     ];
@@ -165,8 +168,10 @@ export class HumanActivity {
           threadId === undefined
             ? undefined
             : this.db
-                .prepare("SELECT * FROM tasks WHERE thread_id = ?")
-                .get(threadId);
+                .prepare(
+                  "SELECT * FROM tasks WHERE thread_id = ? AND EXISTS(SELECT 1 FROM memberships WHERE room_id=tasks.room_id AND principal_id=?)",
+                )
+                .get(threadId, actorId);
         return {
           key: activityKey(roomId, text(row, "kind"), threadId),
           roomId,
@@ -296,9 +301,11 @@ export class HumanActivity {
         )
         .all(input.threadId)
         .map((row) => text(row, "participant_id")),
-      canManage: ["owner", "admin"].includes(
-        roomRole(this.db, input.roomId, actorId),
-      ),
+      canManage: !!this.db
+        .prepare(
+          "SELECT 1 FROM memberships WHERE room_id=? AND principal_id=? AND role IN ('owner','admin')",
+        )
+        .get(input.roomId, actorId),
       following:
         explicit === undefined
           ? implicit !== undefined
@@ -409,7 +416,8 @@ export class HumanActivity {
     return { restored: restored.changes === 1 };
   }
   private requireScope(actorId: string, roomId: string, threadId?: string) {
-    requireRoomMember(this.db, roomId, actorId);
+    if (threadId) requireRoomContentReader(this.db, roomId, actorId);
+    else requireRoomMember(this.db, roomId, actorId);
     if (
       threadId !== undefined &&
       !this.db

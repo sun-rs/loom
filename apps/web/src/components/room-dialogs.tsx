@@ -520,7 +520,6 @@ export function RoomMembersDialog({
       setLeaveConfirmOpen(false);
     } catch (caught) {
       setActionError(errorMessage(caught));
-      throw caught;
     } finally {
       mutationPendingRef.current = false;
       setLifecyclePending(false);
@@ -1018,6 +1017,7 @@ export function RoomMembersDialog({
       {leaveConfirmOpen ? (
         <RoomLeaveConfirmation
           blocked={lifecyclePending}
+          error={actionError}
           name={room?.name ?? "Room"}
           onCancel={closeLeaveConfirmation}
           onConfirm={leave}
@@ -1222,11 +1222,13 @@ function RoomArchiveConfirmation({
 
 function RoomLeaveConfirmation({
   blocked,
+  error,
   name,
   onCancel,
   onConfirm,
 }: {
   blocked: boolean;
+  error: string | undefined;
   name: string;
   onCancel: () => void;
   onConfirm: () => Promise<void>;
@@ -1262,6 +1264,11 @@ function RoomLeaveConfirmation({
           的常规消息，并且在重新加入前无法发送消息。RAH OS 当前按 Room
           成员资格统一保护历史与消息列；离开后这些内容也会从本地导航中移除，直到管理员重新加入你。
         </p>
+        {error === undefined ? null : (
+          <p className="rah-dialog-error" role="alert">
+            {error}
+          </p>
+        )}
         <footer>
           <button className="btn" disabled={blocked} onClick={onCancel}>
             取消

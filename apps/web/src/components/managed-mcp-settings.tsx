@@ -330,6 +330,13 @@ export function ManagedMcpSettingsContent({
               })}
             </div>
           )}
+          <a
+            href="/help/local-workbench.html#mcp"
+            target="_blank"
+            rel="noreferrer"
+          >
+            首次配置 MCP 指南
+          </a>
           <section className="rah-mcp-executor-inventory">
             <header>
               <h2>已配置连接</h2>

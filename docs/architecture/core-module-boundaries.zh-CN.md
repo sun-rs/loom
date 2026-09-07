@@ -1,5 +1,17 @@
 # Core 模块边界与源码规模 Ratchet
 
+当前公开阅读增量：`collaboration-policy` 统一 Human 当前公开阅读资格，
+`room.preview` 提供有界正文；Search、精确定位、附件与已关注 Thread Activity 共用该资格。
+完整 sync/ACK、Task 写入、上传和 Agent execution scope 仍要求成员资格。
+下方“仅元数据／正文权限不变”描述的是先前切片；当前边界与未完成事项见
+[公开频道设计续节](../design/public-channel-discovery-and-join.md#2026-09-07-continuation-public-content-and-thread-attention)。
+
+2026-09-07：public-channel.ts 的 HumanPublicChannels 通过现有 Human command factory
+组合到 Kernel；collaboration-policy.ts 集中当前 Workspace/public Channel 资格。
+HumanApplicationPort、HTTP 和 SDK 只委派。没有第二套 membership、通知队列或历史 cursor，
+没有放宽 RoomKernel 大文件上限。协议错误响应 schema 原样提取到 error-response.ts，
+保留原导出并使 protocol index 继续满足既有体积门禁。详见[增量设计](../design/public-channel-discovery-and-join.md)。
+
 状态：Implemented slice 2（2026-08-26）
 
 ## 为什么现在拆分

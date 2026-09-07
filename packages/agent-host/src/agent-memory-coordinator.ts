@@ -1,3 +1,4 @@
+import { summarizeWorkspaceRoot } from "./workspace-summary.ts";
 import { createHash, randomUUID } from "node:crypto";
 import {
   listAgentWorkspace,
@@ -225,6 +226,15 @@ export class AgentMemoryCoordinator {
     });
     this.#inboxLeases.add(lease);
     return lease;
+  }
+
+  async summarizeWorkspace(owner: string) {
+    return summarizeWorkspaceRoot(
+      agentMemoryWorkspacePath(
+        this.#rootDirectory,
+        requireParticipantId(owner),
+      ),
+    );
   }
 
   async workspaceRoots(owner: string): Promise<AgentWorkspaceRoots> {

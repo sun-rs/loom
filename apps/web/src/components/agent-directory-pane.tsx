@@ -14,6 +14,7 @@ import type {
   ManagedMcpAssignmentRecord,
   ManagedMcpServerRecord,
   ManagedMcpUsageRecord,
+  MembershipRole,
   NavigationTarget,
   Principal,
   Room,
@@ -121,17 +122,24 @@ export function AgentDirectoryPane({
   canManage,
   canMessage,
   canReadManagedMcp,
+  canChangeHumanRole,
   client,
   computerLabel,
   computerStatus,
   controlRoomId,
   currentHuman,
+  humans,
+  humanDirectoryError,
+  humanDirectoryLoading,
+  humansTruncated,
+  onRetryHumans,
   fullResetEnabled,
   onCreate,
   onManage,
   onEditRuntime,
   onResetExecution,
   onSaveProfile,
+  onChangeHumanRole,
   onOpenDirectRoom,
   onOpenMessage,
   onOpenRoom,
@@ -149,11 +157,17 @@ export function AgentDirectoryPane({
   canManage: boolean;
   canMessage: boolean;
   canReadManagedMcp: boolean;
+  canChangeHumanRole: boolean;
   client: RahClient;
   computerLabel: string | undefined;
   computerStatus?: WorkspaceAgentView["connectionStatus"];
   controlRoomId: string | undefined;
   currentHuman: Principal | undefined;
+  humans: readonly import("@rah-os/protocol").WorkspaceHumanMember[];
+  humanDirectoryError?: string | undefined;
+  humanDirectoryLoading?: boolean | undefined;
+  humansTruncated?: boolean | undefined;
+  onRetryHumans?: (() => void) | undefined;
   fullResetEnabled: boolean;
   onCreate: () => void;
   onManage: (agentDefinitionId: string) => void;
@@ -162,9 +176,14 @@ export function AgentDirectoryPane({
     | ((
         agentDefinitionId: string,
         mode: AgentExecutionResetMode,
+        idempotencyKey: string,
       ) => Promise<void>)
     | undefined;
   onSaveProfile?: (input: AgentProfileEditInput) => Promise<void>;
+  onChangeHumanRole: (
+    principalId: string,
+    role: MembershipRole,
+  ) => Promise<void>;
   onOpenDirectRoom: (peerPrincipalId: string) => Promise<void>;
   onOpenMessage: (
     target: Extract<NavigationTarget, { kind: "message" }>,
@@ -711,7 +730,12 @@ export function AgentDirectoryPane({
           canCreate={canCreate}
           computerLabel={computerLabel}
           computerStatus={computerStatus}
-          currentHuman={currentHuman}
+          currentHumanId={currentHuman?.principalId}
+          humans={humans}
+          humanDirectoryError={humanDirectoryError}
+          humanDirectoryLoading={humanDirectoryLoading}
+          humansTruncated={humansTruncated}
+          onRetryHumans={onRetryHumans}
           onSelectHuman={selectHuman}
           selectedHumanId={memberView === "human" ? humanId : undefined}
           onCreate={onCreate}
@@ -749,8 +773,10 @@ export function AgentDirectoryPane({
           />
         ) : memberView === "human" && humanId && !panel ? (
           <HumanProfilePane
-            key={`${workspaceId}:${humanId}`}
+            key={`${workspaceId}:${currentHuman?.principalId}:${humanId}`}
+            canChangeRole={canChangeHumanRole}
             client={client}
+            onChangeRole={onChangeHumanRole}
             principalId={humanId}
             workspaceId={workspaceId}
             onBack={closeRelationship}
@@ -814,8 +840,12 @@ export function AgentDirectoryPane({
                 onResetExecution={
                   onResetExecution === undefined
                     ? undefined
-                    : (mode) =>
-                        onResetExecution(selectedAgent.agentDefinitionId, mode)
+                    : (mode, idempotencyKey) =>
+                        onResetExecution(
+                          selectedAgent.agentDefinitionId,
+                          mode,
+                          idempotencyKey,
+                        )
                 }
                 onSaveProfile={onSaveProfile}
                 onSelectAgent={selectAgent}
@@ -1348,7 +1378,8 @@ export function AgentProfilePane({
   onManage: () => void;
   onEditRuntime: () => void;
   onResetExecution?:
-    ((mode: AgentExecutionResetMode) => Promise<void>) | undefined;
+    | ((mode: AgentExecutionResetMode, idempotencyKey: string) => Promise<void>)
+    | undefined;
   onSaveProfile?: ((input: AgentProfileEditInput) => Promise<void>) | undefined;
   onSelectAgent: (agentDefinitionId: string) => void;
   runtimes: readonly LocalRuntimeInventoryEntry[];

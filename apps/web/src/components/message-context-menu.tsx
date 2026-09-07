@@ -20,7 +20,9 @@ export function MessageContextMenu({
   onOpenThread,
   onSelectMessages,
   social,
+  taskAction,
   target,
+  threadFollow,
   triggerRef,
 }: {
   anchor: { x: number; y: number };
@@ -32,7 +34,23 @@ export function MessageContextMenu({
   onOpenThread?: () => void;
   onSelectMessages?: () => void;
   social: MessageSocialView;
+  taskAction?:
+    | {
+        disabledReason?: string;
+        label: "标记为完成" | "重新打开任务";
+        onAction?: () => Promise<void>;
+        pending: boolean;
+      }
+    | undefined;
   target: Extract<NavigationTarget, { kind: "message" }>;
+  threadFollow?:
+    | {
+        following?: boolean;
+        loading: boolean;
+        onToggle: () => Promise<void>;
+        pending: boolean;
+      }
+    | undefined;
   triggerRef: RefObject<HTMLElement | null>;
 }) {
   const socialData = social.state?.data;
@@ -148,19 +166,45 @@ export function MessageContextMenu({
           {socialData?.saved ? "从收藏中移除" : "收藏消息"}
         </button>
       ) : null}
-      {onConvertToTask ? (
-        <>
-          <hr />
-          <button
-            disabled={conversionPending}
-            onClick={() => void onConvertToTask()}
-            role="menuitem"
-            type="button"
-          >
-            <Icon name="task" />
-            {conversionPending ? "正在转换…" : "转为任务"}
-          </button>
-        </>
+      {threadFollow ? (
+        <button
+          disabled={
+            threadFollow.loading ||
+            threadFollow.pending ||
+            threadFollow.following === undefined
+          }
+          onClick={() => void threadFollow.onToggle()}
+          role="menuitem"
+          type="button"
+        >
+          <Icon name="bell" />
+          {threadFollow.following ? "取消关注消息列" : "关注消息列"}
+        </button>
+      ) : null}
+      {threadFollow || taskAction || onConvertToTask ? <hr /> : null}
+      {taskAction ? (
+        <button
+          disabled={taskAction.pending || taskAction.onAction === undefined}
+          onClick={() => void taskAction.onAction?.()}
+          role="menuitem"
+          title={taskAction.disabledReason}
+          type="button"
+        >
+          <Icon
+            name={taskAction.label === "重新打开任务" ? "refresh-cw" : "task"}
+          />
+          {taskAction.label}
+        </button>
+      ) : onConvertToTask ? (
+        <button
+          disabled={conversionPending}
+          onClick={() => void onConvertToTask()}
+          role="menuitem"
+          type="button"
+        >
+          <Icon name="task" />
+          {conversionPending ? "正在转换…" : "转为任务"}
+        </button>
       ) : null}
     </FloatingContextMenu>
   );

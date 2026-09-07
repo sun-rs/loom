@@ -11,7 +11,7 @@ test("entity cards have one visual owner and no runtime/identity inference", () 
   const binding = read("apps/web/src/components/agent-entity-card.tsx");
   assert.match(binding, /agentPresencePresentation\(agent\)/);
   assert.match(binding, /showStatus=\{false\}/);
-  for (const consumer of ["agent-directory-pane", "workspace-catalog-panes"])
+  for (const consumer of ["agent-directory-pane", "computer-agent-controls"])
     assert.match(
       read(`apps/web/src/components/${consumer}.tsx`),
       /<AgentEntityCard/,

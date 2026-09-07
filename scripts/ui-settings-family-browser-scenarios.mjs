@@ -30,11 +30,11 @@ export async function verifySettingsFamily(page, origin, output, engine) {
     { width: 390, height: 844 },
   ]) {
     await page.setViewportSize(viewport);
-    await page.goto(url, { waitUntil: "networkidle" });
+    await page.goto(url, { waitUntil: "load" });
     await page.evaluate(() =>
       localStorage.removeItem("rah:settings:time-format"),
     );
-    await page.reload({ waitUntil: "networkidle" });
+    await page.reload({ waitUntil: "load" });
     const name = page.getByRole("textbox", { name: "名称", exact: true });
     const save = page.getByRole("button", { name: "保存资料", exact: true });
     await name.waitFor();
@@ -149,7 +149,7 @@ export async function verifySettingsFamily(page, origin, output, engine) {
     assert.equal(await time12.isChecked(), true);
     assert.equal(await time24.isChecked(), false);
     await page.getByRole("status").filter({ hasText: "已保存" }).waitFor();
-    await page.reload({ waitUntil: "networkidle" });
+    await page.reload({ waitUntil: "load" });
     await page.getByText("Fixture language", { exact: true }).click();
     assert.equal(
       await page.getByRole("radio", { name: "12 小时制" }).isChecked(),
@@ -171,7 +171,7 @@ export async function verifySettingsFamily(page, origin, output, engine) {
       false,
       "failed storage keeps the draft dirty",
     );
-    await page.reload({ waitUntil: "networkidle" });
+    await page.reload({ waitUntil: "load" });
     await page.getByText("Fixture language", { exact: true }).click();
     assert.equal(
       await page.getByRole("radio", { name: "12 小时制" }).isChecked(),
@@ -281,7 +281,7 @@ export async function verifySettingsNavigation(page, origin, output, engine) {
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
     await page.goto(`${origin}/?surface=settings`, {
-      waitUntil: "networkidle",
+      waitUntil: "load",
     });
     for (const [section, label] of sections) {
       const nav = page.locator(

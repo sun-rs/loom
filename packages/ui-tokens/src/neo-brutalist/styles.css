@@ -398,7 +398,7 @@ a.sq-btn { color: var(--ink); text-decoration: none; }
 /* ============ 输入区 ============ */
 .composer { border-top: var(--bd-heavy); padding: 12px; background: var(--paper); }
 .composer-box {
-  height: var(--composer-box-h);
+  min-height: var(--composer-box-h);
   border: var(--bd); box-shadow: var(--shadow-s); background: var(--bg);
   padding: 8px;
   display: flex; flex-direction: column; gap: 8px;
@@ -1048,8 +1048,9 @@ body.overlay-open { overflow: hidden; }
   align-items: center;
 }
 
-/* 双 composer 同高：textarea 统一 40px；外盒固定 96px（live 100% CSS px 实测） */
-.composer-box textarea { height: 40px; }
+/* Empty composers retain the adopted minimum; attachment rows may grow the box.
+   Never shrink the editor to fit selected files (composer-attachment-pickers.md). */
+.composer-box textarea { height: 40px; flex: none; }
 
 /* 通知条横跨频道列 + 消息列（窄屏回到全宽） */
 .notice-banner { grid-column: 3 / -1; }

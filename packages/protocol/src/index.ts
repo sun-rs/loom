@@ -1775,26 +1775,13 @@ export type WorkerTaskInputStatusResponse = z.infer<
   typeof WorkerTaskInputStatusResponseSchema
 >;
 
-export const ErrorResponseSchema = z
-  .object({
-    error: z
-      .object({
-        code: IdentifierSchema,
-        message: z.string().min(1),
-      })
-      .strict(),
-  })
-  .strict();
-export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
-
-export const WorkerErrorResponseSchema = ErrorResponseSchema;
-export type WorkerErrorResponse = ErrorResponse;
-
-export const ClientErrorResponseSchema = ErrorResponseSchema;
-export type ClientErrorResponse = z.infer<typeof ClientErrorResponseSchema>;
+export * from "./error-response.ts";
 export * from "./room-files.ts";
 export * from "./message-social.ts";
 export * from "./official-agent-avatars.ts";
 export * from "./profile-image.ts";
 export * from "./runtime-failure.ts";
 export * from "./human-profile.ts";
+export * from "./public-channel.ts";
+
+export * from "./worker-message-tools.ts";

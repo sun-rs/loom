@@ -6,7 +6,11 @@ import * as P from "@rah-os/protocol";
 import type { ZodType } from "zod";
 
 export const DISCOVERY_DATA_PATHS = [
+  "/rooms/preview",
+  "/rooms/public/discover",
+  "/rooms/public/join",
   "/humans/profile",
+  "/workspaces/humans",
   "/messages/social",
   "/messages/react",
   "/messages/save",
@@ -34,9 +38,34 @@ export function routeDiscovery(
   parse: <T>(schema: ZodType<T>, body: Record<string, unknown>) => T,
 ): unknown {
   switch (path) {
+    case "/rooms/preview":
+      return P.ChannelPreviewResponseSchema.parse(
+        human.previewChannel(actor, parse(P.ChannelPreviewRequestSchema, body)),
+      );
+    case "/rooms/public/discover":
+      return P.PublicChannelDirectoryResponseSchema.parse(
+        human.discoverPublicChannels(
+          actor,
+          parse(P.PublicChannelDirectoryRequestSchema, body),
+        ),
+      );
+    case "/rooms/public/join":
+      return P.PublicChannelJoinResponseSchema.parse(
+        human.joinPublicChannel(
+          actor,
+          parse(P.PublicChannelJoinRequestSchema, body),
+        ),
+      );
     case "/humans/profile":
       return P.HumanProfileResponseSchema.parse(
         human.getHumanProfile(actor, parse(P.HumanProfileRequestSchema, body)),
+      );
+    case "/workspaces/humans":
+      return P.WorkspaceHumanDirectoryResponseSchema.parse(
+        human.listWorkspaceHumans(
+          actor,
+          parse(P.WorkspaceHumanDirectoryRequestSchema, body),
+        ),
       );
     case "/messages/social":
       return P.MessageSocialResponseSchema.parse(

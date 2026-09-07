@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import {
   chmodSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { createServer } from "node:net";
@@ -46,6 +47,11 @@ let workbench;
 try {
   mkdirSync(workspaceCwd);
   mkdirSync(binDirectory);
+  // Preserve provider isolation while allowing the startup repository guard.
+  symlinkSync(
+    execFileSync("which", ["git"], { encoding: "utf8" }).trim(),
+    join(binDirectory, "git"),
+  );
   const codexPath = join(binDirectory, "codex");
   writeFileSync(
     codexPath,
@@ -176,7 +182,7 @@ if (args.join(" ") === "debug models --bundled") {
   );
   await evaluate(
     browser,
-    `[...document.querySelectorAll(".rah-settings-navigation button")].find((button) => button.textContent?.trim() === "局域网设备")?.click()`,
+    `[...document.querySelectorAll(".rah-settings-navigation button")].find((button) => button.querySelector("span")?.textContent?.trim() === "局域网设备")?.click()`,
   );
   try {
     await waitForBrowserValue(

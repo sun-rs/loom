@@ -1,3 +1,7 @@
+import { createAgentConfigureCommand } from "./agent-configure-command.ts";
+import { useSearchChannelPreview } from "./use-search-channel-preview.ts";
+import { PublicChannelPreview } from "./components/public-channel-preview.tsx";
+import { InteractivePopover } from "@rah-os/ui-web/neo-brutalist/interactive-popover";
 import {
   useCallback,
   useEffect,
@@ -117,6 +121,7 @@ import { useRoomSidebarWidth } from "./use-room-sidebar-width.ts";
 import { useThreadPanelWidth } from "./use-thread-panel-width.ts";
 import { useThreadFocusReturn } from "./thread-focus-return.ts";
 import { loadThreadHistoryPages } from "./thread-history.ts";
+import { applyGlobalTaskTransition } from "./global-task-actions.ts";
 import { pendingInputRequestsForHuman } from "./human-inbox-projection.ts";
 import { useReconciledQuery } from "./use-reconciled-query.ts";
 import {
@@ -143,6 +148,20 @@ import {
   messageReferenceReadStateRecordsIndex,
   type MessageReferenceReadStateIndex,
 } from "./message-reference-read-state.ts";
+import {
+  appendRoomTaskWindowPage,
+  createRoomTaskWindow,
+  loadEarlierRoomTaskOverview,
+  refreshRoomTaskWindow,
+  rememberRoomTaskWindow,
+  sameRoomTaskPageCursor,
+  type RoomTaskPageCursor,
+  type RoomTaskWindow,
+} from "./room-task-pages.ts";
+import {
+  createTaskCreateCommandLedger,
+  submitTaskCreateRows,
+} from "./task-create-execution.ts";
 
 type AppProps = { client?: RahClient };
 declare const __RAH_TRUSTED_PROXY_AUTH__: boolean;
@@ -158,6 +177,8 @@ type RoomData = {
   messages: Message[];
   referenceEventsComplete: boolean;
   roomEvents: RoomEvent[];
+  roomId: string;
+  taskNextPage?: RoomTaskPageCursor | undefined;
   tasks: Task[];
   threads: Thread[];
 };
@@ -255,6 +276,8 @@ function WorkspaceScreen({
   const [threadEarlierRepliesLoading, setThreadEarlierRepliesLoading] =
     useState(false);
   const [earlierMessagesLoading, setEarlierMessagesLoading] = useState(false);
+  const [earlierTasksLoading, setEarlierTasksLoading] = useState(false);
+  const taskCreateCommandLedger = useRef(createTaskCreateCommandLedger());
   const [tab, setTab] = useState<Tab>(() =>
     roomTabFromSearch(window.location.search),
   );
@@ -327,13 +350,15 @@ function WorkspaceScreen({
   );
   const [focusedMessageId, setFocusedMessageId] = useState<string | undefined>(
     () =>
-      new URLSearchParams(window.location.search).get("message") ?? undefined,
+      new URLSearchParams(window.location.search).get("previewMessage") ??
+      new URLSearchParams(window.location.search).get("message") ??
+      undefined,
   );
   const locationResult = useDiscoveryQuery(
     client,
     "message.context",
     { messageId: focusedMessageId ?? "none" },
-    (surface === "room" || surface === "activity") &&
+    (surface === "room" || surface === "activity" || surface === "search") &&
       focusedMessageId !== undefined,
   );
   const messageContext =
@@ -351,6 +376,11 @@ function WorkspaceScreen({
       setActiveThreadRootMessageId(messageContext.rootMessageId);
     }
   }, [activeThreadRootMessageId, focusedMessageId, messageContext]);
+  const searchPreview = useSearchChannelPreview();
+  const previewJoined =
+    (surface === "search" || surface === "activity") &&
+    !!searchPreview.roomId &&
+    rooms.some((room) => room.roomId === searchPreview.roomId);
   const globalSurface =
     surface === "tasks" || surface === "search" || surface === "activity";
   const openDiscoveryLocation = useCallback(
@@ -362,6 +392,51 @@ function WorkspaceScreen({
           target: location.target,
         });
         if (navigationGeneration.current !== epoch) return false;
+        if (
+          (surface === "search" ||
+            ((surface === "activity" || surface === "saved") &&
+              "roomId" in resolved.target &&
+              !rooms.some(
+                (room) =>
+                  "roomId" in resolved.target &&
+                  room.roomId === resolved.target.roomId,
+              ))) &&
+          (resolved.target.kind === "room" ||
+            resolved.target.kind === "message" ||
+            resolved.target.kind === "thread") &&
+          !rooms.some(
+            (room) =>
+              "roomId" in resolved.target &&
+              room.roomId === resolved.target.roomId &&
+              room.kind === "direct",
+          )
+        ) {
+          const id = resolved.target.roomId;
+          if (surface === "saved") setSurface("search");
+          searchPreview.open(
+            id,
+            resolved.target.kind === "message"
+              ? resolved.target.messageId
+              : resolved.target.kind === "thread"
+                ? resolved.target.rootMessageId
+                : undefined,
+            "threadId" in resolved.target
+              ? resolved.target.threadId
+              : undefined,
+          );
+          if (rooms.some((room) => room.roomId === id)) {
+            setRoomData(undefined);
+            setActiveRoomId(id);
+          }
+          setActiveThreadRootMessageId(undefined);
+          setFocusedMessageId(
+            resolved.target.kind === "message"
+              ? resolved.target.messageId
+              : undefined,
+          );
+          setTab("chat");
+          return true;
+        }
         const presentation = navigationPresentation(
           resolved.target,
           location.surface,
@@ -402,7 +477,14 @@ function WorkspaceScreen({
         return false;
       }
     },
-    [client, invalidateNavigation, setSurface],
+    [
+      client,
+      invalidateNavigation,
+      setSurface,
+      surface,
+      rooms,
+      searchPreview.open,
+    ],
   );
   useEffect(() => {
     const navigate = (event: Event) => {
@@ -448,8 +530,6 @@ function WorkspaceScreen({
   const [agentCatalog, setAgentCatalog] = useState<AgentCatalogEntry[]>([]);
   const [agentCatalogControlRoomId, setAgentCatalogControlRoomId] =
     useState<string>();
-  const [workspaceMembershipRole, setWorkspaceMembershipRole] =
-    useState<MembershipRole>();
   const [mobileRoomsOpen, setMobileRoomsOpen] = useState(false);
   const [computerDetailOpen, setComputerDetailOpen] = useState(true);
   const showMobileNavigation =
@@ -481,6 +561,8 @@ function WorkspaceScreen({
   const sessions = useRef(new Map<string, RoomSession>());
   const messageSessions = useRef(new Map<string, MessageSession>());
   const threadMessageSessions = useRef(new Map<string, MessageSession>());
+  const taskWindows = useRef(new Map<string, RoomTaskWindow>());
+  const roomDataReads = useRef(createLatestRequest());
   const threadHistoryLoadingKey = useRef<string | undefined>(undefined);
   const activeThreadHistoryKey = useRef<string | undefined>(undefined);
   const directRoomOpenRequests = useRef(new Map<string, Promise<Room>>());
@@ -508,6 +590,21 @@ function WorkspaceScreen({
     { workspaceId: activeWorkspace?.workspaceId ?? "none" },
     activeWorkspace !== undefined,
   );
+  const humanDirectoryQuery = useReconciledQuery(
+    client,
+    "workspace.human.list",
+    { workspaceId: activeWorkspace?.workspaceId ?? "none" },
+    health?.capabilities.memberRead === true && activeWorkspace !== undefined,
+    reload,
+  );
+  // The reconciled directory is the single Workspace membership projection.
+  // A failed read cannot leave an old owner capability enabled in the UI.
+  const workspaceMembershipRole = humanDirectoryQuery?.error
+    ? undefined
+    : humanDirectoryQuery?.data?.humans.find(
+        ({ principal }) =>
+          principal.principalId === currentPrincipal?.principalId,
+      )?.membership.role;
   const systemNotices = notificationQuery?.data?.notifications ?? [];
   const systemNoticeView = useSystemNotices(
     systemNotices,
@@ -785,11 +882,14 @@ function WorkspaceScreen({
 
   useEffect(() => {
     const selectFromHistory = () => {
+      setRoomMembersOpen(false);
       setSurface(globalSurfaceFromSearch(window.location.search));
       setAgentRoute(agentRouteFromSearch(window.location.search));
       setTab(roomTabFromSearch(window.location.search));
       setFocusedMessageId(
-        new URLSearchParams(window.location.search).get("message") ?? undefined,
+        new URLSearchParams(window.location.search).get("previewMessage") ??
+          new URLSearchParams(window.location.search).get("message") ??
+          undefined,
       );
       setHumanInboxOpen(
         new URLSearchParams(window.location.search).has("inputRequest"),
@@ -851,40 +951,9 @@ function WorkspaceScreen({
   }, [activeWorkspace?.controlRoomId, client, health, reload]);
 
   useEffect(() => {
-    const controlRoomId = activeWorkspace?.controlRoomId;
-    if (
-      currentPrincipal === undefined ||
-      health === undefined ||
-      !health.capabilities.memberRead ||
-      controlRoomId === undefined
-    ) {
-      setWorkspaceMembershipRole(undefined);
-      return;
-    }
-    const controller = new AbortController();
-    setWorkspaceMembershipRole(undefined);
-    void client
-      .request(
-        "room.member.list",
-        { roomId: controlRoomId },
-        { signal: controller.signal },
-      )
-      .then((result) => {
-        setWorkspaceMembershipRole(
-          result.memberships.find(
-            ({ principalId }) => principalId === currentPrincipal.principalId,
-          )?.role,
-        );
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setWorkspaceMembershipRole(undefined);
-      });
-    return () => controller.abort();
-  }, [activeWorkspace?.controlRoomId, client, currentPrincipal, health]);
-
-  useEffect(() => {
     if (activeRoomId === undefined || health === undefined) return;
-    const controller = new AbortController();
+    const read = roomDataReads.current.begin();
+    const taskWindowBeforeRead = taskWindows.current.get(activeRoomId);
     let timer: ReturnType<typeof setTimeout> | undefined;
     let caughtUp = true;
     setLoading(true);
@@ -899,7 +968,7 @@ function WorkspaceScreen({
         const roomCatchUp = await session.syncUntilCurrent({
           limit: 500,
           maxPages: 4,
-          signal: controller.signal,
+          signal: read.signal,
         });
         const messageSession = health.capabilities.messageRead
           ? getOrCreateBoundedSession(
@@ -928,27 +997,28 @@ function WorkspaceScreen({
             : messageSession.syncUntilCurrent({
                 limit: RAFT_MESSAGE_PAGE_SIZE,
                 maxPages: 10,
-                signal: controller.signal,
+                signal: read.signal,
               }),
           health.capabilities.taskRead
-            ? client.request(
-                "task.list",
-                { roomId: activeRoomId },
-                { signal: controller.signal },
+            ? refreshRoomTaskWindow(
+                client,
+                activeRoomId,
+                taskWindowBeforeRead,
+                read.signal,
               )
-            : Promise.resolve({ tasks: [] as Task[] }),
+            : Promise.resolve(createRoomTaskWindow({ tasks: [] })),
           health.capabilities.threadRead
             ? client.request(
                 "thread.list",
                 { roomId: activeRoomId },
-                { signal: controller.signal },
+                { signal: read.signal },
               )
             : Promise.resolve({ threads: [] as Thread[] }),
           health.capabilities.memberRead
             ? client.request(
                 "room.member.list",
                 { roomId: activeRoomId },
-                { signal: controller.signal },
+                { signal: read.signal },
               )
             : Promise.resolve({
                 memberships: [] as RoomMembership[],
@@ -957,7 +1027,7 @@ function WorkspaceScreen({
             ? client.request(
                 "room.agent.activity.list",
                 { roomId: activeRoomId },
-                { signal: controller.signal },
+                { signal: read.signal },
               )
             : Promise.resolve({ agents: [] as RoomAgentActivity[] }),
         ]);
@@ -965,8 +1035,9 @@ function WorkspaceScreen({
           client,
           activeRoomId,
           messageResult.messages,
-          controller.signal,
+          read.signal,
         );
+        if (!read.current()) return;
         caughtUp = roomCatchUp.caughtUp && messageResult.complete;
         const knownPrincipals = new Map(
           (roomCatchUp.state.snapshot?.members ?? []).map((principal) => [
@@ -990,6 +1061,14 @@ function WorkspaceScreen({
             });
           }
         }
+        const taskWindowAfterRead = taskWindows.current.get(activeRoomId);
+        const projectedTaskWindow =
+          taskWindowAfterRead !== undefined &&
+          taskWindowAfterRead !== taskWindowBeforeRead
+            ? taskWindowAfterRead
+            : taskResult;
+        if (projectedTaskWindow === taskResult)
+          rememberRoomTaskWindow(taskWindows.current, activeRoomId, taskResult);
         setRoomData({
           activeMemberIds: health.capabilities.memberRead
             ? membershipResult.memberships.map(({ principalId }) => principalId)
@@ -1006,7 +1085,11 @@ function WorkspaceScreen({
           messages: [...messageResult.messages],
           referenceEventsComplete: roomCatchUp.state.historyComplete,
           roomEvents: [...roomCatchUp.state.events],
-          tasks: taskResult.tasks,
+          roomId: activeRoomId,
+          ...(projectedTaskWindow.nextPage === undefined
+            ? {}
+            : { taskNextPage: projectedTaskWindow.nextPage }),
+          tasks: projectedTaskWindow.tasks,
           threads: threadResult.threads,
         });
         setActiveThreadRootMessageId((current) =>
@@ -1021,12 +1104,12 @@ function WorkspaceScreen({
         consecutivePollFailures.current = 0;
         setError(undefined);
       } catch (caught) {
-        if (!controller.signal.aborted) {
+        if (read.current()) {
           consecutivePollFailures.current += 1;
           setError(errorMessage(caught));
         }
       } finally {
-        if (!controller.signal.aborted) {
+        if (read.current()) {
           setLoading(false);
           timer = setTimeout(
             () => setReload((value) => value + 1),
@@ -1040,7 +1123,7 @@ function WorkspaceScreen({
       }
     })();
     return () => {
-      controller.abort();
+      read.cancel();
       if (timer !== undefined) clearTimeout(timer);
     };
   }, [
@@ -1102,6 +1185,9 @@ function WorkspaceScreen({
     health?.capabilities.agentWrite === true &&
     (workspaceMembershipRole === "owner" ||
       workspaceMembershipRole === "admin");
+  const canChangeCurrentWorkspaceHumanRole =
+    health?.capabilities.memberWrite === true &&
+    workspaceMembershipRole === "owner";
   const canManageManagedMcp =
     health?.capabilities.managedMcpWrite === true &&
     (workspaceMembershipRole === "owner" ||
@@ -1148,6 +1234,7 @@ function WorkspaceScreen({
     workspaceId: activeWorkspace?.workspaceId,
     actorId: currentPrincipal?.principalId,
     human: currentPrincipal,
+    humans: humanDirectoryQuery?.data?.humans ?? [],
     hostId: localRuntimeHostId,
     computer,
     agents: agentDirectory,
@@ -1434,8 +1521,34 @@ function WorkspaceScreen({
     [activeRoom, client, health, roomData],
   );
 
+  const updateMessageTaskWorkflow = useCallback(
+    async (task: Task) => {
+      if (health?.capabilities.taskWrite !== true)
+        throw new Error("daemon 未开放 Task write capability");
+      if (!roomData?.caughtUp)
+        throw new Error("Room 尚未追赶到最新位置，暂不接受写入");
+      const session = sessions.current.get(task.roomId);
+      if (session === undefined)
+        throw new Error("当前 Room 尚未建立 canonical session");
+      const canManage =
+        currentRoomRole === "owner" ||
+        currentRoomRole === "admin" ||
+        task.creatorId === currentPrincipal?.principalId;
+      await applyGlobalTaskTransition({
+        canManageAnyTask: canManage,
+        client,
+        idempotencyKey: `message-task-${browserOpaqueId()}`,
+        session,
+        target: task.state === "cancelled" ? "todo" : "done",
+        task,
+      });
+      setReload((value) => value + 1);
+    },
+    [client, currentPrincipal, currentRoomRole, health, roomData],
+  );
+
   const createBoardTask = useCallback(
-    async (input: TaskCreateInput) => {
+    async (input: TaskCreateInput, onAccepted: (clientId: string) => void) => {
       if (activeRoom === undefined || roomData === undefined) return;
       if (health?.capabilities.taskWrite !== true) {
         throw new Error("daemon 未开放 Task write capability");
@@ -1447,30 +1560,59 @@ function WorkspaceScreen({
       if (session === undefined) {
         throw new Error("当前 Room 尚未建立 canonical session");
       }
-      const id = browserOpaqueId();
-      await runRoomMutationAtLatest({
-        mutate: (basedOnRoomSeq) =>
-          client.request("task.create", {
-            ...(input.assigneeId === undefined
-              ? {}
-              : { assigneeId: input.assigneeId }),
-            basedOnRoomSeq,
-            collaboratorIds: input.collaboratorIds,
-            dependencyTaskIds: [],
-            ...(input.description === undefined
-              ? {}
-              : { description: input.description }),
-            idempotencyKey: `web-board-task-${id}`,
-            reviewerIds: input.reviewerIds,
-            roomId: activeRoom.roomId,
-            title: input.title,
-          }),
+      await submitTaskCreateRows({
+        ...input,
+        client,
+        ledger: taskCreateCommandLedger.current,
+        onAccepted,
+        roomId: activeRoom.roomId,
         session,
       });
       setReload((value) => value + 1);
     },
     [activeRoom, client, health, roomData],
   );
+
+  const loadEarlierTasks = useCallback(async () => {
+    if (
+      activeRoomId === undefined ||
+      earlierTasksLoading ||
+      roomData?.taskNextPage === undefined
+    )
+      return;
+    const cursor = roomData.taskNextPage;
+    setEarlierTasksLoading(true);
+    try {
+      const result = await loadEarlierRoomTaskOverview(
+        client,
+        activeRoomId,
+        cursor,
+      );
+      setRoomData((current) => {
+        if (current === undefined || current.roomId !== activeRoomId)
+          return current;
+        const taskWindow = taskWindows.current.get(activeRoomId);
+        if (
+          taskWindow === undefined ||
+          !sameRoomTaskPageCursor(taskWindow.nextPage, cursor)
+        )
+          return current;
+        const nextWindow = appendRoomTaskWindowPage(taskWindow, cursor, result);
+        rememberRoomTaskWindow(taskWindows.current, activeRoomId, nextWindow);
+        return {
+          ...current,
+          ...(nextWindow.nextPage === undefined
+            ? { taskNextPage: undefined }
+            : { taskNextPage: nextWindow.nextPage }),
+          tasks: nextWindow.tasks,
+        };
+      });
+    } catch (caught) {
+      setError(errorMessage(caught));
+    } finally {
+      setEarlierTasksLoading(false);
+    }
+  }, [activeRoomId, client, earlierTasksLoading, roomData?.taskNextPage]);
 
   const openThread = useCallback(
     async (rootMessageId: string, returnFocusTarget?: HTMLElement | null) => {
@@ -2193,6 +2335,7 @@ function WorkspaceScreen({
     }
     const leavingRoomId = activeRoom.roomId;
     const leavingWorkspaceId = activeRoom.workspaceId;
+    const navigationIntent = navigationGeneration.current;
     await runRoomMutationAtLatest({
       mutate: (basedOnRoomSeq) =>
         client.request("room.leave", {
@@ -2202,13 +2345,17 @@ function WorkspaceScreen({
         }),
       session,
     });
+    sessions.current.delete(leavingRoomId);
+    setRooms((current) =>
+      current.filter(({ roomId }) => roomId !== leavingRoomId),
+    );
+    setReload((value) => value + 1);
+    if (navigationGeneration.current !== navigationIntent) return;
     const remaining = rooms.filter(({ roomId }) => roomId !== leavingRoomId);
     const nextRoom =
       remaining.find(({ workspaceId }) => workspaceId === leavingWorkspaceId) ??
       remaining[0];
     invalidateNavigation();
-    sessions.current.delete(leavingRoomId);
-    setRooms(remaining);
     setRoomMembersOpen(false);
     setRoomData(undefined);
     setActiveThreadRootMessageId(undefined);
@@ -2223,7 +2370,6 @@ function WorkspaceScreen({
         search.delete(key);
       window.history.replaceState(null, "", `?${search}`);
     }
-    setReload((value) => value + 1);
   }, [
     activeRoom,
     client,
@@ -2248,6 +2394,7 @@ function WorkspaceScreen({
     }
     const deletingRoomId = activeRoom.roomId;
     const deletingWorkspaceId = activeRoom.workspaceId;
+    const navigationIntent = navigationGeneration.current;
     await runRoomMutationAtLatest({
       mutate: (basedOnRoomSeq) =>
         client.request("room.delete", {
@@ -2257,6 +2404,15 @@ function WorkspaceScreen({
         }),
       session,
     });
+    sessions.current.delete(deletingRoomId);
+    setRooms((current) =>
+      current.filter(({ roomId }) => roomId !== deletingRoomId),
+    );
+    setArchivedRooms((current) =>
+      current.filter(({ roomId }) => roomId !== deletingRoomId),
+    );
+    setReload((value) => value + 1);
+    if (navigationGeneration.current !== navigationIntent) return;
     const remaining = rooms.filter(({ roomId }) => roomId !== deletingRoomId);
     const nextRoom =
       remaining.find(
@@ -2268,11 +2424,6 @@ function WorkspaceScreen({
       ) ??
       remaining[0];
     invalidateNavigation();
-    sessions.current.delete(deletingRoomId);
-    setRooms(remaining);
-    setArchivedRooms((current) =>
-      current.filter(({ roomId }) => roomId !== deletingRoomId),
-    );
     setRoomMembersOpen(false);
     setRoomData(undefined);
     setActiveThreadRootMessageId(undefined);
@@ -2287,7 +2438,6 @@ function WorkspaceScreen({
         search.delete(key);
       window.history.replaceState(null, "", `?${search}`);
     }
-    setReload((value) => value + 1);
   }, [
     activeRoom,
     canManageCurrentRoomMembers,
@@ -2565,6 +2715,13 @@ function WorkspaceScreen({
     [activeWorkspace, canManageCurrentWorkspaceAgent, client, consumerPrefix],
   );
 
+  const agentConfigureCommand = useRef<
+    | {
+        detail: ClientAgentGetResponse;
+        save: ReturnType<typeof createAgentConfigureCommand>;
+      }
+    | undefined
+  >(undefined);
   const configureAgent = useCallback(
     async (input: AgentConfigureInput) => {
       const detail = agentManageDetail;
@@ -2582,29 +2739,20 @@ function WorkspaceScreen({
         consumerPrefix,
         controlRoomId,
       );
-      const result = await runRoomMutationAtLatest({
-        mutate: async (basedOnRoomSeq) => {
-          const latest = await client.request("agent.get", {
-            agentDefinitionId: detail.agent.definition.agentDefinitionId,
-          });
-          if (
-            latest.agent.currentRevision.revision !==
-            detail.agent.currentRevision.revision
-          ) {
-            throw new Error(
-              "Agent 配置已在其他页面修改。请关闭并重新打开编辑窗口后再保存，本次未覆盖。",
-            );
-          }
-          return client.request("agent.manage", {
-            ...input,
-            action: "configure",
-            agentDefinitionId: detail.agent.definition.agentDefinitionId,
-            basedOnRoomSeq,
-            idempotencyKey: `web-agent-configure-${browserOpaqueId()}`,
-          });
-        },
-        session: controlSession,
-      });
+      if (agentConfigureCommand.current?.detail !== detail) {
+        agentConfigureCommand.current = {
+          detail,
+          save: createAgentConfigureCommand({
+            client,
+            detail,
+            session: controlSession,
+            createKey: () => `web-agent-configure-${browserOpaqueId()}`,
+          }),
+        };
+      }
+      const navigationIntent = navigationGeneration.current;
+      const result = await agentConfigureCommand.current.save(input);
+      if (navigationGeneration.current !== navigationIntent) return;
       setAgentCatalog((current) =>
         current.map((agent) =>
           agent.definition.agentDefinitionId ===
@@ -2637,7 +2785,9 @@ function WorkspaceScreen({
           }),
         );
       }
-      setAgentManageDetail(undefined);
+      setAgentManageDetail((current) =>
+        current === detail ? undefined : current,
+      );
     },
     [
       activeWorkspace,
@@ -2648,15 +2798,14 @@ function WorkspaceScreen({
     ],
   );
 
-  const setAgentState = useCallback(
-    async (state: "disabled" | "enabled" | "tombstoned") => {
-      const detail = agentManageDetail;
+  const changeWorkspaceAgentState = useCallback(
+    async (
+      agentDefinitionId: string,
+      state: "disabled" | "enabled" | "tombstoned",
+      idempotencyKey: string,
+    ) => {
       const controlRoomId = activeWorkspace?.controlRoomId;
-      if (
-        !canManageCurrentWorkspaceAgent ||
-        detail === undefined ||
-        controlRoomId === undefined
-      ) {
+      if (!canManageCurrentWorkspaceAgent || controlRoomId === undefined) {
         throw new Error("当前 Agent 设置上下文不可写");
       }
       const controlSession = roomSessionFor(
@@ -2669,9 +2818,9 @@ function WorkspaceScreen({
         mutate: (basedOnRoomSeq) =>
           client.request("agent.manage", {
             action: "set_state",
-            agentDefinitionId: detail.agent.definition.agentDefinitionId,
+            agentDefinitionId,
             basedOnRoomSeq,
-            idempotencyKey: `web-agent-state-${browserOpaqueId()}`,
+            idempotencyKey,
             state,
           }),
         session: controlSession,
@@ -2701,19 +2850,34 @@ function WorkspaceScreen({
           })),
         );
       }
-      setAgentManageDetail(undefined);
     },
-    [
-      activeWorkspace,
-      agentManageDetail,
-      canManageCurrentWorkspaceAgent,
-      client,
-      consumerPrefix,
-    ],
+    [activeWorkspace, canManageCurrentWorkspaceAgent, client, consumerPrefix],
+  );
+
+  const setAgentState = useCallback(
+    async (state: "disabled" | "enabled" | "tombstoned") => {
+      const id = agentManageDetail?.agent.definition.agentDefinitionId;
+      if (!id) throw new Error("当前 Agent 设置上下文不可写");
+      await changeWorkspaceAgentState(
+        id,
+        state,
+        `web-agent-state-${browserOpaqueId()}`,
+      );
+      setAgentManageDetail((current) =>
+        current?.agent.definition.agentDefinitionId === id
+          ? undefined
+          : current,
+      );
+    },
+    [agentManageDetail, changeWorkspaceAgentState],
   );
 
   const resetAgentExecution = useCallback(
-    async (agentDefinitionId: string, mode: "restart" | "session" | "full") => {
+    async (
+      agentDefinitionId: string,
+      mode: "restart" | "session" | "full",
+      idempotencyKey: string,
+    ) => {
       const controlRoomId = activeWorkspace?.controlRoomId;
       if (
         !canManageCurrentWorkspaceAgent ||
@@ -2727,7 +2891,7 @@ function WorkspaceScreen({
           client.request("agent.execution.reset", {
             agentDefinitionId,
             basedOnRoomSeq,
-            idempotencyKey: `web-agent-execution-reset-${browserOpaqueId()}`,
+            idempotencyKey,
             mode,
           }),
         session: roomSessionFor(
@@ -2757,6 +2921,38 @@ function WorkspaceScreen({
     ],
   );
 
+  const changeWorkspaceHumanRole = useCallback(
+    async (principalId: string, role: MembershipRole) => {
+      const controlRoomId = activeWorkspace?.controlRoomId;
+      if (!canChangeCurrentWorkspaceHumanRole || controlRoomId === undefined) {
+        throw new Error("当前账号不能修改 Workspace Human 角色");
+      }
+      await runRoomMutationAtLatest({
+        mutate: (basedOnRoomSeq) =>
+          client.request("room.member.role", {
+            basedOnRoomSeq,
+            idempotencyKey: `web-workspace-human-role-${browserOpaqueId()}`,
+            principalId,
+            role,
+            roomId: controlRoomId,
+          }),
+        session: roomSessionFor(
+          sessions.current,
+          client,
+          consumerPrefix,
+          controlRoomId,
+        ),
+      });
+      setReload((value) => value + 1);
+    },
+    [
+      activeWorkspace?.controlRoomId,
+      canChangeCurrentWorkspaceHumanRole,
+      client,
+      consumerPrefix,
+    ],
+  );
+
   const agentDetailProps = {
     initialHumanPrincipalId:
       agentRoute.view === "human" ? agentRoute.humanPrincipalId : undefined,
@@ -2771,11 +2967,17 @@ function WorkspaceScreen({
       health?.capabilities.roomWrite === true &&
       workspaceMembershipRole !== undefined,
     canReadManagedMcp,
+    canChangeHumanRole: canChangeCurrentWorkspaceHumanRole,
     client,
     computerLabel: entities.computer?.displayName,
     computerStatus: computer?.status,
     controlRoomId: activeWorkspace?.controlRoomId,
     currentHuman: currentPrincipal,
+    humans: entities.humans(),
+    humanDirectoryError: humanDirectoryQuery?.error,
+    humanDirectoryLoading: humanDirectoryQuery === undefined,
+    humansTruncated: humanDirectoryQuery?.data?.truncated === true,
+    onRetryHumans: () => setReload((value) => value + 1),
     fullResetEnabled: health?.capabilities.agentExecutionFullReset === true,
     onCreate: () => setAgentCreateOpen(true),
     onManage: (id: string) => void openAgentManagement(id),
@@ -2800,10 +3002,19 @@ function WorkspaceScreen({
       setPeekAgentId(undefined);
     },
     onRouteChange: navigateAgentRoute,
+    onChangeHumanRole: changeWorkspaceHumanRole,
     runtimes: localRuntimes,
     workspaceId: activeWorkspace?.workspaceId,
   };
   const peekOpen = surface === "room" && peekAgentId !== undefined;
+  const openMobileHome = useCallback(() => {
+    setActiveThreadRootMessageId(undefined);
+    setFocusedMessageId(undefined);
+    setRoomMembersOpen(false);
+    setSurface("room");
+    setTab("chat");
+    setMobileRoomsOpen(true);
+  }, []);
   const workspaceIdentityProps = {
     computerName: computer?.displayName,
     workspace: activeWorkspace,
@@ -2821,7 +3032,11 @@ function WorkspaceScreen({
           entry.workspaceId === workspace.workspaceId ? workspace : entry,
         ),
       ),
-    onSelect: (workspace: Workspace, rememberedSearch?: string) => {
+    onSelect: (
+      workspace: Workspace,
+      rememberedSearch: string | undefined,
+      navigationMode: "restore" | "replace-with-home",
+    ) => {
       const workspaceRooms = rooms.filter(
         (room) => room.workspaceId === workspace.workspaceId,
       );
@@ -2848,6 +3063,8 @@ function WorkspaceScreen({
             ? undefined
             : threadRootSelectionFromSearch(rememberedSearch, nextRoomId),
         );
+      } else if (navigationMode === "replace-with-home") {
+        openMobileHome();
       } else {
         setSurface("room");
         setTab("chat");
@@ -2912,731 +3129,821 @@ function WorkspaceScreen({
               });
             }}
           >
-            <div
-              className={`app rah-product-shell${globalSurface ? " rah-global-shell" : ""}${activeThreadRootMessageId === undefined ? " thread-hidden" : ""}${peekOpen ? " rah-agent-peek-open" : ""}${showMobileNavigation ? " rah-mobile-navigation-visible" : ""}`}
-              style={
-                {
-                  "--rah-room-sidebar-width": `${roomSidebarWidth}px`,
-                  "--thread-w": `${threadPanelWidth}px`,
-                } as CSSProperties
-              }
+            <InteractivePopover
+              open={humanInboxOpen}
+              onOpenChange={setHumanInboxOpen}
             >
-              <Rail
-                identity={<WorkspaceIdentity {...workspaceIdentityProps} />}
-                active={surface}
-                notificationCount={humanInputRequests.length}
-                activityUnread={(unreadSummary?.unreadActivityCount ?? 0) > 0}
-                chatUnread={(unreadSummary?.rooms.length ?? 0) > 0}
-                computerAttention={computer?.status === "offline"}
-                notificationAttention={systemNoticeView.notices.length > 0}
-                notificationsOpen={humanInboxOpen}
-                onNotifications={() => setHumanInboxOpen((open) => !open)}
-                onTasks={() => {
-                  setActiveThreadRootMessageId(undefined);
-                  setRoomMembersOpen(false);
-                  setFocusedMessageId(undefined);
-                  setSurface("tasks");
-                }}
-                onSelect={(nextSurface) => {
-                  setPeekAgentId(undefined);
-                  setFocusedMessageId(undefined);
-                  setActiveThreadRootMessageId(undefined);
-                  setRoomMembersOpen(false);
-                  if (nextSurface === "computers") setComputerDetailOpen(true);
-                  setSurface(nextSurface);
-                }}
-              />
-              {navigationError === undefined ? null : (
-                <div className="rah-navigation-error" role="alert">
-                  <span>{navigationError}</span>
-                  <button
-                    aria-label="关闭导航错误"
-                    onClick={() => setNavigationError(undefined)}
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
-              {humanInboxOpen ? (
-                <HumanInboxCenter
-                  error={humanInboxError}
-                  loading={humanInboxLoading}
-                  onClose={() => setHumanInboxOpen(false)}
-                  onOpenRoom={(roomId) => {
-                    void openDiscoveryLocation({
-                      target: { kind: "room", roomId },
-                    }).then((opened) => {
-                      if (opened) setHumanInboxOpen(false);
-                    });
-                  }}
-                  onResolve={resolveHumanInputRequest}
-                  requests={humanInputRequests}
-                  systemNotices={systemNoticeView.notices}
-                  onDismissSystem={systemNoticeView.dismiss}
-                  onOpenSystem={(target) => {
-                    return openDiscoveryLocation({ target }).then((opened) => {
-                      if (opened) setHumanInboxOpen(false);
-                    });
-                  }}
-                  rooms={rooms}
-                />
-              ) : null}
-              {surface === "room" || surface === "saved" ? (
-                <RoomSidebar
-                  mobileWorkspaceIdentity={
-                    <WorkspaceIdentity {...workspaceIdentityProps} mobile />
-                  }
-                  savedActive={surface === "saved"}
-                  onSaved={
-                    health?.capabilities.messageSocial
-                      ? () => {
-                          setSurface("saved");
-                          setPeekAgentId(undefined);
-                          setActiveThreadRootMessageId(undefined);
-                          setFocusedMessageId(undefined);
-                          setMobileRoomsOpen(false);
-                        }
-                      : undefined
-                  }
-                  activeRoomId={activeRoomId}
-                  agents={agentDirectory}
-                  canMessage={
-                    health?.capabilities.roomWrite === true &&
-                    workspaceMembershipRole !== undefined
-                  }
-                  currentHumanId={currentPrincipal?.principalId}
-                  onOpenDirectRoom={openDirectRoom}
-                  onNotifications={() => setHumanInboxOpen((open) => !open)}
-                  onSearch={() => {
-                    setFocusedMessageId(undefined);
-                    setMobileRoomsOpen(false);
-                    setSurface("search");
-                  }}
-                  canCreate={
-                    canCreateCurrentWorkspaceRoom &&
-                    activeWorkspace?.controlRoomId !== undefined
-                  }
-                  mobileOpen={mobileRoomsOpen}
-                  notificationAttention={systemNoticeView.notices.length > 0}
+              <div
+                className={`app rah-product-shell${globalSurface ? " rah-global-shell" : ""}${(surface === "search" || surface === "activity") && searchPreview.roomId ? " rah-search-channel-open" : ""}${activeThreadRootMessageId === undefined ? " thread-hidden" : ""}${peekOpen ? " rah-agent-peek-open" : ""}${showMobileNavigation ? " rah-mobile-navigation-visible" : ""}`}
+                style={
+                  {
+                    "--rah-room-sidebar-width": `${roomSidebarWidth}px`,
+                    "--thread-w": `${threadPanelWidth}px`,
+                  } as CSSProperties
+                }
+              >
+                <Rail
+                  identity={<WorkspaceIdentity {...workspaceIdentityProps} />}
+                  active={surface}
                   notificationCount={humanInputRequests.length}
-                  onActivity={() => {
-                    setFocusedMessageId(undefined);
-                    setMobileRoomsOpen(false);
-                    setSurface("activity");
-                  }}
-                  onCreate={() => setRoomCreateOpen(true)}
-                  onEditRoom={(roomId) => {
-                    invalidateNavigation();
-                    setFocusedMessageId(undefined);
+                  activityUnread={(unreadSummary?.unreadActivityCount ?? 0) > 0}
+                  chatUnread={(unreadSummary?.rooms.length ?? 0) > 0}
+                  computerAttention={computer?.status === "offline"}
+                  notificationAttention={systemNoticeView.notices.length > 0}
+                  notificationsOpen={humanInboxOpen}
+                  onTasks={() => {
                     setActiveThreadRootMessageId(undefined);
-                    setThreadMessages([]);
-                    if (roomId !== activeRoomId) {
-                      setRoomData(undefined);
-                      consecutivePollFailures.current = 0;
-                      setActiveRoomId(roomId);
-                    }
-                    setMobileRoomsOpen(false);
-                    setRoomMembersOpen(true);
+                    setRoomMembersOpen(false);
+                    setFocusedMessageId(undefined);
+                    setSurface("tasks");
                   }}
-                  rooms={rooms}
-                  workspace={activeWorkspace}
-                  unreadRooms={unreadSummary?.rooms}
-                  onSelect={(roomId) => {
+                  onSelect={(nextSurface) => {
                     setPeekAgentId(undefined);
                     setFocusedMessageId(undefined);
                     setActiveThreadRootMessageId(undefined);
                     setRoomMembersOpen(false);
-                    if (roomId !== activeRoomId) {
-                      setThreadMessages([]);
-                      setRoomData(undefined);
-                      consecutivePollFailures.current = 0;
-                      setActiveRoomId(roomId);
-                    }
-                    setSurface("room");
-                    setMobileRoomsOpen(false);
+                    if (nextSurface === "computers")
+                      setComputerDetailOpen(true);
+                    setSurface(nextSurface);
                   }}
                 />
-              ) : null}
-              {surface === "room" || surface === "saved" ? (
-                <RoomSidebarResizer
-                  onWidthChange={setRoomSidebarWidth}
-                  onWidthCommit={commitRoomSidebarWidth}
-                  width={roomSidebarWidth}
-                />
-              ) : null}
-              {mobileRoomsOpen ? (
-                <button
-                  aria-label="关闭 Room 列表背景"
-                  className="rah-mobile-backdrop"
-                  onClick={() => setMobileRoomsOpen(false)}
-                />
-              ) : null}
-              {surface === "saved" && activeWorkspace ? (
-                <SavedMessagesPane
-                  key={activeWorkspace.workspaceId}
-                  client={client}
-                  workspaceId={activeWorkspace.workspaceId}
-                  onOpen={openDiscoveryLocation}
-                  onOpenRooms={() => setMobileRoomsOpen(true)}
-                />
-              ) : globalSurface && activeWorkspace ? (
-                <GlobalDiscoverySurface
-                  key={`${surface}:${activeWorkspace.workspaceId}`}
-                  client={client}
-                  surface={surface as "tasks" | "search" | "activity"}
-                  workspaceId={activeWorkspace.workspaceId}
-                  rooms={rooms}
-                  currentHuman={currentPrincipal}
-                  navigationEpoch={navigationEpoch}
-                  beginNavigation={invalidateNavigation}
-                  onOpen={openDiscoveryLocation}
-                  onPerson={openDirectRoom}
-                  onClose={() => {
-                    setFocusedMessageId(undefined);
-                    setSurface("room");
-                    setTab("chat");
-                    setMobileRoomsOpen(true);
-                  }}
-                />
-              ) : surface === "settings" ? (
-                <SettingsSurface
-                  membershipRole={workspaceMembershipRole}
-                  agents={agentDirectory}
-                  canManageWorkspace={
-                    health?.capabilities.roomWrite === true &&
-                    (workspaceMembershipRole === "owner" ||
-                      workspaceMembershipRole === "admin")
-                  }
-                  canReadManagedMcp={canReadManagedMcp}
-                  canWriteManagedMcp={canManageManagedMcp}
-                  client={client}
-                  consumerPrefix={consumerPrefix}
-                  controlRoomId={activeWorkspace?.controlRoomId}
-                  currentPrincipal={currentPrincipal}
-                  onPrincipalUpdated={(principal) =>
-                    setCurrentPrincipal((current) =>
-                      current?.principalId === principal.principalId
-                        ? principal
-                        : current,
-                    )
-                  }
-                  onWorkspaceUpdated={(workspace) =>
-                    setWorkspaces((current) =>
-                      current.map((item) =>
-                        item.workspaceId === workspace.workspaceId
-                          ? workspace
-                          : item,
-                      ),
-                    )
-                  }
-                  workspace={activeWorkspace}
-                />
-              ) : surface === "agents" ? (
-                <AgentDirectoryPane {...agentDetailProps} />
-              ) : surface === "computers" ? (
-                <ComputerRuntimePane
-                  canEditProfile={
-                    health?.capabilities.computerProfileWrite === true
-                  }
-                  hostId={localRuntimeHostId}
-                  computer={computer}
-                  agents={agentDirectory}
-                  inventoryError={runtimeInventoryError}
-                  onDetailOpenChange={setComputerDetailOpen}
-                  onOpenAgent={(agentDefinitionId) => {
-                    navigateAgentRoute({
-                      agentDefinitionId,
-                      tab: "profile",
-                    });
-                    setSurface("agents");
-                  }}
-                  onUpdateComputerProfile={async (input) => {
-                    const result = await client.request(
-                      "computer.profile.update",
-                      input,
-                    );
-                    setComputerProfileOverride(result.computer);
-                  }}
-                  runtimes={localRuntimes}
-                />
-              ) : (
-                <main className="channel">
-                  <ChannelHeader
-                    onSearch={() => {
-                      const params = new URLSearchParams({
-                        surface: "search",
-                        ...(activeRoomId
-                          ? { room: activeRoomId, channel: activeRoomId }
-                          : {}),
+                {navigationError === undefined ? null : (
+                  <div className="rah-navigation-error" role="alert">
+                    <span>{navigationError}</span>
+                    <button
+                      aria-label="关闭导航错误"
+                      onClick={() => setNavigationError(undefined)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+                {humanInboxOpen ? (
+                  <HumanInboxCenter
+                    error={humanInboxError}
+                    loading={humanInboxLoading}
+                    onClose={() => setHumanInboxOpen(false)}
+                    onOpenRoom={(roomId) => {
+                      void openDiscoveryLocation({
+                        target: { kind: "room", roomId },
+                      }).then((opened) => {
+                        if (opened) setHumanInboxOpen(false);
                       });
-                      window.history.pushState(null, "", `?${params}`);
+                    }}
+                    onResolve={resolveHumanInputRequest}
+                    requests={humanInputRequests}
+                    systemNotices={systemNoticeView.notices}
+                    onDismissSystem={systemNoticeView.dismiss}
+                    onOpenSystem={(target) => {
+                      return openDiscoveryLocation({ target }).then(
+                        (opened) => {
+                          if (opened) setHumanInboxOpen(false);
+                        },
+                      );
+                    }}
+                    rooms={rooms}
+                  />
+                ) : null}
+                {surface === "room" || surface === "saved" ? (
+                  <RoomSidebar
+                    mobileWorkspaceIdentity={
+                      <WorkspaceIdentity {...workspaceIdentityProps} mobile />
+                    }
+                    savedActive={surface === "saved"}
+                    onSaved={
+                      health?.capabilities.messageSocial
+                        ? () => {
+                            setSurface("saved");
+                            setPeekAgentId(undefined);
+                            setActiveThreadRootMessageId(undefined);
+                            setFocusedMessageId(undefined);
+                            setMobileRoomsOpen(false);
+                          }
+                        : undefined
+                    }
+                    activeRoomId={activeRoomId}
+                    agents={agentDirectory}
+                    canMessage={
+                      health?.capabilities.roomWrite === true &&
+                      workspaceMembershipRole !== undefined
+                    }
+                    currentHumanId={currentPrincipal?.principalId}
+                    onOpenDirectRoom={openDirectRoom}
+                    onSearch={() => {
                       setFocusedMessageId(undefined);
+                      setMobileRoomsOpen(false);
                       setSurface("search");
                     }}
-                    directPeer={activeDirectPeer}
-                    room={activeRoom}
-                    memberCount={roomData?.activeMemberIds.length ?? 0}
-                    onManageAgents={() => {
+                    canCreate={
+                      canCreateCurrentWorkspaceRoom &&
+                      activeWorkspace?.controlRoomId !== undefined
+                    }
+                    mobileOpen={mobileRoomsOpen}
+                    notificationAttention={systemNoticeView.notices.length > 0}
+                    notificationCount={humanInputRequests.length}
+                    onActivity={() => {
+                      setFocusedMessageId(undefined);
+                      setMobileRoomsOpen(false);
+                      setSurface("activity");
+                    }}
+                    onCreate={() => setRoomCreateOpen(true)}
+                    onEditRoom={(roomId) => {
+                      invalidateNavigation();
+                      setFocusedMessageId(undefined);
                       setActiveThreadRootMessageId(undefined);
+                      setThreadMessages([]);
+                      if (roomId !== activeRoomId) {
+                        setRoomData(undefined);
+                        consecutivePollFailures.current = 0;
+                        setActiveRoomId(roomId);
+                      }
+                      setMobileRoomsOpen(false);
                       setRoomMembersOpen(true);
                     }}
-                    onOpenDirectPeer={(id) => openAgentPeek(id)}
+                    rooms={rooms}
+                    workspace={activeWorkspace}
+                    unreadRooms={unreadSummary?.rooms}
+                    onSelect={(roomId) => {
+                      setPeekAgentId(undefined);
+                      setFocusedMessageId(undefined);
+                      setActiveThreadRootMessageId(undefined);
+                      setRoomMembersOpen(false);
+                      if (roomId !== activeRoomId) {
+                        setThreadMessages([]);
+                        setRoomData(undefined);
+                        consecutivePollFailures.current = 0;
+                        setActiveRoomId(roomId);
+                      }
+                      setSurface("room");
+                      setMobileRoomsOpen(false);
+                    }}
+                  />
+                ) : null}
+                {surface === "room" || surface === "saved" ? (
+                  <RoomSidebarResizer
+                    onWidthChange={setRoomSidebarWidth}
+                    onWidthCommit={commitRoomSidebarWidth}
+                    width={roomSidebarWidth}
+                  />
+                ) : null}
+                {mobileRoomsOpen ? (
+                  <button
+                    aria-label="关闭 Room 列表背景"
+                    className="rah-mobile-backdrop"
+                    onClick={() => setMobileRoomsOpen(false)}
+                  />
+                ) : null}
+                {globalSurface && activeWorkspace ? (
+                  <GlobalDiscoverySurface
+                    key={`${surface}:${activeWorkspace.workspaceId}`}
+                    client={client}
+                    surface={surface as "tasks" | "search" | "activity"}
+                    workspaceId={activeWorkspace.workspaceId}
+                    rooms={rooms}
+                    currentHuman={currentPrincipal}
+                    navigationEpoch={navigationEpoch}
+                    beginNavigation={invalidateNavigation}
+                    onOpen={openDiscoveryLocation}
+                    onPerson={openDirectRoom}
+                    onClose={() => {
+                      setFocusedMessageId(undefined);
+                      setSurface("room");
+                      setTab("chat");
+                      setMobileRoomsOpen(true);
+                    }}
+                  />
+                ) : null}
+                {(surface === "search" || surface === "activity") &&
+                searchPreview.roomId &&
+                !previewJoined &&
+                activeWorkspace ? (
+                  <PublicChannelPreview
+                    key={`${activeWorkspace.workspaceId}:${searchPreview.roomId}`}
+                    client={client}
+                    workspaceId={activeWorkspace.workspaceId}
+                    roomId={searchPreview.roomId}
+                    messageId={searchPreview.messageId}
+                    threadId={searchPreview.threadId}
+                    rootMessageId={searchPreview.rootMessageId}
+                    onClose={searchPreview.close}
+                    onOpen={searchPreview.open}
+                    tab={searchPreview.tab}
+                    onSelectTab={searchPreview.selectTab}
+                    onJoined={(room) => {
+                      setRooms((previous) =>
+                        previous.some((r) => r.roomId === room.roomId)
+                          ? previous
+                          : [...previous, room],
+                      );
+                      setRoomData(undefined);
+                      setActiveRoomId(room.roomId);
+                      setFocusedMessageId(searchPreview.messageId);
+                      setActiveThreadRootMessageId(
+                        searchPreview.rootMessageId ??
+                          (searchPreview.threadId
+                            ? searchPreview.messageId
+                            : undefined),
+                      );
+                      setReload((n) => n + 1);
+                      const params = new URLSearchParams(
+                        window.location.search,
+                      );
+                      params.set("room", room.roomId);
+                      window.history.replaceState(null, "", `?${params}`);
+                    }}
+                  />
+                ) : null}
+                {surface === "saved" && activeWorkspace ? (
+                  <SavedMessagesPane
+                    key={activeWorkspace.workspaceId}
+                    client={client}
+                    workspaceId={activeWorkspace.workspaceId}
+                    onOpen={openDiscoveryLocation}
                     onOpenRooms={() => setMobileRoomsOpen(true)}
                   />
-                  <ConversationTabs
-                    value={tab}
-                    onSelect={setTab}
-                    canReadMessages={health?.capabilities.messageRead !== false}
-                    canReadTasks={health?.capabilities.taskRead !== false}
+                ) : surface === "settings" ? (
+                  <SettingsSurface
+                    membershipRole={workspaceMembershipRole}
+                    agents={agentDirectory}
+                    canManageWorkspace={
+                      health?.capabilities.roomWrite === true &&
+                      (workspaceMembershipRole === "owner" ||
+                        workspaceMembershipRole === "admin")
+                    }
+                    canReadManagedMcp={canReadManagedMcp}
+                    canWriteManagedMcp={canManageManagedMcp}
+                    client={client}
+                    consumerPrefix={consumerPrefix}
+                    controlRoomId={activeWorkspace?.controlRoomId}
+                    currentPrincipal={currentPrincipal}
+                    onPrincipalUpdated={(principal) =>
+                      setCurrentPrincipal((current) =>
+                        current?.principalId === principal.principalId
+                          ? principal
+                          : current,
+                      )
+                    }
+                    onWorkspaceUpdated={(workspace) =>
+                      setWorkspaces((current) =>
+                        current.map((item) =>
+                          item.workspaceId === workspace.workspaceId
+                            ? workspace
+                            : item,
+                        ),
+                      )
+                    }
+                    workspace={activeWorkspace}
                   />
-                  {roomData?.caughtUp === false ? (
-                    <div className="rah-sync-status">正在追赶 Room 历史…</div>
-                  ) : null}
-                  {error === undefined ? null : (
-                    <div className="rah-error">
-                      <span>{error}</span>
-                      <button onClick={onDisconnect}>重新连接</button>
-                    </div>
-                  )}
-                  {focusedMessageId && (
-                    <div className="rah-message-location" role="status">
-                      {locationResult.error ??
-                        (locationResult.loading
-                          ? "正在定位消息…"
-                          : "已定位原消息及前后文")}
-                      <button
-                        className="tasks-clear"
-                        onClick={() => setFocusedMessageId(undefined)}
-                      >
-                        返回最新消息
-                      </button>
-                    </div>
-                  )}
-                  {tab === "chat" &&
-                  health?.capabilities.messageRead === false ? (
-                    <UnavailablePane
-                      title="Message capability 不可用"
-                      detail="当前 daemon 没有开放 Message read；Room ledger 不会由 UI fixture 替代。"
+                ) : surface === "agents" ? (
+                  <AgentDirectoryPane {...agentDetailProps} />
+                ) : surface === "computers" ? (
+                  <ComputerRuntimePane
+                    onResetAgent={
+                      canManageCurrentWorkspaceAgent &&
+                      health?.capabilities.agentExecutionReset === true
+                        ? resetAgentExecution
+                        : undefined
+                    }
+                    fullResetEnabled={
+                      health?.capabilities.agentExecutionFullReset === true
+                    }
+                    onSetAgentState={
+                      canManageCurrentWorkspaceAgent
+                        ? changeWorkspaceAgentState
+                        : undefined
+                    }
+                    client={client}
+                    onCreateAgent={
+                      canCreateCurrentWorkspaceAgent
+                        ? () => setAgentCreateOpen(true)
+                        : undefined
+                    }
+                    canEditProfile={
+                      health?.capabilities.computerProfileWrite === true
+                    }
+                    hostId={localRuntimeHostId}
+                    computer={computer}
+                    agents={agentDirectory}
+                    inventoryError={runtimeInventoryError}
+                    onDetailOpenChange={setComputerDetailOpen}
+                    onOpenAgent={(agentDefinitionId) => {
+                      navigateAgentRoute({
+                        agentDefinitionId,
+                        tab: "profile",
+                      });
+                      setSurface("agents");
+                    }}
+                    onUpdateComputerProfile={async (input) => {
+                      const result = await client.request(
+                        "computer.profile.update",
+                        input,
+                      );
+                      setComputerProfileOverride(result.computer);
+                    }}
+                    runtimes={localRuntimes}
+                  />
+                ) : !globalSurface ||
+                  (previewJoined && activeThreadRootMessageId === undefined) ? (
+                  <main className="channel">
+                    <ChannelHeader
+                      onSearch={() => {
+                        const params = new URLSearchParams({
+                          surface: "search",
+                          ...(activeRoomId
+                            ? { room: activeRoomId, channel: activeRoomId }
+                            : {}),
+                        });
+                        window.history.pushState(null, "", `?${params}`);
+                        setFocusedMessageId(undefined);
+                        setSurface("search");
+                      }}
+                      directPeer={activeDirectPeer}
+                      room={activeRoom}
+                      memberCount={roomData?.activeMemberIds.length ?? 0}
+                      onManageAgents={() => {
+                        setActiveThreadRootMessageId(undefined);
+                        setRoomMembersOpen(true);
+                      }}
+                      onOpenDirectPeer={(id) => openAgentPeek(id)}
+                      onOpenRooms={() => setMobileRoomsOpen(true)}
                     />
-                  ) : tab === "chat" ? (
-                    <ChatPane
-                      client={client}
-                      currentPrincipal={currentPrincipal}
-                      canAttachFiles={health?.capabilities.fileShare === true}
-                      onReadThrough={
-                        activeRoomId && (!focusedMessageId || messageContext)
-                          ? async (throughSeq) => {
-                              await client.request("activity.mark", {
+                    <ConversationTabs
+                      value={tab}
+                      onSelect={setTab}
+                      canReadMessages={
+                        health?.capabilities.messageRead !== false
+                      }
+                      canReadTasks={health?.capabilities.taskRead !== false}
+                    />
+                    {roomData?.caughtUp === false ? (
+                      <div className="rah-sync-status">正在追赶 Room 历史…</div>
+                    ) : null}
+                    {error === undefined ? null : (
+                      <div className="rah-error">
+                        <span>{error}</span>
+                        <button onClick={onDisconnect}>重新连接</button>
+                      </div>
+                    )}
+                    {focusedMessageId && (
+                      <div className="rah-message-location" role="status">
+                        {locationResult.error ??
+                          (locationResult.loading
+                            ? "正在定位消息…"
+                            : "已定位原消息及前后文")}
+                        <button
+                          className="tasks-clear"
+                          onClick={() => setFocusedMessageId(undefined)}
+                        >
+                          返回最新消息
+                        </button>
+                      </div>
+                    )}
+                    {tab === "chat" &&
+                    health?.capabilities.messageRead === false ? (
+                      <UnavailablePane
+                        title="Message capability 不可用"
+                        detail="当前 daemon 没有开放 Message read；Room ledger 不会由 UI fixture 替代。"
+                      />
+                    ) : tab === "chat" ? (
+                      <ChatPane
+                        client={client}
+                        currentPrincipal={currentPrincipal}
+                        canAttachFiles={health?.capabilities.fileShare === true}
+                        onReadThrough={
+                          activeRoomId && (!focusedMessageId || messageContext)
+                            ? async (throughSeq) => {
+                                await client.request("activity.mark", {
+                                  roomId: activeRoomId,
+                                  throughSeq,
+                                  action: "read",
+                                });
+                              }
+                            : undefined
+                        }
+                        focusedMessageId={focusedMessageId}
+                        canCreateTask={
+                          health?.capabilities.taskWrite === true &&
+                          roomData?.caughtUp === true &&
+                          activeRoom?.archivedAt === undefined
+                        }
+                        canManageAnyTask={
+                          currentRoomRole === "owner" ||
+                          currentRoomRole === "admin"
+                        }
+                        canForward={
+                          health?.capabilities.messageForward === true &&
+                          roomData?.caughtUp === true &&
+                          activeRoom?.archivedAt === undefined
+                        }
+                        canPost={
+                          health?.capabilities.messageWrite === true &&
+                          roomData?.caughtUp === true &&
+                          activeRoom?.archivedAt === undefined
+                        }
+                        canReadThreads={
+                          health?.capabilities.threadRead === true
+                        }
+                        canWriteThreads={
+                          health?.capabilities.threadWrite === true &&
+                          roomData?.caughtUp === true &&
+                          activeRoom?.archivedAt === undefined
+                        }
+                        loading={loading}
+                        messageAgents={agentDirectory}
+                        hasEarlierMessages={
+                          !messageContext &&
+                          roomData?.hasEarlierMessages === true
+                        }
+                        earlierMessagesLoading={earlierMessagesLoading}
+                        messages={view.messages}
+                        {...(roomData?.mentionReadStates === undefined
+                          ? {}
+                          : {
+                              mentionReadStates: roomData.mentionReadStates,
+                            })}
+                        roomEvents={roomData?.roomEvents ?? []}
+                        roomMembers={roomData?.members ?? []}
+                        agents={roomAgents}
+                        tasks={roomData?.tasks ?? []}
+                        threadReplyPreviews={threadReplyPreviews}
+                        onConvertToTask={convertMessageToTask}
+                        onTaskWorkflow={updateMessageTaskWorkflow}
+                        onManageAgents={() => setRoomMembersOpen(true)}
+                        onLoadEarlier={loadEarlierMessages}
+                        onOpenThread={openThread}
+                        onOpenTarget={(target) =>
+                          void openDiscoveryLocation({ target })
+                        }
+                        roomName={activeRoom?.name}
+                        roomKind={activeRoom?.kind}
+                        roomId={activeRoom?.roomId}
+                        referenceComputers={messageReferenceComputers}
+                        referenceEventsComplete={
+                          roomData?.referenceEventsComplete === true
+                        }
+                        referenceRooms={messageReferenceRooms}
+                        onSubmit={submitComposer}
+                        threads={roomData?.threads ?? []}
+                      />
+                    ) : tab === "tasks" &&
+                      health?.capabilities.taskRead === false ? (
+                      <UnavailablePane
+                        title="Task capability 不可用"
+                        detail="当前 daemon 没有开放 Task read；看板不会显示推测状态。"
+                      />
+                    ) : tab === "tasks" ? (
+                      <TaskPane
+                        agents={agentDirectory.filter(({ participantId }) =>
+                          activeMemberIdSet.has(participantId),
+                        )}
+                        canManageAnyTask={
+                          currentRoomRole === "owner" ||
+                          currentRoomRole === "admin"
+                        }
+                        canOpenThread={health?.capabilities.threadRead === true}
+                        canWrite={
+                          health?.capabilities.taskWrite === true &&
+                          activeRoom?.archivedAt === undefined
+                        }
+                        caughtUp={
+                          roomData?.caughtUp === true &&
+                          activeRoom?.archivedAt === undefined
+                        }
+                        client={client}
+                        columns={view.taskColumns}
+                        currentPrincipalId={currentPrincipal?.principalId}
+                        earlierTasksLoading={earlierTasksLoading}
+                        hasEarlierTasks={roomData?.taskNextPage !== undefined}
+                        loading={loading}
+                        onChanged={() => setReload((value) => value + 1)}
+                        onCreate={() => setTaskCreateOpen(true)}
+                        onLoadEarlierTasks={loadEarlierTasks}
+                        onOpenThread={(task) =>
+                          openThread(task.sourceMessageId)
+                        }
+                        roomName={activeRoom?.name ?? ""}
+                      />
+                    ) : health?.capabilities.fileShare !== true ? (
+                      <UnavailablePane
+                        title="当前 daemon 未开放文件共享"
+                        detail="此连接的服务端尚未支持附件合同；不会显示虚构文件或尝试无效上传。"
+                      />
+                    ) : (
+                      <RoomFilesPane
+                        roomId={activeRoomId}
+                        onSource={(file) =>
+                          openDiscoveryLocation({
+                            target: {
+                              kind: "message",
+                              roomId: file.roomId,
+                              messageId: file.messageId,
+                            },
+                          })
+                        }
+                      />
+                    )}
+                  </main>
+                ) : null}
+                {peekOpen ? (
+                  <AgentDirectoryPane
+                    key={peekAgentId}
+                    {...agentDetailProps}
+                    initialAgentDefinitionId={peekAgentId}
+                    initialTab="activity"
+                    onRouteChange={undefined}
+                    panel
+                    onClose={() => {
+                      invalidateNavigation();
+                      setPeekAgentId(undefined);
+                    }}
+                  />
+                ) : null}
+                {(surface !== "room" &&
+                  surface !== "activity" &&
+                  !(surface === "search" && previewJoined)) ||
+                activeThreadRootMessageId === undefined ? null : (
+                  <ThreadPane
+                    client={client}
+                    canManageAnyTask={
+                      currentRoomRole === "owner" || currentRoomRole === "admin"
+                    }
+                    currentPrincipal={currentPrincipal}
+                    messageAgents={agentDirectory}
+                    followers={activeThreadFollowerAgents}
+                    followersCanManage={
+                      threadFollowers.data?.canManage === true
+                    }
+                    followersError={threadFollowers.error}
+                    followersLoading={threadFollowers.loading}
+                    humanFollowing={
+                      activeThreadId === undefined
+                        ? activeThreadRootRecord?.actorId ===
+                          currentPrincipal?.principalId
+                        : threadFollowers.data?.following
+                    }
+                    onReadThrough={
+                      activeRoomId && activeThreadId
+                        ? async (throughSeq) => {
+                            await client.request("activity.mark", {
+                              roomId: activeRoomId,
+                              threadId: activeThreadId,
+                              throughSeq,
+                              action: "read",
+                            });
+                          }
+                        : undefined
+                    }
+                    focusedMessageId={focusedMessageId}
+                    canReply={
+                      health?.capabilities.threadWrite === true &&
+                      roomData?.caughtUp === true
+                    }
+                    canAttachFiles={health?.capabilities.fileShare === true}
+                    canForward={
+                      health?.capabilities.messageForward === true &&
+                      roomData?.caughtUp === true &&
+                      activeRoom?.archivedAt === undefined
+                    }
+                    loading={threadLoading}
+                    earlierRepliesLoading={threadEarlierRepliesLoading}
+                    hasEarlierReplies={threadHasEarlierReplies}
+                    onClose={() => {
+                      const rootMessageId = activeThreadRootMessageId;
+                      invalidateNavigation();
+                      setActiveThreadRootMessageId(undefined);
+                      if (messageContext?.message.threadId)
+                        setFocusedMessageId(undefined);
+                      restoreThreadFocus(rootMessageId);
+                    }}
+                    onSubmit={submitThreadReply}
+                    onTaskWorkflow={updateMessageTaskWorkflow}
+                    onFollow={
+                      activeRoomId &&
+                      activeThreadRootMessageId &&
+                      (activeThreadId ||
+                        health?.capabilities.threadWrite === true)
+                        ? async (following) => {
+                            const { thread } = await ensureActiveThread();
+                            await client.request("activity.follow", {
+                              roomId: activeRoomId,
+                              threadId: thread.threadId,
+                              following,
+                            });
+                            threadFollowers.refresh();
+                          }
+                        : undefined
+                    }
+                    onLoadEarlier={loadEarlierThreadMessages}
+                    onRefreshFollowers={threadFollowers.refresh}
+                    onRemoveFollower={
+                      activeRoomId && activeThreadId
+                        ? async (participantId) => {
+                            const result = await client.request(
+                              "thread.follower.remove",
+                              {
+                                participantId,
                                 roomId: activeRoomId,
-                                throughSeq,
-                                action: "read",
-                              });
-                            }
-                          : undefined
-                      }
-                      focusedMessageId={focusedMessageId}
-                      canCreateTask={
-                        health?.capabilities.taskWrite === true &&
-                        roomData?.caughtUp === true &&
-                        activeRoom?.archivedAt === undefined
-                      }
-                      canForward={
-                        health?.capabilities.messageForward === true &&
-                        roomData?.caughtUp === true &&
-                        activeRoom?.archivedAt === undefined
-                      }
-                      canPost={
-                        health?.capabilities.messageWrite === true &&
-                        roomData?.caughtUp === true &&
-                        activeRoom?.archivedAt === undefined
-                      }
-                      canReadThreads={health?.capabilities.threadRead === true}
-                      canWriteThreads={
-                        health?.capabilities.threadWrite === true &&
-                        roomData?.caughtUp === true &&
-                        activeRoom?.archivedAt === undefined
-                      }
-                      loading={loading}
-                      messageAgents={agentDirectory}
-                      hasEarlierMessages={
-                        !messageContext && roomData?.hasEarlierMessages === true
-                      }
-                      earlierMessagesLoading={earlierMessagesLoading}
-                      messages={view.messages}
-                      {...(roomData?.mentionReadStates === undefined
-                        ? {}
-                        : {
-                            mentionReadStates: roomData.mentionReadStates,
-                          })}
-                      roomEvents={roomData?.roomEvents ?? []}
-                      roomMembers={roomData?.members ?? []}
-                      agents={roomAgents}
-                      tasks={roomData?.tasks ?? []}
-                      threadReplyPreviews={threadReplyPreviews}
-                      onConvertToTask={convertMessageToTask}
-                      onManageAgents={() => setRoomMembersOpen(true)}
-                      onLoadEarlier={loadEarlierMessages}
-                      onOpenThread={openThread}
-                      onOpenTarget={(target) =>
-                        void openDiscoveryLocation({ target })
-                      }
-                      roomName={activeRoom?.name}
-                      roomKind={activeRoom?.kind}
-                      roomId={activeRoom?.roomId}
-                      referenceComputers={messageReferenceComputers}
-                      referenceEventsComplete={
-                        roomData?.referenceEventsComplete === true
-                      }
-                      referenceRooms={messageReferenceRooms}
-                      onSubmit={submitComposer}
-                      threads={roomData?.threads ?? []}
-                    />
-                  ) : tab === "tasks" &&
-                    health?.capabilities.taskRead === false ? (
-                    <UnavailablePane
-                      title="Task capability 不可用"
-                      detail="当前 daemon 没有开放 Task read；看板不会显示推测状态。"
-                    />
-                  ) : tab === "tasks" ? (
-                    <TaskPane
-                      agents={agentDirectory.filter(({ participantId }) =>
-                        activeMemberIdSet.has(participantId),
-                      )}
-                      canManageAnyTask={
-                        currentRoomRole === "owner" ||
-                        currentRoomRole === "admin"
-                      }
-                      canOpenThread={health?.capabilities.threadRead === true}
-                      canWrite={
-                        health?.capabilities.taskWrite === true &&
-                        activeRoom?.archivedAt === undefined
-                      }
-                      caughtUp={
-                        roomData?.caughtUp === true &&
-                        activeRoom?.archivedAt === undefined
-                      }
-                      client={client}
-                      columns={view.taskColumns}
-                      currentPrincipalId={currentPrincipal?.principalId}
-                      loading={loading}
-                      onChanged={() => setReload((value) => value + 1)}
-                      onCreate={() => setTaskCreateOpen(true)}
-                      onOpenThread={(task) => openThread(task.sourceMessageId)}
-                      roomName={activeRoom?.name ?? ""}
-                    />
-                  ) : health?.capabilities.fileShare !== true ? (
-                    <UnavailablePane
-                      title="当前 daemon 未开放文件共享"
-                      detail="此连接的服务端尚未支持附件合同；不会显示虚构文件或尝试无效上传。"
+                                threadId: activeThreadId,
+                              },
+                            );
+                            threadFollowers.refresh();
+                            return result;
+                          }
+                        : undefined
+                    }
+                    onRestoreFollower={
+                      activeRoomId && activeThreadId
+                        ? async ({ participantId, undoToken }) => {
+                            const result = await client.request(
+                              "thread.follower.restore",
+                              {
+                                participantId,
+                                roomId: activeRoomId,
+                                threadId: activeThreadId,
+                                undoToken,
+                              },
+                            );
+                            if (!result.restored)
+                              throw new Error(
+                                "撤销期限已过，请重新提及该 Agent",
+                              );
+                            threadFollowers.refresh();
+                          }
+                        : undefined
+                    }
+                    onSearchThread={searchActiveThread}
+                    onOpenTarget={(target) =>
+                      void openDiscoveryLocation({ target })
+                    }
+                    onViewInChannel={() => {
+                      const rootMessageId = activeThreadRootMessageId;
+                      invalidateNavigation();
+                      setActiveThreadRootMessageId(undefined);
+                      setFocusedMessageId(activeThreadRootMessageId);
+                      restoreThreadFocus(rootMessageId);
+                    }}
+                    replies={threadView.messages}
+                    mentionAgentIds={availableAgentIds}
+                    mentionReadStates={threadMentionReadStates}
+                    referenceComputers={messageReferenceComputers}
+                    referenceEventsComplete={
+                      roomData?.referenceEventsComplete === true
+                    }
+                    referenceRooms={messageReferenceRooms}
+                    referenceTasks={roomData?.tasks ?? []}
+                    roomMembers={roomData?.members ?? []}
+                    resizer={
+                      <ThreadPanelResizer
+                        onWidthChange={setThreadPanelWidth}
+                        onWidthCommit={commitThreadPanelWidth}
+                        width={threadPanelWidth}
+                      />
+                    }
+                    roomEvents={roomData?.roomEvents ?? []}
+                    roomId={activeRoomId}
+                    roomKind={activeRoom?.kind}
+                    roomName={activeRoom?.name}
+                    root={activeThreadRoot}
+                    {...(activeThreadTask === undefined
+                      ? {}
+                      : { task: activeThreadTask })}
+                    {...(activeThreadTaskAgent === undefined
+                      ? {}
+                      : { taskAgent: activeThreadTaskAgent })}
+                    threadId={activeThreadId}
+                  />
+                )}
+                {roomCreateOpen ? (
+                  <RoomCreateDialog
+                    agents={agentDirectory.filter(
+                      ({ state }) => state === "enabled",
+                    )}
+                    archivedRooms={archivedRooms.filter(
+                      ({ workspaceId }) =>
+                        workspaceId === activeWorkspace?.workspaceId,
+                    )}
+                    canUnarchive={canCreateCurrentWorkspaceRoom}
+                    onClose={() => setRoomCreateOpen(false)}
+                    onCreate={createRoom}
+                    onUnarchive={unarchiveRoomFromCreate}
+                  />
+                ) : null}
+                {taskCreateOpen ? (
+                  <TaskCreateDialog
+                    agents={roomAgents}
+                    onClose={() => setTaskCreateOpen(false)}
+                    onCreate={createBoardTask}
+                    onDiscard={(clientIds) =>
+                      taskCreateCommandLedger.current.discard(clientIds)
+                    }
+                    tasks={roomData?.tasks ?? []}
+                  />
+                ) : null}
+                {agentCreateOpen && activeWorkspace !== undefined ? (
+                  <AgentCreateDialog
+                    computerLabel={localRuntimeHostId}
+                    onClose={() => setAgentCreateOpen(false)}
+                    onCreate={createAgent}
+                    runtimes={localRuntimes}
+                  />
+                ) : null}
+                {agentManageDetail !== undefined ? (
+                  agentManageMode === "runtime" ? (
+                    <AgentRuntimeDialog
+                      detail={agentManageDetail}
+                      onClose={() => setAgentManageDetail(undefined)}
+                      onConfigure={configureAgent}
+                      runtimes={localRuntimes}
                     />
                   ) : (
-                    <RoomFilesPane
-                      roomId={activeRoomId}
-                      onSource={(file) =>
-                        openDiscoveryLocation({
-                          target: {
-                            kind: "message",
-                            roomId: file.roomId,
-                            messageId: file.messageId,
-                          },
-                        })
-                      }
+                    <AgentManageDialog
+                      detail={agentManageDetail}
+                      onClose={() => setAgentManageDetail(undefined)}
+                      onConfigure={configureAgent}
+                      onState={setAgentState}
+                      runtimes={localRuntimes}
                     />
-                  )}
-                </main>
-              )}
-              {peekOpen ? (
-                <AgentDirectoryPane
-                  key={peekAgentId}
-                  {...agentDetailProps}
-                  initialAgentDefinitionId={peekAgentId}
-                  initialTab="activity"
-                  onRouteChange={undefined}
-                  panel
-                  onClose={() => {
-                    invalidateNavigation();
-                    setPeekAgentId(undefined);
-                  }}
-                />
-              ) : null}
-              {(surface !== "room" && surface !== "activity") ||
-              activeThreadRootMessageId === undefined ? null : (
-                <ThreadPane
-                  client={client}
-                  currentPrincipal={currentPrincipal}
-                  messageAgents={agentDirectory}
-                  followers={activeThreadFollowerAgents}
-                  followersCanManage={threadFollowers.data?.canManage === true}
-                  followersError={threadFollowers.error}
-                  followersLoading={threadFollowers.loading}
-                  humanFollowing={
-                    activeThreadId === undefined
-                      ? activeThreadRootRecord?.actorId ===
-                        currentPrincipal?.principalId
-                      : threadFollowers.data?.following
-                  }
-                  onReadThrough={
-                    activeRoomId && activeThreadId
-                      ? async (throughSeq) => {
-                          await client.request("activity.mark", {
-                            roomId: activeRoomId,
-                            threadId: activeThreadId,
-                            throughSeq,
-                            action: "read",
-                          });
-                        }
-                      : undefined
-                  }
-                  focusedMessageId={focusedMessageId}
-                  canReply={
-                    health?.capabilities.threadWrite === true &&
-                    roomData?.caughtUp === true
-                  }
-                  canAttachFiles={health?.capabilities.fileShare === true}
-                  canForward={
-                    health?.capabilities.messageForward === true &&
-                    roomData?.caughtUp === true &&
-                    activeRoom?.archivedAt === undefined
-                  }
-                  loading={threadLoading}
-                  earlierRepliesLoading={threadEarlierRepliesLoading}
-                  hasEarlierReplies={threadHasEarlierReplies}
-                  onClose={() => {
-                    const rootMessageId = activeThreadRootMessageId;
-                    invalidateNavigation();
-                    setActiveThreadRootMessageId(undefined);
-                    if (messageContext?.message.threadId)
-                      setFocusedMessageId(undefined);
-                    restoreThreadFocus(rootMessageId);
-                  }}
-                  onSubmit={submitThreadReply}
-                  onFollow={
-                    activeRoomId &&
-                    activeThreadRootMessageId &&
-                    (activeThreadId ||
-                      health?.capabilities.threadWrite === true)
-                      ? async (following) => {
-                          const { thread } = await ensureActiveThread();
-                          await client.request("activity.follow", {
-                            roomId: activeRoomId,
-                            threadId: thread.threadId,
-                            following,
-                          });
-                          threadFollowers.refresh();
-                        }
-                      : undefined
-                  }
-                  onLoadEarlier={loadEarlierThreadMessages}
-                  onRefreshFollowers={threadFollowers.refresh}
-                  onRemoveFollower={
-                    activeRoomId && activeThreadId
-                      ? async (participantId) => {
-                          const result = await client.request(
-                            "thread.follower.remove",
-                            {
-                              participantId,
-                              roomId: activeRoomId,
-                              threadId: activeThreadId,
-                            },
-                          );
-                          threadFollowers.refresh();
-                          return result;
-                        }
-                      : undefined
-                  }
-                  onRestoreFollower={
-                    activeRoomId && activeThreadId
-                      ? async ({ participantId, undoToken }) => {
-                          const result = await client.request(
-                            "thread.follower.restore",
-                            {
-                              participantId,
-                              roomId: activeRoomId,
-                              threadId: activeThreadId,
-                              undoToken,
-                            },
-                          );
-                          if (!result.restored)
-                            throw new Error("撤销期限已过，请重新提及该 Agent");
-                          threadFollowers.refresh();
-                        }
-                      : undefined
-                  }
-                  onSearchThread={searchActiveThread}
-                  onOpenTarget={(target) =>
-                    void openDiscoveryLocation({ target })
-                  }
-                  onViewInChannel={() => {
-                    const rootMessageId = activeThreadRootMessageId;
-                    invalidateNavigation();
-                    setActiveThreadRootMessageId(undefined);
-                    setFocusedMessageId(activeThreadRootMessageId);
-                    restoreThreadFocus(rootMessageId);
-                  }}
-                  replies={threadView.messages}
-                  mentionAgentIds={availableAgentIds}
-                  mentionReadStates={threadMentionReadStates}
-                  referenceComputers={messageReferenceComputers}
-                  referenceEventsComplete={
-                    roomData?.referenceEventsComplete === true
-                  }
-                  referenceRooms={messageReferenceRooms}
-                  referenceTasks={roomData?.tasks ?? []}
-                  roomMembers={roomData?.members ?? []}
-                  resizer={
-                    <ThreadPanelResizer
-                      onWidthChange={setThreadPanelWidth}
-                      onWidthCommit={commitThreadPanelWidth}
-                      width={threadPanelWidth}
-                    />
-                  }
-                  roomEvents={roomData?.roomEvents ?? []}
-                  roomId={activeRoomId}
-                  roomKind={activeRoom?.kind}
-                  roomName={activeRoom?.name}
-                  root={activeThreadRoot}
-                  {...(activeThreadTask === undefined
-                    ? {}
-                    : { task: activeThreadTask })}
-                  {...(activeThreadTaskAgent === undefined
-                    ? {}
-                    : { taskAgent: activeThreadTaskAgent })}
-                  threadId={activeThreadId}
-                />
-              )}
-              {roomCreateOpen ? (
-                <RoomCreateDialog
-                  agents={agentDirectory.filter(
-                    ({ state }) => state === "enabled",
-                  )}
-                  archivedRooms={archivedRooms.filter(
-                    ({ workspaceId }) =>
-                      workspaceId === activeWorkspace?.workspaceId,
-                  )}
-                  canUnarchive={canCreateCurrentWorkspaceRoom}
-                  onClose={() => setRoomCreateOpen(false)}
-                  onCreate={createRoom}
-                  onUnarchive={unarchiveRoomFromCreate}
-                />
-              ) : null}
-              {taskCreateOpen ? (
-                <TaskCreateDialog
-                  agents={roomAgents}
-                  onClose={() => setTaskCreateOpen(false)}
-                  onCreate={createBoardTask}
-                  roomName={activeRoom?.name}
-                />
-              ) : null}
-              {agentCreateOpen && activeWorkspace !== undefined ? (
-                <AgentCreateDialog
-                  computerLabel={localRuntimeHostId}
-                  onClose={() => setAgentCreateOpen(false)}
-                  onCreate={createAgent}
-                  runtimes={localRuntimes}
-                />
-              ) : null}
-              {agentManageDetail !== undefined ? (
-                agentManageMode === "runtime" ? (
-                  <AgentRuntimeDialog
-                    detail={agentManageDetail}
-                    onClose={() => setAgentManageDetail(undefined)}
-                    onConfigure={configureAgent}
-                    runtimes={localRuntimes}
+                  )
+                ) : null}
+                {roomMembersOpen ? (
+                  <RoomMembersDialog
+                    key={`${currentPrincipal?.principalId}:${activeRoom?.roomId}`}
+                    canAdd={
+                      canOnboardCurrentRoomAgent &&
+                      roomData?.caughtUp === true &&
+                      activeRoom?.archivedAt === undefined
+                    }
+                    canLeave={currentRoomLeave.allowed}
+                    canDelete={
+                      canManageCurrentRoomMembers &&
+                      roomData?.caughtUp === true &&
+                      activeRoom?.kind === "channel"
+                    }
+                    canManageRoles={
+                      canManageCurrentRoomRoles &&
+                      activeRoom?.archivedAt === undefined
+                    }
+                    canRemove={
+                      canManageCurrentRoomMembers &&
+                      roomData?.caughtUp === true &&
+                      activeRoom?.archivedAt === undefined
+                    }
+                    canStopAgents={
+                      canManageCurrentRoomMembers &&
+                      roomData?.caughtUp === true &&
+                      activeRoom?.archivedAt === undefined &&
+                      health?.capabilities.roomAgentSos === true
+                    }
+                    canUpdate={
+                      canManageCurrentRoomMembers && roomData?.caughtUp === true
+                    }
+                    candidates={roomMemberCandidates}
+                    memberships={roomData?.memberships ?? []}
+                    members={(roomData?.members ?? []).filter(
+                      ({ principalId }) => activeMemberIdSet.has(principalId),
+                    )}
+                    onAdd={onboardAgent}
+                    onArchive={() => changeRoomArchiveState(true)}
+                    onClose={() => setRoomMembersOpen(false)}
+                    onDelete={deleteCurrentRoom}
+                    onLeave={leaveCurrentRoom}
+                    onRemove={removeAgent}
+                    onResumeAgents={resumeCurrentRoomAgents}
+                    onRole={setRoomMemberRole}
+                    onStopAgents={stopCurrentRoomAgents}
+                    onUnarchive={() => changeRoomArchiveState(false)}
+                    onUpdate={updateRoom}
+                    leaveUnavailableReason={currentRoomLeave.reason}
+                    room={activeRoom}
                   />
-                ) : (
-                  <AgentManageDialog
-                    detail={agentManageDetail}
-                    onClose={() => setAgentManageDetail(undefined)}
-                    onConfigure={configureAgent}
-                    onState={setAgentState}
-                    runtimes={localRuntimes}
-                  />
-                )
-              ) : null}
-              {roomMembersOpen ? (
-                <RoomMembersDialog
-                  canAdd={
-                    canOnboardCurrentRoomAgent &&
-                    roomData?.caughtUp === true &&
-                    activeRoom?.archivedAt === undefined
-                  }
-                  canLeave={currentRoomLeave.allowed}
-                  canDelete={
-                    canManageCurrentRoomMembers &&
-                    roomData?.caughtUp === true &&
-                    activeRoom?.kind === "channel"
-                  }
-                  canManageRoles={
-                    canManageCurrentRoomRoles &&
-                    activeRoom?.archivedAt === undefined
-                  }
-                  canRemove={
-                    canManageCurrentRoomMembers &&
-                    roomData?.caughtUp === true &&
-                    activeRoom?.archivedAt === undefined
-                  }
-                  canStopAgents={
-                    canManageCurrentRoomMembers &&
-                    roomData?.caughtUp === true &&
-                    activeRoom?.archivedAt === undefined &&
-                    health?.capabilities.roomAgentSos === true
-                  }
-                  canUpdate={
-                    canManageCurrentRoomMembers && roomData?.caughtUp === true
-                  }
-                  candidates={roomMemberCandidates}
-                  memberships={roomData?.memberships ?? []}
-                  members={(roomData?.members ?? []).filter(({ principalId }) =>
-                    activeMemberIdSet.has(principalId),
-                  )}
-                  onAdd={onboardAgent}
-                  onArchive={() => changeRoomArchiveState(true)}
-                  onClose={() => setRoomMembersOpen(false)}
-                  onDelete={deleteCurrentRoom}
-                  onLeave={leaveCurrentRoom}
-                  onRemove={removeAgent}
-                  onResumeAgents={resumeCurrentRoomAgents}
-                  onRole={setRoomMemberRole}
-                  onStopAgents={stopCurrentRoomAgents}
-                  onUnarchive={() => changeRoomArchiveState(false)}
-                  onUpdate={updateRoom}
-                  leaveUnavailableReason={currentRoomLeave.reason}
-                  room={activeRoom}
+                ) : null}
+                <MobileNavigation
+                  activeSurface={surface}
+                  onAgents={() => {
+                    setActiveThreadRootMessageId(undefined);
+                    setMobileRoomsOpen(false);
+                    setRoomMembersOpen(false);
+                    setAgentRoute(agentDirectoryRootRoute());
+                    setSurface("agents");
+                  }}
+                  onHome={openMobileHome}
+                  onSettings={() => {
+                    setActiveThreadRootMessageId(undefined);
+                    setMobileRoomsOpen(false);
+                    setRoomMembersOpen(false);
+                    setSurface("settings");
+                  }}
+                  onTasks={() => {
+                    setMobileRoomsOpen(false);
+                    setRoomMembersOpen(false);
+                    setFocusedMessageId(undefined);
+                    setSurface("tasks");
+                  }}
+                  mobileHomeOpen={mobileRoomsOpen}
+                  showMobileNavigation={showMobileNavigation}
                 />
-              ) : null}
-              <MobileNavigation
-                activeSurface={surface}
-                onAgents={() => {
-                  setActiveThreadRootMessageId(undefined);
-                  setMobileRoomsOpen(false);
-                  setRoomMembersOpen(false);
-                  setAgentRoute(agentDirectoryRootRoute());
-                  setSurface("agents");
-                }}
-                onHome={() => {
-                  setActiveThreadRootMessageId(undefined);
-                  setFocusedMessageId(undefined);
-                  setRoomMembersOpen(false);
-                  setSurface("room");
-                  setTab("chat");
-                  setMobileRoomsOpen(true);
-                }}
-                onSettings={() => {
-                  setActiveThreadRootMessageId(undefined);
-                  setMobileRoomsOpen(false);
-                  setRoomMembersOpen(false);
-                  setSurface("settings");
-                }}
-                onTasks={() => {
-                  setMobileRoomsOpen(false);
-                  setRoomMembersOpen(false);
-                  setFocusedMessageId(undefined);
-                  setSurface("tasks");
-                }}
-                mobileHomeOpen={mobileRoomsOpen}
-                showMobileNavigation={showMobileNavigation}
-              />
-            </div>
+              </div>
+            </InteractivePopover>
           </WorkspaceEntityProvider>
         </DiagnosticNavigationContext.Provider>
       </MessageSocialProvider>

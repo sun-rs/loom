@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import {
   chmodSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { createServer } from "node:net";
@@ -53,12 +54,17 @@ let workbench;
 try {
   mkdirSync(workspaceCwd);
   mkdirSync(binDirectory);
+  // Preserve provider isolation while allowing the startup repository guard.
+  symlinkSync(
+    execFileSync("which", ["git"], { encoding: "utf8" }).trim(),
+    join(binDirectory, "git"),
+  );
   const codexPath = join(binDirectory, "codex");
   writeFileSync(
     codexPath,
     `#!${process.execPath}
 import { appendFileSync } from "node:fs";
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { createInterface } from "node:readline";
 const args = process.argv.slice(2);
 if (args.join(" ") === "debug models --bundled") {

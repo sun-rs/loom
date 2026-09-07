@@ -1,12 +1,19 @@
 import type { DatabaseSync } from "node:sqlite";
 import * as P from "@rah-os/protocol";
-import type { AuthenticatedActorContext } from "./auth.ts";
-import { requireRoomMember } from "./collaboration-policy.ts";
+import type {
+  AuthenticatedActorContext,
+  AuthenticatedWorkerExecutionContext,
+} from "./auth.ts";
+import {
+  requireRoomMember,
+  requireRoomContentReader,
+} from "./collaboration-policy.ts";
 import { messageProjectionFromRow } from "./collaboration-projection.ts";
 import {
   requireDiscoveryHuman,
-  discoveryVisibleRooms,
+  discoveryReadableRooms,
   discoveryPage,
+  GlobalDiscovery,
 } from "./global-discovery.ts";
 import { ForbiddenError, IdempotencyConflictError } from "./errors.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
@@ -57,8 +64,20 @@ export function personalCommandReplay(
   return false;
 }
 export class MessageSocial {
-  private readonly context: PersonalStateContext & { events: RoomEventWriter };
-  constructor(context: PersonalStateContext & { events: RoomEventWriter }) {
+  private readonly context: PersonalStateContext & {
+    events: RoomEventWriter;
+    requireWorker?: (
+      worker: AuthenticatedWorkerExecutionContext,
+    ) => P.ActivationCredentialScope;
+  };
+  constructor(
+    context: PersonalStateContext & {
+      events: RoomEventWriter;
+      requireWorker?: (
+        worker: AuthenticatedWorkerExecutionContext,
+      ) => P.ActivationCredentialScope;
+    },
+  ) {
     this.context = context;
   }
   private actor(auth: AuthenticatedActorContext) {
@@ -68,7 +87,7 @@ export class MessageSocial {
   }
   private message(actorId: string, roomId: string, messageId: string): Row {
     const db = this.context.database;
-    requireRoomMember(db, roomId, actorId);
+    requireRoomContentReader(db, roomId, actorId);
     const row = db
       .prepare("SELECT * FROM messages WHERE message_id=? AND room_id=?")
       .get(messageId, roomId);
@@ -84,6 +103,11 @@ export class MessageSocial {
       .all(actorId, messageId);
     return P.MessageSocialItemSchema.parse({
       messageId,
+      canReact: !!db
+        .prepare(
+          "SELECT 1 FROM memberships WHERE principal_id=? AND room_id=(SELECT room_id FROM messages WHERE message_id=?)",
+        )
+        .get(actorId, messageId),
       version: Number(
         db
           .prepare(
@@ -119,11 +143,53 @@ export class MessageSocial {
       }),
     };
   }
+  searchWorker(
+    worker: AuthenticatedWorkerExecutionContext,
+    request: P.WorkerMessageSearchRequest,
+  ) {
+    if (!this.context.requireWorker)
+      throw new ForbiddenError("Worker message tools unavailable");
+    return new GlobalDiscovery(this.context.database).searchRunMessages(
+      this.context.requireWorker(worker),
+      request,
+    );
+  }
+  reactWorker(
+    worker: AuthenticatedWorkerExecutionContext,
+    request: P.WorkerMessageReactionRequest,
+  ) {
+    if (!this.context.requireWorker)
+      throw new ForbiddenError("Worker message tools unavailable");
+    const scope = this.context.requireWorker!(worker);
+    const input = P.WorkerMessageReactionRequestSchema.parse(request);
+    this.message(scope.participantId, scope.roomId, input.messageId);
+    const message = this.context.database
+      .prepare(
+        "SELECT room_seq FROM discovery_messages WHERE message_id=? AND room_id=?",
+      )
+      .get(input.messageId, scope.roomId);
+    if (
+      !message ||
+      message.room_seq === null ||
+      Number(message.room_seq) > scope.toSeq ||
+      input.basedOnRoomSeq !== scope.toSeq
+    )
+      throw new ForbiddenError("reaction is outside delivered Run context");
+    return this.reactInput(scope.participantId, {
+      ...input,
+      roomId: scope.roomId,
+    });
+  }
   react(auth: AuthenticatedActorContext, request: P.MessageReactionRequest) {
-    const actorId = this.actor(auth),
-      input = P.MessageReactionRequestSchema.parse(request),
-      { database: db } = this.context;
+    return this.reactInput(
+      this.actor(auth),
+      P.MessageReactionRequestSchema.parse(request),
+    );
+  }
+  private reactInput(actorId: string, input: P.MessageReactionRequest) {
+    const { database: db } = this.context;
     return this.context.transaction(() => {
+      requireRoomMember(db, input.roomId, actorId);
       this.message(actorId, input.roomId, input.messageId);
       if (
         personalCommandReplay(
@@ -207,7 +273,7 @@ export class MessageSocial {
       input = P.SavedMessagesRequestSchema.parse(request),
       { database: db } = this.context;
     const p = discoveryPage(db, "human_saved_messages", actorId, input);
-    const base = `FROM human_saved_messages s JOIN discovery_messages m ON m.message_id=s.message_id JOIN rooms r ON r.room_id=m.room_id JOIN principals sender ON sender.principal_id=m.actor_id WHERE s.principal_id=? AND ${discoveryVisibleRooms} AND s.save_order<=?`;
+    const base = `FROM human_saved_messages s JOIN discovery_messages m ON m.message_id=s.message_id JOIN rooms r ON r.room_id=m.room_id JOIN principals sender ON sender.principal_id=m.actor_id WHERE s.principal_id=? AND ${discoveryReadableRooms} AND s.save_order<=?`;
     const baseArgs = [actorId, input.workspaceId, actorId, p.ceiling];
     const filters: string[] = [];
     const filterArgs: Array<string> = [];

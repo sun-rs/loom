@@ -381,17 +381,10 @@
   right: 0;
 }
 
-.rah-notification-backdrop {
-  background: transparent;
-  border: 0;
-  inset: 0;
-  position: fixed;
-  z-index: 49;
-}
-
 .rah-human-inbox {
-  bottom: 52px;
-  left: calc(var(--rail-w) + 8px);
+  position: relative;
+  max-width: calc(100vw - 16px);
+  max-height: var(--available-height, calc(100dvh - 16px));
 }
 
 .rah-human-inbox-list {
@@ -903,6 +896,17 @@
   min-height: 0;
   overflow: auto;
   padding: var(--raft-tasks-content-padding);
+}
+
+.rah-room-task-pages {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.rah-task-history-trigger {
+  margin-bottom: 10px;
 }
 
 .rah-thread-parent {
@@ -4086,11 +4090,8 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   }
 
   .rah-human-inbox {
-    bottom: calc(var(--rah-mobile-nav-h) + env(safe-area-inset-bottom) + 8px);
     height: min(360px, calc(100dvh - var(--rah-mobile-nav-h) - 24px));
-    left: 8px;
-    right: 8px;
-    width: auto;
+    width: min(320px, calc(100vw - 16px));
   }
 
   .rah-mobile-nav button.is-active {

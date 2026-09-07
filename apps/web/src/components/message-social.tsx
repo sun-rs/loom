@@ -171,34 +171,36 @@ export function MessageSocialButtons({ view }: { view: MessageSocialView }) {
   const { data, pending } = view.state ?? {};
   return (
     <>
-      <DiscoveryFilter
-        label="添加回应"
-        icon="smile-plus"
-        triggerLabel=""
-        triggerAriaLabel="添加回应"
-        className="rah-reaction-picker"
-        variant="reaction"
-        selected={false}
-        searchable={false}
-        clearable={false}
-        multiple={false}
-        showCount={false}
-        disabled={pending || !data}
-        values={[]}
-        options={QUICK_REACTIONS.map((emoji) => ({
-          id: emoji,
-          label: `用 ${emoji} 回应`,
-          leading: <ReactionGlyph emoji={emoji} />,
-        }))}
-        onChange={([emoji]) => {
-          if (emoji)
-            void view.mutate(
-              "reaction",
-              !data?.reactions.some((r) => r.emoji === emoji && r.mine),
-              emoji,
-            );
-        }}
-      />
+      {data?.canReact !== false && (
+        <DiscoveryFilter
+          label="添加回应"
+          icon="smile-plus"
+          triggerLabel=""
+          triggerAriaLabel="添加回应"
+          className="rah-reaction-picker"
+          variant="reaction"
+          selected={false}
+          searchable={false}
+          clearable={false}
+          multiple={false}
+          showCount={false}
+          disabled={pending || !data}
+          values={[]}
+          options={QUICK_REACTIONS.map((emoji) => ({
+            id: emoji,
+            label: `用 ${emoji} 回应`,
+            leading: <ReactionGlyph emoji={emoji} />,
+          }))}
+          onChange={([emoji]) => {
+            if (emoji)
+              void view.mutate(
+                "reaction",
+                !data?.reactions.some((r) => r.emoji === emoji && r.mine),
+                emoji,
+              );
+          }}
+        />
+      )}
       <button
         type="button"
         className={`msg-action-btn${data?.saved ? " is-saved" : ""}`}
@@ -327,7 +329,8 @@ export function MessageReactionSummary({ view }: { view: MessageSocialView }) {
                     onBlur={closeActorsPopover}
                     onClick={() => {
                       closeActorsPopover();
-                      void view.mutate("reaction", !r.mine, r.emoji);
+                      if (view.state?.data?.canReact !== false)
+                        void view.mutate("reaction", !r.mine, r.emoji);
                     }}
                   >
                     <span className="rah-message-reaction-icon">

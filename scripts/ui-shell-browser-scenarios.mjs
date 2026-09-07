@@ -6,7 +6,7 @@ import { parseFixtureAnnouncement } from "./real-browser-gate-support.mjs";
 
 // The existing fixture starts the real Kernel/daemon/application with isolated
 // temporary state and fake provider binaries. No reference store is imported.
-export async function startShellFixture() {
+export async function startShellFixture({ humanMatrix = false } = {}) {
   const listener = createServer();
   await new Promise((resolve) => listener.listen(0, "127.0.0.1", resolve));
   const port = listener.address().port;
@@ -20,6 +20,8 @@ export async function startShellFixture() {
         RAH_WEB_PORT: String(port),
         RAH_FIXTURE_HISTORY_MESSAGES: "5",
         RAH_FIXTURE_HOST_ID: `ui-shell-${process.pid}-${port}`,
+        RAH_FIXTURE_TASK_MATRIX: "1",
+        RAH_FIXTURE_HUMAN_MATRIX: humanMatrix ? "1" : "0",
       },
       stdio: ["ignore", "pipe", "pipe"],
     },
@@ -42,7 +44,11 @@ export async function startShellFixture() {
       if (child.exitCode !== null) throw new Error(output);
       if (/^RAH_MULTI_AGENT_FIXTURE .*\n/m.test(output)) {
         const descriptor = parseFixtureAnnouncement(output);
-        return { origin: descriptor.webOrigin, close };
+        return {
+          origin: descriptor.webOrigin,
+          roomId: descriptor.roomId,
+          close,
+        };
       }
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
@@ -215,7 +221,7 @@ export async function verifySurfaceHeaders(page, origin, output, engine) {
   for (const [surface, suffix, main, side] of routes) {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`${origin}/?surface=${surface}${suffix}`, {
-      waitUntil: "networkidle",
+      waitUntil: "load",
     });
     await page.locator(main ?? side).waitFor();
     await page.evaluate(() => document.fonts.ready);
@@ -244,10 +250,13 @@ export async function verifySurfaceHeaders(page, origin, output, engine) {
           height <= 600 ? 48 : 62,
           `${surface} ${selector} ${width}x${height}`,
         );
-        assert.equal(
-          await header.evaluate((e) => getComputedStyle(e).borderBottomWidth),
-          "2px",
-        );
+        const border = await page.waitForFunction((selector) => {
+          const element = document.querySelector(selector);
+          if (!element?.isConnected) return false;
+          return getComputedStyle(element).borderBottomWidth || false;
+        }, selector);
+        assert.equal(await border.jsonValue(), "2px");
+        await border.dispose();
       }
     }
     if (main) {
@@ -271,7 +280,7 @@ export async function verifySurfaceHeaders(page, origin, output, engine) {
   }
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${origin}/?surface=settings&settingsSection=notifications`, {
-    waitUntil: "networkidle",
+    waitUntil: "load",
   });
   await page.evaluate(() => document.fonts.ready);
   const back = page.getByRole("button", { name: "返回设置", exact: true });

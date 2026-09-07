@@ -812,3 +812,14 @@ test("the UI fails closed only on capabilities required for canonical Room recov
     "daemon 当前状态为 starting",
   );
 });
+
+test("Search preview history selects the preview Room instead of stale background Room", () => {
+  assert.equal(
+    roomSelectionFromSearch("?surface=search&room=old&previewRoom=current"),
+    "current",
+  );
+  assert.equal(
+    roomSelectionFromSearch("?surface=room&room=old&previewRoom=current"),
+    "old",
+  );
+});

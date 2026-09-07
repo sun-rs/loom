@@ -257,7 +257,21 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   assert.match(managedMcpSettings, /runRoomMutationAtLatest/u);
   assert.match(settings, /ManagedMcpSettingsContent/u);
   assert.match(settings, /LanDeviceSettingsContent/u);
-  assert.match(conversation, /className="composer"/u);
+  assert.equal(
+    (conversation.match(/<ComposerDropForm\b/gu) ?? []).length,
+    2,
+    "Chat and Thread delegate to one composer form owner",
+  );
+  const composerForm = readFileSync(
+    join(sourceDirectory, "components", "composer-drop-form.tsx"),
+    "utf8",
+  );
+  assert.match(
+    composerForm,
+    /<form[\s\S]*?className="composer rah-composer-drop-target"/u,
+  );
+  assert.match(composerForm, /onSubmit=\{onSubmit\}/u);
+  assert.doesNotMatch(conversation, /<form[\s\S]*?className="composer"/u);
   assert.match(conversation, /加载更早消息/u);
   assert.match(conversation, /<MessageTimeline/u);
   assert.match(conversation, /preserveAnchorOnNextChange/u);

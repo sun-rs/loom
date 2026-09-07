@@ -75,3 +75,43 @@ protocol classifyAttachmentPreview（唯一判型/白名单）
 4. 全量 `npm run check`、格式、diff、Web build；真实浏览器验证桌面与 390px
    的 Files、消息附件、预览、下载入口、跳转及刷新。
 5. 通过 active-work audit 后安全重启 4173；只在正式实例做无写入复核。
+
+## 2026-09-07 resource-lifetime repair
+
+`apps/web/src/file-preview-resource.ts` extracts the existing image Blob resource
+lifetime from FilePreview. Its AbortSignal owns cleanup; a late successful
+response after closing must create no URL. This is RAH lifecycle glue, not copied
+Raft source. The existing Raft/Multica comparison above still governs renderer
+selection. It adds no MIME types, streaming grant or download policy. Tests first
+reproduce the old allocate-after-cleanup behavior, then cover cancellation before
+response and exactly-once release after a completed response.
+Public attachment reads now use the current content-reader policy from the
+public-Channel design; unpublished uploads and private Agent files remain separate.
+
+## 2026-09-07 download recovery
+
+FileCard remains the single download owner for its direct/menu/preview actions.
+Its in-flight guard prevents overlapping requests; the preview receives pending
+and error state instead of starting another transport. While the dialog is open,
+download failures appear inside it, with the existing button available for retry.
+Closing the preview does not cancel an explicitly requested download. This is local
+recovery glue, not a copy of Raft's signed-URL transport. See the
+[download repair audit](../audits/2026-09-07-file-download-recovery.zh-CN.md).
+
+## 2026-09-07 shared menu
+
+FileCard now composes the internal ActionMenu over pinned Base UI 1.3.0. The old
+page-owned positioning, document key listeners and outside/focus logic are removed.
+The existing download/source callbacks and adopted menu CSS remain the same; popup
+position belongs to the shared positioner. Keyboard ArrowDown opens the menu and
+Escape restores the trigger. This follows Raft `_it`'s shared trigger/menu/item
+composition; it is a structural port with local glue, not byte-exact source reuse.
+
+## 2026-09-07 bounded binary preview rollout
+
+当前新增 <=20 MiB PDF/audio/video 认证 Blob 预览，替代上文对所有二进制内嵌预览均不可用的
+历史描述。大型流式预览仍不在此能力内。判型在 protocol，原 Files ACL/download owner 不变；
+text-preview 继续返回 415。AbortSignal 管理 Blob 生命周期，长度不匹配不分配 URL。
+PDF 采用随包 PDF.js 6.3.289 的逐页 canvas，脚本/表单不执行；保留严格 CSP 和明确错误。
+native 音视频无 autoplay，失败保留下载。具体来源、差异、PDF 工具栏限制及证据见
+[媒体预览审计](../audits/2026-09-07-media-preview-closure.zh-CN.md)。

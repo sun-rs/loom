@@ -1526,6 +1526,20 @@ try {
     "paused Agent projection",
   );
   await clickAgentAction(browser, "Bob Reviewer", "编辑");
+  await clickButton(browser, { text: "恢复 Agent" });
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-agent-manage-dialog") === null,
+    "Agent resume acknowledged",
+  );
+  await clickAgentAction(browser, "Bob Reviewer", "编辑");
+  await clickButton(browser, { text: "暂停 Agent" });
+  await waitFor(
+    browser,
+    () => document.querySelector(".rah-agent-manage-dialog") === null,
+    "Agent pause acknowledged after resume",
+  );
+  await clickAgentAction(browser, "Bob Reviewer", "编辑");
   await waitFor(
     browser,
     () => document.querySelector(".rah-agent-manage-dialog") !== null,
@@ -1956,7 +1970,9 @@ try {
   );
   assert.equal(JSON.parse(copiedComputerDiagnostic).hostId.length > 0, true);
   const openedComputerAgent = await call(browser, () => {
-    const button = document.querySelector(".rah-computer-agent-list > button");
+    const button = document.querySelector(
+      ".rah-computer-agent-list button.rah-entity-card",
+    );
     if (!(button instanceof HTMLButtonElement)) return null;
     const name = button
       .querySelector(".rah-entity-card-name")
@@ -3450,11 +3466,7 @@ try {
     () => document.querySelector(".rah-task-create-dialog") !== null,
     "Task board create dialog",
   );
-  await setTaskDialogContent(
-    browser,
-    "browser gate: board Task",
-    "Created directly from the canonical Task board",
-  );
+  await setTaskDialogContent(browser, "browser gate: board Task");
   await clickButton(browser, { text: "创建任务" });
   await waitFor(
     browser,
@@ -3547,11 +3559,8 @@ try {
     "Room settings drawer close before Review gate",
   );
   await clickButton(browser, { text: "新建任务" });
-  await setTaskDialogContent(
-    browser,
-    "browser gate: frozen Review",
-    "Kimi owns the change and Alice independently reviews the frozen submission.",
-  );
+  await setTaskDialogContent(browser, "browser gate: frozen Review");
+  await clickButton(browser, { text: "配置协作与依赖" });
   await setTaskDialogAssignee(browser, "Kimi");
   await setTaskDialogRole(browser, "审阅者", "Alice");
   await clickButton(browser, { text: "创建任务" });
@@ -4157,11 +4166,7 @@ try {
   );
   await clickButton(browser, { text: "任务" });
   await clickButton(browser, { text: "新建任务" });
-  await setTaskDialogContent(
-    browser,
-    "browser gate: close and reopen",
-    "Canonical cancellation and recovery must not reuse a completed Task.",
-  );
+  await setTaskDialogContent(browser, "browser gate: close and reopen");
   await clickButton(browser, { text: "创建任务" });
   await waitFor(
     browser,
@@ -5529,14 +5534,63 @@ async function openMessageContextMenu(
             .querySelector(".rah-message-markdown")
             ?.textContent?.trim() === messageBody.trim(),
       );
-      if (message === undefined) return null;
-      const bounds = message.getBoundingClientRect();
-      return { x: bounds.left + 80, y: bounds.top + 20 };
+      const content = message?.querySelector(".rah-message-markdown");
+      const scroller = message?.closest(".messages");
+      if (
+        !(message instanceof HTMLElement) ||
+        !(content instanceof HTMLElement) ||
+        !(scroller instanceof HTMLElement)
+      )
+        return null;
+      const viewport = scroller.getBoundingClientRect();
+      for (const bounds of [
+        content.getBoundingClientRect(),
+        message.getBoundingClientRect(),
+      ]) {
+        const left = Math.max(bounds.left, viewport.left, 0);
+        const right = Math.min(
+          bounds.right,
+          viewport.right,
+          document.documentElement.clientWidth,
+        );
+        const top = Math.max(bounds.top, viewport.top, 0);
+        const bottom = Math.min(
+          bounds.bottom,
+          viewport.bottom,
+          document.documentElement.clientHeight,
+        );
+        if (right <= left || bottom <= top) continue;
+        for (const yRatio of [0.5, 0.25, 0.75]) {
+          for (const xRatio of [0.5, 0.2, 0.8]) {
+            const x = left + (right - left) * xRatio;
+            const y = top + (bottom - top) * yRatio;
+            const hit = document.elementFromPoint(x, y);
+            if (
+              hit instanceof Element &&
+              message.contains(hit) &&
+              hit.closest("a, button, input, label") === null
+            )
+              return {
+                hitTarget: true,
+                targetClass: hit.getAttribute("class") ?? "",
+                x,
+                y,
+              };
+          }
+        }
+      }
+      return null;
     },
     body,
     scope,
   );
-  assert.ok(target, `Message ${body} must be actionable`);
+  assert.ok(target, `Message ${body} must expose a pointer target`);
+  assert.equal(target.hitTarget, true);
+  await connection.command("Input.dispatchMouseEvent", {
+    type: "mouseMoved",
+    x: target.x,
+    y: target.y,
+  });
   await connection.command("Input.dispatchMouseEvent", {
     button: "right",
     clickCount: 1,
@@ -5645,35 +5699,23 @@ async function setDialogInput(connection, index, value) {
   assert.equal(changed, true);
 }
 
-async function setTaskDialogContent(connection, title, description) {
+async function setTaskDialogContent(connection, title) {
   assert.equal(
     await call(
       connection,
-      (nextTitle, nextDescription) => {
+      (nextTitle) => {
         const dialog = document.querySelector(".rah-task-create-dialog");
         const input = dialog?.querySelector("input");
-        const textarea = dialog?.querySelector("textarea");
-        if (
-          !(input instanceof HTMLInputElement) ||
-          !(textarea instanceof HTMLTextAreaElement)
-        )
-          return false;
+        if (!(input instanceof HTMLInputElement)) return false;
         const inputSetter = Object.getOwnPropertyDescriptor(
           HTMLInputElement.prototype,
           "value",
         )?.set;
-        const textareaSetter = Object.getOwnPropertyDescriptor(
-          HTMLTextAreaElement.prototype,
-          "value",
-        )?.set;
         inputSetter?.call(input, nextTitle);
-        textareaSetter?.call(textarea, nextDescription);
         input.dispatchEvent(new Event("input", { bubbles: true }));
-        textarea.dispatchEvent(new Event("input", { bubbles: true }));
         return true;
       },
       title,
-      description,
     ),
     true,
   );

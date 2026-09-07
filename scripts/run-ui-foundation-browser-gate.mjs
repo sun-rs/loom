@@ -1,3 +1,4 @@
+import { verifyNotificationCenter } from "./ui-notification-center-browser-scenarios.mjs";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
@@ -53,6 +54,7 @@ import {
   snapshotUiEvidenceInputs,
   uiContractEvidenceInputPaths,
 } from "./ui-evidence-inputs.mjs";
+import { verifyWorkspaceSwitcherFamily } from "./ui-workspace-switcher-browser-scenarios.mjs";
 
 const registry = JSON.parse(readFileSync(registryPath, "utf8"));
 checkLibrary();
@@ -113,9 +115,13 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
   assert.ok(ready, logs);
-  for (const engine of process.env.RAH_UI_BROWSER === "chrome"
-    ? ["chrome"]
-    : ["chrome", "firefox"]) {
+  const engines =
+    process.env.RAH_UI_BROWSER === "chrome"
+      ? ["chrome"]
+      : process.env.RAH_UI_BROWSER === "firefox"
+        ? ["firefox"]
+        : ["chrome", "firefox"];
+  for (const engine of engines) {
     browser =
       engine === "chrome"
         ? await chromium.launch({
@@ -151,6 +157,8 @@ try {
       return route.abort();
     };
     const guardPage = async (target) => {
+      target.setDefaultTimeout(30_000);
+      target.setDefaultNavigationTimeout(30_000);
       target.on("request", observeRequest);
       await target.route("**/*", routeRequest);
     };
@@ -181,6 +189,8 @@ try {
           ...options,
           serviceWorkers: "block",
         });
+        context.setDefaultTimeout(30_000);
+        context.setDefaultNavigationTimeout(30_000);
         context.on("request", observeRequest);
         await context.route("**/*", routeRequest);
         return context;
@@ -199,11 +209,18 @@ try {
     });
     observeErrors(page);
     const scenario = async (id, run) => {
-      await page.evaluate(() => document.fonts.ready);
+      console.log(`UI foundation start: ${engine} ${id}`);
       await page.goto(`${origin}/test/ui-foundations.html`, {
-        waitUntil: "networkidle",
+        waitUntil: "load",
       });
-      await page.evaluate(() => document.fonts.ready);
+      // Reset from a polling/SSE product page using visible fixture readiness,
+      // not browser-global network silence across the previous navigation.
+      await page.locator(".rah-panel-tabs").first().waitFor();
+      await page.waitForFunction(
+        () => document.fonts.status === "loaded",
+        undefined,
+        { timeout: 30_000 },
+      );
       try {
         await run();
       } catch (error) {
@@ -226,7 +243,6 @@ try {
         );
         throw error;
       }
-      await page.evaluate(() => document.fonts.ready);
       assert.deepEqual(blockedRequests, []);
       assert.deepEqual(rejectedRequests, []);
       assert.deepEqual(errors, []);
@@ -236,6 +252,7 @@ try {
         id,
         status: "passed",
       });
+      console.log(`UI foundation passed: ${engine} ${id}`);
     };
     await scenario("preview-lifetime", async () => {
       // Virtual clock injects instrumentation into future frames. Keep it out
@@ -264,6 +281,9 @@ try {
       }
       assert.deepEqual(settingsErrors, []);
     });
+    await scenario("workspace-switcher-page-family", () =>
+      verifyWorkspaceSwitcherFamily(page, origin),
+    );
     await scenario("preview-content", () =>
       verifyPreviewContent(page, output, engine),
     );
@@ -706,6 +726,7 @@ try {
     });
     await scenario("integrated-shell-layout", async () => {
       shellFixture ??= await startShellFixture();
+      await verifyNotificationCenter(page, shellFixture.origin, output, engine);
       await verifyIntegratedShell(page, shellFixture.origin, output, engine);
       await verifySurfaceHeaders(page, shellFixture.origin, output, engine);
       await verifySecondaryHeaders(page, shellFixture.origin, output, engine);
@@ -774,8 +795,13 @@ try {
         .filter((row) => row.engine === engine)
         .map((row) => row.id)
         .sort(),
-      registry.scenarios.map((row) => row.id).sort(),
-      "every registered scenario must actually execute",
+      registry.scenarios
+        .filter(
+          (row) => row.runner === "scripts/run-ui-foundation-browser-gate.mjs",
+        )
+        .map((row) => row.id)
+        .sort(),
+      "every scenario assigned to the foundations runner must actually execute",
     );
   }
   assertUiEvidenceInputSnapshot(receipt.inputs, {

@@ -1,5 +1,9 @@
 # RAH OS 实施路线与门禁
 
+当前发布范围以[单 Human 主线与多人备选项目](./product/single-human-mainline-and-multi-human-backlog.zh-CN.md)为准。
+多 Human 加入、协作及差异化浏览/加入限制延期，不作为首版 Raft 对齐的阻塞项；
+保留本地认证、Agent 参与/执行权限和私有记忆隔离。下方历史计划不改变此范围。
+
 状态：**v0.1 local candidate / production provisional**。独立 `@rah-os/core`、Task Coordination v1、schema v16 anchored Task/TaskSubmission/Review 与 collaboration P2/P3 Workspace/Room/Agent catalog/Role/Message/Thread Core + Human API、atomic Placement launch claim 与 MultiLaneAgentHost 已通过 local gate；可执行 daemon config v4 已通过 Human 驱动的双 participant、双 immutable profile、两个 Activation-scoped Agent Room reply、开放 Task 单 winner、验收与重连恢复 E2。Agent/Policy control object 现只允许 managed control Room owner/admin，并禁止跨 control Room policy 引用。Host→Worker 无 Agent PAT delegation、instance generation、deadline、content-free wake、跨进程 CLI/SIGTERM/restart已达到 E2 local；Codex `gpt-5.6-sol/low`、Kimi `kimi-code/k3` 与 OpenCode `deepseek/deepseek-v4-flash/max` 又通过 absolute Worker CLI 的完整 Task gate。Task 连续编号、source Message、唯一 Thread、progress/submission reply anchor 与 frozen Review evidence 已接通；已有 Message 转 Task、Human Workspace 到 runtime mount/cwd 的 canonical 映射、真实 mixed CLI v4/reply certification和可安装 packaging。Artifact/frozen diff、剩余 Client/control/hint API、Windows recovery 和 supervisor artifact lifecycle 尚未通过。
 
 ## Phase 0：仓库与协议基线

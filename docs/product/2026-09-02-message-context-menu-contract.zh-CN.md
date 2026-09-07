@@ -2,6 +2,10 @@
 
 状态：`C/A/L/D` 完成；Raft 未取得同一在线状态，未宣称完整 `R`
 
+> 2026-09-05：Thread follow、stale-safe Task 状态动作与 Search 异步状态已由
+> [Conversation 页面族设计](../design/conversation-page-family.md)接续；本文件以下
+> “后续”段落保留为 P6.3 当时的历史边界，不再作为当前缺口登记。
+
 日期：2026-09-02
 
 ## 1. Raft 冻结来源与可证明事实

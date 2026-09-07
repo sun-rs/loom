@@ -1,3 +1,4 @@
+import { InteractivePopoverContent } from "@rah-os/ui-web/neo-brutalist/interactive-popover";
 import { useEffect, useState } from "react";
 
 import type {
@@ -35,11 +36,6 @@ export function HumanInboxCenter({
   onOpenSystem?: (target: NavigationTarget) => Promise<void> | void;
 }) {
   const [answering, setAnswering] = useState<InputRequest>();
-  const dialogRef = useDialogProtocol({
-    blocked: answering !== undefined,
-    initialFocus: "container",
-    onClose,
-  });
   useEffect(() => {
     if (
       answering !== undefined &&
@@ -54,18 +50,10 @@ export function HumanInboxCenter({
   }, [answering, requests]);
   return (
     <>
-      <button
-        aria-label="关闭通知"
-        className="rah-notification-backdrop"
-        onClick={onClose}
-      />
-      <section
-        aria-label="Human Inbox"
-        aria-modal="true"
+      <InteractivePopoverContent
+        blocked={answering !== undefined}
+        label="Human Inbox"
         className="notification-center rah-human-inbox"
-        ref={dialogRef}
-        role="dialog"
-        tabIndex={-1}
       >
         <header className="notification-center-head">
           <strong>通知</strong>
@@ -160,7 +148,7 @@ export function HumanInboxCenter({
             </div>
           )}
         </div>
-      </section>
+      </InteractivePopoverContent>
       {answering === undefined ? null : (
         <HumanInputRequestDialog
           onClose={() => setAnswering(undefined)}

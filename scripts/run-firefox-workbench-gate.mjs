@@ -37,6 +37,7 @@ const profileImagePng = Buffer.from(
   "base64",
 );
 const webPort = await availablePort();
+const completedScenarios = [];
 let browser;
 let workbench;
 
@@ -237,6 +238,31 @@ if (args.join(" ") === "--version") {
     new URL(page.url()).searchParams.get("room"),
     secondaryWorkspace.roomId,
   );
+  await workspaceTrigger.click();
+  await workspaceMenu.waitFor();
+  await workspaceRows.filter({ hasNotText: "Second Workspace" }).click();
+  await page
+    .locator(".channel-title h1", { hasText: "Agent Council" })
+    .waitFor({ timeout: 20_000 });
+
+  // Give the secondary Workspace a real desktop detail location. The mobile
+  // switch below must ignore it and enter the existing Home owner instead.
+  await workspaceTrigger.click();
+  await workspaceMenu.waitFor();
+  await workspaceRows.filter({ hasText: "Second Workspace" }).click();
+  await page
+    .locator(".channel-title h1", { hasText: "Second Council" })
+    .waitFor({ timeout: 20_000 });
+  await page.getByTitle("设置", { exact: true }).click();
+  await page.locator(".rah-settings-surface").waitFor();
+  await page.waitForFunction((workspaceId) => {
+    const suffix = `:location:${workspaceId}`;
+    return Object.keys(localStorage).some(
+      (key) =>
+        key.endsWith(suffix) &&
+        localStorage.getItem(key)?.includes("surface=settings") === true,
+    );
+  }, secondaryWorkspace.workspaceId);
   await workspaceTrigger.click();
   await workspaceMenu.waitFor();
   await workspaceRows.filter({ hasNotText: "Second Workspace" }).click();
@@ -1483,7 +1509,7 @@ if (args.join(" ") === "--version") {
   );
   assert.equal(JSON.parse(copiedComputerDiagnostic).hostId.length > 0, true);
   const computerAgentButton = page
-    .locator(".rah-computer-agent-list > button")
+    .locator(".rah-computer-agent-list button.rah-entity-card")
     .first();
   const computerAgentName =
     (
@@ -1593,6 +1619,10 @@ if (args.join(" ") === "--version") {
   await page.locator(".rah-settings-mobile-index").waitFor();
   await page.getByRole("button", { name: "主页", exact: true }).click();
   await page.locator(".rah-room-sidebar.is-open").waitFor();
+  await page.waitForFunction(() => {
+    const params = new URL(location.href).searchParams;
+    return params.has("room") && params.get("surface") !== "computers";
+  });
   const mobileWorkspaceTrigger = page.locator(".rah-mobile-space-mark");
   const mobileWorkspaceMenu = page.locator("#rah-mobile-workspace-switcher");
   await page.waitForFunction(() => {
@@ -1634,6 +1664,77 @@ if (args.join(" ") === "--version") {
     ),
     true,
   );
+  const primaryMobileHomeRoomId = await page.evaluate(() => {
+    const roomId = new URL(location.href).searchParams.get("room");
+    history.replaceState({ workspaceHomeBase: true }, "", location.href);
+    const current = new URL(location.href);
+    current.searchParams.set("workspaceHomeProbe", "current");
+    history.pushState({ workspaceHomeCurrent: true }, "", current);
+    return roomId;
+  });
+  assert.ok(primaryMobileHomeRoomId);
+  const mobileHistoryLength = await page.evaluate(() => history.length);
+  await mobileWorkspaceTrigger.click();
+  await mobileWorkspaceMenu.waitFor();
+  await mobileWorkspaceMenu
+    .getByRole("menuitemradio")
+    .filter({ hasText: "Second Workspace" })
+    .click();
+  await page.locator(".rah-room-sidebar.is-open").waitFor();
+  await page
+    .locator(".channel-title h1", { hasText: "Second Council" })
+    .waitFor({ timeout: 20_000 });
+  assert.equal(
+    new URL(page.url()).searchParams.get("room"),
+    secondaryWorkspace.roomId,
+  );
+  assert.notEqual(
+    new URL(page.url()).searchParams.get("surface"),
+    "settings",
+    "mobile Workspace selection must not restore its desktop Settings detail",
+  );
+  assert.equal(
+    await page.evaluate(() => history.length),
+    mobileHistoryLength,
+    "replace-with-home must not push the discarded mobile detail location",
+  );
+  // The visible Room can paint before React has installed the history effect
+  // for the hydrated Room catalog. Cross the interactive commit boundary so
+  // this remains a browser Back assertion rather than a hydration race.
+  await page.evaluate(
+    () =>
+      new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      ),
+  );
+  await page.goBack({ waitUntil: "domcontentloaded" });
+  assert.equal(
+    new URL(page.url()).searchParams.get("room"),
+    primaryMobileHomeRoomId,
+    `Back must return to the controlled primary Home entry; got ${page.url()}`,
+  );
+  await page
+    .locator(".channel-title h1", { hasText: "Agent Council" })
+    .waitFor({ timeout: 20_000 });
+  await page.goForward({ waitUntil: "domcontentloaded" });
+  await page
+    .locator(".channel-title h1", { hasText: "Second Council" })
+    .waitFor({ timeout: 20_000 });
+  assert.equal(
+    new URL(page.url()).searchParams.get("room"),
+    secondaryWorkspace.roomId,
+  );
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page
+    .locator(".channel-title h1", { hasText: "Second Council" })
+    .waitFor({ timeout: 20_000 });
+  assert.match(
+    (await page.locator(".rah-mobile-space-mark").textContent()) ?? "",
+    /Second Workspace/u,
+  );
+  scenario("workspace-switcher-full-app");
+  await page.getByLabel("返回主页", { exact: true }).click();
+  await page.locator(".rah-room-sidebar.is-open").waitFor();
   await page.getByRole("button", { name: "设置", exact: true }).click();
   await page.locator(".rah-settings-mobile-index").waitFor();
   await page
@@ -1652,6 +1753,13 @@ if (args.join(" ") === "--version") {
     390,
   );
   await page.getByRole("button", { name: "主页", exact: true }).click();
+  await page.locator(".rah-room-sidebar.is-open").waitFor();
+  await mobileWorkspaceTrigger.click();
+  await mobileWorkspaceMenu.waitFor();
+  await mobileWorkspaceMenu
+    .getByRole("menuitemradio")
+    .filter({ hasNotText: "Second Workspace" })
+    .click();
   await page.locator(".rah-room-sidebar.is-open").waitFor();
   await page
     .locator(".channel-row")
@@ -1757,6 +1865,7 @@ if (args.join(" ") === "--version") {
       desktopViewport: "1440x1000",
       mobileViewport: "390x844",
       persistent: started.descriptor.persistent,
+      scenarios: completedScenarios,
     })}\n`,
   );
 } finally {
@@ -1764,6 +1873,10 @@ if (args.join(" ") === "--version") {
   await terminate(workbench);
   rmSync(firefoxProfileDirectory, { force: true, recursive: true });
   rmSync(temporaryDirectory, { force: true, recursive: true });
+}
+
+function scenario(id) {
+  completedScenarios.push(id);
 }
 
 async function startWorkbench(input) {

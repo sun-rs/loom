@@ -1,6 +1,9 @@
 import { createHash } from "node:crypto";
 import type { DatabaseSync, SQLInputValue } from "node:sqlite";
 import {
+  WorkerMessageSearchRequestSchema,
+  type WorkerMessageSearchRequest,
+  type ActivationCredentialScope,
   GlobalTasksRequestSchema,
   GlobalTasksResponseSchema,
   WorkspaceSearchRequestSchema,
@@ -11,7 +14,12 @@ import {
   type WorkspaceSearchRequest,
   type MessageContextRequest,
 } from "@rah-os/protocol";
-import { requireRoomMember, roomRole } from "./collaboration-policy.ts";
+import {
+  requireRoomMember,
+  requireRoomContentReader,
+  ROOM_CONTENT_READER_PREDICATE,
+  roomRole,
+} from "./collaboration-policy.ts";
 import {
   messageProjectionFromRow,
   roomProjectionFromRow,
@@ -23,6 +31,11 @@ import { integer, text } from "./sqlite-row.ts";
 export const discoveryVisibleRooms = `r.workspace_id = ? AND r.kind <> 'control' AND r.archived_at IS NULL
   AND EXISTS(SELECT 1 FROM workspaces w WHERE w.workspace_id = r.workspace_id AND w.state = 'active')
   AND EXISTS(SELECT 1 FROM memberships access WHERE access.room_id = r.room_id AND access.principal_id = ?)`;
+
+// Content eligibility shared by Search and followed Thread Activity. Task reads retain membership.
+export const discoveryReadableRooms = `r.workspace_id=? AND r.kind<>'control' AND r.archived_at IS NULL
+ AND EXISTS(SELECT 1 FROM workspaces w WHERE w.workspace_id=r.workspace_id AND w.state='active')
+ AND ${ROOM_CONTENT_READER_PREDICATE}`;
 
 type Cursor = {
   ceiling: number;
@@ -181,6 +194,50 @@ export class GlobalDiscovery {
     });
   }
 
+  searchRunMessages(
+    scope: ActivationCredentialScope,
+    request: WorkerMessageSearchRequest,
+  ) {
+    requireRoomMember(this.db, scope.roomId, scope.participantId);
+    const input = WorkerMessageSearchRequestSchema.parse(request);
+    let p: ReturnType<typeof discoveryPage>;
+    try {
+      p = discoveryPage(this.db, "messages", scope.participantId, {
+        ...input,
+        bindingVersion: `worker:${scope.runAttemptId}:${scope.roomId}:${scope.toSeq}`,
+      });
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === "invalid discovery cursor or changed query scope"
+      )
+        throw new ForbiddenError("cursor does not belong to this Run search");
+      throw error;
+    }
+    const terms = searchTerms(input.query);
+    const rows = this.db
+      .prepare(
+        `SELECT m.* FROM discovery_messages m WHERE m.room_id=? AND m.room_seq<=?
+      AND m.message_order<=? AND m.message_order<?
+      AND (${terms.map(() => "instr(rah_casefold(m.body), ?) > 0").join(" OR ")})
+      ORDER BY m.message_order DESC LIMIT ?`,
+      )
+      .all(
+        scope.roomId,
+        scope.toSeq,
+        p.ceiling,
+        p.before,
+        ...terms,
+        p.limit + 1,
+      );
+    const page = rows.slice(0, p.limit);
+    return {
+      messages: page.map(messageProjectionFromRow),
+      ...(rows.length > p.limit
+        ? { nextCursor: p.next(Number(page.at(-1)!.message_order)) }
+        : {}),
+    };
+  }
   search(actorId: string, request: WorkspaceSearchRequest) {
     requireDiscoveryHuman(this.db, actorId);
     const input = WorkspaceSearchRequestSchema.parse(request);
@@ -208,7 +265,7 @@ export class GlobalDiscovery {
         total: 0,
       });
     const where = [
-      discoveryVisibleRooms,
+      discoveryReadableRooms,
       "m.message_order <= ?",
       "m.room_seq IS NOT NULL",
     ];
@@ -304,7 +361,7 @@ export class GlobalDiscovery {
   private directory(actorId: string, workspaceId: string, query: string) {
     const rooms = this.db
       .prepare(
-        `SELECT r.* FROM rooms r WHERE ${discoveryVisibleRooms} AND instr(rah_casefold(r.name), ?) > 0 ORDER BY r.name LIMIT 100`,
+        `SELECT r.* FROM rooms r WHERE ${discoveryReadableRooms} AND instr(rah_casefold(r.name), ?) > 0 ORDER BY r.name LIMIT 100`,
       )
       .all(workspaceId, actorId, query)
       .map(roomProjectionFromRow);
@@ -319,7 +376,7 @@ export class GlobalDiscovery {
   context(actorId: string, request: MessageContextRequest) {
     requireDiscoveryHuman(this.db, actorId);
     const input = MessageContextRequestSchema.parse(request);
-    if (input.roomId) requireRoomMember(this.db, input.roomId, actorId);
+    if (input.roomId) requireRoomContentReader(this.db, input.roomId, actorId);
     let row = this.db
       .prepare("SELECT * FROM discovery_messages WHERE message_id = ?")
       .get(input.messageId);
@@ -335,7 +392,7 @@ export class GlobalDiscovery {
       if (candidates.length === 1) row = candidates[0];
     }
     if (!row) throw new ForbiddenError("message is unavailable");
-    requireRoomMember(this.db, text(row, "room_id"), actorId);
+    requireRoomContentReader(this.db, text(row, "room_id"), actorId);
     const message = messageProjectionFromRow(row);
     const args = [message.roomId, message.threadId ?? null, message.roomSeq];
     const before = this.db

@@ -116,24 +116,92 @@
       "example": "apps/web/test/ui-foundations.tsx",
       "behaviors": ["B034", "B041"],
       "scenarios": ["splitter-contract"]
+    },
+    {
+      "id": "search-result-skeleton",
+      "description": "Raft qO/_lt five-card pending state with one status announcement; error and retry ownership remains in the typed Search page.",
+      "owner": "packages/ui-web/src/neo-brutalist/search-result-skeleton.tsx",
+      "styles": ["packages/ui-tokens/src/neo-brutalist/search.css"],
+      "example": "apps/web/src/components/global-discovery.tsx",
+      "behaviors": ["B059"],
+      "scenarios": ["discovery-page-family"]
+    },
+    {
+      "id": "interactive-popover",
+      "description": "Base UI 1.3.0 shared anchored interactive popover: Raft hover 0/120 ms, keyboard-only initial focus, outside/Escape dismissal and nested modal protection. Notification state remains in application owners.",
+      "owner": "packages/ui-web/src/neo-brutalist/interactive-popover.tsx",
+      "styles": ["packages/ui-tokens/src/neo-brutalist/popover.css"],
+      "example": "apps/web/src/components/human-inbox.tsx",
+      "behaviors": ["B070"],
+      "scenarios": ["integrated-shell-layout"]
+    },
+    {
+      "id": "task-virtual-layout",
+      "description": "Raft L8/Fj structural port: visible Task anchors across virtual stacks with bounded correction and user-input cancellation.",
+      "owner": "packages/ui-web/src/neo-brutalist/task-virtual-layout.tsx",
+      "styles": ["apps/web/src/global-discovery.css"],
+      "example": "apps/web/src/components/global-task-board.tsx",
+      "behaviors": ["B035"],
+      "scenarios": ["task-virtual-window", "discovery-page-family"]
+    },
+    {
+      "id": "task-virtual-stack",
+      "description": "Raft cce structural port: measured Task rows, overscan 6, shared scroll parent and boundary Tab traversal; canonical paging remains outside UI.",
+      "owner": "packages/ui-web/src/neo-brutalist/task-virtual-stack.tsx",
+      "styles": ["apps/web/src/global-discovery.css"],
+      "example": "apps/web/src/components/global-task-board.tsx",
+      "behaviors": ["B035"],
+      "scenarios": ["task-virtual-window", "discovery-page-family"]
+    },
+    {
+      "id": "composer-drop-overlay",
+      "description": "Raft composer overlay: 2px dashed pink, 15% pink fill, bordered white 14px bold label; pointer-transparent, never owns upload state.",
+      "owner": "packages/ui-web/src/neo-brutalist/composer-drop-overlay.tsx",
+      "styles": ["packages/ui-tokens/src/neo-brutalist/channel-extras.css"],
+      "example": "apps/web/src/components/composer-drop-form.tsx",
+      "behaviors": ["B019"],
+      "scenarios": ["composer-file-drop"]
+    },
+    {
+      "id": "composer-attachment-pickers",
+      "description": "Raft media/file buttons with filtered/unfiltered multiple inputs, shared selection, pointer focus and cancel semantics; no upload state.",
+      "owner": "packages/ui-web/src/neo-brutalist/composer-attachment-pickers.tsx",
+      "styles": ["packages/ui-tokens/src/neo-brutalist/channel-extras.css"],
+      "example": "apps/web/src/components/room-files.tsx",
+      "behaviors": ["B019"],
+      "scenarios": ["composer-file-drop"]
     }
   ],
   "templates": [
     {
       "id": "discovery-page-family",
-      "description": "Production Search, global/Room Tasks and ordinary-message actions composed from shared Raft-backed controls and canonical local data owners.",
+      "description": "Production Search, global/Room Tasks and conversation interactions composed from shared Raft-backed controls and canonical local data owners.",
       "owner": "apps/web/src/components/global-discovery.tsx",
       "export": "GlobalDiscovery",
-      "components": ["empty-state", "icon", "panel-header"],
+      "components": [
+        "empty-state",
+        "icon",
+        "panel-header",
+        "search-result-skeleton"
+      ],
       "styles": [
         "packages/ui-tokens/src/neo-brutalist/search.css",
         "packages/ui-tokens/src/neo-brutalist/activity.css",
+        "packages/ui-tokens/src/neo-brutalist/channel-extras.css",
         "apps/web/src/discovery-controls.css",
         "apps/web/src/message-social.css"
       ],
       "example": "scripts/ui-discovery-family-browser-scenarios.mjs",
       "behaviors": [
         "B025",
+        "B026",
+        "B027",
+        "B035",
+        "B036",
+        "B037",
+        "B038",
+        "B039",
+        "B040",
         "B057",
         "B058",
         "B059",

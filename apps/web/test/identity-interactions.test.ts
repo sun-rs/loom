@@ -80,9 +80,12 @@ test("workspace identity counts spaces, never Rooms, and uses workspace write au
   assert.doesNotMatch(navigation, /label="Workspace"/u);
   const app = readFileSync(new URL("../src/App.tsx", import.meta.url), "utf8");
   const identity = app.slice(
-    app.indexOf("<WorkspaceIdentity"),
-    app.indexOf("onUpdated=", app.indexOf("<WorkspaceIdentity")),
+    app.indexOf("const workspaceIdentityProps ="),
+    app.indexOf("onUpdated:", app.indexOf("const workspaceIdentityProps =")),
   );
+  assert.match(identity, /capabilities\.roomWrite === true/u);
+  assert.match(identity, /workspaceMembershipRole === "owner"/u);
+  assert.match(identity, /workspaceMembershipRole === "admin"/u);
   assert.doesNotMatch(identity, /canManageCurrentWorkspaceAgent/u);
 });
 test("mobile Home reuses the canonical workspace switcher instead of a static label", () => {
@@ -98,12 +101,15 @@ test("mobile Home reuses the canonical workspace switcher instead of a static la
   assert.match(identity, /mobile = false/u);
   assert.match(identity, /rah-mobile-space-mark/u);
   assert.match(identity, /rah-mobile-workspace-switcher/u);
+  assert.match(identity, /"replace-with-home"/u);
   assert.match(navigation, /mobileWorkspaceIdentity\?: ReactNode/u);
   assert.match(navigation, /\{mobileWorkspaceIdentity \?\?/u);
   assert.match(
     app,
     /mobileWorkspaceIdentity=\{\s*<WorkspaceIdentity \{\.\.\.workspaceIdentityProps\} mobile/u,
   );
+  assert.match(app, /openMobileHome/u);
+  assert.match(app, /navigationMode === "replace-with-home"/u);
   assert.doesNotMatch(
     navigation,
     /<span className="rah-mobile-home-workspace rah-mobile-only">/u,

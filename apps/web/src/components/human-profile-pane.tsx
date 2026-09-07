@@ -1,5 +1,6 @@
 import type { RahClient } from "@rah-os/client-sdk";
-import { useState } from "react";
+import type { MembershipRole } from "@rah-os/protocol";
+import { useEffect, useRef, useState } from "react";
 import { PanelHeader } from "@rah-os/ui-web/neo-brutalist/panel-header";
 import { PanelHeaderAction } from "@rah-os/ui-web/neo-brutalist/panel-header-action";
 import { ProfileSection } from "@rah-os/ui-web/neo-brutalist/profile-section";
@@ -13,24 +14,39 @@ import {
 import { useHumanProfile } from "../human-profile-hooks.ts";
 import { HumanProfileFields } from "./human-profile-fields.tsx";
 import { RolePermissionsHelp } from "./agent-role-permissions.tsx";
+import {
+  roomMemberRoleLabel,
+  roomMemberRoleOptions,
+} from "../room-member-role.ts";
 
 export function HumanProfilePane({
   client,
   principalId,
   workspaceId,
   onBack,
+  canChangeRole,
+  onChangeRole,
   onOpenAgent,
 }: {
   client: RahClient;
   principalId: string;
   workspaceId: string | undefined;
   onBack: () => void;
+  canChangeRole: boolean;
+  onChangeRole: (principalId: string, role: MembershipRole) => Promise<void>;
   onOpenAgent: (id: string) => void;
 }) {
   const entities = useWorkspaceEntities();
   const context = useHumanIdentity();
   const [opening, setOpening] = useState(false);
   const [directError, setDirectError] = useState<string>();
+  const [roleEditing, setRoleEditing] = useState(false);
+  const [rolePending, setRolePending] = useState(false);
+  const [roleError, setRoleError] = useState<string>();
+  const [selectedRole, setSelectedRole] = useState<MembershipRole>("member");
+  const roleTrigger = useRef<HTMLButtonElement>(null);
+  const roleSelect = useRef<HTMLSelectElement>(null);
+  const restoreRoleFocus = useRef(false);
   const actorId = entities?.scope?.actorId;
   const { profile, error, refresh } = useHumanProfile(
     client,
@@ -41,9 +57,38 @@ export function HumanProfilePane({
   // is not evidence of membership, and a failed lookup is not an empty profile.
   const human = profile?.principal;
   const name = human?.displayName || human?.handle || "成员资料";
+  const ownerCount =
+    entities?.humans().filter(({ membership }) => membership.role === "owner")
+      .length ?? 0;
+  const roleEditable = Boolean(
+    human &&
+    human.principalId !== actorId &&
+    canChangeRole &&
+    (profile?.membership.role !== "owner" || ownerCount > 1),
+  );
+  useEffect(() => {
+    if (!roleEditable) setRoleEditing(false);
+    if (!roleEditing && roleEditable && restoreRoleFocus.current) {
+      roleTrigger.current?.focus();
+      restoreRoleFocus.current = false;
+    }
+  }, [roleEditable, roleEditing]);
+  useEffect(() => {
+    if (roleEditing) roleSelect.current?.focus();
+  }, [roleEditing]);
+  useEffect(() => {
+    setRoleEditing(false);
+    setRoleError(undefined);
+  }, [principalId, workspaceId]);
+  const closeRoleEditor = () => {
+    restoreRoleFocus.current = true;
+    setSelectedRole(profile?.membership.role ?? "member");
+    setRoleError(undefined);
+    setRoleEditing(false);
+  };
   return (
     <section className="rah-agent-detail-panel" aria-label="Human 详情">
-      <PanelHeader kind="agent" className="rah-agent-detail-head">
+      <PanelHeader kind="surface" className="rah-agent-detail-head">
         <PanelHeaderAction
           className="rah-agent-mobile-back"
           aria-label="返回成员列表"
@@ -108,18 +153,104 @@ export function HumanProfilePane({
                 <div>
                   <dt>
                     角色 <RolePermissionsHelp subject="human" />
+                    {roleEditable && !roleEditing ? (
+                      <button
+                        aria-label="编辑角色"
+                        className="rah-profile-edit rah-interaction-flat"
+                        onClick={() => {
+                          setSelectedRole(profile.membership.role);
+                          setRoleError(undefined);
+                          setRoleEditing(true);
+                        }}
+                        ref={roleTrigger}
+                        title="编辑角色"
+                        type="button"
+                      >
+                        <Icon name="pencil" />
+                      </button>
+                    ) : null}
                   </dt>
                   <dd>
-                    <span
-                      className="rah-profile-role"
-                      data-role={profile.membership.role}
-                    >
-                      {
-                        { owner: "所有者", admin: "管理员", member: "成员" }[
-                          profile.membership.role
-                        ]
-                      }
-                    </span>
+                    {roleEditing && roleEditable ? (
+                      <form
+                        className="rah-profile-role-editor"
+                        onKeyDown={(event) => {
+                          if (event.key !== "Escape" || rolePending) return;
+                          event.preventDefault();
+                          closeRoleEditor();
+                        }}
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          if (
+                            !human ||
+                            !roleEditable ||
+                            rolePending ||
+                            selectedRole === profile.membership.role
+                          )
+                            return;
+                          setRolePending(true);
+                          setRoleError(undefined);
+                          void onChangeRole(human.principalId, selectedRole)
+                            .then(() => {
+                              closeRoleEditor();
+                              refresh();
+                            })
+                            .catch((cause: unknown) =>
+                              setRoleError(
+                                cause instanceof Error
+                                  ? cause.message
+                                  : "更新角色失败",
+                              ),
+                            )
+                            .finally(() => setRolePending(false));
+                        }}
+                      >
+                        <select
+                          aria-label={`${name} 的角色`}
+                          disabled={rolePending}
+                          onChange={(event) =>
+                            setSelectedRole(
+                              event.target.value as MembershipRole,
+                            )
+                          }
+                          ref={roleSelect}
+                          value={selectedRole}
+                        >
+                          {roomMemberRoleOptions("human").map((role) => (
+                            <option key={role} value={role}>
+                              {roomMemberRoleLabel(role)}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="rah-profile-role-actions">
+                          <button
+                            className="btn btn-pink"
+                            disabled={
+                              rolePending ||
+                              selectedRole === profile.membership.role
+                            }
+                          >
+                            {rolePending ? "保存中…" : "保存"}
+                          </button>
+                          <button
+                            className="btn"
+                            disabled={rolePending}
+                            onClick={closeRoleEditor}
+                            type="button"
+                          >
+                            取消
+                          </button>
+                        </div>
+                        {roleError ? <p role="alert">{roleError}</p> : null}
+                      </form>
+                    ) : (
+                      <span
+                        className="rah-profile-role"
+                        data-role={profile.membership.role}
+                      >
+                        {roomMemberRoleLabel(profile.membership.role)}
+                      </span>
+                    )}
                   </dd>
                 </div>
                 <div>

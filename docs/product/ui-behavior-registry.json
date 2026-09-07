@@ -2,6 +2,512 @@
   "schemaVersion": 1,
   "milestone": "22086e2b9767343984bb0b5f4d4725240ac09d20",
   "legacyInventory": "packages/raft-ui-snapshot/reference/protocol/rah-ui-capability-inventory.json",
+  "delivery": [
+    {
+      "id": "UI010",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "共享 Settings 页面族已通过当前 Chrome/Firefox 矩阵；OS/iOS 横幅属于 B063/B069 设备验收。"
+    },
+    {
+      "id": "UI009",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "Agent/Computer 资料族的限定共享投影与布局已通过当前矩阵；未包含的管理动作由 B042-B047 跟踪。"
+    },
+    {
+      "id": "UI008",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "Workspace Human 资料、统一身份入口和旧响应围栏已通过当前页面族矩阵。"
+    },
+    {
+      "id": "UI006",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "共享实体卡片限定范围已通过组件与双浏览器组合矩阵。"
+    },
+    {
+      "id": "UI007",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "已登记的 Search/Task/Activity 空态由共享 owner 提供并通过双浏览器矩阵。"
+    },
+    {
+      "id": "B001",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "Activity filter 已接 typed 查询，但旧 intent 尚未按全部筛选、错误和刷新状态重新验收。"
+    },
+    {
+      "id": "B002",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "Activity 精确 Message/Thread 跳转已有 owner，仍需该 intent 的同条件入口与返回焦点验收。"
+    },
+    {
+      "id": "B003",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "read/done frontier 已 canonical 化，仍需完整 Activity 列表动作与新到达竞态验收。"
+    },
+    {
+      "id": "B004",
+      "applicability": "pending",
+      "state": "needs-decision",
+      "reason": "Raft 社区协议是否映射为本地 Workspace 协议尚无产品裁决。"
+    },
+    {
+      "id": "B005",
+      "applicability": "excluded",
+      "state": "not-applicable",
+      "reason": "2026-09-07 用户决定：Human 邀请整体延期到未来多 Human 协作项目，不适用于当前单 Human 首版；不是已完成。见 docs/product/single-human-mainline-and-multi-human-backlog.zh-CN.md。"
+    },
+    {
+      "id": "B006",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "当前已接 Human 目录/角色/权限刷新、资料与 DM；新增隔离多 Human 双浏览器场景。完整官方多 Human、Agent 与管理矩阵仍保留未验收范围，不升级为全项 verified。 2026-09-07 范围更新：多 Human 协作及差异化权限子行为延期；本人资料和 Agent 管理适用部分继续按单 Human 主线验收，不要求完整多人矩阵。"
+    },
+    {
+      "id": "B007",
+      "applicability": "pending",
+      "state": "needs-decision",
+      "reason": "Workspace onboarding 配置在单机产品中的业务含义尚未定义。"
+    },
+    {
+      "id": "B008",
+      "applicability": "excluded",
+      "state": "not-applicable",
+      "reason": "当前产品只支持固定 canonical Room 角色，不复制 Raft 中央自定义角色删除。"
+    },
+    {
+      "id": "B009",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "当前已接 Human 目录/角色/权限刷新、资料与 DM；新增隔离多 Human 双浏览器场景。完整官方多 Human、Agent 与管理矩阵仍保留未验收范围，不升级为全项 verified。 2026-09-07 范围更新：多 Human 协作及差异化权限子行为延期；本人资料和 Agent 管理适用部分继续按单 Human 主线验收，不要求完整多人矩阵。"
+    },
+    {
+      "id": "B010",
+      "applicability": "excluded",
+      "state": "not-applicable",
+      "reason": "RAH managed control Room 是内核不变量，不提供 Raft 中央系统频道选择。"
+    },
+    {
+      "id": "B011",
+      "applicability": "pending",
+      "state": "needs-decision",
+      "reason": "服务器翻译 owner 与隐私/模型策略尚未裁决，不能仅复制可见开关。"
+    },
+    {
+      "id": "B012",
+      "applicability": "excluded",
+      "state": "not-applicable",
+      "reason": "中央账户套餐和结账配置明确不在本地产品范围。"
+    },
+    {
+      "id": "B013",
+      "applicability": "excluded",
+      "state": "not-applicable",
+      "reason": "付款提交明确不在本地产品范围。"
+    },
+    {
+      "id": "B014",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "频道 SOS stop/resume 已接 canonical operation 和 Host terminal proof；待完整 busy/重启/歧义响应与官方页面验收。"
+    },
+    {
+      "id": "B015",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "收藏、取消、分页、右键菜单与精确 deep link 已接，需按本 intent 独立收口证据。"
+    },
+    {
+      "id": "B016",
+      "applicability": "applicable",
+      "state": "needs-feature",
+      "reason": "单 Human Room 创建/归档/恢复等主线保留；已实现公开预览/Tasks/Files/Thread/收藏/本人加入。用户已将多 Human 差异化阅读/加入及非成员专属完整对齐延期，不再锁定首版施工。Agent Room 参与和执行权限仍属主线；不声明整行 verified。"
+    },
+    {
+      "id": "B017",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "置顶、移出与排序已持久化，需单独完成 Room sidebar 行为族证据。"
+    },
+    {
+      "id": "B018",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "名称、描述、可见性使用 causal room.update；需完整设置保存/冲突/取消验收。"
+    },
+    {
+      "id": "B019",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "Chat/DM/Thread 拖放接入原上传/消息 owner；本地双浏览器交付链已有证据，最终归档禁止态与正式重启记录另核；官网现场同条件双边仍未验收。"
+    },
+    {
+      "id": "B020",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "授权文件流下载已接，需浏览器下载结果和 ACL 失效态验收。"
+    },
+    {
+      "id": "B021",
+      "applicability": "applicable",
+      "state": "needs-feature",
+      "reason": "现有菜单只有下载/定位，尚未核清并覆盖官方适用动作全集。"
+    },
+    {
+      "id": "B022",
+      "applicability": "applicable",
+      "state": "needs-feature",
+      "reason": "基础 content preview 已接；完整文件类型、大文件与失败交互仍缺。"
+    },
+    {
+      "id": "B023",
+      "applicability": "pending",
+      "state": "needs-decision",
+      "reason": "浏览器无法直接 Finder reveal，需裁决窄原生桥或明确本地替代。"
+    },
+    {
+      "id": "B024",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "Room 成员增删与列表已 canonical 化，需成员管理完整页面族验收。"
+    },
+    {
+      "id": "B025",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "限定消息动作族已由真实鼠标、canonical reaction/save/forward/thread/task 结果验证。"
+    },
+    {
+      "id": "B026",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "Chat/Thread 测量式折叠与持久偏好已通过当前浏览器矩阵。"
+    },
+    {
+      "id": "B027",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "Room/Thread composer 的 Enter、IME、typed mutation 与 Room ledger 结果已验证。"
+    },
+    {
+      "id": "B028",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "390×844 pane 已有覆盖，但旧 intent 尚未完成所有入口和返回状态登记。"
+    },
+    {
+      "id": "B029",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "移动 typed URL/reload 已接，需独立核清全部 route transition。"
+    },
+    {
+      "id": "B030",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "Chat/Tasks/Files tabs 已共享，Files 不可用和晚到结果边界仍需组合验收。"
+    },
+    {
+      "id": "B031",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "Room create 走 control Room causal owner，需公开/私密/取消/错误完整验收。"
+    },
+    {
+      "id": "B032",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "Room select 与 bounded session 已接，需侧栏排序、草稿、晚到响应组合验收。"
+    },
+    {
+      "id": "B033",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "手动/最近/A-Z 与拖拽置顶已持久化，需 Room sidebar 页面族集中验收。"
+    },
+    {
+      "id": "B034",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "Room sidebar splitter 的 pointer、keyboard 与边界已在共享矩阵验证。"
+    },
+    {
+      "id": "B035",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "五列折叠默认值及 Room/global 实卡片已在双浏览器验证。"
+    },
+    {
+      "id": "B036",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "多标题、原子角色/依赖、部分成功精确重试与 canonical 创建结果已在双浏览器验证。"
+    },
+    {
+      "id": "B037",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "Room/global 创建者和负责人筛选菜单的身份、焦点、空态与窄屏已验证。"
+    },
+    {
+      "id": "B038",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "Room/global 看板与列表共用 presentation owner，并通过 desktop/mobile 验收。"
+    },
+    {
+      "id": "B039",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "Thread 关闭、Escape 与精确触发器焦点返回已在真实浏览器验证。"
+    },
+    {
+      "id": "B040",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "消息/任务入口打开 canonical Thread、关注与回复结果已验证。"
+    },
+    {
+      "id": "B041",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "Thread 左边缘 splitter 的 pointer、keyboard、持久宽度与边界已验证。"
+    },
+    {
+      "id": "B042",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "Computer Agent 卡片已接 App 资料路由；待当前页面族与同条件官方验收。"
+    },
+    {
+      "id": "B043",
+      "applicability": "applicable",
+      "state": "needs-feature",
+      "reason": "诊断信息和本机 doctor 命令复制已实现；剩余是恢复指导与真实管理结果，不能把诊断命令当恢复操作。"
+    },
+    {
+      "id": "B044",
+      "applicability": "applicable",
+      "state": "needs-feature",
+      "reason": "Computer 创建入口、Agent 工作区有界扫描、批量启用/停用、restart/session/full 已接真实 owner 并通过隔离双浏览器；Computer 服务自身重启/升级、孤儿目录清理及整页双边仍未完成，不能将部分操作标记整行 verified。"
+    },
+    {
+      "id": "B045",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "单机自动选中是记录过的本地差异；需验证刷新、空态和未来多机边界。"
+    },
+    {
+      "id": "B046",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "本机恢复指南入口已实现，随正式工作台提供本地文档并经过浏览器验证；这是本地适配，完整 Raft 同条件行为对照仍未完成。"
+    },
+    {
+      "id": "B047",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "Runtime chip 已接 ComputerRuntimeInspector；待完整可用/离线/键盘/移动与官方同条件验收。"
+    },
+    {
+      "id": "B048",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "Computer sidebar 共用宽度边界，需要该页面的 pointer/keyboard 实页验收。"
+    },
+    {
+      "id": "B049",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "Agent pause/resume/delete/reset 已接 execution fence，需成员页面整族重验。"
+    },
+    {
+      "id": "B050",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "managed Agent provision 已接；需入口、官方头像分配、错误与刷新验收。"
+    },
+    {
+      "id": "B051",
+      "applicability": "excluded",
+      "state": "not-applicable",
+      "reason": "2026-09-07 用户决定：Human 邀请整体延期到未来多 Human 协作项目，不适用于当前单 Human 首版；不是已完成。见 docs/product/single-human-mainline-and-multi-human-backlog.zh-CN.md。"
+    },
+    {
+      "id": "B052",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "当前已接 Human 目录/角色/权限刷新、资料与 DM；新增隔离多 Human 双浏览器场景。完整官方多 Human、Agent 与管理矩阵仍保留未验收范围，不升级为全项 verified。 2026-09-07 范围更新：多 Human 协作及差异化权限子行为延期；本人资料和 Agent 管理适用部分继续按单 Human 主线验收，不要求完整多人矩阵。"
+    },
+    {
+      "id": "B053",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "当前已接 Human 目录/角色/权限刷新、资料与 DM；新增隔离多 Human 双浏览器场景。完整官方多 Human、Agent 与管理矩阵仍保留未验收范围，不升级为全项 verified。 2026-09-07 范围更新：多 Human 协作及差异化权限子行为延期；本人资料和 Agent 管理适用部分继续按单 Human 主线验收，不要求完整多人矩阵。"
+    },
+    {
+      "id": "B054",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "关系图已按 ACL-safe Channel membership 建立；不包含无事实来源的 Human-Computer 所有权，待完整双边与权限页面族验收。"
+    },
+    {
+      "id": "B055",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "Members splitter 已有共享实现，需要成员页面实页 pointer/keyboard 验收。"
+    },
+    {
+      "id": "B056",
+      "applicability": "applicable",
+      "state": "needs-feature",
+      "reason": "七个 Agent tab 可导航，但 Reminder/Files/Workspace 等内容仍有未完项。"
+    },
+    {
+      "id": "B057",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "Search sender/scope/channel/time filters 与 typed 查询已通过双浏览器页面族。"
+    },
+    {
+      "id": "B058",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "清除筛选、保留 surface 与焦点返回已通过当前 Search 页面族。"
+    },
+    {
+      "id": "B059",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "查询、IME、loading/error/empty/history 与本地索引结果已验证；不宣称中央排序同构。"
+    },
+    {
+      "id": "B060",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "相关度/最新可见规则和本地 canonical 排序已通过页面族验收。"
+    },
+    {
+      "id": "B061",
+      "applicability": "excluded",
+      "state": "not-applicable",
+      "reason": "RAH 不托管用户的 Provider CLI 账户连接。"
+    },
+    {
+      "id": "B062",
+      "applicability": "excluded",
+      "state": "not-applicable",
+      "reason": "RAH 不复制 Raft 中央账户密码管理；本地凭据撤销由独立 owner 负责。"
+    },
+    {
+      "id": "B063",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "偏好 owner 已接；仍需真实 Chrome/Firefox/macOS/iOS 通知送达与设置关闭验收。"
+    },
+    {
+      "id": "B064",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "Workspace/Human 本地资料更新已接；需按适用字段与 Raft 页面重新验收。"
+    },
+    {
+      "id": "B065",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "适用 Settings sections 可路由恢复；各 section 功能状态仍由独立行为项裁决。"
+    },
+    {
+      "id": "B066",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "本地 LAN device session revoke 已接；需和中央 session 差异一起形成验收。"
+    },
+    {
+      "id": "B067",
+      "applicability": "applicable",
+      "state": "needs-feature",
+      "reason": "主导航已接，但适用的帮助、文档和资源入口尚未全部闭环。"
+    },
+    {
+      "id": "B068",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "通知 dismiss 已 Human×Workspace 持久化，需要页内中心与新版本重现组合验收。"
+    },
+    {
+      "id": "B069",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "默认启用、权限请求、订阅和 opt-out 已接；缺真实设备投递验收。"
+    },
+    {
+      "id": "B070",
+      "applicability": "applicable",
+      "state": "needs-verification",
+      "reason": "已结构化移植 Raft 桌面 0/120ms hover、仅键盘初始焦点、移动点击入口；本地完整 App 浏览器回归通过，官方同条件非空通知与设备投递尚未验收。"
+    },
+    {
+      "id": "B071",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "Chrome/Firefox 组件页覆盖点击式浮层、焦点、排序、最近 URL 与管理弹窗；Firefox 生产 App 另以两个 canonical Workspace 验证移动 Home、忽略桌面详情、history replace、Back/Forward 与 reload。"
+    },
+    {
+      "id": "B072",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "全局 Tasks 三类筛选与统一身份选项已通过双浏览器页面族。"
+    },
+    {
+      "id": "B073",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "全局 Task 清除筛选与异步旧响应隔离已在页面族验证。"
+    },
+    {
+      "id": "B074",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "全局 Tasks 看板/列表与 URL 投影已通过页面族验收。"
+    },
+    {
+      "id": "UI001",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "Agent inspector splitter 的默认/最小/最大、pointer 与 keyboard 已在组合矩阵验证。"
+    },
+    {
+      "id": "UI002",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "已登记的 header icon action 几何与交互状态通过共享矩阵。"
+    },
+    {
+      "id": "UI003",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "已列页面的 header layout slots 通过多视口组合矩阵。"
+    },
+    {
+      "id": "UI005",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "通知只读状态、过期响应和重试在双浏览器矩阵通过；投递由 B063/B069 跟踪。"
+    },
+    {
+      "id": "UI004",
+      "applicability": "applicable",
+      "state": "verified",
+      "reason": "Room/Agent tabs 的共享焦点与横向滚动协议已通过组合矩阵。"
+    }
+  ],
   "sources": [
     {
       "id": "raft-settings-20260905",
@@ -122,6 +628,37 @@
       "differences": "RAH retains the Raft Tasks/Search control order, sentinel rows, query/sort rules and popover behavior, but resolves people from the canonical Workspace entity graph and executes local typed SDK queries. No Raft central relevance service or simulated reference store is imported."
     },
     {
+      "id": "task-page-family",
+      "kind": "extracted-port",
+      "source": "raft-web-20260831",
+      "owner": "apps/web/src/components/global-task-board.tsx",
+      "locator": "pce Task page composition / Vst task card / qst status menu / Kst multi-title create dialog; five columns with Done and Closed initially collapsed",
+      "needles": [
+        "function Vst",
+        "function Kst",
+        "task.create.addAnother",
+        "待确认",
+        "已关闭",
+        "shadow-[2px_2px_0_0_black]"
+      ],
+      "differences": "Raft's five-column/card/menu/presentation contract and Kst primary multi-title screen are adopted for both global and Room views. RAH adds an explicitly labelled pre-create collaboration/dependency stage; it is a local reliability adaptation, not attributed to Raft. RAH does not import Raft's central task service or Multica's Issue state machine: the local Kernel remains the only Task lifecycle owner, disables status choices that would counterfeit execution or Review evidence, and records close/reopen in the canonical Room ledger."
+    },
+    {
+      "id": "workspace-switcher-family",
+      "kind": "extracted-port",
+      "source": "raft-web-20260831",
+      "owner": "apps/web/src/components/workspace-identity.tsx",
+      "locator": "eQe/Moe Workspace switcher and mobile-server-switcher-menu: click-open anchored menu, focus/outside/Escape lifecycle, independent drag handle, per-Server route restore",
+      "needles": [
+        "Switch or Create Server",
+        "updateServerOrder",
+        "replace-with-home",
+        "max-h-[calc(100dvh-16px)]",
+        "w-64"
+      ],
+      "differences": "Raft Server identity, menu geometry and interaction lifecycle are structurally ported to canonical local Workspaces. RAH keeps order and recent location as bounded Human-scoped browser preferences and revalidates Room ownership before restore; it does not import Raft's central Server/community state machine or claim cross-browser preference sync. Mobile selection intentionally follows Raft's replace-with-home behavior."
+    },
+    {
       "id": "message-social-family",
       "kind": "extracted-port",
       "source": "raft-web-20260831",
@@ -135,6 +672,21 @@
         "role:\"menuitemradio\""
       ],
       "differences": "Raft interaction shape is preserved while shared reactions and private saves are durable RAH Kernel facts. The current scope excludes message edit/delete policy and does not infer business completion from a social action."
+    },
+    {
+      "id": "conversation-interaction-family",
+      "kind": "extracted-port",
+      "source": "raft-web-20260831",
+      "owner": "apps/web/src/components/conversation-panes.tsx",
+      "locator": "Bf message item/context menu and qO Search states: ordered Thread follow and Task actions, five loading cards, retryable failure, composition request barrier",
+      "needles": [
+        "message.messageItem.followThread",
+        "message.messageItem.markAsDone",
+        "message.messageItem.reopenTask",
+        "Array.from({length:5",
+        "compositionstart"
+      ],
+      "differences": "Raft labels, conditional placement and asynchronous presentation are ported. RAH uses typed local SDK reads and Kernel-owned Thread/Task mutations. A completed Task is deliberately not reopened because its canonical completion and Review evidence are immutable; unsupported translation/edit/delete actions are not invented."
     },
     {
       "id": "panel-header-slots",
@@ -199,9 +751,94 @@
       "kind": "rah-local",
       "owner": "apps/web/src/web-push-presentation.ts",
       "differences": "仅通知读取状态展示：未知不等于无订阅、不支持或零设备，异常可见且只读重试，复用既有Raft registration helpers与latest-request，非通知投递状态机。"
+    },
+    {
+      "id": "notification-center-popover",
+      "kind": "extracted-port",
+      "source": "raft-web-20260831",
+      "owner": "packages/ui-web/src/neo-brutalist/interactive-popover.tsx",
+      "locator": "Hoe desktop/mobile trigger, bQe popup initialFocus and positioning",
+      "needles": [
+        "openOnHover:!0,delay:0,closeDelay:120",
+        "initialFocus:o=>o===\"keyboard\"",
+        "sideOffset:8"
+      ],
+      "differences": "Reuse Base UI 1.3.0 (MIT) like Multica popover wrapper; RAH keeps existing local notification and InputRequest content, authenticated dismiss/open and a separately blocked answer dialog. Shared UI wrapper is RAH glue, not copied Raft server logic. No claim of complete nonempty notification visual parity."
+    },
+    {
+      "id": "task-virtual-window",
+      "kind": "extracted-port",
+      "source": "raft-web-20260831",
+      "owner": "packages/ui-web/src/neo-brutalist/task-virtual-stack.tsx",
+      "locator": "L8/Fj/lce layout anchors and cce virtual stack, offsets 3134583–3142150",
+      "needles": [
+        "function L8({scrollElementRef:e",
+        "function cce({items:e",
+        "overscan:6,scrollMargin:l"
+      ],
+      "differences": "Structural typed port with explicit scroll refs and existing TanStack React Virtual, shared by Room/global board and list. RAH Task cards, authenticated mutations and bounded data pagination remain existing owners; no upstream server or Task state machine is inferred. See docs/design/task-virtual-window.md."
+    },
+    {
+      "id": "composer-file-drop",
+      "kind": "extracted-port",
+      "source": "raft-web-20260831",
+      "owner": "apps/web/src/components/composer-drop-form.tsx",
+      "locator": "Composer Files-only drag depth, directory skip, batch dedupe, overlay; offsets 2230500–2240900",
+      "needles": [
+        "message.composer.foldersCantUpload",
+        "data-testid\":\"composer-drop-overlay",
+        "onDragEnter:Ps,onDragLeave:Sa,onDragOver:Ea,onDrop:_r"
+      ],
+      "differences": "Structural port into one composer form and shared ui-web/ui-tokens overlay. Existing FileUploadStore and RoomFiles remain owners. Current permissions/pending/task mode block drops; pointer-transparent overlay and cancel cleanup. See docs/design/composer-file-drop.md. Not live official bilateral acceptance."
+    },
+    {
+      "id": "composer-attachment-pickers",
+      "kind": "extracted-port",
+      "source": "raft-web-20260831",
+      "owner": "packages/ui-web/src/neo-brutalist/composer-attachment-pickers.tsx",
+      "locator": "VGe media accept at 2209742, paired inputs/shared Pr at 2244410; k3e image-plus geometry",
+      "needles": [
+        "image/*,video/*",
+        "composer-media-input",
+        "message.composer.attachImage"
+      ],
+      "differences": "Structural shared presentation port; original FileUploadStore/RoomFiles remain owners. Current permission/pending/task mode is checked again on selection. See docs/design/composer-attachment-pickers.md. Native OS picker and official upload/send bilateral remain unverified."
     }
   ],
   "scenarios": [
+    {
+      "id": "workspace-switcher-page-family",
+      "runner": "scripts/run-ui-foundation-browser-gate.mjs",
+      "coverage": [
+        "chrome",
+        "firefox",
+        "desktop-click-open",
+        "anchored-geometry",
+        "long-name",
+        "current-workspace",
+        "outside-dismiss",
+        "escape-focus-return",
+        "pointer-order-reload",
+        "per-workspace-recent-url",
+        "separate-management-dialog",
+        "390x844",
+        "mobile-replace-with-home"
+      ]
+    },
+    {
+      "id": "workspace-switcher-full-app",
+      "runner": "scripts/run-firefox-workbench-gate.mjs",
+      "coverage": [
+        "production-app",
+        "desktop-remembered-settings-location",
+        "390x844-mobile-home",
+        "mobile-ignores-desktop-detail",
+        "history-replace",
+        "browser-back-forward",
+        "reload-persistence",
+        "canonical-workspace-room-identity"
+      ]
+    },
     {
       "id": "settings-family",
       "runner": "scripts/run-ui-foundation-browser-gate.mjs",
@@ -271,7 +908,13 @@
         "runtime-dialog-dirty-state",
         "reset-report-cancel",
         "desktop",
-        "390x844"
+        "390x844",
+        "five-task-columns",
+        "terminal-columns-collapsed",
+        "status-menu-five-options",
+        "canonical-close-reopen",
+        "independent-task-list-and-room-ledger",
+        "multi-title-task-create"
       ]
     },
     {
@@ -310,9 +953,18 @@
         "sentinel-without-avatar",
         "canonical-agent-avatar",
         "search-no-result",
+        "search-ime-request-barrier",
+        "search-five-card-loading",
+        "search-error-retry",
         "shared-empty-contexts",
         "message-three-action-toolbar",
         "seven-quick-reactions",
+        "message-thread-follow-canonical",
+        "message-task-review-protection",
+        "task-multi-title-canonical-dependency",
+        "long-message-toggle",
+        "canonical-composer-send",
+        "thread-open-close-focus-return",
         "escape-focus-return",
         "desktop",
         "390x844"
@@ -383,6 +1035,88 @@
         "1023/1024",
         "1279/1280",
         "short-height"
+      ]
+    },
+    {
+      "id": "human-membership-authority",
+      "runner": "scripts/run-human-membership-browser-gate.mjs",
+      "coverage": [
+        "chrome",
+        "firefox",
+        "three-canonical-humans",
+        "owner-admin-member",
+        "last-owner-rejection",
+        "role-save-canonical-read",
+        "live-role-refresh",
+        "directory-error-retry",
+        "authority-loss-open-editor",
+        "old-subject-lost-response",
+        "human-direct-room",
+        "reload",
+        "390x844"
+      ]
+    },
+    {
+      "id": "room-lifecycle-navigation",
+      "runner": "scripts/run-room-lifecycle-browser-gate.mjs",
+      "coverage": [
+        "chrome",
+        "firefox",
+        "1440x900",
+        "390x844",
+        "canonical-leave",
+        "canonical-delete",
+        "browser-back",
+        "late-accepted-response",
+        "lost-receipt",
+        "failure-feedback-retry",
+        "reload",
+        "no-paid-provider"
+      ]
+    },
+    {
+      "id": "task-virtual-window",
+      "runner": "scripts/run-task-virtual-browser-gate.mjs",
+      "coverage": [
+        "chrome",
+        "firefox",
+        "1440x900",
+        "390x844",
+        "1000-tasks",
+        "board",
+        "list",
+        "wheel-scroll",
+        "bounded-dom",
+        "live-removal-anchor",
+        "keyboard-boundary-tab",
+        "no-paid-provider"
+      ]
+    },
+    {
+      "id": "composer-file-drop",
+      "runner": "scripts/run-composer-drop-browser-gate.mjs",
+      "coverage": [
+        "chrome",
+        "firefox",
+        "1440x900",
+        "390x844",
+        "chat-attachment-only",
+        "thread-attachment-only",
+        "canonical-message-reference",
+        "exact-downloaded-bytes",
+        "reload",
+        "nested-drag",
+        "directory-denied",
+        "disabled-drop",
+        "failed-upload-recovery",
+        "late-upload-draft-isolation",
+        "no-paid-provider",
+        "separate-media-file-chooser",
+        "media-filter",
+        "multiple-selection",
+        "cancel-caret",
+        "keyboard-picker",
+        "same-file-reselection"
       ]
     }
   ],
@@ -562,17 +1296,26 @@
     {
       "id": "B006",
       "intent": "admin.member-permissions.save",
-      "status": "historical-unreviewed",
-      "owners": [],
+      "status": "registered",
+      "owners": [
+        "apps/web/src/App.tsx",
+        "apps/web/src/human-profile-hooks.ts",
+        "apps/web/src/components/human-profile-pane.tsx",
+        "apps/web/src/components/agent-sidebar.tsx",
+        "packages/kernel/src/human-profile.ts",
+        "packages/kernel/src/collaboration-service.ts"
+      ],
       "adoptions": [],
-      "scenarios": [],
+      "scenarios": ["human-membership-authority"],
       "historical": {
         "milestone": "22086e2",
         "scope": "改造",
         "frontend": "部分",
         "backend": "部分",
         "note": "P1.1 已接 canonical Room Human `owner/admin/member` 查看、编辑、保存/取消、错误与最后 owner 保护；Agent 不获得 Human 管理角色。完整 Workspace 权限矩阵仍未定义"
-      }
+      },
+      "evidenceSources": ["raft-human-20260831"],
+      "currentScope": "Human directory, scoped live role authority, profile refresh, role save/rejection/focus and DM. Agent/general Administration behavior and full official multi-Human parity remain separate."
     },
     {
       "id": "B007",
@@ -607,17 +1350,26 @@
     {
       "id": "B009",
       "intent": "admin.role.update",
-      "status": "historical-unreviewed",
-      "owners": [],
+      "status": "registered",
+      "owners": [
+        "apps/web/src/App.tsx",
+        "apps/web/src/human-profile-hooks.ts",
+        "apps/web/src/components/human-profile-pane.tsx",
+        "apps/web/src/components/agent-sidebar.tsx",
+        "packages/kernel/src/human-profile.ts",
+        "packages/kernel/src/collaboration-service.ts"
+      ],
       "adoptions": [],
-      "scenarios": [],
+      "scenarios": ["human-membership-authority"],
       "historical": {
         "milestone": "22086e2",
         "scope": "改造",
         "frontend": "部分",
         "backend": "已接",
         "note": "Human Room 固定角色 UI 与 causal command 已接；不伪装成可创建/编辑任意角色定义。Raft 中的 Server role 与本地 Room role 边界仍明确保留"
-      }
+      },
+      "evidenceSources": ["raft-human-20260831"],
+      "currentScope": "Human directory, scoped live role authority, profile refresh, role save/rejection/focus and DM. Agent/general Administration behavior and full official multi-Human parity remain separate."
     },
     {
       "id": "B010",
@@ -682,8 +1434,11 @@
     {
       "id": "B014",
       "intent": "chat.agents.stop",
-      "status": "historical-unreviewed",
-      "owners": [],
+      "status": "registered",
+      "owners": [
+        "apps/web/src/App.tsx",
+        "packages/kernel/src/room-agent-sos-service.ts"
+      ],
       "adoptions": [],
       "scenarios": [],
       "historical": {
@@ -692,7 +1447,8 @@
         "frontend": "缺失",
         "backend": "部分",
         "note": "AGENT 可逐个 pause；缺聊天页按当前执行安全停止的产品动作，N"
-      }
+      },
+      "currentScope": "频道 SOS stop/resume 已接 canonical operation 和 Host terminal proof；待完整 busy/重启/歧义响应与官方页面验收。"
     },
     {
       "id": "B015",
@@ -712,10 +1468,17 @@
     {
       "id": "B016",
       "intent": "chat.channel.lifecycle",
-      "status": "historical-unreviewed",
-      "owners": [],
+      "status": "registered",
+      "owners": [
+        "apps/web/src/App.tsx",
+        "apps/web/src/components/room-dialogs.tsx",
+        "packages/kernel/src/collaboration-service.ts",
+        "packages/kernel/src/room-deletion-service.ts",
+        "packages/kernel/src/public-channel.ts"
+      ],
       "adoptions": [],
-      "scenarios": [],
+      "scenarios": ["room-lifecycle-navigation"],
+      "currentScope": "已交付公开频道 Human 读取、Tasks/Files/Thread、收藏和加入子链路。2026-09-07 用户将多人及非成员专属完整对齐延期；Room 单 Human 日常操作和多 Agent 参与继续适用。以 docs/product/single-human-mainline-and-multi-human-backlog.zh-CN.md 为当前范围，旧审计不再锁定施工优先级。",
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",
@@ -757,17 +1520,24 @@
     {
       "id": "B019",
       "intent": "chat.composer.asset.request",
-      "status": "historical-unreviewed",
-      "owners": [],
-      "adoptions": [],
-      "scenarios": [],
+      "status": "registered",
+      "owners": [
+        "apps/web/src/components/composer-drop-form.tsx",
+        "apps/web/src/file-uploads.ts",
+        "packages/ui-web/src/neo-brutalist/composer-drop-overlay.tsx",
+        "packages/kernel/src/room-files.ts",
+        "packages/ui-web/src/neo-brutalist/composer-attachment-pickers.tsx"
+      ],
+      "adoptions": ["composer-file-drop", "composer-attachment-pickers"],
+      "scenarios": ["composer-file-drop"],
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",
         "frontend": "已接",
         "backend": "已接",
         "note": "Room/Thread 选文件、prepare/upload/cancel、附件-only Thread 回复与同事务 Files 投影已接；通用拖放仍属交互增量，不再登记 Thread 附件为缺失"
-      }
+      },
+      "currentScope": "Chat/DM/Thread 共享拖放入口复用 FileUploadStore/RoomFiles；目录与重复文件、嵌套拖拽、取消、禁止态、上传失败与迟到草稿隔离、附件-only 发送及下载字节/刷新均有专项门禁。固定源码参数对照不等于官网现场双边；不覆盖 B021/B022 文件菜单或全部预览格式。 本批补媒体/文件双入口、筛选、多选、焦点、取消与重选及 canonical 发送下载专项；仍不将现场或 Files 全页标为通过。"
     },
     {
       "id": "B020",
@@ -849,14 +1619,17 @@
       "intent": "chat.message.action",
       "status": "migrated",
       "owners": [
+        "apps/web/src/components/conversation-panes.tsx",
         "apps/web/src/components/message-social.tsx",
         "apps/web/src/components/message-context-menu.tsx",
+        "apps/web/src/message-task-menu-action.ts",
         "apps/web/src/message-social-store.ts",
-        "packages/kernel/src/message-social.ts"
+        "packages/kernel/src/message-social.ts",
+        "packages/kernel/src/human-activity.ts"
       ],
-      "adoptions": ["message-social-family"],
+      "adoptions": ["message-social-family", "conversation-interaction-family"],
       "scenarios": ["discovery-page-family"],
-      "currentScope": "普通消息hover/focus三按钮、7项快速回应、回应者浮层、私人收藏与上下文菜单接入canonical owner；本登记不宣称消息编辑/删除或所有角色菜单与Raft完全一致。",
+      "currentScope": "普通消息 hover/focus 三按钮、7项快速回应、回应者浮层、私人收藏、选择/转发、Thread打开与关注、无Task时转换及已有Task的Raft标签均接入canonical owner。Raft冻结源码没有普通消息编辑/删除菜单；翻译仍因本地没有translation owner而不伪造。",
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",
@@ -868,10 +1641,15 @@
     {
       "id": "B026",
       "intent": "chat.message.expand.toggle",
-      "status": "historical-unreviewed",
-      "owners": [],
-      "adoptions": [],
-      "scenarios": [],
+      "status": "migrated",
+      "owners": [
+        "apps/web/src/components/collapsible-message.tsx",
+        "apps/web/src/components/sidebar-preferences.tsx",
+        "apps/web/src/room-preferences.ts"
+      ],
+      "adoptions": ["conversation-interaction-family"],
+      "scenarios": ["discovery-page-family"],
+      "currentScope": "Chat与Thread共用测量式长消息折叠；Raft默认折叠、展开全文/收起和Human×Workspace Room偏好由一个owner提供，浏览器矩阵验证真实长消息往返。",
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",
@@ -883,10 +1661,16 @@
     {
       "id": "B027",
       "intent": "chat.message.send",
-      "status": "historical-unreviewed",
-      "owners": [],
-      "adoptions": [],
-      "scenarios": [],
+      "status": "migrated",
+      "owners": [
+        "apps/web/src/components/conversation-panes.tsx",
+        "apps/web/src/composer-keyboard.ts",
+        "packages/application-service/src/client-application-service.ts",
+        "packages/kernel/src/room-kernel.ts"
+      ],
+      "adoptions": ["conversation-interaction-family"],
+      "scenarios": ["discovery-page-family"],
+      "currentScope": "Room与Thread复用统一composer和IME/Enter守卫；浏览器发送必须得到typed mutation并在独立Room ledger中出现，不能以可见气泡替代canonical成功。",
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",
@@ -1004,70 +1788,96 @@
     {
       "id": "B035",
       "intent": "chat.task.column.toggle",
-      "status": "historical-unreviewed",
-      "owners": [],
-      "adoptions": [],
-      "scenarios": [],
+      "status": "migrated",
+      "owners": [
+        "apps/web/src/components/global-task-board.tsx",
+        "packages/ui-web/src/neo-brutalist/task-virtual-layout.tsx",
+        "packages/ui-web/src/neo-brutalist/task-virtual-stack.tsx"
+      ],
+      "adoptions": ["task-page-family", "task-virtual-window"],
+      "scenarios": ["discovery-page-family", "task-virtual-window"],
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",
         "frontend": "部分",
         "backend": "无后端",
         "note": "TASK 列状态/折叠需按本地与全局分别核对，N"
-      }
+      },
+      "currentScope": "Room and global Task views share the five Raft columns; Todo, In progress and In review start expanded while Done and Closed start collapsed. The real-browser matrix exercises expansion, collapse, retained focus and both desktop/mobile viewport bounds. This is presentation state only and never mutates canonical Task truth. The shared virtual layout/stack ports Raft bounded mounted rows, cross-stack anchors and boundary Tab traversal; loaded Task pages remain canonical projections."
     },
     {
       "id": "B036",
       "intent": "chat.task.create",
-      "status": "historical-unreviewed",
-      "owners": [],
-      "adoptions": [],
-      "scenarios": [],
+      "status": "migrated",
+      "owners": [
+        "apps/web/src/components/task-dialogs.tsx",
+        "apps/web/src/components/task-participant-fields.tsx",
+        "apps/web/src/task-create-execution.ts",
+        "apps/web/src/room-task-pages.ts",
+        "apps/web/src/App.tsx"
+      ],
+      "adoptions": ["task-page-family"],
+      "scenarios": ["discovery-page-family"],
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",
         "frontend": "已接",
         "backend": "已接",
         "note": "TASK→`task.create/convert`，唯一Message/Thread，H"
-      }
+      },
+      "currentScope": "The default Room Task screen adopts Raft Kst's repeatable title rows, per-row removal, blank filtering, pending state and plural submit label. An explicitly labelled RAH second stage reuses the Room composer participant owner and submits assignee, collaborator, reviewer and prerequisite IDs in the same typed task.create calls, preventing an open-task claim race without changing the default Kst-shaped screen. Each nonempty title has an exact frozen request and idempotency key: confirmed rows are removed, an ambiguous failure retries only the remaining byte-equivalent command, and accepted configuration stays locked until the batch is resolved or explicitly discarded. Chrome/Firefox acceptance independently confirms the partial retry ledger, selected dependency IDs, task.created Room events and continuation to the 501st active Task. The full fake-runtime browser gate separately proves reviewer rejection, revised frozen delivery, approval and canonical Human completion."
     },
     {
       "id": "B037",
       "intent": "chat.task.filter.open",
-      "status": "historical-unreviewed",
-      "owners": [],
-      "adoptions": [],
-      "scenarios": [],
+      "status": "migrated",
+      "owners": [
+        "apps/web/src/components/task-toolbar.tsx",
+        "apps/web/src/components/discovery-filter.tsx"
+      ],
+      "adoptions": ["discovery-control-family", "task-page-family"],
+      "scenarios": ["discovery-page-family"],
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",
         "frontend": "已接",
         "backend": "无后端",
         "note": "TASK/DISCOVERY共享筛选popover，H"
-      }
+      },
+      "currentScope": "Room and global creator/assignee filters use the shared Raft-shaped searchable popover and resolve Human/Agent options through the canonical Workspace entity graph. Sentinels remain text/icon rows without invented avatars; browser coverage includes empty results, clearing, Escape focus return and narrow viewport placement."
     },
     {
       "id": "B038",
       "intent": "chat.task.view.change",
-      "status": "historical-unreviewed",
-      "owners": [],
-      "adoptions": [],
-      "scenarios": [],
+      "status": "migrated",
+      "owners": [
+        "apps/web/src/components/task-toolbar.tsx",
+        "apps/web/src/components/global-task-board.tsx",
+        "apps/web/src/components/conversation-panes.tsx"
+      ],
+      "adoptions": ["task-page-family"],
+      "scenarios": ["discovery-page-family"],
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",
         "frontend": "已接",
         "backend": "无后端",
         "note": "TASK 看板/列表，H"
-      }
+      },
+      "currentScope": "Board/list selection is one shared presentation mode used by Room and global Task pages. Changing it neither duplicates nor rewrites Task state; browser coverage includes real nonempty cards, Room-name omission inside a Room, global Room labels and the 390x844 layout."
     },
     {
       "id": "B039",
       "intent": "chat.thread.close",
-      "status": "historical-unreviewed",
-      "owners": [],
-      "adoptions": [],
-      "scenarios": [],
+      "status": "migrated",
+      "owners": [
+        "apps/web/src/App.tsx",
+        "apps/web/src/components/conversation-panes.tsx",
+        "apps/web/src/thread-focus-return.ts"
+      ],
+      "adoptions": ["conversation-interaction-family"],
+      "scenarios": ["discovery-page-family"],
+      "currentScope": "关闭Thread会清除当前面板投影并将焦点还给仍连接的触发消息；若触发器已消失才退回可用根消息，不再采用旧审计中的body焦点。",
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",
@@ -1079,10 +1889,15 @@
     {
       "id": "B040",
       "intent": "chat.thread.open",
-      "status": "historical-unreviewed",
-      "owners": [],
-      "adoptions": [],
-      "scenarios": [],
+      "status": "migrated",
+      "owners": [
+        "apps/web/src/App.tsx",
+        "apps/web/src/components/conversation-panes.tsx",
+        "packages/kernel/src/room-kernel.ts"
+      ],
+      "adoptions": ["conversation-interaction-family"],
+      "scenarios": ["discovery-page-family"],
+      "currentScope": "主Room消息从行内动作或上下文菜单打开同一个Thread面板；已有Thread读取canonical消息，首次关注/回复才以Kernel命令建立Thread。",
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",
@@ -1110,8 +1925,11 @@
     {
       "id": "B042",
       "intent": "computers.agent.open",
-      "status": "historical-unreviewed",
-      "owners": [],
+      "status": "registered",
+      "owners": [
+        "apps/web/src/components/workspace-catalog-panes.tsx",
+        "apps/web/src/components/agent-entity-card.tsx"
+      ],
       "adoptions": [],
       "scenarios": [],
       "historical": {
@@ -1120,13 +1938,14 @@
         "frontend": "缺失",
         "backend": "已接",
         "note": "COMPUTER binding 行为article非跳转；Agent get已有，N"
-      }
+      },
+      "currentScope": "Computer Agent 卡片已接 App 资料路由；待当前页面族与同条件官方验收。"
     },
     {
       "id": "B043",
       "intent": "computers.command.copy",
-      "status": "historical-unreviewed",
-      "owners": [],
+      "status": "registered",
+      "owners": ["apps/web/src/components/workspace-catalog-panes.tsx"],
       "adoptions": [],
       "scenarios": [],
       "historical": {
@@ -1135,7 +1954,8 @@
         "frontend": "缺失",
         "backend": "无后端",
         "note": "COMPUTER缺本地恢复命令及复制入口；不直接复制raft重启命令，N"
-      }
+      },
+      "currentScope": "诊断信息和本机 doctor 命令复制已实现；剩余是恢复指导与真实管理结果，不能把诊断命令当恢复操作。"
     },
     {
       "id": "B044",
@@ -1185,8 +2005,11 @@
     {
       "id": "B047",
       "intent": "computers.runtime.open",
-      "status": "historical-unreviewed",
-      "owners": [],
+      "status": "registered",
+      "owners": [
+        "apps/web/src/components/computer-runtime-inspector.tsx",
+        "apps/web/src/components/workspace-catalog-panes.tsx"
+      ],
       "adoptions": [],
       "scenarios": [],
       "historical": {
@@ -1195,7 +2018,8 @@
         "frontend": "缺失",
         "backend": "已接",
         "note": "COMPUTER Runtime chip为span，catalog/Offer有数据，N"
-      }
+      },
+      "currentScope": "Runtime chip 已接 ComputerRuntimeInspector；待完整可用/离线/键盘/移动与官方同条件验收。"
     },
     {
       "id": "B048",
@@ -1260,38 +2084,59 @@
     {
       "id": "B052",
       "intent": "members.participant.select",
-      "status": "historical-unreviewed",
-      "owners": [],
+      "status": "registered",
+      "owners": [
+        "apps/web/src/App.tsx",
+        "apps/web/src/human-profile-hooks.ts",
+        "apps/web/src/components/human-profile-pane.tsx",
+        "apps/web/src/components/agent-sidebar.tsx",
+        "packages/kernel/src/human-profile.ts",
+        "packages/kernel/src/collaboration-service.ts"
+      ],
       "adoptions": [],
-      "scenarios": [],
+      "scenarios": ["human-membership-authority"],
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",
         "frontend": "部分",
         "backend": "部分",
         "note": "AGENT选择已有；Human detail与路由恢复未齐，A"
-      }
+      },
+      "evidenceSources": ["raft-human-20260831"],
+      "currentScope": "Human directory, scoped live role authority, profile refresh, role save/rejection/focus and DM. Agent/general Administration behavior and full official multi-Human parity remain separate."
     },
     {
       "id": "B053",
       "intent": "members.profile.update",
-      "status": "historical-unreviewed",
-      "owners": [],
+      "status": "registered",
+      "owners": [
+        "apps/web/src/App.tsx",
+        "apps/web/src/human-profile-hooks.ts",
+        "apps/web/src/components/human-profile-pane.tsx",
+        "apps/web/src/components/agent-sidebar.tsx",
+        "packages/kernel/src/human-profile.ts",
+        "packages/kernel/src/collaboration-service.ts"
+      ],
       "adoptions": [],
-      "scenarios": [],
+      "scenarios": ["human-membership-authority"],
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",
         "frontend": "部分",
         "backend": "已接",
         "note": "Agent 名称/描述/官方头像、runtime/model/effort/mode 已经 revision-CAS 持久并有实页验收；剩余是 Human 资料、Room Human 角色 UI 和自定义图片生命周期"
-      }
+      },
+      "evidenceSources": ["raft-human-20260831"],
+      "currentScope": "Human directory, scoped live role authority, profile refresh, role save/rejection/focus and DM. Agent/general Administration behavior and full official multi-Human parity remain separate."
     },
     {
       "id": "B054",
       "intent": "members.relationship.open",
-      "status": "historical-unreviewed",
-      "owners": [],
+      "status": "registered",
+      "owners": [
+        "packages/kernel/src/workspace-member-graph.ts",
+        "apps/web/src/components/member-relationship-graph.tsx"
+      ],
       "adoptions": [],
       "scenarios": [],
       "historical": {
@@ -1300,7 +2145,8 @@
         "frontend": "缺失",
         "backend": "缺失",
         "note": "AGENT关系图disabled；不能用Room membership假装关系图，N"
-      }
+      },
+      "currentScope": "关系图已按 ACL-safe Channel membership 建立；不包含无事实来源的 Human-Computer 所有权，待完整双边与权限页面族验收。"
     },
     {
       "id": "B055",
@@ -1377,11 +2223,16 @@
       "status": "migrated",
       "owners": [
         "apps/web/src/components/global-discovery.tsx",
+        "apps/web/src/use-discovery-query.ts",
+        "packages/ui-web/src/neo-brutalist/search-result-skeleton.tsx",
         "packages/application-service/src/client-discovery-routes.ts"
       ],
-      "adoptions": ["discovery-control-family"],
+      "adoptions": [
+        "discovery-control-family",
+        "conversation-interaction-family"
+      ],
       "scenarios": ["discovery-page-family", "integrated-shell-layout"],
-      "currentScope": "受控查询、Escape清空并还焦点、历史建议、零结果空态和typed本地检索；IME组合输入及请求loading/error分支仍保留为后续逐状态浏览器覆盖，不声称复制Raft服务端索引算法。",
+      "currentScope": "受控查询、Escape清空并还焦点、历史建议、零结果、IME组合输入请求屏障、五卡loading及可重试error均由浏览器矩阵覆盖；检索使用typed本地索引，不声称复制Raft中央相关度算法。",
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",
@@ -1548,25 +2399,38 @@
     {
       "id": "B070",
       "intent": "shell.notification.open",
-      "status": "historical-unreviewed",
-      "owners": [],
-      "adoptions": [],
-      "scenarios": [],
+      "status": "migrated",
+      "owners": [
+        "packages/ui-web/src/neo-brutalist/interactive-popover.tsx",
+        "apps/web/src/components/human-inbox.tsx",
+        "apps/web/src/components/workspace-navigation.tsx"
+      ],
+      "adoptions": ["notification-center-popover"],
+      "scenarios": ["integrated-shell-layout"],
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",
         "frontend": "已接",
         "backend": "已接",
         "note": "页内中心/粉点/InputRequest分owner；OS push点击使用same-origin typed target并重验ACL。desktop页内中心hover精确时序仍属鼠标对齐缺口"
-      }
+      },
+      "currentScope": "Source-backed desktop hover and mobile click popover only. Base UI owns pointer bridge, keyboard focus and outside/Escape lifecycle; existing notification/InputRequest and typed navigation owners remain unchanged. Local fixture App verification is not same-precondition official nonempty or OS delivery acceptance."
     },
     {
       "id": "B071",
       "intent": "shell.workspace.switcher.open",
-      "status": "historical-unreviewed",
-      "owners": [],
-      "adoptions": [],
-      "scenarios": [],
+      "status": "migrated",
+      "owners": [
+        "apps/web/src/components/workspace-identity.tsx",
+        "apps/web/src/workspace-switcher-state.ts",
+        "apps/web/src/App.tsx"
+      ],
+      "adoptions": ["workspace-switcher-family"],
+      "scenarios": [
+        "workspace-switcher-page-family",
+        "workspace-switcher-full-app"
+      ],
+      "currentScope": "Desktop and mobile reuse one canonical Workspace identity menu. Real pointer click opens it; outside mousedown closes it; Escape closes and returns focus; an independent 6px-activation drag handle persists Human-scoped order; remembered desktop locations are bounded and revalidated against canonical Room ownership; mobile selection ignores a remembered desktop detail and enters the existing Home owner. Workspace management remains a separate causal workspace.update dialog. Chrome and Firefox cover the component page family; Firefox additionally exercises the production App with two canonical Workspaces, URL replacement, Back/Forward and reload.",
       "historical": {
         "milestone": "22086e2",
         "scope": "适用",

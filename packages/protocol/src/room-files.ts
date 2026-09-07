@@ -1,3 +1,8 @@
+import { attachmentMediaPreview } from "./attachment-media.ts";
+export {
+  attachmentMediaPreview,
+  MAX_ATTACHMENT_MEDIA_PREVIEW_BYTES,
+} from "./attachment-media.ts";
 import { z } from "zod";
 import { IdentifierSchema, TimestampSchema } from "./common.ts";
 
@@ -6,6 +11,9 @@ export const MAX_ATTACHMENT_BYTES = 200 * 1024 * 1024;
 export const MAX_ATTACHMENT_TEXT_PREVIEW_BYTES = 2 * 1024 * 1024;
 export const AttachmentPreviewKindSchema = z.enum([
   "image",
+  "pdf",
+  "video",
+  "audio",
   "markdown",
   "html",
   "diff",
@@ -90,6 +98,8 @@ export function classifyAttachmentPreview(
   const basename = filename.toLowerCase().split(/[\\/]/u).at(-1)?.trim() ?? "";
   const dot = basename.lastIndexOf(".");
   const extension = dot > 0 ? basename.slice(dot + 1) : "";
+  const media = attachmentMediaPreview(mimeType, filename);
+  if (media) return media.kind;
   if (/^image\/(png|jpeg|gif|webp)$/u.test(normalizedMime)) return "image";
   if (
     normalizedMime === "text/markdown" ||

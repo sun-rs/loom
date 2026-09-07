@@ -83,6 +83,7 @@ if (
 ) {
   throw new Error("RAH_FIXTURE_ONBOARD_AGENT_COUNT must be 1 or 2");
 }
+const seedTaskMatrix = process.env.RAH_FIXTURE_TASK_MATRIX === "1";
 
 let application;
 let managedMcpHandler;
@@ -121,6 +122,27 @@ if (command === "debug models" || command === "debug models --bundled") {
     ],
   }));
 } else {
+  if (process.env.RAH_FIXTURE_EXECUTION_PROBE_DIRECTORY) {
+    const {writeFile, access, readFile, rename} = await import("node:fs/promises");
+    const {join} = await import("node:path");
+    const root = process.env.RAH_FIXTURE_EXECUTION_PROBE_DIRECTORY;
+    const agent = JSON.parse(process.env.RAH_AGENT_CONTEXT_JSON);
+    await writeFile(join(root, process.env.RAH_RUN_ATTEMPT_ID + ".pending"), JSON.stringify({
+      agent, argv: process.argv.slice(2), cwd: process.cwd(),
+      memoryDirectory: process.env.RAH_AGENT_MEMORY_DIR,
+      probeNote: await readFile(join(process.env.RAH_AGENT_MEMORY_DIR, "notes", "runtime-continuity-probe.txt"), "utf8").catch(error => { if (error.code === "ENOENT") return null; throw error; }),
+      profile: process.env.RAH_FIXTURE_PROFILE_MARKER,
+      runAttemptId: process.env.RAH_RUN_ATTEMPT_ID,
+    }));
+    await rename(join(root, process.env.RAH_RUN_ATTEMPT_ID + ".pending"), join(root, process.env.RAH_RUN_ATTEMPT_ID + ".json"));
+    const deadline = Date.now() + 30000;
+    while (Date.now() < deadline) {
+      try { await access(join(root, "release")); break; } catch {}
+      await new Promise(resolve => setTimeout(resolve, 25));
+    }
+    await access(join(root, "release")); // timeout must fail, never silently release
+    await writeFile(join(root, process.env.RAH_RUN_ATTEMPT_ID + ".continued"), "original process continued");
+  }
   await import(${JSON.stringify(pathToFileURL(fakeCliPath).href)});
 }
 `,
@@ -148,6 +170,20 @@ if (command === "debug models" || command === "debug models --bundled") {
     slug: "agent-council",
     workspaceId: productWorkspace.workspace.workspaceId,
   });
+  const taskMatrixRoom = seedTaskMatrix
+    ? seed.createWorkspaceRoom(humanActor, {
+        basedOnControlRoomSeq: latestRoomSeq(
+          seed,
+          humanActor,
+          productWorkspace.controlRoom.roomId,
+        ),
+        idempotencyKey: "web-task-page-room",
+        kind: "channel",
+        name: "Task Matrix",
+        slug: "task-matrix",
+        workspaceId: productWorkspace.workspace.workspaceId,
+      })
+    : undefined;
 
   for (let index = 1; index <= historyMessageCount; index += 1) {
     seed.postMessage(humanActor, {
@@ -278,6 +314,10 @@ if (command === "debug models" || command === "debug models --bundled") {
     roomSeq = onboarded.event.roomSeq;
   }
 
+  if (seedTaskMatrix) {
+    seedTaskPageFixture(seed, humanActor, taskMatrixRoom.room.roomId);
+  }
+
   seed.postMessage(humanActor, {
     basedOnRoomSeq: roomSeq,
     body: [
@@ -342,9 +382,17 @@ if (command === "debug models" || command === "debug models --bundled") {
       recoveryDrivers: ["rah-process-supervisor-v1"],
       runtimeProfileId,
       staticEnv: {
+        ...(process.env.RAH_FIXTURE_EXECUTION_PROBE_DIRECTORY
+          ? {
+              RAH_FIXTURE_EXECUTION_PROBE_DIRECTORY:
+                process.env.RAH_FIXTURE_EXECUTION_PROBE_DIRECTORY,
+              RAH_FIXTURE_PROFILE_MARKER: runtimeProfileId,
+            }
+          : {}),
         ...(process.env.RAH_FIXTURE_PRESENCE_PROBE === "1"
           ? { RAH_FAKE_PRESENCE_PROBE: "1" }
           : {}),
+        RAH_FAKE_MESSAGE_TOOLS: process.env.RAH_FIXTURE_MESSAGE_TOOLS ?? "0",
         RAH_FAKE_AUTO_TASK_MARKER: "[TASK]",
         RAH_FAKE_TASK_ARTIFACT: "1",
         ...(index === 0
@@ -372,6 +420,16 @@ if (command === "debug models" || command === "debug models --bundled") {
     });
   }
   registry.close();
+  if (process.env.RAH_FIXTURE_HUMAN_MATRIX === "1") {
+    const { seedHumanMembershipFixture } =
+      await import("./human-membership-fixture.mjs");
+    seedHumanMembershipFixture(
+      seed,
+      humanActor,
+      productWorkspace,
+      productRoom.room.roomId,
+    );
+  }
   seed.close();
   seed = undefined;
 
@@ -559,6 +617,31 @@ function latestRoomSeq(kernel, actor, roomId) {
     consumerId: `fixture-cursor-${roomId}`,
     roomId,
   }).latestRoomSeq;
+}
+
+// Browser fixtures must exercise the real Task projection and lifecycle. Keep
+// the sample deterministic and use only public Kernel commands: editing the
+// SQLite projection here would let a broken canonical transition pass the UI
+// gate.
+function seedTaskPageFixture(kernel, actor, roomId) {
+  const open = kernel.createTask(actor, {
+    idempotencyKey: "web-task-page-open",
+    roomId,
+    title:
+      "Keep the Room-first delivery contract stable across a deliberately long Task title",
+  });
+  const closed = kernel.createTask(actor, {
+    idempotencyKey: "web-task-page-closed",
+    roomId,
+    title: "Closed fixture preserved by canonical Task truth",
+  });
+  kernel.updateTaskWorkflowStatus(actor, {
+    basedOnRoomSeq: latestRoomSeq(kernel, actor, roomId),
+    idempotencyKey: "web-task-page-close",
+    taskId: closed.task.taskId,
+    workflowStatus: "closed",
+  });
+  return { closed, open };
 }
 
 async function waitUntil(predicate, timeoutMs = 5_000) {

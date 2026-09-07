@@ -21,6 +21,7 @@
     "d3-zoom": "^3.0.0",
     "katex": "^0.18.4",
     "mermaid": "^11.17.2",
+    "pdfjs-dist": "6.3.289",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-markdown": "^10.1.0",

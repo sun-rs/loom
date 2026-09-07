@@ -1,4 +1,20 @@
 import {
+  ChannelPreviewRequestSchema,
+  ChannelPreviewResponseSchema,
+  type ChannelPreviewRequest,
+  type ChannelPreviewResponse,
+} from "@rah-os/protocol";
+import {
+  PublicChannelDirectoryRequestSchema,
+  PublicChannelDirectoryResponseSchema,
+  PublicChannelJoinRequestSchema,
+  PublicChannelJoinResponseSchema,
+  type PublicChannelDirectoryRequest,
+  type PublicChannelDirectoryResponse,
+  type PublicChannelJoinRequest,
+  type PublicChannelJoinResponse,
+} from "@rah-os/protocol";
+import {
   ClientAgentActivityListRequestSchema,
   ClientAgentActivityListResponseSchema,
   ClientAgentTrajectoryListRequestSchema,
@@ -74,6 +90,10 @@ import {
   HumanProfileResponseSchema,
   type HumanProfileRequest,
   type HumanProfileResponse,
+  WorkspaceHumanDirectoryRequestSchema,
+  WorkspaceHumanDirectoryResponseSchema,
+  type WorkspaceHumanDirectoryRequest,
+  type WorkspaceHumanDirectoryResponse,
   ClientPrincipalMeResponseSchema,
   ClientPrincipalUpdateRequestSchema,
   ClientPrincipalUpdateResponseSchema,
@@ -114,6 +134,8 @@ import {
   ClientTaskReassignRequestSchema,
   ClientTaskReassignmentResponseSchema,
   ClientTaskUnassignRequestSchema,
+  ClientTaskGetRequestSchema,
+  ClientTaskGetResponseSchema,
   ClientTasksListRequestSchema,
   ClientTasksListResponseSchema,
   ClientTaskReviewEvidenceListRequestSchema,
@@ -234,6 +256,8 @@ import {
   type ClientTaskReassignRequest,
   type ClientTaskReassignmentResponse,
   type ClientTaskUnassignRequest,
+  type ClientTaskGetRequest,
+  type ClientTaskGetResponse,
   type ClientTasksListRequest,
   type ClientTasksListResponse,
   type ClientTaskReviewEvidenceListRequest,
@@ -439,6 +463,10 @@ export type RahClientOperationMap = AgentWorkspaceOperationMap &
       input: HumanProfileRequest;
       output: HumanProfileResponse;
     };
+    "workspace.human.list": {
+      input: WorkspaceHumanDirectoryRequest;
+      output: WorkspaceHumanDirectoryResponse;
+    };
     "principal.update": {
       input: ClientPrincipalUpdateRequest;
       output: ClientPrincipalUpdateResponse;
@@ -458,6 +486,18 @@ export type RahClientOperationMap = AgentWorkspaceOperationMap &
     "room.archive": {
       input: ClientRoomArchiveRequest;
       output: ClientRoomMutationResponse;
+    };
+    "room.preview": {
+      input: ChannelPreviewRequest;
+      output: ChannelPreviewResponse;
+    };
+    "room.public.discover": {
+      input: PublicChannelDirectoryRequest;
+      output: PublicChannelDirectoryResponse;
+    };
+    "room.public.join": {
+      input: PublicChannelJoinRequest;
+      output: PublicChannelJoinResponse;
     };
     "room.leave": {
       input: ClientRoomLeaveRequest;
@@ -538,6 +578,10 @@ export type RahClientOperationMap = AgentWorkspaceOperationMap &
     "task.complete": {
       input: ClientTaskCompleteRequest;
       output: ClientTaskAttentionMutationResponse;
+    };
+    "task.get": {
+      input: ClientTaskGetRequest;
+      output: ClientTaskGetResponse;
     };
     "task.list": {
       input: ClientTasksListRequest;
@@ -877,6 +921,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     output: HumanProfileResponseSchema,
     path: "/v3/client/humans/profile",
   },
+  "workspace.human.list": {
+    authenticated: true,
+    input: WorkspaceHumanDirectoryRequestSchema,
+    method: "POST",
+    output: WorkspaceHumanDirectoryResponseSchema,
+    path: "/v3/client/workspaces/humans",
+  },
   "principal.update": {
     authenticated: true,
     input: ClientPrincipalUpdateRequestSchema,
@@ -911,6 +962,27 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     method: "POST",
     output: ClientRoomMutationResponseSchema,
     path: "/v3/client/rooms/archive",
+  },
+  "room.preview": {
+    authenticated: true,
+    input: ChannelPreviewRequestSchema,
+    method: "POST",
+    output: ChannelPreviewResponseSchema,
+    path: "/v3/client/rooms/preview",
+  },
+  "room.public.discover": {
+    authenticated: true,
+    input: PublicChannelDirectoryRequestSchema,
+    method: "POST",
+    output: PublicChannelDirectoryResponseSchema,
+    path: "/v3/client/rooms/public/discover",
+  },
+  "room.public.join": {
+    authenticated: true,
+    input: PublicChannelJoinRequestSchema,
+    method: "POST",
+    output: PublicChannelJoinResponseSchema,
+    path: "/v3/client/rooms/public/join",
   },
   "room.leave": {
     authenticated: true,
@@ -1051,6 +1123,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     method: "POST",
     output: ClientTaskAttentionMutationResponseSchema,
     path: "/v3/client/tasks/convert",
+  },
+  "task.get": {
+    authenticated: true,
+    input: ClientTaskGetRequestSchema,
+    method: "POST",
+    output: ClientTaskGetResponseSchema,
+    path: "/v3/client/tasks/get",
   },
   "task.list": {
     authenticated: true,

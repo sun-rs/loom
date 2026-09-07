@@ -1686,22 +1686,95 @@ test("Room Task reads are bounded and page backward by canonical task number", (
     });
   }
 
-  const latest = kernel.listTasks(humanActor, {
+  const latestPage = kernel.listTaskPage(humanActor, {
     limit: 3,
     roomId: room.roomId,
   });
+  const latest = latestPage.tasks;
+  assert.equal(latestPage.nextBeforeTaskNumber, 4);
   assert.deepEqual(
     latest.map(({ taskNumber }) => taskNumber),
     [4, 5, 6],
   );
-  const earlier = kernel.listTasks(humanActor, {
+  const earlierPage = kernel.listTaskPage(humanActor, {
     beforeTaskNumber: 4,
     limit: 3,
     roomId: room.roomId,
   });
+  const earlier = earlierPage.tasks;
+  assert.equal(earlierPage.nextBeforeTaskNumber, undefined);
   assert.deepEqual(
     earlier.map(({ taskNumber }) => taskNumber),
     [1, 2, 3],
+  );
+  kernel.close();
+});
+
+test("an old active Task stays exactly readable and server-filtered after terminal history", () => {
+  const { humanActor, kernel, room } = createFixture();
+  const oldActive = kernel.createTask(humanActor, {
+    idempotencyKey: "old-active-task",
+    roomId: room.roomId,
+    title: "Old active work must remain reachable",
+  });
+  for (let index = 1; index <= 205; index += 1) {
+    const created = kernel.createTask(humanActor, {
+      idempotencyKey: `terminal-task-${String(index)}`,
+      roomId: room.roomId,
+      title: `Terminal Task ${String(index)}`,
+    });
+    kernel.cancelTask(humanActor, {
+      basedOnRoomSeq: created.event.roomSeq,
+      idempotencyKey: `terminal-task-cancel-${String(index)}`,
+      reason: "Closed fixture work",
+      taskId: created.task.taskId,
+    });
+  }
+
+  assert.equal(
+    kernel
+      .listTasks(humanActor, { roomId: room.roomId })
+      .some(({ taskId }) => taskId === oldActive.task.taskId),
+    false,
+    "the bounded recent page is intentionally not the complete Task set",
+  );
+  const activePage = kernel.listTaskPage(humanActor, {
+    limit: 20,
+    roomId: room.roomId,
+    states: [
+      "todo",
+      "claimed",
+      "in_progress",
+      "waiting_input",
+      "blocked",
+      "submitted",
+    ],
+  });
+  assert.deepEqual(
+    activePage.tasks.map(({ taskId }) => taskId),
+    [oldActive.task.taskId],
+  );
+  assert.equal(activePage.nextBeforeTaskNumber, undefined);
+  assert.equal(
+    kernel.getTask(humanActor, {
+      roomId: room.roomId,
+      taskId: oldActive.task.taskId,
+    }).taskId,
+    oldActive.task.taskId,
+  );
+
+  const outsider = kernel.provisionPrincipal({
+    handle: "task-outsider",
+    kind: "human",
+  });
+  const outsiderActor = kernel.authenticateAccessToken(outsider.accessToken);
+  assert.throws(
+    () =>
+      kernel.getTask(outsiderActor, {
+        roomId: room.roomId,
+        taskId: oldActive.task.taskId,
+      }),
+    ForbiddenError,
   );
   kernel.close();
 });

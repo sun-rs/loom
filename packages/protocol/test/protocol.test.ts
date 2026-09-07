@@ -39,6 +39,8 @@ import {
   ClientRoomSyncResponseSchema,
   ClientTasksListRequestSchema,
   ClientTasksListResponseSchema,
+  ClientTaskGetRequestSchema,
+  ClientTaskGetResponseSchema,
   ClientTaskAssignRequestSchema,
   ClientTaskCancelRequestSchema,
   ClientTaskCompleteRequestSchema,
@@ -447,9 +449,19 @@ test("Client API v1/v2/v3 contracts are strict, actor-free, and transport-neutra
     { acknowledgedThrough: 9 },
   );
 
-  assert.deepEqual(ClientTasksListRequestSchema.parse({ roomId: "room-1" }), {
-    roomId: "room-1",
-  });
+  assert.deepEqual(
+    ClientTasksListRequestSchema.parse({
+      roomId: "room-1",
+      states: ["todo", "submitted"],
+    }),
+    { roomId: "room-1", states: ["todo", "submitted"] },
+  );
+  assert.throws(() =>
+    ClientTasksListRequestSchema.parse({
+      roomId: "room-1",
+      states: ["todo", "todo"],
+    }),
+  );
   assert.deepEqual(
     ClientInputRequestsListRequestSchema.parse({
       roomId: "room-1",
@@ -608,6 +620,36 @@ test("Client API v1/v2/v3 contracts are strict, actor-free, and transport-neutra
   assert.deepEqual(ClientTasksListResponseSchema.parse({ tasks: [] }), {
     tasks: [],
   });
+  assert.deepEqual(
+    ClientTasksListResponseSchema.parse({
+      nextBeforeTaskNumber: 41,
+      tasks: [],
+    }),
+    { nextBeforeTaskNumber: 41, tasks: [] },
+  );
+  assert.deepEqual(
+    ClientTaskGetRequestSchema.parse({ roomId: "room-1", taskId: "task-1" }),
+    { roomId: "room-1", taskId: "task-1" },
+  );
+  const exactTask = TaskSchema.parse({
+    collaboratorIds: [],
+    createdAt: "2026-08-26T00:00:00.000Z",
+    creatorId: "human-main",
+    dependencyTaskIds: [],
+    reviewerIds: [],
+    roomId: "room-1",
+    sourceMessageId: "message-1",
+    state: "todo",
+    taskId: "task-1",
+    taskNumber: 1,
+    threadId: "thread-1",
+    title: "Exact task",
+    updatedAt: "2026-08-26T00:00:00.000Z",
+  });
+  assert.equal(
+    ClientTaskGetResponseSchema.parse({ task: exactTask }).task.taskId,
+    exactTask.taskId,
+  );
   assert.deepEqual(
     ClientInputRequestsListResponseSchema.parse({ inputRequests: [] }),
     { inputRequests: [] },

@@ -38,6 +38,10 @@ test("foundation policy allows only declared fixture API requests", () => {
     "allow-api",
   );
   assert.equal(
+    classify(fixtureOrigin, "POST", "/v3/client/workspaces/humans").decision,
+    "allow-api",
+  );
+  assert.equal(
     classify(fixtureOrigin, "POST", "/v3/client/messages/social").decision,
     "allow-api",
   );
@@ -67,6 +71,10 @@ test("foundation policy allows only declared fixture API requests", () => {
   );
   assert.equal(
     classify(fixtureOrigin, "POST", "/v3/client/messages/saved").decision,
+    "allow-api",
+  );
+  assert.equal(
+    classify(fixtureOrigin, "POST", "/v3/client/tasks/get").decision,
     "allow-api",
   );
   assert.equal(

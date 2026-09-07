@@ -217,6 +217,60 @@ test("typed identity joins Agent, principal, Computer and runtime without name m
   );
 });
 
+test("the authenticated Human write result replaces an older directory identity without losing membership", () => {
+  const directory = createWorkspaceEntities({
+    ...input,
+    human: {
+      ...human,
+      displayName: "Fresh authenticated name",
+      description: "Fresh authenticated description",
+    },
+    humans: [
+      {
+        principal: {
+          ...human,
+          displayName: "Stale directory name",
+          description: "Stale directory description",
+        },
+        membership: {
+          joinedAt: "2026-09-04T00:00:00Z",
+          role: "owner" as const,
+        },
+      },
+    ],
+  });
+  assert.equal(
+    directory.person(human.principalId)?.displayName,
+    "Fresh authenticated name",
+  );
+  assert.equal(
+    directory.humans()[0]?.principal.displayName,
+    "Fresh authenticated name",
+  );
+  assert.equal(directory.humans()[0]?.membership.role, "owner");
+});
+
+test("a non-Human principal cannot replace a Workspace Human membership", () => {
+  const directory = createWorkspaceEntities({
+    ...input,
+    human: { ...human, kind: "service", displayName: "Service collision" },
+    humans: [
+      {
+        principal: { ...human, displayName: "Canonical Human" },
+        membership: {
+          joinedAt: "2026-09-04T00:00:00Z",
+          role: "owner" as const,
+        },
+      },
+    ],
+  });
+  assert.equal(directory.humans()[0]?.principal.displayName, "Canonical Human");
+  assert.equal(
+    directory.person(human.principalId)?.displayName,
+    "Canonical Human",
+  );
+});
+
 test("unknown bindings and ambiguous runtime selection fail closed, never first/last wins", () => {
   const directory = createWorkspaceEntities({
     ...input,

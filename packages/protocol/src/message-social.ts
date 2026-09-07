@@ -33,6 +33,7 @@ export const MessageSocialItemSchema = z
     messageId: IdentifierSchema,
     version: z.number().int().nonnegative(),
     saved: z.boolean(),
+    canReact: z.boolean().optional(),
     reactions: z.array(
       z
         .object({

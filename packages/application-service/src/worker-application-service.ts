@@ -16,6 +16,10 @@ import {
   type RoomKernel,
 } from "@rah-os/kernel";
 import {
+  WorkerMessageSearchRequestSchema,
+  WorkerMessageSearchResponseSchema,
+  WorkerMessageReactionRequestSchema,
+  MessageSocialItemSchema,
   ActivationCredentialScopeSchema,
   WorkerAcknowledgeRequestSchema,
   WorkerAcknowledgeResponseSchema,
@@ -153,6 +157,8 @@ export const WORKER_HTTP_ROUTE_PATHS = [
   "/v1/worker/acknowledge",
   "/v1/worker/artifacts/prepare",
   "/v1/worker/messages/post",
+  "/v1/worker/messages/search",
+  "/v1/worker/messages/react",
   "/v1/worker/mcp/call",
   "/v1/worker/mcp/tools",
   "/v1/worker/reminders/cancel",
@@ -572,6 +578,35 @@ export class WorkerApplicationService {
       return;
     }
 
+    if (route === "/v1/worker/messages/search") {
+      const command = parseWorkerRequest(
+        WorkerMessageSearchRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        WorkerMessageSearchResponseSchema.parse(
+          this.#kernel.messageSocial.searchWorker(grant.execution, command),
+        ),
+      );
+      return;
+    }
+    if (route === "/v1/worker/messages/react") {
+      const command = parseWorkerRequest(
+        WorkerMessageReactionRequestSchema,
+        body,
+      );
+      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      writeJson(
+        response,
+        200,
+        MessageSocialItemSchema.parse(
+          this.#kernel.messageSocial.reactWorker(grant.execution, command),
+        ),
+      );
+      return;
+    }
     if (route === "/v1/worker/messages/post") {
       const command = parseWorkerRequest(WorkerMessagePostRequestSchema, body);
       this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
@@ -791,6 +826,15 @@ export class WorkerApplicationService {
     }
     const command = parseWorkerRequest(WorkerTaskSubmitRequestSchema, body);
     this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+    const replay = this.#kernel.replayTaskSubmission(grant.execution, {
+      idempotencyKey: command.idempotencyKey,
+      summary: command.summary,
+      taskId: command.taskId,
+      ...(command.verification === undefined
+        ? {}
+        : { verification: command.verification }),
+    });
+    if (replay !== null) return replay;
     const deliveryRepository = await this.#captureTaskDeliveryEvidence(
       grant,
       command.taskId,

@@ -1,8 +1,17 @@
-import type { DatabaseSync } from "node:sqlite";
+import type { DatabaseSync, SQLInputValue } from "node:sqlite";
 
-import { TaskSchema, type Task } from "@rah-os/protocol";
+import { TaskSchema, TaskStateSchema, type Task } from "@rah-os/protocol";
 
+import { NotFoundError } from "./errors.ts";
 import { integer, nullableText, text, type Row } from "./sqlite-row.ts";
+
+export type TaskPageOptions = {
+  beforeTaskNumber?: number;
+  limit?: number;
+  states?: Task["state"][];
+};
+export type RoomTaskPageRequest = TaskPageOptions & { roomId: string };
+export type TaskPage = { nextBeforeTaskNumber?: number; tasks: Task[] };
 
 export function taskDependenciesComplete(
   database: DatabaseSync,
@@ -37,6 +46,20 @@ export function taskProjectionFromRow(database: DatabaseSync, row: Row): Task {
     )
     .all(taskId);
   return taskProjectionFromRelations(row, dependencyTaskIds, participants);
+}
+
+export function requireRoomTaskProjection(
+  database: DatabaseSync,
+  roomId: string,
+  taskId: string,
+): Task {
+  const row = database
+    .prepare("SELECT * FROM tasks WHERE task_id = ?")
+    .get(taskId);
+  if (row === undefined || text(row, "room_id") !== roomId) {
+    throw new NotFoundError(`task ${taskId} was not found in Room ${roomId}`);
+  }
+  return taskProjectionFromRow(database, row);
 }
 
 function taskProjectionFromRelations(
@@ -95,8 +118,16 @@ function taskProjectionFromRelations(
 export function listTaskProjections(
   database: DatabaseSync,
   roomId: string,
-  options: { beforeTaskNumber?: number; limit?: number } = {},
+  options: TaskPageOptions = {},
 ): Task[] {
+  return listTaskProjectionPage(database, roomId, options).tasks;
+}
+
+export function listTaskProjectionPage(
+  database: DatabaseSync,
+  roomId: string,
+  options: TaskPageOptions = {},
+): TaskPage {
   const limit = options.limit ?? 200;
   if (!Number.isInteger(limit) || limit <= 0 || limit > 500) {
     throw new Error("Task page limit must be between 1 and 500");
@@ -108,20 +139,37 @@ export function listTaskProjections(
   ) {
     throw new Error("beforeTaskNumber must be a positive integer");
   }
-  const rows = database
+  const states = options.states?.map((state) => TaskStateSchema.parse(state));
+  if (states !== undefined && new Set(states).size !== states.length) {
+    throw new Error("Task state filters must be unique");
+  }
+  const where = ["room_id = ?"];
+  const args: SQLInputValue[] = [roomId];
+  if (options.beforeTaskNumber !== undefined) {
+    where.push("task_number < ?");
+    args.push(options.beforeTaskNumber);
+  }
+  if (states !== undefined) {
+    if (states.length === 0) {
+      throw new Error("Task state filters cannot be empty");
+    }
+    where.push(`state IN (${states.map(() => "?").join(",")})`);
+    args.push(...states);
+  }
+  const fetched = database
     .prepare(
       `SELECT * FROM tasks
-       WHERE room_id = ? AND (? IS NULL OR task_number < ?)
+       WHERE ${where.join(" AND ")}
        ORDER BY task_number DESC LIMIT ?`,
     )
-    .all(
-      roomId,
-      options.beforeTaskNumber ?? null,
-      options.beforeTaskNumber ?? null,
-      limit,
-    )
-    .reverse();
-  if (rows.length === 0) return [];
+    .all(...args, limit + 1);
+  const hasEarlier = fetched.length > limit;
+  const descendingRows = fetched.slice(0, limit);
+  const nextBeforeTaskNumber = hasEarlier
+    ? integer(descendingRows.at(-1)!, "task_number")
+    : undefined;
+  const rows = descendingRows.reverse();
+  if (rows.length === 0) return { tasks: [] };
   const taskIds = rows.map((row) => text(row, "task_id"));
   const placeholders = taskIds.map(() => "?").join(",");
   const dependenciesByTask = new Map<string, string[]>();
@@ -150,7 +198,7 @@ export function listTaskProjections(
     participants.push(participant);
     participantsByTask.set(taskId, participants);
   }
-  return rows.map((row) => {
+  const tasks = rows.map((row) => {
     const taskId = text(row, "task_id");
     return taskProjectionFromRelations(
       row,
@@ -158,4 +206,8 @@ export function listTaskProjections(
       participantsByTask.get(taskId) ?? [],
     );
   });
+  return {
+    ...(nextBeforeTaskNumber === undefined ? {} : { nextBeforeTaskNumber }),
+    tasks,
+  };
 }

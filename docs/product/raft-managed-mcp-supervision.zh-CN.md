@@ -88,7 +88,7 @@ Activation-scoped Worker
 
 ## 4. 明确未完成
 
-- RAH UI 还不能创建 executor URL、请求头 secret 或 OAuth connection；当前连接必须由 daemon data-only config + owner-private SecretProvider 预配置；
+- 本机 Core 现在从已初始化 state 目录的 `managed-mcp.json` 读取 schemaVersion 1 / executors；复用 daemon 配置校验和 owner-private SecretProvider，缺文件为无 executor，非法文件拒绝启动。配置随 state 备份，重启生效。浏览器仍不能编辑 URL/secret 或 OAuth connection；具体操作见产品内本机指南。
 - Notion/Linear preset、OAuth redirect/refresh/revoke、credential rotation UI 未实现；
 - MCP Server hard delete 未实现；当前只支持保留 provenance 的 soft disable；
 - Human Web/PWA 的 HTTPS LAN pairing edge 已落地；证书自动管理、通用 rate limit 和远程 Computer executor routing 尚未收口。

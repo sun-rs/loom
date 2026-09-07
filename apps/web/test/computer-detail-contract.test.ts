@@ -26,7 +26,14 @@ const firefoxBrowserGate = readFileSync(
 test("Computer pane does not reuse Room dimensions or synthesize Agent avatars", () => {
   assert.doesNotMatch(source, /RAFT_ROOM_SIDEBAR_/u);
   assert.match(source, /readComputerSidebarWidth/u);
-  assert.match(source, /<AgentEntityCard/u);
+  assert.match(source, /<ComputerAgentControls/u);
+  const controls = readFileSync(
+    new URL("../src/components/computer-agent-controls.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(controls, /<AgentEntityCard/u);
+  assert.match(controls, /onOpen=\{onOpen\}/u);
+  assert.doesNotMatch(controls, /handle\.slice\(0, 1\)/u);
   assert.match(source, /onOpen=\{onOpenAgent\}/u);
   const card = readFileSync(
     new URL("../src/components/agent-entity-card.tsx", import.meta.url),

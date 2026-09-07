@@ -4,7 +4,8 @@ import { join } from "node:path";
 export async function verifyEntitySurfaces(page, origin, output, engine) {
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
-    await page.goto(`${origin}/?surface=tasks`, { waitUntil: "networkidle" });
+    await page.goto(`${origin}/?surface=tasks`, { waitUntil: "load" });
+    await page.locator(".rah-global-task-card").first().waitFor();
     for (const label of ["频道", "创建者", "负责人"]) {
       await page.getByRole("button", { name: label, exact: true }).click();
       const menu = page.getByRole("menu", { name: `${label}筛选` });
@@ -29,6 +30,8 @@ export async function verifyEntitySurfaces(page, origin, output, engine) {
           name: label === "创建者" ? "我创建的" : "分配给我的",
           exact: true,
         });
+        await sentinel.waitFor();
+        await menu.locator(".rah-agent-avatar-grid").first().waitFor();
         assert.equal(await sentinel.locator('[role="img"],svg').count(), 0);
         assert.equal(
           await sentinel.locator(".rah-discovery-option-leading").count(),
@@ -50,9 +53,11 @@ export async function verifyEntitySurfaces(page, origin, output, engine) {
       assert.equal(await menu.count(), 0);
     }
     await page.goto(`${origin}/?surface=computers`, {
-      waitUntil: "networkidle",
+      waitUntil: "load",
     });
-    const card = page.locator(".rah-computer-agent-list > button").first();
+    const card = page
+      .locator(".rah-computer-agent-list button.rah-entity-card")
+      .first();
     await card.waitFor();
     await page.mouse.move(0, 0);
     assert.equal(

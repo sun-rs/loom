@@ -102,7 +102,7 @@ the internal `preview.css` frame (background, border, shadow and stacking).
 Agent and graph page-local frame rules were removed. The graph's existing
 compact shadow remains an explicit variant; identity content stays in callers.
 
-Empty states require a named `search` or `profile` context and `fill` or `section`
+Empty states require a named `search`, `profile`, `task`, `activity` or `file` context and `fill` or `section`
 placement. Search home fills its remaining stage only when suggestions are
 absent. Profile empty content fills the area **after** the diagnostic toolbar.
 Loading and read failures belong to the caller and must not show a successful
@@ -169,3 +169,9 @@ permission and subscription are separate view states. Read-only retry and stale
 response fencing are tested without creating a subscription. This does not
 certify OS notification delivery or all notification settings; see the
 [scoped implementation plan](./ui-secondary-headers-and-push-status.md).
+
+Interactive notification popovers now share the internal `interactive-popover` owner,
+using pinned Base UI for hover bridges, dismissal and focus. Raft's desktop 0/120 ms
+and keyboard-only initial focus are source-backed parameters; mobile opens on click.
+InputRequest answering remains a separate modal dialog. See the
+[scoped takeover audit](../audits/2026-09-06-notification-popover-takeover.zh-CN.md).

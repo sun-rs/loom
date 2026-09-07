@@ -4,8 +4,9 @@ export const formalBrowserAllowedApiRequests = [
   "POST /v1/local/runtimes/list",
   "POST /v3/client/activity/list",
   "POST /v3/client/agents/list",
+  "POST /v3/client/agents/get",
   "POST /v3/client/agents/presence/list",
-  "POST /v3/client/humans/profile/get",
+  "POST /v3/client/humans/profile",
   "POST /v3/client/input-requests/list",
   "POST /v3/client/managed-mcp/assignments/list",
   "POST /v3/client/managed-mcp/executors/list",
@@ -27,6 +28,7 @@ export const formalBrowserAllowedApiRequests = [
   "POST /v3/client/tasks/reviews/list",
   "POST /v3/client/threads/list",
   "POST /v3/client/workspaces/list",
+  "POST /v3/client/workspaces/humans",
 ];
 const exactApiRequests = new Set(formalBrowserAllowedApiRequests);
 export const formalBrowserReadStateRequests = [

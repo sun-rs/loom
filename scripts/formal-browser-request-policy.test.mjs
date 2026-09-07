@@ -27,6 +27,10 @@ test("formal browser policy separates projections from read-state writes", () =>
     decision: "allow-api",
     identity: "POST /v3/client/workspaces/list",
   });
+  assert.deepEqual(classify("POST", "/v3/client/workspaces/humans"), {
+    decision: "allow-api",
+    identity: "POST /v3/client/workspaces/humans",
+  });
   assert.deepEqual(
     classify("POST", "/v3/client/messages/reference-read-states"),
     {
@@ -129,4 +133,17 @@ test("formal browser target normalizes an explicitly authorized local target", (
       origin: "http://localhost:4173",
     },
   );
+});
+
+test("formal Human inspector permits exact SDK reads and never membership or profile writes", () => {
+  for (const path of ["/v3/client/humans/profile", "/v3/client/agents/get"])
+    assert.equal(classify("POST", path).decision, "allow-api", path);
+  for (const path of [
+    "/v3/client/humans/profile/get",
+    "/v3/client/rooms/leave",
+    "/v3/client/rooms/delete",
+    "/v3/client/rooms/members/role",
+    "/v3/client/principals/update",
+  ])
+    assert.equal(classify("POST", path).decision, "reject", path);
 });

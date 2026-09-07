@@ -161,7 +161,12 @@ export function roomSlugFromName(name: string): string {
 }
 
 export function roomSelectionFromSearch(search: string): string | undefined {
-  const roomId = new URLSearchParams(search).get("room")?.trim();
+  const params = new URLSearchParams(search);
+  const roomId = (
+    params.get("surface") === "search"
+      ? (params.get("previewRoom") ?? params.get("room"))
+      : params.get("room")
+  )?.trim();
   return roomId === undefined || roomId.length === 0 ? undefined : roomId;
 }
 

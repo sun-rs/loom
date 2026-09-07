@@ -24,3 +24,32 @@ export const HumanProfileResponseSchema = z
   })
   .strict();
 export type HumanProfileResponse = z.infer<typeof HumanProfileResponseSchema>;
+
+export const WorkspaceHumanDirectoryRequestSchema = z
+  .object({ workspaceId: IdentifierSchema })
+  .strict();
+export type WorkspaceHumanDirectoryRequest = z.infer<
+  typeof WorkspaceHumanDirectoryRequestSchema
+>;
+
+export const WorkspaceHumanMemberSchema = z
+  .object({
+    principal: PrincipalSchema.extend({ kind: z.literal("human") }),
+    membership: z
+      .object({ role: MembershipRoleSchema, joinedAt: TimestampSchema })
+      .strict(),
+  })
+  .strict();
+export type WorkspaceHumanMember = z.infer<typeof WorkspaceHumanMemberSchema>;
+
+/** Bounded Workspace identity projection derived from the unique control Room. */
+export const WorkspaceHumanDirectoryResponseSchema = z
+  .object({
+    humans: z.array(WorkspaceHumanMemberSchema).max(500),
+    truncated: z.boolean(),
+    workspaceId: IdentifierSchema,
+  })
+  .strict();
+export type WorkspaceHumanDirectoryResponse = z.infer<
+  typeof WorkspaceHumanDirectoryResponseSchema
+>;

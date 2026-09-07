@@ -1,5 +1,18 @@
 # RAH Core SDK 边界
 
+当前公开阅读增量：`collaboration-policy` 统一 Human 当前公开阅读资格，
+`room.preview` 提供有界正文；Search、精确定位、附件与已关注 Thread Activity 共用该资格。
+完整 sync/ACK、Task 写入、上传和 Agent execution scope 仍要求成员资格。
+下方“仅元数据／正文权限不变”描述的是先前切片；当前边界与未完成事项见
+[公开频道设计续节](../design/public-channel-discovery-and-join.md#2026-09-07-continuation-public-content-and-thread-attention)。
+
+2026-09-07 公开频道后端增量：HumanApplicationPort 的 discoverPublicChannels /
+joinPublicChannel 经认证 HTTP 与 SDK room.public.discover / room.public.join 暴露。
+Kernel HumanPublicChannels 是目录与加入事务唯一 owner；当前 Workspace Human 成员
+可发现 active public Channel 元数据，凭 observed Room sequence 仅将自己加入为 member。
+不增加管理权限，不改变 history/Search 正文/附件/Task/Agent delivery 的成员门禁。
+详见[设计与权限合同](../design/public-channel-discovery-and-join.md)。
+
 2026-09-04 Human 页面族写边界：schema 47 给原 Principal 表增加 nullable description；
 `principal.update` 仍是本人认证、事务与头像 upload-intent 引用绑定的唯一 owner。
 描述最多 3000 字符，trim/清空；旧客户端省略该字段不会擦除描述。新客户端发送
@@ -126,3 +139,9 @@ Human HTTP/IPC adapter 只能依赖 `HumanApplicationPort`，不得依赖或保�
 - [x] Agent/Policy mutation 只允许 managed control Room owner/admin，且 policy revision 不能跨 control Room 引用。
 
 上述门禁允许冻结为“local single-host trusted-config 的多 Agent headless Core candidate”。durable CapacityPool/PlacementHold 不再阻塞 v0.1；Task discussion anchor 已在 schema v9 接通，已有 Message 转 Task、Artifact/Review、Human Workspace 到 runtime mount/cwd 的 canonical 映射和真实 mixed CLI v4 certification 进入 v0.2。完整判断见 [v0.1 收口与竞争性独立审计](../audits/2026-08-26-v01-closure-competitive-audit.zh-CN.md)。
+
+## 2026-09-07 Worker 消息工具
+
+当前 Run 的 message-search / message-react 共用 GlobalDiscovery / MessageSocial owner，
+没有取得 Human discovery 权限。HTTP 与 CLI 的 Room、身份及上界由现有 execution credential 提供，
+不接受 caller actor/room。范围、来源、幂等及验证见[Worker 消息合同](../design/worker-message-tools.md)。

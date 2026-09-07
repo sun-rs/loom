@@ -52,7 +52,11 @@ export function WorkspaceIdentity({
   canManage: boolean;
   principalId: string;
   onUpdated: (workspace: Workspace) => void;
-  onSelect: (workspace: Workspace, rememberedSearch?: string) => void;
+  onSelect: (
+    workspace: Workspace,
+    rememberedSearch: string | undefined,
+    navigationMode: "restore" | "replace-with-home",
+  ) => void;
   mobile?: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -142,7 +146,11 @@ export function WorkspaceIdentity({
       selected.workspaceId,
       roomIds,
     );
-    onSelect(selected, mobile ? undefined : remembered);
+    onSelect(
+      selected,
+      mobile ? undefined : remembered,
+      mobile ? "replace-with-home" : "restore",
+    );
     closeMenu(selected.workspaceId === workspace?.workspaceId);
   };
   return (

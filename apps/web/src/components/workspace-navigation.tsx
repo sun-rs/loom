@@ -1,3 +1,4 @@
+import { InteractivePopoverTrigger } from "@rah-os/ui-web/neo-brutalist/interactive-popover";
 import type { Room, Workspace } from "@rah-os/protocol";
 import { DEFAULT_SIDEBAR_PREFERENCES } from "@rah-os/protocol";
 import { useSidebarPreferences } from "./sidebar-preferences.tsx";
@@ -123,16 +124,21 @@ export function Rail({
         />
       </div>
       <div className="rail-footer-item">
-        <RailButton
-          active={notificationsOpen}
-          badge={notificationCount}
-          dot={notificationAttention && notificationCount === 0}
-          keepDotWhileActive
-          icon="bell"
-          label="通知"
-          {...(onNotifications === undefined
-            ? {}
-            : { onClick: onNotifications })}
+        <InteractivePopoverTrigger
+          hover
+          render={
+            <RailButton
+              active={notificationsOpen}
+              badge={notificationCount}
+              dot={notificationAttention && notificationCount === 0}
+              keepDotWhileActive
+              icon="bell"
+              label="通知"
+              {...(onNotifications === undefined
+                ? {}
+                : { onClick: onNotifications })}
+            />
+          }
         />
       </div>
       <div className="rail-footer-item">
@@ -156,7 +162,8 @@ function RailButton({
   icon,
   label,
   onClick,
-}: {
+  ...buttonProps
+}: React.ComponentProps<"button"> & {
   active?: boolean;
   badge?: number;
   dot?: boolean;
@@ -168,9 +175,13 @@ function RailButton({
 }) {
   return (
     <button
+      {...buttonProps}
       aria-label={badge > 0 ? `${label}，${badge} 项待处理` : label}
       className={`rail-btn${active ? " is-active" : ""}`}
-      disabled={disabled || onClick === undefined}
+      disabled={
+        disabled ||
+        (onClick === undefined && buttonProps["aria-haspopup"] !== "dialog")
+      }
       onClick={onClick}
       title={label}
       data-has-unread={dot || badge > 0}
@@ -223,7 +234,7 @@ export function RoomSidebar({
   onActivity: () => void;
   onCreate: () => void;
   onEditRoom?: (roomId: string) => void;
-  onNotifications: () => void;
+  onNotifications?: () => void;
   onOpenDirectRoom: (peerPrincipalId: string) => Promise<void>;
   onSearch: () => void;
   onSelect: (roomId: string) => void;
@@ -417,24 +428,31 @@ export function RoomSidebar({
         <div className="rah-mobile-home-workspace rah-mobile-only">
           {mobileWorkspaceIdentity ?? workspace?.name ?? "RAH OS"}
         </div>
-        <button
-          aria-label={
-            notificationCount > 0
-              ? `通知，${notificationCount} 项待处理`
-              : "通知"
+        <InteractivePopoverTrigger
+          render={
+            <button
+              aria-label={
+                notificationCount > 0
+                  ? `通知，${notificationCount} 项待处理`
+                  : "通知"
+              }
+              className="rah-mobile-home-notifications rah-mobile-only"
+              data-has-unread={notificationAttention || notificationCount > 0}
+              onClick={onNotifications}
+              type="button"
+            >
+              <Icon name="bell" />
+              {notificationCount > 0 ? (
+                <span
+                  className="rah-mobile-home-notification-badge"
+                  aria-hidden
+                >
+                  {notificationCount > 99 ? "99+" : notificationCount}
+                </span>
+              ) : null}
+            </button>
           }
-          className="rah-mobile-home-notifications rah-mobile-only"
-          data-has-unread={notificationAttention || notificationCount > 0}
-          onClick={onNotifications}
-          type="button"
-        >
-          <Icon name="bell" />
-          {notificationCount > 0 ? (
-            <span className="rah-mobile-home-notification-badge" aria-hidden>
-              {notificationCount > 99 ? "99+" : notificationCount}
-            </span>
-          ) : null}
-        </button>
+        />
       </PanelHeader>
       <div className="sidebar-body">
         <section className="side-section">

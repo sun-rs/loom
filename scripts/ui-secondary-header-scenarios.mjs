@@ -16,7 +16,7 @@ export async function verifySecondaryHeaders(page, origin, output, engine) {
         return document.fonts.ready;
       });
       await page.goto(`${origin}/?surface=${surface}`, {
-        waitUntil: "networkidle",
+        waitUntil: "load",
       });
       const header = page.locator(
         surface === "saved" ? ".rah-saved-header" : ".search-top",

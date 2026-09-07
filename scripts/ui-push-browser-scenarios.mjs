@@ -51,7 +51,7 @@ export async function verifyPushReadStates(browser, origin, output, engine) {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(
       `${origin}/?surface=settings&settingsSection=notifications`,
-      { waitUntil: "networkidle" },
+      { waitUntil: "load" },
     );
     await page.waitForFunction(() => window.__rahPushReadProbe.reads > 0);
     assert.equal(

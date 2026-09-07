@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { Principal } from "@rah-os/protocol";
+import type { WorkspaceHumanMember } from "@rah-os/protocol";
 import type { WorkspaceAgentView } from "@rah-os/ui-web";
 import { PanelHeader } from "@rah-os/ui-web/neo-brutalist/panel-header";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
@@ -12,7 +12,12 @@ export function AgentSidebar({
   canCreate,
   computerLabel,
   computerStatus,
-  currentHuman,
+  currentHumanId,
+  humans,
+  humanDirectoryError,
+  humanDirectoryLoading,
+  humansTruncated,
+  onRetryHumans,
   onSelectHuman,
   selectedHumanId,
   onCreate,
@@ -25,7 +30,12 @@ export function AgentSidebar({
   canCreate: boolean;
   computerLabel: string | undefined;
   computerStatus?: WorkspaceAgentView["connectionStatus"];
-  currentHuman: Principal | undefined;
+  currentHumanId: string | undefined;
+  humans: readonly WorkspaceHumanMember[];
+  humanDirectoryError?: string | undefined;
+  humanDirectoryLoading?: boolean | undefined;
+  humansTruncated?: boolean | undefined;
+  onRetryHumans?: (() => void) | undefined;
   onSelectHuman: (principalId: string) => void;
   selectedHumanId: string | undefined;
   onCreate: () => void;
@@ -36,6 +46,10 @@ export function AgentSidebar({
 }) {
   const [createMenuOpen, setCreateMenuOpen] = useState(false);
   const createMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!canCreate) setCreateMenuOpen(false);
+  }, [canCreate]);
 
   useEffect(() => {
     if (!createMenuOpen) return;
@@ -80,7 +94,7 @@ export function AgentSidebar({
             <span>{agents.length}</span>
             <div className="rah-agent-create-control" ref={createMenuRef}>
               <button
-                aria-expanded={createMenuOpen}
+                aria-expanded={canCreate && createMenuOpen}
                 aria-haspopup="menu"
                 aria-label="添加 Agent"
                 className="rah-interaction-flat"
@@ -92,7 +106,7 @@ export function AgentSidebar({
               >
                 +
               </button>
-              {createMenuOpen ? (
+              {canCreate && createMenuOpen ? (
                 <div className="rah-agent-create-menu" role="menu">
                   <button
                     onClick={() => {
@@ -155,31 +169,53 @@ export function AgentSidebar({
           <header>
             <Icon name="chevron" />
             <b>人类</b>
-            <span>{currentHuman === undefined ? 0 : 1}</span>
+            <span>
+              {humanDirectoryLoading && !humans.length
+                ? "…"
+                : `${humans.length}${humansTruncated ? "+" : ""}`}
+            </span>
           </header>
-          {currentHuman === undefined ? null : (
+          {humanDirectoryError ? (
+            <div className="rah-profile-notice" role="alert">
+              <p>无法读取成员列表：{humanDirectoryError}</p>
+              <button className="btn" type="button" onClick={onRetryHumans}>
+                重试成员列表
+              </button>
+            </div>
+          ) : humanDirectoryLoading ? (
+            <p className="rah-profile-notice" role="status">
+              正在读取成员列表…
+            </p>
+          ) : humans.length === 0 ? (
+            <p className="rah-profile-notice">暂无可访问的人类成员</p>
+          ) : null}
+          {humansTruncated ? (
+            <p className="rah-profile-notice">仅显示前 500 位成员。</p>
+          ) : null}
+          {humans.map(({ principal: human }) => (
             <button
+              key={human.principalId}
               type="button"
-              className={`rah-agent-member-row rah-interaction-row${selectedHumanId === currentHuman.principalId ? " is-selected" : ""}`}
+              className={`rah-agent-member-row rah-interaction-row${selectedHumanId === human.principalId ? " is-selected" : ""}`}
               aria-current={
-                selectedHumanId === currentHuman.principalId
-                  ? "page"
-                  : undefined
+                selectedHumanId === human.principalId ? "page" : undefined
               }
-              onClick={() => onSelectHuman(currentHuman.principalId)}
+              onClick={() => onSelectHuman(human.principalId)}
             >
               <ProfileImageAvatar
-                avatarKey={currentHuman.avatarKey}
-                name={currentHuman.displayName || currentHuman.handle}
-                principalId={currentHuman.principalId}
+                avatarKey={human.avatarKey}
+                name={human.displayName || human.handle}
+                principalId={human.principalId}
                 size="sidebar"
               />
               <span>
-                <b>{currentHuman.displayName || currentHuman.handle}</b>
-                <small>（你）</small>
+                <b>{human.displayName || human.handle}</b>
+                {human.principalId === currentHumanId ? (
+                  <small>（你）</small>
+                ) : null}
               </span>
             </button>
-          )}
+          ))}
         </section>
       </div>
     </aside>

@@ -883,6 +883,11 @@ test("Activity exact Thread callback keeps the list background and opens the req
   const nav = navigation();
   const scope = {
     ...nav.scope,
+    surface: "activity",
+    rooms: [
+      { roomId: "r", kind: "channel" },
+      { roomId: "room", kind: "channel" },
+    ],
     window: {
       location: { search: "?surface=activity&filter=mentions" },
       history: { pushState: noop },
@@ -941,6 +946,11 @@ function activityRouteFixture(search = "?surface=activity&filter=mentions") {
   };
   const scope = {
     ...nav.scope,
+    surface: "activity",
+    rooms: [
+      { roomId: "r", kind: "channel" },
+      { roomId: "room", kind: "channel" },
+    ],
     window,
     discoveryLocation,
     navigationPresentation,

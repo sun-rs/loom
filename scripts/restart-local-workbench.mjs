@@ -13,6 +13,7 @@ import {
   guardedStop,
   verifyStateBackup,
 } from "./workbench-restart-guard.mjs";
+import { assertRahOsRepositoryIdentity } from "./repository-identity.mjs";
 
 // Explicit one-shot local operator command. Never called by a browser or cron.
 const { values } = parseArgs({
@@ -24,6 +25,10 @@ const { values } = parseArgs({
   },
 });
 const repo = await realpath(join(import.meta.dirname, ".."));
+await assertRahOsRepositoryIdentity({
+  commandCwd: process.cwd(),
+  repositoryDirectory: repo,
+});
 assert.ok(
   values.state && values.build && values.pid,
   "Required: --pid --state --build (exact Web build ID)",

@@ -182,3 +182,12 @@ Host 不能依赖 wake 生存：当前单-runtime 实现会在启动、重连和
 | Certified         | 指定版本通过真实 CLI 与故障门禁                   |
 
 禁止用一个“Supported”勾号掩盖能力差异。
+
+## 9. 轨迹预览失效提示
+
+AgentPresence 的可选 `trajectoryVersion` 由现有 RuntimeTrajectory owner 读取该 Agent
+最新记录的 `server_sequence`，空轨迹为 0。该值仅用于判断有界预览是否需要重读；
+清理最新记录可使值回退，客户端只比较相等性，不把它当分页 cursor 或单调业务序号。
+它不含轨迹正文，不替代读取 ACL、activityAt、Room ACK、Inbox 或 Task 状态。
+Web 复用现有 presence reconciliation，不新增计时器或轨迹缓存；旧 daemon 缺少此字段时
+保留 activityAt 刷新。来源与验证见[审计](../audits/2026-09-07-agent-preview-trajectory-refresh.zh-CN.md)。

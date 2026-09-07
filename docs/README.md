@@ -1,6 +1,82 @@
 # RAH OS 文档
 
-当前可靠性主线已进入 E 批：[Search／Tasks／Message 页面族首段收口](./audits/2026-09-05-search-tasks-message-page-family.md)。
+PDF 基本阅读操作：[缩放、页码跳转与布局修复验收](./audits/2026-09-07-pdf-reading-closure.zh-CN.md)。
+
+Computer 三模式批量重启／重置：[按单 Agent 原回执恢复的验收](./audits/2026-09-07-computer-bulk-reset-closure.zh-CN.md)。
+
+附件有界 PDF／音视频预览：[本地生产包与真实浏览器验收](./audits/2026-09-07-media-preview-closure.zh-CN.md)。
+
+最新真实模型与 Computer 补缺：[四家 CLI、冻结 Review 与 Computer 收口](./audits/2026-09-07-real-cli-and-computer-closure.zh-CN.md)。
+
+当前产品范围：**单 Human、多 Agent、本机优先**。多 Human 加入/协作、差异化 Room
+浏览与加入权限整体延期为未来备选项目，不再阻塞首版。
+[用户范围决定、备选项目与主线施工顺序](./product/single-human-mainline-and-multi-human-backlog.zh-CN.md)。
+
+撤销先前“公开频道未完成不得推进其他页面”的施工锁定。第一至第三项的本地确定性闭环已通过，
+第四项已补共享文件菜单、本机 MCP 与帮助反馈，并执行第五项本地门禁；剩余边界见本轮审计，不重建已有后端。
+
+当前五项施工与审计：[本批修复、逐项判定和未收口边界](./audits/2026-09-07-five-item-mainline-audit.zh-CN.md)。
+
+当前第四项续修：[文件预览下载失败反馈与重试](./audits/2026-09-07-file-download-recovery.zh-CN.md)。
+
+当前第四项首个修复：[Agent 预览轨迹更新与验收边界](./audits/2026-09-07-agent-preview-trajectory-refresh.zh-CN.md)。
+
+当前第一至第三项：[本地闭环、Worker 消息能力与验收边界](./audits/2026-09-07-mainline-first-three-closure.zh-CN.md)。
+
+当前执行贯通：[Web 配置到实际子进程与记忆目录连续性](./audits/2026-09-07-runtime-configuration-continuity.zh-CN.md)。
+
+当前续修：[Agent 重启操作回执重试](./audits/2026-09-07-agent-reset-retry.zh-CN.md)。
+
+当前实施方案：[五项依赖、技术 owner 与逐项出口](./product/mainline-implementation-plan.zh-CN.md)。
+
+当前主线交付：[Agent 配置回执修复、验证与剩余边界](./audits/2026-09-07-agent-configure-closure.zh-CN.md)。
+本批收口不确定保存的安全重试，Agent 配置到运行入口整体仍在验收中。
+
+上一批公开频道修复保留历史证据与安全回归：
+[修复与正式恢复记录](./audits/2026-09-07-public-channel-surfaces-verification.zh-CN.md)。
+该报告及[旧续修记录](./audits/2026-09-07-pre-settings-continuation.zh-CN.md)中的继续锁定要求已被本次用户决定取代。
+
+当前逐环节收口：[最新代码审查与单项施工顺序](./audits/2026-09-07-current-parity-closure-review.zh-CN.md)。
+前一交付：[媒体／文件双入口与多选输入修复](./audits/2026-09-07-composer-pickers-verification.zh-CN.md)。
+前一项[文件拖放子链路](./audits/2026-09-07-composer-drop-verification.zh-CN.md)保持回归；官网完整双边、公开频道与 Agent API 对等仍未收口。
+
+当前公开频道增量：[后端发现与本人加入验证](./audits/2026-09-07-public-channel-discovery-and-join-verification.zh-CN.md)。
+该历史批次仅补齐元数据与本人加入；本轮公开正文、前端入口与关注增量见顶部续修报告。
+
+当前 Room / Task 施工：[生命周期导航隔离与任务虚拟窗口](./audits/2026-09-07-room-lifecycle-navigation-verification.zh-CN.md)。
+已有 leave/delete 沿用原后端，修复旧回执抢占新位置、设置串页与错误反馈；补齐 Raft 任务虚拟窗口和锚点。公开频道阅读与 UI 加入尚待收口；下述新批次补齐后端发现与本人加入。
+
+当前成员权限修复：[2026-09-07 Human 权限刷新、目录错误与浏览器证据](./audits/2026-09-07-human-membership-authority-verification.zh-CN.md)。
+删除一次性 Workspace 角色副本，已有有界成员目录同时驱动管理入口与资料刷新；正式状态以该批交付段为准。
+
+当前前后端缺口与后续施工顺序：[2026-09-06 源码、登记与证据交叉审查](./audits/2026-09-06-current-alignment-and-construction-order.zh-CN.md)。
+该审查指出旧行为队列中的已实现误报；后续按成员权限、Room 工作流、文件交付、Agent/Computer、Settings 和设备发布收口，不重建已有核心。
+
+当前接手施工：[通知中心 hover/focus 与证据边界](./audits/2026-09-06-notification-popover-takeover.zh-CN.md)。
+
+当前累计候选的冻结身份、Task 精确重试、有界 Task continuation、84 项机器交付队列、Workspace
+切换器完整页面族、双浏览器及正式持久实例证据见
+[2026-09-06 累计交付审计](./audits/2026-09-06-task-ledger-behavior-queue-workspace-switcher-delivery.zh-CN.md)。
+该报告在既定第三方线程返回前保持“待独立复核”，不把 29 项 verified 外推成全产品完成率。
+
+Task 团队闭环 S1 已有实现和累计验收：Raft 多标题主界面保留，RAH 的负责人、协作者、
+审阅者和依赖通过提交前第二阶段写入同一 canonical Task，避免开放 Task 的认领竞态。
+[Task 页面族设计](./design/task-page-family.md)及
+[2026-09-06 候选验收](./audits/2026-09-06-task-collaboration-entry-verification.zh-CN.md)
+分别记录来源边界、TDD、双浏览器依赖结果和完整 Review/Human completion 业务断言；
+正式实例恢复与后续证据纠正见顶部接手批次，原报告的待复核状态不代表新批次取得独立审计。2026-09-05 的
+[页面族审计](./audits/2026-09-05-task-page-family-verification.zh-CN.md)保留为历史证据。
+当前行为登记已经为全部 84 项增加机器可校验的适用性与交付状态；这是当前工作队列，不是完成率。
+Workspace 切换器已按冻结 Raft 发布物登记为完整页面族，Chrome/Firefox 覆盖桌面/移动、长名称、
+点击/外点/Escape/焦点、排序刷新、合法最近 URL 与独立管理弹窗。Firefox 完整生产 App 另以两个
+canonical Workspace 验证：移动选择不恢复桌面 Settings，而进入既有 Home owner；URL 使用 replace，
+Back/Forward 与 reload 均回到正确 Workspace/Room。
+Room Task continuation 现在是有界窗口而非一次性追加：每 Room 最多保留三个已访问早期页、全局最多八个
+Room，普通轮询重读所有保留 cursor 并由 generation/abort fence 拒绝旧 Room 迟到结果。1,001 条 active Task、
+旧页状态变化以及服务端接受但客户端响应丢失后的精确幂等重试，均已进入双浏览器/production 门禁。
+消息菜单与 Search 异步状态的最新来源裁决、TDD、Chrome/Firefox 和 canonical
+副作用证据见[设计](./design/conversation-page-family.md)与
+[验收审计](./audits/2026-09-05-conversation-page-family-verification.zh-CN.md)。
 共享命名空态、任务筛选身份、Search 零结果和普通消息操作已经通过真实 Chrome/Firefox 的
 桌面与 390px 组合矩阵；相同 Raft 页面仍以固定官方来源和同前置浏览器比较为准，不把内部
 回归当成官网证明。此前第四批为：[canonical 团队业务闭环验证](./audits/2026-09-05-canonical-team-workflow-verification.zh-CN.md)。
@@ -47,7 +123,7 @@ Computer/已创建 Agent 卡片与 Search/Agent 动态空态已接入内部组�
 前一批：[Saved/Search 标题与通知读取错误态审查](./audits/2026-09-04-secondary-headers-and-push-state.md)。
 Saved/Search 消费共享标题、图标和返回/清空按钮；通知读取失败不再误报 iOS
 不支持或设备数为 0，补入只读重试与旧响应隔离。14 个双浏览器场景通过并已正式重启。
-Firefox 正式订阅读取仍有底层错误，本批仅证明准确展示与隔离重试，不代表通知送达；
+该历史批次曾发现 Firefox 订阅读取错误；设备通知合同有后续修复记录。旧状态不代替当前设备验收，也不代表通知送达；
 正文组件、完整鼠标状态与新增官网双边覆盖仍待收口。
 
 前一批：[跨页面标题轨道统一与验收](./audits/2026-09-04-shell-header-consolidation.md)。
@@ -111,7 +187,7 @@ Profile Image 上传后未保存、替换后孤儿文件与崩溃恢复的最终
 
 P4.5 Agent 问题报告：[Raft 中央 feedback bundle/attestation/upload 合同与 RAH 本地安全诊断导出裁决](./product/2026-09-02-agent-issue-report-contract.zh-CN.md)。
 
-P4.6 Agent 完全重置：[Raft 三档 reset 合同、单 fence workspace/continuity saga 与破坏边界设计](./product/2026-09-02-agent-full-reset-contract.zh-CN.md)。当前仅 `R/design`，正式 full 仍禁用。
+P4.6 Agent 完全重置：[Raft 三档 reset 合同、单 fence workspace/continuity saga 与破坏边界设计](./product/2026-09-02-agent-full-reset-contract.zh-CN.md)。该合同后半部已有 `C/A/L/D` 实现与恢复证据，正式 full 由专属 capability 解锁；不可把文档开头的设计状态当作当前禁用结论。
 
 后续收口的当前执行真相：[Raft-first 剩余收口重构与补强计划](./product/2026-09-02-raft-first-remaining-closure-plan.zh-CN.md)。它固定了源码复用顺序、证据分层、P0–P6 施工顺序、单一 owner、迁移/回滚和浏览器验收。旧的完成列表是历史快照，不得用来覆盖该计划和当日审计。
 
@@ -361,3 +437,8 @@ Raft 767px 移动断点、短窗口 50px/36px rail、四项移动根导航、Roo
 - Audits 独立区分 E0 设计、E1 Kernel、E2 系统和 E3 对照证据。
 - Roadmap 只列当前阶段和退出条件，不保存易过期的日期承诺。
 - 删除已被新文档完全取代的内容；不要维护两个相互竞争的架构真相。
+
+# Current page-family work
+
+- [Conversation interaction and Search state family](./design/conversation-page-family.md)
+- [Conversation / Search 页面族验收](./audits/2026-09-05-conversation-page-family-verification.zh-CN.md)

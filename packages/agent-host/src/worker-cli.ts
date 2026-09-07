@@ -4,6 +4,8 @@ import { basename, isAbsolute, resolve } from "node:path";
 import { Readable } from "node:stream";
 import { randomUUID } from "node:crypto";
 import {
+  WorkerMessageSearchRequestSchema,
+  WorkerMessageReactionRequestSchema,
   AgentAppInboxAckCommandSchema,
   AgentMemoryConfigSnapshotSchema,
   MAX_ATTACHMENT_BYTES,
@@ -374,6 +376,40 @@ function parseCommand(arguments_: readonly string[]): {
       return {
         body: { throughSeq: positiveInteger(options, "through-seq") },
         path: "/v1/worker/acknowledge",
+      };
+    case "message-search":
+      assertAllowed(options, ["query", "limit", "cursor"]);
+      return {
+        path: "/v1/worker/messages/search",
+        body: WorkerMessageSearchRequestSchema.parse({
+          query: boundedText(options, "query", 500),
+          ...(options.limit === undefined
+            ? {}
+            : { limit: positiveInteger(options, "limit") }),
+          ...(options.cursor === undefined
+            ? {}
+            : { cursor: boundedText(options, "cursor", 2048) }),
+        }),
+      };
+    case "message-react":
+      assertAllowed(options, [
+        "message-id",
+        "emoji",
+        "active",
+        "based-on-room-seq",
+        "idempotency-key",
+      ]);
+      if (options.active !== "true" && options.active !== "false")
+        throw new Error("--active must be true or false");
+      return {
+        path: "/v1/worker/messages/react",
+        body: WorkerMessageReactionRequestSchema.parse({
+          messageId: boundedText(options, "message-id", 512),
+          emoji: boundedText(options, "emoji", 64),
+          active: options.active === "true",
+          basedOnRoomSeq: nonnegativeInteger(options, "based-on-room-seq"),
+          idempotencyKey: boundedText(options, "idempotency-key", 200),
+        }),
       };
     case "message-post":
       assertAllowed(options, [
@@ -1062,6 +1098,8 @@ rah reminder update --id ID (--in 30m|--fire-at ISO|--cadence RULE|--title TEXT)
 rah reminder log --id ID
 rah worker sync [--after-seq N]
 rah worker acknowledge --through-seq N
+rah worker message-search --query TEXT [--limit N] [--cursor CURSOR]
+rah worker message-react --message-id ID --emoji EMOJI --active true|false --based-on-room-seq N --idempotency-key KEY
 rah worker message-post --body TEXT --based-on-room-seq N --idempotency-key KEY
 rah worker message-post --send-draft --held-draft-id ID [--anyway] --based-on-room-seq N --idempotency-key KEY
 rah worker thread-unfollow --thread-id ID --based-on-room-seq N --idempotency-key KEY

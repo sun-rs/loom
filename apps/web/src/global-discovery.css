@@ -438,3 +438,69 @@
     min-width: 0;
   }
 }
+
+.rah-task-virtual-layout {
+  display: flex;
+  gap: 16px;
+  width: max-content;
+  min-width: 100%;
+  align-items: start;
+  overflow-anchor: none;
+}
+.list-mode > .rah-task-virtual-layout {
+  flex-direction: column;
+  width: 100%;
+  gap: 24px;
+}
+/* Raft Search live 2026-09-07: 64px rail, 560px search column,
+   remaining width owned by the opened channel. Content uses existing owners. */
+.app.rah-global-shell.rah-search-channel-open {
+  grid-template-columns: var(--rail-w) minmax(0, 560px) minmax(0, 1fr);
+}
+.rah-search-channel-open > .channel {
+  border-left: var(--bd);
+}
+.rah-public-preview-messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px;
+}
+.rah-public-preview-pane > .composer {
+  flex: none;
+}
+@media (max-width: 767px) {
+  .app.rah-global-shell.rah-search-channel-open {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rah-search-channel-open > .rah-discovery {
+    display: none;
+  }
+  .rah-search-channel-open > .channel {
+    border-left: 0;
+  }
+}
+
+.rah-public-preview {
+  flex-direction: row;
+  min-width: 0;
+}
+.rah-public-preview-pane {
+  flex: 1;
+  min-width: 0;
+}
+.rah-public-preview-pane + .rah-public-preview-pane {
+  border-left: var(--bd);
+}
+@media (max-width: 767px) {
+  .rah-public-preview.has-public-thread > .rah-public-preview-pane:first-child {
+    display: none;
+  }
+  .rah-public-preview-pane + .rah-public-preview-pane {
+    border-left: 0;
+  }
+}
+
+.rah-public-join {
+  width: 100%;
+}

@@ -24,6 +24,52 @@ test("registry is complete, source-pinned and its human index is generated", asy
       .length,
     74,
   );
+  assert.equal(registry.delivery.length, registry.behaviors.length);
+  // A repaired queue can have zero needs-fix rows. Validate the vocabulary,
+  // not a requirement that the product must always retain a known defect.
+  for (const state of [
+    "needs-feature",
+    "needs-fix",
+    "needs-verification",
+    "verified",
+  ]) {
+    const candidate = structuredClone(registry);
+    const row = candidate.delivery.find(
+      ({ applicability }: { applicability: string }) =>
+        applicability === "applicable",
+    );
+    row.state = state;
+    assert.deepEqual(validateRegistry(candidate, read), []);
+  }
+  assert.equal(
+    registry.delivery.find(({ id }: { id: string }) => id === "B070")?.state,
+    "needs-verification",
+  );
+  const workspaceSwitcher = registry.behaviors.find(
+    ({ id }: { id: string }) => id === "B071",
+  );
+  assert.equal(workspaceSwitcher?.status, "migrated");
+  assert.deepEqual(workspaceSwitcher?.adoptions, ["workspace-switcher-family"]);
+  assert.deepEqual(workspaceSwitcher?.scenarios, [
+    "workspace-switcher-page-family",
+    "workspace-switcher-full-app",
+  ]);
+  assert.equal(
+    registry.scenarios.find(
+      ({ id }: { id: string }) => id === "workspace-switcher-full-app",
+    )?.runner,
+    "scripts/run-firefox-workbench-gate.mjs",
+  );
+  assert.equal(
+    registry.scenarios.find(
+      ({ id }: { id: string }) => id === "workspace-switcher-page-family",
+    )?.runner,
+    "scripts/run-ui-foundation-browser-gate.mjs",
+  );
+  assert.equal(
+    registry.delivery.find(({ id }: { id: string }) => id === "B071")?.state,
+    "verified",
+  );
 });
 
 test("manual official observations remain hash-pinned without masquerading as published source", () => {
@@ -141,6 +187,20 @@ for (const [name, mutate, expected] of [
       r.sources[0].path = "../../outside";
     },
     /path/,
+  ],
+  [
+    "missing delivery classification",
+    (r: any) => {
+      r.delivery = r.delivery.slice(1);
+    },
+    /delivery coverage/u,
+  ],
+  [
+    "invalid delivery state",
+    (r: any) => {
+      r.delivery[0].state = "done";
+    },
+    /delivery state/u,
   ],
 ] as const) {
   test(`registry rejects ${name}`, () => {

@@ -1,3 +1,4 @@
+import { pdfAssetsPlugin } from "./pdf-assets-plugin.ts";
 import { createHash } from "node:crypto";
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
@@ -145,6 +146,7 @@ export default defineConfig(({ command }) => {
     },
     plugins: [
       react(),
+      pdfAssetsPlugin(),
       loopbackCapabilityPlugin(),
       webBuildMetadataPlugin(command),
     ],

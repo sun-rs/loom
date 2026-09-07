@@ -130,6 +130,8 @@ import {
   ClientRoomsListResponseSchema,
   ClientRoomSyncRequestSchema,
   ClientRoomSyncResponseSchema,
+  ClientTaskGetRequestSchema,
+  ClientTaskGetResponseSchema,
   ClientTasksListRequestSchema,
   ClientTasksListResponseSchema,
   ClientTaskReviewEvidenceListRequestSchema,
@@ -377,6 +379,7 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/managed-mcp/servers/revise",
   "/managed-mcp/servers/state",
   "/managed-mcp/usage/list",
+  "/tasks/get",
   "/tasks/reviews/list",
   "/principals/me",
   "/principals/update",
@@ -1728,18 +1731,30 @@ export class ClientApplicationService {
       );
       return;
     }
+    if (path === "/tasks/get") {
+      const command = parseClientRequest(ClientTaskGetRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientTaskGetResponseSchema.parse({
+          task: this.#human.getTask(actor, command),
+        }),
+      );
+      return;
+    }
     if (path === "/tasks/list") {
       const command = parseClientRequest(ClientTasksListRequestSchema, body);
       writeJson(
         response,
         200,
         ClientTasksListResponseSchema.parse({
-          tasks: this.#human.listTasks(actor, {
+          ...this.#human.listTaskPage(actor, {
             ...(command.beforeTaskNumber === undefined
               ? {}
               : { beforeTaskNumber: command.beforeTaskNumber }),
             ...(command.limit === undefined ? {} : { limit: command.limit }),
             roomId: command.roomId,
+            ...(command.states === undefined ? {} : { states: command.states }),
           }),
         }),
       );

@@ -8,15 +8,17 @@ const source = readFileSync(
   "utf8",
 );
 
-test("Human Inbox owns the shared keyboard and focus dialog protocol", () => {
+test("Human Inbox delegates nonmodal interaction to the shared popover; answering stays modal", () => {
   assert.match(
     source,
-    /const dialogRef = useDialogProtocol\(\{[\s\S]*?blocked: answering !== undefined,[\s\S]*?initialFocus: "container",[\s\S]*?onClose,[\s\S]*?\}\);/u,
+    /<InteractivePopoverContent\s+blocked=\{answering !== undefined\}\s+label="Human Inbox"/u,
   );
+  assert.match(source, /useDialogProtocol\(\{ blocked: pending, onClose \}\)/u);
   assert.match(
     source,
-    /aria-label="Human Inbox"[\s\S]*?aria-modal="true"[\s\S]*?ref=\{dialogRef\}[\s\S]*?role="dialog"[\s\S]*?tabIndex=\{-1\}/u,
+    /aria-labelledby="rah-input-request-title"\s+aria-modal="true"/u,
   );
+  assert.doesNotMatch(source, /rah-notification-backdrop/u);
   assert.match(
     source,
     /useEffect\(\(\) => \{[\s\S]*?request\.inputRequestId === answering\.inputRequestId[\s\S]*?request\.state === "pending"[\s\S]*?setAnswering\(undefined\);[\s\S]*?\}, \[answering, requests\]\);/u,

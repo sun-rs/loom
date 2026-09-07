@@ -5,7 +5,6 @@ import type { ActivationCredentialScope, RoomEvent } from "@rah-os/protocol";
 import {
   ConflictError,
   ForbiddenError,
-  IdempotencyConflictError,
   NotFoundError,
   StaleContextError,
 } from "./errors.ts";
@@ -19,6 +18,10 @@ import {
   type TaskCreateCommand,
 } from "./task-anchor.ts";
 import { taskProjectionFromRow } from "./task-projection.ts";
+import {
+  assertTaskEventReplay,
+  findRoomEventByIdempotencyKey,
+} from "./task-event-replay.ts";
 import type { TaskCreateMutationResult, TaskMutationResult } from "./types.ts";
 
 type TaskIntentContext = {
@@ -95,7 +98,7 @@ export function createTaskMutationTransaction(
     input.idempotencyKey,
   );
   if (previous !== undefined) {
-    const event = assertTaskEventReplay(context, previous, {
+    const event = assertTaskEventReplay(context.events.eventFromRow(previous), {
       actorId,
       eventType: "task.created",
       payload: {
@@ -202,7 +205,7 @@ export function claimMessageAsTaskTransaction(
     input.idempotencyKey,
   );
   if (previous !== undefined) {
-    const event = assertTaskEventReplay(context, previous, {
+    const event = assertTaskEventReplay(context.events.eventFromRow(previous), {
       actorId: scope.participantId,
       eventType: "task.created",
       payload: {
@@ -385,45 +388,6 @@ function requireUniqueRole(role: string, ids: readonly string[]): void {
   if (new Set(ids).size !== ids.length) {
     throw new ConflictError(`Task ${role} must be unique`);
   }
-}
-
-function findRoomEventByIdempotencyKey(
-  database: DatabaseSync,
-  roomId: string,
-  idempotencyKey: string,
-): Row | undefined {
-  return database
-    .prepare(
-      "SELECT * FROM room_events WHERE room_id = ? AND idempotency_key = ?",
-    )
-    .get(roomId, idempotencyKey);
-}
-
-function assertTaskEventReplay(
-  context: TaskIntentContext,
-  row: Row,
-  expected: {
-    actorId: string;
-    eventType: string;
-    payload: Record<string, unknown>;
-  },
-): RoomEvent {
-  const event = context.events.eventFromRow(row);
-  const payloadMatches = Object.entries(expected.payload).every(
-    ([key, value]) =>
-      JSON.stringify(event.payload[key]) === JSON.stringify(value),
-  );
-  if (
-    event.type !== expected.eventType ||
-    event.actorId !== expected.actorId ||
-    event.aggregateType !== "task" ||
-    !payloadMatches
-  ) {
-    throw new IdempotencyConflictError(
-      `idempotency key ${event.idempotencyKey} was already used for another mutation`,
-    );
-  }
-  return event;
 }
 
 function requireTaskRow(database: DatabaseSync, taskId: string): Row {

@@ -152,3 +152,56 @@ export function roomRole(
   }
   return text(membership, "role") as MembershipRole;
 }
+
+// Metadata discovery/self-join only. This does not authorize history, files,
+// Task commands, ordinary delivery or a Room cursor acknowledgement.
+export function requirePublicChannelWorkspace(
+  database: DatabaseSync,
+  workspaceId: string,
+  actorId: string,
+): void {
+  const row = database
+    .prepare(
+      `SELECT 1 AS present FROM workspaces w
+    JOIN rooms control ON control.workspace_id=w.workspace_id AND control.kind='control' AND control.archived_at IS NULL
+    JOIN memberships m ON m.room_id=control.room_id AND m.principal_id=?
+    JOIN principals p ON p.principal_id=m.principal_id AND p.kind='human'
+    WHERE w.workspace_id=? AND w.state='active'`,
+    )
+    .get(actorId, workspaceId);
+  if (!row)
+    throw new ForbiddenError(
+      "public Channel access requires a current Human Workspace member",
+    );
+}
+
+// Fixed alias owned here; callers bind values and never interpolate client SQL.
+export const PUBLIC_CHANNEL_METADATA_PREDICATE =
+  "r.kind='channel' AND r.visibility='public' AND r.archived_at IS NULL";
+
+// Content reads only: one bound actor parameter; never use this for mutations,
+// execution snapshots, Inbox, subscriptions or delivery acknowledgements.
+export const ROOM_CONTENT_READER_PREDICATE = `EXISTS (
+ SELECT 1 FROM principals reader WHERE reader.principal_id=? AND (
+ EXISTS (SELECT 1 FROM memberships access WHERE access.room_id=r.room_id AND access.principal_id=reader.principal_id)
+ OR (r.kind='channel' AND r.visibility='public' AND r.archived_at IS NULL AND reader.kind='human'
+ AND EXISTS (SELECT 1 FROM workspaces w JOIN rooms control ON control.workspace_id=w.workspace_id AND control.kind='control' AND control.archived_at IS NULL
+ JOIN memberships access ON access.room_id=control.room_id AND access.principal_id=reader.principal_id
+ WHERE w.workspace_id=r.workspace_id AND w.state='active'))))`;
+
+export function requireRoomContentReader(
+  database: DatabaseSync,
+  roomId: string,
+  principalId: string,
+): void {
+  if (
+    !database
+      .prepare(
+        `SELECT 1 FROM rooms r WHERE r.room_id=? AND ${ROOM_CONTENT_READER_PREDICATE}`,
+      )
+      .get(roomId, principalId)
+  )
+    throw new ForbiddenError(
+      "Room content is unavailable: requires membership or eligible Human public access",
+    );
+}

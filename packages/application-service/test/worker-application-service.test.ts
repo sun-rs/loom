@@ -942,6 +942,10 @@ test("Worker API only acknowledges cursors delivered to its scoped credential", 
 test("Worker API exposes a causal and execution-fenced Task command surface", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-worker-task-api-"));
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+  let deliveryEvidenceCaptureCount = 0;
+  let deliveryEvidencePatch = new TextEncoder().encode(
+    "diff --git a/file.ts b/file.ts\n+verified\n",
+  );
   const deliveryEvidenceCollector: TaskDeliveryEvidenceCollector = {
     async captureBaseline({ workspaceRoot }) {
       return {
@@ -953,13 +957,11 @@ test("Worker API exposes a causal and execution-fenced Task command surface", as
     },
     async captureSubmission({ baseline }) {
       assert.equal(baseline.source, "git");
-      const patch = new TextEncoder().encode(
-        "diff --git a/file.ts b/file.ts\n+verified\n",
-      );
+      deliveryEvidenceCaptureCount += 1;
       return {
         baseCommit: baseline.baseCommit,
         headCommit: "2".repeat(40),
-        patch,
+        patch: deliveryEvidencePatch,
         repositoryId: baseline.repositoryId,
       };
     },
@@ -1188,23 +1190,107 @@ test("Worker API exposes a causal and execution-fenced Task command surface", as
       "completed Agent bytes stay hidden until their Task submission commits",
     );
 
-    const submitResponse = await request("/v1/worker/tasks/submit", {
-      basedOnRoomSeq: (progressed.event as Record<string, unknown>).roomSeq,
+    const submitCommand = {
+      basedOnRoomSeq: Number(
+        (progressed.event as Record<string, unknown>).roomSeq,
+      ),
       idempotencyKey: "worker-task-submit",
       summary: "Task protocol implemented and tested",
       taskId: created.task.taskId,
       verification: {
-        artifactIds: [attachmentId],
-        status: "passed",
+        artifactIds: [String(attachmentId)],
+        status: "passed" as const,
         summary: "Worker API integration passed",
       },
-    });
+    };
+    const submitResponse = await request(
+      "/v1/worker/tasks/submit",
+      submitCommand,
+    );
     assert.equal(submitResponse.status, 200);
     const submitted = await jsonObject(submitResponse);
     assert.equal(
       (submitted.task as Record<string, unknown>).state,
       "submitted",
     );
+    assert.equal(deliveryEvidenceCaptureCount, 1);
+    const originalSubmissionEventId = (
+      submitted.event as Record<string, unknown>
+    ).eventId;
+    const originalRoomEventCount = kernel.sync(humanActor, {
+      consumerId: "worker-task-replay-count",
+      roomId: room.roomId,
+    }).events.length;
+    const originalSubmissionCount = kernel.taskReviews.listTaskSubmissions(
+      humanActor,
+      { roomId: room.roomId, taskId: created.task.taskId },
+    ).length;
+
+    deliveryEvidencePatch = new TextEncoder().encode(
+      "diff --git a/file.ts b/file.ts\n+changed!\n",
+    );
+    const replayResponse = await request(
+      "/v1/worker/tasks/submit",
+      submitCommand,
+    );
+    assert.equal(replayResponse.status, 200);
+    const replayed = await jsonObject(replayResponse);
+    assert.equal(replayed.deduplicated, true);
+    assert.equal(
+      (replayed.event as Record<string, unknown>).eventId,
+      originalSubmissionEventId,
+    );
+    assert.equal(
+      kernel.taskReviews.listTaskSubmissions(humanActor, {
+        roomId: room.roomId,
+        taskId: created.task.taskId,
+      }).length,
+      originalSubmissionCount,
+    );
+    assert.equal(
+      kernel.sync(humanActor, {
+        consumerId: "worker-task-replay-count",
+        roomId: room.roomId,
+      }).events.length,
+      originalRoomEventCount,
+    );
+    assert.equal(
+      deliveryEvidenceCaptureCount,
+      1,
+      "durable command replay must not resample a changed workspace",
+    );
+
+    const conflictingReplay = await request("/v1/worker/tasks/submit", {
+      ...submitCommand,
+      summary: "A different result cannot reuse an accepted command identity",
+    });
+    assert.equal(conflictingReplay.status, 409);
+    assert.equal(await responseErrorCode(conflictingReplay), "conflict");
+    assert.equal(deliveryEvidenceCaptureCount, 1);
+
+    const reopenedKernel = new RoomKernel({
+      databasePath: join(directory, "room.db"),
+    });
+    try {
+      reopenedKernel.initialize();
+      const reopenedExecution = reopenedKernel.authorizeWorkerExecution(host, {
+        activationId: activation.activationId,
+        consumerId: "worker-task-reopened-consumer",
+        hostId: host.hostId,
+        participantId: agent.principal.principalId,
+        roomId: room.roomId,
+        runAttemptId: runAttempt.runAttemptId,
+        toSeq: activation.toSeq,
+      });
+      assert.equal(
+        reopenedKernel.replayTaskSubmission(reopenedExecution, submitCommand)
+          ?.deduplicated,
+        true,
+        "durable replay survives opening a new Kernel owner on the same database",
+      );
+    } finally {
+      reopenedKernel.close();
+    }
 
     const acknowledgement = await request("/v1/worker/acknowledge", {
       throughSeq: basedOnRoomSeq,

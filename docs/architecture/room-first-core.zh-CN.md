@@ -1,5 +1,20 @@
 # Room-first 核心架构
 
+当前发布范围以[单 Human 主线与多人备选项目](../product/single-human-mainline-and-multi-human-backlog.zh-CN.md)为准。
+多 Human 加入、协作及差异化浏览/加入限制延期，不作为首版 Raft 对齐的阻塞项；
+保留本地认证、Agent 参与/执行权限和私有记忆隔离。下方历史计划不改变此范围。
+
+当前公开阅读增量：`collaboration-policy` 统一 Human 当前公开阅读资格，
+`room.preview` 提供有界正文；Search、精确定位、附件与已关注 Thread Activity 共用该资格。
+完整 sync/ACK、Task 写入、上传和 Agent execution scope 仍要求成员资格。
+下方“仅元数据／正文权限不变”描述的是先前切片；当前边界与未完成事项见
+[公开频道设计续节](../design/public-channel-discovery-and-join.md#2026-09-07-continuation-public-content-and-thread-attention)。
+
+2026-09-07 公开频道发现与本人加入：仅开放当前 Workspace Human 的公开频道元数据目录，
+加入事务复用 membership、Room event 与 Outbox。加入不等于已读、不创建 Inbox/Activation；
+退出后的旧加入意图不能复活成员身份。所有正文读取仍使用原成员权限。
+这是[公开频道合同](../design/public-channel-discovery-and-join.md)的第一阶段，非完整公共阅读。
+
 ## 1. 产品边界
 
 RAH OS 的第一等对象是 `Room`，不是任何 Provider Session。

@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { realpath, stat } from "node:fs/promises";
+import { isAbsolute, relative, sep } from "node:path";
 
 import type {
   TaskDeliveryEvidenceBaseline,
@@ -90,13 +91,30 @@ export class GitTaskDeliveryEvidenceCollector implements TaskDeliveryEvidenceCol
     ) {
       throw new Error("Git revision identity is invalid");
     }
-    const repositoryId = digest(await realpath(repositoryRoot));
+    const canonicalRepositoryRoot = await realpath(repositoryRoot);
+    const repositoryId = digest(canonicalRepositoryRoot);
     if (repositoryId !== input.baseline.repositoryId) {
       throw new Error("Git repository changed after activation");
     }
+    const workspaceRelativePath = relative(
+      canonicalRepositoryRoot,
+      workspaceRoot,
+    );
+    if (
+      isAbsolute(workspaceRelativePath) ||
+      workspaceRelativePath === ".." ||
+      workspaceRelativePath.startsWith(`..${sep}`)
+    ) {
+      throw new Error("workspace is outside its Git repository");
+    }
+    const workspacePathspec =
+      workspaceRelativePath === ""
+        ? "."
+        : workspaceRelativePath.split(sep).join("/");
 
     const chunks = [
-      await requiredGit(workspaceRoot, [
+      await requiredGit(canonicalRepositoryRoot, [
+        "--literal-pathspecs",
         "diff",
         "--binary",
         "--full-index",
@@ -104,16 +122,17 @@ export class GitTaskDeliveryEvidenceCollector implements TaskDeliveryEvidenceCol
         "--no-textconv",
         input.baseline.baseCommit,
         "--",
-        ".",
+        workspacePathspec,
       ]),
     ];
-    const untracked = await requiredGit(workspaceRoot, [
+    const untracked = await requiredGit(canonicalRepositoryRoot, [
+      "--literal-pathspecs",
       "ls-files",
       "--others",
       "--exclude-standard",
       "-z",
       "--",
-      ".",
+      workspacePathspec,
     ]);
     const paths = untracked
       .toString("utf8")
@@ -129,7 +148,7 @@ export class GitTaskDeliveryEvidenceCollector implements TaskDeliveryEvidenceCol
         throw new Error("an untracked Git path is not valid UTF-8");
       }
       const chunk = await requiredGit(
-        workspaceRoot,
+        canonicalRepositoryRoot,
         [
           "diff",
           "--no-index",

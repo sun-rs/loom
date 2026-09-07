@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   DndContext,
   MouseSensor,
@@ -24,6 +24,9 @@ import {
 } from "../global-discovery-model.ts";
 import { DiscoveryFilter } from "./discovery-filter.tsx";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
+
+import { TaskVirtualLayout } from "@rah-os/ui-web/neo-brutalist/task-virtual-layout";
+import { TaskVirtualStack } from "@rah-os/ui-web/neo-brutalist/task-virtual-stack";
 
 const ids: TaskColumnId[] = ["todo", "in-progress", "review", "done", "closed"];
 // Arrow navigation crosses semantic groups, rather than requiring 13 x 25px nudges.
@@ -82,6 +85,7 @@ export function GlobalTaskBoard({
   onOpen: DiscoveryNavigationHandler;
   onChanged: () => void;
 }) {
+  const scrollElementRef = useRef<HTMLDivElement>(null);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({
     done: true,
     closed: true,
@@ -186,62 +190,75 @@ export function GlobalTaskBoard({
         }}
       >
         <div
+          ref={scrollElementRef}
+          data-task-virtual-scroll
           className={`kanban rah-global-kanban${view === "list" ? " list-mode" : ""}`}
         >
-          {columns.map((column) => (
-            <TaskGroup
-              key={column.id}
-              column={column}
-              collapsed={Boolean(collapsed[column.id])}
-              onToggle={() =>
-                setCollapsed((old) => ({
-                  ...old,
-                  [column.id]: !old[column.id],
-                }))
-              }
-              rejection={
-                dragging
-                  ? globalTaskTransition(
-                      dragging,
-                      column.id,
-                      canManage(dragging),
-                    ).reason
-                  : undefined
-              }
-            >
-              {[...column.tasks]
-                .sort((a, b) => b.taskNumber - a.taskNumber)
-                .map((task) => (
-                  <TaskCard
-                    key={task.taskId}
-                    task={task}
-                    roomName={
-                      tasks.find((item) => item.task.taskId === task.taskId)
-                        ?.roomName ?? ""
-                    }
-                    showRoomName={showRoomName}
-                    columns={columns}
-                    canManageAnyTask={canManage(task)}
-                    disabled={Boolean(pending) || !writeEnabled}
-                    onChoose={(target) => choose(task, target)}
-                    onOpen={() =>
-                      onOpen({
-                        target: {
-                          kind: "task",
-                          roomId: task.roomId,
-                          rootMessageId: task.sourceMessageId,
-                          taskId: task.taskId,
-                          threadId: task.threadId,
-                        },
-                      })
-                    }
-                  />
-                ))}
-              {!column.tasks.length && (
-                <p className="rah-empty-copy">没有{column.label}的任务。</p>
-              )}
-            </TaskGroup>
-          ))}
+          <TaskVirtualLayout
+            scrollElementRef={scrollElementRef}
+            className="rah-task-virtual-layout"
+          >
+            {columns.map((column) => (
+              <TaskGroup
+                key={column.id}
+                column={column}
+                collapsed={Boolean(collapsed[column.id])}
+                onToggle={() =>
+                  setCollapsed((old) => ({
+                    ...old,
+                    [column.id]: !old[column.id],
+                  }))
+                }
+                rejection={
+                  dragging
+                    ? globalTaskTransition(
+                        dragging,
+                        column.id,
+                        canManage(dragging),
+                      ).reason
+                    : undefined
+                }
+              >
+                <TaskVirtualStack
+                  items={[...column.tasks].sort(
+                    (a, b) => b.taskNumber - a.taskNumber,
+                  )}
+                  scrollElementRef={scrollElementRef}
+                  getItemKey={(task) => task.taskId}
+                  renderItem={(task) => (
+                    <TaskCard
+                      key={task.taskId}
+                      task={task}
+                      roomName={
+                        tasks.find((item) => item.task.taskId === task.taskId)
+                          ?.roomName ?? ""
+                      }
+                      showRoomName={showRoomName}
+                      columns={columns}
+                      canManageAnyTask={canManage(task)}
+                      disabled={Boolean(pending) || !writeEnabled}
+                      openDisabled={Boolean(pending)}
+                      onChoose={(target) => choose(task, target)}
+                      onOpen={() =>
+                        onOpen({
+                          target: {
+                            kind: "task",
+                            roomId: task.roomId,
+                            rootMessageId: task.sourceMessageId,
+                            taskId: task.taskId,
+                            threadId: task.threadId,
+                          },
+                        })
+                      }
+                    />
+                  )}
+                />
+                {!column.tasks.length && (
+                  <p className="rah-empty-copy">没有{column.label}的任务。</p>
+                )}
+              </TaskGroup>
+            ))}
+          </TaskVirtualLayout>
         </div>
       </DndContext>
     </>
@@ -293,6 +310,7 @@ function TaskCard({
   columns,
   canManageAnyTask,
   disabled,
+  openDisabled,
   onChoose,
   onOpen,
 }: {
@@ -302,6 +320,7 @@ function TaskCard({
   columns: readonly TaskColumnView[];
   canManageAnyTask: boolean;
   disabled: boolean;
+  openDisabled: boolean;
   onChoose: (id: TaskColumnId) => void;
   onOpen: () => void;
 }) {
@@ -329,6 +348,7 @@ function TaskCard({
       ref={setNodeRef}
       {...listeners}
       data-task-id={task.taskId}
+      data-task-room-id={task.roomId}
       data-testid="task-board-draggable-card"
       className={`rah-global-task-drag-shell${isDragging ? " is-dragging" : ""}`}
       style={{ transform: CSS.Translate.toString(transform) }}
@@ -351,7 +371,7 @@ function TaskCard({
         <button
           className="rah-global-card-open"
           onClick={onOpen}
-          disabled={disabled}
+          disabled={openDisabled}
         >
           <div className="rah-global-card-row">
             <div className="rah-global-card-main">
@@ -383,6 +403,7 @@ function TaskCard({
             variant="status"
             className="rah-task-state rah-task-status-picker"
             triggerClassName={`chip-${column.tone}`}
+            triggerAriaLabel={`任务 #${task.taskNumber} 状态：${column.label}`}
             disabled={disabled || !canManageAnyTask}
             values={[group]}
             selected={false}

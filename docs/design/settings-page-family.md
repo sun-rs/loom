@@ -98,3 +98,12 @@ read-compatible. Other LAN routes and mutations remain unavailable on loopback.
 After implementation, independent review covers the cumulative dirty tree,
 including earlier entity/Human/backend changes. Fix blocking findings, run the
 full gates, then safe formal restart and read-only browser verification.
+
+## Local recovery/help completion (2026-09-07)
+
+Docs opens a bundled, reloadable local operation guide, also reachable from Computer
+recovery and MCP executor inventory. The guide describes actual local commands and
+the state-owned MCP configuration, without exposing runtime secrets or depending on
+a central docs server. Feedback clipboard denial now produces a visible retry/manual
+copy path; success is reported only after the clipboard promise resolves. These are
+RAH adaptations of the navigation category, not copied Raft help content.

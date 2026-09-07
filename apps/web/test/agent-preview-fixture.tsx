@@ -95,6 +95,7 @@ export function AgentPreviewFixture({ agent }: { agent: WorkspaceAgentView }) {
                           ? "updated_fixture_tool"
                           : "exec_command",
                         toolInput: "PRIVATE COMMAND",
+                        trajectoryVersion: activityVersion,
                         activity: "working",
                       },
                     },
@@ -146,10 +147,11 @@ export function AgentPreviewFixture({ agent }: { agent: WorkspaceAgentView }) {
               ...agent,
               presence: {
                 agentDefinitionId: agent.agentDefinitionId,
+                trajectoryVersion: activityVersion,
                 activity: "working",
                 reason: "working",
                 activityAt: new Date(
-                  Date.UTC(2026, 8, 5, 0, 0, activityVersion),
+                  Date.UTC(2026, 8, 5, 0, 0, 0),
                 ).toISOString(),
               },
             }}
