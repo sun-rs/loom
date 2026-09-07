@@ -1,3 +1,4 @@
+import type { WorkbenchServiceControl } from "./workbench-service-control.ts";
 import { readLocalWorkbenchMcpConfig } from "./local-workbench-mcp-config.ts";
 import { existsSync, lstatSync, readFileSync } from "node:fs";
 import { isAbsolute, join, resolve } from "node:path";
@@ -68,6 +69,7 @@ export type RunningLocalCoreWorkbench = {
 };
 
 export async function startLocalCoreWorkbench(input: {
+  serviceControl?: WorkbenchServiceControl;
   environment?: NodeJS.ProcessEnv;
   mode: LocalCoreWorkbenchMode;
   staticDirectory: string;
@@ -135,6 +137,9 @@ export async function startLocalCoreWorkbench(input: {
       stopped: () => applicationStopped,
     });
     const common = {
+      ...(input.serviceControl === undefined
+        ? {}
+        : { serviceControl: input.serviceControl }),
       accessToken: prepared.humanAccessToken,
       daemonOrigin: requiredDaemonOrigin(application),
       staticDirectory,

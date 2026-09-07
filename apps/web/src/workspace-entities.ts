@@ -1,3 +1,4 @@
+import { runtimeProductLabel } from "./agent-runtime-presentation.ts";
 import type {
   HumanProfileResponse,
   LocalComputerObservation,
@@ -261,7 +262,7 @@ export function createWorkspaceEntities(input: Input) {
           agentDefinitionId: id,
           handle: agent.handle,
           runtimeLabel: runtimesForAgent(id)
-            .map((runtime) => runtime.displayName)
+            .map(runtimeProductLabel)
             .join(" · "),
         };
       }),

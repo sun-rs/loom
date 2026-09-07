@@ -119,17 +119,15 @@ export async function verifySettingsFamily(page, origin, output, engine) {
       "unknown role must not be owner",
     );
     await page.getByText("Fixture language", { exact: true }).click();
-    const language = page.getByRole("combobox", { name: "显示语言" });
-    assert.equal(await language.inputValue(), "zh-CN");
-    assert.equal(await language.isDisabled(), true);
     assert.equal(
-      await page.getByRole("radio", { name: "关闭" }).isChecked(),
-      true,
+      await page.getByRole("combobox", { name: "显示语言" }).count(),
+      0,
     );
     assert.equal(
-      await page.getByRole("radio", { name: "自动" }).isDisabled(),
-      true,
+      await page.getByRole("radio", { name: "自动", exact: true }).count(),
+      0,
     );
+    assert.equal(await page.getByText("时区", { exact: true }).count(), 0);
     const time12 = page.getByRole("radio", { name: "12 小时制" });
     const time24 = page.getByRole("radio", { name: "24 小时制" });
     await time24.focus();
@@ -266,7 +264,7 @@ export async function verifySettingsFamily(page, origin, output, engine) {
 export async function verifySettingsNavigation(page, origin, output, engine) {
   const sections = [
     ["account", "账户"],
-    ["language-region", "语言与区域"],
+    ["language-region", "日期与时间"],
     ["appearance", "外观"],
     ["notifications", "通知"],
     ["server", "服务器资料"],

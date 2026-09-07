@@ -89,3 +89,15 @@ so its instrumentation cannot enter production sandboxed file previews.
 - Human-to-Computer ownership metadata: host presence is not proof of ownership.
 - Settings body/form states, remaining discovery/message empty compositions,
   full Human directory/ACL matrix, physical macOS/iOS notification delivery.
+
+Computer 恢复指南现支持原页展开/收起，使用共享 disclosure 与现有本机恢复合同；
+服务重启的 Web 接线已收口，见
+[服务重启验收](../audits/2026-09-07-service-restart.zh-CN.md)。来源受限升级和遗留工作区清理
+仍按 [单机验收](../audits/2026-09-07-computer-acceptance.zh-CN.md) 的未收口边界处理。
+
+## Computer 对齐补充（2026-09-07）
+
+共享 ProfileSection 将 section action 放在标题右侧，field 编辑按钮仍紧邻标签，采用 Raft 的紧凑参数。产品 Runtime
+名称统一通过 daemon 提供的 cliId 与 runtimeProductLabel，技术 transport 标签保留于诊断。Computer 创建时间
+只消费 Kernel 首次注册记录；Workspace 修改时间消费既有 summary。缺失的创建者不得
+用当前 Human 推断。逐项证据见 [Computer 对齐审计](../audits/2026-09-07-computer-alignment.zh-CN.md)。

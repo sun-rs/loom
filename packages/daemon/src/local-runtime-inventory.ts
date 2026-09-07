@@ -30,6 +30,7 @@ export const KNOWN_LOCAL_CLIS = Object.freeze([
 ]);
 
 export type ConfiguredLocalRuntime = {
+  cliId?: LocalRuntimeInventoryEntry["cliId"];
   agentBindings: LocalRuntimeInventoryEntry["agentBindings"];
   available: boolean;
   displayName: string;
@@ -73,7 +74,22 @@ export function configuredRuntimeSnapshot(input: {
   runtimeProfileRevision: RuntimeProfileRevision;
 }): ConfiguredLocalRuntimeSnapshot {
   const { probeReport, runtimeOfferId, runtimeProfileRevision } = input;
+  const probeKind =
+    runtimeProfileRevision.manifest.manifestVersion === 3
+      ? runtimeProfileRevision.manifest.modelCatalogProbe.kind
+      : undefined;
+  const cliId =
+    probeKind === "codex-cli/v1"
+      ? "codex"
+      : probeKind === "kimi-cli/v1"
+        ? "kimi"
+        : probeKind === "claude-cli/v1"
+          ? "claude"
+          : probeKind === "opencode-cli/v1"
+            ? "opencode"
+            : undefined;
   return {
+    ...(cliId === undefined ? {} : { cliId }),
     available: probeReport.available,
     displayName: runtimeProfileRevision.manifest.displayName,
     executable: runtimeProfileRevision.manifest.adapter.executable,
@@ -155,6 +171,9 @@ export function buildLocalRuntimeInventoryResponse(input: {
               : host.state,
       ...(host
         ? {
+            ...(host.createdAt === undefined
+              ? {}
+              : { createdAt: host.createdAt }),
             lastSeenAt: host.lastSeenAt,
             instanceId: host.instanceId,
             ...(host.buildVersion ? { buildVersion: host.buildVersion } : {}),
@@ -202,6 +221,9 @@ export function mergeLocalRuntimeInventory(input: {
     if (discovery !== undefined) matchedDiscoveryEntries.add(discovery);
     return LocalRuntimeInventoryEntrySchema.parse({
       ...runtime,
+      ...(runtime.cliId === undefined && discovery?.cliId !== undefined
+        ? { cliId: discovery.cliId }
+        : {}),
       configured: true,
       source: "configured",
       ...(runtime.resolvedExecutablePath === undefined &&
@@ -263,6 +285,7 @@ export async function discoverKnownLocalClis(
         agentBindings: [],
         available: resolvedExecutablePath !== undefined,
         configured: false,
+        cliId: executable,
         displayName,
         executable,
         modelBindingDescriptors: [],

@@ -182,6 +182,18 @@ export async function verifyProfileFamily(browser, origin, output, engine) {
       const fields = page.locator(".rah-computer-field");
       assert.equal(await fields.count(), 2);
       for (const field of await fields.all()) {
+        assert.ok(
+          await field.evaluate((el) => {
+            const button = el.querySelector("h3 button");
+            return (
+              button &&
+              button.getBoundingClientRect().left -
+                el.getBoundingClientRect().left <
+                120
+            );
+          }),
+          "Field edit icons stay beside their labels, unlike section toolbar actions",
+        );
         assert.deepEqual(
           await field.evaluate((e) => {
             const s = getComputedStyle(e);
@@ -190,7 +202,9 @@ export async function verifyProfileFamily(browser, origin, output, engine) {
           ["16px", "20px", "1px", "0px"],
         );
       }
-      const disclosure = page.locator(".rah-profile-disclosure");
+      const disclosure = page.locator("details").filter({
+        has: page.locator("summary", { hasText: "CLI / Runtime / Offer 详情" }),
+      });
       assert.equal(await disclosure.getAttribute("open"), null);
       await disclosure.locator("summary").click();
       assert.notEqual(await disclosure.getAttribute("open"), null);

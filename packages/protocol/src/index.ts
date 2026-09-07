@@ -1785,3 +1785,7 @@ export * from "./human-profile.ts";
 export * from "./public-channel.ts";
 
 export * from "./worker-message-tools.ts";
+export {
+  WorkbenchServiceRestartRequestSchema,
+  WorkbenchServiceStatusSchema,
+} from "./workbench-service.ts";

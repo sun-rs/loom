@@ -28,6 +28,7 @@ export const LocalRuntimeInventoryEntrySchema = z
     ),
     available: z.boolean(),
     configured: z.boolean(),
+    cliId: z.enum(["codex", "kimi", "opencode", "claude"]).optional(),
     displayName: z.string().trim().min(1),
     executable: z.string().trim().min(1),
     failureCode: IdentifierSchema.optional(),
@@ -72,6 +73,7 @@ export const LocalRuntimeInventoryResponseSchema = z
     hostId: IdentifierSchema,
     computer: z
       .object({
+        createdAt: TimestampSchema.optional(),
         description: z.string().max(500).nullable().optional(),
         displayName: z.string().min(1),
         hostname: z.string().min(1),

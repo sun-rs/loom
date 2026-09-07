@@ -125,6 +125,7 @@ export const ComputerHostRecordSchema = z
     buildVersion: z.string().trim().min(1).optional(),
     hostId: IdentifierSchema,
     instanceId: IdentifierSchema,
+    createdAt: TimestampSchema.optional(),
     lastSeenAt: TimestampSchema,
     participantIds: z.array(IdentifierSchema),
     processId: z.number().int().positive().optional(),

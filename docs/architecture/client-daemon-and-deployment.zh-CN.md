@@ -231,3 +231,37 @@ FileSecretProvider 负责 owner-private、nofollow、64 KiB 有界读取，解�
 缺文件表示无 executor；非法文件或秘密文件拒绝启动。秘密仅允许绝对路径文件引用，
 不经浏览器传输。现有 Kernel 目录/assignment/usage、daemon MCP registry 与 Provider
 适配继续持有原 owner。配置在 state 内，因此既有备份/重启流程覆盖它；不新增轮询或热更新。
+
+LAN gateway 停止时还必须释放尚未完成 TLS 握手的底层连接；仅调用 closeAllConnections 不足以保证
+停止返回。连接集合按 server 实例归属，不能让浏览器预连接阻塞 daemon 的 offline/单实例恢复。
+见[2026-09-07 全面验收](../audits/2026-09-07-full-acceptance.zh-CN.md)。
+
+## 页面触发本机服务重启
+
+`WorkbenchServiceRestart` 调用部署网关的 `GET /_rah/service` 和
+`POST /_rah/service/restart`。协议包校验 generation；loopback 与 LAN 网关
+分别验证既有 session，POST 必须精确同源，共用一个 handler。该操作属于
+daemon 部署生命周期，不创建 Room 事件、Task 或第二套 Computer 调度队列。
+
+`startRestartableLocalCoreWorkbench` 是存活于页面外的启动器 owner。它检查
+持久执行状态为空闲，保留原监听地址、状态目录与冻结静态资产，调用既有 stop
+完成 Core/AgentHost/gateway 关闭后再完整构造新实例。外层 Node PID 保持不变；
+不是进程升级，也不是只刷新浏览器或只重置 Agent。已安装 Core 与项目启动器
+共用此入口。启动失败时不伪造 online，页面有界等待后提示恢复指南。
+
+请求绑定当前服务 generation；重启中合并相同 generation，恢复后旧请求拒绝，
+因而响应丢失不造成第二次重启。HTTP 连接关闭不会取消已接受的操作。页面仅在
+新 generation 且 online 时确认恢复，保留当前 React 页面；正常 client
+reconciliation 仍负责业务重新同步。启动器收到退出信号时等待已有重启操作，
+再关闭最终实例，避免迟到启动。浏览器不传 PID、路径、shell 命令或 Host 凭据。
+
+验证入口：`node scripts/run-service-restart-browser-gate.mjs`；
+验收范围见 [服务重启收口](../audits/2026-09-07-service-restart.zh-CN.md)。
+
+Computer inventory 的可选 `createdAt` 来自 Kernel `agent_hosts.created_at`，
+Host 重新连接或工作台重启均保留首次注册时间；Computer transport 的 Host 快照也接受
+该可选字段。它不代表 OS 安装日期，缺失时 UI 显示未记录；不根据 current actor 推断创建者。
+
+Runtime inventory 的可选 `cliId` 由 daemon 从 manifest CLI probe 或已知 CLI discovery
+取得，前端共享展示函数负责产品名映射。真实版本化路径或脚本入口不是 CLI 身份；旧记录
+只保留精确 executable basename 回退，未知 runtime 保留其 displayName。诊断名称不改写。

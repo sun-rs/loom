@@ -1,3 +1,4 @@
+import { DatabaseSync } from "node:sqlite";
 import {
   ClientWorkspacesListResponseSchema,
   ClientManagedMcpExecutorsListResponseSchema,
@@ -14,7 +15,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { startLocalCoreWorkbench } from "../src/local-core-workbench.ts";
+import { startRestartableLocalCoreWorkbench as startLocalCoreWorkbench } from "../src/restartable-local-workbench.ts";
 
 test("one local Core owner composes persistent daemon and loopback gateway", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-local-core-owner-"));
@@ -74,6 +75,98 @@ else process.exitCode = 2;
       workbenchHome,
       workspaceCwd,
     });
+    const origin = running.descriptor.webOrigin;
+    const homeBefore = await fetch(origin);
+    const authCookie = homeBefore.headers.get("set-cookie")!.split(";")[0]!;
+    const status = async () =>
+      (
+        await fetch(`${origin}/_rah/service`, {
+          headers: { cookie: authCookie },
+        })
+      ).json() as Promise<{ generation: string; state: string }>;
+    const hostInstance = () => {
+      const db = new DatabaseSync(
+        join(running!.descriptor.stateDirectory, "room.db"),
+        { readOnly: true },
+      );
+      try {
+        return db
+          .prepare("SELECT instance_id FROM agent_hosts WHERE state = 'online'")
+          .get()!.instance_id;
+      } finally {
+        db.close();
+      }
+    };
+    const beforeHost = hostInstance();
+    const before = await status();
+    const restart = (
+      headers: Record<string, string>,
+      generation = before.generation,
+    ) =>
+      fetch(`${origin}/_rah/service/restart`, {
+        method: "POST",
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify({ generation }),
+      });
+    assert.equal((await restart({ origin })).status, 401);
+    assert.equal(
+      (await restart({ cookie: authCookie, origin: "https://evil.invalid" }))
+        .status,
+      403,
+    );
+    assert.equal(
+      (await restart({ cookie: authCookie, origin }, "obsolete")).status,
+      409,
+    );
+    const db = new DatabaseSync(
+      join(running.descriptor.stateDirectory, "room.db"),
+    );
+    try {
+      const human = db
+        .prepare("SELECT principal_id FROM principals LIMIT 1")
+        .get()!.principal_id;
+      db.prepare(
+        "INSERT INTO agent_exclusive_operation_leases (lease_id, operation_id, participant_id, kind, owner_host_id, owner_host_instance_id, state, acquired_at, renewed_at, lease_until, lease_until_ms) VALUES ('restart-fixture', 'restart-fixture', ?, 'execution_restart', 'fixture', 'fixture', 'active', '2026-01-01', '2026-01-01', '2099-01-01', 4070908800000)",
+      ).run(human!);
+      assert.equal(
+        (await restart({ cookie: authCookie, origin })).status,
+        409,
+        "active work blocks restart",
+      );
+      assert.equal((await status()).generation, before.generation);
+      db.prepare(
+        "DELETE FROM agent_exclusive_operation_leases WHERE lease_id = 'restart-fixture'",
+      ).run();
+    } finally {
+      db.close();
+    }
+    assert.equal((await restart({ cookie: authCookie, origin })).status, 202);
+    const deadline = Date.now() + 30_000;
+    let after = before;
+    while (Date.now() < deadline) {
+      try {
+        after = await status();
+        if (after.generation !== before.generation && after.state === "online")
+          break;
+      } catch {}
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    assert.notEqual(
+      after.generation,
+      before.generation,
+      "full service restarted at the same URL",
+    );
+    assert.equal(
+      (await restart({ cookie: authCookie, origin })).status,
+      409,
+      "lost receipt retry cannot restart the successor",
+    );
+    assert.notEqual(
+      hostInstance(),
+      beforeHost,
+      "AgentHost was actually reconstructed",
+    );
+    assert.equal(running.descriptor.webOrigin, origin);
     assert.equal(running.descriptor.persistent, true);
     assert.equal(running.descriptor.runtimes.length, 1);
     assert.equal(running.descriptor.runtimes[0]?.cliId, "codex");

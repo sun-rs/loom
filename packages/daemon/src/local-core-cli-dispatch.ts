@@ -1,3 +1,4 @@
+import { startRestartableLocalCoreWorkbench } from "./restartable-local-workbench.ts";
 import { join, resolve } from "node:path";
 
 import {
@@ -127,7 +128,9 @@ export async function runLocalCoreService(input: {
           publicOrigin,
           tlsDirectory: join(workbenchHome, "tls"),
         };
-  const running = await (input.startWorkbench ?? startLocalCoreWorkbench)({
+  const running = await (
+    input.startWorkbench ?? startRestartableLocalCoreWorkbench
+  )({
     environment,
     mode,
     staticDirectory,

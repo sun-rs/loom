@@ -49,6 +49,27 @@ try {
           name: "这台 COMPUTER 上的 AGENT",
           exact: true,
         });
+        const create = section.getByRole("button", {
+          name: "创建 Agent",
+          exact: true,
+        });
+        await create.waitFor();
+        const sectionBox = await section.boundingBox(),
+          createBox = await create.boundingBox();
+        assert.ok(
+          Math.abs(
+            sectionBox.x +
+              sectionBox.width -
+              20 -
+              (createBox.x + createBox.width),
+          ) < 2,
+          "Raft Computer actions align at the section's trailing content edge",
+        );
+        assert.equal(
+          await create.evaluate((e) => getComputedStyle(e).backgroundColor),
+          "rgb(254, 125, 168)",
+        );
+        assert.equal(await create.locator("svg use").count(), 1);
         await section
           .getByRole("button", { name: "选择 Agent", exact: true })
           .click();

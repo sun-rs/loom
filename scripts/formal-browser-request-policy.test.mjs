@@ -147,3 +147,8 @@ test("formal Human inspector permits exact SDK reads and never membership or pro
   ])
     assert.equal(classify("POST", path).decision, "reject", path);
 });
+
+test("service generation is read-only; default formal acceptance must not restart", () => {
+  assert.equal(classify("GET", "/_rah/service").decision, "allow-api");
+  assert.equal(classify("POST", "/_rah/service/restart").decision, "reject");
+});

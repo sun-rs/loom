@@ -21,27 +21,25 @@ test("settings navigation exposes the applicable Raft contract and omits cloud c
     assert.match(surface, new RegExp(`\"${section}\"`, "u"), section);
   assert.doesNotMatch(surface, /套餐|账单|Plan|Billing/u);
   assert.match(surface, /language-region/u);
-  assert.match(surface, /语言与区域/u);
+  assert.match(surface, /日期与时间/u);
   assert.doesNotMatch(surface, /label:\s*["']应用["']/u);
   const primitives = read("components/settings-primitives.tsx");
   assert.match(primitives, /SettingsPageHeader/u);
   assert.match(primitives, /data-slock-settings-tab/u);
 });
 
-test("language and region preserves the official form split without faking unavailable translation", () => {
+test("date/time retains time format and excludes language, translation and timezone controls", () => {
   const pages = read("components/settings-pages.tsx");
   const preferences = read("settings-preferences.ts");
   assert.match(pages, /LanguageRegionSettingsContent/u);
-  assert.match(pages, /显示语言/u);
-  assert.match(pages, /消息翻译/u);
+  assert.doesNotMatch(pages, /显示语言/u);
+  assert.doesNotMatch(pages, /消息翻译/u);
   assert.match(pages, /日期与时间/u);
-  assert.match(pages, /时区/u);
+  assert.doesNotMatch(pages, /时区/u);
   assert.match(pages, /12 小时制/u);
   assert.match(pages, /24 小时制/u);
   assert.match(pages, /writeTimeFormat/u);
-  assert.match(pages, /尚未接入消息翻译/u);
   assert.match(pages, /disabled/u);
-  assert.match(pages, /rah-settings-compact-control/u);
   assert.match(preferences, /return saved/u);
   assert.match(
     read("settings.css"),

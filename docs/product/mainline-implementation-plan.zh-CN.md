@@ -13,7 +13,11 @@
 <=20 MiB 二进制媒体预览已补，见[限定预览验收](../audits/2026-09-07-media-preview-closure.zh-CN.md)。
 Computer 三模式批量重启/重置入口也已补，见[批量恢复审计](../audits/2026-09-07-computer-bulk-reset-closure.zh-CN.md)。
 PDF 缩放与页码跳转已补，见[阅读操作审计](../audits/2026-09-07-pdf-reading-closure.zh-CN.md)。
-完整 Raft 双边、大文件流式/完整 PDF 工具栏与设备验收尚未收口，不由本地结果代替。
+大文件流式与添加远程 Computer 已由用户归入未来扩展，与多 Human 一同不阻塞首版。
+完整 PDF 工具栏不是已证实的 Raft 自研能力，不再作为必做缺口。
+当前进入验收驱动收口；完整 Raft 双边与设备验收尚未完成，不由本地结果代替。
+Computer 本机服务管理/工作区清理与 Settings 适用行为仍需逐项裁决，不能宣称只剩运行测试。
+范围与判定见[验收阶段裁决](../audits/2026-09-07-acceptance-scope-decision.zh-CN.md)。
 
 ## 顺序和共同施工协议
 
@@ -83,7 +87,7 @@ Computer 恢复 → 必要 Settings/MCP/帮助。搜索、消息、通知已有�
 文件由 Host root-scoped owner 提供；路径浏览不等于 Artifact 发布。官方 Computer 离线时，
 非空文件树双边结论保持未验证。本机诊断不扩张为远程 Host 注册或应用市场。
 
-**出口**：适用操作都有单一真实 owner 和逐行为证据；可选翻译等先明确适用范围，不把禁用伪装为实现。
+**出口**：适用操作都有单一真实 owner 和逐行为证据；翻译、显示语言与时区选择按用户 2026-09-07 决定排除，不保留无效控件。
 
 ## 5. 首版验收
 

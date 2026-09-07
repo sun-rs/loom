@@ -128,6 +128,10 @@ try {
           .waitFor();
         assert.equal(await region.getByRole("alert").count(), 0);
         assert.ok(
+          (await region.getByText(/修改于/u).count()) > 0,
+          "Workspace scan renders the returned modification time",
+        );
+        assert.ok(
           (await region.locator("[data-workspace-summary]").count()) > 0,
         );
         await page.route("**/v3/client/agents/workspace/summary", (route) =>

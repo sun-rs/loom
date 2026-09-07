@@ -357,7 +357,7 @@ for (const runnerName of ["run-local-workbench.mjs", "run-lan-workbench.mjs"]) {
             calls.push("prepare");
             return "/independent-audit/home";
           },
-          startLocalCoreWorkbench: async options => {
+          startRestartableLocalCoreWorkbench: async options => {
             assert.deepEqual(calls, ["prepare", "snapshot", "lease"]);
             assert.equal(options.staticDirectory, "/independent-audit/frozen-result");
             assert.equal(options.workbenchHome, "/independent-audit/home");

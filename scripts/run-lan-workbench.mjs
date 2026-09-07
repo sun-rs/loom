@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import {
   prepareRahDataHome,
-  startLocalCoreWorkbench,
+  startRestartableLocalCoreWorkbench,
 } from "@rah-os/daemon/local-workbench";
 import { assertRahOsRepositoryIdentity } from "./repository-identity.mjs";
 
@@ -32,7 +32,7 @@ const privateKeyPath = optionalEnvironment("RAH_LAN_KEY_PATH");
 
 let running;
 try {
-  running = await startLocalCoreWorkbench({
+  running = await startRestartableLocalCoreWorkbench({
     environment: process.env,
     mode: {
       bindHost: process.env.RAH_LAN_BIND_HOST?.trim() || "0.0.0.0",

@@ -51,7 +51,7 @@ const SETTINGS_GROUPS: readonly {
     label: "个人",
     items: [
       { id: "account", icon: "user-round", label: "账户" },
-      { id: "language-region", icon: "languages", label: "语言与区域" },
+      { id: "language-region", icon: "clock-3", label: "日期与时间" },
       { id: "appearance", icon: "type", label: "外观" },
       { id: "notifications", icon: "bell", label: "通知" },
     ],

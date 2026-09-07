@@ -38,8 +38,29 @@
   color: var(--ink-50);
   font: 700 12px/16px var(--mono);
 }
-.rah-profile-section h3 span {
+.rah-profile-section > h3 > span:not(.rah-profile-section-actions) {
   color: var(--ink-40);
+}
+.rah-profile-section-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--ink);
+}
+.rah-profile-section[data-variant="field"] > h3 > .rah-profile-section-actions {
+  margin-left: 0;
+}
+.rah-profile-section-actions > .btn {
+  padding: 4px 8px;
+  font-size: 12px;
+  line-height: 16px;
+  gap: 4px;
+}
+.rah-profile-section-actions > .btn svg {
+  width: 12px;
+  height: 12px;
 }
 .rah-profile-fields {
   display: grid;

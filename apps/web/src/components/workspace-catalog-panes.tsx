@@ -1,3 +1,6 @@
+import { runtimeProductLabel } from "../agent-runtime-presentation.ts";
+import { WorkbenchServiceRestart } from "./workbench-service-restart.tsx";
+import { ComputerRecoveryGuide } from "./computer-recovery-guide.tsx";
 import type { AgentResetOperation } from "../agent-reset-batch.ts";
 import type { RahClient } from "@rah-os/client-sdk";
 import { ComputerWorkspaceSummary } from "./computer-workspace-summary.tsx";
@@ -292,9 +295,21 @@ export function ComputerRuntimePane({
                         key={runtimeInventoryKey(runtime)}
                         runtime={runtime}
                       >
-                        {runtime.displayName}
+                        {runtimeProductLabel(runtime)}
                       </ComputerRuntimeInspector>
                     ))}
+                  </dd>
+                </div>
+                <div>
+                  <dt>创建时间</dt>
+                  <dd>
+                    {computer?.createdAt
+                      ? formatRahDateTime(computer.createdAt, {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })
+                      : "未记录"}
                   </dd>
                 </div>
               </dl>
@@ -387,13 +402,8 @@ export function ComputerRuntimePane({
                   <Icon name="copy" />
                   {copyFeedback === "diagnostic" ? "已复制" : "复制诊断信息"}
                 </button>
-                <a
-                  href="/help/local-workbench.html#recovery"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  本机恢复指南
-                </a>
+                <WorkbenchServiceRestart />
+                <ComputerRecoveryGuide />
                 <p>需要进一步检查时，请在 RAH OS 项目目录运行：</p>
                 <div className="rah-computer-command-row">
                   <code>npm run doctor:local-core</code>

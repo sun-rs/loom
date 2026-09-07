@@ -58,6 +58,7 @@ test("Computer connection is heartbeat evidence, independent of CLI readiness", 
         {
           hostId: "host-1",
           instanceId: "generation-1",
+          createdAt: "2026-01-01T00:00:00.000Z",
           state,
           lastSeenAt,
           buildVersion: "test",
@@ -65,6 +66,10 @@ test("Computer connection is heartbeat evidence, independent of CLI readiness", 
       ],
     } as never,
   };
+  assert.equal(
+    buildLocalRuntimeInventoryResponse(input).computer?.createdAt,
+    "2026-01-01T00:00:00.000Z",
+  );
   assert.equal(
     buildLocalRuntimeInventoryResponse(input).computer?.status,
     "online",

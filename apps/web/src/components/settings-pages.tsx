@@ -180,56 +180,8 @@ export function LanguageRegionSettingsContent() {
   const [saveState, setSaveState] = useState<"idle" | "saved" | "error">(
     "idle",
   );
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   return (
-    <SettingsPage icon="languages" title="语言与区域">
-      <SettingsSectionLabel icon="languages">语言</SettingsSectionLabel>
-      <form
-        className="rah-settings-card rah-settings-form-card"
-        onSubmit={(event) => event.preventDefault()}
-      >
-        <div>
-          <strong>显示语言</strong>
-          <p>选择应用界面的显示语言。这与消息翻译无关。</p>
-        </div>
-        <div className="rah-settings-compact-control">
-          <select
-            aria-describedby="rah-display-language-note"
-            aria-label="显示语言"
-            disabled
-          >
-            <option value="zh-CN">简体中文</option>
-          </select>
-        </div>
-        <p className="rah-settings-saved" id="rah-display-language-note">
-          RAH OS 当前界面仅提供简体中文。
-        </p>
-        <fieldset className="rah-settings-choice-row">
-          <legend>消息翻译</legend>
-          <label className="rah-settings-choice">
-            <input disabled name="translation-mode" type="radio" />
-            <span>自动</span>
-          </label>
-          <label className="rah-settings-choice">
-            <input disabled name="translation-mode" type="radio" />
-            <span>手动</span>
-          </label>
-          <label className="rah-settings-choice">
-            <input checked name="translation-mode" readOnly type="radio" />
-            <span>关闭</span>
-          </label>
-        </fieldset>
-        <p className="rah-settings-saved">
-          本地 daemon
-          尚未接入消息翻译；关闭以外的模式不可选择，也不会伪造翻译结果。
-        </p>
-        <div className="rah-settings-form-actions">
-          <button className="btn pink" disabled type="submit">
-            保存
-          </button>
-        </div>
-      </form>
-
+    <SettingsPage icon="clock-3" title="日期与时间">
       <SettingsSectionLabel icon="clock-3">日期与时间</SettingsSectionLabel>
       <form
         className="rah-settings-card rah-settings-form-card"
@@ -241,15 +193,6 @@ export function LanguageRegionSettingsContent() {
           setSaveState(saved ? "saved" : "error");
         }}
       >
-        <label className="rah-settings-compact-control">
-          时区
-          <select aria-describedby="rah-timezone-note" disabled>
-            <option value={timezone}>{timezone}</option>
-          </select>
-        </label>
-        <p className="rah-settings-saved" id="rah-timezone-note">
-          使用此设备的系统时区；Reminder 的目标时间继续由 daemon 规范化。
-        </p>
         <fieldset className="rah-settings-choice-row">
           <legend>时间格式</legend>
           {(

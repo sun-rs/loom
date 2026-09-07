@@ -34,9 +34,11 @@ export function runtimeProfilePresentation(
     (!!reasoning && reasoning !== "default");
   return {
     runtime,
-    runtimeLabel:
-      runtime?.displayName ??
-      (runtimes.length > 1 ? "多个运行时绑定" : "未绑定"),
+    runtimeLabel: runtime
+      ? runtimeProductLabel(runtime)
+      : runtimes.length > 1
+        ? "多个运行时绑定"
+        : "未绑定",
     modelLabel: intent
       ? (model?.displayName ??
         model?.modelId ??
@@ -56,4 +58,29 @@ export function runtimeProfilePresentation(
           )?.label ?? reasoning)
       : undefined,
   };
+}
+
+/** Product label only. Preserve exact transport/profile names in diagnostics. */
+export function runtimeProductLabel(
+  runtime: Pick<
+    LocalRuntimeInventoryEntry,
+    "executable" | "displayName" | "cliId"
+  >,
+): string {
+  const executable = runtime.executable
+    .split(/[\\/]/u)
+    .at(-1)
+    ?.replace(/\.exe$/iu, "");
+  switch (runtime.cliId ?? executable) {
+    case "codex":
+      return "Codex CLI";
+    case "claude":
+      return "Claude Code";
+    case "kimi":
+      return "Kimi Code";
+    case "opencode":
+      return "OpenCode";
+    default:
+      return runtime.displayName;
+  }
 }

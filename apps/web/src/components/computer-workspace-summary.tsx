@@ -1,3 +1,4 @@
+import { formatRahDateTime } from "../date-time-presentation.ts";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { useEffect, useRef, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
@@ -110,6 +111,15 @@ export function ComputerWorkspaceSummary({
                       : ""}
                   </p>
                   <code>{row.summary.rootPath}</code>
+                  {row.summary.lastModified ? (
+                    <p>
+                      修改于{" "}
+                      {formatRahDateTime(row.summary.lastModified, {
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
+                  ) : null}
                 </>
               ) : null}
             </div>

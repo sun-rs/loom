@@ -1,3 +1,4 @@
+import { createConnection } from "node:net";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import {
@@ -16,7 +17,7 @@ import test from "node:test";
 import { LanWorkbenchAccessStore } from "../src/lan-workbench-access-store.ts";
 import { LanWorkbenchGateway } from "../src/lan-workbench-gateway.ts";
 
-test("the formal LAN gateway requires TLS pairing and keeps Human authority server-side", async () => {
+test("the formal LAN gateway requires TLS pairing and keeps Human authority server-side", async (t) => {
   const directory = mkdtempSync(join(tmpdir(), "rah-lan-gateway-"));
   const staticDirectory = join(directory, "dist");
   const stateDirectory = join(directory, "state");
@@ -114,7 +115,15 @@ test("the formal LAN gateway requires TLS pairing and keeps Human authority serv
       }),
     /certificate does not cover the public hostname/u,
   );
+  let restartRequests = 0;
   const gateway = new LanWorkbenchGateway({
+    serviceControl: {
+      status: () => ({ generation: "lan-test", state: "online" }),
+      restart: () => {
+        restartRequests++;
+        return "accepted";
+      },
+    },
     accessStore,
     accessToken: "server-only-human-token",
     bindHost: "127.0.0.1",
@@ -218,6 +227,19 @@ test("the formal LAN gateway requires TLS pairing and keeps Human authority serv
       "web-generation-lan",
     );
 
+    for (const [headers, expected] of [
+      [{ origin }, 401],
+      [{ cookie, origin: "https://evil.invalid" }, 403],
+      [{ cookie, origin }, 202],
+    ] as const) {
+      const response = await secureRequest(origin, "/_rah/service/restart", {
+        method: "POST",
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify({ generation: "lan-test" }),
+      });
+      assert.equal(response.statusCode, expected);
+    }
+    assert.equal(restartRequests, 1);
     const session = await secureRequest(origin, "/_rah/session", {
       headers: { cookie },
     });
@@ -318,6 +340,41 @@ test("the formal LAN gateway requires TLS pairing and keeps Human authority serv
       headers: { host: "attacker.invalid" },
     });
     assert.equal(wrongHost.statusCode, 421);
+    await t.test(
+      "shutdown closes browser preconnects before TLS handshake",
+      async () => {
+        const socket = createConnection({
+          host: "127.0.0.1",
+          port: Number(new URL(origin).port),
+        });
+        await new Promise<void>((resolve, reject) => {
+          socket.once("connect", resolve);
+          socket.once("error", reject);
+        });
+        // Let the accepted connection enter TLS parsing, then leave ClientHello incomplete.
+        socket.write(Buffer.from([0x16, 0x03, 0x01, 0x00, 0x20]));
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        const stopped = gateway.stop();
+        try {
+          const completed = await Promise.race([
+            stopped.then(() => true),
+            new Promise<boolean>((resolve) => {
+              timer = setTimeout(() => resolve(false), 1000);
+            }),
+          ]);
+          assert.equal(
+            completed,
+            true,
+            "pending TLS must not block graceful shutdown and Host offline acknowledgement",
+          );
+        } finally {
+          clearTimeout(timer);
+          socket.destroy();
+          await stopped;
+        }
+      },
+    );
   } finally {
     await gateway.stop();
     await close(upstream);

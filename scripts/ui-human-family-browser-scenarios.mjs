@@ -238,8 +238,13 @@ export async function verifyHumanFamily(browser, origin, output, engine) {
       r.url().endsWith("/messages/post"),
     );
     await composer.press("Enter");
-    assert.equal((await posted).status(), 200);
-    const mention = page.locator("button.rah-rich-self-reference").last();
+    const postedResponse = await posted;
+    assert.equal(postedResponse.status(), 200);
+    const postedMessage = await postedResponse.json();
+    // The response precedes rendering; never click an older Agent mention.
+    const mention = page.locator(
+      `.msg[data-message-id=${JSON.stringify(postedMessage.event.aggregateId)}] button.rah-rich-self-reference`,
+    );
     await mention.waitFor();
     await mention.click();
     await edit().waitFor();

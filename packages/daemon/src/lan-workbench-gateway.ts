@@ -1,4 +1,8 @@
 import {
+  handleWorkbenchServiceControl,
+  type WorkbenchServiceControl,
+} from "./workbench-service-control.ts";
+import {
   createPrivateKey,
   createPublicKey,
   randomUUID,
@@ -13,6 +17,7 @@ import {
 } from "node:http";
 import { createServer, type Server as HttpsServer } from "node:https";
 import { isIP } from "node:net";
+import type { Duplex } from "node:stream";
 import {
   basename,
   extname,
@@ -60,6 +65,7 @@ type PairingAttemptWindow = {
 
 export class LanWorkbenchGateway {
   readonly #accessStore: LanWorkbenchAccessStore;
+  readonly #serviceControl: WorkbenchServiceControl | undefined;
   readonly #accessToken: string;
   readonly #bindHost: string;
   readonly #clock: () => number;
@@ -72,9 +78,11 @@ export class LanWorkbenchGateway {
   readonly #webBuildId: string | undefined;
   #origin: string | undefined;
   #server: HttpsServer | undefined;
+  #connections = new Set<Duplex>();
 
   constructor(input: {
     accessStore: LanWorkbenchAccessStore;
+    serviceControl?: WorkbenchServiceControl;
     accessToken: string;
     bindHost: string;
     clock?: () => number;
@@ -125,6 +133,7 @@ export class LanWorkbenchGateway {
       (input.clock ?? Date.now)(),
     );
     this.#accessStore = input.accessStore;
+    this.#serviceControl = input.serviceControl;
     this.#accessToken = input.accessToken;
     this.#bindHost = input.bindHost;
     this.#clock = input.clock ?? Date.now;
@@ -175,6 +184,16 @@ export class LanWorkbenchGateway {
         });
       },
     );
+    const connections = new Set<Duplex>();
+    this.#connections = connections;
+    server.on("connection", (socket) => {
+      if (this.#server !== server) {
+        socket.destroy();
+        return;
+      }
+      connections.add(socket);
+      socket.once("close", () => connections.delete(socket));
+    });
     this.#server = server;
     try {
       await new Promise<void>((resolvePromise, reject) => {
@@ -195,6 +214,7 @@ export class LanWorkbenchGateway {
 
   async stop(): Promise<void> {
     const server = this.#server;
+    const connections = this.#connections;
     this.#server = undefined;
     this.#origin = undefined;
     if (server === undefined || !server.listening) return;
@@ -203,6 +223,10 @@ export class LanWorkbenchGateway {
         error === undefined ? resolvePromise() : reject(error),
       );
       server.closeAllConnections();
+      // HTTPS closeAllConnections excludes sockets still negotiating TLS.
+      // Browser preconnects must not prevent the daemon from reaching offline.
+      for (const socket of connections) socket.destroy();
+      connections.clear();
     });
   }
 
@@ -254,6 +278,19 @@ export class LanWorkbenchGateway {
     response: ServerResponse,
     requestUrl: URL,
   ): Promise<void> {
+    if (
+      requestUrl.pathname === "/_rah/service" ||
+      requestUrl.pathname === "/_rah/service/restart"
+    ) {
+      await handleWorkbenchServiceControl(
+        request,
+        response,
+        this.#serviceControl,
+        this.#authenticatedDevice(request.headers.cookie) !== null,
+        request.headers.origin === this.origin,
+      );
+      return;
+    }
     if (requestUrl.pathname === "/_rah/health" && request.method === "GET") {
       sendJson(response, 200, {
         service: "rah-os-local-core",

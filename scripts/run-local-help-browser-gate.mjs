@@ -100,6 +100,36 @@ try {
         assert.equal(copied, fixture.origin + "/_rah/health");
         assert.equal(await page.getByRole("alert").count(), 0);
         await page.screenshot({ path: join(output, `${engine}-${width}.png`) });
+        await page.goto(fixture.origin + "/?surface=computers");
+        const disclosure = page.locator("details.rah-computer-recovery");
+        const toggle = disclosure.locator("summary");
+        await toggle.waitFor({ timeout: 3000 });
+        assert.equal(await disclosure.getAttribute("open"), null);
+        await toggle.click();
+        assert.notEqual(await disclosure.getAttribute("open"), null);
+        await disclosure
+          .getByText("关闭窗口不会停止后台工作。", { exact: false })
+          .waitFor();
+        assert.ok(
+          (await disclosure.textContent()).includes(
+            "不要对同一状态目录重复启动",
+          ),
+        );
+        await toggle.focus();
+        await page.keyboard.press("Enter");
+        assert.equal(await disclosure.getAttribute("open"), null);
+        assert.equal(
+          await toggle.evaluate((el) => el === document.activeElement),
+          true,
+        );
+        await page.keyboard.press("Space");
+        assert.notEqual(await disclosure.getAttribute("open"), null);
+        await page.screenshot({
+          path: join(output, `${engine}-${width}-computer-recovery.png`),
+        });
+        await page.reload();
+        await toggle.waitFor();
+        assert.equal(await disclosure.getAttribute("open"), null);
         results.push({ engine, width, status: "passed" });
       }
     } finally {

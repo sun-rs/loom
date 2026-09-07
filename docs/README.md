@@ -1,5 +1,18 @@
 # RAH OS 文档
 
+当前状态深度审计：[协作正确性反例、当前门禁失败与收口顺序](audits/2026-09-07-deep-current-state-review.zh-CN.md)。
+包含未提交 Kernel 增量；上一批通过记录不能外推到该候选。以下各批保留其原始证据范围。
+
+最新：[Computer 页面逐项对齐](audits/2026-09-07-computer-alignment.zh-CN.md)。
+
+最新：[页面服务重启与官网对照进展](audits/2026-09-07-service-restart.zh-CN.md)。
+
+本轮全面验收：[22 组浏览器门禁、LAN 退出修复与最终对齐边界](./audits/2026-09-07-full-acceptance.zh-CN.md)。
+
+Computer 单机首轮验收：[官网实操、恢复指南修复及服务管理缺口](./audits/2026-09-07-computer-acceptance.zh-CN.md)。
+
+当前范围与阶段：[未来扩展延期、验收驱动收口及尚不能宣称对齐的边界](./audits/2026-09-07-acceptance-scope-decision.zh-CN.md)。
+
 PDF 基本阅读操作：[缩放、页码跳转与布局修复验收](./audits/2026-09-07-pdf-reading-closure.zh-CN.md)。
 
 Computer 三模式批量重启／重置：[按单 Agent 原回执恢复的验收](./audits/2026-09-07-computer-bulk-reset-closure.zh-CN.md)。

@@ -1,4 +1,5 @@
 export const formalBrowserAllowedApiRequests = [
+  "GET /_rah/service",
   "GET /_rah/session",
   "GET /v3/client/health",
   "POST /v1/local/runtimes/list",

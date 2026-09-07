@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import {
   prepareRahDataHome,
-  startLocalCoreWorkbench,
+  startRestartableLocalCoreWorkbench,
 } from "@rah-os/daemon/local-workbench";
 import {
   acquireWorkbenchAssetLease,
@@ -32,7 +32,7 @@ const releaseLease = await acquireWorkbenchAssetLease(
 
 let running;
 try {
-  running = await startLocalCoreWorkbench({
+  running = await startRestartableLocalCoreWorkbench({
     environment: process.env,
     mode: { kind: "loopback", port: webPort },
     staticDirectory,

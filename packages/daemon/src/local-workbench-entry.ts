@@ -11,3 +11,4 @@ export {
   resolveRahDataHome,
   type RahDataHomeOptions,
 } from "./rah-data-home.ts";
+export { startRestartableLocalCoreWorkbench } from "./restartable-local-workbench.ts";

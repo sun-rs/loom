@@ -41,6 +41,7 @@ export type ProvisionedPrincipal = {
 };
 
 export type HostRecord = {
+  createdAt?: string;
   hostId: string;
   instanceId: string;
   participantIds: string[];

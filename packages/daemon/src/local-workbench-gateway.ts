@@ -1,3 +1,7 @@
+import {
+  handleWorkbenchServiceControl,
+  type WorkbenchServiceControl,
+} from "./workbench-service-control.ts";
 import { createReadStream, existsSync, statSync } from "node:fs";
 import {
   createServer,
@@ -43,6 +47,7 @@ const CONTENT_SECURITY_POLICY = [
 ].join("; ");
 
 export class LocalWorkbenchGateway {
+  readonly #serviceControl: WorkbenchServiceControl | undefined;
   readonly #accessToken: string;
   readonly #daemonOrigin: URL;
   readonly #port: number;
@@ -53,6 +58,7 @@ export class LocalWorkbenchGateway {
   #server: Server | undefined;
 
   constructor(input: {
+    serviceControl?: WorkbenchServiceControl;
     accessToken: string;
     daemonOrigin: string;
     port: number;
@@ -85,6 +91,7 @@ export class LocalWorkbenchGateway {
         "local workbench daemon origin must be an http://127.0.0.1 origin",
       );
     }
+    this.#serviceControl = input.serviceControl;
     this.#accessToken = input.accessToken;
     this.#daemonOrigin = daemonOrigin;
     this.#port = input.port;
@@ -162,6 +169,19 @@ export class LocalWorkbenchGateway {
     }
     this.#setWebBuildHeader(response);
     const requestUrl = new URL(request.url ?? "/", this.origin);
+    if (
+      requestUrl.pathname === "/_rah/service" ||
+      requestUrl.pathname === "/_rah/service/restart"
+    ) {
+      await handleWorkbenchServiceControl(
+        request,
+        response,
+        this.#serviceControl,
+        this.#hasSession(request.headers.cookie),
+        request.headers.origin === this.origin,
+      );
+      return;
+    }
     if (requestUrl.pathname === "/_rah/health" && request.method === "GET") {
       sendJson(response, 200, {
         service: "rah-os-local-core",

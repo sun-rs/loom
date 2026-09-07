@@ -28,7 +28,9 @@ export function ProfileSection({
       <h3>
         {title}
         {count === undefined ? null : <span>{count}</span>}
-        {action}
+        {action == null ? null : (
+          <span className="rah-profile-section-actions">{action}</span>
+        )}
       </h3>
       {children}
     </section>

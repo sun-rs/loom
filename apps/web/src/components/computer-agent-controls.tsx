@@ -1,3 +1,4 @@
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { ComputerAgentReset } from "./computer-agent-reset.tsx";
 import type { AgentResetOperation } from "../agent-reset-batch.ts";
 import { applyAgentStateBatch } from "../agent-state-batch.ts";
@@ -91,7 +92,7 @@ export function ComputerAgentControls({
       title="这台 COMPUTER 上的 AGENT"
       count={bindings.length}
       action={
-        <span className="rah-profile-field-buttons">
+        <>
           <button
             className="btn"
             type="button"
@@ -104,18 +105,20 @@ export function ComputerAgentControls({
               setError(undefined);
             }}
           >
+            <Icon name={selecting ? "x" : "check"} />
             {selecting ? "取消" : "选择"}
           </button>
           <button
-            className="btn"
+            className="btn btn-pink"
             type="button"
             aria-label="创建 Agent"
             disabled={!onCreate || pending}
             onClick={onCreate}
           >
+            <Icon name="plus" />
             创建
           </button>
-        </span>
+        </>
       }
     >
       {selecting ? (

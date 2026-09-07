@@ -17,6 +17,7 @@ export function hostProjectionFromRow(row: Row): HostRecord {
     throw new Error(`unexpected Host state ${state}`);
   }
   return {
+    createdAt: text(row, "created_at"),
     hostId: text(row, "host_id"),
     instanceId: text(row, "instance_id"),
     participantIds,

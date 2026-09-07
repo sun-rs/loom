@@ -95,9 +95,9 @@
     },
     {
       "id": "B011",
-      "applicability": "pending",
-      "state": "needs-decision",
-      "reason": "服务器翻译 owner 与隐私/模型策略尚未裁决，不能仅复制可见开关。"
+      "applicability": "excluded",
+      "state": "not-applicable",
+      "reason": "2026-09-07 用户明确排除翻译、显示语言与时区选择；界面删除相关控件，不再等待后端 owner。"
     },
     {
       "id": "B012",
@@ -295,7 +295,7 @@
       "id": "B044",
       "applicability": "applicable",
       "state": "needs-feature",
-      "reason": "Computer 创建入口、Agent 工作区有界扫描、批量启用/停用、restart/session/full 已接真实 owner 并通过隔离双浏览器；Computer 服务自身重启/升级、孤儿目录清理及整页双边仍未完成，不能将部分操作标记整行 verified。"
+      "reason": "Computer 创建、工作区有界扫描、批量 Agent 操作已有 owner；本机服务重启现接 launcher，隔离真实浏览器与重启生命周期通过。孤儿目录清理、来源受限升级和整页同条件官网对照仍不得视为完成。"
     },
     {
       "id": "B045",
