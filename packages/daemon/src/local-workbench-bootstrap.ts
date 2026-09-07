@@ -50,7 +50,6 @@ export type LocalWorkbenchRuntimeSpec = {
     | "kimi-acp/v1"
     | "opencode-server/v1";
   agentHandle: string;
-  args: string[];
   avatarKey: string;
   cliId: string;
   description: string;
@@ -315,7 +314,10 @@ async function prepareRuntimeRegistry(input: {
             terminationGraceMs: 5_000,
           },
           executable: spec.executable,
-          fixedArgs: spec.args,
+          // The standing prompt is compiled per RunAttempt and delivered
+          // through the daemon activation lease, never frozen into a
+          // RuntimeProfile revision.
+          fixedArgs: [],
           kind: spec.adapterKind,
         },
         credentialSlots: [],

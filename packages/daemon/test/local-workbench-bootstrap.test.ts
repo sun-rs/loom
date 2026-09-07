@@ -15,7 +15,7 @@ import {
   prepareLocalWorkbench,
   type LocalWorkbenchRuntimeSpec,
 } from "../src/local-workbench-bootstrap.ts";
-import { localWorkbenchWorkerPrompt } from "../src/local-cli-runtime-spec.ts";
+import { compileStandingPrompt } from "../src/standing-prompt-compiler.ts";
 
 test("local workbench bootstrap is persistent, owner-private, and restart-safe", async () => {
   const parent = mkdtempSync(join(tmpdir(), "rah-local-workbench-"));
@@ -166,7 +166,6 @@ function fakeRuntimeSpec(workspaceCwd: string): LocalWorkbenchRuntimeSpec {
   return {
     adapterKind: "generic-process/v1",
     agentHandle: "TestAgent",
-    args: ["--version"],
     avatarKey: "test-agent",
     cliId: "test",
     description: "A persistent fake Agent for bootstrap verification.",
@@ -181,22 +180,28 @@ function fakeRuntimeSpec(workspaceCwd: string): LocalWorkbenchRuntimeSpec {
   };
 }
 
-test("normal bootstrap activates a new memory prompt revision without mutating old revisions or reusing their sessions", async () => {
+test("a role edit changes the compiled standing prompt digest without minting a RuntimeProfile revision", async () => {
   const parent = mkdtempSync(join(tmpdir(), "rah-memory-prompt-revision-"));
   const workspaceCwd = join(parent, "workspace");
   const stateDirectory = join(parent, "state");
   mkdirSync(workspaceCwd);
   const base = fakeRuntimeSpec(workspaceCwd);
-  const currentPrompt = localWorkbenchWorkerPrompt();
-  const oldPrompt = `${currentPrompt}\nLegacy test-only memory policy`;
-  const spec = (prompt: string): LocalWorkbenchRuntimeSpec => ({
-    ...base,
-    args: ["-e", "process.stdout.write(process.argv[1])", prompt],
-  });
+  const spec = (role: string): LocalWorkbenchRuntimeSpec => ({ ...base, role });
+  const digestFor = (role: string): string =>
+    compileStandingPrompt({
+      agent: {
+        description: base.description,
+        displayName: base.displayName,
+        handle: base.agentHandle,
+        instructions: base.instructions,
+        participantId: "participant-under-test",
+        role,
+      },
+    }).deterministicDigest;
   let registry: RuntimeProfileRegistry | undefined;
   try {
     const old = await prepareLocalWorkbench({
-      runtimeSpecs: [spec(oldPrompt)],
+      runtimeSpecs: [spec("Persistent test Agent")],
       stateDirectory,
       workspaceCwd,
     });
@@ -206,6 +211,11 @@ test("normal bootstrap activates a new memory prompt revision without mutating o
     });
     registry.initialize();
     const oldRevision = registry.getActiveRevision(base.runtimeProfileId)!;
+    assert.deepEqual(
+      oldRevision.manifest.adapter.fixedArgs,
+      [],
+      "the standing prompt is never frozen into a RuntimeProfile revision",
+    );
     const sessions = new ProviderSessionStore({
       rootDirectory: join(parent, "provider-sessions"),
     });
@@ -213,6 +223,7 @@ test("normal bootstrap activates a new memory prompt revision without mutating o
       participantId: old.metadata.bootstrapParticipantIds[0]!,
       provider: "codex-app-server/v1" as const,
       runtimeProfileRevisionId: oldRevision.runtimeProfileRevisionId,
+      standingPromptDigest: digestFor("Persistent test Agent"),
       workspaceMountRevisionId: "workspace-test-v1",
     };
     await sessions.record(oldKey, "old-session-with-old-prompt");
@@ -220,7 +231,7 @@ test("normal bootstrap activates a new memory prompt revision without mutating o
     registry = undefined;
 
     const current = await prepareLocalWorkbench({
-      runtimeSpecs: [spec(currentPrompt)],
+      runtimeSpecs: [spec("Edited persistent test Agent")],
       stateDirectory,
       workspaceCwd,
     });
@@ -231,36 +242,32 @@ test("normal bootstrap activates a new memory prompt revision without mutating o
     });
     registry.initialize();
     const active = registry.getActiveRevision(base.runtimeProfileId)!;
-    assert.notEqual(
+    assert.equal(
       active.runtimeProfileRevisionId,
       oldRevision.runtimeProfileRevisionId,
+      "an Agent layer edit is not a RuntimeProfile change",
     );
-    assert.equal(active.manifest.adapter.fixedArgs.at(-1), currentPrompt);
-    assert.deepEqual(
-      registry.getRevision(oldRevision.runtimeProfileRevisionId).manifest,
-      oldRevision.manifest,
-    );
+    assert.deepEqual(active.manifest.adapter.fixedArgs, []);
+    const editedDigest = digestFor("Edited persistent test Agent");
+    assert.notEqual(editedDigest, oldKey.standingPromptDigest);
     assert.equal(
-      await sessions.load({
-        ...oldKey,
-        runtimeProfileRevisionId: active.runtimeProfileRevisionId,
-      }),
+      await sessions.load({ ...oldKey, standingPromptDigest: editedDigest }),
       null,
+      "the edited standing prompt cannot resume the previous Provider session",
     );
     assert.equal(
       (await sessions.load(oldKey))?.providerSessionId,
       "old-session-with-old-prompt",
     );
-    registry.activateRevision({
-      runtimeProfileRevisionId: oldRevision.runtimeProfileRevisionId,
-      contentDigest: oldRevision.contentDigest,
-    });
     assert.equal(
-      registry
-        .getActiveRevision(base.runtimeProfileId)
-        ?.manifest.adapter.fixedArgs.at(-1),
-      oldPrompt,
-      "explicit registry rollback still selects the immutable old prompt",
+      await sessions.load({
+        participantId: oldKey.participantId,
+        provider: oldKey.provider,
+        runtimeProfileRevisionId: oldKey.runtimeProfileRevisionId,
+        workspaceMountRevisionId: oldKey.workspaceMountRevisionId,
+      }),
+      null,
+      "a digest-free legacy key stays a distinct record",
     );
   } finally {
     registry?.close();
@@ -357,7 +364,7 @@ test("profile upgrades rotate immutable Offers and migrate only managed policy r
     kernel = undefined;
 
     const second = await prepareLocalWorkbench({
-      runtimeSpecs: [{ ...spec, args: ["--version", "new-profile"] }],
+      runtimeSpecs: [{ ...spec, displayName: "Test Agent, new profile" }],
       stateDirectory,
       workspaceCwd,
     });
@@ -456,7 +463,7 @@ test("profile upgrades rotate immutable Offers and migrate only managed policy r
     kernel.close();
     kernel = undefined;
     const third = await prepareLocalWorkbench({
-      runtimeSpecs: [{ ...spec, args: ["--version", "new-profile"] }],
+      runtimeSpecs: [{ ...spec, displayName: "Test Agent, new profile" }],
       stateDirectory,
       workspaceCwd,
     });

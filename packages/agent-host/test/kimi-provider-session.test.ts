@@ -39,9 +39,44 @@ test("Kimi resumes Host-private ACP sessions and only retries proven side-effect
       contentDigest: revision.contentDigest,
       runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
     });
+    assert.deepEqual(
+      active.manifest.adapter.fixedArgs,
+      [],
+      "the standing prompt arrives per RunAttempt through the activation lease",
+    );
+    for (const legacy of [["frozen legacy room worker prompt"], ["a", "b"]]) {
+      const legacyRevision = profileRegistry.importManifest(
+        manifest(executable, legacy),
+      );
+      const legacyReport = profileRegistry.recordProbeReport(
+        await implementations.probeRevision(legacyRevision, { cwd: directory }),
+      );
+      const legacyActive = profileRegistry.activateRevision({
+        contentDigest: legacyRevision.contentDigest,
+        runtimeProfileRevisionId: legacyRevision.runtimeProfileRevisionId,
+      });
+      const create = (): unknown =>
+        implementations.createRuntime(legacyActive, legacyReport, {
+          cwd: directory,
+          supervisorDirectory: join(directory, "supervisors"),
+        });
+      if (legacy.length === 1) {
+        assert.doesNotThrow(create, "an old frozen manifest still launches");
+      } else {
+        assert.throws(create, /at most one legacy fixed Room worker prompt/u);
+      }
+    }
+    profileRegistry.activateRevision({
+      contentDigest: revision.contentDigest,
+      runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
+    });
     const runtime = implementations.createRuntime(active, report, {
       activationEnvironment: () => ({
+        // The daemon compiles the standing prompt per RunAttempt and appends
+        // it here; the RuntimeProfile freezes no prompt of its own.
+        args: ["--prompt", "canonical room worker prompt"],
         env: { FAKE_KIMI_RECORD_PATH: recordPath },
+        standingPromptDigest: "sha256-standing-prompt-digest",
       }),
       cwd: directory,
       providerSessionStore: new ProviderSessionStore({
@@ -203,12 +238,15 @@ test("Kimi resumes Host-private ACP sessions and only retries proven side-effect
   }
 });
 
-function manifest(executable: string): RuntimeProfileManifestV3 {
+function manifest(
+  executable: string,
+  fixedArgs: readonly string[] = [],
+): RuntimeProfileManifestV3 {
   return {
     adapter: {
       config: { diagnosticByteLimit: 262_144, terminationGraceMs: 1_000 },
       executable,
-      fixedArgs: ["canonical room worker prompt"],
+      fixedArgs: [...fixedArgs],
       kind: "kimi-acp/v1",
     },
     credentialSlots: [],

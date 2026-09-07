@@ -24,6 +24,8 @@ import type {
   ToolAccessMode,
 } from "@rah-os/protocol";
 
+import { standingPromptLease } from "./standing-prompt-lease.ts";
+
 export { assertRuntimeProfileRevisionStillActive };
 
 type RuntimeWorkerService = Pick<
@@ -58,6 +60,15 @@ export function createConfiguredRuntime(input: {
         const leases = [secretLease];
         try {
           if (scope.agent !== undefined) {
+            const promptLease = standingPromptLease(scope, {
+              ...(input.toolAccessMode === undefined
+                ? {}
+                : { toolAccessMode: input.toolAccessMode }),
+              workspacePath: input.cwd,
+            });
+            if (promptLease !== undefined) {
+              leases.push(promptLease);
+            }
             const activation = {
               activationId: scope.activationId,
               computerHostId: scope.hostId,

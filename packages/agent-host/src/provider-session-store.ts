@@ -20,6 +20,14 @@ export type ProviderSessionKey = Readonly<{
   participantId: string;
   provider: string;
   runtimeProfileRevisionId: string;
+  /**
+   * Digest of the daemon-compiled standing prompt this session was started
+   * under. Optional so a record written before compiled standing prompts keeps
+   * resolving to its stored key; a launch that carries a digest keys a
+   * different record, so an edited Agent role or instructions can never resume
+   * a session that ran under the previous prompt.
+   */
+  standingPromptDigest?: string;
   workspaceMountRevisionId: string;
 }>;
 
@@ -411,6 +419,15 @@ function validateKey(key: ProviderSessionKey): ProviderSessionKey {
       "runtimeProfileRevisionId",
       MAX_IDENTIFIER_LENGTH,
     ),
+    ...(key.standingPromptDigest === undefined
+      ? {}
+      : {
+          standingPromptDigest: requiredText(
+            key.standingPromptDigest,
+            "standingPromptDigest",
+            MAX_IDENTIFIER_LENGTH,
+          ),
+        }),
     workspaceMountRevisionId: requiredText(
       key.workspaceMountRevisionId,
       "workspaceMountRevisionId",
@@ -432,6 +449,9 @@ function validateRecord(value: unknown): ProviderSessionRecord {
     "runtimeProfileRevisionId",
     "schemaVersion",
     "workspaceMountRevisionId",
+    ...(record.standingPromptDigest === undefined
+      ? []
+      : ["standingPromptDigest"]),
   ];
   if (
     Object.keys(record).sort().join("\0") !== expectedKeys.sort().join("\0") ||
@@ -443,6 +463,9 @@ function validateRecord(value: unknown): ProviderSessionRecord {
     participantId: record.participantId as string,
     provider: record.provider as string,
     runtimeProfileRevisionId: record.runtimeProfileRevisionId as string,
+    ...(record.standingPromptDigest === undefined
+      ? {}
+      : { standingPromptDigest: record.standingPromptDigest as string }),
     workspaceMountRevisionId: record.workspaceMountRevisionId as string,
   });
   const recordedAt = requiredText(record.recordedAt, "recordedAt", 64);
@@ -479,6 +502,7 @@ function sameKey(
     record.participantId === key.participantId &&
     record.provider === key.provider &&
     record.runtimeProfileRevisionId === key.runtimeProfileRevisionId &&
+    record.standingPromptDigest === key.standingPromptDigest &&
     record.workspaceMountRevisionId === key.workspaceMountRevisionId
   );
 }

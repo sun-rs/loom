@@ -137,7 +137,11 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
     const spec = localCliRuntimeSpec(executable, workspaceCwd);
     assert.notEqual(spec, undefined);
     assert.equal(spec?.workspaceCwd, workspaceCwd);
-    assert.ok(spec?.args.includes(prompt));
+    assert.equal(
+      (spec as unknown as Record<string, unknown>).args,
+      undefined,
+      "no local CLI spec freezes launch arguments or a standing prompt",
+    );
     assert.match(spec?.runtimeProfileId ?? "", /^local-workbench-profile-/u);
     assert.notEqual(spec?.instructions.trim(), "");
     assert.equal(
@@ -154,7 +158,6 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
     localCliRuntimeSpec("codex", workspaceCwd)?.adapterKind,
     "codex-app-server/v1",
   );
-  assert.deepEqual(localCliRuntimeSpec("codex", workspaceCwd)?.args, [prompt]);
   assert.equal(
     localCliRuntimeSpec("kimi", workspaceCwd)?.modelCatalogProbe?.kind,
     "kimi-cli/v1",
@@ -163,7 +166,6 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
     localCliRuntimeSpec("kimi", workspaceCwd)?.adapterKind,
     "kimi-acp/v1",
   );
-  assert.deepEqual(localCliRuntimeSpec("kimi", workspaceCwd)?.args, [prompt]);
   assert.equal(
     localCliRuntimeSpec("opencode", workspaceCwd)?.modelCatalogProbe?.kind,
     "opencode-cli/v1",
@@ -172,32 +174,13 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
     localCliRuntimeSpec("opencode", workspaceCwd)?.adapterKind,
     "opencode-server/v1",
   );
-  assert.deepEqual(localCliRuntimeSpec("opencode", workspaceCwd)?.args, [
-    prompt,
-  ]);
   assert.equal(
     localCliRuntimeSpec("claude", workspaceCwd)?.modelCatalogProbe?.kind,
     "claude-cli/v1",
   );
   const claudeSpec = localCliRuntimeSpec("claude", workspaceCwd)!;
   assert.equal(claudeSpec.adapterKind, "claude-stream-json/v1");
-  assert.deepEqual(claudeSpec.args, [prompt]);
-  assert.equal(claudeSpec.args.includes("--model"), false);
-  assert.equal(claudeSpec.args.includes("--effort"), false);
-  assert.equal(
-    claudeSpec.args.includes("--dangerously-skip-permissions"),
-    false,
-  );
-  assert.equal(claudeSpec.args.includes("--permission-mode"), false);
   assert.doesNotMatch(claudeSpec.displayName, /Sonnet|low/u);
-  assert.equal(
-    localCliRuntimeSpec("codex", workspaceCwd)?.args.includes("--sandbox"),
-    false,
-  );
-  assert.equal(
-    localCliRuntimeSpec("kimi", workspaceCwd)?.args.includes("--auto"),
-    false,
-  );
   for (const executable of ["claude", "codex", "kimi", "opencode"]) {
     assert.equal(
       localCliRuntimeSpec(executable, workspaceCwd)?.toolAccessMode,
@@ -205,10 +188,6 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
       `${executable} must use the Raft-compatible unattended default`,
     );
   }
-  assert.equal(
-    localCliRuntimeSpec("opencode", workspaceCwd)?.args.includes("--auto"),
-    false,
-  );
   assert.deepEqual(
     Object.fromEntries(
       ["claude", "codex", "kimi", "opencode"].map((executable) => [

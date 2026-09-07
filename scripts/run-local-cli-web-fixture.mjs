@@ -159,7 +159,7 @@ try {
           terminationGraceMs: 5_000,
         },
         executable: spec.executable,
-        fixedArgs: spec.args,
+        fixedArgs: [],
         kind: spec.adapterKind,
       },
       credentialSlots: [],

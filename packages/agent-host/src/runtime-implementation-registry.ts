@@ -500,9 +500,9 @@ function createClaudeStreamJsonRuntime(
       "claude-stream-json/v1 requires the claude-cli/v1 capability probe",
     );
   }
-  if (revision.manifest.adapter.fixedArgs.length !== 1) {
+  if (revision.manifest.adapter.fixedArgs.length > 1) {
     throw new Error(
-      "claude-stream-json/v1 requires exactly one fixed Room worker prompt",
+      "claude-stream-json/v1 accepts at most one legacy fixed Room worker prompt",
     );
   }
   const mode = toolAccessMode ?? "full_access";
@@ -525,8 +525,13 @@ function createClaudeStreamJsonRuntime(
       revision.manifest.adapter.executable,
     "--tool-access-mode",
     mode,
-    "--prompt",
-    revision.manifest.adapter.fixedArgs[0]!,
+    // A legacy frozen manifest still carries the standing prompt here. The
+    // daemon standing prompt lease appends a later `--prompt` that wins under
+    // every driver's last-wins flag loop; an empty fixedArgs sends only that
+    // one copy.
+    ...(revision.manifest.adapter.fixedArgs[0] === undefined
+      ? []
+      : ["--prompt", revision.manifest.adapter.fixedArgs[0]]),
   ];
   if (resolvedModel?.source === "explicit_binding") {
     requireModelBinding(probeReport, resolvedModel.modelBindingId);
@@ -538,11 +543,18 @@ function createClaudeStreamJsonRuntime(
       args.push("--effort", resolvedModel.reasoning);
     }
   }
+  const standingPromptDigests = createStandingPromptDigestLedger();
   return new GenericProcessAdapter({
     ...processOptions,
     activationEnvironment: async (input) => {
       const lease = (await baseActivationEnvironment?.(input)) ?? { env: {} };
-      const key = providerSessionKey(input, revision, "claude-stream-json/v1");
+      standingPromptDigests.remember(input, lease.standingPromptDigest);
+      const key = providerSessionKey(
+        input,
+        revision,
+        "claude-stream-json/v1",
+        lease.standingPromptDigest,
+      );
       if (providerSessionStore === undefined || key === undefined) return lease;
       const previous = await providerSessionStore.load(key);
       if (previous === null) return lease;
@@ -595,6 +607,7 @@ function createClaudeStreamJsonRuntime(
               input,
               revision,
               "claude-stream-json/v1",
+              standingPromptDigests.digestFor(input),
             );
             if (key !== undefined) {
               await providerSessionStore.record(
@@ -638,9 +651,9 @@ function createCodexAppServerRuntime(
       "codex-app-server/v1 requires the codex-cli/v1 capability probe",
     );
   }
-  if (revision.manifest.adapter.fixedArgs.length !== 1) {
+  if (revision.manifest.adapter.fixedArgs.length > 1) {
     throw new Error(
-      "codex-app-server/v1 requires exactly one fixed Room worker prompt",
+      "codex-app-server/v1 accepts at most one legacy fixed Room worker prompt",
     );
   }
   const mode = toolAccessMode ?? "full_access";
@@ -663,8 +676,13 @@ function createCodexAppServerRuntime(
       revision.manifest.adapter.executable,
     "--tool-access-mode",
     mode,
-    "--prompt",
-    revision.manifest.adapter.fixedArgs[0]!,
+    // A legacy frozen manifest still carries the standing prompt here. The
+    // daemon standing prompt lease appends a later `--prompt` that wins under
+    // every driver's last-wins flag loop; an empty fixedArgs sends only that
+    // one copy.
+    ...(revision.manifest.adapter.fixedArgs[0] === undefined
+      ? []
+      : ["--prompt", revision.manifest.adapter.fixedArgs[0]]),
   ];
   if (resolvedModel?.source === "explicit_binding") {
     requireModelBinding(probeReport, resolvedModel.modelBindingId);
@@ -676,11 +694,18 @@ function createCodexAppServerRuntime(
       args.push("--reasoning", resolvedModel.reasoning);
     }
   }
+  const standingPromptDigests = createStandingPromptDigestLedger();
   return new GenericProcessAdapter({
     ...processOptions,
     activationEnvironment: async (input) => {
       const lease = (await baseActivationEnvironment?.(input)) ?? { env: {} };
-      const key = providerSessionKey(input, revision, "codex-app-server/v1");
+      standingPromptDigests.remember(input, lease.standingPromptDigest);
+      const key = providerSessionKey(
+        input,
+        revision,
+        "codex-app-server/v1",
+        lease.standingPromptDigest,
+      );
       if (providerSessionStore === undefined || key === undefined) return lease;
       const previous = await providerSessionStore.load(key);
       if (previous === null) return lease;
@@ -733,6 +758,7 @@ function createCodexAppServerRuntime(
               input,
               revision,
               "codex-app-server/v1",
+              standingPromptDigests.digestFor(input),
             );
             if (key !== undefined) {
               await providerSessionStore.record(
@@ -754,10 +780,38 @@ function createCodexAppServerRuntime(
   });
 }
 
+/**
+ * Per-RunAttempt memory of the standing prompt digest delivered by the daemon
+ * activation lease, so recorded Provider session evidence lands on the same
+ * key the launch resumed from. Adapters only carry this value; the daemon
+ * compiler remains the only place a standing prompt is composed or digested.
+ */
+function createStandingPromptDigestLedger(): {
+  digestFor(input: ActivationEnvelope): string | undefined;
+  remember(input: ActivationEnvelope, digest: string | undefined): void;
+} {
+  const digests = new Map<string, string>();
+  return {
+    digestFor: (input) => digests.get(input.runAttemptId),
+    remember: (input, digest) => {
+      if (digest === undefined) {
+        digests.delete(input.runAttemptId);
+        return;
+      }
+      if (digests.size >= 64 && !digests.has(input.runAttemptId)) {
+        const oldest = digests.keys().next();
+        if (oldest.done !== true) digests.delete(oldest.value);
+      }
+      digests.set(input.runAttemptId, digest);
+    },
+  };
+}
+
 function providerSessionKey(
   input: ActivationEnvelope,
   revision: RuntimeProfileRevision,
   provider: string,
+  standingPromptDigest?: string,
 ): ProviderSessionKey | undefined {
   const context = input.contextManifest;
   const placement = context?.placement;
@@ -784,6 +838,10 @@ function providerSessionKey(
     participantId: input.participantId,
     provider,
     runtimeProfileRevisionId: placement.runtimeProfileRevisionId,
+    // Optional so a session recorded before compiled standing prompts keeps
+    // its stored key. A launch that now carries a digest keys a different
+    // record, so an edited role never resumes a session started without it.
+    ...(standingPromptDigest === undefined ? {} : { standingPromptDigest }),
     workspaceMountRevisionId: placement.workspaceMountRevisionId,
   };
 }
@@ -807,9 +865,9 @@ function createKimiAcpRuntime(
   if (revision.manifest.modelCatalogProbe.kind !== "kimi-cli/v1") {
     throw new Error("kimi-acp/v1 requires the kimi-cli/v1 capability probe");
   }
-  if (revision.manifest.adapter.fixedArgs.length !== 1) {
+  if (revision.manifest.adapter.fixedArgs.length > 1) {
     throw new Error(
-      "kimi-acp/v1 requires exactly one fixed Room worker prompt",
+      "kimi-acp/v1 accepts at most one legacy fixed Room worker prompt",
     );
   }
   const mode = toolAccessMode ?? "full_access";
@@ -835,8 +893,13 @@ function createKimiAcpRuntime(
       revision.manifest.adapter.executable,
     "--tool-access-mode",
     mode,
-    "--prompt",
-    revision.manifest.adapter.fixedArgs[0]!,
+    // A legacy frozen manifest still carries the standing prompt here. The
+    // daemon standing prompt lease appends a later `--prompt` that wins under
+    // every driver's last-wins flag loop; an empty fixedArgs sends only that
+    // one copy.
+    ...(revision.manifest.adapter.fixedArgs[0] === undefined
+      ? []
+      : ["--prompt", revision.manifest.adapter.fixedArgs[0]]),
   ];
   if (resolvedModel?.source === "explicit_binding") {
     requireModelBinding(probeReport, resolvedModel.modelBindingId);
@@ -848,11 +911,18 @@ function createKimiAcpRuntime(
       args.push("--thinking-level", resolvedModel.reasoning);
     }
   }
+  const standingPromptDigests = createStandingPromptDigestLedger();
   return new GenericProcessAdapter({
     ...processOptions,
     activationEnvironment: async (input) => {
       const lease = (await baseActivationEnvironment?.(input)) ?? { env: {} };
-      const key = providerSessionKey(input, revision, "kimi-acp/v1");
+      standingPromptDigests.remember(input, lease.standingPromptDigest);
+      const key = providerSessionKey(
+        input,
+        revision,
+        "kimi-acp/v1",
+        lease.standingPromptDigest,
+      );
       if (providerSessionStore === undefined || key === undefined) return lease;
       const previous = await providerSessionStore.load(key);
       if (previous === null) return lease;
@@ -901,7 +971,12 @@ function createKimiAcpRuntime(
                 `unexpected Provider session evidence: ${evidence.provider}`,
               );
             }
-            const key = providerSessionKey(input, revision, "kimi-acp/v1");
+            const key = providerSessionKey(
+              input,
+              revision,
+              "kimi-acp/v1",
+              standingPromptDigests.digestFor(input),
+            );
             if (key !== undefined) {
               await providerSessionStore.record(
                 key,
@@ -944,9 +1019,9 @@ function createOpenCodeServerRuntime(
       "opencode-server/v1 requires the opencode-cli/v1 capability probe",
     );
   }
-  if (revision.manifest.adapter.fixedArgs.length !== 1) {
+  if (revision.manifest.adapter.fixedArgs.length > 1) {
     throw new Error(
-      "opencode-server/v1 requires exactly one fixed Room worker prompt",
+      "opencode-server/v1 accepts at most one legacy fixed Room worker prompt",
     );
   }
   const mode = toolAccessMode ?? "full_access";
@@ -969,8 +1044,13 @@ function createOpenCodeServerRuntime(
       revision.manifest.adapter.executable,
     "--tool-access-mode",
     mode,
-    "--prompt",
-    revision.manifest.adapter.fixedArgs[0]!,
+    // A legacy frozen manifest still carries the standing prompt here. The
+    // daemon standing prompt lease appends a later `--prompt` that wins under
+    // every driver's last-wins flag loop; an empty fixedArgs sends only that
+    // one copy.
+    ...(revision.manifest.adapter.fixedArgs[0] === undefined
+      ? []
+      : ["--prompt", revision.manifest.adapter.fixedArgs[0]]),
   ];
   if (resolvedModel?.source === "explicit_binding") {
     requireModelBinding(probeReport, resolvedModel.modelBindingId);
@@ -986,11 +1066,18 @@ function createOpenCodeServerRuntime(
     revision.manifest.modelCatalogProbe.kind,
     mode,
   );
+  const standingPromptDigests = createStandingPromptDigestLedger();
   return new GenericProcessAdapter({
     ...processOptions,
     activationEnvironment: async (input) => {
       const lease = (await baseActivationEnvironment?.(input)) ?? { env: {} };
-      const key = providerSessionKey(input, revision, "opencode-server/v1");
+      standingPromptDigests.remember(input, lease.standingPromptDigest);
+      const key = providerSessionKey(
+        input,
+        revision,
+        "opencode-server/v1",
+        lease.standingPromptDigest,
+      );
       if (providerSessionStore === undefined || key === undefined) return lease;
       const previous = await providerSessionStore.load(key);
       if (previous === null) return lease;
@@ -1046,6 +1133,7 @@ function createOpenCodeServerRuntime(
               input,
               revision,
               "opencode-server/v1",
+              standingPromptDigests.digestFor(input),
             );
             if (key !== undefined) {
               await providerSessionStore.record(

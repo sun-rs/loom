@@ -59,6 +59,16 @@ export {
   localWorkbenchWorkerPrompt,
 } from "./local-cli-runtime-spec.ts";
 export {
+  STANDING_PROMPT_COMPILER_VERSION,
+  compileStandingPrompt,
+  standingPromptLayers,
+  type CompiledStandingPrompt,
+  type StandingPromptAgentLayer,
+  type StandingPromptInput,
+  type StandingPromptLayer,
+  type StandingPromptRuntimeContext,
+} from "./standing-prompt-compiler.ts";
+export {
   prepareLocalWorkbench,
   type LocalWorkbenchMetadata,
   type LocalWorkbenchRuntimeSpec,

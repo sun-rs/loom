@@ -5,7 +5,20 @@ export function combineActivationEnvironmentLeases(
   failureMessage: string,
 ): ActivationEnvironmentLease {
   let released = false;
+  const standingPromptDigests = leases.flatMap((lease) =>
+    lease.standingPromptDigest === undefined
+      ? []
+      : [lease.standingPromptDigest],
+  );
+  if (new Set(standingPromptDigests).size > 1) {
+    throw new Error(
+      "activation environment carries conflicting standing prompt digests",
+    );
+  }
   return Object.freeze({
+    ...(standingPromptDigests[0] === undefined
+      ? {}
+      : { standingPromptDigest: standingPromptDigests[0] }),
     args: Object.freeze(leases.flatMap((lease) => lease.args ?? [])),
     diagnostics: Object.freeze(
       leases.flatMap((lease) => lease.diagnostics ?? []),

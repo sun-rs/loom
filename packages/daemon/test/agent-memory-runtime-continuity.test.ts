@@ -23,7 +23,7 @@ import type {
 } from "@rah-os/protocol";
 
 import { createConfiguredRuntime } from "../src/runtime-profile-composition.ts";
-import { localWorkbenchWorkerPrompt } from "../src/local-cli-runtime-spec.ts";
+import { standingPromptLease } from "../src/standing-prompt-lease.ts";
 
 const memoryMarker = "continuity-marker-from-room-alpha";
 const noteMarker = "private-note-from-first-runtime";
@@ -68,7 +68,11 @@ process.stdout.write(JSON.stringify({
   modelMarker: process.env.TEST_MODEL_MARKER,
   note: await readIfPresent(notePath),
   operation: process.env.TEST_MEMORY_OPERATION,
-  promptDigest: createHash("sha256").update(process.argv[1]).digest("hex"),
+  promptDigest: (() => {
+    const flag = process.argv.lastIndexOf("--prompt");
+    if (flag < 0) return null;
+    return createHash("sha256").update(process.argv[flag + 1]).digest("hex");
+  })(),
   roomId: process.env.RAH_ROOM_ID,
   source: process.env.RAH_AGENT_MEMORY_SOURCE_FILE ? JSON.parse(await readFile(process.env.RAH_AGENT_MEMORY_SOURCE_FILE, "utf8")).source : null,
 }));
@@ -83,12 +87,7 @@ function manifest(input: {
     adapter: {
       config: { diagnosticByteLimit: 262_144, terminationGraceMs: 1_000 },
       executable: process.execPath,
-      fixedArgs: [
-        "--input-type=module",
-        "-e",
-        childScript,
-        localWorkbenchWorkerPrompt(),
-      ],
+      fixedArgs: ["--input-type=module", "-e", childScript, "--"],
       kind: "generic-process/v1",
     },
     credentialSlots: [],
@@ -231,6 +230,35 @@ test("Agent memory survives Room, Runtime/Profile and daemon-side registry chang
       runtimeProfileRevisionId: writerRevision.runtimeProfileRevisionId,
     });
 
+    const expectedPrompt = (input: {
+      agent: AgentRuntimeContext;
+      cwd?: string;
+      ordinal: number;
+      roomId: string;
+    }): string =>
+      standingPromptLease(
+        {
+          activationId: `activation-memory-${String(input.ordinal)}`,
+          agent: input.agent,
+          consumerId: `consumer-memory-${String(input.ordinal)}`,
+          fromSeq: input.ordinal,
+          hostId,
+          participantId: input.agent.participantId,
+          reason: "manual",
+          roomId: input.roomId,
+          runAttemptId: `run-memory-${String(input.ordinal)}`,
+          toSeq: input.ordinal,
+        },
+        { workspacePath: input.cwd ?? directory },
+      )!.args![1]!;
+    const expectedPromptDigest = (input: {
+      agent: AgentRuntimeContext;
+      cwd?: string;
+      ordinal: number;
+      roomId: string;
+    }): string =>
+      createHash("sha256").update(expectedPrompt(input)).digest("hex");
+
     const runRuntime = async (input: {
       agent: AgentRuntimeContext;
       implementations: RuntimeImplementationRegistry;
@@ -299,13 +327,14 @@ test("Agent memory survives Room, Runtime/Profile and daemon-side registry chang
       };
     };
 
+    const firstAgent = agentContext({
+      displayName: "Persistent Agent",
+      participantId: agentA.principal.principalId,
+      revision: 1,
+      role: "First runtime role",
+    });
     const first = await runRuntime({
-      agent: agentContext({
-        displayName: "Persistent Agent",
-        participantId: agentA.principal.principalId,
-        revision: 1,
-        role: "First runtime role",
-      }),
+      agent: firstAgent,
       implementations: firstImplementations,
       ordinal: 1,
       probeReport: writerProbe,
@@ -314,13 +343,17 @@ test("Agent memory survives Room, Runtime/Profile and daemon-side registry chang
       roomId: "room-alpha",
     });
     assert.equal(first.roomId, "room-alpha");
-    const expectedPromptDigest = createHash("sha256")
-      .update(localWorkbenchWorkerPrompt())
-      .digest("hex");
+    const firstPrompt = expectedPrompt({
+      agent: firstAgent,
+      ordinal: 1,
+      roomId: "room-alpha",
+    });
+    assert.match(firstPrompt, /First runtime role/u);
+    assert.match(firstPrompt, /## Current Runtime Context/u);
     assert.equal(
       first.promptDigest,
-      expectedPromptDigest,
-      "the configured OS child receives the current Worker prompt, not just a source declaration",
+      createHash("sha256").update(firstPrompt).digest("hex"),
+      "the configured OS child receives the standing prompt compiled for this Agent and RunAttempt, not a profile-frozen copy",
     );
     assert.equal(first.modelMarker, "provider-a/model-small");
     assert.match(first.memory, new RegExp(memoryMarker, "u"));
@@ -368,13 +401,14 @@ test("Agent memory survives Room, Runtime/Profile and daemon-side registry chang
       runtimeProfileRevisionId: readerRevision.runtimeProfileRevisionId,
     });
 
+    const secondAgent = agentContext({
+      displayName: "Persistent Agent Renamed",
+      participantId: agentA.principal.principalId,
+      revision: 2,
+      role: "Changed role after Runtime switch",
+    });
     const second = await runRuntime({
-      agent: agentContext({
-        displayName: "Persistent Agent Renamed",
-        participantId: agentA.principal.principalId,
-        revision: 2,
-        role: "Changed role after Runtime switch",
-      }),
+      agent: secondAgent,
       implementations: restartedImplementations,
       ordinal: 2,
       probeReport: readerProbe,
@@ -384,7 +418,20 @@ test("Agent memory survives Room, Runtime/Profile and daemon-side registry chang
       executionCwd: secondCwd,
     });
     assert.equal(second.roomId, "room-beta");
-    assert.equal(second.promptDigest, expectedPromptDigest);
+    assert.equal(
+      second.promptDigest,
+      expectedPromptDigest({
+        agent: secondAgent,
+        cwd: secondCwd,
+        ordinal: 2,
+        roomId: "room-beta",
+      }),
+    );
+    assert.notEqual(
+      second.promptDigest,
+      first.promptDigest,
+      "an edited Agent role reaches the child as a different standing prompt",
+    );
     assert.equal(second.appInboxLive?.measurement, "over_threshold");
     assert.equal(second.source?.cwd, secondCwd);
     assert.deepEqual(second.source?.project, first.source?.project);
@@ -470,12 +517,7 @@ test("Agent memory survives Room, Runtime/Profile and daemon-side registry chang
     );
 
     const fallback = await runRuntime({
-      agent: agentContext({
-        displayName: "Persistent Agent Renamed",
-        participantId: agentA.principal.principalId,
-        revision: 2,
-        role: "Changed role after Runtime switch",
-      }),
+      agent: secondAgent,
       implementations: restartedImplementations,
       ordinal: 4,
       probeReport: readerProbe,
@@ -485,7 +527,14 @@ test("Agent memory survives Room, Runtime/Profile and daemon-side registry chang
       withoutCoordinator: true,
     });
     assert.equal(fallback.bootstrap, second.bootstrap);
-    assert.equal(fallback.promptDigest, expectedPromptDigest);
+    assert.equal(
+      fallback.promptDigest,
+      expectedPromptDigest({
+        agent: secondAgent,
+        ordinal: 4,
+        roomId: "room-gamma",
+      }),
+    );
     assert.equal(fallback.memory, first.memory);
     assert.equal(fallback.memoryDirectory, first.memoryDirectory);
     assert.equal(fallback.source?.resolution, "matched");

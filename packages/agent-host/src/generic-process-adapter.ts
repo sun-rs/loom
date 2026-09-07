@@ -96,6 +96,13 @@ export type ActivationEnvironmentLease = {
   env: Readonly<Record<string, string>>;
   redactions?: readonly string[];
   release?: () => Promise<void> | void;
+  /**
+   * Digest of the daemon-compiled standing prompt this lease delivers. It keys
+   * Provider session continuity so an edited Agent role or instructions cannot
+   * resume a session started under the previous prompt. Adapters only forward
+   * this value; they never derive it from prompt text of their own.
+   */
+  standingPromptDigest?: string;
 };
 
 export type ProcessDiagnostics = {

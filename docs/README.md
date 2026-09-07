@@ -1,5 +1,7 @@
 # RAH OS 文档
 
+StandingPromptCompiler：[分层 standing prompt、每次启动由 daemon 编译投递、Provider session 按 prompt 摘要失效](audits/2026-09-08-standing-prompt-compiler.zh-CN.md)。
+
 Agent 协作最小闭环：[同伴消息接单、@mention 寻址、worker task-create 与 Raft 礼仪 prompt 移植，含真实三 CLI 出口链](audits/2026-09-07-agent-collaboration-minimal-loop.zh-CN.md)。
 
 当前状态深度审计：[协作正确性反例、当前门禁失败与收口顺序](audits/2026-09-07-deep-current-state-review.zh-CN.md)。

@@ -162,3 +162,38 @@ test("Provider continuity quarantine replays the same durable operation after a 
     rmSync(directory, { force: true, recursive: true });
   }
 });
+
+test("the standing prompt digest is part of Provider session locality", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-provider-session-digest-"));
+  const rootDirectory = join(directory, "sessions");
+  try {
+    const store = new ProviderSessionStore({
+      now: () => new Date("2026-09-08T08:00:00.000Z"),
+      rootDirectory,
+    });
+    const original = { ...key, standingPromptDigest: "digest-role-v1" };
+    await store.record(original, "codex-thread-role-v1");
+    assert.equal(
+      (await store.load(original))?.providerSessionId,
+      "codex-thread-role-v1",
+    );
+    assert.equal(
+      await store.load({ ...original, standingPromptDigest: "digest-role-v2" }),
+      null,
+      "an edited Agent role cannot resume the previous Provider session",
+    );
+    assert.equal(
+      await store.load(key),
+      null,
+      "a digest-free legacy key stays a distinct record",
+    );
+    await store.record(key, "codex-thread-legacy");
+    assert.equal(
+      (await store.load(original))?.providerSessionId,
+      "codex-thread-role-v1",
+    );
+    assert.equal(readdirSync(rootDirectory).length, 2);
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
