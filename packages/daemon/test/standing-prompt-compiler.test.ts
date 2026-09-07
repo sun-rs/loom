@@ -270,7 +270,15 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
   );
   assert.match(
     prompt,
-    /task-trajectory.*cite specific command or file evidence.*task-review/isu,
+    /task-trajectory.*cites specific command or file evidence.*task-review/isu,
+  );
+  assert.match(
+    prompt,
+    /no preset reviewer or auditor roles.*asks you to review, audit, or check a Task.*task-trajectory --task-id <id>/isu,
+  );
+  assert.match(
+    prompt,
+    /task-get.*task-submission.*reply in that Task's Thread citing concrete command or file evidence/isu,
   );
   assert.match(prompt, /canonical Room/u);
   assert.match(prompt, /RAH_WORKER_CLI.*worker sync/u);

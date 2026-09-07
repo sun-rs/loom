@@ -1,30 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 
-import type {
-  ClientRoom,
-  Principal,
-  Room,
-  RoomMembership,
-  RoomTaskDefaults,
-} from "@rah-os/protocol";
+import type { Principal, Room, RoomMembership } from "@rah-os/protocol";
 import {
   roomAgentCandidates,
-  roomAgentTargets,
   roomSlugFromName,
-  taskParticipantsForSelection,
   type WorkspaceAgentView,
 } from "@rah-os/ui-web";
 
 import { useDialogProtocol } from "../dialog-protocol.ts";
-import {
-  roomTaskDefaultsFromSelection,
-  roomTaskDefaultsIssue,
-  seedTaskParticipantsFromRoomDefaults,
-  taskParticipantSelectionsEqual,
-} from "../room-task-defaults.ts";
 import { AgentAvatar } from "./agent-directory-pane.tsx";
 import { RoomMemberPage } from "./room-member-pages.tsx";
-import { TaskParticipantFields } from "./task-participant-fields.tsx";
 import { useSidebarPreferences } from "./sidebar-preferences.tsx";
 import {
   roomActivityMuted,
@@ -346,10 +331,9 @@ export function RoomMembersDialog({
   onUpdate: (input: {
     description?: string;
     name: string;
-    taskDefaults?: RoomTaskDefaults;
     visibility: "private" | "public";
   }) => Promise<void>;
-  room: ClientRoom | undefined;
+  room: Room | undefined;
   leaveUnavailableReason?: string | undefined;
 }) {
   const [pendingAgentId, setPendingAgentId] = useState<string>();
@@ -378,20 +362,6 @@ export function RoomMembersDialog({
   const [visibility, setVisibility] = useState<"private" | "public">(
     room?.visibility ?? "private",
   );
-  const taskDefaultAgents = roomAgentTargets(members);
-  const storedTaskDefaults = seedTaskParticipantsFromRoomDefaults({
-    availableAgents: taskDefaultAgents,
-    taskDefaults: room?.taskDefaults,
-  });
-  const [taskDefaultAssigneeId, setTaskDefaultAssigneeId] = useState<
-    string | undefined
-  >(storedTaskDefaults.assigneeId);
-  const [taskDefaultCollaboratorIds, setTaskDefaultCollaboratorIds] = useState<
-    string[]
-  >(storedTaskDefaults.collaboratorIds);
-  const [taskDefaultReviewerIds, setTaskDefaultReviewerIds] = useState<
-    string[]
-  >(storedTaskDefaults.reviewerIds);
   const mutationPendingRef = useRef(false);
   const mutationBlocked =
     pendingAgentId !== undefined ||
@@ -410,43 +380,13 @@ export function RoomMembersDialog({
     setName(room?.name ?? "");
     setVisibility(room?.visibility ?? "private");
   }, [room?.description, room?.name, room?.roomId, room?.visibility]);
-  const storedTaskDefaultsKey = JSON.stringify(storedTaskDefaults);
-  useEffect(() => {
-    const stored = JSON.parse(
-      storedTaskDefaultsKey,
-    ) as typeof storedTaskDefaults;
-    setTaskDefaultAssigneeId(stored.assigneeId);
-    setTaskDefaultCollaboratorIds(stored.collaboratorIds);
-    setTaskDefaultReviewerIds(stored.reviewerIds);
-  }, [room?.roomId, storedTaskDefaultsKey]);
   const humans = members.filter(({ kind }) => kind === "human");
   const joinedAgents = candidates.filter(({ joined }) => joined);
-  const taskDefaultSelection = {
-    ...(taskDefaultAssigneeId === undefined
-      ? {}
-      : { assigneeId: taskDefaultAssigneeId }),
-    collaboratorIds: taskDefaultCollaboratorIds,
-    reviewerIds: taskDefaultReviewerIds,
-  };
-  let taskDefaultIssue = roomTaskDefaultsIssue(taskDefaultSelection);
-  try {
-    taskParticipantsForSelection({
-      availableAgents: taskDefaultAgents,
-      ...taskDefaultSelection,
-    });
-  } catch (caught) {
-    taskDefaultIssue = errorMessage(caught);
-  }
-  const taskDefaultsDirty = !taskParticipantSelectionsEqual(
-    taskDefaultSelection,
-    storedTaskDefaults,
-  );
   const settingsDirty =
     name.trim() !== (room?.name ?? "") ||
     description.trim() !== (room?.description ?? "") ||
-    visibility !== (room?.visibility ?? "private") ||
-    taskDefaultsDirty;
-  const valid = name.trim().length > 0 && taskDefaultIssue === undefined;
+    visibility !== (room?.visibility ?? "private");
+  const valid = name.trim().length > 0;
   useEffect(() => {
     if (focusReturn.current) {
       dialogRef.current
@@ -541,9 +481,6 @@ export function RoomMembersDialog({
     void onUpdate({
       ...(description.trim() === "" ? {} : { description: description.trim() }),
       name: name.trim(),
-      ...(taskDefaultsDirty
-        ? { taskDefaults: roomTaskDefaultsFromSelection(taskDefaultSelection) }
-        : {}),
       visibility,
     })
       .then(() => setActionError(undefined))
@@ -797,44 +734,6 @@ export function RoomMembersDialog({
                     value={description}
                   />
                 </div>
-                <div className="rah-channel-settings-field rah-channel-task-defaults">
-                  <label id="rah-channel-task-defaults-label">
-                    任务默认参与者
-                    <span className="rah-channel-settings-optional">可选</span>
-                  </label>
-                  <p>
-                    新任务会预填这些参与者并展示出来；每次创建仍由 Human
-                    确认或修改。
-                  </p>
-                  <TaskParticipantFields
-                    agents={taskDefaultAgents}
-                    assigneeId={taskDefaultAssigneeId}
-                    collaboratorIds={taskDefaultCollaboratorIds}
-                    disabled={!canUpdate || roomArchived || mutationBlocked}
-                    onAssigneeChange={(participantId) => {
-                      setTaskDefaultAssigneeId(participantId);
-                      if (participantId === undefined) {
-                        setTaskDefaultCollaboratorIds([]);
-                        setTaskDefaultReviewerIds([]);
-                        return;
-                      }
-                      setTaskDefaultCollaboratorIds((current) =>
-                        current.filter(
-                          (candidate) => candidate !== participantId,
-                        ),
-                      );
-                      setTaskDefaultReviewerIds((current) =>
-                        current.filter(
-                          (candidate) => candidate !== participantId,
-                        ),
-                      );
-                    }}
-                    onCollaboratorsChange={setTaskDefaultCollaboratorIds}
-                    onReviewersChange={setTaskDefaultReviewerIds}
-                    reviewerIds={taskDefaultReviewerIds}
-                    taskTargetIssue={taskDefaultIssue}
-                  />
-                </div>
                 <footer>
                   <button
                     className="btn"
@@ -843,11 +742,6 @@ export function RoomMembersDialog({
                       setDescription(room?.description ?? "");
                       setName(room?.name ?? "");
                       setVisibility(room?.visibility ?? "private");
-                      setTaskDefaultAssigneeId(storedTaskDefaults.assigneeId);
-                      setTaskDefaultCollaboratorIds(
-                        storedTaskDefaults.collaboratorIds,
-                      );
-                      setTaskDefaultReviewerIds(storedTaskDefaults.reviewerIds);
                     }}
                     type="button"
                   >

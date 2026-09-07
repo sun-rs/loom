@@ -41,7 +41,6 @@ import type {
   AgentCatalogEntry,
   ClientAgentGetResponse,
   ClientHealthResponse,
-  ClientRoom,
   InputRequest,
   LocalComputerProfile,
   LocalRuntimeInventoryEntry,
@@ -53,7 +52,6 @@ import type {
   RoomAgentActivity,
   RoomEvent,
   RoomMembership,
-  RoomTaskDefaults,
   Task,
   Thread,
   Workspace,
@@ -258,7 +256,7 @@ function WorkspaceScreen({
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string>();
   const [peekAgentId, setPeekAgentId] = useState<string>();
-  const [rooms, setRooms] = useState<ClientRoom[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [archivedRooms, setArchivedRooms] = useState<Room[]>([]);
   const [activeRoomId, setActiveRoomId] = useState<string>();
   const [roomData, setRoomData] = useState<RoomData>();
@@ -770,15 +768,10 @@ function WorkspaceScreen({
           {},
           { signal: controller.signal },
         );
-        const productRoomIds = new Set(
-          selectProductRooms({
-            rooms: roomResult.rooms,
-            workspaces: activeWorkspaces,
-          }).map(({ roomId }) => roomId),
-        );
-        const visibleRooms = roomResult.rooms.filter(({ roomId }) =>
-          productRoomIds.has(roomId),
-        );
+        const visibleRooms = selectProductRooms({
+          rooms: roomResult.rooms,
+          workspaces: activeWorkspaces,
+        });
         const activeWorkspaceIds = new Set(
           activeWorkspaces.map(({ workspaceId }) => workspaceId),
         );
@@ -2109,7 +2102,6 @@ function WorkspaceScreen({
     async (input: {
       description?: string;
       name: string;
-      taskDefaults?: RoomTaskDefaults;
       visibility: "private" | "public";
     }) => {
       if (activeRoom === undefined || roomData === undefined) return;
@@ -2133,9 +2125,6 @@ function WorkspaceScreen({
             idempotencyKey: `web-room-update-${browserOpaqueId()}`,
             name: input.name,
             roomId: activeRoom.roomId,
-            ...(input.taskDefaults === undefined
-              ? {}
-              : { taskDefaults: input.taskDefaults }),
             visibility: input.visibility,
           }),
         session,
@@ -3588,7 +3577,6 @@ function WorkspaceScreen({
                         roomName={activeRoom?.name}
                         roomKind={activeRoom?.kind}
                         roomId={activeRoom?.roomId}
-                        roomTaskDefaults={activeRoom?.taskDefaults}
                         referenceComputers={messageReferenceComputers}
                         referenceEventsComplete={
                           roomData?.referenceEventsComplete === true
@@ -3848,7 +3836,6 @@ function WorkspaceScreen({
                     onDiscard={(clientIds) =>
                       taskCreateCommandLedger.current.discard(clientIds)
                     }
-                    roomTaskDefaults={activeRoom?.taskDefaults}
                     tasks={roomData?.tasks ?? []}
                   />
                 ) : null}

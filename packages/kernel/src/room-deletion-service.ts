@@ -63,7 +63,6 @@ export const ROOM_DELETION_REFERENCED_TABLES = new Set([
   "room_agent_sos_targets",
   "room_events",
   "room_files",
-  "room_task_defaults",
   "rooms",
   "run_attempts",
   "run_trajectory_entries",
@@ -290,7 +289,6 @@ export class RoomDeletionService {
       `DELETE FROM activation_cancellation_requests WHERE room_id=?`,
       `DELETE FROM input_requests WHERE room_id=?`,
       `DELETE FROM room_files WHERE room_id=?`,
-      `DELETE FROM room_task_defaults WHERE room_id=?`,
       `DELETE FROM held_message_drafts WHERE room_id=?`,
       `DELETE FROM managed_mcp_calls WHERE room_id=?`,
       `DELETE FROM context_manifests WHERE run_attempt_id IN

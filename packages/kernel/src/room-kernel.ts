@@ -74,7 +74,6 @@ import {
   type RuntimeTrajectoryAppendInput,
   type RuntimeTrajectoryRecord,
   type RuntimeCertification,
-  type ClientRoom,
   type RuntimeOffer,
   type RuntimeOfferProjection,
   type RoomAgentActivity,
@@ -182,7 +181,7 @@ import {
   migrateMessageForwardingV46,
   migrateBoundedRoomReadsV49,
   migrateFrozenTaskSubmissionEvidenceV50,
-  migrateRoomTaskDefaultsV51,
+  migrateDropRoomTaskDefaultsV52,
   SCHEMA_SQL,
 } from "./schema.ts";
 import * as agentThreads from "./agent-thread-subscriptions.ts";
@@ -598,7 +597,7 @@ export class RoomKernel {
     migrateTaskWorkflowAuthorityV48(this.#database);
     migrateBoundedRoomReadsV49(this.#database);
     migrateFrozenTaskSubmissionEvidenceV50(this.#database);
-    migrateRoomTaskDefaultsV51(this.#database);
+    migrateDropRoomTaskDefaultsV52(this.#database);
     principalProfile.migrate(this.#database);
     this.#database
       .prepare(
@@ -1146,7 +1145,7 @@ export class RoomKernel {
   listRooms(
     actor: AuthenticatedActorContext,
     input: { workspaceId?: string } = {},
-  ): ClientRoom[] {
+  ): Room[] {
     return this.#collaboration.listRooms(
       this.#requireAuthenticatedActor(actor),
       input,

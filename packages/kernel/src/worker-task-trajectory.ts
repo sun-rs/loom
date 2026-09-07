@@ -8,21 +8,21 @@ import {
   type WorkerTaskTrajectoryResponse,
 } from "@rah-os/protocol";
 
-import { ForbiddenError } from "./errors.ts";
+import { ForbiddenError, NotFoundError } from "./errors.ts";
 import { trajectoryFromRow } from "./runtime-trajectory.ts";
 import { nullableText, text, type Row } from "./sqlite-row.ts";
-import { requireWorkerTaskDelivery } from "./worker-task-scope.ts";
 
 /**
- * Supervision visibility for reviewer Agents.
+ * Room-member visibility over a Task owner's recorded tool-call trajectory.
  *
- * A reviewer named on a Task must be able to read the owner's recorded
- * tool-call trajectory for that Task before recording a Review, so a
- * changes_requested cites concrete command and file evidence instead of the
- * owner's prose alone.
+ * There are no preset reviewer or auditor roles: a Human asks any Room Agent by
+ * conversation and @mention to audit or review a Task, and that Agent needs
+ * basic tools rather than a role. Raft semantics say any channel member may read
+ * the channel's messages, task history and activity, so the visibility rule is
+ * Room membership, not a Task role.
  *
- * Visibility rule: the caller must be the Task owner (assignee), a named
- * collaborator, or a named reviewer. Entries are scoped to the owner's
+ * Visibility rule: the caller must be an enabled Agent member of the Task's
+ * Room, and the Task must belong to that Room. Entries are scoped to the owner's
  * participant in the Task's Room; RunAttempts carry no task_id, so activity is
  * further bounded in time by `recorded_at >= tasks.created_at` — trajectory the
  * owner recorded before the Task existed is never disclosed.
@@ -33,8 +33,7 @@ export function listWorkerTaskTrajectory(
   untrustedInput: WorkerTaskTrajectoryRequest,
 ): WorkerTaskTrajectoryResponse {
   const input = WorkerTaskTrajectoryRequestSchema.parse(untrustedInput);
-  const taskRow = requireWorkerTaskDelivery(database, scope, input.taskId);
-  requireTaskSupervisionRole(database, taskRow, scope.participantId);
+  const taskRow = requireRoomTaskVisibility(database, scope, input.taskId);
   const ownerParticipantId = nullableText(taskRow, "assignee_id");
   if (ownerParticipantId === null) {
     throw new ForbiddenError(
@@ -74,19 +73,39 @@ export function listWorkerTaskTrajectory(
   });
 }
 
-function requireTaskSupervisionRole(
+function requireRoomTaskVisibility(
   database: DatabaseSync,
-  taskRow: Row,
-  participantId: string,
-): void {
-  if (nullableText(taskRow, "assignee_id") === participantId) return;
-  const role = database
+  scope: ActivationCredentialScope,
+  taskId: string,
+): Row {
+  const taskRow = database
+    .prepare("SELECT * FROM tasks WHERE task_id = ?")
+    .get(taskId);
+  if (taskRow === undefined) {
+    throw new NotFoundError(`task ${taskId} was not found`);
+  }
+  if (text(taskRow, "room_id") !== scope.roomId) {
+    throw new ForbiddenError(
+      `Task ${taskId} is outside this Worker execution scope`,
+    );
+  }
+  const member = database
     .prepare(
-      "SELECT role FROM task_participants WHERE task_id = ? AND participant_id = ?",
+      `SELECT principals.principal_id
+       FROM memberships
+       JOIN principals ON principals.principal_id = memberships.principal_id
+       LEFT JOIN agent_definitions
+         ON agent_definitions.participant_id = principals.principal_id
+       WHERE memberships.room_id = ?
+         AND memberships.principal_id = ?
+         AND principals.kind = 'agent'
+         AND (agent_definitions.state IS NULL OR agent_definitions.state = 'enabled')`,
     )
-    .get(text(taskRow, "task_id"), participantId);
-  if (role !== undefined) return;
-  throw new ForbiddenError(
-    `participant ${participantId} is not an owner, collaborator, or reviewer of Task ${text(taskRow, "task_id")}`,
-  );
+    .get(text(taskRow, "room_id"), scope.participantId);
+  if (member === undefined) {
+    throw new ForbiddenError(
+      `participant ${scope.participantId} is not an enabled Agent member of Room ${text(taskRow, "room_id")}`,
+    );
+  }
+  return taskRow;
 }

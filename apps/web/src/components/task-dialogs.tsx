@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import type { RoomTaskDefaults, Task } from "@rah-os/protocol";
+import type { Task } from "@rah-os/protocol";
 import {
   taskParticipantsForSelection,
   type RoomAgentTarget,
@@ -8,7 +8,6 @@ import {
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 
 import { useDialogProtocol } from "../dialog-protocol.ts";
-import { seedTaskParticipantsFromRoomDefaults } from "../room-task-defaults.ts";
 import { TaskParticipantFields } from "./task-participant-fields.tsx";
 
 export type TaskCreateInput = {
@@ -248,7 +247,6 @@ export function TaskCreateDialog({
   onClose,
   onCreate,
   onDiscard,
-  roomTaskDefaults,
   tasks,
 }: {
   agents: readonly RoomAgentTarget[];
@@ -258,29 +256,13 @@ export function TaskCreateDialog({
     onAccepted: (clientId: string) => void,
   ) => Promise<void>;
   onDiscard: (clientIds: readonly string[]) => void;
-  roomTaskDefaults?: RoomTaskDefaults | undefined;
   tasks: readonly Task[];
 }) {
-  // ADR-0020 rule 5: Room defaults are a visible Web prefill, never a server
-  // injection, so a non-empty prefill is summarised on the title view instead
-  // of hiding the title inputs behind the configuration page.
-  const [seededParticipants] = useState(() =>
-    seedTaskParticipantsFromRoomDefaults({
-      availableAgents: agents,
-      taskDefaults: roomTaskDefaults,
-    }),
-  );
   const [titles, setTitles] = useState(() => [newTaskTitle()]);
   const [configurationOpen, setConfigurationOpen] = useState(false);
-  const [assigneeId, setAssigneeId] = useState<string | undefined>(
-    () => seededParticipants.assigneeId,
-  );
-  const [collaboratorIds, setCollaboratorIds] = useState<string[]>(
-    () => seededParticipants.collaboratorIds,
-  );
-  const [reviewerIds, setReviewerIds] = useState<string[]>(
-    () => seededParticipants.reviewerIds,
-  );
+  const [assigneeId, setAssigneeId] = useState<string>();
+  const [collaboratorIds, setCollaboratorIds] = useState<string[]>([]);
+  const [reviewerIds, setReviewerIds] = useState<string[]>([]);
   const [dependencyTaskIds, setDependencyTaskIds] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
   const [submissionLocked, setSubmissionLocked] = useState(false);
@@ -308,25 +290,6 @@ export function TaskCreateDialog({
   } catch (caught) {
     participantIssue = errorMessage(caught);
   }
-  const handleOf = (participantId: string) =>
-    agents.find((agent) => agent.participantId === participantId)?.handle ??
-    participantId;
-  const participantSummary =
-    assigneeId === undefined
-      ? undefined
-      : [
-          `负责人 @${handleOf(assigneeId)}`,
-          ...(collaboratorIds.length === 0
-            ? []
-            : [
-                `协作 ${collaboratorIds.map((id) => `@${handleOf(id)}`).join("、")}`,
-              ]),
-          ...(reviewerIds.length === 0
-            ? []
-            : [
-                `审查 ${reviewerIds.map((id) => `@${handleOf(id)}`).join("、")}`,
-              ]),
-        ].join(" · ");
 
   const create = () => {
     if (pending) return;
@@ -496,22 +459,6 @@ export function TaskCreateDialog({
             </div>
           ) : (
             <div className="rah-task-create-fields">
-              {participantSummary === undefined ? null : (
-                <p className="rah-task-create-defaults">
-                  <span>默认参与者：{participantSummary}</span>
-                  <button
-                    className="rah-target-link"
-                    disabled={pending || submissionLocked}
-                    onClick={() => {
-                      setActionError(undefined);
-                      setConfigurationOpen(true);
-                    }}
-                    type="button"
-                  >
-                    配置协作与依赖
-                  </button>
-                </p>
-              )}
               {titles.map((task, index) => (
                 <div className="rah-task-create-row" key={task.clientId}>
                   <input
@@ -578,7 +525,7 @@ export function TaskCreateDialog({
             >
               {configurationOpen ? "返回" : "取消"}
             </button>
-            {!configurationOpen && participantSummary === undefined ? (
+            {!configurationOpen ? (
               <button
                 className="btn"
                 disabled={pending || submissionLocked || nonempty.length === 0}

@@ -1001,6 +1001,10 @@ test("Worker API exposes a causal and execution-fenced Task command surface", as
       handle: "worker-task-reviewer",
       kind: "agent",
     });
+    const auditor = kernel.provisionPrincipal({
+      handle: "worker-task-auditor",
+      kind: "agent",
+    });
     const humanActor = kernel.authenticateAccessToken(human.accessToken);
     const room = kernel.createRoom(humanActor, {
       name: "Worker Task API",
@@ -1012,6 +1016,10 @@ test("Worker API exposes a causal and execution-fenced Task command surface", as
     });
     kernel.addMember(humanActor, {
       principalId: reviewer.principal.principalId,
+      roomId: room.roomId,
+    });
+    kernel.addMember(humanActor, {
+      principalId: auditor.principal.principalId,
       roomId: room.roomId,
     });
     const created = kernel.createTask(humanActor, {
@@ -1452,6 +1460,66 @@ test("Worker API exposes a causal and execution-fenced Task command surface", as
       await responseErrorCode(injectedTrajectory),
       "unexpected_field",
     );
+
+    // No preset auditor role: a Human @mentions any Room Agent to audit a Task.
+    kernel.postMessage(humanActor, {
+      body: "@worker-task-auditor please audit that Task",
+      idempotencyKey: "worker-task-ask-audit",
+      recipients: [
+        { participantId: auditor.principal.principalId, reason: "mention" },
+      ],
+      roomId: room.roomId,
+    });
+    const auditorHost = authenticateHost(
+      kernel,
+      "worker-task-audit-host",
+      auditor.principal.principalId,
+    );
+    const auditorActivation = kernel.leaseNextActivation(auditorHost, {
+      leaseMs: 30_000,
+    });
+    assert.ok(auditorActivation);
+    const auditorRun = kernel.createRunAttempt(auditorHost, {
+      activationId: auditorActivation.activationId,
+    });
+    prepareAndMarkRunAttemptRunning(kernel, auditorHost, {
+      recoveryDescriptor: fakeRecovery("worker-task-audit-runtime"),
+      runAttemptId: auditorRun.runAttemptId,
+      runtimeRunId: "worker-task-audit-runtime",
+    });
+    const auditorCredential = service.issueActivationCredential(auditorHost, {
+      activationId: auditorActivation.activationId,
+      consumerId: "worker-task-audit-consumer",
+      hostId: auditorHost.hostId,
+      participantId: auditor.principal.principalId,
+      roomId: room.roomId,
+      runAttemptId: auditorRun.runAttemptId,
+      toSeq: auditorActivation.toSeq,
+    });
+    const auditTrajectory = await fetch(
+      `${service.origin}/v1/worker/tasks/trajectory`,
+      {
+        body: JSON.stringify({ limit: 10, taskId: created.task.taskId }),
+        headers: {
+          authorization: `Bearer ${auditorCredential.accessToken}`,
+          "content-type": "application/json",
+        },
+        method: "POST",
+      },
+    );
+    assert.equal(
+      auditTrajectory.status,
+      200,
+      "a Room Agent in no Task role reads the owner's trajectory",
+    );
+    assert.deepEqual(
+      (
+        (await jsonObject(auditTrajectory)).entries as Array<
+          Record<string, unknown>
+        >
+      ).map((record) => (record.entry as Record<string, unknown>).toolName),
+      ["Bash"],
+    );
     const reviewResponse = await reviewRequest("/v1/worker/tasks/review", {
       basedOnRoomSeq: reviewDelivery.cursorAfter,
       disposition: "approved",
@@ -1517,7 +1585,7 @@ test("Worker API exposes a causal and execution-fenced Task command surface", as
     assert.equal(
       unlinkedTrajectory.status,
       403,
-      "a reviewer cannot read trajectory for a Task outside its Activation",
+      "a Task with no owner has no trajectory to supervise",
     );
     assert.equal(
       (createdByWorker.event as Record<string, unknown>).type,

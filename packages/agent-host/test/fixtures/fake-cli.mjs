@@ -391,6 +391,62 @@ if (mode === "trajectory") {
     (event) =>
       event.roomSeq >= requiredFrom && event.roomSeq <= requiredThrough,
   );
+  // There is no auditor role: a Human @mentions an ordinary Room Agent and
+  // asks it to audit a Task. The Agent reads the owner's recorded trajectory
+  // through the Worker API and replies once with the tool evidence it found.
+  if (process.env.RAH_FAKE_AUDIT_ON_MENTION === "1") {
+    const selfParticipantId = process.env.RAH_PARTICIPANT_ID;
+    const auditRequest = activationEvents.find(
+      (event) =>
+        event.type === "message.posted" &&
+        event.payload?.threadId === undefined &&
+        typeof event.payload?.body === "string" &&
+        /\[AUDIT [^\]]+\]/u.test(event.payload.body) &&
+        (event.payload.recipients ?? []).some(
+          (recipient) =>
+            recipient.participantId === selfParticipantId &&
+            recipient.reason === "mention",
+        ),
+    );
+    if (auditRequest) {
+      const auditedTaskId = /\[AUDIT ([^\]]+)\]/u.exec(
+        auditRequest.payload.body,
+      )[1];
+      const trajectory = await request("/v1/worker/tasks/trajectory", {
+        limit: 50,
+        taskId: auditedTaskId,
+      });
+      const toolNames = trajectory.entries
+        .filter((record) => record.entry.kind === "tool_start")
+        .map((record) => record.entry.toolName);
+      const activationId = process.env.RAH_ACTIVATION_ID;
+      if (!activationId)
+        throw new Error("audit reply requires RAH_ACTIVATION_ID");
+      const replied = await request("/v1/worker/messages/post", {
+        basedOnRoomSeq: delivery.cursorAfter,
+        body: `Audit of ${auditedTaskId}: ${String(trajectory.entries.length)} trajectory entries; tools: ${toolNames.join(", ")}`,
+        idempotencyKey: `fake:${activationId}:audit-reply`,
+      });
+      await request("/v1/worker/acknowledge", {
+        throughSeq: delivery.cursorAfter,
+      });
+      process.stdout.write(
+        JSON.stringify({
+          marker: "worker-audit-finished",
+          state: replied.state,
+          taskId: auditedTaskId,
+        }) + "\n",
+      );
+      process.exit(0);
+    }
+    await request("/v1/worker/acknowledge", {
+      throughSeq: delivery.cursorAfter,
+    });
+    process.stdout.write(
+      JSON.stringify({ marker: "worker-audit-idle" }) + "\n",
+    );
+    process.exit(0);
+  }
   // Explicit isolated browser probe: real child -> fd3 -> Host -> Kernel -> UI.
   // This is deterministic test telemetry, never presented as a real LLM run.
   if (
@@ -911,6 +967,16 @@ if (mode === "trajectory") {
       process.stderr.write("simulated failure after task.started\n");
       process.exitCode = 7;
     } else {
+      // Gated so the owner's Task leaves one readable tool call behind for a
+      // Room Agent asked to audit it. Other suites keep their exact trajectory.
+      if (process.env.RAH_FAKE_TASK_TOOL_TRAJECTORY === "1") {
+        publishTrajectory({
+          kind: "tool_start",
+          producerFactId: `fixture:task:${taskId}:tool`,
+          toolInput: '{"command":"echo subtask"}',
+          toolName: "bash",
+        });
+      }
       const progressed = await request("/v1/worker/tasks/progress", {
         basedOnRoomSeq,
         idempotencyKey: commandId("progress"),

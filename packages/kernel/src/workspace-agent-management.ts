@@ -31,7 +31,6 @@ import {
 } from "./errors.ts";
 import { eventPayloadOptionalText, eventPayloadText } from "./event-payload.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
-import { dropRoomTaskDefaultParticipant } from "./room-task-defaults.ts";
 import { updateAgentProfile } from "./workspace-agent-profile.ts";
 import {
   assertRuntimeOfferSupportsToolAccess,
@@ -567,7 +566,6 @@ function setAgentState(
           "DELETE FROM memberships WHERE room_id = ? AND principal_id = ?",
         )
         .run(roomId, participantId);
-      dropRoomTaskDefaultParticipant(owner.database, roomId, participantId);
     }
     revokeHostParticipant(
       owner.database,

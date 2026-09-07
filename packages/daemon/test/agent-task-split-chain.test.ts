@@ -19,7 +19,7 @@ const fakeCliPath = fileURLToPath(
   new URL("../../agent-host/test/fixtures/fake-cli.mjs", import.meta.url),
 );
 
-const handles = ["lead", "helper-a", "helper-b"] as const;
+const handles = ["lead", "helper-a", "helper-b", "auditor"] as const;
 
 test("one lead Agent splits a Human message into subtasks that two helper Agents claim, rework and finish", async () => {
   if (process.platform === "win32") return;
@@ -43,9 +43,9 @@ test("one lead Agent splits a Human message into subtasks that two helper Agents
     const agents = handles.map((handle) =>
       seed.provisionPrincipal({ handle, kind: "agent" }),
     );
-    const [lead, helperA, helperB] = agents.map(
+    const [lead, helperA, helperB, auditor] = agents.map(
       (agent) => agent.principal.principalId,
-    ) as [string, string, string];
+    ) as [string, string, string, string];
     const humanActor = seed.authenticateAccessToken(human.accessToken);
     const workspace = seed.createWorkspace(humanActor, {
       idempotencyKey: "split-workspace-created",
@@ -146,10 +146,16 @@ test("one lead Agent splits a Human message into subtasks that two helper Agents
                 RAH_FAKE_SPLIT_HELPERS: "helper-a,helper-b",
                 RAH_FAKE_SPLIT_TITLES: "schema change,docs update",
               }
-            : {
-                RAH_FAKE_MODE: "worker-task",
-                RAH_FAKE_TASK_ATTRIBUTION: "1",
-              },
+            : handles[index] === "auditor"
+              ? {
+                  RAH_FAKE_AUDIT_ON_MENTION: "1",
+                  RAH_FAKE_MODE: "worker-task",
+                }
+              : {
+                  RAH_FAKE_MODE: "worker-task",
+                  RAH_FAKE_TASK_ATTRIBUTION: "1",
+                  RAH_FAKE_TASK_TOOL_TRAJECTORY: "1",
+                },
         workspacePolicy: { allowedModes: ["in_place"] },
       };
       const revision = profileRegistry.importManifest(manifest);
@@ -172,7 +178,7 @@ test("one lead Agent splits a Human message into subtasks that two helper Agents
       host: {
         ...base.host,
         hostId,
-        maxConcurrent: 3,
+        maxConcurrent: 4,
         participantIds: agents.map((agent) => agent.principal.principalId),
       },
       runtimes: profileIds.map((runtimeProfileId, index) => ({
@@ -270,7 +276,6 @@ test("one lead Agent splits a Human message into subtasks that two helper Agents
       throw new Error(`${path} never committed at the latest Room sequence`);
     };
 
-
     let roomSeq = 1;
     for (const [index, agentDefinitionId] of agentDefinitionIds.entries()) {
       const onboarded = await clientRequest<{ event: { roomSeq: number } }>(
@@ -340,7 +345,9 @@ test("one lead Agent splits a Human message into subtasks that two helper Agents
     // 5. The mechanisms behind the chain.
     const events = () => roomEvents(activeObserver, humanActor, roomId);
     const parentCreated = events().find(
-      (event) => event.type === "task.created" && event.aggregateId === parentTask.taskId,
+      (event) =>
+        event.type === "task.created" &&
+        event.aggregateId === parentTask.taskId,
     );
     assert.equal(parentCreated?.actorId, lead);
     assert.equal(parentCreated?.payload.autoClaimed, true);
@@ -369,7 +376,12 @@ test("one lead Agent splits a Human message into subtasks that two helper Agents
     );
     assert.ok(note);
     assert.deepEqual(
-      [...(note.payload.recipients as { participantId: string; reason: string }[])]
+      [
+        ...(note.payload.recipients as {
+          participantId: string;
+          reason: string;
+        }[]),
+      ]
         .map(({ participantId, reason }) => ({ participantId, reason }))
         .sort((left, right) =>
           left.participantId.localeCompare(right.participantId),
@@ -377,6 +389,9 @@ test("one lead Agent splits a Human message into subtasks that two helper Agents
       [
         { participantId: helperA, reason: "mention" },
         { participantId: helperB, reason: "mention" },
+        // No role gates the audit: an unmentioned Room Agent still hears the
+        // note under the Room's own delivery policy.
+        { participantId: auditor, reason: "room_policy" },
       ].sort((left, right) =>
         left.participantId.localeCompare(right.participantId),
       ),
@@ -392,7 +407,8 @@ test("one lead Agent splits a Human message into subtasks that two helper Agents
       ] as const) {
         const created = events().find(
           (event) =>
-            event.type === "task.created" && event.aggregateId === subtask.taskId,
+            event.type === "task.created" &&
+            event.aggregateId === subtask.taskId,
         );
         assert.ok(created);
         const delivered = raw
@@ -406,6 +422,42 @@ test("one lead Agent splits a Human message into subtasks that two helper Agents
     } finally {
       raw.close();
     }
+
+    // 3b. No preset auditor role: the Human asks an ordinary Room Agent, by
+    // @mention, to audit Subtask A. It reads the owner's recorded trajectory
+    // through the Worker API and answers with concrete tool evidence.
+    await humanMutation("/v3/client/messages/post", {
+      body: `@auditor please audit Subtask A [AUDIT ${subtaskA.taskId}]`,
+      idempotencyKey: "split-audit-requested",
+      recipients: [{ participantId: auditor, reason: "mention" }],
+      roomId,
+    });
+    const auditReply = () =>
+      events().find(
+        (event) =>
+          event.type === "message.posted" &&
+          event.actorId === auditor &&
+          typeof event.payload.body === "string" &&
+          event.payload.body.startsWith(`Audit of ${subtaskA.taskId}:`),
+      );
+    await waitUntil(() => auditReply() !== undefined && agentsIdle(), 30_000);
+    const auditBody = auditReply()!.payload.body as string;
+    assert.match(
+      auditBody,
+      /trajectory entries; tools: .*bash/u,
+      `the audit reply must cite a tool the owner actually recorded: ${auditBody}`,
+    );
+    assert.equal(
+      tasksOf().some((task) => task.assigneeId === auditor),
+      false,
+      "an Agent asked to audit never claims a Task",
+    );
+    assert.equal(
+      events().some(
+        (event) => event.type === "task.claimed" && event.actorId === auditor,
+      ),
+      false,
+    );
 
     // 4. The Human rejects Subtask A through the canonical status path
     // (closed, then reopened to todo) and the owner reworks it.

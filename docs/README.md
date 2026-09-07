@@ -1,6 +1,6 @@
 # RAH OS 文档
 
-Room 任务默认参与者与监督可见性：[RAH 扩展的 Room 级默认负责人/协作者/审查者预填、工具轨迹标签与脱敏、reviewer 读取 owner 轨迹](audits/2026-09-08-room-task-defaults-and-supervision-visibility.zh-CN.md)。
+监督可见性与 Room 任务默认参与者回退：[工具轨迹标签与脱敏、任意 Room Agent 成员读取 owner 轨迹的基础工具、预设角色回退裁决](audits/2026-09-08-room-task-defaults-and-supervision-visibility.zh-CN.md)。
 
 StandingPromptCompiler：[分层 standing prompt、每次启动由 daemon 编译投递、Provider session 按 prompt 摘要失效](audits/2026-09-08-standing-prompt-compiler.zh-CN.md)。
 

@@ -195,14 +195,6 @@ CREATE TABLE IF NOT EXISTS rooms (
   UNIQUE (workspace_id, slug)
 ) STRICT;
 
-CREATE TABLE IF NOT EXISTS room_task_defaults (
-  room_id TEXT PRIMARY KEY REFERENCES rooms(room_id),
-  default_assignee_id TEXT,
-  default_collaborator_ids_json TEXT NOT NULL DEFAULT '[]',
-  default_reviewer_ids_json TEXT NOT NULL DEFAULT '[]',
-  updated_at TEXT NOT NULL
-) STRICT;
-
 CREATE TABLE IF NOT EXISTS room_deletion_receipts (
   deletion_id TEXT PRIMARY KEY,
   actor_id TEXT NOT NULL REFERENCES principals(principal_id),
@@ -1515,54 +1507,10 @@ export function migrateFrozenTaskSubmissionEvidenceV50(
   }
 }
 
-export function migrateRoomTaskDefaultsV51(database: DatabaseSync): void {
-  database.exec(`
-    CREATE TABLE IF NOT EXISTS room_task_defaults (
-      room_id TEXT PRIMARY KEY REFERENCES rooms(room_id),
-      default_assignee_id TEXT,
-      default_collaborator_ids_json TEXT NOT NULL DEFAULT '[]',
-      default_reviewer_ids_json TEXT NOT NULL DEFAULT '[]',
-      updated_at TEXT NOT NULL
-    ) STRICT
-  `);
-  const hasRoomsForeignKey = database
-    .prepare("PRAGMA foreign_key_list(room_task_defaults)")
-    .all()
-    .some((row) => requiredString(row, "table") === "rooms");
-  if (hasRoomsForeignKey) return;
-  // A pre-release database created this table without the rooms foreign key.
-  // SQLite cannot add a constraint in place, so recreate it (schema.ts
-  // convention, see migrateActivationRetryFencesV35).
-  database.exec("PRAGMA foreign_keys = OFF");
-  try {
-    database.exec(`
-      BEGIN IMMEDIATE;
-      CREATE TABLE room_task_defaults_v51 (
-        room_id TEXT PRIMARY KEY REFERENCES rooms(room_id),
-        default_assignee_id TEXT,
-        default_collaborator_ids_json TEXT NOT NULL DEFAULT '[]',
-        default_reviewer_ids_json TEXT NOT NULL DEFAULT '[]',
-        updated_at TEXT NOT NULL
-      ) STRICT;
-      INSERT INTO room_task_defaults_v51(
-        room_id, default_assignee_id, default_collaborator_ids_json,
-        default_reviewer_ids_json, updated_at
-      )
-      SELECT defaults.room_id, defaults.default_assignee_id,
-             defaults.default_collaborator_ids_json,
-             defaults.default_reviewer_ids_json, defaults.updated_at
-      FROM room_task_defaults AS defaults
-      JOIN rooms ON rooms.room_id = defaults.room_id;
-      DROP TABLE room_task_defaults;
-      ALTER TABLE room_task_defaults_v51 RENAME TO room_task_defaults;
-      COMMIT;
-    `);
-  } catch (error) {
-    if (database.isTransaction) database.exec("ROLLBACK");
-    throw error;
-  } finally {
-    database.exec("PRAGMA foreign_keys = ON");
-  }
+export function migrateDropRoomTaskDefaultsV52(database: DatabaseSync): void {
+  // Room task default participants were an RAH extension that Raft does not
+  // have; the feature was withdrawn, so v51 databases drop the table.
+  database.exec("DROP TABLE IF EXISTS room_task_defaults");
 }
 
 export function migrateMessageForwardingV46(database: DatabaseSync): void {

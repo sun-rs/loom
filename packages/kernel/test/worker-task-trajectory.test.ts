@@ -25,11 +25,15 @@ function fixture() {
     name: "Supervision visibility",
     slug: "supervision-visibility",
   });
-  const agent = (handle: string) => {
+  const otherRoom = kernel.createRoom(humanActor, {
+    name: "Another Room",
+    slug: "another-room",
+  });
+  const agent = (handle: string, targetRoomId = room.roomId) => {
     const provisioned = kernel.provisionPrincipal({ handle, kind: "agent" });
     kernel.addMember(humanActor, {
       principalId: provisioned.principal.principalId,
-      roomId: room.roomId,
+      roomId: targetRoomId,
     });
     return provisioned.principal.principalId;
   };
@@ -37,6 +41,16 @@ function fixture() {
   const reviewerId = agent("trajectory-reviewer");
   const collaboratorId = agent("trajectory-collaborator");
   const outsiderId = agent("trajectory-outsider");
+  const foreignId = agent("trajectory-foreign", otherRoom.roomId);
+  const foreignTask = kernel.createTask(humanActor, {
+    assigneeId: foreignId,
+    collaboratorIds: [],
+    dependencyTaskIds: [],
+    idempotencyKey: "create-foreign-task",
+    reviewerIds: [],
+    roomId: otherRoom.roomId,
+    title: "Work in another Room",
+  });
   const created = kernel.createTask(humanActor, {
     assigneeId: ownerId,
     collaboratorIds: [collaboratorId],
@@ -53,8 +67,11 @@ function fixture() {
     },
     collaboratorId,
     created,
+    foreignId,
+    foreignTask,
     humanActor,
     kernel,
+    otherRoomId: otherRoom.roomId,
     outsiderId,
     ownerId,
     reviewerId,
@@ -67,8 +84,14 @@ function fixture() {
 
 type Fixture = ReturnType<typeof fixture>;
 
-function activate(state: Fixture, participantId: string, label: string) {
-  const { kernel, roomId } = state;
+function activate(
+  state: Fixture,
+  participantId: string,
+  label: string,
+  roomIdOverride?: string,
+) {
+  const { kernel } = state;
+  const roomId = roomIdOverride ?? state.roomId;
   const host = kernel.authenticateHostAccessToken(
     kernel.provisionHostCredential({
       hostId: `${label}-host`,
@@ -124,7 +147,7 @@ function appendEntry(
   });
 }
 
-test("a Task reviewer reads the owner's recorded tool calls newest first with bounded paging", () => {
+test("a Room Agent reads the owner's recorded tool calls newest first with bounded paging", () => {
   const state = fixture();
   try {
     const owner = activate(state, state.ownerId, "owner");
@@ -291,7 +314,7 @@ test("Task trajectory excludes other participants and activity older than the Ta
   }
 });
 
-test("supervision visibility does not survive losing the Task role", () => {
+test("releasing the Task leaves no owner to supervise, whatever the caller's role", () => {
   const state = fixture();
   try {
     const owner = activate(state, state.ownerId, "owner");
@@ -336,28 +359,115 @@ test("supervision visibility does not survive losing the Task role", () => {
         }),
       (error: unknown) =>
         error instanceof ForbiddenError &&
-        error.message.includes("is not an owner, collaborator, or reviewer"),
-      "a released Task revokes the former collaborator's supervision surface",
+        error.message.includes("has no owner trajectory to supervise"),
+      "a released Task has no assignee, so there is no owner trajectory — the Task role never mattered",
     );
   } finally {
     state.cleanup();
   }
 });
 
-test("an Agent outside every Task role is never activated for that Task", () => {
+test("any enabled Agent member of the Room may audit a Task it holds no role in", () => {
   const state = fixture();
   try {
-    const host = state.kernel.authenticateHostAccessToken(
-      state.kernel.provisionHostCredential({
-        hostId: "outsider-host",
-        participantIds: [state.outsiderId],
-      }).accessToken,
+    const owner = activate(state, state.ownerId, "owner");
+    const claimed = state.kernel.claimTask(owner.execution, {
+      basedOnRoomSeq: owner.toSeq,
+      idempotencyKey: "claim-supervised-task",
+      leaseMs: 86_400_000,
+      taskId: state.created.task.taskId,
+    });
+    state.kernel.startTask(owner.execution, {
+      basedOnRoomSeq: claimed.event.roomSeq,
+      idempotencyKey: "start-supervised-task",
+      leaseMs: 86_400_000,
+      taskId: state.created.task.taskId,
+    });
+    state.setClock("2026-09-05T01:05:00.000Z");
+    appendEntry(
+      state,
+      owner,
+      1,
+      { kind: "tool_start", toolInput: "npm test", toolName: "Bash" },
+      "2026-09-05T01:05:00.000Z",
     );
-    state.kernel.heartbeatHost(host);
+
+    // A Human asks an unrelated Room Agent, by @mention, to audit the Task.
+    state.kernel.postMessage(state.humanActor, {
+      body: "@trajectory-outsider please audit that Task",
+      idempotencyKey: "ask-outsider-to-audit",
+      recipients: [{ participantId: state.outsiderId, reason: "mention" }],
+      roomId: state.roomId,
+    });
+    const outsider = activate(state, state.outsiderId, "outsider");
+    const page = state.kernel.listWorkerTaskTrajectory(outsider.execution, {
+      limit: 50,
+      taskId: state.created.task.taskId,
+    });
     assert.equal(
-      state.kernel.leaseNextActivation(host, { leaseMs: 86_400_000 }),
-      null,
-      "an Agent in no Task role receives no Activation, so it has no Worker scope at all",
+      page.entries.length,
+      1,
+      "an Agent with no Task role reads the owner's trajectory as a Room member",
+    );
+    assert.equal(page.ownerParticipantId, state.ownerId);
+  } finally {
+    state.cleanup();
+  }
+});
+
+test("an Agent of another Room cannot read this Room's Task trajectory", () => {
+  const state = fixture();
+  try {
+    const owner = activate(state, state.ownerId, "owner");
+    const claimed = state.kernel.claimTask(owner.execution, {
+      basedOnRoomSeq: owner.toSeq,
+      idempotencyKey: "claim-supervised-task",
+      leaseMs: 86_400_000,
+      taskId: state.created.task.taskId,
+    });
+    state.kernel.startTask(owner.execution, {
+      basedOnRoomSeq: claimed.event.roomSeq,
+      idempotencyKey: "start-supervised-task",
+      leaseMs: 86_400_000,
+      taskId: state.created.task.taskId,
+    });
+    state.setClock("2026-09-05T01:05:00.000Z");
+    appendEntry(
+      state,
+      owner,
+      1,
+      { kind: "tool_start", toolInput: "npm test", toolName: "Bash" },
+      "2026-09-05T01:05:00.000Z",
+    );
+
+    const foreign = activate(
+      state,
+      state.foreignId,
+      "foreign",
+      state.otherRoomId,
+    );
+    assert.throws(
+      () =>
+        state.kernel.listWorkerTaskTrajectory(foreign.execution, {
+          limit: 50,
+          taskId: state.created.task.taskId,
+        }),
+      (error: unknown) =>
+        error instanceof ForbiddenError &&
+        error.message.includes("outside this Worker execution scope"),
+      "a Task of another Room is outside the caller's Worker scope",
+    );
+
+    assert.throws(
+      () =>
+        state.kernel.listWorkerTaskTrajectory(owner.execution, {
+          limit: 50,
+          taskId: state.foreignTask.task.taskId,
+        }),
+      (error: unknown) =>
+        error instanceof ForbiddenError &&
+        error.message.includes("outside this Worker execution scope"),
+      "this Room's scope never reaches another Room's Task",
     );
   } finally {
     state.cleanup();
