@@ -275,19 +275,30 @@ test("Agent replies explicitly to one attachment and held retry retains that com
       basedOnRoomSeq: f.latest(),
       idempotencyKey: "new-comment",
     });
-    const cliReply = await f.cli([
-      "message-post",
-      "--body",
-      "Agent answer",
-      "--comment-attachment-id",
-      attachmentId,
-      "--thread-id",
-      threadId,
-      "--based-on-room-seq",
-      String(f.activation.toSeq),
-      "--idempotency-key",
-      "agent-comment",
-    ]);
+    const cliReply = await f
+      .cli([
+        "message-post",
+        "--body",
+        "Agent answer",
+        "--comment-attachment-id",
+        attachmentId,
+        "--thread-id",
+        threadId,
+        "--based-on-room-seq",
+        String(f.activation.toSeq),
+        "--idempotency-key",
+        "agent-comment",
+      ])
+      .then(
+        () => {
+          throw new Error("held send must exit unsuccessfully");
+        },
+        (error: { code: number; stderr: string; stdout: string }) => {
+          assert.equal(error.code, 1);
+          assert.match(error.stderr, /SEND_HELD_AS_DRAFT/);
+          return error;
+        },
+      );
     const first = { body: JSON.parse(cliReply.stdout) };
     assert.equal(first.body.state, "held");
     await f.call("acknowledge", { throughSeq: f.activation.toSeq });

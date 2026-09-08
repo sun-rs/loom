@@ -12,28 +12,24 @@ export const WorkerMessagePostRequestSchema = z
     anyway: z.boolean().optional(),
     attachmentIds: z.array(IdentifierSchema).max(10).optional(),
     commentAttachmentId: IdentifierSchema.optional(),
-    basedOnRoomSeq: z.number().int().nonnegative(),
+    basedOnRoomSeq: z.number().int().nonnegative().optional(),
     body: z.string().trim().min(1).optional(),
     heldDraftId: IdentifierSchema.optional(),
-    idempotencyKey: IdentifierSchema,
+    idempotencyKey: IdentifierSchema.optional(),
     sendDraft: z.literal(true).optional(),
     threadId: IdentifierSchema.nullable().optional(),
   })
   .strict()
   .superRefine((value, context) => {
-    if ((value.channel === undefined) !== (value.contextReceipt === undefined))
+    // Raft's shape: a target and content. Everything else is server-derived.
+    // A presented receipt still names the channel it was minted for.
+    if (value.contextReceipt !== undefined && value.channel === undefined)
       context.addIssue({
         code: "custom",
-        message: "channel and contextReceipt must be supplied together",
+        message: "contextReceipt requires the channel it was minted for",
+        path: ["channel"],
       });
     if (value.sendDraft === true) {
-      if (value.heldDraftId === undefined) {
-        context.addIssue({
-          code: "custom",
-          message: "heldDraftId is required when sendDraft is true",
-          path: ["heldDraftId"],
-        });
-      }
       if (
         value.body !== undefined ||
         value.attachmentIds !== undefined ||
@@ -83,11 +79,13 @@ export const WorkerMessageHeldResponseSchema = z
     activationIds: z.array(IdentifierSchema),
     basedOnRoomSeq: z.number().int().nonnegative(),
     heldDraftId: IdentifierSchema,
+    recoveryTarget: WorkerReadChannelSchema.optional(),
     newMessageCount: z.number().int().positive(),
     newerMessages: z.array(RoomEventSchema),
     omittedMessageCount: z.number().int().nonnegative(),
     reason: z.literal("newer_messages_available"),
     reholdCount: z.number().int().positive(),
+    shownMessageCount: z.number().int().nonnegative(),
     continueAnywaySuggested: z.boolean(),
     seenUpToSeq: z.number().int().positive(),
     state: z.literal("held"),
@@ -97,9 +95,31 @@ export type WorkerMessageHeldResponse = z.infer<
   typeof WorkerMessageHeldResponseSchema
 >;
 
+/**
+ * Raft's `THREAD_CONTEXT_TARGET_CONFIRMATION_REQUIRED`. The send was refused,
+ * not held for freshness: the participant's latest read context under this Room
+ * is a Thread, yet the send targets the Room top-level. The composed content is
+ * saved as a draft so the confirmation path is the ordinary `--send-draft`.
+ */
+export const WorkerMessageTargetConfirmationResponseSchema = z
+  .object({
+    activationIds: z.array(IdentifierSchema),
+    heldDraftId: IdentifierSchema,
+    parentTarget: WorkerReadChannelSchema,
+    threadTarget: WorkerReadChannelSchema,
+    threadSeq: z.number().int().positive(),
+    reason: z.literal("thread_context_target_mismatch"),
+    state: z.literal("target_confirmation_required"),
+  })
+  .strict();
+export type WorkerMessageTargetConfirmationResponse = z.infer<
+  typeof WorkerMessageTargetConfirmationResponseSchema
+>;
+
 export const WorkerMessagePostResponseSchema = z.union([
   WorkerMessageMutationResponseSchema,
   WorkerMessageHeldResponseSchema,
+  WorkerMessageTargetConfirmationResponseSchema,
 ]);
 export type WorkerMessagePostResponse = z.infer<
   typeof WorkerMessagePostResponseSchema

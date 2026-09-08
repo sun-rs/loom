@@ -7,6 +7,7 @@ import {
   createHash,
   createHmac,
   randomBytes,
+  randomUUID,
   timingSafeEqual,
 } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
@@ -14,12 +15,25 @@ import * as P from "@rah-os/protocol";
 import type { AuthenticatedWorkerExecutionContext } from "./auth.ts";
 import type { CollaborationService } from "./collaboration-service.ts";
 import { fromRow as principalFromRow } from "./principal-profile.ts";
-import { ForbiddenError, StaleContextError } from "./errors.ts";
+import { ForbiddenError, NotFoundError, StaleContextError } from "./errors.ts";
+import {
+  findActiveHeldMessageDraftForTarget,
+  saveHeldMessageDraft,
+  SEND_DRAFT_NOT_FOUND_MESSAGE,
+} from "./held-message-drafts.ts";
+import { deriveWorkerMessageIdempotencyKey } from "./worker-message-identity.ts";
+import {
+  detectThreadContextParentSend,
+  readWorkerTargetReadPosition,
+  recordWorkerTargetReadPosition,
+} from "./worker-target-read-position.ts";
 import { syncRoomEventWindow } from "./room-sync.ts";
 import { integer, text, type Row } from "./sqlite-row.ts";
 import {
   resolveWorkerReadTarget,
   workerReadThread,
+  workerRoomEntry,
+  WORKER_VISIBLE_ROOMS,
 } from "./worker-read-targets.ts";
 import { requireWorkerRoomVisibility } from "./worker-task-scope.ts";
 import { workerReplyRecipients } from "./worker-message-routing.ts";
@@ -179,6 +193,15 @@ export class WorkerTargetContextService {
         },
       );
       receipt.cursor = window.cursorAfter;
+      // Raft's read commands record the consumed sequence for the target so the
+      // send never has to carry it. This is the same fact, kept server-side.
+      recordWorkerTargetReadPosition(this.#context.database, {
+        participantId: origin.participantId,
+        roomId: target.roomId,
+        ...(target.threadId === undefined ? {} : { threadId: target.threadId }),
+        throughRoomSeq: receipt.cursor,
+        updatedAt: this.#context.now().toISOString(),
+      });
       const response = P.WorkerRoomContextResponseSchema.parse({
         ...envelope,
         complete: receipt.cursor === through,
@@ -202,43 +225,293 @@ export class WorkerTargetContextService {
     return this.#context.transaction(() => {
       const origin = this.#authorize(execution),
         input = P.WorkerMessagePostRequestSchema.parse(raw);
-      if (input.channel === undefined || input.contextReceipt === undefined)
-        throw new ForbiddenError(
-          "target post requires a presented context receipt",
-        );
+      if (input.channel === undefined)
+        throw new ForbiddenError("target post requires a target channel");
       const target = resolveWorkerReadTarget(
         this.#context.database,
         origin,
         input.channel,
       );
-      const previous = this.#context.database
-        .prepare(
-          "SELECT 1 FROM room_events WHERE room_id=? AND idempotency_key=?",
-        )
-        .get(target.roomId, input.idempotencyKey);
+      const threadId = workerReadThread(target, input.threadId) ?? undefined;
+      const draft = this.#resolveOutgoingDraft(origin, target, threadId, input);
+      const window = this.#resolveSendWindow(
+        origin,
+        target,
+        threadId,
+        input,
+        draft,
+      );
+      const principal = principalFromRow(
+        this.#context.database
+          .prepare("SELECT * FROM principals WHERE principal_id=?")
+          .get(origin.participantId)!,
+      );
+      // Downstream helpers see the resolved send: the derived cursor and key,
+      // and the draft the server itself looked up for this target.
+      const resolved = {
+        ...input,
+        basedOnRoomSeq: window.basedOnRoomSeq,
+        idempotencyKey: window.idempotencyKey,
+        ...(draft === undefined ? {} : { heldDraftId: draft.heldDraftId }),
+      };
+      const metadata = this.#context
+        .attachmentComments()
+        .workerMetadata(execution, resolved, {
+          roomId: target.roomId,
+          ...(threadId ? { threadId } : {}),
+        });
+      const attachments = workerMessageAttachments({
+        database: this.#context.database,
+        roomId: target.roomId,
+        input: resolved,
+        eventFromRow: this.#context.eventFromRow,
+        resolveLive: (ids) =>
+          this.#context
+            .files()
+            .forWorkerMessage(execution, ids, undefined, target.roomId),
+      });
+      const confirmation = this.#threadContextTargetConfirmation(
+        origin,
+        target,
+        threadId,
+        input,
+        { basedOnRoomSeq: window.basedOnRoomSeq, key: window.idempotencyKey },
+        attachments,
+        metadata,
+      );
+      if (confirmation !== undefined) return confirmation;
+      const body =
+        input.sendDraft === true
+          ? draft === undefined
+            ? undefined
+            : text(draft.row, "body")
+          : input.body;
+      const result = this.#context
+        .collaboration()
+        .postActivationMessage(principal, {
+          ...(metadata ? { attachmentComment: metadata } : {}),
+          activationId: origin.activationId,
+          roomId: target.roomId,
+          basedOnRoomSeq: window.basedOnRoomSeq,
+          freshnessFloorSeq: window.freshnessFloorSeq,
+          idempotencyKey: window.idempotencyKey,
+          attachments,
+          ...(input.sendDraft === true
+            ? {
+                heldDraftId: draft!.heldDraftId,
+                ...(input.anyway ? { continueAnyway: true } : {}),
+              }
+            : { body: input.body ?? "" }),
+          ...(threadId ? { threadId } : {}),
+          recipients: workerReplyRecipients({
+            database: this.#context.database,
+            participantId: origin.participantId,
+            roomId: target.roomId,
+            causalEvent: this.#context.eventFromRow(window.causal),
+            ...(threadId ? { threadId } : {}),
+            ...(typeof body === "string" ? { body } : {}),
+          }),
+        });
+      if ("event" in result && !result.deduplicated)
+        this.#context.files().consume(attachments, result.event.aggregateId);
+      this.#context.attachmentComments().bindWorkerResult(metadata, result);
+      return P.WorkerMessagePostResponseSchema.parse(result);
+    });
+  }
+
+  /**
+   * Raft's `detectThreadContextParentSend`, evaluated in `handleMessageSend`
+   * only when `!opts.sendDraft && !opts.targetConfirmed`. RAH's confirmation is
+   * the same affordance Raft uses — `--send-draft` on that target — so no new
+   * flag exists and `sendDraft` is exactly the confirmed case.
+   *
+   * Deliberately narrow: never for a Thread target, never when the parent Room
+   * was read at least as recently as the Thread, never for `sendDraft`. It also
+   * only exists on this explicit-target route; the originating route (no
+   * `--target`) is Raft's unguarded default send and keeps today's behavior.
+   *
+   * On a hit the composition is saved as this target's draft and nothing is
+   * published; no read position is consumed or advanced.
+   */
+  #threadContextTargetConfirmation(
+    origin: P.ActivationCredentialScope,
+    target: { roomId: string },
+    threadId: string | undefined,
+    input: P.WorkerMessagePostRequest,
+    window: { basedOnRoomSeq: number; key: string },
+    attachments: unknown[],
+    attachmentComment: { attachmentId: string; anchor: null } | undefined,
+  ): P.WorkerMessageTargetConfirmationResponse | undefined {
+    if (input.sendDraft === true || threadId !== undefined) return undefined;
+    const detected = detectThreadContextParentSend(this.#context.database, {
+      participantId: origin.participantId,
+      roomId: target.roomId,
+    });
+    if (detected === undefined) return undefined;
+    const createdAt = this.#context.now().toISOString();
+    const draft = saveHeldMessageDraft(this.#context.database, {
+      activationId: origin.activationId,
+      ...(attachmentComment === undefined ? {} : { attachmentComment }),
+      attachments,
+      basedOnRoomSeq: window.basedOnRoomSeq,
+      body: input.body?.trim() ?? "",
+      createdAt,
+      heldDraftId: `held_draft_${randomUUID()}`,
+      idempotencyKey: window.key,
+      participantId: origin.participantId,
+      roomId: target.roomId,
+      // The column requires a strictly greater seen bound; the Room head is the
+      // honest one, and this row is never rendered as a freshness hold.
+      seenUpToSeq: Math.max(
+        this.#head(target.roomId),
+        window.basedOnRoomSeq + 1,
+      ),
+    });
+    const room = this.#context.database
+      .prepare(
+        `${WORKER_VISIBLE_ROOMS} WHERE membership.principal_id=? AND r.room_id=?`,
+      )
+      .get(origin.participantId, target.roomId)!;
+    const channel = workerRoomEntry(
+      this.#context.database,
+      origin.participantId,
+      room,
+    ).channel;
+    return P.WorkerMessageTargetConfirmationResponseSchema.parse({
+      activationIds: [],
+      heldDraftId: text(draft, "held_draft_id"),
+      parentTarget: channel,
+      threadTarget: `${channel}:${detected.threadId}`,
+      threadSeq: detected.threadSeq,
+      reason: "thread_context_target_mismatch",
+      state: "target_confirmation_required",
+    });
+  }
+
+  /** Raft's tool resolves the saved draft for (agent, target) internally; the
+   * model supplies only `--send-draft`. An explicitly presented heldDraftId is
+   * still honoured and still fenced by the Kernel. */
+  #resolveOutgoingDraft(
+    origin: P.ActivationCredentialScope,
+    target: { roomId: string },
+    threadId: string | undefined,
+    input: P.WorkerMessagePostRequest,
+  ): { heldDraftId: string; row: Row } | undefined {
+    if (input.sendDraft !== true) return undefined;
+    const heldDraftId =
+      input.heldDraftId ??
+      (() => {
+        const saved = findActiveHeldMessageDraftForTarget(
+          this.#context.database,
+          {
+            participantId: origin.participantId,
+            roomId: target.roomId,
+            ...(threadId === undefined ? {} : { threadId }),
+            nowMs: this.#context.now().getTime(),
+          },
+        );
+        if (saved === undefined)
+          throw new NotFoundError(SEND_DRAFT_NOT_FOUND_MESSAGE);
+        return text(saved, "held_draft_id");
+      })();
+    const row = this.#context.database
+      .prepare("SELECT * FROM held_message_drafts WHERE held_draft_id=?")
+      .get(heldDraftId);
+    if (row === undefined)
+      throw new NotFoundError(`Held draft ${heldDraftId} was not found`);
+    return { heldDraftId, row };
+  }
+
+  #contentIdentity(
+    input: P.WorkerMessagePostRequest,
+    draft: { heldDraftId: string; row: Row } | undefined,
+  ) {
+    return draft === undefined
+      ? {
+          kind: "compose" as const,
+          ...(input.body === undefined ? {} : { body: input.body }),
+          ...(input.attachmentIds === undefined
+            ? {}
+            : { attachmentIds: input.attachmentIds }),
+          ...(input.commentAttachmentId === undefined
+            ? {}
+            : { commentAttachmentId: input.commentAttachmentId }),
+        }
+      : {
+          kind: "draft" as const,
+          heldDraftId: draft.heldDraftId,
+          reholdCount: integer(draft.row, "rehold_count"),
+        };
+  }
+
+  /** Either the presented receipt's window (verified exactly as before) or the
+   * server's own stored read position for this target. */
+  #resolveSendWindow(
+    origin: P.ActivationCredentialScope,
+    target: { roomId: string; threadId?: string },
+    threadId: string | undefined,
+    input: P.WorkerMessagePostRequest,
+    draft: { heldDraftId: string; row: Row } | undefined,
+  ): {
+    basedOnRoomSeq: number;
+    freshnessFloorSeq: number;
+    causal: Row;
+    idempotencyKey: string;
+  } {
+    const database = this.#context.database;
+    const derive = (basedOnRoomSeq: number) =>
+      input.idempotencyKey ??
+      deriveWorkerMessageIdempotencyKey({
+        participantId: origin.participantId,
+        activationId: origin.activationId,
+        roomId: target.roomId,
+        ...(threadId === undefined ? {} : { threadId }),
+        basedOnRoomSeq,
+        content: this.#contentIdentity(input, draft),
+      });
+    if (input.contextReceipt !== undefined) {
+      // Presented-receipt path: unchanged, including the replay allowance that
+      // lets an already-committed mutation re-verify an expired receipt.
+      const presentedKey = input.idempotencyKey;
+      const replay =
+        presentedKey === undefined
+          ? undefined
+          : database
+              .prepare(
+                "SELECT 1 FROM room_events WHERE room_id=? AND idempotency_key=?",
+              )
+              .get(target.roomId, presentedKey);
       const receipt = this.#verify(
         input.contextReceipt,
         origin,
         target,
-        previous !== undefined,
+        replay !== undefined,
       );
       if (
         receipt.cursor !== receipt.through ||
-        input.basedOnRoomSeq !== receipt.through
+        (input.basedOnRoomSeq !== undefined &&
+          input.basedOnRoomSeq !== receipt.through)
       )
         throw new ForbiddenError(
           "target context window is incomplete or cursor differs",
         );
-      const threadId = workerReadThread(target, input.threadId) ?? undefined;
       if ((threadId ?? null) !== receipt.threadId)
         throw new ForbiddenError(
           "target receipt does not authorize another Thread",
         );
-      const previousHeld = this.#context.database
+      const idempotencyKey = derive(receipt.through);
+      const previous =
+        replay ??
+        database
+          .prepare(
+            "SELECT 1 FROM room_events WHERE room_id=? AND idempotency_key=?",
+          )
+          .get(target.roomId, idempotencyKey);
+      const previousHeld = database
         .prepare(
           "SELECT 1 FROM held_message_drafts WHERE room_id=? AND idempotency_key=?",
         )
-        .get(target.roomId, input.idempotencyKey);
+        .get(target.roomId, idempotencyKey);
       const newerMessage = this.#context
         .collaboration()
         .hasNewerTargetMessages(target.roomId, threadId, receipt.through);
@@ -251,78 +524,82 @@ export class WorkerTargetContextService {
         throw new StaleContextError(receipt.through, this.#head(target.roomId));
       const causal =
         threadId === undefined
-          ? this.#context.database
+          ? database
               .prepare(
                 "SELECT * FROM room_events WHERE room_id=? AND room_seq=?",
               )
               .get(target.roomId, receipt.through)
-          : this.#context.database
+          : database
               .prepare(
                 "SELECT * FROM room_events WHERE room_id=? AND room_seq<=? AND event_id=?",
               )
               .get(target.roomId, receipt.through, receipt.causalEventId);
       if (!causal)
         throw new ForbiddenError("target context causal event is unavailable");
-      const principal = principalFromRow(
-        this.#context.database
-          .prepare("SELECT * FROM principals WHERE principal_id=?")
-          .get(origin.participantId)!,
-      );
-      const metadata = this.#context
-        .attachmentComments()
-        .workerMetadata(execution, input, {
-          roomId: target.roomId,
-          ...(threadId ? { threadId } : {}),
-        });
-      const attachments = workerMessageAttachments({
-        database: this.#context.database,
+      return {
+        basedOnRoomSeq: receipt.through,
+        freshnessFloorSeq: receipt.through,
+        causal,
+        idempotencyKey,
+      };
+    }
+    // Derived path: the server verifies against its own stored read position
+    // instead of a client-presented receipt. There is no presented window, so
+    // there is nothing for the Room-head staleness gate to compare against; the
+    // freshness hold below is the fence, computed from the same target-message
+    // numbers as before. An explicit basedOnRoomSeq may only narrow the floor.
+    const stored =
+      readWorkerTargetReadPosition(database, {
+        participantId: origin.participantId,
         roomId: target.roomId,
-        input,
-        eventFromRow: this.#context.eventFromRow,
-        resolveLive: (ids) =>
-          this.#context
-            .files()
-            .forWorkerMessage(execution, ids, undefined, target.roomId),
-      });
-      const body =
-        input.sendDraft === true
-          ? this.#context.database
-              .prepare(
-                "SELECT body FROM held_message_drafts WHERE held_draft_id=?",
-              )
-              .get(input.heldDraftId!)?.body
-          : input.body;
-      const result = this.#context
-        .collaboration()
-        .postActivationMessage(principal, {
-          ...(metadata ? { attachmentComment: metadata } : {}),
-          activationId: origin.activationId,
-          roomId: target.roomId,
-          basedOnRoomSeq: receipt.through,
-          idempotencyKey: input.idempotencyKey,
-          attachments,
-          ...(input.sendDraft === true
-            ? {
-                heldDraftId: input.heldDraftId!,
-                ...(input.anyway ? { continueAnyway: true } : {}),
-              }
-            : { body: input.body ?? "" }),
-          ...(threadId ? { threadId } : {}),
-          recipients: workerReplyRecipients({
-            database: this.#context.database,
-            participantId: origin.participantId,
-            roomId: target.roomId,
-            causalEvent: this.#context.eventFromRow(causal),
-            ...(threadId ? { threadId } : {}),
-            ...(typeof body === "string" ? { body } : {}),
-          }),
-        });
-      if ("event" in result && !result.deduplicated)
-        this.#context.files().consume(attachments, result.event.aggregateId);
-      this.#context.attachmentComments().bindWorkerResult(metadata, result);
-      return P.WorkerMessagePostResponseSchema.parse(result);
-    });
+        ...(threadId === undefined ? {} : { threadId }),
+      }) ?? 0;
+    const basedOnRoomSeq =
+      input.basedOnRoomSeq === undefined
+        ? stored
+        : Math.min(input.basedOnRoomSeq, stored);
+    const own = database
+      .prepare(
+        `SELECT room_events.room_seq AS seq
+         FROM messages
+         JOIN room_events ON room_events.room_id=messages.room_id
+           AND room_events.aggregate_id=messages.message_id
+           AND room_events.type='message.posted'
+         WHERE messages.room_id=? AND messages.thread_id IS ? AND messages.actor_id=?
+         ORDER BY room_events.room_seq DESC LIMIT 1`,
+      )
+      .get(target.roomId, threadId ?? null, origin.participantId);
+    const causal =
+      (threadId === undefined
+        ? undefined
+        : database
+            .prepare(
+              `SELECT * FROM room_events WHERE room_id=?
+               AND json_extract(payload_json, '$.threadId')=?
+               ORDER BY room_seq DESC LIMIT 1`,
+            )
+            .get(target.roomId, threadId)) ??
+      database
+        .prepare(
+          "SELECT * FROM room_events WHERE room_id=? ORDER BY room_seq DESC LIMIT 1",
+        )
+        .get(target.roomId);
+    if (!causal)
+      throw new ForbiddenError("target context causal event is unavailable");
+    return {
+      basedOnRoomSeq,
+      // An Agent has necessarily seen what it published itself, so its own
+      // latest message in this target never re-holds its next one. This widens
+      // nothing: no other participant's message is treated as seen.
+      freshnessFloorSeq:
+        own === undefined
+          ? basedOnRoomSeq
+          : Math.max(basedOnRoomSeq, integer(own, "seq")),
+      causal,
+      idempotencyKey: derive(basedOnRoomSeq),
+    };
   }
+
   #threadContext(
     execution: AuthenticatedWorkerExecutionContext,
     roomId: string,

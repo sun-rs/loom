@@ -385,21 +385,32 @@ test("real Worker CLI publishes PNG to target and resumes its TXT held draft in 
       recipients: [],
       idempotencyKey: "race",
     });
-    const held = await f.cli([
-      "message-post",
-      "--target",
-      "#target",
-      "--context-receipt",
-      fresh.contextReceipt,
-      "--based-on-room-seq",
-      String(fresh.throughRoomSeq),
-      "--body",
-      "Saved exact TXT",
-      "--attachment-ids",
-      id,
-      "--idempotency-key",
-      "cli-held",
-    ]);
+    const held = await f
+      .cli([
+        "message-post",
+        "--target",
+        "#target",
+        "--context-receipt",
+        fresh.contextReceipt,
+        "--based-on-room-seq",
+        String(fresh.throughRoomSeq),
+        "--body",
+        "Saved exact TXT",
+        "--attachment-ids",
+        id,
+        "--idempotency-key",
+        "cli-held",
+      ])
+      .then(
+        () => {
+          throw new Error("held send must exit unsuccessfully");
+        },
+        (error: { code: number; stderr: string; stdout: string }) => {
+          assert.equal(error.code, 1);
+          assert.match(error.stderr, /SEND_HELD_AS_DRAFT/);
+          return JSON.parse(error.stdout);
+        },
+      );
     assert.equal(held.state, "held");
     const oldToken = f.token;
     await f.nextRun();

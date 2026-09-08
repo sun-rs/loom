@@ -231,3 +231,9 @@ threadId/threadRootMessageId；后者始终取真正 Thread 根消息，不把�
 丢回执重试不会因成员投影变化产生另一份投递。HTML sandbox 未新增执行桥，未知位置
 明确不支持；PDF/image/audio 仅整文件评论。验收层级见
 [附件评论前端记录](../audits/2026-09-08-attachment-comments-ui-closure.zh-CN.md)。
+
+## 忙时追加消息的发送恢复
+
+`messages/post` 的 held 响应可携带 canonical `recoveryTarget`（Room、DM 或带 Thread 的目标）。CLI 保留 JSON 并返回 `SEND_HELD_AS_DRAFT` 非成功退出，明确“未发送”。当前 Run 应使用 `room-read --target` 完整读取目标窗口，再以签名 contextReceipt 和 throughRoomSeq 原样 send-draft 或审阅后修订；不得仅因 hold 就 ACK 并退出。普通 sync/ACK 仍受原 Activation 范围约束，目标回执不授权 Task 操作，也不允许自动发布未经 Agent 决定的草稿。历史客户端可忽略新增可选字段，不能将 held 当作成功发送。
+
+来源、失败实验与本批验证边界见[忙时草稿恢复审计](../audits/2026-09-09-busy-held-send-repair.zh-CN.md)。

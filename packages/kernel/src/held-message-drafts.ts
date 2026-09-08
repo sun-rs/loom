@@ -110,6 +110,105 @@ export function requireActiveHeldMessageDraft(
   return row;
 }
 
+/**
+ * Mirrors Raft's `getSavedDraft(agentId, target)`: the current draft for this
+ * participant at this addressable target, or nothing when none is live. An
+ * expired draft is not returned (Raft clears it and returns null); TTL,
+ * replacement and auto-send policy are unchanged.
+ */
+export function findActiveHeldMessageDraftForTarget(
+  database: DatabaseSync,
+  input: {
+    participantId: string;
+    roomId: string;
+    threadId?: string | undefined;
+    nowMs: number;
+  },
+): Row | undefined {
+  return database
+    .prepare(
+      `SELECT * FROM held_message_drafts
+       WHERE room_id = ? AND participant_id = ? AND thread_id IS ?
+         AND state = 'held' AND expires_at_ms > ?
+       ORDER BY created_at DESC, rowid DESC LIMIT 1`,
+    )
+    .get(
+      input.roomId,
+      input.participantId,
+      input.threadId ?? null,
+      input.nowMs,
+    );
+}
+
+/**
+ * Save an unsent composition as the draft for its target, in the exact row
+ * shape a freshness hold writes, so `--send-draft --target` recovers the same
+ * body, attachments and explicit comment target. TTL, replacement and auto-send
+ * policy are untouched: this is a first hold of its own draft (`rehold_count`
+ * 1, no `source_held_draft_id`).
+ *
+ * An identical retry re-derives the same idempotency key; the existing row for
+ * that key is returned rather than a second draft being written.
+ */
+export function saveHeldMessageDraft(
+  database: DatabaseSync,
+  input: {
+    activationId: string;
+    attachmentComment?: unknown;
+    attachments: unknown[];
+    basedOnRoomSeq: number;
+    body: string;
+    createdAt: string;
+    heldDraftId: string;
+    idempotencyKey: string;
+    participantId: string;
+    roomId: string;
+    seenUpToSeq: number;
+    threadId?: string | undefined;
+  },
+): Row {
+  const existing = database
+    .prepare(
+      "SELECT * FROM held_message_drafts WHERE room_id = ? AND idempotency_key = ?",
+    )
+    .get(input.roomId, input.idempotencyKey);
+  if (existing !== undefined) return existing;
+  database
+    .prepare(
+      `INSERT INTO held_message_drafts(
+         held_draft_id, room_id, participant_id, activation_id, thread_id,
+         body, attachments_json, attachment_comment_json, based_on_room_seq,
+         seen_up_to_seq, idempotency_key, state, rehold_count, expires_at_ms,
+         created_at, updated_at
+       ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'held', 1, ?, ?, ?)`,
+    )
+    .run(
+      input.heldDraftId,
+      input.roomId,
+      input.participantId,
+      input.activationId,
+      input.threadId ?? null,
+      input.body,
+      JSON.stringify(input.attachments),
+      JSON.stringify(input.attachmentComment ?? null),
+      input.basedOnRoomSeq,
+      input.seenUpToSeq,
+      input.idempotencyKey,
+      Date.parse(input.createdAt) + HELD_MESSAGE_DRAFT_TTL_MS,
+      input.createdAt,
+      input.createdAt,
+    );
+  return database
+    .prepare("SELECT * FROM held_message_drafts WHERE held_draft_id = ?")
+    .get(input.heldDraftId)!;
+}
+
+/** Raft's `SEND_DRAFT_NOT_FOUND` text, minus the CLI's own command spelling. */
+export const SEND_DRAFT_NOT_FOUND_MESSAGE = [
+  "No saved draft exists for this target.",
+  "To create or update a draft, send message content normally to this target.",
+].join("\n");
+
 export function resolveHeldMessageDrafts(
   database: DatabaseSync,
   input: {

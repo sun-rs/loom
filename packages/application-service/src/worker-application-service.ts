@@ -727,7 +727,10 @@ export class WorkerApplicationService {
     }
     if (route === "/v1/worker/messages/post") {
       const command = parseWorkerRequest(WorkerMessagePostRequestSchema, body);
-      if (command.channel === undefined)
+      // An omitted cursor is derived by the Kernel from the Activation head
+      // this credential already carries, so there is no presented number to
+      // fence; a presented one is fenced exactly as before.
+      if (command.channel === undefined && command.basedOnRoomSeq !== undefined)
         this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
       const mutation = this.#kernel.postWorkerMessage(grant.execution, command);
       if ("event" in mutation && command.channel === undefined) {

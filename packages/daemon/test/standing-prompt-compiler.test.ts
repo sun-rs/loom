@@ -302,7 +302,58 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
   assert.match(prompt, /turn-taking.*newest committed message/isu);
   assert.match(
     prompt,
-    /state.*held.*not published.*acknowledge.*follow-up Activation/isu,
+    /state.*held.*not published.*recoveryTarget.*--send-draft --target <recoveryTarget>.*original sync cursor/isu,
+  );
+  assert.doesNotMatch(
+    prompt,
+    /review newerMessages, acknowledge the original sync cursor, and exit successfully/u,
+  );
+  // Raft's send contract: a target plus content on stdin, nothing else.
+  assert.match(prompt, /### Sending messages/u);
+  assert.match(
+    prompt,
+    /message-post --target "#room-slug" <<'RAH_MESSAGE_EOF'/u,
+  );
+  assert.match(prompt, /--target dm:@peer-handle/u);
+  assert.match(prompt, /--target "#room-slug:THREAD_ID"/u);
+  assert.match(prompt, /Message content is always read from stdin/u);
+  assert.match(
+    prompt,
+    /delimiter that is unlikely to appear in the message body/u,
+  );
+  assert.match(
+    prompt,
+    /not sent and was saved as a draft, choose one path.*--send-draft --target <target>.*with no stdin.*Do not use `--send-draft` when changing content/isu,
+  );
+  assert.match(
+    prompt,
+    /possible thread target mismatch, nothing was sent: either send the message to the named thread target, or.*confirm the saved top-level draft with `"\$RAH_WORKER_CLI" worker message-post --send-draft --target <parent target>` and no stdin/isu,
+  );
+  assert.match(
+    prompt,
+    /always reuse the exact `target` from the received message/u,
+  );
+  assert.match(
+    prompt,
+    /never carry a receipt, cursor, idempotency key or draft id/u,
+  );
+  assert.match(prompt, /saved draft is never a delivery/u);
+  // The messaging mechanics the model mis-combined are gone.
+  assert.doesNotMatch(prompt, /--held-draft-id/u);
+  assert.doesNotMatch(prompt, /message-post --body/u);
+  assert.doesNotMatch(prompt, /--send-draft --held-draft-id/u);
+  assert.doesNotMatch(
+    prompt,
+    /message-post --target TARGET --context-receipt/u,
+  );
+  // Task commands keep their explicit causal cursor and idempotency key.
+  assert.match(
+    prompt,
+    /task-claim-message --message-id <id>.*--based-on-room-seq <cursor> --idempotency-key <stable-key>/isu,
+  );
+  assert.match(
+    prompt,
+    /additional message does not cancel.*explicitly cancels or replaces/isu,
   );
   assert.match(prompt, /send-draft.*rechecks freshness/isu);
   assert.match(prompt, /--anyway.*continueAnywaySuggested/isu);

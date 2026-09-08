@@ -12,6 +12,7 @@ import { DatabaseSync } from "node:sqlite";
 import { GlobalDiscovery } from "./global-discovery.ts";
 import { initializeDiscoverySchema } from "./discovery-schema.ts";
 import { migrateLegacyTaskSchema } from "./legacy-task-schema.ts";
+import { migrateWorkerTargetReadPositions } from "./worker-target-read-position.ts";
 import {
   expireHeldMessageDraftsAt,
   initializeHeldMessageDrafts,
@@ -670,6 +671,7 @@ export class RoomKernel {
     migrateBoundedRoomReadsV49(this.#database);
     migrateFrozenTaskSubmissionEvidenceV50(this.#database);
     migrateDropRoomTaskDefaultsV52(this.#database);
+    migrateWorkerTargetReadPositions(this.#database);
     principalProfile.migrate(this.#database);
     this.#database
       .prepare(
@@ -1499,6 +1501,7 @@ export class RoomKernel {
         scope,
         execution,
         input,
+        now: this.#now,
         eventFromRow: (row) => this.#eventFromRow(row),
       });
     });

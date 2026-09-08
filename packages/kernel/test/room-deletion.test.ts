@@ -19,6 +19,7 @@ import {
   ROOM_FILE_GC_GLOBAL_CLAIM_SQL,
   ROOM_FILE_GC_SCOPED_CLAIM_SQL,
 } from "../src/room-file-gc.ts";
+import { recordWorkerTargetReadPosition } from "../src/worker-target-read-position.ts";
 
 async function* bytes(value: string) {
   yield Buffer.from(value);
@@ -1246,6 +1247,55 @@ test("the explicit Room eraser covers every table whose foreign keys can reach r
       [...reachable].sort(),
       [...ROOM_DELETION_REFERENCED_TABLES].sort(),
     );
+  } finally {
+    f.close();
+  }
+});
+
+test("Room deletion sweeps the server-side Worker target read positions", () => {
+  const f = fixture();
+  try {
+    const writable = new DatabaseSync(f.databasePath);
+    try {
+      recordWorkerTargetReadPosition(writable, {
+        participantId: f.owner.principal.principalId,
+        roomId: f.channel.room.roomId,
+        throughRoomSeq: f.head(),
+        updatedAt: "2026-09-09T00:00:00.000Z",
+      });
+      assert.equal(
+        Number(
+          writable
+            .prepare(
+              "SELECT COUNT(*) AS count FROM worker_target_read_positions WHERE room_id=?",
+            )
+            .get(f.channel.room.roomId)!.count,
+        ),
+        1,
+      );
+    } finally {
+      writable.close();
+    }
+    f.kernel.deleteWorkspaceRoom(f.ownerActor, {
+      basedOnRoomSeq: f.head(),
+      idempotencyKey: "delete-read-positions",
+      roomId: f.channel.room.roomId,
+    });
+    const audited = new DatabaseSync(f.databasePath, { readOnly: true });
+    try {
+      assert.equal(
+        Number(
+          audited
+            .prepare(
+              "SELECT COUNT(*) AS count FROM worker_target_read_positions WHERE room_id=?",
+            )
+            .get(f.channel.room.roomId)!.count,
+        ),
+        0,
+      );
+    } finally {
+      audited.close();
+    }
   } finally {
     f.close();
   }

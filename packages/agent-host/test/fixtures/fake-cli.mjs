@@ -1,4 +1,4 @@
-import { execFileSync, spawn } from "node:child_process";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   existsSync,
@@ -413,6 +413,105 @@ if (mode === "trajectory") {
       !profile.isSelf
     )
       throw new Error("Worker identity reads did not match the execution");
+  }
+
+  // Raft's busy-hold recovery, driven through the real Worker CLI: a second
+  // Human message lands at the same target while this Agent is still composing
+  // its result, the send is freshness-held, and the saved draft is then sent
+  // unchanged by target alone. The original result must survive.
+  if (process.env.RAH_FAKE_BUSY_HOLD_RECOVERY === "1") {
+    const trigger = activationEvents.find(
+      (event) =>
+        event.type === "message.posted" &&
+        typeof event.payload?.body === "string" &&
+        event.payload.body.includes("[BUSY-HOLD]"),
+    );
+    if (trigger) {
+      const workerCli = process.env.RAH_WORKER_CLI;
+      const barrier = process.env.RAH_FAKE_BUSY_HOLD_BARRIER;
+      if (!workerCli || !barrier) {
+        throw new Error(
+          "busy-hold fixture requires RAH_WORKER_CLI and RAH_FAKE_BUSY_HOLD_BARRIER",
+        );
+      }
+      const originalResult = process.env.RAH_FAKE_BUSY_HOLD_RESULT ?? "";
+      const followUpAnswer = process.env.RAH_FAKE_BUSY_HOLD_FOLLOW_UP ?? "";
+      // The Agent is "working": the test posts the interrupting message and
+      // then opens this barrier, so the race is deterministic.
+      writeFileSync(
+        `${barrier}.started`,
+        `${process.env.RAH_ACTIVATION_ID ?? "unknown"}\n`,
+      );
+      while (!existsSync(barrier)) {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+      const transcript = [];
+      const cli = (args, input) => {
+        const result = spawnSync(workerCli, ["worker", ...args], {
+          encoding: "utf8",
+          input: input ?? "",
+        });
+        transcript.push({
+          args,
+          status: result.status,
+          stdout: result.stdout,
+          stderr: result.stderr,
+        });
+        // The fixture's own diagnostics; the daemon never reads this file.
+        writeFileSync(`${barrier}.log`, JSON.stringify(transcript, null, 2));
+        return result;
+      };
+      const lastJsonLine = (output) =>
+        JSON.parse(
+          output
+            .split("\n")
+            .filter((line) => line.trim().length > 0)
+            .pop() ?? "{}",
+        );
+      const held = cli(["message-post"], `${originalResult}\n`);
+      if (held.status === 0) {
+        throw new Error("a freshness-held send must not exit successfully");
+      }
+      const heldPayload = lastJsonLine(held.stdout);
+      if (heldPayload.state !== "held") {
+        throw new Error(`expected a freshness hold, got ${held.stdout}`);
+      }
+      const target = heldPayload.recoveryTarget;
+      if (typeof target !== "string") {
+        throw new Error("the held response must name a recovery target");
+      }
+      if (!held.stderr.includes("--send-draft --target")) {
+        throw new Error("the held output must teach the draft recovery path");
+      }
+      // Recovery needs only the target: no receipt, cursor, key or draft id.
+      const recovered = cli([
+        "message-post",
+        "--send-draft",
+        "--target",
+        target,
+      ]);
+      if (recovered.status !== 0) {
+        throw new Error(`draft recovery failed: ${recovered.stderr}`);
+      }
+      const followUp = cli(
+        ["message-post", "--target", target],
+        `${followUpAnswer}\n`,
+      );
+      if (followUp.status !== 0) {
+        throw new Error(`follow-up send failed: ${followUp.stderr}`);
+      }
+      await request("/v1/worker/acknowledge", {
+        throughSeq: delivery.cursorAfter,
+      });
+      process.stdout.write(
+        JSON.stringify({
+          marker: "worker-busy-hold-recovered",
+          recoveryTarget: target,
+          newMessageCount: heldPayload.newMessageCount,
+        }) + "\n",
+      );
+      process.exit(0);
+    }
   }
 
   if (process.env.RAH_FAKE_PARENT_RESUME === "1" && readTool) {

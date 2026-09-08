@@ -208,3 +208,59 @@ test("Valid current Worker may recover its durable prior post after only the pre
     await f.close();
   }
 });
+
+test("Busy follow-up hold exposes a usable recovery target without widening Activation delivery", async () => {
+  const f = await fixture();
+  try {
+    const initial = await f.call("sync");
+    const frozenSeq = initial.body.cursorAfter;
+    f.k.postMessage(f.actor, {
+      roomId: f.origin.roomId,
+      body: "Also answer the follow-up",
+      idempotencyKey: "busy-followup",
+      recipients: [],
+    });
+    const held = await f.call("messages/post", {
+      body: "Original work completed",
+      basedOnRoomSeq: frozenSeq,
+      idempotencyKey: "busy-original",
+    });
+    assert.equal(held.status, 200, JSON.stringify(held.body));
+    assert.equal(held.body.state, "held");
+    assert.equal(held.body.recoveryTarget, "#origin");
+    assert.equal((await f.call("sync")).body.cursorAfter, frozenSeq);
+    assert.equal(
+      (
+        await f.call("messages/post", {
+          body: "Guessing a new cursor is forbidden",
+          basedOnRoomSeq: held.body.seenUpToSeq,
+          idempotencyKey: "guess",
+        })
+      ).status,
+      409,
+    );
+    const reviewed = await f.call("rooms/read", {
+      channel: held.body.recoveryTarget,
+    });
+    assert.equal(reviewed.status, 200);
+    assert.equal(reviewed.body.complete, true);
+    const retry = {
+      channel: held.body.recoveryTarget,
+      contextReceipt: reviewed.body.contextReceipt,
+      basedOnRoomSeq: reviewed.body.throughRoomSeq,
+      heldDraftId: held.body.heldDraftId,
+      sendDraft: true,
+      idempotencyKey: "recover-original",
+    };
+    const posted = await f.call("messages/post", retry);
+    assert.equal(posted.status, 200, JSON.stringify(posted.body));
+    assert.equal(posted.body.event.payload.body, "Original work completed");
+    assert.equal(
+      (await f.call("messages/post", retry)).body.event.eventId,
+      posted.body.event.eventId,
+    );
+    assert.equal((await f.call("sync")).body.cursorAfter, frozenSeq);
+  } finally {
+    await f.close();
+  }
+});

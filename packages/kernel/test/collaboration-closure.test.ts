@@ -430,7 +430,8 @@ test("held draft retries preserve the original Thread across a multi-Thread Acti
       basedOnRoomSeq: activation.toSeq,
       idempotencyKey: "draft",
     });
-    assert.ok("heldDraftId" in held);
+    assert.ok("state" in held && held.state === "held");
+    assert.equal(held.recoveryTarget, `#${f.room.slug}:${a.thread.threadId}`);
     const command = {
       sendDraft: true as const,
       heldDraftId: held.heldDraftId,
@@ -438,7 +439,7 @@ test("held draft retries preserve the original Thread across a multi-Thread Acti
       idempotencyKey: "rehold",
     };
     const reheld = f.kernel.postWorkerMessage(execution, command);
-    assert.ok("heldDraftId" in reheld);
+    assert.ok("state" in reheld && reheld.state === "held");
     assert.equal(reheld.reholdCount, 2);
     assert.deepEqual(f.kernel.postWorkerMessage(execution, command), reheld);
     assert.throws(

@@ -9,6 +9,7 @@ import {
   type WorkerVisibleRoomScope,
 } from "./worker-read-targets.ts";
 import { boundRows } from "./bounded-read-rows.ts";
+import { recordWorkerTargetReadPosition } from "./worker-target-read-position.ts";
 import { readTaskHistory } from "./task-history-projection.ts";
 import type { DatabaseSync, SQLInputValue } from "node:sqlite";
 import * as P from "@rah-os/protocol";
@@ -228,6 +229,22 @@ export class WorkerReadService {
           ? page.next(integer(rows.at(-1)!, "event_order"), 1)
           : undefined;
       const nextCursor = direction === "before" ? olderCursor : newerCursor;
+      // Raft's `recordConsumedSeqs` runs on a read: the server now owns what it
+      // last showed this participant for this target, so the Agent never has to
+      // carry it back on a send. MAX() semantics mean an older page never
+      // rewinds the position, and a Thread page never advances its Room.
+      recordWorkerTargetReadPosition(this.#db, {
+        participantId: scope.participantId,
+        roomId: scope.roomId,
+        ...(input.threadId === undefined || input.threadId === null
+          ? {}
+          : { threadId: input.threadId }),
+        throughRoomSeq: rows.reduce(
+          (highest, row) => Math.max(highest, integer(row, "event_order")),
+          0,
+        ),
+        updatedAt: (this.#context.now?.() ?? new Date()).toISOString(),
+      });
       return P.WorkerHistoryResponseSchema.parse({
         messages: rows.map(messageProjectionFromRow),
         frozenThroughRoomSeq: page.ceiling,

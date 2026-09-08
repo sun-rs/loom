@@ -1,5 +1,11 @@
 # RAH OS 文档
 
+发送工具合同结构性移植：[目标寻址、服务端已读位置与按目标草稿恢复，模型不再搬运游标／回执／幂等键／草稿 ID](./audits/2026-09-09-raft-send-facade-structural-port.zh-CN.md)。
+
+最新上游核实：[Raft 当前版本、完整 Agent prompt 与工具合同重新取证](./audits/2026-09-09-raft-upstream-prompt-tool-refresh.zh-CN.md)。稳定版仍为 1.0.18；同版本更新未完成但原服务健康。工具状态管理与 Runtime 通知差异是下一施工依据，不能继续仅补 prompt。
+
+当前修复：[忙时追加消息与原草稿恢复](./audits/2026-09-09-busy-held-send-repair.zh-CN.md)：恢复机制已补齐，明确追加的真实实验通过；原措辞仍漏原回复，整项未签收。
+
 冻结验收：[四类核心验证与忙时原回复阻塞](./audits/2026-09-08-frozen-core-four-class-acceptance.zh-CN.md)。产品 commit `09a244c`；真实模型、记忆、三轮协作、Thread 实时更新及一次执行中恢复通过。忙时 held draft 三次漏原回复，Raft 实景可恢复，尚不能全部签收。
 
 当前修复：[HTML 跨段落引用与回跳](./audits/2026-09-08-html-region-repair.zh-CN.md)。

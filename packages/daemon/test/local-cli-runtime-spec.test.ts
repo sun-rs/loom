@@ -114,6 +114,22 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
     prompt,
     /state.*held.*not published.*acknowledge.*follow-up Activation/isu,
   );
+  assert.match(prompt, /### Sending messages/u);
+  assert.match(
+    prompt,
+    /message-post --target "#room-slug" <<'RAH_MESSAGE_EOF'/u,
+  );
+  assert.match(prompt, /Message content is always read from stdin/u);
+  assert.match(
+    prompt,
+    /--send-draft --target <target>.*with no stdin.*Do not use `--send-draft` when changing content/isu,
+  );
+  assert.match(
+    prompt,
+    /always reuse the exact `target` from the received message/u,
+  );
+  assert.doesNotMatch(prompt, /--held-draft-id/u);
+  assert.doesNotMatch(prompt, /message-post --body/u);
   assert.match(prompt, /send-draft.*rechecks freshness/isu);
   assert.match(prompt, /--anyway.*continueAnywaySuggested/isu);
   assert.match(prompt, /goal.*already complete.*remain silent/isu);

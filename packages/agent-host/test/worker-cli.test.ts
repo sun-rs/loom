@@ -9,6 +9,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import { Readable } from "node:stream";
 
 import { runWorkerCliCommand } from "../src/index.ts";
 
@@ -989,6 +990,288 @@ test("Worker message CLI exposes explicit Thread and top-level targets without a
       ),
       0,
     );
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("Freshness hold is an unsuccessful send with executable review and resend guidance", async () => {
+  const state = fixture();
+  try {
+    state.runtime.fetch = async () =>
+      new Response(
+        JSON.stringify({
+          state: "held",
+          heldDraftId: "held-original",
+          recoveryTarget: "#room:thread-1",
+          seenUpToSeq: 12,
+          newMessageCount: 3,
+          shownMessageCount: 1,
+          omittedMessageCount: 2,
+          reholdCount: 1,
+          continueAnywaySuggested: false,
+          newerMessages: [
+            {
+              actorId: "participant-human",
+              roomSeq: 12,
+              payload: { body: "Also answer the follow-up" },
+            },
+          ],
+        }),
+      );
+    const exit = await runWorkerCliCommand(
+      ["worker", "message-post", "--body", "Original result"],
+      state.runtime,
+    );
+    assert.equal(exit, 1, "a saved draft is not a successful send");
+    assert.equal(JSON.parse(state.stdout()).heldDraftId, "held-original");
+    assert.match(state.stderr(), /SEND_HELD_AS_DRAFT/);
+    // Raft's freshness-hold output, ported structurally.
+    assert.match(
+      state.stderr(),
+      /Freshness hold: showing latest 1 of 3 newer messages\./u,
+    );
+    assert.match(
+      state.stderr(),
+      /2 earlier same-target messages omitted from this notice and no longer block this action/u,
+    );
+    assert.match(
+      state.stderr(),
+      /Your message has been saved as a draft\. Review the bounded context shown here, then choose one path\./u,
+    );
+    assert.match(
+      state.stderr(),
+      /\[12\] participant-human: Also answer the follow-up/u,
+    );
+    assert.match(
+      state.stderr(),
+      /rah worker message-post --target '#room:thread-1' <<'RAH_MESSAGE_EOF'/u,
+    );
+    assert.match(
+      state.stderr(),
+      /rah worker message-post --send-draft --target '#room:thread-1'/u,
+    );
+    assert.match(state.stderr(), /You can also choose not to send anything\./u);
+    assert.doesNotMatch(state.stderr(), /--anyway/u);
+    // The whole point of the port: no receipt, cursor, key or draft id.
+    assert.doesNotMatch(state.stderr(), /--context-receipt/u);
+    assert.doesNotMatch(state.stderr(), /--held-draft-id/u);
+    assert.doesNotMatch(state.stderr(), /--idempotency-key/u);
+    assert.doesNotMatch(state.stderr(), /--based-on-room-seq/u);
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("repeated holds surface Raft's --anyway paragraph only when the server suggests it", async () => {
+  const state = fixture();
+  try {
+    state.runtime.fetch = async () =>
+      new Response(
+        JSON.stringify({
+          state: "held",
+          heldDraftId: "held-again",
+          recoveryTarget: "#room",
+          seenUpToSeq: 20,
+          newMessageCount: 1,
+          shownMessageCount: 1,
+          omittedMessageCount: 0,
+          reholdCount: 3,
+          continueAnywaySuggested: true,
+          newerMessages: [],
+        }),
+      );
+    assert.equal(
+      await runWorkerCliCommand(
+        ["worker", "message-post", "--body", "Original result"],
+        state.runtime,
+      ),
+      1,
+    );
+    assert.match(
+      state.stderr(),
+      /Freshness hold: showing latest 1 of 1 newer message\./u,
+    );
+    assert.doesNotMatch(state.stderr(), /omitted from this notice/u);
+    assert.match(
+      state.stderr(),
+      /If repeated updates keep blocking the same draft and this is still the right reply, you may use:\n {2}rah worker message-post --send-draft --anyway --target '#room'/u,
+    );
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("Raft-shaped send reads the body from stdin and needs only a target", async () => {
+  const state = fixture();
+  try {
+    assert.equal(
+      await runWorkerCliCommand(
+        ["worker", "message-post", "--target", "#ops"],
+        {
+          ...state.runtime,
+          stdin: Readable.from(["The original result\n"]),
+        },
+      ),
+      0,
+    );
+    assert.deepEqual(state.requests[0]?.body, {
+      body: "The original result",
+      channel: "#ops",
+    });
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("Raft-shaped draft recovery needs only a target and rejects stdin content", async () => {
+  const state = fixture();
+  try {
+    assert.equal(
+      await runWorkerCliCommand(
+        ["worker", "message-post", "--send-draft", "--target", "#ops"],
+        { ...state.runtime, stdin: Readable.from([]) },
+      ),
+      0,
+    );
+    assert.deepEqual(state.requests[0]?.body, {
+      channel: "#ops",
+      sendDraft: true,
+    });
+    assert.equal(
+      await runWorkerCliCommand(
+        ["worker", "message-post", "--send-draft", "--target", "#ops"],
+        { ...state.runtime, stdin: Readable.from(["A revised reply\n"]) },
+      ),
+      1,
+    );
+    assert.equal(
+      state.requests.length,
+      1,
+      "a rejected send never reached the server",
+    );
+    assert.match(
+      state.stderr(),
+      /--send-draft sends the saved draft unchanged and must not read message content from stdin/u,
+    );
+    assert.match(state.stderr(), /rah worker message-post --target "#ops"/u);
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("an explicit --body still wins over stdin, and an empty send is refused", async () => {
+  const state = fixture();
+  try {
+    assert.equal(
+      await runWorkerCliCommand(
+        ["worker", "message-post", "--target", "#ops", "--body", "Explicit"],
+        { ...state.runtime, stdin: Readable.from(["Ignored stdin\n"]) },
+      ),
+      0,
+    );
+    assert.equal(
+      (state.requests[0]?.body as Record<string, unknown>).body,
+      "Explicit",
+    );
+    assert.equal(
+      await runWorkerCliCommand(
+        ["worker", "message-post", "--target", "#ops"],
+        {
+          ...state.runtime,
+          stdin: Readable.from(["   \n"]),
+        },
+      ),
+      1,
+    );
+    assert.match(state.stderr(), /message content is required/u);
+    assert.equal(state.requests.length, 1);
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("protocol flags stay accepted pass-throughs on the Raft-shaped send", async () => {
+  const state = fixture();
+  try {
+    assert.equal(
+      await runWorkerCliCommand(
+        [
+          "worker",
+          "message-post",
+          "--target",
+          "#ops",
+          "--context-receipt",
+          "receipt-1",
+          "--based-on-room-seq",
+          "9",
+          "--idempotency-key",
+          "explicit-key",
+          "--body",
+          "Explicit protocol send",
+        ],
+        state.runtime,
+      ),
+      0,
+    );
+    assert.deepEqual(state.requests[0]?.body, {
+      basedOnRoomSeq: 9,
+      body: "Explicit protocol send",
+      channel: "#ops",
+      contextReceipt: "receipt-1",
+      idempotencyKey: "explicit-key",
+    });
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("A possible thread target mismatch is an unsuccessful send offering exactly two paths", async () => {
+  const state = fixture();
+  try {
+    state.runtime.fetch = async () =>
+      new Response(
+        JSON.stringify({
+          activationIds: [],
+          state: "target_confirmation_required",
+          reason: "thread_context_target_mismatch",
+          heldDraftId: "held-confirm",
+          parentTarget: "#room",
+          threadTarget: "#room:thread-1",
+          threadSeq: 12,
+        }),
+      );
+    const exit = await runWorkerCliCommand(
+      ["worker", "message-post", "--target", "#room", "--body", "Conclusion"],
+      state.runtime,
+    );
+    assert.equal(exit, 1, "an unconfirmed target is not a successful send");
+    assert.equal(JSON.parse(state.stdout()).heldDraftId, "held-confirm");
+    assert.match(
+      state.stderr(),
+      /THREAD_CONTEXT_TARGET_CONFIRMATION_REQUIRED/u,
+    );
+    assert.match(
+      state.stderr(),
+      /Possible thread target mismatch: your latest read context under '#room' is '#room:thread-1', but this send targets '#room' top-level\./u,
+    );
+    assert.match(
+      state.stderr(),
+      /This guard is intentionally narrow: moving a thread conclusion to the parent channel can be correct, but it is uncommon enough to confirm once\./u,
+    );
+    assert.match(
+      state.stderr(),
+      /If this reply belongs in the thread, send the message to the thread target instead:\n {2}rah worker message-post --target '#room:thread-1' <<'RAH_MESSAGE_EOF'/u,
+    );
+    assert.match(
+      state.stderr(),
+      /If the top-level channel message is intentional, send the saved draft unchanged:\n {2}rah worker message-post --send-draft --target '#room'/u,
+    );
+    assert.match(state.stderr(), /No message was sent\./u);
+    assert.doesNotMatch(state.stderr(), /SEND_HELD_AS_DRAFT/u);
+    assert.doesNotMatch(state.stderr(), /--held-draft-id/u);
+    assert.doesNotMatch(state.stderr(), /--idempotency-key/u);
+    assert.doesNotMatch(state.stderr(), /--context-receipt/u);
   } finally {
     rmSync(state.directory, { force: true, recursive: true });
   }

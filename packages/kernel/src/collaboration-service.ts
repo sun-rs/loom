@@ -1,3 +1,5 @@
+import { heldDraftRecoveryTarget } from "./held-draft-recovery.ts";
+import { recordWorkerTargetReadPosition } from "./worker-target-read-position.ts";
 import type { DatabaseSync } from "node:sqlite";
 
 import {
@@ -1656,6 +1658,7 @@ export class CollaborationService {
       basedOnRoomSeq: number;
       body?: string;
       continueAnyway?: boolean;
+      freshnessFloorSeq?: number;
       heldDraftId?: string;
       idempotencyKey: string;
       recipients: MessageRecipient[];
@@ -1677,6 +1680,15 @@ export class CollaborationService {
     }
     if (!Number.isInteger(input.basedOnRoomSeq) || input.basedOnRoomSeq < 0) {
       throw new Error("basedOnRoomSeq must be a non-negative integer");
+    }
+    // The freshness floor is "what this participant had already seen in this
+    // target". It equals basedOnRoomSeq for every client-presented context, and
+    // differs only on the server-derived route, where basedOnRoomSeq must stay
+    // stable across an identical retry while the floor may include the
+    // participant's own already-published messages in the same target.
+    const freshnessFloorSeq = input.freshnessFloorSeq ?? input.basedOnRoomSeq;
+    if (!Number.isInteger(freshnessFloorSeq) || freshnessFloorSeq < 0) {
+      throw new Error("freshnessFloorSeq must be a non-negative integer");
     }
     const attachments = input.attachments ?? [];
     const createdAt = this.#timestamp();
@@ -1730,7 +1742,7 @@ export class CollaborationService {
           input.threadId ||
         (input.heldDraftId === undefined &&
           text(previousHeld, "body") !== input.body?.trim()) ||
-        integer(previousHeld, "based_on_room_seq") !== input.basedOnRoomSeq ||
+        integer(previousHeld, "based_on_room_seq") !== freshnessFloorSeq ||
         (nullableText(previousHeld, "source_held_draft_id") ?? undefined) !==
           input.heldDraftId
       ) {
@@ -1792,10 +1804,7 @@ export class CollaborationService {
       input.roomId,
       input.threadId,
     );
-    if (
-      latestTargetSeq > input.basedOnRoomSeq &&
-      input.continueAnyway !== true
-    ) {
+    if (latestTargetSeq > freshnessFloorSeq && input.continueAnyway !== true) {
       const heldDraftId = this.#createId("held_draft");
       const reholdCount =
         sourceHeldDraft === undefined
@@ -1818,7 +1827,7 @@ export class CollaborationService {
           input.threadId ?? null,
           body,
           JSON.stringify(attachments),
-          input.basedOnRoomSeq,
+          freshnessFloorSeq,
           latestTargetSeq,
           input.idempotencyKey,
           input.heldDraftId ?? null,
@@ -1967,10 +1976,23 @@ export class CollaborationService {
       )
       .get(...parameters, basedOnRoomSeq, seenUpToSeq)!;
     const newMessageCount = integer(countRow, "count");
+    // Raft records the consumed sequence on a hold as well as on a read
+    // (`handleMessageSend`, held branch): the hold showed this participant the
+    // messages it had not seen, so the target's read position advances here —
+    // and only here — as part of sending.
+    recordWorkerTargetReadPosition(this.#database, {
+      participantId: text(row, "participant_id"),
+      roomId,
+      ...(threadId === undefined ? {} : { threadId }),
+      throughRoomSeq: seenUpToSeq,
+      updatedAt: this.#timestamp(),
+    });
+    const recoveryTarget = heldDraftRecoveryTarget(this.#database, row);
     return {
       activationIds: [],
       basedOnRoomSeq,
       heldDraftId: text(row, "held_draft_id"),
+      ...(recoveryTarget === undefined ? {} : { recoveryTarget }),
       newMessageCount,
       newerMessages: newerRows.map((eventRow) =>
         this.#events.eventFromRow(eventRow),
@@ -1978,6 +2000,7 @@ export class CollaborationService {
       omittedMessageCount: Math.max(0, newMessageCount - newerRows.length),
       reason: "newer_messages_available",
       reholdCount: integer(row, "rehold_count"),
+      shownMessageCount: newerRows.length,
       continueAnywaySuggested:
         integer(row, "rehold_count") >= CONTINUE_ANYWAY_REHOLD_THRESHOLD,
       seenUpToSeq,

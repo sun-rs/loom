@@ -1078,6 +1078,7 @@ test("Worker API contracts are strict protocol-owned schemas", () => {
     omittedMessageCount: 0,
     reason: "newer_messages_available",
     reholdCount: 1,
+    shownMessageCount: 1,
     continueAnywaySuggested: false,
     seenUpToSeq: 4,
     state: "held",

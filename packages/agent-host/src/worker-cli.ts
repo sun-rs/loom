@@ -1,3 +1,8 @@
+import {
+  MESSAGE_HEREDOC_DELIMITER,
+  workerHeldSendGuidance,
+  workerTargetConfirmationGuidance,
+} from "./worker-held-send.ts";
 import carrierPackage from "../package.json" with { type: "json" };
 import { parseWorkerChannelAttentionCommand } from "./worker-channel-attention-cli.ts";
 import {
@@ -39,6 +44,7 @@ const MAX_TOKEN_BYTES = 65_536;
 const MAX_RESPONSE_BYTES = 512 * 1_024;
 const MAX_ARGUMENT_BYTES = 64 * 1_024;
 const REQUEST_TIMEOUT_MS = 30_000;
+const STDIN_FIRST_BYTE_WINDOW_MS = 250;
 const ARTIFACT_REQUEST_TIMEOUT_MS = 120_000;
 
 export type WorkerCliRuntime = Readonly<{
@@ -47,9 +53,84 @@ export type WorkerCliRuntime = Readonly<{
     input: string,
     init: RequestInit,
   ) => Promise<Pick<Response, "body" | "ok" | "status">>;
+  /** Raft reads message content from stdin; RAH keeps `--body` as a fallback. */
+  stdin?: NodeJS.ReadableStream;
   stderr: { write(value: string): unknown };
   stdout: { write(value: string): unknown };
 }>;
+
+/**
+ * Raft's `resolveSendContent`: the body arrives on stdin, bounded and UTF-8
+ * decoded exactly like every other CLI input. A TTY or an unreadable stream is
+ * treated as empty so a facade command can never block on a missing heredoc.
+ */
+async function readStdinText(
+  runtime: WorkerCliRuntime,
+  maximumBytes = MAX_ARGUMENT_BYTES,
+): Promise<string> {
+  const stream = runtime.stdin ?? process.stdin;
+  if (
+    stream === undefined ||
+    (stream as { isTTY?: boolean }).isTTY === true ||
+    (stream as { readable?: boolean }).readable === false
+  )
+    return "";
+  const chunks = await new Promise<Buffer[]>((resolve, reject) => {
+    const collected: Buffer[] = [];
+    let total = 0;
+    let settled = false;
+    // An inherited stdin that never receives a heredoc must not block the
+    // facade, so a first-byte window makes "no content" observable.
+    const deadline = setTimeout(() => {
+      if (collected.length === 0) settle(() => resolve([]));
+    }, STDIN_FIRST_BYTE_WINDOW_MS);
+    const settle = (finish: () => void) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(deadline);
+      stream.removeListener("data", onData);
+      stream.removeListener("end", onEnd);
+      stream.removeListener("error", onError);
+      stream.pause();
+      finish();
+    };
+    function onData(chunk: Buffer | string) {
+      const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      total += bytes.byteLength;
+      if (total > maximumBytes) {
+        settle(() =>
+          reject(
+            new Error(
+              `message content on stdin must not exceed ${String(maximumBytes)} bytes`,
+            ),
+          ),
+        );
+        return;
+      }
+      collected.push(bytes);
+    }
+    function onEnd() {
+      settle(() => resolve(collected));
+    }
+    function onError(error: unknown) {
+      if (hasCode(error, "EAGAIN") || hasCode(error, "EOF")) {
+        settle(() => resolve([]));
+        return;
+      }
+      settle(() => reject(error));
+    }
+    stream.on("data", onData);
+    stream.on("end", onEnd);
+    stream.on("error", onError);
+  });
+  const text = new TextDecoder("utf-8", { fatal: true }).decode(
+    Buffer.concat(chunks),
+  );
+  if (text.includes("\0")) {
+    throw new Error("message content on stdin must not contain NUL bytes");
+  }
+  return text;
+}
 
 export async function runWorkerCliCommand(
   arguments_: readonly string[],
@@ -175,7 +256,14 @@ export async function runWorkerCliCommand(
         ? parseAgentInboxCommand(arguments_)
         : arguments_[0] === "reminder"
           ? parseReminderCommand(arguments_)
-          : parseCommand(arguments_);
+          : parseCommand(
+              arguments_,
+              arguments_[0] === "worker" &&
+                arguments_[1] === "message-post" &&
+                !arguments_.includes("--body")
+                ? await readStdinText(runtime)
+                : "",
+            );
     let result = await send(request);
     if (request.path === "/v1/worker/version")
       result = {
@@ -193,6 +281,15 @@ export async function runWorkerCliCommand(
       });
     }
     runtime.stdout.write(`${JSON.stringify(result)}\n`);
+    if (request.path === "/v1/worker/messages/post") {
+      const guidance =
+        workerHeldSendGuidance(result) ??
+        workerTargetConfirmationGuidance(result);
+      if (guidance) {
+        runtime.stderr.write(guidance);
+        return 1;
+      }
+    }
     return 0;
   } catch (error) {
     runtime.stderr.write(`rah: ${errorMessage(error)}\n`);
@@ -439,7 +536,10 @@ function parseAgentInboxCommand(arguments_: readonly string[]) {
   throw new Error("usage: rah agent inbox check|ack");
 }
 
-function parseCommand(arguments_: readonly string[]): {
+function parseCommand(
+  arguments_: readonly string[],
+  stdinContent = "",
+): {
   body: Record<string, unknown>;
   path: string;
 } {
@@ -536,13 +636,29 @@ function parseCommand(arguments_: readonly string[]): {
         options["top-level"] !== undefined
       )
         throw new Error("--thread-id and --top-level are mutually exclusive");
-      const targetContext =
-        options.target === undefined && options["context-receipt"] === undefined
+      // Raft's shape: `--target` alone addresses the send. A receipt, cursor,
+      // key or draft id remains accepted but is derived by the server when the
+      // model does not present one.
+      const targetContext = {
+        ...(options.target === undefined
+          ? {}
+          : { channel: boundedText(options, "target", 500) }),
+        ...(options["context-receipt"] === undefined
           ? {}
           : {
-              channel: boundedText(options, "target", 500),
               contextReceipt: boundedText(options, "context-receipt", 4096),
-            };
+            }),
+      };
+      const causalContext = {
+        ...(options["based-on-room-seq"] === undefined
+          ? {}
+          : {
+              basedOnRoomSeq: nonnegativeInteger(options, "based-on-room-seq"),
+            }),
+        ...(options["idempotency-key"] === undefined
+          ? {}
+          : { idempotencyKey: boundedText(options, "idempotency-key", 512) }),
+      };
       const replyTarget =
         options["top-level"] === "true"
           ? { threadId: null }
@@ -561,14 +677,24 @@ function parseCommand(arguments_: readonly string[]): {
         if (options.body !== undefined) {
           throw new Error("--body cannot be combined with --send-draft");
         }
+        // Raft's `rejectSendDraftStdin`: revised content is a normal send.
+        if (stdinContent.trim().length > 0) {
+          throw new Error(
+            `--send-draft sends the saved draft unchanged and must not read message content from stdin. To send revised content, send it normally:
+  rah worker message-post --target "${options.target ?? "TARGET"}" <<'${MESSAGE_HEREDOC_DELIMITER}'
+  message body
+  ${MESSAGE_HEREDOC_DELIMITER}`,
+          );
+        }
         return {
           body: {
             ...replyTarget,
             ...targetContext,
             ...(options.anyway === "true" ? { anyway: true } : {}),
-            basedOnRoomSeq: nonnegativeInteger(options, "based-on-room-seq"),
-            heldDraftId: boundedText(options, "held-draft-id", 512),
-            idempotencyKey: boundedText(options, "idempotency-key", 512),
+            ...causalContext,
+            ...(options["held-draft-id"] === undefined
+              ? {}
+              : { heldDraftId: boundedText(options, "held-draft-id", 512) }),
             sendDraft: true,
           },
           path: "/v1/worker/messages/post",
@@ -579,6 +705,22 @@ function parseCommand(arguments_: readonly string[]): {
       }
       if (options["held-draft-id"] !== undefined) {
         throw new Error("--held-draft-id requires --send-draft");
+      }
+      // Precedence: an explicit `--body` wins, otherwise the heredoc on stdin.
+      const composedBody =
+        options.body === undefined
+          ? stdinContent.trim()
+          : boundedText(options, "body");
+      if (
+        composedBody.length === 0 &&
+        options["attachment-ids"] === undefined
+      ) {
+        throw new Error(
+          `message content is required: pipe the body on stdin, or pass --body TEXT.
+  rah worker message-post --target "${options.target ?? "TARGET"}" <<'${MESSAGE_HEREDOC_DELIMITER}'
+  message body
+  ${MESSAGE_HEREDOC_DELIMITER}`,
+        );
       }
       return {
         body: {
@@ -600,12 +742,8 @@ function parseCommand(arguments_: readonly string[]): {
                   .split(",")
                   .map((id) => id.trim()),
               }),
-          basedOnRoomSeq: nonnegativeInteger(options, "based-on-room-seq"),
-          ...(options.body === undefined &&
-          options["attachment-ids"] !== undefined
-            ? {}
-            : { body: boundedText(options, "body") }),
-          idempotencyKey: boundedText(options, "idempotency-key", 512),
+          ...causalContext,
+          ...(composedBody.length === 0 ? {} : { body: composedBody }),
         },
         path: "/v1/worker/messages/post",
       };
@@ -1295,8 +1433,9 @@ rah worker task-history --task-id ID [--target TARGET] [--limit N] [--cursor CUR
 Read tools expose current facts in already joined Rooms and DMs without acknowledging Inbox or authorizing newer mutation cursors. Task lists show current projections, not MVCC snapshots.
 rah worker message-search [--query TEXT] [--target TARGET] [--sender @HANDLE|ID] [--sender-id ID] [--after ISO_TIMESTAMP] [--before ISO_TIMESTAMP] [--sort relevance|recent] [--limit N] [--cursor CURSOR]
 rah worker message-react --message-id ID --emoji EMOJI --active true|false --based-on-room-seq N --idempotency-key KEY
-rah worker message-post [--target TARGET --context-receipt RECEIPT] [--body TEXT] [--attachment-ids ID,ID] [--thread-id ID | --top-level] --based-on-room-seq N --idempotency-key KEY
-rah worker message-post --send-draft --held-draft-id ID [--anyway] --based-on-room-seq N --idempotency-key KEY
+rah worker message-post --target TARGET <<'${MESSAGE_HEREDOC_DELIMITER}' [--attachment-ids ID,ID] [--thread-id ID | --top-level]
+rah worker message-post --send-draft --target TARGET [--anyway]
+Message content is read from stdin; use a heredoc so quotes, backticks and newlines stay literal. --send-draft takes no stdin: it sends the saved draft unchanged. Never use --send-draft when changing content.
 rah worker thread-unfollow --thread-id ID --based-on-room-seq N --idempotency-key KEY
 rah worker attachment-publish --path FILE [--target TARGET --context-receipt RECEIPT] [--filename NAME] [--mime-type TYPE] --idempotency-key KEY
 rah worker attachment-comments --attachment-id ID [--limit N] [--before-room-seq N]

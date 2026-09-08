@@ -13,7 +13,7 @@ import { IdempotencyConflictError } from "./errors.ts";
 export function workerMessageAttachments(context: {
   database: DatabaseSync;
   roomId: string;
-  input: WorkerMessagePostRequest;
+  input: WorkerMessagePostRequest & { idempotencyKey: string };
   eventFromRow: (row: Row) => RoomEvent;
   resolveLive: (ids: readonly string[]) => Attachment[];
 }) {
