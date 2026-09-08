@@ -1,5 +1,7 @@
 # RAH OS 文档
 
+冻结验收：[四类核心验证与忙时原回复阻塞](./audits/2026-09-08-frozen-core-four-class-acceptance.zh-CN.md)。产品 commit `09a244c`；真实模型、记忆、三轮协作、Thread 实时更新及一次执行中恢复通过。忙时 held draft 三次漏原回复，Raft 实景可恢复，尚不能全部签收。
+
 当前修复：[HTML 跨段落引用与回跳](./audits/2026-09-08-html-region-repair.zh-CN.md)。
 
 最新核实：[HTML 跨段落引用与发布后回跳](./audits/2026-09-08-html-region-official-verification.zh-CN.md)。官网有效矩形、刷新与回跳已实证；本地取文、定位和高亮仍有明确差异。
