@@ -125,3 +125,98 @@ To send the current draft unchanged:
 You can also choose not to send anything.
 ${continueAnyway}`;
 }
+
+/** Raft 1.0.18 `DRAFT_REPLACED_EXCERPT_LIMIT`, verbatim. */
+export const DRAFT_REPLACED_EXCERPT_LIMIT = 400;
+
+/** The body a compose discarded, as reported by the server, or nothing. */
+export function workerReplacedDraftBody(result: unknown): string | undefined {
+  if (!result || typeof result !== "object") return undefined;
+  const replaced = (result as Record<string, unknown>).replacedDraft;
+  if (!replaced || typeof replaced !== "object") return undefined;
+  const body = (replaced as Record<string, unknown>).body;
+  return typeof body === "string" && body.trim().length > 0 ? body : undefined;
+}
+
+/** Raft's `formatDraftReplacedWarning`, verbatim wording and excerpt rule. */
+export function formatDraftReplacedWarning(
+  target: string,
+  previousContent: string,
+): string {
+  const trimmed = previousContent.trim();
+  const excerpt =
+    trimmed.length > DRAFT_REPLACED_EXCERPT_LIMIT
+      ? `${trimmed.slice(0, DRAFT_REPLACED_EXCERPT_LIMIT)}… (${String(
+          trimmed.length,
+        )} chars total, truncated)`
+      : trimmed;
+  return [
+    `Warning: replacing an unsent draft for ${target}.`,
+    `One draft is kept per target, so the previous body is now discarded.`,
+    `Discarded draft (last copy):`,
+    excerpt,
+  ].join("\n");
+}
+
+/**
+ * RAH adaptation, not upstream. Raft writes the replacement warning only to
+ * stderr. F0909G: a real Agent redirected stderr on `sync`/`acknowledge` but
+ * not on its sends, so a stderr-only notice was invisible and a freshness-held
+ * reply was silently discarded. One stdout line — no body, no second copy of
+ * the discarded text — makes the fact reach a model that captures stdout only.
+ */
+export function workerReplacedDraftNotice(target: string): string {
+  return `Warning: replaced an unsent draft for ${target}; see stderr for the discarded body.\n`;
+}
+
+function messageIdentifier(result: unknown): string | undefined {
+  if (!result || typeof result !== "object") return undefined;
+  const event = (result as Record<string, unknown>).event;
+  if (!event || typeof event !== "object") return undefined;
+  const row = event as Record<string, unknown>;
+  if (typeof row.aggregateId === "string") return row.aggregateId;
+  const payload =
+    typeof row.payload === "object" && row.payload !== null
+      ? (row.payload as Record<string, unknown>)
+      : {};
+  return typeof payload.messageId === "string" ? payload.messageId : undefined;
+}
+
+/**
+ * Raft's success branch of `handleMessageSend`: `Message sent to <target>.
+ * Message ID: <id>` plus the thread reply hint built from the first eight
+ * characters of the message id. A send with no explicit target has no
+ * addressable target to echo, so it reports the delivery without a hint.
+ */
+export function workerSendSuccessOutput(
+  target: string | undefined,
+  result: unknown,
+): string {
+  const messageId = messageIdentifier(result);
+  const sentStatusLine =
+    target === undefined ? "Message sent." : `Message sent to ${target}.`;
+  if (messageId === undefined) return `${sentStatusLine}\n`;
+  const shortId = messageId.slice(0, 8);
+  const replyHint =
+    target === undefined
+      ? ""
+      : ` (to reply in this message's thread, use target "${
+          target.includes(":") ? target : `${target}:${shortId}`
+        }")`;
+  return `${sentStatusLine} Message ID: ${messageId}${replyHint}\n`;
+}
+
+/**
+ * Raft's `renderError` text mode, narrowed to the two typed send refusals: a
+ * short `Error:`/`Code:` summary on stderr while the body that teaches recovery
+ * goes to stdout.
+ */
+export function workerSendErrorSummary(result: unknown): string | undefined {
+  if (!result || typeof result !== "object" || !("state" in result))
+    return undefined;
+  if (result.state === "held")
+    return "Error: Message held as draft; no target delivery occurred.\nCode: SEND_HELD_AS_DRAFT\n";
+  if (result.state === "target_confirmation_required")
+    return "Error: message was NOT sent; no target delivery occurred.\nCode: THREAD_CONTEXT_TARGET_CONFIRMATION_REQUIRED\n";
+  return undefined;
+}

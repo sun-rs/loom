@@ -338,10 +338,29 @@ test("a busy freshness hold is recovered by target alone and never loses the ori
     // the recovery carried nothing but the target.
     const transcript = JSON.parse(
       readFileSync(`${barrierPath}.log`, "utf8"),
-    ) as { args: string[]; status: number; stderr: string }[];
+    ) as { args: string[]; status: number; stderr: string; stdout: string }[];
     assert.equal(transcript.length, 3);
     assert.equal(transcript[0]?.status, 1, "a held send is not a delivery");
-    assert.match(transcript[0]?.stderr ?? "", /SEND_HELD_AS_DRAFT/u);
+    // F0909G regression: the hold guidance must reach stdout. The real agent
+    // redirected stderr only on sync/acknowledge, so a stderr-only hold notice
+    // was invisible and the held original reply was silently discarded.
+    assert.match(transcript[0]?.stdout ?? "", /SEND_HELD_AS_DRAFT/u);
+    assert.match(
+      transcript[0]?.stdout ?? "",
+      /Your message has been saved as a draft\./u,
+    );
+    assert.match(
+      transcript[0]?.stdout ?? "",
+      /rah worker message-post --send-draft --target '#busy-hold-room'/u,
+    );
+    assert.equal(
+      transcript[0]?.stderr,
+      "Error: Message held as draft; no target delivery occurred.\nCode: SEND_HELD_AS_DRAFT\n",
+    );
+    assert.match(
+      transcript[2]?.stdout ?? "",
+      /Message sent to #busy-hold-room\. Message ID: /u,
+    );
     assert.deepEqual(transcript[1]?.args, [
       "message-post",
       "--send-draft",

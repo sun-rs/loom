@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 
 import { RoomKernel } from "@rah-os/kernel";
@@ -32,13 +33,10 @@ const BUSY_HOLD_RUNTIMES = {
   kimi: {
     executable: "kimi",
     modelId: "kimi-code/k3",
-    reasoning: "low",
+    reasoning: "high",
   },
   opencode: {
     executable: "opencode",
-    // Only used when the catalog does not publish `low` for this binding; the
-    // report says which one was actually resolved.
-    fallbackReasoning: "high",
     modelId: "deepseek/deepseek-v4-flash",
     reasoning: "low",
   },
@@ -46,7 +44,6 @@ const BUSY_HOLD_RUNTIMES = {
   string,
   {
     executable: string;
-    fallbackReasoning?: string;
     modelId: string;
     reasoning: string;
   }
@@ -72,14 +69,66 @@ const ACTIVE_MARKER_FILE = `.f0909g-active`;
 const HUMAN_ORIGINAL_REQUEST = `${EXPERIMENT} BUSY: 请用终端执行 touch ${ACTIVE_MARKER_FILE}; sleep 20 （仅在当前工作区留下实验标记），完成后只回复 ${ORIGINAL_MARKER}，不创建 Task。`;
 
 /**
- * The original follow-up wording that previously lost the held draft. It is a
- * plain additional question. It deliberately does NOT carry F0909C/F0909D's
- * strengthened coaching ("this is an independent addition, it neither cancels
- * nor replaces the earlier request, send the original result first"), because
- * that strengthened wording is what made the model pass; re-using it here would
- * silently replace the failing scenario with the passing one.
+ * The retired follow-up wording (F0909B/F0909E). It is preserved verbatim as
+ * evidence and is selectable with `RAH_REAL_BUSY_HOLD_WORDING=ambiguous`, but it
+ * is OBSERVATION ONLY — see `AMBIGUOUS_WORDING_EVIDENCE`. `只回复 …，不重复上条
+ * 回复` is read by real models as "send the follow-up answer and nothing else",
+ * so under this wording dropping the unsent original result is a defensible
+ * reading of the Human's own words, and upstream Raft likewise permits replacing
+ * a held draft. Asserting both markers here would test a judgment call, not a
+ * RAH mechanism.
  */
-const HUMAN_FOLLOW_UP_REQUEST = `${EXPERIMENT} FOLLOWUP: 这是忙时追加消息，请完成当前消息后只回复 ${FOLLOW_UP_MARKER}，不重复上条回复，不创建 Task。`;
+const HUMAN_FOLLOW_UP_REQUEST_AMBIGUOUS = `${EXPERIMENT} FOLLOWUP: 这是忙时追加消息，请完成当前消息后只回复 ${FOLLOW_UP_MARKER}，不重复上条回复，不创建 Task。`;
+
+/**
+ * Three paid runs on 2026-09-09 with the ambiguous wording, all kept:
+ *
+ * 1. OpenCode `deepseek/deepseek-v4-flash` low, state `…/rah-real-busy-hold-0IppKH`.
+ *    The Agent used the new contract (`message-post --target "#agent-council"`
+ *    with a heredoc body), the send was held, `held_message_drafts` kept the
+ *    body `F0909G BUSY DONE`, then a second compose replaced it
+ *    (`state='replaced'`, `resolution_kind='revised'`). The Agent had not
+ *    redirected stderr on its sends and the hold guidance was printed to stderr
+ *    only, so it never saw the hold. Root cause of the stdout port that is now
+ *    committed.
+ * 2. OpenCode `deepseek/deepseek-v4-flash` low, after the stdout fix, state
+ *    `…/rah-real-busy-hold-WYOrkV`. The Agent saw the hold and reasoned:
+ *    "There's a newer follow-up message at seq 8 … The latest message is seq 8,
+ *    which supersedes. I should send only 'F0909G FOLLOWUP DONE' … Per
+ *    instructions, an additional message does not cancel an unsent original
+ *    result, but the follow-up says '不重复上条回复' (don't repeat the previous
+ *    reply)". It then replaced the draft deliberately.
+ * 3. Kimi `kimi-code/k3` high, state `…/rah-real-busy-hold-emRa7R`. Same
+ *    outcome: "Instruction from the follow-up: don't repeat the previous reply,
+ *    only reply 'F0909G FOLLOWUP DONE'. So the saved draft 'F0909G BUSY DONE'
+ *    should be replaced." and "per its instruction, I'll replace the draft with
+ *    the follow-up reply."
+ *
+ * Two independent models, one low and one high effort, read the wording the
+ * same way. The self-invented prompt rules that run 2 weighed and overrode were
+ * removed the same day: a tool contract, not prompt coaching, has to carry
+ * behavior.
+ */
+const AMBIGUOUS_WORDING_EVIDENCE =
+  "F0909G runs 1-3 (OpenCode deepseek-v4-flash low x2, Kimi k3 high): the Agent replaced the held draft on purpose";
+
+/**
+ * The wording this gate asserts against. The user's requirement is "no lost
+ * replies when the Human appends work while an Agent is busy", so the appended
+ * request states explicitly that it neither cancels nor replaces the original
+ * request and that both answers are wanted, each as its own message. The
+ * original request is unchanged and the markers are unchanged; only the Human's
+ * intent is made unambiguous, so that what remains under test is the mechanism
+ * (freshness hold + `--send-draft` recovery) rather than a judgment call.
+ */
+const HUMAN_FOLLOW_UP_REQUEST_EXPLICIT = `${EXPERIMENT} FOLLOWUP: 这是忙时追加消息，它不取消、也不替代上一条请求；上一条请求的结果仍然必须发出。请分两条消息回复：第一条照原样只写 ${ORIGINAL_MARKER}，第二条只写 ${FOLLOW_UP_MARKER}。两条缺一不可，不要合并成一条，不要省略任何一条，不创建 Task。`;
+
+const WORDING = (process.env.RAH_REAL_BUSY_HOLD_WORDING ?? "explicit") as
+  "ambiguous" | "explicit";
+const HUMAN_FOLLOW_UP_REQUEST =
+  WORDING === "ambiguous"
+    ? HUMAN_FOLLOW_UP_REQUEST_AMBIGUOUS
+    : HUMAN_FOLLOW_UP_REQUEST_EXPLICIT;
 
 test(
   "opt-in real busy freshness hold republishes the original result and the follow-up exactly once",
@@ -93,8 +142,10 @@ test(
       runtime,
       `RAH_REAL_BUSY_HOLD_CLI must be one of ${Object.keys(BUSY_HOLD_RUNTIMES).join(", ")}; received ${String(process.env.RAH_REAL_BUSY_HOLD_CLI)}`,
     );
-    const fallbackReasoning =
-      "fallbackReasoning" in runtime ? runtime.fallbackReasoning : undefined;
+    assert.ok(
+      WORDING === "ambiguous" || WORDING === "explicit",
+      `RAH_REAL_BUSY_HOLD_WORDING must be "explicit" (default) or "ambiguous"; received ${String(process.env.RAH_REAL_BUSY_HOLD_WORDING)}`,
+    );
 
     const directory = mkdtempSync(join(tmpdir(), "rah-real-busy-hold-"));
     console.log(`RAH_REAL_BUSY_HOLD_STATE ${directory}`);
@@ -159,17 +210,12 @@ test(
         binding,
         `${runtime.executable} catalog did not publish ${runtime.modelId}`,
       );
-      const resolvedReasoning = binding.supportedReasoning.includes(
-        runtime.reasoning,
-      )
-        ? runtime.reasoning
-        : fallbackReasoning;
+      // The authorized matrix is exact: a gate must never quietly spend on a
+      // different reasoning level than the one the user approved.
       assert.ok(
-        resolvedReasoning !== undefined &&
-          binding.supportedReasoning.includes(resolvedReasoning),
-        `${runtime.executable} ${runtime.modelId} publishes neither ${runtime.reasoning} nor a permitted fallback (${binding.supportedReasoning.join(", ")})`,
+        binding.supportedReasoning.includes(runtime.reasoning),
+        `${runtime.executable} ${runtime.modelId} does not publish authorized reasoning ${runtime.reasoning} (published: ${binding.supportedReasoning.join(", ")})`,
       );
-      const reasoningFallbackUsed = resolvedReasoning !== runtime.reasoning;
 
       const catalog = await postJson<{ agents: AgentCatalogEntry[] }>(
         origin,
@@ -208,7 +254,7 @@ test(
           modelIntent: {
             exactBindingIds: [binding.modelBindingId],
             fallback: "disabled",
-            reasoning: resolvedReasoning,
+            reasoning: runtime.reasoning,
             serviceTier: "default",
           },
           role: spec.role,
@@ -274,6 +320,14 @@ test(
       };
       const trajectoryOf = () =>
         agentTrajectory(activeObserver, humanActor, agentDefinitionId);
+      // The two mechanism facts, read from the canonical state DB and the
+      // recorded trajectory rather than from the published bodies: a run that
+      // never held anything, or that recovered by retyping the original by
+      // hand, would otherwise pass this gate for the wrong reason.
+      const heldDraftsOf = () => heldMessageDrafts(databasePath, agentId);
+      const originalHeldDraftsOf = () =>
+        heldDraftsOf().filter((draft) => draft.body.includes(ORIGINAL_MARKER));
+      const sendDraftInvocationsOf = () => sendDraftInvocations(trajectoryOf());
 
       let reported = false;
       const publishReport = () => {
@@ -301,6 +355,19 @@ test(
             samples: [],
           };
         }
+        let heldDrafts: ReturnType<typeof heldMessageDrafts> = [];
+        let heldDraftsError: string | undefined;
+        try {
+          heldDrafts = heldDraftsOf();
+        } catch (error) {
+          heldDraftsError = String(error);
+        }
+        let sendDraftCalls: ReturnType<typeof sendDraftInvocations> = [];
+        try {
+          sendDraftCalls = sendDraftInvocationsOf();
+        } catch {
+          sendDraftCalls = [];
+        }
         console.log(
           `RAH_REAL_BUSY_HOLD_REPORT ${JSON.stringify(
             {
@@ -313,6 +380,17 @@ test(
                 messageId: message.messageId,
                 roomSeq: message.roomSeq,
               })),
+              // What the Agent decided to do with the held original result:
+              // `sent_unchanged` is the recovery this gate is about, `revised`
+              // is the deliberate replacement observed in F0909G runs 1-3.
+              agentDecision: heldDrafts
+                .filter((draft) => draft.body.includes(ORIGINAL_MARKER))
+                .map((draft) => ({
+                  heldDraftId: draft.heldDraftId,
+                  reholdCount: draft.reholdCount,
+                  resolutionKind: draft.resolutionKind,
+                  state: draft.state,
+                })),
               cli: RUNTIME_KEY,
               followUpMarker: {
                 count: followUpCount,
@@ -329,6 +407,14 @@ test(
                     : followUpCount === 0
                       ? "follow-up"
                       : null,
+              heldDrafts: heldDrafts.map((draft) => ({
+                body: draft.body.slice(0, 200),
+                heldDraftId: draft.heldDraftId,
+                reholdCount: draft.reholdCount,
+                resolutionKind: draft.resolutionKind,
+                state: draft.state,
+              })),
+              ...(heldDraftsError === undefined ? {} : { heldDraftsError }),
               messagePost: sendSignals,
               modelId: runtime.modelId,
               originalMarker: {
@@ -336,15 +422,19 @@ test(
                 exactlyOnce: originalCount === 1,
                 marker: ORIGINAL_MARKER,
               },
-              reasoning: resolvedReasoning,
-              reasoningFallbackUsed,
+              reasoning: runtime.reasoning,
               runAttempts: attemptsOf().map((attempt) => ({
                 exitCode: attempt.exitCode ?? null,
                 runAttemptId: attempt.runAttemptId,
                 state: attempt.state,
               })),
+              sendDraftRecovery: sendDraftCalls,
               stateDirectory: directory,
               wallTimeMs: Date.now() - startedAt,
+              wording: WORDING,
+              ...(WORDING === "ambiguous"
+                ? { wordingEvidence: AMBIGUOUS_WORDING_EVIDENCE }
+                : {}),
             },
             undefined,
             2,
@@ -414,16 +504,26 @@ test(
 
         // 4. Both halves must be published, each exactly once, with the Agent
         //    quiescent. No retry loop: one honest sample per run.
-        await waitForOutcome({
-          deadline: gateDeadline,
-          diagnose,
-          label: "both the original result and the follow-up answer",
-          stalled: allActivationsTerminal,
-          succeeded: () =>
-            markerCount(ORIGINAL_MARKER) >= 1 &&
-            markerCount(FOLLOW_UP_MARKER) >= 1 &&
-            agentsIdle(),
-        });
+        //    Under the retired ambiguous wording there is nothing to wait for
+        //    beyond quiescence: the Human's own words permit dropping the
+        //    original, so that variant only observes and reports.
+        if (WORDING === "ambiguous")
+          await waitForQuiescence({
+            deadline: gateDeadline,
+            diagnose,
+            settled: () => allActivationsTerminal() && agentsIdle(),
+          });
+        else
+          await waitForOutcome({
+            deadline: gateDeadline,
+            diagnose,
+            label: "both the original result and the follow-up answer",
+            stalled: allActivationsTerminal,
+            succeeded: () =>
+              markerCount(ORIGINAL_MARKER) >= 1 &&
+              markerCount(FOLLOW_UP_MARKER) >= 1 &&
+              agentsIdle(),
+          });
         // Infrastructure facts.
         const activations = activationsOf();
         assert.ok(activations.length > 0);
@@ -441,6 +541,29 @@ test(
             `RunAttempt ${attempt.runAttemptId} exited ${String(attempt.exitCode)} (${attempt.state})`,
           );
 
+        if (WORDING === "ambiguous") {
+          // Observation only. F0909G runs 1-3 (see AMBIGUOUS_WORDING_EVIDENCE)
+          // showed two independent models — OpenCode deepseek-v4-flash at low
+          // effort twice and Kimi k3 at high effort once — reading
+          // `只回复 …，不重复上条回复` as permission to replace the held
+          // original. That is a judgment the Human's own words invite, not a
+          // mechanism defect, so this variant asserts no business outcome; the
+          // Agent's decision is in RAH_REAL_BUSY_HOLD_REPORT.agentDecision.
+          console.log(
+            `RAH_REAL_BUSY_HOLD_OBSERVATION ${JSON.stringify({
+              evidence: AMBIGUOUS_WORDING_EVIDENCE,
+              followUpMarkerCount: markerCount(FOLLOW_UP_MARKER),
+              heldOriginalDrafts: originalHeldDraftsOf().map((draft) => ({
+                resolutionKind: draft.resolutionKind,
+                state: draft.state,
+              })),
+              originalMarkerCount: markerCount(ORIGINAL_MARKER),
+              sendDraftInvocations: sendDraftInvocationsOf().length,
+            })}`,
+          );
+          return;
+        }
+
         // The one business fact this batch is about.
         assert.equal(
           markerCount(ORIGINAL_MARKER),
@@ -451,6 +574,31 @@ test(
           markerCount(FOLLOW_UP_MARKER),
           1,
           `the follow-up marker "${FOLLOW_UP_MARKER}" must appear in exactly one Agent message`,
+        );
+
+        // The mechanism, not just the outcome. Without these, an Agent that was
+        // never held — or one that lost the draft and simply retyped the
+        // original result — would satisfy the marker counts above.
+        const originalHeldDrafts = originalHeldDraftsOf();
+        assert.ok(
+          originalHeldDrafts.length > 0,
+          `no held_message_drafts row for this Agent carried "${ORIGINAL_MARKER}": the run never produced a real freshness hold; ${diagnose()}`,
+        );
+        // Ledger truth, not trajectory text: only `--send-draft` resolves a held
+        // draft as `sent_unchanged`, so this proves the original result was
+        // republished through the tool rather than retyped. The trajectory
+        // command text is corroborating evidence only — it is CLI-shaped, and
+        // Kimi's ACP frames carry structured rawInput rather than the shell
+        // command line, so requiring it would fail a run that actually passed
+        // (observed 2026-09-09, state …-fuv591: both markers published, draft
+        // resolution_kind `sent_unchanged`, zero message-post trajectory rows).
+        const recovered = originalHeldDrafts.filter(
+          (draft) => draft.resolutionKind === "sent_unchanged",
+        );
+        const recoveries = sendDraftInvocationsOf();
+        assert.ok(
+          recovered.length > 0,
+          `no held draft carrying "${ORIGINAL_MARKER}" was resolved as sent_unchanged: the original result was not republished through --send-draft; ${diagnose()}`,
         );
       } finally {
         publishReport();
@@ -500,6 +648,76 @@ function messagePostSignals(activities: readonly RuntimeTrajectoryRecord[]): {
     nonzeroObserved,
     samples: samples.slice(0, 20),
   };
+}
+
+/**
+ * `--send-draft` recoveries taken from recorded tool invocations only. Tool
+ * output is deliberately not searched: the hold guidance itself prints the
+ * `message-post --send-draft --target …` line, so matching free text would let
+ * a run that merely READ the guidance stand in for one that followed it.
+ */
+function sendDraftInvocations(
+  activities: readonly RuntimeTrajectoryRecord[],
+): { observedAt: string; toolInput: string; toolName: string }[] {
+  const invocations: {
+    observedAt: string;
+    toolInput: string;
+    toolName: string;
+  }[] = [];
+  for (const activity of activities) {
+    const entry = activity.entry;
+    if (entry.kind !== "tool_start") continue;
+    const toolInput = entry.toolInput ?? "";
+    if (!toolInput.includes("message-post")) continue;
+    if (!toolInput.includes("--send-draft")) continue;
+    invocations.push({
+      observedAt: activity.observedAt,
+      toolInput: toolInput.slice(0, 400),
+      toolName: entry.toolName,
+    });
+  }
+  return invocations;
+}
+
+/**
+ * The canonical hold evidence: every draft row this Agent ever produced, in the
+ * same state DB the daemon writes. Rows survive their resolution (`state` plus
+ * `resolution_kind`), so this reads both "a hold happened" and "what the Agent
+ * decided to do with it".
+ */
+function heldMessageDrafts(
+  databasePath: string,
+  participantId: string,
+): {
+  body: string;
+  heldDraftId: string;
+  reholdCount: number;
+  resolutionKind: string | null;
+  state: string;
+}[] {
+  const database = new DatabaseSync(databasePath, { readOnly: true });
+  try {
+    return database
+      .prepare(
+        `SELECT held_draft_id, body, state, resolution_kind, rehold_count
+         FROM held_message_drafts
+         WHERE participant_id = ?
+         ORDER BY created_at`,
+      )
+      .all(participantId)
+      .map((row) => ({
+        body: String(row.body ?? ""),
+        heldDraftId: String(row.held_draft_id ?? ""),
+        reholdCount: Number(row.rehold_count ?? 0),
+        resolutionKind:
+          row.resolution_kind === null || row.resolution_kind === undefined
+            ? null
+            : String(row.resolution_kind),
+        state: String(row.state ?? ""),
+      }));
+  } finally {
+    database.close();
+  }
 }
 
 function agentTrajectory(
@@ -588,6 +806,31 @@ async function waitUntil(
     if (Date.now() >= deadline)
       throw new Error("real busy-hold gate timed out");
     await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+}
+
+/**
+ * Waits for the Agent to be done, whatever it decided. Used by the retired
+ * ambiguous wording, which has no business outcome to wait for: a phase
+ * boundary can briefly look terminal, so the settled state must persist.
+ */
+async function waitForQuiescence(input: {
+  deadline: number;
+  diagnose: () => string;
+  settled: () => boolean;
+}): Promise<void> {
+  let settledSince: number | undefined;
+  for (;;) {
+    const now = Date.now();
+    if (input.settled()) {
+      settledSince ??= now;
+      if (now - settledSince >= STALL_CONFIRM_MS) return;
+    } else settledSince = undefined;
+    if (now >= input.deadline)
+      throw new Error(
+        `real busy-hold gate timed out waiting for the Agent to settle: ${input.diagnose()}`,
+      );
+    await new Promise((resolve) => setTimeout(resolve, 500));
   }
 }
 

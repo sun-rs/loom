@@ -461,28 +461,21 @@ if (mode === "trajectory") {
         writeFileSync(`${barrier}.log`, JSON.stringify(transcript, null, 2));
         return result;
       };
-      const lastJsonLine = (output) =>
-        JSON.parse(
-          output
-            .split("\n")
-            .filter((line) => line.trim().length > 0)
-            .pop() ?? "{}",
-        );
       const held = cli(["message-post"], `${originalResult}\n`);
       if (held.status === 0) {
         throw new Error("a freshness-held send must not exit successfully");
       }
-      const heldPayload = lastJsonLine(held.stdout);
-      if (heldPayload.state !== "held") {
+      // Raft writes the human-readable send output to stdout. This fixture
+      // reads it exactly as a model does: no `--json`, no stderr capture.
+      if (!held.stdout.includes("SEND_HELD_AS_DRAFT")) {
         throw new Error(`expected a freshness hold, got ${held.stdout}`);
       }
-      const target = heldPayload.recoveryTarget;
-      if (typeof target !== "string") {
-        throw new Error("the held response must name a recovery target");
-      }
-      if (!held.stderr.includes("--send-draft --target")) {
+      const recovery = /--send-draft --target '([^']+)'/u.exec(held.stdout);
+      if (recovery === null) {
         throw new Error("the held output must teach the draft recovery path");
       }
+      const target = recovery[1];
+      const counted = /of (\d+) newer message/u.exec(held.stdout);
       // Recovery needs only the target: no receipt, cursor, key or draft id.
       const recovered = cli([
         "message-post",
@@ -507,7 +500,7 @@ if (mode === "trajectory") {
         JSON.stringify({
           marker: "worker-busy-hold-recovered",
           recoveryTarget: target,
-          newMessageCount: heldPayload.newMessageCount,
+          newMessageCount: counted === null ? 0 : Number(counted[1]),
         }) + "\n",
       );
       process.exit(0);

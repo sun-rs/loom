@@ -82,6 +82,29 @@ Bug fixes require a reproducing test. Do not weaken assertions to accept the imp
 
 Unit and integration tests use fake clocks, temporary databases, and fake runtime adapters. Real paid CLIs are opt-in release gates, never the default test suite. Claude gates use Sonnet unless the user explicitly approves another model.
 
+### Authorized paid CLI gate models (2026-09-09)
+
+The user authorized exactly this matrix for opt-in real-CLI gates. Every gate that
+spawns a real provider must assert these exact catalog binding ids and reasoning
+levels, and must fail rather than silently substitute another model.
+
+| CLI | Model binding id | Reasoning |
+| --- | --- | --- |
+| Claude Code | `sonnet` | `low` |
+| Codex | `gpt-5.6-luna` | `low` |
+| OpenCode | `deepseek/deepseek-v4-flash` | `low` |
+| Kimi CLI | `kimi-code/k3` | `high` |
+
+Binding ids are the ones the installed CLIs actually publish, verified with
+`probeLocalModelCatalog` on 2026-09-09; do not invent version-suffixed ids.
+The Claude Code catalog publishes a single unversioned `sonnet` binding, so the
+concrete Sonnet release is whatever that install resolves. The installed OpenCode
+publishes no `4.1` DeepSeek build; `deepseek/deepseek-v4-flash` is the authorized
+flash model. Never run Fable in a gate.
+
+This authorization covers running the gates. It does not authorize commits,
+pushes, or any other paid run; re-confirm with the user in a new session.
+
 ## Ownership rules
 
 - `packages/protocol` owns public commands, events, schemas, identities, and validation.

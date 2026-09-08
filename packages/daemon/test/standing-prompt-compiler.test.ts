@@ -338,6 +338,15 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
     /never carry a receipt, cursor, idempotency key or draft id/u,
   );
   assert.match(prompt, /saved draft is never a delivery/u);
+  // F0909G: the blanket "parse its JSON response" told the model the send
+  // output was machine data, so it never read the hold guidance. Scope it.
+  assert.doesNotMatch(prompt, /run one bounded command at a time, parse its/u);
+  assert.match(
+    prompt,
+    /message commands print human-readable text.*read that text/isu,
+  );
+  assert.match(prompt, /`--json`/u);
+  assert.match(prompt, /Task and read commands return JSON/iu);
   // The messaging mechanics the model mis-combined are gone.
   assert.doesNotMatch(prompt, /--held-draft-id/u);
   assert.doesNotMatch(prompt, /message-post --body/u);
@@ -351,9 +360,13 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
     prompt,
     /task-claim-message --message-id <id>.*--based-on-room-seq <cursor> --idempotency-key <stable-key>/isu,
   );
-  assert.match(
+  // Raft has no rule telling an Agent how to weigh an appended request against
+  // an unsent result. Self-invented judgment patches were removed on 2026-09-09
+  // after a real model weighed one against the Human's own words and lost the
+  // original reply anyway; the tool contract, not the prompt, carries behavior.
+  assert.doesNotMatch(
     prompt,
-    /additional message does not cancel.*explicitly cancels or replaces/isu,
+    /additional message does not cancel|permission to omit a result|still-required original result/isu,
   );
   assert.match(prompt, /send-draft.*rechecks freshness/isu);
   assert.match(prompt, /--anyway.*continueAnywaySuggested/isu);

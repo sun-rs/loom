@@ -17,11 +17,11 @@
 
 ## RAH 的三处结构差异与本批裁决
 
-| 机制 | Raft | 本批之前的 RAH | 裁决 |
-|---|---|---|---|
+| 机制     | Raft                                                                     | 本批之前的 RAH                                               | 裁决                                                        |
+| -------- | ------------------------------------------------------------------------ | ------------------------------------------------------------ | ----------------------------------------------------------- |
 | 已读位置 | 工具按 (agent, target) 本地保存 consumed seq，发送时内部补 `seenUpToSeq` | 把 Activation 游标与签名 `contextReceipt` 交给模型选择并搬运 | 服务端按 (participant, target) 持久记录已读位置；模型不再传 |
-| 草稿身份 | 按 (agent, target)，`--send-draft --target` 即可 | 模型须记住 `heldDraftId` | 服务端按 target 查当前 held 草稿；`heldDraftId` 变为可选 |
-| 幂等键 | 不存在，服务端按草稿/目标语义去重 | 模型须自造并保证唯一 | 服务端按稳定输入派生；显式键仍受支持 |
+| 草稿身份 | 按 (agent, target)，`--send-draft --target` 即可                         | 模型须记住 `heldDraftId`                                     | 服务端按 target 查当前 held 草稿；`heldDraftId` 变为可选    |
+| 幂等键   | 不存在，服务端按草稿/目标语义去重                                        | 模型须自造并保证唯一                                         | 服务端按稳定输入派生；显式键仍受支持                        |
 
 ## 实现
 
@@ -81,14 +81,77 @@ Raft 的 `detectThreadContextParentSend`：当 Agent 最近读过某 Thread、�
 - 全仓 `npm run check` 全绿：1167 通过、0 失败、6 跳过（付费门禁）；web 单测 388；棘轮 `room-kernel.ts` 6,787/6,925、
   `protocol/src/index.ts` 1,662/1,800。
 
+## 真实模型验收：三次付费运行与门禁改写（2026-09-09）
+### 门禁改写后的两次通过运行（同日）
+
+| CLI | 模型 / effort | 现场 | 结果 |
+|---|---|---|---|
+| OpenCode | `deepseek/deepseek-v4-flash` / low | `…-VDqJOJ` | 通过，45 秒 |
+| Kimi | `kimi-code/k3` / high | `…-nx7gn3` | 通过，123 秒 |
+
+OpenCode 的轨迹留下了 `message-post --send-draft --target "#agent-council"`（无草稿 ID、无游标、无回执），
+草稿 `resolution_kind = sent_unchanged`；两条回复各恰好一次。这是新合同在真实模型上的端到端证明。
+
+Kimi 首次运行业务结果已经正确（两条消息俱在、草稿 `sent_unchanged`），却被门禁判失败——**是断言写错**：
+它用轨迹里的命令原文取证，而 Kimi 的 ACP 帧记录的是结构化 `rawInput`，不含 shell 命令行。已改为以账本为准
+（只有 `--send-draft` 能把草稿解析为 `sent_unchanged`），轨迹命令文本降为旁证。改后 Kimi 通过。
+教训与本批主题一致：取证要用账本事实，不要用某家 CLI 恰好呈现的文本形状。
+
+
+opt-in 门禁 `packages/daemon/test/real-busy-hold-gate.test.ts` 当日经用户授权跑了三次，全部保留状态目录，全部未通过原断言：
+
+| #   | CLI      | 模型                         | effort   | 状态目录                      | 结果                                                                                                                                                                                                                    |
+| --- | -------- | ---------------------------- | -------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | OpenCode | `deepseek/deepseek-v4-flash` | low      | `…/rah-real-busy-hold-0IppKH` | 用了新合同（`message-post --target "#agent-council"` + heredoc 正文），发送被 hold，`held_message_drafts` 保存了正文 `F0909G BUSY DONE`，随后一次 compose 把它替换掉（`state='replaced'`、`resolution_kind='revised'`） |
+| 2   | OpenCode | `deepseek/deepseek-v4-flash` | low      | `…/rah-real-busy-hold-WYOrkV` | 看见了 hold，**主动**决定替换草稿                                                                                                                                                                                       |
+| 3   | Kimi     | `kimi-code/k3`               | **high** | `…/rah-real-busy-hold-emRa7R` | 同上                                                                                                                                                                                                                    |
+
+**运行 1 找到的根因（已修复并在工作树中）**：Agent 在发送命令上没有重定向 stderr，而 RAH 当时只把 hold 引导打到 stderr，
+于是它根本没看见 hold。修复即本批的 stdout 移植：hold 引导（`SEND_HELD_AS_DRAFT`、`Your message has been saved as a draft.`、
+`--send-draft --target` 三选一）改到 stdout，非零退出码保持不变；`busy-hold-recovery-chain.test.ts` 已按此断言守护。
+
+**运行 2、3 的逐字推理**（两个互相独立的模型，一个 low、一个 high，读法完全一致）：
+
+> "There's a newer follow-up message at seq 8 … The latest message is seq 8, which supersedes. I should send only
+> 'F0909G FOLLOWUP DONE' … Per instructions, an additional message does not cancel an unsent original result, but the
+> follow-up says '不重复上条回复' (don't repeat the previous reply)"（运行 2）
+
+> "Instruction from the follow-up: don't repeat the previous reply, only reply 'F0909G FOLLOWUP DONE'. So the saved draft
+> 'F0909G BUSY DONE' should be replaced." / "per its instruction, I'll replace the draft with the follow-up reply."（运行 3）
+
+**结论：工具合同是对齐的，不对齐的是那句 Human 措辞。** 原措辞
+`F0909G FOLLOWUP: 这是忙时追加消息，请完成当前消息后只回复 F0909G FOLLOWUP DONE，不重复上条回复，不创建 Task。`
+中的"只回复 …、不重复上条回复"，在两个模型看来就是"只发追加那一条"；在这个前提下丢掉未发出的原结果是对 Human 自己的话的
+合理执行，上游 Raft 也允许替换 held 草稿。所以旧断言考的是一次判断，不是 RAH 的机制，**这条措辞不能作为验收标准**。
+
+**由此删除的自造提示词规则**：运行 2 的推理里那句 "Per instructions, an additional message does not cancel an unsent
+original result, but the follow-up says …" 正是模型把我们自造的 prompt 规则（"追加消息不取消未发出的原结果"、
+"不要把'不要重复'理解为可以省略未发布的结果"）与 Human 原话放在一起权衡、并最终选择了 Human 原话。既然真实模型在权衡后仍然
+丢掉原结果，这两条规则就不构成保障，已于 2026-09-09 删除：**行为必须由工具合同承载，不能靠提示词补**。
+
+**门禁改写（本次）**：
+
+- 追加消息改为意图明确的措辞，原始请求与两个 marker 名一字未动：
+  `F0909G FOLLOWUP: 这是忙时追加消息，它不取消、也不替代上一条请求；上一条请求的结果仍然必须发出。请分两条消息回复：
+第一条照原样只写 F0909G BUSY DONE，第二条只写 F0909G FOLLOWUP DONE。两条缺一不可，不要合并成一条，不要省略任何一条，不创建 Task。`
+  对应用户的真实需求："Human 在 Agent 忙时追加工作时不丢回复"。
+- 除"每个 marker 恰好出现在一条 Agent 消息中"与既有基础设施断言外，**再断言机制本身**，避免门禁因错误原因通过：
+  运行必须产生真实的 freshness hold（状态库 `held_message_drafts` 中存在该 Agent 的一行、正文含原结果 marker），
+  且恢复必须走工具（记录的 trajectory 中存在 `tool_start` 且 `toolInput` 同时含 `message-post` 与 `--send-draft`）。
+  只匹配工具调用、不匹配工具输出：hold 引导本身就会打印 `--send-draft` 那行，匹配自由文本会让"读过引导"冒充"照做了"。
+- 旧措辞作为证据完整保留，可用 `RAH_REAL_BUSY_HOLD_WORDING=ambiguous` 选中（默认 `explicit`）。该分支**只观察不断言**：
+  等 Agent 静默后打印 `RAH_REAL_BUSY_HOLD_OBSERVATION`（两个 marker 的条数、held 草稿的 `state`/`resolution_kind`、
+  `--send-draft` 调用次数），代码注释里逐条记着上面三次运行以及"为什么它只能是观察"。
+
 ## 未收口的边界
 
-- **真实模型验收未做**：新增 opt-in 门禁 `packages/daemon/test/real-busy-hold-gate.test.ts`，用上一轮失败的原始措辞
-  （不加"追加不取消原结果"的强化引导）跑 OpenCode DeepSeek 或 Kimi。按 AGENTS.md，付费门禁需用户明确授权，本批未运行。
-  在真实模型上重跑通过之前，不能宣称该场景已收口。
 - Thread 防串线已在本批移植（见上节），但只在确定性测试中验证；真实多 Agent、多 Thread 交错场景未跑。
 - **按 Runtime 区分的忙时投递未对齐**：Raft 的 driver 能力为 Claude gated、Codex direct、Kimi direct、OpenCode none；
   RAH 目前是统一的冻结 Activation + 持久 follow-up。这是已确认的架构差异，尚未逐项对齐，也尚未证明它导致了每一次漏回复。
+  上面运行 2、运行 3 的 trace 给出了它的直接代价：Agent 花了很多轮困惑于"又来了一次 Activation，可它覆盖的那条消息我已经答过了"，
+  在这上面反复确认、反复读上下文。措辞明确之后这一项仍未对齐，需要单独一批处理。
+- **门禁本身仍未在明确措辞下跑过真实模型**：本次只改了门禁与本文档，未运行任何付费门禁。改写后的断言在真实模型上通过之前，
+  不能宣称该场景已收口。
 - **输出格式仍为 JSON**：Raft 默认可读文本、JSON 可选。本批只把 hold 路径改成可读文本（失败正是发生在该路径）；
   翻转默认输出格式会触及几乎所有测试，另批处理。
 - 记忆体系、跨 Room/私聊延续、配置切换后底层 CLI 是否真的换了模型/effort，均不在本批范围。

@@ -240,7 +240,8 @@ export type MessageMutationResult = {
 };
 
 export type WorkerMessagePostResult =
-  MessageMutationResult | WorkerMessageHeldResponse;
+  | (MessageMutationResult & { replacedDraft?: { body: string } })
+  | WorkerMessageHeldResponse;
 
 export type MessagePage = {
   cursorAfter: number;

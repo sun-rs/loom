@@ -1,6 +1,11 @@
 import {
   MESSAGE_HEREDOC_DELIMITER,
+  formatDraftReplacedWarning,
   workerHeldSendGuidance,
+  workerReplacedDraftBody,
+  workerReplacedDraftNotice,
+  workerSendErrorSummary,
+  workerSendSuccessOutput,
   workerTargetConfirmationGuidance,
 } from "./worker-held-send.ts";
 import carrierPackage from "../package.json" with { type: "json" };
@@ -280,16 +285,37 @@ export async function runWorkerCliCommand(
         body: { expectedRevision: current.revision, ...mutation },
       });
     }
-    runtime.stdout.write(`${JSON.stringify(result)}\n`);
-    if (request.path === "/v1/worker/messages/post") {
-      const guidance =
-        workerHeldSendGuidance(result) ??
-        workerTargetConfirmationGuidance(result);
-      if (guidance) {
-        runtime.stderr.write(guidance);
-        return 1;
-      }
+    // Raft's `writeText`/`writeJson` split: a message send prints human-
+    // readable text on stdout and reserves JSON for `--json`. Every other
+    // command keeps its JSON response, which is what the Agent is told to parse.
+    const messagePost = request.path === "/v1/worker/messages/post";
+    const jsonOutput = !messagePost || arguments_.includes("--json");
+    if (jsonOutput) runtime.stdout.write(`${JSON.stringify(result)}\n`);
+    if (!messagePost) return 0;
+    const sendTarget = (request.body as { channel?: unknown }).channel;
+    const displayTarget =
+      typeof sendTarget === "string" ? sendTarget : undefined;
+    const discarded = workerReplacedDraftBody(result);
+    let text = "";
+    if (discarded !== undefined) {
+      const warned = displayTarget ?? "this target";
+      runtime.stderr.write(
+        `${formatDraftReplacedWarning(warned, discarded)}\n`,
+      );
+      text += workerReplacedDraftNotice(warned);
     }
+    const guidance =
+      workerHeldSendGuidance(result) ??
+      workerTargetConfirmationGuidance(result);
+    if (guidance) {
+      if (!jsonOutput) runtime.stdout.write(`${text}${guidance}`);
+      runtime.stderr.write(workerSendErrorSummary(result) ?? "");
+      return 1;
+    }
+    if (!jsonOutput)
+      runtime.stdout.write(
+        `${text}${workerSendSuccessOutput(displayTarget, result)}`,
+      );
     return 0;
   } catch (error) {
     runtime.stderr.write(`rah: ${errorMessage(error)}\n`);
@@ -550,7 +576,7 @@ function parseCommand(
   const options = parseOptions(
     arguments_.slice(2),
     command === "message-post"
-      ? ["anyway", "send-draft", "top-level"]
+      ? ["anyway", "json", "send-draft", "top-level"]
       : command === "task-list"
         ? ["mine"]
         : command === "message-read"
@@ -627,6 +653,8 @@ function parseCommand(
         "body",
         "held-draft-id",
         "idempotency-key",
+        // `--json` selects the output stream only; it never reaches the server.
+        "json",
         "send-draft",
         "thread-id",
         "top-level",
@@ -1436,6 +1464,7 @@ rah worker message-react --message-id ID --emoji EMOJI --active true|false --bas
 rah worker message-post --target TARGET <<'${MESSAGE_HEREDOC_DELIMITER}' [--attachment-ids ID,ID] [--thread-id ID | --top-level]
 rah worker message-post --send-draft --target TARGET [--anyway]
 Message content is read from stdin; use a heredoc so quotes, backticks and newlines stay literal. --send-draft takes no stdin: it sends the saved draft unchanged. Never use --send-draft when changing content.
+message-post prints human-readable text on stdout: read it. Add --json for the machine-readable response object instead.
 rah worker thread-unfollow --thread-id ID --based-on-room-seq N --idempotency-key KEY
 rah worker attachment-publish --path FILE [--target TARGET --context-receipt RECEIPT] [--filename NAME] [--mime-type TYPE] --idempotency-key KEY
 rah worker attachment-comments --attachment-id ID [--limit N] [--before-room-seq N]

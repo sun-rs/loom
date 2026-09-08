@@ -5,7 +5,7 @@ import { realCliGateProfile } from "./real-cli-gate-profile.ts";
 
 test("real CLI gate profiles pin the user-approved non-Ultra models", () => {
   const codex = realCliGateProfile("codex", {
-    model: "gpt-5.6-sol",
+    model: "gpt-5.6-luna",
     reasoning: "low",
   });
   assert.deepEqual(codex.args("/tmp/work", "gate"), [
@@ -15,7 +15,7 @@ test("real CLI gate profiles pin the user-approved non-Ultra models", () => {
     "--ignore-user-config",
     "--skip-git-repo-check",
     "--model",
-    "gpt-5.6-sol",
+    "gpt-5.6-luna",
     "--config",
     "model_reasoning_effort=low",
     "--sandbox",
@@ -55,7 +55,7 @@ test("real CLI gate profiles categorically reject Ultra", () => {
   assert.throws(
     () =>
       realCliGateProfile("codex", {
-        model: "gpt-5.6-sol",
+        model: "gpt-5.6-luna",
         reasoning: "ultra",
       }),
     /Ultra is forbidden/u,

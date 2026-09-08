@@ -23,13 +23,13 @@ const GATE_TIMEOUT_MS = 10 * 60_000;
 type ApprovedCli = {
   executable: "codex" | "kimi" | "opencode" | "claude";
   modelId: string;
-  reasoning: "default" | "low" | "max";
+  reasoning: "default" | "low" | "high" | "max";
 };
 
 const ALL_APPROVED_CLIS: readonly ApprovedCli[] = [
-  { executable: "claude", modelId: "claude-sonnet-4-6", reasoning: "low" },
-  { executable: "codex", modelId: "gpt-5.6-sol", reasoning: "low" },
-  { executable: "kimi", modelId: "kimi-code/k3", reasoning: "low" },
+  { executable: "claude", modelId: "sonnet", reasoning: "low" },
+  { executable: "codex", modelId: "gpt-5.6-luna", reasoning: "low" },
+  { executable: "kimi", modelId: "kimi-code/k3", reasoning: "high" },
   {
     executable: "opencode",
     modelId: "deepseek/deepseek-v4-flash",
@@ -48,8 +48,6 @@ if (ENABLED) {
     new Set(selectedNames).size,
     "unknown CLI selection",
   );
-  if (selectedNames.includes("claude"))
-    process.env.ANTHROPIC_CUSTOM_MODEL_OPTION = "claude-sonnet-4-6";
 }
 
 test(
@@ -134,9 +132,11 @@ test(
           `${approved.executable} catalog did not publish ${approved.modelId}`,
         );
         if (approved.reasoning !== "default") {
+          // The authorized matrix is exact: a gate must never quietly spend on a
+          // different reasoning level than the one the user approved.
           assert.ok(
             binding.supportedReasoning.includes(approved.reasoning),
-            `${approved.executable} ${approved.modelId} does not support ${approved.reasoning}`,
+            `${approved.executable} ${approved.modelId} does not publish authorized reasoning ${approved.reasoning} (published: ${binding.supportedReasoning.join(", ")})`,
           );
         }
         const agent = catalog.agents.find(

@@ -48,6 +48,7 @@ import {
 import {
   CONTINUE_ANYWAY_REHOLD_THRESHOLD,
   HELD_MESSAGE_DRAFT_TTL_MS,
+  findActiveHeldMessageDraftForTarget,
   requireActiveHeldMessageDraft,
   resolveHeldMessageDrafts,
   resolveOneHeldMessageDraft,
@@ -1783,6 +1784,37 @@ export class CollaborationService {
     if (input.continueAnyway === true && sourceHeldDraft === undefined) {
       throw new ConflictError("continueAnyway requires an active held draft");
     }
+    /**
+     * Raft's `handleMessageSend` compose branch: before a normal send it reads
+     * `getSavedDraft(agentId, target)` and, when that draft has content, warns
+     * that the previous body is now discarded. One draft is kept per target, so
+     * this composition replaces it. Only the server knows the previous body, so
+     * it is reported here and rendered by the CLI. `--send-draft` resends the
+     * saved draft rather than replacing it and never reports one.
+     */
+    const replacedDraftBody =
+      input.heldDraftId === undefined
+        ? (() => {
+            const existing = findActiveHeldMessageDraftForTarget(
+              this.#database,
+              {
+                participantId: actor.principalId,
+                roomId: input.roomId,
+                ...(input.threadId === undefined
+                  ? {}
+                  : { threadId: input.threadId }),
+                nowMs: Date.parse(createdAt),
+              },
+            );
+            const previous =
+              existing === undefined ? "" : text(existing, "body");
+            return previous.trim().length > 0 ? previous : undefined;
+          })()
+        : undefined;
+    const replacedDraft =
+      replacedDraftBody === undefined
+        ? {}
+        : { replacedDraft: { body: replacedDraftBody } };
     if (
       input.continueAnyway === true &&
       integer(sourceHeldDraft!, "rehold_count") <
@@ -1843,11 +1875,16 @@ export class CollaborationService {
           timestamp: createdAt,
         });
       }
-      return this.#heldMessageDraftResult(
-        this.#database
-          .prepare("SELECT * FROM held_message_drafts WHERE held_draft_id = ?")
-          .get(heldDraftId)!,
-      );
+      return {
+        ...this.#heldMessageDraftResult(
+          this.#database
+            .prepare(
+              "SELECT * FROM held_message_drafts WHERE held_draft_id = ?",
+            )
+            .get(heldDraftId)!,
+        ),
+        ...replacedDraft,
+      };
     }
 
     if (input.threadId !== undefined) {
@@ -1933,6 +1970,7 @@ export class CollaborationService {
       activationIds: this.#events.deriveAttention(event, recipients, createdAt),
       deduplicated: false,
       event,
+      ...replacedDraft,
     };
   }
 

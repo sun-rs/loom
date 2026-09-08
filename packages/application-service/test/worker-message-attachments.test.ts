@@ -252,6 +252,7 @@ test("a real fake child uploads PNG and text discussion evidence, publishes once
     const post = [
       "worker",
       "message-post",
+      "--json",
       "--body",
       "PNG and text from a real fake child",
       "--attachment-ids",

@@ -278,6 +278,7 @@ test("Agent replies explicitly to one attachment and held retry retains that com
     const cliReply = await f
       .cli([
         "message-post",
+        "--json",
         "--body",
         "Agent answer",
         "--comment-attachment-id",
@@ -590,6 +591,7 @@ test("Comment cannot bind a same-Room different Thread or a joined foreign Room 
       () =>
         f.cli([
           "message-post",
+          "--json",
           "--send-draft",
           "--held-draft-id",
           held.body.heldDraftId,

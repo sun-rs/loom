@@ -356,6 +356,7 @@ test("real Worker CLI publishes PNG to target and resumes its TXT held draft in 
     ]);
     const posted = await f.cli([
       "message-post",
+      "--json",
       "--target",
       "#target",
       "--context-receipt",
@@ -388,6 +389,7 @@ test("real Worker CLI publishes PNG to target and resumes its TXT held draft in 
     const held = await f
       .cli([
         "message-post",
+        "--json",
         "--target",
         "#target",
         "--context-receipt",
@@ -427,6 +429,7 @@ test("real Worker CLI publishes PNG to target and resumes its TXT held draft in 
     const next = await f.cli(["room-read", "--target", "#target"]);
     const sent = await f.cli([
       "message-post",
+      "--json",
       "--target",
       "#target",
       "--context-receipt",
@@ -1026,6 +1029,7 @@ test("a canonical joined DM accepts its own file through the same target CLI pat
     ]);
     const posted = await f.cli([
       "message-post",
+      "--json",
       "--target",
       "dm:@human",
       "--context-receipt",

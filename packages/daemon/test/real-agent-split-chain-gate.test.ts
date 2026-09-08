@@ -29,8 +29,6 @@ type SplitRole = {
   readonly modelId: string;
   /** Reasoning level used when the catalog publishes it. */
   readonly reasoning: string;
-  /** Only used when the catalog does not publish `reasoning`. */
-  readonly fallbackReasoning?: string;
   readonly instructions: string;
 };
 
@@ -57,7 +55,7 @@ const SPLIT_ROLES: readonly SplitRole[] = [
     executable: "codex",
     handle: "lead",
     instructions: LEAD_INSTRUCTIONS,
-    modelId: "gpt-5.6-sol",
+    modelId: "gpt-5.6-luna",
     reasoning: "low",
   },
   {
@@ -65,11 +63,10 @@ const SPLIT_ROLES: readonly SplitRole[] = [
     handle: "helper-a",
     instructions: HELPER_INSTRUCTIONS,
     modelId: "kimi-code/k3",
-    reasoning: "low",
+    reasoning: "high",
   },
   {
     executable: "opencode",
-    fallbackReasoning: "high",
     handle: "helper-b",
     instructions: HELPER_INSTRUCTIONS,
     modelId: "deepseek/deepseek-v4-flash",
@@ -164,14 +161,13 @@ test(
           binding,
           `${role.executable} catalog did not publish ${role.modelId}`,
         );
-        const reasoning = binding.supportedReasoning.includes(role.reasoning)
-          ? role.reasoning
-          : role.fallbackReasoning;
+        // The authorized matrix is exact: a gate must never quietly spend on a
+        // different reasoning level than the one the user approved.
         assert.ok(
-          reasoning !== undefined &&
-            binding.supportedReasoning.includes(reasoning),
-          `${role.executable} ${role.modelId} publishes neither ${role.reasoning} nor a permitted fallback (${binding.supportedReasoning.join(", ")})`,
+          binding.supportedReasoning.includes(role.reasoning),
+          `${role.executable} ${role.modelId} does not publish authorized reasoning ${role.reasoning} (published: ${binding.supportedReasoning.join(", ")})`,
         );
+        const reasoning = role.reasoning;
         const agent = catalog.agents.find(
           (candidate) => candidate.handle === spec.agentHandle,
         );

@@ -343,3 +343,78 @@ test("the stored read position advances on a read and on a hold, but never on a 
     await f.close();
   }
 });
+
+/**
+ * F0909G: a compose silently discarded the freshness-held draft that carried
+ * the original reply. Raft warns before it replaces a saved draft, so the send
+ * response must name exactly what the server threw away — once, and only when
+ * a compose actually replaced a live draft.
+ */
+test("a compose that replaces a live held draft reports the discarded body exactly once", async () => {
+  const f = await fixture();
+  try {
+    f.k.postMessage(f.actor, {
+      roomId: f.target.roomId,
+      body: "Unseen human message",
+      idempotencyKey: "unseen",
+      recipients: [],
+    });
+    const held = await f.call("messages/post", {
+      channel: "#target",
+      body: "BUSY DONE",
+    });
+    assert.equal(held.body.state, "held");
+    assert.equal(
+      held.body.replacedDraft,
+      undefined,
+      "the first hold replaced nothing",
+    );
+
+    const replacing = await f.call("messages/post", {
+      channel: "#target",
+      body: "FOLLOWUP DONE",
+    });
+    assert.equal(replacing.status, 200, JSON.stringify(replacing.body));
+    assert.equal(replacing.body.deduplicated, false);
+    assert.deepEqual(replacing.body.replacedDraft, { body: "BUSY DONE" });
+
+    const clean = await f.call("messages/post", {
+      channel: "#target",
+      body: "A later unrelated reply",
+    });
+    assert.equal(clean.status, 200, JSON.stringify(clean.body));
+    assert.equal(
+      clean.body.replacedDraft,
+      undefined,
+      "the discarded draft is reported once, not on every later send",
+    );
+  } finally {
+    await f.close();
+  }
+});
+
+test("sending the saved draft unchanged never reports it as a replaced draft", async () => {
+  const f = await fixture();
+  try {
+    f.k.postMessage(f.actor, {
+      roomId: f.target.roomId,
+      body: "Unseen human message",
+      idempotencyKey: "unseen",
+      recipients: [],
+    });
+    const held = await f.call("messages/post", {
+      channel: "#target",
+      body: "The original result",
+    });
+    assert.equal(held.body.state, "held");
+    const sent = await f.call("messages/post", {
+      channel: "#target",
+      sendDraft: true,
+    });
+    assert.equal(sent.status, 200, JSON.stringify(sent.body));
+    assert.equal(sent.body.event.payload.body, "The original result");
+    assert.equal(sent.body.replacedDraft, undefined);
+  } finally {
+    await f.close();
+  }
+});

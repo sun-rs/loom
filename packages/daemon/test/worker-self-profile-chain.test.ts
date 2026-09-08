@@ -54,7 +54,7 @@ test("DaemonApplication launches a real fake child that edits its own profile an
       const metadata=await call('profile-update',...flags(before.writeContext),'--display-name','Alicia from child','--description','Actual daemon Worker commands','--idempotency-key','child-metadata');
       const upload=await call('profile-avatar-publish','--path',${JSON.stringify(pngPath)},'--mime-type','image/png');
       const changed=await call('profile-update',...flags(metadata.writeContext),'--avatar-key',upload.avatarKey,'--avatar-upload-intent-id',upload.uploadIntentId,'--idempotency-key','child-avatar');
-      const posted=await call('message-post','--body','Fake child completed self profile and actual avatar binding','--top-level','--based-on-room-seq',String(delivered.cursorAfter),'--idempotency-key','child-profile-result');
+      const posted=await call('message-post','--json','--body','Fake child completed self profile and actual avatar binding','--top-level','--based-on-room-seq',String(delivered.cursorAfter),'--idempotency-key','child-profile-result');
       await call('acknowledge','--through-seq',String(delivered.cursorAfter));
       writeFileSync(${JSON.stringify(evidencePath)},JSON.stringify({before,metadata,upload,changed,posted}));
     } catch(error) { writeFileSync(${JSON.stringify(evidencePath)},JSON.stringify({error:String(error)})); process.exitCode=1; }

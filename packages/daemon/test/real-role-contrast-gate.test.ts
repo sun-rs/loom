@@ -47,8 +47,6 @@ type ContrastRole = {
   readonly modelId: string;
   /** Reasoning level used when the catalog publishes it. */
   readonly reasoning: string;
-  /** Only used when the catalog does not publish `reasoning`. */
-  readonly fallbackReasoning?: string;
   readonly role: "Executor" | "Auditor";
   readonly instructions: string;
 };
@@ -59,7 +57,7 @@ const CONTRAST_ROLES: readonly ContrastRole[] = [
     handle: "kimi-executor",
     instructions: EXECUTOR_INSTRUCTIONS,
     modelId: "kimi-code/k3",
-    reasoning: "low",
+    reasoning: "high",
     role: "Executor",
   },
   {
@@ -67,12 +65,11 @@ const CONTRAST_ROLES: readonly ContrastRole[] = [
     handle: "kimi-auditor",
     instructions: AUDITOR_INSTRUCTIONS,
     modelId: "kimi-code/k3",
-    reasoning: "low",
+    reasoning: "high",
     role: "Auditor",
   },
   {
     executable: "opencode",
-    fallbackReasoning: "high",
     handle: "opencode-executor",
     instructions: EXECUTOR_INSTRUCTIONS,
     modelId: "deepseek/deepseek-v4-flash",
@@ -81,7 +78,6 @@ const CONTRAST_ROLES: readonly ContrastRole[] = [
   },
   {
     executable: "opencode",
-    fallbackReasoning: "high",
     handle: "opencode-auditor",
     instructions: AUDITOR_INSTRUCTIONS,
     modelId: "deepseek/deepseek-v4-flash",
@@ -183,14 +179,13 @@ test(
           binding,
           `${role.executable} catalog did not publish ${role.modelId}`,
         );
-        const reasoning = binding.supportedReasoning.includes(role.reasoning)
-          ? role.reasoning
-          : role.fallbackReasoning;
+        // The authorized matrix is exact: a gate must never quietly spend on a
+        // different reasoning level than the one the user approved.
         assert.ok(
-          reasoning !== undefined &&
-            binding.supportedReasoning.includes(reasoning),
-          `${role.executable} ${role.modelId} publishes neither ${role.reasoning} nor a permitted fallback (${binding.supportedReasoning.join(", ")})`,
+          binding.supportedReasoning.includes(role.reasoning),
+          `${role.executable} ${role.modelId} does not publish authorized reasoning ${role.reasoning} (published: ${binding.supportedReasoning.join(", ")})`,
         );
+        const reasoning = role.reasoning;
         resolvedReasoningByHandle.set(role.handle, reasoning);
 
         const provisionDelivery = await syncRoom(

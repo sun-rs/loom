@@ -63,11 +63,22 @@ export type WorkerMessagePostRequest = z.infer<
   typeof WorkerMessagePostRequestSchema
 >;
 
+/**
+ * Raft's `formatDraftReplacedWarning` input: one draft is kept per target, so a
+ * compose that replaces a live saved draft must say what it discarded. The
+ * server is the only party that knows the previous body, so the send response
+ * carries it and the CLI renders the warning.
+ */
+export const WorkerReplacedDraftSchema = z
+  .object({ body: z.string().min(1) })
+  .strict();
+
 export const WorkerMessageMutationResponseSchema = z
   .object({
     activationIds: z.array(IdentifierSchema),
     deduplicated: z.boolean(),
     event: RoomEventSchema,
+    replacedDraft: WorkerReplacedDraftSchema.optional(),
   })
   .strict();
 export type WorkerMessageMutationResponse = z.infer<
@@ -84,6 +95,7 @@ export const WorkerMessageHeldResponseSchema = z
     newerMessages: z.array(RoomEventSchema),
     omittedMessageCount: z.number().int().nonnegative(),
     reason: z.literal("newer_messages_available"),
+    replacedDraft: WorkerReplacedDraftSchema.optional(),
     reholdCount: z.number().int().positive(),
     shownMessageCount: z.number().int().nonnegative(),
     continueAnywaySuggested: z.boolean(),
