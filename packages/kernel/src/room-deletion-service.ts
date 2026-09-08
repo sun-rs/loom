@@ -32,8 +32,10 @@ export const ROOM_DELETION_REFERENCED_TABLES = new Set([
   "activations",
   "agent_definition_revisions",
   "agent_definitions",
+  "agent_channel_attention",
   "agent_thread_follower_undo",
   "agent_thread_follows",
+  "attachment_comment_links",
   "context_manifests",
   "direct_room_pairs",
   "execution_policies",
@@ -288,6 +290,7 @@ export class RoomDeletionService {
       `DELETE FROM task_reassignment_operations WHERE room_id=?`,
       `DELETE FROM activation_cancellation_requests WHERE room_id=?`,
       `DELETE FROM input_requests WHERE room_id=?`,
+      `DELETE FROM attachment_comment_links WHERE room_id=?`,
       `DELETE FROM room_files WHERE room_id=?`,
       `DELETE FROM held_message_drafts WHERE room_id=?`,
       `DELETE FROM managed_mcp_calls WHERE room_id=?`,
@@ -311,6 +314,7 @@ export class RoomDeletionService {
       `DELETE FROM tasks WHERE room_id=?`,
       `DELETE FROM messages WHERE room_id=?`,
       `DELETE FROM threads WHERE room_id=?`,
+      `DELETE FROM agent_channel_attention WHERE room_id=?`,
       `DELETE FROM memberships WHERE room_id=?`,
     ];
     for (const sql of statements) {

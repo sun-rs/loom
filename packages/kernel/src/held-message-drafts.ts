@@ -13,6 +13,11 @@ export function migrateHeldMessageDraftLifecycle(database: DatabaseSync): void {
   const columns = database
     .prepare("PRAGMA table_info(held_message_drafts)")
     .all();
+  if (!columns.some((row) => row.name === "attachments_json")) {
+    database.exec(
+      "ALTER TABLE held_message_drafts ADD COLUMN attachments_json TEXT NOT NULL DEFAULT '[]' CHECK(json_valid(attachments_json))",
+    );
+  }
   if (!columns.some((row) => row.name === "source_held_draft_id")) {
     database.exec(
       "ALTER TABLE held_message_drafts ADD COLUMN source_held_draft_id TEXT REFERENCES held_message_drafts(held_draft_id)",

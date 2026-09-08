@@ -25,7 +25,7 @@ export {
   AuthenticatedWorkerExecutionContext,
 } from "./auth.ts";
 export { KERNEL_SCHEMA_VERSION, RoomKernel } from "./room-kernel.ts";
-export { ManagedMcpService } from "./managed-mcp-service.ts";
+
 export { TaskReviewService } from "./task-review-service.ts";
 export { ReminderService } from "./reminder-service.ts";
 export type { ReminderReconcileResult } from "./reminder-service.ts";
@@ -35,13 +35,7 @@ export type {
   ProfileImageInventoryEntry,
 } from "./profile-image-lifecycle.ts";
 export type { TaskReviewMutationResult } from "./task-review-service.ts";
-export type {
-  ManagedMcpAssignmentRecord,
-  ManagedMcpAssignmentMutationResult,
-  ManagedMcpAuthorizedCall,
-  ManagedMcpServerRecord,
-  ManagedMcpServerMutationResult,
-} from "./managed-mcp-service.ts";
+
 export { computeRuntimeCertificationDigest } from "./runtime-certification.ts";
 export { ComputerOperationStore } from "./computer-operation-store.ts";
 export type {
@@ -111,3 +105,5 @@ export type {
   WorkspaceAgentProvisionResult,
   WorkspaceMutationResult,
 } from "./types.ts";
+
+export type { WorkerProfileMetadataPort } from "./worker-profile-metadata-port.ts";

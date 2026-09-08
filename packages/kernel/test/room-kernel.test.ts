@@ -5167,8 +5167,9 @@ test("current schema preserves legacy InputRequests while adding Room deletion r
   migrated.close();
 });
 
-test("the minimal InputRequest policy fails closed when a Task creator is not human", () => {
-  const { agent, agentActor, kernel, otherAgent, room } = createFixture();
+test("an Agent-created Task asks the unique current Human without activating its Agent creator", () => {
+  const { human, agent, agentActor, kernel, otherAgent, room } =
+    createFixture();
   const creatorCursor = kernel.sync(agentActor, {
     consumerId: "agent-created-task",
     roomId: room.roomId,
@@ -5216,23 +5217,17 @@ test("the minimal InputRequest policy fails closed when a Task creator is not hu
     taskId: created.task.taskId,
   });
 
-  assert.throws(
-    () =>
-      kernel.requestTaskInput(execution, {
-        basedOnRoomSeq: started.event.roomSeq,
-        idempotencyKey: "agent-created-input-request",
-        question: "This must not enter an Agent Inbox without an Activation",
-        taskId: created.task.taskId,
-      }),
-    ConflictError,
-  );
+  const requested = kernel.requestTaskInput(execution, {
+    basedOnRoomSeq: started.event.roomSeq,
+    idempotencyKey: "agent-created-input-request",
+    question: "Please clarify the requirement",
+    taskId: created.task.taskId,
+  });
+  assert.equal(requested.inputRequest.responderId, human.principalId);
+  assert.equal(requested.task.state, "waiting_input");
   assert.equal(
     kernel.listInputRequests(agentActor, { roomId: room.roomId }).length,
-    0,
-  );
-  assert.equal(
-    kernel.listTasks(agentActor, { roomId: room.roomId })[0]?.state,
-    "in_progress",
+    1,
   );
 
   kernel.close();

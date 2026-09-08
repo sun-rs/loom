@@ -1,5 +1,7 @@
 # Raft UI 产品集成边界
 
+2026-09-08：用户明确[退役 RAH 托管 MCP](../product/managed-mcp-retirement.zh-CN.md)。Settings 与 Agent 详情不再提供该模块；历史截图、测试通过记录不构成重新接入理由。
+
 状态：**Phase 4B implemented / anchored Task tutorial slice**（2026-08-27）。下方早期能力清单不作为当前完成率；最新证据按 docs/README 的日期索引读取。
 
 2026-09-01 Chat 补充：官方 bct/$_ 与 1440×1000 DOM 证实普通聊天侧栏默认240px、180–320px约束并保存布局宽度（仅数字，不存业务状态）。此前“默认320px”不是当前官方事实。行字体以computed style为准；头像预览使用独立的活动状态色，不套用完整日志的分类色。参见[聊天差异合同](../product/2026-09-01-chat-surface-parity-contract.zh-CN.md)。
@@ -77,9 +79,7 @@ packages/ui-tokens/neo-brutalist-library.json 关联既有行为登记与浏览�
 - Chat/Task/Files tabs、composer 的“作为任务”；
 - 390px 无横向溢出的响应式壳、底部主导航、可关闭的 Room 抽屉，以及占满可用 viewport 的移动端 Thread；
 - Files capability 缺失时明确不可用，不加载 fixture。
-- `设置 → MCP 服务器` 只通过 typed `RahClient` 消费 daemon executor inventory 和 Kernel canonical catalog：先用真实 `tools/list` 测试连接，再经 Workspace control Room 最新 sequence 创建/修订 Server 和 Agent tool allowlist；浏览器不接收 executor URL、bearer 或 OAuth token；
-- Agent 详情的 MCP tab 通过 typed `RahClient` 查询 Kernel 持久化的 version-fenced usage/audit projection，不把 assignment 配置误画成调用历史，也不向浏览器投影 arguments、credential 或 result body；
-- Agents surface 由单一 `AgentDirectoryPane` owner 组成：桌面使用官方 `64px rail + 320px members sidebar + fluid detail`，边栏支持 pointer capture、键盘步进与 240–520px 约束；详情固定复用“动态/资料/聊天/提醒/工作区/应用/MCP”七标签协议；
+- Agents surface 由单一 `AgentDirectoryPane` owner 组成：桌面使用官方 `64px rail + 320px members sidebar + fluid detail`，边栏支持 pointer capture、键盘步进与 240–520px 约束；详情固定复用“动态/资料/聊天/提醒/工作区/应用”六标签协议；
 - Agents → 聊天通过 typed `agent.room.list` 读取 Kernel canonical membership：只返回当前 Human 与所选 Agent 都能访问的非 control Room，频道/私信分组与空态复用 Raft 官方信息架构，每一行都跳转到真实 Room；Agent-only 私信活动、私信创建与非共同可见 Room 不由浏览器推断；
 - Agents → 动态通过 typed `agent.trajectory.list` 读取独立的 Kernel runtime trajectory：Provider driver 只把 Codex app-server 与 Kimi ACP 的结构化 thinking/tool/text/status/compaction 事件写入专用 fd3，GenericProcessAdapter 严格校验后绑定 RunAttempt/RuntimeRun 持久化；stdout/stderr/ANSI 仍只是有界 diagnostics。Codex 只允许公开 reasoning summary，原始 reasoning content/textDelta 不跨越归一化边界；
 - 动态首屏取最新 50 条，按 server sequence 正序显示，2 秒可靠性轮询合并去重，活跃窗口最多 500 条；只有用户仍位于底部时才跟随最新，超过 200 字的条目可展开，hover/时间/状态点沿用 Raft 行协议。游标每页重新验证 Human 对实际 Room 的 ACL；
@@ -94,7 +94,6 @@ packages/ui-tokens/neo-brutalist-library.json 关联既有行为登记与浏览�
 - Task unblock 的 Human UI、列折叠细节及完整 Closed/恢复双边验收；
 - 独立 Artifact publication、Thread/Task 附件、Finder reveal、完整大文件/类型预览；
 - 关系图、提醒、应用目录、显式 execution restart/session reset、Computer control/placement、Admin 的其余适用页面；Billing 与中央账户明确排除；
-- Agent MCP tab 与官网 Server/tool 分组和诊断语义的完整对齐；MCP executor URL/credential/OAuth 仍只属于可信 daemon 配置，不直接投影给浏览器；
 - 通用 hint/push subscription 与原生 desktop/iOS packaging。已有安装型 PWA shell、正式 loopback/LAN gateway 和 LAN device pairing，不能再登记为整体缺失。
 
 已经接入但仍需继续双边验收：Human Inbox/InputRequest、Activity、Search、Task Review、Room Files、Agent 工作区/记忆、Provider 结构化 tool/file 动态、共同可见 Room/DM、消息回应/收藏、侧栏排序/置顶和 Room 个人静音/长消息折叠。不能把“有 typed owner”外推成视觉和所有失败分支均与官网一致。
@@ -108,7 +107,7 @@ packages/ui-tokens/neo-brutalist-library.json 关联既有行为登记与浏览�
 - client SDK：Fake/HTTP 共用 typed schemas，GET/auth/path/error 有 contract test；
 - client core：cold reload、backward paginated replay、stable consumer、bounded catch-up、no-progress fence、gap、divergence、apply-before-ack 有确定性测试；
 - view model：Message canonical order 与 Task 五列映射有确定性测试；
-- browser：`npm run test:web:browser` 自动启动隔离 daemon、两个 Fake CLI runtime、一个真实 official MCP Streamable HTTP fixture、same-origin Vite proxy 与系统 Chrome/Chromium，通过原生 CDP 验证 Workspace Agent 创建、配置 revision、停用、删除与重载持久化、官方七标签、320px 键盘可调 Members sidebar、Agent canonical Room 目录与真实跳转、390×844 Agent list/detail/back、Computer inventory、MCP tools/list discovery/Server create/Agent assignment/disable、Room 创建、dialog focus/Escape、成员加入/移除、双 Agent reply、membership-driven delivery、Thread create/reply/count、Task 顶层 Message/连续编号/Thread anchor、claim/start/progress/submit/Human Review/complete、reload-safe URL，以及 390×844 无横向 overflow 和 Room 抽屉；同一 fixture 预置 130 条 canonical 历史并证明首屏只载最新 50 条、一次加载更早增加 50 条、Mounted Message DOM 不超过 80 行，且原可见 Message 的 viewport offset 误差不超过 2px；Human PAT/MCP bearer 不进入浏览器，且不启动付费 Provider；
+- browser：`npm run test:web:browser` 自动启动隔离 daemon、两个 Fake CLI runtime、same-origin Vite proxy 与系统 Chrome/Chromium，通过原生 CDP 验证 Workspace Agent 创建、配置 revision、停用、删除与重载持久化、当前六标签、320px 键盘可调 Members sidebar、Agent canonical Room 目录与真实跳转、390×844 Agent list/detail/back、Computer inventory、Room 创建、dialog focus/Escape、成员加入/移除、双 Agent reply、membership-driven delivery、Thread create/reply/count、Task 顶层 Message/连续编号/Thread anchor、claim/start/progress/submit/Human Review/complete、reload-safe URL，以及 390×844 无横向 overflow 和 Room 抽屉；同一 fixture 预置 130 条 canonical 历史并证明首屏只载最新 50 条、一次加载更早增加 50 条、Mounted Message DOM 不超过 80 行，且原可见 Message 的 viewport offset 误差不超过 2px；Human PAT 不进入浏览器，且不启动付费 Provider；
 - large-history browser：`npm run test:web:message-timeline` 在真实 `ChatPane` 中投影 10,000 条变高 Message，再 prepend 50 条；固定 1440×1000 Chrome 门禁要求逻辑历史可完整滚动、Mounted Message DOM 不超过 80 行、原可见 Message 锚点误差不超过 2px，并拒绝任何 console/page error。该门禁只启动 Vite 和浏览器，不接 daemon 或 Provider；当前参考运行实测为 10,050 条逻辑 Message、26 个 Mounted Message DOM、0px 锚点偏差；
 - CI：pull request 和 `main` push 必须执行同一 `npm run test:web:browser`，不能只用 typed/Fake 测试代替真实 Chrome 业务门禁；
 - no-token browser regression：`apps/web/test/room-agent-membership.html` 通过注入 typed `FakeRahClient`，覆盖互斥移动导航、drawer、Message post/render、成员 Agent 自动回复、Thread create/reply、Task create、mention attention、stale snapshot、正常 join/remove/rejoin、并发 join 409、Room sequence catch-up 与 reload recovery；fixture 不读取 PAT、不启动 CLI，也不进入 production Vite bundle；完整控件—反馈矩阵见 `apps/web/test/README.md`，新启用的控件没有 typed handler 和浏览器断言时不得交付；
@@ -117,3 +116,15 @@ packages/ui-tokens/neo-brutalist-library.json 关联既有行为登记与浏览�
 - real Codex exploratory browser sequence（2026-08-27）：config v4 local CLI fixture 中将 Codex 加入 Room，普通 Human Message 触发真实 Codex CLI；页面依次显示 `waking -> working`，Codex 通过 activation-scoped Worker API 回写基于 Room history 的正文并 ack，随后状态回到 idle。该记录证明本机真实聊天路径可用，但仍是人工 opt-in 证据，不替代自动化付费 Provider certification；
 - production build：Vite build 必须独立通过，且不需要 sibling `raft-ui`。
 - persistent production workbench：`npm run test:web:workbench` 使用 owner-private 临时 state、production bundle、loopback gateway、带 model catalog 的 fake Codex 与真实 Chrome，证明 Agent 模型/推理 Policy 被实际转换成 child argv、canonical Agent reply、进程重启后的同一 Workspace/Room/Agent/Policy/Message 恢复、无 token 输入页，以及 390×844 无横向 overflow。
+
+## 2026-09-08 附件评论区域与移动折叠
+
+`AttachmentComments` 继续消费 canonical `file.comments`／评论写入接口；本批没有第二套评论存储或分页 owner。移动端保留 40px 评论标题条，展开为 45dvh，高度过渡 300ms，折叠保留草稿；点击已支持位置后收起移动面板。沿用现有预览的 767px 移动断点，未声称与官网所有中间宽度逐点相同。
+
+HTML 区域由 `HtmlFilePreview` 和专用静态 `html-preview-bridge.js` 拥有；区域元数据与其他附件锚点复用原评论合同。它们是 Raft `TYe/vYe` 行为的本地适配，不是原样复制。来源和实操条件见[四项核实](../audits/2026-09-08-raft-remaining-live-confirmation.zh-CN.md)。
+
+隔离边界：iframe 仍是 opaque origin，不开放 allow-same-origin。附件中的 script/meta/base/嵌套 frame/object 被移除；CSP 仅允许产品打包的桥接脚本，禁止附件脚本、任意网络、表单和对象。桥接 URL 使用独立静态资源，不内联为 data URL，因此兼容正式 gateway 的 `script-src 'self'`。接收消息同时检查窗口来源、每个预览的随机 channel、消息类型及有界数值；未 ready 的预览不能报告可定位。应用不将 iframe 消息直接写入账本，必须经 Human 的显式评论发送。
+
+桌面点击／拖框记录文档坐标、大小、视口和文档尺寸及引用；回跳优先匹配引用文字，找不到时回退保存坐标，滚动并短暂高亮。触摸设备不显示桌面区域选择层。取文沿用已核实官网 iframe 的矩形相交文本片段、空白归一化、去重及 200 字符拼接上限；回跳按最小包含元素匹配，重复引用按原选框中心选最近项，失败回退原坐标。桌面回跳保留区域选择层，使用官方 `#ffd440`／1.6s 高亮动画。桥接 DOM 扫描排除产品选择层、高亮及 script/style，保留本地安全隔离；这是结构移植及 RAH glue，不是原样复制。来源见 [HTML 官网核实](../audits/2026-09-08-html-region-official-verification.zh-CN.md)。
+
+本地按 Room sequence 有界翻页、每页再按锚点排序；官网组件对返回集合整体排序。保留此显式差异，不为表面一致改成无界读取。用量观察是独立工程，见[运行器用量接线方案](../product/runtime-account-usage-wiring.zh-CN.md)，不在 Worker 资料读取中隐式发起模型或账户调用。

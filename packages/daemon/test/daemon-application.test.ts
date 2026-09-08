@@ -47,50 +47,20 @@ test("daemon config is strict and file secrets must be owner-private", async () 
     assert.throws(() =>
       DaemonConfigSchema.parse({ ...config, schemaVersion: 1 }),
     );
-    const managedMcpConfig = {
-      ...config,
-      managedMcpExecutors: [
+    for (const retired of [
+      "malformed legacy config",
+      null,
+      [
         {
-          bearerToken: { path: secretPath, source: "file" as const },
-          executorRef: "room-tools",
-          transport: {
-            kind: "streamable-http" as const,
-            url: "https://mcp.example.test/mcp",
-          },
+          bearerToken: { source: "file", path: "/not-present/retired-secret" },
         },
       ],
-    };
-    assert.deepEqual(
-      DaemonConfigSchema.parse(managedMcpConfig),
-      managedMcpConfig,
-    );
-    assert.throws(
-      () =>
-        DaemonConfigSchema.parse({
-          ...managedMcpConfig,
-          managedMcpExecutors: [
-            managedMcpConfig.managedMcpExecutors[0],
-            managedMcpConfig.managedMcpExecutors[0],
-          ],
-        }),
-      /duplicate managed MCP executorRef/u,
-    );
-    assert.throws(
-      () =>
-        DaemonConfigSchema.parse({
-          ...managedMcpConfig,
-          managedMcpExecutors: [
-            {
-              executorRef: "cleartext-remote",
-              transport: {
-                kind: "streamable-http",
-                url: "http://mcp.example.test/mcp",
-              },
-            },
-          ],
-        }),
-      /HTTPS or loopback HTTP/u,
-    );
+    ])
+      assert.deepEqual(
+        DaemonConfigSchema.parse({ ...config, managedMcpExecutors: retired }),
+        config,
+      );
+
     assert.throws(() =>
       DaemonConfigSchema.parse({
         ...config,
@@ -941,6 +911,15 @@ test("the composed daemon runs a process Worker without an Agent PAT and restart
 
     const config = DaemonConfigSchema.parse({
       ...validConfig(stateDirectory, secretPath),
+      managedMcpExecutors: [
+        {
+          bearerToken: {
+            source: "file",
+            path: join(directory, "missing-retired-secret"),
+          },
+          transport: "invalid-and-ignored",
+        },
+      ],
       host: {
         credential: { path: secretPath, source: "file" },
         hostId: "daemon-e2e-host",

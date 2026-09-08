@@ -1,5 +1,4 @@
 import { spawn } from "node:child_process";
-import { createServer } from "node:http";
 import {
   chmodSync,
   mkdirSync,
@@ -10,9 +9,6 @@ import {
 import { networkInterfaces, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-
-import { toNodeHandler } from "@modelcontextprotocol/node";
-import { createMcpHandler, Server } from "@modelcontextprotocol/server";
 
 import {
   RuntimeImplementationRegistry,
@@ -37,7 +33,6 @@ const fakeCatalogCliPath = join(stateDirectory, "fake-cli-with-catalog.mjs");
 const databasePath = join(stateDirectory, "room.db");
 const registryDatabasePath = join(stateDirectory, "runtime-registry.db");
 const secretPath = join(stateDirectory, "host.token");
-const managedMcpSecretPath = join(stateDirectory, "managed-mcp.token");
 const hostId =
   process.env.RAH_FIXTURE_HOST_ID?.trim() || "web-multi-agent-host";
 if (/\s/u.test(hostId)) {
@@ -86,8 +81,6 @@ if (
 const seedTaskMatrix = process.env.RAH_FIXTURE_TASK_MATRIX === "1";
 
 let application;
-let managedMcpHandler;
-let managedMcpHttpServer;
 let running;
 let seed;
 let shutdown;
@@ -316,6 +309,13 @@ if (command === "debug models" || command === "debug models --bundled") {
 
   if (seedTaskMatrix) {
     seedTaskPageFixture(seed, humanActor, taskMatrixRoom.room.roomId);
+    if (process.env.RAH_FIXTURE_TASK_ASSIGNMENT === "1") {
+      for (const agent of agents)
+        seed.addMember(humanActor, {
+          principalId: agent.principal.principalId,
+          roomId: taskMatrixRoom.room.roomId,
+        });
+    }
   }
 
   seed.postMessage(humanActor, {
@@ -357,7 +357,6 @@ if (command === "debug models" || command === "debug models --bundled") {
     participantIds: agents.map((agent) => agent.principal.principalId),
   });
   writeFileSync(secretPath, `${hostCredential.accessToken}\n`, { mode: 0o600 });
-  writeFileSync(managedMcpSecretPath, "fixture-mcp-secret\n", { mode: 0o600 });
 
   const registry = new RuntimeProfileRegistry({
     databasePath: registryDatabasePath,
@@ -433,54 +432,6 @@ if (command === "debug models" || command === "debug models --bundled") {
   seed.close();
   seed = undefined;
 
-  managedMcpHandler = createMcpHandler(() => {
-    const server = new Server(
-      { name: "rah-web-fixture-mcp", version: "1" },
-      { capabilities: { tools: {} } },
-    );
-    server.setRequestHandler("tools/list", async () => ({
-      tools: [
-        {
-          description: "Echo one value through the managed MCP gate.",
-          inputSchema: {
-            additionalProperties: false,
-            properties: { value: { type: "string" } },
-            required: ["value"],
-            type: "object",
-          },
-          name: "fixture.echo",
-          title: "Fixture Echo",
-        },
-      ],
-    }));
-    server.setRequestHandler("tools/call", async (request) => ({
-      content: [
-        { text: String(request.params.arguments?.value ?? ""), type: "text" },
-      ],
-      isError: false,
-    }));
-    return server;
-  });
-  const managedMcpNodeHandler = toNodeHandler(managedMcpHandler);
-  managedMcpHttpServer = createServer((request, response) => {
-    if (request.headers.authorization !== "Bearer fixture-mcp-secret") {
-      response.writeHead(401).end();
-      return;
-    }
-    if (request.method === undefined || request.url === undefined) {
-      response.writeHead(400).end();
-      return;
-    }
-    void managedMcpNodeHandler(request, response);
-  });
-  await new Promise((resolve) =>
-    managedMcpHttpServer.listen(0, "127.0.0.1", resolve),
-  );
-  const managedMcpAddress = managedMcpHttpServer.address();
-  if (managedMcpAddress === null || typeof managedMcpAddress === "string") {
-    throw new Error("managed MCP fixture did not bind a TCP address");
-  }
-
   const config = DaemonConfigSchema.parse({
     client: { bindHost: "127.0.0.1", port: 0 },
     drainTimeoutMs: 30_000,
@@ -492,16 +443,6 @@ if (command === "debug models" || command === "debug models --bundled") {
     },
     hostStaleAfterMs: 60_000,
     leaseMs: 30_000,
-    managedMcpExecutors: [
-      {
-        bearerToken: { path: managedMcpSecretPath, source: "file" },
-        executorRef: "fixture-mcp",
-        transport: {
-          kind: "streamable-http",
-          url: `http://127.0.0.1:${String(managedMcpAddress.port)}/mcp`,
-        },
-      },
-    ],
     outboxLeaseMs: 5_000,
     outboxPollIntervalMs: 20,
     outboxRetryAfterMs: 1_000,
@@ -596,10 +537,6 @@ if (command === "debug models" || command === "debug models --bundled") {
   }
   shutdown?.abort("multi-agent-web-fixture-shutdown");
   await running?.catch(() => undefined);
-  await managedMcpHandler?.close();
-  if (managedMcpHttpServer?.listening) {
-    await new Promise((resolve) => managedMcpHttpServer.close(resolve));
-  }
   try {
     seed?.close();
   } catch {
@@ -624,7 +561,18 @@ function latestRoomSeq(kernel, actor, roomId) {
 // SQLite projection here would let a broken canonical transition pass the UI
 // gate.
 function seedTaskPageFixture(kernel, actor, roomId) {
+  // Opt-in assignment UI fixture: an unfinished dependency keeps the assignee
+  // idle so the test never races a Fake CLI claim. Existing gates keep the old seed.
+  const dependency =
+    process.env.RAH_FIXTURE_TASK_ASSIGNMENT === "1"
+      ? kernel.createTask(actor, {
+          idempotencyKey: "web-task-assignment-dependency",
+          roomId,
+          title: "Assignment fixture prerequisite",
+        }).task.taskId
+      : undefined;
   const open = kernel.createTask(actor, {
+    ...(dependency === undefined ? {} : { dependencyTaskIds: [dependency] }),
     idempotencyKey: "web-task-page-open",
     roomId,
     title:

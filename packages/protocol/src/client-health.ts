@@ -73,8 +73,7 @@ export const ClientHealthResponseSchema = ClientHealthBaseSchema.extend({
       hints: z.boolean(),
       inputRequestRead: z.boolean(),
       inputRequestResolve: z.boolean(),
-      managedMcpRead: z.boolean(),
-      managedMcpWrite: z.boolean(),
+
       memberRead: z.boolean(),
       memberWrite: z.boolean(),
       messageRead: z.boolean(),

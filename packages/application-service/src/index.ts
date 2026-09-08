@@ -13,12 +13,7 @@ export type {
 } from "./client-application-service.ts";
 export type { ProfileImageAdministrationPort } from "./client-profile-image-routes.ts";
 export { WorkerApplicationService } from "./worker-application-service.ts";
-export type {
-  ManagedMcpAdministrationPort,
-  ManagedMcpExecutorCall,
-  ManagedMcpExecutorDescriptor,
-  ManagedMcpExecutorPort,
-} from "./managed-mcp-executor.ts";
+
 export type {
   ActivationCredentialScope,
   IssuedActivationCredential,

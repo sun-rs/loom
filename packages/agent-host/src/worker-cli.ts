@@ -1,16 +1,30 @@
+import carrierPackage from "../package.json" with { type: "json" };
+import { parseWorkerChannelAttentionCommand } from "./worker-channel-attention-cli.ts";
+import {
+  TASK_CARD_TRANSPORT_MAX_BYTES,
+  ROOM_SYNC_RESPONSE_MAX_BYTES,
+} from "@rah-os/protocol";
+import { parseWorkerSelfProfileCommand } from "./worker-self-profile-cli.ts";
+import { parseWorkerTaskManagementCommand } from "./worker-task-management-cli.ts";
+import { parseWorkerReadCommand } from "./worker-read-cli.ts";
 import { constants } from "node:fs";
 import { open, unlink } from "node:fs/promises";
 import { basename, isAbsolute, resolve } from "node:path";
 import { Readable } from "node:stream";
 import { randomUUID } from "node:crypto";
 import {
-  WorkerMessageSearchRequestSchema,
   WorkerMessageReactionRequestSchema,
   AgentAppInboxAckCommandSchema,
   AgentMemoryConfigSnapshotSchema,
   MAX_ATTACHMENT_BYTES,
+  PROFILE_IMAGE_MAX_BYTES,
+  ProfileImageMimeTypeSchema,
+  ProfileImageUploadResponseSchema,
   WorkerArtifactPrepareRequestSchema,
   WorkerArtifactUploadSchema,
+  WorkerMessageAttachmentPrepareRequestSchema,
+  WorkerMessageAttachmentUploadSchema,
+  WorkerMessageAttachmentCancelRequestSchema,
   WorkerReminderCancelRequestSchema,
   WorkerReminderListRequestSchema,
   WorkerReminderLogRequestSchema,
@@ -67,9 +81,17 @@ export async function runWorkerCliCommand(
     const mutation = config ? parseAgentAppConfig(arguments_) : undefined;
     const inbox = arguments_[0] === "agent" || config;
     const artifact =
-      arguments_[0] === "worker" && arguments_[1] === "artifact-publish";
+      arguments_[0] === "worker" &&
+      [
+        "artifact-publish",
+        "attachment-publish",
+        "profile-avatar-publish",
+      ].includes(arguments_[1] ?? "");
     const artifactDownload =
-      arguments_[0] === "worker" && arguments_[1] === "artifact-download";
+      arguments_[0] === "worker" &&
+      ["artifact-download", "attachment-download"].includes(
+        arguments_[1] ?? "",
+      );
     const origin = workerOrigin(
       inbox
         ? runtime.env.RAH_AGENT_INBOX_API_URL
@@ -105,7 +127,16 @@ export async function runWorkerCliCommand(
           method: "POST",
           signal: controller.signal,
         });
-        const result = await readBoundedJson(response.body);
+        const result = await readBoundedJson(
+          response.body,
+          ["/v1/worker/sync", "/v1/worker/rooms/read"].includes(request.path)
+            ? ROOM_SYNC_RESPONSE_MAX_BYTES
+            : ["/v1/worker/tasks/amend", "/v1/worker/tasks/history"].includes(
+                  request.path,
+                )
+              ? TASK_CARD_TRANSPORT_MAX_BYTES
+              : MAX_RESPONSE_BYTES,
+        );
         if (!response.ok) {
           throw new Error(serverErrorMessage(result, response.status));
         }
@@ -115,12 +146,17 @@ export async function runWorkerCliCommand(
       }
     };
     if (artifact) {
-      const result = await publishWorkerArtifact(arguments_, {
-        origin,
-        runtime,
-        send,
-        token,
-      });
+      const result = await publishWorkerArtifact(
+        arguments_,
+        {
+          origin,
+          runtime,
+          send,
+          token,
+        },
+        arguments_[1] === "attachment-publish",
+        arguments_[1] === "profile-avatar-publish",
+      );
       runtime.stdout.write(`${JSON.stringify(result)}\n`);
       return 0;
     }
@@ -141,6 +177,14 @@ export async function runWorkerCliCommand(
           ? parseReminderCommand(arguments_)
           : parseCommand(arguments_);
     let result = await send(request);
+    if (request.path === "/v1/worker/version")
+      result = {
+        ...(result as Record<string, unknown>),
+        cliCarrier: {
+          name: carrierPackage.name,
+          version: carrierPackage.version,
+        },
+      };
     if (mutation) {
       const current = AgentMemoryConfigSnapshotSchema.parse(result);
       result = await send({
@@ -164,15 +208,22 @@ async function publishWorkerArtifact(
     send: (request: { path: string; body: unknown }) => Promise<unknown>;
     token: string;
   },
+  messageAttachment = false,
+  profileAvatar = false,
 ) {
   const options = parseOptions(arguments_.slice(2));
-  assertAllowed(options, [
-    "filename",
-    "idempotency-key",
-    "mime-type",
-    "path",
-    "task-id",
-  ]);
+  assertAllowed(
+    options,
+    profileAvatar
+      ? ["path", "mime-type"]
+      : [
+          "filename",
+          "idempotency-key",
+          "mime-type",
+          "path",
+          ...(messageAttachment ? ["target", "context-receipt"] : ["task-id"]),
+        ],
+  );
   const sourcePath = resolve(boundedText(options, "path", 4_096));
   let handle;
   try {
@@ -181,22 +232,48 @@ async function publishWorkerArtifact(
     if (
       !metadata.isFile() ||
       metadata.size <= 0 ||
-      metadata.size > MAX_ATTACHMENT_BYTES ||
+      metadata.size >
+        (profileAvatar ? PROFILE_IMAGE_MAX_BYTES : MAX_ATTACHMENT_BYTES) ||
       !Number.isSafeInteger(metadata.size)
     ) {
       throw new Error(
-        `artifact must be a regular file between 1 and ${String(MAX_ATTACHMENT_BYTES)} bytes`,
+        `${profileAvatar ? "avatar" : "artifact"} must be a regular file between 1 and ${String(profileAvatar ? PROFILE_IMAGE_MAX_BYTES : MAX_ATTACHMENT_BYTES)} bytes`,
       );
     }
-    const prepared = WorkerArtifactUploadSchema.parse(
+    if (profileAvatar)
+      return ProfileImageUploadResponseSchema.parse(
+        await putWorkerUpload(
+          context,
+          handle,
+          "/v1/worker/profile/self/avatar",
+          ProfileImageMimeTypeSchema.parse(options["mime-type"]),
+        ),
+      );
+    const uploadSchema = messageAttachment
+      ? WorkerMessageAttachmentUploadSchema
+      : WorkerArtifactUploadSchema;
+    const prepareSchema = messageAttachment
+      ? WorkerMessageAttachmentPrepareRequestSchema
+      : WorkerArtifactPrepareRequestSchema;
+    const resourcePath = messageAttachment
+      ? "/v1/worker/attachments"
+      : "/v1/worker/artifacts";
+    const prepared = uploadSchema.parse(
       await context.send({
-        path: "/v1/worker/artifacts/prepare",
-        body: WorkerArtifactPrepareRequestSchema.parse({
+        path: `${resourcePath}/prepare`,
+        body: prepareSchema.parse({
           filename: options.filename ?? basename(sourcePath),
           idempotencyKey: boundedText(options, "idempotency-key", 512),
           mimeType: options["mime-type"] ?? "application/octet-stream",
           size: metadata.size,
-          taskId: boundedText(options, "task-id", 512),
+          ...(messageAttachment
+            ? {
+                ...(options.target ? { channel: options.target } : {}),
+                ...(options["context-receipt"]
+                  ? { contextReceipt: options["context-receipt"] }
+                  : {}),
+              }
+            : { taskId: boundedText(options, "task-id", 512) }),
         }),
       }),
     );
@@ -209,36 +286,14 @@ async function publishWorkerArtifact(
       );
     }
 
-    const controller = new AbortController();
-    const timeout = setTimeout(
-      () => controller.abort(new Error("Worker artifact upload timed out")),
-      ARTIFACT_REQUEST_TIMEOUT_MS,
+    return uploadSchema.parse(
+      await putWorkerUpload(
+        context,
+        handle,
+        `${resourcePath}/${prepared.attachmentId}`,
+        "application/octet-stream",
+      ),
     );
-    try {
-      const body = Readable.toWeb(
-        handle.createReadStream({ autoClose: false, start: 0 }),
-      );
-      const response = await context.runtime.fetch(
-        `${context.origin}/v1/worker/artifacts/${prepared.attachmentId}`,
-        {
-          body: body as RequestInit["body"],
-          duplex: "half",
-          headers: {
-            authorization: `Bearer ${context.token}`,
-            "content-type": "application/octet-stream",
-          },
-          method: "PUT",
-          signal: controller.signal,
-        } as RequestInit & { duplex: "half" },
-      );
-      const result = await readBoundedJson(response.body);
-      if (!response.ok) {
-        throw new Error(serverErrorMessage(result, response.status));
-      }
-      return WorkerArtifactUploadSchema.parse(result);
-    } finally {
-      clearTimeout(timeout);
-    }
   } catch (error) {
     if (hasCode(error, "ELOOP")) {
       throw new Error(
@@ -248,6 +303,41 @@ async function publishWorkerArtifact(
     throw error;
   } finally {
     await handle?.close();
+  }
+}
+
+async function putWorkerUpload(
+  context: { origin: string; runtime: WorkerCliRuntime; token: string },
+  handle: Awaited<ReturnType<typeof open>>,
+  path: string,
+  mimeType: string,
+): Promise<unknown> {
+  const controller = new AbortController();
+  const timeout = setTimeout(
+    () => controller.abort(new Error("Worker artifact upload timed out")),
+    ARTIFACT_REQUEST_TIMEOUT_MS,
+  );
+  try {
+    const body = Readable.toWeb(
+      handle.createReadStream({ autoClose: false, start: 0 }),
+    );
+    const response = await context.runtime.fetch(`${context.origin}${path}`, {
+      body: body as RequestInit["body"],
+      duplex: "half",
+      headers: {
+        authorization: `Bearer ${context.token}`,
+        "content-type": mimeType,
+      },
+      method: "PUT",
+      signal: controller.signal,
+    } as RequestInit & { duplex: "half" });
+    const result = await readBoundedJson(response.body);
+    if (!response.ok) {
+      throw new Error(serverErrorMessage(result, response.status));
+    }
+    return result;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -271,7 +361,7 @@ async function downloadWorkerArtifact(
   let handle;
   try {
     const response = await context.runtime.fetch(
-      `${context.origin}/v1/worker/artifacts/${attachmentId}`,
+      `${context.origin}/v1/worker/${arguments_[1] === "attachment-download" ? "attachments" : "artifacts"}/${attachmentId}`,
       {
         headers: { authorization: `Bearer ${context.token}` },
         method: "GET",
@@ -359,8 +449,29 @@ function parseCommand(arguments_: readonly string[]): {
   const command = arguments_[1];
   const options = parseOptions(
     arguments_.slice(2),
-    command === "message-post" ? ["anyway", "send-draft"] : [],
+    command === "message-post"
+      ? ["anyway", "send-draft", "top-level"]
+      : command === "task-list"
+        ? ["mine"]
+        : command === "message-read"
+          ? ["top-level"]
+          : command === "task-amend"
+            ? ["clear-description"]
+            : command === "task-assign"
+              ? ["unassign"]
+              : [],
   );
+  const readCommand = parseWorkerReadCommand(command, options);
+  if (readCommand) return readCommand;
+  const channelAttentionCommand = parseWorkerChannelAttentionCommand(
+    command,
+    options,
+  );
+  if (channelAttentionCommand) return channelAttentionCommand;
+  const managementCommand = parseWorkerTaskManagementCommand(command, options);
+  if (managementCommand) return managementCommand;
+  const profileCommand = parseWorkerSelfProfileCommand(command, options);
+  if (profileCommand) return profileCommand;
   switch (command) {
     case "sync":
       assertAllowed(options, ["after-seq"]);
@@ -376,20 +487,6 @@ function parseCommand(arguments_: readonly string[]): {
       return {
         body: { throughSeq: positiveInteger(options, "through-seq") },
         path: "/v1/worker/acknowledge",
-      };
-    case "message-search":
-      assertAllowed(options, ["query", "limit", "cursor"]);
-      return {
-        path: "/v1/worker/messages/search",
-        body: WorkerMessageSearchRequestSchema.parse({
-          query: boundedText(options, "query", 500),
-          ...(options.limit === undefined
-            ? {}
-            : { limit: positiveInteger(options, "limit") }),
-          ...(options.cursor === undefined
-            ? {}
-            : { cursor: boundedText(options, "cursor", 2048) }),
-        }),
       };
     case "message-react":
       assertAllowed(options, [
@@ -411,21 +508,63 @@ function parseCommand(arguments_: readonly string[]): {
           idempotencyKey: boundedText(options, "idempotency-key", 200),
         }),
       };
+    case "attachment-cancel":
+      assertAllowed(options, ["attachment-id"]);
+      return {
+        path: "/v1/worker/attachments/cancel",
+        body: WorkerMessageAttachmentCancelRequestSchema.parse({
+          attachmentId: boundedText(options, "attachment-id", 512),
+        }),
+      };
     case "message-post":
       assertAllowed(options, [
+        "target",
+        "context-receipt",
         "anyway",
+        "attachment-ids",
+        "comment-attachment-id",
         "based-on-room-seq",
         "body",
         "held-draft-id",
         "idempotency-key",
         "send-draft",
+        "thread-id",
+        "top-level",
       ]);
+      if (
+        options["thread-id"] !== undefined &&
+        options["top-level"] !== undefined
+      )
+        throw new Error("--thread-id and --top-level are mutually exclusive");
+      const targetContext =
+        options.target === undefined && options["context-receipt"] === undefined
+          ? {}
+          : {
+              channel: boundedText(options, "target", 500),
+              contextReceipt: boundedText(options, "context-receipt", 4096),
+            };
+      const replyTarget =
+        options["top-level"] === "true"
+          ? { threadId: null }
+          : options["thread-id"] === undefined
+            ? {}
+            : { threadId: boundedText(options, "thread-id", 512) };
       if (options["send-draft"] === "true") {
+        if (options["comment-attachment-id"] !== undefined)
+          throw new Error(
+            "--comment-attachment-id cannot replace a held draft’s comment target",
+          );
+        if (options["attachment-ids"] !== undefined)
+          throw new Error(
+            "--attachment-ids cannot replace a held draft's attachments",
+          );
         if (options.body !== undefined) {
           throw new Error("--body cannot be combined with --send-draft");
         }
         return {
           body: {
+            ...replyTarget,
+            ...targetContext,
             ...(options.anyway === "true" ? { anyway: true } : {}),
             basedOnRoomSeq: nonnegativeInteger(options, "based-on-room-seq"),
             heldDraftId: boundedText(options, "held-draft-id", 512),
@@ -443,8 +582,29 @@ function parseCommand(arguments_: readonly string[]): {
       }
       return {
         body: {
+          ...replyTarget,
+          ...targetContext,
+          ...(options["comment-attachment-id"] === undefined
+            ? {}
+            : {
+                commentAttachmentId: boundedText(
+                  options,
+                  "comment-attachment-id",
+                  512,
+                ),
+              }),
+          ...(options["attachment-ids"] === undefined
+            ? {}
+            : {
+                attachmentIds: options["attachment-ids"]
+                  .split(",")
+                  .map((id) => id.trim()),
+              }),
           basedOnRoomSeq: nonnegativeInteger(options, "based-on-room-seq"),
-          body: boundedText(options, "body"),
+          ...(options.body === undefined &&
+          options["attachment-ids"] !== undefined
+            ? {}
+            : { body: boundedText(options, "body") }),
           idempotencyKey: boundedText(options, "idempotency-key", 512),
         },
         path: "/v1/worker/messages/post",
@@ -462,30 +622,6 @@ function parseCommand(arguments_: readonly string[]): {
           threadId: boundedText(options, "thread-id", 512),
         },
         path: "/v1/worker/threads/unfollow",
-      };
-    case "mcp-tools":
-      assertAllowed(options, []);
-      return { body: {}, path: "/v1/worker/mcp/tools" };
-    case "mcp-call":
-      assertAllowed(options, [
-        "arguments-json",
-        "assignment-version",
-        "config-version",
-        "server-id",
-        "tool-name",
-      ]);
-      return {
-        body: {
-          arguments: jsonObjectOption(options, "arguments-json"),
-          expectedAssignmentVersion: positiveInteger(
-            options,
-            "assignment-version",
-          ),
-          expectedConfigVersion: positiveInteger(options, "config-version"),
-          mcpServerId: boundedText(options, "server-id", 512),
-          toolName: boundedText(options, "tool-name", 512),
-        },
-        path: "/v1/worker/mcp/call",
       };
     case "task-get":
       return taskQuery(options, "/v1/worker/tasks/get");
@@ -1048,6 +1184,7 @@ async function readWorkerToken(path: string | undefined): Promise<string> {
 
 async function readBoundedJson(
   body: ReadableStream<Uint8Array> | null,
+  maxBytes = MAX_RESPONSE_BYTES,
 ): Promise<unknown> {
   if (body === null) return {};
   const reader = body.getReader();
@@ -1058,7 +1195,7 @@ async function readBoundedJson(
       const part = await reader.read();
       if (part.done) break;
       total += part.value.byteLength;
-      if (total > MAX_RESPONSE_BYTES) {
+      if (total > maxBytes) {
         throw new Error("Worker response exceeds the safe byte limit");
       }
       chunks.push(part.value);
@@ -1133,15 +1270,41 @@ rah reminder update --id ID (--in 30m|--fire-at ISO|--cadence RULE|--title TEXT)
 rah reminder log --id ID
 rah worker sync [--after-seq N]
 rah worker acknowledge --through-seq N
-rah worker message-search --query TEXT [--limit N] [--cursor CURSOR]
+rah worker room-list [--limit N] [--cursor CURSOR]
+rah worker room-read --target TARGET [--limit N] [--context-receipt RECEIPT]
+rah worker room-resolve --target ROOM_ID|#CHANNEL|dm:@HANDLE[:THREAD_ID]
+rah worker message-read [--target TARGET] [--before ID|--after ID|--around ID] [--thread-id ID|--top-level] [--limit N] [--cursor CURSOR]
+rah worker message-resolve --message-id ID [--target TARGET]
+rah worker room-members [--target TARGET] [--limit N] [--cursor CURSOR]
+rah worker version
+rah worker whoami
+rah worker server-info [--target TARGET] [--limit N] [--cursor CURSOR]
+rah worker profile-avatar-publish --path FILE --mime-type image/png|image/jpeg|image/gif|image/webp
+rah worker profile-self-get
+rah worker profile-update --control-room-id ID --control-room-seq N --expected-revision-id ID [--display-name TEXT] [--description TEXT] [--avatar-key KEY] [--avatar-upload-intent-id ID] --idempotency-key KEY
+rah worker profile-show [--target ID|@HANDLE] [--channel TARGET] [--created-agents-limit N] [--created-agents-cursor CURSOR]
+rah worker task-assign --task-id ID (--assignee AGENT_ID | --unassign) --based-on-room-seq N --idempotency-key KEY
+rah worker channel-mute --based-on-room-seq N --idempotency-key KEY [--target CHANNEL --context-receipt RECEIPT]
+rah worker channel-unmute --based-on-room-seq N --idempotency-key KEY [--target CHANNEL --context-receipt RECEIPT]
+rah worker task-delete --room-id ID --task-id ID --based-on-room-seq N --idempotency-key KEY
+rah worker task-amend --task-id ID [--title TEXT] [--description TEXT | --clear-description] --based-on-room-seq N --idempotency-key KEY
+rah worker task-unblock --task-id ID --based-on-room-seq N --idempotency-key KEY
+rah worker task-convert --message-id ID --based-on-room-seq N --idempotency-key KEY
+rah worker task-list [--target TARGET] [--mine] [--status todo|in_progress|in_review|done|closed|all] [--limit N] [--cursor CURSOR]
+rah worker task-history --task-id ID [--target TARGET] [--limit N] [--cursor CURSOR]
+Read tools expose current facts in already joined Rooms and DMs without acknowledging Inbox or authorizing newer mutation cursors. Task lists show current projections, not MVCC snapshots.
+rah worker message-search [--query TEXT] [--target TARGET] [--sender @HANDLE|ID] [--sender-id ID] [--after ISO_TIMESTAMP] [--before ISO_TIMESTAMP] [--sort relevance|recent] [--limit N] [--cursor CURSOR]
 rah worker message-react --message-id ID --emoji EMOJI --active true|false --based-on-room-seq N --idempotency-key KEY
-rah worker message-post --body TEXT --based-on-room-seq N --idempotency-key KEY
+rah worker message-post [--target TARGET --context-receipt RECEIPT] [--body TEXT] [--attachment-ids ID,ID] [--thread-id ID | --top-level] --based-on-room-seq N --idempotency-key KEY
 rah worker message-post --send-draft --held-draft-id ID [--anyway] --based-on-room-seq N --idempotency-key KEY
 rah worker thread-unfollow --thread-id ID --based-on-room-seq N --idempotency-key KEY
+rah worker attachment-publish --path FILE [--target TARGET --context-receipt RECEIPT] [--filename NAME] [--mime-type TYPE] --idempotency-key KEY
+rah worker attachment-comments --attachment-id ID [--limit N] [--before-room-seq N]
+rah worker attachment-capabilities
+rah worker attachment-cancel --attachment-id ID
+rah worker attachment-download --attachment-id ID --output FILE
 rah worker artifact-publish --task-id ID --path FILE [--filename NAME] [--mime-type TYPE] --idempotency-key KEY
 rah worker artifact-download --attachment-id ID --output FILE
-rah worker mcp-tools
-rah worker mcp-call --server-id ID --tool-name NAME --config-version N --assignment-version N --arguments-json JSON_OBJECT
 rah worker task-get --task-id ID
 rah worker task-submission --task-id ID
 rah worker task-trajectory --task-id ID [--limit N] [--before-sequence N]

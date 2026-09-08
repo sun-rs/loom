@@ -6,18 +6,41 @@ export function WorkbenchServiceRestart() {
   const [generation, setGeneration] = useState<string>();
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
+  const [statusState, setStatusState] = useState<
+    "loading" | "available" | "unavailable" | "error"
+  >("loading");
   const lifetime = useRef<AbortController | null>(null);
   useEffect(() => {
     const controller = new AbortController();
     lifetime.current = controller;
-    void readStatus(controller.signal)
-      .then((status) => {
-        if (status.available && !controller.signal.aborted)
-          setGeneration(status.generation);
-      })
-      .catch(() => undefined);
+    void refreshStatus(controller.signal);
     return () => controller.abort();
   }, []);
+  async function refreshStatus(signal = lifetime.current?.signal) {
+    if (signal === undefined || signal.aborted) return;
+    setStatusState("loading");
+    setMessage("");
+    try {
+      const status = await readStatus(signal);
+      if (signal.aborted) return;
+      if (!status.available) {
+        setGeneration(undefined);
+        setStatusState("unavailable");
+      } else if (status.state === "failed") {
+        setGeneration(undefined);
+        setStatusState("error");
+        setMessage("服务启动失败，请按本机恢复指南处理后重试连接。");
+      } else {
+        setGeneration(status.generation);
+        setStatusState("available");
+      }
+    } catch {
+      if (!signal.aborted) {
+        setGeneration(undefined);
+        setStatusState("error");
+      }
+    }
+  }
   async function restart() {
     const signal = lifetime.current?.signal;
     if (
@@ -46,8 +69,20 @@ export function WorkbenchServiceRestart() {
         const result = (await response.json()) as { result?: string };
         if (result.result === "busy")
           throw new Error("Agent 工作尚未结束，请等待后再重启。");
-        if (result.result !== "stale")
-          throw new Error("重启请求被拒绝，请刷新页面检查登录状态。");
+        if (result.result === "stale") {
+          const status = await readStatus(signal);
+          if (signal.aborted) return;
+          if (status.available && status.state === "online") {
+            setGeneration(status.generation);
+            setMessage("服务已由其他请求重启，已刷新连接状态。");
+          } else {
+            setGeneration(undefined);
+            setStatusState("error");
+            setMessage("服务状态已变化，请重试连接以确认恢复。");
+          }
+          return;
+        }
+        throw new Error("重启请求被拒绝，请刷新页面检查登录状态。");
       }
       const deadline = Date.now() + 90_000;
       while (!signal.aborted && Date.now() < deadline) {
@@ -67,8 +102,11 @@ export function WorkbenchServiceRestart() {
         }
         await new Promise((resolve) => window.setTimeout(resolve, 500));
       }
-      if (!signal.aborted)
-        throw new Error("尚未确认服务恢复。可重试核实，或查看本机恢复指南。");
+      if (!signal.aborted) {
+        setGeneration(undefined);
+        setStatusState("error");
+        throw new Error("尚未确认服务恢复。请按本机恢复指南处理后重试连接。");
+      }
     } catch (error) {
       if (!signal.aborted)
         setMessage(error instanceof Error ? error.message : "重启失败");
@@ -80,18 +118,34 @@ export function WorkbenchServiceRestart() {
     <div className="rah-computer-service-restart">
       <button
         className="btn"
-        disabled={pending || generation === undefined}
+        disabled={
+          pending || statusState !== "available" || generation === undefined
+        }
         onClick={() => void restart()}
         type="button"
       >
         <Icon name="refresh-cw" />
         {pending ? "正在重启服务…" : "重启服务"}
       </button>
+      {statusState === "error" && (
+        <button
+          className="btn"
+          disabled={pending}
+          onClick={() => void refreshStatus()}
+          type="button"
+        >
+          重试连接
+        </button>
+      )}
       <p role="status">
         {message ||
-          (generation === undefined
-            ? "当前连接未提供服务重启能力。"
-            : "重启本机工作台服务，页面将自动重新连接。")}
+          (statusState === "loading"
+            ? "正在读取服务状态…"
+            : statusState === "error"
+              ? "暂时无法读取服务状态，请重试。"
+              : statusState === "unavailable"
+                ? "当前连接未提供服务重启能力。"
+                : "重启本机工作台服务，页面将自动重新连接。")}
       </p>
     </div>
   );

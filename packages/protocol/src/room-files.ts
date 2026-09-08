@@ -1,3 +1,7 @@
+import {
+  WorkerReadChannelSchema,
+  WorkerTargetReceiptSchema,
+} from "./worker-target-reference.ts";
 import { attachmentMediaPreview } from "./attachment-media.ts";
 export {
   attachmentMediaPreview,
@@ -8,6 +12,8 @@ import { IdentifierSchema, TimestampSchema } from "./common.ts";
 
 // Raft attachmentUploadContract.ts (1.0.18): reservations, verification and 200 MiB.
 export const MAX_ATTACHMENT_BYTES = 200 * 1024 * 1024;
+// Local reservation lifetime; shared by actual preparation and capability reads.
+export const ATTACHMENT_UPLOAD_SESSION_EXPIRES_IN_SECONDS = 60 * 60;
 export const MAX_ATTACHMENT_TEXT_PREVIEW_BYTES = 2 * 1024 * 1024;
 export const AttachmentPreviewKindSchema = z.enum([
   "image",
@@ -195,9 +201,34 @@ export const WorkerArtifactUploadSchema = FileUploadSchema.extend({
   taskId: IdentifierSchema,
 }).strict();
 export type WorkerArtifactUpload = z.infer<typeof WorkerArtifactUploadSchema>;
+export const WorkerMessageAttachmentPrepareRequestSchema =
+  WorkerArtifactPrepareRequestSchema.omit({ taskId: true })
+    .extend({
+      channel: WorkerReadChannelSchema.optional(),
+      contextReceipt: WorkerTargetReceiptSchema.optional(),
+    })
+    .strict()
+    .refine(
+      (input) =>
+        (input.channel === undefined) === (input.contextReceipt === undefined),
+      { message: "channel and contextReceipt must be supplied together" },
+    );
+export const WorkerMessageAttachmentUploadSchema = FileUploadSchema.extend({
+  sha256: AttachmentSchema.shape.sha256.optional(),
+}).strict();
+export type WorkerMessageAttachmentPrepareRequest = z.infer<
+  typeof WorkerMessageAttachmentPrepareRequestSchema
+>;
+export type WorkerMessageAttachmentUpload = z.infer<
+  typeof WorkerMessageAttachmentUploadSchema
+>;
 export const FileIdRequestSchema = z
   .object({ attachmentId: IdentifierSchema })
   .strict();
+export const WorkerMessageAttachmentCancelRequestSchema = FileIdRequestSchema;
+export type WorkerMessageAttachmentCancelRequest = z.infer<
+  typeof WorkerMessageAttachmentCancelRequestSchema
+>;
 export const RoomFileSchema = AttachmentSchema.extend({
   roomId: IdentifierSchema,
   messageId: IdentifierSchema,

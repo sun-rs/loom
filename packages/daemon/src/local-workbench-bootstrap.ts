@@ -17,10 +17,7 @@ import {
   RuntimeProfileRegistry,
 } from "@rah-os/agent-host";
 import { RoomKernel } from "@rah-os/kernel";
-import type {
-  ManagedMcpRuntimeAdapter,
-  ToolAccessMode,
-} from "@rah-os/protocol";
+import type { ToolAccessMode } from "@rah-os/protocol";
 import { z } from "zod";
 
 import { DaemonConfigSchema, type DaemonConfigV4 } from "./config.ts";
@@ -56,7 +53,7 @@ export type LocalWorkbenchRuntimeSpec = {
   displayName: string;
   executable: string;
   instructions: string;
-  managedMcpAdapter?: ManagedMcpRuntimeAdapter;
+
   modelCatalogProbe?: {
     kind: "claude-cli/v1" | "codex-cli/v1" | "kimi-cli/v1" | "opencode-cli/v1";
   };
@@ -323,9 +320,6 @@ async function prepareRuntimeRegistry(input: {
         credentialSlots: [],
         declaredCapabilities: ["worker_commands"],
         displayName: spec.displayName,
-        ...(spec.managedMcpAdapter === undefined
-          ? {}
-          : { managedMcpAdapter: spec.managedMcpAdapter }),
         protocolFamily: "rah-worker-process/v1",
         recoveryDrivers:
           process.platform === "win32" ? [] : ["rah-process-supervisor-v1"],

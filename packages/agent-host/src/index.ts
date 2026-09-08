@@ -586,7 +586,7 @@ export type {
   ComputerResidentServiceState,
   ComputerResidentServiceTerminalReason,
 } from "./computer-resident-service.ts";
-export * from "./managed-mcp-runtime-proxy.ts";
-export * from "./managed-mcp-runtime-launch.ts";
+
 export * from "./activation-environment-lease.ts";
-export * from "./node-http-managed-mcp-worker-client.ts";
+
+export * from "./agent-skills.ts";

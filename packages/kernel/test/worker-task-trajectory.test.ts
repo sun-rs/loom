@@ -473,3 +473,80 @@ test("an Agent of another Room cannot read this Room's Task trajectory", () => {
     state.cleanup();
   }
 });
+
+test("trajectory reports only Task-linked Runs and labels them as shared diagnostic context", () => {
+  const state = fixture();
+  try {
+    const owner = activate(state, state.ownerId, "owner");
+    const claimed = state.kernel.claimTask(owner.execution, {
+      taskId: state.created.task.taskId,
+      basedOnRoomSeq: owner.toSeq,
+      leaseMs: 86_400_000,
+      idempotencyKey: "claim",
+    });
+    const started = state.kernel.startTask(owner.execution, {
+      taskId: state.created.task.taskId,
+      basedOnRoomSeq: claimed.event.roomSeq,
+      leaseMs: 86_400_000,
+      idempotencyKey: "start",
+    });
+    appendEntry(
+      state,
+      owner,
+      1,
+      {
+        kind: "tool_start",
+        toolName: "Bash",
+        toolInput: "actual task command",
+      },
+      TASK_CREATED_AT,
+    );
+    state.kernel.submitTask(owner.execution, {
+      taskId: state.created.task.taskId,
+      basedOnRoomSeq: started.event.roomSeq,
+      idempotencyKey: "submit",
+      summary: "Done",
+    });
+    state.kernel.recordRuntimeTermination(owner.host, {
+      exit: { code: 0 },
+      runAttemptId: owner.runtime.runAttemptId,
+      runtimeRunId: owner.runtime.runtimeRunId,
+    });
+    state.kernel.finishRunAttempt(owner.host, {
+      exitCode: 0,
+      runAttemptId: owner.runtime.runAttemptId,
+      state: "exited",
+    });
+    state.kernel.completeActivation(owner.host, {
+      activationId: owner.activation.activationId,
+      consumerId: "owner-worker",
+    });
+    state.setClock("2026-09-05T02:00:00.000Z");
+    state.kernel.postMessage(state.humanActor, {
+      roomId: state.roomId,
+      body: "Do an unrelated investigation",
+      recipients: [{ participantId: state.ownerId, reason: "mention" }],
+      idempotencyKey: "unrelated",
+    });
+    const unrelated = activate(state, state.ownerId, "unrelated");
+    appendEntry(
+      state,
+      unrelated,
+      1,
+      { kind: "tool_start", toolName: "Bash", toolInput: "unrelated command" },
+      "2026-09-05T02:00:00.000Z",
+    );
+    const reader = activate(state, state.reviewerId, "reader");
+    const result = state.kernel.listWorkerTaskTrajectory(reader.execution, {
+      taskId: state.created.task.taskId,
+      limit: 50,
+    });
+    assert.deepEqual(
+      result.entries.map((e) => e.runAttemptId),
+      [owner.runtime.runAttemptId],
+    );
+    assert.equal(result.scope, "task_linked_run_diagnostics");
+  } finally {
+    state.cleanup();
+  }
+});

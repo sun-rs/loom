@@ -177,7 +177,7 @@ export class LocalWorkbenchGateway {
         request,
         response,
         this.#serviceControl,
-        this.#hasSession(request.headers.cookie),
+        () => this.#hasSession(request.headers.cookie),
         request.headers.origin === this.origin,
       );
       return;

@@ -11,9 +11,6 @@ import type {
   ClientAgentGetResponse,
   ClientAgentMemoryGetResponse,
   LocalRuntimeInventoryEntry,
-  ManagedMcpAssignmentRecord,
-  ManagedMcpServerRecord,
-  ManagedMcpUsageRecord,
   MembershipRole,
   NavigationTarget,
   Principal,
@@ -58,13 +55,14 @@ import { AgentStatusDot } from "./agent-status-dot.tsx";
 import { AgentMemoryConfigDialog } from "./agent-memory-config-dialog.tsx";
 import { AgentExecutionResetDialog } from "./agent-execution-reset-dialog.tsx";
 import { AgentIssueReportDialog } from "./agent-issue-report-dialog.tsx";
+import {
+  AgentStateDialog,
+  type AgentStateChange,
+} from "./agent-state-dialog.tsx";
 import { AgentRolePermissions } from "./agent-role-permissions.tsx";
+import { AgentSkillsSection } from "./agent-skills-section.tsx";
 import { AgentProfileFieldEditor } from "./agent-profile-field.tsx";
 import type { AgentProfileEditInput } from "../agent-profile-edit.ts";
-import {
-  projectAgentMcpServers,
-  type AgentMcpServerView,
-} from "../agent-mcp-projection.ts";
 import { runtimeProfilePresentation } from "../agent-runtime-presentation.ts";
 import { formatRahDateTime } from "../date-time-presentation.ts";
 import { ProfileSection } from "@rah-os/ui-web/neo-brutalist/profile-section";
@@ -103,7 +101,6 @@ const RAFT_AGENT_TABS: ReadonlyArray<{
   { icon: "bell", id: "reminders", label: "提醒" },
   { icon: "folder-open", id: "workspace", label: "工作区" },
   { icon: "link-2", id: "apps", label: "应用" },
-  { icon: "blocks", id: "mcp", label: "MCP" },
 ];
 
 const MIN_SIDEBAR_WIDTH = 180;
@@ -121,12 +118,10 @@ export function AgentDirectoryPane({
   canCreate,
   canManage,
   canMessage,
-  canReadManagedMcp,
   canChangeHumanRole,
   client,
   computerLabel,
   computerStatus,
-  controlRoomId,
   currentHuman,
   humans,
   humanDirectoryError,
@@ -136,6 +131,7 @@ export function AgentDirectoryPane({
   fullResetEnabled,
   onCreate,
   onManage,
+  onChangeState,
   onEditRuntime,
   onResetExecution,
   onSaveProfile,
@@ -156,12 +152,10 @@ export function AgentDirectoryPane({
   canCreate: boolean;
   canManage: boolean;
   canMessage: boolean;
-  canReadManagedMcp: boolean;
   canChangeHumanRole: boolean;
   client: RahClient;
   computerLabel: string | undefined;
   computerStatus?: WorkspaceAgentView["connectionStatus"];
-  controlRoomId: string | undefined;
   currentHuman: Principal | undefined;
   humans: readonly import("@rah-os/protocol").WorkspaceHumanMember[];
   humanDirectoryError?: string | undefined;
@@ -171,6 +165,7 @@ export function AgentDirectoryPane({
   fullResetEnabled: boolean;
   onCreate: () => void;
   onManage: (agentDefinitionId: string) => void;
+  onChangeState?: AgentStateChange | undefined;
   onEditRuntime: (agentDefinitionId: string) => void;
   onResetExecution?:
     | ((
@@ -251,14 +246,6 @@ export function AgentDirectoryPane({
   const [agentDetail, setAgentDetail] = useState<ClientAgentGetResponse>();
   const [agentDetailError, setAgentDetailError] = useState<string>();
   const [agentDetailLoading, setAgentDetailLoading] = useState(false);
-  const [mcpCalls, setMcpCalls] = useState<ManagedMcpUsageRecord[]>([]);
-  const [mcpServers, setMcpServers] = useState<ManagedMcpServerRecord[]>([]);
-  const [mcpAssignments, setMcpAssignments] = useState<
-    ManagedMcpAssignmentRecord[]
-  >([]);
-  const [mcpCursor, setMcpCursor] = useState<string>();
-  const [mcpError, setMcpError] = useState<string>();
-  const [mcpLoading, setMcpLoading] = useState(false);
   const [agentRooms, setAgentRooms] = useState<Room[]>([]);
   const [agentRoomsError, setAgentRoomsError] = useState<string>();
   const [agentRoomsLoading, setAgentRoomsLoading] = useState(false);
@@ -276,6 +263,10 @@ export function AgentDirectoryPane({
   const [remindersError, setRemindersError] = useState<string>();
   const [remindersLoading, setRemindersLoading] = useState(false);
   const [remindersReload, setRemindersReload] = useState(0);
+  const [stateAction, setStateAction] = useState<
+    "enabled" | "disabled" | "tombstoned"
+  >();
+  const [headerResetOpen, setHeaderResetOpen] = useState(false);
   const activityScope = useRef<AbortController | undefined>(undefined);
   const activityHistoryRef = useRef(false);
   const selectedAgent =
@@ -286,10 +277,13 @@ export function AgentDirectoryPane({
             agentDefinitionId === selectedAgentDefinitionId,
         );
   const detailAgentId = selectedAgent?.agentDefinitionId;
+  useEffect(() => {
+    setStateAction(undefined);
+    setHeaderResetOpen(false);
+  }, [detailAgentId]);
   const detailRevisionId = selectedAgent?.agentDefinitionRevisionId;
   const detailPolicyId = selectedAgent?.executionPolicyRevisionId;
   const detailAgentState = selectedAgent?.state;
-  const detailParticipantId = selectedAgent?.participantId;
   const visibleAgentDetail =
     agentDetail?.agent.definition.agentDefinitionId === detailAgentId
       ? agentDetail
@@ -298,11 +292,6 @@ export function AgentDirectoryPane({
     selectedAgent === undefined
       ? []
       : (entities?.runtimesForAgent(selectedAgent.agentDefinitionId) ?? []);
-  const mcpServerViews = useMemo(
-    () => projectAgentMcpServers(mcpServers, mcpAssignments, mcpCalls),
-    [mcpAssignments, mcpCalls, mcpServers],
-  );
-
   useEffect(() => {
     if (!panel && initialAgentDefinitionId !== undefined) {
       setSelectedAgentDefinitionId(initialAgentDefinitionId);
@@ -486,86 +475,6 @@ export function AgentDirectoryPane({
       controller.abort();
     };
   }, [client, selectedAgent?.agentDefinitionId, tab, activityReload]);
-
-  useEffect(() => {
-    if (
-      tab !== "mcp" ||
-      !canReadManagedMcp ||
-      controlRoomId === undefined ||
-      detailParticipantId === undefined
-    ) {
-      return;
-    }
-    const controller = new AbortController();
-    setMcpCalls([]);
-    setMcpServers([]);
-    setMcpAssignments([]);
-    setMcpCursor(undefined);
-    setMcpError(undefined);
-    setMcpLoading(true);
-    void Promise.all([
-      client.request(
-        "managedMcp.usage.list",
-        {
-          controlRoomId,
-          limit: 50,
-          participantId: detailParticipantId,
-        },
-        { signal: controller.signal },
-      ),
-      client.request(
-        "managedMcp.server.list",
-        { controlRoomId },
-        { signal: controller.signal },
-      ),
-      client.request(
-        "managedMcp.assignment.list",
-        { controlRoomId, participantId: detailParticipantId },
-        { signal: controller.signal },
-      ),
-    ])
-      .then(([usage, serverCatalog, assignmentCatalog]) => {
-        if (controller.signal.aborted) return;
-        setMcpCalls(usage.calls);
-        setMcpCursor(usage.nextCursor);
-        setMcpServers(serverCatalog.servers);
-        setMcpAssignments(assignmentCatalog.assignments);
-        setMcpError(undefined);
-      })
-      .catch((error: unknown) => {
-        if (!controller.signal.aborted) setMcpError(errorMessage(error));
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setMcpLoading(false);
-      });
-    return () => controller.abort();
-  }, [canReadManagedMcp, client, controlRoomId, detailParticipantId, tab]);
-
-  async function loadEarlierMcpUsage(): Promise<void> {
-    if (
-      mcpCursor === undefined ||
-      controlRoomId === undefined ||
-      selectedAgent === undefined
-    ) {
-      return;
-    }
-    setMcpLoading(true);
-    setMcpError(undefined);
-    try {
-      const response = await client.request("managedMcp.usage.list", {
-        beforeCallId: mcpCursor,
-        controlRoomId,
-        limit: 50,
-        participantId: selectedAgent.participantId,
-      });
-      setMcpCalls((current) => [...current, ...response.calls]);
-      setMcpCursor(response.nextCursor);
-    } catch (error) {
-      setMcpError(errorMessage(error));
-    } finally {
-      setMcpLoading(false);
-    }
-  }
 
   async function loadEarlierAgentActivity(): Promise<void> {
     const controller = activityScope.current;
@@ -791,6 +700,25 @@ export function AgentDirectoryPane({
           <p className="rah-agent-selection-empty">选择一个 Agent</p>
         ) : (
           <section className="rah-agent-detail-panel">
+            {stateAction && onChangeState && (
+              <AgentStateDialog
+                key={`${selectedAgent.agentDefinitionId}:${stateAction}`}
+                agent={selectedAgent}
+                state={stateAction}
+                onChange={onChangeState}
+                onClose={() => setStateAction(undefined)}
+              />
+            )}
+            {headerResetOpen && onResetExecution && (
+              <AgentExecutionResetDialog
+                agentName={selectedAgent.displayName}
+                fullResetEnabled={fullResetEnabled}
+                onClose={() => setHeaderResetOpen(false)}
+                onConfirm={(mode, key) =>
+                  onResetExecution(selectedAgent.agentDefinitionId, mode, key)
+                }
+              />
+            )}
             <AgentDetailHeader
               onClose={onClose}
               agent={selectedAgent}
@@ -804,6 +732,21 @@ export function AgentDirectoryPane({
                 });
               }}
               onManage={() => onManage(selectedAgent.agentDefinitionId)}
+              onStartStop={
+                canManage && onChangeState
+                  ? () =>
+                      setStateAction(
+                        selectedAgent.state === "enabled"
+                          ? "disabled"
+                          : "enabled",
+                      )
+                  : undefined
+              }
+              onRestart={
+                canManage && onResetExecution
+                  ? () => setHeaderResetOpen(true)
+                  : undefined
+              }
               onMessage={() => void openSelectedDirectRoom()}
             />
             <AgentTabList activeTab={tab} onSelect={selectTab} />
@@ -834,6 +777,21 @@ export function AgentDirectoryPane({
                 fullResetEnabled={fullResetEnabled}
                 loading={agentDetailLoading}
                 onManage={() => onManage(selectedAgent.agentDefinitionId)}
+                onStartStop={
+                  canManage && onChangeState
+                    ? () =>
+                        setStateAction(
+                          selectedAgent.state === "enabled"
+                            ? "disabled"
+                            : "enabled",
+                        )
+                    : undefined
+                }
+                onDelete={
+                  canManage && onChangeState
+                    ? () => setStateAction("tombstoned")
+                    : undefined
+                }
                 onEditRuntime={() =>
                   onEditRuntime(selectedAgent.agentDefinitionId)
                 }
@@ -863,22 +821,6 @@ export function AgentDirectoryPane({
                 onOpenRoom={onOpenRoom}
                 rooms={agentRooms}
               />
-            ) : tab === "mcp" ? (
-              canReadManagedMcp ? (
-                <AgentMcpUsagePane
-                  error={mcpError}
-                  hasEarlier={mcpCursor !== undefined}
-                  loading={mcpLoading}
-                  onLoadEarlier={() => void loadEarlierMcpUsage()}
-                  servers={mcpServerViews}
-                />
-              ) : (
-                <AgentCapabilityPane
-                  icon="code-xml"
-                  title="MCP 使用记录不可用"
-                  description="当前 Human 没有读取该 Workspace MCP 审计投影的权限。"
-                />
-              )
             ) : tab === "reminders" ? (
               <AgentRemindersPane
                 error={remindersError}
@@ -1274,6 +1216,8 @@ export function AgentDetailHeader({
   messagePending,
   onBack,
   onManage,
+  onStartStop,
+  onRestart,
   onMessage,
 }: {
   onClose?: (() => void) | undefined;
@@ -1282,6 +1226,8 @@ export function AgentDetailHeader({
   messagePending: boolean;
   onBack: () => void;
   onManage: () => void;
+  onStartStop?: (() => void) | undefined;
+  onRestart?: (() => void) | undefined;
   onMessage: () => void;
 }) {
   return (
@@ -1308,6 +1254,22 @@ export function AgentDetailHeader({
           title="聊天"
         >
           <Icon name="chat" />
+        </PanelHeaderAction>
+        <PanelHeaderAction
+          aria-label={agent.state === "enabled" ? "停止 Agent" : "启动 Agent"}
+          title={agent.state === "enabled" ? "停止 Agent" : "启动 Agent"}
+          disabled={onStartStop === undefined}
+          onClick={onStartStop}
+        >
+          <Icon name={agent.state === "enabled" ? "square" : "play"} />
+        </PanelHeaderAction>
+        <PanelHeaderAction
+          aria-label="重启 / 重置"
+          title="重启 / 重置"
+          disabled={onRestart === undefined}
+          onClick={onRestart}
+        >
+          <Icon name="rotate-ccw" />
         </PanelHeaderAction>
         <PanelHeaderAction
           aria-label={`管理 ${agent.displayName}`}
@@ -1359,6 +1321,8 @@ export function AgentProfilePane({
   fullResetEnabled,
   loading,
   onManage,
+  onStartStop,
+  onDelete,
   onEditRuntime,
   onResetExecution,
   onSaveProfile,
@@ -1376,6 +1340,8 @@ export function AgentProfilePane({
   fullResetEnabled: boolean;
   loading: boolean;
   onManage: () => void;
+  onStartStop?: (() => void) | undefined;
+  onDelete?: (() => void) | undefined;
   onEditRuntime: () => void;
   onResetExecution?:
     | ((mode: AgentExecutionResetMode, idempotencyKey: string) => Promise<void>)
@@ -1565,24 +1531,21 @@ export function AgentProfilePane({
           </div>
         )}
       </ProfileSection>
-      {agent.skillRefs.length > 0 ? (
-        <ProfileSection
-          title="技能"
-          count={agent.skillRefs.length}
-          className="rah-agent-skills-section"
-        >
-          <div className="rah-agent-skill-list">
-            {agent.skillRefs.map((skill) => (
-              <article key={`${skill.artifactId}:${skill.versionId}`}>
-                <b>{skill.artifactId}</b>
-                <span>{skill.versionId}</span>
-              </article>
-            ))}
-          </div>
-        </ProfileSection>
-      ) : null}
+      <AgentSkillsSection
+        client={client}
+        agentDefinitionId={agent.agentDefinitionId}
+        executionPolicyRevisionId={agent.executionPolicyRevisionId}
+      />
       <ProfileSection title="操作" className="rah-agent-actions-section">
         <div className="rah-agent-profile-actions">
+          <button
+            className="rah-interaction-brutal"
+            disabled={!canManage || onStartStop === undefined}
+            onClick={onStartStop}
+          >
+            <Icon name={agent.state === "enabled" ? "square" : "play"} />
+            {agent.state === "enabled" ? "停止 Agent" : "启动 Agent"}
+          </button>
           <button
             className="rah-interaction-brutal"
             disabled={!canManage}
@@ -1624,8 +1587,8 @@ export function AgentProfilePane({
           <button
             className="rah-interaction-brutal is-red"
             disabled={!canManage}
-            onClick={onManage}
-            title="打开管理窗口；须先暂停并确认无在途工作后才能删除"
+            onClick={onDelete ?? onManage}
+            title="确认删除；须先停止并确认无在途工作"
           >
             <Icon name="trash-2" />
             删除 Agent
@@ -2080,97 +2043,6 @@ function AgentTrajectoryRow({
   );
 }
 
-function AgentMcpUsagePane({
-  error,
-  hasEarlier,
-  loading,
-  onLoadEarlier,
-  servers,
-}: {
-  error: string | undefined;
-  hasEarlier: boolean;
-  loading: boolean;
-  onLoadEarlier: () => void;
-  servers: readonly AgentMcpServerView[];
-}) {
-  return (
-    <section className="rah-agent-mcp-pane rah-scroll-main">
-      <header>
-        <div>
-          <h3>MCP</h3>
-          <p>已使用的服务器与工具</p>
-        </div>
-      </header>
-      {error === undefined ? null : (
-        <div className="rah-inline-error">{error}</div>
-      )}
-      {loading && servers.length === 0 ? (
-        <p className="rah-agent-activity-empty">正在读取 MCP 使用情况…</p>
-      ) : servers.length === 0 ? (
-        <AgentCapabilityPane
-          icon="code-xml"
-          title="暂无 MCP 使用记录"
-          description="已分配的 MCP 服务器会自动提供给 Agent，调用后显示在这里。"
-        />
-      ) : (
-        <div className="rah-agent-mcp-servers" aria-live="polite">
-          {servers.map((server) => (
-            <details key={server.mcpServerId}>
-              <summary>
-                <Icon name="blocks" />
-                <span>
-                  <b>{server.serverName}</b>
-                  <small>
-                    上次调用 {formatActivityTime(server.lastUsedAt)} · 共
-                    {server.usageCount} 次
-                  </small>
-                </span>
-                <strong
-                  className={
-                    server.serverEnabled && server.assignmentEnabled
-                      ? "is-enabled"
-                      : "is-disabled"
-                  }
-                >
-                  {server.serverEnabled && server.assignmentEnabled
-                    ? server.failedCount > 0
-                      ? `${server.failedCount} 次失败`
-                      : "已连接"
-                    : "已停用"}
-                </strong>
-              </summary>
-              <div className="rah-agent-mcp-tools">
-                {server.tools.map((tool) => (
-                  <article
-                    key={tool.toolName}
-                    title={tool.description ?? tool.title}
-                  >
-                    <Icon name="code-xml" />
-                    <span>
-                      <code>{tool.title ?? tool.toolName}</code>
-                      {tool.title ? <small>{tool.toolName}</small> : null}
-                      {tool.description ? <p>{tool.description}</p> : null}
-                    </span>
-                    <i>{tool.usageCount} 次</i>
-                  </article>
-                ))}
-              </div>
-            </details>
-          ))}
-        </div>
-      )}
-      {hasEarlier ? (
-        <button className="btn" disabled={loading} onClick={onLoadEarlier}>
-          {loading ? "正在读取…" : "加载更早记录"}
-        </button>
-      ) : null}
-      <p className="rah-agent-activity-note">
-        调用参数、凭据与结果正文不会进入此浏览器投影。
-      </p>
-    </section>
-  );
-}
-
 function AgentRemindersPane({
   error,
   loading,
@@ -2303,7 +2175,7 @@ function AgentUnavailableTab({
 }: {
   tab: Exclude<
     AgentTab,
-    "activity" | "chat" | "mcp" | "profile" | "reminders" | "workspace"
+    "activity" | "chat" | "profile" | "reminders" | "workspace"
   >;
 }) {
   const content = {

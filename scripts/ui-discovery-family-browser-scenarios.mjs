@@ -472,7 +472,9 @@ export async function verifyDiscoveryFamily(page, origin, output, engine) {
     const noResult = page.locator(
       '.rah-empty-state[data-context="search"][data-placement="section"]',
     );
-    await noResult.getByText("没有搜索结果", { exact: true }).waitFor();
+    await noResult
+      .getByText(`没有找到“${await query.inputValue()}”的结果`, { exact: true })
+      .waitFor();
     assert.equal(
       await page
         .locator(".search-stage")
@@ -808,7 +810,7 @@ export async function verifyDiscoveryFamily(page, origin, output, engine) {
   );
   assert.ok(prerequisiteTaskId);
   await createDialog
-    .getByRole("button", { name: "配置协作与依赖", exact: true })
+    .getByRole("button", { name: "配置负责人与依赖", exact: true })
     .click();
   const configuredDialog = page.getByRole("dialog", {
     name: "配置任务协作",

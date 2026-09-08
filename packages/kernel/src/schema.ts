@@ -6,6 +6,11 @@ export const SCHEMA_SQL = `
 PRAGMA journal_mode = WAL;
 PRAGMA foreign_keys = ON;
 
+CREATE TABLE IF NOT EXISTS kernel_runtime_secrets (
+  secret_name TEXT PRIMARY KEY,
+  secret_value TEXT NOT NULL
+) STRICT;
+
 CREATE TABLE IF NOT EXISTS principals (
   principal_id TEXT PRIMARY KEY,
   handle TEXT NOT NULL UNIQUE,
@@ -291,6 +296,17 @@ CREATE TABLE IF NOT EXISTS threads (
   FOREIGN KEY (room_id, root_message_id) REFERENCES messages(room_id, message_id)
 ) STRICT;
 
+CREATE TABLE IF NOT EXISTS agent_channel_attention (
+  participant_id TEXT NOT NULL REFERENCES principals(principal_id),
+  room_id TEXT NOT NULL REFERENCES rooms(room_id),
+  activity_muted INTEGER NOT NULL CHECK (activity_muted IN (0,1)),
+  mute_from_seq INTEGER,
+  updated_seq INTEGER NOT NULL CHECK (updated_seq > 0),
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (participant_id,room_id),
+  CHECK ((activity_muted=0 AND mute_from_seq IS NULL) OR (activity_muted=1 AND mute_from_seq>0))
+) STRICT;
+
 CREATE TABLE IF NOT EXISTS agent_thread_follows (
   participant_id TEXT NOT NULL REFERENCES principals(principal_id),
   thread_id TEXT NOT NULL REFERENCES threads(thread_id),
@@ -494,6 +510,7 @@ CREATE TABLE IF NOT EXISTS held_message_drafts (
   activation_id TEXT NOT NULL REFERENCES activations(activation_id),
   thread_id TEXT REFERENCES threads(thread_id),
   body TEXT NOT NULL,
+  attachments_json TEXT NOT NULL DEFAULT '[]' CHECK(json_valid(attachments_json)),
   based_on_room_seq INTEGER NOT NULL CHECK (based_on_room_seq >= 0),
   seen_up_to_seq INTEGER NOT NULL CHECK (seen_up_to_seq > based_on_room_seq),
   idempotency_key TEXT NOT NULL,
@@ -770,6 +787,7 @@ CREATE TABLE IF NOT EXISTS agent_definition_revisions (
   UNIQUE (agent_definition_id, revision)
 ) STRICT;
 
+-- Retired managed MCP tables: preserve existing records and foreign keys. No active mutation owner.
 CREATE TABLE IF NOT EXISTS managed_mcp_servers (
   mcp_server_id TEXT PRIMARY KEY,
   control_room_id TEXT NOT NULL REFERENCES rooms(room_id),

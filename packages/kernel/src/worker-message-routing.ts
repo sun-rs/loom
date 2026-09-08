@@ -1,21 +1,26 @@
 import type { DatabaseSync } from "node:sqlite";
 
-import { messageMentionCandidates, type RoomEvent } from "@rah-os/protocol";
+import {
+  messageMentionCandidates,
+  type ActivationCredentialScope,
+  type WorkerMessagePostRequest,
+  type RoomEvent,
+} from "@rah-os/protocol";
 
 import type { MessageRecipient } from "./collaboration-service.ts";
-import { eventPayloadOptionalText } from "./event-payload.ts";
 import { listRoomAgentRecipients } from "./room-agent-service.ts";
 import { listFollowingAgentThreadRecipients } from "./agent-thread-subscriptions.ts";
-import { text } from "./sqlite-row.ts";
-
-export function workerReplyThreadId(input: {
-  causalEvent: RoomEvent;
-  participantId: string;
-  taskThreadId?: string;
-}): string | undefined {
-  if (input.taskThreadId !== undefined) return input.taskThreadId;
-  return eventPayloadOptionalText(input.causalEvent, "threadId");
-}
+import { integer, nullableText, text, type Row } from "./sqlite-row.ts";
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  StaleContextError,
+} from "./errors.ts";
+import {
+  requireWorkerRoomVisibility,
+  wasTaskCreatedByWorkerRun,
+} from "./worker-task-scope.ts";
 
 /**
  * The Agents an Agent author may address by `@handle`. The membership and
@@ -149,43 +154,112 @@ function causalRecipientIds(event: RoomEvent): string[] {
   return [...ids];
 }
 
-/**
- * A send-draft post carries no body: the prose being sent is the held draft's.
- * Read it without the active-draft assertions so that draft expiry, ownership
- * and idempotency stay the responsibility of the posting path.
- */
-function heldDraftBody(
-  database: DatabaseSync,
-  heldDraftId: string,
-): string | undefined {
-  const row = database
-    .prepare("SELECT body FROM held_message_drafts WHERE held_draft_id = ?")
-    .get(heldDraftId);
-  return row === undefined ? undefined : text(row, "body");
-}
-
-export function workerReplyRoute(input: {
-  body?: string | undefined;
-  causalEvent: RoomEvent;
+/** Resolve an explicit Raft-style target inside the authenticated Room. The
+ * HTTP facade separately proves the complete sync cursor before mutations. */
+export function resolveWorkerReplyRoute(context: {
   database: DatabaseSync;
-  heldDraftId?: string | undefined;
-  participantId: string;
-  roomId: string;
-  taskThreadId?: string;
+  scope: ActivationCredentialScope;
+  input: WorkerMessagePostRequest;
+  eventFromRow: (row: Row) => RoomEvent;
 }): { recipients: MessageRecipient[]; threadId?: string } {
-  const threadId = workerReplyThreadId(input);
-  const body =
-    input.body ??
-    (input.heldDraftId === undefined
+  const { database, scope, input, eventFromRow } = context;
+  requireWorkerRoomVisibility(database, scope);
+  if (input.basedOnRoomSeq !== scope.toSeq)
+    throw new StaleContextError(input.basedOnRoomSeq, scope.toSeq);
+  const causalRow = database
+    .prepare("SELECT * FROM room_events WHERE room_id = ? AND room_seq = ?")
+    .get(scope.roomId, scope.toSeq);
+  if (causalRow === undefined)
+    throw new NotFoundError("Activation causal event was not found");
+  let causalEvent = eventFromRow(causalRow);
+  let threadId: string | undefined;
+  const held =
+    input.heldDraftId === undefined
       ? undefined
-      : heldDraftBody(input.database, input.heldDraftId));
+      : database
+          .prepare("SELECT * FROM held_message_drafts WHERE held_draft_id = ?")
+          .get(input.heldDraftId);
+  if (held !== undefined) {
+    if (
+      text(held, "room_id") !== scope.roomId ||
+      text(held, "participant_id") !== scope.participantId
+    )
+      throw new ForbiddenError(
+        "Held draft is outside this Worker execution scope",
+      );
+    threadId = nullableText(held, "thread_id") ?? undefined;
+    if (
+      input.threadId !== undefined &&
+      (input.threadId ?? undefined) !== threadId
+    )
+      throw new ForbiddenError("Held draft target cannot be changed");
+  } else if (input.threadId !== undefined) {
+    threadId = input.threadId ?? undefined;
+  } else {
+    const targets = database
+      .prepare(
+        `SELECT
+        COALESCE(tasks.thread_id, json_extract(room_events.payload_json, '$.threadId')) AS reply_thread_id,
+        MAX(room_events.room_seq) AS latest_seq
+      FROM room_events
+      JOIN inbox_items ON inbox_items.event_id=room_events.event_id AND inbox_items.participant_id=?
+      JOIN activations ON activations.activation_id=?
+      LEFT JOIN tasks ON room_events.aggregate_type='task' AND tasks.task_id=room_events.aggregate_id
+      WHERE room_events.room_id=? AND room_events.room_seq BETWEEN activations.from_seq AND activations.to_seq
+      GROUP BY reply_thread_id LIMIT 2`,
+      )
+      .all(scope.participantId, scope.activationId, scope.roomId);
+    if (targets.length > 1)
+      throw new ConflictError(
+        "Coalesced messages require an explicit reply target: threadId or null for the Room",
+      );
+    if (targets.length === 1) {
+      threadId = nullableText(targets[0]!, "reply_thread_id") ?? undefined;
+      const row = database
+        .prepare("SELECT * FROM room_events WHERE room_id=? AND room_seq=?")
+        .get(scope.roomId, integer(targets[0]!, "latest_seq"));
+      if (row !== undefined) causalEvent = eventFromRow(row);
+    }
+  }
+  if (threadId !== undefined) {
+    const thread = database
+      .prepare(
+        `SELECT threads.*, room_events.room_seq, room_events.aggregate_id AS creation_task_id,
+        room_events.type AS creation_type FROM threads
+      JOIN room_events ON room_events.room_id=threads.room_id AND room_events.type IN ('thread.created','task.created') AND json_extract(room_events.payload_json, '$.threadId')=threads.thread_id
+      WHERE threads.thread_id=? AND threads.room_id=? ORDER BY room_events.room_seq LIMIT 1`,
+      )
+      .get(threadId, scope.roomId);
+    if (thread === undefined)
+      throw new ForbiddenError("Thread is outside this Worker execution scope");
+    const creationSeq = integer(thread, "room_seq");
+    const ownTaskThread =
+      text(thread, "creation_type") === "task.created" &&
+      wasTaskCreatedByWorkerRun(
+        database,
+        scope,
+        text(thread, "creation_task_id"),
+      );
+    if (creationSeq > scope.toSeq && !ownTaskThread)
+      throw new StaleContextError(scope.toSeq, integer(thread, "room_seq"));
+    // An explicit target must not inherit recipients from a different causal Thread.
+    const targetEvent = database
+      .prepare(
+        `SELECT * FROM room_events WHERE room_id=? AND room_seq<=?
+      AND json_extract(payload_json, '$.threadId')=? ORDER BY room_seq DESC LIMIT 1`,
+      )
+      .get(scope.roomId, Math.max(scope.toSeq, creationSeq), threadId);
+    if (targetEvent !== undefined) causalEvent = eventFromRow(targetEvent);
+  }
+  const body =
+    input.body ?? (held === undefined ? undefined : text(held, "body"));
   return {
     recipients: workerReplyRecipients({
+      database,
+      causalEvent,
+      participantId: scope.participantId,
+      roomId: scope.roomId,
       ...(body === undefined ? {} : { body }),
-      causalEvent: input.causalEvent,
-      database: input.database,
-      participantId: input.participantId,
-      roomId: input.roomId,
       ...(threadId === undefined ? {} : { threadId }),
     }),
     ...(threadId === undefined ? {} : { threadId }),

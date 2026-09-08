@@ -286,7 +286,7 @@ export class LanWorkbenchGateway {
         request,
         response,
         this.#serviceControl,
-        this.#authenticatedDevice(request.headers.cookie) !== null,
+        () => this.#authenticatedDevice(request.headers.cookie) !== null,
         request.headers.origin === this.origin,
       );
       return;

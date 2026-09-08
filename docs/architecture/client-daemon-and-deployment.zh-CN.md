@@ -222,15 +222,12 @@ Web Push/native push 都只是 hint；用户点击或客户端恢复后必须执
 - 浏览器不能冒充另一个 participant，也不能提交任意 shell；
 - 本机、局域网和远端拓扑不改变 Room/Task owner。
 
-## 本机 MCP 配置入口（2026-09-07）
+## 已退役的托管 MCP 配置
 
-LocalCoreWorkbench 在准备 runtime / 启动 daemon 前读取已初始化 state 目录的
-`managed-mcp.json`。文件仅是本机 composition 输入，采用 `schemaVersion: 1` 与
-`executors` 数组；复用 ManagedMcpExecutorConfigSchema，最多 64 个唯一 executorRef。
-FileSecretProvider 负责 owner-private、nofollow、64 KiB 有界读取，解析失败不回显内容。
-缺文件表示无 executor；非法文件或秘密文件拒绝启动。秘密仅允许绝对路径文件引用，
-不经浏览器传输。现有 Kernel 目录/assignment/usage、daemon MCP registry 与 Provider
-适配继续持有原 owner。配置在 state 内，因此既有备份/重启流程覆盖它；不新增轮询或热更新。
+2026-09-08 用户移除 RAH 托管 MCP 模块，当前本机启动不再读取
+`managed-mcp.json` 或启动托管 executor/proxy。历史文件及 SQLite 记录保留在
+既有备份范围内，不恢复功能，也不删除用户 CLI 自身工具配置。
+范围和验证要求见[产品决定](../product/managed-mcp-retirement.zh-CN.md)。
 
 LAN gateway 停止时还必须释放尚未完成 TLS 握手的底层连接；仅调用 closeAllConnections 不足以保证
 停止返回。连接集合按 server 实例归属，不能让浏览器预连接阻塞 daemon 的 offline/单实例恢复。
@@ -243,20 +240,34 @@ LAN gateway 停止时还必须释放尚未完成 TLS 握手的底层连接；仅
 分别验证既有 session，POST 必须精确同源，共用一个 handler。该操作属于
 daemon 部署生命周期，不创建 Room 事件、Task 或第二套 Computer 调度队列。
 
+共享重启 handler 在读请求体前认证，并在完整读取与校验后、进入同步 restart
+接受点前重验同一会话。期间撤销返回 401 且不调用重启；已接受的操作不因
+响应连接关闭或后续撤销而反向取消。这是本地会话合同，不代表已核实 Raft
+闭源服务端的在途请求撤销时序。
+
 `startRestartableLocalCoreWorkbench` 是存活于页面外的启动器 owner。它检查
 持久执行状态为空闲，保留原监听地址、状态目录与冻结静态资产，调用既有 stop
 完成 Core/AgentHost/gateway 关闭后再完整构造新实例。外层 Node PID 保持不变；
 不是进程升级，也不是只刷新浏览器或只重置 Agent。已安装 Core 与项目启动器
-共用此入口。启动失败时不伪造 online，页面有界等待后提示恢复指南。
+共用此入口。后继启动失败必须完成既有 startup rollback，再对全部持久忙碌、
+孤儿、quarantine 与独占操作围栏检查；等待一秒后再次检查，最多再启动一次。
+持续失败通过 launcher 的 `failed` 完成信号通知 loopback、LAN 和安装入口，
+由各入口的既有 finally 清理并非零退出，不残留没有服务却无限等待的启动器。
+永久配置或端口故障仍需本机排障后启动；不会在已关闭服务之外另建网页救援服务器。
 
 请求绑定当前服务 generation；重启中合并相同 generation，恢复后旧请求拒绝，
 因而响应丢失不造成第二次重启。HTTP 连接关闭不会取消已接受的操作。页面仅在
 新 generation 且 online 时确认恢复，保留当前 React 页面；正常 client
 reconciliation 仍负责业务重新同步。启动器收到退出信号时等待已有重启操作，
 再关闭最终实例，避免迟到启动。浏览器不传 PID、路径、shell 命令或 Host 凭据。
+首次状态读取失败必须显示可重试的读取错误，不能把传输失败当作没有重启能力。
+旧 generation 被拒绝后只重读状态，若已换代则明确是其他请求完成了重启，
+不得改用新 generation 再提交或声称旧页面自身请求成功。
 
 验证入口：`node scripts/run-service-restart-browser-gate.mjs`；
-验收范围见 [服务重启收口](../audits/2026-09-07-service-restart.zh-CN.md)。
+初始验收见 [服务重启收口](../audits/2026-09-07-service-restart.zh-CN.md)，
+后继有界恢复、终止与双页面回执以
+[2026-09-08 恢复专项](../audits/2026-09-08-computer-recovery-closure.zh-CN.md) 为准。
 
 Computer inventory 的可选 `createdAt` 来自 Kernel `agent_hosts.created_at`，
 Host 重新连接或工作台重启均保留首次注册时间；Computer transport 的 Host 快照也接受
@@ -265,3 +276,7 @@ Host 重新连接或工作台重启均保留首次注册时间；Computer transp
 Runtime inventory 的可选 `cliId` 由 daemon 从 manifest CLI probe 或已知 CLI discovery
 取得，前端共享展示函数负责产品名映射。真实版本化路径或脚本入口不是 CLI 身份；旧记录
 只保留精确 executable basename 回退，未知 runtime 保留其 displayName。诊断名称不改写。
+
+## Local Core 后台失败传播
+
+启动后的 daemon 非预期退出或拒绝必须关闭其 loopback／LAN gateway，并通过 `RunningLocalCoreWorkbench.failed` 传到当前 launcher。正常 stop 不产生失败；重启时旧 generation 的迟到失败不污染后继。外层不得在 backend 已退出后长期保留一个报告 online 的页面服务。证据见[恢复修复验收](../audits/2026-09-08-core-recovery-repair.zh-CN.md)。

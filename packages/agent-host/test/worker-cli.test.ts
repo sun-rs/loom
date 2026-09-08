@@ -734,71 +734,25 @@ test("Worker CLI exposes one bounded Task creation command", async () => {
   }
 });
 
-test("Worker CLI exposes managed MCP catalog and version-fenced calls without routing fields", async () => {
+test("Worker CLI no longer advertises or dispatches retired managed MCP tools", async () => {
   const state = fixture();
   try {
     assert.equal(
-      await runWorkerCliCommand(["worker", "mcp-tools"], state.runtime),
+      await runWorkerCliCommand(["worker", "help"], state.runtime),
       0,
     );
-    assert.deepEqual(state.requests[0]?.body, {});
+    assert.doesNotMatch(state.stdout(), /mcp-tools|mcp-call/u);
+    for (const command of ["mcp-tools", "mcp-call"])
+      assert.equal(
+        await runWorkerCliCommand(["worker", command], state.runtime),
+        1,
+      );
+    assert.equal(state.requests.length, 0);
     assert.equal(
-      state.requests[0]?.url,
-      "http://127.0.0.1:43123/v1/worker/mcp/tools",
-    );
-    assert.equal(
-      await runWorkerCliCommand(
-        [
-          "worker",
-          "mcp-call",
-          "--server-id",
-          "mcp-room-tools",
-          "--tool-name",
-          "room.snapshot",
-          "--config-version",
-          "7",
-          "--assignment-version",
-          "3",
-          "--arguments-json",
-          '{"roomId":"room-1"}',
-        ],
-        state.runtime,
-      ),
+      await runWorkerCliCommand(["worker", "sync"], state.runtime),
       0,
     );
-    assert.deepEqual(state.requests[1]?.body, {
-      arguments: { roomId: "room-1" },
-      expectedAssignmentVersion: 3,
-      expectedConfigVersion: 7,
-      mcpServerId: "mcp-room-tools",
-      toolName: "room.snapshot",
-    });
-    assert.equal(
-      state.requests[1]?.url,
-      "http://127.0.0.1:43123/v1/worker/mcp/call",
-    );
-    assert.equal(
-      await runWorkerCliCommand(
-        [
-          "worker",
-          "mcp-call",
-          "--server-id",
-          "mcp-room-tools",
-          "--tool-name",
-          "room.snapshot",
-          "--config-version",
-          "7",
-          "--assignment-version",
-          "3",
-          "--arguments-json",
-          "[]",
-        ],
-        state.runtime,
-      ),
-      1,
-    );
-    assert.equal(state.requests.length, 2);
-    assert.match(state.stderr(), /JSON object/u);
+    assert.equal(state.requests.length, 1);
   } finally {
     rmSync(state.directory, { force: true, recursive: true });
   }
@@ -829,33 +783,42 @@ test("Worker CLI fails closed on unknown flags and unsafe token files", async ()
   }
 });
 
-test("Worker CLI cancels an oversized response without exposing its credential", async () => {
-  const state = fixture();
-  let cancelled = false;
-  try {
-    const responseBody = new ReadableStream<Uint8Array>({
-      cancel: () => {
-        cancelled = true;
-      },
-      start: (controller) => {
-        controller.enqueue(new Uint8Array(512 * 1_024 + 1));
-      },
-    });
-    assert.equal(
-      await runWorkerCliCommand(["worker", "sync"], {
-        ...state.runtime,
-        fetch: async () => new Response(responseBody, { status: 200 }),
-      }),
-      1,
-    );
-    assert.equal(cancelled, true);
-    assert.match(state.stderr(), /response exceeds the safe byte limit/u);
-    assert.doesNotMatch(state.stderr(), /worker-secret/u);
-    assert.equal(state.stdout(), "");
-  } finally {
-    rmSync(state.directory, { force: true, recursive: true });
-  }
-});
+for (const [command, limit] of [
+  ["server-info", 512 * 1024],
+  ["sync", 2 * 1024 * 1024],
+] as const) {
+  test(
+    `Worker CLI cancels an oversized ${command} response without exposing its credential`,
+    { timeout: 5000 },
+    async () => {
+      const state = fixture();
+      let cancelled = false;
+      try {
+        const responseBody = new ReadableStream<Uint8Array>({
+          cancel: () => {
+            cancelled = true;
+          },
+          start: (controller) => {
+            controller.enqueue(new Uint8Array(limit + 1));
+          },
+        });
+        assert.equal(
+          await runWorkerCliCommand(["worker", command], {
+            ...state.runtime,
+            fetch: async () => new Response(responseBody, { status: 200 }),
+          }),
+          1,
+        );
+        assert.equal(cancelled, true);
+        assert.match(state.stderr(), /response exceeds the safe byte limit/u);
+        assert.doesNotMatch(state.stderr(), /worker-secret/u);
+        assert.equal(state.stdout(), "");
+      } finally {
+        rmSync(state.directory, { force: true, recursive: true });
+      }
+    },
+  );
+}
 
 test("Worker message tools use fixed routes and reject actor/Room injection", async () => {
   const state = fixture();
@@ -971,6 +934,57 @@ test("Worker CLI pages Task trajectory without accepting a participant selector"
           "--participant-id",
           "agent-other",
         ],
+        state.runtime,
+      ),
+      0,
+    );
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("Worker message CLI exposes explicit Thread and top-level targets without accepting a Room override", async () => {
+  const state = fixture();
+  try {
+    const base = [
+      "worker",
+      "message-post",
+      "--body",
+      "audit",
+      "--based-on-room-seq",
+      "7",
+      "--idempotency-key",
+      "audit-1",
+    ];
+    assert.equal(
+      await runWorkerCliCommand(
+        [...base, "--thread-id", "old-thread"],
+        state.runtime,
+      ),
+      0,
+    );
+    assert.equal(
+      (state.requests[0]?.body as Record<string, unknown>).threadId,
+      "old-thread",
+    );
+    assert.equal(
+      await runWorkerCliCommand([...base, "--top-level"], state.runtime),
+      0,
+    );
+    assert.equal(
+      (state.requests[1]?.body as Record<string, unknown>).threadId,
+      null,
+    );
+    assert.notEqual(
+      await runWorkerCliCommand(
+        [...base, "--thread-id", "t", "--top-level"],
+        state.runtime,
+      ),
+      0,
+    );
+    assert.notEqual(
+      await runWorkerCliCommand(
+        [...base, "--room-id", "foreign"],
         state.runtime,
       ),
       0,

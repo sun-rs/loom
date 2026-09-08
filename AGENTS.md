@@ -38,6 +38,8 @@ Follow `docs/product/single-human-mainline-and-multi-human-backlog.zh-CN.md` for
 scope and the serial mainline construction order; historical audits are evidence,
 not permission to resume deferred work.
 
+RAH-managed third-party MCP connection/catalog/assignment/call management is excluded by the user. Do not restore its Settings or Agent tabs, API, executor configuration or runtime proxy. Preserve provider-owned CLI tools and Room Worker communication; keep historical database compatibility. See `docs/product/managed-mcp-retirement.zh-CN.md`.
+
 RAH OS is room-first. The durable Room ledger, Inbox, Task, Activation, Artifact, Review, and RunAttempt state are authoritative. Provider sessions, transcripts, JSONL, PTY screens, stdout, thinking, and tool streams are diagnostics only.
 
 The permanent causal chain is:

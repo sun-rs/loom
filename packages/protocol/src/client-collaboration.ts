@@ -188,6 +188,7 @@ export type AgentRoomEventActivityRecord = z.infer<
   typeof AgentRoomEventActivityRecordSchema
 >;
 
+/** Read-only compatibility for historical, retired managed MCP call diagnostics. */
 export const AgentManagedMcpActivityRecordSchema =
   AgentActivityCommonSchema.extend({
     aggregateId: z.never().optional(),
@@ -196,6 +197,7 @@ export const AgentManagedMcpActivityRecordSchema =
     eventType: z.never().optional(),
     failureCode: z
       .enum([
+        "authorization_lost_after_execution",
         "executor_failed",
         "executor_unavailable",
         "invalid_result",

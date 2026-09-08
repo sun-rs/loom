@@ -57,7 +57,7 @@ try {
         : {}),
     });
     try {
-      const page = await browser.newPage();
+      const page = await browser.newPage({ serviceWorkers: "block" });
       await page.addInitScript(() =>
         localStorage.setItem("rah:web-push-desired:v1", "disabled"),
       );
@@ -66,12 +66,48 @@ try {
           width,
           height: width === 390 ? 844 : 900,
         });
+        let unavailable = true;
+        await page.route("**/_rah/service", async (route) =>
+          unavailable
+            ? route.fulfill({
+                status: 503,
+                contentType: "application/json",
+                body: '{"error":"temporary"}',
+              })
+            : route.continue(),
+        );
         await page.goto(running.descriptor.webOrigin + "/?surface=computers");
         const button = page.getByRole("button", {
           name: "重启服务",
           exact: true,
         });
         await button.waitFor();
+        await page
+          .getByText("暂时无法读取服务状态，请重试。", { exact: true })
+          .waitFor({ timeout: 10_000 })
+          .catch(async (error) => {
+            await page.screenshot({
+              path: join(output, `${engine}-${width}-status-failure.png`),
+            });
+            console.log(
+              JSON.stringify({
+                output,
+                body: await page.locator("body").innerText(),
+              }),
+            );
+            throw error;
+          });
+        assert.equal(await button.isDisabled(), true);
+        assert.equal(
+          await page
+            .getByText("当前连接未提供服务重启能力。", { exact: true })
+            .count(),
+          0,
+        );
+        unavailable = false;
+        await page
+          .getByRole("button", { name: "重试连接", exact: true })
+          .click();
         await page.waitForFunction(() =>
           [...document.querySelectorAll("button")].some(
             (button) =>
@@ -91,6 +127,23 @@ try {
         const before = await page.evaluate(async () =>
           (await fetch("/_rah/service")).json(),
         );
+        const stalePage = await browser.newPage({
+          serviceWorkers: "block",
+          viewport: { width, height: width === 390 ? 844 : 900 },
+        });
+        await stalePage.goto(
+          running.descriptor.webOrigin + "/?surface=computers",
+        );
+        const staleButton = stalePage.getByRole("button", {
+          name: "重启服务",
+          exact: true,
+        });
+        await stalePage.waitForFunction(() =>
+          [...document.querySelectorAll("button")].some(
+            (button) =>
+              button.textContent.includes("重启服务") && !button.disabled,
+          ),
+        );
         if (width === 390) {
           await button.focus();
           await page.keyboard.press("Enter");
@@ -102,6 +155,25 @@ try {
           (await fetch("/_rah/service")).json(),
         );
         assert.notEqual(before.generation, after.generation);
+        await staleButton.click();
+        await stalePage
+          .getByText("服务已由其他请求重启，已刷新连接状态。", { exact: true })
+          .waitFor();
+        assert.equal(
+          await stalePage
+            .getByText("服务已重启，连接已恢复。", { exact: true })
+            .count(),
+          0,
+        );
+        const afterStale = await stalePage.evaluate(async () =>
+          (await fetch("/_rah/service")).json(),
+        );
+        assert.equal(
+          afterStale.generation,
+          after.generation,
+          "a stale page must not trigger another restart",
+        );
+        await stalePage.close();
         assert.equal(new URL(page.url()).search, "?surface=computers");
         assert.deepEqual(durableSnapshot(), baseline);
         await page.screenshot({
@@ -121,7 +193,10 @@ try {
           before,
           after,
           durableStatePreserved: true,
+          transientStatusRecovered: true,
+          stalePageReconciledWithoutRestart: true,
         });
+        await page.unroute("**/_rah/service");
       }
     } finally {
       await browser.close();

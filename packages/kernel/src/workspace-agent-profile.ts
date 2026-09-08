@@ -16,6 +16,34 @@ export function updateAgentProfile(
   input: ClientAgentProfileRequest,
   requestDigest: string,
 ) {
+  return updateAgentProfilePatch(
+    owner,
+    {
+      agentDefinitionId: input.agentDefinitionId,
+      expectedRevisionId: input.expectedRevisionId,
+      basedOnRoomSeq: input.basedOnRoomSeq,
+      idempotencyKey: input.idempotencyKey,
+      patch: { [input.field]: input.value },
+      eventMetadata: { field: input.field },
+    },
+    requestDigest,
+  );
+}
+
+/** Shared metadata writer. Callers own their authenticated scope and freshness
+ * checks; a multi-field patch still creates exactly one revision and event. */
+export function updateAgentProfilePatch(
+  owner: WorkspaceAgentManagementOwner,
+  input: {
+    agentDefinitionId: string;
+    expectedRevisionId: string;
+    basedOnRoomSeq: number;
+    idempotencyKey: string;
+    patch: { displayName?: string; description?: string; avatarKey?: string };
+    eventMetadata?: Record<string, unknown>;
+  },
+  requestDigest: string,
+) {
   const record = readAgentDefinition(owner.database, input.agentDefinitionId);
   if (record.definition.state === "tombstoned")
     throw new ConflictError("a tombstoned Agent cannot be edited");
@@ -33,9 +61,13 @@ export function updateAgentProfile(
     agentDefinitionId: _agent,
     ...content
   } = previous;
-  if (input.field === "description" && input.value === "")
-    delete content.description;
-  else content[input.field] = input.value;
+  if (input.patch.description === "") delete content.description;
+  else if (input.patch.description !== undefined)
+    content.description = input.patch.description;
+  if (input.patch.displayName !== undefined)
+    content.displayName = input.patch.displayName;
+  if (input.patch.avatarKey !== undefined)
+    content.avatarKey = input.patch.avatarKey;
   const createdAt = owner.now().toISOString();
   const revision = AgentDefinitionRevisionSchema.parse({
     ...content,
@@ -82,7 +114,7 @@ export function updateAgentProfile(
       agentDefinitionRevisionId: revision.agentDefinitionRevisionId,
       agentState: record.definition.state,
       basedOnRoomSeq: input.basedOnRoomSeq,
-      field: input.field,
+      ...input.eventMetadata,
       handle: text(principal, "handle"),
       participantId: record.definition.participantId,
       requestDigest,

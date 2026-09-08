@@ -391,6 +391,78 @@ if (mode === "trajectory") {
     (event) =>
       event.roomSeq >= requiredFrom && event.roomSeq <= requiredThrough,
   );
+  const readTool =
+    process.env.RAH_FAKE_READ_TOOLS === "1"
+      ? (args) =>
+          JSON.parse(
+            execFileSync(process.env.RAH_WORKER_CLI, ["worker", ...args], {
+              encoding: "utf8",
+            }),
+          )
+      : undefined;
+  if (readTool) {
+    const members = readTool(["room-members"]);
+    const server = readTool(["server-info"]);
+    const profile = readTool(["profile-show"]);
+    if (
+      !members.members.some(
+        (member) =>
+          member.principal.principalId === process.env.RAH_PARTICIPANT_ID,
+      ) ||
+      server.room.roomId !== process.env.RAH_ROOM_ID ||
+      !profile.isSelf
+    )
+      throw new Error("Worker identity reads did not match the execution");
+  }
+
+  if (process.env.RAH_FAKE_PARENT_RESUME === "1" && readTool) {
+    const resume = activationEvents.find(
+      (event) =>
+        event.type === "message.posted" &&
+        /\[RESUME PARENT [^\]]+\]/u.test(event.payload?.body ?? ""),
+    );
+    if (resume) {
+      const taskId = /\[RESUME PARENT ([^\]]+)\]/u.exec(resume.payload.body)[1];
+      const result = readTool([
+        "task-unblock",
+        "--task-id",
+        taskId,
+        "--based-on-room-seq",
+        String(delivery.cursorAfter),
+        "--idempotency-key",
+        `resume:${taskId}`,
+      ]);
+      if (result.task.state !== "todo")
+        throw new Error("unblock did not leave pending work");
+      let denied = false;
+      try {
+        readTool([
+          "task-claim",
+          "--task-id",
+          taskId,
+          "--based-on-room-seq",
+          String(result.event.roomSeq),
+          "--idempotency-key",
+          `early:${taskId}`,
+        ]);
+      } catch (error) {
+        denied = String(error.stderr).includes(
+          "not linked in this Activation range",
+        );
+      }
+      if (!denied)
+        throw new Error("unblock improperly expanded this Run's scope");
+      readTool(["acknowledge", "--through-seq", String(delivery.cursorAfter)]);
+      process.stdout.write(
+        JSON.stringify({
+          marker: "parent-unblocked-awaiting-next-activation",
+          taskId,
+        }) + "\n",
+      );
+      process.exit(0);
+    }
+  }
+
   // There is no auditor role: a Human @mentions an ordinary Room Agent and
   // asks it to audit a Task. The Agent reads the owner's recorded trajectory
   // through the Worker API and replies once with the tool evidence it found.
@@ -412,6 +484,34 @@ if (mode === "trajectory") {
       const auditedTaskId = /\[AUDIT ([^\]]+)\]/u.exec(
         auditRequest.payload.body,
       )[1];
+      let readTask;
+      if (readTool) {
+        readTask = readTool(["task-get", "--task-id", auditedTaskId]).task;
+        const history = readTool(["task-history", "--task-id", auditedTaskId]);
+        const board = readTool(["task-list"]);
+        const resolved = readTool([
+          "message-resolve",
+          "--message-id",
+          readTask.sourceMessageId,
+        ]);
+        const around = readTool([
+          "message-read",
+          "--around",
+          readTask.sourceMessageId,
+        ]);
+        readTool(["task-submission", "--task-id", auditedTaskId]);
+        if (
+          !history.events.some((event) => event.type === "task.created") ||
+          !board.tasks.some((task) => task.taskId === auditedTaskId) ||
+          resolved.message.messageId !== readTask.sourceMessageId ||
+          !around.messages.some(
+            (message) => message.messageId === readTask.sourceMessageId,
+          )
+        )
+          throw new Error(
+            "Worker source reads did not establish the audited Task",
+          );
+      }
       const trajectory = await request("/v1/worker/tasks/trajectory", {
         limit: 50,
         taskId: auditedTaskId,
@@ -424,7 +524,8 @@ if (mode === "trajectory") {
         throw new Error("audit reply requires RAH_ACTIVATION_ID");
       const replied = await request("/v1/worker/messages/post", {
         basedOnRoomSeq: delivery.cursorAfter,
-        body: `Audit of ${auditedTaskId}: ${String(trajectory.entries.length)} trajectory entries; tools: ${toolNames.join(", ")}`,
+        ...(readTask ? { threadId: readTask.threadId } : {}),
+        body: `Audit of ${auditedTaskId}: ${String(trajectory.entries.length)} trajectory entries; tools: ${toolNames.join(", ")}${readTool ? "; read-tools: canonical history, task board, member handles, exact source" : ""}`,
         idempotencyKey: `fake:${activationId}:audit-reply`,
       });
       await request("/v1/worker/acknowledge", {
@@ -532,6 +633,13 @@ if (mode === "trajectory") {
       .split(",")
       .map((value) => value.trim());
     const parentTaskId = autoClaimedTask.task.taskId;
+    if (
+      readTool &&
+      !readTool(["task-list"]).tasks.some(
+        (task) => task.taskId === parentTaskId,
+      )
+    )
+      throw new Error("Task board omitted the parent before splitting");
     // message-post is an Activation-head command: the Kernel requires the
     // delivered head, not the Agent's own advancing cursor. task-create
     // instead follows the Worker prompt and chains each non-deduplicated
@@ -603,6 +711,7 @@ if (mode === "trajectory") {
     [
       "task.created",
       "task.assigned",
+      "task.unassigned",
       "task.reassigned",
       "task.reopened",
       "task.unblocked",
@@ -692,6 +801,12 @@ if (mode === "trajectory") {
   const taskReassigned = activationEvents.find(
     (event) => event.type === "task.reassigned",
   );
+  const taskUnassigned = activationEvents.find(
+    (event) => event.type === "task.unassigned",
+  );
+  const taskUnblocked = activationEvents.find(
+    (event) => event.type === "task.unblocked",
+  );
   const taskReopened = activationEvents.find(
     (event) => event.type === "task.reopened",
   );
@@ -709,7 +824,9 @@ if (mode === "trajectory") {
   const taskId =
     autoClaimedTask?.task?.taskId ??
     taskReassigned?.aggregateId ??
+    taskUnassigned?.aggregateId ??
     taskReopened?.aggregateId ??
+    taskUnblocked?.aggregateId ??
     taskCreated?.aggregateId ??
     taskSubmitted?.aggregateId ??
     reviewSubmitted?.payload?.taskId ??

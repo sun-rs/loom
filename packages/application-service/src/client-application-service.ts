@@ -1,4 +1,14 @@
+import {
+  TaskAmendRequestSchema,
+  TaskDeleteRequestSchema,
+  TaskDeleteResponseSchema,
+  ClientTaskMutationResponseSchema,
+} from "@rah-os/protocol";
 import { createHash } from "node:crypto";
+import {
+  ClientTaskHistoryRequestSchema,
+  ClientTaskHistoryResponseSchema,
+} from "@rah-os/protocol";
 import {
   AGENT_WORKSPACE_PATHS,
   routeAgentWorkspace,
@@ -82,24 +92,6 @@ import {
   ClientMessagePostRequestSchema,
   ClientMessagesListRequestSchema,
   ClientMessagesListResponseSchema,
-  ClientManagedMcpAssignmentCreateRequestSchema,
-  ClientManagedMcpAssignmentMutationResponseSchema,
-  ClientManagedMcpAssignmentReviseRequestSchema,
-  ClientManagedMcpAssignmentsListRequestSchema,
-  ClientManagedMcpAssignmentsListResponseSchema,
-  ClientManagedMcpAssignmentStateRequestSchema,
-  ClientManagedMcpExecutorDiscoverRequestSchema,
-  ClientManagedMcpExecutorDiscoverResponseSchema,
-  ClientManagedMcpExecutorsListRequestSchema,
-  ClientManagedMcpExecutorsListResponseSchema,
-  ClientManagedMcpServerCreateRequestSchema,
-  ClientManagedMcpServerMutationResponseSchema,
-  ClientManagedMcpServerReviseRequestSchema,
-  ClientManagedMcpServersListRequestSchema,
-  ClientManagedMcpServersListResponseSchema,
-  ClientManagedMcpServerStateRequestSchema,
-  ClientManagedMcpUsageListRequestSchema,
-  ClientManagedMcpUsageListResponseSchema,
   ClientPrincipalMeRequestSchema,
   ClientPrincipalMeResponseSchema,
   ClientPrincipalUpdateRequestSchema,
@@ -189,7 +181,6 @@ import {
   type NavigationTarget,
 } from "@rah-os/protocol";
 
-import type { ManagedMcpAdministrationPort } from "./managed-mcp-executor.ts";
 import {
   ProfileImageRequestError,
   transferProfileImage,
@@ -206,7 +197,7 @@ export type ClientApplicationServiceOptions = {
   localRuntimeInventory?: (
     actor: AuthenticatedActorContext,
   ) => LocalRuntimeInventoryResponse | Promise<LocalRuntimeInventoryResponse>;
-  managedMcpAdministration?: ManagedMcpAdministrationPort;
+
   port?: number;
   profileImages?: ProfileImageAdministrationPort;
   taskReassignmentAdministration?: TaskReassignmentAdministrationPort;
@@ -368,18 +359,10 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/push/subscribe",
   "/push/unsubscribe",
   "/push/test",
-  "/managed-mcp/assignments/create",
-  "/managed-mcp/assignments/list",
-  "/managed-mcp/assignments/revise",
-  "/managed-mcp/assignments/state",
-  "/managed-mcp/executors/discover",
-  "/managed-mcp/executors/list",
-  "/managed-mcp/servers/create",
-  "/managed-mcp/servers/list",
-  "/managed-mcp/servers/revise",
-  "/managed-mcp/servers/state",
-  "/managed-mcp/usage/list",
   "/tasks/get",
+  "/tasks/history",
+  "/tasks/amend",
+  "/tasks/delete",
   "/tasks/reviews/list",
   "/principals/me",
   "/principals/update",
@@ -424,7 +407,7 @@ export class ClientApplicationService {
       ) =>
         LocalRuntimeInventoryResponse | Promise<LocalRuntimeInventoryResponse>)
     | undefined;
-  readonly #managedMcpAdministration: ManagedMcpAdministrationPort | undefined;
+
   readonly #taskReassignmentAdministration:
     TaskReassignmentAdministrationPort | undefined;
   readonly #webPushAdministration: WebPushAdministrationPort | undefined;
@@ -442,7 +425,7 @@ export class ClientApplicationService {
     this.#health = options.health;
     this.#human = options.human;
     this.#localRuntimeInventory = options.localRuntimeInventory;
-    this.#managedMcpAdministration = options.managedMcpAdministration;
+
     this.#taskReassignmentAdministration =
       options.taskReassignmentAdministration;
     this.#webPushAdministration = options.webPushAdministration;
@@ -821,181 +804,6 @@ export class ClientApplicationService {
         ClientNotificationDismissResponseSchema.parse({
           notificationId: command.notificationId,
         }),
-      );
-      return;
-    }
-    if (path === "/managed-mcp/executors/list") {
-      const command = parseClientRequest(
-        ClientManagedMcpExecutorsListRequestSchema,
-        body,
-      );
-      this.#human.listManagedMcpServers(actor, {
-        controlRoomId: command.controlRoomId,
-      });
-      writeJson(
-        response,
-        200,
-        ClientManagedMcpExecutorsListResponseSchema.parse({
-          executors: this.#requireManagedMcpAdministration().listExecutors(),
-        }),
-      );
-      return;
-    }
-    if (path === "/managed-mcp/executors/discover") {
-      const command = parseClientRequest(
-        ClientManagedMcpExecutorDiscoverRequestSchema,
-        body,
-      );
-      this.#human.listManagedMcpServers(actor, {
-        controlRoomId: command.controlRoomId,
-      });
-      writeJson(
-        response,
-        200,
-        ClientManagedMcpExecutorDiscoverResponseSchema.parse({
-          tools: await this.#requireManagedMcpAdministration().discover(
-            command.executorRef,
-            { signal: AbortSignal.timeout(30_000) },
-          ),
-        }),
-      );
-      return;
-    }
-    if (path === "/managed-mcp/servers/list") {
-      const command = parseClientRequest(
-        ClientManagedMcpServersListRequestSchema,
-        body,
-      );
-      writeJson(
-        response,
-        200,
-        ClientManagedMcpServersListResponseSchema.parse({
-          servers: this.#human.listManagedMcpServers(actor, command),
-        }),
-      );
-      return;
-    }
-    if (path === "/managed-mcp/servers/create") {
-      const command = parseClientRequest(
-        ClientManagedMcpServerCreateRequestSchema,
-        body,
-      );
-      writeJson(
-        response,
-        200,
-        ClientManagedMcpServerMutationResponseSchema.parse(
-          this.#human.createManagedMcpServer(actor, command),
-        ),
-      );
-      return;
-    }
-    if (path === "/managed-mcp/servers/revise") {
-      const command = parseClientRequest(
-        ClientManagedMcpServerReviseRequestSchema,
-        body,
-      );
-      writeJson(
-        response,
-        200,
-        ClientManagedMcpServerMutationResponseSchema.parse(
-          this.#human.reviseManagedMcpServer(actor, command),
-        ),
-      );
-      return;
-    }
-    if (path === "/managed-mcp/servers/state") {
-      const command = parseClientRequest(
-        ClientManagedMcpServerStateRequestSchema,
-        body,
-      );
-      writeJson(
-        response,
-        200,
-        ClientManagedMcpServerMutationResponseSchema.parse(
-          this.#human.setManagedMcpServerState(actor, command),
-        ),
-      );
-      return;
-    }
-    if (path === "/managed-mcp/assignments/list") {
-      const command = parseClientRequest(
-        ClientManagedMcpAssignmentsListRequestSchema,
-        body,
-      );
-      writeJson(
-        response,
-        200,
-        ClientManagedMcpAssignmentsListResponseSchema.parse({
-          assignments: this.#human.listManagedMcpAssignments(actor, {
-            controlRoomId: command.controlRoomId,
-            ...(command.participantId === undefined
-              ? {}
-              : { participantId: command.participantId }),
-          }),
-        }),
-      );
-      return;
-    }
-    if (path === "/managed-mcp/assignments/create") {
-      const command = parseClientRequest(
-        ClientManagedMcpAssignmentCreateRequestSchema,
-        body,
-      );
-      writeJson(
-        response,
-        200,
-        ClientManagedMcpAssignmentMutationResponseSchema.parse(
-          this.#human.assignManagedMcpServer(actor, command),
-        ),
-      );
-      return;
-    }
-    if (path === "/managed-mcp/assignments/revise") {
-      const command = parseClientRequest(
-        ClientManagedMcpAssignmentReviseRequestSchema,
-        body,
-      );
-      writeJson(
-        response,
-        200,
-        ClientManagedMcpAssignmentMutationResponseSchema.parse(
-          this.#human.reviseManagedMcpAssignment(actor, command),
-        ),
-      );
-      return;
-    }
-    if (path === "/managed-mcp/assignments/state") {
-      const command = parseClientRequest(
-        ClientManagedMcpAssignmentStateRequestSchema,
-        body,
-      );
-      writeJson(
-        response,
-        200,
-        ClientManagedMcpAssignmentMutationResponseSchema.parse(
-          this.#human.setManagedMcpAssignmentState(actor, command),
-        ),
-      );
-      return;
-    }
-    if (path === "/managed-mcp/usage/list") {
-      const command = parseClientRequest(
-        ClientManagedMcpUsageListRequestSchema,
-        body,
-      );
-      writeJson(
-        response,
-        200,
-        ClientManagedMcpUsageListResponseSchema.parse(
-          this.#human.listManagedMcpUsage(actor, {
-            ...(command.beforeCallId === undefined
-              ? {}
-              : { beforeCallId: command.beforeCallId }),
-            controlRoomId: command.controlRoomId,
-            ...(command.limit === undefined ? {} : { limit: command.limit }),
-            participantId: command.participantId,
-          }),
-        ),
       );
       return;
     }
@@ -1742,6 +1550,37 @@ export class ClientApplicationService {
       );
       return;
     }
+    if (path === "/tasks/delete") {
+      const command = parseClientRequest(TaskDeleteRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        TaskDeleteResponseSchema.parse(this.#human.deleteTask(actor, command)),
+      );
+      return;
+    }
+    if (path === "/tasks/amend") {
+      const command = parseClientRequest(TaskAmendRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientTaskMutationResponseSchema.parse(
+          this.#human.amendTask(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/tasks/history") {
+      const command = parseClientRequest(ClientTaskHistoryRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientTaskHistoryResponseSchema.parse(
+          this.#human.listTaskHistory(actor, command),
+        ),
+      );
+      return;
+    }
     if (path === "/tasks/list") {
       const command = parseClientRequest(ClientTasksListRequestSchema, body);
       writeJson(
@@ -2068,17 +1907,6 @@ export class ClientApplicationService {
       );
     }
     return this.#taskReassignmentAdministration;
-  }
-
-  #requireManagedMcpAdministration(): ManagedMcpAdministrationPort {
-    if (this.#managedMcpAdministration === undefined) {
-      throw new HttpRequestError(
-        "managed_mcp_unavailable",
-        "managed MCP administration is unavailable",
-        503,
-      );
-    }
-    return this.#managedMcpAdministration;
   }
 
   #requireWebPushAdministration(): WebPushAdministrationPort {

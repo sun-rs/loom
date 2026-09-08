@@ -149,7 +149,16 @@ async function serveUntilShutdown(
     process.stdout.write(
       `RAH_LOCAL_CORE ${JSON.stringify(running.descriptor)}\n`,
     );
-    await waitForShutdown();
+    await Promise.race([
+      waitForShutdown(),
+      ...(running.failed === undefined
+        ? []
+        : [
+            running.failed.then((error) => {
+              throw error;
+            }),
+          ]),
+    ]);
   } finally {
     await running.stop();
   }

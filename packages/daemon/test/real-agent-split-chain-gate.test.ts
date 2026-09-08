@@ -17,7 +17,7 @@ import {
 } from "../src/index.ts";
 
 const ENABLED = process.env.RAH_REAL_SPLIT_CHAIN_GATE === "1";
-const GATE_TIMEOUT_MS = 10 * 60_000;
+const GATE_TIMEOUT_MS = 12 * 60_000;
 // A phase boundary can briefly show every Activation terminal before the next
 // wake is enqueued, so a stall must persist before it is reported as a gap.
 const STALL_CONFIRM_MS = 20_000;
@@ -41,6 +41,8 @@ const LEAD_INSTRUCTIONS = [
   "post one short top-level note that @mentions each helper with their subtask,",
   "then task-block your parent Task until the subtasks are done.",
   "Never do the subtasks yourself and never claim them.",
+  "Wait for the Human to accept both subtasks and explicitly ask you to resume the parent.",
+  "Then task-unblock your own blocked parent, acknowledge and exit; on the next Activation claim/start that same parent, verify both files and submit it.",
 ].join(" ");
 
 const HELPER_INSTRUCTIONS = [
@@ -83,7 +85,7 @@ const HUMAN_REQUEST = [
 ].join(" ");
 
 test(
-  "opt-in real lead CLI splits a Human message into helper subtasks that survive rejection, rework and Human acceptance",
+  "opt-in real lead CLI splits, reworks, resumes the blocked parent and reaches Human acceptance for all tasks",
   { skip: !ENABLED, timeout: GATE_TIMEOUT_MS + 60_000 },
   async () => {
     const startedAt = Date.now();
@@ -204,14 +206,8 @@ test(
             toolAccessMode: "full_access",
           },
         );
-        participantIdByHandle.set(
-          role.handle,
-          agent.definition.participantId,
-        );
-        handleByParticipantId.set(
-          agent.definition.participantId,
-          role.handle,
-        );
+        participantIdByHandle.set(role.handle, agent.definition.participantId);
+        handleByParticipantId.set(agent.definition.participantId, role.handle);
         resolvedReasoningByHandle.set(role.handle, reasoning);
 
         const roomDelivery = await syncRoom(
@@ -289,7 +285,8 @@ test(
                 state: attempt.state,
               })),
             tasks: tasksOf().map((task) => ({
-              assignee: handleByParticipantId.get(task.assigneeId ?? "") ?? null,
+              assignee:
+                handleByParticipantId.get(task.assigneeId ?? "") ?? null,
               claimedBy:
                 handleByParticipantId.get(task.claimedBy ?? "") ?? null,
               creator: handleByParticipantId.get(task.creatorId) ?? "human",
@@ -416,9 +413,10 @@ test(
       assert.equal(parentTask.creatorId, humanMessage.event.actorId);
       assert.equal(parentTask.assigneeId, lead);
       const parentState = parentTask.state;
-      assert.ok(
-        ["blocked", "in_progress", "claimed"].includes(parentState),
-        `parent Task state ${parentState} is not a canonical split-wait state`,
+      assert.equal(
+        parentState,
+        "blocked",
+        "parent must release its claim while waiting for Human acceptance of subtasks",
       );
       console.log(`RAH_REAL_SPLIT_CHAIN_PARENT_STATE ${parentState}`);
 
@@ -518,6 +516,58 @@ test(
       assert.equal(byId().get(subtaskA.taskId)?.state, "completed");
       assert.equal(byId().get(subtaskB.taskId)?.state, "completed");
 
+      // The parent must finish through a new Agent execution, not a Human
+      // unblock shortcut or a report based only on its children's completion.
+      await humanMutation("/v3/client/threads/reply", {
+        idempotencyKey: "real-split-chain-resume-parent",
+        roomId,
+        threadId: parentTask.threadId,
+        body: `@lead both subtasks have been accepted by the Human. Resume parent ${parentTask.taskId}: task-unblock, ACK and exit; next Activation claim/start the same parent, verify both files and submit. Do not create another Task.`,
+        recipientIds: [lead],
+      });
+      await waitForOutcome({
+        deadline: gateDeadline,
+        diagnose,
+        label: "parent resumed in a new execution and submitted",
+        stalled: allActivationsTerminal,
+        succeeded: () =>
+          byId().get(parentTask.taskId)?.state === "submitted" && agentsIdle(),
+      });
+      const unblockEvent = eventsOf().find(
+        (event) =>
+          event.type === "task.unblocked" &&
+          event.aggregateId === parentTask.taskId,
+      );
+      assert.equal(unblockEvent?.actorId, lead);
+      assert.ok(unblockEvent?.payload.runAttemptId);
+      const resumedClaim = eventsOf().find(
+        (event) =>
+          event.type === "task.claimed" &&
+          event.aggregateId === parentTask.taskId &&
+          event.roomSeq > unblockEvent.roomSeq,
+      );
+      assert.ok(resumedClaim?.payload.runAttemptId);
+      assert.notEqual(
+        resumedClaim.payload.runAttemptId,
+        unblockEvent.payload.runAttemptId,
+        "parent execution must use the next Activation's Run",
+      );
+      const parentSubmissions = activeObserver.taskReviews.listTaskSubmissions(
+        humanActor,
+        { roomId, taskId: parentTask.taskId },
+      );
+      assert.equal(parentSubmissions.length, 1);
+      await humanMutation("/v3/client/tasks/complete", {
+        idempotencyKey: "real-split-chain-parent-completed",
+        taskId: parentTask.taskId,
+      });
+      assert.equal(byId().get(parentTask.taskId)?.state, "completed");
+      assert.equal(
+        tasksOf().length,
+        3,
+        "resumption must not create a replacement parent",
+      );
+
       // 7. Report before teardown, while the live projections are still open.
       const finalActivations = agentActivations();
       const finalAttempts = activeObserver.listRunAttempts({ roomId });
@@ -529,7 +579,8 @@ test(
               total: finalActivations.length,
             },
             files: ["SPLIT_A.txt", "SPLIT_B.txt"],
-            parentState,
+            parentState: byId().get(parentTask.taskId)?.state,
+            parentWaitState: parentState,
             runAttempts: finalAttempts.map((attempt) => ({
               exitCode: attempt.exitCode,
               participant:
@@ -572,6 +623,7 @@ test(
         assert.equal(persisted.get(subtaskA.taskId)?.assigneeId, helperA);
         assert.equal(persisted.get(subtaskB.taskId)?.assigneeId, helperB);
         const persistedParent = persisted.get(parentTask.taskId);
+        assert.equal(persistedParent?.state, "completed");
         assert.equal(persistedParent?.creatorId, humanMessage.event.actorId);
         assert.equal(persistedParent?.assigneeId, lead);
         assert.equal(

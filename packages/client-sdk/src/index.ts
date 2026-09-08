@@ -1,4 +1,20 @@
 import {
+  TaskAmendRequestSchema,
+  TaskDeleteRequestSchema,
+  TaskDeleteResponseSchema,
+  type TaskDeleteRequest,
+  type TaskDeleteResponse,
+  ClientTaskMutationResponseSchema,
+  type ClientTaskMutationResponse,
+  type TaskAmendRequest,
+} from "@rah-os/protocol";
+import {
+  ClientTaskHistoryRequestSchema,
+  ClientTaskHistoryResponseSchema,
+  type ClientTaskHistoryRequest,
+  type ClientTaskHistoryResponse,
+} from "@rah-os/protocol";
+import {
   ChannelPreviewRequestSchema,
   ChannelPreviewResponseSchema,
   type ChannelPreviewRequest,
@@ -67,24 +83,6 @@ import {
   ClientMessagePostRequestSchema,
   ClientMessagesListRequestSchema,
   ClientMessagesListResponseSchema,
-  ClientManagedMcpAssignmentCreateRequestSchema,
-  ClientManagedMcpAssignmentMutationResponseSchema,
-  ClientManagedMcpAssignmentReviseRequestSchema,
-  ClientManagedMcpAssignmentsListRequestSchema,
-  ClientManagedMcpAssignmentsListResponseSchema,
-  ClientManagedMcpAssignmentStateRequestSchema,
-  ClientManagedMcpExecutorDiscoverRequestSchema,
-  ClientManagedMcpExecutorDiscoverResponseSchema,
-  ClientManagedMcpExecutorsListRequestSchema,
-  ClientManagedMcpExecutorsListResponseSchema,
-  ClientManagedMcpServerCreateRequestSchema,
-  ClientManagedMcpServerMutationResponseSchema,
-  ClientManagedMcpServerReviseRequestSchema,
-  ClientManagedMcpServersListRequestSchema,
-  ClientManagedMcpServersListResponseSchema,
-  ClientManagedMcpServerStateRequestSchema,
-  ClientManagedMcpUsageListRequestSchema,
-  ClientManagedMcpUsageListResponseSchema,
   ClientPrincipalMeRequestSchema,
   HumanProfileRequestSchema,
   HumanProfileResponseSchema,
@@ -197,24 +195,6 @@ import {
   type ClientMessagePostRequest,
   type ClientMessagesListRequest,
   type ClientMessagesListResponse,
-  type ClientManagedMcpAssignmentCreateRequest,
-  type ClientManagedMcpAssignmentMutationResponse,
-  type ClientManagedMcpAssignmentReviseRequest,
-  type ClientManagedMcpAssignmentsListRequest,
-  type ClientManagedMcpAssignmentsListResponse,
-  type ClientManagedMcpAssignmentStateRequest,
-  type ClientManagedMcpExecutorDiscoverRequest,
-  type ClientManagedMcpExecutorDiscoverResponse,
-  type ClientManagedMcpExecutorsListRequest,
-  type ClientManagedMcpExecutorsListResponse,
-  type ClientManagedMcpServerCreateRequest,
-  type ClientManagedMcpServerMutationResponse,
-  type ClientManagedMcpServerReviseRequest,
-  type ClientManagedMcpServersListRequest,
-  type ClientManagedMcpServersListResponse,
-  type ClientManagedMcpServerStateRequest,
-  type ClientManagedMcpUsageListRequest,
-  type ClientManagedMcpUsageListResponse,
   type ClientPrincipalMeRequest,
   type ClientPrincipalMeResponse,
   type ClientPrincipalUpdateRequest,
@@ -391,50 +371,7 @@ export type RahClientOperationMap = AgentWorkspaceOperationMap &
       input: InputRequestResolveRequest;
       output: InputRequestResolveResponse;
     };
-    "managedMcp.assignment.create": {
-      input: ClientManagedMcpAssignmentCreateRequest;
-      output: ClientManagedMcpAssignmentMutationResponse;
-    };
-    "managedMcp.assignment.list": {
-      input: ClientManagedMcpAssignmentsListRequest;
-      output: ClientManagedMcpAssignmentsListResponse;
-    };
-    "managedMcp.assignment.revise": {
-      input: ClientManagedMcpAssignmentReviseRequest;
-      output: ClientManagedMcpAssignmentMutationResponse;
-    };
-    "managedMcp.assignment.state": {
-      input: ClientManagedMcpAssignmentStateRequest;
-      output: ClientManagedMcpAssignmentMutationResponse;
-    };
-    "managedMcp.executor.discover": {
-      input: ClientManagedMcpExecutorDiscoverRequest;
-      output: ClientManagedMcpExecutorDiscoverResponse;
-    };
-    "managedMcp.executor.list": {
-      input: ClientManagedMcpExecutorsListRequest;
-      output: ClientManagedMcpExecutorsListResponse;
-    };
-    "managedMcp.server.create": {
-      input: ClientManagedMcpServerCreateRequest;
-      output: ClientManagedMcpServerMutationResponse;
-    };
-    "managedMcp.server.list": {
-      input: ClientManagedMcpServersListRequest;
-      output: ClientManagedMcpServersListResponse;
-    };
-    "managedMcp.server.revise": {
-      input: ClientManagedMcpServerReviseRequest;
-      output: ClientManagedMcpServerMutationResponse;
-    };
-    "managedMcp.server.state": {
-      input: ClientManagedMcpServerStateRequest;
-      output: ClientManagedMcpServerMutationResponse;
-    };
-    "managedMcp.usage.list": {
-      input: ClientManagedMcpUsageListRequest;
-      output: ClientManagedMcpUsageListResponse;
-    };
+
     "message.list": {
       input: ClientMessagesListRequest;
       output: ClientMessagesListResponse;
@@ -582,6 +519,18 @@ export type RahClientOperationMap = AgentWorkspaceOperationMap &
     "task.get": {
       input: ClientTaskGetRequest;
       output: ClientTaskGetResponse;
+    };
+    "task.delete": {
+      input: TaskDeleteRequest;
+      output: TaskDeleteResponse;
+    };
+    "task.amend": {
+      input: TaskAmendRequest;
+      output: ClientTaskMutationResponse;
+    };
+    "task.history": {
+      input: ClientTaskHistoryRequest;
+      output: ClientTaskHistoryResponse;
     };
     "task.list": {
       input: ClientTasksListRequest;
@@ -795,83 +744,7 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     output: InputRequestResolveResponseSchema,
     path: "/v3/client/input-requests/resolve",
   },
-  "managedMcp.assignment.create": {
-    authenticated: true,
-    input: ClientManagedMcpAssignmentCreateRequestSchema,
-    method: "POST",
-    output: ClientManagedMcpAssignmentMutationResponseSchema,
-    path: "/v3/client/managed-mcp/assignments/create",
-  },
-  "managedMcp.assignment.list": {
-    authenticated: true,
-    input: ClientManagedMcpAssignmentsListRequestSchema,
-    method: "POST",
-    output: ClientManagedMcpAssignmentsListResponseSchema,
-    path: "/v3/client/managed-mcp/assignments/list",
-  },
-  "managedMcp.assignment.revise": {
-    authenticated: true,
-    input: ClientManagedMcpAssignmentReviseRequestSchema,
-    method: "POST",
-    output: ClientManagedMcpAssignmentMutationResponseSchema,
-    path: "/v3/client/managed-mcp/assignments/revise",
-  },
-  "managedMcp.assignment.state": {
-    authenticated: true,
-    input: ClientManagedMcpAssignmentStateRequestSchema,
-    method: "POST",
-    output: ClientManagedMcpAssignmentMutationResponseSchema,
-    path: "/v3/client/managed-mcp/assignments/state",
-  },
-  "managedMcp.executor.discover": {
-    authenticated: true,
-    input: ClientManagedMcpExecutorDiscoverRequestSchema,
-    method: "POST",
-    output: ClientManagedMcpExecutorDiscoverResponseSchema,
-    path: "/v3/client/managed-mcp/executors/discover",
-  },
-  "managedMcp.executor.list": {
-    authenticated: true,
-    input: ClientManagedMcpExecutorsListRequestSchema,
-    method: "POST",
-    output: ClientManagedMcpExecutorsListResponseSchema,
-    path: "/v3/client/managed-mcp/executors/list",
-  },
-  "managedMcp.server.create": {
-    authenticated: true,
-    input: ClientManagedMcpServerCreateRequestSchema,
-    method: "POST",
-    output: ClientManagedMcpServerMutationResponseSchema,
-    path: "/v3/client/managed-mcp/servers/create",
-  },
-  "managedMcp.server.list": {
-    authenticated: true,
-    input: ClientManagedMcpServersListRequestSchema,
-    method: "POST",
-    output: ClientManagedMcpServersListResponseSchema,
-    path: "/v3/client/managed-mcp/servers/list",
-  },
-  "managedMcp.server.revise": {
-    authenticated: true,
-    input: ClientManagedMcpServerReviseRequestSchema,
-    method: "POST",
-    output: ClientManagedMcpServerMutationResponseSchema,
-    path: "/v3/client/managed-mcp/servers/revise",
-  },
-  "managedMcp.server.state": {
-    authenticated: true,
-    input: ClientManagedMcpServerStateRequestSchema,
-    method: "POST",
-    output: ClientManagedMcpServerMutationResponseSchema,
-    path: "/v3/client/managed-mcp/servers/state",
-  },
-  "managedMcp.usage.list": {
-    authenticated: true,
-    input: ClientManagedMcpUsageListRequestSchema,
-    method: "POST",
-    output: ClientManagedMcpUsageListResponseSchema,
-    path: "/v3/client/managed-mcp/usage/list",
-  },
+
   "message.list": {
     authenticated: true,
     input: ClientMessagesListRequestSchema,
@@ -1130,6 +1003,27 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     method: "POST",
     output: ClientTaskGetResponseSchema,
     path: "/v3/client/tasks/get",
+  },
+  "task.delete": {
+    authenticated: true,
+    input: TaskDeleteRequestSchema,
+    method: "POST",
+    output: TaskDeleteResponseSchema,
+    path: "/v3/client/tasks/delete",
+  },
+  "task.amend": {
+    authenticated: true,
+    input: TaskAmendRequestSchema,
+    method: "POST",
+    output: ClientTaskMutationResponseSchema,
+    path: "/v3/client/tasks/amend",
+  },
+  "task.history": {
+    authenticated: true,
+    input: ClientTaskHistoryRequestSchema,
+    method: "POST",
+    output: ClientTaskHistoryResponseSchema,
+    path: "/v3/client/tasks/history",
   },
   "task.list": {
     authenticated: true,

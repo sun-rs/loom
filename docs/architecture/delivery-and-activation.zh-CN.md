@@ -54,6 +54,12 @@ Agent Thread 关注由 Kernel 的 `agent_thread_follows` 持久表拥有，不�
 
 ## 3. 合并与串行 lane
 
+解除闲置 Task 的负责人后，已有 `task.unassigned` attention 继续进入普通持久投递。
+被投递的下一 Activation 可将该事件作为对应 Task 的执行来源；仍须匹配 Room、
+接收者 Inbox、Task ID 和冻结范围，不允许仅凭当前看板可见性认领未来任务。
+该事件授予参与接手的资格，不强制每个收到开放任务通知的 Agent 都认领。
+这是 Raft “清除后重新开放”行为的本地适配，不宣称官方使用相同的事件与租约结构。
+
 同一个 AgentParticipant 在同一时刻最多拥有一个 active lane。
 
 - queued 状态的多条事件合并到一个 Activation，扩展 `fromSeq/toSeq`。
@@ -152,3 +158,83 @@ Task／Review domain 在派生 attention 的同一事务中，把需要强制完
 ## 8. Task claim 恢复
 
 Activation lease 与 Task ownership 是两套状态。当前 Worker Application Service 在有效 execution credential 存续期间，以不产生 Room event/Outbox 的 sidecar heartbeat 续租本 Agent 的 `claimed/in_progress` Task；credential revoke、execution fencing 或服务关闭会停止续租。新 RunAttempt 先查询 canonical Task projection，再用稳定业务幂等键重放已完成命令并从当前 Activation cursor 继续；旧命令的原始因果序号不成为业务幂等内容。过期 ownership 不能被 heartbeat 复活，必须显式 reclaim，并保留新的 `task.claimed` 历史。依赖检查与更丰富的恢复策略仍待后续 Task workflow 实现。
+
+## 2026-09-08 基础协作目标与读取边界
+
+Worker `message-post` 支持显式 `threadId`，`null` 表示 Room 顶层。省略时只有单一投递目标可自动路由；多 Thread 或 Room/Thread 合批必须选择目标。旧 Thread 不要求出现在本次 Activation，但必须属于当前 Room、其创建事实不晚于已投递 Activation cursor。HTTP 保留已 sync 的 causal cursor 检查；Host 代际、运行实例、租约、成员与 Agent enabled 围栏不变。已读的新事实不能偷偷扩大执行凭据的 `toSeq`；较新 Thread 写入仍等待 follow-up Activation。唯一窄补充是当前 Worker 本人在同一 Run 的 canonical `task.created` 明确创建的 Task Thread；该来源证明由 `worker-task-scope` 共享，回复仍使用原写入 cursor，并通过相同 freshness/held draft 与 active Run 围栏。
+
+收件人属于发布时的服务器派生结果，不作为 Worker 原消息意图的幂等内容。相同身份、Activation、正文、目标和发送方式的重试复用旧 event；成员或 Thread 关注变化不重新投递。held draft 固定原 Thread，rehold 的原请求也可重放其旧回执。
+
+普通 Room Agent 可读取同 Room Task、冻结 Submission、已发布 Message/Task 附件；不要求预设审查角色或本次 Activation 投递 Task。未发送附件与跨 Room 附件不可读。认领、提交、正式 Review 等 mutation 继续执行独立的 delivery/ownership/lease 检查。本 Run 本人 canonical `task.created` 可作为自己新建 Task 的来源证明，从而允许创建后立即 start；它不能授权其他 Run、其他 Agent 或任意只读取得的 Task。Human 通过对话临时指派审计，Agent 读取证据后在明确 Thread 回复；只有历史 Task 已显式设置 reviewer 时才适用兼容正式 Review 流程。
+
+普通 Worker 讨论附件由现有 `RoomFiles` 负责 prepare、真实 bytes 上传完成、取消和 GC，不要求先建 Task。消息与附件 consumed 在原 Kernel 事务一起提交，held draft 保存不可替换的附件快照，取消后原回执仍可重放但不能再次发布文件。Task Artifact reservation 继续受 Task/Run/claim 约束，不能经普通附件路径消费。见 [本批附件证据](../audits/2026-09-08-worker-discussion-attachments-closure.zh-CN.md)。
+
+`task-trajectory` 只收集 canonical Task mutation 明确关联的 Run，并返回 `scope=task_linked_run_diagnostics`。同一个 Run 可以处理其他工作，所以这既不是逐工具 Task 归属，也不是完成/正确性的证明。没有相关 Run 的 Task 返回空轨迹，不用同 Agent 后续活动补足。当前查询仍展示当前 assignee 的关联 Run，释放后无 assignee 保持不可查询。
+
+来源、最小本地适配、RED/GREEN 与限制见[本批审计](../audits/2026-09-08-collaboration-core-closure.zh-CN.md)。
+
+### Worker 基础读取的唯一 owner
+
+`WorkerReadService` 组合现有 Room/Message/Principal/Task 投影，通过严格的协议、Worker HTTP 和 CLI 提供历史 before/after/around、精确消息与 Thread 定位、当前 Room 成员及 handle、可见身份资料、Task 看板和 canonical 生命周期历史。actor 与 Room 只取有效 execution grant；每次读取重新检查 enabled Agent membership。读取不要求先认领 Task，不 ACK Inbox，不添加已知写入 cursor，也不扩大当前 Activation 的执行范围。
+
+历史与 Task history 在第一次查询时冻结本 Room 的 `next_seq-1`，分页使用同一 `discoveryPage` owner 的 Room 序号模式；不能以可复用的 SQLite 全局 rowid 代替 Room 的单调序号。Task 列表以 `task.created` 的 Room 序号冻结候选，但返回当前 Task 投影，明确不是历史快照。成员与 profile 同样反映当前可见身份；Agent 展示名、描述和头像取 current revision，角色指令、私有记忆与运行凭据不出现在该 profile。
+
+读取可以看到当前 Room 中晚于 Activation `toSeq` 的事实；这不授权用该事实写入或 ACK，后续执行仍由 durable follow-up 承接。响应按完整 UTF-8 JSON（包含分页字段）限制为 512 KiB，分页保留完整记录并留出封包空间；单条过大显式拒绝，不截正文、不跳过记录或返回无限空分页。源码依据与本批验证见 [Agent API 映射](../product/raft-agent-api-contract-map.zh-CN.md) 及 [Worker 基础读工具收口](../audits/2026-09-08-worker-read-tools-closure.zh-CN.md)。
+
+### Worker 自身公开资料的因果边界
+
+`WorkerSelfProfileService` 只把当前有效 execution 绑定到本人 enabled AgentDefinition，并复用 `workspace-agent-profile` 的唯一 revision writer。`profile-self-get` 返回公开展示字段，以及本人资料 control Room 的 `writeContext={controlRoomId,controlRoomSeq,expectedRevisionId}`；不返回角色指令或私有记忆，不读取其他 control Room 事件，不增加工作 Room 的 known cursor、ACK 或执行范围。此接口提供明确写依据，不证明模型已经读懂资料，也不新增 grant 内的读取回执槽。
+
+`profile-update` 必须显式携带这份 control Room 位置与 revision CAS。工作 Room 的当前有效 execution 和成员资格只证明本人身份；control Room 序号不能当成工作 Room 的 `basedOnRoomSeq`。更新只接受 displayName、description、avatarKey，同一事务写单个新 revision 和一条 `agent.profile_updated`，标注 `metadataOnly`、来源工作 Room 和 Run。该事务不变更现行 RunAttempt 的冻结 manifest、执行租约或记忆身份；下次运行由原 Placement owner 选到新 revision。有效身份的完全相同重试返回原持久回执，命令改变则冲突，Human 并发 revision 更新不会被覆盖。
+
+`profile-avatar-publish` 复用 daemon 的 `ProfileImageStore`、现有 5 MiB 图片上限、内容校验、immutable image key 和 `ProfileImageLifecycleService` 的 upload intent/GC。HTTP 在读取 bytes 前、记录 intent 时和返回前重验凭据与执行资格。Worker 随后用显式 profile CAS 绑定本人上传 intent；其他 Agent 的公开头像 key/intent、未完成上传和 raw URL 都不是授权。既有本人头像和官方预设可以继续使用。上传失败或 CAS 冲突留下的未绑定对象走原 GC，不能通过新的 Worker facade 绕过 Task Artifact 的发布证据。来源与分层测试见 [自身资料及头像收口](../audits/2026-09-08-worker-self-profile-closure.zh-CN.md)。
+
+Worker JSON facade 在等候请求正文前及正文读取完成后都认证 bearer，防止上传请求期间撤销凭据却继续沿缓存 grant 写入。Kernel 的 live Run 围栏与应用服务 bearer 的撤销是两层独立校验，任何一层失效都不能接受 mutation。
+
+普通附件与 Task Artifact 的异步 PUT 同样传入动态 facade 授权函数；`RoomFiles` 在其原三个 owner 检查点复验。最终 rename 后、同步提交 completed 之前没有可跳过的授权窗口；拒绝时走原 failed 和文件清理逻辑，不先完成存储再仅返回 401。
+
+## Worker 父任务恢复的单一状态 owner
+
+Worker `/v1/worker/tasks/unblock` 复用 `task-unblock-service.ts` 中原 Human unblock 事务。Human 仍为 creator 权限；Worker 只允许有效 Run 中当前 assignee 本人恢复自己最近阻塞且已在 `toSeq` 内可见的 Task。当前成员必须 enabled，未完成依赖、pending Human input 或相关新事实必须拒绝；不把 read 工具返回的新事实当作写授权。
+
+解除阻塞只写 `todo`、`task.unblocked` 和既有派发工作；不认领、不把 unblocked 伪装成 created、不扩 grant。当前 Run ACK 原 delivery cursor 后退出，下一 Activation 正常交付事件并允许 claim/start/submit，最终完成仍由 Human。合法幂等重放没有第二条事件/Outbox，事件失败回滚整个事务。
+
+同一共享 owner 还提供 creator 的闲置 Task assign/unassign 与 source Message 唯一 convert。任务管理不等于执行 claim；权限不能退化为所有 Room 成员可改。具体边界和当前证据见 [Task 管理与父任务恢复](../audits/2026-09-08-worker-task-management-closure.zh-CN.md)。
+
+## 2026-09-08：完整 Task amendment 与同步字节边界
+
+Task 修改沿既有 `task_updated` attention 向非修改者的负责人派生通知；新的 `task.amended` 事件可作为下次 Activation 的 Task 关联证据，不替代 claim、执行锁或验收。Room 同步在原事件数上限外增加独立的 2 MiB JSON 响应上限，计入 snapshot 和 envelope，逐行读取完整事件前缀；`cursorAfter` 仅为实际返回末条，未返回的事件留到下页。Worker 仍须通过已经返回的 cursor 继续或 ACK，不能用最新 Room seq 跳过未读事实。详见[本批来源、权限及验证](../audits/2026-09-08-task-amend-upload-capabilities.zh-CN.md)。
+
+## Task 真删除的事务边界（2026-09-08）
+
+Task 删除由 kernel/task-deletion.ts 的 TaskDeletionService 独占。Human deleteTask 与 Worker tasks/delete、SDK task.delete、CLI task-delete 仅委派。请求携带 roomId 与 taskId，删除后仍以当前认证/成员身份定位原 Room 内 task.deleted 幂等事件；合法重放不依赖已移除投影，也不因新 Worker grant 尚无原游标回执而失去持久结果。
+
+删除事务移除 Task 私有关系和投影，保留 Message/Thread、发布附件、历史 Room event、Outbox 与 Run/进程证据。发布文件解除 Task 外键，未发布上传置 canceled 并沿 RoomFiles 既有 GC 回收。legacy obligation 的启动回填只排除有更晚 task.deleted 证明的旧 Task 义务。编号分配读取持久已用 taskNumber，不能复用被删除的最大编号。
+
+授权和执行限制复用现有 Room/Worker owner：Human creator 或 Room owner/admin；Worker 本人 creator、同 Room 当前有效成员与 active execution，原冻结范围或本 Run 创建来源、因果 freshness。存在 active claim、Task 关联 Run 尚未 terminal、未解决取消/重分配/输入、其他 Task 依赖时拒绝删除。删除不推断任务完成，不自动停止 Provider，也不释放依赖。当前删除 attention 仅通知现有有效 Agent creator/assignee。
+
+这是对 Raft 已证实 Task metadata 真删除行为的本地适配；Raft 中央 server 对原讨论/已发布文件与 active execution 的具体处置未知。不得把本地 409 流程宣称为 Raft 原样行为。
+
+## Agent 频道静音的注意力边界（2026-09-08）
+
+- 单一 owner：`AgentChannelAttentionService` / `agent_channel_attention`，键为 participantId×roomId。Worker scope 决定身份与当前 Room；不接收任意目标身份，不复用 Human sidebar 偏好。schema v53 由根统一发布。
+- `channel-mute` / `channel-unmute` 只修改当前已加入普通 Channel 的未来普通 Activity 投递；每次成功事务写 projection、一个 `channel.attention_changed` Room event 和现有 room.event Outbox。已接受 Inbox、Activation、RunAttempt 不撤回；Room 历史和读取权限不变；解除静音不编造被抑制期间的新 Inbox。
+- 唯一 attention 过滤位于 `RoomEventWriter.deriveAttention` 的 Inbox/Activation/obligation/Outbox 派生前。个人 mention、DM、followed Thread 独立穿透。普通 room_policy、task_available/task_updated/task_review 和开放 dependency 广播被抑制；Task 当前事件 title/description 的真实个人 handle mention 可穿透，使用现有 mention parser。
+- RAH 明确差异：typed task_assigned/task_collaboration、Human input_resolved 和显式 task_owner_follow_up/task_review obligation、依赖就绪时真正当前 assignee 的责任投递仍保留。这是已有 Task 责任安全性适配，不能说所有 Task 等同 @mention 或 Raft Server 已实测该规则。
+- 认证/因果：Worker facade 在 JSON await 后重验 bearer，Kernel 在事务中重验执行与当前 enabled membership。偏好事件 receipt 可链接后续偏好操作，不能扩大 Task execution cursor。旧 key 绑定 Room、actor、mutation 种类及设定值；重试返回原事件与当前 setting，不回滚后续 setting。新 key 若基于较旧 setting seq 则拒绝。归档/数据库失败完整回滚。
+- Room 删除 graph 同时擦除 agent_channel_attention；根的 attachment_comment_links 按授权加入 graph，位于 room_files/messages 之前擦除。
+- 本批未做跨 Room mute 写授权、Human 设置 UI、自动静音策略、模型实跑或官网双边写操作；根负责总检查与正式备份重启。
+
+### 跨频道静音接线（2026-09-08 续批）
+
+`channel-mute/channel-unmute` 保留原当前 Room 调用；可增加成对的
+`--target <channel> --context-receipt <receipt>`，先用已有 `room-read --target`
+取得完整目标窗口，再以其 throughRoomSeq 修改本人偏好。目标解析、当前执行/双边成员和签名
+复用 WorkerTargetContext，不复制 grant，不向原 knownRoomSeqs 加入目标事件。
+拒绝 Thread、DM、control 和非成员；新偏好不能覆盖晚于所呈现窗口的偏好事实。
+无关普通消息不改变偏好写入因果条件。准确旧 intent 回放可使用原已过期签名凭据，
+但始终复验有效 Run/成员，且不重新投递、不回滚较新设置。权限和普通 Activity 过滤仍沿单一 owner。
+
+## 重启后的 Activation 代际校验
+
+Activation 的执行授权按当前 `attempt_count` 对应的 Run／Placement 校验 Host generation。已终止的历史 Run 保留原 Host、退出来源和代际围栏，不阻挡新 attempt 的合法领取；新 Host 也不得修改旧 Run。真实中断反例与修复见[恢复修复验收](../audits/2026-09-08-core-recovery-repair.zh-CN.md)。

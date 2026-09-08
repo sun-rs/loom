@@ -5,6 +5,23 @@ import test from "node:test";
 
 const webRoot = join(import.meta.dirname, "..");
 
+test("installable PWA icons include real 192 and 512 pixel PNG assets", () => {
+  const manifest = JSON.parse(
+    readFileSync(join(webRoot, "public", "manifest.webmanifest"), "utf8"),
+  );
+  for (const size of [192, 512]) {
+    const icon = manifest.icons.find(
+      (entry: { type: string; sizes: string }) =>
+        entry.type === "image/png" && entry.sizes === `${size}x${size}`,
+    );
+    assert.ok(icon, `missing ${size}px PNG`);
+    const png = readFileSync(join(webRoot, "public", icon.src));
+    assert.equal(png.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
+    assert.equal(png.readUInt32BE(16), size);
+    assert.equal(png.readUInt32BE(20), size);
+  }
+});
+
 test("the Web product exposes one installable PWA shell without caching canonical APIs", () => {
   const index = readFileSync(join(webRoot, "index.html"), "utf8");
   const manifest = JSON.parse(

@@ -1,8 +1,5 @@
 import { DatabaseSync } from "node:sqlite";
-import {
-  ClientWorkspacesListResponseSchema,
-  ClientManagedMcpExecutorsListResponseSchema,
-} from "@rah-os/protocol";
+import { ClientWorkspacesListResponseSchema } from "@rah-os/protocol";
 import assert from "node:assert/strict";
 import {
   chmodSync,
@@ -54,18 +51,7 @@ else process.exitCode = 2;
     await running.stop();
     writeFileSync(
       join(workbenchHome, "state", "managed-mcp.json"),
-      JSON.stringify({
-        schemaVersion: 1,
-        executors: [
-          {
-            executorRef: "owner-fixture",
-            transport: {
-              kind: "streamable-http",
-              url: "https://example.invalid/mcp",
-            },
-          },
-        ],
-      }),
+      "retired configuration must never be parsed or followed",
       { mode: 0o600 },
     );
     running = await startLocalCoreWorkbench({
@@ -197,16 +183,20 @@ else process.exitCode = 2;
     const workspace = ClientWorkspacesListResponseSchema.parse(
       await query("workspaces/list", {}),
     ).workspaces[0]!;
-    const mcp = ClientManagedMcpExecutorsListResponseSchema.parse(
-      await query("managed-mcp/executors/list", {
-        controlRoomId: workspace.controlRoomId,
-      }),
+    assert.ok(workspace.workspaceId);
+    const retired = await fetch(
+      `${origin}/v3/client/managed-mcp/executors/list`,
+      {
+        method: "POST",
+        headers: {
+          cookie: authCookie,
+          origin,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ controlRoomId: workspace.controlRoomId }),
+      },
     );
-    assert.deepEqual(
-      mcp.executors.map((entry: { executorRef: string }) => entry.executorRef),
-      ["owner-fixture"],
-    );
-    assert.equal(JSON.stringify(mcp).includes("example.invalid"), false);
+    assert.equal(retired.status, 404);
     assert.deepEqual(await health.json(), {
       service: "rah-os-local-core",
       state: "online",

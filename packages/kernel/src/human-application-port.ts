@@ -1,5 +1,4 @@
 import type { RoomKernel } from "./room-kernel.ts";
-import type { ManagedMcpService } from "./managed-mcp-service.ts";
 
 export type HumanApplicationPort = Pick<
   RoomKernel,
@@ -74,6 +73,9 @@ export type HumanApplicationPort = Pick<
   discoverPublicChannels: RoomKernel["publicChannels"]["list"];
   joinPublicChannel: RoomKernel["publicChannels"]["join"];
   getHumanProfile: RoomKernel["humanProfiles"]["get"];
+  amendTask: RoomKernel["taskAmendments"]["human"];
+  deleteTask: RoomKernel["taskDeletions"]["human"];
+  listTaskHistory: RoomKernel["humanTaskHistory"]["list"];
   listWorkspaceHumans: RoomKernel["humanProfiles"]["list"];
   listNotificationDismissals: RoomKernel["humanNotifications"]["listDismissals"];
   dismissNotification: RoomKernel["humanNotifications"]["dismiss"];
@@ -81,26 +83,21 @@ export type HumanApplicationPort = Pick<
   continueRoomAgentSos: RoomKernel["roomAgentSos"]["continueStop"];
   resumeRoomAgentSos: RoomKernel["roomAgentSos"]["resume"];
   listAgentReminders: RoomKernel["reminders"]["listHuman"];
+  listAttachmentComments: RoomKernel["attachmentComments"]["list"];
+  postAttachmentComment: RoomKernel["attachmentComments"]["post"];
   prepareFile: RoomKernel["files"]["prepare"];
   uploadFile: RoomKernel["files"]["upload"];
   cancelFile: RoomKernel["files"]["cancel"];
   listRoomFiles: RoomKernel["files"]["list"];
   downloadFile: RoomKernel["files"]["download"];
-  assignManagedMcpServer: ManagedMcpService["assignServer"];
-  createManagedMcpServer: ManagedMcpService["createServer"];
+
   createRoom: RoomKernel["createWorkspaceRoom"];
-  listManagedMcpAssignments: ManagedMcpService["listAssignments"];
-  listManagedMcpServers: ManagedMcpService["listServers"];
-  listManagedMcpUsage: ManagedMcpService["listUsage"];
+
   listTaskReviews: RoomKernel["taskReviews"]["listRoomReviews"];
   listTaskSubmissions: RoomKernel["taskReviews"]["listRoomSubmissions"];
   requestTaskReassignment: RoomKernel["taskReassignment"]["request"];
   continueTaskReassignment: RoomKernel["taskReassignment"]["continue"];
   postRoomMessage: RoomKernel["postRoomMessage"];
-  reviseManagedMcpAssignment: ManagedMcpService["reviseAssignment"];
-  reviseManagedMcpServer: ManagedMcpService["reviseServer"];
-  setManagedMcpAssignmentState: ManagedMcpService["setAssignmentState"];
-  setManagedMcpServerState: ManagedMcpService["setServerState"];
 };
 
 export function createHumanApplicationPort(
@@ -140,6 +137,10 @@ export function createHumanApplicationPort(
       kernel.roomAgentSos.resume(actor, input),
     listAgentReminders: (actor, input) =>
       kernel.reminders.listHuman(actor, input),
+    listAttachmentComments: (actor, input) =>
+      kernel.attachmentComments.list(actor, input),
+    postAttachmentComment: (actor, input) =>
+      kernel.attachmentComments.post(actor, input),
     prepareFile: (actor, input) => kernel.files.prepare(actor, input),
     uploadFile: (actor, id, chunks) => kernel.files.upload(actor, id, chunks),
     cancelFile: (actor, input) => kernel.files.cancel(actor, input),
@@ -150,15 +151,13 @@ export function createHumanApplicationPort(
     archiveWorkspaceRoom: (actor, input) =>
       kernel.archiveWorkspaceRoom(actor, input),
     assignTask: (actor, input) => kernel.assignTask(actor, input),
-    assignManagedMcpServer: (actor, input) =>
-      kernel.managedMcp.assignServer(actor, input),
+
     authenticateHumanAccessToken: (accessToken) =>
       kernel.authenticateHumanAccessToken(accessToken),
     cancelTask: (actor, input) => kernel.cancelTask(actor, input),
     completeTask: (actor, input) => kernel.completeTask(actor, input),
     createRoom: (actor, input) => kernel.createWorkspaceRoom(actor, input),
-    createManagedMcpServer: (actor, input) =>
-      kernel.managedMcp.createServer(actor, input),
+
     createTask: (actor, input) => kernel.createTask(actor, input),
     createThread: (actor, input) => kernel.createThread(actor, input),
     createWorkspace: (actor, input) => kernel.createWorkspace(actor, input),
@@ -168,6 +167,10 @@ export function createHumanApplicationPort(
     getAuthenticatedPrincipal: (actor) =>
       kernel.getAuthenticatedPrincipal(actor),
     getTask: (actor, input) => kernel.getTask(actor, input),
+    amendTask: (actor, input) => kernel.taskAmendments.human(actor, input),
+    deleteTask: (actor, input) => kernel.taskDeletions.human(actor, input),
+    listTaskHistory: (actor, input) =>
+      kernel.humanTaskHistory.list(actor, input),
     updateAuthenticatedPrincipal: (actor, input) =>
       kernel.updateAuthenticatedPrincipal(actor, input),
     getWorkspaceAgentManagementView: (actor, agentDefinitionId) =>
@@ -179,12 +182,7 @@ export function createHumanApplicationPort(
     listAgentCatalog: (actor, input) => kernel.listAgentCatalog(actor, input),
     listInputRequests: (actor, input) => kernel.listInputRequests(actor, input),
     leaveRoom: (actor, input) => kernel.leaveRoom(actor, input),
-    listManagedMcpAssignments: (actor, input) =>
-      kernel.managedMcp.listAssignments(actor, input),
-    listManagedMcpServers: (actor, input) =>
-      kernel.managedMcp.listServers(actor, input),
-    listManagedMcpUsage: (actor, input) =>
-      kernel.managedMcp.listUsage(actor, input),
+
     listMessages: (actor, input) => kernel.listMessages(actor, input),
     listMessageReferenceReadStates: (actor, input) =>
       kernel.listMessageReferenceReadStates(actor, input),
@@ -234,18 +232,12 @@ export function createHumanApplicationPort(
     continueTaskReassignment: (actor, input) =>
       kernel.taskReassignment.continue(actor, input),
     reopenTask: (actor, input) => kernel.reopenTask(actor, input),
-    reviseManagedMcpAssignment: (actor, input) =>
-      kernel.managedMcp.reviseAssignment(actor, input),
-    reviseManagedMcpServer: (actor, input) =>
-      kernel.managedMcp.reviseServer(actor, input),
+
     replyThread: (actor, input) => kernel.replyThread(actor, input),
     resolveInputRequest: (actor, input) =>
       kernel.resolveInputRequest(actor, input),
     setRoomMemberRole: (actor, input) => kernel.setRoomMemberRole(actor, input),
-    setManagedMcpAssignmentState: (actor, input) =>
-      kernel.managedMcp.setAssignmentState(actor, input),
-    setManagedMcpServerState: (actor, input) =>
-      kernel.managedMcp.setServerState(actor, input),
+
     sync: (actor, input) => kernel.sync(actor, input),
     unassignTask: (actor, input) => kernel.unassignTask(actor, input),
     unarchiveWorkspaceRoom: (actor, input) =>

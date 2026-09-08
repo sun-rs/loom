@@ -33,6 +33,7 @@
     "test:web:agent-runtime-continuity": "node scripts/run-agent-runtime-continuity-browser-gate.mjs",
     "test:web:worker-message-tools": "node scripts/run-worker-message-tools-browser-gate.mjs",
     "test:web:agent-reset": "node scripts/run-agent-reset-browser-gate.mjs",
+    "test:web:agent-state-dialog": "node scripts/run-agent-state-dialog-browser-gate.mjs",
     "test:web:agent-configure": "node scripts/run-agent-configure-browser-gate.mjs",
     "test:web:browser": "node scripts/run-real-browser-gate.mjs",
     "test:web:message-timeline": "node scripts/run-message-timeline-browser-gate.mjs",
@@ -73,7 +74,7 @@
     "test:real:opencode:deepseek-v4-flash": "RAH_REAL_CLI_GATE=opencode RAH_REAL_CLI_MODEL=deepseek/deepseek-v4-flash RAH_REAL_CLI_REASONING=max node --test packages/daemon/test/real-cli-gate.test.ts",
     "test:real:multi-cli": "RAH_REAL_MULTI_CLI_GATE=1 node --test packages/daemon/test/real-multi-cli-gate.test.ts",
     "typecheck": "tsc --noEmit && npm run typecheck --workspace=@rah-os/web",
-    "check": "npm run test:repository-identity && npm run check:ui-library && npm run check:ui-contract && npm run typecheck && npm test && npm run test:web:unit && npm run test:parity:regression && npm run test:formal-browser-policy",
+    "check": "npm run test:repository-identity && npm run check:ui-library && npm run check:ui-contract && npm run typecheck && npm test && npm run test:web:unit && npm run test:parity:regression && npm run test:formal-browser-policy && npm run test:ui:bilateral-captures",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "test:web:human-membership": "node scripts/run-human-membership-browser-gate.mjs",
@@ -85,7 +86,12 @@
     "test:real:review": "RAH_REAL_REVIEW_GATE=1 node --test packages/daemon/test/real-review-cli-gate.test.ts",
     "test:real:claude:sonnet46-low": "RAH_REAL_MULTI_CLI_GATE=1 RAH_REAL_CLI_NAMES=claude node --test packages/daemon/test/real-multi-cli-gate.test.ts",
     "test:web:media-preview": "npm run build:web:workbench && node scripts/run-media-preview-browser-gate.mjs",
-    "test:web:computer-reset": "node scripts/run-computer-reset-browser-gate.mjs"
+    "test:web:computer-reset": "node scripts/run-computer-reset-browser-gate.mjs",
+    "test:ui:bilateral-captures": "node --test scripts/ui-bilateral-captures.test.mjs",
+    "test:web:mcp-retirement": "node scripts/run-managed-mcp-retirement-browser-gate.mjs",
+    "test:web:computer-rail-parity": "node scripts/run-computer-rail-parity-browser-gate.mjs",
+    "test:web:search-count": "node scripts/run-search-count-browser-gate.mjs",
+    "test:web:task-amend": "node scripts/run-task-amend-browser-gate.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

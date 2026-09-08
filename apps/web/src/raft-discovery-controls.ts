@@ -84,7 +84,16 @@ export function normalizeDiscoveryParams(
           "previewTab",
         ]
       : surface === "tasks"
-        ? ["channel", "creator", "assignee", "view"]
+        ? [
+            "channel",
+            "creator",
+            "assignee",
+            "view",
+            "target",
+            "task",
+            "thread",
+            "threadId",
+          ]
         : [
             "filter",
             "thread",

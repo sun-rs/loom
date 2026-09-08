@@ -42,6 +42,7 @@ type TaskIntentContext = {
   database: DatabaseSync;
   events: RoomEventWriter;
   now(): Date;
+  workerScope?: ActivationCredentialScope;
 };
 
 export function createTaskMutationTransaction(
@@ -160,7 +161,12 @@ export function createTaskMutationTransaction(
     aggregateId: taskId,
     aggregateType: "task",
     idempotencyKey: input.idempotencyKey,
-    payload: eventPayload,
+    payload: {
+      ...eventPayload,
+      ...(context.workerScope
+        ? { runAttemptId: context.workerScope.runAttemptId }
+        : {}),
+    },
     roomId: input.roomId,
     type: "task.created",
   });
@@ -176,7 +182,14 @@ export function createTaskMutationTransaction(
       )
     : [];
   return {
-    activationIds: context.events.deriveAttention(event, recipients, createdAt),
+    activationIds: context.events.deriveAttention(
+      event,
+      recipients.filter(
+        (recipient) =>
+          recipient.participantId !== context.workerScope?.participantId,
+      ),
+      createdAt,
+    ),
     deduplicated: false,
     event,
     task: taskProjectionFromRow(

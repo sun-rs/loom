@@ -1,6 +1,20 @@
 import * as P from "@rah-os/protocol";
 import type { z } from "zod";
 export const fileOperations = {
+  "file.comments": {
+    input: P.AttachmentCommentsRequestSchema,
+    output: P.AttachmentCommentsResponseSchema,
+    path: "/v3/client/files/comments/list",
+    authenticated: true,
+    method: "POST",
+  },
+  "file.comment": {
+    input: P.AttachmentCommentPostRequestSchema,
+    output: P.ClientMessageMutationResponseSchema,
+    path: "/v3/client/files/comments/post",
+    authenticated: true,
+    method: "POST",
+  },
   "file.prepare": {
     input: P.FilePrepareRequestSchema,
     output: P.FileUploadSchema,

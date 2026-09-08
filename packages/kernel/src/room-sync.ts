@@ -1,6 +1,7 @@
 import type { DatabaseSync } from "node:sqlite";
 
-import type { RoomEvent } from "@rah-os/protocol";
+import { ROOM_SYNC_RESPONSE_MAX_BYTES, type RoomEvent } from "@rah-os/protocol";
+import { ForbiddenError } from "./errors.ts";
 
 import { integer, type Row } from "./sqlite-row.ts";
 import type { RoomSnapshot, SyncResult } from "./types.ts";
@@ -25,6 +26,7 @@ export function syncRoomEventWindow(
   owners: {
     eventFromRow: (row: Row) => RoomEvent;
     snapshot: (roomId: string) => RoomSnapshot;
+    responseOverheadBytes?: number;
   },
 ): SyncResult {
   const cursorRow = database
@@ -63,18 +65,11 @@ export function syncRoomEventWindow(
   if (afterSeq > throughSeq) {
     throw new Error("afterSeq cannot exceed throughSeq");
   }
-  const events = database
-    .prepare(
-      "SELECT * FROM room_events WHERE room_id = ? AND room_seq > ? AND room_seq <= ? ORDER BY room_seq LIMIT ?",
-    )
-    .all(input.roomId, afterSeq, throughSeq, limit)
-    .map((row) => owners.eventFromRow(row));
-  const cursorAfter = events.at(-1)?.roomSeq ?? afterSeq;
-  return {
+  const result: SyncResult = {
     cursorBefore,
-    cursorAfter,
+    cursorAfter: afterSeq,
     ...(input.bootstrap === "latest" ? { eventFloorSeq: afterSeq } : {}),
-    events,
+    events: [],
     latestRoomSeq,
     snapshot:
       input.bootstrap === "latest" || afterSeq === 0
@@ -82,4 +77,40 @@ export function syncRoomEventWindow(
         : null,
     ...(input.bootstrap === "latest" ? { snapshotSeq: latestRoomSeq } : {}),
   };
+  // Reserve the actual Room/member snapshot and all envelope keys. Append only
+  // complete ordered events, so cursorAfter never acknowledges an omitted row.
+  const envelopeBytes =
+    Buffer.byteLength(JSON.stringify(result)) +
+    (owners.responseOverheadBytes ?? 0);
+  if (envelopeBytes > ROOM_SYNC_RESPONSE_MAX_BYTES)
+    throw new ForbiddenError(
+      "Room sync snapshot exceeds the complete JSON limit",
+    );
+  let eventBytes = 0;
+  const rows = database
+    .prepare(
+      "SELECT * FROM room_events WHERE room_id=? AND room_seq>? AND room_seq<=? ORDER BY room_seq LIMIT ?",
+    )
+    .iterate(input.roomId, afterSeq, throughSeq, limit);
+  for (const row of rows) {
+    const event = owners.eventFromRow(row),
+      size =
+        Buffer.byteLength(JSON.stringify(event)) +
+        (result.events.length ? 1 : 0);
+    const cursorGrowth = String(event.roomSeq).length - String(afterSeq).length;
+    if (
+      envelopeBytes + cursorGrowth + eventBytes + size >
+      ROOM_SYNC_RESPONSE_MAX_BYTES
+    ) {
+      if (result.events.length === 0)
+        throw new ForbiddenError(
+          "one Room event exceeds the complete sync response limit",
+        );
+      break;
+    }
+    result.events.push(event);
+    eventBytes += size;
+    result.cursorAfter = event.roomSeq;
+  }
+  return result;
 }

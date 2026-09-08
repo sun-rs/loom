@@ -50,25 +50,10 @@ const DaemonConcurrencySchema = z
   .positive()
   .max(64, "daemon concurrency must not exceed 64");
 
-export const ManagedMcpExecutorConfigSchema = z
-  .object({
-    bearerToken: HostCredentialReferenceSchema.optional(),
-    executorRef: z.string().trim().min(1).max(256),
-    transport: z
-      .object({
-        kind: z.literal("streamable-http"),
-        url: z.url().max(4_096).refine(isSecureManagedMcpUrl, {
-          message: "managed MCP URL must use HTTPS or loopback HTTP",
-        }),
-      })
-      .strict(),
-  })
-  .strict();
-export type ManagedMcpExecutorConfig = z.infer<
-  typeof ManagedMcpExecutorConfigSchema
->;
-
 const CommonDaemonConfigFields = {
+  // Historical input only. The public config parser discards it without parsing
+  // connections or reading credential references; no executor consumes it.
+  managedMcpExecutors: z.unknown().optional(),
   client: z
     .object({
       bindHost: z.literal("127.0.0.1"),
@@ -80,10 +65,7 @@ const CommonDaemonConfigFields = {
   leaseMs: z.number().int().positive(),
   leaseRenewIntervalMs: z.number().int().positive().optional(),
   lockDirectory: AbsolutePathSchema.optional(),
-  managedMcpExecutors: z
-    .array(ManagedMcpExecutorConfigSchema)
-    .max(64)
-    .optional(),
+
   outboxLeaseMs: z.number().int().positive(),
   outboxPollIntervalMs: z.number().int().positive(),
   outboxRetryAfterMs: z.number().int().nonnegative(),
@@ -216,17 +198,6 @@ export const DaemonConfigSchema = z
     DaemonConfigV4Schema,
   ])
   .superRefine((config, context) => {
-    const executorRefs = new Set<string>();
-    config.managedMcpExecutors?.forEach(({ executorRef }, index) => {
-      if (executorRefs.has(executorRef)) {
-        context.addIssue({
-          code: "custom",
-          message: `duplicate managed MCP executorRef: ${executorRef}`,
-          path: ["managedMcpExecutors", index, "executorRef"],
-        });
-      }
-      executorRefs.add(executorRef);
-    });
     if (
       config.leaseRenewIntervalMs !== undefined &&
       config.leaseRenewIntervalMs >= config.leaseMs
@@ -276,21 +247,10 @@ export const DaemonConfigSchema = z
         });
       }
     }
-  });
+  })
+  .transform(({ managedMcpExecutors: _retired, ...config }) => config);
 
 export type DaemonConfig = z.infer<typeof DaemonConfigSchema>;
 export type DaemonConfigV2 = z.infer<typeof DaemonConfigV2Schema>;
 export type DaemonConfigV3 = z.infer<typeof DaemonConfigV3Schema>;
 export type DaemonConfigV4 = z.infer<typeof DaemonConfigV4Schema>;
-
-function isSecureManagedMcpUrl(value: string): boolean {
-  const url = new URL(value);
-  if (url.username !== "" || url.password !== "" || url.hash !== "") {
-    return false;
-  }
-  return (
-    url.protocol === "https:" ||
-    (url.protocol === "http:" &&
-      ["127.0.0.1", "::1", "[::1]", "localhost"].includes(url.hostname))
-  );
-}

@@ -4,18 +4,26 @@ import { pathToFileURL } from "node:url";
 
 const uncomment = (source) => source.replace(/\/\*[\s\S]*?\*\//g, "");
 
+// InteractivePopover renders Base UI Popover.Positioner. Its
+// utils/useAnchorPositioning.js writes this property on the Positioner at
+// runtime, and Popover.Popup inherits it. Keep exact, verified owners only.
+export const runtimeCssVariableOwners = {
+  "--available-height": "@base-ui/react/popover/positioner",
+};
+
 // CSS custom properties may also be supplied explicitly by a React style prop.
 // A prefix is never an exemption: a misspelled --rah-* name must still fail.
-export function unresolvedCssVariables(inputs) {
+export function unresolvedCssVariables(inputs, runtimeVariables = []) {
   const entries = Object.entries(inputs).map(([path, source]) => [
     path,
     uncomment(source),
   ]);
-  const declared = new Set(
-    entries.flatMap(([, source]) =>
+  const declared = new Set([
+    ...runtimeVariables,
+    ...entries.flatMap(([, source]) =>
       [...source.matchAll(/(--[\w-]+)["']?\s*:/g)].map((match) => match[1]),
     ),
-  );
+  ]);
   const errors = new Set();
   for (const [path, source] of entries) {
     if (!path.endsWith(".css")) continue;
@@ -54,7 +62,10 @@ if (
   process.argv[1] &&
   import.meta.url === pathToFileURL(resolve(process.argv[1])).href
 ) {
-  const errors = unresolvedCssVariables(cssContractInputs());
+  const errors = unresolvedCssVariables(
+    cssContractInputs(),
+    Object.keys(runtimeCssVariableOwners),
+  );
   if (errors.length) throw new Error(errors.join("\n"));
   process.stdout.write("Product CSS custom-property references resolve.\n");
 }

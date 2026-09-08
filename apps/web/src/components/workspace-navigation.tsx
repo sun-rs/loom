@@ -1,3 +1,4 @@
+import { RailHelpMenu } from "./rail-help-menu.tsx";
 import { InteractivePopoverTrigger } from "@rah-os/ui-web/neo-brutalist/interactive-popover";
 import type { Room, Workspace } from "@rah-os/protocol";
 import { DEFAULT_SIDEBAR_PREFERENCES } from "@rah-os/protocol";
@@ -123,7 +124,7 @@ export function Rail({
           onClick={() => onSelect?.("computers")}
         />
       </div>
-      <div className="rail-footer-item">
+      <div className="rail-footer-item rail-footer-item--notifications">
         <InteractivePopoverTrigger
           hover
           render={
@@ -141,6 +142,7 @@ export function Rail({
           }
         />
       </div>
+      <RailHelpMenu />
       <div className="rail-footer-item">
         <RailButton
           active={active === "settings"}

@@ -4,10 +4,7 @@ import {
   type AgentMemoryCoordinator,
   combineActivationEnvironmentLeases,
   createWorkerToolTransportEnvironment,
-  NodeHttpManagedMcpWorkerClient,
-  prepareManagedMcpRuntimeLaunch,
   prepareAgentMemoryRun,
-  type ManagedMcpRuntimeProxyRegistry,
   RuntimeCredentialEnvironmentBinding,
   RuntimeImplementationRegistry,
   ProviderSessionStore,
@@ -42,7 +39,7 @@ export function createConfiguredRuntime(input: {
   cwd: string;
   host: AuthenticatedHostContext;
   implementations: RuntimeImplementationRegistry;
-  managedMcpProxyRegistry: ManagedMcpRuntimeProxyRegistry;
+
   probeReport: RuntimeProfileProbeReport;
   resolvedModel?: ResolvedModel;
   toolAccessMode?: ToolAccessMode;
@@ -115,31 +112,6 @@ export function createConfiguredRuntime(input: {
             workerApiOrigin: input.workerService.origin,
           });
           leases.push(workerLease);
-          const manifest = input.runtimeProfileRevision.manifest;
-          const managedMcpAdapter =
-            manifest.manifestVersion === 1
-              ? undefined
-              : manifest.managedMcpAdapter;
-          if (managedMcpAdapter !== undefined) {
-            leases.push(
-              await prepareManagedMcpRuntimeLaunch({
-                adapter: managedMcpAdapter,
-                client: new NodeHttpManagedMcpWorkerClient({
-                  accessToken: credential.accessToken,
-                  origin: input.workerService.origin,
-                }),
-                existingEnvironment: {
-                  ...(manifest.manifestVersion === 1 ? {} : manifest.staticEnv),
-                  ...secretLease.env,
-                },
-                registry: input.managedMcpProxyRegistry,
-                temporaryDirectory: join(
-                  input.supervisorDirectory,
-                  "managed-mcp-runtime",
-                ),
-              }),
-            );
-          }
           return combineActivationEnvironmentLeases(
             leases,
             "local Runtime activation environment release failed",

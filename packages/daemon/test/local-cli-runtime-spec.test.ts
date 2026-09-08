@@ -188,19 +188,10 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
       `${executable} must use the Raft-compatible unattended default`,
     );
   }
-  assert.deepEqual(
-    Object.fromEntries(
-      ["claude", "codex", "kimi", "opencode"].map((executable) => [
-        executable,
-        localCliRuntimeSpec(executable, workspaceCwd)?.managedMcpAdapter?.kind,
-      ]),
-    ),
-    {
-      claude: "claude-cli/v1",
-      codex: "codex-cli/v1",
-      kimi: "kimi-cli/v1",
-      opencode: "opencode-cli/v1",
-    },
-  );
+  for (const executable of ["claude", "codex", "kimi", "opencode"])
+    assert.equal(
+      "managedMcpAdapter" in localCliRuntimeSpec(executable, workspaceCwd)!,
+      false,
+    );
   assert.equal(localCliRuntimeSpec("unknown", workspaceCwd), undefined);
 });

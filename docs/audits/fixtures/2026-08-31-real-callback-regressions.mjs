@@ -15,6 +15,7 @@ import { createLatestRequest } from "../../../apps/web/src/latest-request.ts";
 import { pendingInputRequestsForHuman } from "../../../apps/web/src/human-inbox-projection.ts";
 import { discoveryLocation } from "../../../apps/web/src/global-discovery-model.ts";
 import { navigationPresentation } from "../../../apps/web/src/navigation-target.ts";
+import { globalTaskDetailFromSearch } from "../../../apps/web/src/global-task-detail-route.ts";
 import { normalizeDiscoveryParams } from "../../../apps/web/src/raft-discovery-controls.ts";
 
 const app = "apps/web/src/App.tsx";
@@ -252,6 +253,12 @@ function navigation() {
     requests,
     invalidateNavigation,
     scope: {
+      // These regressions exercise ordinary Room/Activity Threads. Task modal
+      // callbacks now share the navigation owner, so supply their real route
+      // parser and inactive state without weakening the original assertions.
+      globalTaskDetailFromSearch,
+      setGlobalTaskDetail: noop,
+      taskModalOpen: false,
       navigationGeneration: generation,
       diagnosticNavigation: requests,
       invalidateNavigation,

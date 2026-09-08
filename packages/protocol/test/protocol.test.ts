@@ -488,8 +488,6 @@ test("Client API v1/v2/v3 contracts are strict, actor-free, and transport-neutra
       hints: false,
       inputRequestRead: true,
       inputRequestResolve: true,
-      managedMcpRead: true,
-      managedMcpWrite: true,
       memberRead: true,
       memberWrite: true,
       messageRead: true,

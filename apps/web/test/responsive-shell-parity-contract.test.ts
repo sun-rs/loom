@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { iconName } from "../../../packages/ui-web/src/neo-brutalist/icon-name.ts";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
@@ -117,7 +118,7 @@ test("mobile Home renders the actual Raft house glyph, not a missing SVG referen
     ),
     "utf8",
   );
-  assert.match(icon, /home: "house"/u);
+  assert.equal(iconName("home"), "house");
   assert.match(icon, /\[[^\]]*"house"[^\]]*\]\.includes\(mappedName\)/u);
   const symbol = sprite.match(
     /<symbol id="raft-icon-house"[^>]*>([\s\S]*?)<\/symbol>/u,

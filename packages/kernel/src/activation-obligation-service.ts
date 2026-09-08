@@ -99,6 +99,14 @@ export class ActivationObligationService {
         text(row, "reason"),
         event,
         text(row, "participant_id"),
+      ).filter(
+        (spec) =>
+          !this.#database
+            .prepare(
+              `SELECT 1 FROM room_events WHERE room_id = ? AND aggregate_type = 'task'
+         AND aggregate_id = ? AND type = 'task.deleted' AND room_seq > ? LIMIT 1`,
+            )
+            .get(event.roomId, spec.taskId, event.roomSeq),
       );
       if (specs.length === 0) continue;
       this.record({

@@ -12,7 +12,7 @@ test("Agent tabs use the observed Raft icons, not placeholder code or attachment
     new URL("../src/components/agent-directory-pane.tsx", import.meta.url),
     "utf8",
   );
-  for (const icon of ["bot", "folder-open", "link-2", "blocks"])
+  for (const icon of ["bot", "folder-open", "link-2"])
     assert.ok(source.includes(`icon: "${icon}"`));
 });
 test("activity color overrides are specific enough to beat legacy success and active rows", () => {

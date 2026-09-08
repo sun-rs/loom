@@ -48,6 +48,7 @@ for (const engine of ["chrome", "firefox"]) {
         fixture.origin + `/?surface=agents&agent=${id}&agentTab=profile`,
       );
       await page
+        .locator(".rah-agent-actions-section")
         .getByRole("button", { name: "重启 / 重置", exact: true })
         .click();
       const dialog = page.getByRole("dialog", { name: /^重新启动/ });
@@ -136,6 +137,7 @@ for (const engine of ["chrome", "firefox"]) {
       await page.unroute("**/v3/client/agents/execution/reset");
       await page.reload();
       await page
+        .locator(".rah-agent-actions-section")
         .getByRole("button", { name: "重启 / 重置", exact: true })
         .waitFor();
       const after = await post("agents/get", { agentDefinitionId: id });

@@ -269,7 +269,6 @@ export async function verifySettingsNavigation(page, origin, output, engine) {
     ["notifications", "通知"],
     ["server", "服务器资料"],
     ["administration", "管理"],
-    ["managed-mcp", "MCP 服务器"],
     ["lan-devices", "局域网设备"],
     ["about", "关于"],
     ["docs", "文档"],

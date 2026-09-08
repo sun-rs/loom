@@ -374,7 +374,6 @@
 .rah-agent-profile-pane,
 .rah-agent-activity-pane,
 .rah-agent-chat-pane,
-.rah-agent-mcp-pane,
 .rah-agent-reminders-pane,
 .rah-agent-capability-pane {
   flex: 1;
@@ -501,8 +500,7 @@
 }
 
 .rah-agent-activity-pane,
-.rah-agent-chat-pane,
-.rah-agent-mcp-pane {
+.rah-agent-chat-pane {
   display: flex;
   flex-direction: column;
 }
@@ -671,8 +669,7 @@
   line-height: 14px;
 }
 
-.rah-agent-activity-pane > header,
-.rah-agent-mcp-pane > header {
+.rah-agent-activity-pane > header {
   align-items: center;
   border-bottom: 1px solid var(--ink-10);
   display: flex;
@@ -680,14 +677,12 @@
   padding: 8px 20px;
 }
 
-.rah-agent-activity-pane > header h3,
-.rah-agent-mcp-pane > header h3 {
+.rah-agent-activity-pane > header h3 {
   font-size: 12px;
   font-weight: 700;
 }
 
-.rah-agent-activity-pane > header p,
-.rah-agent-mcp-pane > header p {
+.rah-agent-activity-pane > header p {
   color: var(--ink-40);
   font: 10px/1.5 var(--mono);
 }
@@ -796,109 +791,6 @@
   padding: 12px 20px;
 }
 
-.rah-agent-mcp-servers {
-  display: grid;
-}
-
-.rah-agent-mcp-servers > details {
-  border-bottom: 1px solid var(--ink-10);
-}
-
-.rah-agent-mcp-servers summary {
-  align-items: center;
-  cursor: pointer;
-  display: grid;
-  gap: 10px;
-  grid-template-columns: 18px minmax(0, 1fr) auto;
-  list-style: none;
-  min-height: 58px;
-  padding: 9px 20px;
-}
-
-.rah-agent-mcp-servers summary::-webkit-details-marker {
-  display: none;
-}
-
-.rah-agent-mcp-servers summary > svg {
-  height: 16px;
-  width: 16px;
-}
-
-.rah-agent-mcp-servers summary > span {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.rah-agent-mcp-servers summary b {
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rah-agent-mcp-servers summary small,
-.rah-agent-mcp-tools small,
-.rah-agent-mcp-tools p,
-.rah-agent-mcp-tools i {
-  color: var(--ink-40);
-  font: 10px/1.45 var(--mono);
-}
-
-.rah-agent-mcp-servers summary strong {
-  border: 1px solid var(--ink);
-  font: 10px/1.4 var(--mono);
-  padding: 2px 6px;
-}
-
-.rah-agent-mcp-servers summary strong.is-enabled {
-  background: var(--green);
-}
-
-.rah-agent-mcp-servers summary strong.is-disabled {
-  background: var(--gray-chip);
-}
-
-.rah-agent-mcp-tools {
-  background: var(--ink-05);
-  border-top: 1px solid var(--ink-10);
-  display: grid;
-  padding: 4px 20px 8px 48px;
-}
-
-.rah-agent-mcp-tools article {
-  align-items: start;
-  display: grid;
-  gap: 8px;
-  grid-template-columns: 14px minmax(0, 1fr) auto;
-  padding: 7px 0;
-}
-
-.rah-agent-mcp-tools article > svg {
-  height: 13px;
-  margin-top: 1px;
-  width: 13px;
-}
-
-.rah-agent-mcp-tools article > span {
-  display: grid;
-  min-width: 0;
-}
-
-.rah-agent-mcp-tools code {
-  font: 11px/1.4 var(--mono);
-  overflow-wrap: anywhere;
-}
-
-.rah-agent-mcp-tools p {
-  margin-top: 2px;
-}
-
-.rah-agent-mcp-tools i {
-  font-style: normal;
-  white-space: nowrap;
-}
-
 /* Raft live runtime editor: max-w-md, card-brutal p-6, gap-4. */
 .rah-dialog.rah-runtime-edit-dialog {
   border: var(--bd);
@@ -956,8 +848,7 @@
   line-height: 18px;
   color: var(--ink-50);
 }
-.rah-agent-activity-pane > .btn,
-.rah-agent-mcp-pane > .btn {
+.rah-agent-activity-pane > .btn {
   margin: 14px 20px 0;
 }
 
@@ -1405,8 +1296,7 @@
     width: 96px;
   }
 
-  .rah-agent-activity-pane > header,
-  .rah-agent-mcp-pane > header {
+  .rah-agent-activity-pane > header {
     align-items: flex-start;
     padding: 10px 14px;
   }
@@ -1415,15 +1305,6 @@
     gap: 8px;
     grid-template-columns: 62px 8px minmax(0, 1fr);
     padding: 9px 14px;
-  }
-
-  .rah-agent-mcp-servers summary {
-    gap: 8px;
-    padding-inline: 14px;
-  }
-
-  .rah-agent-mcp-tools {
-    padding-inline: 38px 14px;
   }
 
   .rah-agent-chat-title {

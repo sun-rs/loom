@@ -261,8 +261,6 @@ export function TaskCreateDialog({
   const [titles, setTitles] = useState(() => [newTaskTitle()]);
   const [configurationOpen, setConfigurationOpen] = useState(false);
   const [assigneeId, setAssigneeId] = useState<string>();
-  const [collaboratorIds, setCollaboratorIds] = useState<string[]>([]);
-  const [reviewerIds, setReviewerIds] = useState<string[]>([]);
   const [dependencyTaskIds, setDependencyTaskIds] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
   const [submissionLocked, setSubmissionLocked] = useState(false);
@@ -284,8 +282,8 @@ export function TaskCreateDialog({
     taskParticipantsForSelection({
       availableAgents: agents,
       ...(assigneeId === undefined ? {} : { assigneeId }),
-      collaboratorIds,
-      reviewerIds,
+      collaboratorIds: [],
+      reviewerIds: [],
     });
   } catch (caught) {
     participantIssue = errorMessage(caught);
@@ -302,8 +300,8 @@ export function TaskCreateDialog({
       participants = taskParticipantsForSelection({
         availableAgents: agents,
         ...(assigneeId === undefined ? {} : { assigneeId }),
-        collaboratorIds,
-        reviewerIds,
+        collaboratorIds: [],
+        reviewerIds: [],
       });
     } catch (caught) {
       setActionError(errorMessage(caught));
@@ -394,7 +392,7 @@ export function TaskCreateDialog({
             <p className="rah-dialog-status" role="status">
               已确认 {String(acceptedClientIds.length)} /{" "}
               {String(nonempty.length)}；
-              标题与协作配置已冻结，只会重试尚未确认的任务。
+              标题与负责人配置已冻结，只会重试尚未确认的任务。
             </p>
           )}
           {configurationOpen ? (
@@ -402,26 +400,9 @@ export function TaskCreateDialog({
               <TaskParticipantFields
                 agents={agents}
                 assigneeId={assigneeId}
-                collaboratorIds={collaboratorIds}
                 disabled={submissionLocked}
                 initialFocus
-                onAssigneeChange={(participantId) => {
-                  setAssigneeId(participantId);
-                  if (participantId === undefined) {
-                    setCollaboratorIds([]);
-                    setReviewerIds([]);
-                    return;
-                  }
-                  setCollaboratorIds((current) =>
-                    current.filter((candidate) => candidate !== participantId),
-                  );
-                  setReviewerIds((current) =>
-                    current.filter((candidate) => candidate !== participantId),
-                  );
-                }}
-                onCollaboratorsChange={setCollaboratorIds}
-                onReviewersChange={setReviewerIds}
-                reviewerIds={reviewerIds}
+                onAssigneeChange={setAssigneeId}
                 taskTargetIssue={participantIssue}
               />
               <fieldset
@@ -535,7 +516,7 @@ export function TaskCreateDialog({
                 }}
                 type="button"
               >
-                配置协作与依赖
+                配置负责人与依赖
               </button>
             ) : null}
             <button

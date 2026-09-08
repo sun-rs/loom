@@ -16,6 +16,7 @@ import {
 } from "../computer-runtime-inspector-model.ts";
 import { floatingContextMenuPosition } from "../floating-context-menu-model.ts";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
+import { runtimeProductLabel } from "../agent-runtime-presentation.ts";
 
 export function ComputerRuntimeInspector({
   children,
@@ -181,7 +182,7 @@ export function ComputerRuntimeInspector({
       <button
         aria-expanded={open}
         aria-haspopup="dialog"
-        aria-label={`${runtime.displayName} Runtime 详情`}
+        aria-label={`${runtimeProductLabel(runtime)} Runtime 详情`}
         className={className}
         onBlur={scheduleClose}
         onClick={() => {

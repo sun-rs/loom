@@ -64,3 +64,7 @@
   下限、8px 手柄、62px 标题栏、真实指针双向拖拽、provisional 关注/取消关注、操作菜单内容、
   Agent 关注者多项独立移除/撤销/5 秒过期与 Escape 关闭。人工验收另在 1280×720 比对 Raft；移动/窄屏
   继续作为右侧浮层，隐藏桌面拖拽手柄。
+
+## 打开中的消息列持续同步
+
+Thread 明细读取必须跟随已提交的 Room 同步结果，不能只依赖会被 runtime/catalog 刷新取消的 reload 定时器。继续复用 MessageSession 的增量与历史窗口；切换目标后，异步引用状态不得写回旧 Thread 的结果。对应 [实时更新修复与双边证据](../audits/2026-09-08-thread-live-repair.zh-CN.md)。

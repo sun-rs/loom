@@ -1,3 +1,10 @@
+import type { WorkerProfileMetadataPort } from "@rah-os/kernel";
+import {
+  DAEMON_BUILD_VERSION,
+  DAEMON_PROTOCOL_VERSION,
+} from "./daemon-health.ts";
+import { GitTaskDeliveryEvidenceCollector } from "./git-task-delivery-evidence.ts";
+import { createDaemonAgentSkillsReader } from "./daemon-agent-skills.ts";
 import { createHash } from "node:crypto";
 import { lstat, mkdir } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
@@ -17,6 +24,7 @@ import {
   type AgentMemoryAdministrationPort,
   type ComputerProfileAdministrationPort,
   HumanHttpApplicationService,
+  WorkerApplicationService,
   type TaskReassignmentAdministrationPort,
   type WebPushAdministrationPort,
 } from "@rah-os/application-service";
@@ -49,7 +57,7 @@ import {
   buildLocalRuntimeInventoryResponse,
   type ConfiguredLocalRuntimeSnapshot,
 } from "./local-runtime-inventory.ts";
-import type { NodeManagedMcpExecutorRegistry } from "./managed-mcp-executor-registry.ts";
+
 import { ProfileImageStore } from "./profile-image-store.ts";
 import {
   LocalComputerProfileStore,
@@ -89,6 +97,34 @@ export function createDaemonAgentMemoryCoordinator(input: {
     // Typed App Inbox state is not a Room Message. The next canonical
     // Activation receives it until a dedicated maintenance lane exists.
     wake: () => false,
+  });
+}
+
+export function createDaemonWorkerService(input: {
+  profileMetadata?: WorkerProfileMetadataPort;
+  config: DaemonConfig;
+  kernel: RoomKernel;
+}): WorkerApplicationService {
+  return new WorkerApplicationService({
+    ...(input.profileMetadata
+      ? { profileMetadata: input.profileMetadata }
+      : {}),
+    serviceInfo: () => ({
+      buildVersion: DAEMON_BUILD_VERSION,
+      protocolVersion: DAEMON_PROTOCOL_VERSION,
+    }),
+    profileImageStore: openDaemonProfileImageStore(input.kernel),
+    deliveryEvidenceCollector: new GitTaskDeliveryEvidenceCollector(),
+    kernel: input.kernel,
+    ...(input.config.taskClaimHeartbeatIntervalMs === undefined
+      ? {}
+      : {
+          taskClaimHeartbeatIntervalMs:
+            input.config.taskClaimHeartbeatIntervalMs,
+        }),
+    ...(input.config.taskClaimLeaseMs === undefined
+      ? {}
+      : { taskClaimLeaseMs: input.config.taskClaimLeaseMs }),
   });
 }
 
@@ -398,10 +434,12 @@ function manageAgentStateAtLatest(
 export function createDaemonAgentMemoryAdministration(
   coordinator: AgentMemoryCoordinator,
   computerHostId: string,
+  skills?: NonNullable<AgentMemoryAdministrationPort["workspace"]>["skills"],
 ): AgentMemoryAdministrationPort {
   return Object.freeze({
     computerHostId,
     workspace: {
+      ...(skills ? { skills } : {}),
       summary: (owner) => coordinator.summarizeWorkspace(owner),
       roots: (owner) => coordinator.workspaceRoots(owner),
       list: (owner, rootId, path, hidden) =>
@@ -446,6 +484,7 @@ export function createDaemonComputerProfileAdministration(
 }
 
 export function createDaemonHumanClientService(input: {
+  computerProfiles?: LocalComputerProfileStore;
   agentExecutionResetCoordinator: AgentExecutionResetCoordinator;
   agentMemoryCoordinator: AgentMemoryCoordinator;
   buildVersion: string;
@@ -456,16 +495,18 @@ export function createDaemonHumanClientService(input: {
   host: AuthenticatedHostContext;
   human: HumanApplicationPort;
   kernel: RoomKernel;
-  managedMcpAdministration: NodeManagedMcpExecutorRegistry;
+
   protocolVersion: number;
   webPushAdministration: WebPushAdministrationPort;
 }): HumanHttpApplicationService {
   const profileImages = new ProfileImageStore({
     directory: join(input.config.stateDirectory, "profile-images"),
   });
-  const computerProfiles = new LocalComputerProfileStore({
-    path: join(input.config.stateDirectory, "computer-profiles.json"),
-  });
+  const computerProfiles =
+    input.computerProfiles ??
+    new LocalComputerProfileStore({
+      path: join(input.config.stateDirectory, "computer-profiles.json"),
+    });
   return new HumanHttpApplicationService({
     agentExecutionAdministration: createDaemonAgentExecutionAdministration({
       coordinator: input.agentExecutionResetCoordinator,
@@ -474,6 +515,10 @@ export function createDaemonHumanClientService(input: {
     agentMemoryAdministration: createDaemonAgentMemoryAdministration(
       input.agentMemoryCoordinator,
       input.host.hostId,
+      createDaemonAgentSkillsReader({
+        coordinator: input.agentMemoryCoordinator,
+        configured: input.configuredLocalRuntimes,
+      }),
     ),
     taskReassignmentAdministration: createDaemonTaskReassignmentAdministration({
       human: input.human,
@@ -501,8 +546,7 @@ export function createDaemonHumanClientService(input: {
         hints: false,
         inputRequestRead: true,
         inputRequestResolve: true,
-        managedMcpRead: true,
-        managedMcpWrite: true,
+
         memberRead: true,
         memberWrite: true,
         messageRead: true,
@@ -538,7 +582,7 @@ export function createDaemonHumanClientService(input: {
         staleAfterMs: input.config.hostStaleAfterMs,
       });
     },
-    managedMcpAdministration: input.managedMcpAdministration,
+
     port: input.config.client.port,
     profileImages: {
       upload: (_actor, mimeType, chunks) =>

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-09-08T01:18:05.438967+00:00",
+  "sourceKind": "official-public-browser-download",
+  "captureMethod": "Firefox 155 native View Source / Save Link As / Save Page As; no credentials exported",
+  "release": {
+    "releaseId": "f1a9a6b83add3db8f44320c753d2f8d8b03b8f06",
+    "commitSha": "f1a9a6b83add3db8f44320c753d2f8d8b03b8f06",
+    "builtAt": "2026-09-04T11:56:32Z",
+    "branch": "release/v1.12.0",
+    "deploymentEnvironment": "production"
+  },
+  "usage": "Analysis-only authorized upstream evidence; not production dependencies or generator inputs. Does not replace earlier evidence provenance.",
+  "files": [
+    {
+      "path": "raft-current-20260908.html",
+      "bytes": 2235,
+      "sha256": "4b8a1f774116d2adb91d8c5458e2011f21f23ea3e54d6eabf7773aae619105c0",
+      "url": "https://app.raft.build/s/hakasemac/agent/926ee3ce-8489-4996-8d70-072cc182be75"
+    },
+    {
+      "path": "index-BVfbaScj.js",
+      "bytes": 3595372,
+      "sha256": "65dda3865ac7263afb44308e22bcdc20034e84f886f78767f7198a65c5691dde",
+      "url": "https://app.raft.build/assets/index-BVfbaScj.js"
+    },
+    {
+      "path": "index-D8Neh8lc.css",
+      "bytes": 663272,
+      "sha256": "11f78ea36cb9e35639a08232b61a4523355c5242717b4abe48ec5ff0fc230f25",
+      "url": "https://app.raft.build/assets/index-D8Neh8lc.css"
+    },
+    {
+      "path": "AgentDetailPanel-DSYPOiPi.js",
+      "bytes": 148143,
+      "sha256": "f65d89ca2784a6383173747778edbb263adcd514cf6ae0bc53e47e32bd0ac430",
+      "url": "https://app.raft.build/assets/AgentDetailPanel-DSYPOiPi.js"
+    }
+  ]
+}

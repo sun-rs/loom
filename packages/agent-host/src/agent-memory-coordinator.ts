@@ -239,7 +239,13 @@ export class AgentMemoryCoordinator {
 
   async workspaceRoots(owner: string): Promise<AgentWorkspaceRoots> {
     const participantId = requireParticipantId(owner);
-    const memoryRoot = await realpath(this.#rootDirectory);
+    const memoryRoot = await realpath(this.#rootDirectory).catch(
+      (error: NodeJS.ErrnoException) => {
+        if (error.code !== "ENOENT") throw error;
+        // Read-only discovery must also work before the first activation creates memory.
+        return resolve(this.#rootDirectory);
+      },
+    );
     const agentRoot = agentMemoryWorkspacePath(memoryRoot, participantId);
     const roots: AgentWorkspaceRoot[] = [
       {

@@ -8,6 +8,8 @@ import * as P from "@rah-os/protocol";
 import type { ZodType } from "zod";
 
 export const FILE_DATA_PATHS = [
+  "/files/comments/list",
+  "/files/comments/post",
   "/files/prepare",
   "/files/cancel",
   "/files/list",
@@ -19,6 +21,16 @@ export function routeFiles(
   body: Record<string, unknown>,
   parse: <T>(schema: ZodType<T>, body: Record<string, unknown>) => T,
 ) {
+  if (path === "/files/comments/list")
+    return human.listAttachmentComments(
+      actor,
+      parse(P.AttachmentCommentsRequestSchema, body),
+    );
+  if (path === "/files/comments/post")
+    return human.postAttachmentComment(
+      actor,
+      parse(P.AttachmentCommentPostRequestSchema, body),
+    );
   if (path === "/files/prepare")
     return human.prepareFile(actor, parse(P.FilePrepareRequestSchema, body));
   if (path === "/files/cancel")

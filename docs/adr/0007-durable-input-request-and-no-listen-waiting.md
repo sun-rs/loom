@@ -19,7 +19,7 @@ Agent 提问后继续运行 MCP `room_wait`、短轮询或 Provider session，�
      -> Task claimed -> in_progress -> submitted
    ```
 
-   `InputRequest` 固定记录 Room、Task、requester、designated responder、question、answer、resolution identity 与时间。pending projection 不允许携带伪 resolution evidence；resolved projection 必须拥有完整 evidence。当前最小策略把 human Task creator 固定为 responder，Worker 不能注入 responder、actor 或 Room；若 Task creator 不是 human，command 在写入任何状态前 fail closed，避免制造永远无人处理的 Inbox。
+   `InputRequest` 固定记录 Room、Task、requester、designated responder、question、answer、resolution identity 与时间。pending projection 不允许携带伪 resolution evidence；resolved projection 必须拥有完整 evidence。当前单 Human 策略优先采用仍在 Room 内的 Human Task creator；若 creator 为 Agent 或已不在 Room，只有当前 Room 恰好一个 Human 时才能选为 responder，零个或多个候选在任何写入前 fail closed。Worker 不能注入 responder、actor 或 Room。幂等回执先复用原冻结 responder，不因后续成员变化重新选人。
 
 2. Worker 的 `tasks/request-input` 是严格 causal command，只允许持有有效 `in_progress` claim 的 Task assignee 调用。在一个 transaction 内，Kernel 创建 pending InputRequest、把 Task 置为 `waiting_input` 并清除 claim、追加唯一 `input.requested` Room event，再给 responder 创建 InboxItem。人类不会因此得到 Agent Activation；Worker service 看到 `waiting_input` 后停止该 Task 的 sidecar heartbeat。
 

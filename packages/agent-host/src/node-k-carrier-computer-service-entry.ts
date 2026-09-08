@@ -44,7 +44,6 @@ import {
 } from "./runtime-implementation-registry.ts";
 import { RuntimeProfileRegistry } from "./runtime-profile-registry.ts";
 import { RemoteRuntimeProfileSet } from "./remote-runtime-profile-composition.ts";
-import { ManagedMcpRuntimeProxyRegistry } from "./managed-mcp-runtime-proxy.ts";
 
 export const NODE_K_CARRIER_COMPUTER_SERVICE_CONFIGURATION_SCHEMA_VERSION = 1;
 const MAX_CONFIGURATION_BYTES = 256 * 1_024;
@@ -347,7 +346,6 @@ export async function runNodeKCarrierComputerServiceFromConfiguration(input: {
   const secretProvider =
     runtime.secretProvider ?? new SystemComputerSecretProvider();
   const registries = new Map<string, RuntimeProfileRegistry>();
-  const managedMcpProxyRegistry = new ManagedMcpRuntimeProxyRegistry();
   let runtimeProfiles: RemoteRuntimeProfileSet | undefined;
   const shutdownLease =
     runtime.supervisorShutdownSignal === undefined
@@ -420,7 +418,6 @@ export async function runNodeKCarrierComputerServiceFromConfiguration(input: {
     }
     runtimeProfiles = new RemoteRuntimeProfileSet({
       implementations,
-      managedMcpProxyRegistry,
       profiles: profileEntries,
       supervisorDirectory: configuration.supervisorDirectory,
     });
@@ -495,7 +492,6 @@ export async function runNodeKCarrierComputerServiceFromConfiguration(input: {
   } finally {
     shutdownLease.close();
     await runtimeProfiles?.close();
-    await managedMcpProxyRegistry.close();
     for (const registry of registries.values()) registry.close();
   }
 }

@@ -18,3 +18,6 @@ export const RoomEventSchema = z
   })
   .strict();
 export type RoomEvent = z.infer<typeof RoomEventSchema>;
+
+/** Complete ordered Room event pages, including the actual snapshot/envelope. */
+export const ROOM_SYNC_RESPONSE_MAX_BYTES = 2 * 1024 * 1024;

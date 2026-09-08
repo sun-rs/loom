@@ -61,7 +61,12 @@ try {
       `Trust ${running.descriptor.tlsIdentity.caCertificatePath} on each device before opening RAH OS; never copy the local CA private key.\n`,
     );
   }
-  await waitForShutdownSignal();
+  await Promise.race([
+    waitForShutdownSignal(),
+    running.failed.then((error) => {
+      throw error;
+    }),
+  ]);
 } finally {
   await running?.stop();
   await releaseLease.release();

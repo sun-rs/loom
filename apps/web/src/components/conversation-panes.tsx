@@ -223,10 +223,6 @@ export function ChatPane({
     setAsTask,
     taskAssigneeId,
     setTaskAssigneeId,
-    taskCollaboratorIds,
-    setTaskCollaboratorIds,
-    taskReviewerIds,
-    setTaskReviewerIds,
     acceptDraft,
   } = useComposerDraft(roomId ? `room:${roomId}` : undefined);
   const composerRef = useRef<HTMLTextAreaElement>(null);
@@ -412,8 +408,8 @@ export function ChatPane({
       taskParticipants = taskParticipantsForSelection({
         availableAgents: agents,
         ...(taskAssigneeId === undefined ? {} : { assigneeId: taskAssigneeId }),
-        collaboratorIds: taskCollaboratorIds,
-        reviewerIds: taskReviewerIds,
+        collaboratorIds: [],
+        reviewerIds: [],
       });
     } catch (caught) {
       taskTargetIssue = errorMessage(caught);
@@ -706,22 +702,8 @@ export function ChatPane({
             <TaskParticipantFields
               agents={agents}
               assigneeId={taskAssigneeId}
-              collaboratorIds={taskCollaboratorIds}
-              onAssigneeChange={(participantId) => {
-                setTaskAssigneeId(participantId);
-                if (participantId !== undefined) {
-                  setTaskCollaboratorIds((current) =>
-                    current.filter((candidate) => candidate !== participantId),
-                  );
-                  setTaskReviewerIds((current) =>
-                    current.filter((candidate) => candidate !== participantId),
-                  );
-                }
-              }}
-              onCollaboratorsChange={setTaskCollaboratorIds}
+              onAssigneeChange={setTaskAssigneeId}
               onManageAgents={onManageAgents}
-              onReviewersChange={setTaskReviewerIds}
-              reviewerIds={taskReviewerIds}
               taskTargetIssue={taskTargetIssue}
             />
           ) : null}
@@ -1269,6 +1251,8 @@ export function MessageArticle({
 }
 
 export function ThreadPane({
+  hideHeader = false,
+  parentSlot,
   client,
   canManageAnyTask,
   currentPrincipal,
@@ -1315,6 +1299,8 @@ export function ThreadPane({
   taskAgent,
   threadId,
 }: {
+  hideHeader?: boolean;
+  parentSlot?: ReactNode;
   client: RahClient;
   canManageAnyTask: boolean;
   currentPrincipal?: Principal | undefined;
@@ -1826,191 +1812,193 @@ export function ThreadPane({
       ref={threadPanelRef}
     >
       {resizer}
-      <PanelHeader kind="thread" className="rah-thread-head">
-        <button
-          className="rah-thread-title"
-          data-testid="thread-scroll-to-top"
-          onClick={() => messagesElement.current?.scrollTo({ top: 0 })}
-          type="button"
-        >
-          <b>消息列</b>
-          <span className="thread-sub">
-            — {roomKind === "direct" ? "@" : "#"}
-            {roomName ?? "room"}
-          </span>
-        </button>
-        <div className="rah-thread-head-actions">
-          {followers.length > 0 || followersLoading || followersError ? (
-            <div className="rah-thread-menu-owner" ref={followersOwnerRef}>
-              <button
-                aria-label={`正在关注的 Agent：${followers.length}`}
-                aria-expanded={followersOpen}
-                className="rah-thread-followers-trigger"
-                data-testid="thread-followers-header-trigger"
-                onClick={() => {
-                  setFollowersOpen((open) => !open);
-                  setOverflowOpen(false);
-                }}
-                title="正在关注的 Agent"
-                type="button"
-                ref={followersTriggerRef}
-              >
-                {followersError ? (
-                  <Icon name="circle-question-mark" />
-                ) : (
-                  <>
-                    {followers.slice(0, 3).map((agent) => (
-                      <AgentAvatar
-                        agent={agent}
-                        key={agent.participantId}
-                        showStatus={false}
-                        size="compact"
-                      />
-                    ))}
-                    <span>{followersLoading ? "…" : followers.length}</span>
-                  </>
-                )}
-              </button>
-              {followersOpen ? (
-                <div
-                  aria-label="正在关注的 Agent"
-                  className="rah-thread-followers-popover"
-                  onKeyDown={(event) =>
-                    closeThreadLayerOnEscape(event, "followers")
-                  }
-                  ref={followersDialogRef}
-                  role="dialog"
-                  tabIndex={-1}
+      {hideHeader ? null : (
+        <PanelHeader kind="thread" className="rah-thread-head">
+          <button
+            className="rah-thread-title"
+            data-testid="thread-scroll-to-top"
+            onClick={() => messagesElement.current?.scrollTo({ top: 0 })}
+            type="button"
+          >
+            <b>消息列</b>
+            <span className="thread-sub">
+              — {roomKind === "direct" ? "@" : "#"}
+              {roomName ?? "room"}
+            </span>
+          </button>
+          <div className="rah-thread-head-actions">
+            {followers.length > 0 || followersLoading || followersError ? (
+              <div className="rah-thread-menu-owner" ref={followersOwnerRef}>
+                <button
+                  aria-label={`正在关注的 Agent：${followers.length}`}
+                  aria-expanded={followersOpen}
+                  className="rah-thread-followers-trigger"
+                  data-testid="thread-followers-header-trigger"
+                  onClick={() => {
+                    setFollowersOpen((open) => !open);
+                    setOverflowOpen(false);
+                  }}
+                  title="正在关注的 Agent"
+                  type="button"
+                  ref={followersTriggerRef}
                 >
-                  <strong>正在关注的 Agent</strong>
-                  {followersError || followerActionError ? (
-                    <>
-                      <p role="alert">
-                        {followersError ?? followerActionError}
-                      </p>
-                      {followersError && onRefreshFollowers ? (
-                        <button
-                          className="rah-thread-followers-retry"
-                          onClick={onRefreshFollowers}
-                          type="button"
-                        >
-                          重试
-                        </button>
-                      ) : null}
-                    </>
-                  ) : followers.length === 0 ? (
-                    <p>暂无 Agent 正在关注。</p>
+                  {followersError ? (
+                    <Icon name="circle-question-mark" />
                   ) : (
-                    followers.map((agent) => (
-                      <div
-                        className="rah-thread-follower-row"
-                        key={agent.participantId}
-                      >
+                    <>
+                      {followers.slice(0, 3).map((agent) => (
                         <AgentAvatar
                           agent={agent}
+                          key={agent.participantId}
                           showStatus={false}
-                          size="member"
+                          size="compact"
                         />
-                        <span className="rah-thread-follower-copy">
-                          <b>{agent.displayName}</b>
-                          <small>
-                            {agent.runtimeLabels[0] ?? agent.handle}
-                          </small>
-                        </span>
-                        {followersCanManage && onRemoveFollower ? (
+                      ))}
+                      <span>{followersLoading ? "…" : followers.length}</span>
+                    </>
+                  )}
+                </button>
+                {followersOpen ? (
+                  <div
+                    aria-label="正在关注的 Agent"
+                    className="rah-thread-followers-popover"
+                    onKeyDown={(event) =>
+                      closeThreadLayerOnEscape(event, "followers")
+                    }
+                    ref={followersDialogRef}
+                    role="dialog"
+                    tabIndex={-1}
+                  >
+                    <strong>正在关注的 Agent</strong>
+                    {followersError || followerActionError ? (
+                      <>
+                        <p role="alert">
+                          {followersError ?? followerActionError}
+                        </p>
+                        {followersError && onRefreshFollowers ? (
                           <button
-                            aria-label={`移除 ${agent.displayName}`}
-                            disabled={followerPendingIds.has(
-                              agent.participantId,
-                            )}
-                            onClick={() => void removeFollower(agent)}
+                            className="rah-thread-followers-retry"
+                            onClick={onRefreshFollowers}
                             type="button"
                           >
-                            ×
+                            重试
                           </button>
                         ) : null}
-                      </div>
-                    ))
-                  )}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-          <div className="rah-thread-menu-owner" ref={overflowOwnerRef}>
-            <PanelHeaderAction
-              aria-expanded={overflowOpen}
-              aria-label="消息列操作"
-              className="rah-thread-overflow"
-              data-testid="thread-overflow-trigger"
-              onClick={() => {
-                setOverflowOpen((open) => !open);
-                setFollowersOpen(false);
-              }}
-              type="button"
-              ref={overflowTriggerRef}
-            >
-              <span aria-hidden="true">⋮</span>
-            </PanelHeaderAction>
-            {overflowOpen ? (
-              <div
-                className="rah-thread-overflow-menu"
-                onKeyDown={(event) =>
-                  closeThreadLayerOnEscape(event, "overflow")
-                }
-                role="menu"
+                      </>
+                    ) : followers.length === 0 ? (
+                      <p>暂无 Agent 正在关注。</p>
+                    ) : (
+                      followers.map((agent) => (
+                        <div
+                          className="rah-thread-follower-row"
+                          key={agent.participantId}
+                        >
+                          <AgentAvatar
+                            agent={agent}
+                            showStatus={false}
+                            size="member"
+                          />
+                          <span className="rah-thread-follower-copy">
+                            <b>{agent.displayName}</b>
+                            <small>
+                              {agent.runtimeLabels[0] ?? agent.handle}
+                            </small>
+                          </span>
+                          {followersCanManage && onRemoveFollower ? (
+                            <button
+                              aria-label={`移除 ${agent.displayName}`}
+                              disabled={followerPendingIds.has(
+                                agent.participantId,
+                              )}
+                              onClick={() => void removeFollower(agent)}
+                              type="button"
+                            >
+                              ×
+                            </button>
+                          ) : null}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+            <div className="rah-thread-menu-owner" ref={overflowOwnerRef}>
+              <PanelHeaderAction
+                aria-expanded={overflowOpen}
+                aria-label="消息列操作"
+                className="rah-thread-overflow"
+                data-testid="thread-overflow-trigger"
+                onClick={() => {
+                  setOverflowOpen((open) => !open);
+                  setFollowersOpen(false);
+                }}
+                type="button"
+                ref={overflowTriggerRef}
               >
-                <button
-                  autoFocus
-                  onClick={() => {
-                    setSearchOpen(true);
-                    setOverflowOpen(false);
-                  }}
-                  role="menuitem"
-                  type="button"
+                <span aria-hidden="true">⋮</span>
+              </PanelHeaderAction>
+              {overflowOpen ? (
+                <div
+                  className="rah-thread-overflow-menu"
+                  onKeyDown={(event) =>
+                    closeThreadLayerOnEscape(event, "overflow")
+                  }
+                  role="menu"
                 >
-                  <Icon name="search" /> 在消息列中搜索
-                </button>
-                <button
-                  disabled={onViewInChannel === undefined}
-                  onClick={() => {
-                    onViewInChannel?.();
-                    setOverflowOpen(false);
-                  }}
-                  role="menuitem"
-                  type="button"
-                >
-                  <Icon name="pin" /> 在频道中查看
-                </button>
-                {onFollow ? (
                   <button
-                    disabled={pending}
+                    autoFocus
                     onClick={() => {
-                      void follow(!displayedFollowing);
+                      setSearchOpen(true);
                       setOverflowOpen(false);
                     }}
                     role="menuitem"
                     type="button"
                   >
-                    <Icon name="bell" />
-                    {displayedFollowing ? "取消关注消息列" : "关注消息列"}
+                    <Icon name="search" /> 在消息列中搜索
                   </button>
-                ) : null}
-              </div>
-            ) : null}
+                  <button
+                    disabled={onViewInChannel === undefined}
+                    onClick={() => {
+                      onViewInChannel?.();
+                      setOverflowOpen(false);
+                    }}
+                    role="menuitem"
+                    type="button"
+                  >
+                    <Icon name="pin" /> 在频道中查看
+                  </button>
+                  {onFollow ? (
+                    <button
+                      disabled={pending}
+                      onClick={() => {
+                        void follow(!displayedFollowing);
+                        setOverflowOpen(false);
+                      }}
+                      role="menuitem"
+                      type="button"
+                    >
+                      <Icon name="bell" />
+                      {displayedFollowing ? "取消关注消息列" : "关注消息列"}
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+            <PanelHeaderAction
+              aria-label="关闭消息列"
+              className="rah-thread-close"
+              onClick={onClose}
+              title="关闭消息列"
+              type="button"
+            >
+              <span className="rah-close-glyph" aria-hidden="true">
+                ×
+              </span>
+            </PanelHeaderAction>
           </div>
-          <PanelHeaderAction
-            aria-label="关闭消息列"
-            className="rah-thread-close"
-            onClick={onClose}
-            title="关闭消息列"
-            type="button"
-          >
-            <span className="rah-close-glyph" aria-hidden="true">
-              ×
-            </span>
-          </PanelHeaderAction>
-        </div>
-      </PanelHeader>
+        </PanelHeader>
+      )}
       {searchOpen ? (
         <div className="rah-thread-search">
           <Icon name="search" />
@@ -2087,97 +2075,106 @@ export function ThreadPane({
           )}
         </div>
       ) : null}
-      <section className="messages rah-scroll-main" ref={messagesElement}>
-        {root === undefined ? (
-          <p className="rah-empty-copy">原消息尚未载入。</p>
-        ) : (
-          <div className="rah-thread-parent" data-testid="thread-panel-parent">
-            <MessageArticle
-              client={client}
-              canManageTask={
-                task !== undefined &&
-                (canManageAnyTask ||
-                  task.creatorId === currentPrincipal?.principalId)
-              }
-              collapseLongMessages={collapseLongMessages}
-              contextRoomId={roomId}
-              contextThreadId={threadId}
-              highlightQuery={searchOpen ? searchQuery : undefined}
-              message={root}
-              mentionReadStates={mentionReadStatesByMessage.get(root.messageId)}
-              navigationTarget={messageNavigationTarget(
-                root,
-                roomId,
-                threadId,
-                root.messageId,
-              )}
-              {...(roomId === undefined
-                ? {}
-                : {
-                    selection: {
-                      active: messageSelection.active,
-                      onEnter: () =>
-                        messageSelection.selection.enterThread(
-                          roomId,
-                          root.messageId,
-                          [root.messageId],
-                        ),
-                      onToggle: () =>
-                        messageSelection.selection.toggleWithThread(
-                          root.messageId,
-                          replies.map(({ messageId }) => messageId),
-                        ),
-                      selected:
-                        messageSelection.active &&
-                        messageSelection.selection.selectedIds.includes(
-                          root.messageId,
-                        ),
-                    },
-                  })}
-              messageAgent={messageAgents.find(
-                (agent) => agent.participantId === root.actorId,
-              )}
-              onMention={mention}
-              onOpenTarget={onOpenTarget}
-              referenceAgents={messageAgents}
-              referenceComputers={referenceComputers}
-              referenceCurrentPrincipal={currentPrincipal}
-              referencePrincipals={roomMembers}
-              referenceRooms={referenceRooms}
-              referenceTasks={referenceTasks}
-              referenceThreads={
-                roomId === undefined ||
-                roomKind === undefined ||
-                root === undefined ||
-                threadId === undefined
-                  ? []
-                  : [
-                      {
-                        roomId,
-                        roomKind,
-                        roomName:
-                          referenceRooms.find(
-                            (candidate) => candidate.roomId === roomId,
-                          )?.names[0] ??
-                          roomName ??
-                          roomId,
-                        rootMessageId: root.messageId,
-                        threadId,
+      <section
+        className={`messages rah-scroll-main${parentSlot === undefined ? "" : " rah-thread-task-body"}`}
+        ref={messagesElement}
+      >
+        {parentSlot ??
+          (root === undefined ? (
+            <p className="rah-empty-copy">原消息尚未载入。</p>
+          ) : (
+            <div
+              className="rah-thread-parent"
+              data-testid="thread-panel-parent"
+            >
+              <MessageArticle
+                client={client}
+                canManageTask={
+                  task !== undefined &&
+                  (canManageAnyTask ||
+                    task.creatorId === currentPrincipal?.principalId)
+                }
+                collapseLongMessages={collapseLongMessages}
+                contextRoomId={roomId}
+                contextThreadId={threadId}
+                highlightQuery={searchOpen ? searchQuery : undefined}
+                message={root}
+                mentionReadStates={mentionReadStatesByMessage.get(
+                  root.messageId,
+                )}
+                navigationTarget={messageNavigationTarget(
+                  root,
+                  roomId,
+                  threadId,
+                  root.messageId,
+                )}
+                {...(roomId === undefined
+                  ? {}
+                  : {
+                      selection: {
+                        active: messageSelection.active,
+                        onEnter: () =>
+                          messageSelection.selection.enterThread(
+                            roomId,
+                            root.messageId,
+                            [root.messageId],
+                          ),
+                        onToggle: () =>
+                          messageSelection.selection.toggleWithThread(
+                            root.messageId,
+                            replies.map(({ messageId }) => messageId),
+                          ),
+                        selected:
+                          messageSelection.active &&
+                          messageSelection.selection.selectedIds.includes(
+                            root.messageId,
+                          ),
                       },
-                    ]
-              }
-              focused={
-                root.messageId === focusedMessageId ||
-                root.messageId === activeSearchMessageId
-              }
-              {...(task === undefined ? {} : { task })}
-              {...(task === undefined
-                ? {}
-                : { taskWorkflowAction: () => onTaskWorkflow(task) })}
-              {...(taskAgent === undefined ? {} : { taskAgent })}
-            />
-          </div>
-        )}
+                    })}
+                messageAgent={messageAgents.find(
+                  (agent) => agent.participantId === root.actorId,
+                )}
+                onMention={mention}
+                onOpenTarget={onOpenTarget}
+                referenceAgents={messageAgents}
+                referenceComputers={referenceComputers}
+                referenceCurrentPrincipal={currentPrincipal}
+                referencePrincipals={roomMembers}
+                referenceRooms={referenceRooms}
+                referenceTasks={referenceTasks}
+                referenceThreads={
+                  roomId === undefined ||
+                  roomKind === undefined ||
+                  root === undefined ||
+                  threadId === undefined
+                    ? []
+                    : [
+                        {
+                          roomId,
+                          roomKind,
+                          roomName:
+                            referenceRooms.find(
+                              (candidate) => candidate.roomId === roomId,
+                            )?.names[0] ??
+                            roomName ??
+                            roomId,
+                          rootMessageId: root.messageId,
+                          threadId,
+                        },
+                      ]
+                }
+                focused={
+                  root.messageId === focusedMessageId ||
+                  root.messageId === activeSearchMessageId
+                }
+                {...(task === undefined ? {} : { task })}
+                {...(task === undefined
+                  ? {}
+                  : { taskWorkflowAction: () => onTaskWorkflow(task) })}
+                {...(taskAgent === undefined ? {} : { taskAgent })}
+              />
+            </div>
+          ))}
         {hasEarlierReplies ? (
           <button
             className="rah-message-history-trigger rah-thread-load-earlier"

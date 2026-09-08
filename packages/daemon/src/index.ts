@@ -4,7 +4,6 @@ export {
   DaemonConfigV3Schema,
   DaemonConfigV4Schema,
   HostCredentialReferenceSchema,
-  ManagedMcpExecutorConfigSchema,
 } from "./config.ts";
 export type {
   DaemonConfig,
@@ -12,7 +11,6 @@ export type {
   DaemonConfigV3,
   DaemonConfigV4,
   HostCredentialReference,
-  ManagedMcpExecutorConfig,
 } from "./config.ts";
 export {
   DAEMON_BUILD_VERSION,
@@ -41,8 +39,7 @@ export {
 export type { ContentFreeWakePublisher } from "./outbox-wake-dispatcher.ts";
 export { FileSecretProvider } from "./secret-provider.ts";
 export type { SecretProvider } from "./secret-provider.ts";
-export { NodeManagedMcpExecutorRegistry } from "./managed-mcp-executor-registry.ts";
-export type { ManagedMcpExecutorConnection } from "./managed-mcp-executor-registry.ts";
+
 export {
   buildLocalRuntimeInventoryResponse,
   configuredRuntimeSnapshot,

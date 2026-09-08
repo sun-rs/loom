@@ -2,3 +2,5 @@ packages/raft-ui-snapshot/reference/** -whitespace
 # Byte-exact upstream archives: preserve their recorded hashes, including whitespace.
 docs/evidence/raft-web-20260831-current/** -whitespace
 packages/k-carrier/src/** -whitespace
+
+docs/evidence/raft-web-20260908-current/** -whitespace

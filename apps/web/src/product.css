@@ -2057,7 +2057,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   display: none;
 }
 
-.rah-mcp-empty-state {
+.rah-device-empty-state {
   align-items: center;
   border: var(--bd);
   display: flex;
@@ -2069,35 +2069,35 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   text-align: center;
 }
 
-.rah-mcp-empty-state svg {
+.rah-device-empty-state svg {
   color: var(--ink-40);
   height: 34px;
   width: 34px;
 }
 
-.rah-mcp-empty-state strong {
+.rah-device-empty-state strong {
   font-size: 15px;
   font-weight: 800;
 }
 
-.rah-mcp-empty-state span {
+.rah-device-empty-state span {
   color: var(--ink-40);
   font: 11px/1.5 var(--mono);
   max-width: 560px;
 }
 
-.rah-mcp-server-list {
+.rah-device-server-list {
   display: grid;
   gap: 14px;
 }
 
-.rah-mcp-server-card {
+.rah-device-server-card {
   background: var(--bg);
   border: var(--bd-heavy);
   box-shadow: var(--shadow-m);
 }
 
-.rah-mcp-server-card > header {
+.rah-device-server-card > header {
   align-items: center;
   border-bottom: var(--bd);
   display: flex;
@@ -2106,7 +2106,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   padding: 10px 12px;
 }
 
-.rah-mcp-server-icon {
+.rah-device-server-icon {
   align-items: center;
   background: var(--yellow);
   border: var(--bd);
@@ -2116,23 +2116,23 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   width: 34px;
 }
 
-.rah-mcp-server-icon svg {
+.rah-device-server-icon svg {
   height: 18px;
   width: 18px;
 }
 
-.rah-mcp-server-card > header > div {
+.rah-device-server-card > header > div {
   display: grid;
   flex: 1;
   min-width: 0;
 }
 
-.rah-mcp-server-card h2 {
+.rah-device-server-card h2 {
   font-size: 14px;
   font-weight: 800;
 }
 
-.rah-mcp-server-card > header p {
+.rah-device-server-card > header p {
   color: var(--ink-40);
   font: 10px/1.4 var(--mono);
   overflow: hidden;
@@ -2140,124 +2140,82 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   white-space: nowrap;
 }
 
-.rah-mcp-state {
+.rah-device-state {
   border: var(--bd);
   font: 700 9px/1 var(--mono);
   padding: 4px 6px;
   white-space: nowrap;
 }
 
-.rah-mcp-state.is-enabled {
+.rah-device-state.is-enabled {
   background: var(--green);
 }
 
-.rah-mcp-state.is-disabled {
+.rah-device-state.is-disabled {
   background: var(--paper);
   color: var(--ink-40);
 }
 
-.rah-mcp-server-card .btn {
+.rah-device-server-card .btn {
   font-size: 10px;
   min-height: 26px;
   padding: 5px 8px;
 }
 
-.rah-mcp-tool-summary {
+.rah-device-tool-summary {
   border-bottom: var(--bd);
   display: grid;
   gap: 6px;
   padding: 11px 12px;
 }
 
-.rah-mcp-tool-summary > b {
+.rah-device-tool-summary > b {
   font-size: 11px;
 }
 
-.rah-mcp-tool-summary > span {
+.rah-device-tool-summary > span {
   color: var(--ink-40);
   font: 10px/1.3 var(--mono);
 }
 
-.rah-mcp-tool-summary > div {
+.rah-device-tool-summary > div {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
 }
 
-.rah-mcp-tool-summary code {
+.rah-device-tool-summary code {
   background: var(--lavender);
   border: var(--bd);
   font: 9px/1 var(--mono);
   padding: 4px 6px;
 }
 
-.rah-mcp-assignment-list > header {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-  padding: 9px 12px;
-}
-
-.rah-mcp-assignment-list > header b {
-  font-size: 11px;
-}
-
-.rah-mcp-assignment-list > p {
-  color: var(--ink-40);
-  font: 10px/1.4 var(--mono);
-  padding: 0 12px 12px;
-}
-
-.rah-mcp-assignment-list > div {
-  align-items: center;
-  border-top: var(--bd);
-  display: flex;
-  gap: 9px;
-  min-height: 48px;
-  padding: 7px 12px;
-}
-
-.rah-mcp-assignment-list > div > span:nth-child(2) {
-  display: grid;
-  flex: 1;
-  min-width: 0;
-}
-
-.rah-mcp-assignment-list > div b {
-  font-size: 11px;
-}
-
-.rah-mcp-assignment-list > div small,
-.rah-mcp-assignment-list > div i {
-  color: var(--ink-40);
-  font: 9px/1.4 var(--mono);
-}
-
-.rah-mcp-executor-inventory {
+.rah-device-executor-inventory {
   border-top: var(--bd-heavy);
   margin-top: 22px;
   padding-top: 14px;
 }
 
-.rah-mcp-executor-inventory > header {
+.rah-device-executor-inventory > header {
   align-items: center;
   display: flex;
   gap: 7px;
   margin-bottom: 8px;
 }
 
-.rah-mcp-executor-inventory h2 {
+.rah-device-executor-inventory h2 {
   font-size: 13px;
   font-weight: 800;
 }
 
-.rah-mcp-executor-inventory header span,
-.rah-mcp-executor-inventory > p {
+.rah-device-executor-inventory header span,
+.rah-device-executor-inventory > p {
   color: var(--ink-40);
   font: 10px/1.4 var(--mono);
 }
 
-.rah-mcp-executor-inventory > div {
+.rah-device-executor-inventory > div {
   align-items: center;
   border: var(--bd);
   display: flex;
@@ -2267,115 +2225,10 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   padding: 8px 10px;
 }
 
-.rah-dialog.rah-mcp-server-dialog {
-  box-shadow: 4px 4px 0 var(--ink);
-  max-width: 672px;
-}
-
-.rah-mcp-server-dialog form,
-.rah-mcp-assignment-dialog form {
-  gap: 13px;
-}
-
 .rah-dialog-copy {
   color: var(--ink-70);
   font-size: 12px;
   line-height: 16px;
-}
-
-.rah-mcp-discovery-row {
-  align-items: center;
-  display: flex;
-  gap: 10px;
-}
-
-.rah-mcp-discovery-row > span {
-  color: var(--ink-40);
-  font: 10px/1.4 var(--mono);
-}
-
-.rah-mcp-discovered-tools,
-.rah-mcp-tool-permissions {
-  border: var(--bd);
-  max-height: 230px;
-  overflow: auto;
-}
-
-.rah-mcp-discovered-tools > div {
-  border-bottom: 1px solid var(--ink-10);
-  display: grid;
-  gap: 3px;
-  grid-template-columns: minmax(110px, 0.5fr) minmax(110px, 0.5fr) minmax(
-      0,
-      1fr
-    );
-  padding: 8px 9px;
-}
-
-.rah-mcp-discovered-tools > div:last-child {
-  border-bottom: 0;
-}
-
-.rah-mcp-discovered-tools b {
-  font-size: 10px;
-}
-
-.rah-mcp-discovered-tools code,
-.rah-mcp-discovered-tools span {
-  color: var(--ink-40);
-  font: 9px/1.4 var(--mono);
-  overflow-wrap: anywhere;
-}
-
-.rah-mcp-assignment-dialog {
-  max-width: 560px;
-}
-
-.rah-mcp-tool-permissions {
-  margin: 0;
-  padding: 0;
-}
-
-.rah-mcp-tool-permissions legend {
-  font-size: 12px;
-  font-weight: 700;
-  margin: 0 8px;
-  padding: 0 4px;
-}
-
-.rah-mcp-tool-permissions > label {
-  align-items: flex-start;
-  border-bottom: 1px solid var(--ink-10);
-  display: flex;
-  flex-direction: row;
-  gap: 8px;
-  padding: 8px 10px;
-}
-
-.rah-mcp-tool-permissions > label:last-child {
-  border-bottom: 0;
-}
-
-.rah-mcp-tool-permissions input {
-  accent-color: var(--black);
-  flex: none;
-  height: 14px;
-  margin-top: 2px;
-  width: 14px;
-}
-
-.rah-mcp-tool-permissions span {
-  display: grid;
-  min-width: 0;
-}
-
-.rah-mcp-tool-permissions b {
-  font-size: 10px;
-}
-
-.rah-mcp-tool-permissions small {
-  color: var(--ink-40);
-  font: 9px/1.4 var(--mono);
 }
 
 .rah-runtime-summary {
@@ -4130,25 +3983,13 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
     grid-column: 1;
   }
 
-  .rah-mcp-server-card > header {
+  .rah-device-server-card > header {
     align-items: flex-start;
     flex-wrap: wrap;
   }
 
-  .rah-mcp-server-card > header > div {
+  .rah-device-server-card > header > div {
     min-width: 150px;
-  }
-
-  .rah-mcp-assignment-list > div {
-    flex-wrap: wrap;
-  }
-
-  .rah-mcp-assignment-list > div > span:nth-child(2) {
-    min-width: 140px;
-  }
-
-  .rah-mcp-discovered-tools > div {
-    grid-template-columns: minmax(0, 1fr);
   }
 
   .rah-runtime-summary {

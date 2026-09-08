@@ -14,6 +14,35 @@ const classify = (method, path) =>
     url: new URL(path, origin).href,
   });
 
+test("formal Task detail permits reads while refusing lifecycle mutations", () => {
+  for (const path of [
+    "/v3/client/tasks/get",
+    "/v3/client/tasks/history",
+    "/v3/client/navigation/resolve",
+    "/v3/client/messages/context",
+    "/v3/client/activity/thread-followers",
+  ]) {
+    assert.equal(classify("POST", path).decision, "allow-api");
+    assert.equal(classify("GET", path).decision, "reject");
+  }
+  assert.equal(classify("POST", "/v3/client/tasks/cancel").decision, "reject");
+});
+
+test("formal Agent Skills verification permits only its read endpoint", () => {
+  assert.equal(
+    classify("POST", "/v3/client/agents/skills/list").decision,
+    "allow-api",
+  );
+  assert.equal(
+    classify("POST", "/v3/client/agents/skills/update").decision,
+    "reject",
+  );
+  assert.equal(
+    classify("GET", "/v3/client/agents/skills/list").decision,
+    "reject",
+  );
+});
+
 test("formal browser policy separates projections from read-state writes", () => {
   assert.deepEqual(classify("GET", "/_rah/session"), {
     decision: "allow-api",
@@ -151,4 +180,15 @@ test("formal Human inspector permits exact SDK reads and never membership or pro
 test("service generation is read-only; default formal acceptance must not restart", () => {
   assert.equal(classify("GET", "/_rah/service").decision, "allow-api");
   assert.equal(classify("POST", "/_rah/service/restart").decision, "reject");
+});
+
+test("formal attachment comment inspection permits only the canonical read endpoint", () => {
+  assert.equal(
+    classify("POST", "/v3/client/files/comments/list").decision,
+    "allow-api",
+  );
+  assert.equal(
+    classify("POST", "/v3/client/files/comments/post").decision,
+    "reject",
+  );
 });

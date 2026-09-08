@@ -1,3 +1,5 @@
+import { LocalComputerProfileStore } from "./local-computer-profile-store.ts";
+import { createDaemonWorkerProfileMetadata } from "./daemon-worker-profile-metadata.ts";
 import { join } from "node:path";
 import {
   AgentHost,
@@ -8,7 +10,6 @@ import {
   GenericProcessAdapter,
   createWorkerToolTransportEnvironment,
   MultiLaneAgentHost,
-  ManagedMcpRuntimeProxyRegistry,
   RuntimeCredentialEnvironmentBinding,
   RuntimeImplementationRegistry,
   RuntimeProfileRegistry,
@@ -52,9 +53,7 @@ import {
   discoverKnownLocalClis,
   type ConfiguredLocalRuntimeSnapshot,
 } from "./local-runtime-inventory.ts";
-import { createConfiguredManagedMcpExecutor } from "./managed-mcp-executor-composition.ts";
-import { GitTaskDeliveryEvidenceCollector } from "./git-task-delivery-evidence.ts";
-import type { NodeManagedMcpExecutorRegistry } from "./managed-mcp-executor-registry.ts";
+
 import {
   configuredParticipantIds,
   createDaemonAgentExecutionResetCoordinator,
@@ -64,6 +63,7 @@ import {
   ensureOwnerPrivateDirectory,
   errorMessage,
   openRuntimeProfileRegistry,
+  createDaemonWorkerService,
   runCoupledComponents,
 } from "./daemon-application-support.ts";
 
@@ -122,20 +122,17 @@ export class DaemonApplication {
     let agentMemoryCoordinator: AgentMemoryCoordinator | undefined;
     let agentExecutionResetCoordinator:
       AgentExecutionResetCoordinator | undefined;
-    let managedMcpExecutor: NodeManagedMcpExecutorRegistry | undefined;
     let workerService: WorkerApplicationService | undefined;
     const runtimeProfileRegistries = new Map<string, RuntimeProfileRegistry>();
-    const managedMcpProxyRegistry = new ManagedMcpRuntimeProxyRegistry();
     const configuredLocalRuntimes: ConfiguredLocalRuntimeSnapshot[] = [];
     let executionFailure: unknown;
     try {
       await ensureOwnerPrivateDirectory(this.#config.stateDirectory);
+      const computerProfiles = new LocalComputerProfileStore({
+        path: join(this.#config.stateDirectory, "computer-profiles.json"),
+      });
       const hostAccessToken = await this.#secretProvider.load(
         this.#config.host.credential,
-      );
-      managedMcpExecutor = await createConfiguredManagedMcpExecutor(
-        this.#config,
-        this.#secretProvider,
       );
       core = RahCore.open({
         databasePath: join(this.#config.stateDirectory, "room.db"),
@@ -191,19 +188,15 @@ export class DaemonApplication {
         retryAfterMs: this.#config.outboxRetryAfterMs,
         stateDirectory: join(this.#config.stateDirectory, "transport"),
       });
-      workerService = new WorkerApplicationService({
-        deliveryEvidenceCollector: new GitTaskDeliveryEvidenceCollector(),
+      workerService = createDaemonWorkerService({
+        profileMetadata: createDaemonWorkerProfileMetadata({
+          hostId: host.hostId,
+          kernel,
+          computerProfiles,
+          registries: runtimeProfileRegistries,
+        }),
+        config: this.#config,
         kernel,
-        managedMcpExecutor,
-        ...(this.#config.taskClaimHeartbeatIntervalMs === undefined
-          ? {}
-          : {
-              taskClaimHeartbeatIntervalMs:
-                this.#config.taskClaimHeartbeatIntervalMs,
-            }),
-        ...(this.#config.taskClaimLeaseMs === undefined
-          ? {}
-          : { taskClaimLeaseMs: this.#config.taskClaimLeaseMs }),
       });
       await workerService.start();
       const activeWorkerService = workerService;
@@ -360,7 +353,6 @@ export class DaemonApplication {
           cwd: runtimeOptions.cwd,
           host,
           implementations,
-          managedMcpProxyRegistry,
           probeReport,
           runtimeProfileRegistry,
           runtimeProfileRevision: activeRevision,
@@ -522,7 +514,6 @@ export class DaemonApplication {
               cwd: v4Config.workspace.cwd,
               host,
               implementations,
-              managedMcpProxyRegistry,
               probeReport: placementProbeReport,
               ...(placement?.resolvedModel === undefined
                 ? {}
@@ -694,6 +685,7 @@ export class DaemonApplication {
         runner,
       });
       clientService = createDaemonHumanClientService({
+        computerProfiles,
         agentExecutionResetCoordinator: activeAgentExecutionResetCoordinator,
         agentMemoryCoordinator: activeAgentMemoryCoordinator,
         buildVersion: DAEMON_BUILD_VERSION,
@@ -704,7 +696,7 @@ export class DaemonApplication {
         host,
         human: core.human,
         kernel,
-        managedMcpAdministration: managedMcpExecutor,
+
         protocolVersion: DAEMON_PROTOCOL_VERSION,
         webPushAdministration: webPush.administration,
       });
@@ -744,17 +736,7 @@ export class DaemonApplication {
       cleanupErrors.push(error);
     }
     try {
-      await managedMcpProxyRegistry.close();
-    } catch (error) {
-      cleanupErrors.push(error);
-    }
-    try {
       await workerService?.close();
-    } catch (error) {
-      cleanupErrors.push(error);
-    }
-    try {
-      await managedMcpExecutor?.close();
     } catch (error) {
       cleanupErrors.push(error);
     }

@@ -1,5 +1,69 @@
 # RAH OS 文档
 
+当前修复：[HTML 跨段落引用与回跳](./audits/2026-09-08-html-region-repair.zh-CN.md)。
+
+最新核实：[HTML 跨段落引用与发布后回跳](./audits/2026-09-08-html-region-official-verification.zh-CN.md)。官网有效矩形、刷新与回跳已实证；本地取文、定位和高亮仍有明确差异。
+
+当前纠偏：[移动折叠、HTML 区域、本地分页与用量接线梳理](./audits/2026-09-08-four-corrections-closure.zh-CN.md)。第四项是方案完成，运行器账户用量尚未上线。
+
+- [打开中的 Thread 实时更新修复](audits/2026-09-08-thread-live-repair.zh-CN.md)
+
+最新核实：[HTML 区域、移动评论折叠、分页与运行器用量的官网实操](./audits/2026-09-08-raft-remaining-live-confirmation.zh-CN.md)。修正“拖动手势”和“Raft 分页缺口”的表述；区分运行器用量与中央订阅。
+
+当前修复：[执行中恢复围栏、后台失败传播与真实原现场复验](./audits/2026-09-08-core-recovery-repair.zh-CN.md)。上一轮 R0908 恢复阻塞已修复，其他核心旅程边界仍分项保留。
+
+真实核心旅程：[多 Agent Room、双 Thread、跨 Room／DM 记忆、更正召回与实际 CLI 参数](./audits/2026-09-08-real-multi-agent-core-journey.zh-CN.md)。逐项区分双边通过、本地通过及仍未签收；不是完整高可用发布结论。
+
+当前续批：[跨目标能力与附件评论前端实施和验收](./audits/2026-09-08-remaining-parity-implementation.zh-CN.md)。Task 删除的 Web 入口按用户要求移入未来待实现。资料字段的唯一 owner 与边界见[Worker 公开资料](./architecture/worker-visible-profile.zh-CN.md)。
+
+当前后端批次：[剩余六组差异的实施、独立审查与分层验收](./audits/2026-09-08-backend-six-gap-closure.zh-CN.md)。以该记录区分已实现、已验证与尚未对齐的参数组合。
+
+前端双边验证：[Raft 官网与本地实例同流程实测对比、差异分类与证据](./audits/2026-09-08-raft-frontend-bilateral-verification.zh-CN.md)；只读验证未改产品，中优先真实分歧 2 项（关系图节点覆盖、语言与区域子集），无高优先项。
+
+上一批交付：[Task 修改、完整历史与上传能力查询及正式重启验收](./audits/2026-09-08-task-amend-upload-capabilities.zh-CN.md)。
+
+前端交付：[Task 弹窗、Search 计数、Computer 标签与底栏偏移修复](./audits/2026-09-08-frontend-parity-repair.zh-CN.md)。
+
+后端原始施工顺序：[八组差异的证据、依赖与验收顺序](./product/2026-09-08-backend-eight-gap-plan.zh-CN.md)。最新实现与剩余边界以本页顶部六组批次验收为准，未通过的官方实验不作为已验证行为。
+
+此前交付：[双轨差异审查、MCP 模块退役及正式重启验收](./audits/2026-09-08-two-track-parity-and-mcp-retirement.zh-CN.md)。
+
+后端对标分析：[raft-computer 1.0.18 SEA 源码逐域对照与后端差距](./audits/2026-09-08-raft-computer-backend-gap-analysis.zh-CN.md)；E0 源码级判定，只发现缺口不关闭缺口。
+
+2026-09-08 产品范围更新：[用户明确移除 RAH 托管 MCP 模块](./product/managed-mcp-retirement.zh-CN.md)；旧清单中的 MCP 配置、分配、调用不再作为复刻缺口，Provider 自有工具与 Room Worker 通信保留。实施及验收以本批交付证据为准。
+
+当前交付：[核实后的 A1/A2/A3/A8 修复、集成门禁与正式重启](audits/2026-09-08-evidence-led-repairs.zh-CN.md)。[后续施工顺序](product/2026-09-08-evidence-led-repair-order.zh-CN.md)；A4/A5/A6/A7 仍待语义裁决或补证。
+
+最新裁决：[八项反例的 Raft 源码核实、官网实操和重新分类](audits/2026-09-08-raft-behavior-revalidation.zh-CN.md)。本地内部缺陷与官方复刻差异分开，部分服务端实验仍待验证。
+
+最新反证审计：[交付后 8 类已复现问题、证据边界与修复顺序](audits/2026-09-08-post-delivery-independent-review.zh-CN.md)。本轮只审计未修复，以下“收口”记录须结合这些重新打开的边界阅读。
+
+当前批次总表：[集成审计、分层验证与前后端剩余差异](audits/2026-09-08-parallel-closure-integration.zh-CN.md)。
+
+当前并行收口：[依赖顺序、产品裁决与验证边界](product/2026-09-08-parallel-closure-plan.zh-CN.md)，
+[75 条 Agent API 及表外合同映射](product/raft-agent-api-contract-map.zh-CN.md)。
+映射是 `672c596` 基线审计，不把并行实现自动当成验收；最终结果沿下面专项证据更新。
+
+协作正确性修复：[多 Thread 明确寻址、幂等回放、Agent 来源 Task 请求 Human 输入、普通成员读冻结交付与附件](audits/2026-09-08-collaboration-core-closure.zh-CN.md)。
+
+服务重启恢复：[首次状态错误可重试、旧页面回执、后继一次恢复与持续失败清理退出](audits/2026-09-08-computer-recovery-closure.zh-CN.md)。
+
+Worker 基础读工具：[历史定位与冻结分页、成员和公开资料、Task 看板与生命周期历史](audits/2026-09-08-worker-read-tools-closure.zh-CN.md)。
+
+Worker 自身资料：[名称、描述、头像与上传中凭据撤销复验](audits/2026-09-08-worker-self-profile-closure.zh-CN.md)。
+
+任务管理：[闲置任务分配、消息转待办及父任务恢复](audits/2026-09-08-worker-task-management-closure.zh-CN.md)。
+
+讨论附件闭环：[无需 Task 的上传、显式发消息、原字节下载、幂等与执行来源围栏](audits/2026-09-08-worker-discussion-attachments-closure.zh-CN.md)。
+
+Agent／Task 页面：[取消新任务预设角色、直接管理操作及 PWA 图标](audits/2026-09-08-agent-task-pwa-ui-closure.zh-CN.md)。
+
+Agent Skills：[真实全局／工作区技能元信息、目录隔离与双浏览器状态验收](audits/2026-09-08-agent-skills-closure.zh-CN.md)。
+
+官网双边取证：[当前来源冻结、Search 筛选／空态修复与共享图标](audits/2026-09-08-bilateral-search-and-icon-closure.zh-CN.md)。
+
+当前官网源码：[2026-09-08 捕获的 v1.12.0 HTML、公开脚本和样式及哈希](evidence/raft-web-20260908-current/manifest.json)。只用于分析，不替换历史证据来源或进入生产依赖。
+
 监督可见性与 Room 任务默认参与者回退：[工具轨迹标签与脱敏、任意 Room Agent 成员读取 owner 轨迹的基础工具、预设角色回退裁决](audits/2026-09-08-room-task-defaults-and-supervision-visibility.zh-CN.md)。
 
 StandingPromptCompiler：[分层 standing prompt、每次启动由 daemon 编译投递、Provider session 按 prompt 摘要失效](audits/2026-09-08-standing-prompt-compiler.zh-CN.md)。
@@ -461,3 +525,5 @@ Raft 767px 移动断点、短窗口 50px/36px rail、四项移动根导航、Roo
 
 - [Conversation interaction and Search state family](./design/conversation-page-family.md)
 - [Conversation / Search 页面族验收](./audits/2026-09-05-conversation-page-family-verification.zh-CN.md)
+
+当前用户优先级（2026-09-08）：[聊天室、私聊、Agent 配置与记忆核心交付基线](./audits/2026-09-08-core-conversation-memory-delivery.zh-CN.md)。其他六组后端差异由独立施工线处理；本报告记录核心专项回归、证据边界与串行验收出口。

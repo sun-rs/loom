@@ -1,9 +1,15 @@
+import { boundRows } from "./bounded-read-rows.ts";
+import {
+  resolveWorkerReadTarget,
+  type WorkerVisibleRoomScope,
+} from "./worker-read-targets.ts";
+import { requireWorkerRoomVisibility } from "./worker-task-scope.ts";
 import { createHash } from "node:crypto";
 import type { DatabaseSync, SQLInputValue } from "node:sqlite";
 import {
   WorkerMessageSearchRequestSchema,
   type WorkerMessageSearchRequest,
-  type ActivationCredentialScope,
+  WorkerMessageSearchResponseSchema,
   GlobalTasksRequestSchema,
   GlobalTasksResponseSchema,
   WorkspaceSearchRequestSchema,
@@ -42,6 +48,7 @@ type Cursor = {
   before: number;
   rank: number;
   binding: string;
+  roomSeqCeilings?: Array<[string, number]>;
 };
 const SEARCH_RANK_BINDING = "raft-token-or-v1";
 const MAX_SEARCH_TERMS = 64;
@@ -60,30 +67,76 @@ function searchTerms(query: string) {
     });
 }
 
+function messageSearchRank(
+  query: string,
+  terms: string[],
+  sort?: "recent" | "relevance",
+) {
+  const relevance = Boolean(query) && sort !== "recent";
+  return {
+    rank: relevance
+      ? `CASE WHEN rah_casefold(m.body) = ? THEN 0 WHEN instr(rah_casefold(m.body), ?) = 1 THEN 1 WHEN instr(rah_casefold(m.body), ?) > 0 THEN 2 ELSE 3 + (${terms.length} - (${terms.map(() => "CASE WHEN instr(rah_casefold(m.body), ?) > 0 THEN 1 ELSE 0 END").join(" + ")})) END`
+      : "0",
+    rankArgs: relevance ? [query, query, query, ...terms] : [],
+  };
+}
+
 export function discoveryPage(
   db: DatabaseSync,
-  table: "messages" | "tasks" | "human_saved_messages",
+  table:
+    | "messages"
+    | "tasks"
+    | "human_saved_messages"
+    | "room_events"
+    | "principals"
+    | "rooms",
   actorId: string,
   input: {
     cursor?: string | undefined;
     limit?: number | undefined;
     bindingVersion?: string | undefined;
+    sequenceRoomId?: string | undefined;
+    sequenceRoomIds?: string[] | undefined;
   },
 ) {
   const { cursor, limit = 50, ...filters } = input;
   const binding = createHash("sha256")
     .update(JSON.stringify([actorId, table, filters]))
     .digest("hex");
+  if (input.sequenceRoomId !== undefined && table !== "room_events")
+    throw new Error("Room sequence paging requires the Room event owner");
+  const roomSeqCeilings =
+    input.sequenceRoomIds === undefined
+      ? undefined
+      : db
+          .prepare(
+            "SELECT room_id,next_seq-1 AS head FROM rooms WHERE room_id IN (SELECT value FROM json_each(?)) ORDER BY room_id",
+          )
+          .all(JSON.stringify(input.sequenceRoomIds))
+          .map(
+            (row) =>
+              [text(row, "room_id"), integer(row, "head")] as [string, number],
+          );
   const ceiling = Number(
-    db
-      .prepare(
-        table === "human_saved_messages"
-          ? "SELECT COALESCE((SELECT seq FROM sqlite_sequence WHERE name='human_saved_messages'),0) AS n"
-          : `SELECT COALESCE(MAX(rowid), 0) AS n FROM ${table}`,
-      )
-      .get()!.n,
+    input.sequenceRoomId !== undefined
+      ? db
+          .prepare("SELECT next_seq-1 AS n FROM rooms WHERE room_id=?")
+          .get(input.sequenceRoomId)!.n
+      : db
+          .prepare(
+            table === "human_saved_messages"
+              ? "SELECT COALESCE((SELECT seq FROM sqlite_sequence WHERE name='human_saved_messages'),0) AS n"
+              : `SELECT COALESCE(MAX(rowid), 0) AS n FROM ${table}`,
+          )
+          .get()!.n,
   );
-  let state: Cursor = { ceiling, before: ceiling + 1, rank: 0, binding };
+  let state: Cursor = {
+    ceiling,
+    before: ceiling + 1,
+    rank: 0,
+    binding,
+    ...(roomSeqCeilings ? { roomSeqCeilings } : {}),
+  };
   if (cursor !== undefined) {
     try {
       state = JSON.parse(
@@ -91,6 +144,18 @@ export function discoveryPage(
       ) as Cursor;
       if (
         state.binding !== binding ||
+        (roomSeqCeilings !== undefined &&
+          (!Array.isArray(state.roomSeqCeilings) ||
+            state.roomSeqCeilings.length !== roomSeqCeilings.length ||
+            state.roomSeqCeilings.some(
+              (pair, index) =>
+                !Array.isArray(pair) ||
+                pair.length !== 2 ||
+                pair[0] !== roomSeqCeilings[index]![0] ||
+                !Number.isSafeInteger(pair[1]) ||
+                pair[1] < 0 ||
+                pair[1] > roomSeqCeilings[index]![1],
+            ))) ||
         !Number.isSafeInteger(state.ceiling) ||
         state.ceiling < 0 ||
         state.ceiling > ceiling ||
@@ -195,48 +260,116 @@ export class GlobalDiscovery {
   }
 
   searchRunMessages(
-    scope: ActivationCredentialScope,
+    origin: WorkerVisibleRoomScope,
     request: WorkerMessageSearchRequest,
   ) {
-    requireRoomMember(this.db, scope.roomId, scope.participantId);
+    requireWorkerRoomVisibility(this.db, origin);
     const input = WorkerMessageSearchRequestSchema.parse(request);
+    const scope =
+      input.channel === undefined
+        ? undefined
+        : resolveWorkerReadTarget(this.db, origin, input.channel);
+    const rooms = scope
+      ? undefined
+      : this.db
+          .prepare(
+            "SELECT r.room_id FROM rooms r JOIN memberships m ON m.room_id=r.room_id WHERE m.principal_id=? AND r.kind IN ('channel','direct') ORDER BY r.room_id LIMIT 501",
+          )
+          .all(origin.participantId)
+          .map((row) => text(row, "room_id"));
+    if (rooms && rooms.length > 500)
+      throw new ForbiddenError(
+        "global Worker search supports at most 500 joined Rooms; select a target",
+      );
     let p: ReturnType<typeof discoveryPage>;
     try {
-      p = discoveryPage(this.db, "messages", scope.participantId, {
-        ...input,
-        bindingVersion: `worker:${scope.runAttemptId}:${scope.roomId}:${scope.toSeq}`,
-      });
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message === "invalid discovery cursor or changed query scope"
-      )
-        throw new ForbiddenError("cursor does not belong to this Run search");
-      throw error;
+      p = discoveryPage(
+        this.db,
+        scope ? "room_events" : "messages",
+        origin.participantId,
+        {
+          ...input,
+          bindingVersion: scope
+            ? `worker-search-current-v2:${scope.roomId}:${scope.threadId ?? "all"}`
+            : "worker-search-joined-v1",
+          ...(scope
+            ? { sequenceRoomId: scope.roomId }
+            : { sequenceRoomIds: rooms! }),
+        },
+      );
+    } catch {
+      throw new ForbiddenError("invalid search cursor or changed query scope");
     }
-    const terms = searchTerms(input.query);
+    const query = (input.query ?? "").toLowerCase(),
+      terms = searchTerms(query);
+    const where: string[] = [],
+      args: SQLInputValue[] = [];
+    if (scope) {
+      where.push("m.room_id=?", "m.room_seq<=?");
+      args.push(scope.roomId, p.ceiling);
+    } else {
+      const ceilings = p.roomSeqCeilings!;
+      where.push(
+        ceilings.length
+          ? `(${ceilings.map(() => "(m.room_id=? AND m.room_seq<=?)").join(" OR ")})`
+          : "0",
+        "m.message_order<=?",
+      );
+      args.push(...ceilings.flat(), p.ceiling);
+    }
+    if (scope?.threadId !== undefined) {
+      where.push("m.thread_id=?");
+      args.push(scope.threadId);
+    }
+    if (terms.length) {
+      where.push(
+        `(${terms.map(() => "instr(rah_casefold(m.body), ?) > 0").join(" OR ")})`,
+      );
+      args.push(...terms);
+    }
+    if (input.senderId !== undefined) {
+      where.push("m.actor_id=?");
+      args.push(input.senderId);
+    }
+    if (input.sender !== undefined) {
+      where.push("(m.actor_id=? OR sender.handle=?)");
+      args.push(input.sender, input.sender.replace(/^@/u, ""));
+    }
+    if (input.after) {
+      where.push("julianday(m.created_at) >= julianday(?)");
+      args.push(input.after);
+    }
+    if (input.before) {
+      where.push("julianday(m.created_at) <= julianday(?)");
+      args.push(input.before);
+    }
+    const { rank, rankArgs } = messageSearchRank(query, terms, input.sort);
     const rows = this.db
       .prepare(
-        `SELECT m.* FROM discovery_messages m WHERE m.room_id=? AND m.room_seq<=?
-      AND m.message_order<=? AND m.message_order<?
-      AND (${terms.map(() => "instr(rah_casefold(m.body), ?) > 0").join(" OR ")})
-      ORDER BY m.message_order DESC LIMIT ?`,
+        `WITH hits AS (SELECT m.*, ${rank} AS rank FROM discovery_messages m
+      JOIN principals sender ON sender.principal_id=m.actor_id WHERE ${where.join(" AND ")})
+      SELECT * FROM hits WHERE (rank>? OR (rank=? AND ${scope ? "room_seq" : "message_order"}<?)) ORDER BY rank,${scope ? "room_seq" : "message_order"} DESC LIMIT ?`,
       )
-      .all(
-        scope.roomId,
-        scope.toSeq,
-        p.ceiling,
-        p.before,
-        ...terms,
-        p.limit + 1,
-      );
-    const page = rows.slice(0, p.limit);
-    return {
+      .all(...rankArgs, ...args, p.rank, p.rank, p.before, p.limit + 1);
+    const page = boundRows(
+      rows.slice(0, p.limit),
+      messageProjectionFromRow,
+      "last",
+    );
+    return WorkerMessageSearchResponseSchema.parse({
       messages: page.map(messageProjectionFromRow),
-      ...(rows.length > p.limit
-        ? { nextCursor: p.next(Number(page.at(-1)!.message_order)) }
+      ...(scope
+        ? { frozenThroughRoomSeq: p.ceiling }
+        : { frozenRoomCount: p.roomSeqCeilings!.length }),
+      ...(rows.length > page.length
+        ? {
+            nextCursor: p.next(
+              integer(page.at(-1)!, scope ? "room_seq" : "message_order"),
+              integer(page.at(-1)!, "rank"),
+            ),
+          }
         : {}),
-    };
+    });
   }
   search(actorId: string, request: WorkspaceSearchRequest) {
     requireDiscoveryHuman(this.db, actorId);
@@ -314,11 +447,7 @@ export class GlobalDiscovery {
     );
     // Raft's server ranker is not distributed. Preserve its observable full-term-before-partial
     // contract with a deterministic local exact/prefix/phrase/distinct-term rank.
-    const relevance = Boolean(q) && input.sort !== "recent";
-    const rank = relevance
-      ? `CASE WHEN rah_casefold(m.body) = ? THEN 0 WHEN instr(rah_casefold(m.body), ?) = 1 THEN 1 WHEN instr(rah_casefold(m.body), ?) > 0 THEN 2 ELSE 3 + (${terms.length} - (${terms.map(() => "CASE WHEN instr(rah_casefold(m.body), ?) > 0 THEN 1 ELSE 0 END").join(" + ")})) END`
-      : "0";
-    const rankArgs = relevance ? [q, q, q, ...terms] : [];
+    const { rank, rankArgs } = messageSearchRank(q, terms, input.sort);
     const rows = this.db
       .prepare(
         `WITH hits AS (SELECT m.*, r.name AS room_name, sender.handle AS sender_name, th.root_message_id, ${rank} AS rank ${from}) SELECT * FROM hits WHERE (rank > ? OR (rank = ? AND message_order < ?)) ORDER BY rank, message_order DESC LIMIT ?`,

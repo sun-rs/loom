@@ -8,32 +8,21 @@ import {
   type WorkerTaskTrajectoryResponse,
 } from "@rah-os/protocol";
 
-import { ForbiddenError, NotFoundError } from "./errors.ts";
+import { ForbiddenError } from "./errors.ts";
+import { requireWorkerTaskVisibility } from "./worker-task-scope.ts";
 import { trajectoryFromRow } from "./runtime-trajectory.ts";
 import { nullableText, text, type Row } from "./sqlite-row.ts";
 
-/**
- * Room-member visibility over a Task owner's recorded tool-call trajectory.
- *
- * There are no preset reviewer or auditor roles: a Human asks any Room Agent by
- * conversation and @mention to audit or review a Task, and that Agent needs
- * basic tools rather than a role. Raft semantics say any channel member may read
- * the channel's messages, task history and activity, so the visibility rule is
- * Room membership, not a Task role.
- *
- * Visibility rule: the caller must be an enabled Agent member of the Task's
- * Room, and the Task must belong to that Room. Entries are scoped to the owner's
- * participant in the Task's Room; RunAttempts carry no task_id, so activity is
- * further bounded in time by `recorded_at >= tasks.created_at` — trajectory the
- * owner recorded before the Task existed is never disclosed.
- */
+/** Room-visible diagnostics from Runs explicitly linked by Task mutations.
+ * A Run may handle several tasks, so these entries are context, never proof
+ * that each tool call belongs to the selected Task. */
 export function listWorkerTaskTrajectory(
   database: DatabaseSync,
   scope: ActivationCredentialScope,
   untrustedInput: WorkerTaskTrajectoryRequest,
 ): WorkerTaskTrajectoryResponse {
   const input = WorkerTaskTrajectoryRequestSchema.parse(untrustedInput);
-  const taskRow = requireRoomTaskVisibility(database, scope, input.taskId);
+  const taskRow = requireWorkerTaskVisibility(database, scope, input.taskId);
   const ownerParticipantId = nullableText(taskRow, "assignee_id");
   if (ownerParticipantId === null) {
     throw new ForbiddenError(
@@ -44,6 +33,7 @@ export function listWorkerTaskTrajectory(
     ownerParticipantId,
     text(taskRow, "room_id"),
     text(taskRow, "created_at"),
+    input.taskId,
   ];
   let cursorClause = "";
   if (input.beforeSequence !== undefined) {
@@ -56,6 +46,12 @@ export function listWorkerTaskTrajectory(
        WHERE participant_id = ?
          AND room_id = ?
          AND recorded_at >= ?
+         AND run_attempt_id IN (
+           SELECT json_extract(payload_json, '$.runAttemptId') FROM room_events
+           WHERE room_id = run_trajectory_entries.room_id
+             AND aggregate_type = 'task' AND aggregate_id = ?
+             AND json_type(payload_json, '$.runAttemptId') = 'text'
+         )
          ${cursorClause}
        ORDER BY server_sequence DESC
        LIMIT ?`,
@@ -65,47 +61,11 @@ export function listWorkerTaskTrajectory(
   const entries = rows.slice(0, input.limit).map(trajectoryFromRow);
   return WorkerTaskTrajectoryResponseSchema.parse({
     entries,
+    scope: "task_linked_run_diagnostics",
     ownerParticipantId,
     taskId: input.taskId,
     ...(hasMore && entries.length > 0
       ? { nextBeforeSequence: entries.at(-1)!.serverSequence }
       : {}),
   });
-}
-
-function requireRoomTaskVisibility(
-  database: DatabaseSync,
-  scope: ActivationCredentialScope,
-  taskId: string,
-): Row {
-  const taskRow = database
-    .prepare("SELECT * FROM tasks WHERE task_id = ?")
-    .get(taskId);
-  if (taskRow === undefined) {
-    throw new NotFoundError(`task ${taskId} was not found`);
-  }
-  if (text(taskRow, "room_id") !== scope.roomId) {
-    throw new ForbiddenError(
-      `Task ${taskId} is outside this Worker execution scope`,
-    );
-  }
-  const member = database
-    .prepare(
-      `SELECT principals.principal_id
-       FROM memberships
-       JOIN principals ON principals.principal_id = memberships.principal_id
-       LEFT JOIN agent_definitions
-         ON agent_definitions.participant_id = principals.principal_id
-       WHERE memberships.room_id = ?
-         AND memberships.principal_id = ?
-         AND principals.kind = 'agent'
-         AND (agent_definitions.state IS NULL OR agent_definitions.state = 'enabled')`,
-    )
-    .get(text(taskRow, "room_id"), scope.participantId);
-  if (member === undefined) {
-    throw new ForbiddenError(
-      `participant ${scope.participantId} is not an enabled Agent member of Room ${text(taskRow, "room_id")}`,
-    );
-  }
-  return taskRow;
 }

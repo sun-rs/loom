@@ -588,7 +588,7 @@ test("Raft-style freshness holds the losing concurrent reply and wakes the peer"
   }
 });
 
-test("a coalesced Activation keeps the Worker reply in its latest originating Thread", async () => {
+test("a coalesced Activation requires an explicit target and preserves its selected Thread", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-worker-thread-reply-"));
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
   const service = new WorkerApplicationService({ kernel });
@@ -672,11 +672,29 @@ test("a coalesced Activation keeps the Worker reply in its latest originating Th
         },
         method: "POST",
       });
+    const unread = await request("/v1/worker/messages/post", {
+      basedOnRoomSeq: activation.toSeq,
+      body: "Cannot bypass sync by knowing a Thread ID",
+      threadId: created.thread.threadId,
+      idempotencyKey: "worker-thread-unread",
+    });
+    assert.equal(unread.status, 409);
+    assert.equal(
+      await responseErrorCode(unread),
+      "causal_cursor_not_delivered",
+    );
     const deliveryResponse = await request("/v1/worker/sync", {});
     assert.equal(deliveryResponse.status, 200);
     const delivery = await jsonObject(deliveryResponse);
+    const ambiguous = await request("/v1/worker/messages/post", {
+      basedOnRoomSeq: delivery.cursorAfter,
+      body: "No explicit target",
+      idempotencyKey: "worker-thread-ambiguous",
+    });
+    assert.equal(ambiguous.status, 409);
     const response = await request("/v1/worker/messages/post", {
       basedOnRoomSeq: delivery.cursorAfter,
+      threadId: created.thread.threadId,
       body: "Canonical Agent Thread reply",
       idempotencyKey: "worker-thread-agent-reply",
     });
@@ -1604,7 +1622,13 @@ test("Worker API exposes a causal and execution-fenced Task command surface", as
 
 test("Worker API atomically requests human input and releases its Task claim", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-worker-input-api-"));
-  const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+  // The claim/input contract does not depend on wall-clock scheduling. Keep
+  // Kernel time fixed so concurrent browser gates cannot consume its 150ms lease.
+  const clock = new Date("2026-09-08T00:00:00.000Z");
+  const kernel = new RoomKernel({
+    databasePath: join(directory, "room.db"),
+    now: () => clock,
+  });
   const service = new WorkerApplicationService({
     kernel,
     taskClaimHeartbeatIntervalMs: 25,

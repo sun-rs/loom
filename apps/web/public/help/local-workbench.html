@@ -14,7 +14,7 @@
       </p>
       <nav aria-label="指南目录">
         <a href="#recovery">本机恢复</a> · <a href="#agents">Agent 配置</a> ·
-        <a href="#mcp">首次配置 MCP</a> · <a href="#delivery">任务交付</a>
+        <a href="#delivery">任务交付</a>
       </nav>
       <section id="recovery">
         <h2>本机恢复</h2>
@@ -58,58 +58,6 @@
           或配置付费账号。角色与私有记忆属于 Agent 身份，切换模型、effort 或
           runtime
           不创建新身份。修改后从下一次执行验证配置；普通进程退出不代表任务完成。
-        </p>
-      </section>
-      <section id="mcp">
-        <h2>首次配置 MCP</h2>
-        <ol>
-          <li>
-            先正常启动一次工作台完成状态初始化，再安全停止。准备你信任且可访问的
-            Streamable HTTP MCP 服务；RAH OS 不会启动示例地址上的服务器。
-          </li>
-          <li>
-            在当前状态目录创建
-            <code>managed-mcp.json</code>，仅允许当前用户读写（<code
-              >chmod 600</code
-            >）。文件最大 64 KiB、最多 64 个唯一
-            executorRef。示例中地址必须替换为你的真实服务：
-          </li>
-        </ol>
-        <pre>
-{
-  "schemaVersion": 1,
-  "executors": [{
-    "executorRef": "my-tools",
-    "transport": {"kind": "streamable-http", "url": "http://127.0.0.1:9000/mcp"}
-  }]
-}</pre>
-        <p>
-          远端地址必须使用 HTTPS。服务需要 bearer token 时，在对应 executor
-          对象加入
-          <code
-            >"bearerToken":
-            {"source":"file","path":"/absolute/path/to/private-token"}</code
-          >。令牌文件必须属于当前用户、权限
-          600、不可为符号链接；不要把令牌值写入 URL、浏览器、截图或聊天。
-        </p>
-        <ol start="3">
-          <li>
-            启动或安全重启工作台。格式、权限或地址非法时会拒绝启动，不会假装已连接。
-          </li>
-          <li>
-            打开“设置 → MCP 服务器”，选择已登记的
-            executor，发现工具、保存服务器，再给 Agent
-            分配允许使用的工具。执行后的使用记录与目录配置是两个页面。
-          </li>
-          <li>
-            没有配置文件表示没有 executor；空数组表示明确清空本机 executor
-            配置。移除 executor
-            前先停用相关服务器和分配。修改配置后需要重启；已有 canonical
-            目录与历史不会被此文件删除。
-          </li>
-        </ol>
-        <p>
-          此入口支持本机配置与文件凭据；OAuth、推荐集成商店和浏览器内凭据编辑尚不可用。
         </p>
       </section>
       <section id="delivery">

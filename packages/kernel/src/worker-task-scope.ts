@@ -1,8 +1,9 @@
+import type { WorkerVisibleRoomScope } from "./worker-read-targets.ts";
 import type { DatabaseSync } from "node:sqlite";
 
 import type { ActivationCredentialScope } from "@rah-os/protocol";
 
-import { ForbiddenError, NotFoundError } from "./errors.ts";
+import { ConflictError, ForbiddenError, NotFoundError } from "./errors.ts";
 import { integer, text, type Row } from "./sqlite-row.ts";
 
 export function requireWorkerTaskDelivery(
@@ -47,7 +48,7 @@ export function requireWorkerTaskDelivery(
            OR type = 'task.submitted'
            AND aggregate_type = 'task'
            AND aggregate_id = ?
-           OR type IN ('task.assigned', 'task.reassigned', 'task.reopened', 'task.unblocked', 'task.released', 'task.cancelled')
+           OR type IN ('task.amended', 'task.assigned', 'task.unassigned', 'task.reassigned', 'task.reopened', 'task.unblocked', 'task.released', 'task.cancelled')
            AND aggregate_type = 'task'
            AND aggregate_id = ?
            OR type = 'input.resolved'
@@ -78,9 +79,91 @@ export function requireWorkerTaskDelivery(
       taskId,
     );
   if (delivery === undefined) {
+    // A Task explicitly created by this running Worker is also a proven input;
+    // it cannot appear in the Activation's earlier frozen delivery range.
+    if (wasTaskCreatedByWorkerRun(database, scope, taskId)) return taskRow;
     throw new ForbiddenError(
       `Task ${taskId} was not linked in this Activation range`,
     );
   }
   return taskRow;
+}
+
+/** Source proof for work explicitly created by this active execution, not a
+ * grant for arbitrary newer facts returned by Room read tools. */
+export function wasTaskCreatedByWorkerRun(
+  database: DatabaseSync,
+  scope: ActivationCredentialScope,
+  taskId: string,
+): boolean {
+  return (
+    database
+      .prepare(
+        `SELECT event_id FROM room_events
+      WHERE room_id=? AND aggregate_type='task' AND aggregate_id=?
+        AND type='task.created' AND actor_id=?
+        AND json_extract(payload_json, '$.runAttemptId')=? LIMIT 1`,
+      )
+      .get(scope.roomId, taskId, scope.participantId, scope.runAttemptId) !==
+    undefined
+  );
+}
+
+/** Read visibility is Room membership; mutation delivery/claim checks stay separate. */
+export function requireWorkerTaskVisibility(
+  database: DatabaseSync,
+  scope: WorkerVisibleRoomScope,
+  taskId: string,
+): Row {
+  const task = database
+    .prepare("SELECT * FROM tasks WHERE task_id = ?")
+    .get(taskId);
+  if (task === undefined)
+    throw new NotFoundError(`task ${taskId} was not found`);
+  if (text(task, "room_id") !== scope.roomId)
+    throw new ForbiddenError(
+      `Task ${taskId} is outside this Worker execution scope`,
+    );
+  requireWorkerRoomVisibility(database, scope);
+  return task;
+}
+
+export function requireWorkerRoomVisibility(
+  database: DatabaseSync,
+  scope: WorkerVisibleRoomScope,
+): void {
+  const member = database
+    .prepare(
+      `SELECT principals.principal_id FROM memberships
+    JOIN principals ON principals.principal_id = memberships.principal_id
+    LEFT JOIN agent_definitions ON agent_definitions.participant_id = principals.principal_id
+    WHERE memberships.room_id = ? AND memberships.principal_id = ? AND principals.kind = 'agent'
+      AND (agent_definitions.state IS NULL OR agent_definitions.state = 'enabled')`,
+    )
+    .get(scope.roomId, scope.participantId);
+  if (member === undefined)
+    throw new ForbiddenError(
+      `participant ${scope.participantId} is not an enabled Agent member of Room ${scope.roomId}`,
+    );
+}
+
+/** Prefer a still-visible Human creator; Agent authors fall back only to a unique Human. */
+export function workerTaskInputResponder(
+  database: DatabaseSync,
+  task: Row,
+): string {
+  const humans = database
+    .prepare(
+      `SELECT principals.principal_id FROM memberships
+    JOIN principals ON principals.principal_id = memberships.principal_id
+    WHERE memberships.room_id = ? AND principals.kind = 'human' ORDER BY principals.principal_id`,
+    )
+    .all(text(task, "room_id"));
+  const creatorId = text(task, "creator_id");
+  if (humans.some((human) => text(human, "principal_id") === creatorId))
+    return creatorId;
+  if (humans.length === 1) return text(humans[0]!, "principal_id");
+  throw new ConflictError(
+    `Task ${text(task, "task_id")} requires exactly one current Human responder`,
+  );
 }

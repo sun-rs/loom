@@ -62,11 +62,11 @@ Kimi K3 与 OpenCode deepseek-v4-flash 各配 Executor、Auditor 两个角色，
 4 个 Activation 全部 completed、4 个 RunAttempt 全部 exit 0。保留现场
 `/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-real-role-contrast-8NGAJS`。门禁只断言基础设施事实，不断言行为。
 
-| 对照 | 结果 |
-|---|---|
-| A：同角色换 CLI（kimi-executor vs opencode-executor） | 两者都 claim-message 成 Task、写出精确文件、submitted、在 Task 线程汇报；差异仅为尾随换行与消息条数（2 vs 1） |
-| B：同 CLI 换角色（kimi-executor vs kimi-auditor） | 执行者写文件并提交；审计者不写文件、不建 Task，顶层说明"我审计而不执行"并列出审阅检查项与所需证据 |
-| C：同 CLI 换角色（opencode-executor vs opencode-auditor） | 同 B：执行者完成；审计者拒绝修改工作区并枚举 reviewer 检查项 |
+| 对照                                                      | 结果                                                                                                          |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| A：同角色换 CLI（kimi-executor vs opencode-executor）     | 两者都 claim-message 成 Task、写出精确文件、submitted、在 Task 线程汇报；差异仅为尾随换行与消息条数（2 vs 1） |
+| B：同 CLI 换角色（kimi-executor vs kimi-auditor）         | 执行者写文件并提交；审计者不写文件、不建 Task，顶层说明"我审计而不执行"并列出审阅检查项与所需证据             |
+| C：同 CLI 换角色（opencode-executor vs opencode-auditor） | 同 B：执行者完成；审计者拒绝修改工作区并枚举 reviewer 检查项                                                  |
 
 评判：切换 CLI 的行为差异明显小于切换角色的差异，第 2 项出口达成。瑕疵：kimi-auditor 先发了一条多余的顶层 "test"，
 并在正文里自称"CLI 崩了两次"，而账本只有 1 个 Activation 与 1 个 exit 0 的 RunAttempt——这是 provider 自述，不是账本事实，

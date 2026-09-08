@@ -46,7 +46,12 @@ try {
   process.stdout.write(
     `Open ${running.descriptor.webOrigin} in Firefox or Chrome.\n`,
   );
-  await waitForShutdownSignal();
+  await Promise.race([
+    waitForShutdownSignal(),
+    running.failed.then((error) => {
+      throw error;
+    }),
+  ]);
 } finally {
   await running?.stop();
   await releaseLease.release();

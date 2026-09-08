@@ -11,7 +11,6 @@ test("settings navigation exposes the applicable Raft contract and omits cloud c
     "notifications",
     "server",
     "administration",
-    "managed-mcp",
     "lan-devices",
     "about",
     "docs",

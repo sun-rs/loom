@@ -1,3 +1,9 @@
+import { AttachmentComments } from "./attachment-comments.tsx";
+import {
+  attachmentAnchorAt,
+  jumpToAttachmentAnchor,
+  type AttachmentAnchor,
+} from "../attachment-comment-anchors.ts";
 import { AttachmentMediaPreview } from "./attachment-media-preview.tsx";
 import { ActionMenu } from "@rah-os/ui-web/neo-brutalist/action-menu";
 import { EmptyState } from "@rah-os/ui-web/neo-brutalist/empty-state";
@@ -294,6 +300,43 @@ function FilePreview({
     error?: string;
   }>();
   const dialogRef = useDialogProtocol({ blocked: false, onClose });
+  const previewRef = useRef<HTMLDivElement>(null);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [pendingAnchor, setPendingAnchor] = useState<AttachmentAnchor>();
+  const [videoTime, setVideoTime] = useState<number>();
+  function selectAnchor(node: Node | null) {
+    if (!previewRef.current) return;
+    const selection = window.getSelection();
+    let anchor = attachmentAnchorAt(previewRef.current, node, kind);
+    if (selection && !selection.isCollapsed && selection.rangeCount) {
+      const range = selection.getRangeAt(0);
+      const start = attachmentAnchorAt(
+        previewRef.current,
+        range.startContainer,
+        kind,
+      );
+      const end = attachmentAnchorAt(
+        previewRef.current,
+        range.endContainer,
+        kind,
+      );
+      if (start && end && start.type === end.type) {
+        anchor = {
+          ...start,
+          data: { ...start.data, quote: selection.toString().slice(0, 1000) },
+        };
+        if (
+          typeof start.data.start === "number" &&
+          typeof end.data.end === "number"
+        )
+          anchor.data.end = end.data.end;
+      }
+    }
+    if (anchor) {
+      setPendingAnchor(anchor);
+      setCommentsOpen(true);
+    }
+  }
   useEffect(() => {
     const controller = new AbortController();
     if (attachmentMediaPreview(file.mimeType, file.filename))
@@ -354,6 +397,27 @@ function FilePreview({
       >
         <header>
           <h2>{file.filename}</h2>
+          <button
+            type="button"
+            aria-expanded={commentsOpen}
+            onClick={() => setCommentsOpen((value) => !value)}
+          >
+            评论
+          </button>
+          {videoTime !== undefined && (
+            <button
+              type="button"
+              onClick={() => {
+                setPendingAnchor({
+                  type: "video-timestamp",
+                  data: { time: videoTime },
+                });
+                setCommentsOpen(true);
+              }}
+            >
+              评论当前时间
+            </button>
+          )}
           <button type="button" onClick={onDownload} disabled={downloadPending}>
             {downloadPending ? "下载中…" : "下载"}
           </button>
@@ -366,34 +430,91 @@ function FilePreview({
             ×
           </button>
         </header>
-        <div className="rah-file-preview-body">
-          {downloadError && <p role="alert">{downloadError}</p>}
-          {attachmentMediaPreview(file.mimeType, file.filename) ? (
-            <AttachmentMediaPreview
-              file={file}
-              media={attachmentMediaPreview(file.mimeType, file.filename)!}
-              client={context?.client}
-            />
-          ) : !content ? (
-            <p>正在加载…</p>
-          ) : content.image ? (
-            <img alt={file.filename} src={content.image} />
-          ) : content.text !== undefined ? (
-            kind === "image" ||
-            kind === "unsupported" ||
-            kind === "pdf" ||
-            kind === "audio" ||
-            kind === "video" ? (
-              <p>此文件不提供内嵌预览，请下载查看。</p>
-            ) : (
-              <AttachmentTextPreview
-                filename={file.filename}
-                kind={kind}
-                text={content.text}
+        <div className="rah-file-preview-columns">
+          <div
+            className="rah-file-preview-body"
+            ref={previewRef}
+            data-anchor-scope="attachment"
+            onMouseUp={(event) => {
+              if (
+                !(event.target instanceof Element) ||
+                !event.target.closest("a, button, input, video, audio")
+              )
+                selectAnchor(event.target as Node);
+            }}
+            onTimeUpdate={(event) => {
+              const media = event.target;
+              if (media instanceof HTMLVideoElement)
+                setVideoTime(
+                  media.paused && media.currentTime > 0
+                    ? Math.round(media.currentTime * 1000) / 1000
+                    : undefined,
+                );
+            }}
+            onPause={(event) => {
+              const media = event.target;
+              if (media instanceof HTMLVideoElement)
+                setVideoTime(
+                  media.currentTime > 0
+                    ? Math.round(media.currentTime * 1000) / 1000
+                    : undefined,
+                );
+            }}
+            onPlay={() => setVideoTime(undefined)}
+          >
+            {downloadError && <p role="alert">{downloadError}</p>}
+            {attachmentMediaPreview(file.mimeType, file.filename) ? (
+              <AttachmentMediaPreview
+                file={file}
+                media={attachmentMediaPreview(file.mimeType, file.filename)!}
+                client={context?.client}
               />
-            )
-          ) : (
-            <p>{content.error}</p>
+            ) : !content ? (
+              <p>正在加载…</p>
+            ) : content.image ? (
+              <img alt={file.filename} src={content.image} />
+            ) : content.text !== undefined ? (
+              kind === "image" ||
+              kind === "unsupported" ||
+              kind === "pdf" ||
+              kind === "audio" ||
+              kind === "video" ? (
+                <p>此文件不提供内嵌预览，请下载查看。</p>
+              ) : (
+                <AttachmentTextPreview
+                  filename={file.filename}
+                  kind={kind}
+                  text={content.text}
+                  commentMode={commentsOpen}
+                  onAnchor={setPendingAnchor}
+                />
+              )
+            ) : (
+              <p>{content.error}</p>
+            )}
+          </div>
+          {context && (
+            <AttachmentComments
+              key={file.attachmentId}
+              client={context.client}
+              attachmentId={file.attachmentId}
+              filename={file.filename}
+              kind={kind}
+              open={commentsOpen}
+              pendingAnchor={pendingAnchor}
+              onClearAnchor={() => setPendingAnchor(undefined)}
+              onToggle={() => setCommentsOpen((value) => !value)}
+              onJump={(anchor) => {
+                const jumped =
+                  !!previewRef.current &&
+                  jumpToAttachmentAnchor(previewRef.current, anchor, kind);
+                if (jumped && window.matchMedia("(max-width: 767px)").matches) {
+                  setCommentsOpen(false);
+                  setPendingAnchor(undefined);
+                }
+                return jumped;
+              }}
+            />
           )}
         </div>
       </section>

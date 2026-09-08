@@ -1,11 +1,11 @@
 import type { NavigationTarget } from "@rah-os/protocol";
 
-import type { AgentRouteTab } from "./agent-route.ts";
+import { normalizeAgentRouteTab, type AgentRouteTab } from "./agent-route.ts";
 import type { GlobalSurface } from "./global-discovery-model.ts";
 
 export type ProductNavigationRequest = {
   target: NavigationTarget;
-  surface?: "activity";
+  surface?: "activity" | "tasks";
 };
 
 export type NavigationPresentation = {
@@ -21,12 +21,12 @@ export type NavigationPresentation = {
 
 export function navigationPresentation(
   target: NavigationTarget,
-  originSurface?: "activity",
+  originSurface?: "activity" | "tasks",
 ): NavigationPresentation {
   if (target.kind === "agent")
     return {
       agentDefinitionId: target.agentDefinitionId,
-      agentTab: target.tab ?? "profile",
+      agentTab: normalizeAgentRouteTab(target.tab),
       surface: "agents",
       tab: "chat",
     };
@@ -59,6 +59,14 @@ export function navigationPresentation(
   if (target.kind === "task")
     return {
       ...common,
+      ...(originSurface === "tasks"
+        ? {
+            surface: "tasks" as const,
+            ...(target.rootMessageId === undefined
+              ? {}
+              : { focusedMessageId: target.rootMessageId }),
+          }
+        : {}),
       tab: "tasks",
       ...(target.rootMessageId === undefined
         ? {}
@@ -85,6 +93,13 @@ export function navigationSearch(
 ): string {
   const params = new URLSearchParams();
   const { target } = request;
+  if (request.surface === "tasks" && target.kind === "task") {
+    params.set("surface", "tasks");
+    const current = new URLSearchParams(currentSearch);
+    if (current.get("surface") === "tasks")
+      for (const key of ["channel", "creator", "assignee", "view"])
+        for (const value of current.getAll(key)) params.append(key, value);
+  }
   if (
     request.surface === "activity" &&
     retainsActivityBackground(request.target)
@@ -98,7 +113,7 @@ export function navigationSearch(
   if (target.kind === "agent") {
     params.set("surface", "agents");
     params.set("agent", target.agentDefinitionId);
-    params.set("agentTab", target.tab ?? "profile");
+    params.set("agentTab", normalizeAgentRouteTab(target.tab));
     return `?${params}`;
   }
   if (target.kind === "computer") {

@@ -3,7 +3,11 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 
-const source = ["room-files.tsx", "file-preview-renderers.tsx"]
+const source = [
+  "room-files.tsx",
+  "file-preview-renderers.tsx",
+  "html-file-preview.tsx",
+]
   .map((name) =>
     readFileSync(
       join(import.meta.dirname, "..", "src", "components", name),
@@ -28,8 +32,11 @@ test("Raft Files actions and the rich attachment preview share one bounded frame
   assert.match(source, /className="sq-btn rah-file-overflow"/u);
   assert.match(source, /classifyAttachmentPreview/u);
   assert.match(source, /client\.files\s*\.previewText/u);
-  assert.match(source, /<MessageMarkdown source=\{clipped\.value\}/u);
-  assert.match(source, /sandbox=""/u);
+  assert.match(source, /<MessageMarkdown source=\{text\}/u);
+  assert.match(source, /sandbox="allow-scripts"/u);
+  assert.doesNotMatch(source, /sandbox="[^"]*allow-same-origin/u);
+  assert.match(source, /script-src \$\{url\}/u);
+  assert.match(source, /event.source !== element.contentWindow/u);
   assert.match(source, /MAX_RENDERED_PREVIEW_CHARACTERS/u);
   assert.match(source, /MAX_CSV_PREVIEW_ROWS/u);
   assert.match(

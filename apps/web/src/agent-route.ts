@@ -5,7 +5,6 @@ export const AGENT_ROUTE_TABS = [
   "reminders",
   "workspace",
   "apps",
-  "mcp",
 ] as const;
 
 export type AgentRouteTab = (typeof AGENT_ROUTE_TABS)[number];
@@ -29,6 +28,12 @@ export type AgentRouteSelection =
     };
 
 const AGENT_ROUTE_TAB_SET = new Set<string>(AGENT_ROUTE_TABS);
+
+export function normalizeAgentRouteTab(value: unknown): AgentRouteTab {
+  return typeof value === "string" && AGENT_ROUTE_TAB_SET.has(value)
+    ? (value as AgentRouteTab)
+    : "profile";
+}
 
 export function agentDirectoryRootRoute(): AgentRouteSelection {
   return { agentDefinitionId: undefined, tab: "profile" };
@@ -62,10 +67,7 @@ export function agentRouteFromSearch(search: string): AgentRouteSelection {
   return {
     agentDefinitionId:
       rawAgent && rawAgent.length <= 512 ? rawAgent : undefined,
-    tab:
-      rawTab && AGENT_ROUTE_TAB_SET.has(rawTab)
-        ? (rawTab as AgentRouteTab)
-        : "profile",
+    tab: normalizeAgentRouteTab(rawTab),
   };
 }
 

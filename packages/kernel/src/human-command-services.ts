@@ -1,3 +1,5 @@
+import { TaskDeletionService } from "./task-deletion.ts";
+import { TaskAmendmentService } from "./task-amendment.ts";
 import type { DatabaseSync } from "node:sqlite";
 
 import type {
@@ -9,6 +11,7 @@ import { HumanSidebar } from "./human-sidebar.ts";
 import { HumanNavigation } from "./human-navigation.ts";
 import { HumanPublicChannels } from "./public-channel.ts";
 import { HumanProfiles } from "./human-profile.ts";
+import { HumanTaskHistory } from "./human-task-history.ts";
 import { HumanNotifications } from "./human-notifications.ts";
 import { MessageSocial } from "./message-social.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
@@ -23,6 +26,7 @@ export function createHumanCommandServices(options: {
   requireWorker: (
     worker: AuthenticatedWorkerExecutionContext,
   ) => import("@rah-os/protocol").ActivationCredentialScope;
+  assertFreshContext(roomId: string, actorId: string, seq: number): void;
   createId: (prefix: string) => string;
   database: DatabaseSync;
   events: RoomEventWriter;
@@ -51,6 +55,9 @@ export function createHumanCommandServices(options: {
     ) => humanActivity.followers(options.requireActor(actor), input),
     humanNavigation: new HumanNavigation(context),
     humanProfiles: new HumanProfiles(context),
+    humanTaskHistory: new HumanTaskHistory(context),
+    taskAmendments: new TaskAmendmentService(options),
+    taskDeletions: new TaskDeletionService(options),
     publicChannels: new HumanPublicChannels({
       ...context,
       events: options.events,

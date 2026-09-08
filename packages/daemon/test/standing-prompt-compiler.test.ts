@@ -245,6 +245,17 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
   assert.match(prompt, /@<handle>.*message-post/isu);
   assert.match(prompt, /Mention others, not yourself/iu);
   assert.match(prompt, /Room is the isolation boundary/iu);
+  assert.match(prompt, /--thread-id <threadId>/u);
+  assert.match(prompt, /multiple merged targets require explicit selection/u);
+  assert.match(
+    prompt,
+    /task_linked_run_diagnostics.*do not treat every entry as Task-specific evidence/isu,
+  );
+  assert.match(
+    prompt,
+    /Legacy compatibility only.*explicitly selected formal reviewers/isu,
+  );
+  assert.match(prompt, /ordinary conversational audit has no reviewer role/iu);
   assert.match(prompt, /RAH_WORKER_CLI.*worker task-create/u);
   assert.match(prompt, /task-create.*unassigned.*todo/isu);
   assert.match(prompt, /cannot assign another participant/isu);

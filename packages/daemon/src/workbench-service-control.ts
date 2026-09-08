@@ -11,7 +11,7 @@ export async function handleWorkbenchServiceControl(
   request: IncomingMessage,
   response: ServerResponse,
   control: WorkbenchServiceControl | undefined,
-  authenticated: boolean,
+  isAuthenticated: () => boolean,
   sameOrigin: boolean,
 ): Promise<void> {
   const send = (status: number, body: object) => {
@@ -21,7 +21,7 @@ export async function handleWorkbenchServiceControl(
     });
     response.end(JSON.stringify(body));
   };
-  if (!authenticated) return send(401, { error: "unauthorized" });
+  if (!isAuthenticated()) return send(401, { error: "unauthorized" });
   if (
     request.method === "GET" &&
     request.url?.split("?")[0] === "/_rah/service"
@@ -53,6 +53,8 @@ export async function handleWorkbenchServiceControl(
     return send(400, { error: "invalid_request" });
   }
   if (!parsed.success) return send(400, { error: "invalid_request" });
+  // The session may have been revoked while receiving the request body.
+  if (!isAuthenticated()) return send(401, { error: "unauthorized" });
   const result = control.restart(parsed.data.generation);
   send(result === "accepted" ? 202 : 409, { result, ...control.status() });
 }

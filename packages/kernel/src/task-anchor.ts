@@ -64,9 +64,16 @@ export function createAnchoredTaskProjection(
   const taskNumber = integer(
     database
       .prepare(
-        "SELECT COALESCE(MAX(task_number), 0) + 1 AS task_number FROM tasks WHERE room_id = ?",
+        `SELECT COALESCE(MAX(task_number), 0) + 1 AS task_number FROM (
+          SELECT task_number FROM tasks WHERE room_id = ?
+          UNION ALL
+          SELECT json_extract(payload_json, '$.taskNumber') AS task_number
+          FROM room_events WHERE room_id = ? AND aggregate_type = 'task'
+            AND type IN ('task.created', 'task.deleted')
+            AND json_type(payload_json, '$.taskNumber') = 'integer'
+        )`,
       )
-      .get(command.roomId)!,
+      .get(command.roomId, command.roomId)!,
     "task_number",
   );
   if (command.sourceMessageId === undefined) {
@@ -192,7 +199,12 @@ export function resolveTaskAnchorTitle(
   if (nullableText(message, "thread_id") !== null) {
     throw new ConflictError("Only a top-level Message can become a Task");
   }
-  return text(message, "body");
+  const body = text(message, "body");
+  if (body.trim().length === 0)
+    throw new ConflictError(
+      "A Message without text needs an explicit titled Task; attachment-only conversion is unavailable",
+    );
+  return body;
 }
 
 export function assertTaskAnchorAvailable(

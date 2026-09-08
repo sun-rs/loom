@@ -156,3 +156,33 @@ test("Activity Room targets leave the feed while Thread targets retain its backg
     "activity",
   );
 });
+
+test("global Task selection retains its board and filters while ordinary Room Tasks keep their Thread route", () => {
+  const target = {
+    kind: "task" as const,
+    roomId: "room-1",
+    taskId: "task-1",
+    threadId: "thread-1",
+    rootMessageId: "root-1",
+  };
+  assert.equal(navigationPresentation(target, "tasks").surface, "tasks");
+  const query = new URLSearchParams(
+    navigationSearch(
+      { target, surface: "tasks" },
+      "?surface=tasks&channel=room-1&channel=room-2&creator=human-1&assignee=agent-1&view=list&q=unrelated",
+    ),
+  );
+  assert.equal(query.get("surface"), "tasks");
+  assert.deepEqual(query.getAll("channel"), ["room-1", "room-2"]);
+  assert.equal(query.get("creator"), "human-1");
+  assert.equal(query.get("assignee"), "agent-1");
+  assert.equal(query.get("view"), "list");
+  assert.equal(query.get("task"), "task-1");
+  assert.equal(query.get("thread"), "room-1:root-1");
+  assert.equal(query.has("q"), false);
+  assert.equal(navigationPresentation(target).surface, "room");
+  assert.equal(
+    navigationPresentation({ kind: "room", roomId: "room-1" }, "tasks").surface,
+    "room",
+  );
+});

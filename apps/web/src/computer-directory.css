@@ -186,6 +186,7 @@
 }
 
 .rah-computer-runtime-chips {
+  align-items: center;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -196,9 +197,13 @@
   background: var(--cyan);
   border: var(--bd);
   color: var(--black);
-  font: 700 11px/16px var(--sans);
-  min-height: 24px;
-  padding: 2px 8px;
+  /* MachineDetailPanel-DkiunI4y: h-6 px-2.5 py-1 text-sm font-bold;
+     RuntimeUsageTrigger adds inline-flex/items-center. */
+  align-items: center;
+  display: inline-flex;
+  font: 700 14px/20px var(--sans);
+  height: 24px;
+  padding: 4px 10px;
 }
 
 .rah-computer-runtime-chips > button {
@@ -211,7 +216,8 @@
 }
 
 .rah-computer-runtime-chips > .is-missing {
-  background: var(--gray-chip);
+  background: var(--runtime-unavailable-bg);
+  border-color: var(--ink-30);
   color: var(--ink-40);
 }
 

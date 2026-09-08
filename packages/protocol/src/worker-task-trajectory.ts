@@ -3,11 +3,9 @@ import { z } from "zod";
 import { IdentifierSchema } from "./common.ts";
 import { RuntimeTrajectoryRecordSchema } from "./runtime-activity.ts";
 
-/**
- * Supervision visibility: a reviewer named on a Task reads the owner's recorded
- * tool-call trajectory for that Task before recording a Review, so a
- * changes_requested can cite concrete command and file evidence.
- */
+/** Any current Room Agent may read bounded Task-linked Run diagnostics.
+ * Runs can contain unrelated work; this response does not establish per-tool
+ * Task ownership and is never canonical completion evidence. */
 export const WorkerTaskTrajectoryRequestSchema = z
   .object({
     taskId: IdentifierSchema,
@@ -23,6 +21,7 @@ export const WorkerTaskTrajectoryResponseSchema = z
   .object({
     taskId: IdentifierSchema,
     ownerParticipantId: IdentifierSchema,
+    scope: z.literal("task_linked_run_diagnostics"),
     entries: z.array(RuntimeTrajectoryRecordSchema).max(200),
     nextBeforeSequence: z.number().int().positive().optional(),
   })

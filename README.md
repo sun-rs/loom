@@ -1,5 +1,15 @@
 # RAH OS
 
+当前续批交付：[跨目标静音、文件与草稿、公开资料及附件评论界面](./docs/audits/2026-09-08-remaining-parity-implementation.zh-CN.md)。包含正式重启验收与明确剩余边界。
+
+当前交付：[Task 修改、完整历史与上传能力查询及正式重启验收](./docs/audits/2026-09-08-task-amend-upload-capabilities.zh-CN.md)。
+
+前端交付：[Task 弹窗、Search 计数、Computer 标签与底栏偏移修复](./docs/audits/2026-09-08-frontend-parity-repair.zh-CN.md)。
+
+此前交付：[双轨差异审查、MCP 模块退役及正式重启验收](./docs/audits/2026-09-08-two-track-parity-and-mcp-retirement.zh-CN.md)。
+
+2026-09-08 产品范围更新：[用户明确移除 RAH 托管 MCP 模块](./docs/product/managed-mcp-retirement.zh-CN.md)；旧清单中的 MCP 配置、分配、调用不再作为复刻缺口，Provider 自有工具与 Room Worker 通信保留。实施及验收以本批交付证据为准。
+
 The maintained frontend standard is [RAH Neo-Brutalist UI](./docs/design/neo-brutalist-ui.md):
 internal assets, shared components, executable templates and linked behavior contracts.
 No external `raft-ui` checkout is needed for build, runtime or library maintenance.
@@ -32,7 +42,7 @@ not first-release blockers. [Scope decision and mainline order](./docs/product/s
 supersede earlier public-Channel closure priorities; existing authentication and
 Agent execution/memory boundaries remain required.
 
-Current remaining work and evidence limits: [2026-09-06 source audit and construction order](./docs/audits/2026-09-06-current-alignment-and-construction-order.zh-CN.md). Historical capability notes below are not current missing-feature lists; use the dated delivery evidence in [docs/README.md](./docs/README.md).
+Previous delivery: [evidence-led A1/A2/A3/A8 repairs and formal restart](./docs/audits/2026-09-08-evidence-led-repairs.zh-CN.md). A4/A5/A6/A7 remain subject to local contract decisions or further evidence. [Raft source and live behavior revalidation](./docs/audits/2026-09-08-raft-behavior-revalidation.zh-CN.md) distinguishes local contract defects from proven upstream parity differences; several server-side comparisons remain unknown. [Integration evidence and remaining parity gaps](./docs/audits/2026-09-08-parallel-closure-integration.zh-CN.md) remain scoped historical results. Historical capability notes below are not current missing-feature lists; use the dated delivery evidence in [docs/README.md](./docs/README.md).
 
 Agent memory follows the [Raft-baseline-first contract](./docs/product/agent-memory-raft-baseline.zh-CN.md): one persistent Agent-owned `MEMORY.md + notes/`, complete original-index reads, and no automatic text splitting or selection. Optional enhancements must be independently testable and reversible; source reuse, host adaptation and unfinished integration are recorded separately.
 

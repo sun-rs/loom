@@ -16,7 +16,7 @@ Raft 无对应合同：`agentApiContract.ts` 全文无 `reviewer`/`collaborator`
 ### 实现
 
 - kernel：新表 `room_task_defaults(room_id PK REFERENCES rooms, default_assignee_id, default_collaborator_ids_json,
-  default_reviewer_ids_json, updated_at)`，schema v51 迁移（含对无外键预发布表的重建）；owner 模块 `room-task-defaults.ts`
+default_reviewer_ids_json, updated_at)`，schema v51 迁移（含对无外键预发布表的重建）；owner 模块 `room-task-defaults.ts`
   （读路径过滤非成员、无负责人则清空次要角色；写路径校验全部为启用的 Agent 成员）；`room.updated` 事件携带 `taskDefaults`；
   成员移除、退出、Agent 墓碑三条路径写侧清理；Room 擦除器覆盖新表。
 - protocol：`RoomTaskDefaultsSchema`（唯一、负责人不在两表、两表互斥、无负责人不得有次要角色）；`ClientRoomSchema` 与

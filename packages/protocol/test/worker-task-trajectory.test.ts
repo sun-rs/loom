@@ -67,6 +67,7 @@ test("Worker Task trajectory response round-trips owner tool-call evidence", () 
     entries: [record],
     nextBeforeSequence: 7,
     ownerParticipantId: "agent-owner",
+    scope: "task_linked_run_diagnostics",
     taskId: "task-1",
   });
   assert.equal(parsed.entries.length, 1);
@@ -76,6 +77,7 @@ test("Worker Task trajectory response round-trips owner tool-call evidence", () 
     WorkerTaskTrajectoryResponseSchema.parse({
       entries: [],
       ownerParticipantId: "agent-owner",
+      scope: "task_linked_run_diagnostics",
       taskId: "task-1",
     }).nextBeforeSequence,
     undefined,
@@ -84,6 +86,7 @@ test("Worker Task trajectory response round-trips owner tool-call evidence", () 
     WorkerTaskTrajectoryResponseSchema.safeParse({
       entries: [],
       ownerParticipantId: "agent-owner",
+      scope: "task_linked_run_diagnostics",
       taskId: "task-1",
       unknown: true,
     }).success,

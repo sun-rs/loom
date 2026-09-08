@@ -1,3 +1,42 @@
+import type { WorkerProfileMetadataPort } from "@rah-os/kernel";
+import {
+  WorkerIntrospectionRequestSchema,
+  WorkerLiveVersionResponseSchema,
+} from "@rah-os/protocol";
+import {
+  WorkerChannelAttentionRequestSchema,
+  WorkerChannelAttentionResponseSchema,
+} from "@rah-os/protocol";
+import {
+  TaskAmendRequestSchema,
+  TaskDeleteRequestSchema,
+  TaskDeleteResponseSchema,
+  TASK_CARD_TRANSPORT_MAX_BYTES,
+} from "@rah-os/protocol";
+import {
+  uploadWorkerSelfAvatar,
+  type WorkerProfileImageStore,
+} from "./worker-profile-image-upload.ts";
+import {
+  mapProfileImageStorageError,
+  ProfileImageRequestError,
+} from "./client-profile-image-routes.ts";
+import { ProfileImageMimeTypeSchema } from "@rah-os/protocol";
+import {
+  WorkerSelfProfileGetRequestSchema,
+  WorkerSelfProfileUpdateRequestSchema,
+  WorkerSelfProfileResponseSchema,
+  WorkerSelfProfileUpdateResponseSchema,
+} from "@rah-os/protocol";
+import {
+  WorkerTaskAssignRequestSchema,
+  WorkerTaskUnblockRequestSchema,
+  WorkerTaskConvertRequestSchema,
+} from "@rah-os/protocol";
+import {
+  WORKER_READ_ROUTE_PATHS,
+  handleWorkerReadRequest,
+} from "./worker-read-handler.ts";
 import { createHash, randomBytes } from "node:crypto";
 import {
   createServer,
@@ -16,8 +55,6 @@ import {
   type RoomKernel,
 } from "@rah-os/kernel";
 import {
-  WorkerMessageSearchRequestSchema,
-  WorkerMessageSearchResponseSchema,
   WorkerMessageReactionRequestSchema,
   MessageSocialItemSchema,
   ActivationCredentialScopeSchema,
@@ -25,6 +62,9 @@ import {
   WorkerAcknowledgeResponseSchema,
   WorkerArtifactPrepareRequestSchema,
   WorkerArtifactUploadSchema,
+  WorkerMessageAttachmentPrepareRequestSchema,
+  WorkerMessageAttachmentUploadSchema,
+  WorkerMessageAttachmentCancelRequestSchema,
   WorkerErrorResponseSchema,
   WorkerMessagePostResponseSchema,
   WorkerMessagePostRequestSchema,
@@ -37,10 +77,6 @@ import {
   WorkerReminderScheduleRequestSchema,
   WorkerReminderSnoozeRequestSchema,
   WorkerReminderUpdateRequestSchema,
-  WorkerManagedMcpCallRequestSchema,
-  WorkerManagedMcpCallResponseSchema,
-  WorkerManagedMcpCatalogRequestSchema,
-  WorkerManagedMcpCatalogResponseSchema,
   WorkerSyncRequestSchema,
   WorkerSyncResponseSchema,
   WorkerTaskClaimRequestSchema,
@@ -72,8 +108,6 @@ import {
   type Task,
 } from "@rah-os/protocol";
 
-import type { ManagedMcpExecutorPort } from "./managed-mcp-executor.ts";
-
 export type { ActivationCredentialScope } from "@rah-os/protocol";
 
 export type IssuedActivationCredential = {
@@ -83,13 +117,14 @@ export type IssuedActivationCredential = {
 };
 
 export type WorkerApplicationServiceOptions = {
+  profileMetadata?: WorkerProfileMetadataPort;
+  serviceInfo?: () => { buildVersion: string; protocolVersion: number };
   deliveryEvidenceCollector?: TaskDeliveryEvidenceCollector;
   kernel: RoomKernel;
+  profileImageStore?: WorkerProfileImageStore;
   now?: () => Date;
   taskClaimHeartbeatIntervalMs?: number;
   taskClaimLeaseMs?: number;
-  managedMcpExecutor?: ManagedMcpExecutorPort;
-  managedMcpTimeoutMs?: number;
 };
 
 export type TaskDeliveryEvidenceUnavailableReason =
@@ -152,18 +187,22 @@ class HttpRequestError extends Error {
 const MAX_BODY_BYTES = 128 * 1_024;
 const DEFAULT_CREDENTIAL_TTL_MS = 30 * 60_000;
 const DEFAULT_TASK_CLAIM_LEASE_MS = 5 * 60_000;
-const DEFAULT_MANAGED_MCP_TIMEOUT_MS = 25_000;
 const WORKER_ARTIFACT_ROUTE =
   /^\/v1\/worker\/artifacts\/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/u;
 
+const WORKER_MESSAGE_ATTACHMENT_ROUTE =
+  /^\/v1\/worker\/attachments\/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/u;
+
 export const WORKER_HTTP_ROUTE_PATHS = [
+  "/v1/worker/attachments/prepare",
+  "/v1/worker/attachments/cancel",
+  ...WORKER_READ_ROUTE_PATHS,
+  "/v1/worker/version",
   "/v1/worker/acknowledge",
   "/v1/worker/artifacts/prepare",
   "/v1/worker/messages/post",
   "/v1/worker/messages/search",
   "/v1/worker/messages/react",
-  "/v1/worker/mcp/call",
-  "/v1/worker/mcp/tools",
   "/v1/worker/reminders/cancel",
   "/v1/worker/reminders/list",
   "/v1/worker/reminders/log",
@@ -172,9 +211,18 @@ export const WORKER_HTTP_ROUTE_PATHS = [
   "/v1/worker/reminders/update",
   "/v1/worker/sync",
   "/v1/worker/threads/unfollow",
+  "/v1/worker/channels/mute",
+  "/v1/worker/channels/unmute",
   "/v1/worker/tasks/claim",
   "/v1/worker/tasks/claim-message",
+  "/v1/worker/profile/self/get",
+  "/v1/worker/profile/self/update",
   "/v1/worker/tasks/create",
+  "/v1/worker/tasks/assign",
+  "/v1/worker/tasks/amend",
+  "/v1/worker/tasks/delete",
+  "/v1/worker/tasks/unblock",
+  "/v1/worker/tasks/convert",
   "/v1/worker/tasks/block",
   "/v1/worker/tasks/get",
   "/v1/worker/tasks/input-status",
@@ -190,30 +238,26 @@ export const WORKER_HTTP_ROUTE_PATHS = [
 const WORKER_ROUTES = new Set<string>(WORKER_HTTP_ROUTE_PATHS);
 
 export class WorkerApplicationService {
+  readonly #profileMetadata: WorkerProfileMetadataPort | undefined;
+  readonly #serviceInfo: WorkerApplicationServiceOptions["serviceInfo"];
   readonly #grants = new Map<string, WorkerGrant>();
   readonly #kernel: RoomKernel;
+  readonly #profileImageStore: WorkerProfileImageStore | undefined;
   readonly #deliveryEvidenceCollector:
     TaskDeliveryEvidenceCollector | undefined;
   readonly #now: () => Date;
   readonly #taskClaimHeartbeatIntervalMs: number;
   readonly #taskClaimLeaseMs: number;
-  readonly #managedMcpExecutor: ManagedMcpExecutorPort | undefined;
-  readonly #managedMcpTimeoutMs: number;
+
   #origin: string | undefined;
   #server: Server | undefined;
 
   constructor(options: WorkerApplicationServiceOptions) {
+    this.#serviceInfo = options.serviceInfo;
+    this.#profileMetadata = options.profileMetadata;
     this.#kernel = options.kernel;
+    this.#profileImageStore = options.profileImageStore;
     this.#deliveryEvidenceCollector = options.deliveryEvidenceCollector;
-    this.#managedMcpExecutor = options.managedMcpExecutor;
-    this.#managedMcpTimeoutMs =
-      options.managedMcpTimeoutMs ?? DEFAULT_MANAGED_MCP_TIMEOUT_MS;
-    if (
-      !Number.isInteger(this.#managedMcpTimeoutMs) ||
-      this.#managedMcpTimeoutMs <= 0
-    ) {
-      throw new Error("managedMcpTimeoutMs must be a positive integer");
-    }
     this.#now = options.now ?? (() => new Date());
     this.#taskClaimLeaseMs =
       options.taskClaimLeaseMs ?? DEFAULT_TASK_CLAIM_LEASE_MS;
@@ -393,14 +437,53 @@ export class WorkerApplicationService {
     response: ServerResponse,
   ): Promise<void> {
     const route = request.url;
+    if (
+      route === "/v1/worker/profile/self/avatar" &&
+      request.method === "PUT"
+    ) {
+      this.#authenticate(request);
+      if (!this.#profileImageStore)
+        throw new HttpRequestError(
+          "profile_image_unavailable",
+          "profile image storage is unavailable",
+          503,
+        );
+      const mimeType = ProfileImageMimeTypeSchema.safeParse(
+        request.headers["content-type"]?.split(";")[0]?.trim(),
+      );
+      if (!mimeType.success)
+        throw new HttpRequestError(
+          "profile_image_invalid",
+          "unsupported profile image MIME type",
+          400,
+        );
+      try {
+        const result = await uploadWorkerSelfAvatar({
+          profiles: this.#kernel.workerSelfProfile,
+          execution: () => this.#authenticate(request).execution,
+          store: this.#profileImageStore,
+          mimeType: mimeType.data,
+          chunks: request,
+        });
+        writeJson(response, 200, result);
+      } catch (error) {
+        throw mapProfileImageStorageError(error);
+      }
+      return;
+    }
+
+    const messageAttachmentMatch =
+      route === undefined ? null : WORKER_MESSAGE_ATTACHMENT_ROUTE.exec(route);
     const artifactMatch =
-      route === undefined ? null : WORKER_ARTIFACT_ROUTE.exec(route);
+      messageAttachmentMatch ??
+      (route === undefined ? null : WORKER_ARTIFACT_ROUTE.exec(route));
     if (artifactMatch !== null) {
       if (request.method === "GET") {
         const grant = this.#authenticate(request);
         const download = await this.#kernel.files.downloadWorkerTaskArtifact(
           grant.execution,
           artifactMatch[1]!,
+          messageAttachmentMatch !== null,
         );
         response.statusCode = 200;
         response.setHeader("content-length", String(download.attachment.size));
@@ -417,12 +500,32 @@ export class WorkerApplicationService {
         );
       }
       const grant = this.#authenticate(request);
-      const upload = await this.#kernel.files.uploadWorker(
-        grant.execution,
-        artifactMatch[1]!,
-        request,
+      const upload =
+        messageAttachmentMatch === null
+          ? await this.#kernel.files.uploadWorker(
+              grant.execution,
+              artifactMatch[1]!,
+              request,
+              () => {
+                this.#authenticate(request);
+              },
+            )
+          : await this.#kernel.files.uploadWorkerMessage(
+              grant.execution,
+              artifactMatch[1]!,
+              request,
+              () => {
+                this.#authenticate(request);
+              },
+            );
+      writeJson(
+        response,
+        200,
+        (messageAttachmentMatch === null
+          ? WorkerArtifactUploadSchema
+          : WorkerMessageAttachmentUploadSchema
+        ).parse(upload),
       );
-      writeJson(response, 200, WorkerArtifactUploadSchema.parse(upload));
       return;
     }
     if (request.method !== "POST") {
@@ -436,8 +539,97 @@ export class WorkerApplicationService {
       throw new HttpRequestError("not_found", "route was not found", 404);
     }
 
+    this.#authenticate(request);
+    const body = await readJsonObject(
+      request,
+      route === "/v1/worker/tasks/amend"
+        ? TASK_CARD_TRANSPORT_MAX_BYTES
+        : MAX_BODY_BYTES,
+    );
     const grant = this.#authenticate(request);
-    const body = await readJsonObject(request);
+    if (route === "/v1/worker/version") {
+      const input = parseWorkerRequest(WorkerIntrospectionRequestSchema, body);
+      this.#kernel.workerReads.whoami(grant.execution, input);
+      const version = this.#serviceInfo?.();
+      writeJson(
+        response,
+        200,
+        WorkerLiveVersionResponseSchema.parse({
+          source: "serving_daemon",
+          buildVersion: version?.buildVersion ?? null,
+          protocolVersion: version?.protocolVersion ?? null,
+        }),
+      );
+      return;
+    }
+    const readResult = handleWorkerReadRequest(
+      this.#kernel,
+      grant.execution,
+      route,
+      body,
+      parseWorkerRequest,
+      this.#profileMetadata,
+    );
+    if (readResult !== undefined) {
+      writeJson(response, 200, readResult);
+      return;
+    }
+    if (route === "/v1/worker/profile/self/get") {
+      const command = parseWorkerRequest(
+        WorkerSelfProfileGetRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        WorkerSelfProfileResponseSchema.parse(
+          this.#kernel.workerSelfProfile.get(grant.execution, command),
+        ),
+      );
+      return;
+    }
+    if (route === "/v1/worker/profile/self/update") {
+      const command = parseWorkerRequest(
+        WorkerSelfProfileUpdateRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        WorkerSelfProfileUpdateResponseSchema.parse(
+          this.#kernel.workerSelfProfile.update(grant.execution, command),
+        ),
+      );
+      return;
+    }
+    if (route === "/v1/worker/attachments/prepare") {
+      const command = parseWorkerRequest(
+        WorkerMessageAttachmentPrepareRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        WorkerMessageAttachmentUploadSchema.parse(
+          this.#kernel.files.prepareWorkerMessage(grant.execution, command),
+        ),
+      );
+      return;
+    }
+    if (route === "/v1/worker/attachments/cancel") {
+      const command = parseWorkerRequest(
+        WorkerMessageAttachmentCancelRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        WorkerMessageAttachmentUploadSchema.parse(
+          this.#kernel.files.cancelWorkerMessage(grant.execution, command),
+        ),
+      );
+      return;
+    }
     if (route === "/v1/worker/artifacts/prepare") {
       const command = parseWorkerRequest(
         WorkerArtifactPrepareRequestSchema,
@@ -450,86 +642,6 @@ export class WorkerApplicationService {
           this.#kernel.files.prepareWorker(grant.execution, command),
         ),
       );
-      return;
-    }
-    if (route === "/v1/worker/mcp/tools") {
-      parseWorkerRequest(WorkerManagedMcpCatalogRequestSchema, body);
-      writeJson(
-        response,
-        200,
-        WorkerManagedMcpCatalogResponseSchema.parse(
-          this.#kernel.managedMcp.listCatalog(grant.execution),
-        ),
-      );
-      return;
-    }
-    if (route === "/v1/worker/mcp/call") {
-      const command = parseWorkerRequest(
-        WorkerManagedMcpCallRequestSchema,
-        body,
-      );
-      const authorized = this.#kernel.managedMcp.authorizeCall(
-        grant.execution,
-        command,
-      );
-      const executor = this.#managedMcpExecutor;
-      if (executor === undefined) {
-        this.#kernel.managedMcp.failCall(grant.execution, {
-          failureCode: "executor_unavailable",
-          managedMcpCallId: authorized.call.managedMcpCallId,
-        });
-        throw new HttpRequestError(
-          "managed_mcp_unavailable",
-          "managed MCP executor is unavailable",
-          503,
-        );
-      }
-      const controller = new AbortController();
-      let timer: NodeJS.Timeout | undefined;
-      let result: ReturnType<typeof WorkerManagedMcpCallResponseSchema.parse>;
-      try {
-        result = WorkerManagedMcpCallResponseSchema.parse(
-          await Promise.race([
-            executor.call(
-              { ...authorized.call, executorRef: authorized.executorRef },
-              { signal: controller.signal },
-            ),
-            new Promise<never>((_resolve, reject) => {
-              timer = setTimeout(() => {
-                controller.abort();
-                reject(new ManagedMcpTimeoutError());
-              }, this.#managedMcpTimeoutMs);
-            }),
-          ]),
-        );
-      } catch (error) {
-        const failureCode =
-          error instanceof ManagedMcpTimeoutError
-            ? "timeout"
-            : error instanceof Error && error.name === "ZodError"
-              ? "invalid_result"
-              : "executor_failed";
-        this.#kernel.managedMcp.failCall(grant.execution, {
-          failureCode,
-          managedMcpCallId: authorized.call.managedMcpCallId,
-        });
-        throw new HttpRequestError(
-          failureCode === "timeout"
-            ? "managed_mcp_timeout"
-            : "managed_mcp_failed",
-          failureCode === "timeout"
-            ? "managed MCP call timed out"
-            : "managed MCP call failed",
-          failureCode === "timeout" ? 504 : 502,
-        );
-      } finally {
-        if (timer !== undefined) clearTimeout(timer);
-      }
-      const completed = this.#kernel.managedMcp.completeCall(grant.execution, {
-        managedMcpCallId: authorized.call.managedMcpCallId,
-        result,
-      });
-      writeJson(response, 200, completed);
       return;
     }
     if (route === "/v1/worker/sync") {
@@ -598,20 +710,6 @@ export class WorkerApplicationService {
       return;
     }
 
-    if (route === "/v1/worker/messages/search") {
-      const command = parseWorkerRequest(
-        WorkerMessageSearchRequestSchema,
-        body,
-      );
-      writeJson(
-        response,
-        200,
-        WorkerMessageSearchResponseSchema.parse(
-          this.#kernel.messageSocial.searchWorker(grant.execution, command),
-        ),
-      );
-      return;
-    }
     if (route === "/v1/worker/messages/react") {
       const command = parseWorkerRequest(
         WorkerMessageReactionRequestSchema,
@@ -629,15 +727,40 @@ export class WorkerApplicationService {
     }
     if (route === "/v1/worker/messages/post") {
       const command = parseWorkerRequest(WorkerMessagePostRequestSchema, body);
-      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      if (command.channel === undefined)
+        this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
       const mutation = this.#kernel.postWorkerMessage(grant.execution, command);
-      if ("event" in mutation) {
+      if ("event" in mutation && command.channel === undefined) {
         grant.knownRoomSeqs.add(mutation.event.roomSeq);
       }
       writeJson(response, 200, WorkerMessagePostResponseSchema.parse(mutation));
       return;
     }
 
+    if (
+      route === "/v1/worker/channels/mute" ||
+      route === "/v1/worker/channels/unmute"
+    ) {
+      const command = parseWorkerRequest(
+        WorkerChannelAttentionRequestSchema,
+        body,
+      );
+      if (command.channel === undefined)
+        this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      const result = this.#kernel.workerChannelAttention.set(
+        grant.execution,
+        command,
+        route.endsWith("/mute"),
+      );
+      if (command.channel === undefined)
+        grant.knownRoomSeqs.add(result.event.roomSeq);
+      writeJson(
+        response,
+        200,
+        WorkerChannelAttentionResponseSchema.parse(result),
+      );
+      return;
+    }
     if (route === "/v1/worker/threads/unfollow") {
       const command = parseWorkerRequest(
         WorkerThreadUnfollowRequestSchema,
@@ -732,10 +855,24 @@ export class WorkerApplicationService {
       return;
     }
 
+    if (route === "/v1/worker/tasks/delete") {
+      const command = parseWorkerRequest(TaskDeleteRequestSchema, body);
+      const deleted = this.#kernel.taskDeletions.worker(
+        grant.execution,
+        command,
+        () => this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq),
+      );
+      grant.knownRoomSeqs.add(deleted.event.roomSeq);
+      writeJson(response, 200, TaskDeleteResponseSchema.parse(deleted));
+      return;
+    }
     if (route.startsWith("/v1/worker/tasks/")) {
-      const mutation = await this.#handleTaskCommand(route, body, grant);
+      const mutation = await this.#handleTaskCommand(route, body, grant, () => {
+        this.#authenticate(request);
+      });
       grant.knownRoomSeqs.add(mutation.event.roomSeq);
-      this.#synchronizeTaskHeartbeat(grant, mutation.task);
+      if (route !== "/v1/worker/tasks/amend")
+        this.#synchronizeTaskHeartbeat(grant, mutation.task);
       writeJson(
         response,
         200,
@@ -743,7 +880,8 @@ export class WorkerApplicationService {
           ? WorkerTaskRequestInputResponseSchema.parse(mutation)
           : route === "/v1/worker/tasks/review"
             ? WorkerTaskReviewResponseSchema.parse(mutation)
-            : route === "/v1/worker/tasks/block" ||
+            : route === "/v1/worker/tasks/unblock" ||
+                route === "/v1/worker/tasks/block" ||
                 route === "/v1/worker/tasks/release"
               ? WorkerTaskAttentionMutationResponseSchema.parse(mutation)
               : WorkerTaskMutationResponseSchema.parse(mutation),
@@ -785,7 +923,35 @@ export class WorkerApplicationService {
     route: string,
     body: Record<string, unknown>,
     grant: WorkerGrant,
+    assertAuthorized: () => void,
   ) {
+    if (route === "/v1/worker/tasks/amend") {
+      const command = parseWorkerRequest(TaskAmendRequestSchema, body);
+      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      return this.#kernel.taskAmendments.worker(grant.execution, command);
+    }
+    if (route === "/v1/worker/tasks/unblock") {
+      const command = parseWorkerRequest(WorkerTaskUnblockRequestSchema, body);
+      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      return this.#kernel.workerTaskManagement.unblock(
+        grant.execution,
+        command,
+      );
+    }
+    if (route === "/v1/worker/tasks/assign") {
+      const command = parseWorkerRequest(WorkerTaskAssignRequestSchema, body);
+      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      const { activationIds: _activationIds, ...mutation } =
+        this.#kernel.workerTaskManagement.assign(grant.execution, command);
+      return mutation;
+    }
+    if (route === "/v1/worker/tasks/convert") {
+      const command = parseWorkerRequest(WorkerTaskConvertRequestSchema, body);
+      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      const { activationIds: _activationIds, ...mutation } =
+        this.#kernel.workerTaskManagement.convert(grant.execution, command);
+      return mutation;
+    }
     if (route === "/v1/worker/tasks/claim-message") {
       const command = parseWorkerRequest(
         WorkerTaskClaimMessageRequestSchema,
@@ -869,7 +1035,9 @@ export class WorkerApplicationService {
       grant,
       command.taskId,
       command.idempotencyKey,
+      assertAuthorized,
     );
+    assertAuthorized();
     return this.#kernel.submitTask(grant.execution, {
       basedOnRoomSeq: command.basedOnRoomSeq,
       deliveryRepository,
@@ -886,6 +1054,7 @@ export class WorkerApplicationService {
     grant: WorkerGrant,
     taskId: string,
     idempotencyKey: string,
+    assertAuthorized: () => void,
   ): Promise<TaskSubmissionRepositoryEvidence> {
     const baseline = grant.deliveryEvidenceBaseline;
     if (baseline === undefined) {
@@ -908,6 +1077,7 @@ export class WorkerApplicationService {
         503,
       );
     }
+    assertAuthorized();
     if (
       capture.baseCommit !== baseline.baseCommit ||
       capture.repositoryId !== baseline.repositoryId
@@ -939,6 +1109,7 @@ export class WorkerApplicationService {
           grant.execution,
           prepared.attachmentId,
           Readable.from([capture.patch]),
+          assertAuthorized,
         );
         if (uploaded.sha256 !== patchDigest.slice("sha256:".length)) {
           throw new HttpRequestError(
@@ -1080,7 +1251,10 @@ export class WorkerApplicationService {
       response.destroy();
       return;
     }
-    if (error instanceof HttpRequestError) {
+    if (
+      error instanceof HttpRequestError ||
+      error instanceof ProfileImageRequestError
+    ) {
       writeJson(
         response,
         error.status,
@@ -1121,17 +1295,16 @@ export class WorkerApplicationService {
   }
 }
 
-class ManagedMcpTimeoutError extends Error {}
-
 async function readJsonObject(
   request: IncomingMessage,
+  maxBytes = MAX_BODY_BYTES,
 ): Promise<Record<string, unknown>> {
   const chunks: Buffer[] = [];
   let bytes = 0;
   for await (const chunk of request) {
     const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
     bytes += buffer.byteLength;
-    if (bytes > MAX_BODY_BYTES) {
+    if (bytes > maxBytes) {
       throw new HttpRequestError(
         "body_too_large",
         "request body exceeds 128 KiB",

@@ -212,6 +212,7 @@ export function createWorkspaceEntities(input: Input) {
       : undefined,
     edges: Object.freeze(edges.map((edge) => Object.freeze(edge))),
     agent: (id: string) => agents.get(id),
+    agents: () => [...agents.values()],
     human: (id: string) => humans.get(id),
     humans: () => [...humans.values()],
     person: (id: string) => people.get(id),

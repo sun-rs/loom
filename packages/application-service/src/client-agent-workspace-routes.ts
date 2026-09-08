@@ -1,4 +1,8 @@
 import {
+  AgentSkillsListSchema,
+  AgentSkillsListRequestSchema,
+  type AgentSkillsList,
+  type ExecutionPolicyRevision,
   AgentWorkspaceSummarySchema,
   type AgentWorkspaceSummary,
   AgentWorkspaceListRequestSchema,
@@ -18,6 +22,10 @@ import type {
 } from "@rah-os/kernel";
 import type { ZodType } from "zod";
 export type AgentWorkspaceReadPort = {
+  skills?(
+    owner: string,
+    policy: ExecutionPolicyRevision,
+  ): Promise<AgentSkillsList>;
   summary?(owner: string): Promise<AgentWorkspaceSummary>;
   roots(owner: string): Promise<AgentWorkspaceRoots>;
   list(
@@ -33,6 +41,7 @@ export type AgentWorkspaceReadPort = {
   ): Promise<AgentWorkspaceFile>;
 };
 export const AGENT_WORKSPACE_PATHS = [
+  "/agents/skills/list",
   "/agents/workspace/roots",
   "/agents/workspace/summary",
   "/agents/workspace/list",
@@ -47,6 +56,31 @@ export async function routeAgentWorkspace(
   parse: <T>(schema: ZodType<T>, body: Record<string, unknown>) => T,
 ) {
   if (!port) throw new Error("此 Computer 尚未提供 Agent 工作区浏览能力");
+  if (path === "/agents/skills/list") {
+    const input = parse(AgentSkillsListRequestSchema, body);
+    const skills = port.skills;
+    if (!skills) throw new Error("此 Computer 尚未提供 Skills 读取能力");
+    const view = human.getWorkspaceAgentManagementView(
+      actor,
+      input.agentDefinitionId,
+    );
+    const result = await authorizedResult(
+      human,
+      actor,
+      input.agentDefinitionId,
+      async (owner) =>
+        AgentSkillsListSchema.parse(await skills(owner, view.policy)),
+    );
+    if (
+      human.getWorkspaceAgentManagementView(actor, input.agentDefinitionId)
+        .policy.executionPolicyRevisionId !==
+      view.policy.executionPolicyRevisionId
+    )
+      throw new Error(
+        "Agent runtime configuration changed while reading Skills; retry with current configuration",
+      );
+    return result;
+  }
   if (path.endsWith("/summary")) {
     const input = parse(AgentWorkspaceRootsRequestSchema, body);
     const summary = port.summary;

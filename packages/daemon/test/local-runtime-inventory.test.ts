@@ -22,6 +22,11 @@ test("configured Runtime availability follows the current canonical Offer", () =
     configured: [
       {
         available: true,
+        skillsConfiguration: {
+          known: true,
+          home: "/private-effective-home",
+          codexHome: "/private-effective-codex",
+        },
         displayName: "Codex",
         executable: "codex",
         modelBindingDescriptors: [],
@@ -40,6 +45,8 @@ test("configured Runtime availability follows the current canonical Offer", () =
   });
 
   assert.equal(response.runtimes[0]?.available, false);
+  assert.ok(!JSON.stringify(response).includes("private-effective"));
+  assert.ok(!Object.hasOwn(response.runtimes[0]!, "skillsConfiguration"));
 });
 
 test("Computer connection is heartbeat evidence, independent of CLI readiness", () => {

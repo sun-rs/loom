@@ -1,0 +1,172 @@
+/* Raft release/v1.12.0 index-BVfbaScj db/t9 and TaskModalHead-CFi1iRLr.
+   Structural port: same modal dimensions; existing RAH Thread and dialog owners. */
+.rah-task-detail-layer {
+  padding: 16px;
+}
+.rah-task-detail-dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(960px, calc(100vw - 2rem));
+  height: min(86vh, 900px);
+  max-height: calc(100dvh - 2rem);
+  overflow: hidden;
+  border: var(--bd-heavy);
+  background: var(--bg);
+  box-shadow: var(--shadow-l);
+  outline: none;
+}
+.rah-task-detail-bar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: var(--bd-heavy);
+}
+.rah-task-detail-bar > div {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+}
+.rah-task-detail-bar span {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.6;
+}
+.rah-task-detail-bar b {
+  font-size: 14px;
+}
+.rah-task-detail-dialog .thread-side-column {
+  position: relative;
+  inset: auto;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  border: 0;
+}
+.rah-task-detail-dialog .messages {
+  min-height: 0;
+}
+.rah-task-detail-metadata {
+  padding: 16px 20px;
+  border-bottom: var(--bd-heavy);
+}
+.rah-task-detail-dialog .rah-thread-task-body {
+  padding: 0;
+}
+.rah-thread-task-body
+  > :is(.msg, .rah-thread-history-heading, .rah-thread-empty-replies) {
+  margin-inline: 12px;
+}
+.rah-task-detail-metadata h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+.rah-task-detail-description {
+  margin-bottom: 16px;
+  overflow-wrap: anywhere;
+}
+.rah-task-detail-history {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgb(0 0 0 / 10%);
+}
+.rah-task-detail-history > button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: none;
+  padding: 0;
+  font-size: 12px;
+  text-align: left;
+}
+.rah-task-detail-history > button svg {
+  width: 14px;
+  height: 14px;
+}
+.rah-task-detail-properties {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 24px;
+  row-gap: 8px;
+  margin: 0;
+}
+.rah-task-detail-properties dt {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.rah-task-detail-properties dd {
+  margin: 0;
+  font-size: 14px;
+}
+.rah-task-detail-history-body {
+  margin-top: 12px;
+  font-size: 12px;
+}
+.rah-task-detail-history-body ol {
+  list-style: none;
+  padding: 0 0 0 12px;
+  border-left: 1px solid currentColor;
+}
+.rah-task-detail-history-body li {
+  margin-bottom: 12px;
+  overflow-wrap: anywhere;
+}
+.rah-task-detail-history-body li > b,
+.rah-task-detail-history-body li > span {
+  display: block;
+}
+.rah-task-detail-history-body li > span {
+  opacity: 0.6;
+}
+.rah-task-detail-history-body li p {
+  white-space: pre-wrap;
+}
+.rah-task-detail-history-pager {
+  display: flex;
+  gap: 8px;
+}
+.rah-task-detail-loading,
+.rah-task-detail-failure {
+  padding: 16px;
+}
+@media (max-width: 767px) {
+  .rah-task-detail-layer {
+    padding: 0;
+  }
+  .rah-task-detail-dialog {
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border: 0;
+    box-shadow: none;
+  }
+}
+
+.app.rah-global-shell.rah-task-modal-open {
+  grid-template-columns: var(--rail-w) minmax(0, 1fr);
+}
+.rah-task-detail-properties > div {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+.rah-task-detail-properties dt {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+@media (max-width: 767px) {
+  .app.rah-global-shell.rah-task-modal-open {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

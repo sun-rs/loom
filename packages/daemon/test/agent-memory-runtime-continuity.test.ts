@@ -9,7 +9,6 @@ import test from "node:test";
 import {
   AgentMemoryCoordinator,
   GenericProcessAdapter,
-  ManagedMcpRuntimeProxyRegistry,
   RuntimeCredentialEnvironmentBinding,
   RuntimeImplementationRegistry,
   RuntimeProfileRegistry,
@@ -66,6 +65,8 @@ process.stdout.write(JSON.stringify({
   memoryDirectory,
   memoryIndexPath,
   modelMarker: process.env.TEST_MODEL_MARKER,
+  providerMcpReference: process.env.PROVIDER_MCP_CONFIG_REFERENCE,
+  launchArgs: process.argv.slice(2),
   note: await readIfPresent(notePath),
   operation: process.env.TEST_MEMORY_OPERATION,
   promptDigest: (() => {
@@ -94,11 +95,14 @@ function manifest(input: {
     declaredCapabilities: ["worker_commands"],
     displayName: `${input.runtimeProfileId} fixture`,
     manifestVersion: 2,
+    // Simulate a durable revision created before managed MCP retirement.
+    managedMcpAdapter: { kind: "codex-cli/v1" },
     protocolFamily: "rah-worker-process/v1",
     recoveryDrivers:
       process.platform === "win32" ? [] : ["rah-process-supervisor-v1"],
     runtimeProfileId: input.runtimeProfileId,
     staticEnv: {
+      PROVIDER_MCP_CONFIG_REFERENCE: "/user-owned/provider-settings.json",
       TEST_MEMORY_OPERATION: input.operation,
       TEST_MODEL_MARKER: input.modelMarker,
     },
@@ -145,7 +149,6 @@ test("Agent memory survives Room, Runtime/Profile and daemon-side registry chang
   const secondCwd = join(directory, "another-checkout");
   const hostId = "memory-continuity-host";
   const kernel = new RoomKernel({ databasePath });
-  const proxyRegistry = new ManagedMcpRuntimeProxyRegistry();
   const memoryCoordinator = new AgentMemoryCoordinator({
     rootDirectory: join(supervisorDirectory, "agent-memory"),
     wake: () => false,
@@ -281,7 +284,6 @@ test("Agent memory survives Room, Runtime/Profile and daemon-side registry chang
         cwd: input.executionCwd ?? directory,
         host,
         implementations: input.implementations,
-        managedMcpProxyRegistry: proxyRegistry,
         probeReport: input.probeReport,
         runtimeProfileRegistry: input.registry,
         runtimeProfileRevision: input.revision,
@@ -315,6 +317,8 @@ test("Agent memory survives Room, Runtime/Profile and daemon-side registry chang
         memoryDirectory: string;
         memoryIndexPath: string;
         modelMarker: string;
+        providerMcpReference: string;
+        launchArgs: string[];
         note: string | null;
         operation: string;
         promptDigest: string;
@@ -356,6 +360,16 @@ test("Agent memory survives Room, Runtime/Profile and daemon-side registry chang
       "the configured OS child receives the standing prompt compiled for this Agent and RunAttempt, not a profile-frozen copy",
     );
     assert.equal(first.modelMarker, "provider-a/model-small");
+    assert.equal(
+      first.providerMcpReference,
+      "/user-owned/provider-settings.json",
+    );
+    assert.ok(
+      first.launchArgs.every(
+        (arg) => !arg.includes("rah_managed") && !arg.includes("--mcp-config"),
+      ),
+    );
+
     assert.match(first.memory, new RegExp(memoryMarker, "u"));
     assert.equal(first.note, `${noteMarker}\n`);
     assert.equal(first.appInbox, undefined);
@@ -542,7 +556,6 @@ test("Agent memory survives Room, Runtime/Profile and daemon-side registry chang
   } finally {
     await memoryCoordinator.close();
     profileRegistry?.close();
-    await proxyRegistry.close();
     kernel.close();
     rmSync(directory, { force: true, recursive: true });
   }

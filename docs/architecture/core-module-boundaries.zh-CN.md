@@ -1,5 +1,11 @@
 # Core 模块边界与源码规模 Ratchet
 
+2026-09-08：Task 弹窗的 Human `task.history` 经过 HumanApplicationPort/SDK 读取。
+`human-task-history.ts` 负责 Human 认证、Room 成员和 Task 归属校验；
+`task-history-projection.ts` 从既有 Worker 读取实现抽出，双方共用同一 canonical
+生命周期查询、冻结 cursor 和安全字段投影；`bounded-read-rows.ts` 保留完整 UTF-8
+行与响应体积上限。未新增 Task 状态机、事件、表或执行权限。
+
 当前公开阅读增量：`collaboration-policy` 统一 Human 当前公开阅读资格，
 `room.preview` 提供有界正文；Search、精确定位、附件与已关注 Thread Activity 共用该资格。
 完整 sync/ACK、Task 写入、上传和 Agent execution scope 仍要求成员资格。

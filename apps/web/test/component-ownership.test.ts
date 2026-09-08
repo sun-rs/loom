@@ -35,10 +35,6 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
     join(sourceDirectory, "components", "room-sidebar-resizer.tsx"),
     "utf8",
   );
-  const managedMcpSettings = readFileSync(
-    join(sourceDirectory, "components", "managed-mcp-settings.tsx"),
-    "utf8",
-  );
   const settings = readFileSync(
     join(sourceDirectory, "components", "settings-surface.tsx"),
     "utf8",
@@ -247,15 +243,6 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   assert.match(panelResizer, /setPointerCapture/u);
   assert.match(roomSidebarResizer, /nextRoomSidebarWidth/u);
   assert.doesNotMatch(navigation, /disabled icon="gear"/u);
-  assert.match(managedMcpSettings, /managedMcp\.executor\.list/u);
-  assert.match(managedMcpSettings, /managedMcp\.executor\.discover/u);
-  assert.match(managedMcpSettings, /managedMcp\.server\.create/u);
-  assert.match(managedMcpSettings, /managedMcp\.server\.state/u);
-  assert.match(managedMcpSettings, /managedMcp\.assignment\.create/u);
-  assert.match(managedMcpSettings, /managedMcp\.assignment\.revise/u);
-  assert.match(managedMcpSettings, /managedMcp\.assignment\.state/u);
-  assert.match(managedMcpSettings, /runRoomMutationAtLatest/u);
-  assert.match(settings, /ManagedMcpSettingsContent/u);
   assert.match(settings, /LanDeviceSettingsContent/u);
   assert.equal(
     (conversation.match(/<ComposerDropForm\b/gu) ?? []).length,
@@ -316,20 +303,9 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
     /import \{ activityPresentation \} from "\.\.\/identity-presentation\.ts"/u,
   );
   assert.match(agentSurface, /activityPresentation\(activity\.entry\)/u);
-  assert.match(agentSurface, /managedMcp\.usage\.list/u);
-  assert.match(agentSurface, /MCP 使用记录/u);
-  assert.match(agentSurface, /调用参数、凭据与结果正文不会进入此浏览器投影/u);
   assert.match(agentSurface, /aria-live="polite"/u);
   assert.match(agentSurface, /const RAFT_AGENT_TABS/u);
-  const agentTabLabels = [
-    "动态",
-    "资料",
-    "聊天",
-    "提醒",
-    "工作区",
-    "应用",
-    "MCP",
-  ];
+  const agentTabLabels = ["动态", "资料", "聊天", "提醒", "工作区", "应用"];
   let previousTabIndex = -1;
   for (const label of agentTabLabels) {
     const index = agentSurface.indexOf(`label: "${label}"`);

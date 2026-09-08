@@ -1,3 +1,8 @@
+import {
+  WorkerMessageAttachmentPrepareRequestSchema,
+  WorkerMessageAttachmentUploadSchema,
+  ATTACHMENT_UPLOAD_SESSION_EXPIRES_IN_SECONDS,
+} from "@rah-os/protocol";
 import { createHash, randomUUID } from "node:crypto";
 import {
   constants,
@@ -48,7 +53,7 @@ import {
   RoomFileGcService,
   type RoomFileGcReconcileResult,
 } from "./room-file-gc.ts";
-import { requireWorkerTaskDelivery } from "./worker-task-scope.ts";
+import { requireWorkerRoomVisibility } from "./worker-task-scope.ts";
 import type { z } from "zod";
 
 const FORWARDED_ATTACHMENT_ID_DOMAIN =
@@ -92,6 +97,12 @@ export class RoomFiles {
   readonly #worker: (
     worker: AuthenticatedWorkerExecutionContext,
   ) => ActivationCredentialScope;
+  readonly #targetContext:
+    | ((
+        execution: AuthenticatedWorkerExecutionContext,
+        input: { channel: string; contextReceipt: string },
+      ) => { roomId: string; throughRoomSeq: number })
+    | undefined;
   readonly #now: () => Date;
   readonly #roomDeletionGc: RoomFileGcService;
   constructor(options: {
@@ -101,6 +112,10 @@ export class RoomFiles {
     requireWorker: (
       worker: AuthenticatedWorkerExecutionContext,
     ) => ActivationCredentialScope;
+    verifyTargetContext?: (
+      execution: AuthenticatedWorkerExecutionContext,
+      input: { channel: string; contextReceipt: string },
+    ) => { roomId: string; throughRoomSeq: number };
     now: () => Date;
   }) {
     this.#db = options.database;
@@ -108,6 +123,7 @@ export class RoomFiles {
     this.#actor = options.requireActor;
     this.#worker = options.requireWorker;
     this.#now = options.now;
+    this.#targetContext = options.verifyTargetContext;
     this.#roomDeletionGc = new RoomFileGcService({
       database: this.#db,
       now: this.#now,
@@ -198,14 +214,51 @@ export class RoomFiles {
     const input = FilePrepareRequestSchema.parse(request);
     const actorId = this.#actor(actor);
     requireRoomMember(this.#db, input.roomId, actorId);
+    return this.#prepareMessageFile({ actorId, roomId: input.roomId }, input);
+  }
+  prepareWorkerMessage(
+    execution: AuthenticatedWorkerExecutionContext,
+    request: z.input<typeof WorkerMessageAttachmentPrepareRequestSchema>,
+  ) {
+    const input = WorkerMessageAttachmentPrepareRequestSchema.parse(request);
+    const scope = this.#worker(execution);
+    requireWorkerRoomVisibility(this.#db, scope);
+    let roomId = scope.roomId;
+    if (input.channel !== undefined && input.contextReceipt !== undefined) {
+      if (!this.#targetContext)
+        throw new ForbiddenError("target context validation is unavailable");
+      const target = this.#targetContext(execution, {
+        channel: input.channel,
+        contextReceipt: input.contextReceipt,
+      });
+      roomId = target.roomId;
+      // A reservation creates no Room event; the signed complete presentation
+      // selects its immutable Room. Publication rechecks message freshness.
+    }
+    const prepared = this.#prepareMessageFile(
+      {
+        actorId: scope.participantId,
+        roomId,
+        runAttemptId: scope.runAttemptId,
+      },
+      input,
+    );
+    return this.#workerMessageUploadView(this.#row(prepared.attachmentId));
+  }
+  #prepareMessageFile(
+    context: { actorId: string; roomId: string; runAttemptId?: string },
+    input: z.infer<typeof WorkerMessageAttachmentPrepareRequestSchema>,
+  ) {
+    const { actorId, roomId } = context;
     this.#reclaimExpired();
     const previous = this.#db
       .prepare(
         "SELECT * FROM room_files WHERE room_id = ? AND actor_id = ? AND request_key = ?",
       )
-      .get(input.roomId, actorId, input.idempotencyKey);
+      .get(roomId, actorId, input.idempotencyKey);
     if (previous) {
       if (
+        previous.task_id !== null ||
         previous.filename !== input.filename ||
         previous.mime_type !== input.mimeType ||
         previous.size !== input.size
@@ -227,18 +280,22 @@ export class RoomFiles {
     const id = randomUUID();
     this.#db
       .prepare(
-        "INSERT INTO room_files(attachment_id, room_id, actor_id, request_key, filename, mime_type, size, state, expires_at, created_at) VALUES(?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)",
+        "INSERT INTO room_files(attachment_id, room_id, actor_id, request_key, filename, mime_type, size, state, expires_at, created_at, run_attempt_id) VALUES(?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)",
       )
       .run(
         id,
-        input.roomId,
+        roomId,
         actorId,
         input.idempotencyKey,
         input.filename,
         input.mimeType,
         input.size,
-        new Date(this.#now().getTime() + 60 * 60_000).toISOString(),
+        new Date(
+          this.#now().getTime() +
+            ATTACHMENT_UPLOAD_SESSION_EXPIRES_IN_SECONDS * 1000,
+        ).toISOString(),
         this.#now().toISOString(),
+        context.runAttemptId ?? null,
       );
     return this.#uploadView(this.#row(id));
   }
@@ -294,7 +351,10 @@ export class RoomFiles {
         input.filename,
         input.mimeType,
         input.size,
-        new Date(this.#now().getTime() + 60 * 60_000).toISOString(),
+        new Date(
+          this.#now().getTime() +
+            ATTACHMENT_UPLOAD_SESSION_EXPIRES_IN_SECONDS * 1000,
+        ).toISOString(),
         input.taskId,
         scope.runAttemptId,
         createdAt,
@@ -316,13 +376,69 @@ export class RoomFiles {
     execution: AuthenticatedWorkerExecutionContext,
     attachmentId: string,
     chunks: AsyncIterable<Uint8Array>,
+    assertFacadeAuthorized?: () => void,
   ) {
     await this.#writeUpload(
       attachmentId,
-      () => this.#ownedWorker(execution, attachmentId),
+      () => {
+        assertFacadeAuthorized?.();
+        return this.#ownedWorker(execution, attachmentId);
+      },
       chunks,
     );
     return this.#workerUploadView(this.#row(attachmentId));
+  }
+  async uploadWorkerMessage(
+    execution: AuthenticatedWorkerExecutionContext,
+    attachmentId: string,
+    chunks: AsyncIterable<Uint8Array>,
+    assertFacadeAuthorized?: () => void,
+  ) {
+    await this.#writeUpload(
+      attachmentId,
+      () => {
+        assertFacadeAuthorized?.();
+        return this.#ownedWorkerMessage(execution, attachmentId);
+      },
+      chunks,
+    );
+    return this.#workerMessageUploadView(this.#row(attachmentId));
+  }
+  cancelWorkerMessage(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: { attachmentId: string },
+  ) {
+    const row = this.#ownedWorkerMessage(execution, input.attachmentId);
+    this.#cancelOwnedFile(row, input.attachmentId);
+    return this.#workerMessageUploadView(this.#row(input.attachmentId));
+  }
+  forWorkerMessage(
+    execution: AuthenticatedWorkerExecutionContext,
+    attachmentIds: readonly string[],
+    replayMessageId?: string,
+    targetRoomId?: string,
+  ): Attachment[] {
+    if (
+      attachmentIds.length > 10 ||
+      new Set(attachmentIds).size !== attachmentIds.length
+    )
+      throw new ConflictError("at most 10 distinct attachments per message");
+    return attachmentIds.map((id) => {
+      const row = this.#ownedWorkerMessage(execution, id);
+      const scope = this.#worker(execution);
+      if (row.room_id !== (targetRoomId ?? scope.roomId))
+        throw new ForbiddenError("attachment belongs to another Room");
+      if (!(
+        row.state === "completed" ||
+        (replayMessageId &&
+          row.state === "consumed" &&
+          row.message_id === replayMessageId)
+      ))
+        throw new ConflictError(
+          "attachment must be completed and not already consumed",
+        );
+      return this.#attachment(row);
+    });
   }
   async #writeUpload(
     attachmentId: string,
@@ -371,7 +487,8 @@ export class RoomFiles {
       await handle.sync();
       await handle.close();
       handle = undefined;
-      // Recheck membership and cancellation after asynchronous IO; no transaction is held across await.
+      // Recheck facade revocation, membership and cancellation after async I/O;
+      // no transaction is held across await. Repeat after rename, before completion.
       const current = owner();
       if (current.state !== "verifying")
         throw new ConflictError("upload was canceled or expired");
@@ -440,19 +557,22 @@ export class RoomFiles {
   }
   cancel(actor: AuthenticatedActorContext, input: { attachmentId: string }) {
     const row = this.#owned(actor, input.attachmentId);
+    this.#cancelOwnedFile(row, input.attachmentId);
+    return this.#uploadView(this.#row(input.attachmentId));
+  }
+  #cancelOwnedFile(row: Row, attachmentId: string) {
     if (row.state === "consumed")
       throw new ConflictError("sent files cannot be canceled");
     this.#db
       .prepare(
         "UPDATE room_files SET state = 'canceled' WHERE attachment_id = ?",
       )
-      .run(input.attachmentId);
+      .run(attachmentId);
     try {
-      unlinkSync(this.#path(input.attachmentId));
+      unlinkSync(this.#path(attachmentId));
     } catch (e) {
       if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e;
     }
-    return this.#uploadView(this.#row(input.attachmentId));
   }
   forMessage(
     actor: AuthenticatedActorContext,
@@ -737,20 +857,22 @@ export class RoomFiles {
   async downloadWorkerTaskArtifact(
     execution: AuthenticatedWorkerExecutionContext,
     attachmentId: string,
+    allowJoinedTarget = false,
   ) {
     const scope = this.#worker(execution);
     const row = this.#row(attachmentId);
-    if (
-      text(row, "room_id") !== scope.roomId ||
-      typeof row.task_id !== "string"
-    ) {
+    if (!allowJoinedTarget && text(row, "room_id") !== scope.roomId) {
       throw new ForbiddenError(
         "artifact is outside this Worker execution scope",
       );
     }
-    requireWorkerTaskDelivery(this.#db, scope, text(row, "task_id"));
+    requireWorkerRoomVisibility(this.#db, scope);
+    requireWorkerRoomVisibility(this.#db, {
+      participantId: scope.participantId,
+      roomId: text(row, "room_id"),
+    });
     if (row.state !== "consumed") {
-      throw new NotFoundError("file is not attached to a sent Task submission");
+      throw new NotFoundError("file is not attached to a sent Room message");
     }
     this.#ensureDirectory();
     const path = this.#path(attachmentId);
@@ -759,7 +881,7 @@ export class RoomFiles {
       constants.O_RDONLY | constants.O_NOFOLLOW,
     );
     try {
-      requireWorkerTaskDelivery(this.#db, scope, text(row, "task_id"));
+      requireWorkerRoomVisibility(this.#db, scope);
       return {
         attachment: this.#attachment(row),
         stream: createReadStream(path, {
@@ -875,6 +997,29 @@ export class RoomFiles {
     if (row.actor_id !== actorId)
       throw new ForbiddenError("upload belongs to another member");
     return this.#expire(row);
+  }
+  #ownedWorkerMessage(
+    execution: AuthenticatedWorkerExecutionContext,
+    attachmentId: string,
+  ) {
+    const scope = this.#worker(execution);
+    requireWorkerRoomVisibility(this.#db, scope);
+    const row = this.#row(attachmentId);
+    if (row.actor_id !== scope.participantId || row.task_id !== null)
+      throw new ForbiddenError(
+        "message attachment is outside this Worker execution scope",
+      );
+    requireWorkerRoomVisibility(this.#db, {
+      participantId: scope.participantId,
+      roomId: text(row, "room_id"),
+    });
+    return this.#expire(row);
+  }
+  #workerMessageUploadView(row: Row) {
+    return WorkerMessageAttachmentUploadSchema.parse({
+      ...this.#uploadView(row),
+      ...(typeof row.sha256 === "string" ? { sha256: row.sha256 } : {}),
+    });
   }
   #ownedWorker(
     execution: AuthenticatedWorkerExecutionContext,

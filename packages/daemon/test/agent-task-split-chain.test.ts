@@ -144,11 +144,14 @@ test("one lead Agent splits a Human message into subtasks that two helper Agents
                 RAH_FAKE_AUTO_TASK_MARKER: "[SPLIT]",
                 RAH_FAKE_MODE: "worker-task",
                 RAH_FAKE_SPLIT_HELPERS: "helper-a,helper-b",
+                RAH_FAKE_PARENT_RESUME: "1",
+                RAH_FAKE_READ_TOOLS: "1",
                 RAH_FAKE_SPLIT_TITLES: "schema change,docs update",
               }
             : handles[index] === "auditor"
               ? {
                   RAH_FAKE_AUDIT_ON_MENTION: "1",
+                  RAH_FAKE_READ_TOOLS: "1",
                   RAH_FAKE_MODE: "worker-task",
                 }
               : {
@@ -447,6 +450,11 @@ test("one lead Agent splits a Human message into subtasks that two helper Agents
       /trajectory entries; tools: .*bash/u,
       `the audit reply must cite a tool the owner actually recorded: ${auditBody}`,
     );
+    assert.equal(auditReply()!.payload.threadId, subtaskA.threadId);
+    assert.match(
+      auditBody,
+      /read-tools: canonical history, task board, member handles, exact source/u,
+    );
     assert.equal(
       tasksOf().some((task) => task.assigneeId === auditor),
       false,
@@ -529,6 +537,52 @@ test("one lead Agent splits a Human message into subtasks that two helper Agents
       "task.completed",
     ]);
 
+    // 6. Human asks the original blocker to resume. Its unblock Run exits;
+    // durable task.unblocked attention grants a separate Run normal execution.
+    await humanMutation("/v3/client/messages/post", {
+      body: `@lead please resume [RESUME PARENT ${parentTask.taskId}]`,
+      idempotencyKey: "parent-resume-requested",
+      roomId,
+      recipients: [{ participantId: lead, reason: "mention" }],
+    });
+    await waitUntil(
+      () =>
+        finalTasks().get(parentTask.taskId)?.state === "submitted" &&
+        agentsIdle(),
+      30_000,
+    );
+    await humanMutation("/v3/client/tasks/complete", {
+      taskId: parentTask.taskId,
+      idempotencyKey: "parent-completed",
+    });
+    assert.equal(finalTasks().get(parentTask.taskId)?.state, "completed");
+    assert.deepEqual(typesOf(parentTask.taskId), [
+      "task.created",
+      "task.started",
+      "task.blocked",
+      "task.unblocked",
+      "task.claimed",
+      "task.started",
+      "task.progressed",
+      "task.submitted",
+      "task.completed",
+    ]);
+    const parentEvents = events().filter(
+      (event) => event.aggregateId === parentTask.taskId,
+    );
+    const resumed = parentEvents.find(
+      (event) => event.type === "task.unblocked",
+    )!;
+    const reclaimed = parentEvents.find(
+      (event) => event.type === "task.claimed",
+    )!;
+    assert.ok(resumed.payload.runAttemptId);
+    assert.ok(reclaimed.payload.runAttemptId);
+    assert.notEqual(
+      resumed.payload.runAttemptId,
+      reclaimed.payload.runAttemptId,
+    );
+
     // 6. The same evidence survives a fresh connection to the same database.
     shutdown.abort("split-chain-complete");
     await running.catch(() => undefined);
@@ -547,7 +601,7 @@ test("one lead Agent splits a Human message into subtasks that two helper Agents
       assert.equal(persisted.size, 3);
       assert.equal(persisted.get(subtaskA.taskId)?.state, "completed");
       assert.equal(persisted.get(subtaskB.taskId)?.state, "completed");
-      assert.equal(persisted.get(parentTask.taskId)?.state, "blocked");
+      assert.equal(persisted.get(parentTask.taskId)?.state, "completed");
       assert.equal(persisted.get(parentTask.taskId)?.assigneeId, lead);
       const persistedEvents = roomEvents(reopened, reopenedActor, roomId);
       assert.equal(

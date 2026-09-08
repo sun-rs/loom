@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { RahClient, RahClientOperationMap } from "@rah-os/client-sdk";
 
 type Query =
+  | "task.get"
+  | "task.history"
   | "task.global.list"
   | "search"
   | "activity.list"
@@ -24,7 +26,9 @@ export function useDiscoveryQuery<K extends Query>(
   useEffect(() => {
     if (
       !enabled ||
-      (operation !== "activity.list" && operation !== "task.global.list")
+      (operation !== "activity.list" &&
+        operation !== "task.global.list" &&
+        operation !== "task.get")
     )
       return;
     const refreshVisible = () => {
@@ -76,10 +80,11 @@ export function useDiscoveryQuery<K extends Query>(
     };
   }, [client, enabled, operation, queryKey, tick]);
   const current = result.key === queryKey && enabled;
+  const refreshResult = useCallback(() => refresh((value) => value + 1), []);
   return {
     data: current ? result.data : undefined,
     error: current ? result.error : undefined,
     loading: current ? result.loading : enabled,
-    refresh: () => refresh((value) => value + 1),
+    refresh: refreshResult,
   };
 }

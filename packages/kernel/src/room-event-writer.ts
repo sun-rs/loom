@@ -1,3 +1,4 @@
+import { allowsAgentChannelAttention } from "./agent-channel-attention.ts";
 import type { DatabaseSync } from "node:sqlite";
 
 import {
@@ -113,6 +114,8 @@ export class RoomEventWriter {
   ): string[] {
     const activationIds: string[] = [];
     for (const recipient of recipients) {
+      if (!allowsAgentChannelAttention(this.#database, event, recipient))
+        continue;
       this.insertInboxItem({
         createdAt,
         event,

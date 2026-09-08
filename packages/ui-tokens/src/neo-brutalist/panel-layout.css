@@ -12,11 +12,11 @@
     height: 36px;
     width: 36px;
   }
-  .rah-product-shell .rail-primary {
-    padding-block: 4px;
-  }
-  .rah-product-shell .rail-footer-item {
+  /* Notification trigger is independently size-10 in Raft, even at short height.
+     The h-11 footer slots and py-2 primary stack do not shrink. */
+  .rah-product-shell .rail-footer-item--notifications .rail-btn {
     height: 40px;
+    width: 40px;
   }
 }
 

@@ -20,6 +20,11 @@ import {
 } from "@rah-os/agent-host";
 import type { AuthenticatedActorContext, RoomKernel } from "@rah-os/kernel";
 
+import {
+  resolveSkillsConfiguration,
+  type SkillsConfiguration,
+} from "./daemon-agent-skills.ts";
+
 const execFileAsync = promisify(execFile);
 
 export const KNOWN_LOCAL_CLIS = Object.freeze([
@@ -49,7 +54,7 @@ export type ConfiguredLocalRuntime = {
 export type ConfiguredLocalRuntimeSnapshot = Omit<
   ConfiguredLocalRuntime,
   "agentBindings"
->;
+> & { skillsConfiguration?: SkillsConfiguration };
 
 export function configuredRuntimeSnapshotWithValidation(input: {
   probeReport: RuntimeProfileProbeReport;
@@ -67,13 +72,9 @@ export function configuredRuntimeSnapshotWithValidation(input: {
   });
 }
 
-export function configuredRuntimeSnapshot(input: {
-  probeReport: RuntimeProfileProbeReport;
-  probeValidatedAt: string | undefined;
-  runtimeOfferId: string;
-  runtimeProfileRevision: RuntimeProfileRevision;
-}): ConfiguredLocalRuntimeSnapshot {
-  const { probeReport, runtimeOfferId, runtimeProfileRevision } = input;
+export function runtimeProfileCliId(
+  runtimeProfileRevision: RuntimeProfileRevision,
+): LocalRuntimeInventoryEntry["cliId"] {
   const probeKind =
     runtimeProfileRevision.manifest.manifestVersion === 3
       ? runtimeProfileRevision.manifest.modelCatalogProbe.kind
@@ -88,6 +89,17 @@ export function configuredRuntimeSnapshot(input: {
           : probeKind === "opencode-cli/v1"
             ? "opencode"
             : undefined;
+  return cliId;
+}
+
+export function configuredRuntimeSnapshot(input: {
+  probeReport: RuntimeProfileProbeReport;
+  probeValidatedAt: string | undefined;
+  runtimeOfferId: string;
+  runtimeProfileRevision: RuntimeProfileRevision;
+}): ConfiguredLocalRuntimeSnapshot {
+  const { probeReport, runtimeOfferId, runtimeProfileRevision } = input;
+  const cliId = runtimeProfileCliId(runtimeProfileRevision);
   return {
     ...(cliId === undefined ? {} : { cliId }),
     available: probeReport.available,
@@ -114,6 +126,10 @@ export function configuredRuntimeSnapshot(input: {
           resolvedExecutablePath:
             probeReport.executableIdentity.resolvedExecutablePath,
         }),
+    skillsConfiguration: resolveSkillsConfiguration(
+      runtimeProfileRevision,
+      probeReport,
+    ),
     runtimeOfferId,
     runtimeProfileId: runtimeProfileRevision.runtimeProfileId,
     runtimeProfileRevisionId: runtimeProfileRevision.runtimeProfileRevisionId,
@@ -128,6 +144,54 @@ export function configuredRuntimeSnapshot(input: {
   };
 }
 
+export function buildLocalComputerObservation(input: {
+  computerProfile?: LocalComputerProfile;
+  hostId: string;
+  kernel: Pick<RoomKernel, "listHosts">;
+  now?: Date;
+  staleAfterMs?: number;
+}): NonNullable<LocalRuntimeInventoryResponse["computer"]> {
+  const now = input.now ?? new Date();
+  const staleAfterMs = input.staleAfterMs ?? 30_000;
+  const host = input.kernel
+    .listHosts()
+    .find((host) => host.hostId === input.hostId);
+  const age = host ? now.getTime() - Date.parse(host.lastSeenAt) : Infinity;
+  const computerProfile = input.computerProfile;
+  return {
+    description: computerProfile?.description ?? null,
+    displayName:
+      computerProfile?.displayName ?? hostname().replace(/\.local$/, ""),
+    hostname: hostname(),
+    os: `${platform()} ${arch()}`,
+    observedAt: now.toISOString(),
+    profileRevision: computerProfile?.revision ?? 0,
+    ...(computerProfile === undefined
+      ? {}
+      : { profileUpdatedAt: computerProfile.updatedAt }),
+    staleAfterMs,
+    status: !host
+      ? "unknown"
+      : host.state === "offline"
+        ? "offline"
+        : age < 0 || !Number.isFinite(age)
+          ? "unknown"
+          : age >= staleAfterMs
+            ? "offline"
+            : host.state,
+    ...(host
+      ? {
+          ...(host.createdAt === undefined
+            ? {}
+            : { createdAt: host.createdAt }),
+          lastSeenAt: host.lastSeenAt,
+          instanceId: host.instanceId,
+          ...(host.buildVersion ? { buildVersion: host.buildVersion } : {}),
+        }
+      : {}),
+  };
+}
+
 export function buildLocalRuntimeInventoryResponse(input: {
   actor: AuthenticatedActorContext;
   computerProfile?: LocalComputerProfile;
@@ -139,71 +203,37 @@ export function buildLocalRuntimeInventoryResponse(input: {
   staleAfterMs?: number;
 }): LocalRuntimeInventoryResponse {
   const catalog = input.kernel.listAgentCatalog(input.actor);
-  const now = input.now ?? new Date();
-  const staleAfterMs = input.staleAfterMs ?? 30_000;
-  const host = input.kernel
-    .listHosts()
-    .find((host) => host.hostId === input.hostId);
-  const age = host ? now.getTime() - Date.parse(host.lastSeenAt) : Infinity;
-  const computerProfile = input.computerProfile;
   return LocalRuntimeInventoryResponseSchema.parse({
     hostId: input.hostId,
-    computer: {
-      description: computerProfile?.description ?? null,
-      displayName:
-        computerProfile?.displayName ?? hostname().replace(/\.local$/, ""),
-      hostname: hostname(),
-      os: `${platform()} ${arch()}`,
-      observedAt: now.toISOString(),
-      profileRevision: computerProfile?.revision ?? 0,
-      ...(computerProfile === undefined
-        ? {}
-        : { profileUpdatedAt: computerProfile.updatedAt }),
-      staleAfterMs,
-      status: !host
-        ? "unknown"
-        : host.state === "offline"
-          ? "offline"
-          : age < 0 || !Number.isFinite(age)
-            ? "unknown"
-            : age >= staleAfterMs
-              ? "offline"
-              : host.state,
-      ...(host
-        ? {
-            ...(host.createdAt === undefined
-              ? {}
-              : { createdAt: host.createdAt }),
-            lastSeenAt: host.lastSeenAt,
-            instanceId: host.instanceId,
-            ...(host.buildVersion ? { buildVersion: host.buildVersion } : {}),
-          }
-        : {}),
-    },
+    computer: buildLocalComputerObservation(input),
     restartRequiredToRescan: true,
     runtimes: mergeLocalRuntimeInventory({
-      configured: input.configured.map((runtime) => ({
-        ...runtime,
-        available:
-          runtime.available &&
-          input.kernel.runtimeOfferIsCurrentlyAvailable(runtime.runtimeOfferId),
-        agentBindings: catalog.flatMap((entry) => {
-          const policy = input.kernel.getExecutionPolicyRevision(
-            entry.currentRevision.executionPolicyRevisionId,
-          );
-          return policy.required.allowedOfferIds?.includes(
-            runtime.runtimeOfferId,
-          ) === true
-            ? [
-                {
-                  agentDefinitionId: entry.definition.agentDefinitionId,
-                  handle: entry.handle,
-                  participantId: entry.definition.participantId,
-                },
-              ]
-            : [];
+      configured: input.configured.map(
+        ({ skillsConfiguration: _skillsConfiguration, ...runtime }) => ({
+          ...runtime,
+          available:
+            runtime.available &&
+            input.kernel.runtimeOfferIsCurrentlyAvailable(
+              runtime.runtimeOfferId,
+            ),
+          agentBindings: catalog.flatMap((entry) => {
+            const policy = input.kernel.getExecutionPolicyRevision(
+              entry.currentRevision.executionPolicyRevisionId,
+            );
+            return policy.required.allowedOfferIds?.includes(
+              runtime.runtimeOfferId,
+            ) === true
+              ? [
+                  {
+                    agentDefinitionId: entry.definition.agentDefinitionId,
+                    handle: entry.handle,
+                    participantId: entry.definition.participantId,
+                  },
+                ]
+              : [];
+          }),
         }),
-      })),
+      ),
       discovered: input.discovered,
     }),
   });

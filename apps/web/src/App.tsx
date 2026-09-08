@@ -22,6 +22,14 @@ import {
 } from "@rah-os/client-core";
 import { HttpRahClient, type RahClient } from "@rah-os/client-sdk";
 import { GlobalDiscoverySurface } from "./components/global-discovery.tsx";
+import {
+  TaskDetailMetadata,
+  TaskThreadPresentation,
+} from "./components/global-task-detail.tsx";
+import {
+  closeGlobalTaskSearch,
+  globalTaskDetailFromSearch,
+} from "./global-task-detail-route.ts";
 import { MessageSocialProvider } from "./components/message-social.tsx";
 import { SidebarPreferencesProvider } from "./components/sidebar-preferences.tsx";
 import { SavedMessagesPane } from "./components/saved-messages.tsx";
@@ -286,6 +294,9 @@ function WorkspaceScreen({
   const [surface, setSurfaceState] = useState<Surface>(() =>
     globalSurfaceFromSearch(window.location.search),
   );
+  const [globalTaskDetail, setGlobalTaskDetail] = useState(() =>
+    globalTaskDetailFromSearch(window.location.search),
+  );
   const [agentRoute, setAgentRoute] = useState<AgentRouteSelection>(() =>
     agentRouteFromSearch(window.location.search),
   );
@@ -325,6 +336,7 @@ function WorkspaceScreen({
   const setSurface = useCallback(
     (next: Surface) => {
       invalidateNavigation();
+      if (next !== "tasks") setGlobalTaskDetail(undefined);
       setSurfaceState(next);
     },
     [invalidateNavigation],
@@ -354,11 +366,48 @@ function WorkspaceScreen({
       new URLSearchParams(window.location.search).get("message") ??
       undefined,
   );
+  const taskModalOpen = surface === "tasks" && globalTaskDetail !== undefined;
+  const taskDetailResult = useDiscoveryQuery(
+    client,
+    "task.get",
+    {
+      roomId: globalTaskDetail?.roomId ?? "unavailable",
+      taskId: globalTaskDetail?.taskId ?? "unavailable",
+    },
+    taskModalOpen,
+  );
+  const detailTask = taskDetailResult.data?.task;
+  useEffect(() => {
+    if (
+      !taskModalOpen ||
+      !detailTask ||
+      detailTask.taskId !== globalTaskDetail?.taskId ||
+      detailTask.roomId !== globalTaskDetail.roomId
+    )
+      return;
+    setActiveRoomId(detailTask.roomId);
+    setActiveThreadRootMessageId(detailTask.sourceMessageId);
+    setFocusedMessageId(detailTask.sourceMessageId);
+  }, [detailTask, globalTaskDetail, taskModalOpen]);
+  const closeTaskDetail = () => {
+    invalidateNavigation();
+    window.history.replaceState(
+      null,
+      "",
+      closeGlobalTaskSearch(window.location.search),
+    );
+    setGlobalTaskDetail(undefined);
+    setActiveThreadRootMessageId(undefined);
+    setFocusedMessageId(undefined);
+  };
   const locationResult = useDiscoveryQuery(
     client,
     "message.context",
     { messageId: focusedMessageId ?? "none" },
-    (surface === "room" || surface === "activity" || surface === "search") &&
+    (surface === "room" ||
+      surface === "activity" ||
+      surface === "search" ||
+      (surface === "tasks" && globalTaskDetail !== undefined)) &&
       focusedMessageId !== undefined,
   );
   const messageContext =
@@ -450,6 +499,7 @@ function WorkspaceScreen({
           ),
         );
         setFocusedMessageId(presentation.focusedMessageId);
+        setGlobalTaskDetail(globalTaskDetailFromSearch(window.location.search));
         setActiveThreadRootMessageId(presentation.threadRootMessageId);
         if (presentation.roomId !== undefined)
           setActiveRoomId(presentation.roomId);
@@ -833,7 +883,11 @@ function WorkspaceScreen({
     }
     if (detachedSurface) {
       next.set("surface", surface);
-      if (surface === "activity" && activeThreadRootMessageId) {
+      if (
+        (surface === "activity" ||
+          (surface === "tasks" && globalTaskDetail !== undefined)) &&
+        activeThreadRootMessageId
+      ) {
         next.set("room", activeRoomId);
         next.set("thread", `${activeRoomId}:${activeThreadRootMessageId}`);
         if (focusedMessageId) next.set("message", focusedMessageId);
@@ -857,6 +911,7 @@ function WorkspaceScreen({
     focusedMessageId,
     agentRoute,
     globalSurface,
+    globalTaskDetail,
     surface,
     tab,
   ]);
@@ -884,6 +939,7 @@ function WorkspaceScreen({
     const selectFromHistory = () => {
       setRoomMembersOpen(false);
       setSurface(globalSurfaceFromSearch(window.location.search));
+      setGlobalTaskDetail(globalTaskDetailFromSearch(window.location.search));
       setAgentRoute(agentRouteFromSearch(window.location.search));
       setTab(roomTabFromSearch(window.location.search));
       setFocusedMessageId(
@@ -1188,14 +1244,6 @@ function WorkspaceScreen({
   const canChangeCurrentWorkspaceHumanRole =
     health?.capabilities.memberWrite === true &&
     workspaceMembershipRole === "owner";
-  const canManageManagedMcp =
-    health?.capabilities.managedMcpWrite === true &&
-    (workspaceMembershipRole === "owner" ||
-      workspaceMembershipRole === "admin");
-  const canReadManagedMcp =
-    health?.capabilities.managedMcpRead === true &&
-    (workspaceMembershipRole === "owner" ||
-      workspaceMembershipRole === "admin");
   const canCreateCurrentWorkspaceAgent =
     canManageCurrentWorkspaceAgent &&
     localRuntimes.some(
@@ -1350,7 +1398,9 @@ function WorkspaceScreen({
   const activeThread = roomData?.threads.find(
     (thread) => thread.rootMessageId === activeThreadRootMessageId,
   );
-  const activeThreadId = activeThread?.threadId;
+  const activeThreadId = taskModalOpen
+    ? detailTask?.threadId
+    : activeThread?.threadId;
   useEffect(() => {
     activeThreadHistoryKey.current =
       activeRoomId && activeThreadId
@@ -1358,9 +1408,9 @@ function WorkspaceScreen({
         : undefined;
     threadHistoryLoadingKey.current = undefined;
   }, [activeRoomId, activeThreadId]);
-  const activeThreadTask = roomData?.tasks.find(
-    (task) => task.threadId === activeThreadId,
-  );
+  const activeThreadTask = taskModalOpen
+    ? detailTask
+    : roomData?.tasks.find((task) => task.threadId === activeThreadId);
   const threadFollowers = useDiscoveryQuery(
     client,
     "thread.followers",
@@ -1684,19 +1734,17 @@ function WorkspaceScreen({
           maxPages: 4,
           signal: controller.signal,
         });
-        let messages = initial.messages;
-        let hasEarlier = initial.hasEarlier;
         if (controller.signal.aborted) return;
-        setThreadMessages([...messages]);
-        setThreadMentionReadStates(
-          await loadMessageReferenceReadStates(
-            client,
-            activeRoomId,
-            messages,
-            controller.signal,
-          ),
+        setThreadMessages([...session.state.messages]);
+        const mentionReadStates = await loadMessageReferenceReadStates(
+          client,
+          activeRoomId,
+          initial.messages,
+          controller.signal,
         );
-        setThreadHasEarlierReplies(hasEarlier);
+        if (controller.signal.aborted) return;
+        setThreadMentionReadStates(mentionReadStates);
+        setThreadHasEarlierReplies(session.state.hasEarlier);
       } catch (caught) {
         if (!controller.signal.aborted) setError(errorMessage(caught));
       } finally {
@@ -1704,7 +1752,10 @@ function WorkspaceScreen({
       }
     })();
     return () => controller.abort();
-  }, [activeRoomId, activeThreadId, client, health, reload]);
+    // Activity/catalog refreshes can restart Room reads before their reload timer
+    // fires. Follow committed Room reads as well, including recovery without a
+    // new sequence number; keep the existing MessageSession and history window.
+  }, [activeRoomId, activeThreadId, client, health, reload, roomData]);
 
   const loadThreadHistory = useCallback(async () => {
     if (
@@ -2966,12 +3017,10 @@ function WorkspaceScreen({
     canMessage:
       health?.capabilities.roomWrite === true &&
       workspaceMembershipRole !== undefined,
-    canReadManagedMcp,
     canChangeHumanRole: canChangeCurrentWorkspaceHumanRole,
     client,
     computerLabel: entities.computer?.displayName,
     computerStatus: computer?.status,
-    controlRoomId: activeWorkspace?.controlRoomId,
     currentHuman: currentPrincipal,
     humans: entities.humans(),
     humanDirectoryError: humanDirectoryQuery?.error,
@@ -2981,6 +3030,7 @@ function WorkspaceScreen({
     fullResetEnabled: health?.capabilities.agentExecutionFullReset === true,
     onCreate: () => setAgentCreateOpen(true),
     onManage: (id: string) => void openAgentManagement(id),
+    onChangeState: changeWorkspaceAgentState,
     onEditRuntime: (id: string) => void openAgentManagement(id, "runtime"),
     onResetExecution:
       health?.capabilities.agentExecutionReset === true
@@ -3053,6 +3103,7 @@ function WorkspaceScreen({
       if (rememberedSearch) {
         window.history.pushState(null, "", rememberedSearch);
         setSurface(globalSurfaceFromSearch(rememberedSearch));
+        setGlobalTaskDetail(globalTaskDetailFromSearch(rememberedSearch));
         setAgentRoute(agentRouteFromSearch(rememberedSearch));
         setTab(roomTabFromSearch(rememberedSearch));
         setFocusedMessageId(
@@ -3134,7 +3185,7 @@ function WorkspaceScreen({
               onOpenChange={setHumanInboxOpen}
             >
               <div
-                className={`app rah-product-shell${globalSurface ? " rah-global-shell" : ""}${(surface === "search" || surface === "activity") && searchPreview.roomId ? " rah-search-channel-open" : ""}${activeThreadRootMessageId === undefined ? " thread-hidden" : ""}${peekOpen ? " rah-agent-peek-open" : ""}${showMobileNavigation ? " rah-mobile-navigation-visible" : ""}`}
+                className={`app rah-product-shell${globalSurface ? " rah-global-shell" : ""}${taskModalOpen ? " rah-task-modal-open" : ""}${(surface === "search" || surface === "activity") && searchPreview.roomId ? " rah-search-channel-open" : ""}${activeThreadRootMessageId === undefined ? " thread-hidden" : ""}${peekOpen ? " rah-agent-peek-open" : ""}${showMobileNavigation ? " rah-mobile-navigation-visible" : ""}`}
                 style={
                   {
                     "--rah-room-sidebar-width": `${roomSidebarWidth}px`,
@@ -3299,6 +3350,7 @@ function WorkspaceScreen({
                     client={client}
                     surface={surface as "tasks" | "search" | "activity"}
                     workspaceId={activeWorkspace.workspaceId}
+                    taskRefreshVersion={reload}
                     rooms={rooms}
                     currentHuman={currentPrincipal}
                     navigationEpoch={navigationEpoch}
@@ -3370,11 +3422,7 @@ function WorkspaceScreen({
                       (workspaceMembershipRole === "owner" ||
                         workspaceMembershipRole === "admin")
                     }
-                    canReadManagedMcp={canReadManagedMcp}
-                    canWriteManagedMcp={canManageManagedMcp}
                     client={client}
-                    consumerPrefix={consumerPrefix}
-                    controlRoomId={activeWorkspace?.controlRoomId}
                     currentPrincipal={currentPrincipal}
                     onPrincipalUpdated={(principal) =>
                       setCurrentPrincipal((current) =>
@@ -3658,160 +3706,210 @@ function WorkspaceScreen({
                     }}
                   />
                 ) : null}
-                {(surface !== "room" &&
+                {!taskModalOpen &&
+                ((surface !== "room" &&
                   surface !== "activity" &&
                   !(surface === "search" && previewJoined)) ||
-                activeThreadRootMessageId === undefined ? null : (
-                  <ThreadPane
-                    client={client}
-                    canManageAnyTask={
-                      currentRoomRole === "owner" || currentRoomRole === "admin"
-                    }
-                    currentPrincipal={currentPrincipal}
-                    messageAgents={agentDirectory}
-                    followers={activeThreadFollowerAgents}
-                    followersCanManage={
-                      threadFollowers.data?.canManage === true
-                    }
-                    followersError={threadFollowers.error}
-                    followersLoading={threadFollowers.loading}
-                    humanFollowing={
-                      activeThreadId === undefined
-                        ? activeThreadRootRecord?.actorId ===
-                          currentPrincipal?.principalId
-                        : threadFollowers.data?.following
-                    }
-                    onReadThrough={
-                      activeRoomId && activeThreadId
-                        ? async (throughSeq) => {
-                            await client.request("activity.mark", {
-                              roomId: activeRoomId,
-                              threadId: activeThreadId,
-                              throughSeq,
-                              action: "read",
-                            });
-                          }
-                        : undefined
-                    }
-                    focusedMessageId={focusedMessageId}
-                    canReply={
-                      health?.capabilities.threadWrite === true &&
-                      roomData?.caughtUp === true
-                    }
-                    canAttachFiles={health?.capabilities.fileShare === true}
-                    canForward={
-                      health?.capabilities.messageForward === true &&
-                      roomData?.caughtUp === true &&
-                      activeRoom?.archivedAt === undefined
-                    }
-                    loading={threadLoading}
-                    earlierRepliesLoading={threadEarlierRepliesLoading}
-                    hasEarlierReplies={threadHasEarlierReplies}
-                    onClose={() => {
-                      const rootMessageId = activeThreadRootMessageId;
-                      invalidateNavigation();
-                      setActiveThreadRootMessageId(undefined);
-                      if (messageContext?.message.threadId)
-                        setFocusedMessageId(undefined);
-                      restoreThreadFocus(rootMessageId);
-                    }}
-                    onSubmit={submitThreadReply}
-                    onTaskWorkflow={updateMessageTaskWorkflow}
-                    onFollow={
-                      activeRoomId &&
-                      activeThreadRootMessageId &&
-                      (activeThreadId ||
-                        health?.capabilities.threadWrite === true)
-                        ? async (following) => {
-                            const { thread } = await ensureActiveThread();
-                            await client.request("activity.follow", {
-                              roomId: activeRoomId,
-                              threadId: thread.threadId,
-                              following,
-                            });
-                            threadFollowers.refresh();
-                          }
-                        : undefined
-                    }
-                    onLoadEarlier={loadEarlierThreadMessages}
-                    onRefreshFollowers={threadFollowers.refresh}
-                    onRemoveFollower={
-                      activeRoomId && activeThreadId
-                        ? async (participantId) => {
-                            const result = await client.request(
-                              "thread.follower.remove",
-                              {
-                                participantId,
-                                roomId: activeRoomId,
-                                threadId: activeThreadId,
-                              },
-                            );
-                            threadFollowers.refresh();
-                            return result;
-                          }
-                        : undefined
-                    }
-                    onRestoreFollower={
-                      activeRoomId && activeThreadId
-                        ? async ({ participantId, undoToken }) => {
-                            const result = await client.request(
-                              "thread.follower.restore",
-                              {
-                                participantId,
-                                roomId: activeRoomId,
-                                threadId: activeThreadId,
-                                undoToken,
-                              },
-                            );
-                            if (!result.restored)
-                              throw new Error(
-                                "撤销期限已过，请重新提及该 Agent",
-                              );
-                            threadFollowers.refresh();
-                          }
-                        : undefined
-                    }
-                    onSearchThread={searchActiveThread}
-                    onOpenTarget={(target) =>
-                      void openDiscoveryLocation({ target })
-                    }
-                    onViewInChannel={() => {
-                      const rootMessageId = activeThreadRootMessageId;
-                      invalidateNavigation();
-                      setActiveThreadRootMessageId(undefined);
-                      setFocusedMessageId(activeThreadRootMessageId);
-                      restoreThreadFocus(rootMessageId);
-                    }}
-                    replies={threadView.messages}
-                    mentionAgentIds={availableAgentIds}
-                    mentionReadStates={threadMentionReadStates}
-                    referenceComputers={messageReferenceComputers}
-                    referenceEventsComplete={
-                      roomData?.referenceEventsComplete === true
-                    }
-                    referenceRooms={messageReferenceRooms}
-                    referenceTasks={roomData?.tasks ?? []}
-                    roomMembers={roomData?.members ?? []}
-                    resizer={
-                      <ThreadPanelResizer
-                        onWidthChange={setThreadPanelWidth}
-                        onWidthCommit={commitThreadPanelWidth}
-                        width={threadPanelWidth}
-                      />
-                    }
-                    roomEvents={roomData?.roomEvents ?? []}
-                    roomId={activeRoomId}
-                    roomKind={activeRoom?.kind}
+                  activeThreadRootMessageId === undefined) ? null : (
+                  <TaskThreadPresentation
+                    modal={taskModalOpen}
+                    task={detailTask}
                     roomName={activeRoom?.name}
-                    root={activeThreadRoot}
-                    {...(activeThreadTask === undefined
-                      ? {}
-                      : { task: activeThreadTask })}
-                    {...(activeThreadTaskAgent === undefined
-                      ? {}
-                      : { taskAgent: activeThreadTaskAgent })}
-                    threadId={activeThreadId}
-                  />
+                    error={taskDetailResult.error}
+                    onClose={closeTaskDetail}
+                  >
+                    <ThreadPane
+                      hideHeader={taskModalOpen}
+                      parentSlot={
+                        taskModalOpen ? (
+                          <TaskDetailMetadata
+                            key={globalTaskDetail?.taskId}
+                            client={client}
+                            task={detailTask}
+                            people={roomData?.members ?? []}
+                            principalId={currentPrincipal?.principalId}
+                            agents={agentDirectory.filter(
+                              (agent) =>
+                                agent.state === "enabled" &&
+                                roomData?.members.some(
+                                  (member) =>
+                                    member.principalId === agent.participantId,
+                                ),
+                            )}
+                            canManage={
+                              currentRoomRole === "owner" ||
+                              currentRoomRole === "admin" ||
+                              detailTask?.creatorId ===
+                                currentPrincipal?.principalId
+                            }
+                            writeEnabled={
+                              health?.capabilities.taskWrite === true &&
+                              roomData?.caughtUp === true
+                            }
+                            onChanged={() => {
+                              taskDetailResult.refresh();
+                              setReload((value) => value + 1);
+                            }}
+                          />
+                        ) : undefined
+                      }
+                      client={client}
+                      canManageAnyTask={
+                        currentRoomRole === "owner" ||
+                        currentRoomRole === "admin"
+                      }
+                      currentPrincipal={currentPrincipal}
+                      messageAgents={agentDirectory}
+                      followers={activeThreadFollowerAgents}
+                      followersCanManage={
+                        threadFollowers.data?.canManage === true
+                      }
+                      followersError={threadFollowers.error}
+                      followersLoading={threadFollowers.loading}
+                      humanFollowing={
+                        activeThreadId === undefined
+                          ? activeThreadRootRecord?.actorId ===
+                            currentPrincipal?.principalId
+                          : threadFollowers.data?.following
+                      }
+                      onReadThrough={
+                        activeRoomId && activeThreadId
+                          ? async (throughSeq) => {
+                              await client.request("activity.mark", {
+                                roomId: activeRoomId,
+                                threadId: activeThreadId,
+                                throughSeq,
+                                action: "read",
+                              });
+                            }
+                          : undefined
+                      }
+                      focusedMessageId={focusedMessageId}
+                      canReply={
+                        health?.capabilities.threadWrite === true &&
+                        roomData?.caughtUp === true
+                      }
+                      canAttachFiles={health?.capabilities.fileShare === true}
+                      canForward={
+                        health?.capabilities.messageForward === true &&
+                        roomData?.caughtUp === true &&
+                        activeRoom?.archivedAt === undefined
+                      }
+                      loading={threadLoading}
+                      earlierRepliesLoading={threadEarlierRepliesLoading}
+                      hasEarlierReplies={threadHasEarlierReplies}
+                      onClose={() => {
+                        if (taskModalOpen) {
+                          closeTaskDetail();
+                          return;
+                        }
+                        const rootMessageId = activeThreadRootMessageId;
+                        invalidateNavigation();
+                        setActiveThreadRootMessageId(undefined);
+                        if (messageContext?.message.threadId)
+                          setFocusedMessageId(undefined);
+                        restoreThreadFocus(rootMessageId);
+                      }}
+                      onSubmit={submitThreadReply}
+                      onTaskWorkflow={updateMessageTaskWorkflow}
+                      onFollow={
+                        activeRoomId &&
+                        activeThreadRootMessageId &&
+                        (activeThreadId ||
+                          health?.capabilities.threadWrite === true)
+                          ? async (following) => {
+                              const { thread } = await ensureActiveThread();
+                              await client.request("activity.follow", {
+                                roomId: activeRoomId,
+                                threadId: thread.threadId,
+                                following,
+                              });
+                              threadFollowers.refresh();
+                            }
+                          : undefined
+                      }
+                      onLoadEarlier={loadEarlierThreadMessages}
+                      onRefreshFollowers={threadFollowers.refresh}
+                      onRemoveFollower={
+                        activeRoomId && activeThreadId
+                          ? async (participantId) => {
+                              const result = await client.request(
+                                "thread.follower.remove",
+                                {
+                                  participantId,
+                                  roomId: activeRoomId,
+                                  threadId: activeThreadId,
+                                },
+                              );
+                              threadFollowers.refresh();
+                              return result;
+                            }
+                          : undefined
+                      }
+                      onRestoreFollower={
+                        activeRoomId && activeThreadId
+                          ? async ({ participantId, undoToken }) => {
+                              const result = await client.request(
+                                "thread.follower.restore",
+                                {
+                                  participantId,
+                                  roomId: activeRoomId,
+                                  threadId: activeThreadId,
+                                  undoToken,
+                                },
+                              );
+                              if (!result.restored)
+                                throw new Error(
+                                  "撤销期限已过，请重新提及该 Agent",
+                                );
+                              threadFollowers.refresh();
+                            }
+                          : undefined
+                      }
+                      onSearchThread={searchActiveThread}
+                      onOpenTarget={(target) =>
+                        void openDiscoveryLocation({ target })
+                      }
+                      onViewInChannel={() => {
+                        const rootMessageId = activeThreadRootMessageId;
+                        invalidateNavigation();
+                        setActiveThreadRootMessageId(undefined);
+                        setFocusedMessageId(activeThreadRootMessageId);
+                        restoreThreadFocus(rootMessageId);
+                      }}
+                      replies={threadView.messages}
+                      mentionAgentIds={availableAgentIds}
+                      mentionReadStates={threadMentionReadStates}
+                      referenceComputers={messageReferenceComputers}
+                      referenceEventsComplete={
+                        roomData?.referenceEventsComplete === true
+                      }
+                      referenceRooms={messageReferenceRooms}
+                      referenceTasks={roomData?.tasks ?? []}
+                      roomMembers={roomData?.members ?? []}
+                      resizer={
+                        taskModalOpen ? null : (
+                          <ThreadPanelResizer
+                            onWidthChange={setThreadPanelWidth}
+                            onWidthCommit={commitThreadPanelWidth}
+                            width={threadPanelWidth}
+                          />
+                        )
+                      }
+                      roomEvents={roomData?.roomEvents ?? []}
+                      roomId={activeRoomId}
+                      roomKind={activeRoom?.kind}
+                      roomName={activeRoom?.name}
+                      root={activeThreadRoot}
+                      {...(activeThreadTask === undefined
+                        ? {}
+                        : { task: activeThreadTask })}
+                      {...(activeThreadTaskAgent === undefined
+                        ? {}
+                        : { taskAgent: activeThreadTaskAgent })}
+                      threadId={activeThreadId}
+                    />
+                  </TaskThreadPresentation>
                 )}
                 {roomCreateOpen ? (
                   <RoomCreateDialog

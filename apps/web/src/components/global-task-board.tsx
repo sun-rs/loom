@@ -69,6 +69,7 @@ export function GlobalTaskBoard({
   view,
   writeEnabled = true,
   showRoomName = true,
+  openSurface,
   onOpen,
   onChanged,
 }: {
@@ -82,6 +83,7 @@ export function GlobalTaskBoard({
   view: "board" | "list";
   writeEnabled?: boolean;
   showRoomName?: boolean;
+  openSurface?: "tasks";
   onOpen: DiscoveryNavigationHandler;
   onChanged: () => void;
 }) {
@@ -241,6 +243,9 @@ export function GlobalTaskBoard({
                       onChoose={(target) => choose(task, target)}
                       onOpen={() =>
                         onOpen({
+                          ...(openSurface === undefined
+                            ? {}
+                            : { surface: openSurface }),
                           target: {
                             kind: "task",
                             roomId: task.roomId,

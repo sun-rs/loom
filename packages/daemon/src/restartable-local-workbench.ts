@@ -10,6 +10,10 @@ import type { WorkbenchServiceControl } from "./workbench-service-control.ts";
 /** Outer launcher survives; Core, Host and gateway are fully stopped and recreated. */
 export async function startRestartableLocalCoreWorkbench(
   input: Parameters<typeof startLocalCoreWorkbench>[0],
+  lifecycle = {
+    start: startLocalCoreWorkbench,
+    wait: () => new Promise<void>((resolve) => setTimeout(resolve, 1000)),
+  },
 ): Promise<RunningLocalCoreWorkbench> {
   let generation = randomUUID();
   let state: "online" | "restarting" | "failed" = "online";
@@ -17,6 +21,17 @@ export async function startRestartableLocalCoreWorkbench(
   let pending: Promise<void> | undefined;
   let running: RunningLocalCoreWorkbench;
   let mode = input.mode;
+  let fail!: (error: Error) => void;
+  const failed = new Promise<Error>((resolve) => {
+    fail = resolve;
+  });
+  const observeFailure = (owner: RunningLocalCoreWorkbench) => {
+    void owner.failed?.then((error) => {
+      if (stopped || owner !== running || state !== "online") return;
+      state = "failed";
+      fail(error);
+    });
+  };
   const serviceControl: WorkbenchServiceControl = {
     status: () => ({ generation, state }),
     restart(expected) {
@@ -29,29 +44,52 @@ export async function startRestartableLocalCoreWorkbench(
       pending = new Promise<void>((resolve) => setImmediate(resolve))
         .then(async () => {
           await running.stop();
-          if (stopped) return;
-          running = await startLocalCoreWorkbench({
-            ...input,
-            mode,
-            serviceControl,
-          });
-          generation = randomUUID();
-          state = "online";
+          for (let attempt = 0; attempt < 2 && !stopped; attempt += 1) {
+            try {
+              running = await lifecycle.start({
+                ...input,
+                mode,
+                serviceControl,
+              });
+              generation = randomUUID();
+              state = "online";
+              observeFailure(running);
+              return;
+            } catch (error) {
+              // startLocalCoreWorkbench rolls back every partially started owner.
+              // Recheck durable execution evidence; never retry past an orphan or hold.
+              if (
+                attempt > 0 ||
+                !workbenchIsIdle(running.descriptor.stateDirectory)
+              )
+                throw error;
+              await lifecycle.wait();
+              if (!workbenchIsIdle(running.descriptor.stateDirectory))
+                throw error;
+            }
+          }
         })
         .catch((error: unknown) => {
           state = "failed";
           process.stderr.write(`Workbench restart failed: ${String(error)}\n`);
+          fail(
+            error instanceof Error
+              ? error
+              : new Error("Workbench restart failed"),
+          );
         });
       return "accepted";
     },
   };
-  running = await startLocalCoreWorkbench({ ...input, serviceControl });
+  running = await lifecycle.start({ ...input, serviceControl });
+  observeFailure(running);
   if (mode.kind === "loopback")
     mode = {
       ...mode,
       port: Number(new URL(running.descriptor.webOrigin).port),
     };
   return {
+    failed,
     get descriptor() {
       return running.descriptor;
     },

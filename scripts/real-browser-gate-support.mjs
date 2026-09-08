@@ -34,6 +34,9 @@ export function parseFixtureAnnouncement(output) {
     roomId: value.roomId,
     webOrigin: value.webOrigin,
     workspaceId: value.workspaceId,
+    ...(typeof value.stateDirectory === "string"
+      ? { stateDirectory: value.stateDirectory }
+      : {}),
   };
 }
 

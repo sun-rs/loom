@@ -50,12 +50,6 @@ export function assertNoActiveRoomWork(
       .get(roomId),
     database
       .prepare(
-        `SELECT 1 AS present FROM managed_mcp_calls
-         WHERE room_id = ? AND state = 'pending' LIMIT 1`,
-      )
-      .get(roomId),
-    database
-      .prepare(
         `SELECT 1 AS present FROM activation_cancellation_requests
          WHERE room_id = ? AND resolved_at IS NULL LIMIT 1`,
       )

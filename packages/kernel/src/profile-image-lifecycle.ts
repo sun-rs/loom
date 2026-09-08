@@ -94,6 +94,15 @@ export class ProfileImageLifecycleService {
     input: Readonly<{ avatarKey: string }>,
   ): Readonly<{ uploadIntentId: string }> {
     const actorId = this.#requireActor(actor);
+    return this.recordAuthorizedUpload(actorId, input);
+  }
+
+  /** Internal owner entry after a facade has authenticated its actor. Worker
+   * upload callbacks recheck the live execution before recording this intent. */
+  recordAuthorizedUpload(
+    actorId: string,
+    input: Readonly<{ avatarKey: string }>,
+  ): Readonly<{ uploadIntentId: string }> {
     const avatarKey = UploadedProfileImageKeySchema.parse(input.avatarKey);
     return inImmediateTransaction(this.#database, () => {
       const now = this.#now();
@@ -155,6 +164,31 @@ export class ProfileImageLifecycleService {
         );
       return { uploadIntentId };
     });
+  }
+
+  /** Strict self-profile binding: another profile's public image reference is
+   * not an ownership proof for a Worker upload. Called in the profile transaction. */
+  bindOwnedReference(
+    actorId: string,
+    avatarKey: string,
+    uploadIntentId?: string,
+  ): void {
+    const canonicalKey = UploadedProfileImageKeySchema.parse(avatarKey);
+    const intent =
+      uploadIntentId === undefined
+        ? undefined
+        : this.#database
+            .prepare(
+              `SELECT intent.upload_intent_id FROM profile_image_upload_intents AS intent
+       JOIN profile_image_objects AS object ON object.avatar_key=intent.avatar_key
+       WHERE intent.upload_intent_id=? AND intent.avatar_key=? AND intent.actor_id=? AND object.state='pending'`,
+            )
+            .get(uploadIntentId, canonicalKey, actorId);
+    if (!intent)
+      throw new ConflictError(
+        "Worker avatar requires its own completed upload intent",
+      );
+    this.bindReference(actorId, canonicalKey, uploadIntentId);
   }
 
   /** Must be called inside the same Kernel transaction as the profile write. */

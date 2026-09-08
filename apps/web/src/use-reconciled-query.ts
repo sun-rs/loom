@@ -5,6 +5,8 @@ import type { RahClient, RahClientOperationMap } from "@rah-os/client-sdk";
 export function useReconciledQuery<
   K extends
     | "room.preview"
+    | "file.comments"
+    | "room.member.list"
     | "host.runtime.list"
     | "activity.list"
     | "agent.presence.list"

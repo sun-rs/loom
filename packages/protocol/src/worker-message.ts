@@ -1,3 +1,5 @@
+import { WorkerReadChannelSchema } from "./worker-room-targets.ts";
+import { WorkerTargetReceiptSchema } from "./worker-room-targets.ts";
 import { z } from "zod";
 
 import { IdentifierSchema } from "./common.ts";
@@ -5,15 +7,25 @@ import { RoomEventSchema } from "./room-event.ts";
 
 export const WorkerMessagePostRequestSchema = z
   .object({
+    channel: WorkerReadChannelSchema.optional(),
+    contextReceipt: WorkerTargetReceiptSchema.optional(),
     anyway: z.boolean().optional(),
+    attachmentIds: z.array(IdentifierSchema).max(10).optional(),
+    commentAttachmentId: IdentifierSchema.optional(),
     basedOnRoomSeq: z.number().int().nonnegative(),
     body: z.string().trim().min(1).optional(),
     heldDraftId: IdentifierSchema.optional(),
     idempotencyKey: IdentifierSchema,
     sendDraft: z.literal(true).optional(),
+    threadId: IdentifierSchema.nullable().optional(),
   })
   .strict()
   .superRefine((value, context) => {
+    if ((value.channel === undefined) !== (value.contextReceipt === undefined))
+      context.addIssue({
+        code: "custom",
+        message: "channel and contextReceipt must be supplied together",
+      });
     if (value.sendDraft === true) {
       if (value.heldDraftId === undefined) {
         context.addIssue({
@@ -22,19 +34,24 @@ export const WorkerMessagePostRequestSchema = z
           path: ["heldDraftId"],
         });
       }
-      if (value.body !== undefined) {
+      if (
+        value.body !== undefined ||
+        value.attachmentIds !== undefined ||
+        value.commentAttachmentId !== undefined
+      ) {
         context.addIssue({
           code: "custom",
-          message: "body must be omitted when sendDraft is true",
+          message:
+            "body and attachmentIds must be omitted when sendDraft is true",
           path: ["body"],
         });
       }
       return;
     }
-    if (value.body === undefined) {
+    if (value.body === undefined && !value.attachmentIds?.length) {
       context.addIssue({
         code: "custom",
-        message: "body is required for a composed message",
+        message: "body or attachmentIds is required for a composed message",
         path: ["body"],
       });
     }

@@ -102,6 +102,7 @@ test("Run message search and reactions are scoped, bounded, causal and revocable
     const page = WorkerMessageSearchResponseSchema.parse(await search.json());
     assert.equal(page.messages.length, 1);
     assert.ok(page.nextCursor);
+    assert.equal(page.frozenRoomCount, 1);
     const next = WorkerMessageSearchResponseSchema.parse(
       await (
         await request("messages/search", {
@@ -113,7 +114,7 @@ test("Run message search and reactions are scoped, bounded, causal and revocable
     );
     assert.deepEqual(
       [page.messages[0]!.body, next.messages[0]!.body],
-      ["needle wake", "needle earlier"],
+      ["needle future", "needle wake"],
     );
     assert.equal(
       (

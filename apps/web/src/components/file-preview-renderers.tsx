@@ -1,3 +1,6 @@
+import { HtmlFilePreview } from "./html-file-preview.tsx";
+import type { AttachmentAnchor } from "../attachment-comment-anchors.ts";
+import { useLayoutEffect, useRef } from "react";
 import type { AttachmentPreviewKind } from "@rah-os/protocol";
 import { MessageMarkdown } from "./message-markdown.tsx";
 
@@ -5,13 +8,13 @@ export const MAX_RENDERED_PREVIEW_CHARACTERS = 300_000;
 export const MAX_CSV_PREVIEW_ROWS = 200;
 const MAX_CSV_PREVIEW_COLUMNS = 50;
 const MAX_DIFF_PREVIEW_LINES = 5_000;
-const HTML_PREVIEW_CSP =
-  "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src data: blob:; media-src data: blob:; style-src 'unsafe-inline'; font-src data:; object-src 'none'; base-uri 'none'; form-action 'none'\">";
 
 export function AttachmentTextPreview({
   filename,
   kind,
   text,
+  commentMode = false,
+  onAnchor,
 }: {
   filename: string;
   kind: Exclude<
@@ -19,14 +22,13 @@ export function AttachmentTextPreview({
     "image" | "unsupported" | "pdf" | "video" | "audio"
   >;
   text: string;
+  commentMode?: boolean;
+  onAnchor?: (anchor: AttachmentAnchor) => void;
 }) {
   if (kind === "markdown") {
     const clipped = clipText(text);
     return (
-      <div className="rah-file-preview-markdown">
-        <PreviewTruncation truncated={clipped.truncated} />
-        <MessageMarkdown source={clipped.value} />
-      </div>
+      <MarkdownFilePreview text={clipped.value} truncated={clipped.truncated} />
     );
   }
   if (kind === "html") {
@@ -34,10 +36,11 @@ export function AttachmentTextPreview({
     return (
       <div className="rah-file-preview-html">
         <PreviewTruncation truncated={clipped.truncated} />
-        <iframe
-          sandbox=""
-          srcDoc={hardenHtmlPreview(clipped.value)}
-          title={"HTML 预览 " + filename}
+        <HtmlFilePreview
+          filename={filename}
+          text={clipped.value}
+          commentMode={commentMode}
+          onAnchor={onAnchor}
         />
       </div>
     );
@@ -45,10 +48,20 @@ export function AttachmentTextPreview({
   if (kind === "diff") return <DiffPreview text={text} />;
   if (kind === "csv") return <CsvPreview filename={filename} text={text} />;
   const clipped = clipText(text);
+  const lines = clipped.value.split("\n");
   return (
     <>
-      <PreviewTruncation truncated={clipped.truncated} />
-      <pre className="rah-file-preview-text">{clipped.value}</pre>
+      <PreviewTruncation
+        truncated={clipped.truncated || lines.length > MAX_DIFF_PREVIEW_LINES}
+      />
+      <pre className="rah-file-preview-text">
+        {lines.slice(0, MAX_DIFF_PREVIEW_LINES).map((line, index) => (
+          <span data-anchor-line={index + 1} key={index}>
+            {line}
+            {"\n"}
+          </span>
+        ))}
+      </pre>
     </>
   );
 }
@@ -70,12 +83,6 @@ function PreviewTruncation({ truncated }: { truncated: boolean }) {
   ) : null;
 }
 
-function hardenHtmlPreview(source: string): string {
-  return /<head(?:\s[^>]*)?>/iu.test(source)
-    ? source.replace(/<head(?:\s[^>]*)?>/iu, (head) => head + HTML_PREVIEW_CSP)
-    : HTML_PREVIEW_CSP + source;
-}
-
 function DiffPreview({ text }: { text: string }) {
   const clipped = clipText(text);
   const allLines = clipped.value.split("\n");
@@ -89,6 +96,7 @@ function DiffPreview({ text }: { text: string }) {
           <span
             className={"rah-file-preview-diff-line" + diffLineClass(line)}
             key={index}
+            data-anchor-line={index + 1}
           >
             {line}
             {"\n"}
@@ -117,7 +125,7 @@ function CsvPreview({ filename, text }: { filename: string; text: string }) {
       <table>
         <tbody>
           {parsed.rows.map((row, rowIndex) => (
-            <tr key={rowIndex}>
+            <tr key={rowIndex} data-anchor-row={rowIndex + 1}>
               {row.slice(0, MAX_CSV_PREVIEW_COLUMNS).map((cell, cellIndex) => (
                 <td key={cellIndex}>{cell}</td>
               ))}
@@ -163,4 +171,29 @@ function parseDelimited(text: string, delimiter: string) {
     rows.push(row);
   }
   return { rows, truncated: index < text.length };
+}
+
+// Local renderer IDs are deterministic for immutable attachment bytes. They do
+// not change the global Markdown renderer or execute HTML attachment content.
+function MarkdownFilePreview({
+  text,
+  truncated,
+}: {
+  text: string;
+  truncated: boolean;
+}) {
+  const root = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    root.current
+      ?.querySelectorAll<HTMLElement>("h1, h2, h3")
+      .forEach((heading, index) => {
+        heading.dataset.anchorHeading = `attachment-section-${index + 1}`;
+      });
+  }, [text]);
+  return (
+    <div className="rah-file-preview-markdown" ref={root}>
+      <PreviewTruncation truncated={truncated} />
+      <MessageMarkdown source={text} />
+    </div>
+  );
 }

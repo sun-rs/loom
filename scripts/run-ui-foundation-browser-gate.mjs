@@ -392,20 +392,20 @@ try {
       const activity = agent.getByRole("tab", { name: "动态", exact: true });
       await activity.focus();
       await page.keyboard.press("End");
-      const mcp = agent.getByRole("tab", { name: "MCP", exact: true });
+      const apps = agent.getByRole("tab", { name: "应用", exact: true });
       assert.equal(
         await activity.getAttribute("aria-selected"),
         "true",
         "Agent Tabs also use focus-only navigation",
       );
       assert.equal(
-        await mcp.evaluate((e) => document.activeElement === e),
+        await apps.evaluate((e) => document.activeElement === e),
         true,
       );
       await page.keyboard.press("Enter");
-      assert.equal(await mcp.getAttribute("aria-selected"), "true");
+      assert.equal(await apps.getAttribute("aria-selected"), "true");
       assert.equal(
-        await mcp.evaluate((e) => {
+        await apps.evaluate((e) => {
           const r = e.getBoundingClientRect();
           const p = e.closest(".rah-panel-tabs").getBoundingClientRect();
           return (
@@ -417,7 +417,7 @@ try {
           );
         }),
         true,
-        "MCP must become visible and clickable in a narrow inspector",
+        "Last Agent tab must become visible and clickable in a narrow inspector",
       );
       await page.keyboard.press("ArrowRight");
       await page.keyboard.press("Enter");

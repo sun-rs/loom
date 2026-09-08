@@ -778,8 +778,6 @@ test("the UI fails closed only on capabilities required for canonical Room recov
       hints: false,
       inputRequestRead: false,
       inputRequestResolve: false,
-      managedMcpRead: false,
-      managedMcpWrite: false,
       memberRead: false,
       memberWrite: false,
       messageRead: false,

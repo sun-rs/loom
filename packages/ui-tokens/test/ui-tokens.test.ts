@@ -35,10 +35,23 @@ test("interaction icon geometry is frozen from Raft RFe/TFe/yze/cze/Bw, Agent ta
   );
   assert.equal(
     // Keep the entire prior sprite byte-frozen while adopting verified
-    // arrow-left and image-plus symbols. Never promote a new whole-file hash to hide drift.
+    // arrow-left, image-plus and separately source-checked 2026-09-08 symbols.
+    // Never promote a new whole-file hash to hide drift.
     createHash("sha256")
       .update(
         source
+          .replace(
+            /  <!-- Raft (?:AgentDetailPanel-DKwoNvgK\.js (?:Cl|Rl)|index-BoAC7nSE\.js (?:dBe|N3e)); verbatim geometry, local symbol wrapper\. -->\n  <symbol id="raft-icon-(?:folder-closed|menu|share-2|link)"(?:(?!<\/symbol>)[\s\S])*<\/symbol>\n/gu,
+            "",
+          )
+          .replace(
+            /<symbol id="raft-icon-play"(?:(?!<\/symbol>)[\s\S])*<\/symbol>\n/u,
+            "",
+          )
+          .replace(
+            /  <!-- Raft release\/v1\.12\.0 AgentDetailPanel-DSYPOiPi ql\/Wl: verbatim globe geometry\. -->\n  <symbol id="raft-icon-globe"(?:(?!<\/symbol>)[\s\S])*<\/symbol>\n/u,
+            "",
+          )
           .replace(
             /  <!-- Raft index-BVfbaScj\.js v\$e\/y\$e,[\s\S]*?<symbol id="raft-icon-image-plus"[\s\S]*?<\/symbol>\n/u,
             "",
@@ -148,4 +161,93 @@ test("media picker image-plus retains every path and circle from the fixed offic
   );
   assert.match(source, /\["circle",\{cx:"9",cy:"9",r:"2"/u);
   assert.match(sprite, /<circle cx="9" cy="9" r="2"/u);
+});
+
+test("2026-09-08 additional glyphs exactly match the separately frozen source geometry", () => {
+  const evidence = JSON.parse(
+    readFileSync(
+      join(repositoryRoot, "docs/evidence/raft-icon-semantics-20260908.json"),
+      "utf8",
+    ),
+  );
+  const sprite = readFileSync(
+    join(packageRoot, "src/interaction-icons.svg"),
+    "utf8",
+  );
+  for (const icon of evidence.icons) {
+    const upstream = readFileSync(join(repositoryRoot, icon.source));
+    assert.equal(
+      createHash("sha256").update(upstream).digest("hex"),
+      icon.sha256,
+      icon.name,
+    );
+    assert.equal(icon.offsetUnit, "utf8-bytes");
+    const declaration = upstream.subarray(icon.offset).toString("utf8");
+    assert.ok(declaration.startsWith(`const ${icon.array}=`), icon.name);
+    const array = declaration.match(/^const \w+=(\[\[.*?\]\]),/u)?.[1];
+    assert.ok(array, icon.name);
+    const geometry = JSON.parse(
+      array.replace(/([{,])([A-Za-z_]\w*):/gu, '$1"$2":'),
+    );
+    assert.deepEqual(
+      icon.geometry,
+      geometry,
+      `${icon.name} manifest must derive from unchanged upstream`,
+    );
+    const symbol = sprite.match(
+      new RegExp(
+        `<symbol (id="raft-icon-${icon.name}"[^>]*)>([\\s\\S]*?)<\\/symbol>`,
+        "u",
+      ),
+    );
+    assert.ok(symbol, icon.name);
+    const attributes = Object.fromEntries(
+      [...symbol[1]!.matchAll(/([\w-]+)="([^"]*)"/gu)].map(([, key, value]) => [
+        key,
+        value,
+      ]),
+    );
+    assert.deepEqual(attributes, {
+      id: `raft-icon-${icon.name}`,
+      viewBox: "0 0 24 24",
+      ...(icon.name === "play"
+        ? {}
+        : {
+            fill: "none",
+            stroke: "currentColor",
+            "stroke-width": "2",
+            "stroke-linecap": "round",
+            "stroke-linejoin": "round",
+          }),
+    });
+    const body = symbol[2]!;
+    assert.equal(
+      body
+        .replace(/<(?:path|circle|line|rect|polyline|polygon)\b[^>]*\/>/gu, "")
+        .trim(),
+      "",
+      "unknown nested elements must not escape the frozen sprite check",
+    );
+    const actual = [
+      ...body.matchAll(
+        /<(path|circle|line|rect|polyline|polygon)\b([^>]*?)\/?>(?:<\/\1>)?/gu,
+      ),
+    ].map(([, tag, attributes]) => [
+      tag,
+      Object.fromEntries(
+        [...attributes!.matchAll(/([\w-]+)="([^"]*)"/gu)].map(
+          ([, key, value]) => [key, value],
+        ),
+      ),
+    ]);
+    const expected = icon.geometry.map(
+      ([tag, attributes]: [string, Record<string, string>]) => [
+        tag,
+        Object.fromEntries(
+          Object.entries(attributes).filter(([key]) => key !== "key"),
+        ),
+      ],
+    );
+    assert.deepEqual(actual, expected, icon.name);
+  }
 });

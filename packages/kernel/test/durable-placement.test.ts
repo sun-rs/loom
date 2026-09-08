@@ -261,7 +261,7 @@ function addAgent(
 
 test("Kernel schema owns anchored Tasks and immutable Placement projections", () => {
   const fixture = createFixture();
-  assert.equal(KERNEL_SCHEMA_VERSION, 50);
+  assert.equal(KERNEL_SCHEMA_VERSION, 53);
   assert.equal(
     fixture.agentDefinition.currentRevisionId,
     fixture.agentDefinitionRevision.agentDefinitionRevisionId,
@@ -2097,6 +2097,101 @@ test("a crash after RunAttempt finish but before Activation resolution is requeu
   assert.notEqual(replacement.placementId, placement.placementId);
   kernel.close();
 });
+
+for (const terminalState of ["exited", "cancelled"] as const) {
+  test(`a restarted Host claims a new attempt after a ${terminalState} Run`, () => {
+    const { agentId, clock, humanActor, kernel, room } = createFixture();
+    const credential = kernel.provisionHostCredential({
+      hostId: "post-finish-crash-host",
+      participantIds: [agentId],
+    });
+    const host = kernel.authenticateHostAccessToken(credential.accessToken);
+    kernel.heartbeatHost(host);
+    kernel.publishRuntimeOffer(
+      host,
+      runtimeOffer(host, "post-finish-crash-offer"),
+    );
+    kernel.postMessage(humanActor, {
+      body: "Recover the business Activation after process bookkeeping finished",
+      idempotencyKey: "post-finish-crash-message",
+      recipients: [{ participantId: agentId, reason: "mention" }],
+      roomId: room.roomId,
+    });
+    const placement = kernel.scheduleNextPlacement({ leaseMs: 1_000 });
+    assert.ok(placement);
+    const runAttempt = kernel.createRunAttempt(host, {
+      activationId: placement.activationId,
+    });
+    const recoveryDescriptor = {
+      driver: "fake-recovery",
+      metadata: {},
+      recoveryKey: "post-finish-crash-runtime",
+    };
+    kernel.prepareRunAttemptRuntime(host, {
+      recoveryDescriptor,
+      runAttemptId: runAttempt.runAttemptId,
+      runtimeRunId: "post-finish-crash-runtime",
+    });
+    kernel.markRunAttemptRunning(host, {
+      recoveryDescriptor,
+      runAttemptId: runAttempt.runAttemptId,
+      runtimeRunId: "post-finish-crash-runtime",
+    });
+    kernel.recordRuntimeTermination(host, {
+      exit: { code: 1 },
+      runAttemptId: runAttempt.runAttemptId,
+      runtimeRunId: "post-finish-crash-runtime",
+    });
+    kernel.finishRunAttempt(host, {
+      exitCode: 1,
+      runAttemptId: runAttempt.runAttemptId,
+      state: terminalState,
+    });
+    const oldRun = kernel.listRunAttempts()[0];
+    kernel.heartbeatHost(host, { state: "offline" });
+    const successor = kernel.authenticateHostAccessToken(
+      credential.accessToken,
+    );
+    kernel.heartbeatHost(successor);
+    clock.advance(1_001);
+    kernel.publishRuntimeOffer(
+      successor,
+      runtimeOffer(successor, "post-finish-crash-offer", {
+        observedAt: clock.now().toISOString(),
+      }),
+    );
+
+    const replacement = kernel.scheduleNextPlacement({ leaseMs: 1_000 });
+    assert.ok(replacement);
+    assert.equal(replacement.activationId, placement.activationId);
+    assert.notEqual(replacement.placementId, placement.placementId);
+    const claim = kernel.claimNextPlacement(successor, { leaseMs: 1_000 });
+    assert.ok(claim, "new Host must start the recovered Activation");
+    assert.notEqual(claim.runAttempt.runAttemptId, runAttempt.runAttemptId);
+    assert.equal(claim.activation.activationId, placement.activationId);
+    assert.deepEqual(
+      kernel
+        .listRunAttempts()
+        .find((r) => r.runAttemptId === runAttempt.runAttemptId),
+      oldRun,
+    );
+    assert.throws(
+      () =>
+        kernel.finishRunAttempt(successor, {
+          runAttemptId: runAttempt.runAttemptId,
+          state: "failed",
+        }),
+      ExecutionFencedError,
+    );
+    assert.throws(() =>
+      kernel.renewActivationLease(host, {
+        activationId: placement.activationId,
+        leaseMs: 1_000,
+      }),
+    );
+    kernel.close();
+  });
+}
 
 test("a crash after terminal proof but before RunAttempt finish is automatically requeued", () => {
   const { agentId, clock, humanActor, kernel, room } = createFixture();

@@ -56,8 +56,6 @@ test("Files HTTP + SDK roundtrip verifies bytes, Room provenance, authorization 
         hints: false,
         inputRequestRead: true,
         inputRequestResolve: true,
-        managedMcpRead: true,
-        managedMcpWrite: true,
         memberRead: true,
         memberWrite: true,
         messageRead: true,

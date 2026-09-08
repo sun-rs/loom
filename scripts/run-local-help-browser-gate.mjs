@@ -57,12 +57,16 @@ try {
         await guide
           .getByRole("heading", { name: "本机恢复", exact: true })
           .waitFor();
-        await guide
-          .getByRole("heading", { name: "首次配置 MCP", exact: true })
-          .waitFor();
         assert.equal(new URL(guide.url()).origin, fixture.origin);
-        assert.ok(
+        assert.equal(
+          await guide
+            .getByRole("heading", { name: "首次配置 MCP", exact: true })
+            .count(),
+          0,
+        );
+        assert.equal(
           (await guide.textContent("body")).includes("managed-mcp.json"),
+          false,
         );
         await guide.reload();
         await guide

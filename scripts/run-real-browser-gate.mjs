@@ -526,7 +526,7 @@ try {
         (tab) => tab.textContent?.trim(),
       ),
     ),
-    ["动态", "资料", "聊天", "提醒", "工作区", "应用", "MCP"],
+    ["动态", "资料", "聊天", "提醒", "工作区", "应用"],
     "Agent detail must preserve the complete Raft tab protocol",
   );
   await clickButton(browser, { text: "关系图" });
@@ -1364,44 +1364,31 @@ try {
     await call(browser, () => window.__rahCopiedDiagnostic ?? ""),
     /RAH_OS Agent runtime trajectory diagnostics[\s\S]*kind=/u,
   );
-  await clickButton(browser, { text: "MCP" });
+  await clickButton(browser, { text: "资料" });
   await waitFor(
     browser,
-    () =>
-      document
-        .querySelector(".rah-agent-mcp-pane")
-        ?.textContent?.includes("暂无 MCP 使用记录") === true,
-    "Agent MCP usage surface",
+    () => document.querySelector(".rah-agent-profile-pane") !== null,
+    "Agent profile surface",
   );
-  const agentMcpRoute = await call(browser, () => ({
+  const agentProfileRoute = await call(browser, () => ({
     agent: new URLSearchParams(location.search).get("agent"),
     agentTab: new URLSearchParams(location.search).get("agentTab"),
     surface: new URLSearchParams(location.search).get("surface"),
   }));
-  assert.equal(agentMcpRoute.surface, "agents");
-  assert.equal(agentMcpRoute.agentTab, "mcp");
-  assert.ok(agentMcpRoute.agent, "Agent route must retain a stable identity");
+  assert.equal(agentProfileRoute.surface, "agents");
+  assert.equal(agentProfileRoute.agentTab, "profile");
+  assert.ok(agentProfileRoute.agent, "Agent route retains its stable identity");
   await reloadPage(browser);
   await waitFor(
     browser,
-    () =>
-      document
-        .querySelector(".rah-agent-mcp-pane")
-        ?.textContent?.includes("暂无 MCP 使用记录") === true,
-    "Agent identity and MCP tab recovery after reload",
+    () => document.querySelector(".rah-agent-profile-pane") !== null,
+    "Agent identity and profile recovery after reload",
   );
-  // A development server can commit the new document before its module graph
-  // and service-worker reconciliation have settled. Require the recovered
-  // Agent surface to remain present across a second observation so a transient
-  // pre-reload projection cannot satisfy this persistence gate.
   await delay(250);
   await waitFor(
     browser,
-    () =>
-      document
-        .querySelector(".rah-agent-mcp-pane")
-        ?.textContent?.includes("暂无 MCP 使用记录") === true,
-    "stable Agent identity and MCP tab recovery after reload",
+    () => document.querySelector(".rah-agent-profile-pane") !== null,
+    "Stable Agent profile after reload",
   );
   assert.deepEqual(
     await call(browser, () => ({
@@ -1409,22 +1396,17 @@ try {
       agentTab: new URLSearchParams(location.search).get("agentTab"),
       surface: new URLSearchParams(location.search).get("surface"),
     })),
-    agentMcpRoute,
-    "Agent route must remain canonical after reload",
+    agentProfileRoute,
+    "Agent route remains canonical after reload",
   );
-  assert.match(
-    await call(
-      browser,
-      () => document.querySelector(".rah-agent-mcp-pane")?.textContent ?? "",
+  assert.equal(
+    await call(browser, () =>
+      [
+        ...document.querySelectorAll('.rah-agent-detail-tabs [role="tab"]'),
+      ].some((tab) => tab.textContent?.trim() === "MCP"),
     ),
-    /暂无 MCP 使用记录/u,
-  );
-  assert.match(
-    await call(
-      browser,
-      () => document.querySelector(".rah-agent-mcp-pane")?.textContent ?? "",
-    ),
-    /调用参数、凭据与结果正文不会进入此浏览器投影/u,
+    false,
+    "Retired MCP tab is absent",
   );
 
   await clickButton(browser, { ariaLabel: "添加 Agent" });
@@ -2003,13 +1985,10 @@ try {
   );
 
   await clickButton(browser, { title: "设置" });
-  await clickButton(browser, { text: "MCP 服务器" });
   await waitFor(
     browser,
-    () =>
-      document.querySelector(".rah-settings-page-head h1")?.textContent ===
-      "MCP 服务器",
-    "managed MCP settings",
+    () => document.querySelector(".rah-settings-surface") !== null,
+    "Settings surface",
   );
   assert.equal(
     await call(
@@ -2017,67 +1996,16 @@ try {
       () => document.querySelector(".rah-room-sidebar") === null,
     ),
     true,
-    "non-Room surfaces must not retain the Chat sidebar",
-  );
-  await clickButton(browser, { text: "添加服务器" });
-  await waitFor(
-    browser,
-    () => document.querySelector(".rah-mcp-server-dialog") !== null,
-    "managed MCP server dialog",
-  );
-  await clickButton(browser, { text: "测试连接" });
-  await waitFor(
-    browser,
-    () =>
-      document
-        .querySelector(".rah-mcp-server-dialog")
-        ?.textContent?.includes("已发现 1 个工具") === true,
-    "managed MCP tool discovery",
-  );
-  await clickButton(browser, { text: "保存" });
-  await waitFor(
-    browser,
-    () =>
-      document
-        .querySelector(".rah-mcp-server-card")
-        ?.textContent?.includes("fixture.echo") === true,
-    "canonical managed MCP server",
-  );
-  await clickButton(browser, { text: "分配 Agent" });
-  await waitFor(
-    browser,
-    () => document.querySelector(".rah-mcp-assignment-dialog") !== null,
-    "managed MCP Agent assignment dialog",
-  );
-  await clickButton(browser, { text: "保存权限" });
-  await waitFor(
-    browser,
-    () =>
-      document
-        .querySelector(".rah-mcp-assignment-list > div")
-        ?.textContent?.includes("Alice") === true,
-    "canonical managed MCP Agent assignment",
+    "non-Room surfaces do not retain Chat sidebar",
   );
   assert.equal(
-    await call(browser, () => {
-      const assignment = document.querySelector(
-        ".rah-mcp-assignment-list > div",
-      );
-      const button = [...(assignment?.querySelectorAll("button") ?? [])].find(
-        (candidate) => candidate.textContent?.trim() === "停用",
-      );
-      button?.click();
-      return button !== undefined;
-    }),
-    true,
-  );
-  await delay(100);
-  await waitFor(
-    browser,
-    () =>
-      document.querySelector(".rah-mcp-assignment-list > div > i")
-        ?.textContent === "已停用",
-    "disabled managed MCP assignment",
+    await call(browser, () =>
+      [...document.querySelectorAll("button")].some(
+        (button) => button.textContent?.trim() === "MCP 服务器",
+      ),
+    ),
+    false,
+    "Retired MCP settings are absent",
   );
 
   await clickButton(browser, { title: "聊天" });
@@ -3558,12 +3486,45 @@ try {
     browser,
     "Room settings drawer close before Review gate",
   );
-  await clickButton(browser, { text: "新建任务" });
-  await setTaskDialogContent(browser, "browser gate: frozen Review");
-  await clickButton(browser, { text: "配置协作与依赖" });
-  await setTaskDialogAssignee(browser, "Kimi");
-  await setTaskDialogRole(browser, "审阅者", "Alice");
-  await clickButton(browser, { text: "创建任务" });
+  // Historical Review compatibility fixture. Fresh Task UI intentionally has
+  // no preset reviewer controls; retain the canonical Review execution assertions.
+  await call(
+    browser,
+    async (roomId) => {
+      const post = async (path, body) => {
+        const response = await fetch(`/v3/client/${path}`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(JSON.stringify(result));
+        return result;
+      };
+      const workspace = (await post("workspaces/list", {})).workspaces[0];
+      const agents = (
+        await post("agents/list", { controlRoomId: workspace.controlRoomId })
+      ).agents;
+      const owner = agents.find((agent) => agent.handle === "Kimi");
+      const reviewer = agents.find((agent) => agent.handle === "Alice");
+      const head = await post("rooms/sync", {
+        roomId,
+        consumerId: "historical-review-fixture",
+        limit: 1,
+      });
+      await post("tasks/create", {
+        roomId,
+        basedOnRoomSeq: head.latestRoomSeq,
+        idempotencyKey: "historical-review-browser-fixture",
+        title: "browser gate: frozen Review",
+        assigneeId: owner.definition.participantId,
+        reviewerIds: [reviewer.definition.participantId],
+        collaboratorIds: [],
+        dependencyTaskIds: [],
+      });
+    },
+    selectedRoomId,
+  );
   await waitFor(
     browser,
     (title) => {
@@ -4741,7 +4702,7 @@ try {
     {
       clientWidth: 390,
       scrollWidth: 390,
-      tabs: ["动态", "资料", "聊天", "提醒", "工作区", "应用", "MCP"],
+      tabs: ["动态", "资料", "聊天", "提醒", "工作区", "应用"],
     },
     "mobile Agent detail must remain overflow-free and share desktop tabs",
   );
@@ -4758,12 +4719,12 @@ try {
   await waitFor(
     browser,
     () => document.querySelector(".rah-settings-surface") !== null,
-    "mobile managed MCP settings",
+    "mobile settings",
   );
   assert.equal(
     await call(browser, () => document.documentElement.scrollWidth),
     390,
-    "mobile managed MCP settings must not overflow",
+    "mobile settings must not overflow",
   );
 
   await browser.command("Page.navigate", {

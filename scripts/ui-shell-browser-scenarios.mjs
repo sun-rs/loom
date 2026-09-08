@@ -47,6 +47,9 @@ export async function startShellFixture({ humanMatrix = false } = {}) {
         return {
           origin: descriptor.webOrigin,
           roomId: descriptor.roomId,
+          ...(descriptor.stateDirectory
+            ? { stateDirectory: descriptor.stateDirectory }
+            : {}),
           close,
         };
       }
@@ -169,11 +172,14 @@ export async function verifyIntegratedShell(page, origin, output, engine) {
     const list = peek.getByRole("tablist", { name: "Agent 详情" });
     await list.getByRole("tab", { name: "动态", exact: true }).focus();
     await page.keyboard.press("End");
-    const mcp = list.getByRole("tab", { name: "MCP", exact: true });
-    assert.equal(await mcp.getAttribute("aria-selected"), "false");
-    assert.equal(await mcp.evaluate((e) => document.activeElement === e), true);
+    const apps = list.getByRole("tab", { name: "应用", exact: true });
+    assert.equal(await apps.getAttribute("aria-selected"), "false");
+    assert.equal(
+      await apps.evaluate((e) => document.activeElement === e),
+      true,
+    );
     await page.keyboard.press("Enter");
-    assert.equal(await mcp.getAttribute("aria-selected"), "true");
+    assert.equal(await apps.getAttribute("aria-selected"), "true");
     await page.keyboard.press("Home");
     await page.keyboard.press("Enter");
     if ([1440, 1024, 767, 390].includes(width))

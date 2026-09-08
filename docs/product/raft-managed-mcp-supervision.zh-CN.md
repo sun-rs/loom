@@ -1,5 +1,7 @@
 # Raft Managed MCP 产品监督基线
 
+**2026-09-08 范围变更：本文托管 MCP 部分已由[用户退役决定](./managed-mcp-retirement.zh-CN.md)取代，仅保留历史设计证据，不再是当前实施要求。Agent 非 MCP 页签的导航与身份不变量继续适用。**
+
 状态：**Active / first canonical RAH slice implemented**（2026-08-28）。
 
 本文记录已登录 Raft 官方 Web 的只读实操证据，并把它转换成 RAH OS 的 owner、协议和浏览器验收约束。页面文案和可见状态可以监督产品；Raft 未公开的 Server 事务、secret storage 和 OAuth 实现不能由 DOM 推断成源码事实。

@@ -1,0 +1,121 @@
+{
+  "capturedAt": "2026-09-08",
+  "capture": {
+    "raft": "https://app.raft.build/s/hakasemac (已登录, 只读操作), headless Chrome, 1440x900 + 390x844, locale zh-CN",
+    "rah": "http://127.0.0.1:4173 正式本地实例, 独立 profile, 同浏览器同视口同语言",
+    "method": "getBoundingClientRect + getComputedStyle 语义对应元素探针 + 截图; 全文截图与原始 JSON 存 /Users/sun/Code/reviews/rah_os/2026-09-08-frontend-bilateral/"
+  },
+  "aligned": {
+    "rail": "双侧 64x900 rgb(255,212,64) pad-bottom 8px; 按钮 40x40 x=11 y=70 起; 底栏 通知/帮助/设置 40x40 y=762/806/850; transition 0.15s cubic-bezier(0.4,0,0.2,1) 一致",
+    "workspaceAvatar": "双侧 40x40 黑底黄字 2px 黑边 at (11,10); hover 变黑底+4px 4px 硬阴影",
+    "sidebar": "双侧 240px rgb(255,250,239) 右 2px 边; 分组标签 12px/16px 700; 行 222x32 pad 4/8 14px/20px 500; 选中 rgb(254,125,168) + 2px 黑边 + 2px 2px rgb(20,17,17) 硬阴影",
+    "panelHeader": "双侧 62px pad 0/20 底 2px 边白底; 标题 16px/20px 700",
+    "roomTabs": "双侧 76x28 pad 6/16 12px/16px 600; active bg oklch(0.883 0.162 91.89)",
+    "message": "sender 14px/20px 700; body 14px/20px 400; time 12px/16px Space Mono black/40; thread 预览行 12.5px/18.75px 700 black/55; hover 出 2px 黑边 + 右上工具条(回复/回应/收藏)",
+    "composerInner": "双侧内盒 1112x96 pad 8 2px 黑边白底; textarea 14px/20px",
+    "kanban": "双侧列 320px pad 12 2px black/20 边 white/30 底; chip 38x21 10px/15px 700 pad 2/8 rgb(248,161,111); 卡片 292x105.3 pad 10/12 2px 黑边白底 2px 2px rgb(20,17,17) 阴影; 标题 14px/20px 700",
+    "activity": "双侧 tab 44x32 pad 6/8 12px/16px 600 active oklch(0.883 0.162 91.89); 卡片 RAH 1344x104 pad 12 2px black/30 (Raft 行截图同构)",
+    "notifications": "双侧面板 320x288 at (59,514) 2px 边 4px 4px 硬阴影; 空态 暂无通知+图标",
+    "threadPanel": "双侧 400px at x=1040, header 62px; composer '发送消息至 消息列'",
+    "fonts": "双侧 fontFamily 'Raft Quote Glyphs','Space Grotesk',system-ui; 时间戳 'Space Mono',ui-monospace",
+    "mobile": "双侧 390x844 底部 Tab 主页/任务/成员/设置; 房间视图带返回主页; 任务/成员/设置/计算机/动态页结构一致"
+  },
+  "divergences": [
+    {
+      "id": "graph-node-coverage",
+      "severity": "medium",
+      "raft": "关系图显示全部 6 节点, 含 0 连接孤立节点(Grok '0 个连接')",
+      "rah": "关系图仅 3 节点(owner/Kimi/OpenCode), 无连接的 Claude Code/Codex 缺席",
+      "classification": "真实分歧(前端行为)"
+    },
+    {
+      "id": "settings-language-region",
+      "severity": "medium",
+      "raft": "语言与区域页含显示语言选择(简体中文)+翻译模式(自动/手动/关闭)+时区选择+时间格式",
+      "rah": "日期与时间页仅时间格式 12/24 小时制; 无语言/翻译/时区",
+      "classification": "真实分歧(功能缺失, 范围待定)"
+    },
+    {
+      "id": "activity-time-format",
+      "severity": "low",
+      "raft": "动态页相对时间('5 小时前','4 天前')",
+      "rah": "动态页绝对时间('2026/9/4 16:53')",
+      "classification": "真实分歧(展示行为)"
+    },
+    {
+      "id": "composer-form-padding",
+      "severity": "low",
+      "raft": "composer form 1136x126 pad 12,12,16,12",
+      "rah": "composer form 1136x122 pad 12,12,12,12 (底 padding 少 4px)",
+      "classification": "真实分歧(几何)"
+    },
+    {
+      "id": "thread-header-padding",
+      "severity": "low",
+      "raft": "thread header pad 0/20",
+      "rah": "thread header pad 0/16",
+      "classification": "真实分歧(几何)"
+    },
+    {
+      "id": "notif-header",
+      "severity": "low",
+      "raft": "通知面板 header 高 34, 右侧'全部已处理'; 边框 oklch(0.18 0.006 25) 阴影 oklch(0 0 0)",
+      "rah": "header 高 42, 右侧'0 项待处理'; 边框 oklch(0 0 0) 阴影 oklch(0.18 0.006 25) (两色互换)",
+      "classification": "真实分歧(几何/配色互换, 视觉近不可辨)"
+    },
+    {
+      "id": "graph-title",
+      "severity": "low",
+      "raft": "标题 '关系图' + EXPERIMENTAL chip; 统计卡 '连接最多的成员'/'最大的频道'",
+      "rah": "标题 '关系图 3'(计数); 统计卡 '连接最多'/'最大频道'",
+      "classification": "真实分歧(文案)"
+    },
+    {
+      "id": "computer-row-subtitle",
+      "severity": "low",
+      "raft": "计算机列表行副标题 'Computer v1.0.18'(版本)",
+      "rah": "'Computer · 已连接'(状态)",
+      "classification": "真实分歧(文案)"
+    },
+    {
+      "id": "channel-row-affordance",
+      "severity": "low",
+      "raft": "选中频道行 pad 4/8, 无行内编辑入口",
+      "rah": "选中频道行 pad 4/32/4/8, hover 出铅笔(频道设置)",
+      "classification": "真实分歧(本地扩入口)"
+    },
+    {
+      "id": "tab-transition",
+      "severity": "low",
+      "raft": "tab/按钮 transition 0.15s 颜色过渡",
+      "rah": "tab transition none(即时切换)",
+      "classification": "真实分歧(动效)"
+    },
+    {
+      "id": "channel-name-offset",
+      "severity": "low",
+      "raft": "频道名文本 x=106",
+      "rah": "频道名文本 x=102 (图标几何差 4px)",
+      "classification": "真实分歧(几何, 低可见)"
+    }
+  ],
+  "intentional": {
+    "notDone": [
+      "侧栏 联合频道 分组(多 Human 联邦, 首发范围排除)",
+      "设置 套餐与账单(中央计费非需求)",
+      "设置 MCP 服务器(托管 MCP 已退役)",
+      "设置 应用市场(中央平台能力)",
+      "Agent 资料 MCP tab(退役)"
+    ],
+    "localExtension": [
+      "设置 局域网设备(本地标记)",
+      "RAH Room 行 hover 铅笔(本地 Room 管理)"
+    ]
+  },
+  "dataDriven": [
+    "动态 header 未读计数(RAH 0 未读未显示, 无法验证 0 态行为)",
+    "成员/计算机页默认选中项(持久化 tabMemory 不同)",
+    "DM 消息内容(RAH DM 为空)",
+    "看板列任务数(数据前提不同)"
+  ]
+}

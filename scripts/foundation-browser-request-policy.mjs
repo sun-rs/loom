@@ -21,7 +21,6 @@ const fixtureApiRequests = new Set([
   "POST /v3/client/computers/profile/update",
   "POST /v3/client/files/list",
   "POST /v3/client/humans/profile",
-  "POST /v3/client/managed-mcp/usage/list",
   "POST /v3/client/messages/post",
   "POST /v3/client/messages/react",
   "POST /v3/client/messages/save",

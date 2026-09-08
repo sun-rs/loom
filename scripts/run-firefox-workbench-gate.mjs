@@ -1223,7 +1223,7 @@ if (args.join(" ") === "--version") {
   assert.equal(await page.locator(".rah-agent-profile-pane").count(), 1);
   assert.deepEqual(
     await page.locator('.rah-agent-detail-tabs [role="tab"]').allTextContents(),
-    ["动态", "资料", "聊天", "提醒", "工作区", "应用", "MCP"],
+    ["动态", "资料", "聊天", "提醒", "工作区", "应用"],
   );
   await page.getByRole("button", { name: "关系图", exact: true }).click();
   const relationshipCanvas = page.locator(".rah-member-graph-canvas");
@@ -1283,10 +1283,12 @@ if (args.join(" ") === "--version") {
   await page
     .locator(".rah-agent-profile-avatar-trigger .rah-profile-image-avatar")
     .waitFor();
-  const executionResetButton = page.getByRole("button", {
-    exact: true,
-    name: "重启 / 重置",
-  });
+  const executionResetButton = page
+    .locator(".rah-agent-actions-section")
+    .getByRole("button", {
+      exact: true,
+      name: "重启 / 重置",
+    });
   await executionResetButton.click();
   const executionResetDialog = page.locator(".rah-agent-reset-dialog");
   await executionResetDialog.waitFor();

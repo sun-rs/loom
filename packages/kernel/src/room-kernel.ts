@@ -1,3 +1,8 @@
+import { WorkerTargetContextService } from "./worker-target-context.ts";
+import { AttachmentCommentsService } from "./attachment-comments.ts";
+import { AgentChannelAttentionService } from "./agent-channel-attention.ts";
+import { postWorkerMessageTransaction } from "./worker-message-command.ts";
+import { WorkerReadService } from "./worker-read-tools.ts";
 import { randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
 import { RoomFiles } from "./room-files.ts";
@@ -215,19 +220,26 @@ import {
   publishRuntimeOffer as publishRuntimeOfferTransaction,
 } from "./runtime-offer-publication.ts";
 import { computeRuntimeCertificationDigest } from "./runtime-certification.ts";
-import { ManagedMcpService } from "./managed-mcp-service.ts";
+
 import {
   MessageForwardDestinationError,
   MessageForwardingService,
 } from "./message-forwarding-service.ts";
 import { TaskReviewService } from "./task-review-service.ts";
+import { unblockTaskTransaction } from "./task-unblock-service.ts";
+import { assignTaskTransaction } from "./task-assignment-service.ts";
+import { WorkerSelfProfileService } from "./worker-self-profile.ts";
+import { WorkerTaskManagementService } from "./worker-task-management.ts";
 import { TaskLifecycleService } from "./task-lifecycle-service.ts";
 import * as principalProfile from "./principal-profile.ts";
 import { ProfileImageLifecycleService } from "./profile-image-lifecycle.ts";
 import { createHumanCommandServices } from "./human-command-services.ts";
-import { requireWorkerTaskDelivery } from "./worker-task-scope.ts";
+import {
+  requireWorkerTaskDelivery,
+  requireWorkerTaskVisibility,
+  workerTaskInputResponder,
+} from "./worker-task-scope.ts";
 import { listWorkerTaskTrajectory } from "./worker-task-trajectory.ts";
-import * as workerMessages from "./worker-message-routing.ts";
 import {
   listTaskProjectionPage,
   requireRoomTaskProjection,
@@ -313,7 +325,7 @@ import {
 const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 50;
+export const KERNEL_SCHEMA_VERSION = 53;
 export class RoomKernel {
   readonly databasePath: string;
   readonly #database: DatabaseSync;
@@ -332,7 +344,16 @@ export class RoomKernel {
   readonly #collaboration: CollaborationService;
   readonly #messageForwarding: MessageForwardingService;
   readonly #roomDeletion: RoomDeletionService;
-  readonly #managedMcp: ManagedMcpService;
+
+  readonly attachmentComments: AttachmentCommentsService;
+  readonly workerTargetContext: WorkerTargetContextService;
+  readonly workerReads: WorkerReadService;
+  readonly taskDeletions: import("./task-deletion.ts").TaskDeletionService;
+  readonly taskAmendments: import("./task-amendment.ts").TaskAmendmentService;
+  readonly humanTaskHistory: import("./human-task-history.ts").HumanTaskHistory;
+  readonly workerChannelAttention: AgentChannelAttentionService;
+  readonly workerTaskManagement: WorkerTaskManagementService;
+  readonly workerSelfProfile: WorkerSelfProfileService;
   readonly files: RoomFiles;
   readonly profileImages: ProfileImageLifecycleService;
   readonly followHumanThread;
@@ -432,6 +453,25 @@ export class RoomKernel {
       throw new Error("runtimeOfferMaxTtlMs must be a positive integer");
     }
     this.#database = new DatabaseSync(options.databasePath, { timeout: 5_000 });
+    this.workerTargetContext = new WorkerTargetContextService({
+      database: this.#database,
+      now: this.#now,
+      requireWorker: (worker) =>
+        this.#requireAuthenticatedWorkerExecution(worker),
+      transaction: (operation) => this.#transaction(operation),
+      eventFromRow: (row) => this.#eventFromRow(row),
+      snapshot: (roomId) => this.#snapshot(roomId),
+      collaboration: () => this.#collaboration,
+      attachmentComments: () => this.attachmentComments,
+      files: () => this.files,
+    });
+    this.workerReads = new WorkerReadService({
+      database: this.#database,
+      now: this.#now,
+      requireWorker: (worker) =>
+        this.#requireAuthenticatedWorkerExecution(worker),
+      transaction: (operation) => this.#transaction(operation),
+    });
     this.#agentExclusiveOperations = new AgentExclusiveOperationService({
       createId: this.#createId,
       database: this.#database,
@@ -451,6 +491,24 @@ export class RoomKernel {
       now: this.#now,
       obligations: this.#activationObligations,
     });
+    this.workerChannelAttention = new AgentChannelAttentionService({
+      targetContext: () => this.workerTargetContext,
+      database: this.#database,
+      events: this.#roomEvents,
+      requireWorker: (execution) =>
+        this.#requireAuthenticatedWorkerExecution(execution),
+      transaction: (operation) => this.#transaction(operation),
+    });
+    this.workerTaskManagement = new WorkerTaskManagementService({
+      database: this.#database,
+      events: this.#roomEvents,
+      createId: this.#createId,
+      now: this.#now,
+      requireWorker: (execution) =>
+        this.#requireAuthenticatedWorkerExecution(execution),
+      transaction: (operation) => this.#transaction(operation),
+    });
+
     this.reminders = new ReminderService({
       createId: this.#createId,
       database: this.#database,
@@ -464,6 +522,8 @@ export class RoomKernel {
       transaction: (operation) => this.#transaction(operation),
     });
     const humanCommands = createHumanCommandServices({
+      assertFreshContext: (roomId, actorId, seq) =>
+        this.#assertFreshContext(roomId, actorId, seq),
       requireWorker: (worker) =>
         this.#requireAuthenticatedWorkerExecution(worker),
       createId: this.#createId,
@@ -476,6 +536,9 @@ export class RoomKernel {
     this.humanSidebar = humanCommands.humanSidebar;
     this.humanNavigation = humanCommands.humanNavigation;
     this.humanProfiles = humanCommands.humanProfiles;
+    this.humanTaskHistory = humanCommands.humanTaskHistory;
+    this.taskAmendments = humanCommands.taskAmendments;
+    this.taskDeletions = humanCommands.taskDeletions;
     this.publicChannels = humanCommands.publicChannels;
     this.humanNotifications = humanCommands.humanNotifications;
     this.followHumanThread = humanCommands.followHumanThread;
@@ -492,6 +555,8 @@ export class RoomKernel {
     this.files = new RoomFiles({
       database: this.#database,
       directory: join(dirname(options.databasePath), "room-files"),
+      verifyTargetContext: (execution, input) =>
+        this.workerTargetContext.verifyPresented(execution, input),
       requireActor: (actor) => this.#requireAuthenticatedActor(actor),
       requireWorker: (worker) =>
         this.#requireAuthenticatedWorkerExecution(worker),
@@ -503,6 +568,17 @@ export class RoomKernel {
       now: this.#now,
       requireActor: (actor) => this.#requireAuthenticatedActor(actor),
     });
+    this.workerSelfProfile = new WorkerSelfProfileService({
+      database: this.#database,
+      createId: this.#createId,
+      now: this.#now,
+      events: this.#roomEvents,
+      profileImages: this.profileImages,
+      requireWorker: (execution) =>
+        this.#requireAuthenticatedWorkerExecution(execution),
+      transaction: (operation) => this.#transaction(operation),
+    });
+
     this.#roomDeletion = new RoomDeletionService({
       createId: this.#createId,
       database: this.#database,
@@ -517,21 +593,21 @@ export class RoomKernel {
       events: this.#roomEvents,
       now: this.#now,
     });
+    this.attachmentComments = new AttachmentCommentsService({
+      database: this.#database,
+      transaction: (fn) => this.#transaction(fn),
+      requireActor: (actor) => this.getAuthenticatedPrincipal(actor),
+      requireWorker: (worker) =>
+        this.#requireAuthenticatedWorkerExecution(worker),
+      collaboration: this.#collaboration,
+      events: this.#roomEvents,
+    });
     this.#messageForwarding = new MessageForwardingService({
       createId: this.#createId,
       database: this.#database,
       events: this.#roomEvents,
       files: this.files,
       now: this.#now,
-    });
-    this.#managedMcp = new ManagedMcpService({
-      createId: this.#createId,
-      database: this.#database,
-      events: this.#roomEvents,
-      now: this.#now,
-      requireActor: (actor) => this.#requireAuthenticatedActor(actor),
-      requireWorker: (worker) =>
-        this.#requireAuthenticatedWorkerExecution(worker),
     });
     this.#taskReviews = new TaskReviewService({
       createId: this.#createId,
@@ -561,10 +637,6 @@ export class RoomKernel {
       requireRunAttemptHostGeneration: (runAttempt, host) =>
         this.#requireRunAttemptHostGeneration(runAttempt, host),
     });
-  }
-
-  get managedMcp(): ManagedMcpService {
-    return this.#managedMcp;
   }
 
   get taskReviews(): TaskReviewService {
@@ -614,6 +686,7 @@ export class RoomKernel {
       this.#database.exec("ALTER TABLE workspaces ADD COLUMN avatar_key TEXT");
     }
     this.files.initialize();
+    this.attachmentComments.initialize();
     initializeDiscoverySchema(this.#database);
     this.humanNotifications.initialize();
     this.#taskReviews.backfillLegacySubmissions();
@@ -1411,79 +1484,26 @@ export class RoomKernel {
     execution: AuthenticatedWorkerExecutionContext,
     input: WorkerMessagePostRequest,
   ) {
+    if (input.channel !== undefined)
+      return this.workerTargetContext.post(execution, input);
     return this.#transaction(() => {
       const scope = this.#requireAuthenticatedWorkerExecution(execution);
-      if (input.basedOnRoomSeq !== scope.toSeq) {
-        throw new StaleContextError(input.basedOnRoomSeq, scope.toSeq);
-      }
-      let taskThreadId: string | undefined;
-      const causalEventRow = this.#database
-        .prepare("SELECT * FROM room_events WHERE room_id = ? AND room_seq = ?")
-        .get(scope.roomId, scope.toSeq);
-      if (causalEventRow === undefined) {
-        throw new NotFoundError(
-          `causal event ${scope.roomId}:${String(scope.toSeq)} was not found for Activation ${scope.activationId}`,
-        );
-      }
-      const causalEvent = this.#eventFromRow(causalEventRow);
-      const taskScopedEvent = this.#database
-        .prepare(
-          `SELECT room_events.aggregate_id
-           FROM room_events
-           JOIN inbox_items
-             ON inbox_items.event_id = room_events.event_id
-            AND inbox_items.participant_id = ?
-           JOIN activations
-             ON activations.activation_id = ?
-           WHERE room_events.room_id = ?
-             AND room_events.room_seq BETWEEN activations.from_seq AND activations.to_seq
-             AND room_events.aggregate_type = 'task'
-             AND room_events.type IN ('task.created', 'task.submitted')
-             AND inbox_items.reason IN ('task_collaboration', 'task_review')
-           ORDER BY room_events.room_seq DESC
-           LIMIT 1`,
-        )
-        .get(scope.participantId, scope.activationId, scope.roomId);
-      if (taskScopedEvent !== undefined) {
-        taskThreadId = text(
-          this.#requireTaskRow(text(taskScopedEvent, "aggregate_id")),
-          "thread_id",
-        );
-      }
-      const route = workerMessages.workerReplyRoute({
-        ...(input.body === undefined ? {} : { body: input.body }),
-        causalEvent,
+      return postWorkerMessageTransaction({
+        comments: this.attachmentComments,
         database: this.#database,
-        ...(input.heldDraftId === undefined
-          ? {}
-          : { heldDraftId: input.heldDraftId }),
-        participantId: scope.participantId,
-        roomId: scope.roomId,
-        ...(taskThreadId === undefined ? {} : { taskThreadId }),
+        collaboration: this.#collaboration,
+        files: this.files,
+        principal: principalProfile.fromRow(
+          this.#requirePrincipal(scope.participantId),
+        ),
+        scope,
+        execution,
+        input,
+        eventFromRow: (row) => this.#eventFromRow(row),
       });
-      return this.#collaboration.postActivationMessage(
-        principalProfile.fromRow(this.#requirePrincipal(scope.participantId)),
-        {
-          activationId: scope.activationId,
-          basedOnRoomSeq: input.basedOnRoomSeq,
-          idempotencyKey: input.idempotencyKey,
-          recipients: route.recipients,
-          roomId: scope.roomId,
-          ...(input.sendDraft === true
-            ? {
-                ...(input.anyway === true ? { continueAnyway: true } : {}),
-                ...(input.heldDraftId === undefined
-                  ? {}
-                  : { heldDraftId: input.heldDraftId }),
-              }
-            : input.body === undefined
-              ? {}
-              : { body: input.body }),
-          ...(route.threadId === undefined ? {} : { threadId: route.threadId }),
-        },
-      );
     });
   }
+
   unfollowWorkerThread(
     execution: AuthenticatedWorkerExecutionContext,
     input: {
@@ -1623,7 +1643,9 @@ export class RoomKernel {
   ): Task {
     return this.#transaction(() => {
       const scope = this.#requireAuthenticatedWorkerExecution(execution);
-      return this.#taskFromRow(this.#requireWorkerTask(scope, input.taskId));
+      return this.#taskFromRow(
+        requireWorkerTaskVisibility(this.#database, scope, input.taskId),
+      );
     });
   }
   listWorkerTaskTrajectory(
@@ -2017,15 +2039,6 @@ export class RoomKernel {
     return this.#transaction(() => {
       const scope = this.#requireAuthenticatedWorkerExecution(execution);
       const taskRow = this.#requireWorkerTask(scope, input.taskId);
-      const responderId = text(taskRow, "creator_id");
-      if (
-        principalProfile.fromRow(this.#requirePrincipal(responderId)).kind !==
-        "human"
-      ) {
-        throw new ConflictError(
-          `Task ${input.taskId} has no human creator available for input`,
-        );
-      }
       const previous = findRoomEventByIdempotencyKey(
         this.#database,
         scope.roomId,
@@ -2049,6 +2062,7 @@ export class RoomKernel {
           task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
         };
       }
+      const responderId = workerTaskInputResponder(this.#database, taskRow);
       assertWorkerTaskFreshContext(
         this.#database,
         scope,
@@ -2268,94 +2282,19 @@ export class RoomKernel {
       taskId: string;
     },
   ): TaskCreateMutationResult {
-    return this.#transaction(() => {
-      const actorId = this.#requireAuthenticatedActor(actor);
-      const taskRow = this.#requireTaskRow(input.taskId);
-      const roomId = text(taskRow, "room_id");
-      this.#requireMember(roomId, actorId);
-      if (text(taskRow, "creator_id") !== actorId) {
-        throw new ForbiddenError("only the Task creator can assign it");
-      }
-      this.#requireMember(roomId, input.assigneeId);
-      if (
-        principalProfile.fromRow(this.#requirePrincipal(input.assigneeId))
-          .kind !== "agent"
-      ) {
-        throw new ForbiddenError("Task assignee must be an Agent principal");
-      }
-      const previous = findRoomEventByIdempotencyKey(
-        this.#database,
-        roomId,
-        input.idempotencyKey,
-      );
-      if (previous !== undefined) {
-        const event = assertTaskEventReplay(this.#eventFromRow(previous), {
-          actorId,
-          aggregateId: input.taskId,
-          eventType: "task.assigned",
-          payload: { assigneeId: input.assigneeId },
-        });
-        return {
-          activationIds: [],
-          deduplicated: true,
-          event,
-          task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
-        };
-      }
-      this.#assertFreshContext(roomId, actorId, input.basedOnRoomSeq);
-      if (
-        text(taskRow, "state") !== "todo" ||
-        nullableText(taskRow, "claimed_by") !== null
-      ) {
-        throw new ConflictError(
-          `Task ${input.taskId} can only be assigned while unclaimed todo`,
-        );
-      }
-
-      const assignedAt = this.#timestamp();
-      const previousAssigneeId = nullableText(taskRow, "assignee_id");
-      this.#database
-        .prepare(
-          "UPDATE tasks SET assignee_id = ?, updated_at = ? WHERE task_id = ?",
-        )
-        .run(input.assigneeId, assignedAt, input.taskId);
-      const event = this.#appendEvent({
-        actorId,
-        aggregateId: input.taskId,
-        aggregateType: "task",
-        idempotencyKey: input.idempotencyKey,
-        payload: {
-          assigneeId: input.assigneeId,
-          assignedAt,
-          basedOnRoomSeq: input.basedOnRoomSeq,
-          ...(previousAssigneeId === null ? {} : { previousAssigneeId }),
-          taskId: input.taskId,
+    return this.#transaction(() =>
+      assignTaskTransaction(
+        {
+          database: this.#database,
+          events: this.#roomEvents,
+          assignedAt: this.#timestamp(),
+          assertFreshContext: (roomId, actorId, seq) =>
+            this.#assertFreshContext(roomId, actorId, seq),
         },
-        roomId,
-        type: "task.assigned",
-      });
-      const activationIds = taskDependenciesComplete(
-        this.#database,
-        input.taskId,
-      )
-        ? this.#deriveAttention(
-            event,
-            [
-              {
-                participantId: input.assigneeId,
-                reason: "task_assigned",
-              },
-            ],
-            assignedAt,
-          )
-        : [];
-      return {
-        activationIds,
-        deduplicated: false,
-        event,
-        task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
-      };
-    });
+        this.#requireAuthenticatedActor(actor),
+        input,
+      ),
+    );
   }
 
   unassignTask(
@@ -2379,87 +2318,19 @@ export class RoomKernel {
       taskId: string;
     },
   ): TaskCreateMutationResult {
-    return this.#transaction(() => {
-      const actorId = this.#requireAuthenticatedActor(actor);
-      const taskRow = this.#requireTaskRow(input.taskId);
-      const roomId = text(taskRow, "room_id");
-      this.#requireMember(roomId, actorId);
-      if (text(taskRow, "creator_id") !== actorId) {
-        throw new ForbiddenError("only the Task creator can unblock it");
-      }
-      const previous = findRoomEventByIdempotencyKey(
-        this.#database,
-        roomId,
-        input.idempotencyKey,
-      );
-      if (previous !== undefined) {
-        const event = assertTaskEventReplay(this.#eventFromRow(previous), {
-          actorId,
-          aggregateId: input.taskId,
-          eventType: "task.unblocked",
-          payload: {},
-        });
-        return {
-          activationIds: [],
-          deduplicated: true,
-          event,
-          task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
-        };
-      }
-      this.#assertFreshContext(roomId, actorId, input.basedOnRoomSeq);
-      if (text(taskRow, "state") !== "blocked") {
-        throw new ConflictError(
-          `Task ${input.taskId} can only be unblocked from blocked`,
-        );
-      }
-
-      const unblockedAt = this.#timestamp();
-      this.#database
-        .prepare(
-          "UPDATE tasks SET state = 'todo', blocked_reason = NULL, blocked_at = NULL, updated_at = ? WHERE task_id = ?",
-        )
-        .run(unblockedAt, input.taskId);
-      const event = this.#appendEvent({
-        actorId,
-        aggregateId: input.taskId,
-        aggregateType: "task",
-        idempotencyKey: input.idempotencyKey,
-        payload: {
-          basedOnRoomSeq: input.basedOnRoomSeq,
-          taskId: input.taskId,
-          unblockedAt,
+    return this.#transaction(() =>
+      unblockTaskTransaction(
+        {
+          database: this.#database,
+          events: this.#roomEvents,
+          unblockedAt: this.#timestamp(),
+          assertFreshContext: (roomId, actorId, seq) =>
+            this.#assertFreshContext(roomId, actorId, seq),
         },
-        roomId,
-        type: "task.unblocked",
-      });
-      const assigneeId = nullableText(taskRow, "assignee_id");
-      const recipients =
-        assigneeId === null
-          ? ar.listRoomAgentRecipients(this.#database, roomId, "task_available")
-          : [
-              { participantId: assigneeId, reason: "task_assigned" as const },
-              ...this.#database
-                .prepare(
-                  "SELECT participant_id FROM task_participants WHERE task_id = ? AND role = 'collaborator' ORDER BY participant_id",
-                )
-                .all(input.taskId)
-                .map((participant) => ({
-                  participantId: text(participant, "participant_id"),
-                  reason: "task_collaboration" as const,
-                })),
-            ];
-      const activationIds = this.#deriveAttention(
-        event,
-        recipients,
-        unblockedAt,
-      );
-      return {
-        activationIds,
-        deduplicated: false,
-        event,
-        task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
-      };
-    });
+        this.#requireAuthenticatedActor(actor),
+        input,
+      ),
+    );
   }
 
   cancelTask(
@@ -6161,18 +6032,24 @@ export class RoomKernel {
   ): void {
     const runAttempt = this.#database
       .prepare(
-        "SELECT * FROM run_attempts WHERE activation_id = ? ORDER BY attempt_number DESC, started_at DESC LIMIT 1",
+        "SELECT * FROM run_attempts WHERE activation_id = ? AND attempt_number = ? ORDER BY started_at DESC LIMIT 1",
       )
-      .get(text(activation, "activation_id"));
+      .get(
+        text(activation, "activation_id"),
+        integer(activation, "attempt_count"),
+      );
     if (runAttempt !== undefined) {
       this.#requireRunAttemptHostGeneration(runAttempt, host);
       return;
     }
     const placement = this.#database
       .prepare(
-        "SELECT * FROM placements WHERE activation_id = ? AND state IN ('reserved', 'consumed') ORDER BY created_at DESC, placement_id DESC LIMIT 1",
+        "SELECT * FROM placements WHERE activation_id = ? AND activation_attempt_number = ? AND state IN ('reserved', 'consumed') ORDER BY created_at DESC, placement_id DESC LIMIT 1",
       )
-      .get(text(activation, "activation_id"));
+      .get(
+        text(activation, "activation_id"),
+        integer(activation, "attempt_count"),
+      );
     if (
       placement !== undefined &&
       (text(placement, "host_id") !== host.hostId ||

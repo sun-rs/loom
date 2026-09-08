@@ -17,9 +17,7 @@ import {
 import { AgentMemoryCoordinator } from "./agent-memory-coordinator.ts";
 import { prepareAgentMemoryRun } from "./agent-memory-activation.ts";
 import { combineActivationEnvironmentLeases } from "./activation-environment-lease.ts";
-import { type ManagedMcpRuntimeProxyRegistry } from "./managed-mcp-runtime-proxy.ts";
-import { prepareManagedMcpRuntimeLaunch } from "./managed-mcp-runtime-launch.ts";
-import { NodeHttpManagedMcpWorkerClient } from "./node-http-managed-mcp-worker-client.ts";
+
 import { ProviderSessionStore } from "./provider-session-store.ts";
 import { RuntimeProfileRegistry } from "./runtime-profile-registry.ts";
 import { createRegistryBackedRuntimeRecoveryFromRegistries } from "./runtime-profile-recovery.ts";
@@ -60,13 +58,13 @@ export class RemoteRuntimeProfileSet {
   readonly #implementations: RuntimeImplementationRegistry;
   #lastObservedAtMs = 0;
   readonly #nowMs: () => number;
-  readonly #managedMcpProxyRegistry: ManagedMcpRuntimeProxyRegistry | undefined;
+
   readonly #profiles: readonly RemoteRuntimeProfileSetEntry[];
   readonly #supervisorDirectory: string;
 
   constructor(input: {
     implementations: RuntimeImplementationRegistry;
-    managedMcpProxyRegistry?: ManagedMcpRuntimeProxyRegistry;
+
     nowMs?: () => number;
     profiles: readonly RemoteRuntimeProfileSetEntry[];
     supervisorDirectory: string;
@@ -94,7 +92,7 @@ export class RemoteRuntimeProfileSet {
       // Activation until a host-local maintenance lane can be fenced.
       wake: () => false,
     });
-    this.#managedMcpProxyRegistry = input.managedMcpProxyRegistry;
+
     this.#nowMs = input.nowMs ?? Date.now;
     this.#profiles = Object.freeze([...input.profiles]);
     this.#supervisorDirectory = input.supervisorDirectory;
@@ -138,9 +136,6 @@ export class RemoteRuntimeProfileSet {
         credentialEnvironment: profile.credentialEnvironment,
         cwd: profile.cwd,
         implementations: this.#implementations,
-        ...(this.#managedMcpProxyRegistry === undefined
-          ? {}
-          : { managedMcpProxyRegistry: this.#managedMcpProxyRegistry }),
         probeReport: profile.probeReport,
         resident,
         ...(resolvedModel === undefined ? {} : { resolvedModel }),
@@ -218,7 +213,7 @@ export function createRemoteConfiguredRuntime(input: {
   credentialEnvironment: RuntimeCredentialEnvironmentBinding;
   cwd: string;
   implementations: RuntimeImplementationRegistry;
-  managedMcpProxyRegistry?: ManagedMcpRuntimeProxyRegistry;
+
   probeReport: RuntimeProfileProbeReport;
   resident: RemoteWorkerCredentialServicePort;
   resolvedModel?: ResolvedModel;
@@ -269,36 +264,6 @@ export function createRemoteConfiguredRuntime(input: {
             scope,
           );
           leases.push(worker.lease);
-          const manifest = input.runtimeProfileRevision.manifest;
-          const managedMcpAdapter =
-            manifest.manifestVersion === 1
-              ? undefined
-              : manifest.managedMcpAdapter;
-          if (managedMcpAdapter !== undefined) {
-            if (input.managedMcpProxyRegistry === undefined) {
-              throw new Error(
-                "managed MCP Runtime adapter requires a Computer-owned proxy registry",
-              );
-            }
-            leases.push(
-              await prepareManagedMcpRuntimeLaunch({
-                adapter: managedMcpAdapter,
-                client: new NodeHttpManagedMcpWorkerClient({
-                  accessToken: worker.credential.workerAccessToken,
-                  origin: worker.credential.workerApiOrigin,
-                }),
-                existingEnvironment: {
-                  ...(manifest.manifestVersion === 1 ? {} : manifest.staticEnv),
-                  ...secretLease.env,
-                },
-                registry: input.managedMcpProxyRegistry,
-                temporaryDirectory: join(
-                  input.supervisorDirectory,
-                  "managed-mcp-runtime",
-                ),
-              }),
-            );
-          }
           return combineActivationEnvironmentLeases(
             leases,
             "remote Runtime activation environment release failed",

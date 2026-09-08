@@ -18,6 +18,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
   const directory = mkdtempSync(join(tmpdir(), "rah-os-client-api-"));
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
   let workspaceSummaryCalls = 0;
+  let skillsCalls = 0;
   let memoryResetCalls = 0;
   let executionResetCalls = 0;
   let computerProfileUpdates = 0;
@@ -59,6 +60,20 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     agentMemoryAdministration: {
       computerHostId: "client-host",
       workspace: {
+        skills: async (_owner, policy) => {
+          skillsCalls++;
+          const scope = {
+            state: "ready" as const,
+            skills: [],
+            truncated: false,
+            issues: [],
+          };
+          return {
+            executionPolicyRevisionId: policy.executionPolicyRevisionId,
+            global: scope,
+            workspace: scope,
+          };
+        },
         summary: async (owner) => {
           workspaceSummaryCalls++;
           return {
@@ -223,8 +238,6 @@ test("Client API authenticates humans and exposes canonical Room work without ow
         hints: false,
         inputRequestRead: true,
         inputRequestResolve: true,
-        managedMcpRead: true,
-        managedMcpWrite: true,
         memberRead: true,
         memberWrite: true,
         messageRead: true,
@@ -275,22 +288,6 @@ test("Client API authenticates humans and exposes canonical Room work without ow
         },
       ],
     }),
-    managedMcpAdministration: {
-      discover: async (executorRef) => [
-        {
-          description: `Discovered through ${executorRef}`,
-          inputSchema: { type: "object" },
-          runtimeName: "room_snapshot",
-          toolName: "room.snapshot",
-        },
-      ],
-      listExecutors: () => [
-        {
-          executorRef: "executor-room-tools",
-          transportKind: "streamable-http",
-        },
-      ],
-    },
   });
   try {
     kernel.initialize();
@@ -499,7 +496,7 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     assert.equal(healthV3.capabilities.agentExecutionReset, true);
     assert.equal(healthV3.capabilities.agentExecutionFullReset, true);
     assert.equal(healthV3.capabilities.agentWrite, true);
-    assert.equal(healthV3.capabilities.managedMcpWrite, true);
+    assert.equal("managedMcpWrite" in healthV3.capabilities, false);
     assert.equal(healthV3.capabilities.messageForward, true);
     assert.equal(healthV3.capabilities.workspaceWrite, true);
 
@@ -758,6 +755,40 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       1,
       "unauthorized or arbitrary-root input must not reach Host I/O",
     );
+    const skillsInput = {
+      agentDefinitionId: agentDefinition.definition.agentDefinitionId,
+    };
+    const skillsResponse = await request(
+      "/v3/client/agents/skills/list",
+      skillsInput,
+      human.accessToken,
+    );
+    assert.equal(skillsResponse.status, 200);
+    assert.equal(
+      (await jsonObject(skillsResponse)).executionPolicyRevisionId,
+      policy.policy.executionPolicyRevisionId,
+    );
+    assert.equal(
+      (
+        await request(
+          "/v3/client/agents/skills/list",
+          skillsInput,
+          otherHuman.accessToken,
+        )
+      ).status,
+      403,
+    );
+    assert.equal(
+      (
+        await request(
+          "/v3/client/agents/skills/list",
+          { ...skillsInput, rootPath: "/" },
+          human.accessToken,
+        )
+      ).status,
+      400,
+    );
+    assert.equal(skillsCalls, 1);
     const workspaceInput = {
       agentDefinitionId: agentDefinition.definition.agentDefinitionId,
       path: "",
@@ -1305,120 +1336,26 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     );
     assert.equal(agents.agents[0]?.handle, "client-agent");
 
-    const mcpServerCreateResponse = await request(
-      "/v3/client/managed-mcp/servers/create",
-      {
-        basedOnRoomSeq: kernel.sync(humanActor, {
-          afterSeq: 0,
-          consumerId: "client-managed-mcp-server-seq",
-          roomId: controlRoom.roomId,
-        }).latestRoomSeq,
-        controlRoomId: controlRoom.roomId,
-        definition: {
-          executorRef: "executor-room-tools",
-          runtimeName: "room_tools",
-          serverName: "RAH Room tools",
-          tools: [
-            {
-              inputSchema: { type: "object" },
-              runtimeName: "room_snapshot",
-              toolName: "room.snapshot",
-            },
-          ],
-        },
-        idempotencyKey: "client-managed-mcp-server-create",
-        mcpServerId: "mcp-room-tools",
-      },
-      human.accessToken,
-    );
-    assert.equal(mcpServerCreateResponse.status, 200);
-    const mcpServerCreated = await jsonObject(mcpServerCreateResponse);
-    assert.equal(mcpServerCreated.event.type, "mcp_server.created");
-    assert.equal(mcpServerCreated.server.configVersion, 1);
-
-    const mcpExecutorsResponse = await request(
-      "/v3/client/managed-mcp/executors/list",
-      { controlRoomId: controlRoom.roomId },
-      human.accessToken,
-    );
-    assert.equal(mcpExecutorsResponse.status, 200);
-    assert.deepEqual((await jsonObject(mcpExecutorsResponse)).executors, [
-      {
-        executorRef: "executor-room-tools",
-        transportKind: "streamable-http",
-      },
-    ]);
-    const mcpDiscoverResponse = await request(
-      "/v3/client/managed-mcp/executors/discover",
-      {
-        controlRoomId: controlRoom.roomId,
-        executorRef: "executor-room-tools",
-      },
-      human.accessToken,
-    );
-    assert.equal(mcpDiscoverResponse.status, 200);
-    assert.equal(
-      (await jsonObject(mcpDiscoverResponse)).tools[0]?.toolName,
-      "room.snapshot",
-    );
-
-    const mcpAssignmentCreateResponse = await request(
-      "/v3/client/managed-mcp/assignments/create",
-      {
-        allowedToolNames: ["room.snapshot"],
-        basedOnRoomSeq: mcpServerCreated.event.roomSeq,
-        idempotencyKey: "client-managed-mcp-assignment-create",
-        mcpServerId: "mcp-room-tools",
-        participantId: agent.principal.principalId,
-      },
-      human.accessToken,
-    );
-    assert.equal(mcpAssignmentCreateResponse.status, 200);
-    const mcpAssignmentCreated = await jsonObject(mcpAssignmentCreateResponse);
-    assert.equal(mcpAssignmentCreated.assignment.assignmentVersion, 1);
-
-    const mcpServersResponse = await request(
-      "/v3/client/managed-mcp/servers/list",
-      { controlRoomId: controlRoom.roomId },
-      human.accessToken,
-    );
-    assert.equal(mcpServersResponse.status, 200);
-    assert.equal((await jsonObject(mcpServersResponse)).servers.length, 1);
-    const mcpAssignmentsResponse = await request(
-      "/v3/client/managed-mcp/assignments/list",
-      { controlRoomId: controlRoom.roomId },
-      human.accessToken,
-    );
-    assert.equal(mcpAssignmentsResponse.status, 200);
-    assert.equal(
-      (await jsonObject(mcpAssignmentsResponse)).assignments.length,
-      1,
-    );
-    const mcpUsageResponse = await request(
-      "/v3/client/managed-mcp/usage/list",
-      {
-        controlRoomId: controlRoom.roomId,
-        participantId: agent.principal.principalId,
-      },
-      human.accessToken,
-    );
-    assert.equal(mcpUsageResponse.status, 200);
-    assert.deepEqual((await jsonObject(mcpUsageResponse)).calls, []);
-    const hiddenMcpResponse = await request(
-      "/v3/client/managed-mcp/servers/list",
-      { controlRoomId: controlRoom.roomId },
-      otherHuman.accessToken,
-    );
-    assert.equal(hiddenMcpResponse.status, 403);
-    const hiddenMcpUsageResponse = await request(
-      "/v3/client/managed-mcp/usage/list",
-      {
-        controlRoomId: controlRoom.roomId,
-        participantId: agent.principal.principalId,
-      },
-      otherHuman.accessToken,
-    );
-    assert.equal(hiddenMcpUsageResponse.status, 403);
+    for (const path of [
+      "assignments/create",
+      "assignments/list",
+      "assignments/revise",
+      "assignments/state",
+      "executors/discover",
+      "executors/list",
+      "servers/create",
+      "servers/list",
+      "servers/revise",
+      "servers/state",
+      "usage/list",
+    ]) {
+      const retired = await request(
+        `/v3/client/managed-mcp/${path}`,
+        {},
+        human.accessToken,
+      );
+      assert.equal(retired.status, 404, `retired MCP route ${path}`);
+    }
 
     const provisionResponse = await request(
       "/v3/client/agents/provision",
@@ -2301,6 +2238,36 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     assert.equal(
       (await jsonObject(exactTaskResponse)).task.taskId,
       openTask.task.taskId,
+    );
+    const taskHistoryInput = {
+      roomId: room.roomId,
+      taskId: openTask.task.taskId,
+      limit: 1,
+    };
+    const taskHistoryResponse = await request(
+      "/v3/client/tasks/history",
+      taskHistoryInput,
+      human.accessToken,
+    );
+    assert.equal(taskHistoryResponse.status, 200);
+    const taskHistory = await jsonObject(taskHistoryResponse);
+    assert.equal(taskHistory.taskId, openTask.task.taskId);
+    assert.equal(taskHistory.events.length, 1);
+    assert.equal(taskHistory.events[0].type, "task.reopened");
+    assert.ok(taskHistory.nextCursor);
+    const historyNext = await request(
+      "/v3/client/tasks/history",
+      { ...taskHistoryInput, cursor: taskHistory.nextCursor },
+      human.accessToken,
+    );
+    assert.equal(historyNext.status, 200);
+    assert.equal(
+      (await jsonObject(historyNext)).frozenThroughRoomSeq,
+      taskHistory.frozenThroughRoomSeq,
+    );
+    assert.equal(
+      (await request("/v3/client/tasks/history", taskHistoryInput)).status,
+      401,
     );
 
     const noPendingResponse = await request(

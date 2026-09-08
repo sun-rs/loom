@@ -141,16 +141,16 @@ export function LanDeviceSettingsContent() {
               title="暂无设备"
             />
           ) : (
-            <div className="rah-mcp-server-list">
+            <div className="rah-device-server-list">
               {devices.map((device) => {
                 const current = session.device.deviceId === device.deviceId;
                 return (
                   <article
-                    className="rah-mcp-server-card"
+                    className="rah-device-server-card"
                     key={device.deviceId}
                   >
                     <header>
-                      <span className="rah-mcp-server-icon">
+                      <span className="rah-device-server-icon">
                         <Icon name="monitor" />
                       </span>
                       <div>
@@ -158,7 +158,7 @@ export function LanDeviceSettingsContent() {
                         <p>{device.deviceId}</p>
                       </div>
                       <span
-                        className={`rah-mcp-state is-${device.revokedAt === null ? "enabled" : "disabled"}`}
+                        className={`rah-device-state is-${device.revokedAt === null ? "enabled" : "disabled"}`}
                       >
                         {device.revokedAt === null
                           ? current
@@ -174,7 +174,7 @@ export function LanDeviceSettingsContent() {
                         撤销
                       </button>
                     </header>
-                    <div className="rah-mcp-tool-summary">
+                    <div className="rah-device-tool-summary">
                       <b>最近访问 {formatTimestamp(device.lastSeenAt)}</b>
                       <span>配对于 {formatTimestamp(device.createdAt)}</span>
                     </div>
@@ -184,7 +184,10 @@ export function LanDeviceSettingsContent() {
             </div>
           )}
           {invite === undefined ? null : (
-            <section className="rah-mcp-executor-inventory" aria-live="polite">
+            <section
+              className="rah-device-executor-inventory"
+              aria-live="polite"
+            >
               <header>
                 <h2>一次性配对码</h2>
                 <span>有效至 {formatTimestamp(invite.expiresAt)}</span>
@@ -285,7 +288,7 @@ function DeviceEmptyState({
   title: string;
 }) {
   return (
-    <div className="rah-mcp-empty-state">
+    <div className="rah-device-empty-state">
       <Icon name="monitor" />
       <strong>{title}</strong>
       <span>{detail}</span>

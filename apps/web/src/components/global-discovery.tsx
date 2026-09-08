@@ -45,6 +45,7 @@ import { taskPersonOptions } from "./task-person-options.tsx";
 import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
 import { formatRahDateTime } from "../date-time-presentation.ts";
 import { SearchResultSkeleton } from "@rah-os/ui-web/neo-brutalist/search-result-skeleton";
+import { visibleSearchResults } from "../search-visible-results.ts";
 
 type Props = {
   client: RahClient;
@@ -57,6 +58,7 @@ type Props = {
   onClose: () => void;
   navigationEpoch?: () => number;
   beginNavigation?: () => number;
+  taskRefreshVersion?: number;
 };
 
 export function GlobalDiscoverySurface(props: Props) {
@@ -115,6 +117,8 @@ function useFilters(surface: GlobalSurface) {
     const next = new URLSearchParams({ surface });
     if (surface === "search" && params.has("q"))
       next.set("q", params.get("q")!);
+    if (surface === "search" && params.has("sort"))
+      next.set("sort", params.get("sort")!);
     preserveCurrentLocation(next);
     setParams(next);
     setCursors([undefined]);
@@ -246,6 +250,7 @@ function GlobalTasks({
   currentHuman,
   onOpen,
   onClose,
+  taskRefreshVersion,
 }: Props & { people: Principal[] }) {
   const filters = useFilters("tasks");
   const { params, change } = filters;
@@ -258,6 +263,9 @@ function GlobalTasks({
     ...(filters.cursor ? { cursor: filters.cursor } : {}),
     limit: 100,
   });
+  useEffect(() => {
+    result.refresh();
+  }, [taskRefreshVersion, result.refresh]);
   const defaultView = "board";
   const view =
     params.get("view") === "list"
@@ -352,6 +360,7 @@ function GlobalTasks({
         />
       ) : (
         <GlobalTaskBoard
+          openSurface="tasks"
           client={client}
           columns={columns}
           tasks={tasks}
@@ -396,14 +405,16 @@ function GlobalSearch({
   const afterBound = rangeBounds.after ?? searchDateBound(date);
   const beforeBound = rangeBounds.before ?? searchDateBound(before, true);
   const [composing, setComposing] = useState(false);
-  const searchActive = searchShouldRun(query, {
+  const searchFilters = {
     scopes,
     roomIds: params.getAll("channel"),
     senderIds: params.getAll("sender"),
     timeRange,
     after: afterBound,
     before: beforeBound,
-  });
+  };
+  const searchActive = searchShouldRun(query, searchFilters);
+  const filtersActive = searchShouldRun("", searchFilters);
   const result = useDiscoveryQuery(
     client,
     "search",
@@ -459,6 +470,11 @@ function GlobalSearch({
     setFrequent(readFrequentSearches(window.localStorage, workspaceId));
   }, [workspaceId]);
   const groupedHits = useMemo(() => groupSearchHits(searchHits), [searchHits]);
+  const visibleResults = visibleSearchResults(
+    result.data,
+    searchHits,
+    currentHuman?.principalId,
+  );
   const [personError, setPersonError] = useState<string>();
   const box = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -644,9 +660,11 @@ function GlobalSearch({
           ]}
           onChange={(values) => change("sort", values)}
         />
-        <button className="clear-filters" onClick={filters.clear}>
-          清除筛选
-        </button>
+        {filtersActive && (
+          <button className="clear-filters" onClick={filters.clear}>
+            清除筛选
+          </button>
+        )}
       </section>
       <Failure error={personError} />
       <section className="search-stage">
@@ -685,10 +703,10 @@ function GlobalSearch({
               </section>
             ) : null}
             {result.data && (
-              <p className="rah-search-count">{result.data.total} 条消息结果</p>
+              <p className="rah-search-count">{visibleResults.count} 条结果</p>
             )}
             {Boolean(
-              result.data?.rooms.length || result.data?.principals.length,
+              result.data?.rooms.length || visibleResults.principals.length,
             ) && <h2 className="rah-search-section-title">服务器内容</h2>}
             {result.data?.rooms.map((room) => (
               <button
@@ -702,26 +720,22 @@ function GlobalSearch({
                 {room.name}
               </button>
             ))}
-            {result.data?.principals
-              .filter(
-                (person) => person.principalId !== currentHuman?.principalId,
-              )
-              .map((person) => (
-                <button
-                  className="rah-search-destination"
-                  key={person.principalId}
-                  onClick={() => {
-                    void onPerson(person.principalId).catch((error: unknown) =>
-                      setPersonError(
-                        error instanceof Error ? error.message : "无法打开私信",
-                      ),
-                    );
-                  }}
-                >
-                  <Icon name="user-round" />
-                  {person.handle} · {person.kind === "agent" ? "Agent" : "成员"}
-                </button>
-              ))}
+            {visibleResults.principals.map((person) => (
+              <button
+                className="rah-search-destination"
+                key={person.principalId}
+                onClick={() => {
+                  void onPerson(person.principalId).catch((error: unknown) =>
+                    setPersonError(
+                      error instanceof Error ? error.message : "无法打开私信",
+                    ),
+                  );
+                }}
+              >
+                <Icon name="user-round" />
+                {person.handle} · {person.kind === "agent" ? "Agent" : "成员"}
+              </button>
+            ))}
             {groupedHits.length > 0 && (
               <h2 className="rah-search-section-title">消息</h2>
             )}
@@ -736,15 +750,22 @@ function GlobalSearch({
             ))}
             {!result.loading &&
               !result.error &&
-              result.data?.total === 0 &&
-              !result.data.rooms.length &&
-              !result.data.principals.length && (
+              result.data &&
+              visibleResults.count === 0 && (
                 <EmptyState
                   context="search"
                   placement="section"
                   icon="search"
-                  title="没有搜索结果"
-                  description="尝试其他关键词或清除筛选。"
+                  title={
+                    query.trim()
+                      ? `没有找到“${query.trim()}”的结果`
+                      : "没有匹配的消息"
+                  }
+                  description={
+                    query.trim()
+                      ? "试试其他关键词或更短的短语。"
+                      : "试试其他筛选组合。"
+                  }
                 />
               )}
             {result.data?.nextCursor && (

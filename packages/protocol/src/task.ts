@@ -95,7 +95,7 @@ export const TaskSchema = z
     assigneeId: IdentifierSchema.optional(),
     collaboratorIds: z.array(IdentifierSchema).default([]),
     title: z.string().trim().min(1),
-    description: z.string().trim().min(1).optional(),
+    description: z.string().optional(),
     dependencyTaskIds: z.array(IdentifierSchema).default([]),
     sourceMessageId: IdentifierSchema,
     state: TaskStateSchema,

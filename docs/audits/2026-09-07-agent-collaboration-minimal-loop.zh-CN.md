@@ -9,12 +9,12 @@ Task/Review 链在 agent→agent 方向不启动。本批只做该缺口的最�
 
 来源为提取源码 `raft-computer-1.0.18`（`~/Code/repos/raft-runtime-forensics/artifacts/extracted/`）。
 
-| 能力 | Raft 证据 | RAH 裁决 |
-|---|---|---|
-| 同伴消息可 claim | `regions/agent-prompt-compiler.js:161-170`：任何人要求做事即 claim，仅顶层消息可成 Task | `claimMessageAsTaskTransaction` 去掉 `principals.kind = 'human'`，保留顶层、同 Room、Activation 因果范围、inbox 投递四个约束 |
-| @mention 寻址 | `agentApiContract.ts:241-253` send 合同无 mentions 字段；`agent-prompt-compiler.js:212-220` 以唯一 handle 在正文 @ | 不新增请求字段；kernel 服务端用 `messageMentionCandidates` 解析 worker 正文中的 `@handle`，只解析同 Room 已启用 Agent 成员，命中者 reason=`mention`，其余仍 `room_policy`/`thread_subscription`；Thread 内 mention 同时订阅该 Thread |
-| task create | `agentApiContract.ts:358-368` 仅 `title[]`、`assignee?`、`creates_resource?`；prompt 190 行：默认未分派 todo，`--assignee` 指向他人仅 owner/admin | 新增 worker `task-create --title [--assignee 本人 participantId]`；只允许自派（否则 Forbidden）；不加 description/collaborator/reviewer/dependency（Raft 无此合同，且 kernel 要求协作者必须搭配显式 assignee）；不做 creates-resource |
-| 礼仪与拆任务 | `agent-prompt-compiler.js:155-211, 236-246` | 删除"agent 消息不是回复义务、沉默有效"段，逐段移植 Conversation etiquette、Tasks 决策规则、What task create really means、Creating new tasks、Splitting tasks for parallel execution、@Mentions |
+| 能力             | Raft 证据                                                                                                                                         | RAH 裁决                                                                                                                                                                                                                              |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 同伴消息可 claim | `regions/agent-prompt-compiler.js:161-170`：任何人要求做事即 claim，仅顶层消息可成 Task                                                           | `claimMessageAsTaskTransaction` 去掉 `principals.kind = 'human'`，保留顶层、同 Room、Activation 因果范围、inbox 投递四个约束                                                                                                          |
+| @mention 寻址    | `agentApiContract.ts:241-253` send 合同无 mentions 字段；`agent-prompt-compiler.js:212-220` 以唯一 handle 在正文 @                                | 不新增请求字段；kernel 服务端用 `messageMentionCandidates` 解析 worker 正文中的 `@handle`，只解析同 Room 已启用 Agent 成员，命中者 reason=`mention`，其余仍 `room_policy`/`thread_subscription`；Thread 内 mention 同时订阅该 Thread  |
+| task create      | `agentApiContract.ts:358-368` 仅 `title[]`、`assignee?`、`creates_resource?`；prompt 190 行：默认未分派 todo，`--assignee` 指向他人仅 owner/admin | 新增 worker `task-create --title [--assignee 本人 participantId]`；只允许自派（否则 Forbidden）；不加 description/collaborator/reviewer/dependency（Raft 无此合同，且 kernel 要求协作者必须搭配显式 assignee）；不做 creates-resource |
+| 礼仪与拆任务     | `agent-prompt-compiler.js:155-211, 236-246`                                                                                                       | 删除"agent 消息不是回复义务、沉默有效"段，逐段移植 Conversation etiquette、Tasks 决策规则、What task create really means、Creating new tasks、Splitting tasks for parallel execution、@Mentions                                       |
 
 ## 代码改动
 

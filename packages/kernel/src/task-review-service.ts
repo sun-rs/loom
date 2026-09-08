@@ -31,7 +31,7 @@ import { createTaskThreadReply } from "./task-anchor.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
 import { integer, jsonObject, text, type Row } from "./sqlite-row.ts";
 import { taskProjectionFromRow } from "./task-projection.ts";
-import { requireWorkerTaskDelivery } from "./worker-task-scope.ts";
+import { requireWorkerTaskVisibility } from "./worker-task-scope.ts";
 
 export type TaskReviewMutationResult = {
   activationIds: string[];
@@ -387,7 +387,7 @@ export class TaskReviewService {
     input: { taskId: string },
   ): TaskSubmission {
     const scope = this.#requireWorker(execution);
-    requireWorkerTaskDelivery(this.#database, scope, input.taskId);
+    requireWorkerTaskVisibility(this.#database, scope, input.taskId);
     return this.#submissionFromRow(
       this.#requireCurrentSubmission(input.taskId),
     );

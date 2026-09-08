@@ -27,6 +27,8 @@ export function unassignTaskTransaction(
     actorId: string;
     command: TaskUnassignCommand;
     unassignedAt: string;
+    runAttemptId?: string;
+    assertFreshContext?: (taskId: string, seq: number) => void;
   },
 ): TaskCreateMutationResult {
   const command = input.command;
@@ -72,7 +74,9 @@ export function unassignTaskTransaction(
     throw new NotFoundError(`Room ${roomId} was not found`);
   }
   const latestRoomSeq = integer(room, "next_seq") - 1;
-  if (command.basedOnRoomSeq !== latestRoomSeq) {
+  if (input.assertFreshContext)
+    input.assertFreshContext(command.taskId, command.basedOnRoomSeq);
+  else if (command.basedOnRoomSeq !== latestRoomSeq) {
     throw new StaleContextError(command.basedOnRoomSeq, latestRoomSeq);
   }
   const previousAssigneeId = nullableText(taskRow, "assignee_id");
@@ -114,6 +118,7 @@ export function unassignTaskTransaction(
         .map((participant) => text(participant, "participant_id")),
       taskId: command.taskId,
       unassignedAt: input.unassignedAt,
+      ...(input.runAttemptId ? { runAttemptId: input.runAttemptId } : {}),
     },
     roomId,
     type: "task.unassigned",

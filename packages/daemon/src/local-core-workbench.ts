@@ -1,5 +1,4 @@
 import type { WorkbenchServiceControl } from "./workbench-service-control.ts";
-import { readLocalWorkbenchMcpConfig } from "./local-workbench-mcp-config.ts";
 import { existsSync, lstatSync, readFileSync } from "node:fs";
 import { isAbsolute, join, resolve } from "node:path";
 
@@ -65,6 +64,8 @@ export type LocalCoreLanDescriptor = LocalCoreLoopbackDescriptor & {
 
 export type RunningLocalCoreWorkbench = {
   descriptor: LocalCoreLoopbackDescriptor | LocalCoreLanDescriptor;
+  /** Terminal background failure after the local gateway has been closed. */
+  failed?: Promise<Error>;
   stop(): Promise<void>;
 };
 
@@ -87,7 +88,6 @@ export async function startLocalCoreWorkbench(input: {
     );
   }
 
-  const managedMcpExecutors = await readLocalWorkbenchMcpConfig(stateDirectory);
   const discovered = await discoverKnownLocalClis({ environment });
   const runtimeSpecs = discovered.flatMap((candidate) => {
     if (
@@ -113,7 +113,7 @@ export async function startLocalCoreWorkbench(input: {
     workspaceCwd,
   });
   const application = new DaemonApplication({
-    config: { ...prepared.config, managedMcpExecutors },
+    config: prepared.config,
   });
   const shutdown = new AbortController();
   const applicationRun = application.run({ signal: shutdown.signal });
@@ -238,19 +238,46 @@ function baseDescriptor(input: {
   };
 }
 
-function runningWorkbench(input: {
+export function runningWorkbench(input: {
   applicationRun: Promise<void>;
   descriptor: LocalCoreLoopbackDescriptor | LocalCoreLanDescriptor;
-  gateway: LocalWorkbenchGateway | LanWorkbenchGateway;
+  gateway: Pick<LocalWorkbenchGateway, "stop">;
   shutdown: AbortController;
 }): RunningLocalCoreWorkbench {
   let stopped = false;
+  let gatewayStop: Promise<void> | undefined;
+  const closeGateway = () => (gatewayStop ??= input.gateway.stop());
+  let fail!: (error: Error) => void;
+  const failed = new Promise<Error>((resolve) => {
+    fail = resolve;
+  });
+  const reportFailure = async (cause: unknown) => {
+    if (stopped) return;
+    const error = cause instanceof Error ? cause : new Error(String(cause));
+    try {
+      await closeGateway();
+    } catch (cleanup) {
+      fail(
+        new AggregateError(
+          [error, cleanup],
+          "daemon failed and gateway cleanup failed",
+        ),
+      );
+      return;
+    }
+    fail(error);
+  };
+  void input.applicationRun.then(
+    () => reportFailure(new Error("local Core daemon exited unexpectedly")),
+    reportFailure,
+  );
   return {
+    failed,
     descriptor: structuredClone(input.descriptor),
     async stop() {
       if (stopped) return;
       stopped = true;
-      await input.gateway.stop().catch(() => undefined);
+      await closeGateway().catch(() => undefined);
       input.shutdown.abort("local-core-shutdown");
       await input.applicationRun.catch(() => undefined);
     },

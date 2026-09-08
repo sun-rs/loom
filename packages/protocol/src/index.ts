@@ -51,7 +51,7 @@ import {
   type InputRequest,
   type InputRequestStatus,
 } from "./input-request.ts";
-import { ManagedMcpRuntimeAdapterSchema } from "./managed-mcp.ts";
+import { ManagedMcpRuntimeAdapterSchema } from "./retired-managed-mcp.ts";
 import {
   addTaskParticipantSelectionIssues,
   projectTaskLifecycle,
@@ -102,7 +102,6 @@ export * from "./agent-avatar-pattern.ts";
 export * from "./context-manifest.ts";
 export * from "./execution-policy.ts";
 export * from "./workspace-instruction-pack.ts";
-export * from "./managed-mcp.ts";
 export * from "./runtime-activity.ts";
 export * from "./agent-presence.ts";
 export * from "./review.ts";
@@ -148,7 +147,7 @@ export * from "./worker-message.ts";
 export * from "./worker-task-create.ts";
 export * from "./worker-thread.ts";
 export * from "./input-request.ts";
-export { RoomEventSchema } from "./room-event.ts";
+export { RoomEventSchema, ROOM_SYNC_RESPONSE_MAX_BYTES } from "./room-event.ts";
 export type { RoomEvent } from "./room-event.ts";
 
 export const InboxStateSchema = z.enum(["pending", "acknowledged"]);
@@ -368,6 +367,7 @@ export const RuntimeProfileManifestV2Schema = z
     credentialSlots: z.array(RuntimeCredentialSlotSchema).max(64),
     declaredCapabilities: UniqueIdentifierArraySchema.max(256),
     recoveryDrivers: UniqueIdentifierArraySchema.max(64),
+    // Retired metadata: accepted only for durable RuntimeProfile revision compatibility.
     managedMcpAdapter: ManagedMcpRuntimeAdapterSchema.optional(),
     workspacePolicy: z
       .object({
@@ -432,6 +432,7 @@ export const RuntimeProfileManifestV3Schema = z
     credentialSlots: z.array(RuntimeCredentialSlotSchema).max(64),
     declaredCapabilities: UniqueIdentifierArraySchema.max(256),
     recoveryDrivers: UniqueIdentifierArraySchema.max(64),
+    // Retired metadata: accepted only for durable RuntimeProfile revision compatibility.
     managedMcpAdapter: ManagedMcpRuntimeAdapterSchema.optional(),
     workspacePolicy: z
       .object({
@@ -1598,71 +1599,15 @@ export type WorkerTaskSubmitRequest = z.infer<
   typeof WorkerTaskSubmitRequestSchema
 >;
 
-export const RoomSnapshotSchema = z
-  .object({
-    room: RoomSchema,
-    members: z.array(PrincipalSchema),
-  })
-  .strict();
-export type RoomSnapshot = z.infer<typeof RoomSnapshotSchema>;
-
-export const RoomSyncResponseSchema = z
-  .object({
-    cursorBefore: z.number().int().nonnegative(),
-    cursorAfter: z.number().int().nonnegative(),
-    eventFloorSeq: z.number().int().nonnegative().optional(),
-    latestRoomSeq: z.number().int().nonnegative(),
-    snapshot: RoomSnapshotSchema.nullable(),
-    snapshotSeq: z.number().int().nonnegative().optional(),
-    events: z.array(RoomEventSchema),
-  })
-  .strict()
-  .refine((response) => response.cursorBefore <= response.latestRoomSeq, {
-    message: "cursorBefore must be less than or equal to latestRoomSeq",
-    path: ["cursorBefore"],
-  })
-  .refine((response) => response.cursorAfter <= response.latestRoomSeq, {
-    message: "cursorAfter must be less than or equal to latestRoomSeq",
-    path: ["cursorAfter"],
-  })
-  .refine(
-    (response) =>
-      response.eventFloorSeq === undefined ||
-      response.eventFloorSeq <= response.cursorAfter,
-    {
-      message: "eventFloorSeq must be less than or equal to cursorAfter",
-      path: ["eventFloorSeq"],
-    },
-  )
-  .refine(
-    (response) =>
-      response.snapshotSeq === undefined ||
-      response.snapshotSeq <= response.latestRoomSeq,
-    {
-      message: "snapshotSeq must be less than or equal to latestRoomSeq",
-      path: ["snapshotSeq"],
-    },
-  )
-  .refine(
-    (response) =>
-      (response.eventFloorSeq === undefined) ===
-      (response.snapshotSeq === undefined),
-    {
-      message: "bounded bootstrap metadata must be complete",
-      path: ["eventFloorSeq"],
-    },
-  )
-  .refine(
-    (response) =>
-      response.eventFloorSeq === undefined ||
-      (response.snapshot !== null &&
-        response.snapshotSeq === response.latestRoomSeq),
-    {
-      message: "bounded bootstrap requires a current Room snapshot",
-      path: ["snapshot"],
-    },
-  );
-export type RoomSyncResponse = z.infer<typeof RoomSyncResponseSchema>;
+export {
+  RoomSnapshotSchema,
+  RoomSyncResponseSchema,
+} from "./room-sync-response.ts";
+export type { RoomSnapshot, RoomSyncResponse } from "./room-sync-response.ts";
+import {
+  RoomSyncResponseSchema,
+  type RoomSyncResponse,
+} from "./room-sync-response.ts";
 
 export const WorkerSyncResponseSchema = RoomSyncResponseSchema;
 export type WorkerSyncResponse = RoomSyncResponse;
@@ -1681,100 +1626,7 @@ export type ClientAcknowledgeResponse = z.infer<
   typeof ClientAcknowledgeResponseSchema
 >;
 
-export const ClientTaskMutationResponseSchema = z
-  .object({
-    deduplicated: z.boolean(),
-    event: RoomEventSchema,
-    task: TaskSchema,
-  })
-  .strict();
-export type ClientTaskMutationResponse = z.infer<
-  typeof ClientTaskMutationResponseSchema
->;
-
-export const ClientTaskAttentionMutationResponseSchema =
-  ClientTaskMutationResponseSchema.extend({
-    activationIds: z.array(IdentifierSchema),
-  }).strict();
-export type ClientTaskAttentionMutationResponse = z.infer<
-  typeof ClientTaskAttentionMutationResponseSchema
->;
-
-export const ClientInputRequestsListResponseSchema = z
-  .object({ inputRequests: z.array(InputRequestSchema) })
-  .strict();
-export type ClientInputRequestsListResponse = z.infer<
-  typeof ClientInputRequestsListResponseSchema
->;
-
-export const WorkerAcknowledgeResponseSchema = z
-  .object({
-    acknowledgedThrough: z.number().int().nonnegative(),
-  })
-  .strict();
-export type WorkerAcknowledgeResponse = z.infer<
-  typeof WorkerAcknowledgeResponseSchema
->;
-
-export const WorkerTaskMutationResponseSchema = z
-  .object({
-    deduplicated: z.boolean(),
-    event: RoomEventSchema,
-    task: TaskSchema,
-  })
-  .strict();
-export type WorkerTaskMutationResponse = z.infer<
-  typeof WorkerTaskMutationResponseSchema
->;
-
-export const WorkerTaskAttentionMutationResponseSchema =
-  WorkerTaskMutationResponseSchema.extend({
-    activationIds: z.array(IdentifierSchema),
-  }).strict();
-export type WorkerTaskAttentionMutationResponse = z.infer<
-  typeof WorkerTaskAttentionMutationResponseSchema
->;
-
-export const WorkerTaskRequestInputResponseSchema = z
-  .object({
-    deduplicated: z.boolean(),
-    event: RoomEventSchema,
-    inputRequest: InputRequestSchema,
-    task: TaskSchema,
-  })
-  .strict();
-export type WorkerTaskRequestInputResponse = z.infer<
-  typeof WorkerTaskRequestInputResponseSchema
->;
-
-export const InputRequestResolveResponseSchema = z
-  .object({
-    activationIds: z.array(IdentifierSchema),
-    deduplicated: z.boolean(),
-    event: RoomEventSchema,
-    inputRequest: InputRequestSchema,
-    task: TaskSchema,
-  })
-  .strict();
-export type InputRequestResolveResponse = z.infer<
-  typeof InputRequestResolveResponseSchema
->;
-
-export const WorkerTaskGetResponseSchema = z
-  .object({
-    task: TaskSchema,
-  })
-  .strict();
-export type WorkerTaskGetResponse = z.infer<typeof WorkerTaskGetResponseSchema>;
-
-export const WorkerTaskInputStatusResponseSchema = z
-  .object({
-    inputRequest: InputRequestStatusSchema.nullable(),
-  })
-  .strict();
-export type WorkerTaskInputStatusResponse = z.infer<
-  typeof WorkerTaskInputStatusResponseSchema
->;
+export * from "./task-response.ts";
 
 export * from "./error-response.ts";
 export * from "./room-files.ts";
@@ -1791,3 +1643,20 @@ export {
   WorkbenchServiceRestartRequestSchema,
   WorkbenchServiceStatusSchema,
 } from "./workbench-service.ts";
+
+export * from "./worker-read-tools.ts";
+export * from "./client-task-history.ts";
+
+export * from "./agent-skills.ts";
+
+export * from "./worker-task-management.ts";
+
+export * from "./worker-self-profile.ts";
+
+export * from "./task-amend.ts";
+
+export * from "./worker-channel-attention.ts";
+
+export * from "./attachment-comments.ts";
+
+export * from "./task-delete.ts";

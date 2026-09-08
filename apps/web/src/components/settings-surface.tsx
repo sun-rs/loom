@@ -5,7 +5,6 @@ import type { Principal, Workspace, MembershipRole } from "@rah-os/protocol";
 import type { WorkspaceAgentView } from "@rah-os/ui-web";
 
 import { LanDeviceSettingsContent } from "./lan-device-settings.tsx";
-import { ManagedMcpSettingsContent } from "./managed-mcp-settings.tsx";
 import {
   AboutSettingsContent,
   AccountSettingsContent,
@@ -31,7 +30,6 @@ export type SettingsSection =
   | "feedback"
   | "language-region"
   | "lan-devices"
-  | "managed-mcp"
   | "notifications"
   | "release-notes"
   | "server";
@@ -61,7 +59,6 @@ const SETTINGS_GROUPS: readonly {
     items: [
       { id: "server", icon: "server", label: "服务器资料" },
       { id: "administration", icon: "shield-check", label: "管理" },
-      { id: "managed-mcp", icon: "blocks", label: "MCP 服务器" },
       {
         id: "lan-devices",
         icon: "monitor",
@@ -99,11 +96,7 @@ function hasExplicitSettingsSection(search: string): boolean {
 export function SettingsSurface({
   agents,
   canManageWorkspace,
-  canReadManagedMcp,
-  canWriteManagedMcp,
   client,
-  consumerPrefix,
-  controlRoomId,
   currentPrincipal,
   membershipRole,
   onWorkspaceUpdated,
@@ -112,11 +105,7 @@ export function SettingsSurface({
 }: {
   agents: readonly WorkspaceAgentView[];
   canManageWorkspace: boolean;
-  canReadManagedMcp: boolean;
-  canWriteManagedMcp: boolean;
   client: RahClient;
-  consumerPrefix: string;
-  controlRoomId: string | undefined;
   currentPrincipal: Principal | undefined;
   membershipRole?: MembershipRole | undefined;
   onWorkspaceUpdated: (workspace: Workspace) => void;
@@ -191,15 +180,6 @@ export function SettingsSurface({
             agents={agents}
             principal={currentPrincipal}
             membershipRole={membershipRole}
-          />
-        ) : section === "managed-mcp" ? (
-          <ManagedMcpSettingsContent
-            agents={agents}
-            canRead={canReadManagedMcp}
-            canWrite={canWriteManagedMcp}
-            client={client}
-            consumerPrefix={consumerPrefix}
-            controlRoomId={controlRoomId}
           />
         ) : section === "lan-devices" ? (
           <LanDeviceSettingsContent />

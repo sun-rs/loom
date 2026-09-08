@@ -179,7 +179,9 @@ async function verifySearch(page, engine) {
   const noResult = page.locator(
     '.rah-empty-state[data-context="search"][data-placement="section"]',
   );
-  await noResult.getByText("没有搜索结果", { exact: true }).waitFor();
+  await noResult
+    .getByText(`没有找到“${await query.inputValue()}”的结果`, { exact: true })
+    .waitFor();
   assert.equal(
     await page.locator(".search-stage").getByText("0", { exact: true }).count(),
     0,

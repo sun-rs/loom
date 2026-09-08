@@ -107,7 +107,7 @@ export async function transferProfileImage(
   response.end();
 }
 
-function mapProfileImageStorageError(error: unknown): Error {
+export function mapProfileImageStorageError(error: unknown): Error {
   if (
     error &&
     typeof error === "object" &&
