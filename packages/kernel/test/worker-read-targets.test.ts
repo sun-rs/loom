@@ -108,6 +108,57 @@ function fixture() {
   };
 }
 
+test("an Agent cannot open a Direct Room, so dm:@peer only addresses existing DMs", () => {
+  const f = fixture();
+  try {
+    const workspace = f.kernel.createWorkspace(f.actor, {
+      name: "Managed",
+      slug: "managed",
+      idempotencyKey: "workspace",
+    });
+    f.kernel.addMember(f.actor, {
+      roomId: workspace.controlRoom.roomId,
+      principalId: f.agent.principal.principalId,
+    });
+    const head = () =>
+      f.kernel.sync(f.actor, {
+        roomId: workspace.controlRoom.roomId,
+        consumerId: "open-dm-head",
+      }).latestRoomSeq;
+    // Before a Human opens it, the target the prompt teaches does not resolve.
+    assert.throws(
+      () => f.reads.room(f.execution, { channel: "dm:@human" }),
+      /unavailable/u,
+    );
+    // Raft's "Start a NEW DM" has no RAH equivalent: openDirectRoom is gated
+    // to Human principals and no worker route reaches it.
+    const agentActor = f.kernel.authenticateAccessToken(f.agent.accessToken);
+    assert.throws(
+      () =>
+        f.kernel.openDirectRoom(agentActor, {
+          workspaceId: workspace.workspace.workspaceId,
+          peerPrincipalId: f.human.principal.principalId,
+          basedOnControlRoomSeq: head(),
+          idempotencyKey: "agent-opened-dm",
+        }),
+      /only Human principals can open Direct Rooms/u,
+    );
+    // Once the Human opens it, the same target reads and the Agent can post.
+    const dm = f.kernel.openDirectRoom(f.actor, {
+      workspaceId: workspace.workspace.workspaceId,
+      peerPrincipalId: f.agent.principal.principalId,
+      basedOnControlRoomSeq: head(),
+      idempotencyKey: "human-opened-dm",
+    });
+    assert.equal(
+      f.reads.room(f.execution, { channel: "dm:@human" }).room.roomId,
+      dm.roomId,
+    );
+  } finally {
+    f.close();
+  }
+});
+
 test("joined Room and canonical DM targets are independently authorized read scopes", () => {
   const f = fixture();
   try {

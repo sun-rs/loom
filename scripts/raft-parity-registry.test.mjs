@@ -281,9 +281,28 @@ test("exceeding the non-deferred missing ratchet fails", () => {
   );
 });
 
+// The committed registry holds no judgment rows, so the ratchet is exercised
+// against a synthetic one whose needle is really present in the prompt.
+const judgmentRow = (id, needle) => ({
+  id,
+  kind: "prompt-paragraph",
+  rah: {
+    file: "packages/daemon/src/standing-prompt-compiler.ts",
+    symbol: "standing-prompt-compiler.ts",
+    needles: [needle],
+  },
+  raft: null,
+  verdict: "unjustified",
+  upstreamEvidence: "cli-behavior",
+  classification: "judgment",
+  note: "synthetic fixture",
+});
+const JUDGMENT_NEEDLE = "Skip idle narration";
+
 test("exceeding the standing prompt judgment ratchet fails", () => {
   const mutated = registry();
-  mutated.ratchet.promptJudgmentParagraphs = 1;
+  mutated.entries.push(judgmentRow("prompt.fixture.one", JUDGMENT_NEEDLE));
+  mutated.ratchet.promptJudgmentParagraphs = 0;
   const result = validateRegistry(mutated, reader(), noUpstream);
 
   assert.ok(
@@ -296,12 +315,16 @@ test("exceeding the standing prompt judgment ratchet fails", () => {
 
 test("removing a judgment paragraph lowers the counted total", () => {
   const mutated = registry();
-  const entry = mutated.entries.find(
-    (row) => row.classification === "judgment",
-  );
+  mutated.entries.push(judgmentRow("prompt.fixture.one", JUDGMENT_NEEDLE));
+  mutated.ratchet.promptJudgmentParagraphs = 1;
+  mutated.ratchet.unjustified += 1;
+  const present = validateRegistry(mutated, reader(), noUpstream);
+  assert.deepEqual(present.errors, []);
+  assert.equal(present.judgmentPresent, 1);
+
   const stripped = file("packages/daemon/src/standing-prompt-compiler.ts")
     .toString()
-    .replaceAll(entry.rah.needles[0], "");
+    .replaceAll(JUDGMENT_NEEDLE, "");
   const result = validateRegistry(
     mutated,
     reader({ "packages/daemon/src/standing-prompt-compiler.ts": stripped }),
@@ -309,10 +332,17 @@ test("removing a judgment paragraph lowers the counted total", () => {
   );
 
   assert.deepEqual(result.errors, []);
-  assert.equal(
-    result.judgmentPresent,
-    validateRegistry(registry(), reader(), noUpstream).judgmentPresent - 1,
+  assert.equal(result.judgmentPresent, present.judgmentPresent - 1);
+});
+
+test("the standing prompt carries no registered judgment paragraph", () => {
+  assert.deepEqual(
+    registry()
+      .entries.filter((row) => row.classification === "judgment")
+      .map((row) => row.id),
+    [],
   );
+  assert.equal(registry().ratchet.promptJudgmentParagraphs, 0);
 });
 
 test("an absent upstream extraction skips anchor verification and still passes", () => {

@@ -27,18 +27,18 @@
     "deferred-scope"
   ],
   "ratchet": {
-    "unjustified": 155,
+    "unjustified": 143,
     "undecidable": 0,
-    "missingNonDeferred": 63,
+    "missingNonDeferred": 64,
     "outputSurfaceUnjustified": 75,
     "outputSurfaceMissingNonDeferred": 30,
-    "promptJudgmentParagraphs": 14
+    "promptJudgmentParagraphs": 0
   },
   "ratchetNotes": {
-    "unjustified": "Falls when RAH replicates the Raft contract, and equally when a row is re-adjudicated. A drop is not repair unless a commit changed a surface. It stood at 80 while the registry covered only the CLI-surface and prompt-sections inventories; the 2026-09-09 pass that registered the output and error inventory added 88 unjustified rows without repairing anything, so it now measures 168 unreplicated Agent-facing divergences. The rise is bookkeeping: lowering it while adding rows would have hidden the newly registered debt. The 2026-09-09 read-family pass closed 13 of them by porting Raft's own renderers — nine output-format rows and four output rows — leaving 155. Three of the four output rows are recorded justified rather than aligned because RAH prints canonical ledger ids where formatMessageLine slices to eight characters, and one output row was split so room-read's kept context receipt could be declared instead of hidden inside an aligned row.",
+    "unjustified": "Falls when RAH replicates the Raft contract, and equally when a row is re-adjudicated. A drop is not repair unless a commit changed a surface. It stood at 80 while the registry covered only the CLI-surface and prompt-sections inventories; the 2026-09-09 pass that registered the output and error inventory added 88 unjustified rows without repairing anything, so it now measures 168 unreplicated Agent-facing divergences. The rise is bookkeeping: lowering it while adding rows would have hidden the newly registered debt. The 2026-09-09 read-family pass closed 13 of them by porting Raft's own renderers — nine output-format rows and four output rows — leaving 155. Three of the four output rows are recorded justified rather than aligned because RAH prints canonical ledger ids where formatMessageLine slices to eight characters, and one output row was split so room-read's kept context receipt could be declared instead of hidden inside an aligned row. The 2026-09-09 prompt pass closed the 12 registered `prompt-paragraph` judgment rows by porting the upstream sections they were compensating for, leaving 143.",
     "undecidable": "Counts rows whose Raft-side claim rests on the closed Raft Server rather than on the client contract or the extracted CLI. It may rise only when a new Agent-facing surface is added whose upstream behaviour is Server-held, never by reclassifying a row that already has client-side evidence. It must fall the moment Server evidence becomes available: every row it covers is then re-adjudicated aligned, justified or unjustified. It stands at 0 because all 211 rows cite either packages/shared/src/agentApiContract.ts or the extracted Computer CLI and prompt compiler.",
-    "missingNonDeferred": "Falls when RAH ports the Raft surface. Deferred absences are excluded and must name a constraint instead. It rose from 33 to 63 when the output and error inventory was registered; the 30 new rows are absences that were always there and had no row to sit in.",
-    "promptJudgmentParagraphs": "Falls when a self-authored judgment paragraph is removed from the standing prompt.",
+    "missingNonDeferred": "Falls when RAH ports the Raft surface. Deferred absences are excluded and must name a constraint instead. It rose from 33 to 63 when the output and error inventory was registered; the 30 new rows are absences that were always there and had no row to sit in. It rose to 64 on 2026-09-09 when `prompt.standing.start-new-dm` registered that an Agent cannot open a Direct Room; the rise is a newly registered gap, not a regression.",
+    "promptJudgmentParagraphs": "Counts standing-prompt paragraphs classified `judgment` whose needles are still present in packages/daemon/src/standing-prompt-compiler.ts. It stood at 14 with 12 rows registered; the 2026-09-09 pass ported Raft's startup sequence, credential hygiene, reminders, channel awareness, communication style, live constraints and the two formatting sections, then removed all 12 judgment paragraphs — three of them restated as mechanical facts about the tool. It is 0: any new self-authored judgment rule fails the check immediately.",
     "outputSurfaceUnjustified": "The output and error share of `unjustified`, over kinds output, error-code and output-format. It exists so the surface that lost a real reply cannot hide inside a whole-registry total: it can only fall by replicating an output contract, never by adding rows elsewhere. It stood at 88 when the inventory was registered. The read-family pass closed 13 — nine output-format rows (sync, room-read, message-read, message-resolve, room-members, server-info, task-list, task-history, version) and four output rows (message-read, message-check, message-resolve, version) — leaving 75: 46 of the systemic format divergence, 20 error codes whose recovery guidance RAH still does not carry, and 9 command results whose rendering diverges.",
     "outputSurfaceMissingNonDeferred": "The output and error share of `missingNonDeferred`. Of the 30, 8 are Agent-visible outcomes RAH never produces (the missed-messages section, the drive-by tip, SEND_DRAFT_NOT_FOUND, the stdin-window diagnostic, mention partial delivery, the two Task freshness holds and reminder ack) and 22 are Raft cliError codes with no RAH site."
   },
@@ -3629,10 +3629,9 @@
         "needles": ["Order of precedence: canonical Worker protocol"]
       },
       "raft": null,
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "classification": "judgment",
-      "note": "§3.1 (a): a self-invented five-level conflict ranking; Raft states only user-override and owner policy."
+      "note": "§3.1 (a): removed 2026-09-09; RAH now states only Raft's user-override and owner-policy precedence."
     },
     {
       "id": "prompt.standing.i",
@@ -3643,10 +3642,9 @@
         "needles": ["does not make the old event a new instruction"]
       },
       "raft": null,
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "classification": "judgment",
-      "note": "§3.1 (i): a self-invented suppression rule; Raft's historical-references section encourages re-reading instead."
+      "note": "§3.1 (i): removed 2026-09-09; the ported historical-references guidance covers re-reading, and the cursor facts already bound write authority."
     },
     {
       "id": "prompt.standing.n",
@@ -3657,10 +3655,9 @@
         "needles": ["Or send nothing"]
       },
       "raft": null,
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "classification": "judgment",
-      "note": "§3.1 (n): a third held-draft branch Raft does not have; it widens the dropped-reply failure mode."
+      "note": "§3.1 (n): removed 2026-09-09; the saved-draft branch is back to Raft's two paths."
     },
     {
       "id": "prompt.standing.p",
@@ -3673,10 +3670,9 @@
         ]
       },
       "raft": null,
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "classification": "judgment",
-      "note": "§3.1 (p): the strict Task definition contradicts the Raft decision rule ported into the same paragraph."
+      "note": "§3.1 (p): removed 2026-09-09; only Raft's own claim decision rule remains in that paragraph."
     },
     {
       "id": "prompt.standing.q",
@@ -3687,10 +3683,9 @@
         "needles": ["must not duplicate the work or post a competing answer"]
       },
       "raft": null,
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "classification": "judgment",
-      "note": "§3.1 (q): adds a silence order and drops Raft's canonical-owner routing correction."
+      "note": "§3.1 (q): removed 2026-09-09; replaced by Raft's conflict wording including the canonical owner's routing correction."
     },
     {
       "id": "prompt.standing.r",
@@ -3701,10 +3696,9 @@
         "needles": ["Do not also post a top-level Room reply"]
       },
       "raft": null,
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "classification": "judgment",
-      "note": "§3.1 (r): Raft asks for Thread updates but never forbids a top-level reply."
+      "note": "§3.1 (r): removed 2026-09-09; restated as the mechanical fact that task-progress and task-submit post to the Task's canonical Thread."
     },
     {
       "id": "prompt.standing.s",
@@ -3715,10 +3709,9 @@
         "needles": ["exactly once with the reply body on stdin"]
       },
       "raft": null,
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "classification": "judgment",
-      "note": "§3.1 (s): the 'exactly once' send cap is self-invented."
+      "note": "§3.1 (s): removed 2026-09-09; the self-invented send-count ceiling is gone."
     },
     {
       "id": "prompt.standing.v",
@@ -3732,10 +3725,9 @@
         ]
       },
       "raft": null,
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "classification": "judgment",
-      "note": "§3.1 (v): both sentences are absent from the Raft prompt."
+      "note": "§3.1 (v): removed 2026-09-09; the surrounding instruction to read task-trajectory and cite command or file evidence carries the same duty as a tool fact."
     },
     {
       "id": "prompt.standing.w",
@@ -3746,10 +3738,9 @@
         "needles": ["An older Thread in the same Room is allowed"]
       },
       "raft": null,
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "classification": "judgment",
-      "note": "§3.1 (w): a self-invented permission clause."
+      "note": "§3.1 (w): removed 2026-09-09; replaced by Raft's own thread rules (read a mentioned Thread before replying, threads cannot be nested)."
     },
     {
       "id": "prompt.standing.aa",
@@ -3763,10 +3754,9 @@
         ]
       },
       "raft": null,
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "classification": "judgment",
-      "note": "§3.1 (aa): a fully self-invented turn-taking script and silence order."
+      "note": "§3.1 (aa): removed 2026-09-09; the self-authored turn-taking script and its silence order are gone."
     },
     {
       "id": "prompt.standing.jj",
@@ -3779,10 +3769,9 @@
         ]
       },
       "raft": null,
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "classification": "judgment",
-      "note": "§3.1 (jj): a self-invented process constraint."
+      "note": "§3.1 (jj): removed 2026-09-09; restated as the mechanical fact that task-block records a parent Task waiting on its subtasks."
     },
     {
       "id": "prompt.standing.ss",
@@ -3793,10 +3782,9 @@
         "needles": ["An ordinary conversational audit has no reviewer role"]
       },
       "raft": null,
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "classification": "judgment",
-      "note": "§3.1 (ss): a recorded product adjudication, still RAH-authored judgment prose with no Raft counterpart."
+      "note": "§3.1 (ss): removed 2026-09-09; restated as the mechanical fact that task-review applies only to Human-selected reviewerIds."
     },
     {
       "id": "output.send.success-status-line",
@@ -7076,6 +7064,18 @@
       "verdict": "unjustified",
       "upstreamEvidence": "cli-behavior",
       "note": "output-errors 表三 excludes this command from its tally because Raft has no counterpart, so there is no upstream format to compare. It is registered here so the coverage rule can see every Agent-visible command, and it carries the verdict already adjudicated for the command itself by the CLI-surface inventory (unjustified); the JSON-only output is part of that same unreplicated addition, not a separate finding."
+    },
+    {
+      "id": "prompt.standing.start-new-dm",
+      "kind": "prompt-paragraph",
+      "rah": null,
+      "raft": {
+        "anchor": "**Start a NEW DM**",
+        "location": "agent-prompt-compiler.js@buildSendingMessagesSection"
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "§4 row 16. Raft lets an Agent open a DM by sending to `dm:@person-name`. RAH cannot: openDirectRoom (packages/kernel/src/collaboration-service.ts:718) throws ForbiddenError('only Human principals can open Direct Rooms'), and the only route reaching it is the Human client route POST /rooms/direct/open (packages/application-service/src/client-application-service.ts:1275). No worker route creates a Room, so `--target dm:@peer` for a Room that does not yet exist fails in resolveWorkerReadTarget (packages/kernel/src/worker-read-targets.ts:74) with NotFoundError. Existing DMs read and post correctly through the same `dm:@handle` target. Not deferred: closing it needs a worker-side open-DM capability plus its ACL decision, which is out of this batch's prompt-only scope."
     }
   ]
 }

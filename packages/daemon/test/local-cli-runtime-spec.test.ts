@@ -59,19 +59,26 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
     prompt,
     /assigned to process\.env\.RAH_PARTICIPANT_ID.*unassigned/isu,
   );
-  assert.match(
+  assert.doesNotMatch(
     prompt,
     /ordinary conversation.*must remain a message.*not a Task/isu,
   );
-  assert.match(prompt, /tool use.*does not make.*Task/isu);
-  assert.match(prompt, /long-running.*persistent changes.*progress.*review/isu);
+  assert.doesNotMatch(prompt, /tool use.*does not make.*Task/isu);
+  assert.doesNotMatch(
+    prompt,
+    /A Task is reserved for long-running or multi-step execution/isu,
+  );
   assert.match(
     prompt,
     /After task-claim-message succeeds.*event\.roomSeq.*task-start.*task-progress.*task-submit/isu,
   );
+  assert.doesNotMatch(
+    prompt,
+    /must not duplicate the work or post a competing/isu,
+  );
   assert.match(
     prompt,
-    /task-claim-message.*conflict.*acknowledge.*must not duplicate/isu,
+    /task-claim-message returns a conflict.*do not start conflicting execution or take over its scope without a redirect/isu,
   );
   assert.match(
     prompt,
@@ -90,7 +97,7 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
   assert.match(prompt, /existing Tasks to avoid duplicates/isu);
   assert.match(
     prompt,
-    /task-block.*before acknowledging|cannot acknowledge.*idle/isu,
+    /task-block.*is how a parent Task records that it waits on its subtasks/isu,
   );
   // The rework round is separated by the server-derived key, not by a prompt
   // rule telling the Agent to fold a triggering roomSeq into one.
@@ -114,7 +121,7 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
   assert.match(prompt, /Claim before you start.*concurrency lock/isu);
   assert.match(prompt, /Before stopping.*blockers you own/isu);
   assert.match(prompt, /Skip idle narration.*actionable content/isu);
-  assert.match(prompt, /turn-taking.*newest committed message/isu);
+  assert.doesNotMatch(prompt, /turn-taking/iu);
   assert.match(
     prompt,
     /state.*held.*not published.*acknowledge.*follow-up Activation/isu,
@@ -137,7 +144,7 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
   assert.doesNotMatch(prompt, /message-post --body/u);
   assert.match(prompt, /send-draft.*rechecks freshness/isu);
   assert.match(prompt, /--anyway.*continueAnywaySuggested/isu);
-  assert.match(prompt, /goal.*already complete.*remain silent/isu);
+  assert.doesNotMatch(prompt, /goal.*already complete.*remain silent/isu);
   assert.match(prompt, /RAH_WORKER_CLI.*worker task-submit/u);
   assert.match(prompt, /task\.reassigned/u);
   // Raft has no such recipe, and the server now derives the key itself.
@@ -154,6 +161,15 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
   assert.doesNotMatch(prompt, /RAH_WORKER_TOKEN/u);
   assert.doesNotMatch(prompt, /\/v1\/worker/u);
   assert.doesNotMatch(prompt, /Authorization/u);
+  // The ported Raft sections reach the local workbench prompt too.
+  assert.match(prompt, /## Startup sequence/u);
+  assert.match(prompt, /### Credential handling/u);
+  assert.match(prompt, /### Reminders/u);
+  assert.match(prompt, /### Room awareness/u);
+  assert.match(prompt, /## Communication style/u);
+  assert.match(prompt, /## Live constraints and pull-request closure/u);
+  assert.match(prompt, /### Formatting — Mentions & Room Refs/u);
+  assert.match(prompt, /### Formatting — URLs in non-English text/u);
 
   for (const executable of ["codex", "kimi", "opencode", "claude"]) {
     const spec = localCliRuntimeSpec(executable, workspaceCwd);
