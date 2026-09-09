@@ -1,5 +1,7 @@
 # RAH OS 文档
 
+核心链验收协议：[五个场景、59 个观察点与证据来源](./product/core-chain-acceptance-protocol.zh-CN.md)。
+
 Raft 对齐工程：[三份盘点、构建时对齐检查与九批收敛记录](./audits/2026-09-09-raft-parity-alignment-program.zh-CN.md)。
 
 重复唤醒收口：[把"已呈现"事实写进 Worker 投递，真实模型第二次唤醒推理步数 23→2](./audits/2026-09-09-presented-context-duplicate-wake.zh-CN.md)。
