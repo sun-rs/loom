@@ -1,5 +1,7 @@
 # RAH OS 文档
 
+核心链验收第 1 次真实运行：[跨 Room、私聊延续、记忆正反对照通过；配置切换因预算未成立](./audits/2026-09-10-core-chain-acceptance-run-1.zh-CN.md)。
+
 核心链验收协议：[五个场景、59 个观察点与证据来源](./product/core-chain-acceptance-protocol.zh-CN.md)。
 
 Raft 对齐工程：[三份盘点、构建时对齐检查与九批收敛记录](./audits/2026-09-09-raft-parity-alignment-program.zh-CN.md)。

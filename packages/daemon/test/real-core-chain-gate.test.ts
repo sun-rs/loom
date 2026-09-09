@@ -51,14 +51,30 @@ import {
  */
 const ENABLED = process.env.RAH_CORE_CHAIN_GATE === "1";
 /**
- * The protocol's budget for one pass. A supervisor who deliberately wants a
- * longer single pass can raise it; the default is the documented 15 minutes and
- * the gate never retries a scenario on its own.
+ * The budget for one pass. The documented 15 minutes was measured, not
+ * estimated, and does not fit: run 1 (2026-09-10) spent 930 s and reached its
+ * wall while the pre-switch Run was still in flight, so scenario 4 never got a
+ * post-switch Run at all. The observed cost of the script is roughly 17 minutes
+ * with three real CLIs, of which the seven Human turns before scenario 4 are
+ * about 12; 35 minutes leaves headroom for models that answer at
+ * half that speed without letting a genuinely stuck run burn indefinitely (a
+ * stall is caught much earlier by `waitForOutcome`). A supervisor can still
+ * override it, and the gate never retries a scenario on its own.
  */
 const GATE_TIMEOUT_MS = Number.parseInt(
-  process.env.RAH_CORE_CHAIN_TIMEOUT_MS ?? String(15 * 60_000),
+  process.env.RAH_CORE_CHAIN_TIMEOUT_MS ?? String(35 * 60_000),
   10,
 );
+/**
+ * Scenario 4 is the only scenario whose evidence cannot be collected after the
+ * fact: the switch has to land while a Run is in flight, a later Run has to be
+ * scheduled from the new revision, and its argv has to be read off a live
+ * process. If the preamble has eaten the budget, the gate says so before paying
+ * for two more real turns it could never judge.
+ */
+const SCENARIO_4_RESERVE_MS = 10 * 60_000;
+/** How long the post-switch wake is waited for before the timeline is dumped. */
+const POST_SWITCH_WAIT_MS = 5 * 60_000;
 // A phase boundary can briefly show every Activation terminal before the next
 // wake is enqueued, so a stall must persist before it is reported as a gap.
 const STALL_CONFIRM_MS = 20_000;
@@ -196,7 +212,10 @@ test(
     // fact, so sampling runs for the whole gate rather than only around the
     // switch.
     const argvByRunAttempt = new Map<string, ArgvObservation[]>();
-    const sampler = setInterval(() => {
+    // Sampling runs on a timer for the whole gate and is additionally driven by
+    // hand while the post-switch Run is being waited for, so 4.4's window is
+    // sampled deliberately rather than only by luck of the interval.
+    const recordArgvSamples = (): void => {
       try {
         for (const [runAttemptId, observation] of sampleDriverArgv()) {
           const seen = argvByRunAttempt.get(runAttemptId) ?? [];
@@ -217,7 +236,8 @@ test(
       } catch {
         // A transient `ps` failure must never break the paid run.
       }
-    }, ARGV_SAMPLE_INTERVAL_MS);
+    };
+    const sampler = setInterval(recordArgvSamples, ARGV_SAMPLE_INTERVAL_MS);
     sampler.unref();
 
     const shutdown = { controller: new AbortController() };
@@ -572,24 +592,31 @@ test(
         throw new Error("messages/post never committed at the latest sequence");
       };
 
-      /** One Human turn: post, then wait for the addressed Agent to answer. */
+      /**
+       * One Human turn: post, then wait for every addressed Agent to answer.
+       * `waitFor` names the answering Agents when they are not simply the
+       * recipients, which is what lets one message carry two unrelated
+       * questions to two Agents without weakening either row's evidence.
+       */
       const turn = async (input: {
         body: string;
         idempotencyKey: string;
         label: string;
         recipients: { participantId: string; reason: "dm" | "mention" }[];
         roomId: string;
-        waitFor?: string;
+        waitFor?: readonly string[];
       }): Promise<{
         event: { aggregateId: string; eventId: string; roomSeq: number };
         replies: { actorId: string; body: string }[];
       }> => {
         const posted = await humanSay(input);
-        const target = input.waitFor ?? input.recipients[0]!.participantId;
+        const targets =
+          input.waitFor ??
+          input.recipients.map((recipient) => recipient.participantId);
         const replies = () =>
           messagesOf(input.roomId).filter(
             (message) =>
-              message.actorId === target &&
+              targets.includes(message.actorId) &&
               message.roomSeq > posted.event.roomSeq,
           );
         await waitForOutcome({
@@ -597,7 +624,10 @@ test(
           diagnose,
           label: input.label,
           stalled: allActivationsTerminal,
-          succeeded: () => replies().length > 0 && agentsIdle(),
+          succeeded: () =>
+            targets.every((target) =>
+              replies().some((message) => message.actorId === target),
+            ) && agentsIdle(),
         });
         return {
           event: posted.event,
@@ -933,14 +963,38 @@ test(
       );
       record("3.7", "asserted", { hits: passphraseHits });
 
-      // Return to the Room and continue.
-      const backInRoom = await turn({
-        body: `@mem-a [CCG-5] 请在这个房间说出 S3 私聊口令。`,
-        idempotencyKey: "core-chain-s3-return",
-        label: "mem-a continues in Room A after the DM",
-        recipients: [{ participantId: memA, reason: "mention" }],
+      // Two unrelated questions in one Room A turn, so the budget buys one
+      // wake of the Room instead of two: mem-a must carry the DM's memory back
+      // into the Room (3.8), and mem-b must fail to know either of mem-a's
+      // private values (5.6 / 3.9). Merging them costs the negative control
+      // nothing: mem-b's answer is still judged against its own memory
+      // directory and against what it says, and it now answers without mem-a's
+      // reply necessarily being in front of it.
+      const returnAndNegative = await turn({
+        body: [
+          `@mem-a [CCG-5] 请在这个房间说出 S3 私聊口令。`,
+          `@mem-b [CCG-6] 请独立回答：S5 项目代号和 S3 私聊口令分别是什么？`,
+          `如果你不知道，就明确说你不知道，不要猜，也不要复述别人的答案。`,
+        ].join(" "),
+        idempotencyKey: "core-chain-s3-return-and-negative",
+        label:
+          "mem-a continues after the DM and mem-b answers the negative control",
+        recipients: [
+          { participantId: memA, reason: "mention" },
+          { participantId: memB, reason: "mention" },
+        ],
         roomId: roomA,
       });
+      const backInRoom = {
+        replies: returnAndNegative.replies.filter(
+          (reply) => reply.actorId === memA,
+        ),
+      };
+      const negative = {
+        replies: returnAndNegative.replies.filter(
+          (reply) => reply.actorId === memB,
+        ),
+      };
       observations["3.8-return-reply"] = backInRoom.replies;
       record(
         "3.8",
@@ -953,16 +1007,6 @@ test(
         },
         "recall is observed; the Room A messages after the DM are the asserted continuity evidence",
       );
-
-      // Negative control: a different Agent must not hold mem-a's private
-      // memory, and must not be able to say it.
-      const negative = await turn({
-        body: `@mem-b [CCG-6] 请说出 S5 项目代号和 S3 私聊口令。如果你不知道，就明确说你不知道，不要猜。`,
-        idempotencyKey: "core-chain-negative",
-        label: "mem-b answers the negative control",
-        recipients: [{ participantId: memB, reason: "mention" }],
-        roomId: roomA,
-      });
       observations["5.6-negative-reply"] = negative.replies;
 
       const memBFiles = readMemoryTree(memBMemory);
@@ -1135,7 +1179,18 @@ test(
 
       // ---------------------------------------------------------------
       // Scenario 4: switch the model while collaboration is in progress.
+      //
+      // Everything scenario 4 proves has to happen live, so it is never
+      // started on a budget that cannot hold it. Run 1 paid for the switch and
+      // for the post-switch Human turn and then hit its wall 31 s after the
+      // last placement, which made 4.3 unsatisfiable by any implementation.
       // ---------------------------------------------------------------
+      const scenario4Remaining = gateDeadline - Date.now();
+      assert.ok(
+        scenario4Remaining >= SCENARIO_4_RESERVE_MS,
+        `scenario 4 not started: only ${String(Math.round(scenario4Remaining / 1000))} s of the ${String(Math.round(GATE_TIMEOUT_MS / 1000))} s budget remain and it needs at least ${String(Math.round(SCENARIO_4_RESERVE_MS / 1000))} s. This is a harness budget failure, not a product failure: raise RAH_CORE_CHAIN_TIMEOUT_MS and re-run. Scenarios 2, 3 and 5 above are unaffected.`,
+      );
+
       const baselineDefinition = agentDefinitionState(
         databasePath,
         definitionIdByHandle.get("mem-a")!,
@@ -1147,7 +1202,7 @@ test(
 
       const busyMessage = await humanSay({
         body: [
-          `@mem-a [CCG-9] 请用终端执行 mkdir -p acceptance && touch ${S4_ACTIVE_MARKER}; sleep 25，`,
+          `@mem-a [CCG-9] 请用终端执行 mkdir -p acceptance && touch ${S4_ACTIVE_MARKER}; sleep 12，`,
           `然后把 ${S4_EXEC_FILE} 写成一行 ${S4_EXEC_BODY}，最后只回复 ${S4_EXEC_DONE}。`,
           `@steady-c [CCG-9] 请独立地把 ${S4_AUDIT_FILE} 写成一行 ${S4_AUDIT_BODY}，然后只回复 ${S4_AUDIT_DONE}。`,
         ].join(" "),
@@ -1248,13 +1303,28 @@ test(
       ]);
       record("4.2", "asserted", switchedIntent);
 
+      // The switch has to be observable in the ledger before anything is
+      // asserted about what it did, so the exact `agent.configured` moment is
+      // read back and every later claim is timed against it.
+      const switchEvent = agentConfiguredEventAt(
+        databasePath,
+        switchedDefinition.currentRevisionId,
+      );
+      assert.ok(
+        switchEvent,
+        `4.1 failed: the switch wrote revision ${switchedDefinition.currentRevisionId} but no agent.configured event carries it`,
+      );
+      const switchedAtMs = Date.parse(switchEvent);
+
       // The post-switch turn: a genuinely independent question that neither
-      // cancels nor replaces the original request, plus a dwell that keeps its
-      // process alive long enough for the live argv snapshot and the restart.
+      // cancels nor replaces the original request, and a mention mem-a is
+      // obliged to answer, so a post-switch wake is guaranteed rather than
+      // hoped for. The dwell keeps its process alive long enough for the live
+      // argv snapshot and for the restart to land on a Run in flight.
       const followUp = await humanSay({
         body: [
           `@mem-a [CCG-10] 插一个独立的新问题，它不取消也不替换你上一条尚未发出的结论：`,
-          `请先执行 sleep 15，然后回答两件事：${S4_EXEC_FILE} 现在存在吗（只答 EXISTS 或 MISSING），`,
+          `请先执行 sleep 10，然后回答两件事：${S4_EXEC_FILE} 现在存在吗（只答 EXISTS 或 MISSING），`,
           `以及 S5 项目代号的当前值是什么。两条答复都要，各自作为一条消息发出。`,
         ].join(" "),
         idempotencyKey: "core-chain-s4-followup",
@@ -1262,16 +1332,83 @@ test(
         roomId: roomA,
       });
 
-      // 4.4: the live process is the only evidence, and only while it runs.
+      // Wait for the evidence instead of assuming it. A placement is the
+      // scheduler's own record of a decision taken for mem-a, so the gate
+      // waits until one exists that was created after the switch event and
+      // carries the switched AgentDefinition revision. What that placement
+      // resolved to is then asserted, which is what separates "the switch
+      // never reached a Run" (a harness or scheduling gap) from "the Run kept
+      // the old model" (a product defect).
+      const placementsOfMemA = () =>
+        rooms()
+          .flatMap((roomId) => activeObserver.listPlacements({ roomId }))
+          .filter((placement) => placement.participantId === memA)
+          .sort(
+            (left, right) =>
+              Date.parse(left.createdAt) - Date.parse(right.createdAt),
+          );
+      const postSwitchPlacements = () =>
+        placementsOfMemA().filter(
+          (placement) =>
+            Date.parse(placement.createdAt) > switchedAtMs &&
+            placement.agentDefinitionRevisionId ===
+              switchedDefinition.currentRevisionId,
+        );
+      const switchTimeline = () =>
+        JSON.stringify(
+          {
+            lastPreSwitchPlacement: placementsOfMemA()
+              .filter(
+                (placement) => Date.parse(placement.createdAt) <= switchedAtMs,
+              )
+              .at(-1),
+            memAPlacements: placementsOfMemA().map((placement) => ({
+              agentDefinitionRevisionId: placement.agentDefinitionRevisionId,
+              createdAt: placement.createdAt,
+              placementId: placement.placementId,
+              resolvedModel: placement.resolvedModel,
+              state: placement.state,
+            })),
+            postSwitchHumanMessageRoomSeq: followUp.event.roomSeq,
+            switchedAgentDefinitionRevisionId:
+              switchedDefinition.currentRevisionId,
+            switchEventAt: switchEvent,
+          },
+          undefined,
+          2,
+        );
+
+      const postSwitchDeadline = Math.min(
+        Date.now() + POST_SWITCH_WAIT_MS,
+        gateDeadline,
+      );
+      try {
+        await waitForOutcome({
+          deadline: postSwitchDeadline,
+          diagnose: () => `${switchTimeline()} ${diagnose()}`,
+          label:
+            "a placement for mem-a created after the switch (the CCG-10 mention must wake it)",
+          stalled: () =>
+            allActivationsTerminal() && postSwitchPlacements().length === 0,
+          succeeded: () => postSwitchPlacements().length > 0,
+        });
+      } catch (waitError) {
+        assert.fail(
+          `4.3 failed: no placement for mem-a was created after the switch, so no post-switch RunAttempt could exist. ${String(waitError)}`,
+        );
+      }
+      // 4.4: the live process is the only evidence, and only while it runs, so
+      // this window is sampled by hand on top of the background interval.
       let postSwitchAttemptId: string | undefined;
-      const argvDeadline = Math.min(Date.now() + 180_000, gateDeadline);
-      while (Date.now() < argvDeadline) {
+      while (Date.now() < postSwitchDeadline) {
+        recordArgvSamples();
+        const placementIds = new Set(
+          postSwitchPlacements().map((placement) => placement.placementId),
+        );
         const candidate = runAttemptsOf().find(
           (attempt) =>
-            attempt.participantId === memA &&
-            attempt.runAttemptId !== preSwitchAttempt.runAttemptId &&
-            attempt.placement?.resolvedModel.source === "explicit_binding" &&
-            attempt.placement.resolvedModel.modelId === SWITCH_TARGET.modelId,
+            attempt.placement !== undefined &&
+            placementIds.has(attempt.placement.placementId),
         );
         if (candidate !== undefined) {
           postSwitchAttemptId = candidate.runAttemptId;
@@ -1287,12 +1424,17 @@ test(
 
       assert.ok(
         postSwitchAttemptId,
-        `4.3 failed: no post-switch RunAttempt resolved ${SWITCH_TARGET.modelId}: ${diagnose()}`,
+        `4.3 failed: a post-switch placement exists for mem-a but no RunAttempt ever consumed it: ${switchTimeline()} ${diagnose()}`,
       );
       const postSwitchAttempt = runAttemptsOf().find(
         (attempt) => attempt.runAttemptId === postSwitchAttemptId,
       );
       assert.ok(postSwitchAttempt);
+      assert.notEqual(
+        postSwitchAttempt.runAttemptId,
+        preSwitchAttempt.runAttemptId,
+        "4.3 failed: the post-switch placement was consumed by the pre-switch RunAttempt",
+      );
       const postSwitchPlacement = postSwitchAttempt.placement;
       assert.ok(postSwitchPlacement);
       assert.equal(
@@ -1321,16 +1463,19 @@ test(
       );
       record("4.3", "asserted", {
         postSwitch: {
+          createdAt: postSwitchPlacement.createdAt,
           resolvedModel: postSwitchPlacement.resolvedModel,
           runAttemptId: postSwitchAttempt.runAttemptId,
           runtimeProfileRevisionId:
             postSwitchPlacement.runtimeProfileRevisionId,
         },
         preSwitch: {
+          createdAt: preSwitchPlacement.createdAt,
           resolvedModel: preSwitchPlacement.resolvedModel,
           runAttemptId: preSwitchAttempt.runAttemptId,
           runtimeProfileRevisionId: preSwitchPlacement.runtimeProfileRevisionId,
         },
+        switchEventAt: switchEvent,
       });
 
       const postSwitchArgv = argvByRunAttempt.get(
@@ -1857,6 +2002,30 @@ function agentDefinitionState(
       currentRevisionId: String(row.revision_id ?? ""),
       executionPolicyRevisionId: String(row.policy_revision_id ?? ""),
     };
+  });
+}
+
+/**
+ * The moment the switch was recorded, read from the `agent.configured` event
+ * that carries the new revision. Every post-switch claim is timed against this
+ * value rather than against the wall clock of the test process, so a failure
+ * report can say whether a placement came before or after the switch.
+ */
+function agentConfiguredEventAt(
+  databasePath: string,
+  agentDefinitionRevisionId: string,
+): string | undefined {
+  return readOnlyLedger(databasePath, (database) => {
+    const row = database
+      .prepare(
+        `SELECT created_at FROM room_events
+          WHERE type = 'agent.configured'
+            AND payload_json LIKE ?
+          ORDER BY created_at DESC LIMIT 1`,
+      )
+      .get(`%${agentDefinitionRevisionId}%`) as
+      { created_at?: string } | undefined;
+    return row?.created_at === undefined ? undefined : String(row.created_at);
   });
 }
 
