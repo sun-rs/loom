@@ -1,0 +1,163 @@
+# Raft 输出与错误面对照清单
+
+2026-09-09。只清点，不施工。
+
+## 1. 口径
+
+**上游取样**：Raft Computer 1.0.18，`/Users/sun/Code/repos/raft-runtime-forensics/artifacts/extracted/raft-computer-1.0.18-recheck-20260909/main.js`（sha256 `20f16da1…ab00fd0e`，见 `/Users/sun/Code/reviews/rah_os/2026-09-09-raft-upstream-refresh/sea-functions/index.json`）。所有 Raft 断言都读自该字节流，标注为 `main.js@<偏移>`；预抽函数标注为 `sea-functions/<文件>`。没有一条 Raft 结论是从 RAH 代码反推的。
+
+**RAH 取样**：`packages/agent-host/src/worker-cli.ts`、`packages/agent-host/src/worker-held-send.ts`、`packages/agent-host/src/worker-read-cli.ts`、`packages/agent-host/src/worker-task-management-cli.ts`、`packages/application-service/src/worker-application-service.ts`、`packages/protocol/src/`。
+
+**覆盖范围**：只清点 Agent 进程实际能观察到的四样东西——stdout 字节、stderr 字节、退出码、机器可解析载荷（JSON）。不含 UI、不含数据库、不含 system prompt 措辞（`buildSendingMessagesSection` 等属于提示层，另案）。
+
+**两侧的总入口**：
+
+- Raft：`registerCliCommand` 的 `child.action` 捕获任何异常 → `renderError(ctx.io, cliError)` → `throw new CliExit2(cliError.exitCode)`；顶层 `handleCliError` 设 `process.exitCode`（`main.js@30030572`、`main.js@30436390`）。`writeText(io, text)` = `io.stdout.write(text)`；`writeJson(io, payload)` = `io.stdout.write(JSON.stringify(payload)+"\n")`（`main.js@29840174`）。`renderError` **全部写 stderr**（`main.js@29836449`）。`CliError.exitCode` 默认 1，全 CLI 区段没有任何一处传自定义 `exitCode`，所以 Raft 的失败退出码恒为 1。
+- RAH：`runWorkerCliCommand` 返回 `Promise<0 | 1>`；成功路径 `runtime.stdout.write(JSON.stringify(result)+"\n")`；唯一的 catch 是 `runtime.stderr.write("rah: " + errorMessage(error) + "\n"); return 1;`（`worker-cli.ts:246/255/293/321`）。`errorMessage` 只取 `Error.message`（`worker-cli.ts:1492`），`serverErrorMessage` 只取 `Worker API HTTP <status>: <error.message>`，**丢弃服务端返回的 `error.code`**（`worker-cli.ts:1409`）。
+
+## 2. 表一 · 每个命令结果的呈现
+
+| # | Agent 可见结果 | Raft 输出内容 | Raft 写到哪个流 | Raft 退出码 | 默认文本/JSON | RAH 对应 | 判定 | 证据 |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 发送成功（状态行） | `Message sent to <target>. Message ID: <id> (to reply in this message's thread, use target "…")` | stdout（`writeText`） | 0 | 文本 | `workerSendSuccessOutput` 同措辞、同流、同退出码 | 已对齐 | `sea-functions/handleMessageSend-0.js` 末段；`worker-held-send.ts` `workerSendSuccessOutput` |
+| 2 | 发送成功附带未读段 | 状态行后追加 `\n--- New messages you may have missed ---\n<formatMessages(recentUnread)>` | stdout | 0 | 文本 | 无。RAH 发送响应 `WorkerMessageMutationResponseSchema` 只有 `activationIds/deduplicated/event/replacedDraft` | 缺失 | `sea-functions/handleMessageSend-0.js`（`unreadSection`）；`packages/protocol/src/worker-message.ts` |
+| 3 | 发送成功附带 drive-by 提示 | `formatDriveByJoinedToPostTip` 结果附在状态行后 | stdout | 0 | 文本 | 无 | 缺失 | `sea-functions/handleMessageSend-0.js`（`driveBySection`） |
+| 4 | 发送成功 `--json` | `writeJson(ctx.io, data)`，仅此一行 | stdout | 0 | JSON（需 `--json`） | `--json` 时 `JSON.stringify(result)` 一行到 stdout | 已对齐 | 同上；`worker-cli.ts:293` |
+| 5 | 新鲜度暂挂（文本） | `formatHeldSendOutput`：开场行 + 省略说明 + `Your message has been saved as a draft.` + 血统/@提及注记 + 有界历史 + 三条路径 | **stdout**（`writeText`，仅在 `!opts.json`） | 1（随后 `throw cliError("SEND_HELD_AS_DRAFT")`） | 文本 | `workerHeldSendGuidance` 写 stdout，`return 1` | 已对齐 | `sea-functions/formatHeldSendOutput-0.js`、`formatFreshnessHoldOutput-0.js`；`worker-cli.ts:311` |
+| 6 | 新鲜度暂挂的 stderr 摘要 | `renderError` 文本模式：`Error:`/`Code: SEND_HELD_AS_DRAFT`/`Retryable: no`/`Effect: draft_saved`/`Draft saved: yes`/`Next action: Review the held context, then update the draft or send the current draft unchanged.` | stderr | 1 | 文本 | `workerSendErrorSummary` 只有 `Error:` + `Code:` 两行 | 无理由偏离 | `main.js@29836449`；`sea-functions/handleMessageSend-0.js`（`cliError` 选项）；`worker-held-send.ts` `workerSendErrorSummary` |
+| 7 | 新鲜度暂挂 `--json` | stdout **无输出**；stderr 一行错误信封 `{"ok":false,"error":{"code":"SEND_HELD_AS_DRAFT",…,"next_action":…},"details":{"held":…}}` | stderr | 1 | JSON（需 `--json`） | stdout 先写出 held 结果对象（无 `ok:false`、无 `error`、形状与成功响应同级），stderr 再写两行**纯文本**摘要 | 无理由偏离（含流向倒置） | `sea-functions/handleMessageSend-0.js`（`if (!opts.json) writeText(...)` 后 `throw`）；`main.js@29836449`；`worker-cli.ts:293/312` |
+| 8 | 草稿被替换的警告 | `formatDraftReplacedWarning`（4 行，含被丢弃正文摘录，上限 400 字符） | **stderr only** | 与本次结果一致 | 文本 | stderr 写同一份 4 行警告，**并额外**在 stdout 写一行 `workerReplacedDraftNotice` | 有理由偏离 | `main.js@30163074`（`ctx.io.stderr.write` 于 `handleMessageSend`）；`worker-held-send.ts` 注释 F0909G；`worker-cli.ts:302-305` |
+| 9 | 线程目标确认 | `formatThreadContextParentSendMessage`：不写 stdout；`cliError("THREAD_CONTEXT_TARGET_CONFIRMATION_REQUIRED", msg, {suggestedNextAction})` → 整段经 `renderError` 落 **stderr** | stderr | 1 | 文本 | 正文 + `No message was sent…` 一并写 **stdout**；stderr 只有两行摘要 | 无理由偏离（流向倒置，方向与 #7 相反） | `sea-functions/handleMessageSend-0.js`（无 `writeText` 分支）、`main.js@30167899`；`worker-cli.ts:311`、`worker-held-send.ts` `workerTargetConfirmationGuidance` |
+| 10 | `--send-draft` 但无草稿 | `cliError("SEND_DRAFT_NOT_FOUND", …)`，正文含重建草稿的 heredoc 范例 | stderr | 1 | 文本 | 无本地草稿态；`--send-draft` 直接发服务端，失败退化为 `rah: Worker API HTTP …` | 缺失 | `main.js@30172995`；`worker-cli.ts:696-730` |
+| 11 | `--send-draft` 却收到 stdin | `SEND_DRAFT_STDIN_UNSUPPORTED`，正文给出改为普通发送的范例 | stderr | 1 | 文本 | 同措辞的 `throw new Error(...)` → `rah: <正文>` 到 stderr | 有理由偏离（内容对齐，缺 `Code:` 行） | `main.js@30165033`；`worker-cli.ts:709-716` |
+| 12 | `--send-draft` 的 stdin 观察窗过期诊断 | `No stdin bytes were detected within <N>ms; the stored draft will now be sent.` | stderr | 0 | 文本 | 无。RAH 有 `STDIN_FIRST_BYTE_WINDOW_MS = 250` 但静默返回空 | 缺失 | `main.js@30163074`（`formatSendDraftStdinDeadlineDiagnostic`）、`sea-functions/handleMessageSend-0.js`；`worker-cli.ts:52/87-90` |
+| 13 | @提及部分投递 | stdout 先写 `formatPendingMentionActions` + `Message queued to <target>. Message ID: …`；再抛 `MENTION_DELIVERY_FAILED`（stderr 摘要 + 逐 token 恢复命令 + `Do not resend the queued message.`） | stdout + stderr | 1 | 文本（`--json` 时改为 stderr 信封 + `details.result`，stdout 无输出） | 无该概念 | 缺失 | `main.js@30179928`、`sea-functions/handleMessageSend-0.js`；`worker-cli.ts` 全文无 mention 分支 |
+| 14 | 发送在草稿已保存后失败 | `markSendFailureDraftSaved` 注入长 `Next action:`：交付状态 `CANNOT_CONFIRM`，读取不能证伪，**不要重发** | stderr（`renderError` 的 `Next action:` 行） | 1 | 文本 | 无。任何异常都退化为 `rah: <message>` | 缺失 | `main.js@30168709`；`worker-cli.ts:321` |
+| 15 | 读历史 `message read` | `formatHistory(...)` + 换行 | stdout | 0 | 文本（**无 `--json`**） | `message-read` / `room-read` 输出 `JSON.stringify(result)` | 无理由偏离 | `main.js@32622144`；`worker-read-cli.ts` `message-read`/`room-read` |
+| 16 | 收件箱抽取 `message check` | `formatMessages(...)` + `More messages are pending. Run \`raft message check\` again.` 或 `No more new inbox messages.` | stdout | 0 | 文本（无 `--json`） | `rah worker sync` 输出 JSON；无「还有更多／已抽干」文字提示 | 无理由偏离 + 恢复指引缺失 | `main.js@32620741`；`worker-cli.ts:602` |
+| 17 | 搜索 `message search` | `formatSearchResults(...)` | stdout | 0 | 文本（无 `--json`） | `message-search` 输出 JSON | 无理由偏离 | `main.js@32625209` |
+| 18 | 解析消息 id `message resolve` | `formatMessages([message])` | stdout | 0 | 文本（无 `--json`） | `message-resolve` 输出 JSON | 无理由偏离 | `main.js@32628007` |
+| 19 | 反应 `message react` | `Reaction <emoji> added to/removed from message <8位>.` | stdout | 0 | 文本（无 `--json`） | `message-react` 输出 JSON | 无理由偏离 | `main.js@32629615` |
+| 20 | Task 认领成功 | `formatClaimResults(channel, data) + "\n"` | stdout | 0 | 文本（无 `--json`） | `task-claim` 输出 JSON | 无理由偏离 | `main.js@32650425` |
+| 21 | Task 认领被新鲜度暂挂 | `formatFreshnessHoldOutput(channel, data, {heldAction: "Your task claim was not applied.", draftInstructions: "After reviewing the newer context, rerun the task claim command if it is still correct."})`，写完 **`return`** | stdout | **0** | 文本 | 无。RAH Task 侧无 hold 状态；乐观并发失败走 `stale_context`(409) → `rah: Worker API HTTP 409: …` 到 stderr，退出 1 | 缺失 | `main.js@32650425`（`isFreshnessHeldResponse` 分支）；`packages/kernel/src/errors.ts:89`、`worker-cli.ts:227` |
+| 22 | Task 更新/修订被暂挂 | 同 21 的 `formatFreshnessHoldOutput` 形态 | stdout | 0 | 文本 | 同 21 | 缺失 | `main.js@32661473`（task update）、`main.js@32673449`（task amend） |
+| 23 | 其余 Task 命令（list/create/assign/unassign/unclaim/receipt/delete/convert/history） | 各自 `format*` 文本 | stdout | 0 | 文本（均无 `--json`） | 全部输出 JSON | 无理由偏离 | `main.js@32644742`–`32678717`；`worker-read-cli.ts`、`worker-task-management-cli.ts` |
+| 24 | Reminder schedule/list/cancel/snooze/update/log | `formatReminderScheduled` 等文本 | stdout | 0 | 文本（无 `--json`） | `rah reminder *` 输出 JSON | 无理由偏离 | `main.js@32734942`–`32748111`；`worker-cli.ts` `parseReminderCommand` |
+| 25 | Reminder ack（成功／已确认过） | `Reminder <id> revision <n> fired item acknowledged.` / `… was already acknowledged for this fired item.` | stdout | 0 | 文本 | RAH 无 `reminder ack`；`agent inbox ack` 输出 JSON | 缺失 | `main.js@30424700` `runReminderAck` |
+| 26 | 收件箱快照 `inbox check` | `formatAgentInboxFullSnapshot` | stdout | 0 | 文本（无 `--json`） | `rah agent inbox check` 输出 JSON | 无理由偏离 | `main.js@32612642` |
+| 27 | `whoami` | `writeJson` | stdout | 0 | **JSON**（无 `--json` 开关） | `rah worker whoami` 输出 JSON | 已对齐 | `main.js@32532731`；`worker-read-cli.ts` |
+| 28 | `version` | `formatVersionInfo` 文本，`--json` 才 `writeJson` | stdout | 0 | 文本 + `--json` | `rah worker version` 只有 JSON | 无理由偏离 | `main.js@32534037`；`worker-read-cli.ts` |
+| 29 | `profile show` / `profile update` | `formatProfile` 文本，`--json` 才 JSON | stdout | 0 | 文本 + `--json` | `profile-show` / `profile-update` 只有 JSON | 无理由偏离 | `main.js@32680172`、`main.js@32593937` |
+| 30 | 频道成员 / server info / channel mute / thread unfollow | `formatChannelMembers`、`formatServerInfo`、`writeText`、`formatUnfollowThreadResult` | stdout | 0 | 文本（无 `--json`） | `room-members` / `server-info` / `channel-mute` / `thread-unfollow` 均 JSON | 无理由偏离 | `main.js@32566172`、`32588437`、`30115284`、`32614502` |
+| 31 | 通用错误（文本模式） | `Error:` / `Code:` /（`Fault domain:`）/（`Layer:`）/ `Retryable:` / `Effect:` /（`Correlation:`）/（代理七行）/（`Draft saved:`）/（`Effect state:`）/（`Next action:`） | stderr | 1 | 文本 | 单行 `rah: <message>`；无 code、无 next action、无 retryable、无 effect、无 correlation | 无理由偏离 | `main.js@29836449`；`worker-cli.ts:321/1409` |
+| 32 | 通用错误（JSON 模式） | `{"ok":false,"error":{"code","message","fault_domain","layer","retryable","effect","correlation_id","next_action"},"details","effect_state"}` 一行 | stderr | 1 | JSON（`outputMode==="json"` 时） | 不存在。RAH 只有 `--json`（且只在 `message-post`），且它只切换成功载荷，不产生错误信封 | 缺失 | `main.js@29836449`；`worker-cli.ts:291-293` |
+| 33 | 凭据/引导失败 | `CliError(code, message, suggestedNextAction: bootstrapSuggestedNextAction(code))`，含具体 `raft agent login …` 恢复命令 | stderr | 1 | 文本 | `rah: <message>`，无恢复命令 | 无理由偏离 | `main.js@30026000`（`bootstrapSuggestedNextAction`）；`worker-cli.ts:321` |
+| 34 | `--help` | commander 帮助文本 | stdout | 0 | 文本 | `runtime.stdout.write(help())`，返回 0 | 已对齐 | `main.js@30030572`；`worker-cli.ts:162` |
+
+**表一小计**：已对齐 5、有理由偏离 2、无理由偏离 18、缺失 9（共 34 行）。
+
+## 3. 表二 · 错误码与恢复指引
+
+Raft `cliError` / `new CliError({code})` 的字面量码在 `main.js` 中共 **51 个**（正则计数，见下表；另有三个不是字面量：`SERVER_5XX`、`PROXY_5XX`、以及 `apiFailureError` 把服务端 `response.errorCode` 直接当作 CLI code 透出，`main.js` `apiFailureError`，故码空间实际开放）。RAH 侧的对照对象是 `HttpRequestError` / `KernelError` 的 code，共 **28 + 12 = 40 个**，但它们在 CLI 一侧**全部被丢弃**：`serverErrorMessage`（`worker-cli.ts:1409`）只保留 `message`。全仓库 `grep suggestedNextAction|next_action|nextAction` 命中 **0 处**。
+
+下表按 Agent 可见性排序，只列与 Agent 会话直接相关的码。
+
+| Raft code | Raft `suggestedNextAction` | Raft 流/退出码 | RAH 对应 | 判定 | 证据 |
+|---|---|---|---|---|---|
+| `SEND_HELD_AS_DRAFT` | `Review the held context, then update the draft or send the current draft unchanged.`（并带 `draftSaved:true`、`effect:"draft_saved"`、`retryable:false`、`details.held`） | stderr / 1 | `workerSendErrorSummary` 输出码名，无 next action、无 effect、无 retryable、无 draftSaved | 无理由偏离 | `sea-functions/handleMessageSend-0.js`；`worker-held-send.ts` |
+| `THREAD_CONTEXT_TARGET_CONFIRMATION_REQUIRED` | `No message was sent. Send to <thread> if this belongs in the thread, or confirm the saved top-level draft with \`raft message send --send-draft --target "<target>"\`.` | stderr / 1 | 同名字符串出现在 **stdout** 正文中，stderr 只有码名 | 无理由偏离 | `main.js@30174525`；`worker-held-send.ts` |
+| `SEND_DRAFT_NOT_FOUND` | 消息正文即指引（重建草稿的 heredoc） | stderr / 1 | 无 | 缺失 | `main.js@30172995` |
+| `MENTION_DELIVERY_FAILED` | `The message is already queued.` + 逐 token `recoveryCommand` + `Do not resend the queued message.`（`effect:"message_queued"`、`retryable:false`） | stderr / 1 | 无 | 缺失 | `main.js@30179928` |
+| `SEND_FAILED` | reviewer-isolation 下改为「上游细节已扣留」；配合 `markSendFailureDraftSaved` 注入 `CANNOT_CONFIRM` 长指引 | stderr / 1 | `rah: Worker API HTTP <status>: <message>` | 无理由偏离（码与指引双缺） | `main.js@30176154`、`main.js@30168709` |
+| `SERVER_5XX` | 无默认；`apiFailureError` 在 `agent_proxy_failed` 时给「这是本地 daemon 代理产生的 5xx，先查代理日志再归因服务端」 | stderr / 1 | `rah: Worker API HTTP 5xx: internal server error`（服务端 code 恒为 `internal_error`） | 无理由偏离 | `main.js@29996408` 起 20 处；`worker-application-service.ts:1288-1296` |
+| `PROXY_5XX` + `proxy` 诊断块（`failure_class`/`cause_code`/`route_family`/`upstream_layer`/`upstream_status`/`response_started`/`response_complete`/`correlation_id`） | 同上 | stderr / 1（JSON 模式进 `error.proxy`） | 无任何相关性诊断 | 缺失 | `main.js` `apiFailureError` / `proxyDiagnosticsPayload` |
+| `INVALID_JSON_RESPONSE`（28 处） | 无默认，消息点名是哪个 Agent API 返回空/畸形体 | stderr / 1 | RAH 用 zod 抛出，退化为 `rah: <zod 消息>`，不指名端点 | 无理由偏离 | `main.js@30159935` 等 |
+| `INVALID_ARG`（160 处，全 CLI 最高频） | commander 阶段的变体带 `Run \`<cmd> --help\` for syntax.` | stderr / 1 | `throw new Error("unknown --x option for <cmd>")` 等，无码、无 `--help` 提示 | 无理由偏离 | `main.js@30436161`；`worker-read-cli.ts` `allowed()`、`worker-cli.ts` `assertAllowed` |
+| `INVALID_TARGET`（9 处） | 无默认 | stderr / 1 | 无独立码 | 缺失 | `main.js@30106764` 等 |
+| `NOT_FOUND`（10 处） | `mapReadFailure` 透传服务端 `suggestedNextAction` | stderr / 1 | `not_found`(404) 服务端码被 CLI 丢弃 | 无理由偏离 | `main.js@30422742`、`worker-cli.ts:1409` |
+| `AMBIGUOUS_ID` | `Use the full message UUID instead of the 8-character short id.` | stderr / 1 | 无 | 缺失 | `main.js@30188772` |
+| `SEARCH_FAILED` / `SCOPE_DENIED` | `toSearchErrorCode` 分流 | stderr / 1 | 无 | 缺失 | `main.js` `toSearchErrorCode` |
+| `READ_FAILED` | `apiFailureError` 默认 | stderr / 1 | 无 | 缺失 | `main.js` `mapReadFailure` |
+| `CLAIM_FAILED` | 5xx 且 `agent_proxy_failed` 时给代理归因指引 | stderr / 1 | 无 | 缺失 | `main.js@32652659` |
+| `AMEND_FAILED` / `UPDATE_FAILED` / `LOG_FAILED` / `ACK_FAILED`(5) | 无默认，消息自解释 | stderr / 1 | 无 | 缺失 | `main.js@32674865`、`32601817`、`32748111`、`30425208` |
+| `MISSING_CHANNEL` / `INVALID_REACTION` / `INVALID_ACTION`(2) / `UPLOAD_FAILED` / `VIEW_FAILED`(2) | 无默认 | stderr / 1 | 无 | 缺失 | `main.js@32634473`、`32630769`、`32564487`、`32638548`、`29998057` |
+| `INBOX_CHECK_FAILED` | `Use \`raft message check\` to drain messages.` | stderr / 1 | 无 | 缺失 | `main.js@32612996` |
+| `KNOWLEDGE_GET_FAILED` / `KNOWLEDGE_SEARCH_FAILED` / `KNOWLEDGE_CONTEXT_INVALID` | `KNOWLEDGE_CONTEXT_INVALID` 给出补齐 intent/reason 两字段的重试范例 | stderr / 1 | 无 | 缺失 | `main.js@32608772`、`32611951`、`30124064` |
+| `PROFILE_UPDATE_FAILED` / `PROFILE_FILE_NOT_FOUND`(2) / `PROFILE_AVATAR_TOO_LARGE` / `PROFILE_AVATAR_BAD_FORMAT` / `PROFILE_ALREADY_EXISTS` | 头像类给尺寸/格式约束 | stderr / 1 | RAH 走 `ProfileImageRequestError` → `profile_image_invalid` 等，CLI 丢码 | 无理由偏离 | `main.js@32598124`、`30120873`、`30121200`、`30121596`、`30043623` |
+| `MISSING_TOKEN` / `MISSING_AGENT_ID` / `MISSING_SERVER_URL` / `PROFILE_FILE_UNREADABLE` / `PROFILE_FILE_INVALID` / `TOKEN_FILE_UNREADABLE` / `TOKEN_FILE_EMPTY` / `MISSING_AGENT_PROXY_URL` / `MISSING_AGENT_PROXY_TOKEN` / `MULTIPLE_AGENT_PROXY_TOKENS` / `LEGACY_MACHINE_UNSUPPORTED` | `bootstrapSuggestedNextAction` 逐类给出具体恢复命令 | stderr / 1 | `rah: <message>` | 无理由偏离 | `main.js@30026000` |
+| `POSITIONAL_CONTENT_UNSUPPORTED` / `CONTENT_FLAG_UNSUPPORTED` / `MISSING_CONTENT` / `SEND_DRAFT_STDIN_UNSUPPORTED` / `SEND_DRAFT_ANYWAY_REQUIRES_SEND_DRAFT` / `SEND_DRAFT_ATTACHMENTS_UNSUPPORTED` | 正文即指引 | stderr / 1 | 措辞已移植（`--send-draft` 三条、`--anyway`、内容必填），但都是无码 `Error` | 有理由偏离 | `main.js@30165033` 等；`worker-cli.ts:696-752` |
+| `VERSION_UNAVAILABLE`(2) | `Reinstall or upgrade Raft Computer; do not report a placeholder version.` | stderr / 1 | 无 | 缺失 | `main.js@30033802` |
+| `INTERNAL_BUG` | `toCliError` 把任何非 `CliError` 包成 `Unexpected error: <msg>` 并保留 `code` | stderr / 1 | `rah: <msg>`，无码 | 无理由偏离 | `main.js@29836458` |
+| `INTEGRATION_*`（12 类）/ `MIGRATE_*`(2) / `BRIDGE_*`(3) / `WIKI` 相关 / `MANAGED_WRAPPER_FORWARD_FAILED` / `LOCAL_WRITE_FAILED`(4) / `CHECK_FAILED`(6) / `CREDENTIAL_CHECK_FAILED` / `MENTION_ACTION_FAILED` / `AMBIGUOUS` / `INVALID_AGENT_ID`(2) | 各自带 `Run \`…\`` 类指引 | stderr / 1 | RAH 无对应命令族 | 不适用（本地无该功能） | `main.js@30374016` 起等 |
+
+**表二小计（不含「不适用」一行）**：已对齐 0、有理由偏离 1、无理由偏离 10、缺失 15。
+
+## 4. 表三 · 默认输出格式
+
+**Raft**：`defineCommand` 共 **80** 条。其中默认 JSON 的只有 4 条（`whoami`、`wiki manifest`、`wiki read`、`wiki publish`——它们无条件 `writeJson`，也不提供开关）；其余 **76 条默认文本**。提供 `--json` 开关的共 **19 条**：`version`、`agent bridge`、`profile update`、`server update`、`message send`、`mention pending`、`profile show`、`integration list/marketplace/login/env/invoke`、`integration app rotate-secret/transfer-owner/update/logo/list/status/prepare-recover-owner`。
+（枚举方法：对每个 `<name>Command = defineCommand(` 块检测 `--json` 与 `writeText`/`writeJson` 调用，`main.js@32532731`–`32770500`。）
+
+**RAH**：Agent 可见命令共 **59** 条（`rah app config` 1、`rah agent inbox` 3、`rah reminder` 6、`rah worker` 49，来源 `worker-cli.ts` `help()` 与四个 parser）。默认输出格式由 `worker-cli.ts:291-293` 一行决定：
+
+```
+const messagePost = request.path === "/v1/worker/messages/post";
+const jsonOutput = !messagePost || arguments_.includes("--json");
+```
+
+即 **58 条默认 JSON，1 条（`message-post`）默认文本**；提供 `--json` 开关的也只有 `message-post` 这 1 条。
+
+**逐条对照**（只统计存在 Raft 对应命令的 44 条）：
+
+| 类别 | 条数 | 说明 |
+|---|---|---|
+| 已对齐 | 2 | `whoami`（两侧都默认 JSON、都无开关）；`message-post`（两侧都默认文本、都有 `--json`） |
+| 无理由偏离（Raft 文本、RAH JSON） | **42** | `app config`、`agent inbox check`、`reminder` ×6、`sync`(=Raft `message check`)、`room-read`、`message-read`、`message-resolve`、`message-search`、`message-react`、`room-members`、`server-info`、`version`、`profile-self-get`、`profile-update`、`profile-show`、`channel-mute`、`channel-unmute`、`thread-unfollow`、`attachment-publish`、`attachment-comments`、`attachment-download`、`task-list`、`task-history`、`task-create`、`task-claim`、`task-claim-message`、`task-assign`、`task-release`、`task-start`、`task-progress`、`task-block`、`task-request-input`、`task-submit`、`task-review`、`task-amend`、`task-convert`、`task-delete` |
+| 无 Raft 对应（不计入） | 15 | `inbox recheck`、`inbox ack`、`acknowledge`、`room-list`、`room-resolve`、`profile-avatar-publish`、`attachment-capabilities`、`attachment-cancel`、`artifact-publish`、`artifact-download`、`task-get`、`task-submission`、`task-trajectory`、`task-input-status`、`task-unblock` |
+
+另有格式方向的次级事实：Raft 的 42 条文本命令**大多数根本不提供 `--json`**（只有 `version`、`profile show/update` 三条在这 42 条内提供），也就是说 Raft 的默认不是「文本优先、JSON 可选」，而是「对 Agent 只给文本」。RAH 反之：对 Agent 只给 JSON。
+
+## 5. 无理由偏离与缺失清单
+
+按「模型静默漏掉信息的风险」排序：流向错误 > 恢复指引缺失 > 格式差异。
+
+### 第一档 · 流向错误（模型看不到 = 静默失败，本周已发生过一次）
+
+| 序 | 项 | 风险 | 规模 |
+|---|---|---|---|
+| 1 | `message-post --json` 的暂挂结果：Raft stdout 无输出、stderr 是 `ok:false` 错误信封；RAH 把 held 载荷当成功结果写 stdout，stderr 只有纯文本两行。只读 stdout 的 `--json` 消费者会把「未送达」读成「已送达」。 | 最高（与 F0909G 同类，且方向更隐蔽） | M |
+| 2 | 线程目标确认：Raft 全文在 **stderr**，RAH 全文在 **stdout**。方向与第 1 项相反，说明两条路径不是按同一规则移植的。当前对 Agent 有利（stdout 更可见），但仍是未声明的偏离。 | 中（信息不丢，口径不一致） | S |
+| 3 | `--send-draft` 的 stdin 观察窗过期诊断完全没有实现：Raft 在 stderr 明确说「窗口内无 stdin，现在发送已存草稿」。RAH 静默按空处理，模型无法区分「我的 heredoc 没被读到」和「草稿被有意发送」。 | 中高 | S |
+
+### 第二档 · 恢复指引缺失
+
+| 序 | 项 | 风险 | 规模 |
+|---|---|---|---|
+| 4 | 草稿已保存后发送失败的 `CANNOT_CONFIRM` 指引整段缺失。Raft 明说「不要据此重发」；RAH 只给 `rah: <message>`，模型极可能重发造成重复消息。 | 最高（可造成重复投递） | M |
+| 5 | 全仓库 `suggestedNextAction` 为 0 处。Raft 的每一类失败都带一句可执行下一步，RAH 一句也没有。 | 高 | L |
+| 6 | CLI 丢弃服务端 `error.code`（`serverErrorMessage` 只取 message）。RAH 服务端其实有 40 个稳定码（`HttpRequestError` 28 + `KernelError` 12），但 Agent 一个也看不到，只能对英文散文做字符串匹配。 | 高 | S（CLI 一处改动即可透出） | 
+| 7 | `renderError` 的结构化字段缺失：`Retryable:`、`Effect:`、`Draft saved:`、`Fault domain:`、`Layer:`、`Correlation:`。尤其 `Draft saved:` 是「我的内容还在不在」的唯一机器可读答案。 | 高 | M |
+| 8 | Task 侧新鲜度暂挂（claim/update/amend）整类缺失。Raft 写 stdout 且**退出 0**，RAH 只有 409 `stale_context` 错误，模型收到的是失败而不是「先读这些新上下文再重试」。 | 高 | L |
+| 9 | `SEND_DRAFT_NOT_FOUND` 缺失（无本地草稿态，`--send-draft` 无草稿时只会得到一个 HTTP 错误）。 | 中 | M |
+| 10 | @提及部分投递（`MENTION_DELIVERY_FAILED`）整类缺失，含逐 token 恢复命令与「不要重发已入队消息」。 | 中 | L |
+| 11 | 成功发送后的「你可能错过的新消息」段与 drive-by 提示缺失——Raft 用它在同一次输出里免掉一次额外 read。 | 中 | M |
+| 12 | `message check` 的「还有更多／已抽干」终止提示缺失，模型无法判断何时停止抽取。 | 中 | S |
+| 13 | 引导/凭据失败的具体恢复命令缺失（`bootstrapSuggestedNextAction` 的 4 类）。 | 中低 | S |
+| 14 | `AMBIGUOUS_ID` 的「改用完整 UUID」提示缺失。 | 低 | S |
+| 15 | 代理故障诊断块（`PROXY_5XX` + 7 个 proxy 字段 + correlation id）缺失，5xx 无法区分本地代理与服务端。 | 低（当前单机） | M |
+
+### 第三档 · 格式差异
+
+| 序 | 项 | 风险 | 规模 |
+|---|---|---|---|
+| 16 | 42 条命令 Raft 默认文本、RAH 默认 JSON（详见表三）。模型必须自己解析 JSON 才能得到 Raft 直接印在屏幕上的结论。 | 中（分散、逐条低风险，总量高） | L |
+| 17 | JSON 错误信封（`{ok:false,error:{…},details,effect_state}`）不存在，`--json` 只切换成功载荷。 | 中 | M |
+| 18 | 暂挂 stderr 摘要只有两行（缺 `Retryable`/`Effect`/`Draft saved`/`Next action`），与第 7 项同源但作用面更窄。 | 低 | S |
+
+### 已确认的「有理由偏离」（无需处理，但需保持声明）
+
+- 草稿替换警告在 stdout 多一行 `workerReplacedDraftNotice`：F0909G 事故的定向修复，`worker-held-send.ts` 内已有声明性注释。
+- `--send-draft` 三类参数拒绝的措辞已移植但不带码：内容等价，缺的是码本身（并入第 6 项）。
+
+## 6. 结语
+
+这是清单，不是工单。以上每一行都只声称「Raft 的字节这样、RAH 的字节那样」，不裁决先修哪一条、不提出设计、也不主张任何一项必须落地。第一档三项之所以排在最前，只因为它们与本周那次真实丢回复属于同一类失效——写错流的信息对模型等于不存在，而单元测试看不见流。

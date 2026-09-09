@@ -1,0 +1,3351 @@
+{
+  "schemaVersion": 1,
+  "recordedOn": "2026-09-09",
+  "inventories": [
+    "docs/product/raft-parity-cli-surface.zh-CN.md",
+    "docs/product/raft-parity-prompt-sections.zh-CN.md",
+    "docs/product/raft-parity-output-errors.zh-CN.md"
+  ],
+  "upstream": {
+    "path": "/Users/sun/Code/repos/raft-runtime-forensics/artifacts/extracted/raft-computer-1.0.18-recheck-20260909/main.js",
+    "sha256": "20f16da1a37173925bb8707254329dd6e0df4b694c809c53b3f35f38ab00fd0e",
+    "regionBytes": 256,
+    "note": "Byte offsets are transcribed from the inventories, not re-derived. Region digests pin whatever bytes those offsets address today; they prove the extraction has not changed, never Raft parity."
+  },
+  "sources": {
+    "cli": "packages/agent-host/src/worker-cli.ts",
+    "routes": "packages/application-service/src/worker-application-service.ts",
+    "readRoutes": "packages/application-service/src/worker-read-handler.ts",
+    "prompt": "packages/daemon/src/standing-prompt-compiler.ts"
+  },
+  "constraints": [
+    "no-central-server",
+    "local-credentials",
+    "sqlite-ledger",
+    "activation-fence",
+    "single-machine",
+    "deferred-scope"
+  ],
+  "ratchet": {
+    "unjustified": 104,
+    "missingNonDeferred": 33,
+    "promptJudgmentParagraphs": 14
+  },
+  "ambiguities": [
+    "The CLI inventory §4 counts (aligned 8 / justified 7 / unjustified 29 / missing 46, 28 deferred) do not reproduce from its own §2 rows, which yield aligned 7, justified 7, unjustified 30 and 49 missing subcommands (28 deferred). This registry records the per-row verdicts, not the summary totals.",
+    "The CLI inventory §2.11 declares 36 missing routes (22 deferred); its own 75 numbered rows yield 32 missing (20 deferred). This registry records the rows.",
+    "The prompt inventory §3.3 summarises 14 judgment paragraphs and 6 mixed, while its own per-paragraph labels give 12 pure judgment and 7 mixed. The ratchet stays at the adjudicated 14; only the 12 explicitly labelled judgment paragraphs are registered.",
+    "The CLI inventory records the upstream bundle as 34,981,487 bytes; the file with the recorded sha256 is 34,983,657 bytes, and its byte offsets do not resolve to the described definitions. Offsets are kept verbatim and used only as region anchors."
+  ],
+  "entries": [
+    {
+      "id": "cli.app.config",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "app config"
+      },
+      "raft": {
+        "anchor": "raft app config",
+        "location": "main.js@32748701",
+        "region": {
+          "bytes": 256,
+          "offset": 32748701,
+          "sha256": "6092267ccdf146ca117303b1d0d6164aa789736096d1f3015290020ec95c370e"
+        }
+      },
+      "verdict": "aligned",
+      "note": "§2.8: --app/--set/--unset shape matches."
+    },
+    {
+      "id": "cli.agent.inbox.check",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "agent inbox check"
+      },
+      "raft": {
+        "anchor": "raft inbox check",
+        "location": "main.js@32612662",
+        "region": {
+          "bytes": 256,
+          "offset": 32612662,
+          "sha256": "c891bc0d35b43d7ae527aa80b793da9e7ddf8ebcdb1a019fcbc4175ac63731fa"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.12: RAH splits Raft's inbox/reminder acknowledgement into a Computer-local App Inbox family."
+    },
+    {
+      "id": "cli.agent.inbox.recheck",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "agent inbox recheck"
+      },
+      "raft": {
+        "anchor": "raft inbox check",
+        "location": "main.js@32612662",
+        "region": {
+          "bytes": 256,
+          "offset": 32612662,
+          "sha256": "c891bc0d35b43d7ae527aa80b793da9e7ddf8ebcdb1a019fcbc4175ac63731fa"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.12: no Raft counterpart for a re-check pass."
+    },
+    {
+      "id": "cli.agent.inbox.ack",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "agent inbox ack"
+      },
+      "raft": {
+        "anchor": "raft reminder ack",
+        "location": "main.js@32746448",
+        "region": {
+          "bytes": 256,
+          "offset": 32746448,
+          "sha256": "bfe12f2f9117a8a3affa4f3eb37f2d61903d9735c3c90349f6584160840cd564"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.8: --revision renamed --version and folded into a generic App Inbox ack."
+    },
+    {
+      "id": "cli.reminder.schedule",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "reminder schedule"
+      },
+      "raft": {
+        "anchor": "raft reminder schedule",
+        "location": "main.js@32734968",
+        "region": {
+          "bytes": 256,
+          "offset": 32734968,
+          "sha256": "b8652ccf144d08dca6e1ea1ca48c787fae02a5b3bf1d1faa7306584d9d3fb9f7"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.8: adds a mandatory --based-on-room-seq; drops the --msg-id alias."
+    },
+    {
+      "id": "cli.reminder.list",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "reminder list"
+      },
+      "raft": {
+        "anchor": "raft reminder list",
+        "location": "main.js@32737578",
+        "region": {
+          "bytes": 256,
+          "offset": 32737578,
+          "sha256": "67590b2212738b5dfb713a3cbed534379b89c7727d135fda924f976d2293a35c"
+        }
+      },
+      "verdict": "aligned",
+      "note": "§2.8: same --status/--all selection."
+    },
+    {
+      "id": "cli.reminder.cancel",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "reminder cancel"
+      },
+      "raft": {
+        "anchor": "raft reminder cancel",
+        "location": "main.js@32739703",
+        "region": {
+          "bytes": 256,
+          "offset": 32739703,
+          "sha256": "563e444eb6286c63bd733d38ab2dcbf6c34423d2568fe7c1cb0fdfbabaa92ad3"
+        }
+      },
+      "verdict": "aligned",
+      "note": "§2.8: same --id addressing."
+    },
+    {
+      "id": "cli.reminder.snooze",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "reminder snooze"
+      },
+      "raft": {
+        "anchor": "raft reminder snooze",
+        "location": "main.js@32741344",
+        "region": {
+          "bytes": 256,
+          "offset": 32741344,
+          "sha256": "e1516019ced37c824b288d786dfaa041e662a42f43ae3da67b04643aa0694bd5"
+        }
+      },
+      "verdict": "aligned",
+      "note": "§2.8: same --id --by shape."
+    },
+    {
+      "id": "cli.reminder.update",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "reminder update"
+      },
+      "raft": {
+        "anchor": "raft reminder update",
+        "location": "main.js@32743311",
+        "region": {
+          "bytes": 256,
+          "offset": 32743311,
+          "sha256": "36f1ec886cb2f553fe461cb57a568bf08f246cd5984bb9dc39b763732c5320f8"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.8: RAH adds --tz."
+    },
+    {
+      "id": "cli.reminder.log",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "reminder log"
+      },
+      "raft": {
+        "anchor": "raft reminder log",
+        "location": "main.js@32747217",
+        "region": {
+          "bytes": 256,
+          "offset": 32747217,
+          "sha256": "72b8331e779ea05ead9567d2f7c6317fb65f343ae74fcae7d6306c3dc269985d"
+        }
+      },
+      "verdict": "aligned",
+      "note": "§2.8: same --id shape."
+    },
+    {
+      "id": "cli.worker.sync",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker sync"
+      },
+      "raft": {
+        "anchor": "raft message check",
+        "location": "main.js@32620763",
+        "region": {
+          "bytes": 256,
+          "offset": 32620763,
+          "sha256": "9032bcad5039aed54d6c3a22db85b9c005d1d8f7e9a229e5fd0a7ed786d79fda"
+        }
+      },
+      "verdict": "justified",
+      "constraint": "activation-fence",
+      "note": "§2.4/§2.12: Raft drains and ACKs in one command; the Activation fence requires an explicit separate ACK."
+    },
+    {
+      "id": "cli.worker.acknowledge",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker acknowledge"
+      },
+      "raft": {
+        "anchor": "raft message check",
+        "location": "main.js@32620763",
+        "region": {
+          "bytes": 256,
+          "offset": 32620763,
+          "sha256": "9032bcad5039aed54d6c3a22db85b9c005d1d8f7e9a229e5fd0a7ed786d79fda"
+        }
+      },
+      "verdict": "justified",
+      "constraint": "activation-fence",
+      "note": "§2.12: the explicit ACK half of Raft's single message check."
+    },
+    {
+      "id": "cli.worker.room-list",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker room-list"
+      },
+      "raft": {
+        "anchor": "raft server info --channels --joined",
+        "location": "main.js@32588457",
+        "region": {
+          "bytes": 256,
+          "offset": 32588457,
+          "sha256": "2c76ec0713a3b487ac6d7fab8612c7993d8b043678770587af61ef729d8bca32"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.12: RAH exposes a separate joined-target listing."
+    },
+    {
+      "id": "cli.worker.room-read",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker room-read"
+      },
+      "raft": {
+        "anchor": "raft message send consumed-seq state",
+        "location": "main.js@32618469",
+        "region": {
+          "bytes": 256,
+          "offset": 32618469,
+          "sha256": "dd3579d15f04f11d973a42fac42c674335001a7e7a981f145f57d2dba277101b"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.12: lifts Raft's CLI-local consumed-seq state into an Agent-carried --context-receipt."
+    },
+    {
+      "id": "cli.worker.room-resolve",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker room-resolve"
+      },
+      "raft": {
+        "anchor": "POST /resolve-channel",
+        "location": "agentApiContract.ts@1564"
+      },
+      "verdict": "unjustified",
+      "note": "§2.12: Raft has the route but exposes no CLI command."
+    },
+    {
+      "id": "cli.worker.message-read",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker message-read"
+      },
+      "raft": {
+        "anchor": "raft message read",
+        "location": "main.js@32622165",
+        "region": {
+          "bytes": 256,
+          "offset": 32622165,
+          "sha256": "e61d38413d63c21055ae0f7a84662b4c054ee184f7e5af12b9c97169f35be2ff"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.4: adds thread selectors and --cursor."
+    },
+    {
+      "id": "cli.worker.message-resolve",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker message-resolve"
+      },
+      "raft": {
+        "anchor": "raft message resolve",
+        "location": "main.js@32628031",
+        "region": {
+          "bytes": 256,
+          "offset": 32628031,
+          "sha256": "919000b9a9dfb083ddc2d8ae7f616c70e818f5d0534922fb6dc20352d9d95bf6"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.4: positional <id> became --message-id."
+    },
+    {
+      "id": "cli.worker.room-members",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker room-members"
+      },
+      "raft": {
+        "anchor": "raft channel members",
+        "location": "main.js@32566196",
+        "region": {
+          "bytes": 256,
+          "offset": 32566196,
+          "sha256": "09ec261b924b20ea6ea414b97d905adf70fb4d5fd4262ddb5520777fb37517c1"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.2: positional <target> became an optional --target."
+    },
+    {
+      "id": "cli.worker.version",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker version"
+      },
+      "raft": {
+        "anchor": "raft version",
+        "location": "main.js@32534054",
+        "region": {
+          "bytes": 256,
+          "offset": 32534054,
+          "sha256": "a06c575d4268d31994204eecea095845c602c828d4e2e1d7974d67b7ab1a3494"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.1: reports only the carrier package version; no daemon/Computer version, no --json."
+    },
+    {
+      "id": "cli.worker.whoami",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker whoami"
+      },
+      "raft": {
+        "anchor": "raft auth whoami",
+        "location": "main.js@32532747",
+        "region": {
+          "bytes": 256,
+          "offset": 32532747,
+          "sha256": "b678fc1a060cde3b0bcaea653e47a648090225c9f9338d8ed626461422882afc"
+        }
+      },
+      "verdict": "aligned",
+      "note": "§2.1: same no-argument identity echo."
+    },
+    {
+      "id": "cli.worker.server-info",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker server-info"
+      },
+      "raft": {
+        "anchor": "raft server info",
+        "location": "main.js@32588457",
+        "region": {
+          "bytes": 256,
+          "offset": 32588457,
+          "sha256": "2c76ec0713a3b487ac6d7fab8612c7993d8b043678770587af61ef729d8bca32"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.3: no partition selectors, no --query, --offset became --cursor."
+    },
+    {
+      "id": "cli.worker.profile-avatar-publish",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker profile-avatar-publish"
+      },
+      "raft": {
+        "anchor": "raft profile update --avatar-file",
+        "location": "main.js@32593960",
+        "region": {
+          "bytes": 256,
+          "offset": 32593960,
+          "sha256": "db59afb1f36581fd6196f3e95b42c6705c5dc3e6b7a03828e0478dee112459b9"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.3: Raft uploads the avatar in one step."
+    },
+    {
+      "id": "cli.worker.profile-self-get",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker profile-self-get"
+      },
+      "raft": {
+        "anchor": "raft profile show",
+        "location": "main.js@32680193",
+        "region": {
+          "bytes": 256,
+          "offset": 32680193,
+          "sha256": "e6f684270685b4a144896e993cfc3ea8aea72efb54ffd36d8fd5205b23688709"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.12: Raft omits the target instead of adding a second command."
+    },
+    {
+      "id": "cli.worker.profile-update",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker profile-update"
+      },
+      "raft": {
+        "anchor": "raft profile update",
+        "location": "main.js@32593960",
+        "region": {
+          "bytes": 256,
+          "offset": 32593960,
+          "sha256": "db59afb1f36581fd6196f3e95b42c6705c5dc3e6b7a03828e0478dee112459b9"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.3: requires Agent-carried control-room id/seq, expected-revision-id and an idempotency key."
+    },
+    {
+      "id": "cli.worker.profile-show",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker profile-show"
+      },
+      "raft": {
+        "anchor": "raft profile show",
+        "location": "main.js@32680193",
+        "region": {
+          "bytes": 256,
+          "offset": 32680193,
+          "sha256": "e6f684270685b4a144896e993cfc3ea8aea72efb54ffd36d8fd5205b23688709"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.3: positional target became an option; absorbs raft user info."
+    },
+    {
+      "id": "cli.worker.task-assign",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-assign"
+      },
+      "raft": {
+        "anchor": "raft task assign",
+        "location": "main.js@32655245",
+        "region": {
+          "bytes": 256,
+          "offset": 32655245,
+          "sha256": "f81f5f43450b78de152f2e555e900ebdcd57e9f5f91709a1615f2a9e0027d947"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.6: internal participant id instead of @handle; --expected-revision replaced by --based-on-room-seq."
+    },
+    {
+      "id": "cli.worker.channel-mute",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker channel-mute"
+      },
+      "raft": {
+        "anchor": "raft channel mute",
+        "location": "main.js@32587811",
+        "region": {
+          "bytes": 256,
+          "offset": 32587811,
+          "sha256": "3225303b32f95fca3de485008ee010b6d35911721718570e7f77e637d305f182"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.2: adds two mandatory causal parameters."
+    },
+    {
+      "id": "cli.worker.channel-unmute",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker channel-unmute"
+      },
+      "raft": {
+        "anchor": "raft channel unmute",
+        "location": "main.js@32587811",
+        "region": {
+          "bytes": 256,
+          "offset": 32587811,
+          "sha256": "3225303b32f95fca3de485008ee010b6d35911721718570e7f77e637d305f182"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.2: adds two mandatory causal parameters."
+    },
+    {
+      "id": "cli.worker.task-delete",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-delete"
+      },
+      "raft": {
+        "anchor": "raft task delete",
+        "location": "main.js@32669514",
+        "region": {
+          "bytes": 256,
+          "offset": 32669514,
+          "sha256": "b4c36f6a5c8e89adc66e02b7ebe515c749604486abca446a93657dd8ee9514fc"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.6: additionally requires --room-id."
+    },
+    {
+      "id": "cli.worker.task-amend",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-amend"
+      },
+      "raft": {
+        "anchor": "raft task amend",
+        "location": "main.js@32673468",
+        "region": {
+          "bytes": 256,
+          "offset": 32673468,
+          "sha256": "c87a6715c302544957ce5bd2f212cbdc18bf49daf66d76ebce9d988a42c74564"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.6: same fields plus two mandatory causal parameters and --task-id addressing."
+    },
+    {
+      "id": "cli.worker.task-unblock",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-unblock"
+      },
+      "raft": {
+        "anchor": "raft task update --status",
+        "location": "main.js@32661493",
+        "region": {
+          "bytes": 256,
+          "offset": 32661493,
+          "sha256": "d80bec5b0a157d5b67205f7e224d06a371d06db787754eb2d83c3e1344d1de03"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.12: part of the fixed lifecycle command set replacing one status setter."
+    },
+    {
+      "id": "cli.worker.task-convert",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-convert"
+      },
+      "raft": {
+        "anchor": "raft task convert",
+        "location": "main.js@32671600",
+        "region": {
+          "bytes": 256,
+          "offset": 32671600,
+          "sha256": "63687a877297130f1b22005e4483c732eeafabca2650a7f9547a089f2140bec4"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.6: --task-id addressing plus two mandatory causal parameters."
+    },
+    {
+      "id": "cli.worker.task-list",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-list"
+      },
+      "raft": {
+        "anchor": "raft task list",
+        "location": "main.js@32644760",
+        "region": {
+          "bytes": 256,
+          "offset": 32644760,
+          "sha256": "06e9cc8634d666511190b872fc7df0bb61da8178a7cf5bd48aceb609a5a3aa08"
+        }
+      },
+      "verdict": "aligned",
+      "note": "§2.6: same selectors and status values."
+    },
+    {
+      "id": "cli.worker.task-history",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-history"
+      },
+      "raft": {
+        "anchor": "raft task history",
+        "location": "main.js@32676771",
+        "region": {
+          "bytes": 256,
+          "offset": 32676771,
+          "sha256": "106ddf0f92676aa657ba0068acde7bc1be7ba7596d3317479084f4382a32f5d8"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.6: --task-id addressing plus cursor paging."
+    },
+    {
+      "id": "cli.worker.message-search",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker message-search"
+      },
+      "raft": {
+        "anchor": "raft message search",
+        "location": "main.js@32625232",
+        "region": {
+          "bytes": 256,
+          "offset": 32625232,
+          "sha256": "891d67f564e7fbb24ee3e19a080c36f905098b4fbf8ebbb0b656856bd59c32f7"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.4: no --channel alias, no --offset; adds --sender-id and --cursor."
+    },
+    {
+      "id": "cli.worker.message-react",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker message-react"
+      },
+      "raft": {
+        "anchor": "raft message react",
+        "location": "main.js@32629637",
+        "region": {
+          "bytes": 256,
+          "offset": 32629637,
+          "sha256": "232fc66e618fe4c74354cf829c462bed59c1ea8afcb328e5d927d78df756ab03"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.4: --remove toggle became a mandatory --active true|false plus two causal parameters."
+    },
+    {
+      "id": "cli.worker.message-post",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker message-post"
+      },
+      "raft": {
+        "anchor": "raft message send",
+        "location": "main.js@32618469",
+        "region": {
+          "bytes": 256,
+          "offset": 32618469,
+          "sha256": "dd3579d15f04f11d973a42fac42c674335001a7e7a981f145f57d2dba277101b"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.4: heredoc core aligned; missing --target-confirmed and --reviewer-isolation, repeated --attachment-id became a comma string, adds two causal parameters."
+    },
+    {
+      "id": "cli.worker.thread-unfollow",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker thread-unfollow"
+      },
+      "raft": {
+        "anchor": "raft thread unfollow",
+        "location": "main.js@32614526",
+        "region": {
+          "bytes": 256,
+          "offset": 32614526,
+          "sha256": "5f776358d0fef78a0d6fb834475233169779df12332cb8223fccaef4fac4d041"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.2: drops --reason, drops target-suffix addressing, adds two causal parameters."
+    },
+    {
+      "id": "cli.worker.attachment-publish",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker attachment-publish"
+      },
+      "raft": {
+        "anchor": "raft attachment upload",
+        "location": "main.js@32632917",
+        "region": {
+          "bytes": 256,
+          "offset": 32632917,
+          "sha256": "74dfe89b2ba91fe491780ea43a04c7655017355c3e2517091b9e738707b8529c"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.5: lifts Raft's CLI-generated clientRequestId into an Agent-carried idempotency key."
+    },
+    {
+      "id": "cli.worker.attachment-comments",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker attachment-comments"
+      },
+      "raft": {
+        "anchor": "raft attachment comments",
+        "location": "main.js@32641909",
+        "region": {
+          "bytes": 256,
+          "offset": 32641909,
+          "sha256": "930a93de56e397a932ba1973c9916f8c4d3cfb701faa7e3330f7f0a02c7e3a94"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.5: --before-room-seq replaces Raft's plain limit paging."
+    },
+    {
+      "id": "cli.worker.attachment-capabilities",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker attachment-capabilities"
+      },
+      "raft": {
+        "anchor": "GET /attachment-upload-capabilities",
+        "location": "agentApiContract.ts@2020"
+      },
+      "verdict": "unjustified",
+      "note": "§2.12: Raft has the route but exposes no CLI command."
+    },
+    {
+      "id": "cli.worker.attachment-cancel",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker attachment-cancel"
+      },
+      "raft": {
+        "anchor": "DELETE /attachment-upload-sessions/:uploadId",
+        "location": "agentApiContract.ts@2050"
+      },
+      "verdict": "unjustified",
+      "note": "§2.12: Raft has the route but exposes no CLI command."
+    },
+    {
+      "id": "cli.worker.attachment-download",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker attachment-download"
+      },
+      "raft": {
+        "anchor": "raft attachment view",
+        "location": "main.js@32639716",
+        "region": {
+          "bytes": 256,
+          "offset": 32639716,
+          "sha256": "3619afe30dacd21f90b574795a9327e4ed3d3f01e6f1381d4bc7d30f27446b2a"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.5: positional attachment id became --attachment-id."
+    },
+    {
+      "id": "cli.worker.artifact-publish",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker artifact-publish"
+      },
+      "raft": {
+        "anchor": "raft attachment upload",
+        "location": "main.js@32632917",
+        "region": {
+          "bytes": 256,
+          "offset": 32632917,
+          "sha256": "74dfe89b2ba91fe491780ea43a04c7655017355c3e2517091b9e738707b8529c"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.12: RAH adds a Task-deliverable channel separate from attachments."
+    },
+    {
+      "id": "cli.worker.artifact-download",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker artifact-download"
+      },
+      "raft": {
+        "anchor": "raft attachment view",
+        "location": "main.js@32639716",
+        "region": {
+          "bytes": 256,
+          "offset": 32639716,
+          "sha256": "3619afe30dacd21f90b574795a9327e4ed3d3f01e6f1381d4bc7d30f27446b2a"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.12: RAH adds a Task-deliverable channel separate from attachments."
+    },
+    {
+      "id": "cli.worker.task-get",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-get"
+      },
+      "raft": {
+        "anchor": "raft task list",
+        "location": "main.js@32644760",
+        "region": {
+          "bytes": 256,
+          "offset": 32644760,
+          "sha256": "06e9cc8634d666511190b872fc7df0bb61da8178a7cf5bd48aceb609a5a3aa08"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.12: Raft reads a single Task through task list / task history."
+    },
+    {
+      "id": "cli.worker.task-submission",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-submission"
+      },
+      "raft": {
+        "anchor": "raft task list",
+        "location": "main.js@32644760",
+        "region": {
+          "bytes": 256,
+          "offset": 32644760,
+          "sha256": "06e9cc8634d666511190b872fc7df0bb61da8178a7cf5bd48aceb609a5a3aa08"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.12: no Raft counterpart for a frozen submission read."
+    },
+    {
+      "id": "cli.worker.task-trajectory",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-trajectory"
+      },
+      "raft": null,
+      "verdict": "justified",
+      "constraint": "sqlite-ledger",
+      "note": "§2.12: only a single-machine SQLite ledger can record this Computer's own Run commands and file edits."
+    },
+    {
+      "id": "cli.worker.task-input-status",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-input-status"
+      },
+      "raft": {
+        "anchor": "raft task list",
+        "location": "main.js@32644760",
+        "region": {
+          "bytes": 256,
+          "offset": 32644760,
+          "sha256": "06e9cc8634d666511190b872fc7df0bb61da8178a7cf5bd48aceb609a5a3aa08"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.12: no Raft counterpart for an input-request status read."
+    },
+    {
+      "id": "cli.worker.task-create",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-create"
+      },
+      "raft": {
+        "anchor": "raft task create",
+        "location": "main.js@32646909",
+        "region": {
+          "bytes": 256,
+          "offset": 32646909,
+          "sha256": "23f312a0eed568e45bc0c778e5ed5c555df0cbeca0d235842172917726c1caf6"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.6: no batch --title, no --target, no --creates-resource, participant id instead of @handle."
+    },
+    {
+      "id": "cli.worker.task-claim-message",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-claim-message"
+      },
+      "raft": {
+        "anchor": "raft task claim --message-id",
+        "location": "main.js@32650444",
+        "region": {
+          "bytes": 256,
+          "offset": 32650444,
+          "sha256": "6789eb4621adf053d10538cbe32761f5383a31c70a5c483bd3f86df08cc6c2c0"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.12: Raft claims an existing Task; RAH atomically creates and claims from a message."
+    },
+    {
+      "id": "cli.worker.task-claim",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-claim"
+      },
+      "raft": {
+        "anchor": "raft task claim",
+        "location": "main.js@32650444",
+        "region": {
+          "bytes": 256,
+          "offset": 32650444,
+          "sha256": "6789eb4621adf053d10538cbe32761f5383a31c70a5c483bd3f86df08cc6c2c0"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.6: --task-id addressing plus two mandatory causal parameters."
+    },
+    {
+      "id": "cli.worker.task-start",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-start"
+      },
+      "raft": {
+        "anchor": "raft task update --status",
+        "location": "main.js@32661493",
+        "region": {
+          "bytes": 256,
+          "offset": 32661493,
+          "sha256": "d80bec5b0a157d5b67205f7e224d06a371d06db787754eb2d83c3e1344d1de03"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.6: one status setter replaced by fixed lifecycle commands."
+    },
+    {
+      "id": "cli.worker.task-release",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-release"
+      },
+      "raft": {
+        "anchor": "raft task unclaim",
+        "location": "main.js@32659612",
+        "region": {
+          "bytes": 256,
+          "offset": 32659612,
+          "sha256": "b640465338d637c6850a360ea938df697b4b1bbe819721b4f719307f86c7fd38"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.6: renamed and re-addressed."
+    },
+    {
+      "id": "cli.worker.task-progress",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-progress"
+      },
+      "raft": {
+        "anchor": "raft task update --status",
+        "location": "main.js@32661493",
+        "region": {
+          "bytes": 256,
+          "offset": 32661493,
+          "sha256": "d80bec5b0a157d5b67205f7e224d06a371d06db787754eb2d83c3e1344d1de03"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.6: one status setter replaced by fixed lifecycle commands."
+    },
+    {
+      "id": "cli.worker.task-block",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-block"
+      },
+      "raft": {
+        "anchor": "raft task update --status",
+        "location": "main.js@32661493",
+        "region": {
+          "bytes": 256,
+          "offset": 32661493,
+          "sha256": "d80bec5b0a157d5b67205f7e224d06a371d06db787754eb2d83c3e1344d1de03"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.6: one status setter replaced by fixed lifecycle commands."
+    },
+    {
+      "id": "cli.worker.task-request-input",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-request-input"
+      },
+      "raft": {
+        "anchor": "raft task update --status",
+        "location": "main.js@32661493",
+        "region": {
+          "bytes": 256,
+          "offset": 32661493,
+          "sha256": "d80bec5b0a157d5b67205f7e224d06a371d06db787754eb2d83c3e1344d1de03"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.6: one status setter replaced by fixed lifecycle commands."
+    },
+    {
+      "id": "cli.worker.task-submit",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-submit"
+      },
+      "raft": {
+        "anchor": "raft task update --status",
+        "location": "main.js@32661493",
+        "region": {
+          "bytes": 256,
+          "offset": 32661493,
+          "sha256": "d80bec5b0a157d5b67205f7e224d06a371d06db787754eb2d83c3e1344d1de03"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.6: one status setter replaced by fixed lifecycle commands."
+    },
+    {
+      "id": "cli.worker.task-review",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-review"
+      },
+      "raft": {
+        "anchor": "raft task update --status",
+        "location": "main.js@32661493",
+        "region": {
+          "bytes": 256,
+          "offset": 32661493,
+          "sha256": "d80bec5b0a157d5b67205f7e224d06a371d06db787754eb2d83c3e1344d1de03"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.6: one status setter replaced by fixed lifecycle commands."
+    },
+    {
+      "id": "cli.raft.agent.login",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft agent login",
+        "location": "main.js@32542515",
+        "region": {
+          "bytes": 256,
+          "offset": 32542515,
+          "sha256": "a1ab77f706b60d6bc9dd8eee4d5e9f821f62bafd22f1ec1b9111824b058de5ed"
+        }
+      },
+      "verdict": "justified",
+      "constraint": "no-central-server",
+      "note": "§2.1: no central Server; the daemon issues credentials inside the Activation fence."
+    },
+    {
+      "id": "cli.raft.agent.login.start",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft agent login start",
+        "location": "main.js@32544240",
+        "region": {
+          "bytes": 256,
+          "offset": 32544240,
+          "sha256": "524c4895ca9f12d00cdbadb215ff7af0531c2d3e6c4e9fa9cae0315fb70a9498"
+        }
+      },
+      "verdict": "justified",
+      "constraint": "no-central-server",
+      "note": "§2.1: no central Server, no browser device-code handoff."
+    },
+    {
+      "id": "cli.raft.agent.login.wait",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft agent login wait",
+        "location": "main.js@32545234",
+        "region": {
+          "bytes": 256,
+          "offset": 32545234,
+          "sha256": "ce230a6cab2b894e8ea8259b218b5bee4b8cb01fc82d83368e55d0842f4ed4cd"
+        }
+      },
+      "verdict": "justified",
+      "constraint": "local-credentials",
+      "note": "§2.1: credentials are granted and revoked locally by Activation."
+    },
+    {
+      "id": "cli.raft.agent.login.status",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft agent login status",
+        "location": "main.js@32546459",
+        "region": {
+          "bytes": 256,
+          "offset": 32546459,
+          "sha256": "00dfcb5a834fe6f7284a017fb26e537bbb494a68ffebff5e360acf2c08d8b9fb"
+        }
+      },
+      "verdict": "justified",
+      "constraint": "local-credentials",
+      "note": "§2.1: credential lifetime is Activation-scoped."
+    },
+    {
+      "id": "cli.raft.agent.list",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft agent list",
+        "location": "main.js@32537452",
+        "region": {
+          "bytes": 256,
+          "offset": 32537452,
+          "sha256": "ebbf4c2e9fe59d220c6729febb5d1e3b88424735865f8d5e70ebcf6e123e5755"
+        }
+      },
+      "verdict": "justified",
+      "constraint": "no-central-server",
+      "note": "§2.1: no central Server to enumerate mintable Agents."
+    },
+    {
+      "id": "cli.raft.agent.bridge",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft agent bridge",
+        "location": "main.js@32549824",
+        "region": {
+          "bytes": 256,
+          "offset": 32549824,
+          "sha256": "cf7355bf948bc3a2e22cc6786c577a9dbdd0d2c4dd2d8b07733851c37835d421"
+        }
+      },
+      "verdict": "justified",
+      "constraint": "single-machine",
+      "note": "§2.1: the single-machine daemon wakes Runs directly; no self-hosted wake bridge."
+    },
+    {
+      "id": "cli.raft.channel.info",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft channel info",
+        "location": "main.js@32569969",
+        "region": {
+          "bytes": 256,
+          "offset": 32569969,
+          "sha256": "a5385ff6c148030650d8c1a19349bf306958fa9e191f83efe0cd488fd1a1b1e1"
+        }
+      },
+      "verdict": "missing",
+      "note": "§2.2: room-resolve/room-read only approximate it; no joined/description/member-count facts."
+    },
+    {
+      "id": "cli.raft.channel.create",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft channel create",
+        "location": "main.js@32571946",
+        "region": {
+          "bytes": 256,
+          "offset": 32571946,
+          "sha256": "4eb9ede22c8d82b7995ca6b0c971f76905da18c6bc316e30c39a66a544267417"
+        }
+      },
+      "verdict": "missing",
+      "note": "§2.2: no Channel lifecycle route."
+    },
+    {
+      "id": "cli.raft.channel.update",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft channel update",
+        "location": "main.js@32573923",
+        "region": {
+          "bytes": 256,
+          "offset": 32573923,
+          "sha256": "c60bce9b118b67d9fdf35db97eb660e408acf713ced80c4df2a683a1ef276058"
+        }
+      },
+      "verdict": "missing",
+      "note": "§2.2: no Channel lifecycle route."
+    },
+    {
+      "id": "cli.raft.channel.archive",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft channel archive",
+        "location": "main.js@32577799",
+        "region": {
+          "bytes": 256,
+          "offset": 32577799,
+          "sha256": "16de1ce73231093926cc28cca28a02011db158a840f4b7ad699913171011331b"
+        }
+      },
+      "verdict": "missing",
+      "note": "§2.2: no Channel lifecycle route."
+    },
+    {
+      "id": "cli.raft.channel.unarchive",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft channel unarchive",
+        "location": "main.js@32578236",
+        "region": {
+          "bytes": 256,
+          "offset": 32578236,
+          "sha256": "024fcbae4447e0fa5de949ef4aed9347ad88933e5b44b221ca2576557a54f95f"
+        }
+      },
+      "verdict": "missing",
+      "note": "§2.2: no Channel lifecycle route."
+    },
+    {
+      "id": "cli.raft.channel.add-member",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft channel add-member",
+        "location": "main.js@32578925",
+        "region": {
+          "bytes": 256,
+          "offset": 32578925,
+          "sha256": "0222b63cb028f8262309756344a8d7b844c1012b9d67219d8bc5ebd9b0179fac"
+        }
+      },
+      "verdict": "missing",
+      "note": "§2.2: no Channel membership route."
+    },
+    {
+      "id": "cli.raft.channel.remove-member",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft channel remove-member",
+        "location": "main.js@32582309",
+        "region": {
+          "bytes": 256,
+          "offset": 32582309,
+          "sha256": "bfd3b12a95574db2e28d7714d3916884badebbbaf11a17e88c75c6cf22218d48"
+        }
+      },
+      "verdict": "missing",
+      "note": "§2.2: no Channel membership route."
+    },
+    {
+      "id": "cli.raft.channel.join",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft channel join",
+        "location": "main.js@32585664",
+        "region": {
+          "bytes": 256,
+          "offset": 32585664,
+          "sha256": "3bf8c0bee71c9f03105b9de5bb58f115eb2a69ec4053c7438c1ee207cfe57aca"
+        }
+      },
+      "verdict": "missing",
+      "note": "§2.2/§3.3: an Agent cannot enter a visible public Room by itself."
+    },
+    {
+      "id": "cli.raft.channel.leave",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft channel leave",
+        "location": "main.js@32567512",
+        "region": {
+          "bytes": 256,
+          "offset": 32567512,
+          "sha256": "b495ef7c88dca0baac0e43e4bb24d2f18a34312cd6005a35edcf58febb65612e"
+        }
+      },
+      "verdict": "missing",
+      "note": "§2.2/§3.3: an Agent cannot leave a Room by itself."
+    },
+    {
+      "id": "cli.raft.server.update",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft server update",
+        "location": "main.js@32598694",
+        "region": {
+          "bytes": 256,
+          "offset": 32598694,
+          "sha256": "5b55cb403674d86b039f18352426a5470af99e18f893d8a89cdca4de594b69be"
+        }
+      },
+      "verdict": "missing",
+      "note": "§2.3/S30: no workspace name/avatar administration route."
+    },
+    {
+      "id": "cli.raft.manual.get",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft manual get",
+        "location": "main.js@32606525",
+        "region": {
+          "bytes": 256,
+          "offset": 32606525,
+          "sha256": "4ef94cf27ba89f9b75547ea4179f2cd27a1305f4f760b638e4ff7f950c48f55b"
+        }
+      },
+      "verdict": "missing",
+      "note": "§2.4/S9: replaced by standing prompt text plus worker help."
+    },
+    {
+      "id": "cli.raft.manual.search",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft manual search",
+        "location": "main.js@32609326",
+        "region": {
+          "bytes": 256,
+          "offset": 32609326,
+          "sha256": "595eb0f4950594df27a52e292ba9a019bef914a19fe87b101faad6add2a61600"
+        }
+      },
+      "verdict": "missing",
+      "note": "§2.4/S9: replaced by standing prompt text plus worker help."
+    },
+    {
+      "id": "cli.raft.knowledge.get",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft knowledge get",
+        "location": "main.js@32769049",
+        "region": {
+          "bytes": 256,
+          "offset": 32769049,
+          "sha256": "77e1c6bc12bbcbe8e4e02ae445d8b3306f298d379daf6225578629c3baee3aa1"
+        }
+      },
+      "verdict": "missing",
+      "note": "§2.4: legacy alias of manual get; also absent."
+    },
+    {
+      "id": "cli.raft.knowledge.search",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft knowledge search",
+        "location": "main.js@32769049",
+        "region": {
+          "bytes": 256,
+          "offset": 32769049,
+          "sha256": "77e1c6bc12bbcbe8e4e02ae445d8b3306f298d379daf6225578629c3baee3aa1"
+        }
+      },
+      "verdict": "missing",
+      "note": "§2.4: legacy alias of manual search; also absent."
+    },
+    {
+      "id": "cli.raft.inbox.check",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft inbox check",
+        "location": "main.js@32612662",
+        "region": {
+          "bytes": 256,
+          "offset": 32612662,
+          "sha256": "c891bc0d35b43d7ae527aa80b793da9e7ddf8ebcdb1a019fcbc4175ac63731fa"
+        }
+      },
+      "verdict": "missing",
+      "note": "§2.4/S11: no peek-without-draining entry point."
+    },
+    {
+      "id": "cli.raft.task.receipt",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft task receipt",
+        "location": "main.js@32664866",
+        "region": {
+          "bytes": 256,
+          "offset": 32664866,
+          "sha256": "20af06da9df944d50b082320bbb8d60a4255fad9dc57090a3aab57bb7a663db6"
+        }
+      },
+      "verdict": "missing",
+      "note": "§2.6/S16: no structured resource receipt."
+    },
+    {
+      "id": "cli.raft.mention.pending",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft mention pending",
+        "location": "main.js@32678741",
+        "region": {
+          "bytes": 256,
+          "offset": 32678741,
+          "sha256": "b53267d306adae911f219a3c706df9456aa009135bed5a277398d5c5b2c7a46d"
+        }
+      },
+      "verdict": "missing",
+      "note": "§2.7/S19: the standing prompt states there is no separate mention command."
+    },
+    {
+      "id": "cli.raft.mention.notify",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft mention notify",
+        "location": "main.js@32678741",
+        "region": {
+          "bytes": 256,
+          "offset": 32678741,
+          "sha256": "b53267d306adae911f219a3c706df9456aa009135bed5a277398d5c5b2c7a46d"
+        }
+      },
+      "verdict": "missing",
+      "note": "§2.7/S19: no send-side mention execution."
+    },
+    {
+      "id": "cli.raft.mention.add",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft mention add",
+        "location": "main.js@32678741",
+        "region": {
+          "bytes": 256,
+          "offset": 32678741,
+          "sha256": "b53267d306adae911f219a3c706df9456aa009135bed5a277398d5c5b2c7a46d"
+        }
+      },
+      "verdict": "missing",
+      "note": "§2.7/S19: no send-side mention execution."
+    },
+    {
+      "id": "cli.raft.action.prepare",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft action prepare",
+        "location": "main.js@32562967",
+        "region": {
+          "bytes": 256,
+          "offset": 32562967,
+          "sha256": "73cea2ae05eb76e1942a1f20c89e3bf7d8888b47b18054fa30f0aab5cf32f3d3"
+        }
+      },
+      "verdict": "missing",
+      "note": "§2.7/S18: no RAFTACTION heredoc action card for a Human."
+    },
+    {
+      "id": "cli.raft.reminder.dismiss",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft reminder dismiss",
+        "location": "main.js@32746698",
+        "region": {
+          "bytes": 256,
+          "offset": 32746698,
+          "sha256": "acf646d0fac777c6c43ca058cbcffa9dbd8ae4e9e7b4932bfeb3508f1dd78284"
+        }
+      },
+      "verdict": "missing",
+      "note": "§2.8/S21: App Inbox has check/recheck/ack only."
+    },
+    {
+      "id": "cli.raft.integration.list",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft integration list",
+        "location": "main.js@32681782",
+        "region": {
+          "bytes": 256,
+          "offset": 32681782,
+          "sha256": "41ee8986ead58de8d390d32dfc820e1b43cbbba4aedbad3fdb8eb7181e8f7abb"
+        }
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.9: adjudicated deferred (Marketplace / Integration)."
+    },
+    {
+      "id": "cli.raft.integration.marketplace",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft integration marketplace",
+        "location": "main.js@32682913",
+        "region": {
+          "bytes": 256,
+          "offset": 32682913,
+          "sha256": "ee961ed8976a6d1dd9d0c38cc395ed6b9214e46e2769740aae46ddefd577529c"
+        }
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.9: adjudicated deferred."
+    },
+    {
+      "id": "cli.raft.integration.login",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft integration login",
+        "location": "main.js@32688548",
+        "region": {
+          "bytes": 256,
+          "offset": 32688548,
+          "sha256": "6438c69519aa82ff7dbe1a1f85a94dead7f6036f526af87158dd458b2c975f9b"
+        }
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.9: adjudicated deferred."
+    },
+    {
+      "id": "cli.raft.integration.env",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft integration env",
+        "location": "main.js@32691986",
+        "region": {
+          "bytes": 256,
+          "offset": 32691986,
+          "sha256": "142bce721ff2c31615eeae5f23c6bd27285cc43e6b7fe2dfbf852187ab5e5246"
+        }
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.9: adjudicated deferred."
+    },
+    {
+      "id": "cli.raft.integration.invoke",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft integration invoke",
+        "location": "main.js@32704395",
+        "region": {
+          "bytes": 256,
+          "offset": 32704395,
+          "sha256": "47e6ad87beb68b47040d3617f502a10c3ec7646cb1b061e0f3410a4db3dc8b6e"
+        }
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.9: adjudicated deferred."
+    },
+    {
+      "id": "cli.raft.integration.app.prepare.register",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft integration app prepare register",
+        "location": "main.js@32734147",
+        "region": {
+          "bytes": 256,
+          "offset": 32734147,
+          "sha256": "e7d7f9e461e6cf33b2d2b44a6b9736601f557df7b96e4d842f04c1a51ae49eb6"
+        }
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.9: adjudicated deferred."
+    },
+    {
+      "id": "cli.raft.integration.app.prepare.recover-owner",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft integration app prepare recover-owner",
+        "location": "main.js@32731677",
+        "region": {
+          "bytes": 256,
+          "offset": 32731677,
+          "sha256": "863779813ea5bd1810c3359cd33e334cbd411bbf2aeac8d74ad163e4391b5d5f"
+        }
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.9: adjudicated deferred."
+    },
+    {
+      "id": "cli.raft.integration.app.rotate-secret",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft integration app rotate-secret",
+        "location": "main.js@32724033",
+        "region": {
+          "bytes": 256,
+          "offset": 32724033,
+          "sha256": "16a849d1bcea0bd0bac0d04630ad2fcff85bafaf5fe51385068bd03afc54872f"
+        }
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.9: adjudicated deferred."
+    },
+    {
+      "id": "cli.raft.integration.app.transfer-owner",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft integration app transfer-owner",
+        "location": "main.js@32724696",
+        "region": {
+          "bytes": 256,
+          "offset": 32724696,
+          "sha256": "441945d3d5e4454a49f188fdd8683e1ac6f5c70cccf133f0fcfe966df61632ce"
+        }
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.9: adjudicated deferred."
+    },
+    {
+      "id": "cli.raft.integration.app.update",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft integration app update",
+        "location": "main.js@32725271",
+        "region": {
+          "bytes": 256,
+          "offset": 32725271,
+          "sha256": "e8b719b8fa52d06823d4f665bd449d846e59a5cae528cb38f339318f101f439a"
+        }
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.9: adjudicated deferred."
+    },
+    {
+      "id": "cli.raft.integration.app.logo",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft integration app logo",
+        "location": "main.js@32728403",
+        "region": {
+          "bytes": 256,
+          "offset": 32728403,
+          "sha256": "7ccccc82ec12f36dd51f4d640f033fa1ac2c9195c0f259eba96fdc38db857286"
+        }
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.9: adjudicated deferred."
+    },
+    {
+      "id": "cli.raft.integration.app.clear-logo",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft integration app clear-logo",
+        "location": null
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.9: adjudicated deferred; registerIntegrationAppCommands, no byte offset recorded."
+    },
+    {
+      "id": "cli.raft.integration.app.share-link.create",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft integration app share-link create",
+        "location": null
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.9: adjudicated deferred; no byte offset recorded."
+    },
+    {
+      "id": "cli.raft.integration.app.share-link.status",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft integration app share-link status",
+        "location": null
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.9: adjudicated deferred; no byte offset recorded."
+    },
+    {
+      "id": "cli.raft.integration.app.share-link.revoke",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft integration app share-link revoke",
+        "location": null
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.9: adjudicated deferred; no byte offset recorded."
+    },
+    {
+      "id": "cli.raft.integration.app.request-publish",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft integration app request-publish",
+        "location": null
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.9: adjudicated deferred; no byte offset recorded."
+    },
+    {
+      "id": "cli.raft.integration.app.request-unpublish",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft integration app request-unpublish",
+        "location": null
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.9: adjudicated deferred; no byte offset recorded."
+    },
+    {
+      "id": "cli.raft.integration.app.delete",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft integration app delete",
+        "location": null
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.9: adjudicated deferred; no byte offset recorded."
+    },
+    {
+      "id": "cli.raft.integration.app.list",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft integration app list",
+        "location": "main.js@32730709",
+        "region": {
+          "bytes": 256,
+          "offset": 32730709,
+          "sha256": "fed0a1cceb00e1a89b91d63bfe03a2caf06b69c728b3aebb0e8d4c36c1058964"
+        }
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.9: adjudicated deferred."
+    },
+    {
+      "id": "cli.raft.integration.app.status",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft integration app status",
+        "location": "main.js@32731081",
+        "region": {
+          "bytes": 256,
+          "offset": 32731081,
+          "sha256": "874536f662ca08879549571249a18253cd6cf16077799086a139d4578dfee73e"
+        }
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.9: adjudicated deferred."
+    },
+    {
+      "id": "cli.raft.wiki.manifest",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft wiki manifest",
+        "location": "main.js@32757567",
+        "region": {
+          "bytes": 256,
+          "offset": 32757567,
+          "sha256": "9c8361a26c573dd7924b927414579b36e66f76a4f6c75913096652e3437b8942"
+        }
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.10: adjudicated deferred (Wiki)."
+    },
+    {
+      "id": "cli.raft.wiki.read",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft wiki read",
+        "location": "main.js@32758164",
+        "region": {
+          "bytes": 256,
+          "offset": 32758164,
+          "sha256": "7e9223e5338407f598a77a103d13979673cd398773ee2398b2eca3ceee5e8a71"
+        }
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.10: adjudicated deferred (Wiki)."
+    },
+    {
+      "id": "cli.raft.wiki.publish",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft wiki publish",
+        "location": "main.js@32759258",
+        "region": {
+          "bytes": 256,
+          "offset": 32759258,
+          "sha256": "3711c44cd1fab68b722bc75850150e85e9abab94e68d5dbfc5e707beed783624"
+        }
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.10: adjudicated deferred (Wiki)."
+    },
+    {
+      "id": "cli.raft.migrate.export",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft migrate export",
+        "location": "main.js@32751428",
+        "region": {
+          "bytes": 256,
+          "offset": 32751428,
+          "sha256": "101be798b9786b55fdbbe667cfa803a5594e3bb53e24d998343ece7b770fb67c"
+        }
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.10: adjudicated deferred (Migration)."
+    },
+    {
+      "id": "cli.raft.migrate.import",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft migrate import",
+        "location": "main.js@32752823",
+        "region": {
+          "bytes": 256,
+          "offset": 32752823,
+          "sha256": "ddbdd70cc3554b7611c68f69ae478b20fade93fd8b2f51894660f5c6f67fbbcd"
+        }
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.10: adjudicated deferred (Migration)."
+    },
+    {
+      "id": "cli.raft.migrate.status",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft migrate status",
+        "location": "main.js@32753887",
+        "region": {
+          "bytes": 256,
+          "offset": 32753887,
+          "sha256": "ac3aa91d5ba0a048525af456ab33f376b8c211df26c6686fcd6f49aad4bd8126"
+        }
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.10: adjudicated deferred (Migration)."
+    },
+    {
+      "id": "cli.raft.migrate.ready",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft migrate ready",
+        "location": "main.js@32754548",
+        "region": {
+          "bytes": 256,
+          "offset": 32754548,
+          "sha256": "7287be2dd60570085c723bff030f618c6d08fba1b8221aa8c914143d3e102d79"
+        }
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.10: adjudicated deferred (Migration)."
+    },
+    {
+      "id": "cli.raft.migrate.arrived",
+      "kind": "cli",
+      "rah": null,
+      "raft": {
+        "anchor": "raft migrate arrived",
+        "location": "main.js@32755862",
+        "region": {
+          "bytes": 256,
+          "offset": 32755862,
+          "sha256": "53421af3e2f9bebc9a5bfbad0c85796775242b9e4e8b0bb5fb5db5ee46ad39b7"
+        }
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.10: adjudicated deferred (Migration)."
+    },
+    {
+      "id": "route.attachments.prepare",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/attachments/prepare"
+      },
+      "raft": {
+        "anchor": "POST /upload",
+        "location": "agentApiContract.ts@2010"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 68: adds an idempotency key and a context receipt."
+    },
+    {
+      "id": "route.attachments.cancel",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/attachments/cancel"
+      },
+      "raft": {
+        "anchor": "DELETE /attachment-upload-sessions/:uploadId",
+        "location": "agentApiContract.ts@2050"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 72: RAH also exposes a CLI command Raft does not."
+    },
+    {
+      "id": "route.auth.whoami",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/auth/whoami"
+      },
+      "raft": {
+        "anchor": "raft auth whoami",
+        "location": "main.js@32532747",
+        "region": {
+          "bytes": 256,
+          "offset": 32532747,
+          "sha256": "b678fc1a060cde3b0bcaea653e47a648090225c9f9338d8ed626461422882afc"
+        }
+      },
+      "verdict": "aligned",
+      "note": "§2.1: env-derived identity echo, same shape."
+    },
+    {
+      "id": "route.rooms.read",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/rooms/read"
+      },
+      "raft": {
+        "anchor": "raft message send consumed-seq state",
+        "location": "main.js@32618469",
+        "region": {
+          "bytes": 256,
+          "offset": 32618469,
+          "sha256": "dd3579d15f04f11d973a42fac42c674335001a7e7a981f145f57d2dba277101b"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.12: Agent-carried context receipt replaces Raft's CLI-local state."
+    },
+    {
+      "id": "route.messages.search",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/messages/search"
+      },
+      "raft": {
+        "anchor": "GET /search",
+        "location": "agentApiContract.ts@1464"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 14."
+    },
+    {
+      "id": "route.rooms.list",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/rooms/list"
+      },
+      "raft": {
+        "anchor": "GET /server",
+        "location": "agentApiContract.ts@1584"
+      },
+      "verdict": "unjustified",
+      "note": "§2.12: Raft lists joined channels through server info."
+    },
+    {
+      "id": "route.rooms.resolve",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/rooms/resolve"
+      },
+      "raft": {
+        "anchor": "POST /resolve-channel",
+        "location": "agentApiContract.ts@1564"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 24: Raft has the route but no CLI command."
+    },
+    {
+      "id": "route.attachments.comments",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/attachments/comments"
+      },
+      "raft": {
+        "anchor": "GET /attachments/:attachmentId/comments",
+        "location": "agentApiContract.ts@2080"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 75."
+    },
+    {
+      "id": "route.attachments.capabilities",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/attachments/capabilities"
+      },
+      "raft": {
+        "anchor": "GET /attachment-upload-capabilities",
+        "location": "agentApiContract.ts@2020"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 69."
+    },
+    {
+      "id": "route.messages.history",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/messages/history"
+      },
+      "raft": {
+        "anchor": "GET /history",
+        "location": "agentApiContract.ts@1364"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 4: selector differences."
+    },
+    {
+      "id": "route.messages.resolve",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/messages/resolve"
+      },
+      "raft": {
+        "anchor": "GET /messages/:msgId/resolve",
+        "location": "agentApiContract.ts@1454"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 13: addressing."
+    },
+    {
+      "id": "route.room.members",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/room/members"
+      },
+      "raft": {
+        "anchor": "GET /channel-members",
+        "location": "agentApiContract.ts@1554"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 23: addressing."
+    },
+    {
+      "id": "route.server.info",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/server/info"
+      },
+      "raft": {
+        "anchor": "GET /server",
+        "location": "agentApiContract.ts@1584"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 26."
+    },
+    {
+      "id": "route.profiles.get",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/profiles/get"
+      },
+      "raft": {
+        "anchor": "GET /profile",
+        "location": "agentApiContract.ts@1854"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 53: Raft's single profile read is split in two."
+    },
+    {
+      "id": "route.tasks.list",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/tasks/list"
+      },
+      "raft": {
+        "anchor": "GET /tasks",
+        "location": "agentApiContract.ts@1624"
+      },
+      "verdict": "aligned",
+      "note": "§2.11 row 30."
+    },
+    {
+      "id": "route.tasks.history",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/tasks/history"
+      },
+      "raft": {
+        "anchor": "GET /tasks/history",
+        "location": "agentApiContract.ts@1714"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 39."
+    },
+    {
+      "id": "route.version",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/version"
+      },
+      "raft": {
+        "anchor": "raft version",
+        "location": "main.js@32534054",
+        "region": {
+          "bytes": 256,
+          "offset": 32534054,
+          "sha256": "a06c575d4268d31994204eecea095845c602c828d4e2e1d7974d67b7ab1a3494"
+        }
+      },
+      "verdict": "unjustified",
+      "note": "§2.1: carrier package version only."
+    },
+    {
+      "id": "route.acknowledge",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/acknowledge"
+      },
+      "raft": {
+        "anchor": "GET /events",
+        "location": "agentApiContract.ts@1354"
+      },
+      "verdict": "justified",
+      "constraint": "activation-fence",
+      "note": "§2.12: the explicit ACK the Activation fence requires."
+    },
+    {
+      "id": "route.artifacts.prepare",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/artifacts/prepare"
+      },
+      "raft": {
+        "anchor": "POST /upload",
+        "location": "agentApiContract.ts@2010"
+      },
+      "verdict": "unjustified",
+      "note": "§2.12: separate Task-deliverable channel."
+    },
+    {
+      "id": "route.messages.post",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/messages/post"
+      },
+      "raft": {
+        "anchor": "POST /send",
+        "location": "agentApiContract.ts@1444"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 12."
+    },
+    {
+      "id": "route.messages.react",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/messages/react"
+      },
+      "raft": {
+        "anchor": "POST /messages/:msgId/reactions",
+        "location": "agentApiContract.ts@1474"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 rows 15-16: two Raft routes folded into one --active flag."
+    },
+    {
+      "id": "route.reminders.cancel",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/reminders/cancel"
+      },
+      "raft": {
+        "anchor": "DELETE /reminders/:reminderId",
+        "location": "agentApiContract.ts@1784"
+      },
+      "verdict": "aligned",
+      "note": "§2.11 row 46."
+    },
+    {
+      "id": "route.reminders.list",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/reminders/list"
+      },
+      "raft": {
+        "anchor": "GET /reminders",
+        "location": "agentApiContract.ts@1764"
+      },
+      "verdict": "aligned",
+      "note": "§2.11 row 44."
+    },
+    {
+      "id": "route.reminders.log",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/reminders/log"
+      },
+      "raft": {
+        "anchor": "GET /reminders/:reminderId/log",
+        "location": "agentApiContract.ts@1824"
+      },
+      "verdict": "aligned",
+      "note": "§2.11 row 50."
+    },
+    {
+      "id": "route.reminders.schedule",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/reminders/schedule"
+      },
+      "raft": {
+        "anchor": "POST /reminders",
+        "location": "agentApiContract.ts@1774"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 45: adds --based-on-room-seq."
+    },
+    {
+      "id": "route.reminders.snooze",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/reminders/snooze"
+      },
+      "raft": {
+        "anchor": "POST /reminders/:reminderId/snooze",
+        "location": "agentApiContract.ts@1794"
+      },
+      "verdict": "aligned",
+      "note": "§2.11 row 47."
+    },
+    {
+      "id": "route.reminders.update",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/reminders/update"
+      },
+      "raft": {
+        "anchor": "PATCH /reminders/:reminderId",
+        "location": "agentApiContract.ts@1804"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 48: adds --tz."
+    },
+    {
+      "id": "route.sync",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/sync"
+      },
+      "raft": {
+        "anchor": "GET /events",
+        "location": "agentApiContract.ts@1354"
+      },
+      "verdict": "justified",
+      "constraint": "activation-fence",
+      "note": "§2.11 row 3: delivery range is decided by the Activation."
+    },
+    {
+      "id": "route.threads.unfollow",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/threads/unfollow"
+      },
+      "raft": {
+        "anchor": "POST /threads/unfollow",
+        "location": "agentApiContract.ts@1574"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 25: drops --reason, adds causal parameters."
+    },
+    {
+      "id": "route.channels.mute",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/channels/mute"
+      },
+      "raft": {
+        "anchor": "POST /channels/:channelId/mute",
+        "location": "agentApiContract.ts@1514"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 19: adds mandatory causal parameters."
+    },
+    {
+      "id": "route.channels.unmute",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/channels/unmute"
+      },
+      "raft": {
+        "anchor": "POST /channels/:channelId/unmute",
+        "location": "agentApiContract.ts@1524"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 20."
+    },
+    {
+      "id": "route.tasks.claim",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/tasks/claim"
+      },
+      "raft": {
+        "anchor": "POST /tasks/claim",
+        "location": "agentApiContract.ts@1614"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 29."
+    },
+    {
+      "id": "route.tasks.claim-message",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/tasks/claim-message"
+      },
+      "raft": {
+        "anchor": "POST /tasks/claim",
+        "location": "agentApiContract.ts@1614"
+      },
+      "verdict": "unjustified",
+      "note": "§2.12: atomic create-and-claim from a message."
+    },
+    {
+      "id": "route.profile.self.get",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/profile/self/get"
+      },
+      "raft": {
+        "anchor": "GET /profile",
+        "location": "agentApiContract.ts@1854"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 53."
+    },
+    {
+      "id": "route.profile.self.update",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/profile/self/update"
+      },
+      "raft": {
+        "anchor": "POST /profile",
+        "location": "agentApiContract.ts@1864"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 54: three extra mandatory write-context parameters."
+    },
+    {
+      "id": "route.tasks.create",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/tasks/create"
+      },
+      "raft": {
+        "anchor": "POST /tasks",
+        "location": "agentApiContract.ts@1634"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 31: no batch create, different assignee semantics."
+    },
+    {
+      "id": "route.tasks.assign",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/tasks/assign"
+      },
+      "raft": {
+        "anchor": "POST /tasks/assign",
+        "location": "agentApiContract.ts@1654"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 33."
+    },
+    {
+      "id": "route.tasks.amend",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/tasks/amend"
+      },
+      "raft": {
+        "anchor": "POST /tasks/amend",
+        "location": "agentApiContract.ts@1704"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 38."
+    },
+    {
+      "id": "route.tasks.delete",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/tasks/delete"
+      },
+      "raft": {
+        "anchor": "POST /tasks/delete",
+        "location": "agentApiContract.ts@1684"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 36: extra --room-id."
+    },
+    {
+      "id": "route.tasks.unblock",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/tasks/unblock"
+      },
+      "raft": {
+        "anchor": "POST /tasks/update-status",
+        "location": "agentApiContract.ts@1664"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 34: one status route split into lifecycle routes."
+    },
+    {
+      "id": "route.tasks.convert",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/tasks/convert"
+      },
+      "raft": {
+        "anchor": "POST /tasks/convert",
+        "location": "agentApiContract.ts@1694"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 37."
+    },
+    {
+      "id": "route.tasks.block",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/tasks/block"
+      },
+      "raft": {
+        "anchor": "POST /tasks/update-status",
+        "location": "agentApiContract.ts@1664"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 34."
+    },
+    {
+      "id": "route.tasks.get",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/tasks/get"
+      },
+      "raft": {
+        "anchor": "GET /tasks",
+        "location": "agentApiContract.ts@1624"
+      },
+      "verdict": "unjustified",
+      "note": "§2.12: no Raft single-Task read route."
+    },
+    {
+      "id": "route.tasks.input-status",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/tasks/input-status"
+      },
+      "raft": {
+        "anchor": "GET /tasks",
+        "location": "agentApiContract.ts@1624"
+      },
+      "verdict": "unjustified",
+      "note": "§2.12: no Raft counterpart."
+    },
+    {
+      "id": "route.tasks.progress",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/tasks/progress"
+      },
+      "raft": {
+        "anchor": "POST /tasks/update-status",
+        "location": "agentApiContract.ts@1664"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 34."
+    },
+    {
+      "id": "route.tasks.release",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/tasks/release"
+      },
+      "raft": {
+        "anchor": "POST /tasks/unclaim",
+        "location": "agentApiContract.ts@1644"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 32."
+    },
+    {
+      "id": "route.tasks.request-input",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/tasks/request-input"
+      },
+      "raft": {
+        "anchor": "POST /tasks/update-status",
+        "location": "agentApiContract.ts@1664"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 34."
+    },
+    {
+      "id": "route.tasks.review",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/tasks/review"
+      },
+      "raft": {
+        "anchor": "POST /tasks/update-status",
+        "location": "agentApiContract.ts@1664"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 34."
+    },
+    {
+      "id": "route.tasks.start",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/tasks/start"
+      },
+      "raft": {
+        "anchor": "POST /tasks/update-status",
+        "location": "agentApiContract.ts@1664"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 34."
+    },
+    {
+      "id": "route.tasks.submit",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/tasks/submit"
+      },
+      "raft": {
+        "anchor": "POST /tasks/update-status",
+        "location": "agentApiContract.ts@1664"
+      },
+      "verdict": "unjustified",
+      "note": "§2.11 row 34."
+    },
+    {
+      "id": "route.tasks.submission",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/tasks/submission"
+      },
+      "raft": {
+        "anchor": "GET /tasks",
+        "location": "agentApiContract.ts@1624"
+      },
+      "verdict": "unjustified",
+      "note": "§2.12: no Raft frozen-submission read."
+    },
+    {
+      "id": "route.tasks.trajectory",
+      "kind": "route",
+      "rah": {
+        "file": "packages/application-service/src/worker-application-service.ts",
+        "symbol": "/v1/worker/tasks/trajectory"
+      },
+      "raft": null,
+      "verdict": "justified",
+      "constraint": "sqlite-ledger",
+      "note": "§2.12: only the local SQLite ledger records this Computer's Run commands and file edits."
+    },
+    {
+      "id": "route.raft.post.feedback-locators",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "POST /feedback-locators",
+        "location": "agentApiContract.ts@1334"
+      },
+      "verdict": "missing",
+      "note": "§2.11 row 1."
+    },
+    {
+      "id": "route.raft.get.feedback-locators",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "GET /feedback-locators",
+        "location": "agentApiContract.ts@1344"
+      },
+      "verdict": "missing",
+      "note": "§2.11 row 2."
+    },
+    {
+      "id": "route.raft.get.knowledge",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "GET /knowledge",
+        "location": "agentApiContract.ts@1374"
+      },
+      "verdict": "missing",
+      "note": "§2.11 row 5."
+    },
+    {
+      "id": "route.raft.get.knowledge.search",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "GET /knowledge/search",
+        "location": "agentApiContract.ts@1384"
+      },
+      "verdict": "missing",
+      "note": "§2.11 row 6."
+    },
+    {
+      "id": "route.raft.get.wiki.manifest",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "GET /wiki/manifest",
+        "location": "agentApiContract.ts@1394"
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.11 row 7: adjudicated deferred."
+    },
+    {
+      "id": "route.raft.get.wiki.artifacts.artifactId",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "GET /wiki/artifacts/:artifactId",
+        "location": "agentApiContract.ts@1404"
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.11 row 8: adjudicated deferred."
+    },
+    {
+      "id": "route.raft.post.wiki.publish",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "POST /wiki/publish",
+        "location": "agentApiContract.ts@1414"
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.11 row 9: adjudicated deferred."
+    },
+    {
+      "id": "route.raft.get.mcp.tools",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "GET /mcp/tools",
+        "location": "agentApiContract.ts@1424"
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.11 row 10: adjudicated deferred (Managed MCP)."
+    },
+    {
+      "id": "route.raft.post.mcp.call",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "POST /mcp/call",
+        "location": "agentApiContract.ts@1434"
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.11 row 11: adjudicated deferred (Managed MCP)."
+    },
+    {
+      "id": "route.raft.post.channels.channelId.join",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "POST /channels/:channelId/join",
+        "location": "agentApiContract.ts@1494"
+      },
+      "verdict": "missing",
+      "note": "§2.11 row 17."
+    },
+    {
+      "id": "route.raft.post.channels.channelId.leave",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "POST /channels/:channelId/leave",
+        "location": "agentApiContract.ts@1504"
+      },
+      "verdict": "missing",
+      "note": "§2.11 row 18."
+    },
+    {
+      "id": "route.raft.post.channels.archive",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "POST /channels/archive",
+        "location": "agentApiContract.ts@1534"
+      },
+      "verdict": "missing",
+      "note": "§2.11 row 21."
+    },
+    {
+      "id": "route.raft.post.channels.unarchive",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "POST /channels/unarchive",
+        "location": "agentApiContract.ts@1544"
+      },
+      "verdict": "missing",
+      "note": "§2.11 row 22."
+    },
+    {
+      "id": "route.raft.get.mention-actions.pending",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "GET /mention-actions/pending",
+        "location": "agentApiContract.ts@1594"
+      },
+      "verdict": "missing",
+      "note": "§2.11 row 27."
+    },
+    {
+      "id": "route.raft.post.mention-actions.execute",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "POST /mention-actions/execute",
+        "location": "agentApiContract.ts@1604"
+      },
+      "verdict": "missing",
+      "note": "§2.11 row 28."
+    },
+    {
+      "id": "route.raft.post.tasks.resource-receipt",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "POST /tasks/resource-receipt",
+        "location": "agentApiContract.ts@1674"
+      },
+      "verdict": "missing",
+      "note": "§2.11 row 35."
+    },
+    {
+      "id": "route.raft.post.migrations",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "POST /migrations",
+        "location": "agentApiContract.ts@1724"
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.11 row 40: adjudicated deferred."
+    },
+    {
+      "id": "route.raft.get.migrations.current",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "GET /migrations/current",
+        "location": "agentApiContract.ts@1734"
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.11 row 41: adjudicated deferred."
+    },
+    {
+      "id": "route.raft.post.migrations.ready",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "POST /migrations/ready",
+        "location": "agentApiContract.ts@1744"
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.11 row 42: adjudicated deferred."
+    },
+    {
+      "id": "route.raft.post.migrations.arrived",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "POST /migrations/arrived",
+        "location": "agentApiContract.ts@1754"
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.11 row 43: adjudicated deferred."
+    },
+    {
+      "id": "route.raft.get.integrations",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "GET /integrations",
+        "location": "agentApiContract.ts@1884"
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.11 row 56: adjudicated deferred."
+    },
+    {
+      "id": "route.raft.get.integrations.marketplace",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "GET /integrations/marketplace",
+        "location": "agentApiContract.ts@1894"
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.11 row 57: adjudicated deferred."
+    },
+    {
+      "id": "route.raft.post.integrations.login",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "POST /integrations/login",
+        "location": "agentApiContract.ts@1904"
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.11 row 58: adjudicated deferred."
+    },
+    {
+      "id": "route.raft.post.integrations.app.prepare",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "POST /integrations/app/prepare",
+        "location": "agentApiContract.ts@1914"
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.11 row 59: adjudicated deferred."
+    },
+    {
+      "id": "route.raft.post.integrations.app.rotate-secret",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "POST /integrations/app/rotate-secret",
+        "location": "agentApiContract.ts@1924"
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.11 row 60: adjudicated deferred."
+    },
+    {
+      "id": "route.raft.post.integrations.app.transfer-owner",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "POST /integrations/app/transfer-owner",
+        "location": "agentApiContract.ts@1940"
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.11 row 61: adjudicated deferred."
+    },
+    {
+      "id": "route.raft.post.integrations.app.update",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "POST /integrations/app/update",
+        "location": "agentApiContract.ts@1950"
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.11 row 62: adjudicated deferred."
+    },
+    {
+      "id": "route.raft.post.integrations.app.manage",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "POST /integrations/app/manage",
+        "location": "agentApiContract.ts@1960"
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.11 row 63: adjudicated deferred."
+    },
+    {
+      "id": "route.raft.post.integrations.app.logo",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "POST /integrations/app/logo",
+        "location": "agentApiContract.ts@1970"
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.11 row 64: adjudicated deferred."
+    },
+    {
+      "id": "route.raft.get.integrations.app",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "GET /integrations/app",
+        "location": "agentApiContract.ts@1980"
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.11 row 65: adjudicated deferred."
+    },
+    {
+      "id": "route.raft.get.integrations.app.status",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "GET /integrations/app/status",
+        "location": "agentApiContract.ts@1990"
+      },
+      "verdict": "missing",
+      "constraint": "deferred-scope",
+      "deferred": true,
+      "note": "§2.11 row 66: adjudicated deferred."
+    },
+    {
+      "id": "route.raft.post.prepare-action",
+      "kind": "route",
+      "rah": null,
+      "raft": {
+        "anchor": "POST /prepare-action",
+        "location": "agentApiContract.ts@2000"
+      },
+      "verdict": "missing",
+      "note": "§2.11 row 67."
+    },
+    {
+      "id": "prompt.standing.a",
+      "kind": "prompt-paragraph",
+      "rah": {
+        "file": "packages/daemon/src/standing-prompt-compiler.ts",
+        "symbol": "standing-prompt-compiler.ts:104",
+        "needles": ["Order of precedence: canonical Worker protocol"]
+      },
+      "raft": null,
+      "verdict": "unjustified",
+      "classification": "judgment",
+      "note": "§3.1 (a): a self-invented five-level conflict ranking; Raft states only user-override and owner policy."
+    },
+    {
+      "id": "prompt.standing.i",
+      "kind": "prompt-paragraph",
+      "rah": {
+        "file": "packages/daemon/src/standing-prompt-compiler.ts",
+        "symbol": "standing-prompt-compiler.ts:115",
+        "needles": ["does not make the old event a new instruction"]
+      },
+      "raft": null,
+      "verdict": "unjustified",
+      "classification": "judgment",
+      "note": "§3.1 (i): a self-invented suppression rule; Raft's historical-references section encourages re-reading instead."
+    },
+    {
+      "id": "prompt.standing.n",
+      "kind": "prompt-paragraph",
+      "rah": {
+        "file": "packages/daemon/src/standing-prompt-compiler.ts",
+        "symbol": "standing-prompt-compiler.ts:135",
+        "needles": ["Or send nothing"]
+      },
+      "raft": null,
+      "verdict": "unjustified",
+      "classification": "judgment",
+      "note": "§3.1 (n): a third held-draft branch Raft does not have; it widens the dropped-reply failure mode."
+    },
+    {
+      "id": "prompt.standing.p",
+      "kind": "prompt-paragraph",
+      "rah": {
+        "file": "packages/daemon/src/standing-prompt-compiler.ts",
+        "symbol": "standing-prompt-compiler.ts:142",
+        "needles": [
+          "A Task is reserved for long-running or multi-step execution"
+        ]
+      },
+      "raft": null,
+      "verdict": "unjustified",
+      "classification": "judgment",
+      "note": "§3.1 (p): the strict Task definition contradicts the Raft decision rule ported into the same paragraph."
+    },
+    {
+      "id": "prompt.standing.q",
+      "kind": "prompt-paragraph",
+      "rah": {
+        "file": "packages/daemon/src/standing-prompt-compiler.ts",
+        "symbol": "standing-prompt-compiler.ts:142",
+        "needles": ["must not duplicate the work or post a competing answer"]
+      },
+      "raft": null,
+      "verdict": "unjustified",
+      "classification": "judgment",
+      "note": "§3.1 (q): adds a silence order and drops Raft's canonical-owner routing correction."
+    },
+    {
+      "id": "prompt.standing.r",
+      "kind": "prompt-paragraph",
+      "rah": {
+        "file": "packages/daemon/src/standing-prompt-compiler.ts",
+        "symbol": "standing-prompt-compiler.ts:142",
+        "needles": ["Do not also post a top-level Room reply"]
+      },
+      "raft": null,
+      "verdict": "unjustified",
+      "classification": "judgment",
+      "note": "§3.1 (r): Raft asks for Thread updates but never forbids a top-level reply."
+    },
+    {
+      "id": "prompt.standing.s",
+      "kind": "prompt-paragraph",
+      "rah": {
+        "file": "packages/daemon/src/standing-prompt-compiler.ts",
+        "symbol": "standing-prompt-compiler.ts:142",
+        "needles": ["exactly once with the reply body on stdin"]
+      },
+      "raft": null,
+      "verdict": "unjustified",
+      "classification": "judgment",
+      "note": "§3.1 (s): the 'exactly once' send cap is self-invented."
+    },
+    {
+      "id": "prompt.standing.v",
+      "kind": "prompt-paragraph",
+      "rah": {
+        "file": "packages/daemon/src/standing-prompt-compiler.ts",
+        "symbol": "standing-prompt-compiler.ts:144+170",
+        "needles": [
+          "never judge from the owner's prose alone",
+          "never rely on the owner's prose alone"
+        ]
+      },
+      "raft": null,
+      "verdict": "unjustified",
+      "classification": "judgment",
+      "note": "§3.1 (v): both sentences are absent from the Raft prompt."
+    },
+    {
+      "id": "prompt.standing.w",
+      "kind": "prompt-paragraph",
+      "rah": {
+        "file": "packages/daemon/src/standing-prompt-compiler.ts",
+        "symbol": "standing-prompt-compiler.ts:146",
+        "needles": ["An older Thread in the same Room is allowed"]
+      },
+      "raft": null,
+      "verdict": "unjustified",
+      "classification": "judgment",
+      "note": "§3.1 (w): a self-invented permission clause."
+    },
+    {
+      "id": "prompt.standing.aa",
+      "kind": "prompt-paragraph",
+      "rah": {
+        "file": "packages/daemon/src/standing-prompt-compiler.ts",
+        "symbol": "standing-prompt-compiler.ts:150",
+        "needles": [
+          "emit at most one next step",
+          "remain silent and only acknowledge"
+        ]
+      },
+      "raft": null,
+      "verdict": "unjustified",
+      "classification": "judgment",
+      "note": "§3.1 (aa): a fully self-invented turn-taking script and silence order."
+    },
+    {
+      "id": "prompt.standing.jj",
+      "kind": "prompt-paragraph",
+      "rah": {
+        "file": "packages/daemon/src/standing-prompt-compiler.ts",
+        "symbol": "standing-prompt-compiler.ts:154",
+        "needles": [
+          "cannot acknowledge the Activation while that parent Task sits idle"
+        ]
+      },
+      "raft": null,
+      "verdict": "unjustified",
+      "classification": "judgment",
+      "note": "§3.1 (jj): a self-invented process constraint."
+    },
+    {
+      "id": "prompt.standing.ss",
+      "kind": "prompt-paragraph",
+      "rah": {
+        "file": "packages/daemon/src/standing-prompt-compiler.ts",
+        "symbol": "standing-prompt-compiler.ts:170",
+        "needles": ["An ordinary conversational audit has no reviewer role"]
+      },
+      "raft": null,
+      "verdict": "unjustified",
+      "classification": "judgment",
+      "note": "§3.1 (ss): a recorded product adjudication, still RAH-authored judgment prose with no Raft counterpart."
+    }
+  ]
+}
