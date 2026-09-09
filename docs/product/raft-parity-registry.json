@@ -27,10 +27,10 @@
     "deferred-scope"
   ],
   "ratchet": {
-    "unjustified": 106,
+    "unjustified": 104,
     "undecidable": 0,
     "missingNonDeferred": 63,
-    "outputSurfaceUnjustified": 39,
+    "outputSurfaceUnjustified": 37,
     "outputSurfaceMissingNonDeferred": 30,
     "promptJudgmentParagraphs": 0
   },
@@ -4183,7 +4183,7 @@
       "outcome": "message search results",
       "disposition": "rendered-result",
       "rah": {
-        "file": "packages/agent-host/src/worker-read-cli.ts"
+        "file": "packages/agent-host/src/worker-read-render.ts"
       },
       "raft": {
         "anchor": "formatSearchResults",
@@ -4204,11 +4204,11 @@
       },
       "format": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表一 row 17."
+      "note": "output-errors 表一 row 17, closed: `worker-read-render.ts` ports formatSearchResults (main.js@676157) together with its whole preview engine — renderSearchSource (@676045), findSearchMatch (@676061), findSlockRefLiteralRanges (@676080), expandSearchMatchToRefLiteral (@676099), trimPreviewWindow (@676110), escapeSearchComponentLiterals (@676120), neutralizeSlockRefLiterals (@676123), renderPreviewText (@676126) and renderSearchPreview (@676129) — with Raft's own 80/120-character window, its `<omit />` and `<match>` tags and its trailing read-the-context sentence. Two field-level differences follow from RAH's ledger and are not free choices: `ref=\"msg:<id>\"` and the Thread id are the canonical ids because RAH's `message-resolve --message-id` and `message-post --thread-id` take those, and the `Source:` line reads `room:<roomId>` / `thread:<roomId>:<threadId>` rather than Raft's `channel:` / `dm:` / `thread:<parent>:<msg8>` because RAH's search row is a canonical Message that carries no Room kind or name at all. `Sender:` is the participant id for the same reason Raft's senderType is absent: the Message row has neither a display name nor a sender type. The RAH paging cursor is kept as the read family's `More: rah worker message-search --cursor \"...\"` footer, and `frozenThroughRoomSeq` / `frozenRoomCount` are dropped from the text because no later RAH command takes them; both remain on the HTTP response."
     },
     {
       "id": "output.read.message-resolve",
@@ -6092,15 +6092,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch on `message search` (main.js@729649 calls writeText with formatSearchResults and the command declares no --json option), and RAH now does the same. The rendering, including the preview engine, is adjudicated in output.read.message-search."
     },
     {
       "id": "output-format.worker.message-react",

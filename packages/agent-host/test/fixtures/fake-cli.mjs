@@ -358,11 +358,11 @@ if (mode === "trajectory") {
     )
   ) {
     const cli = (args) =>
-      JSON.parse(
-        execFileSync(process.env.RAH_WORKER_CLI, ["worker", ...args], {
-          encoding: "utf8",
-        }),
-      );
+      execFileSync(process.env.RAH_WORKER_CLI, ["worker", ...args], {
+        encoding: "utf8",
+      });
+    // Raft's `message search` prints text, so the probe reads the rendered
+    // `<result ref="msg:ID">` line rather than a JSON field.
     const found = cli([
       "message-search",
       "--query",
@@ -370,9 +370,10 @@ if (mode === "trajectory") {
       "--limit",
       "1",
     ]);
-    if (found.messages.length !== 1)
+    const refs = [...found.matchAll(/^<result ref="msg:([^"]+)">$/gmu)];
+    if (refs.length !== 1)
       throw new Error("Worker search did not find the explicit probe message");
-    const messageId = found.messages[0].messageId;
+    const messageId = refs[0][1];
     // Raft's minimal toggle: the message, the emoji, and nothing else.
     // Raft's `message react` acknowledges in text, naming the emoji, the
     // direction and the message.

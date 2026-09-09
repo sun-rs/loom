@@ -189,13 +189,18 @@ test("joined Room reads and directory resolve through HTTP and a real Worker CLI
       ]),
       new RegExp(`^## Task ${targetTask.taskId} history$`, "mu"),
     );
-    const global = P.WorkerMessageSearchResponseSchema.parse(
-      await cliJson(["message-search", "--query", "Joined fact"]),
+    // Raft's `message search` prints text, so the CLI is read as a model reads
+    // it; the freeze fields the text does not carry stay asserted on the HTTP
+    // response the CLI itself calls.
+    assert.match(
+      await cli(["message-search", "--query", "Joined fact"]),
+      new RegExp(
+        `^Search results for: "Joined fact" \\(2 results\\)\\n\\n<result ref="msg:${message.event.aggregateId}">\\nSource: room:${other.roomId}$`,
+        "mu",
+      ),
     );
-    assert.equal(global.messages[0]?.messageId, message.event.aggregateId);
-    assert.equal(global.frozenRoomCount, 2);
-    const search = P.WorkerMessageSearchResponseSchema.parse(
-      await cliJson([
+    assert.match(
+      await cli([
         "message-search",
         "--target",
         "#other",
@@ -206,6 +211,28 @@ test("joined Room reads and directory resolve through HTTP and a real Worker CLI
         "--after",
         "2000-01-01T00:00:00.000Z",
       ]),
+      new RegExp(
+        `^Filtered message results \\(\\d+ results?\\)$[^]*^<result ref="msg:${message.event.aggregateId}">$`,
+        "mu",
+      ),
+    );
+    const globalSearch = P.WorkerMessageSearchResponseSchema.parse(
+      await (await call("messages/search", { query: "Joined fact" })).json(),
+    );
+    assert.equal(
+      globalSearch.messages[0]?.messageId,
+      message.event.aggregateId,
+    );
+    assert.equal(globalSearch.frozenRoomCount, 2);
+    const search = P.WorkerMessageSearchResponseSchema.parse(
+      await (
+        await call("messages/search", {
+          channel: "#other",
+          sender: "@human",
+          sort: "recent",
+          after: "2000-01-01T00:00:00.000Z",
+        })
+      ).json(),
     );
     assert.ok(
       search.messages.some((m) => m.messageId === message.event.aggregateId),

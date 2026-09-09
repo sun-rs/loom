@@ -33,6 +33,13 @@
  *   (`@30120452`), `formatHumanProfile` (`@30119673`), `formatCreatedAgents`
  *   (`@30119334`), `formatCreator` (`@30120250`) and `getRuntimeDisplayName`
  *   (`@29997849`)
+ * - the search family, engine and all: `formatSearchResults` (`@676157`),
+ *   `renderSearchSource` (`@676045`), `findSearchMatch` (`@676061`),
+ *   `findSlockRefLiteralRanges` (`@676080`),
+ *   `expandSearchMatchToRefLiteral` (`@676099`), `trimPreviewWindow`
+ *   (`@676110`), `escapeSearchComponentLiterals` (`@676120`),
+ *   `neutralizeSlockRefLiterals` (`@676123`), `renderPreviewText` (`@676126`)
+ *   and `renderSearchPreview` (`@676129`)
  *
  * Two things are deliberately not copied, because copying them would take from
  * the Agent something RAH's ledger requires it to pass to a later command:
@@ -192,6 +199,217 @@ function renderMessageResolve(result: Json): string {
   if (result.rootMessage !== undefined)
     lines.push("", "Thread root:", messageLine(asRecord(result.rootMessage)));
   return lines.join("\n");
+}
+
+// ------------------------------------------------------------------ search --
+
+// `PREVIEW_BEFORE_CHARS` / `PREVIEW_AFTER_CHARS` / `PREVIEW_FALLBACK_CHARS`
+// (`main.js@729380`).
+const PREVIEW_BEFORE_CHARS = 80;
+const PREVIEW_AFTER_CHARS = 120;
+const PREVIEW_FALLBACK_CHARS = PREVIEW_BEFORE_CHARS + PREVIEW_AFTER_CHARS;
+
+type Span = { start: number; end: number };
+
+/** `escapeRegExp2` (`main.js@676058`). */
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * `findSearchMatch` (`main.js@676061`): the whole trimmed query first, then the
+ * first quoted phrase or bare term that occurs, case-insensitively.
+ */
+function findSearchMatch(content: string, query: string): Span | null {
+  const normalizedQuery = query.trim();
+  if (!normalizedQuery) return null;
+  const exactIndex = content
+    .toLowerCase()
+    .indexOf(normalizedQuery.toLowerCase());
+  if (exactIndex >= 0)
+    return { start: exactIndex, end: exactIndex + normalizedQuery.length };
+  const terms = normalizedQuery.match(/"([^"]+)"|\S+/g) ?? [];
+  for (const rawTerm of terms) {
+    const term = rawTerm.replace(/^"|"$/g, "").trim();
+    if (!term) continue;
+    const match = new RegExp(escapeRegExp(term), "i").exec(content);
+    if (match?.index !== undefined)
+      return { start: match.index, end: match.index + match[0].length };
+  }
+  return null;
+}
+
+/**
+ * `findSlockRefLiteralRanges` (`main.js@676080`). RAH writes the same four
+ * reference literals — `dm:@handle`, `task #N`, `@handle` and `#room` — so the
+ * ranges are the upstream ones unchanged.
+ */
+function* findRefLiteralRanges(content: string): Generator<Span> {
+  for (const match of content.matchAll(/\bdm:@[A-Za-z0-9][A-Za-z0-9_-]*/g))
+    if (match.index !== undefined)
+      yield { start: match.index, end: match.index + match[0].length };
+  for (const match of content.matchAll(/\btask #[0-9]+\b/g))
+    if (match.index !== undefined)
+      yield { start: match.index, end: match.index + match[0].length };
+  for (const pattern of [
+    /(^|[\n\s([{"'`;])(@[A-Za-z0-9][A-Za-z0-9_-]*)/g,
+    /(^|[\n\s([{"'`;])(#[A-Za-z][A-Za-z0-9_-]*)/g,
+  ]) {
+    for (const match of content.matchAll(pattern)) {
+      if (match.index === undefined) continue;
+      const prefix = match[1] ?? "";
+      const ref = match[2] ?? "";
+      yield {
+        start: match.index + prefix.length,
+        end: match.index + prefix.length + ref.length,
+      };
+    }
+  }
+}
+
+/**
+ * `expandSearchMatchToRefLiteral` (`main.js@676099`): a hit that lands inside a
+ * reference literal is widened to the whole literal, so the Agent reads a
+ * reference it can act on rather than a fragment of one.
+ */
+function expandSearchMatchToRefLiteral(content: string, match: Span): Span {
+  for (const refRange of findRefLiteralRanges(content)) {
+    if (match.start < refRange.end && match.end > refRange.start)
+      return {
+        start: Math.min(match.start, refRange.start),
+        end: Math.max(match.end, refRange.end),
+      };
+  }
+  return match;
+}
+
+/** `trimPreviewWindow` (`main.js@676110`): pull each cut edge off whitespace. */
+function trimPreviewWindow(content: string, start: number, end: number): Span {
+  let trimmedStart = start;
+  let trimmedEnd = end;
+  while (trimmedStart > 0 && /\s/.test(content[trimmedStart] ?? ""))
+    trimmedStart += 1;
+  while (
+    trimmedEnd < content.length &&
+    /\s/.test(content[trimmedEnd - 1] ?? "")
+  )
+    trimmedEnd -= 1;
+  return {
+    start: Math.max(0, Math.min(trimmedStart, content.length)),
+    end: Math.max(0, Math.min(trimmedEnd, content.length)),
+  };
+}
+
+/** `escapeSearchComponentLiterals` (`main.js@676120`). */
+function escapeSearchComponentLiterals(text: string): string {
+  return text.replace(
+    /<\/?(?:result|preview|match)\b[^>]*>|<omit\s*\/>/gi,
+    (tag) =>
+      tag.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"),
+  );
+}
+
+/**
+ * `neutralizeSlockRefLiterals` (`main.js@676123`): quoted content must not read
+ * as a live mention, DM, room or Task reference.
+ */
+function neutralizeRefLiterals(text: string): string {
+  return text
+    .replace(/\bdm:@([A-Za-z0-9][A-Za-z0-9_-]*)/g, "dm:user:$1")
+    .replace(/\btask #([0-9]+)\b/g, "task:$1")
+    .replace(/(^|[\n\s([{"'`;])@([A-Za-z0-9][A-Za-z0-9_-]*)/g, "$1user:$2")
+    .replace(/(^|[\n\s([{"'`;])#([A-Za-z][A-Za-z0-9_-]*)/g, "$1channel:$2");
+}
+
+/** `renderPreviewText` (`main.js@676126`). */
+const renderPreviewText = (text: string): string =>
+  neutralizeRefLiterals(escapeSearchComponentLiterals(text));
+
+/** `renderSearchPreview` (`main.js@676129`). */
+function renderSearchPreview(content: string, query: string): string {
+  const foundMatch = findSearchMatch(content, query);
+  const match = foundMatch
+    ? expandSearchMatchToRefLiteral(content, foundMatch)
+    : null;
+  let start = 0;
+  let end = Math.min(content.length, PREVIEW_FALLBACK_CHARS);
+  if (match) {
+    start = Math.max(0, match.start - PREVIEW_BEFORE_CHARS);
+    end = Math.min(content.length, match.end + PREVIEW_AFTER_CHARS);
+  }
+  ({ start, end } = trimPreviewWindow(content, start, end));
+  const leadingOmit = start > 0 ? "<omit />" : "";
+  const trailingOmit = end < content.length ? "<omit />" : "";
+  if (!match || match.end <= start || match.start >= end)
+    return `${leadingOmit}${renderPreviewText(
+      content.slice(start, end),
+    )}${trailingOmit}`;
+  return [
+    leadingOmit,
+    renderPreviewText(content.slice(start, match.start)),
+    "<match>",
+    renderPreviewText(content.slice(match.start, match.end)),
+    "</match>",
+    renderPreviewText(content.slice(match.end, end)),
+    trailingOmit,
+  ].join("");
+}
+
+/**
+ * `renderSearchSource` (`main.js@676045`). Upstream names the target by kind and
+ * name — `channel:`, `dm:`, `thread:<parent>:<msg8>` — from the four channel
+ * fields its search row carries. RAH's search row is a canonical Message, which
+ * carries the Room id and the Thread id and no Room kind or name at all, so the
+ * source names the target the way `--target` takes it: the canonical Room id,
+ * with `:<threadId>` appended for a Thread.
+ */
+function renderSearchSource(message: Json): string {
+  const roomId = neutralizeRefLiterals(asString(message.roomId) ?? "unknown");
+  const threadId = asString(message.threadId);
+  return threadId === undefined
+    ? `room:${roomId}`
+    : `thread:${roomId}:${threadId}`;
+}
+
+/**
+ * `formatSearchResults` (`main.js@676157`). `body.query` is Raft's
+ * `displayQuery` (`main.js@677157`): the trimmed query, or the empty string when
+ * the search was filter-only.
+ */
+function renderMessageSearch(body: Json, result: Json): string {
+  const messages = asArray(result.messages).map(asRecord);
+  if (messages.length === 0) return "No search results.";
+  const trimmedQuery = (asString(body.query) ?? "").trim();
+  const formatted = messages
+    .map((message) =>
+      [
+        `<result ref="msg:${asString(message.messageId) ?? "-"}">`,
+        `Source: ${renderSearchSource(message)}`,
+        `Sender: @${neutralizeRefLiterals(
+          asString(message.actorId) ?? "unknown",
+        )}`,
+        `Time: ${time(message.createdAt)}`,
+        "",
+        "<preview>",
+        renderSearchPreview(asString(message.body) ?? "", trimmedQuery),
+        "</preview>",
+        "</result>",
+      ].join("\n"),
+    )
+    .join("\n\n");
+  const resultLabel = messages.length === 1 ? "result" : "results";
+  return `${[
+    trimmedQuery
+      ? `Search results for: "${trimmedQuery}" (${messages.length} ${resultLabel})`
+      : `Filtered message results (${messages.length} ${resultLabel})`,
+    "",
+    formatted,
+    "",
+    "If a result may be relevant but its preview is not enough, read the surrounding context for that result before answering.",
+  ].join("\n")}${formatPageFooter(
+    "rah worker message-search",
+    result.nextCursor,
+  )}`;
 }
 
 // ------------------------------------------------------------------ events --
@@ -1379,6 +1597,7 @@ const RENDERERS: Record<string, (body: Json, result: Json) => string> = {
   "/v1/worker/channels/unmute": renderChannelAttention,
   "/v1/worker/messages/history": (_body, result) => renderHistory(result),
   "/v1/worker/messages/react": renderMessageReaction,
+  "/v1/worker/messages/search": renderMessageSearch,
   "/v1/worker/messages/resolve": (_body, result) =>
     renderMessageResolve(result),
   "/v1/worker/reminders/cancel": (_body, result) =>

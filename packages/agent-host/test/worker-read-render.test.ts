@@ -65,6 +65,199 @@ test("message-read with no messages renders Raft's empty-window sentence", () =>
   );
 });
 
+// ------------------------------------------------------------------ search --
+
+const SEARCH_PATH = "/v1/worker/messages/search";
+
+// One deterministic body long enough that Raft's 80/120-character preview
+// window has to cut it, so a match at the start, in the middle and at the end
+// each produce a different omission shape.
+const LONG_BODY =
+  "The deployment checklist starts here. " +
+  "Then a long stretch of filler text about the migration, the rollout window, the freeze, and the owners who signed off on each stage of the plan. " +
+  "Somewhere in the middle we mention the CANARY rollback decision that was taken on Tuesday. " +
+  "More filler follows about dashboards, alert thresholds, paging rotations, and the runbook that nobody has read since the last incident review. " +
+  "Finally the note closes with the OWNER handoff.";
+
+const searchMessage = (overrides: Record<string, unknown> = {}) => ({
+  actorId: "participant-a",
+  body: LONG_BODY,
+  createdAt: "2026-09-09T01:02:03.000Z",
+  messageId: "message-1",
+  roomId: "room-1",
+  roomSeq: 4,
+  ...overrides,
+});
+
+const previewOf = (text: string) =>
+  text.slice(
+    text.indexOf("<preview>\n") + "<preview>\n".length,
+    text.indexOf("\n</preview>"),
+  );
+
+const searchPreview = (body: string, query: string) =>
+  previewOf(
+    render(
+      SEARCH_PATH,
+      { messages: [searchMessage({ body })] },
+      query === "" ? {} : { query },
+    ) as string,
+  );
+
+test("message-search renders Raft's formatSearchResults block for one result", () => {
+  assert.equal(
+    render(
+      SEARCH_PATH,
+      { messages: [searchMessage({ body: "Ship it now, @alice said." })] },
+      { query: "ship" },
+    ),
+    [
+      'Search results for: "ship" (1 result)',
+      "",
+      '<result ref="msg:message-1">',
+      "Source: room:room-1",
+      "Sender: @participant-a",
+      "Time: 2026-09-09 01:02:03",
+      "",
+      "<preview>",
+      "<match>Ship</match> it now, user:alice said.",
+      "</preview>",
+      "</result>",
+      "",
+      "If a result may be relevant but its preview is not enough, read the surrounding context for that result before answering.",
+    ].join("\n"),
+  );
+});
+
+test("message-search names a Thread target and pluralises the result count", () => {
+  const text = render(
+    SEARCH_PATH,
+    {
+      messages: [
+        searchMessage({ body: "first hit" }),
+        searchMessage({
+          body: "second hit",
+          messageId: "message-2",
+          actorId: "participant-b",
+          threadId: "thread-9",
+          createdAt: "2026-09-09T02:00:00.000Z",
+        }),
+      ],
+    },
+    { query: "hit" },
+  ) as string;
+  assert.match(text, /^Search results for: "hit" \(2 results\)$/mu);
+  assert.match(text, /^Source: room:room-1$/mu);
+  assert.match(text, /^Source: thread:room-1:thread-9$/mu);
+  assert.match(text, /^<result ref="msg:message-2">$/mu);
+  assert.match(text, /^Sender: @participant-b$/mu);
+  // Raft separates results with a blank line.
+  assert.ok(text.includes("</result>\n\n<result "));
+});
+
+test("message-search renders Raft's filter-only header when no query was sent", () => {
+  const text = render(
+    SEARCH_PATH,
+    { messages: [searchMessage({ body: "Filter only result body." })] },
+    { sender: "@human", sort: "recent" },
+  ) as string;
+  assert.match(text, /^Filtered message results \(1 result\)$/mu);
+  assert.equal(previewOf(text), "Filter only result body.");
+});
+
+test("message-search renders Raft's empty sentence for an empty result set", () => {
+  assert.equal(
+    render(SEARCH_PATH, { messages: [] }, { query: "nothing" }),
+    "No search results.",
+  );
+});
+
+test("message-search follows the RAH paging cursor the read family already prints", () => {
+  const text = render(
+    SEARCH_PATH,
+    { messages: [searchMessage({ body: "page one" })], nextCursor: "c-2" },
+    { query: "page" },
+  ) as string;
+  assert.ok(
+    text.endsWith(
+      'before answering.\nMore: rah worker message-search --cursor "c-2"',
+    ),
+    text,
+  );
+});
+
+test("renderSearchPreview trims the window around a match at the start, middle and end", () => {
+  assert.equal(
+    searchPreview(LONG_BODY, "deployment"),
+    "The <match>deployment</match> checklist starts here. Then a long stretch of filler text about the migration, the rollout window, the freeze, and the<omit />",
+  );
+  assert.equal(
+    searchPreview(LONG_BODY, "CANARY"),
+    "<omit />ho signed off on each stage of the plan. Somewhere in the middle we mention the <match>CANARY</match> rollback decision that was taken on Tuesday. More filler follows about dashboards, alert thresholds, paging rotations,<omit />",
+  );
+  assert.equal(
+    searchPreview(LONG_BODY, "handoff"),
+    "<omit />has read since the last incident review. Finally the note closes with the OWNER <match>handoff</match>.",
+  );
+});
+
+test("renderSearchPreview falls back to the leading window when nothing matches", () => {
+  assert.equal(
+    searchPreview(LONG_BODY, "zzz nowhere"),
+    "The deployment checklist starts here. Then a long stretch of filler text about the migration, the rollout window, the freeze, and the owners who signed off on each stage of the plan. Somewhere in the<omit />",
+  );
+});
+
+test("findSearchMatch prefers the exact phrase, then the first term, and the first occurrence", () => {
+  assert.equal(
+    searchPreview(LONG_BODY, '"rollback decision" freeze'),
+    "<omit />ed off on each stage of the plan. Somewhere in the middle we mention the CANARY <match>rollback decision</match> that was taken on Tuesday. More filler follows about dashboards, alert thresholds, paging rotations, and the runbook th<omit />",
+  );
+  assert.equal(
+    searchPreview("needle one, then needle two, then needle three.", "needle"),
+    "<match>needle</match> one, then needle two, then needle three.",
+  );
+});
+
+test("a body shorter than the preview window is shown whole, with no omission marks", () => {
+  const preview = searchPreview("Ship it now, @alice said.", "now");
+  assert.equal(preview, "Ship it <match>now</match>, user:alice said.");
+  assert.ok(!preview.includes("<omit />"));
+});
+
+test("expandSearchMatchToRefLiteral widens a partial hit to the whole reference literal", () => {
+  assert.equal(
+    searchPreview("Please ask @alice-b about the rollout.", "alice"),
+    "Please ask <match>user:alice-b</match> about the rollout.",
+  );
+  assert.equal(
+    searchPreview("That is tracked as task #7 already.", "7"),
+    "That is tracked as <match>task:7</match> already.",
+  );
+  assert.equal(
+    searchPreview("Continue in dm:@alice for the details.", "alice"),
+    "Continue in <match>dm:user:alice</match> for the details.",
+  );
+  assert.equal(
+    searchPreview("Posted in #ops-room earlier today.", "ops"),
+    "Posted in <match>channel:ops-room</match> earlier today.",
+  );
+});
+
+test("a body that contains the preview markup itself is escaped, not obeyed", () => {
+  assert.equal(
+    searchPreview(
+      "The <match> tag and <omit /> marker are literal here.",
+      "tag",
+    ),
+    "The &lt;match&gt; <match>tag</match> and &lt;omit /&gt; marker are literal here.",
+  );
+});
+
+test("message-search has no --json, because Raft's message search has none", () => {
+  assert.equal(workerReadCommandOffersJson(SEARCH_PATH), false);
+});
+
 test("message-resolve renders the Raft message line and its thread root", () => {
   const text = render("/v1/worker/messages/resolve", {
     message: {
@@ -522,10 +715,6 @@ test("room-read renders the delivered window and keeps the context receipt", () 
 });
 
 test("a command with no ported renderer keeps its JSON response", () => {
-  assert.equal(
-    render("/v1/worker/messages/search", { messages: [] }),
-    undefined,
-  );
   assert.equal(
     render("/v1/worker/attachments/prepare", { attachmentId: "a" }),
     undefined,
