@@ -354,48 +354,34 @@ test("the follow-up Activation's sync states that the message was already presen
       activationId: string | null;
       fromSeq: number;
       toSeq: number;
-      sync: {
-        events: { roomSeq: number }[];
-        presentedContext?: {
-          targets: { roomId: string; presentedThroughSeq: number }[];
-          events: {
-            roomSeq: number;
-            messageId: string;
-            alreadyPresented: boolean;
-            presentedThroughSeq: number;
-            respondedAfter: { messageIds: string[]; count: number };
-          }[];
-        };
-      };
+      syncText: string;
     };
     assert.equal(observed.activationId, activations[1]?.activationId);
     assert.equal(observed.fromSeq, followUpRequest.roomSeq);
     assert.equal(observed.toSeq, followUpRequest.roomSeq);
-    // Delivery is unchanged: the follow-up is still re-delivered in the window.
-    assert.ok(
-      observed.sync.events.some(
-        (event) => event.roomSeq === followUpRequest.roomSeq,
+    // Delivery is unchanged: the follow-up is still re-delivered in the window,
+    // and the Agent reads that as the rendered text Raft would have printed.
+    assert.match(
+      observed.syncText,
+      new RegExp(
+        `\\[seq=${String(followUpRequest.roomSeq)} msg=${followUpRequest.payload.messageId as string} `,
+        "u",
       ),
-      "the second Activation still receives its actionable event",
+      observed.syncText,
     );
-    const presented = observed.sync.presentedContext;
-    assert.ok(presented, "the second Activation's sync must state what it saw");
-    assert.deepEqual(presented.targets, [
-      { presentedThroughSeq: followUpRequest.roomSeq, roomId },
-    ]);
-    const annotated = presented.events.find(
-      (event) => event.roomSeq === followUpRequest.roomSeq,
+    assert.ok(
+      observed.syncText.includes(
+        `Already presented: target ${roomId} through seq ${String(followUpRequest.roomSeq)}.`,
+      ),
+      observed.syncText,
     );
-    assert.ok(annotated, JSON.stringify(presented.events));
-    assert.equal(annotated.alreadyPresented, true);
-    assert.equal(annotated.presentedThroughSeq, followUpRequest.roomSeq);
-    assert.equal(annotated.messageId, followUpRequest.payload.messageId);
     // The 20 re-derivation steps in the incident were hunting for exactly this.
-    assert.equal(annotated.respondedAfter.count, 2);
-    assert.deepEqual(annotated.respondedAfter.messageIds, [
-      originalReply.payload.messageId,
-      followUpReply.payload.messageId,
-    ]);
+    assert.ok(
+      observed.syncText.includes(
+        `Already presented: seq ${String(followUpRequest.roomSeq)} (msg=${followUpRequest.payload.messageId as string}) was already presented through seq ${String(followUpRequest.roomSeq)}; you posted 2 message(s) at that target afterwards (${originalReply.payload.messageId as string}, ${followUpReply.payload.messageId as string}).`,
+      ),
+      observed.syncText,
+    );
   } finally {
     shutdown.abort("presented-context-cleanup");
     await running?.catch(() => undefined);

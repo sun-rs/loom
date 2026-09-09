@@ -207,10 +207,18 @@ test("a real fake child uploads PNG and text discussion evidence, publishes once
           maxBuffer: 1024 * 1024,
         },
       );
-      return JSON.parse(result.stdout) as Record<string, unknown>;
+      return result.stdout;
     };
+    const invokeJson = async (args: string[]) =>
+      JSON.parse(await invoke(args)) as Record<string, unknown>;
+    // `sync` renders Raft's drained window; its header states the delivered
+    // cursor, which is what `acknowledge --through-seq` takes.
     const delivery = await invoke(["worker", "sync"]);
-    assert.equal(delivery.cursorAfter, run.activation.toSeq);
+    assert.match(
+      delivery,
+      new RegExp(`cursor \\d+ to ${String(run.activation.toSeq)} of `, "u"),
+      delivery,
+    );
     const textBytes = Buffer.from("fake-child actual attachment evidence\n");
     const imageBytes = Buffer.from(
       "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aJ1sAAAAASUVORK5CYII=",
@@ -223,7 +231,7 @@ test("a real fake child uploads PNG and text discussion evidence, publishes once
     ] as const) {
       const source = join(directory, name);
       writeFileSync(source, content);
-      const published = await invoke([
+      const published = await invokeJson([
         "worker",
         "attachment-publish",
         "--path",
@@ -236,7 +244,7 @@ test("a real fake child uploads PNG and text discussion evidence, publishes once
       assert.equal(published.state, "completed");
       ids.push(String(published.attachmentId));
       assert.deepEqual(
-        await invoke([
+        await invokeJson([
           "worker",
           "attachment-publish",
           "--path",
@@ -259,13 +267,13 @@ test("a real fake child uploads PNG and text discussion evidence, publishes once
       ids.join(","),
       "--top-level",
       "--based-on-room-seq",
-      String(delivery.cursorAfter),
+      String(run.activation.toSeq),
       "--idempotency-key",
       "post-files",
     ];
-    const sent = await invoke(post);
+    const sent = await invokeJson(post);
     assert.equal(sent.deduplicated, false);
-    assert.equal((await invoke(post)).deduplicated, true);
+    assert.equal((await invokeJson(post)).deduplicated, true);
     assert.equal(
       f.kernel.listTasks(f.humanActor, { roomId: f.room.roomId }).length,
       0,
@@ -294,7 +302,7 @@ test("a real fake child uploads PNG and text discussion evidence, publishes once
       "worker",
       "acknowledge",
       "--through-seq",
-      String(delivery.cursorAfter),
+      String(run.activation.toSeq),
     ]);
   } finally {
     await service.close();

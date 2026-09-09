@@ -33,6 +33,10 @@ import {
   taskAddressList,
 } from "./worker-task-address-cli.ts";
 import { parseWorkerReadCommand } from "./worker-read-cli.ts";
+import {
+  renderWorkerReadResult,
+  workerReadCommandOffersJson,
+} from "./worker-read-render.ts";
 import { constants } from "node:fs";
 import { open, unlink } from "node:fs/promises";
 import { basename, isAbsolute, resolve } from "node:path";
@@ -180,8 +184,10 @@ export async function runWorkerCliCommand(
   }
   const sendCommand =
     arguments_[0] === "worker" && arguments_[1] === "message-post";
-  // Raft's `--json` is an output selector on `message send` alone.
-  const jsonOutput = sendCommand ? arguments_.includes("--json") : false;
+  // Raft's `--json` is an output selector, present on 19 of its 80 commands.
+  // `message send` and `version` are the two of those RAH has ported; every
+  // other command renders text only, exactly as upstream does.
+  const jsonOutput = arguments_.includes("--json");
   let failureDraftSaved = false;
   try {
     const config = arguments_[0] === "app";
@@ -338,11 +344,21 @@ export async function runWorkerCliCommand(
         body: { expectedRevision: current.revision, ...mutation },
       });
     }
-    // Raft's `writeText`/`writeJson` split: a message send prints human-
-    // readable text on stdout and reserves JSON for `--json`. Every other
-    // command keeps its JSON response, which is what the Agent is told to parse.
+    // Raft's `writeText`/`writeJson` split, applied the way upstream applies it:
+    // 76 of its 80 commands render human-readable text on stdout, and only 19
+    // offer `--json` at all. A command with a ported renderer therefore prints
+    // text unless it is one of the two that carry the flag and it was passed;
+    // a command with no renderer yet keeps its JSON response.
     if (!messagePost) {
-      runtime.stdout.write(`${JSON.stringify(result)}\n`);
+      const rendered =
+        jsonOutput && workerReadCommandOffersJson(request.path)
+          ? undefined
+          : renderWorkerReadResult(request.path, request.body, result);
+      runtime.stdout.write(
+        rendered === undefined
+          ? `${JSON.stringify(result)}\n`
+          : `${rendered}\n`,
+      );
       return 0;
     }
     const sendTarget = (request.body as { channel?: unknown }).channel;
@@ -668,17 +684,21 @@ function parseCommand(
     arguments_.slice(2),
     command === "message-post"
       ? ["anyway", "json", "send-draft", "top-level"]
-      : command === "message-react"
-        ? ["remove"]
-        : command === "task-list"
-          ? ["mine"]
-          : command === "message-read"
-            ? ["top-level"]
-            : command === "task-amend"
-              ? ["clear-description"]
-              : command === "task-assign"
-                ? ["unassign"]
-                : [],
+      : // Raft puts `--json` on 19 of its 80 commands; `version` is the only
+        // one of those in the read family (`main.js@32534037`).
+        command === "version"
+        ? ["json"]
+        : command === "message-react"
+          ? ["remove"]
+          : command === "task-list"
+            ? ["mine"]
+            : command === "message-read"
+              ? ["top-level"]
+              : command === "task-amend"
+                ? ["clear-description"]
+                : command === "task-assign"
+                  ? ["unassign"]
+                  : [],
     // Raft makes `--number` repeatable on `task claim` and nowhere else.
     command === "task-claim" ? ["number"] : [],
   );
@@ -1651,7 +1671,7 @@ rah worker room-resolve --target ROOM_ID|#CHANNEL|dm:@HANDLE[:THREAD_ID]
 rah worker message-read [--target TARGET] [--before ID|--after ID|--around ID] [--thread-id ID|--top-level] [--limit N] [--cursor CURSOR]
 rah worker message-resolve --message-id ID [--target TARGET]
 rah worker room-members [--target TARGET] [--limit N] [--cursor CURSOR]
-rah worker version
+rah worker version [--json]
 rah worker whoami
 rah worker server-info [--target TARGET] [--limit N] [--cursor CURSOR]
 rah worker profile-avatar-publish --path FILE --mime-type image/png|image/jpeg|image/gif|image/webp
@@ -1674,7 +1694,7 @@ rah worker message-react --message-id ID --emoji EMOJI [--remove]
 rah worker message-post --target TARGET <<'${MESSAGE_HEREDOC_DELIMITER}' [--attachment-ids ID,ID] [--thread-id ID | --top-level]
 rah worker message-post --send-draft --target TARGET [--anyway]
 Message content is read from stdin; use a heredoc so quotes, backticks and newlines stay literal. --send-draft takes no stdin: it sends the saved draft unchanged. Never use --send-draft when changing content.
-message-post prints human-readable text on stdout: read it. Add --json for the machine-readable response object instead.
+Commands print human-readable text on stdout: read it. Only message-post and version accept --json, and only when you need the machine-readable object; whoami answers in JSON and takes no flag.
 rah worker thread-unfollow --target "#channel:THREAD_ID" [--reason TEXT]
 rah worker attachment-publish --path FILE [--target TARGET --context-receipt RECEIPT] [--filename NAME] [--mime-type TYPE]
 rah worker attachment-comments --attachment-id ID [--limit N] [--before-room-seq N]

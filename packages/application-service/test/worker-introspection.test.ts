@@ -197,10 +197,14 @@ test("version and whoami use authenticated live daemon context with no token or 
     const cli = JSON.parse((await f.cli(["whoami"])).stdout);
     assert.equal(cli.participantId, f.agent.principal.principalId);
     assert.equal(cli.token, "[REDACTED]");
-    const cv = JSON.parse((await f.cli(["version"])).stdout);
-    assert.equal(cv.buildVersion, "actual-daemon-test");
-    assert.equal(cv.cliCarrier.name, "@rah-os/agent-host");
-    assert.ok(cv.cliCarrier.version);
+    // Raft's `version` is one of its 19 `--json` commands: text by default.
+    const cv = (await f.cli(["version"])).stdout;
+    assert.match(cv, /^RAH CLI: @rah-os\/agent-host \S+$/mu);
+    assert.match(cv, /^RAH daemon \(live\): actual-daemon-test$/mu);
+    const cvJson = JSON.parse((await f.cli(["version", "--json"])).stdout);
+    assert.equal(cvJson.buildVersion, "actual-daemon-test");
+    assert.equal(cvJson.cliCarrier.name, "@rah-os/agent-host");
+    assert.ok(cvJson.cliCarrier.version);
     f.db
       .prepare("DELETE FROM memberships WHERE room_id=? AND principal_id=?")
       .run(f.room.roomId, f.agent.principal.principalId);

@@ -400,7 +400,7 @@ test("real Node child converts a Message, assigns and clears its Task, and reads
     writeFileSync(tokenPath, f.credential.accessToken, { mode: 0o600 });
     const cli = new URL("../../agent-host/src/worker-cli.ts", import.meta.url)
       .href;
-    const invoke = async (args: string[]) => {
+    const invokeText = async (args: string[]) => {
       const result = await promisify(execFile)(
         process.execPath,
         [
@@ -420,8 +420,9 @@ test("real Node child converts a Message, assigns and clears its Task, and reads
           timeout: 20_000,
         },
       );
-      return JSON.parse(result.stdout);
+      return result.stdout;
     };
+    const invoke = async (args: string[]) => JSON.parse(await invokeText(args));
     const converted = WorkerTaskMutationResponseSchema.parse(
       await invoke([
         "task-convert",
@@ -461,13 +462,16 @@ test("real Node child converts a Message, assigns and clears its Task, and reads
     assert.equal(cleared.task.state, "todo");
     assert.equal(cleared.task.claimedBy, undefined);
     assert.equal(cleared.task.assigneeId, undefined);
-    const history = await invoke([
+    // `task-history` renders Raft's `formatTaskHistory` event lines.
+    const history = await invokeText([
       "task-history",
       "--task-id",
       converted.task.taskId,
     ]);
     assert.deepEqual(
-      history.events.map((event: { type: string }) => event.type),
+      [...history.matchAll(/^seq=\d+ .* type=(\S+)$/gmu)].map(
+        (match) => match[1],
+      ),
       ["task.unassigned", "task.assigned", "task.created"],
     );
     const current = f.kernel.getTask(f.actor, {

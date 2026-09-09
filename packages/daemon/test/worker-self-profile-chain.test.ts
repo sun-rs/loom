@@ -41,21 +41,30 @@ test("DaemonApplication launches a real fake child that edits its own profile an
     import {writeFileSync} from 'node:fs';
     import {runWorkerCliCommand} from ${JSON.stringify(cliUrl)};
     if (!process.env.RAH_WORKER_API_URL) { console.log('Fake profile worker fixture'); process.exit(0); }
-    const call=async (...args)=>{
+    const text=async (...args)=>{
       let out='',err='';
       const status=await runWorkerCliCommand(['worker',...args],{env:process.env,fetch:globalThis.fetch,stdout:{write:x=>out+=x},stderr:{write:x=>err+=x}});
       if(status!==0)throw new Error(args[0]+': '+err);
-      return JSON.parse(out);
+      return out;
+    };
+    // Profile commands still answer in JSON; \`sync\` renders Raft's text and
+    // states the delivered cursor on its header line.
+    const call=async (...args)=>JSON.parse(await text(...args));
+    const syncCursorAfter=async()=>{
+      const out=await text('sync');
+      const matched=/cursor \\d+ to (\\d+) of \\d+/u.exec(out);
+      if(!matched)throw new Error('sync printed no cursor: '+out);
+      return Number(matched[1]);
     };
     const flags=c=>['--control-room-id',c.controlRoomId,'--control-room-seq',String(c.controlRoomSeq),'--expected-revision-id',c.expectedRevisionId];
     try {
-      const delivered=await call('sync');
+      const deliveredThrough=await syncCursorAfter();
       const before=await call('profile-self-get');
       const metadata=await call('profile-update',...flags(before.writeContext),'--display-name','Alicia from child','--description','Actual daemon Worker commands','--idempotency-key','child-metadata');
       const upload=await call('profile-avatar-publish','--path',${JSON.stringify(pngPath)},'--mime-type','image/png');
       const changed=await call('profile-update',...flags(metadata.writeContext),'--avatar-key',upload.avatarKey,'--avatar-upload-intent-id',upload.uploadIntentId,'--idempotency-key','child-avatar');
-      const posted=await call('message-post','--json','--body','Fake child completed self profile and actual avatar binding','--top-level','--based-on-room-seq',String(delivered.cursorAfter),'--idempotency-key','child-profile-result');
-      await call('acknowledge','--through-seq',String(delivered.cursorAfter));
+      const posted=await call('message-post','--json','--body','Fake child completed self profile and actual avatar binding','--top-level','--based-on-room-seq',String(deliveredThrough),'--idempotency-key','child-profile-result');
+      await call('acknowledge','--through-seq',String(deliveredThrough));
       writeFileSync(${JSON.stringify(evidencePath)},JSON.stringify({before,metadata,upload,changed,posted}));
     } catch(error) { writeFileSync(${JSON.stringify(evidencePath)},JSON.stringify({error:String(error)})); process.exitCode=1; }
   `,

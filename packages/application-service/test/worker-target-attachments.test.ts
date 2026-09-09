@@ -95,6 +95,47 @@ async function fixture() {
     get token() {
       return token;
     },
+    /**
+     * `room-read` renders Raft's window text; the receipt and the through-seq
+     * stay on that text because `attachment-publish --context-receipt` and
+     * `message-post --based-on-room-seq` take them.
+     */
+    async cliRoomContext(
+      this: { cliText(args: string[]): Promise<string> },
+      args: string[],
+    ) {
+      const stdout = await this.cliText(args);
+      const header =
+        /^Read window: \d+ delivered at \S+, seq \d+-(\d+), /mu.exec(stdout);
+      const receipt = /^Context receipt: (.+)$/mu.exec(stdout);
+      assert.ok(header && receipt, stdout);
+      return {
+        contextReceipt: receipt[1]!,
+        throughRoomSeq: Number(header[1]),
+      };
+    },
+    cliText: async (args: string[]) => {
+      const result = await promisify(execFile)(
+        process.execPath,
+        [
+          "--input-type=module",
+          "-e",
+          `import {runWorkerCliCommand} from ${JSON.stringify(new URL("../../agent-host/src/worker-cli.ts", import.meta.url).href)};process.exitCode=await runWorkerCliCommand(process.argv.slice(1));`,
+          "worker",
+          ...args,
+        ],
+        {
+          cwd: process.cwd(),
+          env: {
+            ...process.env,
+            RAH_WORKER_API_URL: s.origin!,
+            RAH_WORKER_SESSION_FILE: tokenFile,
+          },
+          maxBuffer: 3 * 1024 * 1024,
+        },
+      );
+      return result.stdout;
+    },
     cli: async (args: string[]) => {
       const result = await promisify(execFile)(
         process.execPath,
@@ -340,7 +381,11 @@ test("real Worker CLI publishes PNG to target and resumes its TXT held draft in 
     );
     const path = join(f.dir, "pixel.png");
     writeFileSync(path, png);
-    const context = await f.cli(["room-read", "--target", "#target"]);
+    const context = await f.cliRoomContext([
+      "room-read",
+      "--target",
+      "#target",
+    ]);
     const file = await f.cli([
       "attachment-publish",
       "--target",
@@ -378,7 +423,7 @@ test("real Worker CLI publishes PNG to target and resumes its TXT held draft in 
       output,
     ]);
     assert.deepEqual(readFileSync(output), png);
-    const fresh = await f.cli(["room-read", "--target", "#target"]);
+    const fresh = await f.cliRoomContext(["room-read", "--target", "#target"]);
     const id = await upload(f, fresh, "cli-txt");
     f.k.postMessage(f.actor, {
       roomId: f.target.roomId,
@@ -435,7 +480,7 @@ test("real Worker CLI publishes PNG to target and resumes its TXT held draft in 
       idempotencyKey: "wrong-run-receipt",
     });
     assert.equal(invalid.status, 403);
-    const next = await f.cli(["room-read", "--target", "#target"]);
+    const next = await f.cliRoomContext(["room-read", "--target", "#target"]);
     const sent = await f.cli([
       "message-post",
       "--json",
@@ -1022,7 +1067,11 @@ test("a canonical joined DM accepts its own file through the same target CLI pat
       }).latestRoomSeq,
       idempotencyKey: "dm",
     });
-    const context = await f.cli(["room-read", "--target", "dm:@human"]);
+    const context = await f.cliRoomContext([
+      "room-read",
+      "--target",
+      "dm:@human",
+    ]);
     const path = join(f.dir, "dm.txt");
     writeFileSync(path, "Direct file");
     const file = await f.cli([

@@ -348,10 +348,16 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
   assert.doesNotMatch(prompt, /run one bounded command at a time, parse its/u);
   assert.match(
     prompt,
-    /message commands print human-readable text.*read that text/isu,
+    /commands print human-readable text on stdout.*read that text/isu,
   );
   assert.match(prompt, /`--json`/u);
-  assert.match(prompt, /Task and read commands return JSON/iu);
+  // Raft gives the Agent text, not "text with a JSON option": the read family
+  // now renders text too, so nothing tells the model to parse a read response.
+  assert.doesNotMatch(prompt, /Task and read commands return JSON/iu);
+  assert.match(
+    prompt,
+    /Only `message-post` and `version` accept `--json`, and `whoami` answers in JSON with no flag/u,
+  );
   // The messaging mechanics the model mis-combined are gone.
   assert.doesNotMatch(prompt, /--held-draft-id/u);
   assert.doesNotMatch(prompt, /message-post --body/u);
@@ -384,28 +390,30 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
   // F0909H: the Kernel now states what it already showed this participant and
   // what that participant already said afterwards. These are mechanical ledger
   // facts, so the prompt names the fields and draws no conclusion from them.
-  assert.match(prompt, /`presentedContext`/u);
+  // The read family renders text, so the same facts are named as the lines the
+  // Agent reads rather than as fields it would have to parse.
+  assert.match(prompt, /`Already presented:` lines/u);
   assert.match(
     prompt,
-    /`presentedThroughSeq`.*already shown at that target/isu,
+    /a target line states the Room sequence you were already shown at that target/isu,
   );
   assert.match(
     prompt,
-    /`alreadyPresented`.*already showed you in an earlier Run/isu,
+    /an event line names a delivered event the Kernel already showed you in an earlier Run/isu,
   );
   assert.match(
     prompt,
-    /`respondedAfter`.*your own message ids.*same target/isu,
+    /how many of your own messages you posted at that same target afterwards/isu,
   );
   assert.match(prompt, /canonical Kernel ledger facts.*before deciding/isu);
   // No judgment rule may ride along with the facts.
   assert.doesNotMatch(
     prompt,
-    /alreadyPresented[^.]*(do not reply|already answered|skip|stay silent|no further)/isu,
+    /Already presented[^.]*(do not reply|already answered|skip|stay silent|no further)/isu,
   );
   assert.doesNotMatch(
     prompt,
-    /respondedAfter[^.]*(means you|proves you|so you have|therefore)/isu,
+    /afterwards[^.]*(means you|proves you|so you have|therefore)/isu,
   );
   assert.match(prompt, /send-draft.*rechecks freshness/isu);
   assert.match(prompt, /--anyway.*continueAnywaySuggested/isu);

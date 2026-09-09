@@ -69,7 +69,19 @@ test("Worker CLI maps bounded commands to the activation-scoped application port
       state.requests[0]?.headers.get("authorization"),
       "Bearer worker-secret",
     );
-    assert.equal(state.stdout(), '{"ok":true,"roomSeq":7}\n');
+    // Raft renders `message check` as text and terminates the drain; RAH's
+    // `sync` is the same outcome, so it renders text rather than a payload.
+    assert.equal(
+      state.stdout(),
+      [
+        "Sync window: 0 delivered, cursor - to - of -.",
+        "",
+        "No new inbox messages.",
+        "",
+        "No more new inbox messages.",
+        "",
+      ].join("\n"),
+    );
     assert.equal(state.stderr(), "");
   } finally {
     rmSync(state.directory, { force: true, recursive: true });

@@ -42,6 +42,17 @@ function publishPidFile(pidFile, value) {
   renameSync(temporaryPath, pidFile);
 }
 
+/**
+ * `rah worker sync` renders Raft's drained window as text; its header states
+ * the delivered cursor because RAH's Agent, unlike Raft's, has to pass that
+ * cursor back to `acknowledge --through-seq`.
+ */
+function syncCursorAfter(stdout) {
+  const matched = /cursor \d+ to (\d+) of \d+/u.exec(stdout);
+  if (!matched) throw new Error(`worker sync printed no cursor: ${stdout}`);
+  return Number(matched[1]);
+}
+
 function readWorkerAccessToken() {
   if (process.env.RAH_WORKER_TOKEN !== undefined) {
     throw new Error("legacy raw Worker token environment is forbidden");
@@ -244,24 +255,26 @@ if (mode === "trajectory") {
     throw new Error("internal Worker tool directory hint leaked to Runtime");
   }
   const requiredThrough = Number(process.env.RAH_TO_SEQ);
-  const delivery = JSON.parse(
+  // Raft prints the drained window as text and RAH does the same, so the fake
+  // Agent reads the cursor off the rendered line exactly as a real one must.
+  const deliveredThrough = syncCursorAfter(
     execFileSync("rah", ["worker", "sync"], { encoding: "utf8" }),
   );
   if (
     !Number.isInteger(requiredThrough) ||
-    !Number.isInteger(delivery.cursorAfter) ||
-    delivery.cursorAfter < requiredThrough
+    !Number.isInteger(deliveredThrough) ||
+    deliveredThrough < requiredThrough
   ) {
     throw new Error("rah Worker CLI did not deliver the Activation range");
   }
   execFileSync(
     "rah",
-    ["worker", "acknowledge", "--through-seq", String(delivery.cursorAfter)],
+    ["worker", "acknowledge", "--through-seq", String(deliveredThrough)],
     { encoding: "utf8" },
   );
   process.stdout.write(
     JSON.stringify({
-      deliveredThrough: delivery.cursorAfter,
+      deliveredThrough,
       marker: "worker-cli-sync-finished",
     }) + "\n",
   );
@@ -386,25 +399,24 @@ if (mode === "trajectory") {
     (event) =>
       event.roomSeq >= requiredFrom && event.roomSeq <= requiredThrough,
   );
-  const readTool =
+  // The read family renders text upstream, so the fake Agent reads text. Only
+  // the commands Raft itself answers in JSON are parsed as JSON.
+  const readText =
     process.env.RAH_FAKE_READ_TOOLS === "1"
       ? (args) =>
-          JSON.parse(
-            execFileSync(process.env.RAH_WORKER_CLI, ["worker", ...args], {
-              encoding: "utf8",
-            }),
-          )
+          execFileSync(process.env.RAH_WORKER_CLI, ["worker", ...args], {
+            encoding: "utf8",
+          })
       : undefined;
-  if (readTool) {
-    const members = readTool(["room-members"]);
-    const server = readTool(["server-info"]);
+  const readTool =
+    readText === undefined ? undefined : (args) => JSON.parse(readText(args));
+  if (readText) {
+    const members = readText(["room-members"]);
+    const server = readText(["server-info"]);
     const profile = readTool(["profile-show"]);
     if (
-      !members.members.some(
-        (member) =>
-          member.principal.principalId === process.env.RAH_PARTICIPANT_ID,
-      ) ||
-      server.room.roomId !== process.env.RAH_ROOM_ID ||
+      !members.includes(`id=${process.env.RAH_PARTICIPANT_ID}`) ||
+      !server.includes(`id=${process.env.RAH_ROOM_ID}`) ||
       !profile.isSelf
     )
       throw new Error("Worker identity reads did not match the execution");
@@ -518,7 +530,10 @@ if (mode === "trajectory") {
             activationId: process.env.RAH_ACTIVATION_ID ?? null,
             fromSeq: Number(process.env.RAH_FROM_SEQ),
             toSeq: Number(process.env.RAH_TO_SEQ),
-            sync: JSON.parse(sync.stdout),
+            // Recorded as the bytes the Agent actually read. The stderr defect
+            // this chain was written for is only visible when the fixture
+            // observes the rendered stream rather than a re-parsed payload.
+            syncText: sync.stdout,
           },
           null,
           2,
@@ -588,29 +603,28 @@ if (mode === "trajectory") {
       const auditedTaskId = /\[AUDIT ([^\]]+)\]/u.exec(
         auditRequest.payload.body,
       )[1];
-      let readTask;
-      if (readTool) {
-        readTask = readTool(["task-get", "--task-id", auditedTaskId]).task;
-        const history = readTool(["task-history", "--task-id", auditedTaskId]);
-        const board = readTool(["task-list"]);
-        const resolved = readTool([
+      let sourceMessageId;
+      let auditedThreadId;
+      if (readText) {
+        const card = readText(["task-get", "--task-id", auditedTaskId]);
+        sourceMessageId = /^Source message: (\S+)$/mu.exec(card)?.[1];
+        auditedThreadId = /^Thread: (\S+)$/mu.exec(card)?.[1];
+        if (sourceMessageId === undefined)
+          throw new Error(`task-get printed no source message: ${card}`);
+        const history = readText(["task-history", "--task-id", auditedTaskId]);
+        const board = readText(["task-list"]);
+        const resolved = readText([
           "message-resolve",
           "--message-id",
-          readTask.sourceMessageId,
+          sourceMessageId,
         ]);
-        const around = readTool([
-          "message-read",
-          "--around",
-          readTask.sourceMessageId,
-        ]);
-        readTool(["task-submission", "--task-id", auditedTaskId]);
+        const around = readText(["message-read", "--around", sourceMessageId]);
+        readText(["task-submission", "--task-id", auditedTaskId]);
         if (
-          !history.events.some((event) => event.type === "task.created") ||
-          !board.tasks.some((task) => task.taskId === auditedTaskId) ||
-          resolved.message.messageId !== readTask.sourceMessageId ||
-          !around.messages.some(
-            (message) => message.messageId === readTask.sourceMessageId,
-          )
+          !history.includes("type=task.created") ||
+          !board.includes(`id=${auditedTaskId}`) ||
+          !resolved.includes(`msg=${sourceMessageId}`) ||
+          !around.includes(`msg=${sourceMessageId}`)
         )
           throw new Error(
             "Worker source reads did not establish the audited Task",
@@ -628,8 +642,8 @@ if (mode === "trajectory") {
         throw new Error("audit reply requires RAH_ACTIVATION_ID");
       const replied = await request("/v1/worker/messages/post", {
         basedOnRoomSeq: delivery.cursorAfter,
-        ...(readTask ? { threadId: readTask.threadId } : {}),
-        body: `Audit of ${auditedTaskId}: ${String(trajectory.entries.length)} trajectory entries; tools: ${toolNames.join(", ")}${readTool ? "; read-tools: canonical history, task board, member handles, exact source" : ""}`,
+        ...(auditedThreadId === undefined ? {} : { threadId: auditedThreadId }),
+        body: `Audit of ${auditedTaskId}: ${String(trajectory.entries.length)} trajectory entries; tools: ${toolNames.join(", ")}${readText ? "; read-tools: canonical history, task board, member handles, exact source" : ""}`,
         idempotencyKey: `fake:${activationId}:audit-reply`,
       });
       await request("/v1/worker/acknowledge", {
@@ -735,12 +749,7 @@ if (mode === "trajectory") {
       .split(",")
       .map((value) => value.trim());
     const parentTaskId = autoClaimedTask.task.taskId;
-    if (
-      readTool &&
-      !readTool(["task-list"]).tasks.some(
-        (task) => task.taskId === parentTaskId,
-      )
-    )
+    if (readText && !readText(["task-list"]).includes(`id=${parentTaskId}`))
       throw new Error("Task board omitted the parent before splitting");
     // message-post is an Activation-head command: the Kernel requires the
     // delivered head, not the Agent's own advancing cursor. task-create

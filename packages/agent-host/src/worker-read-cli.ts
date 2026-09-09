@@ -11,7 +11,9 @@ export function parseWorkerReadCommand(
         throw new Error(`unknown --${key} option for ${command}`);
   };
   if (command === "version" || command === "whoami") {
-    allowed([]);
+    // Upstream `version` is one of the 19 commands that carry `--json`; it is
+    // an output selector, so it never reaches the request body.
+    allowed(command === "version" ? ["json"] : []);
     return {
       path:
         command === "version" ? "/v1/worker/version" : "/v1/worker/auth/whoami",

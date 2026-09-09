@@ -148,6 +148,30 @@ async function fixture() {
   };
 }
 
+/**
+ * `task-history` and `sync` render Raft's text; upstream prints the event
+ * payload as JSON on its own indented line (`formatTaskHistory`,
+ * `main.js@677573`), so a test that asserts on a payload reads that line.
+ */
+const renderedPayloads = (stdout: string): any[] =>
+  stdout
+    .split("\n")
+    .filter((line) => line.startsWith("  {"))
+    .map((line) => JSON.parse(line.trim()));
+
+/** Every `seq=`/`type=` pair the rendered sync window states. */
+const renderedEvents = (stdout: string): { roomSeq: number; type: string }[] =>
+  [...stdout.matchAll(/^\[?seq=(\d+) [^\n]*?type=([a-z_]+\.[a-z_]+)/gmu)].map(
+    (match) => ({ roomSeq: Number(match[1]), type: match[2]! }),
+  );
+
+/** The delivered cursor the sync header states. */
+const renderedCursorAfter = (stdout: string): number => {
+  const matched = /cursor \d+ to (\d+) of \d+/u.exec(stdout);
+  assert.ok(matched, stdout);
+  return Number(matched[1]);
+};
+
 test("Worker noncreator amendment through HTTP and real Node CLI preserves ownership, exact replay and full history", async () => {
   const f = await fixture();
   try {
@@ -182,10 +206,10 @@ test("Worker noncreator amendment through HTTP and real Node CLI preserves owner
     ]);
     const cleared = JSON.parse(out.stdout);
     assert.equal(cleared.task.description, undefined);
-    const history = JSON.parse(
+    const history = renderedPayloads(
       (await f.cli(["task-history", "--task-id", input.taskId])).stdout,
     );
-    assert.deepEqual(history.events[0].changes.description, {
+    assert.deepEqual(history[0].changes.description, {
       from: "Criteria",
       to: null,
     });
@@ -248,10 +272,10 @@ test("Human typed task.amend and Worker history accept complete worst-case legal
       basedOnRoomSeq: f.latest(),
       idempotencyKey: "large2",
     });
-    const history = JSON.parse(
+    const history = renderedPayloads(
       (await f.cli(["task-history", "--task-id", taskId])).stdout,
     );
-    assert.deepEqual(history.events[0].changes, b.event.payload.changes);
+    assert.deepEqual(history[0].changes, b.event.payload.changes);
     assert.equal(a.task.description?.length, 50000);
     const read = await client.request("task.history", {
       roomId: f.room.roomId,
@@ -317,16 +341,17 @@ test("Large amended events reach the assignee next execution through bounded com
         ...(cursor ? ["--after-seq", String(cursor)] : []),
       ]);
       assert.ok(Buffer.byteLength(out.stdout) < 2 * 1024 * 1024);
-      const result = JSON.parse(out.stdout);
+      const delivered = renderedEvents(out.stdout);
       pages++;
-      assert.ok(result.cursorAfter > cursor);
-      seqs.push(...result.events.map((e: any) => e.roomSeq));
+      const cursorAfter = renderedCursorAfter(out.stdout);
+      assert.ok(cursorAfter > cursor);
+      seqs.push(...delivered.map((event) => event.roomSeq));
       amendments.push(
-        ...result.events
-          .filter((e: any) => e.type === "task.amended")
-          .map((e: any) => e.eventId),
+        ...delivered
+          .filter((event) => event.type === "task.amended")
+          .map((event) => String(event.roomSeq)),
       );
-      cursor = result.cursorAfter;
+      cursor = cursorAfter;
       if (pages === 1) {
         assert.ok(cursor < activation.toSeq);
         await assert.rejects(

@@ -229,7 +229,30 @@ test("cross-target posts require a complete signed latest-window receipt without
           maxBuffer: P.ROOM_SYNC_RESPONSE_MAX_BYTES + 4096,
         },
       );
-      return JSON.parse(result.stdout);
+      return result.stdout;
+    };
+    const cliJson = async (args: string[]) => JSON.parse(await cli(args));
+    /**
+     * `room-read` renders Raft's window text. The receipt and the through-seq
+     * stay on the line because RAH's `message-post --context-receipt` and
+     * `--based-on-room-seq` take them; the rest is read off the same header.
+     */
+    const roomContext = (stdout: string) => {
+      const header =
+        /^Read window: (\d+) delivered at \S+, seq (\d+)-(\d+), (complete|truncated), oldest to newest\.$/mu.exec(
+          stdout,
+        );
+      assert.ok(header, stdout);
+      const receipt = /^Context receipt: (.+)$/mu.exec(stdout);
+      assert.ok(receipt, stdout);
+      return {
+        complete: header[4] === "complete",
+        contextReceipt: receipt[1]!,
+        delivered: Number(header[1]),
+        eventFloorSeq: Number(header[2]),
+        hasSnapshot: /^Room snapshot at seq \d+: /mu.test(stdout),
+        throughRoomSeq: Number(header[3]),
+      };
     };
     const thread = kernel.createThread(actor, {
       roomId: other.roomId,
@@ -239,11 +262,11 @@ test("cross-target posts require a complete signed latest-window receipt without
       idempotencyKey: "target-thread",
     }).thread;
     const threadTarget = `#other:${thread.threadId}`;
-    const threadContext = P.WorkerRoomContextResponseSchema.parse(
+    const threadContext = roomContext(
       await cli(["room-read", "--target", threadTarget]),
     );
     const threadPosted = P.WorkerMessagePostResponseSchema.parse(
-      await cli([
+      await cliJson([
         "message-post",
         "--json",
         "--target",
@@ -278,11 +301,11 @@ test("cross-target posts require a complete signed latest-window receipt without
       }).latestRoomSeq,
       idempotencyKey: "dm",
     });
-    const dmContext = P.WorkerRoomContextResponseSchema.parse(
+    const dmContext = roomContext(
       await cli(["room-read", "--target", "dm:@human"]),
     );
     const dmPosted = P.WorkerMessagePostResponseSchema.parse(
-      await cli([
+      await cliJson([
         "message-post",
         "--json",
         "--target",
@@ -306,14 +329,17 @@ test("cross-target posts require a complete signed latest-window receipt without
         recipients: [],
         idempotencyKey: `large-${n}`,
       });
-    const partial = P.WorkerRoomContextResponseSchema.parse(
-      await cli(["room-read", "--target", "#other", "--limit", "20"]),
-    );
+    const partialText = await cli([
+      "room-read",
+      "--target",
+      "#other",
+      "--limit",
+      "20",
+    ]);
+    const partial = roomContext(partialText);
     assert.equal(partial.complete, false);
-    assert.ok(
-      Buffer.byteLength(JSON.stringify(partial)) <=
-        P.ROOM_SYNC_RESPONSE_MAX_BYTES,
-    );
+    // The bound applies to the bytes the Agent actually reads.
+    assert.ok(Buffer.byteLength(partialText) <= P.ROOM_SYNC_RESPONSE_MAX_BYTES);
     assert.equal(
       (
         await call("messages/post", {
@@ -325,7 +351,7 @@ test("cross-target posts require a complete signed latest-window receipt without
       ).status,
       403,
     );
-    const remainder = P.WorkerRoomContextResponseSchema.parse(
+    const remainder = roomContext(
       await cli([
         "room-read",
         "--target",
@@ -337,14 +363,11 @@ test("cross-target posts require a complete signed latest-window receipt without
       ]),
     );
     assert.equal(remainder.complete, true);
-    assert.equal(
-      partial.window.events.length + remainder.window.events.length,
-      20,
-    );
-    assert.equal(remainder.window.snapshot, null);
+    assert.equal(partial.delivered + remainder.delivered, 20);
+    assert.equal(remainder.hasSnapshot, false);
     assert.equal(remainder.eventFloorSeq, partial.eventFloorSeq);
     const completedPost = P.WorkerMessagePostResponseSchema.parse(
-      await cli([
+      await cliJson([
         "message-post",
         "--json",
         "--target",

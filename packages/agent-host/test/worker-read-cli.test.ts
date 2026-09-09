@@ -164,6 +164,14 @@ test("Worker read CLI exposes bounded history, identity and Task tools without a
       ),
       1,
     );
+    // Raft puts `--json` on 19 of its 80 commands and on none of the read
+    // family but `version`; a read command that is offered the flag must fail
+    // closed rather than quietly switch format.
+    for (const command of ["sync", "message-read", "task-list", "whoami"])
+      assert.equal(
+        await runWorkerCliCommand(["worker", command, "--json"], runtime),
+        1,
+      );
     assert.equal(requests.length, accepted);
   } finally {
     rmSync(dir, { recursive: true, force: true });

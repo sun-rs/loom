@@ -149,61 +149,53 @@ test("joined Room reads and directory resolve through HTTP and a real Worker CLI
           timeout: 15000,
         },
       );
-      return JSON.parse(result.stdout);
+      return result.stdout;
     };
+    // The read family renders Raft's text; only the commands that still answer
+    // in JSON are parsed.
+    const cliJson = async (args: string[]) => JSON.parse(await cli(args));
     assert.equal(
       P.WorkerRoomResolveResponseSchema.parse(
-        await cli(["room-resolve", "--target", "#other"]),
+        await cliJson(["room-resolve", "--target", "#other"]),
       ).room.roomId,
       other.roomId,
     );
-    assert.equal(
-      P.WorkerHistoryResponseSchema.parse(
-        await cli(["message-read", "--target", "#other"]),
-      ).messages[0]?.messageId,
-      message.event.aggregateId,
+    assert.match(
+      await cli(["message-read", "--target", "#other"]),
+      new RegExp(`^\\[1/\\d+ seq=\\d+ msg=${message.event.aggregateId} `, "mu"),
     );
-    assert.equal(
-      P.WorkerMessageResolveResponseSchema.parse(
-        await cli([
-          "message-resolve",
-          "--message-id",
-          message.event.aggregateId,
-        ]),
-      ).message.roomId,
-      other.roomId,
+    assert.match(
+      await cli(["message-resolve", "--message-id", message.event.aggregateId]),
+      new RegExp(
+        `^\\[target=${other.roomId} msg=${message.event.aggregateId} `,
+        "mu",
+      ),
     );
-    assert.equal(
-      P.WorkerMembersResponseSchema.parse(
-        await cli(["room-members", "--target", "#other"]),
-      ).roomId,
-      other.roomId,
+    assert.match(
+      await cli(["room-members", "--target", "#other"]),
+      new RegExp(`^Channel: ${other.roomId}$`, "mu"),
     );
-    assert.equal(
-      P.WorkerTaskListResponseSchema.parse(
-        await cli(["task-list", "--target", "#other"]),
-      ).tasks[0]?.taskId,
-      targetTask.taskId,
+    assert.match(
+      await cli(["task-list", "--target", "#other"]),
+      new RegExp(` id=${targetTask.taskId}$`, "mu"),
     );
-    assert.equal(
-      P.WorkerTaskHistoryResponseSchema.parse(
-        await cli([
-          "task-history",
-          "--target",
-          "#other",
-          "--task-id",
-          targetTask.taskId,
-        ]),
-      ).taskId,
-      targetTask.taskId,
+    assert.match(
+      await cli([
+        "task-history",
+        "--target",
+        "#other",
+        "--task-id",
+        targetTask.taskId,
+      ]),
+      new RegExp(`^## Task ${targetTask.taskId} history$`, "mu"),
     );
     const global = P.WorkerMessageSearchResponseSchema.parse(
-      await cli(["message-search", "--query", "Joined fact"]),
+      await cliJson(["message-search", "--query", "Joined fact"]),
     );
     assert.equal(global.messages[0]?.messageId, message.event.aggregateId);
     assert.equal(global.frozenRoomCount, 2);
     const search = P.WorkerMessageSearchResponseSchema.parse(
-      await cli([
+      await cliJson([
         "message-search",
         "--target",
         "#other",
