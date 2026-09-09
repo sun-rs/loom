@@ -409,8 +409,17 @@ test("real Worker CLI publishes PNG to target and resumes its TXT held draft in 
         },
         (error: { code: number; stderr: string; stdout: string }) => {
           assert.equal(error.code, 1);
-          assert.match(error.stderr, /SEND_HELD_AS_DRAFT/);
-          return JSON.parse(error.stdout);
+          // Raft's `--json` refusal: stdout stays empty and the held payload
+          // travels inside the stderr error envelope's `details.held`.
+          assert.equal(error.stdout, "");
+          const envelope = JSON.parse(error.stderr) as {
+            details: { held: { heldDraftId: string; state: string } };
+            error: { code: string };
+            ok: boolean;
+          };
+          assert.equal(envelope.ok, false);
+          assert.equal(envelope.error.code, "SEND_HELD_AS_DRAFT");
+          return envelope.details.held;
         },
       );
     assert.equal(held.state, "held");

@@ -1,13 +1,23 @@
 import {
   MESSAGE_HEREDOC_DELIMITER,
+  SEND_HELD_AS_DRAFT_MESSAGE,
+  SEND_HELD_AS_DRAFT_NEXT_ACTION,
   formatDraftReplacedWarning,
   workerHeldSendGuidance,
   workerReplacedDraftBody,
   workerReplacedDraftNotice,
-  workerSendErrorSummary,
   workerSendSuccessOutput,
-  workerTargetConfirmationGuidance,
+  workerTargetConfirmationBody,
+  workerTargetConfirmationNextAction,
 } from "./worker-held-send.ts";
+import {
+  WorkerCliError,
+  cliError,
+  markSendFailureDraftSaved,
+  renderWorkerCliError,
+  toWorkerCliError,
+  workerServerFailureError,
+} from "./worker-cli-error.ts";
 import carrierPackage from "../package.json" with { type: "json" };
 import { parseWorkerChannelAttentionCommand } from "./worker-channel-attention-cli.ts";
 import {
@@ -168,6 +178,11 @@ export async function runWorkerCliCommand(
     runtime.stdout.write(help());
     return 0;
   }
+  const sendCommand =
+    arguments_[0] === "worker" && arguments_[1] === "message-post";
+  // Raft's `--json` is an output selector on `message send` alone.
+  const jsonOutput = sendCommand ? arguments_.includes("--json") : false;
+  let failureDraftSaved = false;
   try {
     const config = arguments_[0] === "app";
     const mutation = config ? parseAgentAppConfig(arguments_) : undefined;
@@ -230,7 +245,13 @@ export async function runWorkerCliCommand(
               : MAX_RESPONSE_BYTES,
         );
         if (!response.ok) {
-          throw new Error(serverErrorMessage(result, response.status));
+          throw workerServerFailureError(
+            result,
+            response.status,
+            request.path === "/v1/worker/messages/post"
+              ? "SEND_FAILED"
+              : "READ_FAILED",
+          );
         }
         return result;
       } finally {
@@ -261,20 +282,26 @@ export async function runWorkerCliCommand(
       runtime.stdout.write(`${JSON.stringify(result)}\n`);
       return 0;
     }
-    const request = config
-      ? { path: "/v1/agent-config/get", body: {} }
-      : inbox
-        ? parseAgentInboxCommand(arguments_)
-        : arguments_[0] === "reminder"
-          ? parseReminderCommand(arguments_)
-          : parseCommand(
-              arguments_,
-              arguments_[0] === "worker" &&
-                arguments_[1] === "message-post" &&
-                !arguments_.includes("--body")
-                ? await readStdinText(runtime)
-                : "",
-            );
+    // Raft's commander stage raises `INVALID_ARG` for every syntax and option
+    // rejection (`main.js@30436161`). RAH's parsers are that stage, so a
+    // rejection that carries no code of its own is an argument error, not an
+    // internal bug; a parser that already chose a Raft code keeps it.
+    const request = await parseWorkerRequest(async () =>
+      config
+        ? { path: "/v1/agent-config/get", body: {} }
+        : inbox
+          ? parseAgentInboxCommand(arguments_)
+          : arguments_[0] === "reminder"
+            ? parseReminderCommand(arguments_)
+            : parseCommand(
+                arguments_,
+                arguments_[0] === "worker" &&
+                  arguments_[1] === "message-post" &&
+                  !arguments_.includes("--body")
+                  ? await readStdinText(runtime)
+                  : "",
+              ),
+    );
     const fanOut = (request as { bodies?: Record<string, unknown>[] }).bodies;
     if (fanOut !== undefined) {
       for (const body of fanOut) {
@@ -283,6 +310,18 @@ export async function runWorkerCliCommand(
       }
       return 0;
     }
+    const messagePost = request.path === "/v1/worker/messages/post";
+    // Raft's `handleMessageSend` calls `setSavedDraft(...)` and then
+    // `setFailureDraftSaved(true)` *before* awaiting the send, and skips both
+    // for `--send-draft`. RAH's draft lives on the server and is written by the
+    // same request, so the flag flips at the same point for the same reason:
+    // from here on, a failure cannot tell the Agent whether its content
+    // survived or was delivered.
+    if (
+      messagePost &&
+      (request.body as { sendDraft?: unknown }).sendDraft !== true
+    )
+      failureDraftSaved = true;
     let result = await send(request);
     if (request.path === "/v1/worker/version")
       result = {
@@ -302,10 +341,10 @@ export async function runWorkerCliCommand(
     // Raft's `writeText`/`writeJson` split: a message send prints human-
     // readable text on stdout and reserves JSON for `--json`. Every other
     // command keeps its JSON response, which is what the Agent is told to parse.
-    const messagePost = request.path === "/v1/worker/messages/post";
-    const jsonOutput = !messagePost || arguments_.includes("--json");
-    if (jsonOutput) runtime.stdout.write(`${JSON.stringify(result)}\n`);
-    if (!messagePost) return 0;
+    if (!messagePost) {
+      runtime.stdout.write(`${JSON.stringify(result)}\n`);
+      return 0;
+    }
     const sendTarget = (request.body as { channel?: unknown }).channel;
     const displayTarget =
       typeof sendTarget === "string" ? sendTarget : undefined;
@@ -318,21 +357,50 @@ export async function runWorkerCliCommand(
       );
       text += workerReplacedDraftNotice(warned);
     }
-    const guidance =
-      workerHeldSendGuidance(result) ??
-      workerTargetConfirmationGuidance(result);
-    if (guidance) {
-      if (!jsonOutput) runtime.stdout.write(`${text}${guidance}`);
-      runtime.stderr.write(workerSendErrorSummary(result) ?? "");
-      return 1;
+    // Raft's rule for the two streams, applied per path rather than in bulk: a
+    // rendered result goes to stdout, a raised error goes to stderr. The
+    // freshness hold renders its bounded context first and then raises
+    // (`handleMessageSend`: `if (!opts.json) writeText(...)` then `throw`), so
+    // its body is stdout and its envelope is stderr. The thread-target
+    // confirmation renders nothing and only raises, so all of it is stderr.
+    const heldGuidance = workerHeldSendGuidance(result);
+    if (heldGuidance !== undefined) {
+      if (!jsonOutput) runtime.stdout.write(`${text}${heldGuidance}`);
+      throw cliError("SEND_HELD_AS_DRAFT", SEND_HELD_AS_DRAFT_MESSAGE, {
+        details: { held: result },
+        draftSaved: true,
+        effect: "draft_saved",
+        outputMode: jsonOutput ? "json" : "text",
+        retryable: false,
+        suggestedNextAction: SEND_HELD_AS_DRAFT_NEXT_ACTION,
+      });
     }
-    if (!jsonOutput)
+    const confirmationBody = workerTargetConfirmationBody(result);
+    if (confirmationBody !== undefined) {
+      throw cliError(
+        "THREAD_CONTEXT_TARGET_CONFIRMATION_REQUIRED",
+        confirmationBody,
+        {
+          suggestedNextAction: workerTargetConfirmationNextAction(result),
+        },
+      );
+    }
+    if (jsonOutput) runtime.stdout.write(`${JSON.stringify(result)}\n`);
+    else
       runtime.stdout.write(
         `${text}${workerSendSuccessOutput(displayTarget, result)}`,
       );
     return 0;
   } catch (error) {
-    runtime.stderr.write(`rah: ${errorMessage(error)}\n`);
+    // Raft's `message send` action wraps every failure with
+    // `markSendFailureDraftSaved` before `renderError` (`main.js@32620184`);
+    // no other command does, so no other command claims a draft state.
+    renderWorkerCliError(
+      runtime.stderr,
+      sendCommand
+        ? markSendFailureDraftSaved(error, failureDraftSaved)
+        : toWorkerCliError(error),
+    );
     return 1;
   }
 }
@@ -477,7 +545,7 @@ async function putWorkerUpload(
     } as RequestInit & { duplex: "half" });
     const result = await readBoundedJson(response.body);
     if (!response.ok) {
-      throw new Error(serverErrorMessage(result, response.status));
+      throw workerServerFailureError(result, response.status, "UPLOAD_FAILED");
     }
     return result;
   } finally {
@@ -514,7 +582,7 @@ async function downloadWorkerArtifact(
     );
     if (!response.ok) {
       const result = await readBoundedJson(response.body);
-      throw new Error(serverErrorMessage(result, response.status));
+      throw workerServerFailureError(result, response.status, "VIEW_FAILED");
     }
     if (response.body === null) {
       throw new Error("Worker artifact response had no body");
@@ -743,11 +811,13 @@ function parseCommand(
             : { threadId: boundedText(options, "thread-id", 512) };
       if (options["send-draft"] === "true") {
         if (options["comment-attachment-id"] !== undefined)
-          throw new Error(
+          throw cliError(
+            "SEND_DRAFT_ATTACHMENTS_UNSUPPORTED",
             "--comment-attachment-id cannot replace a held draft’s comment target",
           );
         if (options["attachment-ids"] !== undefined)
-          throw new Error(
+          throw cliError(
+            "SEND_DRAFT_ATTACHMENTS_UNSUPPORTED",
             "--attachment-ids cannot replace a held draft's attachments",
           );
         if (options.body !== undefined) {
@@ -755,7 +825,8 @@ function parseCommand(
         }
         // Raft's `rejectSendDraftStdin`: revised content is a normal send.
         if (stdinContent.trim().length > 0) {
-          throw new Error(
+          throw cliError(
+            "SEND_DRAFT_STDIN_UNSUPPORTED",
             `--send-draft sends the saved draft unchanged and must not read message content from stdin. To send revised content, send it normally:
   rah worker message-post --target "${options.target ?? "TARGET"}" <<'${MESSAGE_HEREDOC_DELIMITER}'
   message body
@@ -777,7 +848,10 @@ function parseCommand(
         };
       }
       if (options.anyway !== undefined) {
-        throw new Error("--anyway requires --send-draft");
+        throw cliError(
+          "SEND_DRAFT_ANYWAY_REQUIRES_SEND_DRAFT",
+          "--anyway requires --send-draft",
+        );
       }
       if (options["held-draft-id"] !== undefined) {
         throw new Error("--held-draft-id requires --send-draft");
@@ -791,7 +865,8 @@ function parseCommand(
         composedBody.length === 0 &&
         options["attachment-ids"] === undefined
       ) {
-        throw new Error(
+        throw cliError(
+          "MISSING_CONTENT",
           `message content is required: pipe the body on stdin, or pass --body TEXT.
   rah worker message-post --target "${options.target ?? "TARGET"}" <<'${MESSAGE_HEREDOC_DELIMITER}'
   message body
@@ -1435,7 +1510,10 @@ function nonnegativeInteger(
 
 async function readWorkerToken(path: string | undefined): Promise<string> {
   if (path === undefined || !isAbsolute(path) || path.includes("\0")) {
-    throw new Error("RAH_WORKER_SESSION_FILE must be an absolute path");
+    throw cliError(
+      "MISSING_TOKEN",
+      "RAH_WORKER_SESSION_FILE must be an absolute path",
+    );
   }
   let file;
   try {
@@ -1449,7 +1527,8 @@ async function readWorkerToken(path: string | undefined): Promise<string> {
       (typeof process.getuid === "function" &&
         metadata.uid !== process.getuid())
     ) {
-      throw new Error(
+      throw cliError(
+        "TOKEN_FILE_UNREADABLE",
         "Worker token file must be an owner-private regular file",
       );
     }
@@ -1470,7 +1549,10 @@ async function readWorkerToken(path: string | undefined): Promise<string> {
     }
     const token = buffer.subarray(0, offset).toString("utf8");
     if (token.length === 0 || /[\0\r\n]/u.test(token)) {
-      throw new Error("Worker token file contains an invalid credential");
+      throw cliError(
+        "TOKEN_FILE_UNREADABLE",
+        "Worker token file contains an invalid credential",
+      );
     }
     return token;
   } catch (error) {
@@ -1518,7 +1600,10 @@ async function readBoundedJson(
   try {
     return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
   } catch {
-    throw new Error("Worker response is not valid bounded JSON");
+    throw cliError(
+      "INVALID_JSON_RESPONSE",
+      "Worker response is not valid bounded JSON",
+    );
   }
 }
 
@@ -1530,7 +1615,10 @@ function workerOrigin(value: string | undefined): string {
   try {
     url = new URL(value);
   } catch {
-    throw new Error("RAH_WORKER_API_URL must be an HTTP(S) origin");
+    throw cliError(
+      "MISSING_SERVER_URL",
+      "RAH_WORKER_API_URL must be an HTTP(S) origin",
+    );
   }
   if (
     (url.protocol !== "http:" && url.protocol !== "https:") ||
@@ -1541,22 +1629,6 @@ function workerOrigin(value: string | undefined): string {
     throw new Error("RAH_WORKER_API_URL must be an HTTP(S) origin");
   }
   return value;
-}
-
-function serverErrorMessage(value: unknown, status: number): string {
-  if (
-    typeof value === "object" &&
-    value !== null &&
-    "error" in value &&
-    typeof value.error === "object" &&
-    value.error !== null &&
-    "message" in value.error &&
-    typeof value.error.message === "string" &&
-    value.error.message.length <= 2_000
-  ) {
-    return `Worker API HTTP ${String(status)}: ${value.error.message}`;
-  }
-  return `Worker API HTTP ${String(status)}`;
 }
 
 function help(): string {
@@ -1629,8 +1701,17 @@ TASK addresses one Task as --target "#channel" --number N, or as --task-id ID.
 `;
 }
 
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
+async function parseWorkerRequest<T>(parse: () => Promise<T>): Promise<T> {
+  try {
+    return await parse();
+  } catch (error) {
+    if (error instanceof WorkerCliError) throw error;
+    throw cliError(
+      "INVALID_ARG",
+      error instanceof Error ? error.message : String(error),
+      { cause: error },
+    );
+  }
 }
 
 function hasCode(error: unknown, code: string): boolean {

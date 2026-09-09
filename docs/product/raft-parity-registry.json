@@ -820,6 +820,121 @@
       "note": "§2.4: heredoc core aligned; missing --target-confirmed and --reviewer-isolation, repeated --attachment-id became a comma string, adds two causal parameters."
     },
     {
+      "id": "cli.worker.message-post.held-json",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli-error.ts"
+      },
+      "raft": {
+        "anchor": "handleMessageSend held branch: if (!opts.json) writeText(...) then throw",
+        "location": "main.js@30179467",
+        "region": {
+          "bytes": 256,
+          "offset": 30179467,
+          "sha256": "7cc95cbdf5ea4d5a262ac5d6f2ccf9af48c9f5eec56d4e6c774ed205b569b288"
+        }
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors §5 first tier row 1: closed 2026-09-09. A freshness-held send under --json now writes nothing to stdout and one ok:false envelope to stderr with code SEND_HELD_AS_DRAFT, retryable false, effect draft_saved, the next action and details.held. RAH previously wrote the held payload to stdout as a success-shaped object, so a --json consumer read \"not delivered\" as \"delivered\"."
+    },
+    {
+      "id": "cli.error.render",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli-error.ts"
+      },
+      "raft": {
+        "anchor": "renderError",
+        "location": "main.js@29838351",
+        "region": {
+          "bytes": 256,
+          "offset": 29838351,
+          "sha256": "d5efdff1b760adc06e7c21c1ee2f614478dc949e0289578e20eb66f0c787a4d1"
+        }
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors §2 rows 31-32 and §5 second tier rows 6-7: closed 2026-09-09. Every raised failure now renders Raft's stderr block (Error/Code/Fault domain/Layer/Retryable/Effect/Correlation/Draft saved/Effect state/Next action) or, where Raft sets outputMode from --json, the one-line JSON envelope. The proxy diagnostic fields are absent because RAH has no daemon proxy; that stays inventory row 15."
+    },
+    {
+      "id": "cli.error.server-code-passthrough",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "apiFailureError",
+        "location": "main.js@29998032",
+        "region": {
+          "bytes": 256,
+          "offset": 29998032,
+          "sha256": "c9a5b9288e6156fa370654d54e48eb7ae5d38cb9650ebf74e2b575fbcebec1ea"
+        }
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors §5 second tier row 6: closed 2026-09-09. Raft's apiFailureError uses response.errorCode verbatim as the CLI code, falls back to SERVER_5XX above 500, and passes the server's suggestedNextAction through. RAH's CLI now does the same with its own 40 stable server codes instead of discarding them in serverErrorMessage."
+    },
+    {
+      "id": "cli.worker.message-post.send-failure-draft-saved",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli-error.ts"
+      },
+      "raft": {
+        "anchor": "markSendFailureDraftSaved",
+        "location": "main.js@30170611",
+        "region": {
+          "bytes": 256,
+          "offset": 30170611,
+          "sha256": "466597c079962d1c8d523ab1e9f362b60434fcd33cab45fd9bfcb66af23d4479"
+        }
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors §2 row 14 and §5 second tier row 4: closed 2026-09-09. A send that fails after the draft was saved now carries Raft's verbatim CANNOT_CONFIRM next action and Draft saved: yes; --send-draft keeps Draft saved: no and no such guidance, as upstream."
+    },
+    {
+      "id": "cli.worker.message-post.thread-target-confirmation-stream",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-held-send.ts"
+      },
+      "raft": {
+        "anchor": "formatThreadContextParentSendMessage + cliError",
+        "location": "main.js@30176446",
+        "region": {
+          "bytes": 256,
+          "offset": 30176446,
+          "sha256": "900f177dd3d67a3c90979ed34a1b75aee759286bd8639d59ee5dacbac7bd18f6"
+        }
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors §2 row 9 and §5 first tier row 2: closed 2026-09-09. Raft raises this as a cliError, so the whole message is stderr and its two paths are the suggestedNextAction. RAH previously wrote the body to stdout. The exit code stays 1."
+    },
+    {
+      "id": "cli.worker.message-post.stdout-refusal-notices",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-held-send.ts"
+      },
+      "raft": {
+        "anchor": "formatHeldSendOutput",
+        "location": "main.js@30179467",
+        "region": {
+          "bytes": 256,
+          "offset": 30179467,
+          "sha256": "7cc95cbdf5ea4d5a262ac5d6f2ccf9af48c9f5eec56d4e6c774ed205b569b288"
+        }
+      },
+      "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
+      "constraint": "single-machine",
+      "note": "output-errors §5 declared divergences: in text mode RAH keeps two stdout lines Raft does not write — the SEND_HELD_AS_DRAFT: opening line on the hold body and workerReplacedDraftNotice. On Raft the CLI runs in the Agent's own shell; on RAH the Agent is a local child process of the Computer whose stderr the Provider runtime may drop, which is how F0909G lost a real reply. Both lines are code-and-pointer only: no body, no second copy of discarded text."
+    },
+    {
       "id": "cli.worker.thread-unfollow",
       "kind": "cli",
       "rah": {

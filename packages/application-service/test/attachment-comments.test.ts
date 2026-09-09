@@ -297,10 +297,19 @@ test("Agent replies explicitly to one attachment and held retry retains that com
         (error: { code: number; stderr: string; stdout: string }) => {
           assert.equal(error.code, 1);
           assert.match(error.stderr, /SEND_HELD_AS_DRAFT/);
+          // A `--json` refusal writes nothing to stdout; the held payload is
+          // `details.held` inside the stderr error envelope.
+          assert.equal(error.stdout, "");
           return error;
         },
       );
-    const first = { body: JSON.parse(cliReply.stdout) };
+    const first = {
+      body: (
+        JSON.parse(cliReply.stderr) as {
+          details: { held: Record<string, unknown> };
+        }
+      ).details.held,
+    };
     assert.equal(first.body.state, "held");
     await f.call("acknowledge", { throughSeq: f.activation.toSeq });
     f.kernel.recordRuntimeTermination(f.host, {

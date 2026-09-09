@@ -35,12 +35,9 @@ function renderNewerMessages(value: Record<string, unknown>): string {
   return lines.length === 0 ? "" : `\n${lines.join("\n")}\n`;
 }
 
-/** Raft's `THREAD_CONTEXT_TARGET_CONFIRMATION_REQUIRED` output, ported with RAH
- * command names: the send was refused, the composition is saved as this
- * target's draft, and exactly two paths resolve it. */
-export function workerTargetConfirmationGuidance(
+function confirmationTargets(
   result: unknown,
-): string | undefined {
+): { parent: string; thread: string } | undefined {
   if (
     !result ||
     typeof result !== "object" ||
@@ -54,22 +51,45 @@ export function workerTargetConfirmationGuidance(
     typeof value.threadTarget !== "string"
   )
     return undefined;
-  const parent = shellQuote(value.parentTarget),
-    thread = shellQuote(value.threadTarget);
-  return `THREAD_CONTEXT_TARGET_CONFIRMATION_REQUIRED: message was NOT sent; no target delivery occurred.
-Possible thread target mismatch: your latest read context under ${parent} is ${thread}, but this send targets ${parent} top-level.
-This guard is intentionally narrow: moving a thread conclusion to the parent channel can be correct, but it is uncommon enough to confirm once.
+  return {
+    parent: shellQuote(value.parentTarget),
+    thread: shellQuote(value.threadTarget),
+  };
+}
 
-If this reply belongs in the thread, send the message to the thread target instead:
-  rah worker message-post --target ${thread} <<'${MESSAGE_HEREDOC_DELIMITER}'
-  message body
-  ${MESSAGE_HEREDOC_DELIMITER}
+/**
+ * Raft's `formatThreadContextParentSendMessage` (`main.js@30167899`), ported
+ * with RAH command names. Raft raises this as a `cliError`, so the body is the
+ * error message and reaches the Agent on stderr — it is never a rendered
+ * result, and nothing about it is written to stdout.
+ */
+export function workerTargetConfirmationBody(
+  result: unknown,
+): string | undefined {
+  const targets = confirmationTargets(result);
+  if (targets === undefined) return undefined;
+  const { parent, thread } = targets;
+  return [
+    `Possible thread target mismatch: your latest read context under ${parent} is ${thread}, but this send targets ${parent} top-level.`,
+    "This guard is intentionally narrow: moving a thread conclusion to the parent channel can be correct, but it is uncommon enough to confirm once.",
+    "",
+    "If this reply belongs in the thread, send the message to the thread target instead:",
+    `  rah worker message-post --target ${thread} <<'${MESSAGE_HEREDOC_DELIMITER}'`,
+    "  message body",
+    `  ${MESSAGE_HEREDOC_DELIMITER}`,
+    "",
+    "If the top-level channel message is intentional, send the saved draft unchanged:",
+    `  rah worker message-post --send-draft --target ${parent}`,
+  ].join("\n");
+}
 
-If the top-level channel message is intentional, send the saved draft unchanged:
-  rah worker message-post --send-draft --target ${parent}
-
-No message was sent. Send to ${thread} if this belongs in the thread, or confirm the saved top-level draft with \`rah worker message-post --send-draft --target ${parent}\`.
-`;
+/** Raft's `suggestedNextAction` for the same refusal (`main.js@30174525`). */
+export function workerTargetConfirmationNextAction(
+  result: unknown,
+): string | undefined {
+  const targets = confirmationTargets(result);
+  if (targets === undefined) return undefined;
+  return `No message was sent. Send to ${targets.thread} if this belongs in the thread, or confirm the saved top-level draft with \`rah worker message-post --send-draft --target ${targets.parent}\`.`;
 }
 
 export function workerHeldSendGuidance(result: unknown): string | undefined {
@@ -206,17 +226,9 @@ export function workerSendSuccessOutput(
   return `${sentStatusLine} Message ID: ${messageId}${replyHint}\n`;
 }
 
-/**
- * Raft's `renderError` text mode, narrowed to the two typed send refusals: a
- * short `Error:`/`Code:` summary on stderr while the body that teaches recovery
- * goes to stdout.
- */
-export function workerSendErrorSummary(result: unknown): string | undefined {
-  if (!result || typeof result !== "object" || !("state" in result))
-    return undefined;
-  if (result.state === "held")
-    return "Error: Message held as draft; no target delivery occurred.\nCode: SEND_HELD_AS_DRAFT\n";
-  if (result.state === "target_confirmation_required")
-    return "Error: message was NOT sent; no target delivery occurred.\nCode: THREAD_CONTEXT_TARGET_CONFIRMATION_REQUIRED\n";
-  return undefined;
-}
+/** Raft's `SEND_HELD_AS_DRAFT` message and `suggestedNextAction`, verbatim. */
+export const SEND_HELD_AS_DRAFT_MESSAGE =
+  "Message held as draft; no target delivery occurred.";
+
+export const SEND_HELD_AS_DRAFT_NEXT_ACTION =
+  "Review the held context, then update the draft or send the current draft unchanged.";

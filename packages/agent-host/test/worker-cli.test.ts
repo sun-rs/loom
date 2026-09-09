@@ -1030,8 +1030,16 @@ test("Freshness hold is an unsuccessful send with executable review and resend g
     // that only captures stdout must still see the hold and its three paths.
     assert.equal(
       state.stderr(),
-      "Error: Message held as draft; no target delivery occurred.\nCode: SEND_HELD_AS_DRAFT\n",
-      "stderr carries only the short renderError summary",
+      [
+        "Error: Message held as draft; no target delivery occurred.",
+        "Code: SEND_HELD_AS_DRAFT",
+        "Retryable: no",
+        "Effect: draft_saved",
+        "Draft saved: yes",
+        "Next action: Review the held context, then update the draft or send the current draft unchanged.",
+        "",
+      ].join("\n"),
+      "stderr carries Raft's renderError block, including the draft-saved answer",
     );
     assert.doesNotMatch(state.stdout(), /"heldDraftId"/u);
     assert.match(state.stdout(), /SEND_HELD_AS_DRAFT/u);
@@ -1255,42 +1263,46 @@ test("A possible thread target mismatch is an unsuccessful send offering exactly
       state.runtime,
     );
     assert.equal(exit, 1, "an unconfirmed target is not a successful send");
-    assert.equal(
+    // Raft raises this as a `cliError`, so the whole message is stderr
+    // (`main.js@30174525`, `@30167899`). Nothing at all reaches stdout.
+    assert.equal(state.stdout(), "", "a raised error never writes stdout");
+    assert.match(
       state.stderr(),
-      "Error: message was NOT sent; no target delivery occurred.\nCode: THREAD_CONTEXT_TARGET_CONFIRMATION_REQUIRED\n",
-      "stderr carries only the short renderError summary",
+      /Code: THREAD_CONTEXT_TARGET_CONFIRMATION_REQUIRED/u,
     );
     assert.match(
-      state.stdout(),
-      /THREAD_CONTEXT_TARGET_CONFIRMATION_REQUIRED/u,
+      state.stderr(),
+      /^Error: Possible thread target mismatch: your latest read context under '#room' is '#room:thread-1', but this send targets '#room' top-level\./u,
     );
     assert.match(
-      state.stdout(),
-      /Possible thread target mismatch: your latest read context under '#room' is '#room:thread-1', but this send targets '#room' top-level\./u,
-    );
-    assert.match(
-      state.stdout(),
+      state.stderr(),
       /This guard is intentionally narrow: moving a thread conclusion to the parent channel can be correct, but it is uncommon enough to confirm once\./u,
     );
     assert.match(
-      state.stdout(),
+      state.stderr(),
       /If this reply belongs in the thread, send the message to the thread target instead:\n {2}rah worker message-post --target '#room:thread-1' <<'RAH_MESSAGE_EOF'/u,
     );
     assert.match(
-      state.stdout(),
+      state.stderr(),
       /If the top-level channel message is intentional, send the saved draft unchanged:\n {2}rah worker message-post --send-draft --target '#room'/u,
     );
-    assert.match(state.stdout(), /No message was sent\./u);
-    assert.doesNotMatch(state.stdout(), /SEND_HELD_AS_DRAFT/u);
-    assert.doesNotMatch(state.stdout(), /--held-draft-id/u);
-    assert.doesNotMatch(state.stdout(), /--idempotency-key/u);
-    assert.doesNotMatch(state.stdout(), /--context-receipt/u);
+    // The composition survived, and Raft carries the two paths as the error's
+    // `suggestedNextAction`, not as a second copy of the body.
+    assert.match(state.stderr(), /\nDraft saved: yes\n/u);
+    assert.match(
+      state.stderr(),
+      /\nNext action: No message was sent\. Send to '#room:thread-1' if this belongs in the thread, or confirm the saved top-level draft with `rah worker message-post --send-draft --target '#room'`\.\n$/u,
+    );
+    assert.doesNotMatch(state.stderr(), /SEND_HELD_AS_DRAFT/u);
+    assert.doesNotMatch(state.stderr(), /--held-draft-id/u);
+    assert.doesNotMatch(state.stderr(), /--idempotency-key/u);
+    assert.doesNotMatch(state.stderr(), /--context-receipt/u);
   } finally {
     rmSync(state.directory, { force: true, recursive: true });
   }
 });
 
-test("--json restores the machine-readable send response on stdout", async () => {
+test("a held send with --json writes nothing to stdout and an ok:false envelope to stderr", async () => {
   const state = fixture();
   try {
     const sent: unknown[] = [];
@@ -1321,13 +1333,182 @@ test("--json restores the machine-readable send response on stdout", async () =>
       ),
       1,
     );
-    assert.equal(JSON.parse(state.stdout()).heldDraftId, "held-json");
-    assert.doesNotMatch(state.stdout(), /Freshness hold: showing latest/u);
-    assert.match(state.stderr(), /Code: SEND_HELD_AS_DRAFT/u);
+    // The defect this closes: RAH used to write the held payload to stdout as
+    // a success-shaped object, so a `--json` consumer reading stdout alone read
+    // "not delivered" as "delivered". Raft writes nothing there.
+    assert.equal(state.stdout(), "", "a held send delivers nothing to stdout");
+    const envelope = JSON.parse(state.stderr()) as {
+      details: { held: { heldDraftId: string } };
+      error: {
+        code: string;
+        correlation_id: null;
+        effect: string;
+        fault_domain: null;
+        layer: null;
+        message: string;
+        next_action: string;
+        retryable: boolean;
+      };
+      ok: boolean;
+    };
+    assert.equal(envelope.ok, false);
+    assert.equal(envelope.error.code, "SEND_HELD_AS_DRAFT");
+    assert.equal(
+      envelope.error.message,
+      "Message held as draft; no target delivery occurred.",
+    );
+    assert.equal(envelope.error.retryable, false);
+    assert.equal(envelope.error.effect, "draft_saved");
+    assert.equal(envelope.error.fault_domain, null);
+    assert.equal(envelope.error.layer, null);
+    assert.equal(envelope.error.correlation_id, null);
+    assert.equal(
+      envelope.error.next_action,
+      "Review the held context, then update the draft or send the current draft unchanged.",
+    );
+    assert.equal(envelope.details.held.heldDraftId, "held-json");
     assert.deepEqual(
       sent,
       [{ body: "Original result" }],
       "--json is an output selector, never part of the send request",
+    );
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("a send that fails after the draft was saved refuses to direct a resend", async () => {
+  const state = fixture();
+  try {
+    state.runtime.fetch = async () =>
+      new Response(
+        JSON.stringify({
+          error: { code: "internal_error", message: "internal server error" },
+        }),
+        { status: 500 },
+      );
+    assert.equal(
+      await runWorkerCliCommand(
+        ["worker", "message-post", "--target", "#ops", "--body", "Result"],
+        state.runtime,
+      ),
+      1,
+    );
+    assert.equal(state.stdout(), "");
+    assert.match(
+      state.stderr(),
+      /^Error: Worker API HTTP 500: internal server error\nCode: SERVER_5XX\n/u,
+    );
+    assert.match(state.stderr(), /\nDraft saved: yes\n/u);
+    // Raft's `markSendFailureDraftSaved` (`main.js@30168709`): the honest state
+    // is CANNOT_CONFIRM, reading cannot settle it, and a resend is a decision
+    // to accept a duplicate. This is the one guidance whose absence produces
+    // duplicate delivery.
+    assert.match(state.stderr(), /so the honest state is CANNOT_CONFIRM/u);
+    assert.match(state.stderr(), /Reading CANNOT settle this/u);
+    assert.match(state.stderr(), /Do not resend on this evidence\./u);
+    assert.match(
+      state.stderr(),
+      /Sending the draft again is a decision by a person to accept a duplicate/u,
+    );
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("a failed --send-draft saves no new draft and carries no CANNOT_CONFIRM guidance", async () => {
+  const state = fixture();
+  try {
+    state.runtime.fetch = async () =>
+      new Response(
+        JSON.stringify({
+          error: { code: "not_found", message: "no draft for this target" },
+        }),
+        { status: 404 },
+      );
+    assert.equal(
+      await runWorkerCliCommand(
+        ["worker", "message-post", "--send-draft", "--target", "#ops"],
+        { ...state.runtime, stdin: Readable.from([]) },
+      ),
+      1,
+    );
+    assert.match(
+      state.stderr(),
+      /^Error: Worker API HTTP 404: no draft for this target\nCode: NOT_FOUND\nDraft saved: no\n$/u,
+      state.stderr(),
+    );
+    assert.doesNotMatch(state.stderr(), /CANNOT_CONFIRM/u);
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("a server error surfaces its stable code and the server's next action", async () => {
+  const state = fixture();
+  try {
+    state.runtime.fetch = async () =>
+      new Response(
+        JSON.stringify({
+          error: {
+            code: "stale_context",
+            message: "mutation was based on Room sequence 4, but latest is 9",
+            next_action:
+              "Read the newer context with `rah worker room-read`, then rerun the command.",
+          },
+        }),
+        { status: 409 },
+      );
+    assert.equal(
+      await runWorkerCliCommand(
+        ["worker", "task-claim", "--task-id", "task-1"],
+        state.runtime,
+      ),
+      1,
+    );
+    assert.equal(state.stdout(), "", "a raised error never writes stdout");
+    assert.equal(
+      state.stderr(),
+      [
+        "Error: Worker API HTTP 409: mutation was based on Room sequence 4, but latest is 9",
+        "Code: stale_context",
+        "Next action: Read the newer context with `rah worker room-read`, then rerun the command.",
+        "",
+      ].join("\n"),
+      "the server's stable code and its recovery guidance both reach the Agent",
+    );
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+/**
+ * Raft sets `outputMode` from `opts.json` at exactly two sites — the held send
+ * and mention partial delivery — so an API failure renders the text block even
+ * under `--json` (`main.js` `apiFailureError` passes no `outputMode`). RAH
+ * replicates that rather than inventing a wider JSON error surface.
+ */
+test("a server error under --json keeps Raft's text error block on stderr", async () => {
+  const state = fixture();
+  try {
+    state.runtime.fetch = async () =>
+      new Response(
+        JSON.stringify({
+          error: { code: "forbidden", message: "target is not joined" },
+        }),
+        { status: 403 },
+      );
+    assert.equal(
+      await runWorkerCliCommand(
+        ["worker", "message-post", "--json", "--target", "#ops", "--body", "x"],
+        state.runtime,
+      ),
+      1,
+    );
+    assert.equal(state.stdout(), "");
+    assert.match(
+      state.stderr(),
+      /^Error: Worker API HTTP 403: target is not joined\nCode: forbidden\n/u,
     );
   } finally {
     rmSync(state.directory, { force: true, recursive: true });

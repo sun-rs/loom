@@ -353,9 +353,20 @@ test("a busy freshness hold is recovered by target alone and never loses the ori
       transcript[0]?.stdout ?? "",
       /rah worker message-post --send-draft --target '#busy-hold-room'/u,
     );
+    // Raft's `renderError` block: the code, whether a retry is allowed, what
+    // effect the refusal had, whether the content survived, and the one next
+    // action — all on stderr, none of it invented here.
     assert.equal(
       transcript[0]?.stderr,
-      "Error: Message held as draft; no target delivery occurred.\nCode: SEND_HELD_AS_DRAFT\n",
+      [
+        "Error: Message held as draft; no target delivery occurred.",
+        "Code: SEND_HELD_AS_DRAFT",
+        "Retryable: no",
+        "Effect: draft_saved",
+        "Draft saved: yes",
+        "Next action: Review the held context, then update the draft or send the current draft unchanged.",
+        "",
+      ].join("\n"),
     );
     assert.match(
       transcript[2]?.stdout ?? "",
