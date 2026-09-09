@@ -49,6 +49,7 @@ export type {
 } from "./computer-operation-store.ts";
 export { manageWorkspaceAgentTransaction } from "./workspace-agent-management.ts";
 export type {
+  InPlaceWorkspaceSharing,
   PlacementCapacityPolicy,
   RoomKernelOptions,
 } from "./room-kernel.ts";

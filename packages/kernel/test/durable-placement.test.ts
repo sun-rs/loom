@@ -14,6 +14,7 @@ import {
   RoomKernel,
   RuntimeTerminationProofError,
   type AuthenticatedHostContext,
+  type RoomKernelOptions,
 } from "../src/index.ts";
 
 const temporaryDirectories: string[] = [];
@@ -121,7 +122,11 @@ function runtimeOffer(
 }
 
 function createFixture(
-  options: { trustedRuntimeCertification?: boolean } = {},
+  options: {
+    inPlaceWorkspaceSharing?: "exclusive" | "shared";
+    placementCapacityPolicy?: RoomKernelOptions["placementCapacityPolicy"];
+    trustedRuntimeCertification?: boolean;
+  } = {},
 ) {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-placement-"));
   temporaryDirectories.push(directory);
@@ -129,7 +134,13 @@ function createFixture(
   const clock = createClock();
   const kernel = new RoomKernel({
     databasePath,
+    ...(options.inPlaceWorkspaceSharing === undefined
+      ? {}
+      : { inPlaceWorkspaceSharing: options.inPlaceWorkspaceSharing }),
     now: clock.now,
+    ...(options.placementCapacityPolicy === undefined
+      ? {}
+      : { placementCapacityPolicy: options.placementCapacityPolicy }),
     runtimeCertifications:
       options.trustedRuntimeCertification === false
         ? []
@@ -261,7 +272,7 @@ function addAgent(
 
 test("Kernel schema owns anchored Tasks and immutable Placement projections", () => {
   const fixture = createFixture();
-  assert.equal(KERNEL_SCHEMA_VERSION, 53);
+  assert.equal(KERNEL_SCHEMA_VERSION, 54);
   assert.equal(
     fixture.agentDefinition.currentRevisionId,
     fixture.agentDefinitionRevision.agentDefinitionRevisionId,
@@ -2447,5 +2458,356 @@ test("legacy single-runtime leasing still creates a RunAttempt without placement
     activationId: activation.activationId,
   });
   assert.equal(runAttempt.placement, undefined);
+  kernel.close();
+});
+
+function runAttemptWindows(databasePath: string): Array<{
+  finishedAt: string | null;
+  participantId: string;
+  runAttemptId: string;
+  startedAt: string;
+}> {
+  const database = new DatabaseSync(databasePath);
+  try {
+    return database
+      .prepare(
+        `SELECT run_attempt_id, participant_id, started_at, finished_at
+         FROM run_attempts
+         ORDER BY started_at, run_attempt_id`,
+      )
+      .all()
+      .map((row) => ({
+        finishedAt: (row as Record<string, unknown>)["finished_at"] as
+          string | null,
+        participantId: (row as Record<string, unknown>)[
+          "participant_id"
+        ] as string,
+        runAttemptId: (row as Record<string, unknown>)[
+          "run_attempt_id"
+        ] as string,
+        startedAt: (row as Record<string, unknown>)["started_at"] as string,
+      }));
+  } finally {
+    database.close();
+  }
+}
+
+function inPlaceLeaseCount(databasePath: string): number {
+  const database = new DatabaseSync(databasePath);
+  try {
+    const row = database
+      .prepare(
+        "SELECT COUNT(*) AS total FROM workspace_leases WHERE workspace_mode = 'in_place'",
+      )
+      .get();
+    return Number((row as Record<string, unknown>)["total"]);
+  } finally {
+    database.close();
+  }
+}
+
+function sharedMountFixture(
+  options: { inPlaceWorkspaceSharing?: "exclusive" | "shared" } = {},
+) {
+  const fixture = createFixture({
+    ...(options.inPlaceWorkspaceSharing === undefined
+      ? {}
+      : { inPlaceWorkspaceSharing: options.inPlaceWorkspaceSharing }),
+    placementCapacityPolicy: { defaultMaxConcurrent: 8 },
+  });
+  return fixture;
+}
+
+// The headline of the concurrency decision: one Human message wakes every Agent
+// member of the Room and their RunAttempt windows overlap in the ledger. The
+// assertion reads `run_attempts.started_at`/`finished_at`, never wall clock.
+test("one Human message gives two Agents on one in-place mount overlapping RunAttempt windows", () => {
+  const fixture = sharedMountFixture();
+  const { agentId, clock, databasePath, humanActor, kernel, room } = fixture;
+  const secondAgentId = addAgent(fixture, "agent-b", "concurrent-agent-b");
+  const host = authenticateHost(kernel, "concurrent-host", [
+    agentId,
+    secondAgentId,
+  ]);
+  const offer = runtimeOffer(host, "concurrent-offer", { maxConcurrent: 8 });
+  kernel.publishRuntimeOffer(host, offer);
+  kernel.postMessage(humanActor, {
+    body: "Everyone weigh in",
+    idempotencyKey: "concurrent-discussion",
+    recipients: [
+      { participantId: agentId, reason: "mention" },
+      { participantId: secondAgentId, reason: "mention" },
+    ],
+    roomId: room.roomId,
+  });
+
+  assert.ok(kernel.scheduleNextPlacement({ leaseMs: 30_000 }));
+  const first = kernel.claimNextPlacement(host, { leaseMs: 30_000 });
+  assert.ok(first);
+  clock.advance(1_000);
+  const secondPlacement = kernel.scheduleNextPlacement({ leaseMs: 30_000 });
+  assert.ok(
+    secondPlacement,
+    "the second Agent must be placeable while the first still holds the mount",
+  );
+  const second = kernel.claimNextPlacement(host, { leaseMs: 30_000 });
+  assert.ok(second);
+
+  // Both placements are on the very same in-place mount at the same time.
+  assert.equal(
+    first.placement.workspaceMountRevisionId,
+    second.placement.workspaceMountRevisionId,
+  );
+  assert.equal(first.placement.workspaceMode, "in_place");
+  assert.equal(inPlaceLeaseCount(databasePath), 2);
+
+  clock.advance(1_000);
+  kernel.finishRunAttempt(host, {
+    runAttemptId: first.runAttempt.runAttemptId,
+    state: "exited",
+    exitCode: 0,
+  });
+  clock.advance(1_000);
+  kernel.finishRunAttempt(host, {
+    runAttemptId: second.runAttempt.runAttemptId,
+    state: "exited",
+    exitCode: 0,
+  });
+
+  const windows = runAttemptWindows(databasePath);
+  assert.equal(windows.length, 2);
+  const [earlier, later] = windows;
+  assert.ok(earlier && later);
+  assert.notEqual(earlier.participantId, later.participantId);
+  assert.ok(earlier.finishedAt);
+  assert.ok(later.finishedAt);
+  // Overlap, read straight from the ledger: the later Run started before the
+  // earlier Run finished.
+  assert.ok(
+    Date.parse(later.startedAt) < Date.parse(earlier.finishedAt),
+    `expected overlapping RunAttempt windows, got ${JSON.stringify(windows)}`,
+  );
+  kernel.close();
+});
+
+test("a third Agent joining the Room makes three RunAttempts overlap on one mount", () => {
+  const fixture = sharedMountFixture();
+  const { agentId, clock, databasePath, humanActor, kernel, room } = fixture;
+  const secondAgentId = addAgent(fixture, "agent-b", "trio-agent-b");
+  const thirdAgentId = addAgent(fixture, "agent-c", "trio-agent-c");
+  const host = authenticateHost(kernel, "trio-host", [
+    agentId,
+    secondAgentId,
+    thirdAgentId,
+  ]);
+  kernel.publishRuntimeOffer(
+    host,
+    runtimeOffer(host, "trio-offer", { maxConcurrent: 8 }),
+  );
+  kernel.postMessage(humanActor, {
+    body: "All three of you, please respond",
+    idempotencyKey: "trio-discussion",
+    recipients: [
+      { participantId: agentId, reason: "mention" },
+      { participantId: secondAgentId, reason: "mention" },
+      { participantId: thirdAgentId, reason: "mention" },
+    ],
+    roomId: room.roomId,
+  });
+
+  const claims = [];
+  for (let index = 0; index < 3; index += 1) {
+    assert.ok(
+      kernel.scheduleNextPlacement({ leaseMs: 30_000 }),
+      `placement ${index} must be schedulable`,
+    );
+    const claim = kernel.claimNextPlacement(host, { leaseMs: 30_000 });
+    assert.ok(claim);
+    claims.push(claim);
+    clock.advance(1_000);
+  }
+
+  assert.equal(inPlaceLeaseCount(databasePath), 3);
+  assert.equal(
+    new Set(claims.map((claim) => claim.placement.workspaceMountRevisionId))
+      .size,
+    1,
+  );
+  clock.advance(10_000);
+  for (const claim of claims) {
+    kernel.finishRunAttempt(host, {
+      runAttemptId: claim.runAttempt.runAttemptId,
+      state: "exited",
+      exitCode: 0,
+    });
+  }
+  const windows = runAttemptWindows(databasePath);
+  assert.equal(windows.length, 3);
+  const lastStart = Date.parse(windows[2]?.startedAt ?? "");
+  for (const window of windows.slice(0, 2)) {
+    assert.ok(window.finishedAt);
+    assert.ok(
+      lastStart < Date.parse(window.finishedAt),
+      "every earlier RunAttempt must still be open when the last one starts",
+    );
+  }
+  kernel.close();
+});
+
+test("shared in-place mounts still keep one execution lane per participant", () => {
+  const fixture = sharedMountFixture();
+  const { agentId, clock, humanActor, kernel, room } = fixture;
+  const host = authenticateHost(kernel, "single-flight-host", agentId);
+  kernel.publishRuntimeOffer(
+    host,
+    runtimeOffer(host, "single-flight-offer", { maxConcurrent: 8 }),
+  );
+  kernel.postMessage(humanActor, {
+    body: "First ask",
+    idempotencyKey: "single-flight-one",
+    recipients: [{ participantId: agentId, reason: "mention" }],
+    roomId: room.roomId,
+  });
+  assert.ok(kernel.scheduleNextPlacement({ leaseMs: 30_000 }));
+  const claim = kernel.claimNextPlacement(host, { leaseMs: 30_000 });
+  assert.ok(claim);
+
+  clock.advance(1_000);
+  kernel.postMessage(humanActor, {
+    body: "Second ask while the first Run is live",
+    idempotencyKey: "single-flight-two",
+    recipients: [{ participantId: agentId, reason: "mention" }],
+    roomId: room.roomId,
+  });
+  assert.equal(kernel.scheduleNextPlacement({ leaseMs: 30_000 }), null);
+  assert.equal(kernel.listRunAttempts({ roomId: room.roomId }).length, 1);
+  kernel.close();
+});
+
+test("an active exclusive-operation lease fences one Agent while the others keep running", () => {
+  const fixture = sharedMountFixture();
+  const { agentId, clock, humanActor, kernel, room } = fixture;
+  const secondAgentId = addAgent(fixture, "agent-b", "fence-agent-b");
+  const host = authenticateHost(kernel, "fence-host", [agentId, secondAgentId]);
+  kernel.publishRuntimeOffer(
+    host,
+    runtimeOffer(host, "fence-offer", { maxConcurrent: 8 }),
+  );
+  kernel.acquireAgentExclusiveOperationLease(host, {
+    kind: "task_reassignment",
+    leaseMs: 60_000,
+    operationId: "fence-task-reassignment",
+    participantId: agentId,
+  });
+  kernel.postMessage(humanActor, {
+    body: "Both of you, respond",
+    idempotencyKey: "fence-discussion",
+    recipients: [
+      { participantId: agentId, reason: "mention" },
+      { participantId: secondAgentId, reason: "mention" },
+    ],
+    roomId: room.roomId,
+  });
+
+  assert.ok(kernel.scheduleNextPlacement({ leaseMs: 30_000 }));
+  const claim = kernel.claimNextPlacement(host, { leaseMs: 30_000 });
+  assert.ok(claim);
+  assert.equal(claim.activation.participantId, secondAgentId);
+  clock.advance(1_000);
+  assert.equal(
+    kernel.scheduleNextPlacement({ leaseMs: 30_000 }),
+    null,
+    "the fenced Agent must stay unplaceable even though the mount is shareable",
+  );
+  kernel.close();
+});
+
+test("a shared mount still refuses to release resources without terminal RuntimeProcess proof", () => {
+  const fixture = sharedMountFixture();
+  const { agentId, databasePath, humanActor, kernel, room } = fixture;
+  const host = authenticateHost(kernel, "proof-host", agentId);
+  kernel.publishRuntimeOffer(
+    host,
+    runtimeOffer(host, "proof-offer", { maxConcurrent: 8 }),
+  );
+  kernel.postMessage(humanActor, {
+    body: "Prove termination before releasing",
+    idempotencyKey: "proof-message",
+    recipients: [{ participantId: agentId, reason: "mention" }],
+    roomId: room.roomId,
+  });
+  assert.ok(kernel.scheduleNextPlacement({ leaseMs: 30_000 }));
+  const claim = kernel.claimNextPlacement(host, { leaseMs: 30_000 });
+  assert.ok(claim);
+  const runtime = {
+    recoveryDescriptor: {
+      driver: "fake-runtime",
+      metadata: {},
+      recoveryKey: "proof-runtime",
+    },
+    runAttemptId: claim.runAttempt.runAttemptId,
+    runtimeRunId: "proof-runtime",
+  };
+  kernel.prepareRunAttemptRuntime(host, runtime);
+  kernel.markRunAttemptRunning(host, runtime);
+
+  assert.throws(
+    () =>
+      kernel.finishRunAttempt(host, {
+        runAttemptId: claim.runAttempt.runAttemptId,
+        state: "exited",
+        exitCode: 0,
+      }),
+    RuntimeTerminationProofError,
+  );
+  assert.equal(inPlaceLeaseCount(databasePath), 1);
+  kernel.close();
+});
+
+test("inPlaceWorkspaceSharing 'exclusive' restores the serial one-writer behavior", () => {
+  const fixture = sharedMountFixture({ inPlaceWorkspaceSharing: "exclusive" });
+  const { agentId, clock, databasePath, humanActor, kernel, room } = fixture;
+  const secondAgentId = addAgent(fixture, "agent-b", "exclusive-agent-b");
+  const host = authenticateHost(kernel, "exclusive-host", [
+    agentId,
+    secondAgentId,
+  ]);
+  kernel.publishRuntimeOffer(
+    host,
+    runtimeOffer(host, "exclusive-offer", { maxConcurrent: 8 }),
+  );
+  kernel.postMessage(humanActor, {
+    body: "Both of you, respond",
+    idempotencyKey: "exclusive-discussion",
+    recipients: [
+      { participantId: agentId, reason: "mention" },
+      { participantId: secondAgentId, reason: "mention" },
+    ],
+    roomId: room.roomId,
+  });
+
+  assert.ok(kernel.scheduleNextPlacement({ leaseMs: 30_000 }));
+  const first = kernel.claimNextPlacement(host, { leaseMs: 30_000 });
+  assert.ok(first);
+  clock.advance(1_000);
+  assert.equal(
+    kernel.scheduleNextPlacement({ leaseMs: 30_000 }),
+    null,
+    "exclusive mode must serialize on the single in-place mount",
+  );
+  assert.equal(inPlaceLeaseCount(databasePath), 1);
+
+  kernel.finishRunAttempt(host, {
+    runAttemptId: first.runAttempt.runAttemptId,
+    state: "exited",
+    exitCode: 0,
+  });
+  clock.advance(1_000);
+  assert.ok(
+    kernel.scheduleNextPlacement({ leaseMs: 30_000 }),
+    "the mount is placeable again once the first Run released it",
+  );
+  const windows = runAttemptWindows(databasePath);
+  assert.equal(windows.length, 1);
   kernel.close();
 });

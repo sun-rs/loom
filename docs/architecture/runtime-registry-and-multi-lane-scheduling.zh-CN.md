@@ -1,5 +1,10 @@
 # Runtime Registry 与多 Lane 调度架构
 
+> **2026-09-10 更新**：in-place 工作区默认已改为 **shared**，多个 Agent 可在同一挂载点并发运行，
+> 与上游 Raft 一致（Raft 无工作区锁，只有 `AgentStartCoordinator` 限制同时启动数）。
+> 冲突仲裁交给 Task claim 与 Room 内的分工，不再由调度器串行兜底。
+> `workspace.sharing: "exclusive"` 可退回旧的独占行为。本文下述 in-place 独占与 R4 worktree 的表述已过时。
+
 状态：**Accepted in stages / R0–R3 implemented / narrow R2a–R2c, native Provider resume and cancel implemented / R5 config v4 mixed reply certified / remaining R1–R4 provisional**（2026-08-29）。严格 protocol schemas、pure placement planner、Kernel schema v12、control Room 配置修订、trusted immutable Offer evidence、durable Placement/RunAttempt provenance、atomic placement launch claim、可信启动期 capacity policy、MultiLaneAgentHost、Host-local immutable Runtime Profile/Probe Registry、spawn-time secret binding、probe-backed model catalog/launch binding，以及 daemon config v4 的 Placement-selected external Worker E2 已通过本机门禁。Codex Sol/low、Kimi K3 与 OpenCode DeepSeek V4 Flash/max 又在同一 Room 完成真实 mixed CLI reply certification；Kimi ACP、Codex app-server、OpenCode serve 与 Claude stream-json 均通过 fake native protocol gate 证明 Host 私有 resume-or-fresh 与 Provider-native cancellation，Codex 另通过 daemon-restart gate。durable PlacementHold、control-Room CapacityPool、完整 canonical Workspace mount 管理面、native live input、真实付费 Provider interrupt/watchdog 与 mixed-adapter crash recovery 尚未完成。
 
 ## 1. 要解决的问题

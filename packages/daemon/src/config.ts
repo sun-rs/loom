@@ -183,6 +183,10 @@ export const DaemonConfigV4Schema = z
       .object({
         cwd: AbsolutePathSchema,
         mode: z.literal("in_place"),
+        // Whether several Runs may hold this in-place mount at once. "shared"
+        // is Raft-equivalent (Agents in one Room answer concurrently);
+        // "exclusive" restores one writer per mount, serializing them.
+        sharing: z.enum(["exclusive", "shared"]).optional(),
         workspaceDefinitionId: z.string().min(1),
         workspaceMountDigest: ContentDigestSchema,
         workspaceMountRevisionId: z.string().min(1),

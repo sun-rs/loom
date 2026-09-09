@@ -215,7 +215,7 @@ test("comment retry normalizes self recipients exactly like canonical Thread rep
   }
 });
 
-test("comments survive a fresh Kernel owner and schema 53 migration preserves Room facts", () => {
+test("comments survive a fresh Kernel owner and schema 54 migration preserves Room facts", () => {
   const f = fixture();
   try {
     const result = f.kernel.attachmentComments.post(f.actor, {
@@ -233,7 +233,7 @@ test("comments survive a fresh Kernel owner and schema 53 migration preserves Ro
           .comments[0]!.id,
         result.event.aggregateId,
       );
-      assert.equal(f.db.prepare("PRAGMA user_version").get()!.user_version, 53);
+      assert.equal(f.db.prepare("PRAGMA user_version").get()!.user_version, 54);
     } finally {
       reopened.close();
     }

@@ -4,12 +4,22 @@ import {
 } from "@rah-os/kernel";
 
 import { AgentHost, type AgentHostOptions } from "./agent-host.ts";
+import {
+  AgentStartGate,
+  type AgentStartSchedulerSettings,
+} from "./agent-start-coordinator.ts";
 
 export type MultiLaneAgentHostOptions = Omit<
   AgentHostOptions,
-  "control" | "kernel" | "manageHostLifecycle"
+  "control" | "kernel" | "manageHostLifecycle" | "startGate"
 > & {
   capacity: number;
+  /**
+   * Bounds on how many Agents may be *starting* at once, ported from Raft's
+   * `runtimeStartScheduler`. Omitted fields fall back to the environment and
+   * then to Raft's defaults (5 concurrent starts, 500 ms apart).
+   */
+  runtimeStartScheduler?: Partial<AgentStartSchedulerSettings>;
   host: AuthenticatedHostContext;
   kernel: NonNullable<AgentHostOptions["kernel"]>;
   placementRuntimeResolver: NonNullable<
@@ -22,6 +32,7 @@ export class MultiLaneAgentHost {
   readonly #host: AuthenticatedHostContext;
   readonly #kernel: NonNullable<AgentHostOptions["kernel"]>;
   readonly #workers: AgentHost[];
+  readonly #startGate: AgentStartGate;
   #running = false;
 
   constructor(options: MultiLaneAgentHostOptions) {
@@ -31,9 +42,15 @@ export class MultiLaneAgentHost {
     this.capacity = options.capacity;
     this.#host = options.host;
     this.#kernel = options.kernel;
+    this.#startGate = new AgentStartGate(options.runtimeStartScheduler ?? {});
     this.#workers = Array.from(
       { length: options.capacity },
-      () => new AgentHost({ ...options, manageHostLifecycle: false }),
+      () =>
+        new AgentHost({
+          ...options,
+          manageHostLifecycle: false,
+          startGate: this.#startGate,
+        }),
     );
   }
 
@@ -65,6 +82,7 @@ export class MultiLaneAgentHost {
       );
     } finally {
       input.signal.removeEventListener("abort", beginDrain);
+      this.#startGate.cancelAll("MultiLaneAgentHost stopped");
       try {
         this.#kernel.heartbeatHost(this.#host, { state: "offline" });
       } catch (error) {

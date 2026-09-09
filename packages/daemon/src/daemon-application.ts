@@ -138,6 +138,8 @@ export class DaemonApplication {
         databasePath: join(this.#config.stateDirectory, "room.db"),
         ...(this.#config.schemaVersion === 4
           ? {
+              inPlaceWorkspaceSharing:
+                this.#config.workspace.sharing ?? "shared",
               placementCapacityPolicy: {
                 defaultMaxConcurrent: this.#config.host.maxConcurrent,
                 hostLimits: [

@@ -28,6 +28,7 @@ import {
   runtimeErrorRetryDelay,
   runtimeErrorJitterRandom,
 } from "./runtime-error-policy.ts";
+import type { AgentStartGate } from "./agent-start-coordinator.ts";
 
 const DEFAULT_ACTIVATION_RETRY_DELAY_MS = 10_000;
 
@@ -104,6 +105,7 @@ export type AgentHostOptions = {
   ) => RuntimeAdapter;
   runtimeRecoveryTimeoutMs?: number;
   runtimeStartTimeoutMs?: number;
+  startGate?: AgentStartGate;
   timeoutWait?: (delayMs: number, signal: AbortSignal) => Promise<void>;
   wait?: (delayMs: number, signal: AbortSignal) => Promise<void>;
 };
@@ -142,6 +144,7 @@ export class AgentHost {
     signal: AbortSignal,
   ) => Promise<void>;
   readonly #wait: (delayMs: number, signal: AbortSignal) => Promise<void>;
+  readonly #startGate: AgentStartGate | undefined;
   #draining = false;
   #drainDeadlineAtMs: number | undefined;
   #runSignal: AbortSignal | undefined;
@@ -194,6 +197,7 @@ export class AgentHost {
       }
     }
     this.#drainTimeoutMs = drainTimeoutMs;
+    this.#startGate = options.startGate;
     this.#host = options.host;
     this.#hostId = options.host.hostId;
     this.#consumerId = `${options.host.hostId}:runtime`;
@@ -500,32 +504,43 @@ export class AgentHost {
     let preparedRun: RunHandle | undefined;
     let run: RunHandle | undefined;
     try {
-      run = await withDeadline(
-        runtime.start(envelope, {
-          recordTrajectory: async (activity) => {
-            await this.#control.appendRunTrajectory(activity);
-          },
-          registerPrepared: async (candidate) => {
-            if (preparedRun !== undefined) {
-              throw new Error(
-                "runtime registered more than one prepared handle",
-              );
-            }
-            await this.#control.prepareRunAttemptRuntime({
-              recoveryDescriptor: candidate.recoveryDescriptor ?? {
-                driver: "unrecoverable-runtime",
-                metadata: {},
-                recoveryKey: candidate.runId,
-              },
-              runAttemptId: runAttempt.runAttemptId,
-              runtimeRunId: candidate.runId,
-            });
-            preparedRun = candidate;
-          },
-        }),
-        this.#runtimeStartTimeoutMs,
-        "runtime start",
-      );
+      const startRuntime = () =>
+        withDeadline(
+          runtime.start(envelope, {
+            recordTrajectory: async (activity) => {
+              await this.#control.appendRunTrajectory(activity);
+            },
+            registerPrepared: async (candidate) => {
+              if (preparedRun !== undefined) {
+                throw new Error(
+                  "runtime registered more than one prepared handle",
+                );
+              }
+              await this.#control.prepareRunAttemptRuntime({
+                recoveryDescriptor: candidate.recoveryDescriptor ?? {
+                  driver: "unrecoverable-runtime",
+                  metadata: {},
+                  recoveryKey: candidate.runId,
+                },
+                runAttemptId: runAttempt.runAttemptId,
+                runtimeRunId: candidate.runId,
+              });
+              preparedRun = candidate;
+            },
+          }),
+          this.#runtimeStartTimeoutMs,
+          "runtime start",
+        );
+      // Upstream Raft bounds how many Agents may be *starting* at once — never
+      // how many may be running — with AgentStartCoordinator. The gate is the
+      // port of that queue-and-pump; without one, every lane starts at once.
+      run =
+        this.#startGate === undefined
+          ? await startRuntime()
+          : await this.#startGate.runStart(
+              activation.participantId,
+              startRuntime,
+            );
       if (
         preparedRun === undefined ||
         preparedRun.runId !== run.runId ||

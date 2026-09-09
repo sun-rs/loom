@@ -957,9 +957,12 @@ CREATE TABLE IF NOT EXISTS workspace_leases (
   created_at TEXT NOT NULL
 ) STRICT;
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_one_in_place_workspace_lease
-  ON workspace_leases(workspace_mount_revision_id)
-  WHERE workspace_mode = 'in_place';
+-- In-place workspace leases are no longer unique per mount: whether several
+-- Runs may share one in-place mount is a Kernel option
+-- (inPlaceWorkspaceSharing), enforced by the placement planner's busy set,
+-- not by the storage layer. The index stays for lookup only.
+CREATE INDEX IF NOT EXISTS idx_workspace_leases_mount
+  ON workspace_leases(workspace_mount_revision_id, workspace_mode);
 
 CREATE TABLE IF NOT EXISTS run_attempts (
   run_attempt_id TEXT PRIMARY KEY,
@@ -1529,6 +1532,20 @@ export function migrateDropRoomTaskDefaultsV52(database: DatabaseSync): void {
   // Room task default participants were an RAH extension that Raft does not
   // have; the feature was withdrawn, so v51 databases drop the table.
   database.exec("DROP TABLE IF EXISTS room_task_defaults");
+}
+
+export function migrateSharedInPlaceWorkspaceLeasesV53(
+  database: DatabaseSync,
+): void {
+  // v53 databases carry a partial UNIQUE index that made one in-place mount
+  // exclusive to a single placement, which serialized every Agent in a Room.
+  // Exclusivity is now a Kernel option, so the storage-level lock is dropped
+  // and replaced by a plain lookup index.
+  database.exec(`
+    DROP INDEX IF EXISTS idx_one_in_place_workspace_lease;
+    CREATE INDEX IF NOT EXISTS idx_workspace_leases_mount
+      ON workspace_leases(workspace_mount_revision_id, workspace_mode);
+  `);
 }
 
 export function migrateMessageForwardingV46(database: DatabaseSync): void {

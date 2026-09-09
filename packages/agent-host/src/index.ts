@@ -148,6 +148,18 @@ export type {
 } from "./remote-computer-agent-host-service.ts";
 export { RemoteComputerManagedAttachmentService } from "./remote-computer-managed-attachment-service.ts";
 export type { RemoteComputerManagedAttachmentServiceOptions } from "./remote-computer-managed-attachment-service.ts";
+export {
+  AgentStartCoordinator,
+  AgentStartGate,
+  DEFAULT_AGENT_START_INTERVAL_MS,
+  DEFAULT_MAX_CONCURRENT_AGENT_STARTS,
+  resolveAgentStartSchedulerSettings,
+} from "./agent-start-coordinator.ts";
+export type {
+  AgentStartSchedulerSettings,
+  AgentStartSnapshot,
+  QueuedAgentStart,
+} from "./agent-start-coordinator.ts";
 export { MultiLaneAgentHost } from "./multi-lane-agent-host.ts";
 export type { MultiLaneAgentHostOptions } from "./multi-lane-agent-host.ts";
 export {

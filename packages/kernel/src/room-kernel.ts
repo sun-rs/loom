@@ -24,8 +24,13 @@ import {
   buildTaskSubmissionEvidence,
   deriveTaskSubmissionWorkspaceEvidence,
 } from "./task-submission-evidence.ts";
-import type { RoomKernelOptions } from "./room-kernel-options.ts";
+import type {
+  InPlaceWorkspaceSharing,
+  RoomKernelOptions,
+} from "./room-kernel-options.ts";
+import { busyWorkspaceMountRevisionIds } from "./workspace-lease.ts";
 export type {
+  InPlaceWorkspaceSharing,
   PlacementCapacityPolicy,
   RoomKernelOptions,
 } from "./room-kernel-options.ts";
@@ -195,6 +200,7 @@ import {
   migrateBoundedRoomReadsV49,
   migrateFrozenTaskSubmissionEvidenceV50,
   migrateDropRoomTaskDefaultsV52,
+  migrateSharedInPlaceWorkspaceLeasesV53,
   SCHEMA_SQL,
 } from "./schema.ts";
 import * as agentThreads from "./agent-thread-subscriptions.ts";
@@ -347,7 +353,7 @@ import {
 const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 53;
+export const KERNEL_SCHEMA_VERSION = 54;
 export class RoomKernel {
   readonly databasePath: string;
   readonly #database: DatabaseSync;
@@ -357,6 +363,7 @@ export class RoomKernel {
   readonly #runtimeCertifications: Map<string, RuntimeCertification>;
   readonly #runtimeOfferClockSkewMs: number;
   readonly #runtimeOfferMaxTtlMs: number;
+  readonly #inPlaceWorkspaceSharing: InPlaceWorkspaceSharing;
   readonly #defaultPlacementMaxConcurrent: number;
   readonly #hostPlacementLimits: Map<string, number>;
   readonly #poolPlacementLimits: Map<string, number>;
@@ -399,6 +406,7 @@ export class RoomKernel {
   constructor(options: RoomKernelOptions) {
     this.databasePath = options.databasePath;
     this.#now = options.now ?? (() => new Date());
+    this.#inPlaceWorkspaceSharing = options.inPlaceWorkspaceSharing ?? "shared";
     this.#createId =
       options.createId ?? ((prefix) => `${prefix}_${randomUUID()}`);
     const placementCapacityPolicy = options.placementCapacityPolicy ?? {};
@@ -698,6 +706,7 @@ export class RoomKernel {
     migrateBoundedRoomReadsV49(this.#database);
     migrateFrozenTaskSubmissionEvidenceV50(this.#database);
     migrateDropRoomTaskDefaultsV52(this.#database);
+    migrateSharedInPlaceWorkspaceLeasesV53(this.#database);
     migrateWorkerTargetReadPositions(this.#database);
     migrateWorkerSelfProfileObservations(this.#database);
     principalProfile.migrate(this.#database);
@@ -5829,20 +5838,11 @@ export class RoomKernel {
         this.#database,
         hostRows,
       ),
-      busyWorkspaceMountRevisionIds: [
-        ...new Set([
-          ...this.#database
-            .prepare(
-              "SELECT workspace_mount_revision_id FROM workspace_leases WHERE workspace_mode = 'in_place' ORDER BY workspace_mount_revision_id",
-            )
-            .all()
-            .map((row) => text(row, "workspace_mount_revision_id")),
-          ...unprovenRuntimePlacements
-            .map(({ placement }) => placement)
-            .filter((placement) => placement.workspaceMode === "in_place")
-            .map((placement) => placement.workspaceMountRevisionId),
-        ]),
-      ].sort(),
+      busyWorkspaceMountRevisionIds: busyWorkspaceMountRevisionIds({
+        database: this.#database,
+        sharing: this.#inPlaceWorkspaceSharing,
+        unprovenRuntimePlacements,
+      }),
       candidates,
       capacities: {
         hosts: [...uniqueHosts.values()],
