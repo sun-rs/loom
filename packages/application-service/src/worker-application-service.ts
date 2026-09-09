@@ -98,6 +98,7 @@ import {
   WorkerTaskReviewResponseSchema,
   WorkerTaskReleaseRequestSchema,
   WorkerTaskStartRequestSchema,
+  WorkerTaskAddressSchema,
   WorkerTaskSubmitRequestSchema,
   WorkerTaskSubmissionRequestSchema,
   WorkerTaskSubmissionResponseSchema,
@@ -236,6 +237,24 @@ export const WORKER_HTTP_ROUTE_PATHS = [
   "/v1/worker/tasks/trajectory",
 ] as const;
 const WORKER_ROUTES = new Set<string>(WORKER_HTTP_ROUTE_PATHS);
+
+/**
+ * Raft's Task family is addressed by `{ channel, task_number }`; only these
+ * three Task routes are addressed by something other than a Task, so only they
+ * refuse the pair. `tasks/convert` and `tasks/claim-message` address a message
+ * and `tasks/create` addresses nothing yet, exactly as upstream.
+ */
+const TASK_ROUTES_WITHOUT_A_TASK = new Set<string>([
+  "/v1/worker/tasks/claim-message",
+  "/v1/worker/tasks/convert",
+  "/v1/worker/tasks/create",
+]);
+
+/** Task read routes that already carry their own `channel` selector. */
+const TASK_ROUTES_WITH_OWN_CHANNEL = new Set<string>([
+  "/v1/worker/tasks/history",
+  "/v1/worker/tasks/list",
+]);
 
 export class WorkerApplicationService {
   readonly #profileMetadata: WorkerProfileMetadataPort | undefined;
@@ -547,6 +566,8 @@ export class WorkerApplicationService {
         : MAX_BODY_BYTES,
     );
     const grant = this.#authenticate(request);
+    if (route.startsWith("/v1/worker/tasks/"))
+      this.#resolveTaskAddressing(route, body, grant);
     if (route === "/v1/worker/version") {
       const input = parseWorkerRequest(WorkerIntrospectionRequestSchema, body);
       this.#kernel.workerReads.whoami(grant.execution, input);
@@ -932,6 +953,51 @@ export class WorkerApplicationService {
         acknowledgedThrough: throughSeq,
       }),
     );
+  }
+
+  /**
+   * Raft addresses a Task as `--target "#channel" --number N`. The pair is
+   * resolved to the canonical Task id here, before any command schema sees the
+   * body, so every Task command keeps one addressing shape downstream and every
+   * existing authority check — Activation delivery for a mutation, Room
+   * visibility for a read — is applied to the resolved id unchanged. A number
+   * in a Room this credential cannot act in therefore fails in the same place,
+   * and with the same error, as the equivalent `--task-id` does today.
+   */
+  #resolveTaskAddressing(
+    route: string,
+    body: Record<string, unknown>,
+    grant: WorkerGrant,
+  ): void {
+    if (TASK_ROUTES_WITH_OWN_CHANNEL.has(route)) return;
+    if (body.channel === undefined && body.taskNumber === undefined) return;
+    if (TASK_ROUTES_WITHOUT_A_TASK.has(route))
+      throw new HttpRequestError(
+        "unexpected_field",
+        "field channel is not accepted",
+        400,
+      );
+    if (body.taskId !== undefined)
+      throw new HttpRequestError(
+        "invalid_field",
+        "taskId: a Task is addressed by taskId or by channel with taskNumber, not both",
+        400,
+      );
+    const address = parseWorkerRequest(WorkerTaskAddressSchema, {
+      ...(body.channel === undefined ? {} : { channel: body.channel }),
+      ...(body.taskNumber === undefined ? {} : { taskNumber: body.taskNumber }),
+    });
+    const resolved = this.#kernel.resolveWorkerTaskAddress(
+      grant.execution,
+      address,
+    );
+    delete body.channel;
+    delete body.taskNumber;
+    body.taskId = resolved.taskId;
+    // `tasks/delete` is RAH's one Task command that also names its Room; the
+    // address already carries it.
+    if (route === "/v1/worker/tasks/delete" && body.roomId === undefined)
+      body.roomId = resolved.roomId;
   }
 
   /**

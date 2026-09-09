@@ -27,7 +27,7 @@
     "deferred-scope"
   ],
   "ratchet": {
-    "unjustified": 100,
+    "unjustified": 98,
     "missingNonDeferred": 33,
     "promptJudgmentParagraphs": 14
   },
@@ -602,8 +602,19 @@
           "sha256": "c87a6715c302544957ce5bd2f212cbdc18bf49daf66d76ebce9d988a42c74564"
         }
       },
-      "verdict": "unjustified",
-      "note": "§2.6: same fields; --task-id addressing instead of --target/--channel/--number."
+      "verdict": "aligned",
+      "note": "§2.6: aligned on 2026-09-09 — same fields, addressed by --target/--channel with --number as taskAmendCommand does."
+    },
+    {
+      "id": "cli.worker.task-id-addressing",
+      "kind": "cli",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": null,
+      "verdict": "justified",
+      "constraint": "sqlite-ledger",
+      "note": "§2.6: --task-id stays accepted alongside Raft's --target/--number on every Task command. The canonical Task identity in the single local SQLite ledger is the task_id UUID that the Human client, the Kernel commands and the existing tests already address; the server resolves either form to the same Task before any authority check runs, so the addition widens no authority."
     },
     {
       "id": "cli.worker.task-unblock",
@@ -1003,8 +1014,8 @@
           "sha256": "6789eb4621adf053d10538cbe32761f5383a31c70a5c483bd3f86df08cc6c2c0"
         }
       },
-      "verdict": "unjustified",
-      "note": "§2.6: --task-id addressing; Raft claims by --target/--channel/--number or --message-id."
+      "verdict": "aligned",
+      "note": "§2.6: aligned on 2026-09-09 — claims by --target/--channel with a repeatable --number, exactly as taskClaimCommand does; --message-id claiming stays RAH task-claim-message."
     },
     {
       "id": "cli.worker.task-start",

@@ -536,3 +536,205 @@ test("a reviewer records one canonical Review without carrying causal parameters
     await f.close();
   }
 });
+
+/**
+ * Raft addresses a Task the way a Human reads it in the Room:
+ * `--target "#channel" --number N`, repeatable on claim
+ * (agent-prompt-compiler.js line 181; `agentApiTaskClaimBodySchema`).
+ */
+test("a Task command resolves --target with --number to the same canonical Task as --task-id", async () => {
+  const f = await fixture();
+  try {
+    const claimed = await f.call("tasks/claim-message", {
+      messageId: f.source.event.aggregateId,
+      rationale: "Durable multi-step work",
+    });
+    assert.equal(claimed.status, 200, JSON.stringify(claimed.body));
+    const taskId = claimed.body.task.taskId as string;
+    const taskNumber = claimed.body.task.taskNumber as number;
+    assert.equal(taskNumber, 1);
+
+    const byNumber = await f.call("tasks/get", {
+      channel: "#minimal",
+      taskNumber,
+    });
+    assert.equal(byNumber.status, 200, JSON.stringify(byNumber.body));
+    assert.equal(byNumber.body.task.taskId, taskId);
+    const byId = await f.call("tasks/get", { taskId });
+    assert.equal(byId.status, 200);
+    assert.deepEqual(byId.body.task, byNumber.body.task);
+
+    const started = await f.call("tasks/start", {
+      channel: "#minimal",
+      taskNumber,
+    });
+    assert.equal(started.status, 200, JSON.stringify(started.body));
+    assert.equal(started.body.task.taskId, taskId);
+    assert.equal(started.body.task.state, "in_progress");
+
+    const progressed = await f.call("tasks/progress", {
+      channel: "#minimal",
+      taskNumber,
+      progress: "Half way",
+    });
+    assert.equal(progressed.status, 200, JSON.stringify(progressed.body));
+    assert.equal(progressed.body.task.taskId, taskId);
+
+    // The Room is implied by the address, so `tasks/delete` needs no `roomId`.
+    const spare = await f.call("tasks/create", { title: "Spare" });
+    assert.equal(spare.status, 200, JSON.stringify(spare.body));
+    const deleted = await f.call("tasks/delete", {
+      channel: "#minimal",
+      taskNumber: spare.body.task.taskNumber,
+    });
+    assert.equal(deleted.status, 200, JSON.stringify(deleted.body));
+    assert.equal(deleted.body.taskId, spare.body.task.taskId);
+  } finally {
+    await f.close();
+  }
+});
+
+test("every number of a repeated claim is claimed, one canonical Task each", async () => {
+  const f = await fixture();
+  try {
+    const first = await f.call("tasks/create", { title: "First subtask" });
+    const second = await f.call("tasks/create", { title: "Second subtask" });
+    assert.equal(first.status, 200, JSON.stringify(first.body));
+    assert.equal(second.status, 200, JSON.stringify(second.body));
+    for (const created of [first, second]) {
+      const claimed = await f.call("tasks/claim", {
+        channel: "#minimal",
+        taskNumber: created.body.task.taskNumber,
+      });
+      assert.equal(claimed.status, 200, JSON.stringify(claimed.body));
+      assert.equal(claimed.body.task.taskId, created.body.task.taskId);
+      assert.equal(claimed.body.task.state, "claimed");
+    }
+  } finally {
+    await f.close();
+  }
+});
+
+test("a number outside this Activation's Room is refused exactly like its Task id", async () => {
+  const f = await fixture();
+  try {
+    const other = f.kernel.createRoom(f.actor, {
+      name: "Other",
+      slug: "other",
+    });
+    f.kernel.addMember(f.actor, {
+      roomId: other.roomId,
+      principalId: f.agent.principal.principalId,
+    });
+    const outside = f.kernel.createTask(f.actor, {
+      roomId: other.roomId,
+      title: "Work in another Room",
+      collaboratorIds: [],
+      reviewerIds: [],
+      dependencyTaskIds: [],
+      idempotencyKey: "outside-task",
+    });
+    const byNumber = await f.call("tasks/claim", {
+      channel: "#other",
+      taskNumber: outside.task.taskNumber,
+    });
+    const byId = await f.call("tasks/claim", { taskId: outside.task.taskId });
+    assert.equal(byId.status, 403, JSON.stringify(byId.body));
+    assert.equal(byNumber.status, byId.status, JSON.stringify(byNumber.body));
+    assert.deepEqual(byNumber.body.error, byId.body.error);
+
+    // A Room this Agent is not a member of is not even addressable.
+    const unjoined = await f.call("tasks/claim", {
+      channel: "#nowhere",
+      taskNumber: 1,
+    });
+    assert.equal(unjoined.status, 404, JSON.stringify(unjoined.body));
+
+    // Neither addressing form may be combined with the other.
+    const both = await f.call("tasks/claim", {
+      channel: "#minimal",
+      taskNumber: 1,
+      taskId: outside.task.taskId,
+    });
+    assert.equal(both.status, 400, JSON.stringify(both.body));
+  } finally {
+    await f.close();
+  }
+});
+
+/**
+ * Raft: "`raft message read` shows messages in their current state. If a
+ * message was later converted to a task, it will show the `[task #N ...]`
+ * suffix" (agent-prompt-compiler.js line 172).
+ */
+test("a Task-anchored message carries the [task #N status=...] suffix in Agent-facing reads", async () => {
+  const f = await fixture();
+  try {
+    const before = await f.call("messages/history", { limit: 20 });
+    assert.equal(before.status, 200, JSON.stringify(before.body));
+    const plain = (
+      before.body.messages as { messageId: string; body: string }[]
+    ).find((message) => message.messageId === f.source.event.aggregateId);
+    assert.ok(plain);
+    assert.equal(plain.body, "Please carry this durable work");
+
+    const claimed = await f.call("tasks/claim-message", {
+      messageId: f.source.event.aggregateId,
+      rationale: "Durable multi-step work",
+    });
+    assert.equal(claimed.status, 200, JSON.stringify(claimed.body));
+    const taskNumber = claimed.body.task.taskNumber as number;
+    const suffixed = async () => {
+      const read = await f.call("messages/history", { limit: 20 });
+      assert.equal(read.status, 200, JSON.stringify(read.body));
+      const message = (
+        read.body.messages as { messageId: string; body: string }[]
+      ).find((entry) => entry.messageId === f.source.event.aggregateId);
+      assert.ok(message);
+      return message.body;
+    };
+    assert.equal(
+      await suffixed(),
+      `Please carry this durable work [task #${String(taskNumber)} status=in_progress]`,
+    );
+
+    // The status tracks the canonical workflow change.
+    const started = await f.call("tasks/start", {
+      channel: "#minimal",
+      taskNumber,
+    });
+    assert.equal(started.status, 200, JSON.stringify(started.body));
+    const submitted = await f.call("tasks/submit", {
+      channel: "#minimal",
+      taskNumber,
+      summary: "Done and verified",
+    });
+    assert.equal(submitted.status, 200, JSON.stringify(submitted.body));
+    assert.equal(
+      await suffixed(),
+      `Please carry this durable work [task #${String(taskNumber)} status=in_review]`,
+    );
+
+    // The sync delivery the Agent parses shows the same suffix.
+    const synced = await f.call("sync", {});
+    assert.equal(synced.status, 200, JSON.stringify(synced.body));
+    const posted = (
+      synced.body.events as {
+        type: string;
+        aggregateId: string;
+        payload: { body?: string };
+      }[]
+    ).find(
+      (event) =>
+        event.type === "message.posted" &&
+        event.aggregateId === f.source.event.aggregateId,
+    );
+    if (posted !== undefined)
+      assert.match(
+        posted.payload.body ?? "",
+        /\[task #\d+ status=in_review\]$/u,
+      );
+  } finally {
+    await f.close();
+  }
+});

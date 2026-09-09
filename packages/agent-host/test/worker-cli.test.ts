@@ -1660,3 +1660,244 @@ test("help no longer presents the causal parameters as required on Task commands
     rmSync(state.directory, { force: true, recursive: true });
   }
 });
+
+/**
+ * Raft addresses a Task as a Human reads it — `--target "#channel" --number N`
+ * (agent-prompt-compiler.js line 181) — with `--channel` as the legacy alias.
+ */
+const numberAddressedTaskCommands: ReadonlyArray<{
+  argv: readonly string[];
+  body: Record<string, unknown>;
+  path: string;
+}> = [
+  {
+    argv: ["task-get"],
+    body: { channel: "#build", taskNumber: 3 },
+    path: "/v1/worker/tasks/get",
+  },
+  {
+    argv: ["task-submission"],
+    body: { channel: "#build", taskNumber: 3 },
+    path: "/v1/worker/tasks/submission",
+  },
+  {
+    argv: ["task-input-status"],
+    body: { channel: "#build", taskNumber: 3 },
+    path: "/v1/worker/tasks/input-status",
+  },
+  {
+    argv: ["task-trajectory"],
+    body: { channel: "#build", taskNumber: 3 },
+    path: "/v1/worker/tasks/trajectory",
+  },
+  {
+    argv: ["task-claim"],
+    body: { channel: "#build", taskNumber: 3 },
+    path: "/v1/worker/tasks/claim",
+  },
+  {
+    argv: ["task-start"],
+    body: { channel: "#build", taskNumber: 3 },
+    path: "/v1/worker/tasks/start",
+  },
+  {
+    argv: ["task-release"],
+    body: { channel: "#build", taskNumber: 3 },
+    path: "/v1/worker/tasks/release",
+  },
+  {
+    argv: ["task-progress", "--progress", "half way"],
+    body: { channel: "#build", progress: "half way", taskNumber: 3 },
+    path: "/v1/worker/tasks/progress",
+  },
+  {
+    argv: ["task-block", "--reason", "waiting"],
+    body: { channel: "#build", reason: "waiting", taskNumber: 3 },
+    path: "/v1/worker/tasks/block",
+  },
+  {
+    argv: ["task-request-input", "--question", "which?"],
+    body: { channel: "#build", question: "which?", taskNumber: 3 },
+    path: "/v1/worker/tasks/request-input",
+  },
+  {
+    argv: ["task-submit", "--summary", "done"],
+    body: { channel: "#build", summary: "done", taskNumber: 3 },
+    path: "/v1/worker/tasks/submit",
+  },
+  {
+    argv: [
+      "task-review",
+      "--disposition",
+      "approved",
+      "--summary",
+      "evidence read",
+    ],
+    body: {
+      channel: "#build",
+      disposition: "approved",
+      summary: "evidence read",
+      taskNumber: 3,
+    },
+    path: "/v1/worker/tasks/review",
+  },
+  {
+    argv: ["task-assign", "--assignee", "agent-2"],
+    body: { assigneeId: "agent-2", channel: "#build", taskNumber: 3 },
+    path: "/v1/worker/tasks/assign",
+  },
+  {
+    argv: ["task-amend", "--title", "Sharper title"],
+    body: { channel: "#build", taskNumber: 3, title: "Sharper title" },
+    path: "/v1/worker/tasks/amend",
+  },
+  {
+    argv: ["task-unblock"],
+    body: { channel: "#build", taskNumber: 3 },
+    path: "/v1/worker/tasks/unblock",
+  },
+  {
+    argv: ["task-delete"],
+    body: { channel: "#build", taskNumber: 3 },
+    path: "/v1/worker/tasks/delete",
+  },
+];
+
+test("every Task command accepts Raft's --target with --number addressing", async () => {
+  for (const command of numberAddressedTaskCommands) {
+    for (const alias of ["--target", "--channel"]) {
+      const state = fixture();
+      try {
+        assert.equal(
+          await runWorkerCliCommand(
+            [
+              "worker",
+              command.argv[0]!,
+              alias,
+              "#build",
+              "--number",
+              "3",
+              ...command.argv.slice(1),
+            ],
+            state.runtime,
+          ),
+          0,
+          `${command.argv[0]!} ${alias}: ${state.stderr()}`,
+        );
+        assert.deepEqual(
+          state.requests[0]?.body,
+          command.body,
+          command.argv[0],
+        );
+        assert.equal(
+          state.requests[0]?.url,
+          `http://127.0.0.1:43123${command.path}`,
+        );
+      } finally {
+        rmSync(state.directory, { force: true, recursive: true });
+      }
+    }
+  }
+});
+
+test("--number repeats on task-claim alone and claims each Task in turn", async () => {
+  const state = fixture();
+  try {
+    assert.equal(
+      await runWorkerCliCommand(
+        [
+          "worker",
+          "task-claim",
+          "--target",
+          "#build",
+          "--number",
+          "1",
+          "--number",
+          "2",
+        ],
+        state.runtime,
+      ),
+      0,
+      state.stderr(),
+    );
+    assert.deepEqual(
+      state.requests.map((request) => request.body),
+      [
+        { channel: "#build", taskNumber: 1 },
+        { channel: "#build", taskNumber: 2 },
+      ],
+    );
+    assert.equal(state.stdout().trim().split("\n").length, 2);
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+
+  const single = fixture();
+  try {
+    assert.equal(
+      await runWorkerCliCommand(
+        [
+          "worker",
+          "task-start",
+          "--target",
+          "#build",
+          "--number",
+          "1",
+          "--number",
+          "2",
+        ],
+        single.runtime,
+      ),
+      1,
+    );
+    assert.match(single.stderr(), /duplicate Worker option: --number/u);
+  } finally {
+    rmSync(single.directory, { force: true, recursive: true });
+  }
+});
+
+test("the two addressing forms are mutually exclusive and each is complete", async () => {
+  const cases: ReadonlyArray<[readonly string[], RegExp]> = [
+    [
+      ["task-start", "--task-id", "task-1", "--number", "3"],
+      /choose --task-id or --target with --number/u,
+    ],
+    [["task-start", "--number", "3"], /address the Task with --target/u],
+    [["task-start", "--target", "#build"], /address the Task with --target/u],
+    [["task-start"], /address the Task with --target/u],
+    [
+      [
+        "task-start",
+        "--target",
+        "#build",
+        "--channel",
+        "#build",
+        "--number",
+        "3",
+      ],
+      /choose --target or --channel/u,
+    ],
+    [
+      ["task-start", "--target", "#build", "--number", "0"],
+      /--number must be a positive integer/u,
+    ],
+    [
+      ["task-start", "--target", "#build", "--number", "one"],
+      /--number must be a positive integer/u,
+    ],
+  ];
+  for (const [argv, expected] of cases) {
+    const state = fixture();
+    try {
+      assert.equal(
+        await runWorkerCliCommand(["worker", ...argv], state.runtime),
+        1,
+        argv.join(" "),
+      );
+      assert.match(state.stderr(), expected, argv.join(" "));
+      assert.equal(state.requests.length, 0);
+    } finally {
+      rmSync(state.directory, { force: true, recursive: true });
+    }
+  }
+});

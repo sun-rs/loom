@@ -9,6 +9,10 @@ import {
   type WorkerVisibleRoomScope,
 } from "./worker-read-targets.ts";
 import { boundRows } from "./bounded-read-rows.ts";
+import {
+  annotateTaskAnchoredMessage,
+  annotateTaskAnchoredMessages,
+} from "./task-anchor-annotation.ts";
 import { recordWorkerTargetReadPosition } from "./worker-target-read-position.ts";
 import { readTaskHistory } from "./task-history-projection.ts";
 import type { DatabaseSync, SQLInputValue } from "node:sqlite";
@@ -246,7 +250,13 @@ export class WorkerReadService {
         updatedAt: (this.#context.now?.() ?? new Date()).toISOString(),
       });
       return P.WorkerHistoryResponseSchema.parse({
-        messages: rows.map(messageProjectionFromRow),
+        // Raft: "`raft message read` shows messages in their current state. If
+        // a message was later converted to a task, it will show the
+        // `[task #N ...]` suffix" (agent-prompt-compiler.js line 172).
+        messages: annotateTaskAnchoredMessages(
+          this.#db,
+          rows.map(messageProjectionFromRow),
+        ),
         frozenThroughRoomSeq: page.ceiling,
         ...(olderCursor ? { olderCursor } : {}),
         ...(newerCursor ? { newerCursor } : {}),
@@ -282,12 +292,18 @@ export class WorkerReadService {
         )
         .get(scope.roomId, row.thread_id ?? null, row.message_id!);
       return P.WorkerMessageResolveResponseSchema.parse({
-        message: messageProjectionFromRow(row),
+        message: annotateTaskAnchoredMessage(
+          this.#db,
+          messageProjectionFromRow(row),
+        ),
         ...(thread
           ? {
               threadId: thread.thread_id,
-              rootMessage: messageProjectionFromRow(
-                this.#message(scope, text(thread, "root_message_id")),
+              rootMessage: annotateTaskAnchoredMessage(
+                this.#db,
+                messageProjectionFromRow(
+                  this.#message(scope, text(thread, "root_message_id")),
+                ),
               ),
             }
           : {}),

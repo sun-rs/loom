@@ -243,6 +243,11 @@ import {
 } from "./worker-task-scope.ts";
 import { listWorkerTaskTrajectory } from "./worker-task-trajectory.ts";
 import {
+  resolveWorkerTaskNumber,
+  type WorkerTaskAddress,
+} from "./worker-task-address.ts";
+import { annotateTaskAnchoredEvents } from "./task-anchor-annotation.ts";
+import {
   listTaskProjectionPage,
   requireRoomTaskProjection,
   taskDependenciesComplete,
@@ -1662,6 +1667,24 @@ export class RoomKernel {
         input,
       );
     });
+  }
+  /**
+   * Raft's `--target "#channel" --number N` addressing. This resolves an
+   * address to the canonical `taskId` only; every authority check that a
+   * `--task-id` would face is applied afterwards, unchanged, by the command
+   * itself.
+   */
+  resolveWorkerTaskAddress(
+    execution: AuthenticatedWorkerExecutionContext,
+    address: WorkerTaskAddress,
+  ): { roomId: string; taskId: string } {
+    return this.#transaction(() =>
+      resolveWorkerTaskNumber(
+        this.#database,
+        this.#requireAuthenticatedWorkerExecution(execution),
+        address,
+      ),
+    );
   }
   getWorkerTask(
     execution: AuthenticatedWorkerExecutionContext,
@@ -4780,9 +4803,16 @@ export class RoomKernel {
         participantId: scope.participantId,
         roomId: scope.roomId,
       });
+      // Raft renders a Task-anchored message with its `[task #N status=...]`
+      // suffix wherever the Agent reads it, sync included. Presentation only:
+      // the stored event ledger is untouched.
+      const annotated = {
+        ...delivery,
+        events: annotateTaskAnchoredEvents(this.#database, delivery.events),
+      };
       return presentedContext === undefined
-        ? delivery
-        : { ...delivery, presentedContext };
+        ? annotated
+        : { ...annotated, presentedContext };
     });
   }
 

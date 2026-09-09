@@ -282,7 +282,7 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
   );
   assert.match(
     prompt,
-    /task-trajectory --task-id <id>.*recorded commands and file edits/isu,
+    /task-trajectory --target "#channel" --number <n>.*recorded commands and file edits/isu,
   );
   assert.match(
     prompt,
@@ -290,7 +290,7 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
   );
   assert.match(
     prompt,
-    /no preset reviewer or auditor roles.*asks you to review, audit, or check a Task.*task-trajectory --task-id <id>/isu,
+    /no preset reviewer or auditor roles.*asks you to review, audit, or check a Task.*task-trajectory --target "#channel" --number <n>/isu,
   );
   assert.match(
     prompt,

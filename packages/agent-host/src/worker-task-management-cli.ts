@@ -3,6 +3,10 @@ import {
   WorkerTaskDeleteRequestSchema,
 } from "@rah-os/protocol";
 import {
+  TASK_ADDRESS_OPTIONS,
+  taskAddress,
+} from "./worker-task-address-cli.ts";
+import {
   WorkerTaskAssignRequestSchema,
   WorkerTaskUnblockRequestSchema,
   WorkerTaskConvertRequestSchema,
@@ -28,26 +32,38 @@ export function parseWorkerTaskManagementCommand(
       if (
         ![
           "room-id",
-          "task-id",
+          ...TASK_ADDRESS_OPTIONS,
           "based-on-room-seq",
           "idempotency-key",
         ].includes(key)
       )
         throw new Error(`unknown --${key} option for ${command}`);
+    const address = taskAddress(options);
+    const body = {
+      ...(options["room-id"] === undefined
+        ? {}
+        : { roomId: options["room-id"] }),
+      ...address,
+      ...causality(options),
+    };
+    // A `--target`/`--number` address already names the Room; the server fills
+    // `roomId` in from it, so the strict schema only runs on the id form.
     return {
       path: "/v1/worker/tasks/delete",
-      body: WorkerTaskDeleteRequestSchema.parse({
-        roomId: options["room-id"],
-        taskId: options["task-id"],
-        ...causality(options),
-      }),
+      body:
+        address.taskId === undefined
+          ? body
+          : (WorkerTaskDeleteRequestSchema.parse(body) as Record<
+              string,
+              unknown
+            >),
     };
   }
   if (command === "task-amend") {
     for (const key of Object.keys(options))
       if (
         ![
-          "task-id",
+          ...TASK_ADDRESS_OPTIONS,
           "title",
           "description",
           "clear-description",
@@ -61,18 +77,26 @@ export function parseWorkerTaskManagementCommand(
       options["clear-description"] !== undefined
     )
       throw new Error("choose --description or --clear-description");
+    const address = taskAddress(options);
+    const body = {
+      ...address,
+      ...causality(options),
+      ...(options.title === undefined ? {} : { title: options.title }),
+      ...(options["clear-description"] !== undefined
+        ? { description: null }
+        : options.description !== undefined
+          ? { description: options.description }
+          : {}),
+    };
     return {
       path: "/v1/worker/tasks/amend",
-      body: WorkerTaskAmendRequestSchema.parse({
-        taskId: options["task-id"],
-        ...causality(options),
-        ...(options.title === undefined ? {} : { title: options.title }),
-        ...(options["clear-description"] !== undefined
-          ? { description: null }
-          : options.description !== undefined
-            ? { description: options.description }
-            : {}),
-      }),
+      body:
+        address.taskId === undefined
+          ? body
+          : (WorkerTaskAmendRequestSchema.parse(body) as Record<
+              string,
+              unknown
+            >),
     };
   }
   if (!["task-assign", "task-convert", "task-unblock"].includes(command))
@@ -80,29 +104,33 @@ export function parseWorkerTaskManagementCommand(
   const allowed =
     command === "task-assign"
       ? [
-          "task-id",
+          ...TASK_ADDRESS_OPTIONS,
           "assignee",
           "unassign",
           "based-on-room-seq",
           "idempotency-key",
         ]
-      : [
-          command === "task-unblock" ? "task-id" : "message-id",
-          "based-on-room-seq",
-          "idempotency-key",
-        ];
+      : command === "task-unblock"
+        ? [...TASK_ADDRESS_OPTIONS, "based-on-room-seq", "idempotency-key"]
+        : ["message-id", "based-on-room-seq", "idempotency-key"];
   for (const key of Object.keys(options))
     if (!allowed.includes(key))
       throw new Error(`unknown --${key} option for ${command}`);
   const common = causality(options);
-  if (command === "task-unblock")
+  if (command === "task-unblock") {
+    const address = taskAddress(options);
+    const body = { ...common, ...address };
     return {
       path: "/v1/worker/tasks/unblock",
-      body: WorkerTaskUnblockRequestSchema.parse({
-        ...common,
-        taskId: options["task-id"],
-      }),
+      body:
+        address.taskId === undefined
+          ? body
+          : (WorkerTaskUnblockRequestSchema.parse(body) as Record<
+              string,
+              unknown
+            >),
     };
+  }
   if (command === "task-convert")
     return {
       path: "/v1/worker/tasks/convert",
@@ -117,12 +145,20 @@ export function parseWorkerTaskManagementCommand(
     1
   )
     throw new Error("choose --assignee or --unassign");
+  const address = taskAddress(options);
+  const assigned = {
+    ...common,
+    ...address,
+    assigneeId: options.unassign === undefined ? options.assignee : null,
+  };
   return {
     path: "/v1/worker/tasks/assign",
-    body: WorkerTaskAssignRequestSchema.parse({
-      ...common,
-      taskId: options["task-id"],
-      assigneeId: options.unassign === undefined ? options.assignee : null,
-    }),
+    body:
+      address.taskId === undefined
+        ? assigned
+        : (WorkerTaskAssignRequestSchema.parse(assigned) as Record<
+            string,
+            unknown
+          >),
   };
 }

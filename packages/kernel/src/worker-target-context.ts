@@ -28,6 +28,7 @@ import {
   recordWorkerTargetReadPosition,
 } from "./worker-target-read-position.ts";
 import { syncRoomEventWindow } from "./room-sync.ts";
+import { annotateTaskAnchoredEvents } from "./task-anchor-annotation.ts";
 import { integer, text, type Row } from "./sqlite-row.ts";
 import {
   resolveWorkerReadTarget,
@@ -206,7 +207,15 @@ export class WorkerTargetContextService {
         ...envelope,
         complete: receipt.cursor === through,
         contextReceipt: this.#sign(receipt),
-        window,
+        // The same `[task #N status=...]` suffix the Agent sees in
+        // `message-read`; the receipt is signed over the unannotated window.
+        window: {
+          ...window,
+          events: annotateTaskAnchoredEvents(
+            this.#context.database,
+            window.events,
+          ),
+        },
       });
       if (
         Buffer.byteLength(JSON.stringify(response)) >

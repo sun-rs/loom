@@ -1,5 +1,11 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -536,6 +542,26 @@ test("one lead Agent splits a Human message into subtasks that two helper Agents
       "task.submitted",
       "task.completed",
     ]);
+
+    // Raft addresses a Task the way a Human reads it: `--target "#channel"
+    // --number N`. Every helper started its subtask in exactly that form — the
+    // fixture resolves the Room's channel, sends `tasks/start` with
+    // `{ channel, taskNumber }`, and throws if that address resolves to any
+    // other canonical Task — so a regression fails this chain instead of
+    // silently falling back to `--task-id`.
+    assert.match(
+      readFileSync(fakeCliPath, "utf8"),
+      /"\/v1\/worker\/tasks\/start",\s*\{\s*channel: taskChannel,\s*taskNumber: canonical\.task\.taskNumber,/u,
+    );
+    for (const subtask of [subtaskA, subtaskB])
+      assert.ok(
+        events().some(
+          (event) =>
+            event.aggregateId === subtask.taskId &&
+            event.type === "task.started",
+        ),
+        subtask.taskId,
+      );
 
     // Raft carries neither `--based-on-room-seq` nor `--idempotency-key` on a
     // Task command. Every Agent Task command in this chain — including the

@@ -46,3 +46,19 @@ export const WorkerRoomResolveResponseSchema = WorkerRoomEntrySchema.extend({
 export type WorkerRoomResolveResponse = z.infer<
   typeof WorkerRoomResolveResponseSchema
 >;
+
+/**
+ * Raft addresses a Task the way a Human reads it: `--target "#channel"` plus a
+ * per-channel Task number (`agentApiTaskClaimBodySchema = { channel,
+ * task_numbers }`, `agentApiTaskUnclaimBodySchema = { channel, task_number }`).
+ * RAH accepts that pair on every Task-family command that takes a Task and
+ * resolves it to the canonical Task id server-side.
+ */
+export const WorkerTaskNumberSchema = z.number().int().positive();
+export const WorkerTaskAddressSchema = z
+  .object({
+    channel: WorkerReadChannelSchema,
+    taskNumber: WorkerTaskNumberSchema,
+  })
+  .strict();
+export type WorkerTaskAddress = z.infer<typeof WorkerTaskAddressSchema>;

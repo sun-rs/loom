@@ -16,6 +16,12 @@ import {
 } from "@rah-os/protocol";
 import { parseWorkerSelfProfileCommand } from "./worker-self-profile-cli.ts";
 import { parseWorkerTaskManagementCommand } from "./worker-task-management-cli.ts";
+import {
+  REPEATED_VALUE_SEPARATOR,
+  TASK_ADDRESS_OPTIONS,
+  taskAddress,
+  taskAddressList,
+} from "./worker-task-address-cli.ts";
 import { parseWorkerReadCommand } from "./worker-read-cli.ts";
 import { constants } from "node:fs";
 import { open, unlink } from "node:fs/promises";
@@ -269,6 +275,14 @@ export async function runWorkerCliCommand(
                 ? await readStdinText(runtime)
                 : "",
             );
+    const fanOut = (request as { bodies?: Record<string, unknown>[] }).bodies;
+    if (fanOut !== undefined) {
+      for (const body of fanOut) {
+        const claimed = await send({ body, path: request.path });
+        runtime.stdout.write(`${JSON.stringify(claimed)}\n`);
+      }
+      return 0;
+    }
     let result = await send(request);
     if (request.path === "/v1/worker/version")
       result = {
@@ -566,6 +580,8 @@ function parseCommand(
   arguments_: readonly string[],
   stdinContent = "",
 ): {
+  /** Raft's repeatable `--number` on `task claim`: one command, several Tasks. */
+  bodies?: Record<string, unknown>[];
   body: Record<string, unknown>;
   path: string;
 } {
@@ -586,6 +602,8 @@ function parseCommand(
             : command === "task-assign"
               ? ["unassign"]
               : [],
+    // Raft makes `--number` repeatable on `task claim` and nowhere else.
+    command === "task-claim" ? ["number"] : [],
   );
   const readCommand = parseWorkerReadCommand(command, options);
   if (readCommand) return readCommand;
@@ -792,10 +810,14 @@ function parseCommand(
     case "task-get":
       return taskQuery(options, "/v1/worker/tasks/get");
     case "task-trajectory": {
-      assertAllowed(options, ["before-sequence", "limit", "task-id"]);
+      assertAllowed(options, [
+        "before-sequence",
+        "limit",
+        ...TASK_ADDRESS_OPTIONS,
+      ]);
       return {
         body: {
-          taskId: boundedText(options, "task-id", 512),
+          ...taskAddress(options),
           ...(options["limit"] === undefined
             ? {}
             : { limit: positiveInteger(options, "limit") }),
@@ -844,8 +866,24 @@ function parseCommand(
         },
         path: "/v1/worker/tasks/claim-message",
       };
-    case "task-claim":
-      return taskMutation(options, "/v1/worker/tasks/claim");
+    case "task-claim": {
+      // Raft: `raft task claim --target "#channel" --number 1 --number 2`.
+      assertAllowed(options, [
+        "based-on-room-seq",
+        "idempotency-key",
+        ...TASK_ADDRESS_OPTIONS,
+      ]);
+      const causality = taskCausality(options);
+      const bodies = taskAddressList(options).map((address) => ({
+        ...causality,
+        ...address,
+      }));
+      return {
+        body: bodies[0]!,
+        ...(bodies.length > 1 ? { bodies } : {}),
+        path: "/v1/worker/tasks/claim",
+      };
+    }
     case "task-start":
       return taskMutation(options, "/v1/worker/tasks/start");
     case "task-release":
@@ -868,7 +906,7 @@ function parseCommand(
         "disposition",
         "idempotency-key",
         "summary",
-        "task-id",
+        ...TASK_ADDRESS_OPTIONS,
       ]);
       const disposition = boundedText(options, "disposition", 64);
       if (disposition !== "approved" && disposition !== "changes_requested") {
@@ -877,9 +915,9 @@ function parseCommand(
       return {
         body: {
           ...taskCausality(options),
+          ...taskAddress(options),
           disposition,
           summary: boundedText(options, "summary"),
-          taskId: boundedText(options, "task-id", 512),
         },
         path: "/v1/worker/tasks/review",
       };
@@ -1148,8 +1186,8 @@ function taskQuery(
   options: Readonly<Record<string, string>>,
   path: string,
 ): { body: Record<string, unknown>; path: string } {
-  assertAllowed(options, ["task-id"]);
-  return { body: { taskId: boundedText(options, "task-id", 512) }, path };
+  assertAllowed(options, [...TASK_ADDRESS_OPTIONS]);
+  return { body: taskAddress(options), path };
 }
 
 function taskMutation(
@@ -1160,13 +1198,13 @@ function taskMutation(
   assertAllowed(options, [
     "based-on-room-seq",
     "idempotency-key",
-    "task-id",
+    ...TASK_ADDRESS_OPTIONS,
     ...(contentField === undefined ? [] : [contentField]),
   ]);
   return {
     body: {
       ...taskCausality(options),
-      taskId: boundedText(options, "task-id", 512),
+      ...taskAddress(options),
       ...(contentField === undefined
         ? {}
         : { [contentField]: boundedText(options, contentField) }),
@@ -1183,7 +1221,7 @@ function taskSubmitMutation(options: Readonly<Record<string, string>>): {
     "based-on-room-seq",
     "idempotency-key",
     "summary",
-    "task-id",
+    ...TASK_ADDRESS_OPTIONS,
     "verification-artifact-ids",
     "verification-status",
     "verification-summary",
@@ -1204,10 +1242,10 @@ function taskSubmitMutation(options: Readonly<Record<string, string>>): {
     );
   }
   return {
-    body: WorkerTaskSubmitRequestSchema.parse({
+    body: taskSubmitBody({
       ...taskCausality(options),
+      ...taskAddress(options),
       summary: boundedText(options, "summary"),
-      taskId: boundedText(options, "task-id", 512),
       ...(hasVerification
         ? {
             verification: {
@@ -1228,11 +1266,27 @@ function taskSubmitMutation(options: Readonly<Record<string, string>>): {
   };
 }
 
+/**
+ * The strict submit schema still validates the whole body whenever the Agent
+ * addressed the Task by id; a `--target`/`--number` address is resolved by the
+ * server before that schema runs, so only the rest is checked here.
+ */
+function taskSubmitBody(
+  body: Record<string, unknown>,
+): Record<string, unknown> {
+  if (body.taskId === undefined) return body;
+  return WorkerTaskSubmitRequestSchema.parse(body) as Record<string, unknown>;
+}
+
 function parseOptions(
   arguments_: readonly string[],
   booleanFlags: readonly string[] = [],
+  repeatableFlags: readonly string[] = [],
 ): Record<string, string> {
   const flags = new Set(booleanFlags);
+  // Raft's `parse: (value, prev = []) => prev.concat(value)`: only the flags a
+  // command declares repeatable may appear more than once.
+  const repeatable = new Set(repeatableFlags);
   const options: Record<string, string> = {};
   for (let index = 0; index < arguments_.length; index += 1) {
     const option = arguments_[index]!;
@@ -1240,7 +1294,7 @@ function parseOptions(
       throw new Error(`invalid Worker option: ${option}`);
     }
     const name = option.slice(2);
-    if (Object.hasOwn(options, name)) {
+    if (Object.hasOwn(options, name) && !repeatable.has(name)) {
       throw new Error(`duplicate Worker option: --${name}`);
     }
     if (flags.has(name)) {
@@ -1251,7 +1305,12 @@ function parseOptions(
     if (value === undefined || value.startsWith("--")) {
       throw new Error(`Worker option --${name} requires one value`);
     }
-    options[name] = value;
+    if (value.includes(REPEATED_VALUE_SEPARATOR)) {
+      throw new Error(`Worker option --${name} has an unsupported value`);
+    }
+    options[name] = Object.hasOwn(options, name)
+      ? `${options[name]!}${REPEATED_VALUE_SEPARATOR}${value}`
+      : value;
     index += 1;
   }
   return options;
@@ -1461,12 +1520,12 @@ rah worker profile-avatar-publish --path FILE --mime-type image/png|image/jpeg|i
 rah worker profile-self-get
 rah worker profile-update --control-room-id ID --control-room-seq N --expected-revision-id ID [--display-name TEXT] [--description TEXT] [--avatar-key KEY] [--avatar-upload-intent-id ID] --idempotency-key KEY
 rah worker profile-show [--target ID|@HANDLE] [--channel TARGET] [--created-agents-limit N] [--created-agents-cursor CURSOR]
-rah worker task-assign --task-id ID (--assignee AGENT_ID | --unassign)
+rah worker task-assign TASK (--assignee AGENT_ID | --unassign)
 rah worker channel-mute --based-on-room-seq N --idempotency-key KEY [--target CHANNEL --context-receipt RECEIPT]
 rah worker channel-unmute --based-on-room-seq N --idempotency-key KEY [--target CHANNEL --context-receipt RECEIPT]
-rah worker task-delete --room-id ID --task-id ID
-rah worker task-amend --task-id ID [--title TEXT] [--description TEXT | --clear-description]
-rah worker task-unblock --task-id ID
+rah worker task-delete (--target TARGET --number N | --room-id ID --task-id ID)
+rah worker task-amend TASK [--title TEXT] [--description TEXT | --clear-description]
+rah worker task-unblock TASK
 rah worker task-convert --message-id ID
 rah worker task-list [--target TARGET] [--mine] [--status todo|in_progress|in_review|done|closed|all] [--limit N] [--cursor CURSOR]
 rah worker task-history --task-id ID [--target TARGET] [--limit N] [--cursor CURSOR]
@@ -1486,19 +1545,21 @@ rah worker attachment-cancel --attachment-id ID
 rah worker attachment-download --attachment-id ID --output FILE
 rah worker artifact-publish --task-id ID --path FILE [--filename NAME] [--mime-type TYPE] --idempotency-key KEY
 rah worker artifact-download --attachment-id ID --output FILE
-rah worker task-get --task-id ID
-rah worker task-submission --task-id ID
-rah worker task-trajectory --task-id ID [--limit N] [--before-sequence N]
+rah worker task-get TASK
+rah worker task-submission TASK
+rah worker task-trajectory TASK [--limit N] [--before-sequence N]
 Reviewers read the owner's recorded commands and file edits before recording a Review.
-rah worker task-input-status --task-id ID
+rah worker task-input-status TASK
 rah worker task-create --title TEXT [--assignee PARTICIPANT_ID]
 rah worker task-claim-message --message-id ID --rationale TEXT
-rah worker task-claim|task-start|task-release --task-id ID
-rah worker task-progress --task-id ID --progress TEXT
-rah worker task-block --task-id ID --reason TEXT
-rah worker task-request-input --task-id ID --question TEXT
-rah worker task-submit --task-id ID --summary TEXT [--verification-status passed|failed|not_run --verification-summary TEXT --verification-artifact-ids ID,ID]
-rah worker task-review --task-id ID --disposition approved|changes_requested --summary TEXT
+rah worker task-claim --target TARGET --number N [--number N ...]
+rah worker task-start|task-release TASK
+rah worker task-progress TASK --progress TEXT
+rah worker task-block TASK --reason TEXT
+rah worker task-request-input TASK --question TEXT
+rah worker task-submit TASK --summary TEXT [--verification-status passed|failed|not_run --verification-summary TEXT --verification-artifact-ids ID,ID]
+rah worker task-review TASK --disposition approved|changes_requested --summary TEXT
+TASK addresses one Task as --target "#channel" --number N, or as --task-id ID.
 `;
 }
 

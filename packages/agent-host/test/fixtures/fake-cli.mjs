@@ -1108,10 +1108,24 @@ if (mode === "trajectory") {
         basedOnRoomSeq = Math.max(basedOnRoomSeq, claimed.event.roomSeq);
       }
     }
+    // Raft addresses a Task as a Human reads it: `--target "#channel" --number
+    // N`. One command of the deterministic chain uses that form end to end.
+    const rooms = await request("/v1/worker/rooms/list", {});
+    const taskChannel = rooms.rooms.find(
+      (entry) => entry.room.roomId === canonical.task.roomId,
+    )?.channel;
+    if (!taskChannel) {
+      throw new Error("the canonical Task Room is not a visible target");
+    }
+    const taskAddress = `${taskChannel} #${String(canonical.task.taskNumber)}`;
     const started = await request("/v1/worker/tasks/start", {
-      taskId,
+      channel: taskChannel,
+      taskNumber: canonical.task.taskNumber,
       ...(claimExpired ? { idempotencyKey: startCommandId } : {}),
     });
+    if (started.task.taskId !== taskId) {
+      throw new Error(`${taskAddress} resolved to a different canonical Task`);
+    }
     if (!started.deduplicated) {
       basedOnRoomSeq = Math.max(basedOnRoomSeq, started.event.roomSeq);
     }
@@ -1228,6 +1242,7 @@ if (mode === "trajectory") {
       process.stdout.write(
         JSON.stringify({
           marker: "worker-task-finished",
+          startedByAddress: taskAddress,
           state: submitted.task.state,
           taskId,
         }) + "\n",

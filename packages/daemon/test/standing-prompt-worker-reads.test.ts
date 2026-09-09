@@ -85,7 +85,8 @@ test("joined-target reads and search guidance never confer cross-Room write auth
 
 test("Task deletion prompt distinguishes metadata removal from execution cancellation", () => {
   const prompt = compileStandingPrompt().prompt;
-  assert.match(prompt, /task-delete --room-id/u);
+  // Raft addresses the Task by channel and number; the Room is implied.
+  assert.match(prompt, /task-delete --target "#channel" --number N/u);
   assert.match(prompt, /Only delete Tasks you created/u);
   assert.match(
     prompt,
@@ -105,4 +106,25 @@ test("standing prompt explains target upload ownership and cross-Run held receip
     prompt,
     /Cross-target attachment publication and held-draft resending remain unavailable/u,
   );
+});
+
+/**
+ * Ported from agent-prompt-compiler.js lines 166-197 and 272: the Agent is
+ * taught the address a Human reads and the suffix that shows it.
+ */
+test("the standing prompt teaches Raft's Task addressing and the [task #N ...] suffix", () => {
+  const prompt = compileStandingPrompt().prompt;
+  assert.match(prompt, /\[task #3 status=in_progress\]/u);
+  assert.match(
+    prompt,
+    /if a message was later converted to a Task, it will show the `\[task #N \.\.\.\]` suffix/u,
+  );
+  assert.match(
+    prompt,
+    /If a message already shows a `\[task #N \.\.\.\]` suffix, claim `#N` if it is yours to take/u,
+  );
+  assert.match(prompt, /task-claim --target "#channel" --number 1 --number 2/u);
+  assert.match(prompt, /In prose always write "task #N", not bare "#N"/u);
+  // `--task-id` stays accepted but is no longer the form the Agent is taught.
+  assert.doesNotMatch(prompt, /task-claim --task-id/u);
 });
