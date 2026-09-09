@@ -163,11 +163,15 @@ export function parseWorkerReadCommand(
     };
   }
   if (command === "profile-show") {
+    // `--json` is one of the three `--json` flags Raft has in this family
+    // (`main.js@32682200`); it selects the output stream and never reaches the
+    // server, so it is accepted and dropped here.
     allowed([
       "target",
       "channel",
       "created-agents-limit",
       "created-agents-cursor",
+      "json",
     ]);
     return {
       path: "/v1/worker/profiles/get",

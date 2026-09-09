@@ -26,6 +26,13 @@
  * - `formatChannelMuteResult` (`@30113763`), `formatSeq` (`@30113681`),
  *   `formatUnfollowThreadResult` (`@30129287`) and `message react`'s success
  *   line (`@32631422`)
+ * - the attachment family: `attachment upload`'s success block (`@32639300`),
+ *   `attachment view`'s save line (`@32641715`), `attachment comments`
+ *   (`@32643904`) and `anchorSummary` (`@30196995`)
+ * - the profile family: `formatProfile` (`@30121736`), `formatAgentProfile`
+ *   (`@30120452`), `formatHumanProfile` (`@30119673`), `formatCreatedAgents`
+ *   (`@30119334`), `formatCreator` (`@30120250`) and `getRuntimeDisplayName`
+ *   (`@29997849`)
  *
  * Two things are deliberately not copied, because copying them would take from
  * the Agent something RAH's ledger requires it to pass to a later command:
@@ -926,6 +933,425 @@ function renderMessageReaction(body: Json, result: Json): string {
   }.`;
 }
 
+// -------------------------------------------------------------- profiles --
+
+/**
+ * `formatCreatedAgents` (`main.js@30119334`). Upstream's child row names one
+ * runtime; RAH's carries the child's configured runtime targets, so the row
+ * names the first registered one. Two things are kept that upstream's row has
+ * no field for: the participant id, because `profile-show --target` and
+ * `task-create --assignee` take it where Raft addresses a member by handle
+ * alone, and the created-Agent cursor, because RAH pages this list and
+ * `--created-agents-cursor` takes the canonical cursor.
+ */
+function createdAgentLines(profile: Json): string[] {
+  const created = asArray(profile.createdAgents).map(asRecord);
+  if (created.length === 0) return ["- Created Agents: none"];
+  const lines = [
+    `- Created Agents (${created.length}):`,
+    ...created.map((child) => {
+      const target = asArray(child.runtimes)
+        .map(asRecord)
+        .find((entry) => entry.registered === true);
+      return `  - @${asString(child.handle) ?? "unknown"} (${
+        target === undefined ? "no runtime" : runtimeDisplayName(target)
+      }, ${asString(child.state) ?? "unknown"}) id=${
+        asString(child.participantId) ?? "-"
+      }`;
+    }),
+  ];
+  const cursor = asString(profile.createdAgentsNextCursor);
+  if (cursor !== undefined)
+    lines.push(
+      `More created agents: rah worker profile-show --target ${
+        asString(asRecord(profile.principal).principalId) ?? "-"
+      } --created-agents-cursor ${JSON.stringify(cursor)}`,
+    );
+  return lines;
+}
+
+/** `formatCreator` (`main.js@30120250`), with the participant id kept. */
+function creatorLine(profile: Json): string | undefined {
+  if (profile.creator === null || profile.creator === undefined)
+    return undefined;
+  const creator = asRecord(profile.creator);
+  const displayName = asString(creator.displayName);
+  const handle = `@${asString(creator.handle) ?? "unknown"}`;
+  return `- Creator: ${
+    displayName === undefined ? handle : `${displayName} (${handle})`
+  } id=${asString(creator.participantId) ?? "-"}`;
+}
+
+/**
+ * Upstream's `- Membership:` names a membership status Raft's server keeps.
+ * RAH's ledger has no such status — a visible profile exists only for a current
+ * member of the visible Room — and carries the membership's scope, role and
+ * join time instead, so the line names the scope RAH's role is bound to and
+ * upstream's own `- Role:` and `- Joined:` lines carry the rest.
+ */
+function membershipLines(profile: Json): string[] {
+  const membership = asRecord(profile.membership);
+  const scope = asString(membership.scope);
+  if (scope === undefined) return ["- Membership: (none)"];
+  const lines = [`- Membership: ${scope}`];
+  const role = asString(membership.role);
+  if (role !== undefined) lines.push(`- Role: ${role}`);
+  const joinedAt = asString(membership.joinedAt);
+  if (joinedAt !== undefined) lines.push(`- Joined: ${joinedAt}`);
+  return lines;
+}
+
+/** `getRuntimeDisplayName` (`main.js@29997849`) over RAH's runtime metadata. */
+function runtimeDisplayName(target: Json): string {
+  return (
+    asString(asRecord(target.runtime).displayName) ??
+    asString(target.runtimeOfferId) ??
+    "unknown runtime"
+  );
+}
+
+/**
+ * `formatAgentProfile`'s `- Runtime:`, `- Model:` and `- Reasoning:` lines
+ * (`main.js@30120452`) over RAH's `configured` section, which is the same fact
+ * — what this Agent is configured to run — expressed as a policy over runtime
+ * offers rather than one registered runtime and one model id. `- Tools:` has no
+ * upstream counterpart and is kept because `toolAccessMode` is the Agent's own
+ * capability and RAH's ledger carries it on the same revision.
+ */
+function configuredLines(configured: Json): string[] {
+  const targets = asArray(configured.runtimeTargets).map(asRecord);
+  const runtimes = targets.map((target) => runtimeDisplayName(target));
+  if (configured.runtimeTargetsTruncated === true) runtimes.push("…");
+  const selection = asString(configured.modelSelection);
+  const models = [
+    ...new Set(
+      targets.flatMap((target) =>
+        asArray(target.models)
+          .map(asRecord)
+          .map(
+            (model) =>
+              `${asString(model.provider) ?? "-"}/${asString(model.modelId) ?? "-"}`,
+          ),
+      ),
+    ),
+  ];
+  const bindings = asArray(configured.modelBindingIds).map(
+    (value) => asString(value) ?? "-",
+  );
+  return [
+    `- Runtime: ${
+      configured.runtimeTargetsRestricted === true
+        ? runtimes.length === 0
+          ? "(none)"
+          : runtimes.join(", ")
+        : "any registered runtime"
+    }`,
+    `- Model: ${
+      selection === "capability_class"
+        ? `capability class ${asString(configured.capabilityClass) ?? "-"}`
+        : selection === "runtime_default"
+          ? "runtime default"
+          : models.length > 0
+            ? models.join(", ")
+            : bindings.length > 0
+              ? bindings.join(", ")
+              : "(none)"
+    }`,
+    `- Reasoning: ${asString(configured.reasoning) ?? "default"}`,
+    `- Tools: ${asString(configured.toolAccessMode) ?? "unknown"}`,
+  ];
+}
+
+/**
+ * Upstream's `- Computer:`, `- Hostname:` and `- Daemon:` lines name the
+ * Computer the Agent is registered on. RAH has no such registration: the
+ * Computer facts its ledger carries belong to `actualRun`, the latest Run of
+ * this Agent in this visible Room, so the same three lines are printed from it
+ * and the Run itself is named first so they cannot be read as configuration.
+ * `- Run Model:` is that Run's frozen model selection, which upstream's single
+ * `- Model:` line has no separate counterpart for.
+ */
+function actualRunLines(run: Json): string[] {
+  const computer = asRecord(run.computer);
+  const finishedAt = asString(run.finishedAt);
+  const lines = [
+    `- Latest Run: ${asString(run.state) ?? "unknown"} run=${
+      asString(run.runAttemptId) ?? "-"
+    } started ${asString(run.startedAt) ?? "-"}${
+      finishedAt === undefined ? "" : ` finished ${finishedAt}`
+    }`,
+  ];
+  const name = asString(computer.displayName);
+  const hostId = asString(computer.hostId);
+  const label =
+    name !== undefined && hostId !== undefined
+      ? `${name} (${hostId})`
+      : (name ?? hostId);
+  if (label !== undefined) lines.push(`- Computer: ${label}`);
+  const hostname = asString(computer.hostname);
+  if (hostname !== undefined) lines.push(`- Hostname: ${hostname}`);
+  const build = asString(computer.reportedBuildVersion);
+  if (build !== undefined) lines.push(`- Daemon: v${build}`);
+  if (run.model !== null && run.model !== undefined) {
+    const model = asRecord(run.model);
+    lines.push(
+      `- Run Model: ${
+        model.source === "explicit_binding"
+          ? `${asString(model.provider) ?? "-"}/${asString(model.modelId) ?? "-"}`
+          : "runtime default"
+      }`,
+    );
+  }
+  return lines;
+}
+
+/**
+ * RAH's `availability` is a timestamped presence observation. Raft's profile
+ * has no such field, so this line has no upstream shape to copy; it is kept
+ * because the same ledger fact is what the prompt tells the Agent to read
+ * before assuming a peer can answer.
+ */
+function availabilityLines(profile: Json): string[] {
+  if (profile.availability === null || profile.availability === undefined)
+    return [];
+  const availability = asRecord(profile.availability);
+  const reason = asString(availability.reason);
+  return [
+    `- Availability: ${asString(availability.activity) ?? "unknown"}${
+      reason === undefined ? "" : ` (${reason})`
+    } observed ${asString(availability.observedAt) ?? "-"}`,
+  ];
+}
+
+/**
+ * The head of `formatHumanProfile` / `formatAgentProfile` (`main.js@30119673`,
+ * `@30120452`). The participant id is kept for the same reason `formatChannelMembers`
+ * keeps it here, and `(you)` states the `isSelf` flag RAH's projection carries
+ * and Raft's does not.
+ */
+function profileHeader(profile: Json): string[] {
+  const principal = asRecord(profile.principal);
+  return [
+    "## Profile",
+    "",
+    `- Type: ${asString(principal.kind) ?? "unknown"}`,
+    `- Handle: @${asString(principal.handle) ?? "unknown"}${
+      profile.isSelf === true ? " (you)" : ""
+    }`,
+    `- ID: ${asString(principal.principalId) ?? "-"}`,
+    `- Display Name: ${asString(profile.displayName) ?? "(none)"}`,
+    `- Description: ${asString(profile.description) ?? "(none)"}`,
+  ];
+}
+
+/**
+ * `formatHumanProfile` (`main.js@30119673`) without its `- Email:` line: RAH's
+ * visible profile carries no address, and the Room directory it projects has no
+ * field to take one from.
+ */
+function renderHumanProfile(profile: Json): string {
+  return [
+    ...profileHeader(profile),
+    ...membershipLines(profile),
+    ...createdAgentLines(profile),
+  ].join("\n");
+}
+
+/** `formatAgentProfile` (`main.js@30120452`). */
+function renderAgentProfile(profile: Json): string {
+  const lines = [
+    ...profileHeader(profile),
+    `- Status: ${asString(profile.agentState) ?? "unknown"}`,
+    ...membershipLines(profile),
+  ];
+  const executionModes = new Set<string>();
+  if (profile.configured !== null && profile.configured !== undefined) {
+    const configured = asRecord(profile.configured);
+    lines.push(...configuredLines(configured));
+    for (const target of asArray(configured.runtimeTargets).map(asRecord)) {
+      const mode = asString(asRecord(target.runtime).executionMode);
+      if (mode !== undefined) executionModes.add(mode);
+    }
+  }
+  for (const mode of executionModes) lines.push(`- Execution: ${mode}`);
+  lines.push(...availabilityLines(profile));
+  if (profile.actualRun !== null && profile.actualRun !== undefined)
+    lines.push(...actualRunLines(asRecord(profile.actualRun)));
+  lines.push(`- Created: ${asString(profile.createdAt) ?? "-"}`);
+  const deletedAt = asString(profile.deletedAt);
+  if (deletedAt !== undefined) lines.push(`- Deleted At: ${deletedAt}`);
+  const creator = creatorLine(profile);
+  if (creator !== undefined) lines.push(creator);
+  return [...lines, ...createdAgentLines(profile)].join("\n");
+}
+
+/** `formatProfile` (`main.js@30121736`). */
+function renderVisibleProfile(profile: Json): string {
+  return asRecord(profile.principal).kind === "agent"
+    ? renderAgentProfile(profile)
+    : renderHumanProfile(profile);
+}
+
+/**
+ * Raft's `profile show` with no target and its `profile update` both print
+ * `formatProfile` over a full profile. RAH's self routes answer with the
+ * visible metadata this Agent may write plus the control-Room write context
+ * `profile-update --control-room-id/--control-room-seq/--expected-revision-id`
+ * takes, and carry no handle, kind, membership or configuration, so the block
+ * prints the fields that exist in `formatProfile`'s own `- Label: value` shape.
+ * `- Avatar:` names the `avatarKey` that `profile-avatar-publish` returns and
+ * this command binds, and `- Deduplicated:` states whether the update RAH's
+ * idempotency key matched was a replay rather than a new revision.
+ */
+function renderSelfProfile(result: Json): string {
+  const profile = asRecord(result.profile);
+  const context = asRecord(result.writeContext);
+  const lines = [
+    "## Profile",
+    "",
+    `- Display Name: ${asString(profile.displayName) ?? "(none)"}`,
+    `- Description: ${asString(profile.description) ?? "(none)"}`,
+    `- Avatar: ${asString(profile.avatarKey) ?? "(none)"}`,
+    `- ID: ${asString(profile.participantId) ?? "-"}`,
+    `- Agent Definition: ${asString(profile.agentDefinitionId) ?? "-"}`,
+    `- Control Room: ${asString(context.controlRoomId) ?? "-"}`,
+    `- Control Room Seq: ${asNumber(context.controlRoomSeq) ?? "-"}`,
+    `- Expected Revision: ${asString(context.expectedRevisionId) ?? "-"}`,
+  ];
+  if (result.deduplicated !== undefined)
+    lines.push(
+      `- Deduplicated: ${result.deduplicated === true ? "yes" : "no"}`,
+    );
+  return lines.join("\n");
+}
+
+// ----------------------------------------------------------- attachments --
+
+/** `anchorSummary` (`main.js@30196995`). */
+function anchorSummary(anchor: Json): string {
+  const type = asString(anchor.type) ?? "anchor";
+  const data = asRecord(anchor.data);
+  if (type === "md-section") {
+    const title = asString(data.headingTitle) ?? asString(data.headingId);
+    return title === undefined || title === "" ? "§ section" : `§ ${title}`;
+  }
+  if (type === "lines" || type === "csv-rows") {
+    const start = Number(data.start);
+    const end = Number(data.end ?? start);
+    if (!Number.isFinite(start)) return type;
+    const prefix = type === "lines" ? "L" : "rows ";
+    return start === (Number.isFinite(end) ? end : start)
+      ? `${prefix}${start}`
+      : `${prefix}${start}–${end}`;
+  }
+  const quote = asString(data.quote);
+  return quote === undefined ? type : `${type}: ${quote}`;
+}
+
+/**
+ * `raft attachment comments` (`main.js@32643904`). Upstream slices the
+ * attachment id and every comment id to eight characters; RAH prints the
+ * canonical ids `--attachment-id` and `message-post --thread-id` take. Two
+ * lines are kept that upstream has no field for: the `--before-room-seq` page
+ * footer, because RAH pages this list where Raft returns one bounded batch, and
+ * the closed-commenting sentence, because RAH's response says whether this
+ * Agent may still post to the attachment's Thread at all.
+ */
+function renderAttachmentComments(body: Json, result: Json): string {
+  const attachmentId = asString(body.attachmentId) ?? "-";
+  const comments = asArray(result.comments).map(asRecord);
+  const lines =
+    comments.length === 0
+      ? [`No comments on attachment ${attachmentId}.`]
+      : [
+          `## Comments on attachment ${attachmentId} (${comments.length})`,
+          ...comments.map((comment) => {
+            const check = asArray(comment.reactions)
+              .map(asRecord)
+              .some((reaction) => reaction.emoji === "✅")
+              ? " ✅"
+              : "";
+            const anchor =
+              comment.anchor === null || comment.anchor === undefined
+                ? ""
+                : ` [anchor: ${anchorSummary(asRecord(comment.anchor))}]`;
+            return `[msg=${asString(comment.id) ?? "-"} time=${
+              asString(comment.createdAt) ?? "-"
+            } type=${asString(comment.senderType) ?? "unknown"}]${check}${anchor} @${
+              asString(comment.senderName) ?? "unknown"
+            }: ${asString(comment.content) ?? ""}`;
+          }),
+        ];
+  const threadId = asString(result.threadId);
+  if (threadId !== undefined)
+    lines.push(`(full conversation lives in thread ${threadId})`);
+  const before = asNumber(result.nextBeforeRoomSeq);
+  if (before !== undefined)
+    lines.push(
+      `More: rah worker attachment-comments --attachment-id ${JSON.stringify(
+        attachmentId,
+      )} --before-room-seq ${before}`,
+    );
+  if (asRecord(result.viewer).canComment === false)
+    lines.push("You cannot comment on this attachment.");
+  return lines.join("\n");
+}
+
+/**
+ * `attachment-capabilities` has no Raft counterpart: upstream reads the same
+ * facts inside `attachment upload` and never shows them to the Agent. The lines
+ * are RAH's own, in the house style, and the registry row stays unjustified —
+ * rendering a command Raft does not have is not replication.
+ */
+function renderAttachmentCapabilities(result: Json): string {
+  return [
+    `Attachment uploads: at most ${asNumber(result.maxBytes) ?? "-"} bytes per file.`,
+    `A reservation expires ${
+      asNumber(result.sessionExpiresInSeconds) ?? "-"
+    } second(s) after it is created.`,
+    "Direct upload is disabled: bytes go to the local daemon upload path, and there is no direct-upload threshold.",
+  ].join("\n");
+}
+
+/** `attachment-cancel`, which Raft has no counterpart for, in the same style. */
+function renderAttachmentCanceled(result: Json): string {
+  return `Reservation canceled: ${asString(result.filename) ?? "-"} (id:${
+    asString(result.attachmentId) ?? "-"
+  }) — state ${asString(result.state) ?? "unknown"}.`;
+}
+
+/**
+ * `raft attachment upload`'s success block (`main.js@32639300`), which names the
+ * file, its size in KB, the attachment id and the one command that consumes the
+ * id. `artifact-publish` has no Raft counterpart — Raft has no Task artifact —
+ * so its last line states RAH's own binding rule in the same shape, and its
+ * registry row stays unjustified.
+ */
+export function renderWorkerAttachmentPublish(
+  messageAttachment: boolean,
+  upload: unknown,
+): string {
+  const result = asRecord(upload);
+  const attachmentId = asString(result.attachmentId) ?? "-";
+  return [
+    `File uploaded: ${asString(result.filename) ?? "-"} (${(
+      (asNumber(result.size) ?? 0) / 1024
+    ).toFixed(1)}KB)`,
+    `Attachment ID: ${attachmentId}`,
+    "",
+    messageAttachment
+      ? `Use this ID with rah worker message-post --attachment-ids ${attachmentId} to include it in a message.`
+      : `rah worker task-submit binds this artifact to task ${
+          asString(result.taskId) ?? "-"
+        }; it takes no attachment id.`,
+  ].join("\n");
+}
+
+/** `raft attachment view`'s success line (`main.js@32641715`). */
+export function renderWorkerAttachmentDownload(download: unknown): string {
+  return `Downloaded to: ${asString(asRecord(download).output) ?? "-"}`;
+}
+
 /** `formatVersionInfo` (`main.js@673345`). */
 function renderVersion(result: Json): string {
   const carrier = asRecord(result.cliCarrier);
@@ -944,6 +1370,11 @@ function renderVersion(result: Json): string {
  * of the four commands that call `writeJson` unconditionally (`main.js@32532731`).
  */
 const RENDERERS: Record<string, (body: Json, result: Json) => string> = {
+  "/v1/worker/attachments/cancel": (_body, result) =>
+    renderAttachmentCanceled(result),
+  "/v1/worker/attachments/capabilities": (_body, result) =>
+    renderAttachmentCapabilities(result),
+  "/v1/worker/attachments/comments": renderAttachmentComments,
   "/v1/worker/channels/mute": renderChannelAttention,
   "/v1/worker/channels/unmute": renderChannelAttention,
   "/v1/worker/messages/history": (_body, result) => renderHistory(result),
@@ -961,6 +1392,10 @@ const RENDERERS: Record<string, (body: Json, result: Json) => string> = {
     reminderConfirmation("Reminder snoozed", asRecord(result.reminder)),
   "/v1/worker/reminders/update": (_body, result) =>
     reminderConfirmation("Reminder updated", asRecord(result.reminder)),
+  "/v1/worker/profile/self/get": (_body, result) => renderSelfProfile(result),
+  "/v1/worker/profile/self/update": (_body, result) =>
+    renderSelfProfile(result),
+  "/v1/worker/profiles/get": (_body, result) => renderVisibleProfile(result),
   "/v1/worker/room/members": (_body, result) => renderMembers(result),
   "/v1/worker/rooms/list": (_body, result) => renderRoomList(result),
   "/v1/worker/rooms/read": (_body, result) => renderRoomRead(result),
@@ -1010,7 +1445,14 @@ export function renderWorkerReadResult(
 
 /** Whether `--json` exists on the command behind this path, as it does upstream. */
 export function workerReadCommandOffersJson(path: string): boolean {
-  // `version` is one of Raft's 19 `--json` commands (`main.js@32534037`); none
-  // of the other read commands ported here carries the flag upstream.
-  return path === "/v1/worker/version";
+  // `version` (`main.js@32534037`), `profile show` (`main.js@32682200`) and
+  // `profile update` (`main.js@32599200`) are the three of Raft's 19 `--json`
+  // commands in this family; `profile-self-get` is RAH's own split of
+  // `profile show` with no target, and Raft has no second command to carry a
+  // flag, so it does not get one either.
+  return [
+    "/v1/worker/profile/self/update",
+    "/v1/worker/profiles/get",
+    "/v1/worker/version",
+  ].includes(path);
 }

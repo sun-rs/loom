@@ -6,8 +6,11 @@ import test from "node:test";
 process.env.TZ = "UTC";
 
 import {
+  renderWorkerAttachmentDownload,
+  renderWorkerAttachmentPublish,
   renderWorkerReadResult,
   renderWorkerTaskClaimResults,
+  workerReadCommandOffersJson,
 } from "../src/worker-read-render.ts";
 
 const render = (path: string, result: unknown, body: unknown = {}) =>
@@ -523,7 +526,10 @@ test("a command with no ported renderer keeps its JSON response", () => {
     render("/v1/worker/messages/search", { messages: [] }),
     undefined,
   );
-  assert.equal(render("/v1/worker/profiles/get", { isSelf: true }), undefined);
+  assert.equal(
+    render("/v1/worker/attachments/prepare", { attachmentId: "a" }),
+    undefined,
+  );
 });
 
 // ------------------------------------------------------- task mutations --
@@ -826,5 +832,430 @@ test("message-react states the emoji, the direction and the canonical message id
       { active: false, emoji: "👍" },
     ),
     "Reaction 👍 removed from message message-9.",
+  );
+});
+
+// ------------------------------------------------------------- profiles --
+
+const AGENT_PROFILE = {
+  actualRun: {
+    computer: {
+      displayName: "Studio",
+      hostId: "host-1",
+      hostname: "studio.local",
+      reportedBuildVersion: "1.4.0",
+    },
+    model: {
+      modelBindingId: "b1",
+      modelId: "gpt-x",
+      provider: "openai",
+      source: "explicit_binding",
+    },
+    runAttemptId: "run-9",
+    startedAt: "2026-09-09T02:00:00.000Z",
+    state: "running",
+  },
+  agentDefinitionId: "def-1",
+  agentState: "enabled",
+  availability: {
+    activity: "busy",
+    observedAt: "2026-09-09T02:05:00.000Z",
+    reason: "running",
+  },
+  configured: {
+    capabilityClass: undefined,
+    modelBindingIds: ["b1"],
+    modelBindingIdsTruncated: false,
+    modelSelection: "binding_ids",
+    reasoning: "low",
+    runtimeTargets: [
+      {
+        computer: { hostId: "host-1" },
+        models: [
+          { modelBindingId: "b1", modelId: "gpt-x", provider: "openai" },
+        ],
+        modelsTruncated: false,
+        registered: true,
+        runtime: { displayName: "Codex CLI", executionMode: "byoc" },
+        runtimeOfferId: "offer-1",
+      },
+    ],
+    runtimeTargetsRestricted: true,
+    runtimeTargetsTruncated: false,
+    toolAccessMode: "full_access",
+  },
+  createdAgents: [],
+  createdAgentsTruncated: false,
+  createdAt: "2026-09-01T00:00:00.000Z",
+  creator: {
+    displayName: "Sun",
+    handle: "sun",
+    kind: "human",
+    participantId: "participant-h",
+  },
+  deletedAt: null,
+  description: "Ports the read family",
+  displayName: "Alice",
+  isSelf: true,
+  membership: {
+    joinedAt: "2026-09-02T00:00:00.000Z",
+    role: "member",
+    scope: "room",
+  },
+  principal: { handle: "alice", kind: "agent", principalId: "participant-a" },
+};
+
+test("profile-show renders Raft's formatAgentProfile lines over RAH's configuration and latest Run", () => {
+  assert.equal(
+    render("/v1/worker/profiles/get", AGENT_PROFILE),
+    [
+      "## Profile",
+      "",
+      "- Type: agent",
+      "- Handle: @alice (you)",
+      "- ID: participant-a",
+      "- Display Name: Alice",
+      "- Description: Ports the read family",
+      "- Status: enabled",
+      "- Membership: room",
+      "- Role: member",
+      "- Joined: 2026-09-02T00:00:00.000Z",
+      "- Runtime: Codex CLI",
+      "- Model: openai/gpt-x",
+      "- Reasoning: low",
+      "- Tools: full_access",
+      "- Execution: byoc",
+      "- Availability: busy (running) observed 2026-09-09T02:05:00.000Z",
+      "- Latest Run: running run=run-9 started 2026-09-09T02:00:00.000Z",
+      "- Computer: Studio (host-1)",
+      "- Hostname: studio.local",
+      "- Daemon: v1.4.0",
+      "- Run Model: openai/gpt-x",
+      "- Created: 2026-09-01T00:00:00.000Z",
+      "- Creator: Sun (@sun) id=participant-h",
+      "- Created Agents: none",
+    ].join("\n"),
+  );
+});
+
+test("profile-show names an unrestricted runtime policy, a capability class and a tombstone", () => {
+  assert.equal(
+    render("/v1/worker/profiles/get", {
+      ...AGENT_PROFILE,
+      actualRun: null,
+      availability: null,
+      configured: {
+        ...AGENT_PROFILE.configured,
+        capabilityClass: "frontier",
+        modelSelection: "capability_class",
+        runtimeTargets: [],
+        runtimeTargetsRestricted: false,
+      },
+      creator: null,
+      deletedAt: "2026-09-08T00:00:00.000Z",
+      isSelf: false,
+    }),
+    [
+      "## Profile",
+      "",
+      "- Type: agent",
+      "- Handle: @alice",
+      "- ID: participant-a",
+      "- Display Name: Alice",
+      "- Description: Ports the read family",
+      "- Status: enabled",
+      "- Membership: room",
+      "- Role: member",
+      "- Joined: 2026-09-02T00:00:00.000Z",
+      "- Runtime: any registered runtime",
+      "- Model: capability class frontier",
+      "- Reasoning: low",
+      "- Tools: full_access",
+      "- Created: 2026-09-01T00:00:00.000Z",
+      "- Deleted At: 2026-09-08T00:00:00.000Z",
+      "- Created Agents: none",
+    ].join("\n"),
+  );
+});
+
+test("profile-show renders formatHumanProfile and the created-Agent list with its cursor", () => {
+  assert.equal(
+    render("/v1/worker/profiles/get", {
+      availability: null,
+      configured: null,
+      createdAgents: [
+        {
+          agentDefinitionId: "def-1",
+          displayName: "Alice",
+          handle: "alice",
+          kind: "agent",
+          participantId: "participant-a",
+          runtimes: [
+            {
+              registered: true,
+              runtime: { displayName: "Codex CLI" },
+              runtimeOfferId: "offer-1",
+            },
+          ],
+          runtimesTruncated: false,
+          state: "enabled",
+        },
+        {
+          agentDefinitionId: "def-2",
+          displayName: "Bob",
+          handle: "bob",
+          kind: "agent",
+          participantId: "participant-b",
+          runtimes: [{ registered: false, runtimeOfferId: "offer-2" }],
+          runtimesTruncated: false,
+          state: "tombstoned",
+        },
+      ],
+      createdAgentsNextCursor: "cursor-1",
+      createdAgentsTruncated: true,
+      createdAt: "2026-08-01T00:00:00.000Z",
+      creator: null,
+      deletedAt: null,
+      displayName: "Sun",
+      isSelf: false,
+      membership: {
+        joinedAt: "2026-08-02T00:00:00.000Z",
+        role: "owner",
+        scope: "room",
+      },
+      principal: { handle: "sun", kind: "human", principalId: "participant-h" },
+    }),
+    [
+      "## Profile",
+      "",
+      "- Type: human",
+      "- Handle: @sun",
+      "- ID: participant-h",
+      "- Display Name: Sun",
+      "- Description: (none)",
+      "- Membership: room",
+      "- Role: owner",
+      "- Joined: 2026-08-02T00:00:00.000Z",
+      "- Created Agents (2):",
+      "  - @alice (Codex CLI, enabled) id=participant-a",
+      "  - @bob (no runtime, tombstoned) id=participant-b",
+      'More created agents: rah worker profile-show --target participant-h --created-agents-cursor "cursor-1"',
+    ].join("\n"),
+  );
+});
+
+test("profile-self-get and profile-update render the writable metadata and the write context", () => {
+  const self = {
+    profile: {
+      agentDefinitionId: "def-1",
+      displayName: "Alice",
+      participantId: "participant-a",
+    },
+    writeContext: {
+      controlRoomId: "room-control",
+      controlRoomSeq: 12,
+      expectedRevisionId: "revision-3",
+    },
+  };
+  assert.equal(
+    render("/v1/worker/profile/self/get", self),
+    [
+      "## Profile",
+      "",
+      "- Display Name: Alice",
+      "- Description: (none)",
+      "- Avatar: (none)",
+      "- ID: participant-a",
+      "- Agent Definition: def-1",
+      "- Control Room: room-control",
+      "- Control Room Seq: 12",
+      "- Expected Revision: revision-3",
+    ].join("\n"),
+  );
+  assert.equal(
+    render("/v1/worker/profile/self/update", {
+      ...self,
+      deduplicated: true,
+      profile: { ...self.profile, avatarKey: "avatar-1", description: "Ports" },
+    }),
+    [
+      "## Profile",
+      "",
+      "- Display Name: Alice",
+      "- Description: Ports",
+      "- Avatar: avatar-1",
+      "- ID: participant-a",
+      "- Agent Definition: def-1",
+      "- Control Room: room-control",
+      "- Control Room Seq: 12",
+      "- Expected Revision: revision-3",
+      "- Deduplicated: yes",
+    ].join("\n"),
+  );
+});
+
+test("--json exists where Raft has it: profile show and update, never profile-self-get", () => {
+  assert.equal(workerReadCommandOffersJson("/v1/worker/profiles/get"), true);
+  assert.equal(
+    workerReadCommandOffersJson("/v1/worker/profile/self/update"),
+    true,
+  );
+  assert.equal(
+    workerReadCommandOffersJson("/v1/worker/profile/self/get"),
+    false,
+  );
+  assert.equal(workerReadCommandOffersJson("/v1/worker/room/members"), false);
+});
+
+// ---------------------------------------------------- attachments --
+
+test("attachment-comments renders Raft's comment block, its anchors and check mark", () => {
+  assert.equal(
+    render(
+      "/v1/worker/attachments/comments",
+      {
+        comments: [
+          {
+            anchor: null,
+            content: "Looks right",
+            createdAt: "2026-09-09T03:00:00.000Z",
+            id: "message-11",
+            reactions: [],
+            roomId: "room-1",
+            roomSeq: 12,
+            senderId: "participant-h",
+            senderName: "sun",
+            senderType: "human",
+          },
+          {
+            anchor: { data: { end: 20, start: 12 }, type: "lines" },
+            content: "Fix this range",
+            createdAt: "2026-09-09T03:01:00.000Z",
+            id: "message-12",
+            reactions: [
+              {
+                createdAt: "2026-09-09T03:02:00.000Z",
+                emoji: "✅",
+                reactorId: "participant-a",
+                reactorType: "agent",
+              },
+            ],
+            roomId: "room-1",
+            roomSeq: 13,
+            senderId: "participant-a",
+            senderName: "alice",
+            senderType: "agent",
+          },
+        ],
+        messageId: "message-1",
+        nextBeforeRoomSeq: 12,
+        roomId: "room-1",
+        threadId: "thread-1",
+        viewer: { canComment: true },
+      },
+      { attachmentId: "att-1" },
+    ),
+    [
+      "## Comments on attachment att-1 (2)",
+      "[msg=message-11 time=2026-09-09T03:00:00.000Z type=human] @sun: Looks right",
+      "[msg=message-12 time=2026-09-09T03:01:00.000Z type=agent] ✅ [anchor: L12–20] @alice: Fix this range",
+      "(full conversation lives in thread thread-1)",
+      'More: rah worker attachment-comments --attachment-id "att-1" --before-room-seq 12',
+    ].join("\n"),
+  );
+});
+
+test("attachment-comments renders Raft's empty sentence and says when commenting is closed", () => {
+  assert.equal(
+    render(
+      "/v1/worker/attachments/comments",
+      {
+        comments: [],
+        messageId: "message-1",
+        roomId: "room-1",
+        viewer: { canComment: false },
+      },
+      { attachmentId: "att-1" },
+    ),
+    [
+      "No comments on attachment att-1.",
+      "You cannot comment on this attachment.",
+    ].join("\n"),
+  );
+});
+
+test("attachment-capabilities and attachment-cancel render text in the same house style", () => {
+  assert.equal(
+    render("/v1/worker/attachments/capabilities", {
+      directUploadEnabled: false,
+      directUploadThresholdBytes: null,
+      maxBytes: 26214400,
+      sessionExpiresInSeconds: 3600,
+    }),
+    [
+      "Attachment uploads: at most 26214400 bytes per file.",
+      "A reservation expires 3600 second(s) after it is created.",
+      "Direct upload is disabled: bytes go to the local daemon upload path, and there is no direct-upload threshold.",
+    ].join("\n"),
+  );
+  assert.equal(
+    render("/v1/worker/attachments/cancel", {
+      attachmentId: "att-1",
+      expiresAt: "2026-09-09T04:00:00.000Z",
+      filename: "evidence.txt",
+      mimeType: "text/plain",
+      roomId: "room-1",
+      size: 12,
+      state: "canceled",
+    }),
+    "Reservation canceled: evidence.txt (id:att-1) — state canceled.",
+  );
+});
+
+test("attachment-publish renders Raft's upload block with the RAH command that consumes the id", () => {
+  assert.equal(
+    renderWorkerAttachmentPublish(true, {
+      attachmentId: "att-1",
+      expiresAt: "2026-09-09T04:00:00.000Z",
+      filename: "evidence.txt",
+      mimeType: "text/plain",
+      roomId: "room-1",
+      size: 2048,
+      state: "completed",
+    }),
+    [
+      "File uploaded: evidence.txt (2.0KB)",
+      "Attachment ID: att-1",
+      "",
+      "Use this ID with rah worker message-post --attachment-ids att-1 to include it in a message.",
+    ].join("\n"),
+  );
+  assert.equal(
+    renderWorkerAttachmentPublish(false, {
+      attachmentId: "att-2",
+      expiresAt: "2026-09-09T04:00:00.000Z",
+      filename: "result.txt",
+      mimeType: "text/plain",
+      roomId: "room-1",
+      size: 512,
+      state: "completed",
+      taskId: "task-1",
+    }),
+    [
+      "File uploaded: result.txt (0.5KB)",
+      "Attachment ID: att-2",
+      "",
+      "rah worker task-submit binds this artifact to task task-1; it takes no attachment id.",
+    ].join("\n"),
+  );
+});
+
+test("attachment-download renders Raft's one-line save confirmation", () => {
+  assert.equal(
+    renderWorkerAttachmentDownload({
+      attachmentId: "att-1",
+      output: "/tmp/evidence.txt",
+    }),
+    "Downloaded to: /tmp/evidence.txt",
   );
 });

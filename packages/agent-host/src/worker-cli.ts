@@ -34,6 +34,8 @@ import {
 } from "./worker-task-address-cli.ts";
 import { parseWorkerReadCommand } from "./worker-read-cli.ts";
 import {
+  renderWorkerAttachmentDownload,
+  renderWorkerAttachmentPublish,
   renderWorkerReadResult,
   renderWorkerTaskClaimResults,
   workerReadCommandOffersJson,
@@ -277,7 +279,17 @@ export async function runWorkerCliCommand(
         arguments_[1] === "attachment-publish",
         arguments_[1] === "profile-avatar-publish",
       );
-      runtime.stdout.write(`${JSON.stringify(result)}\n`);
+      // `raft attachment upload` writes its success block as text and offers no
+      // `--json`. `profile-avatar-publish` has no ported renderer yet and keeps
+      // its JSON response.
+      runtime.stdout.write(
+        arguments_[1] === "profile-avatar-publish"
+          ? `${JSON.stringify(result)}\n`
+          : `${renderWorkerAttachmentPublish(
+              arguments_[1] === "attachment-publish",
+              result,
+            )}\n`,
+      );
       return 0;
     }
     if (artifactDownload) {
@@ -286,7 +298,8 @@ export async function runWorkerCliCommand(
         runtime,
         token,
       });
-      runtime.stdout.write(`${JSON.stringify(result)}\n`);
+      // `raft attachment view` writes one line naming the saved path.
+      runtime.stdout.write(`${renderWorkerAttachmentDownload(result)}\n`);
       return 0;
     }
     // Raft's commander stage raises `INVALID_ARG` for every syntax and option
@@ -688,9 +701,12 @@ function parseCommand(
     arguments_.slice(2),
     command === "message-post"
       ? ["anyway", "json", "send-draft", "top-level"]
-      : // Raft puts `--json` on 19 of its 80 commands; `version` is the only
-        // one of those in the read family (`main.js@32534037`).
-        command === "version"
+      : // Raft puts `--json` on 19 of its 80 commands; `version`
+        // (`main.js@32534037`), `profile show` (`main.js@32682200`) and
+        // `profile update` (`main.js@32599200`) are the three of those in this
+        // family. `profile-self-get` is RAH's own split of `profile show` with
+        // no target, and upstream has no second command to carry a flag.
+        ["profile-show", "profile-update", "version"].includes(command)
         ? ["json"]
         : command === "message-react"
           ? ["remove"]
@@ -1680,8 +1696,8 @@ rah worker whoami
 rah worker server-info [--target TARGET] [--limit N] [--cursor CURSOR]
 rah worker profile-avatar-publish --path FILE --mime-type image/png|image/jpeg|image/gif|image/webp
 rah worker profile-self-get
-rah worker profile-update [--display-name TEXT] [--description TEXT] [--avatar-key KEY] [--avatar-upload-intent-id ID]
-rah worker profile-show [--target ID|@HANDLE] [--channel TARGET] [--created-agents-limit N] [--created-agents-cursor CURSOR]
+rah worker profile-update [--display-name TEXT] [--description TEXT] [--avatar-key KEY] [--avatar-upload-intent-id ID] [--json]
+rah worker profile-show [--target ID|@HANDLE] [--channel TARGET] [--created-agents-limit N] [--created-agents-cursor CURSOR] [--json]
 rah worker task-assign TASK (--assignee AGENT_ID | --unassign)
 rah worker channel-mute [--target #CHANNEL]
 rah worker channel-unmute [--target #CHANNEL]
@@ -1698,7 +1714,7 @@ rah worker message-react --message-id ID --emoji EMOJI [--remove]
 rah worker message-post --target TARGET <<'${MESSAGE_HEREDOC_DELIMITER}' [--attachment-ids ID,ID] [--thread-id ID | --top-level]
 rah worker message-post --send-draft --target TARGET [--anyway]
 Message content is read from stdin; use a heredoc so quotes, backticks and newlines stay literal. --send-draft takes no stdin: it sends the saved draft unchanged. Never use --send-draft when changing content.
-Commands print human-readable text on stdout: read it. Only message-post and version accept --json, and only when you need the machine-readable object; whoami answers in JSON and takes no flag.
+Commands print human-readable text on stdout: read it. Only message-post, version, profile-show and profile-update accept --json, and only when you need the machine-readable object; whoami answers in JSON and takes no flag.
 rah worker thread-unfollow --target "#channel:THREAD_ID" [--reason TEXT]
 rah worker attachment-publish --path FILE [--target TARGET --context-receipt RECEIPT] [--filename NAME] [--mime-type TYPE]
 rah worker attachment-comments --attachment-id ID [--limit N] [--before-room-seq N]

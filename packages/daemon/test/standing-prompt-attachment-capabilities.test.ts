@@ -9,5 +9,8 @@ test("attachment guidance asks the live owner for limits and does not imply dire
     prompt,
     /server-authoritative upload size and reservation lifetime/u,
   );
-  assert.match(prompt, /directUploadEnabled=false/u);
+  // `attachment-capabilities` renders text, so the guidance states the fact
+  // rather than naming a JSON field the Agent no longer receives.
+  assert.match(prompt, /direct upload is disabled/iu);
+  assert.ok(!prompt.includes("directUploadEnabled"));
 });

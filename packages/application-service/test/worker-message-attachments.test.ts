@@ -211,6 +211,14 @@ test("a real fake child uploads PNG and text discussion evidence, publishes once
     };
     const invokeJson = async (args: string[]) =>
       JSON.parse(await invoke(args)) as Record<string, unknown>;
+    // `raft attachment upload` prints its success block as text and offers no
+    // `--json`, so the attachment id is read off `Attachment ID:`.
+    const publish = async (args: string[]) => {
+      const stdout = await invoke(args);
+      const matched = /^Attachment ID: (.+)$/mu.exec(stdout);
+      assert.ok(matched, stdout);
+      return { attachmentId: matched[1]!, stdout: stdout.trimEnd() };
+    };
     // `sync` renders Raft's drained window; its header states the delivered
     // cursor, which is what `acknowledge --through-seq` takes.
     const delivery = await invoke(["worker", "sync"]);
@@ -231,7 +239,7 @@ test("a real fake child uploads PNG and text discussion evidence, publishes once
     ] as const) {
       const source = join(directory, name);
       writeFileSync(source, content);
-      const published = await invokeJson([
+      const command = [
         "worker",
         "attachment-publish",
         "--path",
@@ -240,22 +248,14 @@ test("a real fake child uploads PNG and text discussion evidence, publishes once
         mime,
         "--idempotency-key",
         `upload:${name}`,
-      ]);
-      assert.equal(published.state, "completed");
-      ids.push(String(published.attachmentId));
-      assert.deepEqual(
-        await invokeJson([
-          "worker",
-          "attachment-publish",
-          "--path",
-          source,
-          "--mime-type",
-          mime,
-          "--idempotency-key",
-          `upload:${name}`,
-        ]),
-        published,
+      ];
+      const published = await publish(command);
+      assert.match(
+        published.stdout,
+        /^Use this ID with rah worker message-post --attachment-ids .+ to include it in a message\.$/mu,
       );
+      ids.push(published.attachmentId);
+      assert.deepEqual(await publish(command), published);
     }
     const post = [
       "worker",
@@ -288,14 +288,20 @@ test("a real fake child uploads PNG and text discussion evidence, publishes once
     );
     for (const [index, expected] of [textBytes, imageBytes].entries()) {
       const output = join(directory, `read-${index}`);
-      await invoke([
-        "worker",
-        "attachment-download",
-        "--attachment-id",
-        ids[index]!,
-        "--output",
-        output,
-      ]);
+      // `raft attachment view` names the saved path and nothing else.
+      assert.equal(
+        (
+          await invoke([
+            "worker",
+            "attachment-download",
+            "--attachment-id",
+            ids[index]!,
+            "--output",
+            output,
+          ])
+        ).trimEnd(),
+        `Downloaded to: ${output}`,
+      );
       assert.deepEqual(readFileSync(output), expected);
     }
     await invoke([

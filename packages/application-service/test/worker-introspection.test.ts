@@ -254,8 +254,16 @@ test("profile/members/serverInfo carry live safe Computer metadata through the a
       assert.equal(profile.actualRun.runtime, undefined);
     }
     name = "Edited Computer";
+    // `raft profile show` prints `formatProfile` unless `--json` is passed, so
+    // the default read is text and the flag is what returns the object.
+    const cliText = (
+      await f.cli(["profile-show", "--created-agents-limit", "1"])
+    ).stdout;
+    assert.match(cliText, /^- Computer: Edited Computer \(/mu);
+    assert.match(cliText, /^## Profile$/mu);
     const cli = JSON.parse(
-      (await f.cli(["profile-show", "--created-agents-limit", "1"])).stdout,
+      (await f.cli(["profile-show", "--created-agents-limit", "1", "--json"]))
+        .stdout,
     );
     assert.equal(cli.actualRun.computer.displayName, name);
     assert.equal(f.latest(), before);

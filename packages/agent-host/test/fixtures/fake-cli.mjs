@@ -413,11 +413,14 @@ if (mode === "trajectory") {
   if (readText) {
     const members = readText(["room-members"]);
     const server = readText(["server-info"]);
-    const profile = readTool(["profile-show"]);
+    // `raft profile show` prints `formatProfile`; the self view is the handle
+    // line's `(you)` marker, not a JSON field.
+    const profile = readText(["profile-show"]);
     if (
       !members.includes(`id=${process.env.RAH_PARTICIPANT_ID}`) ||
       !server.includes(`id=${process.env.RAH_ROOM_ID}`) ||
-      !profile.isSelf
+      !profile.includes("(you)") ||
+      !profile.includes(`- ID: ${process.env.RAH_PARTICIPANT_ID}`)
     )
       throw new Error("Worker identity reads did not match the execution");
   }

@@ -198,7 +198,15 @@ test("published comments roundtrip through Human SDK and authenticated Worker CL
       "--attachment-id",
       upload.attachmentId,
     ]);
-    assert.deepEqual(JSON.parse(reply.stdout), human);
+    // `raft attachment comments` prints its block as text and offers no --json.
+    assert.equal(
+      reply.stdout.trimEnd(),
+      [
+        `## Comments on attachment ${upload.attachmentId} (1)`,
+        `[msg=${human.comments[0]!.id} time=${human.comments[0]!.createdAt} type=human] [anchor: L2] @${human.comments[0]!.senderName}: Look here`,
+        `(full conversation lives in thread ${human.threadId})`,
+      ].join("\n"),
+    );
     assert.equal(
       (await f.call("acknowledge", { throughSeq: f.activation.toSeq })).status,
       409,

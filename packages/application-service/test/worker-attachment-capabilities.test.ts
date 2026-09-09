@@ -172,7 +172,16 @@ test("upload capabilities match real reservation limits through authenticated HT
         timeout: 15000,
       },
     );
-    assert.deepEqual(JSON.parse(cli.stdout), capabilities);
+    // The command has no Raft counterpart, so it renders in the same house
+    // style rather than answering in JSON.
+    assert.equal(
+      cli.stdout.trimEnd(),
+      [
+        `Attachment uploads: at most ${capabilities.maxBytes} bytes per file.`,
+        `A reservation expires ${capabilities.sessionExpiresInSeconds} second(s) after it is created.`,
+        "Direct upload is disabled: bytes go to the local daemon upload path, and there is no direct-upload threshold.",
+      ].join("\n"),
+    );
     const prepare = {
       filename: "ceiling.txt",
       mimeType: "text/plain",

@@ -15,6 +15,9 @@ export function parseWorkerSelfProfileCommand(
     command === "profile-self-get"
       ? []
       : [
+          // `raft profile update --json` (`main.js@32599200`) selects the
+          // output stream only; it never reaches the server.
+          "json",
           "control-room-id",
           "control-room-seq",
           "expected-revision-id",

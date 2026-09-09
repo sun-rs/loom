@@ -47,9 +47,33 @@ test("DaemonApplication launches a real fake child that edits its own profile an
       if(status!==0)throw new Error(args[0]+': '+err);
       return out;
     };
-    // Profile commands still answer in JSON; \`sync\` renders Raft's text and
-    // states the delivered cursor on its header line.
+    // Raft's profile commands print \`formatProfile\` text, so the child reads
+    // the rendered block; only the commands Raft answers in JSON are parsed as
+    // JSON. \`sync\` renders Raft's text and states the delivered cursor on its
+    // header line.
     const call=async (...args)=>JSON.parse(await text(...args));
+    const field=(out,label)=>{
+      const matched=new RegExp('^- '+label+': (.+)$','mu').exec(out);
+      if(!matched)throw new Error('profile printed no '+label+': '+out);
+      return matched[1];
+    };
+    const profile=async(...args)=>{
+      const out=await text(...args);
+      return {
+        profile:{
+          displayName:field(out,'Display Name'),
+          description:field(out,'Description'),
+          avatarKey:field(out,'Avatar'),
+          participantId:field(out,'ID'),
+          agentDefinitionId:field(out,'Agent Definition'),
+        },
+        writeContext:{
+          controlRoomId:field(out,'Control Room'),
+          controlRoomSeq:Number(field(out,'Control Room Seq')),
+          expectedRevisionId:field(out,'Expected Revision'),
+        },
+      };
+    };
     const syncCursorAfter=async()=>{
       const out=await text('sync');
       const matched=/cursor \\d+ to (\\d+) of \\d+/u.exec(out);
@@ -59,10 +83,10 @@ test("DaemonApplication launches a real fake child that edits its own profile an
     const flags=c=>['--control-room-id',c.controlRoomId,'--control-room-seq',String(c.controlRoomSeq),'--expected-revision-id',c.expectedRevisionId];
     try {
       const deliveredThrough=await syncCursorAfter();
-      const before=await call('profile-self-get');
-      const metadata=await call('profile-update',...flags(before.writeContext),'--display-name','Alicia from child','--description','Actual daemon Worker commands','--idempotency-key','child-metadata');
+      const before=await profile('profile-self-get');
+      const metadata=await profile('profile-update',...flags(before.writeContext),'--display-name','Alicia from child','--description','Actual daemon Worker commands','--idempotency-key','child-metadata');
       const upload=await call('profile-avatar-publish','--path',${JSON.stringify(pngPath)},'--mime-type','image/png');
-      const changed=await call('profile-update',...flags(metadata.writeContext),'--avatar-key',upload.avatarKey,'--avatar-upload-intent-id',upload.uploadIntentId,'--idempotency-key','child-avatar');
+      const changed=await profile('profile-update',...flags(metadata.writeContext),'--avatar-key',upload.avatarKey,'--avatar-upload-intent-id',upload.uploadIntentId,'--idempotency-key','child-avatar');
       const posted=await call('message-post','--json','--body','Fake child completed self profile and actual avatar binding','--top-level','--based-on-room-seq',String(deliveredThrough),'--idempotency-key','child-profile-result');
       await call('acknowledge','--through-seq',String(deliveredThrough));
       writeFileSync(${JSON.stringify(evidencePath)},JSON.stringify({before,metadata,upload,changed,posted}));

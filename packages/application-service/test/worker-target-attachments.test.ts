@@ -114,6 +114,19 @@ async function fixture() {
         throughRoomSeq: Number(header[1]),
       };
     },
+    /**
+     * `raft attachment upload` prints its success block as text and offers no
+     * `--json`, so the attachment id is read off its `Attachment ID:` line.
+     */
+    async cliPublish(
+      this: { cliText(args: string[]): Promise<string> },
+      args: string[],
+    ) {
+      const stdout = await this.cliText(args);
+      const matched = /^Attachment ID: (.+)$/mu.exec(stdout);
+      assert.ok(matched, stdout);
+      return { attachmentId: matched[1]! };
+    },
     cliText: async (args: string[]) => {
       const result = await promisify(execFile)(
         process.execPath,
@@ -386,7 +399,7 @@ test("real Worker CLI publishes PNG to target and resumes its TXT held draft in 
       "--target",
       "#target",
     ]);
-    const file = await f.cli([
+    const file = await f.cliPublish([
       "attachment-publish",
       "--target",
       "#target",
@@ -415,13 +428,19 @@ test("real Worker CLI publishes PNG to target and resumes its TXT held draft in 
     ]);
     assert.equal(posted.event.roomId, f.target.roomId);
     const output = join(f.dir, "download.png");
-    await f.cli([
-      "attachment-download",
-      "--attachment-id",
-      file.attachmentId,
-      "--output",
-      output,
-    ]);
+    // `raft attachment view` names the saved path and nothing else.
+    assert.equal(
+      (
+        await f.cliText([
+          "attachment-download",
+          "--attachment-id",
+          file.attachmentId,
+          "--output",
+          output,
+        ])
+      ).trimEnd(),
+      `Downloaded to: ${output}`,
+    );
     assert.deepEqual(readFileSync(output), png);
     const fresh = await f.cliRoomContext(["room-read", "--target", "#target"]);
     const id = await upload(f, fresh, "cli-txt");
@@ -1074,7 +1093,7 @@ test("a canonical joined DM accepts its own file through the same target CLI pat
     ]);
     const path = join(f.dir, "dm.txt");
     writeFileSync(path, "Direct file");
-    const file = await f.cli([
+    const file = await f.cliPublish([
       "attachment-publish",
       "--target",
       "dm:@human",
@@ -1100,7 +1119,14 @@ test("a canonical joined DM accepts its own file through the same target CLI pat
       "dm-file-post",
     ]);
     assert.equal(posted.event.roomId, dm.roomId);
-    assert.equal(file.roomId, dm.roomId);
+    // Raft's upload block names the file and the id, not the resolved channel,
+    // so the reservation's Room is asserted from the ledger it was written to.
+    assert.equal(
+      f.db
+        .prepare("SELECT room_id FROM room_files WHERE attachment_id=?")
+        .get(file.attachmentId)!.room_id,
+      dm.roomId,
+    );
   } finally {
     await f.close();
   }
