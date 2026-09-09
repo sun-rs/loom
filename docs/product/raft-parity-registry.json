@@ -28,14 +28,22 @@
   ],
   "ratchet": {
     "unjustified": 98,
+    "undecidable": 0,
     "missingNonDeferred": 33,
     "promptJudgmentParagraphs": 14
+  },
+  "ratchetNotes": {
+    "unjustified": "Falls when RAH replicates the Raft contract, and equally when a row is re-adjudicated. A drop is not repair unless a commit changed a surface; the adjudication pass of 2026-09-09 moved no row, so this number still measures 98 unreplicated Agent-facing divergences.",
+    "undecidable": "Counts rows whose Raft-side claim rests on the closed Raft Server rather than on the client contract or the extracted CLI. It may rise only when a new Agent-facing surface is added whose upstream behaviour is Server-held, never by reclassifying a row that already has client-side evidence. It must fall the moment Server evidence becomes available: every row it covers is then re-adjudicated aligned, justified or unjustified. It stands at 0 because all 211 rows cite either packages/shared/src/agentApiContract.ts or the extracted Computer CLI and prompt compiler.",
+    "missingNonDeferred": "Falls when RAH ports the Raft surface. Deferred absences are excluded and must name a constraint instead.",
+    "promptJudgmentParagraphs": "Falls when a self-authored judgment paragraph is removed from the standing prompt."
   },
   "ambiguities": [
     "The CLI inventory §4 counts (aligned 8 / justified 7 / unjustified 29 / missing 46, 28 deferred) do not reproduce from its own §2 rows, which yield aligned 7, justified 7, unjustified 30 and 49 missing subcommands (28 deferred). This registry records the per-row verdicts, not the summary totals.",
     "The CLI inventory §2.11 declares 36 missing routes (22 deferred); its own 75 numbered rows yield 32 missing (20 deferred). This registry records the rows.",
     "The prompt inventory §3.3 summarises 14 judgment paragraphs and 6 mixed, while its own per-paragraph labels give 12 pure judgment and 7 mixed. The ratchet stays at the adjudicated 14; only the 12 explicitly labelled judgment paragraphs are registered.",
-    "The CLI inventory records the upstream bundle as 34,981,487 bytes; the file with the recorded sha256 is 34,983,657 bytes, and its byte offsets do not resolve to the described definitions. Offsets are kept verbatim and used only as region anchors."
+    "The CLI inventory records the upstream bundle as 34,981,487 bytes; the file with the recorded sha256 is 34,983,657 bytes, and its byte offsets do not resolve to the described definitions. Offsets are kept verbatim and used only as region anchors.",
+    "Fifteen entries carry no `raft` anchor object because the divergence is an absence upstream, not a differing definition: the twelve self-authored standing-prompt paragraphs and the three RAH-only Task surfaces. Their evidence tier is read from the inventory section each note cites — the prompt rows from the extracted `raft-computer-1.0.18/regions/agent-prompt-compiler.js` that the prompt inventory §1 declares as its baseline, the Task rows from the 90-subcommand catalogue enumerated in the CLI inventory §1.4 — so they are recorded `cli-behavior`, not `server-inferred`. Both files are readable, so neither absence rests on the closed Server."
   ],
   "entries": [
     {
@@ -55,6 +63,7 @@
         }
       },
       "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.8: --app/--set/--unset shape matches."
     },
     {
@@ -74,6 +83,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.12: RAH splits Raft's inbox/reminder acknowledgement into a Computer-local App Inbox family."
     },
     {
@@ -93,6 +103,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.12: no Raft counterpart for a re-check pass."
     },
     {
@@ -112,6 +123,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.8: --revision renamed --version and folded into a generic App Inbox ack."
     },
     {
@@ -131,6 +143,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.8: adds a mandatory --based-on-room-seq; drops the --msg-id alias."
     },
     {
@@ -150,6 +163,7 @@
         }
       },
       "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.8: same --status/--all selection."
     },
     {
@@ -169,6 +183,7 @@
         }
       },
       "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.8: same --id addressing."
     },
     {
@@ -188,6 +203,7 @@
         }
       },
       "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.8: same --id --by shape."
     },
     {
@@ -207,6 +223,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.8: RAH adds --tz."
     },
     {
@@ -226,6 +243,7 @@
         }
       },
       "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.8: same --id shape."
     },
     {
@@ -245,6 +263,7 @@
         }
       },
       "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "activation-fence",
       "note": "§2.4/§2.12: Raft drains and ACKs in one command; the Activation fence requires an explicit separate ACK."
     },
@@ -265,6 +284,7 @@
         }
       },
       "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "activation-fence",
       "note": "§2.12: the explicit ACK half of Raft's single message check."
     },
@@ -285,6 +305,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.12: RAH exposes a separate joined-target listing."
     },
     {
@@ -304,6 +325,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.12: lifts Raft's CLI-local consumed-seq state into an Agent-carried --context-receipt."
     },
     {
@@ -318,6 +340,7 @@
         "location": "agentApiContract.ts@1564"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.12: Raft has the route but exposes no CLI command."
     },
     {
@@ -337,6 +360,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.4: adds thread selectors and --cursor."
     },
     {
@@ -356,6 +380,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.4: positional <id> became --message-id."
     },
     {
@@ -375,6 +400,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.2: positional <target> became an optional --target."
     },
     {
@@ -394,6 +420,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.1: reports only the carrier package version; no daemon/Computer version, no --json."
     },
     {
@@ -413,6 +440,7 @@
         }
       },
       "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.1: same no-argument identity echo."
     },
     {
@@ -432,6 +460,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.3: no partition selectors, no --query, --offset became --cursor."
     },
     {
@@ -451,6 +480,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.3: Raft uploads the avatar in one step."
     },
     {
@@ -470,6 +500,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.12: Raft omits the target instead of adding a second command."
     },
     {
@@ -489,6 +520,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.3: requires Agent-carried control-room id/seq, expected-revision-id and an idempotency key."
     },
     {
@@ -508,6 +540,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.3: positional target became an option; absorbs raft user info."
     },
     {
@@ -527,6 +560,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.6: internal participant id instead of @handle; no --expected-revision optimistic key."
     },
     {
@@ -546,6 +580,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.2: adds two mandatory causal parameters (deferred to the message/channel batch)."
     },
     {
@@ -565,6 +600,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.2: adds two mandatory causal parameters (deferred to the message/channel batch)."
     },
     {
@@ -584,6 +620,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.6: additionally requires --room-id."
     },
     {
@@ -603,6 +640,7 @@
         }
       },
       "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.6: aligned on 2026-09-09 — same fields, addressed by --target/--channel with --number as taskAmendCommand does."
     },
     {
@@ -613,6 +651,7 @@
       },
       "raft": null,
       "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "sqlite-ledger",
       "note": "§2.6: --task-id stays accepted alongside Raft's --target/--number on every Task command. The canonical Task identity in the single local SQLite ledger is the task_id UUID that the Human client, the Kernel commands and the existing tests already address; the server resolves either form to the same Task before any authority check runs, so the addition widens no authority."
     },
@@ -633,6 +672,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.12: part of the fixed lifecycle command set replacing one status setter."
     },
     {
@@ -652,6 +692,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.6: --task-id addressing instead of --target/--channel."
     },
     {
@@ -671,6 +712,7 @@
         }
       },
       "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.6: same selectors and status values."
     },
     {
@@ -690,6 +732,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.6: --task-id addressing plus cursor paging."
     },
     {
@@ -709,6 +752,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.4: no --channel alias, no --offset; adds --sender-id and --cursor."
     },
     {
@@ -728,6 +772,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.4: --remove toggle became a mandatory --active true|false plus two causal parameters."
     },
     {
@@ -747,6 +792,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.4: heredoc core aligned; missing --target-confirmed and --reviewer-isolation, repeated --attachment-id became a comma string, adds two causal parameters."
     },
     {
@@ -766,6 +812,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.2: drops --reason, drops target-suffix addressing, adds two causal parameters."
     },
     {
@@ -785,6 +832,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.5: lifts Raft's CLI-generated clientRequestId into an Agent-carried idempotency key."
     },
     {
@@ -804,6 +852,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.5: --before-room-seq replaces Raft's plain limit paging."
     },
     {
@@ -818,6 +867,7 @@
         "location": "agentApiContract.ts@2020"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.12: Raft has the route but exposes no CLI command."
     },
     {
@@ -832,6 +882,7 @@
         "location": "agentApiContract.ts@2050"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.12: Raft has the route but exposes no CLI command."
     },
     {
@@ -851,6 +902,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.5: positional attachment id became --attachment-id."
     },
     {
@@ -870,6 +922,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.12: RAH adds a Task-deliverable channel separate from attachments."
     },
     {
@@ -889,6 +942,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.12: RAH adds a Task-deliverable channel separate from attachments."
     },
     {
@@ -908,6 +962,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.12: Raft reads a single Task through task list / task history."
     },
     {
@@ -927,6 +982,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.12: no Raft counterpart for a frozen submission read."
     },
     {
@@ -938,6 +994,7 @@
       },
       "raft": null,
       "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "sqlite-ledger",
       "note": "§2.12: only a single-machine SQLite ledger can record this Computer's own Run commands and file edits."
     },
@@ -958,6 +1015,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.12: no Raft counterpart for an input-request status read."
     },
     {
@@ -977,6 +1035,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.6: no batch --title, no --target, no --creates-resource, participant id instead of @handle."
     },
     {
@@ -996,6 +1055,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.12: Raft claims an existing Task; RAH atomically creates and claims from a message."
     },
     {
@@ -1015,6 +1075,7 @@
         }
       },
       "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.6: aligned on 2026-09-09 — claims by --target/--channel with a repeatable --number, exactly as taskClaimCommand does; --message-id claiming stays RAH task-claim-message."
     },
     {
@@ -1034,6 +1095,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.6: one status setter replaced by fixed lifecycle commands."
     },
     {
@@ -1053,6 +1115,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.6: renamed and re-addressed."
     },
     {
@@ -1072,6 +1135,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.6: one status setter replaced by fixed lifecycle commands."
     },
     {
@@ -1091,6 +1155,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.6: one status setter replaced by fixed lifecycle commands."
     },
     {
@@ -1110,6 +1175,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.6: one status setter replaced by fixed lifecycle commands."
     },
     {
@@ -1129,6 +1195,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.6: one status setter replaced by fixed lifecycle commands."
     },
     {
@@ -1148,6 +1215,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.6: one status setter replaced by fixed lifecycle commands."
     },
     {
@@ -1164,6 +1232,7 @@
         }
       },
       "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "no-central-server",
       "note": "§2.1: no central Server; the daemon issues credentials inside the Activation fence."
     },
@@ -1181,6 +1250,7 @@
         }
       },
       "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "no-central-server",
       "note": "§2.1: no central Server, no browser device-code handoff."
     },
@@ -1198,6 +1268,7 @@
         }
       },
       "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "local-credentials",
       "note": "§2.1: credentials are granted and revoked locally by Activation."
     },
@@ -1215,6 +1286,7 @@
         }
       },
       "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "local-credentials",
       "note": "§2.1: credential lifetime is Activation-scoped."
     },
@@ -1232,6 +1304,7 @@
         }
       },
       "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "no-central-server",
       "note": "§2.1: no central Server to enumerate mintable Agents."
     },
@@ -1249,6 +1322,7 @@
         }
       },
       "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "single-machine",
       "note": "§2.1: the single-machine daemon wakes Runs directly; no self-hosted wake bridge."
     },
@@ -1266,6 +1340,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.2: room-resolve/room-read only approximate it; no joined/description/member-count facts."
     },
     {
@@ -1282,6 +1357,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.2: no Channel lifecycle route."
     },
     {
@@ -1298,6 +1374,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.2: no Channel lifecycle route."
     },
     {
@@ -1314,6 +1391,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.2: no Channel lifecycle route."
     },
     {
@@ -1330,6 +1408,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.2: no Channel lifecycle route."
     },
     {
@@ -1346,6 +1425,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.2: no Channel membership route."
     },
     {
@@ -1362,6 +1442,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.2: no Channel membership route."
     },
     {
@@ -1378,6 +1459,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.2/§3.3: an Agent cannot enter a visible public Room by itself."
     },
     {
@@ -1394,6 +1476,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.2/§3.3: an Agent cannot leave a Room by itself."
     },
     {
@@ -1410,6 +1493,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.3/S30: no workspace name/avatar administration route."
     },
     {
@@ -1426,6 +1510,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.4/S9: replaced by standing prompt text plus worker help."
     },
     {
@@ -1442,6 +1527,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.4/S9: replaced by standing prompt text plus worker help."
     },
     {
@@ -1458,6 +1544,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.4: legacy alias of manual get; also absent."
     },
     {
@@ -1474,6 +1561,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.4: legacy alias of manual search; also absent."
     },
     {
@@ -1490,6 +1578,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.4/S11: no peek-without-draining entry point."
     },
     {
@@ -1506,6 +1595,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.6/S16: no structured resource receipt."
     },
     {
@@ -1522,6 +1612,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.7/S19: the standing prompt states there is no separate mention command."
     },
     {
@@ -1538,6 +1629,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.7/S19: no send-side mention execution."
     },
     {
@@ -1554,6 +1646,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.7/S19: no send-side mention execution."
     },
     {
@@ -1570,6 +1663,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.7/S18: no RAFTACTION heredoc action card for a Human."
     },
     {
@@ -1586,6 +1680,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.8/S21: App Inbox has check/recheck/ack only."
     },
     {
@@ -1602,6 +1697,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.9: adjudicated deferred (Marketplace / Integration)."
@@ -1620,6 +1716,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.9: adjudicated deferred."
@@ -1638,6 +1735,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.9: adjudicated deferred."
@@ -1656,6 +1754,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.9: adjudicated deferred."
@@ -1674,6 +1773,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.9: adjudicated deferred."
@@ -1692,6 +1792,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.9: adjudicated deferred."
@@ -1710,6 +1811,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.9: adjudicated deferred."
@@ -1728,6 +1830,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.9: adjudicated deferred."
@@ -1746,6 +1849,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.9: adjudicated deferred."
@@ -1764,6 +1868,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.9: adjudicated deferred."
@@ -1782,6 +1887,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.9: adjudicated deferred."
@@ -1795,6 +1901,7 @@
         "location": null
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.9: adjudicated deferred; registerIntegrationAppCommands, no byte offset recorded."
@@ -1808,6 +1915,7 @@
         "location": null
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.9: adjudicated deferred; no byte offset recorded."
@@ -1821,6 +1929,7 @@
         "location": null
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.9: adjudicated deferred; no byte offset recorded."
@@ -1834,6 +1943,7 @@
         "location": null
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.9: adjudicated deferred; no byte offset recorded."
@@ -1847,6 +1957,7 @@
         "location": null
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.9: adjudicated deferred; no byte offset recorded."
@@ -1860,6 +1971,7 @@
         "location": null
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.9: adjudicated deferred; no byte offset recorded."
@@ -1873,6 +1985,7 @@
         "location": null
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.9: adjudicated deferred; no byte offset recorded."
@@ -1891,6 +2004,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.9: adjudicated deferred."
@@ -1909,6 +2023,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.9: adjudicated deferred."
@@ -1927,6 +2042,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.10: adjudicated deferred (Wiki)."
@@ -1945,6 +2061,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.10: adjudicated deferred (Wiki)."
@@ -1963,6 +2080,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.10: adjudicated deferred (Wiki)."
@@ -1981,6 +2099,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.10: adjudicated deferred (Migration)."
@@ -1999,6 +2118,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.10: adjudicated deferred (Migration)."
@@ -2017,6 +2137,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.10: adjudicated deferred (Migration)."
@@ -2035,6 +2156,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.10: adjudicated deferred (Migration)."
@@ -2053,6 +2175,7 @@
         }
       },
       "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.10: adjudicated deferred (Migration)."
@@ -2069,6 +2192,7 @@
         "location": "agentApiContract.ts@2010"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 68: adds an idempotency key and a context receipt."
     },
     {
@@ -2083,6 +2207,7 @@
         "location": "agentApiContract.ts@2050"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 72: RAH also exposes a CLI command Raft does not."
     },
     {
@@ -2102,6 +2227,7 @@
         }
       },
       "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.1: env-derived identity echo, same shape."
     },
     {
@@ -2121,6 +2247,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.12: Agent-carried context receipt replaces Raft's CLI-local state."
     },
     {
@@ -2135,6 +2262,7 @@
         "location": "agentApiContract.ts@1464"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 14."
     },
     {
@@ -2149,6 +2277,7 @@
         "location": "agentApiContract.ts@1584"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.12: Raft lists joined channels through server info."
     },
     {
@@ -2163,6 +2292,7 @@
         "location": "agentApiContract.ts@1564"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 24: Raft has the route but no CLI command."
     },
     {
@@ -2177,6 +2307,7 @@
         "location": "agentApiContract.ts@2080"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 75."
     },
     {
@@ -2191,6 +2322,7 @@
         "location": "agentApiContract.ts@2020"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 69."
     },
     {
@@ -2205,6 +2337,7 @@
         "location": "agentApiContract.ts@1364"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 4: selector differences."
     },
     {
@@ -2219,6 +2352,7 @@
         "location": "agentApiContract.ts@1454"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 13: addressing."
     },
     {
@@ -2233,6 +2367,7 @@
         "location": "agentApiContract.ts@1554"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 23: addressing."
     },
     {
@@ -2247,6 +2382,7 @@
         "location": "agentApiContract.ts@1584"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 26."
     },
     {
@@ -2261,6 +2397,7 @@
         "location": "agentApiContract.ts@1854"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 53: Raft's single profile read is split in two."
     },
     {
@@ -2275,6 +2412,7 @@
         "location": "agentApiContract.ts@1624"
       },
       "verdict": "aligned",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 30."
     },
     {
@@ -2289,6 +2427,7 @@
         "location": "agentApiContract.ts@1714"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 39."
     },
     {
@@ -2308,6 +2447,7 @@
         }
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "note": "§2.1: carrier package version only."
     },
     {
@@ -2322,6 +2462,7 @@
         "location": "agentApiContract.ts@1354"
       },
       "verdict": "justified",
+      "upstreamEvidence": "client-contract",
       "constraint": "activation-fence",
       "note": "§2.12: the explicit ACK the Activation fence requires."
     },
@@ -2337,6 +2478,7 @@
         "location": "agentApiContract.ts@2010"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.12: separate Task-deliverable channel."
     },
     {
@@ -2351,6 +2493,7 @@
         "location": "agentApiContract.ts@1444"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 12."
     },
     {
@@ -2365,6 +2508,7 @@
         "location": "agentApiContract.ts@1474"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 rows 15-16: two Raft routes folded into one --active flag."
     },
     {
@@ -2379,6 +2523,7 @@
         "location": "agentApiContract.ts@1784"
       },
       "verdict": "aligned",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 46."
     },
     {
@@ -2393,6 +2538,7 @@
         "location": "agentApiContract.ts@1764"
       },
       "verdict": "aligned",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 44."
     },
     {
@@ -2407,6 +2553,7 @@
         "location": "agentApiContract.ts@1824"
       },
       "verdict": "aligned",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 50."
     },
     {
@@ -2421,6 +2568,7 @@
         "location": "agentApiContract.ts@1774"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 45: adds --based-on-room-seq."
     },
     {
@@ -2435,6 +2583,7 @@
         "location": "agentApiContract.ts@1794"
       },
       "verdict": "aligned",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 47."
     },
     {
@@ -2449,6 +2598,7 @@
         "location": "agentApiContract.ts@1804"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 48: adds --tz."
     },
     {
@@ -2463,6 +2613,7 @@
         "location": "agentApiContract.ts@1354"
       },
       "verdict": "justified",
+      "upstreamEvidence": "client-contract",
       "constraint": "activation-fence",
       "note": "§2.11 row 3: delivery range is decided by the Activation."
     },
@@ -2478,6 +2629,7 @@
         "location": "agentApiContract.ts@1574"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 25: drops --reason, adds causal parameters."
     },
     {
@@ -2492,6 +2644,7 @@
         "location": "agentApiContract.ts@1514"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 19: adds mandatory causal parameters."
     },
     {
@@ -2506,6 +2659,7 @@
         "location": "agentApiContract.ts@1524"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 20."
     },
     {
@@ -2520,6 +2674,7 @@
         "location": "agentApiContract.ts@1614"
       },
       "verdict": "aligned",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 29: aligned on 2026-09-09 — the request body no longer carries a client cursor and its idempotency key is optional, as in agentApiContract.ts."
     },
     {
@@ -2534,6 +2689,7 @@
         "location": "agentApiContract.ts@1614"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.12: atomic create-and-claim from a message."
     },
     {
@@ -2548,6 +2704,7 @@
         "location": "agentApiContract.ts@1854"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 53."
     },
     {
@@ -2562,6 +2719,7 @@
         "location": "agentApiContract.ts@1864"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 54: three extra mandatory write-context parameters."
     },
     {
@@ -2576,6 +2734,7 @@
         "location": "agentApiContract.ts@1634"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 31: no batch create, different assignee semantics."
     },
     {
@@ -2590,6 +2749,7 @@
         "location": "agentApiContract.ts@1654"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 33."
     },
     {
@@ -2604,6 +2764,7 @@
         "location": "agentApiContract.ts@1704"
       },
       "verdict": "aligned",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 38: aligned on 2026-09-09 — the request body no longer carries a client cursor and its idempotency key is optional, as in agentApiContract.ts."
     },
     {
@@ -2618,6 +2779,7 @@
         "location": "agentApiContract.ts@1684"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 36: extra --room-id."
     },
     {
@@ -2632,6 +2794,7 @@
         "location": "agentApiContract.ts@1664"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 34: one status route split into lifecycle routes."
     },
     {
@@ -2646,6 +2809,7 @@
         "location": "agentApiContract.ts@1694"
       },
       "verdict": "aligned",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 37: aligned on 2026-09-09 — the request body no longer carries a client cursor and its idempotency key is optional, as in agentApiContract.ts."
     },
     {
@@ -2660,6 +2824,7 @@
         "location": "agentApiContract.ts@1664"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 34."
     },
     {
@@ -2674,6 +2839,7 @@
         "location": "agentApiContract.ts@1624"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.12: no Raft single-Task read route."
     },
     {
@@ -2688,6 +2854,7 @@
         "location": "agentApiContract.ts@1624"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.12: no Raft counterpart."
     },
     {
@@ -2702,6 +2869,7 @@
         "location": "agentApiContract.ts@1664"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 34."
     },
     {
@@ -2716,6 +2884,7 @@
         "location": "agentApiContract.ts@1644"
       },
       "verdict": "aligned",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 32: aligned on 2026-09-09 — the request body no longer carries a client cursor and its idempotency key is optional, as in agentApiContract.ts."
     },
     {
@@ -2730,6 +2899,7 @@
         "location": "agentApiContract.ts@1664"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 34."
     },
     {
@@ -2744,6 +2914,7 @@
         "location": "agentApiContract.ts@1664"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 34."
     },
     {
@@ -2758,6 +2929,7 @@
         "location": "agentApiContract.ts@1664"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 34."
     },
     {
@@ -2772,6 +2944,7 @@
         "location": "agentApiContract.ts@1664"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 34."
     },
     {
@@ -2786,6 +2959,7 @@
         "location": "agentApiContract.ts@1624"
       },
       "verdict": "unjustified",
+      "upstreamEvidence": "client-contract",
       "note": "§2.12: no Raft frozen-submission read."
     },
     {
@@ -2797,6 +2971,7 @@
       },
       "raft": null,
       "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
       "constraint": "sqlite-ledger",
       "note": "§2.12: only the local SQLite ledger records this Computer's Run commands and file edits."
     },
@@ -2809,6 +2984,7 @@
         "location": "agentApiContract.ts@1334"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 1."
     },
     {
@@ -2820,6 +2996,7 @@
         "location": "agentApiContract.ts@1344"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 2."
     },
     {
@@ -2831,6 +3008,7 @@
         "location": "agentApiContract.ts@1374"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 5."
     },
     {
@@ -2842,6 +3020,7 @@
         "location": "agentApiContract.ts@1384"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 6."
     },
     {
@@ -2853,6 +3032,7 @@
         "location": "agentApiContract.ts@1394"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.11 row 7: adjudicated deferred."
@@ -2866,6 +3046,7 @@
         "location": "agentApiContract.ts@1404"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.11 row 8: adjudicated deferred."
@@ -2879,6 +3060,7 @@
         "location": "agentApiContract.ts@1414"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.11 row 9: adjudicated deferred."
@@ -2892,6 +3074,7 @@
         "location": "agentApiContract.ts@1424"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.11 row 10: adjudicated deferred (Managed MCP)."
@@ -2905,6 +3088,7 @@
         "location": "agentApiContract.ts@1434"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.11 row 11: adjudicated deferred (Managed MCP)."
@@ -2918,6 +3102,7 @@
         "location": "agentApiContract.ts@1494"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 17."
     },
     {
@@ -2929,6 +3114,7 @@
         "location": "agentApiContract.ts@1504"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 18."
     },
     {
@@ -2940,6 +3126,7 @@
         "location": "agentApiContract.ts@1534"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 21."
     },
     {
@@ -2951,6 +3138,7 @@
         "location": "agentApiContract.ts@1544"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 22."
     },
     {
@@ -2962,6 +3150,7 @@
         "location": "agentApiContract.ts@1594"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 27."
     },
     {
@@ -2973,6 +3162,7 @@
         "location": "agentApiContract.ts@1604"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 28."
     },
     {
@@ -2984,6 +3174,7 @@
         "location": "agentApiContract.ts@1674"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 35."
     },
     {
@@ -2995,6 +3186,7 @@
         "location": "agentApiContract.ts@1724"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.11 row 40: adjudicated deferred."
@@ -3008,6 +3200,7 @@
         "location": "agentApiContract.ts@1734"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.11 row 41: adjudicated deferred."
@@ -3021,6 +3214,7 @@
         "location": "agentApiContract.ts@1744"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.11 row 42: adjudicated deferred."
@@ -3034,6 +3228,7 @@
         "location": "agentApiContract.ts@1754"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.11 row 43: adjudicated deferred."
@@ -3047,6 +3242,7 @@
         "location": "agentApiContract.ts@1884"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.11 row 56: adjudicated deferred."
@@ -3060,6 +3256,7 @@
         "location": "agentApiContract.ts@1894"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.11 row 57: adjudicated deferred."
@@ -3073,6 +3270,7 @@
         "location": "agentApiContract.ts@1904"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.11 row 58: adjudicated deferred."
@@ -3086,6 +3284,7 @@
         "location": "agentApiContract.ts@1914"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.11 row 59: adjudicated deferred."
@@ -3099,6 +3298,7 @@
         "location": "agentApiContract.ts@1924"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.11 row 60: adjudicated deferred."
@@ -3112,6 +3312,7 @@
         "location": "agentApiContract.ts@1940"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.11 row 61: adjudicated deferred."
@@ -3125,6 +3326,7 @@
         "location": "agentApiContract.ts@1950"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.11 row 62: adjudicated deferred."
@@ -3138,6 +3340,7 @@
         "location": "agentApiContract.ts@1960"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.11 row 63: adjudicated deferred."
@@ -3151,6 +3354,7 @@
         "location": "agentApiContract.ts@1970"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.11 row 64: adjudicated deferred."
@@ -3164,6 +3368,7 @@
         "location": "agentApiContract.ts@1980"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.11 row 65: adjudicated deferred."
@@ -3177,6 +3382,7 @@
         "location": "agentApiContract.ts@1990"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "constraint": "deferred-scope",
       "deferred": true,
       "note": "§2.11 row 66: adjudicated deferred."
@@ -3190,6 +3396,7 @@
         "location": "agentApiContract.ts@2000"
       },
       "verdict": "missing",
+      "upstreamEvidence": "client-contract",
       "note": "§2.11 row 67."
     },
     {
@@ -3202,6 +3409,7 @@
       },
       "raft": null,
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "classification": "judgment",
       "note": "§3.1 (a): a self-invented five-level conflict ranking; Raft states only user-override and owner policy."
     },
@@ -3215,6 +3423,7 @@
       },
       "raft": null,
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "classification": "judgment",
       "note": "§3.1 (i): a self-invented suppression rule; Raft's historical-references section encourages re-reading instead."
     },
@@ -3228,6 +3437,7 @@
       },
       "raft": null,
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "classification": "judgment",
       "note": "§3.1 (n): a third held-draft branch Raft does not have; it widens the dropped-reply failure mode."
     },
@@ -3243,6 +3453,7 @@
       },
       "raft": null,
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "classification": "judgment",
       "note": "§3.1 (p): the strict Task definition contradicts the Raft decision rule ported into the same paragraph."
     },
@@ -3256,6 +3467,7 @@
       },
       "raft": null,
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "classification": "judgment",
       "note": "§3.1 (q): adds a silence order and drops Raft's canonical-owner routing correction."
     },
@@ -3269,6 +3481,7 @@
       },
       "raft": null,
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "classification": "judgment",
       "note": "§3.1 (r): Raft asks for Thread updates but never forbids a top-level reply."
     },
@@ -3282,6 +3495,7 @@
       },
       "raft": null,
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "classification": "judgment",
       "note": "§3.1 (s): the 'exactly once' send cap is self-invented."
     },
@@ -3298,6 +3512,7 @@
       },
       "raft": null,
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "classification": "judgment",
       "note": "§3.1 (v): both sentences are absent from the Raft prompt."
     },
@@ -3311,6 +3526,7 @@
       },
       "raft": null,
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "classification": "judgment",
       "note": "§3.1 (w): a self-invented permission clause."
     },
@@ -3327,6 +3543,7 @@
       },
       "raft": null,
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "classification": "judgment",
       "note": "§3.1 (aa): a fully self-invented turn-taking script and silence order."
     },
@@ -3342,6 +3559,7 @@
       },
       "raft": null,
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "classification": "judgment",
       "note": "§3.1 (jj): a self-invented process constraint."
     },
@@ -3355,6 +3573,7 @@
       },
       "raft": null,
       "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
       "classification": "judgment",
       "note": "§3.1 (ss): a recorded product adjudication, still RAH-authored judgment prose with no Raft counterpart."
     }

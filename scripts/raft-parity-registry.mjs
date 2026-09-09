@@ -11,7 +11,18 @@ export const readRoutePath =
 export const promptPath = "packages/daemon/src/standing-prompt-compiler.ts";
 
 const KINDS = ["cli", "route", "prompt-paragraph"];
-const VERDICTS = ["aligned", "justified", "unjustified", "missing"];
+const VERDICTS = [
+  "aligned",
+  "justified",
+  "unjustified",
+  "undecidable",
+  "missing",
+];
+// What the row's "what Raft does" claim rests on. The authorized extraction is
+// the Raft Computer; Raft's Server is closed and absent, so a claim that needs
+// Server behaviour is not adjudicable in either direction and may only be
+// `undecidable`.
+const EVIDENCE = ["client-contract", "cli-behavior", "server-inferred"];
 const CONSTRAINTS = [
   "no-central-server",
   "local-credentials",
@@ -107,6 +118,29 @@ export function validateRegistry(registry, read, options = {}) {
     if (!KINDS.includes(entry.kind)) errors.push(`${id}: invalid kind`);
     if (!VERDICTS.includes(entry.verdict))
       errors.push(`${id}: invalid verdict`);
+    if (!EVIDENCE.includes(entry.upstreamEvidence))
+      errors.push(
+        `${id}: upstreamEvidence must be one of ${EVIDENCE.join(", ")}`,
+      );
+    // Ruling 2: only a row whose upstream claim we can read may accuse RAH of a
+    // divergence or clear it as a match.
+    if (
+      entry.upstreamEvidence === "server-inferred" &&
+      ["aligned", "unjustified"].includes(entry.verdict)
+    )
+      errors.push(
+        `${id}: ${entry.verdict} entry rests on server-inferred evidence; Raft's Server is closed, so reclassify it undecidable`,
+      );
+    if (entry.verdict === "undecidable") {
+      if (entry.upstreamEvidence !== "server-inferred")
+        errors.push(
+          `${id}: undecidable entry must be server-inferred; adjudicate it against the ${entry.upstreamEvidence} evidence it cites`,
+        );
+      if (typeof entry.note !== "string" || entry.note.trim() === "")
+        errors.push(
+          `${id}: undecidable entry requires a note naming the missing Server fact`,
+        );
+    }
     if (
       entry.constraint !== undefined &&
       !CONSTRAINTS.includes(entry.constraint)
@@ -171,17 +205,35 @@ export function validateRegistry(registry, read, options = {}) {
       );
 
   const counts = {
+    aligned: registry.entries.filter((entry) => entry.verdict === "aligned")
+      .length,
+    justified: registry.entries.filter((entry) => entry.verdict === "justified")
+      .length,
     unjustified: registry.entries.filter(
       (entry) => entry.verdict === "unjustified",
+    ).length,
+    undecidable: registry.entries.filter(
+      (entry) => entry.verdict === "undecidable",
     ).length,
     missingNonDeferred: registry.entries.filter(
       (entry) => entry.verdict === "missing" && entry.deferred !== true,
     ).length,
   };
+  // Ratchet directions, mirrored in the registry's `ratchetNotes`:
+  // `unjustified` and `missingNonDeferred` fall as RAH replicates the Raft
+  // contract. `undecidable` is not a repair backlog: it may rise only when a
+  // new Agent-facing surface is added whose upstream behaviour is Server-held,
+  // never by reclassifying a row that already cites client-side evidence, and
+  // it must fall the moment Raft's Server becomes readable, because every row
+  // it covers is then adjudicable as aligned, justified or unjustified.
   const ratchet = registry.ratchet ?? {};
   if (counts.unjustified > (ratchet.unjustified ?? 0))
     errors.push(
       `unjustified divergences rose to ${counts.unjustified}; replicate the Raft contract instead of raising the ${ratchet.unjustified} ratchet`,
+    );
+  if (counts.undecidable > (ratchet.undecidable ?? 0))
+    errors.push(
+      `undecidable divergences rose to ${counts.undecidable}; only a newly added surface with Server-held upstream behaviour may raise the ${ratchet.undecidable} ratchet`,
     );
   if (counts.missingNonDeferred > (ratchet.missingNonDeferred ?? 0))
     errors.push(
@@ -258,7 +310,10 @@ if (
     console.log(
       [
         `Raft parity registry valid: ${registry.entries.length} entries`,
+        `aligned ${result.counts.aligned}`,
+        `justified ${result.counts.justified}`,
         `unjustified ${result.counts.unjustified}/${registry.ratchet.unjustified}`,
+        `undecidable ${result.counts.undecidable}/${registry.ratchet.undecidable}`,
         `non-deferred missing ${result.counts.missingNonDeferred}/${registry.ratchet.missingNonDeferred}`,
         `standing prompt judgment paragraphs ${result.judgmentPresent}/${registry.ratchet.promptJudgmentParagraphs}`,
         `upstream anchors verified ${result.anchorsChecked}`,

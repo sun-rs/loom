@@ -36,6 +36,7 @@ test("the committed registry passes on the current tree", () => {
 
   assert.deepEqual(result.errors, []);
   assert.equal(result.counts.unjustified, registry().ratchet.unjustified);
+  assert.equal(result.counts.undecidable, registry().ratchet.undecidable);
   assert.equal(
     result.counts.missingNonDeferred,
     registry().ratchet.missingNonDeferred,
@@ -144,6 +145,111 @@ test("a free-text constraint fails", () => {
       message.startsWith(
         `${entry.id}: constraint "because the agent preferred it" is not one of`,
       ),
+    ),
+    result.errors.join("\n"),
+  );
+});
+
+test("every entry declares an evidence tier and none is server-inferred today", () => {
+  const tiers = ["client-contract", "cli-behavior", "server-inferred"];
+  for (const entry of registry().entries)
+    assert.ok(tiers.includes(entry.upstreamEvidence), entry.id);
+  assert.equal(
+    registry().entries.filter(
+      (row) => row.upstreamEvidence === "server-inferred",
+    ).length,
+    0,
+  );
+});
+
+test("an unknown evidence tier fails", () => {
+  const mutated = registry();
+  const entry = mutated.entries[0];
+  entry.upstreamEvidence = "vibes";
+  const result = validateRegistry(mutated, reader(), noUpstream);
+
+  assert.ok(
+    result.errors.includes(
+      `${entry.id}: upstreamEvidence must be one of client-contract, cli-behavior, server-inferred`,
+    ),
+    result.errors.join("\n"),
+  );
+});
+
+test("a server-inferred unjustified entry is sent to undecidable", () => {
+  const mutated = registry();
+  const entry = mutated.entries.find((row) => row.verdict === "unjustified");
+  entry.upstreamEvidence = "server-inferred";
+  const result = validateRegistry(mutated, reader(), noUpstream);
+
+  assert.ok(
+    result.errors.includes(
+      `${entry.id}: unjustified entry rests on server-inferred evidence; Raft's Server is closed, so reclassify it undecidable`,
+    ),
+    result.errors.join("\n"),
+  );
+});
+
+test("a server-inferred aligned entry is sent to undecidable", () => {
+  const mutated = registry();
+  const entry = mutated.entries.find((row) => row.verdict === "aligned");
+  entry.upstreamEvidence = "server-inferred";
+  const result = validateRegistry(mutated, reader(), noUpstream);
+
+  assert.ok(
+    result.errors.includes(
+      `${entry.id}: aligned entry rests on server-inferred evidence; Raft's Server is closed, so reclassify it undecidable`,
+    ),
+    result.errors.join("\n"),
+  );
+});
+
+test("an undecidable entry with readable evidence fails", () => {
+  const mutated = registry();
+  const entry = mutated.entries.find(
+    (row) => row.verdict === "unjustified" && row.note,
+  );
+  entry.verdict = "undecidable";
+  const result = validateRegistry(mutated, reader(), noUpstream);
+
+  assert.ok(
+    result.errors.includes(
+      `${entry.id}: undecidable entry must be server-inferred; adjudicate it against the ${entry.upstreamEvidence} evidence it cites`,
+    ),
+    result.errors.join("\n"),
+  );
+});
+
+test("an undecidable entry without a note fails", () => {
+  const mutated = registry();
+  const entry = mutated.entries.find((row) => row.verdict === "unjustified");
+  entry.verdict = "undecidable";
+  entry.upstreamEvidence = "server-inferred";
+  delete entry.note;
+  const result = validateRegistry(mutated, reader(), noUpstream);
+
+  assert.ok(
+    result.errors.includes(
+      `${entry.id}: undecidable entry requires a note naming the missing Server fact`,
+    ),
+    result.errors.join("\n"),
+  );
+});
+
+test("an undecidable entry counts against its own ratchet", () => {
+  const mutated = registry();
+  const entry = mutated.entries.find(
+    (row) => row.verdict === "unjustified" && row.note,
+  );
+  entry.verdict = "undecidable";
+  entry.upstreamEvidence = "server-inferred";
+  const result = validateRegistry(mutated, reader(), noUpstream);
+
+  assert.equal(result.counts.undecidable, 1);
+  assert.equal(result.counts.unjustified, registry().ratchet.unjustified - 1);
+  assert.ok(
+    result.errors.includes(
+      "undecidable divergences rose to 1; only a newly added surface with Server-held upstream behaviour may raise the 0 ratchet",
     ),
     result.errors.join("\n"),
   );
