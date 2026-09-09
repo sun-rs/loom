@@ -699,11 +699,10 @@ test("ported Raft formatting sections carry RAH's own inline tokens", () => {
   assert.match(prompt, /测试环境：<http:\/\/localhost:3000>，请查看/u);
 });
 
-test("the prompt teaches DM targets but never claims an Agent can open a DM", () => {
+test("the prompt teaches DM targets, including starting a new DM", () => {
   const { prompt } = compileStandingPrompt({ agent: fixtureAgent });
   assert.match(prompt, /--target dm:@peer-handle/u);
   assert.match(prompt, /room-resolve --target #CHANNEL\|dm:@HANDLE/u);
-  // RAH's `openDirectRoom` is gated to Human principals, so Raft's
-  // "**Start a NEW DM**" bullet is not ported.
-  assert.doesNotMatch(prompt, /Start a NEW DM/iu);
+  // Raft's bullet, in upstream's words, now that an Agent can open a DM.
+  assert.match(prompt, /\*\*Start a NEW DM\*\*.*--target dm:@person-handle/u);
 });

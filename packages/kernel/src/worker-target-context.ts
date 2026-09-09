@@ -37,6 +37,7 @@ import {
   workerReadThread,
   workerRoomEntry,
   WORKER_VISIBLE_ROOMS,
+  type WorkerDirectRoomOpener,
 } from "./worker-read-targets.ts";
 import { requireWorkerRoomVisibility } from "./worker-task-scope.ts";
 import { workerReplyRecipients } from "./worker-message-routing.ts";
@@ -57,6 +58,8 @@ type Receipt = {
 type Context = {
   database: DatabaseSync;
   now: () => Date;
+  /** Present only where Raft's `resolveChannel` may open a writable DM target. */
+  openDirect?: WorkerDirectRoomOpener;
   requireWorker: (
     execution: AuthenticatedWorkerExecutionContext,
   ) => P.ActivationCredentialScope;
@@ -277,6 +280,7 @@ export class WorkerTargetContextService {
         this.#context.database,
         origin,
         input.channel,
+        this.#context.openDirect,
       );
       const threadId = workerReadThread(target, input.threadId) ?? undefined;
       const draft = this.#resolveOutgoingDraft(origin, target, threadId, input);

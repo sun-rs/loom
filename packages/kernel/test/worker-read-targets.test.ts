@@ -87,6 +87,7 @@ function fixture() {
   return {
     kernel,
     database,
+    databasePath: path,
     reads,
     execution,
     actor,
@@ -108,51 +109,167 @@ function fixture() {
   };
 }
 
-test("an Agent cannot open a Direct Room, so dm:@peer only addresses existing DMs", () => {
-  const f = fixture();
-  try {
-    const workspace = f.kernel.createWorkspace(f.actor, {
-      name: "Managed",
-      slug: "managed",
-      idempotencyKey: "workspace",
-    });
-    f.kernel.addMember(f.actor, {
-      roomId: workspace.controlRoom.roomId,
-      principalId: f.agent.principal.principalId,
-    });
-    const head = () =>
+/** The managed Workspace both the Agent and the Human belong to. */
+function managed(f: ReturnType<typeof fixture>) {
+  const workspace = f.kernel.createWorkspace(f.actor, {
+    name: "Managed",
+    slug: "managed",
+    idempotencyKey: "workspace",
+  });
+  f.kernel.addMember(f.actor, {
+    roomId: workspace.controlRoom.roomId,
+    principalId: f.agent.principal.principalId,
+  });
+  f.kernel.addMember(f.actor, {
+    roomId: workspace.controlRoom.roomId,
+    principalId: f.outsider.principal.principalId,
+  });
+  return {
+    workspace,
+    head: () =>
       f.kernel.sync(f.actor, {
         roomId: workspace.controlRoom.roomId,
         consumerId: "open-dm-head",
-      }).latestRoomSeq;
-    // Before a Human opens it, the target the prompt teaches does not resolve.
-    assert.throws(
-      () => f.reads.room(f.execution, { channel: "dm:@human" }),
-      /unavailable/u,
-    );
-    // Raft's "Start a NEW DM" has no RAH equivalent: openDirectRoom is gated
-    // to Human principals and no worker route reaches it.
+      }).latestRoomSeq,
+  };
+}
+
+test("an Agent opens a Direct Room with a peer it already shares a Room with", () => {
+  const f = fixture();
+  try {
+    const { workspace, head } = managed(f);
     const agentActor = f.kernel.authenticateAccessToken(f.agent.accessToken);
+    const dm = f.kernel.openDirectRoom(agentActor, {
+      workspaceId: workspace.workspace.workspaceId,
+      peerPrincipalId: f.human.principal.principalId,
+      basedOnControlRoomSeq: head(),
+      idempotencyKey: "agent-opened-dm",
+    });
+    assert.equal(dm.kind, "direct");
+    // The Room the Agent made is an ordinary DM: the same `dm:@handle` target
+    // the prompt teaches resolves to it and both principals are members.
+    assert.equal(
+      f.reads.room(f.execution, { channel: "dm:@human" }).room.roomId,
+      dm.roomId,
+    );
+    assert.equal(
+      f.reads.members(f.execution, { channel: dm.roomId }).members.length,
+      2,
+    );
+    assert.equal(
+      f.database
+        .prepare("SELECT count(*) AS n FROM direct_room_pairs WHERE room_id=?")
+        .get(dm.roomId)!.n,
+      1,
+    );
+  } finally {
+    f.close();
+  }
+});
+
+test("an Agent cannot open a Direct Room with a principal it shares no Room with", () => {
+  const f = fixture();
+  try {
+    const { workspace, head } = managed(f);
+    const agentActor = f.kernel.authenticateAccessToken(f.agent.accessToken);
+    // `foreign` is a Workspace member but shares no visible Room with `reader`,
+    // so it is outside the directory `profile-show`/`@mention` already resolve.
     assert.throws(
       () =>
         f.kernel.openDirectRoom(agentActor, {
           workspaceId: workspace.workspace.workspaceId,
-          peerPrincipalId: f.human.principal.principalId,
+          peerPrincipalId: f.outsider.principal.principalId,
           basedOnControlRoomSeq: head(),
-          idempotencyKey: "agent-opened-dm",
+          idempotencyKey: "agent-opened-foreign-dm",
         }),
-      /only Human principals can open Direct Rooms/u,
+      (error: unknown) =>
+        error instanceof Error &&
+        error.name === "ForbiddenError" &&
+        /shares no visible Room/u.test(error.message),
     );
-    // Once the Human opens it, the same target reads and the Agent can post.
-    const dm = f.kernel.openDirectRoom(f.actor, {
-      workspaceId: workspace.workspace.workspaceId,
-      peerPrincipalId: f.agent.principal.principalId,
-      basedOnControlRoomSeq: head(),
-      idempotencyKey: "human-opened-dm",
-    });
+    // And the Agent-facing target keeps today's error class.
+    assert.throws(
+      () => f.reads.room(f.execution, { channel: "dm:@foreign" }),
+      (error: unknown) =>
+        error instanceof Error &&
+        error.name === "NotFoundError" &&
+        /unavailable/u.test(error.message),
+    );
+  } finally {
+    f.close();
+  }
+});
+
+test("every creation of the same Direct pair converges on one Room", () => {
+  const f = fixture();
+  try {
+    const { workspace, head } = managed(f);
+    const agentActor = f.kernel.authenticateAccessToken(f.agent.accessToken);
+    const open = (
+      kernel: typeof f.kernel,
+      actor: typeof f.actor,
+      key: string,
+    ) =>
+      kernel.openDirectRoom(actor, {
+        workspaceId: workspace.workspace.workspaceId,
+        peerPrincipalId:
+          actor === f.actor
+            ? f.agent.principal.principalId
+            : f.human.principal.principalId,
+        basedOnControlRoomSeq: head(),
+        idempotencyKey: key,
+      });
+    const first = open(f.kernel, agentActor, "agent-open");
+    // The same Agent twice, with the same key and with a different one.
+    assert.equal(open(f.kernel, agentActor, "agent-open").roomId, first.roomId);
     assert.equal(
-      f.reads.room(f.execution, { channel: "dm:@human" }).room.roomId,
-      dm.roomId,
+      open(f.kernel, agentActor, "agent-open-2").roomId,
+      first.roomId,
+    );
+    // The other side of the pair, opening from the Human path.
+    assert.equal(open(f.kernel, f.actor, "human-open").roomId, first.roomId);
+    // A second Kernel on the same database file — the concurrent case a
+    // single-machine daemon actually has — converges through the table.
+    const other = new RoomKernel({ databasePath: f.databasePath });
+    try {
+      assert.equal(
+        other.openDirectRoom(
+          other.authenticateAccessToken(f.agent.accessToken),
+          {
+            workspaceId: workspace.workspace.workspaceId,
+            peerPrincipalId: f.human.principal.principalId,
+            basedOnControlRoomSeq: head(),
+            idempotencyKey: "concurrent-open",
+          },
+        ).roomId,
+        first.roomId,
+      );
+    } finally {
+      other.close();
+    }
+    assert.equal(
+      f.database
+        .prepare(
+          "SELECT count(*) AS n FROM direct_room_pairs WHERE workspace_id=?",
+        )
+        .get(workspace.workspace.workspaceId)!.n,
+      1,
+    );
+    // The table, not the caller, is what makes a second Room impossible.
+    assert.throws(
+      () =>
+        f.database
+          .prepare(
+            "INSERT INTO direct_room_pairs(workspace_id, left_principal_id, right_principal_id, room_id) VALUES(?, ?, ?, ?)",
+          )
+          .run(
+            workspace.workspace.workspaceId,
+            ...(f.agent.principal.principalId < f.human.principal.principalId
+              ? [f.agent.principal.principalId, f.human.principal.principalId]
+              : [f.human.principal.principalId, f.agent.principal.principalId]),
+            f.room.roomId,
+          ),
+      /UNIQUE|constraint/iu,
     );
   } finally {
     f.close();

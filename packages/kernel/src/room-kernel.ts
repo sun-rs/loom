@@ -34,7 +34,10 @@ import {
   isActivationRetryBlocked,
   resolveActivationRetryFence,
 } from "./activation-retry-fence.ts";
-import { resolveWorkerReadTarget } from "./worker-read-targets.ts";
+import {
+  resolveWorkerReadTarget,
+  workerDirectRoomOpener,
+} from "./worker-read-targets.ts";
 import { deriveWorkerCommandIdempotencyKey } from "./worker-message-identity.ts";
 import type {
   ClientMessageForwardRequest,
@@ -472,9 +475,14 @@ export class RoomKernel {
       throw new Error("runtimeOfferMaxTtlMs must be a positive integer");
     }
     this.#database = new DatabaseSync(options.databasePath, { timeout: 5_000 });
+    const openDirect = workerDirectRoomOpener(
+      this.#database,
+      () => this.#collaboration,
+    );
     this.workerTargetContext = new WorkerTargetContextService({
       database: this.#database,
       now: this.#now,
+      openDirect,
       requireWorker: (worker) =>
         this.#requireAuthenticatedWorkerExecution(worker),
       transaction: (operation) => this.#transaction(operation),
@@ -487,6 +495,7 @@ export class RoomKernel {
     this.workerReads = new WorkerReadService({
       database: this.#database,
       now: this.#now,
+      openDirect,
       requireWorker: (worker) =>
         this.#requireAuthenticatedWorkerExecution(worker),
       transaction: (operation) => this.#transaction(operation),

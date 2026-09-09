@@ -6,6 +6,7 @@ import {
   workerReadThread,
   workerRoomEntry,
   WORKER_VISIBLE_ROOMS,
+  type WorkerDirectRoomOpener,
   type WorkerVisibleRoomScope,
 } from "./worker-read-targets.ts";
 import { boundRows } from "./bounded-read-rows.ts";
@@ -34,6 +35,8 @@ import {
 type ReadContext = {
   now?: () => Date;
   database: DatabaseSync;
+  /** Present only where Raft's `resolveChannel` may open a writable DM target. */
+  openDirect?: WorkerDirectRoomOpener;
   requireWorker: (
     execution: AuthenticatedWorkerExecutionContext,
   ) => P.ActivationCredentialScope;
@@ -110,7 +113,12 @@ export class WorkerReadService {
   ): P.WorkerRoomResolveResponse {
     return this.#read(execution, (origin) => {
       const input = P.WorkerRoomResolveRequestSchema.parse(raw);
-      const scope = resolveWorkerReadTarget(this.#db, origin, input.channel);
+      const scope = resolveWorkerReadTarget(
+        this.#db,
+        origin,
+        input.channel,
+        this.#context.openDirect,
+      );
       const row = this.#db
         .prepare(
           `${WORKER_VISIBLE_ROOMS} WHERE membership.principal_id=? AND r.room_id=?`,

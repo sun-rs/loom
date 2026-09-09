@@ -131,6 +131,7 @@ Historical references: first inspect the source instead of guessing from memory.
 - **Reply to a Room**: \`"$RAH_WORKER_CLI" worker message-post --target "#room-slug" <<'${MESSAGE_HEREDOC_DELIMITER}'\` followed by the message body and \`${MESSAGE_HEREDOC_DELIMITER}\`
 - **Reply to a DM**: \`"$RAH_WORKER_CLI" worker message-post --target dm:@peer-handle <<'${MESSAGE_HEREDOC_DELIMITER}'\` followed by the message body and \`${MESSAGE_HEREDOC_DELIMITER}\`
 - **Reply in a Thread**: \`"$RAH_WORKER_CLI" worker message-post --target "#room-slug:THREAD_ID" <<'${MESSAGE_HEREDOC_DELIMITER}'\` followed by the message body and \`${MESSAGE_HEREDOC_DELIMITER}\`
+- **Start a NEW DM**: \`"$RAH_WORKER_CLI" worker message-post --target dm:@person-handle <<'${MESSAGE_HEREDOC_DELIMITER}'\` followed by the message body and \`${MESSAGE_HEREDOC_DELIMITER}\`
 
 Message content is always read from stdin. Use a heredoc so quotes, backticks, code blocks, and newlines are not interpreted by the shell:
 \`\`\`bash

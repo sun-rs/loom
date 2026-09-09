@@ -40,6 +40,7 @@ import {
   threadProjectionFromRow,
   workspaceProjectionFromRow,
 } from "./collaboration-projection.ts";
+import { agentSharesVisibleRoom } from "./worker-read-targets.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
 import {
   followAgentThreadParticipants,
@@ -715,8 +716,21 @@ export class CollaborationService {
   }
 
   openDirectRoom(actor: Principal, input: DirectRoomOpenInput): Room {
-    if (actor.kind !== "human") {
-      throw new ForbiddenError("only Human principals can open Direct Rooms");
+    // A non-Human opener is fenced by the directory it can already see and
+    // address — the `memberships` predicate behind `profile-show --target
+    // @HANDLE`, `room-members` and `@mention` handle resolution. Humans keep
+    // the Workspace-wide reach the control-Room fences below already give them.
+    if (
+      actor.kind !== "human" &&
+      !agentSharesVisibleRoom(
+        this.#database,
+        actor.principalId,
+        input.peerPrincipalId,
+      )
+    ) {
+      throw new ForbiddenError(
+        `${actor.principalId} shares no visible Room with Direct Room peer ${input.peerPrincipalId}`,
+      );
     }
     if (input.peerPrincipalId === actor.principalId) {
       throw new ConflictError(
