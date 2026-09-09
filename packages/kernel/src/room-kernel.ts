@@ -12,6 +12,7 @@ import { DatabaseSync } from "node:sqlite";
 import { GlobalDiscovery } from "./global-discovery.ts";
 import { initializeDiscoverySchema } from "./discovery-schema.ts";
 import { migrateLegacyTaskSchema } from "./legacy-task-schema.ts";
+import { collectWorkerPresentedContext } from "./worker-presented-context.ts";
 import { migrateWorkerTargetReadPositions } from "./worker-target-read-position.ts";
 import {
   expireHeldMessageDraftsAt,
@@ -310,6 +311,7 @@ import type {
   TaskMutationResult,
   Thread,
   ThreadMutationResult,
+  WorkerSyncResult,
   Workspace,
   WorkspaceAgentManagementInput,
   WorkspaceAgentManagementResult,
@@ -4740,15 +4742,26 @@ export class RoomKernel {
   syncWorker(
     execution: AuthenticatedWorkerExecutionContext,
     input: { afterSeq?: number; limit?: number },
-  ): SyncResult {
+  ): WorkerSyncResult {
     return this.#transaction(() => {
       const scope = this.#requireAuthenticatedWorkerExecution(execution);
-      return this.#syncForParticipant(scope.participantId, {
+      const delivery = this.#syncForParticipant(scope.participantId, {
         ...input,
         consumerId: scope.consumerId,
         roomId: scope.roomId,
         throughSeq: scope.toSeq,
       });
+      // Read-only: the delivered events, the actionable range and the
+      // acknowledge fence are untouched; only the facts this participant would
+      // otherwise re-derive are attached.
+      const presentedContext = collectWorkerPresentedContext(this.#database, {
+        events: delivery.events,
+        participantId: scope.participantId,
+        roomId: scope.roomId,
+      });
+      return presentedContext === undefined
+        ? delivery
+        : { ...delivery, presentedContext };
     });
   }
 

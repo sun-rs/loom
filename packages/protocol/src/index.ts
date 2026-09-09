@@ -1604,13 +1604,9 @@ export {
   RoomSyncResponseSchema,
 } from "./room-sync-response.ts";
 export type { RoomSnapshot, RoomSyncResponse } from "./room-sync-response.ts";
-import {
-  RoomSyncResponseSchema,
-  type RoomSyncResponse,
-} from "./room-sync-response.ts";
+import { RoomSyncResponseSchema } from "./room-sync-response.ts";
 
-export const WorkerSyncResponseSchema = RoomSyncResponseSchema;
-export type WorkerSyncResponse = RoomSyncResponse;
+export * from "./worker-presented-context.ts";
 
 export const ClientRoomSyncResponseSchema = RoomSyncResponseSchema;
 export type ClientRoomSyncResponse = z.infer<

@@ -18,6 +18,7 @@ import type {
   Room,
   RoomMembership,
   RoomEvent,
+  WorkerPresentedContext,
   RuntimeRecoveryDescriptor,
   Task,
   Thread,
@@ -231,6 +232,15 @@ export type SyncResult = {
   snapshot: RoomSnapshot | null;
   snapshotSeq?: number;
   events: RoomEvent[];
+};
+
+/**
+ * A Worker delivery is the same window plus the read-only presented context
+ * the Kernel already owns. The field is absent whenever no delivered event was
+ * already shown to this participant.
+ */
+export type WorkerSyncResult = SyncResult & {
+  presentedContext?: WorkerPresentedContext;
 };
 
 export type MessageMutationResult = {

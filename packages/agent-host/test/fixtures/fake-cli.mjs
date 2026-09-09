@@ -420,6 +420,7 @@ if (mode === "trajectory") {
   // its result, the send is freshness-held, and the saved draft is then sent
   // unchanged by target alone. The original result must survive.
   if (process.env.RAH_FAKE_BUSY_HOLD_RECOVERY === "1") {
+    const presentedLog = process.env.RAH_FAKE_PRESENTED_CONTEXT_LOG;
     const trigger = activationEvents.find(
       (event) =>
         event.type === "message.posted" &&
@@ -502,6 +503,37 @@ if (mode === "trajectory") {
           recoveryTarget: target,
           newMessageCount: counted === null ? 0 : Number(counted[1]),
         }) + "\n",
+      );
+      process.exit(0);
+    }
+    // The follow-up Activation for the very message the hold already showed
+    // this Agent. It syncs through the real Worker CLI and records exactly what
+    // the delivery states, without re-deriving anything.
+    if (presentedLog) {
+      const sync = spawnSync(process.env.RAH_WORKER_CLI, ["worker", "sync"], {
+        encoding: "utf8",
+      });
+      if (sync.status !== 0) {
+        throw new Error(`presented-context sync failed: ${sync.stderr}`);
+      }
+      writeFileSync(
+        presentedLog,
+        JSON.stringify(
+          {
+            activationId: process.env.RAH_ACTIVATION_ID ?? null,
+            fromSeq: Number(process.env.RAH_FROM_SEQ),
+            toSeq: Number(process.env.RAH_TO_SEQ),
+            sync: JSON.parse(sync.stdout),
+          },
+          null,
+          2,
+        ),
+      );
+      await request("/v1/worker/acknowledge", {
+        throughSeq: delivery.cursorAfter,
+      });
+      process.stdout.write(
+        JSON.stringify({ marker: "worker-presented-context-observed" }) + "\n",
       );
       process.exit(0);
     }

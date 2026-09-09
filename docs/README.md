@@ -1,5 +1,7 @@
 # RAH OS 文档
 
+重复唤醒收口：[把"已呈现"事实写进 Worker 投递，真实模型第二次唤醒推理步数 23→2](./audits/2026-09-09-presented-context-duplicate-wake.zh-CN.md)。
+
 发送工具合同结构性移植：[目标寻址、服务端已读位置与按目标草稿恢复，模型不再搬运游标／回执／幂等键／草稿 ID](./audits/2026-09-09-raft-send-facade-structural-port.zh-CN.md)。
 
 最新上游核实：[Raft 当前版本、完整 Agent prompt 与工具合同重新取证](./audits/2026-09-09-raft-upstream-prompt-tool-refresh.zh-CN.md)。稳定版仍为 1.0.18；同版本更新未完成但原服务健康。工具状态管理与 Runtime 通知差异是下一施工依据，不能继续仅补 prompt。

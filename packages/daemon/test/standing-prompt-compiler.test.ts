@@ -368,6 +368,32 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
     prompt,
     /additional message does not cancel|permission to omit a result|still-required original result/isu,
   );
+  // F0909H: the Kernel now states what it already showed this participant and
+  // what that participant already said afterwards. These are mechanical ledger
+  // facts, so the prompt names the fields and draws no conclusion from them.
+  assert.match(prompt, /`presentedContext`/u);
+  assert.match(
+    prompt,
+    /`presentedThroughSeq`.*already shown at that target/isu,
+  );
+  assert.match(
+    prompt,
+    /`alreadyPresented`.*already showed you in an earlier Run/isu,
+  );
+  assert.match(
+    prompt,
+    /`respondedAfter`.*your own message ids.*same target/isu,
+  );
+  assert.match(prompt, /canonical Kernel ledger facts.*before deciding/isu);
+  // No judgment rule may ride along with the facts.
+  assert.doesNotMatch(
+    prompt,
+    /alreadyPresented[^.]*(do not reply|already answered|skip|stay silent|no further)/isu,
+  );
+  assert.doesNotMatch(
+    prompt,
+    /respondedAfter[^.]*(means you|proves you|so you have|therefore)/isu,
+  );
   assert.match(prompt, /send-draft.*rechecks freshness/isu);
   assert.match(prompt, /--anyway.*continueAnywaySuggested/isu);
   assert.match(prompt, /goal.*already complete.*remain silent/isu);
