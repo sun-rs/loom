@@ -1,4 +1,10 @@
 import { WorkerSelfProfileUpdateRequestSchema } from "@rah-os/protocol";
+/**
+ * Raft: `raft profile update [--display-name] [--description] [--avatar-url]`
+ * — the bound credential already names the profile, so the CLI carries no write
+ * context and no key. RAH keeps all four as accepted explicit forms and derives
+ * them from the Activation the daemon already granted.
+ */
 export function parseWorkerSelfProfileCommand(
   command: string,
   options: Record<string, string>,
@@ -31,15 +37,24 @@ export function parseWorkerSelfProfileCommand(
     ["avatar-upload-intent-id", "avatarUploadIntentId"],
   ] as const)
     if (options[flag] !== undefined) patch[key] = options[flag];
+  const writeContext = {
+    ...(options["control-room-id"] === undefined
+      ? {}
+      : { controlRoomId: options["control-room-id"] }),
+    ...(options["control-room-seq"] === undefined
+      ? {}
+      : { controlRoomSeq: Number(options["control-room-seq"]) }),
+    ...(options["expected-revision-id"] === undefined
+      ? {}
+      : { expectedRevisionId: options["expected-revision-id"] }),
+  };
   return {
     path: "/v1/worker/profile/self/update",
     body: WorkerSelfProfileUpdateRequestSchema.parse({
-      writeContext: {
-        controlRoomId: options["control-room-id"],
-        controlRoomSeq: Number(options["control-room-seq"]),
-        expectedRevisionId: options["expected-revision-id"],
-      },
-      idempotencyKey: options["idempotency-key"],
+      ...(Object.keys(writeContext).length === 0 ? {} : { writeContext }),
+      ...(options["idempotency-key"] === undefined
+        ? {}
+        : { idempotencyKey: options["idempotency-key"] }),
       patch,
     }),
   };

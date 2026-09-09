@@ -79,21 +79,21 @@ test("self profile CLI uses explicit control-Room revision context without auto-
       await runWorkerCliCommand([...update, "--actor-id", "other"], runtime),
       1,
     );
+    // Raft's `profile update` carries no write context at all; the minimal form
+    // now sends the patch alone and the server resolves the rest.
     assert.equal(
       await runWorkerCliCommand(
-        [
-          "worker",
-          "profile-update",
-          "--display-name",
-          "Implicit revision",
-          "--idempotency-key",
-          "bad",
-        ],
+        ["worker", "profile-update", "--display-name", "Implicit revision"],
         runtime,
       ),
-      1,
+      0,
+      errors,
     );
-    assert.equal(calls.length, 2);
+    assert.deepEqual(calls[2], {
+      path: "http://127.0.0.1:43001/v1/worker/profile/self/update",
+      body: { patch: { displayName: "Implicit revision" } },
+    });
+    assert.equal(calls.length, 3);
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }

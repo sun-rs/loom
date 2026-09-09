@@ -4,6 +4,7 @@ import {
   ATTACHMENT_UPLOAD_SESSION_EXPIRES_IN_SECONDS,
 } from "@rah-os/protocol";
 import { createHash, randomUUID } from "node:crypto";
+import { deriveWorkerCommandIdempotencyKey } from "./worker-message-identity.ts";
 import {
   constants,
   closeSync,
@@ -220,21 +221,46 @@ export class RoomFiles {
     execution: AuthenticatedWorkerExecutionContext,
     request: z.input<typeof WorkerMessageAttachmentPrepareRequestSchema>,
   ) {
-    const input = WorkerMessageAttachmentPrepareRequestSchema.parse(request);
+    const presented =
+      WorkerMessageAttachmentPrepareRequestSchema.parse(request);
     const scope = this.#worker(execution);
     requireWorkerRoomVisibility(this.#db, scope);
     let roomId = scope.roomId;
-    if (input.channel !== undefined && input.contextReceipt !== undefined) {
+    if (
+      presented.channel !== undefined &&
+      presented.contextReceipt !== undefined
+    ) {
       if (!this.#targetContext)
         throw new ForbiddenError("target context validation is unavailable");
       const target = this.#targetContext(execution, {
-        channel: input.channel,
-        contextReceipt: input.contextReceipt,
+        channel: presented.channel,
+        contextReceipt: presented.contextReceipt,
       });
       roomId = target.roomId;
       // A reservation creates no Room event; the signed complete presentation
       // selects its immutable Room. Publication rechecks message freshness.
     }
+    // Raft's upload CLI mints `clientRequestId` itself with `randomUUID()`, so
+    // the model never carries one. RAH derives it instead of minting a random
+    // value, so a genuine retry of the same file, in the same Run, into the
+    // same Room, still finds its existing reservation.
+    const input = {
+      ...presented,
+      idempotencyKey:
+        presented.idempotencyKey ??
+        deriveWorkerCommandIdempotencyKey({
+          participantId: scope.participantId,
+          activationId: scope.activationId,
+          roomId,
+          operation: "attachment-prepare",
+          subjectId: null,
+          content: [
+            presented.filename,
+            presented.mimeType,
+            String(presented.size),
+          ],
+        }),
+    };
     const prepared = this.#prepareMessageFile(
       {
         actorId: scope.participantId,
@@ -247,7 +273,9 @@ export class RoomFiles {
   }
   #prepareMessageFile(
     context: { actorId: string; roomId: string; runAttemptId?: string },
-    input: z.infer<typeof WorkerMessageAttachmentPrepareRequestSchema>,
+    input: z.infer<typeof WorkerMessageAttachmentPrepareRequestSchema> & {
+      idempotencyKey: string;
+    },
   ) {
     const { actorId, roomId } = context;
     this.#reclaimExpired();

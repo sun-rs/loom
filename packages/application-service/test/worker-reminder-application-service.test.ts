@@ -205,6 +205,37 @@ test("Worker Reminder HTTP contract preserves causal anchoring and owner scope",
       ),
       ["scheduled", "snoozed", "fired"],
     );
+
+    // Raft's `reminder schedule` carries no causal cursor at all; the server
+    // resolves the anchor against the Activation head it already owns, so the
+    // minimal form schedules the same reminder and an identical retry is one.
+    const minimal = await request("/v1/worker/reminders/schedule", {
+      delaySeconds: 86_400,
+      idempotencyKey: "worker-reminder-minimal",
+      messageId: posted.event.aggregateId,
+      title: "Minimal form",
+    });
+    assert.equal(minimal.status, 200, JSON.stringify(minimal.payload));
+    assert.ok(isRecord(minimal.payload));
+    assert.ok(isRecord(minimal.payload.reminder));
+    const minimalRetry = await request("/v1/worker/reminders/schedule", {
+      delaySeconds: 86_400,
+      idempotencyKey: "worker-reminder-minimal",
+      messageId: posted.event.aggregateId,
+      title: "Minimal form",
+    });
+    assert.equal(minimalRetry.status, 200);
+    assert.ok(isRecord(minimalRetry.payload));
+    assert.equal(minimalRetry.payload.deduplicated, true);
+    // A presented cursor this credential never saw is still refused.
+    const forged = await request("/v1/worker/reminders/schedule", {
+      basedOnRoomSeq: Number(basedOnRoomSeq) + 1,
+      delaySeconds: 86_400,
+      idempotencyKey: "worker-reminder-forged",
+      messageId: posted.event.aggregateId,
+      title: "Forged cursor",
+    });
+    assert.equal(forged.status, 409);
   } finally {
     await service.close();
     kernel.close();

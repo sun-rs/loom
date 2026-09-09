@@ -54,8 +54,28 @@ export const WorkerMessageSearchResponseSchema = z
 export type WorkerMessageSearchResponse = z.infer<
   typeof WorkerMessageSearchResponseSchema
 >;
+/**
+ * Raft's `raft message react --message-id ID --emoji EMOJI [--remove]`: the
+ * model names the message, the emoji and whether it is adding or removing, and
+ * nothing else. `active` therefore defaults to the add side of Raft's toggle,
+ * and both causal parameters are optional and derived server-side. An
+ * explicitly presented cursor or key stays valid and stays fenced.
+ */
 export const WorkerMessageReactionRequestSchema =
-  MessageReactionRequestSchema.omit({ roomId: true });
+  MessageReactionRequestSchema.omit({
+    roomId: true,
+    active: true,
+    basedOnRoomSeq: true,
+    idempotencyKey: true,
+  }).extend({
+    active: z.boolean().default(true),
+    basedOnRoomSeq: z.number().int().nonnegative().optional(),
+    idempotencyKey: z.string().min(1).max(200).optional(),
+  });
 export type WorkerMessageReactionRequest = z.infer<
+  typeof WorkerMessageReactionRequestSchema
+>;
+/** The Agent-facing form, before the server fills in what Raft never asks for. */
+export type WorkerMessageReactionCommand = z.input<
   typeof WorkerMessageReactionRequestSchema
 >;

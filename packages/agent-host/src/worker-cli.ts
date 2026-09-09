@@ -400,7 +400,14 @@ async function publishWorkerArtifact(
         path: `${resourcePath}/prepare`,
         body: prepareSchema.parse({
           filename: options.filename ?? basename(sourcePath),
-          idempotencyKey: boundedText(options, "idempotency-key", 512),
+          // Raft's upload mints its own `clientRequestId`; the model never
+          // carries one. RAH lets the server derive it for a message
+          // attachment, and `artifact-publish` keeps its explicit key.
+          ...(options["idempotency-key"] === undefined && messageAttachment
+            ? {}
+            : {
+                idempotencyKey: boundedText(options, "idempotency-key", 512),
+              }),
           mimeType: options["mime-type"] ?? "application/octet-stream",
           size: metadata.size,
           ...(messageAttachment
@@ -593,15 +600,17 @@ function parseCommand(
     arguments_.slice(2),
     command === "message-post"
       ? ["anyway", "json", "send-draft", "top-level"]
-      : command === "task-list"
-        ? ["mine"]
-        : command === "message-read"
-          ? ["top-level"]
-          : command === "task-amend"
-            ? ["clear-description"]
-            : command === "task-assign"
-              ? ["unassign"]
-              : [],
+      : command === "message-react"
+        ? ["remove"]
+        : command === "task-list"
+          ? ["mine"]
+          : command === "message-read"
+            ? ["top-level"]
+            : command === "task-amend"
+              ? ["clear-description"]
+              : command === "task-assign"
+                ? ["unassign"]
+                : [],
     // Raft makes `--number` repeatable on `task claim` and nowhere else.
     command === "task-claim" ? ["number"] : [],
   );
@@ -632,26 +641,47 @@ function parseCommand(
         body: { throughSeq: positiveInteger(options, "through-seq") },
         path: "/v1/worker/acknowledge",
       };
-    case "message-react":
+    case "message-react": {
+      // Raft: `react --message-id ID --emoji EMOJI [--remove]`. `--active` is
+      // kept as the explicit form of the same toggle; the causal parameters
+      // remain accepted pass-throughs and are derived when omitted.
       assertAllowed(options, [
         "message-id",
         "emoji",
         "active",
+        "remove",
         "based-on-room-seq",
         "idempotency-key",
       ]);
-      if (options.active !== "true" && options.active !== "false")
+      if (
+        options.active !== undefined &&
+        options.active !== "true" &&
+        options.active !== "false"
+      )
         throw new Error("--active must be true or false");
+      if (options.active !== undefined && options.remove !== undefined)
+        throw new Error("choose --remove or --active");
       return {
         path: "/v1/worker/messages/react",
         body: WorkerMessageReactionRequestSchema.parse({
           messageId: boundedText(options, "message-id", 512),
           emoji: boundedText(options, "emoji", 64),
-          active: options.active === "true",
-          basedOnRoomSeq: nonnegativeInteger(options, "based-on-room-seq"),
-          idempotencyKey: boundedText(options, "idempotency-key", 200),
+          active:
+            options.remove === "true" ? false : options.active !== "false",
+          ...(options["based-on-room-seq"] === undefined
+            ? {}
+            : {
+                basedOnRoomSeq: nonnegativeInteger(
+                  options,
+                  "based-on-room-seq",
+                ),
+              }),
+          ...(options["idempotency-key"] === undefined
+            ? {}
+            : { idempotencyKey: boundedText(options, "idempotency-key", 200) }),
         }),
       };
+    }
     case "attachment-cancel":
       assertAllowed(options, ["attachment-id"]);
       return {
@@ -793,20 +823,50 @@ function parseCommand(
         },
         path: "/v1/worker/messages/post",
       };
-    case "thread-unfollow":
+    case "thread-unfollow": {
+      // Raft: `thread unfollow --target '#channel:abcd1234' [--reason TEXT]`.
       assertAllowed(options, [
         "based-on-room-seq",
+        "channel",
         "idempotency-key",
+        "reason",
+        "target",
         "thread-id",
       ]);
+      if (options.target !== undefined && options.channel !== undefined)
+        throw new Error("choose --target or --channel");
+      const channel = options.target ?? options.channel;
+      if (channel !== undefined && options["thread-id"] !== undefined)
+        throw new Error("choose --target or --thread-id");
+      if (channel === undefined && options["thread-id"] === undefined)
+        throw new Error(
+          "address the Thread with --target \'#channel:threadId\' or with --thread-id",
+        );
       return {
         body: {
-          basedOnRoomSeq: nonnegativeInteger(options, "based-on-room-seq"),
-          idempotencyKey: boundedText(options, "idempotency-key", 512),
-          threadId: boundedText(options, "thread-id", 512),
+          ...(options["based-on-room-seq"] === undefined
+            ? {}
+            : {
+                basedOnRoomSeq: nonnegativeInteger(
+                  options,
+                  "based-on-room-seq",
+                ),
+              }),
+          ...(options["idempotency-key"] === undefined
+            ? {}
+            : { idempotencyKey: boundedText(options, "idempotency-key", 512) }),
+          // Raft defaults the Thread-local notice to this exact wording.
+          reason:
+            options.reason === undefined
+              ? "no longer following"
+              : boundedText(options, "reason", 200),
+          ...(channel === undefined
+            ? { threadId: boundedText(options, "thread-id", 512) }
+            : { channel }),
         },
         path: "/v1/worker/threads/unfollow",
       };
+    }
     case "task-get":
       return taskQuery(options, "/v1/worker/tasks/get");
     case "task-trajectory": {
@@ -965,7 +1025,13 @@ function parseReminderCommand(arguments_: readonly string[]): {
     }
     return {
       body: WorkerReminderScheduleRequestSchema.parse({
-        basedOnRoomSeq: nonnegativeInteger(options, "based-on-room-seq"),
+        // Raft's `reminder schedule` carries no cursor; the server resolves the
+        // anchor against the read position it already owns.
+        ...(options["based-on-room-seq"] === undefined
+          ? {}
+          : {
+              basedOnRoomSeq: nonnegativeInteger(options, "based-on-room-seq"),
+            }),
         ...(options.channel === undefined
           ? {}
           : { channel: boundedText(options, "channel", 512) }),
@@ -1499,7 +1565,7 @@ rah agent inbox check
 rah agent inbox recheck
 rah agent inbox ack --item-id ID --version N
 App Inbox ack confirms a notification, not successful memory cleanup or a Room/Task action.
-rah reminder schedule --title TEXT (--delay-seconds N|--fire-at ISO|--repeat RULE) --message-id ID --based-on-room-seq N [--channel #ROOM] [--tz IANA]
+rah reminder schedule --title TEXT (--delay-seconds N|--fire-at ISO|--repeat RULE) --message-id ID [--channel #ROOM] [--tz IANA]
 rah reminder list [--status scheduled,fired,canceled|--all]
 rah reminder cancel --id ID
 rah reminder snooze --id ID --by 30m
@@ -1508,7 +1574,7 @@ rah reminder log --id ID
 rah worker sync [--after-seq N]
 rah worker acknowledge --through-seq N
 rah worker room-list [--limit N] [--cursor CURSOR]
-rah worker room-read --target TARGET [--limit N] [--context-receipt RECEIPT]
+rah worker room-read --target TARGET [--limit N]
 rah worker room-resolve --target ROOM_ID|#CHANNEL|dm:@HANDLE[:THREAD_ID]
 rah worker message-read [--target TARGET] [--before ID|--after ID|--around ID] [--thread-id ID|--top-level] [--limit N] [--cursor CURSOR]
 rah worker message-resolve --message-id ID [--target TARGET]
@@ -1518,27 +1584,27 @@ rah worker whoami
 rah worker server-info [--target TARGET] [--limit N] [--cursor CURSOR]
 rah worker profile-avatar-publish --path FILE --mime-type image/png|image/jpeg|image/gif|image/webp
 rah worker profile-self-get
-rah worker profile-update --control-room-id ID --control-room-seq N --expected-revision-id ID [--display-name TEXT] [--description TEXT] [--avatar-key KEY] [--avatar-upload-intent-id ID] --idempotency-key KEY
+rah worker profile-update [--display-name TEXT] [--description TEXT] [--avatar-key KEY] [--avatar-upload-intent-id ID]
 rah worker profile-show [--target ID|@HANDLE] [--channel TARGET] [--created-agents-limit N] [--created-agents-cursor CURSOR]
 rah worker task-assign TASK (--assignee AGENT_ID | --unassign)
-rah worker channel-mute --based-on-room-seq N --idempotency-key KEY [--target CHANNEL --context-receipt RECEIPT]
-rah worker channel-unmute --based-on-room-seq N --idempotency-key KEY [--target CHANNEL --context-receipt RECEIPT]
-rah worker task-delete (--target TARGET --number N | --room-id ID --task-id ID)
+rah worker channel-mute [--target #CHANNEL]
+rah worker channel-unmute [--target #CHANNEL]
+rah worker task-delete TASK
 rah worker task-amend TASK [--title TEXT] [--description TEXT | --clear-description]
 rah worker task-unblock TASK
 rah worker task-convert --message-id ID
 rah worker task-list [--target TARGET] [--mine] [--status todo|in_progress|in_review|done|closed|all] [--limit N] [--cursor CURSOR]
 rah worker task-history --task-id ID [--target TARGET] [--limit N] [--cursor CURSOR]
-Task commands need no causal cursor and no idempotency key: RAH resolves the read position and the operation identity itself.
+No command needs a causal cursor or an idempotency key: RAH resolves the read position and the operation identity itself.
 Read tools expose current facts in already joined Rooms and DMs without acknowledging Inbox or authorizing newer mutation cursors. Task lists show current projections, not MVCC snapshots.
 rah worker message-search [--query TEXT] [--target TARGET] [--sender @HANDLE|ID] [--sender-id ID] [--after ISO_TIMESTAMP] [--before ISO_TIMESTAMP] [--sort relevance|recent] [--limit N] [--cursor CURSOR]
-rah worker message-react --message-id ID --emoji EMOJI --active true|false --based-on-room-seq N --idempotency-key KEY
+rah worker message-react --message-id ID --emoji EMOJI [--remove]
 rah worker message-post --target TARGET <<'${MESSAGE_HEREDOC_DELIMITER}' [--attachment-ids ID,ID] [--thread-id ID | --top-level]
 rah worker message-post --send-draft --target TARGET [--anyway]
 Message content is read from stdin; use a heredoc so quotes, backticks and newlines stay literal. --send-draft takes no stdin: it sends the saved draft unchanged. Never use --send-draft when changing content.
 message-post prints human-readable text on stdout: read it. Add --json for the machine-readable response object instead.
-rah worker thread-unfollow --thread-id ID --based-on-room-seq N --idempotency-key KEY
-rah worker attachment-publish --path FILE [--target TARGET --context-receipt RECEIPT] [--filename NAME] [--mime-type TYPE] --idempotency-key KEY
+rah worker thread-unfollow --target "#channel:THREAD_ID" [--reason TEXT]
+rah worker attachment-publish --path FILE [--target TARGET --context-receipt RECEIPT] [--filename NAME] [--mime-type TYPE]
 rah worker attachment-comments --attachment-id ID [--limit N] [--before-room-seq N]
 rah worker attachment-capabilities
 rah worker attachment-cancel --attachment-id ID

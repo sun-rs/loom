@@ -736,7 +736,10 @@ export class WorkerApplicationService {
         WorkerMessageReactionRequestSchema,
         body,
       );
-      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      // Nothing is presented in the minimal form, so there is no claimed cursor
+      // to fence; a presented one is fenced exactly as before.
+      if (body.basedOnRoomSeq !== undefined)
+        this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq!);
       writeJson(
         response,
         200,
@@ -769,7 +772,7 @@ export class WorkerApplicationService {
         WorkerChannelAttentionRequestSchema,
         body,
       );
-      if (command.channel === undefined)
+      if (command.channel === undefined && command.basedOnRoomSeq !== undefined)
         this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
       const result = this.#kernel.workerChannelAttention.set(
         grant.execution,
@@ -790,7 +793,8 @@ export class WorkerApplicationService {
         WorkerThreadUnfollowRequestSchema,
         body,
       );
-      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      if (command.basedOnRoomSeq !== undefined)
+        this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
       const mutation = this.#kernel.unfollowWorkerThread(
         grant.execution,
         command,
@@ -836,7 +840,8 @@ export class WorkerApplicationService {
           WorkerReminderScheduleRequestSchema,
           body,
         );
-        this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+        if (command.basedOnRoomSeq !== undefined)
+          this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
         mutation = this.#kernel.reminders.schedule(grant.execution, command);
       } else if (route === "/v1/worker/reminders/cancel") {
         mutation = this.#kernel.reminders.cancel(
@@ -881,9 +886,17 @@ export class WorkerApplicationService {
 
     if (route === "/v1/worker/tasks/delete") {
       const presented = parseWorkerRequest(WorkerTaskDeleteRequestSchema, body);
+      // Raft's `task delete` never names a Room: the Task is already addressed.
+      // A `--target/--number` address resolved one above; a `--task-id` is
+      // deleted in the Room this Activation is bound to, which is the only Room
+      // the Kernel would have accepted anyway.
+      const addressed = {
+        ...presented,
+        roomId: presented.roomId ?? grant.scope.roomId,
+      };
       const command = this.#resolveTaskCommand(
         grant,
-        presented,
+        addressed,
         { operation: "task-delete", subjectId: body.taskId as string },
         // Deletion fences inside the Kernel, after the replay check, so a
         // durable receipt still replays through a credential that never

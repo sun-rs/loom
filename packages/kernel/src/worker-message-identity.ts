@@ -71,6 +71,48 @@ export function deriveWorkerTaskIdempotencyKey(input: {
   return `derived-task-${digest.slice(0, 32)}`;
 }
 
+/**
+ * The same scheme once more, for the remaining commands Raft never asks the
+ * model to key: a reaction, a Thread unfollow, a Channel mute or unmute, a
+ * self-profile update and an attachment reservation. Raft's CLI either sends no
+ * key at all or mints one itself with `randomUUID()`; RAH keeps the ledger's
+ * replay check and derives the key from what the operation actually is:
+ *
+ *   sha256("rah-worker-command-v1", participantId, activationId, roomId,
+ *          operation, subjectId, content)
+ *
+ * The trade-off is the one already documented for a send and for a Task
+ * command: inside one Activation, at one subject, the same operation with the
+ * same content is ONE logical operation, so an identical retry deduplicates and
+ * a caller that genuinely wants it applied twice must present an explicit
+ * `idempotencyKey`. Anything that really differs — a different emoji, a
+ * different Thread or Channel, add versus remove, a different profile patch, a
+ * different file — hashes differently and is a distinct operation.
+ */
+export function deriveWorkerCommandIdempotencyKey(input: {
+  participantId: string;
+  activationId: string;
+  roomId: string;
+  operation: string;
+  subjectId: string | null;
+  content: readonly (string | null)[];
+}): string {
+  const digest = createHash("sha256")
+    .update(
+      JSON.stringify([
+        "rah-worker-command-v1",
+        input.participantId,
+        input.activationId,
+        input.roomId,
+        input.operation,
+        input.subjectId,
+        [...input.content],
+      ]),
+    )
+    .digest("hex");
+  return `derived-${input.operation}-${digest.slice(0, 32)}`;
+}
+
 export function deriveWorkerMessageIdempotencyKey(input: {
   participantId: string;
   activationId: string;

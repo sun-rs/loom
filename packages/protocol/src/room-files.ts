@@ -202,10 +202,16 @@ export const WorkerArtifactUploadSchema = FileUploadSchema.extend({
 }).strict();
 export type WorkerArtifactUpload = z.infer<typeof WorkerArtifactUploadSchema>;
 export const WorkerMessageAttachmentPrepareRequestSchema =
-  WorkerArtifactPrepareRequestSchema.omit({ taskId: true })
+  WorkerArtifactPrepareRequestSchema.omit({
+    taskId: true,
+    idempotencyKey: true,
+  })
     .extend({
       channel: WorkerReadChannelSchema.optional(),
       contextReceipt: WorkerTargetReceiptSchema.optional(),
+      // Raft's upload CLI mints its own `clientRequestId` with `randomUUID()`
+      // and never asks the model for one; RAH derives it server-side instead.
+      idempotencyKey: IdentifierSchema.optional(),
     })
     .strict()
     .refine(

@@ -34,8 +34,11 @@ import {
   isActivationRetryBlocked,
   resolveActivationRetryFence,
 } from "./activation-retry-fence.ts";
+import { resolveWorkerReadTarget } from "./worker-read-targets.ts";
+import { deriveWorkerCommandIdempotencyKey } from "./worker-message-identity.ts";
 import type {
   ClientMessageForwardRequest,
+  WorkerThreadUnfollowRequest,
   ClientMessageForwardResponse,
   ClientMessageForwardTargetsRequest,
   GlobalTasksRequest,
@@ -230,7 +233,10 @@ import {
 import { TaskReviewService } from "./task-review-service.ts";
 import { unblockTaskTransaction } from "./task-unblock-service.ts";
 import { assignTaskTransaction } from "./task-assignment-service.ts";
-import { WorkerSelfProfileService } from "./worker-self-profile.ts";
+import {
+  migrateWorkerSelfProfileObservations,
+  WorkerSelfProfileService,
+} from "./worker-self-profile.ts";
 import { WorkerTaskManagementService } from "./worker-task-management.ts";
 import { TaskLifecycleService } from "./task-lifecycle-service.ts";
 import * as principalProfile from "./principal-profile.ts";
@@ -684,6 +690,7 @@ export class RoomKernel {
     migrateFrozenTaskSubmissionEvidenceV50(this.#database);
     migrateDropRoomTaskDefaultsV52(this.#database);
     migrateWorkerTargetReadPositions(this.#database);
+    migrateWorkerSelfProfileObservations(this.#database);
     principalProfile.migrate(this.#database);
     this.#database
       .prepare(
@@ -1535,23 +1542,77 @@ export class RoomKernel {
     });
   }
 
+  /**
+   * Raft addresses the Thread as `--target '#channel:abcd1234'` and carries no
+   * causal parameter. The target is resolved to the canonical Thread id here,
+   * before the command runs, and an omitted cursor or key is resolved from
+   * Kernel-owned state; a presented one is used byte-for-byte and stays fenced.
+   */
   unfollowWorkerThread(
     execution: AuthenticatedWorkerExecutionContext,
-    input: {
-      basedOnRoomSeq: number;
-      idempotencyKey: string;
-      threadId: string;
-    },
+    input: WorkerThreadUnfollowRequest,
   ) {
-    return this.#transaction(() =>
-      agentThreads.unfollowWorkerThreadTransaction({
-        command: input,
+    return this.#transaction(() => {
+      const scope = this.#requireAuthenticatedWorkerExecution(execution);
+      const threadId =
+        input.threadId ??
+        (() => {
+          const target = resolveWorkerReadTarget(
+            this.#database,
+            scope,
+            input.channel!,
+          );
+          if (target.threadId === undefined)
+            throw new NotFoundError(
+              "unfollow needs a Thread target like '#channel:threadId'",
+            );
+          return target.threadId;
+        })();
+      return agentThreads.unfollowWorkerThreadTransaction({
+        command: {
+          basedOnRoomSeq: input.basedOnRoomSeq ?? scope.toSeq,
+          idempotencyKey:
+            input.idempotencyKey ??
+            deriveWorkerCommandIdempotencyKey({
+              participantId: scope.participantId,
+              activationId: scope.activationId,
+              roomId: scope.roomId,
+              operation: "thread-unfollow",
+              subjectId: threadId,
+              // Posting into a Thread follows it again, so the sequence of this
+              // participant's own latest message there separates a genuine
+              // second unfollow from a retry of the first. Unfollowing publishes
+              // nothing, so the number does not move under a retry.
+              content: [
+                input.reason ?? null,
+                String(this.#ownLatestThreadMessageSeq(scope, threadId)),
+              ],
+            }),
+          ...(input.reason === undefined ? {} : { reason: input.reason }),
+          threadId,
+        },
         database: this.#database,
         events: this.#roomEvents,
-        scope: this.#requireAuthenticatedWorkerExecution(execution),
+        scope,
         updatedAt: this.#timestamp(),
-      }),
-    );
+      });
+    });
+  }
+  #ownLatestThreadMessageSeq(
+    scope: { participantId: string; roomId: string },
+    threadId: string,
+  ): number {
+    const row = this.#database
+      .prepare(
+        `SELECT MAX(room_events.room_seq) AS seq
+         FROM messages
+         JOIN room_events ON room_events.room_id=messages.room_id
+           AND room_events.aggregate_id=messages.message_id
+           AND room_events.type='message.posted'
+         WHERE messages.room_id=? AND messages.thread_id=? AND messages.actor_id=?`,
+      )
+      .get(scope.roomId, threadId, scope.participantId);
+    return row === undefined || row.seq === null ? 0 : Number(row.seq);
   }
   createTask(
     actor: AuthenticatedActorContext,

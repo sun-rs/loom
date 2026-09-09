@@ -788,8 +788,11 @@ test("targeted mute rejects forged, missing, foreign Room and Thread context wit
       basedOnRoomSeq: context.throughRoomSeq,
       idempotencyKey: "deny",
     };
+    // A target no longer needs a receipt — Raft's `channel mute --target` is
+    // the minimal form, covered in worker-minimal-commands.test.ts. What a
+    // PRESENTED receipt must still do is fail when it is forged, tampered with,
+    // issued for another Room, or points at a Thread.
     for (const input of [
-      { ...command, contextReceipt: undefined },
       {
         ...command,
         contextReceipt: command.contextReceipt.slice(0, -8) + "tampered",

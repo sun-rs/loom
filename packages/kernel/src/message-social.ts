@@ -16,6 +16,7 @@ import {
   GlobalDiscovery,
 } from "./global-discovery.ts";
 import { ForbiddenError, IdempotencyConflictError } from "./errors.ts";
+import { deriveWorkerCommandIdempotencyKey } from "./worker-message-identity.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
 import { text, type Row } from "./sqlite-row.ts";
 
@@ -156,12 +157,44 @@ export class MessageSocial {
   }
   reactWorker(
     worker: AuthenticatedWorkerExecutionContext,
-    request: P.WorkerMessageReactionRequest,
+    request: P.WorkerMessageReactionCommand,
   ) {
     if (!this.context.requireWorker)
       throw new ForbiddenError("Worker message tools unavailable");
     const scope = this.context.requireWorker!(worker);
-    const input = P.WorkerMessageReactionRequestSchema.parse(request);
+    const presented = P.WorkerMessageReactionRequestSchema.parse(request);
+    // Raft's toggle carries no causality: the read position is the Activation
+    // head this credential was issued for, and the identity of the operation is
+    // "this participant, this Run, this message, this emoji, add or remove".
+    const input = {
+      ...presented,
+      basedOnRoomSeq: presented.basedOnRoomSeq ?? scope.toSeq,
+      idempotencyKey:
+        presented.idempotencyKey ??
+        deriveWorkerCommandIdempotencyKey({
+          participantId: scope.participantId,
+          activationId: scope.activationId,
+          roomId: scope.roomId,
+          operation: "message-react",
+          subjectId: presented.messageId,
+          // The last opposite transition on this exact reaction. It does not
+          // move when this command commits, so a retry still deduplicates,
+          // while add → remove → add is three distinct operations.
+          content: [
+            presented.emoji,
+            presented.active ? "active" : "removed",
+            String(
+              this.lastReactionTransition(
+                scope.participantId,
+                scope.roomId,
+                presented.messageId,
+                presented.emoji,
+                !presented.active,
+              ),
+            ),
+          ],
+        }),
+    };
     this.message(scope.participantId, scope.roomId, input.messageId);
     const message = this.context.database
       .prepare(
@@ -179,6 +212,24 @@ export class MessageSocial {
       ...input,
       roomId: scope.roomId,
     });
+  }
+  private lastReactionTransition(
+    actorId: string,
+    roomId: string,
+    messageId: string,
+    emoji: string,
+    active: boolean,
+  ): number {
+    const row = this.context.database
+      .prepare(
+        `SELECT MAX(room_seq) AS seq FROM room_events
+         WHERE room_id=? AND actor_id=? AND type='message.reaction_changed'
+           AND json_extract(payload_json, '$.messageId')=?
+           AND json_extract(payload_json, '$.emoji')=?
+           AND json_extract(payload_json, '$.active')=?`,
+      )
+      .get(roomId, actorId, messageId, emoji, active ? 1 : 0);
+    return row === undefined || row.seq === null ? 0 : Number(row.seq);
   }
   react(auth: AuthenticatedActorContext, request: P.MessageReactionRequest) {
     return this.reactInput(

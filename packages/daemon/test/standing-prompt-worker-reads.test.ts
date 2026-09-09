@@ -43,7 +43,11 @@ test("self-profile prompt requires read revision context and distinguishes profi
   assert.ok(prompt.includes("profile-self-get"));
   assert.ok(prompt.includes("profile-update"));
   assert.ok(prompt.includes("profile-avatar-publish"));
-  assert.match(prompt, /never silently replace its expected revision/u);
+  // The write context is resolved server-side now, so the prompt no longer
+  // teaches an expected revision; it teaches what to do on a conflict.
+  assert.match(prompt, /never re-issue the same change blindly/u);
+  assert.doesNotMatch(prompt, /--control-room-id/u);
+  assert.doesNotMatch(prompt, /--expected-revision-id/u);
 });
 
 test("parent continuation waits for the next Activation after explicit unblock", () => {

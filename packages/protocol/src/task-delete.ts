@@ -14,9 +14,18 @@ export const TaskDeleteRequestSchema = z
   .object({ ...TaskDeleteFieldsShape, ...ResolvedWorkerTaskCausalityShape })
   .strict();
 export type TaskDeleteRequest = z.infer<typeof TaskDeleteRequestSchema>;
-/** The Agent-facing form: Raft's `task delete` carries neither causal field. */
+/**
+ * The Agent-facing form: Raft's `raft task delete --target '#channel'
+ * --number N` carries neither causal field and never names a Room. The Task is
+ * already addressed, so `roomId` is optional here too and the server fills it
+ * in — from the resolved address, or from the Activation's own Room.
+ */
 export const WorkerTaskDeleteRequestSchema = z
-  .object({ ...TaskDeleteFieldsShape, ...WorkerTaskCausalityShape })
+  .object({
+    ...TaskDeleteFieldsShape,
+    roomId: IdentifierSchema.optional(),
+    ...WorkerTaskCausalityShape,
+  })
   .strict();
 export type WorkerTaskDeleteRequest = z.infer<
   typeof WorkerTaskDeleteRequestSchema

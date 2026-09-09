@@ -52,10 +52,19 @@ export const WorkerSelfProfilePatchSchema = z
       });
   });
 export const WorkerSelfProfileGetRequestSchema = z.object({}).strict();
+/**
+ * Raft's `POST /profile` body is `{ avatarUrl?, displayName?, description? }`
+ * and its CLI carries no write context at all: the bound credential already
+ * names the profile. RAH's daemon granted the Activation and therefore already
+ * knows the control Room, its sequence and the revision this Run observed, so
+ * every write-context field is optional and resolved server-side. Optimistic
+ * concurrency is unchanged: the expected revision is the one this Run last saw,
+ * so an update committed by anyone else in between still fails.
+ */
 export const WorkerSelfProfileUpdateRequestSchema = z
   .object({
-    writeContext: WorkerSelfProfileWriteContextSchema,
-    idempotencyKey: IdentifierSchema,
+    writeContext: WorkerSelfProfileWriteContextSchema.partial().optional(),
+    idempotencyKey: IdentifierSchema.optional(),
     patch: WorkerSelfProfilePatchSchema,
   })
   .strict();

@@ -78,6 +78,7 @@ export const ROOM_DELETION_REFERENCED_TABLES = new Set([
   "task_submissions",
   "tasks",
   "threads",
+  "worker_target_context_windows",
   "worker_target_read_positions",
   "workspace_leases",
 ]);
@@ -295,6 +296,7 @@ export class RoomDeletionService {
       `DELETE FROM room_files WHERE room_id=?`,
       `DELETE FROM held_message_drafts WHERE room_id=?`,
       `DELETE FROM worker_target_read_positions WHERE room_id=?`,
+      `DELETE FROM worker_target_context_windows WHERE room_id=?`,
       `DELETE FROM managed_mcp_calls WHERE room_id=?`,
       `DELETE FROM context_manifests WHERE run_attempt_id IN
          (SELECT run_attempt_id FROM run_attempts WHERE room_id=?)`,

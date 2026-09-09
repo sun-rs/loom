@@ -322,6 +322,63 @@ test("authenticated self profile update keeps distinct control/work Room causali
   }
 });
 
+test("the minimal profile update carries no write context and still fails a concurrent change", async () => {
+  const f = await fixture();
+  try {
+    // Raft's `profile update` sends the patch alone.
+    const observed = WorkerSelfProfileResponseSchema.parse(
+      await (await f.call("profile/self/get")).json(),
+    );
+    const minimal = await f.call("profile/self/update", {
+      patch: { displayName: "Minimal" },
+    });
+    assert.equal(minimal.status, 200, await minimal.clone().text());
+    const changed = WorkerSelfProfileUpdateResponseSchema.parse(
+      await minimal.json(),
+    );
+    assert.equal(changed.profile.displayName, "Minimal");
+    assert.equal(
+      changed.writeContext.controlRoomSeq,
+      observed.writeContext.controlRoomSeq + 1,
+    );
+    // An identical retry is one logical update.
+    const retried = WorkerSelfProfileUpdateResponseSchema.parse(
+      await (
+        await f.call("profile/self/update", {
+          patch: { displayName: "Minimal" },
+        })
+      ).json(),
+    );
+    assert.equal(retried.deduplicated, true);
+    // A genuinely different patch is a different update.
+    const second = await f.call("profile/self/update", {
+      patch: { description: "Second change" },
+    });
+    assert.equal(second.status, 200, await second.clone().text());
+
+    // Optimistic concurrency is unchanged: this Run observed a revision, and a
+    // profile change committed by somebody else afterwards still conflicts.
+    const current = WorkerSelfProfileResponseSchema.parse(
+      await (await f.call("profile/self/get")).json(),
+    );
+    f.kernel.manageWorkspaceAgent(f.actor, {
+      action: "update_profile",
+      agentDefinitionId: f.created.agent.definition.agentDefinitionId,
+      basedOnRoomSeq: current.writeContext.controlRoomSeq,
+      expectedRevisionId: current.writeContext.expectedRevisionId,
+      field: "displayName",
+      idempotencyKey: "human-edit",
+      value: "Edited elsewhere",
+    });
+    const conflicted = await f.call("profile/self/update", {
+      patch: { displayName: "Racing update" },
+    });
+    assert.equal(conflicted.status, 409, await conflicted.clone().text());
+  } finally {
+    await f.close();
+  }
+});
+
 test("avatar byte ingestion rechecks revoked execution before recording an intent or returning a receipt", async () => {
   const f = await fixture();
   const bytes = Buffer.from(

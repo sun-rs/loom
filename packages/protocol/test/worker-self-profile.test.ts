@@ -37,14 +37,32 @@ test("Worker self profile edits bind explicit profile causal position and reject
         .success,
       false,
     );
-  assert.equal(
-    WorkerSelfProfileUpdateRequestSchema.safeParse({
-      ...request,
-      writeContext: {
-        controlRoomId: "control",
-        expectedRevisionId: "revision",
-      },
-    }).success,
-    false,
-  );
+  // Raft's `POST /profile` body is the patch alone, so the whole write context
+  // and the key are optional and resolved server-side. A partially presented
+  // write context is still accepted field by field; only a malformed field or
+  // an unknown one is rejected.
+  for (const minimal of [
+    { patch: request.patch },
+    { patch: request.patch, writeContext: { controlRoomId: "control" } },
+    {
+      patch: request.patch,
+      writeContext: { controlRoomId: "control", expectedRevisionId: "rev" },
+    },
+  ])
+    assert.equal(
+      WorkerSelfProfileUpdateRequestSchema.safeParse(minimal).success,
+      true,
+    );
+  for (const malformed of [
+    { writeContext: { controlRoomSeq: -1 } },
+    { writeContext: { controlRoomId: "" } },
+    { writeContext: { unexpected: "field" } },
+  ])
+    assert.equal(
+      WorkerSelfProfileUpdateRequestSchema.safeParse({
+        patch: request.patch,
+        ...malformed,
+      }).success,
+      false,
+    );
 });

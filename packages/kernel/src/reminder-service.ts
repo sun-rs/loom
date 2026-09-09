@@ -111,9 +111,16 @@ export class ReminderService {
     worker: AuthenticatedWorkerExecutionContext,
     untrustedInput: WorkerReminderScheduleRequest,
   ): WorkerReminderMutationResponse {
-    const input = WorkerReminderScheduleRequestSchema.parse(untrustedInput);
+    const presented = WorkerReminderScheduleRequestSchema.parse(untrustedInput);
     return this.#transaction(() => {
       const scope = this.#requireWorker(worker);
+      // Raft's `reminder schedule` carries no causal cursor: the anchor is
+      // resolved against the read position the tool already owns. Here that is
+      // the Activation head this credential was issued for.
+      const input = {
+        ...presented,
+        basedOnRoomSeq: presented.basedOnRoomSeq ?? scope.toSeq,
+      };
       const replay = this.#commandReplay(scope.participantId, input);
       if (replay !== undefined) return replay;
       const anchor = this.#requireAnchor(

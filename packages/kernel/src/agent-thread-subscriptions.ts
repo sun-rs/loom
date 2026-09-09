@@ -3,7 +3,7 @@ import type { DatabaseSync } from "node:sqlite";
 import type {
   ActivationCredentialScope,
   ActivationReason,
-  WorkerThreadUnfollowRequest,
+  ResolvedWorkerThreadUnfollow,
   WorkerThreadUnfollowResponse,
 } from "@rah-os/protocol";
 
@@ -144,7 +144,7 @@ export function unfollowAgentThread(
 }
 
 export function unfollowWorkerThreadTransaction(input: {
-  command: WorkerThreadUnfollowRequest;
+  command: ResolvedWorkerThreadUnfollow;
   database: DatabaseSync;
   events: RoomEventWriter;
   scope: ActivationCredentialScope;
@@ -162,7 +162,8 @@ export function unfollowWorkerThreadTransaction(input: {
       event.actorId !== input.scope.participantId ||
       event.payload.activationId !== input.scope.activationId ||
       event.payload.basedOnRoomSeq !== input.command.basedOnRoomSeq ||
-      event.payload.threadId !== input.command.threadId
+      event.payload.threadId !== input.command.threadId ||
+      (event.payload.reason ?? null) !== (input.command.reason ?? null)
     ) {
       throw new IdempotencyConflictError(
         `idempotency key ${input.command.idempotencyKey} was already used for another mutation`,
@@ -210,6 +211,10 @@ export function unfollowWorkerThreadTransaction(input: {
       activationId: input.scope.activationId,
       basedOnRoomSeq: input.command.basedOnRoomSeq,
       following: false,
+      // Raft shows this short reason in the Thread-local unfollow notice.
+      ...(input.command.reason === undefined
+        ? {}
+        : { reason: input.command.reason }),
       threadId: input.command.threadId,
     },
     roomId: input.scope.roomId,

@@ -372,6 +372,8 @@ test("Worker CLI exposes Raft-shaped explicit Thread unfollow without routing in
     assert.deepEqual(state.requests[0]?.body, {
       basedOnRoomSeq: 8,
       idempotencyKey: "thread-unfollow:thread-1:agent-1",
+      // Raft always sends a reason and defaults it to this exact wording.
+      reason: "no longer following",
       threadId: "thread-1",
     });
     assert.equal(
@@ -1899,5 +1901,159 @@ test("the two addressing forms are mutually exclusive and each is complete", asy
     } finally {
       rmSync(state.directory, { force: true, recursive: true });
     }
+  }
+});
+
+/**
+ * Raft's minimal forms for the commands this batch ported. Each one is the
+ * shape the extracted Computer CLI actually offers the model; the explicit RAH
+ * form is asserted alongside so both are known to resolve to one request.
+ */
+test("Worker CLI offers Raft's minimal form for react, unfollow, mute, delete, profile and attachments", async () => {
+  const state = fixture();
+  try {
+    const run = async (args: string[]) =>
+      runWorkerCliCommand(args, state.runtime);
+    assert.equal(
+      await run([
+        "worker",
+        "message-react",
+        "--message-id",
+        "msg-1",
+        "--emoji",
+        "👍",
+      ]),
+      0,
+      state.stderr(),
+    );
+    assert.deepEqual(state.requests.at(-1)?.body, {
+      messageId: "msg-1",
+      emoji: "👍",
+      active: true,
+    });
+    // Raft's `--remove` is the other side of the same toggle.
+    assert.equal(
+      await run([
+        "worker",
+        "message-react",
+        "--message-id",
+        "msg-1",
+        "--emoji",
+        "👍",
+        "--remove",
+      ]),
+      0,
+      state.stderr(),
+    );
+    assert.equal((state.requests.at(-1)?.body as any).active, false);
+    assert.equal(
+      await run([
+        "worker",
+        "message-react",
+        "--message-id",
+        "msg-1",
+        "--emoji",
+        "👍",
+        "--remove",
+        "--active",
+        "true",
+      ]),
+      1,
+      "--remove and --active are the same toggle and cannot disagree",
+    );
+
+    assert.equal(
+      await run([
+        "worker",
+        "thread-unfollow",
+        "--target",
+        "#channel:abcd1234",
+        "--reason",
+        "handled elsewhere",
+      ]),
+      0,
+      state.stderr(),
+    );
+    assert.deepEqual(state.requests.at(-1)?.body, {
+      reason: "handled elsewhere",
+      channel: "#channel:abcd1234",
+    });
+
+    for (const command of ["channel-mute", "channel-unmute"]) {
+      assert.equal(
+        await run(["worker", command, "--target", "#channel"]),
+        0,
+        state.stderr(),
+      );
+      assert.deepEqual(state.requests.at(-1)?.body, { channel: "#channel" });
+      assert.equal(await run(["worker", command]), 0, state.stderr());
+      assert.deepEqual(state.requests.at(-1)?.body, {});
+    }
+
+    assert.equal(
+      await run(["worker", "task-delete", "--task-id", "task-1"]),
+      0,
+      state.stderr(),
+    );
+    assert.deepEqual(state.requests.at(-1)?.body, { taskId: "task-1" });
+
+    assert.equal(
+      await run(["worker", "profile-update", "--display-name", "Visible name"]),
+      0,
+      state.stderr(),
+    );
+    assert.deepEqual(state.requests.at(-1)?.body, {
+      patch: { displayName: "Visible name" },
+    });
+
+    assert.equal(
+      await run(["worker", "room-read", "--target", "#channel"]),
+      0,
+      state.stderr(),
+    );
+    assert.deepEqual(state.requests.at(-1)?.body, {
+      channel: "#channel",
+      limit: 50,
+    });
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("the CLI help never asks the Agent for a cursor, a key or a paging receipt", () => {
+  const state = fixture();
+  try {
+    return runWorkerCliCommand(["worker", "--help"], state.runtime).then(() => {
+      const help = state.stdout();
+      for (const command of [
+        "message-react --message-id ID --emoji EMOJI [--remove]",
+        'thread-unfollow --target "#channel:THREAD_ID" [--reason TEXT]',
+        "channel-mute [--target #CHANNEL]",
+        "channel-unmute [--target #CHANNEL]",
+        "task-delete TASK",
+        "room-read --target TARGET [--limit N]",
+      ])
+        assert.ok(help.includes(command), command);
+      for (const line of help.split("\n")) {
+        // `artifact-publish` keeps its explicit key, and a target attachment
+        // still names the receipt its complete target read issued; neither row
+        // is part of this batch.
+        if (
+          line.startsWith("rah worker artifact-publish") ||
+          line.startsWith("rah worker attachment-publish")
+        )
+          continue;
+        assert.ok(
+          !line.includes("--based-on-room-seq") &&
+            !line.includes("--idempotency-key") &&
+            !line.includes("--context-receipt") &&
+            !line.includes("--control-room-id") &&
+            !line.includes("--expected-revision-id"),
+          line,
+        );
+      }
+    });
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
   }
 });

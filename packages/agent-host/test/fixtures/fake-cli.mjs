@@ -360,18 +360,13 @@ if (mode === "trajectory") {
     if (found.messages.length !== 1)
       throw new Error("Worker search did not find the explicit probe message");
     const messageId = found.messages[0].messageId;
+    // Raft's minimal toggle: the message, the emoji, and nothing else.
     const reacted = cli([
       "message-react",
       "--message-id",
       messageId,
       "--emoji",
       "👍",
-      "--active",
-      "true",
-      "--based-on-room-seq",
-      String(requiredThrough),
-      "--idempotency-key",
-      `probe:${messageId}`,
     ]);
     if (reacted.reactions[0]?.count !== 1)
       throw new Error("Worker reaction did not persist");

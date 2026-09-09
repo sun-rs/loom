@@ -12,6 +12,7 @@ import type {
   AttentionRecipient,
   RoomEventWriter,
 } from "./room-event-writer.ts";
+import { deriveWorkerCommandIdempotencyKey } from "./worker-message-identity.ts";
 import { integer, jsonObject, text } from "./sqlite-row.ts";
 import { requireWorkerRoomVisibility } from "./worker-task-scope.ts";
 
@@ -135,6 +136,28 @@ export class AgentChannelAttentionService {
   constructor(context: Context) {
     this.context = context;
   }
+  private lastOppositeSeq(
+    participantId: string,
+    roomId: string,
+    activityMuted: boolean,
+  ): number {
+    const row = this.context.database
+      .prepare(
+        `SELECT MAX(room_seq) AS seq FROM room_events
+         WHERE room_id=? AND actor_id=? AND type='channel.attention_changed'
+           AND json_extract(payload_json, '$.activityMuted')=?`,
+      )
+      .get(roomId, participantId, activityMuted ? 0 : 1);
+    return row === undefined || row.seq === null ? 0 : integer(row, "seq");
+  }
+  private head(roomId: string): number {
+    return integer(
+      this.context.database
+        .prepare("SELECT next_seq-1 AS n FROM rooms WHERE room_id=?")
+        .get(roomId)!,
+      "n",
+    );
+  }
   set(
     execution: AuthenticatedWorkerExecutionContext,
     raw: P.WorkerChannelAttentionRequest,
@@ -143,14 +166,54 @@ export class AgentChannelAttentionService {
     return this.context.transaction(() => {
       const { database, events } = this.context,
         scope = this.context.requireWorker(execution),
-        input = P.WorkerChannelAttentionRequestSchema.parse(raw);
+        presented = P.WorkerChannelAttentionRequestSchema.parse(raw);
       requireWorkerRoomVisibility(database, scope);
-      const target = resolveWorkerReadTarget(database, scope, input.channel);
+      const target = resolveWorkerReadTarget(
+        database,
+        scope,
+        presented.channel,
+      );
       const roomId = target.roomId;
       if (target.threadId)
         throw new ForbiddenError(
           "Channel mute cannot target a Thread; use Thread follow controls",
         );
+      // Raft's `channel mute --target '#channel'` carries no causality at all.
+      // The cursor is provenance only — the mute takes effect from the event's
+      // own sequence — so an omitted one is the target Room's current head,
+      // which is exactly the fact the server already owns. An omitted key names
+      // the operation: this participant, this Run, this Channel, mute or
+      // unmute, so a retry deduplicates and the opposite command does not.
+      const activityMutedLabel = activityMuted ? "mute" : "unmute";
+      const input = {
+        ...presented,
+        basedOnRoomSeq:
+          presented.basedOnRoomSeq ??
+          (presented.channel === undefined ? scope.toSeq : this.head(roomId)),
+        idempotencyKey:
+          presented.idempotencyKey ??
+          deriveWorkerCommandIdempotencyKey({
+            participantId: scope.participantId,
+            activationId: scope.activationId,
+            roomId,
+            operation: "channel-attention",
+            subjectId: roomId,
+            // The sequence of the last opposite transition. It is stable across
+            // this command's own commit, so a retry still deduplicates, while
+            // mute → unmute → mute is three distinct operations rather than a
+            // replay of the first mute.
+            content: [
+              activityMutedLabel,
+              String(
+                this.lastOppositeSeq(
+                  scope.participantId,
+                  roomId,
+                  activityMuted,
+                ),
+              ),
+            ],
+          }),
+      };
       const room = database
         .prepare("SELECT kind FROM rooms WHERE room_id=?")
         .get(roomId);
@@ -174,13 +237,15 @@ export class AgentChannelAttentionService {
           throw new IdempotencyConflictError(
             "idempotency key was used for another channel attention command",
           );
-        if (input.channel !== undefined)
+        if (input.contextReceipt !== undefined)
           this.context.targetContext().verifyPresented(
             execution,
             {
-              channel: input.channel,
-              contextReceipt: input.contextReceipt!,
-              basedOnRoomSeq: input.basedOnRoomSeq,
+              channel: input.channel!,
+              contextReceipt: input.contextReceipt,
+              ...(presented.basedOnRoomSeq === undefined
+                ? {}
+                : { basedOnRoomSeq: presented.basedOnRoomSeq }),
             },
             { allowExpired: true },
           );
@@ -191,13 +256,15 @@ export class AgentChannelAttentionService {
           deduplicated: true,
         };
       }
-      if (input.channel !== undefined)
+      if (input.contextReceipt !== undefined)
         this.context.targetContext().verifyPresented(
           execution,
           {
-            channel: input.channel,
-            contextReceipt: input.contextReceipt!,
-            basedOnRoomSeq: input.basedOnRoomSeq,
+            channel: input.channel!,
+            contextReceipt: input.contextReceipt,
+            ...(presented.basedOnRoomSeq === undefined
+              ? {}
+              : { basedOnRoomSeq: presented.basedOnRoomSeq }),
           },
           {},
         );

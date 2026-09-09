@@ -5,17 +5,24 @@ import {
   WorkerTargetReceiptSchema,
 } from "./worker-target-reference.ts";
 import { RoomEventSchema } from "./room-event.ts";
+/**
+ * Raft's `raft channel mute|unmute --target '#channel'` carries the target and
+ * nothing else. RAH accepts that form: the causal cursor and the idempotency
+ * key are derived server-side, and a target may now be named without also
+ * presenting a receipt. A presented receipt still requires its channel and is
+ * still verified.
+ */
 export const WorkerChannelAttentionRequestSchema = z
   .object({
     channel: WorkerReadChannelSchema.optional(),
     contextReceipt: WorkerTargetReceiptSchema.optional(),
-    basedOnRoomSeq: z.number().int().nonnegative(),
-    idempotencyKey: IdentifierSchema,
+    basedOnRoomSeq: z.number().int().nonnegative().optional(),
+    idempotencyKey: IdentifierSchema.optional(),
   })
   .strict()
   .refine(
-    (v) => (v.channel === undefined) === (v.contextReceipt === undefined),
-    "channel and contextReceipt must be supplied together",
+    (v) => v.contextReceipt === undefined || v.channel !== undefined,
+    "contextReceipt requires the channel it was issued for",
   );
 export type WorkerChannelAttentionRequest = z.infer<
   typeof WorkerChannelAttentionRequestSchema

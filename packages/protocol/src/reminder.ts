@@ -67,7 +67,9 @@ const ReminderIdempotencySchema = z
 
 export const WorkerReminderScheduleRequestSchema = z
   .object({
-    basedOnRoomSeq: z.number().int().nonnegative(),
+    // Raft's `raft reminder schedule` carries no causal cursor; the server
+    // resolves the anchor against the Activation head when none is presented.
+    basedOnRoomSeq: z.number().int().nonnegative().optional(),
     channel: z.string().trim().min(2).max(512).optional(),
     delaySeconds: z.number().int().positive().optional(),
     fireAt: TimestampSchema.optional(),

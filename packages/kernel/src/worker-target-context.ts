@@ -24,7 +24,9 @@ import {
 import { deriveWorkerMessageIdempotencyKey } from "./worker-message-identity.ts";
 import {
   detectThreadContextParentSend,
+  readWorkerTargetContextWindow,
   readWorkerTargetReadPosition,
+  recordWorkerTargetContextWindow,
   recordWorkerTargetReadPosition,
 } from "./worker-target-read-position.ts";
 import { syncRoomEventWindow } from "./room-sync.ts";
@@ -116,9 +118,24 @@ export class WorkerTargetContextService {
         origin,
         input.channel,
       );
+      // Raft's read command keeps its paging position in the tool's own state,
+      // so a continuation carries no token. RAH keeps the same fact server-side
+      // per (participant, RunAttempt, target): the stored window is the frozen
+      // snapshot — same `through`, same floor, same Thread facts — and it is
+      // dropped as soon as it is complete or its hour is up, so the next
+      // `room-read` opens a fresh window at the head. A presented receipt is
+      // still verified, and a forged or tampered one is still rejected.
       const prior = input.contextReceipt
         ? this.#verify(input.contextReceipt, origin, target)
-        : undefined;
+        : readWorkerTargetContextWindow(this.#context.database, {
+            participantId: origin.participantId,
+            roomId: target.roomId,
+            ...(target.threadId === undefined
+              ? {}
+              : { threadId: target.threadId }),
+            runAttemptId: origin.runAttemptId,
+            nowMs: this.#context.now().getTime(),
+          });
       const through = prior?.through ?? this.#head(target.roomId);
       const floor = prior?.floor ?? Math.max(0, through - input.limit);
       const threadContext =
@@ -194,6 +211,26 @@ export class WorkerTargetContextService {
         },
       );
       receipt.cursor = window.cursorAfter;
+      recordWorkerTargetContextWindow(
+        this.#context.database,
+        {
+          participantId: origin.participantId,
+          roomId: target.roomId,
+          ...(target.threadId === undefined
+            ? {}
+            : { threadId: target.threadId }),
+          runAttemptId: origin.runAttemptId,
+          updatedAt: this.#context.now().toISOString(),
+        },
+        {
+          through,
+          floor,
+          cursor: receipt.cursor,
+          threadContextHash: receipt.threadContextHash,
+          causalEventId: receipt.causalEventId,
+          expires: receipt.expires,
+        },
+      );
       // Raft's read commands record the consumed sequence for the target so the
       // send never has to carry it. This is the same fact, kept server-side.
       recordWorkerTargetReadPosition(this.#context.database, {

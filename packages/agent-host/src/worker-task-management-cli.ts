@@ -46,8 +46,9 @@ export function parseWorkerTaskManagementCommand(
       ...address,
       ...causality(options),
     };
-    // A `--target`/`--number` address already names the Room; the server fills
-    // `roomId` in from it, so the strict schema only runs on the id form.
+    // Raft's `task delete` names no Room at all: a `--target`/`--number`
+    // address already resolves one, and a `--task-id` is deleted in the Room
+    // this Activation is bound to. `--room-id` stays an accepted explicit form.
     return {
       path: "/v1/worker/tasks/delete",
       body:

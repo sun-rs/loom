@@ -37,7 +37,113 @@ export function migrateWorkerTargetReadPositions(database: DatabaseSync): void {
     ) STRICT;
     CREATE INDEX IF NOT EXISTS idx_worker_target_read_positions_room
       ON worker_target_read_positions(room_id);
+    CREATE TABLE IF NOT EXISTS worker_target_context_windows (
+      participant_id TEXT NOT NULL REFERENCES principals(principal_id),
+      run_attempt_id TEXT NOT NULL,
+      room_id TEXT NOT NULL REFERENCES rooms(room_id),
+      thread_key TEXT NOT NULL,
+      through_room_seq INTEGER NOT NULL,
+      floor_room_seq INTEGER NOT NULL,
+      cursor_room_seq INTEGER NOT NULL,
+      thread_context_hash TEXT,
+      causal_event_id TEXT,
+      expires_at_ms INTEGER NOT NULL,
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY (participant_id, run_attempt_id, room_id, thread_key)
+    ) STRICT;
+    CREATE INDEX IF NOT EXISTS idx_worker_target_context_windows_room
+      ON worker_target_context_windows(room_id);
   `);
+}
+
+/**
+ * The paging position of an open `room-read` window, kept where Raft's tool
+ * keeps it: in the tool's own state, not in a token the Agent has to carry
+ * between calls. One row per (participant, RunAttempt, target) holds exactly
+ * the snapshot the signed receipt used to hold — the frozen `through`, the
+ * window floor, how far the Agent has actually consumed, and the Thread facts
+ * the first page froze — so a continuation reads the same immutable window even
+ * though the Room head has moved on.
+ */
+export type WorkerTargetContextWindow = {
+  through: number;
+  floor: number;
+  cursor: number;
+  threadContextHash: string | null;
+  causalEventId: string | null;
+  expires: number;
+};
+
+export function readWorkerTargetContextWindow(
+  database: DatabaseSync,
+  target: WorkerTargetAddress & { runAttemptId: string; nowMs: number },
+): WorkerTargetContextWindow | undefined {
+  const row = database
+    .prepare(
+      `SELECT through_room_seq, floor_room_seq, cursor_room_seq,
+              thread_context_hash, causal_event_id, expires_at_ms
+       FROM worker_target_context_windows
+       WHERE participant_id = ? AND run_attempt_id = ? AND room_id = ?
+         AND thread_key = ?`,
+    )
+    .get(
+      target.participantId,
+      target.runAttemptId,
+      target.roomId,
+      threadKey(target.threadId),
+    );
+  if (row === undefined) return undefined;
+  const window = {
+    through: integer(row, "through_room_seq"),
+    floor: integer(row, "floor_room_seq"),
+    cursor: integer(row, "cursor_room_seq"),
+    threadContextHash:
+      row.thread_context_hash === null ? null : String(row.thread_context_hash),
+    causalEventId:
+      row.causal_event_id === null ? null : String(row.causal_event_id),
+    expires: integer(row, "expires_at_ms"),
+  };
+  // A finished or expired window is not a continuation: the next `room-read`
+  // opens a fresh snapshot at the current head, exactly as the first one did.
+  if (window.cursor >= window.through || window.expires <= target.nowMs)
+    return undefined;
+  return window;
+}
+
+export function recordWorkerTargetContextWindow(
+  database: DatabaseSync,
+  target: WorkerTargetAddress & { runAttemptId: string; updatedAt: string },
+  window: WorkerTargetContextWindow,
+): void {
+  database
+    .prepare(
+      `INSERT INTO worker_target_context_windows(
+         participant_id, run_attempt_id, room_id, thread_key, through_room_seq,
+         floor_room_seq, cursor_room_seq, thread_context_hash, causal_event_id,
+         expires_at_ms, updated_at
+       ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(participant_id, run_attempt_id, room_id, thread_key) DO UPDATE SET
+         through_room_seq = excluded.through_room_seq,
+         floor_room_seq = excluded.floor_room_seq,
+         cursor_room_seq = excluded.cursor_room_seq,
+         thread_context_hash = excluded.thread_context_hash,
+         causal_event_id = excluded.causal_event_id,
+         expires_at_ms = excluded.expires_at_ms,
+         updated_at = excluded.updated_at`,
+    )
+    .run(
+      target.participantId,
+      target.runAttemptId,
+      target.roomId,
+      threadKey(target.threadId),
+      window.through,
+      window.floor,
+      window.cursor,
+      window.threadContextHash,
+      window.causalEventId,
+      window.expires,
+      target.updatedAt,
+    );
 }
 
 function threadKey(threadId: string | undefined): string {

@@ -17,6 +17,7 @@ import {
 import type { ProfileImageLifecycleService } from "./profile-image-lifecycle.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
 import { integer, jsonObject, text } from "./sqlite-row.ts";
+import { deriveWorkerCommandIdempotencyKey } from "./worker-message-identity.ts";
 import { requireWorkerRoomVisibility } from "./worker-task-scope.ts";
 import { readAgentDefinition } from "./workspace-agent-management.ts";
 import { updateAgentProfilePatch } from "./workspace-agent-profile.ts";
@@ -32,6 +33,27 @@ type Context = {
   ) => ActivationCredentialScope;
   transaction: <T>(operation: () => T) => T;
 };
+/**
+ * The revision of its own profile a Run has actually been shown. Raft's client
+ * holds this in the tool; RAH keeps it on the Kernel side so `profile-update`
+ * needs no Agent-carried expected revision and still fails when somebody else
+ * committed a profile change after this Run observed one.
+ */
+export function migrateWorkerSelfProfileObservations(
+  database: DatabaseSync,
+): void {
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS worker_self_profile_observations (
+      participant_id TEXT NOT NULL REFERENCES principals(principal_id),
+      run_attempt_id TEXT NOT NULL,
+      agent_definition_id TEXT NOT NULL,
+      observed_revision_id TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY (participant_id, run_attempt_id, agent_definition_id)
+    ) STRICT;
+  `);
+}
+
 /** Bound Agent metadata only. Profile control-Room causality never enters the
  * execution's work-Room read/ACK frontier or its frozen runtime manifest. */
 export class WorkerSelfProfileService {
@@ -47,6 +69,7 @@ export class WorkerSelfProfileService {
     return this.#context.transaction(() => {
       const scope = this.#authorize(execution),
         record = this.#self(scope);
+      this.#observe(scope, record);
       return this.#response(
         record.currentRevision,
         scope.participantId,
@@ -59,20 +82,62 @@ export class WorkerSelfProfileService {
     execution: AuthenticatedWorkerExecutionContext,
     raw: P.WorkerSelfProfileUpdateRequest,
   ): P.WorkerSelfProfileUpdateResponse {
-    const input = P.WorkerSelfProfileUpdateRequestSchema.parse(raw);
+    const presented = P.WorkerSelfProfileUpdateRequestSchema.parse(raw);
     return this.#context.transaction(() => {
       const scope = this.#authorize(execution),
         record = this.#self(scope),
         controlRoomId = record.definition.controlRoomId;
-      if (input.writeContext.controlRoomId !== controlRoomId)
+      if (
+        presented.writeContext?.controlRoomId !== undefined &&
+        presented.writeContext.controlRoomId !== controlRoomId
+      )
         throw new ForbiddenError(
           "profile control Room is outside this bound Agent scope",
         );
+      // Raft's `profile update` carries no write context: the daemon granted
+      // this Activation and already knows the control Room, its sequence, and
+      // the revision this Run was shown. Optimistic concurrency is unchanged —
+      // the expected revision is the observed one, so a profile committed by
+      // anyone else since this Run read it still conflicts.
+      const input = {
+        ...presented,
+        writeContext: {
+          controlRoomId,
+          controlRoomSeq:
+            presented.writeContext?.controlRoomSeq ?? this.#head(controlRoomId),
+          expectedRevisionId:
+            presented.writeContext?.expectedRevisionId ??
+            this.#observedRevisionId(scope, record) ??
+            record.currentRevision.agentDefinitionRevisionId,
+        },
+        idempotencyKey:
+          presented.idempotencyKey ??
+          deriveWorkerCommandIdempotencyKey({
+            participantId: scope.participantId,
+            activationId: scope.activationId,
+            roomId: controlRoomId,
+            operation: "profile-update",
+            subjectId: record.definition.agentDefinitionId,
+            content: [
+              presented.patch.displayName ?? null,
+              presented.patch.description ?? null,
+              presented.patch.avatarKey ?? null,
+              presented.patch.avatarUploadIntentId ?? null,
+            ],
+          }),
+      };
+      // The digest identifies the REQUEST, so only what the caller actually
+      // presented enters it. A server-derived write context moves as soon as
+      // this very update commits — a new control-Room event, a new revision —
+      // so folding it in would make an honest retry look like a different
+      // mutation under the same key.
       const digest = canonicalDigest({
         domain: "rah/worker-self-profile/v1",
         participantId: scope.participantId,
         sourceRoomId: scope.roomId,
-        ...input,
+        idempotencyKey: input.idempotencyKey,
+        patch: input.patch,
+        writeContext: presented.writeContext ?? null,
       });
       const previous = this.#context.database
         .prepare(
@@ -139,6 +204,13 @@ export class WorkerSelfProfileService {
           record.currentRevision.avatarKey,
           patch.avatarKey,
         );
+      // What this Run has now been shown: a second update in the same Run
+      // builds on its own result rather than conflicting with it.
+      this.#recordObservation(
+        scope,
+        record.definition.agentDefinitionId,
+        String(event.payload.agentDefinitionRevisionId),
+      );
       return this.#result(event, scope.participantId, false);
     });
   }
@@ -157,6 +229,55 @@ export class WorkerSelfProfileService {
     execution: AuthenticatedWorkerExecutionContext,
   ): void {
     this.#self(this.#authorize(execution));
+  }
+  #observe(
+    scope: ActivationCredentialScope,
+    record: ReturnType<typeof readAgentDefinition>,
+  ): void {
+    this.#recordObservation(
+      scope,
+      record.definition.agentDefinitionId,
+      record.currentRevision.agentDefinitionRevisionId,
+    );
+  }
+  #recordObservation(
+    scope: ActivationCredentialScope,
+    agentDefinitionId: string,
+    revisionId: string,
+  ): void {
+    this.#context.database
+      .prepare(
+        `INSERT INTO worker_self_profile_observations(
+           participant_id, run_attempt_id, agent_definition_id,
+           observed_revision_id, updated_at
+         ) VALUES(?, ?, ?, ?, ?)
+         ON CONFLICT(participant_id, run_attempt_id, agent_definition_id)
+         DO UPDATE SET observed_revision_id = excluded.observed_revision_id,
+                       updated_at = excluded.updated_at`,
+      )
+      .run(
+        scope.participantId,
+        scope.runAttemptId,
+        agentDefinitionId,
+        revisionId,
+        this.#context.now().toISOString(),
+      );
+  }
+  #observedRevisionId(
+    scope: ActivationCredentialScope,
+    record: ReturnType<typeof readAgentDefinition>,
+  ): string | undefined {
+    const row = this.#context.database
+      .prepare(
+        `SELECT observed_revision_id FROM worker_self_profile_observations
+         WHERE participant_id=? AND run_attempt_id=? AND agent_definition_id=?`,
+      )
+      .get(
+        scope.participantId,
+        scope.runAttemptId,
+        record.definition.agentDefinitionId,
+      );
+    return row === undefined ? undefined : text(row, "observed_revision_id");
   }
   #authorize(execution: AuthenticatedWorkerExecutionContext) {
     const scope = this.#context.requireWorker(execution);
