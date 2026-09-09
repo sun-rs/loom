@@ -11,6 +11,8 @@ import { join } from "node:path";
 import test from "node:test";
 import { Readable } from "node:stream";
 
+import { WORKER_MESSAGE_RESOLVE_NOT_FOUND_NEXT_ACTION } from "@rah-os/protocol";
+
 import { runWorkerCliCommand } from "../src/index.ts";
 
 function fixture() {
@@ -1463,17 +1465,21 @@ test("a server error surfaces its stable code and the server's next action", asy
       new Response(
         JSON.stringify({
           error: {
-            code: "stale_context",
-            message: "mutation was based on Room sequence 4, but latest is 9",
-            next_action:
-              "Read the newer context with `rah worker room-read`, then rerun the command.",
+            code: "not_found",
+            message: "message is unavailable",
+            suggestedNextAction: WORKER_MESSAGE_RESOLVE_NOT_FOUND_NEXT_ACTION,
           },
         }),
-        { status: 409 },
+        { status: 404 },
       );
     assert.equal(
       await runWorkerCliCommand(
-        ["worker", "task-claim", "--task-id", "task-1"],
+        [
+          "worker",
+          "message-resolve",
+          "--message-id",
+          "11111111-1111-4111-8111-111111111111",
+        ],
         state.runtime,
       ),
       1,
@@ -1482,9 +1488,9 @@ test("a server error surfaces its stable code and the server's next action", asy
     assert.equal(
       state.stderr(),
       [
-        "Error: Worker API HTTP 409: mutation was based on Room sequence 4, but latest is 9",
-        "Code: stale_context",
-        "Next action: Read the newer context with `rah worker room-read`, then rerun the command.",
+        "Error: Worker API HTTP 404: message is unavailable",
+        "Code: NOT_FOUND",
+        `Next action: ${WORKER_MESSAGE_RESOLVE_NOT_FOUND_NEXT_ACTION}`,
         "",
       ].join("\n"),
       "the server's stable code and its recovery guidance both reach the Agent",

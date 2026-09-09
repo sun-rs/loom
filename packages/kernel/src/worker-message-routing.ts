@@ -206,13 +206,23 @@ export function resolveWorkerReplyRoute(context: {
       JOIN activations ON activations.activation_id=?
       LEFT JOIN tasks ON room_events.aggregate_type='task' AND tasks.task_id=room_events.aggregate_id
       WHERE room_events.room_id=? AND room_events.room_seq BETWEEN activations.from_seq AND activations.to_seq
-      GROUP BY reply_thread_id LIMIT 2`,
+      GROUP BY reply_thread_id ORDER BY reply_thread_id`,
       )
       .all(scope.participantId, scope.activationId, scope.roomId);
-    if (targets.length > 1)
+    if (targets.length > 1) {
+      // A coalesced Activation spanning several Threads has no defensible
+      // default: guessing the last one is crosstalk. Name the candidates so the
+      // Agent can retry with an explicit `threadId` (or null for the Room).
+      const candidates = targets
+        .map(
+          (target) =>
+            nullableText(target, "reply_thread_id") ?? "null (the Room)",
+        )
+        .join(", ");
       throw new ConflictError(
-        "Coalesced messages require an explicit reply target: threadId or null for the Room",
+        `Coalesced messages require an explicit reply target: threadId or null for the Room. This Activation delivered ${targets.length} candidates: ${candidates}`,
       );
+    }
     if (targets.length === 1) {
       threadId = nullableText(targets[0]!, "reply_thread_id") ?? undefined;
       const row = database

@@ -147,7 +147,15 @@ export function requireWorkerRoomVisibility(
     );
 }
 
-/** Prefer a still-visible Human creator; Agent authors fall back only to a unique Human. */
+/**
+ * The Human a Task asks for input. An Agent-created Task has an Agent creator,
+ * so the responder is a property of the Room, not of the Task's author: it is
+ * the Room's current Human membership. A still-joined Human creator keeps the
+ * question with the person who asked for the work; otherwise RAH picks the
+ * Room's most responsible Human deterministically — the highest Room role
+ * (owner, then admin, then member), then the earliest `joined_at`, then the
+ * lowest `principal_id`. Only a Room with no Human member left fails.
+ */
 export function workerTaskInputResponder(
   database: DatabaseSync,
   task: Row,
@@ -156,14 +164,20 @@ export function workerTaskInputResponder(
     .prepare(
       `SELECT principals.principal_id FROM memberships
     JOIN principals ON principals.principal_id = memberships.principal_id
-    WHERE memberships.room_id = ? AND principals.kind = 'human' ORDER BY principals.principal_id`,
+    WHERE memberships.room_id = ? AND principals.kind = 'human'
+    ORDER BY CASE memberships.role
+        WHEN 'owner' THEN 0
+        WHEN 'admin' THEN 1
+        ELSE 2
+      END, memberships.joined_at, principals.principal_id`,
     )
     .all(text(task, "room_id"));
   const creatorId = text(task, "creator_id");
   if (humans.some((human) => text(human, "principal_id") === creatorId))
     return creatorId;
-  if (humans.length === 1) return text(humans[0]!, "principal_id");
+  const responder = humans[0];
+  if (responder !== undefined) return text(responder, "principal_id");
   throw new ConflictError(
-    `Task ${text(task, "task_id")} requires exactly one current Human responder`,
+    `Task ${text(task, "task_id")} has no current Human member to answer input in Room ${text(task, "room_id")}`,
   );
 }

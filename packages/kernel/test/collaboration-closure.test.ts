@@ -317,8 +317,10 @@ test("a committed Worker reply replays unchanged after Room membership changes",
   }
 });
 
+// An Agent-authored Task asks the Room, not its own creator: any current Human
+// membership yields a deterministic responder and only an empty one fails.
 for (const humanCount of [0, 1, 2])
-  test(`Agent-authored Task input fails closed except one current Human (${humanCount})`, () => {
+  test(`Agent-authored Task input resolves the Room's Human responder (${humanCount})`, () => {
     const f = createFixture();
     try {
       const seq = f.kernel.sync(f.otherAgentActor, {
@@ -376,7 +378,7 @@ for (const humanCount of [0, 1, 2])
         question: "Which requirement?",
         idempotencyKey: "ask",
       };
-      if (humanCount !== 1)
+      if (humanCount === 0)
         assert.throws(
           () => f.kernel.requestTaskInput(execution, command),
           ConflictError,
@@ -891,6 +893,176 @@ test("self-created Task authority expires with its Run and never transfers to an
           idempotencyKey: "different-agent-claim",
         }),
       ForbiddenError,
+    );
+  } finally {
+    f.kernel.close();
+  }
+});
+
+test("an Agent-created Task asks the Room's Human even when the Room has several Humans", () => {
+  const f = createFixture();
+  try {
+    const second = f.kernel.provisionPrincipal({
+      handle: "second-human",
+      kind: "human",
+    });
+    f.kernel.addMember(f.humanActor, {
+      principalId: second.principal.principalId,
+      roomId: f.room.roomId,
+    });
+    f.kernel.postMessage(f.humanActor, {
+      body: "Start the file work",
+      roomId: f.room.roomId,
+      recipients: [{ participantId: f.agent.principalId, reason: "mention" }],
+      idempotencyKey: "wake-own-task",
+    });
+    const { activation, execution } = startWorkerExecution(
+      f.kernel,
+      "own-task-input",
+      f.agent.principalId,
+      f.room.roomId,
+    );
+    const created = f.kernel.createWorkerTask(execution, {
+      assigneeId: f.agent.principalId,
+      basedOnRoomSeq: activation.toSeq,
+      idempotencyKey: "own-task",
+      leaseMs: 30_000,
+      title: "Persistent file work",
+    });
+    assert.equal(created.task.creatorId, f.agent.principalId);
+    const started = f.kernel.startTask(execution, {
+      basedOnRoomSeq: created.event.roomSeq,
+      idempotencyKey: "own-start",
+      leaseMs: 30_000,
+      taskId: created.task.taskId,
+    });
+    const requested = f.kernel.requestTaskInput(execution, {
+      basedOnRoomSeq: started.event.roomSeq,
+      idempotencyKey: "own-ask",
+      question: "Which requirement?",
+      taskId: created.task.taskId,
+    });
+    // The Room's owner Human is the deterministic responder: highest Room role
+    // first, then earliest joined_at, then lowest principal_id.
+    assert.equal(requested.inputRequest.responderId, f.human.principalId);
+    assert.equal(requested.task.state, "waiting_input");
+    const resolved = f.kernel.resolveInputRequest(f.humanActor, {
+      answer: "Use the persistent path",
+      basedOnRoomSeq: f.kernel.sync(f.humanActor, {
+        consumerId: "resolver",
+        roomId: f.room.roomId,
+      }).latestRoomSeq,
+      idempotencyKey: "own-answer",
+      inputRequestId: requested.inputRequest.inputRequestId,
+    });
+    assert.equal(resolved.inputRequest.state, "resolved");
+  } finally {
+    f.kernel.close();
+  }
+});
+
+test("an ambiguous coalesced reply names the candidate Threads it refuses to guess", () => {
+  const f = createFixture();
+  try {
+    const { a, b } = threads(f);
+    const { activation, execution } = startWorkerExecution(
+      f.kernel,
+      "named-threads",
+      f.agent.principalId,
+      f.room.roomId,
+    );
+    assert.throws(
+      () =>
+        f.kernel.postWorkerMessage(execution, {
+          body: "ambiguous",
+          basedOnRoomSeq: activation.toSeq,
+          idempotencyKey: "ambiguous-named",
+        }),
+      (error: unknown) => {
+        assert.ok(error instanceof ConflictError);
+        assert.match(error.message, new RegExp(a.thread.threadId));
+        assert.match(error.message, new RegExp(b.thread.threadId));
+        return true;
+      },
+    );
+  } finally {
+    f.kernel.close();
+  }
+});
+
+test("a single-Thread coalesced Activation still resolves its reply target implicitly", () => {
+  const f = createFixture();
+  try {
+    const root = f.kernel.postMessage(f.humanActor, {
+      body: "Only Thread",
+      roomId: f.room.roomId,
+      recipients: [],
+      idempotencyKey: "single-root",
+    });
+    const only = f.kernel.createThread(f.humanActor, {
+      basedOnRoomSeq: root.event.roomSeq,
+      idempotencyKey: "single-thread",
+      recipientIds: [f.agent.principalId],
+      roomId: f.room.roomId,
+      rootMessageId: root.event.aggregateId,
+    });
+    const { activation, execution } = startWorkerExecution(
+      f.kernel,
+      "single-thread",
+      f.agent.principalId,
+      f.room.roomId,
+    );
+    const reply = f.kernel.postWorkerMessage(execution, {
+      body: "Implicit answer",
+      basedOnRoomSeq: activation.toSeq,
+      idempotencyKey: "single-reply",
+    });
+    assert.ok("event" in reply);
+    assert.equal(reply.event.payload.threadId, only.thread.threadId);
+  } finally {
+    f.kernel.close();
+  }
+});
+
+test("a membership change between a post and its retry replays instead of conflicting", () => {
+  const f = createFixture();
+  try {
+    const command = {
+      body: "Room announcement",
+      idempotencyKey: "membership-retry",
+      roomId: f.room.roomId,
+    };
+    const posted = f.kernel.postRoomMessage(f.humanActor, command);
+    const added = f.kernel.provisionPrincipal({
+      handle: "late-agent",
+      kind: "agent",
+    });
+    f.kernel.addMember(f.humanActor, {
+      principalId: added.principal.principalId,
+      roomId: f.room.roomId,
+    });
+    const replay = f.kernel.postRoomMessage(f.humanActor, command);
+    assert.equal(replay.deduplicated, true);
+    assert.deepEqual(replay.event, posted.event);
+    f.kernel.removeRoomMember(f.humanActor, {
+      basedOnRoomSeq: f.kernel.sync(f.humanActor, {
+        consumerId: "remover",
+        roomId: f.room.roomId,
+      }).latestRoomSeq,
+      idempotencyKey: "remove-late-agent",
+      principalId: added.principal.principalId,
+      roomId: f.room.roomId,
+    });
+    const afterRemoval = f.kernel.postRoomMessage(f.humanActor, command);
+    assert.equal(afterRemoval.deduplicated, true);
+    assert.deepEqual(afterRemoval.event, posted.event);
+    assert.throws(
+      () =>
+        f.kernel.postRoomMessage(f.humanActor, {
+          ...command,
+          body: "A different announcement",
+        }),
+      IdempotencyConflictError,
     );
   } finally {
     f.kernel.close();

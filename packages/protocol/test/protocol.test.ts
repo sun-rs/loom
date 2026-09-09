@@ -59,6 +59,7 @@ import {
   WakeHintSchema,
   WorkerAcknowledgeRequestSchema,
   WorkerArtifactPrepareRequestSchema,
+  WORKER_MESSAGE_RESOLVE_NOT_FOUND_NEXT_ACTION,
   WorkerErrorResponseSchema,
   WorkerMessageMutationResponseSchema,
   WorkerMessagePostResponseSchema,
@@ -2040,5 +2041,54 @@ test("Worker Task query is narrow and returns the canonical projection", () => {
   assert.deepEqual(
     WorkerTaskInputStatusResponseSchema.parse({ inputRequest: null }),
     { inputRequest: null },
+  );
+});
+
+/**
+ * Raft's failure body carries the recovery instruction as a typed field beside
+ * the code (`main.js@32524008`). The field is optional so a body written before
+ * it existed still parses, and so a situation with no upstream guidance can
+ * carry none rather than carrying invented prose.
+ */
+test("a Worker error body may carry a recovery instruction, and parses without one", () => {
+  assert.deepEqual(
+    WorkerErrorResponseSchema.parse({
+      error: { code: "not_found", message: "message is unavailable" },
+    }),
+    { error: { code: "not_found", message: "message is unavailable" } },
+  );
+  const withAction = WorkerErrorResponseSchema.parse({
+    error: {
+      code: "not_found",
+      message: "message is unavailable",
+      suggestedNextAction: WORKER_MESSAGE_RESOLVE_NOT_FOUND_NEXT_ACTION,
+    },
+  });
+  assert.equal(
+    withAction.error.suggestedNextAction,
+    WORKER_MESSAGE_RESOLVE_NOT_FOUND_NEXT_ACTION,
+  );
+  assert.match(
+    WORKER_MESSAGE_RESOLVE_NOT_FOUND_NEXT_ACTION,
+    /^Use rah worker message-search to find the message, or rah worker message-read --around only when you want nearby context rather than proof that this id exists\.$/u,
+  );
+  assert.throws(() =>
+    WorkerErrorResponseSchema.parse({
+      error: { code: "not_found", message: "m", suggestedNextAction: "" },
+    }),
+  );
+  assert.throws(() =>
+    WorkerErrorResponseSchema.parse({
+      error: {
+        code: "not_found",
+        message: "m",
+        suggestedNextAction: "x".repeat(4_001),
+      },
+    }),
+  );
+  assert.throws(() =>
+    WorkerErrorResponseSchema.parse({
+      error: { code: "not_found", message: "m", next_action: "wrong name" },
+    }),
   );
 });

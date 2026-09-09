@@ -66,6 +66,7 @@ import {
   WorkerMessageAttachmentUploadSchema,
   WorkerMessageAttachmentCancelRequestSchema,
   WorkerErrorResponseSchema,
+  WORKER_MESSAGE_RESOLVE_NOT_FOUND_NEXT_ACTION,
   WorkerMessagePostResponseSchema,
   WorkerMessagePostRequestSchema,
   WorkerReminderCancelRequestSchema,
@@ -183,6 +184,46 @@ class HttpRequestError extends Error {
     this.code = code;
     this.status = status;
   }
+}
+
+/**
+ * Raft attaches a recovery instruction where it knows both the command and the
+ * failure, and attaches none anywhere else — `apiFailureError` passes the
+ * server's own `suggestedNextAction` through untouched and invents nothing
+ * (`main.js@29998456`). RAH's dispatch is the place that knows both, so the
+ * table below is keyed the same way Raft's per-command mappers are: route plus
+ * stable code. It holds only rows whose upstream wording survives the move.
+ *
+ * Deliberately absent, with the evidence for each absence:
+ *
+ * - `execution_fenced`, `causal_cursor_not_delivered`, `cursor_not_delivered`,
+ *   `stale_context`, `delivery_not_proven`, `runtime_termination_not_proven`,
+ *   `task_not_submitted`: RAH-only fences. Raft has no code covering the same
+ *   situation, and its nearest text ("rerun the task claim command if it is
+ *   still correct", `main.js@32650425`) both belongs to a hold that exits 0
+ *   and carries a judgment clause, so it is not portable here.
+ * - `forbidden` on `/v1/worker/tasks/delete`: Raft's 403 guidance names a
+ *   server admin and a "close it instead" path (`main.js@32672815`); RAH's
+ *   Worker delete admits neither, and its 403 also covers two non-authority
+ *   refusals, so upstream's sentence would misstate RAH.
+ * - `not_found` on every other read route: Raft's `mapReadFailure` passes the
+ *   server's action through and supplies no literal (`main.js@30186333`).
+ */
+const WORKER_ERROR_NEXT_ACTIONS: Readonly<
+  Record<string, Readonly<Record<string, string>>>
+> = {
+  "/v1/worker/messages/resolve": {
+    not_found: WORKER_MESSAGE_RESOLVE_NOT_FOUND_NEXT_ACTION,
+  },
+};
+
+function suggestedNextActionFor(
+  route: string | undefined,
+  code: string,
+): { suggestedNextAction?: string } {
+  const action =
+    route === undefined ? undefined : WORKER_ERROR_NEXT_ACTIONS[route]?.[code];
+  return action === undefined ? {} : { suggestedNextAction: action };
 }
 
 const MAX_BODY_BYTES = 128 * 1_024;
@@ -312,7 +353,7 @@ export class WorkerApplicationService {
 
     const server = createServer((request, response) => {
       void this.#handle(request, response).catch((error: unknown) => {
-        this.#writeError(response, error);
+        this.#writeError(response, error, request.url);
       });
     });
     server.requestTimeout = 120_000;
@@ -1463,7 +1504,11 @@ export class WorkerApplicationService {
     return grant;
   }
 
-  #writeError(response: ServerResponse, error: unknown): void {
+  #writeError(
+    response: ServerResponse,
+    error: unknown,
+    route?: string | undefined,
+  ): void {
     if (response.headersSent) {
       response.destroy();
       return;
@@ -1476,7 +1521,11 @@ export class WorkerApplicationService {
         response,
         error.status,
         WorkerErrorResponseSchema.parse({
-          error: { code: error.code, message: error.message },
+          error: {
+            code: error.code,
+            message: error.message,
+            ...suggestedNextActionFor(route, error.code),
+          },
         }),
       );
       return;
@@ -1494,7 +1543,11 @@ export class WorkerApplicationService {
         response,
         status,
         WorkerErrorResponseSchema.parse({
-          error: { code: error.code, message: error.message },
+          error: {
+            code: error.code,
+            message: error.message,
+            ...suggestedNextActionFor(route, error.code),
+          },
         }),
       );
       return;

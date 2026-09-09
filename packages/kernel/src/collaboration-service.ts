@@ -1592,15 +1592,10 @@ export class CollaborationService {
     if (input.idempotencyKey.trim().length === 0) {
       throw new Error("idempotencyKey is required");
     }
-    const recipients = this.#normalizeRecipients(
-      input.roomId,
-      actor.principalId,
-      input.recipients,
-    );
-    const recipientPayload = recipients.map((recipient) => ({
-      participantId: recipient.participantId,
-      reason: recipient.reason,
-    }));
+    // The replay decision compares only what the caller authored — body, target
+    // and attachments. The recipient set is derived from Room membership at
+    // append time, so a join or a leave between the original post and an
+    // identical retry must replay the original event, not raise a conflict.
     const previous = this.#database
       .prepare(
         "SELECT * FROM room_events WHERE room_id = ? AND idempotency_key = ?",
@@ -1614,9 +1609,7 @@ export class CollaborationService {
         event.payload.threadId !== undefined ||
         event.payload.body !== body ||
         JSON.stringify(event.payload.attachments ?? []) !==
-          JSON.stringify(attachments) ||
-        JSON.stringify(event.payload.recipients) !==
-          JSON.stringify(recipientPayload)
+          JSON.stringify(attachments)
       ) {
         throw new IdempotencyConflictError(
           `idempotency key ${input.idempotencyKey} was already used for another mutation`,
@@ -1624,6 +1617,15 @@ export class CollaborationService {
       }
       return { activationIds: [], deduplicated: true, event };
     }
+    const recipients = this.#normalizeRecipients(
+      input.roomId,
+      actor.principalId,
+      input.recipients,
+    );
+    const recipientPayload = recipients.map((recipient) => ({
+      participantId: recipient.participantId,
+      reason: recipient.reason,
+    }));
     this.#assertFreshContext(input.roomId, actor, input.basedOnRoomSeq);
     const messageId = this.#createId("message");
     const createdAt = this.#timestamp();

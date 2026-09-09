@@ -369,25 +369,37 @@ test("idempotent retry does not duplicate any derived state", () => {
   kernel.close();
 });
 
-test("an idempotency key cannot be reused with different recipients", () => {
+// The recipient set of a Room post is a server-derived delivery snapshot taken
+// from Room membership at append time, so it is not part of the identity of the
+// logical send: a reused key replays the original event instead of conflicting.
+// The fence that matters is preserved — the replay appends nothing and never
+// delivers to a recipient the original send did not reach.
+test("an idempotency key reused with different recipients replays without new delivery", () => {
   const { agent, humanActor, kernel, otherAgent, otherAgentActor, room } =
     createFixture();
 
-  kernel.postMessage(humanActor, {
+  const posted = kernel.postMessage(humanActor, {
     body: "Inspect this",
     idempotencyKey: "recipient-sensitive-key",
     recipients: [{ participantId: agent.principalId, reason: "mention" }],
     roomId: room.roomId,
   });
 
+  const replay = kernel.postMessage(humanActor, {
+    body: "Inspect this",
+    idempotencyKey: "recipient-sensitive-key",
+    recipients: [{ participantId: otherAgent.principalId, reason: "mention" }],
+    roomId: room.roomId,
+  });
+  assert.equal(replay.deduplicated, true);
+  assert.deepEqual(replay.event, posted.event);
+  assert.deepEqual(replay.activationIds, []);
   assert.throws(
     () =>
       kernel.postMessage(humanActor, {
-        body: "Inspect this",
+        body: "A different body",
         idempotencyKey: "recipient-sensitive-key",
-        recipients: [
-          { participantId: otherAgent.principalId, reason: "mention" },
-        ],
+        recipients: [{ participantId: agent.principalId, reason: "mention" }],
         roomId: room.roomId,
       }),
     IdempotencyConflictError,
