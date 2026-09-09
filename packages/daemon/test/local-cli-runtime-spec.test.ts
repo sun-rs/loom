@@ -70,7 +70,9 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
   );
   assert.match(
     prompt,
-    /After task-claim-message succeeds.*event\.roomSeq.*task-start.*task-progress.*task-submit/isu,
+    // The claim acknowledges in Raft's text, so the prompt points at the
+    // printed claim line rather than at a JSON field.
+    /After task-claim-message succeeds.*claimed` line it prints.*task-start.*task-progress.*task-submit/isu,
   );
   assert.doesNotMatch(
     prompt,

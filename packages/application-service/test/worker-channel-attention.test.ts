@@ -183,18 +183,16 @@ test("Agent self mute suppresses ordinary future Channel delivery, preserves men
         .status,
       409,
     );
-    const unmuted = JSON.parse(
-      (
-        await f.cli([
-          "channel-unmute",
-          "--based-on-room-seq",
-          String(muted.body.event.roomSeq),
-          "--idempotency-key",
-          "unmute",
-        ])
-      ).stdout,
-    );
-    assert.equal(unmuted.activityMuted, false);
+    // Raft's `channel mute|unmute` acknowledges in text
+    // (`formatChannelMuteResult`, `main.js@30113763`).
+    const unmuted = await f.cli([
+      "channel-unmute",
+      "--based-on-room-seq",
+      String(muted.body.event.roomSeq),
+      "--idempotency-key",
+      "unmute",
+    ]);
+    assert.match(unmuted.stdout, /^Activity muted: no$/mu, unmuted.stderr);
     assert.ok(f.delivered(f.post("resumed").event.eventId));
     assert.equal(f.delivered(ordinary.event.eventId), undefined);
     const replay = await f.call("channels/mute", command);
@@ -363,18 +361,14 @@ test("Muted Channel does not affect canonical DM, Human settings, or typed compl
   const f = await fixture();
   try {
     const prefs = f.db.prepare("SELECT * FROM human_sidebar_preferences").all();
-    const mute = JSON.parse(
-      (
-        await f.cli([
-          "channel-mute",
-          "--based-on-room-seq",
-          String(f.activation.toSeq),
-          "--idempotency-key",
-          "mute",
-        ])
-      ).stdout,
-    );
-    assert.equal(mute.activityMuted, true);
+    const mute = await f.cli([
+      "channel-mute",
+      "--based-on-room-seq",
+      String(f.activation.toSeq),
+      "--idempotency-key",
+      "mute",
+    ]);
+    assert.match(mute.stdout, /^Activity muted: yes$/mu, mute.stderr);
     assert.deepEqual(
       f.db.prepare("SELECT * FROM human_sidebar_preferences").all(),
       prefs,
@@ -727,28 +721,29 @@ test("targeted mute uses joined Channel context, preserves origin authority and 
       409,
     );
     const fresh = await f.call("rooms/read", { channel: "#second" });
-    const unmuted = JSON.parse(
-      (
-        await f.cli([
-          "channel-unmute",
-          "--target",
-          "#second",
-          "--context-receipt",
-          fresh.body.contextReceipt,
-          "--based-on-room-seq",
-          String(fresh.body.throughRoomSeq),
-          "--idempotency-key",
-          "target-unmute",
-        ])
-      ).stdout,
-    );
-    assert.equal(unmuted.activityMuted, false);
+    const unmuted = await f.cli([
+      "channel-unmute",
+      "--target",
+      "#second",
+      "--context-receipt",
+      fresh.body.contextReceipt,
+      "--based-on-room-seq",
+      String(fresh.body.throughRoomSeq),
+      "--idempotency-key",
+      "target-unmute",
+    ]);
+    assert.match(unmuted.stdout, /^Unmuted #second\.$/mu, unmuted.stderr);
+    assert.match(unmuted.stdout, /^Activity muted: no$/mu);
     const next = f.kernel.postRoomMessage(f.actor, {
       roomId: target.roomId,
       body: "Resumed",
       recipients: [],
       idempotencyKey: "resumed-target",
-      basedOnRoomSeq: unmuted.event.roomSeq,
+      basedOnRoomSeq: Number(
+        f.db
+          .prepare("SELECT next_seq-1 AS n FROM rooms WHERE room_id=?")
+          .get(target.roomId)!.n,
+      ),
     });
     assert.ok(f.delivered(next.event.eventId));
     // Simulate a revoked membership at the authority boundary. Public leave

@@ -27,19 +27,19 @@
     "deferred-scope"
   ],
   "ratchet": {
-    "unjustified": 142,
+    "unjustified": 113,
     "undecidable": 0,
     "missingNonDeferred": 63,
-    "outputSurfaceUnjustified": 75,
+    "outputSurfaceUnjustified": 46,
     "outputSurfaceMissingNonDeferred": 30,
     "promptJudgmentParagraphs": 0
   },
   "ratchetNotes": {
-    "unjustified": "Falls when RAH replicates the Raft contract, and equally when a row is re-adjudicated. A drop is not repair unless a commit changed a surface. It stood at 80 while the registry covered only the CLI-surface and prompt-sections inventories; the 2026-09-09 pass that registered the output and error inventory added 88 unjustified rows without repairing anything, so it now measures 168 unreplicated Agent-facing divergences. The rise is bookkeeping: lowering it while adding rows would have hidden the newly registered debt. The 2026-09-09 read-family pass closed 13 of them by porting Raft's own renderers — nine output-format rows and four output rows — leaving 155. Three of the four output rows are recorded justified rather than aligned because RAH prints canonical ledger ids where formatMessageLine slices to eight characters, and one output row was split so room-read's kept context receipt could be declared instead of hidden inside an aligned row. The 2026-09-09 prompt pass closed the 12 registered `prompt-paragraph` judgment rows by porting the upstream sections they were compensating for, leaving 143. It is 142 after `cli.worker.room-resolve` was re-adjudicated aligned rather than repaired: `resolveChannel` is an Agent-credential route Raft exposes to its Agent client, and RAH's activation-scoped CLI is the only Agent carrier RAH has, so the command is that route in that carrier. The same pass made it match the route's writable-target contract, so the re-adjudication is not a bare reclassification.",
+    "unjustified": "Falls when RAH replicates the Raft contract, and equally when a row is re-adjudicated. A drop is not repair unless a commit changed a surface. It stood at 80 while the registry covered only the CLI-surface and prompt-sections inventories; the 2026-09-09 pass that registered the output and error inventory added 88 unjustified rows without repairing anything, so it now measures 168 unreplicated Agent-facing divergences. The rise is bookkeeping: lowering it while adding rows would have hidden the newly registered debt. The 2026-09-09 read-family pass closed 13 of them by porting Raft's own renderers — nine output-format rows and four output rows — leaving 155. Three of the four output rows are recorded justified rather than aligned because RAH prints canonical ledger ids where formatMessageLine slices to eight characters, and one output row was split so room-read's kept context receipt could be declared instead of hidden inside an aligned row. The 2026-09-09 prompt pass closed the 12 registered `prompt-paragraph` judgment rows by porting the upstream sections they were compensating for, leaving 143. It is 142 after `cli.worker.room-resolve` was re-adjudicated aligned rather than repaired: `resolveChannel` is an Agent-credential route Raft exposes to its Agent client, and RAH's activation-scoped CLI is the only Agent carrier RAH has, so the command is that route in that carrier. The same pass made it match the route's writable-target contract, so the re-adjudication is not a bare reclassification. The 2026-09-09 default-output pass closed 29 more by porting Raft's mutation acknowledgements — 24 output-format rows (the fourteen Task mutations, the six reminder commands, message-react, channel-mute, channel-unmute and thread-unfollow) and five output rows — leaving 113. All five output rows are recorded justified rather than aligned, each naming the ledger field it keeps: full canonical ids, the lease bound in place of Raft's claimedAt, the amendment event's Room sequence in place of a Task revision counter, and the mute result's absent server-authored attention block.",
     "undecidable": "Counts rows whose Raft-side claim rests on the closed Raft Server rather than on the client contract or the extracted CLI. It may rise only when a new Agent-facing surface is added whose upstream behaviour is Server-held, never by reclassifying a row that already has client-side evidence. It must fall the moment Server evidence becomes available: every row it covers is then re-adjudicated aligned, justified or unjustified. It stands at 0 because all 211 rows cite either packages/shared/src/agentApiContract.ts or the extracted Computer CLI and prompt compiler.",
     "missingNonDeferred": "Falls when RAH ports the Raft surface. Deferred absences are excluded and must name a constraint instead. It rose from 33 to 63 when the output and error inventory was registered; the 30 new rows are absences that were always there and had no row to sit in. It rose to 64 on 2026-09-09 when `prompt.standing.start-new-dm` registered that an Agent cannot open a Direct Room; the rise is a newly registered gap, not a regression. It is 63: the same day's DM pass closed that row by letting an Agent open a Direct Room with a peer it already shares a Room with.",
     "promptJudgmentParagraphs": "Counts standing-prompt paragraphs classified `judgment` whose needles are still present in packages/daemon/src/standing-prompt-compiler.ts. It stood at 14 with 12 rows registered; the 2026-09-09 pass ported Raft's startup sequence, credential hygiene, reminders, channel awareness, communication style, live constraints and the two formatting sections, then removed all 12 judgment paragraphs — three of them restated as mechanical facts about the tool. It is 0: any new self-authored judgment rule fails the check immediately.",
-    "outputSurfaceUnjustified": "The output and error share of `unjustified`, over kinds output, error-code and output-format. It exists so the surface that lost a real reply cannot hide inside a whole-registry total: it can only fall by replicating an output contract, never by adding rows elsewhere. It stood at 88 when the inventory was registered. The read-family pass closed 13 — nine output-format rows (sync, room-read, message-read, message-resolve, room-members, server-info, task-list, task-history, version) and four output rows (message-read, message-check, message-resolve, version) — leaving 75: 46 of the systemic format divergence, 20 error codes whose recovery guidance RAH still does not carry, and 9 command results whose rendering diverges.",
+    "outputSurfaceUnjustified": "The output and error share of `unjustified`, over kinds output, error-code and output-format. It exists so the surface that lost a real reply cannot hide inside a whole-registry total: it can only fall by replicating an output contract, never by adding rows elsewhere. It stood at 88 when the inventory was registered. The read-family pass closed 13 — nine output-format rows (sync, room-read, message-read, message-resolve, room-members, server-info, task-list, task-history, version) and four output rows (message-read, message-check, message-resolve, version) — leaving 75: 46 of the systemic format divergence, 20 error codes whose recovery guidance RAH still does not carry, and 9 command results whose rendering diverges. The default-output pass closed 29 more — 24 output-format rows (the fourteen Task mutations, the six reminder commands, message-react, channel-mute, channel-unmute, thread-unfollow) and five output rows (task claim success, the remaining Task commands, the reminder commands, message-react, and the channel/server views) — leaving 46: 22 of the systemic format divergence, 20 error codes whose recovery guidance RAH still does not carry, and 4 command results whose rendering diverges.",
     "outputSurfaceMissingNonDeferred": "The output and error share of `missingNonDeferred`. Of the 30, 8 are Agent-visible outcomes RAH never produces (the missed-messages section, the drive-by tip, SEND_DRAFT_NOT_FOUND, the stdin-window diagnostic, mention partial delivery, the two Task freshness holds and reminder ack) and 22 are Raft cliError codes with no RAH site."
   },
   "ambiguities": [
@@ -4271,11 +4271,12 @@
       },
       "format": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
-      "verdict": "unjustified",
+      "verdict": "justified",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表一 row 19."
+      "note": "output-errors 表一 row 19, closed with one declared divergence: message-react writes Raft’s `Reaction <emoji> added to|removed from message <id>.` line on stdout, with the whole canonical message id where upstream slices it to 8, because `--message-id` takes the canonical id and RAH has no short-id resolver.",
+      "constraint": "sqlite-ledger"
     },
     {
       "id": "output.task.claim-success",
@@ -4304,11 +4305,12 @@
       },
       "format": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
-      "verdict": "unjustified",
+      "verdict": "justified",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表一 row 20."
+      "note": "output-errors 表一 row 20, closed with declared divergences: task-claim and task-claim-message render formatClaimResults on stdout with the same header, per-Task `claimed` rows and follow-up hints. Raft claims every --number in one request and rows a failure inline; RAH sends one request per Task and a refused claim is a raised CliError, so only the successful rows reach the renderer. `msg:` carries the whole canonical message id where upstream slices it to 8, and the follow-up hint is `message-post --thread-id <threadId>` because RAH addresses a Thread by its canonical id rather than by `#channel:<msg8>`.",
+      "constraint": "sqlite-ledger"
     },
     {
       "id": "output.task.claim-freshness-hold",
@@ -4397,11 +4399,12 @@
       },
       "format": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
-      "verdict": "unjustified",
+      "verdict": "justified",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表一 row 23: formatTaskList2/formatMyTaskList and formatTaskHistory are ported — `task-list` and `task-history` now render text, and board lines keep `id=<taskId>` because RAH has no short-id resolver and `--task-id` is the handle that works across a `--mine` listing. The row stays unjustified for create/assign/unassign/unclaim/receipt/delete/convert, which still print JSON."
+      "note": "output-errors 表一 row 23, closed with declared divergences: task-create renders formatTasksCreated, task-assign formatTaskAssigned, task-release formatTaskUnclaimed, task-start/progress/block/request-input/submit/review formatTaskStatusUpdated (Raft’s `task update`), task-amend formatTaskAmended, task-convert formatTaskConverted and task-delete formatTaskDeleted, alongside the already-ported task-list and task-history. Three fields are named rather than silently dropped: created Task lines print `claimUntil=` because RAH’s ledger records the lease bound and has no claimedAt; the amendment headline names the recorded event’s Room sequence because RAH’s Task projection carries no revision counter; and every id is the whole canonical id, as RAH’s own flags take it. Raft’s resource-receipt suffix has no RAH counterpart because RAH has no --creates-resource gate.",
+      "constraint": "sqlite-ledger"
     },
     {
       "id": "output.reminder.commands",
@@ -4430,11 +4433,12 @@
       },
       "format": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
-      "verdict": "unjustified",
+      "verdict": "justified",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表一 row 24."
+      "note": "output-errors 表一 row 24, closed with two declared divergences: schedule/snooze/update render Raft’s three-line confirmation with its modify hint, list renders formatReminder rows including its OVERDUE marker, cancel renders formatReminderCanceled and log renders formatReminderLog. `#` carries the whole canonical reminder id because RAH’s `--id` takes it and there is no short-id resolver, and Raft’s optional `Warning:` line has no counterpart because RAH’s scheduler refuses the input Raft accepts with a warning instead of accepting it.",
+      "constraint": "sqlite-ledger"
     },
     {
       "id": "output.reminder.ack",
@@ -4626,11 +4630,12 @@
       },
       "format": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
-      "verdict": "unjustified",
+      "verdict": "justified",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表一 row 30: formatChannelMembers (32566172) and formatServerInfo (32588437) are ported — `room-members` and `server-info` now render text, and member lines keep `id=<participantId>` because `task-create --assignee` takes it. The row stays unjustified for its other two anchors, channel mute's writeText (30115284) and formatUnfollowThreadResult (32614502), which still print JSON."
+      "note": "output-errors 表一 row 30, closed with declared divergences across its four anchors: formatChannelMembers and formatServerInfo were ported for room-members and server-info, member lines keeping `id=<participantId>` because `task-create --assignee` takes it; channel-mute/unmute now render formatChannelMuteResult’s three lines, without its `attention` guidance block because RAH’s WorkerChannelAttentionResponse carries no server-authored guidance to print; and thread-unfollow now renders formatUnfollowThreadResult with RAH’s own command name in the re-follow reminder.",
+      "constraint": "sqlite-ledger"
     },
     {
       "id": "output.error.bootstrap-failure",
@@ -5856,15 +5861,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.reminder.list",
@@ -5879,15 +5884,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.reminder.cancel",
@@ -5902,15 +5907,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.reminder.snooze",
@@ -5925,15 +5930,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.reminder.update",
@@ -5948,15 +5953,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.reminder.log",
@@ -5971,15 +5976,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.worker.sync",
@@ -6109,15 +6114,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.worker.room-members",
@@ -6270,15 +6275,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.worker.channel-unmute",
@@ -6293,15 +6298,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.worker.thread-unfollow",
@@ -6316,15 +6321,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.worker.attachment-publish",
@@ -6454,15 +6459,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.worker.task-claim",
@@ -6477,15 +6482,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.worker.task-claim-message",
@@ -6500,15 +6505,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.worker.task-assign",
@@ -6523,15 +6528,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.worker.task-release",
@@ -6546,15 +6551,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.worker.task-start",
@@ -6569,15 +6574,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.worker.task-progress",
@@ -6592,15 +6597,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.worker.task-block",
@@ -6615,15 +6620,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.worker.task-request-input",
@@ -6638,15 +6643,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.worker.task-submit",
@@ -6661,15 +6666,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.worker.task-review",
@@ -6684,15 +6689,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.worker.task-amend",
@@ -6707,15 +6712,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.worker.task-convert",
@@ -6730,15 +6735,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.worker.task-delete",
@@ -6753,15 +6758,15 @@
       },
       "outputMode": {
         "raft": "text",
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": false,
         "rah": false
       },
-      "verdict": "unjustified",
+      "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch, and RAH now does the same: the ported renderer is named in packages/agent-host/src/worker-read-render.ts."
     },
     {
       "id": "output-format.agent.inbox.recheck",
@@ -7055,7 +7060,7 @@
       "raft": null,
       "outputMode": {
         "raft": null,
-        "rah": "json"
+        "rah": "text"
       },
       "jsonFlag": {
         "raft": null,
@@ -7063,7 +7068,7 @@
       },
       "verdict": "unjustified",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors 表三 excludes this command from its tally because Raft has no counterpart, so there is no upstream format to compare. It is registered here so the coverage rule can see every Agent-visible command, and it carries the verdict already adjudicated for the command itself by the CLI-surface inventory (unjustified); the JSON-only output is part of that same unreplicated addition, not a separate finding."
+      "note": "output-errors 表三 excludes this command from its tally because Raft has no counterpart, so there is no upstream format to compare. It is registered here so the coverage rule can see every Agent-visible command, and it carries the verdict already adjudicated for the command itself by the CLI-surface inventory (unjustified); the JSON-only output is part of that same unreplicated addition, not a separate finding. RAH now renders it with formatTaskStatusUpdated’s line shape, but re-rendering a command Raft does not have does not make it replicated."
     },
     {
       "id": "prompt.standing.start-new-dm",

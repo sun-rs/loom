@@ -226,23 +226,28 @@ test("Worker creator deletion uses current Room and execution authority; real CL
     const deleted = await f.call("tasks/delete", input);
     assert.equal(deleted.status, 200, JSON.stringify(deleted.body));
     assert.equal(deleted.body.deleted, true);
-    const replay = JSON.parse(
-      (
-        await f.cli([
-          "task-delete",
-          "--room-id",
-          input.roomId,
-          "--task-id",
-          input.taskId,
-          "--based-on-room-seq",
-          String(input.basedOnRoomSeq),
-          "--idempotency-key",
-          input.idempotencyKey,
-        ])
-      ).stdout,
+    // Raft's `task delete` acknowledges in text (`formatTaskDeleted`), so the
+    // Agent's own surface is read as text and the durable replay receipt is
+    // asserted where it lives, on the ledger response.
+    const replay = await f.cli([
+      "task-delete",
+      "--room-id",
+      input.roomId,
+      "--task-id",
+      input.taskId,
+      "--based-on-room-seq",
+      String(input.basedOnRoomSeq),
+      "--idempotency-key",
+      input.idempotencyKey,
+    ]);
+    assert.equal(
+      replay.stdout.trim(),
+      `#${deleted.body.taskNumber} deleted.`,
+      replay.stderr,
     );
-    assert.equal(replay.event.eventId, deleted.body.event.eventId);
-    assert.equal(replay.deduplicated, true);
+    const receipt = await f.call("tasks/delete", input);
+    assert.equal(receipt.body.event.eventId, deleted.body.event.eventId);
+    assert.equal(receipt.body.deduplicated, true);
     assert.equal(
       (await f.call("tasks/delete", { ...input, taskId: "another" })).status,
       409,

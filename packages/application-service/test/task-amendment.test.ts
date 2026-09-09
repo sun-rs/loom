@@ -204,8 +204,14 @@ test("Worker noncreator amendment through HTTP and real Node CLI preserves owner
       "--idempotency-key",
       "clear",
     ]);
-    const cleared = JSON.parse(out.stdout);
-    assert.equal(cleared.task.description, undefined);
+    // Raft's `task amend` acknowledges in text (`formatTaskAmended`): the
+    // headline names the recorded event and a cleared description renders as
+    // `details: <none>`.
+    assert.match(out.stdout, /^details: <none>$/mu, out.stderr);
+    const clearedSeq = Number(
+      /amended — event seq (\d+)\./u.exec(out.stdout)?.[1],
+    );
+    assert.ok(Number.isInteger(clearedSeq), out.stdout);
     const history = renderedPayloads(
       (await f.cli(["task-history", "--task-id", input.taskId])).stdout,
     );
@@ -217,7 +223,7 @@ test("Worker noncreator amendment through HTTP and real Node CLI preserves owner
       (
         await f.call("tasks/claim", {
           taskId: input.taskId,
-          basedOnRoomSeq: cleared.event.roomSeq,
+          basedOnRoomSeq: clearedSeq,
           idempotencyKey: "steal",
         })
       ).status,

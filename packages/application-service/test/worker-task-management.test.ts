@@ -422,52 +422,44 @@ test("real Node child converts a Message, assigns and clears its Task, and reads
       );
       return result.stdout;
     };
-    const invoke = async (args: string[]) => JSON.parse(await invokeText(args));
-    const converted = WorkerTaskMutationResponseSchema.parse(
-      await invoke([
-        "task-convert",
-        "--message-id",
-        f.source.event.aggregateId,
-        "--based-on-room-seq",
-        String(f.activation.toSeq),
-        "--idempotency-key",
-        "child-convert",
-      ]),
-    );
-    const assigned = WorkerTaskMutationResponseSchema.parse(
-      await invoke([
-        "task-assign",
-        "--task-id",
-        converted.task.taskId,
-        "--assignee",
-        f.helper.principal.principalId,
-        "--based-on-room-seq",
-        String(converted.event.roomSeq),
-        "--idempotency-key",
-        "child-assign",
-      ]),
-    );
-    const cleared = WorkerTaskMutationResponseSchema.parse(
-      await invoke([
-        "task-assign",
-        "--task-id",
-        converted.task.taskId,
-        "--unassign",
-        "--based-on-room-seq",
-        String(assigned.event.roomSeq),
-        "--idempotency-key",
-        "child-clear",
-      ]),
-    );
-    assert.equal(cleared.task.state, "todo");
-    assert.equal(cleared.task.claimedBy, undefined);
-    assert.equal(cleared.task.assigneeId, undefined);
-    // `task-history` renders Raft's `formatTaskHistory` event lines.
-    const history = await invokeText([
-      "task-history",
-      "--task-id",
-      converted.task.taskId,
+    // Raft's Task mutations acknowledge in text and carry neither cursor nor
+    // key, so the child drives them the way an Agent does: the conversion line
+    // names the Task number, and everything after it is addressed by that
+    // number in the channel.
+    const convertOutput = await invokeText([
+      "task-convert",
+      "--message-id",
+      f.source.event.aggregateId,
     ]);
+    const converted = /to task #(\d+) \[/u.exec(convertOutput);
+    assert.ok(converted, convertOutput);
+    const number = converted[1]!;
+    assert.match(convertOutput, /assignee=unassigned/u);
+    const address = ["--target", "#management", "--number", number];
+    assert.equal(
+      (
+        await invokeText([
+          "task-assign",
+          ...address,
+          "--assignee",
+          f.helper.principal.principalId,
+        ])
+      ).trim(),
+      `#${number} assigned to @${f.helper.principal.principalId}.`,
+    );
+    assert.equal(
+      (await invokeText(["task-assign", ...address, "--unassign"])).trim(),
+      `#${number} unassigned — now open.`,
+    );
+    const card = await invokeText(["task-get", ...address]);
+    const taskId = /^ID: (\S+)$/mu.exec(card)?.[1];
+    assert.ok(taskId, card);
+    assert.match(card, /^Status: todo$/mu);
+    assert.match(card, /^Assignee: \(unassigned\)$/mu);
+    assert.equal(/^Claimed by: /mu.test(card), false, card);
+    const threadId = /^Thread: (\S+)$/mu.exec(card)?.[1];
+    // `task-history` renders Raft's `formatTaskHistory` event lines.
+    const history = await invokeText(["task-history", "--task-id", taskId]);
     assert.deepEqual(
       [...history.matchAll(/^seq=\d+ .* type=(\S+)$/gmu)].map(
         (match) => match[1],
@@ -476,9 +468,9 @@ test("real Node child converts a Message, assigns and clears its Task, and reads
     );
     const current = f.kernel.getTask(f.actor, {
       roomId: f.room.roomId,
-      taskId: converted.task.taskId,
+      taskId,
     });
-    assert.equal(current.threadId, converted.task.threadId);
+    assert.equal(current.threadId, threadId);
     assert.equal(current.sourceMessageId, f.source.event.aggregateId);
     assert.equal(
       Number(

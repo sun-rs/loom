@@ -374,15 +374,15 @@ if (mode === "trajectory") {
       throw new Error("Worker search did not find the explicit probe message");
     const messageId = found.messages[0].messageId;
     // Raft's minimal toggle: the message, the emoji, and nothing else.
-    const reacted = cli([
-      "message-react",
-      "--message-id",
-      messageId,
-      "--emoji",
-      "👍",
-    ]);
-    if (reacted.reactions[0]?.count !== 1)
-      throw new Error("Worker reaction did not persist");
+    // Raft's `message react` acknowledges in text, naming the emoji, the
+    // direction and the message.
+    const reacted = execFileSync(
+      process.env.RAH_WORKER_CLI,
+      ["worker", "message-react", "--message-id", messageId, "--emoji", "👍"],
+      { encoding: "utf8" },
+    );
+    if (reacted.trim() !== `Reaction 👍 added to message ${messageId}.`)
+      throw new Error(`Worker reaction did not persist: ${reacted}`);
   }
   const requiredContextEventTypes = (
     process.env.RAH_FAKE_REQUIRED_CONTEXT_EVENT_TYPES ?? ""
@@ -549,7 +549,7 @@ if (mode === "trajectory") {
     }
   }
 
-  if (process.env.RAH_FAKE_PARENT_RESUME === "1" && readTool) {
+  if (process.env.RAH_FAKE_PARENT_RESUME === "1" && readText) {
     const resume = activationEvents.find(
       (event) =>
         event.type === "message.posted" &&
@@ -558,12 +558,13 @@ if (mode === "trajectory") {
     if (resume) {
       const taskId = /\[RESUME PARENT ([^\]]+)\]/u.exec(resume.payload.body)[1];
       // Raft-shaped: a Task command carries no cursor and no key.
-      const result = readTool(["task-unblock", "--task-id", taskId]);
-      if (result.task.state !== "todo")
-        throw new Error("unblock did not leave pending work");
+      // Task mutations acknowledge in text, as Raft's `task update` does.
+      const result = readText(["task-unblock", "--task-id", taskId]);
+      if (!/^#\d+ moved to todo\.$/mu.test(result))
+        throw new Error(`unblock did not leave pending work: ${result}`);
       let denied = false;
       try {
-        readTool(["task-claim", "--task-id", taskId]);
+        readText(["task-claim", "--task-id", taskId]);
       } catch (error) {
         denied = String(error.stderr).includes(
           "not linked in this Activation range",

@@ -13,6 +13,19 @@
  * - `formatTaskList2` / `formatMyTaskList` (`main.js@677419`/`@677441`)
  * - `formatTaskHistory` (`main.js@677573`), `formatChannelInfo` (`@675084`)
  * - `formatVersionInfo` (`main.js@673345`), `formatPageFooter` (`@675170`)
+ * - the Task mutation acknowledgements: `formatTasksCreated` (`@30201610`),
+ *   `formatClaimResults` (`@30203619`), `formatTaskAssigned` (`@30205071`),
+ *   `formatTaskUnclaimed` (`@30204972`), `formatTaskStatusUpdated`
+ *   (`@30205235`), `formatTaskAmended` (`@30205804`), `formatTaskConverted`
+ *   (`@30205418`) and `formatTaskDeleted` (`@30205339`)
+ * - the reminder family: `formatReminder` (`@30419136`),
+ *   `formatReminderScheduled` (`@30419620`), `formatReminderList` (`@30419909`),
+ *   `formatReminderCanceled` (`@30420079`), `formatReminderSnoozed`
+ *   (`@30420209`), `formatReminderUpdated` (`@30420412`), `formatReminderLog`
+ *   (`@30420697`) and `formatReminderType` (`@30421062`)
+ * - `formatChannelMuteResult` (`@30113763`), `formatSeq` (`@30113681`),
+ *   `formatUnfollowThreadResult` (`@30129287`) and `message react`'s success
+ *   line (`@32631422`)
  *
  * Two things are deliberately not copied, because copying them would take from
  * the Agent something RAH's ledger requires it to pass to a later command:
@@ -25,6 +38,10 @@
  *    takes a participant id, so member lines keep `id=<participantId>`, and
  *    `attachment-publish --context-receipt` needs the receipt `room-read`
  *    issues, so that line is kept too.
+ * 3. Raft's Task thread hints and its `task amend` line are addressed in RAH's
+ *    own terms: `message-post --thread-id <threadId>` in place of
+ *    `--target "#channel:<msg8>"`, and the amendment event's Room sequence in
+ *    place of a Task revision counter RAH's projection does not carry.
  *
  * Both are declared in docs/product/raft-parity-registry.json under the
  * sqlite-ledger constraint. Everything else is the upstream line shape.
@@ -645,6 +662,270 @@ function renderInputStatus(result: Json): string {
   } is ${asString(request.state) ?? "unknown"}.`;
 }
 
+// -------------------------------------------------------- task mutations --
+
+/**
+ * The Task line `formatTasksCreated` prints for each created Task
+ * (`main.js@30201610`). Upstream shows `claimedAt`; RAH's ledger records the
+ * lease bound instead, so the field is named for what it holds. There is no
+ * `--creates-resource` gate in RAH, so the resource-receipt suffix has no
+ * counterpart to print.
+ */
+function createdTaskLine(task: Json): string {
+  const assigneeId = asString(task.assigneeId);
+  return `#${asNumber(task.taskNumber) ?? "?"} [${taskStatus(task)}] assignee=${
+    assigneeId === undefined ? "unassigned" : `@${assigneeId}`
+  } claimUntil=${asString(task.claimUntil) ?? "null"} msg=${
+    asString(task.sourceMessageId) ?? "-"
+  } "${asString(task.title) ?? ""}"`;
+}
+
+/**
+ * `formatTasksCreated`'s thread hint (`main.js@30201610`) in RAH's own address
+ * form: upstream follows up with `--target "#channel:<msg8>"`, RAH's
+ * `message-post` addresses the same Thread by its canonical id.
+ */
+function threadHintLine(task: Json): string {
+  return `#${asNumber(task.taskNumber) ?? "?"} → rah worker message-post --thread-id ${
+    asString(task.threadId) ?? "-"
+  }`;
+}
+
+/** `formatTasksCreated` (`main.js@30201610`) over the one Task RAH creates. */
+function renderTaskCreated(result: Json): string {
+  const task = asRecord(result.task);
+  return [
+    `Created 1 task(s) in ${asString(task.roomId) ?? "this Room"}:`,
+    createdTaskLine(task),
+    "",
+    "To follow up in each task's thread:",
+    threadHintLine(task),
+  ].join("\n");
+}
+
+/**
+ * `formatClaimResults` (`main.js@30203619`). RAH sends one request per claimed
+ * Task, so the successful rows are gathered and rendered as the one result
+ * block Raft writes. A failed claim is a raised error on RAH's side and never
+ * reaches this renderer, so the failure rows have no counterpart here.
+ */
+export function renderWorkerTaskClaimResults(
+  results: readonly unknown[],
+): string {
+  const tasks = results.map((entry) => asRecord(asRecord(entry).task));
+  const lines = tasks.map(
+    (task) =>
+      `#${asNumber(task.taskNumber) ?? "?"} (msg:${
+        asString(task.sourceMessageId) ?? "-"
+      }): claimed`,
+  );
+  const hints = tasks.map((task) => threadHintLine(task)).join("\n");
+  return `Claim results (${tasks.length} claimed):\n${lines.join(
+    "\n",
+  )}\n\nFollow up in each task's thread:\n${hints}`;
+}
+
+/** `formatTaskAssigned` (`main.js@30205071`). */
+function renderTaskAssigned(result: Json): string {
+  const task = asRecord(result.task);
+  const assigneeId = asString(task.assigneeId);
+  const number = asNumber(task.taskNumber) ?? "?";
+  return assigneeId === undefined
+    ? `#${number} unassigned — now open.`
+    : `#${number} assigned to @${assigneeId}.`;
+}
+
+/** `formatTaskUnclaimed` (`main.js@30204972`), which is Raft's `task unclaim`. */
+function renderTaskReleased(result: Json): string {
+  return `#${asNumber(asRecord(result.task).taskNumber) ?? "?"} unclaimed — now open.`;
+}
+
+/** `formatTaskStatusUpdated` (`main.js@30205235`), which is Raft's `task update`. */
+function renderTaskStatusUpdated(result: Json): string {
+  const task = asRecord(result.task);
+  return `#${asNumber(task.taskNumber) ?? "?"} moved to ${taskStatus(task)}.`;
+}
+
+/**
+ * `formatTaskAmended` (`main.js@30205804`). Upstream names the Task revision;
+ * RAH's Task projection carries no revision counter, so the amendment is
+ * identified by the Room sequence of the event that recorded it, which is the
+ * ledger fact `task-history` shows for the same amendment.
+ */
+function renderTaskAmended(result: Json): string {
+  const task = asRecord(result.task);
+  const description = asString(task.description);
+  return [
+    `#${asNumber(task.taskNumber) ?? "?"} amended — event seq ${
+      asNumber(asRecord(result.event).roomSeq) ?? "-"
+    }.`,
+    `title: ${asString(task.title) ?? ""}`,
+    description === undefined
+      ? "details: <none>"
+      : `details:\n${description
+          .split("\n")
+          .map((line) => `  ${line}`)
+          .join("\n")}`,
+  ].join("\n");
+}
+
+/** `formatTaskConverted` (`main.js@30205418`). */
+function renderTaskConverted(result: Json): string {
+  const task = asRecord(result.task);
+  const assigneeId = asString(task.assigneeId);
+  return [
+    `Converted msg=${asString(task.sourceMessageId) ?? "-"} to task #${
+      asNumber(task.taskNumber) ?? "?"
+    } [${taskStatus(task)}] assignee=${
+      assigneeId === undefined ? "unassigned" : `@${assigneeId}`
+    } "${asString(task.title) ?? ""}"`,
+    "",
+    "To follow up in the task's thread:",
+    `rah worker message-post --thread-id ${asString(task.threadId) ?? "-"}`,
+  ].join("\n");
+}
+
+/** `formatTaskDeleted` (`main.js@30205339`). */
+function renderTaskDeleted(result: Json): string {
+  return `#${asNumber(result.taskNumber) ?? "?"} deleted.`;
+}
+
+// ------------------------------------------------------------- reminders --
+
+/** `MODIFY_HINT` (`main.js@32736620`), with RAH's command name. */
+const REMINDER_MODIFY_HINT =
+  "(to modify: snooze/update/cancel; rah reminder --help)";
+
+/** `formatReminderType` (`main.js@30421062`). */
+function reminderType(reminder: Json): string {
+  const recurrence = asRecord(reminder.recurrence);
+  const description = asString(recurrence.description);
+  return description === undefined
+    ? "(one-time)"
+    : `(recurring · ${description})`;
+}
+
+/**
+ * `formatReminder` (`main.js@30419136`). Upstream slices the reminder id to
+ * eight characters and resolves it server-side; RAH's `--id` takes the
+ * canonical ledger id, so the id is printed in full.
+ */
+function reminderLine(reminder: Json, now: Date): string {
+  const status = asString(reminder.status) ?? "unknown";
+  const fireAt = asString(reminder.fireAt);
+  const timeField =
+    status === "fired"
+      ? `fired_at=${asString(reminder.firedAt) ?? fireAt ?? "-"}`
+      : `next=${fireAt ?? "-"}`;
+  const fireAtMs = fireAt === undefined ? Number.NaN : Date.parse(fireAt);
+  const overdue =
+    status === "scheduled" &&
+    Number.isFinite(fireAtMs) &&
+    fireAtMs < now.getTime();
+  const messageId = asString(reminder.msgId);
+  return `#${asString(reminder.reminderId) ?? "-"} [${status}] ${reminderType(
+    reminder,
+  )} ${timeField}${overdue ? " OVERDUE" : ""} "${
+    asString(reminder.title) ?? ""
+  }"${messageId === undefined ? "" : ` ref=${messageId}`}`;
+}
+
+/** `formatReminderList` (`main.js@30419909`). */
+function renderReminderList(result: Json, now: Date): string {
+  const reminders = asArray(result.reminders).map(asRecord);
+  if (reminders.length === 0) return "No reminders.";
+  return reminders.map((reminder) => reminderLine(reminder, now)).join("\n");
+}
+
+/**
+ * `formatReminderScheduled` / `formatReminderSnoozed` / `formatReminderUpdated`
+ * (`main.js@30419620`, `@30420209`, `@30420412`): one headline, the next fire
+ * time and the modify hint. Raft's optional `Warning:` line reports a timezone
+ * its own scheduler could not honour; RAH's scheduler rejects that input
+ * instead of accepting it with a warning, so there is no line to print.
+ */
+function reminderConfirmation(headline: string, reminder: Json): string {
+  return [
+    `${headline}: #${asString(reminder.reminderId) ?? "-"} ${reminderType(
+      reminder,
+    )} "${asString(reminder.title) ?? ""}"`,
+    `Next: ${asString(reminder.fireAt) ?? "-"}`,
+    REMINDER_MODIFY_HINT,
+  ].join("\n");
+}
+
+/** `formatReminderCanceled` (`main.js@30420079`). */
+function renderReminderCanceled(reminder: Json): string {
+  return `Reminder canceled: #${asString(reminder.reminderId) ?? "-"} [${
+    asString(reminder.status) ?? "unknown"
+  }] "${asString(reminder.title) ?? ""}"`;
+}
+
+/** `formatReminderLog` (`main.js@30420697`). */
+function renderReminderLog(result: Json): string {
+  const events = asArray(result.events).map(asRecord);
+  if (events.length === 0) return "No reminder events.";
+  return events
+    .map((event) => {
+      const actorId = asString(event.actorId);
+      const nextFireAt = asString(event.nextFireAt);
+      return `${asString(event.occurredAt) ?? "-"} ${(
+        asString(event.eventType) ?? "unknown"
+      ).toUpperCase()} by ${asString(event.actorType) ?? "unknown"}${
+        actorId === undefined ? "" : `:${actorId}`
+      } next=${nextFireAt ?? "none"}`;
+    })
+    .join("\n");
+}
+
+// ----------------------------------------------------- channel attention --
+
+/** `formatSeq` (`main.js@30113681`). */
+const formatSeq = (value: unknown) =>
+  value === null || value === undefined ? "none" : String(value);
+
+/**
+ * `formatChannelMuteResult` (`main.js@30113763`). Upstream's `attention` block
+ * is server-authored guidance that RAH's response does not carry, so only the
+ * three lines it always writes have a counterpart here.
+ */
+function renderChannelAttention(body: Json, result: Json): string {
+  const target =
+    asString(body.channel) ?? asString(result.roomId) ?? "this Room";
+  const muted = result.activityMuted === true;
+  return [
+    `${muted ? "Muted" : "Unmuted"} ${target}.`,
+    `Activity muted: ${muted ? "yes" : "no"}`,
+    `Mute from seq: ${formatSeq(result.muteFromSeq)}`,
+  ].join("\n");
+}
+
+/** `formatUnfollowThreadResult` (`main.js@30129287`), with RAH's command name. */
+function renderThreadUnfollow(body: Json, result: Json): string {
+  const target =
+    asString(body.channel) ?? asString(result.threadId) ?? "this thread";
+  return [
+    `Unfollowed ${target}. Ordinary delivery for this thread has stopped.`,
+    `A later personal @mention arrives and re-follows you; that delivery reminds you to run: rah worker thread-unfollow --target ${JSON.stringify(
+      target,
+    )}`,
+    "Posting in this thread re-follows you automatically.",
+  ].join("\n");
+}
+
+/**
+ * `raft message react`'s success line (`main.js@32631422`). Upstream slices the
+ * message id to eight characters; RAH prints the canonical id its own
+ * `--message-id` takes.
+ */
+function renderMessageReaction(body: Json, result: Json): string {
+  const emoji = asString(body.emoji) ?? "-";
+  const verb = body.active === false ? "removed from" : "added to";
+  return `Reaction ${emoji} ${verb} message ${
+    asString(result.messageId) ?? asString(body.messageId) ?? "-"
+  }.`;
+}
+
 /** `formatVersionInfo` (`main.js@673345`). */
 function renderVersion(result: Json): string {
   const carrier = asRecord(result.cliCarrier);
@@ -663,20 +944,55 @@ function renderVersion(result: Json): string {
  * of the four commands that call `writeJson` unconditionally (`main.js@32532731`).
  */
 const RENDERERS: Record<string, (body: Json, result: Json) => string> = {
+  "/v1/worker/channels/mute": renderChannelAttention,
+  "/v1/worker/channels/unmute": renderChannelAttention,
   "/v1/worker/messages/history": (_body, result) => renderHistory(result),
+  "/v1/worker/messages/react": renderMessageReaction,
   "/v1/worker/messages/resolve": (_body, result) =>
     renderMessageResolve(result),
+  "/v1/worker/reminders/cancel": (_body, result) =>
+    renderReminderCanceled(asRecord(result.reminder)),
+  "/v1/worker/reminders/list": (_body, result) =>
+    renderReminderList(result, new Date()),
+  "/v1/worker/reminders/log": (_body, result) => renderReminderLog(result),
+  "/v1/worker/reminders/schedule": (_body, result) =>
+    reminderConfirmation("Reminder scheduled", asRecord(result.reminder)),
+  "/v1/worker/reminders/snooze": (_body, result) =>
+    reminderConfirmation("Reminder snoozed", asRecord(result.reminder)),
+  "/v1/worker/reminders/update": (_body, result) =>
+    reminderConfirmation("Reminder updated", asRecord(result.reminder)),
   "/v1/worker/room/members": (_body, result) => renderMembers(result),
   "/v1/worker/rooms/list": (_body, result) => renderRoomList(result),
   "/v1/worker/rooms/read": (_body, result) => renderRoomRead(result),
   "/v1/worker/server/info": (_body, result) => renderServerInfo(result),
   "/v1/worker/sync": (_body, result) => renderSync(result),
+  "/v1/worker/tasks/amend": (_body, result) => renderTaskAmended(result),
+  "/v1/worker/tasks/assign": (_body, result) => renderTaskAssigned(result),
+  "/v1/worker/tasks/block": (_body, result) => renderTaskStatusUpdated(result),
+  "/v1/worker/tasks/claim": (_body, result) =>
+    renderWorkerTaskClaimResults([result]),
+  "/v1/worker/tasks/claim-message": (_body, result) =>
+    renderWorkerTaskClaimResults([result]),
+  "/v1/worker/tasks/convert": (_body, result) => renderTaskConverted(result),
+  "/v1/worker/tasks/create": (_body, result) => renderTaskCreated(result),
+  "/v1/worker/tasks/delete": (_body, result) => renderTaskDeleted(result),
   "/v1/worker/tasks/get": (_body, result) => renderTaskGet(result),
   "/v1/worker/tasks/history": (_body, result) => renderTaskHistory(result),
   "/v1/worker/tasks/input-status": (_body, result) => renderInputStatus(result),
   "/v1/worker/tasks/list": renderTaskList,
+  "/v1/worker/tasks/progress": (_body, result) =>
+    renderTaskStatusUpdated(result),
+  "/v1/worker/tasks/release": (_body, result) => renderTaskReleased(result),
+  "/v1/worker/tasks/request-input": (_body, result) =>
+    renderTaskStatusUpdated(result),
+  "/v1/worker/tasks/review": (_body, result) => renderTaskStatusUpdated(result),
+  "/v1/worker/tasks/start": (_body, result) => renderTaskStatusUpdated(result),
   "/v1/worker/tasks/submission": (_body, result) =>
     renderTaskSubmission(result),
+  "/v1/worker/tasks/submit": (_body, result) => renderTaskStatusUpdated(result),
+  "/v1/worker/tasks/unblock": (_body, result) =>
+    renderTaskStatusUpdated(result),
+  "/v1/worker/threads/unfollow": renderThreadUnfollow,
   "/v1/worker/version": (_body, result) => renderVersion(result),
 };
 

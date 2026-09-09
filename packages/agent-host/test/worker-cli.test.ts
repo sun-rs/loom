@@ -2022,7 +2022,10 @@ test("--number repeats on task-claim alone and claims each Task in turn", async 
         { channel: "#build", taskNumber: 2 },
       ],
     );
-    assert.equal(state.stdout().trim().split("\n").length, 2);
+    // Raft writes one `formatClaimResults` block for the whole claim, not one
+    // machine line per request.
+    assert.match(state.stdout(), /^Claim results \(2 claimed\):\n/u);
+    assert.equal(state.stdout().match(/: claimed$/gmu)?.length, 2);
   } finally {
     rmSync(state.directory, { force: true, recursive: true });
   }

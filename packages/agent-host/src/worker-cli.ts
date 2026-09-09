@@ -35,6 +35,7 @@ import {
 import { parseWorkerReadCommand } from "./worker-read-cli.ts";
 import {
   renderWorkerReadResult,
+  renderWorkerTaskClaimResults,
   workerReadCommandOffersJson,
 } from "./worker-read-render.ts";
 import { constants } from "node:fs";
@@ -310,10 +311,13 @@ export async function runWorkerCliCommand(
     );
     const fanOut = (request as { bodies?: Record<string, unknown>[] }).bodies;
     if (fanOut !== undefined) {
-      for (const body of fanOut) {
-        const claimed = await send({ body, path: request.path });
-        runtime.stdout.write(`${JSON.stringify(claimed)}\n`);
-      }
+      // Raft's `task claim` takes every `--number` in one request and writes
+      // one `formatClaimResults` block. RAH sends one request per Task, so the
+      // rows are gathered and rendered as the single block upstream writes.
+      const claimed: unknown[] = [];
+      for (const body of fanOut)
+        claimed.push(await send({ body, path: request.path }));
+      runtime.stdout.write(`${renderWorkerTaskClaimResults(claimed)}\n`);
       return 0;
     }
     const messagePost = request.path === "/v1/worker/messages/post";

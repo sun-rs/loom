@@ -261,7 +261,9 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
   );
   assert.match(
     prompt,
-    /After task-claim-message succeeds.*event\.roomSeq.*task-start.*task-progress.*task-submit/isu,
+    // The claim acknowledges in Raft's text, so the prompt points at the
+    // printed claim line rather than at a JSON field.
+    /After task-claim-message succeeds.*claimed` line it prints.*task-start.*task-progress.*task-submit/isu,
   );
   // prompt.standing.q: Raft's own conflict wording, including the canonical
   // owner's routing correction that RAH had dropped.

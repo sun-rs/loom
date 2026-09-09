@@ -5,7 +5,10 @@ import test from "node:test";
 // line shapes are asserted, not the machine the suite runs on.
 process.env.TZ = "UTC";
 
-import { renderWorkerReadResult } from "../src/worker-read-render.ts";
+import {
+  renderWorkerReadResult,
+  renderWorkerTaskClaimResults,
+} from "../src/worker-read-render.ts";
 
 const render = (path: string, result: unknown, body: unknown = {}) =>
   renderWorkerReadResult(path, body, result);
@@ -521,4 +524,307 @@ test("a command with no ported renderer keeps its JSON response", () => {
     undefined,
   );
   assert.equal(render("/v1/worker/profiles/get", { isSelf: true }), undefined);
+});
+
+// ------------------------------------------------------- task mutations --
+
+const TASK = {
+  assigneeId: undefined,
+  claimUntil: undefined,
+  description: undefined,
+  roomId: "room-1",
+  sourceMessageId: "message-9",
+  state: "todo",
+  taskId: "task-1",
+  taskNumber: 4,
+  threadId: "thread-9",
+  title: "Ship the port",
+  workflowStatus: "todo",
+};
+
+test("task-create renders Raft's formatTasksCreated block and thread hint", () => {
+  assert.equal(
+    render("/v1/worker/tasks/create", { task: TASK }),
+    [
+      "Created 1 task(s) in room-1:",
+      '#4 [todo] assignee=unassigned claimUntil=null msg=message-9 "Ship the port"',
+      "",
+      "To follow up in each task's thread:",
+      "#4 → rah worker message-post --thread-id thread-9",
+    ].join("\n"),
+  );
+});
+
+test("task-create names the assignee and the lease bound when the Task is claimed", () => {
+  assert.match(
+    render("/v1/worker/tasks/create", {
+      task: {
+        ...TASK,
+        assigneeId: "participant-b",
+        claimUntil: "2026-09-09T02:00:00.000Z",
+        state: "claimed",
+        workflowStatus: "in_progress",
+      },
+    })!,
+    /^#4 \[in_progress\] assignee=@participant-b claimUntil=2026-09-09T02:00:00\.000Z msg=message-9 "Ship the port"$/mu,
+  );
+});
+
+test("task-claim and task-claim-message render Raft's formatClaimResults block", () => {
+  for (const path of [
+    "/v1/worker/tasks/claim",
+    "/v1/worker/tasks/claim-message",
+  ]) {
+    assert.equal(
+      render(path, { task: TASK }),
+      [
+        "Claim results (1 claimed):",
+        "#4 (msg:message-9): claimed",
+        "",
+        "Follow up in each task's thread:",
+        "#4 → rah worker message-post --thread-id thread-9",
+      ].join("\n"),
+    );
+  }
+});
+
+test("a repeated --number claim renders one block covering every Task", () => {
+  assert.equal(
+    renderWorkerTaskClaimResults([
+      { task: TASK },
+      { task: { ...TASK, sourceMessageId: "message-10", taskNumber: 5 } },
+    ]),
+    [
+      "Claim results (2 claimed):",
+      "#4 (msg:message-9): claimed",
+      "#5 (msg:message-10): claimed",
+      "",
+      "Follow up in each task's thread:",
+      "#4 → rah worker message-post --thread-id thread-9",
+      "#5 → rah worker message-post --thread-id thread-9",
+    ].join("\n"),
+  );
+});
+
+test("task-assign renders formatTaskAssigned in both directions", () => {
+  assert.equal(
+    render("/v1/worker/tasks/assign", {
+      task: { ...TASK, assigneeId: "participant-b" },
+    }),
+    "#4 assigned to @participant-b.",
+  );
+  assert.equal(
+    render("/v1/worker/tasks/assign", { task: TASK }),
+    "#4 unassigned — now open.",
+  );
+});
+
+test("task-release renders Raft's unclaim line", () => {
+  assert.equal(
+    render("/v1/worker/tasks/release", { task: TASK }),
+    "#4 unclaimed — now open.",
+  );
+});
+
+test("every status-moving Task command renders formatTaskStatusUpdated", () => {
+  for (const [path, workflowStatus] of [
+    ["/v1/worker/tasks/start", "in_progress"],
+    ["/v1/worker/tasks/progress", "in_progress"],
+    ["/v1/worker/tasks/block", "blocked"],
+    ["/v1/worker/tasks/request-input", "waiting_input"],
+    ["/v1/worker/tasks/submit", "in_review"],
+    ["/v1/worker/tasks/review", "done"],
+    ["/v1/worker/tasks/unblock", "todo"],
+  ] as const) {
+    assert.equal(
+      render(path, { task: { ...TASK, workflowStatus } }),
+      `#4 moved to ${workflowStatus}.`,
+    );
+  }
+});
+
+test("task-amend names the recorded event and renders the amended details", () => {
+  assert.equal(
+    render("/v1/worker/tasks/amend", {
+      event: { roomSeq: 12 },
+      task: { ...TASK, description: "one\ntwo", title: "Amended" },
+    }),
+    [
+      "#4 amended — event seq 12.",
+      "title: Amended",
+      "details:",
+      "  one",
+      "  two",
+    ].join("\n"),
+  );
+  assert.match(
+    render("/v1/worker/tasks/amend", { event: { roomSeq: 12 }, task: TASK })!,
+    /^details: <none>$/mu,
+  );
+});
+
+test("task-convert and task-delete render Raft's acknowledgements", () => {
+  assert.equal(
+    render("/v1/worker/tasks/convert", { task: TASK }),
+    [
+      'Converted msg=message-9 to task #4 [todo] assignee=unassigned "Ship the port"',
+      "",
+      "To follow up in the task's thread:",
+      "rah worker message-post --thread-id thread-9",
+    ].join("\n"),
+  );
+  assert.equal(
+    render("/v1/worker/tasks/delete", { deleted: true, taskNumber: 4 }),
+    "#4 deleted.",
+  );
+});
+
+// ------------------------------------------------------------ reminders --
+
+const REMINDER = {
+  fireAt: "2126-09-09T03:00:00.000Z",
+  msgId: "message-9",
+  reminderId: "reminder-1",
+  status: "scheduled",
+  title: "Check the deploy",
+};
+
+test("reminder schedule, snooze and update render Raft's confirmation block", () => {
+  for (const [path, headline] of [
+    ["/v1/worker/reminders/schedule", "Reminder scheduled"],
+    ["/v1/worker/reminders/snooze", "Reminder snoozed"],
+    ["/v1/worker/reminders/update", "Reminder updated"],
+  ] as const) {
+    assert.equal(
+      render(path, { deduplicated: false, reminder: REMINDER }),
+      [
+        `${headline}: #reminder-1 (one-time) "Check the deploy"`,
+        "Next: 2126-09-09T03:00:00.000Z",
+        "(to modify: snooze/update/cancel; rah reminder --help)",
+      ].join("\n"),
+    );
+  }
+});
+
+test("a recurring reminder states its cadence the way formatReminderType does", () => {
+  assert.match(
+    render("/v1/worker/reminders/schedule", {
+      reminder: {
+        ...REMINDER,
+        recurrence: { description: "every weekday at 09:00", kind: "daily" },
+      },
+    })!,
+    /^Reminder scheduled: #reminder-1 \(recurring · every weekday at 09:00\) "Check the deploy"$/mu,
+  );
+});
+
+test("reminder list renders one formatReminder line each and flags an overdue one", () => {
+  assert.equal(render("/v1/worker/reminders/list", {}), "No reminders.");
+  const text = render("/v1/worker/reminders/list", {
+    reminders: [
+      REMINDER,
+      { ...REMINDER, fireAt: "2020-01-01T00:00:00.000Z", reminderId: "old" },
+      {
+        ...REMINDER,
+        firedAt: "2020-01-02T00:00:00.000Z",
+        reminderId: "done",
+        status: "fired",
+      },
+    ],
+  })!;
+  assert.deepEqual(text.split("\n"), [
+    '#reminder-1 [scheduled] (one-time) next=2126-09-09T03:00:00.000Z "Check the deploy" ref=message-9',
+    '#old [scheduled] (one-time) next=2020-01-01T00:00:00.000Z OVERDUE "Check the deploy" ref=message-9',
+    '#done [fired] (one-time) fired_at=2020-01-02T00:00:00.000Z "Check the deploy" ref=message-9',
+  ]);
+});
+
+test("reminder cancel and log render Raft's lines", () => {
+  assert.equal(
+    render("/v1/worker/reminders/cancel", {
+      reminder: { ...REMINDER, status: "canceled" },
+    }),
+    'Reminder canceled: #reminder-1 [canceled] "Check the deploy"',
+  );
+  assert.equal(
+    render("/v1/worker/reminders/log", { events: [] }),
+    "No reminder events.",
+  );
+  assert.equal(
+    render("/v1/worker/reminders/log", {
+      events: [
+        {
+          actorId: "participant-a",
+          actorType: "agent",
+          eventType: "scheduled",
+          nextFireAt: "2126-09-09T03:00:00.000Z",
+          occurredAt: "2026-09-09T01:00:00.000Z",
+        },
+        {
+          actorType: "system",
+          eventType: "canceled",
+          occurredAt: "2026-09-09T02:00:00.000Z",
+        },
+      ],
+    }),
+    [
+      "2026-09-09T01:00:00.000Z SCHEDULED by agent:participant-a next=2126-09-09T03:00:00.000Z",
+      "2026-09-09T02:00:00.000Z CANCELED by system next=none",
+    ].join("\n"),
+  );
+});
+
+// --------------------------------------------- attention and reactions --
+
+test("channel mute and unmute render Raft's three-line result", () => {
+  assert.equal(
+    render(
+      "/v1/worker/channels/mute",
+      { activityMuted: true, muteFromSeq: 12, roomId: "room-1" },
+      { channel: "#build" },
+    ),
+    ["Muted #build.", "Activity muted: yes", "Mute from seq: 12"].join("\n"),
+  );
+  assert.equal(
+    render("/v1/worker/channels/unmute", {
+      activityMuted: false,
+      muteFromSeq: null,
+      roomId: "room-1",
+    }),
+    ["Unmuted room-1.", "Activity muted: no", "Mute from seq: none"].join("\n"),
+  );
+});
+
+test("thread-unfollow renders Raft's three-line notice", () => {
+  assert.equal(
+    render(
+      "/v1/worker/threads/unfollow",
+      { following: false, threadId: "thread-9" },
+      { channel: "#build:thread-9" },
+    ),
+    [
+      "Unfollowed #build:thread-9. Ordinary delivery for this thread has stopped.",
+      'A later personal @mention arrives and re-follows you; that delivery reminds you to run: rah worker thread-unfollow --target "#build:thread-9"',
+      "Posting in this thread re-follows you automatically.",
+    ].join("\n"),
+  );
+});
+
+test("message-react states the emoji, the direction and the canonical message id", () => {
+  assert.equal(
+    render(
+      "/v1/worker/messages/react",
+      { messageId: "message-9" },
+      { active: true, emoji: "👍" },
+    ),
+    "Reaction 👍 added to message message-9.",
+  );
+  assert.equal(
+    render(
+      "/v1/worker/messages/react",
+      { messageId: "message-9" },
+      { active: false, emoji: "👍" },
+    ),
+    "Reaction 👍 removed from message message-9.",
+  );
 });
