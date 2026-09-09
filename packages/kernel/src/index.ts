@@ -107,3 +107,17 @@ export type {
 } from "./types.ts";
 
 export type { WorkerProfileMetadataPort } from "./worker-profile-metadata-port.ts";
+export {
+  deriveWorkerTaskIdempotencyKey,
+  deriveWorkerMessageIdempotencyKey,
+} from "./worker-message-identity.ts";
+export {
+  requireResolvedWorkerTaskCausality,
+  resolveWorkerTaskCommandCausality,
+  workerTaskCommandReadPosition,
+  workerTaskReworkRoundSeq,
+} from "./worker-task-command-identity.ts";
+export type {
+  ResolvedWorkerTaskCausality,
+  WorkerTaskCommandIdentity,
+} from "./worker-task-command-identity.ts";

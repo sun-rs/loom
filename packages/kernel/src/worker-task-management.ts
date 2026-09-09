@@ -2,6 +2,7 @@ import type { DatabaseSync } from "node:sqlite";
 import * as P from "@rah-os/protocol";
 import type { AuthenticatedWorkerExecutionContext } from "./auth.ts";
 import { ConflictError, ForbiddenError } from "./errors.ts";
+import { requireResolvedWorkerTaskCausality } from "./worker-task-command-identity.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
 import { integer, nullableText, text } from "./sqlite-row.ts";
 import { unblockTaskTransaction } from "./task-unblock-service.ts";
@@ -41,7 +42,9 @@ export class WorkerTaskManagementService {
     raw: P.WorkerTaskAssignRequest,
   ): TaskCreateMutationResult {
     return this.#run(execution, (scope) => {
-      const input = P.WorkerTaskAssignRequestSchema.parse(raw);
+      const input = requireResolvedWorkerTaskCausality(
+        P.WorkerTaskAssignRequestSchema.parse(raw),
+      );
       const { database, events } = this.#context;
       const task = requireWorkerTaskVisibility(database, scope, input.taskId);
       if (text(task, "creator_id") !== scope.participantId)
@@ -98,7 +101,9 @@ export class WorkerTaskManagementService {
     raw: P.WorkerTaskConvertRequest,
   ): TaskCreateMutationResult {
     return this.#run(execution, (scope) => {
-      const input = P.WorkerTaskConvertRequestSchema.parse(raw);
+      const input = requireResolvedWorkerTaskCausality(
+        P.WorkerTaskConvertRequestSchema.parse(raw),
+      );
       const { database } = this.#context;
       const message = database
         .prepare(
@@ -134,7 +139,9 @@ export class WorkerTaskManagementService {
     raw: P.WorkerTaskUnblockRequest,
   ): TaskCreateMutationResult {
     return this.#run(execution, (scope) => {
-      const input = P.WorkerTaskUnblockRequestSchema.parse(raw),
+      const input = requireResolvedWorkerTaskCausality(
+          P.WorkerTaskUnblockRequestSchema.parse(raw),
+        ),
         { database, events } = this.#context;
       requireWorkerTaskVisibility(database, scope, input.taskId);
       return unblockTaskTransaction(

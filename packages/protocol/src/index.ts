@@ -7,6 +7,7 @@ export * from "./client-computer-profile.ts";
 export * from "./client-discovery.ts";
 export * from "./message-reference.ts";
 export * from "./message-mention.ts";
+import { WorkerTaskCausalityShape } from "./worker-task-causality.ts";
 import {
   ContentDigestSchema,
   IdentifierSchema,
@@ -1516,11 +1517,7 @@ export type WorkerAcknowledgeRequest = z.infer<
 >;
 
 const WorkerTaskCommandBaseSchema = z
-  .object({
-    taskId: IdentifierSchema,
-    idempotencyKey: IdentifierSchema,
-    basedOnRoomSeq: z.number().int().nonnegative(),
-  })
+  .object({ taskId: IdentifierSchema, ...WorkerTaskCausalityShape })
   .strict();
 
 export const WorkerTaskClaimRequestSchema = WorkerTaskCommandBaseSchema;
@@ -1530,8 +1527,7 @@ export type WorkerTaskClaimRequest = z.infer<
 
 export const WorkerTaskClaimMessageRequestSchema = z
   .object({
-    basedOnRoomSeq: z.number().int().nonnegative(),
-    idempotencyKey: IdentifierSchema,
+    ...WorkerTaskCausalityShape,
     messageId: IdentifierSchema,
     rationale: z.string().trim().min(1).max(2_000),
   })
@@ -1607,6 +1603,7 @@ export type { RoomSnapshot, RoomSyncResponse } from "./room-sync-response.ts";
 import { RoomSyncResponseSchema } from "./room-sync-response.ts";
 
 export * from "./worker-presented-context.ts";
+export * from "./worker-task-causality.ts";
 
 export const ClientRoomSyncResponseSchema = RoomSyncResponseSchema;
 export type ClientRoomSyncResponse = z.infer<

@@ -266,7 +266,12 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
     prompt,
     /task-block.*before acknowledging|cannot acknowledge.*idle/isu,
   );
-  assert.match(prompt, /roomSeq of.*(reopened|changes_requested).*key/isu);
+  // The rework round is separated by the server's derived key, not by a rule
+  // telling the Agent to fold a triggering roomSeq into one.
+  assert.doesNotMatch(
+    prompt,
+    /roomSeq of.*(reopened|changes_requested).*key/isu,
+  );
   assert.match(prompt, /task\.reopened/u);
   assert.match(prompt, /Reuse existing Tasks and Threads/iu);
   assert.match(prompt, /collaboratorIds.*must not claim/isu);
@@ -355,11 +360,19 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
     prompt,
     /message-post --target TARGET --context-receipt/u,
   );
-  // Task commands keep their explicit causal cursor and idempotency key.
-  assert.match(
-    prompt,
-    /task-claim-message --message-id <id>.*--based-on-room-seq <cursor> --idempotency-key <stable-key>/isu,
-  );
+  // Raft has neither parameter on any Task command, and the server now
+  // resolves both, so the prompt no longer teaches the Agent to carry them.
+  assert.match(prompt, /task-claim-message --message-id <id>/u);
+  const taskCommand =
+    "task-(?:claim-message|claim|start|release|progress|block|request-input|submit|review|create|assign|amend|unblock|convert|delete)";
+  for (const invocation of prompt.matchAll(
+    new RegExp(`${taskCommand}[^\`]*`, "gu"),
+  ))
+    assert.doesNotMatch(
+      invocation[0],
+      /--(based-on-room-seq|idempotency-key)/u,
+      invocation[0],
+    );
   // Raft has no rule telling an Agent how to weigh an appended request against
   // an unsent result. Self-invented judgment patches were removed on 2026-09-09
   // after a real model weighed one against the Human's own words and lost the
@@ -399,9 +412,20 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
   assert.match(prompt, /goal.*already complete.*remain silent/isu);
   assert.match(prompt, /RAH_WORKER_CLI.*worker task-submit/u);
   assert.match(prompt, /task\.reassigned/u);
-  assert.match(
+  // The self-invented key rules are gone: no stable-key recipe, and no rework
+  // round rule folding a triggering roomSeq into a key.
+  assert.doesNotMatch(
     prompt,
     /stable idempotency keys.*participant ID.*Task ID.*operation/isu,
+  );
+  assert.doesNotMatch(
+    prompt,
+    /roomSeq of (that|the) triggering[^.]*idempotency key/isu,
+  );
+  assert.doesNotMatch(prompt, /idempotency key of that (rework )?round/isu);
+  assert.doesNotMatch(
+    prompt,
+    /non-deduplicated response event\.roomSeq as the next/isu,
   );
   assert.match(
     prompt,

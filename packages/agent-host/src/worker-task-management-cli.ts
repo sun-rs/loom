@@ -1,12 +1,24 @@
 import {
-  TaskAmendRequestSchema,
-  TaskDeleteRequestSchema,
+  WorkerTaskAmendRequestSchema,
+  WorkerTaskDeleteRequestSchema,
 } from "@rah-os/protocol";
 import {
   WorkerTaskAssignRequestSchema,
   WorkerTaskUnblockRequestSchema,
   WorkerTaskConvertRequestSchema,
 } from "@rah-os/protocol";
+
+/** Raft carries neither causal parameter; both stay accepted pass-throughs. */
+function causality(options: Record<string, string>): Record<string, unknown> {
+  return {
+    ...(options["based-on-room-seq"] === undefined
+      ? {}
+      : { basedOnRoomSeq: Number(options["based-on-room-seq"]) }),
+    ...(options["idempotency-key"] === undefined
+      ? {}
+      : { idempotencyKey: options["idempotency-key"] }),
+  };
+}
 export function parseWorkerTaskManagementCommand(
   command: string,
   options: Record<string, string>,
@@ -24,11 +36,10 @@ export function parseWorkerTaskManagementCommand(
         throw new Error(`unknown --${key} option for ${command}`);
     return {
       path: "/v1/worker/tasks/delete",
-      body: TaskDeleteRequestSchema.parse({
+      body: WorkerTaskDeleteRequestSchema.parse({
         roomId: options["room-id"],
         taskId: options["task-id"],
-        basedOnRoomSeq: Number(options["based-on-room-seq"]),
-        idempotencyKey: options["idempotency-key"],
+        ...causality(options),
       }),
     };
   }
@@ -52,10 +63,9 @@ export function parseWorkerTaskManagementCommand(
       throw new Error("choose --description or --clear-description");
     return {
       path: "/v1/worker/tasks/amend",
-      body: TaskAmendRequestSchema.parse({
+      body: WorkerTaskAmendRequestSchema.parse({
         taskId: options["task-id"],
-        basedOnRoomSeq: Number(options["based-on-room-seq"]),
-        idempotencyKey: options["idempotency-key"],
+        ...causality(options),
         ...(options.title === undefined ? {} : { title: options.title }),
         ...(options["clear-description"] !== undefined
           ? { description: null }
@@ -84,10 +94,7 @@ export function parseWorkerTaskManagementCommand(
   for (const key of Object.keys(options))
     if (!allowed.includes(key))
       throw new Error(`unknown --${key} option for ${command}`);
-  const common = {
-    basedOnRoomSeq: Number(options["based-on-room-seq"]),
-    idempotencyKey: options["idempotency-key"],
-  };
+  const common = causality(options);
   if (command === "task-unblock")
     return {
       path: "/v1/worker/tasks/unblock",

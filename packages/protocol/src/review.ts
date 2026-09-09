@@ -6,6 +6,7 @@ import {
   TimestampSchema,
 } from "./common.ts";
 import { RoomEventSchema } from "./room-event.ts";
+import { WorkerTaskCausalityShape } from "./worker-task-causality.ts";
 import { TaskSchema } from "./task.ts";
 import { AttachmentSchema } from "./room-files.ts";
 
@@ -275,11 +276,7 @@ export const TaskReviewSchema = z
 export type TaskReview = z.infer<typeof TaskReviewSchema>;
 
 const WorkerTaskReviewCommandBaseSchema = z
-  .object({
-    basedOnRoomSeq: z.number().int().nonnegative(),
-    idempotencyKey: IdentifierSchema,
-    taskId: IdentifierSchema,
-  })
+  .object({ ...WorkerTaskCausalityShape, taskId: IdentifierSchema })
   .strict();
 
 export const WorkerTaskReviewRequestSchema =

@@ -1,9 +1,8 @@
 import { z } from "zod";
 import { IdentifierSchema } from "./common.ts";
-const Mutation = {
-  basedOnRoomSeq: z.number().int().nonnegative(),
-  idempotencyKey: IdentifierSchema,
-};
+import { WorkerTaskCausalityShape } from "./worker-task-causality.ts";
+// Raft carries no client cursor and no mandatory key on a Task mutation.
+const Mutation = WorkerTaskCausalityShape;
 export const WorkerTaskAssignRequestSchema = z
   .object({
     ...Mutation,

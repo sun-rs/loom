@@ -8,8 +8,8 @@ import {
   WorkerChannelAttentionResponseSchema,
 } from "@rah-os/protocol";
 import {
-  TaskAmendRequestSchema,
-  TaskDeleteRequestSchema,
+  WorkerTaskAmendRequestSchema,
+  WorkerTaskDeleteRequestSchema,
   TaskDeleteResponseSchema,
   TASK_CARD_TRANSPORT_MAX_BYTES,
 } from "@rah-os/protocol";
@@ -859,11 +859,23 @@ export class WorkerApplicationService {
     }
 
     if (route === "/v1/worker/tasks/delete") {
-      const command = parseWorkerRequest(TaskDeleteRequestSchema, body);
+      const presented = parseWorkerRequest(WorkerTaskDeleteRequestSchema, body);
+      const command = this.#resolveTaskCommand(
+        grant,
+        presented,
+        { operation: "task-delete", subjectId: body.taskId as string },
+        // Deletion fences inside the Kernel, after the replay check, so a
+        // durable receipt still replays through a credential that never
+        // delivered the original cursor.
+        { fence: false },
+      );
       const deleted = this.#kernel.taskDeletions.worker(
         grant.execution,
         command,
-        () => this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq),
+        () => {
+          if (presented.basedOnRoomSeq !== undefined)
+            this.#requireKnownCausalCursor(grant, presented.basedOnRoomSeq);
+        },
       );
       grant.knownRoomSeqs.add(deleted.event.roomSeq);
       writeJson(response, 200, TaskDeleteResponseSchema.parse(deleted));
@@ -922,6 +934,44 @@ export class WorkerApplicationService {
     );
   }
 
+  /**
+   * Raft's Task commands carry neither a causal cursor nor an idempotency key,
+   * so the minimal form is the normal form here: whatever the Agent omitted is
+   * resolved from Kernel-owned state, mirroring `/v1/worker/messages/post`.
+   * A cursor that WAS presented is still fenced against this credential's
+   * delivered and produced sequences before anything else happens.
+   */
+  #resolveTaskCommand<
+    T extends {
+      basedOnRoomSeq?: number | undefined;
+      idempotencyKey?: string | undefined;
+    },
+  >(
+    grant: WorkerGrant,
+    command: T,
+    identity: {
+      operation: string;
+      subjectId?: string | undefined;
+      content?: readonly (string | null)[] | undefined;
+    },
+    options: { fence?: boolean } = {},
+  ): T & { basedOnRoomSeq: number; idempotencyKey: string } {
+    if (options.fence !== false && command.basedOnRoomSeq !== undefined)
+      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+    return {
+      ...command,
+      ...this.#kernel.resolveWorkerTaskCommandCausality(grant.execution, {
+        ...identity,
+        ...(command.basedOnRoomSeq === undefined
+          ? {}
+          : { basedOnRoomSeq: command.basedOnRoomSeq }),
+        ...(command.idempotencyKey === undefined
+          ? {}
+          : { idempotencyKey: command.idempotencyKey }),
+      }),
+    };
+  }
+
   async #handleTaskCommand(
     route: string,
     body: Record<string, unknown>,
@@ -929,46 +979,82 @@ export class WorkerApplicationService {
     assertAuthorized: () => void,
   ) {
     if (route === "/v1/worker/tasks/amend") {
-      const command = parseWorkerRequest(TaskAmendRequestSchema, body);
-      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      const command = this.#resolveTaskCommand(
+        grant,
+        parseWorkerRequest(WorkerTaskAmendRequestSchema, body),
+        {
+          operation: "task-amend",
+          subjectId: body.taskId as string,
+          content: [
+            (body.title as string | undefined) ?? null,
+            (body.description as string | null | undefined) ?? null,
+          ],
+        },
+      );
       return this.#kernel.taskAmendments.worker(grant.execution, command);
     }
     if (route === "/v1/worker/tasks/unblock") {
-      const command = parseWorkerRequest(WorkerTaskUnblockRequestSchema, body);
-      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      const command = this.#resolveTaskCommand(
+        grant,
+        parseWorkerRequest(WorkerTaskUnblockRequestSchema, body),
+        { operation: "task-unblock", subjectId: body.taskId as string },
+      );
       return this.#kernel.workerTaskManagement.unblock(
         grant.execution,
         command,
       );
     }
     if (route === "/v1/worker/tasks/assign") {
-      const command = parseWorkerRequest(WorkerTaskAssignRequestSchema, body);
-      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      const command = this.#resolveTaskCommand(
+        grant,
+        parseWorkerRequest(WorkerTaskAssignRequestSchema, body),
+        {
+          operation: "task-assign",
+          subjectId: body.taskId as string,
+          content: [(body.assigneeId as string | null | undefined) ?? null],
+        },
+      );
       const { activationIds: _activationIds, ...mutation } =
         this.#kernel.workerTaskManagement.assign(grant.execution, command);
       return mutation;
     }
     if (route === "/v1/worker/tasks/convert") {
-      const command = parseWorkerRequest(WorkerTaskConvertRequestSchema, body);
-      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      const command = this.#resolveTaskCommand(
+        grant,
+        parseWorkerRequest(WorkerTaskConvertRequestSchema, body),
+        { operation: "task-convert", subjectId: body.messageId as string },
+      );
       const { activationIds: _activationIds, ...mutation } =
         this.#kernel.workerTaskManagement.convert(grant.execution, command);
       return mutation;
     }
     if (route === "/v1/worker/tasks/claim-message") {
-      const command = parseWorkerRequest(
-        WorkerTaskClaimMessageRequestSchema,
-        body,
+      const command = this.#resolveTaskCommand(
+        grant,
+        parseWorkerRequest(WorkerTaskClaimMessageRequestSchema, body),
+        {
+          operation: "task-claim-message",
+          subjectId: body.messageId as string,
+          content: [(body.rationale as string | undefined) ?? null],
+        },
       );
-      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
       return this.#kernel.claimMessageAsTask(grant.execution, {
         ...command,
         leaseMs: this.#taskClaimLeaseMs,
       });
     }
     if (route === "/v1/worker/tasks/create") {
-      const command = parseWorkerRequest(WorkerTaskCreateRequestSchema, body);
-      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      const command = this.#resolveTaskCommand(
+        grant,
+        parseWorkerRequest(WorkerTaskCreateRequestSchema, body),
+        {
+          operation: "task-create",
+          content: [
+            (body.title as string | undefined) ?? null,
+            (body.assigneeId as string | undefined) ?? null,
+          ],
+        },
+      );
       const { assigneeId, ...rest } = command;
       return this.#kernel.createWorkerTask(grant.execution, {
         ...rest,
@@ -977,54 +1063,103 @@ export class WorkerApplicationService {
       });
     }
     if (route === "/v1/worker/tasks/claim") {
-      const command = parseWorkerRequest(WorkerTaskClaimRequestSchema, body);
-      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      const command = this.#resolveTaskCommand(
+        grant,
+        parseWorkerRequest(WorkerTaskClaimRequestSchema, body),
+        { operation: "task-claim", subjectId: body.taskId as string },
+      );
       return this.#kernel.claimTask(grant.execution, {
         ...command,
         leaseMs: this.#taskClaimLeaseMs,
       });
     }
     if (route === "/v1/worker/tasks/start") {
-      const command = parseWorkerRequest(WorkerTaskStartRequestSchema, body);
-      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      const command = this.#resolveTaskCommand(
+        grant,
+        parseWorkerRequest(WorkerTaskStartRequestSchema, body),
+        { operation: "task-start", subjectId: body.taskId as string },
+      );
       return this.#kernel.startTask(grant.execution, {
         ...command,
         leaseMs: this.#taskClaimLeaseMs,
       });
     }
     if (route === "/v1/worker/tasks/progress") {
-      const command = parseWorkerRequest(WorkerTaskProgressRequestSchema, body);
-      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      const command = this.#resolveTaskCommand(
+        grant,
+        parseWorkerRequest(WorkerTaskProgressRequestSchema, body),
+        {
+          operation: "task-progress",
+          subjectId: body.taskId as string,
+          content: [(body.progress as string | undefined) ?? null],
+        },
+      );
       return this.#kernel.progressTask(grant.execution, {
         ...command,
         leaseMs: this.#taskClaimLeaseMs,
       });
     }
     if (route === "/v1/worker/tasks/release") {
-      const command = parseWorkerRequest(WorkerTaskReleaseRequestSchema, body);
-      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      const command = this.#resolveTaskCommand(
+        grant,
+        parseWorkerRequest(WorkerTaskReleaseRequestSchema, body),
+        { operation: "task-release", subjectId: body.taskId as string },
+      );
       return this.#kernel.releaseTask(grant.execution, command);
     }
     if (route === "/v1/worker/tasks/block") {
-      const command = parseWorkerRequest(WorkerTaskBlockRequestSchema, body);
-      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      const command = this.#resolveTaskCommand(
+        grant,
+        parseWorkerRequest(WorkerTaskBlockRequestSchema, body),
+        {
+          operation: "task-block",
+          subjectId: body.taskId as string,
+          content: [(body.reason as string | undefined) ?? null],
+        },
+      );
       return this.#kernel.blockTask(grant.execution, command);
     }
     if (route === "/v1/worker/tasks/request-input") {
-      const command = parseWorkerRequest(
-        WorkerTaskRequestInputRequestSchema,
-        body,
+      const command = this.#resolveTaskCommand(
+        grant,
+        parseWorkerRequest(WorkerTaskRequestInputRequestSchema, body),
+        {
+          operation: "task-request-input",
+          subjectId: body.taskId as string,
+          content: [(body.question as string | undefined) ?? null],
+        },
       );
-      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
       return this.#kernel.requestTaskInput(grant.execution, command);
     }
     if (route === "/v1/worker/tasks/review") {
-      const command = parseWorkerRequest(WorkerTaskReviewRequestSchema, body);
-      this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+      const command = this.#resolveTaskCommand(
+        grant,
+        parseWorkerRequest(WorkerTaskReviewRequestSchema, body),
+        {
+          operation: "task-review",
+          subjectId: body.taskId as string,
+          content: [
+            (body.disposition as string | undefined) ?? null,
+            (body.summary as string | undefined) ?? null,
+          ],
+        },
+      );
       return this.#kernel.taskReviews.reviewTask(grant.execution, command);
     }
-    const command = parseWorkerRequest(WorkerTaskSubmitRequestSchema, body);
-    this.#requireKnownCausalCursor(grant, command.basedOnRoomSeq);
+    const command = this.#resolveTaskCommand(
+      grant,
+      parseWorkerRequest(WorkerTaskSubmitRequestSchema, body),
+      {
+        operation: "task-submit",
+        subjectId: body.taskId as string,
+        content: [
+          (body.summary as string | undefined) ?? null,
+          body.verification === undefined
+            ? null
+            : JSON.stringify(body.verification),
+        ],
+      },
+    );
     const replay = this.#kernel.replayTaskSubmission(grant.execution, {
       idempotencyKey: command.idempotencyKey,
       summary: command.summary,

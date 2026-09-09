@@ -547,28 +547,13 @@ if (mode === "trajectory") {
     );
     if (resume) {
       const taskId = /\[RESUME PARENT ([^\]]+)\]/u.exec(resume.payload.body)[1];
-      const result = readTool([
-        "task-unblock",
-        "--task-id",
-        taskId,
-        "--based-on-room-seq",
-        String(delivery.cursorAfter),
-        "--idempotency-key",
-        `resume:${taskId}`,
-      ]);
+      // Raft-shaped: a Task command carries no cursor and no key.
+      const result = readTool(["task-unblock", "--task-id", taskId]);
       if (result.task.state !== "todo")
         throw new Error("unblock did not leave pending work");
       let denied = false;
       try {
-        readTool([
-          "task-claim",
-          "--task-id",
-          taskId,
-          "--based-on-room-seq",
-          String(result.event.roomSeq),
-          "--idempotency-key",
-          `early:${taskId}`,
-        ]);
+        readTool(["task-claim", "--task-id", taskId]);
       } catch (error) {
         denied = String(error.stderr).includes(
           "not linked in this Activation range",
@@ -720,8 +705,6 @@ if (mode === "trajectory") {
     }
     try {
       autoClaimedTask = await request("/v1/worker/tasks/claim-message", {
-        basedOnRoomSeq: delivery.cursorAfter,
-        idempotencyKey: `fake:${activationId}:claim-message`,
         messageId: autoTaskMessage.aggregateId,
         rationale:
           "Fixture marker denotes persistent multi-step work with progress and review",
@@ -769,28 +752,14 @@ if (mode === "trajectory") {
     // instead follows the Worker prompt and chains each non-deduplicated
     // response event.roomSeq into the next call.
     const activationHead = delivery.cursorAfter;
-    let parentCursor = autoClaimedTask.event.roomSeq;
-    const startedParent = await request("/v1/worker/tasks/start", {
-      basedOnRoomSeq: parentCursor,
-      idempotencyKey: `fake:${activationId}:split-parent-start`,
-      taskId: parentTaskId,
-    });
-    if (!startedParent.deduplicated) {
-      parentCursor = Math.max(parentCursor, startedParent.event.roomSeq);
-    }
+    await request("/v1/worker/tasks/start", { taskId: parentTaskId });
     const subtasks = [];
-    let createCursor = activationHead;
     for (const [index, helper] of splitHelpers.entries()) {
       const label = String.fromCodePoint(65 + index);
       const suffix = splitTitles[index] ?? `part ${label}`;
       const created = await request("/v1/worker/tasks/create", {
-        basedOnRoomSeq: createCursor,
-        idempotencyKey: `fake:${activationId}:subtask:${String(index)}`,
         title: `Subtask ${label} (@${helper}): ${suffix}`,
       });
-      if (!created.deduplicated) {
-        createCursor = created.event.roomSeq;
-      }
       subtasks.push({
         label,
         roomSeq: created.event.roomSeq,
@@ -811,8 +780,6 @@ if (mode === "trajectory") {
     // canonical waiting state: an acknowledged Activation may not leave an
     // owned Task executing.
     const blocked = await request("/v1/worker/tasks/block", {
-      basedOnRoomSeq: parentCursor,
-      idempotencyKey: `fake:${activationId}:split-parent-block`,
       reason: "Waiting for the delegated subtasks",
       taskId: parentTaskId,
     });
@@ -1041,11 +1008,7 @@ if (mode === "trajectory") {
           process.env.RAH_FAKE_REVIEW_FIRST_SUBMISSION ===
             "changes_requested" && frozen.submission?.submissionNumber === 1;
         await request("/v1/worker/tasks/review", {
-          basedOnRoomSeq: delivery.cursorAfter,
           disposition: requestChanges ? "changes_requested" : "approved",
-          idempotencyKey: commandId(
-            `review:${frozen.submission?.submissionId ?? "missing"}`,
-          ),
           summary: requestChanges
             ? "要求修改：首个冻结版本缺少独立验收证据。"
             : "审阅通过：提交证据与 Task 范围一致。",
@@ -1124,9 +1087,10 @@ if (mode === "trajectory") {
       let claimed;
       try {
         claimed = await request("/v1/worker/tasks/claim", {
-          basedOnRoomSeq,
-          idempotencyKey: claimCommandId,
           taskId,
+          // An expired lease is the one case the server cannot tell from a
+          // retry, so that recovery still presents an explicit key.
+          ...(claimExpired ? { idempotencyKey: claimCommandId } : {}),
         });
       } catch (error) {
         // Another Agent won the same unassigned Task: a lost claim is a
@@ -1145,9 +1109,8 @@ if (mode === "trajectory") {
       }
     }
     const started = await request("/v1/worker/tasks/start", {
-      basedOnRoomSeq,
-      idempotencyKey: startCommandId,
       taskId,
+      ...(claimExpired ? { idempotencyKey: startCommandId } : {}),
     });
     if (!started.deduplicated) {
       basedOnRoomSeq = Math.max(basedOnRoomSeq, started.event.roomSeq);
@@ -1172,8 +1135,6 @@ if (mode === "trajectory") {
     const resumeMarkerPath = process.env.RAH_FAKE_RESUME_MARKER;
     if (isInputMode && !inputResolved) {
       const requested = await request("/v1/worker/tasks/request-input", {
-        basedOnRoomSeq,
-        idempotencyKey: commandId("request-input"),
         question: "Should the daemon remain loopback-only for this phase?",
         taskId,
       });
@@ -1219,8 +1180,6 @@ if (mode === "trajectory") {
         });
       }
       const progressed = await request("/v1/worker/tasks/progress", {
-        basedOnRoomSeq,
-        idempotencyKey: commandId("progress"),
         progress: "Fake Worker verified the daemon Task command path",
         taskId,
       });
@@ -1260,8 +1219,6 @@ if (mode === "trajectory") {
         );
       }
       const submitted = await request("/v1/worker/tasks/submit", {
-        basedOnRoomSeq,
-        idempotencyKey: commandId("submit"),
         summary: "Fake Worker completed the durable Task protocol",
         taskId,
       });

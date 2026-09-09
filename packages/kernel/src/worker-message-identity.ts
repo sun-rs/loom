@@ -24,6 +24,53 @@ import { createHash } from "node:crypto";
  * position must still supply an explicit `idempotencyKey`; nothing in the
  * request distinguishes that case from a retry.
  */
+/**
+ * The same scheme for a Task command, which Raft also never asks the model to
+ * key. The identity of a Task operation is: who, in which Activation, in which
+ * Room, which operation, on which subject (Task or Message), with which
+ * content — plus `roundSeq`, the Room sequence of the latest event that opened
+ * a *new round of owner work* on that Task (a `task.reopened`, or a
+ * `review.submitted` whose disposition is changes_requested).
+ *
+ * `roundSeq` is the server-side form of the rule the standing prompt used to
+ * teach the Agent: without it a rework round's reclaim/start/progress/submit
+ * would hash to the first round's keys and deduplicate into no-ops. It moves
+ * only when a real reopening event is appended, so an ordinary retry inside one
+ * round still hashes identically and still deduplicates.
+ *
+ * The Activation's read position is deliberately NOT an input: unlike a send,
+ * a committed Task command advances that position, so including it would make
+ * an identical retry look new. Two genuinely distinct operations that differ in
+ * nothing — the same progress note twice inside one Activation and one round —
+ * therefore collapse into one, exactly as for a send; a caller that wants both
+ * must present an explicit `idempotencyKey`.
+ */
+export function deriveWorkerTaskIdempotencyKey(input: {
+  participantId: string;
+  activationId: string;
+  roomId: string;
+  operation: string;
+  subjectId: string | null;
+  roundSeq: number;
+  content: readonly (string | null)[];
+}): string {
+  const digest = createHash("sha256")
+    .update(
+      JSON.stringify([
+        "rah-worker-task-command-v1",
+        input.participantId,
+        input.activationId,
+        input.roomId,
+        input.operation,
+        input.subjectId,
+        input.roundSeq,
+        [...input.content],
+      ]),
+    )
+    .digest("hex");
+  return `derived-task-${digest.slice(0, 32)}`;
+}
+
 export function deriveWorkerMessageIdempotencyKey(input: {
   participantId: string;
   activationId: string;

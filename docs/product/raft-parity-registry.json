@@ -27,7 +27,7 @@
     "deferred-scope"
   ],
   "ratchet": {
-    "unjustified": 104,
+    "unjustified": 100,
     "missingNonDeferred": 33,
     "promptJudgmentParagraphs": 14
   },
@@ -527,7 +527,7 @@
         }
       },
       "verdict": "unjustified",
-      "note": "§2.6: internal participant id instead of @handle; --expected-revision replaced by --based-on-room-seq."
+      "note": "§2.6: internal participant id instead of @handle; no --expected-revision optimistic key."
     },
     {
       "id": "cli.worker.channel-mute",
@@ -546,7 +546,7 @@
         }
       },
       "verdict": "unjustified",
-      "note": "§2.2: adds two mandatory causal parameters."
+      "note": "§2.2: adds two mandatory causal parameters (deferred to the message/channel batch)."
     },
     {
       "id": "cli.worker.channel-unmute",
@@ -565,7 +565,7 @@
         }
       },
       "verdict": "unjustified",
-      "note": "§2.2: adds two mandatory causal parameters."
+      "note": "§2.2: adds two mandatory causal parameters (deferred to the message/channel batch)."
     },
     {
       "id": "cli.worker.task-delete",
@@ -603,7 +603,7 @@
         }
       },
       "verdict": "unjustified",
-      "note": "§2.6: same fields plus two mandatory causal parameters and --task-id addressing."
+      "note": "§2.6: same fields; --task-id addressing instead of --target/--channel/--number."
     },
     {
       "id": "cli.worker.task-unblock",
@@ -641,7 +641,7 @@
         }
       },
       "verdict": "unjustified",
-      "note": "§2.6: --task-id addressing plus two mandatory causal parameters."
+      "note": "§2.6: --task-id addressing instead of --target/--channel."
     },
     {
       "id": "cli.worker.task-list",
@@ -1004,7 +1004,7 @@
         }
       },
       "verdict": "unjustified",
-      "note": "§2.6: --task-id addressing plus two mandatory causal parameters."
+      "note": "§2.6: --task-id addressing; Raft claims by --target/--channel/--number or --message-id."
     },
     {
       "id": "cli.worker.task-start",
@@ -2508,8 +2508,8 @@
         "anchor": "POST /tasks/claim",
         "location": "agentApiContract.ts@1614"
       },
-      "verdict": "unjustified",
-      "note": "§2.11 row 29."
+      "verdict": "aligned",
+      "note": "§2.11 row 29: aligned on 2026-09-09 — the request body no longer carries a client cursor and its idempotency key is optional, as in agentApiContract.ts."
     },
     {
       "id": "route.tasks.claim-message",
@@ -2592,8 +2592,8 @@
         "anchor": "POST /tasks/amend",
         "location": "agentApiContract.ts@1704"
       },
-      "verdict": "unjustified",
-      "note": "§2.11 row 38."
+      "verdict": "aligned",
+      "note": "§2.11 row 38: aligned on 2026-09-09 — the request body no longer carries a client cursor and its idempotency key is optional, as in agentApiContract.ts."
     },
     {
       "id": "route.tasks.delete",
@@ -2634,8 +2634,8 @@
         "anchor": "POST /tasks/convert",
         "location": "agentApiContract.ts@1694"
       },
-      "verdict": "unjustified",
-      "note": "§2.11 row 37."
+      "verdict": "aligned",
+      "note": "§2.11 row 37: aligned on 2026-09-09 — the request body no longer carries a client cursor and its idempotency key is optional, as in agentApiContract.ts."
     },
     {
       "id": "route.tasks.block",
@@ -2704,8 +2704,8 @@
         "anchor": "POST /tasks/unclaim",
         "location": "agentApiContract.ts@1644"
       },
-      "verdict": "unjustified",
-      "note": "§2.11 row 32."
+      "verdict": "aligned",
+      "note": "§2.11 row 32: aligned on 2026-09-09 — the request body no longer carries a client cursor and its idempotency key is optional, as in agentApiContract.ts."
     },
     {
       "id": "route.tasks.request-input",

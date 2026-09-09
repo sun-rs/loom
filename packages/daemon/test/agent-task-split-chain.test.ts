@@ -537,6 +537,23 @@ test("one lead Agent splits a Human message into subtasks that two helper Agents
       "task.completed",
     ]);
 
+    // Raft carries neither `--based-on-room-seq` nor `--idempotency-key` on a
+    // Task command. Every Agent Task command in this chain — including the
+    // rework round after task.reopened — was sent in that minimal form, so the
+    // server keyed it, and the second round is not a deduplicated replay.
+    const agentTaskEvents = events().filter(
+      (event) =>
+        event.aggregateType === "task" &&
+        [lead, helperA, helperB].includes(event.actorId),
+    );
+    assert.ok(agentTaskEvents.length >= 12);
+    for (const event of agentTaskEvents)
+      assert.match(
+        event.idempotencyKey,
+        /^derived-task-/u,
+        `${event.type} ${event.idempotencyKey}`,
+      );
+
     // 6. Human asks the original blocker to resume. Its unblock Run exits;
     // durable task.unblocked attention grants a separate Run normal execution.
     await humanMutation("/v3/client/messages/post", {

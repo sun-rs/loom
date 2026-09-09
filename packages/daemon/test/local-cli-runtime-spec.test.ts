@@ -92,7 +92,12 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
     prompt,
     /task-block.*before acknowledging|cannot acknowledge.*idle/isu,
   );
-  assert.match(prompt, /roomSeq of.*(reopened|changes_requested).*key/isu);
+  // The rework round is separated by the server-derived key, not by a prompt
+  // rule telling the Agent to fold a triggering roomSeq into one.
+  assert.doesNotMatch(
+    prompt,
+    /roomSeq of.*(reopened|changes_requested).*key/isu,
+  );
   assert.match(prompt, /task\.reopened/u);
   assert.match(prompt, /Reuse existing Tasks and Threads/iu);
   assert.match(prompt, /collaboratorIds.*must not claim/isu);
@@ -135,7 +140,8 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
   assert.match(prompt, /goal.*already complete.*remain silent/isu);
   assert.match(prompt, /RAH_WORKER_CLI.*worker task-submit/u);
   assert.match(prompt, /task\.reassigned/u);
-  assert.match(
+  // Raft has no such recipe, and the server now derives the key itself.
+  assert.doesNotMatch(
     prompt,
     /stable idempotency keys.*participant ID.*Task ID.*operation/isu,
   );

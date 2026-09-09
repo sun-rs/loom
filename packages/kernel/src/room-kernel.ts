@@ -256,6 +256,11 @@ import {
 } from "./task-event-replay.ts";
 import { assertInputRequestEventReplay } from "./input-request-event-replay.ts";
 import {
+  resolveWorkerTaskCommandCausality,
+  type ResolvedWorkerTaskCausality,
+  type WorkerTaskCommandIdentity,
+} from "./worker-task-command-identity.ts";
+import {
   createTaskThreadReply,
   migrateTaskAnchorsV9,
   type TaskCreateCommand,
@@ -1482,6 +1487,22 @@ export class RoomKernel {
         input,
         principal: this.getAuthenticatedPrincipal(actor),
       }),
+    );
+  }
+  /**
+   * Raft's Task commands carry neither a client cursor nor a mandatory key, so
+   * the route resolves both from Kernel-owned state before the command runs.
+   */
+  resolveWorkerTaskCommandCausality(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: WorkerTaskCommandIdentity,
+  ): ResolvedWorkerTaskCausality {
+    return this.#transaction(() =>
+      resolveWorkerTaskCommandCausality(
+        this.#database,
+        this.#requireAuthenticatedWorkerExecution(execution),
+        input,
+      ),
     );
   }
   postWorkerMessage(

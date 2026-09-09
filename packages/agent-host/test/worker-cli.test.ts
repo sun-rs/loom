@@ -1488,3 +1488,175 @@ test("a long discarded draft is truncated at the excerpt limit", async () => {
     rmSync(state.directory, { force: true, recursive: true });
   }
 });
+
+/**
+ * Raft has neither `--based-on-room-seq` nor `--idempotency-key` on any Task
+ * command. RAH's Task family therefore sends the minimal body, and the two
+ * flags stay accepted pass-throughs.
+ */
+const minimalTaskCommands: ReadonlyArray<{
+  argv: readonly string[];
+  body: Record<string, unknown>;
+  path: string;
+}> = [
+  {
+    argv: ["task-claim", "--task-id", "task-1"],
+    body: { taskId: "task-1" },
+    path: "/v1/worker/tasks/claim",
+  },
+  {
+    argv: ["task-start", "--task-id", "task-1"],
+    body: { taskId: "task-1" },
+    path: "/v1/worker/tasks/start",
+  },
+  {
+    argv: ["task-release", "--task-id", "task-1"],
+    body: { taskId: "task-1" },
+    path: "/v1/worker/tasks/release",
+  },
+  {
+    argv: ["task-progress", "--task-id", "task-1", "--progress", "half way"],
+    body: { progress: "half way", taskId: "task-1" },
+    path: "/v1/worker/tasks/progress",
+  },
+  {
+    argv: ["task-block", "--task-id", "task-1", "--reason", "waiting"],
+    body: { reason: "waiting", taskId: "task-1" },
+    path: "/v1/worker/tasks/block",
+  },
+  {
+    argv: ["task-request-input", "--task-id", "task-1", "--question", "which?"],
+    body: { question: "which?", taskId: "task-1" },
+    path: "/v1/worker/tasks/request-input",
+  },
+  {
+    argv: ["task-submit", "--task-id", "task-1", "--summary", "done"],
+    body: { summary: "done", taskId: "task-1" },
+    path: "/v1/worker/tasks/submit",
+  },
+  {
+    argv: [
+      "task-review",
+      "--task-id",
+      "task-1",
+      "--disposition",
+      "approved",
+      "--summary",
+      "evidence read",
+    ],
+    body: {
+      disposition: "approved",
+      summary: "evidence read",
+      taskId: "task-1",
+    },
+    path: "/v1/worker/tasks/review",
+  },
+  {
+    argv: [
+      "task-claim-message",
+      "--message-id",
+      "message-1",
+      "--rationale",
+      "durable work",
+    ],
+    body: { messageId: "message-1", rationale: "durable work" },
+    path: "/v1/worker/tasks/claim-message",
+  },
+  {
+    argv: ["task-create", "--title", "New work"],
+    body: { title: "New work" },
+    path: "/v1/worker/tasks/create",
+  },
+  {
+    argv: ["task-assign", "--task-id", "task-1", "--assignee", "agent-2"],
+    body: { assigneeId: "agent-2", taskId: "task-1" },
+    path: "/v1/worker/tasks/assign",
+  },
+  {
+    argv: ["task-amend", "--task-id", "task-1", "--title", "Sharper title"],
+    body: { taskId: "task-1", title: "Sharper title" },
+    path: "/v1/worker/tasks/amend",
+  },
+  {
+    argv: ["task-unblock", "--task-id", "task-1"],
+    body: { taskId: "task-1" },
+    path: "/v1/worker/tasks/unblock",
+  },
+  {
+    argv: ["task-convert", "--message-id", "message-1"],
+    body: { messageId: "message-1" },
+    path: "/v1/worker/tasks/convert",
+  },
+  {
+    argv: ["task-delete", "--room-id", "room-1", "--task-id", "task-1"],
+    body: { roomId: "room-1", taskId: "task-1" },
+    path: "/v1/worker/tasks/delete",
+  },
+];
+
+test("every Task command sends the Raft-shaped minimal body", async () => {
+  for (const command of minimalTaskCommands) {
+    const state = fixture();
+    try {
+      assert.equal(
+        await runWorkerCliCommand(["worker", ...command.argv], state.runtime),
+        0,
+        command.argv[0],
+      );
+      assert.deepEqual(state.requests[0]?.body, command.body, command.argv[0]);
+      assert.equal(
+        state.requests[0]?.url,
+        `http://127.0.0.1:43123${command.path}`,
+      );
+    } finally {
+      rmSync(state.directory, { force: true, recursive: true });
+    }
+  }
+});
+
+test("the explicit causal form stays an accepted pass-through on every Task command", async () => {
+  for (const command of minimalTaskCommands) {
+    const state = fixture();
+    try {
+      assert.equal(
+        await runWorkerCliCommand(
+          [
+            "worker",
+            ...command.argv,
+            "--based-on-room-seq",
+            "9",
+            "--idempotency-key",
+            "explicit-key",
+          ],
+          state.runtime,
+        ),
+        0,
+        command.argv[0],
+      );
+      assert.deepEqual(
+        state.requests[0]?.body,
+        { ...command.body, basedOnRoomSeq: 9, idempotencyKey: "explicit-key" },
+        command.argv[0],
+      );
+    } finally {
+      rmSync(state.directory, { force: true, recursive: true });
+    }
+  }
+});
+
+test("help no longer presents the causal parameters as required on Task commands", async () => {
+  const state = fixture();
+  try {
+    await runWorkerCliCommand(["worker", "help"], state.runtime);
+    const help = state.stdout();
+    for (const line of help.split("\n"))
+      if (/^rah worker task-/u.test(line))
+        assert.ok(
+          !line.includes("--based-on-room-seq") &&
+            !line.includes("--idempotency-key"),
+          line,
+        );
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});

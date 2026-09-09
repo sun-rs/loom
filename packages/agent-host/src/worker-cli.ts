@@ -820,8 +820,7 @@ function parseCommand(
       const assignee = options["assignee"];
       return {
         body: {
-          basedOnRoomSeq: nonnegativeInteger(options, "based-on-room-seq"),
-          idempotencyKey: boundedText(options, "idempotency-key", 512),
+          ...taskCausality(options),
           title: boundedText(options, "title", 2_000),
           ...(assignee === undefined
             ? {}
@@ -839,8 +838,7 @@ function parseCommand(
       ]);
       return {
         body: {
-          basedOnRoomSeq: nonnegativeInteger(options, "based-on-room-seq"),
-          idempotencyKey: boundedText(options, "idempotency-key", 512),
+          ...taskCausality(options),
           messageId: boundedText(options, "message-id", 512),
           rationale: boundedText(options, "rationale", 2_000),
         },
@@ -878,9 +876,8 @@ function parseCommand(
       }
       return {
         body: {
-          basedOnRoomSeq: nonnegativeInteger(options, "based-on-room-seq"),
+          ...taskCausality(options),
           disposition,
-          idempotencyKey: boundedText(options, "idempotency-key", 512),
           summary: boundedText(options, "summary"),
           taskId: boundedText(options, "task-id", 512),
         },
@@ -1130,6 +1127,23 @@ function jsonObjectOption(
   return value as Record<string, unknown>;
 }
 
+/**
+ * Raft carries neither `--based-on-room-seq` nor `--idempotency-key` on a Task
+ * command; the server resolves both. Both remain accepted pass-throughs.
+ */
+function taskCausality(
+  options: Readonly<Record<string, string>>,
+): Record<string, unknown> {
+  return {
+    ...(options["based-on-room-seq"] === undefined
+      ? {}
+      : { basedOnRoomSeq: nonnegativeInteger(options, "based-on-room-seq") }),
+    ...(options["idempotency-key"] === undefined
+      ? {}
+      : { idempotencyKey: boundedText(options, "idempotency-key", 512) }),
+  };
+}
+
 function taskQuery(
   options: Readonly<Record<string, string>>,
   path: string,
@@ -1151,8 +1165,7 @@ function taskMutation(
   ]);
   return {
     body: {
-      basedOnRoomSeq: nonnegativeInteger(options, "based-on-room-seq"),
-      idempotencyKey: boundedText(options, "idempotency-key", 512),
+      ...taskCausality(options),
       taskId: boundedText(options, "task-id", 512),
       ...(contentField === undefined
         ? {}
@@ -1192,8 +1205,7 @@ function taskSubmitMutation(options: Readonly<Record<string, string>>): {
   }
   return {
     body: WorkerTaskSubmitRequestSchema.parse({
-      basedOnRoomSeq: nonnegativeInteger(options, "based-on-room-seq"),
-      idempotencyKey: boundedText(options, "idempotency-key", 512),
+      ...taskCausality(options),
       summary: boundedText(options, "summary"),
       taskId: boundedText(options, "task-id", 512),
       ...(hasVerification
@@ -1449,15 +1461,16 @@ rah worker profile-avatar-publish --path FILE --mime-type image/png|image/jpeg|i
 rah worker profile-self-get
 rah worker profile-update --control-room-id ID --control-room-seq N --expected-revision-id ID [--display-name TEXT] [--description TEXT] [--avatar-key KEY] [--avatar-upload-intent-id ID] --idempotency-key KEY
 rah worker profile-show [--target ID|@HANDLE] [--channel TARGET] [--created-agents-limit N] [--created-agents-cursor CURSOR]
-rah worker task-assign --task-id ID (--assignee AGENT_ID | --unassign) --based-on-room-seq N --idempotency-key KEY
+rah worker task-assign --task-id ID (--assignee AGENT_ID | --unassign)
 rah worker channel-mute --based-on-room-seq N --idempotency-key KEY [--target CHANNEL --context-receipt RECEIPT]
 rah worker channel-unmute --based-on-room-seq N --idempotency-key KEY [--target CHANNEL --context-receipt RECEIPT]
-rah worker task-delete --room-id ID --task-id ID --based-on-room-seq N --idempotency-key KEY
-rah worker task-amend --task-id ID [--title TEXT] [--description TEXT | --clear-description] --based-on-room-seq N --idempotency-key KEY
-rah worker task-unblock --task-id ID --based-on-room-seq N --idempotency-key KEY
-rah worker task-convert --message-id ID --based-on-room-seq N --idempotency-key KEY
+rah worker task-delete --room-id ID --task-id ID
+rah worker task-amend --task-id ID [--title TEXT] [--description TEXT | --clear-description]
+rah worker task-unblock --task-id ID
+rah worker task-convert --message-id ID
 rah worker task-list [--target TARGET] [--mine] [--status todo|in_progress|in_review|done|closed|all] [--limit N] [--cursor CURSOR]
 rah worker task-history --task-id ID [--target TARGET] [--limit N] [--cursor CURSOR]
+Task commands need no causal cursor and no idempotency key: RAH resolves the read position and the operation identity itself.
 Read tools expose current facts in already joined Rooms and DMs without acknowledging Inbox or authorizing newer mutation cursors. Task lists show current projections, not MVCC snapshots.
 rah worker message-search [--query TEXT] [--target TARGET] [--sender @HANDLE|ID] [--sender-id ID] [--after ISO_TIMESTAMP] [--before ISO_TIMESTAMP] [--sort relevance|recent] [--limit N] [--cursor CURSOR]
 rah worker message-react --message-id ID --emoji EMOJI --active true|false --based-on-room-seq N --idempotency-key KEY
@@ -1478,14 +1491,14 @@ rah worker task-submission --task-id ID
 rah worker task-trajectory --task-id ID [--limit N] [--before-sequence N]
 Reviewers read the owner's recorded commands and file edits before recording a Review.
 rah worker task-input-status --task-id ID
-rah worker task-create --title TEXT [--assignee PARTICIPANT_ID] --based-on-room-seq N --idempotency-key KEY
-rah worker task-claim-message --message-id ID --rationale TEXT --based-on-room-seq N --idempotency-key KEY
-rah worker task-claim|task-start|task-release --task-id ID --based-on-room-seq N --idempotency-key KEY
-rah worker task-progress --task-id ID --progress TEXT --based-on-room-seq N --idempotency-key KEY
-rah worker task-block --task-id ID --reason TEXT --based-on-room-seq N --idempotency-key KEY
-rah worker task-request-input --task-id ID --question TEXT --based-on-room-seq N --idempotency-key KEY
-rah worker task-submit --task-id ID --summary TEXT [--verification-status passed|failed|not_run --verification-summary TEXT --verification-artifact-ids ID,ID] --based-on-room-seq N --idempotency-key KEY
-rah worker task-review --task-id ID --disposition approved|changes_requested --summary TEXT --based-on-room-seq N --idempotency-key KEY
+rah worker task-create --title TEXT [--assignee PARTICIPANT_ID]
+rah worker task-claim-message --message-id ID --rationale TEXT
+rah worker task-claim|task-start|task-release --task-id ID
+rah worker task-progress --task-id ID --progress TEXT
+rah worker task-block --task-id ID --reason TEXT
+rah worker task-request-input --task-id ID --question TEXT
+rah worker task-submit --task-id ID --summary TEXT [--verification-status passed|failed|not_run --verification-summary TEXT --verification-artifact-ids ID,ID]
+rah worker task-review --task-id ID --disposition approved|changes_requested --summary TEXT
 `;
 }
 
