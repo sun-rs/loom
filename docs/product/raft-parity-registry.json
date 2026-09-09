@@ -27,23 +27,29 @@
     "deferred-scope"
   ],
   "ratchet": {
-    "unjustified": 80,
+    "unjustified": 168,
     "undecidable": 0,
-    "missingNonDeferred": 33,
+    "missingNonDeferred": 63,
+    "outputSurfaceUnjustified": 88,
+    "outputSurfaceMissingNonDeferred": 30,
     "promptJudgmentParagraphs": 14
   },
   "ratchetNotes": {
-    "unjustified": "Falls when RAH replicates the Raft contract, and equally when a row is re-adjudicated. A drop is not repair unless a commit changed a surface; the batch of 2026-09-09 that removed the remaining protocol mechanics from the Agent moved 18 rows, so this number now measures 80 unreplicated Agent-facing divergences.",
+    "unjustified": "Falls when RAH replicates the Raft contract, and equally when a row is re-adjudicated. A drop is not repair unless a commit changed a surface. It stood at 80 while the registry covered only the CLI-surface and prompt-sections inventories; the 2026-09-09 pass that registered the output and error inventory added 88 unjustified rows without repairing anything, so it now measures 168 unreplicated Agent-facing divergences. The rise is bookkeeping: lowering it while adding rows would have hidden the newly registered debt.",
     "undecidable": "Counts rows whose Raft-side claim rests on the closed Raft Server rather than on the client contract or the extracted CLI. It may rise only when a new Agent-facing surface is added whose upstream behaviour is Server-held, never by reclassifying a row that already has client-side evidence. It must fall the moment Server evidence becomes available: every row it covers is then re-adjudicated aligned, justified or unjustified. It stands at 0 because all 211 rows cite either packages/shared/src/agentApiContract.ts or the extracted Computer CLI and prompt compiler.",
-    "missingNonDeferred": "Falls when RAH ports the Raft surface. Deferred absences are excluded and must name a constraint instead.",
-    "promptJudgmentParagraphs": "Falls when a self-authored judgment paragraph is removed from the standing prompt."
+    "missingNonDeferred": "Falls when RAH ports the Raft surface. Deferred absences are excluded and must name a constraint instead. It rose from 33 to 63 when the output and error inventory was registered; the 30 new rows are absences that were always there and had no row to sit in.",
+    "promptJudgmentParagraphs": "Falls when a self-authored judgment paragraph is removed from the standing prompt.",
+    "outputSurfaceUnjustified": "The output and error share of `unjustified`, over kinds output, error-code and output-format. It exists so the surface that lost a real reply cannot hide inside a whole-registry total: it can only fall by replicating an output contract, never by adding rows elsewhere. Of the 88, 55 are the systemic format divergence (Raft prints text for the Agent, RAH prints JSON), 20 are error codes whose recovery guidance RAH still does not carry, and 13 are command results whose rendering diverges.",
+    "outputSurfaceMissingNonDeferred": "The output and error share of `missingNonDeferred`. Of the 30, 8 are Agent-visible outcomes RAH never produces (the missed-messages section, the drive-by tip, SEND_DRAFT_NOT_FOUND, the stdin-window diagnostic, mention partial delivery, the two Task freshness holds and reminder ack) and 22 are Raft cliError codes with no RAH site."
   },
   "ambiguities": [
     "The CLI inventory §4 counts (aligned 8 / justified 7 / unjustified 29 / missing 46, 28 deferred) do not reproduce from its own §2 rows, which yield aligned 7, justified 7, unjustified 30 and 49 missing subcommands (28 deferred). This registry records the per-row verdicts, not the summary totals.",
     "The CLI inventory §2.11 declares 36 missing routes (22 deferred); its own 75 numbered rows yield 32 missing (20 deferred). This registry records the rows.",
     "The prompt inventory §3.3 summarises 14 judgment paragraphs and 6 mixed, while its own per-paragraph labels give 12 pure judgment and 7 mixed. The ratchet stays at the adjudicated 14; only the 12 explicitly labelled judgment paragraphs are registered.",
     "The CLI inventory records the upstream bundle as 34,981,487 bytes; the file with the recorded sha256 is 34,983,657 bytes, and its byte offsets do not resolve to the described definitions. Offsets are kept verbatim and used only as region anchors.",
-    "Fifteen entries carry no `raft` anchor object because the divergence is an absence upstream, not a differing definition: the twelve self-authored standing-prompt paragraphs and the three RAH-only Task surfaces. Their evidence tier is read from the inventory section each note cites — the prompt rows from the extracted `raft-computer-1.0.18/regions/agent-prompt-compiler.js` that the prompt inventory §1 declares as its baseline, the Task rows from the 90-subcommand catalogue enumerated in the CLI inventory §1.4 — so they are recorded `cli-behavior`, not `server-inferred`. Both files are readable, so neither absence rests on the closed Server."
+    "Thirty entries carry no `raft` anchor object because the divergence is an absence upstream, not a differing definition: the twelve self-authored standing-prompt paragraphs, the three RAH-only Task surfaces, and the fifteen output-format rows for Agent-visible commands Raft has no counterpart for. Their evidence tier is read from the inventory section each note cites — the prompt rows from the extracted `raft-computer-1.0.18/regions/agent-prompt-compiler.js` that the prompt inventory §1 declares as its baseline, the Task rows from the 90-subcommand catalogue enumerated in the CLI inventory §1.4, the format rows from the output and error inventory §4 — so they are recorded `cli-behavior`, not `server-inferred`. All three files are readable, so no absence rests on the closed Server.",
+    "The output and error inventory §3 (表二) records a final grouped row of INTEGRATION_*, MIGRATE_*, BRIDGE_*, WIKI, MANAGED_WRAPPER_FORWARD_FAILED, LOCAL_WRITE_FAILED, CHECK_FAILED, CREDENTIAL_CHECK_FAILED, MENTION_ACTION_FAILED, AMBIGUOUS and INVALID_AGENT_ID codes with the verdict 不适用 (not applicable: RAH has no such command family), and excludes it from its own subtotal. 不适用 has no counterpart in the closed verdict vocabulary, and calling it justified would require inventing a constraint, so those codes are not registered. They are the only part of the third inventory this registry does not carry.",
+    "The output and error inventory was written on 2026-09-09 against the tree before 277bd23. Twelve of its rows record a deviation that commit closed: 表一 rows 6 and 11, and 表二 SEND_HELD_AS_DRAFT, THREAD_CONTEXT_TARGET_CONFIRMATION_REQUIRED, SEND_FAILED, READ_FAILED, UPLOAD_FAILED, VIEW_FAILED and the four ported send-argument rejections. They are recorded aligned against the current source rather than transcribed from the inventory's reading, and each note says so. No row was moved the other way, and no row whose deviation is only partly closed (NOT_FOUND, INVALID_JSON_RESPONSE, INVALID_ARG, the bootstrap codes) was upgraded."
   ],
   "entries": [
     {
@@ -821,7 +827,7 @@
     },
     {
       "id": "cli.worker.message-post.held-json",
-      "kind": "cli",
+      "kind": "output",
       "rah": {
         "file": "packages/agent-host/src/worker-cli-error.ts"
       },
@@ -836,11 +842,25 @@
       },
       "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors §5 first tier row 1: closed 2026-09-09. A freshness-held send under --json now writes nothing to stdout and one ok:false envelope to stderr with code SEND_HELD_AS_DRAFT, retryable false, effect draft_saved, the next action and details.held. RAH previously wrote the held payload to stdout as a success-shaped object, so a --json consumer read \"not delivered\" as \"delivered\"."
+      "note": "output-errors §5 first tier row 1: closed 2026-09-09. A freshness-held send under --json now writes nothing to stdout and one ok:false envelope to stderr with code SEND_HELD_AS_DRAFT, retryable false, effect draft_saved, the next action and details.held. RAH previously wrote the held payload to stdout as a success-shaped object, so a --json consumer read \"not delivered\" as \"delivered\".",
+      "outcome": "freshness-held send under --json",
+      "disposition": "raised-error",
+      "streams": {
+        "raft": "stderr",
+        "rah": "stderr"
+      },
+      "exit": {
+        "raft": 1,
+        "rah": 1
+      },
+      "format": {
+        "raft": "json",
+        "rah": "json"
+      }
     },
     {
       "id": "cli.error.render",
-      "kind": "cli",
+      "kind": "output",
       "rah": {
         "file": "packages/agent-host/src/worker-cli-error.ts"
       },
@@ -855,11 +875,25 @@
       },
       "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors §2 rows 31-32 and §5 second tier rows 6-7: closed 2026-09-09. Every raised failure now renders Raft's stderr block (Error/Code/Fault domain/Layer/Retryable/Effect/Correlation/Draft saved/Effect state/Next action) or, where Raft sets outputMode from --json, the one-line JSON envelope. The proxy diagnostic fields are absent because RAH has no daemon proxy; that stays inventory row 15."
+      "note": "output-errors §2 rows 31-32 and §5 second tier rows 6-7: closed 2026-09-09. Every raised failure now renders Raft's stderr block (Error/Code/Fault domain/Layer/Retryable/Effect/Correlation/Draft saved/Effect state/Next action) or, where Raft sets outputMode from --json, the one-line JSON envelope. The proxy diagnostic fields are absent because RAH has no daemon proxy; that stays inventory row 15. On the 表一 axis this one row owns both row 31 (the text block) and row 32 (the JSON envelope), because a single renderError branch decides which of the two is written; it is not split into two rows so the fix is not counted twice.",
+      "outcome": "generic failure rendering, text and JSON",
+      "disposition": "raised-error",
+      "streams": {
+        "raft": "stderr",
+        "rah": "stderr"
+      },
+      "exit": {
+        "raft": 1,
+        "rah": 1
+      },
+      "format": {
+        "raft": "text+json-flag",
+        "rah": "text+json-flag"
+      }
     },
     {
       "id": "cli.error.server-code-passthrough",
-      "kind": "cli",
+      "kind": "error-code",
       "rah": {
         "file": "packages/agent-host/src/worker-cli.ts"
       },
@@ -874,11 +908,14 @@
       },
       "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors §5 second tier row 6: closed 2026-09-09. Raft's apiFailureError uses response.errorCode verbatim as the CLI code, falls back to SERVER_5XX above 500, and passes the server's suggestedNextAction through. RAH's CLI now does the same with its own 40 stable server codes instead of discarding them in serverErrorMessage."
+      "note": "output-errors §5 second tier row 6: closed 2026-09-09. Raft's apiFailureError uses response.errorCode verbatim as the CLI code, falls back to SERVER_5XX above 500, and passes the server's suggestedNextAction through. RAH's CLI now does the same with its own 40 stable server codes instead of discarding them in serverErrorMessage. On the 表二 axis this row owns the SERVER_5XX code and the apiFailureError passthrough mechanism that every other server-coded row depends on.",
+      "code": "SERVER_5XX",
+      "raftNextAction": "no default; apiFailureError attributes an agent_proxy_failed 5xx to the local daemon proxy before the server",
+      "rahCode": "SERVER_5XX"
     },
     {
       "id": "cli.worker.message-post.send-failure-draft-saved",
-      "kind": "cli",
+      "kind": "output",
       "rah": {
         "file": "packages/agent-host/src/worker-cli-error.ts"
       },
@@ -893,11 +930,25 @@
       },
       "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors §2 row 14 and §5 second tier row 4: closed 2026-09-09. A send that fails after the draft was saved now carries Raft's verbatim CANNOT_CONFIRM next action and Draft saved: yes; --send-draft keeps Draft saved: no and no such guidance, as upstream."
+      "note": "output-errors §2 row 14 and §5 second tier row 4: closed 2026-09-09. A send that fails after the draft was saved now carries Raft's verbatim CANNOT_CONFIRM next action and Draft saved: yes; --send-draft keeps Draft saved: no and no such guidance, as upstream.",
+      "outcome": "send failure after the draft was saved",
+      "disposition": "raised-error",
+      "streams": {
+        "raft": "stderr",
+        "rah": "stderr"
+      },
+      "exit": {
+        "raft": 1,
+        "rah": 1
+      },
+      "format": {
+        "raft": "text",
+        "rah": "text"
+      }
     },
     {
       "id": "cli.worker.message-post.thread-target-confirmation-stream",
-      "kind": "cli",
+      "kind": "output",
       "rah": {
         "file": "packages/agent-host/src/worker-held-send.ts"
       },
@@ -912,11 +963,25 @@
       },
       "verdict": "aligned",
       "upstreamEvidence": "cli-behavior",
-      "note": "output-errors §2 row 9 and §5 first tier row 2: closed 2026-09-09. Raft raises this as a cliError, so the whole message is stderr and its two paths are the suggestedNextAction. RAH previously wrote the body to stdout. The exit code stays 1."
+      "note": "output-errors §2 row 9 and §5 first tier row 2: closed 2026-09-09. Raft raises this as a cliError, so the whole message is stderr and its two paths are the suggestedNextAction. RAH previously wrote the body to stdout. The exit code stays 1.",
+      "outcome": "thread-target confirmation",
+      "disposition": "raised-error",
+      "streams": {
+        "raft": "stderr",
+        "rah": "stderr"
+      },
+      "exit": {
+        "raft": 1,
+        "rah": 1
+      },
+      "format": {
+        "raft": "text",
+        "rah": "text"
+      }
     },
     {
       "id": "cli.worker.message-post.stdout-refusal-notices",
-      "kind": "cli",
+      "kind": "output",
       "rah": {
         "file": "packages/agent-host/src/worker-held-send.ts"
       },
@@ -932,7 +997,21 @@
       "verdict": "justified",
       "upstreamEvidence": "cli-behavior",
       "constraint": "single-machine",
-      "note": "output-errors §5 declared divergences: in text mode RAH keeps two stdout lines Raft does not write — the SEND_HELD_AS_DRAFT: opening line on the hold body and workerReplacedDraftNotice. On Raft the CLI runs in the Agent's own shell; on RAH the Agent is a local child process of the Computer whose stderr the Provider runtime may drop, which is how F0909G lost a real reply. Both lines are code-and-pointer only: no body, no second copy of discarded text."
+      "note": "output-errors §5 declared divergences: in text mode RAH keeps two stdout lines Raft does not write — the SEND_HELD_AS_DRAFT: opening line on the hold body and workerReplacedDraftNotice. On Raft the CLI runs in the Agent's own shell; on RAH the Agent is a local child process of the Computer whose stderr the Provider runtime may drop, which is how F0909G lost a real reply. Both lines are code-and-pointer only: no body, no second copy of discarded text. Recorded side-channel because Raft writes this warning to stderr beside an otherwise normal result, so it is neither a rendered result nor a raised error; the exit code is whatever the surrounding send returns.",
+      "outcome": "draft-replaced warning and refusal pointers",
+      "disposition": "side-channel",
+      "streams": {
+        "raft": "stderr",
+        "rah": "stdout+stderr"
+      },
+      "exit": {
+        "raft": null,
+        "rah": null
+      },
+      "format": {
+        "raft": "text",
+        "rah": "text"
+      }
     },
     {
       "id": "cli.worker.thread-unfollow",
@@ -3717,6 +3796,3248 @@
       "upstreamEvidence": "cli-behavior",
       "classification": "judgment",
       "note": "§3.1 (ss): a recorded product adjudication, still RAH-authored judgment prose with no Raft counterpart."
+    },
+    {
+      "id": "output.send.success-status-line",
+      "kind": "output",
+      "outcome": "send success status line",
+      "disposition": "rendered-result",
+      "rah": {
+        "file": "packages/agent-host/src/worker-held-send.ts"
+      },
+      "raft": {
+        "anchor": "handleMessageSend status line",
+        "location": "sea-functions/handleMessageSend-0.js"
+      },
+      "streams": {
+        "raft": "stdout",
+        "rah": "stdout"
+      },
+      "exit": {
+        "raft": 0,
+        "rah": 0
+      },
+      "format": {
+        "raft": "text",
+        "rah": "text"
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 1: workerSendSuccessOutput carries Raft's wording, stream and exit code, including the thread-reply target hint."
+    },
+    {
+      "id": "output.send.unread-section",
+      "kind": "output",
+      "outcome": "send success with a missed-messages section",
+      "disposition": "rendered-result",
+      "raft": {
+        "anchor": "handleMessageSend unreadSection",
+        "location": "sea-functions/handleMessageSend-0.js"
+      },
+      "streams": {
+        "raft": "stdout",
+        "rah": null
+      },
+      "exit": {
+        "raft": 0,
+        "rah": null
+      },
+      "format": {
+        "raft": "text",
+        "rah": null
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 2 and §5 second tier row 11: Raft appends `--- New messages you may have missed ---` plus formatMessages(recentUnread) to the same stdout write, saving the Agent one read. RAH's send response schema carries no unread payload at all."
+    },
+    {
+      "id": "output.send.drive-by-tip",
+      "kind": "output",
+      "outcome": "send success with the drive-by join tip",
+      "disposition": "rendered-result",
+      "raft": {
+        "anchor": "handleMessageSend driveBySection",
+        "location": "sea-functions/handleMessageSend-0.js"
+      },
+      "streams": {
+        "raft": "stdout",
+        "rah": null
+      },
+      "exit": {
+        "raft": 0,
+        "rah": null
+      },
+      "format": {
+        "raft": "text",
+        "rah": null
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 3: formatDriveByJoinedToPostTip is appended to the same stdout write. RAH has no counterpart."
+    },
+    {
+      "id": "output.send.success-json",
+      "kind": "output",
+      "outcome": "send success under --json",
+      "disposition": "rendered-result",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "writeJson(ctx.io, data)",
+        "location": "sea-functions/handleMessageSend-0.js"
+      },
+      "streams": {
+        "raft": "stdout",
+        "rah": "stdout"
+      },
+      "exit": {
+        "raft": 0,
+        "rah": 0
+      },
+      "format": {
+        "raft": "json",
+        "rah": "json"
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 4: one JSON line on stdout, exit 0, on both sides."
+    },
+    {
+      "id": "output.send.freshness-hold-text",
+      "kind": "output",
+      "outcome": "freshness-held send, text mode",
+      "disposition": "rendered-result",
+      "rah": {
+        "file": "packages/agent-host/src/worker-held-send.ts"
+      },
+      "raft": {
+        "anchor": "formatHeldSendOutput / formatFreshnessHoldOutput",
+        "location": "sea-functions/formatHeldSendOutput-0.js"
+      },
+      "streams": {
+        "raft": "stdout",
+        "rah": "stdout"
+      },
+      "exit": {
+        "raft": 1,
+        "rah": 1
+      },
+      "format": {
+        "raft": "text",
+        "rah": "text"
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 5: Raft writes the hold body with writeText when !opts.json and only then raises SEND_HELD_AS_DRAFT, so the body is a rendered result on stdout while the error summary is on stderr. RAH's workerHeldSendGuidance does the same and returns 1. This is the row whose RAH-side inversion lost a real reply as F0909G; it is now pinned by the stream-direction rule."
+    },
+    {
+      "id": "output.send.freshness-hold-stderr-summary",
+      "kind": "output",
+      "outcome": "freshness-held send, stderr summary",
+      "disposition": "raised-error",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli-error.ts"
+      },
+      "raft": {
+        "anchor": "renderError text branch",
+        "location": "main.js@29836449",
+        "region": {
+          "bytes": 256,
+          "offset": 29836449,
+          "sha256": "de0725d302f20b6474e9ac839fa7ff0ec6692b4d9e489a175898dc028b207c8b"
+        }
+      },
+      "streams": {
+        "raft": "stderr",
+        "rah": "stderr"
+      },
+      "exit": {
+        "raft": 1,
+        "rah": 1
+      },
+      "format": {
+        "raft": "text",
+        "rah": "text"
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 6 and 表二 SEND_HELD_AS_DRAFT: the inventory recorded a two-line RAH summary (Error/Code only). 277bd23 ported renderError, so the hold now renders Retryable, Effect, Draft saved and Next action alongside the code. Recorded aligned on the current tree, not on the inventory's 2026-09-09 reading."
+    },
+    {
+      "id": "output.send.draft-not-found",
+      "kind": "output",
+      "outcome": "--send-draft with no saved draft",
+      "disposition": "raised-error",
+      "raft": {
+        "anchor": "cliError SEND_DRAFT_NOT_FOUND",
+        "location": "main.js@30172995",
+        "region": {
+          "bytes": 256,
+          "offset": 30172995,
+          "sha256": "2ce80c29caed4c7c1a8421acc0d2d0d737a48b49b4db7c55f23118ee0f3e12d7"
+        }
+      },
+      "streams": {
+        "raft": "stderr",
+        "rah": null
+      },
+      "exit": {
+        "raft": 1,
+        "rah": null
+      },
+      "format": {
+        "raft": "text",
+        "rah": null
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 10 and §5 second tier row 9: Raft raises a coded error whose body is a heredoc for rebuilding the draft. RAH keeps no local draft state, so --send-draft goes straight to the server and any absence degrades to a Worker API HTTP error."
+    },
+    {
+      "id": "output.send.draft-stdin-unsupported",
+      "kind": "output",
+      "outcome": "--send-draft that received stdin",
+      "disposition": "raised-error",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "rejectSendDraftStdin",
+        "location": "main.js@30165033",
+        "region": {
+          "bytes": 256,
+          "offset": 30165033,
+          "sha256": "2ff84c0106bff59b01e67a9e36938fc1d366fd48c0874d28c603d2444dc35817"
+        }
+      },
+      "streams": {
+        "raft": "stderr",
+        "rah": "stderr"
+      },
+      "exit": {
+        "raft": 1,
+        "rah": 1
+      },
+      "format": {
+        "raft": "text",
+        "rah": "text"
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 11: the inventory recorded the wording as ported but uncoded (有理由偏离). 277bd23 made it cliError(\"SEND_DRAFT_STDIN_UNSUPPORTED\", ...), so the row's one stated deviation is closed and it is recorded aligned rather than justified; the closed constraint enum has no value meaning \"wording ported, code absent\"."
+    },
+    {
+      "id": "output.send.draft-stdin-deadline-diagnostic",
+      "kind": "output",
+      "outcome": "--send-draft stdin observation window expiry",
+      "disposition": "side-channel",
+      "raft": {
+        "anchor": "formatSendDraftStdinDeadlineDiagnostic",
+        "location": "main.js@30163074",
+        "region": {
+          "bytes": 256,
+          "offset": 30163074,
+          "sha256": "33d5e6fd225b5f3d5a0903963586d6590ecd7db1cd7b09590f65f03e5847d727"
+        }
+      },
+      "streams": {
+        "raft": "stderr",
+        "rah": null
+      },
+      "exit": {
+        "raft": 0,
+        "rah": null
+      },
+      "format": {
+        "raft": "text",
+        "rah": null
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 12 and §5 first tier row 3: Raft writes a stderr diagnostic on an otherwise successful (exit 0) send, so it is neither a rendered result nor a raised error. RAH has the same 250ms window but returns empty silently, so the Agent cannot tell an unread heredoc from a deliberate draft send."
+    },
+    {
+      "id": "output.send.mention-partial-delivery",
+      "kind": "output",
+      "outcome": "@mention partial delivery",
+      "disposition": "side-channel",
+      "raft": {
+        "anchor": "MENTION_DELIVERY_FAILED",
+        "location": "main.js@30179928",
+        "region": {
+          "bytes": 256,
+          "offset": 30179928,
+          "sha256": "ff154d6814e64ee80b1aedd7c1dcea24aa3d0e9ce91851c4be50bb9e2af3420a"
+        }
+      },
+      "streams": {
+        "raft": "stdout+stderr",
+        "rah": null
+      },
+      "exit": {
+        "raft": 1,
+        "rah": null
+      },
+      "format": {
+        "raft": "text",
+        "rah": null
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 13 and §5 second tier row 10: Raft writes the queued-message result to stdout and then raises MENTION_DELIVERY_FAILED to stderr with per-token recovery commands and `Do not resend the queued message.`, so one outcome occupies both streams. RAH has no mention branch at all."
+    },
+    {
+      "id": "output.read.message-read",
+      "kind": "output",
+      "outcome": "message read / history",
+      "disposition": "rendered-result",
+      "rah": {
+        "file": "packages/agent-host/src/worker-read-cli.ts"
+      },
+      "raft": {
+        "anchor": "formatHistory",
+        "location": "main.js@32622144",
+        "region": {
+          "bytes": 256,
+          "offset": 32622144,
+          "sha256": "81072a96489e6750c685507c01a0ff290e9ae29d8e64390c58640a73c3780e68"
+        }
+      },
+      "streams": {
+        "raft": "stdout",
+        "rah": "stdout"
+      },
+      "exit": {
+        "raft": 0,
+        "rah": 0
+      },
+      "format": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 15: Raft prints formatted history text and offers no --json; RAH's message-read and room-read print JSON.stringify(result)."
+    },
+    {
+      "id": "output.read.message-check",
+      "kind": "output",
+      "outcome": "inbox drain (raft message check / rah worker sync)",
+      "disposition": "rendered-result",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "formatMessages + drain terminator",
+        "location": "main.js@32620741",
+        "region": {
+          "bytes": 256,
+          "offset": 32620741,
+          "sha256": "c919b45e2f59c3d1bc2a7e9f61da9a619077c526e9cf759a4416ec56f4599704"
+        }
+      },
+      "streams": {
+        "raft": "stdout",
+        "rah": "stdout"
+      },
+      "exit": {
+        "raft": 0,
+        "rah": 0
+      },
+      "format": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 16 and §5 second tier row 12: besides the format, Raft terminates the drain with `More messages are pending.` or `No more new inbox messages.`; RAH emits neither, so the Agent cannot tell when to stop draining."
+    },
+    {
+      "id": "output.read.message-search",
+      "kind": "output",
+      "outcome": "message search results",
+      "disposition": "rendered-result",
+      "rah": {
+        "file": "packages/agent-host/src/worker-read-cli.ts"
+      },
+      "raft": {
+        "anchor": "formatSearchResults",
+        "location": "main.js@32625209",
+        "region": {
+          "bytes": 256,
+          "offset": 32625209,
+          "sha256": "a54e8cea41b1a7194d639f3d438788e858db0f60a9a51d61d79bb893545a9816"
+        }
+      },
+      "streams": {
+        "raft": "stdout",
+        "rah": "stdout"
+      },
+      "exit": {
+        "raft": 0,
+        "rah": 0
+      },
+      "format": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 17."
+    },
+    {
+      "id": "output.read.message-resolve",
+      "kind": "output",
+      "outcome": "message id resolution",
+      "disposition": "rendered-result",
+      "rah": {
+        "file": "packages/agent-host/src/worker-read-cli.ts"
+      },
+      "raft": {
+        "anchor": "formatMessages([message])",
+        "location": "main.js@32628007",
+        "region": {
+          "bytes": 256,
+          "offset": 32628007,
+          "sha256": "69b2bad6689b40c4d38bc9eed872d4e13e1cb93c7d305f459fcb4dd4321fd401"
+        }
+      },
+      "streams": {
+        "raft": "stdout",
+        "rah": "stdout"
+      },
+      "exit": {
+        "raft": 0,
+        "rah": 0
+      },
+      "format": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 18."
+    },
+    {
+      "id": "output.write.message-react",
+      "kind": "output",
+      "outcome": "reaction added or removed",
+      "disposition": "rendered-result",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "Reaction <emoji> added to/removed from",
+        "location": "main.js@32629615",
+        "region": {
+          "bytes": 256,
+          "offset": 32629615,
+          "sha256": "f19530e4e671a9b9eca1cdeac1da106f6e95f9fc729c574c4fcfbebda37dabf8"
+        }
+      },
+      "streams": {
+        "raft": "stdout",
+        "rah": "stdout"
+      },
+      "exit": {
+        "raft": 0,
+        "rah": 0
+      },
+      "format": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 19."
+    },
+    {
+      "id": "output.task.claim-success",
+      "kind": "output",
+      "outcome": "task claim success",
+      "disposition": "rendered-result",
+      "rah": {
+        "file": "packages/agent-host/src/worker-task-management-cli.ts"
+      },
+      "raft": {
+        "anchor": "formatClaimResults",
+        "location": "main.js@32650425",
+        "region": {
+          "bytes": 256,
+          "offset": 32650425,
+          "sha256": "68a6a0afbbc614a99858b2f4ef473ba6463b531b8a252325e5ddb88b03eaaa0e"
+        }
+      },
+      "streams": {
+        "raft": "stdout",
+        "rah": "stdout"
+      },
+      "exit": {
+        "raft": 0,
+        "rah": 0
+      },
+      "format": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 20."
+    },
+    {
+      "id": "output.task.claim-freshness-hold",
+      "kind": "output",
+      "outcome": "task claim held on freshness",
+      "disposition": "rendered-result",
+      "raft": {
+        "anchor": "isFreshnessHeldResponse branch in task claim",
+        "location": "main.js@32650425",
+        "region": {
+          "bytes": 256,
+          "offset": 32650425,
+          "sha256": "68a6a0afbbc614a99858b2f4ef473ba6463b531b8a252325e5ddb88b03eaaa0e"
+        }
+      },
+      "streams": {
+        "raft": "stdout",
+        "rah": null
+      },
+      "exit": {
+        "raft": 0,
+        "rah": null
+      },
+      "format": {
+        "raft": "text",
+        "rah": null
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 21 and §5 second tier row 8: Raft renders formatFreshnessHoldOutput on stdout and returns with exit 0, so a hold is a result to read, not a failure. RAH has no Task-side hold: optimistic concurrency fails as stale_context (409) and reaches the Agent as an error with exit 1."
+    },
+    {
+      "id": "output.task.update-amend-freshness-hold",
+      "kind": "output",
+      "outcome": "task update / amend held on freshness",
+      "disposition": "rendered-result",
+      "raft": {
+        "anchor": "task update freshness hold",
+        "location": "main.js@32661473",
+        "region": {
+          "bytes": 256,
+          "offset": 32661473,
+          "sha256": "24a1a65d9bc174301b1fce4c4ab2b546052c7a2520012d570444b78dcdcc4875"
+        }
+      },
+      "streams": {
+        "raft": "stdout",
+        "rah": null
+      },
+      "exit": {
+        "raft": 0,
+        "rah": null
+      },
+      "format": {
+        "raft": "text",
+        "rah": null
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 22: same shape as row 21 for task update (main.js@32661473) and task amend (main.js@32673449)."
+    },
+    {
+      "id": "output.task.remaining-commands",
+      "kind": "output",
+      "outcome": "remaining task command results",
+      "disposition": "rendered-result",
+      "rah": {
+        "file": "packages/agent-host/src/worker-task-management-cli.ts"
+      },
+      "raft": {
+        "anchor": "task list/create/assign/unassign/unclaim/receipt/delete/convert/history formatters",
+        "location": "main.js@32644742",
+        "region": {
+          "bytes": 256,
+          "offset": 32644742,
+          "sha256": "59a4c794141e47f62c181049b7567fe091ebdc30b9fe58253cda841ecf53c108"
+        }
+      },
+      "streams": {
+        "raft": "stdout",
+        "rah": "stdout"
+      },
+      "exit": {
+        "raft": 0,
+        "rah": 0
+      },
+      "format": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 23: every remaining Task command prints its own formatted text upstream and JSON in RAH."
+    },
+    {
+      "id": "output.reminder.commands",
+      "kind": "output",
+      "outcome": "reminder schedule/list/cancel/snooze/update/log results",
+      "disposition": "rendered-result",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "formatReminderScheduled and siblings",
+        "location": "main.js@32734942",
+        "region": {
+          "bytes": 256,
+          "offset": 32734942,
+          "sha256": "d55f5bc3e6fd55afcabb7f7963e35ca818c8a49e0417b0c30432af5c12e42f10"
+        }
+      },
+      "streams": {
+        "raft": "stdout",
+        "rah": "stdout"
+      },
+      "exit": {
+        "raft": 0,
+        "rah": 0
+      },
+      "format": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 24."
+    },
+    {
+      "id": "output.reminder.ack",
+      "kind": "output",
+      "outcome": "reminder ack result",
+      "disposition": "rendered-result",
+      "raft": {
+        "anchor": "runReminderAck",
+        "location": "main.js@30424700",
+        "region": {
+          "bytes": 256,
+          "offset": 30424700,
+          "sha256": "3ee8a44f42b3d008f86e8093db232d9df7a050bbec10e4aecb242f19192e4297"
+        }
+      },
+      "streams": {
+        "raft": "stdout",
+        "rah": null
+      },
+      "exit": {
+        "raft": 0,
+        "rah": null
+      },
+      "format": {
+        "raft": "text",
+        "rah": null
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 25: Raft acknowledges a fired reminder item and says so, including the already-acknowledged case. RAH has no reminder ack; `agent inbox ack` is a different surface and prints JSON."
+    },
+    {
+      "id": "output.inbox.check-snapshot",
+      "kind": "output",
+      "outcome": "app inbox snapshot",
+      "disposition": "rendered-result",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "formatAgentInboxFullSnapshot",
+        "location": "main.js@32612642",
+        "region": {
+          "bytes": 256,
+          "offset": 32612642,
+          "sha256": "3c44a1bb1371f04985d5306af66514c6221be679985c94a25f5b64e1d7dc47cb"
+        }
+      },
+      "streams": {
+        "raft": "stdout",
+        "rah": "stdout"
+      },
+      "exit": {
+        "raft": 0,
+        "rah": 0
+      },
+      "format": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 26."
+    },
+    {
+      "id": "output.identity.whoami",
+      "kind": "output",
+      "outcome": "whoami",
+      "disposition": "rendered-result",
+      "rah": {
+        "file": "packages/agent-host/src/worker-read-cli.ts"
+      },
+      "raft": {
+        "anchor": "whoami writeJson",
+        "location": "main.js@32532731",
+        "region": {
+          "bytes": 256,
+          "offset": 32532731,
+          "sha256": "4fab9f8e974049f7c57182e044cbc1c02b8c4617b80a04b728e5d464aa6d5211"
+        }
+      },
+      "streams": {
+        "raft": "stdout",
+        "rah": "stdout"
+      },
+      "exit": {
+        "raft": 0,
+        "rah": 0
+      },
+      "format": {
+        "raft": "json",
+        "rah": "json"
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 27: one of only four Raft commands that write JSON unconditionally, and RAH matches it."
+    },
+    {
+      "id": "output.identity.version",
+      "kind": "output",
+      "outcome": "version",
+      "disposition": "rendered-result",
+      "rah": {
+        "file": "packages/agent-host/src/worker-read-cli.ts"
+      },
+      "raft": {
+        "anchor": "formatVersionInfo",
+        "location": "main.js@32534037",
+        "region": {
+          "bytes": 256,
+          "offset": 32534037,
+          "sha256": "af15ce506cee19ad6a44c6a059b1d2bb7cb0c33a3abdd7de7ec5b55ed65bec2b"
+        }
+      },
+      "streams": {
+        "raft": "stdout",
+        "rah": "stdout"
+      },
+      "exit": {
+        "raft": 0,
+        "rah": 0
+      },
+      "format": {
+        "raft": "text+json-flag",
+        "rah": "json"
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 28: Raft prints text and switches to JSON only under --json; RAH has JSON only."
+    },
+    {
+      "id": "output.profile.show-update",
+      "kind": "output",
+      "outcome": "profile show / update",
+      "disposition": "rendered-result",
+      "rah": {
+        "file": "packages/agent-host/src/worker-read-cli.ts"
+      },
+      "raft": {
+        "anchor": "formatProfile",
+        "location": "main.js@32680172",
+        "region": {
+          "bytes": 256,
+          "offset": 32680172,
+          "sha256": "fce7359e971af66d28d1788737616f00e6efee9f85b0405ee2f04039c60b87b0"
+        }
+      },
+      "streams": {
+        "raft": "stdout",
+        "rah": "stdout"
+      },
+      "exit": {
+        "raft": 0,
+        "rah": 0
+      },
+      "format": {
+        "raft": "text+json-flag",
+        "rah": "json"
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 29: profile show (main.js@32680172) and profile update (main.js@32593937) both print text unless --json."
+    },
+    {
+      "id": "output.read.channel-and-server-views",
+      "kind": "output",
+      "outcome": "channel members / server info / channel mute / thread unfollow",
+      "disposition": "rendered-result",
+      "rah": {
+        "file": "packages/agent-host/src/worker-read-cli.ts"
+      },
+      "raft": {
+        "anchor": "formatChannelMembers",
+        "location": "main.js@32566172",
+        "region": {
+          "bytes": 256,
+          "offset": 32566172,
+          "sha256": "8e9780bcb9d233ad1d978ebf2bf17959afafcba7e87769c81e2e30b827e0fd03"
+        }
+      },
+      "streams": {
+        "raft": "stdout",
+        "rah": "stdout"
+      },
+      "exit": {
+        "raft": 0,
+        "rah": 0
+      },
+      "format": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 30: formatChannelMembers (32566172), formatServerInfo (32588437), channel mute writeText (30115284) and formatUnfollowThreadResult (32614502)."
+    },
+    {
+      "id": "output.error.bootstrap-failure",
+      "kind": "output",
+      "outcome": "credential / bootstrap failure",
+      "disposition": "raised-error",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "bootstrapSuggestedNextAction",
+        "location": "main.js@30026000",
+        "region": {
+          "bytes": 256,
+          "offset": 30026000,
+          "sha256": "538c1cc24a67302762a0eafaea0a00dd0a45c2e7283fcf2c311c6fe9d3643daf"
+        }
+      },
+      "streams": {
+        "raft": "stderr",
+        "rah": "stderr"
+      },
+      "exit": {
+        "raft": 1,
+        "rah": 1
+      },
+      "format": {
+        "raft": "text",
+        "rah": "text"
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 33 and §5 second tier row 13: the stream, exit code and code line now match after 277bd23, but Raft attaches a concrete `raft agent login ...` recovery command per bootstrap class and RAH attaches none, so the row stays unjustified on the guidance, not on the stream."
+    },
+    {
+      "id": "output.help",
+      "kind": "output",
+      "outcome": "--help",
+      "disposition": "rendered-result",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "commander help output",
+        "location": "main.js@30030572",
+        "region": {
+          "bytes": 256,
+          "offset": 30030572,
+          "sha256": "bf1acdf523b42a0fa9f686e9cdb66dad54422b0e8ee16a44442fd9534ed19544"
+        }
+      },
+      "streams": {
+        "raft": "stdout",
+        "rah": "stdout"
+      },
+      "exit": {
+        "raft": 0,
+        "rah": 0
+      },
+      "format": {
+        "raft": "text",
+        "rah": "text"
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表一 row 34."
+    },
+    {
+      "id": "error-code.send-held-as-draft",
+      "kind": "error-code",
+      "code": "SEND_HELD_AS_DRAFT",
+      "raftNextAction": "Review the held context, then update the draft or send the current draft unchanged.",
+      "rahCode": "SEND_HELD_AS_DRAFT",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli-error.ts"
+      },
+      "raft": {
+        "anchor": "cliError(\"SEND_HELD_AS_DRAFT\", ...)",
+        "location": "sea-functions/handleMessageSend-0.js"
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二: closed by 277bd23 through cli.error.render — the code now carries draftSaved:true, effect draft_saved, retryable:false, details.held and Raft's next action verbatim."
+    },
+    {
+      "id": "error-code.thread-context-target-confirmation-required",
+      "kind": "error-code",
+      "code": "THREAD_CONTEXT_TARGET_CONFIRMATION_REQUIRED",
+      "raftNextAction": "No message was sent. Send to <thread> if this belongs in the thread, or confirm the saved top-level draft with `raft message send --send-draft --target \"<target>\"`.",
+      "rahCode": "THREAD_CONTEXT_TARGET_CONFIRMATION_REQUIRED",
+      "rah": {
+        "file": "packages/agent-host/src/worker-held-send.ts"
+      },
+      "raft": {
+        "anchor": "THREAD_CONTEXT_TARGET_CONFIRMATION_REQUIRED",
+        "location": "main.js@30174525",
+        "region": {
+          "bytes": 256,
+          "offset": 30174525,
+          "sha256": "f0a1c4ab50381dd95bc12fcc0ef7b6c7847b18299aa44b178897206227133c2e"
+        }
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二: closed by 277bd23 through cli.worker.message-post.thread-target-confirmation-stream; the two paths are now the suggestedNextAction on stderr rather than stdout prose."
+    },
+    {
+      "id": "error-code.send-draft-not-found",
+      "kind": "error-code",
+      "code": "SEND_DRAFT_NOT_FOUND",
+      "raftNextAction": "the message body is itself the guidance: a heredoc that rebuilds the draft",
+      "rahCode": null,
+      "raft": {
+        "anchor": "cliError SEND_DRAFT_NOT_FOUND",
+        "location": "main.js@30172995",
+        "region": {
+          "bytes": 256,
+          "offset": 30172995,
+          "sha256": "2ce80c29caed4c7c1a8421acc0d2d0d737a48b49b4db7c55f23118ee0f3e12d7"
+        }
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二: RAH keeps no local draft state."
+    },
+    {
+      "id": "error-code.mention-delivery-failed",
+      "kind": "error-code",
+      "code": "MENTION_DELIVERY_FAILED",
+      "raftNextAction": "The message is already queued. + per-token recoveryCommand + Do not resend the queued message.",
+      "rahCode": null,
+      "raft": {
+        "anchor": "MENTION_DELIVERY_FAILED",
+        "location": "main.js@30179928",
+        "region": {
+          "bytes": 256,
+          "offset": 30179928,
+          "sha256": "ff154d6814e64ee80b1aedd7c1dcea24aa3d0e9ce91851c4be50bb9e2af3420a"
+        }
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二: effect message_queued, retryable false. RAH has no mention delivery concept."
+    },
+    {
+      "id": "error-code.send-failed",
+      "kind": "error-code",
+      "code": "SEND_FAILED",
+      "raftNextAction": "under reviewer isolation, upstream detail is withheld; markSendFailureDraftSaved injects the CANNOT_CONFIRM guidance",
+      "rahCode": "SEND_FAILED",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli-error.ts"
+      },
+      "raft": {
+        "anchor": "SEND_FAILED",
+        "location": "main.js@30176154",
+        "region": {
+          "bytes": 256,
+          "offset": 30176154,
+          "sha256": "7b042dcb4bb8dce5568e8e58396d0f514fda56a24282deb37b07b339f48b3425"
+        }
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二: closed by 277bd23 through cli.worker.message-post.send-failure-draft-saved and cli.error.server-code-passthrough — message-post is the fallback code and the CANNOT_CONFIRM next action is verbatim."
+    },
+    {
+      "id": "error-code.proxy-5xx",
+      "kind": "error-code",
+      "code": "PROXY_5XX",
+      "raftNextAction": "attribute a 5xx raised by the local daemon proxy to the proxy before the server; carries failure_class, cause_code, route_family, upstream_layer, upstream_status, response_started, response_complete and correlation_id",
+      "rahCode": null,
+      "raft": {
+        "anchor": "apiFailureError / proxyDiagnosticsPayload",
+        "location": "main.js apiFailureError"
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二 and §5 second tier row 15: RAH has no daemon proxy layer, so none of the seven diagnostic fields has a source. Recorded missing and non-deferred rather than justified: the inventory records it as an absence, and the closed constraint enum is not used here to retire debt this pass did not repair."
+    },
+    {
+      "id": "error-code.invalid-json-response",
+      "kind": "error-code",
+      "code": "INVALID_JSON_RESPONSE",
+      "raftNextAction": "no default; the message names which Agent API returned an empty or malformed body",
+      "rahCode": "INVALID_JSON_RESPONSE",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "INVALID_JSON_RESPONSE",
+        "location": "main.js@30159935",
+        "region": {
+          "bytes": 256,
+          "offset": 30159935,
+          "sha256": "37d4cf3fb61625fabe6a9f3b135341829050a69e12bfb1607c4134342cd18399"
+        }
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二: 277bd23 gave RAH the code, but its message is the generic `Worker response is not valid bounded JSON` and still does not name the endpoint, which is the deviation the inventory recorded."
+    },
+    {
+      "id": "error-code.invalid-arg",
+      "kind": "error-code",
+      "code": "INVALID_ARG",
+      "raftNextAction": "the commander-stage variants add ``Run `<cmd> --help` for syntax.``",
+      "rahCode": "INVALID_ARG",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "commander INVALID_ARG",
+        "location": "main.js@30436161",
+        "region": {
+          "bytes": 256,
+          "offset": 30436161,
+          "sha256": "3dfe183c0780828f63410e8de2bf8c9b3ff387d4fc6010040b3945168f6666f3"
+        }
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二: the highest-frequency Raft code (160 sites). 277bd23 made parseWorkerRequest wrap every parser rejection as INVALID_ARG, but no rejection carries the `--help` pointer."
+    },
+    {
+      "id": "error-code.invalid-target",
+      "kind": "error-code",
+      "code": "INVALID_TARGET",
+      "raftNextAction": "none",
+      "rahCode": null,
+      "raft": {
+        "anchor": "INVALID_TARGET",
+        "location": "main.js@30106764",
+        "region": {
+          "bytes": 256,
+          "offset": 30106764,
+          "sha256": "166c5347754762d4c80f870dd74456bee5a79c5927f6d2e09a96a30ba9529a0f"
+        }
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二: nine Raft sites; RAH has no distinct target-validation code."
+    },
+    {
+      "id": "error-code.not-found",
+      "kind": "error-code",
+      "code": "NOT_FOUND",
+      "raftNextAction": "mapReadFailure passes the server's own suggestedNextAction through",
+      "rahCode": "NOT_FOUND",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli-error.ts"
+      },
+      "raft": {
+        "anchor": "NOT_FOUND",
+        "location": "main.js@30422742",
+        "region": {
+          "bytes": 256,
+          "offset": 30422742,
+          "sha256": "304c2059066c1755b02fdc942626992775d45d9f0a6d023590c3b06b28fff55e"
+        }
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二: the server code now reaches the Agent through cli.error.server-code-passthrough, but RAH's worker error schema carries only code and message, so the server-supplied next action stays dormant. The stated deviation is closed only halfway."
+    },
+    {
+      "id": "error-code.ambiguous-id",
+      "kind": "error-code",
+      "code": "AMBIGUOUS_ID",
+      "raftNextAction": "Use the full message UUID instead of the 8-character short id.",
+      "rahCode": null,
+      "raft": {
+        "anchor": "AMBIGUOUS_ID",
+        "location": "main.js@30188772",
+        "region": {
+          "bytes": 256,
+          "offset": 30188772,
+          "sha256": "d5577c7afde1cce9722f93ba5fe396a7cbab7991a4ca2213b6e1f9d9abc2a5df"
+        }
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二 and §5 second tier row 14."
+    },
+    {
+      "id": "error-code.search-failed",
+      "kind": "error-code",
+      "code": "SEARCH_FAILED",
+      "raftNextAction": "routed by toSearchErrorCode",
+      "rahCode": null,
+      "raft": {
+        "anchor": "toSearchErrorCode",
+        "location": "main.js toSearchErrorCode"
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二."
+    },
+    {
+      "id": "error-code.scope-denied",
+      "kind": "error-code",
+      "code": "SCOPE_DENIED",
+      "raftNextAction": "routed by toSearchErrorCode",
+      "rahCode": null,
+      "raft": {
+        "anchor": "toSearchErrorCode",
+        "location": "main.js toSearchErrorCode"
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二."
+    },
+    {
+      "id": "error-code.read-failed",
+      "kind": "error-code",
+      "code": "READ_FAILED",
+      "raftNextAction": "apiFailureError default",
+      "rahCode": "READ_FAILED",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "mapReadFailure",
+        "location": "main.js mapReadFailure"
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二: 277bd23 made READ_FAILED the fallback code for every non-send worker request, matching Raft's default for read failures."
+    },
+    {
+      "id": "error-code.claim-failed",
+      "kind": "error-code",
+      "code": "CLAIM_FAILED",
+      "raftNextAction": "on a 5xx with agent_proxy_failed, attribute the failure to the proxy",
+      "rahCode": null,
+      "raft": {
+        "anchor": "CLAIM_FAILED",
+        "location": "main.js@32652659",
+        "region": {
+          "bytes": 256,
+          "offset": 32652659,
+          "sha256": "a51182441cf72f5c46721045e2be76d2b68ebac6f55b9fbd22549c3debd0df72"
+        }
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二."
+    },
+    {
+      "id": "error-code.amend-failed",
+      "kind": "error-code",
+      "code": "AMEND_FAILED",
+      "raftNextAction": "none; the message is self-explanatory",
+      "rahCode": null,
+      "raft": {
+        "anchor": "AMEND_FAILED",
+        "location": "main.js@32674865",
+        "region": {
+          "bytes": 256,
+          "offset": 32674865,
+          "sha256": "b837ed96787afa6caff1093e0f72f19df64df478c2793ef15c8df711a68b8f52"
+        }
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二."
+    },
+    {
+      "id": "error-code.update-failed",
+      "kind": "error-code",
+      "code": "UPDATE_FAILED",
+      "raftNextAction": "none; the message is self-explanatory",
+      "rahCode": null,
+      "raft": {
+        "anchor": "UPDATE_FAILED",
+        "location": "main.js@32601817",
+        "region": {
+          "bytes": 256,
+          "offset": 32601817,
+          "sha256": "527802322d8f9fbef0b1f0066e8ba40d40081f3edc11694b6ce8b0bf35ce5e6d"
+        }
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二."
+    },
+    {
+      "id": "error-code.log-failed",
+      "kind": "error-code",
+      "code": "LOG_FAILED",
+      "raftNextAction": "none; the message is self-explanatory",
+      "rahCode": null,
+      "raft": {
+        "anchor": "LOG_FAILED",
+        "location": "main.js@32748111",
+        "region": {
+          "bytes": 256,
+          "offset": 32748111,
+          "sha256": "351833d706d98541f6c87ed133853b2e35f902f1b06917ccbb5b7159e12b6938"
+        }
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二."
+    },
+    {
+      "id": "error-code.ack-failed",
+      "kind": "error-code",
+      "code": "ACK_FAILED",
+      "raftNextAction": "none; the message is self-explanatory",
+      "rahCode": null,
+      "raft": {
+        "anchor": "ACK_FAILED",
+        "location": "main.js@30425208",
+        "region": {
+          "bytes": 256,
+          "offset": 30425208,
+          "sha256": "227ea3796d17b498e1b3dce47a8305e5311fcf8c6965607b09160661aa42530e"
+        }
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二: five Raft sites."
+    },
+    {
+      "id": "error-code.missing-channel",
+      "kind": "error-code",
+      "code": "MISSING_CHANNEL",
+      "raftNextAction": "none",
+      "rahCode": null,
+      "raft": {
+        "anchor": "MISSING_CHANNEL",
+        "location": "main.js@32634473",
+        "region": {
+          "bytes": 256,
+          "offset": 32634473,
+          "sha256": "d1e0c5d09306bb051f1ae6e2ada85aff97f0f7ce20d15844a1f9bea8fa31f81d"
+        }
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二."
+    },
+    {
+      "id": "error-code.invalid-reaction",
+      "kind": "error-code",
+      "code": "INVALID_REACTION",
+      "raftNextAction": "none",
+      "rahCode": null,
+      "raft": {
+        "anchor": "INVALID_REACTION",
+        "location": "main.js@32630769",
+        "region": {
+          "bytes": 256,
+          "offset": 32630769,
+          "sha256": "7d0f6bcbfb99498f0b1735cdebc3fe38b8ed7138e5ff8460f7ecb211d7c47a20"
+        }
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二."
+    },
+    {
+      "id": "error-code.invalid-action",
+      "kind": "error-code",
+      "code": "INVALID_ACTION",
+      "raftNextAction": "none",
+      "rahCode": null,
+      "raft": {
+        "anchor": "INVALID_ACTION",
+        "location": "main.js@32564487",
+        "region": {
+          "bytes": 256,
+          "offset": 32564487,
+          "sha256": "0fa150fd13fa53959decbfb6a1a4b2ef35fe8698b5a1913e753b9a1a70965556"
+        }
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二: two Raft sites."
+    },
+    {
+      "id": "error-code.upload-failed",
+      "kind": "error-code",
+      "code": "UPLOAD_FAILED",
+      "raftNextAction": "none",
+      "rahCode": "UPLOAD_FAILED",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "UPLOAD_FAILED",
+        "location": "main.js@32638548",
+        "region": {
+          "bytes": 256,
+          "offset": 32638548,
+          "sha256": "1ed03c95290a9ee08f974892e13fbbd1c66eb1e6d3bb5c99285fcffa8238a70d"
+        }
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二: 277bd23 made UPLOAD_FAILED the fallback code on the artifact and attachment upload path, so the code the inventory recorded as absent now reaches the Agent."
+    },
+    {
+      "id": "error-code.view-failed",
+      "kind": "error-code",
+      "code": "VIEW_FAILED",
+      "raftNextAction": "none",
+      "rahCode": "VIEW_FAILED",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "VIEW_FAILED",
+        "location": "main.js@29998057",
+        "region": {
+          "bytes": 256,
+          "offset": 29998057,
+          "sha256": "32953a51f41d0f2165d301a9d19453d3b5d1df44c58fc9c31a2f15b0921dea51"
+        }
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二: 277bd23 made VIEW_FAILED the fallback code on the artifact and attachment download path."
+    },
+    {
+      "id": "error-code.inbox-check-failed",
+      "kind": "error-code",
+      "code": "INBOX_CHECK_FAILED",
+      "raftNextAction": "Use `raft message check` to drain messages.",
+      "rahCode": null,
+      "raft": {
+        "anchor": "INBOX_CHECK_FAILED",
+        "location": "main.js@32612996",
+        "region": {
+          "bytes": 256,
+          "offset": 32612996,
+          "sha256": "ce34b0adcdb2a581e7079ddcae3be17e092c602bcff297d467a4e4a492277008"
+        }
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二."
+    },
+    {
+      "id": "error-code.knowledge-get-failed",
+      "kind": "error-code",
+      "code": "KNOWLEDGE_GET_FAILED",
+      "raftNextAction": "none",
+      "rahCode": null,
+      "raft": {
+        "anchor": "KNOWLEDGE_GET_FAILED",
+        "location": "main.js@32608772",
+        "region": {
+          "bytes": 256,
+          "offset": 32608772,
+          "sha256": "bab050231f07bae595dcd00bd974b701979c81483374b425f780b69ca71cea50"
+        }
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二."
+    },
+    {
+      "id": "error-code.knowledge-search-failed",
+      "kind": "error-code",
+      "code": "KNOWLEDGE_SEARCH_FAILED",
+      "raftNextAction": "none",
+      "rahCode": null,
+      "raft": {
+        "anchor": "KNOWLEDGE_SEARCH_FAILED",
+        "location": "main.js@32611951",
+        "region": {
+          "bytes": 256,
+          "offset": 32611951,
+          "sha256": "81f65ddfbbaa5ebd03e22c80652cab5e441985c271c7c8dca36199bf836d2154"
+        }
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二."
+    },
+    {
+      "id": "error-code.knowledge-context-invalid",
+      "kind": "error-code",
+      "code": "KNOWLEDGE_CONTEXT_INVALID",
+      "raftNextAction": "a retry example that supplies the missing intent and reason fields",
+      "rahCode": null,
+      "raft": {
+        "anchor": "KNOWLEDGE_CONTEXT_INVALID",
+        "location": "main.js@30124064",
+        "region": {
+          "bytes": 256,
+          "offset": 30124064,
+          "sha256": "300f16d8174c061d2a64168c7302a8d08b8d6a2c7bbd85030da36cfa1eeff2e8"
+        }
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二."
+    },
+    {
+      "id": "error-code.profile-update-failed",
+      "kind": "error-code",
+      "code": "PROFILE_UPDATE_FAILED",
+      "raftNextAction": "none",
+      "rahCode": null,
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "PROFILE_UPDATE_FAILED",
+        "location": "main.js@32598124",
+        "region": {
+          "bytes": 256,
+          "offset": 32598124,
+          "sha256": "033c8c124f356bcaadf76077a6620db82dba67c853288d163cfdc39237861c36"
+        }
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二: RAH raises ProfileImageRequestError and its server codes now pass through, but no Raft-spelled profile code and no avatar constraint guidance exists."
+    },
+    {
+      "id": "error-code.profile-file-not-found",
+      "kind": "error-code",
+      "code": "PROFILE_FILE_NOT_FOUND",
+      "raftNextAction": "none",
+      "rahCode": null,
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "PROFILE_FILE_NOT_FOUND",
+        "location": "main.js@30120873",
+        "region": {
+          "bytes": 256,
+          "offset": 30120873,
+          "sha256": "be2d2e76a2461e7e43431ab90b02d801b654a62751cd2be4716b20edec9a65ea"
+        }
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二: two Raft sites; RAH has no counterpart code."
+    },
+    {
+      "id": "error-code.profile-avatar-too-large",
+      "kind": "error-code",
+      "code": "PROFILE_AVATAR_TOO_LARGE",
+      "raftNextAction": "states the size constraint",
+      "rahCode": null,
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "PROFILE_AVATAR_TOO_LARGE",
+        "location": "main.js@30121200",
+        "region": {
+          "bytes": 256,
+          "offset": 30121200,
+          "sha256": "f774ac33485c7feb97c61f98f29025cca9222750b369d3f02766a5daf4007d4e"
+        }
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二."
+    },
+    {
+      "id": "error-code.profile-avatar-bad-format",
+      "kind": "error-code",
+      "code": "PROFILE_AVATAR_BAD_FORMAT",
+      "raftNextAction": "states the format constraint",
+      "rahCode": null,
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "PROFILE_AVATAR_BAD_FORMAT",
+        "location": "main.js@30121596",
+        "region": {
+          "bytes": 256,
+          "offset": 30121596,
+          "sha256": "e6cefdfaf565640911e401d96241a2be498599bd694fe1d6ed29766a21dee21f"
+        }
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二."
+    },
+    {
+      "id": "error-code.profile-already-exists",
+      "kind": "error-code",
+      "code": "PROFILE_ALREADY_EXISTS",
+      "raftNextAction": "none",
+      "rahCode": null,
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "PROFILE_ALREADY_EXISTS",
+        "location": "main.js@30043623",
+        "region": {
+          "bytes": 256,
+          "offset": 30043623,
+          "sha256": "08df928187c4e3ac501b0eb399928a8d6bf2d991c7182e94ea369e8ee4c24ddc"
+        }
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二."
+    },
+    {
+      "id": "error-code.missing-token",
+      "kind": "error-code",
+      "code": "MISSING_TOKEN",
+      "raftNextAction": "bootstrapSuggestedNextAction gives a concrete recovery command per class",
+      "rahCode": "MISSING_TOKEN",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "bootstrapSuggestedNextAction",
+        "location": "main.js@30026000",
+        "region": {
+          "bytes": 256,
+          "offset": 30026000,
+          "sha256": "538c1cc24a67302762a0eafaea0a00dd0a45c2e7283fcf2c311c6fe9d3643daf"
+        }
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二 bootstrap group: 277bd23 gave RAH the code, and in either case no recovery command is attached, which is the deviation the inventory recorded."
+    },
+    {
+      "id": "error-code.missing-agent-id",
+      "kind": "error-code",
+      "code": "MISSING_AGENT_ID",
+      "raftNextAction": "bootstrapSuggestedNextAction gives a concrete recovery command per class",
+      "rahCode": null,
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "bootstrapSuggestedNextAction",
+        "location": "main.js@30026000",
+        "region": {
+          "bytes": 256,
+          "offset": 30026000,
+          "sha256": "538c1cc24a67302762a0eafaea0a00dd0a45c2e7283fcf2c311c6fe9d3643daf"
+        }
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二 bootstrap group: RAH has no counterpart code, and in either case no recovery command is attached, which is the deviation the inventory recorded."
+    },
+    {
+      "id": "error-code.missing-server-url",
+      "kind": "error-code",
+      "code": "MISSING_SERVER_URL",
+      "raftNextAction": "bootstrapSuggestedNextAction gives a concrete recovery command per class",
+      "rahCode": "MISSING_SERVER_URL",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "bootstrapSuggestedNextAction",
+        "location": "main.js@30026000",
+        "region": {
+          "bytes": 256,
+          "offset": 30026000,
+          "sha256": "538c1cc24a67302762a0eafaea0a00dd0a45c2e7283fcf2c311c6fe9d3643daf"
+        }
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二 bootstrap group: 277bd23 gave RAH the code, and in either case no recovery command is attached, which is the deviation the inventory recorded."
+    },
+    {
+      "id": "error-code.profile-file-unreadable",
+      "kind": "error-code",
+      "code": "PROFILE_FILE_UNREADABLE",
+      "raftNextAction": "bootstrapSuggestedNextAction gives a concrete recovery command per class",
+      "rahCode": null,
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "bootstrapSuggestedNextAction",
+        "location": "main.js@30026000",
+        "region": {
+          "bytes": 256,
+          "offset": 30026000,
+          "sha256": "538c1cc24a67302762a0eafaea0a00dd0a45c2e7283fcf2c311c6fe9d3643daf"
+        }
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二 bootstrap group: RAH has no counterpart code, and in either case no recovery command is attached, which is the deviation the inventory recorded."
+    },
+    {
+      "id": "error-code.profile-file-invalid",
+      "kind": "error-code",
+      "code": "PROFILE_FILE_INVALID",
+      "raftNextAction": "bootstrapSuggestedNextAction gives a concrete recovery command per class",
+      "rahCode": null,
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "bootstrapSuggestedNextAction",
+        "location": "main.js@30026000",
+        "region": {
+          "bytes": 256,
+          "offset": 30026000,
+          "sha256": "538c1cc24a67302762a0eafaea0a00dd0a45c2e7283fcf2c311c6fe9d3643daf"
+        }
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二 bootstrap group: RAH has no counterpart code, and in either case no recovery command is attached, which is the deviation the inventory recorded."
+    },
+    {
+      "id": "error-code.token-file-unreadable",
+      "kind": "error-code",
+      "code": "TOKEN_FILE_UNREADABLE",
+      "raftNextAction": "bootstrapSuggestedNextAction gives a concrete recovery command per class",
+      "rahCode": "TOKEN_FILE_UNREADABLE",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "bootstrapSuggestedNextAction",
+        "location": "main.js@30026000",
+        "region": {
+          "bytes": 256,
+          "offset": 30026000,
+          "sha256": "538c1cc24a67302762a0eafaea0a00dd0a45c2e7283fcf2c311c6fe9d3643daf"
+        }
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二 bootstrap group: 277bd23 gave RAH the code, and in either case no recovery command is attached, which is the deviation the inventory recorded."
+    },
+    {
+      "id": "error-code.token-file-empty",
+      "kind": "error-code",
+      "code": "TOKEN_FILE_EMPTY",
+      "raftNextAction": "bootstrapSuggestedNextAction gives a concrete recovery command per class",
+      "rahCode": null,
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "bootstrapSuggestedNextAction",
+        "location": "main.js@30026000",
+        "region": {
+          "bytes": 256,
+          "offset": 30026000,
+          "sha256": "538c1cc24a67302762a0eafaea0a00dd0a45c2e7283fcf2c311c6fe9d3643daf"
+        }
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二 bootstrap group: RAH has no counterpart code, and in either case no recovery command is attached, which is the deviation the inventory recorded."
+    },
+    {
+      "id": "error-code.missing-agent-proxy-url",
+      "kind": "error-code",
+      "code": "MISSING_AGENT_PROXY_URL",
+      "raftNextAction": "bootstrapSuggestedNextAction gives a concrete recovery command per class",
+      "rahCode": null,
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "bootstrapSuggestedNextAction",
+        "location": "main.js@30026000",
+        "region": {
+          "bytes": 256,
+          "offset": 30026000,
+          "sha256": "538c1cc24a67302762a0eafaea0a00dd0a45c2e7283fcf2c311c6fe9d3643daf"
+        }
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二 bootstrap group: RAH has no counterpart code, and in either case no recovery command is attached, which is the deviation the inventory recorded."
+    },
+    {
+      "id": "error-code.missing-agent-proxy-token",
+      "kind": "error-code",
+      "code": "MISSING_AGENT_PROXY_TOKEN",
+      "raftNextAction": "bootstrapSuggestedNextAction gives a concrete recovery command per class",
+      "rahCode": null,
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "bootstrapSuggestedNextAction",
+        "location": "main.js@30026000",
+        "region": {
+          "bytes": 256,
+          "offset": 30026000,
+          "sha256": "538c1cc24a67302762a0eafaea0a00dd0a45c2e7283fcf2c311c6fe9d3643daf"
+        }
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二 bootstrap group: RAH has no counterpart code, and in either case no recovery command is attached, which is the deviation the inventory recorded."
+    },
+    {
+      "id": "error-code.multiple-agent-proxy-tokens",
+      "kind": "error-code",
+      "code": "MULTIPLE_AGENT_PROXY_TOKENS",
+      "raftNextAction": "bootstrapSuggestedNextAction gives a concrete recovery command per class",
+      "rahCode": null,
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "bootstrapSuggestedNextAction",
+        "location": "main.js@30026000",
+        "region": {
+          "bytes": 256,
+          "offset": 30026000,
+          "sha256": "538c1cc24a67302762a0eafaea0a00dd0a45c2e7283fcf2c311c6fe9d3643daf"
+        }
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二 bootstrap group: RAH has no counterpart code, and in either case no recovery command is attached, which is the deviation the inventory recorded."
+    },
+    {
+      "id": "error-code.legacy-machine-unsupported",
+      "kind": "error-code",
+      "code": "LEGACY_MACHINE_UNSUPPORTED",
+      "raftNextAction": "bootstrapSuggestedNextAction gives a concrete recovery command per class",
+      "rahCode": null,
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "bootstrapSuggestedNextAction",
+        "location": "main.js@30026000",
+        "region": {
+          "bytes": 256,
+          "offset": 30026000,
+          "sha256": "538c1cc24a67302762a0eafaea0a00dd0a45c2e7283fcf2c311c6fe9d3643daf"
+        }
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二 bootstrap group: RAH has no counterpart code, and in either case no recovery command is attached, which is the deviation the inventory recorded."
+    },
+    {
+      "id": "error-code.positional-content-unsupported",
+      "kind": "error-code",
+      "code": "POSITIONAL_CONTENT_UNSUPPORTED",
+      "raftNextAction": "the message body is itself the guidance",
+      "rahCode": null,
+      "raft": {
+        "anchor": "send argument rejections",
+        "location": "main.js@30165033",
+        "region": {
+          "bytes": 256,
+          "offset": 30165033,
+          "sha256": "2ff84c0106bff59b01e67a9e36938fc1d366fd48c0874d28c603d2444dc35817"
+        }
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二 argument-rejection group: RAH has no positional or --content form to reject, so the code has no site."
+    },
+    {
+      "id": "error-code.content-flag-unsupported",
+      "kind": "error-code",
+      "code": "CONTENT_FLAG_UNSUPPORTED",
+      "raftNextAction": "the message body is itself the guidance",
+      "rahCode": null,
+      "raft": {
+        "anchor": "send argument rejections",
+        "location": "main.js@30165033",
+        "region": {
+          "bytes": 256,
+          "offset": 30165033,
+          "sha256": "2ff84c0106bff59b01e67a9e36938fc1d366fd48c0874d28c603d2444dc35817"
+        }
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二 argument-rejection group: RAH has no positional or --content form to reject, so the code has no site."
+    },
+    {
+      "id": "error-code.missing-content",
+      "kind": "error-code",
+      "code": "MISSING_CONTENT",
+      "raftNextAction": "the message body is itself the guidance",
+      "rahCode": "MISSING_CONTENT",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "send argument rejections",
+        "location": "main.js@30165033",
+        "region": {
+          "bytes": 256,
+          "offset": 30165033,
+          "sha256": "2ff84c0106bff59b01e67a9e36938fc1d366fd48c0874d28c603d2444dc35817"
+        }
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二 argument-rejection group: the inventory recorded these as 有理由偏离 because the wording was ported without a code. 277bd23 raises them through cliError with the Raft code, so the stated deviation is closed; recorded aligned rather than justified because the closed constraint enum has no value meaning \"wording ported, code absent\"."
+    },
+    {
+      "id": "error-code.send-draft-stdin-unsupported",
+      "kind": "error-code",
+      "code": "SEND_DRAFT_STDIN_UNSUPPORTED",
+      "raftNextAction": "the message body is itself the guidance",
+      "rahCode": "SEND_DRAFT_STDIN_UNSUPPORTED",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "send argument rejections",
+        "location": "main.js@30165033",
+        "region": {
+          "bytes": 256,
+          "offset": 30165033,
+          "sha256": "2ff84c0106bff59b01e67a9e36938fc1d366fd48c0874d28c603d2444dc35817"
+        }
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二 argument-rejection group: the inventory recorded these as 有理由偏离 because the wording was ported without a code. 277bd23 raises them through cliError with the Raft code, so the stated deviation is closed; recorded aligned rather than justified because the closed constraint enum has no value meaning \"wording ported, code absent\"."
+    },
+    {
+      "id": "error-code.send-draft-anyway-requires-send-draft",
+      "kind": "error-code",
+      "code": "SEND_DRAFT_ANYWAY_REQUIRES_SEND_DRAFT",
+      "raftNextAction": "the message body is itself the guidance",
+      "rahCode": "SEND_DRAFT_ANYWAY_REQUIRES_SEND_DRAFT",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "send argument rejections",
+        "location": "main.js@30165033",
+        "region": {
+          "bytes": 256,
+          "offset": 30165033,
+          "sha256": "2ff84c0106bff59b01e67a9e36938fc1d366fd48c0874d28c603d2444dc35817"
+        }
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二 argument-rejection group: the inventory recorded these as 有理由偏离 because the wording was ported without a code. 277bd23 raises them through cliError with the Raft code, so the stated deviation is closed; recorded aligned rather than justified because the closed constraint enum has no value meaning \"wording ported, code absent\"."
+    },
+    {
+      "id": "error-code.send-draft-attachments-unsupported",
+      "kind": "error-code",
+      "code": "SEND_DRAFT_ATTACHMENTS_UNSUPPORTED",
+      "raftNextAction": "the message body is itself the guidance",
+      "rahCode": "SEND_DRAFT_ATTACHMENTS_UNSUPPORTED",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts"
+      },
+      "raft": {
+        "anchor": "send argument rejections",
+        "location": "main.js@30165033",
+        "region": {
+          "bytes": 256,
+          "offset": 30165033,
+          "sha256": "2ff84c0106bff59b01e67a9e36938fc1d366fd48c0874d28c603d2444dc35817"
+        }
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二 argument-rejection group: the inventory recorded these as 有理由偏离 because the wording was ported without a code. 277bd23 raises them through cliError with the Raft code, so the stated deviation is closed; recorded aligned rather than justified because the closed constraint enum has no value meaning \"wording ported, code absent\"."
+    },
+    {
+      "id": "error-code.version-unavailable",
+      "kind": "error-code",
+      "code": "VERSION_UNAVAILABLE",
+      "raftNextAction": "Reinstall or upgrade Raft Computer; do not report a placeholder version.",
+      "rahCode": null,
+      "raft": {
+        "anchor": "VERSION_UNAVAILABLE",
+        "location": "main.js@30033802",
+        "region": {
+          "bytes": 256,
+          "offset": 30033802,
+          "sha256": "2a54ef0aeb554907c541751775e42c4a160a2dcfdc2ee13ca601877d3e8e5f25"
+        }
+      },
+      "verdict": "missing",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二: two Raft sites."
+    },
+    {
+      "id": "error-code.internal-bug",
+      "kind": "error-code",
+      "code": "INTERNAL_BUG",
+      "raftNextAction": "toCliError wraps any non-CliError as `Unexpected error: <msg>` and keeps the code",
+      "rahCode": "INTERNAL_BUG",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli-error.ts"
+      },
+      "raft": {
+        "anchor": "toCliError",
+        "location": "main.js@29836458",
+        "region": {
+          "bytes": 256,
+          "offset": 29836458,
+          "sha256": "82dcabaf77d47cf5546f9ca403593a818d05cb7c14986077654591100f79e9f2"
+        }
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表二: 277bd23 ported toWorkerCliError with the same wrapping, but RAH raises INTERNAL_BUG only after every parser rejection has already been reclassified INVALID_ARG, so the two code populations still differ."
+    },
+    {
+      "id": "output-format.worker.whoami",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker whoami"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker whoami",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "json",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: one of the two commands where both sides default to JSON and neither offers a switch."
+    },
+    {
+      "id": "output-format.worker.message-post",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker message-post"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker message-post",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "text"
+      },
+      "jsonFlag": {
+        "raft": true,
+        "rah": true
+      },
+      "verdict": "aligned",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: the only command where both sides default to text and both offer --json."
+    },
+    {
+      "id": "output-format.app.config",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "app config"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah app config",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.agent.inbox.check",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "agent inbox check"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah agent inbox check",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.reminder.schedule",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "reminder schedule"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah reminder schedule",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.reminder.list",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "reminder list"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah reminder list",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.reminder.cancel",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "reminder cancel"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah reminder cancel",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.reminder.snooze",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "reminder snooze"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah reminder snooze",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.reminder.update",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "reminder update"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah reminder update",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.reminder.log",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "reminder log"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah reminder log",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.sync",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker sync"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker sync",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.room-read",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker room-read"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker room-read",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.message-read",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker message-read"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker message-read",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.message-resolve",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker message-resolve"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker message-resolve",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.message-search",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker message-search"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker message-search",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.message-react",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker message-react"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker message-react",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.room-members",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker room-members"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker room-members",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.server-info",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker server-info"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker server-info",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.version",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker version"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker version",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": true,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers --json; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.profile-self-get",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker profile-self-get"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker profile-self-get",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.profile-update",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker profile-update"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker profile-update",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": true,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers --json; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.profile-show",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker profile-show"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker profile-show",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": true,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers --json; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.channel-mute",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker channel-mute"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker channel-mute",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.channel-unmute",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker channel-unmute"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker channel-unmute",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.thread-unfollow",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker thread-unfollow"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker thread-unfollow",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.attachment-publish",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker attachment-publish"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker attachment-publish",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.attachment-comments",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker attachment-comments"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker attachment-comments",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.attachment-download",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker attachment-download"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker attachment-download",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.task-list",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-list"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker task-list",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.task-history",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-history"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker task-history",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.task-create",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-create"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker task-create",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.task-claim",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-claim"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker task-claim",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.task-claim-message",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-claim-message"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker task-claim-message",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.task-assign",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-assign"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker task-assign",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.task-release",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-release"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker task-release",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.task-start",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-start"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker task-start",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.task-progress",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-progress"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker task-progress",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.task-block",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-block"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker task-block",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.task-request-input",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-request-input"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker task-request-input",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.task-submit",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-submit"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker task-submit",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.task-review",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-review"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker task-review",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.task-amend",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-amend"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker task-amend",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.task-convert",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-convert"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker task-convert",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.worker.task-delete",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-delete"
+      },
+      "raft": {
+        "anchor": "raft counterpart of rah worker task-delete",
+        "location": "docs/product/raft-parity-output-errors.zh-CN.md §4"
+      },
+      "outputMode": {
+        "raft": "text",
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": false,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三: Raft prints formatted text and offers no --json switch; RAH prints JSON with no text mode. Raft's default is not \"text first, JSON optional\" but \"text only, for the Agent\"; RAH's is the mirror image."
+    },
+    {
+      "id": "output-format.agent.inbox.recheck",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "agent inbox recheck"
+      },
+      "raft": null,
+      "outputMode": {
+        "raft": null,
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": null,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三 excludes this command from its tally because Raft has no counterpart, so there is no upstream format to compare. It is registered here so the coverage rule can see every Agent-visible command, and it carries the verdict already adjudicated for the command itself by the CLI-surface inventory (unjustified); the JSON-only output is part of that same unreplicated addition, not a separate finding."
+    },
+    {
+      "id": "output-format.agent.inbox.ack",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "agent inbox ack"
+      },
+      "raft": null,
+      "outputMode": {
+        "raft": null,
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": null,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三 excludes this command from its tally because Raft has no counterpart, so there is no upstream format to compare. It is registered here so the coverage rule can see every Agent-visible command, and it carries the verdict already adjudicated for the command itself by the CLI-surface inventory (unjustified); the JSON-only output is part of that same unreplicated addition, not a separate finding."
+    },
+    {
+      "id": "output-format.worker.acknowledge",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker acknowledge"
+      },
+      "raft": null,
+      "outputMode": {
+        "raft": null,
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": null,
+        "rah": false
+      },
+      "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三 excludes this command from its tally because Raft has no counterpart, so there is no upstream format to compare. It is registered here so the coverage rule can see every Agent-visible command, and it carries the verdict already adjudicated for the command itself by the CLI-surface inventory (justified); the JSON-only output is part of that same unreplicated addition, not a separate finding.",
+      "constraint": "activation-fence"
+    },
+    {
+      "id": "output-format.worker.room-list",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker room-list"
+      },
+      "raft": null,
+      "outputMode": {
+        "raft": null,
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": null,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三 excludes this command from its tally because Raft has no counterpart, so there is no upstream format to compare. It is registered here so the coverage rule can see every Agent-visible command, and it carries the verdict already adjudicated for the command itself by the CLI-surface inventory (unjustified); the JSON-only output is part of that same unreplicated addition, not a separate finding."
+    },
+    {
+      "id": "output-format.worker.room-resolve",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker room-resolve"
+      },
+      "raft": null,
+      "outputMode": {
+        "raft": null,
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": null,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三 excludes this command from its tally because Raft has no counterpart, so there is no upstream format to compare. It is registered here so the coverage rule can see every Agent-visible command, and it carries the verdict already adjudicated for the command itself by the CLI-surface inventory (unjustified); the JSON-only output is part of that same unreplicated addition, not a separate finding."
+    },
+    {
+      "id": "output-format.worker.profile-avatar-publish",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker profile-avatar-publish"
+      },
+      "raft": null,
+      "outputMode": {
+        "raft": null,
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": null,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三 excludes this command from its tally because Raft has no counterpart, so there is no upstream format to compare. It is registered here so the coverage rule can see every Agent-visible command, and it carries the verdict already adjudicated for the command itself by the CLI-surface inventory (unjustified); the JSON-only output is part of that same unreplicated addition, not a separate finding."
+    },
+    {
+      "id": "output-format.worker.attachment-capabilities",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker attachment-capabilities"
+      },
+      "raft": null,
+      "outputMode": {
+        "raft": null,
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": null,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三 excludes this command from its tally because Raft has no counterpart, so there is no upstream format to compare. It is registered here so the coverage rule can see every Agent-visible command, and it carries the verdict already adjudicated for the command itself by the CLI-surface inventory (unjustified); the JSON-only output is part of that same unreplicated addition, not a separate finding."
+    },
+    {
+      "id": "output-format.worker.attachment-cancel",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker attachment-cancel"
+      },
+      "raft": null,
+      "outputMode": {
+        "raft": null,
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": null,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三 excludes this command from its tally because Raft has no counterpart, so there is no upstream format to compare. It is registered here so the coverage rule can see every Agent-visible command, and it carries the verdict already adjudicated for the command itself by the CLI-surface inventory (unjustified); the JSON-only output is part of that same unreplicated addition, not a separate finding."
+    },
+    {
+      "id": "output-format.worker.artifact-publish",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker artifact-publish"
+      },
+      "raft": null,
+      "outputMode": {
+        "raft": null,
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": null,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三 excludes this command from its tally because Raft has no counterpart, so there is no upstream format to compare. It is registered here so the coverage rule can see every Agent-visible command, and it carries the verdict already adjudicated for the command itself by the CLI-surface inventory (unjustified); the JSON-only output is part of that same unreplicated addition, not a separate finding."
+    },
+    {
+      "id": "output-format.worker.artifact-download",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker artifact-download"
+      },
+      "raft": null,
+      "outputMode": {
+        "raft": null,
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": null,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三 excludes this command from its tally because Raft has no counterpart, so there is no upstream format to compare. It is registered here so the coverage rule can see every Agent-visible command, and it carries the verdict already adjudicated for the command itself by the CLI-surface inventory (unjustified); the JSON-only output is part of that same unreplicated addition, not a separate finding."
+    },
+    {
+      "id": "output-format.worker.task-get",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-get"
+      },
+      "raft": null,
+      "outputMode": {
+        "raft": null,
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": null,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三 excludes this command from its tally because Raft has no counterpart, so there is no upstream format to compare. It is registered here so the coverage rule can see every Agent-visible command, and it carries the verdict already adjudicated for the command itself by the CLI-surface inventory (unjustified); the JSON-only output is part of that same unreplicated addition, not a separate finding."
+    },
+    {
+      "id": "output-format.worker.task-submission",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-submission"
+      },
+      "raft": null,
+      "outputMode": {
+        "raft": null,
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": null,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三 excludes this command from its tally because Raft has no counterpart, so there is no upstream format to compare. It is registered here so the coverage rule can see every Agent-visible command, and it carries the verdict already adjudicated for the command itself by the CLI-surface inventory (unjustified); the JSON-only output is part of that same unreplicated addition, not a separate finding."
+    },
+    {
+      "id": "output-format.worker.task-trajectory",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-trajectory"
+      },
+      "raft": null,
+      "outputMode": {
+        "raft": null,
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": null,
+        "rah": false
+      },
+      "verdict": "justified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三 excludes this command from its tally because Raft has no counterpart, so there is no upstream format to compare. It is registered here so the coverage rule can see every Agent-visible command, and it carries the verdict already adjudicated for the command itself by the CLI-surface inventory (justified); the JSON-only output is part of that same unreplicated addition, not a separate finding.",
+      "constraint": "sqlite-ledger"
+    },
+    {
+      "id": "output-format.worker.task-input-status",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-input-status"
+      },
+      "raft": null,
+      "outputMode": {
+        "raft": null,
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": null,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三 excludes this command from its tally because Raft has no counterpart, so there is no upstream format to compare. It is registered here so the coverage rule can see every Agent-visible command, and it carries the verdict already adjudicated for the command itself by the CLI-surface inventory (unjustified); the JSON-only output is part of that same unreplicated addition, not a separate finding."
+    },
+    {
+      "id": "output-format.worker.task-unblock",
+      "kind": "output-format",
+      "rah": {
+        "file": "packages/agent-host/src/worker-cli.ts",
+        "symbol": "worker task-unblock"
+      },
+      "raft": null,
+      "outputMode": {
+        "raft": null,
+        "rah": "json"
+      },
+      "jsonFlag": {
+        "raft": null,
+        "rah": false
+      },
+      "verdict": "unjustified",
+      "upstreamEvidence": "cli-behavior",
+      "note": "output-errors 表三 excludes this command from its tally because Raft has no counterpart, so there is no upstream format to compare. It is registered here so the coverage rule can see every Agent-visible command, and it carries the verdict already adjudicated for the command itself by the CLI-surface inventory (unjustified); the JSON-only output is part of that same unreplicated addition, not a separate finding."
     }
   ]
 }

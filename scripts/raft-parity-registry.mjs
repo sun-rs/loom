@@ -10,7 +10,29 @@ export const readRoutePath =
   "packages/application-service/src/worker-read-handler.ts";
 export const promptPath = "packages/daemon/src/standing-prompt-compiler.ts";
 
-const KINDS = ["cli", "route", "prompt-paragraph"];
+const KINDS = [
+  "cli",
+  "route",
+  "prompt-paragraph",
+  "output",
+  "error-code",
+  "output-format",
+];
+// The three tables of the output/error inventory. They are one surface: what
+// the Agent process can actually observe — stdout bytes, stderr bytes, the exit
+// code and the machine-parsable payload — so they share one pair of ratchets.
+const OUTPUT_KINDS = new Set(["output", "error-code", "output-format"]);
+const STREAMS = ["stdout", "stderr", "stdout+stderr", "none"];
+// Upstream's own rule, from `renderError` and `writeText`/`writeJson`: a
+// rendered result is written to stdout and a raised error to stderr. A row that
+// is neither — a notice written beside a normal result — must say so.
+const DISPOSITIONS = ["rendered-result", "raised-error", "side-channel"];
+const DISPOSITION_STREAM = {
+  "raised-error": "stderr",
+  "rendered-result": "stdout",
+};
+const FORMATS = ["text", "json", "text+json-flag", "none"];
+const OUTPUT_MODES = ["text", "json"];
 const VERDICTS = [
   "aligned",
   "justified",
@@ -85,6 +107,114 @@ export function parseWorkerRoutes(serviceSource, readSource) {
   return [...new Set(routes)].sort();
 }
 
+// An output row records both sides of one Agent-visible outcome: which stream
+// carries it, the exit code, and whether the default rendering is text or JSON.
+function validateOutputRow(entry, errors) {
+  const id = entry.id;
+  const streams = entry.streams ?? {};
+  const format = entry.format ?? {};
+  const exit = entry.exit ?? {};
+  if (!DISPOSITIONS.includes(entry.disposition))
+    errors.push(`${id}: disposition must be one of ${DISPOSITIONS.join(", ")}`);
+  if (!STREAMS.includes(streams.raft))
+    errors.push(`${id}: streams.raft must be one of ${STREAMS.join(", ")}`);
+  if (streams.rah !== null && !STREAMS.includes(streams.rah))
+    errors.push(
+      `${id}: streams.rah must be null or one of ${STREAMS.join(", ")}`,
+    );
+  if (!FORMATS.includes(format.raft))
+    errors.push(`${id}: format.raft must be one of ${FORMATS.join(", ")}`);
+  if (format.rah !== null && !FORMATS.includes(format.rah))
+    errors.push(
+      `${id}: format.rah must be null or one of ${FORMATS.join(", ")}`,
+    );
+  for (const side of ["raft", "rah"])
+    if (exit[side] !== null && !Number.isInteger(exit[side]))
+      errors.push(`${id}: exit.${side} must be an integer or null`);
+  // Upstream's rule, encoded rather than assumed.
+  const required = DISPOSITION_STREAM[entry.disposition];
+  if (required !== undefined && streams.raft !== required)
+    errors.push(
+      `${id}: a ${entry.disposition} is written to ${required} upstream, but this row records Raft writing ${streams.raft}; correct the stream or reclassify the row side-channel`,
+    );
+  if (
+    entry.disposition === "side-channel" &&
+    (typeof entry.note !== "string" || entry.note.trim() === "")
+  )
+    errors.push(
+      `${id}: side-channel output row requires a note saying why it is neither a rendered result nor a raised error`,
+    );
+  // The stream-direction rule. Writing a result to the stream the Agent does
+  // not read is a silent failure that no unit test sees, which is how a real
+  // reply was lost; a row may not claim parity while inverting the stream.
+  if (entry.verdict === "aligned" && streams.rah !== streams.raft)
+    errors.push(
+      `${id}: aligned output row records RAH writing ${String(streams.rah)} where Raft writes ${String(streams.raft)}; upstream renders results on stdout and raises errors on stderr, so reconcile the stream before calling this row aligned`,
+    );
+  if (entry.verdict === "missing") {
+    if (streams.rah !== null || format.rah !== null || exit.rah !== null)
+      errors.push(
+        `${id}: a missing output surface must record streams.rah, format.rah and exit.rah as null`,
+      );
+  } else if (streams.rah === null)
+    errors.push(
+      `${id}: ${entry.verdict} output row must record the stream RAH writes to`,
+    );
+}
+
+// An error-code row records one Raft `cliError` code, the recovery guidance
+// Raft attaches to it, and RAH's counterpart code if it has one.
+function validateErrorCodeRow(entry, errors) {
+  const id = entry.id;
+  if (typeof entry.code !== "string" || !/^[A-Z][A-Z0-9_]*$/u.test(entry.code))
+    errors.push(`${id}: code must be a Raft cliError code literal`);
+  if (typeof entry.raftNextAction !== "string" || entry.raftNextAction === "")
+    errors.push(
+      `${id}: raftNextAction must state the suggestedNextAction Raft attaches, or "none"`,
+    );
+  if (entry.rahCode !== null && typeof entry.rahCode !== "string")
+    errors.push(`${id}: rahCode must be a string or null`);
+  if (entry.verdict === "aligned" && entry.rahCode === null)
+    errors.push(
+      `${id}: aligned error-code row must name the RAH code the Agent sees`,
+    );
+  if (entry.verdict === "missing" && entry.rahCode !== null)
+    errors.push(`${id}: a missing error code cannot name a RAH code`);
+}
+
+// A format row records one Agent-visible command's default output mode and
+// whether `--json` exists, on both sides.
+function validateOutputFormatRow(entry, errors) {
+  const id = entry.id;
+  const mode = entry.outputMode ?? {};
+  const flag = entry.jsonFlag ?? {};
+  if (!entry.rah?.symbol)
+    errors.push(`${id}: output-format row must name the RAH command`);
+  if (!OUTPUT_MODES.includes(mode.rah))
+    errors.push(
+      `${id}: outputMode.rah must be one of ${OUTPUT_MODES.join(", ")}`,
+    );
+  if (typeof flag.rah !== "boolean")
+    errors.push(`${id}: jsonFlag.rah must say whether RAH offers --json`);
+  if (mode.raft !== null && !OUTPUT_MODES.includes(mode.raft))
+    errors.push(
+      `${id}: outputMode.raft must be null or one of ${OUTPUT_MODES.join(", ")}`,
+    );
+  if (flag.raft !== null && typeof flag.raft !== "boolean")
+    errors.push(`${id}: jsonFlag.raft must be a boolean or null`);
+  if ((mode.raft === null) !== (flag.raft === null))
+    errors.push(
+      `${id}: a command with no Raft counterpart must record both outputMode.raft and jsonFlag.raft as null`,
+    );
+  if (
+    entry.verdict === "aligned" &&
+    (mode.raft !== mode.rah || flag.raft !== flag.rah)
+  )
+    errors.push(
+      `${id}: aligned format row records RAH defaulting to ${String(mode.rah)} where Raft defaults to ${String(mode.raft)}`,
+    );
+}
+
 function regionDigest(fd, offset, bytes) {
   const buffer = Buffer.alloc(bytes);
   const read = readSync(fd, buffer, 0, bytes, offset);
@@ -141,6 +271,9 @@ export function validateRegistry(registry, read, options = {}) {
           `${id}: undecidable entry requires a note naming the missing Server fact`,
         );
     }
+    if (entry.kind === "output") validateOutputRow(entry, errors);
+    if (entry.kind === "error-code") validateErrorCodeRow(entry, errors);
+    if (entry.kind === "output-format") validateOutputFormatRow(entry, errors);
     if (
       entry.constraint !== undefined &&
       !CONSTRAINTS.includes(entry.constraint)
@@ -190,6 +323,31 @@ export function validateRegistry(registry, read, options = {}) {
         `registered surface no longer exists: rah ${command}; retire its registry entry`,
       );
 
+  // Every Agent-visible command must additionally declare how it answers: the
+  // default rendering, and whether `--json` exists at all. A command that
+  // declares neither is a surface the output/error registry cannot see.
+  const declaredFormats = new Map(
+    registry.entries
+      .filter((entry) => entry.kind === "output-format" && entry.rah?.symbol)
+      .map((entry) => [entry.rah.symbol, entry]),
+  );
+  for (const command of commands) {
+    const row = declaredFormats.get(command);
+    if (
+      !row ||
+      !OUTPUT_MODES.includes(row.outputMode?.rah) ||
+      typeof row.jsonFlag?.rah !== "boolean"
+    )
+      errors.push(
+        `undeclared agent-facing surface: rah ${command} declares no default output mode and no --json availability`,
+      );
+  }
+  for (const command of declaredFormats.keys())
+    if (cliSource && !commands.includes(command))
+      errors.push(
+        `registered surface no longer exists: rah ${command}; retire its output-format entry`,
+      );
+
   const routes =
     routeSource && readRouteSource
       ? parseWorkerRoutes(routeSource, readRouteSource)
@@ -218,6 +376,19 @@ export function validateRegistry(registry, read, options = {}) {
     missingNonDeferred: registry.entries.filter(
       (entry) => entry.verdict === "missing" && entry.deferred !== true,
     ).length,
+    outputSurfaceRows: registry.entries.filter((entry) =>
+      OUTPUT_KINDS.has(entry.kind),
+    ).length,
+    outputSurfaceUnjustified: registry.entries.filter(
+      (entry) =>
+        OUTPUT_KINDS.has(entry.kind) && entry.verdict === "unjustified",
+    ).length,
+    outputSurfaceMissingNonDeferred: registry.entries.filter(
+      (entry) =>
+        OUTPUT_KINDS.has(entry.kind) &&
+        entry.verdict === "missing" &&
+        entry.deferred !== true,
+    ).length,
   };
   // Ratchet directions, mirrored in the registry's `ratchetNotes`:
   // `unjustified` and `missingNonDeferred` fall as RAH replicates the Raft
@@ -238,6 +409,18 @@ export function validateRegistry(registry, read, options = {}) {
   if (counts.missingNonDeferred > (ratchet.missingNonDeferred ?? 0))
     errors.push(
       `non-deferred missing surfaces rose to ${counts.missingNonDeferred}; port the Raft surface instead of raising the ${ratchet.missingNonDeferred} ratchet`,
+    );
+
+  if (counts.outputSurfaceUnjustified > (ratchet.outputSurfaceUnjustified ?? 0))
+    errors.push(
+      `unjustified output and error divergences rose to ${counts.outputSurfaceUnjustified}; replicate the Raft output contract instead of raising the ${ratchet.outputSurfaceUnjustified} ratchet`,
+    );
+  if (
+    counts.outputSurfaceMissingNonDeferred >
+    (ratchet.outputSurfaceMissingNonDeferred ?? 0)
+  )
+    errors.push(
+      `non-deferred missing output and error surfaces rose to ${counts.outputSurfaceMissingNonDeferred}; port the Raft surface instead of raising the ${ratchet.outputSurfaceMissingNonDeferred} ratchet`,
     );
 
   const promptSource = safeRead(promptPath, "prompt source");
@@ -315,6 +498,9 @@ if (
         `unjustified ${result.counts.unjustified}/${registry.ratchet.unjustified}`,
         `undecidable ${result.counts.undecidable}/${registry.ratchet.undecidable}`,
         `non-deferred missing ${result.counts.missingNonDeferred}/${registry.ratchet.missingNonDeferred}`,
+        `output surface rows ${result.counts.outputSurfaceRows}`,
+        `output surface unjustified ${result.counts.outputSurfaceUnjustified}/${registry.ratchet.outputSurfaceUnjustified}`,
+        `output surface non-deferred missing ${result.counts.outputSurfaceMissingNonDeferred}/${registry.ratchet.outputSurfaceMissingNonDeferred}`,
         `standing prompt judgment paragraphs ${result.judgmentPresent}/${registry.ratchet.promptJudgmentParagraphs}`,
         `upstream anchors verified ${result.anchorsChecked}`,
       ].join("; "),

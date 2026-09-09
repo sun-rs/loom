@@ -344,3 +344,223 @@ test("a drifted upstream anchor is reported", () => {
     result.errors.join("\n"),
   );
 });
+
+test("the output surface counts match its own ratchets", () => {
+  const result = validateRegistry(registry(), reader(), noUpstream);
+
+  assert.deepEqual(result.errors, []);
+  assert.equal(
+    result.counts.outputSurfaceUnjustified,
+    registry().ratchet.outputSurfaceUnjustified,
+  );
+  assert.equal(
+    result.counts.outputSurfaceMissingNonDeferred,
+    registry().ratchet.outputSurfaceMissingNonDeferred,
+  );
+  assert.equal(
+    result.counts.outputSurfaceRows,
+    registry().entries.filter((row) =>
+      ["output", "error-code", "output-format"].includes(row.kind),
+    ).length,
+  );
+});
+
+test("every agent-facing CLI command declares an output mode and --json", () => {
+  const commands = parseWorkerCliCommands(file(cliPath).toString());
+  const declared = new Map(
+    registry()
+      .entries.filter((row) => row.kind === "output-format" && row.rah?.symbol)
+      .map((row) => [row.rah.symbol, row]),
+  );
+
+  assert.equal(declared.size, commands.length);
+  for (const command of commands) {
+    const row = declared.get(command);
+    assert.ok(row, command);
+    assert.ok(["text", "json"].includes(row.outputMode.rah), command);
+    assert.equal(typeof row.jsonFlag.rah, "boolean", command);
+  }
+});
+
+test("a command with no declared output mode fails, naming the command", () => {
+  const mutated = registry();
+  const entry = mutated.entries.find(
+    (row) => row.kind === "output-format" && row.rah?.symbol === "worker sync",
+  );
+  delete entry.outputMode.rah;
+  const result = validateRegistry(mutated, reader(), noUpstream);
+
+  assert.ok(
+    result.errors.includes(
+      "undeclared agent-facing surface: rah worker sync declares no default output mode and no --json availability",
+    ),
+    result.errors.join("\n"),
+  );
+});
+
+test("a command with no output-format row at all fails, naming the command", () => {
+  const mutated = registry();
+  mutated.entries = mutated.entries.filter(
+    (row) =>
+      !(row.kind === "output-format" && row.rah?.symbol === "worker whoami"),
+  );
+  const result = validateRegistry(mutated, reader(), noUpstream);
+
+  assert.ok(
+    result.errors.includes(
+      "undeclared agent-facing surface: rah worker whoami declares no default output mode and no --json availability",
+    ),
+    result.errors.join("\n"),
+  );
+});
+
+// The class of defect that lost a real reply: a result written to the stream
+// the Agent does not read, while the row still claims parity.
+test("the stream-direction rule fires when an aligned row inverts the stream", () => {
+  const mutated = registry();
+  const entry = mutated.entries.find(
+    (row) => row.id === "output.send.freshness-hold-text",
+  );
+
+  assert.equal(entry.verdict, "aligned");
+  assert.equal(entry.streams.raft, "stdout");
+  entry.streams.rah = "stderr";
+  const result = validateRegistry(mutated, reader(), noUpstream);
+
+  assert.ok(
+    result.errors.includes(
+      "output.send.freshness-hold-text: aligned output row records RAH writing stderr where Raft writes stdout; upstream renders results on stdout and raises errors on stderr, so reconcile the stream before calling this row aligned",
+    ),
+    result.errors.join("\n"),
+  );
+});
+
+test("the stream-direction rule fires in the other direction too", () => {
+  const mutated = registry();
+  const entry = mutated.entries.find(
+    (row) =>
+      row.id === "cli.worker.message-post.thread-target-confirmation-stream",
+  );
+
+  assert.equal(entry.verdict, "aligned");
+  assert.equal(entry.streams.raft, "stderr");
+  entry.streams.rah = "stdout";
+  const result = validateRegistry(mutated, reader(), noUpstream);
+
+  assert.ok(
+    result.errors.some((message) =>
+      message.startsWith(
+        `${entry.id}: aligned output row records RAH writing stdout where Raft writes stderr`,
+      ),
+    ),
+    result.errors.join("\n"),
+  );
+});
+
+test("upstream's result-on-stdout, error-on-stderr rule is enforced on the Raft side", () => {
+  const mutated = registry();
+  const entry = mutated.entries.find(
+    (row) => row.kind === "output" && row.disposition === "raised-error",
+  );
+  entry.streams.raft = "stdout";
+  entry.streams.rah = "stdout";
+  const result = validateRegistry(mutated, reader(), noUpstream);
+
+  assert.ok(
+    result.errors.includes(
+      `${entry.id}: a raised-error is written to stderr upstream, but this row records Raft writing stdout; correct the stream or reclassify the row side-channel`,
+    ),
+    result.errors.join("\n"),
+  );
+});
+
+test("a missing output row may not record a RAH stream", () => {
+  const mutated = registry();
+  const entry = mutated.entries.find(
+    (row) => row.kind === "output" && row.verdict === "missing",
+  );
+  entry.streams.rah = "stdout";
+  const result = validateRegistry(mutated, reader(), noUpstream);
+
+  assert.ok(
+    result.errors.includes(
+      `${entry.id}: a missing output surface must record streams.rah, format.rah and exit.rah as null`,
+    ),
+    result.errors.join("\n"),
+  );
+});
+
+test("an aligned error-code row must name the code the Agent sees", () => {
+  const mutated = registry();
+  const entry = mutated.entries.find(
+    (row) => row.kind === "error-code" && row.verdict === "aligned",
+  );
+  entry.rahCode = null;
+  const result = validateRegistry(mutated, reader(), noUpstream);
+
+  assert.ok(
+    result.errors.includes(
+      `${entry.id}: aligned error-code row must name the RAH code the Agent sees`,
+    ),
+    result.errors.join("\n"),
+  );
+});
+
+test("an error-code row without Raft's suggestedNextAction fails", () => {
+  const mutated = registry();
+  const entry = mutated.entries.find((row) => row.kind === "error-code");
+  delete entry.raftNextAction;
+  const result = validateRegistry(mutated, reader(), noUpstream);
+
+  assert.ok(
+    result.errors.some((message) =>
+      message.startsWith(`${entry.id}: raftNextAction must state`),
+    ),
+    result.errors.join("\n"),
+  );
+});
+
+test("exceeding the output surface unjustified ratchet fails", () => {
+  const mutated = registry();
+  mutated.ratchet.outputSurfaceUnjustified -= 1;
+  const result = validateRegistry(mutated, reader(), noUpstream);
+
+  assert.ok(
+    result.errors.some((message) =>
+      message.startsWith("unjustified output and error divergences rose to"),
+    ),
+    result.errors.join("\n"),
+  );
+});
+
+test("exceeding the output surface missing ratchet fails", () => {
+  const mutated = registry();
+  mutated.ratchet.outputSurfaceMissingNonDeferred -= 1;
+  const result = validateRegistry(mutated, reader(), noUpstream);
+
+  assert.ok(
+    result.errors.some((message) =>
+      message.startsWith(
+        "non-deferred missing output and error surfaces rose to",
+      ),
+    ),
+    result.errors.join("\n"),
+  );
+});
+
+test("every output and error row carries the third inventory's shape", () => {
+  for (const entry of registry().entries) {
+    if (entry.kind === "output") {
+      assert.ok(entry.outcome, entry.id);
+      assert.ok(
+        ["rendered-result", "raised-error", "side-channel"].includes(
+          entry.disposition,
+        ),
+        entry.id,
+      );
+      assert.ok(entry.streams && entry.exit && entry.format, entry.id);
+    }
+    if (entry.kind === "error-code")
+      assert.ok(/^[A-Z][A-Z0-9_]*$/u.test(entry.code), entry.id);
+  }
+});
