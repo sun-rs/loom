@@ -244,6 +244,23 @@ export function formatSendDraftStdinDeadlineDiagnostic(
   return `No stdin bytes were detected within ${String(observationWindowMs)}ms; the stored draft will now be sent.`;
 }
 
+/** Upstream labels a claim row `#N` or `msg:<id>`; RAH addresses the same two ways. */
+function claimLabel(body: Record<string, unknown>): string {
+  const taskNumber = body.taskNumber;
+  if (typeof taskNumber === "number") return `#${String(taskNumber)}`;
+  const taskId = body.taskId;
+  if (typeof taskId === "string") return `#${taskId}`;
+  const messageId = body.messageId;
+  return typeof messageId === "string" ? `msg:${messageId}` : "#?";
+}
+
+/** The server's own sentence, without the transport prefix the CLI adds. */
+function claimReason(message: string | undefined): string | undefined {
+  if (message === undefined) return undefined;
+  const separator = message.indexOf(": ");
+  return separator < 0 ? message : message.slice(separator + 2);
+}
+
 export async function runWorkerCliCommand(
   arguments_: readonly string[],
   runtime: WorkerCliRuntime = {
@@ -431,19 +448,39 @@ export async function runWorkerCliCommand(
       // so the refusal stays an error — but the claims that did land must
       // still be reported, or the CLI states something the ledger contradicts.
       const claimed: unknown[] = [];
+      const failed: { label: string; reason?: string | undefined }[] = [];
       let heldClaim: string | undefined;
       let refusal: unknown;
+      let settled = 0;
       for (const body of fanOut) {
         let entry: unknown;
         try {
           entry = await send({ body, path: request.path });
         } catch (error) {
+          // Upstream returns a per-Task result row for an ordinary claim
+          // conflict and carries on with the remaining Tasks; only a transport
+          // or authority failure ends the command. RAH's server refuses per
+          // request, so the conflict arrives as an error — it is turned back
+          // into the row upstream would have returned, and the loop continues.
+          if (
+            error instanceof WorkerCliError &&
+            error.code === "conflict" &&
+            !(error.message ?? "").includes("stale")
+          ) {
+            failed.push({
+              label: claimLabel(body),
+              reason: claimReason(error.message),
+            });
+            settled += 1;
+            continue;
+          }
           refusal = error;
           break;
         }
         const hold = workerTaskHoldOutput(arguments_[1] ?? "", entry);
         if (hold === undefined) {
           claimed.push(entry);
+          settled += 1;
           continue;
         }
         // The remaining Tasks are not attempted: the same stale position would
@@ -455,22 +492,22 @@ export async function runWorkerCliCommand(
       // Upstream attempts every Task in one request; RAH stops at the first
       // refusal or hold. "Not attempted" is a different fact from "failed", so
       // it is stated rather than left for the Agent to infer from a short list.
-      const notAttempted = (settled: number): string =>
-        fanOut.length - settled <= 0
+      const notAttempted = (): string =>
+        fanOut.length - settled - 1 <= 0
           ? ""
-          : `${String(fanOut.length - settled)} of ${String(fanOut.length)} Tasks in this command were not attempted.\n`;
+          : `${String(fanOut.length - settled - 1)} of ${String(fanOut.length)} Tasks in this command were not attempted.\n`;
       if (refusal !== undefined) {
-        if (claimed.length > 0)
+        if (claimed.length > 0 || failed.length > 0)
           runtime.stdout.write(
-            `${renderWorkerTaskClaimResults(claimed)}\n${notAttempted(claimed.length + 1)}`,
+            `${renderWorkerTaskClaimResults(claimed, failed)}\n${notAttempted()}`,
           );
         throw refusal;
       }
       const appliedBlock =
-        claimed.length === 0
+        claimed.length === 0 && failed.length === 0
           ? ""
-          : `${renderWorkerTaskClaimResults(claimed)}\n${
-              heldClaim === undefined ? "" : notAttempted(claimed.length + 1)
+          : `${renderWorkerTaskClaimResults(claimed, failed)}\n${
+              heldClaim === undefined ? "" : notAttempted()
             }`;
       runtime.stdout.write(
         heldClaim === undefined

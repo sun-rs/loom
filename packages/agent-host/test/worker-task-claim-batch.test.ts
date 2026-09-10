@@ -109,6 +109,55 @@ test("a refused second claim never erases the first, and says what was not attem
   }
 });
 
+test("an ordinary conflict is a row and the remaining Tasks are still attempted", async () => {
+  // Upstream returns results[] for the whole request: a conflict on one Task is
+  // a row, the others still claim, and the command exits 0.
+  const state = fixture([
+    claimed(1),
+    {
+      body: {
+        error: {
+          code: "conflict",
+          message: "Task 2 already has an active claim",
+        },
+      },
+      status: 409,
+    },
+    claimed(3),
+  ]);
+  try {
+    const code = await runWorkerCliCommand(
+      [
+        "worker",
+        "task-claim",
+        "--target",
+        "#room",
+        "--number",
+        "1",
+        "--number",
+        "2",
+        "--number",
+        "3",
+      ],
+      state.runtime,
+    );
+    assert.equal(code, 0, "an ordinary conflict is a result, not a failure");
+    assert.equal(state.calls(), 3, "the third Task is still attempted");
+    const stdout = state.stdout();
+    assert.match(stdout, /Claim results \(2 claimed, 1 failed\)/);
+    assert.match(stdout, /#1 \(msg:message-1\): claimed/);
+    assert.match(stdout, /#3 \(msg:message-3\): claimed/);
+    assert.match(
+      stdout,
+      /#2: FAILED — Task 2 already has an active claim\. Do not start conflicting execution/,
+    );
+    assert.doesNotMatch(stdout, /not attempted/);
+    assert.equal(state.stderr(), "");
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
 test("a clean batch reports every claim and nothing about attempts", async () => {
   const state = fixture([claimed(1), claimed(2)]);
   try {

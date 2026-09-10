@@ -936,6 +936,7 @@ function renderTaskCreated(result: Json): string {
  */
 export function renderWorkerTaskClaimResults(
   results: readonly unknown[],
+  failures: readonly { label: string; reason?: string | undefined }[] = [],
 ): string {
   const tasks = results.map((entry) => asRecord(asRecord(entry).task));
   const lines = tasks.map(
@@ -944,10 +945,24 @@ export function renderWorkerTaskClaimResults(
         asString(task.sourceMessageId) ?? "-"
       }): claimed`,
   );
+  // Upstream's failure row, verbatim, including the sentence that stops an
+  // Agent from reading a lost race as a ruling about ownership.
+  for (const failure of failures)
+    lines.push(
+      `${failure.label}: FAILED — ${
+        failure.reason === undefined || failure.reason.length === 0
+          ? "already claimed"
+          : failure.reason
+      }. Do not start conflicting execution on this task or take over its scope without a redirect; a failed claim is a concurrency lock, not a ruling on lane ownership.`,
+    );
+  const summary =
+    failures.length === 0
+      ? `${tasks.length} claimed`
+      : `${tasks.length} claimed, ${failures.length} failed`;
   const hints = tasks.map((task) => threadHintLine(task)).join("\n");
-  return `Claim results (${tasks.length} claimed):\n${lines.join(
-    "\n",
-  )}\n\nFollow up in each task's thread:\n${hints}`;
+  const threadHint =
+    tasks.length === 0 ? "" : `\n\nFollow up in each task's thread:\n${hints}`;
+  return `Claim results (${summary}):\n${lines.join("\n")}${threadHint}`;
 }
 
 /** `formatTaskAssigned` (`main.js@30205071`). */
