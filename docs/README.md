@@ -2,7 +2,7 @@
 
 频道能力范围裁决：[上游支持什么、RAH 已有什么、当前范围要什么；并记下本轮被推翻的推论](./audits/2026-09-10-channel-capability-scope-adjudication.zh-CN.md)。
 
-核心链验收第 2 次真实运行：[五场景全部通过；并发生效，配置切换在账本与进程两层证实](./audits/2026-09-10-core-chain-acceptance-run-2.zh-CN.md)。
+核心链验收第 2 次真实运行：[场景二三四五通过（场景一未重跑、正式实例不在范围）；并发生效，配置切换在账本与进程两层证实](./audits/2026-09-10-core-chain-acceptance-run-2.zh-CN.md)。
 
 多 Agent 运行串行取证：[工作区独占租约，与 Raft 的真实分歧，待裁决](./audits/2026-09-10-agent-run-serialization.zh-CN.md)。
 

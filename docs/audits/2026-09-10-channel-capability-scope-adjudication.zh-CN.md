@@ -44,8 +44,14 @@ Room 创建被 `requireHumanRoomOwner`（同文件 `:9`）限定为 Human——�
 
 ### 三、当前范围要什么
 
-13 行（9 个 `cli.raft.channel.*` + 4 条 `route.raft.*`）已登记为 `deferred: true` / `constraint: "deferred-scope"`。
-非延期缺失棘轮 63 → 50。**该下降是记账，不是干活，一行都没移植**，已写入 `ratchetNotes`。
+12 行（8 个 `cli.raft.channel.*` + 4 条 `route.raft.*`）已登记为 `deferred: true` / `constraint: "deferred-scope"`。
+非延期缺失棘轮 63 → 51。**该下降是记账，不是干活，一行都没移植**，已写入 `ratchetNotes`。
+**数量下降不代表产品收口，也不能替代逐项范围判断。** 这 12 行还包含 CLI 与路由两个层面对同一决定的重复记录，
+不是 12 个独立产品功能。
+
+`cli.raft.channel.info` **不在延期之列**：它同时服务于"发现尚未加入的频道"（延期）与
+"让 Agent 理解自己已加入的频道"（在范围内），后者不该被前者连带延期。为改正这一过宽裁决，
+棘轮由 50 回升至 51 并写明理由——只降不升会让棘轮变成计分板。
 
 自助档若要提前进入范围，需要单独的范围解释：非成员公开 Room 发现与多 Human 权限体验本就在已定的延期范围内。
 提权档进入范围等同于移植 scope 层，属独立项目。
@@ -70,8 +76,11 @@ Room 创建被 `requireHumanRoomOwner`（同文件 `:9`）限定为 Human——�
 `ui-behavior-registry.json` 的 **B049** 由 `historical-unreviewed` 升为 `registered`，补齐 owner 与证据源。
 旧备注「full reset 仍明确禁用」对两边都已过时：Raft 发货了全量重置（闸门是角色能力 `resetAgentWorkspace`），
 **RAH 自己也发货了**（闸门是 daemon 能力 `agentExecutionFullReset`）。同时记下 Raft 单 Agent 的动词是
-Start/Stop/Restart-Reset，**无 pause/resume**；RAH 的 exclusive fence 与终止证明在该路径上**没有上游对应物**
-（Raft 就是一次普通 POST），登记为 RAH 本地机制，而非已复刻契约。
+Start/Stop/Restart-Reset，**无 pause/resume**。
+
+RAH 的 exclusive fence 与终止证明登记为 **RAH 本地机制；本次尚未找到上游对应实现**。
+**不能据客户端只发一次普通 POST 就判定上游不存在排他、停止确认或恢复机制**——那些完全可能落在 Computer
+内部或服务端。这正是本轮已纠正过一次的推断错误，此处不得重犯。
 
 ## 离线证据的边界
 
