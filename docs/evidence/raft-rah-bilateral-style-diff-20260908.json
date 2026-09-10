@@ -26,77 +26,88 @@
       "severity": "medium",
       "raft": "关系图显示全部 6 节点, 含 0 连接孤立节点(Grok '0 个连接')",
       "rah": "关系图仅 3 节点(owner/Kimi/OpenCode), 无连接的 Claude Code/Codex 缺席",
-      "classification": "真实分歧(前端行为)"
+      "classification": "真实分歧(前端行为)",
+      "status": "open"
     },
     {
       "id": "settings-language-region",
       "severity": "medium",
       "raft": "语言与区域页含显示语言选择(简体中文)+翻译模式(自动/手动/关闭)+时区选择+时间格式",
       "rah": "日期与时间页仅时间格式 12/24 小时制; 无语言/翻译/时区",
-      "classification": "真实分歧(功能缺失, 范围待定)"
+      "classification": "真实分歧(功能缺失, 范围待定)",
+      "status": "open"
     },
     {
       "id": "activity-time-format",
       "severity": "low",
       "raft": "动态页相对时间('5 小时前','4 天前')",
       "rah": "动态页绝对时间('2026/9/4 16:53')",
-      "classification": "真实分歧(展示行为)"
+      "classification": "真实分歧(展示行为)",
+      "status": "open"
     },
     {
       "id": "composer-form-padding",
       "severity": "low",
       "raft": "composer form 1136x126 pad 12,12,16,12",
       "rah": "composer form 1136x122 pad 12,12,12,12 (底 padding 少 4px)",
-      "classification": "真实分歧(几何)"
+      "classification": "真实分歧(几何)",
+      "status": "closed-2026-09-10"
     },
     {
       "id": "thread-header-padding",
       "severity": "low",
       "raft": "thread header pad 0/20",
       "rah": "thread header pad 0/16",
-      "classification": "真实分歧(几何)"
+      "classification": "真实分歧(几何)",
+      "status": "closed-2026-09-10"
     },
     {
       "id": "notif-header",
       "severity": "low",
       "raft": "通知面板 header 高 34, 右侧'全部已处理'; 边框 oklch(0.18 0.006 25) 阴影 oklch(0 0 0)",
       "rah": "header 高 42, 右侧'0 项待处理'; 边框 oklch(0 0 0) 阴影 oklch(0.18 0.006 25) (两色互换)",
-      "classification": "真实分歧(几何/配色互换, 视觉近不可辨)"
+      "classification": "真实分歧(几何/配色互换, 视觉近不可辨)",
+      "status": "closed-2026-09-10"
     },
     {
       "id": "graph-title",
       "severity": "low",
       "raft": "标题 '关系图' + EXPERIMENTAL chip; 统计卡 '连接最多的成员'/'最大的频道'",
       "rah": "标题 '关系图 3'(计数); 统计卡 '连接最多'/'最大频道'",
-      "classification": "真实分歧(文案)"
+      "classification": "真实分歧(文案)",
+      "status": "closed-2026-09-10"
     },
     {
       "id": "computer-row-subtitle",
       "severity": "low",
       "raft": "计算机列表行副标题 'Computer v1.0.18'(版本)",
       "rah": "'Computer · 已连接'(状态)",
-      "classification": "真实分歧(文案)"
+      "classification": "真实分歧(文案)",
+      "status": "open"
     },
     {
       "id": "channel-row-affordance",
       "severity": "low",
       "raft": "选中频道行 pad 4/8, 无行内编辑入口",
       "rah": "选中频道行 pad 4/32/4/8, hover 出铅笔(频道设置)",
-      "classification": "真实分歧(本地扩入口)"
+      "classification": "真实分歧(本地扩入口)",
+      "status": "open"
     },
     {
       "id": "tab-transition",
       "severity": "low",
       "raft": "tab/按钮 transition 0.15s 颜色过渡",
       "rah": "tab transition none(即时切换)",
-      "classification": "真实分歧(动效)"
+      "classification": "真实分歧(动效)",
+      "status": "closed-2026-09-10"
     },
     {
       "id": "channel-name-offset",
       "severity": "low",
       "raft": "频道名文本 x=106",
       "rah": "频道名文本 x=102 (图标几何差 4px)",
-      "classification": "真实分歧(几何, 低可见)"
+      "classification": "真实分歧(几何, 低可见)",
+      "status": "closed-2026-09-10"
     }
   ],
   "intentional": {
@@ -117,5 +128,33 @@
     "成员/计算机页默认选中项(持久化 tabMemory 不同)",
     "DM 消息内容(RAH DM 为空)",
     "看板列任务数(数据前提不同)"
-  ]
+  ],
+  "reverification": {
+    "on": "2026-09-10",
+    "method": "static source verification of all 11 against current RAH source; no new capture",
+    "result": "all 11 were still present and nothing had drifted further; six pure-visual ones are now closed",
+    "closed": [
+      "channel-name-offset",
+      "composer-form-padding",
+      "graph-title",
+      "notif-header",
+      "tab-transition",
+      "thread-header-padding"
+    ],
+    "openPureVisual": {
+      "activity-time-format": "Raft shows relative time. RAH's absolute formatter is shared with search results, which the probe did not cover, so changing it needs a scoped call site rather than a formatter swap.",
+      "graph-title-chip": "The two summary card labels are fixed. The EXPERIMENTAL chip is new markup with no primitive in the library, and removing RAH's node count would drop information the probe did not show Raft dropping.",
+      "computer-row-subtitle": "buildVersion exists and could be rendered, but Raft's rendering when the version is unknown was never captured, so the fallback would be invented."
+    },
+    "openBehavioural": {
+      "graph-node-coverage": "Node set comes from channel memberships, so zero-connection Agents are structurally absent. A query-scope decision, not a style fix.",
+      "settings-language-region": "Display language, translation mode and time zone do not exist in RAH. A feature-scope decision.",
+      "channel-row-affordance": "This file lists the hover pencil both as a divergence and under intentional.localExtension. It is one or the other; it needs an owner decision, and until then it stays recorded as open."
+    },
+    "notCaptured": [
+      "Raft's thread header gap was read as 12px against RAH's 6px, but that was not part of the recorded eleven and its provenance is weaker than the probed values; left unchanged.",
+      "members.agent-row name offset differs 2px in the opposite direction from channel-name-offset; the channel fix is deliberately not generalised to it.",
+      "Whether Raft's channel row glyph is 18px or a 14px glyph in an 18px box. RAH now matches the measured name offset either way."
+    ]
+  }
 }

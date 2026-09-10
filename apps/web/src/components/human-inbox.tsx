@@ -57,7 +57,13 @@ export function HumanInboxCenter({
       >
         <header className="notification-center-head">
           <strong>通知</strong>
-          <span>{requests.length + systemNotices.length} 项待处理</span>
+          {/* Bilateral probe 2026-09-08: Raft's zero state reads 全部已处理.
+              Its non-zero wording was not captured, so only this branch changes. */}
+          <span>
+            {requests.length + systemNotices.length === 0
+              ? "全部已处理"
+              : `${String(requests.length + systemNotices.length)} 项待处理`}
+          </span>
         </header>
         <div className="notification-center-scroll">
           {systemNotices.length > 0 && (

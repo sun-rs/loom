@@ -170,7 +170,7 @@ a.rail-btn { color: var(--ink); text-decoration: none; }
   transition-duration: .15s;
 }
 .channel-row .hash { font-weight: 400; }
-.channel-row .row-icon { width: 14px; height: 14px; }
+.channel-row .row-icon { width: 18px; height: 18px; }
 /* 仅聊天侧栏：未选中的频道/私信行 hover = 白底 + 黑框 + 2px 阴影（live 实测）；
    选中的频道行（粉底）hover/active/focus 均无视觉变化、仅 focus outline（实测），
    故 hover 规则排除 .is-selected；成员页/设置导航行实测无 hover，作用域限定 .sidebar */
@@ -396,7 +396,7 @@ a.sq-btn { color: var(--ink); text-decoration: none; }
 .muted-link:hover { color: var(--ink); }
 
 /* ============ 输入区 ============ */
-.composer { border-top: var(--bd-heavy); padding: 12px; background: var(--paper); }
+.composer { border-top: var(--bd-heavy); padding: 12px 12px 16px; background: var(--paper); }
 .composer-box {
   min-height: var(--composer-box-h);
   border: var(--bd); box-shadow: var(--shadow-s); background: var(--bg);
@@ -778,12 +778,15 @@ body.overlay-open { overflow: hidden; }
   position: fixed; z-index: 50;
   width: 320px; height: 288px;
   display: flex; flex-direction: column; overflow: hidden;
-  border: var(--bd); background: var(--bg); box-shadow: var(--shadow-m);
+  /* Bilateral probe 2026-09-08: Raft's panel border is --ink and its shadow is
+     --black; RAH had the pair the other way round. Scoped to this panel — the
+     global token pairing matched everywhere else that was probed. */
+  border: 2px solid var(--ink); background: var(--bg); box-shadow: 4px 4px 0 var(--black);
   outline: none;
 }
 .notification-center[hidden] { display: none; }
 .notification-center-head {
-  min-height: 42px; flex: none;
+  min-height: 34px; flex: none;
   display: flex; align-items: center; gap: 8px;
   padding: 8px 12px; border-bottom: var(--bd); background: var(--cream);
 }

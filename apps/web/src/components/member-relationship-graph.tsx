@@ -186,7 +186,7 @@ export function MemberRelationshipSurface({
             <GraphMetric label="Agent" value={data?.agents.length ?? 0} />
             <GraphMetric label="连接" value={data?.edges.length ?? 0} />
           </div>
-          <GraphSummaryCard title="连接最多">
+          <GraphSummaryCard title="连接最多的成员">
             {mostConnected.length === 0 ? (
               <i>暂无成员关系</i>
             ) : (
@@ -208,7 +208,7 @@ export function MemberRelationshipSurface({
               ))
             )}
           </GraphSummaryCard>
-          <GraphSummaryCard title="最大频道">
+          <GraphSummaryCard title="最大的频道">
             {largestChannels.length === 0 ? (
               <i>暂无可见频道</i>
             ) : (

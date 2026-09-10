@@ -185,10 +185,12 @@
   background: var(--yellow);
 }
 
-/* Current Raft's SegmentedControl and reorderable conversation tabs change
-   immediately. Tabs deliberately keep the default cursor although they stay
-   keyboard/click operable. */
-.rah-product-shell :is(.activity-filter, .rah-interaction-segment, .tab) {
+/* Bilateral probe 2026-09-08 corrected half of this: Raft's SegmentedControl
+   and activity filter do change immediately, but its conversation tabs animate
+   colour over 0.15s. `.tab` is therefore no longer cancelled here, and the
+   transition declared in styles.css applies. Tabs deliberately keep the default
+   cursor although they stay keyboard/click operable. */
+.rah-product-shell :is(.activity-filter, .rah-interaction-segment) {
   transition: none;
 }
 

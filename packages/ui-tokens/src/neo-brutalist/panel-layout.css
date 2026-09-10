@@ -34,7 +34,6 @@
 
 .rah-panel-header[data-header-kind="thread"] {
   gap: 6px;
-  padding-inline: 16px;
 }
 
 .rah-panel-header[data-header-kind="sidebar"] {

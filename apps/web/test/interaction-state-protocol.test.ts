@@ -79,9 +79,16 @@ test("the product owns one Raft-derived interaction state protocol", () => {
     protocol,
     /\.rah-product-shell \.task-filter-trigger \{[\s\S]*?transition-timing-function:\s*cubic-bezier\(0\.4, 0, 0\.2, 1\)/u,
   );
+  // The 2026-09-08 bilateral probe measured Raft's conversation tabs animating
+  // colour over 0.15s while its SegmentedControl and activity filter change
+  // immediately, so `.tab` must not be in the cancelled set.
   assert.match(
     protocol,
-    /\.rah-product-shell :is\(\.activity-filter, \.rah-interaction-segment, \.tab\) \{[\s\S]*?transition:\s*none/u,
+    /\.rah-product-shell :is\(\.activity-filter, \.rah-interaction-segment\) \{[\s\S]*?transition:\s*none/u,
+  );
+  assert.doesNotMatch(
+    protocol,
+    /:is\(\.activity-filter, \.rah-interaction-segment, \.tab\)/u,
   );
   assert.match(
     protocol,
