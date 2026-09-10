@@ -1,5 +1,7 @@
 # RAH OS 文档
 
+核心链验收第 2 次真实运行：[五场景全部通过；并发生效，配置切换在账本与进程两层证实](./audits/2026-09-10-core-chain-acceptance-run-2.zh-CN.md)。
+
 多 Agent 运行串行取证：[工作区独占租约，与 Raft 的真实分歧，待裁决](./audits/2026-09-10-agent-run-serialization.zh-CN.md)。
 
 核心链验收第 1 次真实运行：[跨 Room、私聊延续、记忆正反对照通过；配置切换因预算未成立](./audits/2026-09-10-core-chain-acceptance-run-1.zh-CN.md)。
