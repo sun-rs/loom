@@ -555,6 +555,13 @@
       "path": "packages/raft-ui-snapshot/reference/vendor/raft/fonts/space-grotesk-latin.woff2",
       "sha256": "a0d054c4af557de20afd6ca59f47ab353bcaec49c63ff04b6c9d39d0f8910557",
       "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPbF4C_k3HqU.woff2"
+    },
+    {
+      "id": "raft-web-20260908",
+      "kind": "official-published",
+      "path": "docs/evidence/raft-web-20260908-current/index-BVfbaScj.js",
+      "sha256": "65dda3865ac7263afb44308e22bcdc20034e84f886f78767f7198a65c5691dde",
+      "url": "https://app.raft.build/assets/index-BVfbaScj.js"
     }
   ],
   "adoptions": [
@@ -2039,8 +2046,13 @@
     {
       "id": "B049",
       "intent": "members.agent.action",
-      "status": "historical-unreviewed",
-      "owners": [],
+      "status": "registered",
+      "owners": [
+        "apps/web/src/App.tsx",
+        "apps/web/src/components/agent-execution-reset-dialog.tsx",
+        "packages/daemon/src/daemon-application-support.ts",
+        "packages/protocol/src/client-health.ts"
+      ],
       "adoptions": [],
       "scenarios": [],
       "historical": {
@@ -2049,7 +2061,9 @@
         "frontend": "部分",
         "backend": "已接",
         "note": "AGENT pause/resume/manage/delete 与 restart/session reset 已走 exclusive fence、terminal proof 与正式重启验收；full reset 仍明确禁用，关系/外部身份动作另列"
-      }
+      },
+      "evidenceSources": ["raft-web-20260908"],
+      "currentScope": "Raft ships Start/Stop/\"Restart / Reset\" for a single Agent — there is no pause/resume verb — with three reset modes, full reset included, gated on the role capability resetAgentWorkspace. RAH also ships all three modes (agent-execution-reset-dialog.tsx) and gates full reset on the daemon capability agentExecutionFullReset, not on a role. The historical note's \"full reset 仍明确禁用\" is stale against both sides. RAH's exclusive fence and termination proof are local mechanisms with no upstream counterpart on this path, where Raft issues a plain POST; they are recorded as RAH-owned, not as replicated contract. Server-side enforcement of resetAgentWorkspace, and whether the server truly deletes workspace files, cannot be established from a client bundle."
     },
     {
       "id": "B050",
