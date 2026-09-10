@@ -207,3 +207,93 @@ test("a claim applied before a later hold stays applied and stays reported", asy
     await f.close();
   }
 });
+
+/**
+ * A read position is a maximum sequence, not proof that a particular fact was
+ * shown. These two must hold together: reading the fact that caused the hold
+ * clears it, and reading something else — however recent — does not.
+ */
+test("reading the Task change that caused the hold clears it", async () => {
+  const f = await fixture();
+  try {
+    const latest = Number(
+      f.database
+        .prepare("SELECT next_seq-1 AS n FROM rooms WHERE room_id=?")
+        .get(f.room.roomId)!.n,
+    );
+    f.kernel.taskAmendments.human(f.actor, {
+      basedOnRoomSeq: latest,
+      idempotencyKey: "human-change",
+      taskId: f.task.task.taskId,
+      title: "First, rescoped",
+    });
+
+    const held = await f.call("tasks/claim", {
+      idempotencyKey: "claim-a",
+      taskId: f.task.task.taskId,
+    });
+    assert.equal((held.body as { state?: string }).state, "held");
+
+    const history = await f.call("tasks/history", {
+      taskId: f.task.task.taskId,
+    });
+    assert.equal(history.status, 200, JSON.stringify(history.body));
+
+    const retried = await f.call("tasks/claim", {
+      idempotencyKey: "claim-b",
+      taskId: f.task.task.taskId,
+    });
+    assert.notEqual(
+      (retried.body as { state?: string }).state,
+      "held",
+      "reading the Task change the hold was about must clear it",
+    );
+  } finally {
+    await f.close();
+  }
+});
+
+test("reading an unrelated message does not clear a hold caused by a Task change", async () => {
+  const f = await fixture();
+  try {
+    const latest = Number(
+      f.database
+        .prepare("SELECT next_seq-1 AS n FROM rooms WHERE room_id=?")
+        .get(f.room.roomId)!.n,
+    );
+    f.kernel.taskAmendments.human(f.actor, {
+      basedOnRoomSeq: latest,
+      idempotencyKey: "human-change",
+      taskId: f.task.task.taskId,
+      title: "First, rescoped",
+    });
+
+    const held = await f.call("tasks/claim", {
+      idempotencyKey: "claim-a",
+      taskId: f.task.task.taskId,
+    });
+    assert.equal((held.body as { state?: string }).state, "held");
+
+    // Something newer, and unrelated, that the Agent does read.
+    f.kernel.postMessage(f.actor, {
+      body: "Unrelated chatter",
+      idempotencyKey: "unrelated",
+      recipients: [],
+      roomId: f.room.roomId,
+    });
+    const read = await f.call("messages/history", { limit: 50 });
+    assert.equal(read.status, 200, JSON.stringify(read.body));
+
+    const retried = await f.call("tasks/claim", {
+      idempotencyKey: "claim-b",
+      taskId: f.task.task.taskId,
+    });
+    assert.equal(
+      (retried.body as { state?: string }).state,
+      "held",
+      "a larger sequence read elsewhere is not proof the Task change was seen",
+    );
+  } finally {
+    await f.close();
+  }
+});

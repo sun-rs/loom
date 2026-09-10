@@ -15,7 +15,10 @@ import {
   annotateTaskAnchoredMessage,
   annotateTaskAnchoredMessages,
 } from "./task-anchor-annotation.ts";
-import { recordWorkerTargetReadPosition } from "./worker-target-read-position.ts";
+import {
+  recordWorkerTargetReadPosition,
+  recordWorkerTaskHistoryReadPosition,
+} from "./worker-target-read-position.ts";
 import { readTaskHistory } from "./task-history-projection.ts";
 import type { DatabaseSync, SQLInputValue } from "node:sqlite";
 import * as P from "@rah-os/protocol";
@@ -526,6 +529,29 @@ export class WorkerReadService {
         const scope = resolveWorkerReadTarget(this.#db, origin, parsed.channel);
         const input = parsed;
         requireWorkerTaskVisibility(this.#db, scope, input.taskId);
+        // Raft's `recordConsumedSeqs` rule, applied to the Task surface: the
+        // read owns what it showed. A freshness hold caused by a Task change
+        // tells the Agent to read that history, so the read has to leave proof
+        // the change was shown — otherwise the instruction cannot be carried
+        // out. Only this Task's own events are proven, never the Room at large.
+        const shownThrough = this.#db
+          .prepare(
+            `SELECT MAX(room_seq) AS seq FROM room_events
+             WHERE room_id = ? AND aggregate_type = 'task' AND aggregate_id = ?`,
+          )
+          .get(scope.roomId, input.taskId);
+        recordWorkerTaskHistoryReadPosition(this.#db, {
+          participantId: scope.participantId,
+          roomId: scope.roomId,
+          taskId: input.taskId,
+          throughRoomSeq:
+            shownThrough === undefined
+              ? 0
+              : Number(
+                  (shownThrough as { seq: number | bigint | null }).seq ?? 0,
+                ),
+          updatedAt: (this.#context.now?.() ?? new Date()).toISOString(),
+        });
         return readTaskHistory(
           this.#db,
           scope.participantId,

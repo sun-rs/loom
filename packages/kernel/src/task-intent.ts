@@ -26,7 +26,10 @@ import {
   type TaskCreateCommand,
 } from "./task-anchor.ts";
 import { taskProjectionFromRow } from "./task-projection.ts";
-import { highestWorkerRoomReadPosition } from "./worker-target-read-position.ts";
+import {
+  readWorkerTargetReadPosition,
+  readWorkerTaskHistoryReadPosition,
+} from "./worker-target-read-position.ts";
 import {
   assertTaskEventReplay,
   findRoomEventByIdempotencyKey,
@@ -579,18 +582,6 @@ function assertWorkerTaskCursorAnchor(
     throw new Error("basedOnRoomSeq must be a non-negative integer");
   }
   if (basedOnRoomSeq === scope.toSeq) return;
-  // A position the Kernel has demonstrably shown this participant in this Room
-  // is an anchor too. Without it a freshness hold's own instruction — read the
-  // newer context, then rerun if it is still correct — cannot be carried out:
-  // the retry would present a position the fence refuses.
-  if (
-    basedOnRoomSeq <=
-    highestWorkerRoomReadPosition(database, {
-      participantId: scope.participantId,
-      roomId: scope.roomId,
-    })
-  )
-    return;
   const causalEvent = database
     .prepare("SELECT * FROM room_events WHERE room_id = ? AND room_seq = ?")
     .get(scope.roomId, basedOnRoomSeq);
@@ -661,18 +652,27 @@ export function assertWorkerTaskFreshContext(
 ): void {
   assertWorkerTaskCursorAnchor(database, scope, basedOnRoomSeq);
 
-  const newerBusinessEvent = database
+  // The fence blocks on a fact, so it clears on proof of that fact. A Task
+  // change is proven read by a Task history read; a delivered message by a read
+  // of the target it was posted on. A maximum sequence reached on some other
+  // target is not proof: reading Thread B past seq 20 says nothing about seq 10
+  // in Thread A, and reading an unrelated message says nothing about a Task
+  // change. Every blocking candidate is checked against its own proof.
+  const blocking = database
     .prepare(
-      `SELECT room_seq FROM room_events
-       WHERE room_id = ?
-         AND room_seq > ?
-         AND type NOT LIKE 'activation.%'
-         AND type NOT LIKE 'inbox.%'
-         AND type NOT LIKE 'placement.%'
-         AND type NOT LIKE 'run.%'
-         AND type NOT LIKE 'runtime_process.%'
+      `SELECT room_events.room_seq, room_events.aggregate_type,
+              room_events.aggregate_id, messages.thread_id AS message_thread_id
+       FROM room_events
+       LEFT JOIN messages ON messages.message_id = room_events.aggregate_id
+       WHERE room_events.room_id = ?
+         AND room_events.room_seq > ?
+         AND room_events.type NOT LIKE 'activation.%'
+         AND room_events.type NOT LIKE 'inbox.%'
+         AND room_events.type NOT LIKE 'placement.%'
+         AND room_events.type NOT LIKE 'run.%'
+         AND room_events.type NOT LIKE 'runtime_process.%'
          AND (
-           (aggregate_type = 'task' AND aggregate_id = ?)
+           (room_events.aggregate_type = 'task' AND room_events.aggregate_id = ?)
            OR EXISTS (
              SELECT 1 FROM inbox_items
              WHERE inbox_items.event_id = room_events.event_id
@@ -680,15 +680,15 @@ export function assertWorkerTaskFreshContext(
            )
          )
          AND NOT (
-           aggregate_type = 'task'
-           AND aggregate_id = ?
-           AND actor_id = ?
-           AND type IN ('task.claimed', 'task.started', 'task.progressed', 'task.blocked', 'task.released', 'task.submitted')
+           room_events.aggregate_type = 'task'
+           AND room_events.aggregate_id = ?
+           AND room_events.actor_id = ?
+           AND room_events.type IN ('task.claimed', 'task.started', 'task.progressed', 'task.blocked', 'task.released', 'task.submitted')
          )
-       ORDER BY room_seq DESC
-       LIMIT 1`,
+       ORDER BY room_events.room_seq
+       LIMIT 500`,
     )
-    .get(
+    .all(
       scope.roomId,
       basedOnRoomSeq,
       taskId,
@@ -696,6 +696,25 @@ export function assertWorkerTaskFreshContext(
       taskId,
       scope.participantId,
     );
+  const newerBusinessEvent = blocking.find((row) => {
+    const seq = integer(row, "room_seq");
+    if (text(row, "aggregate_type") === "task") {
+      return (
+        readWorkerTaskHistoryReadPosition(database, {
+          participantId: scope.participantId,
+          roomId: scope.roomId,
+          taskId: text(row, "aggregate_id"),
+        }) < seq
+      );
+    }
+    const threadId = nullableText(row, "message_thread_id") ?? undefined;
+    const shown = readWorkerTargetReadPosition(database, {
+      participantId: scope.participantId,
+      roomId: scope.roomId,
+      ...(threadId === undefined ? {} : { threadId }),
+    });
+    return shown === undefined || shown < seq;
+  });
   if (newerBusinessEvent !== undefined) {
     throw new StaleContextError(
       basedOnRoomSeq,

@@ -37,6 +37,14 @@ export function migrateWorkerTargetReadPositions(database: DatabaseSync): void {
     ) STRICT;
     CREATE INDEX IF NOT EXISTS idx_worker_target_read_positions_room
       ON worker_target_read_positions(room_id);
+    CREATE TABLE IF NOT EXISTS worker_task_history_read_positions (
+      participant_id TEXT NOT NULL REFERENCES principals(principal_id),
+      room_id TEXT NOT NULL REFERENCES rooms(room_id),
+      task_id TEXT NOT NULL,
+      through_room_seq INTEGER NOT NULL CHECK (through_room_seq > 0),
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY (participant_id, room_id, task_id)
+    ) STRICT;
     CREATE TABLE IF NOT EXISTS worker_target_context_windows (
       participant_id TEXT NOT NULL REFERENCES principals(principal_id),
       run_attempt_id TEXT NOT NULL,
@@ -246,26 +254,50 @@ export function readWorkerTargetReadPosition(
 }
 
 /**
- * The furthest sequence this participant has demonstrably been shown in this
- * Room, across every target. A Task command's read position uses it so that
- * reading the newer context actually clears a freshness hold: a hold that says
- * "read this, then rerun if it is still correct" is a false instruction if the
- * position the retry carries cannot move.
- *
- * This widens the Task fence only to what the participant has actually read —
- * the fence's own criterion — and never past it.
+ * A Task history read is the proof that Task changes were shown. It is kept
+ * apart from target read positions on purpose: a read position is a maximum
+ * sequence on one target, and a maximum reached on any target is not evidence
+ * that a particular earlier fact on another target was seen.
  */
-export function highestWorkerRoomReadPosition(
+export function recordWorkerTaskHistoryReadPosition(
   database: DatabaseSync,
-  target: { participantId: string; roomId: string },
+  input: {
+    participantId: string;
+    roomId: string;
+    taskId: string;
+    throughRoomSeq: number;
+    updatedAt: string;
+  },
+): void {
+  if (!Number.isSafeInteger(input.throughRoomSeq) || input.throughRoomSeq <= 0)
+    return;
+  database
+    .prepare(
+      `INSERT INTO worker_task_history_read_positions(
+         participant_id, room_id, task_id, through_room_seq, updated_at
+       ) VALUES(?, ?, ?, ?, ?)
+       ON CONFLICT(participant_id, room_id, task_id) DO UPDATE SET
+         through_room_seq = MAX(through_room_seq, excluded.through_room_seq),
+         updated_at = excluded.updated_at`,
+    )
+    .run(
+      input.participantId,
+      input.roomId,
+      input.taskId,
+      input.throughRoomSeq,
+      input.updatedAt,
+    );
+}
+
+export function readWorkerTaskHistoryReadPosition(
+  database: DatabaseSync,
+  input: { participantId: string; roomId: string; taskId: string },
 ): number {
   const row = database
     .prepare(
-      `SELECT MAX(through_room_seq) AS seq FROM worker_target_read_positions
-       WHERE participant_id = ? AND room_id = ?`,
+      `SELECT through_room_seq FROM worker_task_history_read_positions
+       WHERE participant_id = ? AND room_id = ? AND task_id = ?`,
     )
-    .get(target.participantId, target.roomId);
-  if (row === undefined) return 0;
-  const seq = row.seq;
-  return typeof seq === "number" || typeof seq === "bigint" ? Number(seq) : 0;
+    .get(input.participantId, input.roomId, input.taskId);
+  return row === undefined ? 0 : integer(row, "through_room_seq");
 }
