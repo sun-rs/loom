@@ -60,7 +60,10 @@ Agent 面操作**唯一**就是 `task-submit`。因此这条按合同补齐，�
 `requireHumanTaskManager` 抛 "Task status management requires a Human" —— 这是 RAH 自研限制，
 构成一处真实能力差异，待补齐。
 
-`closed` 在出厂 prompt 中从未出现，仍不成立。
+**`closed` 同样更正**：`task update` 以 agent 凭据执行（`ctx.loadAgentContext()`），`--status`
+取值就是含 `closed` 的五个，请求体 `{channel, task_number, status}` 直发 `/tasks/update-status`。
+所以 **Agent CLI 能力已确认**；prompt 没有逐一举例并不等于能力不成立——这是我第二次犯同类错误。
+服务端授权与转换条件仍待核实。RAH 侧 `closed`（`cancelled`）没有 Agent 入口。
 
 ## `todo` 与 `in_progress`：证据里有反例，不是"缺支持"
 
@@ -86,11 +89,24 @@ Agent 面操作**唯一**就是 `task-submit`。因此这条按合同补齐，�
 
 ## 仍未收口
 
-- **`done`：确定的能力缺口，下一步补齐。** 需先把 `completeTask` 的完成事务从 `room-kernel.ts`
-  抽成模块（该文件 6922/6925，无余量），再开 Agent 入口，并保留既有围栏：房间成员、状态必须为
-  `submitted`、reviewer 证据（`assertCompletionAllowed`）。授权由"必须是 Human"改为"本次提交的
-  producer"（`task_submissions.producer_id`）——上游契约只给出粗粒度 `capability: "tasks"`，
-  更细的授权在服务端不可知，因此这是**标注为 RAH 本地**的选择，不宣称与上游一致。
+### `done`：能力缺口确认，但移植被"没有可查的批准事实"挡住
+
+原计划是把授权由"必须是 Human"改为"本次提交的 producer"。**核查后这个方案不成立。**
+
+`assertCompletionAllowed` 在任务**没有 reviewer 时直接 `return`，不作任何校验**
+（`task-review-service.ts:484`），而 reviewer 只在创建时经 `reviewerIds` 设置，默认任务没有。
+所以它**不是批准围栏**。已用 `task-completion-approval-fact.test.ts` 钉住这一事实。
+
+于是今天 RAH 里"人类已批准"的**唯一持久事实，就是 Human 作为 actor 亲自完成这一动作本身**。
+把完成权交给 Agent 会让这个事实凭空消失：提交者身份 ≠ 人类批准，Agent 可以提交完立刻自我完成。
+即使配置了 reviewer，`task-review` 本身也是 Agent 面命令，批准者未必是人类。
+
+上游怎么解决的：Raft 的批准是**人类在聊天里的自然语言**（"looks good"、"merge it"），由 Agent 自行判断。
+**照抄它就等于依赖模型自述"已批准"**，这与本仓库"只从账本取证、不信模型口述"的规矩直接冲突；
+而自建一套审批记录又属于新造审批系统。两条都被排除，因此**此项停在取证结论上，不进入实现**。
+
+要推进需要先有一个可查的批准事实（谁、对哪一次 submission、何时批准），这是产品决定，不是复刻决定。
+
 - `todo` / `in_progress`：上游有反例挡住推断，保持现状。
-- `closed`：上游未对 Agent 提及。`task-block` / `task-unblock` / `task-request-input` / `task-progress`
+- `closed`：Agent CLI 能力已确认，服务端授权与转换条件待核实；RAH 无 Agent 入口。`task-block` / `task-unblock` / `task-request-input` / `task-progress`
   是 RAH 独有、上游无对应物，保留现有权限与执行围栏不变。
