@@ -110,6 +110,14 @@ export type AgentHostOptions = {
   wait?: (delayMs: number, signal: AbortSignal) => Promise<void>;
 };
 
+/**
+ * Outcome of the gated runtime start. `lease-lost` carries the renewal failure
+ * taken after the start slot was granted, so the caller can resolve a
+ * cancellation rather than treat it as a start failure.
+ */
+type GatedRuntimeStart =
+  { error: unknown; kind: "lease-lost" } | { kind: "started"; run: RunHandle };
+
 export class AgentHost {
   readonly #drainTimeoutMs: number;
   readonly #host: AgentHostIdentity;
@@ -455,31 +463,7 @@ export class AgentHost {
         leaseMs: this.#leaseMs,
       });
     } catch (error) {
-      if (error instanceof ActivationCancellationRequestedError) {
-        if (runAttempt !== undefined) {
-          await this.#control.finishRunAttempt({
-            error: error.message,
-            runAttemptId: runAttempt.runAttemptId,
-            state: "cancelled",
-          });
-        }
-        await this.#control.resolveActivationCancellation({
-          activationId: activation.activationId,
-        });
-        return {
-          activationId: activation.activationId,
-          reason: error.message,
-          state: "cancelled",
-        };
-      }
-      const failure = `pre-start lease validation failed: ${errorMessage(error)}`;
-      return runAttempt === undefined
-        ? this.#retryFailedActivation(activation, failure)
-        : this.#failClaimedActivation(
-            activation,
-            runAttempt.runAttemptId,
-            failure,
-          );
+      return this.#failPreStartLease(error, activation, runAttempt);
     }
 
     runAttempt ??= await this.#control.createRunAttempt({
@@ -534,13 +518,38 @@ export class AgentHost {
       // Upstream Raft bounds how many Agents may be *starting* at once — never
       // how many may be running — with AgentStartCoordinator. The gate is the
       // port of that queue-and-pump; without one, every lane starts at once.
-      run =
-        this.#startGate === undefined
-          ? await startRuntime()
-          : await this.#startGate.runStart(
-              activation.participantId,
-              startRuntime,
-            );
+      //
+      // The queue wait sits before run supervision begins, so nothing renews
+      // the activation lease while a lane waits for a start slot. Renew again
+      // once the slot is in hand: that restores the invariant this host had
+      // before the gate existed — the un-renewed window is exactly the bounded
+      // `runtime.start` — and a cancellation or an expiry that landed during
+      // the wait is discovered here, before a runtime is spawned. Raft has no
+      // activation lease, so there is no upstream contract to copy; this keeps
+      // a RAH invariant that the ported gate widened.
+      let gated: GatedRuntimeStart;
+      if (this.#startGate === undefined) {
+        gated = { kind: "started", run: await startRuntime() };
+      } else {
+        gated = await this.#startGate.runStart(
+          activation.participantId,
+          async (): Promise<GatedRuntimeStart> => {
+            try {
+              await this.#control.renewActivationLease({
+                activationId: activation.activationId,
+                leaseMs: this.#leaseMs,
+              });
+            } catch (error) {
+              return { error, kind: "lease-lost" };
+            }
+            return { kind: "started", run: await startRuntime() };
+          },
+        );
+      }
+      if (gated.kind === "lease-lost") {
+        return this.#failPreStartLease(gated.error, activation, runAttempt);
+      }
+      run = gated.run;
       if (
         preparedRun === undefined ||
         preparedRun.runId !== run.runId ||
@@ -937,6 +946,45 @@ export class AgentHost {
     } catch {
       // An observation sink cannot own or interrupt reconciliation.
     }
+  }
+
+  /**
+   * Resolve a lease renewal that failed on the way into a Run. Shared by the
+   * renewal taken before the start gate and the one taken after the gate hands
+   * back a start slot, so a cancellation that arrived while this lane sat in
+   * the start queue resolves the cancellation instead of being retried as a
+   * start failure.
+   */
+  async #failPreStartLease(
+    error: unknown,
+    activation: Pick<Activation, "activationId" | "attemptCount">,
+    runAttempt: { runAttemptId: string } | undefined,
+  ): Promise<HostCycleResult> {
+    if (error instanceof ActivationCancellationRequestedError) {
+      if (runAttempt !== undefined) {
+        await this.#control.finishRunAttempt({
+          error: error.message,
+          runAttemptId: runAttempt.runAttemptId,
+          state: "cancelled",
+        });
+      }
+      await this.#control.resolveActivationCancellation({
+        activationId: activation.activationId,
+      });
+      return {
+        activationId: activation.activationId,
+        reason: error.message,
+        state: "cancelled",
+      };
+    }
+    const failure = `pre-start lease validation failed: ${errorMessage(error)}`;
+    return runAttempt === undefined
+      ? this.#retryFailedActivation(activation, failure)
+      : this.#failClaimedActivation(
+          activation,
+          runAttempt.runAttemptId,
+          failure,
+        );
   }
 
   async #retryFailedActivation(
