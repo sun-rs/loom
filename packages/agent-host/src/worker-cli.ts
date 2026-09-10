@@ -424,10 +424,23 @@ export async function runWorkerCliCommand(
       // applied are reported first and the hold is appended: replacing the
       // block with the hold would tell the Agent nothing was applied while the
       // ledger already holds a claim it made.
+      //
+      // A refusal on a later Task says nothing about the earlier ones either.
+      // Upstream renders per-Task failures as lines inside an exit-0 result
+      // because its server aggregates them; RAH's server refuses per request,
+      // so the refusal stays an error — but the claims that did land must
+      // still be reported, or the CLI states something the ledger contradicts.
       const claimed: unknown[] = [];
       let heldClaim: string | undefined;
+      let refusal: unknown;
       for (const body of fanOut) {
-        const entry = await send({ body, path: request.path });
+        let entry: unknown;
+        try {
+          entry = await send({ body, path: request.path });
+        } catch (error) {
+          refusal = error;
+          break;
+        }
         const hold = workerTaskHoldOutput(arguments_[1] ?? "", entry);
         if (hold === undefined) {
           claimed.push(entry);
@@ -439,10 +452,26 @@ export async function runWorkerCliCommand(
         heldClaim = hold;
         break;
       }
+      // Upstream attempts every Task in one request; RAH stops at the first
+      // refusal or hold. "Not attempted" is a different fact from "failed", so
+      // it is stated rather than left for the Agent to infer from a short list.
+      const notAttempted = (settled: number): string =>
+        fanOut.length - settled <= 0
+          ? ""
+          : `${String(fanOut.length - settled)} of ${String(fanOut.length)} Tasks in this command were not attempted.\n`;
+      if (refusal !== undefined) {
+        if (claimed.length > 0)
+          runtime.stdout.write(
+            `${renderWorkerTaskClaimResults(claimed)}\n${notAttempted(claimed.length + 1)}`,
+          );
+        throw refusal;
+      }
       const appliedBlock =
         claimed.length === 0
           ? ""
-          : `${renderWorkerTaskClaimResults(claimed)}\n`;
+          : `${renderWorkerTaskClaimResults(claimed)}\n${
+              heldClaim === undefined ? "" : notAttempted(claimed.length + 1)
+            }`;
       runtime.stdout.write(
         heldClaim === undefined
           ? appliedBlock
