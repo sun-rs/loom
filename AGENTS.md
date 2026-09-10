@@ -88,12 +88,12 @@ The user authorized exactly this matrix for opt-in real-CLI gates. Every gate th
 spawns a real provider must assert these exact catalog binding ids and reasoning
 levels, and must fail rather than silently substitute another model.
 
-| CLI | Model binding id | Reasoning |
-| --- | --- | --- |
-| Claude Code | `sonnet` | `low` |
-| Codex | `gpt-5.6-luna` | `low` |
-| OpenCode | `deepseek/deepseek-v4-flash` | `low` |
-| Kimi CLI | `kimi-code/k3` | `high` |
+| CLI         | Model binding id             | Reasoning |
+| ----------- | ---------------------------- | --------- |
+| Claude Code | `sonnet`                     | `low`     |
+| Codex       | `gpt-5.6-luna`               | `low`     |
+| OpenCode    | `deepseek/deepseek-v4-flash` | `low`     |
+| Kimi CLI    | `kimi-code/k3`               | `high`    |
 
 Binding ids are the ones the installed CLIs actually publish, verified with
 `probeLocalModelCatalog` on 2026-09-09; do not invent version-suffixed ids.

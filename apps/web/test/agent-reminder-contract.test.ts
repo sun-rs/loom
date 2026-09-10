@@ -19,3 +19,8 @@ test("Agent Reminder tab follows the source-backed scheduled projection and card
   assert.match(source, /threadId: reminder\.threadId/u);
   assert.match(source, /rootMessageId: reminder\.rootMessageId/u);
 });
+
+test("empty Reminder view explains how to create one through Agent conversation", () => {
+  assert.match(source, /此 Agent 尚未安排任何提醒/);
+  assert.match(source, /明天提醒我跟进/);
+});

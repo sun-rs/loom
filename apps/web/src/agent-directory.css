@@ -287,8 +287,7 @@
   line-height: 1;
 }
 
-.rah-agent-mobile-back,
-.rah-agent-header-message {
+.rah-agent-mobile-back {
   display: none;
 }
 

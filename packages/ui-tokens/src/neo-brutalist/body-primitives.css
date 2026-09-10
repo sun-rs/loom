@@ -78,7 +78,8 @@ button.rah-entity-card:disabled {
   flex: 1 0 auto;
 }
 .rah-empty-state[data-context="profile"],
-.rah-empty-state[data-context="activity"] {
+.rah-empty-state[data-context="activity"],
+.rah-empty-state[data-context="thread"] {
   padding: 48px 24px;
 }
 .rah-empty-state[data-context="task"] {

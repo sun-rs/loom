@@ -18,6 +18,7 @@ import type {
 } from "@rah-os/protocol";
 import type { WorkspaceAgentView } from "@rah-os/ui-web";
 
+import { PanelHeader } from "@rah-os/ui-web/neo-brutalist/panel-header";
 import { PreviewCard } from "./preview-card.tsx";
 import {
   useHumanIdentity,
@@ -138,92 +139,104 @@ export function MemberRelationshipSurface({
   );
   return (
     <section className="rah-member-graph-surface rah-scroll-main">
-      <header className="rah-member-graph-header">
-        <div>
-          <button
-            aria-label="返回成员列表"
-            className="rah-member-graph-mobile-back rah-interaction-flat"
-            onClick={onBack}
-            type="button"
-          >
-            <Icon name="chevron" />
-          </button>
-          <Icon name="share-2" />
-          <h2>关系图</h2>
-          <span>{data ? members.length : null}</span>
-        </div>
+      <PanelHeader kind="surface" className="rah-member-graph-page-header">
         <button
-          className="btn-brutal-sm"
-          disabled={loading || workspaceId === undefined}
-          onClick={() => setReload((value) => value + 1)}
+          aria-label="返回成员列表"
+          className="rah-member-graph-mobile-back rah-interaction-flat"
+          onClick={onBack}
           type="button"
         >
-          <Icon name="refresh-cw" />
-          {loading ? "刷新中…" : "刷新"}
+          <Icon name="chevron" />
         </button>
-      </header>
-      {error ? (
-        <p className="rah-member-graph-warning" role="status">
-          {error}
-          {data ? "；已保留本工作区上一次成功结果。" : ""}
-        </p>
-      ) : null}
-      {data?.truncated ? (
-        <p className="rah-member-graph-warning" role="status">
-          Workspace 成员或频道超过安全上限，当前图为有界结果。
-        </p>
-      ) : null}
-      <div className="rah-member-graph-grid">
-        <MemberGraphCanvas
-          data={data}
-          agents={agents}
-          loading={loading}
-          onOpenAgent={onOpenAgent}
-        />
-        <aside className="rah-member-graph-summary" aria-label="关系图摘要">
-          <div className="rah-member-graph-counts">
-            <GraphMetric label="人类" value={data?.humans.length ?? 0} />
-            <GraphMetric label="Agent" value={data?.agents.length ?? 0} />
-            <GraphMetric label="连接" value={data?.edges.length ?? 0} />
+        <span className="rah-panel-header-icon">
+          <Icon name="share-2" />
+        </span>
+        <h2>关系图</h2>
+        <span className="rah-member-graph-experimental">EXPERIMENTAL</span>
+      </PanelHeader>
+      <div className="rah-member-graph-body">
+        <header className="rah-member-graph-header">
+          <div>
+            <Icon name="share-2" />
+            <h3>关系</h3>
+            <span>{data ? members.length : null}</span>
           </div>
-          <GraphSummaryCard title="连接最多的成员">
-            {mostConnected.length === 0 ? (
-              <i>暂无成员关系</i>
-            ) : (
-              mostConnected.map((member) => (
-                <button
-                  type="button"
-                  onClick={() =>
-                    member.type === "human"
-                      ? humanIdentity?.onOpenHuman(member.principalId)
-                      : onOpenAgent(member.agentDefinitionId)
-                  }
-                  className="rah-member-graph-summary-row"
-                  key={memberKey(member)}
-                >
-                  <MemberCompactAvatar member={member} agents={agents} />
-                  <b>{memberDisplayName(member)}</b>
-                  <span>{degrees.get(memberKey(member)) ?? 0}</span>
-                </button>
-              ))
-            )}
-          </GraphSummaryCard>
-          <GraphSummaryCard title="最大的频道">
-            {largestChannels.length === 0 ? (
-              <i>暂无可见频道</i>
-            ) : (
-              largestChannels.map((channel) => (
-                <div className="rah-member-graph-summary-row" key={channel.id}>
-                  <Icon name="hash" />
-                  <b>{channel.name}</b>
-                  <span>
-                    {channel.humanCount}H/{channel.agentCount}A
-                  </span>
-                </div>
-              ))
-            )}
-          </GraphSummaryCard>
-        </aside>
+          <button
+            className="btn-brutal-sm"
+            disabled={loading || workspaceId === undefined}
+            onClick={() => setReload((value) => value + 1)}
+            type="button"
+          >
+            <Icon name="refresh-cw" />
+            {loading ? "刷新中…" : "刷新"}
+          </button>
+        </header>
+        {error ? (
+          <p className="rah-member-graph-warning" role="status">
+            {error}
+            {data ? "；已保留本工作区上一次成功结果。" : ""}
+          </p>
+        ) : null}
+        {data?.truncated ? (
+          <p className="rah-member-graph-warning" role="status">
+            Workspace 成员或频道超过安全上限，当前图为有界结果。
+          </p>
+        ) : null}
+        <div className="rah-member-graph-grid">
+          <MemberGraphCanvas
+            data={data}
+            agents={agents}
+            loading={loading}
+            onOpenAgent={onOpenAgent}
+          />
+          <aside className="rah-member-graph-summary" aria-label="关系图摘要">
+            <div className="rah-member-graph-counts">
+              <GraphMetric label="人类" value={data?.humans.length ?? 0} />
+              <GraphMetric label="Agent" value={data?.agents.length ?? 0} />
+              <GraphMetric label="连接" value={data?.edges.length ?? 0} />
+            </div>
+            <GraphSummaryCard title="连接最多的成员">
+              {mostConnected.length === 0 ? (
+                <i>暂无成员关系</i>
+              ) : (
+                mostConnected.map((member) => (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      member.type === "human"
+                        ? humanIdentity?.onOpenHuman(member.principalId)
+                        : onOpenAgent(member.agentDefinitionId)
+                    }
+                    className="rah-member-graph-summary-row"
+                    key={memberKey(member)}
+                  >
+                    <MemberCompactAvatar member={member} agents={agents} />
+                    <b>{memberDisplayName(member)}</b>
+                    <span>{degrees.get(memberKey(member)) ?? 0}</span>
+                  </button>
+                ))
+              )}
+            </GraphSummaryCard>
+            <GraphSummaryCard title="最大的频道">
+              {largestChannels.length === 0 ? (
+                <i>暂无可见频道</i>
+              ) : (
+                largestChannels.map((channel) => (
+                  <div
+                    className="rah-member-graph-summary-row"
+                    key={channel.id}
+                  >
+                    <Icon name="hash" />
+                    <b>{channel.name}</b>
+                    <span>
+                      {channel.humanCount}H/{channel.agentCount}A
+                    </span>
+                  </div>
+                ))
+              )}
+            </GraphSummaryCard>
+          </aside>
+        </div>
       </div>
     </section>
   );

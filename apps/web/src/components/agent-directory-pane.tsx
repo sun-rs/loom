@@ -2076,7 +2076,10 @@ function AgentRemindersPane({
         <div className="rah-agent-reminders-empty">
           <Icon name="bell" />
           <strong>暂无提醒</strong>
-          <span>该 Agent 尚未安排提醒。</span>
+          <span>
+            此 Agent 尚未安排任何提醒。要设置一个，只需告诉你的
+            Agent：「明天提醒我跟进。」
+          </span>
         </div>
       ) : (
         <div className="rah-agent-reminders-list">

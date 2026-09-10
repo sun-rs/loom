@@ -35,7 +35,8 @@ Raft 发布前端不能证明 Server 的 ACL SQL。RAH OS 的 canonical owner �
 
 - 请求只接受 `workspaceId`，actor 从认证上下文取得；
 - 只纳入该 Human 当前可读取且未归档的普通 Channel；Direct/control Room 不产生边；
-- 只纳入上述 Channel 的当前成员；不因为同属 Workspace 暴露未共享 Room 的身份；
+- Human 与边仍来自上述 Channel 的当前成员；Agent 节点同时纳入既有 authenticated
+  Agent catalog 可见的同 Workspace 身份，即使没有共享 Channel；不扩大目录可见权限；
 - Agent node 同时带 `participantId` 与 `agentDefinitionId`，Human node 只带
   `principalId`；浏览器不从显示名反查身份；
 - node/channel/link 数量有上限，超限显式截断或失败，不能返回无界 Workspace 图；
@@ -70,7 +71,7 @@ Channel 点击导航，因此本批不发明点击行为，也不创建公开分
 必须先失败、再实现：
 
 1. protocol 拒绝未知字段、重复 node/channel identity、无效类型和无界集合；
-2. Kernel 证明不可见/归档/direct/control Room 不进入图，成员仅来自可见 Channel；
+2. Kernel 证明不可见/归档/direct/control Room 不进入图，边仅来自可见 Channel，目录可见的零连接 Agent 仍保留；
 3. 两个共享 Channel 只生成一条边且权重为 2；无共享 Channel 的成员仍是孤立 node；
 4. HTTP/SDK 路由严格绑定 actor 与 workspace；
 5. URL reload/back/forward 在 relationship 与 Agent detail 间稳定切换；
@@ -116,3 +117,21 @@ ACL SQL 是本地安全 glue，不冒充未公开 Raft Server 源码。
 
 结论：`C/A/L/D` 完成；`R` 完成冻结 Raft 发布物可证明的 projector、组件和交互合同。
 未取得的 Raft Server ACL 实现没有被冒充为源码移植。
+
+## 8. 2026-09-10 Chrome 对照纠正
+
+Chrome 同视口证据 `2026-09-10-chrome-bilateral/chrome/22-graph-raft.png` 中官方图保留
+零连接 Agent。第 7 节“另两名 Agent 不进入图正确”的历史验收结论撤回。Kernel 沿用
+`listAgentCatalogRows` 的 control Room 认证范围补齐目录可见节点；边仍只由可见、未归档
+频道成员关系形成。没有增加多 Human 权限或非成员频道读取能力。
+
+界面复用共享 `PanelHeader`，恢复标题和 EXPERIMENTAL 标签，以及独立关系数量/刷新行。
+图内默认 Human 头像原输出 `.rah-settings-avatar` 未命中图的头像规则；现在与 Agent 均为
+36px 圆形，摘要和侧栏仍使用紧凑头像。布局参考冻结 MemberGraphSection 的 `space-y-4`、
+`xl:grid-cols-[minmax(0,1fr)_280px]` 和 `md:h-[520px]`；标签视觉来自上述 Chrome 图，
+不将截图测量称为源码提取值。
+
+聚焦回归：Kernel 真实临时账本先验证空频道图仍包含全部目录 Agent（修复前 0 != 3），
+再验证加入频道后零连接节点保留且没有伪造边、不可访问 Workspace 仍拒绝；Chrome fixture
+先复现 Human 18px 方块，再验证 1280/390 视口双方图节点 36px 圆形、标题/数量分离、无横向溢出。
+此处是隔离浏览器回归，不代替正式构建重启或重新双边验收。

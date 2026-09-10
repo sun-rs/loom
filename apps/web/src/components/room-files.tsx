@@ -224,7 +224,7 @@ function FileCard({
           title="跳转到原消息"
           onClick={onSource}
         >
-          <Icon name="message-square" />
+          <Icon name="map-pin" />
         </button>
       )}
       {onSource && (

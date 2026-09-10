@@ -3939,7 +3939,9 @@ function WorkspaceScreen({
                 ) : null}
                 {agentCreateOpen && activeWorkspace !== undefined ? (
                   <AgentCreateDialog
-                    computerLabel={localRuntimeHostId}
+                    computerLabel={
+                      computer?.displayName ?? computer?.hostname ?? "本机"
+                    }
                     onClose={() => setAgentCreateOpen(false)}
                     onCreate={createAgent}
                     runtimes={localRuntimes}

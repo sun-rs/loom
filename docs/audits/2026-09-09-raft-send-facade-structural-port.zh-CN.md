@@ -82,12 +82,13 @@ Raft 的 `detectThreadContextParentSend`：当 Agent 最近读过某 Thread、�
   `protocol/src/index.ts` 1,662/1,800。
 
 ## 真实模型验收：三次付费运行与门禁改写（2026-09-09）
+
 ### 门禁改写后的两次通过运行（同日）
 
-| CLI | 模型 / effort | 现场 | 结果 |
-|---|---|---|---|
-| OpenCode | `deepseek/deepseek-v4-flash` / low | `…-VDqJOJ` | 通过，45 秒 |
-| Kimi | `kimi-code/k3` / high | `…-nx7gn3` | 通过，123 秒 |
+| CLI      | 模型 / effort                      | 现场       | 结果         |
+| -------- | ---------------------------------- | ---------- | ------------ |
+| OpenCode | `deepseek/deepseek-v4-flash` / low | `…-VDqJOJ` | 通过，45 秒  |
+| Kimi     | `kimi-code/k3` / high              | `…-nx7gn3` | 通过，123 秒 |
 
 OpenCode 的轨迹留下了 `message-post --send-draft --target "#agent-council"`（无草稿 ID、无游标、无回执），
 草稿 `resolution_kind = sent_unchanged`；两条回复各恰好一次。这是新合同在真实模型上的端到端证明。
@@ -96,7 +97,6 @@ Kimi 首次运行业务结果已经正确（两条消息俱在、草稿 `sent_un
 它用轨迹里的命令原文取证，而 Kimi 的 ACP 帧记录的是结构化 `rawInput`，不含 shell 命令行。已改为以账本为准
 （只有 `--send-draft` 能把草稿解析为 `sent_unchanged`），轨迹命令文本降为旁证。改后 Kimi 通过。
 教训与本批主题一致：取证要用账本事实，不要用某家 CLI 恰好呈现的文本形状。
-
 
 opt-in 门禁 `packages/daemon/test/real-busy-hold-gate.test.ts` 当日经用户授权跑了三次，全部保留状态目录，全部未通过原断言：
 

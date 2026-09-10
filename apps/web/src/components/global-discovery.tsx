@@ -41,8 +41,10 @@ import {
 import { DiscoveryFilter } from "./discovery-filter.tsx";
 import { GlobalTaskBoard } from "./global-task-board.tsx";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
+import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
 import { taskPersonOptions } from "./task-person-options.tsx";
 import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
+import { formatActivityRelativeTime } from "../activity-relative-time.ts";
 import { formatRahDateTime } from "../date-time-presentation.ts";
 import { SearchResultSkeleton } from "@rah-os/ui-web/neo-brutalist/search-result-skeleton";
 import { visibleSearchResults } from "../search-visible-results.ts";
@@ -389,6 +391,7 @@ function GlobalSearch({
   onPerson,
   onClose,
 }: Props & { people: Principal[] }) {
+  const entities = useWorkspaceEntities();
   const filters = useFilters("search");
   const { params, change } = filters;
   const query = params.get("q") ?? "";
@@ -546,6 +549,7 @@ function GlobalSearch({
                   ? 1
                   : a.handle.localeCompare(b.handle),
             )
+            .map((person) => entities?.resolvePerson(person) ?? person)
             .map((person) => ({
               id: person.principalId,
               label:
@@ -553,7 +557,13 @@ function GlobalSearch({
                   ? "我"
                   : person.handle,
               leading: (
-                <Icon name={person.kind === "agent" ? "bot" : "user-round"} />
+                <ProfileImageAvatar
+                  avatarKey={person.avatarKey}
+                  name={person.displayName ?? person.handle}
+                  kind={person.kind}
+                  principalId={person.principalId}
+                  size="compact"
+                />
               ),
             }))}
           values={params.getAll("sender")}
@@ -1099,7 +1109,9 @@ function GlobalActivity({
                       {item.title}
                     </span>
                     <time>
-                      {formatDiscoveryDateTime(item.latestMessage.createdAt)}
+                      {formatActivityRelativeTime(
+                        item.latestMessage.createdAt,
+                      ) ?? "时间未知"}
                     </time>
                   </span>
                   <span className="fc-summary">

@@ -206,7 +206,13 @@ export function ComputerRuntimePane({
                 </span>
                 <span>
                   <b>{computerName}</b>
-                  <small>Computer · {statusLabel}</small>
+                  <small>
+                    {computer?.buildVersion ? (
+                      <>Computer v{computer.buildVersion}</>
+                    ) : (
+                      "Computer"
+                    )}
+                  </small>
                 </span>
               </button>
             )}

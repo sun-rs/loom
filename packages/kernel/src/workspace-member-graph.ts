@@ -7,6 +7,7 @@ import {
   type ClientWorkspaceMemberGraphResponse,
 } from "@rah-os/protocol";
 
+import { listAgentCatalogRows } from "./room-agent-service.ts";
 import { ForbiddenError, NotFoundError } from "./errors.ts";
 import { jsonObject, nullableText, text, type Row } from "./sqlite-row.ts";
 import type { Principal } from "./types.ts";
@@ -68,16 +69,6 @@ export function listWorkspaceMemberGraph(
     .all(actor.principalId, input.workspaceId);
   let truncated = channelRows.length > 500;
   const visibleChannelRows = channelRows.slice(0, 500);
-  if (visibleChannelRows.length === 0) {
-    return ClientWorkspaceMemberGraphResponseSchema.parse({
-      agents: [],
-      channels: [],
-      edges: [],
-      humans: [],
-      truncated,
-      workspaceId: input.workspaceId,
-    });
-  }
   const channelIds = visibleChannelRows.map((row) => text(row, "room_id"));
   const placeholders = channelIds.map(() => "?").join(", ");
   const membershipRows = database
@@ -103,6 +94,29 @@ export function listWorkspaceMemberGraph(
     )
     .all(...channelIds);
   const members = new Map<string, MutableMember>();
+  // Reuse the authenticated directory owner: membership defines edges, not
+  // whether an already-visible Agent identity may appear as an isolated node.
+  const controlRooms = database
+    .prepare(
+      "SELECT room_id FROM rooms WHERE workspace_id = ? AND kind = 'control'",
+    )
+    .all(input.workspaceId);
+  for (const controlRoom of controlRooms) {
+    for (const row of listAgentCatalogRows(
+      database,
+      actor.principalId,
+      text(controlRoom, "room_id"),
+    )) {
+      const member = memberFromRow({
+        ...row,
+        kind: "agent",
+        principal_id: text(row, "participant_id"),
+        room_id: null,
+      });
+      members.set(`${member.type}:${member.id}`, member);
+    }
+  }
+
   for (const row of membershipRows) {
     const member = memberFromRow(row);
     const key = `${member.type}:${member.id}`;
@@ -181,13 +195,13 @@ function memberFromRow(row: Row): MutableMember {
   const handle = text(row, "handle");
   const principalDisplayName = nullableText(row, "display_name") ?? handle;
   const principalAvatarKey = nullableText(row, "avatar_key") ?? undefined;
-  const roomId = text(row, "room_id");
+  const roomId = nullableText(row, "room_id");
   if (text(row, "kind") === "human") {
     return {
       ...(principalAvatarKey === undefined
         ? {}
         : { avatarKey: principalAvatarKey }),
-      channelIds: [roomId],
+      channelIds: roomId === null ? [] : [roomId],
       displayName: principalDisplayName,
       handle,
       id: principalId,
@@ -205,7 +219,7 @@ function memberFromRow(row: Row): MutableMember {
   return {
     ...(agentDefinitionId === undefined ? {} : { agentDefinitionId }),
     ...(avatarKey === undefined ? {} : { avatarKey }),
-    channelIds: [roomId],
+    channelIds: roomId === null ? [] : [roomId],
     displayName: definition?.displayName ?? principalDisplayName,
     handle,
     id: agentDefinitionId ?? principalId,

@@ -103,8 +103,29 @@ test("Workspace member graph is an ACL-safe projection of visible active Channel
       runtimeOfferId: offer.runtimeOfferId,
       sessionPolicy: "prefer_resume",
     });
-    const colleagueMembership = kernel.addRoomMember(ownerActor, {
+    const isolated = kernel.provisionWorkspaceAgent(ownerActor, {
+      avatarKey: "cat",
       basedOnRoomSeq: kimi.event.roomSeq,
+      controlRoomId: workspace.controlRoom.roomId,
+      displayName: "Isolated",
+      handle: "isolated",
+      idempotencyKey: "agent-isolated",
+      instructions: "Fixture only.",
+      modelIntent: { fallback: "disabled" },
+      role: "Builder",
+      runtimeOfferId: offer.runtimeOfferId,
+      sessionPolicy: "prefer_resume",
+    });
+    const emptyChannelGraph = kernel.listWorkspaceMemberGraph(ownerActor, {
+      workspaceId: workspace.workspace.workspaceId,
+    });
+    assert.equal(emptyChannelGraph.agents.length, 3);
+    assert.equal(emptyChannelGraph.edges.length, 0);
+    assert.ok(
+      emptyChannelGraph.agents.every((agent) => agent.channelIds.length === 0),
+    );
+    const colleagueMembership = kernel.addRoomMember(ownerActor, {
+      basedOnRoomSeq: isolated.event.roomSeq,
       idempotencyKey: "add-colleague-control",
       principalId: colleague.principal.principalId,
       role: "member",
@@ -178,7 +199,18 @@ test("Workspace member graph is an ACL-safe projection of visible active Channel
       [alpha.room.roomId, beta.room.roomId],
     );
     assert.equal(graph.humans.length, 2);
-    assert.equal(graph.agents.length, 2);
+    assert.equal(graph.agents.length, 3);
+    const isolatedNode = graph.agents.find(
+      (agent) => agent.id === isolated.agent.definition.agentDefinitionId,
+    );
+    assert.deepEqual(isolatedNode?.channelIds, []);
+    assert.ok(
+      graph.edges.every(
+        (edge) =>
+          edge.source !== `agent:${isolatedNode?.id}` &&
+          edge.target !== `agent:${isolatedNode?.id}`,
+      ),
+    );
     assert.equal(graph.truncated, false);
     const ownerAlice = graph.edges.find(
       (edge) =>

@@ -45,6 +45,7 @@ export function AgentRuntimeDialog({
     detail.policy.modelIntent.reasoning ?? "default",
   );
   const [pending, setPending] = useState(false);
+  const [advanced, setAdvanced] = useState(false);
   const [error, setError] = useState<string>();
   const saving = useRef(false);
   const dialogRef = useDialogProtocol({ blocked: pending, onClose });
@@ -163,16 +164,29 @@ export function AgentRuntimeDialog({
               );
             }}
           />
-          <RuntimePicker
-            label="推理强度"
-            disabled={pending || runtime === undefined}
-            value={reasoning}
-            options={efforts.map((item) => ({
-              id: item.value,
-              label: item.label,
-            }))}
-            onChange={(next) => setReasoning(next as ReasoningLevel)}
-          />
+          <button
+            className="rah-agent-disclosure"
+            type="button"
+            aria-label="高级"
+            aria-expanded={advanced}
+            onClick={() => setAdvanced(!advanced)}
+          >
+            <span aria-hidden="true">{advanced ? "⌄" : "›"}</span> 高级
+          </button>
+          {advanced && (
+            <section className="rah-runtime-advanced">
+              <RuntimePicker
+                label="推理强度"
+                disabled={pending || runtime === undefined}
+                value={reasoning}
+                options={efforts.map((item) => ({
+                  id: item.value,
+                  label: item.label,
+                }))}
+                onChange={(next) => setReasoning(next as ReasoningLevel)}
+              />
+            </section>
+          )}
           {!valid && (
             <p role="status">
               当前配置缺少可用的 Runtime

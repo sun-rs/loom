@@ -100,10 +100,11 @@ export function DiscoveryFilter({
       if (!menu.current || !trigger.current) return;
       const origin = trigger.current.getBoundingClientRect(),
         popup = menu.current.getBoundingClientRect();
-      const gutter = variant === "status" ? 8 : 12,
-        gap = variant === "status" ? 4 : 8;
+      const gutter = variant === "status" || variant === "reaction" ? 8 : 12,
+        gap = variant === "status" || variant === "reaction" ? 4 : 8;
       const anchor =
-        variant === "status" && window.innerWidth < 640
+        variant === "reaction" ||
+        (variant === "status" && window.innerWidth < 640)
           ? origin.right - popup.width
           : origin.left;
       const left = Math.max(

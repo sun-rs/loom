@@ -2,7 +2,7 @@
   background: var(--bg);
   min-height: 0;
   overflow: auto;
-  padding: 16px;
+  padding: 0;
 }
 
 .rah-member-graph-header,
@@ -27,8 +27,24 @@
   width: 16px;
 }
 
-.rah-member-graph-header h2 {
+.rah-member-graph-page-header h2 {
   font-size: 16px;
+}
+.rah-member-graph-body {
+  padding: 16px 20px;
+}
+.rah-member-graph-experimental {
+  background: var(--green);
+  border: 1px solid var(--black);
+  font: 700 10px var(--mono);
+  padding: 2px 6px;
+}
+.rah-member-graph-header h3 {
+  color: var(--ink-50);
+  font-size: 12px;
+}
+.rah-member-graph-header {
+  margin-bottom: 16px;
 }
 
 .rah-member-graph-header span {
@@ -109,6 +125,7 @@
   text-align: left;
 }
 
+.rah-member-graph-node-trigger > .rah-settings-avatar,
 .rah-member-graph-node-trigger > .rah-agent-avatar,
 .rah-member-graph-human-avatar {
   border: 1px solid var(--black);
@@ -299,24 +316,27 @@
   color: var(--ink-40);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1279px) {
   .rah-member-graph-grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .rah-member-graph-canvas,
-  .rah-member-graph-empty {
-    height: 360px;
   }
 }
 
 @media (max-width: 767px) {
+  .rah-member-graph-canvas,
+  .rah-member-graph-empty {
+    height: 360px;
+  }
   .rah-member-graph-surface {
     height: 100%;
+    padding: 0;
+  }
+
+  .rah-member-graph-body {
     padding: 12px;
   }
 
-  .rah-member-graph-header {
+  .rah-member-graph-page-header {
     padding-left: 52px;
   }
 

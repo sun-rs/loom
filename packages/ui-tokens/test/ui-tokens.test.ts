@@ -57,6 +57,10 @@ test("interaction icon geometry is frozen from Raft RFe/TFe/yze/cze/Bw, Agent ta
             "",
           )
           .replace(
+            /  <!-- Verbatim Lucide geometry from authorized Raft index-BVfbaScj\.js: O\$e, U\$e, z\$e\. -->\n(?:  <symbol id="raft-icon-(?:map-pin|message-circle-plus|message-circle-off)"[^\n]*\n){3}/u,
+            "",
+          )
+          .replace(
             /  <!-- Raft live channel\/settings\/computer mobile back, index-Biin3FEA\.js,[\s\S]*?<symbol id="raft-icon-arrow-left"[\s\S]*?<\/symbol>\n/u,
             "",
           ),
@@ -250,4 +254,20 @@ test("2026-09-08 additional glyphs exactly match the separately frozen source ge
     );
     assert.deepEqual(actual, expected, icon.name);
   }
+});
+
+// index-BVfbaScj.js O$e/U$e/z$e; independently frozen additions, not a new baseline.
+test("Thread action glyph additions retain their separately reviewed Raft geometry", () => {
+  const source = readFileSync(
+    join(packageRoot, "src", "interaction-icons.svg"),
+    "utf8",
+  );
+  const block = source.match(
+    /  <!-- Verbatim Lucide[^\n]*\n(?:  <symbol id="raft-icon-(?:map-pin|message-circle-plus|message-circle-off)"[^\n]*\n){3}/u,
+  )?.[0];
+  assert.ok(block);
+  assert.equal(
+    createHash("sha256").update(block).digest("hex"),
+    "c7d7b08b1a147ef528975e266961af3294b1d90c831e778c885bdd2cb37dfa49",
+  );
 });

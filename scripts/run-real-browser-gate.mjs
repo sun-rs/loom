@@ -975,6 +975,7 @@ try {
     "Agent profile before runtime picker audit",
   );
   await clickButton(browser, { ariaLabel: "编辑运行时配置" });
+  await clickButton(browser, { ariaLabel: "高级" });
   await waitFor(
     browser,
     () => document.querySelector(".rah-runtime-edit-dialog") !== null,
@@ -1080,6 +1081,7 @@ try {
     "persist alternate runtime",
   );
   await clickButton(browser, { ariaLabel: "编辑运行时配置" });
+  await clickButton(browser, { ariaLabel: "高级" });
   await waitFor(
     browser,
     (expected) => {
@@ -1135,6 +1137,7 @@ try {
     "restore original runtime",
   );
   await clickButton(browser, { ariaLabel: "编辑运行时配置" });
+  await clickButton(browser, { ariaLabel: "高级" });
   await waitFor(
     browser,
     (expected) => {
@@ -1247,6 +1250,7 @@ try {
     "persist model and effort",
   );
   await clickButton(browser, { ariaLabel: "编辑运行时配置" });
+  await clickButton(browser, { ariaLabel: "高级" });
   await waitFor(
     browser,
     (expectedModel, expectedEffort) => {

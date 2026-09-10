@@ -1966,7 +1966,7 @@ export function ThreadPane({
                     role="menuitem"
                     type="button"
                   >
-                    <Icon name="pin" /> 在频道中查看
+                    <Icon name="map-pin" /> 在频道中查看
                   </button>
                   {onFollow ? (
                     <button
@@ -1978,7 +1978,13 @@ export function ThreadPane({
                       role="menuitem"
                       type="button"
                     >
-                      <Icon name="bell" />
+                      <Icon
+                        name={
+                          displayedFollowing
+                            ? "message-circle-off"
+                            : "message-circle-plus"
+                        }
+                      />
                       {displayedFollowing ? "取消关注消息列" : "关注消息列"}
                     </button>
                   ) : null}
@@ -2076,7 +2082,7 @@ export function ThreadPane({
         </div>
       ) : null}
       <section
-        className={`messages rah-scroll-main${parentSlot === undefined ? "" : " rah-thread-task-body"}`}
+        className={`messages rah-scroll-main${parentSlot === undefined ? "" : " rah-thread-task-body"}${!hasEarlierReplies && replies.length === 0 ? " rah-thread-empty-body" : ""}`}
         ref={messagesElement}
       >
         {parentSlot ??
@@ -2185,7 +2191,12 @@ export function ThreadPane({
             {earlierRepliesLoading ? "正在载入更早回复…" : "载入更早回复"}
           </button>
         ) : replies.length === 0 ? (
-          <div className="rah-thread-empty-replies">暂无回复</div>
+          <EmptyState
+            context="thread"
+            placement="fill"
+            icon="chat"
+            title="暂无回复"
+          />
         ) : (
           <div className="rah-thread-history-heading">
             <div className="rah-thread-beginning">回复的开头</div>

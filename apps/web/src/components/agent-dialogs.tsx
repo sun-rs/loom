@@ -169,7 +169,9 @@ export function AgentCreateDialog({
           }}
         >
           <label>
-            计算机 <em>*</em>
+            <span>
+              计算机 <em>*</em>
+            </span>
             <select disabled value={computerLabel ?? ""}>
               {computerLabel === undefined ? (
                 <option value="">没有在线的计算机</option>
@@ -179,7 +181,9 @@ export function AgentCreateDialog({
             </select>
           </label>
           <label>
-            名称 <em>*</em>
+            <span>
+              名称 <em>*</em>
+            </span>
             <input
               autoFocus
               maxLength={128}
@@ -201,9 +205,14 @@ export function AgentCreateDialog({
               rows={4}
               value={description}
             />
+            <small className="rah-agent-description-count">
+              {description.length}/3000
+            </small>
           </label>
           <label>
-            运行时 <em>*</em>
+            <span>
+              运行时 <em>*</em>
+            </span>
             <select
               onChange={(event) => setRuntimeOfferId(event.target.value)}
               value={runtimeOfferId}
