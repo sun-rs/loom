@@ -297,3 +297,73 @@ test("reading an unrelated message does not clear a hold caused by a Task change
     await f.close();
   }
 });
+
+/**
+ * `task-submit` is RAH's share of Raft's `task update`: `in_review` is reached
+ * upstream only by that command, which holds. So a submit blocked by newer
+ * context must behave like a hold — apply nothing, show the context, and clear
+ * once the blocking fact has been read — not raise a bare 409.
+ */
+test("a held task submit applies nothing, then lands after the blocking fact is read", async () => {
+  const f = await fixture();
+  try {
+    const claimed = await f.call("tasks/claim", {
+      idempotencyKey: "submit-claim",
+      taskId: f.task.task.taskId,
+    });
+    assert.notEqual((claimed.body as { state?: string }).state, "held");
+    await f.call("tasks/start", {
+      idempotencyKey: "submit-start",
+      taskId: f.task.task.taskId,
+    });
+
+    const latest = Number(
+      f.database
+        .prepare("SELECT next_seq-1 AS n FROM rooms WHERE room_id=?")
+        .get(f.room.roomId)!.n,
+    );
+    f.kernel.taskAmendments.human(f.actor, {
+      basedOnRoomSeq: latest,
+      idempotencyKey: "rescope-before-submit",
+      taskId: f.task.task.taskId,
+      title: "First, rescoped mid-flight",
+    });
+
+    const held = await f.call("tasks/submit", {
+      idempotencyKey: "submit-a",
+      summary: "done as originally scoped",
+      taskId: f.task.task.taskId,
+    });
+    assert.equal(held.status, 200, JSON.stringify(held.body));
+    assert.equal((held.body as { state?: string }).state, "held");
+    const row = f.database
+      .prepare("SELECT state, submission_summary FROM tasks WHERE task_id=?")
+      .get(f.task.task.taskId)!;
+    assert.notEqual(row.state, "submitted", "a hold applies nothing");
+    assert.equal(row.submission_summary, null, "and records no submission");
+
+    const history = await f.call("tasks/history", {
+      taskId: f.task.task.taskId,
+    });
+    assert.equal(history.status, 200, JSON.stringify(history.body));
+
+    const retried = await f.call("tasks/submit", {
+      idempotencyKey: "submit-b",
+      summary: "done, rescope accounted for",
+      taskId: f.task.task.taskId,
+    });
+    assert.notEqual(
+      (retried.body as { state?: string }).state,
+      "held",
+      "reading the amendment must let the retry through",
+    );
+    assert.equal(
+      f.database
+        .prepare("SELECT state FROM tasks WHERE task_id=?")
+        .get(f.task.task.taskId)!.state,
+      "submitted",
+    );
+  } finally {
+    await f.close();
+  }
+});

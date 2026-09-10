@@ -3,26 +3,34 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 /**
- * Upstream's hold set is exhaustive, not a sample. `isFreshnessHeldResponse`
- * has exactly three call sites in the extracted CLI — task claim, task update
- * and task amend — and only those three response schemas union into
- * `agentApiHeldFreshnessResponseSchema`. Every other task command returns a
- * plain result with no held variant.
+ * Raft holds three commands: task claim, task update, task amend
+ * (`isFreshnessHeldResponse` has exactly three call sites in the extracted CLI,
+ * and only those three response schemas union into
+ * `agentApiHeldFreshnessResponseSchema`).
  *
- * So widening RAH's hold set is not a refinement, it is innovation past the
- * contract. This pins the set; a change to it has to arrive with new evidence
- * and a new statement here.
+ * RAH covers claim (through both selectors), amend, and **part of** update:
+ * `in_review` is reached upstream only by `task update`, and the factory prompt
+ * names that command for it, so `task-submit` holds. Raft's other four
+ * statuses are not covered — RAH has no `task update` and no `--status` — so
+ * this set is deliberately incomplete and the registry keeps that gap open.
  *
- * Deliberately outside the set, each for a stated reason:
+ * This pins the set so it cannot be widened without evidence. It is not a
+ * statement that the set is complete.
+ *
+ * Excluded, each for a stated reason:
  *  - release/assign/unassign/create/convert/delete: their Raft counterparts
- *    (unclaim, assign, create, convert, delete) demonstrably have no hold.
- *  - start, submit, review: shards of Raft's single `task update`, which RAH
- *    does not have as one command. The status mapping is legible but the hold
- *    mapping is not settled by the client bundle.
+ *    (unclaim, assign, create, convert, delete) have no hold branch. Note this
+ *    proves only that upstream's CLI does not render a hold there; it does not
+ *    prove the Raft server applies no concurrency check.
+ *  - start, review: the remaining shards of `task update`. The evidence carries
+ *    counterexamples rather than merely lacking support — `unclaim` reaches
+ *    `todo` without holding and `task create --assignee @yourself` reaches
+ *    `in_progress` without holding — so the target status cannot decide it.
  *  - block, unblock, request-input, progress: RAH-only. `blocked` is not a Raft
- *    task status anywhere in the product, so upstream settles nothing for them.
+ *    task status anywhere in the product, so upstream settles nothing.
+ *  - `done` and `closed` have no Agent-facing RAH operation to map at all.
  */
-test("the Task freshness hold covers exactly the routes whose Raft counterpart holds", () => {
+test("the Task freshness hold covers exactly the routes evidence has settled", () => {
   const source = readFileSync(
     new URL("../src/worker-application-service.ts", import.meta.url),
     "utf8",
@@ -37,5 +45,6 @@ test("the Task freshness hold covers exactly the routes whose Raft counterpart h
     "/v1/worker/tasks/amend",
     "/v1/worker/tasks/claim",
     "/v1/worker/tasks/claim-message",
+    "/v1/worker/tasks/submit",
   ]);
 });

@@ -44,11 +44,11 @@ export function workerTaskHoldWording(
   if (command === "task-claim" || command === "task-claim-message")
     return CLAIM;
   if (command === "task-amend") return AMEND;
+  // RAH's share of Raft's `task update`: `in_review` is reached upstream only
+  // by that command, which holds. The other four statuses stay unmapped.
+  if (command === "task-submit") return STATUS;
   return undefined;
 }
-
-/** Raft's status-update hold wording, kept for the mapping still to be made. */
-export const TASK_STATUS_HOLD_WORDING = STATUS;
 
 function renderNewerMessages(value: Record<string, unknown>): string {
   const events = Array.isArray(value.newerMessages) ? value.newerMessages : [];

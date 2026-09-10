@@ -6,7 +6,7 @@
 ## 起因
 
 `task-claim` / `task-amend` 遇到陈旧上下文会给出可读、可恢复的 hold，而 `task-start` / `task-submit` /
-`task-review` 仍抛光秃秃的 409。这看起来是同一缺陷剩下的另一半，取证后**不是**。
+`task-review` 仍抛光秃秃的 409。这看起来是同一缺陷剩下的另一半。取证的结果是：**其中一条确实是**（`task-submit`），其余不是。
 
 ## 上游的 hold 集合是穷尽的，不是样本
 
@@ -23,39 +23,56 @@
 `task` 子树共 12 个命令，其余九个（list / create / unclaim / assign / unassign / receipt / delete /
 convert / history）**没有 held 变体**。
 
-## 结论：RAH 现有集合已经正确且完整
+## 更正：RAH 覆盖的是两类半，不是三类
 
-RAH 的 `TASK_FRESHNESS_HOLD_ROUTES` = {claim, claim-message, amend}。
-`claim-message` 是 Raft `task claim --message-id` 的同一命令另一种选择器，因此归入 claim。**无需扩大。**
+`claim` 与 `claim-message` 都对应上游**同一条** `task claim`（后者是 `--message-id` 选择器）。
+所以 RAH 原先覆盖的是 **claim / amend 两类**，**`update` 整类缺失**。此前"已经正确且完整"的说法是错的。
 
-**明确不该 hold（现在有证据，不再只是"未决"）**：`task-release`（对应 `unclaim`）、`task-assign`、
-`task-assign --unassign`、`task-create`、`task-convert`、`task-delete` 及全部读命令——它们的 Raft
-对应命令存在且确实没有 hold 分支。给它们加 hold 是越过合同自创。
+## Raft `task update` 五个目标状态的映射表
 
-## 三类无法据此裁决的命令
+| Raft `--status` | RAH 的 Agent 面操作                                                           | 落账结果                                                     | 前置条件           | 陈旧上下文                  | 读后重试               |
+| --------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------ | ------------------ | --------------------------- | ---------------------- |
+| `in_review`     | **`task-submit`**                                                             | `state = submitted` + 提交摘要                               | 需为受让人且已开始 | **已改为 hold**             | 读到阻塞事实后重试成功 |
+| `in_progress`   | `task-claim`（→`claimed`）、`task-start`（`claimed`→`in_progress`）           | 认领/开始                                                    | 未被他人占有       | claim 已 hold；start 仍 409 | —                      |
+| `todo`          | `task-release`、`task-unblock`、`task-review --disposition changes_requested` | 清空认领 / 解除阻塞 / 打回                                   | 各自不同           | 均仍 409                    | —                      |
+| `done`          | **无 Agent 面操作**                                                           | `completeTask` 仅经 Human 的 `updateTaskWorkflowStatus` 到达 | —                  | —                           | —                      |
+| `closed`        | **无 Agent 面操作**                                                           | `cancelTask`                                                 | —                  | —                           | —                      |
 
-**一、Raft 单一设置器的碎片**：RAH **没有 `task update`，也没有 `--status`**。Raft 一条命令的五个状态
-（todo / in_progress / in_review / done / closed）在 RAH 是一族命令。`task-submit`（→ in_review）、
-`task-start`（→ in_progress）、`task-review --disposition changes_requested`（→ todo）在**状态**上可对应，
-但**是否该 hold** 客户端产物判不了。而且 RAH 的 submit 还携带 Raft 设置器根本没有的提交证据负载。
+`updateTaskWorkflowStatus` 在内核里存在，但只接受 Human actor，**worker CLI 完全够不到**。
 
-**二、RAH 独有、上游完全没有的状态**：`blocked` 与 `blockedReason`、`waiting_input` 与整个 input request
-面、`task-progress` 叙述、提交/验证/产物证据记录、reviewer 处置记录，以及 `claimed` 作为区别于
-`in_progress` 的独立状态。**`blocked` 在整个产品里都不是 Task 状态**，`agentApiContract.ts` 里一次都没有。
-上游对它们不授权任何做法——这也是上一轮我在 `blocked` 上过度推论后的更正。
+## 唯一可确定的一行：`in_review`
 
-**三、需要服务端才能回答**：Raft 服务端是否对 `unclaim`/`assign`/`convert`/`create` 也施加新鲜度围栏、
-只是不渲染 hold；以及 `task assign --expected-revision`（"Only apply if the task is still at this revision"）
-是不是 Raft 为 assign 准备的替代方案。客户端只能证明**渲染**不存在，不能证明**围栏**不存在。
+出厂 prompt 原文（`chunk-ZHWD6VKE.js@117742`）：
+
+> 4. When done, set status to \`in_review\` so a human can validate via \`raft task update\`
+
+`in_review` 在上游**只有 `task update` 一条路径**，而 `task update` 会 hold；RAH 到达该状态的
+Agent 面操作**唯一**就是 `task-submit`。因此这条按合同补齐，已接入并有行为回归。
+
+## 其余四个状态：证据里有反例，不是"缺支持"
+
+不能用"到达同一状态"来推 hold，因为上游自己就有反例：
+
+- `task unclaim` 到达 `todo`，**不 hold**；
+- `task create --assignee @yourself`"atomically creates it \`in_progress\`"，而 `create` **不 hold**。
+
+所以 `task-start`、`task-review`、`task-release`、`task-unblock` 不能由目标状态推出结论。
+
+## 九个命令没有 held 分支：只证明客户端不这样输出
+
+**这只证明上游 CLI 不渲染 hold，不能证明 Raft 服务端没有并发检查。** 前面关于"明确不该 hold"的表述
+按此限定收窄：给它们加 hold 会越过客户端合同，但服务端是否设有围栏仍属未知。
 
 ## 本轮产出
 
-不改行为。新增护栏 `task-hold-route-set.test.ts`，把 hold 路由集钉在这三条，并在测试里写明每一类被排除的理由——
-以后要扩大必须带着新证据来改这个断言。登记表 `output.task.update-amend-freshness-hold` 的备注改为记录上述穷尽事实，
-仍记为 `missing`：RAH 确实没有 `task update`，这是真实缺口，不用重新归类去降数字。
+`task-submit` 接入 hold，并有行为回归证明"hold 时未应用（状态非 submitted、无提交摘要）"与
+"读到相关新事实后重试成功"，移除该路由后测试即失败。护栏 `task-hold-route-set.test.ts` 钉住路由集并
+**明说这个集合是有意不完整的**——它约束的是"不得无证据扩张"，不是"已经完整"。
+登记表 `output.task.update-amend-freshness-hold` 仍记为 `missing`：RAH 没有 `task update`，
+`update` 的另外四个状态仍未覆盖，这是真实缺口。
 
-## 待裁决（不由取证决定）
+## 仍未收口
 
-RAH 的 `task-start` / `task-submit` / `task-review` 要不要 hold，是本地并发语义决定，不是复刻决定。
-hold 比 409 更有信息（会展示新上下文并给出恢复路径，两者都不会应用变更），但会把退出码从 1 变成 0。
-需要实际使用数据或官网实测才能定。
+`update` 的另外四个状态（todo / in_progress / done / closed）未对齐：前两个在上游有反例挡住推断，
+后两个在 RAH 根本没有 Agent 面操作。`task-block` / `task-unblock` / `task-request-input` / `task-progress`
+是 RAH 独有、上游无对应物，保留现有权限与执行围栏不变。

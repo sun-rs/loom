@@ -2,7 +2,7 @@
 
 # RAH OS 文档
 
-Task 状态设置器映射：[上游 hold 集合是穷尽的三条；RAH 现有集合已正确，三类命令无法据此裁决](./audits/2026-09-10-task-status-setter-mapping.zh-CN.md)。
+Task 状态设置器映射：[五个状态逐条对照；`in_review` 唯一可确定并已补齐，其余有反例挡住推断](./audits/2026-09-10-task-status-setter-mapping.zh-CN.md)。
 
 频道能力范围裁决：[上游支持什么、RAH 已有什么、当前范围要什么；并记下本轮被推翻的推论](./audits/2026-09-10-channel-capability-scope-adjudication.zh-CN.md)。
 

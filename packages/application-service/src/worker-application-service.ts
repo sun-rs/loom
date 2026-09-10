@@ -287,11 +287,29 @@ const WORKER_ROUTES = new Set<string>(WORKER_HTTP_ROUTE_PATHS);
  * refuse the pair. `tasks/convert` and `tasks/claim-message` address a message
  * and `tasks/create` addresses nothing yet, exactly as upstream.
  */
-/** The Task routes whose upstream counterpart renders a freshness hold. */
+/**
+ * The Task routes whose upstream counterpart renders a freshness hold. Raft
+ * holds three commands — claim, update, amend — and RAH's `claim-message` is
+ * the message-id selector of the same claim.
+ *
+ * `submit` is RAH's share of Raft's `update`: `in_review` is reached upstream
+ * only by `raft task update`, which holds, and the factory prompt says so
+ * outright — "When done, set status to `in_review` so a human can validate via
+ * `raft task update`". `task-submit` is the one Agent-facing RAH operation that
+ * reaches that status.
+ *
+ * The rest of `update`'s statuses are not settled, and the evidence contains
+ * the counterexamples that block the inference rather than merely lacking
+ * support: `unclaim` reaches `todo` without holding, and
+ * `task create --assignee @yourself` reaches `in_progress` without holding, so
+ * "this transition holds upstream" cannot be argued from the target status.
+ * `done` and `closed` have no Agent-facing RAH operation at all.
+ */
 const TASK_FRESHNESS_HOLD_ROUTES = new Set<string>([
   "/v1/worker/tasks/claim",
   "/v1/worker/tasks/claim-message",
   "/v1/worker/tasks/amend",
+  "/v1/worker/tasks/submit",
 ]);
 
 const TASK_ROUTES_WITHOUT_A_TASK = new Set<string>([
