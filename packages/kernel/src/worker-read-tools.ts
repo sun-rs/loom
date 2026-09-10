@@ -1,3 +1,4 @@
+import { freshnessHoldContext } from "./freshness-hold-context.ts";
 import type { WorkerProfileMetadataPort } from "./worker-profile-metadata-port.ts";
 import { visibleWorkerProfile } from "./worker-visible-profile.ts";
 import {
@@ -35,6 +36,8 @@ import {
 type ReadContext = {
   now?: () => Date;
   database: DatabaseSync;
+  /** Present where a held action must render the newer context it withheld. */
+  eventFromRow?: (row: Record<string, unknown>) => P.RoomEvent;
   /** Present only where Raft's `resolveChannel` may open a writable DM target. */
   openDirect?: WorkerDirectRoomOpener;
   requireWorker: (
@@ -60,6 +63,40 @@ export class WorkerReadService {
   constructor(context: ReadContext) {
     this.#context = context;
     this.#db = context.database;
+  }
+
+  /**
+   * The bounded newer-message context Raft renders when it holds an action.
+   * Raft's Task claim, status update and amendment all hold this way and exit 0
+   * (`dist-UT7IQEHX.js@2818799`, `@2828615`, `@2840513`): the mutation is not
+   * applied and, unlike a send, no draft is saved. This deliberately does not
+   * advance `worker_target_read_positions` — the send hold's advance cites a
+   * specific upstream site in `handleMessageSend`, and whether Raft's server
+   * advances a read position on a Task hold is not observable in the extracted
+   * client, so it is left undecided rather than assumed symmetric.
+   */
+  freshnessHold(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: { basedOnRoomSeq: number; seenUpToSeq: number },
+  ): P.WorkerTaskHeldResponse {
+    return this.#read(execution, (scope) => {
+      const eventFromRow = this.#context.eventFromRow;
+      if (eventFromRow === undefined)
+        throw new Error("freshness hold rendering requires an event mapper");
+      const context = freshnessHoldContext(this.#db, {
+        basedOnRoomSeq: input.basedOnRoomSeq,
+        eventFromRow,
+        roomId: scope.roomId,
+        seenUpToSeq: input.seenUpToSeq,
+      });
+      return {
+        basedOnRoomSeq: input.basedOnRoomSeq,
+        ...context,
+        reason: "newer_messages_available" as const,
+        seenUpToSeq: input.seenUpToSeq,
+        state: "held" as const,
+      };
+    });
   }
 
   search(

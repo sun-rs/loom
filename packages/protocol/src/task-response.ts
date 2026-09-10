@@ -100,3 +100,26 @@ export const WorkerTaskInputStatusResponseSchema = z
 export type WorkerTaskInputStatusResponse = z.infer<
   typeof WorkerTaskInputStatusResponseSchema
 >;
+
+/**
+ * Raft holds a Task claim, status update or amendment on stale context the same
+ * way it holds a send: `formatFreshnessHoldOutput` is written to stdout and the
+ * command returns 0 (`dist-UT7IQEHX.js@2818799`, `@2828615`, `@2840513`). The
+ * mutation is simply not applied — unlike a send, no draft is saved, so this
+ * carries no draft id, rehold count or continue-anyway suggestion.
+ */
+export const WorkerTaskHeldResponseSchema = z
+  .object({
+    basedOnRoomSeq: z.number().int().nonnegative(),
+    newMessageCount: z.number().int().nonnegative(),
+    newerMessages: z.array(RoomEventSchema),
+    omittedMessageCount: z.number().int().nonnegative(),
+    reason: z.literal("newer_messages_available"),
+    seenUpToSeq: z.number().int().nonnegative(),
+    shownMessageCount: z.number().int().nonnegative(),
+    state: z.literal("held"),
+  })
+  .strict();
+export type WorkerTaskHeldResponse = z.infer<
+  typeof WorkerTaskHeldResponseSchema
+>;

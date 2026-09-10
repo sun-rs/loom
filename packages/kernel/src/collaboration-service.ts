@@ -54,6 +54,7 @@ import {
   resolveHeldMessageDrafts,
   resolveOneHeldMessageDraft,
 } from "./held-message-drafts.ts";
+import { freshnessHoldContext } from "./freshness-hold-context.ts";
 import { integer, nullableText, text, type Row } from "./sqlite-row.ts";
 import { assertNoActiveRoomWork } from "./room-lifecycle-policy.ts";
 import { workspaceRoomSlugIsAvailable } from "./message-reference-identity.ts";
@@ -1997,39 +1998,13 @@ export class CollaborationService {
     const threadId = nullableText(row, "thread_id") ?? undefined;
     const basedOnRoomSeq = integer(row, "based_on_room_seq");
     const seenUpToSeq = integer(row, "seen_up_to_seq");
-    const parameters: string[] = [roomId];
-    const targetClause =
-      threadId === undefined
-        ? "messages.thread_id IS NULL"
-        : "messages.thread_id = ?";
-    if (threadId !== undefined) parameters.push(threadId);
-    const newerRows = this.#database
-      .prepare(
-        `SELECT room_events.*
-         FROM messages
-         JOIN room_events
-           ON room_events.room_id = messages.room_id
-          AND room_events.aggregate_id = messages.message_id
-          AND room_events.type = 'message.posted'
-         WHERE messages.room_id = ? AND ${targetClause}
-           AND room_events.room_seq > ? AND room_events.room_seq <= ?
-         ORDER BY room_events.room_seq
-         LIMIT 20`,
-      )
-      .all(...parameters, basedOnRoomSeq, seenUpToSeq);
-    const countRow = this.#database
-      .prepare(
-        `SELECT COUNT(*) AS count
-         FROM messages
-         JOIN room_events
-           ON room_events.room_id = messages.room_id
-          AND room_events.aggregate_id = messages.message_id
-          AND room_events.type = 'message.posted'
-         WHERE messages.room_id = ? AND ${targetClause}
-           AND room_events.room_seq > ? AND room_events.room_seq <= ?`,
-      )
-      .get(...parameters, basedOnRoomSeq, seenUpToSeq)!;
-    const newMessageCount = integer(countRow, "count");
+    const holdContext = freshnessHoldContext(this.#database, {
+      basedOnRoomSeq,
+      eventFromRow: (row) => this.#events.eventFromRow(row as Row),
+      roomId,
+      seenUpToSeq,
+      ...(threadId === undefined ? {} : { threadId }),
+    });
     // Raft records the consumed sequence on a hold as well as on a read
     // (`handleMessageSend`, held branch): the hold showed this participant the
     // messages it had not seen, so the target's read position advances here —
@@ -2047,14 +2022,12 @@ export class CollaborationService {
       basedOnRoomSeq,
       heldDraftId: text(row, "held_draft_id"),
       ...(recoveryTarget === undefined ? {} : { recoveryTarget }),
-      newMessageCount,
-      newerMessages: newerRows.map((eventRow) =>
-        this.#events.eventFromRow(eventRow),
-      ),
-      omittedMessageCount: Math.max(0, newMessageCount - newerRows.length),
+      newMessageCount: holdContext.newMessageCount,
+      newerMessages: holdContext.newerMessages,
+      omittedMessageCount: holdContext.omittedMessageCount,
       reason: "newer_messages_available",
       reholdCount: integer(row, "rehold_count"),
-      shownMessageCount: newerRows.length,
+      shownMessageCount: holdContext.shownMessageCount,
       continueAnywaySuggested:
         integer(row, "rehold_count") >= CONTINUE_ANYWAY_REHOLD_THRESHOLD,
       seenUpToSeq,

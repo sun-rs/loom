@@ -16,6 +16,7 @@ import {
   workerTargetConfirmationBody,
   workerTargetConfirmationNextAction,
 } from "./worker-held-send.ts";
+import { workerTaskHoldOutput } from "./worker-task-hold.ts";
 import {
   WorkerCliError,
   cliError,
@@ -336,7 +337,16 @@ export async function runWorkerCliCommand(
       const claimed: unknown[] = [];
       for (const body of fanOut)
         claimed.push(await send({ body, path: request.path }));
-      runtime.stdout.write(`${renderWorkerTaskClaimResults(claimed)}\n`);
+      // A hold applies to the whole fan-out: none of the claims were applied,
+      // so the newer context replaces the claim block rather than joining it.
+      const heldClaim = claimed
+        .map((entry) => workerTaskHoldOutput(arguments_[1] ?? "", entry))
+        .find((rendered) => rendered !== undefined);
+      runtime.stdout.write(
+        heldClaim === undefined
+          ? `${renderWorkerTaskClaimResults(claimed)}\n`
+          : `${heldClaim}\n`,
+      );
       return 0;
     }
     const messagePost = request.path === "/v1/worker/messages/post";
@@ -373,6 +383,17 @@ export async function runWorkerCliCommand(
     // text unless it is one of the two that carry the flag and it was passed;
     // a command with no renderer yet keeps its JSON response.
     if (!messagePost) {
+      // Raft's Task hold is a rendered result on stdout with exit 0, not an
+      // error: the claim, status update or amendment was not applied, the
+      // bounded newer context is shown, and the only path forward is to rerun
+      // the command if it is still correct after reading it.
+      const taskHold = workerTaskHoldOutput(arguments_[1] ?? "", result);
+      if (taskHold !== undefined) {
+        runtime.stdout.write(
+          jsonOutput ? `${JSON.stringify(result)}\n` : `${taskHold}\n`,
+        );
+        return 0;
+      }
       const rendered =
         jsonOutput && workerReadCommandOffersJson(request.path)
           ? undefined

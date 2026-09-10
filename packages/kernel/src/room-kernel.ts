@@ -502,6 +502,7 @@ export class RoomKernel {
     });
     this.workerReads = new WorkerReadService({
       database: this.#database,
+      eventFromRow: (row) => this.#eventFromRow(row as Row),
       now: this.#now,
       openDirect,
       requireWorker: (worker) =>

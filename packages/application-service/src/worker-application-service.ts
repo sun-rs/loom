@@ -7,6 +7,8 @@ import {
   WorkerChannelAttentionRequestSchema,
   WorkerChannelAttentionResponseSchema,
 } from "@rah-os/protocol";
+import { StaleContextError } from "@rah-os/kernel";
+import { WorkerTaskHeldResponseSchema } from "@rah-os/protocol";
 import {
   WorkerTaskAmendRequestSchema,
   WorkerTaskDeleteRequestSchema,
@@ -285,6 +287,13 @@ const WORKER_ROUTES = new Set<string>(WORKER_HTTP_ROUTE_PATHS);
  * refuse the pair. `tasks/convert` and `tasks/claim-message` address a message
  * and `tasks/create` addresses nothing yet, exactly as upstream.
  */
+/** The Task routes whose upstream counterpart renders a freshness hold. */
+const TASK_FRESHNESS_HOLD_ROUTES = new Set<string>([
+  "/v1/worker/tasks/claim",
+  "/v1/worker/tasks/claim-message",
+  "/v1/worker/tasks/amend",
+]);
+
 const TASK_ROUTES_WITHOUT_A_TASK = new Set<string>([
   "/v1/worker/tasks/claim-message",
   "/v1/worker/tasks/convert",
@@ -957,9 +966,43 @@ export class WorkerApplicationService {
       return;
     }
     if (route.startsWith("/v1/worker/tasks/")) {
-      const mutation = await this.#handleTaskCommand(route, body, grant, () => {
-        this.#authenticate(request);
-      });
+      // Raft holds a Task claim and amendment on stale context exactly as it
+      // holds a send: the bounded newer context is a rendered result on stdout
+      // and the command exits 0, with the mutation not applied and no draft
+      // saved (`dist-UT7IQEHX.js@2818799`, `@2840513`). RAH raised a bare 409
+      // instead, so an Agent that lost a race got a failure with nothing to
+      // read and no path forward.
+      //
+      // Raft's third hold is its single status setter, whose `--status` takes
+      // one of todo/in_progress/in_review/done/closed. `blocked` is not among
+      // them, so unblock is not that command, and assign/unassign/unclaim are
+      // separate commands with no hold branch at all. RAH split the setter into
+      // a lifecycle family, and which members correspond to those five statuses
+      // is not settled here — so the hold stays on the two routes whose mapping
+      // the evidence fixes, rather than on a mapping invented to cover more.
+      let mutation;
+      try {
+        mutation = await this.#handleTaskCommand(route, body, grant, () => {
+          this.#authenticate(request);
+        });
+      } catch (error) {
+        if (
+          !(error instanceof StaleContextError) ||
+          !TASK_FRESHNESS_HOLD_ROUTES.has(route)
+        )
+          throw error;
+        writeJson(
+          response,
+          200,
+          WorkerTaskHeldResponseSchema.parse(
+            this.#kernel.workerReads.freshnessHold(grant.execution, {
+              basedOnRoomSeq: error.basedOnRoomSeq ?? 0,
+              seenUpToSeq: error.latestRoomSeq,
+            }),
+          ),
+        );
+        return;
+      }
       grant.knownRoomSeqs.add(mutation.event.roomSeq);
       if (route !== "/v1/worker/tasks/amend")
         this.#synchronizeTaskHeartbeat(grant, mutation.task);
