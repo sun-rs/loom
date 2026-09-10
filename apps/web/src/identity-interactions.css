@@ -254,9 +254,13 @@
 .rah-message-avatar-trigger:active {
   transform: translate(1px, 1px);
 }
-.msg > .rah-message-avatar-trigger .rah-agent-avatar {
+.msg
+  > .rah-message-avatar-trigger
+  :is(.rah-agent-avatar, .rah-settings-avatar) {
   width: 36px;
   height: 36px;
+  border-width: 2px;
+  font-size: 16px;
 }
 .rah-agent-activity-list article.is-text > i {
   background: rgb(39 204 243);

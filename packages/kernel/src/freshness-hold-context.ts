@@ -20,7 +20,13 @@ export function freshnessHoldContext(
     basedOnRoomSeq: number;
     roomId: string;
     seenUpToSeq: number;
-    threadId?: string | undefined;
+    /**
+     * The send hold is target-scoped: a send addresses one Thread, or the Room
+     * top level. A Task hold is not — the stale context can come from any
+     * Thread in the Room, so it passes `"room"` and filters nothing, rather
+     * than showing top-level messages and hiding the Thread the work is in.
+     */
+    threadId?: string | "room" | undefined;
     eventFromRow: (row: Record<string, unknown>) => RoomEvent;
   },
 ): {
@@ -31,10 +37,13 @@ export function freshnessHoldContext(
 } {
   const parameters: string[] = [input.roomId];
   const targetClause =
-    input.threadId === undefined
-      ? "messages.thread_id IS NULL"
-      : "messages.thread_id = ?";
-  if (input.threadId !== undefined) parameters.push(input.threadId);
+    input.threadId === "room"
+      ? "1 = 1"
+      : input.threadId === undefined
+        ? "messages.thread_id IS NULL"
+        : "messages.thread_id = ?";
+  if (input.threadId !== undefined && input.threadId !== "room")
+    parameters.push(input.threadId);
   const newerRows = database
     .prepare(
       `SELECT room_events.*
@@ -45,7 +54,7 @@ export function freshnessHoldContext(
           AND room_events.type = 'message.posted'
          WHERE messages.room_id = ? AND ${targetClause}
            AND room_events.room_seq > ? AND room_events.room_seq <= ?
-         ORDER BY room_events.room_seq
+         ORDER BY room_events.room_seq DESC
          LIMIT ${MAX_SHOWN_HELD_MESSAGES}`,
     )
     .all(...parameters, input.basedOnRoomSeq, input.seenUpToSeq);
@@ -64,9 +73,14 @@ export function freshnessHoldContext(
   const newMessageCount = integer(countRow, "count");
   return {
     newMessageCount,
-    newerMessages: newerRows.map((row) =>
-      input.eventFromRow(row as Record<string, unknown>),
-    ),
+    // Selected newest-first so the cap drops the oldest, then reversed for
+    // display. The notice says "showing latest N of M" and calls what it
+    // dropped "earlier": selecting ascending returned the OLDEST N and made
+    // both statements false, hiding exactly the corrections and cancellations
+    // an Agent most needs before it retries.
+    newerMessages: newerRows
+      .map((row) => input.eventFromRow(row as Record<string, unknown>))
+      .reverse(),
     omittedMessageCount: Math.max(0, newMessageCount - newerRows.length),
     shownMessageCount: newerRows.length,
   };

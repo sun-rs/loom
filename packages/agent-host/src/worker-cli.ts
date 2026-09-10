@@ -334,18 +334,34 @@ export async function runWorkerCliCommand(
       // Raft's `task claim` takes every `--number` in one request and writes
       // one `formatClaimResults` block. RAH sends one request per Task, so the
       // rows are gathered and rendered as the single block upstream writes.
+      // RAH sends one request per Task and each commits on its own, so a hold
+      // on a later Task says nothing about the earlier ones. Claims that were
+      // applied are reported first and the hold is appended: replacing the
+      // block with the hold would tell the Agent nothing was applied while the
+      // ledger already holds a claim it made.
       const claimed: unknown[] = [];
-      for (const body of fanOut)
-        claimed.push(await send({ body, path: request.path }));
-      // A hold applies to the whole fan-out: none of the claims were applied,
-      // so the newer context replaces the claim block rather than joining it.
-      const heldClaim = claimed
-        .map((entry) => workerTaskHoldOutput(arguments_[1] ?? "", entry))
-        .find((rendered) => rendered !== undefined);
+      let heldClaim: string | undefined;
+      for (const body of fanOut) {
+        const entry = await send({ body, path: request.path });
+        const hold = workerTaskHoldOutput(arguments_[1] ?? "", entry);
+        if (hold === undefined) {
+          claimed.push(entry);
+          continue;
+        }
+        // The remaining Tasks are not attempted: the same stale position would
+        // hold them too, and attempting them would widen what this notice has
+        // to explain.
+        heldClaim = hold;
+        break;
+      }
+      const appliedBlock =
+        claimed.length === 0
+          ? ""
+          : `${renderWorkerTaskClaimResults(claimed)}\n`;
       runtime.stdout.write(
         heldClaim === undefined
-          ? `${renderWorkerTaskClaimResults(claimed)}\n`
-          : `${heldClaim}\n`,
+          ? appliedBlock
+          : `${appliedBlock}${heldClaim}\n`,
       );
       return 0;
     }

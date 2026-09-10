@@ -30,12 +30,13 @@ const AMEND: TaskHoldWording = {
 
 /**
  * Raft's third hold belongs to its single status setter, whose `--status` takes
- * one of todo/in_progress/in_review/done/closed. `blocked` is not among them,
- * so unblock is a different command, and assign/unassign/unclaim have no hold
- * branch upstream at all. RAH split that setter into a lifecycle family, and
- * which members correspond to those five statuses is not settled by the
- * evidence gathered here — so STATUS is defined and left unmapped rather than
- * applied through a mapping invented to cover more commands.
+ * one of todo/in_progress/in_review/done/closed. `blocked` has no same-name
+ * value there, and assign/unassign/unclaim have no hold branch upstream at all.
+ * That establishes only the absence of a direct mapping — it does not settle
+ * RAH's local concurrency semantics for those commands. RAH split that setter
+ * into a lifecycle family, so STATUS is defined and left unmapped until the
+ * per-command correspondence is established, rather than applied through a
+ * mapping invented to cover more commands.
  */
 export function workerTaskHoldWording(
   command: string,
@@ -100,9 +101,26 @@ export function workerTaskHoldOutput(
           omittedMessageCount === 1 ? "" : "s"
         } omitted from this notice and no longer block this action; use rah worker message-read explicitly if you need earlier context.`
       : "";
-  return `Freshness hold: showing latest ${String(shownMessageCount)} of ${String(
-    newMessageCount,
-  )} newer message${newMessageCount === 1 ? "" : "s"}.${omittedNote}
+  const taskEventCount =
+    typeof value.newerTaskEventCount === "number"
+      ? value.newerTaskEventCount
+      : 0;
+  // The Task fence blocks on newer Task activity as well as on messages, so a
+  // hold can have no messages to show. Saying "showing latest 0 of 0" while
+  // asking the Agent to review context would be a notice with nothing in it.
+  const taskEventNote =
+    taskEventCount > 0
+      ? ` ${String(taskEventCount)} newer Task event${
+          taskEventCount === 1 ? "" : "s"
+        } in this Room also moved the position; use rah worker task-history for them.`
+      : "";
+  const opening =
+    newMessageCount === 0
+      ? `Freshness hold: no newer messages on this target.${taskEventNote}`
+      : `Freshness hold: showing latest ${String(shownMessageCount)} of ${String(
+          newMessageCount,
+        )} newer message${newMessageCount === 1 ? "" : "s"}.${omittedNote}${taskEventNote}`;
+  return `${opening}
 ${wording.action} Review the bounded context shown here, then choose one path.
 ${renderNewerMessages(value)}
 ${wording.rerun}

@@ -1,3 +1,5 @@
+[Human 消息头像尺寸修复](./audits/2026-09-10-human-message-avatar-size.zh-CN.md)：修复字母头像误用侧栏尺寸，消息 Human／Agent 共用 36px；含浏览器回归。
+
 # RAH OS 文档
 
 频道能力范围裁决：[上游支持什么、RAH 已有什么、当前范围要什么；并记下本轮被推翻的推论](./audits/2026-09-10-channel-capability-scope-adjudication.zh-CN.md)。

@@ -112,6 +112,13 @@ export const WorkerTaskHeldResponseSchema = z
   .object({
     basedOnRoomSeq: z.number().int().nonnegative(),
     newMessageCount: z.number().int().nonnegative(),
+    /**
+     * Task events newer than the position the command carried. The Task fence
+     * blocks on these as well as on messages, so a hold can legitimately show
+     * no messages at all; without this the notice would claim newer context and
+     * then display none.
+     */
+    newerTaskEventCount: z.number().int().nonnegative(),
     newerMessages: z.array(RoomEventSchema),
     omittedMessageCount: z.number().int().nonnegative(),
     reason: z.literal("newer_messages_available"),

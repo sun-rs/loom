@@ -4,6 +4,7 @@ import type * as P from "@rah-os/protocol";
 import { ForbiddenError } from "./errors.ts";
 import { deriveWorkerTaskIdempotencyKey } from "./worker-message-identity.ts";
 import { jsonObject, nullableInteger } from "./sqlite-row.ts";
+import { highestWorkerRoomReadPosition } from "./worker-target-read-position.ts";
 
 export type WorkerTaskCommandIdentity = {
   operation: string;
@@ -24,11 +25,17 @@ export type ResolvedWorkerTaskCausality = {
  * the ledger itself: the Activation head this credential was issued for, moved
  * forward by this Run's own committed Task events.
  *
- * `assertWorkerTaskCursorAnchor` accepts exactly those two anchors — the
- * Activation head, or a Task event this participant appended in this RunAttempt
- * — so this resolution never widens the freshness fence. It is the same number
- * the standing prompt used to make the Agent carry and re-derive after every
- * non-deduplicated response.
+ * `assertWorkerTaskCursorAnchor` accepts exactly those anchors — the Activation
+ * head, a Task event this participant appended in this RunAttempt, or the
+ * furthest position the Kernel has demonstrably shown this participant in this
+ * Room. It is the same number the standing prompt used to make the Agent carry
+ * and re-derive after every non-deduplicated response.
+ *
+ * The read position is part of it because a freshness hold tells the Agent to
+ * read the newer context and rerun the command if it is still correct. Without
+ * it that instruction is false: the retry would carry the same frozen head and
+ * be held again, with no path out inside the Run. The fence widens only to what
+ * this participant has actually been shown, which is the fence's own criterion.
  */
 export function workerTaskCommandReadPosition(
   database: DatabaseSync,
@@ -46,6 +53,10 @@ export function workerTaskCommandReadPosition(
   return Math.max(
     scope.toSeq,
     own === undefined ? 0 : (nullableInteger(own, "seq") ?? 0),
+    highestWorkerRoomReadPosition(database, {
+      participantId: scope.participantId,
+      roomId: scope.roomId,
+    }),
   );
 }
 

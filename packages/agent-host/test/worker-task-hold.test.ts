@@ -129,3 +129,31 @@ test("an amendment carries its own wording", async () => {
     rmSync(state.directory, { force: true, recursive: true });
   }
 });
+
+test("a hold caused by Task activity says so instead of showing an empty window", async () => {
+  const state = fixture({
+    ...held,
+    newMessageCount: 0,
+    newerMessages: [],
+    newerTaskEventCount: 2,
+    omittedMessageCount: 0,
+    shownMessageCount: 0,
+  });
+  try {
+    const code = await runWorkerCliCommand(
+      ["worker", "task-claim", "--target", "#room", "--number", "3"],
+      state.runtime,
+    );
+    assert.equal(code, 0);
+    const stdout = state.stdout();
+    assert.match(stdout, /Freshness hold: no newer messages on this target\./);
+    assert.match(stdout, /2 newer Task events in this Room also moved/);
+    assert.doesNotMatch(
+      stdout,
+      /showing latest 0 of 0/,
+      "an empty window must never be dressed up as shown context",
+    );
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});

@@ -88,10 +88,26 @@ export class WorkerReadService {
         eventFromRow,
         roomId: scope.roomId,
         seenUpToSeq: input.seenUpToSeq,
+        threadId: "room",
       });
+      // The Task fence blocks on a newer event about the Task as well as on a
+      // newer message, so a hold can have nothing to show in the message
+      // window. Count those events rather than rendering an empty notice that
+      // says newer context exists and then shows none of it.
+      const newerTaskEvents = integer(
+        this.#db
+          .prepare(
+            `SELECT COUNT(*) AS count FROM room_events
+             WHERE room_id = ? AND room_seq > ? AND room_seq <= ?
+               AND aggregate_type = 'task'`,
+          )
+          .get(scope.roomId, input.basedOnRoomSeq, input.seenUpToSeq)!,
+        "count",
+      );
       return {
         basedOnRoomSeq: input.basedOnRoomSeq,
         ...context,
+        newerTaskEventCount: newerTaskEvents,
         reason: "newer_messages_available" as const,
         seenUpToSeq: input.seenUpToSeq,
         state: "held" as const,

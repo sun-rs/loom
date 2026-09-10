@@ -244,3 +244,28 @@ export function readWorkerTargetReadPosition(
     .get(target.participantId, target.roomId, threadKey(target.threadId));
   return row === undefined ? undefined : integer(row, "through_room_seq");
 }
+
+/**
+ * The furthest sequence this participant has demonstrably been shown in this
+ * Room, across every target. A Task command's read position uses it so that
+ * reading the newer context actually clears a freshness hold: a hold that says
+ * "read this, then rerun if it is still correct" is a false instruction if the
+ * position the retry carries cannot move.
+ *
+ * This widens the Task fence only to what the participant has actually read —
+ * the fence's own criterion — and never past it.
+ */
+export function highestWorkerRoomReadPosition(
+  database: DatabaseSync,
+  target: { participantId: string; roomId: string },
+): number {
+  const row = database
+    .prepare(
+      `SELECT MAX(through_room_seq) AS seq FROM worker_target_read_positions
+       WHERE participant_id = ? AND room_id = ?`,
+    )
+    .get(target.participantId, target.roomId);
+  if (row === undefined) return 0;
+  const seq = row.seq;
+  return typeof seq === "number" || typeof seq === "bigint" ? Number(seq) : 0;
+}

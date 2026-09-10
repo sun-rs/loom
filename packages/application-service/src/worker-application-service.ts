@@ -974,12 +974,11 @@ export class WorkerApplicationService {
       // read and no path forward.
       //
       // Raft's third hold is its single status setter, whose `--status` takes
-      // one of todo/in_progress/in_review/done/closed. `blocked` is not among
-      // them, so unblock is not that command, and assign/unassign/unclaim are
-      // separate commands with no hold branch at all. RAH split the setter into
-      // a lifecycle family, and which members correspond to those five statuses
-      // is not settled here — so the hold stays on the two routes whose mapping
-      // the evidence fixes, rather than on a mapping invented to cover more.
+      // one of todo/in_progress/in_review/done/closed. `blocked` has no
+      // same-name value there and assign/unassign/unclaim have no hold branch
+      // upstream, which establishes the absence of a direct mapping and not
+      // RAH's local concurrency semantics for them. The hold therefore stays on
+      // the routes whose mapping the evidence fixes.
       let mutation;
       try {
         mutation = await this.#handleTaskCommand(route, body, grant, () => {

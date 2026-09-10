@@ -26,6 +26,7 @@ import {
   type TaskCreateCommand,
 } from "./task-anchor.ts";
 import { taskProjectionFromRow } from "./task-projection.ts";
+import { highestWorkerRoomReadPosition } from "./worker-target-read-position.ts";
 import {
   assertTaskEventReplay,
   findRoomEventByIdempotencyKey,
@@ -578,6 +579,18 @@ function assertWorkerTaskCursorAnchor(
     throw new Error("basedOnRoomSeq must be a non-negative integer");
   }
   if (basedOnRoomSeq === scope.toSeq) return;
+  // A position the Kernel has demonstrably shown this participant in this Room
+  // is an anchor too. Without it a freshness hold's own instruction — read the
+  // newer context, then rerun if it is still correct — cannot be carried out:
+  // the retry would present a position the fence refuses.
+  if (
+    basedOnRoomSeq <=
+    highestWorkerRoomReadPosition(database, {
+      participantId: scope.participantId,
+      roomId: scope.roomId,
+    })
+  )
+    return;
   const causalEvent = database
     .prepare("SELECT * FROM room_events WHERE room_id = ? AND room_seq = ?")
     .get(scope.roomId, basedOnRoomSeq);
