@@ -2553,8 +2553,46 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   padding: 9px 10px;
 }
 
+/* Raft index-BVfbaScj.js Aet -> Si: max-w-md card-brutal p-6. */
+.rah-agent-reset-dialog {
+  box-shadow: var(--shadow-m);
+  max-width: 448px;
+  min-width: 0;
+  padding: 24px;
+  overflow-y: auto;
+}
+.rah-agent-reset-dialog > header {
+  border-bottom: 0;
+  padding: 0;
+  margin-bottom: 16px;
+}
+.rah-agent-reset-dialog > header h2 {
+  font: 700 18px/28px var(--sans);
+}
 .rah-agent-reset-dialog form {
-  gap: 14px;
+  gap: 20px;
+  padding: 0;
+}
+.rah-agent-reset-dialog form footer {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+/* Raft Si close: p-1 + size20; dn/vqe sm: h-7 px-2.5 text-xs. */
+.rah-agent-reset-dialog > header .sq-btn {
+  width: 32px;
+  height: 32px;
+  padding: 4px;
+}
+.rah-agent-reset-dialog > header .sq-btn svg {
+  width: 20px;
+  height: 20px;
+}
+.rah-agent-reset-dialog form footer .btn {
+  height: 28px;
+  min-height: 0;
+  padding: 0 10px;
+  gap: 6px;
+  font: 700 12px/1 var(--sans);
 }
 
 .rah-agent-reset-dialog fieldset {
@@ -2571,7 +2609,8 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   cursor: pointer;
   display: flex !important;
   gap: 10px !important;
-  padding: 14px;
+  padding: 16px;
+  position: relative;
 }
 
 .rah-agent-reset-option:hover,
@@ -2601,8 +2640,16 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   opacity: 0.55;
 }
 
+/* Preserve native radio keyboard semantics without a second visible control. */
 .rah-agent-reset-option input {
-  margin-top: 2px;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0 !important;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  border: 0 !important;
 }
 
 .rah-agent-reset-option > span {
@@ -2611,14 +2658,14 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 
 .rah-agent-reset-option b {
-  font-size: 13px;
+  font-size: 14px;
   text-transform: uppercase;
 }
 
 .rah-agent-reset-option small,
 .rah-agent-reset-option em {
-  color: var(--muted);
-  font: 11px/1.45 var(--mono);
+  color: var(--ink-60);
+  font: 400 12px/16px var(--sans);
 }
 
 .rah-agent-reset-option em {
@@ -4184,4 +4231,11 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   .rah-thread-resizer {
     display: none;
   }
+}
+
+/* Raft create-agent-name Sl/nOe and dOe/lOe; brutal field tokens. */
+.rah-agent-create-dialog:not(.rah-agent-manage-dialog) form input,
+.rah-agent-create-dialog:not(.rah-agent-manage-dialog) form textarea {
+  font: 400 16px/24px var(--sans);
+  padding: 8px 12px;
 }

@@ -262,7 +262,7 @@ export function AppearanceSettingsContent() {
           </p>
         </div>
         <div
-          className="rah-settings-choice-row"
+          className="rah-settings-choice-row rah-settings-font-size"
           role="group"
           aria-label="消息字号"
         >
@@ -300,10 +300,16 @@ export function AppearanceSettingsContent() {
               agent={{
                 avatarKey: "avatar-03",
                 displayName: "Cindy",
+                // Static appearance sample, never an actual Agent observation.
+                presence: {
+                  agentDefinitionId: "appearance-preview",
+                  activity: "online",
+                  reason: "online",
+                },
                 runtimeAvailable: true,
                 state: "enabled",
               }}
-              showStatus={false}
+              showStatus
               size="header"
             />
             <div>
@@ -561,12 +567,12 @@ export function AboutSettingsContent({
   return (
     <SettingsPage icon="info" title="关于">
       <SettingsSectionLabel>版本</SettingsSectionLabel>
-      <article className="rah-settings-card rah-settings-copy-card">
+      <article className="rah-settings-card rah-settings-copy-card rah-settings-readonly-card">
         <strong>RAH OS 0.0.0</strong>
         <p>local-first 多 Agent 聊天室与任务工作台</p>
       </article>
       <SettingsSectionLabel>移动端</SettingsSectionLabel>
-      <article className="rah-settings-card rah-settings-copy-card">
+      <article className="rah-settings-card rah-settings-copy-card rah-settings-readonly-card">
         <strong>PWA</strong>
         <p>
           通过受信任 HTTPS 局域网地址打开后，可添加到 iPhone/iPad
@@ -574,7 +580,7 @@ export function AboutSettingsContent({
         </p>
       </article>
       <SettingsSectionLabel>工作空间</SettingsSectionLabel>
-      <article className="rah-settings-card rah-settings-copy-card">
+      <article className="rah-settings-card rah-settings-copy-card rah-settings-readonly-card">
         <strong>{workspace?.name ?? "正在读取"}</strong>
         <p>{workspace?.slug ? `/${workspace.slug}` : "本地工作空间"}</p>
       </article>

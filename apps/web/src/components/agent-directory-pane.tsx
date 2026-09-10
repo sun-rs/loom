@@ -2043,7 +2043,7 @@ function AgentTrajectoryRow({
   );
 }
 
-function AgentRemindersPane({
+export function AgentRemindersPane({
   error,
   loading,
   onOpenMessage,

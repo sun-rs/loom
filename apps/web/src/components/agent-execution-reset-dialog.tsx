@@ -95,9 +95,7 @@ export function AgentExecutionResetDialog({
             onClick={onClose}
             type="button"
           >
-            <span aria-hidden="true" className="rah-close-glyph">
-              ×
-            </span>
+            <Icon name="x" />
           </button>
         </header>
         <form

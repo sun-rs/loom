@@ -213,7 +213,6 @@ export function RoomSidebar({
   notificationCount = 0,
   onActivity,
   onCreate,
-  onEditRoom,
   onNotifications,
   onOpenDirectRoom,
   onSearch,
@@ -235,7 +234,6 @@ export function RoomSidebar({
   notificationCount?: number;
   onActivity: () => void;
   onCreate: () => void;
-  onEditRoom?: (roomId: string) => void;
   onNotifications?: () => void;
   onOpenDirectRoom: (peerPrincipalId: string) => Promise<void>;
   onSearch: () => void;
@@ -367,17 +365,6 @@ export function RoomSidebar({
                 value={unread(room.roomId)}
               />
             </button>
-            {onEditRoom ? (
-              <button
-                type="button"
-                className="rah-sidebar-channel-edit"
-                aria-label={`设置频道 ${room.name}`}
-                title="频道详情与设置"
-                onClick={() => onEditRoom(room.roomId)}
-              >
-                <Icon name="pencil" />
-              </button>
-            ) : null}
           </div>
         ) : entry ? (
           <button

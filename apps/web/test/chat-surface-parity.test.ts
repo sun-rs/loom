@@ -106,7 +106,8 @@ test("chat sidebar does not promote persona prompt to description or force every
   assert.doesNotMatch(s, /<b>\{entry\.label\}<\/b>/u);
   assert.doesNotMatch(s, /<small>\{peer\.role\}<\/small>/u);
   assert.match(s, /peer\.description/u);
-  assert.match(s, /onEditRoom/u);
+  assert.doesNotMatch(s, /rah-sidebar-channel-edit|onEditRoom/u);
+  assert.match(s, /aria-label="频道详情与设置"/u);
 });
 
 test("Direct Room and profile avatars share the Agent detail and canonical avatar-edit path", () => {

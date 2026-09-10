@@ -3298,19 +3298,6 @@ function WorkspaceScreen({
                       setSurface("activity");
                     }}
                     onCreate={() => setRoomCreateOpen(true)}
-                    onEditRoom={(roomId) => {
-                      invalidateNavigation();
-                      setFocusedMessageId(undefined);
-                      setActiveThreadRootMessageId(undefined);
-                      setThreadMessages([]);
-                      if (roomId !== activeRoomId) {
-                        setRoomData(undefined);
-                        consecutivePollFailures.current = 0;
-                        setActiveRoomId(roomId);
-                      }
-                      setMobileRoomsOpen(false);
-                      setRoomMembersOpen(true);
-                    }}
                     rooms={rooms}
                     workspace={activeWorkspace}
                     unreadRooms={unreadSummary?.rooms}

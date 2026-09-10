@@ -41,6 +41,13 @@ export function RailHelpMenu() {
             <Icon name="book-open" />
             <span>本机操作指南</span>
           </a>
+          <a
+            href="/?surface=settings&settingsSection=feedback"
+            onClick={() => setOpen(false)}
+          >
+            <Icon name="message-square" />
+            <span>反馈</span>
+          </a>
         </InteractivePopoverContent>
       </div>
     </InteractivePopover>

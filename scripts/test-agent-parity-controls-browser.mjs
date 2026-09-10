@@ -20,7 +20,7 @@ try {
     await page.setViewportSize({ width, height: 844 });
     const origin =
       server.resolvedUrls.local[0] + "test/agent-parity-controls.html";
-    for (const mode of ["header", "create", "runtime"]) {
+    for (const mode of ["header", "create", "runtime", "reminder", "reset"]) {
       try {
         await page.goto(origin + "?mode=" + mode);
         if (mode === "header") {
@@ -58,12 +58,75 @@ try {
             labels.length >= 3 && labels.every(Boolean),
             "required markers share caption line",
           );
+          const inputStyle = await page
+            .locator(".rah-agent-create-dialog input")
+            .first()
+            .evaluate((e) => ({
+              size: getComputedStyle(e).fontSize,
+              line: getComputedStyle(e).lineHeight,
+              pad: getComputedStyle(e).padding,
+            }));
+          assert.deepEqual(inputStyle, {
+            size: "16px",
+            line: "24px",
+            pad: "8px 12px",
+          });
           const textarea = page.locator("textarea").first();
           await textarea.fill("abc");
           assert.equal(
             await page.getByText("3/3000", { exact: true }).count(),
             1,
             "live description count",
+          );
+        } else if (mode === "reset") {
+          const dialog = page.getByRole("dialog");
+          await dialog.waitFor();
+          if (width === 1280)
+            assert.equal((await dialog.boundingBox()).width, 448);
+          assert.equal(
+            await dialog.evaluate((e) => getComputedStyle(e).padding),
+            "24px",
+          );
+          assert.equal(
+            await dialog
+              .locator("header")
+              .evaluate((e) => getComputedStyle(e).borderBottomWidth),
+            "0px",
+          );
+          assert.match(
+            await dialog.evaluate((e) => getComputedStyle(e).boxShadow),
+            /4px 4px 0px/,
+          );
+          const radio = page.getByRole("radio").first();
+          for (const button of await dialog.locator("footer button").all()) {
+            assert.equal((await button.boundingBox()).height, 28);
+          }
+          const close = dialog.getByRole("button", {
+            name: "关闭",
+            exact: true,
+          });
+          assert.equal((await close.boundingBox()).width, 32);
+          assert.equal((await close.locator("svg").boundingBox()).width, 20);
+          assert.ok((await radio.boundingBox()).width <= 1);
+          await page.locator(".rah-agent-reset-option").nth(1).click();
+          assert.equal(await page.getByRole("radio").nth(1).isChecked(), true);
+          await page.keyboard.press("ArrowUp");
+          assert.equal(await radio.isChecked(), true);
+          await page.keyboard.press("Escape");
+          await page.getByText("Fixture closed").waitFor();
+        } else if (mode === "reminder") {
+          await page.getByText("暂无提醒", { exact: true }).waitFor();
+          const title = page.getByText("暂无提醒", { exact: true });
+          assert.equal(
+            await title.evaluate((e) => getComputedStyle(e).fontSize),
+            "18px",
+          );
+          const icon = page.locator(".rah-agent-reminders-pane svg");
+          assert.equal((await icon.boundingBox()).width, 28);
+          const desc = page.getByText(/此 Agent 尚未安排任何提醒/);
+          assert.equal(
+            await desc.evaluate((e) => getComputedStyle(e).fontSize),
+            "14px",
           );
         } else {
           await page.getByRole("dialog").waitFor();

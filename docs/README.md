@@ -2,6 +2,10 @@
 
 # RAH OS 文档
 
+[Agent 弹窗续批](./audits/2026-09-10-agent-dialog-visual-closure.zh-CN.md)：以正确 Aet/Si 和字段 token 来源修复重置几何与创建字体。
+
+[前端续批修复](./audits/2026-09-10-frontend-second-repair.zh-CN.md)：频道入口、Settings 和 Reminder，明确 Task 与弹窗剩余边界。
+
 [前端首批差异修复](./audits/2026-09-10-frontend-first-repair.zh-CN.md)：关系图、动态、身份展示、Agent 与 Thread；记录尚未签收项。
 
 Task 状态设置器映射：[五个状态逐条对照；`in_review` 唯一可确定并已补齐，其余有反例挡住推断](./audits/2026-09-10-task-status-setter-mapping.zh-CN.md)。

@@ -1,17 +1,42 @@
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 import "../src/product-styles.ts";
-import { AgentDetailHeader } from "../src/components/agent-directory-pane.tsx";
+import {
+  AgentDetailHeader,
+  AgentRemindersPane,
+} from "../src/components/agent-directory-pane.tsx";
 import { AgentCreateDialog } from "../src/components/agent-dialogs.tsx";
 import { AgentRuntimeDialog } from "../src/components/agent-runtime-dialog.tsx";
 import type { ClientAgentGetResponse } from "@rah-os/protocol";
 import type { WorkspaceAgentView } from "@rah-os/ui-web";
+import { AgentExecutionResetDialog } from "../src/components/agent-execution-reset-dialog.tsx";
 const noop = () => {};
 function Fixture() {
   const mode = new URLSearchParams(location.search).get("mode");
   const [sent, setSent] = useState(0);
   const [closed, setClosed] = useState(false);
   if (closed) return <p>Fixture closed</p>;
+  if (mode === "reset")
+    return (
+      <AgentExecutionResetDialog
+        agentName="Fixture Agent"
+        fullResetEnabled
+        onClose={() => setClosed(true)}
+        onConfirm={async () => {}}
+      />
+    );
+  if (mode === "reminder")
+    return (
+      <div style={{ height: 500, display: "flex" }}>
+        <AgentRemindersPane
+          error={undefined}
+          loading={false}
+          onOpenMessage={noop}
+          onRetry={noop}
+          reminders={[]}
+        />
+      </div>
+    );
   if (mode === "create")
     return (
       <AgentCreateDialog

@@ -1184,23 +1184,26 @@
   height: 100%;
   justify-content: center;
   min-height: 260px;
+  padding: 48px 24px;
   text-align: center;
 }
 
 .rah-agent-reminders-empty > svg {
   height: 28px;
-  margin-bottom: 10px;
+  margin-bottom: 16px;
   width: 28px;
 }
 
 .rah-agent-reminders-empty strong {
-  color: var(--ink);
-  font-size: 14px;
+  color: var(--ink-60);
+  font: 600 18px/28px var(--sans);
 }
 
 .rah-agent-reminders-empty span {
-  font: 11px/1.5 var(--mono);
-  margin-top: 4px;
+  color: var(--ink-60);
+  font: 400 14px/1.625 var(--sans);
+  max-width: 32ch;
+  margin-top: 8px;
 }
 
 .rah-agent-reminders-error {

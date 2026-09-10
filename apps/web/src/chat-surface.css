@@ -10,9 +10,6 @@
 .rah-sidebar-channel-entry {
   position: relative;
 }
-.rah-sidebar-channel-entry .channel-row {
-  padding-right: 32px;
-}
 .rah-sidebar-channel-name,
 .rah-direct-row-name {
   min-width: 0;
@@ -22,33 +19,6 @@
 }
 .rah-sidebar-channel-name {
   flex: 1;
-}
-.rah-sidebar-channel-edit {
-  position: absolute;
-  top: 3px;
-  right: 4px;
-  width: 24px;
-  height: 24px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  background: transparent;
-  border: 0;
-  color: var(--ink-40);
-  opacity: 0;
-  cursor: pointer;
-}
-.rah-sidebar-channel-entry:hover .rah-sidebar-channel-edit,
-.rah-sidebar-channel-entry:focus-within .rah-sidebar-channel-edit {
-  opacity: 1;
-}
-.rah-sidebar-channel-edit:hover {
-  color: var(--ink);
-  background: var(--ink-05);
-}
-.rah-sidebar-channel-edit svg {
-  width: 12px;
-  height: 12px;
 }
 .rah-direct-room-row {
   gap: 6px;
@@ -161,9 +131,6 @@
   display: flex;
 }
 @media (max-width: 767px) {
-  .rah-sidebar-channel-edit {
-    opacity: 1;
-  }
   .rah-direct-title .rah-direct-status {
     overflow: hidden;
     white-space: nowrap;

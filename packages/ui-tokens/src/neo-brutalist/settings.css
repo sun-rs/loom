@@ -310,7 +310,7 @@
 
 .rah-settings-choice-row .btn[aria-pressed="true"] {
   background: var(--yellow);
-  box-shadow: var(--shadow-s);
+  box-shadow: none;
 }
 
 .rah-settings-choice {
@@ -605,9 +605,10 @@
   outline-offset: 3px;
 }
 .rah-settings-choice-row .btn {
-  font: 700 12px/16px var(--sans);
-  height: 36px;
-  padding: 8px 12px;
+  font: 600 12px/16px var(--sans);
+  height: 32px;
+  padding: 6px 8px;
+  box-shadow: none;
 }
 .rah-settings-profile-preview strong,
 .rah-settings-member-row strong {
@@ -674,4 +675,15 @@
   .rah-settings-scroll {
     padding: 12px 10px 24px;
   }
+}
+
+/* Raft hqe noninteractive card: border-black/30 px-4 py-3, no shadow. */
+.rah-settings-readonly-card {
+  border-color: rgb(0 0 0 / 30%);
+  box-shadow: none;
+  padding: 12px 16px;
+}
+
+.rah-settings-font-size {
+  gap: 4px;
 }
