@@ -49,7 +49,20 @@ convert / history）**没有 held 变体**。
 `in_review` 在上游**只有 `task update` 一条路径**，而 `task update` 会 hold；RAH 到达该状态的
 Agent 面操作**唯一**就是 `task-submit`。因此这条按合同补齐，已接入并有行为回归。
 
-## 其余四个状态：证据里有反例，不是"缺支持"
+## 更正：`done` 是能力缺口，不是"无对应物"
+
+出厂 prompt 的 **Workflow** 小节是第二人称对 Agent 说的，第 5 步逐字：
+
+> 5. After approval (e.g. "looks good", "merge it"), set status to \`done\`
+
+**Raft 的 Agent 自己设 `done`。** 我此前把"RAH 没有 Agent 面操作"当成了"没有可映射对象"，
+等于**把本地限制当成了产品要求**。实际是 `packages/kernel/src/collaboration-policy.ts:116` 的
+`requireHumanTaskManager` 抛 "Task status management requires a Human" —— 这是 RAH 自研限制，
+构成一处真实能力差异，待补齐。
+
+`closed` 在出厂 prompt 中从未出现，仍不成立。
+
+## `todo` 与 `in_progress`：证据里有反例，不是"缺支持"
 
 不能用"到达同一状态"来推 hold，因为上游自己就有反例：
 
@@ -73,6 +86,11 @@ Agent 面操作**唯一**就是 `task-submit`。因此这条按合同补齐，�
 
 ## 仍未收口
 
-`update` 的另外四个状态（todo / in_progress / done / closed）未对齐：前两个在上游有反例挡住推断，
-后两个在 RAH 根本没有 Agent 面操作。`task-block` / `task-unblock` / `task-request-input` / `task-progress`
-是 RAH 独有、上游无对应物，保留现有权限与执行围栏不变。
+- **`done`：确定的能力缺口，下一步补齐。** 需先把 `completeTask` 的完成事务从 `room-kernel.ts`
+  抽成模块（该文件 6922/6925，无余量），再开 Agent 入口，并保留既有围栏：房间成员、状态必须为
+  `submitted`、reviewer 证据（`assertCompletionAllowed`）。授权由"必须是 Human"改为"本次提交的
+  producer"（`task_submissions.producer_id`）——上游契约只给出粗粒度 `capability: "tasks"`，
+  更细的授权在服务端不可知，因此这是**标注为 RAH 本地**的选择，不宣称与上游一致。
+- `todo` / `in_progress`：上游有反例挡住推断，保持现状。
+- `closed`：上游未对 Agent 提及。`task-block` / `task-unblock` / `task-request-input` / `task-progress`
+  是 RAH 独有、上游无对应物，保留现有权限与执行围栏不变。
