@@ -127,5 +127,17 @@ export function postWorkerMessageTransaction(context: {
   if ("event" in result && !result.deduplicated)
     files.consume(attachments, result.event.aggregateId);
   context.comments.bindWorkerResult(attachmentComment, result);
+  // A token that woke nobody rides back on the successful post, exactly as
+  // Raft returns unresolvedMentionHandles alongside a queued message. A
+  // deduplicated post reports nothing: the first one already did.
+  if (
+    "event" in result &&
+    !result.deduplicated &&
+    route.unresolvedMentionHandles.length > 0
+  )
+    return {
+      ...result,
+      unresolvedMentionHandles: route.unresolvedMentionHandles,
+    };
   return result;
 }

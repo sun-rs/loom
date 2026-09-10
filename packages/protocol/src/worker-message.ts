@@ -79,6 +79,12 @@ export const WorkerMessageMutationResponseSchema = z
     deduplicated: z.boolean(),
     event: RoomEventSchema,
     replacedDraft: WorkerReplacedDraftSchema.optional(),
+    /**
+     * The `@tokens` the author wrote that woke nobody. Raft carries the same
+     * field on its send response and then raises MENTION_DELIVERY_FAILED while
+     * the message stays queued; omitted when every token resolved.
+     */
+    unresolvedMentionHandles: z.array(z.string().min(1)).optional(),
   })
   .strict();
 export type WorkerMessageMutationResponse = z.infer<

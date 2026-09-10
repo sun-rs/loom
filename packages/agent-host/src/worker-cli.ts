@@ -7,6 +7,12 @@ import {
   workerReplacedDraftBody,
   workerReplacedDraftNotice,
   workerSendSuccessOutput,
+  workerSendQueuedOutput,
+  workerSentMessageId,
+  workerUnresolvedMentions,
+  formatUnresolvedMentionSection,
+  unresolvedMentionMessage,
+  UNRESOLVED_MENTION_NEXT_ACTION,
   workerTargetConfirmationBody,
   workerTargetConfirmationNextAction,
 } from "./worker-held-send.ts";
@@ -415,6 +421,31 @@ export async function runWorkerCliCommand(
         confirmationBody,
         {
           suggestedNextAction: workerTargetConfirmationNextAction(result),
+        },
+      );
+    }
+    // Raft's partial branch: an undelivered @mention does not undo the post.
+    // Text mode renders the queued result on stdout and then raises; JSON mode
+    // skips the success payload entirely and carries it inside the error.
+    const unresolvedMentions = workerUnresolvedMentions(result);
+    if (unresolvedMentions.length > 0) {
+      if (!jsonOutput)
+        runtime.stdout.write(
+          `${text}${formatUnresolvedMentionSection(unresolvedMentions)}${workerSendQueuedOutput(displayTarget, result)}`,
+        );
+      throw cliError(
+        "MENTION_DELIVERY_FAILED",
+        unresolvedMentionMessage(
+          workerSentMessageId(result),
+          unresolvedMentions.length,
+        ),
+        {
+          details: { result },
+          draftSaved: false,
+          effect: "message_queued",
+          outputMode: jsonOutput ? "json" : "text",
+          retryable: false,
+          suggestedNextAction: UNRESOLVED_MENTION_NEXT_ACTION,
         },
       );
     }

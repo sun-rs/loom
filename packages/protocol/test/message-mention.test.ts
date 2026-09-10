@@ -5,6 +5,7 @@ import {
   messageHasMention,
   messageMentionCandidates,
   messageMentionQueryAt,
+  unresolvedMentionHandles,
 } from "../src/message-mention.ts";
 
 test("message mention grammar supports CJK prose and dotted handles with stable boundaries", () => {
@@ -89,4 +90,32 @@ test("case or NFKC ambiguous handles fail closed", () => {
     messageMentionCandidates("@Alice", ["Alice", "Alice"]).length,
     1,
   );
+});
+
+test("unresolved mention tokens are the ones that woke nobody", () => {
+  // Resolved tokens are not reported.
+  assert.deepEqual(unresolvedMentionHandles("@alice ping", ["alice"]), []);
+  // A handle the directory does not carry is reported.
+  assert.deepEqual(unresolvedMentionHandles("@carol ping", ["alice"]), [
+    "carol",
+  ]);
+  // The ambiguity that fails closed is the sharpest missed wake, so it must be
+  // reported even though the directory does carry a matching handle.
+  assert.deepEqual(
+    unresolvedMentionHandles("@Alice ping", ["Alice", "alice"]),
+    ["Alice"],
+  );
+  // Code is masked, which is why Raft tells an author to wrap a literal name.
+  assert.deepEqual(
+    unresolvedMentionHandles("`@carol` is prose", ["alice"]),
+    [],
+  );
+  // An address-like token mid-word has no leading boundary and is not a token.
+  assert.deepEqual(unresolvedMentionHandles("mail me@example.com", []), []);
+  // Unicode handles are never split at a guessed boundary.
+  assert.deepEqual(unresolvedMentionHandles("请@小明处理", ["alice"]), []);
+  // Repeats collapse on the shared comparison key.
+  assert.deepEqual(unresolvedMentionHandles("@carol and @Carol", []), [
+    "carol",
+  ]);
 });

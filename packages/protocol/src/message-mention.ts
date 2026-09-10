@@ -123,6 +123,49 @@ export function messageReferenceNameKey(value: string): string {
 }
 
 /**
+ * The lexical shape Raft's own client uses when it marks `@handle` runs in
+ * visible prose (`findSlockRefLiteralRanges`): a leading boundary, then `@`,
+ * then an ASCII identifier. RAH's delivery parser stays directory-driven —
+ * this shape is used only to notice a token the directory did not resolve, so
+ * an unknown Unicode handle is never split at a guessed boundary.
+ */
+const mentionTokenShape = /(^|[\n\s([{"'`;])(@[A-Za-z0-9][A-Za-z0-9_-]*)/gu;
+
+/**
+ * The `@tokens` an author wrote that woke nobody: no directory handle matched,
+ * or the only matching handles were case/NFKC-equivalent and so failed closed.
+ * A token inside code is already masked by `visibleMessageText`, which is why
+ * Raft's own guidance for a literal name is to wrap it in code.
+ */
+export function unresolvedMentionHandles(
+  source: string,
+  knownHandles: readonly string[],
+): string[] {
+  const visible = visibleMessageText(source);
+  const resolved = messageMentionCandidates(source, knownHandles);
+  const unresolved: string[] = [];
+  const seen = new Set<string>();
+  for (const match of visible.matchAll(mentionTokenShape)) {
+    if (match.index === undefined) continue;
+    const token = match[2]!;
+    const start = match.index + match[1]!.length;
+    const end = start + token.length;
+    if (
+      resolved.some(
+        (candidate) => start < candidate.end && end > candidate.start,
+      )
+    )
+      continue;
+    const handle = token.slice(1);
+    const key = messageReferenceNameKey(handle);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unresolved.push(handle);
+  }
+  return unresolved;
+}
+
+/**
  * Matches only names supplied by the caller's canonical directory. This is
  * what lets Chinese prose such as `请@Alice处理` work without guessing where
  * an unknown Unicode handle ends.

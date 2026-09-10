@@ -2,6 +2,7 @@ import type { DatabaseSync } from "node:sqlite";
 
 import {
   messageMentionCandidates,
+  unresolvedMentionHandles,
   type ActivationCredentialScope,
   type WorkerMessagePostRequest,
   type RoomEvent,
@@ -78,6 +79,26 @@ export function workerMentionRecipients(input: {
     participantId,
     reason: "mention" as const,
   }));
+}
+
+/**
+ * The `@tokens` an author wrote that woke nobody in this Room: no member handle
+ * matched, or the only matches were case/NFKC-equivalent and failed closed. The
+ * author's own handle stays in the directory, so a self-mention — which the
+ * standing prompt already states is ignored — is not reported here.
+ *
+ * Raft reports the same condition as `unresolvedMentionHandles` on the send
+ * response and then raises MENTION_DELIVERY_FAILED, keeping the message queued.
+ */
+export function workerUnresolvedMentionHandles(input: {
+  body?: string | undefined;
+  database: DatabaseSync;
+  roomId: string;
+}): string[] {
+  if (input.body === undefined || input.body.trim().length === 0) return [];
+  return unresolvedMentionHandles(input.body, [
+    ...mentionableRoomAgentHandles(input.database, input.roomId, "").keys(),
+  ]);
 }
 
 export function workerReplyRecipients(input: {
@@ -161,7 +182,11 @@ export function resolveWorkerReplyRoute(context: {
   scope: ActivationCredentialScope;
   input: WorkerMessagePostRequest;
   eventFromRow: (row: Row) => RoomEvent;
-}): { recipients: MessageRecipient[]; threadId?: string } {
+}): {
+  recipients: MessageRecipient[];
+  threadId?: string;
+  unresolvedMentionHandles: string[];
+} {
   const { database, scope, input, eventFromRow } = context;
   requireWorkerRoomVisibility(database, scope);
   if (input.basedOnRoomSeq !== scope.toSeq)
@@ -273,5 +298,10 @@ export function resolveWorkerReplyRoute(context: {
       ...(threadId === undefined ? {} : { threadId }),
     }),
     ...(threadId === undefined ? {} : { threadId }),
+    unresolvedMentionHandles: workerUnresolvedMentionHandles({
+      database,
+      roomId: scope.roomId,
+      ...(body === undefined ? {} : { body }),
+    }),
   };
 }

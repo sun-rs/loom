@@ -212,9 +212,34 @@ export function workerSendSuccessOutput(
   target: string | undefined,
   result: unknown,
 ): string {
+  return sendReceipt(target, result, "sent");
+}
+
+/** The message id Raft echoes on a queued or sent receipt. */
+export function workerSentMessageId(result: unknown): string | undefined {
+  return messageIdentifier(result);
+}
+
+/**
+ * Raft switches the receipt verb when a mention did not resolve:
+ * `Message queued to <target>` rather than `Message sent to <target>`, so a
+ * partial result is never read as a clean send.
+ */
+export function workerSendQueuedOutput(
+  target: string | undefined,
+  result: unknown,
+): string {
+  return sendReceipt(target, result, "queued");
+}
+
+function sendReceipt(
+  target: string | undefined,
+  result: unknown,
+  verb: "queued" | "sent",
+): string {
   const messageId = messageIdentifier(result);
   const sentStatusLine =
-    target === undefined ? "Message sent." : `Message sent to ${target}.`;
+    target === undefined ? `Message ${verb}.` : `Message ${verb} to ${target}.`;
   if (messageId === undefined) return `${sentStatusLine}\n`;
   const shortId = messageId.slice(0, 8);
   const replyHint =
@@ -232,3 +257,62 @@ export const SEND_HELD_AS_DRAFT_MESSAGE =
 
 export const SEND_HELD_AS_DRAFT_NEXT_ACTION =
   "Review the held context, then update the draft or send the current draft unchanged.";
+
+/**
+ * Raft's undelivered-mention partial result. Ported from
+ * `formatPendingMentionActions(source: "send")` and the `MENTION_DELIVERY_FAILED`
+ * branch of `handleMessageSend`: the queued message is a rendered result and
+ * stays on stdout, the partial condition is a raised error on stderr, and the
+ * status line switches from "sent" to "queued" so the two are never confused.
+ */
+export function workerUnresolvedMentions(result: unknown): string[] {
+  if (typeof result !== "object" || result === null) return [];
+  const handles = (result as Record<string, unknown>).unresolvedMentionHandles;
+  if (!Array.isArray(handles)) return [];
+  return handles.filter(
+    (handle): handle is string => typeof handle === "string",
+  );
+}
+
+/** Raft's stdout block, per token, bound to the literal `@token` as written. */
+export function formatUnresolvedMentionSection(
+  handles: readonly string[],
+): string {
+  if (handles.length === 0) return "";
+  const rows = handles
+    .map(
+      (handle) =>
+        `  @${handle} — status=not_queued reason=unknown_or_not_visible; This @mention did not notify anyone.`,
+    )
+    .join("\n");
+  return [
+    "Undelivered mentions — partial result",
+    "Message effect: status=queued. Queue acceptance is the only message proof.",
+    "Do not rerun `rah worker message-post`; the message is already queued and a retry could duplicate it.",
+    "Each row below is bound to the literal @token from your message.",
+    "For a literal name rather than a recipient, wrap the @handle in inline or fenced code.",
+    rows,
+    "",
+  ].join("\n");
+}
+
+/**
+ * Raft's `MENTION_DELIVERY_FAILED` message. `effect: "message_queued"` and
+ * `retryable: false` are the load-bearing facts: the post succeeded.
+ */
+export function unresolvedMentionMessage(
+  messageId: string | undefined,
+  count: number,
+): string {
+  const subject =
+    messageId === undefined ? "the message" : `message ${messageId}`;
+  return `Partial result for ${subject}: message status=queued; ${count} @mention${count === 1 ? "" : "s"} status=not_queued.`;
+}
+
+/**
+ * Raft's `suggestedNextAction`, minus its second sentence. That sentence directs
+ * the Agent to `raft mention notify <id>`, a deferred sender-side recovery
+ * surface RAH does not have; no substitute is invented in its place.
+ */
+export const UNRESOLVED_MENTION_NEXT_ACTION =
+  "The message is already queued. If an unresolved token was literal prose, wrap it in code; otherwise verify the exact handle and send only a corrected follow-up mention. Do not resend the queued message.";
