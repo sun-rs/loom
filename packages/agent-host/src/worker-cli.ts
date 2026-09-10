@@ -95,48 +95,84 @@ export type WorkerCliRuntime = Readonly<{
 }>;
 
 /**
- * Raft's `resolveSendContent`: the body arrives on stdin, bounded and UTF-8
- * decoded exactly like every other CLI input. A TTY or an unreadable stream is
- * treated as empty so a facade command can never block on a missing heredoc.
+ * Raft resolves send content down two different paths and RAH used one for
+ * both. Upstream `resolveSendContent` (normal send) has **no** observation
+ * window: it reads the stream to the end and raises MISSING_CONTENT on a TTY or
+ * an empty body. Upstream `resolveOptionalSendContent` (`--send-draft`) has one,
+ * `SEND_DRAFT_STDIN_OBSERVATION_MS = 1000`, because there it is only observing
+ * whether stdin was supplied by mistake. RAH applied a 250ms window to both and
+ * resolved it to an empty string, so a slow heredoc on a normal send became a
+ * silently empty body rather than an error.
+ *
+ * The byte cap, the UTF-8 decode and the NUL check are RAH-local and kept.
  */
-async function readStdinText(
+const SEND_DRAFT_STDIN_OBSERVATION_MS = 1_000;
+
+/**
+ * RAH-local, and not an upstream behaviour: the worker CLI is a child of the
+ * runtime and can inherit a stdin that never closes, which upstream's shell
+ * invocation does not. A normal send therefore waits a bounded time — and then
+ * reports MISSING_CONTENT, the same outcome upstream gives an empty stream,
+ * rather than silently sending nothing.
+ */
+const NORMAL_SEND_STDIN_WAIT_MS = 5_000;
+
+type StdinRead = { kind: "content"; text: string } | { kind: "empty" };
+
+async function collectStdin(
   runtime: WorkerCliRuntime,
-  maximumBytes = MAX_ARGUMENT_BYTES,
-): Promise<string> {
+  options: {
+    firstByteWindowMs?: number;
+    maximumBytes: number;
+    overallWaitMs?: number;
+  },
+): Promise<StdinRead> {
   const stream = runtime.stdin ?? process.stdin;
   if (
     stream === undefined ||
     (stream as { isTTY?: boolean }).isTTY === true ||
     (stream as { readable?: boolean }).readable === false
   )
-    return "";
-  const chunks = await new Promise<Buffer[]>((resolve, reject) => {
+    return { kind: "empty" };
+  const chunks = await new Promise<Buffer[] | undefined>((resolve, reject) => {
     const collected: Buffer[] = [];
     let total = 0;
     let settled = false;
-    // An inherited stdin that never receives a heredoc must not block the
-    // facade, so a first-byte window makes "no content" observable.
-    const deadline = setTimeout(() => {
-      if (collected.length === 0) settle(() => resolve([]));
-    }, STDIN_FIRST_BYTE_WINDOW_MS);
     const settle = (finish: () => void) => {
       if (settled) return;
       settled = true;
-      clearTimeout(deadline);
+      if (firstByte !== undefined) clearTimeout(firstByte);
+      if (overall !== undefined) clearTimeout(overall);
       stream.removeListener("data", onData);
       stream.removeListener("end", onEnd);
       stream.removeListener("error", onError);
       stream.pause();
       finish();
     };
+    // Upstream's draft-path observation: nothing arrived, so nothing was meant
+    // to arrive. Only the draft path passes this.
+    const firstByte =
+      options.firstByteWindowMs === undefined
+        ? undefined
+        : setTimeout(() => {
+            if (collected.length === 0) settle(() => resolve(undefined));
+          }, options.firstByteWindowMs);
+    const overall =
+      options.overallWaitMs === undefined
+        ? undefined
+        : setTimeout(() => {
+            settle(() =>
+              resolve(collected.length === 0 ? undefined : collected),
+            );
+          }, options.overallWaitMs);
     function onData(chunk: Buffer | string) {
       const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
       total += bytes.byteLength;
-      if (total > maximumBytes) {
+      if (total > options.maximumBytes) {
         settle(() =>
           reject(
             new Error(
-              `message content on stdin must not exceed ${String(maximumBytes)} bytes`,
+              `message content on stdin must not exceed ${String(options.maximumBytes)} bytes`,
             ),
           ),
         );
@@ -149,7 +185,7 @@ async function readStdinText(
     }
     function onError(error: unknown) {
       if (hasCode(error, "EAGAIN") || hasCode(error, "EOF")) {
-        settle(() => resolve([]));
+        settle(() => resolve(undefined));
         return;
       }
       settle(() => reject(error));
@@ -158,13 +194,54 @@ async function readStdinText(
     stream.on("end", onEnd);
     stream.on("error", onError);
   });
+  if (chunks === undefined) return { kind: "empty" };
   const text = new TextDecoder("utf-8", { fatal: true }).decode(
     Buffer.concat(chunks),
   );
   if (text.includes("\0")) {
     throw new Error("message content on stdin must not contain NUL bytes");
   }
-  return text;
+  return { kind: "content", text };
+}
+
+/** Upstream `resolveSendContent`: read to the end, no observation window. */
+async function resolveSendContent(
+  runtime: WorkerCliRuntime,
+  maximumBytes = MAX_ARGUMENT_BYTES,
+): Promise<string> {
+  const read = await collectStdin(runtime, {
+    maximumBytes,
+    overallWaitMs: NORMAL_SEND_STDIN_WAIT_MS,
+  });
+  return read.kind === "content" ? read.text : "";
+}
+
+/**
+ * Upstream `resolveOptionalSendContent`: observe whether stdin was supplied at
+ * all, and report an expired window so the caller can say the stored draft is
+ * being sent instead.
+ */
+async function resolveOptionalSendContent(
+  runtime: WorkerCliRuntime,
+  onNoBytesWithinWindow: () => void,
+  maximumBytes = MAX_ARGUMENT_BYTES,
+): Promise<string | undefined> {
+  const read = await collectStdin(runtime, {
+    firstByteWindowMs: SEND_DRAFT_STDIN_OBSERVATION_MS,
+    maximumBytes,
+  });
+  if (read.kind === "empty") {
+    onNoBytesWithinWindow();
+    return undefined;
+  }
+  return read.text;
+}
+
+/** Upstream `formatSendDraftStdinDeadlineDiagnostic`, verbatim. */
+export function formatSendDraftStdinDeadlineDiagnostic(
+  observationWindowMs = SEND_DRAFT_STDIN_OBSERVATION_MS,
+): string {
+  return `No stdin bytes were detected within ${String(observationWindowMs)}ms; the stored draft will now be sent.`;
 }
 
 export async function runWorkerCliCommand(
@@ -313,6 +390,7 @@ export async function runWorkerCliCommand(
     // rejection (`main.js@30436161`). RAH's parsers are that stage, so a
     // rejection that carries no code of its own is an argument error, not an
     // internal bug; a parser that already chose a Raft code keeps it.
+    let sendDraftStdinDeadlineExpired = false;
     const request = await parseWorkerRequest(async () =>
       config
         ? { path: "/v1/agent-config/get", body: {} }
@@ -322,10 +400,17 @@ export async function runWorkerCliCommand(
             ? parseReminderCommand(arguments_)
             : parseCommand(
                 arguments_,
+                // Upstream picks the resolver by `opts.sendDraft`, so RAH does
+                // too: a normal send reads to the end, `--send-draft` only
+                // observes whether stdin was supplied by mistake.
                 arguments_[0] === "worker" &&
                   arguments_[1] === "message-post" &&
                   !arguments_.includes("--body")
-                  ? await readStdinText(runtime)
+                  ? arguments_.includes("--send-draft")
+                    ? ((await resolveOptionalSendContent(runtime, () => {
+                        sendDraftStdinDeadlineExpired = true;
+                      })) ?? "")
+                    : await resolveSendContent(runtime)
                   : "",
               ),
     );
@@ -486,6 +571,13 @@ export async function runWorkerCliCommand(
         },
       );
     }
+    // Upstream writes this diagnostic to stderr on the `--send-draft` path once
+    // it has found the stored draft, so the Agent can tell "no heredoc" from
+    // "heredoc too slow". RAH's draft lives on the server, so the CLI cannot
+    // know a draft exists until the response — a local ordering difference:
+    // the fact is reported once the send has actually happened, never before.
+    if (sendDraftStdinDeadlineExpired)
+      runtime.stderr.write(`${formatSendDraftStdinDeadlineDiagnostic()}\n`);
     if (jsonOutput) runtime.stdout.write(`${JSON.stringify(result)}\n`);
     else
       runtime.stdout.write(
