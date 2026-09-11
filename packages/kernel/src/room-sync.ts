@@ -27,6 +27,7 @@ export function syncRoomEventWindow(
     eventFromRow: (row: Row) => RoomEvent;
     snapshot: (roomId: string) => RoomSnapshot;
     responseOverheadBytes?: number;
+    eventOverheadBytes?: (event: RoomEvent) => number;
   },
 ): SyncResult {
   const cursorRow = database
@@ -95,6 +96,7 @@ export function syncRoomEventWindow(
   for (const row of rows) {
     const event = owners.eventFromRow(row),
       size =
+        (owners.eventOverheadBytes?.(event) ?? 0) +
         Buffer.byteLength(JSON.stringify(event)) +
         (result.events.length ? 1 : 0);
     const cursorGrowth = String(event.roomSeq).length - String(afterSeq).length;

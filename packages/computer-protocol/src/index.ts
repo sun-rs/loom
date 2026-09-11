@@ -1,4 +1,6 @@
 import {
+  HOST_EXECUTION_WORKSPACE_BINDING_LIMIT,
+  HostExecutionWorkspaceBindingSchema,
   ActivationSchema,
   AgentRuntimeContextSchema,
   ContextManifestSchema,
@@ -152,6 +154,10 @@ export type ComputerHeartbeatRequest = z.infer<
 
 export const ComputerHeartbeatResponseSchema = z
   .object({
+    executionWorkspaceBindings: z
+      .array(HostExecutionWorkspaceBindingSchema)
+      .max(HOST_EXECUTION_WORKSPACE_BINDING_LIMIT)
+      .optional(),
     host: ComputerHostRecordSchema,
     serverTime: TimestampSchema,
     sessionExpiresAt: TimestampSchema,

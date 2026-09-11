@@ -1,3 +1,4 @@
+import { RuntimeGuideSettingsContent } from "./runtime-guide-settings.tsx";
 import { useEffect, useState } from "react";
 
 import type { RahClient } from "@rah-os/client-sdk";
@@ -84,6 +85,7 @@ const SETTINGS_SECTIONS = new Set(
 
 function settingsSectionFromSearch(search: string): SettingsSection {
   const requested = new URLSearchParams(search).get("settingsSection");
+  if (requested === "runtime") return "administration";
   return requested && SETTINGS_SECTIONS.has(requested as SettingsSection)
     ? (requested as SettingsSection)
     : "account";
@@ -120,9 +122,15 @@ export function SettingsSurface({
   );
   useEffect(() => {
     const sync = () => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("settingsSection") === "runtime") {
+        params.set("settingsSection", "administration");
+        window.history.replaceState(null, "", `?${params}`);
+      }
       setSection(settingsSectionFromSearch(window.location.search));
       setMobileIndex(!hasExplicitSettingsSection(window.location.search));
     };
+    sync();
     window.addEventListener("popstate", sync);
     return () => window.removeEventListener("popstate", sync);
   }, []);
@@ -180,7 +188,9 @@ export function SettingsSurface({
             agents={agents}
             principal={currentPrincipal}
             membershipRole={membershipRole}
-          />
+          >
+            <RuntimeGuideSettingsContent client={client} />
+          </AdministrationSettingsContent>
         ) : section === "lan-devices" ? (
           <LanDeviceSettingsContent />
         ) : section === "about" ? (

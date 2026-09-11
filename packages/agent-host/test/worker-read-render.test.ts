@@ -50,8 +50,8 @@ test("message-read renders Raft's formatHistory window, header and cursors", () 
     [
       "Read window: 2 returned, seq 4-7, oldest to newest. Older exist: --before message-1. No newer.",
       "",
-      "[1/2 seq=4 msg=message-1 time=2026-09-09 01:02:03] @participant-a: first [task #3 status=in_progress]",
-      "[2/2 seq=7 msg=message-2 time=2026-09-09 01:04:05 threadId=thread-1] @participant-b: second [1 attachment: log.txt (id:att-1) — use rah worker attachment-download to download]",
+      "[1/2 target=room-1 seq=4 msg=message-1 time=2026-09-09 01:02:03] @participant-a: first [task #3 status=in_progress]",
+      "[2/2 target=room-1 seq=7 msg=message-2 time=2026-09-09 01:04:05 threadId=thread-1] @participant-b: second [1 attachment: log.txt (id:att-1) — use rah worker attachment-download to download]",
       "",
       "End of window: 2/2 shown.",
     ].join("\n"),
@@ -282,7 +282,7 @@ test("message-resolve renders the Raft message line and its thread root", () => 
   assert.equal(
     text,
     [
-      "[target=room-1:thread-1 msg=message-2 time=2026-09-09 01:02:03] @participant-a: reply",
+      "[target=room-1 threadId=thread-1 msg=message-2 time=2026-09-09 01:02:03] @participant-a: reply",
       "",
       "Thread root:",
       "[target=room-1 msg=message-1 time=2026-09-09 01:00:00] @participant-b: root",
@@ -334,7 +334,7 @@ test("sync renders the delivered window and Raft's drain terminator", () => {
     [
       "Sync window: 2 delivered, seq 5-7, cursor 3 to 7 of 9, oldest to newest.",
       "",
-      "[seq=5 msg=message-1 time=2026-09-09 01:02:03 type=message.posted] @participant-a: hello",
+      "[target=room-1 seq=5 msg=message-1 time=2026-09-09 01:02:03 type=message.posted] @participant-a: hello",
       "  mentions: @participant-b",
       "seq=7 time=2026-09-09T01:03:03.000Z actor=@participant-a type=task.created",
       '  {"taskId":"task-1"}',
@@ -426,11 +426,11 @@ test("room-members renders Raft's channel member sections and keeps participant 
       "Members means join/post authority for this surface.",
       "",
       "### Agents",
-      "Role labels show server-level owner/admin authority; no role label means ordinary member.",
+      "Role labels describe recorded Room membership, not server-wide authority; an absent label means the role was not provided.",
       "  - @ada (enabled) id=participant-a — reviewer",
       "",
       "### Humans",
-      "Role labels show server-level owner/admin authority; no role label means ordinary member.",
+      "Role labels describe recorded Room membership, not server-wide authority; an absent label means the role was not provided.",
       "  - @sun id=participant-h",
       "",
     ].join("\n"),
@@ -707,7 +707,7 @@ test("room-read renders the delivered window and keeps the context receipt", () 
       "Read window: 1 delivered at room-1, seq 4-7, complete, oldest to newest.",
       "Context receipt: receipt-1",
       "",
-      "[seq=5 msg=message-1 time=2026-09-09 01:02:03 type=message.posted] @participant-a: hello",
+      "[target=room-1 seq=5 msg=message-1 time=2026-09-09 01:02:03 type=message.posted] @participant-a: hello",
       "",
       "End of window: 1/1 shown.",
     ].join("\n"),
@@ -1447,4 +1447,117 @@ test("attachment-download renders Raft's one-line save confirmation", () => {
     }),
     "Downloaded to: /tmp/evidence.txt",
   );
+});
+
+test("sync renders each supplied Room or DM identity and its independent Thread IDs", () => {
+  for (const roomId of ["room-a", "room-b", "direct-room"]) {
+    const events = [null, "thread-a", "thread-b"].map((threadId, index) => ({
+      roomId,
+      roomSeq: index + 1,
+      actorId: "human",
+      type: "message.posted",
+      payload: { messageId: `message-${index}`, threadId, body: "Reply here" },
+    }));
+    const result = {
+      events,
+      cursorBefore: 0,
+      cursorAfter: 3,
+      latestRoomSeq: 3,
+    };
+    const before = structuredClone(result);
+    const text = render("/v1/worker/sync", result)!;
+    assert.match(text, new RegExp(`\\[target=${roomId} seq=1`));
+    for (const [index, threadId] of ["thread-a", "thread-b"].entries()) {
+      const line = text
+        .split("\n")
+        .find((line) => line.includes(`msg=message-${index + 1} `))!;
+      assert.ok(line.includes(`target=${roomId} `));
+      assert.ok(line.includes(`threadId=${threadId}`));
+      assert.ok(
+        !line.includes(`target=${roomId}:`),
+        "Room UUID plus colon is not a supported target",
+      );
+    }
+    assert.deepEqual(
+      result,
+      before,
+      "rendering must not change delivery or read positions",
+    );
+  }
+});
+
+test("rosters render canonical Room roles without inferring authority from handles", () => {
+  const members = [
+    {
+      principal: { handle: "sun", kind: "human", principalId: "human" },
+      membership: { scope: "room", role: "owner" },
+    },
+    {
+      principal: { handle: "helper", kind: "agent", principalId: "admin" },
+      membership: { scope: "room", role: "admin" },
+    },
+    {
+      principal: { handle: "owner", kind: "agent", principalId: "member" },
+      membership: { scope: "room", role: "member" },
+    },
+    { principal: { handle: "unknown", kind: "human", principalId: "unknown" } },
+  ];
+  for (const path of ["/v1/worker/room/members", "/v1/worker/server/info"]) {
+    const text = render(path, { roomId: "room-1", members });
+    assert.equal(typeof text, "string");
+    assert.ok(text !== undefined);
+    assert.match(text, /@sun \[room owner\] id=human/);
+    assert.match(text, /@helper \[room admin\] id=admin/);
+    assert.match(text, /@owner \[room member\] id=member/);
+    assert.match(text, /@unknown id=unknown/);
+    assert.doesNotMatch(text, /no role label means ordinary member/);
+  }
+});
+
+test("channel attention conditionally renders upstream guidance and preserves legacy response", () => {
+  const base = { activityMuted: true, muteFromSeq: 12 };
+  const body = { channel: "#channel" };
+  assert.equal(
+    render("/v1/worker/channels/mute", base, body),
+    "Muted #channel.\nActivity muted: yes\nMute from seq: 12",
+  );
+  const text = render(
+    "/v1/worker/channels/mute",
+    {
+      ...base,
+      attention: {
+        state: "muted",
+        ordinaryActivity: "Ordinary delivery is muted.",
+        stillArrives: ["Personal mentions", "Followed Threads"],
+        threadBoundary: "Thread controls are independent.",
+        catchUp: "Read history to catch up.",
+        unmuteCommand: 'rah worker channel-unmute --target "#channel"',
+      },
+    },
+    body,
+  )!;
+  assert.match(
+    text,
+    /Ordinary delivery is muted\.\nStill arrives:\n- Personal mentions\n- Followed Threads/,
+  );
+  assert.match(
+    text,
+    /Thread controls are independent\.\nRead history to catch up\.\nTo unmute: rah worker channel-unmute/,
+  );
+  assert.ok(!text.includes("Agent API:"));
+  const restored = render(
+    "/v1/worker/channels/unmute",
+    {
+      activityMuted: false,
+      attention: {
+        muteCommand: "mute command",
+        muteApi: "provided mute API",
+        unmuteApi: "provided unmute API",
+      },
+    },
+    body,
+  )!;
+  assert.match(restored, /To mute: mute command/);
+  assert.match(restored, /Agent API: provided mute API/);
+  assert.match(restored, /Agent API: provided unmute API/);
 });

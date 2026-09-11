@@ -99,6 +99,7 @@ test("Claude stream-json resumes only accepted sessions and interrupts natively"
       },
       "full_access",
     );
+    assert.equal(runtime.busyInputSupported, true);
     const trajectory: unknown[] = [];
     const runActivation = async (
       scenario: string,

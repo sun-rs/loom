@@ -161,9 +161,11 @@ const renderedPayloads = (stdout: string): any[] =>
 
 /** Every `seq=`/`type=` pair the rendered sync window states. */
 const renderedEvents = (stdout: string): { roomSeq: number; type: string }[] =>
-  [...stdout.matchAll(/^\[?seq=(\d+) [^\n]*?type=([a-z_]+\.[a-z_]+)/gmu)].map(
-    (match) => ({ roomSeq: Number(match[1]), type: match[2]! }),
-  );
+  [
+    ...stdout.matchAll(
+      /^\[?(?:target=\S+ )?seq=(\d+) [^\n]*?type=([a-z_]+\.[a-z_]+)/gmu,
+    ),
+  ].map((match) => ({ roomSeq: Number(match[1]), type: match[2]! }));
 
 /** The delivered cursor the sync header states. */
 const renderedCursorAfter = (stdout: string): number => {

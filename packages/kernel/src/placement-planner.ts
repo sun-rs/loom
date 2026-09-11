@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 import type {
+  AgentDefinitionRevision,
   CapabilityEvidenceLevel,
   ExecutionPolicyRevision,
   IsolationLevel,
@@ -22,6 +23,7 @@ export type PlacementActivationCandidate = {
   participantId: string;
   agentDefinitionRevisionId: string;
   agentEnabled: boolean;
+  executionWorkspace?: AgentDefinitionRevision["executionWorkspace"];
   executionPolicy: ExecutionPolicyRevision;
   workspaceDefinitionId: string;
   priority: number;
@@ -540,10 +542,22 @@ function evaluateOffer(
     addReason(reasons, "isolation_insufficient");
   }
 
+  if (
+    candidate.executionWorkspace?.kind === "agent_private" &&
+    offer.supportsAgentPrivateWorkspace !== true
+  )
+    addReason(reasons, "private_workspace_unsupported");
+
   const workspaceCandidates = offer.workspaceMountDescriptors
     .filter(
       (workspace) =>
-        workspace.workspaceDefinitionId === candidate.workspaceDefinitionId,
+        workspace.workspaceDefinitionId === candidate.workspaceDefinitionId &&
+        (candidate.executionWorkspace?.kind === "agent_private"
+          ? workspace.participantId === candidate.participantId
+          : workspace.participantId === undefined &&
+            (candidate.executionWorkspace?.kind !== "existing_mount" ||
+              workspace.workspaceMountRevisionId ===
+                candidate.executionWorkspace.workspaceMountRevisionId)),
     )
     .sort((left, right) =>
       left.workspaceMountRevisionId.localeCompare(

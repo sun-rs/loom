@@ -452,8 +452,13 @@ export async function runNodeKCarrierComputerServiceFromConfiguration(input: {
       }),
       processId,
       reconcileIntervalMs: configuration.attachmentReconcileIntervalMs,
-      runtimeOffers: async ({ identity }) =>
-        activeRuntimeProfiles.runtimeOffers(identity),
+      runtimeOffers: async ({ identity, executionWorkspaceBindings }) => {
+        if (executionWorkspaceBindings !== undefined)
+          await activeRuntimeProfiles.prepareExecutionWorkspaces(
+            executionWorkspaceBindings,
+          );
+        return activeRuntimeProfiles.runtimeOffers(identity);
+      },
       runtimeProtocolVersion: configuration.runtimeProtocolVersion,
     });
     const selfCommand = runtime.selfCommand ?? currentSelfCommand();

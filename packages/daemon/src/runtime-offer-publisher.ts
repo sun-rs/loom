@@ -24,7 +24,9 @@ export class RuntimeOfferPublisher {
   readonly #runtimeExecutableIdentity:
     RuntimeProfileProbeReport["executableIdentity"] | undefined;
   readonly #runtimeProfileRevision: RuntimeProfileRevision;
-  readonly #workspaceMountDescriptors: WorkspaceMountDescriptor[];
+  #workspaceMountDescriptors: WorkspaceMountDescriptor[];
+  readonly #refreshWorkspaceMountDescriptors:
+    (() => Promise<WorkspaceMountDescriptor[]>) | undefined;
   #lastObservedAtMs = 0;
 
   constructor(input: {
@@ -39,7 +41,12 @@ export class RuntimeOfferPublisher {
     runtimeOfferId: string;
     runtimeProfileRevision: RuntimeProfileRevision;
     workspaceMountDescriptors?: WorkspaceMountDescriptor[];
+    refreshWorkspaceMountDescriptors?: () => Promise<
+      WorkspaceMountDescriptor[]
+    >;
   }) {
+    this.#refreshWorkspaceMountDescriptors =
+      input.refreshWorkspaceMountDescriptors;
     this.#host = input.host;
     this.#kernel = input.kernel;
     this.#leaseMs = input.leaseMs;
@@ -66,12 +73,19 @@ export class RuntimeOfferPublisher {
       while (!signal.aborted) {
         await waitForAbortOrDelay(this.#refreshIntervalMs, signal);
         if (signal.aborted) break;
+        await this.refreshWorkspaceMounts();
         this.#available = await this.#refreshAvailability();
         this.#tryPublish(this.#currentOfferState());
       }
     } finally {
       this.publishUnavailable();
     }
+  }
+
+  async refreshWorkspaceMounts(): Promise<void> {
+    if (this.#refreshWorkspaceMountDescriptors)
+      this.#workspaceMountDescriptors =
+        await this.#refreshWorkspaceMountDescriptors();
   }
 
   publishAvailable(): boolean {
@@ -119,6 +133,9 @@ export class RuntimeOfferPublisher {
     this.#kernel.publishRuntimeOffer(
       this.#host,
       buildRuntimeOfferFromProfile({
+        ...(this.#refreshWorkspaceMountDescriptors
+          ? { supportsAgentPrivateWorkspace: true }
+          : {}),
         hostId: this.#host.hostId,
         hostInstanceId: this.#host.instanceId,
         leaseUntil: new Date(observedAtMs + this.#leaseMs).toISOString(),

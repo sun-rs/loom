@@ -2,6 +2,24 @@
 
 状态：最小 AgentHost、Fake/Generic Runtime、Host generation fencing、deadline、Outbox wake、持久 `prepared -> active` RunAttempt/RuntimeProcess 和 scoped Worker API 已实现；Codex `gpt-5.6-sol/low`、Kimi `kimi-code/k3` 与 OpenCode `deepseek/deepseek-v4-flash/max` 已通过 opt-in 本机完整 Task gate，fake process 已通过 InputRequest 无 listening 恢复 gate。主动逃离 process group 的 descendant、完整 Artifact/Review workflow 和 Windows tree recovery 尚未实现或验证。
 
+## Agent 默认执行目录
+
+支持私有工作区的本地 daemon 以 `supportsAgentPrivateWorkspace` 发布可信能力；新建 Agent 定义显式保存 `executionWorkspace: agent_private`。旧定义缺字段保持既有 mount，显式 `existing_mount` 只接受 Host 已授权的非私有 mount。缺能力的旧 Host 与独立 Computer 不发布该能力，也不能调度私有 Agent。
+
+Kernel 保存定义意图、按 participant 匹配 mount 并冻结 Placement；AgentHost Catalog 唯一解析 Host 路径，按稳定 participant ID 准备独立 cwd。启动、Worker 文件根、prompt cwd、文件浏览与 RuntimeProcess 恢复描述符消费同一冻结 mount；恢复不按当前配置重新猜目录。Host 心跳绑定是认证后完整快照，最多 512 项，超限拒绝而不截断。未准备成功的私有目录不得回退到全局 cwd。
+
+私有 cwd 与既有 Agent 文件记忆分离，不改变记忆 owner。full reset 复用执行围栏与现有完成收据：私有执行目录先隔离，完成决定落盘后只允许 finalize，未完成重启保持阻断；旧共享项目目录不删除。隔离目录保留用于恢复，自动 GC 尚未接入。私有 cwd 是默认路径隔离，不是同一系统用户下的 OS 文件沙箱。实现、上游定位与验证边界见[本地私有 cwd 交付](../audits/2026-09-11-agent-private-cwd-implementation.zh-CN.md)。
+
+## Runtime 级 Guide 设置
+
+用户更新的本地扩展：已接通的 Codex/Claude Guide 默认开启，其他接法等待；已有显式偏好保留。daemon 以 `runtime-guide.json` 保存按 CLI 的 Guide 开关与 revision。它只拥有投递偏好；待处理消息仍由 Kernel Inbox/Activation 唯一持久化。Human 认证 API 与共享 Client SDK 读取/修改，Host 在通知读取前及实际投递前检查偏好，技术能力、会话/工具边界仍由 adapter 检查。关闭不会撤回已提交输入，开启也不确认 read/ACK/Task；传输拒绝仍留在原 follow-up。等待仅延后主动输入，不隐藏已经发布的 Room 消息，Agent 主动读取仍受既有权限与 freshness 规则约束。
+
+当前可选接法为 Codex app-server 与 Claude stream-json；Kimi ACP、OpenCode 尚未接通的 Guide 不可开启，未知 Runtime 默认等待。设置影响下一次尚未开始的投递，运行中可关闭；多页面冲突以 revision 拒绝并要求重读。此开关是用户授权扩展，不能冒称 Raft 已有同样设置。[源码对照](../audits/2026-09-11-runtime-wait-guide-source-matrix.zh-CN.md)。
+
+## 当前原生忙时投递扩展
+
+Codex 已提供可选 notifyBusy：Kernel 只读 pending Inbox 投影经 Host 和既有认证 supervisor，送入当前 turn 的原生 steer。传输回执不推进 canonical read/ACK/Task；未确认输入保留 durable follow-up。Claude 后续接入 gated 工具边界，来源与实际验证见 [Claude/Kimi 后续证据](../audits/2026-09-11-claude-gated-busy-delivery.zh-CN.md)。Kimi 与跨 Activation 常驻仍未据此完成，旧的 live-input 未实施描述应以[当前实施与验证边界](../audits/2026-09-11-codex-native-busy-delivery.zh-CN.md)为准。
+
 ## 1. 承诺边界
 
 RAH OS 不承诺“接入任何 CLI 都零适配”。它承诺：
@@ -191,3 +209,16 @@ AgentPresence 的可选 `trajectoryVersion` 由现有 RuntimeTrajectory owner �
 它不含轨迹正文，不替代读取 ACL、activityAt、Room ACK、Inbox 或 Task 状态。
 Web 复用现有 presence reconciliation，不新增计时器或轨迹缓存；旧 daemon 缺少此字段时
 保留 activityAt 刷新。来源与验证见[审计](../audits/2026-09-07-agent-preview-trajectory-refresh.zh-CN.md)。
+
+## 2026-09-11 投递说明与会话就绪
+
+Runtime adapter 的 `busyInputMode` 与可用 transport、用户 Guide 开关共同决定
+有效模式；Host 投递 admission 与 daemon standing prompt 消费同一判定。
+每个 Run 编译时重读开关，通知说明不承诺运行中开关永远不变。mode 属行为
+默认，参与 provider continuity digest；Room/Host/cwd 仍不参与该摘要。
+
+Claude 匹配的恢复会话才允许 gated 忙时输入；新会话在当前有限进程模型下
+通过后续 Activation 处理积攒内容。session ID 出现不等于新会话已经就绪；
+result 后不再开放输入。恢复失败转新建时重建 gate 并恢复共用输入流读取。
+以上是 Raft readiness 的有限 Run 适配，非 persistent 会话完整移植。
+来源、差异及验证见[本批交付](../audits/2026-09-11-parity-batch-review-and-delivery.zh-CN.md)。

@@ -17,6 +17,10 @@
     "./official-fonts.css": "./src/neo-brutalist/vendor/raft/official-fonts.css",
     "./overlays.css": "./src/neo-brutalist/extracted/raft-official-overlays.css",
     "./styles.css": "./src/neo-brutalist/styles.css",
-    "./tasks.css": "./src/neo-brutalist/extracted/raft-official-tasks.css"
+    "./tasks.css": "./src/neo-brutalist/extracted/raft-official-tasks.css",
+    "./runtime-icons/claude.svg": "./src/runtime-icons/claude.svg",
+    "./runtime-icons/codex.svg": "./src/runtime-icons/codex.svg",
+    "./runtime-icons/kimi.svg": "./src/runtime-icons/kimi.svg",
+    "./runtime-icons/opencode.svg": "./src/runtime-icons/opencode.svg"
   }
 }

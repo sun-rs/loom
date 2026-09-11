@@ -1,3 +1,4 @@
+import type { HostExecutionWorkspaceBinding } from "@rah-os/protocol";
 import { randomUUID } from "node:crypto";
 
 import {
@@ -138,6 +139,7 @@ export type ComputerResidentServiceOptions = {
   reconcileIntervalMs?: number;
   runtimeOffers(
     identity: Readonly<ComputerResidentIdentity>,
+    executionWorkspaceBindings?: readonly HostExecutionWorkspaceBinding[],
   ): Promise<readonly RuntimeOffer[]>;
   runtimeProtocolVersion: number;
   wait?: (delayMs: number, signal: AbortSignal) => Promise<void>;
@@ -459,10 +461,24 @@ export class ComputerResidentService {
       );
     }
 
-    const offers = await this.#runtimeOffers({
-      hostId: session.hostId,
-      hostInstanceId: session.hostInstanceId,
-    });
+    const bindings = heartbeat.executionWorkspaceBindings;
+    if (
+      bindings?.some(
+        (binding) =>
+          !heartbeat.host.participantIds.includes(binding.participantId),
+      )
+    )
+      throw new ComputerControlClientError(
+        "protocol",
+        "Execution binding exceeds authorized Host participant scope",
+      );
+    const offers = await this.#runtimeOffers(
+      {
+        hostId: session.hostId,
+        hostInstanceId: session.hostInstanceId,
+      },
+      bindings,
+    );
     for (const untrustedOffer of offers) {
       const offer = RuntimeOfferSchema.parse(untrustedOffer);
       if (

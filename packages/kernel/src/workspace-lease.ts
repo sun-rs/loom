@@ -9,9 +9,9 @@ import { text } from "./sqlite-row.ts";
  * The set of workspace mounts the placement planner must treat as taken.
  *
  * An `in_place` mount is a mutual exclusion point only when the Kernel is
- * configured `"exclusive"`. The default, `"shared"`, matches upstream Raft,
- * which has no workspace lock at all: every Agent in a Room may answer one
- * Human message concurrently on the same checkout. Under `"exclusive"` the set
+ * configured `"exclusive"`. The default `"shared"` permits concurrent writers
+ * to an explicitly shared mount; it is not Raft workspace isolation. Raft
+ * uses a separate default cwd per Agent. Under `"exclusive"` the set
  * is every live in-place lease plus every in-place placement whose
  * RuntimeProcess has no terminal proof, so an orphan can never share a mount
  * with a new Run.

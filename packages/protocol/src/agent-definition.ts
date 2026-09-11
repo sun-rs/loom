@@ -44,8 +44,36 @@ export const AgentDefinitionSchema = z
   );
 export type AgentDefinition = z.infer<typeof AgentDefinitionSchema>;
 
+export const AgentExecutionWorkspaceSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("agent_private") }).strict(),
+  z
+    .object({
+      kind: z.literal("existing_mount"),
+      workspaceMountRevisionId: IdentifierSchema,
+    })
+    .strict(),
+]);
+export type AgentExecutionWorkspace = z.infer<
+  typeof AgentExecutionWorkspaceSchema
+>;
+
+export const HOST_EXECUTION_WORKSPACE_BINDING_LIMIT = 512;
+
+export const HostExecutionWorkspaceBindingSchema = z
+  .object({
+    participantId: IdentifierSchema,
+    agentDefinitionRevisionId: IdentifierSchema,
+    workspaceDefinitionId: IdentifierSchema,
+    executionWorkspace: AgentExecutionWorkspaceSchema.optional(),
+  })
+  .strict();
+export type HostExecutionWorkspaceBinding = z.infer<
+  typeof HostExecutionWorkspaceBindingSchema
+>;
+
 export const AgentDefinitionRevisionSchema = z
   .object({
+    executionWorkspace: AgentExecutionWorkspaceSchema.optional(),
     agentDefinitionRevisionId: IdentifierSchema,
     agentDefinitionId: IdentifierSchema,
     revision: z.number().int().positive(),

@@ -1,3 +1,4 @@
+import { WorkerAddressingSchema } from "./worker-addressing.ts";
 import { z } from "zod";
 
 import { IdentifierSchema } from "./common.ts";
@@ -56,6 +57,7 @@ export const WorkerSyncResponseSchema = refineRoomSyncWindow(
   z
     .object({
       ...roomSyncResponseShape,
+      addressing: WorkerAddressingSchema.optional(),
       presentedContext: WorkerPresentedContextSchema.optional(),
     })
     .strict(),

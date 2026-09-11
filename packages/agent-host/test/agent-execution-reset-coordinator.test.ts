@@ -324,3 +324,50 @@ test("execution reset fence waits for terminal proof instead of bypassing an act
   assert.equal(attempts, 3);
   assert.equal(releases, 1);
 });
+
+test("a durable reset decision survives finalize failure and replay only finalizes", async () => {
+  const rootDirectory = await mkdtemp(join(tmpdir(), "rah-reset-finalize-"));
+  const calls: string[] = [];
+  const input = {
+    agentDefinitionId: "definition",
+    ownerParticipantId: "owner",
+    operationId: "finalize-op",
+    mode: "full" as const,
+  };
+  const options = {
+    rootDirectory,
+    computerHostId: "host",
+    acquireFence: async () => ({
+      release: async () => {
+        calls.push("release");
+      },
+    }),
+    quarantineAgentWorkspace: async () => ({
+      commit: () => {
+        calls.push("commit");
+        throw new Error("finalize disk failure");
+      },
+      rollback: async () => {
+        calls.push("workspace rollback");
+      },
+    }),
+    quarantineProviderContinuity: async () => ({
+      recordCount: 1,
+      rollback: async () => {
+        calls.push("continuity rollback");
+      },
+    }),
+    finalizeCommittedWorkspace: async (receipt: { operationId: string }) => {
+      assert.equal(receipt.operationId, input.operationId);
+      calls.push("finalize replay");
+    },
+  };
+  const coordinator = new AgentExecutionResetCoordinator(options);
+  await assert.rejects(coordinator.reset(input), /finalize disk failure/);
+  assert.ok(await coordinator.receipt(input.operationId));
+  assert.deepEqual(calls, ["commit"]);
+  const restarted = new AgentExecutionResetCoordinator(options);
+  const replay = await restarted.reset(input);
+  assert.equal(replay.deduplicated, true);
+  assert.deepEqual(calls, ["commit", "finalize replay"]);
+});

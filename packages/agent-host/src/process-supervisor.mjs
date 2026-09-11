@@ -281,7 +281,12 @@ async function launchTarget(socket) {
       detached: true,
       env: process.env,
       shell: false,
-      stdio: ["ignore", "pipe", "pipe", "pipe"],
+      stdio: [
+        config.nativeBusyInput === true ? "pipe" : "ignore",
+        "pipe",
+        "pipe",
+        "pipe",
+      ],
     });
   } catch (error) {
     response(socket, {
@@ -292,6 +297,9 @@ async function launchTarget(socket) {
     return;
   }
 
+  child.stdin?.on("error", () => {
+    /* failed input leaves durable follow-up pending */
+  });
   forwardDiagnostics(child.stdout, process.stdout);
   forwardDiagnostics(child.stderr, process.stderr);
   forwardActivity(child.stdio[3]);
@@ -387,6 +395,31 @@ const server = createServer((socket) => {
     }
     if (command.command === "launch") {
       void launchTarget(socket);
+      return;
+    }
+    if (command.command === "notify") {
+      const input = command.input;
+      if (
+        config.nativeBusyInput !== true ||
+        phase !== "running" ||
+        terminalExit ||
+        leaderExit ||
+        typeof input !== "string" ||
+        Buffer.byteLength(input) > 6000 ||
+        !child?.stdin?.writable ||
+        child.stdin.writableLength > 8192
+      ) {
+        response(socket, { error: "runtime input unavailable", ok: false });
+        return;
+      }
+      child.stdin.write(input, (error) =>
+        response(
+          socket,
+          error
+            ? { error: "runtime input write failed", ok: false }
+            : { ok: true },
+        ),
+      );
       return;
     }
     if (command.command !== "terminate") {

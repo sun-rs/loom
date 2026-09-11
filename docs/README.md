@@ -1,3 +1,31 @@
+[Worker 自动确认与重放实施](./audits/2026-09-11-worker-message-check-implementation.zh-CN.md)：工具负责 ACK，原交付窗口支持新 Run 与服务重启恢复；[Task 批次合同](./audits/2026-09-11-task-batch-contract-closure.zh-CN.md)完成批量子项；[Task 状态统一入口](./audits/2026-09-11-task-status-facade.zh-CN.md)已接线五态，明确 Human 对话批准约定及本地 reviewer/本人任务边界；部署结果见该文。
+
+[Agent 私有默认 cwd 方案](./audits/2026-09-11-agent-private-cwd-plan.zh-CN.md)：施工前源码对照与设计；当前见[私有 cwd 实施记录](./audits/2026-09-11-agent-private-cwd-implementation.zh-CN.md)，尚待主任务全量验收与部署。
+
+[Codex 原生忙时投递](./audits/2026-09-11-codex-native-busy-delivery.zh-CN.md)：当前运行内原回复与追加均落账；Claude/Kimi、后续空运行抑制及严格双边组合仍待收口。
+
+[原生忙时投递施工边界](./audits/2026-09-11-native-busy-delivery-construction.zh-CN.md)：核实当前关闭输入的两条路径，按 Kernel→Host→supervisor→Codex 原生 steer 逐层施工，尚未实现。
+
+[Worker 成员角色显示修复](./audits/2026-09-11-worker-roster-role-repair.zh-CN.md)：room-members/server-info 使用同一 canonical Membership 显示 Room 角色，缺字段不猜权限。
+
+[Task 选择的双边根因实验](./audits/2026-09-11-task-choice-bilateral-root-cause.zh-CN.md)：Raft Codex 同样认领并转 Thread；两侧核验 owner 后显式豁免均直接回复，纠正将 Task 路由当作 RAH 独有串线的判断。
+
+[多 Agent 重复寻址验证](./audits/2026-09-11-target-repeated-verification.zh-CN.md)：OpenCode 四轮与 Codex 纯聊天通过，但两个新 Codex 在实际工作时转入 Task Thread，目标阶段尚未签收。
+
+[核心组合验收](./audits/2026-09-11-core-combination-verification.zh-CN.md)：双Thread、新provider会话记忆与配置恢复；明确区分原失败、独立续验和双边条件限制。
+
+[忙时追加延迟根因](./audits/2026-09-11-busy-latency-root-cause.zh-CN.md)：132秒等待旧运行退出，启动不到1秒；收件箱同步后再次hold已复现，但官网有同类反例，撤回直接判缺陷；忙时投递尚未修复。
+
+[同模型双边验证进展](./audits/2026-09-11-bilateral-matched-runtime-progress.zh-CN.md)：记录配置不匹配的无效样本及双提及条件修正，未冒充完整验收。
+
+[Runtime双边源码预检](./audits/2026-09-11-runtime-bilateral-preflight.zh-CN.md)：逐CLI区分常驻、恢复与投递，包含实际模型/effort反证。
+
+[侧栏共享tooltip](./audits/2026-09-11-shared-rail-tooltip.zh-CN.md)：以Raft zi/Bc/JLe参数替换共享RailButton的原生title，保留帮助菜单及既有点击行为。
+
+[返工与忙时追加验收](./audits/2026-09-11-rework-and-busy-dialogue-acceptance.zh-CN.md)：先验证错误交付经独立审计、返工、再审，再在修复中追加消息。
+
+[双边续验与多轮对话](./audits/2026-09-10-bilateral-and-multiround-acceptance.zh-CN.md)：三轮真实执行/审计无Human催促达到目标并停止；区分追加、返工及官网待验边界。
+
 [Human 消息头像尺寸修复](./audits/2026-09-10-human-message-avatar-size.zh-CN.md)：修复字母头像误用侧栏尺寸，消息 Human／Agent 共用 36px；含浏览器回归。
 
 # RAH OS 文档
@@ -559,3 +587,23 @@ Raft 767px 移动断点、短窗口 50px/36px rail、四项移动根导航、Roo
 - [Conversation / Search 页面族验收](./audits/2026-09-05-conversation-page-family-verification.zh-CN.md)
 
 当前用户优先级（2026-09-08）：[聊天室、私聊、Agent 配置与记忆核心交付基线](./audits/2026-09-08-core-conversation-memory-delivery.zh-CN.md)。其他六组后端差异由独立施工线处理；本报告记录核心专项回归、证据边界与串行验收出口。
+
+当前核心串行收口：[Worker 目标呈现修复与验收边界](./audits/2026-09-11-worker-target-presentation-repair.zh-CN.md)。先验寻址，再推进原生忙时投递，最后严格双边组合复验。
+
+原事故会话的实际续验：[Codex 旧会话跨 Room/DM 寻址复验](./audits/2026-09-11-codex-original-session-target-recheck.zh-CN.md)。四步最终落点通过，DM 首次寻址两次 404 后恢复，未宣布整体收口。
+
+后续修复：[Worker 语义寻址与真实 handle](./audits/2026-09-11-worker-semantic-addressing-repair.zh-CN.md)。按 Raft 源码补齐读取输出的 `#channel` / `dm:@handle`；并纠正旧验收脚本仅缩小配置、未收窄 Host 凭据的隔离误判。
+
+Claude 工具边界追加与 Kimi 原生接口差异：[来源、实施与验证边界](./audits/2026-09-11-claude-gated-busy-delivery.zh-CN.md)。不等同于全 Runtime 常驻会话或严格双边组合验收。
+
+等待发送由 daemon 统一负责、Guide 按 CLI 控制面判定：[安装版本源码能力表与此前结论纠正](./audits/2026-09-11-runtime-wait-guide-source-matrix.zh-CN.md)。包含 Kimi 自带本地服务 steer 与 OpenCode 运行中 prompt 的上游依据；本批仅源码核实，非新功能部署。
+
+[Runtime 级 Guide 开关与等待基线](./audits/2026-09-11-runtime-guide-settings.zh-CN.md)：按 CLI 持久开关，默认等待，未接通的接法禁用；不改变 Room 主动读取可见性。
+
+[投递、会话生命周期与提示词审查（仅建议）](./audits/2026-09-11-delivery-lifecycle-prompt-review.zh-CN.md)：区分陈旧源码注释、实际 prompt 缺口及 Claude fresh/resume 就绪差异；用户要求本批不修改这些后端行为。
+
+[Runtime 设置页重排与默认 Guide](./audits/2026-09-11-runtime-settings-redesign.zh-CN.md)：用户更新为已接通的 Guide 默认开启；修正间距、图标和颜色。生命周期及提示词问题仅审查，未在该批修复。
+
+[六项差异二次核验与分批交付](./audits/2026-09-11-parity-batch-review-and-delivery.zh-CN.md)：纠正旧报告，首批对齐有效投递模式、实际 prompt 与 Claude fresh/resume 就绪，修帮助文本；其余项按证据与 owner 分批。
+
+- [Runtime provider 图标与紧凑卡片](./audits/2026-09-11-runtime-provider-icons-compact.zh-CN.md) — 已通过联合检查并部署，含桌面/手机正式页面验证。

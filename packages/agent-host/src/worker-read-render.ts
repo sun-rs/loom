@@ -1,3 +1,8 @@
+import {
+  WorkerTaskBatchResponseSchema,
+  TaskStateSchema,
+  taskWorkflowStatus,
+} from "@rah-os/protocol";
 /**
  * Raft gives the Agent text, not "text with a JSON option": of its 80 CLI
  * commands 76 default to human-readable output and only 19 carry `--json` at
@@ -117,10 +122,23 @@ function formatPageFooter(command: string, nextCursor: unknown): string {
 
 // ---------------------------------------------------------------- messages --
 
+/** Names are supplied by the authenticated Kernel projection, never inferred. */
+function addressed(message: Json, addressing: unknown): Json {
+  const names = asRecord(addressing);
+  return {
+    ...message,
+    target: asString(asRecord(names.targets)[asString(message.roomId) ?? ""]),
+    senderHandle: asString(
+      asRecord(names.handles)[asString(message.actorId) ?? ""],
+    ),
+  };
+}
+
 /** `formatHistoryMessageLine` (`main.js@675977`). */
 function historyLine(message: Json, index: number, total: number): string {
   const header = [
     `${index + 1}/${total}`,
+    `target=${asString(message.target) ?? asString(message.roomId) ?? "-"}`,
     `seq=${asNumber(message.roomSeq) ?? "-"}`,
     `msg=${asString(message.messageId) ?? "-"}`,
     `time=${time(message.createdAt)}`,
@@ -128,7 +146,7 @@ function historyLine(message: Json, index: number, total: number): string {
   const threadId = asString(message.threadId);
   if (threadId !== undefined) header.push(`threadId=${threadId}`);
   return `[${header.join(" ")}] @${
-    asString(message.actorId) ?? "unknown"
+    asString(message.senderHandle) ?? asString(message.actorId) ?? "unknown"
   }: ${asString(message.body) ?? ""}${formatAttachmentSuffix(
     message.attachments,
   )}`;
@@ -137,13 +155,15 @@ function historyLine(message: Json, index: number, total: number): string {
 /** `formatMessageLine` (`main.js@675944`): the RFC 5424-style message header. */
 function messageLine(message: Json): string {
   const threadId = asString(message.threadId);
-  const target = `${asString(message.roomId) ?? "-"}${
-    threadId === undefined ? "" : `:${threadId}`
+  // UUID targets use the existing separate --thread-id option. The resolver
+  // only accepts a colon suffix on #channel / dm:@handle, not on a Room UUID.
+  const target = `${asString(message.target) ?? asString(message.roomId) ?? "-"}${
+    threadId === undefined ? "" : ` threadId=${threadId}`
   }`;
   return `[target=${target} msg=${
     asString(message.messageId) ?? "-"
   } time=${time(message.createdAt)}] @${
-    asString(message.actorId) ?? "unknown"
+    asString(message.senderHandle) ?? asString(message.actorId) ?? "unknown"
   }: ${asString(message.body) ?? ""}${formatAttachmentSuffix(
     message.attachments,
   )}`;
@@ -188,16 +208,24 @@ function renderHistory(result: Json): string {
     oldest,
   )} ${cursorText("Newer", result.newerCursor !== undefined, "after", newest)}`;
   const body = messages
-    .map((message, index) => historyLine(message, index, count))
+    .map((message, index) =>
+      historyLine(addressed(message, result.addressing), index, count),
+    )
     .join("\n");
   return `${header}\n\n${body}\n\nEnd of window: ${count}/${count} shown.`;
 }
 
 /** `formatMessages([message])` (`main.js@32628007` calls it with one message). */
 function renderMessageResolve(result: Json): string {
-  const lines = [messageLine(asRecord(result.message))];
+  const lines = [
+    messageLine(addressed(asRecord(result.message), result.addressing)),
+  ];
   if (result.rootMessage !== undefined)
-    lines.push("", "Thread root:", messageLine(asRecord(result.rootMessage)));
+    lines.push(
+      "",
+      "Thread root:",
+      messageLine(addressed(asRecord(result.rootMessage), result.addressing)),
+    );
   return lines.join("\n");
 }
 
@@ -356,14 +384,14 @@ function renderSearchPreview(content: string, query: string): string {
 }
 
 /**
- * `renderSearchSource` (`main.js@676045`). Upstream names the target by kind and
- * name — `channel:`, `dm:`, `thread:<parent>:<msg8>` — from the four channel
- * fields its search row carries. RAH's search row is a canonical Message, which
- * carries the Room id and the Thread id and no Room kind or name at all, so the
- * source names the target the way `--target` takes it: the canonical Room id,
- * with `:<threadId>` appended for a Thread.
+ * Raft renderSearchSource names the channel/DM peer. RAH additionally labels
+ * the canonical executable address as target, with its separate Thread option.
+ * Legacy responses without the read-only projection retain a provenance label.
  */
 function renderSearchSource(message: Json): string {
+  const target = asString(message.target);
+  if (target !== undefined)
+    return `target=${escapeSearchComponentLiterals(target)}${asString(message.threadId) === undefined ? "" : ` threadId=${asString(message.threadId)}`}`;
   const roomId = neutralizeRefLiterals(asString(message.roomId) ?? "unknown");
   const threadId = asString(message.threadId);
   return threadId === undefined
@@ -377,7 +405,9 @@ function renderSearchSource(message: Json): string {
  * the search was filter-only.
  */
 function renderMessageSearch(body: Json, result: Json): string {
-  const messages = asArray(result.messages).map(asRecord);
+  const messages = asArray(result.messages).map((value) =>
+    addressed(asRecord(value), result.addressing),
+  );
   if (messages.length === 0) return "No search results.";
   const trimmedQuery = (asString(body.query) ?? "").trim();
   const formatted = messages
@@ -386,7 +416,9 @@ function renderMessageSearch(body: Json, result: Json): string {
         `<result ref="msg:${asString(message.messageId) ?? "-"}">`,
         `Source: ${renderSearchSource(message)}`,
         `Sender: @${neutralizeRefLiterals(
-          asString(message.actorId) ?? "unknown",
+          asString(message.senderHandle) ??
+            asString(message.actorId) ??
+            "unknown",
         )}`,
         `Time: ${time(message.createdAt)}`,
         "",
@@ -419,12 +451,15 @@ function renderMessageSearch(body: Json, result: Json): string {
  * event, and the `formatMessageLine` shape for `message.posted`, so a delivered
  * message body is text on the line rather than a field inside JSON.
  */
-function eventLines(event: Json): string[] {
+function eventLines(rawEvent: Json, addressing?: unknown): string[] {
+  const event = addressed(rawEvent, addressing);
   const payload = asRecord(event.payload);
-  const actor = asString(event.actorId) ?? "unknown";
+  const actor =
+    asString(event.senderHandle) ?? asString(event.actorId) ?? "unknown";
   if (event.type === "message.posted") {
     const threadId = asString(payload.threadId);
     const header = [
+      `target=${asString(event.target) ?? asString(event.roomId) ?? "-"}`,
       `seq=${asNumber(event.roomSeq) ?? "-"}`,
       `msg=${asString(payload.messageId) ?? "-"}`,
       `time=${time(event.createdAt)}`,
@@ -439,7 +474,10 @@ function eventLines(event: Json): string[] {
     const mentions = asArray(payload.recipients)
       .map(asRecord)
       .filter((recipient) => recipient.reason === "mention")
-      .map((recipient) => `@${asString(recipient.participantId) ?? "unknown"}`);
+      .map(
+        (recipient) =>
+          `@${asString(asRecord(asRecord(addressing).handles)[asString(recipient.participantId) ?? ""]) ?? asString(recipient.participantId) ?? "unknown"}`,
+      );
     if (mentions.length > 0) lines.push(`  mentions: ${mentions.join(", ")}`);
     return lines;
   }
@@ -459,7 +497,7 @@ function presentedContextLines(presentedContext: unknown): string[] {
     const threadId = asString(item.threadId);
     lines.push(
       `Already presented: target ${asString(item.roomId) ?? "-"}${
-        threadId === undefined ? "" : `:${threadId}`
+        threadId === undefined ? "" : ` threadId=${threadId}`
       } through seq ${asNumber(item.presentedThroughSeq) ?? "-"}.`,
     );
   }
@@ -497,9 +535,9 @@ function renderSync(result: Json): string {
       : seqs[0] === seqs.at(-1)
         ? String(seqs[0])
         : `${seqs[0]}-${seqs.at(-1)}`;
-  // The cursor is stated on every run, empty window included: unlike Raft's
-  // `message check`, which acks the drained seqs itself, RAH's Agent has to
-  // pass the delivered cursor to `acknowledge --through-seq`.
+  // Keep cursor diagnostics for legacy explicit sync/ACK callers. The normal
+  // message-check tool shares this renderer and confirms delivered pages
+  // itself; the model does not have to carry acknowledgement parameters.
   const sections: string[] = [
     `Sync window: ${events.length} delivered${
       range === undefined ? "" : `, seq ${range}`
@@ -508,7 +546,9 @@ function renderSync(result: Json): string {
     } of ${latest ?? "-"}${events.length === 0 ? "." : ", oldest to newest."}`,
     events.length === 0
       ? "No new inbox messages."
-      : events.flatMap((event) => eventLines(event)).join("\n"),
+      : events
+          .flatMap((event) => eventLines(event, result.addressing))
+          .join("\n"),
   ];
   const presented = presentedContextLines(result.presentedContext);
   if (presented.length > 0) sections.push(presented.join("\n"));
@@ -530,7 +570,7 @@ function renderRoomRead(result: Json): string {
     }${
       asString(result.threadId) === undefined
         ? ""
-        : `:${asString(result.threadId)}`
+        : ` threadId=${asString(result.threadId)}`
     }, seq ${asNumber(result.eventFloorSeq) ?? "-"}-${
       asNumber(result.throughRoomSeq) ?? "-"
     }, ${result.complete === true ? "complete" : "truncated"}, oldest to newest.`,
@@ -548,7 +588,9 @@ function renderRoomRead(result: Json): string {
   sections.push(
     events.length === 0
       ? "No messages in this channel."
-      : events.flatMap((event) => eventLines(event)).join("\n"),
+      : events
+          .flatMap((event) => eventLines(event, result.addressing))
+          .join("\n"),
   );
   const threadContext = asRecord(result.threadContext);
   if (threadContext.history !== undefined)
@@ -568,18 +610,29 @@ const memberStatus = (member: Json) => {
   return state === undefined ? "" : ` (${state})`;
 };
 
+// Raft formatChannelMembers prints roleLabel(a.role). RAH's authority is
+// scoped to canonical Room membership, so keep that scope visible.
+function memberRole(member: Json): string {
+  const membership = asRecord(member.membership);
+  const role = asString(membership.role);
+  return membership.scope === "room" &&
+    (role === "owner" || role === "admin" || role === "member")
+    ? ` [room ${role}]`
+    : "";
+}
+
 function memberLine(member: Json): string {
   const principal = asRecord(member.principal);
   const description = asString(member.description);
   return `  - @${asString(principal.handle) ?? "unknown"}${memberStatus(
     member,
-  )} id=${asString(principal.principalId) ?? "-"}${
+  )}${memberRole(member)} id=${asString(principal.principalId) ?? "-"}${
     description === undefined ? "" : ` — ${description}`
   }`;
 }
 
 const ROLE_NOTE =
-  "Role labels show server-level owner/admin authority; no role label means ordinary member.";
+  "Role labels describe recorded Room membership, not server-wide authority; an absent label means the role was not provided.";
 
 function memberSections(members: Json[]): string {
   let text = "";
@@ -965,6 +1018,44 @@ export function renderWorkerTaskClaimResults(
   return `Claim results (${summary}):\n${lines.join("\n")}${threadHint}`;
 }
 
+function renderTaskBatch(result: Json, create: boolean): string {
+  const response = WorkerTaskBatchResponseSchema.parse(result);
+  const active = response.results
+    .filter((row) => row.success && !row.deleted)
+    .map((row) => ({
+      task: { ...row, roomId: response.roomId, sourceMessageId: row.messageId },
+    }));
+  const removed = response.results
+    .filter((row) => row.deleted)
+    .map(
+      (row) =>
+        `#${row.taskNumber ?? "?"}: previously applied; Task has since been deleted.`,
+    );
+  if (!create)
+    return [
+      renderWorkerTaskClaimResults(
+        active,
+        response.results
+          .filter((row) => !row.success)
+          .map((row) => ({
+            label: row.taskNumber
+              ? `#${row.taskNumber}`
+              : (row.messageId ?? row.taskId ?? "Task"),
+            reason: row.reason,
+          })),
+      ),
+      ...removed,
+    ].join("\n");
+  return [
+    `Created ${active.length} task(s) in ${response.roomId}:`,
+    ...active.map((row) => createdTaskLine(row.task)),
+    ...removed,
+    "",
+    "To follow up in each task's thread:",
+    ...active.map((row) => threadHintLine(row.task)),
+  ].join("\n");
+}
+
 /** `formatTaskAssigned` (`main.js@30205071`). */
 function renderTaskAssigned(result: Json): string {
   const task = asRecord(result.task);
@@ -1126,18 +1217,36 @@ const formatSeq = (value: unknown) =>
 
 /**
  * `formatChannelMuteResult` (`main.js@30113763`). Upstream's `attention` block
- * is server-authored guidance that RAH's response does not carry, so only the
- * three lines it always writes have a counterpart here.
+ * is server-authored optional guidance. Structural port of Raft Computer
+ * 1.0.18 main.js:675385-675401; old responses retain the three-line form.
  */
 function renderChannelAttention(body: Json, result: Json): string {
   const target =
     asString(body.channel) ?? asString(result.roomId) ?? "this Room";
   const muted = result.activityMuted === true;
-  return [
+  const lines = [
     `${muted ? "Muted" : "Unmuted"} ${target}.`,
     `Activity muted: ${muted ? "yes" : "no"}`,
     `Mute from seq: ${formatSeq(result.muteFromSeq)}`,
-  ].join("\n");
+  ];
+  const attention = asRecord(result.attention);
+  const append = (key: string, prefix = "") => {
+    const value = asString(attention[key]);
+    if (value) lines.push(`${prefix}${value}`);
+  };
+  append("ordinaryActivity");
+  const stillArrives = asArray(attention.stillArrives).filter(
+    (item): item is string => typeof item === "string" && item.length > 0,
+  );
+  if (stillArrives.length)
+    lines.push("Still arrives:", ...stillArrives.map((item) => `- ${item}`));
+  append("threadBoundary");
+  append("catchUp");
+  append("unmuteCommand", "To unmute: ");
+  append("unmuteApi", "Agent API: ");
+  append("muteCommand", "To mute: ");
+  append("muteApi", "Agent API: ");
+  return lines.join("\n");
 }
 
 /** `formatUnfollowThreadResult` (`main.js@30129287`), with RAH's command name. */
@@ -1643,6 +1752,10 @@ const RENDERERS: Record<string, (body: Json, result: Json) => string> = {
   "/v1/worker/tasks/claim-message": (_body, result) =>
     renderWorkerTaskClaimResults([result]),
   "/v1/worker/tasks/convert": (_body, result) => renderTaskConverted(result),
+  "/v1/worker/tasks/create-batch": (_body, result) =>
+    renderTaskBatch(result, true),
+  "/v1/worker/tasks/claim-batch": (_body, result) =>
+    renderTaskBatch(result, false),
   "/v1/worker/tasks/create": (_body, result) => renderTaskCreated(result),
   "/v1/worker/tasks/delete": (_body, result) => renderTaskDeleted(result),
   "/v1/worker/tasks/get": (_body, result) => renderTaskGet(result),
@@ -1656,6 +1769,10 @@ const RENDERERS: Record<string, (body: Json, result: Json) => string> = {
     renderTaskStatusUpdated(result),
   "/v1/worker/tasks/review": (_body, result) => renderTaskStatusUpdated(result),
   "/v1/worker/tasks/start": (_body, result) => renderTaskStatusUpdated(result),
+  "/v1/worker/tasks/update-status": (_body, result) => {
+    const task = asRecord(result.task);
+    return `#${asNumber(task.taskNumber) ?? "?"} moved to ${taskWorkflowStatus(TaskStateSchema.parse(task.state))}.`;
+  },
   "/v1/worker/tasks/submission": (_body, result) =>
     renderTaskSubmission(result),
   "/v1/worker/tasks/submit": (_body, result) => renderTaskStatusUpdated(result),

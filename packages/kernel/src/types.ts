@@ -1,3 +1,4 @@
+import type { WorkerAddressing } from "@rah-os/protocol";
 import type {
   Activation,
   ActivationReason,
@@ -137,6 +138,7 @@ export type AgentDefinitionRecord = {
 };
 
 export type WorkspaceAgentProvisionInput = {
+  executionWorkspace?: AgentDefinitionRevision["executionWorkspace"];
   avatarKey?: string;
   basedOnRoomSeq: number;
   controlRoomId: string;
@@ -240,6 +242,7 @@ export type SyncResult = {
  * already shown to this participant.
  */
 export type WorkerSyncResult = SyncResult & {
+  addressing?: WorkerAddressing;
   presentedContext?: WorkerPresentedContext;
 };
 

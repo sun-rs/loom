@@ -1,3 +1,10 @@
+import { WorkerTaskUpdateRequestSchema } from "@rah-os/protocol";
+import { parseWorkerTaskBatchCommand } from "./worker-task-batch-cli.ts";
+import { deriveArtifactPublicationKey } from "./worker-artifact-key.ts";
+import {
+  drainWorkerMessages,
+  writeWorkerCheckOutput,
+} from "./worker-message-check.ts";
 import {
   MESSAGE_HEREDOC_DELIMITER,
   SEND_HELD_AS_DRAFT_MESSAGE,
@@ -346,8 +353,13 @@ export async function runWorkerCliCommand(
         });
         const result = await readBoundedJson(
           response.body,
-          ["/v1/worker/sync", "/v1/worker/rooms/read"].includes(request.path)
-            ? ROOM_SYNC_RESPONSE_MAX_BYTES
+          [
+            "/v1/worker/sync",
+            "/v1/worker/message-check",
+            "/v1/worker/rooms/read",
+          ].includes(request.path)
+            ? ROOM_SYNC_RESPONSE_MAX_BYTES +
+                (request.path === "/v1/worker/message-check" ? 128 : 0)
             : ["/v1/worker/tasks/amend", "/v1/worker/tasks/history"].includes(
                   request.path,
                 )
@@ -361,6 +373,7 @@ export async function runWorkerCliCommand(
             request.path === "/v1/worker/messages/post"
               ? "SEND_FAILED"
               : "READ_FAILED",
+            request.path,
           );
         }
         return result;
@@ -368,6 +381,19 @@ export async function runWorkerCliCommand(
         clearTimeout(timeout);
       }
     };
+    if (arguments_[0] === "worker" && arguments_[1] === "message-check") {
+      await parseWorkerRequest(async () => {
+        const options = parseOptions(arguments_.slice(2), ["replay"]);
+        assertAllowed(options, ["replay"]);
+        return options;
+      });
+      await drainWorkerMessages({
+        send,
+        write: (text) => writeWorkerCheckOutput(runtime.stdout, text),
+        replay: arguments_.includes("--replay"),
+      });
+      return 0;
+    }
     if (artifact) {
       const result = await publishWorkerArtifact(
         arguments_,
@@ -431,91 +457,6 @@ export async function runWorkerCliCommand(
                   : "",
               ),
     );
-    const fanOut = (request as { bodies?: Record<string, unknown>[] }).bodies;
-    if (fanOut !== undefined) {
-      // Raft's `task claim` takes every `--number` in one request and writes
-      // one `formatClaimResults` block. RAH sends one request per Task, so the
-      // rows are gathered and rendered as the single block upstream writes.
-      // RAH sends one request per Task and each commits on its own, so a hold
-      // on a later Task says nothing about the earlier ones. Claims that were
-      // applied are reported first and the hold is appended: replacing the
-      // block with the hold would tell the Agent nothing was applied while the
-      // ledger already holds a claim it made.
-      //
-      // A refusal on a later Task says nothing about the earlier ones either.
-      // Upstream renders per-Task failures as lines inside an exit-0 result
-      // because its server aggregates them; RAH's server refuses per request,
-      // so the refusal stays an error — but the claims that did land must
-      // still be reported, or the CLI states something the ledger contradicts.
-      const claimed: unknown[] = [];
-      const failed: { label: string; reason?: string | undefined }[] = [];
-      let heldClaim: string | undefined;
-      let refusal: unknown;
-      let settled = 0;
-      for (const body of fanOut) {
-        let entry: unknown;
-        try {
-          entry = await send({ body, path: request.path });
-        } catch (error) {
-          // Upstream returns a per-Task result row for an ordinary claim
-          // conflict and carries on with the remaining Tasks; only a transport
-          // or authority failure ends the command. RAH's server refuses per
-          // request, so the conflict arrives as an error — it is turned back
-          // into the row upstream would have returned, and the loop continues.
-          if (
-            error instanceof WorkerCliError &&
-            error.code === "conflict" &&
-            !(error.message ?? "").includes("stale")
-          ) {
-            failed.push({
-              label: claimLabel(body),
-              reason: claimReason(error.message),
-            });
-            settled += 1;
-            continue;
-          }
-          refusal = error;
-          break;
-        }
-        const hold = workerTaskHoldOutput(arguments_[1] ?? "", entry);
-        if (hold === undefined) {
-          claimed.push(entry);
-          settled += 1;
-          continue;
-        }
-        // The remaining Tasks are not attempted: the same stale position would
-        // hold them too, and attempting them would widen what this notice has
-        // to explain.
-        heldClaim = hold;
-        break;
-      }
-      // Upstream attempts every Task in one request; RAH stops at the first
-      // refusal or hold. "Not attempted" is a different fact from "failed", so
-      // it is stated rather than left for the Agent to infer from a short list.
-      const notAttempted = (): string =>
-        fanOut.length - settled - 1 <= 0
-          ? ""
-          : `${String(fanOut.length - settled - 1)} of ${String(fanOut.length)} Tasks in this command were not attempted.\n`;
-      if (refusal !== undefined) {
-        if (claimed.length > 0 || failed.length > 0)
-          runtime.stdout.write(
-            `${renderWorkerTaskClaimResults(claimed, failed)}\n${notAttempted()}`,
-          );
-        throw refusal;
-      }
-      const appliedBlock =
-        claimed.length === 0 && failed.length === 0
-          ? ""
-          : `${renderWorkerTaskClaimResults(claimed, failed)}\n${
-              heldClaim === undefined ? "" : notAttempted()
-            }`;
-      runtime.stdout.write(
-        heldClaim === undefined
-          ? appliedBlock
-          : `${appliedBlock}${heldClaim}\n`,
-      );
-      return 0;
-    }
     const messagePost = request.path === "/v1/worker/messages/post";
     // Raft's `handleMessageSend` calls `setSavedDraft(...)` and then
     // `setFailureDraftSaved(true)` *before* awaiting the send, and skips both
@@ -722,6 +663,17 @@ async function publishWorkerArtifact(
     const resourcePath = messageAttachment
       ? "/v1/worker/attachments"
       : "/v1/worker/artifacts";
+    const artifactKey =
+      !messageAttachment && options["idempotency-key"] === undefined
+        ? await deriveArtifactPublicationKey({
+            file: handle,
+            runAttemptId: context.runtime.env.RAH_RUN_ATTEMPT_ID,
+            taskId: boundedText(options, "task-id", 512),
+            filename: options.filename ?? basename(sourcePath),
+            mimeType: options["mime-type"] ?? "application/octet-stream",
+            size: metadata.size,
+          })
+        : undefined;
     const prepared = uploadSchema.parse(
       await context.send({
         path: `${resourcePath}/prepare`,
@@ -729,11 +681,12 @@ async function publishWorkerArtifact(
           filename: options.filename ?? basename(sourcePath),
           // Raft's upload mints its own `clientRequestId`; the model never
           // carries one. RAH lets the server derive it for a message
-          // attachment, and `artifact-publish` keeps its explicit key.
+          // attachment; Artifact keys derive from Run/content unless explicitly supplied.
           ...(options["idempotency-key"] === undefined && messageAttachment
             ? {}
             : {
-                idempotencyKey: boundedText(options, "idempotency-key", 512),
+                idempotencyKey:
+                  artifactKey ?? boundedText(options, "idempotency-key", 512),
               }),
           mimeType: options["mime-type"] ?? "application/octet-stream",
           size: metadata.size,
@@ -946,8 +899,20 @@ function parseCommand(
                   ? ["unassign"]
                   : [],
     // Raft makes `--number` repeatable on `task claim` and nowhere else.
-    command === "task-claim" ? ["number"] : [],
+    command === "task-claim"
+      ? ["number", "message-id"]
+      : command === "task-create"
+        ? ["title"]
+        : [],
   );
+  if (command === "task-create" || command === "task-claim") {
+    const batch = parseWorkerTaskBatchCommand(
+      command,
+      options,
+      taskCausality(options),
+    );
+    if (batch) return batch;
+  }
   const readCommand = parseWorkerReadCommand(command, options);
   if (readCommand) return readCommand;
   const channelAttentionCommand = parseWorkerChannelAttentionCommand(
@@ -1283,6 +1248,32 @@ function parseCommand(
         body: bodies[0]!,
         ...(bodies.length > 1 ? { bodies } : {}),
         path: "/v1/worker/tasks/claim",
+      };
+    }
+    case "task-update": {
+      assertAllowed(options, [
+        "status",
+        "summary",
+        "based-on-room-seq",
+        "idempotency-key",
+        ...TASK_ADDRESS_OPTIONS,
+      ]);
+      return {
+        path: "/v1/worker/tasks/update-status",
+        body: {
+          ...taskCausality(options),
+          ...taskAddress(options),
+          status: WorkerTaskUpdateRequestSchema.shape.status.parse(
+            options.status,
+          ),
+          ...(options.summary === undefined
+            ? {}
+            : {
+                summary: WorkerTaskUpdateRequestSchema.shape.summary.parse(
+                  boundedText(options, "summary"),
+                ),
+              }),
+        },
       };
     }
     case "task-start":
@@ -1909,6 +1900,7 @@ rah reminder cancel --id ID
 rah reminder snooze --id ID --by 30m
 rah reminder update --id ID (--in 30m|--fire-at ISO|--cadence RULE|--title TEXT) [--tz IANA]
 rah reminder log --id ID
+rah worker message-check [--replay]
 rah worker sync [--after-seq N]
 rah worker acknowledge --through-seq N
 rah worker room-list [--limit N] [--cursor CURSOR]
@@ -1933,7 +1925,7 @@ rah worker task-unblock TASK
 rah worker task-convert --message-id ID
 rah worker task-list [--target TARGET] [--mine] [--status todo|in_progress|in_review|done|closed|all] [--limit N] [--cursor CURSOR]
 rah worker task-history --task-id ID [--target TARGET] [--limit N] [--cursor CURSOR]
-No command needs a causal cursor or an idempotency key: RAH resolves the read position and the operation identity itself.
+Routine Room and Task mutations resolve their read position and operation identity automatically. message-check drains the current Activation and confirms only its delivered pages; --replay re-reads that Activation without completing any Task. Legacy sync/acknowledge remain available for diagnostics. Artifact publication derives its retry identity from the Run and file content; an explicit key remains an optional legacy override.
 Read tools expose current facts in already joined Rooms and DMs without acknowledging Inbox or authorizing newer mutation cursors. Task lists show current projections, not MVCC snapshots.
 rah worker message-search [--query TEXT] [--target TARGET] [--sender @HANDLE|ID] [--sender-id ID] [--after ISO_TIMESTAMP] [--before ISO_TIMESTAMP] [--sort relevance|recent] [--limit N] [--cursor CURSOR]
 rah worker message-react --message-id ID --emoji EMOJI [--remove]
@@ -1947,20 +1939,21 @@ rah worker attachment-comments --attachment-id ID [--limit N] [--before-room-seq
 rah worker attachment-capabilities
 rah worker attachment-cancel --attachment-id ID
 rah worker attachment-download --attachment-id ID --output FILE
-rah worker artifact-publish --task-id ID --path FILE [--filename NAME] [--mime-type TYPE] --idempotency-key KEY
+rah worker artifact-publish --task-id ID --path FILE [--filename NAME] [--mime-type TYPE] [--idempotency-key KEY]
 rah worker artifact-download --attachment-id ID --output FILE
 rah worker task-get TASK
 rah worker task-submission TASK
 rah worker task-trajectory TASK [--limit N] [--before-sequence N]
 Reviewers read the owner's recorded commands and file edits before recording a Review.
 rah worker task-input-status TASK
-rah worker task-create --title TEXT [--assignee PARTICIPANT_ID]
+rah worker task-create --title TEXT [--title TEXT ...] [--target TARGET] [--assignee @HANDLE|PARTICIPANT_ID]
 rah worker task-claim-message --message-id ID --rationale TEXT
-rah worker task-claim --target TARGET --number N [--number N ...]
+rah worker task-claim --target TARGET --number N [--number N ...] [--message-id ID ...]
 rah worker task-start|task-release TASK
 rah worker task-progress TASK --progress TEXT
 rah worker task-block TASK --reason TEXT
 rah worker task-request-input TASK --question TEXT
+rah worker task-update TASK --status todo|in_progress|in_review|done|closed [--summary TEXT]
 rah worker task-submit TASK --summary TEXT [--verification-status passed|failed|not_run --verification-summary TEXT --verification-artifact-ids ID,ID]
 rah worker task-review TASK --disposition approved|changes_requested --summary TEXT
 TASK addresses one Task as --target "#channel" --number N, or as --task-id ID.

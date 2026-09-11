@@ -17,6 +17,7 @@ export type RegistryRuntimeRecovery = Readonly<{
 
 export function createRegistryBackedRuntimeRecovery(input: {
   cwd: string;
+  resolveCwd?: (descriptor: RuntimeRecoveryDescriptor) => string;
   implementations: RuntimeImplementationRegistry;
   registry: RuntimeProfileRegistry;
   supervisorDirectory: string;
@@ -35,6 +36,7 @@ export function createRegistryBackedRuntimeRecovery(input: {
 
 export function createRegistryBackedRuntimeRecoveryFromRegistries(input: {
   cwd: string;
+  resolveCwd?: (descriptor: RuntimeRecoveryDescriptor) => string;
   implementations: RuntimeImplementationRegistry;
   registries: RuntimeProfileRegistry[];
   supervisorDirectory: string;
@@ -90,6 +92,7 @@ function requireImmutableRecoveryProvenance(
 function createRecoveryRuntime(
   input: {
     cwd: string;
+    resolveCwd?: (descriptor: RuntimeRecoveryDescriptor) => string;
     implementations: RuntimeImplementationRegistry;
     supervisorDirectory: string;
   },
@@ -118,7 +121,7 @@ function createRecoveryRuntime(
     revision,
     descriptor.driver,
     {
-      cwd: input.cwd,
+      cwd: input.resolveCwd ? input.resolveCwd(descriptor) : input.cwd,
       supervisorDirectory: input.supervisorDirectory,
     },
   );

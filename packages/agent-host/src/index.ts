@@ -1,3 +1,7 @@
+export {
+  resolveRuntimeDeliveryMode,
+  type RuntimeDeliveryMode,
+} from "./runtime.ts";
 export { AgentHost } from "./agent-host.ts";
 export {
   classifyRuntimeFailure,
@@ -602,3 +606,10 @@ export type {
 export * from "./activation-environment-lease.ts";
 
 export * from "./agent-skills.ts";
+
+export { AgentExecutionWorkspaceCatalog } from "./agent-execution-workspace-catalog.ts";
+export { quarantineAgentExecutionWorkspaceReset } from "./agent-execution-workspace-reset.ts";
+
+export { withRuntimeExecutionWorkspace } from "./runtime-execution-workspace.ts";
+
+export { readAgentExecutionResetReceipt } from "./agent-execution-reset-coordinator.ts";

@@ -239,7 +239,7 @@ test("cross-target posts require a complete signed latest-window receipt without
      */
     const roomContext = (stdout: string) => {
       const header =
-        /^Read window: (\d+) delivered at \S+, seq (\d+)-(\d+), (complete|truncated), oldest to newest\.$/mu.exec(
+        /^Read window: (\d+) delivered at \S+(?: threadId=\S+)?, seq (\d+)-(\d+), (complete|truncated), oldest to newest\.$/mu.exec(
           stdout,
         );
       assert.ok(header, stdout);

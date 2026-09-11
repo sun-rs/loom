@@ -1,6 +1,10 @@
 import type { DatabaseSync } from "node:sqlite";
 
-import { taskWorkflowStatus, type TaskWorkflowStatus } from "@rah-os/protocol";
+import {
+  taskWorkflowStatus,
+  type TaskWorkflowStatus,
+  type ActivationCredentialScope,
+} from "@rah-os/protocol";
 
 import type { AuthenticatedActorContext } from "./auth.ts";
 import {
@@ -9,6 +13,7 @@ import {
 } from "./collaboration-policy.ts";
 import {
   ConflictError,
+  ForbiddenError,
   IdempotencyConflictError,
   NotFoundError,
   StaleContextError,
@@ -18,6 +23,8 @@ import type { RoomEventWriter } from "./room-event-writer.ts";
 import { integer, nullableText, text, type Row } from "./sqlite-row.ts";
 import { taskProjectionFromRow } from "./task-projection.ts";
 import type { TaskCreateMutationResult } from "./types.ts";
+import { requireWorkerTaskDelivery } from "./worker-task-scope.ts";
+import { assertWorkerTaskFreshContext } from "./task-intent.ts";
 import { requestActiveTaskExecutionCancellation } from "./activation-cancellation.ts";
 
 export type TaskLifecycleServiceOptions = {
@@ -109,108 +116,140 @@ export class TaskLifecycleService {
         },
         actorId,
       );
-      const replay = this.#findReplay(roomId, input.idempotencyKey);
-      if (replay !== undefined) {
-        return this.#taskReplay(
-          replay,
-          actorId,
-          input.taskId,
-          "task.cancelled",
-        );
-      }
-      this.#assertFresh(roomId, input.basedOnRoomSeq);
-      const previousState = text(taskRow, "state");
-      if (previousState === "completed" || previousState === "cancelled") {
-        throw new ConflictError(
-          `Task ${input.taskId} cannot be cancelled from state ${previousState}`,
-        );
-      }
+      return this.#cancelTaskProjection(actorId, taskRow, input, reason);
+    });
+  }
 
-      const cancelledAt = this.#now().toISOString();
-      const pendingInputRequest = this.#database
+  /** Called inside the authenticated Worker status transaction. Self-close ends
+   * one Task, not the provider process that may be working on other Tasks. */
+  cancelOwnedWorkerTask(
+    scope: ActivationCredentialScope,
+    input: { taskId: string; basedOnRoomSeq: number; idempotencyKey: string },
+  ): TaskCreateMutationResult {
+    const task = requireWorkerTaskDelivery(this.#database, scope, input.taskId);
+    if (nullableText(task, "assignee_id") !== scope.participantId)
+      throw new ForbiddenError("Only this Task's assignee may close it");
+    return this.#cancelTaskProjection(
+      scope.participantId,
+      task,
+      input,
+      "Closed by the assigned Agent through task-update",
+      scope,
+    );
+  }
+
+  #cancelTaskProjection(
+    actorId: string,
+    taskRow: Row,
+    input: { taskId: string; basedOnRoomSeq: number; idempotencyKey: string },
+    reason: string,
+    scope?: ActivationCredentialScope,
+  ): TaskCreateMutationResult {
+    const roomId = text(taskRow, "room_id");
+    const replay = this.#findReplay(roomId, input.idempotencyKey);
+    if (replay !== undefined) {
+      return this.#taskReplay(replay, actorId, input.taskId, "task.cancelled");
+    }
+    if (scope)
+      assertWorkerTaskFreshContext(
+        this.#database,
+        scope,
+        input.basedOnRoomSeq,
+        input.taskId,
+      );
+    else this.#assertFresh(roomId, input.basedOnRoomSeq);
+    const previousState = text(taskRow, "state");
+    if (previousState === "completed" || previousState === "cancelled") {
+      throw new ConflictError(
+        `Task ${input.taskId} cannot be cancelled from state ${previousState}`,
+      );
+    }
+
+    const cancelledAt = this.#now().toISOString();
+    const pendingInputRequest = this.#database
+      .prepare(
+        "SELECT input_request_id FROM input_requests WHERE task_id = ? AND state = 'pending'",
+      )
+      .get(input.taskId);
+    const cancelledInputRequestId =
+      pendingInputRequest === undefined
+        ? undefined
+        : text(pendingInputRequest, "input_request_id");
+    const claimedBy = nullableText(taskRow, "claimed_by");
+    const cancellationRequestId =
+      claimedBy === null || scope !== undefined
+        ? undefined
+        : requestActiveTaskExecutionCancellation({
+            actorId,
+            createId: this.#createId,
+            database: this.#database,
+            participantId: claimedBy,
+            reason,
+            requestedAt: cancelledAt,
+            roomId,
+            taskId: input.taskId,
+          });
+    if (cancelledInputRequestId !== undefined) {
+      this.#database
         .prepare(
-          "SELECT input_request_id FROM input_requests WHERE task_id = ? AND state = 'pending'",
-        )
-        .get(input.taskId);
-      const cancelledInputRequestId =
-        pendingInputRequest === undefined
-          ? undefined
-          : text(pendingInputRequest, "input_request_id");
-      const claimedBy = nullableText(taskRow, "claimed_by");
-      const cancellationRequestId =
-        claimedBy === null
-          ? undefined
-          : requestActiveTaskExecutionCancellation({
-              actorId,
-              createId: this.#createId,
-              database: this.#database,
-              participantId: claimedBy,
-              reason,
-              requestedAt: cancelledAt,
-              roomId,
-              taskId: input.taskId,
-            });
-      if (cancelledInputRequestId !== undefined) {
-        this.#database
-          .prepare(
-            `UPDATE input_requests
+          `UPDATE input_requests
              SET state = 'cancelled', cancelled_at = ?, cancelled_by = ?,
                  cancellation_reason = ?, updated_at = ?
              WHERE input_request_id = ? AND state = 'pending'`,
-          )
-          .run(
-            cancelledAt,
-            actorId,
-            reason,
-            cancelledAt,
-            cancelledInputRequestId,
-          );
-      }
-      this.#database
-        .prepare(
-          "UPDATE tasks SET state = 'cancelled', claimed_by = NULL, claim_until = NULL, claim_until_ms = NULL, blocked_reason = NULL, blocked_at = NULL, cancellation_reason = ?, cancelled_at = ?, updated_at = ? WHERE task_id = ?",
         )
-        .run(reason, cancelledAt, cancelledAt, input.taskId);
-      const event = this.#events.append({
-        actorId,
-        aggregateId: input.taskId,
-        aggregateType: "task",
-        idempotencyKey: input.idempotencyKey,
-        payload: {
-          basedOnRoomSeq: input.basedOnRoomSeq,
+        .run(
           cancelledAt,
-          ...(cancelledInputRequestId === undefined
-            ? {}
-            : { cancelledInputRequestId }),
-          ...(cancellationRequestId === undefined
-            ? {}
-            : { activationCancellationRequestId: cancellationRequestId }),
-          previousState,
+          actorId,
           reason,
-          taskId: input.taskId,
-        },
-        roomId,
-        type: "task.cancelled",
-      });
-      const assigneeId = nullableText(taskRow, "assignee_id");
-      const activationIds =
-        assigneeId === null || assigneeId === actorId
-          ? []
-          : this.#events.deriveAttention(
-              event,
-              [{ participantId: assigneeId, reason: "task_updated" }],
-              cancelledAt,
-            );
-      return {
-        activationIds,
-        deduplicated: false,
-        event,
-        task: taskProjectionFromRow(
-          this.#database,
-          this.#requireTask(input.taskId),
-        ),
-      };
+          cancelledAt,
+          cancelledInputRequestId,
+        );
+    }
+    this.#database
+      .prepare(
+        "UPDATE tasks SET state = 'cancelled', claimed_by = NULL, claim_until = NULL, claim_until_ms = NULL, blocked_reason = NULL, blocked_at = NULL, cancellation_reason = ?, cancelled_at = ?, updated_at = ? WHERE task_id = ?",
+      )
+      .run(reason, cancelledAt, cancelledAt, input.taskId);
+    const event = this.#events.append({
+      actorId,
+      aggregateId: input.taskId,
+      aggregateType: "task",
+      idempotencyKey: input.idempotencyKey,
+      payload: {
+        basedOnRoomSeq: input.basedOnRoomSeq,
+        ...(scope ? { runAttemptId: scope.runAttemptId } : {}),
+        cancelledAt,
+        ...(cancelledInputRequestId === undefined
+          ? {}
+          : { cancelledInputRequestId }),
+        ...(cancellationRequestId === undefined
+          ? {}
+          : { activationCancellationRequestId: cancellationRequestId }),
+        previousState,
+        reason,
+        taskId: input.taskId,
+      },
+      roomId,
+      type: "task.cancelled",
     });
+    const assigneeId = nullableText(taskRow, "assignee_id");
+    const activationIds =
+      assigneeId === null || assigneeId === actorId
+        ? []
+        : this.#events.deriveAttention(
+            event,
+            [{ participantId: assigneeId, reason: "task_updated" }],
+            cancelledAt,
+          );
+    return {
+      activationIds,
+      deduplicated: false,
+      event,
+      task: taskProjectionFromRow(
+        this.#database,
+        this.#requireTask(input.taskId),
+      ),
+    };
   }
 
   reopenTask(

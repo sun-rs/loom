@@ -188,6 +188,7 @@ export function workerServerFailureError(
   value: unknown,
   status: number,
   fallbackCode: string,
+  requestPath?: string,
 ): WorkerCliError {
   const error =
     typeof value === "object" &&
@@ -216,14 +217,26 @@ export function workerServerFailureError(
     rawNextAction.length <= 4_000
       ? rawNextAction
       : undefined;
+  // Raft SEA 1.0.18 main.js:675452-675456 labels the failed Channel action,
+  // while retaining the backend message and recovery guidance.
+  // Task update uses the same rule at main.js:730455-730460.
+  const operationCode =
+    requestPath === "/v1/worker/channels/mute"
+      ? "MUTE_FAILED"
+      : requestPath === "/v1/worker/channels/unmute"
+        ? "UNMUTE_FAILED"
+        : requestPath === "/v1/worker/tasks/update-status"
+          ? "UPDATE_FAILED"
+          : undefined;
   const code =
     status >= 500
       ? serverCode === undefined || serverCode === "internal_error"
         ? "SERVER_5XX"
         : serverCode
-      : serverCode === undefined
-        ? fallbackCode
-        : (RAFT_SERVER_CODE_SPELLING[serverCode] ?? serverCode);
+      : (operationCode ??
+        (serverCode === undefined
+          ? fallbackCode
+          : (RAFT_SERVER_CODE_SPELLING[serverCode] ?? serverCode)));
   return new WorkerCliError(
     code,
     `Worker API HTTP ${String(status)}${

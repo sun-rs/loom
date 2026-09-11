@@ -1,3 +1,17 @@
+import { completeTaskTransaction } from "./task-completion.ts";
+import {
+  releaseTaskTransaction,
+  transitionOwnedTaskTransaction,
+} from "./task-execution-transitions.ts";
+import { workerDeliveryReplayStart } from "./worker-delivery-window.ts";
+import { claimTaskTransaction, type TaskClaimInput } from "./task-claim.ts";
+import { projectPlacementCandidates } from "./placement-candidate-projection.ts";
+import { assertRuntimeWorkspaceProvenance } from "./runtime-workspace-provenance.ts";
+import { listHostExecutionWorkspaceBindings } from "./host-execution-workspaces.ts";
+import type { RuntimeNoticeInput } from "./runtime-pending-notice.ts";
+import { renewValidatedActivationLease } from "./activation-lease-renewal.ts";
+import { pendingRuntimeNotice } from "./runtime-pending-notice.ts";
+import { workerAddressingBudget } from "./worker-addressing.ts";
 import { WorkerTargetContextService } from "./worker-target-context.ts";
 import { AttachmentCommentsService } from "./attachment-comments.ts";
 import { AgentChannelAttentionService } from "./agent-channel-attention.ts";
@@ -12,7 +26,7 @@ import { DatabaseSync } from "node:sqlite";
 import { GlobalDiscovery } from "./global-discovery.ts";
 import { initializeDiscoverySchema } from "./discovery-schema.ts";
 import { migrateLegacyTaskSchema } from "./legacy-task-schema.ts";
-import { collectWorkerPresentedContext } from "./worker-presented-context.ts";
+import { presentWorkerSync } from "./worker-sync-presentation.ts";
 import { migrateWorkerTargetReadPositions } from "./worker-target-read-position.ts";
 import {
   expireHeldMessageDraftsAt,
@@ -261,7 +275,6 @@ import {
   resolveWorkerTaskNumber,
   type WorkerTaskAddress,
 } from "./worker-task-address.ts";
-import { annotateTaskAnchoredEvents } from "./task-anchor-annotation.ts";
 import {
   listTaskProjectionPage,
   requireRoomTaskProjection,
@@ -353,7 +366,7 @@ import {
 const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 54;
+export const KERNEL_SCHEMA_VERSION = 55;
 export class RoomKernel {
   readonly databasePath: string;
   readonly #database: DatabaseSync;
@@ -537,6 +550,27 @@ export class RoomKernel {
       transaction: (operation) => this.#transaction(operation),
     });
     this.workerTaskManagement = new WorkerTaskManagementService({
+      completeTask: (scope, input) =>
+        completeTaskTransaction(
+          {
+            database: this.#database,
+            events: this.#roomEvents,
+            now: this.#now,
+            assertCompletionAllowed: (taskId) =>
+              this.#taskReviews.assertCompletionAllowed(taskId),
+            assertFresh: () =>
+              assertWorkerTaskFreshContext(
+                this.#database,
+                scope,
+                input.basedOnRoomSeq,
+                input.taskId,
+              ),
+          },
+          scope.participantId,
+          { ...input, runAttemptId: scope.runAttemptId },
+        ),
+      cancelTask: (scope, input) =>
+        this.#taskLifecycle.cancelOwnedWorkerTask(scope, input),
       database: this.#database,
       events: this.#roomEvents,
       createId: this.#createId,
@@ -1856,110 +1890,15 @@ export class RoomKernel {
 
   claimTask(
     execution: AuthenticatedWorkerExecutionContext,
-    input: {
-      basedOnRoomSeq: number;
-      idempotencyKey: string;
-      leaseMs: number;
-      taskId: string;
-    },
+    input: TaskClaimInput,
   ): TaskMutationResult {
-    return this.#transaction(() => {
-      const scope = this.#requireAuthenticatedWorkerExecution(execution);
-      const taskRow = this.#requireWorkerTask(scope, input.taskId);
-      const replay = this.#replayWorkerTaskCommand(taskRow, scope, {
-        eventType: "task.claimed",
-        idempotencyKey: input.idempotencyKey,
-      });
-      if (replay !== null) return replay;
-      this.#assertPositiveTaskLease(input.leaseMs);
-      const existingAssignee = nullableText(taskRow, "assignee_id");
-      if (
-        existingAssignee !== null &&
-        existingAssignee !== scope.participantId
-      ) {
-        throw new LeaseConflictError(
-          `Task ${input.taskId} is owned by another Agent`,
-        );
-      }
-      const incompleteDependency = this.#database
-        .prepare(
-          `SELECT task_dependencies.dependency_task_id
-           FROM task_dependencies
-           JOIN tasks AS dependency
-             ON dependency.task_id = task_dependencies.dependency_task_id
-           WHERE task_dependencies.task_id = ?
-             AND dependency.state <> 'completed'
-           ORDER BY task_dependencies.dependency_task_id
-           LIMIT 1`,
-        )
-        .get(input.taskId);
-      if (incompleteDependency !== undefined) {
-        throw new ConflictError(
-          `Task ${input.taskId} is waiting for dependency ${text(incompleteDependency, "dependency_task_id")}`,
-        );
-      }
-      assertWorkerTaskFreshContext(
-        this.#database,
-        scope,
-        input.basedOnRoomSeq,
-        input.taskId,
-      );
-
-      const previousState = text(taskRow, "state");
-      const previousClaimedBy = nullableText(taskRow, "claimed_by");
-      const previousClaimUntil = nullableText(taskRow, "claim_until");
-      const previousClaimUntilMs = nullableInteger(taskRow, "claim_until_ms");
-      const claimIsActive =
-        (previousState === "claimed" || previousState === "in_progress") &&
-        previousClaimUntilMs !== null &&
-        previousClaimUntilMs > this.#now().getTime();
-      if (previousState !== "todo" && !claimIsActive) {
-        if (previousState !== "claimed" && previousState !== "in_progress") {
-          throw new ConflictError(
-            `Task ${input.taskId} cannot be claimed from state ${previousState}`,
-          );
-        }
-      }
-      if (claimIsActive) {
-        throw new LeaseConflictError(
-          `Task ${input.taskId} already has an active claim`,
-        );
-      }
-
-      const now = this.#now();
-      const updatedAt = now.toISOString();
-      const claimUntil = new Date(now.getTime() + input.leaseMs).toISOString();
-      this.#database
-        .prepare(
-          "UPDATE tasks SET state = 'claimed', assignee_id = ?, claimed_by = ?, claim_until = ?, claim_until_ms = ?, updated_at = ? WHERE task_id = ?",
-        )
-        .run(
-          scope.participantId,
-          scope.participantId,
-          claimUntil,
-          now.getTime() + input.leaseMs,
-          updatedAt,
-          input.taskId,
-        );
-      const event = this.#appendWorkerTaskEvent(scope, {
-        basedOnRoomSeq: input.basedOnRoomSeq,
-        eventType: "task.claimed",
-        idempotencyKey: input.idempotencyKey,
-        payload: {
-          claimedBy: scope.participantId,
-          claimUntil,
-          ...(previousClaimedBy === null ? {} : { previousClaimedBy }),
-          ...(previousClaimUntil === null ? {} : { previousClaimUntil }),
-          previousState,
-        },
-        taskId: input.taskId,
-      });
-      return {
-        deduplicated: false,
-        event,
-        task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
-      };
-    });
+    return this.#transaction(() =>
+      claimTaskTransaction(
+        { database: this.#database, events: this.#roomEvents, now: this.#now },
+        this.#requireAuthenticatedWorkerExecution(execution),
+        input,
+      ),
+    );
   }
 
   startTask(
@@ -2009,84 +1948,18 @@ export class RoomKernel {
       taskId: string;
     },
   ): TaskCreateMutationResult {
-    return this.#transaction(() => {
-      const scope = this.#requireAuthenticatedWorkerExecution(execution);
-      const taskRow = this.#requireWorkerTask(scope, input.taskId);
-      const replay = this.#replayWorkerTaskCommand(taskRow, scope, {
-        eventType: "task.released",
-        idempotencyKey: input.idempotencyKey,
-      });
-      if (replay !== null) return { ...replay, activationIds: [] };
-      assertWorkerTaskFreshContext(
-        this.#database,
-        scope,
-        input.basedOnRoomSeq,
-        input.taskId,
-      );
-      const previousState = text(taskRow, "state");
-      if (previousState !== "claimed" && previousState !== "in_progress") {
-        throw new ConflictError(
-          `Task ${input.taskId} cannot be released from state ${previousState}`,
-        );
-      }
-      requireOwnedTaskClaim(
-        taskRow,
-        scope.participantId,
-        previousState,
-        this.#now().getTime(),
-      );
-
-      const releasedAt = this.#timestamp();
-      const previousParticipants = this.#database
-        .prepare(
-          "SELECT participant_id, role FROM task_participants WHERE task_id = ? ORDER BY participant_id, role",
-        )
-        .all(input.taskId);
-      this.#database
-        .prepare(
-          "UPDATE tasks SET state = 'todo', assignee_id = NULL, claimed_by = NULL, claim_until = NULL, claim_until_ms = NULL, updated_at = ? WHERE task_id = ?",
-        )
-        .run(releasedAt, input.taskId);
-      this.#database
-        .prepare("DELETE FROM task_participants WHERE task_id = ?")
-        .run(input.taskId);
-      const event = this.#appendWorkerTaskEvent(scope, {
-        basedOnRoomSeq: input.basedOnRoomSeq,
-        eventType: "task.released",
-        idempotencyKey: input.idempotencyKey,
-        payload: {
-          previousAssigneeId: scope.participantId,
-          previousCollaboratorIds: previousParticipants
-            .filter(
-              (participant) => text(participant, "role") === "collaborator",
-            )
-            .map((participant) => text(participant, "participant_id")),
-          previousReviewerIds: previousParticipants
-            .filter((participant) => text(participant, "role") === "reviewer")
-            .map((participant) => text(participant, "participant_id")),
-          previousState,
-          releasedAt,
+    return this.#transaction(() =>
+      releaseTaskTransaction(
+        {
+          database: this.#database,
+          events: this.#roomEvents,
+          createId: this.#createId,
+          now: this.#now,
         },
-        taskId: input.taskId,
-      });
-      const recipients = ar.listRoomAgentRecipients(
-        this.#database,
-        scope.roomId,
-        "task_available",
-        scope.participantId,
-      );
-      const activationIds = this.#deriveAttention(
-        event,
-        recipients,
-        releasedAt,
-      );
-      return {
-        activationIds,
-        deduplicated: false,
-        event,
-        task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
-      };
-    });
+        this.#requireAuthenticatedWorkerExecution(execution),
+        input,
+      ),
+    );
   }
 
   blockTask(
@@ -2611,122 +2484,25 @@ export class RoomKernel {
         { creatorId: text(taskRow, "creator_id"), roomId },
         actorId,
       );
-      const previous = findRoomEventByIdempotencyKey(
-        this.#database,
-        roomId,
-        input.idempotencyKey,
-      );
-      if (previous !== undefined) {
-        const event = assertTaskEventReplay(this.#eventFromRow(previous), {
-          actorId,
-          aggregateId: input.taskId,
-          eventType: "task.completed",
-          payload: { basedOnRoomSeq: input.basedOnRoomSeq },
-        });
-        return {
-          activationIds: [],
-          deduplicated: true,
-          event,
-          task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
-        };
-      }
-      if (input.basedOnRoomSeq === undefined) {
-        throw new StaleContextError(
-          undefined,
-          integer(this.#requireRoom(roomId), "next_seq") - 1,
-        );
-      }
-      this.#assertFreshContext(roomId, actorId, input.basedOnRoomSeq);
-      if (text(taskRow, "state") !== "submitted") {
-        throw new ConflictError(
-          `Task ${input.taskId} can only be completed from submitted`,
-        );
-      }
-      this.#taskReviews.assertCompletionAllowed(input.taskId);
-      const completedAt = this.#timestamp();
-      this.#database
-        .prepare(
-          "UPDATE tasks SET state = 'completed', completed_at = ?, updated_at = ? WHERE task_id = ?",
-        )
-        .run(completedAt, completedAt, input.taskId);
-      const readyTasks = this.#database
-        .prepare(
-          `SELECT candidate.*
-           FROM task_dependencies
-           JOIN tasks AS candidate
-             ON candidate.task_id = task_dependencies.task_id
-           WHERE task_dependencies.dependency_task_id = ?
-             AND candidate.state = 'todo'
-             AND NOT EXISTS (
-               SELECT 1
-               FROM task_dependencies AS remaining
-               JOIN tasks AS dependency
-                 ON dependency.task_id = remaining.dependency_task_id
-               WHERE remaining.task_id = candidate.task_id
-                 AND dependency.state <> 'completed'
-             )
-           ORDER BY candidate.task_id`,
-        )
-        .all(input.taskId);
-      const readyTaskIds = readyTasks.map((readyTask) =>
-        text(readyTask, "task_id"),
-      );
-      const event = this.#appendEvent({
-        actorId,
-        aggregateId: input.taskId,
-        aggregateType: "task",
-        idempotencyKey: input.idempotencyKey,
-        payload: {
-          basedOnRoomSeq: input.basedOnRoomSeq,
-          completedAt,
-          readyTaskIds,
-          taskId: input.taskId,
+      return completeTaskTransaction(
+        {
+          database: this.#database,
+          events: this.#roomEvents,
+          now: this.#now,
+          assertCompletionAllowed: (taskId) =>
+            this.#taskReviews.assertCompletionAllowed(taskId),
+          assertFresh: () => {
+            if (input.basedOnRoomSeq === undefined)
+              throw new StaleContextError(
+                undefined,
+                integer(this.#requireRoom(roomId), "next_seq") - 1,
+              );
+            this.#assertFreshContext(roomId, actorId, input.basedOnRoomSeq);
+          },
         },
-        roomId,
-        type: "task.completed",
-      });
-      const recipientMap = new Map<string, MessageRecipient>();
-      for (const readyTask of readyTasks) {
-        const assigneeId = nullableText(readyTask, "assignee_id");
-        const recipients =
-          assigneeId === null
-            ? ar.listRoomAgentRecipients(
-                this.#database,
-                roomId,
-                "dependency_resolved",
-              )
-            : [
-                {
-                  participantId: assigneeId,
-                  reason: "dependency_resolved" as const,
-                },
-                ...this.#database
-                  .prepare(
-                    "SELECT participant_id FROM task_participants WHERE task_id = ? AND role = 'collaborator' ORDER BY participant_id",
-                  )
-                  .all(text(readyTask, "task_id"))
-                  .map((participant) => ({
-                    participantId: text(participant, "participant_id"),
-                    reason: "task_collaboration" as const,
-                  })),
-              ];
-        for (const recipient of recipients) {
-          recipientMap.set(recipient.participantId, recipient);
-        }
-      }
-      const activationIds = this.#deriveAttention(
-        event,
-        [...recipientMap.values()].sort((left, right) =>
-          left.participantId.localeCompare(right.participantId),
-        ),
-        completedAt,
+        actorId,
+        input,
       );
-      return {
-        activationIds,
-        deduplicated: false,
-        event,
-        task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
-      };
     });
   }
 
@@ -3281,6 +3057,10 @@ export class RoomKernel {
     });
   }
 
+  listHostExecutionWorkspaceBindings(host: AuthenticatedHostContext) {
+    return listHostExecutionWorkspaceBindings(this.#database, host);
+  }
+
   publishRuntimeOffer(
     host: AuthenticatedHostContext,
     untrustedOffer: RuntimeOffer,
@@ -3729,6 +3509,11 @@ export class RoomKernel {
           `run attempt ${input.runAttemptId} is not starting`,
         );
       }
+      assertRuntimeWorkspaceProvenance(
+        this.#database,
+        runAttempt,
+        recoveryDescriptor,
+      );
       const existing = this.#database
         .prepare("SELECT * FROM runtime_processes WHERE run_attempt_id = ?")
         .get(input.runAttemptId);
@@ -4439,6 +4224,33 @@ export class RoomKernel {
     });
   }
 
+  readPendingRuntimeNotice(
+    host: AuthenticatedHostContext,
+    input: RuntimeNoticeInput,
+  ) {
+    const authenticatedHost = this.#requireAuthenticatedHost(host);
+    const activation = this.#requireActivationRow(input.activationId);
+    this.#requireHostParticipant(
+      authenticatedHost,
+      text(activation, "participant_id"),
+    );
+    this.#requireActivationLease(activation, authenticatedHost.hostId);
+    this.#requireActivationHostGeneration(activation, authenticatedHost);
+    const run = this.#requireRunAttemptRow(input.runAttemptId);
+    this.#requireRunAttemptOwner(run, authenticatedHost.hostId);
+    this.#requireRunAttemptHostGeneration(run, authenticatedHost);
+    if (
+      text(run, "activation_id") !== input.activationId ||
+      text(run, "state") !== "running" ||
+      integer(run, "attempt_number") !== integer(activation, "attempt_count")
+    ) {
+      throw new ExecutionFencedError(
+        "runtime notice requires the current running attempt",
+      );
+    }
+    return pendingRuntimeNotice(this.#database, activation, input);
+  }
+
   renewActivationLease(
     host: AuthenticatedHostContext,
     input: { activationId: string; leaseMs: number },
@@ -4455,30 +4267,11 @@ export class RoomKernel {
       );
       this.#requireActivationLease(row, authenticatedHost.hostId);
       this.#requireActivationHostGeneration(row, authenticatedHost);
-      const cancellation = unresolvedActivationCancellation(
+      return renewValidatedActivationLease(
         this.#database,
         row,
-      );
-      if (cancellation !== undefined) {
-        throw new ActivationCancellationRequestedError(
-          text(cancellation, "reason"),
-        );
-      }
-      requireAgentExecutionEnabled(this.#database, text(row, "participant_id"));
-      const now = this.#now();
-      const leaseUntil = new Date(now.getTime() + input.leaseMs);
-      this.#database
-        .prepare(
-          "UPDATE activations SET lease_until = ?, lease_until_ms = ?, updated_at = ? WHERE activation_id = ?",
-        )
-        .run(
-          leaseUntil.toISOString(),
-          leaseUntil.getTime(),
-          now.toISOString(),
-          input.activationId,
-        );
-      return activationProjectionFromRow(
-        this.#requireActivationRow(input.activationId),
+        input.leaseMs,
+        this.#now,
       );
     });
   }
@@ -4865,34 +4658,29 @@ export class RoomKernel {
 
   syncWorker(
     execution: AuthenticatedWorkerExecutionContext,
-    input: { afterSeq?: number; limit?: number },
+    input: { afterSeq?: number; limit?: number; replayDelivery?: boolean },
   ): WorkerSyncResult {
     return this.#transaction(() => {
       const scope = this.#requireAuthenticatedWorkerExecution(execution);
-      const delivery = this.#syncForParticipant(scope.participantId, {
-        ...input,
-        consumerId: scope.consumerId,
-        roomId: scope.roomId,
-        throughSeq: scope.toSeq,
-      });
-      // Read-only: the delivered events, the actionable range and the
-      // acknowledge fence are untouched; only the facts this participant would
-      // otherwise re-derive are attached.
-      const presentedContext = collectWorkerPresentedContext(this.#database, {
-        events: delivery.events,
-        participantId: scope.participantId,
-        roomId: scope.roomId,
-      });
-      // Raft renders a Task-anchored message with its `[task #N status=...]`
-      // suffix wherever the Agent reads it, sync included. Presentation only:
-      // the stored event ledger is untouched.
-      const annotated = {
-        ...delivery,
-        events: annotateTaskAnchoredEvents(this.#database, delivery.events),
-      };
-      return presentedContext === undefined
-        ? annotated
-        : { ...annotated, presentedContext };
+      const replayStart = input.replayDelivery
+        ? workerDeliveryReplayStart(this.#database, scope)
+        : undefined;
+      const delivery = this.#syncForParticipant(
+        scope.participantId,
+        {
+          ...(input.limit === undefined ? {} : { limit: input.limit }),
+          ...(replayStart === undefined
+            ? input.afterSeq === undefined
+              ? {}
+              : { afterSeq: input.afterSeq }
+            : { afterSeq: replayStart }),
+          consumerId: scope.consumerId,
+          roomId: scope.roomId,
+          throughSeq: scope.toSeq,
+        },
+        workerAddressingBudget(this.#database, scope),
+      );
+      return presentWorkerSync(this.#database, scope, delivery);
     });
   }
 
@@ -4939,9 +4727,13 @@ export class RoomKernel {
       limit?: number;
       throughSeq?: number;
     },
+    eventOverheadBytes?: (event: RoomEvent) => number,
   ): SyncResult {
     this.#requireMember(input.roomId, participantId);
     return syncRoomEventWindow(this.#database, participantId, input, {
+      ...(eventOverheadBytes
+        ? { eventOverheadBytes, responseOverheadBytes: 48 }
+        : {}),
       eventFromRow: (row) => this.#eventFromRow(row),
       snapshot: (roomId) => this.#snapshot(roomId),
     });
@@ -4999,86 +4791,18 @@ export class RoomKernel {
       taskId: string;
     },
   ): TaskMutationResult {
-    return this.#transaction(() => {
-      const scope = this.#requireAuthenticatedWorkerExecution(execution);
-      const taskRow = this.#requireWorkerTask(scope, input.taskId);
-      const replay = this.#replayWorkerTaskCommand(taskRow, scope, {
-        eventType: input.eventType,
-        idempotencyKey: input.idempotencyKey,
-        ...(input.extraPayload === undefined
-          ? {}
-          : { payload: input.extraPayload }),
-      });
-      if (replay !== null) return replay;
-      this.#assertPositiveTaskLease(input.leaseMs);
-      assertWorkerTaskFreshContext(
-        this.#database,
-        scope,
-        input.basedOnRoomSeq,
-        input.taskId,
-      );
-      requireOwnedTaskClaim(
-        taskRow,
-        scope.participantId,
-        input.expectedState,
-        this.#now().getTime(),
-      );
-
-      const now = this.#now();
-      const updatedAt = now.toISOString();
-      const claimUntil = new Date(now.getTime() + input.leaseMs).toISOString();
-      if (input.lastProgress === undefined) {
-        this.#database
-          .prepare(
-            "UPDATE tasks SET state = ?, claim_until = ?, claim_until_ms = ?, updated_at = ? WHERE task_id = ?",
-          )
-          .run(
-            input.nextState,
-            claimUntil,
-            now.getTime() + input.leaseMs,
-            updatedAt,
-            input.taskId,
-          );
-      } else {
-        this.#database
-          .prepare(
-            "UPDATE tasks SET state = ?, claim_until = ?, claim_until_ms = ?, last_progress = ?, updated_at = ? WHERE task_id = ?",
-          )
-          .run(
-            input.nextState,
-            claimUntil,
-            now.getTime() + input.leaseMs,
-            input.lastProgress,
-            updatedAt,
-            input.taskId,
-          );
-      }
-      const reply =
-        input.lastProgress === undefined
-          ? undefined
-          : createTaskThreadReply(this.#database, this.#createId, taskRow, {
-              actorId: scope.participantId,
-              body: input.lastProgress,
-              createdAt: updatedAt,
-              roomId: scope.roomId,
-            });
-      const event = this.#appendWorkerTaskEvent(scope, {
-        basedOnRoomSeq: input.basedOnRoomSeq,
-        eventType: input.eventType,
-        idempotencyKey: input.idempotencyKey,
-        payload: {
-          claimUntil,
-          ...(input.extraPayload ?? {}),
-          ...(reply ?? {}),
+    return this.#transaction(() =>
+      transitionOwnedTaskTransaction(
+        {
+          database: this.#database,
+          events: this.#roomEvents,
+          createId: this.#createId,
+          now: this.#now,
         },
-        taskId: input.taskId,
-      });
-      return {
-        deduplicated: false,
-        event,
-        task: this.#taskFromRow(this.#requireTaskRow(input.taskId)),
-      };
-    });
+        this.#requireAuthenticatedWorkerExecution(execution),
+        input,
+      ),
+    );
   }
 
   #replayWorkerTaskCommand(
@@ -5656,38 +5380,18 @@ export class RoomKernel {
         ? workspaceDefinitionIds[0]!
         : "workspace-unconfigured";
 
-    const candidateRows = this.#database
-      .prepare(
-        `SELECT activations.*, agent_definitions.state AS agent_state,
-                agent_definitions.current_revision_id AS agent_revision_id
-         FROM activations
-         JOIN agent_definitions
-           ON agent_definitions.participant_id = activations.participant_id
-         WHERE activations.state = 'queued'
-           AND activations.available_at_ms <= ?
-         ORDER BY activations.available_at_ms, activations.created_at, activations.activation_id`,
-      )
-      .all(now.getTime());
-    const candidates = candidateRows.map((row) => {
-      const revision = this.#agentDefinitionRevisionFromRow(
-        this.#requireAgentDefinitionRevisionRow(text(row, "agent_revision_id")),
-      );
-      return {
-        activationId: text(row, "activation_id"),
-        agentDefinitionRevisionId: revision.agentDefinitionRevisionId,
-        agentEnabled: text(row, "agent_state") === "enabled",
-        availableAt: text(row, "available_at"),
-        createdAt: text(row, "created_at"),
-        executionPolicy: this.#executionPolicyRevisionFromRow(
-          this.#requireExecutionPolicyRevisionRow(
-            revision.executionPolicyRevisionId,
-          ),
+    const candidates = projectPlacementCandidates({
+      database: this.#database,
+      now,
+      workspaceDefinitionId,
+      readAgentRevision: (id) =>
+        this.#agentDefinitionRevisionFromRow(
+          this.#requireAgentDefinitionRevisionRow(id),
         ),
-        participantId: text(row, "participant_id"),
-        priority: 0,
-        roomId: text(row, "room_id"),
-        workspaceDefinitionId,
-      };
+      readExecutionPolicy: (id) =>
+        this.#executionPolicyRevisionFromRow(
+          this.#requireExecutionPolicyRevisionRow(id),
+        ),
     });
 
     const hostRows = this.#database

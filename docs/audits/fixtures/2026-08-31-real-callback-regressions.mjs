@@ -6,6 +6,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import ts from "typescript";
 import * as React from "react";
+import { Tooltip } from "@base-ui/react/tooltip";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
   agentPresencePresentation,
@@ -210,6 +211,11 @@ test("Agent presence does not inherit navigation-dot absolute positioning", () =
 });
 
 test("system notification attention stays visible while the bell is open on desktop and mobile", () => {
+  const HintTooltip = declaration(
+    "packages/ui-web/src/neo-brutalist/tooltip.tsx",
+    "HintTooltip",
+    { React, Tooltip },
+  );
   for (const name of ["RailButton", "MobileNavigationButton"]) {
     const Button = declaration(
       "apps/web/src/components/workspace-navigation.tsx",
@@ -217,6 +223,7 @@ test("system notification attention stays visible while the bell is open on desk
       {
         React,
         visibleNavigationDot,
+        HintTooltip,
         Icon: () => React.createElement("svg"),
       },
     );

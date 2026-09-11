@@ -167,3 +167,14 @@ test("a 64 KiB instructions body stays inside the runtime argument byte cap", ()
     `compiled standing prompt argv is ${String(bytes)} bytes`,
   );
 });
+
+test("delivery mode reaches the exact driver prompt and continuity digest", () => {
+  const scope = envelope(agentContext({ role: "review" }));
+  const wait = standingPromptLease(scope, { deliveryMode: "wait" })!;
+  const direct = standingPromptLease(scope, { deliveryMode: "direct" })!;
+  const gated = standingPromptLease(scope, { deliveryMode: "gated" })!;
+  assert.match(direct.args!.join(" "), /Delivery mode at launch: direct/);
+  assert.match(gated.args!.join(" "), /Delivery mode at launch: gated/);
+  assert.notEqual(wait.standingPromptDigest, direct.standingPromptDigest);
+  assert.notEqual(gated.standingPromptDigest, direct.standingPromptDigest);
+});

@@ -364,7 +364,7 @@ test("the follow-up Activation's sync states that the message was already presen
     assert.match(
       observed.syncText,
       new RegExp(
-        `\\[seq=${String(followUpRequest.roomSeq)} msg=${followUpRequest.payload.messageId as string} `,
+        `\\[target=#presented-context-room seq=${String(followUpRequest.roomSeq)} msg=${followUpRequest.payload.messageId as string} `,
         "u",
       ),
       observed.syncText,

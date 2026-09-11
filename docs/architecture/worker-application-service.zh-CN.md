@@ -237,3 +237,33 @@ threadId/threadRootMessageId；后者始终取真正 Thread 根消息，不把�
 `messages/post` 的 held 响应可携带 canonical `recoveryTarget`（Room、DM 或带 Thread 的目标）。CLI 保留 JSON 并返回 `SEND_HELD_AS_DRAFT` 非成功退出，明确“未发送”。当前 Run 应使用 `room-read --target` 完整读取目标窗口，再以签名 contextReceipt 和 throughRoomSeq 原样 send-draft 或审阅后修订；不得仅因 hold 就 ACK 并退出。普通 sync/ACK 仍受原 Activation 范围约束，目标回执不授权 Task 操作，也不允许自动发布未经 Agent 决定的草稿。历史客户端可忽略新增可选字段，不能将 held 当作成功发送。
 
 来源、失败实验与本批验证边界见[忙时草稿恢复审计](../audits/2026-09-09-busy-held-send-repair.zh-CN.md)。
+
+## Worker 文本中的目标身份（2026-09-11）
+
+AgentHost 的 Worker 呈现层在 sync、room-read 和消息历史的每条消息中保留 canonical Room target 与独立 threadId；message-resolve 同样使用这两个字段。Room UUID 不能拼接冒号后缀充当可执行目标：发送沿已有 `--target RoomID --thread-id ThreadID`，带名称的 `#channel:Thread` / `dm:@handle:Thread` 仍由 Kernel 原解析器处理。文本呈现不增加读取回执、不 ACK Inbox、不扩大执行范围。来源与测试边界见 [目标呈现修复](../audits/2026-09-11-worker-target-presentation-repair.zh-CN.md)。
+
+### 真实地址与 handle 的只读投影
+
+Worker sync、room-read、message-read、message-resolve、message-search 的响应可携带 `addressing`：由 Kernel 从现有 Room、Membership、Direct Room pair 和 Principal 读取，CLI 不通过内部 ID 猜测名称。消息显示 `#channel` 或 `dm:@peer-handle`，发送者与提及显示真实 handle；Thread 保留独立 `threadId`。同名 slug 在当前成员范围内不唯一时退回合法 Room ID，不任意选择另一个 Room。JSON 中原始 roomId、actorId、messageId 均保留，sidecar 不是权限或已读事实。
+
+同步窗口按完整事件为该投影预留字节，续页 cursor 只经过实际交付的事件，不因呈现字段增加而跳过消息。既有读范围、ACK、新鲜度 hold 与错误目标 404 不变；此修复不改变 standing prompt、Provider session key 或私有记忆。证据与验收限制见 [语义寻址修复](../audits/2026-09-11-worker-semantic-addressing-repair.zh-CN.md)。
+
+Worker roster 权限显示：`room-members` 与 `server-info` 从既有 WorkerVisibleProfile.membership 输出带 Room 范围的角色标签；不按 handle 推断 owner，不将字段缺失当普通成员，不把 Room 管理权限说成 server-wide authority。见 [角色显示修复](../audits/2026-09-11-worker-roster-role-repair.zh-CN.md)。
+
+## 2026-09-11：有界 Task 批次
+
+Worker 的 `tasks/create-batch` / `tasks/claim-batch` 在 Kernel 同一事务组合现有创建与认领 owner。claim 的全批 freshness 检查先于写入，普通业务冲突返回逐项结果；create 任一写入异常回滚全批。成功 Task 继续由既有 Worker claim heartbeat 管理。批次收据只保存幂等结果，不成为第二个 Task 状态机；重放仍验证当前执行与成员身份。自动键沿用工具侧 participant/Activation/Room/operation/content 约定，普通模型无需搬运键。
+
+收据的 7 日保留、1024 条容量、256 KiB 响应和每次 100 条清理是明确的本地政策；活跃或可恢复 Run 不因 TTL 被清理。已删除 Task 的重放保留成功 ID 并去除旧正文。实现、上游锚点及未对齐的五态/普通 Message 转 Task 等范围见[Task 批量合同](../audits/2026-09-11-task-batch-contract-closure.zh-CN.md)。
+
+## 正常 Worker 交付确认（2026-09-11）
+
+`message-check` 是正常模型读取入口，CLI 对实际输出成功的页自动 ACK；旧 sync/ack 保留兼容。Kernel 持久化每个 Activation/consumer 的不可变重放下界，新的凭据与重试 Run 不因原 ACK 丢失原输入。grant 中的临时 continuation 只在成功 ACK 后推进，不是新的持久交付 owner。权限、冻结 toSeq、Task 义务及 execution fence 不变；交付确认不等于工作完成。
+
+具体恢复、迁移和验证边界见 [实施记录](../audits/2026-09-11-worker-message-check-implementation.zh-CN.md)。Artifact 普通键由工具按实际 Run/内容生成，仍交由原 Artifact owner 判定重试与授权。
+
+## Task 状态组合入口
+
+`tasks/update-status` 由 Worker service 解析统一状态输入，Kernel 组合既有认领、开始、释放和提交 owner。`todo → in_progress` 的认领与开始在同一事务内执行；`in_review` 复用交付证据冻结，仅使用显式摘要或本 Agent 最近开始后在 Task Thread 实际发送的内容。CLI 按返回的 canonical 状态呈现结果，不能把请求状态当作成功事实。
+
+`done` 由真实 Agent 完成本人已提交的 Task，共享 Human 完成事务并保留显式 reviewer 约束；Human 对话批准是 Raft prompt 约定，不假装后端能验证语言含义。`closed` 共享取消投影，但 Agent 自闭只结束 Task，不取消整个执行 lane；Human 强制取消的终止证明不变。本人权限和 reviewer 约束是本地适配，不宣称未知 Raft 服务端的全部转换等价。原身份、参与范围、freshness 与执行围栏保留。Raft 来源、局部适配及验证边界见 [状态入口审计](../audits/2026-09-11-task-status-facade.zh-CN.md)。

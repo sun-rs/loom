@@ -1,3 +1,4 @@
+import { WorkerAddressingSchema } from "./worker-addressing.ts";
 import { MessageSchema } from "./collaboration.ts";
 import { WorkerHistoryResponseSchema } from "./worker-read-tools.ts";
 import { z } from "zod";
@@ -21,6 +22,7 @@ export type WorkerRoomContextRequest = z.input<
 export const WorkerRoomContextResponseSchema = z
   .object({
     roomId: IdentifierSchema,
+    addressing: WorkerAddressingSchema.optional(),
     threadId: IdentifierSchema.optional(),
     throughRoomSeq: z.number().int().nonnegative(),
     eventFloorSeq: z.number().int().nonnegative(),

@@ -1,3 +1,8 @@
+import {
+  createDaemonExecutionWorkspaceComposition,
+  legacyWorkspaceMountDescriptors,
+} from "./daemon-execution-workspace-composition.ts";
+import { RuntimeGuideSettings } from "./runtime-guide-settings.ts";
 import { LocalComputerProfileStore } from "./local-computer-profile-store.ts";
 import { createDaemonWorkerProfileMetadata } from "./daemon-worker-profile-metadata.ts";
 import { join } from "node:path";
@@ -25,7 +30,6 @@ import { RahCore, RoomKernel } from "@rah-os/core";
 import {
   type PlacementDecision,
   type RuntimeRecoveryDescriptor,
-  type WorkspaceMountDescriptor,
 } from "@rah-os/protocol";
 import type { DaemonConfig } from "./config.ts";
 import {
@@ -128,6 +132,9 @@ export class DaemonApplication {
     let executionFailure: unknown;
     try {
       await ensureOwnerPrivateDirectory(this.#config.stateDirectory);
+      const runtimeGuideSettings = new RuntimeGuideSettings(
+        join(this.#config.stateDirectory, "runtime-guide.json"),
+      );
       const computerProfiles = new LocalComputerProfileStore({
         path: join(this.#config.stateDirectory, "computer-profiles.json"),
       });
@@ -202,14 +209,27 @@ export class DaemonApplication {
       });
       await workerService.start();
       const activeWorkerService = workerService;
+      const {
+        executionWorkspaces,
+        refreshExecutionWorkspaces,
+        resolveRuntimeWorkspace,
+        createRecoveryCwdResolver,
+        createLifecycle: createWorkspaceLifecycle,
+      } = await createDaemonExecutionWorkspaceComposition({
+        config: this.#config,
+        host,
+        kernel,
+      });
       const activeAgentMemoryCoordinator = (agentMemoryCoordinator =
         createDaemonAgentMemoryCoordinator({
+          ...(executionWorkspaces ? { executionWorkspaces } : {}),
           config: this.#config,
           host,
           kernel,
         }));
       agentExecutionResetCoordinator =
         createDaemonAgentExecutionResetCoordinator({
+          ...(executionWorkspaces ? { executionWorkspaces } : {}),
           agentMemoryCoordinator: activeAgentMemoryCoordinator,
           host,
           kernel,
@@ -350,6 +370,7 @@ export class DaemonApplication {
           ),
         });
         runtime = createConfiguredRuntime({
+          guideEnabled: (runtimeId) => runtimeGuideSettings.enabled(runtimeId),
           agentMemoryCoordinator: activeAgentMemoryCoordinator,
           credentialEnvironment,
           cwd: runtimeOptions.cwd,
@@ -405,15 +426,9 @@ export class DaemonApplication {
           (placement: PlacementDecision) => RuntimeAdapter
         >();
         let defaultRuntime: RuntimeAdapter | undefined;
-        const workspaceMountDescriptors: WorkspaceMountDescriptor[] = [
-          {
-            modes: [v4Config.workspace.mode],
-            workspaceDefinitionId: v4Config.workspace.workspaceDefinitionId,
-            workspaceMountDigest: v4Config.workspace.workspaceMountDigest,
-            workspaceMountRevisionId:
-              v4Config.workspace.workspaceMountRevisionId,
-          },
-        ];
+        const workspaceMountDescriptors = legacyWorkspaceMountDescriptors(
+          v4Config.workspace,
+        );
         for (const runtimeOptions of v4Config.runtimes) {
           const runtimeProfileRegistry = openRuntimeProfileRegistry(
             runtimeProfileRegistries,
@@ -511,9 +526,11 @@ export class DaemonApplication {
               }
             }
             return createConfiguredRuntime({
+              guideEnabled: (runtimeId) =>
+                runtimeGuideSettings.enabled(runtimeId),
               agentMemoryCoordinator: activeAgentMemoryCoordinator,
               credentialEnvironment,
-              cwd: v4Config.workspace.cwd,
+              ...resolveRuntimeWorkspace(placement, v4Config.workspace.cwd),
               host,
               implementations,
               probeReport: placementProbeReport,
@@ -566,6 +583,7 @@ export class DaemonApplication {
               runtimeOfferId: runtimeOptions.offer.runtimeOfferId,
               runtimeProfileRevision: activeRevision,
               workspaceMountDescriptors,
+              refreshWorkspaceMountDescriptors: refreshExecutionWorkspaces,
             }),
           );
         }
@@ -584,6 +602,7 @@ export class DaemonApplication {
         };
         const recovery = createRegistryBackedRuntimeRecoveryFromRegistries({
           cwd: v4Config.workspace.cwd,
+          resolveCwd: createRecoveryCwdResolver(v4Config.workspace.cwd),
           implementations,
           registries: [...runtimeProfileRegistries.values()],
           supervisorDirectory: join(v4Config.stateDirectory, "supervisors"),
@@ -598,6 +617,8 @@ export class DaemonApplication {
       const wakeSignal = new LocalWakeSignal();
       const discoveredLocalClis = await discoverKnownLocalClis();
       const runnerOptions = {
+        guideEnabled: (runtimeId: string | undefined) =>
+          runtimeGuideSettings.enabled(runtimeId),
         drainTimeoutMs: this.#config.drainTimeoutMs,
         host,
         kernel,
@@ -665,18 +686,10 @@ export class DaemonApplication {
         ...(runtimeOfferPublishers.length === 0
           ? {}
           : {
-              lifecycle: {
-                afterOnline: () => {
-                  for (const publisher of runtimeOfferPublishers) {
-                    publisher.publishAvailable();
-                  }
-                },
-                beforeDraining: () => {
-                  for (const publisher of runtimeOfferPublishers) {
-                    publisher.publishUnavailable();
-                  }
-                },
-              },
+              lifecycle: createWorkspaceLifecycle(
+                activeAgentExecutionResetCoordinator,
+                runtimeOfferPublishers,
+              ),
             }),
         metadata: {
           buildVersion: DAEMON_BUILD_VERSION,
@@ -687,6 +700,7 @@ export class DaemonApplication {
         runner,
       });
       clientService = createDaemonHumanClientService({
+        runtimeGuideSettings,
         computerProfiles,
         agentExecutionResetCoordinator: activeAgentExecutionResetCoordinator,
         agentMemoryCoordinator: activeAgentMemoryCoordinator,

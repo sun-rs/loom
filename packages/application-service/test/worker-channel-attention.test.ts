@@ -831,3 +831,94 @@ test("targeted mute rejects forged, missing, foreign Room and Thread context wit
     await f.close();
   }
 });
+
+test("mute response guidance matches canonical delivery and unmute does not replay suppressed history", async () => {
+  const f = await fixture();
+  try {
+    const queued = () =>
+      f.db
+        .prepare(
+          "SELECT inbox_item_id FROM inbox_items WHERE participant_id=? ORDER BY inbox_item_id",
+        )
+        .all(f.agent.principal.principalId);
+    const queuedBefore = queued();
+    const mute = await f.call("channels/mute", { channel: "#channel" });
+    assert.equal(mute.status, 200);
+    assert.deepEqual(queued(), queuedBefore);
+    assert.equal(mute.body.attention?.state, "muted");
+    assert.match(mute.body.attention.ordinaryActivity, /muted/);
+    assert.deepEqual(mute.body.attention.stillArrives, [
+      "Personal @mentions",
+      "Replies in followed Threads",
+      "Directly assigned Tasks",
+    ]);
+    assert.equal(
+      mute.body.attention.unmuteCommand,
+      `"$RAH_WORKER_CLI" worker channel-unmute --target '#channel'`,
+    );
+    assert.equal(mute.body.attention.unmuteApi, undefined);
+    assert.match(mute.body.attention.threadBoundary, /independent/);
+    const ordinary = f.post("guidance-ordinary");
+    assert.equal(f.delivered(ordinary.event.eventId), undefined);
+    assert.ok(f.delivered(f.post("guidance-mention", true).event.eventId));
+    const unmute = await f.call("channels/unmute", { channel: "#channel" });
+    assert.equal(unmute.body.attention.state, "unmuted");
+    assert.equal(
+      unmute.body.attention.muteCommand,
+      `"$RAH_WORKER_CLI" worker channel-mute --target '#channel'`,
+    );
+    assert.equal(unmute.body.attention.unmuteCommand, undefined);
+    assert.match(unmute.body.attention.catchUp, /not replayed/);
+    assert.equal(f.delivered(ordinary.event.eventId), undefined);
+    const history = await f.call("messages/history", { channel: "#channel" });
+    assert.equal(history.status, 200, JSON.stringify(history.body));
+    assert.ok(JSON.stringify(history.body).includes("ordinary news"));
+    assert.ok(f.delivered(f.post("guidance-resumed").event.eventId));
+    const replay = await f.call("channels/mute", {
+      channel: "#channel",
+      idempotencyKey: "guidance-replay",
+    });
+    const replayed = await f.call("channels/mute", {
+      channel: "#channel",
+      idempotencyKey: "guidance-replay",
+    });
+    assert.equal(replayed.body.deduplicated, true);
+    assert.deepEqual(replayed.body.attention, replay.body.attention);
+    const cli = await f.cli(["channel-mute", "--target", "#channel"]);
+    assert.match(cli.stdout, /Still arrives:\n- Personal @mentions/);
+  } finally {
+    await f.close();
+  }
+});
+
+test("long Channel slugs omit unusable guidance without failing an accepted mute", async () => {
+  const f = await fixture();
+  try {
+    const room = f.kernel.createRoom(f.actor, {
+      name: "Long slug",
+      slug: "x".repeat(3000),
+    });
+    f.kernel.addMember(f.actor, {
+      roomId: room.roomId,
+      principalId: f.agent.principal.principalId,
+    });
+    const command = { channel: room.roomId, idempotencyKey: "long-slug-mute" };
+    const result = await f.call("channels/mute", command);
+    assert.equal(result.status, 200, JSON.stringify(result.body));
+    assert.equal(result.body.activityMuted, true);
+    assert.equal(result.body.attention.unmuteCommand, undefined);
+    assert.equal(
+      f.db
+        .prepare(
+          "SELECT activity_muted FROM agent_channel_attention WHERE room_id=? AND participant_id=?",
+        )
+        .get(room.roomId, f.agent.principal.principalId)!.activity_muted,
+      1,
+    );
+    const replay = await f.call("channels/mute", command);
+    assert.equal(replay.status, 200);
+    assert.equal(replay.body.event.eventId, result.body.event.eventId);
+  } finally {
+    await f.close();
+  }
+});

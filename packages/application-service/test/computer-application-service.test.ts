@@ -403,6 +403,12 @@ test("two remote Computer sessions publish distinct Offers and claim their own A
     const renewedSecond = service.heartbeat(secondSession.sessionAccessToken, {
       state: "online",
     });
+    assert.deepEqual(
+      renewedSecond.executionWorkspaceBindings?.map(
+        (binding) => binding.participantId,
+      ),
+      [agents[1]!.principal.principalId],
+    );
     assert.ok(
       Date.parse(renewedSecond.sessionExpiresAt) >
         Date.parse(renewedSecond.serverTime),

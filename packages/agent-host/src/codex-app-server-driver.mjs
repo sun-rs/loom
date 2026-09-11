@@ -1,3 +1,4 @@
+import { attachCodexBusyInput } from "./codex-busy-input.js";
 import { spawn } from "node:child_process";
 import { writeSync } from "node:fs";
 import { createInterface } from "node:readline";
@@ -36,9 +37,20 @@ const trajectoryWriter = new RuntimeTrajectoryWriter();
 let requestSequence = 0;
 let activeThreadId;
 let activeTurnId;
+let startingTurn = false;
+let earlyStartedTurnId;
 let driverCompleted = false;
 let stopping = false;
 let terminationPromise;
+const busyInput = attachCodexBusyInput({
+  input: process.stdin,
+  state: () => ({
+    threadId: activeThreadId,
+    turnId: activeTurnId,
+    stopping: stopping || driverCompleted,
+  }),
+  request,
+});
 let resolveProcessExit;
 const processExited = new Promise((resolve) => {
   resolveProcessExit = resolve;
@@ -177,6 +189,7 @@ try {
     threadId: activeThreadId,
   };
   if (options.reasoning !== undefined) turnStart.effort = options.reasoning;
+  startingTurn = true;
   const startedTurn = await request(
     "turn/start",
     turnStart,
@@ -201,6 +214,7 @@ try {
   if (!stopping) writeProviderSessionEvidence(activeThreadId);
 
   driverCompleted = true;
+  busyInput.close();
   codex.stdin.end();
   const graceful = await Promise.race([
     processExited.then(() => true),
@@ -254,10 +268,14 @@ function handleResponse(frame) {
   if (requestState === undefined) return;
   pending.delete(key);
   clearTimeout(requestState.timer);
+  if (requestState.method === "turn/start") startingTurn = false;
   if (isRecord(frame.error)) {
     requestState.reject(
-      new Error(
-        `${requestState.method}: ${String(frame.error.message ?? "app-server error")} (code=${String(frame.error.code ?? "unknown")})`,
+      Object.assign(
+        new Error(
+          `${requestState.method}: ${String(frame.error.message ?? "app-server error")} (code=${String(frame.error.code ?? "unknown")})`,
+        ),
+        { providerRejected: true },
       ),
     );
   } else {
@@ -265,13 +283,30 @@ function handleResponse(frame) {
       activeThreadId = nestedStringField(frame.result, "thread", "id");
     } else if (requestState.method === "turn/start") {
       activeTurnId = nestedStringField(frame.result, "turn", "id");
+      // An early event is only readiness evidence after the actual RPC result
+      // confirms exactly the same turn in the already verified thread.
+      if (activeTurnId !== undefined && earlyStartedTurnId === activeTurnId) {
+        busyInput.observe({ method: "turn/started" });
+      }
+      earlyStartedTurnId = undefined;
     }
     requestState.resolve(frame.result);
   }
 }
 
 function handleNotification(frame) {
+  if (
+    startingTurn &&
+    activeTurnId === undefined &&
+    frame.method === "turn/started" &&
+    stringField(frame.params, "threadId") === activeThreadId &&
+    activeThreadId !== undefined
+  ) {
+    earlyStartedTurnId = nestedStringField(frame.params, "turn", "id");
+    return;
+  }
   if (!isRecord(frame.params) || !belongsToActiveCodexTurn(frame)) return;
+  busyInput.observe(frame);
   trajectoryWriter.emit(normalizeCodexTrajectoryNotification(frame));
   if (frame.method !== "turn/completed") return;
   const threadId = stringField(frame.params, "threadId");
@@ -366,6 +401,7 @@ function failPending(error) {
 function terminate(signal) {
   if (terminationPromise !== undefined) return terminationPromise;
   stopping = true;
+  busyInput.close();
   terminationPromise = performTermination(signal);
   return terminationPromise;
 }

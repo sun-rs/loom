@@ -1,3 +1,4 @@
+export * from "./runtime-guide-settings.ts";
 import { z } from "zod";
 import { ClientAgentProfileRequestSchema } from "./client-agent-profile.ts";
 export * from "./client-agent-profile.ts";
@@ -17,6 +18,7 @@ import {
 import {
   AgentCatalogEntrySchema,
   AgentDefinitionRevisionSchema,
+  AgentExecutionWorkspaceSchema,
 } from "./agent-definition.ts";
 import {
   CapabilityEvidenceLevelSchema,
@@ -156,6 +158,15 @@ export type InboxState = z.infer<typeof InboxStateSchema>;
 
 export const RuntimeRecoveryDescriptorSchema = z
   .object({
+    executionWorkspace: z
+      .object({
+        participantId: IdentifierSchema,
+        workspaceDefinitionId: IdentifierSchema,
+        workspaceMountRevisionId: IdentifierSchema,
+        workspaceMountDigest: ContentDigestSchema,
+      })
+      .strict()
+      .optional(),
     driver: IdentifierSchema,
     metadata: z.record(z.string(), z.unknown()),
     recoveryImplementationVersion: IdentifierSchema.optional(),
@@ -750,6 +761,7 @@ export type RuntimeProfileAuditEntry = z.infer<
 
 export const ClientAgentProvisionRequestSchema = z
   .object({
+    executionWorkspace: AgentExecutionWorkspaceSchema.optional(),
     avatarKey: IdentifierSchema.optional(),
     basedOnRoomSeq: z.number().int().nonnegative(),
     controlRoomId: IdentifierSchema,
@@ -874,6 +886,7 @@ export type RuntimeOfferState = z.infer<typeof RuntimeOfferStateSchema>;
 
 export const WorkspaceMountDescriptorSchema = z
   .object({
+    participantId: IdentifierSchema.optional(),
     workspaceDefinitionId: IdentifierSchema,
     workspaceMountRevisionId: IdentifierSchema,
     workspaceMountDigest: ContentDigestSchema,
@@ -899,6 +912,7 @@ export type RuntimeProfileProbeReportRef = z.infer<
 
 export const RuntimeOfferSchema = z
   .object({
+    supportsAgentPrivateWorkspace: z.boolean().optional(),
     runtimeOfferId: IdentifierSchema,
     hostId: IdentifierSchema,
     hostInstanceId: IdentifierSchema,
@@ -1050,6 +1064,7 @@ function resolvedModelsEqual(
 }
 
 export const PlacementHardRejectionReasonSchema = z.enum([
+  "private_workspace_unsupported",
   "agent_disabled",
   "lane_busy",
   "host_unauthorized",
@@ -1653,3 +1668,9 @@ export * from "./worker-channel-attention.ts";
 export * from "./attachment-comments.ts";
 
 export * from "./task-delete.ts";
+
+export * from "./worker-addressing.ts";
+
+export * from "./worker-message-check.ts";
+export * from "./worker-task-batch.ts";
+export * from "./worker-task-update.ts";

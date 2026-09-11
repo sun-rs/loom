@@ -1,3 +1,4 @@
+import type { RuntimeGuideSettings } from "./runtime-guide-settings.ts";
 import type { WorkerProfileMetadataPort } from "@rah-os/kernel";
 import {
   DAEMON_BUILD_VERSION,
@@ -11,6 +12,8 @@ import { dirname, join, resolve } from "node:path";
 
 import {
   AgentMemoryCoordinator,
+  quarantineAgentExecutionWorkspaceReset,
+  type AgentExecutionWorkspaceCatalog,
   AgentExecutionResetCoordinator,
   createAgentExecutionResetFenceAcquirer,
   createAgentMemoryResetFenceAcquirer,
@@ -65,6 +68,7 @@ import {
 } from "./local-computer-profile-store.ts";
 
 export function createDaemonAgentMemoryCoordinator(input: {
+  executionWorkspaces?: AgentExecutionWorkspaceCatalog;
   config: DaemonConfig;
   host: AuthenticatedHostContext;
   kernel: RoomKernel;
@@ -77,6 +81,12 @@ export function createDaemonAgentMemoryCoordinator(input: {
     ),
   });
   return new AgentMemoryCoordinator({
+    ...(input.executionWorkspaces
+      ? {
+          resolveProjectDirectory: (owner: string) =>
+            input.executionWorkspaces!.projectDirectory(owner),
+        }
+      : {}),
     acquireResetFence: createAgentMemoryResetFenceAcquirer(
       createKernelAgentHostControlPort(input.kernel, input.host),
     ),
@@ -140,6 +150,7 @@ export function openDaemonProfileImageStore(
 }
 
 export function createDaemonAgentExecutionResetCoordinator(input: {
+  executionWorkspaces?: AgentExecutionWorkspaceCatalog;
   agentMemoryCoordinator: Pick<
     AgentMemoryCoordinator,
     "beginWorkspaceResetInsideFence"
@@ -155,16 +166,53 @@ export function createDaemonAgentExecutionResetCoordinator(input: {
       "provider-sessions",
     ),
   });
+  const acquireFence = createAgentExecutionResetFenceAcquirer(
+    createKernelAgentHostControlPort(input.kernel, input.host),
+  );
   return new AgentExecutionResetCoordinator({
-    acquireFence: createAgentExecutionResetFenceAcquirer(
-      createKernelAgentHostControlPort(input.kernel, input.host),
-    ),
+    acquireFence,
+    ...(input.executionWorkspaces
+      ? {
+          finalizeCommittedWorkspace: async (receipt) => {
+            if (receipt.mode !== "full") return;
+            await input.executionWorkspaces!.finalizeCommitted(
+              receipt.ownerParticipantId,
+              receipt.operationId,
+            );
+            const lease = input.kernel.getAgentExclusiveOperationLease(
+              receipt.operationId,
+            );
+            if (
+              lease.participantId !== receipt.ownerParticipantId ||
+              lease.ownerHostId !== input.host.hostId
+            )
+              throw new Error(
+                "Committed reset lease identity does not match receipt",
+              );
+            if (lease.state === "active") {
+              const recovered = await acquireFence(
+                receipt.ownerParticipantId,
+                receipt.operationId,
+              );
+              await recovered.release();
+            }
+          },
+        }
+      : {}),
     computerHostId: input.host.hostId,
     quarantineAgentWorkspace: async (ownerParticipantId, operationId) =>
-      await input.agentMemoryCoordinator.beginWorkspaceResetInsideFence(
-        ownerParticipantId,
-        operationId,
-      ),
+      await quarantineAgentExecutionWorkspaceReset({
+        quarantineMemory: () =>
+          input.agentMemoryCoordinator.beginWorkspaceResetInsideFence(
+            ownerParticipantId,
+            operationId,
+          ),
+        quarantineExecution: async () =>
+          input.executionWorkspaces?.quarantinePrivate(
+            ownerParticipantId,
+            operationId,
+          ),
+      }),
     quarantineProviderContinuity: async (ownerParticipantId, operationId) =>
       await providerSessions.quarantineParticipant(
         ownerParticipantId,
@@ -484,6 +532,7 @@ export function createDaemonComputerProfileAdministration(
 }
 
 export function createDaemonHumanClientService(input: {
+  runtimeGuideSettings?: RuntimeGuideSettings;
   computerProfiles?: LocalComputerProfileStore;
   agentExecutionResetCoordinator: AgentExecutionResetCoordinator;
   agentMemoryCoordinator: AgentMemoryCoordinator;
@@ -508,6 +557,9 @@ export function createDaemonHumanClientService(input: {
       path: join(input.config.stateDirectory, "computer-profiles.json"),
     });
   return new HumanHttpApplicationService({
+    ...(input.runtimeGuideSettings
+      ? { runtimeGuideSettings: input.runtimeGuideSettings }
+      : {}),
     agentExecutionAdministration: createDaemonAgentExecutionAdministration({
       coordinator: input.agentExecutionResetCoordinator,
       human: input.human,

@@ -720,7 +720,7 @@ test("current schema preserves a schema v40 reclaimed file receipt while adding 
     const audit = new DatabaseSync(f.databasePath, { readOnly: true });
     assert.equal(
       Number(audit.prepare("PRAGMA user_version").get()?.user_version),
-      54,
+      55,
     );
     assert.deepEqual(audit.prepare("PRAGMA foreign_key_check").all(), []);
     assert.deepEqual(
@@ -793,7 +793,7 @@ test("current schema atomically replaces the schema v41 GC scan index", () => {
     const audit = new DatabaseSync(f.databasePath, { readOnly: true });
     assert.equal(
       Number(audit.prepare("PRAGMA user_version").get()?.user_version),
-      54,
+      55,
     );
     assert.deepEqual(
       audit
@@ -1297,6 +1297,118 @@ test("Room deletion sweeps the server-side Worker target read positions", () => 
       audited.close();
     }
   } finally {
+    f.close();
+  }
+});
+
+test("Room erasure removes delivery windows and batch receipts atomically and preserves another Room", () => {
+  const f = fixture();
+  const db = new DatabaseSync(f.databasePath);
+  try {
+    const agent = f.kernel.provisionPrincipal({
+      handle: "receipt-agent",
+      kind: "agent",
+    });
+    const roomIds = [f.channel.room.roomId, f.workspace.controlRoom.roomId];
+    const activationIds: string[] = [];
+    for (const [index, roomId] of roomIds.entries()) {
+      f.kernel.addMember(f.ownerActor, {
+        roomId,
+        principalId: agent.principal.principalId,
+      });
+      f.kernel.postMessage(f.ownerActor, {
+        roomId,
+        body: `Receipt source ${index}`,
+        idempotencyKey: `receipt-source-${index}`,
+        recipients: [
+          { participantId: agent.principal.principalId, reason: "mention" },
+        ],
+      });
+      const activationId = String(
+        db
+          .prepare(
+            "SELECT activation_id FROM activations WHERE room_id=? AND participant_id=? ORDER BY created_at DESC LIMIT 1",
+          )
+          .get(roomId, agent.principal.principalId)!.activation_id,
+      );
+      activationIds.push(activationId);
+      // Seed retained terminal-Activation receipts; lifecycle gates are tested separately.
+      db.prepare(
+        "UPDATE activations SET state='cancelled' WHERE activation_id=?",
+      ).run(activationId);
+      db.prepare("INSERT INTO activation_delivery_windows VALUES(?,?,?)").run(
+        activationId,
+        "receipt-consumer",
+        0,
+      );
+      db.prepare(
+        "INSERT INTO task_batch_command_receipts VALUES(?,?,?,?,?,?,?,?,?)",
+      ).run(
+        agent.principal.principalId,
+        roomId,
+        "create",
+        `receipt-${index}`,
+        "fixture-digest",
+        JSON.stringify({ roomId, results: [], tasks: [], deduplicated: false }),
+        activationId,
+        0,
+        604800000,
+      );
+    }
+    const counts = () =>
+      roomIds.map((roomId, index) => [
+        Number(
+          db
+            .prepare(
+              "SELECT COUNT(*) AS n FROM activation_delivery_windows WHERE activation_id=?",
+            )
+            .get(activationIds[index]!)!.n,
+        ),
+        Number(
+          db
+            .prepare(
+              "SELECT COUNT(*) AS n FROM task_batch_command_receipts WHERE room_id=?",
+            )
+            .get(roomId)!.n,
+        ),
+      ]);
+    assert.deepEqual(counts(), [
+      [1, 1],
+      [1, 1],
+    ]);
+    db.exec(
+      "CREATE TRIGGER reject_receipt_room_erasure BEFORE DELETE ON messages BEGIN SELECT RAISE(ABORT, 'receipt erase rollback'); END",
+    );
+    assert.throws(
+      () =>
+        f.kernel.deleteWorkspaceRoom(f.ownerActor, {
+          roomId: f.channel.room.roomId,
+          basedOnRoomSeq: f.head(),
+          idempotencyKey: "receipt-delete",
+        }),
+      /receipt erase rollback/,
+    );
+    assert.deepEqual(
+      counts(),
+      [
+        [1, 1],
+        [1, 1],
+      ],
+      "later failure rolls back both new receipt removals",
+    );
+    db.exec("DROP TRIGGER reject_receipt_room_erasure");
+    f.kernel.deleteWorkspaceRoom(f.ownerActor, {
+      roomId: f.channel.room.roomId,
+      basedOnRoomSeq: f.head(),
+      idempotencyKey: "receipt-delete",
+    });
+    assert.deepEqual(counts(), [
+      [0, 0],
+      [1, 1],
+    ]);
+    assert.deepEqual(db.prepare("PRAGMA foreign_key_check").all(), []);
+  } finally {
+    db.close();
     f.close();
   }
 });

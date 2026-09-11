@@ -1,0 +1,100 @@
+/* Local busy-delivery controls in Management; provider marks from Multica. */
+.rah-runtime-settings {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 20px;
+  border-bottom: var(--bd);
+}
+.rah-runtime-settings-intro {
+  display: grid;
+  gap: 6px;
+}
+.rah-runtime-settings-intro h2 {
+  font-size: 16px;
+  line-height: 24px;
+  margin: 0;
+}
+.rah-runtime-settings-intro p {
+  color: var(--ink-70);
+  font-size: 13px;
+  line-height: 20px;
+  margin: 0;
+}
+.rah-runtime-settings-list {
+  display: grid;
+  gap: 8px;
+}
+.rah-runtime-settings-card {
+  background: var(--bg);
+  border: 2px solid var(--ink-30);
+  padding: 6px 12px;
+}
+.rah-runtime-settings-heading {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 10px;
+}
+.rah-runtime-settings-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+.rah-runtime-settings-icon img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+.rah-runtime-settings-name {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+.rah-runtime-settings-name h3 {
+  font-size: 14px;
+  line-height: 20px;
+  white-space: nowrap;
+  margin: 0;
+}
+.rah-runtime-settings-name small {
+  color: var(--ink-70);
+  font-size: 12px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+.rah-runtime-settings-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+}
+.rah-runtime-settings-control input {
+  height: 20px;
+  width: 20px;
+  margin: 0;
+}
+.rah-runtime-settings-control input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.rah-runtime-settings-card[data-supported="false"] {
+  filter: grayscale(1);
+  background: var(--bg-sunken, #f3f3f3);
+  color: var(--ink-70);
+}
+@media (max-width: 600px) {
+  .rah-runtime-settings-card {
+    padding-inline: 8px;
+  }
+  .rah-runtime-settings-heading {
+    gap: 8px;
+  }
+  .rah-runtime-settings-name {
+    gap: 6px;
+  }
+}

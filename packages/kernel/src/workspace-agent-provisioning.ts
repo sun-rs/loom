@@ -2,6 +2,7 @@ import type { DatabaseSync } from "node:sqlite";
 
 import {
   AgentCatalogEntrySchema,
+  AgentExecutionWorkspaceSchema,
   AgentDefinitionRevisionSchema,
   AgentDefinitionSchema,
   ExecutionPolicyRevisionSchema,
@@ -154,6 +155,31 @@ export function provisionWorkspaceAgentTransaction(
     normalized.toolAccessMode ?? "full_access",
   );
 
+  const executionWorkspace =
+    normalized.executionWorkspace ??
+    (offer.supportsAgentPrivateWorkspace === true
+      ? { kind: "agent_private" as const }
+      : undefined);
+  if (
+    executionWorkspace?.kind === "agent_private" &&
+    offer.supportsAgentPrivateWorkspace !== true
+  )
+    throw new ConflictError(
+      "Selected Computer does not support Agent private execution workspaces",
+    );
+  if (
+    executionWorkspace?.kind === "existing_mount" &&
+    !offer.workspaceMountDescriptors.some(
+      (m) =>
+        m.participantId === undefined &&
+        m.workspaceDefinitionId === workspaceId &&
+        m.workspaceMountRevisionId ===
+          executionWorkspace.workspaceMountRevisionId,
+    )
+  )
+    throw new ForbiddenError(
+      "Requested existing execution mount is not available on this Computer",
+    );
   const createdAt = owner.now().toISOString();
   const participantId = owner.createId("principal");
   const executionPolicyId = owner.createId("execution_policy");
@@ -242,6 +268,7 @@ export function provisionWorkspaceAgentTransaction(
   });
 
   const definitionContent: AgentDefinitionContent = {
+    ...(executionWorkspace === undefined ? {} : { executionWorkspace }),
     avatarKey:
       normalized.avatarKey ??
       allocateAgentAvatarKey(owner.database, input.controlRoomId),
@@ -349,6 +376,9 @@ export function normalizeAgentDefinitionContent(
     ...(input.displayName === undefined
       ? {}
       : { displayName: input.displayName.trim() }),
+    ...(input.executionWorkspace === undefined
+      ? {}
+      : { executionWorkspace: input.executionWorkspace }),
     executionPolicyRevisionId: input.executionPolicyRevisionId,
     ...(input.instructions === undefined
       ? {}
@@ -557,6 +587,13 @@ function normalizeWorkspaceAgentProvisionInput(
     throw new Error("avatarKey must not exceed 128 characters");
   }
   return {
+    ...(input.executionWorkspace === undefined
+      ? {}
+      : {
+          executionWorkspace: AgentExecutionWorkspaceSchema.parse(
+            input.executionWorkspace,
+          ),
+        }),
     ...(avatarKey === undefined ? {} : { avatarKey }),
     basedOnRoomSeq: input.basedOnRoomSeq,
     controlRoomId: requiredBoundedText(

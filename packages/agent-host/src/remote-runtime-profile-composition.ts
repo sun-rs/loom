@@ -1,3 +1,7 @@
+import { AgentExecutionWorkspaceCatalog } from "./agent-execution-workspace-catalog.ts";
+import { withRuntimeExecutionWorkspace } from "./runtime-execution-workspace.ts";
+import type { HostExecutionWorkspaceBinding } from "@rah-os/protocol";
+import { realpath } from "node:fs/promises";
 import type {
   PlacementDecision,
   ResolvedModel,
@@ -55,6 +59,8 @@ export type RemoteRuntimeProfileBinding = Readonly<{
  */
 export class RemoteRuntimeProfileSet {
   readonly #memoryCoordinator: AgentMemoryCoordinator;
+  #executionWorkspaces: AgentExecutionWorkspaceCatalog | undefined;
+  #executionMounts: WorkspaceMountDescriptor[] | undefined;
   readonly #implementations: RuntimeImplementationRegistry;
   #lastObservedAtMs = 0;
   readonly #nowMs: () => number;
@@ -88,6 +94,8 @@ export class RemoteRuntimeProfileSet {
     this.#implementations = input.implementations;
     this.#memoryCoordinator = new AgentMemoryCoordinator({
       rootDirectory: join(input.supervisorDirectory, "agent-memory"),
+      resolveProjectDirectory: async (owner) =>
+        this.#executionWorkspaces?.projectDirectory(owner),
       // Remote Computers retain the typed hint for the next canonical
       // Activation until a host-local maintenance lane can be fenced.
       wake: () => false,
@@ -96,6 +104,32 @@ export class RemoteRuntimeProfileSet {
     this.#nowMs = input.nowMs ?? Date.now;
     this.#profiles = Object.freeze([...input.profiles]);
     this.#supervisorDirectory = input.supervisorDirectory;
+  }
+
+  #requireExecutionWorkspaces(): AgentExecutionWorkspaceCatalog {
+    if (!this.#executionWorkspaces)
+      throw new Error("Execution workspace catalog is not prepared");
+    return this.#executionWorkspaces;
+  }
+
+  async prepareExecutionWorkspaces(
+    bindings: readonly HostExecutionWorkspaceBinding[],
+  ): Promise<void> {
+    if (!this.#executionWorkspaces) {
+      const profile = this.#profiles[0]!;
+      const legacyMount = profile.workspaceMountDescriptors[0];
+      if (!legacyMount)
+        throw new Error("Execution workspace requires a configured mount");
+      this.#executionWorkspaces = await AgentExecutionWorkspaceCatalog.open({
+        rootDirectory: join(
+          await realpath(this.#supervisorDirectory),
+          "agent-workspaces",
+        ),
+        legacyCwd: requireSharedCwd(this.#profiles),
+        legacyMount,
+      });
+    }
+    this.#executionMounts = await this.#executionWorkspaces.refresh(bindings);
   }
 
   runtimeOffers(identity: {
@@ -115,7 +149,9 @@ export class RemoteRuntimeProfileSet {
         runtimeOfferId: profile.runtimeOfferId,
         runtimeProfileRevision: profile.runtimeProfileRevision,
         state: revisionIsActive(profile) ? "available" : "unavailable",
-        workspaceMountDescriptors: [...profile.workspaceMountDescriptors],
+        workspaceMountDescriptors: this.#executionMounts ?? [
+          ...profile.workspaceMountDescriptors,
+        ],
       });
     });
   }
@@ -130,11 +166,25 @@ export class RemoteRuntimeProfileSet {
       profile: RemoteRuntimeProfileSetEntry,
       resolvedModel?: ResolvedModel,
       toolAccessMode?: ToolAccessMode,
+      placement?: PlacementDecision,
     ) =>
       createRemoteConfiguredRuntime({
         agentMemoryCoordinator: this.#memoryCoordinator,
         credentialEnvironment: profile.credentialEnvironment,
-        cwd: profile.cwd,
+        cwd:
+          placement && this.#executionWorkspaces
+            ? this.#executionWorkspaces.resolve(placement)
+            : profile.cwd,
+        ...(placement && this.#executionWorkspaces
+          ? {
+              executionWorkspace: {
+                participantId: placement.participantId,
+                workspaceDefinitionId: placement.workspaceDefinitionId,
+                workspaceMountRevisionId: placement.workspaceMountRevisionId,
+                workspaceMountDigest: placement.workspaceMountDigest,
+              },
+            }
+          : {}),
         implementations: this.#implementations,
         probeReport: profile.probeReport,
         resident,
@@ -146,6 +196,12 @@ export class RemoteRuntimeProfileSet {
       });
     const recovery = createRegistryBackedRuntimeRecoveryFromRegistries({
       cwd: requireSharedCwd(this.#profiles),
+      resolveCwd: (descriptor) =>
+        descriptor.executionWorkspace
+          ? this.#requireExecutionWorkspaces().resolveFrozen(
+              descriptor.executionWorkspace,
+            )
+          : requireSharedCwd(this.#profiles),
       implementations: this.#implementations,
       registries: distinctRegistries(this.#profiles),
       supervisorDirectory: this.#supervisorDirectory,
@@ -162,6 +218,7 @@ export class RemoteRuntimeProfileSet {
           profile,
           placement.resolvedModel,
           placement.toolAccessMode,
+          placement,
         );
       },
       runtime: createRuntime(this.#profiles[0]!),
@@ -209,6 +266,7 @@ export function assertRuntimeProfileRevisionStillActive(
  * Computer session credentials never enter the child environment.
  */
 export function createRemoteConfiguredRuntime(input: {
+  executionWorkspace?: import("@rah-os/protocol").RuntimeRecoveryDescriptor["executionWorkspace"];
   agentMemoryCoordinator?: AgentMemoryCoordinator;
   credentialEnvironment: RuntimeCredentialEnvironmentBinding;
   cwd: string;
@@ -225,7 +283,7 @@ export function createRemoteConfiguredRuntime(input: {
   const workerEnvironmentOptions = {
     credentialDirectory: join(input.supervisorDirectory, "worker-credentials"),
   };
-  return input.implementations.createRuntime(
+  const runtime = input.implementations.createRuntime(
     input.runtimeProfileRevision,
     input.probeReport,
     {
@@ -297,6 +355,9 @@ export function createRemoteConfiguredRuntime(input: {
     input.resolvedModel,
     input.toolAccessMode,
   );
+  return input.executionWorkspace
+    ? withRuntimeExecutionWorkspace(runtime, input.executionWorkspace)
+    : runtime;
 }
 
 function revisionIsActive(profile: RemoteRuntimeProfileSetEntry): boolean {

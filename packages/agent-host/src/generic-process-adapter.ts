@@ -26,6 +26,7 @@ import type {
   RunExit,
   RunHandle,
   RuntimeAdapter,
+  RuntimeBusyNotice,
   RuntimeAvailability,
   RuntimeStartLifecycle,
 } from "./runtime.ts";
@@ -46,7 +47,12 @@ import {
 import { RAH_AGENT_MEMORY_BOOTSTRAP_JSON_ENV } from "./agent-memory-bootstrap.ts";
 import { RAH_AGENT_MEMORY_SOURCE_FILE_ENV } from "./agent-memory-project.ts";
 
+import { RuntimeBusyInput, validBusyNotice } from "./runtime-busy-input.ts";
+
 export type GenericProcessAdapterOptions = {
+  busyInputMode?: "direct" | "gated";
+  guideRuntimeId?: string;
+  nativeBusyInput?: boolean;
   activationEnvironment?: (
     input: ActivationEnvelope,
   ) => ActivationEnvironmentLease | Promise<ActivationEnvironmentLease>;
@@ -112,6 +118,7 @@ export type ProcessDiagnostics = {
 };
 
 type ProcessRun = {
+  busyInput: RuntimeBusyInput;
   activity: RuntimeTrajectoryCollector;
   child: ChildProcess;
   exitPromise: Promise<RunExit>;
@@ -188,6 +195,7 @@ const REDACTED_TRAJECTORY_FIELDS = new Set([
 ]);
 
 class RuntimeTrajectoryCollector {
+  readonly busyInput = new RuntimeBusyInput();
   readonly #activation: ActivationEnvelope;
   readonly #decoder = new StringDecoder("utf8");
   readonly #diagnostics: BoundedOutput;
@@ -225,11 +233,7 @@ class RuntimeTrajectoryCollector {
   }
 
   append(chunk: Buffer | string): void {
-    if (
-      this.#finished ||
-      (this.#lifecycle.recordTrajectory === undefined &&
-        this.#recordProviderSessionEvidence === undefined)
-    ) {
+    if (this.#finished) {
       return;
     }
     const value = Buffer.isBuffer(chunk)
@@ -300,6 +304,7 @@ class RuntimeTrajectoryCollector {
     this.#queue = this.#queue.then(async () => {
       try {
         const frame = JSON.parse(line) as unknown;
+        if (this.busyInput.receive(frame)) return;
         const providerSession = parseProviderSessionEvidence(frame);
         if (providerSession !== null) {
           await this.#recordProviderSessionEvidence?.(
@@ -553,6 +558,12 @@ class BoundedOutput {
 }
 
 export class GenericProcessAdapter implements RuntimeAdapter {
+  readonly busyInputMode: "direct" | "gated" | undefined;
+  readonly guideRuntimeId: string | undefined;
+  readonly #nativeBusyInput: boolean;
+  get busyInputSupported(): boolean {
+    return this.#nativeBusyInput;
+  }
   readonly recoveryDrivers: readonly string[] =
     process.platform === "win32" ? [] : [SUPERVISOR_DRIVER];
   readonly #activationEnvironment:
@@ -581,6 +592,9 @@ export class GenericProcessAdapter implements RuntimeAdapter {
   readonly #terminationGraceMs: number;
 
   constructor(options: GenericProcessAdapterOptions) {
+    this.#nativeBusyInput = options.nativeBusyInput === true;
+    this.guideRuntimeId = options.guideRuntimeId;
+    this.busyInputMode = options.busyInputMode;
     if (options.command.length === 0) {
       throw new Error("process command must not be empty");
     }
@@ -745,7 +759,12 @@ export class GenericProcessAdapter implements RuntimeAdapter {
         detached: process.platform !== "win32",
         env: this.#createActivationProcessEnvironment(input, environmentLease),
         shell: false,
-        stdio: ["ignore", "pipe", "pipe", "pipe"],
+        stdio: [
+          this.#nativeBusyInput ? "pipe" : "ignore",
+          "pipe",
+          "pipe",
+          "pipe",
+        ],
       });
     } catch (error) {
       await releaseEnvironment();
@@ -754,6 +773,9 @@ export class GenericProcessAdapter implements RuntimeAdapter {
 
     child.stdout?.on("data", (chunk: Buffer) => stdout.append(chunk));
     child.stderr?.on("data", (chunk: Buffer) => stderr.append(chunk));
+    child.stdin?.on("error", () => {
+      /* write callback/receipt handles EPIPE */
+    });
     const activity = new RuntimeTrajectoryCollector({
       activation: input,
       diagnostics: stderr,
@@ -773,6 +795,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       resolveExit = resolvePromise;
     });
     const run: ProcessRun = {
+      busyInput: activity.busyInput,
       activity,
       child,
       exitPromise,
@@ -819,6 +842,40 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       throw error;
     }
     return runHandle;
+  }
+
+  async notifyBusy(
+    handle: RunHandle,
+    notice: RuntimeBusyNotice,
+  ): Promise<boolean> {
+    const run = this.#runs.get(handle.runId);
+    if (
+      !this.#nativeBusyInput ||
+      !run ||
+      run.exited ||
+      !validBusyNotice(notice)
+    )
+      return false;
+    return await run.busyInput.send(
+      { fingerprint: notice.fingerprint, text: notice.text },
+      async (line) => {
+        if (run.exited) throw new Error("runtime exited");
+        if (run.supervisorDescriptor) {
+          await this.#requestSupervisorControl(
+            run.supervisorDescriptor,
+            "notify",
+            line,
+          );
+        } else {
+          const stdin = run.child.stdin;
+          if (!stdin?.writable || stdin.writableLength > 8192)
+            throw new Error("runtime stdin unavailable");
+          await new Promise<void>((resolve, reject) =>
+            stdin.write(line, (error) => (error ? reject(error) : resolve())),
+          );
+        }
+      },
+    );
   }
 
   async cancel(handle: RunHandle): Promise<RunExit> {
@@ -988,6 +1045,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       }
     };
     const supervisorConfig = {
+      nativeBusyInput: this.#nativeBusyInput,
       args: launchArgs,
       command: this.#command,
       controlRequestTimeoutMs: this.#supervisorControlTimeoutMs,
@@ -1030,6 +1088,9 @@ export class GenericProcessAdapter implements RuntimeAdapter {
 
     child.stdout?.on("data", (chunk: Buffer) => stdout.append(chunk));
     child.stderr?.on("data", (chunk: Buffer) => stderr.append(chunk));
+    child.stdin?.on("error", () => {
+      /* write callback/receipt handles EPIPE */
+    });
     const activity = new RuntimeTrajectoryCollector({
       activation: input,
       diagnostics: stderr,
@@ -1054,6 +1115,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
     );
     void exitPromise.catch(() => undefined);
     const run: ProcessRun = {
+      busyInput: activity.busyInput,
       activity,
       child,
       exitPromise,
@@ -1307,7 +1369,8 @@ export class GenericProcessAdapter implements RuntimeAdapter {
 
   async #requestSupervisorControl(
     descriptor: SupervisorDescriptor,
-    command: "launch" | "terminate",
+    command: "launch" | "terminate" | "notify",
+    input?: string,
   ): Promise<void> {
     await new Promise<void>((resolvePromise, reject) => {
       const socket = createConnection(descriptor.socketPath);
@@ -1364,6 +1427,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
         socket.write(
           `${JSON.stringify({
             command,
+            ...(input === undefined ? {} : { input }),
             controlToken: descriptor.controlToken,
             protocol: SUPERVISOR_DRIVER,
             runAttemptId: descriptor.runAttemptId,

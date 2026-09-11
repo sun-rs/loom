@@ -83,6 +83,9 @@ test("local workbench bootstrap is persistent, owner-private, and restart-safe",
       controlRoomId: first.metadata.controlRoomId,
     })[0];
     assert.ok(catalogEntry);
+    assert.deepEqual(catalogEntry.currentRevision.executionWorkspace, {
+      kind: "agent_private",
+    });
     assert.equal(
       kernel.getExecutionPolicyRevision(
         catalogEntry.currentRevision.executionPolicyRevisionId,

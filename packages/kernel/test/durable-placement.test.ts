@@ -272,7 +272,7 @@ function addAgent(
 
 test("Kernel schema owns anchored Tasks and immutable Placement projections", () => {
   const fixture = createFixture();
-  assert.equal(KERNEL_SCHEMA_VERSION, 54);
+  assert.equal(KERNEL_SCHEMA_VERSION, 55);
   assert.equal(
     fixture.agentDefinition.currentRevisionId,
     fixture.agentDefinitionRevision.agentDefinitionRevisionId,
@@ -2810,4 +2810,87 @@ test("inPlaceWorkspaceSharing 'exclusive' restores the serial one-writer behavio
   const windows = runAttemptWindows(databasePath);
   assert.equal(windows.length, 1);
   kernel.close();
+});
+
+test("Host execution workspace bindings expose only its authorized Agent identities", () => {
+  const f = createFixture();
+  try {
+    const otherAgent = addAgent(f, "private-other", "private-other-create");
+    const first = authenticateHost(f.kernel, "workspace-host-first", f.agentId);
+    const second = authenticateHost(
+      f.kernel,
+      "workspace-host-second",
+      otherAgent,
+    );
+    const bindings = f.kernel.listHostExecutionWorkspaceBindings(first);
+    assert.deepEqual(
+      bindings.map((row) => row.participantId),
+      [f.agentId],
+    );
+    assert.equal(bindings[0]?.executionWorkspace, undefined);
+    assert.equal("cwd" in bindings[0]!, false);
+    assert.deepEqual(
+      f.kernel
+        .listHostExecutionWorkspaceBindings(second)
+        .map((row) => row.participantId),
+      [otherAgent],
+    );
+    assert.throws(() =>
+      f.kernel.listHostExecutionWorkspaceBindings({
+        ...first,
+        hostId: second.hostId,
+      }),
+    );
+  } finally {
+    f.kernel.close();
+  }
+});
+
+test("Runtime preparation rejects workspace provenance not matching its frozen Placement", () => {
+  const f = createFixture();
+  try {
+    const host = authenticateHost(f.kernel, "frozen-cwd-host", f.agentId);
+    f.kernel.publishRuntimeOffer(host, runtimeOffer(host, "frozen-cwd-offer"));
+    f.kernel.createTask(f.humanActor, {
+      assigneeId: f.agentId,
+      idempotencyKey: "frozen-cwd-task",
+      roomId: f.room.roomId,
+      title: "Frozen cwd",
+    });
+    const placement = f.kernel.scheduleNextPlacement({ leaseMs: 30000 });
+    assert.ok(placement);
+    const launch = f.kernel.claimNextPlacement(host, { leaseMs: 30000 });
+    assert.ok(launch);
+    const executionWorkspace = {
+      participantId: placement.participantId,
+      workspaceDefinitionId: placement.workspaceDefinitionId,
+      workspaceMountRevisionId: placement.workspaceMountRevisionId,
+      workspaceMountDigest: placement.workspaceMountDigest,
+    };
+    const request = {
+      runAttemptId: launch.runAttempt.runAttemptId,
+      runtimeRunId: "frozen-cwd-runtime",
+      recoveryDescriptor: {
+        driver: "fake-runtime",
+        metadata: {},
+        recoveryKey: "frozen-cwd",
+        executionWorkspace,
+      },
+    };
+    assert.throws(() =>
+      f.kernel.prepareRunAttemptRuntime(host, {
+        ...request,
+        recoveryDescriptor: {
+          ...request.recoveryDescriptor,
+          executionWorkspace: {
+            ...executionWorkspace,
+            workspaceMountDigest: digest("f"),
+          },
+        },
+      }),
+    );
+    f.kernel.prepareRunAttemptRuntime(host, request);
+  } finally {
+    f.kernel.close();
+  }
 });

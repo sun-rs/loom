@@ -33,7 +33,7 @@ export type AgentHostIdentityMetadata = {
 };
 
 export type AgentHostDaemonLifecycle = {
-  afterOnline?: () => void;
+  afterOnline?: () => void | Promise<void>;
   beforeDraining?: () => void;
 };
 
@@ -203,7 +203,7 @@ export class AgentHostDaemon {
         ...this.#metadata,
         state: "online",
       });
-      this.#lifecycle?.afterOnline?.();
+      await this.#lifecycle?.afterOnline?.();
       input.signal.addEventListener("abort", beginDrain, { once: true });
       if (input.signal.aborted) beginDrain();
       await this.#runner.run({ signal: workerShutdown.signal });

@@ -61,6 +61,7 @@ test("a real candidate process proves the exclusive service socket before commit
         sourceProcessId,
       });
       assert.ok(child.pid !== undefined);
+      await waitForCandidateReady(child);
       return child.pid;
     },
     takeoverTimeoutMs: 2_000,
@@ -123,6 +124,7 @@ test("a real mismatched candidate is terminated before incumbent ownership retur
         sourceProcessId,
       });
       assert.ok(child.pid !== undefined);
+      await waitForCandidateReady(child);
       return child.pid;
     },
     takeoverTimeoutMs: 100,
@@ -198,5 +200,42 @@ async function waitForExit(child: ChildProcess | undefined): Promise<void> {
       clearTimeout(timer);
       resolve();
     });
+  });
+}
+
+// The fixture announces readiness only after acquiring the socket and setting
+// its owner-private permissions. Readiness does not replace the signed proof.
+async function waitForCandidateReady(child: ChildProcess): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    const pipe = child.stdio[3];
+    let body = "";
+    const finish = (error?: Error) => {
+      clearTimeout(timer);
+      pipe?.off("data", data);
+      child.off("exit", exited);
+      child.off("error", finish);
+      if (error) reject(error);
+      else resolve();
+    };
+    const exited = () => finish(new Error("Candidate exited before readiness"));
+    const data = (chunk: Buffer) => {
+      body += chunk.toString("utf8");
+      if (body.length > 1024)
+        return finish(new Error("Invalid candidate readiness"));
+      if (!body.includes("\n")) return;
+      try {
+        assert.equal(JSON.parse(body.trim()).processId, child.pid);
+        finish();
+      } catch (error) {
+        finish(error as Error);
+      }
+    };
+    const timer = setTimeout(
+      () => finish(new Error("Candidate readiness timed out")),
+      2000,
+    );
+    pipe?.on("data", data);
+    child.once("exit", exited);
+    child.once("error", finish);
   });
 }

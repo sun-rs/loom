@@ -1,3 +1,4 @@
+import { WorkerAddressingSchema } from "./worker-addressing.ts";
 export * from "./worker-target-context.ts";
 export * from "./worker-visible-profile.ts";
 import { WorkerVisibleProfileMetadataSchema } from "./worker-visible-profile.ts";
@@ -36,6 +37,7 @@ export type WorkerHistoryRequest = z.input<typeof WorkerHistoryRequestSchema>;
 export const WorkerHistoryResponseSchema = z
   .object({
     messages: z.array(MessageSchema).max(100),
+    addressing: WorkerAddressingSchema.optional(),
     frozenThroughRoomSeq: z.number().int().nonnegative(),
     olderCursor: z.string().optional(),
     newerCursor: z.string().optional(),
@@ -56,6 +58,7 @@ export type WorkerMessageResolveRequest = z.infer<
 export const WorkerMessageResolveResponseSchema = z
   .object({
     message: MessageSchema,
+    addressing: WorkerAddressingSchema.optional(),
     rootMessage: MessageSchema.optional(),
     threadId: IdentifierSchema.optional(),
   })

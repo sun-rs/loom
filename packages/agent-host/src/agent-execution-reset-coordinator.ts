@@ -41,6 +41,9 @@ export type AgentExecutionResetInput = Readonly<{
 export type AgentExecutionResetReceipt = ClientAgentExecutionResetResponse;
 
 export type AgentExecutionResetCoordinatorOptions = Readonly<{
+  finalizeCommittedWorkspace?: (
+    receipt: AgentExecutionResetReceipt,
+  ) => Promise<void>;
   acquireFence(
     ownerParticipantId: string,
     operationId: string,
@@ -141,6 +144,7 @@ type InFlight = Readonly<{
  * rollback-capable Provider-continuity effect and its terminal receipt.
  */
 export class AgentExecutionResetCoordinator {
+  readonly #finalizeCommittedWorkspace: AgentExecutionResetCoordinatorOptions["finalizeCommittedWorkspace"];
   readonly #acquireFence: AgentExecutionResetCoordinatorOptions["acquireFence"];
   readonly #computerHostId: string;
   readonly #inFlight = new Map<string, InFlight>();
@@ -152,6 +156,7 @@ export class AgentExecutionResetCoordinator {
   readonly #rootDirectory: string;
 
   constructor(options: AgentExecutionResetCoordinatorOptions) {
+    this.#finalizeCommittedWorkspace = options.finalizeCommittedWorkspace;
     this.#acquireFence = options.acquireFence;
     this.#computerHostId = requiredIdentifier(
       options.computerHostId,
@@ -167,7 +172,10 @@ export class AgentExecutionResetCoordinator {
     uncheckedOperationId: string,
   ): Promise<AgentExecutionResetReceipt | null> {
     const operationId = requiredIdentifier(uncheckedOperationId, "operationId");
-    return await readReceipt(this.#rootDirectory, operationId);
+    return await readAgentExecutionResetReceipt(
+      this.#rootDirectory,
+      operationId,
+    );
   }
 
   async reset(
@@ -179,6 +187,7 @@ export class AgentExecutionResetCoordinator {
     const existing = await this.receipt(input.operationId);
     if (existing !== null) {
       assertReceiptIdentity(existing, input);
+      await this.#finalizeCommittedWorkspace?.(existing);
       return Object.freeze({ ...existing, deduplicated: true });
     }
     const active = this.#inFlight.get(input.operationId);
@@ -213,6 +222,7 @@ export class AgentExecutionResetCoordinator {
     let continuity: AgentExecutionProviderContinuityQuarantine | undefined;
     let workspace: AgentExecutionWorkspaceQuarantine | undefined;
     let safeToRelease = input.mode === "restart";
+    let receiptWriteAttempted = false;
     try {
       if (input.mode === "full") {
         if (this.#quarantineAgentWorkspace === undefined) {
@@ -250,11 +260,31 @@ export class AgentExecutionResetCoordinator {
         ownerParticipantId: input.ownerParticipantId,
         providerContinuityRecords: continuity?.recordCount ?? 0,
       });
+      receiptWriteAttempted = true;
       await persistReceipt(this.#rootDirectory, receipt);
       workspace?.commit();
       safeToRelease = true;
       return Object.freeze(receipt);
     } catch (error) {
+      // A published receipt is the existing durable commit decision. Failure
+      // after publication is finalization work, never permission to undo it.
+      if (receiptWriteAttempted) {
+        safeToRelease = false;
+        let committed: AgentExecutionResetReceipt | null;
+        try {
+          committed = await this.receipt(input.operationId);
+        } catch (readError) {
+          throw new AggregateError(
+            [error, readError],
+            "Reset commit outcome is uncertain; execution fence retained",
+          );
+        }
+        if (committed !== null) {
+          assertReceiptIdentity(committed, input);
+          safeToRelease = false;
+          throw error;
+        }
+      }
       const rollbackErrors: unknown[] = [];
       if (continuity !== undefined) {
         try {
@@ -304,7 +334,7 @@ async function persistReceipt(
   await syncDirectory(receiptRoot);
 }
 
-async function readReceipt(
+export async function readAgentExecutionResetReceipt(
   rootDirectory: string,
   operationId: string,
 ): Promise<AgentExecutionResetReceipt | null> {

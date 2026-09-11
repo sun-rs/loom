@@ -1,3 +1,4 @@
+import { HintTooltip } from "@rah-os/ui-web/neo-brutalist/tooltip";
 import { RailHelpMenu } from "./rail-help-menu.tsx";
 import { InteractivePopoverTrigger } from "@rah-os/ui-web/neo-brutalist/interactive-popover";
 import type { Room, Workspace } from "@rah-os/protocol";
@@ -176,28 +177,29 @@ function RailButton({
   onClick?: () => void;
 }) {
   return (
-    <button
-      {...buttonProps}
-      aria-label={badge > 0 ? `${label}，${badge} 项待处理` : label}
-      className={`rail-btn${active ? " is-active" : ""}`}
-      disabled={
-        disabled ||
-        (onClick === undefined && buttonProps["aria-haspopup"] !== "dialog")
-      }
-      onClick={onClick}
-      title={label}
-      data-has-unread={dot || badge > 0}
-    >
-      <Icon name={icon} />
-      {visibleNavigationDot(dot, active && !keepDotWhileActive) && (
-        <span className="rah-status-dot" aria-hidden="true" />
-      )}
-      {badge > 0 ? (
-        <span className="rah-rail-badge" aria-hidden="true">
-          {badge > 99 ? "99+" : badge}
-        </span>
-      ) : null}
-    </button>
+    <HintTooltip content={label}>
+      <button
+        {...buttonProps}
+        aria-label={badge > 0 ? `${label}，${badge} 项待处理` : label}
+        className={`rail-btn${active ? " is-active" : ""}`}
+        disabled={
+          disabled ||
+          (onClick === undefined && buttonProps["aria-haspopup"] !== "dialog")
+        }
+        onClick={onClick}
+        data-has-unread={dot || badge > 0}
+      >
+        <Icon name={icon} />
+        {visibleNavigationDot(dot, active && !keepDotWhileActive) && (
+          <span className="rah-status-dot" aria-hidden="true" />
+        )}
+        {badge > 0 ? (
+          <span className="rah-rail-badge" aria-hidden="true">
+            {badge > 99 ? "99+" : badge}
+          </span>
+        ) : null}
+      </button>
+    </HintTooltip>
   );
 }
 

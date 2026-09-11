@@ -1,3 +1,12 @@
+import { WorkerTaskUpdateRequestSchema } from "@rah-os/protocol";
+import {
+  WorkerTaskBatchCreateRequestSchema,
+  WorkerTaskBatchClaimRequestSchema,
+} from "@rah-os/protocol";
+import {
+  WorkerMessageCheckRequestSchema,
+  WorkerMessageCheckResponseSchema,
+} from "@rah-os/protocol";
 import type { WorkerProfileMetadataPort } from "@rah-os/kernel";
 import {
   WorkerIntrospectionRequestSchema,
@@ -167,6 +176,7 @@ export type TaskDeliveryEvidenceCollector = {
 };
 
 type WorkerGrant = {
+  messageCheck?: { cursor?: number; pending: Set<number> };
   claimedTaskIds: Set<string>;
   deliveredCursors: Set<number>;
   deliveryEvidenceBaseline?: TaskDeliveryEvidenceBaseline;
@@ -254,6 +264,7 @@ export const WORKER_HTTP_ROUTE_PATHS = [
   "/v1/worker/reminders/snooze",
   "/v1/worker/reminders/update",
   "/v1/worker/sync",
+  "/v1/worker/message-check",
   "/v1/worker/threads/unfollow",
   "/v1/worker/channels/mute",
   "/v1/worker/channels/unmute",
@@ -262,6 +273,8 @@ export const WORKER_HTTP_ROUTE_PATHS = [
   "/v1/worker/profile/self/get",
   "/v1/worker/profile/self/update",
   "/v1/worker/tasks/create",
+  "/v1/worker/tasks/create-batch",
+  "/v1/worker/tasks/claim-batch",
   "/v1/worker/tasks/assign",
   "/v1/worker/tasks/amend",
   "/v1/worker/tasks/delete",
@@ -275,6 +288,7 @@ export const WORKER_HTTP_ROUTE_PATHS = [
   "/v1/worker/tasks/request-input",
   "/v1/worker/tasks/review",
   "/v1/worker/tasks/start",
+  "/v1/worker/tasks/update-status",
   "/v1/worker/tasks/submit",
   "/v1/worker/tasks/submission",
   "/v1/worker/tasks/trajectory",
@@ -310,6 +324,7 @@ const TASK_FRESHNESS_HOLD_ROUTES = new Set<string>([
   "/v1/worker/tasks/claim-message",
   "/v1/worker/tasks/amend",
   "/v1/worker/tasks/submit",
+  "/v1/worker/tasks/update-status",
 ]);
 
 const TASK_ROUTES_WITHOUT_A_TASK = new Set<string>([
@@ -320,6 +335,8 @@ const TASK_ROUTES_WITHOUT_A_TASK = new Set<string>([
 
 /** Task read routes that already carry their own `channel` selector. */
 const TASK_ROUTES_WITH_OWN_CHANNEL = new Set<string>([
+  "/v1/worker/tasks/create-batch",
+  "/v1/worker/tasks/claim-batch",
   "/v1/worker/tasks/history",
   "/v1/worker/tasks/list",
 ]);
@@ -733,6 +750,34 @@ export class WorkerApplicationService {
       );
       return;
     }
+    if (route === "/v1/worker/message-check") {
+      const { replay } = parseWorkerRequest(
+        WorkerMessageCheckRequestSchema,
+        body,
+      );
+      const check =
+        replay || grant.messageCheck === undefined
+          ? (grant.messageCheck = { pending: new Set<number>() })
+          : grant.messageCheck;
+      const delivery = this.#kernel.syncWorker(grant.execution, {
+        ...(check.cursor === undefined
+          ? { replayDelivery: true }
+          : { afterSeq: check.cursor }),
+      });
+      grant.deliveredCursors.add(delivery.cursorAfter);
+      grant.knownRoomSeqs.add(delivery.cursorAfter);
+      check.pending.add(delivery.cursorAfter);
+      writeJson(
+        response,
+        200,
+        WorkerMessageCheckResponseSchema.parse({
+          delivery,
+          throughSeq: grant.scope.toSeq,
+        }),
+      );
+      return;
+    }
+
     if (route === "/v1/worker/sync") {
       const { afterSeq } = parseWorkerRequest(WorkerSyncRequestSchema, body);
       if (afterSeq !== undefined && !grant.deliveredCursors.has(afterSeq)) {
@@ -983,6 +1028,46 @@ export class WorkerApplicationService {
       writeJson(response, 200, TaskDeleteResponseSchema.parse(deleted));
       return;
     }
+    if (
+      route === "/v1/worker/tasks/create-batch" ||
+      route === "/v1/worker/tasks/claim-batch"
+    ) {
+      if (body.basedOnRoomSeq !== undefined)
+        this.#requireKnownCausalCursor(grant, body.basedOnRoomSeq as number);
+      try {
+        const input = route.endsWith("create-batch")
+          ? parseWorkerRequest(WorkerTaskBatchCreateRequestSchema, body)
+          : parseWorkerRequest(WorkerTaskBatchClaimRequestSchema, body);
+        const batch = this.#kernel.workerTaskManagement.batch(
+          grant.execution,
+          route.endsWith("create-batch") ? "create" : "claim",
+          input,
+          this.#taskClaimLeaseMs,
+        );
+        for (const mutation of batch.mutations) {
+          grant.knownRoomSeqs.add(mutation.event.roomSeq);
+          this.#synchronizeTaskHeartbeat(grant, mutation.task);
+        }
+        writeJson(response, 200, batch.response);
+      } catch (error) {
+        if (
+          !(error instanceof StaleContextError) ||
+          !route.endsWith("claim-batch")
+        )
+          throw error;
+        writeJson(
+          response,
+          200,
+          WorkerTaskHeldResponseSchema.parse(
+            this.#kernel.workerReads.freshnessHold(grant.execution, {
+              basedOnRoomSeq: error.basedOnRoomSeq ?? 0,
+              seenUpToSeq: error.latestRoomSeq,
+            }),
+          ),
+        );
+      }
+      return;
+    }
     if (route.startsWith("/v1/worker/tasks/")) {
       // Raft holds a Task claim and amendment on stale context exactly as it
       // holds a send: the bounded newer context is a rendered result on stdout
@@ -1060,6 +1145,10 @@ export class WorkerApplicationService {
     this.#kernel.acknowledgeWorkerCursor(grant.execution, {
       throughSeq,
     });
+    if (grant.messageCheck?.pending.has(throughSeq)) {
+      grant.messageCheck.cursor = throughSeq;
+      grant.messageCheck.pending.clear();
+    }
     writeJson(
       response,
       200,
@@ -1158,6 +1247,36 @@ export class WorkerApplicationService {
     grant: WorkerGrant,
     assertAuthorized: () => void,
   ) {
+    if (route === "/v1/worker/tasks/update-status") {
+      const presented = parseWorkerRequest(WorkerTaskUpdateRequestSchema, body);
+      if (presented.basedOnRoomSeq !== undefined)
+        this.#requireKnownCausalCursor(grant, presented.basedOnRoomSeq);
+      const command = this.#kernel.workerTaskManagement.resolveStatus(
+        grant.execution,
+        presented,
+      );
+      if (command.status === "in_review") {
+        const summary = this.#kernel.workerTaskManagement.statusSummary(
+          grant.execution,
+          command,
+        );
+        return this.#handleTaskSubmission(
+          {
+            taskId: command.taskId,
+            basedOnRoomSeq: command.basedOnRoomSeq,
+            idempotencyKey: command.idempotencyKey,
+            summary,
+          },
+          grant,
+          assertAuthorized,
+        );
+      }
+      return this.#kernel.workerTaskManagement.status(
+        grant.execution,
+        command,
+        this.#taskClaimLeaseMs,
+      );
+    }
     if (route === "/v1/worker/tasks/amend") {
       const command = this.#resolveTaskCommand(
         grant,
@@ -1326,6 +1445,14 @@ export class WorkerApplicationService {
       );
       return this.#kernel.taskReviews.reviewTask(grant.execution, command);
     }
+    return this.#handleTaskSubmission(body, grant, assertAuthorized);
+  }
+
+  async #handleTaskSubmission(
+    body: Record<string, unknown>,
+    grant: WorkerGrant,
+    assertAuthorized: () => void,
+  ) {
     const command = this.#resolveTaskCommand(
       grant,
       parseWorkerRequest(WorkerTaskSubmitRequestSchema, body),

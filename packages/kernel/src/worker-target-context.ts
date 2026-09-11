@@ -1,3 +1,7 @@
+import {
+  workerAddressing,
+  workerAddressingBudget,
+} from "./worker-addressing.ts";
 import type { RoomFiles } from "./room-files.ts";
 import { workerMessageAttachments } from "./worker-message-attachments.ts";
 import { WorkerReadService } from "./worker-read-tools.ts";
@@ -209,8 +213,12 @@ export class WorkerTargetContextService {
         {
           eventFromRow: this.#context.eventFromRow,
           snapshot: this.#context.snapshot,
+          eventOverheadBytes: workerAddressingBudget(
+            this.#context.database,
+            origin,
+          ),
           responseOverheadBytes:
-            Buffer.byteLength(JSON.stringify(envelope)) - 4,
+            Buffer.byteLength(JSON.stringify(envelope)) - 4 + 48,
         },
       );
       receipt.cursor = window.cursorAfter;
@@ -245,6 +253,11 @@ export class WorkerTargetContextService {
       });
       const response = P.WorkerRoomContextResponseSchema.parse({
         ...envelope,
+        addressing: workerAddressing(
+          this.#context.database,
+          origin,
+          window.events,
+        ),
         complete: receipt.cursor === through,
         contextReceipt: this.#sign(receipt),
         // The same `[task #N status=...]` suffix the Agent sees in

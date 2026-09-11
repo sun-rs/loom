@@ -361,7 +361,7 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
     /never (judge from|rely on) the owner's prose alone/iu,
   );
   assert.match(prompt, /canonical Room/u);
-  assert.match(prompt, /RAH_WORKER_CLI.*worker sync/u);
+  assert.match(prompt, /RAH_WORKER_CLI.*worker message-check/u);
   assert.match(prompt, /RAH_WORKER_CLI.*worker message-post/u);
   assert.match(prompt, /Respect ongoing conversations/iu);
   assert.match(prompt, /Only the person doing the work should report/iu);
@@ -374,7 +374,7 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
   assert.doesNotMatch(prompt, /emit at most one next step/iu);
   assert.match(
     prompt,
-    /state.*held.*not published.*recoveryTarget.*--send-draft --target <recoveryTarget>.*original sync cursor/isu,
+    /state.*held.*not published.*recoveryTarget.*--send-draft --target <recoveryTarget>.*message-check handles delivery confirmation/isu,
   );
   assert.doesNotMatch(
     prompt,
@@ -508,7 +508,7 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
     prompt,
     /explicit result file.*artifact-publish.*before.*task-submit/isu,
   );
-  assert.match(prompt, /RAH_WORKER_CLI.*worker acknowledge/u);
+  assert.match(prompt, /Delivery confirmation is automatic/);
   assert.doesNotMatch(prompt, /RAH_WORKER_API_URL/u);
   assert.doesNotMatch(prompt, /RAH_WORKER_TOKEN/u);
   assert.doesNotMatch(prompt, /\/v1\/worker/u);
@@ -553,7 +553,8 @@ test("ported Raft startup sequence keeps all five upstream steps", () => {
     prompt,
     /finish everything, report results, then stop\. New messages arrive automatically — you do not need to poll or wait for them\./u,
   );
-  assert.match(prompt, /6\. Finally call .*worker acknowledge --through-seq/u);
+  assert.match(prompt, /6\. Delivery confirmation is automatic/u);
+  assert.doesNotMatch(prompt, /worker acknowledge --through-seq/);
 });
 
 test("ported Raft credential hygiene keeps both upstream halves", () => {
@@ -707,4 +708,53 @@ test("the prompt teaches DM targets, including starting a new DM", () => {
   assert.match(prompt, /room-resolve --target #CHANNEL\|dm:@HANDLE/u);
   // Raft's bullet, in upstream's words, now that an Agent can open a DM.
   assert.match(prompt, /\*\*Start a NEW DM\*\*.*--target dm:@person-handle/u);
+});
+
+test("delivery instructions distinguish Wait, direct and gated without treating a notice as read", () => {
+  for (const deliveryMode of ["wait", "direct", "gated"] as const) {
+    const compiled = compileStandingPrompt({
+      runtimeContext: { deliveryMode },
+    });
+    assert.match(
+      compiled.prompt,
+      new RegExp(`Delivery mode at launch: ${deliveryMode}`),
+    );
+    assert.match(compiled.prompt, /does not acknowledge Inbox/);
+    if (deliveryMode === "direct")
+      assert.match(
+        compiled.prompt,
+        /batched, content-free inbox update into your current turn/,
+      );
+    if (deliveryMode === "gated")
+      assert.match(compiled.prompt, /fresh Claude session.*first turn ends/);
+    if (deliveryMode === "wait")
+      assert.match(compiled.prompt, /does not proactively inject/);
+  }
+});
+
+test("live-notice startup does not interpret a body-free notice as no work", () => {
+  for (const deliveryMode of ["direct", "gated"] as const) {
+    const { prompt } = compileStandingPrompt({
+      runtimeContext: { deliveryMode },
+    });
+    assert.doesNotMatch(
+      prompt,
+      /3\. If there is no concrete incoming message to handle, stop and wait\./u,
+    );
+    assert.match(
+      prompt,
+      /never derive "no work" from a content-free notice alone/u,
+    );
+  }
+});
+
+test("Task workflow teaches Agent completion after Human approval without a second approval protocol", () => {
+  const { prompt } = compileStandingPrompt({
+    agent: fixtureAgent,
+    runtimeContext: fixtureRuntimeContext,
+  });
+  assert.match(prompt, /After.*human.*approval.*task-update.*--status done/is);
+  assert.match(prompt, /--status closed/);
+  assert.doesNotMatch(prompt, /Human acceptance remains the only transition/);
+  assert.doesNotMatch(prompt, /artifact-publish[^\n]*--idempotency-key/);
 });

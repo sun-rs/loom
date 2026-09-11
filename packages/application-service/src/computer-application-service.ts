@@ -238,6 +238,10 @@ export class ComputerApplicationService {
     const serverTime = this.#now();
     session.expiresAtMs = serverTime.getTime() + this.#sessionTtlMs;
     const response = ComputerHeartbeatResponseSchema.parse({
+      executionWorkspaceBindings:
+        request.state === "offline"
+          ? []
+          : this.#computer.listHostExecutionWorkspaceBindings(session.host),
       host: record,
       serverTime: serverTime.toISOString(),
       sessionExpiresAt: new Date(session.expiresAtMs).toISOString(),

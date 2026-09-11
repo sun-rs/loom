@@ -478,13 +478,16 @@ export function AdministrationSettingsContent({
   agents,
   principal,
   membershipRole,
+  children,
 }: {
+  children?: React.ReactNode;
   membershipRole?: MembershipRole | undefined;
   agents: readonly WorkspaceAgentView[];
   principal: Principal | undefined;
 }) {
   return (
     <SettingsPage icon="shield-check" title="管理">
+      {children}
       <SettingsSectionLabel icon="shield-check">
         当前成员权限
       </SettingsSectionLabel>

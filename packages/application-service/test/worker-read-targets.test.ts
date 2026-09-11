@@ -162,19 +162,23 @@ test("joined Room reads and directory resolve through HTTP and a real Worker CLI
     );
     assert.match(
       await cli(["message-read", "--target", "#other"]),
-      new RegExp(`^\\[1/\\d+ seq=\\d+ msg=${message.event.aggregateId} `, "mu"),
+      new RegExp(
+        `^\\[1/\\d+ target=#other seq=\\d+ msg=${message.event.aggregateId} `,
+        "mu",
+      ),
     );
     assert.match(
       await cli(["message-resolve", "--message-id", message.event.aggregateId]),
-      new RegExp(
-        `^\\[target=${other.roomId} msg=${message.event.aggregateId} `,
-        "mu",
-      ),
+      new RegExp(`^\\[target=#other msg=${message.event.aggregateId} `, "mu"),
     );
     assert.match(
       await cli(["room-members", "--target", "#other"]),
       new RegExp(`^Channel: ${other.roomId}$`, "mu"),
     );
+    const roster = await cli(["room-members", "--target", "#other"]);
+    assert.match(roster, /@human \[room owner\]/);
+    assert.match(roster, /@reader \[room member\]/);
+
     assert.match(
       await cli(["task-list", "--target", "#other"]),
       new RegExp(` id=${targetTask.taskId}$`, "mu"),
@@ -195,7 +199,7 @@ test("joined Room reads and directory resolve through HTTP and a real Worker CLI
     assert.match(
       await cli(["message-search", "--query", "Joined fact"]),
       new RegExp(
-        `^Search results for: "Joined fact" \\(2 results\\)\\n\\n<result ref="msg:${message.event.aggregateId}">\\nSource: room:${other.roomId}$`,
+        `^Search results for: "Joined fact" \\(2 results\\)\\n\\n<result ref="msg:${message.event.aggregateId}">\\nSource: target=#other$`,
         "mu",
       ),
     );

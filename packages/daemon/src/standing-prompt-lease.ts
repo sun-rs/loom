@@ -1,3 +1,4 @@
+import type { PromptDeliveryMode } from "./standing-prompt-delivery.ts";
 import { hostname } from "node:os";
 
 import type {
@@ -18,6 +19,7 @@ import {
 export const DAEMON_VERSION = "0.1.0";
 
 export type StandingPromptLeaseOptions = {
+  deliveryMode?: PromptDeliveryMode;
   daemonVersion?: string;
   machineHostname?: string;
   machineOs?: string;
@@ -58,6 +60,7 @@ export function standingPromptLease(
       role: revision.role,
     },
     runtimeContext: {
+      deliveryMode: options.deliveryMode ?? "wait",
       daemonVersion: options.daemonVersion ?? DAEMON_VERSION,
       hostId: scope.hostId,
       machineHostname: options.machineHostname ?? hostname(),

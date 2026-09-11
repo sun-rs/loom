@@ -38,6 +38,24 @@ function fixture() {
           headers: new Headers(init?.headers),
           url: String(input),
         });
+        if (String(input).endsWith("/tasks/claim-batch")) {
+          const body = JSON.parse(String(init?.body));
+          return new Response(
+            JSON.stringify({
+              roomId: "room-test",
+              results: body.taskNumbers.map((taskNumber: number) => ({
+                success: true,
+                taskNumber,
+                taskId: `task-${taskNumber}`,
+                messageId: `message-${taskNumber}`,
+                threadId: `thread-${taskNumber}`,
+                state: "claimed",
+              })),
+              tasks: [],
+              deduplicated: false,
+            }),
+          );
+        }
         return new Response(JSON.stringify({ ok: true, roomSeq: 7 }), {
           headers: { "content-type": "application/json" },
           status: 200,
@@ -2001,7 +2019,7 @@ test("every Task command accepts Raft's --target with --number addressing", asyn
   }
 });
 
-test("--number repeats on task-claim alone and claims each Task in turn", async () => {
+test("--number repeats on task-claim alone and submits one batch", async () => {
   const state = fixture();
   try {
     assert.equal(
@@ -2023,10 +2041,7 @@ test("--number repeats on task-claim alone and claims each Task in turn", async 
     );
     assert.deepEqual(
       state.requests.map((request) => request.body),
-      [
-        { channel: "#build", taskNumber: 1 },
-        { channel: "#build", taskNumber: 2 },
-      ],
+      [{ channel: "#build", taskNumbers: [1, 2] }],
     );
     // Raft writes one `formatClaimResults` block for the whole claim, not one
     // machine line per request.
@@ -2257,5 +2272,212 @@ test("the CLI help never asks the Agent for a cursor, a key or a paging receipt"
     });
   } finally {
     rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("help states explicit delivery acknowledgement and artifact key exceptions", async () => {
+  const state = fixture();
+  try {
+    await runWorkerCliCommand(["worker", "help"], state.runtime);
+    const help = state.stdout();
+    assert.ok(
+      !help.includes("No command needs a causal cursor or an idempotency key"),
+    );
+    assert.ok(help.includes("message-check drains the current Activation"));
+    assert.ok(help.includes("Artifact publication derives its retry identity"));
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("normal message-check hides cursors and acknowledges only rendered delivery", async () => {
+  const state = fixture();
+  try {
+    const calls: Array<{ path: string; body: unknown }> = [];
+    const code = await runWorkerCliCommand(["worker", "message-check"], {
+      ...state.runtime,
+      fetch: async (input, init) => {
+        const path = new URL(String(input)).pathname;
+        calls.push({ path, body: JSON.parse(String(init?.body)) });
+        return new Response(
+          JSON.stringify(
+            path.endsWith("message-check")
+              ? {
+                  throughSeq: 7,
+                  delivery: {
+                    cursorBefore: 0,
+                    cursorAfter: 7,
+                    latestRoomSeq: 12,
+                    events: [],
+                    snapshot: null,
+                  },
+                }
+              : { acknowledgedThrough: 7 },
+          ),
+        );
+      },
+    });
+    assert.equal(code, 0, state.stderr());
+    assert.deepEqual(calls, [
+      { path: "/v1/worker/message-check", body: {} },
+      { path: "/v1/worker/acknowledge", body: { throughSeq: 7 } },
+    ]);
+    assert.match(state.stdout(), /current Activation/);
+    assert.doesNotMatch(state.stdout(), /through-seq/);
+  } finally {
+    rmSync(state.directory, { recursive: true, force: true });
+  }
+});
+
+test("Worker CLI owns Artifact retry keys without sending a local path", async () => {
+  const state = fixture();
+  const filePath = join(state.directory, "evidence.txt");
+  writeFileSync(filePath, "artifact-evidence!", { mode: 0o600 });
+  const requests: Array<{
+    body: string;
+    headers: Headers;
+    method: string | undefined;
+    url: string;
+  }> = [];
+  try {
+    const publish = () =>
+      runWorkerCliCommand(
+        [
+          "worker",
+          "artifact-publish",
+          "--task-id",
+          "task-1",
+          "--path",
+          filePath,
+          "--mime-type",
+          "text/plain",
+        ],
+        {
+          ...state.runtime,
+          env: { ...state.runtime.env, RAH_RUN_ATTEMPT_ID: "run-1" },
+          fetch: async (input, init) => {
+            const body =
+              typeof init?.body === "string"
+                ? init.body
+                : Buffer.from(
+                    await new Response(init?.body ?? null).arrayBuffer(),
+                  ).toString("utf8");
+            requests.push({
+              body,
+              headers: new Headers(init?.headers),
+              method: init?.method,
+              url: String(input),
+            });
+            return String(input).endsWith("/prepare")
+              ? new Response(
+                  JSON.stringify({
+                    attachmentId: "attachment-1",
+                    expiresAt: "2026-09-01T01:00:00.000Z",
+                    filename: "evidence.txt",
+                    mimeType: "text/plain",
+                    roomId: "room-1",
+                    size: 18,
+                    state: "pending",
+                    taskId: "task-1",
+                  }),
+                )
+              : new Response(
+                  JSON.stringify({
+                    attachmentId: "attachment-1",
+                    expiresAt: "2026-09-01T01:00:00.000Z",
+                    filename: "evidence.txt",
+                    mimeType: "text/plain",
+                    roomId: "room-1",
+                    sha256:
+                      "0d612265f5b74df4d813cf768c288f6dc27872470cd02e763c130b0bdaafbe51",
+                    size: 18,
+                    state: "completed",
+                    taskId: "task-1",
+                  }),
+                );
+          },
+        },
+      );
+    assert.equal(await publish(), 0, state.stderr());
+    assert.equal(requests.length, 2);
+    assert.equal(
+      requests[0]?.url,
+      "http://127.0.0.1:43123/v1/worker/artifacts/prepare",
+    );
+    assert.match(
+      JSON.parse(requests[0]!.body).idempotencyKey,
+      /^artifact:[a-f0-9]{64}$/,
+    );
+    assert.deepEqual(
+      { ...JSON.parse(requests[0]!.body), idempotencyKey: "automatic" },
+      {
+        filename: "evidence.txt",
+        idempotencyKey: "automatic",
+        mimeType: "text/plain",
+        size: 18,
+        taskId: "task-1",
+      },
+    );
+    assert.equal(requests[0]?.body.includes(filePath), false);
+    assert.equal(requests[1]?.method, "PUT");
+    assert.equal(
+      requests[1]?.url,
+      "http://127.0.0.1:43123/v1/worker/artifacts/attachment-1",
+    );
+    assert.equal(requests[1]?.body, "artifact-evidence!");
+    assert.equal(await publish(), 0, state.stderr());
+    assert.equal(
+      JSON.parse(requests[2]!.body).idempotencyKey,
+      JSON.parse(requests[0]!.body).idempotencyKey,
+      "same logical retry must reuse its preparation key",
+    );
+  } finally {
+    rmSync(state.directory, { force: true, recursive: true });
+  }
+});
+
+test("message-check accepts the full sync budget plus its bounded outer envelope", async () => {
+  const state = fixture();
+  try {
+    const delivery = {
+      cursorBefore: 0,
+      cursorAfter: 1,
+      latestRoomSeq: 1,
+      snapshot: null,
+      events: [
+        {
+          eventId: "event-1",
+          roomId: "room-1",
+          roomSeq: 1,
+          type: "message.posted",
+          actorId: "agent-1",
+          aggregateType: "message",
+          aggregateId: "message-1",
+          payload: { body: "" },
+          idempotencyKey: "key-1",
+          schemaVersion: 1,
+          createdAt: "2026-09-11T00:00:00.000Z",
+        },
+      ],
+    };
+    delivery.events[0]!.payload.body = "x".repeat(
+      2 * 1024 * 1024 - Buffer.byteLength(JSON.stringify(delivery)),
+    );
+    assert.equal(Buffer.byteLength(JSON.stringify(delivery)), 2 * 1024 * 1024);
+    let acknowledged = false;
+    const code = await runWorkerCliCommand(["worker", "message-check"], {
+      ...state.runtime,
+      fetch: async (input) => {
+        if (String(input).endsWith("acknowledge")) {
+          acknowledged = true;
+          return new Response(JSON.stringify({ acknowledgedThrough: 1 }));
+        }
+        return new Response(JSON.stringify({ delivery, throughSeq: 1 }));
+      },
+    });
+    assert.equal(code, 0, state.stderr());
+    assert.equal(acknowledged, true);
+  } finally {
+    rmSync(state.directory, { recursive: true, force: true });
   }
 });

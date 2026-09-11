@@ -8,11 +8,10 @@ import test from "node:test";
  * and only those three response schemas union into
  * `agentApiHeldFreshnessResponseSchema`).
  *
- * RAH covers claim (through both selectors), amend, and **part of** update:
- * `in_review` is reached upstream only by `task update`, and the factory prompt
- * names that command for it, so `task-submit` holds. Raft's other four
- * statuses are not covered — RAH has no `task update` and no `--status` — so
- * this set is deliberately incomplete and the registry keeps that gap open.
+ * RAH now has the explicit update-status facade, matching Raft's held response
+ * union (SEA 1.0.18 main.js:17274ff and 730404ff). It also keeps the existing
+ * task-submit alias. This adds no hold behavior to unrelated lifecycle commands;
+ * done/closed authority remains a separate policy boundary.
  *
  * This pins the set so it cannot be widened without evidence. It is not a
  * statement that the set is complete.
@@ -28,7 +27,7 @@ import test from "node:test";
  *    `in_progress` without holding — so the target status cannot decide it.
  *  - block, unblock, request-input, progress: RAH-only. `blocked` is not a Raft
  *    task status anywhere in the product, so upstream settles nothing.
- *  - `done` and `closed` have no Agent-facing RAH operation to map at all.
+ *  - done/closed inputs exist but retain the current Human-management denial.
  */
 test("the Task freshness hold covers exactly the routes evidence has settled", () => {
   const source = readFileSync(
@@ -46,5 +45,6 @@ test("the Task freshness hold covers exactly the routes evidence has settled", (
     "/v1/worker/tasks/claim",
     "/v1/worker/tasks/claim-message",
     "/v1/worker/tasks/submit",
+    "/v1/worker/tasks/update-status",
   ]);
 });

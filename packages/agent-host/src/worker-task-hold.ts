@@ -34,9 +34,8 @@ const AMEND: TaskHoldWording = {
  * value there, and assign/unassign/unclaim have no hold branch upstream at all.
  * That establishes only the absence of a direct mapping — it does not settle
  * RAH's local concurrency semantics for those commands. RAH split that setter
- * into a lifecycle family, so STATUS is defined and left unmapped until the
- * per-command correspondence is established, rather than applied through a
- * mapping invented to cover more commands.
+ * into a lifecycle family. The explicit task-update facade now maps directly
+ * to STATUS; legacy family members are not blanket-mapped by their end state.
  */
 export function workerTaskHoldWording(
   command: string,
@@ -45,8 +44,8 @@ export function workerTaskHoldWording(
     return CLAIM;
   if (command === "task-amend") return AMEND;
   // RAH's share of Raft's `task update`: `in_review` is reached upstream only
-  // by that command, which holds. The other four statuses stay unmapped.
-  if (command === "task-submit") return STATUS;
+  // by that command, which holds. The explicit five-status facade shares it.
+  if (command === "task-submit" || command === "task-update") return STATUS;
   return undefined;
 }
 

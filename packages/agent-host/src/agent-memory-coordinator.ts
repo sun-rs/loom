@@ -98,6 +98,8 @@ export class AgentMemoryCoordinator {
     | undefined;
   readonly #now: () => number;
   readonly #projectDirectory: string | undefined;
+  readonly #resolveProjectDirectory:
+    ((ownerParticipantId: string) => Promise<string | undefined>) | undefined;
   readonly #rootDirectory: string;
   readonly #configs: AgentMemoryConfigStore;
   readonly #resetting = new Set<string>();
@@ -113,6 +115,10 @@ export class AgentMemoryCoordinator {
     ) => Promise<AgentMemoryProviderContinuityQuarantine>;
     now?: () => number;
     projectDirectory?: string;
+    /** When supplied, owns project resolution; undefined never falls back to the shared path. */
+    resolveProjectDirectory?: (
+      ownerParticipantId: string,
+    ) => Promise<string | undefined>;
     rootDirectory: string;
     wake: (
       ownerParticipantId: string,
@@ -129,6 +135,7 @@ export class AgentMemoryCoordinator {
     ) {
       throw new Error("Runtime project directory must be absolute");
     }
+    this.#resolveProjectDirectory = options.resolveProjectDirectory;
     this.#acquireResetFence = options.acquireResetFence;
     this.#quarantineProviderContinuity = options.quarantineProviderContinuity;
     this.#now = options.now ?? Date.now;
@@ -256,8 +263,8 @@ export class AgentMemoryCoordinator {
         state: (await existsDirectory(agentRoot)) ? "ready" : "absent",
       },
     ];
-    if (this.#projectDirectory !== undefined) {
-      const projectRoot = await realpath(this.#projectDirectory);
+    const projectRoot = await this.#resolveOwnerProjectDirectory(participantId);
+    if (projectRoot !== undefined) {
       roots.push({
         label: basename(projectRoot) || "本机运行项目",
         rootId: "runtime-project",
@@ -276,7 +283,9 @@ export class AgentMemoryCoordinator {
     includeHidden: boolean,
   ) {
     if (rootId === "runtime-project") {
-      const rootDirectory = await this.#requireProjectDirectory();
+      const rootDirectory = await this.#requireProjectDirectory(
+        requireParticipantId(owner),
+      );
       return listWorkspaceRoot({
         rootDirectory,
         rootId,
@@ -300,7 +309,9 @@ export class AgentMemoryCoordinator {
     path: string,
   ) {
     if (rootId === "runtime-project") {
-      const rootDirectory = await this.#requireProjectDirectory();
+      const rootDirectory = await this.#requireProjectDirectory(
+        requireParticipantId(owner),
+      );
       return readWorkspaceRoot({
         rootDirectory,
         rootId,
@@ -316,10 +327,26 @@ export class AgentMemoryCoordinator {
     );
   }
 
-  async #requireProjectDirectory(): Promise<string> {
-    if (this.#projectDirectory === undefined)
+  async #resolveOwnerProjectDirectory(
+    participantId: string,
+  ): Promise<string | undefined> {
+    const directory = this.#resolveProjectDirectory
+      ? await this.#resolveProjectDirectory(participantId)
+      : this.#projectDirectory;
+    if (directory === undefined) return undefined;
+    if (!isAbsolute(directory))
+      throw new Error("Runtime project directory must be absolute");
+    const projectRoot = await realpath(directory);
+    if (projectRoot === "/")
+      throw new Error("Filesystem root is not a runtime project");
+    return projectRoot;
+  }
+
+  async #requireProjectDirectory(participantId: string): Promise<string> {
+    const directory = await this.#resolveOwnerProjectDirectory(participantId);
+    if (directory === undefined)
       throw new Error("此 Computer 尚未配置本机运行项目");
-    return await realpath(this.#projectDirectory);
+    return directory;
   }
 
   async inspectWorkspace(

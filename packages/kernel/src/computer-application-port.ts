@@ -13,6 +13,7 @@ export type ComputerApplicationPort = Pick<
   | "completeActivation"
   | "finishRunAttempt"
   | "heartbeatHost"
+  | "listHostExecutionWorkspaceBindings"
   | "markRunAttemptRunning"
   | "prepareRunAttemptRuntime"
   | "publishRuntimeOffer"
@@ -54,6 +55,8 @@ export function createComputerApplicationPort(
     claimNextPlacement: (host, input) => kernel.claimNextPlacement(host, input),
     completeActivation: (host, input) => kernel.completeActivation(host, input),
     finishRunAttempt: (host, input) => kernel.finishRunAttempt(host, input),
+    listHostExecutionWorkspaceBindings: (host) =>
+      kernel.listHostExecutionWorkspaceBindings(host),
     heartbeatHost: (host, input) => kernel.heartbeatHost(host, input),
     markRunAttemptRunning: (host, input) =>
       kernel.markRunAttemptRunning(host, input),

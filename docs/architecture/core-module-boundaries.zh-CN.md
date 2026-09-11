@@ -1,5 +1,9 @@
 # Core 模块边界与源码规模 Ratchet
 
+2026-09-11：`daemon-execution-workspace-composition.ts` 组合本地目录 Catalog、冻结启动 cwd、mount 与 reset-replay/Offer lifecycle；不增加持久状态或改变 reset owner。
+
+2026-09-11：`placement-candidate-projection.ts` 只读投影到期的 queued Activation 与 Agent revision/policy，保留原排序及 optional workspace 意图；RoomKernel 保留事务与调度 owner，不新增状态或放宽源码行数门禁。
+
 2026-09-08：Task 弹窗的 Human `task.history` 经过 HumanApplicationPort/SDK 读取。
 `human-task-history.ts` 负责 Human 认证、Room 成员和 Task 归属校验；
 `task-history-projection.ts` 从既有 Worker 读取实现抽出，双方共用同一 canonical

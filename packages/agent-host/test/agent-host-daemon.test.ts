@@ -482,3 +482,58 @@ async function waitUntil(predicate: () => boolean): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, 5));
   }
 }
+
+test("daemon waits for prepared workspace offers before starting its runner", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-wo-"));
+  const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+  let release!: () => void;
+  const ready = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let entered = false;
+  let ran = false;
+  const shutdown = new AbortController();
+  try {
+    kernel.initialize();
+    const agent = kernel.provisionPrincipal({
+      handle: "online-agent",
+      kind: "agent",
+    });
+    const host = kernel.authenticateHostAccessToken(
+      kernel.provisionHostCredential({
+        hostId: "online-host",
+        participantIds: [agent.principal.principalId],
+      }).accessToken,
+    );
+    const daemon = new AgentHostDaemon({
+      host,
+      kernel,
+      instanceLock: new UnixSocketInstanceLock({
+        directory: join(directory, "run"),
+        hostId: host.hostId,
+      }),
+      lifecycle: {
+        afterOnline: async () => {
+          entered = true;
+          await ready;
+        },
+      },
+      runner: {
+        run: async () => {
+          ran = true;
+        },
+      },
+    });
+    const running = daemon.run({ signal: shutdown.signal });
+    await waitUntil(() => entered);
+    const prematurelyStarted = ran;
+    release();
+    await running;
+    assert.equal(prematurelyStarted, false);
+    assert.equal(ran, true);
+  } finally {
+    release();
+    kernel.close();
+    rmSync(directory, { recursive: true, force: true });
+  }
+});

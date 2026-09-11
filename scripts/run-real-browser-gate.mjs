@@ -498,7 +498,7 @@ try {
     historyAfter.domRows <= 80,
     `prepended history must keep a bounded DOM, got ${String(historyAfter.domRows)} rows`,
   );
-  await clickButton(browser, { title: "Agent 与成员" });
+  await clickButton(browser, { ariaLabel: "Agent 与成员" });
   await waitFor(
     browser,
     () =>
@@ -962,7 +962,7 @@ try {
       "Agent Council",
     "return from Direct Room",
   );
-  await clickButton(browser, { title: "Agent 与成员" });
+  await clickButton(browser, { ariaLabel: "Agent 与成员" });
   await waitFor(
     browser,
     () => document.querySelector(".rah-agent-detail-panel") !== null,
@@ -1617,7 +1617,7 @@ try {
         true,
     "persisted owner-routing Agent",
   );
-  await clickButton(browser, { title: "计算机" });
+  await clickButton(browser, { ariaLabel: "计算机" });
   await waitFor(
     browser,
     () => document.querySelector("main.rah-computer-directory") !== null,
@@ -1978,7 +1978,7 @@ try {
     "Computer Agent row typed profile navigation",
     [openedComputerAgent],
   );
-  await clickButton(browser, { title: "计算机" });
+  await clickButton(browser, { ariaLabel: "计算机" });
   await waitFor(
     browser,
     () =>
@@ -1988,7 +1988,7 @@ try {
     "Computer selection and width survive Agent navigation",
   );
 
-  await clickButton(browser, { title: "设置" });
+  await clickButton(browser, { ariaLabel: "设置" });
   await waitFor(
     browser,
     () => document.querySelector(".rah-settings-surface") !== null,
@@ -2012,7 +2012,7 @@ try {
     "Retired MCP settings are absent",
   );
 
-  await clickButton(browser, { title: "聊天" });
+  await clickButton(browser, { ariaLabel: "聊天" });
   await waitFor(
     browser,
     () =>
@@ -2248,7 +2248,7 @@ try {
     { activityPanel: false, messageOwnedStatus: false },
     "Room Chat must contain only conversation Messages, not Agent execution diagnostics",
   );
-  await clickButton(browser, { title: "Agent 与成员" });
+  await clickButton(browser, { ariaLabel: "Agent 与成员" });
   await waitFor(
     browser,
     () => document.querySelector(".rah-agent-activity-pane") === null,
@@ -2263,7 +2263,7 @@ try {
       ) !== null,
     "current Room activity projection on the selected Agent",
   );
-  await clickButton(browser, { title: "聊天" });
+  await clickButton(browser, { ariaLabel: "聊天" });
   await waitFor(
     browser,
     () =>
@@ -4196,7 +4196,7 @@ try {
     browser,
     "Room settings drawer close after restoring Task Agents",
   );
-  await clickButton(browser, { title: "聊天" });
+  await clickButton(browser, { ariaLabel: "聊天" });
   await waitFor(
     browser,
     () =>
@@ -4204,14 +4204,14 @@ try {
       "Design Lab",
     "return to Room after owner routing",
   );
-  await clickButton(browser, { title: "计算机" });
+  await clickButton(browser, { ariaLabel: "计算机" });
   await waitFor(
     browser,
     () => document.querySelector(".rah-computer-detail h1") !== null,
     "Computer before mobile transition",
   );
 
-  await clickButton(browser, { title: "任务" });
+  await clickButton(browser, { ariaLabel: "任务" });
   await waitFor(
     browser,
     () => document.querySelector('main[aria-label="全局任务"]') !== null,
@@ -4314,7 +4314,7 @@ try {
     screenWidth: 1_440,
     width: 1_440,
   });
-  await clickButton(browser, { title: "计算机" });
+  await clickButton(browser, { ariaLabel: "计算机" });
   await waitFor(
     browser,
     () => document.querySelector(".rah-computer-detail h1") !== null,

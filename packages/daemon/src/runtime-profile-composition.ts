@@ -1,6 +1,9 @@
+import { withRuntimeExecutionWorkspace } from "@rah-os/agent-host";
+import type { RuntimeRecoveryDescriptor } from "@rah-os/protocol";
 import { join } from "node:path";
 
 import {
+  resolveRuntimeDeliveryMode,
   type AgentMemoryCoordinator,
   combineActivationEnvironmentLeases,
   createWorkerToolTransportEnvironment,
@@ -34,6 +37,8 @@ type RuntimeWorkerService = Pick<
   >;
 
 export function createConfiguredRuntime(input: {
+  executionWorkspace?: RuntimeRecoveryDescriptor["executionWorkspace"];
+  guideEnabled?: (runtimeId: string | undefined) => boolean;
   agentMemoryCoordinator?: AgentMemoryCoordinator;
   credentialEnvironment: RuntimeCredentialEnvironmentBinding;
   cwd: string;
@@ -48,7 +53,7 @@ export function createConfiguredRuntime(input: {
   supervisorDirectory: string;
   workerService: RuntimeWorkerService;
 }): RuntimeAdapter {
-  return input.implementations.createRuntime(
+  const runtime = input.implementations.createRuntime(
     input.runtimeProfileRevision,
     input.probeReport,
     {
@@ -58,6 +63,10 @@ export function createConfiguredRuntime(input: {
         try {
           if (scope.agent !== undefined) {
             const promptLease = standingPromptLease(scope, {
+              deliveryMode: resolveRuntimeDeliveryMode(
+                runtime,
+                input.guideEnabled?.(runtime.guideRuntimeId) === true,
+              ),
               ...(input.toolAccessMode === undefined
                 ? {}
                 : { toolAccessMode: input.toolAccessMode }),
@@ -145,4 +154,7 @@ export function createConfiguredRuntime(input: {
     input.resolvedModel,
     input.toolAccessMode,
   );
+  return input.executionWorkspace
+    ? withRuntimeExecutionWorkspace(runtime, input.executionWorkspace)
+    : runtime;
 }

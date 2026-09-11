@@ -1,3 +1,5 @@
+import { resolveRuntimeDeliveryMode } from "./runtime.ts";
+import { maintainRuntimeBusyNotices } from "./runtime-busy-notices.ts";
 import {
   ActivationCancellationRequestedError,
   AgentExecutionPausedError,
@@ -82,6 +84,7 @@ export type AgentHostIdentity = Readonly<{
 }>;
 
 export type AgentHostOptions = {
+  guideEnabled?: (runtimeId: string | undefined) => boolean;
   control?: AgentHostControlPort;
   drainTimeoutMs?: number;
   host: AgentHostIdentity;
@@ -119,6 +122,7 @@ type GatedRuntimeStart =
   { error: unknown; kind: "lease-lost" } | { kind: "started"; run: RunHandle };
 
 export class AgentHost {
+  readonly #guideEnabled: (runtimeId: string | undefined) => boolean;
   readonly #drainTimeoutMs: number;
   readonly #host: AgentHostIdentity;
   readonly #hostId: string;
@@ -158,6 +162,7 @@ export class AgentHost {
   #runSignal: AbortSignal | undefined;
 
   constructor(options: AgentHostOptions) {
+    this.#guideEnabled = options.guideEnabled ?? (() => false);
     if (!Number.isInteger(options.leaseMs) || options.leaseMs <= 0) {
       throw new Error("leaseMs must be a positive integer");
     }
@@ -642,6 +647,20 @@ export class AgentHost {
       activation.activationId,
       supervisor.signal,
     );
+    const busyNotices = maintainRuntimeBusyNotices({
+      guideEnabled: () =>
+        resolveRuntimeDeliveryMode(
+          runtime,
+          this.#guideEnabled(runtime.guideRuntimeId),
+        ) !== "wait",
+      activationId: activation.activationId,
+      runAttemptId: runAttempt.runAttemptId,
+      run,
+      runtime,
+      control: this.#control,
+      signal: supervisor.signal,
+      wait: waitForDelay,
+    });
     const drainOutcome = this.#waitForDrainDeadline(supervisor.signal);
     const outcome = await Promise.race([
       reapOutcome,
@@ -650,7 +669,7 @@ export class AgentHost {
       drainOutcome,
     ]);
     supervisor.abort();
-    await Promise.all([maintenanceOutcome, drainOutcome]);
+    await Promise.all([maintenanceOutcome, drainOutcome, busyNotices]);
 
     if (outcome.kind === "activation_cancelled") {
       const termination = await this.#cancelRuntime(runtime, run);

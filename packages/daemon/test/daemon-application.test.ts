@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import {
   chmodSync,
+  readFileSync,
+  realpathSync,
   mkdirSync,
   mkdtempSync,
   rmSync,
@@ -314,12 +316,20 @@ test("Human API drives two Workspace Agents through daemon v4 and reconnect reco
     });
     profileRegistry.initialize();
     const implementations = new RuntimeImplementationRegistry();
+    const cwdProofCli = join(stateDirectory, "cwd-proof-cli.mjs");
+    writeFileSync(
+      cwdProofCli,
+      `import {writeFileSync} from "node:fs";
+writeFileSync("cwd-proof.txt",process.cwd());
+await import(${JSON.stringify(new URL("../../agent-host/test/fixtures/fake-cli.mjs", import.meta.url).href)});
+`,
+    );
     for (const [index, runtimeProfileId] of profileIds.entries()) {
       const manifest: RuntimeProfileManifestV2 = {
         adapter: {
           config: { terminationGraceMs: 1_000 },
           executable: process.execPath,
-          fixedArgs: [fakeCliPath],
+          fixedArgs: [cwdProofCli],
           kind: "generic-process/v1",
         },
         credentialSlots: [],
@@ -680,7 +690,11 @@ test("Human API drives two Workspace Agents through daemon v4 and reconnect reco
       }),
     );
     const provisionedAgent = await requireJson<{
-      agent: { definition: { participantId: string }; handle: string };
+      agent: {
+        definition: { participantId: string };
+        handle: string;
+        currentRevision: { executionWorkspace?: { kind: string } };
+      };
     }>(
       await clientRequest(firstOrigin, "/v3/client/agents/provision", {
         basedOnRoomSeq: provisionSequence.latestRoomSeq,
@@ -695,6 +709,56 @@ test("Human API drives two Workspace Agents through daemon v4 and reconnect reco
       }),
     );
     assert.equal(provisionedAgent.agent.handle, "review-agent");
+    assert.equal(
+      provisionedAgent.agent.currentRevision.executionWorkspace?.kind,
+      "agent_private",
+    );
+    const privateId = provisionedAgent.agent.definition.participantId;
+    activeObserver.addMember(humanActor, { roomId, principalId: privateId });
+    const privateTask = activeObserver.createTask(humanActor, {
+      roomId,
+      assigneeId: privateId,
+      title: "Run in private cwd",
+      idempotencyKey: "private-cwd-task",
+    });
+    await waitUntil(
+      () =>
+        activeObserver
+          .listTasks(humanActor, { roomId })
+          .some(
+            (task) =>
+              task.taskId === privateTask.task.taskId &&
+              task.state === "submitted",
+          ),
+      5000,
+    );
+    const privatePlacement = activeObserver
+      .listPlacements({ roomId })
+      .find((p) => p.participantId === privateId);
+    assert.ok(privatePlacement);
+    const privateProcesses = activeObserver
+      .listRuntimeProcesses({ roomId })
+      .filter((p) => p.participantId === privateId);
+    assert.ok(privateProcesses.length > 0);
+    assert.equal(
+      privateProcesses[0]!.recoveryDescriptor.executionWorkspace
+        ?.workspaceMountRevisionId,
+      privatePlacement.workspaceMountRevisionId,
+    );
+    const { agentExecutionWorkspacePath } =
+      await import("../../agent-host/src/agent-execution-workspace.ts");
+    const privateCwd = agentExecutionWorkspacePath(
+      join(realpathSync(stateDirectory), "agent-workspaces"),
+      privateId,
+    );
+    assert.equal(
+      readFileSync(join(privateCwd, "cwd-proof.txt"), "utf8"),
+      privateCwd,
+    );
+    assert.equal(
+      readFileSync(join(stateDirectory, "cwd-proof.txt"), "utf8"),
+      realpathSync(stateDirectory),
+    );
 
     activeShutdown.abort("p3c-first-daemon-stop");
     await running;
@@ -706,6 +770,10 @@ test("Human API drives two Workspace Agents through daemon v4 and reconnect reco
     activeShutdown = new AbortController();
     running = application.run({ signal: activeShutdown.signal });
     await waitUntil(() => application.clientOrigin() !== undefined);
+    assert.equal(
+      readFileSync(join(privateCwd, "cwd-proof.txt"), "utf8"),
+      privateCwd,
+    );
     const restartedOrigin = application.clientOrigin();
     assert.ok(restartedOrigin);
     assert.ok(
@@ -754,9 +822,17 @@ test("Human API drives two Workspace Agents through daemon v4 and reconnect reco
         roomId,
       }),
     );
-    assert.equal(completedTasks.tasks.length, 1);
-    assert.equal(completedTasks.tasks[0]?.taskId, taskId);
-    assert.equal(completedTasks.tasks[0]?.state, "completed");
+    assert.equal(completedTasks.tasks.length, 2);
+    assert.equal(
+      completedTasks.tasks.find((task) => task.taskId === taskId)?.state,
+      "completed",
+    );
+    assert.equal(
+      completedTasks.tasks.find(
+        (task) => task.taskId === privateTask.task.taskId,
+      )?.state,
+      "submitted",
+    );
 
     activeShutdown.abort("p3c-e2e-complete");
     await running;

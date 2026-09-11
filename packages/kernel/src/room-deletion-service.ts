@@ -27,6 +27,7 @@ import { integer, text, type Row } from "./sqlite-row.ts";
  */
 export const ROOM_DELETION_REFERENCED_TABLES = new Set([
   "activation_cancellation_requests",
+  "activation_delivery_windows",
   "activation_obligations",
   "activation_retry_fences",
   "activations",
@@ -70,6 +71,7 @@ export const ROOM_DELETION_REFERENCED_TABLES = new Set([
   "run_trajectory_entries",
   "runtime_processes",
   "subscription_cursors",
+  "task_batch_command_receipts",
   "task_dependencies",
   "task_participants",
   "task_reassignment_operations",
@@ -284,6 +286,7 @@ export class RoomDeletionService {
          (SELECT task_id FROM tasks WHERE room_id=?)`,
       `DELETE FROM task_reviews WHERE room_id=?`,
       `DELETE FROM activation_obligations WHERE room_id=?`,
+      `DELETE FROM task_batch_command_receipts WHERE room_id=?`,
       `DELETE FROM task_submissions WHERE room_id=?`,
       `DELETE FROM task_dependencies WHERE task_id IN
          (SELECT task_id FROM tasks WHERE room_id=?)
@@ -311,6 +314,8 @@ export class RoomDeletionService {
       `DELETE FROM run_attempts WHERE room_id=?`,
       `DELETE FROM placements WHERE room_id=?`,
       `DELETE FROM activation_retry_fences WHERE room_id=?`,
+      `DELETE FROM activation_delivery_windows WHERE activation_id IN
+         (SELECT activation_id FROM activations WHERE room_id=?)`,
       `DELETE FROM activations WHERE room_id=?`,
       `DELETE FROM inbox_items WHERE room_id=?`,
       `DELETE FROM outbox WHERE room_id=?`,

@@ -16,14 +16,14 @@ Computer 不切分、筛选、摘要、重排或改写索引。不引入自动�
 
 固定来源为授权取得的 Raft Computer 1.0.18，bundle SHA-256：`20f16da1a37173925bb8707254329dd6e0df4b694c809c53b3f35f38ab00fd0e`。
 
-| 部分                                          | 当前采用方式                                                                                         | 验收边界                                                                                             |
-| --------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Workspace & Memory / Compaction safety 提示词 | `raft-memory/upstream-standing-prompt.ts` 原始 4,049 bytes，仅追加 ESM export footer；测试校验源 SHA | 两个纯函数已逐字复用，不代表所有 runtime 自动完成了压缩后重读                                        |
-| 种子、稳定 Agent 目录、仅首次创建             | 已有结构化移植                                                                                       | 保留原始索引与正文，切模型/Room 不重建                                                               |
-| Runtime cwd 与记忆位置                        | 独立 RAH 适配                                                                                        | 项目 cwd 不变；上游开头的 cwd 段替换为 Agent 私有绝对环境路径，其余 memory/compaction 原文保持       |
-| Cleaner 阈值、调度、typed Inbox               | 已有结构化移植，当前 Run 已接 scoped check/ack                                                       | check 只查看、ack 只确认通知；主动源状态 recheck 为独立适配；active notice/idle maintenance 仍未接线 |
-| reset                                         | 上游语义加 RAH 安全适配                                                                              | 保留全局 fence、quarantine、回滚、幂等；不倒退为无保护删除                                           |
-| Run receipt / Memory Home                     | RAH 承载与安全设施                                                                                   | 非上游直接复制；receipt 只证明 materialization，不证明模型已读                                       |
+| 部分                                          | 当前采用方式                                                                                         | 验收边界                                                                                                            |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Workspace & Memory / Compaction safety 提示词 | `raft-memory/upstream-standing-prompt.ts` 原始 4,049 bytes，仅追加 ESM export footer；测试校验源 SHA | 两个纯函数已逐字复用，不代表所有 runtime 自动完成了压缩后重读                                                       |
+| 种子、稳定 Agent 目录、仅首次创建             | 已有结构化移植                                                                                       | 保留原始索引与正文，切模型/Room 不重建                                                                              |
+| Runtime cwd 与记忆位置                        | 独立 RAH 适配                                                                                        | 既有项目 cwd 不迁移；支持的本地 Host 上新建 Agent 默认独立 cwd，私有记忆 owner/路径不变；memory/compaction 原文保持 |
+| Cleaner 阈值、调度、typed Inbox               | 已有结构化移植，当前 Run 已接 scoped check/ack                                                       | check 只查看、ack 只确认通知；主动源状态 recheck 为独立适配；active notice/idle maintenance 仍未接线                |
+| reset                                         | 上游语义加 RAH 安全适配                                                                              | 保留全局 fence、quarantine、回滚、幂等；不倒退为无保护删除                                                          |
+| Run receipt / Memory Home                     | RAH 承载与安全设施                                                                                   | 非上游直接复制；receipt 只证明 materialization，不证明模型已读                                                      |
 
 完整来源、切片和未接线项仍以[源码移植账本](../audits/2026-08-29-raft-memory-source-extraction.zh-CN.md)为准。禁止把其中的 `structured-port`、RAH glue 或未完成项统一标成“100% 原源码”。
 

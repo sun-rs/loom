@@ -1,3 +1,4 @@
+import type { HostExecutionWorkspaceBinding } from "@rah-os/protocol";
 import type { RuntimeOffer } from "@rah-os/protocol";
 
 import type { ComputerAttachment } from "./computer-attachment-store.ts";
@@ -35,6 +36,7 @@ export type ComputerAttachmentManagerOptions = {
   runtimeOffers(input: {
     attachment: Readonly<ComputerAttachment>;
     identity: Readonly<ComputerResidentIdentity>;
+    executionWorkspaceBindings?: readonly HostExecutionWorkspaceBinding[];
   }): Promise<readonly RuntimeOffer[]>;
   runtimeProtocolVersion: number;
   store: ComputerAttachmentStorePort;
@@ -203,10 +205,13 @@ export class ComputerAttachmentManager {
         ...(this.#processId === undefined
           ? {}
           : { processId: this.#processId }),
-        runtimeOffers: async (identity) =>
+        runtimeOffers: async (identity, executionWorkspaceBindings) =>
           await this.#runtimeOffers({
             attachment: stableAttachment,
             identity,
+            ...(executionWorkspaceBindings === undefined
+              ? {}
+              : { executionWorkspaceBindings }),
           }),
         runtimeProtocolVersion: this.#runtimeProtocolVersion,
       });

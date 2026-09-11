@@ -224,6 +224,7 @@ async function initializeState(input: {
         toolAccessMode: spec.toolAccessMode,
       }).policy;
       kernel.createAgentDefinition(actor, {
+        executionWorkspace: { kind: "agent_private" },
         avatarKey: spec.avatarKey,
         basedOnRoomSeq: latestRoomSeq(
           kernel,

@@ -1,3 +1,4 @@
+import { WorkerAddressingSchema } from "./worker-addressing.ts";
 import { WorkerReadChannelSchema } from "./worker-room-targets.ts";
 import { TimestampSchema, IdentifierSchema } from "./common.ts";
 import { z } from "zod";
@@ -43,6 +44,7 @@ export type WorkerMessageSearchRequest = z.input<
 export const WorkerMessageSearchResponseSchema = z
   .object({
     messages: z.array(MessageSchema).max(100),
+    addressing: WorkerAddressingSchema.optional(),
     frozenThroughRoomSeq: z.number().int().nonnegative().optional(),
     frozenRoomCount: z.number().int().min(0).max(500).optional(),
     nextCursor: z

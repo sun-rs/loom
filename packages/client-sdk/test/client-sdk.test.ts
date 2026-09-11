@@ -95,6 +95,8 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "room.sync",
     "room.unarchive",
     "room.update",
+    "runtime.guide.read",
+    "runtime.guide.update",
     "search",
     "sidebar.get",
     "sidebar.patch",

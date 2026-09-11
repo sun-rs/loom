@@ -53,6 +53,9 @@ export type AgentHostControlPort = {
   recordRuntimeTermination(
     input: HostInput<RoomKernel["recordRuntimeTermination"]>,
   ): Promise<HostResult<RoomKernel["recordRuntimeTermination"]>>;
+  readPendingRuntimeNotice?(
+    input: HostInput<RoomKernel["readPendingRuntimeNotice"]>,
+  ): Promise<HostResult<RoomKernel["readPendingRuntimeNotice"]>>;
   renewActivationLease(
     input: HostInput<RoomKernel["renewActivationLease"]>,
   ): Promise<HostResult<RoomKernel["renewActivationLease"]>>;
@@ -110,6 +113,8 @@ export function createKernelAgentHostControlPort(
       kernel.recordRecoveredRuntimeTermination(host, input),
     recordRuntimeTermination: async (input) =>
       kernel.recordRuntimeTermination(host, input),
+    readPendingRuntimeNotice: async (input) =>
+      kernel.readPendingRuntimeNotice(host, input),
     renewActivationLease: async (input) =>
       kernel.renewActivationLease(host, input),
     renewAgentExclusiveOperationLease: async (input) =>

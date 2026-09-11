@@ -16,6 +16,8 @@ import {
   runtimeStatusTrajectory,
 } from "./provider-trajectory-normalizer.js";
 
+import { attachClaudeBusyInput } from "./claude-busy-input.js";
+
 const INTERRUPT_TIMEOUT_MS = 750;
 const TERM_TIMEOUT_MS = 300;
 const MAX_STDERR_BYTES = 64 * 1024;
@@ -159,8 +161,18 @@ async function runTurn(resumeSession) {
   let toolActivity = false;
   let toolActivityBeforeInput = false;
   let resultFrame;
+  let resultCount = 0;
+  let failedResult;
   let protocolError;
   const toolNames = new Map();
+  const busyInput = attachClaudeBusyInput({
+    input: process.stdin,
+    resumedSession: resumeSession !== undefined,
+    session: () =>
+      inputAccepted && !protocolError && !stopping ? sessionId : undefined,
+    write: (text, done) => child.stdin.write(text, done),
+  });
+  child.stdin.on("error", () => busyInput.close());
   let stderrTail = Buffer.alloc(0);
   child.stderr.on("data", (chunk) => {
     stderrTail = appendBounded(stderrTail, chunk, MAX_STDERR_BYTES);
@@ -204,12 +216,21 @@ async function runTurn(resumeSession) {
       toolActivity = true;
       if (!inputAccepted) toolActivityBeforeInput = true;
     }
+    busyInput.observe(frame);
     rememberToolNames(frame, toolNames);
     if (frame.type === "result") {
-      if (resultFrame !== undefined) {
-        protocolError = "Claude stream-json returned multiple terminal results";
+      resultCount += 1;
+      if (resultCount > 1 + busyInput.writtenCount) {
+        protocolError =
+          "Claude stream-json returned unexpected terminal results";
       }
+      if (frame.subtype !== "success" || frame.is_error === true)
+        failedResult = frame;
       resultFrame = frame;
+      // Close admission at the first result; already written user inputs remain
+      // in the CLI pipe and may produce further results before process exit.
+      // This bounded Run lifecycle is RAH glue, not Raft's idle resident process.
+      child.stdin.end();
     } else {
       trajectoryWriter.emit(
         normalizeClaudeTrajectoryEvent(withKnownToolName(frame, toolNames)),
@@ -225,8 +246,8 @@ async function runTurn(resumeSession) {
     },
     ...(resumeSession === undefined ? {} : { session_id: resumeSession }),
   };
-  child.stdin.end(`${JSON.stringify(input)}\n`);
-  const terminal = await exited;
+  child.stdin.write(`${JSON.stringify(input)}\n`);
+  const terminal = await exited.finally(() => busyInput.close());
   if (activeChild === child) activeChild = undefined;
   lines.close();
   if (stopping) {
@@ -261,6 +282,7 @@ async function runTurn(resumeSession) {
   }
   trajectoryWriter.emit(normalizeClaudeTrajectoryEvent(resultFrame));
   const succeeded =
+    failedResult === undefined &&
     resultFrame.subtype === "success" &&
     resultFrame.is_error !== true &&
     terminal.code === 0 &&
@@ -272,9 +294,12 @@ async function runTurn(resumeSession) {
       : diagnosticError(
           toolActivityBeforeInput
             ? "Claude produced tool activity before exact input acceptance"
-            : resultFrame.subtype === "success" && resultFrame.is_error !== true
-              ? `Claude exited abnormally after success (code=${String(terminal.code)}, signal=${String(terminal.signal)})`
-              : resultError(resultFrame),
+            : failedResult !== undefined
+              ? resultError(failedResult)
+              : resultFrame.subtype === "success" &&
+                  resultFrame.is_error !== true
+                ? `Claude exited abnormally after success (code=${String(terminal.code)}, signal=${String(terminal.signal)})`
+                : resultError(resultFrame),
           stderrTail,
         ),
     inputAccepted,

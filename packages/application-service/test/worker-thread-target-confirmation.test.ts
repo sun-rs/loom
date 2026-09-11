@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import test from "node:test";
 import { RoomKernel } from "@rah-os/kernel";
 import { WorkerApplicationService } from "../src/index.ts";
+import { renderWorkerReadResult } from "../../agent-host/src/worker-read-render.ts";
 
 /**
  * Raft's `detectThreadContextParentSend`: an Agent that just read a Thread and
@@ -96,6 +97,7 @@ async function fixture() {
     call,
     thread,
     target,
+    participantId: a.principal.principalId,
     topLevelBodies: () =>
       k
         .sync(actor, {
@@ -210,6 +212,146 @@ test("Two Threads in one Room: the refusal names the most recently read Thread",
     });
     assert.equal(refused.status, 200, JSON.stringify(refused.body));
     assert.equal(refused.body.threadTarget, `#target:${second.threadId}`);
+  } finally {
+    await f.close();
+  }
+});
+
+test("rendered message targets round-trip through the real Worker service without crossing Threads", async () => {
+  const f = await fixture();
+  try {
+    for (const label of ["address-alpha", "address-beta"]) {
+      const thread = f.thread(label);
+      f.k.replyThread(f.actor, {
+        basedOnRoomSeq: f.k.sync(f.actor, {
+          roomId: f.target.roomId,
+          consumerId: `setup-${label}`,
+        }).latestRoomSeq,
+        roomId: f.target.roomId,
+        threadId: thread.threadId,
+        body: `Read and reply to ${label}`,
+        recipientIds: [],
+        idempotencyKey: `${label}-instruction`,
+      });
+      const read = await f.call("rooms/read", {
+        channel: `#target:${thread.threadId}`,
+      });
+      assert.equal(read.status, 200, JSON.stringify(read.body));
+      const rendered = renderWorkerReadResult(
+        "/v1/worker/rooms/read",
+        {},
+        read.body,
+      )!;
+      const line = rendered
+        .split("\n")
+        .find((line) => line.includes(`Read and reply to ${label}`))!;
+      const channel = /target=([^ ]+)/u.exec(line)?.[1];
+      const threadId = /threadId=([^ \]]+)/u.exec(line)?.[1];
+      assert.equal(channel, "#target");
+      assert.equal(threadId, thread.threadId);
+      const reply = await f.call("messages/post", {
+        channel,
+        threadId,
+        body: `${label} acknowledged`,
+      });
+      assert.equal(reply.status, 200, JSON.stringify(reply.body));
+      assert.equal(
+        reply.body.event?.type,
+        "message.posted",
+        JSON.stringify(reply.body),
+      );
+      assert.equal(reply.body.event.roomId, f.target.roomId);
+      assert.equal(reply.body.event.payload.threadId, thread.threadId);
+      assert.ok(!f.topLevelBodies().includes(`${label} acknowledged`));
+    }
+  } finally {
+    await f.close();
+  }
+});
+
+test("Worker delivery presents a resolvable channel and the sender's real handle", async () => {
+  const f = await fixture();
+  try {
+    const response = await f.call("sync");
+    assert.equal(response.status, 200);
+    const output = renderWorkerReadResult(
+      "/v1/worker/sync",
+      {},
+      response.body,
+    )!;
+    assert.match(output, /target=#origin .*@human: Work/);
+    assert.doesNotMatch(output, /@principal_/);
+    const resolved = await f.call("rooms/resolve", { channel: "#origin" });
+    assert.equal(resolved.status, 200);
+  } finally {
+    await f.close();
+  }
+});
+
+test("DM read surfaces name the peer handle and their displayed address sends to that DM", async () => {
+  const f = await fixture();
+  try {
+    const workspace = f.k.createWorkspace(f.actor, {
+      name: "Direct",
+      slug: "direct",
+      idempotencyKey: "workspace",
+    });
+    f.k.addMember(f.actor, {
+      roomId: workspace.controlRoom.roomId,
+      principalId: f.participantId,
+    });
+    const dm = f.k.openDirectRoom(f.actor, {
+      workspaceId: workspace.workspace.workspaceId,
+      peerPrincipalId: f.participantId,
+      basedOnControlRoomSeq: f.k.sync(f.actor, {
+        roomId: workspace.controlRoom.roomId,
+        consumerId: "dm-head",
+      }).latestRoomSeq,
+      idempotencyKey: "dm",
+    });
+    const posted = f.k.postMessage(f.actor, {
+      roomId: dm.roomId,
+      body: "DM address check",
+      recipients: [],
+      idempotencyKey: "dm-message",
+    });
+    for (const [route, input] of [
+      ["rooms/read", { channel: dm.roomId }],
+      ["messages/history", { channel: dm.roomId }],
+      ["messages/resolve", { messageId: posted.event.aggregateId }],
+    ] as const) {
+      const response = await f.call(route, input);
+      assert.equal(response.status, 200, JSON.stringify(response.body));
+      const rendered = renderWorkerReadResult(
+        `/v1/worker/${route}`,
+        input,
+        response.body,
+      )!;
+      assert.match(rendered, /target=dm:@human .*@human: DM address check/);
+      assert.doesNotMatch(rendered, /@principal_/);
+    }
+    const search = await f.call("messages/search", {
+      query: "DM address check",
+      channel: dm.roomId,
+    });
+    assert.equal(search.status, 200, JSON.stringify(search.body));
+    const searchOutput = renderWorkerReadResult(
+      "/v1/worker/messages/search",
+      {},
+      search.body,
+    )!;
+    assert.match(searchOutput, /Source: target=dm:@human/);
+    assert.match(searchOutput, /Sender: @human/);
+    assert.doesNotMatch(searchOutput, /@principal_/);
+    const sent = await f.call("messages/post", {
+      channel: "dm:@human",
+      body: "Correct DM",
+    });
+    assert.equal(sent.status, 200, JSON.stringify(sent.body));
+    assert.equal(sent.body.event.roomId, dm.roomId);
+    for (const channel of [`dm-${dm.roomId}`, `dm:@${f.actor.principalId}`]) {
+      assert.equal((await f.call("rooms/resolve", { channel })).status, 404);
+    }
   } finally {
     await f.close();
   }

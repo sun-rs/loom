@@ -546,6 +546,9 @@ function createClaudeStreamJsonRuntime(
   const standingPromptDigests = createStandingPromptDigestLedger();
   return new GenericProcessAdapter({
     ...processOptions,
+    nativeBusyInput: true,
+    guideRuntimeId: "claude",
+    busyInputMode: "gated",
     activationEnvironment: async (input) => {
       const lease = (await baseActivationEnvironment?.(input)) ?? { env: {} };
       standingPromptDigests.remember(input, lease.standingPromptDigest);
@@ -697,6 +700,9 @@ function createCodexAppServerRuntime(
   const standingPromptDigests = createStandingPromptDigestLedger();
   return new GenericProcessAdapter({
     ...processOptions,
+    nativeBusyInput: true,
+    guideRuntimeId: "codex",
+    busyInputMode: "direct",
     activationEnvironment: async (input) => {
       const lease = (await baseActivationEnvironment?.(input)) ?? { env: {} };
       standingPromptDigests.remember(input, lease.standingPromptDigest);
@@ -1229,6 +1235,7 @@ export class RuntimeCredentialEnvironmentBinding {
 }
 
 export function buildRuntimeOfferFromProfile(input: {
+  supportsAgentPrivateWorkspace?: boolean;
   hostId: string;
   hostInstanceId: string;
   leaseUntil: string;
@@ -1293,6 +1300,9 @@ export function buildRuntimeOfferFromProfile(input: {
         : undefined,
     ),
     workspaceMountDescriptors,
+    ...(input.supportsAgentPrivateWorkspace === undefined
+      ? {}
+      : { supportsAgentPrivateWorkspace: input.supportsAgentPrivateWorkspace }),
   });
 }
 

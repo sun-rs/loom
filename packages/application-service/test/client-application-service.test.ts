@@ -27,6 +27,13 @@ test("Client API authenticates humans and exposes canonical Room work without ow
   let executionResetOwnerParticipantId = "fixture-agent";
   const memoryConfigs = new AgentMemoryConfigStore(join(directory, "memory"));
   const service = new ClientApplicationService({
+    runtimeGuideSettings: {
+      read: () => ({ revision: 0, runtimes: [] }),
+      update: (input) => ({
+        revision: input.expectedRevision + 1,
+        runtimes: [],
+      }),
+    },
     computerProfileAdministration: {
       update: async (_actor, input) => {
         computerProfileUpdates += 1;
@@ -543,6 +550,11 @@ test("Client API authenticates humans and exposes canonical Room work without ow
 
     const globalInput = { workspaceId: workspace.workspace.workspaceId };
     for (const [path, body] of [
+      ["/runtime-guide/read", {}],
+      [
+        "/runtime-guide/update",
+        { runtimeId: "codex", enabled: true, expectedRevision: 0 },
+      ],
       ["/tasks/global", globalInput],
       ["/search", { ...globalInput, query: "" }],
       ["/activity/list", globalInput],

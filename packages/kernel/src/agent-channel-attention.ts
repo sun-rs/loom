@@ -1,3 +1,4 @@
+import { channelAttentionGuidance } from "./agent-channel-attention-guidance.ts";
 import { resolveWorkerReadTarget } from "./worker-read-targets.ts";
 import type { WorkerTargetContextService } from "./worker-target-context.ts";
 import type { DatabaseSync } from "node:sqlite";
@@ -215,7 +216,7 @@ export class AgentChannelAttentionService {
           }),
       };
       const room = database
-        .prepare("SELECT kind FROM rooms WHERE room_id=?")
+        .prepare("SELECT kind,slug FROM rooms WHERE room_id=?")
         .get(roomId);
       if (room?.kind !== "channel")
         throw new ForbiddenError(
@@ -249,8 +250,17 @@ export class AgentChannelAttentionService {
             },
             { allowExpired: true },
           );
+        const attention = readAgentChannelAttention(
+          database,
+          scope.participantId,
+          roomId,
+        );
         return {
-          ...readAgentChannelAttention(database, scope.participantId, roomId),
+          ...attention,
+          attention: channelAttentionGuidance(
+            attention.activityMuted,
+            `#${text(room, "slug")}`,
+          ),
           roomId: roomId,
           event,
           deduplicated: true,
@@ -318,6 +328,10 @@ export class AgentChannelAttentionService {
         );
       return {
         ...readAgentChannelAttention(database, scope.participantId, roomId),
+        attention: channelAttentionGuidance(
+          activityMuted,
+          `#${text(room, "slug")}`,
+        ),
         roomId: roomId,
         event,
         deduplicated: false,

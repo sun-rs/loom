@@ -1,3 +1,9 @@
+import {
+  updateWorkerTaskStatus,
+  workerStatusSubmissionSummary,
+  resolveStatusCommand,
+} from "./worker-task-status.ts";
+import { runWorkerTaskBatch } from "./worker-task-batch.ts";
 import type { DatabaseSync } from "node:sqlite";
 import * as P from "@rah-os/protocol";
 import type { AuthenticatedWorkerExecutionContext } from "./auth.ts";
@@ -22,6 +28,8 @@ import {
 import type { TaskCreateMutationResult } from "./types.ts";
 
 type Context = {
+  completeTask: import("./worker-task-status.ts").WorkerTaskStatusContext["completeTask"];
+  cancelTask: import("./worker-task-status.ts").WorkerTaskStatusContext["cancelTask"];
   database: DatabaseSync;
   events: RoomEventWriter;
   createId(prefix: string): string;
@@ -37,6 +45,46 @@ export class WorkerTaskManagementService {
   constructor(context: Context) {
     this.#context = context;
   }
+  resolveStatus(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: P.WorkerTaskUpdateRequest,
+  ) {
+    return resolveStatusCommand(this.#context, execution, input);
+  }
+  status(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: P.WorkerTaskUpdateRequest & {
+      basedOnRoomSeq: number;
+      idempotencyKey: string;
+    },
+    leaseMs: number,
+  ) {
+    return updateWorkerTaskStatus(this.#context, execution, input, leaseMs);
+  }
+  statusSummary(
+    execution: AuthenticatedWorkerExecutionContext,
+    input: P.WorkerTaskUpdateRequest & {
+      basedOnRoomSeq: number;
+      idempotencyKey: string;
+    },
+  ) {
+    return workerStatusSubmissionSummary(this.#context, execution, input);
+  }
+  batch(
+    execution: AuthenticatedWorkerExecutionContext,
+    operation: "create" | "claim",
+    input: unknown,
+    leaseMs: number,
+  ) {
+    return runWorkerTaskBatch(
+      this.#context,
+      execution,
+      operation,
+      input,
+      leaseMs,
+    );
+  }
+
   assign(
     execution: AuthenticatedWorkerExecutionContext,
     raw: P.WorkerTaskAssignRequest,

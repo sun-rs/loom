@@ -963,38 +963,68 @@ test(
       );
       record("3.7", "asserted", { hits: passphraseHits });
 
-      // Two unrelated questions in one Room A turn, so the budget buys one
-      // wake of the Room instead of two: mem-a must carry the DM's memory back
-      // into the Room (3.8), and mem-b must fail to know either of mem-a's
-      // private values (5.6 / 3.9). Merging them costs the negative control
-      // nothing: mem-b's answer is still judged against its own memory
-      // directory and against what it says, and it now answers without mem-a's
-      // reply necessarily being in front of it.
-      const returnAndNegative = await turn({
-        body: [
-          `@mem-a [CCG-5] 请在这个房间说出 S3 私聊口令。`,
-          `@mem-b [CCG-6] 请独立回答：S5 项目代号和 S3 私聊口令分别是什么？`,
-          `如果你不知道，就明确说你不知道，不要猜，也不要复述别人的答案。`,
-        ].join(" "),
-        idempotencyKey: "core-chain-s3-return-and-negative",
-        label:
-          "mem-a continues after the DM and mem-b answers the negative control",
-        recipients: [
-          { participantId: memA, reason: "mention" },
-          { participantId: memB, reason: "mention" },
-        ],
+      // S5 was published in Room A, where mem-b is a member. It is not a
+      // private fact. Test the DM-only S3 before allowing mem-a to publish it.
+      const negativeControlHead = await syncRoom(
+        originOf(),
+        token,
+        controlRoomId,
+        "core-chain-control",
+      );
+      const negativeDm = await postJson<{ room: { roomId: string } }>(
+        originOf(),
+        token,
+        "/v3/client/rooms/direct/open",
+        {
+          basedOnControlRoomSeq: negativeControlHead.latestRoomSeq,
+          idempotencyKey: "core-chain-negative-dm-open",
+          peerPrincipalId: memB,
+          workspaceId: prepared.metadata.workspaceId,
+        },
+      );
+      assert.notEqual(negativeDm.room.roomId, dmRoom);
+      const negative = await turn({
+        body: "[CCG-6] 请只读取你自己的私有记忆，回答 S3 私聊口令是什么。如果不知道请明确说不知道。不要猜，不要询问其他Agent或搜索聊天历史。",
+        idempotencyKey: "core-chain-s3-negative-private",
+        label: "mem-b negative control before any public S3 disclosure",
+        recipients: [{ participantId: memB, reason: "dm" }],
+        roomId: negativeDm.room.roomId,
+      });
+      observations["5.6-negative-reply"] = negative.replies;
+      const memBFiles = readMemoryTree(memBMemory);
+      assert.equal(
+        memBFiles.filter((file) => file.text.includes(S3_PASSPHRASE)).length,
+        0,
+        "5.6/3.9 failed: DM-only S3 appeared in the other Agent's memory before disclosure",
+      );
+      assert.ok(
+        negative.replies.every((reply) => !reply.body.includes(S3_PASSPHRASE)),
+        "5.6/3.9 failed: negative control spoke the unexposed DM-only fact",
+      );
+      for (const roomId of [roomA, roomB, negativeDm.room.roomId]) {
+        assert.ok(
+          messagesOf(roomId).every(
+            (message) => !message.body.includes(S3_PASSPHRASE),
+          ),
+          "invalid negative control: S3 was already disclosed in a shared target",
+        );
+      }
+      record("5.6", "asserted", {
+        memBFiles: memBFiles.map((file) => file.path),
+        replies: negative.replies,
+        scope: "DM-only S3, before public recall; public S5 is excluded",
+      });
+      record("3.9", "asserted", {
+        memBFiles: memBFiles.map((file) => file.path),
+        replies: negative.replies,
+      });
+      const backInRoom = await turn({
+        body: "@mem-a [CCG-5] 负对照已结束，现在请在这个房间说出 S3 私聊口令。",
+        idempotencyKey: "core-chain-s3-return-after-negative",
+        label: "mem-a returns from DM after the independent negative control",
+        recipients: [{ participantId: memA, reason: "mention" }],
         roomId: roomA,
       });
-      const backInRoom = {
-        replies: returnAndNegative.replies.filter(
-          (reply) => reply.actorId === memA,
-        ),
-      };
-      const negative = {
-        replies: returnAndNegative.replies.filter(
-          (reply) => reply.actorId === memB,
-        ),
-      };
       observations["3.8-return-reply"] = backInRoom.replies;
       record(
         "3.8",
@@ -1005,38 +1035,8 @@ test(
           ),
           replies: backInRoom.replies,
         },
-        "recall is observed; the Room A messages after the DM are the asserted continuity evidence",
+        "public recall runs only after the private negative control is complete",
       );
-      observations["5.6-negative-reply"] = negative.replies;
-
-      const memBFiles = readMemoryTree(memBMemory);
-      const leaked = memBFiles.filter(
-        (file) =>
-          file.text.includes(S5_ORIGINAL) || file.text.includes(S3_PASSPHRASE),
-      );
-      assert.equal(
-        leaked.length,
-        0,
-        `5.6/3.9 failed: mem-a's private memory leaked into ${memBMemory}: ${JSON.stringify(leaked.map((file) => file.path))}`,
-      );
-      const spokenLeak = negative.replies.filter(
-        (reply) =>
-          reply.body.includes(S5_ORIGINAL) ||
-          reply.body.includes(S3_PASSPHRASE),
-      );
-      assert.equal(
-        spokenLeak.length,
-        0,
-        `5.6/3.9 failed: mem-b said a value it was never told: ${JSON.stringify(spokenLeak)}`,
-      );
-      record("5.6", "asserted", {
-        memBFiles: memBFiles.map((file) => file.path),
-        replies: negative.replies,
-      });
-      record("3.9", "asserted", {
-        memBFiles: memBFiles.map((file) => file.path),
-        replies: negative.replies,
-      });
 
       assert.notEqual(memAMemory, memBMemory);
       const modes = {
@@ -1114,6 +1114,45 @@ test(
         "the corrected value on disk is asserted; whether the old value is marked superseded is Human judgment over the quoted lines",
       );
 
+      // A new RunAttempt can resume the same provider session. Use the real
+      // Human reset facade, preserve private memory, and verify native identity.
+      const providerDirectory = join(
+        stateDirectory,
+        "supervisors",
+        "provider-sessions",
+      );
+      const sessionsBeforeReset = providerSessionIds(providerDirectory, memA);
+      assert.ok(
+        sessionsBeforeReset.length > 0,
+        "correction must produce provider continuity evidence",
+      );
+      const memoryBeforeReset = readMemoryTree(memAMemory);
+      const resetControl = await syncRoom(
+        originOf(),
+        token,
+        prepared.metadata.controlRoomId,
+        "core-chain-reset",
+      );
+      const sessionReset = await postJson<{
+        providerContinuityRecords: number;
+      }>(originOf(), token, "/v3/client/agents/execution/reset", {
+        agentDefinitionId: definitionIdByHandle.get("mem-a")!,
+        basedOnRoomSeq: resetControl.latestRoomSeq,
+        idempotencyKey: "core-chain-fresh-provider-session",
+        mode: "session",
+      });
+      assert.ok(sessionReset.providerContinuityRecords > 0);
+      assert.deepEqual(
+        readMemoryTree(memAMemory),
+        memoryBeforeReset,
+        "session reset preserves Agent private files",
+      );
+      assert.deepEqual(
+        providerSessionIds(providerDirectory, memA),
+        [],
+        "session reset removes resumable continuity",
+      );
+
       const beforeNewSession = runAttemptsOf()
         .filter((attempt) => attempt.participantId === memA)
         .map((attempt) => attempt.runAttemptId);
@@ -1125,6 +1164,21 @@ test(
         roomId: roomB,
       });
       observations["5.9-new-session-reply"] = newSession.replies;
+      const sessionsAfterReset = providerSessionIds(providerDirectory, memA);
+      assertFreshProviderSessions(sessionsBeforeReset, sessionsAfterReset);
+      assert.ok(
+        newSession.replies.some(
+          (reply) =>
+            reply.actorId === memA && reply.body.includes(S5_CORRECTED),
+        ),
+        "new provider session recalls the corrected value",
+      );
+      observations["5.9-provider-reset"] = {
+        sessionsBeforeReset,
+        sessionsAfterReset,
+        resetReceipt: sessionReset,
+      };
+
       const newSessionAttempt = runAttemptsOf()
         .filter(
           (attempt) =>
@@ -1155,7 +1209,7 @@ test(
           newRunAttemptId: newSessionAttempt.runAttemptId,
           replies: newSession.replies,
         },
-        "the new RunAttempt and its own receipt are asserted; which value the model said is Human judgment",
+        "provider session identity changed through Human session reset; private files are unchanged by reset and corrected recall is asserted; mentions of the old value still require semantic review",
       );
       record("5.3", "asserted", {
         memoryDirectory: memAMemory,
@@ -1689,6 +1743,16 @@ test(
         auditContent,
         S4_AUDIT_BODY,
         `4.7 failed: ${S4_AUDIT_FILE} is ${JSON.stringify(auditContent)}`,
+      );
+
+      assert.ok(
+        messagesOf(roomA).some(
+          (message) =>
+            message.actorId === steadyC &&
+            message.roomSeq > busyMessage.event.roomSeq &&
+            message.body.trim() === S4_AUDIT_DONE,
+        ),
+        "4.7 failed: steady-c must publish its audit reply in the Human request Room; a file and exit 0 are insufficient",
       );
 
       const roomAAfter = messagesOf(roomA).filter(
@@ -2257,3 +2321,42 @@ async function waitForOutcome(input: {
     await sleep(500);
   }
 }
+
+function providerSessionIds(
+  directory: string,
+  participantId: string,
+): string[] {
+  if (!existsSync(directory)) return [];
+  return readdirSync(directory)
+    .filter((name) => name.endsWith(".json"))
+    .flatMap((name) => {
+      const record = JSON.parse(
+        readFileSync(join(directory, name), "utf8"),
+      ) as { participantId?: string; providerSessionId?: string };
+      return record.participantId === participantId &&
+        typeof record.providerSessionId === "string"
+        ? [record.providerSessionId]
+        : [];
+    })
+    .sort();
+}
+
+function assertFreshProviderSessions(before: string[], after: string[]): void {
+  assert.ok(
+    before.length > 0 && after.length > 0,
+    "both sides need actual provider evidence",
+  );
+  assert.ok(
+    after.every((id) => !before.includes(id)),
+    "new RunAttempt must not masquerade as a new provider session",
+  );
+}
+
+test("fresh-session evidence rejects resumed identities and missing receipts", () => {
+  assert.throws(() =>
+    assertFreshProviderSessions(["session-a"], ["session-a"]),
+  );
+  assert.throws(() => assertFreshProviderSessions(["session-a"], []));
+  assert.throws(() => assertFreshProviderSessions([], ["session-b"]));
+  assertFreshProviderSessions(["session-a"], ["session-b"]);
+});

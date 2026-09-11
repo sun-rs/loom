@@ -462,6 +462,19 @@ CREATE INDEX IF NOT EXISTS idx_task_reviews_task
 CREATE INDEX IF NOT EXISTS idx_task_reviews_room_created
   ON task_reviews(room_id, created_at DESC, review_id DESC);
 
+CREATE TABLE IF NOT EXISTS task_batch_command_receipts (
+ actor_id TEXT NOT NULL REFERENCES principals(principal_id),
+ room_id TEXT NOT NULL REFERENCES rooms(room_id) ON DELETE CASCADE,
+ operation TEXT NOT NULL,
+ idempotency_key TEXT NOT NULL,
+ request_digest TEXT NOT NULL,
+ response_json TEXT NOT NULL,
+ activation_id TEXT NOT NULL,
+ created_at_ms INTEGER NOT NULL,
+ expires_at_ms INTEGER NOT NULL,
+ PRIMARY KEY(actor_id, room_id, operation, idempotency_key)
+) STRICT;
+
 CREATE TABLE IF NOT EXISTS input_requests (
   input_request_id TEXT PRIMARY KEY,
   room_id TEXT NOT NULL REFERENCES rooms(room_id),
@@ -566,6 +579,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_one_queued_activation_per_lane
 
 CREATE INDEX IF NOT EXISTS idx_activation_lease_queue
   ON activations(state, available_at_ms, lease_until_ms, created_at);
+
+CREATE TABLE IF NOT EXISTS activation_delivery_windows (
+  activation_id TEXT NOT NULL REFERENCES activations(activation_id) ON DELETE CASCADE,
+  consumer_id TEXT NOT NULL,
+  after_seq INTEGER NOT NULL CHECK (after_seq >= 0),
+  PRIMARY KEY (activation_id, consumer_id)
+) STRICT;
 
 CREATE TABLE IF NOT EXISTS activation_retry_fences (
   activation_id TEXT PRIMARY KEY REFERENCES activations(activation_id),

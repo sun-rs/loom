@@ -1,4 +1,11 @@
 import {
+  RuntimeGuideReadSchema,
+  RuntimeGuideUpdateSchema,
+  RuntimeGuideSettingsSchema,
+  type RuntimeGuideUpdate,
+  type RuntimeGuideSettingsView,
+} from "@rah-os/protocol";
+import {
   TaskAmendRequestSchema,
   TaskDeleteRequestSchema,
   TaskDeleteResponseSchema,
@@ -188,6 +195,10 @@ import {
 } from "./client-profile-image-routes.ts";
 
 export type ClientApplicationServiceOptions = {
+  runtimeGuideSettings?: {
+    read(): RuntimeGuideSettingsView;
+    update(input: RuntimeGuideUpdate): RuntimeGuideSettingsView;
+  };
   agentExecutionAdministration?: AgentExecutionAdministrationPort;
   agentMemoryAdministration?: AgentMemoryAdministrationPort;
   bindHost?: "127.0.0.1";
@@ -329,6 +340,8 @@ const CLIENT_V2_DATA_PATHS = new Set([
   "/workspaces/list",
 ]);
 const CLIENT_V3_DATA_PATHS = new Set([
+  "/runtime-guide/read",
+  "/runtime-guide/update",
   ...AGENT_WORKSPACE_PATHS,
   ...COMPUTER_PROFILE_PATHS,
   ...FILE_DATA_PATHS,
@@ -397,6 +410,7 @@ export class ClientApplicationService {
   readonly #agentMemoryAdministration:
     AgentMemoryAdministrationPort | undefined;
   readonly #bindHost: "127.0.0.1";
+  readonly #runtimeGuideSettings: ClientApplicationServiceOptions["runtimeGuideSettings"];
   readonly #computerProfileAdministration:
     ComputerProfileAdministrationPort | undefined;
   readonly #health: () => ClientHealthResponse;
@@ -422,6 +436,7 @@ export class ClientApplicationService {
     this.#agentMemoryAdministration = options.agentMemoryAdministration;
     this.#bindHost = options.bindHost ?? "127.0.0.1";
     this.#computerProfileAdministration = options.computerProfileAdministration;
+    this.#runtimeGuideSettings = options.runtimeGuideSettings;
     this.#health = options.health;
     this.#human = options.human;
     this.#localRuntimeInventory = options.localRuntimeInventory;
@@ -680,6 +695,22 @@ export class ClientApplicationService {
         200,
         routeDiscovery(this.#human, actor, path, body, parseClientRequest),
       );
+      return;
+    }
+    if (path === "/runtime-guide/read" || path === "/runtime-guide/update") {
+      if (!this.#runtimeGuideSettings)
+        throw new HttpRequestError(
+          "not_found",
+          "Runtime Guide settings unavailable",
+          404,
+        );
+      const value = path.endsWith("/update")
+        ? this.#runtimeGuideSettings.update(
+            parseClientRequest(RuntimeGuideUpdateSchema, body),
+          )
+        : (parseClientRequest(RuntimeGuideReadSchema, body),
+          this.#runtimeGuideSettings.read());
+      writeJson(response, 200, RuntimeGuideSettingsSchema.parse(value));
       return;
     }
     if (COMPUTER_PROFILE_PATHS.includes(path)) {

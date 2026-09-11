@@ -1,4 +1,11 @@
 import {
+  RuntimeGuideReadSchema,
+  RuntimeGuideUpdateSchema,
+  RuntimeGuideSettingsSchema,
+  type RuntimeGuideUpdate,
+  type RuntimeGuideSettingsView,
+} from "@rah-os/protocol";
+import {
   TaskAmendRequestSchema,
   TaskDeleteRequestSchema,
   TaskDeleteResponseSchema,
@@ -358,6 +365,14 @@ export type RahClientOperationMap = AgentWorkspaceOperationMap &
     "host.runtime.list": {
       input: LocalRuntimeInventoryRequest;
       output: LocalRuntimeInventoryResponse;
+    };
+    "runtime.guide.read": {
+      input: Record<string, never>;
+      output: RuntimeGuideSettingsView;
+    };
+    "runtime.guide.update": {
+      input: RuntimeGuideUpdate;
+      output: RuntimeGuideSettingsView;
     };
     "computer.profile.update": {
       input: ClientComputerProfileUpdateRequest;
@@ -722,6 +737,20 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     method: "POST",
     output: LocalRuntimeInventoryResponseSchema,
     path: "/v1/local/runtimes/list",
+  },
+  "runtime.guide.read": {
+    authenticated: true,
+    input: RuntimeGuideReadSchema,
+    method: "POST",
+    output: RuntimeGuideSettingsSchema,
+    path: "/v3/client/runtime-guide/read",
+  },
+  "runtime.guide.update": {
+    authenticated: true,
+    input: RuntimeGuideUpdateSchema,
+    method: "POST",
+    output: RuntimeGuideSettingsSchema,
+    path: "/v3/client/runtime-guide/update",
   },
   "computer.profile.update": {
     authenticated: true,

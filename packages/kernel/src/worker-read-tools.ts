@@ -1,3 +1,4 @@
+import { workerAddressing } from "./worker-addressing.ts";
 import { freshnessHoldContext } from "./freshness-hold-context.ts";
 import type { WorkerProfileMetadataPort } from "./worker-profile-metadata-port.ts";
 import { visibleWorkerProfile } from "./worker-visible-profile.ts";
@@ -122,9 +123,16 @@ export class WorkerReadService {
     execution: AuthenticatedWorkerExecutionContext,
     raw: P.WorkerMessageSearchRequest,
   ): P.WorkerMessageSearchResponse {
-    return this.#read(execution, (scope) =>
-      new GlobalDiscovery(this.#db).searchRunMessages(scope, raw),
-    );
+    return this.#read(execution, (scope) => {
+      const result = new GlobalDiscovery(this.#db).searchRunMessages(
+        scope,
+        raw,
+      );
+      return {
+        ...result,
+        addressing: workerAddressing(this.#db, scope, result.messages),
+      };
+    });
   }
   rooms(
     execution: AuthenticatedWorkerExecutionContext,
@@ -314,6 +322,11 @@ export class WorkerReadService {
         updatedAt: (this.#context.now?.() ?? new Date()).toISOString(),
       });
       return P.WorkerHistoryResponseSchema.parse({
+        addressing: workerAddressing(
+          this.#db,
+          origin,
+          rows.map(messageProjectionFromRow),
+        ),
         // Raft: "`raft message read` shows messages in their current state. If
         // a message was later converted to a task, it will show the
         // `[task #N ...]` suffix" (agent-prompt-compiler.js line 172).
@@ -356,6 +369,16 @@ export class WorkerReadService {
         )
         .get(scope.roomId, row.thread_id ?? null, row.message_id!);
       return P.WorkerMessageResolveResponseSchema.parse({
+        addressing: workerAddressing(this.#db, origin, [
+          messageProjectionFromRow(row),
+          ...(thread
+            ? [
+                messageProjectionFromRow(
+                  this.#message(scope, text(thread, "root_message_id")),
+                ),
+              ]
+            : []),
+        ]),
         message: annotateTaskAnchoredMessage(
           this.#db,
           messageProjectionFromRow(row),
