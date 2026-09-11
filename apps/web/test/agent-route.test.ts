@@ -14,7 +14,7 @@ import { globalSurfaceFromSearch } from "../src/global-discovery-model.ts";
 test("Agent identity and tab survive refresh without carrying hidden conversation state", () => {
   const selection: AgentRouteSelection = {
     agentDefinitionId: "agent_definition_alice",
-    tab: "apps",
+    tab: "profile",
   };
   const search = agentRouteSearch(
     "?room=room_old&thread=room_old%3Aroot&message=message_old&filter=mentions",
@@ -23,7 +23,7 @@ test("Agent identity and tab survive refresh without carrying hidden conversatio
 
   assert.equal(
     search,
-    "?surface=agents&agent=agent_definition_alice&agentTab=apps",
+    "?surface=agents&agent=agent_definition_alice&agentTab=profile",
   );
   assert.deepEqual(agentRouteFromSearch(search), selection);
   assert.equal(globalSurfaceFromSearch(search), "agents");
@@ -66,7 +66,7 @@ test("relationship view is a reload-safe Agent surface mutually exclusive with A
     view: "relationship",
   };
   const search = agentRouteSearch(
-    "?surface=agents&agent=stale&agentTab=apps",
+    "?surface=agents&agent=stale&agentTab=profile",
     relationship,
   );
   assert.equal(search, "?surface=agents&memberView=relationship");

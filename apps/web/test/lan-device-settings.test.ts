@@ -18,8 +18,8 @@ test("LAN device administration is an edge-owned settings component", () => {
 
   assert.match(app, /from "\.\/components\/settings-surface\.tsx"/u);
   assert.doesNotMatch(app, /LanAccessClient|LanDeviceSettings/u);
-  assert.match(settings, /LanDeviceSettingsContent/u);
-  assert.match(settings, /局域网设备/u);
+  assert.doesNotMatch(settings, /LanDeviceSettingsContent/u);
+  assert.doesNotMatch(settings, /局域网设备/u);
   assert.match(devices, /client\s*\.session\(/u);
   assert.match(devices, /client\.listDevices\(/u);
   assert.match(devices, /client\s*\.issuePairingCode\(/u);

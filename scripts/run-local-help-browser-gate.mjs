@@ -26,7 +26,7 @@ try {
         : {}),
     });
     try {
-      const page = await browser.newPage();
+      const page = await browser.newPage({ serviceWorkers: "block" });
       await page.addInitScript(() =>
         localStorage.setItem("rah:web-push-desired:v1", "disabled"),
       );
@@ -45,34 +45,54 @@ try {
             ? ".rah-settings-mobile-index"
             : ".rah-settings-navigation:not(.rah-settings-mobile-index)",
         );
-        await nav.getByRole("button", { name: "文档", exact: true }).click();
-        const link = page.getByRole("link", {
-          name: "打开本机操作指南",
-          exact: true,
-        });
-        await link.waitFor({ timeout: 3000 });
-        const popup = page.waitForEvent("popup");
-        await link.click();
-        const guide = await popup;
-        await guide
+        await nav.getByRole("button", { name: "帮助", exact: true }).click();
+        await page
+          .getByRole("heading", { name: "帮助", exact: true })
+          .waitFor();
+        await page
           .getByRole("heading", { name: "本机恢复", exact: true })
           .waitFor();
-        assert.equal(new URL(guide.url()).origin, fixture.origin);
         assert.equal(
-          await guide
-            .getByRole("heading", { name: "首次配置 MCP", exact: true })
+          await page
+            .getByRole("dialog", { name: "帮助与资源", exact: true })
             .count(),
           0,
         );
         assert.equal(
-          (await guide.textContent("body")).includes("managed-mcp.json"),
-          false,
+          await page
+            .locator(".rah-settings-guide")
+            .evaluate((n) => getComputedStyle(n).borderLeftWidth),
+          "0px",
         );
-        await guide.reload();
-        await guide
+        assert.equal(
+          await page
+            .locator(".rah-settings-guide ol")
+            .evaluate((n) => getComputedStyle(n).listStyleType),
+          "decimal",
+        );
+        assert.equal(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth,
+          ),
+          true,
+        );
+        await page.reload();
+        await page
           .getByRole("heading", { name: "本机恢复", exact: true })
           .waitFor();
-        await guide.close();
+        await page.route("**/help/local-workbench.html", (route) =>
+          route.fulfill({ status: 503, body: "unavailable" }),
+        );
+        await page.reload();
+        await page
+          .getByRole("alert")
+          .filter({ hasText: "操作指南加载失败" })
+          .waitFor();
+        await page.unroute("**/help/local-workbench.html");
+        await page.getByRole("button", { name: "重试", exact: true }).click();
+        await page
+          .getByRole("heading", { name: "本机恢复", exact: true })
+          .waitFor();
         if (width === 390)
           await page
             .getByRole("button", { name: "返回设置", exact: true })

@@ -41,6 +41,10 @@ test("interaction icon geometry is frozen from Raft RFe/TFe/yze/cze/Bw, Agent ta
       .update(
         source
           .replace(
+            /  <!-- Raft index-BVfbaScj\.js vHe\/yHe: verbatim Lucide star geometry\. -->\n  <symbol id="raft-icon-star"[^\n]*\n/u,
+            "",
+          )
+          .replace(
             /  <!-- Raft (?:AgentDetailPanel-DKwoNvgK\.js (?:Cl|Rl)|index-BoAC7nSE\.js (?:dBe|N3e)); verbatim geometry, local symbol wrapper\. -->\n  <symbol id="raft-icon-(?:folder-closed|menu|share-2|link)"(?:(?!<\/symbol>)[\s\S])*<\/symbol>\n/gu,
             "",
           )
@@ -269,5 +273,16 @@ test("Thread action glyph additions retain their separately reviewed Raft geomet
   assert.equal(
     createHash("sha256").update(block).digest("hex"),
     "c7d7b08b1a147ef528975e266961af3294b1d90c831e778c885bdd2cb37dfa49",
+  );
+});
+
+test("Search common star preserves Raft vHe/yHe geometry", () => {
+  const source = readFileSync(
+    join(packageRoot, "src", "interaction-icons.svg"),
+    "utf8",
+  );
+  assert.equal(
+    source.match(/id="raft-icon-star"[^>]*><path d="([^"]+)"/u)?.[1],
+    "M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z",
   );
 });

@@ -5,14 +5,12 @@ import type { RahClient } from "@rah-os/client-sdk";
 import type { Principal, Workspace, MembershipRole } from "@rah-os/protocol";
 import type { WorkspaceAgentView } from "@rah-os/ui-web";
 
-import { LanDeviceSettingsContent } from "./lan-device-settings.tsx";
 import {
   AboutSettingsContent,
   AccountSettingsContent,
   AdministrationSettingsContent,
   AppearanceSettingsContent,
   DocsSettingsContent,
-  FeedbackSettingsContent,
   LanguageRegionSettingsContent,
   ReleaseNotesSettingsContent,
   WorkspaceProfileSettingsContent,
@@ -28,9 +26,7 @@ export type SettingsSection =
   | "appearance"
   | "about"
   | "docs"
-  | "feedback"
   | "language-region"
-  | "lan-devices"
   | "notifications"
   | "release-notes"
   | "server";
@@ -60,20 +56,13 @@ const SETTINGS_GROUPS: readonly {
     items: [
       { id: "server", icon: "server", label: "服务器资料" },
       { id: "administration", icon: "shield-check", label: "管理" },
-      {
-        id: "lan-devices",
-        icon: "monitor",
-        label: "局域网设备",
-        localExtension: true,
-      },
     ],
   },
   {
     label: "资源",
     items: [
       { id: "about", icon: "info", label: "关于" },
-      { id: "docs", icon: "book-open", label: "文档" },
-      { id: "feedback", icon: "message-square", label: "反馈" },
+      { id: "docs", icon: "book-open", label: "帮助" },
       { id: "release-notes", icon: "list", label: "更新日志" },
     ],
   },
@@ -96,11 +85,9 @@ function hasExplicitSettingsSection(search: string): boolean {
 }
 
 export function SettingsSurface({
-  agents,
   canManageWorkspace,
   client,
   currentPrincipal,
-  membershipRole,
   onWorkspaceUpdated,
   onPrincipalUpdated,
   workspace,
@@ -184,21 +171,13 @@ export function SettingsSurface({
             workspace={workspace}
           />
         ) : section === "administration" ? (
-          <AdministrationSettingsContent
-            agents={agents}
-            principal={currentPrincipal}
-            membershipRole={membershipRole}
-          >
+          <AdministrationSettingsContent>
             <RuntimeGuideSettingsContent client={client} />
           </AdministrationSettingsContent>
-        ) : section === "lan-devices" ? (
-          <LanDeviceSettingsContent />
         ) : section === "about" ? (
           <AboutSettingsContent workspace={workspace} />
         ) : section === "docs" ? (
           <DocsSettingsContent />
-        ) : section === "feedback" ? (
-          <FeedbackSettingsContent />
         ) : (
           <ReleaseNotesSettingsContent />
         )}

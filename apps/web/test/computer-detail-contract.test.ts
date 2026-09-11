@@ -32,7 +32,7 @@ test("Computer pane does not reuse Room dimensions or synthesize Agent avatars",
     "utf8",
   );
   assert.match(controls, /<AgentEntityCard/u);
-  assert.match(controls, /onOpen=\{onOpen\}/u);
+  assert.match(controls, /selecting\s*\?\s*\(id\)/u);
   assert.doesNotMatch(controls, /handle\.slice\(0, 1\)/u);
   assert.match(source, /onOpen=\{onOpenAgent\}/u);
   const card = readFileSync(
@@ -49,7 +49,7 @@ test("detected Runtime chips expose the Raft-shaped inspector", () => {
   assert.match(inspector, /aria-haspopup="dialog"/u);
   assert.match(inspector, /suppressNextFocusOpen/u);
   assert.match(source, /复制诊断信息/u);
-  assert.match(source, /npm run doctor:local-core/u);
+  assert.doesNotMatch(source, /npm run doctor:local-core/u);
 });
 
 test("Computer profile uses the durable Raft edit contract", () => {

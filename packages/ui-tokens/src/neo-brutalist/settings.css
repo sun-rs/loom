@@ -687,3 +687,86 @@
 .rah-settings-font-size {
   gap: 4px;
 }
+
+/* Help owns its prose layout; release-note timeline decoration is separate. */
+.rah-settings-guide {
+  max-width: 80ch;
+  min-width: 0;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+.rah-settings-guide section {
+  margin-top: 28px;
+  scroll-margin-top: 16px;
+}
+.rah-settings-guide h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  line-height: 1.5;
+}
+.rah-settings-guide p {
+  margin: 12px 0;
+}
+.rah-settings-guide > p:first-child {
+  margin-top: 0;
+}
+.rah-settings-guide ol,
+.rah-settings-guide ul {
+  margin: 12px 0;
+  padding-left: 24px;
+}
+.rah-settings-guide ol {
+  list-style: decimal;
+}
+.rah-settings-guide ul {
+  list-style: disc;
+}
+.rah-settings-guide li + li {
+  margin-top: 8px;
+}
+.rah-settings-guide code {
+  padding: 2px 4px;
+  background: rgb(0 0 0 / 5%);
+  border: 1px solid rgb(0 0 0 / 15%);
+  font: 12px/1.7 var(--mono);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  box-decoration-break: clone;
+}
+.rah-settings-guide pre {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 12px;
+  background: rgb(0 0 0 / 5%);
+}
+.rah-settings-guide pre code {
+  padding: 0;
+  border: 0;
+  background: none;
+  white-space: pre;
+}
+.rah-settings-guide a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.rah-settings-guide a:hover {
+  background: color-mix(in srgb, var(--yellow) 30%, white);
+}
+.rah-settings-guide nav {
+  margin: 16px 0;
+  line-height: 2;
+}
+
+/* Appearance uses a stationary segment, not the generic lifted action button. */
+.rah-product-shell .rah-settings-font-size .btn,
+.rah-product-shell .rah-settings-font-size .btn:hover:not(:disabled),
+.rah-product-shell .rah-settings-font-size .btn:active:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  border-color: var(--black);
+}
+.rah-settings-font-size .btn:hover:not(:disabled):not([aria-pressed="true"]) {
+  background: color-mix(in srgb, var(--yellow) 30%, white);
+}

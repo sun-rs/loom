@@ -1,3 +1,14 @@
+[Computer 选择栏与分割线收口](audits/2026-09-12-computer-selection-toolbar-refinement.zh-CN.md)：选择模式标题操作、28px批量按钮、持续选中阴影与内缩分割线。
+
+[成员侧栏与运行时表单收口](audits/2026-09-12-member-profile-cleanup.zh-CN.md)：精简入口，Human 页面复用 Agent 侧栏，明确选模与常显推理强度。
+
+- [动态全部已读按钮尺寸](audits/2026-09-12-activity-read-all-size.zh-CN.md)
+- [Search 首页与结果卡片修复](audits/2026-09-12-search-home-result-parity.zh-CN.md)
+
+[Room 与消息列响应式](./audits/2026-09-11-conversation-responsive-parity.zh-CN.md)：实景680px容器/768px窄屏切换，消除半遮挡及根消息多余8px留白。
+
+[Tooltip 零延迟与页内操作指南](audits/2026-09-11-tooltip-delay-and-inline-help.zh-CN.md)：核对 Raft 根 Provider 的 0ms 设置；问号直达指南，不再使用资源浮窗。
+
 [Worker 自动确认与重放实施](./audits/2026-09-11-worker-message-check-implementation.zh-CN.md)：工具负责 ACK，原交付窗口支持新 Run 与服务重启恢复；[Task 批次合同](./audits/2026-09-11-task-batch-contract-closure.zh-CN.md)完成批量子项；[Task 状态统一入口](./audits/2026-09-11-task-status-facade.zh-CN.md)已接线五态，明确 Human 对话批准约定及本地 reviewer/本人任务边界；部署结果见该文。
 
 [Agent 私有默认 cwd 方案](./audits/2026-09-11-agent-private-cwd-plan.zh-CN.md)：施工前源码对照与设计；当前见[私有 cwd 实施记录](./audits/2026-09-11-agent-private-cwd-implementation.zh-CN.md)，尚待主任务全量验收与部署。
@@ -607,3 +618,16 @@ Claude 工具边界追加与 Kimi 原生接口差异：[来源、实施与验证
 [六项差异二次核验与分批交付](./audits/2026-09-11-parity-batch-review-and-delivery.zh-CN.md)：纠正旧报告，首批对齐有效投递模式、实际 prompt 与 Claude fresh/resume 就绪，修帮助文本；其余项按证据与 owner 分批。
 
 - [Runtime provider 图标与紧凑卡片](./audits/2026-09-11-runtime-provider-icons-compact.zh-CN.md) — 已通过联合检查并部署，含桌面/手机正式页面验证。
+
+- [受管 Provider 自动记忆关闭](audits/2026-09-11-provider-auto-memory-disable.zh-CN.md)：Claude/Codex 进程级覆盖、无 HOME 隔离及验证边界。
+
+- [管理页 Provider 启动参数](audits/2026-09-11-provider-launch-settings.zh-CN.md)：按 Provider 分组，受管启动参数覆盖、红绿差异与恢复默认。
+- [UI 规格试点独立复核](audits/2026-09-11-ui-component-spec-independent-review.zh-CN.md)：来源核实、12 项测试与 42 项本地浏览器验证；静态值自引用、来源检查、预算棘轮尚需补齐。
+
+- [管理卡片与字号悬停修正](audits/2026-09-11-settings-card-and-size-hover.zh-CN.md)
+
+- [刷新等待与 Provider 白色标题](audits/2026-09-11-refresh-timeout-and-provider-heading.zh-CN.md)
+
+- [频道设置开关与操作修复（2026-09-12）](audits/2026-09-12-channel-settings-repair.zh-CN.md)
+
+- [Computer 选择与工作区 UI（2026-09-12）](audits/2026-09-12-computer-selection-and-workspace-ui.zh-CN.md)

@@ -1,3 +1,4 @@
+import { providerLaunchArguments } from "./provider-launch-arguments.js";
 import { spawn } from "node:child_process";
 import { writeSync } from "node:fs";
 import { createServer } from "node:net";
@@ -184,7 +185,13 @@ async function startServer() {
   const port = await allocatePort();
   const child = spawn(
     options.executable,
-    ["serve", "--pure", "--hostname", "127.0.0.1", "--port", String(port)],
+    [
+      ...providerLaunchArguments("opencode"),
+      "--hostname",
+      "127.0.0.1",
+      "--port",
+      String(port),
+    ],
     {
       cwd: process.cwd(),
       env: process.env,

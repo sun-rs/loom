@@ -1,6 +1,5 @@
 import { runtimeProductLabel } from "../agent-runtime-presentation.ts";
 import { WorkbenchServiceRestart } from "./workbench-service-restart.tsx";
-import { ComputerRecoveryGuide } from "./computer-recovery-guide.tsx";
 import type { AgentResetOperation } from "../agent-reset-batch.ts";
 import type { RahClient } from "@rah-os/client-sdk";
 import { ComputerWorkspaceSummary } from "./computer-workspace-summary.tsx";
@@ -97,9 +96,6 @@ export function ComputerRuntimePane({
     displayComputerName(hostId);
   const statusLabel = computerStatusLabel(computer);
   const online = computer?.status === "online";
-  const configuredRuntimes = runtimes.filter(
-    ({ available, configured }) => available && configured,
-  );
   const bindings = entities?.computerAgents() ?? [];
   const rootStyle = {
     "--rah-computer-sidebar-width": `${sidebarWidth}px`,
@@ -321,6 +317,7 @@ export function ComputerRuntimePane({
               </dl>
             </ProfileSection>
             <ComputerAgentControls
+              client={client}
               bindings={bindings}
               onCreate={onCreateAgent}
               onOpen={onOpenAgent}
@@ -333,63 +330,8 @@ export function ComputerRuntimePane({
               agents={bindings}
               onOpen={onOpenAgent}
             />
-            <ProfileSection title="本机诊断">
-              <details className="rah-profile-disclosure">
-                <summary>CLI / Runtime / Offer 详情</summary>
-                <dl className="rah-profile-fields">
-                  <div>
-                    <dt>Host ID</dt>
-                    <dd>{hostId}</dd>
-                  </div>
-                  <div>
-                    <dt>最后连接状态观测</dt>
-                    <dd>
-                      {computer?.lastSeenAt
-                        ? formatRahDateTime(computer.lastSeenAt, {
-                            dateStyle: "short",
-                            timeStyle: "short",
-                          })
-                        : "—"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>可运行 Offer</dt>
-                    <dd>{configuredRuntimes.length}</dd>
-                  </div>
-                </dl>
-                <div className="rah-computer-runtime-evidence">
-                  {runtimes.map((runtime) => (
-                    <article key={runtimeInventoryKey(runtime)}>
-                      <header>
-                        <b>{runtime.displayName}</b>
-                        <span>{runtime.version ?? "版本未知"}</span>
-                      </header>
-                      <dl>
-                        <div>
-                          <dt>Executable</dt>
-                          <dd>
-                            {runtime.resolvedExecutablePath ??
-                              runtime.executable}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>Runtime Profile</dt>
-                          <dd>{runtime.runtimeProfileId ?? "未配置"}</dd>
-                        </div>
-                        <div>
-                          <dt>Offer</dt>
-                          <dd>{runtime.runtimeOfferId ?? "未发布"}</dd>
-                        </div>
-                      </dl>
-                    </article>
-                  ))}
-                </div>
-              </details>
+            <ProfileSection title="操作">
               <section className="rah-computer-diagnostics">
-                <p>
-                  复制经过裁剪的 Computer、Runtime 与 Agent
-                  状态；不包含环境变量、凭据或 Provider 账号。
-                </p>
                 <button
                   className="btn"
                   onClick={() =>
@@ -409,25 +351,6 @@ export function ComputerRuntimePane({
                   {copyFeedback === "diagnostic" ? "已复制" : "复制诊断信息"}
                 </button>
                 <WorkbenchServiceRestart />
-                <ComputerRecoveryGuide />
-                <p>需要进一步检查时，请在 RAH OS 项目目录运行：</p>
-                <div className="rah-computer-command-row">
-                  <code>npm run doctor:local-core</code>
-                  <button
-                    aria-label="复制本机诊断命令"
-                    className="btn"
-                    onClick={() =>
-                      void copyComputerEvidence(
-                        "doctor",
-                        "npm run doctor:local-core",
-                      )
-                    }
-                    type="button"
-                  >
-                    <Icon name="copy" />
-                    {copyFeedback === "doctor" ? "已复制" : "复制"}
-                  </button>
-                </div>
                 {copyFeedback === "error" ? (
                   <p className="rah-computer-copy-error" role="alert">
                     无法写入剪贴板，请手动复制。

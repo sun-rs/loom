@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   currentWebBuildId,
+  webBuildProbeUrl,
   isStaleWebBuildError,
   recoveryUrl,
   webBuildCacheNames,
@@ -61,5 +62,15 @@ test("cache cleanup is limited to RAH OS shell generations", () => {
       "other-rah-os-data",
     ]),
     ["rah-os-shell-v1", "rah-os-assets-build-2"],
+  );
+});
+
+test("build probes cannot reuse a previous document's cached HEAD identity", () => {
+  const first = webBuildProbeUrl("same-build", "first");
+  const next = webBuildProbeUrl("same-build", "next");
+  assert.notEqual(first, next);
+  assert.equal(
+    new URL(first, "http://localhost").searchParams.get("rah_build_probe"),
+    "same-build",
   );
 });

@@ -1,4 +1,12 @@
 export {
+  PROVIDER_LAUNCH_ARGS_ENV,
+  providerLaunchDefaults,
+  providerLaunchRequiredArgs,
+  providerLaunchPolicy,
+  validateProviderLaunchArgs,
+  validateProviderLaunchOverride,
+} from "./provider-launch-arguments.js";
+export {
   resolveRuntimeDeliveryMode,
   type RuntimeDeliveryMode,
 } from "./runtime.ts";

@@ -1,3 +1,8 @@
+import {
+  providerLaunchArguments,
+  providerLaunchPolicy,
+  providerMemoryConfig as memoryConfig,
+} from "./provider-launch-arguments.js";
 import { attachCodexBusyInput } from "./codex-busy-input.js";
 import { spawn } from "node:child_process";
 import { writeSync } from "node:fs";
@@ -18,10 +23,19 @@ const INTERRUPT_CONFIRM_TIMEOUT_MS = 600;
 const INTERRUPT_EXIT_TIMEOUT_MS = 150;
 const PROVIDER_TERM_TIMEOUT_MS = 150;
 
+// RAH policy; Multica uses the same three switches. No user config writes.
+const providerMemoryConfig = memoryConfig("codex");
+
 const options = parseArguments(driverArguments(process.argv.slice(2)));
 const codex = spawn(
   options.executable,
-  ["app-server", ...options.codexConfigArgs, "--listen", "stdio://"],
+  [
+    ...providerLaunchArguments("codex"),
+    ...options.codexConfigArgs,
+    ...providerLaunchPolicy("codex").args,
+    "--listen",
+    "stdio://",
+  ],
   {
     cwd: process.cwd(),
     env: process.env,
@@ -126,6 +140,7 @@ try {
   notify("initialized", {});
 
   const threadStart = {
+    config: { ...providerMemoryConfig },
     approvalPolicy: "never",
     cwd: process.cwd(),
     developerInstructions: options.prompt,
@@ -134,7 +149,7 @@ try {
   };
   if (options.model !== undefined) threadStart.model = options.model;
   if (options.reasoning !== undefined) {
-    threadStart.config = { model_reasoning_effort: options.reasoning };
+    threadStart.config.model_reasoning_effort = options.reasoning;
   }
   let resumeRecovery;
   let startedThread;

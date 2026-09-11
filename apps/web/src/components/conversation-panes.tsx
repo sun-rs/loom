@@ -1814,6 +1814,14 @@ export function ThreadPane({
       {resizer}
       {hideHeader ? null : (
         <PanelHeader kind="thread" className="rah-thread-head">
+          <PanelHeaderAction
+            aria-label="返回聊天"
+            className="rah-thread-back"
+            onClick={onClose}
+            type="button"
+          >
+            <Icon name="arrow-left" />
+          </PanelHeaderAction>
           <button
             className="rah-thread-title"
             data-testid="thread-scroll-to-top"

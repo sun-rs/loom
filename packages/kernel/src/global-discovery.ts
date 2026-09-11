@@ -450,7 +450,7 @@ export class GlobalDiscovery {
     const { rank, rankArgs } = messageSearchRank(q, terms, input.sort);
     const rows = this.db
       .prepare(
-        `WITH hits AS (SELECT m.*, r.name AS room_name, sender.handle AS sender_name, th.root_message_id, ${rank} AS rank ${from}) SELECT * FROM hits WHERE (rank > ? OR (rank = ? AND message_order < ?)) ORDER BY rank, message_order DESC LIMIT ?`,
+        `WITH hits AS (SELECT m.*, r.name AS room_name, sender.handle AS sender_name, th.root_message_id, (SELECT substr(root.body, 1, 160) FROM messages root WHERE root.message_id = th.root_message_id AND root.room_id = m.room_id) AS root_preview, ${rank} AS rank ${from}) SELECT * FROM hits WHERE (rank > ? OR (rank = ? AND message_order < ?)) ORDER BY rank, message_order DESC LIMIT ?`,
       )
       .all(...rankArgs, ...args, p.rank, p.rank, p.before, p.limit + 1);
     const taken = rows.slice(0, p.limit);
@@ -474,7 +474,12 @@ export class GlobalDiscovery {
         },
         ...(row.root_message_id === null
           ? {}
-          : { rootMessageId: row.root_message_id }),
+          : {
+              rootMessageId: row.root_message_id,
+              ...(typeof row.root_preview === "string"
+                ? { rootMessagePreview: row.root_preview.slice(0, 160) }
+                : {}),
+            }),
       })),
       ...(rows.length > p.limit
         ? {
@@ -490,7 +495,7 @@ export class GlobalDiscovery {
   private directory(actorId: string, workspaceId: string, query: string) {
     const rooms = this.db
       .prepare(
-        `SELECT r.* FROM rooms r WHERE ${discoveryReadableRooms} AND instr(rah_casefold(r.name), ?) > 0 ORDER BY r.name LIMIT 100`,
+        `SELECT r.*, pair.left_principal_id, pair.right_principal_id FROM rooms r LEFT JOIN direct_room_pairs pair ON pair.room_id = r.room_id WHERE ${discoveryReadableRooms} AND instr(rah_casefold(r.name), ?) > 0 ORDER BY r.name LIMIT 100`,
       )
       .all(workspaceId, actorId, query)
       .map(roomProjectionFromRow);

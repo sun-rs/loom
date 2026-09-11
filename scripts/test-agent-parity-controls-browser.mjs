@@ -131,16 +131,12 @@ try {
         } else {
           await page.getByRole("dialog").waitFor();
           const effort = page.getByRole("button", { name: /^推理强度：/ });
+          assert.equal(await effort.isVisible(), true, "effort always visible");
           assert.equal(
-            await effort.isVisible(),
-            false,
-            "advanced starts collapsed",
-          );
-          await page.getByRole("button", { name: "高级", exact: true }).click();
-          assert.equal(
-            await effort.isVisible(),
-            true,
-            "advanced reveals preserved effort control",
+            await page
+              .getByRole("button", { name: "高级", exact: true })
+              .count(),
+            0,
           );
           await page.keyboard.press("Escape");
           await page.getByText("Fixture closed").waitFor();

@@ -1,13 +1,11 @@
 import assert from "node:assert/strict";
-import { mkdir, readFile } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import { DatabaseSync } from "node:sqlite";
 import { chromium } from "playwright";
-if (process.env.RAH_GUIDE_FORMAL !== "1")
-  throw new Error(
-    "Set RAH_GUIDE_FORMAL=1 for the idle formal workbench verification",
-  );
-const state = process.env.RAH_STATE_DIRECTORY;
-assert.ok(state, "RAH_STATE_DIRECTORY is required");
+assert.equal(process.env.RAH_GUIDE_FORMAL, "1");
+const state = process.env.RAH_STATE_DIRECTORY,
+  directory = process.env.RAH_GUIDE_EVIDENCE;
+assert.ok(state && directory);
 const db = new DatabaseSync(`${state}/room.db`, { readOnly: true });
 try {
   assert.equal(
@@ -17,86 +15,103 @@ try {
       )
       .get().n,
     0,
-    "Formal workbench must be idle before changing Guide settings",
   );
 } finally {
   db.close();
 }
-const directory = process.env.RAH_GUIDE_EVIDENCE;
-assert.ok(directory, "RAH_GUIDE_EVIDENCE is required");
 await mkdir(directory, { recursive: true });
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-let restore;
+let original;
+async function command(path, body) {
+  return page.evaluate(
+    async ({ path, body }) => {
+      const r = await fetch(`/v3/client/runtime-guide/${path}`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!r.ok) throw new Error(await r.text());
+      return r.json();
+    },
+    { path, body },
+  );
+}
 try {
   await page.goto(
     "http://127.0.0.1:4173/?surface=settings&settingsSection=administration",
   );
-  const codex = page.getByRole("checkbox", {
-    name: "Codex Guide",
-    exact: true,
-  });
-  await codex.waitFor();
-  if (process.env.RAH_GUIDE_ENABLE_SUPPORTED === "1") {
-    for (const name of ["Codex Guide", "Claude Code Guide"]) {
-      const box = page.getByRole("checkbox", { name, exact: true });
-      if (!(await box.isChecked())) {
-        await box.click();
-        await page.waitForFunction((label) => {
-          const input = document.querySelector(`input[aria-label="${label}"]`);
-          return input?.checked && !input.disabled;
-        }, name);
-      }
+  await page
+    .getByRole("region", { name: "Claude Code", exact: true })
+    .waitFor();
+  original = (await command("read", {})).runtimes.find(
+    (r) => r.runtimeId === "claude",
+  );
+  for (const name of ["Codex", "Claude Code"]) {
+    const card = page.getByRole("region", { name, exact: true });
+    await card.locator("summary").click();
+    const text = await card.locator(".rah-runtime-launch-fixed").innerText();
+    if (name === "Codex") {
+      assert.match(text, /app-server/);
+      assert.match(text, /features.memories=false/);
+      assert.match(text, /memories.generate_memories=false/);
+      assert.match(text, /memories.use_memories=false/);
+    } else {
+      assert.match(text, /--verbose/);
+      assert.match(text, /CLAUDE_CODE_DISABLE_AUTO_MEMORY=1/);
     }
+    assert.equal(
+      await card
+        .getByRole("button", { name: "与默认对比", exact: true })
+        .count(),
+      0,
+    );
   }
-  restore = await codex.isChecked();
-  await codex.click();
+  const card = page.getByRole("region", { name: "Claude Code", exact: true });
+  const editor = card.getByRole("textbox", { name: "claude 附加参数" });
+  await editor.fill('--debug "api"');
+  await card.getByRole("button", { name: "保存", exact: true }).click();
   await page.waitForFunction(
-    (expected) =>
-      document.querySelector('input[aria-label="Codex Guide"]')?.checked ===
-        expected &&
-      !document.querySelector('input[aria-label="Codex Guide"]')?.disabled,
-    !restore,
-  );
-  await page.reload();
-  await codex.waitFor();
-  assert.equal(
-    await codex.isChecked(),
-    !restore,
-    "Reload reads durable daemon setting",
-  );
-  const saved = JSON.parse(
-    await readFile(`${state}/runtime-guide.json`, "utf8"),
-  );
-  assert.equal(saved.enabled.includes("codex"), !restore);
-  await codex.click();
-  await page.waitForFunction(
-    (expected) =>
-      document.querySelector('input[aria-label="Codex Guide"]')?.checked ===
-        expected &&
-      !document.querySelector('input[aria-label="Codex Guide"]')?.disabled,
-    restore,
+    () =>
+      document.querySelector('textarea[aria-label="claude 附加参数"]').value ===
+        "--debug api" &&
+      !document.querySelector('textarea[aria-label="claude 附加参数"]')
+        .disabled,
   );
   assert.equal(
-    await page
-      .getByRole("checkbox", { name: "Kimi Guide", exact: true })
-      .isDisabled(),
+    await card.getByRole("button", { name: "保存", exact: true }).isDisabled(),
     true,
   );
+  await page.reload();
+  await card.locator("summary").click();
+  assert.equal(await editor.inputValue(), "--debug api");
+  assert.deepEqual(
+    (await command("read", {})).runtimes.find((r) => r.runtimeId === "claude")
+      .additionalArgs,
+    ["--debug", "api"],
+  );
+  await card.getByRole("button", { name: "清空附加参数", exact: true }).click();
+  await card.getByRole("button", { name: "保存", exact: true }).click();
+  await page.waitForFunction(
+    () =>
+      !document.querySelector('textarea[aria-label="claude 附加参数"]')
+        .disabled,
+  );
+  assert.deepEqual(
+    (await command("read", {})).runtimes.find((r) => r.runtimeId === "claude")
+      .additionalArgs,
+    [],
+  );
   assert.equal(
-    await page
-      .getByRole("checkbox", { name: "OpenCode Guide", exact: true })
-      .isDisabled(),
+    await card.getByRole("button", { name: "保存", exact: true }).isDisabled(),
     true,
   );
   await page.screenshot({
     path: `${directory}/formal-runtime-guide-desktop.png`,
     fullPage: true,
+    animations: "disabled",
   });
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.reload();
-  await codex.waitFor();
-  assert.equal(await codex.isChecked(), restore);
   assert.equal(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -106,32 +121,21 @@ try {
   await page.screenshot({
     path: `${directory}/formal-runtime-guide-mobile.png`,
     fullPage: true,
+    animations: "disabled",
   });
   console.log(
-    "Formal Chrome: authenticated settings, pointer toggle, reload, durable file, disabled adapters, restored original preference, desktop/mobile passed.",
+    "Formal Chrome: fixed parameters/environment visible, additions save/reload/clear, disabled saved button, desktop/mobile passed.",
   );
 } finally {
-  if (restore !== undefined) {
-    await page.evaluate(async (enabled) => {
-      const send = (path, body) =>
-        fetch(`/v3/client/runtime-guide/${path}`, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify(body),
-        });
-      const current = await (await send("read", {})).json();
-      if (
-        current.runtimes?.find((row) => row.runtimeId === "codex")?.enabled !==
-        enabled
-      ) {
-        const result = await send("update", {
-          runtimeId: "codex",
-          enabled,
-          expectedRevision: current.revision,
-        });
-        if (!result.ok) throw new Error("Could not restore Guide preference");
-      }
-    }, restore);
+  if (original) {
+    const current = await command("read", {});
+    await command("update", {
+      runtimeId: "claude",
+      expectedRevision: current.revision,
+      ...(original.overrideArgs !== null
+        ? { overrideArgs: original.overrideArgs }
+        : { additionalArgs: original.additionalArgs }),
+    });
   }
   await browser.close();
 }

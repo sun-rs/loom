@@ -37,8 +37,7 @@
   margin-top: 24px;
 }
 
-.rah-web-build-refresh-actions button,
-.rah-web-build-refresh-banner button {
+.rah-web-build-refresh-actions :is(button, a) {
   min-height: 40px;
   border: 2px solid #111;
   background: #fff;
@@ -47,40 +46,24 @@
   font: inherit;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 3px 3px 0 #111;
+  box-shadow: 2px 2px 0 #111;
+  transition:
+    transform 100ms,
+    box-shadow 100ms;
 }
 
-.rah-web-build-refresh-actions button:first-child {
+.rah-web-build-refresh-actions :is(button, a):first-child {
   background: #ff79ad;
 }
 
-.rah-web-build-refresh-actions button:focus-visible,
-.rah-web-build-refresh-banner button:focus-visible {
-  outline: 3px solid #ffd43b;
-  outline-offset: 3px;
+.rah-web-build-refresh-actions :is(button, a):focus-visible {
+  outline: 2px solid #111;
+  outline-offset: 2px;
 }
 
-.rah-web-build-refresh-actions button:disabled {
+.rah-web-build-refresh-actions :is(button, a):disabled {
   cursor: wait;
   opacity: 0.55;
-}
-
-.rah-web-build-refresh-banner {
-  position: fixed;
-  z-index: 2147483646;
-  top: 0;
-  right: 0;
-  left: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  min-height: 48px;
-  border-bottom: 2px solid #111;
-  background: #ffd43b;
-  padding: 6px 16px;
-  color: #111;
-  font-weight: 700;
 }
 
 @media (max-width: 600px) {
@@ -96,7 +79,29 @@
     flex-direction: column;
   }
 
-  .rah-web-build-refresh-actions button {
+  .rah-web-build-refresh-actions :is(button, a) {
     width: 100%;
   }
+}
+
+.rah-web-build-refresh-actions :is(button, a):hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 4px 4px 0 #111;
+}
+.rah-web-build-refresh-actions :is(button, a):active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #111;
+}
+
+.rah-web-build-refresh-layer:focus {
+  outline: none;
+}
+.rah-web-build-refresh-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+.rah-web-build-refresh-actions :is(button, a):focus:not(:focus-visible) {
+  outline: none;
 }

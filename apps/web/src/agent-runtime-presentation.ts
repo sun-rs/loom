@@ -29,9 +29,6 @@ export function runtimeProfilePresentation(
   const reasoning = intent?.reasoning;
   // A saved explicit intent remains visible even if discovery is temporarily
   // unavailable. An unsupported default must not pretend to be a capability.
-  const showReasoning =
-    !!model?.supportedReasoning.length ||
-    (!!reasoning && reasoning !== "default");
   return {
     runtime,
     runtimeLabel: runtime
@@ -40,23 +37,18 @@ export function runtimeProfilePresentation(
         ? "多个运行时绑定"
         : "未绑定",
     modelLabel: intent
-      ? (model?.displayName ??
-        model?.modelId ??
-        bindingId ??
-        intent.capabilityClass ??
-        "Runtime 默认")
+      ? (model?.displayName ?? model?.modelId ?? bindingId ?? "未选择模型")
       : state === "loading"
         ? "加载中…"
         : state === "error"
           ? "暂时无法读取"
           : "配置尚未加载",
-    reasoningLabel: showReasoning
-      ? !reasoning || reasoning === "default"
+    reasoningLabel:
+      !reasoning || reasoning === "default"
         ? "默认"
         : (runtimeReasoningOptions(runtime, bindingId).find(
             (o) => o.value === reasoning,
-          )?.label ?? reasoning)
-      : undefined,
+          )?.label ?? reasoning),
   };
 }
 

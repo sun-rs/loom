@@ -126,32 +126,32 @@ a.rail-btn { color: var(--ink); text-decoration: none; }
 .sidebar-title { font-size: var(--fs-sidebar-head); font-weight: var(--fw-bold); line-height: 28px; }
 .sidebar-body { flex: 1; overflow: auto; padding: 12px 8px 20px; }
 .side-section { margin: 0; }
-.side-section + .side-section { margin-top: 12px; }
+.side-section + .side-section { margin-top: var(--space-3); }
 .sidebar-bookmarks {
-  width: 100%; height: 32px; margin: 0;
-  display: flex; align-items: center; gap: 6px;
-  padding: 4px 8px; border: 2px solid transparent;
+  width: 100%; height: 32px; margin: 0 0 var(--space-1);
+  display: flex; align-items: center; gap: var(--space-1-5);
+  padding: var(--space-1) var(--space-2); border: 2px solid transparent;
   background: transparent; text-align: left;
   font-size: 14px; line-height: 20px; font-weight: 500;
   transition: color .1s, background-color .1s, border-color .1s, box-shadow .1s;
 }
-.sidebar-bookmarks svg { width: 14px; height: 14px; flex: none; }
+.sidebar-bookmarks svg { width: var(--icon-3-5); height: var(--icon-3-5); flex: none; }
 .sidebar-bookmarks:hover,
 .sidebar-bookmarks:active { border-color: var(--black); background: var(--bg); box-shadow: var(--shadow-s); }
 .side-title {
-  display: flex; align-items: center; gap: 6px;
+  display: flex; align-items: center; gap: var(--space-1-5);
   font-size: var(--fs-section); font-weight: var(--fw-bold);
   letter-spacing: var(--tracking-widest);
   text-transform: uppercase;
-  height: 24px; margin-bottom: 4px; padding: 0 8px;
+  height: var(--control-6); margin-bottom: var(--space-1); padding: 0 var(--space-2);
 }
-.side-title > svg { width: 12px; height: 12px; }
-.count { font-family: var(--mono); font-weight: 400; font-size: 12px; color: var(--ink-40); }
+.side-title > svg { width: var(--icon-3); height: var(--icon-3); }
+.count { font-family: var(--mono); font-weight: var(--fw-bold); font-size: var(--fs-section); color: var(--ink-40); }
 .side-actions { margin-left: auto; display: flex; gap: 2px; }
 /* 侧栏迷你钮（实测 btn-flat-sm 系）：基色 black/70，hover 底 black/5 + 字黑，
    active 底 black/10，focus-visible 底 black/5（outline 走全局协议） */
-.side-actions button { width: 24px; height: 24px; background: none; border: 0; cursor: pointer; padding: 0; display: grid; place-items: center; color: var(--ink-70); transition: color .1s, background-color .1s; }
-.side-actions svg { width: 14px; height: 14px; }
+.side-actions button { width: var(--control-6); height: var(--control-6); background: none; border: 0; cursor: pointer; padding: 0; display: grid; place-items: center; color: var(--ink-70); transition: color .1s, background-color .1s; }
+.side-actions svg { width: var(--icon-3-5); height: var(--icon-3-5); }
 .side-actions button:hover { background: var(--ink-05); color: var(--ink); }
 .side-actions button:active { background: var(--ink-10); }
 .side-actions button:focus-visible { background: var(--ink-05); }
@@ -159,18 +159,28 @@ a.rail-btn { color: var(--ink); text-decoration: none; }
 .side-section:nth-child(2) .side-hint { min-height: 36px; color: var(--ink-45); padding-block: 6px; }
 
 .channel-row {
-  display: flex; align-items: center; gap: 6px;
+  display: flex; align-items: center; gap: var(--space-1-5);
   width: 100%; text-align: left;
   background: none; border: 2px solid transparent;
   font-size: 14px; line-height: var(--message-line); font-weight: var(--fw-medium);
-  padding: 4px 8px; cursor: pointer;
-  margin-bottom: 4px;
+  padding: var(--space-1) var(--space-2); cursor: pointer;
+  margin-bottom: var(--space-1);
   color: inherit; text-decoration: none;
   transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke;
   transition-duration: .15s;
 }
 .channel-row .hash { font-weight: 400; }
-.channel-row .row-icon { width: 18px; height: 18px; }
+/* 改动边界 6：上游行是 `py-2 [@media(max-height:600px)]:py-1 md:py-1`——
+   基态 8px，≥768px 与视口高 ≤600px 收到 4px。RAH 基态写的是 ≥768px 的 4px，
+   这里补上窄视口分支；max-height 放在后面，与上游在窄且矮时同为 4px 一致。 */
+@media (max-width: 767.98px) {
+  .channel-row { padding-block: var(--space-2); }
+}
+@media (max-height: 600px) {
+  .channel-row { padding-block: var(--space-1); }
+}
+
+.channel-row .row-icon { width: var(--icon-3-5); height: var(--icon-3-5); }
 /* 仅聊天侧栏：未选中的频道/私信行 hover = 白底 + 黑框 + 2px 阴影（live 实测）；
    选中的频道行（粉底）hover/active/focus 均无视觉变化、仅 focus outline（实测），
    故 hover 规则排除 .is-selected；成员页/设置导航行实测无 hover，作用域限定 .sidebar */
@@ -225,25 +235,30 @@ a.rail-btn { color: var(--ink); text-decoration: none; }
 
 /* 通用方形硬阴影按钮（实测 28px） */
 .sq-btn {
-  width: 28px; height: 28px; flex: none;
+  width: var(--control-7); height: var(--control-7); flex: none;
   padding: 0;
   display: inline-flex; align-items: center; justify-content: center;
   background: var(--bg);
   border: var(--bd); box-shadow: var(--shadow-s);
   cursor: pointer;
   transition: all var(--transition-fast);
+  /* 上游 .btn-brutal-sm 基态自带 display 字体与 700 字重（冻结 CSS）。
+     RAH 25 个调用点目前都是纯图标，补齐后几何不变，只补文字分支。 */
+  font-family: var(--sans);
+  font-weight: var(--fw-bold);
 }
 a.sq-btn { color: var(--ink); text-decoration: none; }
-.sq-btn svg { width: 16px; height: 16px; }
+.sq-btn svg { width: var(--icon-4); height: var(--icon-4); }
 .sq-btn:hover { box-shadow: var(--shadow-m); }
 .sq-btn:active { transform: translate(var(--press-translate), var(--press-translate)); box-shadow: var(--shadow-press); }
-.sq-btn.members { width: auto; padding: 0 10px; gap: 6px; font-size: 14px; }
-.sq-btn.wide { width: auto; padding: 0 10px; gap: 6px; font-size: 13px; font-weight: 700; }
-.sq-btn.sm { width: 24px; height: 24px; box-shadow: var(--shadow-s); }
+.sq-btn.sm { width: var(--control-6); height: var(--control-6); box-shadow: var(--shadow-s); }
 .sq-btn.sm svg { width: 13px; height: 13px; }
 
 /* 输入区内的方形钮（图片/附件）实测 26px */
-.composer-bar .sq-btn { width: 26px; height: 26px; }
+.composer-bar .sq-btn {
+  width: calc(var(--icon-3-5) + 2 * var(--space-1) + 2 * var(--bw-2));
+  height: calc(var(--icon-3-5) + 2 * var(--space-1) + 2 * var(--bw-2));
+}
 
 /* 标签页：live Raft 的 tablist 自身仅在组末画 2px 右边，
    相邻 tab 的 2px 分隔线由后一个 tab 的 ::before 绘制。 */
@@ -420,14 +435,14 @@ a.sq-btn { color: var(--ink); text-decoration: none; }
 .task-check .box { width: 15px; height: 15px; border: var(--bd); background: var(--bg); display: inline-block; }
 .task-check input:checked + .box { background: var(--yellow); box-shadow: var(--shadow-inset-check); }
 .send-btn {
-  width: 28px; height: 28px; flex: none;
+  width: var(--control-7); height: var(--control-7); flex: none;
   display: inline-flex; align-items: center; justify-content: center;
   background: var(--pink);
   border: var(--bd); box-shadow: var(--shadow-s);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
-.send-btn svg { width: 16px; height: 16px; }
+.send-btn svg { width: var(--icon-4); height: var(--icon-4); }
 .send-btn:hover { box-shadow: var(--shadow-m); }
 .send-btn:active { transform: translate(var(--press-translate), var(--press-translate)); box-shadow: var(--shadow-press); }
 
@@ -456,7 +471,8 @@ a.sq-btn { color: var(--ink); text-decoration: none; }
     box-shadow: var(--shadow-side);
   }
 }
-@media (max-width: 760px) {
+/* 批次 3b 裁决 3：断点对齐 Tailwind `md` = 48rem = 768px（活体：Raft 764 隐藏侧栏、772 显示）。 */
+@media (max-width: 767.98px) {
   .app, .app.thread-hidden { grid-template-columns: 56px minmax(0, 1fr); }
   .sidebar { display: none; }
   .rail { padding: 10px 0; gap: 10px; }
@@ -1057,7 +1073,8 @@ body.overlay-open { overflow: hidden; }
 
 /* 通知条横跨频道列 + 消息列（窄屏回到全宽） */
 .notice-banner { grid-column: 3 / -1; }
-@media (max-width: 760px) {
+/* 批次 3b 裁决 3：同上，与侧栏隐藏断点保持同一个值。 */
+@media (max-width: 767.98px) {
   .notice-banner { grid-column: 1 / -1; }
 }
 
@@ -1099,38 +1116,3 @@ body.overlay-open { overflow: hidden; }
 }
 .col-resizer:hover, .col-resizer.is-dragging { background: var(--ink-08); }
 @media (max-width: 1279.98px) { .col-resizer { display: none; } }
-
-/* Raft left-rail Help: w-80, right/end/8px Popover; only local guide is applicable. */
-.rah-rail-help-menu {
-  background: var(--bg);
-  border: var(--bd);
-  box-shadow: var(--shadow-l);
-  max-height: var(--available-height);
-  overflow: hidden;
-  padding: 0;
-  width: 320px;
-}
-.rah-rail-help-menu > header {
-  background: var(--cream);
-  border-bottom: var(--bd);
-  color: var(--ink-60);
-  font: 700 12px/16px var(--sans);
-  letter-spacing: var(--tracking-widest);
-  padding: 8px 12px;
-}
-.rah-rail-help-menu > a {
-  align-items: center;
-  color: var(--black);
-  display: flex;
-  font: 500 14px/20px var(--sans);
-  gap: 8px;
-  padding: 8px 12px;
-  text-decoration: none;
-}
-.rah-rail-help-menu > a:hover {
-  background: color-mix(in srgb, var(--yellow) 30%, transparent);
-}
-.rah-rail-help-menu > a svg { height: 14px; width: 14px; }
-@media (max-height: 600px) {
-  .rah-rail-help-menu > a { padding-block: 4px; }
-}

@@ -13,6 +13,7 @@ import test from "node:test";
 import type { RuntimeProfileManifestV3 } from "@rah-os/protocol";
 
 import {
+  providerLaunchDefaults,
   ProviderSessionStore,
   RuntimeImplementationRegistry,
   RuntimeProfileRegistry,
@@ -81,7 +82,18 @@ test("Claude stream-json resumes only accepted sessions and interrupts natively"
           // The daemon compiles the standing prompt per RunAttempt and appends
           // it here; the RuntimeProfile freezes no prompt of its own.
           args: ["--prompt", "canonical room worker prompt"],
-          env: { FAKE_CLAUDE_RECORD_PATH: recordPath },
+          env: {
+            FAKE_CLAUDE_RECORD_PATH: recordPath,
+            RAH_PROVIDER_LAUNCH_ARGS_JSON: JSON.stringify({
+              runtimeId: "claude",
+              overrideArgs: [
+                ...providerLaunchDefaults("claude"),
+                "--test-extra",
+                "value with spaces",
+              ],
+            }),
+            CLAUDE_CODE_DISABLE_AUTO_MEMORY: "0",
+          },
           standingPromptDigest: "sha256-standing-prompt-digest",
         }),
         cwd: directory,
@@ -171,6 +183,16 @@ test("Claude stream-json resumes only accepted sessions and interrupts natively"
       .trim()
       .split("\n")
       .map((line) => JSON.parse(line));
+    for (const record of records.filter((entry) => entry.kind === "spawn")) {
+      assert.ok(record.args.includes("value with spaces"));
+      assert.ok(record.args.includes("--test-extra"));
+      assert.equal(record.args.includes("--verbose"), true);
+      assert.equal(
+        record.autoMemoryDisabled,
+        "1",
+        "every fresh/resumed/fallback child disables automatic memory",
+      );
+    }
     const forActivation = (suffix: string) =>
       records.filter(
         (record) => record.activationId === `activation-claude-${suffix}`,
@@ -387,7 +409,7 @@ if (args.includes("--input-format") && args.includes("stream-json") && !activati
   });
 } else {
   const promptPath = args[args.indexOf("--append-system-prompt-file") + 1];
-  record({kind:"spawn",args,systemPrompt:readFileSync(promptPath,"utf8")});
+  record({kind:"spawn",args,autoMemoryDisabled:process.env.CLAUDE_CODE_DISABLE_AUTO_MEMORY,systemPrompt:readFileSync(promptPath,"utf8")});
   const resumed = args.includes("--resume");
   const missing = activationId?.includes("missing-run") && resumed;
   const cancelled = activationId?.includes("cancel-seed");

@@ -118,6 +118,12 @@ for (const mode of ["direct", "gated", undefined] as const) {
         runtimeProfileRegistry: registry,
         runtimeProfileRevision: revision,
         supervisorDirectory: directory,
+        launchEnvironment: () => ({
+          RAH_PROVIDER_LAUNCH_ARGS_JSON: JSON.stringify({
+            runtimeId: "claude",
+            additionalArgs: enabled ? ["--verbose"] : [],
+          }),
+        }),
         guideEnabled: (id) => {
           checkedIds.push(id);
           return enabled;
@@ -182,6 +188,11 @@ for (const mode of ["direct", "gated", undefined] as const) {
         };
         const lease = await environment(scope);
         try {
+          assert.deepEqual(
+            JSON.parse(lease.env?.RAH_PROVIDER_LAUNCH_ARGS_JSON ?? "{}")
+              .additionalArgs,
+            guide ? ["--verbose"] : [],
+          );
           assert.ok(lease.args);
           const promptIndex = lease.args.lastIndexOf("--prompt");
           assert.ok(

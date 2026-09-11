@@ -41,32 +41,39 @@ for (const engine of engines) {
       body.runtimes[body.runtimes.length - 1].available = false;
       await route.fulfill({ response, json: body });
     });
-    await page.goto(`${fixture.origin}/?surface=computers`);
-    await page.locator(".rah-computer-row").first().click();
     const chips = page.locator(".rah-computer-runtime-chips > button");
-    await chips.first().waitFor();
-    await page.evaluate(() => document.fonts.ready);
     for (const viewport of [
       { width: 1440, height: 900 },
       { width: 1280, height: 598 },
       { width: 390, height: 844 },
     ]) {
       await page.setViewportSize(viewport);
+      await page.goto(
+        `${fixture.origin}/?surface=${scope === "rail" ? "settings" : "computers"}`,
+      );
+      if (scope !== "rail") {
+        await page.locator(".rah-computer-row").first().click();
+        await chips.first().waitFor();
+      }
+      await page.evaluate(() => document.fonts.ready);
       const label = `${engine}-${viewport.width}x${viewport.height}`;
-      const chip = await chips.first().evaluate((el) => {
-        const css = getComputedStyle(el),
-          box = el.getBoundingClientRect();
-        return {
-          width: box.width,
-          height: box.height,
-          fontSize: css.fontSize,
-          lineHeight: css.lineHeight,
-          padding: css.padding,
-          border: css.borderWidth,
-          display: css.display,
-          alignItems: css.alignItems,
-        };
-      });
+      const chip =
+        scope === "rail"
+          ? undefined
+          : await chips.first().evaluate((el) => {
+              const css = getComputedStyle(el),
+                box = el.getBoundingClientRect();
+              return {
+                width: box.width,
+                height: box.height,
+                fontSize: css.fontSize,
+                lineHeight: css.lineHeight,
+                padding: css.padding,
+                border: css.borderWidth,
+                display: css.display,
+                alignItems: css.alignItems,
+              };
+            });
       if (scope !== "rail") {
         assert.equal(chip.fontSize, "14px", label + " source text-sm");
         assert.equal(
@@ -106,6 +113,13 @@ for (const engine of engines) {
       }
       let rail;
       if (viewport.width >= 768 && scope !== "chip") {
+        await page.locator(".rail").waitFor();
+        await page.waitForFunction(() => {
+          const rail = document.querySelector(".rail");
+          return (
+            rail?.isConnected && getComputedStyle(rail).paddingBottom !== ""
+          );
+        });
         rail = await page.locator(".rail").evaluate((el) => {
           const css = getComputedStyle(el),
             box = el.getBoundingClientRect();
@@ -150,44 +164,25 @@ for (const engine of engines) {
         assert.equal(rail.bottom - rail.rows[2].bottom, 8 + (44 - regular) / 2);
         const help = page.getByRole("button", { name: "帮助", exact: true });
         await help.hover();
-        const popup = page.getByRole("dialog", {
-          name: "帮助与资源",
-          exact: true,
-        });
-        await popup.waitFor();
-        await popup.hover();
-        assert.equal(await popup.isVisible(), true);
-        await page.screenshot({ path: join(output, `${label}-help.png`) });
-        await page.mouse.move(700, 50);
-        await popup.waitFor({ state: "hidden" });
+        await page
+          .getByRole("tooltip", { name: "帮助", exact: true })
+          .waitFor();
+        assert.equal(
+          await page
+            .getByRole("dialog", { name: "帮助与资源", exact: true })
+            .count(),
+          0,
+        );
         await help.focus();
         await page.keyboard.press("Enter");
-        await popup.waitFor();
-        await page.keyboard.press("Escape");
-        await popup.waitFor({ state: "hidden" });
-        assert.equal(
-          await help.evaluate((el) => el === document.activeElement),
-          true,
-        );
-        await help.click();
-        await popup.waitFor();
-        const newPage = context.waitForEvent("page");
-        await popup
-          .getByRole("link", { name: "本机操作指南", exact: true })
-          .click();
-        const guide = await newPage;
-        await guide.waitForURL(
-          (url) => url.pathname === "/help/local-workbench.html",
-        );
-        await guide.waitForLoadState("domcontentloaded");
-        assert.equal(
-          new URL(guide.url()).pathname,
-          "/help/local-workbench.html",
-        );
-        assert.ok((await guide.locator("h1").textContent()).includes("本机"));
-        await guide.close();
-        await popup.waitFor({ state: "hidden" });
-        await page.mouse.move(700, 50);
+        await page
+          .getByRole("heading", { name: "操作指南", exact: true })
+          .waitFor();
+        await page
+          .getByRole("heading", { name: "本机恢复", exact: true })
+          .waitFor();
+        assert.equal(context.pages().length, 1);
+        await page.screenshot({ path: join(output, `${label}-help.png`) });
       }
       if (viewport.width === 390) {
         assert.equal(

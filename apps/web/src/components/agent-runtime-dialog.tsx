@@ -39,13 +39,12 @@ export function AgentRuntimeDialog({
     detail.policy.required.allowedOfferIds?.[0] ?? "",
   );
   const [bindingId, setBindingId] = useState(
-    detail.policy.modelIntent.exactBindingIds?.[0] ?? "runtime_default",
+    detail.policy.modelIntent.exactBindingIds?.[0] ?? "",
   );
   const [reasoning, setReasoning] = useState<ReasoningLevel>(
     detail.policy.modelIntent.reasoning ?? "default",
   );
   const [pending, setPending] = useState(false);
-  const [advanced, setAdvanced] = useState(false);
   const [error, setError] = useState<string>();
   const saving = useRef(false);
   const dialogRef = useDialogProtocol({ blocked: pending, onClose });
@@ -60,8 +59,7 @@ export function AgentRuntimeDialog({
     efforts.some((effort) => effort.value === reasoning);
   const changed =
     offerId !== detail.policy.required.allowedOfferIds?.[0] ||
-    bindingId !==
-      (detail.policy.modelIntent.exactBindingIds?.[0] ?? "runtime_default") ||
+    bindingId !== (detail.policy.modelIntent.exactBindingIds?.[0] ?? "") ||
     reasoning !== (detail.policy.modelIntent.reasoning ?? "default");
 
   async function save() {
@@ -86,8 +84,7 @@ export function AgentRuntimeDialog({
         runtimeOfferId: offerId,
         modelIntent: {
           ...detail.policy.modelIntent,
-          exactBindingIds:
-            bindingId === "runtime_default" ? undefined : [bindingId],
+          exactBindingIds: [bindingId],
           fallback: "disabled",
           reasoning,
         },
@@ -145,12 +142,13 @@ export function AgentRuntimeDialog({
             }))}
             onChange={(next) => {
               setOfferId(next);
-              setBindingId("runtime_default");
+              setBindingId("");
               setReasoning("default");
             }}
           />
           <RuntimePicker
             label="模型"
+            required
             disabled={pending || runtime === undefined}
             value={bindingId}
             options={models.map((item) => ({
@@ -164,29 +162,16 @@ export function AgentRuntimeDialog({
               );
             }}
           />
-          <button
-            className="rah-agent-disclosure"
-            type="button"
-            aria-label="高级"
-            aria-expanded={advanced}
-            onClick={() => setAdvanced(!advanced)}
-          >
-            <span aria-hidden="true">{advanced ? "⌄" : "›"}</span> 高级
-          </button>
-          {advanced && (
-            <section className="rah-runtime-advanced">
-              <RuntimePicker
-                label="推理强度"
-                disabled={pending || runtime === undefined}
-                value={reasoning}
-                options={efforts.map((item) => ({
-                  id: item.value,
-                  label: item.label,
-                }))}
-                onChange={(next) => setReasoning(next as ReasoningLevel)}
-              />
-            </section>
-          )}
+          <RuntimePicker
+            label="推理强度"
+            disabled={pending || runtime === undefined}
+            value={reasoning}
+            options={efforts.map((item) => ({
+              id: item.value,
+              label: item.label,
+            }))}
+            onChange={(next) => setReasoning(next as ReasoningLevel)}
+          />
           {!valid && (
             <p role="status">
               当前配置缺少可用的 Runtime
@@ -246,7 +231,7 @@ function RuntimePicker({
       </b>
       <DiscoveryFilter
         label={label}
-        triggerAriaLabel={`${label}：${options.find((item) => item.id === value)?.label ?? "配置不可用"}`}
+        triggerAriaLabel={`${label}：${options.find((item) => item.id === value)?.label ?? "请选择"}`}
         icon={null}
         values={[value]}
         options={options}
@@ -257,7 +242,7 @@ function RuntimePicker({
         disabled={disabled}
         className="rah-runtime-picker"
         triggerLabel={
-          options.find((item) => item.id === value)?.label ?? "配置不可用"
+          options.find((item) => item.id === value)?.label ?? "请选择"
         }
         onChange={(values) => {
           if (values[0] !== undefined) onChange(values[0]);

@@ -453,3 +453,120 @@
     align-items: stretch;
   }
 }
+
+/* Raft MachineDetailPanel: 32px avatar, py-2, border-2 = 52+ px rows. */
+.rah-computer-select-row > .rah-entity-card {
+  min-height: 56px;
+}
+.rah-computer-select-row[data-selected="true"] > .rah-entity-card {
+  background: #e3f6fc;
+  border-color: var(--ink);
+}
+.rah-computer-select-row > input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--yellow);
+}
+.rah-computer-diagnostics {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+  border-top: 0;
+  padding-top: 0;
+}
+.rah-computer-service-restart .btn-coral {
+  background: var(--coral);
+}
+
+.rah-computer-agent-error {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-50);
+  font: 12px/16px var(--mono);
+}
+.rah-workspace-summary-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rah-workspace-state {
+  border: 1px solid var(--ink);
+  padding: 1px 4px;
+  font: 700 10px/12px var(--sans);
+  background: #eee;
+}
+.rah-workspace-state.is-active {
+  background: var(--green);
+}
+
+.rah-workspace-summary-row > .btn {
+  flex-shrink: 0;
+  padding: 4px;
+}
+.rah-workspace-summary-row > .btn svg {
+  width: 14px;
+  height: 14px;
+}
+.rah-workspace-delete-confirm {
+  z-index: 130;
+}
+.rah-workspace-delete-confirm .rah-dialog > p {
+  padding: 16px;
+}
+.rah-workspace-delete-confirm footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px;
+}
+.rah-workspace-delete-confirm .btn-coral {
+  background: var(--coral);
+}
+
+.rah-workspace-summary-body code {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rah-computer-select-row {
+  position: relative;
+}
+.rah-computer-select-row > input {
+  position: absolute;
+  left: 12px;
+  z-index: 1;
+}
+.rah-computer-select-row:has(input) > .rah-entity-card {
+  padding-left: 40px;
+}
+.rah-computer-bulk-actions {
+  border: 2px solid var(--ink);
+  background: #f3f4f6;
+  padding: 8px 12px;
+}
+.rah-computer-bulk-actions > span:first-child {
+  margin-right: auto;
+}
+
+/* Raft Computer small-button height from the frozen computed-style contract. */
+.rah-computer-agents-section .rah-computer-bulk-actions > .btn {
+  height: var(--raft-computers-small-button-height, 28px);
+  min-height: 28px;
+  padding: 2px 8px;
+  font: 700 12px/16px var(--sans);
+  gap: 4px;
+}
+.rah-computer-bulk-actions > .btn svg {
+  width: 12px;
+  height: 12px;
+}
+.rah-computer-select-row[data-selected="true"] > .rah-entity-card {
+  box-shadow: var(--shadow-s);
+}
+.rah-computer-agents-section ~ .rah-profile-section {
+  margin-inline: 20px;
+  padding-inline: 0;
+}

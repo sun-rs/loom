@@ -117,7 +117,7 @@ export function WorkbenchServiceRestart() {
   return (
     <div className="rah-computer-service-restart">
       <button
-        className="btn"
+        className="btn btn-coral"
         disabled={
           pending || statusState !== "available" || generation === undefined
         }
@@ -137,7 +137,7 @@ export function WorkbenchServiceRestart() {
           重试连接
         </button>
       )}
-      <p role="status">
+      <p role="status" hidden={statusState === "available" && !message}>
         {message ||
           (statusState === "loading"
             ? "正在读取服务状态…"

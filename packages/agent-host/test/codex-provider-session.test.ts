@@ -74,8 +74,19 @@ test("Codex automatically resumes Host-private Provider sessions with Raft fallb
       activationEnvironment: () => ({
         // The daemon compiles the standing prompt per RunAttempt and appends
         // it here; the RuntimeProfile freezes no prompt of its own.
-        args: ["--prompt", "canonical room worker prompt"],
-        env: { FAKE_CODEX_RECORD_PATH: recordPath },
+        args: [
+          "--prompt",
+          "canonical room worker prompt",
+          "-c",
+          "features.memories=true",
+        ],
+        env: {
+          FAKE_CODEX_RECORD_PATH: recordPath,
+          RAH_PROVIDER_LAUNCH_ARGS_JSON: JSON.stringify({
+            runtimeId: "codex",
+            additionalArgs: ["--test-extra", "value with spaces"],
+          }),
+        },
         standingPromptDigest: "sha256-standing-prompt-digest",
       }),
       cwd: directory,
@@ -147,6 +158,35 @@ test("Codex automatically resumes Host-private Provider sessions with Raft fallb
       .trim()
       .split("\n")
       .map((line) => JSON.parse(line));
+    for (const record of records.filter((entry) => entry.args)) {
+      assert.ok(record.args.includes("value with spaces"));
+      assert.ok(record.args.includes("--test-extra"));
+      assert.ok(
+        record.args.lastIndexOf("features.memories=false") >
+          record.args.lastIndexOf("features.memories=true"),
+        "managed policy wins over inherited arguments",
+      );
+      for (const key of [
+        "features.memories",
+        "memories.generate_memories",
+        "memories.use_memories",
+      ]) {
+        assert.ok(
+          record.args.includes(`${key}=false`),
+          `${key} disabled on every app-server spawn`,
+        );
+      }
+    }
+    for (const record of records.filter((entry) =>
+      ["thread/start", "thread/resume"].includes(entry.frame?.method),
+    )) {
+      assert.equal(record.frame.params.config["memories.use_memories"], false);
+      assert.equal(
+        record.frame.params.config["memories.generate_memories"],
+        false,
+      );
+      assert.equal(record.frame.params.config["features.memories"], false);
+    }
     const methodsFor = (suffix: string): string[] =>
       records
         .filter((record) => record.activationId === `activation-${suffix}`)

@@ -196,7 +196,7 @@ function Fixture() {
       );
       button("返回频道设置")!.click();
       await frame();
-      button("停止所有 Agent")!.click();
+      button("停止 Agent")!.click();
       await frame();
       check(
         document.querySelector('[aria-labelledby="rah-room-sos-title"]'),
@@ -205,10 +205,10 @@ function Fixture() {
       document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
       await frame();
       check(
-        document.activeElement === button("停止所有 Agent"),
+        document.activeElement === button("停止 Agent"),
         "关闭 SOS 确认后必须把焦点还给触发按钮",
       );
-      button("停止所有 Agent")!.click();
+      button("停止 Agent")!.click();
       await frame();
       button("立即停止")!.click();
       for (let i = 0; i < 4; i++) await frame();

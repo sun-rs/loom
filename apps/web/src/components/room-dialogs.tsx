@@ -1,3 +1,4 @@
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { useEffect, useRef, useState } from "react";
 
 import type { Principal, Room, RoomMembership } from "@rah-os/protocol";
@@ -8,12 +9,12 @@ import {
 } from "@rah-os/ui-web";
 
 import { useDialogProtocol } from "../dialog-protocol.ts";
+import { RoomVisibilityConfirmation } from "./room-visibility-confirmation.tsx";
 import { AgentAvatar } from "./agent-directory-pane.tsx";
 import { RoomMemberPage } from "./room-member-pages.tsx";
 import { useSidebarPreferences } from "./sidebar-preferences.tsx";
 import {
   roomActivityMuted,
-  roomAllMessagesNotified,
   roomLongMessagesCollapsed,
   setRoomPreference,
 } from "../room-preferences.ts";
@@ -306,7 +307,6 @@ export function RoomMembersDialog({
   onUnarchive,
   onUpdate,
   room,
-  leaveUnavailableReason,
 }: {
   canAdd: boolean;
   canDelete: boolean;
@@ -340,6 +340,10 @@ export function RoomMembersDialog({
   const sidebarPreferences = useSidebarPreferences();
   const [settingsPending, setSettingsPending] = useState(false);
   const [lifecyclePending, setLifecyclePending] = useState(false);
+  const [visibilityConfirm, setVisibilityConfirm] = useState<
+    "public" | "private"
+  >();
+  const visibilityTriggerRef = useRef<HTMLButtonElement>(null);
   const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const archiveTriggerRef = useRef<HTMLButtonElement>(null);
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
@@ -833,43 +837,6 @@ export function RoomMembersDialog({
                 </label>
                 <label>
                   <span>
-                    <b>通知所有新消息</b>
-                    <small>
-                      为此频道的普通顶层新消息发送系统通知。精确提及、关注的消息列、输入请求和关键任务状态不依赖此开关。
-                    </small>
-                  </span>
-                  <input
-                    aria-label="通知所有新消息"
-                    checked={
-                      room && sidebarPreferences?.data
-                        ? roomAllMessagesNotified(
-                            sidebarPreferences.data.preferences
-                              .notifyAllMessages,
-                            room.roomId,
-                          )
-                        : false
-                    }
-                    disabled={
-                      !room ||
-                      !sidebarPreferences?.data ||
-                      sidebarPreferences.pending
-                    }
-                    onChange={(event) => {
-                      if (!room || !sidebarPreferences?.data) return;
-                      void sidebarPreferences.patch({
-                        notifyAllMessages: setRoomPreference(
-                          sidebarPreferences.data.preferences.notifyAllMessages,
-                          room.roomId,
-                          event.target.checked,
-                        ),
-                      });
-                    }}
-                    type="checkbox"
-                  />
-                  <i aria-hidden="true" />
-                </label>
-                <label>
-                  <span>
                     <b>折叠长消息</b>
                     <small>
                       超过预览高度的消息折叠在「显示更多」开关后。关闭后此频道的长消息始终完整显示。
@@ -907,68 +874,25 @@ export function RoomMembersDialog({
                   <i aria-hidden="true" />
                 </label>
               </section>
-              <section className="rah-channel-settings-access">
-                <header>
-                  <h3>频道访问</h3>
-                  <p>公开频道会自动对 Workspace Human 可见。</p>
-                </header>
-                <fieldset>
-                  <legend>可见性</legend>
-                  <button
-                    aria-checked={visibility === "public"}
-                    className={visibility === "public" ? "is-selected" : ""}
-                    disabled={!canUpdate || roomArchived || mutationBlocked}
-                    onClick={() => setVisibility("public")}
-                    role="radio"
-                    type="button"
-                  >
-                    # 公开
-                  </button>
-                  <button
-                    aria-checked={visibility === "private"}
-                    className={visibility === "private" ? "is-selected" : ""}
-                    disabled={!canUpdate || roomArchived || mutationBlocked}
-                    onClick={() => setVisibility("private")}
-                    role="radio"
-                    type="button"
-                  >
-                    ▢ 私密
-                  </button>
-                </fieldset>
-              </section>
               <section className="rah-channel-settings-operations">
                 <h3>操作</h3>
-                {!roomArchived ? (
-                  <button
-                    className="btn rah-channel-sos-button"
-                    disabled={!canStopAgents || mutationBlocked}
-                    onClick={() => {
-                      setSosPhase("confirm");
-                      setSosGuidance("");
-                      setSosOpen(true);
-                    }}
-                    ref={sosTriggerRef}
-                    type="button"
-                  >
-                    停止所有 Agent
-                  </button>
-                ) : null}
-                {!roomArchived ? (
-                  <>
-                    <button
-                      className="btn rah-channel-leave-button"
-                      disabled={!canLeave || mutationBlocked}
-                      onClick={() => setLeaveConfirmOpen(true)}
-                      ref={leaveTriggerRef}
-                      type="button"
-                    >
-                      退出频道
-                    </button>
-                    {canLeave || !leaveUnavailableReason ? null : (
-                      <small>{leaveUnavailableReason}</small>
-                    )}
-                  </>
-                ) : null}
+                <button
+                  className="btn rah-channel-visibility-button"
+                  ref={visibilityTriggerRef}
+                  disabled={!canUpdate || roomArchived || mutationBlocked}
+                  onClick={() => {
+                    setActionError(undefined);
+                    setVisibilityConfirm(
+                      room?.visibility === "public" ? "private" : "public",
+                    );
+                  }}
+                  type="button"
+                >
+                  <Icon
+                    name={room?.visibility === "public" ? "lock" : "hash"}
+                  />
+                  {room?.visibility === "public" ? "设为私密" : "设为公开"}
+                </button>
                 {roomArchived ? (
                   <button
                     className="btn"
@@ -986,9 +910,40 @@ export function RoomMembersDialog({
                     ref={archiveTriggerRef}
                     type="button"
                   >
+                    <Icon name="archive" />
                     归档频道
                   </button>
                 )}
+                {!roomArchived ? (
+                  <>
+                    <button
+                      className="btn rah-channel-leave-button"
+                      disabled={!canLeave || mutationBlocked}
+                      onClick={() => setLeaveConfirmOpen(true)}
+                      ref={leaveTriggerRef}
+                      type="button"
+                    >
+                      <Icon name="log-out" />
+                      退出频道
+                    </button>
+                  </>
+                ) : null}
+                {!roomArchived ? (
+                  <button
+                    className="btn rah-channel-sos-button"
+                    disabled={!canStopAgents || mutationBlocked}
+                    onClick={() => {
+                      setSosPhase("confirm");
+                      setSosGuidance("");
+                      setSosOpen(true);
+                    }}
+                    ref={sosTriggerRef}
+                    type="button"
+                  >
+                    <Icon name="circle-stop" />
+                    停止 Agent
+                  </button>
+                ) : null}
                 <button
                   className="btn rah-channel-delete-button"
                   disabled={!canDelete || mutationBlocked}
@@ -999,6 +954,7 @@ export function RoomMembersDialog({
                   ref={deleteTriggerRef}
                   type="button"
                 >
+                  <Icon name="trash-2" />
                   删除频道
                 </button>
               </section>
@@ -1006,6 +962,47 @@ export function RoomMembersDialog({
           </div>
         )}
       </section>
+      {visibilityConfirm ? (
+        <RoomVisibilityConfirmation
+          blocked={settingsPending}
+          error={actionError}
+          name={room?.name ?? ""}
+          visibility={visibilityConfirm}
+          onCancel={() => {
+            if (mutationPendingRef.current) return;
+            setVisibilityConfirm(undefined);
+            visibilityTriggerRef.current?.focus();
+          }}
+          onConfirm={async () => {
+            if (
+              mutationPendingRef.current ||
+              !room ||
+              !canUpdate ||
+              roomArchived
+            )
+              return;
+            mutationPendingRef.current = true;
+            setSettingsPending(true);
+            setActionError(undefined);
+            try {
+              await onUpdate({
+                name: room.name,
+                ...(room.description === undefined
+                  ? {}
+                  : { description: room.description }),
+                visibility: visibilityConfirm,
+              });
+              setVisibilityConfirm(undefined);
+              visibilityTriggerRef.current?.focus();
+            } catch (error) {
+              setActionError(String(error));
+            } finally {
+              mutationPendingRef.current = false;
+              setSettingsPending(false);
+            }
+          }}
+        />
+      ) : null}
       {archiveConfirmOpen ? (
         <RoomArchiveConfirmation
           blocked={lifecyclePending}

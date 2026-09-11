@@ -81,6 +81,25 @@
   box-shadow: var(--shadow-press);
 }
 
+/* Upstream .btn-brutal-sm:disabled: pointer-events none, opacity .4, the base
+   hard shadow and no transform. Scoping through the layer class puts this at
+   (0,3,0), which beats the shell-wide `.rah-product-shell button:disabled`
+   (0,2,1) without editing that rule — the management pages still rely on it. */
+.rah-dialog-layer :is(.sq-btn, .send-btn):disabled,
+.rah-product-shell :is(.sq-btn, .send-btn):disabled {
+  pointer-events: none;
+  opacity: 0.4;
+  box-shadow: var(--shadow-s);
+  transform: none;
+}
+
+/* The send button alone carries `disabled:opacity-30` upstream. It needs the
+   same specificity class as the shared rule above to keep its own value. */
+.rah-dialog-layer .send-btn:disabled,
+.rah-product-shell .send-btn:disabled {
+  opacity: 0.3;
+}
+
 /* Legacy token selectors predate disabled guards. Keep their base hard shadow
    and neutral position instead of letting hover/active leak through. */
 .rah-dialog-layer :is(.sq-btn, .send-btn, .btn):disabled:hover,

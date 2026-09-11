@@ -1,3 +1,5 @@
+import type { RahClient } from "@rah-os/client-sdk";
+import { ComputerAgentError } from "./computer-agent-error.tsx";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { ComputerAgentReset } from "./computer-agent-reset.tsx";
 import type { AgentResetOperation } from "../agent-reset-batch.ts";
@@ -13,12 +15,14 @@ export type ComputerAgentStateChange = (
 ) => Promise<void>;
 export function ComputerAgentControls({
   bindings,
+  client,
   onCreate,
   onOpen,
   onSetState,
   onReset,
   fullResetEnabled = false,
 }: {
+  client?: RahClient | undefined;
   bindings: readonly {
     agent: WorkspaceAgentView;
     agentDefinitionId: string;
@@ -90,9 +94,24 @@ export function ComputerAgentControls({
   return (
     <ProfileSection
       title="这台 COMPUTER 上的 AGENT"
+      className="rah-computer-agents-section"
       count={bindings.length}
       action={
         <>
+          {selecting && (
+            <button
+              className="btn"
+              type="button"
+              aria-label="全选 Agent"
+              disabled={pending}
+              onClick={() =>
+                setSelected(bindings.map((b) => b.agentDefinitionId))
+              }
+            >
+              <Icon name="check" />
+              全选
+            </button>
+          )}
           <button
             className="btn"
             type="button"
@@ -108,54 +127,55 @@ export function ComputerAgentControls({
             <Icon name={selecting ? "x" : "check"} />
             {selecting ? "取消" : "选择"}
           </button>
-          <button
-            className="btn btn-pink"
-            type="button"
-            aria-label="创建 Agent"
-            disabled={!onCreate || pending}
-            onClick={onCreate}
-          >
-            <Icon name="plus" />
-            创建
-          </button>
+          {!selecting && (
+            <button
+              className="btn btn-pink"
+              type="button"
+              aria-label="创建 Agent"
+              disabled={!onCreate || pending}
+              onClick={onCreate}
+            >
+              <Icon name="plus" />
+              创建
+            </button>
+          )}
         </>
       }
     >
       {selecting ? (
         <div className="rah-computer-bulk-actions">
-          <label>
-            <input
-              type="checkbox"
-              aria-label="全选 Agent"
-              disabled={pending}
-              checked={
-                bindings.length > 0 && selected.length === bindings.length
-              }
-              onChange={(e) =>
-                setSelected(
-                  e.target.checked
-                    ? bindings.map((b) => b.agentDefinitionId)
-                    : [],
-                )
-              }
-            />
-            全选
-          </label>
+          <span>已选 {selected.length} 个</span>
           <button
             className="btn"
             type="button"
-            disabled={pending || !selected.length}
+            disabled={
+              pending ||
+              !selected.some(
+                (id) =>
+                  bindings.find((b) => b.agentDefinitionId === id)?.agent
+                    .state !== "enabled",
+              )
+            }
             onClick={() => void apply("enabled")}
           >
-            启用所选
+            <Icon name="play" />
+            启动
           </button>
           <button
             className="btn"
             type="button"
-            disabled={pending || !selected.length}
+            disabled={
+              pending ||
+              !selected.some(
+                (id) =>
+                  bindings.find((b) => b.agentDefinitionId === id)?.agent
+                    .state !== "disabled",
+              )
+            }
             onClick={() => void apply("disabled")}
           >
-            停用所选
+            <Icon name="square" />
+            停止
           </button>
           <ComputerAgentReset
             ids={selected}
@@ -178,6 +198,7 @@ export function ComputerAgentControls({
           {bindings.map((binding) => (
             <div
               className="rah-computer-select-row"
+              data-selected={selected.includes(binding.agentDefinitionId)}
               key={binding.agentDefinitionId}
             >
               {selecting ? (
@@ -198,8 +219,27 @@ export function ComputerAgentControls({
               <AgentEntityCard
                 agent={binding.agent}
                 runtimeLabel={binding.runtimeLabel}
+                error={
+                  binding.agent.presence?.reason === "error" ? (
+                    <ComputerAgentError
+                      client={client}
+                      id={binding.agentDefinitionId}
+                      version={binding.agent.presence.trajectoryVersion}
+                    />
+                  ) : undefined
+                }
                 showStatusLabel
-                onOpen={onOpen}
+                disabled={pending}
+                onOpen={
+                  selecting
+                    ? (id) =>
+                        setSelected((ids) =>
+                          ids.includes(id)
+                            ? ids.filter((value) => value !== id)
+                            : [...ids, id],
+                        )
+                    : onOpen
+                }
               />
             </div>
           ))}

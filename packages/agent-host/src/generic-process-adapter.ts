@@ -1195,6 +1195,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
     delete inheritedEnvironment[LEGACY_RAH_WORKER_TOKEN_FILE_ENV];
     delete inheritedEnvironment[RAH_AGENT_TOOL_BIN_ENV];
     delete inheritedEnvironment[RAH_WORKER_CLI_ENV];
+    delete inheritedEnvironment.RAH_PROVIDER_LAUNCH_ARGS_JSON;
     delete inheritedEnvironment.RAH_AGENT_CONTEXT_JSON;
     delete inheritedEnvironment.RAH_CONTEXT_MANIFEST_JSON;
     delete inheritedEnvironment[RAH_AGENT_MEMORY_DIR_ENV];

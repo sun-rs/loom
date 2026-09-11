@@ -1,3 +1,4 @@
+import { RuntimeLaunchEditor } from "./runtime-launch-editor.tsx";
 import codexIcon from "@rah-os/ui-tokens/runtime-icons/codex.svg";
 import claudeIcon from "@rah-os/ui-tokens/runtime-icons/claude.svg";
 import kimiIcon from "@rah-os/ui-tokens/runtime-icons/kimi.svg";
@@ -46,9 +47,9 @@ export function RuntimeGuideSettingsContent({ client }: { client: RahClient }) {
   }, [client]);
   async function update(
     runtimeId: RuntimeGuideSettingsView["runtimes"][number]["runtimeId"],
-    enabled: boolean,
+    change: { enabled?: boolean; additionalArgs?: string[] },
   ) {
-    if (!data || writing.current) return;
+    if (!data || writing.current) return false;
     const ticket = ++generation.current;
     writing.current = true;
     setBusy(true);
@@ -56,12 +57,15 @@ export function RuntimeGuideSettingsContent({ client }: { client: RahClient }) {
     try {
       const value = await client.request("runtime.guide.update", {
         runtimeId,
-        enabled,
+        ...change,
         expectedRevision: data.revision,
       });
-      if (generation.current === ticket) setData(value);
+      if (generation.current === ticket) {
+        setData(value);
+        return true;
+      }
     } catch (failure) {
-      if (generation.current !== ticket) return;
+      if (generation.current !== ticket) return false;
       setError(`保存失败，请重新确认设置：${String(failure)}`);
       try {
         const value = await client.request("runtime.guide.read", {});
@@ -75,12 +79,12 @@ export function RuntimeGuideSettingsContent({ client }: { client: RahClient }) {
         setBusy(false);
       }
     }
+    return false;
   }
   return (
     <div className="rah-runtime-settings">
       <header className="rah-runtime-settings-intro">
-        <h2>忙时消息投递</h2>
-        <p>勾选开启忙时投递；关闭时等待本轮结束。灰色表示暂不支持。</p>
+        <h2>CLI 配置</h2>
       </header>
       {error ? <p role="alert">{error}</p> : null}
       {!data && !error ? <p role="status">正在读取设置…</p> : null}
@@ -92,33 +96,54 @@ export function RuntimeGuideSettingsContent({ client }: { client: RahClient }) {
             aria-label={labels[row.runtimeId]}
             data-supported={row.supported}
           >
-            <div className="rah-runtime-settings-heading">
-              <span
-                className="rah-runtime-settings-icon"
-                data-runtime={row.runtimeId}
-              >
-                <img
-                  src={presentation[row.runtimeId].icon}
-                  alt=""
-                  aria-hidden="true"
-                />
-              </span>
-              <div className="rah-runtime-settings-name">
-                <h3>{labels[row.runtimeId]}</h3>
-                <small>{presentation[row.runtimeId].mode}</small>
-              </div>
-              <label className="rah-settings-check-row rah-runtime-settings-control">
-                <input
-                  type="checkbox"
-                  aria-label={`${labels[row.runtimeId]} Guide`}
-                  checked={row.enabled}
-                  disabled={busy || !row.supported}
-                  onChange={(event) =>
-                    void update(row.runtimeId, event.target.checked)
+            <details className="rah-runtime-provider-details">
+              <summary className="rah-runtime-settings-heading">
+                <span
+                  className="rah-runtime-settings-icon"
+                  data-runtime={row.runtimeId}
+                >
+                  <img
+                    src={presentation[row.runtimeId].icon}
+                    alt=""
+                    aria-hidden="true"
+                  />
+                </span>
+                <div className="rah-runtime-settings-name">
+                  <h3>{labels[row.runtimeId]}</h3>
+                </div>
+                <span className="rah-runtime-disclosure" aria-hidden="true" />
+              </summary>
+              <div className="rah-runtime-provider-body">
+                <label className="rah-settings-check-row rah-runtime-guide-row">
+                  <span>
+                    忙时投递{" "}
+                    <small>
+                      {row.supported
+                        ? `${presentation[row.runtimeId].mode}；关闭时等本轮结束`
+                        : "此 CLI 暂不支持"}
+                    </small>
+                  </span>
+                  <input
+                    type="checkbox"
+                    aria-label={`${labels[row.runtimeId]} Guide`}
+                    checked={row.enabled}
+                    disabled={busy || !row.supported}
+                    onChange={(event) =>
+                      void update(row.runtimeId, {
+                        enabled: event.target.checked,
+                      })
+                    }
+                  />
+                </label>
+                <RuntimeLaunchEditor
+                  row={row}
+                  busy={busy}
+                  onSave={(additionalArgs) =>
+                    update(row.runtimeId, { additionalArgs })
                   }
                 />
-              </label>
-            </div>
+              </div>
+            </details>
           </section>
         ))}
       </div>

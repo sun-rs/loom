@@ -57,7 +57,6 @@ test("Agent reasoning choices are derived only from verified runtime bindings", 
     ],
   } satisfies LocalRuntimeInventoryEntry;
   assert.deepEqual(runtimeModelOptions(probedRuntime), [
-    { label: "Runtime 默认", modelBindingId: "runtime_default" },
     {
       label: "Verified Model",
       modelBindingId: "probed-model",
@@ -74,10 +73,7 @@ test("Agent reasoning choices are derived only from verified runtime bindings", 
     { label: "High", value: "high" },
   ]);
   assert.deepEqual(supportedReasoningLevels(probedRuntime), ["default"]);
-  assert.equal(
-    normalizeModelBindingId("declared-only", probedRuntime),
-    "runtime_default",
-  );
+  assert.equal(normalizeModelBindingId("declared-only", probedRuntime), "");
   assert.equal(
     normalizeModelBindingId("probed-model", probedRuntime),
     "probed-model",
@@ -94,4 +90,9 @@ test("Agent permission is fixed to the Raft-compatible unattended policy", () =>
     }),
     [],
   );
+});
+
+test("model selection never invents a runtime default", () => {
+  assert.deepEqual(runtimeModelOptions(runtime), []);
+  assert.equal(normalizeModelBindingId(undefined, runtime), "");
 });

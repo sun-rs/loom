@@ -912,7 +912,7 @@
 .rah-thread-parent {
   border-bottom: var(--bd-heavy);
   margin: 0 -12px;
-  padding: 8px 12px;
+  padding: 12px;
 }
 
 .rah-thread-history-heading {
@@ -1238,9 +1238,9 @@
   flex: none;
 }
 
+/* 批次 3b 裁决 1：所有者是 apps/web/src/chat-surface.css 的同选择器规则（后写胜出）。
+   这里被完全覆盖的 font/color 已删除，只留与所有者同值的溢出省略声明。 */
 .rah-direct-room-row small {
-  color: var(--ink-40);
-  font: 10px/1.25 var(--mono);
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -2432,20 +2432,27 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   padding: 3px 6px;
 }
 
+/* 批次 3b 裁决 2：新建钮按上游 `.btn-flat-sm flex size-6 p-0` + lucide plus 14 建模。
+   文本 `+` 换成 sprite 图标后，字体族/字号/字重不再有承载对象，已删除。 */
 .rah-side-create {
   align-items: center;
   background: transparent;
   border: 0;
   cursor: pointer;
   display: inline-flex;
-  font-family: var(--mono);
   color: var(--ink-70);
-  font-size: 18px;
-  font-weight: 800;
   height: 24px;
   justify-content: center;
   margin-left: auto;
   width: 24px;
+}
+/* 上游 `.btn-flat-sm:focus, :focus-visible { outline-style: none }`。 */
+.rah-side-create:focus-visible {
+  outline-style: none;
+}
+.rah-side-create > svg {
+  width: var(--icon-3-5);
+  height: var(--icon-3-5);
 }
 
 .rah-dialog-layer {
@@ -2579,13 +2586,13 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 /* Raft Si close: p-1 + size20; dn/vqe sm: h-7 px-2.5 text-xs. */
 .rah-agent-reset-dialog > header .sq-btn {
-  width: 32px;
-  height: 32px;
-  padding: 4px;
+  width: var(--control-8);
+  height: var(--control-8);
+  padding: var(--space-1);
 }
 .rah-agent-reset-dialog > header .sq-btn svg {
-  width: 20px;
-  height: 20px;
+  width: var(--icon-5);
+  height: var(--icon-5);
 }
 .rah-agent-reset-dialog form footer .btn {
   height: 28px;
@@ -3347,8 +3354,8 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   margin-bottom: 4px;
 }
 
-.rah-channel-settings-description-field {
-  min-height: 98.5px;
+.rah-channel-settings-description-field textarea {
+  display: block;
 }
 
 .rah-channel-settings-info label em {
@@ -3383,50 +3390,8 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   resize: vertical;
 }
 
-.rah-channel-settings-access {
-  display: grid;
-  gap: 12px;
-}
-
-.rah-channel-settings-access h3 {
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.rah-channel-settings-access header p {
-  color: var(--ink-40);
-  font-size: 10px;
-  margin-top: 4px;
-}
-
-.rah-channel-settings-access fieldset {
-  border: 0;
-  display: flex;
-  gap: 7px;
-  margin: 0;
-  padding: 0;
-}
-
-.rah-channel-settings-access fieldset legend {
-  font-size: 12px;
-  font-weight: 700;
-  margin-bottom: 6px;
-}
-
-.rah-channel-settings-access fieldset button {
-  background: var(--bg);
-  border: var(--bd);
-  font-size: 11px;
-  font-weight: 700;
-  min-height: 30px;
-  padding: 4px 9px;
-}
-
-.rah-channel-settings-access fieldset button.is-selected {
-  background: var(--yellow);
-}
-
 .rah-channel-settings-info footer {
+  margin-top: 6.5px;
   display: flex;
   gap: 8px;
   justify-content: flex-end;
@@ -3459,12 +3424,13 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 
 .rah-channel-settings-preferences b {
-  font-size: 12px;
+  font-weight: 500;
+  font-size: 14px;
 }
 
 .rah-channel-settings-preferences small {
-  color: var(--ink-40);
-  font-size: 10px;
+  color: rgb(0 0 0 / 55%);
+  font-size: 12px;
 }
 
 .rah-channel-settings-preferences input {
@@ -3479,7 +3445,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   border: var(--bd);
   height: 20px;
   margin-left: auto;
-  opacity: 0.45;
+  flex-shrink: 0;
   position: relative;
   width: 36px;
 }
@@ -3488,10 +3454,27 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   background: var(--ink);
   content: "";
   height: 14px;
-  left: 2px;
+  left: 1px;
   position: absolute;
   top: 1px;
   width: 14px;
+}
+
+.rah-channel-settings-preferences input:checked + i {
+  background: var(--yellow);
+}
+.rah-channel-settings-preferences input:checked + i::after {
+  left: 17px;
+}
+.rah-channel-settings-preferences input:disabled + i {
+  opacity: 0.45;
+}
+.rah-channel-settings-preferences input:focus-visible + i {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+.rah-channel-settings-preferences > label:has(input:not(:disabled)) {
+  cursor: pointer;
 }
 
 .rah-channel-settings-operations {
@@ -3508,20 +3491,25 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 
 .rah-channel-settings-operations .btn {
-  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 48px;
   width: 100%;
 }
 
 .rah-channel-archive-button,
 .rah-channel-leave-button,
 .rah-channel-sos-button {
-  background: var(--orange);
+  background: var(--bg);
 }
 
 .rah-channel-delete-button {
   background: var(--coral);
 }
 
+.rah-room-visibility-confirm,
 .rah-room-archive-confirm,
 .rah-room-delete-confirm,
 .rah-room-leave-confirm,
@@ -3529,6 +3517,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   z-index: 120;
 }
 
+.rah-room-visibility-confirm .rah-dialog > p,
 .rah-room-archive-confirm .rah-dialog > p,
 .rah-room-delete-confirm .rah-dialog > p,
 .rah-room-leave-confirm .rah-dialog > p {
@@ -3537,6 +3526,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   padding: 18px;
 }
 
+.rah-room-visibility-confirm .rah-dialog > footer,
 .rah-room-archive-confirm .rah-dialog > footer,
 .rah-room-delete-confirm .rah-dialog > footer,
 .rah-room-leave-confirm .rah-dialog > footer {
@@ -3807,26 +3797,6 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   margin-top: 5px;
 }
 
-@media (max-width: 1279.98px) {
-  .rah-product-shell > .thread {
-    bottom: 0;
-    height: 100dvh;
-    left: auto;
-    position: fixed;
-    right: 0;
-    top: 0;
-    width: min(520px, 100vw);
-    z-index: 40;
-  }
-}
-
-@media (max-width: 900px) {
-  .rah-product-shell {
-    grid-template-columns: var(--rail-w) var(--sidebar-w) minmax(0, 1fr);
-    min-width: 640px;
-  }
-}
-
 @media (max-width: 767px) {
   :root {
     --rah-mobile-nav-h: 52px;
@@ -4078,10 +4048,6 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
     margin-right: 0;
   }
 
-  .head-actions .sq-btn:not(.rah-channel-options) {
-    display: none;
-  }
-
   .kanban {
     padding: 12px;
   }
@@ -4212,30 +4178,86 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   }
 }
 
-@media (min-width: 1280px) {
-  .app.rah-product-shell:not(.thread-hidden) {
-    grid-template-columns:
-      var(--rail-w) var(--sidebar-w) minmax(320px, 1fr)
-      min(
-        var(--thread-w),
-        calc(100vw - var(--rail-w) - var(--sidebar-w) - 320px)
-      );
-  }
-}
-
-@media (max-width: 1279.98px) {
-  .rah-product-shell > .thread {
-    width: min(var(--thread-w), 100vw);
-  }
-
-  .rah-thread-resizer {
-    display: none;
-  }
-}
-
 /* Raft create-agent-name Sl/nOe and dOe/lOe; brutal field tokens. */
 .rah-agent-create-dialog:not(.rah-agent-manage-dialog) form input,
 .rah-agent-create-dialog:not(.rah-agent-manage-dialog) form textarea {
   font: 400 16px/24px var(--sans);
   padding: 8px 12px;
+}
+
+/* Raft thread-layout container rule port. Layout state uses measured available
+   content width, including the user's sidebar size, not a viewport-only drawer. */
+.rah-product-shell[data-conversation-layout] {
+  min-width: 0;
+}
+.rah-product-shell[data-conversation-layout]:not(.rah-global-shell):not(
+    .thread-hidden
+  ):not(.rah-task-modal-open) {
+  grid-template-columns: var(--rail-w) var(--sidebar-w) minmax(0, 1fr);
+}
+.rah-product-shell[data-conversation-layout] > .thread {
+  position: relative;
+  inset: auto;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  box-shadow: none;
+  z-index: auto;
+  grid-row: 1;
+  grid-column: 3;
+}
+.rah-product-shell[data-conversation-layout="split"]:not(.rah-global-shell):not(
+    .thread-hidden
+  ):not(.rah-task-modal-open) {
+  grid-template-columns: var(--rail-w) var(--sidebar-w) minmax(320px, 1fr) min(
+      var(--thread-w),
+      calc(100% - var(--rail-w) - var(--sidebar-w) - 320px)
+    );
+}
+.rah-product-shell[data-conversation-layout="split"] > .thread {
+  grid-column: 4;
+}
+.rah-product-shell[data-conversation-layout="split"] .rah-thread-resizer {
+  display: block;
+}
+.rah-thread-back {
+  display: none;
+}
+.rah-product-shell:not([data-conversation-layout="split"])
+  > .thread
+  .rah-thread-back {
+  display: inline-flex;
+}
+.rah-product-shell:not([data-conversation-layout="split"])
+  > .thread
+  :is(.rah-thread-close, .rah-thread-resizer) {
+  display: none;
+}
+.rah-product-shell:not([data-conversation-layout="split"]):not(
+    .thread-hidden
+  ):not(.rah-task-modal-open):not(.rah-global-shell)
+  > .channel {
+  display: none;
+}
+.rah-product-shell:not([data-conversation-layout="split"]) > .thread {
+  border-left: 0;
+}
+.rah-product-shell > .thread > .messages {
+  padding-top: 0;
+}
+@media (max-width: 767px) {
+  .rah-product-shell[data-conversation-layout="fullscreen"]:not(
+      .rah-global-shell
+    ):not(.thread-hidden):not(.rah-task-modal-open) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rah-product-shell[data-conversation-layout="fullscreen"] > .thread {
+    grid-column: 1;
+    z-index: 70;
+  }
+}
+
+.rah-channel-settings-operations .btn svg {
+  width: 14px;
+  height: 14px;
 }

@@ -56,8 +56,30 @@ try {
       "Runtime entries have clear separation",
     );
     assert.ok(
-      cards.every((card) => card.height <= 70),
+      cards.every((card) => card.height <= 100),
       "Runtime cards stay compact",
+    );
+    assert.equal(
+      await page
+        .getByText(
+          "勾选开启忙时投递；关闭时等待本轮结束。展开各 CLI 可修改启动参数。",
+          { exact: true },
+        )
+        .count(),
+      0,
+    );
+    for (const card of await page.locator(".rah-runtime-settings-card").all()) {
+      assert.equal(await card.getByRole("checkbox").isVisible(), false);
+      await card.locator("summary").click();
+      assert.equal(await card.getByRole("checkbox").isVisible(), true);
+    }
+    assert.equal(
+      await page
+        .getByRole("checkbox")
+        .first()
+        .evaluate((n) => getComputedStyle(n).appearance),
+      "none",
+      "Guide retains the shared square checkbox",
     );
     const boxes = await page
       .locator(".rah-runtime-settings-card input")
@@ -77,9 +99,79 @@ try {
     );
     assert.equal(await muted.count(), 2);
     assert.equal(
-      await muted.first().evaluate((n) => getComputedStyle(n).filter),
-      "grayscale(1)",
+      await muted
+        .first()
+        .locator(".rah-runtime-settings-heading")
+        .evaluate((n) => getComputedStyle(n).filter),
+      "none",
     );
+    assert.equal(
+      await page.getByText("当前成员权限", { exact: true }).count(),
+      0,
+    );
+    assert.equal(await page.getByText(/个工作空间 Agent/).count(), 0);
+    const backgrounds = await page
+      .locator(".rah-runtime-settings-heading")
+      .evaluateAll((nodes) =>
+        nodes.map((n) => getComputedStyle(n).backgroundColor),
+      );
+    assert.ok(
+      backgrounds.every((value) => value === backgrounds[0]),
+      "Provider headings share the same background",
+    );
+    const claudeCard = page.getByRole("region", {
+      name: "OpenCode",
+      exact: true,
+    });
+    const editor = claudeCard.getByRole("textbox", {
+      name: "opencode 附加参数",
+    });
+    assert.equal(await editor.inputValue(), "");
+    assert.equal(
+      await claudeCard
+        .getByRole("button", { name: "保存", exact: true })
+        .isDisabled(),
+      true,
+    );
+    assert.equal(
+      await claudeCard
+        .getByRole("button", { name: "与默认对比", exact: true })
+        .count(),
+      0,
+    );
+    assert.match(
+      await claudeCard.locator(".rah-runtime-launch-fixed").innerText(),
+      /serve/,
+    );
+    await editor.fill('--log-level "debug"');
+    await claudeCard.getByRole("button", { name: "保存", exact: true }).click();
+    await page.waitForFunction(
+      () =>
+        document.querySelector('textarea[aria-label="opencode 附加参数"]')
+          .value === "--log-level debug",
+    );
+    assert.equal(
+      await claudeCard
+        .getByRole("button", { name: "保存", exact: true })
+        .isDisabled(),
+      true,
+    );
+    await claudeCard
+      .getByRole("button", { name: "清空附加参数", exact: true })
+      .click();
+    await claudeCard.getByRole("button", { name: "保存", exact: true }).click();
+    await page.waitForFunction(
+      () =>
+        !document.querySelector('textarea[aria-label="opencode 附加参数"]')
+          .disabled,
+    );
+    await editor.fill("--draft-only");
+    await claudeCard.locator("summary").click();
+    assert.equal(await editor.isVisible(), false);
+    await claudeCard.locator("summary").focus();
+    await page.keyboard.press("Enter");
+    assert.equal(await editor.inputValue(), "--draft-only");
+    await editor.fill("");
     const codex = page.getByRole("checkbox", {
       name: "Codex Guide",
       exact: true,

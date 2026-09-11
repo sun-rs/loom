@@ -11,10 +11,8 @@ test("settings navigation exposes the applicable Raft contract and omits cloud c
     "notifications",
     "server",
     "administration",
-    "lan-devices",
     "about",
     "docs",
-    "feedback",
     "release-notes",
   ])
     assert.match(surface, new RegExp(`\"${section}\"`, "u"), section);

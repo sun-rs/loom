@@ -100,7 +100,6 @@ const RAFT_AGENT_TABS: ReadonlyArray<{
   { icon: "chat", id: "chat", label: "聊天" },
   { icon: "bell", id: "reminders", label: "提醒" },
   { icon: "folder-open", id: "workspace", label: "工作区" },
-  { icon: "link-2", id: "apps", label: "应用" },
 ];
 
 const MIN_SIDEBAR_WIDTH = 180;
@@ -137,6 +136,7 @@ export function AgentDirectoryPane({
   onSaveProfile,
   onChangeHumanRole,
   onOpenDirectRoom,
+  onPeekAgent,
   onOpenMessage,
   onOpenRoom,
   onRouteChange,
@@ -179,6 +179,7 @@ export function AgentDirectoryPane({
     principalId: string,
     role: MembershipRole,
   ) => Promise<void>;
+  onPeekAgent?: ((id: string) => void) | undefined;
   onOpenDirectRoom: (peerPrincipalId: string) => Promise<void>;
   onOpenMessage: (
     target: Extract<NavigationTarget, { kind: "message" }>,
@@ -689,7 +690,7 @@ export function AgentDirectoryPane({
             principalId={humanId}
             workspaceId={workspaceId}
             onBack={closeRelationship}
-            onOpenAgent={selectAgent}
+            onOpenAgent={onPeekAgent ?? selectAgent}
           />
         ) : agents.length === 0 ? (
           <p className="rah-empty-copy">
@@ -842,9 +843,7 @@ export function AgentDirectoryPane({
                   />
                 }
               />
-            ) : (
-              <AgentUnavailableTab tab={tab} />
-            )}
+            ) : null}
           </section>
         )}
       </section>
@@ -1215,7 +1214,6 @@ export function AgentDetailHeader({
   canMessage,
   messagePending,
   onBack,
-  onManage,
   onStartStop,
   onRestart,
   onMessage,
@@ -1270,15 +1268,6 @@ export function AgentDetailHeader({
           onClick={onRestart}
         >
           <Icon name="rotate-ccw" />
-        </PanelHeaderAction>
-        <PanelHeaderAction
-          aria-label={`管理 ${agent.displayName}`}
-          onClick={onManage}
-          title="Agent 菜单"
-        >
-          <span className="rah-agent-overflow-glyph" aria-hidden="true">
-            ⋮
-          </span>
         </PanelHeaderAction>
         {onClose ? (
           <PanelHeaderAction aria-label="关闭 Agent 侧栏" onClick={onClose}>
@@ -1545,14 +1534,6 @@ export function AgentProfilePane({
           >
             <Icon name={agent.state === "enabled" ? "square" : "play"} />
             {agent.state === "enabled" ? "停止 Agent" : "启动 Agent"}
-          </button>
-          <button
-            className="rah-interaction-brutal"
-            disabled={!canManage}
-            onClick={onManage}
-          >
-            <Icon name="settings" />
-            管理 Agent
           </button>
           <button
             className="rah-interaction-brutal"
@@ -2170,42 +2151,6 @@ function relativeReminderTime(value: string): string {
   return new Intl.RelativeTimeFormat("zh-CN", { numeric: "auto" }).format(
     amount,
     unit,
-  );
-}
-
-function AgentUnavailableTab({
-  tab,
-}: {
-  tab: Exclude<
-    AgentTab,
-    "activity" | "chat" | "profile" | "reminders" | "workspace"
-  >;
-}) {
-  const content = {
-    apps: {
-      description: "Agent 应用目录尚未形成 canonical API。",
-      icon: "link",
-      title: "暂无应用",
-    },
-  }[tab];
-  return <AgentCapabilityPane {...content} />;
-}
-
-function AgentCapabilityPane({
-  description,
-  icon,
-  title,
-}: {
-  description: string;
-  icon: string;
-  title: string;
-}) {
-  return (
-    <section className="rah-agent-capability-pane rah-scroll-main">
-      <Icon name={icon} />
-      <h3>{title}</h3>
-      <p>{description}</p>
-    </section>
   );
 }
 

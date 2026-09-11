@@ -29,7 +29,7 @@
 }
 .rah-sidebar-disclosure > .count {
   letter-spacing: normal;
-  font-weight: 400;
+  font-weight: var(--fw-bold);
 }
 .rah-sidebar-disclosure[aria-expanded="true"] > svg {
   transform: rotate(90deg);
@@ -367,5 +367,26 @@
   }
   .app.rah-agent-peek-open > .channel:not(.rah-agent-peek) {
     grid-column: 1;
+  }
+}
+
+.rah-agent-role-block > small {
+  margin-left: 10px;
+}
+.rah-runtime-picker > button:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.rah-runtime-picker > button:not(:disabled):active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+/* Members already owns its sidebar inside the page; only chat reserves one. */
+@media (min-width: 768px) {
+  .app.rah-agent-peek-open:has(
+      > .rah-agent-directory-page:not(.rah-agent-peek)
+    ) {
+    grid-template-columns: var(--rail-w) 0 minmax(0, 1fr) auto;
   }
 }

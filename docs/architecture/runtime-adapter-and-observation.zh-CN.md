@@ -222,3 +222,9 @@ Claude 匹配的恢复会话才允许 gated 忙时输入；新会话在当前有
 result 后不再开放输入。恢复失败转新建时重建 gate 并恢复共用输入流读取。
 以上是 Raft readiness 的有限 Run 适配，非 persistent 会话完整移植。
 来源、差异及验证见[本批交付](../audits/2026-09-11-parity-batch-review-and-delivery.zh-CN.md)。
+
+## 受管 Provider 自动记忆
+
+用户要求内置 Claude/Codex driver 在每次启动时关闭 Provider 自动记忆读取/生成，保留登录、HOME、会话恢复与 RAH Agent MEMORY.md/notes。这是明确的本地策略，不是 Raft 已有开关。旧会话上下文不会被清除；自定义 Runtime 与普通文件读取不属于自动记忆开关保证。来源与验证见[进程级自动记忆关闭](../audits/2026-09-11-provider-auto-memory-disable.zh-CN.md)。
+
+管理页的内置 CLI 启动覆盖参数由 daemon 的现有 RuntimeGuideSettings 单点持有；在 Activation 准备时冻结到环境 lease，Driver 使用覆盖 argv（旧附加参数保留兼容）；null 恢复默认并清理旧附加值。它不热改活跃进程，不覆盖通信协议、Agent 模型及自动记忆策略，不创建第二个 Runtime 或记忆 owner。详见[启动参数设置](../audits/2026-09-11-provider-launch-settings.zh-CN.md)。

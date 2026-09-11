@@ -4,7 +4,6 @@ export const AGENT_ROUTE_TABS = [
   "chat",
   "reminders",
   "workspace",
-  "apps",
 ] as const;
 
 export type AgentRouteTab = (typeof AGENT_ROUTE_TABS)[number];

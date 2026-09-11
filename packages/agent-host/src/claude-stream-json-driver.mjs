@@ -1,3 +1,7 @@
+import {
+  providerLaunchArguments,
+  providerLaunchPolicy,
+} from "./provider-launch-arguments.js";
 import { spawn } from "node:child_process";
 import {
   chmodSync,
@@ -127,18 +131,7 @@ try {
 
 async function runTurn(resumeSession) {
   const args = [
-    "--print",
-    "--verbose",
-    "--allow-dangerously-skip-permissions",
-    "--dangerously-skip-permissions",
-    "--permission-mode",
-    "bypassPermissions",
-    "--output-format",
-    "stream-json",
-    "--input-format",
-    "stream-json",
-    "--include-partial-messages",
-    "--replay-user-messages",
+    ...providerLaunchArguments("claude"),
     "--disallowed-tools",
     DISALLOWED_TOOLS,
     "--append-system-prompt-file",
@@ -151,7 +144,11 @@ async function runTurn(resumeSession) {
 
   const child = spawn(options.executable, args, {
     cwd: process.cwd(),
-    env: withoutNestedClaudeCode(process.env),
+    // Process-only override: preserve user auth/config and RAH-owned memory.
+    env: {
+      ...withoutNestedClaudeCode(process.env),
+      ...providerLaunchPolicy("claude").environment,
+    },
     shell: false,
     stdio: ["pipe", "pipe", "pipe"],
   });

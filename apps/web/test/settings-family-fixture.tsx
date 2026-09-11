@@ -178,10 +178,7 @@ export function SettingsFamilyFixture() {
           workspaceId={workspace.workspaceId}
         />
       ) : mode === "administration" ? (
-        <AdministrationSettingsContent
-          agents={[]}
-          principal={{ principalId: "human", kind: "human", handle: "member" }}
-        />
+        <AdministrationSettingsContent />
       ) : (
         <WorkspaceProfileSettingsContent
           canManage={canManage}

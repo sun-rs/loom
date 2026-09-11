@@ -370,7 +370,7 @@ export class DaemonApplication {
           ),
         });
         runtime = createConfiguredRuntime({
-          guideEnabled: (runtimeId) => runtimeGuideSettings.enabled(runtimeId),
+          ...runtimeGuideSettings.runtimeOptions(),
           agentMemoryCoordinator: activeAgentMemoryCoordinator,
           credentialEnvironment,
           cwd: runtimeOptions.cwd,
@@ -526,8 +526,7 @@ export class DaemonApplication {
               }
             }
             return createConfiguredRuntime({
-              guideEnabled: (runtimeId) =>
-                runtimeGuideSettings.enabled(runtimeId),
+              ...runtimeGuideSettings.runtimeOptions(),
               agentMemoryCoordinator: activeAgentMemoryCoordinator,
               credentialEnvironment,
               ...resolveRuntimeWorkspace(placement, v4Config.workspace.cwd),

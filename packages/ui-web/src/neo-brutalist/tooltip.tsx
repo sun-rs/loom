@@ -11,7 +11,7 @@ export function HintTooltip({
 }) {
   return (
     <Tooltip.Root>
-      <Tooltip.Trigger render={children} />
+      <Tooltip.Trigger delay={0} render={children} />
       <Tooltip.Portal>
         <Tooltip.Positioner
           positionMethod="fixed"

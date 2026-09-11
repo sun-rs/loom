@@ -60,7 +60,6 @@ export function runtimeModelOptions(
   runtime: LocalRuntimeInventoryEntry | undefined,
 ): Array<{ label: string; modelBindingId: string }> {
   return [
-    { label: "Runtime 默认", modelBindingId: "runtime_default" },
     ...verifiedModelBindings(runtime).map((binding) => ({
       label: binding.displayName ?? `${binding.provider} / ${binding.modelId}`,
       modelBindingId: binding.modelBindingId,
@@ -76,7 +75,7 @@ export function normalizeModelBindingId(
     (option) => option.modelBindingId === modelBindingId,
   )
     ? modelBindingId!
-    : "runtime_default";
+    : "";
 }
 
 /**

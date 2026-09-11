@@ -1,8 +1,8 @@
+import { HelpGuideSettings } from "./help-guide-settings.tsx";
 import { useEffect, useState, useRef, useMemo, type ChangeEvent } from "react";
 
 import type { RahClient } from "@rah-os/client-sdk";
-import type { Principal, Workspace, MembershipRole } from "@rah-os/protocol";
-import type { WorkspaceAgentView } from "@rah-os/ui-web";
+import type { Principal, Workspace } from "@rah-os/protocol";
 
 import {
   readLiveAgentActivity,
@@ -475,53 +475,13 @@ export function WorkspaceProfileSettingsContent({
 }
 
 export function AdministrationSettingsContent({
-  agents,
-  principal,
-  membershipRole,
   children,
 }: {
   children?: React.ReactNode;
-  membershipRole?: MembershipRole | undefined;
-  agents: readonly WorkspaceAgentView[];
-  principal: Principal | undefined;
 }) {
   return (
     <SettingsPage icon="shield-check" title="管理">
       {children}
-      <SettingsSectionLabel icon="shield-check">
-        当前成员权限
-      </SettingsSectionLabel>
-      <article className="rah-settings-card rah-settings-member-row">
-        <ProfileImageAvatar
-          avatarKey={principal?.avatarKey}
-          name={principal?.displayName ?? principal?.handle ?? "本地用户"}
-          size="compact"
-        />
-        <div>
-          <strong>
-            {principal?.displayName ?? principal?.handle ?? "本地用户"}
-          </strong>
-          <p>当前本机 Human</p>
-        </div>
-        <span className={`role-${membershipRole ?? "unknown"}`}>
-          {membershipRole === "owner"
-            ? "所有者"
-            : membershipRole === "admin"
-              ? "管理员"
-              : membershipRole === "member"
-                ? "成员"
-                : "权限未读取"}
-        </span>
-      </article>
-      <SettingsSectionLabel>Agent</SettingsSectionLabel>
-      <article className="rah-settings-card rah-settings-copy-card">
-        <strong>{agents.length} 个工作空间 Agent</strong>
-        <p>
-          Agent 角色、模型、effort 与运行模式由 Agent 资料页管理；Room
-          成员角色由成员页管理。 这里不伪造 Raft
-          中央邀请链接、社交账户或跨组织权限。
-        </p>
-      </article>
     </SettingsPage>
   );
 }
@@ -592,21 +552,7 @@ export function AboutSettingsContent({
 }
 
 export function DocsSettingsContent() {
-  return (
-    <SettingsPage icon="book-open" title="文档">
-      <SettingsSectionLabel>产品文档</SettingsSectionLabel>
-      <article className="rah-settings-card rah-settings-copy-card">
-        <strong>本地 daemon / Web / PWA</strong>
-        <p>
-          项目内的 docs/README.md 是文档入口，包含本机部署、局域网访问、Agent
-          CLI 管理、通知与安全边界。
-        </p>
-        <a href="/help/local-workbench.html" target="_blank" rel="noreferrer">
-          打开本机操作指南
-        </a>
-      </article>
-    </SettingsPage>
-  );
+  return <HelpGuideSettings />;
 }
 
 export function FeedbackSettingsContent() {

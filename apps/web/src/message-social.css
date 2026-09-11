@@ -236,11 +236,13 @@
   align-items: center;
   gap: 2px;
 }
+/* 批次 3b 裁决 2：侧栏排序钮按上游 `.btn-flat-sm flex size-6 p-0` 建模
+   （pad 0、图标 14）。作用域限定侧栏，任务页 `.task-filter-trigger` 通用规则不动。 */
 .rah-sidebar-sort > button {
   width: 24px;
   height: 24px;
   min-height: 0;
-  padding: 4px;
+  padding: 0;
   border: 0;
   background: transparent;
   box-shadow: none;
@@ -248,9 +250,13 @@
   display: grid;
   place-items: center;
 }
+/* 上游 `.btn-flat-sm:focus, :focus-visible { outline-style: none }`：聚焦只用底色表示。 */
+.rah-sidebar-sort > button:focus-visible {
+  outline-style: none;
+}
 .rah-sidebar-sort > button > svg {
-  width: 12px;
-  height: 12px;
+  width: var(--icon-3-5);
+  height: var(--icon-3-5);
 }
 .rah-discovery-popover.is-sidebar {
   width: 128px;

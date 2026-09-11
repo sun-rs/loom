@@ -48,7 +48,7 @@ test("unknown profile does not claim defaults, and unsupported effort is not fab
   );
   assert.equal(
     runtimeProfilePresentation([a], { reasoning: "default" }).reasoningLabel,
-    undefined,
+    "默认",
   );
 });
 test("exact model identity selects the same runtime irrespective of inventory order", () => {

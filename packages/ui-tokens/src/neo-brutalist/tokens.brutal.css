@@ -117,7 +117,8 @@
   --scrim: rgba(20, 17, 17, .3);         /* 模态遮罩 */
 
   /* 描边：标准 2px；hairline 用 1px 时直接写 1px solid var(--ink) */
-  --bd: 2px solid var(--black);
+  --bw-2: 2px;                           /* bundle --tw-border-style: solid 的结构描边宽度 */
+  --bd: var(--bw-2) solid var(--black);
   --bd-heavy: 2px solid var(--black);    /* 全宽分隔线（实测同为 2px） */
 
   /* 硬阴影：无模糊纯偏移，新粗野的标志性笔法 */
@@ -184,6 +185,20 @@
   /* 杂项实测色 */
   --term-ink: #F5F2E9;                   /* 终端块文字（实测米色） */
   --preview-text: rgba(0,0,0,.60);       /* live: text-black/60 */
+
+  /* 间距与控件刻度：取自 bundle Tailwind 主题 --spacing: .25rem（4px）的整数倍，
+     不是截图估读。组件方钮几何 = 图标 + 2*内边距 + 2*描边。 */
+  --space-1: 4px;                        /* Tailwind p-1 */
+  --space-1-5: 6px;                      /* Tailwind gap-1.5：侧栏行内间距 */
+  --space-2: 8px;                        /* Tailwind p-2 */
+  --space-3: 12px;                       /* Tailwind mt-3：分区标题上方间距 */
+  --control-6: 24px;                     /* Tailwind size-6：小号方钮 */
+  --control-7: 28px;                     /* Tailwind size-7：标准方钮、发送钮 */
+  --control-8: 32px;                     /* 弹窗关闭钮（20 图标 + p-1 + 描边） */
+  --icon-3: 12px;                        /* lucide size 12（分区标题 chevron） */
+  --icon-3-5: 14px;                      /* lucide size 14 */
+  --icon-4: 16px;                        /* lucide size 16 */
+  --icon-5: 20px;                        /* lucide size 20 */
 
   /* 动效：实测 .btn-brutal transition-duration:.1s */
   --press-translate: 1px;

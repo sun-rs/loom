@@ -59,6 +59,7 @@ export const SearchHitSchema = z
     roomName: z.string(),
     senderName: z.string(),
     rootMessageId: IdentifierSchema.optional(),
+    rootMessagePreview: z.string().max(160).optional(),
     target: NavigationTargetSchema,
   })
   .strict();

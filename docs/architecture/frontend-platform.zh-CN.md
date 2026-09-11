@@ -323,3 +323,9 @@ Computer 的批量 restart/session/full 同样复用现有 AgentExecutionResetDi
 `agent.execution.reset`。当前确认窗口冻结选择与每项幂等键，只缓存已确认成功项；不建立
 持久批量队列。换范围取消后续项，已接受命令由原管理 fence 完成，详见
 [批量重置审计](../audits/2026-09-07-computer-bulk-reset-closure.zh-CN.md)。
+
+## Room 与 Thread 自适应列
+
+单一呈现测量 owner `use-conversation-layout` 沿 Raft 的可用容器宽度与横竖屏条件选择并排、替换正文、全屏；不以固定1280px抽屉覆盖部分正文。sidebar拖动参与可用宽度计算，切换仅影响布局，不卸载已有消息、草稿与scroll owner。来源与边界见 [响应式修复](../audits/2026-09-11-conversation-responsive-parity.zh-CN.md)。
+
+Search 首页的常用项按搜索打开的实体排序，历史查询与实体使用偏好分离；消息列搜索标题消费 Kernel 有界根消息摘要。来源与验证见 [Search 修复](../audits/2026-09-12-search-home-result-parity.zh-CN.md)。

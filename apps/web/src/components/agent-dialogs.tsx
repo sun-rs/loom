@@ -78,7 +78,7 @@ export function AgentCreateDialog({
   const [instructions, setInstructions] = useState("");
   const [avatarKey, setAvatarKey] = useState<string>("");
   const [runtimeOfferId, setRuntimeOfferId] = useState("");
-  const [modelBindingId, setModelBindingId] = useState("runtime_default");
+  const [modelBindingId, setModelBindingId] = useState("");
   const [reasoning, setReasoning] = useState<ReasoningLevel>("default");
   const [showMore, setShowMore] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -108,7 +108,8 @@ export function AgentCreateDialog({
   const valid =
     displayName.trim() !== "" &&
     /^[\p{L}\p{N}][\p{L}\p{N}._-]*$/u.test(handle.trim()) &&
-    runtimeOfferId !== "";
+    runtimeOfferId !== "" &&
+    modelOptions.some((option) => option.modelBindingId === modelBindingId);
   const effectiveRole =
     role.trim() || description.trim() || `${displayName.trim()} Agent`;
   const effectiveInstructions =
@@ -240,6 +241,9 @@ export function AgentCreateDialog({
               }}
               value={modelBindingId}
             >
+              <option value="" disabled>
+                请选择模型
+              </option>
               {modelOptions.map((option) => (
                 <option
                   key={option.modelBindingId}
@@ -451,7 +455,8 @@ export function AgentManageDialog({
     displayName.trim() !== "" &&
     /^[\p{L}\p{N}][\p{L}\p{N}._-]*$/u.test(handle.trim()) &&
     role.trim() !== "" &&
-    runtimeOfferId !== "";
+    runtimeOfferId !== "" &&
+    modelOptions.some((option) => option.modelBindingId === modelBindingId);
   const effectiveInstructions =
     instructions.trim() ||
     revision.instructions?.trim() ||
@@ -584,6 +589,9 @@ export function AgentManageDialog({
                 }}
                 value={modelBindingId}
               >
+                <option value="" disabled>
+                  请选择模型
+                </option>
                 {modelOptions.map((option) => (
                   <option
                     key={option.modelBindingId}
@@ -596,7 +604,7 @@ export function AgentManageDialog({
               {configuredModelBindingId !== undefined &&
               configuredModelBindingId !== modelBindingId ? (
                 <small>
-                  旧模型绑定没有当前 Runtime 证据；保存时将恢复为 Runtime 默认。
+                  旧模型绑定没有当前 Runtime 证据；请明确选择模型后保存。
                 </small>
               ) : null}
             </label>
@@ -648,7 +656,7 @@ export function AgentManageDialog({
               ) === false ? (
                 <small>
                   旧配置 {reasoningLabel(configuredReasoning)}
-                  没有 Runtime 证据；保存时将恢复为 Runtime 默认。
+                  没有 Runtime 证据；请明确选择模型后保存。
                 </small>
               ) : reasoningOptions.length === 1 ? (
                 <small>当前模型未发布可执行的推理档位，将使用默认值。</small>

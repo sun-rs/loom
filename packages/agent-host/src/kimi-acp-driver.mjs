@@ -1,3 +1,4 @@
+import { providerLaunchArguments } from "./provider-launch-arguments.js";
 import { spawn } from "node:child_process";
 import { writeSync } from "node:fs";
 import { readFile } from "node:fs/promises";
@@ -47,7 +48,7 @@ let observedToolActivity = false;
 let cancelRequested = false;
 let activePromptSettlement;
 
-const kimi = spawn(options.executable, ["acp"], {
+const kimi = spawn(options.executable, providerLaunchArguments("kimi"), {
   cwd: process.cwd(),
   env: process.env,
   shell: false,

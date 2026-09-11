@@ -543,7 +543,7 @@ export function RoomSidebar({
                           onClick={onCreate}
                           title="新建频道"
                         >
-                          +
+                          <Icon name="plus" />
                         </button>
                       )}
                     </div>

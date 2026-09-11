@@ -1,6 +1,5 @@
 const WEB_BUILD_HEADER = "x-rah-web-build-id";
 const REFRESH_LAYER_ID = "rah-web-build-refresh-layer";
-const REFRESH_BANNER_ID = "rah-web-build-refresh-banner";
 const RECOVERY_QUERY = "rah_recover";
 const CACHE_PREFIXES = ["rah-os-shell-", "rah-os-assets-"] as const;
 const DEVELOPMENT_BUILD_ID = "development";
@@ -93,19 +92,23 @@ export function requestWebBuildRefresh(
   return true;
 }
 
+export function webBuildProbeUrl(
+  currentBuildId: string,
+  nonce = crypto.randomUUID(),
+): string {
+  return `/?rah_build_probe=${encodeURIComponent(currentBuildId)}&rah_probe_nonce=${encodeURIComponent(nonce)}`;
+}
+
 async function probeCurrentBuild(
   currentBuildId: string,
   trigger: "initial_probe",
 ): Promise<void> {
   try {
-    await globalThis.fetch(
-      `/?rah_build_probe=${encodeURIComponent(currentBuildId)}`,
-      {
-        cache: "no-store",
-        credentials: "same-origin",
-        method: "HEAD",
-      },
-    );
+    await globalThis.fetch(webBuildProbeUrl(currentBuildId), {
+      cache: "no-store",
+      credentials: "same-origin",
+      method: "HEAD",
+    });
   } catch {
     // Connectivity recovery owns an unavailable gateway. A missing response
     // cannot prove that this browser build is stale.
@@ -125,9 +128,30 @@ function installFetchBuildFence(currentBuildId: string): void {
       serverBuildId !== currentBuildId &&
       serverBuildId !== ignoredServerBuildId
     ) {
+      // A cached resource can carry an older build header than this document.
+      // Only a fresh shell probe may establish the current server identity.
+      let verifiedBuildId: string | undefined;
+      try {
+        const probe = await originalFetch!(webBuildProbeUrl(currentBuildId), {
+          method: "HEAD",
+          cache: "no-store",
+          credentials: "same-origin",
+          signal: AbortSignal.timeout(3000),
+        });
+        if (probe.ok)
+          verifiedBuildId = probe.headers.get(WEB_BUILD_HEADER)?.trim();
+      } catch {
+        /* An unavailable probe cannot establish a stale document. */
+      }
+      if (
+        !verifiedBuildId ||
+        verifiedBuildId === currentBuildId ||
+        verifiedBuildId === ignoredServerBuildId
+      )
+        return response;
       showRefreshPrompt({
         reason: "build_mismatch",
-        serverBuildId,
+        serverBuildId: verifiedBuildId,
         trigger:
           typeof input === "string" && input.includes("rah_build_probe=")
             ? "initial_probe"
@@ -151,11 +175,14 @@ function showRefreshPrompt(prompt: typeof activePrompt): void {
   pendingDecision ??= new Promise<void>((resolve) => {
     resolvePendingDecision = resolve;
   });
-  document.getElementById(REFRESH_BANNER_ID)?.remove();
   document.getElementById(REFRESH_LAYER_ID)?.remove();
 
   const layer = document.createElement("div");
   layer.id = REFRESH_LAYER_ID;
+  layer.dataset.reason = prompt.reason;
+  layer.dataset.trigger = prompt.trigger;
+  layer.dataset.clientBuild = currentWebBuildId();
+  if (prompt.serverBuildId) layer.dataset.serverBuild = prompt.serverBuildId;
   layer.className = "rah-web-build-refresh-layer";
   layer.setAttribute("role", "dialog");
   layer.setAttribute("aria-modal", "true");
@@ -165,7 +192,7 @@ function showRefreshPrompt(prompt: typeof activePrompt): void {
       <h1 id="${REFRESH_LAYER_ID}-title">刷新 RAH OS 以继续</h1>
       <p>此标签页运行的是较旧的应用版本。请刷新以加载当前版本；此标签页中未发送的文本或未保存的更改可能会丢失。</p>
       <div class="rah-web-build-refresh-actions">
-        <button type="button" data-refresh>立即刷新</button>
+        <a role="button" data-refresh>立即刷新</a>
         <button type="button" data-continue>仍然继续</button>
       </div>
     </section>`;
@@ -173,19 +200,24 @@ function showRefreshPrompt(prompt: typeof activePrompt): void {
   const root = document.getElementById("root");
   if (root instanceof HTMLElement) root.inert = true;
 
-  const refresh = layer.querySelector<HTMLButtonElement>("[data-refresh]");
+  const refresh = layer.querySelector<HTMLAnchorElement>("[data-refresh]");
   const continueAnyway =
     layer.querySelector<HTMLButtonElement>("[data-continue]");
-  refresh?.addEventListener("click", () => {
-    if (refresh) {
-      refresh.disabled = true;
-      refresh.textContent = "正在刷新…";
-    }
-    if (continueAnyway) continueAnyway.disabled = true;
-    void recoverAndRefresh();
-  });
+  if (refresh) {
+    refresh.href = recoveryUrl(window.location.href);
+    refresh.addEventListener("click", () => {
+      void prepareRefreshCaches();
+    });
+    refresh.addEventListener("keydown", (event) => {
+      if (event.key === " ") {
+        event.preventDefault();
+        refresh.click();
+      }
+    });
+  }
   continueAnyway?.addEventListener("click", continueWithOldBuild);
-  refresh?.focus();
+  layer.tabIndex = -1;
+  layer.focus();
 }
 
 function continueWithOldBuild(): void {
@@ -199,27 +231,13 @@ function continueWithOldBuild(): void {
   resolvePendingDecision?.();
   resolvePendingDecision = undefined;
   pendingDecision = undefined;
-  showRefreshBanner();
-}
-
-function showRefreshBanner(): void {
-  if (document.getElementById(REFRESH_BANNER_ID) !== null) return;
-  const banner = document.createElement("div");
-  banner.id = REFRESH_BANNER_ID;
-  banner.className = "rah-web-build-refresh-banner";
-  banner.setAttribute("role", "status");
-  banner.innerHTML = `<span>有新版本的 RAH OS 可用。</span><button type="button">刷新</button>`;
-  banner.querySelector("button")?.addEventListener("click", () => {
-    void recoverAndRefresh();
-  });
-  document.body.append(banner);
 }
 
 async function waitForRecoveryDecision(): Promise<void> {
   if (pendingDecision !== undefined) await pendingDecision;
 }
 
-async function recoverAndRefresh(): Promise<void> {
+async function prepareRefreshCaches(): Promise<void> {
   const work: Promise<unknown>[] = [];
   try {
     if ("serviceWorker" in navigator) {
@@ -242,8 +260,8 @@ async function recoverAndRefresh(): Promise<void> {
       }
     }
     await Promise.all(work);
-  } finally {
-    window.location.replace(recoveryUrl(window.location.href));
+  } catch {
+    // Cleanup is best-effort; the native link owns explicit navigation.
   }
 }
 

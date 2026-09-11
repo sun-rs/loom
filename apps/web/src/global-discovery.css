@@ -191,94 +191,298 @@
   text-transform: uppercase;
   color: var(--muted);
 }
-.rah-search-result-panel {
-  border: var(--bd);
-  background: var(--bg);
+/* Raft Search ft and grouped result render: metadata row + two-line excerpt. */
+.rah-discovery .result-list {
+  padding: 16px;
+  gap: 8px;
 }
-.rah-search-result-panel + .rah-search-result-panel {
-  margin-top: 10px;
+.rah-search-result-panel {
+  border: 2px solid rgb(0 0 0 / 30%);
+  background: white;
+}
+.rah-search-result-panel:hover {
+  border-color: black;
+  box-shadow: 2px 2px 0 black;
 }
 .rah-search-result-panel > header {
-  display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  padding: 9px 12px;
-  border-bottom: var(--bd);
-  font-size: 12px;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 2px solid black;
+  background: #ffeefb;
+  font: 700 11px/16px var(--sans);
+  color: rgb(0 0 0 / 70%);
 }
-.rah-search-result-panel > header span:first-child {
+.rah-search-result-panel > header > span:first-child {
+  border: 1px solid black;
   padding: 2px 6px;
-  border: var(--bd);
-  background: var(--pink);
-  font-weight: 800;
+  background: white;
 }
-.rah-search-result-panel > header time,
-.rah-search-result-panel > header span:nth-last-child(2) {
-  color: var(--muted);
+.rah-search-result-panel > header time {
+  font-family: var(--mono);
+  color: rgb(0 0 0 / 50%);
+}
+.rah-search-thread-title {
+  display: block;
+  width: 100%;
+  font: 700 14px/20px var(--sans);
+  color: black;
 }
 .rah-search-result-panel .result-item {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 12px;
   border: 0;
-  border-bottom: 1px solid var(--ink-10);
+  border-top: 2px solid rgb(0 0 0 / 10%);
+  background: white;
+  box-shadow: none;
+  text-align: left;
 }
-.rah-search-result-panel .result-item:last-child {
-  border-bottom: 0;
+.rah-search-result-panel .result-item:first-of-type {
+  border-top: 0;
+}
+.rah-search-result-panel[data-kind="thread"] .result-item:hover {
+  background: rgb(0 0 0 / 3%);
+}
+.rah-search-hit-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 12px;
+  line-height: 16px;
+}
+.rah-search-hit-meta .result-channel {
+  font: 700 12px/16px var(--sans);
+  color: rgb(0 0 0 / 50%);
+}
+.rah-search-hit-author {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.rah-search-hit-author .result-title {
+  margin: 0;
+  font: 700 12px/16px var(--sans);
+  color: black;
+}
+.rah-search-hit-author > :first-child {
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  box-shadow: none;
+  font-size: 9px;
+}
+.rah-search-hit-meta .result-time {
+  margin: 0;
+  font: 400 12px/16px var(--mono);
+  color: rgb(0 0 0 / 40%);
+}
+.rah-search-hit .rah-search-excerpt {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font: 400 14px/22.75px var(--sans);
+  color: rgb(0 0 0 / 70%);
 }
 .rah-search-load-more {
   width: 100%;
   margin-top: 12px;
 }
+/* Raft Search home: history above entity cards; index-BVfbaScj.js fn / search-home. */
 .rah-search-suggestions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-  padding: 0 20px 24px;
+  display: block;
+  padding: 16px;
 }
-.rah-search-suggestions > div {
-  display: flex;
-  flex-direction: column;
-  border-top: var(--bd);
+.rah-search-history-section {
+  margin-bottom: 24px;
 }
 .rah-search-suggestions header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+  padding: 0 4px;
+  margin-bottom: 8px;
 }
-.rah-search-suggestions h2,
+.rah-search-suggestions h2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font: 700 10px/16px var(--mono);
+  letter-spacing: 0.2em;
+  color: rgb(0 0 0 / 50%);
+}
 .rah-search-suggestions header button {
-  margin: 10px 0;
-  font-size: 13px;
-}
-.rah-search-suggestions > div > button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 0;
   border: 0;
-  background: transparent;
-  text-align: left;
-}
-.rah-search-suggestions svg {
-  width: 15px;
-  height: 15px;
-}
-.rah-search-destination {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px;
-  text-align: left;
-  border: var(--bd);
-  background: var(--bg);
+  background: none;
+  font: 700 11px/16px var(--sans);
+  color: rgb(0 0 0 / 45%);
   cursor: pointer;
 }
+.rah-search-suggestions svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+.rah-search-history-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.rah-search-history-tag {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  align-items: center;
+  border: 1px solid rgb(0 0 0 / 20%);
+  background: white;
+}
+.rah-search-history-tag > button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: none;
+  padding: 6px 4px 6px 10px;
+  font: 500 12px/16px var(--sans);
+  color: black;
+  cursor: pointer;
+}
+.rah-search-history-tag > button:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rah-search-history-tag svg {
+  color: rgb(0 0 0 / 35%);
+}
+.rah-search-history-tag > .rah-search-history-remove {
+  padding: 0;
+  margin-right: 4px;
+  width: 20px;
+  height: 20px;
+  justify-content: center;
+  opacity: 0;
+}
+.rah-search-history-tag:hover,
+.rah-search-history-tag:focus-within {
+  border-color: rgb(0 0 0 / 35%);
+  background: rgb(0 0 0 / 3%);
+}
+.rah-search-history-tag:hover .rah-search-history-remove,
+.rah-search-history-tag:focus-within .rah-search-history-remove {
+  opacity: 1;
+}
+/* Raft search-history-tag owns the shared hover; the query stays transparent. */
+.rah-product-shell
+  .rah-search-history-tag
+  > .rah-search-suggestion:is(:hover, :focus-visible, :active):not(:disabled) {
+  background: transparent;
+}
+.rah-search-history-tag > .rah-search-history-remove:hover {
+  background: rgb(0 0 0 / 10%);
+}
+.rah-search-history-remove svg {
+  color: rgb(0 0 0 / 30%);
+}
+.rah-search-suggestions[data-editing="true"] .rah-search-history-remove svg {
+  color: rgb(0 0 0 / 45%);
+}
+.rah-search-history-tag > .rah-search-history-remove:hover svg {
+  color: rgb(0 0 0 / 70%);
+}
+.rah-search-common-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.rah-search-common-empty {
+  border: 2px dashed rgb(0 0 0 / 20%);
+  padding: 16px 12px;
+  margin: 0;
+  font-size: 12px;
+  color: rgb(0 0 0 / 40%);
+}
+.rah-search-common,
+.rah-search-destination {
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 2px solid rgb(0 0 0 / 30%);
+  background: white;
+  text-align: left;
+  cursor: pointer;
+}
+.rah-search-common:hover,
 .rah-search-destination:hover {
-  background: var(--ink-05);
+  border-color: black;
+  box-shadow: 2px 2px 0 black;
 }
-.rah-search-destination svg {
-  width: 18px;
-  height: 18px;
+.rah-search-channel-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: 2px solid black;
+  background: var(--yellow);
 }
+.rah-search-channel-icon svg {
+  width: 16px;
+  height: 16px;
+}
+.rah-search-card-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.rah-search-card-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 20px;
+  color: black;
+}
+.rah-search-card-name b,
+.rah-search-card-subtitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rah-search-card-name small {
+  flex-shrink: 0;
+  padding: 2px 4px;
+  border: 1px solid black;
+  font-size: 9px;
+  line-height: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: rgb(0 0 0 / 60%);
+}
+.rah-search-card-subtitle {
+  font-size: 12px;
+  line-height: 16px;
+  color: rgb(0 0 0 / 50%);
+}
+@media (max-width: 639px) {
+  .rah-search-common-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .rah-select-filter,
 .rah-date-filter summary {
   display: inline-flex;
@@ -503,4 +707,47 @@
 
 .rah-public-join {
   width: 100%;
+}
+
+/* Raft Search surface-list avatar is 32px, independent of sidebar's 18px. */
+:is(.rah-search-common, .rah-search-destination) > [role="img"] {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  flex-shrink: 0;
+}
+
+/* Raft Search jdt/gdt/hdt: edit controls use max-width:767px, not pointer type. */
+.rah-search-history-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.rah-search-history-edit {
+  display: none;
+}
+.rah-discovery.search-main .filter-bar {
+  padding: 12px 16px;
+}
+@media (max-width: 767px) {
+  .rah-search-history-edit {
+    display: inline-flex;
+  }
+  .rah-search-history-tag > .rah-search-history-remove {
+    display: none;
+  }
+  .rah-search-suggestions[data-editing="true"] .rah-search-history-remove {
+    display: flex;
+    opacity: 1;
+  }
+}
+
+/* Raft ThreadsInbox inbox-mark-all-read: h-8 px-2 text-xs font-bold. */
+.rah-activity-read-all.btn {
+  height: 32px;
+  flex-shrink: 0;
+  padding: 0 8px;
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
 }

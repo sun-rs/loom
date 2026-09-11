@@ -106,7 +106,7 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   assert.match(dialogs, /<div className="rah-channel-settings-info">/u);
   assert.match(
     dialogs,
-    /<div className="rah-channel-settings-info">[\s\S]*?<section className="rah-channel-settings-preferences">[\s\S]*?<section className="rah-channel-settings-access">[\s\S]*?<\/section>\s*<\/div>/u,
+    /<div className="rah-channel-settings-info">[\s\S]*?<section className="rah-channel-settings-preferences">[\s\S]*?<section className="rah-channel-settings-operations">[\s\S]*?<\/section>\s*<\/div>/u,
     "Raft keeps information, preferences, and access controls in one padded drawer body",
   );
   assert.match(
@@ -194,8 +194,8 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   );
   assert.match(
     productCss,
-    /\.rah-channel-settings-description-field \{\s+min-height: 98\.5px;/u,
-    "the description field must match Raft's measured baseline without fixing its resize height",
+    /\.rah-channel-settings-description-field textarea \{\s+display: block;/u,
+    "textarea baseline cannot add hidden space; real browser gate verifies the 18.5px footer gap",
   );
   assert.match(agentDialogs, /useDialogProtocol/u);
   assert.match(agentDialogs, />创建 AGENT</u);
@@ -243,7 +243,7 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   assert.match(panelResizer, /setPointerCapture/u);
   assert.match(roomSidebarResizer, /nextRoomSidebarWidth/u);
   assert.doesNotMatch(navigation, /disabled icon="gear"/u);
-  assert.match(settings, /LanDeviceSettingsContent/u);
+  assert.doesNotMatch(settings, /LanDeviceSettingsContent/u);
   assert.equal(
     (conversation.match(/<ComposerDropForm\b/gu) ?? []).length,
     2,
@@ -305,7 +305,7 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   assert.match(agentSurface, /activityPresentation\(activity\.entry\)/u);
   assert.match(agentSurface, /aria-live="polite"/u);
   assert.match(agentSurface, /const RAFT_AGENT_TABS/u);
-  const agentTabLabels = ["动态", "资料", "聊天", "提醒", "工作区", "应用"];
+  const agentTabLabels = ["动态", "资料", "聊天", "提醒", "工作区"];
   let previousTabIndex = -1;
   for (const label of agentTabLabels) {
     const index = agentSurface.indexOf(`label: "${label}"`);

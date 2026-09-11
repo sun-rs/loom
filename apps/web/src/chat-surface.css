@@ -45,7 +45,8 @@
 .rah-direct-room-row small {
   flex: 1;
   min-width: 0;
-  font: 400 12px/16px var(--sans);
+  /* 批次 3b 裁决 1：描述字重继承行的 500（Raft `text-xs text-black/40` 无字重声明）。 */
+  font: var(--fw-medium) 12px/16px var(--sans);
   color: var(--ink-40);
   white-space: nowrap;
   overflow: hidden;

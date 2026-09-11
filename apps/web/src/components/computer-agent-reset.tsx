@@ -1,3 +1,4 @@
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AgentExecutionResetDialog } from "./agent-execution-reset-dialog.tsx";
@@ -38,6 +39,7 @@ export function ComputerAgentReset({
     <>
       <button
         className="btn"
+        aria-label="重启 / 重置所选"
         type="button"
         disabled={disabled || !onReset || ids.length === 0}
         onClick={() => {
@@ -50,7 +52,8 @@ export function ComputerAgentReset({
           setBatch(next);
         }}
       >
-        重启 / 重置所选
+        <Icon name="rotate-ccw" />
+        重启 / 重置
       </button>
       {batch &&
         createPortal(

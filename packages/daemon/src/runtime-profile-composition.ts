@@ -38,6 +38,7 @@ type RuntimeWorkerService = Pick<
 
 export function createConfiguredRuntime(input: {
   executionWorkspace?: RuntimeRecoveryDescriptor["executionWorkspace"];
+  launchEnvironment?: (runtimeId: string) => Record<string, string>;
   guideEnabled?: (runtimeId: string | undefined) => boolean;
   agentMemoryCoordinator?: AgentMemoryCoordinator;
   credentialEnvironment: RuntimeCredentialEnvironmentBinding;
@@ -58,8 +59,18 @@ export function createConfiguredRuntime(input: {
     input.probeReport,
     {
       activationEnvironment: async (scope) => {
+        const runtimeId = (
+          {
+            "codex-app-server/v1": "codex",
+            "claude-stream-json/v1": "claude",
+            "kimi-acp/v1": "kimi",
+            "opencode-server/v1": "opencode",
+          } as Record<string, string>
+        )[input.runtimeProfileRevision.manifest.adapter.kind];
+        const launchEnv =
+          input.launchEnvironment?.(runtimeId ?? "unknown") ?? {};
         const secretLease = await input.credentialEnvironment.resolve();
-        const leases = [secretLease];
+        const leases = [secretLease, { env: launchEnv }];
         try {
           if (scope.agent !== undefined) {
             const promptLease = standingPromptLease(scope, {

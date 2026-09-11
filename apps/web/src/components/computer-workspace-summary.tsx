@@ -1,3 +1,6 @@
+import { computerWorkspaceState } from "../computer-workspace-state.ts";
+import type { WorkspaceAgentView } from "@rah-os/ui-web";
+import { ComputerWorkspaceDelete } from "./computer-workspace-delete.tsx";
 import { formatRahDateTime } from "../date-time-presentation.ts";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { useEffect, useRef, useState } from "react";
@@ -5,7 +8,11 @@ import type { RahClient } from "@rah-os/client-sdk";
 import type { AgentWorkspaceSummary } from "@rah-os/protocol";
 import { ProfileSection } from "@rah-os/ui-web/neo-brutalist/profile-section";
 
-type Agent = { agentDefinitionId: string; handle: string };
+type Agent = {
+  agentDefinitionId: string;
+  handle: string;
+  agent?: Pick<WorkspaceAgentView, "state" | "presence">;
+};
 type Row = Agent & { summary?: AgentWorkspaceSummary; error?: string };
 export function ComputerWorkspaceSummary({
   client,
@@ -65,7 +72,7 @@ export function ComputerWorkspaceSummary({
   }
   return (
     <ProfileSection
-      title="工作区扫描"
+      title="AGENT 工作区"
       action={
         <button
           className="btn"
@@ -74,6 +81,7 @@ export function ComputerWorkspaceSummary({
           disabled={!client || pending || agents.length === 0}
           onClick={() => void scan()}
         >
+          <Icon name="refresh-cw" />
           {pending ? "扫描中…" : rows ? "重新扫描" : "扫描"}
         </button>
       }
@@ -91,38 +99,56 @@ export function ComputerWorkspaceSummary({
           >
             <Icon name="folder-open" />
             <div className="rah-workspace-summary-body">
-              <button
-                className="rah-workspace-summary-name"
-                type="button"
-                onClick={() => onOpen(row.agentDefinitionId)}
-              >
-                {row.handle}
-              </button>
+              <div className="rah-workspace-summary-heading">
+                <button
+                  className="rah-workspace-summary-name"
+                  type="button"
+                  onClick={() => onOpen(row.agentDefinitionId)}
+                >
+                  {row.handle}
+                </button>
+                {row.agent ? (
+                  <span
+                    className={`rah-workspace-state ${computerWorkspaceState(row.agent) === "ACTIVE" ? "is-active" : ""}`}
+                  >
+                    {computerWorkspaceState(row.agent)}
+                  </span>
+                ) : null}
+              </div>
               {row.error ? (
                 <p role="alert">{row.error}</p>
               ) : row.summary ? (
                 <>
+                  <code>{row.summary.rootPath}</code>
                   <p>
                     {row.summary.state === "absent"
                       ? "工作区尚未创建"
-                      : `${row.summary.fileCount} 个文件 · ${row.summary.totalSizeBytes.toLocaleString()} bytes`}
+                      : `${row.summary.totalSizeBytes.toLocaleString()} bytes · ${row.summary.fileCount} 个文件`}
+                    {row.summary.lastModified
+                      ? ` · 修改于 ${formatRahDateTime(row.summary.lastModified, { month: "long", day: "numeric" })}`
+                      : ""}
                     {row.summary.truncated
                       ? " · 部分结果（已达到扫描上限）"
                       : ""}
                   </p>
-                  <code>{row.summary.rootPath}</code>
-                  {row.summary.lastModified ? (
-                    <p>
-                      修改于{" "}
-                      {formatRahDateTime(row.summary.lastModified, {
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </p>
-                  ) : null}
                 </>
               ) : null}
             </div>
+            {row.summary?.state !== "absent" && row.summary ? (
+              <ComputerWorkspaceDelete
+                client={client}
+                id={row.agentDefinitionId}
+                name={row.handle}
+                onDeleted={() =>
+                  setRows((current) =>
+                    current?.filter(
+                      (item) =>
+                        item.agentDefinitionId !== row.agentDefinitionId,
+                    ),
+                  )
+                }
+              />
+            ) : null}
           </div>
         ))
       )}

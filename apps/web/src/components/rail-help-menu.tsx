@@ -1,55 +1,25 @@
-import { useState } from "react";
-import {
-  InteractivePopover,
-  InteractivePopoverContent,
-  InteractivePopoverTrigger,
-} from "@rah-os/ui-web/neo-brutalist/interactive-popover";
+import { HintTooltip } from "@rah-os/ui-web/neo-brutalist/tooltip";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 
-/** Raft Help's anchored resource menu, limited to the local product's real guide. */
+/** User-requested direct guide entry; no resource popover. */
 export function RailHelpMenu() {
-  const [open, setOpen] = useState(false);
   return (
-    <InteractivePopover open={open} onOpenChange={setOpen}>
-      <div className="rail-footer-item">
-        <InteractivePopoverTrigger
-          hover
-          render={
-            <button
-              type="button"
-              className={`rail-btn${open ? " is-active" : ""}`}
-              aria-label="帮助"
-              aria-haspopup="dialog"
-              aria-expanded={open}
-            >
-              <Icon name="circle-question-mark" />
-            </button>
-          }
-        />
-        <InteractivePopoverContent
-          blocked={false}
-          label="帮助与资源"
-          className="rah-rail-help-menu"
+    <div className="rail-footer-item">
+      <HintTooltip content="帮助">
+        <button
+          type="button"
+          className="rail-btn"
+          aria-label="帮助"
+          onClick={() => {
+            const url = new URL(window.location.href);
+            url.searchParams.set("surface", "settings");
+            url.searchParams.set("settingsSection", "docs");
+            window.location.assign(url.toString());
+          }}
         >
-          <header>帮助与资源</header>
-          <a
-            href="/help/local-workbench.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => setOpen(false)}
-          >
-            <Icon name="book-open" />
-            <span>本机操作指南</span>
-          </a>
-          <a
-            href="/?surface=settings&settingsSection=feedback"
-            onClick={() => setOpen(false)}
-          >
-            <Icon name="message-square" />
-            <span>反馈</span>
-          </a>
-        </InteractivePopoverContent>
-      </div>
-    </InteractivePopover>
+          <Icon name="circle-question-mark" />
+        </button>
+      </HintTooltip>
+    </div>
   );
 }

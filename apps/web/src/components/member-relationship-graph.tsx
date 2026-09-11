@@ -162,7 +162,7 @@ export function MemberRelationshipSurface({
             <span>{data ? members.length : null}</span>
           </div>
           <button
-            className="btn-brutal-sm"
+            className="btn"
             disabled={loading || workspaceId === undefined}
             onClick={() => setReload((value) => value + 1)}
             type="button"

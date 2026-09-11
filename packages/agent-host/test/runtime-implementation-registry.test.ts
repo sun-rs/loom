@@ -251,6 +251,12 @@ rl.on("line", (line) => {
       "app-server",
       "-c",
       'mcp_servers.rah.url="http://127.0.0.1:43111/mcp"',
+      "-c",
+      "features.memories=false",
+      "-c",
+      "memories.generate_memories=false",
+      "-c",
+      "memories.use_memories=false",
       "--listen",
       "stdio://",
     ]);

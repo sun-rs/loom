@@ -15,11 +15,18 @@ try {
   await page.goto(
     server.resolvedUrls.local[0] + "test/settings-visual-fixture.html",
   );
+  await page.clock.install();
   for (const name of ["设置", "搜索", "聊天", "Agent 与成员", "计算机"]) {
     const button = page.getByRole("button", { name, exact: true });
     assert.equal(await button.getAttribute("title"), null);
     await button.hover();
     const tip = page.getByRole("tooltip", { name, exact: true });
+    await page.clock.runFor(50);
+    assert.equal(
+      await tip.count(),
+      1,
+      "Raft root provider has zero opening delay",
+    );
     await tip.waitFor();
     assert.equal(await tip.innerText(), name);
     const style = await tip.evaluate((e) => ({

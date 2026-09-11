@@ -590,6 +590,7 @@ test("threadIds constrain indexed search to one authorized Thread", () => {
     assert.equal(result.total, 1);
     assert.equal(result.hits[0]?.message.threadId, first.threadId);
     assert.equal(result.hits[0]?.message.body, "thread-local needle first");
+    assert.equal(result.hits[0]?.rootMessagePreview, "first searchable thread");
   } finally {
     f.close();
   }
@@ -1076,6 +1077,23 @@ test("unfollowed long threads do not re-scan all replies once per message", (t) 
     assert.ok(
       elapsed < 1000,
       "thread eligibility must be computed per thread, not per message",
+    );
+  } finally {
+    f.close();
+  }
+});
+
+test("Search directory preserves canonical DM participants for identity cards", () => {
+  const f = fixture();
+  try {
+    const result = f.kernel.searchWorkspace(f.actor, {
+      workspaceId: f.workspaceId,
+      query: "",
+    });
+    assert.equal(
+      result.rooms.find((room) => room.roomId === f.direct.roomId)
+        ?.directParticipantIds?.length,
+      2,
     );
   } finally {
     f.close();

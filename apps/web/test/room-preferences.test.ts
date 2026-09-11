@@ -41,7 +41,7 @@ test("Room long-message preference keeps the current Raft wording", () => {
     source,
     /超过预览高度的消息折叠在「显示更多」开关后。关闭后此频道的长消息始终完整显示。/u,
   );
-  assert.match(source, /通知所有新消息/u);
+  assert.doesNotMatch(source, /通知所有新消息/u);
 });
 
 test("sidebar preferences clear a transient read error after recovery", () => {

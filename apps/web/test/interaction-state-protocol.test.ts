@@ -317,7 +317,7 @@ test("the Raft strong-lift source inventory and local consumers remain auditable
 });
 
 test("search, tasks, and account settings do not leak native browser button states", () => {
-  const discovery = read("components/global-discovery.tsx");
+  const discovery = read("components/search-cards.tsx");
   const taskToolbar = read("components/task-toolbar.tsx");
   const settings = read("components/settings-pages.tsx");
 

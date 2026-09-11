@@ -43,8 +43,8 @@ try {
           .getByRole("button", { name: "选择 Agent", exact: true })
           .click();
         await agentSection
-          .getByRole("checkbox", { name: "全选 Agent", exact: true })
-          .check();
+          .getByRole("button", { name: "全选 Agent", exact: true })
+          .click();
         const mutationKeys = [];
         let invocation = 0;
         await page.route("**/v3/client/agents/manage", async (route) => {
@@ -65,11 +65,11 @@ try {
           else await route.continue();
         });
         await agentSection
-          .getByRole("button", { name: "停用所选", exact: true })
+          .getByRole("button", { name: "停止", exact: true })
           .click();
         await agentSection.getByRole("alert").waitFor();
         await agentSection
-          .getByRole("button", { name: "停用所选", exact: true })
+          .getByRole("button", { name: "停止", exact: true })
           .click();
         await agentSection.getByText("已完成 2 项", { exact: true }).waitFor();
         assert.equal(mutationKeys.length, 3);
@@ -94,7 +94,7 @@ try {
         }
         await assertStates("disabled");
         await agentSection
-          .getByRole("button", { name: "启用所选", exact: true })
+          .getByRole("button", { name: "启动", exact: true })
           .click();
         await agentSection.getByText("已完成 2 项", { exact: true }).waitFor();
         await assertStates("enabled");
@@ -120,7 +120,7 @@ try {
         });
         await scan.click();
         const region = page.getByRole("region", {
-          name: "工作区扫描",
+          name: "AGENT 工作区",
           exact: true,
         });
         await region

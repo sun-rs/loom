@@ -1,3 +1,4 @@
+import { useConversationLayout } from "./use-conversation-layout.ts";
 import { createAgentConfigureCommand } from "./agent-configure-command.ts";
 import { useSearchChannelPreview } from "./use-search-channel-preview.ts";
 import { PublicChannelPreview } from "./components/public-channel-preview.tsx";
@@ -258,6 +259,7 @@ function WorkspaceScreen({
     setWidth: setThreadPanelWidth,
     commit: commitThreadPanelWidth,
   } = useThreadPanelWidth();
+  const conversationLayout = useConversationLayout(roomSidebarWidth);
   const { rememberThreadFocus, restoreThreadFocus } = useThreadFocusReturn();
   const [health, setHealth] = useState<ClientHealthResponse>();
   const [currentPrincipal, setCurrentPrincipal] = useState<Principal>();
@@ -3051,12 +3053,14 @@ function WorkspaceScreen({
       });
       setPeekAgentId(undefined);
     },
+    onPeekAgent: (id: string) => setPeekAgentId(id),
     onRouteChange: navigateAgentRoute,
     onChangeHumanRole: changeWorkspaceHumanRole,
     runtimes: localRuntimes,
     workspaceId: activeWorkspace?.workspaceId,
   };
-  const peekOpen = surface === "room" && peekAgentId !== undefined;
+  const peekOpen =
+    (surface === "room" || surface === "agents") && peekAgentId !== undefined;
   const openMobileHome = useCallback(() => {
     setActiveThreadRootMessageId(undefined);
     setFocusedMessageId(undefined);
@@ -3185,6 +3189,8 @@ function WorkspaceScreen({
               onOpenChange={setHumanInboxOpen}
             >
               <div
+                ref={conversationLayout.ref}
+                data-conversation-layout={conversationLayout.mode}
                 className={`app rah-product-shell${globalSurface ? " rah-global-shell" : ""}${taskModalOpen ? " rah-task-modal-open" : ""}${(surface === "search" || surface === "activity") && searchPreview.roomId ? " rah-search-channel-open" : ""}${activeThreadRootMessageId === undefined ? " thread-hidden" : ""}${peekOpen ? " rah-agent-peek-open" : ""}${showMobileNavigation ? " rah-mobile-navigation-visible" : ""}`}
                 style={
                   {
@@ -3685,6 +3691,8 @@ function WorkspaceScreen({
                     {...agentDetailProps}
                     initialAgentDefinitionId={peekAgentId}
                     initialTab="activity"
+                    initialView="agent"
+                    initialHumanPrincipalId={undefined}
                     onRouteChange={undefined}
                     panel
                     onClose={() => {

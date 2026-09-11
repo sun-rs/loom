@@ -74,8 +74,8 @@ try {
           .getByRole("button", { name: "选择 Agent", exact: true })
           .click();
         await section
-          .getByRole("checkbox", { name: "全选 Agent", exact: true })
-          .check();
+          .getByRole("button", { name: "全选 Agent", exact: true })
+          .click();
         for (const [mode, label] of [
           ["restart", "重新启动"],
           ["session", "重置会话并重启"],
@@ -99,7 +99,8 @@ try {
           });
           await dialog
             .getByRole("radio", { name: new RegExp("^" + label) })
-            .check();
+            .locator("..")
+            .click();
           const requests = [],
             responses = [];
           await page.route(

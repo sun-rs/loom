@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { WorkspaceAgentView } from "@rah-os/ui-web";
 import { EntityCard } from "@rah-os/ui-web/neo-brutalist/entity-card";
 import { AgentStatusDot } from "@rah-os/ui-web/neo-brutalist/status-dot";
@@ -11,12 +12,14 @@ export function AgentEntityCard({
   showStatusLabel = false,
   onOpen,
   disabled = false,
+  error,
 }: {
   agent: WorkspaceAgentView;
   runtimeLabel: string | undefined;
   showStatusLabel?: boolean;
   onOpen: (id: string) => void;
   disabled?: boolean;
+  error?: ReactNode;
 }) {
   const presence = agentPresencePresentation(agent);
   return (
@@ -30,14 +33,15 @@ export function AgentEntityCard({
       trailing={
         <>
           <AgentStatusDot {...presence} className="" size="md" />
-          {showStatusLabel ? (
-            <span
-              className="rah-entity-card-status-label"
-              title={presence.label}
-            >
-              {presence.label}
-            </span>
-          ) : null}
+          {error ??
+            (showStatusLabel ? (
+              <span
+                className="rah-entity-card-status-label"
+                title={presence.label}
+              >
+                {presence.label}
+              </span>
+            ) : null)}
         </>
       }
     />

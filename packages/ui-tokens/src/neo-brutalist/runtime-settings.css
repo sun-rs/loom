@@ -2,8 +2,6 @@
 .rah-runtime-settings {
   display: grid;
   gap: 12px;
-  padding-bottom: 20px;
-  border-bottom: var(--bd);
 }
 .rah-runtime-settings-intro {
   display: grid;
@@ -26,10 +24,17 @@
 }
 .rah-runtime-settings-card {
   background: var(--bg);
-  border: 2px solid var(--ink-30);
+  border: 2px solid var(--black);
   padding: 6px 12px;
+  box-shadow: var(--shadow-s);
+  transition:
+    transform var(--rah-press-transition),
+    box-shadow var(--rah-press-transition);
 }
 .rah-runtime-settings-heading {
+  cursor: pointer;
+  list-style: none;
+  min-height: 44px;
   display: grid;
   grid-template-columns: 24px minmax(0, 1fr) 44px;
   align-items: center;
@@ -65,26 +70,49 @@
   line-height: 20px;
   white-space: nowrap;
 }
-.rah-runtime-settings-control {
+.rah-runtime-settings-heading::-webkit-details-marker {
+  display: none;
+}
+.rah-runtime-disclosure {
+  justify-self: center;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+}
+.rah-runtime-provider-details[open] > summary .rah-runtime-disclosure {
+  transform: rotate(225deg);
+}
+.rah-runtime-provider-body {
+  border-top: 1px solid var(--ink-30);
+  padding-top: 6px;
+}
+.rah-settings-check-row.rah-runtime-guide-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  margin: 0;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 32px;
+  font-size: 13px;
 }
-.rah-runtime-settings-control input {
-  height: 20px;
+.rah-settings-check-row.rah-runtime-guide-row small {
+  display: inline;
+  color: var(--ink-70);
+  font-size: 12px;
+  margin-left: 6px;
+}
+.rah-settings-check-row.rah-runtime-guide-row > input {
   width: 20px;
-  margin: 0;
+  height: 20px;
+  flex: none;
+  margin: 0 12px;
 }
-.rah-runtime-settings-control input:disabled {
+.rah-runtime-guide-row input:disabled {
   opacity: 0.4;
-  cursor: not-allowed;
 }
-.rah-runtime-settings-card[data-supported="false"] {
-  filter: grayscale(1);
-  background: var(--bg-sunken, #f3f3f3);
+.rah-runtime-settings-card[data-supported="false"]
+  .rah-settings-check-row.rah-runtime-guide-row {
   color: var(--ink-70);
 }
 @media (max-width: 600px) {
@@ -97,4 +125,88 @@
   .rah-runtime-settings-name {
     gap: 6px;
   }
+}
+
+.rah-runtime-launch-editor {
+  border-top: 1px solid var(--ink-30);
+  margin-top: 4px;
+  padding-top: 4px;
+  font-size: 12px;
+  line-height: 20px;
+}
+.rah-runtime-launch-editor pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 4px 0;
+  padding: 8px;
+  border: 1px solid var(--ink-30);
+}
+.rah-runtime-launch-editor label {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0;
+  font-weight: 700;
+}
+.rah-runtime-launch-editor textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 8px;
+  border: var(--bd);
+  resize: vertical;
+  font: 12px/20px var(--mono);
+}
+.rah-runtime-launch-editor small {
+  color: var(--ink-70);
+}
+.rah-runtime-launch-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.rah-runtime-launch-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.rah-runtime-launch-actions .btn[aria-pressed="true"] {
+  background: var(--yellow);
+}
+.rah-runtime-launch-actions .btn {
+  padding: 6px 10px;
+}
+
+.rah-runtime-launch-fixed {
+  color: var(--ink-70);
+  background: var(--bg-sunken, #f3f3f3);
+  max-height: 160px;
+  overflow: auto;
+  font: 12px/20px var(--mono);
+}
+.rah-runtime-launch-frame {
+  height: 80px;
+  margin: 8px 0;
+}
+.rah-runtime-launch-frame textarea {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  border: var(--bd);
+  padding: 8px;
+  resize: vertical;
+  overflow: auto;
+  font: 12px/20px var(--mono);
+}
+
+/* Raft button hard-shadow/lift parameters; local provider disclosure. */
+.rah-runtime-settings-card:has(> details > summary:hover) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-m);
+}
+.rah-runtime-settings-heading:focus-visible {
+  outline: 2px solid var(--black);
+  outline-offset: 2px;
 }

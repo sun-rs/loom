@@ -41,6 +41,7 @@ const browser = await chromium.launch({ headless: true });
 try {
   await verifyDesktop();
   await verifyMobile();
+  await verifyHistoricalResponse();
   process.stdout.write(
     `${JSON.stringify({
       desktopScreenshot: "/tmp/rah-web-build-recovery-desktop.png",
@@ -70,22 +71,33 @@ async function verifyDesktop() {
     fullPage: false,
   });
   assert.equal(
-    await page.evaluate(() => document.activeElement?.textContent?.trim()),
-    "立即刷新",
+    await page.evaluate(() => document.activeElement?.getAttribute("role")),
+    "dialog",
   );
+  for (const button of await dialog.getByRole("button").all()) {
+    await button.hover();
+    await page.waitForTimeout(150);
+    const style = await button.evaluate((n) => {
+      const s = getComputedStyle(n);
+      return { transform: s.transform, outline: s.outlineColor };
+    });
+    assert.equal(style.transform, "matrix(1, 0, 0, 1, 0, -1)");
+    assert.notEqual(style.outline, "rgb(255, 212, 59)");
+  }
+  assert.equal(
+    await page.locator("[data-refresh]").evaluate((n) => n.tagName),
+    "A",
+  );
+  assert.ok(await page.locator("[data-refresh]").getAttribute("href"));
   assert.equal(page.url(), deepLink);
   await page.getByRole("button", { name: "仍然继续", exact: true }).click();
-  await page.getByRole("status").waitFor({ state: "visible" });
-  assert.match(await page.getByRole("status").innerText(), /有新版本/u);
-
+  assert.equal(await page.locator(".rah-web-build-refresh-banner").count(), 0);
+  assert.equal(await page.locator("#root").evaluate((n) => n.inert), false);
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await page.waitForTimeout(200);
+  assert.equal(await page.getByRole("dialog").count(), 0);
   advertisedBuildId = metadata.webBuildId;
-  await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page
-      .getByRole("status")
-      .getByRole("button", { name: "刷新", exact: true })
-      .click(),
-  ]);
+  await page.reload({ waitUntil: "domcontentloaded" });
   await page.waitForTimeout(250);
   assert.equal(page.url(), deepLink);
   assert.equal(await page.getByRole("dialog").count(), 0);
@@ -122,9 +134,15 @@ async function verifyMobile() {
     fullPage: false,
   });
 
+  await page.evaluate(() =>
+    Object.defineProperty(navigator.serviceWorker, "getRegistrations", {
+      configurable: true,
+      value: () => new Promise(() => {}),
+    }),
+  );
   advertisedBuildId = metadata.webBuildId;
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 5000 }),
     refresh.click(),
   ]);
   await page.waitForTimeout(250);
@@ -175,4 +193,31 @@ function contentType(filePath) {
       ".woff2": "font/woff2",
     }[extname(filePath)] ?? "application/octet-stream"
   );
+}
+
+async function verifyHistoricalResponse() {
+  advertisedBuildId = metadata.webBuildId;
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto(deepLink, { waitUntil: "domcontentloaded" });
+  await page.route("**/historical-response", (route) =>
+    route.fulfill({
+      status: 200,
+      headers: { "x-rah-web-build-id": "cached-old-build" },
+      body: "old cached resource",
+    }),
+  );
+  const completed = await page.evaluate(async () =>
+    Promise.race([
+      fetch("/historical-response").then(() => true),
+      new Promise((resolve) => setTimeout(() => resolve(false), 1500)),
+    ]),
+  );
+  assert.equal(
+    completed,
+    true,
+    "historical resource must not block a current page",
+  );
+  assert.equal(await page.getByRole("dialog").count(), 0);
+  await context.close();
 }
