@@ -110,15 +110,11 @@
   gap: 8px;
   width: 100%;
   border: 0;
-  background: white;
   color: inherit;
   padding: 8px 12px;
   text-align: left;
   cursor: pointer;
   font: inherit;
-}
-.rah-room-add-candidate:hover:not(:disabled) {
-  background: var(--yellow);
 }
 .rah-room-add-candidate > span:last-child {
   min-width: 0;
@@ -149,7 +145,6 @@
   background: var(--pink);
 }
 .rah-room-add-candidate:disabled {
-  opacity: 0.5;
   cursor: default;
 }
 .rah-room-add-submit {
@@ -332,11 +327,6 @@
 }
 .rah-room-member-entry[role="button"] > [role="img"]:hover {
   filter: brightness(0.9);
-}
-.rah-room-member-entry:hover,
-.rah-room-member-entry:focus-within {
-  /* The maintained token already contains Raft's 30% alpha. */
-  background: var(--soft-signal);
 }
 .rah-room-member-human .rah-room-member-entry > b {
   font-weight: 700;

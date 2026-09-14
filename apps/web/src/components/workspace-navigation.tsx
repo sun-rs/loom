@@ -1,3 +1,5 @@
+import { useMobileLayout } from "../use-mobile-layout.ts";
+import { sidebarPreviewPatch } from "../sidebar-drag-layout.ts";
 import { SidebarSortableGroup } from "./sidebar-drag.tsx";
 import { SidebarGroupActions } from "./sidebar-group-actions.tsx";
 import {
@@ -18,20 +20,13 @@ import {
   SidebarDragItem,
   SidebarDropZone,
 } from "./sidebar-drag.tsx";
-import {
-  sortSidebar,
-  sidebarDrop,
-  type SidebarSectionId,
-} from "../sidebar-order.ts";
+import { sortSidebar, type SidebarSectionId } from "../sidebar-order.ts";
 import { DiscoveryFilter } from "./discovery-filter.tsx";
 import { SidebarSection } from "./sidebar-section.tsx";
 import { useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { directConversationEntries } from "../direct-conversation-entries.ts";
-import {
-  activeMobileNavigation,
-  type WorkspaceAgentView,
-} from "@rah-os/ui-web";
+import { type WorkspaceAgentView } from "@rah-os/ui-web";
 
 import { AgentAvatar } from "./agent-avatar.tsx";
 import { AgentStatusDot } from "./agent-status-dot.tsx";
@@ -314,8 +309,6 @@ export function RoomSidebar({
           ? p.channelOrder
           : p.dmOrder,
       preferences?.data?.recent ?? {},
-    ).sort(
-      (a, b) => Number(b.room?.slug === "all") - Number(a.room?.slug === "all"),
     );
   const opening = useRef(false);
   const [openingPeer, setOpeningPeer] = useState<string>();
@@ -335,17 +328,6 @@ export function RoomSidebar({
     }
   }
   const disabled = !preferences?.data || preferences.pending;
-  const drop = (key: string, section: SidebarSectionId, target?: string) => {
-    if (disabled) return;
-    const patch = sidebarDrop(
-      p,
-      key,
-      section,
-      target,
-      group(section).map((e) => e.key),
-    );
-    if (patch) void preferences.patch(patch);
-  };
   const pin = (key: string) => {
     if (disabled) return;
     void preferences.patch({
@@ -371,6 +353,10 @@ export function RoomSidebar({
       ["pinned", "channels", "dms"].includes(id) ||
       p.customSections.some((s) => `custom:${s.id}` === id),
   );
+  const mobile = useMobileLayout();
+  // Hidden mobile rows must stay unselected too: removing pink only when
+  // opening the list would animate its 150ms fade into the return transition.
+  const showConversationSelection = !mobile;
   const render = (row: Entry, section: SidebarSectionId) => {
     const room = row.room,
       entry = row.direct,
@@ -406,7 +392,7 @@ export function RoomSidebar({
             {room ? (
               <div className="rah-sidebar-channel-entry">
                 <button
-                  className={`channel-row${room.roomId === activeRoomId && !savedActive ? " is-selected" : ""}`}
+                  className={`channel-row${showConversationSelection && room.roomId === activeRoomId && !savedActive ? " is-selected" : ""}`}
                   onClick={() => onSelect(room.roomId)}
                 >
                   <Icon
@@ -436,7 +422,7 @@ export function RoomSidebar({
                   openingPeer !== undefined ||
                   (entry.roomId === undefined && !canMessage)
                 }
-                className={`channel-row rah-direct-room-row${entry.roomId !== undefined && entry.roomId === activeRoomId && !savedActive ? " is-selected" : ""}`}
+                className={`channel-row rah-direct-room-row${showConversationSelection && entry.roomId !== undefined && entry.roomId === activeRoomId && !savedActive ? " is-selected" : ""}`}
                 onClick={() =>
                   entry.roomId !== undefined
                     ? onSelect(entry.roomId)
@@ -542,10 +528,46 @@ export function RoomSidebar({
             </p>
           )}
           <SidebarDrag
-            onDrop={drop}
-            sections={sectionIds}
-            onReorder={(sectionOrder) => {
-              if (!disabled) void preferences?.patch({ sectionOrder });
+            layout={{
+              version: p.version,
+              sections: sectionIds,
+              items: Object.fromEntries(
+                sectionIds.map((id) => {
+                  const custom = p.customSections.find(
+                    (s) => `custom:${s.id}` === id,
+                  );
+                  return [
+                    id,
+                    custom
+                      ? custom.items.filter(
+                          (key) =>
+                            all.some((row) => row.key === key) &&
+                            !p.pinned.includes(key),
+                        )
+                      : group(id as SidebarSectionId).map((row) => row.key),
+                  ];
+                }),
+              ),
+            }}
+            disabled={disabled}
+            manualSections={sectionIds.filter(
+              (id) =>
+                id.startsWith("custom:") ||
+                (id === "pinned"
+                  ? p.pinnedSortMode
+                  : id === "channels"
+                    ? p.channelSortMode
+                    : p.dmSortMode) === "manual",
+            )}
+            onCommit={async (layout) => {
+              if (disabled || layout.version !== p.version) return false;
+              return preferences.patch(
+                sidebarPreviewPatch(
+                  p,
+                  layout,
+                  new Set(all.map((row) => row.key)),
+                ),
+              );
             }}
             labels={Object.fromEntries([
               ...all.map((row) => [row.key, row.label]),
@@ -558,40 +580,131 @@ export function RoomSidebar({
               ]),
             ])}
           >
-            {sectionIds.map((id) => {
-              const section = id as SidebarSectionId;
-              const custom = p.customSections.find(
-                (s) => `custom:${s.id}` === id,
-              );
-              if (custom) {
-                const rows = sortSidebar(
-                  all.filter(
-                    (row) =>
-                      custom.items.includes(row.key) &&
-                      !p.pinned.includes(row.key),
-                  ),
-                  "manual",
-                  custom.items,
-                  {},
+            {(layout) =>
+              layout.sections.map((id) => {
+                const section = id as SidebarSectionId;
+                const custom = p.customSections.find(
+                  (s) => `custom:${s.id}` === id,
                 );
+                if (custom) {
+                  const rows = (layout.items[id] ?? []).flatMap((key) => {
+                    const row = all.find((r) => r.key === key);
+                    return row ? [row] : [];
+                  });
+                  return (
+                    <SidebarSortableGroup key={id} id={id} disabled={disabled}>
+                      <SidebarGroupActions id={id}>
+                        <div>
+                          <SidebarDropZone
+                            section={section}
+                            items={rows.map((r) => r.key)}
+                          >
+                            <SidebarSection
+                              label={[custom.emoji, custom.name]
+                                .filter(Boolean)
+                                .join(" ")}
+                              count={rows.length}
+                            >
+                              {rows.length ? (
+                                rows.map((row) => render(row, section))
+                              ) : (
+                                <p className="side-hint">暂无会话</p>
+                              )}
+                            </SidebarSection>
+                          </SidebarDropZone>
+                        </div>
+                      </SidebarGroupActions>
+                    </SidebarSortableGroup>
+                  );
+                }
+                const rows = (layout.items[id] ?? []).flatMap((key) => {
+                    const row = all.find((r) => r.key === key);
+                    return row ? [row] : [];
+                  }),
+                  label =
+                    section === "pinned"
+                      ? "已置顶"
+                      : section === "channels"
+                        ? "频道"
+                        : "私信",
+                  field =
+                    section === "pinned"
+                      ? "pinnedSortMode"
+                      : section === "channels"
+                        ? "channelSortMode"
+                        : "dmSortMode";
                 return (
-                  <SidebarSortableGroup key={id} id={id}>
-                    <SidebarGroupActions id={id}>
+                  <SidebarSortableGroup
+                    key={section}
+                    id={section}
+                    disabled={disabled}
+                  >
+                    <SidebarGroupActions id={section}>
                       <div>
                         <SidebarDropZone
                           section={section}
                           items={rows.map((r) => r.key)}
                         >
                           <SidebarSection
-                            label={[custom.emoji, custom.name]
-                              .filter(Boolean)
-                              .join(" ")}
+                            label={label}
                             count={rows.length}
+                            unread={rows.some(
+                              (row) =>
+                                (unread(row.room?.roomId ?? row.direct?.roomId)
+                                  ?.unreadCount ?? 0) > 0,
+                            )}
+                            action={
+                              <div className="rah-sidebar-section-actions">
+                                <DiscoveryFilter
+                                  label={`${label}排序`}
+                                  icon="arrow-up-down"
+                                  className="rah-sidebar-sort"
+                                  variant="sidebar"
+                                  triggerLabel=""
+                                  triggerAriaLabel={`${label}排序`}
+                                  multiple={false}
+                                  searchable={false}
+                                  clearable={false}
+                                  selected={false}
+                                  showCount={false}
+                                  disabled={disabled}
+                                  values={[p[field]]}
+                                  options={[
+                                    { id: "manual", label: "手动" },
+                                    { id: "recent", label: "最近" },
+                                    { id: "az", label: "A-Z" },
+                                  ]}
+                                  onChange={([mode]) => {
+                                    if (mode)
+                                      void preferences?.patch({
+                                        [field]: mode,
+                                      });
+                                  }}
+                                />
+                                {section === "channels" && (
+                                  <button
+                                    aria-label="新建频道"
+                                    className="rah-side-create rah-interaction-flat"
+                                    disabled={!canCreate}
+                                    onClick={onCreate}
+                                    title="新建频道"
+                                  >
+                                    <Icon name="plus" />
+                                  </button>
+                                )}
+                              </div>
+                            }
                           >
                             {rows.length ? (
                               rows.map((row) => render(row, section))
                             ) : (
-                              <p className="side-hint">暂无会话</p>
+                              <p className="side-hint">
+                                {section === "pinned"
+                                  ? "将频道或私信拖到这里置顶"
+                                  : section === "channels"
+                                    ? "还没有频道"
+                                    : "暂无可私信的成员"}
+                              </p>
                             )}
                           </SidebarSection>
                         </SidebarDropZone>
@@ -599,94 +712,8 @@ export function RoomSidebar({
                     </SidebarGroupActions>
                   </SidebarSortableGroup>
                 );
-              }
-              const rows = group(section),
-                label =
-                  section === "pinned"
-                    ? "已置顶"
-                    : section === "channels"
-                      ? "频道"
-                      : "私信",
-                field =
-                  section === "pinned"
-                    ? "pinnedSortMode"
-                    : section === "channels"
-                      ? "channelSortMode"
-                      : "dmSortMode";
-              return (
-                <SidebarSortableGroup key={section} id={section}>
-                  <SidebarGroupActions id={section}>
-                    <div>
-                      <SidebarDropZone
-                        section={section}
-                        items={rows.map((r) => r.key)}
-                      >
-                        <SidebarSection
-                          label={label}
-                          count={rows.length}
-                          unread={rows.some(
-                            (row) =>
-                              (unread(row.room?.roomId ?? row.direct?.roomId)
-                                ?.unreadCount ?? 0) > 0,
-                          )}
-                          action={
-                            <div className="rah-sidebar-section-actions">
-                              <DiscoveryFilter
-                                label={`${label}排序`}
-                                icon="arrow-up-down"
-                                className="rah-sidebar-sort"
-                                variant="sidebar"
-                                triggerLabel=""
-                                triggerAriaLabel={`${label}排序`}
-                                multiple={false}
-                                searchable={false}
-                                clearable={false}
-                                selected={false}
-                                showCount={false}
-                                disabled={disabled}
-                                values={[p[field]]}
-                                options={[
-                                  { id: "manual", label: "手动" },
-                                  { id: "recent", label: "最近" },
-                                  { id: "az", label: "A-Z" },
-                                ]}
-                                onChange={([mode]) => {
-                                  if (mode)
-                                    void preferences?.patch({ [field]: mode });
-                                }}
-                              />
-                              {section === "channels" && (
-                                <button
-                                  aria-label="新建频道"
-                                  className="rah-side-create rah-interaction-flat"
-                                  disabled={!canCreate}
-                                  onClick={onCreate}
-                                  title="新建频道"
-                                >
-                                  <Icon name="plus" />
-                                </button>
-                              )}
-                            </div>
-                          }
-                        >
-                          {rows.length ? (
-                            rows.map((row) => render(row, section))
-                          ) : (
-                            <p className="side-hint">
-                              {section === "pinned"
-                                ? "将频道或私信拖到这里置顶"
-                                : section === "channels"
-                                  ? "还没有频道"
-                                  : "暂无可私信的成员"}
-                            </p>
-                          )}
-                        </SidebarSection>
-                      </SidebarDropZone>
-                    </div>
-                  </SidebarGroupActions>
-                </SidebarSortableGroup>
-              );
-            })}
+              })
+            }
           </SidebarDrag>
         </div>
       </ChatContextActions>
@@ -771,123 +798,38 @@ export function ChannelHeader({
           </p>
         </div>
       </div>
-      {direct ? null : (
+      {!direct || onCloseSearchPreview ? (
         <div className="head-actions">
-          <PanelHeaderAction
-            onClick={onSearch}
-            aria-label="搜索当前对话"
-            title="搜索当前对话"
-          >
-            <Icon name="search" />
-          </PanelHeaderAction>
-          <PanelHeaderAction
-            className="rah-channel-options"
-            onClick={onManageAgents}
-            aria-label="频道详情与设置"
-            title={`频道详情与设置（${memberCount} 位成员）`}
-          >
-            <Icon name="settings" />
-          </PanelHeaderAction>
+          {!direct && (
+            <>
+              <PanelHeaderAction
+                onClick={onSearch}
+                aria-label="搜索当前对话"
+                title="搜索当前对话"
+              >
+                <Icon name="search" />
+              </PanelHeaderAction>
+              <PanelHeaderAction
+                className="rah-channel-options"
+                onClick={onManageAgents}
+                aria-label="频道详情与设置"
+                title={`频道详情与设置（${memberCount} 位成员）`}
+              >
+                <Icon name="settings" />
+              </PanelHeaderAction>
+            </>
+          )}
+          {onCloseSearchPreview ? (
+            <PanelHeaderAction
+              className="rah-search-preview-close"
+              aria-label="关闭搜索预览"
+              onClick={onCloseSearchPreview}
+            >
+              <Icon name="x" />
+            </PanelHeaderAction>
+          ) : null}
         </div>
-      )}
-      {onCloseSearchPreview ? (
-        <PanelHeaderAction
-          className="rah-search-preview-close"
-          aria-label="关闭搜索预览"
-          onClick={onCloseSearchPreview}
-        >
-          <Icon name="x" />
-        </PanelHeaderAction>
       ) : null}
     </PanelHeader>
-  );
-}
-
-export function MobileNavigation({
-  activeSurface,
-  onAgents,
-  onHome,
-  onSettings,
-  onTasks,
-  mobileHomeOpen,
-}: {
-  activeSurface: Surface;
-  onAgents: () => void;
-  onHome: () => void;
-  onSettings: () => void;
-  onTasks: () => void;
-  mobileHomeOpen: boolean;
-}) {
-  const activeDestination = activeMobileNavigation({
-    activeSurface,
-    homeOpen: mobileHomeOpen,
-  });
-  return (
-    <nav className="rah-mobile-nav" aria-label="移动端主导航">
-      <MobileNavigationButton
-        active={activeDestination === "home"}
-        icon="home"
-        label="主页"
-        onClick={onHome}
-      />
-      <MobileNavigationButton
-        active={activeDestination === "tasks"}
-        icon="task"
-        label="任务"
-        onClick={onTasks}
-      />
-      <MobileNavigationButton
-        active={activeDestination === "members"}
-        icon="members"
-        label="成员"
-        onClick={onAgents}
-      />
-      <MobileNavigationButton
-        active={activeDestination === "settings"}
-        icon="gear"
-        label="设置"
-        onClick={onSettings}
-      />
-    </nav>
-  );
-}
-
-function MobileNavigationButton({
-  active,
-  badge = 0,
-  dot = false,
-  icon,
-  label,
-  onClick,
-}: {
-  active: boolean;
-  badge?: number;
-  dot?: boolean;
-  icon: string;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      aria-label={
-        badge > 0
-          ? `${label}，${badge} 项待处理`
-          : dot
-            ? `${label}，有待处理事项`
-            : label
-      }
-      className={active ? "is-active" : undefined}
-      onClick={onClick}
-      type="button"
-    >
-      <Icon name={icon} />
-      <span>{label}</span>
-      {dot && <span className="rah-status-dot" aria-hidden="true" />}
-      {badge > 0 ? (
-        <b className="rah-mobile-nav-badge" aria-hidden="true">
-          {badge > 99 ? "99+" : badge}
-        </b>
-      ) : null}
-    </button>
   );
 }

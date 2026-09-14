@@ -1,5 +1,6 @@
 import { ContextMenu } from "@base-ui/react/context-menu";
-import { useRef, type ReactElement, type ReactNode } from "react";
+import { useTouchMenuLock } from "./touch-menu-lock.tsx";
+import { useState, useRef, type ReactElement, type ReactNode } from "react";
 
 export type ContextAction = {
   key: string;
@@ -62,20 +63,36 @@ export function ContextActions({
   items: readonly ContextAction[];
 }) {
   const suppressTouchClick = useRef(false);
+  const [touchOpen, setTouchOpen] = useState(false);
+  useTouchMenuLock(touchOpen);
   return (
     <ContextMenu.Root
       onOpenChange={(open, details) => {
-        if (open && details.event.type === "touchstart")
+        if (!open) {
+          if (
+            touchOpen &&
+            details.reason === "outside-press" &&
+            (details.event.type === "touchmove" ||
+              details.event.type === "touchend")
+          ) {
+            details.cancel();
+            return;
+          }
+          setTouchOpen(false);
+        }
+        if (open && details.event.type === "touchstart") {
           suppressTouchClick.current = true;
+          setTouchOpen(true);
+        }
       }}
     >
       <ContextMenu.Trigger
         render={trigger}
         onPointerDown={() => {
-          suppressTouchClick.current = false;
+          if (!touchOpen) suppressTouchClick.current = false;
         }}
         onTouchStart={() => {
-          suppressTouchClick.current = false;
+          if (!touchOpen) suppressTouchClick.current = false;
         }}
         onClickCapture={(event) => {
           // A long press belongs to the menu, not the trigger's normal action.
@@ -86,7 +103,17 @@ export function ContextActions({
             event.stopPropagation();
           }
         }}
-        onContextMenu={(event) => event.stopPropagation()}
+        onTouchEnd={(event) => {
+          if (touchOpen) event.preventDefault();
+        }}
+        onContextMenu={(event) => {
+          event.stopPropagation();
+          // A native follow-up contextmenu must not move the already-open menu.
+          if (touchOpen) {
+            event.preventDefault();
+            event.preventBaseUIHandler();
+          }
+        }}
         onKeyDown={(event) => {
           if (
             event.key !== "ContextMenu" &&
@@ -106,6 +133,11 @@ export function ContextActions({
         }}
       />
       <ContextMenu.Portal>
+        {touchOpen && (
+          <ContextMenu.Backdrop
+            style={{ position: "fixed", inset: 0, zIndex: 99 }}
+          />
+        )}
         <ContextMenu.Positioner collisionPadding={8} style={{ zIndex: 100 }}>
           <ContextMenu.Popup aria-label={label} className="rah-context-actions">
             <Items items={items} />

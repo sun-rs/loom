@@ -224,6 +224,10 @@ try {
       await expect(profile).toBeVisible();
       await expect(channel).toBeHidden();
       if (width === 390) {
+        await expect(
+          page.getByRole("navigation", { name: "移动端主导航" }),
+        ).toBeHidden();
+        await expect(profile).toBeVisible();
         assert.ok(
           Math.abs((await profile.boundingBox()).width - width) < 2,
           "mobile target fills viewport",
@@ -321,6 +325,12 @@ try {
         .evaluate((el) => getComputedStyle(el).backgroundColor),
       "rgba(0, 0, 0, 0)",
     );
+    if (width === 390) {
+      await expect(
+        page.getByRole("navigation", { name: "移动端主导航" }),
+      ).toBeHidden();
+      await expect(modal).toBeVisible();
+    }
     await page.screenshot({
       animations: "disabled",
       path: `/tmp/rah-two-pages-${engine.name()}-task-modal-${width}.png`,

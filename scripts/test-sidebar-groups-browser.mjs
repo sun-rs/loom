@@ -49,7 +49,14 @@ try {
   await edit.getByPlaceholder("我的项目").fill("工作");
   await edit.getByRole("button", { name: "保存", exact: true }).click();
   await expect(header(id)).toContainText("工作");
-  async function drag(source, target) {
+  async function drag(source, target, cancel = false) {
+    const sourceKey = await source.getAttribute("data-sidebar-key");
+    const sourceGroup = await source.evaluate((el) =>
+      el.closest("[data-sidebar-group]").getAttribute("data-sidebar-group"),
+    );
+    const targetGroup = await target.evaluate((el) =>
+      el.closest("[data-sidebar-group]").getAttribute("data-sidebar-group"),
+    );
     const a = await source.boundingBox(),
       z = await target.boundingBox();
     assert.ok(a && z);
@@ -58,6 +65,63 @@ try {
     await p.mouse.move(a.x + a.width / 2 + 8, a.y + a.height / 2, { steps: 3 });
     await p.mouse.move(z.x + z.width / 2, z.y + z.height / 2, { steps: 20 });
     await p.waitForTimeout(250);
+    if (
+      sourceKey &&
+      sourceGroup !== targetGroup &&
+      targetGroup.startsWith("custom:")
+    ) {
+      await expect(
+        p.locator(
+          `[data-sidebar-group="${targetGroup}"] [data-sidebar-key="${sourceKey}"]`,
+        ),
+      ).toHaveCount(1);
+      await expect(
+        p.locator(
+          `[data-sidebar-group="${sourceGroup}"] [data-sidebar-key="${sourceKey}"]`,
+        ),
+      ).toHaveCount(0);
+    }
+    const decorations = await p
+      .locator(".rah-sidebar-sortable.is-over, .rah-sidebar-drop.is-over")
+      .evaluateAll((nodes) =>
+        nodes.map((node) => ({
+          outline: getComputedStyle(node).outlineStyle,
+          line: getComputedStyle(node, "::after").borderBottomWidth,
+        })),
+      );
+    assert.ok(
+      decorations.every((d) => d.outline === "none" && d.line === "0px"),
+      "drag feedback uses displacement, not dashed group outlines or item underlines",
+    );
+    const isGroup = !sourceKey;
+    const moving = sourceKey
+      ? p.locator(`[data-sidebar-key="${sourceKey}"]`)
+      : source;
+    const opacity = await moving.evaluate(
+      (el) =>
+        getComputedStyle(
+          el.closest("[data-sidebar-key]") ??
+            el.closest("[data-sidebar-group]"),
+        ).opacity,
+    );
+    assert.equal(opacity, isGroup ? "0.6" : "0.12");
+    if (isGroup)
+      await expect(p.locator(".rah-sidebar-drag-preview")).toHaveCount(0);
+    else {
+      await expect(p.locator(".rah-sidebar-drag-preview")).toBeVisible();
+      assert.match(
+        await p
+          .locator(".rah-sidebar-drag-preview")
+          .evaluate((el) => getComputedStyle(el).backgroundColor),
+        /^(rgb\(255, 255, 255\)|oklch\(1 0 0\))$/,
+      );
+    }
+    await p.screenshot({
+      path: isGroup
+        ? "/tmp/rah-sidebar-group-drag-active.png"
+        : "/tmp/rah-sidebar-drag-active.png",
+    });
+    if (cancel) await p.keyboard.press("Escape");
     await p.mouse.up();
     await p.waitForTimeout(350);
   }
@@ -98,6 +162,59 @@ try {
   const firstKey = await entries.first().getAttribute("data-sidebar-key");
   await drag(entries.first(), entries.last());
   await expect(entries.last()).toHaveAttribute("data-sidebar-key", firstKey);
+  // A slow durable save must not snap the preview back while waiting.
+  let releaseSave;
+  let patchCalls = 0;
+  await p.route("**/sidebar/patch", async (route) => {
+    patchCalls++;
+    await new Promise((resolve) => {
+      releaseSave = resolve;
+    });
+    await route.continue();
+  });
+  const slowKey = await entries.first().getAttribute("data-sidebar-key");
+  await drag(entries.first(), entries.last());
+  await expect(entries.last()).toHaveAttribute("data-sidebar-key", slowKey);
+  assert.equal(patchCalls, 1, "preview movement sends only one final write");
+  await p.waitForTimeout(500);
+  await expect(entries.last()).toHaveAttribute("data-sidebar-key", slowKey);
+  const savedResponse = p.waitForResponse((response) =>
+    response.url().endsWith("/sidebar/patch"),
+  );
+  releaseSave();
+  await savedResponse;
+  await p.unroute("**/sidebar/patch");
+  await expect(p.locator("[data-sidebar-key][aria-disabled=true]")).toHaveCount(
+    0,
+  );
+  await p.reload();
+  await expect(entries.last()).toHaveAttribute("data-sidebar-key", slowKey);
+  // Failed writes restore the confirmed order, rather than leaving fake success.
+  const failedFirst = await entries.first().getAttribute("data-sidebar-key");
+  await p.route("**/sidebar/patch", (route) =>
+    route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({ error: "fixture denied save" }),
+    }),
+  );
+  await drag(entries.first(), entries.last());
+  await expect(entries.first()).toHaveAttribute(
+    "data-sidebar-key",
+    failedFirst,
+  );
+  await expect(p.getByRole("alert")).toBeVisible();
+  await p.unroute("**/sidebar/patch");
+  const cancelOrder = await entries.evaluateAll((nodes) =>
+    nodes.map((n) => n.getAttribute("data-sidebar-key")),
+  );
+  await drag(entries.first(), entries.last(), true);
+  assert.deepEqual(
+    await entries.evaluateAll((nodes) =>
+      nodes.map((n) => n.getAttribute("data-sidebar-key")),
+    ),
+    cancelOrder,
+  );
   await p.getByRole("button", { name: "已保存", exact: true }).click();
   await p.mouse.move(1000, 700);
   assert.match(

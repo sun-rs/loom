@@ -1,0 +1,48 @@
+/* RAH structural presentation contract; Raft index-MqTUR4Ez, 2026-09-14
+   source matrix: docs/audits/2026-09-14-agent-choice-hover-contract.zh-CN.md.
+   A surface's placement never selects its palette. Alpha is applied once. */
+.rah-choice-row {
+  background: transparent;
+}
+.rah-choice-row[data-choice-profile="member-selection"]:hover:where(
+    :not(:disabled, [aria-disabled="true"], [data-disabled])
+  ) {
+  background: var(--yellow);
+}
+.rah-choice-row[data-choice-profile="member-browse"]:where(
+    :hover,
+    :focus-within
+  ):where(:not(:disabled, [aria-disabled="true"], [data-disabled])),
+.rah-choice-row[data-choice-profile="property-option"]:where(
+    :hover,
+    :focus-visible,
+    [data-highlighted],
+    [data-choice-current]
+  ):where(:not(:disabled, [aria-disabled="true"], [data-disabled])) {
+  background: var(--soft-signal);
+}
+.rah-choice-row[data-choice-profile="autocomplete"]:hover:where(
+    :not(:disabled, [aria-disabled="true"], [data-disabled])
+  ) {
+  background: color-mix(in srgb, var(--yellow) 50%, transparent);
+}
+.rah-choice-row[data-choice-profile="autocomplete"][data-choice-current]:where(
+    :not(:disabled, [aria-disabled="true"], [data-disabled])
+  ) {
+  background: var(--yellow);
+}
+.rah-choice-row[data-choice-profile="member-selection"][data-choice-selected] {
+  background: color-mix(in srgb, var(--pink) 20%, transparent);
+}
+.rah-choice-row:focus-visible {
+  outline: 2px solid var(--black);
+  outline-offset: -2px;
+}
+
+.rah-choice-row[data-choice-profile="member-selection"]:where(
+    :disabled,
+    [aria-disabled="true"],
+    [data-disabled]
+  ) {
+  opacity: 0.5;
+}

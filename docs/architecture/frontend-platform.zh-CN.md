@@ -341,7 +341,7 @@ Search 首页的常用项按搜索打开的实体排序，历史查询与实体�
 
 ## 2026-09-12 移动导航布局修正
 
-移动 Web/PWA 的主导航在所有页面（包括 Agent、Computer、Room 和 Thread 详情）常驻底部；shell 统一为底栏和 safe-area 预留空间，不再按路由隐藏。任务默认视图按实际容器宽度选择，手动选择优先。共享组件与业务 owner 不变；[实现与验证](../audits/2026-09-12-mobile-navigation-and-task-layout.zh-CN.md)。
+该历史底栏决策已被用户于 2026-09-14 的[移动端主导航抽屉](../audits/2026-09-14-mobile-navigation-drawer.zh-CN.md)决策替代：所有移动页面保留固定左上角入口，导航覆盖滑出，正文不再为底栏预留空间；桌面和移动端共用 Rail 目的地。任务默认视图按实际容器宽度选择，手动选择优先。共享组件与业务 owner 不变；[实现与验证](../audits/2026-09-12-mobile-navigation-and-task-layout.zh-CN.md)。
 
 ## 2026-09-12：构建探测不得阻塞客户端恢复
 
@@ -362,3 +362,11 @@ Web bootstrap 与版本 HEAD 探测并行；成功 API 响应不等待刷新 mod
 Agent 与 Human 目录复用 `useReconciledQuery` 的可见性轮询、超时及 scope/client 隔离。网络错误不等于空目录，首次失败可自动恢复；不使用持久缓存替代后台真值。见[复现和修复证据](../audits/2026-09-13-agent-directory-network-recovery.zh-CN.md)。
 
 2026-09-14：聊天侧栏的分组顺序由 HumanSidebar 的 `sectionOrder` 保存，旧偏好默认补齐系统组。分组与会话共享 sortable 交互，移动清除旧位置，删除自定义分区恢复默认归属；系统分区不可改名或删除。见[侧栏分组证据](../audits/2026-09-14-sidebar-groups.zh-CN.md)。
+
+搜索结果列表的关键词标黄只由当前搜索词派生，不能复用正文定位的点击清除状态。列表在跳转、点击和滚动后保留关键词，正文定位仍独立清除；离开搜索统一清空结果。
+
+侧栏拖动的短暂布局快照属于 SidebarDrag 呈现层，拖动 over 只调整预览；鼠标释放通过 HumanSidebar 提交一次版本栅栏 patch。保存期间保留预览，失败/取消恢复已确认投影，不引入第二份持久会话归属。
+
+2026-09-14 移动主页细化：主页覆盖聊天时不标记后台聊天选中，搜索/动态统一从导航抽屉进入；主页与抽屉共用同位置工作区标题。触摸上下文菜单由共享 owner 锁定背景滚动并区分滑动与外部点击。见[实现与验证](../audits/2026-09-14-mobile-home-context-menu-stability.zh-CN.md)。
+
+2026-09-14 最新移动导航决策：[iOS 风格根导航](../audits/2026-09-14-mobile-ios-tab-navigation.zh-CN.md)替代上文左侧抽屉。首页/任务/成员/设置共享底部浮层导航，详情隐藏并使用原有逐层返回；搜索、动态、铃铛回到首页。屏幕内可编辑搜索控件采用移动 16px 字号并保留手动缩放。业务状态及导航动作 owner 不变。

@@ -26,16 +26,17 @@ async function check(name, fn) {
     console.log("FAIL", name, e.stack);
   }
 }
-async function navVisible() {
-  const nav = page.getByRole("navigation", { name: "移动端主导航" });
-  assert.equal(await nav.isVisible(), true, "navigation must be visible");
-  const r = await nav.boundingBox();
-  assert.equal(Math.round(r.y + r.height), 844);
-  for (const name of ["主页", "任务", "成员", "设置"])
-    assert.equal(
-      await nav.getByRole("button", { name, exact: true }).isVisible(),
-      true,
-    );
+async function navVisible(expected = false) {
+  const nav = page.getByRole("navigation", {
+    name: "移动端主导航",
+    exact: true,
+  });
+  await page.waitForTimeout(180);
+  assert.equal(await nav.isVisible(), expected);
+  if (expected) {
+    const r = await nav.boundingBox();
+    assert.ok(r.x >= 0 && r.y > 700 && r.height >= 56);
+  }
   assert.equal(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -43,6 +44,7 @@ async function navVisible() {
     true,
   );
 }
+
 try {
   for (const surface of [
     "agents",
@@ -52,12 +54,12 @@ try {
     "search",
     "room",
   ])
-    await check("bottom navigation: " + surface, async () => {
+    await check("root tabs and detail back: " + surface, async () => {
       await page.goto(
         `${fixture.origin}/?surface=${surface}&room=${fixture.roomId}`,
       );
       await page.locator(".rah-product-shell").waitFor();
-      await navVisible();
+      await navVisible(surface === "agents" || surface === "settings");
       await page.screenshot({ path: join(evidence, `${surface}.png`) });
       if (surface === "agents") {
         await page.locator(".rah-agent-member-row").first().click();
@@ -71,7 +73,7 @@ try {
         const composer = page.locator(".channel .composer");
         await composer.waitFor();
         const a = await composer.boundingBox(),
-          b = await page.locator(".rah-mobile-nav").boundingBox();
+          b = { y: 844 };
         assert.ok(
           a.y + a.height <= b.y,
           "composer must clear bottom navigation",
@@ -118,7 +120,9 @@ try {
         "wide default must be board",
       );
       assert.equal(
-        await page.locator(".rah-mobile-nav").isVisible(),
+        await page
+          .getByRole("navigation", { name: "移动端主导航", exact: true })
+          .isVisible(),
         false,
         "desktop keeps the rail",
       );

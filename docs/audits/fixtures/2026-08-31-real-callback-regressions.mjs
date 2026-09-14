@@ -216,7 +216,8 @@ test("system notification attention stays visible while the bell is open on desk
     "HintTooltip",
     { React, Tooltip },
   );
-  for (const name of ["RailButton", "MobileNavigationButton"]) {
+  // Mobile drawer now renders the same RailButton as desktop.
+  for (const name of ["RailButton"]) {
     const Button = declaration(
       "apps/web/src/components/workspace-navigation.tsx",
       name,

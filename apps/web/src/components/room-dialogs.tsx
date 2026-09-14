@@ -1,3 +1,4 @@
+import { ChoiceRow } from "@rah-os/ui-web/neo-brutalist/choice-row";
 import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
 import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
 import { ChannelSettingsHeader } from "./channel-settings-header.tsx";
@@ -244,7 +245,10 @@ export function RoomCreateDialog({
                     agent.participantId,
                   );
                   return (
-                    <button
+                    <ChoiceRow
+                      profile="member-selection"
+                      selection="tint"
+                      selected={selected}
                       aria-pressed={selected}
                       className={selected ? "is-selected" : ""}
                       key={agent.participantId}
@@ -269,7 +273,7 @@ export function RoomCreateDialog({
                         <b>{agent.displayName}</b>
                       </span>
                       {selected ? <Icon name="check" /> : null}
-                    </button>
+                    </ChoiceRow>
                   );
                 })
               )}

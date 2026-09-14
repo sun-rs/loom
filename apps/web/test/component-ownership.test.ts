@@ -243,7 +243,7 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   assert.doesNotMatch(catalog, /选择一个频道/u);
   assert.match(catalog, /检测到的运行时/u);
   assert.doesNotMatch(catalog, /className="rah-runtime-grid rah-scroll-main"/u);
-  assert.match(navigation, /className="rah-mobile-nav"/u);
+  assert.match(navigation, /className="rail"/u);
   assert.match(navigation, /label="设置"/u);
   assert.match(navigation, /kind === "direct"/u);
   assert.match(navigation, /<SidebarSection\s+label=\{label\}/u);

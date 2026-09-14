@@ -1125,6 +1125,24 @@
         "keyboard-picker",
         "same-file-reselection"
       ]
+    },
+    {
+      "id": "choice-state-profiles",
+      "runner": "scripts/test-choice-row-browser.mjs",
+      "coverage": [
+        "chromium",
+        "firefox",
+        "1440x844",
+        "390x844",
+        "hover-exit",
+        "current-hover-priority",
+        "selected-hover-priority",
+        "disabled",
+        "nested-placement",
+        "property-picker",
+        "composer-mention-keyboard",
+        "reload"
+      ]
     }
   ],
   "behaviors": [

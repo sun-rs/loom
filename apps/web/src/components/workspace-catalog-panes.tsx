@@ -39,6 +39,7 @@ import { ProfileSection } from "@rah-os/ui-web/neo-brutalist/profile-section";
 import { formatRahDateTime } from "../date-time-presentation.ts";
 
 export function ComputerRuntimePane({
+  onMobileBack,
   client,
   onCreateAgent,
   onSetAgentState,
@@ -54,6 +55,7 @@ export function ComputerRuntimePane({
   onOpenAgent,
   onUpdateComputerProfile,
 }: {
+  onMobileBack?: (() => void) | undefined;
   client?: RahClient;
   onCreateAgent?: (() => void) | undefined;
   onSetAgentState?: ComputerAgentStateChange | undefined;
@@ -165,6 +167,15 @@ export function ComputerRuntimePane({
     >
       <aside className="rah-computer-sidebar">
         <PanelHeader kind="sidebar">
+          {onMobileBack && (
+            <PanelHeaderAction
+              className="rah-mobile-only"
+              aria-label="返回设置"
+              onClick={onMobileBack}
+            >
+              <Icon name="arrow-left" />
+            </PanelHeaderAction>
+          )}
           <strong>计算机</strong>
         </PanelHeader>
         <div className="rah-computer-sidebar-body rah-scroll-main">

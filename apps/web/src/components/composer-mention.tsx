@@ -1,3 +1,4 @@
+import { ChoiceRow } from "@rah-os/ui-web/neo-brutalist/choice-row";
 import {
   useEffect,
   useMemo,
@@ -143,7 +144,9 @@ export function ComposerMentionMenu({
       role="listbox"
     >
       {agents.map((agent, index) => (
-        <button
+        <ChoiceRow
+          profile="autocomplete"
+          current={index === activeIndex}
           aria-selected={index === activeIndex}
           className={`mention-row${index === activeIndex ? " is-active" : ""}`}
           id={`${id}-${agent.participantId}`}
@@ -162,7 +165,7 @@ export function ComposerMentionMenu({
             <span>{agent.role}</span>
           </span>
           <span className="handle">@{agent.handle}</span>
-        </button>
+        </ChoiceRow>
       ))}
     </div>
   );

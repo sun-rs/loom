@@ -421,7 +421,7 @@
   .app.rah-product-shell.rah-agent-peek-open[data-conversation-layout][data-profile-source]
     > .rah-agent-peek {
     grid-column: 1;
-    height: calc(100dvh - var(--rah-mobile-nav-space));
+    height: 100dvh;
   }
 }
 

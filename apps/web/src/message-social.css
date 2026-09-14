@@ -66,7 +66,9 @@
   padding: 0;
   overflow: visible;
 }
-.rah-discovery-popover.is-reaction .rah-discovery-popover-options > button {
+.rah-discovery-popover.is-reaction
+  .rah-discovery-popover-options
+  > button:not(.rah-choice-row) {
   width: 28px;
   height: 28px;
   min-height: 0;
@@ -85,14 +87,14 @@
 }
 .rah-discovery-popover.is-reaction
   .rah-discovery-popover-options
-  > button:hover:not(:disabled) {
+  > button:not(.rah-choice-row):hover:not(:disabled) {
   border: 0;
   background: color-mix(in srgb, var(--pink) 20%, transparent);
   box-shadow: none;
 }
 .rah-discovery-popover.is-reaction
   .rah-discovery-popover-options
-  > button
+  > button:not(.rah-choice-row)
   > span:not(.rah-discovery-option-leading) {
   display: none;
 }
@@ -283,28 +285,17 @@
   user-select: none;
   -webkit-touch-callout: none;
 }
-.rah-sidebar-sortable.is-dragging {
-  opacity: 0.35;
-}
-.rah-sidebar-sortable.is-over::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  border-bottom: 2px solid var(--black);
-  pointer-events: none;
-}
 .rah-sidebar-drop.is-over {
-  outline: 1px dashed var(--ink-40);
-  outline-offset: -1px;
+  background: rgb(255 255 255 / 60%);
 }
 .rah-sidebar-drag-preview {
-  padding: 5px 8px;
+  max-width: 288px;
+  padding: 6px 8px;
   border: 2px solid var(--black);
-  background: var(--pink);
+  background: var(--bg);
   box-shadow: 2px 2px 0 var(--black);
   font-size: 14px;
+  font-weight: 500;
 }
 .rah-sidebar-pin-keyboard {
   position: absolute;

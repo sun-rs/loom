@@ -186,8 +186,9 @@ neither an old reference fixture nor a visible tab proves product completeness.
   New Agent choice surfaces must select the shared member-selection, member-browse,
   property-option or autocomplete profile; do not invent per-window colors or
   pass page-local color overrides. Additional profiles need a central source-backed
-  contract and tests. The design profiles do not imply all legacy selectors have
-  migrated to a typed shared API; preserve explicit adoption/verification status.
+  contract and tests. Use ui-web ChoiceRow; check:ui-library rejects local row
+  palette overrides and test:ui:choice verifies computed states. Keep the documented
+  adoption inventory explicit; unrelated navigation cards retain their own contract.
 - Web/PWA share components, intents and protocol. Responsive layout changes must
   not create a second business path. Native shells remain thin clients.
 - Shell borders, splitters, overlay/focus behavior and message measurement each

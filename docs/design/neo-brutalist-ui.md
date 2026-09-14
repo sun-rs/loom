@@ -85,11 +85,12 @@ over the actual surface; a sampled screenshot RGB must not replace that recipe.
 | `property-option`  | Agent assignee and equivalent property options | Yellow 30%                | Shared menu highlight: yellow 30%     | Preserve the selected-value checkmark          |
 | `autocomplete`     | Chat mention and sidebar conversation search   | Yellow 50%                | Opaque yellow                         | Accept the candidate using the existing action |
 
-These profile names describe the design contract; they are not currently
-exported React props or CSS classes. The linked evidence matrix owns precise
-applicability. For example, pink selection is verified for create/edit members,
-not automatically for every add-member flow. Unknown combinations require
-source inspection rather than a locally invented default.
+These profiles are exported by `ChoiceRow` in `ui-web/neo-brutalist/choice-row`.
+`profile` is required. `current` is available only for autocomplete/property
+options. Member selection explicitly opts into `selection="tint"` plus `selected`;
+add-member checkboxes keep the default check-only marker. `as="div"` supports
+member rows containing independent controls without nesting buttons.
+The API excludes inline `style`; callers retain geometry classes and actions.
 
 State rules are shared:
 
@@ -116,14 +117,25 @@ reason and interaction tests; a new window is not itself such a reason.
 the existing client/component controller continues to own current/selected
 state. A visual row must not introduce another business-state owner.
 
-Adoption status: this closes the design vocabulary, not the implementation
-migration. Existing page selectors remain migration debt under ADR 0028.
-There is not yet a typed profile API or a gate rejecting every page-local color
-override. Incremental implementation must migrate each family into the existing
-library owner, remove its old selectors, and add failing contract/browser tests
-for entry/exit, current+hover, selected+hover, disabled and nested placement.
-Use the existing catalog/behavior registry for that evidence; do not add a
-second registry or claim documentation alone prevents CSS drift.
+Adopted callers: create-channel candidates, add-member candidates, Human/Agent
+Room member browsing, shared DiscoveryFilter property/assignee options, and the
+Room/DM/Thread/file-comment mention menu. Reaction options remain their separate
+pink family. Agent directory navigation cards, ordinary conversation rows and
+native `<select>` controls are not Agent choice rows and retain their own contracts.
+There is currently no separate sidebar conversation autocomplete controller to
+migrate; the shared autocomplete profile supports its source-backed current state.
+
+`npm run check:ui-library` runs `ui-choice-contract.mjs`: it discovers ChoiceRow
+consumers and their geometry classes, rejects inline styles/prop spreads/raw
+profile attributes, and rejects local background/opacity/filter/custom-property
+rules targeting those rows, including enclosing-container button rules. Layout
+and child-icon rules remain permitted. `npm run test:ui:choice` verifies computed
+colors in Chromium/Firefox at desktop and 390px widths, pointer exit, current,
+selected, disabled, nested placement and the actual shared property picker.
+The browser gate is also part of `npm run check`; broad global CSS must still be
+reviewed and tested, not assumed safe solely because a static selector scan passes.
+New picker work must use this API. Evidence and scope:
+[code adoption](../audits/2026-09-14-choice-row-code-contract.zh-CN.md).
 
 ## Ownership and composition
 
@@ -268,3 +280,7 @@ using pinned Base UI for hover bridges, dismissal and focus. Raft's desktop 0/12
 and keyboard-only initial focus are source-backed parameters; mobile opens on click.
 InputRequest answering remains a separate modal dialog. See the
 [scoped takeover audit](../audits/2026-09-06-notification-popover-takeover.zh-CN.md).
+
+## Mobile root navigation exception
+
+The user-selected [iOS reference tab bar](../audits/2026-09-14-mobile-ios-tab-navigation.zh-CN.md) uses a translucent rounded surface and gray active capsule on mobile root pages. This is a bounded navigation presentation exception, not a change to dialog, button, Agent choice-row or desktop Rail styles. Detail pages hide the bar. Dimensions and blur are maintained RAH CSS based on supplied screenshots, not extracted native iOS source.

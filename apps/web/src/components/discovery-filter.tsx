@@ -1,3 +1,4 @@
+import { ChoiceRow } from "@rah-os/ui-web/neo-brutalist/choice-row";
 import {
   useEffect,
   useId,
@@ -125,7 +126,9 @@ export function DiscoveryFilter({
     };
     place();
     if (searchable)
-      menu.current?.querySelector<HTMLInputElement>("input")?.focus();
+      menu.current
+        ?.querySelector<HTMLInputElement>("input")
+        ?.focus({ preventScroll: true });
     const viewportChanged = () => {
       if (variant === "reaction") close();
       else place();
@@ -293,31 +296,48 @@ export function DiscoveryFilter({
               </div>
             )}
             <div className="rah-discovery-popover-options">
-              {visible.map((option) => (
-                <button
-                  type="button"
-                  key={option.id}
-                  role={multiple ? "menuitemcheckbox" : "menuitemradio"}
-                  aria-checked={values.includes(option.id)}
-                  disabled={Boolean(option.disabledReason)}
-                  title={
-                    option.disabledReason ??
-                    (variant === "reaction" ? option.label : undefined)
-                  }
-                  aria-label={variant === "reaction" ? option.label : undefined}
-                  onClick={() => choose(option.id)}
-                >
-                  {(option.leading || option.reserveLeadingSlot) && (
-                    <span className="rah-discovery-option-leading">
-                      {option.leading}
+              {visible.map((option) => {
+                const content = (
+                  <>
+                    {(option.leading || option.reserveLeadingSlot) && (
+                      <span className="rah-discovery-option-leading">
+                        {option.leading}
+                      </span>
+                    )}
+                    <span className={option.italic ? "is-italic" : ""}>
+                      {option.label}
                     </span>
-                  )}
-                  <span className={option.italic ? "is-italic" : ""}>
-                    {option.label}
-                  </span>
-                  {values.includes(option.id) && <Icon name="check" />}
-                </button>
-              ))}
+                    {values.includes(option.id) && <Icon name="check" />}
+                  </>
+                );
+                return variant === "reaction" ? (
+                  <button
+                    type="button"
+                    key={option.id}
+                    role={multiple ? "menuitemcheckbox" : "menuitemradio"}
+                    aria-checked={values.includes(option.id)}
+                    disabled={Boolean(option.disabledReason)}
+                    title={option.disabledReason ?? option.label}
+                    aria-label={option.label}
+                    onClick={() => choose(option.id)}
+                  >
+                    {content}
+                  </button>
+                ) : (
+                  <ChoiceRow
+                    profile="property-option"
+                    className="rah-property-choice"
+                    key={option.id}
+                    role={multiple ? "menuitemcheckbox" : "menuitemradio"}
+                    aria-checked={values.includes(option.id)}
+                    disabled={Boolean(option.disabledReason)}
+                    title={option.disabledReason}
+                    onClick={() => choose(option.id)}
+                  >
+                    {content}
+                  </ChoiceRow>
+                );
+              })}
               {!visible.length && <p>没有匹配项</p>}
             </div>
           </div>,

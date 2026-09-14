@@ -62,18 +62,19 @@ test("Room, DM and Thread reuse the Raft mention menu and its yellow active row"
   );
   const css = readFileSync(
     new URL(
-      "../../../packages/ui-tokens/src/neo-brutalist/styles.css",
+      "../../../packages/ui-tokens/src/neo-brutalist/choice-row.css",
       import.meta.url,
     ),
     "utf8",
   );
   assert.equal(panes.match(/<ComposerMentionMenu/g)?.length, 2);
-  assert.match(component, /mention-row.*is-active/su);
+  assert.match(component, /profile="autocomplete"/u);
+  assert.match(component, /current=\{index === activeIndex\}/u);
   assert.match(component, /role="listbox"/u);
   assert.match(component, /<AgentAvatar/u);
   assert.match(panes, /mentionAgentIds/u);
   assert.match(
     css,
-    /\.mention-row\.is-active\s*\{\s*background:\s*var\(--yellow\)/u,
+    /\[data-choice-profile="autocomplete"\]\[data-choice-current\][^{]*\{\s*background:\s*var\(--yellow\)/u,
   );
 });

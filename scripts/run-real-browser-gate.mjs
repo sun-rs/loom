@@ -498,7 +498,7 @@ try {
     historyAfter.domRows <= 80,
     `prepended history must keep a bounded DOM, got ${String(historyAfter.domRows)} rows`,
   );
-  await clickButton(browser, { ariaLabel: "Agent 与成员" });
+  await clickButton(browser, { ariaLabel: "成员" });
   await waitFor(
     browser,
     () =>
@@ -4278,7 +4278,7 @@ try {
         return {
           mobileLabels: navigation
             ? [...navigation.querySelectorAll("button")].map((button) =>
-                button.textContent?.trim(),
+                button.getAttribute("aria-label"),
               )
             : [],
           navVisible: (navigation?.getClientRects().length ?? 0) > 0,
@@ -4299,7 +4299,7 @@ try {
         };
       }),
       {
-        mobileLabels: ["主页", "任务", "成员", "设置"],
+        mobileLabels: expectedMobile ? ["首页", "任务", "成员", "设置"] : [],
         navVisible: expectedMobile,
         railButtonHeight: expectedMobile ? 0 : 36,
         railVisible: !expectedMobile,
@@ -4342,7 +4342,7 @@ try {
       scrollWidth: document.documentElement.scrollWidth,
     })),
     { clientWidth: 390, navVisible: false, scrollWidth: 390 },
-    "390x844 Computer detail must hide root navigation without horizontal overflow",
+    "390x844 Computer detail hides root navigation without horizontal overflow",
   );
   assert.deepEqual(
     await call(browser, () => ({
@@ -4533,7 +4533,7 @@ try {
     () =>
       document.querySelector('[aria-label="返回主页"]')?.getClientRects()
         .length > 0 && document.querySelector(".rah-mobile-nav") === null,
-    "mobile Room detail hides root navigation and exposes back",
+    "mobile Room detail removes bottom navigation and exposes back",
   );
   assert.equal(
     await call(browser, () => {
@@ -4632,12 +4632,10 @@ try {
     browser,
     () =>
       document.querySelector(".rah-room-sidebar.is-open") !== null &&
-      [...document.querySelectorAll(".rah-mobile-nav button")]
-        .map((button) => button.textContent?.trim())
-        .join("|") === "主页|任务|成员|设置",
-    "mobile Raft home with four root destinations",
+      document.querySelector(".rah-mobile-nav") !== null,
+    "mobile chat list with root tabs",
   );
-  await clickButton(browser, { text: "成员" });
+  await clickButton(browser, { ariaLabel: "成员" });
   await waitFor(
     browser,
     () =>
@@ -4652,9 +4650,7 @@ try {
     browser,
     () =>
       document.querySelector(".rah-member-graph-surface") !== null &&
-      document
-        .querySelector(".rah-product-shell")
-        ?.classList.contains("rah-mobile-navigation-visible") === true,
+      document.querySelector(".rah-mobile-nav") !== null,
     "mobile relationship graph surface",
   );
   assert.deepEqual(
@@ -4667,8 +4663,8 @@ try {
           navigation === null ? null : getComputedStyle(navigation).display,
       };
     }),
-    { graphWidth: 390, navigationDisplay: "grid" },
-    "mobile Members root keeps the Raft four-tab navigation visible",
+    { graphWidth: 390, navigationDisplay: "none" },
+    "mobile relationship detail hides root tabs",
   );
   assert.equal(
     await call(browser, () => document.documentElement.scrollWidth),
@@ -4694,9 +4690,7 @@ try {
     () =>
       document.querySelector(".rah-agent-mobile-back")?.getClientRects()
         .length > 0 &&
-      (document.querySelector(".rah-mobile-nav") === null ||
-        document.querySelector(".rah-mobile-nav")?.getClientRects().length ===
-          0),
+      document.querySelector(".rah-mobile-nav")?.getClientRects().length === 0,
     "mobile focused Agent detail",
   );
   assert.deepEqual(

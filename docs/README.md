@@ -1,4 +1,12 @@
+[移动端 iOS 风格根导航](./audits/2026-09-14-mobile-ios-tab-navigation.zh-CN.md)：按用户最新决定撤回左侧抽屉，改为根页面悬浮四项底栏；首页入口、任务移动布局及聚焦防放大。
+
+[Agent候选行共享组件与门禁](./audits/2026-09-14-choice-row-code-contract.zh-CN.md)：四类typed配置、现有调用迁移、局部样式越界检查及双浏览器状态验收。
+
+[移动主页与长按菜单稳定性](./audits/2026-09-14-mobile-home-context-menu-stability.zh-CN.md)：触摸菜单固定与防点击穿透、返回列表逐帧无粉色、共用工作区标题及快捷入口收敛。
+
 [聊天列表触摸与移动导航](./audits/2026-09-14-sidebar-touch-and-mobile-navigation.zh-CN.md)：长按不选字、不误导航，触摸滚动优先、停用手指拖动排序；底栏改抽屉的取舍与设备验收边界。
+
+[移动端主导航抽屉](./audits/2026-09-14-mobile-navigation-drawer.zh-CN.md)：取消底栏占位，所有移动页面保留左上角导航入口，共用桌面导航动作。
 
 [聊天侧栏分组与归属](./audits/2026-09-14-sidebar-groups.zh-CN.md)：分组间距、空分区、编辑图标、拖动顺序与会话单一归属。
 

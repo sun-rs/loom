@@ -1,3 +1,4 @@
+import { ChoiceRow } from "@rah-os/ui-web/neo-brutalist/choice-row";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
 import { useEffect, useRef, useState } from "react";
@@ -171,7 +172,8 @@ export function RoomMemberPage({
                 </p>
               )}
               {visibleAgents.map((agent) => (
-                <button
+                <ChoiceRow
+                  profile="member-selection"
                   key={agent.participantId}
                   className="rah-room-add-candidate"
                   aria-label={`选择 ${agent.displayName}`}
@@ -194,7 +196,7 @@ export function RoomMemberPage({
                     {agent.description && <small>{agent.description}</small>}
                     {agent.state !== "enabled" && <small>Agent 已停用</small>}
                   </span>
-                </button>
+                </ChoiceRow>
               ))}
             </section>
             <button
@@ -233,7 +235,9 @@ export function RoomMemberPage({
                       className="rah-room-member-human"
                       key={human.principalId}
                     >
-                      <div
+                      <ChoiceRow
+                        as="div"
+                        profile="member-browse"
                         className="rah-room-member-entry"
                         role="button"
                         tabIndex={0}
@@ -268,7 +272,7 @@ export function RoomMemberPage({
                           editable: canManageRoles,
                           handle: human.displayName || human.handle,
                         })}
-                      </div>
+                      </ChoiceRow>
                       {roleEditor?.principalId === human.principalId ? (
                         <form
                           className="rah-room-member-role-editor"
@@ -357,7 +361,9 @@ export function RoomMemberPage({
                   </span>
                 </summary>
                 {visibleAgents.map((agent) => (
-                  <div
+                  <ChoiceRow
+                    as="div"
+                    profile="member-browse"
                     className="rah-room-member-entry rah-member-row"
                     role="button"
                     tabIndex={0}
@@ -401,7 +407,7 @@ export function RoomMemberPage({
                         移除
                       </button>
                     )}
-                  </div>
+                  </ChoiceRow>
                 ))}
                 {visibleAgents.length === 0 && (
                   <p className="rah-members-empty">

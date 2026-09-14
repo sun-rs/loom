@@ -21,7 +21,10 @@ import { opaqueIdFromBytes } from "@rah-os/ui-web";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { Room, Workspace } from "@rah-os/protocol";
 import avatarPack from "@rah-os/ui-tokens/avatar-pack.json";
-import { workspaceInitial } from "../identity-presentation.ts";
+import {
+  workspaceInitial,
+  mobileWorkspaceLabel,
+} from "../identity-presentation.ts";
 import { useDialogProtocol } from "../dialog-protocol.ts";
 import {
   moveWorkspaceOrder,
@@ -169,7 +172,11 @@ export function WorkspaceIdentity({
       >
         {mobile ? (
           <>
-            <span>{workspace?.name ?? computerName ?? "协作空间"}</span>
+            <span>
+              {mobileWorkspaceLabel(
+                workspace?.name ?? computerName ?? "协作空间",
+              )}
+            </span>
             <Icon name="chevron" />
           </>
         ) : workspace?.avatarKey ? (

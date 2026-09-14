@@ -41,7 +41,7 @@ export async function assertInlineReferenceParity(page) {
               rowHeight: parent.height,
               textTop: text.top - box.top,
               textBottom: box.bottom - text.bottom,
-              selectable: css.userSelect,
+              selectable: css.userSelect ?? css.webkitUserSelect,
             };
             row.remove();
             return result;

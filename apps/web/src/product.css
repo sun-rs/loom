@@ -478,7 +478,6 @@
 }
 
 .rah-mobile-only,
-.rah-mobile-nav,
 .rah-mobile-backdrop {
   display: none;
 }
@@ -3122,19 +3121,12 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 .rah-room-create-agent-list > button {
   align-items: center;
-  background: transparent;
   border: 0;
   display: flex;
   gap: 8px;
   padding: 6px 12px;
   text-align: left;
   width: 100%;
-}
-.rah-room-create-agent-list > button:hover {
-  background: var(--yellow);
-}
-.rah-room-create-agent-list > button.is-selected {
-  background: color-mix(in srgb, var(--pink) 20%, transparent);
 }
 .rah-room-create-agent-list .rah-agent-avatar {
   height: 18px;
@@ -3876,16 +3868,9 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 
 @media (max-width: 767px) {
-  :root {
-    --rah-mobile-nav-h: 52px;
-    --rah-mobile-nav-space: calc(
-      var(--rah-mobile-nav-h) + env(safe-area-inset-bottom)
-    );
-  }
-
   .app.rah-product-shell {
     grid-template-columns: minmax(0, 1fr);
-    height: calc(100dvh - var(--rah-mobile-nav-space));
+    height: 100dvh;
     min-width: 0;
     width: 100%;
   }
@@ -3907,7 +3892,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   }
 
   .rah-product-shell > .rah-room-sidebar {
-    bottom: calc(var(--rah-mobile-nav-h) + env(safe-area-inset-bottom));
+    bottom: 0;
     border-right: 0;
     box-shadow: none;
     display: flex;
@@ -3991,70 +3976,9 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
     display: none;
   }
 
-  .rah-mobile-nav {
-    background: white;
-    border-top: var(--bd-heavy);
-    bottom: 0;
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    left: 0;
-    height: var(--rah-mobile-nav-space);
-    padding: 0 0 env(safe-area-inset-bottom);
-    position: fixed;
-    right: 0;
-    z-index: 70;
-  }
-
-  .rah-mobile-nav button {
-    align-items: center;
-    background: white;
-    border: 0;
-    border-right: var(--bd-heavy);
-    display: flex;
-    flex-direction: column;
-    font-family: var(--sans);
-    font-size: 10px;
-    font-weight: 700;
-    gap: 2px;
-    justify-content: center;
-    min-height: 0;
-    padding: 8px 0;
-    position: relative;
-    transition: background-color var(--rah-interaction-transition);
-  }
-
-  .rah-mobile-nav button:last-child {
-    border-right: 0;
-  }
-
-  .rah-mobile-nav-badge {
-    align-items: center;
-    background: var(--pink);
-    border: 1px solid var(--ink);
-    border-radius: 999px;
-    display: flex;
-    font: 700 8px/1 var(--mono);
-    height: 14px;
-    justify-content: center;
-    min-width: 14px;
-    padding: 0 2px;
-    position: absolute;
-    right: 8px;
-    top: 3px;
-  }
-
   .rah-human-inbox {
-    height: min(360px, calc(100dvh - var(--rah-mobile-nav-h) - 24px));
+    height: min(360px, calc(100dvh - 24px));
     width: min(320px, calc(100vw - 16px));
-  }
-
-  .rah-mobile-nav button.is-active {
-    background: var(--yellow);
-  }
-
-  .rah-mobile-nav svg {
-    height: 18px;
-    width: 18px;
   }
 
   .rah-product-shell > .thread {
@@ -4096,7 +4020,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 
   .rah-dialog-layer {
     align-items: stretch;
-    padding: 0 0 calc(var(--rah-mobile-nav-h) + env(safe-area-inset-bottom));
+    padding: 0;
   }
 
   .rah-channel-settings-drawer {
@@ -4243,17 +4167,6 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   height: 6px;
   border-radius: 50%;
   background: var(--pink);
-}
-
-@media (max-width: 767px) and (max-height: 600px) {
-  .rah-mobile-nav button {
-    min-height: 36px;
-    padding-block: 8px;
-  }
-
-  .rah-mobile-nav button > svg {
-    display: none;
-  }
 }
 
 /* Raft create-agent-name Sl/nOe and dOe/lOe; brutal field tokens. */

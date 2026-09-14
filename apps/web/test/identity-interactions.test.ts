@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import {
   insertMention,
   workspaceInitial,
+  mobileWorkspaceLabel,
   activityPresentation,
 } from "../src/identity-presentation.ts";
 
@@ -302,4 +303,12 @@ test("tool labels cover every CLI's tool vocabulary in the Agent activity feed",
     }),
     { label: "Editing notebook", detail: "/tmp/n.ipynb", block: false },
   );
+});
+
+test("mobile branding abbreviates only the default label without renaming custom workspaces", () => {
+  assert.equal(
+    mobileWorkspaceLabel("RAH Local Workstation"),
+    "RAH Workstation",
+  );
+  assert.equal(mobileWorkspaceLabel("Local Research"), "Local Research");
 });

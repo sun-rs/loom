@@ -1,3 +1,5 @@
+import { useMobileLayout } from "./use-mobile-layout.ts";
+import { WorkspaceNavigation } from "./components/workspace-navigation-shell.tsx";
 import {
   SearchPreviewResizer,
   useSearchPreviewWidth,
@@ -131,8 +133,6 @@ import { RoomSidebarResizer } from "./components/room-sidebar-resizer.tsx";
 import { ThreadPanelResizer } from "./components/thread-panel-resizer.tsx";
 import {
   ChannelHeader,
-  MobileNavigation,
-  Rail,
   RoomSidebar,
   type Surface,
   type Tab,
@@ -679,7 +679,14 @@ function WorkspaceScreen({
   const [agentCatalog, setAgentCatalog] = useState<AgentCatalogEntry[]>([]);
   const [agentCatalogControlRoomId, setAgentCatalogControlRoomId] =
     useState<string>();
-  const [mobileRoomsOpen, setMobileRoomsOpen] = useState(false);
+  const [mobileRoomsOpen, setMobileRoomsOpen] = useState(
+    () =>
+      window.matchMedia("(max-width: 767px)").matches &&
+      !new URLSearchParams(window.location.search).has("room") &&
+      [null, "room"].includes(
+        new URLSearchParams(window.location.search).get("surface"),
+      ),
+  );
   const [roomCreateOpen, setRoomCreateOpen] = useState(false);
   const [taskCreateOpen, setTaskCreateOpen] = useState(false);
   const [agentCreateOpen, setAgentCreateOpen] = useState(false);
@@ -692,6 +699,14 @@ function WorkspaceScreen({
   const [humanInboxOpen, setHumanInboxOpen] = useState(() =>
     new URLSearchParams(window.location.search).has("inputRequest"),
   );
+  const mobileLayout = useMobileLayout();
+  useEffect(() => {
+    // Mobile notifications live on Home, including typed links opened without a bell tap.
+    if (humanInboxOpen && mobileLayout) {
+      setSurface("room");
+      setMobileRoomsOpen(true);
+    }
+  }, [humanInboxOpen, mobileLayout]);
   const [humanInboxLoading, setHumanInboxLoading] = useState(false);
   const [humanInboxError, setHumanInboxError] = useState<string>();
   const [humanInputRequests, setHumanInputRequests] = useState<InputRequest[]>(
@@ -3393,7 +3408,9 @@ function WorkspaceScreen({
                   } as CSSProperties
                 }
               >
-                <Rail
+                <WorkspaceNavigation
+                  homeOpen={mobileRoomsOpen}
+                  onHome={openMobileHome}
                   identity={<WorkspaceIdentity {...workspaceIdentityProps} />}
                   active={surface}
                   notificationCount={humanInputRequests.length}
@@ -3403,12 +3420,18 @@ function WorkspaceScreen({
                   notificationAttention={systemNoticeView.notices.length > 0}
                   notificationsOpen={humanInboxOpen}
                   onTasks={() => {
+                    setMobileRoomsOpen(false);
+                    setPeekAgentId(undefined);
+                    setPeekHumanId(undefined);
                     setActiveThreadRootMessageId(undefined);
                     setRoomMembersOpen(false);
                     setFocusedMessageId(undefined);
                     setSurface("tasks");
                   }}
                   onSelect={(nextSurface) => {
+                    setMobileRoomsOpen(false);
+                    if (nextSurface === "agents")
+                      setAgentRoute(agentDirectoryRootRoute());
                     setPeekAgentId(undefined);
                     setPeekHumanId(undefined);
                     setFocusedMessageId(undefined);
@@ -3621,6 +3644,7 @@ function WorkspaceScreen({
                   />
                 ) : surface === "settings" ? (
                   <SettingsSurface
+                    onComputers={() => setSurface("computers")}
                     onSystemChannelUpdated={() => {
                       setDirectoryRevision((value) => value + 1);
                       setReload((value) => value + 1);
@@ -3656,6 +3680,7 @@ function WorkspaceScreen({
                   <AgentDirectoryPane {...agentDetailProps} />
                 ) : surface === "computers" ? (
                   <ComputerRuntimePane
+                    onMobileBack={() => setSurface("settings")}
                     onResetAgent={
                       canManageCurrentWorkspaceAgent &&
                       health?.capabilities.agentExecutionReset === true
@@ -4301,37 +4326,6 @@ function WorkspaceScreen({
                     room={activeRoom}
                   />
                 ) : null}
-                <MobileNavigation
-                  activeSurface={surface}
-                  onAgents={() => {
-                    setPeekAgentId(undefined);
-                    setPeekHumanId(undefined);
-                    setActiveThreadRootMessageId(undefined);
-                    setMobileRoomsOpen(false);
-                    setRoomMembersOpen(false);
-                    setAgentRoute(agentDirectoryRootRoute());
-                    setSurface("agents");
-                  }}
-                  onHome={openMobileHome}
-                  onSettings={() => {
-                    setPeekAgentId(undefined);
-                    setPeekHumanId(undefined);
-                    setActiveThreadRootMessageId(undefined);
-                    setMobileRoomsOpen(false);
-                    setRoomMembersOpen(false);
-                    setSurface("settings");
-                  }}
-                  onTasks={() => {
-                    setPeekAgentId(undefined);
-                    setPeekHumanId(undefined);
-                    setActiveThreadRootMessageId(undefined);
-                    setMobileRoomsOpen(false);
-                    setRoomMembersOpen(false);
-                    setFocusedMessageId(undefined);
-                    setSurface("tasks");
-                  }}
-                  mobileHomeOpen={mobileRoomsOpen}
-                />
               </div>
             </InteractivePopover>
           </WorkspaceEntityProvider>

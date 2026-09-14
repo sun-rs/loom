@@ -81,6 +81,7 @@ export function AgentSidebar({
   return (
     <aside className="rah-agent-directory-list" aria-label="Agent 列表">
       <PanelHeader kind="sidebar" className="rah-agent-sidebar-head">
+        <Icon name="members" className="rah-mobile-only" />
         <h1>成员</h1>
       </PanelHeader>
       <div className="rah-agent-sidebar-scroll rah-scroll-main">

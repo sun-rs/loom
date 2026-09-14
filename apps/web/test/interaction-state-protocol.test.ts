@@ -142,11 +142,11 @@ test("source-backed interaction exceptions stay explicit", () => {
   );
   assert.match(
     messageSocial,
-    /\.rah-discovery-popover\.is-reaction[\s\S]*?button:hover:not\(:disabled\)[\s\S]*?var\(--pink\)[\s\S]*?20%/u,
+    /\.rah-discovery-popover\.is-reaction[\s\S]*?button:not\(\.rah-choice-row\):hover:not\(:disabled\)[\s\S]*?var\(--pink\)[\s\S]*?20%/u,
   );
   assert.match(
     messageSocial,
-    /\.rah-discovery-popover\.is-reaction[\s\S]*?> button \{[\s\S]*?padding:\s*0;[\s\S]*?display:\s*flex;[\s\S]*?justify-content:\s*center;[\s\S]*?border-radius:\s*4px/u,
+    /\.rah-discovery-popover\.is-reaction[\s\S]*?> button:not\(\.rah-choice-row\) \{[\s\S]*?padding:\s*0;[\s\S]*?display:\s*flex;[\s\S]*?justify-content:\s*center;[\s\S]*?border-radius:\s*4px/u,
   );
   assert.match(
     messageSocial,
@@ -194,7 +194,7 @@ test("source-backed interaction exceptions stay explicit", () => {
   );
   assert.match(
     discoveryFilter,
-    /title=\{[\s\S]*?variant === "reaction" \? option\.label/u,
+    /variant === "reaction" \? \([\s\S]*?title=\{option\.disabledReason \?\? option\.label\}[\s\S]*?aria-label=\{option\.label\}/u,
   );
   assert.match(messageSocialComponent, /className="rah-message-saved-badge"/u);
   assert.match(

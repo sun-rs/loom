@@ -1,4 +1,9 @@
 import {
+  moveSidebarPreview,
+  sidebarAccepts,
+  type SidebarDragLayout,
+} from "../sidebar-drag-layout.ts";
+import {
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
@@ -16,83 +21,193 @@ import {
   useDroppable,
   pointerWithin,
   closestCenter,
+  type DragOverEvent,
 } from "@dnd-kit/core";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import type { SidebarSectionId } from "../sidebar-order.ts";
 export function SidebarDrag({
   children,
-  onDrop,
   labels,
-  sections,
-  onReorder,
+  layout,
+  onCommit,
+  disabled = false,
+  manualSections,
 }: {
-  children: ReactNode;
-  sections: string[];
-  onReorder: (order: string[]) => void;
+  children: (layout: SidebarDragLayout) => ReactNode;
   labels: Record<string, string>;
-  onDrop: (key: string, section: SidebarSectionId, target?: string) => void;
+  layout: SidebarDragLayout;
+  onCommit: (layout: SidebarDragLayout) => Promise<boolean>;
+  disabled?: boolean;
+  manualSections: string[];
 }) {
   const sensors = useSensors(
-    // Touch belongs to native scrolling and the context-menu long press.
-    // PointerSensor also captures touch and competes with those gestures.
     useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
   );
   const [active, setActive] = useState<string>();
+  const [error, setError] = useState<string>();
+  const [preview, setPreview] = useState<SidebarDragLayout>();
+  const draft = useRef<SidebarDragLayout | undefined>(undefined);
+  const original = useRef<SidebarDragLayout | undefined>(undefined);
+  const saving = useRef(false);
+  const shown = preview ?? layout;
+  const cancel = () => {
+    draft.current = undefined;
+    original.current = undefined;
+    setPreview(undefined);
+    setActive(undefined);
+  };
+  const save = async (next: SidebarDragLayout) => {
+    setActive(undefined);
+    saving.current = true;
+    draft.current = next;
+    setPreview(next);
+    try {
+      if (!(await onCommit(next))) setError("侧栏排序未保存，请重试");
+    } finally {
+      saving.current = false;
+      cancel();
+    }
+  };
+  const previewMove = ({ active: dragging, over }: DragOverEvent) => {
+    const current = draft.current,
+      target = over?.data.current;
+    if (
+      !current ||
+      !over ||
+      !target ||
+      String(dragging.id).startsWith("group:")
+    )
+      return;
+    if (!manualSections.includes(target.section)) return;
+    // Same-container displacement belongs to useSortable. Mutating that list
+    // here as well restarts its geometry/transition while the pointer moves.
+    const source = Object.keys(current.items).find((id) =>
+      current.items[id]?.includes(String(dragging.id)),
+    );
+    if (source === target.section) return;
+    const rect =
+      dragging.rect.current.translated ?? dragging.rect.current.initial;
+    const after = rect
+      ? rect.top + rect.height / 2 >= over.rect.top + over.rect.height / 2
+      : false;
+    const items = moveSidebarPreview(
+      current.items,
+      String(dragging.id),
+      target.section,
+      target.key,
+      after,
+    );
+    if (items !== current.items) {
+      const next = { ...current, items };
+      draft.current = next;
+      setPreview(next);
+    }
+  };
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={(args) => {
-        const group = String(args.active.id).startsWith("group:");
+        const key = String(args.active.id),
+          group = key.startsWith("group:");
         const scoped = {
           ...args,
-          droppableContainers: args.droppableContainers.filter(
-            (c) => String(c.id).startsWith("group:") === group,
-          ),
+          droppableContainers: args.droppableContainers.filter((c) => {
+            if (group) return String(c.id).startsWith("group:");
+            const section = c.data.current?.section;
+            return (
+              section &&
+              manualSections.includes(section) &&
+              sidebarAccepts(key, section)
+            );
+          }),
         };
         const hits = pointerWithin(scoped);
-        return hits.length
-          ? hits.sort(
-              (a, b) =>
-                Number(String(a.id).startsWith("zone:")) -
-                Number(String(b.id).startsWith("zone:")),
-            )
-          : closestCenter(scoped);
+        const item = hits.find((hit) => !String(hit.id).startsWith("zone:"));
+        if (item) return [item];
+        if (hits.length) return hits;
+        // A disallowed target must not become the nearest valid group instead.
+        if (!group && pointerWithin(args).length) return [];
+        return closestCenter(scoped);
       }}
-      onDragStart={(e) => setActive(String(e.active.id))}
-      onDragCancel={() => setActive(undefined)}
+      onDragStart={(e) => {
+        if (disabled || saving.current) return;
+        setError(undefined);
+        original.current = layout;
+        draft.current = layout;
+        setPreview(layout);
+        setActive(String(e.active.id));
+      }}
+      onDragOver={previewMove}
+      onDragCancel={cancel}
       onDragEnd={(e) => {
-        setActive(undefined);
-        if (String(e.active.id).startsWith("group:")) {
-          const from = sections.indexOf(String(e.active.id).slice(6)),
-            to = sections.indexOf(String(e.over?.id).slice(6));
-          if (from >= 0 && to >= 0 && from !== to) {
-            const order = [...sections];
-            order.splice(to, 0, order.splice(from, 1)[0]!);
-            onReorder(order);
-          }
+        if (!original.current || !draft.current || !e.over || saving.current) {
+          cancel();
           return;
         }
-        const over = e.over?.data.current;
-        if (over) onDrop(String(e.active.id), over.section, over.key);
+        let next = draft.current;
+        if (String(e.active.id).startsWith("group:")) {
+          const from = next.sections.indexOf(String(e.active.id).slice(6)),
+            to = next.sections.indexOf(String(e.over.id).slice(6));
+          if (from >= 0 && to >= 0 && from !== to) {
+            const sections = [...next.sections];
+            sections.splice(to, 0, sections.splice(from, 1)[0]!);
+            next = { ...next, sections };
+          }
+        }
+        if (!String(e.active.id).startsWith("group:")) {
+          const target = e.over.data.current;
+          if (
+            target?.key &&
+            target.section &&
+            manualSections.includes(target.section)
+          ) {
+            const items = next.items[target.section] ?? [];
+            const from = items.indexOf(String(e.active.id)),
+              to = items.indexOf(target.key);
+            if (from >= 0 && to >= 0 && from !== to) {
+              next = {
+                ...next,
+                items: moveSidebarPreview(
+                  next.items,
+                  String(e.active.id),
+                  target.section,
+                  target.key,
+                  from < to,
+                ),
+              };
+            }
+          }
+        }
+        if (next === original.current) {
+          cancel();
+          return;
+        }
+        void save(next);
       }}
     >
       <SortableContext
-        items={sections.map((s) => `group:${s}`)}
+        items={shown.sections.map((id) => `group:${id}`)}
         strategy={verticalListSortingStrategy}
       >
-        {children}
+        {children(shown)}
       </SortableContext>
-      <DragOverlay>
-        {active ? (
+      {error && (
+        <p role="status" className="side-hint">
+          {error}
+        </p>
+      )}
+      <DragOverlay dropAnimation={null}>
+        {active && !active.startsWith("group:") ? (
           <div className="rah-sidebar-drag-preview">{labels[active]}</div>
         ) : null}
       </DragOverlay>
     </DndContext>
   );
 }
+
 export function SidebarDropZone({
   section,
   children,
@@ -140,9 +255,7 @@ export function SidebarDragItem({
   });
   return (
     <div
-      ref={(node) => {
-        drag.setNodeRef(node);
-      }}
+      ref={drag.setNodeRef}
       {...drag.attributes}
       {...drag.listeners}
       className={`rah-sidebar-sortable${drag.isDragging ? " is-dragging" : ""}${drag.isOver ? " is-over" : ""}`}
@@ -150,6 +263,7 @@ export function SidebarDragItem({
         transform: CSS.Transform.toString(drag.transform),
         transition: drag.transition,
         opacity: drag.isDragging ? 0.12 : 1,
+        zIndex: drag.isDragging ? 10 : undefined,
       }}
       data-sidebar-key={itemKey}
       aria-label="拖动会话；Alt+P 置顶或取消置顶"
@@ -179,21 +293,26 @@ export function useSidebarGroupHandle() {
 }
 export function SidebarSortableGroup({
   id,
+  disabled = false,
   children,
 }: {
   id: string;
+  disabled?: boolean;
   children: ReactNode;
 }) {
-  const sortable = useSortable({ id: `group:${id}` });
+  const sortable = useSortable({ id: `group:${id}`, disabled });
   return (
     <GroupHandle.Provider value={sortable}>
       <div
         ref={sortable.setNodeRef}
         data-sidebar-group={id}
         style={{
-          transform: CSS.Transform.toString(sortable.transform),
+          transform: CSS.Transform.toString(
+            sortable.transform ? { ...sortable.transform, x: 0 } : null,
+          ),
           transition: sortable.transition,
           opacity: sortable.isDragging ? 0.6 : 1,
+          zIndex: sortable.isDragging ? 10 : undefined,
         }}
       >
         {children}

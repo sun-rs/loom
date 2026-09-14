@@ -37,7 +37,6 @@ try {
     });
   }
   await page.goto(f.origin);
-  await page.getByRole("button", { name: "主页", exact: true }).tap();
   const sidebar = page.locator(".rah-room-sidebar");
   await expect
     .poll(async () => Math.round((await sidebar.boundingBox()).x))
@@ -145,8 +144,48 @@ try {
   await page.waitForTimeout(600);
   const menu = page.getByRole("menu").first();
   await expect(menu).toBeVisible();
-  await touch("touchEnd", pos.x, pos.y);
+  const anchor = await menu.boundingBox();
+  const lockedScroll = await body.evaluate((el) => el.scrollTop);
+  for (let i = 1; i <= 5; i++) {
+    await touch("touchMove", pos.x, pos.y - i * 16);
+    await page.waitForTimeout(30);
+  }
   await expect(menu).toBeVisible();
+  assert.equal(
+    await body.evaluate((el) => el.scrollTop),
+    lockedScroll,
+    "open menu freezes background touch scrolling",
+  );
+  const afterMove = await menu.boundingBox();
+  assert.ok(
+    Math.abs(afterMove.y - anchor.y) < 1,
+    "open menu keeps its initial screen anchor",
+  );
+  assert.notEqual(
+    await label.evaluate((el) => getComputedStyle(el).backgroundColor),
+    "rgb(254, 125, 168)",
+    "mobile home never paints its hidden conversation pink",
+  );
+  await touch("touchEnd", pos.x, pos.y - 80);
+  await expect(menu).toBeVisible();
+  await page.waitForTimeout(500);
+  await touch("touchStart", 10, 730);
+  for (let i = 1; i <= 4; i++) {
+    await touch("touchMove", 10, 730 - i * 20);
+    await page.waitForTimeout(30);
+  }
+  await touch("touchEnd", 10, 650);
+  await expect(menu).toBeVisible();
+  assert.equal(
+    await body.evaluate((el) => el.scrollTop),
+    lockedScroll,
+    "later background swipe stays locked too",
+  );
+  const afterSwipe = await menu.boundingBox();
+  assert.ok(
+    Math.abs(afterSwipe.y - anchor.y) < 1,
+    "later swipe cannot reposition the menu",
+  );
   await expect(sidebar).toHaveClass(/is-open/);
   assert.equal(
     page.url(),
@@ -154,6 +193,7 @@ try {
     "long press must not open the conversation on release",
   );
   assert.equal(await page.evaluate(() => getSelection()?.toString()), "");
+  await expect(sidebar.locator(".channel-row.is-selected")).toHaveCount(0);
   await expect(
     page.getByRole("menuitem", { name: "移动到分区", exact: true }),
   ).toBeVisible();
@@ -175,8 +215,22 @@ try {
   await page.waitForTimeout(500);
   // A real outside tap closes the menu without changing the underlying route.
   await page.touchscreen.tap(200, 60);
+
   await expect(page.getByRole("menu")).toHaveCount(0);
   await expect(sidebar).toHaveClass(/is-open/);
+  // The transparent touch backdrop must not intercept menu actions.
+  pos = await point(header);
+  await touch("touchStart", pos.x, pos.y);
+  await page.waitForTimeout(600);
+  await touch("touchEnd", pos.x, pos.y);
+  await page.getByRole("menuitem", { name: "新建分区…", exact: true }).tap();
+  const sectionDialog = page.getByRole("dialog", {
+    name: "新建分区",
+    exact: true,
+  });
+  await expect(sectionDialog).toBeVisible();
+  await sectionDialog.getByRole("button", { name: "取消", exact: true }).tap();
+  await expect(sectionDialog).toBeHidden();
   // Movement and cancellation must release the long-press timer.
   for (const cancel of [false, true]) {
     pos = await point(row);

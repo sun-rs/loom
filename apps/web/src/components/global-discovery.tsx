@@ -1,7 +1,7 @@
-import { useMessageHighlight } from "../use-message-highlight.ts";
+import { useMobileLayout } from "../use-mobile-layout.ts";
 import { activityDisplayText } from "../activity-display-names.ts";
 import { useResponsiveTaskView } from "../use-responsive-task-view.ts";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { PanelHeader } from "@rah-os/ui-web/neo-brutalist/panel-header";
 import { EmptyState } from "@rah-os/ui-web/neo-brutalist/empty-state";
 import { PanelHeaderAction } from "@rah-os/ui-web/neo-brutalist/panel-header-action";
@@ -225,12 +225,16 @@ function Failure({ error }: { error?: string | undefined }) {
   ) : null;
 }
 function Header({
+  actions,
+  root = false,
   title,
   subtitle,
   icon,
   onRefresh,
   onClose,
 }: {
+  actions?: ReactNode;
+  root?: boolean;
   title: string;
   subtitle: string;
   icon: string;
@@ -245,18 +249,21 @@ function Header({
         <p className="channel-sub">{subtitle}</p>
       </div>
       <div className="head-actions">
+        {actions}
         {onRefresh === undefined ? null : (
           <PanelHeaderAction aria-label={`刷新${title}`} onClick={onRefresh}>
             <Icon name="refresh-cw" />
           </PanelHeaderAction>
         )}
-        <PanelHeaderAction
-          className="rah-mobile-only"
-          aria-label="返回聊天"
-          onClick={onClose}
-        >
-          <Icon name="x" />
-        </PanelHeaderAction>
+        {!root && (
+          <PanelHeaderAction
+            className="rah-mobile-only"
+            aria-label="返回聊天"
+            onClick={onClose}
+          >
+            <Icon name="arrow-left" />
+          </PanelHeaderAction>
+        )}
       </div>
     </PanelHeader>
   );
@@ -303,6 +310,23 @@ function GlobalTasks({
     params.has("channel") || params.has("creator") || params.has("assignee");
   const options = (filter: "creator" | "assignee") =>
     taskPersonOptions(people, currentHuman?.principalId, filter, entities);
+  const mobile = useMobileLayout();
+  const viewControl = (
+    <div className="tasks-view" role="radiogroup" aria-label="任务视图">
+      {(["board", "list"] as const).map((mode) => (
+        <button
+          className="rah-interaction-segment"
+          key={mode}
+          role="radio"
+          aria-checked={view === mode}
+          onClick={() => change("view", [mode])}
+        >
+          <Icon name={mode === "board" ? "columns-3" : "layout-list"} />
+          {mode === "board" ? "看板" : "列表"}
+        </button>
+      ))}
+    </div>
+  );
   return (
     <main
       className="rah-discovery activity-main"
@@ -311,6 +335,8 @@ function GlobalTasks({
     >
       <Header
         title="任务"
+        root
+        actions={mobile ? viewControl : undefined}
         subtitle={`${result.data?.total ?? 0} 个频道任务${result.data?.nextCursor || filters.previous ? ` · 本页 ${tasks.length} 项` : ""}`}
         icon="task"
         onClose={onClose}
@@ -350,20 +376,7 @@ function GlobalTasks({
               清除筛选
             </button>
           )}
-          <div className="tasks-view" role="radiogroup" aria-label="任务视图">
-            {(["board", "list"] as const).map((mode) => (
-              <button
-                className="rah-interaction-segment"
-                key={mode}
-                role="radio"
-                aria-checked={view === mode}
-                onClick={() => change("view", [mode])}
-              >
-                <Icon name={mode === "board" ? "columns-3" : "layout-list"} />
-                {mode === "board" ? "看板" : "列表"}
-              </button>
-            ))}
-          </div>
+          {!mobile && viewControl}
         </div>
       </section>
       <Failure error={result.error} />
@@ -416,7 +429,6 @@ function GlobalSearch({
   const filters = useFilters("search");
   const { params, change } = filters;
   const query = params.get("q") ?? "";
-  const highlight = useMessageHighlight(query ? params.toString() : undefined);
   const scopes = normalizeScopes(params.getAll("scope"));
   const senderKind = senderKindForScopes(scopes);
   const sender = people.find(
@@ -554,7 +566,7 @@ function GlobalSearch({
   const [personError, setPersonError] = useState<string>();
   const box = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    box.current?.focus();
+    box.current?.focus({ preventScroll: true });
   }, []);
   return (
     <main className="rah-discovery search-main" aria-label="全局搜索">
@@ -592,7 +604,7 @@ function GlobalSearch({
                 size="compact"
                 onClick={() => {
                   change("q", []);
-                  box.current?.focus();
+                  box.current?.focus({ preventScroll: true });
                 }}
               >
                 <Icon name="x" />
@@ -824,7 +836,6 @@ function GlobalSearch({
             {groupedHits.map((group) => (
               <SearchResultPanel
                 group={group}
-                highlight={highlight.visible}
                 key={group.key}
                 onOpen={onOpen}
                 query={query}
@@ -869,18 +880,15 @@ function GlobalSearch({
 
 function SearchResultPanel({
   group,
-  highlight,
   onOpen,
   query,
   rooms,
 }: {
   group: ReturnType<typeof groupSearchHits>[number];
-  highlight: boolean;
   onOpen: DiscoveryNavigationHandler;
   query: string;
   rooms: readonly Room[];
 }) {
-  const [hovered, setHovered] = useState<string>();
   const first = group.hits[0]!;
   const entities = useWorkspaceEntities();
   return (
@@ -907,10 +915,7 @@ function SearchResultPanel({
         <button
           className="result-item rah-search-hit"
           key={hit.message.messageId}
-          onMouseEnter={() => setHovered(hit.message.messageId)}
-          onMouseLeave={() => setHovered(undefined)}
           onClick={() => {
-            setHovered(undefined);
             return onOpen({ target: hit.target, highlightQuery: query });
           }}
         >
@@ -954,12 +959,7 @@ function SearchResultPanel({
                 ),
                 query,
               ).map((part, index) =>
-                part.match &&
-                (highlight || hovered === hit.message.messageId) ? (
-                  <mark key={index}>{part.text}</mark>
-                ) : (
-                  part.text
-                ),
+                part.match ? <mark key={index}>{part.text}</mark> : part.text,
               )}
             </span>
           </span>

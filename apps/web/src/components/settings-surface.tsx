@@ -86,6 +86,7 @@ function hasExplicitSettingsSection(search: string): boolean {
 }
 
 export function SettingsSurface({
+  onComputers,
   canManageWorkspace,
   client,
   currentPrincipal,
@@ -94,6 +95,7 @@ export function SettingsSurface({
   onPrincipalUpdated,
   workspace,
 }: {
+  onComputers?: () => void;
   agents: readonly WorkspaceAgentView[];
   canManageWorkspace: boolean;
   client: RahClient;
@@ -144,10 +146,15 @@ export function SettingsSurface({
       className="rah-settings-surface"
       data-mobile-index={mobileIndex || undefined}
     >
-      <SettingsNavigation active={section} onSelect={select} />
+      <SettingsNavigation
+        active={section}
+        onSelect={select}
+        onComputers={onComputers}
+      />
       <SettingsNavigation
         active={section}
         className="rah-settings-mobile-index"
+        onComputers={onComputers}
         onSelect={select}
       />
       <SettingsMobileBackProvider onBack={showMobileSettingsIndex}>
@@ -196,10 +203,12 @@ export function SettingsSurface({
 }
 
 function SettingsNavigation({
+  onComputers,
   active,
   className,
   onSelect,
 }: {
+  onComputers?: (() => void) | undefined;
   active: SettingsSection;
   className?: string;
   onSelect: (section: SettingsSection) => void;
@@ -210,6 +219,7 @@ function SettingsNavigation({
       className={`rah-settings-navigation${className ? ` ${className}` : ""}`}
     >
       <PanelHeader kind="sidebar">
+        <Icon name="gear" />
         <strong>设置</strong>
       </PanelHeader>
       <nav>
@@ -230,6 +240,16 @@ function SettingsNavigation({
                 {item.localExtension ? <small>本地</small> : null}
               </button>
             ))}
+            {group.label === "工作空间" && onComputers && (
+              <button
+                type="button"
+                className="rah-interaction-row"
+                onClick={onComputers}
+              >
+                <Icon name="monitor" />
+                <span>计算机</span>
+              </button>
+            )}
           </section>
         ))}
       </nav>

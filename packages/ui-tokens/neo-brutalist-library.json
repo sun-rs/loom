@@ -9,6 +9,15 @@
   "stylesheet": "packages/ui-tokens/src/neo-brutalist/index.css",
   "components": [
     {
+      "id": "choice-row",
+      "description": "Four source-backed Agent choice profiles with independent hover/current/selection/disabled states; page and modal placement do not change the palette. Typed API and CSS ownership gate prevent local overrides.",
+      "owner": "packages/ui-web/src/neo-brutalist/choice-row.tsx",
+      "styles": ["packages/ui-tokens/src/neo-brutalist/choice-row.css"],
+      "example": "apps/web/test/choice-row-fixture.tsx",
+      "behaviors": ["B024", "B027", "B031", "B037"],
+      "scenarios": ["choice-state-profiles"]
+    },
+    {
       "id": "profile-field",
       "description": "HumanDetailPanel multiline description port: frozen edit baseline, 3000-character limit, Escape/cancel, pending/error and focus restoration. Mutation stays in the authenticated profile owner.",
       "owner": "packages/ui-web/src/neo-brutalist/profile-field.tsx",

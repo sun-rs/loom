@@ -1,0 +1,177 @@
+/* User's Raft iOS screenshots: floating translucent capsule with gray active pill.
+   These are maintained RAH CSS values, not extracted native iOS measurements. */
+.rah-mobile-nav {
+  display: none;
+}
+@media (max-width: 767px) {
+  .app.rah-product-shell {
+    padding-top: env(safe-area-inset-top);
+  }
+  .rah-product-shell > .rah-room-sidebar {
+    top: env(safe-area-inset-top);
+  }
+  .rah-mobile-nav {
+    position: fixed;
+    z-index: 70;
+    display: flex;
+    align-items: stretch;
+    left: max(16px, env(safe-area-inset-left));
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(12px, env(safe-area-inset-bottom));
+    height: 64px;
+    padding: 4px;
+    gap: 2px;
+    border: 1px solid rgb(255 255 255 / 75%);
+    border-radius: 40px;
+    background: rgb(255 255 255 / 88%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 4px 24px rgb(0 0 0 / 8%);
+  }
+  .rah-mobile-nav button {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    border-radius: 32px;
+    background: transparent;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: center;
+    justify-content: center;
+    font: 500 12px/16px var(--sans);
+  }
+  .rah-mobile-nav button[aria-current="page"] {
+    background: rgb(0 0 0 / 7%);
+    font-weight: 700;
+  }
+  .rah-mobile-nav button:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: -3px;
+  }
+  .rah-mobile-nav svg {
+    width: 26px;
+    height: 26px;
+  }
+  .rah-product-shell:has(> .rah-agent-directory-page.is-mobile-detail-open)
+    > .rah-mobile-nav,
+  .rah-product-shell:has(> .rah-settings-surface:not([data-mobile-index]))
+    > .rah-mobile-nav,
+  .rah-task-modal-open > .rah-mobile-nav {
+    display: none;
+  }
+  .rah-room-sidebar.is-open .sidebar-body,
+  .rah-product-shell > .rah-discovery[aria-label="全局任务"] .rah-global-kanban,
+  .rah-agent-directory-page:not(.is-mobile-detail-open)
+    .rah-agent-sidebar-scroll,
+  .rah-settings-mobile-index {
+    padding-bottom: calc(92px + env(safe-area-inset-bottom));
+    scroll-padding-bottom: 92px;
+  }
+  .rah-mobile-home-notifications {
+    width: 36px;
+    height: 36px;
+    background: white;
+    border: var(--bd);
+    box-shadow: var(--shadow-s);
+  }
+  .rah-mobile-home-notifications > svg {
+    width: 22px;
+    height: 22px;
+  }
+  .rah-product-shell .composer {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  /* Keep editable controls at iOS's non-zooming size without disabling pinch zoom. */
+  .search-box input,
+  .rah-discovery-popover-search input {
+    font-size: 16px;
+  }
+  .rah-discovery[aria-label="全局任务"] .activity-head {
+    gap: 8px;
+    padding: 12px;
+    min-height: 72px;
+  }
+  .rah-discovery[aria-label="全局任务"] .channel-sub {
+    display: block;
+    font: 12px/18px var(--sans);
+  }
+  .rah-discovery[aria-label="全局任务"] .channel-title {
+    flex: 1;
+    min-width: 0;
+  }
+  .rah-discovery[aria-label="全局任务"] .head-actions {
+    margin-left: auto;
+  }
+  .rah-discovery[aria-label="全局任务"] .tasks-view {
+    margin: 0;
+    gap: 4px;
+  }
+  .rah-discovery[aria-label="全局任务"] .tasks-view button {
+    padding: 5px 6px;
+    font-size: 12px;
+  }
+  .rah-discovery[aria-label="全局任务"] .tasks-toolbar {
+    padding: 10px 8px;
+  }
+  .rah-discovery[aria-label="全局任务"] .tasks-toolbar-row {
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+  .rah-discovery[aria-label="全局任务"] .task-filter-trigger {
+    padding: 5px;
+    gap: 3px;
+  }
+  .rah-discovery[aria-label="全局任务"] .tasks-clear {
+    margin-left: auto;
+    flex: none;
+    padding: 5px;
+    font-size: 12px;
+  }
+  .rah-settings-mobile-index > header {
+    display: flex;
+    gap: 12px;
+    min-height: 72px;
+  }
+  .rah-settings-mobile-index > header svg {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+@media (max-width: 767px) {
+  .rah-agent-directory-list,
+  .rah-settings-mobile-index {
+    background: white;
+  }
+  .rah-product-shell .rah-agent-sidebar-head,
+  .rah-product-shell .rah-settings-mobile-index > header {
+    background: var(--yellow);
+    min-height: 72px;
+  }
+  .rah-agent-sidebar-head {
+    gap: 12px;
+  }
+  .rah-agent-sidebar-head > svg {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+@media (max-width: 767px) {
+  .rah-human-inbox {
+    height: min(288px, calc(100dvh - 100px));
+  }
+  .rah-human-inbox:has(.notification-empty) {
+    height: min(200px, calc(100dvh - 100px));
+  }
+  .app.rah-product-shell {
+    background: white;
+  }
+  .app.rah-product-shell:has(> .rah-mobile-nav) {
+    background: var(--yellow);
+  }
+}

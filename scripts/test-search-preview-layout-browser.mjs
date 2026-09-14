@@ -11,12 +11,35 @@ try {
   p.setDefaultTimeout(10000);
   await p.goto(f.origin + "/?surface=search&q=History");
   const hit = p.locator(".rah-search-hit").first();
+  await expect(hit.locator("mark").first()).toBeVisible();
+  const initialMarks = await p.locator(".rah-search-hit mark").count();
+  assert.ok(initialMarks > 0);
   await hit.click();
+  await p.mouse.move(1200, 700);
+  await expect(p.locator(".rah-search-hit mark")).toHaveCount(initialMarks);
+  await p.locator(".rah-search-section-title").click();
+  await expect(p.locator(".rah-search-hit mark")).toHaveCount(initialMarks);
+  await p.mouse.wheel(0, 100);
+  await expect(p.locator(".rah-search-hit mark")).toHaveCount(initialMarks);
   const separator = p.getByRole("separator", {
     name: "调整搜索结果宽度",
     exact: true,
   });
   await expect(separator).toBeVisible();
+  const headerButtons = ["搜索当前对话", "频道详情与设置", "关闭搜索预览"];
+  const bounds = await Promise.all(
+    headerButtons.map((name) =>
+      p.getByRole("button", { name, exact: true }).boundingBox(),
+    ),
+  );
+  assert.ok(bounds.every(Boolean));
+  const searchGap = bounds[1].x - bounds[0].x - bounds[0].width;
+  const closeGap = bounds[2].x - bounds[1].x - bounds[1].width;
+  assert.equal(
+    closeGap,
+    searchGap,
+    "search/settings/close share the same action gap",
+  );
   const results = p.locator(".rah-discovery");
   const before = (await results.boundingBox()).width;
   const box = await separator.boundingBox();

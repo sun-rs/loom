@@ -48,31 +48,12 @@ test("short desktop shells use Raft's compact rail geometry", () => {
   );
 });
 
-test("mobile navigation keeps Raft destinations and remains mounted on details", () => {
-  const raft = readRaftBundle();
-  const navigation = readWeb("components/workspace-navigation.tsx");
-  const app = readWeb("App.tsx");
-
-  for (const id of [
-    "layout.mobileTabBar.home",
-    "layout.mobileTabBar.tasks",
-    "layout.mobileTabBar.members",
-    "layout.mobileTabBar.settings",
-  ]) {
-    assert.match(raft, new RegExp(id.replaceAll(".", "\\."), "u"));
-  }
-  assert.match(
-    navigation,
-    /label="主页"[\s\S]*?label="任务"[\s\S]*?label="成员"[\s\S]*?label="设置"/u,
-  );
-  assert.doesNotMatch(
-    navigation.slice(navigation.indexOf("export function MobileNavigation")),
-    /label="(?:搜索|动态|Rooms|聊天|Agents|Inbox)"/u,
-  );
-  // User override: all mobile pages retain navigation, including detail routes.
-  assert.doesNotMatch(app, /showMobileNavigation/u);
-  assert.doesNotMatch(navigation, /if \(!showMobileNavigation\) return null/u);
-  assert.match(app, /onHome=/u);
+test("mobile root navigation uses tabs and removes the drawer", () => {
+  const navigation = readWeb("components/workspace-navigation-shell.tsx");
+  assert.match(navigation, /aria-label="移动端主导航"/u);
+  assert.match(navigation, /<Rail/u);
+  assert.match(navigation, /homeOpen/u);
+  assert.doesNotMatch(navigation, /Dialog|drawer|打开主导航/u);
 });
 
 test("both task surfaces share container-based defaults with explicit selection precedence", () => {

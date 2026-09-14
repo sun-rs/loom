@@ -941,12 +941,10 @@ body.overlay-open { overflow: hidden; }
 }
 .mention-row {
   display: flex; align-items: center; gap: 8px;
-  width: 100%; text-align: left;
-  background: none; border: 0;
+  width: 100%; text-align: left; border: 0;
   padding: 6px 8px; font-size: 14px; cursor: pointer;
 }
 .mention-row .handle { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--ink-40); }
-.mention-row.is-active { background: var(--yellow); }
 
 /* ============================================================
    移动端与成员体系组件（2026-08 实测自 iOS App 截图）

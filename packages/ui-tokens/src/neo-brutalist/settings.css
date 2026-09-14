@@ -687,7 +687,7 @@
   .rah-settings-surface {
     grid-column: 1;
     grid-template-columns: minmax(0, 1fr);
-    padding-bottom: calc(var(--rah-mobile-nav-h) + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
   .rah-settings-surface

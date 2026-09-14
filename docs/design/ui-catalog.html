@@ -1330,12 +1330,10 @@ body.overlay-open { overflow: hidden; }
 }
 .mention-row {
   display: flex; align-items: center; gap: 8px;
-  width: 100%; text-align: left;
-  background: none; border: 0;
+  width: 100%; text-align: left; border: 0;
   padding: 6px 8px; font-size: 14px; cursor: pointer;
 }
 .mention-row .handle { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--ink-40); }
-.mention-row.is-active { background: var(--yellow); }
 
 /* ============================================================
    移动端与成员体系组件（2026-08 实测自 iOS App 截图）
@@ -4841,7 +4839,7 @@ button.rah-entity-card:disabled {
   .rah-settings-surface {
     grid-column: 1;
     grid-template-columns: minmax(0, 1fr);
-    padding-bottom: calc(var(--rah-mobile-nav-h) + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
   .rah-settings-surface
@@ -5341,10 +5339,61 @@ html:not([data-rah-agent-model-name="true"]) .rah-message-agent-model {
   display: block;
 }
 
+/* ===== packages/ui-tokens/src/neo-brutalist/choice-row.css ===== */
+/* RAH structural presentation contract; Raft index-MqTUR4Ez, 2026-09-14
+   source matrix: docs/audits/2026-09-14-agent-choice-hover-contract.zh-CN.md.
+   A surface's placement never selects its palette. Alpha is applied once. */
+.rah-choice-row {
+  background: transparent;
+}
+.rah-choice-row[data-choice-profile="member-selection"]:hover:where(
+    :not(:disabled, [aria-disabled="true"], [data-disabled])
+  ) {
+  background: var(--yellow);
+}
+.rah-choice-row[data-choice-profile="member-browse"]:where(
+    :hover,
+    :focus-within
+  ):where(:not(:disabled, [aria-disabled="true"], [data-disabled])),
+.rah-choice-row[data-choice-profile="property-option"]:where(
+    :hover,
+    :focus-visible,
+    [data-highlighted],
+    [data-choice-current]
+  ):where(:not(:disabled, [aria-disabled="true"], [data-disabled])) {
+  background: var(--soft-signal);
+}
+.rah-choice-row[data-choice-profile="autocomplete"]:hover:where(
+    :not(:disabled, [aria-disabled="true"], [data-disabled])
+  ) {
+  background: color-mix(in srgb, var(--yellow) 50%, transparent);
+}
+.rah-choice-row[data-choice-profile="autocomplete"][data-choice-current]:where(
+    :not(:disabled, [aria-disabled="true"], [data-disabled])
+  ) {
+  background: var(--yellow);
+}
+.rah-choice-row[data-choice-profile="member-selection"][data-choice-selected] {
+  background: color-mix(in srgb, var(--pink) 20%, transparent);
+}
+.rah-choice-row:focus-visible {
+  outline: 2px solid var(--black);
+  outline-offset: -2px;
+}
+
+.rah-choice-row[data-choice-profile="member-selection"]:where(
+    :disabled,
+    [aria-disabled="true"],
+    [data-disabled]
+  ) {
+  opacity: 0.5;
+}
+
 /* ===== packages/ui-tokens/src/neo-brutalist/index.css ===== */
 /* RAH Neo-Brutalist UI: one production and fixture stylesheet entry.
    Preserve adoption order while migrating legacy page families incrementally.
    overlays.css is already imported by styles.css; do not import it twice. */
+
 
 
 
@@ -5846,7 +5895,6 @@ html:not([data-rah-agent-model-name="true"]) .rah-message-agent-model {
 }
 
 .rah-mobile-only,
-.rah-mobile-nav,
 .rah-mobile-backdrop {
   display: none;
 }
@@ -8490,19 +8538,12 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 .rah-room-create-agent-list > button {
   align-items: center;
-  background: transparent;
   border: 0;
   display: flex;
   gap: 8px;
   padding: 6px 12px;
   text-align: left;
   width: 100%;
-}
-.rah-room-create-agent-list > button:hover {
-  background: var(--yellow);
-}
-.rah-room-create-agent-list > button.is-selected {
-  background: color-mix(in srgb, var(--pink) 20%, transparent);
 }
 .rah-room-create-agent-list .rah-agent-avatar {
   height: 18px;
@@ -9244,16 +9285,9 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 
 @media (max-width: 767px) {
-  :root {
-    --rah-mobile-nav-h: 52px;
-    --rah-mobile-nav-space: calc(
-      var(--rah-mobile-nav-h) + env(safe-area-inset-bottom)
-    );
-  }
-
   .app.rah-product-shell {
     grid-template-columns: minmax(0, 1fr);
-    height: calc(100dvh - var(--rah-mobile-nav-space));
+    height: 100dvh;
     min-width: 0;
     width: 100%;
   }
@@ -9275,7 +9309,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   }
 
   .rah-product-shell > .rah-room-sidebar {
-    bottom: calc(var(--rah-mobile-nav-h) + env(safe-area-inset-bottom));
+    bottom: 0;
     border-right: 0;
     box-shadow: none;
     display: flex;
@@ -9359,70 +9393,9 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
     display: none;
   }
 
-  .rah-mobile-nav {
-    background: white;
-    border-top: var(--bd-heavy);
-    bottom: 0;
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    left: 0;
-    height: var(--rah-mobile-nav-space);
-    padding: 0 0 env(safe-area-inset-bottom);
-    position: fixed;
-    right: 0;
-    z-index: 70;
-  }
-
-  .rah-mobile-nav button {
-    align-items: center;
-    background: white;
-    border: 0;
-    border-right: var(--bd-heavy);
-    display: flex;
-    flex-direction: column;
-    font-family: var(--sans);
-    font-size: 10px;
-    font-weight: 700;
-    gap: 2px;
-    justify-content: center;
-    min-height: 0;
-    padding: 8px 0;
-    position: relative;
-    transition: background-color var(--rah-interaction-transition);
-  }
-
-  .rah-mobile-nav button:last-child {
-    border-right: 0;
-  }
-
-  .rah-mobile-nav-badge {
-    align-items: center;
-    background: var(--pink);
-    border: 1px solid var(--ink);
-    border-radius: 999px;
-    display: flex;
-    font: 700 8px/1 var(--mono);
-    height: 14px;
-    justify-content: center;
-    min-width: 14px;
-    padding: 0 2px;
-    position: absolute;
-    right: 8px;
-    top: 3px;
-  }
-
   .rah-human-inbox {
-    height: min(360px, calc(100dvh - var(--rah-mobile-nav-h) - 24px));
+    height: min(360px, calc(100dvh - 24px));
     width: min(320px, calc(100vw - 16px));
-  }
-
-  .rah-mobile-nav button.is-active {
-    background: var(--yellow);
-  }
-
-  .rah-mobile-nav svg {
-    height: 18px;
-    width: 18px;
   }
 
   .rah-product-shell > .thread {
@@ -9464,7 +9437,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 
   .rah-dialog-layer {
     align-items: stretch;
-    padding: 0 0 calc(var(--rah-mobile-nav-h) + env(safe-area-inset-bottom));
+    padding: 0;
   }
 
   .rah-channel-settings-drawer {
@@ -9611,17 +9584,6 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   height: 6px;
   border-radius: 50%;
   background: var(--pink);
-}
-
-@media (max-width: 767px) and (max-height: 600px) {
-  .rah-mobile-nav button {
-    min-height: 36px;
-    padding-block: 8px;
-  }
-
-  .rah-mobile-nav button > svg {
-    display: none;
-  }
 }
 
 /* Raft create-agent-name Sl/nOe and dOe/lOe; brutal field tokens. */
@@ -12940,10 +12902,6 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
     background: var(--yellow);
     padding-inline: 20px;
   }
-  .rah-global-shell .activity-head > .rah-panel-header-icon,
-  .rah-global-shell .activity-head .head-actions > .rah-mobile-only {
-    display: none;
-  }
   .rah-discovery .task-filter-menu {
     width: min(220px, calc(100vw - 32px));
   }
@@ -13483,14 +13441,10 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   text-align: left;
   font: 700 12px/16px var(--sans);
   color: #000;
-  background: #fff;
   cursor: pointer;
 }
 .rah-discovery-popover-options > button:last-child {
   border-bottom: 0;
-}
-.rah-discovery-popover-options > button:hover:not(:disabled) {
-  background: color-mix(in oklab, var(--yellow) 30%, transparent);
 }
 .rah-discovery-popover-options > button:disabled {
   cursor: not-allowed;
@@ -14185,7 +14139,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   .app.rah-product-shell.rah-agent-peek-open[data-conversation-layout][data-profile-source]
     > .rah-agent-peek {
     grid-column: 1;
-    height: calc(100dvh - var(--rah-mobile-nav-space));
+    height: 100dvh;
   }
 }
 
@@ -14415,7 +14369,9 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   padding: 0;
   overflow: visible;
 }
-.rah-discovery-popover.is-reaction .rah-discovery-popover-options > button {
+.rah-discovery-popover.is-reaction
+  .rah-discovery-popover-options
+  > button:not(.rah-choice-row) {
   width: 28px;
   height: 28px;
   min-height: 0;
@@ -14434,14 +14390,14 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 .rah-discovery-popover.is-reaction
   .rah-discovery-popover-options
-  > button:hover:not(:disabled) {
+  > button:not(.rah-choice-row):hover:not(:disabled) {
   border: 0;
   background: color-mix(in srgb, var(--pink) 20%, transparent);
   box-shadow: none;
 }
 .rah-discovery-popover.is-reaction
   .rah-discovery-popover-options
-  > button
+  > button:not(.rah-choice-row)
   > span:not(.rah-discovery-option-leading) {
   display: none;
 }
@@ -14632,28 +14588,17 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   user-select: none;
   -webkit-touch-callout: none;
 }
-.rah-sidebar-sortable.is-dragging {
-  opacity: 0.35;
-}
-.rah-sidebar-sortable.is-over::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  border-bottom: 2px solid var(--black);
-  pointer-events: none;
-}
 .rah-sidebar-drop.is-over {
-  outline: 1px dashed var(--ink-40);
-  outline-offset: -1px;
+  background: rgb(255 255 255 / 60%);
 }
 .rah-sidebar-drag-preview {
-  padding: 5px 8px;
+  max-width: 288px;
+  padding: 6px 8px;
   border: 2px solid var(--black);
-  background: var(--pink);
+  background: var(--bg);
   box-shadow: 2px 2px 0 var(--black);
   font-size: 14px;
+  font-weight: 500;
 }
 .rah-sidebar-pin-keyboard {
   position: absolute;
@@ -16182,6 +16127,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   width: 192px;
   max-height: var(--available-height);
   overflow-y: auto;
+  overscroll-behavior: contain;
   border: 2px solid #000;
   background: #fff;
   box-shadow: 4px 4px 0 #141111;
@@ -16246,6 +16192,185 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 .rah-rich-task-reference[data-task-status]:focus-visible {
   background: var(--rah-task-reference-bg);
   filter: brightness(0.9);
+}
+
+/* ===== apps/web/src/mobile-navigation.css ===== */
+/* User's Raft iOS screenshots: floating translucent capsule with gray active pill.
+   These are maintained RAH CSS values, not extracted native iOS measurements. */
+.rah-mobile-nav {
+  display: none;
+}
+@media (max-width: 767px) {
+  .app.rah-product-shell {
+    padding-top: env(safe-area-inset-top);
+  }
+  .rah-product-shell > .rah-room-sidebar {
+    top: env(safe-area-inset-top);
+  }
+  .rah-mobile-nav {
+    position: fixed;
+    z-index: 70;
+    display: flex;
+    align-items: stretch;
+    left: max(16px, env(safe-area-inset-left));
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(12px, env(safe-area-inset-bottom));
+    height: 64px;
+    padding: 4px;
+    gap: 2px;
+    border: 1px solid rgb(255 255 255 / 75%);
+    border-radius: 40px;
+    background: rgb(255 255 255 / 88%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 4px 24px rgb(0 0 0 / 8%);
+  }
+  .rah-mobile-nav button {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    border-radius: 32px;
+    background: transparent;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: center;
+    justify-content: center;
+    font: 500 12px/16px var(--sans);
+  }
+  .rah-mobile-nav button[aria-current="page"] {
+    background: rgb(0 0 0 / 7%);
+    font-weight: 700;
+  }
+  .rah-mobile-nav button:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: -3px;
+  }
+  .rah-mobile-nav svg {
+    width: 26px;
+    height: 26px;
+  }
+  .rah-product-shell:has(> .rah-agent-directory-page.is-mobile-detail-open)
+    > .rah-mobile-nav,
+  .rah-product-shell:has(> .rah-settings-surface:not([data-mobile-index]))
+    > .rah-mobile-nav,
+  .rah-task-modal-open > .rah-mobile-nav {
+    display: none;
+  }
+  .rah-room-sidebar.is-open .sidebar-body,
+  .rah-product-shell > .rah-discovery[aria-label="全局任务"] .rah-global-kanban,
+  .rah-agent-directory-page:not(.is-mobile-detail-open)
+    .rah-agent-sidebar-scroll,
+  .rah-settings-mobile-index {
+    padding-bottom: calc(92px + env(safe-area-inset-bottom));
+    scroll-padding-bottom: 92px;
+  }
+  .rah-mobile-home-notifications {
+    width: 36px;
+    height: 36px;
+    background: white;
+    border: var(--bd);
+    box-shadow: var(--shadow-s);
+  }
+  .rah-mobile-home-notifications > svg {
+    width: 22px;
+    height: 22px;
+  }
+  .rah-product-shell .composer {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  /* Keep editable controls at iOS's non-zooming size without disabling pinch zoom. */
+  .search-box input,
+  .rah-discovery-popover-search input {
+    font-size: 16px;
+  }
+  .rah-discovery[aria-label="全局任务"] .activity-head {
+    gap: 8px;
+    padding: 12px;
+    min-height: 72px;
+  }
+  .rah-discovery[aria-label="全局任务"] .channel-sub {
+    display: block;
+    font: 12px/18px var(--sans);
+  }
+  .rah-discovery[aria-label="全局任务"] .channel-title {
+    flex: 1;
+    min-width: 0;
+  }
+  .rah-discovery[aria-label="全局任务"] .head-actions {
+    margin-left: auto;
+  }
+  .rah-discovery[aria-label="全局任务"] .tasks-view {
+    margin: 0;
+    gap: 4px;
+  }
+  .rah-discovery[aria-label="全局任务"] .tasks-view button {
+    padding: 5px 6px;
+    font-size: 12px;
+  }
+  .rah-discovery[aria-label="全局任务"] .tasks-toolbar {
+    padding: 10px 8px;
+  }
+  .rah-discovery[aria-label="全局任务"] .tasks-toolbar-row {
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+  .rah-discovery[aria-label="全局任务"] .task-filter-trigger {
+    padding: 5px;
+    gap: 3px;
+  }
+  .rah-discovery[aria-label="全局任务"] .tasks-clear {
+    margin-left: auto;
+    flex: none;
+    padding: 5px;
+    font-size: 12px;
+  }
+  .rah-settings-mobile-index > header {
+    display: flex;
+    gap: 12px;
+    min-height: 72px;
+  }
+  .rah-settings-mobile-index > header svg {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+@media (max-width: 767px) {
+  .rah-agent-directory-list,
+  .rah-settings-mobile-index {
+    background: white;
+  }
+  .rah-product-shell .rah-agent-sidebar-head,
+  .rah-product-shell .rah-settings-mobile-index > header {
+    background: var(--yellow);
+    min-height: 72px;
+  }
+  .rah-agent-sidebar-head {
+    gap: 12px;
+  }
+  .rah-agent-sidebar-head > svg {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+@media (max-width: 767px) {
+  .rah-human-inbox {
+    height: min(288px, calc(100dvh - 100px));
+  }
+  .rah-human-inbox:has(.notification-empty) {
+    height: min(200px, calc(100dvh - 100px));
+  }
+  .app.rah-product-shell {
+    background: white;
+  }
+  .app.rah-product-shell:has(> .rah-mobile-nav) {
+    background: var(--yellow);
+  }
 }
 
 </style>
@@ -16616,7 +16741,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   <dl>
     <div><dt>组件规格</dt><dd>2</dd></div>
     <div><dt>令牌</dt><dd>149</dd></div>
-    <div><dt>内联样式表</dt><dd>41</dd></div>
+    <div><dt>内联样式表</dt><dd>43</dd></div>
     <div><dt>生成器</dt><dd>scripts/build-ui-catalog.mjs</dd></div>
   </dl>
 </header>
@@ -17794,7 +17919,7 @@ npm run check:ui-catalog</pre>
 <footer class="uic-foot">
   <p>本页由 <code>node scripts/build-ui-catalog.mjs</code> 生成，请勿手改 <code>docs/design/ui-catalog.html</code>。</p>
   <ul>
-    <li>样式表载入顺序（取自 <code>apps/web/src/product-styles.ts</code>）：packages/ui-tokens/src/neo-brutalist/index.css → apps/web/src/product.css → apps/web/src/agent-directory.css → apps/web/src/member-relationship-graph.css → apps/web/src/computer-directory.css → apps/web/src/global-discovery.css → apps/web/src/task-detail.css → apps/web/src/discovery-controls.css → apps/web/src/identity-interactions.css → apps/web/src/chat-surface.css → apps/web/src/message-social.css → apps/web/src/message-selection.css → apps/web/src/room-files.css → apps/web/src/attachment-comments.css → apps/web/src/web-build-recovery.css → apps/web/src/context-actions.css → apps/web/src/task-reference-colors.css</li>
+    <li>样式表载入顺序（取自 <code>apps/web/src/product-styles.ts</code>）：packages/ui-tokens/src/neo-brutalist/index.css → apps/web/src/product.css → apps/web/src/agent-directory.css → apps/web/src/member-relationship-graph.css → apps/web/src/computer-directory.css → apps/web/src/global-discovery.css → apps/web/src/task-detail.css → apps/web/src/discovery-controls.css → apps/web/src/identity-interactions.css → apps/web/src/chat-surface.css → apps/web/src/message-social.css → apps/web/src/message-selection.css → apps/web/src/room-files.css → apps/web/src/attachment-comments.css → apps/web/src/web-build-recovery.css → apps/web/src/context-actions.css → apps/web/src/task-reference-colors.css → apps/web/src/mobile-navigation.css</li>
     <li>内联字体：packages/ui-tokens/src/neo-brutalist/vendor/raft/fonts/raft-quote-glyphs.woff2、packages/ui-tokens/src/neo-brutalist/vendor/raft/fonts/space-grotesk-latin.woff2、packages/ui-tokens/src/neo-brutalist/vendor/raft/fonts/space-mono-400-latin.woff2、packages/ui-tokens/src/neo-brutalist/vendor/raft/fonts/space-mono-700-latin.woff2（合计 76000 字节，base64 后约 101333 字节）</li>
     <li>图标雪碧图：packages/ui-tokens/src/neo-brutalist/extracted/raft-icons.svg、packages/ui-tokens/src/interaction-icons.svg</li>
     <li>规格来源：packages/ui-tokens/specs/*.spec.json、packages/ui-tokens/specs/ratchet.json、docs/design/component-specs/*.zh-CN.md</li>

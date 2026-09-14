@@ -107,3 +107,8 @@ export function activityPresentation(entry: RuntimeTrajectoryRecord["entry"]) {
     block: false,
   };
 }
+
+/** Mobile presentation alias only; the canonical workspace name stays intact. */
+export function mobileWorkspaceLabel(name: string): string {
+  return name === "RAH Local Workstation" ? "RAH Workstation" : name;
+}
