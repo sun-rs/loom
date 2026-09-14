@@ -5,6 +5,8 @@ import type { GlobalSurface } from "./global-discovery-model.ts";
 
 export type ProductNavigationRequest = {
   target: NavigationTarget;
+  /** Ephemeral search presentation; never sent to the business resolver. */
+  highlightQuery?: string;
   surface?: "activity" | "tasks";
 };
 
@@ -67,7 +69,7 @@ export function navigationPresentation(
               : { focusedMessageId: target.rootMessageId }),
           }
         : {}),
-      tab: "tasks",
+      tab: originSurface === "tasks" ? "tasks" : "chat",
       ...(target.rootMessageId === undefined
         ? {}
         : { threadRootMessageId: target.rootMessageId }),
@@ -93,6 +95,8 @@ export function navigationSearch(
 ): string {
   const params = new URLSearchParams();
   const { target } = request;
+  if (request.highlightQuery?.trim())
+    params.set("highlight", request.highlightQuery.trim());
   if (request.surface === "tasks" && target.kind === "task") {
     params.set("surface", "tasks");
     const current = new URLSearchParams(currentSearch);
@@ -132,7 +136,7 @@ export function navigationSearch(
     if (target.rootMessageId)
       params.set("thread", `${target.roomId}:${target.rootMessageId}`);
   } else if (target.kind === "task") {
-    params.set("roomTab", "tasks");
+    if (request.surface === "tasks") params.set("roomTab", "tasks");
     params.set("task", target.taskId);
     if (target.threadId) params.set("threadId", target.threadId);
     if (target.rootMessageId)

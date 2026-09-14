@@ -70,6 +70,22 @@ for (const engine of engines)
         const header = page.locator(".rah-agent-detail-head");
         const dialog = () =>
           page.getByRole("dialog", { name: "停止 Agent", exact: true });
+        async function openStopConfirmation() {
+          const more = header.getByRole("button", {
+            name: "更多操作",
+            exact: true,
+          });
+          if (await more.isVisible()) {
+            await more.press("Enter");
+            await page
+              .getByRole("menuitem", { name: "停止 Agent", exact: true })
+              .press("Enter");
+          } else {
+            await header
+              .getByRole("button", { name: "停止 Agent", exact: true })
+              .press("Enter");
+          }
+        }
         await page.goto(
           `${fixture.origin}/?surface=agents&agent=${bId}&agentTab=profile`,
         );
@@ -115,9 +131,9 @@ for (const engine of engines)
             });
           }
         });
-        await header
-          .getByRole("button", { name: "停止 Agent", exact: true })
-          .click();
+        // This gate isolates keyboard intent and stale-response ownership.
+        // Right-click pointer/geometry coverage lives in test-member-context-browser.
+        await openStopConfirmation();
         await dialog()
           .getByRole("button", { name: "停止 Agent", exact: true })
           .click();
@@ -129,16 +145,16 @@ for (const engine of engines)
         );
         assert.equal(
           await dialog()
-            .getByRole("button", { name: "处理中…", exact: true })
+            .getByRole("button", { name: "停止中…", exact: true })
             .isDisabled(),
           true,
         );
         await page.goBack();
         await page.waitForURL((url) => url.searchParams.get("agent") === bId);
         await dialog().waitFor({ state: "hidden" });
-        await header
-          .getByRole("button", { name: "停止 Agent", exact: true })
-          .click();
+        // This gate isolates keyboard intent and stale-response ownership.
+        // Right-click pointer/geometry coverage lives in test-member-context-browser.
+        await openStopConfirmation();
         await dialog().waitFor();
         await page.screenshot({ path: join(output, `${label}-before.png`) });
         const completed = page.waitForResponse(
@@ -230,9 +246,22 @@ for (const engine of engines)
           requests.at(-1).idempotencyKey,
         );
         await page.reload();
-        await header
-          .getByRole("button", { name: "启动 Agent", exact: true })
-          .waitFor();
+        await header.waitFor();
+        const more = header.getByRole("button", {
+          name: "更多操作",
+          exact: true,
+        });
+        if (await more.isVisible()) {
+          await more.press("Enter");
+          await page
+            .getByRole("menuitem", { name: "启动 Agent", exact: true })
+            .waitFor();
+          await page.keyboard.press("Escape");
+        } else {
+          await header
+            .getByRole("button", { name: "启动 Agent", exact: true })
+            .waitFor();
+        }
         assert.deepEqual(pageErrors, []);
         results.push({
           engine,

@@ -8,7 +8,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
@@ -46,7 +46,8 @@ test("a busy freshness hold is recovered by target alone and never loses the ori
   const registryDatabasePath = join(stateDirectory, "runtime-registry.db");
   const secretPath = join(stateDirectory, "host.token");
   const barrierPath = join(stateDirectory, "busy-hold.barrier");
-  const hostId = "busy-hold-host";
+  // Concurrent test invocations must not compete for the global Host lock.
+  const hostId = `busy-hold-${basename(directory)}`;
   const seed = new RoomKernel({ databasePath });
   const shutdown = new AbortController();
   let running: Promise<void> | undefined;
@@ -165,7 +166,7 @@ test("a busy freshness hold is recovered by target alone and never loses the ori
     profileRegistry.close();
     seed.close();
 
-    const base = validConfig(stateDirectory, secretPath);
+    const base = validConfig(stateDirectory, secretPath, hostId);
     const config = DaemonConfigSchema.parse({
       ...base,
       host: {
@@ -443,13 +444,17 @@ function roomEvents(
   return collected;
 }
 
-function validConfig(stateDirectory: string, secretPath: string) {
+function validConfig(
+  stateDirectory: string,
+  secretPath: string,
+  hostId: string,
+) {
   return {
     client: { bindHost: "127.0.0.1" as const, port: 0 },
     drainTimeoutMs: 30_000,
     host: {
       credential: { path: secretPath, source: "file" as const },
-      hostId: "busy-hold-host",
+      hostId,
       maxConcurrent: 1,
       participantIds: ["agent-a"],
     },

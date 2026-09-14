@@ -71,7 +71,7 @@
 ## 执行记录（2026-09-11，批次 3）
 
 机器可读副本：`packages/ui-tokens/specs/sidebar-row.spec.json`（32 条 rules / 19 条 overrides / 13 条 pending）；
-夹具 `apps/web/test/sidebar-row-spec-fixture.{html,tsx}`；门禁 `scripts/run-sidebar-row-spec-browser-gate.mjs`；
+夹具 `apps/web/test/sidebar-row-spec-fixture.{html,tsx}`；门禁 `scripts/run-component-spec-browser-gate.mjs sidebar-row`；
 `packages/ui-tokens/specs/ratchet.json` 新增 `sidebar-row` 条目（首次登记，HEAD 尚未提交，校验器按约定报红）。
 
 ### 已执行
@@ -120,3 +120,19 @@ declarations 对象，而 `componentSpecErrors` 又用 `Object.assign` 就地合
 2. **排序钮与新建钮**（原定位有误）。排序钮由 `apps/web/src/components/discovery-filter.tsx:184`（`variant === "sidebar"`）渲染，侧栏专属样式所有者是 `apps/web/src/message-social.css:239-254`（`.rah-sidebar-sort > button`，pad 4、svg 12）。裁决：只改该侧栏所有者，不碰 `task-filter-trigger` 通用规则：`padding: 0`、svg `var(--icon-3-5)`；新建钮 `workspace-navigation.tsx:541-547` 的文本 `+` 改为 `<svg aria-hidden="true"><use href="…#raft-icon-plus" /></svg>`（14px），`product.css:2435-2449` 的 `.rah-side-create` 删除 `font-family/font-size/font-weight`，保留 24×24 与 ink-70。两钮的 `:focus-visible` 在侧栏作用域内加 `outline: none`（Raft `.btn-flat-sm:focus, :focus-visible { outline-style: none }`，以底色 black/5 表示聚焦），作用域限定 `.rah-sidebar-sort > button` 与 `.rah-side-create`，不影响任务页筛选器。
 3. **侧栏隐藏断点**。活体：Raft 在 764px 隐藏侧栏（行宽 0，行 padding-block 8），772px 显示（行宽 211，padding 4）；RAH 在 764px 仍显示（`display: flex`，行宽 748）。Raft 断点是 Tailwind `md` = 48rem = 768px（冻结 CSS 中 `@media(min-width:48rem)` 11 处）。裁决：`packages/ui-tokens/src/neo-brutalist/styles.css:474` 与 `:1075` 的 `@media (max-width: 760px)` 改为 `767.98px`，门禁在 764×900 断言 `.sidebar` 为 `display: none`、在 772×900 断言可见。其他文件里的 760 断点不在本批范围，登记为挂起。
 4. **390px 下 RAH 以列表替代频道页**仍挂起（导航行为）。
+
+## 执行记录（2026-09-12，业主复审加固）
+
+本次只动门禁脚手架与规格 JSON 的门禁字段，不动本组件的任何 CSS 声明、override 或 pending。
+
+- **门禁合并**：`scripts/run-<组件>-spec-browser-gate.mjs` 的近重复副本已由通用的
+  `scripts/run-component-spec-browser-gate.mjs <组件>` 取代，探针表 / 视口 / 读取属性 / settle 时长
+  全部迁入 `packages/ui-tokens/specs/<组件>.spec.json` 的 `probes` 与 `gate`。
+  平价证明（删除旧脚本前跑）：旧脚本 `--write-baseline` → 新脚本 `--compare` **diff 为空**；
+  两者产出的 `*.matched-rules.json` 的 `probes` **逐字节相同**。
+- **不再跳过**：夹具里缺任何一个已声明探针，门禁硬失败（旧实现是 `continue`）。
+- **报告四重绑定**：CSS 输入 / 夹具 `{html,tsx}` 字节 / 每个探针渲染后 DOM 的摘要 / 门禁脚本字节。
+  校验器要求报告的探针集合与 `spec.probes` 完全一致（缺一个、多一个都失败）。
+- **夹具渲染导出**：新增 `packages/ui-tokens/specs/<组件>.fixture-markup.json`，目录页改为渲染它。
+- **flag 更名**：`--allow-uncommitted-ratchet` → `--uncommitted-ratchet-preview`，
+  报错改为指向 `docs/design/component-specs/baseline-2026-09-12.zh-CN.md`。

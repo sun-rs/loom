@@ -30,6 +30,9 @@ export const MessageSocialRequestSchema = z
   .strict();
 export const MessageSocialItemSchema = z
   .object({
+    attachmentCommentCounts: z
+      .record(IdentifierSchema, z.number().int().nonnegative())
+      .optional(),
     messageId: IdentifierSchema,
     version: z.number().int().nonnegative(),
     saved: z.boolean(),
@@ -111,12 +114,40 @@ const Keys = z
     (keys) => new Set(keys).size === keys.length,
     "duplicate sidebar identity",
   );
+const CustomSections = z
+  .array(
+    z
+      .object({
+        id: z.string().regex(/^[a-zA-Z0-9_-]{1,100}$/),
+        name: z.string().trim().min(1).max(80),
+        emoji: z.string().trim().min(1).max(64).nullable().optional(),
+        items: Keys,
+      })
+      .strict(),
+  )
+  .max(50)
+  .refine(
+    (sections) =>
+      new Set(sections.map((s) => s.id)).size === sections.length &&
+      new Set(sections.flatMap((s) => s.items)).size ===
+        sections.flatMap((s) => s.items).length,
+    "duplicate section or placement",
+  );
 export const SidebarPreferencesSchema = z
   .object({
     version: z.number().int().nonnegative(),
     pinned: Keys,
     channelOrder: Keys,
     dmOrder: Keys,
+    hiddenDms: Keys.default([]),
+    customSections: CustomSections.default([]),
+    sectionOrder: z
+      .array(
+        z.string().regex(/^(pinned|channels|dms|custom:[a-zA-Z0-9_-]{1,100})$/),
+      )
+      .max(53)
+      .refine((v) => new Set(v).size === v.length)
+      .default([]),
     // Raft channel settings are personal Human × Workspace preferences. Muting
     // suppresses ordinary Activity but never exact mentions.
     mutedActivity: Keys.default([]),
@@ -149,6 +180,16 @@ export const SidebarPatchRequestSchema = SidebarGetRequestSchema.extend({
       pinned: Keys,
       channelOrder: Keys,
       dmOrder: Keys,
+      hiddenDms: Keys,
+      customSections: CustomSections,
+      sectionOrder: z
+        .array(
+          z
+            .string()
+            .regex(/^(pinned|channels|dms|custom:[a-zA-Z0-9_-]{1,100})$/),
+        )
+        .max(53)
+        .refine((v) => new Set(v).size === v.length),
       mutedActivity: Keys,
       mutedWorkspace: z.boolean(),
       notifyAllMessages: Keys,
@@ -173,6 +214,9 @@ export const DEFAULT_SIDEBAR_PREFERENCES: SidebarPreferences = {
   pinned: [],
   channelOrder: [],
   dmOrder: [],
+  hiddenDms: [],
+  customSections: [],
+  sectionOrder: [],
   mutedActivity: [],
   mutedWorkspace: false,
   notifyAllMessages: [],

@@ -98,10 +98,13 @@ test("public workflow status is derived from canonical execution evidence", () =
     workflowStatus: "in_progress",
     executionPhase: "claimed",
   });
-  assert.deepEqual(projectTaskLifecycle({ state: "in_progress" }), {
-    workflowStatus: "in_progress",
-    executionPhase: "running",
-  });
+  assert.deepEqual(
+    projectTaskLifecycle({ state: "in_progress", claimedBy: "agent" }),
+    {
+      workflowStatus: "in_progress",
+      executionPhase: "running",
+    },
+  );
   assert.deepEqual(projectTaskLifecycle({ state: "waiting_input" }), {
     workflowStatus: "in_progress",
     executionPhase: "idle",
@@ -128,5 +131,12 @@ test("blocked projection fails closed without canonical reason evidence", () => 
   assert.throws(
     () => projectTaskLifecycle({ state: "blocked" }),
     /blocked Task projection requires blockedReason/u,
+  );
+});
+
+test("manual in-progress does not claim a Runtime is running", () => {
+  assert.equal(
+    projectTaskLifecycle({ state: "in_progress" }).executionPhase,
+    "idle",
   );
 });

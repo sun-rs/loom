@@ -65,6 +65,17 @@ export function useSearchChannelPreview() {
     [select],
   );
   const close = useCallback(() => select(undefined), [select]);
+  const reset = useCallback(
+    () =>
+      setSelection({
+        roomId: undefined,
+        messageId: undefined,
+        threadId: undefined,
+        rootMessageId: undefined,
+        tab: "chat",
+      }),
+    [],
+  );
   const selectTab = useCallback((tab: "chat" | "tasks" | "files") => {
     const params = new URLSearchParams(window.location.search);
     params.set("previewTab", tab);
@@ -80,5 +91,6 @@ export function useSearchChannelPreview() {
     selectTab,
     open,
     close,
+    reset,
   };
 }

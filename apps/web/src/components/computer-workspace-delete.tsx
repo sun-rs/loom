@@ -1,3 +1,4 @@
+import { browserOpaqueId } from "../browser-opaque-id.ts";
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { RahClient } from "@rah-os/client-sdk";
@@ -59,7 +60,7 @@ function Confirm({
 }) {
   const [pending, setPending] = useState(false),
     [error, setError] = useState<string>();
-  const key = useRef(crypto.randomUUID()),
+  const key = useRef(browserOpaqueId()),
     busy = useRef(false);
   const ref = useDialogProtocol({ blocked: pending, onClose });
   async function remove() {

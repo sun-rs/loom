@@ -181,8 +181,10 @@
 .rah-runtime-launch-fixed {
   color: var(--ink-70);
   background: var(--bg-sunken, #f3f3f3);
-  max-height: 160px;
-  overflow: auto;
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overflow: visible;
   font: 12px/20px var(--mono);
 }
 .rah-runtime-launch-frame {
@@ -209,4 +211,14 @@
 .rah-runtime-settings-heading:focus-visible {
   outline: 2px solid var(--black);
   outline-offset: 2px;
+}
+
+/* Read-only fields scroll with Settings, not nested pre scroll regions on iOS. */
+.rah-runtime-launch-field {
+  min-width: 0;
+  margin-top: 16px;
+  margin-bottom: 12px;
+}
+.rah-runtime-launch-field > strong {
+  display: block;
 }

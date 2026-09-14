@@ -128,3 +128,5 @@ HTML 区域由 `HtmlFilePreview` 和专用静态 `html-preview-bridge.js` 拥有
 桌面点击／拖框记录文档坐标、大小、视口和文档尺寸及引用；回跳优先匹配引用文字，找不到时回退保存坐标，滚动并短暂高亮。触摸设备不显示桌面区域选择层。取文沿用已核实官网 iframe 的矩形相交文本片段、空白归一化、去重及 200 字符拼接上限；回跳按最小包含元素匹配，重复引用按原选框中心选最近项，失败回退原坐标。桌面回跳保留区域选择层，使用官方 `#ffd440`／1.6s 高亮动画。桥接 DOM 扫描排除产品选择层、高亮及 script/style，保留本地安全隔离；这是结构移植及 RAH glue，不是原样复制。来源见 [HTML 官网核实](../audits/2026-09-08-html-region-official-verification.zh-CN.md)。
 
 本地按 Room sequence 有界翻页、每页再按锚点排序；官网组件对返回集合整体排序。保留此显式差异，不为表面一致改成无界读取。用量观察是独立工程，见[运行器用量接线方案](../product/runtime-account-usage-wiring.zh-CN.md)，不在 Worker 资料读取中隐式发起模型或账户调用。
+
+2026-09-14 Task 弹窗补充：历史状态前后值由 Kernel 的冻结历史投影提供，UI 只展示操作时间线；负责人候选使用频道 activeMemberIds，历史身份解析继续使用已知身份集合。见[验收记录](../audits/2026-09-14-task-detail-operation-history.zh-CN.md)。

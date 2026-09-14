@@ -1,3 +1,15 @@
+import {
+  SearchPreviewResizer,
+  useSearchPreviewWidth,
+} from "./components/search-preview-resizer.tsx";
+import {
+  conversationPanels,
+  type ConversationPanelIntent,
+  type ConversationOrigin,
+} from "./conversation-panels.ts";
+import { IdentityOriginContext } from "./components/workspace-entity-context.tsx";
+import { changeSystemChannel } from "./components/system-channel-settings.tsx";
+import { browserOpaqueId } from "./browser-opaque-id.ts";
 import { useConversationLayout } from "./use-conversation-layout.ts";
 import { createAgentConfigureCommand } from "./agent-configure-command.ts";
 import { useSearchChannelPreview } from "./use-search-channel-preview.ts";
@@ -72,7 +84,6 @@ import {
   createRoomViewModel,
   foundationCapabilityIssue,
   mentionedRoomAgentIds,
-  opaqueIdFromBytes,
   roomMessageAttentionRecipients,
   roomAgentCandidates,
   roomAgentTargets,
@@ -234,7 +245,10 @@ export function App({ client: injectedClient }: AppProps) {
       <ComposerDraftProvider>
         <WorkspaceScreen
           client={client}
-          onDisconnect={() => setClient(undefined)}
+          onDisconnect={() => {
+            if (__RAH_TRUSTED_PROXY_AUTH__) window.location.reload();
+            else setClient(undefined);
+          }}
         />
       </ComposerDraftProvider>
     </FilesProvider>
@@ -259,13 +273,18 @@ function WorkspaceScreen({
     setWidth: setThreadPanelWidth,
     commit: commitThreadPanelWidth,
   } = useThreadPanelWidth();
-  const conversationLayout = useConversationLayout(roomSidebarWidth);
   const { rememberThreadFocus, restoreThreadFocus } = useThreadFocusReturn();
   const [health, setHealth] = useState<ClientHealthResponse>();
   const [currentPrincipal, setCurrentPrincipal] = useState<Principal>();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string>();
+  const [panelIntent, setPanelIntent] = useState<ConversationPanelIntent>({
+    latest: "profile",
+    source: "room",
+  });
   const [peekAgentId, setPeekAgentId] = useState<string>();
+  const [peekActivityRequest, setPeekActivityRequest] = useState(0);
+  const [peekHumanId, setPeekHumanId] = useState<string>();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [archivedRooms, setArchivedRooms] = useState<Room[]>([]);
   const [activeRoomId, setActiveRoomId] = useState<string>();
@@ -293,9 +312,13 @@ function WorkspaceScreen({
   );
   const navigationGeneration = useRef(0);
   const diagnosticNavigation = useRef(createLatestRequest());
+  const searchPreview = useSearchChannelPreview();
+  const searchLayout = useSearchPreviewWidth();
   const [surface, setSurfaceState] = useState<Surface>(() =>
     globalSurfaceFromSearch(window.location.search),
   );
+  const surfaceRef = useRef(surface);
+  surfaceRef.current = surface;
   const [globalTaskDetail, setGlobalTaskDetail] = useState(() =>
     globalTaskDetailFromSearch(window.location.search),
   );
@@ -308,7 +331,7 @@ function WorkspaceScreen({
     return ++navigationGeneration.current;
   }, []);
   const openAgentPeek = useCallback(
-    async (agentDefinitionId: string) => {
+    async (agentDefinitionId: string, origin: ConversationOrigin = "room") => {
       const epoch = invalidateNavigation();
       setNavigationError(undefined);
       try {
@@ -320,7 +343,14 @@ function WorkspaceScreen({
           resolved.target.kind !== "agent"
         )
           return false;
+        setPeekHumanId(undefined);
         setPeekAgentId(resolved.target.agentDefinitionId);
+        setPanelIntent({ latest: "profile", source: origin });
+        if (
+          peekAgentId !== resolved.target.agentDefinitionId ||
+          panelIntent.latest === "profile"
+        )
+          setPeekActivityRequest((request) => request + 1);
         return true;
       } catch (failure) {
         if (navigationGeneration.current === epoch) {
@@ -333,15 +363,43 @@ function WorkspaceScreen({
         return false;
       }
     },
-    [client, invalidateNavigation],
+    [client, invalidateNavigation, peekAgentId, panelIntent.latest],
   );
   const setSurface = useCallback(
     (next: Surface) => {
       invalidateNavigation();
+      if (surfaceRef.current === "search" && next !== "search") {
+        setGlobalTaskDetail(undefined);
+        const params = new URLSearchParams(window.location.search);
+        for (const key of [
+          "target",
+          "task",
+          "thread",
+          "threadId",
+          "message",
+          "q",
+          "scope",
+          "sender",
+          "channel",
+          "time",
+          "after",
+          "before",
+          "sort",
+          "previewRoom",
+          "previewMessage",
+          "previewThread",
+          "previewRoot",
+          "previewTab",
+          "highlight",
+        ])
+          params.delete(key);
+        window.history.replaceState(null, "", `?${params}`);
+        searchPreview.reset();
+      }
       if (next !== "tasks") setGlobalTaskDetail(undefined);
       setSurfaceState(next);
     },
-    [invalidateNavigation],
+    [invalidateNavigation, searchPreview.reset],
   );
   const navigationEpoch = useCallback(() => navigationGeneration.current, []);
   const navigateAgentRoute = useCallback(
@@ -362,13 +420,21 @@ function WorkspaceScreen({
     },
     [client, invalidateNavigation],
   );
+  const [focusHighlightRequest, setFocusHighlightRequest] = useState(0);
+  const [focusHighlightQuery, setFocusHighlightQuery] = useState<
+    string | undefined
+  >(
+    () =>
+      new URLSearchParams(window.location.search).get("highlight") ?? undefined,
+  );
   const [focusedMessageId, setFocusedMessageId] = useState<string | undefined>(
     () =>
       new URLSearchParams(window.location.search).get("previewMessage") ??
       new URLSearchParams(window.location.search).get("message") ??
       undefined,
   );
-  const taskModalOpen = surface === "tasks" && globalTaskDetail !== undefined;
+  const taskDetailVisible = globalTaskDetail !== undefined;
+  const taskModalOpen = taskDetailVisible && surface !== "search";
   const taskDetailResult = useDiscoveryQuery(
     client,
     "task.get",
@@ -376,12 +442,12 @@ function WorkspaceScreen({
       roomId: globalTaskDetail?.roomId ?? "unavailable",
       taskId: globalTaskDetail?.taskId ?? "unavailable",
     },
-    taskModalOpen,
+    taskDetailVisible,
   );
   const detailTask = taskDetailResult.data?.task;
   useEffect(() => {
     if (
-      !taskModalOpen ||
+      !taskDetailVisible ||
       !detailTask ||
       detailTask.taskId !== globalTaskDetail?.taskId ||
       detailTask.roomId !== globalTaskDetail.roomId
@@ -390,7 +456,7 @@ function WorkspaceScreen({
     setActiveRoomId(detailTask.roomId);
     setActiveThreadRootMessageId(detailTask.sourceMessageId);
     setFocusedMessageId(detailTask.sourceMessageId);
-  }, [detailTask, globalTaskDetail, taskModalOpen]);
+  }, [detailTask, globalTaskDetail, taskDetailVisible]);
   const closeTaskDetail = () => {
     invalidateNavigation();
     window.history.replaceState(
@@ -427,11 +493,23 @@ function WorkspaceScreen({
       setActiveThreadRootMessageId(messageContext.rootMessageId);
     }
   }, [activeThreadRootMessageId, focusedMessageId, messageContext]);
-  const searchPreview = useSearchChannelPreview();
   const previewJoined =
     (surface === "search" || surface === "activity") &&
     !!searchPreview.roomId &&
     rooms.some((room) => room.roomId === searchPreview.roomId);
+  const closeSearchPreview = () => {
+    invalidateNavigation();
+    searchPreview.close();
+    setGlobalTaskDetail(undefined);
+    window.history.replaceState(
+      null,
+      "",
+      closeGlobalTaskSearch(window.location.search),
+    );
+    setActiveThreadRootMessageId(undefined);
+    setFocusedMessageId(undefined);
+    setFocusHighlightQuery(undefined);
+  };
   const globalSurface =
     surface === "tasks" || surface === "search" || surface === "activity";
   const openDiscoveryLocation = useCallback(
@@ -443,6 +521,7 @@ function WorkspaceScreen({
           target: location.target,
         });
         if (navigationGeneration.current !== epoch) return false;
+        setFocusHighlightQuery(location.highlightQuery?.trim() || undefined);
         if (
           (surface === "search" ||
             ((surface === "activity" || surface === "saved") &&
@@ -454,21 +533,30 @@ function WorkspaceScreen({
               ))) &&
           (resolved.target.kind === "room" ||
             resolved.target.kind === "message" ||
-            resolved.target.kind === "thread") &&
-          !rooms.some(
-            (room) =>
-              "roomId" in resolved.target &&
-              room.roomId === resolved.target.roomId &&
-              room.kind === "direct",
-          )
+            resolved.target.kind === "thread" ||
+            resolved.target.kind === "task")
         ) {
           const id = resolved.target.roomId;
           if (surface === "saved") setSurface("search");
+          const previewParams = new URLSearchParams(window.location.search);
+          for (const key of ["target", "task", "thread", "threadId", "message"])
+            previewParams.delete(key);
+          if (resolved.target.kind === "task") {
+            previewParams.set("target", "task");
+            previewParams.set("task", resolved.target.taskId);
+          }
+
+          if (location.highlightQuery?.trim())
+            previewParams.set("highlight", location.highlightQuery.trim());
+          else previewParams.delete("highlight");
+          window.history.replaceState(null, "", `?${previewParams}`);
+          setFocusHighlightRequest((request) => request + 1);
           searchPreview.open(
             id,
             resolved.target.kind === "message"
               ? resolved.target.messageId
-              : resolved.target.kind === "thread"
+              : resolved.target.kind === "thread" ||
+                  resolved.target.kind === "task"
                 ? resolved.target.rootMessageId
                 : undefined,
             "threadId" in resolved.target
@@ -479,7 +567,14 @@ function WorkspaceScreen({
             setRoomData(undefined);
             setActiveRoomId(id);
           }
-          setActiveThreadRootMessageId(undefined);
+          setGlobalTaskDetail(
+            globalTaskDetailFromSearch(window.location.search),
+          );
+          setActiveThreadRootMessageId(
+            "rootMessageId" in resolved.target
+              ? resolved.target.rootMessageId
+              : undefined,
+          );
           setFocusedMessageId(
             resolved.target.kind === "message"
               ? resolved.target.messageId
@@ -500,8 +595,8 @@ function WorkspaceScreen({
             window.location.search,
           ),
         );
+        setFocusHighlightRequest((request) => request + 1);
         setFocusedMessageId(presentation.focusedMessageId);
-        setGlobalTaskDetail(globalTaskDetailFromSearch(window.location.search));
         setActiveThreadRootMessageId(presentation.threadRootMessageId);
         if (presentation.roomId !== undefined)
           setActiveRoomId(presentation.roomId);
@@ -512,9 +607,11 @@ function WorkspaceScreen({
           });
         }
         setPeekAgentId(undefined);
+        setPeekHumanId(undefined);
         setRoomMembersOpen(false);
         setMobileRoomsOpen(false);
         setSurface(presentation.surface);
+        setGlobalTaskDetail(globalTaskDetailFromSearch(window.location.search));
         setTab(presentation.tab);
         if (presentation.inputRequestId !== undefined) setHumanInboxOpen(true);
         return true;
@@ -583,13 +680,6 @@ function WorkspaceScreen({
   const [agentCatalogControlRoomId, setAgentCatalogControlRoomId] =
     useState<string>();
   const [mobileRoomsOpen, setMobileRoomsOpen] = useState(false);
-  const [computerDetailOpen, setComputerDetailOpen] = useState(true);
-  const showMobileNavigation =
-    mobileRoomsOpen ||
-    surface === "tasks" ||
-    surface === "settings" ||
-    (surface === "computers" && !computerDetailOpen) ||
-    (surface === "agents" && agentRoute.agentDefinitionId === undefined);
   const [roomCreateOpen, setRoomCreateOpen] = useState(false);
   const [taskCreateOpen, setTaskCreateOpen] = useState(false);
   const [agentCreateOpen, setAgentCreateOpen] = useState(false);
@@ -610,6 +700,7 @@ function WorkspaceScreen({
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(true);
   const [reload, setReload] = useState(0);
+  const [directoryRevision, setDirectoryRevision] = useState(0);
   const sessions = useRef(new Map<string, RoomSession>());
   const messageSessions = useRef(new Map<string, MessageSession>());
   const threadMessageSessions = useRef(new Map<string, MessageSession>());
@@ -801,6 +892,7 @@ function WorkspaceScreen({
             client.request("workspace.list", {}, { signal: controller.signal }),
             client.request("principal.me", {}, { signal: controller.signal }),
           ]);
+        if (controller.signal.aborted) return;
         const capabilityIssue = foundationCapabilityIssue(currentHealth);
         if (capabilityIssue !== undefined) throw new Error(capabilityIssue);
         setHealth(currentHealth);
@@ -820,6 +912,7 @@ function WorkspaceScreen({
           {},
           { signal: controller.signal },
         );
+        if (controller.signal.aborted) return;
         const visibleRooms = selectProductRooms({
           rooms: roomResult.rooms,
           workspaces: activeWorkspaces,
@@ -846,6 +939,9 @@ function WorkspaceScreen({
           const requested = roomSelectionFromSearch(window.location.search);
           return (
             visibleRooms.find(({ roomId }) => roomId === requested)?.roomId ??
+            visibleRooms.find(
+              (room) => room.kind === "channel" && room.slug === "all",
+            )?.roomId ??
             visibleRooms[0]?.roomId
           );
         });
@@ -857,7 +953,7 @@ function WorkspaceScreen({
       }
     })();
     return () => controller.abort();
-  }, [client]);
+  }, [client, directoryRevision]);
 
   useEffect(() => {
     if (activeRoomId === undefined) return;
@@ -878,6 +974,7 @@ function WorkspaceScreen({
         "threadId",
         "inputRequest",
         "artifact",
+        "highlight",
       ]) {
         const value = current.get(key);
         if (value !== null) next.set(key, value);
@@ -944,6 +1041,11 @@ function WorkspaceScreen({
       setGlobalTaskDetail(globalTaskDetailFromSearch(window.location.search));
       setAgentRoute(agentRouteFromSearch(window.location.search));
       setTab(roomTabFromSearch(window.location.search));
+      setFocusHighlightQuery(
+        new URLSearchParams(window.location.search).get("highlight") ??
+          undefined,
+      );
+      setFocusHighlightRequest((request) => request + 1);
       setFocusedMessageId(
         new URLSearchParams(window.location.search).get("previewMessage") ??
           new URLSearchParams(window.location.search).get("message") ??
@@ -980,33 +1082,36 @@ function WorkspaceScreen({
     return () => window.removeEventListener("keydown", searchShortcut);
   }, []);
 
+  const agentDirectoryQuery = useReconciledQuery(
+    client,
+    "agent.list",
+    { controlRoomId: activeWorkspace?.controlRoomId ?? "none" },
+    health?.capabilities.agentRead === true &&
+      activeWorkspace?.controlRoomId !== undefined,
+    reload,
+  );
   useEffect(() => {
     const controlRoomId = activeWorkspace?.controlRoomId;
     if (
-      health === undefined ||
-      !health.capabilities.agentRead ||
-      controlRoomId === undefined
+      !health?.capabilities.agentRead ||
+      controlRoomId === undefined ||
+      agentDirectoryQuery === undefined
     ) {
       setAgentCatalog([]);
       setAgentCatalogControlRoomId(undefined);
       return;
     }
-    const controller = new AbortController();
-    void client
-      .request("agent.list", { controlRoomId }, { signal: controller.signal })
-      .then((catalog) => {
-        if (controller.signal.aborted) return;
-        setAgentCatalog(catalog.agents);
-        setAgentCatalogControlRoomId(controlRoomId);
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) {
-          setAgentCatalog([]);
-          setAgentCatalogControlRoomId(undefined);
-        }
-      });
-    return () => controller.abort();
-  }, [activeWorkspace?.controlRoomId, client, health, reload]);
+    // A failed read is not an empty directory. The shared query retries and
+    // retains only this client's current scope; permissions remain server-owned.
+    if (agentDirectoryQuery?.data && !agentDirectoryQuery.error) {
+      setAgentCatalog(agentDirectoryQuery.data.agents);
+      setAgentCatalogControlRoomId(controlRoomId);
+    }
+  }, [
+    activeWorkspace?.controlRoomId,
+    health?.capabilities.agentRead,
+    agentDirectoryQuery,
+  ]);
 
   useEffect(() => {
     if (activeRoomId === undefined || health === undefined) return;
@@ -1591,7 +1696,10 @@ function WorkspaceScreen({
         client,
         idempotencyKey: `message-task-${browserOpaqueId()}`,
         session,
-        target: task.state === "cancelled" ? "todo" : "done",
+        target:
+          task.state === "cancelled" || task.state === "completed"
+            ? "todo"
+            : "done",
         task,
       });
       setReload((value) => value + 1);
@@ -1681,8 +1789,11 @@ function WorkspaceScreen({
         ) {
           throw new Error("Thread 原消息尚未载入");
         }
-        setThreadMessages([]);
-        setThreadHasEarlierReplies(false);
+        setPanelIntent((intent) => ({ ...intent, latest: "thread" }));
+        if (activeThreadRootMessageId !== rootMessageId) {
+          setThreadMessages([]);
+          setThreadHasEarlierReplies(false);
+        }
         rememberThreadFocus(returnFocusTarget);
         invalidateNavigation();
         setActiveThreadRootMessageId(rootMessageId);
@@ -1693,6 +1804,7 @@ function WorkspaceScreen({
       }
     },
     [
+      activeThreadRootMessageId,
       activeRoom,
       health,
       roomData,
@@ -2203,6 +2315,59 @@ function WorkspaceScreen({
     [activeRoom, canManageCurrentRoomMembers, client, roomData],
   );
 
+  const unreadHeld = useRef(new Set<string>());
+  const pendingReads = useRef(new Set<Promise<unknown>>());
+  useEffect(
+    () => () => {
+      if (activeRoomId) unreadHeld.current.delete(activeRoomId);
+    },
+    [activeRoomId],
+  );
+  const sidebarArchive = async (roomId: string) => {
+    const session = roomSessionFor(
+      sessions.current,
+      client,
+      consumerPrefix,
+      roomId,
+    );
+    const result = await runRoomMutationAtLatest({
+      session,
+      mutate: (basedOnRoomSeq) =>
+        client.request("room.archive", {
+          roomId,
+          basedOnRoomSeq,
+          idempotencyKey: `web-context-archive-${browserOpaqueId()}`,
+        }),
+    });
+    setRooms((current) =>
+      current.map((room) => (room.roomId === roomId ? result.room : room)),
+    );
+    setArchivedRooms((current) => [
+      ...current.filter((room) => room.roomId !== roomId),
+      result.room,
+    ]);
+    if (activeRoomId === roomId)
+      setActiveRoomId(rooms.find((room) => room.slug === "all")?.roomId);
+    setReload((value) => value + 1);
+  };
+  const sidebarUnread = async (roomId: string, unread: boolean) => {
+    unreadHeld.current.add(roomId);
+    try {
+      await Promise.allSettled([...pendingReads.current]);
+      const page = await client.request("message.list", { roomId, limit: 1 });
+      await client.request("activity.mark", {
+        roomId,
+        throughSeq: page.messages[0]?.roomSeq ?? 0,
+        action: unread ? "unread" : "read",
+      });
+      if (!unread) unreadHeld.current.delete(roomId);
+      setReload((value) => value + 1);
+    } catch (e) {
+      unreadHeld.current.delete(roomId);
+      throw e;
+    }
+  };
+
   const unarchiveRoomFromCreate = useCallback(
     async (room: Room) => {
       if (!canCreateCurrentWorkspaceRoom) {
@@ -2614,6 +2779,7 @@ function WorkspaceScreen({
       );
       if (navigationGeneration.current !== navigationIntent) return;
       setPeekAgentId(undefined);
+      setPeekHumanId(undefined);
       setFocusedMessageId(undefined);
       setActiveThreadRootMessageId(undefined);
       setRoomMembersOpen(false);
@@ -3007,6 +3173,7 @@ function WorkspaceScreen({
   );
 
   const agentDetailProps = {
+    launchSettingsRefresh: reload,
     initialHumanPrincipalId:
       agentRoute.view === "human" ? agentRoute.humanPrincipalId : undefined,
     initialAgentDefinitionId: agentRoute.agentDefinitionId,
@@ -3046,22 +3213,34 @@ function WorkspaceScreen({
         target,
       });
       setPeekAgentId(undefined);
+      setPeekHumanId(undefined);
     },
     onOpenRoom: (roomId: string) => {
       void openDiscoveryLocation({
         target: { kind: "room", roomId },
       });
       setPeekAgentId(undefined);
+      setPeekHumanId(undefined);
     },
-    onPeekAgent: (id: string) => setPeekAgentId(id),
     onRouteChange: navigateAgentRoute,
     onChangeHumanRole: changeWorkspaceHumanRole,
     runtimes: localRuntimes,
     workspaceId: activeWorkspace?.workspaceId,
   };
-  const peekOpen =
-    (surface === "room" || surface === "agents") && peekAgentId !== undefined;
+  const peekRetained =
+    surface === "room" &&
+    (peekAgentId !== undefined || peekHumanId !== undefined);
+  const conversationLayout = useConversationLayout(roomSidebarWidth);
+  const panels = conversationPanels({
+    ...panelIntent,
+    thread: activeThreadRootMessageId !== undefined && !taskModalOpen,
+    profile: peekRetained,
+    split: conversationLayout.mode === "split",
+  });
+  const peekOpen = panels.profile;
   const openMobileHome = useCallback(() => {
+    setPeekAgentId(undefined);
+    setPeekHumanId(undefined);
     setActiveThreadRootMessageId(undefined);
     setFocusedMessageId(undefined);
     setRoomMembersOpen(false);
@@ -3127,6 +3306,7 @@ function WorkspaceScreen({
         setActiveThreadRootMessageId(undefined);
       }
       setPeekAgentId(undefined);
+      setPeekHumanId(undefined);
     },
   };
   return (
@@ -3154,7 +3334,13 @@ function WorkspaceScreen({
             entities={entities}
             client={client}
             canManageAgents={canManageCurrentWorkspaceAgent}
-            onOpen={openAgentPeek}
+            onOpen={(id, origin) =>
+              surface === "room"
+                ? openAgentPeek(id, origin)
+                : openDiscoveryLocation({
+                    target: { kind: "agent", agentDefinitionId: id },
+                  })
+            }
             onPrincipalUpdated={(principal) =>
               setCurrentPrincipal((current) =>
                 current?.principalId === principal.principalId
@@ -3165,23 +3351,29 @@ function WorkspaceScreen({
             onOpenDirect={openDirectRoom}
             onOpenComputer={() => {
               setPeekAgentId(undefined);
+              setPeekHumanId(undefined);
               setFocusedMessageId(undefined);
               setActiveThreadRootMessageId(undefined);
               setRoomMembersOpen(false);
-              setComputerDetailOpen(true);
               setSurface("computers");
             }}
-            onOpenHuman={(humanPrincipalId) => {
+            onOpenHuman={(humanPrincipalId, origin = "room") => {
+              invalidateNavigation();
               setPeekAgentId(undefined);
+              setPeekHumanId(undefined);
+              if (surface === "room") {
+                setPeekHumanId(humanPrincipalId);
+                setPanelIntent({ latest: "profile", source: origin });
+              } else {
+                setSurface("agents");
+                navigateAgentRoute({
+                  agentDefinitionId: undefined,
+                  humanPrincipalId,
+                  tab: "profile",
+                  view: "human",
+                });
+              }
               setRoomMembersOpen(false);
-              setMobileRoomsOpen(false);
-              setSurface("agents");
-              navigateAgentRoute({
-                agentDefinitionId: undefined,
-                humanPrincipalId,
-                tab: "profile",
-                view: "human",
-              });
             }}
           >
             <InteractivePopover
@@ -3191,11 +3383,13 @@ function WorkspaceScreen({
               <div
                 ref={conversationLayout.ref}
                 data-conversation-layout={conversationLayout.mode}
-                className={`app rah-product-shell${globalSurface ? " rah-global-shell" : ""}${taskModalOpen ? " rah-task-modal-open" : ""}${(surface === "search" || surface === "activity") && searchPreview.roomId ? " rah-search-channel-open" : ""}${activeThreadRootMessageId === undefined ? " thread-hidden" : ""}${peekOpen ? " rah-agent-peek-open" : ""}${showMobileNavigation ? " rah-mobile-navigation-visible" : ""}`}
+                data-profile-source={panels.source}
+                className={`app rah-product-shell${globalSurface ? " rah-global-shell" : ""}${taskModalOpen ? " rah-task-modal-open" : ""}${(surface === "search" || surface === "activity") && searchPreview.roomId ? " rah-search-channel-open" : ""}${activeThreadRootMessageId === undefined ? " thread-hidden" : ""}${peekOpen ? " rah-agent-peek-open" : ""}`}
                 style={
                   {
                     "--rah-room-sidebar-width": `${roomSidebarWidth}px`,
                     "--thread-w": `${threadPanelWidth}px`,
+                    "--rah-search-width": `${searchLayout.width}px`,
                   } as CSSProperties
                 }
               >
@@ -3216,14 +3410,16 @@ function WorkspaceScreen({
                   }}
                   onSelect={(nextSurface) => {
                     setPeekAgentId(undefined);
+                    setPeekHumanId(undefined);
                     setFocusedMessageId(undefined);
                     setActiveThreadRootMessageId(undefined);
                     setRoomMembersOpen(false);
-                    if (nextSurface === "computers")
-                      setComputerDetailOpen(true);
                     setSurface(nextSurface);
                   }}
                 />
+                {surface === "search" && searchPreview.roomId ? (
+                  <SearchPreviewResizer layout={searchLayout} />
+                ) : null}
                 {navigationError === undefined ? null : (
                   <div className="rah-navigation-error" role="alert">
                     <span>{navigationError}</span>
@@ -3272,6 +3468,7 @@ function WorkspaceScreen({
                         ? () => {
                             setSurface("saved");
                             setPeekAgentId(undefined);
+                            setPeekHumanId(undefined);
                             setActiveThreadRootMessageId(undefined);
                             setFocusedMessageId(undefined);
                             setMobileRoomsOpen(false);
@@ -3286,6 +3483,20 @@ function WorkspaceScreen({
                     }
                     currentHumanId={currentPrincipal?.principalId}
                     onOpenDirectRoom={openDirectRoom}
+                    contextControl={{
+                      onArchive: sidebarArchive,
+                      onUnread: sidebarUnread,
+                      onCreate: () => setRoomCreateOpen(true),
+                      canCreate: canCreateCurrentWorkspaceRoom,
+                      onCloseConversation: (roomId) => {
+                        if (roomId === activeRoomId) {
+                          setActiveRoomId(
+                            rooms.find((room) => room.slug === "all")?.roomId,
+                          );
+                          setRoomData(undefined);
+                        }
+                      },
+                    }}
                     onSearch={() => {
                       setFocusedMessageId(undefined);
                       setMobileRoomsOpen(false);
@@ -3308,7 +3519,9 @@ function WorkspaceScreen({
                     workspace={activeWorkspace}
                     unreadRooms={unreadSummary?.rooms}
                     onSelect={(roomId) => {
+                      unreadHeld.current.delete(roomId);
                       setPeekAgentId(undefined);
+                      setPeekHumanId(undefined);
                       setFocusedMessageId(undefined);
                       setActiveThreadRootMessageId(undefined);
                       setRoomMembersOpen(false);
@@ -3408,6 +3621,10 @@ function WorkspaceScreen({
                   />
                 ) : surface === "settings" ? (
                   <SettingsSurface
+                    onSystemChannelUpdated={() => {
+                      setDirectoryRevision((value) => value + 1);
+                      setReload((value) => value + 1);
+                    }}
                     membershipRole={workspaceMembershipRole}
                     agents={agentDirectory}
                     canManageWorkspace={
@@ -3466,7 +3683,6 @@ function WorkspaceScreen({
                     computer={computer}
                     agents={agentDirectory}
                     inventoryError={runtimeInventoryError}
-                    onDetailOpenChange={setComputerDetailOpen}
                     onOpenAgent={(agentDefinitionId) => {
                       navigateAgentRoute({
                         agentDefinitionId,
@@ -3485,8 +3701,16 @@ function WorkspaceScreen({
                   />
                 ) : !globalSurface ||
                   (previewJoined && activeThreadRootMessageId === undefined) ? (
-                  <main className="channel">
+                  <main
+                    className="channel"
+                    inert={surface === "room" && !panels.room}
+                  >
                     <ChannelHeader
+                      onCloseSearchPreview={
+                        surface === "search" && previewJoined
+                          ? closeSearchPreview
+                          : undefined
+                      }
                       onSearch={() => {
                         const params = new URLSearchParams({
                           surface: "search",
@@ -3501,10 +3725,7 @@ function WorkspaceScreen({
                       directPeer={activeDirectPeer}
                       room={activeRoom}
                       memberCount={roomData?.activeMemberIds.length ?? 0}
-                      onManageAgents={() => {
-                        setActiveThreadRootMessageId(undefined);
-                        setRoomMembersOpen(true);
-                      }}
+                      onManageAgents={() => setRoomMembersOpen(true)}
                       onOpenDirectPeer={(id) => openAgentPeek(id)}
                       onOpenRooms={() => setMobileRoomsOpen(true)}
                     />
@@ -3525,18 +3746,9 @@ function WorkspaceScreen({
                         <button onClick={onDisconnect}>重新连接</button>
                       </div>
                     )}
-                    {focusedMessageId && (
-                      <div className="rah-message-location" role="status">
-                        {locationResult.error ??
-                          (locationResult.loading
-                            ? "正在定位消息…"
-                            : "已定位原消息及前后文")}
-                        <button
-                          className="tasks-clear"
-                          onClick={() => setFocusedMessageId(undefined)}
-                        >
-                          返回最新消息
-                        </button>
+                    {focusedMessageId && locationResult.error && (
+                      <div className="rah-error" role="alert">
+                        {locationResult.error}
                       </div>
                     )}
                     {tab === "chat" &&
@@ -3547,21 +3759,35 @@ function WorkspaceScreen({
                       />
                     ) : tab === "chat" ? (
                       <ChatPane
+                        onReturnToLatest={() => setFocusedMessageId(undefined)}
                         client={client}
                         currentPrincipal={currentPrincipal}
                         canAttachFiles={health?.capabilities.fileShare === true}
                         onReadThrough={
                           activeRoomId && (!focusedMessageId || messageContext)
                             ? async (throughSeq) => {
-                                await client.request("activity.mark", {
-                                  roomId: activeRoomId,
-                                  throughSeq,
-                                  action: "read",
-                                });
+                                if (unreadHeld.current.has(activeRoomId))
+                                  return;
+                                const request = client.request(
+                                  "activity.mark",
+                                  {
+                                    roomId: activeRoomId,
+                                    throughSeq,
+                                    action: "read",
+                                  },
+                                );
+                                pendingReads.current.add(request);
+                                try {
+                                  await request;
+                                } finally {
+                                  pendingReads.current.delete(request);
+                                }
                               }
                             : undefined
                         }
                         focusedMessageId={focusedMessageId}
+                        focusHighlightRequest={focusHighlightRequest}
+                        focusHighlightQuery={focusHighlightQuery}
                         canCreateTask={
                           health?.capabilities.taskWrite === true &&
                           roomData?.caughtUp === true &&
@@ -3685,19 +3911,27 @@ function WorkspaceScreen({
                     )}
                   </main>
                 ) : null}
-                {peekOpen ? (
+                {peekRetained ? (
                   <AgentDirectoryPane
-                    key={peekAgentId}
+                    key={peekHumanId ?? peekAgentId}
                     {...agentDetailProps}
+                    activityRequest={peekActivityRequest}
+                    panelActive={peekOpen}
+                    panelSizing={{
+                      width: threadPanelWidth,
+                      setWidth: setThreadPanelWidth,
+                      commit: commitThreadPanelWidth,
+                    }}
                     initialAgentDefinitionId={peekAgentId}
-                    initialTab="activity"
-                    initialView="agent"
-                    initialHumanPrincipalId={undefined}
+                    initialTab={peekHumanId ? "profile" : "activity"}
+                    initialView={peekHumanId ? "human" : "agent"}
+                    initialHumanPrincipalId={peekHumanId}
                     onRouteChange={undefined}
                     panel
                     onClose={() => {
                       invalidateNavigation();
                       setPeekAgentId(undefined);
+                      setPeekHumanId(undefined);
                     }}
                   />
                 ) : null}
@@ -3706,205 +3940,221 @@ function WorkspaceScreen({
                   surface !== "activity" &&
                   !(surface === "search" && previewJoined)) ||
                   activeThreadRootMessageId === undefined) ? null : (
-                  <TaskThreadPresentation
-                    modal={taskModalOpen}
-                    task={detailTask}
-                    roomName={activeRoom?.name}
-                    error={taskDetailResult.error}
-                    onClose={closeTaskDetail}
-                  >
-                    <ThreadPane
-                      hideHeader={taskModalOpen}
-                      parentSlot={
-                        taskModalOpen ? (
-                          <TaskDetailMetadata
-                            key={globalTaskDetail?.taskId}
-                            client={client}
-                            task={detailTask}
-                            people={roomData?.members ?? []}
-                            principalId={currentPrincipal?.principalId}
-                            agents={agentDirectory.filter(
-                              (agent) =>
-                                agent.state === "enabled" &&
-                                roomData?.members.some(
-                                  (member) =>
-                                    member.principalId === agent.participantId,
-                                ),
-                            )}
-                            canManage={
-                              currentRoomRole === "owner" ||
-                              currentRoomRole === "admin" ||
-                              detailTask?.creatorId ===
-                                currentPrincipal?.principalId
-                            }
-                            writeEnabled={
-                              health?.capabilities.taskWrite === true &&
-                              roomData?.caughtUp === true
-                            }
-                            onChanged={() => {
-                              taskDetailResult.refresh();
-                              setReload((value) => value + 1);
-                            }}
-                          />
-                        ) : undefined
-                      }
-                      client={client}
-                      canManageAnyTask={
-                        currentRoomRole === "owner" ||
-                        currentRoomRole === "admin"
-                      }
-                      currentPrincipal={currentPrincipal}
-                      messageAgents={agentDirectory}
-                      followers={activeThreadFollowerAgents}
-                      followersCanManage={
-                        threadFollowers.data?.canManage === true
-                      }
-                      followersError={threadFollowers.error}
-                      followersLoading={threadFollowers.loading}
-                      humanFollowing={
-                        activeThreadId === undefined
-                          ? activeThreadRootRecord?.actorId ===
-                            currentPrincipal?.principalId
-                          : threadFollowers.data?.following
-                      }
-                      onReadThrough={
-                        activeRoomId && activeThreadId
-                          ? async (throughSeq) => {
-                              await client.request("activity.mark", {
-                                roomId: activeRoomId,
-                                threadId: activeThreadId,
-                                throughSeq,
-                                action: "read",
-                              });
-                            }
-                          : undefined
-                      }
-                      focusedMessageId={focusedMessageId}
-                      canReply={
-                        health?.capabilities.threadWrite === true &&
-                        roomData?.caughtUp === true
-                      }
-                      canAttachFiles={health?.capabilities.fileShare === true}
-                      canForward={
-                        health?.capabilities.messageForward === true &&
-                        roomData?.caughtUp === true &&
-                        activeRoom?.archivedAt === undefined
-                      }
-                      loading={threadLoading}
-                      earlierRepliesLoading={threadEarlierRepliesLoading}
-                      hasEarlierReplies={threadHasEarlierReplies}
-                      onClose={() => {
-                        if (taskModalOpen) {
-                          closeTaskDetail();
-                          return;
-                        }
-                        const rootMessageId = activeThreadRootMessageId;
-                        invalidateNavigation();
-                        setActiveThreadRootMessageId(undefined);
-                        if (messageContext?.message.threadId)
-                          setFocusedMessageId(undefined);
-                        restoreThreadFocus(rootMessageId);
-                      }}
-                      onSubmit={submitThreadReply}
-                      onTaskWorkflow={updateMessageTaskWorkflow}
-                      onFollow={
-                        activeRoomId &&
-                        activeThreadRootMessageId &&
-                        (activeThreadId ||
-                          health?.capabilities.threadWrite === true)
-                          ? async (following) => {
-                              const { thread } = await ensureActiveThread();
-                              await client.request("activity.follow", {
-                                roomId: activeRoomId,
-                                threadId: thread.threadId,
-                                following,
-                              });
-                              threadFollowers.refresh();
-                            }
-                          : undefined
-                      }
-                      onLoadEarlier={loadEarlierThreadMessages}
-                      onRefreshFollowers={threadFollowers.refresh}
-                      onRemoveFollower={
-                        activeRoomId && activeThreadId
-                          ? async (participantId) => {
-                              const result = await client.request(
-                                "thread.follower.remove",
-                                {
-                                  participantId,
-                                  roomId: activeRoomId,
-                                  threadId: activeThreadId,
-                                },
-                              );
-                              threadFollowers.refresh();
-                              return result;
-                            }
-                          : undefined
-                      }
-                      onRestoreFollower={
-                        activeRoomId && activeThreadId
-                          ? async ({ participantId, undoToken }) => {
-                              const result = await client.request(
-                                "thread.follower.restore",
-                                {
-                                  participantId,
-                                  roomId: activeRoomId,
-                                  threadId: activeThreadId,
-                                  undoToken,
-                                },
-                              );
-                              if (!result.restored)
-                                throw new Error(
-                                  "撤销期限已过，请重新提及该 Agent",
-                                );
-                              threadFollowers.refresh();
-                            }
-                          : undefined
-                      }
-                      onSearchThread={searchActiveThread}
-                      onOpenTarget={(target) =>
-                        void openDiscoveryLocation({ target })
-                      }
-                      onViewInChannel={() => {
-                        const rootMessageId = activeThreadRootMessageId;
-                        invalidateNavigation();
-                        setActiveThreadRootMessageId(undefined);
-                        setFocusedMessageId(activeThreadRootMessageId);
-                        restoreThreadFocus(rootMessageId);
-                      }}
-                      replies={threadView.messages}
-                      mentionAgentIds={availableAgentIds}
-                      mentionReadStates={threadMentionReadStates}
-                      referenceComputers={messageReferenceComputers}
-                      referenceEventsComplete={
-                        roomData?.referenceEventsComplete === true
-                      }
-                      referenceRooms={messageReferenceRooms}
-                      referenceTasks={roomData?.tasks ?? []}
-                      roomMembers={roomData?.members ?? []}
-                      resizer={
-                        taskModalOpen ? null : (
-                          <ThreadPanelResizer
-                            onWidthChange={setThreadPanelWidth}
-                            onWidthCommit={commitThreadPanelWidth}
-                            width={threadPanelWidth}
-                          />
-                        )
-                      }
-                      roomEvents={roomData?.roomEvents ?? []}
-                      roomId={activeRoomId}
-                      roomKind={activeRoom?.kind}
+                  <IdentityOriginContext.Provider value="thread">
+                    <TaskThreadPresentation
+                      modal={taskModalOpen}
+                      task={detailTask}
                       roomName={activeRoom?.name}
-                      root={activeThreadRoot}
-                      {...(activeThreadTask === undefined
-                        ? {}
-                        : { task: activeThreadTask })}
-                      {...(activeThreadTaskAgent === undefined
-                        ? {}
-                        : { taskAgent: activeThreadTaskAgent })}
-                      threadId={activeThreadId}
-                    />
-                  </TaskThreadPresentation>
+                      error={taskDetailResult.error}
+                      onClose={closeTaskDetail}
+                    >
+                      <ThreadPane
+                        searchPreview={surface === "search" && previewJoined}
+                        inactive={peekOpen && !panels.thread}
+                        hideHeader={taskModalOpen}
+                        parentSlot={
+                          taskDetailVisible ? (
+                            <TaskDetailMetadata
+                              key={globalTaskDetail?.taskId}
+                              client={client}
+                              task={detailTask}
+                              people={roomData?.members ?? []}
+                              activeMemberIds={roomData?.activeMemberIds ?? []}
+                              principalId={currentPrincipal?.principalId}
+                              agents={agentDirectory.filter(
+                                (agent) =>
+                                  agent.state === "enabled" &&
+                                  roomData?.members.some(
+                                    (member) =>
+                                      member.principalId ===
+                                      agent.participantId,
+                                  ),
+                              )}
+                              canManage={
+                                currentRoomRole === "owner" ||
+                                currentRoomRole === "admin" ||
+                                detailTask?.creatorId ===
+                                  currentPrincipal?.principalId
+                              }
+                              writeEnabled={
+                                health?.capabilities.taskWrite === true &&
+                                roomData?.caughtUp === true
+                              }
+                              onChanged={() => {
+                                taskDetailResult.refresh();
+                                setReload((value) => value + 1);
+                              }}
+                            />
+                          ) : undefined
+                        }
+                        client={client}
+                        canManageAnyTask={
+                          currentRoomRole === "owner" ||
+                          currentRoomRole === "admin"
+                        }
+                        currentPrincipal={currentPrincipal}
+                        messageAgents={agentDirectory}
+                        followers={activeThreadFollowerAgents}
+                        followerCount={
+                          threadFollowers.data?.agentParticipantIds.length
+                        }
+                        followersCanManage={
+                          threadFollowers.data?.canManage === true
+                        }
+                        followersError={threadFollowers.error}
+                        followersLoading={threadFollowers.loading}
+                        humanFollowing={
+                          activeThreadId === undefined
+                            ? activeThreadRootRecord?.actorId ===
+                              currentPrincipal?.principalId
+                            : threadFollowers.data?.following
+                        }
+                        onReadThrough={
+                          activeRoomId && activeThreadId
+                            ? async (throughSeq) => {
+                                await client.request("activity.mark", {
+                                  roomId: activeRoomId,
+                                  threadId: activeThreadId,
+                                  throughSeq,
+                                  action: "read",
+                                });
+                              }
+                            : undefined
+                        }
+                        focusedMessageId={focusedMessageId}
+                        focusHighlightRequest={focusHighlightRequest}
+                        focusHighlightQuery={focusHighlightQuery}
+                        canReply={
+                          health?.capabilities.threadWrite === true &&
+                          roomData?.caughtUp === true
+                        }
+                        canAttachFiles={health?.capabilities.fileShare === true}
+                        canForward={
+                          health?.capabilities.messageForward === true &&
+                          roomData?.caughtUp === true &&
+                          activeRoom?.archivedAt === undefined
+                        }
+                        loading={threadLoading}
+                        earlierRepliesLoading={threadEarlierRepliesLoading}
+                        hasEarlierReplies={threadHasEarlierReplies}
+                        onClose={() => {
+                          if (taskModalOpen) {
+                            closeTaskDetail();
+                            return;
+                          }
+                          if (surface === "search" && previewJoined) {
+                            closeSearchPreview();
+                            return;
+                          }
+                          const rootMessageId = activeThreadRootMessageId;
+                          invalidateNavigation();
+                          setActiveThreadRootMessageId(undefined);
+                          if (messageContext?.message.threadId)
+                            setFocusedMessageId(undefined);
+                          restoreThreadFocus(rootMessageId);
+                        }}
+                        onSubmit={submitThreadReply}
+                        onTaskWorkflow={updateMessageTaskWorkflow}
+                        onFollow={
+                          activeRoomId &&
+                          activeThreadRootMessageId &&
+                          (activeThreadId ||
+                            health?.capabilities.threadWrite === true)
+                            ? async (following) => {
+                                const { thread } = await ensureActiveThread();
+                                await client.request("activity.follow", {
+                                  roomId: activeRoomId,
+                                  threadId: thread.threadId,
+                                  following,
+                                });
+                                threadFollowers.refresh();
+                              }
+                            : undefined
+                        }
+                        onLoadEarlier={loadEarlierThreadMessages}
+                        onRefreshFollowers={threadFollowers.refresh}
+                        onRemoveFollower={
+                          activeRoomId && activeThreadId
+                            ? async (participantId) => {
+                                const result = await client.request(
+                                  "thread.follower.remove",
+                                  {
+                                    participantId,
+                                    roomId: activeRoomId,
+                                    threadId: activeThreadId,
+                                  },
+                                );
+                                threadFollowers.refresh();
+                                return result;
+                              }
+                            : undefined
+                        }
+                        onRestoreFollower={
+                          activeRoomId && activeThreadId
+                            ? async ({ participantId, undoToken }) => {
+                                const result = await client.request(
+                                  "thread.follower.restore",
+                                  {
+                                    participantId,
+                                    roomId: activeRoomId,
+                                    threadId: activeThreadId,
+                                    undoToken,
+                                  },
+                                );
+                                if (!result.restored)
+                                  throw new Error(
+                                    "撤销期限已过，请重新提及该 Agent",
+                                  );
+                                threadFollowers.refresh();
+                              }
+                            : undefined
+                        }
+                        onSearchThread={searchActiveThread}
+                        onOpenTarget={(target) =>
+                          void openDiscoveryLocation({ target })
+                        }
+                        onViewInChannel={() => {
+                          const rootMessageId = activeThreadRootMessageId;
+                          invalidateNavigation();
+                          setActiveThreadRootMessageId(undefined);
+                          setFocusedMessageId(activeThreadRootMessageId);
+                          restoreThreadFocus(rootMessageId);
+                        }}
+                        replies={threadView.messages}
+                        mentionAgentIds={availableAgentIds}
+                        mentionReadStates={threadMentionReadStates}
+                        referenceComputers={messageReferenceComputers}
+                        referenceEventsComplete={
+                          roomData?.referenceEventsComplete === true
+                        }
+                        referenceRooms={messageReferenceRooms}
+                        referenceTasks={roomData?.tasks ?? []}
+                        roomMembers={roomData?.members ?? []}
+                        resizer={
+                          taskModalOpen ||
+                          (surface === "search" && previewJoined) ? null : (
+                            <ThreadPanelResizer
+                              onWidthChange={setThreadPanelWidth}
+                              onWidthCommit={commitThreadPanelWidth}
+                              width={threadPanelWidth}
+                            />
+                          )
+                        }
+                        roomEvents={roomData?.roomEvents ?? []}
+                        roomId={activeRoomId}
+                        roomKind={activeRoom?.kind}
+                        roomName={activeRoom?.name}
+                        root={activeThreadRoot}
+                        {...(activeThreadTask === undefined
+                          ? {}
+                          : { task: activeThreadTask })}
+                        {...(activeThreadTaskAgent === undefined
+                          ? {}
+                          : { taskAgent: activeThreadTaskAgent })}
+                        threadId={activeThreadId}
+                      />
+                    </TaskThreadPresentation>
+                  </IdentityOriginContext.Provider>
                 )}
                 {roomCreateOpen ? (
                   <RoomCreateDialog
@@ -3945,6 +4195,15 @@ function WorkspaceScreen({
                 {agentManageDetail !== undefined ? (
                   agentManageMode === "runtime" ? (
                     <AgentRuntimeDialog
+                      onLaunchSaved={() => setReload((value) => value + 1)}
+                      client={client}
+                      onRefreshModels={async (refreshOfferId) => {
+                        const result = await client.request(
+                          "host.runtime.list",
+                          { refreshOfferId },
+                        );
+                        setLocalRuntimes(result.runtimes);
+                      }}
                       detail={agentManageDetail}
                       onClose={() => setAgentManageDetail(undefined)}
                       onConfigure={configureAgent}
@@ -3962,6 +4221,36 @@ function WorkspaceScreen({
                 ) : null}
                 {roomMembersOpen ? (
                   <RoomMembersDialog
+                    onHideAll={async () => {
+                      if (!activeWorkspace) return;
+                      await changeSystemChannel(client, activeWorkspace, true);
+                      setRoomMembersOpen(false);
+                      setDirectoryRevision((value) => value + 1);
+                      setActiveRoomId(
+                        rooms.find(
+                          (r) => r.kind === "channel" && r.slug !== "all",
+                        )?.roomId,
+                      );
+                      setReload((value) => value + 1);
+                    }}
+                    renderProfile={(target, onBack, onClose) => (
+                      <AgentDirectoryPane
+                        {...agentDetailProps}
+                        key={`${target.kind}:${target.id}`}
+                        panel
+                        initialView={target.kind}
+                        initialTab="profile"
+                        initialAgentDefinitionId={
+                          target.kind === "agent" ? target.id : undefined
+                        }
+                        initialHumanPrincipalId={
+                          target.kind === "human" ? target.id : undefined
+                        }
+                        onRouteChange={undefined}
+                        onPanelBack={onBack}
+                        onClose={onClose}
+                      />
+                    )}
                     key={`${currentPrincipal?.principalId}:${activeRoom?.roomId}`}
                     canAdd={
                       canOnboardCurrentRoomAgent &&
@@ -4015,6 +4304,8 @@ function WorkspaceScreen({
                 <MobileNavigation
                   activeSurface={surface}
                   onAgents={() => {
+                    setPeekAgentId(undefined);
+                    setPeekHumanId(undefined);
                     setActiveThreadRootMessageId(undefined);
                     setMobileRoomsOpen(false);
                     setRoomMembersOpen(false);
@@ -4023,19 +4314,23 @@ function WorkspaceScreen({
                   }}
                   onHome={openMobileHome}
                   onSettings={() => {
+                    setPeekAgentId(undefined);
+                    setPeekHumanId(undefined);
                     setActiveThreadRootMessageId(undefined);
                     setMobileRoomsOpen(false);
                     setRoomMembersOpen(false);
                     setSurface("settings");
                   }}
                   onTasks={() => {
+                    setPeekAgentId(undefined);
+                    setPeekHumanId(undefined);
+                    setActiveThreadRootMessageId(undefined);
                     setMobileRoomsOpen(false);
                     setRoomMembersOpen(false);
                     setFocusedMessageId(undefined);
                     setSurface("tasks");
                   }}
                   mobileHomeOpen={mobileRoomsOpen}
-                  showMobileNavigation={showMobileNavigation}
                 />
               </div>
             </InteractivePopover>
@@ -4066,12 +4361,6 @@ function roomSessionFor(
         roomId,
       }),
     8,
-  );
-}
-
-function browserOpaqueId(): string {
-  return opaqueIdFromBytes(
-    globalThis.crypto.getRandomValues(new Uint8Array(16)),
   );
 }
 

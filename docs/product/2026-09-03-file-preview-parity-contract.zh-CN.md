@@ -115,3 +115,11 @@ text-preview 继续返回 415。AbortSignal 管理 Blob 生命周期，长度不
 PDF 采用随包 PDF.js 6.3.289 的逐页 canvas，脚本/表单不执行；保留严格 CSP 和明确错误。
 native 音视频无 autoplay，失败保留下载。具体来源、差异、PDF 工具栏限制及证据见
 [媒体预览审计](../audits/2026-09-07-media-preview-closure.zh-CN.md)。
+
+## 2026-09-14 消息卡片与文件关联
+
+消息附件独立采用Raft紧凑卡片和预览加载状态，文件列表沿用原列表行。
+评论继续由AttachmentCommentsService写入canonical Thread；Message投影和Worker文本输出保留文件ID与名称，
+Web显示文件回复标签。首次新建文件讨论仅继承仍有参与权限的Agent作者，已有线程保留关注/取消关注语义。
+历史关联可恢复，不改变原消息正文或文件访问权限。来源、参数、差异及验收见
+[消息附件与评论审计](../audits/2026-09-14-message-artifact-cards-and-comments.zh-CN.md)。

@@ -1,10 +1,13 @@
 import {
+  AgentLaunchOverlaySchema,
+  LaunchOverlaysSchema,
+  mergeLaunchArguments,
+} from "./runtime-launch-overlays.ts";
+import {
   PROVIDER_LAUNCH_ARGS_ENV,
   providerLaunchDefaults,
   providerLaunchRequiredArgs,
   providerLaunchPolicy,
-  validateProviderLaunchArgs,
-  validateProviderLaunchOverride,
 } from "@rah-os/agent-host";
 import { dirname } from "node:path";
 import { randomUUID } from "node:crypto";
@@ -22,6 +25,8 @@ import { z } from "zod";
 import { ConflictError } from "@rah-os/kernel";
 import {
   RuntimeGuideUpdateSchema,
+  RuntimeLaunchEnvironmentSchema,
+  type RuntimeGuideRead,
   type RuntimeGuideUpdate,
   type RuntimeGuideSettingsView,
 } from "@rah-os/protocol";
@@ -29,6 +34,10 @@ import {
 const State = z
   .object({
     revision: z.number().int().nonnegative(),
+    environment: z
+      .record(z.string(), RuntimeLaunchEnvironmentSchema)
+      .optional(),
+    agents: LaunchOverlaysSchema.optional(),
     enabled: z.array(z.enum(["codex", "claude"])).max(2),
     overrides: z
       .record(
@@ -83,40 +92,45 @@ export class RuntimeGuideSettings {
   runtimeOptions() {
     return {
       guideEnabled: (runtimeId: string | undefined) => this.enabled(runtimeId),
-      launchEnvironment: (runtimeId: string) => ({
-        [PROVIDER_LAUNCH_ARGS_ENV]: JSON.stringify({
-          runtimeId,
-          overrideArgs:
-            this.read().runtimes.find((r) => r.runtimeId === runtimeId)
-              ?.overrideArgs ?? null,
-          additionalArgs:
-            this.read().runtimes.find((r) => r.runtimeId === runtimeId)
-              ?.additionalArgs ?? [],
-        }),
-      }),
+      launchEnvironment: (runtimeId: string, agentDefinitionId?: string) => {
+        const row = this.read(
+          agentDefinitionId ? { agentDefinitionId } : {},
+        ).runtimes.find((r) => r.runtimeId === runtimeId);
+        return {
+          ...row?.inheritedEnvironment,
+          ...row?.environment,
+          [PROVIDER_LAUNCH_ARGS_ENV]: JSON.stringify({
+            runtimeId,
+            overrideArgs: row?.overrideArgs ?? null,
+            additionalArgs: mergeLaunchArguments(
+              row?.inheritedArgs ?? [],
+              row?.additionalArgs ?? [],
+            ),
+          }),
+        };
+      },
     };
   }
-  read(): RuntimeGuideSettingsView {
+  read(scope: RuntimeGuideRead = {}): RuntimeGuideSettingsView {
     return {
       revision: this.#state.revision,
       runtimes: capabilities.map((row) => ({
         ...row,
         enabled: this.enabled(row.runtimeId),
-        additionalArgs: [
-          ...(this.#state.additionalArgs?.[row.runtimeId] ?? []),
-        ],
+        additionalArgs: [],
+        environment: scope.agentDefinitionId
+          ? {
+              ...this.#state.agents?.[scope.agentDefinitionId]?.[row.runtimeId]
+                ?.environment,
+            }
+          : {},
+        inheritedArgs: [],
+        inheritedEnvironment: {},
         defaultArgs: providerLaunchDefaults(row.runtimeId),
         requiredArgs: providerLaunchRequiredArgs(row.runtimeId),
         managedLaunch: providerLaunchPolicy(row.runtimeId),
-        overrideArgs: this.#state.overrides?.[row.runtimeId]
-          ? [...this.#state.overrides[row.runtimeId]!]
-          : null,
-        effectiveArgs: [
-          ...(this.#state.overrides?.[row.runtimeId] ?? [
-            ...providerLaunchDefaults(row.runtimeId),
-            ...(this.#state.additionalArgs?.[row.runtimeId] ?? []),
-          ]),
-        ],
+        overrideArgs: null,
+        effectiveArgs: providerLaunchDefaults(row.runtimeId),
       })),
     };
   }
@@ -127,65 +141,49 @@ export class RuntimeGuideSettings {
         "Guide settings revision changed; reload settings",
       );
     if (
-      input.enabled &&
-      !capabilities.find((row) => row.runtimeId === input.runtimeId)?.supported
+      !input.agentDefinitionId &&
+      (input.enabled === undefined ||
+        input.environment !== undefined ||
+        input.additionalArgs !== undefined ||
+        input.overrideArgs !== undefined)
     )
-      throw new ConflictError("Guide unavailable for this runtime adapter");
-    const enabled = this.#state.enabled.filter(
-      (id) => input.enabled === undefined || id !== input.runtimeId,
-    );
-    const additionalArgs = {
-      codex: [],
-      claude: [],
-      kimi: [],
-      opencode: [],
-      ...this.#state.additionalArgs,
-    };
-    const overrides = {
-      codex: null,
-      claude: null,
-      kimi: null,
-      opencode: null,
-      ...this.#state.overrides,
-    } as Record<"codex" | "claude" | "kimi" | "opencode", string[] | null>;
-    if (input.overrideArgs !== undefined) {
-      try {
-        overrides[input.runtimeId] =
-          input.overrideArgs === null
-            ? null
-            : validateProviderLaunchOverride(
-                input.runtimeId,
-                input.overrideArgs,
-              );
-      } catch (error) {
-        throw new ConflictError(
-          error instanceof Error ? error.message : "Invalid provider override",
-        );
-      }
-      additionalArgs[input.runtimeId] = [];
+      throw new ConflictError(
+        "Provider settings are read-only; configure launch settings on an Agent",
+      );
+    if (input.agentDefinitionId && input.additionalArgs !== undefined)
+      throw new ConflictError(
+        "Agent configuration supports environment variables only",
+      );
+    const agents = structuredClone(this.#state.agents ?? {});
+    const enabled = [...this.#state.enabled];
+    if (input.agentDefinitionId) {
+      const perAgent = agents[input.agentDefinitionId] ?? {};
+      perAgent[input.runtimeId] = AgentLaunchOverlaySchema.parse({
+        additionalArgs:
+          input.additionalArgs === undefined
+            ? (perAgent[input.runtimeId]?.additionalArgs ?? [])
+            : mergeLaunchArguments([], input.additionalArgs),
+        environment:
+          input.environment ?? perAgent[input.runtimeId]?.environment ?? {},
+      });
+      agents[input.agentDefinitionId] = perAgent;
+    } else {
+      if (
+        !capabilities.find((row) => row.runtimeId === input.runtimeId)
+          ?.supported
+      )
+        throw new ConflictError("Guide unavailable for this runtime adapter");
+      const id = input.runtimeId as "codex" | "claude";
+      const index = enabled.indexOf(id);
+      if (index >= 0) enabled.splice(index, 1);
+      if (input.enabled) enabled.push(id);
     }
-    if (input.additionalArgs !== undefined) {
-      overrides[input.runtimeId] = null;
-      try {
-        additionalArgs[input.runtimeId] = validateProviderLaunchArgs(
-          input.additionalArgs,
-        );
-      } catch (error) {
-        throw new ConflictError(
-          error instanceof Error ? error.message : "Invalid provider arguments",
-        );
-      }
-    }
-    if (
-      input.enabled &&
-      (input.runtimeId === "codex" || input.runtimeId === "claude")
-    )
-      enabled.push(input.runtimeId);
+    // Retain retired global fields for disk compatibility, never apply them.
     const next = State.parse({
+      ...this.#state,
       revision: this.#state.revision + 1,
+      agents,
       enabled,
-      additionalArgs,
-      overrides,
     });
     const temporary = `${this.path}.${randomUUID()}.tmp`;
     try {
@@ -210,6 +208,10 @@ export class RuntimeGuideSettings {
     } finally {
       rmSync(temporary, { force: true });
     }
-    return this.read();
+    return this.read(
+      input.agentDefinitionId
+        ? { agentDefinitionId: input.agentDefinitionId }
+        : {},
+    );
   }
 }

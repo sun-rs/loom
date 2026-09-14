@@ -48,7 +48,7 @@ export function requireWorkerTaskDelivery(
            OR type = 'task.submitted'
            AND aggregate_type = 'task'
            AND aggregate_id = ?
-           OR type IN ('task.amended', 'task.assigned', 'task.unassigned', 'task.reassigned', 'task.reopened', 'task.unblocked', 'task.released', 'task.cancelled')
+           OR type IN ('task.workflow_updated', 'task.amended', 'task.assigned', 'task.unassigned', 'task.reassigned', 'task.reopened', 'task.unblocked', 'task.released', 'task.cancelled')
            AND aggregate_type = 'task'
            AND aggregate_id = ?
            OR type = 'input.resolved'
@@ -137,7 +137,7 @@ export function requireWorkerRoomVisibility(
       `SELECT principals.principal_id FROM memberships
     JOIN principals ON principals.principal_id = memberships.principal_id
     LEFT JOIN agent_definitions ON agent_definitions.participant_id = principals.principal_id
-    WHERE memberships.room_id = ? AND memberships.principal_id = ? AND principals.kind = 'agent'
+    WHERE memberships.room_id = ? AND memberships.principal_id = ? AND principals.kind = 'agent' AND EXISTS(SELECT 1 FROM rooms r WHERE r.room_id=memberships.room_id AND r.system_hidden=0)
       AND (agent_definitions.state IS NULL OR agent_definitions.state = 'enabled')`,
     )
     .get(scope.roomId, scope.participantId);

@@ -131,16 +131,15 @@ function startTask(fixture: ReturnType<typeof createTaskFixture>) {
   return { execution, started };
 }
 
-test("Task workflow cannot display Done before canonical completion", () => {
+test("Evidence-based completion still requires canonical submission", () => {
   const fixture = createTaskFixture();
   try {
     assert.throws(
       () =>
-        fixture.kernel.updateTaskWorkflowStatus(fixture.humanActor, {
+        fixture.kernel.completeTask(fixture.humanActor, {
           basedOnRoomSeq: fixture.created.event.roomSeq,
           idempotencyKey: "premature-done",
           taskId: fixture.created.task.taskId,
-          workflowStatus: "done",
         }),
       ConflictError,
     );
@@ -155,17 +154,16 @@ test("Task workflow cannot display Done before canonical completion", () => {
   }
 });
 
-test("a rejected board move cannot strand the running Worker", () => {
+test("Rejected evidence-based completion does not strand the running Worker", () => {
   const fixture = createTaskFixture();
   try {
     const { execution, started } = startTask(fixture);
     assert.throws(
       () =>
-        fixture.kernel.updateTaskWorkflowStatus(fixture.humanActor, {
+        fixture.kernel.completeTask(fixture.humanActor, {
           basedOnRoomSeq: started.event.roomSeq,
           idempotencyKey: "premature-review",
           taskId: fixture.created.task.taskId,
-          workflowStatus: "in_review",
         }),
       ConflictError,
     );
@@ -241,7 +239,7 @@ test("a Human Room manager can apply the same canonical status action exposed by
   }
 });
 
-test("Done workflow action completes only a frozen submitted Task", () => {
+test("Human workflow completion preserves an existing frozen submission", () => {
   const fixture = createTaskFixture();
   try {
     const { execution, started } = startTask(fixture);

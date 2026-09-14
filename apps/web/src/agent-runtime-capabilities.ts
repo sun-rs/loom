@@ -61,10 +61,26 @@ export function runtimeModelOptions(
 ): Array<{ label: string; modelBindingId: string }> {
   return [
     ...verifiedModelBindings(runtime).map((binding) => ({
-      label: binding.displayName ?? `${binding.provider} / ${binding.modelId}`,
+      label: runtimeModelLabel(runtime!, binding),
       modelBindingId: binding.modelBindingId,
     })),
   ];
+}
+
+/** Provider identity comes from the discovered catalog, never a display-name split. */
+export function runtimeModelLabel(
+  runtime: Pick<LocalRuntimeInventoryEntry, "cliId" | "executable">,
+  binding: LocalRuntimeInventoryEntry["modelBindingDescriptors"][number],
+): string {
+  const cliId =
+    runtime.cliId ??
+    runtime.executable
+      .split(/[\\/]/u)
+      .at(-1)
+      ?.replace(/\.exe$/iu, "");
+  return cliId === "opencode"
+    ? `${binding.provider} · ${binding.displayName ?? binding.modelId}`
+    : (binding.displayName ?? binding.modelId);
 }
 
 export function normalizeModelBindingId(
@@ -105,4 +121,18 @@ function verifiedModelBindings(
 function fallbackReasoningLabel(reasoning: string): string {
   if (reasoning === "xhigh") return "Extra high";
   return reasoning.slice(0, 1).toUpperCase() + reasoning.slice(1);
+}
+
+export function runtimeFastTier(
+  runtime: LocalRuntimeInventoryEntry | undefined,
+  bindingId: string,
+): "priority" | "fast" | undefined {
+  const tiers = verifiedModelBindings(runtime).find(
+    (model) => model.modelBindingId === bindingId,
+  )?.supportedServiceTiers;
+  return tiers?.includes("priority")
+    ? "priority"
+    : tiers?.includes("fast")
+      ? "fast"
+      : undefined;
 }

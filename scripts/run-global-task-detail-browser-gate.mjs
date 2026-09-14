@@ -48,6 +48,71 @@ for (const engine of process.env.RAH_UI_BROWSER
       const taskId = await card.evaluate(
         (element) => element.closest("[data-task-id]").dataset.taskId,
       );
+      // Chat badges must use the same canonical task dialog as the board.
+      await page.goto(fixture.origin + "/?room=" + roomId);
+      const badge = page
+        .locator(
+          '[data-testid="message-task-badge"][aria-label*="Keep the Room-first"]',
+        )
+        .first();
+      await expect(badge).toBeVisible();
+      await badge.click();
+      const chatModal = page.getByTestId("task-thread-modal");
+      await expect(chatModal).toBeVisible();
+      await expect(chatModal.getByTestId("task-detail-metadata")).toBeVisible();
+      assert.notEqual(new URL(page.url()).searchParams.get("surface"), "tasks");
+      await expect(
+        chatModal.locator(".rah-task-status-picker button").first(),
+      ).toBeEnabled();
+      await expect(
+        chatModal.getByRole("button", { name: /^任务负责人：/ }),
+      ).toBeEnabled();
+      const chatReply = `CHAT_TASK_FAKE_FIXTURE_${engine}_${width}`;
+      const chatComposer = chatModal.getByRole("textbox", {
+        name: "Thread 回复输入框",
+      });
+      await chatComposer.fill(chatReply);
+      await chatComposer.press("Enter");
+      await expect(
+        chatModal.locator(".msg-body").filter({ hasText: chatReply }).first(),
+      ).toBeVisible();
+      await page.screenshot({
+        path: join(output, `${engine}-${width}-chat-task.png`),
+      });
+      await page.reload();
+      await expect(chatModal).toBeVisible();
+      await expect(
+        chatModal.locator(".msg-body").filter({ hasText: chatReply }).first(),
+      ).toBeVisible();
+      const chatStatus = chatModal
+        .locator(".rah-task-status-picker button")
+        .first();
+      await chatStatus.click();
+      await page
+        .getByRole("menuitemradio", { name: "已关闭", exact: true })
+        .click();
+      await expect(badge).toHaveAttribute("data-task-status", "closed", {
+        timeout: 15000,
+      });
+      const closedColor = await badge.evaluate(
+        (e) => getComputedStyle(e).backgroundColor,
+      );
+      await chatStatus.click();
+      await page
+        .getByRole("menuitemradio", { name: "待办", exact: true })
+        .click();
+      await expect(badge).toHaveAttribute("data-task-status", "todo", {
+        timeout: 15000,
+      });
+      assert.notEqual(
+        await badge.evaluate((e) => getComputedStyle(e).backgroundColor),
+        closedColor,
+      );
+      await chatModal
+        .getByRole("button", { name: "关闭任务详情", exact: true })
+        .click();
+      await expect(chatModal).toHaveCount(0);
+      assert.equal(new URL(page.url()).searchParams.get("room"), roomId);
       const boardQuery = new URLSearchParams({
         surface: "tasks",
         channel: roomId,
@@ -88,7 +153,9 @@ for (const engine of process.env.RAH_UI_BROWSER
           (width === 390 ? box.x === 0 : box.x > 100),
         JSON.stringify(box),
       );
-      await modal.getByRole("button", { name: "历史", exact: true }).click();
+      await modal
+        .getByRole("button", { name: "操作时间线", exact: true })
+        .click();
       await expect(
         modal.locator(".rah-task-detail-history-body"),
       ).toContainText("创建任务");
@@ -121,10 +188,12 @@ for (const engine of process.env.RAH_UI_BROWSER
         .getByRole("menuitemradio", { name: "已关闭", exact: true })
         .click();
       await expect(state).toContainText("已关闭");
-      await modal.getByRole("button", { name: "历史", exact: true }).click();
+      await modal
+        .getByRole("button", { name: "操作时间线", exact: true })
+        .click();
       await expect(
         modal.locator(".rah-task-detail-history-body"),
-      ).toContainText("关闭任务");
+      ).toContainText("已关闭");
       await state.click();
       await page
         .getByRole("menuitemradio", { name: "待办", exact: true })
@@ -133,21 +202,73 @@ for (const engine of process.env.RAH_UI_BROWSER
       const assignee = modal.getByRole("button", { name: /^任务负责人：/ });
       await expect(assignee).toBeEnabled();
       await assignee.click();
+      await expect(
+        page.getByPlaceholder("搜索人和 Agent", { exact: true }),
+      ).toBeVisible();
+      assert.equal(
+        await page
+          .locator(".rah-discovery-popover.is-task-assignee")
+          .evaluate((e) => getComputedStyle(e).width),
+        "240px",
+      );
       await page
         .getByRole("menuitemradio", { name: "Alice", exact: true })
         .click();
       await expect(assignee).toContainText("Alice");
+      await assignee.click();
+      await page
+        .getByRole("menuitemradio", { name: "sun", exact: true })
+        .click();
+      await expect(assignee).toContainText("sun");
+      for (const status of [
+        "完成",
+        "待确认",
+        "待办",
+        "进行中",
+        "已关闭",
+        "待确认",
+      ]) {
+        await state.click();
+        await page
+          .getByRole("menuitemradio", { name: status, exact: true })
+          .click();
+        await expect(state).toContainText(status);
+        await assignee.click();
+        await page
+          .getByRole("menuitemradio", { name: "未指派", exact: true })
+          .click();
+        await expect(assignee).toContainText("未指派");
+        await assignee.click();
+        await page
+          .getByRole("menuitemradio", { name: "Alice", exact: true })
+          .click();
+        await expect(assignee).toContainText("Alice");
+      }
+      const historyToggle = modal.getByRole("button", {
+        name: "操作时间线",
+        exact: true,
+      });
+      if ((await historyToggle.getAttribute("aria-expanded")) === "true")
+        await historyToggle.click();
+      await assignee.click();
+      await page.screenshot({
+        path: join(output, `manual-task-edit-${engine}-${width}.png`),
+      });
+      await page.keyboard.press("Escape");
       await page.reload();
+      await expect(state).toContainText("待确认");
       await expect(assignee).toContainText("Alice");
       await assignee.click();
       await page
         .getByRole("menuitemradio", { name: "未指派", exact: true })
         .click();
       await expect(assignee).toContainText("未指派");
-      await modal.getByRole("button", { name: "历史", exact: true }).click();
+      await modal
+        .getByRole("button", { name: "操作时间线", exact: true })
+        .click();
       await expect(
         modal.locator(".rah-task-detail-history-body"),
-      ).toContainText("移除负责人");
+      ).toContainText("取消指派");
       const reply = modal.getByRole("textbox", { name: "Thread 回复输入框" });
       await expect(reply).toBeEnabled();
       const body = `TASK_MODAL_FAKE_FIXTURE_${engine}_${width}`;

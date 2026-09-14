@@ -2981,7 +2981,7 @@ try {
         ),
       ].map((item) => item.textContent?.trim()),
     ),
-    ["在消息列中搜索", "在频道中查看", "取消关注消息列"],
+    ["在消息列中搜索", "在新标签页中打开", "在频道中查看", "取消关注消息列"],
     "a provisional Raft Thread must expose root-message follow state",
   );
   await clickButton(browser, { text: "取消关注消息列" });
@@ -3016,7 +3016,7 @@ try {
         ),
       ].map((item) => item.textContent?.trim()),
     ),
-    ["在消息列中搜索", "在频道中查看", "取消关注消息列"],
+    ["在消息列中搜索", "在新标签页中打开", "在频道中查看", "取消关注消息列"],
   );
   await dispatchKey(browser, "Escape", 27);
   await waitFor(
@@ -3041,11 +3041,12 @@ try {
   });
   const followerRemoveLabel = await call(browser, () =>
     document
-      .querySelector(".rah-thread-follower-row > button")
+      .querySelector(".rah-thread-follower-row > .rah-thread-follower-remove")
       ?.getAttribute("aria-label"),
   );
   assert.ok(followerRemoveLabel?.startsWith("移除 "));
   await clickButton(browser, { ariaLabel: followerRemoveLabel });
+  await clickButton(browser, { text: "移除关注" });
   await waitFor(
     browser,
     () => document.querySelector(".rah-thread-follower-undo") !== null,
@@ -3056,13 +3057,16 @@ try {
     browser,
     (ariaLabel) =>
       document.querySelector(".rah-thread-follower-undo") === null &&
-      [...document.querySelectorAll(".rah-thread-follower-row > button")].some(
-        (button) => button.getAttribute("aria-label") === ariaLabel,
-      ),
+      [
+        ...document.querySelectorAll(
+          ".rah-thread-follower-row > .rah-thread-follower-remove",
+        ),
+      ].some((button) => button.getAttribute("aria-label") === ariaLabel),
     "Agent follower restore",
     [followerRemoveLabel],
   );
   await clickButton(browser, { ariaLabel: followerRemoveLabel });
+  await clickButton(browser, { text: "移除关注" });
   await waitFor(
     browser,
     () => document.querySelector(".rah-thread-follower-undo") !== null,

@@ -87,8 +87,8 @@ export function ComputerWorkspaceSummary({
       }
     >
       {rows === undefined ? (
-        <p className="rah-computer-hint">
-          扫描这台 Computer 上各 Agent 工作区的可浏览文件，不包含独立运行项目。
+        <p className="rah-computer-hint rah-workspace-scan-hint">
+          点击扫描，检查这台 Computer 上的工作区目录。
         </p>
       ) : (
         rows.map((row) => (

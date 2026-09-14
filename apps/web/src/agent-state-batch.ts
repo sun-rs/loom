@@ -1,3 +1,4 @@
+import { browserOpaqueId } from "./browser-opaque-id.ts";
 /** Ephemeral UI sequencing only; each mutation belongs to the existing Agent owner. */
 export async function applyAgentStateBatch(input: {
   ids: readonly string[];
@@ -16,7 +17,7 @@ export async function applyAgentStateBatch(input: {
   for (const id of input.ids) {
     if (input.signal.aborted) return;
     if (input.currentState(id) !== input.state) {
-      const key = input.keys.get(id) ?? `computer-agent-${crypto.randomUUID()}`;
+      const key = input.keys.get(id) ?? `computer-agent-${browserOpaqueId()}`;
       input.keys.set(id, key);
       await input.apply(id, input.state, key);
       input.keys.delete(id);

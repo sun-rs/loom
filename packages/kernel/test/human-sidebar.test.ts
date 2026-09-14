@@ -35,6 +35,9 @@ test("sidebar order is private, version fenced, idempotent and ACL validated", (
       pinned: [],
       channelOrder: [],
       dmOrder: [],
+      hiddenDms: [],
+      customSections: [],
+      sectionOrder: [],
       channelSortMode: "manual",
       dmSortMode: "manual",
       pinnedSortMode: "manual",
@@ -107,6 +110,93 @@ test("sidebar order is private, version fenced, idempotent and ACL validated", (
       /unavailable|accessible/,
     );
     assert.equal(k.humanSidebar.get(a, get).preferences.version, 1);
+  } finally {
+    k.close();
+  }
+});
+
+test("custom sections and hidden conversations are private, persistent and target validated", () => {
+  const k = new RoomKernel({ databasePath: ":memory:" });
+  k.initialize();
+  try {
+    const h = k.provisionPrincipal({ handle: "h", kind: "human" }),
+      a = k.authenticateAccessToken(h.accessToken);
+    const agent = k.provisionPrincipal({ handle: "agent", kind: "agent" });
+    const w = k.createWorkspace(a, {
+      name: "w",
+      slug: "w",
+      idempotencyKey: "w",
+    });
+    k.addMember(a, {
+      roomId: w.controlRoom.roomId,
+      principalId: agent.principal.principalId,
+    });
+    const key = `peer:${agent.principal.principalId}`;
+    const request = {
+      workspaceId: w.workspace.workspaceId,
+      expectedVersion: 0,
+      idempotencyKey: "section",
+      patch: {
+        hiddenDms: [key],
+        sectionOrder: ["custom:work", "dms", "pinned", "channels"],
+        customSections: [
+          { id: "work", name: "工作", emoji: "🚀", items: [key] },
+        ],
+      },
+    };
+    const result = k.humanSidebar.patch(a, request);
+    assert.deepEqual(result.preferences.hiddenDms, [key]);
+    assert.deepEqual(
+      k.humanSidebar.get(a, { workspaceId: w.workspace.workspaceId })
+        .preferences.sectionOrder,
+      request.patch.sectionOrder,
+    );
+    assert.deepEqual(
+      k.humanSidebar.get(a, { workspaceId: w.workspace.workspaceId })
+        .preferences.customSections,
+      request.patch.customSections,
+    );
+    assert.deepEqual(k.humanSidebar.patch(a, request), result);
+    const opened = k.openDirectRoom(a, {
+      workspaceId: w.workspace.workspaceId,
+      peerPrincipalId: agent.principal.principalId,
+      basedOnControlRoomSeq: k.sync(a, {
+        roomId: w.controlRoom.roomId,
+        consumerId: "dm",
+      }).latestRoomSeq,
+      idempotencyKey: "reopen",
+    });
+    assert.equal(opened.kind, "direct");
+    assert.deepEqual(
+      k.humanSidebar.get(a, { workspaceId: w.workspace.workspaceId })
+        .preferences.hiddenDms,
+      [],
+    );
+
+    assert.throws(
+      () =>
+        k.humanSidebar.patch(a, {
+          ...request,
+          expectedVersion: 2,
+          idempotencyKey: "bad",
+          patch: {
+            customSections: [
+              { id: "work", name: "工作", items: ["room:secret"] },
+            ],
+          },
+        }),
+      /unavailable|accessible/,
+    );
+    assert.throws(
+      () =>
+        k.humanSidebar.patch(a, {
+          ...request,
+          expectedVersion: 2,
+          idempotencyKey: "bad-hidden",
+          patch: { hiddenDms: ["room:secret"] },
+        }),
+      /unavailable|accessible/,
+    );
   } finally {
     k.close();
   }

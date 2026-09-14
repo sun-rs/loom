@@ -1,9 +1,10 @@
-import type { ReactNode } from "react";
+import { useContext, type ReactNode } from "react";
 import type { Principal } from "@rah-os/protocol";
 import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
 import { PreviewCard } from "./preview-card.tsx";
 import {
   useHumanIdentity,
+  IdentityOriginContext,
   useWorkspaceEntities,
 } from "./workspace-entity-context.tsx";
 import { useHumanProfile } from "../human-profile-hooks.ts";
@@ -21,6 +22,7 @@ export function HumanIdentity({
   avatar?: boolean;
 }) {
   const context = useHumanIdentity();
+  const origin = useContext(IdentityOriginContext);
   const entities = useWorkspaceEntities();
   const person = entities?.resolvePerson(principal) ?? principal;
   const name = person.displayName || person.handle;
@@ -42,7 +44,7 @@ export function HumanIdentity({
           size="compact"
         />
         <b>{name}</b>
-        <small>@{person.handle}</small>
+        <small>@{person.displayName || person.handle}</small>
       </>
     ));
   if (!context) return <span className={className}>{contents}</span>;
@@ -51,7 +53,7 @@ export function HumanIdentity({
       label={`查看 ${name} 资料`}
       triggerClassName={className}
       className="rah-human-preview"
-      onClick={() => context.onOpenHuman(person.principalId)}
+      onClick={() => context.onOpenHuman(person.principalId, origin)}
       content={<HumanPreview principalId={person.principalId} />}
     >
       {contents}
@@ -68,7 +70,10 @@ function HumanPreview({ principalId }: { principalId: string }) {
   );
   if (error) return <p className="rah-profile-notice">无法读取成员资料</p>;
   if (!profile) return <p className="rah-profile-notice">正在读取成员资料…</p>;
-  const human = profile.principal;
+  const human = {
+    ...profile.principal,
+    ...entities?.resolvePerson(profile.principal),
+  };
   return (
     <>
       <div className="rah-profile-identity">
@@ -79,11 +84,13 @@ function HumanPreview({ principalId }: { principalId: string }) {
         />
         <div>
           <h2>{human.displayName || human.handle}</h2>
-          <p>@{human.handle}</p>
+          <p>@{human.displayName || human.handle}</p>
         </div>
       </div>
       {human.description && (
-        <p className="rah-human-preview-description">{human.description}</p>
+        <p className="rah-human-preview-description" title={human.description}>
+          {human.description}
+        </p>
       )}
     </>
   );

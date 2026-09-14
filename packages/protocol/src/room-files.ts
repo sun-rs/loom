@@ -144,6 +144,7 @@ export function classifyAttachmentPreview(
 }
 export const AttachmentSchema = z
   .object({
+    commentCount: z.number().int().nonnegative().optional(),
     attachmentId: IdentifierSchema,
     filename: z
       .string()

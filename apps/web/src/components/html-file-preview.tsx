@@ -1,3 +1,4 @@
+import { browserOpaqueId } from "../browser-opaque-id.ts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import bridgeAsset from "../html-preview-bridge.js?url&no-inline";
 import {
@@ -19,7 +20,7 @@ export function HtmlFilePreview({
   onAnchor: ((anchor: AttachmentAnchor) => void) | undefined;
 }) {
   const frame = useRef<HTMLIFrameElement>(null);
-  const [channel] = useState(() => crypto.randomUUID());
+  const [channel] = useState(() => browserOpaqueId());
   const latest = useRef({ commentMode, onAnchor });
   latest.current = { commentMode, onAnchor };
   const source = useMemo(() => {

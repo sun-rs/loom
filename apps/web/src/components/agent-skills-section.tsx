@@ -1,3 +1,4 @@
+import { skillSourceLabel } from "../agent-skills-presentation.ts";
 import { useEffect, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
@@ -98,7 +99,7 @@ export function AgentSkillsSection({
             label="工作区"
             icon="folder"
             scope={result.workspace}
-            empty="暂无工作区技能"
+            empty="此 Agent 工作区内暂无 skill"
           />
           {[result.global, result.workspace].some(
             (scope) => scope.state === "error" || scope.state === "partial",
@@ -164,7 +165,7 @@ function SkillsScope({
               {[...groups].map(([path, skills]) => (
                 <div key={path}>
                   <div className="rah-agent-skills-source">
-                    <span>{path}</span>
+                    <code title={path}>{skillSourceLabel(path)}</code>
                     <span>({skills.length})</span>
                   </div>
                   <div className="rah-agent-skill-list">

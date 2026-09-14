@@ -42,7 +42,100 @@ CSS is authoritative for rendering values. Do not copy this table into constants
 Historical fallback tokens and extracted aliases still coexist; their consolidation
 is recorded debt, not permission to add another override.
 
+## Agent choice row colors
+
+Choose colors by component family and interaction state, never by whether the
+component is inside a modal, drawer, popover or base page. The
+[source-backed matrix and counterexamples](../audits/2026-09-14-agent-choice-hover-contract.zh-CN.md)
+are the current contract: member-add/create candidates use full yellow hover;
+member browsing and property menus use 30%; autocomplete distinguishes the
+current candidate from ordinary hover (including 50%). Task-modal assignee menus
+remain 30%, and sidebar Agent search can become full yellow on pointer entry.
+
+Raft's unqualified `soft-signal` is opaque `#FFD440`. Our historical
+`--soft-signal` already contains 30% alpha. Use `--yellow` for opaque yellow and
+`--soft-signal` for that existing 30% contract; derive other source-backed alpha
+values from opaque `--yellow`. Never infer equivalence from token names or apply
+alpha twice. Do not change the global alias to repair one component.
+
+Treat hover, keyboard/pointer current candidate, selected membership and disabled
+states separately. Pink 20% plus a checkmark belongs to the create-channel member
+selection contract, not every Agent picker. Preserve shared component behavior
+when nesting it in a dialog; do not add ancestor-modal hover overrides. New or
+changed pickers must cite their source family and verify computed colors on
+pointer entry/exit, selected rows and keyboard highlighting as applicable.
+
+### Shared choice-state contract
+
+Component differences do not authorize page-specific palettes. The reusable
+contract has three layers: library-owned color values, explicit interaction
+states, and a closed set of component profiles. This is a presentation contract,
+not a new command/event in `packages/protocol`.
+
+The color vocabulary is opaque yellow (`--yellow`), yellow at 30%
+(`--soft-signal`), yellow at 50% (derived once from opaque yellow), and pink at
+20% for the member-selection marker. These are the existing source-backed
+recipes, not permission to choose arbitrary alpha values. Alpha is composited
+over the actual surface; a sampled screenshot RGB must not replace that recipe.
+
+| Profile            | Applicable interaction                         | Ordinary unselected hover | Current candidate                     | Committed selection                            |
+| ------------------ | ---------------------------------------------- | ------------------------- | ------------------------------------- | ---------------------------------------------- |
+| `member-selection` | Create/edit channel and add-member candidates  | Opaque yellow             | Follow the registered picker behavior | Create/edit members: pink 20% plus checkmark   |
+| `member-browse`    | Existing member rows and identity navigation   | Yellow 30%                | No autocomplete current index         | Membership is data, not a selected-row color   |
+| `property-option`  | Agent assignee and equivalent property options | Yellow 30%                | Shared menu highlight: yellow 30%     | Preserve the selected-value checkmark          |
+| `autocomplete`     | Chat mention and sidebar conversation search   | Yellow 50%                | Opaque yellow                         | Accept the candidate using the existing action |
+
+These profile names describe the design contract; they are not currently
+exported React props or CSS classes. The linked evidence matrix owns precise
+applicability. For example, pink selection is verified for create/edit members,
+not automatically for every add-member flow. Unknown combinations require
+source inspection rather than a locally invented default.
+
+State rules are shared:
+
+- `hover` means pointer presence; `current` identifies the keyboard/pointer
+  navigation candidate; `selected` means the value already chosen. Keep them
+  independent. Sidebar search promotes pointer entry to current, explaining
+  opaque yellow without introducing a sidebar-specific color.
+- In autocomplete, current wins over ordinary hover. In member multi-selection,
+  the committed pink marker remains on hover. Property options retain their
+  checkmark while the menu highlight changes. Do not create one universal
+  selected/hover priority that erases these distinct meanings.
+- Focus indication remains explicit and must not silently commit a selection.
+  Disabled options cannot activate and must not gain enabled hover/current
+  feedback. Pointer exit removes hover but does not erase a separately owned
+  current or selected state.
+- Moving the same component into a modal, drawer or page preserves its profile,
+  state rules and values. Overlay dimming is a separate surface behavior.
+
+New Agent choice surfaces must select an existing profile and reuse its owner;
+pages supply data, state and actions, not color/alpha/hover-style overrides.
+An additional profile requires a central contract update with a source-backed
+reason and interaction tests; a new window is not itself such a reason.
+`ui-tokens` owns rendering values, `ui-web` owns shared row presentation, and
+the existing client/component controller continues to own current/selected
+state. A visual row must not introduce another business-state owner.
+
+Adoption status: this closes the design vocabulary, not the implementation
+migration. Existing page selectors remain migration debt under ADR 0028.
+There is not yet a typed profile API or a gate rejecting every page-local color
+override. Incremental implementation must migrate each family into the existing
+library owner, remove its old selectors, and add failing contract/browser tests
+for entry/exit, current+hover, selected+hover, disabled and nested placement.
+Use the existing catalog/behavior registry for that evidence; do not add a
+second registry or claim documentation alone prevents CSS drift.
+
 ## Ownership and composition
+
+Sidebar touch interaction follows the
+[source-backed touch contract](../audits/2026-09-14-sidebar-touch-and-mobile-navigation.zh-CN.md).
+Touch scrolls or opens the context menu on long press; it does not reorder rows
+or groups. Mouse and keyboard sorting remain available regardless of viewport
+width. Navigation labels and menus suppress native selection/callouts, while
+inputs and message text remain selectable. ContextActions owns release-click
+suppression after its existing library long press; do not introduce a second
+timer or block all touchmove events. Desktop WebKit automation is not physical
+iOS Safari/PWA acceptance.
 
 1. Load `@rah-os/ui-tokens/neo-brutalist.css` once at the application boundary.
 2. Import primitives from `@rah-os/ui-web/neo-brutalist/*`.

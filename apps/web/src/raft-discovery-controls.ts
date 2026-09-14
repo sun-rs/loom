@@ -69,6 +69,9 @@ export function normalizeDiscoveryParams(
   const keys =
     surface === "search"
       ? [
+          "target",
+          "task",
+          "highlight",
           "q",
           "scope",
           "channel",

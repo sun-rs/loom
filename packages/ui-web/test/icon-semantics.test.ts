@@ -8,6 +8,7 @@ test("folder, menu, sharing and links retain the official semantic glyph", () =>
     ["folder", "folder-closed"],
     ["menu", "menu"],
     ["share-2", "share-2"],
+    ["git-branch", "git-branch"],
     ["link", "link"],
     ["play", "play"],
     ["globe", "globe"],
@@ -42,5 +43,8 @@ test("Skills globe has the current official geometry and uses the maintained spr
     new URL("../src/neo-brutalist/icon.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(component, /\["globe", "play"/);
+  assert.match(
+    component,
+    /\[[^\]]*"globe"[^\]]*\]\.includes\(mappedName\) \? interactionIconsUrl/,
+  );
 });

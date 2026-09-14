@@ -252,6 +252,59 @@ export function loadRatchet() {
   return exists(RATCHET) ? JSON.parse(readText(RATCHET)) : null;
 }
 
+/* ------------------------------------------- finding 3: gate-exported markup */
+
+// OWNER REVIEW 2026-09-12, finding 3. The previews used to be hand-written
+// HTML in a PREVIEWS map, so a product JSX change never reached them while the
+// page still claimed "真实产品标记 / 没有一处手抄". They now render the DOM the
+// real-Chrome gate exported (`<name>.fixture-markup.json`), which is the same
+// DOM the gate measured — and the page says exactly what that is.
+export { fixtureDigest } from "./ui-component-spec.mjs";
+import { fixtureDigest } from "./ui-component-spec.mjs";
+
+/** Read one component's gate-exported fixture DOM, or undefined. */
+export function loadFixtureMarkup(spec) {
+  if (spec.fixtureMarkupFile === undefined) return undefined;
+  return exists(spec.fixtureMarkupFile)
+    ? JSON.parse(readText(spec.fixtureMarkupFile))
+    : undefined;
+}
+
+/**
+ * `--check` half of finding 3: a markup export the catalog consumes is only
+ * trustworthy while the fixture that produced it, and the gate that read it,
+ * are byte-identical to what is in the tree now.
+ */
+export function markupDriftErrors(
+  specs = loadSpecs(),
+  read = (path) => readFileSync(at(path)),
+  load = loadFixtureMarkup,
+) {
+  const errors = [];
+  for (const spec of specs) {
+    if (spec.fixtureMarkupFile === undefined) continue;
+    const exported = load(spec);
+    if (exported === undefined) {
+      errors.push(
+        `${spec.component}: ${spec.fixtureMarkupFile} is missing; run node scripts/run-component-spec-browser-gate.mjs ${spec.component} --report-matching-rules`,
+      );
+      continue;
+    }
+    const fixture = fixtureDigest(spec.fixture ?? {}, read);
+    if (exported.fixtureSha256 !== fixture)
+      errors.push(
+        `${spec.component}: ${spec.fixtureMarkupFile} was exported from fixtures hashing ${exported.fixtureSha256 ?? "(absent)"}, the fixture files now hash to ${fixture}; re-run node scripts/run-component-spec-browser-gate.mjs ${spec.component} --report-matching-rules`,
+      );
+    if (spec.gateScript === undefined) continue;
+    const gate = fixtureDigest([spec.gateScript], read);
+    if (exported.gateScriptSha256 !== gate)
+      errors.push(
+        `${spec.component}: ${spec.fixtureMarkupFile} was exported by a gate hashing ${exported.gateScriptSha256 ?? "(absent)"}, the gate script now hashes to ${gate}; re-run node scripts/run-component-spec-browser-gate.mjs ${spec.component} --report-matching-rules`,
+      );
+  }
+  return errors;
+}
+
 /* ---------------------------------------------------------- mini markdown */
 
 function inline(text) {
@@ -416,12 +469,7 @@ export function docSection(markdown, keyword) {
 
 /* ----------------------------------------------------------------- previews */
 
-const icon = (name, className = "") =>
-  `<svg aria-hidden="true"${className ? ` class="${className}"` : ""}><use href="#raft-icon-${name}"></use></svg>`;
-
 const SHELL_PAD = "calc(var(--space-2) * 3)";
-const SIDEBAR_WIDTH = "calc(var(--control-8) * 10)";
-const SIDEBAR_HEIGHT = "calc(var(--control-8) * 16)";
 
 function variantCell(label, note, markup) {
   return `<figure class="uic-variant">
@@ -432,76 +480,84 @@ function variantCell(label, note, markup) {
 </figure>`;
 }
 
-const sqButton = (extra = "", attributes = "") =>
-  `<button type="button" class="sq-btn${extra}" ${attributes}>${icon("plus")}</button>`;
+// Finding 3: stage composition is prose (a label and a note); the MARKUP is
+// always a probe id resolved against the gate's export. Nothing here spells a
+// class name, an element or an attribute of a component.
+export const STATIC_EXAMPLE_LABEL = "静态示例（非夹具）";
 
-const PREVIEWS = new Map([
+const STAGES = new Map([
   [
     "sq-btn",
-    () => [
-      variantCell("base", "", sqButton()),
-      variantCell("hover", "真实 CSS：把鼠标放上去", sqButton()),
-      variantCell("active", "真实 CSS：按住不放", sqButton()),
-      variantCell("disabled", "真实 disabled 属性", sqButton("", "disabled")),
-      variantCell("focus-visible", "仅键盘：Tab 到它", sqButton()),
-      variantCell(
-        "尺寸变体 .sm / 标准 / 关闭钮",
-        "24 / 28 / 32",
-        `<div style="display:flex;gap:var(--space-2);align-items:center">${sqButton(" sm")}${sqButton()}<div class="rah-agent-reset-dialog"><header>${sqButton()}</header></div></div>`,
-      ),
-      variantCell(
-        "会话头部 .head-actions",
-        "响应式分支只在 767.98px 以下生效",
-        `<div class="rah-conversation-head" style="display:flex;width:max-content"><div class="head-actions">${sqButton()}</div></div>`,
-      ),
-      variantCell(
-        "composer：拾取器与发送钮",
-        "禁用态并排",
-        `<div class="composer-bar"><div class="rah-composer-pickers"><button type="button" class="sq-btn rah-composer-picker">${icon("image-plus")}</button><button type="button" class="sq-btn rah-composer-picker" disabled>${icon("image-plus")}</button></div><button type="button" class="send-btn">${icon("send")}</button><button type="button" class="send-btn" disabled>${icon("send")}</button></div>`,
-      ),
+    [
+      { label: "base", note: "夹具探针 sq-btn", probes: ["sq-btn"] },
+      {
+        label: "hover / active / focus-visible",
+        note: "同一个探针，状态是真的 CSS：hover 放鼠标、active 按住、focus-visible 用键盘 Tab",
+        probes: ["sq-btn"],
+      },
+      {
+        label: "disabled",
+        note: "夹具探针 sq-btn-disabled，真实 disabled 属性",
+        probes: ["sq-btn-disabled"],
+      },
+      {
+        label: "尺寸变体 .sm / 标准",
+        note: "夹具探针 sq-btn-sm 与 sq-btn：24 / 28",
+        probes: ["sq-btn-sm", "sq-btn"],
+      },
+      {
+        label: "会话头部 .head-actions",
+        note: "夹具探针 head-sq-btn；响应式分支只在 767.98px 以下生效，本快照取 1440×900",
+        probes: ["head-sq-btn"],
+      },
+      {
+        label: "composer：拾取器与发送钮",
+        note: "夹具探针 composer-sq-btn / composer-picker / composer-picker-disabled / send-btn / send-btn-disabled",
+        probes: [
+          "composer-sq-btn",
+          "composer-picker",
+          "composer-picker-disabled",
+          "send-btn",
+          "send-btn-disabled",
+        ],
+      },
     ],
   ],
   [
     "sidebar-row",
-    () => {
-      const sectionHead = (label, disabled) => `<div class="side-title">
-  <button type="button" class="rah-sidebar-disclosure" aria-expanded="true">${icon("chevron-down")}<span>${escapeHtml(label)}</span><span class="count">3</span></button>
-  <div class="rah-sidebar-section-actions">
-    <div class="rah-sidebar-sort"><button type="button" class="task-filter-trigger rah-interaction-flat" aria-label="${escapeHtml(label)}排序"${disabled ? " disabled" : ""}>${icon("arrow-up-down")}</button></div>
-    <button type="button" aria-label="新建频道" class="rah-side-create rah-interaction-flat"${disabled ? " disabled" : ""}>${icon("plus")}</button>
-  </div>
-</div>`;
-      const sidebar = `<div class="sidebar" style="width:${SIDEBAR_WIDTH};height:${SIDEBAR_HEIGHT}">
-  <div class="sidebar-body">
-    <button type="button" class="sidebar-bookmarks">${icon("bookmark")}<span>已保存</span></button>
-    <section class="side-section">${sectionHead("频道", false)}
-      <div>
-        <a class="channel-row" href="#">${icon("hash", "row-icon")}<span class="rah-sidebar-channel-name">test</span></a>
-        <a class="channel-row is-selected" href="#">${icon("hash", "row-icon")}<span class="rah-sidebar-channel-name">general</span></a>
-      </div>
-    </section>
-    <section class="side-section">${sectionHead("私信", true)}
-      <div>
-        <a class="channel-row rah-direct-room-row" href="#"><span class="rah-direct-room-fallback">A</span><span class="rah-direct-row-identity"><b class="rah-direct-row-name">Agent Council</b><small>协调者</small></span></a>
-      </div>
-    </section>
-  </div>
-</div>`;
-      return [
-        variantCell(
-          "base / selected / disabled 并排",
-          "第二行是 .is-selected；私信分区的两个迷你钮是真实 disabled",
-          sidebar,
-        ),
-        variantCell(
-          "hover / active / focus-visible",
-          "hover 与 active 是真实 CSS；focus-visible 需键盘 Tab",
-          `<div class="sidebar" style="width:${SIDEBAR_WIDTH}"><div class="sidebar-body"><div><a class="channel-row" href="#">${icon("hash", "row-icon")}<span class="rah-sidebar-channel-name">hover-me</span></a><a class="channel-row" href="#">${icon("hash", "row-icon")}<span class="rah-sidebar-channel-name">press-me</span></a><a class="channel-row" href="#">${icon("hash", "row-icon")}<span class="rah-sidebar-channel-name">tab-to-me</span></a></div></div></div>`,
-        ),
-      ];
-    },
+    [
+      {
+        label: "侧栏整体",
+        note: "夹具探针 sidebar：频道行、选中行、私信行、分区头与两个真实 disabled 迷你钮都在其中",
+        probes: ["sidebar"],
+      },
+      {
+        label: "频道行 base / selected",
+        note: "夹具探针 channel-row 与 channel-row-selected",
+        probes: ["channel-row", "channel-row-selected"],
+      },
+      {
+        label: "私信行",
+        note: "夹具探针 direct-room-row",
+        probes: ["direct-room-row"],
+      },
+      {
+        label: "分区头与迷你钮（含 disabled）",
+        note: "夹具探针 sidebar-disclosure / sidebar-sort-disabled / sidebar-create-disabled",
+        probes: [
+          "sidebar-disclosure",
+          "sidebar-sort-disabled",
+          "sidebar-create-disabled",
+        ],
+      },
+    ],
   ],
 ]);
+
+/** The stages the catalog renders for one component. */
+export function catalogStages(spec) {
+  return STAGES.get(spec.component) ?? [];
+}
 
 /* -------------------------------------------------------------- page chrome */
 
@@ -774,13 +830,35 @@ function renderRatchet(component, ratchet) {
 }
 
 function renderPreview(spec) {
-  const factory = PREVIEWS.get(spec.component);
-  if (factory === undefined) {
+  const stages = catalogStages(spec);
+  if (stages.length === 0)
     return missing(
-      `${spec.component} 的静态预览（scripts/build-ui-catalog.mjs 尚未收录其 fixture 结构）`,
+      `${spec.component} 的预览舞台（scripts/build-ui-catalog.mjs 的 STAGES 尚未收录该组件）`,
     );
-  }
-  return `<div class="uic-variants">${factory().join("\n")}</div>`;
+  const exported = loadFixtureMarkup(spec);
+  if (exported === undefined)
+    return missing(
+      `${spec.fixtureMarkupFile ?? `${spec.component} 的夹具渲染导出`}（跑 node scripts/run-component-spec-browser-gate.mjs ${spec.component} --report-matching-rules 生成）`,
+    );
+  const cells = stages.map((stage) => {
+    // A stage whose probes are not all in the export is NOT silently dropped
+    // and NOT hand-written: it says so on the page.
+    const absent = stage.probes.filter(
+      (probe) => typeof exported.markup?.[probe]?.base !== "string",
+    );
+    if (absent.length)
+      return variantCell(
+        `${stage.label}（${STATIC_EXAMPLE_LABEL}）`,
+        `夹具没有对应探针：${absent.join("、")}`,
+        `<p class="uic-missing">未登记：${escapeHtml(absent.join("、"))}</p>`,
+      );
+    return variantCell(
+      stage.label,
+      stage.note,
+      stage.probes.map((probe) => exported.markup[probe].base).join(""),
+    );
+  });
+  return `<div class="uic-variants">${cells.join("\n")}</div>`;
 }
 
 /** Split the inlined CSS into `@media` blocks (condition + body). */
@@ -910,25 +988,35 @@ function renderComponent(spec, ratchet, mediaBlockList) {
 </article>`;
 }
 
-const BATCH_RULES = [
-  "一次只处理一个共享组件；一个批次一个组件。",
-  "动手前先登记上游：element、source（文件行）、version（release + commit）、values、states。",
-  "先做同值 token 替换，并用门禁 --compare 证明计算值一字未变，然后才谈改值。",
-  "只改「同条件双边实测有差异」的项；没有同条件证据的差异一律挂起。",
-  "禁止顺手取整：不把 7 改成 8，不把 15 改成 14。",
-  "白名单只减不增：新增 override 必须带 source + reason + pending，预算只能通过已提交的 ratchet 下降。",
-  "保留用户指定的设计：紧凑的 Runtime 行、单行描述、对齐的勾选框、灰色的不支持态；不另开 Runtime 页面。",
-  "每批次汇报：改了什么 + 依据、实际跑过的检查、仍存在的差异。",
-];
+/**
+ * Owner review 2026-09-12, finding 4: the rules section used to be a
+ * hand-written copy of the skill's batch rules, so rewriting SKILL.md left the
+ * page asserting the old, too-absolute wording. It is now parsed out of
+ * SKILL.md's `## 批次规则` list — one source, like everything else here.
+ */
+export function parseBatchRules(markdown) {
+  const lines = markdown.split(/\r?\n/u);
+  const start = lines.findIndex((line) => /^##\s+批次规则\s*$/u.test(line));
+  if (start < 0) return [];
+  const rules = [];
+  for (let index = start + 1; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (/^#{1,6}\s/u.test(line)) break;
+    const match = /^\s*[-*]\s+(.*\S)\s*$/u.exec(line);
+    if (match !== null) rules.push(match[1]);
+  }
+  return rules;
+}
 
 const COMMANDS = [
   "npm run check:ui-library",
-  "node scripts/ui-component-spec.mjs [--allow-uncommitted-ratchet]",
-  "node scripts/run-<component>-spec-browser-gate.mjs --write-baseline <path>",
-  "node scripts/run-<component>-spec-browser-gate.mjs --compare <path>",
-  "node scripts/run-<component>-spec-browser-gate.mjs --expect-spec",
-  "node scripts/run-<component>-spec-browser-gate.mjs --report-matching-rules",
+  "node scripts/ui-component-spec.mjs [--uncommitted-ratchet-preview]",
+  "node scripts/run-component-spec-browser-gate.mjs <component> --write-baseline <path>",
+  "node scripts/run-component-spec-browser-gate.mjs <component> --compare <path>",
+  "node scripts/run-component-spec-browser-gate.mjs <component> --expect-spec",
+  "node scripts/run-component-spec-browser-gate.mjs <component> --report-matching-rules",
   "node --test scripts/ui-component-spec.test.mjs",
+  "npm run check:ui-catalog",
 ];
 
 function renderTokenTable(groups) {
@@ -962,6 +1050,7 @@ export function buildCatalog() {
   const tokens = parseTokens();
   const groups = groupTokens(tokens);
   const skillSteps = exists(SKILL) ? parseSkillSteps(readText(SKILL)) : [];
+  const batchRules = exists(SKILL) ? parseBatchRules(readText(SKILL)) : [];
   const constraints = exists(CHECKER)
     ? parseCheckerConstraints(readText(CHECKER))
     : [];
@@ -983,7 +1072,7 @@ export function buildCatalog() {
 
   const hero = `<header class="uic-hero" id="hero">
   <h1>RAH OS 新粗野 UI 目录</h1>
-  <p>本页只用产品自身的样式表渲染，页面外壳与它所记录的刻度同源。所有数值来自已提交的规格与令牌文件，没有一处是手抄的。</p>
+  <p>本页只用产品自身的样式表渲染，页面外壳与它所记录的刻度同源。所有数值来自已提交的规格与令牌文件。</p>
   <dl>
     <div><dt>组件规格</dt><dd>${specs.length}</dd></div>
     <div><dt>令牌</dt><dd>${tokens.length}</dd></div>
@@ -1017,7 +1106,7 @@ export function buildCatalog() {
   const rules = `<section class="uic-section" id="rules">
   <h2>规则与约束</h2>
   <h3>批次规则（人给的）</h3>
-  <ol class="uic-list">${BATCH_RULES.map((rule) => `<li>${escapeHtml(rule)}</li>`).join("")}</ol>
+  <ol class="uic-list">${batchRules.map((rule) => `<li>${escapeHtml(rule)}</li>`).join("")}</ol>
   <h3>校验器的六条机械约束</h3>
   <p>逐字取自 <code>${escapeHtml(CHECKER)}</code> 的头部注释。</p>
   ${
@@ -1033,12 +1122,12 @@ export function buildCatalog() {
 
   const components = `<section class="uic-section" id="components">
   <h2>组件预览与规格</h2>
-  <p>预览是真实产品标记，包在 <code>.rah-product-shell</code> 里：hover 与 active 是真的 CSS，disabled 是真的 <code>disabled</code> 属性，focus-visible 只在键盘 Tab 时出现。<code>.rah-product-shell</code> 的 <code>min-width</code> 比预览格宽，所以每个舞台自带横向滚动。</p>
+  <p>预览是<strong>夹具在真实 Chrome 中的渲染快照，与门禁同源</strong>：门禁 <code>node scripts/run-component-spec-browser-gate.mjs &lt;组件&gt; --report-matching-rules</code> 把每个探针 React 渲染后的 <code>outerHTML</code> 导出到 <code>packages/ui-tokens/specs/&lt;组件&gt;.fixture-markup.json</code>，本页逐字渲染这些字符串，没有一处组件标记是手写的。<strong>夹具本身不是产品页面</strong>——它是门禁脚手架，只重现该组件在产品中的类名与结构，页面级布局、数据与路由都不在其中。快照取门禁的首个视口（sq-btn 与 sidebar-row 都是 1440×900）。舞台包在 <code>.rah-product-shell</code> 里，所以 hover 与 active 是真的 CSS，disabled 是真的 <code>disabled</code> 属性，focus-visible 只在键盘 Tab 时出现；<code>.rah-product-shell</code> 的 <code>min-width</code> 比预览格宽，每个舞台自带横向滚动。</p>
   ${specs.length === 0 ? missing(`${SPEC_DIRECTORY}/*.spec.json`) : specs.map((spec) => renderComponent(spec, ratchet, mediaBlockList)).join("\n")}
   ${
     orphanDocs.length === 0
       ? ""
-      : `<h3>只有文档、尚无规格 JSON</h3>${missing(`${orphanDocs.map((name) => `${SPEC_DOCS}/${name}.zh-CN.md`).join("、")} 没有对应的 *.spec.json，无法在本页登记其规则、例外与门禁期望`)}`
+      : `<h3>待实施（只有文档、尚无规格 JSON）</h3>${missing(`${orphanDocs.map((name) => `${SPEC_DOCS}/${name}.zh-CN.md`).join("、")} 没有对应的 *.spec.json，无法在本页登记其规则、例外与门禁期望`)}`
   }
 </section>`;
 
@@ -1089,6 +1178,15 @@ function main(argv) {
   const out = outIndex >= 0 ? argv[outIndex + 1] : OUTPUT;
   const html = buildCatalog();
   if (argv.includes("--check")) {
+    // Finding 3: staleness of the page is not enough. A markup export the page
+    // consumes is only trustworthy while the fixture that produced it, and the
+    // gate that read it, are byte-identical to the tree.
+    const drift = markupDriftErrors();
+    if (drift.length) {
+      process.stderr.write(`${drift.join("\n")}\n`);
+      process.exitCode = 1;
+      return;
+    }
     const current = exists(out) ? readText(out) : "";
     if (current !== html) {
       process.stderr.write(

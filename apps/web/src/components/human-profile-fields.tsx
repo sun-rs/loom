@@ -9,9 +9,14 @@ import {
 } from "./workspace-entity-context.tsx";
 import { useHumanProfileMutation } from "../human-profile-hooks.ts";
 
-export function HumanProfileFields({ human }: { human: Principal }) {
+export function HumanProfileFields({
+  human: observedHuman,
+}: {
+  human: Principal;
+}) {
   const context = useHumanIdentity()!;
   const entities = useWorkspaceEntities();
+  const human = { ...observedHuman, ...entities?.resolvePerson(observedHuman) };
   const self = human.principalId === entities?.scope?.actorId;
   const { pending, save } = useHumanProfileMutation(
     context.client,
@@ -92,7 +97,7 @@ export function HumanProfileFields({ human }: { human: Principal }) {
         <div>
           <h2 title={name}>{name}</h2>
           <p>
-            @{human.handle}
+            @{human.displayName || human.handle}
             {self ? " （你）" : ""}
           </p>
         </div>

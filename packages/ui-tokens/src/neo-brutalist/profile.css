@@ -165,8 +165,10 @@
   height: 12px;
 }
 .rah-profile-edit:hover:not(:disabled) {
-  background: var(--ink-05);
   color: var(--ink);
+}
+.rah-profile-edit:not(.rah-profile-edit-plain):hover:not(:disabled) {
+  background: var(--ink-05);
 }
 .rah-profile-description {
   white-space: pre-wrap;
@@ -241,12 +243,37 @@
   color: var(--ink-40);
   font: 12px var(--mono);
 }
+/* Raft RO human mention-card: 48px avatar, gap-3, px-3 py-3.
+ * Keep full Human detail identity metrics independent from this compact preview. */
+.rah-human-preview .rah-profile-identity {
+  gap: 12px;
+  padding: 12px;
+}
+.rah-human-preview .rah-profile-identity > [role="img"] {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.rah-human-preview .rah-profile-identity h2 {
+  font: 700 14px/20px var(--sans);
+}
+.rah-human-preview .rah-profile-identity p {
+  color: rgb(0 0 0 / 60%);
+  font: 12px/16px var(--mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .rah-human-preview-description {
   border-top: 2px solid var(--black);
-  padding: 12px 16px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  font: 14px/20px var(--mono);
+  padding: 8px 12px;
+  color: rgb(0 0 0 / 70%);
+  font: 12px/16px var(--sans);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .rah-agent-profile-hero {
@@ -500,6 +527,14 @@
   color: var(--ink-40);
   font: 11px/16.5px var(--mono);
   overflow-wrap: anywhere;
+}
+/* Raft InlineCode: default yellow/50, bordered label; no hover-only fill. */
+.rah-agent-skills-source code {
+  border: 1px solid var(--black);
+  background: color-mix(in srgb, var(--yellow) 50%, transparent);
+  padding: 0 6px;
+  color: var(--ink-40);
+  font: 500 11px/16.5px var(--mono);
 }
 .rah-agent-skills-source span:last-child {
   color: color-mix(in srgb, var(--black) 30%, transparent);
@@ -789,4 +824,85 @@
   gap: 8px;
   align-items: center;
   margin-bottom: 8px;
+}
+
+/* Raft MachineDetailPanel workspace scan: text-xs text-black/40 italic. */
+.rah-workspace-scan-hint {
+  font-size: 12px;
+  line-height: 16px;
+}
+
+/* Raft runtime section: adjacent pencil and masked environment chips. */
+.rah-agent-runtime-section > h3 > .rah-profile-section-actions {
+  margin-left: 0;
+}
+.rah-agent-environment-summary {
+  margin-top: 8px;
+  font: 12px/16px var(--mono);
+}
+.rah-agent-environment-summary > span {
+  color: var(--ink-50);
+}
+.rah-agent-environment-summary > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.rah-agent-environment-summary > div > span {
+  border: 2px solid var(--black);
+  background: white;
+  padding: 2px 8px;
+  overflow-wrap: anywhere;
+}
+.rah-agent-environment-summary i {
+  color: var(--ink-40);
+  font-style: normal;
+}
+.rah-runtime-model-refresh {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: #000;
+  cursor: pointer;
+}
+.rah-runtime-model-refresh svg {
+  width: 12px;
+  height: 12px;
+}
+.rah-runtime-model-refresh:hover:not(:disabled) {
+  color: var(--black);
+}
+.rah-runtime-model-refresh:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Raft Dae belowControl: mt-2 border-l-2 border-black/20 pl-2 text-xs text-black/60. */
+.rah-runtime-edit-dialog .rah-runtime-model-status {
+  margin: 8px 0 0;
+  border-left: 2px solid rgba(0, 0, 0, 0.2);
+  padding-left: 8px;
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+}
+.rah-runtime-model-refresh[aria-busy="true"] svg {
+  animation: rah-runtime-model-spin 1s linear infinite;
+}
+@keyframes rah-runtime-model-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rah-runtime-model-refresh[aria-busy="true"] svg {
+    animation: none;
+  }
 }

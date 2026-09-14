@@ -14,7 +14,7 @@ const Context = createContext<{
   data: State | undefined;
   pending: boolean;
   error: string | undefined;
-  patch: (p: Partial<Omit<SidebarPreferences, "version">>) => Promise<void>;
+  patch: (p: Partial<Omit<SidebarPreferences, "version">>) => Promise<boolean>;
 } | null>(null);
 export const useSidebarPreferences = () => useContext(Context);
 export function SidebarPreferencesProvider({
@@ -79,7 +79,8 @@ export function SidebarPreferencesProvider({
     };
   }, [client, workspaceId, enabled]);
   async function patch(p: Partial<Omit<SidebarPreferences, "version">>) {
-    if (!enabled || !workspaceId || !head.current || writing.current) return;
+    if (!enabled || !workspaceId || !head.current || writing.current)
+      return false;
     const generation = epoch.current,
       expectedVersion = head.current.preferences.version;
     writing.current = true;
@@ -95,6 +96,7 @@ export function SidebarPreferencesProvider({
       if (generation === epoch.current) {
         head.current = next;
         setData(next);
+        return true;
       }
     } catch (e) {
       if (generation === epoch.current) {
@@ -115,6 +117,7 @@ export function SidebarPreferencesProvider({
         setPending(false);
       }
     }
+    return false;
   }
   return (
     <Context.Provider value={{ data, pending, error, patch }}>

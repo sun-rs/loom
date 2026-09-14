@@ -1,3 +1,5 @@
+import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
+import { activityDisplayText } from "../activity-display-names.ts";
 import { useCallback, useRef, useState } from "react";
 
 import { navigationSearch } from "../navigation-target.ts";
@@ -27,8 +29,9 @@ export function SavedMessageCard({
 }) {
   const [menu, setMenu] = useState<Position>();
   const cardRef = useRef<HTMLDivElement>(null);
-  const senderName =
-    row.sender.displayName ?? row.sender.handle ?? row.senderName;
+  const entities = useWorkspaceEntities();
+  const sender = entities?.resolvePerson(row.sender) ?? row.sender;
+  const senderName = sender.displayName || sender.handle || row.senderName;
   const closeMenu = useCallback(() => {
     setMenu(undefined);
   }, []);
@@ -81,7 +84,7 @@ export function SavedMessageCard({
             <span className="rah-saved-sender">
               <span className="rah-saved-sender-avatar">
                 <ProfileImageAvatar
-                  avatarKey={row.sender.avatarKey}
+                  avatarKey={sender.avatarKey}
                   name={senderName}
                   size="compact"
                 />
@@ -90,7 +93,12 @@ export function SavedMessageCard({
             </span>
             <time>{formatSavedRelativeTime(row.message.createdAt)}</time>
           </span>
-          <span className="rah-saved-message-body">{row.message.body}</span>
+          <span className="rah-saved-message-body">
+            {activityDisplayText(
+              row.message.body,
+              entities?.humans().map((member) => member.principal) ?? [],
+            )}
+          </span>
         </span>
         <span className="rah-saved-remove-wrap">
           <button

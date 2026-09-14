@@ -12,6 +12,103 @@
     "selector": ".btn-brutal-sm"
   },
   "classNames": [".sq-btn", ".send-btn"],
+  "fixture": {
+    "html": "apps/web/test/sq-btn-spec-fixture.html",
+    "tsx": "apps/web/test/sq-btn-spec-fixture.tsx"
+  },
+  "gateScript": "scripts/run-component-spec-browser-gate.mjs",
+  "gate": {
+    "fixtureUrl": "/test/sq-btn-spec-fixture.html",
+    "anchorProbe": "sq-btn",
+    "settleMs": 260,
+    "skipZeroWidth": false,
+    "viewports": [
+      [1440, 900],
+      [390, 844]
+    ],
+    "properties": [
+      "width",
+      "height",
+      "padding-top",
+      "padding-right",
+      "padding-bottom",
+      "padding-left",
+      "border-top-width",
+      "border-right-width",
+      "border-bottom-width",
+      "border-left-width",
+      "border-top-style",
+      "border-top-color",
+      "box-shadow",
+      "transform",
+      "translate",
+      "opacity",
+      "pointer-events",
+      "font-family",
+      "font-weight",
+      "font-size",
+      "background-color",
+      "transition-property",
+      "transition-duration",
+      "transition-timing-function",
+      "outline-width",
+      "outline-style",
+      "outline-color",
+      "outline-offset",
+      "gap"
+    ]
+  },
+  "probes": [
+    {
+      "id": "sq-btn",
+      "selector": ".sq-btn",
+      "interactive": true
+    },
+    {
+      "id": "head-sq-btn",
+      "selector": ".head-actions .sq-btn",
+      "interactive": true
+    },
+    {
+      "id": "sq-btn-disabled",
+      "selector": ".sq-btn",
+      "interactive": true,
+      "disabled": true
+    },
+    {
+      "id": "sq-btn-sm",
+      "selector": ".sq-btn.sm",
+      "interactive": true
+    },
+    {
+      "id": "composer-sq-btn",
+      "selector": ".composer-bar .sq-btn",
+      "interactive": true
+    },
+    {
+      "id": "send-btn",
+      "selector": ".send-btn",
+      "interactive": true
+    },
+    {
+      "id": "send-btn-disabled",
+      "selector": ".send-btn",
+      "interactive": true,
+      "disabled": true
+    },
+    {
+      "id": "composer-picker",
+      "selector": ".rah-composer-pickers .rah-composer-picker",
+      "capture": false,
+      "note": "coverage only: carries .sq-btn in the product but is reached by .rah-composer-picker selectors"
+    },
+    {
+      "id": "composer-picker-disabled",
+      "selector": ".rah-composer-pickers .rah-composer-picker:disabled",
+      "capture": false,
+      "note": "coverage only"
+    }
+  ],
   "tokens": [
     "--bw-2",
     "--bd",
@@ -240,6 +337,7 @@
     }
   ],
   "matchedRulesFile": "packages/ui-tokens/specs/sq-btn.matched-rules.json",
+  "fixtureMarkupFile": "packages/ui-tokens/specs/sq-btn.fixture-markup.json",
   "rules": [
     {
       "file": "packages/ui-tokens/src/neo-brutalist/styles.css",
@@ -546,16 +644,157 @@
         "opacity": ".4",
         "pointer-events": "none"
       }
+    },
+    {
+      "file": "apps/web/src/product.css",
+      "selector": ".rah-channel-confirmation > header .sq-btn",
+      "state": "base",
+      "source": "docs/evidence/raft-web-20260831-current/index-BoAC7nSE.js zi close button: p-1, icon size20; environment editor uses small square action",
+      "reason": "Channel confirmation close geometry: 20 icon + 8 padding + 4 border.",
+      "declarations": {
+        "width": "32px",
+        "height": "32px",
+        "min-height": "32px",
+        "padding": "4px"
+      }
+    },
+    {
+      "file": "apps/web/src/product.css",
+      "selector": ".rah-channel-confirmation > header .sq-btn svg",
+      "state": "base",
+      "source": "docs/evidence/raft-web-20260831-current/index-BoAC7nSE.js zi close button: p-1, icon size20; environment editor uses small square action",
+      "reason": "The zi close icon is explicitly size20.",
+      "declarations": {
+        "width": "20px",
+        "height": "20px"
+      }
+    },
+    {
+      "file": "apps/web/src/agent-directory.css",
+      "selector": ".rah-runtime-environment-row .sq-btn",
+      "state": "base",
+      "source": "Raft index-MqTUR4Ez.js SHA256 9cf480531f38c29136637f7b373f285a0e915711c07dbebeadd22c05b33ad443 pretty:102821 EnvironmentVariableRow uses icon-xs; pretty:49318 icon-xs = size-6 p-0 and svg size-3",
+      "reason": "Correct the previous unrelated confirmation-close citation: environment deletion uses the 24px icon-xs variant, zero padding and 12px rendered SVG.",
+      "declarations": {
+        "width": "24px",
+        "height": "24px",
+        "min-height": "24px",
+        "padding": "0"
+      }
+    },
+    {
+      "file": "apps/web/src/agent-directory.css",
+      "selector": ".rah-runtime-environment-row .sq-btn svg",
+      "state": "base",
+      "source": "Raft index-MqTUR4Ez.js SHA256 9cf480531f38c29136637f7b373f285a0e915711c07dbebeadd22c05b33ad443 pretty:102821 EnvironmentVariableRow uses icon-xs; pretty:49318 icon-xs = size-6 p-0 and svg size-3",
+      "reason": "The icon-xs CSS size-3 rule overrides the JSX size=14 attribute.",
+      "declarations": {
+        "width": "12px",
+        "height": "12px"
+      }
+    },
+    {
+      "file": "apps/web/src/product.css",
+      "selector": ".rah-agent-state-confirmation .sq-btn",
+      "state": "base",
+      "source": "docs/audits/2026-09-13-agent-deletion-cascade.zh-CN.md; Raft index-MqTUR4Ez.js Ki/an small confirmation close and btn-brutal-sm transitions",
+      "reason": "Source-backed confirmation small-button interaction variant, validated by the focused browser gate.",
+      "declarations": {
+        "transition": "all 0.1s cubic-bezier(0.4, 0, 0.2, 1)",
+        "translate": "0px 0px"
+      }
+    },
+    {
+      "file": "apps/web/src/product.css",
+      "selector": ".rah-agent-state-confirmation .sq-btn:active",
+      "state": "active",
+      "source": "docs/audits/2026-09-13-agent-deletion-cascade.zh-CN.md; Raft index-MqTUR4Ez.js Ki/an small confirmation close and btn-brutal-sm transitions",
+      "reason": "Source-backed confirmation small-button interaction variant, validated by the focused browser gate.",
+      "declarations": {
+        "transform": "none",
+        "box-shadow": "1px 1px 0px #141111"
+      }
+    },
+    {
+      "file": "apps/web/src/product.css",
+      "selector": ".rah-agent-state-confirmation .sq-btn:hover",
+      "state": "hover",
+      "source": "docs/audits/2026-09-13-agent-deletion-cascade.zh-CN.md; Raft index-MqTUR4Ez.js Ki/an small confirmation close and btn-brutal-sm transitions",
+      "reason": "Source-backed confirmation small-button interaction variant, validated by the focused browser gate.",
+      "declarations": {
+        "transform": "none",
+        "box-shadow": "4px 4px 0px #141111"
+      },
+      "media": "@media (hover: hover)"
+    },
+    {
+      "file": "apps/web/src/room-files.css",
+      "selector": ".rah-file-preview .sq-btn.is-active",
+      "state": "base",
+      "source": "Raft index-MqTUR4Ez.js Jw compact composer and RYe preview toggle; docs/audits/2026-09-14-message-artifact-cards-and-comments.zh-CN.md",
+      "reason": "Scoped attachment preview/comment controls use the source compact composer geometry and selected preview state.",
+      "declarations": {
+        "background": "#ffd440"
+      }
+    },
+    {
+      "file": "apps/web/src/attachment-comments.css",
+      "selector": ".rah-attachment-comment-footer .sq-btn",
+      "state": "base",
+      "source": "Raft index-MqTUR4Ez.js oS, pretty 117448-117456 and 116983: size-7 send button with 14px glyph; docs/audits/2026-09-14-composer-autosize.zh-CN.md",
+      "reason": "File comments reuse the Raft compact chat composer: separate toolbar, 28px send target and 14px glyph.",
+      "declarations": {
+        "width": "28px",
+        "height": "28px",
+        "background": "#fe7da8",
+        "position": "static",
+        "margin-left": "auto"
+      }
+    },
+    {
+      "file": "apps/web/src/attachment-comments.css",
+      "selector": ".rah-attachment-comment-footer .sq-btn svg",
+      "state": "base",
+      "source": "Raft index-MqTUR4Ez.js oS, pretty 117448-117456 and 116983: size-7 send button with 14px glyph; docs/audits/2026-09-14-composer-autosize.zh-CN.md",
+      "reason": "File comments reuse the Raft compact chat composer: separate toolbar, 28px send target and 14px glyph.",
+      "declarations": {
+        "width": "14px",
+        "height": "14px"
+      }
+    },
+    {
+      "file": "apps/web/src/product.css",
+      "selector": ".rah-thread-search .sq-btn",
+      "state": "base",
+      "source": "Raft index-MqTUR4Ez.js SHA256 9cf480531f38c29136637f7b373f285a0e915711c07dbebeadd22c05b33ad443, thread-search-bar pretty 165079-165104: btn-brutal-sm size-7 with 14px previous/next/close icons.",
+      "reason": "Register the existing source-backed Thread search compact controls so shared component validation covers their scoped geometry.",
+      "declarations": {
+        "width": "28px",
+        "height": "28px",
+        "min-width": "28px",
+        "padding": "0"
+      }
+    },
+    {
+      "file": "apps/web/src/product.css",
+      "selector": ".rah-thread-search .sq-btn svg",
+      "state": "base",
+      "source": "Raft index-MqTUR4Ez.js SHA256 9cf480531f38c29136637f7b373f285a0e915711c07dbebeadd22c05b33ad443, thread-search-bar pretty 165079-165104: btn-brutal-sm size-7 with 14px previous/next/close icons.",
+      "reason": "Register the existing source-backed Thread search compact controls so shared component validation covers their scoped geometry.",
+      "declarations": {
+        "width": "14px",
+        "height": "14px"
+      }
     }
   ],
   "overrides": [
     {
       "file": "apps/web/src/product.css",
-      "selector": ".rah-agent-reset-dialog > header .sq-btn",
+      "selector": ".rah-dialog .sq-btn.rah-card-dialog-close",
       "state": "base",
       "status": "registered",
       "source": "docs/evidence/raft-web-20260908-current/index-BVfbaScj.js `btn-brutal-sm ... p-1` with a 20px icon",
-      "reason": "Upstream dialog-close variant: 20 icon + 2*4 padding + 2*2 border = 32.",
+      "reason": "Shared source-backed card-dialog close variant, used by reset and channel creation: 20px icon, 4px padding, 2px border.",
       "declarations": {
         "width": "32px",
         "height": "32px",
@@ -566,11 +805,11 @@
     },
     {
       "file": "apps/web/src/product.css",
-      "selector": ".rah-agent-reset-dialog > header .sq-btn svg",
+      "selector": ".rah-dialog .sq-btn.rah-card-dialog-close svg",
       "state": "base",
       "status": "registered",
       "source": "docs/evidence/raft-web-20260908-current/index-BVfbaScj.js dialog close lucide size 20",
-      "reason": "The 32px close variant carries a 20px icon upstream.",
+      "reason": "Shared source-backed card-dialog close variant, used by reset and channel creation: 20px icon, 4px padding, 2px border.",
       "declarations": {
         "width": "20px",
         "height": "20px"

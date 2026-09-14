@@ -1,3 +1,4 @@
+import { browserOpaqueId } from "../browser-opaque-id.ts";
 import { useRef, useState } from "react";
 
 import type { AgentExecutionResetMode } from "@rah-os/protocol";
@@ -7,21 +8,24 @@ import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 
 const OPTIONS = [
   {
-    description: "停止并重新启动 agent 进程，保留运行时会话和工作区文件。",
-    label: "重新启动",
+    description: "停止并重启 agent 进程，保留运行时会话和工作区文件。",
+    batchDescription: "停止并重启选中的 Agent。运行时会话和工作区文件会保留。",
+    label: "重启",
     mode: "restart" as const,
     tone: "cyan",
   },
   {
     description:
       "清除运行时会话并重启。工作区文件（MEMORY.md、notes/）会保留。",
+    batchDescription: "清除运行时会话并重启选中的 Agent。工作区文件会保留。",
     label: "重置会话并重启",
     mode: "session" as const,
     tone: "orange",
   },
   {
     description: "清除运行时会话，删除所有工作区文件，并从零开始重启。",
-    label: "完全重置并重启",
+    batchDescription: "清除运行时会话、删除工作区文件，并重启选中的 Agent。",
+    label: "完整重置并重启",
     mode: "full" as const,
     tone: "red",
   },
@@ -29,11 +33,13 @@ const OPTIONS = [
 
 export function AgentExecutionResetDialog({
   agentName,
+  selectionCount,
   fullResetEnabled,
   onClose,
   onConfirm,
 }: {
   agentName: string;
+  selectionCount?: number;
   fullResetEnabled: boolean;
   onClose: () => void;
   onConfirm: (
@@ -43,7 +49,7 @@ export function AgentExecutionResetDialog({
 }) {
   const [mode, setMode] = useState<AgentExecutionResetMode>("restart");
   const [idempotencyKey] = useState(
-    () => `web-agent-execution-reset-${crypto.randomUUID()}`,
+    () => `web-agent-execution-reset-${browserOpaqueId()}`,
   );
   const [submitted, setSubmitted] = useState(false);
   const [pending, setPending] = useState(false);
@@ -80,17 +86,23 @@ export function AgentExecutionResetDialog({
         aria-labelledby="rah-agent-reset-title"
         aria-modal="true"
         className="rah-dialog rah-agent-reset-dialog"
+        data-reset-scope={selectionCount === undefined ? "agent" : "batch"}
         ref={dialogRef}
         role="dialog"
         tabIndex={-1}
       >
         <header>
           <div>
-            <h2 id="rah-agent-reset-title">重新启动 {agentName}</h2>
+            <h2 id="rah-agent-reset-title">
+              重启{" "}
+              {selectionCount === undefined
+                ? agentName
+                : `${selectionCount} 个 Agent`}
+            </h2>
           </div>
           <button
             aria-label="关闭"
-            className="sq-btn"
+            className="sq-btn rah-card-dialog-close"
             disabled={pending}
             onClick={onClose}
             type="button"
@@ -126,9 +138,13 @@ export function AgentExecutionResetDialog({
                   />
                   <span>
                     <b>{option.label}</b>
-                    <small>{option.description}</small>
+                    <small>
+                      {selectionCount === undefined
+                        ? option.description
+                        : option.batchDescription}
+                    </small>
                     {disabled ? (
-                      <em>当前 daemon 尚未开放安全的完全重置。</em>
+                      <em>当前 daemon 尚未开放安全的完整重置。</em>
                     ) : null}
                   </span>
                 </label>
@@ -166,10 +182,10 @@ export function AgentExecutionResetDialog({
               {pending
                 ? "重启中…"
                 : mode === "full"
-                  ? "完全重置并重启"
+                  ? "完整重置并重启"
                   : mode === "session"
                     ? "重置会话并重启"
-                    : "重新启动"}
+                    : "重启"}
             </button>
           </footer>
         </form>

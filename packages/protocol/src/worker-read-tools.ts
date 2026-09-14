@@ -159,6 +159,7 @@ export const WorkerTaskHistoryEntrySchema = z
     progress: z.string().optional(),
     assigneeId: IdentifierSchema.nullable().optional(),
     workflowStatus: TaskWorkflowStatusSchema.optional(),
+    previousWorkflowStatus: TaskWorkflowStatusSchema.optional(),
     disposition: z.enum(["approved", "changes_requested"]).optional(),
   })
   .strict();

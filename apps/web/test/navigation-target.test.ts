@@ -106,7 +106,7 @@ test("resolved target presentation maps to the existing Raft surfaces and tabs",
     {
       roomId: "room-1",
       surface: "room",
-      tab: "tasks",
+      tab: "chat",
       threadRootMessageId: "root-1",
     },
   );
@@ -157,7 +157,7 @@ test("Activity Room targets leave the feed while Thread targets retain its backg
   );
 });
 
-test("global Task selection retains its board and filters while ordinary Room Tasks keep their Thread route", () => {
+test("global Task selection retains its board and filters while Room task links retain the channel background", () => {
   const target = {
     kind: "task" as const,
     roomId: "room-1",

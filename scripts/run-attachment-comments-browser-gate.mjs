@@ -284,18 +284,30 @@ for (const engine of (
     await expect(dialog.getByText("当前预览不支持此位置")).toBeVisible({
       timeout: 8000,
     });
-    const discussion = dialog.getByRole("link", { name: "打开讨论" });
-    const href = await discussion.getAttribute("href");
-    assert.equal(
-      new URLSearchParams(href).get("thread"),
-      `${roomId}:${saved.threadRootMessageId}`,
+    await expect(dialog.getByRole("link", { name: "打开讨论" })).toHaveCount(0);
+    const originUrl = page.url();
+    await dialog.getByRole("button", { name: "关闭", exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+    assert.equal(page.url(), originUrl);
+    // Independently verify canonical comment references through the existing Thread route.
+    await page.goto(
+      fixture.origin +
+        "/?room=" +
+        roomId +
+        "&thread=" +
+        encodeURIComponent(`${roomId}:${saved.threadRootMessageId}`),
     );
-    await discussion.click();
     await expect(
       page
         .getByTestId("thread-side-column")
         .getByText("Pointer selected canonical comment", { exact: true }),
     ).toBeVisible();
+    await expect(
+      page
+        .getByTestId("thread-side-column")
+        .locator(".rah-message-file-reference")
+        .first(),
+    ).toHaveText("评论：" + filename);
     const cases = [
       {
         filename: "Rows.csv",
@@ -368,11 +380,30 @@ for (const engine of (
         idempotencyKey: "case-publish-" + i,
       });
       await page.goto(fixture.origin + "/?room=" + roomId);
-      const opener = page
-        .locator(".rah-file-open")
-        .filter({ hasText: item.filename });
+      const opener = page.getByRole("button", {
+        name: "预览 " + item.filename,
+        exact: true,
+      });
       await opener.click();
       const modal = page.getByRole("dialog", { name: "预览 " + item.filename });
+      if (item.mime === "application/pdf" || item.mime === "audio/wav") {
+        await expect(modal).toBeVisible();
+        await expect(
+          modal.getByRole("button", { name: "评论", exact: true }),
+        ).toHaveCount(0);
+        await expect(modal.locator(".rah-attachment-comments")).toHaveCount(0);
+        const list = await post("/v3/client/files/comments/list", {
+          attachmentId: up.attachmentId,
+        });
+        assert.equal(list.comments.length, 0);
+        await modal.getByRole("button", { name: "关闭", exact: true }).click();
+        await expect(opener).toBeFocused();
+        verified.push({
+          filename: item.filename,
+          comments: "excluded by Raft preview type",
+        });
+        continue;
+      }
       if (item.selector) await modal.locator(item.selector).click();
       else if (item.anchorType === "video-timestamp") {
         const video = modal.locator("video");

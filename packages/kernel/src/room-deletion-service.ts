@@ -17,7 +17,10 @@ import {
   StaleContextError,
 } from "./errors.ts";
 import type { RoomFiles } from "./room-files.ts";
-import { assertNoActiveRoomWork } from "./room-lifecycle-policy.ts";
+import {
+  assertPermanentChannelChange,
+  assertNoActiveRoomWork,
+} from "./room-lifecycle-policy.ts";
 import { integer, text, type Row } from "./sqlite-row.ts";
 
 /**
@@ -157,6 +160,7 @@ export class RoomDeletionService {
         );
       }
       requireRoomManager(this.#database, input.roomId, actorId);
+      assertPermanentChannelChange(room);
       const latestRoomSeq = integer(room, "next_seq") - 1;
       if (input.basedOnRoomSeq !== latestRoomSeq) {
         throw new StaleContextError(input.basedOnRoomSeq, latestRoomSeq);
@@ -365,6 +369,15 @@ export class RoomDeletionService {
           preferences[field] = next;
           changed = true;
         }
+      }
+      if (Array.isArray(preferences.customSections)) {
+        preferences.customSections = preferences.customSections.map(
+          (section: { items: string[] }) => {
+            const items = section.items.filter((item) => item !== key);
+            if (items.length !== section.items.length) changed = true;
+            return { ...section, items };
+          },
+        );
       }
       if (!changed) continue;
       if (typeof preferences.version === "number") {

@@ -1,30 +1,175 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { RuntimeGuideSettings } from "../src/runtime-guide-settings.ts";
 
-test("Guide defaults on for supported Runtimes, survives restart, and rejects unsupported/stale changes", () => {
-  const dir = mkdtempSync(join(tmpdir(), "rah-guide-"));
+test("Provider settings reject global launch mutations without changing durable state", () => {
+  const dir = mkdtempSync(join(tmpdir(), "rah-readonly-provider-"));
   try {
     const path = join(dir, "guide.json");
+    const legacy = {
+      revision: 4,
+      enabled: ["claude"],
+      additionalArgs: {
+        claude: [],
+        kimi: [],
+        opencode: [],
+        codex: ["--debug"],
+      },
+      environment: { codex: { LABEL: "legacy" } },
+      overrides: {
+        codex: null,
+        claude: null,
+        opencode: null,
+        kimi: ["legacy"],
+      },
+    };
+    writeFileSync(path, JSON.stringify(legacy));
     const store = new RuntimeGuideSettings(path);
-    assert.equal(store.enabled("codex"), true);
-    assert.equal(store.enabled("unknown"), false);
-    const first = store.update({
-      runtimeId: "codex",
-      enabled: false,
-      expectedRevision: 0,
-    });
-    assert.equal(first.revision, 1);
+    for (const change of [
+      { enabled: true, environment: {} },
+      { additionalArgs: [] },
+      { environment: {} },
+      { overrideArgs: null },
+    ]) {
+      assert.throws(
+        () =>
+          store.update({ runtimeId: "codex", expectedRevision: 4, ...change }),
+        /read.only|Agent/i,
+      );
+      assert.equal(store.read().revision, 4);
+      assert.deepEqual(JSON.parse(readFileSync(path, "utf8")), legacy);
+    }
     assert.equal(store.enabled("codex"), false);
     assert.equal(store.enabled("claude"), true);
-    assert.equal(new RuntimeGuideSettings(path).enabled("codex"), false);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("Legacy global launch overlays are retained but never exposed or executed; Agent settings stay isolated", () => {
+  const dir = mkdtempSync(join(tmpdir(), "rah-agent-launch-"));
+  try {
+    const path = join(dir, "guide.json");
+    const legacy = {
+      revision: 0,
+      enabled: ["codex", "claude"],
+      additionalArgs: {
+        claude: [],
+        kimi: [],
+        opencode: [],
+        codex: ["--debug", "global"],
+      },
+      environment: { codex: { LABEL: "global", SHARED: "secret" } },
+      overrides: {
+        claude: null,
+        kimi: null,
+        opencode: null,
+        codex: ["legacy"],
+      },
+    };
+    writeFileSync(path, JSON.stringify(legacy));
+    const store = new RuntimeGuideSettings(path);
+    store.update({
+      agentDefinitionId: "a",
+      runtimeId: "codex",
+
+      environment: { LABEL: "agent" },
+      expectedRevision: 0,
+    });
+    const a = store.runtimeOptions().launchEnvironment("codex", "a");
+    assert.equal(a.LABEL, "agent");
+    assert.equal(a.SHARED, undefined);
+    assert.deepEqual(JSON.parse(a.RAH_PROVIDER_LAUNCH_ARGS_JSON!), {
+      runtimeId: "codex",
+      overrideArgs: null,
+      additionalArgs: [],
+    });
+    for (const id of [undefined, "b"]) {
+      const env = store.runtimeOptions().launchEnvironment("codex", id);
+      assert.equal(env.LABEL, undefined);
+      assert.equal(env.SHARED, undefined);
+      assert.deepEqual(
+        JSON.parse(env.RAH_PROVIDER_LAUNCH_ARGS_JSON!).additionalArgs,
+        [],
+      );
+    }
+    const row = store.read().runtimes.find((r) => r.runtimeId === "codex")!;
+    assert.deepEqual(row.environment, {});
+    assert.deepEqual(row.inheritedEnvironment, {});
+    assert.deepEqual(row.additionalArgs, []);
+    assert.deepEqual(row.effectiveArgs, row.defaultArgs);
+    assert.equal(row.overrideArgs, null);
+    const saved = JSON.parse(readFileSync(path, "utf8"));
+    for (const key of ["additionalArgs", "environment", "overrides"] as const)
+      assert.deepEqual(saved[key], legacy[key]);
+    assert.equal(
+      new RuntimeGuideSettings(path)
+        .runtimeOptions()
+        .launchEnvironment("codex", "a").LABEL,
+      "agent",
+    );
+    for (const change of [
+      { environment: { RAH_WORKER_TOKEN: "bad" } },
+      { additionalArgs: ["--model", "other"] },
+    ]) {
+      assert.throws(
+        () =>
+          store.update({
+            agentDefinitionId: "a",
+            runtimeId: "codex",
+            expectedRevision: 1,
+            ...change,
+          }),
+        /managed|protected|reserved|environment variables only/i,
+      );
+    }
     assert.throws(
       () =>
         store.update({
-          runtimeId: "claude",
+          agentDefinitionId: "a",
+          runtimeId: "codex",
+          expectedRevision: 0,
+          environment: {},
+        }),
+      /revision/,
+    );
+    assert.equal(store.read().revision, 1);
+    store.update({
+      agentDefinitionId: "a",
+      runtimeId: "codex",
+      expectedRevision: 1,
+      environment: {},
+    });
+    assert.equal(
+      store.runtimeOptions().launchEnvironment("codex", "a").LABEL,
+      undefined,
+    );
+    assert.deepEqual(
+      store
+        .read({ agentDefinitionId: "a" })
+        .runtimes.find((r) => r.runtimeId === "codex")!.effectiveArgs,
+      row.defaultArgs,
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("Guide toggles independently while global launch configuration remains read-only", () => {
+  const dir = mkdtempSync(join(tmpdir(), "rah-guide-toggle-"));
+  try {
+    const path = join(dir, "guide.json"),
+      store = new RuntimeGuideSettings(path);
+    store.update({ runtimeId: "codex", enabled: false, expectedRevision: 0 });
+    assert.equal(new RuntimeGuideSettings(path).enabled("codex"), false);
+    assert.equal(store.enabled("claude"), true);
+    assert.throws(
+      () =>
+        store.update({
+          runtimeId: "codex",
           enabled: true,
           expectedRevision: 0,
         }),
@@ -35,56 +180,12 @@ test("Guide defaults on for supported Runtimes, survives restart, and rejects un
         store.update({ runtimeId: "kimi", enabled: true, expectedRevision: 1 }),
       /unavailable/,
     );
-    store.update({ runtimeId: "codex", enabled: false, expectedRevision: 1 });
-    assert.equal(new RuntimeGuideSettings(path).enabled("codex"), false);
-  } finally {
-    rmSync(dir, { recursive: true, force: true });
-  }
-});
-
-test("Provider arguments persist independently of Guide, reject stale writes and reset to defaults", () => {
-  const dir = mkdtempSync(join(tmpdir(), "rah-launch-settings-"));
-  try {
-    const path = join(dir, "guide.json");
-    const store = new RuntimeGuideSettings(path);
-    const updated = store.update({
-      runtimeId: "kimi",
-      additionalArgs: ["--debug"],
-      expectedRevision: 0,
-    });
+    assert.equal(store.read().revision, 1);
+    store.update({ runtimeId: "codex", enabled: true, expectedRevision: 1 });
+    assert.equal(new RuntimeGuideSettings(path).enabled("codex"), true);
     assert.deepEqual(
-      updated.runtimes.find((r) => r.runtimeId === "kimi")!.additionalArgs,
-      ["--debug"],
-    );
-    assert.equal(store.enabled("kimi"), false);
-    assert.deepEqual(new RuntimeGuideSettings(path).read(), updated);
-    assert.throws(
-      () =>
-        store.update({
-          runtimeId: "kimi",
-          additionalArgs: [],
-          expectedRevision: 0,
-        }),
-      /revision/,
-    );
-    assert.throws(
-      () =>
-        store.update({
-          runtimeId: "claude",
-          additionalArgs: ["--input-format", "text"],
-          expectedRevision: 1,
-        }),
-      /managed/,
-    );
-    store.update({
-      runtimeId: "kimi",
-      additionalArgs: [],
-      expectedRevision: 1,
-    });
-    assert.deepEqual(
-      new RuntimeGuideSettings(path)
-        .read()
-        .runtimes.find((r) => r.runtimeId === "kimi")!.additionalArgs,
+      store.read().runtimes.find((r) => r.runtimeId === "codex")!
+        .additionalArgs,
       [],
     );
   } finally {
@@ -92,67 +193,64 @@ test("Provider arguments persist independently of Guide, reject stale writes and
   }
 });
 
-test("override replaces defaults, survives Guide changes and resets without reviving old additions", () => {
-  const dir = mkdtempSync(join(tmpdir(), "rah-launch-override-"));
+test("Agent CLI arguments are retired while environment reaches an isolated child process", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const dir = mkdtempSync(join(tmpdir(), "rah-env-only-"));
   try {
-    const path = join(dir, "settings.json");
+    const path = join(dir, "guide.json");
+    const legacy = {
+      revision: 0,
+      enabled: ["codex"],
+      agents: {
+        a: {
+          codex: { additionalArgs: ["--debug"], environment: { LABEL: "old" } },
+        },
+      },
+    };
+    writeFileSync(path, JSON.stringify(legacy));
     const store = new RuntimeGuideSettings(path);
-    store.update({
-      runtimeId: "claude",
-      additionalArgs: ["--debug"],
-      expectedRevision: 0,
-    });
-    const defaults = store
-      .read()
-      .runtimes.find((r) => r.runtimeId === "claude")!.defaultArgs;
-    const override = [...defaults, "--debug", "api"];
-    const changed = store.update({
-      runtimeId: "claude",
-      overrideArgs: override,
-      expectedRevision: 1,
-    });
-    assert.deepEqual(
-      changed.runtimes.find((r) => r.runtimeId === "claude")!.effectiveArgs,
-      override,
-    );
-    changed.runtimes
-      .find((r) => r.runtimeId === "claude")!
-      .effectiveArgs.push("--unexpected");
-    assert.deepEqual(
-      store.read().runtimes.find((r) => r.runtimeId === "claude")!
-        .effectiveArgs,
-      override,
-    );
-    store.update({ runtimeId: "claude", enabled: false, expectedRevision: 2 });
-    const restored = new RuntimeGuideSettings(path);
-    assert.deepEqual(
-      restored.read().runtimes.find((r) => r.runtimeId === "claude")!
-        .effectiveArgs,
-      override,
-    );
-    const envelope = JSON.parse(
-      restored.runtimeOptions().launchEnvironment("claude")
-        .RAH_PROVIDER_LAUNCH_ARGS_JSON!,
-    );
-    assert.deepEqual(envelope.overrideArgs, override);
     assert.throws(
       () =>
-        restored.update({
-          runtimeId: "claude",
-          overrideArgs: [],
-          expectedRevision: 3,
+        store.update({
+          agentDefinitionId: "a",
+          runtimeId: "codex",
+          expectedRevision: 0,
+          additionalArgs: ["--debug"],
         }),
-      /managed|required/,
+      /environment|环境变量/i,
     );
-    restored.update({
-      runtimeId: "claude",
-      overrideArgs: null,
-      expectedRevision: 3,
-    });
     assert.deepEqual(
-      restored.read().runtimes.find((r) => r.runtimeId === "claude")!
-        .effectiveArgs,
-      defaults,
+      store.read({ agentDefinitionId: "a" }).runtimes[0]!.additionalArgs,
+      [],
+    );
+    for (const runtimeId of ["codex", "claude", "kimi", "opencode"] as const) {
+      store.update({
+        agentDefinitionId: "a",
+        runtimeId,
+        expectedRevision: store.read().revision,
+        environment: { LABEL: "agent-value" },
+      });
+      const env = store.runtimeOptions().launchEnvironment(runtimeId, "a");
+      assert.equal(
+        execFileSync(
+          process.execPath,
+          ["-e", "process.stdout.write(process.env.LABEL)"],
+          { env, encoding: "utf8" },
+        ),
+        "agent-value",
+      );
+      assert.equal(
+        store.runtimeOptions().launchEnvironment(runtimeId, "b").LABEL,
+        undefined,
+      );
+      assert.deepEqual(
+        JSON.parse(env.RAH_PROVIDER_LAUNCH_ARGS_JSON!).additionalArgs,
+        [],
+      );
+    }
+    assert.deepEqual(
+      JSON.parse(readFileSync(path, "utf8")).agents.a.codex.additionalArgs,
+      ["--debug"],
     );
   } finally {
     rmSync(dir, { recursive: true, force: true });

@@ -60,6 +60,9 @@ export function messageProjectionFromRow(row: Row): Message {
   const threadId = nullableText(row, "thread_id");
   const forwardedBundleJson = nullableText(row, "forwarded_bundle_json");
   return MessageSchema.parse({
+    ...(typeof row.attachment_comment_json === "string"
+      ? { attachmentComment: JSON.parse(row.attachment_comment_json) }
+      : {}),
     ...(typeof row.attachments_json === "string" &&
     row.attachments_json !== "[]"
       ? { attachments: JSON.parse(row.attachments_json) }

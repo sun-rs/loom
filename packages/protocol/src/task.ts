@@ -138,8 +138,14 @@ export const TaskSchema = z
         path: ["dependencyTaskIds"],
       });
     }
-    const requiresClaim =
-      task.state === "claimed" || task.state === "in_progress";
+    if ((task.claimedBy === undefined) !== (task.claimUntil === undefined)) {
+      context.addIssue({
+        code: "custom",
+        message: "Claim owner and expiry must be present together",
+        path: ["claimedBy"],
+      });
+    }
+    const requiresClaim = task.state === "claimed";
     if (requiresClaim && task.claimedBy === undefined) {
       context.addIssue({
         code: "custom",
@@ -154,29 +160,26 @@ export const TaskSchema = z
         path: ["claimUntil"],
       });
     }
-    if (!requiresClaim && task.claimedBy !== undefined) {
+    if (
+      !requiresClaim &&
+      task.state !== "in_progress" &&
+      task.claimedBy !== undefined
+    ) {
       context.addIssue({
         code: "custom",
         message: `${task.state} tasks cannot retain claimedBy`,
         path: ["claimedBy"],
       });
     }
-    if (!requiresClaim && task.claimUntil !== undefined) {
+    if (
+      !requiresClaim &&
+      task.state !== "in_progress" &&
+      task.claimUntil !== undefined
+    ) {
       context.addIssue({
         code: "custom",
         message: `${task.state} tasks cannot retain claimUntil`,
         path: ["claimUntil"],
-      });
-    }
-    if (
-      task.state !== "todo" &&
-      task.state !== "cancelled" &&
-      task.assigneeId === undefined
-    ) {
-      context.addIssue({
-        code: "custom",
-        message: `${task.state} tasks require assigneeId`,
-        path: ["assigneeId"],
       });
     }
     if (task.claimedBy !== undefined && task.claimedBy !== task.assigneeId) {
@@ -184,26 +187,6 @@ export const TaskSchema = z
         code: "custom",
         message: "claimedBy must match assigneeId",
         path: ["claimedBy"],
-      });
-    }
-    if (
-      (task.state === "submitted" || task.state === "completed") &&
-      task.submissionSummary === undefined
-    ) {
-      context.addIssue({
-        code: "custom",
-        message: `${task.state} tasks require submissionSummary`,
-        path: ["submissionSummary"],
-      });
-    }
-    if (
-      (task.state === "submitted" || task.state === "completed") &&
-      task.submittedAt === undefined
-    ) {
-      context.addIssue({
-        code: "custom",
-        message: `${task.state} tasks require submittedAt`,
-        path: ["submittedAt"],
       });
     }
     if (task.state === "completed" && task.completedAt === undefined) {
@@ -292,7 +275,7 @@ export function taskWorkflowStatus(
 }
 
 export function projectTaskLifecycle(
-  task: Pick<Task, "blockedReason" | "state" | "workflowStatus">,
+  task: Pick<Task, "blockedReason" | "state" | "workflowStatus" | "claimedBy">,
   options: { cancellationPending?: boolean } = {},
 ): TaskLifecycleProjection {
   const workflowStatus = taskWorkflowStatus(task);
@@ -300,7 +283,7 @@ export function projectTaskLifecycle(
     ? "cancelling"
     : task.state === "claimed"
       ? "claimed"
-      : task.state === "in_progress"
+      : task.state === "in_progress" && task.claimedBy !== undefined
         ? "running"
         : "idle";
   if (task.state === "waiting_input") {

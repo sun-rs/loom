@@ -1,5 +1,16 @@
 import {
+  SystemChannelVisibilityReadSchema,
+  SystemChannelVisibilityUpdateSchema,
+  SystemChannelVisibilityResponseSchema,
+  SystemChannelVisibilityMutationSchema,
+  type SystemChannelVisibilityRead,
+  type SystemChannelVisibilityUpdate,
+  type SystemChannelVisibilityResponse,
+  type SystemChannelVisibilityMutation,
+} from "@rah-os/protocol";
+import {
   RuntimeGuideReadSchema,
+  type RuntimeGuideRead,
   RuntimeGuideUpdateSchema,
   RuntimeGuideSettingsSchema,
   type RuntimeGuideUpdate,
@@ -367,7 +378,7 @@ export type RahClientOperationMap = AgentWorkspaceOperationMap &
       output: LocalRuntimeInventoryResponse;
     };
     "runtime.guide.read": {
-      input: Record<string, never>;
+      input: RuntimeGuideRead;
       output: RuntimeGuideSettingsView;
     };
     "runtime.guide.update": {
@@ -434,6 +445,14 @@ export type RahClientOperationMap = AgentWorkspaceOperationMap &
     "room.delete": {
       input: ClientRoomDeleteRequest;
       output: ClientRoomDeleteResponse;
+    };
+    "workspace.system-channel.read": {
+      input: SystemChannelVisibilityRead;
+      output: SystemChannelVisibilityResponse;
+    };
+    "workspace.system-channel.update": {
+      input: SystemChannelVisibilityUpdate;
+      output: SystemChannelVisibilityMutation;
     };
     "room.archive": {
       input: ClientRoomArchiveRequest;
@@ -609,6 +628,20 @@ type OperationDefinition = {
 };
 
 const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
+  "workspace.system-channel.read": {
+    authenticated: true,
+    input: SystemChannelVisibilityReadSchema,
+    output: SystemChannelVisibilityResponseSchema,
+    method: "POST",
+    path: "/v3/client/workspaces/system-channel/read",
+  },
+  "workspace.system-channel.update": {
+    authenticated: true,
+    input: SystemChannelVisibilityUpdateSchema,
+    output: SystemChannelVisibilityMutationSchema,
+    method: "POST",
+    path: "/v3/client/workspaces/system-channel/update",
+  },
   ...discoveryOperations,
   ...fileOperations,
   ...agentWorkspaceOperations,

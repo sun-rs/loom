@@ -24,12 +24,25 @@ test("Task modal deep links survive filter normalization and close without losin
     assert.equal(closed.get(key!), value);
   for (const key of ["task", "thread", "threadId", "target"])
     assert.equal(closed.has(key), false);
-  assert.equal(
+  assert.deepEqual(
     globalTaskDetailFromSearch("?surface=room&target=task&task=t&room=r"),
-    undefined,
+    { roomId: "r", taskId: "t" },
   );
   assert.equal(
     globalTaskDetailFromSearch("?surface=tasks&target=task&task=t"),
     undefined,
   );
+});
+
+test("chat task links open the shared task modal and close back to the channel", () => {
+  const input = "?target=task&room=r&task=t&thread=r%3Am&threadId=th";
+  assert.deepEqual(globalTaskDetailFromSearch(input), {
+    roomId: "r",
+    taskId: "t",
+    rootMessageId: "m",
+  });
+  const closed = new URLSearchParams(closeGlobalTaskSearch(input));
+  assert.equal(closed.get("room"), "r");
+  assert.notEqual(closed.get("surface"), "tasks");
+  assert.equal(closed.has("task"), false);
 });

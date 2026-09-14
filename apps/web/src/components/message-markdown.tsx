@@ -15,7 +15,9 @@ import type {
   NavigationTarget,
   Principal,
   RoomKind,
+  Task,
 } from "@rah-os/protocol";
+import { taskStatusPresentation } from "../task-presentation.ts";
 import type { WorkspaceAgentView } from "@rah-os/ui-web";
 import Markdown from "react-markdown";
 import type { Components } from "react-markdown";
@@ -42,6 +44,7 @@ import {
 } from "../message-rich-text.ts";
 import { MessageAgentReference } from "./agent-message-identity.tsx";
 import { HumanIdentity } from "./human-identity.tsx";
+import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
 
 const markdownSchema = {
   ...defaultSchema,
@@ -92,6 +95,7 @@ export type MessageMarkdownReferences = {
     target: Extract<NavigationTarget, { kind: "task" }>;
     taskId: string;
     taskNumber: number;
+    state?: Task["state"];
   }[];
   threads?: readonly {
     peerNames?: readonly string[];
@@ -215,18 +219,21 @@ function referenceClassName(
 
 function MessageReferenceToken({ token }: { token: MessageTextToken }) {
   const context = useContext(RichTextContext);
+  const entities = useWorkspaceEntities();
   if (token.kind === "text" || context === undefined)
     return <HighlightedText value={token.value} />;
   const content = <HighlightedText value={token.value} />;
   if (token.kind === "agent") {
-    const agent = context.references.agents.find(
+    const candidate = context.references.agents.find(
       ({ agentDefinitionId }) => agentDefinitionId === token.agentDefinitionId,
     );
+    const agent =
+      candidate && (entities?.agent(candidate.agentDefinitionId) ?? candidate);
     return agent === undefined ? (
       content
     ) : (
       <MessageAgentReference agent={agent} readState={token.readState}>
-        {content}
+        <HighlightedText value={`@${agent.displayName || agent.handle}`} />
       </MessageAgentReference>
     );
   }
@@ -248,12 +255,14 @@ function MessageReferenceToken({ token }: { token: MessageTextToken }) {
       (person) =>
         person?.principalId === token.principalId && person.kind === "human",
     );
-    return principal ? (
+    const person =
+      principal && (entities?.resolvePerson(principal) ?? principal);
+    return principal && person ? (
       <HumanIdentity
         principal={principal}
         className={referenceClassName(token)}
       >
-        {content}
+        <HighlightedText value={`@${person.displayName || person.handle}`} />
         <MentionReadDot state={token.readState} />
       </HumanIdentity>
     ) : (
@@ -265,6 +274,13 @@ function MessageReferenceToken({ token }: { token: MessageTextToken }) {
   }
   const target = referenceTarget(token);
   const className = referenceClassName(token);
+  const taskState =
+    token.kind === "task"
+      ? context.references.tasks.find((task) => task.taskId === token.taskId)
+          ?.state
+      : undefined;
+  const taskStatus =
+    taskState === undefined ? undefined : taskStatusPresentation(taskState).id;
   const readDot = null;
   if (token.kind === "app")
     return (
@@ -274,7 +290,7 @@ function MessageReferenceToken({ token }: { token: MessageTextToken }) {
     );
   if (target === undefined || context.references.onOpenTarget === undefined)
     return (
-      <span className={className}>
+      <span className={className} data-task-status={taskStatus}>
         {content}
         {readDot}
       </span>
@@ -283,6 +299,7 @@ function MessageReferenceToken({ token }: { token: MessageTextToken }) {
     <button
       aria-label={`打开引用 ${token.value}`}
       className={className}
+      data-task-status={taskStatus}
       onClick={() => context.references.onOpenTarget?.(target)}
       title={`打开 ${token.value}`}
       type="button"

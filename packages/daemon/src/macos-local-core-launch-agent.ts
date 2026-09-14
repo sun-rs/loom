@@ -1,3 +1,4 @@
+import { rotateServiceLogs } from "@rah-os/agent-host";
 import { createHash, randomUUID } from "node:crypto";
 import { constants } from "node:fs";
 import { request as createHttpRequest } from "node:http";
@@ -371,6 +372,7 @@ export async function activateMacOSLocalCoreLaunchAgent(input: {
     });
     kind = "reloaded";
   }
+  await rotateServiceLogs(plan.logDirectory, "core");
   requireSuccess(
     "bootstrap",
     await launchctl.run(["bootstrap", domainTarget, plan.plistPath]),

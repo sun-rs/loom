@@ -21,6 +21,7 @@ import type { ToolAccessMode } from "@rah-os/protocol";
 import { z } from "zod";
 
 import { DaemonConfigSchema, type DaemonConfigV4 } from "./config.ts";
+import { ensureAllChannel } from "./ensure-all-channel.ts";
 import { reconcileLocalWorkbenchRuntimeBindings } from "./local-workbench-runtime-bindings.ts";
 
 const LocalWorkbenchMetadataSchema = z
@@ -464,6 +465,20 @@ function verifyCanonicalState(input: {
       )
     ) {
       throw new Error("local workbench Host credential scope is inconsistent");
+    }
+    const all = ensureAllChannel(
+      kernel,
+      input.humanAccessToken,
+      input.metadata.workspaceId,
+      input.metadata.controlRoomId,
+    );
+    if (all && input.metadata.defaultRoomId !== all.roomId) {
+      input.metadata.defaultRoomId = all.roomId;
+      const pending = join(input.stateDirectory, "workbench.json.pending");
+      writeFileSync(pending, JSON.stringify(input.metadata, null, 2) + "\n", {
+        mode: 0o600,
+      });
+      renameSync(pending, join(input.stateDirectory, "workbench.json"));
     }
   } finally {
     kernel.close();

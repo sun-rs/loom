@@ -70,7 +70,9 @@ export function requireRoomMember(
   principalId: string,
 ): void {
   const room = database
-    .prepare("SELECT 1 AS present FROM rooms WHERE room_id = ?")
+    .prepare(
+      "SELECT 1 AS present FROM rooms WHERE room_id = ? AND system_hidden=0",
+    )
     .get(roomId);
   if (room === undefined) {
     throw new ForbiddenError(`room ${roomId} is unavailable`);
@@ -137,12 +139,14 @@ export function roomRole(
 ): MembershipRole {
   const membership = database
     .prepare(
-      "SELECT role FROM memberships WHERE room_id = ? AND principal_id = ?",
+      "SELECT role FROM memberships WHERE room_id = ? AND principal_id = ? AND EXISTS(SELECT 1 FROM rooms r WHERE r.room_id=memberships.room_id AND r.system_hidden=0)",
     )
     .get(roomId, principalId);
   if (membership === undefined) {
     const room = database
-      .prepare("SELECT 1 AS present FROM rooms WHERE room_id = ?")
+      .prepare(
+        "SELECT 1 AS present FROM rooms WHERE room_id = ? AND system_hidden=0",
+      )
       .get(roomId);
     if (room === undefined)
       throw new NotFoundError(`room ${roomId} was not found`);
@@ -177,11 +181,11 @@ export function requirePublicChannelWorkspace(
 
 // Fixed alias owned here; callers bind values and never interpolate client SQL.
 export const PUBLIC_CHANNEL_METADATA_PREDICATE =
-  "r.kind='channel' AND r.visibility='public' AND r.archived_at IS NULL";
+  "r.system_hidden=0 AND r.kind='channel' AND r.visibility='public' AND r.archived_at IS NULL";
 
 // Content reads only: one bound actor parameter; never use this for mutations,
 // execution snapshots, Inbox, subscriptions or delivery acknowledgements.
-export const ROOM_CONTENT_READER_PREDICATE = `EXISTS (
+export const ROOM_CONTENT_READER_PREDICATE = `r.system_hidden=0 AND EXISTS (
  SELECT 1 FROM principals reader WHERE reader.principal_id=? AND (
  EXISTS (SELECT 1 FROM memberships access WHERE access.room_id=r.room_id AND access.principal_id=reader.principal_id)
  OR (r.kind='channel' AND r.visibility='public' AND r.archived_at IS NULL AND reader.kind='human'

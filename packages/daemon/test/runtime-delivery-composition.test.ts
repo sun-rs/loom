@@ -118,12 +118,16 @@ for (const mode of ["direct", "gated", undefined] as const) {
         runtimeProfileRegistry: registry,
         runtimeProfileRevision: revision,
         supervisorDirectory: directory,
-        launchEnvironment: () => ({
-          RAH_PROVIDER_LAUNCH_ARGS_JSON: JSON.stringify({
-            runtimeId: "claude",
-            additionalArgs: enabled ? ["--verbose"] : [],
-          }),
-        }),
+        launchEnvironment: (_runtimeId, agentDefinitionId) => {
+          assert.equal(agentDefinitionId, "definition-delivery");
+          return {
+            AGENT_ENV_FIXTURE: agentDefinitionId,
+            RAH_PROVIDER_LAUNCH_ARGS_JSON: JSON.stringify({
+              runtimeId: "claude",
+              additionalArgs: enabled ? ["--verbose"] : [],
+            }),
+          };
+        },
         guideEnabled: (id) => {
           checkedIds.push(id);
           return enabled;
@@ -188,6 +192,15 @@ for (const mode of ["direct", "gated", undefined] as const) {
         };
         const lease = await environment(scope);
         try {
+          const { execFileSync } = await import("node:child_process");
+          assert.equal(
+            execFileSync(
+              process.execPath,
+              ["-e", "process.stdout.write(process.env.AGENT_ENV_FIXTURE)"],
+              { env: lease.env, encoding: "utf8" },
+            ),
+            "definition-delivery",
+          );
           assert.deepEqual(
             JSON.parse(lease.env?.RAH_PROVIDER_LAUNCH_ARGS_JSON ?? "{}")
               .additionalArgs,

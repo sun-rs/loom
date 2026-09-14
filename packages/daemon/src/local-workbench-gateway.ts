@@ -1,3 +1,6 @@
+import { recoveryAssetPath, recoveryShell } from "./web-recovery-assets.ts";
+import { readFile } from "node:fs/promises";
+import { isIP } from "node:net";
 import {
   handleWorkbenchServiceControl,
   type WorkbenchServiceControl,
@@ -51,18 +54,26 @@ export class LocalWorkbenchGateway {
   readonly #accessToken: string;
   readonly #daemonOrigin: URL;
   readonly #port: number;
-  readonly #sessionToken: string;
+  readonly #bindHost: string;
+  readonly #sessionToken: string | undefined;
+  readonly #browserAccess: "session" | "trusted-network";
   readonly #staticDirectory: string;
   readonly #webBuildId: string | undefined;
   #origin: string | undefined;
   #server: Server | undefined;
+  #additional: LocalWorkbenchGateway[] = [];
+  readonly #createAdditional: (port: number) => LocalWorkbenchGateway[];
 
   constructor(input: {
     serviceControl?: WorkbenchServiceControl;
     accessToken: string;
+    /** Explicit trusted Tailnet/private LAN binding; public and wildcard interfaces are rejected. */
+    bindHost?: string;
+    additionalBindHosts?: string[];
     daemonOrigin: string;
     port: number;
-    sessionToken: string;
+    browserAccess?: "session" | "trusted-network";
+    sessionToken?: string;
     staticDirectory: string;
   }) {
     if (input.accessToken.trim().length === 0) {
@@ -78,7 +89,11 @@ export class LocalWorkbenchGateway {
     if (!isAbsolute(input.staticDirectory)) {
       throw new Error("local workbench static directory must be absolute");
     }
-    if (!/^[A-Za-z0-9_-]{43}$/u.test(input.sessionToken)) {
+    const browserAccess = input.browserAccess ?? "session";
+    if (
+      browserAccess !== "trusted-network" &&
+      !/^[A-Za-z0-9_-]{43}$/u.test(input.sessionToken ?? "")
+    ) {
       throw new Error("local workbench session token is malformed");
     }
     const daemonOrigin = new URL(input.daemonOrigin);
@@ -91,11 +106,49 @@ export class LocalWorkbenchGateway {
         "local workbench daemon origin must be an http://127.0.0.1 origin",
       );
     }
+    const bindHost = input.bindHost ?? "127.0.0.1";
+    const octets = bindHost.split(".").map(Number);
+    if (
+      bindHost !== "127.0.0.1" &&
+      !(
+        browserAccess === "trusted-network" &&
+        isIP(bindHost) === 4 &&
+        /^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(bindHost)
+      ) &&
+      !(
+        isIP(bindHost) === 4 &&
+        octets[0] === 100 &&
+        octets[1]! >= 64 &&
+        octets[1]! <= 127
+      )
+    ) {
+      throw new Error(
+        "Unpaired HTTP requires loopback or an explicit trusted private/Tailnet IPv4 address",
+      );
+    }
+    const additional = [
+      ...new Set(
+        input.additionalBindHosts ??
+          (bindHost === "127.0.0.1" ? [] : ["127.0.0.1"]),
+      ),
+    ].filter((host) => host !== bindHost);
+    this.#createAdditional = (port) =>
+      additional.map(
+        (host) =>
+          new LocalWorkbenchGateway({
+            ...input,
+            bindHost: host,
+            port,
+            additionalBindHosts: [],
+          }),
+      );
+    this.#bindHost = bindHost;
     this.#serviceControl = input.serviceControl;
     this.#accessToken = input.accessToken;
     this.#daemonOrigin = daemonOrigin;
     this.#port = input.port;
     this.#sessionToken = input.sessionToken;
+    this.#browserAccess = browserAccess;
     this.#staticDirectory = resolve(input.staticDirectory);
     this.#webBuildId = readWebBuildId(this.#staticDirectory);
   }
@@ -130,7 +183,7 @@ export class LocalWorkbenchGateway {
     try {
       await new Promise<void>((resolvePromise, reject) => {
         server.once("error", reject);
-        server.listen(this.#port, "127.0.0.1", resolvePromise);
+        server.listen(this.#port, this.#bindHost, resolvePromise);
       });
     } catch (error) {
       this.#server = undefined;
@@ -141,10 +194,20 @@ export class LocalWorkbenchGateway {
       await this.stop();
       throw new Error("local workbench gateway did not bind a TCP port");
     }
-    this.#origin = `http://127.0.0.1:${String(address.port)}`;
+    this.#origin = `http://${this.#bindHost}:${String(address.port)}`;
+    try {
+      this.#additional = this.#createAdditional(address.port);
+      for (const gateway of this.#additional) await gateway.start();
+    } catch (error) {
+      await this.stop();
+      throw error;
+    }
   }
 
   async stop(): Promise<void> {
+    const additional = this.#additional;
+    this.#additional = [];
+    await Promise.all(additional.map((gateway) => gateway.stop()));
     const server = this.#server;
     this.#server = undefined;
     this.#origin = undefined;
@@ -224,14 +287,32 @@ export class LocalWorkbenchGateway {
       });
       return;
     }
+    const recoveredAsset = recoveryAssetPath(requestUrl.pathname);
+    if (recoveredAsset) {
+      await this.#serveStatic(
+        request,
+        response,
+        recoveredAsset,
+        undefined,
+        true,
+      );
+      return;
+    }
     if (requestUrl.pathname.startsWith("/_rah/")) {
       sendText(response, 404, "LAN gateway route unavailable");
       return;
     }
-    await this.#serveStatic(request, response, requestUrl.pathname);
+    await this.#serveStatic(
+      request,
+      response,
+      requestUrl.pathname,
+      requestUrl.searchParams.get("rah_recover"),
+    );
   }
 
   #hasSession(cookieHeader: string | undefined): boolean {
+    if (this.#browserAccess === "trusted-network") return true;
+    if (this.#sessionToken === undefined) return false;
     const supplied = cookieHeader
       ?.split(";")
       .map((part) => part.trim().split("=", 2))
@@ -253,6 +334,7 @@ export class LocalWorkbenchGateway {
   }
 
   #setSessionCookie(response: ServerResponse): void {
+    if (this.#browserAccess === "trusted-network") return;
     response.setHeader(
       "set-cookie",
       `${SESSION_COOKIE}=${this.#sessionToken}; HttpOnly; SameSite=Strict; Path=/`,
@@ -293,6 +375,8 @@ export class LocalWorkbenchGateway {
     request: IncomingMessage,
     response: ServerResponse,
     encodedPathname: string,
+    recoveryNonce?: string | null,
+    recoveringAsset = false,
   ): Promise<void> {
     if (request.method !== "GET" && request.method !== "HEAD") {
       sendText(response, 405, "Method not allowed");
@@ -318,6 +402,13 @@ export class LocalWorkbenchGateway {
       sendText(response, 404, "Not found");
       return;
     }
+    if (
+      pathname.startsWith("/assets/") &&
+      (!existsSync(candidate) || !statSync(candidate).isFile())
+    ) {
+      sendText(response, 404, "Asset not found");
+      return;
+    }
     const staticPath =
       relativePath.length > 0 &&
       existsSync(candidate) &&
@@ -338,13 +429,21 @@ export class LocalWorkbenchGateway {
     } else {
       response.setHeader(
         "cache-control",
-        revalidatedShellFile(staticPath)
-          ? "no-cache"
-          : "public, max-age=31536000, immutable",
+        recoveringAsset
+          ? "no-store"
+          : revalidatedShellFile(staticPath)
+            ? "no-cache"
+            : "public, max-age=31536000, immutable",
       );
     }
     if (request.method === "HEAD") {
       response.end();
+      return;
+    }
+    if (isIndex && recoveryNonce) {
+      response.end(
+        recoveryShell(await readFile(staticPath, "utf8"), recoveryNonce),
+      );
       return;
     }
     await new Promise<void>((resolvePromise, reject) => {

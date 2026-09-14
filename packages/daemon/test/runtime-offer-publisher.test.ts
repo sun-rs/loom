@@ -191,3 +191,49 @@ function probeReport(reasoning: string): RuntimeProfileProbeReport {
     probeDigest: computeRuntimeProfileProbeDigest(reportWithoutDigest),
   };
 }
+
+test("explicit catalog refresh publishes new evidence while old offer observations remain unchanged", () => {
+  const published: Array<{
+    modelBindingDescriptors: Array<{ supportedReasoning: string[] }>;
+  }> = [];
+  const publisher = new RuntimeOfferPublisher({
+    host: { hostId: "host-1", instanceId: "host-instance-1" } as never,
+    kernel: {
+      publishRuntimeOffer: (_a: unknown, offer: (typeof published)[number]) =>
+        published.push(offer),
+    } as never,
+    leaseMs: 1000,
+    maxConcurrent: 1,
+    probeReport: probeReport("low"),
+    refreshIntervalMs: 1000,
+    refreshAvailability: async () => true,
+    revisionIsActive: () => true,
+    runtimeOfferId: "offer-1",
+    runtimeProfileRevision: {
+      activatedAt: "2026-08-28T00:00:00.000Z",
+      contentDigest: runtimeProfileDigest,
+      importedAt: "2026-08-28T00:00:00.000Z",
+      manifest: runtimeManifest,
+      revision: 1,
+      runtimeProfileId: "profile-1",
+      runtimeProfileRevisionId: "profile-revision-1",
+      state: "active",
+    },
+  });
+  publisher.publishAvailable();
+  publisher.replaceProbeReport(probeReport("high"));
+  assert.deepEqual(
+    published.map((o) => o.modelBindingDescriptors[0]?.supportedReasoning),
+    [["low"], ["high"]],
+  );
+  const changed = probeReport("low");
+  changed.executableIdentity = {
+    ...executableIdentity,
+    contentDigest: `sha256:${"2".repeat(64)}`,
+  };
+  assert.throws(
+    () => publisher.replaceProbeReport(changed),
+    /identity|restart/,
+  );
+  assert.equal(published.length, 2);
+});

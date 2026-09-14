@@ -1,3 +1,4 @@
+import { reconcileAllChannelMemberships } from "./all-channel-membership.ts";
 import type { DatabaseSync } from "node:sqlite";
 
 import {
@@ -362,6 +363,7 @@ export function provisionWorkspaceAgentTransaction(
     roomId: input.controlRoomId,
     type: "agent.provisioned",
   });
+  reconcileAllChannelMemberships(owner.database, owner.events, owner.now());
   return workspaceAgentProvisionResult(owner.database, event, false);
 }
 

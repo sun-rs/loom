@@ -1,3 +1,4 @@
+import { workbenchLaunchMode } from "./workbench-launch-mode.mjs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -24,7 +25,6 @@ const staticDirectory = await snapshotWorkbenchAssets(
   repositoryDirectory,
   process.env.RAH_WEB_STATIC_DIRECTORY,
 );
-const webPort = Number(process.env.RAH_WEB_PORT ?? "4173");
 const releaseLease = await acquireWorkbenchAssetLease(
   repositoryDirectory,
   staticDirectory,
@@ -34,7 +34,7 @@ let running;
 try {
   running = await startRestartableLocalCoreWorkbench({
     environment: process.env,
-    mode: { kind: "loopback", port: webPort },
+    mode: workbenchLaunchMode(process.env, workbenchHome),
     staticDirectory,
     workbenchHome,
     workspaceCwd,

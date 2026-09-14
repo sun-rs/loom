@@ -23,15 +23,24 @@ const task: Task = {
   dependencyTaskIds: [],
 };
 
-test("Raft's five-state editor exposes only canonical Task lifecycle actions", () => {
+test("Raft manager can select every distinct business status", () => {
   assert.ok(globalTaskTransition(task, "closed", false).reason);
   assert.equal(
     globalTaskTransition(task, "closed", true).operation,
     "task.workflow.update",
   );
-  assert.ok(globalTaskTransition(task, "in-progress", true).reason);
-  assert.ok(globalTaskTransition(task, "review", true).reason);
-  assert.ok(globalTaskTransition(task, "done", true).reason);
+  assert.equal(
+    globalTaskTransition(task, "in-progress", true).operation,
+    "task.workflow.update",
+  );
+  assert.equal(
+    globalTaskTransition(task, "review", true).operation,
+    "task.workflow.update",
+  );
+  assert.equal(
+    globalTaskTransition(task, "done", true).operation,
+    "task.workflow.update",
+  );
   assert.equal(
     globalTaskTransition(
       { ...task, state: "submitted", workflowStatus: "in_progress" },

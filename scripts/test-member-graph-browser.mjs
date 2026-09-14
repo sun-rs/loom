@@ -21,6 +21,34 @@ try {
     );
     await avatars.first().waitFor();
     assert.equal(await avatars.count(), 2);
+    const avatarAppearance = (node) => ({
+      background: getComputedStyle(node).backgroundColor,
+      pixels: [...node.querySelectorAll(".rah-agent-avatar-grid i")].map(
+        (pixel) => [
+          pixel.style.gridColumn,
+          pixel.style.gridRow,
+          getComputedStyle(pixel).backgroundColor,
+        ],
+      ),
+    });
+    assert.deepEqual(
+      await page
+        .locator(".rah-member-graph-node-trigger > .rah-agent-avatar")
+        .evaluate(avatarAppearance),
+      await page
+        .locator('[data-testid="canonical-avatar"] > .rah-agent-avatar')
+        .evaluate(avatarAppearance),
+      "graph preserves the canonical Agent avatar palette and pixels",
+    );
+    for (const selector of [
+      ".rah-member-graph-page-header .rah-panel-header-icon",
+      ".rah-member-graph-header > div",
+    ]) {
+      assert.match(
+        await page.locator(`${selector} use`).getAttribute("href"),
+        /#raft-icon-git-branch$/,
+      );
+    }
     const geometry = await avatars.evaluateAll((nodes) =>
       nodes.map((node) => {
         const box = node.getBoundingClientRect();
@@ -49,6 +77,7 @@ try {
       true,
     );
     console.log({ width, geometry });
+    await page.screenshot({ path: `/tmp/rah-member-graph-${width}.png` });
   }
 } finally {
   await browser.close();

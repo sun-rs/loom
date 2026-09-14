@@ -21,7 +21,7 @@ test("time-bearing Settings consumers use the shared date-time owner", () => {
   for (const file of [
     "components/agent-directory-pane.tsx",
     "components/agent-message-identity.tsx",
-    "components/conversation-panes.tsx",
+    "components/chat-message-time.tsx",
     "components/forwarded-message-bundle.tsx",
     "components/global-discovery.tsx",
     "components/human-inbox.tsx",
@@ -30,7 +30,7 @@ test("time-bearing Settings consumers use the shared date-time owner", () => {
     "components/workspace-catalog-panes.tsx",
   ]) {
     const source = read(file);
-    assert.match(source, /formatRahDateTime/u, file);
+    assert.match(source, /formatRahDateTime|formatChatMessageTime/u, file);
     assert.doesNotMatch(source, /hour12:\s*(?:false|true)/u, file);
   }
 });

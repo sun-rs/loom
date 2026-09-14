@@ -147,7 +147,7 @@ export const HumanActivityMarkRequestSchema = z
     roomId: IdentifierSchema,
     threadId: IdentifierSchema.optional(),
     throughSeq: z.number().int().nonnegative(),
-    action: z.enum(["read", "done"]),
+    action: z.enum(["read", "done", "unread"]),
   })
   .strict();
 export const HumanActivityMarkResponseSchema = z

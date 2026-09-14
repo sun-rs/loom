@@ -122,11 +122,15 @@ export function listAgentCatalogRows(
       `SELECT
          agent_definitions.*,
          agent_definition_revisions.definition_json,
-         principals.handle
+         principals.handle,
+         json_extract(execution_policy_revisions.policy_json, '$.modelIntent.exactBindingIds[0]') AS model_binding_id
        FROM agent_definitions
        JOIN agent_definition_revisions
          ON agent_definition_revisions.agent_definition_revision_id =
             agent_definitions.current_revision_id
+       JOIN execution_policy_revisions
+         ON execution_policy_revisions.execution_policy_revision_id =
+            agent_definition_revisions.execution_policy_revision_id
        JOIN principals
          ON principals.principal_id = agent_definitions.participant_id
        JOIN memberships
@@ -154,6 +158,9 @@ export function listAgentCatalog(
   }
   return listAgentCatalogRows(database, actorId, controlRoomId).map((row) =>
     AgentCatalogEntrySchema.parse({
+      ...(nullableText(row, "model_binding_id")
+        ? { modelBindingId: text(row, "model_binding_id") }
+        : {}),
       currentRevision: AgentDefinitionRevisionSchema.parse(
         jsonObject(row, "definition_json"),
       ),
@@ -209,7 +216,7 @@ export function listWorkspaceAgentRooms(
          ON actor_membership.room_id = rooms.room_id
         AND actor_membership.principal_id = ?
        WHERE rooms.workspace_id = ?
-         AND rooms.kind <> 'control'
+         AND rooms.kind <> 'control' AND rooms.system_hidden=0
        ORDER BY rooms.kind, rooms.slug, rooms.room_id`,
     )
     .all(
@@ -341,7 +348,7 @@ export function listAgentActivity(
            NULL AS failure_code,
            NULL AS is_error
     FROM room_events AS event
-    JOIN rooms ON rooms.room_id = event.room_id
+    JOIN rooms ON rooms.room_id = event.room_id AND rooms.system_hidden=0
     JOIN memberships AS actor_membership
       ON actor_membership.room_id = event.room_id
     LEFT JOIN run_attempts AS activity_run
@@ -376,7 +383,7 @@ export function listAgentActivity(
            call.failure_code,
            call.is_error
     FROM managed_mcp_calls AS call
-    JOIN rooms ON rooms.room_id = call.room_id
+    JOIN rooms ON rooms.room_id = call.room_id AND rooms.system_hidden=0
     JOIN memberships AS actor_membership
       ON actor_membership.room_id = call.room_id
      AND actor_membership.principal_id = ?

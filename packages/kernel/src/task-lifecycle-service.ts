@@ -1,7 +1,7 @@
+import { editHumanTask } from "./human-task-edit.ts";
 import type { DatabaseSync } from "node:sqlite";
 
 import {
-  taskWorkflowStatus,
   type TaskWorkflowStatus,
   type ActivationCredentialScope,
 } from "@rah-os/protocol";
@@ -61,34 +61,19 @@ export class TaskLifecycleService {
       taskId: string;
       workflowStatus: TaskWorkflowStatus;
     },
-    complete: () => TaskCreateMutationResult,
   ): TaskCreateMutationResult {
-    const actorId = this.#requireActor(actor);
-    const taskRow = this.#requireTask(input.taskId);
-    const roomId = text(taskRow, "room_id");
-    requireRoomMember(this.#database, roomId, actorId);
-    requireHumanTaskManager(
-      this.#database,
-      { creatorId: text(taskRow, "creator_id"), roomId },
-      actorId,
-    );
-    if (input.workflowStatus === "closed") {
-      return this.cancelTask(actor, {
-        basedOnRoomSeq: input.basedOnRoomSeq,
-        idempotencyKey: input.idempotencyKey,
-        reason: "Closed from the Task status menu",
-        taskId: input.taskId,
-      });
-    }
-    if (input.workflowStatus === "todo") {
-      return this.reopenTask(actor, input);
-    }
-    if (input.workflowStatus === "done") return complete();
-    const currentWorkflowStatus = taskWorkflowStatus(
-      taskProjectionFromRow(this.#database, taskRow).state,
-    );
-    throw new ConflictError(
-      `Task ${input.taskId} cannot move from workflow ${currentWorkflowStatus} to ${input.workflowStatus} without the canonical claim, execution, or submission command`,
+    return this.#transaction(() =>
+      editHumanTask(
+        {
+          database: this.#database,
+          events: this.#events,
+          now: this.#now,
+          createId: this.#createId,
+        },
+        this.#requireActor(actor),
+        input,
+        { workflowStatus: input.workflowStatus },
+      ),
     );
   }
 

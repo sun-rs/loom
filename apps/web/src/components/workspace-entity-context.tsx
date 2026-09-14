@@ -1,3 +1,4 @@
+import type { ConversationOrigin } from "../conversation-panels.ts";
 import { createContext, useContext, useRef, type ReactNode } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { Principal } from "@rah-os/protocol";
@@ -7,13 +8,15 @@ import {
   type WorkspaceEntities,
 } from "../workspace-entities.ts";
 
+export const IdentityOriginContext = createContext<ConversationOrigin>("room");
+
 export const WorkspaceEntityContext = createContext<
   WorkspaceEntities | undefined
 >(undefined);
 export const HumanIdentityContext = createContext<
   | {
       client: RahClient;
-      onOpenHuman: (id: string) => void;
+      onOpenHuman: (id: string, origin?: ConversationOrigin) => void;
       onPrincipalUpdated: (principal: Principal) => void;
       onOpenDirect: (id: string) => Promise<unknown>;
       capturePrincipal: (id: string) => PrincipalObservation;
@@ -41,7 +44,7 @@ export const ComputerIdentityContext = createContext<(() => void) | undefined>(
 export const AgentMessageContext = createContext<
   | {
       client: RahClient;
-      onOpen: (id: string) => void;
+      onOpen: (id: string, origin?: ConversationOrigin) => void;
       canManageAgents?: boolean;
     }
   | undefined
@@ -60,8 +63,8 @@ export function WorkspaceEntityProvider({
 }: {
   entities: WorkspaceEntities;
   client: RahClient;
-  onOpen: (id: string) => void;
-  onOpenHuman: (id: string) => void;
+  onOpen: (id: string, origin?: ConversationOrigin) => void;
+  onOpenHuman: (id: string, origin?: ConversationOrigin) => void;
   onPrincipalUpdated: (principal: Principal) => void;
   onOpenDirect: (id: string) => Promise<unknown>;
   onOpenComputer: () => void;

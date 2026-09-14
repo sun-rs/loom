@@ -61,3 +61,32 @@ test("manual reordering uses the target slot and self-drops are no-ops", () => {
     ["room:b", "room:c", "room:a"],
   );
 });
+
+test("custom section moves preserve one placement and system type fences", () => {
+  const p = {
+    ...DEFAULT_SIDEBAR_PREFERENCES,
+    pinned: ["room:a"],
+    customSections: [
+      { id: "one", name: "One", items: [] },
+      { id: "two", name: "Two", items: ["peer:b"] },
+    ],
+  };
+  const patch = sidebarDrop(p, "room:a", "custom:one", undefined, []);
+  assert.deepEqual(patch?.pinned, []);
+  assert.deepEqual(patch?.customSections?.[0]?.items, ["room:a"]);
+  const moved = sidebarDrop(p, "peer:b", "custom:one", undefined, []);
+  assert.deepEqual(
+    moved?.customSections?.map((s) => s.items),
+    [["peer:b"], []],
+  );
+  assert.equal(sidebarDrop(p, "peer:b", "channels", undefined, []), undefined);
+  assert.equal(sidebarDrop(p, "room:a", "dms", undefined, []), undefined);
+  assert.deepEqual(
+    sidebarDrop(p, "peer:b", "dms", undefined, [])?.customSections?.[1]?.items,
+    [],
+  );
+  assert.equal(
+    sidebarDrop(p, "room:a", "custom:missing", undefined, []),
+    undefined,
+  );
+});

@@ -47,6 +47,7 @@ import {
 import type { AgentDefinitionRecord } from "./types.ts";
 
 export type WorkspaceAgentManagementOwner = {
+  deletionRequest?: RoomEvent;
   actorId: string;
   createId: (prefix: string) => string;
   database: DatabaseSync;
@@ -269,6 +270,17 @@ export function manageWorkspaceAgentTransaction(
       );
     }
     return managementResultFromEvent(owner.database, event, true);
+  }
+  if (
+    text(definitionRow, "state") !== "tombstoned" &&
+    !(input.action === "set_state" && input.state === "tombstoned") &&
+    owner.database
+      .prepare(
+        "SELECT 1 FROM room_events WHERE aggregate_id=? AND type='agent.deletion_requested' LIMIT 1",
+      )
+      .get(input.agentDefinitionId)
+  ) {
+    throw new ConflictError("Agent deletion is in progress");
   }
   assertFreshControlRoom(owner.database, controlRoomId, input.basedOnRoomSeq);
   if (input.action === "update_profile") {
@@ -551,19 +563,22 @@ function setAgentState(
           .get(roomId),
         `Room ${roomId} was not found`,
       );
-      owner.events.append({
-        actorId: owner.actorId,
-        aggregateId: participantId,
-        aggregateType: "membership",
-        idempotencyKey: `${input.idempotencyKey}:membership:${roomId}`,
-        payload: {
-          basedOnRoomSeq: integer(roomRow, "next_seq") - 1,
-          participantId,
-          previousRole: text(membership, "role"),
+      owner.events.append(
+        {
+          actorId: owner.actorId,
+          aggregateId: participantId,
+          aggregateType: "membership",
+          idempotencyKey: `${input.idempotencyKey}:membership:${roomId}`,
+          payload: {
+            basedOnRoomSeq: integer(roomRow, "next_seq") - 1,
+            participantId,
+            previousRole: text(membership, "role"),
+          },
+          roomId,
+          type: "membership.removed",
         },
-        roomId,
-        type: "membership.removed",
-      });
+        owner.deletionRequest,
+      );
       owner.database
         .prepare(
           "DELETE FROM memberships WHERE room_id = ? AND principal_id = ?",
@@ -702,7 +717,7 @@ function assertAgentQuiescent(database: DatabaseSync, participantId: string) {
   }
 }
 
-function managementResultFromEvent(
+export function managementResultFromEvent(
   database: DatabaseSync,
   event: RoomEvent,
   deduplicated: boolean,

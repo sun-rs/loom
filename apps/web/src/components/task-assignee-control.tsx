@@ -1,20 +1,20 @@
+import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
+import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
+import { browserOpaqueId } from "../browser-opaque-id.ts";
 import { useRef, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
-import type { Task } from "@rah-os/protocol";
-import type { RoomAgentTarget } from "@rah-os/ui-web";
-import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
+import type { Task, Principal } from "@rah-os/protocol";
 import {
   createTaskAssigneeCommand,
   taskAssigneeMode,
   type TaskAssigneeIntent,
 } from "../global-task-assignee.ts";
 import { DiscoveryFilter } from "./discovery-filter.tsx";
-import { TaskReassignDialog } from "./task-dialogs.tsx";
 
 export function TaskAssigneeControl({
   client,
   task,
-  agents,
+  people,
   principalId,
   label,
   writeEnabled,
@@ -22,7 +22,7 @@ export function TaskAssigneeControl({
 }: {
   client: RahClient;
   task: Task;
-  agents: readonly RoomAgentTarget[];
+  people: readonly Principal[];
   principalId: string | undefined;
   label: string;
   writeEnabled: boolean;
@@ -30,16 +30,18 @@ export function TaskAssigneeControl({
 }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>();
-  const [reassignOpen, setReassignOpen] = useState(false);
   const command = useRef<
     | { key: string; execute: ReturnType<typeof createTaskAssigneeCommand> }
     | undefined
   >(undefined);
-  const candidates = agents.filter(
-    (agent) =>
-      !task.collaboratorIds.includes(agent.participantId) &&
-      !task.reviewerIds.includes(agent.participantId),
-  );
+  const entities = useWorkspaceEntities();
+  const candidates = people
+    .map((person) => entities?.resolvePerson(person) ?? person)
+    .sort(
+      (a, b) =>
+        Number(b.kind === "human") - Number(a.kind === "human") ||
+        (a.displayName || a.handle).localeCompare(b.displayName || b.handle),
+    );
   const mode = taskAssigneeMode(task, principalId);
   async function perform(intent: TaskAssigneeIntent) {
     const key = JSON.stringify(intent);
@@ -51,7 +53,7 @@ export function TaskAssigneeControl({
           task,
           principalId,
           intent,
-          idempotencyKey: `task-assignee-${crypto.randomUUID()}`,
+          idempotencyKey: `task-assignee-${browserOpaqueId()}`,
         }),
       };
     setPending(true);
@@ -75,21 +77,34 @@ export function TaskAssigneeControl({
           triggerAriaLabel={`任务负责人：${label}`}
           triggerLabel={label}
           icon={null}
+          variant="status"
+          className="rah-task-status-picker"
+          popoverClassName="is-task-assignee"
+          popoverTitle="负责人"
+          searchPlaceholder="搜索人和 Agent"
           multiple={false}
           searchable
           clearable={false}
           selected={false}
-          disabled={
-            pending ||
-            !writeEnabled ||
-            (candidates.length === 0 && !task.assigneeId)
-          }
+          disabled={pending || !writeEnabled || candidates.length === 0}
           values={[task.assigneeId ?? "unassigned"]}
           options={[
-            { id: "unassigned", label: "未指派" },
+            { id: "unassigned", label: "未指派", reserveLeadingSlot: true },
             ...candidates.map((agent) => ({
-              id: agent.participantId,
-              label: agent.handle,
+              id: agent.principalId,
+              label: agent.displayName || agent.handle,
+              reserveLeadingSlot: true,
+              leading: (
+                <span aria-hidden="true">
+                  <ProfileImageAvatar
+                    avatarKey={agent.avatarKey}
+                    name={agent.displayName || agent.handle}
+                    kind={agent.kind}
+                    principalId={agent.principalId}
+                    size="compact"
+                  />
+                </span>
+              ),
             })),
           ]}
           onChange={(values) => {
@@ -102,38 +117,13 @@ export function TaskAssigneeControl({
             ).catch(() => {});
           }}
         />
-      ) : mode === "reassign" ? (
-        <button
-          className="btn rah-task-assignee-reassign"
-          aria-label={`改派任务负责人：${label}`}
-          disabled={
-            !writeEnabled ||
-            pending ||
-            candidates.every((agent) => agent.participantId === task.assigneeId)
-          }
-          onClick={() => setReassignOpen(true)}
-        >
-          {label}
-          <Icon name="pencil" />
-        </button>
       ) : (
         <span>{label}</span>
       )}
-      {error && !reassignOpen ? (
+      {error ? (
         <span className="rah-inline-error" role="alert">
           {error}
         </span>
-      ) : null}
-      {reassignOpen && task.assigneeId ? (
-        <TaskReassignDialog
-          agents={candidates}
-          currentAssigneeId={task.assigneeId}
-          taskTitle={task.title}
-          onClose={() => setReassignOpen(false)}
-          onConfirm={(assigneeId, reason) =>
-            perform({ kind: "reassign", assigneeId, reason })
-          }
-        />
       ) : null}
     </>
   );

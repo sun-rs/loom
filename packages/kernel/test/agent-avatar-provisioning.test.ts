@@ -65,8 +65,17 @@ test("automatic Agent avatars are unique, canonical, replay-stable and survive r
       ],
     };
     kernel.publishRuntimeOffer(host, offer);
+    const all = kernel.createWorkspaceRoom(actor, {
+      workspaceId: workspace.workspace.workspaceId,
+      basedOnControlRoomSeq: workspace.event.roomSeq,
+      name: "all",
+      slug: "all",
+      kind: "channel",
+      visibility: "public",
+      idempotencyKey: "all",
+    });
     const request = {
-      basedOnRoomSeq: workspace.event.roomSeq,
+      basedOnRoomSeq: all.event.roomSeq,
       controlRoomId: workspace.controlRoom.roomId,
       displayName: "Alice",
       handle: "alice",
@@ -78,6 +87,15 @@ test("automatic Agent avatars are unique, canonical, replay-stable and survive r
       sessionPolicy: "prefer_resume" as const,
     };
     const first = kernel.provisionWorkspaceAgent(actor, request);
+    assert.ok(
+      kernel
+        .listRoomMemberships(actor, { roomId: all.room.roomId })
+        .some(
+          (member) =>
+            member.principalId === first.agent.definition.participantId,
+        ),
+      "provisioned Agent joins all in the same transaction",
+    );
     const firstKey = first.agent.currentRevision.avatarKey!;
     assert.ok(OFFICIAL_AGENT_AVATAR_KEYS.includes(firstKey));
     const replay = kernel.provisionWorkspaceAgent(actor, request);

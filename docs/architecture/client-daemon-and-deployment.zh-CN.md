@@ -280,3 +280,54 @@ Runtime inventory 的可选 `cliId` 由 daemon 从 manifest CLI probe 或已知 
 ## Local Core 后台失败传播
 
 启动后的 daemon 非预期退出或拒绝必须关闭其 loopback／LAN gateway，并通过 `RunningLocalCoreWorkbench.failed` 传到当前 launcher。正常 stop 不产生失败；重启时旧 generation 的迟到失败不污染后继。外层不得在 backend 已退出后长期保留一个报告 online 的页面服务。证据见[恢复修复验收](../audits/2026-09-08-core-recovery-repair.zh-CN.md)。
+
+### 仓库工作台启动入口的 LAN 选择（2026-09-12）
+
+`scripts/run-local-workbench.mjs` 现在与正式 service 入口一样接受 `RAH_LAN_ORIGIN`：未指定时保持 loopback；指定 HTTPS origin 时复用现有 LAN gateway、证书与配对机制。`RAH_LAN_BIND_HOST` 默认 `0.0.0.0`，证书覆盖仍用 `RAH_LAN_CERT_PATH` / `RAH_LAN_KEY_PATH`。此模式切换同一入口端口至 HTTPS，不额外启动第二份 Core，也不取消认证。LAN 客户端须信任受管 CA 并配对；Tailscale 不替代应用鉴权。
+
+`workbench-launch-mode.test.mjs` 覆盖未启用与显式启用配置；现有 LAN gateway/local Core 三项测试通过。2026-09-12 本机目标为 HTTPS LAN，但重启仍被未完成 Activation 拦截，因此当次变更不能视为已上线。
+
+随后工作已排空，完成备份与受控重启。正式服务已监听所有接口4173端口，使用HTTPS LAN入口；Chrome新会话通过配对并加载正式Computer页面，构建f5108c4f。TLS通过受管CA校验。跨物理设备访问及设备安装CA仍需各客户端完成。
+
+### 用户指定的单 Human Tailnet HTTP 入口（2026-09-12，取代上节本机部署选择）
+
+用户明确要求 Tailnet 内 HTTP 直连，不使用 HTTPS 或配对码。仓库 launcher 的
+`RAH_TAILNET_HOST` 显式选择 `tailnet` 模式，优先于旧 `RAH_LAN_ORIGIN`。
+绑定该台 Computer 已有的精确 100.64.0.0/10 IPv4 地址，端口仍由 `RAH_WEB_PORT` 指定。
+禁止通配、普通 LAN 地址、域名及越界地址；无此配置仍默认 loopback。
+该模式以 Tailnet 网络访问控制为信任边界，不提供应用层设备配对。
+
+此入口复用 LocalWorkbenchGateway 的同源代理和 Host/Origin 校验；按用户后续决定，
+Tailnet 模式停用浏览器 session token/cookie 门槛，不发放 cookie，不要求用户输入 token。
+Human PAT 保留在服务端，Kernel/Agent 权限及执行栅栏不变，不另建业务处理器。
+HTTP 不具备浏览器 secure-context 功能；普通 Web 响应式访问可用，Service Worker、
+安装能力与系统通知是否可用由浏览器决定，不能把 HTTP 直连称为完整安装式 PWA 验收。
+既有 HTTPS gateway 仍作为兼容能力保留，不再用于此次正式入口。
+
+验证：新增 Tailnet launch-mode、绑定范围拒绝测试；既有 gateway 鉴权、重启会话测试通过。
+正式入口需在备份、空闲检查及受控重启后单独验收，不以单元测试证明部署。
+
+本批已完成该 HTTP 模式的正式备份重启；新 Chromium 与 WebKit 无配对加载真实页面，
+实际绑定精确 Tailnet 地址，资源构建及移动端验收记录见
+[移动端与 Tailnet 部署](../audits/2026-09-12-mobile-navigation-and-task-layout.zh-CN.md)。
+
+2026-09-12 后续用户要求明确停用浏览器 token 门槛；原 session 和 HTTPS 代码保留，
+Tailnet 通过 `browserAccess: trusted-network` 绕过浏览器会话检查。重连也不返回 token 表单。
+[实现和验收](../audits/2026-09-12-trusted-network-access.zh-CN.md)取代先前“自动 HttpOnly 会话”的当前入口描述。
+
+## 通知租约失效的恢复边界（2026-09-12）
+
+Web Push dispatcher 失去 Outbox 租约后停止通过旧租约写入，并继续由 Kernel 领取工作；
+`LeaseConflictError` 不得使整个 daemon 因可恢复的通知租约过期退出。其他存储错误仍上报。
+见 [故障审计](../audits/2026-09-12-web-push-lease-crash.zh-CN.md)。
+
+Tailnet HTTP 模式同时在相同端口监听 `127.0.0.1`，由同一个
+`LocalWorkbenchGateway` 生命周期管理两个入口；每个入口分别校验自身 Host/Origin，
+复用相同 daemon、身份及冻结静态资源。任一入口启动失败须回收另一个入口，停止时关闭两者。
+不使用 wildcard 绑定，也不创建第二份持久状态。
+
+Tailnet HTTP 启动器发现本机 RFC1918 IPv4 后，显式加入同端口的局域网监听；保留 loopback
+与 Tailnet 入口。过滤公共地址、IPv6、内部接口及 Surge 198.18/15 虚拟地址，不绑定 0.0.0.0。
+局域网地址改变需要重新启动以重新发现；任一入口失败回收本次所有监听，避免半启动。
+
+2026-09-13 日志生命周期：显式启动/替换入口在旧进程退出后、打开新日志句柄之前应用统一的 UTC 跨日 / 64MiB / 14 天轮转策略；不对活动写入者执行 rename。Owner 为 agent-host 的 service-log-rotation，Core 启动层复用。详见[日志轮转](../audits/2026-09-13-service-log-rotation.zh-CN.md)。

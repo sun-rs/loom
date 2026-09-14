@@ -23,13 +23,13 @@ zodGlobal.__zod_globalConfig = {
 applySettingsPreferences(window.localStorage);
 
 const webBuildRecovery = installWebBuildRecovery(currentWebBuildId());
-void webBuildRecovery.probeBeforeMount().then(() =>
-  import("./mount-app.tsx")
-    .then(({ mountRahApp }) => mountRahApp())
-    .catch((error: unknown) => {
-      if (!requestWebBuildRefresh(error, "later_action")) throw error;
-    }),
-);
+// A slow version probe must never prevent the application from mounting.
+void webBuildRecovery.probe();
+void import("./mount-app.tsx")
+  .then(({ mountRahApp }) => mountRahApp())
+  .catch((error: unknown) => {
+    if (!requestWebBuildRefresh(error, "later_action")) throw error;
+  });
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.addEventListener("message", (event) => {

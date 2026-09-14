@@ -93,13 +93,13 @@
 1. 解析 `packages/ui-tokens/src/neo-brutalist/**/*.css` 与 `apps/web/src/**/*.css`，展开 `var()`（含 `calc`），对规格中每个 `selector + state` 断言解析后的声明与期望值逐项相等。
 2. 枚举所有选择器命中本组件类名的规则（含 `@media` 内），凡不在规格 `rules` 或 `overrides` 中登记的，检查失败。登记项必须带 `source`（证据文件路径或 `main.js@offset`）与 `reason`，缺一即失败。
 3. 例外不能靠加白名单绕过：`overrides` 条目数记录在 JSON 的 `overrideBudget`，新增条目时若 `source` 不指向 `docs/evidence/` 或上游 bundle 位置，检查失败；预算值只允许在评审中下调。
-4. 浏览器门禁 `scripts/run-sq-btn-spec-browser-gate.mjs`：在真实 Chrome 中对 `.sq-btn`、`.composer-bar .sq-btn`、`.sq-btn.sm`、`.send-btn` 采集基态、hover、active、disabled、focus-visible 五种状态在 1440×900 与 390×844 的计算样式，与规格期望值比对；token 替换提交前后各跑一次，差异必须为空。
+4. 浏览器门禁 `scripts/run-component-spec-browser-gate.mjs sq-btn`：在真实 Chrome 中对 `.sq-btn`、`.composer-bar .sq-btn`、`.sq-btn.sm`、`.send-btn` 采集基态、hover、active、disabled、focus-visible 五种状态在 1440×900 与 390×844 的计算样式，与规格期望值比对；token 替换提交前后各跑一次，差异必须为空。
 
 ## 批次 1 执行记录（2026-09-11）
 
 机器可读规格：`packages/ui-tokens/specs/sq-btn.spec.json`；
 校验器：`scripts/ui-component-spec.mjs`（已接入 `npm run check:ui-library`）；
-浏览器门禁：`scripts/run-sq-btn-spec-browser-gate.mjs`，
+浏览器门禁：`scripts/run-component-spec-browser-gate.mjs sq-btn`，
 夹具 `apps/web/test/sq-btn-spec-fixture.{html,tsx}`。
 
 ### 本文件与实测不符之处（未擅自按本文改，按实测记录）
@@ -143,7 +143,7 @@
 
 ### 协调者复核（Fable，2026-09-11）
 
-- 亲自重跑：`node --test scripts/ui-component-spec.test.mjs` 12 通过；`npm run check:ui-library` 输出 `Component specs hold: sq-btn`；`node scripts/run-sq-btn-spec-browser-gate.mjs --expect-spec` 输出 `matches 42 spec browser expectations`；`git diff --check` 通过。
+- 亲自重跑：`node --test scripts/ui-component-spec.test.mjs` 12 通过；`npm run check:ui-library` 输出 `Component specs hold: sq-btn`；`node scripts/run-component-spec-browser-gate.mjs sq-btn --expect-spec` 输出 `matches 42 spec browser expectations`；`git diff --check` 通过。
 - diff 逐行复核：改动限于 `tokens.brutal.css`、`styles.css`、`interaction-state.css`、`product.css` 中规格列出的规则与 `package.json` 一行；未触碰 `product.css:301` 全局禁用规则与管理页样式。
 - 校验器已知盲点：只登记"选择器文本含 `.sq-btn` / `.send-btn`"的规则。通过其他类名命中同一元素的规则不在其视野内，例如 `channel-extras.css:259` 的 `.rah-composer-pickers .rah-composer-picker:disabled { opacity: .4; pointer-events: none }`。下一批需让校验器按夹具中的真实元素反查全部命中规则，而不是按类名文本匹配。
 - focus-visible 分歧的现状：夹具中的 `.sq-btn` 实测 `2px oklch(0 0 0)`（`styles.css:48` 通用规则）；正式实例页面上的 `.sq-btn.rah-composer-picker` 与 Raft 的 `.btn-brutal-sm bg-white p-1` 实测均为 `3px #141111`。两次测量的元素与构建不同，`pending: focus-outline-width-2-vs-3` 保留，需在同一构建上对 header 方钮与取件钮各测一次。
@@ -204,3 +204,19 @@
   本地报告运行，绝不进 `package.json`。
 - **matched-rules 报告会被并发的 CSS 改动作废。** 内容哈希一变就必须重跑门禁；
   这是设计意图，但在有人同时改 `packages/ui-tokens/src/**/*.css` 时会反复失效。
+
+## 执行记录（2026-09-12，业主复审加固）
+
+本次只动门禁脚手架与规格 JSON 的门禁字段，不动本组件的任何 CSS 声明、override 或 pending。
+
+- **门禁合并**：`scripts/run-<组件>-spec-browser-gate.mjs` 的近重复副本已由通用的
+  `scripts/run-component-spec-browser-gate.mjs <组件>` 取代，探针表 / 视口 / 读取属性 / settle 时长
+  全部迁入 `packages/ui-tokens/specs/<组件>.spec.json` 的 `probes` 与 `gate`。
+  平价证明（删除旧脚本前跑）：旧脚本 `--write-baseline` → 新脚本 `--compare` **diff 为空**；
+  两者产出的 `*.matched-rules.json` 的 `probes` **逐字节相同**。
+- **不再跳过**：夹具里缺任何一个已声明探针，门禁硬失败（旧实现是 `continue`）。
+- **报告四重绑定**：CSS 输入 / 夹具 `{html,tsx}` 字节 / 每个探针渲染后 DOM 的摘要 / 门禁脚本字节。
+  校验器要求报告的探针集合与 `spec.probes` 完全一致（缺一个、多一个都失败）。
+- **夹具渲染导出**：新增 `packages/ui-tokens/specs/<组件>.fixture-markup.json`，目录页改为渲染它。
+- **flag 更名**：`--allow-uncommitted-ratchet` → `--uncommitted-ratchet-preview`，
+  报错改为指向 `docs/design/component-specs/baseline-2026-09-12.zh-CN.md`。

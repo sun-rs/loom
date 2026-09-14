@@ -1,3 +1,7 @@
+import {
+  taskHistoryStatus,
+  previousTaskHistoryStatus,
+} from "./task-history-status.ts";
 import type { DatabaseSync } from "node:sqlite";
 import * as P from "@rah-os/protocol";
 import { discoveryPage } from "./global-discovery.ts";
@@ -43,7 +47,7 @@ export function readTaskHistory(
       input.limit + 1,
     );
   for (const row of rows) {
-    const entry = historyEntry(row),
+    const entry = historyEntry(row, database),
       size = Buffer.byteLength(JSON.stringify(entry));
     if (size > P.TASK_HISTORY_ROW_MAX_BYTES)
       throw new ForbiddenError(
@@ -69,7 +73,7 @@ export function readTaskHistory(
   });
 }
 
-function historyEntry(row: Row) {
+function historyEntry(row: Row, database: DatabaseSync) {
   const payload = jsonObject(row, "payload_json");
   const entry: Record<string, unknown> = {
     eventId: text(row, "event_id"),
@@ -95,5 +99,10 @@ function historyEntry(row: Row) {
     payload.disposition === "changes_requested"
   )
     entry.disposition = payload.disposition;
+  const status = taskHistoryStatus(row);
+  if (status) {
+    entry.workflowStatus = status;
+    entry.previousWorkflowStatus = previousTaskHistoryStatus(database, row);
+  }
   return P.WorkerTaskHistoryEntrySchema.parse(entry);
 }

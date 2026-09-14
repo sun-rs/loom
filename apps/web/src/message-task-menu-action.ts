@@ -11,11 +11,7 @@ export type MessageTaskMenuAction =
       reason: string;
     };
 
-/**
- * Raft owns the message-menu labels and placement. The Kernel still owns what
- * those labels mean: only a submitted/reviewable Task can complete, while only
- * a safely cancelled Task can reopen. A completed delivery remains immutable.
- */
+/** Message actions share the canonical Human status editor. */
 export function messageTaskMenuAction(
   task: Task,
   canManageAnyTask: boolean,
@@ -30,13 +26,8 @@ export function messageTaskMenuAction(
       label,
       reason: "你没有管理此任务的权限",
     };
-  if (task.state === "completed")
-    return {
-      kind: "unavailable",
-      label,
-      reason: "已完成任务保留 canonical 完成记录",
-    };
-  const target = task.state === "cancelled" ? "todo" : "done";
+  const reopen = task.state === "cancelled" || task.state === "completed";
+  const target = reopen ? "todo" : "done";
   const transition = globalTaskTransition(task, target, true);
   if (!transition.operation)
     return {
@@ -44,7 +35,7 @@ export function messageTaskMenuAction(
       label,
       reason: transition.reason ?? "此任务操作不可用",
     };
-  return task.state === "cancelled"
+  return reopen
     ? { kind: "reopen", label: "重新打开任务" }
     : { kind: "complete", label: "标记为完成" };
 }

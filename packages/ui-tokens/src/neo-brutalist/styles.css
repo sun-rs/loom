@@ -1069,7 +1069,17 @@ body.overlay-open { overflow: hidden; }
 
 /* Empty composers retain the adopted minimum; attachment rows may grow the box.
    Never shrink the editor to fit selected files (composer-attachment-pickers.md). */
-.composer-box textarea { height: 40px; flex: none; }
+/* Raft oS: min-h-5 md:min-h-10, max-h-32, leading-5. */
+.composer-box textarea {
+  height: 20px; min-height: 20px; max-height: 128px; flex: none;
+  font-size: 16px; line-height: 20px; overflow-y: hidden;
+}
+@media (min-width: 768px) {
+  .composer-box textarea { height: 40px; min-height: 40px; font-size: 14px; }
+}
+@media (max-width: 767.98px) {
+  .composer-box { min-height: 76px; }
+}
 
 /* 通知条横跨频道列 + 消息列（窄屏回到全宽） */
 .notice-banner { grid-column: 3 / -1; }

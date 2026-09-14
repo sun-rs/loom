@@ -100,18 +100,14 @@ export function attachmentAnchorLabel(anchor: AttachmentAnchor): string {
   return "位置不可用";
 }
 
+/** File discussions follow time, with canonical Room sequence breaking ties. */
 export function orderAttachmentComments<
-  T extends { createdAt: string; anchor: AttachmentAnchor | null },
+  T extends { createdAt: string; roomSeq: number },
 >(comments: readonly T[]): T[] {
-  const position = (anchor: AttachmentAnchor | null) => {
-    if (!anchor) return -1;
-    const value = anchor.data.start ?? anchor.data.time ?? anchor.data.y;
-    return typeof value === "number" && Number.isFinite(value) ? value : 0;
-  };
   return [...comments].sort(
     (a, b) =>
-      position(a.anchor) - position(b.anchor) ||
-      a.createdAt.localeCompare(b.createdAt),
+      Date.parse(a.createdAt) - Date.parse(b.createdAt) ||
+      a.roomSeq - b.roomSeq,
   );
 }
 

@@ -230,25 +230,6 @@
   transition: none;
 }
 
-/* Raft keeps the Activity completion action in the tab order but reveals it
-   on card hover/focus with the 100ms opacity primitive. */
-.rah-product-shell .activity-done {
-  opacity: 0;
-  transition: opacity var(--rah-press-transition);
-}
-
-.rah-product-shell
-  :is(.feed-card:hover, .feed-card:focus-visible, .feed-card:focus-within)
-  .activity-done {
-  opacity: 1;
-}
-
-@media (hover: none) {
-  .rah-product-shell .activity-done {
-    opacity: 1;
-  }
-}
-
 /* Tailwind's transition-colors timing is part of the observed Raft shell
    contract. These legacy primitives predate this protocol but are still the
    owners for every rail, conversation row and tab instance. */

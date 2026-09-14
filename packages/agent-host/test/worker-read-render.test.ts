@@ -1561,3 +1561,52 @@ test("channel attention conditionally renders upstream guidance and preserves le
   assert.match(restored, /Agent API: provided mute API/);
   assert.match(restored, /Agent API: provided unmute API/);
 });
+
+test("Agent message history retains the exact file reference independently of the comment body", () => {
+  const text = render("/v1/worker/messages/history", {
+    messages: [
+      {
+        messageId: "comment",
+        roomId: "room",
+        roomSeq: 2,
+        actorId: "human",
+        body: "What does this mean?",
+        createdAt: "2026-09-14T00:00:00Z",
+        attachmentComment: {
+          attachmentId: "md-identity",
+          filename: "report.md",
+        },
+      },
+    ],
+  });
+  assert.ok(text);
+  assert.match(
+    text,
+    /Comment on file: "report.md" \(attachmentId:md-identity\)/,
+  );
+  assert.match(text, /What does this mean\?/);
+});
+
+test("Agent sync includes the delivered comment file name and identity", () => {
+  const text = render("/v1/worker/sync", {
+    events: [
+      {
+        type: "message.posted",
+        actorId: "human",
+        roomId: "room",
+        roomSeq: 2,
+        createdAt: "2026-09-14T00:00:00Z",
+        payload: {
+          body: "Question",
+          attachmentComment: {
+            attachmentId: "html-id",
+            filename: "index.html",
+            anchor: null,
+          },
+        },
+      },
+    ],
+  });
+  assert.ok(text);
+  assert.match(text, /Comment on file: "index.html" \(attachmentId:html-id\)/);
+});

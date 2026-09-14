@@ -186,7 +186,7 @@ test("Raft focus, message toolbar and channel drawer interactions share the meas
   );
   assert.match(
     product,
-    /\.rah-channel-settings-header\s*\{[^}]*height:\s*54px;[^}]*min-height:\s*54px;/su,
+    /\.rah-channel-settings-header\s*\{[^}]*height:\s*var\(--head-h\);[^}]*min-height:\s*var\(--head-h\);/su,
   );
   assert.doesNotMatch(discovery, /<button className="search-kbd"/u);
   assert.match(discovery, /<span className="search-kbd" aria-hidden="true">/u);

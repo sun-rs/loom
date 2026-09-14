@@ -1,0 +1,178 @@
+import { cancelDeletedAgentReminders } from "./reminder-agent-deletion.ts";
+import { requireHumanControlRoomManager } from "./collaboration-policy.ts";
+import type { ClientAgentManageRequest, RoomEvent } from "@rah-os/protocol";
+import { canonicalDigest } from "./canonical-digest.ts";
+import {
+  ConflictError,
+  IdempotencyConflictError,
+  RuntimeTerminationProofError,
+  StaleContextError,
+} from "./errors.ts";
+import { integer, text } from "./sqlite-row.ts";
+import {
+  readAgentDefinition,
+  manageWorkspaceAgentTransaction,
+  managementResultFromEvent,
+  type WorkspaceAgentManagementOwner,
+} from "./workspace-agent-management.ts";
+import { releaseDeletedAgentTasks } from "./task-agent-deletion.ts";
+
+export type AgentDeleteCommand = Extract<
+  ClientAgentManageRequest,
+  { action: "set_state" }
+>;
+
+/** Room events are the durable deletion request/receipt. No adapter-owned queue. */
+export function requestAgentDeletion(
+  owner: WorkspaceAgentManagementOwner,
+  command: AgentDeleteCommand,
+): RoomEvent {
+  const { database: db, events } = owner;
+  const agent = readAgentDefinition(db, command.agentDefinitionId);
+  const roomId = agent.definition.controlRoomId;
+  requireHumanControlRoomManager(db, roomId, owner.actorId);
+  const digest = canonicalDigest({
+    domain: "rah/agent-deletion/v1",
+    action: command.action,
+    state: command.state,
+    agentDefinitionId: command.agentDefinitionId,
+    idempotencyKey: command.idempotencyKey,
+  });
+  const old = db
+    .prepare("SELECT * FROM room_events WHERE room_id=? AND idempotency_key=?")
+    .get(roomId, command.idempotencyKey);
+  if (old) {
+    const event = events.eventFromRow(old);
+    if (
+      event.type !== "agent.deletion_requested" ||
+      event.actorId !== owner.actorId ||
+      event.aggregateId !== command.agentDefinitionId ||
+      event.payload.requestDigest !== digest
+    )
+      throw new IdempotencyConflictError(
+        "Agent deletion request identity changed",
+      );
+    return event;
+  }
+  if (agent.definition.state === "tombstoned")
+    throw new ConflictError("a tombstoned Agent cannot be deleted again");
+  const seq =
+    integer(
+      db.prepare("SELECT next_seq FROM rooms WHERE room_id=?").get(roomId)!,
+      "next_seq",
+    ) - 1;
+  if (seq !== command.basedOnRoomSeq)
+    throw new StaleContextError(command.basedOnRoomSeq, seq);
+  const pending = db
+    .prepare(
+      "SELECT * FROM room_events WHERE aggregate_id=? AND type='agent.deletion_requested' LIMIT 1",
+    )
+    .get(command.agentDefinitionId);
+  if (pending) return events.eventFromRow(pending);
+  if (agent.definition.state !== "disabled")
+    manageWorkspaceAgentTransaction(owner, {
+      ...command,
+      state: "disabled",
+      idempotencyKey: `${command.idempotencyKey}:disable`,
+    });
+  return events.append({
+    actorId: owner.actorId,
+    aggregateId: command.agentDefinitionId,
+    aggregateType: "agent_definition",
+    idempotencyKey: command.idempotencyKey,
+    roomId,
+    type: "agent.deletion_requested",
+    payload: {
+      requestDigest: digest,
+      participantId: agent.definition.participantId,
+      basedOnRoomSeq: command.basedOnRoomSeq,
+    },
+  });
+}
+
+export function finishAgentDeletion(
+  owner: WorkspaceAgentManagementOwner,
+  request: RoomEvent,
+) {
+  const { database: db, events } = owner;
+  const key = `${request.idempotencyKey}:complete`;
+  const old = db
+    .prepare("SELECT * FROM room_events WHERE room_id=? AND idempotency_key=?")
+    .get(request.roomId, key);
+  if (old) {
+    const event = events.eventFromRow(old);
+    if (
+      event.type !== "agent.tombstoned" ||
+      event.aggregateId !== request.aggregateId ||
+      event.actorId !== request.actorId
+    )
+      throw new IdempotencyConflictError(
+        "Agent deletion receipt identity changed",
+      );
+    return managementResultFromEvent(db, event, true);
+  }
+  const participantId = String(request.payload.participantId);
+  // Timeouts, disabled state, and process signals are not terminal proof.
+  for (const [table, predicate] of [
+    ["run_attempts", "state IN ('starting','running','orphaned')"],
+    ["runtime_processes", "state <> 'terminated'"],
+    ["activations", "state = 'leased'"],
+    ["placements", "state IN ('reserved','consumed')"],
+    ["agent_exclusive_operation_leases", "state = 'active'"],
+  ])
+    if (
+      db
+        .prepare(
+          `SELECT 1 FROM ${table} WHERE participant_id=? AND ${predicate} LIMIT 1`,
+        )
+        .get(participantId)
+    )
+      throw new RuntimeTerminationProofError(
+        "Agent deletion is waiting for Host terminal proof; the durable request will resume automatically",
+      );
+  const now = owner.now().toISOString();
+  for (const activation of db
+    .prepare(
+      "SELECT * FROM activations WHERE participant_id=? AND state IN ('queued','quarantined')",
+    )
+    .all(participantId)) {
+    const id = text(activation, "activation_id");
+    db.prepare(
+      "UPDATE activations SET state='cancelled',lease_owner=NULL,lease_until=NULL,lease_until_ms=NULL,last_error='Agent deleted',updated_at=? WHERE activation_id=?",
+    ).run(now, id);
+    events.append(
+      {
+        actorId: request.actorId,
+        aggregateId: id,
+        aggregateType: "activation",
+        roomId: text(activation, "room_id"),
+        idempotencyKey: `${request.eventId}:cancel:${id}`,
+        type: "activation.cancelled",
+        payload: {
+          activationId: id,
+          reason: "agent_deleted",
+          agentDefinitionId: request.aggregateId,
+        },
+      },
+      request,
+    );
+  }
+  releaseDeletedAgentTasks(owner, participantId, request);
+  cancelDeletedAgentReminders(owner, request);
+  return manageWorkspaceAgentTransaction(
+    { ...owner, actorId: request.actorId, deletionRequest: request },
+    {
+      action: "set_state",
+      state: "tombstoned",
+      agentDefinitionId: request.aggregateId,
+      basedOnRoomSeq:
+        integer(
+          db
+            .prepare("SELECT next_seq FROM rooms WHERE room_id=?")
+            .get(request.roomId)!,
+          "next_seq",
+        ) - 1,
+      idempotencyKey: key,
+    },
+  );
+}

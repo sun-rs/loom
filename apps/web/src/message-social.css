@@ -274,6 +274,15 @@
   position: relative;
   touch-action: pan-y;
 }
+/* Raft sidebar select-none: long press opens a menu, never text selection.
+   Scope to navigation rows so search fields and chat text remain selectable. */
+.rah-room-sidebar [data-sidebar-key],
+.rah-room-sidebar .rah-sidebar-disclosure {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
 .rah-sidebar-sortable.is-dragging {
   opacity: 0.35;
 }
@@ -316,6 +325,8 @@
 .sidebar-bookmarks.is-selected {
   color: var(--ink);
   background: var(--pink);
+  border-color: var(--black);
+  box-shadow: var(--shadow-s);
 }
 .rah-saved-pane {
   min-height: 0;
@@ -600,4 +611,9 @@
     pointer-events: auto;
     display: flex;
   }
+}
+
+/* Raft Zx/FD: mt-3 above each group, including wrapped drag containers. */
+.rah-room-sidebar [data-sidebar-group] {
+  margin-top: 12px;
 }

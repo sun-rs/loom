@@ -2,69 +2,77 @@ import { createRoot } from "react-dom/client";
 import type { RahClient } from "@rah-os/client-sdk";
 import { SettingsSurface } from "../src/components/settings-surface.tsx";
 import "../src/product-styles.ts";
+const longLaunch = new URLSearchParams(location.search).has("longLaunch");
 let revision = 0;
-let enabled = false;
-const additions: Record<string, string[]> = {};
-const overrides: Record<string, string[] | null> = {};
-const defaults = ["serve", "--pure"];
-const view = () => ({
-  revision,
-  runtimes: [
-    { runtimeId: "codex", enabled, supported: true, detail: "Fixture — Codex" },
-    {
-      runtimeId: "claude",
-      enabled: false,
-      supported: true,
-      detail: "Fixture — Claude",
-    },
-    {
-      runtimeId: "kimi",
-      enabled: false,
-      supported: false,
-      detail: "Fixture — ACP 未接通 Guide",
-    },
-    {
-      runtimeId: "opencode",
-      enabled: false,
-      supported: false,
-      detail: "Fixture — 未接通 Guide",
-    },
-  ].map((row) => ({
-    ...row,
-    additionalArgs: additions[row.runtimeId] ?? [],
-    managedLaunch: { args: [], environment: {} },
-    defaultArgs: defaults,
-    requiredArgs: ["serve"],
-    effectiveArgs: overrides[row.runtimeId] ?? defaults,
-    overrideArgs: overrides[row.runtimeId] ?? null,
-  })),
-});
+const enabled = new Set(["codex", "claude"]);
 const client = {
   async request(
     command: string,
-    input: {
-      enabled?: boolean;
-      runtimeId: string;
-      overrideArgs?: string[] | null;
-      additionalArgs?: string[];
-    },
+    input: { runtimeId?: string; enabled?: boolean; expectedRevision?: number },
   ) {
-    await new Promise((resolve) => setTimeout(resolve, 50));
     if (command === "runtime.guide.update") {
-      if (input.enabled !== undefined) enabled = input.enabled;
-      if (input.overrideArgs !== undefined)
-        overrides[input.runtimeId] = input.overrideArgs;
-      if (input.additionalArgs !== undefined) {
-        additions[input.runtimeId] = input.additionalArgs;
-        overrides[input.runtimeId] = null;
-      }
+      if (
+        Object.keys(input).some(
+          (key) => !["runtimeId", "enabled", "expectedRevision"].includes(key),
+        )
+      )
+        throw new Error("Global launch writes forbidden");
+      if (
+        input.expectedRevision !== revision ||
+        !["codex", "claude"].includes(input.runtimeId ?? "")
+      )
+        throw new Error("Invalid Guide update");
+      if (input.enabled) enabled.add(input.runtimeId!);
+      else enabled.delete(input.runtimeId!);
       revision++;
-    }
-    return view();
+    } else if (command !== "runtime.guide.read")
+      throw new Error("Unexpected command");
+    return {
+      revision,
+      runtimes: ["codex", "claude", "kimi", "opencode"].map((runtimeId) => ({
+        runtimeId,
+        enabled: enabled.has(runtimeId),
+        supported: ["codex", "claude"].includes(runtimeId),
+        detail: "Fixture",
+        additionalArgs: [],
+        environment: {},
+        inheritedArgs: [],
+        inheritedEnvironment: {},
+        managedLaunch: {
+          args: [],
+          environment:
+            runtimeId === "claude"
+              ? { CLAUDE_CODE_DISABLE_AUTO_MEMORY: "1" }
+              : {},
+        },
+        defaultArgs:
+          runtimeId === "codex"
+            ? [
+                "app-server",
+                ...(longLaunch
+                  ? Array.from(
+                      { length: 20 },
+                      (_, i) => `--fixture-option-${i}=${"x".repeat(80)}`,
+                    )
+                  : []),
+              ]
+            : [],
+        requiredArgs: [],
+        effectiveArgs: [],
+        overrideArgs: null,
+      })),
+    };
   },
 } as unknown as RahClient;
 createRoot(document.getElementById("root")!).render(
-  <main style={{ height: "100vh" }}>
+  <main
+    style={{
+      height: "100vh",
+      display: "flex",
+      gridTemplateColumns: "0 minmax(0, 1fr) 0",
+      gridTemplateRows: "minmax(0, 1fr)",
+    }}
+  >
     <SettingsSurface
       client={client}
       agents={[]}

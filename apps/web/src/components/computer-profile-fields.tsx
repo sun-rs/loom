@@ -1,3 +1,4 @@
+import { browserOpaqueId } from "../browser-opaque-id.ts";
 import { useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 
 import type {
@@ -89,7 +90,7 @@ export function ComputerProfileFields({
     });
     if (saveAttempt.current?.signature !== signature) {
       saveAttempt.current = {
-        idempotencyKey: crypto.randomUUID(),
+        idempotencyKey: browserOpaqueId(),
         signature,
       };
     }

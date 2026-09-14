@@ -333,3 +333,24 @@
   width: 16px;
   height: 16px;
 }
+
+/* Raft JD searchable assignee editor uses the shared 240px person list. */
+.rah-discovery-popover.is-task-assignee {
+  width: 240px;
+}
+
+/* Raft JD -> dm/Itt person rows, distinct from the plain status list. */
+.rah-discovery-popover.is-task-assignee
+  .rah-discovery-popover-options
+  > button {
+  height: 36px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-bottom: 1px solid rgb(0 0 0 / 10%);
+  font: 700 12px/24px var(--sans);
+}
+.rah-discovery-popover.is-task-assignee
+  .rah-discovery-popover-options
+  > button:last-child {
+  border-bottom: 0;
+}

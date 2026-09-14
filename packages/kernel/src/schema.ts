@@ -1605,3 +1605,16 @@ function optionalString(row: object, field: string): string | undefined {
   if (value === null || value === undefined) return undefined;
   return requiredString(row, field);
 }
+
+export function migrateSystemChannelVisibilityV56(
+  database: DatabaseSync,
+): void {
+  const roomColumns = database.prepare("PRAGMA table_info(rooms)").all();
+  if (
+    !roomColumns.some((row) => requiredString(row, "name") === "system_hidden")
+  ) {
+    database.exec(
+      "ALTER TABLE rooms ADD COLUMN system_hidden INTEGER NOT NULL DEFAULT 0 CHECK(system_hidden IN (0,1))",
+    );
+  }
+}

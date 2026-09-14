@@ -86,12 +86,49 @@ export class HumanSidebar {
       "pinned",
       "channelOrder",
       "dmOrder",
+      "hiddenDms",
       "mutedActivity",
       "notifyAllMessages",
       "expandedLongMessages",
     ] as const)
       preferences[field] = preferences[field].filter((key) => keys.has(key));
+    preferences.customSections = preferences.customSections.map((section) => ({
+      ...section,
+      items: section.items.filter((key) => keys.has(key)),
+    }));
     return { preferences, recent };
+  }
+  /** Called inside the canonical open-DM transaction; no nested transaction. */
+  revealDirect(
+    auth: AuthenticatedActorContext,
+    workspaceId: string,
+    peerPrincipalId: string,
+    idempotencyKey: string,
+  ) {
+    const current = this.get(auth, { workspaceId });
+    const key = `peer:${peerPrincipalId}`,
+      actorId = this.context.requireActor(auth);
+    if (!current.preferences.hiddenDms.includes(key)) return;
+    if (
+      personalCommandReplay(
+        this.context.database,
+        actorId,
+        "sidebar-reveal",
+        idempotencyKey,
+        { workspaceId, peerPrincipalId },
+      )
+    )
+      return;
+    const preferences = {
+      ...current.preferences,
+      version: current.preferences.version + 1,
+      hiddenDms: current.preferences.hiddenDms.filter((item) => item !== key),
+    };
+    this.context.database
+      .prepare(
+        "UPDATE human_sidebar_preferences SET preferences_json=? WHERE principal_id=? AND workspace_id=?",
+      )
+      .run(JSON.stringify(preferences), actorId, workspaceId);
   }
   patch(auth: AuthenticatedActorContext, request: P.SidebarPatchRequest) {
     const input = P.SidebarPatchRequestSchema.parse(request),
@@ -118,6 +155,7 @@ export class HumanSidebar {
         "pinned",
         "channelOrder",
         "dmOrder",
+        "hiddenDms",
         "mutedActivity",
         "notifyAllMessages",
         "expandedLongMessages",
@@ -126,7 +164,8 @@ export class HumanSidebar {
           if (
             !keys.has(key) ||
             (field === "channelOrder" && !key.startsWith("room:")) ||
-            (field === "dmOrder" && !key.startsWith("peer:")) ||
+            ((field === "dmOrder" || field === "hiddenDms") &&
+              !key.startsWith("peer:")) ||
             ((field === "mutedActivity" ||
               field === "notifyAllMessages" ||
               field === "expandedLongMessages") &&
@@ -136,6 +175,12 @@ export class HumanSidebar {
               "sidebar target is unavailable or inaccessible in this section",
             );
         }
+      for (const section of input.patch.customSections ?? [])
+        for (const key of section.items)
+          if (!keys.has(key))
+            throw new ForbiddenError(
+              "sidebar target is unavailable or inaccessible in this section",
+            );
       const preferences = {
         ...current.preferences,
         ...input.patch,

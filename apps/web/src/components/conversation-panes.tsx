@@ -1,5 +1,16 @@
+import { activityDisplayText } from "../activity-display-names.ts";
+import { useTaskInitialScroll } from "../use-task-initial-scroll.ts";
+import { useMessageHighlight } from "../use-message-highlight.ts";
+import { useComposerAutosize } from "../use-composer-autosize.ts";
+import { ThreadFollowerConfirmation } from "./thread-follower-confirmation.tsx";
+import { MessageAgentModelName } from "./message-model-name.tsx";
+import {
+  useWorkspaceEntities,
+  AgentMessageContext,
+} from "./workspace-entity-context.tsx";
+import { useResponsiveTaskView } from "../use-responsive-task-view.ts";
 import { ComposerDropForm } from "./composer-drop-form.tsx";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import type {
   FormEvent,
   KeyboardEvent as ReactKeyboardEvent,
@@ -27,7 +38,6 @@ import {
 } from "./message-social.tsx";
 import {
   createRoomViewModel,
-  taskParticipantsForSelection,
   type RoomAgentTarget,
   type TaskParticipantSelection,
   type WorkspaceAgentView,
@@ -38,7 +48,7 @@ import { HumanIdentity } from "./human-identity.tsx";
 import { AgentAvatar } from "./agent-avatar.tsx";
 import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
 import { insertMention } from "../identity-presentation.ts";
-import { formatRahDateTime } from "../date-time-presentation.ts";
+import { ChatDateDivider, ChatMessageTime } from "./chat-message-time.tsx";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import {
   MessageMarkdown,
@@ -69,7 +79,6 @@ import { roomLongMessagesCollapsed } from "../room-preferences.ts";
 import {
   buildChatTimeline,
   buildThreadReceiptTimeline,
-  chatDateLabel,
   chatLocalDateKey,
   chatTimelineKey,
   threadReminderReceipts,
@@ -81,7 +90,6 @@ import {
 import { useMessageContextMenu } from "../use-message-context-menu.ts";
 import { MessageContextMenu } from "./message-context-menu.tsx";
 import { MessageSelectionToolbar } from "./message-selection-toolbar.tsx";
-import { TaskParticipantFields } from "./task-participant-fields.tsx";
 import { MessageForwardDialog } from "./message-forward-dialog.tsx";
 import { ForwardedMessageBundleView } from "./forwarded-message-bundle.tsx";
 import {
@@ -114,6 +122,9 @@ export function ChatPane({
   client,
   currentPrincipal,
   focusedMessageId,
+  focusHighlightRequest = 0,
+  focusHighlightQuery,
+  onReturnToLatest,
   onReadThrough,
   agents,
   canManageAnyTask,
@@ -151,6 +162,9 @@ export function ChatPane({
   client: RahClient;
   currentPrincipal?: Principal | undefined;
   focusedMessageId?: string | undefined;
+  focusHighlightRequest?: number | undefined;
+  focusHighlightQuery?: string | undefined;
+  onReturnToLatest?: () => void;
   onReadThrough?: ((throughSeq: number) => Promise<void>) | undefined;
   agents: readonly RoomAgentTarget[];
   canManageAnyTask: boolean;
@@ -198,6 +212,12 @@ export function ChatPane({
   threadReplyPreviews: readonly ThreadReplyPreview[];
   threads: readonly Thread[];
 }) {
+  const locationHighlight = useMessageHighlight(
+    focusedMessageId &&
+      messages.some((message) => message.messageId === focusedMessageId)
+      ? JSON.stringify([roomId, focusedMessageId, focusHighlightRequest])
+      : undefined,
+  );
   const mentionReadStatesByMessage = useMemo(
     () =>
       canonicalMentionReadStates ??
@@ -216,16 +236,11 @@ export function ChatPane({
         );
   const uploadDraftKey = roomId ? `room:${roomId}` : undefined;
   const fileUploads = useRoomUploads(roomId, uploadDraftKey);
-  const {
-    body,
-    setBody,
-    asTask,
-    setAsTask,
-    taskAssigneeId,
-    setTaskAssigneeId,
-    acceptDraft,
-  } = useComposerDraft(roomId ? `room:${roomId}` : undefined);
+  const { body, setBody, asTask, setAsTask, acceptDraft } = useComposerDraft(
+    roomId ? `room:${roomId}` : undefined,
+  );
   const composerRef = useRef<HTMLTextAreaElement>(null);
+  const attachComposer = useComposerAutosize(composerRef, body);
   const composerMentionAgents = useMemo(() => {
     const participantIds = new Set(
       agents.map(({ participantId }) => participantId),
@@ -398,23 +413,11 @@ export function ChatPane({
       });
     });
   }
-  let taskTargetIssue: string | undefined;
-  let taskParticipants: TaskParticipantSelection = {
+  const taskParticipants: TaskParticipantSelection = {
     collaboratorIds: [],
     reviewerIds: [],
   };
-  if (asTask) {
-    try {
-      taskParticipants = taskParticipantsForSelection({
-        availableAgents: agents,
-        ...(taskAssigneeId === undefined ? {} : { assigneeId: taskAssigneeId }),
-        collaboratorIds: [],
-        reviewerIds: [],
-      });
-    } catch (caught) {
-      taskTargetIssue = errorMessage(caught);
-    }
-  }
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     const value = body.trim();
@@ -524,7 +527,7 @@ export function ChatPane({
               return (
                 <>
                   {showDate ? (
-                    <ChatDateDivider label={chatDateLabel(item.createdAt)} />
+                    <ChatDateDivider createdAt={item.createdAt} />
                   ) : null}
                   <p className="rah-chat-system-notice">
                     {item.kind === "reminder-fired" ? (
@@ -567,7 +570,7 @@ export function ChatPane({
             return (
               <>
                 {showDate ? (
-                  <ChatDateDivider label={chatDateLabel(message.createdAt)} />
+                  <ChatDateDivider createdAt={message.createdAt} />
                 ) : null}
                 <MessageArticle
                   client={client}
@@ -600,7 +603,16 @@ export function ChatPane({
                           threadId: referenceThread.threadId,
                         }))
                   }
-                  focused={message.messageId === focusedMessageId}
+                  highlightQuery={
+                    locationHighlight.visible &&
+                    message.messageId === focusedMessageId
+                      ? focusHighlightQuery
+                      : undefined
+                  }
+                  focused={
+                    locationHighlight.visible &&
+                    message.messageId === focusedMessageId
+                  }
                   message={message}
                   mentionReadStates={mentionReadStatesByMessage.get(
                     message.messageId,
@@ -666,10 +678,15 @@ export function ChatPane({
           scrollElementRef={messagesRef}
         />
       </section>
-      {!focusedMessageId && timelineItems.length > 0 && !atBottom ? (
+      {(focusedMessageId && onReturnToLatest) ||
+      (!focusedMessageId && timelineItems.length > 0 && !atBottom) ? (
         <button
           className="rah-scroll-to-bottom"
           onClick={() => {
+            if (focusedMessageId) {
+              onReturnToLatest?.();
+              return;
+            }
             stickToBottom.current = true;
             setAtBottom(true);
             timelineRef.current?.scrollToLatest();
@@ -698,15 +715,6 @@ export function ChatPane({
         />
       ) : (
         <>
-          {asTask ? (
-            <TaskParticipantFields
-              agents={agents}
-              assigneeId={taskAssigneeId}
-              onAssigneeChange={setTaskAssigneeId}
-              onManageAgents={onManageAgents}
-              taskTargetIssue={taskTargetIssue}
-            />
-          ) : null}
           {submitError === undefined ? null : (
             <div className="rah-inline-error">{submitError}</div>
           )}
@@ -730,7 +738,7 @@ export function ChatPane({
                 aria-controls="room-composer-mentions"
                 aria-expanded={composerMention.open}
                 aria-label="消息输入框"
-                ref={composerRef}
+                ref={attachComposer}
                 disabled={!canPost && !canCreateTask}
                 onBlur={composerMention.onBlur}
                 onChange={composerMention.onChange}
@@ -750,7 +758,7 @@ export function ChatPane({
                     ? undefined
                     : { kind: roomKind ?? "channel", name: roomName },
                 )}`}
-                rows={3}
+                rows={1}
                 value={body}
               />
               <div className="composer-bar">
@@ -779,7 +787,6 @@ export function ChatPane({
                     (body.trim() === "" && fileUploads.rows.length === 0) ||
                     fileUploads.rows.some((row) => row.status !== "ready") ||
                     pending ||
-                    taskTargetIssue !== undefined ||
                     (asTask ? !canCreateTask : !canPost)
                   }
                   title="发送"
@@ -827,15 +834,6 @@ function messageNavigationTarget(
   };
 }
 
-function ChatDateDivider({ label }: { label: string }) {
-  return (
-    <div className="rah-chat-date-divider" role="separator">
-      <span aria-hidden="true" />
-      <time>{label}</time>
-    </div>
-  );
-}
-
 function ThreadReplyAvatar({
   actorId,
   agents,
@@ -847,20 +845,24 @@ function ThreadReplyAvatar({
   author: string;
   principals: readonly Principal[];
 }) {
+  const entities = useWorkspaceEntities();
   const replyAgent = agents.find(
     ({ participantId }) => participantId === actorId,
   );
   if (replyAgent !== undefined) {
     return <AgentAvatar agent={replyAgent} showStatus={false} size="compact" />;
   }
-  const replyPrincipal = principals.find(
+  const candidate = principals.find(
     ({ principalId }) => principalId === actorId,
   );
-  if (replyPrincipal?.avatarKey) {
+  const replyPrincipal = candidate
+    ? (entities?.resolvePerson(candidate) ?? candidate)
+    : entities?.person(actorId);
+  if (replyPrincipal) {
     return (
       <ProfileImageAvatar
         avatarKey={replyPrincipal.avatarKey}
-        name={author}
+        name={replyPrincipal.displayName || author}
         size="compact"
       />
     );
@@ -945,6 +947,14 @@ export function MessageArticle({
   threadReplies?: readonly ThreadReplyPreview[];
   threadReplyCount?: number;
 }) {
+  const entities = useWorkspaceEntities();
+  const person =
+    messagePrincipal &&
+    (entities?.resolvePerson(messagePrincipal) ?? messagePrincipal);
+  const authorName =
+    person?.kind === "human"
+      ? person.displayName || person.handle
+      : message.author;
   const social = useMessageSocial(message);
   const {
     anchor: contextMenu,
@@ -1061,7 +1071,7 @@ export function MessageArticle({
       {selection?.active ? (
         <label className="rah-message-selection-check">
           <input
-            aria-label={`选择 ${message.author} 的消息`}
+            aria-label={`选择 ${authorName} 的消息`}
             checked={selection.selected}
             onChange={selection.onToggle}
             type="checkbox"
@@ -1117,15 +1127,30 @@ export function MessageArticle({
               {message.author}
             </button>
           ) : (
-            <b>{message.author}</b>
+            <b>{authorName}</b>
           )}
-          <time>{formatTime(message.createdAt)}</time>
+          {messageAgent ? <MessageAgentModelName agent={messageAgent} /> : null}
+          <ChatMessageTime value={message.createdAt} />
         </header>
         {message.body.trim().length === 0 ? null : (
           <CollapsibleMessage
             collapse={collapseLongMessages}
             messageId={message.messageId}
           >
+            {message.attachmentComment && (
+              <span className="rah-message-file-reference">
+                <Icon name="chat" />
+                {(
+                  messagePrincipal ??
+                  referencePrincipals.find(
+                    (principal) => principal.principalId === message.actorId,
+                  )
+                )?.kind === "human"
+                  ? "评论："
+                  : "回复："}
+                {message.attachmentComment.filename}
+              </span>
+            )}
             <MessageMarkdown
               highlightQuery={highlightQuery}
               references={{
@@ -1146,6 +1171,7 @@ export function MessageArticle({
                   },
                   taskId: referenceTask.taskId,
                   taskNumber: referenceTask.taskNumber,
+                  state: referenceTask.state,
                 })),
                 threads: referenceThreads,
               }}
@@ -1165,8 +1191,16 @@ export function MessageArticle({
             className="rah-message-task-link"
             data-task-status={taskStatusPresentation(task).id}
             data-testid="message-task-badge"
-            disabled={threadAction === undefined}
-            onClick={openThreadFromMessage}
+            disabled={onOpenTarget === undefined}
+            onClick={() =>
+              onOpenTarget?.({
+                kind: "task",
+                roomId: task.roomId,
+                taskId: task.taskId,
+                rootMessageId: task.sourceMessageId,
+                threadId: task.threadId,
+              })
+            }
             type="button"
           >
             <Icon name="eye" />
@@ -1174,7 +1208,11 @@ export function MessageArticle({
             {taskAgent === undefined ? null : <span>@{taskAgent.handle}</span>}
           </button>
         )}
-        <MessageAttachments attachments={message.attachments} />
+        <MessageAttachments
+          attachments={message.attachments}
+          commentCounts={social.state?.data?.attachmentCommentCounts}
+          commentContext={{ parentMessageId: message.messageId }}
+        />
         <MessageReactionSummary view={social} />
         {threadAction === undefined || threadReplyCount === undefined ? null : (
           <button className="thread-preview" onClick={openThreadFromMessage}>
@@ -1189,9 +1227,17 @@ export function MessageArticle({
                   author={reply.author}
                   principals={referencePrincipals}
                 />
-                <b>{reply.author}</b>
-                <span className="tp-text">{reply.body}</span>
-                <time>{formatTime(reply.createdAt)}</time>
+                <b>
+                  {entities?.person(reply.actorId)?.displayName || reply.author}
+                </b>
+                <span className="tp-text">
+                  {activityDisplayText(
+                    reply.body,
+                    entities?.humans().map((member) => member.principal) ??
+                      referencePrincipals,
+                  )}
+                </span>
+                <ChatMessageTime value={reply.createdAt} />
               </span>
             ))}
           </button>
@@ -1251,6 +1297,8 @@ export function MessageArticle({
 }
 
 export function ThreadPane({
+  inactive = false,
+  searchPreview = false,
   hideHeader = false,
   parentSlot,
   client,
@@ -1259,7 +1307,10 @@ export function ThreadPane({
   messageAgents = [],
   mentionAgentIds = [],
   focusedMessageId,
+  focusHighlightRequest = 0,
+  focusHighlightQuery,
   followers = [],
+  followerCount,
   followersCanManage = false,
   followersError,
   followersLoading = false,
@@ -1299,6 +1350,8 @@ export function ThreadPane({
   taskAgent,
   threadId,
 }: {
+  inactive?: boolean;
+  searchPreview?: boolean;
   hideHeader?: boolean;
   parentSlot?: ReactNode;
   client: RahClient;
@@ -1307,7 +1360,10 @@ export function ThreadPane({
   messageAgents?: readonly WorkspaceAgentView[];
   mentionAgentIds?: readonly string[];
   focusedMessageId?: string | undefined;
+  focusHighlightRequest?: number | undefined;
+  focusHighlightQuery?: string | undefined;
   followers?: readonly WorkspaceAgentView[];
+  followerCount?: number | undefined;
   followersCanManage?: boolean;
   followersError?: string | undefined;
   followersLoading?: boolean;
@@ -1361,6 +1417,7 @@ export function ThreadPane({
   taskAgent?: WorkspaceAgentView;
   threadId?: string | undefined;
 }) {
+  const agentIdentity = useContext(AgentMessageContext);
   const mentionReadStatesByMessage = useMemo(
     () =>
       canonicalMentionReadStates ??
@@ -1383,6 +1440,7 @@ export function ThreadPane({
   const uploadDraftKey = root ? `thread:${root.messageId}` : undefined;
   const fileUploads = useRoomUploads(roomId, uploadDraftKey);
   const composerRef = useRef<HTMLTextAreaElement>(null);
+  const attachComposer = useComposerAutosize(composerRef, body);
   const composerMentionAgents = useMemo(() => {
     const participantIds = new Set(mentionAgentIds);
     return messageAgents.filter(({ participantId }) =>
@@ -1433,10 +1491,20 @@ export function ThreadPane({
   const [followerPendingIds, setFollowerPendingIds] = useState<Set<string>>(
     () => new Set(),
   );
+  const [removeFollowerTarget, setRemoveFollowerTarget] =
+    useState<WorkspaceAgentView>();
   const [followerActionError, setFollowerActionError] = useState<string>();
   const [removedFollowers, setRemovedFollowers] = useState<
     { agent: WorkspaceAgentView; undoToken: string }[]
   >([]);
+  useEffect(() => {
+    if (
+      !followersLoading &&
+      !followersError &&
+      (followerCount ?? followers.length) === 0
+    )
+      setFollowersOpen(false);
+  }, [followersLoading, followersError, followerCount, followers.length]);
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -1463,6 +1531,11 @@ export function ThreadPane({
     [reminderReceipts, replies],
   );
   const messagesElement = useRef<HTMLElement>(null);
+  useTaskInitialScroll(
+    messagesElement,
+    hideHeader && task && replies.length > 0 ? task.taskId : undefined,
+  );
+
   useVisibleMessageRead(
     messagesElement,
     root?.messageId,
@@ -1471,6 +1544,7 @@ export function ThreadPane({
   );
   const positionedMessage = useRef<string | undefined>(undefined);
   useEffect(() => {
+    setRemoveFollowerTarget(undefined);
     setFollowing(undefined);
     setFollowersOpen(false);
     setOverflowOpen(false);
@@ -1570,6 +1644,19 @@ export function ThreadPane({
   const activeSearchMessageId = searchOpen
     ? searchMatches[searchIndex]?.messageId
     : undefined;
+  const messageHighlight = useMessageHighlight(
+    activeSearchMessageId || focusedMessageId
+      ? JSON.stringify([
+          roomId,
+          root?.messageId,
+          focusedMessageId,
+          focusHighlightRequest,
+          searchOpen,
+          searchQuery,
+          activeSearchMessageId,
+        ])
+      : undefined,
+  );
   useEffect(() => {
     if (!searchOpen || searchMatches.length === 0) return;
     const index = Math.min(searchIndex, searchMatches.length - 1);
@@ -1590,7 +1677,7 @@ export function ThreadPane({
     }
   }, [onOpenTarget, replies, root, searchIndex, searchMatches, searchOpen]);
   useEffect(() => {
-    if (!followersOpen && !overflowOpen) return;
+    if (removeFollowerTarget || (!followersOpen && !overflowOpen)) return;
     const closeOutside = (event: PointerEvent) => {
       if (!(event.target instanceof Node)) return;
       if (followersOpen && !followersOwnerRef.current?.contains(event.target))
@@ -1602,7 +1689,7 @@ export function ThreadPane({
     return () => {
       window.removeEventListener("pointerdown", closeOutside);
     };
-  }, [followersOpen, overflowOpen]);
+  }, [followersOpen, overflowOpen, removeFollowerTarget]);
 
   function closeThreadLayerOnEscape(
     event: ReactKeyboardEvent<HTMLDivElement>,
@@ -1646,7 +1733,7 @@ export function ThreadPane({
     if (followersOpen) followersDialogRef.current?.focus();
   }, [followersOpen]);
   useEffect(() => {
-    if (!focusedMessageId) {
+    if (hideHeader || !focusedMessageId) {
       positionedMessage.current = undefined;
       return;
     }
@@ -1657,7 +1744,7 @@ export function ThreadPane({
     if (!node) return;
     node.scrollIntoView({ block: "center" });
     positionedMessage.current = focusedMessageId;
-  }, [focusedMessageId, replies, root]);
+  }, [focusedMessageId, hideHeader, replies, root]);
   async function follow(value: boolean) {
     if (!onFollow || pending) return;
     setPending(true);
@@ -1687,6 +1774,7 @@ export function ThreadPane({
         { agent, undoToken: result.undoToken },
       ]);
       setFollowerActionError(undefined);
+      setRemoveFollowerTarget(undefined);
       const delay = Math.max(0, Date.parse(result.undoExpiresAt) - Date.now());
       const previousTimer = followerUndoTimers.current.get(agent.participantId);
       if (previousTimer !== undefined) window.clearTimeout(previousTimer);
@@ -1807,15 +1895,28 @@ export function ThreadPane({
   return (
     <aside
       className="thread thread-side-column"
+      inert={inactive}
       aria-label="Thread 讨论"
       data-testid="thread-side-column"
       ref={threadPanelRef}
     >
       {resizer}
+      {removeFollowerTarget && (
+        <ThreadFollowerConfirmation
+          name={removeFollowerTarget.displayName}
+          busy={followerPendingIds.has(removeFollowerTarget.participantId)}
+          error={followerActionError}
+          onClose={() => {
+            setRemoveFollowerTarget(undefined);
+            setFollowerActionError(undefined);
+          }}
+          onConfirm={() => void removeFollower(removeFollowerTarget)}
+        />
+      )}
       {hideHeader ? null : (
         <PanelHeader kind="thread" className="rah-thread-head">
           <PanelHeaderAction
-            aria-label="返回聊天"
+            aria-label={searchPreview ? "返回搜索结果" : "返回聊天"}
             className="rah-thread-back"
             onClick={onClose}
             type="button"
@@ -1835,10 +1936,12 @@ export function ThreadPane({
             </span>
           </button>
           <div className="rah-thread-head-actions">
-            {followers.length > 0 || followersLoading || followersError ? (
+            {((followerCount === undefined &&
+              (followersLoading || followersError)) ||
+              (followerCount ?? followers.length) > 0) && (
               <div className="rah-thread-menu-owner" ref={followersOwnerRef}>
                 <button
-                  aria-label={`正在关注的 Agent：${followers.length}`}
+                  aria-label={`正在关注的 Agent：${followerCount ?? followers.length}`}
                   aria-expanded={followersOpen}
                   className="rah-thread-followers-trigger"
                   data-testid="thread-followers-header-trigger"
@@ -1850,7 +1953,7 @@ export function ThreadPane({
                   type="button"
                   ref={followersTriggerRef}
                 >
-                  {followersError ? (
+                  {followersError && followerCount === undefined ? (
                     <Icon name="circle-question-mark" />
                   ) : (
                     <>
@@ -1862,7 +1965,11 @@ export function ThreadPane({
                           size="compact"
                         />
                       ))}
-                      <span>{followersLoading ? "…" : followers.length}</span>
+                      <span>
+                        {followersLoading && followerCount === undefined
+                          ? "…"
+                          : (followerCount ?? followers.length)}
+                      </span>
                     </>
                   )}
                 </button>
@@ -1901,27 +2008,54 @@ export function ThreadPane({
                           className="rah-thread-follower-row"
                           key={agent.participantId}
                         >
-                          <AgentAvatar
-                            agent={agent}
-                            showStatus={false}
-                            size="member"
-                          />
-                          <span className="rah-thread-follower-copy">
-                            <b>{agent.displayName}</b>
-                            <small>
-                              {agent.runtimeLabels[0] ?? agent.handle}
-                            </small>
-                          </span>
+                          <button
+                            className="rah-thread-follower-profile"
+                            aria-label={`查看 ${agent.displayName} 资料`}
+                            disabled={!agentIdentity}
+                            onClick={() => {
+                              setFollowersOpen(false);
+                              agentIdentity?.onOpen(
+                                agent.agentDefinitionId,
+                                "thread",
+                              );
+                            }}
+                            type="button"
+                          >
+                            <AgentAvatar
+                              agent={agent}
+                              showStatus={false}
+                              size="member"
+                            />
+                            <span className="rah-thread-follower-copy">
+                              <b>{agent.displayName}</b>
+                            </span>
+                          </button>
                           {followersCanManage && onRemoveFollower ? (
                             <button
+                              className="rah-thread-follower-remove"
                               aria-label={`移除 ${agent.displayName}`}
                               disabled={followerPendingIds.has(
                                 agent.participantId,
                               )}
-                              onClick={() => void removeFollower(agent)}
+                              onClick={() => {
+                                setFollowerActionError(undefined);
+                                setRemoveFollowerTarget(agent);
+                              }}
                               type="button"
                             >
-                              ×
+                              <svg
+                                aria-hidden="true"
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M18 6 6 18m0-12 12 12" />
+                              </svg>
                             </button>
                           ) : null}
                         </div>
@@ -1930,7 +2064,7 @@ export function ThreadPane({
                   </div>
                 ) : null}
               </div>
-            ) : null}
+            )}
             <div className="rah-thread-menu-owner" ref={overflowOwnerRef}>
               <PanelHeaderAction
                 aria-expanded={overflowOpen}
@@ -1944,7 +2078,7 @@ export function ThreadPane({
                 type="button"
                 ref={overflowTriggerRef}
               >
-                <span aria-hidden="true">⋮</span>
+                <Icon name="ellipsis-vertical" />
               </PanelHeaderAction>
               {overflowOpen ? (
                 <div
@@ -1964,6 +2098,30 @@ export function ThreadPane({
                     type="button"
                   >
                     <Icon name="search" /> 在消息列中搜索
+                  </button>
+                  <button
+                    disabled={!roomId || !root}
+                    onClick={() => {
+                      if (!roomId || !root) return;
+                      window.open(
+                        navigationSearch({
+                          target: {
+                            kind: "message",
+                            roomId,
+                            messageId: root.messageId,
+                            rootMessageId: root.messageId,
+                            ...(threadId ? { threadId } : {}),
+                          },
+                        }),
+                        "_blank",
+                        "noopener,noreferrer",
+                      );
+                      setOverflowOpen(false);
+                    }}
+                    role="menuitem"
+                    type="button"
+                  >
+                    <Icon name="external-link" /> 在新标签页中打开
                   </button>
                   <button
                     disabled={onViewInChannel === undefined}
@@ -2000,14 +2158,14 @@ export function ThreadPane({
               ) : null}
             </div>
             <PanelHeaderAction
-              aria-label="关闭消息列"
+              aria-label={searchPreview ? "关闭搜索预览" : "关闭消息列"}
               className="rah-thread-close"
               onClick={onClose}
               title="关闭消息列"
               type="button"
             >
               <span className="rah-close-glyph" aria-hidden="true">
-                ×
+                <Icon name="x" />
               </span>
             </PanelHeaderAction>
           </div>
@@ -2029,6 +2187,7 @@ export function ThreadPane({
                 setSearchOpen(false);
               } else if (event.key === "Enter" && searchMatches.length > 0) {
                 event.preventDefault();
+                messageHighlight.reveal();
                 setSearchIndex((current) =>
                   event.shiftKey
                     ? (current - 1 + searchMatches.length) %
@@ -2037,50 +2196,57 @@ export function ThreadPane({
                 );
               }
             }}
-            placeholder="在消息列中搜索"
+            placeholder="搜索此消息列"
             value={searchQuery}
           />
           <span>
             {searchLoading
               ? "…"
-              : searchMatches.length === 0
-                ? "0/0"
-                : `${searchIndex + 1}/${searchMatches.length}`}
+              : !searchQuery.trim()
+                ? ""
+                : searchMatches.length === 0
+                  ? "0/0"
+                  : `${searchIndex + 1}/${searchMatches.length}`}
           </span>
           <button
+            className="sq-btn"
             aria-label="上一个搜索结果"
             disabled={searchMatches.length === 0}
-            onClick={() =>
+            onClick={() => {
+              messageHighlight.reveal();
               setSearchIndex((current) =>
                 searchMatches.length === 0
                   ? 0
                   : (current - 1 + searchMatches.length) % searchMatches.length,
-              )
-            }
+              );
+            }}
             type="button"
           >
-            ↑
+            <Icon name="chevron-down" className="rah-search-previous-icon" />
           </button>
           <button
+            className="sq-btn"
             aria-label="下一个搜索结果"
             disabled={searchMatches.length === 0}
-            onClick={() =>
+            onClick={() => {
+              messageHighlight.reveal();
               setSearchIndex((current) =>
                 searchMatches.length === 0
                   ? 0
                   : (current + 1) % searchMatches.length,
-              )
-            }
+              );
+            }}
             type="button"
           >
-            ↓
+            <Icon name="chevron-down" />
           </button>
           <button
+            className="sq-btn"
             aria-label="关闭消息列搜索"
             onClick={() => setSearchOpen(false)}
             type="button"
           >
-            ×
+            <Icon name="x" />
           </button>
           {searchError === undefined ? null : (
             <span className="rah-thread-search-error" role="alert">
@@ -2111,7 +2277,15 @@ export function ThreadPane({
                 collapseLongMessages={collapseLongMessages}
                 contextRoomId={roomId}
                 contextThreadId={threadId}
-                highlightQuery={searchOpen ? searchQuery : undefined}
+                highlightQuery={
+                  messageHighlight.visible
+                    ? searchOpen
+                      ? searchQuery
+                      : root.messageId === focusedMessageId
+                        ? focusHighlightQuery
+                        : undefined
+                    : undefined
+                }
                 message={root}
                 mentionReadStates={mentionReadStatesByMessage.get(
                   root.messageId,
@@ -2145,6 +2319,9 @@ export function ThreadPane({
                           ),
                       },
                     })}
+                messagePrincipal={roomMembers.find(
+                  (person) => person.principalId === root.actorId,
+                )}
                 messageAgent={messageAgents.find(
                   (agent) => agent.participantId === root.actorId,
                 )}
@@ -2178,8 +2355,9 @@ export function ThreadPane({
                       ]
                 }
                 focused={
-                  root.messageId === focusedMessageId ||
-                  root.messageId === activeSearchMessageId
+                  messageHighlight.visible &&
+                  (root.messageId === focusedMessageId ||
+                    root.messageId === activeSearchMessageId)
                 }
                 {...(task === undefined ? {} : { task })}
                 {...(task === undefined
@@ -2232,7 +2410,15 @@ export function ThreadPane({
             <MessageArticle
               client={client}
               collapseLongMessages={collapseLongMessages}
-              highlightQuery={searchOpen ? searchQuery : undefined}
+              highlightQuery={
+                messageHighlight.visible
+                  ? searchOpen
+                    ? searchQuery
+                    : item.message.messageId === focusedMessageId
+                      ? focusHighlightQuery
+                      : undefined
+                  : undefined
+              }
               key={item.message.messageId}
               message={item.message}
               mentionReadStates={mentionReadStatesByMessage.get(
@@ -2266,6 +2452,9 @@ export function ThreadPane({
                         ),
                     },
                   })}
+              messagePrincipal={roomMembers.find(
+                (person) => person.principalId === item.message.actorId,
+              )}
               messageAgent={messageAgents.find(
                 (agent) => agent.participantId === item.message.actorId,
               )}
@@ -2299,8 +2488,9 @@ export function ThreadPane({
                     ]
               }
               focused={
-                item.message.messageId === focusedMessageId ||
-                item.message.messageId === activeSearchMessageId
+                messageHighlight.visible &&
+                (item.message.messageId === focusedMessageId ||
+                  item.message.messageId === activeSearchMessageId)
               }
             />
           ),
@@ -2370,7 +2560,7 @@ export function ThreadPane({
                 aria-controls="thread-composer-mentions"
                 aria-expanded={composerMention.open}
                 aria-label="Thread 回复输入框"
-                ref={composerRef}
+                ref={attachComposer}
                 disabled={!canReply}
                 onBlur={composerMention.onBlur}
                 onChange={composerMention.onChange}
@@ -2390,7 +2580,7 @@ export function ThreadPane({
                     ? "发送消息至消息列"
                     : "Thread write capability 不可用"
                 }
-                rows={3}
+                rows={1}
                 value={body}
               />
               <div className="composer-bar">
@@ -2499,7 +2689,8 @@ export function TaskPane({
   const [assigneeFilterId, setAssigneeFilterId] = useState<
     string | null | undefined
   >();
-  const [view, setView] = useState<TaskViewMode>("board");
+  const [selectedView, setView] = useState<TaskViewMode>();
+  const { ref: taskPaneRef, view } = useResponsiveTaskView(selectedView);
   const visibleColumns = columns.map((column) => ({
     ...column,
     tasks: column.tasks.filter((task) =>
@@ -2523,7 +2714,7 @@ export function TaskPane({
   }));
 
   return (
-    <div className="chan-pane">
+    <div className="chan-pane" ref={taskPaneRef}>
       <TaskToolbar
         agents={agents}
         assigneeId={assigneeFilterId}
@@ -2600,13 +2791,6 @@ export function UnavailablePane({
       <p>{detail}</p>
     </div>
   );
-}
-
-function formatTime(value: string) {
-  return formatRahDateTime(value, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }
 
 function errorMessage(error: unknown): string {

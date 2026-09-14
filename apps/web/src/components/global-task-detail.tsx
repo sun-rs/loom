@@ -1,10 +1,8 @@
+import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
+import { browserOpaqueId } from "../browser-opaque-id.ts";
 import { useState, type ReactNode } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
-import type {
-  Principal,
-  Task,
-  WorkerTaskHistoryResponse,
-} from "@rah-os/protocol";
+import type { Principal, Task } from "@rah-os/protocol";
 import { createRoomViewModel, type TaskColumnId } from "@rah-os/ui-web";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { useDialogProtocol } from "../dialog-protocol.ts";
@@ -13,8 +11,7 @@ import {
   globalTaskTransition,
 } from "../global-task-actions.ts";
 import { raftTaskGroup } from "../global-discovery-model.ts";
-import { useDiscoveryQuery } from "../use-discovery-query.ts";
-import { formatRahDateTime } from "../date-time-presentation.ts";
+import { TaskDetailHistory } from "./task-detail-history.tsx";
 import { DiscoveryFilter } from "./discovery-filter.tsx";
 import { MessageMarkdown } from "./message-markdown.tsx";
 import { TaskAssigneeControl } from "./task-assignee-control.tsx";
@@ -114,6 +111,7 @@ export function TaskDetailMetadata({
   onChanged,
   agents,
   principalId,
+  activeMemberIds,
 }: {
   client: RahClient;
   task?: Task | undefined;
@@ -123,7 +121,9 @@ export function TaskDetailMetadata({
   onChanged: () => void;
   agents: readonly RoomAgentTarget[];
   principalId: string | undefined;
+  activeMemberIds: readonly string[];
 }) {
+  const entities = useWorkspaceEntities();
   const [historyOpen, setHistoryOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>();
@@ -142,7 +142,10 @@ export function TaskDetailMetadata({
     column = columns.find(({ id }) => id === current)!;
   const personName = (id: string | undefined) => {
     if (id === undefined) return "未指派";
-    const person = people.find((item) => item.principalId === id);
+    const candidate = people.find((item) => item.principalId === id);
+    const person = candidate
+      ? (entities?.resolvePerson(candidate) ?? candidate)
+      : entities?.person(id);
     return person?.displayName || person?.handle || "未知成员";
   };
   async function choose(target: TaskColumnId) {
@@ -155,7 +158,7 @@ export function TaskDetailMetadata({
         task,
         target,
         canManageAnyTask: canManage,
-        idempotencyKey: `task-detail-${crypto.randomUUID()}`,
+        idempotencyKey: `task-detail-${browserOpaqueId()}`,
       });
       onChanged();
     } catch (failure) {
@@ -182,7 +185,7 @@ export function TaskDetailMetadata({
           aria-expanded={historyOpen}
           onClick={() => setHistoryOpen((value) => !value)}
         >
-          <b>历史</b>
+          <b>操作时间线</b>
           <Icon name={historyOpen ? "chevron-down" : "chevron-right"} />
         </button>
         {historyOpen ? (
@@ -236,10 +239,12 @@ export function TaskDetailMetadata({
             <TaskAssigneeControl
               client={client}
               task={task}
-              agents={agents}
+              people={people.filter((person) =>
+                activeMemberIds.includes(person.principalId),
+              )}
               principalId={principalId}
               label={personName(task.assigneeId)}
-              writeEnabled={writeEnabled}
+              writeEnabled={writeEnabled && canManage}
               onChanged={onChanged}
             />
           </dd>
@@ -257,112 +262,4 @@ export function TaskDetailMetadata({
       ) : null}
     </section>
   );
-}
-
-function TaskDetailHistory({
-  client,
-  task,
-  people,
-}: {
-  client: RahClient;
-  task: Task;
-  people: readonly Principal[];
-}) {
-  const [cursors, setCursors] = useState<Array<string | undefined>>([
-    undefined,
-  ]);
-  const cursor = cursors.at(-1);
-  const result = useDiscoveryQuery(client, "task.history", {
-    roomId: task.roomId,
-    taskId: task.taskId,
-    limit: 50,
-    ...(cursor === undefined ? {} : { cursor }),
-  });
-  return (
-    <div className="rah-task-detail-history-body">
-      {result.loading ? (
-        <p role="status">正在加载历史…</p>
-      ) : result.error ? (
-        <div role="alert">
-          <p>无法加载历史记录：{result.error}</p>
-          <button className="btn" onClick={result.refresh}>
-            重试
-          </button>
-        </div>
-      ) : result.data?.events.length === 0 ? (
-        <p>暂无历史记录</p>
-      ) : (
-        <ol>
-          {result.data?.events.map((event) => (
-            <li key={event.eventId}>
-              <b>{taskHistoryTitle(event)}</b>
-              <span>
-                {people.find((person) => person.principalId === event.actorId)
-                  ?.displayName ||
-                  people.find((person) => person.principalId === event.actorId)
-                    ?.handle ||
-                  "未知成员"}{" "}
-                ·{" "}
-                {formatRahDateTime(event.createdAt, {
-                  dateStyle: "short",
-                  timeStyle: "short",
-                })}
-              </span>
-              {event.title ? <p>{event.title}</p> : null}
-              {event.summary || event.progress ? (
-                <p>{event.summary || event.progress}</p>
-              ) : null}
-            </li>
-          ))}
-        </ol>
-      )}
-      <div className="rah-task-detail-history-pager">
-        {cursors.length > 1 ? (
-          <button
-            className="btn"
-            disabled={result.loading}
-            onClick={() => setCursors((values) => values.slice(0, -1))}
-          >
-            较新记录
-          </button>
-        ) : null}
-        {result.data?.nextCursor ? (
-          <button
-            className="btn"
-            disabled={result.loading}
-            onClick={() =>
-              setCursors((values) => [...values, result.data!.nextCursor!])
-            }
-          >
-            更早记录
-          </button>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-function taskHistoryTitle(
-  event: WorkerTaskHistoryResponse["events"][number],
-): string {
-  const labels: Record<string, string> = {
-    "task.created": "创建任务",
-    "task.assigned": "指派负责人",
-    "task.unassigned": "移除负责人",
-    "task.claimed": "认领任务",
-    "task.started": "开始任务",
-    "task.progressed": "更新进度",
-    "task.submitted": "提交任务",
-    "task.completed": "完成任务",
-    "task.cancelled": "关闭任务",
-    "task.reopened": "重新打开任务",
-    "task.blocked": "任务受阻",
-    "task.unblocked": "解除阻塞",
-    "review.submitted": "提交审阅",
-    "input.requested": "请求输入",
-    "input.resolved": "输入已收到",
-    "input.cancelled": "取消输入请求",
-    "input.expired": "输入请求已过期",
-  };
-  return labels[event.type] ?? "任务更新";
 }

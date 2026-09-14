@@ -10,11 +10,16 @@
 // substitution changed nothing. `--expect-spec` checks the captured values
 // against packages/ui-tokens/specs/message-row.spec.json `browserExpectations`.
 //
-// Like scripts/run-sidebar-row-spec-browser-gate.mjs this is a deliberate copy
-// of the batch-2 sq-btn gate rather than a generalization: all three are still
-// uncommitted, and folding the probe tables into the spec JSONs would mean
-// editing specs outside this batch's change boundary. Fold them together once
-// they are committed.
+// STATUS 2026-09-12 (owner review): the sq-btn and sidebar-row copies of this
+// program were replaced by the spec-driven
+// scripts/run-component-spec-browser-gate.mjs. This one could NOT be folded in
+// with them, because message-row has no packages/ui-tokens/specs/
+// message-row.spec.json yet — it is a 待实施 component (doc only), so there is
+// no spec for a spec-driven gate to read. It therefore keeps its own probe
+// table, and it does NOT produce the four-way-bound report or the fixture
+// markup export the generic gate produces. Fold it in by writing the spec
+// JSON (probes + gate + fixture + gateScript + fixtureMarkupFile) and deleting
+// this file; until then message-row is not a finished component anywhere.
 import { chromium } from "playwright";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";

@@ -39,6 +39,9 @@ export function DiscoveryFilter({
   selected = values.length > 0,
   className = "",
   triggerClassName = "",
+  popoverClassName = "",
+  popoverTitle,
+  searchPlaceholder = "搜索…",
   variant = "selection",
 }: {
   label: string;
@@ -56,6 +59,9 @@ export function DiscoveryFilter({
   selected?: boolean;
   className?: string;
   triggerClassName?: string;
+  popoverClassName?: string;
+  popoverTitle?: string;
+  searchPlaceholder?: string;
   variant?: "selection" | "status" | "reaction" | "sidebar";
 }) {
   const [open, setOpen] = useState(false);
@@ -212,7 +218,7 @@ export function DiscoveryFilter({
       {open &&
         createPortal(
           <div
-            className={`rah-discovery-popover is-${variant}`}
+            className={`rah-discovery-popover is-${variant} ${popoverClassName}`}
             ref={menu}
             id={id}
             role="menu"
@@ -266,9 +272,9 @@ export function DiscoveryFilter({
               }
             }}
           >
-            {variant === "selection" && (
+            {(variant === "selection" || popoverTitle !== undefined) && (
               <header>
-                <b>{label}</b>
+                <b>{popoverTitle ?? label}</b>
                 {clearable && values.length > 0 && (
                   <button type="button" onClick={() => onChange([])}>
                     清除
@@ -280,7 +286,7 @@ export function DiscoveryFilter({
               <div className="rah-discovery-popover-search">
                 <input
                   aria-label={`搜索${label}`}
-                  placeholder="搜索…"
+                  placeholder={searchPlaceholder}
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                 />

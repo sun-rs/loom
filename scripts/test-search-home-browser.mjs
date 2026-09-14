@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
+import { expect } from "playwright/test";
 import { startShellFixture } from "./ui-shell-browser-scenarios.mjs";
 import { findChromeExecutable } from "./real-browser-gate-support.mjs";
 const fixture = await startShellFixture();
@@ -61,6 +62,17 @@ try {
       .evaluate((e) => getComputedStyle(e).webkitLineClamp),
     "2",
   );
+  assert.ok((await page.locator(".rah-search-excerpt mark").count()) > 0);
+  await meta.hover();
+  await page.mouse.wheel(0, 50);
+  assert.ok((await page.locator(".rah-search-excerpt mark").count()) > 0);
+  const queryInput = page.getByRole("textbox", {
+    name: "搜索频道、私信、消息",
+    exact: true,
+  });
+  await queryInput.click();
+  await expect(page.locator(".rah-search-excerpt mark")).toHaveCount(0);
+  await expect(queryInput).toBeFocused();
   await page.screenshot({ path: "/tmp/rah-search-results-desktop.png" });
   await page.locator(".rah-search-hit").first().click();
   await page.locator(".channel").waitFor();

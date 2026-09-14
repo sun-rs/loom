@@ -97,13 +97,12 @@ for (const binding of cases.filter(
       const db = new DatabaseSync(join(stateDirectory, "room.db"), {
         readOnly: true,
       });
-      new RuntimeGuideSettings(
-        join(stateDirectory, "runtime-guide.json"),
-      ).update({
-        runtimeId: binding.cli === "codex" ? "codex" : "claude",
-        enabled: true,
-        expectedRevision: 0,
-      });
+      assert.equal(
+        new RuntimeGuideSettings(
+          join(stateDirectory, "runtime-guide.json"),
+        ).enabled(binding.cli === "codex" ? "codex" : "claude"),
+        true,
+      );
       const app = new DaemonApplication({ config: prepared.config });
       const abort = new AbortController(),
         running = app.run({ signal: abort.signal });

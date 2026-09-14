@@ -179,6 +179,15 @@ neither an old reference fixture nor a visible tab proves product completeness.
 - Extract CSS, icons, fonts, avatars and state parameters from authorized source
   evidence. Use the maintained internal tokens; label unavoidable approximations, never guess
   screenshot dimensions and call them extracted specifications.
+- Agent choice-row colors follow component family and hover/current/selected states,
+  not modal versus base-page placement. Follow the [UI color contract](docs/design/neo-brutalist-ui.md#agent-choice-row-colors):
+  Raft's opaque soft-signal maps to local --yellow; local --soft-signal already has
+  30% alpha. Do not add modal-wide hover overrides or apply opacity twice.
+  New Agent choice surfaces must select the shared member-selection, member-browse,
+  property-option or autocomplete profile; do not invent per-window colors or
+  pass page-local color overrides. Additional profiles need a central source-backed
+  contract and tests. The design profiles do not imply all legacy selectors have
+  migrated to a typed shared API; preserve explicit adoption/verification status.
 - Web/PWA share components, intents and protocol. Responsive layout changes must
   not create a second business path. Native shells remain thin clients.
 - Shell borders, splitters, overlay/focus behavior and message measurement each

@@ -10,6 +10,7 @@ export function readUiSource(path: string): string {
   const target = component
     ? `../../../packages/ui-web/src/neo-brutalist/${component[1]}.tsx`
     : [
+          "activity.css",
           "interaction-state.css",
           "panel-layout.css",
           "panel-foundations.css",

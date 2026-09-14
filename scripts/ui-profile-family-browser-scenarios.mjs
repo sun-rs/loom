@@ -27,12 +27,18 @@ export async function verifyPreviewContent(page, output, engine) {
             .querySelector(".rah-agent-preview")
             ?.textContent.includes("加载中…"),
       );
+      assert.equal(
+        (await preview.textContent()).includes(
+          "Description must stay in the profile only",
+        ),
+        false,
+      );
       if (mode === "profile-error") {
         assert.ok((await preview.textContent()).includes("暂时无法读取"));
-      } else assert.ok((await preview.textContent()).includes("Runtime 默认"));
+      } else assert.ok((await preview.textContent()).includes("未选择模型"));
       assert.equal(
         await preview.getByText("推理强度", { exact: true }).count(),
-        0,
+        1,
       );
       const reads = await fixture
         .locator("[data-trajectory-reads]")
@@ -96,6 +102,31 @@ export async function verifyPreviewContent(page, output, engine) {
         await page.screenshot({
           path: join(output, `${engine}-agent-preview-${width}.png`),
         });
+      }
+      if (mode === "manager") {
+        const activity = preview.getByRole("button", {
+          name: "最近动态",
+          exact: true,
+        });
+        const chevron = await activity.locator("svg").boundingBox();
+        assert.deepEqual([chevron.width, chevron.height], [10, 10]);
+        await activity.hover();
+        await activity.click();
+        assert.notEqual(
+          await fixture.locator("[data-opened-agent]").textContent(),
+          "",
+        );
+        await preview.waitFor({ state: "detached" });
+        await fixture.getByRole("button").focus();
+        await fixture.getByRole("button").hover();
+        await preview.waitFor();
+        await page.keyboard.press("Tab");
+        assert.equal(
+          await activity.evaluate((e) => e === document.activeElement),
+          true,
+        );
+        await page.keyboard.press("Enter");
+        await preview.waitFor({ state: "detached" });
       }
       await page.keyboard.press("Escape");
       assert.equal(await preview.count(), 0);

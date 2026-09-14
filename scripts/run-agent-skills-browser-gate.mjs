@@ -95,7 +95,7 @@ for (const engine of ["chrome", "firefox"]) {
         });
       assert.match(await skills.innerText(), /全局.*1/s);
       assert.match(await skills.innerText(), /工作区.*0/s);
-      assert.match(await skills.innerText(), /暂无工作区技能/);
+      assert.match(await skills.innerText(), /此 Agent 工作区内暂无 skill/);
       assert.ok(
         !(await skills.innerText()).includes("BODY_MUST_NOT_REACH_BROWSER"),
       );

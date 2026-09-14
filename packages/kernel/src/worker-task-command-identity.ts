@@ -69,7 +69,7 @@ export function workerTaskReworkRoundSeq(
       `SELECT MAX(room_seq) AS seq FROM room_events
        WHERE room_id = ?
          AND (
-           (aggregate_type = 'task' AND aggregate_id = ? AND type = 'task.reopened')
+           (aggregate_type = 'task' AND aggregate_id = ? AND (type = 'task.reopened' OR json_extract(payload_json, '$.humanEdited') = 1))
            OR (
              type = 'review.submitted'
              AND json_extract(payload_json, '$.taskId') = ?

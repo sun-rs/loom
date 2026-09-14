@@ -39,3 +39,22 @@ Room 中的 Human 消息既可能是普通讨论，也可能是需要持续执�
 ## 后果
 
 该设计保留 Raft 的单 winner 优点，同时把“是否成为 Task”的阈值收紧为可说明、可审计的业务意图。Agent 的语义判断仍可能出错，因此 Human 显式 Task 是最高优先信号；自动转换必须保留理由，后续可据真实误判样本调整 standing prompt，而不改变 Kernel 协议。
+
+## 2026-09-14：Human 任务编辑对齐 Raft
+
+用户明确撤回将人工状态编辑限制为执行/提交/审阅派生动作的产品规则。
+Human creator/Room manager 通过 `task.workflow.update` 可以选择全部五个业务状态，
+包括完成回待办/待确认、关闭回任意状态。状态仍写 canonical Task state，由原触发器
+生成 workflow_status；不恢复第二份可分歧的工作流真相。
+
+人工“进行中”允许无执行 claim；人工“待确认/完成”允许没有 Agent 提交证据。
+这些操作记录 Human 编辑事件，不伪造 RunAttempt、claim、submissionSummary 或冻结制品。
+真正 Worker 的 claim、start、submit、review 和证据式 completeTask 仍验证各自执行权限。
+Task schema 中 claim owner/expiry 必须成对；执行阶段根据实际 claim 展示，人工进行中
+不代表 Runtime 正在运行。已有提交、审阅和历史记录保留。
+
+Human 负责人编辑与状态独立，允许 Room 内 Human/Agent 或未指派；统一使用
+assign/unassign 接口。将次级角色成员提升为 owner 时移除其冲突角色；取消负责人清除
+次级角色。单一 owner 不变。旧 Worker claim 原子撤销，已有停止请求负责真实进程终止；
+停止未完成前拒绝新 claim，界面仍可继续编辑最新的意图。不是通过前端隐藏限制规避后端。
+变更、事件、通知/Outbox 在同一事务；保留权限、最新 Room seq 与精确幂等校验。

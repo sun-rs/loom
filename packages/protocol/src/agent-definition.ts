@@ -123,6 +123,8 @@ export type AgentRuntimeContext = z.infer<typeof AgentRuntimeContextSchema>;
 
 export const AgentCatalogEntrySchema = z
   .object({
+    // Saved explicit model choice, projected from the current execution policy.
+    modelBindingId: IdentifierSchema.optional(),
     currentRevision: AgentDefinitionRevisionSchema,
     definition: AgentDefinitionSchema,
     handle: IdentifierSchema,

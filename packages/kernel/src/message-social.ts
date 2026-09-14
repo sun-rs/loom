@@ -1,3 +1,4 @@
+import { messageAttachmentCommentState } from "./attachment-comment-counts.ts";
 import type { DatabaseSync } from "node:sqlite";
 import * as P from "@rah-os/protocol";
 import type {
@@ -102,19 +103,26 @@ export class MessageSocial {
         "SELECT emoji,COUNT(*) AS n,MAX(principal_id=?) AS mine FROM message_reactions WHERE message_id=? GROUP BY emoji ORDER BY emoji",
       )
       .all(actorId, messageId);
+    const fileComments = messageAttachmentCommentState(db, messageId);
     return P.MessageSocialItemSchema.parse({
+      ...(fileComments.attachmentCommentCounts
+        ? { attachmentCommentCounts: fileComments.attachmentCommentCounts }
+        : {}),
       messageId,
       canReact: !!db
         .prepare(
           "SELECT 1 FROM memberships WHERE principal_id=? AND room_id=(SELECT room_id FROM messages WHERE message_id=?)",
         )
         .get(actorId, messageId),
-      version: Number(
-        db
-          .prepare(
-            "SELECT COALESCE(MAX(room_seq),0) AS v FROM room_events WHERE room_id=(SELECT room_id FROM messages WHERE message_id=?) AND aggregate_type='message' AND aggregate_id=? AND type='message.reaction_changed'",
-          )
-          .get(messageId, messageId)!.v,
+      version: Math.max(
+        fileComments.version,
+        Number(
+          db
+            .prepare(
+              "SELECT COALESCE(MAX(room_seq),0) AS v FROM room_events WHERE room_id=(SELECT room_id FROM messages WHERE message_id=?) AND aggregate_type='message' AND aggregate_id=? AND type='message.reaction_changed'",
+            )
+            .get(messageId, messageId)!.v,
+        ),
       ),
       saved: !!db
         .prepare(

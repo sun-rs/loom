@@ -208,6 +208,14 @@ test("Workspace Agent directory is independent from Room membership and reports 
       state: "enabled",
     },
   ]);
+  assert.equal(
+    workspaceAgentDirectory({
+      agents: [{ ...agent, modelBindingId: "model-fixture" }],
+      runtimes: [runtime],
+    })[0]?.modelBindingId,
+    "model-fixture",
+    "saved model binding survives the authorized directory projection",
+  );
   assert.deepEqual(
     roomAgentCandidates({ directory, memberIds: ["human-main"] }),
     [{ ...directory[0], joined: false }],

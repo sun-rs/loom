@@ -5,6 +5,8 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 
+import { followAgentThreadParticipants } from "../src/agent-thread-subscriptions.ts";
+
 import { type AuthenticatedHostContext, RoomKernel } from "../src/index.ts";
 
 test("thread creation keeps the first Worker reply in the Thread and persists Agent follow state", () => {
@@ -316,6 +318,87 @@ test("Human thread state exposes the Agent follower roster separately from Human
   }
 });
 
+test("member removal retains history and follows but fences Thread delivery until rejoin", () => {
+  const state = fixture();
+  try {
+    const root = state.kernel.postMessage(state.humanActor, {
+      body: "Retained history",
+      idempotencyKey: "removal-root",
+      recipients: [],
+      roomId: state.room.roomId,
+    });
+    const thread = state.kernel.createThread(state.humanActor, {
+      basedOnRoomSeq: root.event.roomSeq,
+      idempotencyKey: "removal-thread",
+      recipientIds: [],
+      roomId: state.room.roomId,
+      rootMessageId: root.event.aggregateId,
+    });
+    // Arrange a durable, idle follower through its existing owner, without starting a CLI.
+    const db = new DatabaseSync(state.databasePath);
+    try {
+      followAgentThreadParticipants(db, {
+        participantIds: [state.agent.principalId],
+        source: "participation",
+        threadId: thread.thread.threadId,
+        updatedAt: "2026-09-14T00:00:00.000Z",
+      });
+    } finally {
+      db.close();
+    }
+    const input = {
+      basedOnRoomSeq: thread.event.roomSeq,
+      idempotencyKey: "removal-member",
+      principalId: state.agent.principalId,
+      roomId: state.room.roomId,
+    };
+    const removed = state.kernel.removeRoomMember(state.humanActor, input);
+    assert.equal(
+      state.kernel.removeRoomMember(state.humanActor, input).deduplicated,
+      true,
+    );
+    assert.throws(
+      () =>
+        state.kernel.listMessages(state.agentActor, {
+          roomId: state.room.roomId,
+        }),
+      /member|access/i,
+    );
+    const reply = state.kernel.replyThread(state.humanActor, {
+      basedOnRoomSeq: removed.event.roomSeq,
+      body: "No delivery after removal",
+      idempotencyKey: "removal-reply",
+      recipientIds: [],
+      roomId: state.room.roomId,
+      threadId: thread.thread.threadId,
+    });
+    assert.equal(reply.activationIds.length, 0);
+    const rejoined = state.kernel.addRoomMember(state.humanActor, {
+      basedOnRoomSeq: reply.event.roomSeq,
+      idempotencyKey: "removal-rejoin",
+      principalId: state.agent.principalId,
+      role: "member",
+      roomId: state.room.roomId,
+    });
+    assert.ok(
+      state.kernel
+        .listMessages(state.agentActor, { roomId: state.room.roomId })
+        .messages.some((m) => m.body === "Retained history"),
+    );
+    const resumed = state.kernel.replyThread(state.humanActor, {
+      basedOnRoomSeq: rejoined.event.roomSeq,
+      body: "Preserved follow resumes",
+      idempotencyKey: "removal-resumed-reply",
+      recipientIds: [],
+      roomId: state.room.roomId,
+      threadId: thread.thread.threadId,
+    });
+    assert.equal(resumed.activationIds.length, 1);
+  } finally {
+    state.close();
+  }
+});
+
 function fixture() {
   const directory = mkdtempSync(join(tmpdir(), "rah-agent-thread-follow-"));
   const databasePath = join(directory, "room.db");
@@ -340,6 +423,7 @@ function fixture() {
   });
   return {
     agent: agent.principal,
+    agentActor: kernel.authenticateAccessToken(agent.accessToken),
     databasePath,
     close: () => {
       kernel.close();

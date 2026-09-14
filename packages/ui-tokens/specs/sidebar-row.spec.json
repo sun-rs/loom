@@ -21,6 +21,145 @@
     ".count",
     ".side-section"
   ],
+  "fixture": {
+    "html": "apps/web/test/sidebar-row-spec-fixture.html",
+    "tsx": "apps/web/test/sidebar-row-spec-fixture.tsx"
+  },
+  "gateScript": "scripts/run-component-spec-browser-gate.mjs",
+  "gate": {
+    "fixtureUrl": "/test/sidebar-row-spec-fixture.html",
+    "anchorProbe": "channel-row",
+    "settleMs": 320,
+    "skipZeroWidth": true,
+    "viewports": [
+      [1440, 900],
+      [767, 844],
+      [764, 900],
+      [772, 900],
+      [390, 844],
+      [1440, 600]
+    ],
+    "properties": [
+      "width",
+      "height",
+      "padding-top",
+      "padding-right",
+      "padding-bottom",
+      "padding-left",
+      "margin-top",
+      "margin-right",
+      "margin-bottom",
+      "margin-left",
+      "border-top-width",
+      "border-right-width",
+      "border-bottom-width",
+      "border-left-width",
+      "border-top-style",
+      "border-top-color",
+      "box-shadow",
+      "transform",
+      "opacity",
+      "pointer-events",
+      "font-family",
+      "font-weight",
+      "font-size",
+      "line-height",
+      "letter-spacing",
+      "text-transform",
+      "color",
+      "background-color",
+      "transition-property",
+      "transition-duration",
+      "outline-width",
+      "outline-style",
+      "outline-color",
+      "outline-offset",
+      "gap"
+    ]
+  },
+  "probes": [
+    {
+      "id": "sidebar",
+      "selector": ".sidebar",
+      "interactive": false,
+      "coverage": false,
+      "note": "container: read only for the responsive display branch; the shell rules matching it belong to the app layout, not to this spec"
+    },
+    {
+      "id": "sidebar-bookmarks",
+      "selector": ".sidebar-bookmarks",
+      "interactive": true
+    },
+    {
+      "id": "channel-row",
+      "selector": ".channel-row",
+      "interactive": true
+    },
+    {
+      "id": "channel-row-selected",
+      "selector": ".channel-row.is-selected",
+      "interactive": true
+    },
+    {
+      "id": "direct-room-row",
+      "selector": ".channel-row.rah-direct-room-row",
+      "interactive": true
+    },
+    {
+      "id": "direct-room-small",
+      "selector": ".rah-direct-row-identity small",
+      "interactive": false
+    },
+    {
+      "id": "direct-room-avatar",
+      "selector": ".rah-direct-room-fallback",
+      "interactive": false
+    },
+    {
+      "id": "sidebar-disclosure",
+      "selector": ".rah-sidebar-disclosure",
+      "interactive": true
+    },
+    {
+      "id": "sidebar-count",
+      "selector": ".rah-sidebar-disclosure .count",
+      "interactive": false
+    },
+    {
+      "id": "sidebar-sort",
+      "selector": ".rah-sidebar-sort .task-filter-trigger",
+      "interactive": true
+    },
+    {
+      "id": "sidebar-create",
+      "selector": ".rah-side-create",
+      "interactive": true
+    },
+    {
+      "id": "sidebar-sort-disabled",
+      "selector": ".rah-sidebar-sort .task-filter-trigger:disabled",
+      "interactive": true,
+      "disabled": true
+    },
+    {
+      "id": "sidebar-create-disabled",
+      "selector": ".rah-side-create:disabled",
+      "interactive": true,
+      "disabled": true
+    },
+    {
+      "id": "sidebar-disclosure-disabled",
+      "selector": ".rah-sidebar-disclosure:disabled",
+      "capture": false,
+      "note": "coverage only"
+    },
+    {
+      "id": "sidebar-count-disabled",
+      "selector": ".rah-sidebar-disclosure:disabled .count",
+      "capture": false,
+      "note": "coverage only"
+    }
+  ],
   "tokens": [
     "--space-1",
     "--space-1-5",
@@ -176,7 +315,21 @@
     }
   ],
   "matchedRulesFile": "packages/ui-tokens/specs/sidebar-row.matched-rules.json",
+  "fixtureMarkupFile": "packages/ui-tokens/specs/sidebar-row.fixture-markup.json",
   "rules": [
+    {
+      "file": "apps/web/src/message-social.css",
+      "selector": ".rah-room-sidebar .rah-sidebar-disclosure",
+      "state": "base",
+      "source": "docs/audits/2026-09-14-sidebar-touch-and-mobile-navigation.zh-CN.md; Raft index-MqTUR4Ez.js pretty 136250 select-none",
+      "reason": "侧栏长按用于菜单，禁止原生文字选取和callout；不影响搜索输入与聊天正文。",
+      "declarations": {
+        "-webkit-user-select": "none",
+        "user-select": "none",
+        "-webkit-touch-callout": "none",
+        "-webkit-tap-highlight-color": "transparent"
+      }
+    },
     {
       "file": "apps/web/src/identity-interactions.css",
       "selector": ".rah-sidebar-disclosure",
@@ -733,10 +886,12 @@
       "status": "registered-unresolved",
       "pending": "bookmarks-selected-pink",
       "source": "apps/web/src/message-social.css",
-      "reason": "RAH 给已保存行一个粉底选中态；冻结包里没有提取到对应的上游选中态。登记以免无声漂移。",
+      "reason": "Raft 已保存选中行保留粉底、黑框与固定阴影；本地修复鼠标离开后边框丢失。",
       "declarations": {
         "color": "#141111",
-        "background": "#FE7DA8"
+        "background": "#FE7DA8",
+        "border-color": "#000000",
+        "box-shadow": "2px 2px 0 #141111"
       },
       "since": "2026-09-11",
       "evidenceNeeded": "双边同条件实测该表面上游对应元素的计算值，或一个把该规则并入本家族原语的决定。"

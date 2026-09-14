@@ -266,3 +266,42 @@ test("the read position is the Activation head, moved on by this Run's own Task 
     f.close();
   }
 });
+
+test("Human reopen-to-progress and assignee edits advance the Worker command round", () => {
+  const f = fixture();
+  try {
+    let prior = workerTaskReworkRoundSeq(
+      f.database,
+      f.room.roomId,
+      f.task.task.taskId,
+    );
+    for (const workflowStatus of ["done", "in_progress"] as const) {
+      const r = f.kernel.updateTaskWorkflowStatus(f.actor, {
+        taskId: f.task.task.taskId,
+        basedOnRoomSeq: f.head(),
+        idempotencyKey: `manual-${workflowStatus}`,
+        workflowStatus,
+      });
+      const next = workerTaskReworkRoundSeq(
+        f.database,
+        f.room.roomId,
+        f.task.task.taskId,
+      );
+      assert.equal(next, r.event.roomSeq);
+      assert.ok(next > prior);
+      prior = next;
+    }
+    const assigned = f.kernel.assignTask(f.actor, {
+      taskId: f.task.task.taskId,
+      basedOnRoomSeq: f.head(),
+      idempotencyKey: "manual-self",
+      assigneeId: f.task.task.creatorId,
+    });
+    assert.equal(
+      workerTaskReworkRoundSeq(f.database, f.room.roomId, f.task.task.taskId),
+      assigned.event.roomSeq,
+    );
+  } finally {
+    f.close();
+  }
+});

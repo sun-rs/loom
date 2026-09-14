@@ -24,6 +24,8 @@ export function HumanProfilePane({
   principalId,
   workspaceId,
   onBack,
+  backLabel,
+  onClose,
   canChangeRole,
   onChangeRole,
   onOpenAgent,
@@ -32,6 +34,8 @@ export function HumanProfilePane({
   principalId: string;
   workspaceId: string | undefined;
   onBack: () => void;
+  backLabel?: string | undefined;
+  onClose?: (() => void) | undefined;
   canChangeRole: boolean;
   onChangeRole: (principalId: string, role: MembershipRole) => Promise<void>;
   onOpenAgent: (id: string) => void;
@@ -55,7 +59,10 @@ export function HumanProfilePane({
   );
   // Only render a successfully authorized profile. A URL or directory candidate
   // is not evidence of membership, and a failed lookup is not an empty profile.
-  const human = profile?.principal;
+  const observedHuman = profile?.principal;
+  const human = observedHuman
+    ? { ...observedHuman, ...entities?.resolvePerson(observedHuman) }
+    : undefined;
   const name = human?.displayName || human?.handle || "成员资料";
   const ownerCount =
     entities?.humans().filter(({ membership }) => membership.role === "owner")
@@ -91,7 +98,7 @@ export function HumanProfilePane({
       <PanelHeader kind="surface" className="rah-agent-detail-head">
         <PanelHeaderAction
           className="rah-agent-mobile-back"
-          aria-label="返回成员列表"
+          aria-label={backLabel ?? "返回成员列表"}
           onClick={onBack}
         >
           <Icon name="arrow-left" />
@@ -105,7 +112,7 @@ export function HumanProfilePane({
         )}
         <div className="rah-agent-detail-identity">
           <h2>{name}</h2>
-          {human && <p>@{human.handle}</p>}
+          {human && <p>@{human.displayName || human.handle}</p>}
         </div>
         {human && human.principalId !== actorId && context && (
           <PanelHeaderAction
@@ -125,6 +132,11 @@ export function HumanProfilePane({
             }}
           >
             <Icon name="chat" />
+          </PanelHeaderAction>
+        )}
+        {onClose && (
+          <PanelHeaderAction aria-label="关闭 Human 侧栏" onClick={onClose}>
+            <Icon name="x" />
           </PanelHeaderAction>
         )}
       </PanelHeader>

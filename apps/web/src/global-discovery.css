@@ -554,15 +554,6 @@
   font-size: 11px;
   cursor: pointer;
 }
-.rah-discovery .fc-actions {
-  flex-direction: column;
-  opacity: 0;
-  transition: opacity 0.15s;
-}
-.rah-discovery .feed-card:hover .fc-actions,
-.rah-discovery .feed-card:focus-within .fc-actions {
-  opacity: 1;
-}
 .rah-discovery .fc-title svg {
   width: 14px;
   height: 14px;
@@ -574,23 +565,6 @@
 .rah-discovery .activity-chip.rah-new-message-count {
   background: var(--pink);
 }
-@media (hover: none) {
-  .rah-discovery .fc-actions {
-    opacity: 1;
-  }
-}
-.rah-message-location {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 16px;
-  border-bottom: var(--bd);
-  background: var(--soft-signal);
-  font-size: 12px;
-}
-.rah-message-location button {
-  margin-left: auto;
-}
 .rah-thread-follow {
   margin-left: auto;
   gap: 4px;
@@ -600,9 +574,11 @@
   height: 14px;
 }
 .msg[data-focused="true"] {
-  background: var(--soft-signal);
-  outline: 2px solid var(--yellow);
-  outline-offset: -2px;
+  background: color-mix(in srgb, var(--cyan) 25%, white);
+  border: var(--bd);
+  outline: none;
+  box-shadow: var(--shadow-m);
+  animation: none;
 }
 @media (max-width: 767px) {
   .app.rah-global-shell,
@@ -616,9 +592,6 @@
   .rah-global-shell .activity-head > .rah-panel-header-icon,
   .rah-global-shell .activity-head .head-actions > .rah-mobile-only {
     display: none;
-  }
-  .rah-discovery {
-    padding-bottom: calc(var(--rah-mobile-nav-h) + env(safe-area-inset-bottom));
   }
   .rah-discovery .task-filter-menu {
     width: min(220px, calc(100vw - 32px));
@@ -750,4 +723,73 @@
   font-size: 12px;
   line-height: 16px;
   white-space: nowrap;
+}
+
+/* Search owns one result column plus one replaceable preview, including DMs. */
+.app.rah-global-shell.rah-search-channel-open {
+  position: relative;
+  grid-template-columns: var(--rail-w) var(--rah-search-width, 560px) minmax(
+      0,
+      1fr
+    );
+}
+.app.rah-search-channel-open > .rah-discovery {
+  grid-column: 2;
+  grid-row: 1;
+}
+.app.rah-search-channel-open > .channel,
+.app.rah-search-channel-open > .thread {
+  grid-column: 3;
+  grid-row: 1;
+  min-width: 0;
+  width: auto;
+  border-left: var(--bd);
+}
+.app.rah-search-channel-open > .thread .rah-thread-close {
+  display: inline-flex;
+}
+.app.rah-search-channel-open > .thread .rah-thread-back {
+  display: none;
+}
+.app.rah-search-channel-open > .rah-search-resizer {
+  position: absolute;
+  display: block;
+  left: calc(var(--rail-w) + var(--rah-search-width, 560px) - 4px);
+  right: auto;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  z-index: 25;
+}
+.rah-search-count,
+.rah-search-section-title {
+  font: 700 12px/16px var(--sans);
+  color: var(--ink-60);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.rah-search-count {
+  margin: 0 4px 12px;
+}
+.rah-search-section-title {
+  margin: 0 4px 8px;
+}
+@media (max-width: 767px) {
+  .app.rah-global-shell.rah-search-channel-open {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app.rah-search-channel-open > .channel,
+  .app.rah-search-channel-open > .thread {
+    grid-column: 1;
+    border-left: 0;
+  }
+  .app.rah-search-channel-open > .rah-discovery,
+  .app.rah-search-channel-open > .rah-search-resizer,
+  .app.rah-search-channel-open .rah-search-preview-close,
+  .app.rah-search-channel-open > .thread .rah-thread-close {
+    display: none;
+  }
+  .app.rah-search-channel-open > .thread .rah-thread-back {
+    display: inline-flex;
+  }
 }

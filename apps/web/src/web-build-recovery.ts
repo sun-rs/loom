@@ -1,3 +1,4 @@
+import { browserOpaqueId } from "./browser-opaque-id.ts";
 const WEB_BUILD_HEADER = "x-rah-web-build-id";
 const REFRESH_LAYER_ID = "rah-web-build-refresh-layer";
 const RECOVERY_QUERY = "rah_recover";
@@ -16,8 +17,7 @@ let activePrompt:
   | { reason: RecoveryReason; serverBuildId?: string; trigger: RecoveryTrigger }
   | undefined;
 let ignoredServerBuildId: string | undefined;
-let pendingDecision: Promise<void> | undefined;
-let resolvePendingDecision: (() => void) | undefined;
+let pendingVerification: Promise<void> | undefined;
 let originalFetch: typeof globalThis.fetch | undefined;
 
 export function isStaleWebBuildError(error: unknown): boolean {
@@ -56,7 +56,7 @@ export function currentWebBuildId(): string {
 }
 
 export function installWebBuildRecovery(currentBuildId: string): {
-  probeBeforeMount: () => Promise<void>;
+  probe: () => Promise<void>;
 } {
   removeRecoveryNonce();
   installFetchBuildFence(currentBuildId);
@@ -73,14 +73,14 @@ export function installWebBuildRecovery(currentBuildId: string): {
     }
   });
 
-  const probe = () => probeCurrentBuild(currentBuildId, "initial_probe");
+  const probe = () => probeCurrentBuild(currentBuildId);
   window.addEventListener("focus", () => void probe());
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") void probe();
   });
   window.setInterval(() => void probe(), 15_000);
 
-  return { probeBeforeMount: probe };
+  return { probe };
 }
 
 export function requestWebBuildRefresh(
@@ -94,26 +94,23 @@ export function requestWebBuildRefresh(
 
 export function webBuildProbeUrl(
   currentBuildId: string,
-  nonce = crypto.randomUUID(),
+  nonce = browserOpaqueId(),
 ): string {
   return `/?rah_build_probe=${encodeURIComponent(currentBuildId)}&rah_probe_nonce=${encodeURIComponent(nonce)}`;
 }
 
-async function probeCurrentBuild(
-  currentBuildId: string,
-  trigger: "initial_probe",
-): Promise<void> {
+async function probeCurrentBuild(currentBuildId: string): Promise<void> {
   try {
     await globalThis.fetch(webBuildProbeUrl(currentBuildId), {
       cache: "no-store",
       credentials: "same-origin",
       method: "HEAD",
+      signal: AbortSignal.timeout(3000),
     });
   } catch {
     // Connectivity recovery owns an unavailable gateway. A missing response
     // cannot prove that this browser build is stale.
   }
-  if (activePrompt?.trigger === trigger) await waitForRecoveryDecision();
 }
 
 function installFetchBuildFence(currentBuildId: string): void {
@@ -128,39 +125,51 @@ function installFetchBuildFence(currentBuildId: string): void {
       serverBuildId !== currentBuildId &&
       serverBuildId !== ignoredServerBuildId
     ) {
-      // A cached resource can carry an older build header than this document.
-      // Only a fresh shell probe may establish the current server identity.
-      let verifiedBuildId: string | undefined;
-      try {
-        const probe = await originalFetch!(webBuildProbeUrl(currentBuildId), {
-          method: "HEAD",
-          cache: "no-store",
-          credentials: "same-origin",
-          signal: AbortSignal.timeout(3000),
-        });
-        if (probe.ok)
-          verifiedBuildId = probe.headers.get(WEB_BUILD_HEADER)?.trim();
-      } catch {
-        /* An unavailable probe cannot establish a stale document. */
-      }
-      if (
-        !verifiedBuildId ||
-        verifiedBuildId === currentBuildId ||
-        verifiedBuildId === ignoredServerBuildId
-      )
-        return response;
-      showRefreshPrompt({
-        reason: "build_mismatch",
-        serverBuildId: verifiedBuildId,
-        trigger:
-          typeof input === "string" && input.includes("rah_build_probe=")
-            ? "initial_probe"
-            : "fetch_response",
+      // Version discovery is advisory: never withhold an accepted API response
+      // or let the refresh dialog consume the client's request deadline.
+      pendingVerification ??= verifyCurrentBuild(
+        currentBuildId,
+        typeof input === "string" && input.includes("rah_build_probe=")
+          ? "initial_probe"
+          : "fetch_response",
+      ).finally(() => {
+        pendingVerification = undefined;
       });
-      await waitForRecoveryDecision();
     }
     return response;
   };
+}
+
+async function verifyCurrentBuild(
+  currentBuildId: string,
+  trigger: "initial_probe" | "fetch_response",
+): Promise<void> {
+  // Cached responses may carry a historical header. Only a fresh shell probe
+  // can establish the current server identity; concurrent mismatches share it.
+  try {
+    const probe = await originalFetch!(webBuildProbeUrl(currentBuildId), {
+      method: "HEAD",
+      cache: "no-store",
+      credentials: "same-origin",
+      signal: AbortSignal.timeout(3000),
+    });
+    const verifiedBuildId = probe.ok
+      ? probe.headers.get(WEB_BUILD_HEADER)?.trim()
+      : undefined;
+    if (
+      verifiedBuildId &&
+      verifiedBuildId !== currentBuildId &&
+      verifiedBuildId !== ignoredServerBuildId
+    ) {
+      showRefreshPrompt({
+        reason: "build_mismatch",
+        serverBuildId: verifiedBuildId,
+        trigger,
+      });
+    }
+  } catch {
+    // Connectivity recovery owns unavailable probes, not build recovery.
+  }
 }
 
 function showRefreshPrompt(prompt: typeof activePrompt): void {
@@ -172,9 +181,9 @@ function showRefreshPrompt(prompt: typeof activePrompt): void {
     return;
   }
   activePrompt = prompt;
-  pendingDecision ??= new Promise<void>((resolve) => {
-    resolvePendingDecision = resolve;
-  });
+  const confirmedNewBuild = prompt.reason === "build_mismatch";
+  const root = document.getElementById("root");
+  const canContinue = confirmedNewBuild || Boolean(root?.childElementCount);
   document.getElementById(REFRESH_LAYER_ID)?.remove();
 
   const layer = document.createElement("div");
@@ -189,15 +198,14 @@ function showRefreshPrompt(prompt: typeof activePrompt): void {
   layer.setAttribute("aria-labelledby", `${REFRESH_LAYER_ID}-title`);
   layer.innerHTML = `
     <section class="rah-web-build-refresh-card">
-      <h1 id="${REFRESH_LAYER_ID}-title">刷新 RAH OS 以继续</h1>
-      <p>此标签页运行的是较旧的应用版本。请刷新以加载当前版本；此标签页中未发送的文本或未保存的更改可能会丢失。</p>
+      <h1 id="${REFRESH_LAYER_ID}-title">${confirmedNewBuild ? "刷新 RAH OS 以继续" : "页面资源加载失败"}</h1>
+      <p>${confirmedNewBuild ? "此标签页运行的是较旧的应用版本。请刷新以加载当前版本；此标签页中未发送的文本或未保存的更改可能会丢失。" : "网络连接或页面资源暂时不可用，尚不能确认版本发生变化。连接恢复后请重新加载；未发送的文本或未保存的更改可能会丢失。"}</p>
       <div class="rah-web-build-refresh-actions">
-        <a role="button" data-refresh>立即刷新</a>
-        <button type="button" data-continue>仍然继续</button>
+        <a role="button" data-refresh>${confirmedNewBuild ? "立即刷新" : "重新加载"}</a>
+        ${canContinue ? `<button type="button" data-continue>${confirmedNewBuild ? "仍然继续" : "关闭提示"}</button>` : ""}
       </div>
     </section>`;
   document.body.append(layer);
-  const root = document.getElementById("root");
   if (root instanceof HTMLElement) root.inert = true;
 
   const refresh = layer.querySelector<HTMLAnchorElement>("[data-refresh]");
@@ -228,13 +236,6 @@ function continueWithOldBuild(): void {
   document.getElementById(REFRESH_LAYER_ID)?.remove();
   const root = document.getElementById("root");
   if (root instanceof HTMLElement) root.inert = false;
-  resolvePendingDecision?.();
-  resolvePendingDecision = undefined;
-  pendingDecision = undefined;
-}
-
-async function waitForRecoveryDecision(): Promise<void> {
-  if (pendingDecision !== undefined) await pendingDecision;
 }
 
 async function prepareRefreshCaches(): Promise<void> {

@@ -1,3 +1,4 @@
+import { browserOpaqueId } from "../browser-opaque-id.ts";
 import { useState } from "react";
 
 import type { Task } from "@rah-os/protocol";
@@ -539,7 +540,7 @@ export function TaskCreateDialog({
 
 function newTaskTitle() {
   return {
-    clientId: globalThis.crypto.randomUUID(),
+    clientId: browserOpaqueId(),
     title: "",
   };
 }

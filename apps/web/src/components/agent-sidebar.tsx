@@ -1,3 +1,7 @@
+import {
+  MemberContextActions,
+  type MemberContextControl,
+} from "./member-context-actions.tsx";
 import { useEffect, useRef, useState } from "react";
 import type { WorkspaceHumanMember } from "@rah-os/protocol";
 import type { WorkspaceAgentView } from "@rah-os/ui-web";
@@ -9,6 +13,7 @@ import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
 
 export function AgentSidebar({
   agents,
+  contextControl,
   canCreate,
   computerLabel,
   computerStatus,
@@ -27,6 +32,7 @@ export function AgentSidebar({
   selectedAgentDefinitionId,
 }: {
   agents: readonly WorkspaceAgentView[];
+  contextControl: MemberContextControl;
   canCreate: boolean;
   computerLabel: string | undefined;
   computerStatus?: WorkspaceAgentView["connectionStatus"];
@@ -84,7 +90,7 @@ export function AgentSidebar({
           onClick={onRelationship}
           type="button"
         >
-          <Icon name="share-2" />
+          <Icon name="git-branch" />
           <span>关系图</span>
         </button>
         <section className="rah-agent-sidebar-section">
@@ -144,25 +150,32 @@ export function AgentSidebar({
             </p>
           )}
           {agents.map((agent) => (
-            <button
-              aria-current={
-                agent.agentDefinitionId === selectedAgentDefinitionId
-                  ? "page"
-                  : undefined
-              }
-              className={`rah-agent-member-row rah-interaction-row${agent.agentDefinitionId === selectedAgentDefinitionId ? " is-selected" : ""}`}
+            <MemberContextActions
               key={agent.agentDefinitionId}
-              onClick={() => onSelect(agent.agentDefinitionId)}
+              agent={agent}
+              principalId={agent.participantId}
+              control={contextControl}
             >
-              <AgentAvatar agent={agent} size="sidebar" />
-              <span>
-                <b>{agent.displayName}</b>
-                <small>
-                  {agent.description}
-                  {agent.state === "disabled" ? " · 已暂停" : null}
-                </small>
-              </span>
-            </button>
+              <button
+                aria-current={
+                  agent.agentDefinitionId === selectedAgentDefinitionId
+                    ? "page"
+                    : undefined
+                }
+                className={`rah-agent-member-row rah-interaction-row${agent.agentDefinitionId === selectedAgentDefinitionId ? " is-selected" : ""}`}
+                key={agent.agentDefinitionId}
+                onClick={() => onSelect(agent.agentDefinitionId)}
+              >
+                <AgentAvatar agent={agent} size="sidebar" />
+                <span>
+                  <b>{agent.displayName}</b>
+                  <small>
+                    {agent.description}
+                    {agent.state === "disabled" ? " · 已暂停" : null}
+                  </small>
+                </span>
+              </button>
+            </MemberContextActions>
           ))}
         </section>
         <section className="rah-agent-sidebar-section rah-agent-human-section">
@@ -193,28 +206,35 @@ export function AgentSidebar({
             <p className="rah-profile-notice">仅显示前 500 位成员。</p>
           ) : null}
           {humans.map(({ principal: human }) => (
-            <button
+            <MemberContextActions
               key={human.principalId}
-              type="button"
-              className={`rah-agent-member-row rah-interaction-row${selectedHumanId === human.principalId ? " is-selected" : ""}`}
-              aria-current={
-                selectedHumanId === human.principalId ? "page" : undefined
-              }
-              onClick={() => onSelectHuman(human.principalId)}
+              principalId={human.principalId}
+              self={human.principalId === currentHumanId}
+              control={contextControl}
             >
-              <ProfileImageAvatar
-                avatarKey={human.avatarKey}
-                name={human.displayName || human.handle}
-                principalId={human.principalId}
-                size="sidebar"
-              />
-              <span>
-                <b>{human.displayName || human.handle}</b>
-                {human.principalId === currentHumanId ? (
-                  <small>（你）</small>
-                ) : null}
-              </span>
-            </button>
+              <button
+                key={human.principalId}
+                type="button"
+                className={`rah-agent-member-row rah-interaction-row${selectedHumanId === human.principalId ? " is-selected" : ""}`}
+                aria-current={
+                  selectedHumanId === human.principalId ? "page" : undefined
+                }
+                onClick={() => onSelectHuman(human.principalId)}
+              >
+                <ProfileImageAvatar
+                  avatarKey={human.avatarKey}
+                  name={human.displayName || human.handle}
+                  principalId={human.principalId}
+                  size="sidebar"
+                />
+                <span>
+                  <b>{human.displayName || human.handle}</b>
+                  {human.principalId === currentHumanId ? (
+                    <small>（你）</small>
+                  ) : null}
+                </span>
+              </button>
+            </MemberContextActions>
           ))}
         </section>
       </div>

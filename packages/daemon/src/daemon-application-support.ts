@@ -1,3 +1,4 @@
+import { runAgentDeletionReconciler } from "./agent-deletion-reconciler.ts";
 import type { RuntimeGuideSettings } from "./runtime-guide-settings.ts";
 import type { WorkerProfileMetadataPort } from "@rah-os/kernel";
 import {
@@ -297,10 +298,14 @@ export function createDaemonBackgroundReconcilerRunners(
     createDaemonRoomFileGcReconciler(kernel, onFailure),
     createDaemonProfileImageGcReconciler(kernel, profileImages, onFailure),
   ];
-  return reconcilers.map(
-    (reconciler) => async (signal: AbortSignal) =>
-      await reconciler.run({ signal }),
-  );
+  return [
+    (signal: AbortSignal) =>
+      runAgentDeletionReconciler(kernel, signal, onFailure),
+    ...reconcilers.map(
+      (reconciler) => async (signal: AbortSignal) =>
+        await reconciler.run({ signal }),
+    ),
+  ];
 }
 
 export function createDaemonAgentExecutionAdministration(input: {
@@ -539,6 +544,7 @@ export function createDaemonHumanClientService(input: {
   buildVersion: string;
   config: DaemonConfig;
   configuredLocalRuntimes: readonly ConfiguredLocalRuntimeSnapshot[];
+  refreshRuntimeCatalog?: ((offerId: string) => Promise<void>) | undefined;
   discoveredLocalClis: readonly LocalRuntimeInventoryEntry[];
   healthState: () => ClientHealthResponse["state"];
   host: AuthenticatedHostContext;
@@ -622,7 +628,14 @@ export function createDaemonHumanClientService(input: {
       state: input.healthState(),
     }),
     human: input.human,
-    localRuntimeInventory: (actor) => {
+    localRuntimeInventory: async (actor, request) => {
+      if (input.kernel.getAuthenticatedPrincipal(actor).kind !== "human")
+        throw new Error("Runtime catalog requires Human authority");
+      if (request?.refreshOfferId) {
+        if (!input.refreshRuntimeCatalog)
+          throw new Error("Runtime model refresh unavailable");
+        await input.refreshRuntimeCatalog(request.refreshOfferId);
+      }
       const computerProfile = computerProfiles.read(input.host.hostId);
       return buildLocalRuntimeInventoryResponse({
         actor,

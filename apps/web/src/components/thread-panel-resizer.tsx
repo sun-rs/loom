@@ -9,12 +9,15 @@ import {
   threadPanelMaxWidth,
 } from "../thread-panel-resize.ts";
 
-export function ThreadPanelResizer(props: PanelResizeProps) {
+export function ThreadPanelResizer({
+  inspector = false,
+  ...props
+}: PanelResizeProps & { inspector?: boolean }) {
   return (
     <PanelResizer
       {...props}
-      label="调整消息列宽度"
-      className="rah-thread-resizer"
+      label={inspector ? "调整 Agent 资料面板宽度" : "调整消息列宽度"}
+      className={inspector ? "rah-agent-profile-resizer" : "rah-thread-resizer"}
       direction={-1}
       min={RAFT_THREAD_PANEL_MIN_WIDTH}
       max={threadPanelMaxWidth(window.innerWidth)}
@@ -22,7 +25,11 @@ export function ThreadPanelResizer(props: PanelResizeProps) {
       nextWidth={(width, key) =>
         nextThreadPanelWidth(width, key, window.innerWidth)
       }
-      testId="thread-side-column-resizer"
+      testId={
+        inspector
+          ? "conversation-inspector-resizer"
+          : "thread-side-column-resizer"
+      }
       highlight={false}
     />
   );

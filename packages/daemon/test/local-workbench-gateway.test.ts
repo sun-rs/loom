@@ -382,3 +382,153 @@ async function statusWithHost(url: string, host: string): Promise<number> {
     request.once("error", reject);
   });
 }
+
+test("unpaired gateway refuses wildcard, LAN and noncanonical Tailnet bindings", () => {
+  for (const bindHost of [
+    "0.0.0.0",
+    "192.168.1.86",
+    "100.63.255.255",
+    "100.128.0.1",
+    "100.64.1.999",
+    "attacker.invalid",
+  ]) {
+    assert.throws(
+      () =>
+        new LocalWorkbenchGateway({
+          accessToken: "server-only",
+          daemonOrigin: "http://127.0.0.1:1234",
+          port: 0,
+          sessionToken: "a".repeat(43),
+          staticDirectory: "/tmp",
+          bindHost,
+        }),
+      /Tailnet/,
+    );
+  }
+  assert.doesNotThrow(
+    () =>
+      new LocalWorkbenchGateway({
+        accessToken: "server-only",
+        daemonOrigin: "http://127.0.0.1:1234",
+        port: 0,
+        sessionToken: "a".repeat(43),
+        staticDirectory: "/tmp",
+        bindHost: "100.101.107.87",
+      }),
+  );
+});
+
+test("trusted-network access needs neither a browser token nor a session cookie", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-trusted-edge-"));
+  writeFileSync(
+    join(directory, "index.html"),
+    "<!doctype html><p>Workbench</p>",
+  );
+  const upstream = createServer((request, response) => {
+    assert.equal(
+      request.headers.authorization,
+      "Bearer server-only-human-token",
+    );
+    response.setHeader("content-type", "application/json");
+    response.end(JSON.stringify({ ok: true }));
+  });
+  let gateway: LocalWorkbenchGateway | undefined;
+  try {
+    gateway = new LocalWorkbenchGateway({
+      accessToken: "server-only-human-token",
+      browserAccess: "trusted-network",
+      daemonOrigin: await listen(upstream),
+      port: 0,
+      staticDirectory: directory,
+    });
+    await gateway.start();
+    const origin = gateway.origin;
+    assert.match(origin, /^http:/u);
+    const page = await fetch(origin);
+    assert.equal(page.status, 200);
+    assert.equal(page.headers.get("set-cookie"), null);
+    for (const headers of [{}, { cookie: "rah_workbench_session=obsolete" }]) {
+      const response = await fetch(`${origin}/v3/client/capabilities`, {
+        headers,
+      });
+      assert.equal(response.status, 200);
+      assert.equal(response.headers.get("set-cookie"), null);
+      assert.deepEqual(await response.json(), { ok: true });
+    }
+    assert.equal(
+      (
+        await fetch(`${origin}/v3/client/commands`, {
+          method: "POST",
+          headers: { origin },
+          body: "{}",
+        })
+      ).status,
+      200,
+    );
+    assert.equal(
+      (
+        await fetch(`${origin}/v3/client/commands`, {
+          method: "POST",
+          headers: { origin: "http://attacker.invalid" },
+          body: "{}",
+        })
+      ).status,
+      403,
+    );
+    assert.equal(await statusWithHost(origin, "attacker.invalid"), 421);
+    assert.equal((await fetch(`${origin}/_rah/service`)).status, 200);
+  } finally {
+    await gateway?.stop();
+    await close(upstream);
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("Tailnet gateway also serves loopback and closes both listeners", async (t) => {
+  const { Server } = await import("node:net");
+  const originalListen = Server.prototype.listen;
+  // A second loopback address stands in for a Tailnet interface in this fixture.
+  t.mock.method(
+    Server.prototype,
+    "listen",
+    function (this: import("node:net").Server, ...args: unknown[]) {
+      if (args[1] === "100.101.107.87") args[1] = "::1";
+      return Reflect.apply(originalListen, this, args);
+    },
+  );
+  const directory = mkdtempSync(join(tmpdir(), "rah-dual-edge-"));
+  writeFileSync(join(directory, "index.html"), "dual edge");
+  const upstream = createServer((_request, response) =>
+    response.end("same core"),
+  );
+  const gateway = new LocalWorkbenchGateway({
+    accessToken: "server-only-token",
+    browserAccess: "trusted-network",
+    bindHost: "100.101.107.87",
+    daemonOrigin: await listen(upstream),
+    port: 0,
+    staticDirectory: directory,
+  });
+  try {
+    await gateway.start();
+    const port = new URL(gateway.origin).port;
+    const local = `http://127.0.0.1:${port}`;
+    assert.equal(await (await fetch(local)).text(), "dual edge");
+    assert.equal(
+      await (await fetch(`${local}/v3/client/health`)).text(),
+      "same core",
+    );
+    assert.equal(await statusWithHost(local, "attacker.invalid"), 421);
+    assert.equal(
+      await statusWithHost(`http://[::1]:${port}`, `100.101.107.87:${port}`),
+      200,
+    );
+    await gateway.stop();
+    await assert.rejects(fetch(local));
+    await assert.rejects(fetch(`http://[::1]:${port}`));
+  } finally {
+    await gateway.stop();
+    await close(upstream);
+    rmSync(directory, { recursive: true, force: true });
+  }
+});

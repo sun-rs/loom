@@ -1,6 +1,6 @@
 import { HtmlFilePreview } from "./html-file-preview.tsx";
 import type { AttachmentAnchor } from "../attachment-comment-anchors.ts";
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { AttachmentPreviewKind } from "@rah-os/protocol";
 import { MessageMarkdown } from "./message-markdown.tsx";
 
@@ -183,17 +183,54 @@ function MarkdownFilePreview({
   truncated: boolean;
 }) {
   const root = useRef<HTMLDivElement>(null);
+  const [outline, setOutline] = useState<
+    { id: string; title: string; level: number }[]
+  >([]);
   useLayoutEffect(() => {
-    root.current
-      ?.querySelectorAll<HTMLElement>("h1, h2, h3")
-      .forEach((heading, index) => {
-        heading.dataset.anchorHeading = `attachment-section-${index + 1}`;
-      });
+    const headings = [
+      ...(root.current?.querySelectorAll<HTMLElement>(
+        ".rah-file-document h1, .rah-file-document h2, .rah-file-document h3",
+      ) ?? []),
+    ];
+    setOutline(
+      headings.map((heading, index) => {
+        const id = `attachment-section-${index + 1}`;
+        heading.dataset.anchorHeading = id;
+        heading.id = id;
+        return {
+          id,
+          title: heading.textContent ?? "",
+          level: Number(heading.tagName.slice(1)),
+        };
+      }),
+    );
   }, [text]);
   return (
     <div className="rah-file-preview-markdown" ref={root}>
-      <PreviewTruncation truncated={truncated} />
-      <MessageMarkdown source={text} />
+      <div className="rah-file-document-grid">
+        <nav className="rah-file-outline" aria-label="Markdown 大纲">
+          <strong>大纲</strong>
+          {outline.map((item) => (
+            <a
+              key={item.id}
+              href={`#${item.id}`}
+              data-level={item.level}
+              onClick={(event) => {
+                event.preventDefault();
+                root.current
+                  ?.querySelector(`[data-anchor-heading="${item.id}"]`)
+                  ?.scrollIntoView({ block: "start" });
+              }}
+            >
+              {item.title}
+            </a>
+          ))}
+        </nav>
+        <div className="rah-file-document">
+          <PreviewTruncation truncated={truncated} />
+          <MessageMarkdown source={text} />
+        </div>
+      </div>
     </div>
   );
 }

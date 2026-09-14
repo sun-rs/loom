@@ -463,11 +463,14 @@ function mutationScope() {
     consumerPrefix: "audit",
     runRoomMutationAtLatest: () => response.promise,
     browserOpaqueId: () => "audit",
+    setFocusHighlightQuery: noop,
+    setFocusHighlightRequest: noop,
     setFocusedMessageId: noop,
     setRooms: (value) => {
       nav.state.rooms =
         typeof value === "function" ? value(nav.state.rooms) : value;
     },
+    setPeekHumanId: noop,
     setPeekAgentId: (value) => {
       nav.state.peek =
         typeof value === "function" ? value(nav.state.peek) : value;
@@ -632,6 +635,8 @@ test("opening and closing Thread synchronously invalidate an earlier diagnostic 
   const f = mutationScope();
   const scope = {
     ...f.scope,
+    surface: "room",
+    previewJoined: false,
     activeRoom: { roomId: "r" },
     roomData: {},
     view: { messages: [{ messageId: "root" }] },
@@ -642,6 +647,7 @@ test("opening and closing Thread synchronously invalidate an earlier diagnostic 
     activeThreadRootMessageId: "root",
     rememberThreadFocus: noop,
     restoreThreadFocus: noop,
+    setPanelIntent: noop,
   };
   const first = f.nav.requests.current.begin();
   await callback("openThread", scope)("root");
@@ -666,6 +672,7 @@ test("late direct-room wrapper completion does not close a subsequently selected
     ...nav.scope,
     openDirectRoom: () => response.promise,
     peekAgentId: "first-agent",
+    setPeekHumanId: noop,
     setPeekAgentId: (value) => {
       selectedPeek = typeof value === "function" ? value(selectedPeek) : value;
     },
@@ -913,6 +920,8 @@ test("Activity exact Thread callback keeps the list background and opens the req
       request: async (_, input) => ({ target: input.target }),
     },
     setNavigationError: noop,
+    setFocusHighlightQuery: noop,
+    setFocusHighlightRequest: noop,
     setFocusedMessageId: noop,
     setActiveThreadRootMessageId: (value) => {
       nav.state.thread = value;
@@ -922,6 +931,7 @@ test("Activity exact Thread callback keeps the list background and opens the req
     },
     setRoomMembersOpen: noop,
     setMobileRoomsOpen: noop,
+    setPeekHumanId: noop,
     setPeekAgentId: noop,
     setTab: noop,
   };
@@ -972,6 +982,8 @@ function activityRouteFixture(search = "?surface=activity&filter=mentions") {
       request: async (_, input) => ({ target: input.target }),
     },
     setNavigationError: noop,
+    setFocusHighlightQuery: noop,
+    setFocusHighlightRequest: noop,
     setFocusedMessageId: (value) => {
       nav.state.focus = value;
     },
@@ -983,6 +995,7 @@ function activityRouteFixture(search = "?surface=activity&filter=mentions") {
     },
     setRoomMembersOpen: noop,
     setMobileRoomsOpen: noop,
+    setPeekHumanId: noop,
     setPeekAgentId: noop,
     setTab: noop,
   };
@@ -1024,7 +1037,10 @@ test("Activity mark opening a Thread releases pending despite its own route inva
     true,
   );
   assert.equal(state.pending, "thread-card");
-  request.resolve({});
+  request.resolve({
+    message: { roomId: "room", messageId: "reply" },
+    rootMessageId: "root",
+  });
   await opening;
   assert.equal(f.nav.state.surface, "activity");
   assert.equal(f.nav.state.thread, "root");

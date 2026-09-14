@@ -149,7 +149,7 @@ export function MemberRelationshipSurface({
           <Icon name="chevron" />
         </button>
         <span className="rah-panel-header-icon">
-          <Icon name="share-2" />
+          <Icon name="git-branch" />
         </span>
         <h2>关系图</h2>
         <span className="rah-member-graph-experimental">EXPERIMENTAL</span>
@@ -157,7 +157,7 @@ export function MemberRelationshipSurface({
       <div className="rah-member-graph-body">
         <header className="rah-member-graph-header">
           <div>
-            <Icon name="share-2" />
+            <Icon name="git-branch" />
             <h3>关系</h3>
             <span>{data ? members.length : null}</span>
           </div>
@@ -490,7 +490,9 @@ function MemberGraphPreview({
   return (
     <div className="rah-member-graph-preview-body">
       <b>{memberDisplayName(member)}</b>
-      <small>@{member.handle}</small>
+      <small>
+        @{member.type === "human" ? memberDisplayName(member) : member.handle}
+      </small>
       <dl>
         <dt>身份</dt>
         <dd>{member.type === "agent" ? "Agent" : "人类"}</dd>

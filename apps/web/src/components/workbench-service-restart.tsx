@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { WorkbenchServiceStatusSchema } from "@rah-os/protocol";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
+import { ServiceRestartConfirmation } from "./service-restart-confirmation.tsx";
 
 export function WorkbenchServiceRestart() {
   const [generation, setGeneration] = useState<string>();
   const [pending, setPending] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const restartLock = useRef(false);
   const [message, setMessage] = useState("");
   const [statusState, setStatusState] = useState<
     "loading" | "available" | "unavailable" | "error"
@@ -44,12 +47,14 @@ export function WorkbenchServiceRestart() {
   async function restart() {
     const signal = lifetime.current?.signal;
     if (
-      pending ||
+      restartLock.current ||
       generation === undefined ||
       signal === undefined ||
       signal.aborted
     )
       return;
+    restartLock.current = true;
+    setConfirmOpen(false);
     setPending(true);
     setMessage("正在重启服务，等待重新连接…");
     try {
@@ -94,7 +99,7 @@ export function WorkbenchServiceRestart() {
             status.generation !== generation
           ) {
             setGeneration(status.generation);
-            setMessage("服务已重启，连接已恢复。");
+            setMessage("服务已重启，连接已恢复");
             return;
           }
         } catch {
@@ -111,6 +116,7 @@ export function WorkbenchServiceRestart() {
       if (!signal.aborted)
         setMessage(error instanceof Error ? error.message : "重启失败");
     } finally {
+      restartLock.current = false;
       if (!signal.aborted) setPending(false);
     }
   }
@@ -121,7 +127,7 @@ export function WorkbenchServiceRestart() {
         disabled={
           pending || statusState !== "available" || generation === undefined
         }
-        onClick={() => void restart()}
+        onClick={() => setConfirmOpen(true)}
         type="button"
       >
         <Icon name="refresh-cw" />
@@ -147,6 +153,12 @@ export function WorkbenchServiceRestart() {
                 ? "当前连接未提供服务重启能力。"
                 : "重启本机工作台服务，页面将自动重新连接。")}
       </p>
+      {confirmOpen && (
+        <ServiceRestartConfirmation
+          onClose={() => setConfirmOpen(false)}
+          onConfirm={() => void restart()}
+        />
+      )}
     </div>
   );
 }

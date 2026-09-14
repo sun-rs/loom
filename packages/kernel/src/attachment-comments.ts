@@ -1,3 +1,5 @@
+import { refreshAttachmentCommentCounts } from "./attachment-comment-counts.ts";
+import { followAgentThreadParticipants } from "./agent-thread-subscriptions.ts";
 import { boundRows } from "./bounded-read-rows.ts";
 import type { DatabaseSync } from "node:sqlite";
 import * as P from "@rah-os/protocol";
@@ -28,6 +30,16 @@ export class AttachmentCommentsService {
     this.#c = context;
   }
   initialize() {
+    const db = this.#c.database;
+    if (
+      !db
+        .prepare("PRAGMA table_info(messages)")
+        .all()
+        .some((row) => row.name === "attachment_comment_json")
+    )
+      db.exec(
+        "ALTER TABLE messages ADD COLUMN attachment_comment_json TEXT CHECK(attachment_comment_json IS NULL OR json_valid(attachment_comment_json))",
+      );
     if (
       !this.#c.database
         .prepare("PRAGMA table_info(held_message_drafts)")
@@ -40,6 +52,18 @@ export class AttachmentCommentsService {
     this.#c.database
       .exec(`CREATE TABLE IF NOT EXISTS attachment_comment_links(message_id TEXT PRIMARY KEY REFERENCES messages(message_id),attachment_id TEXT NOT NULL REFERENCES room_files(attachment_id),room_id TEXT NOT NULL REFERENCES rooms(room_id),anchor_json TEXT) STRICT;
  CREATE INDEX IF NOT EXISTS idx_attachment_comments ON attachment_comment_links(attachment_id,message_id);`);
+    db.exec(
+      `UPDATE messages SET attachment_comment_json=(SELECT json_object('attachmentId',f.attachment_id,'filename',f.filename) FROM attachment_comment_links l JOIN room_files f USING(attachment_id) WHERE l.message_id=messages.message_id) WHERE attachment_comment_json IS NULL AND message_id IN(SELECT message_id FROM attachment_comment_links)`,
+    );
+    refreshAttachmentCommentCounts(db);
+  }
+  #projectComment(messageId: string, attachmentId: string) {
+    this.#c.database
+      .prepare(
+        `UPDATE messages SET attachment_comment_json=(SELECT json_object('attachmentId',attachment_id,'filename',filename) FROM room_files WHERE attachment_id=?) WHERE message_id=?`,
+      )
+      .run(attachmentId, messageId);
+    refreshAttachmentCommentCounts(this.#c.database, attachmentId);
   }
   list(
     auth: AuthenticatedActorContext,
@@ -200,6 +224,7 @@ export class AttachmentCommentsService {
             result.event.roomId,
             "null",
           );
+      this.#projectComment(result.event.aggregateId, metadata.attachmentId);
     } else
       this.#c.database
         .prepare(
@@ -226,6 +251,7 @@ export class AttachmentCommentsService {
         .get(roomId, input.idempotencyKey);
       const metadata = {
         attachmentId: input.attachmentId,
+        filename: text(file, "filename"),
         anchor: input.anchor ?? null,
       };
       if (previous) {
@@ -234,8 +260,12 @@ export class AttachmentCommentsService {
           event.type !== "message.posted" ||
           event.actorId !== actor.principalId ||
           event.payload.body !== input.body ||
-          JSON.stringify(event.payload.attachmentComment) !==
-            JSON.stringify(metadata) ||
+          (event.payload.attachmentComment as { attachmentId?: string })
+            ?.attachmentId !== metadata.attachmentId ||
+          JSON.stringify(
+            (event.payload.attachmentComment as { anchor?: unknown })?.anchor ??
+              null,
+          ) !== JSON.stringify(metadata.anchor) ||
           JSON.stringify(event.payload.requestedRecipientIds) !==
             JSON.stringify(
               [...new Set(input.recipientIds)]
@@ -258,6 +288,14 @@ export class AttachmentCommentsService {
           basedOnRoomSeq: seq,
           idempotencyKey: `comment-thread:${input.idempotencyKey}`,
         });
+        // The file author has already participated through the published attachment.
+        // Only a new discussion adopts that participation; never re-follow an existing one.
+        followAgentThreadParticipants(db, {
+          participantIds: [text(file, "actor_id")],
+          source: "participation",
+          threadId: created.thread.threadId,
+          updatedAt: created.thread.createdAt,
+        });
         thread = { thread_id: created.thread.threadId };
         seq = created.event.roomSeq;
       }
@@ -278,6 +316,7 @@ export class AttachmentCommentsService {
         roomId,
         JSON.stringify(input.anchor ?? null),
       );
+      this.#projectComment(result.event.aggregateId, input.attachmentId);
       return result;
     });
   }

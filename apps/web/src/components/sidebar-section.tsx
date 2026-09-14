@@ -1,3 +1,4 @@
+import { useSidebarGroupHandle } from "./sidebar-drag.tsx";
 import { useId, useState, type ReactNode } from "react";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 
@@ -16,10 +17,14 @@ export function SidebarSection({
 }) {
   const [open, setOpen] = useState(true);
   const id = useId();
+  const handle = useSidebarGroupHandle();
   return (
     <section className="side-section">
       <div className="side-title">
         <button
+          ref={handle?.setActivatorNodeRef}
+          {...handle?.attributes}
+          {...handle?.listeners}
           type="button"
           className="rah-sidebar-disclosure"
           aria-expanded={open}

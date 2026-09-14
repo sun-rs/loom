@@ -25,24 +25,7 @@ export function globalTaskTransition(
   const current = taskWorkflowStatus(task.state);
   const requested = workflowStatus(target);
   if (requested === current) return { reason: "任务已处于此状态" };
-  if (
-    requested === "closed" &&
-    !["completed", "cancelled"].includes(task.state)
-  )
-    return { operation: "task.workflow.update" };
-  if (requested === "todo" && task.state === "cancelled")
-    return { operation: "task.workflow.update" };
-  if (requested === "done" && task.state === "submitted")
-    return { operation: "task.workflow.update" };
-  if (requested === "in_progress")
-    return { reason: "进行中状态由真实认领与执行产生" };
-  if (requested === "in_review")
-    return { reason: "待确认状态由 Agent 提交冻结成果产生" };
-  if (requested === "done")
-    return { reason: "只有已提交且满足审阅要求的任务才能完成" };
-  if (requested === "todo")
-    return { reason: "只有已关闭且完成停止证明的任务才能重开" };
-  return { reason: "已完成或已关闭的任务不能再次关闭" };
+  return { operation: "task.workflow.update" };
 }
 
 function workflowStatus(target: TaskColumnId): TaskWorkflowStatus {

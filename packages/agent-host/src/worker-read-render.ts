@@ -114,6 +114,13 @@ function formatAttachmentSuffix(attachments: unknown): string {
   }: ${rendered} — use rah worker attachment-download to download]`;
 }
 
+function attachmentCommentSuffix(message: Json): string {
+  const reference = asRecord(message.attachmentComment);
+  return asString(reference.attachmentId)
+    ? ` [Comment on file: ${JSON.stringify(reference.filename ?? reference.attachmentId)} (attachmentId:${reference.attachmentId})]`
+    : "";
+}
+
 /** `formatPageFooter` (`main.js@675170`), reduced to the one cursor RAH pages by. */
 function formatPageFooter(command: string, nextCursor: unknown): string {
   const cursor = asString(nextCursor);
@@ -147,7 +154,7 @@ function historyLine(message: Json, index: number, total: number): string {
   if (threadId !== undefined) header.push(`threadId=${threadId}`);
   return `[${header.join(" ")}] @${
     asString(message.senderHandle) ?? asString(message.actorId) ?? "unknown"
-  }: ${asString(message.body) ?? ""}${formatAttachmentSuffix(
+  }: ${asString(message.body) ?? ""}${attachmentCommentSuffix(message)}${formatAttachmentSuffix(
     message.attachments,
   )}`;
 }
@@ -164,7 +171,7 @@ function messageLine(message: Json): string {
     asString(message.messageId) ?? "-"
   } time=${time(message.createdAt)}] @${
     asString(message.senderHandle) ?? asString(message.actorId) ?? "unknown"
-  }: ${asString(message.body) ?? ""}${formatAttachmentSuffix(
+  }: ${asString(message.body) ?? ""}${attachmentCommentSuffix(message)}${formatAttachmentSuffix(
     message.attachments,
   )}`;
 }
@@ -469,7 +476,7 @@ function eventLines(rawEvent: Json, addressing?: unknown): string[] {
     const lines = [
       `[${header.join(" ")}] @${actor}: ${
         asString(payload.body) ?? ""
-      }${formatAttachmentSuffix(payload.attachments)}`,
+      }${attachmentCommentSuffix(payload)}${formatAttachmentSuffix(payload.attachments)}`,
     ];
     const mentions = asArray(payload.recipients)
       .map(asRecord)

@@ -445,3 +445,55 @@ function fixturePlan(
     workspaceCwd: join(directory, "workspace"),
   });
 }
+
+test("log rotation happens only after old service stops and before bootstrap", async () => {
+  const { mkdtemp, mkdir, writeFile, readFile, utimes, rm } =
+    await import("node:fs/promises");
+  const { randomUUID } = await import("node:crypto");
+  const directory = await mkdtemp(join(tmpdir(), "rah-log-lifecycle-"));
+  const plan = fixturePlan(directory, { kind: "loopback", port: 4173 });
+  try {
+    await mkdir(plan.logDirectory, { recursive: true });
+    const log = join(plan.logDirectory, "core.stdout.log");
+    await writeFile(log, "previous-process");
+    await utimes(log, new Date("2000-01-01"), new Date("2000-01-01"));
+    let loaded = true;
+    const launchctl = {
+      async run(args: readonly string[]) {
+        if (args[0] === "print") return { exitCode: loaded ? 0 : 113 };
+        if (args[0] === "bootout") {
+          assert.equal(await readFile(log, "utf8"), "previous-process");
+          loaded = false;
+          return { exitCode: 0 };
+        }
+        if (args[0] === "bootstrap") {
+          await assert.rejects(readFile(log), { code: "ENOENT" });
+          loaded = true;
+          return { exitCode: 0 };
+        }
+        throw new Error("unexpected launchctl action");
+      },
+    };
+    await activateMacOSLocalCoreLaunchAgent({
+      plan,
+      launchctl,
+      userId: 501,
+      proveReady: async () => {},
+    });
+    assert.equal(
+      await readFile(log, "utf8"),
+      "previous-process",
+      "already-loaded activation must not rename its live log",
+    );
+    await activateMacOSLocalCoreLaunchAgent({
+      plan,
+      launchctl,
+      userId: 501,
+      replaceLoaded: true,
+      proveReady: async () => {},
+    });
+  } finally {
+    await rm(plan.logDirectory, { recursive: true, force: true });
+    await rm(directory, { recursive: true, force: true });
+  }
+});

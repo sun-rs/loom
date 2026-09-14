@@ -12,6 +12,7 @@ import { MessageAgentAvatar } from "../src/components/agent-message-identity.tsx
 export function AgentPreviewFixture({ agent }: { agent: WorkspaceAgentView }) {
   const [mode, setMode] = useState("other");
   const [reads, setReads] = useState(0);
+  const [opened, setOpened] = useState("");
   const [activityVersion, setActivityVersion] = useState(0);
   const activityVersionRef = useRef(0);
   useEffect(() => {
@@ -131,11 +132,12 @@ export function AgentPreviewFixture({ agent }: { agent: WorkspaceAgentView }) {
         </select>
       </label>
       <output data-trajectory-reads>{reads}</output>
+      <output data-opened-agent>{opened}</output>
       <WorkspaceEntityContext.Provider value={entities}>
         <AgentMessageContext.Provider
           value={{
             client,
-            onOpen: () => {},
+            onOpen: (id) => setOpened(id),
             canManageAgents: ["manager", "empty", "activity-error"].includes(
               mode,
             ),
@@ -145,6 +147,7 @@ export function AgentPreviewFixture({ agent }: { agent: WorkspaceAgentView }) {
             key={mode}
             agent={{
               ...agent,
+              description: "Description must stay in the profile only",
               presence: {
                 agentDefinitionId: agent.agentDefinitionId,
                 trajectoryVersion: activityVersion,

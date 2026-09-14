@@ -11,13 +11,13 @@ import {
   writeComputerSidebarWidth,
 } from "../src/computer-sidebar-resize.ts";
 
-test("Computer owns Raft's 320 / 240..520 sidebar contract", () => {
-  assert.equal(RAFT_COMPUTER_SIDEBAR_DEFAULT_WIDTH, 320);
-  assert.equal(RAFT_COMPUTER_SIDEBAR_MIN_WIDTH, 240);
-  assert.equal(RAFT_COMPUTER_SIDEBAR_MAX_WIDTH, 520);
-  assert.equal(clampComputerSidebarWidth(80), 240);
-  assert.equal(clampComputerSidebarWidth(840), 520);
-  assert.equal(clampComputerSidebarWidth(333.6), 334);
+test("Computer owns Raft's 240 / 180..320 sidebar contract", () => {
+  assert.equal(RAFT_COMPUTER_SIDEBAR_DEFAULT_WIDTH, 240);
+  assert.equal(RAFT_COMPUTER_SIDEBAR_MIN_WIDTH, 180);
+  assert.equal(RAFT_COMPUTER_SIDEBAR_MAX_WIDTH, 320);
+  assert.equal(clampComputerSidebarWidth(80), 180);
+  assert.equal(clampComputerSidebarWidth(840), 320);
+  assert.equal(clampComputerSidebarWidth(233.6), 234);
 });
 
 test("Computer width persists separately from the Room sidebar", () => {
@@ -26,19 +26,19 @@ test("Computer width persists separately from the Room sidebar", () => {
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => values.set(key, value),
   };
-  assert.equal(readComputerSidebarWidth(storage), 320);
-  writeComputerSidebarWidth(storage, 408);
-  assert.equal(values.get("rah:computer-sidebar-width"), "408");
+  assert.equal(readComputerSidebarWidth(storage), 240);
+  writeComputerSidebarWidth(storage, 280);
+  assert.equal(values.get("rah:computer-sidebar-width"), "280");
   assert.equal(values.has("rah:room-sidebar-width"), false);
-  assert.equal(readComputerSidebarWidth(storage), 408);
+  assert.equal(readComputerSidebarWidth(storage), 280);
   values.set("rah:computer-sidebar-width", "9000");
-  assert.equal(readComputerSidebarWidth(storage), 320);
+  assert.equal(readComputerSidebarWidth(storage), 240);
 });
 
 test("Computer keyboard resizing follows its right-edge handle", () => {
   assert.equal(nextComputerSidebarWidth(320, "ArrowLeft"), 312);
-  assert.equal(nextComputerSidebarWidth(320, "ArrowRight"), 328);
-  assert.equal(nextComputerSidebarWidth(320, "Home"), 240);
-  assert.equal(nextComputerSidebarWidth(320, "End"), 520);
+  assert.equal(nextComputerSidebarWidth(320, "ArrowRight"), 320);
+  assert.equal(nextComputerSidebarWidth(320, "Home"), 180);
+  assert.equal(nextComputerSidebarWidth(320, "End"), 320);
   assert.equal(nextComputerSidebarWidth(320, "Escape"), undefined);
 });

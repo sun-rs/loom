@@ -148,8 +148,24 @@ try {
           await button.focus();
           await page.keyboard.press("Enter");
         } else await button.click();
+        const confirmation = page.getByRole("dialog", {
+          name: "重启服务",
+          exact: true,
+        });
+        await confirmation.waitFor();
+        const beforeConfirm = await page.evaluate(async () =>
+          (await fetch("/_rah/service")).json(),
+        );
+        assert.equal(
+          beforeConfirm.generation,
+          before.generation,
+          "opening confirmation must not restart",
+        );
+        await confirmation
+          .getByRole("button", { name: "重启服务", exact: true })
+          .click();
         await page
-          .getByText("服务已重启，连接已恢复。", { exact: true })
+          .getByText("服务已重启，连接已恢复", { exact: true })
           .waitFor({ timeout: 90_000 });
         const after = await page.evaluate(async () =>
           (await fetch("/_rah/service")).json(),
@@ -157,11 +173,15 @@ try {
         assert.notEqual(before.generation, after.generation);
         await staleButton.click();
         await stalePage
+          .getByRole("dialog", { name: "重启服务", exact: true })
+          .getByRole("button", { name: "重启服务", exact: true })
+          .click();
+        await stalePage
           .getByText("服务已由其他请求重启，已刷新连接状态。", { exact: true })
           .waitFor();
         assert.equal(
           await stalePage
-            .getByText("服务已重启，连接已恢复。", { exact: true })
+            .getByText("服务已重启，连接已恢复", { exact: true })
             .count(),
           0,
         );
@@ -183,7 +203,7 @@ try {
         await button.waitFor();
         assert.equal(
           await page
-            .getByText("服务已重启，连接已恢复。", { exact: true })
+            .getByText("服务已重启，连接已恢复", { exact: true })
             .count(),
           0,
         );

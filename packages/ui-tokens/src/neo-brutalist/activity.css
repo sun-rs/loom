@@ -114,7 +114,7 @@
 .feed-card.is-completing {
   pointer-events: none;
   opacity: 0;
-  transition: opacity .15s;
+  transition: opacity var(--rah-interaction-transition);
 }
 
 .fc-content {
@@ -160,6 +160,7 @@
   font-size: var(--raft-activity-time-size);
   font-weight: 400;
   line-height: var(--raft-activity-time-line);
+  transition: opacity var(--rah-interaction-transition);
 }
 .fc-summary {
   display: -webkit-box;
@@ -210,11 +211,33 @@
   flex: none;
 }
 
+/* Raft ThreadsInbox-C27ErbNa: actions replace the timestamp at right-3/top-3.
+   Keep time in normal flow so hover never changes title wrapping or card height. */
 .fc-actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
   display: flex;
-  flex: none;
   align-items: center;
-  gap: var(--raft-activity-chips-gap);
+  padding-left: 4px;
+  pointer-events: none;
+  background: transparent;
+}
+.feed-card:is(:hover, :focus-visible, :focus-within) .fc-actions {
+  background: var(--bg);
+}
+.feed-card:is(:hover, :focus-visible, :focus-within) .fc-heading-row time {
+  opacity: 0;
+}
+.feed-card:is(:hover, :focus-visible, :focus-within) .activity-done {
+  opacity: 1;
+  pointer-events: auto;
+}
+@media (hover: none) {
+  .fc-actions { background: var(--bg); }
+  .fc-heading-row time { opacity: 0; }
+  .feed-card .activity-done { opacity: 1; pointer-events: auto; }
 }
 .activity-done {
   display: inline-flex;
@@ -228,7 +251,9 @@
   box-shadow: var(--raft-activity-done-shadow);
   padding: var(--raft-activity-done-padding);
   cursor: pointer;
-  transition: all .1s;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--rah-press-transition);
 }
 .activity-done svg { width: 14px; height: 14px; }
 .activity-done:hover {
@@ -248,7 +273,4 @@
   .page { grid-template-columns: 56px minmax(0, 1fr); }
   .activity-toolbar { padding-inline: 12px; }
   .feed { padding: 12px; }
-  .feed-card { padding: 10px; }
-  .fc-heading-row { display: block; }
-  .fc-heading-row time { display: block; margin-top: 2px; }
 }

@@ -6,6 +6,7 @@ import type {
   RuntimeTrajectoryRecord,
 } from "@rah-os/protocol";
 import type { WorkspaceAgentView } from "@rah-os/ui-web";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { PreviewCard } from "./preview-card.tsx";
 import { AgentAvatar } from "./agent-avatar.tsx";
 import { AgentStatusDot } from "./agent-status-dot.tsx";
@@ -13,6 +14,7 @@ import { runtimeProfilePresentation } from "../agent-runtime-presentation.ts";
 import {
   useWorkspaceEntities,
   AgentMessageContext,
+  IdentityOriginContext,
 } from "./workspace-entity-context.tsx";
 import {
   previewActivityText,
@@ -26,14 +28,26 @@ import { formatRahDateTime } from "../date-time-presentation.ts";
 
 export function MessageAgentAvatar({ agent }: { agent: WorkspaceAgentView }) {
   const context = useContext(AgentMessageContext);
+  const origin = useContext(IdentityOriginContext);
   return (
     <PreviewCard
       label={`查看 ${agent.displayName} 动态`}
       triggerClassName="rah-message-avatar-trigger"
       className="rah-agent-preview"
-      onClick={() => context?.onOpen(agent.agentDefinitionId)}
+      onClick={() => context?.onOpen(agent.agentDefinitionId, origin)}
       content={
-        context ? <AgentPreview agent={agent} client={context.client} /> : null
+        context
+          ? (close) => (
+              <AgentPreview
+                agent={agent}
+                client={context.client}
+                onOpenActivity={() => {
+                  close();
+                  context.onOpen(agent.agentDefinitionId, origin);
+                }}
+              />
+            )
+          : null
       }
     >
       <AgentAvatar agent={agent} size="sidebar" />
@@ -51,14 +65,26 @@ export function MessageAgentReference({
   readState?: MessageReferenceReadState | undefined;
 }) {
   const context = useContext(AgentMessageContext);
+  const origin = useContext(IdentityOriginContext);
   return (
     <PreviewCard
       label={`查看 ${agent.displayName} 动态`}
       triggerClassName="rah-rich-agent-reference"
       className="rah-agent-preview"
-      onClick={() => context?.onOpen(agent.agentDefinitionId)}
+      onClick={() => context?.onOpen(agent.agentDefinitionId, origin)}
       content={
-        context ? <AgentPreview agent={agent} client={context.client} /> : null
+        context
+          ? (close) => (
+              <AgentPreview
+                agent={agent}
+                client={context.client}
+                onOpenActivity={() => {
+                  close();
+                  context.onOpen(agent.agentDefinitionId, origin);
+                }}
+              />
+            )
+          : null
       }
     >
       {children}
@@ -76,9 +102,11 @@ export function MessageAgentReference({
 function AgentPreview({
   agent,
   client,
+  onOpenActivity,
 }: {
   agent: WorkspaceAgentView;
   client: RahClient;
+  onOpenActivity: () => void;
 }) {
   const entities = useWorkspaceEntities();
   const context = useContext(AgentMessageContext);
@@ -234,19 +262,18 @@ function AgentPreview({
           </dl>
         </div>
       </div>
-      {agent.description ? (
-        <div
-          className="rah-agent-preview-description"
-          title={agent.description}
-        >
-          {agent.description}
-        </div>
-      ) : null}
       {canReadActivity &&
       (!loading || activities.length > 0) &&
       (error || activities.length > 0) ? (
         <section>
-          <h4>最近动态</h4>
+          <button
+            type="button"
+            className="rah-agent-preview-activity-open"
+            onClick={onOpenActivity}
+          >
+            最近动态
+            <Icon name="chevron-right" />
+          </button>
           {error ? (
             <p>暂时无法读取动态</p>
           ) : (

@@ -83,7 +83,7 @@ export async function startRestartableLocalCoreWorkbench(
   };
   running = await lifecycle.start({ ...input, serviceControl });
   observeFailure(running);
-  if (mode.kind === "loopback")
+  if (mode.kind === "loopback" || mode.kind === "tailnet")
     mode = {
       ...mode,
       port: Number(new URL(running.descriptor.webOrigin).port),

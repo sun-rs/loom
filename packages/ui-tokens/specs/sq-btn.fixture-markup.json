@@ -1,0 +1,39 @@
+{
+  "generatedBy": "node scripts/run-component-spec-browser-gate.mjs sq-btn --report-matching-rules",
+  "component": "sq-btn",
+  "note": "outerHTML of each fixture probe after React rendered it in real Chrome, at the gate's primary viewport. docs/design/ui-catalog.html renders exactly these strings; no component markup in the catalog is hand-written.",
+  "viewport": "1440x900",
+  "cssInputsSha256": "305bbcc64771dc952921fa93f64d92b2929640fcbd0f3b4980ba52bb599b158e",
+  "fixtureSha256": "a727338cd2b1a215b119ee2cbcce91c3632dd2f6125cccacd1c4c830f96bea97",
+  "gateScriptSha256": "bc7e998c999fee56cd3ecde9592703aaeb96beea610b5424f0e331de22e8e59b",
+  "structureSha256": "08f539335909b3ae8c7df078e1e217ef9527209c997cd3aaa43cf8070423b7be",
+  "markup": {
+    "sq-btn": {
+      "base": "<button type=\"button\" class=\"sq-btn\" data-probe=\"sq-btn\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 4h16v16H4z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"></path></svg></button>"
+    },
+    "head-sq-btn": {
+      "base": "<button type=\"button\" class=\"sq-btn\" data-probe=\"head-sq-btn\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 4h16v16H4z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"></path></svg></button>"
+    },
+    "sq-btn-disabled": {
+      "base": "<button type=\"button\" class=\"sq-btn\" data-probe=\"sq-btn-disabled\" disabled=\"\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 4h16v16H4z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"></path></svg></button>"
+    },
+    "sq-btn-sm": {
+      "base": "<button type=\"button\" class=\"sq-btn sm\" data-probe=\"sq-btn-sm\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 4h16v16H4z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"></path></svg></button>"
+    },
+    "composer-sq-btn": {
+      "base": "<button type=\"button\" class=\"sq-btn\" data-probe=\"composer-sq-btn\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 4h16v16H4z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"></path></svg></button>"
+    },
+    "send-btn": {
+      "base": "<button type=\"button\" class=\"send-btn\" data-probe=\"send-btn\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 4h16v16H4z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"></path></svg></button>"
+    },
+    "send-btn-disabled": {
+      "base": "<button type=\"button\" class=\"send-btn\" data-probe=\"send-btn-disabled\" disabled=\"\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 4h16v16H4z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"></path></svg></button>"
+    },
+    "composer-picker": {
+      "base": "<button type=\"button\" class=\"sq-btn rah-composer-picker\" data-probe=\"composer-picker\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 4h16v16H4z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"></path></svg></button>"
+    },
+    "composer-picker-disabled": {
+      "base": "<button type=\"button\" class=\"sq-btn rah-composer-picker\" data-probe=\"composer-picker-disabled\" disabled=\"\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 4h16v16H4z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"></path></svg></button>"
+    }
+  }
+}

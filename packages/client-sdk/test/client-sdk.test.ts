@@ -127,6 +127,8 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "workspace.human.list",
     "workspace.list",
     "workspace.member-graph.get",
+    "workspace.system-channel.read",
+    "workspace.system-channel.update",
     "workspace.update",
   ]);
 });

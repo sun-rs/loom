@@ -1,3 +1,4 @@
+import { browserOpaqueId } from "../browser-opaque-id.ts";
 import { useEffect, useMemo, useState } from "react";
 
 import type { RahClient } from "@rah-os/client-sdk";
@@ -30,7 +31,7 @@ export function MessageForwardDialog({
     [],
   );
   const [attempted, setAttempted] = useState(false);
-  const [requestId] = useState(() => `forward-${crypto.randomUUID()}`);
+  const [requestId] = useState(() => `forward-${browserOpaqueId()}`);
   const dialogRef = useDialogProtocol({ blocked: pending, onClose });
   const deliveredIds = useMemo(
     () =>

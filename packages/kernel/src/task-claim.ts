@@ -40,6 +40,14 @@ export function claimTaskTransaction(
   if (replay !== null) return replay;
   if (!Number.isInteger(input.leaseMs) || input.leaseMs <= 0)
     throw new Error("leaseMs must be a positive integer");
+  if (
+    context.database
+      .prepare(
+        "SELECT 1 FROM activation_cancellation_requests WHERE task_id=? AND resolved_at IS NULL",
+      )
+      .get(input.taskId)
+  )
+    throw new ConflictError("Previous Task execution is still stopping");
   const existingAssignee = nullableText(taskRow, "assignee_id");
   if (existingAssignee !== null && existingAssignee !== scope.participantId) {
     throw new LeaseConflictError(

@@ -1,4 +1,8 @@
 import {
+  RuntimeCatalogRefresh,
+  activeRuntimeRevision,
+} from "./runtime-catalog-refresh.ts";
+import {
   createDaemonExecutionWorkspaceComposition,
   legacyWorkspaceMountDescriptors,
 } from "./daemon-execution-workspace-composition.ts";
@@ -129,6 +133,7 @@ export class DaemonApplication {
     let workerService: WorkerApplicationService | undefined;
     const runtimeProfileRegistries = new Map<string, RuntimeProfileRegistry>();
     const configuredLocalRuntimes: ConfiguredLocalRuntimeSnapshot[] = [];
+    const catalogRefresh = new RuntimeCatalogRefresh();
     let executionFailure: unknown;
     try {
       await ensureOwnerPrivateDirectory(this.#config.stateDirectory);
@@ -463,14 +468,6 @@ export class DaemonApplication {
               `active RuntimeProfile probe failed: ${probeReport.failureCode ?? "unavailable"}`,
             );
           }
-          configuredLocalRuntimes.push(
-            configuredRuntimeSnapshotWithValidation({
-              probeReport,
-              registry: runtimeProfileRegistry,
-              runtimeOfferId: runtimeOptions.offer.runtimeOfferId,
-              runtimeProfileRevision: activeRevision,
-            }),
-          );
           const credentialEnvironment = new RuntimeCredentialEnvironmentBinding(
             {
               manifest: activeRevision.manifest,
@@ -562,17 +559,10 @@ export class DaemonApplication {
               leaseMs: runtimeOptions.offer.leaseMs,
               maxConcurrent: runtimeOptions.offer.maxConcurrent,
               probeReport,
-              revisionIsActive: () => {
-                try {
-                  assertRuntimeProfileRevisionStillActive(
-                    runtimeProfileRegistry,
-                    activeRevision,
-                  );
-                  return true;
-                } catch {
-                  return false;
-                }
-              },
+              revisionIsActive: activeRuntimeRevision(
+                runtimeProfileRegistry,
+                activeRevision,
+              ),
               refreshIntervalMs: runtimeOptions.offer.refreshIntervalMs,
               refreshAvailability: async () =>
                 await implementations.probeReportAppearsRunnable(
@@ -585,6 +575,16 @@ export class DaemonApplication {
               refreshWorkspaceMountDescriptors: refreshExecutionWorkspaces,
             }),
           );
+          catalogRefresh.register({
+            initialReport: probeReport,
+            runtimeOfferId: runtimeOptions.offer.runtimeOfferId,
+            revision: activeRevision,
+            registry: runtimeProfileRegistry,
+            implementations,
+            publisher: runtimeOfferPublishers.at(-1)!,
+            configured: configuredLocalRuntimes,
+            cwd: v4Config.workspace.cwd,
+          });
         }
         if (defaultRuntime === undefined) {
           throw new Error("daemon config v4 requires at least one Runtime");
@@ -706,6 +706,7 @@ export class DaemonApplication {
         buildVersion: DAEMON_BUILD_VERSION,
         config: this.#config,
         configuredLocalRuntimes,
+        refreshRuntimeCatalog: (offerId) => catalogRefresh.refresh(offerId),
         discoveredLocalClis,
         healthState: () => this.#health.state,
         host,

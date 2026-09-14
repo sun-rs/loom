@@ -6,6 +6,10 @@
 
 ## 决策
 
+2026-09-14：自定义侧栏分区通过既有sidebar.patch原子保存可选emoji，旧记录兼容；
+其唯一owner仍是Human × Workspace侧栏偏好，非Room配置。
+[新建分区弹窗及协议证据](../audits/2026-09-14-section-create-dialog-parity.zh-CN.md)。
+
 2026-09-08 本批修复：全局 Task 在保留看板与筛选的居中 Thread 弹窗内打开；
 Task 生命周期历史由既有 Kernel 投影提供，Human `task.history` 仅增加认证读取入口，
 与 Worker 共用冻结分页和字段脱敏，不扫描整间 Room、不新建历史存储。
@@ -92,3 +96,28 @@ Raft 的前端发布源码是**可见产品行为**的首要证据：触发入�
 PDF 附件的本地 canvas 阅读补充：支持页码跳转、10%–2500% 相对适合宽度缩放，单页画布至多 400 万像素。
 沿用认证下载、关闭取消与 URL 回收；工具栏为本地适配，原生 PDF 完整能力及官方双边仍未验收。
 见[阅读操作证据](../audits/2026-09-07-pdf-reading-closure.zh-CN.md)。
+
+## #all 固定成员（2026-09-13）
+
+常驻 #all 使用不可变 slug 标识，同 Workspace 的全部未删除 Agent 自动成为成员；停用不退出，删除身份遵守原执行围栏。Kernel 在频道/Agent 创建和启动时维护 canonical membership，前端无手动添加或移除入口，后端拒绝绕过调用。普通频道保持原行为。详见[来源、事务与验收](../audits/2026-09-13-all-channel-membership.zh-CN.md)。
+
+## #all 隐藏与覆盖式成员资料（2026-09-13）
+
+系统频道隐藏是独立于 public/private 的 Kernel 工作空间策略：频道设置确认后隐藏，
+设置→管理→系统频道可恢复。隐藏禁止 Human/Agent 读取与发送，保留成员和历史，
+服务重启不恢复。活动工作仍受现有执行围栏保护。覆盖式频道抽屉使用 Raft 的
+240/180ms 动画，成员资料在同尺寸容器中显示；并排聊天 inspector 不使用此动画。
+来源、规则、测试与差异见[频道设置与系统可见性审计](../audits/2026-09-13-channel-settings-and-system-visibility.zh-CN.md)。
+
+## 外观模型显示（2026-09-14）
+
+本设备偏好控制预览和 Room/DM/Thread 的 Agent 名旁模型标签；Web/PWA 默认关闭，
+有明确保存的模型绑定才显示。Agent 目录以现有 ACL 投影当前策略的可选 `modelBindingId`，
+不按消息读取完整策略，不推断历史 Run 的模型。详见[来源和验证记录](../audits/2026-09-14-agent-model-appearance.zh-CN.md)。
+
+## 文件评论计数（2026-09-14）
+
+附件卡片评论数来自 AttachmentCommentsService 的持久附件关联，不使用线程回复数或当前评论分页长度。
+Attachment.commentCount 是可重建显示投影；挂载的旧消息通过已有 MessageSocial 批量读模型的
+attachmentCommentCounts 更新，保持有界窗口及权限检查。整文件引用使用 Raft file-text 图标。
+详见[源码、数据与验证证据](../audits/2026-09-14-file-comment-count-and-glyph.zh-CN.md)。

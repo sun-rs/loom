@@ -1,3 +1,4 @@
+import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
 import type {
   ForwardedMessageBundle,
   NavigationTarget,
@@ -20,6 +21,7 @@ export function ForwardedMessageBundleView({
   bundle: ForwardedMessageBundle;
   onOpenTarget?: ((target: NavigationTarget) => void) | undefined;
 }) {
+  const entities = useWorkspaceEntities();
   return (
     <section className="rah-forwarded-bundle" data-testid="forwarded-bundle">
       <header>
@@ -40,12 +42,13 @@ export function ForwardedMessageBundleView({
                 }
               : {}),
           };
-          const author = item.actor.displayName ?? item.actor.handle;
+          const actor = entities?.resolvePerson(item.actor) ?? item.actor;
+          const author = actor.displayName || actor.handle;
           return (
             <article key={item.sourceMessageId}>
-              {item.actor.avatarKey ? (
+              {actor.avatarKey ? (
                 <ProfileImageAvatar
-                  avatarKey={item.actor.avatarKey}
+                  avatarKey={actor.avatarKey}
                   name={author}
                   size="compact"
                 />
@@ -73,7 +76,17 @@ export function ForwardedMessageBundleView({
                     查看原消息
                   </a>
                 </header>
-                <MessageMarkdown source={item.body} />
+                <MessageMarkdown
+                  source={item.body}
+                  references={{
+                    agents: entities?.agents() ?? [],
+                    principals:
+                      entities?.humans().map((member) => member.principal) ??
+                      [],
+                    rooms: [],
+                    tasks: [],
+                  }}
+                />
                 {item.attachmentPolicy === "projected" ? (
                   <MessageAttachments attachments={item.attachments} />
                 ) : null}

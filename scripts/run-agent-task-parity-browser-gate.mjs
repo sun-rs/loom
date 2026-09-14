@@ -114,7 +114,7 @@ for (const engine of ["chrome", "firefox"]) {
       await head
         .getByRole("button", { name: "重启 / 重置", exact: true })
         .click();
-      await page.getByRole("dialog", { name: /^重新启动/ }).waitFor();
+      await page.getByRole("dialog", { name: /^重启/ }).waitFor();
       await page.keyboard.press("Escape");
       const actions = page.locator(".rah-agent-actions-section");
       await actions

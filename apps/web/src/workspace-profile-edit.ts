@@ -1,3 +1,4 @@
+import { browserOpaqueId } from "./browser-opaque-id.ts";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { Workspace } from "@rah-os/protocol";
@@ -111,7 +112,7 @@ export function useWorkspaceProfileEdit(
       const response = await client.request("workspace.update", {
         workspaceId: workspace.workspaceId,
         basedOnControlRoomSeq: baseline.seq,
-        idempotencyKey: crypto.randomUUID(),
+        idempotencyKey: browserOpaqueId(),
         name: name.trim(),
         avatarKey: avatarKey || null,
         ...(avatarUploadIntentId ? { avatarUploadIntentId } : {}),

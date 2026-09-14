@@ -3,6 +3,7 @@ export type RahTimeFormat = "12" | "24";
 
 const MESSAGE_SIZE_KEY = "rah:settings:message-size";
 const LIVE_ACTIVITY_KEY = "rah:settings:live-agent-activity";
+const AGENT_MODEL_KEY = "rah:settings:agent-model-name";
 const TIME_FORMAT_KEY = "rah:settings:time-format";
 
 function read(storage: Storage, key: string): string | null {
@@ -43,6 +44,18 @@ export function writeLiveAgentActivity(storage: Storage, value: boolean) {
   return saved;
 }
 
+// Web/PWA follow Raft's browser default. Native desktop defaults belong to a
+// future explicit shell capability, never viewport width or user-agent sniffing.
+export function readAgentModelName(storage: Storage): boolean {
+  return read(storage, AGENT_MODEL_KEY) === "true";
+}
+
+export function writeAgentModelName(storage: Storage, value: boolean) {
+  const saved = write(storage, AGENT_MODEL_KEY, String(value));
+  document.documentElement.dataset.rahAgentModelName = String(value);
+  return saved;
+}
+
 export function readTimeFormat(storage: Storage): RahTimeFormat {
   return read(storage, TIME_FORMAT_KEY) === "12" ? "12" : "24";
 }
@@ -54,6 +67,9 @@ export function writeTimeFormat(storage: Storage, value: RahTimeFormat) {
 }
 
 export function applySettingsPreferences(storage: Storage) {
+  document.documentElement.dataset.rahAgentModelName = String(
+    readAgentModelName(storage),
+  );
   document.documentElement.dataset.rahMessageSize = readMessageSize(storage);
   document.documentElement.dataset.rahLiveAgentActivity = String(
     readLiveAgentActivity(storage),

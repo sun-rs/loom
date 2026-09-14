@@ -1,3 +1,7 @@
+import { ThreadPanelResizer } from "./thread-panel-resizer.tsx";
+import { AgentEnvironmentSummary } from "./agent-environment-summary.tsx";
+import { AgentHeaderActions } from "./agent-header-actions.tsx";
+import { browserOpaqueId } from "../browser-opaque-id.ts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   CSSProperties,
@@ -103,15 +107,20 @@ const RAFT_AGENT_TABS: ReadonlyArray<{
 ];
 
 const MIN_SIDEBAR_WIDTH = 180;
-const MAX_SIDEBAR_WIDTH = 400;
+const MAX_SIDEBAR_WIDTH = 320;
 const DEFAULT_SIDEBAR_WIDTH = 240;
 
 export function AgentDirectoryPane({
+  activityRequest,
+  panelSizing,
+  panelActive = true,
+  launchSettingsRefresh = 0,
   initialAgentDefinitionId,
   initialHumanPrincipalId,
   initialTab,
   initialView,
   panel = false,
+  onPanelBack,
   onClose,
   agents,
   canCreate,
@@ -136,17 +145,25 @@ export function AgentDirectoryPane({
   onSaveProfile,
   onChangeHumanRole,
   onOpenDirectRoom,
-  onPeekAgent,
   onOpenMessage,
   onOpenRoom,
   onRouteChange,
   workspaceId,
 }: {
+  activityRequest?: number;
+  panelActive?: boolean;
+  panelSizing?: {
+    width: number;
+    setWidth: (width: number) => void;
+    commit: (width: number) => void;
+  };
+  launchSettingsRefresh?: number;
   initialAgentDefinitionId?: string | undefined;
   initialHumanPrincipalId?: string | undefined;
   initialTab?: AgentTab;
   initialView?: AgentRouteSelection["view"];
   panel?: boolean;
+  onPanelBack?: () => void;
   onClose?: () => void;
   agents: readonly WorkspaceAgentView[];
   canCreate: boolean;
@@ -179,7 +196,6 @@ export function AgentDirectoryPane({
     principalId: string,
     role: MembershipRole,
   ) => Promise<void>;
-  onPeekAgent?: ((id: string) => void) | undefined;
   onOpenDirectRoom: (peerPrincipalId: string) => Promise<void>;
   onOpenMessage: (
     target: Extract<NavigationTarget, { kind: "message" }>,
@@ -200,7 +216,7 @@ export function AgentDirectoryPane({
   >(initialAgentDefinitionId);
   const [memberView, setMemberView] = useState<
     "agent" | "relationship" | "human"
-  >(!panel && initialView ? initialView : "agent");
+  >(initialView ?? "agent");
   const [humanId, setHumanId] = useState(initialHumanPrincipalId);
   const [mobileDetailOpen, setMobileDetailOpen] = useState(() =>
     shouldOpenAgentMobileDetail({
@@ -218,12 +234,15 @@ export function AgentDirectoryPane({
       ? document.activeElement
       : null,
   );
+  const activePanel = useRef(panelActive);
+  activePanel.current = panelActive;
   const closePanel = useRef(onClose);
   closePanel.current = onClose;
   useEffect(() => {
     if (!panel) return;
     const escape = (event: globalThis.KeyboardEvent) => {
       if (
+        !activePanel.current ||
         event.key !== "Escape" ||
         event.defaultPrevented ||
         document.querySelector('[aria-modal="true"]')
@@ -239,7 +258,8 @@ export function AgentDirectoryPane({
     };
   }, [panel]);
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
-  const profilePanelWidth = useProfilePanelWidth();
+  const storedProfilePanelWidth = useProfilePanelWidth();
+  const profilePanelWidth = panelSizing ?? storedProfilePanelWidth;
   const [resizing, setResizing] = useState(false);
   const resizeOrigin = useRef<{ clientX: number; width: number } | undefined>(
     undefined,
@@ -306,6 +326,10 @@ export function AgentDirectoryPane({
       if (initialView === "human") setMobileDetailOpen(true);
     }
   }, [initialView, initialHumanPrincipalId, panel]);
+
+  useEffect(() => {
+    if (panel && activityRequest !== undefined) setTab("activity");
+  }, [activityRequest, panel]);
 
   useEffect(() => {
     if (!panel && initialTab !== undefined) setTab(initialTab);
@@ -525,7 +549,6 @@ export function AgentDirectoryPane({
   }
 
   function selectHuman(principalId: string): void {
-    if (panel) return;
     setMemberView("human");
     setHumanId(principalId);
     setMobileDetailOpen(true);
@@ -623,19 +646,42 @@ export function AgentDirectoryPane({
 
   return (
     <main
-      className={`channel rah-agent-runtime-page rah-agent-directory-page${memberView === "relationship" && !panel ? " is-relationship-view" : ""}${panel ? " rah-agent-peek is-mobile-detail-open" : mobileDetailOpen ? " is-mobile-detail-open" : ""}`}
-      aria-label={panel ? "Agent 详情侧栏" : "Agent 与成员"}
+      inert={panel && !panelActive}
+      className={`channel rah-agent-runtime-page rah-agent-directory-page${memberView === "relationship" && !panel ? " is-relationship-view" : ""}${onPanelBack ? " is-embedded-profile" : ""}${panel ? " rah-agent-peek is-mobile-detail-open" : mobileDetailOpen ? " is-mobile-detail-open" : ""}`}
+      aria-label={
+        panel
+          ? memberView === "human"
+            ? "Human 详情侧栏"
+            : "Agent 详情侧栏"
+          : "Agent 与成员"
+      }
       style={rootStyle}
     >
-      {panel ? (
-        <ProfilePanelResizer
-          onWidthChange={profilePanelWidth.setWidth}
-          onWidthCommit={profilePanelWidth.commit}
-          width={profilePanelWidth.width}
-        />
+      {panel && !onPanelBack ? (
+        panelSizing ? (
+          <ThreadPanelResizer
+            inspector
+            onWidthChange={panelSizing.setWidth}
+            onWidthCommit={panelSizing.commit}
+            width={panelSizing.width}
+          />
+        ) : (
+          <ProfilePanelResizer
+            onWidthChange={profilePanelWidth.setWidth}
+            onWidthCommit={profilePanelWidth.commit}
+            width={profilePanelWidth.width}
+          />
+        )
       ) : null}
       <section className="rah-agent-directory-body">
         <AgentSidebar
+          contextControl={{
+            canManage,
+            fullResetEnabled,
+            onMessage: onOpenDirectRoom,
+            onChangeState,
+            onResetExecution,
+          }}
           agents={agents}
           canCreate={canCreate}
           computerLabel={computerLabel}
@@ -681,7 +727,7 @@ export function AgentDirectoryPane({
             onOpenAgent={selectAgent}
             workspaceId={workspaceId}
           />
-        ) : memberView === "human" && humanId && !panel ? (
+        ) : memberView === "human" && humanId ? (
           <HumanProfilePane
             key={`${workspaceId}:${currentHuman?.principalId}:${humanId}`}
             canChangeRole={canChangeHumanRole}
@@ -689,8 +735,10 @@ export function AgentDirectoryPane({
             onChangeRole={onChangeHumanRole}
             principalId={humanId}
             workspaceId={workspaceId}
-            onBack={closeRelationship}
-            onOpenAgent={onPeekAgent ?? selectAgent}
+            backLabel={onPanelBack ? "返回成员管理" : undefined}
+            onBack={onPanelBack ?? onClose ?? closeRelationship}
+            onClose={panel ? onClose : undefined}
+            onOpenAgent={selectAgent}
           />
         ) : agents.length === 0 ? (
           <p className="rah-empty-copy">
@@ -722,10 +770,12 @@ export function AgentDirectoryPane({
             )}
             <AgentDetailHeader
               onClose={onClose}
+              backLabel={onPanelBack ? "返回成员管理" : undefined}
               agent={selectedAgent}
               canMessage={canMessage}
               messagePending={directRoomOpening}
               onBack={() => {
+                if (onPanelBack) return onPanelBack();
                 setMobileDetailOpen(false);
                 onRouteChange?.({
                   agentDefinitionId: undefined,
@@ -766,6 +816,7 @@ export function AgentDirectoryPane({
               />
             ) : tab === "profile" ? (
               <AgentProfilePane
+                launchSettingsRefresh={launchSettingsRefresh}
                 key={selectedAgent.agentDefinitionId}
                 client={client}
                 computerLabel={computerLabel}
@@ -1073,10 +1124,7 @@ function AgentMemoryPane({
 }
 
 function browserMemoryMutationId(): string {
-  if (typeof globalThis.crypto?.randomUUID === "function") {
-    return globalThis.crypto.randomUUID();
-  }
-  return `memory-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  return browserOpaqueId();
 }
 
 function formatMemoryBytes(bytes: number): string {
@@ -1210,6 +1258,7 @@ function AgentChatRoomGroup({
 
 export function AgentDetailHeader({
   onClose,
+  backLabel,
   agent,
   canMessage,
   messagePending,
@@ -1219,6 +1268,7 @@ export function AgentDetailHeader({
   onMessage,
 }: {
   onClose?: (() => void) | undefined;
+  backLabel?: string | undefined;
   agent: WorkspaceAgentView;
   canMessage: boolean;
   messagePending: boolean;
@@ -1231,7 +1281,7 @@ export function AgentDetailHeader({
   return (
     <PanelHeader kind="agent" className="rah-agent-detail-head">
       <PanelHeaderAction
-        aria-label="返回成员列表"
+        aria-label={backLabel ?? "返回成员列表"}
         className="rah-agent-mobile-back"
         onClick={onBack}
       >
@@ -1243,35 +1293,18 @@ export function AgentDetailHeader({
         {agent.description && <p>{agent.description}</p>}
       </div>
       <div className="rah-agent-head-actions">
-        <PanelHeaderAction
-          aria-label={`给 ${agent.displayName} 发消息`}
-          className="rah-agent-header-message"
-          disabled={!canMessage}
-          pending={messagePending}
-          onClick={onMessage}
-          title="聊天"
-        >
-          <Icon name="chat" />
-        </PanelHeaderAction>
-        <PanelHeaderAction
-          aria-label={agent.state === "enabled" ? "停止 Agent" : "启动 Agent"}
-          title={agent.state === "enabled" ? "停止 Agent" : "启动 Agent"}
-          disabled={onStartStop === undefined}
-          onClick={onStartStop}
-        >
-          <Icon name={agent.state === "enabled" ? "square" : "play"} />
-        </PanelHeaderAction>
-        <PanelHeaderAction
-          aria-label="重启 / 重置"
-          title="重启 / 重置"
-          disabled={onRestart === undefined}
-          onClick={onRestart}
-        >
-          <Icon name="rotate-ccw" />
-        </PanelHeaderAction>
+        <AgentHeaderActions
+          name={agent.displayName}
+          enabled={agent.state === "enabled"}
+          canMessage={canMessage}
+          messagePending={messagePending}
+          onMessage={onMessage}
+          onStartStop={onStartStop}
+          onRestart={onRestart}
+        />
         {onClose ? (
           <PanelHeaderAction aria-label="关闭 Agent 侧栏" onClick={onClose}>
-            ×
+            <Icon name="x" />
           </PanelHeaderAction>
         ) : null}
       </div>
@@ -1299,6 +1332,7 @@ export function AgentTabList({
 }
 
 export function AgentProfilePane({
+  launchSettingsRefresh = 0,
   client,
   computerLabel,
   onDiagnostics,
@@ -1318,6 +1352,7 @@ export function AgentProfilePane({
   onSelectAgent,
   runtimes,
 }: {
+  launchSettingsRefresh?: number;
   client: RahClient;
   computerLabel: string | undefined;
   onDiagnostics: () => void;
@@ -1447,7 +1482,7 @@ export function AgentProfilePane({
         className="rah-agent-runtime-section"
         action={
           <button
-            className="rah-profile-edit rah-interaction-flat"
+            className="rah-profile-edit rah-profile-edit-plain"
             aria-label="编辑运行时配置"
             disabled={!canManage}
             onClick={onEditRuntime}
@@ -1485,6 +1520,20 @@ export function AgentProfilePane({
           <p className="rah-agent-profile-status is-error">
             {error ?? "配置尚未加载"}
           </p>
+        )}
+        {canManage && (
+          <AgentEnvironmentSummary
+            client={client}
+            agentDefinitionId={agent.agentDefinitionId}
+            runtimeId={
+              runtimes.find(
+                (runtime) =>
+                  runtime.runtimeOfferId ===
+                  detail?.policy.required.allowedOfferIds?.[0],
+              )?.cliId
+            }
+            refresh={launchSettingsRefresh}
+          />
         )}
         {error && detail !== undefined ? (
           <p role="alert" className="rah-agent-profile-status is-error">

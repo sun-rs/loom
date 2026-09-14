@@ -23,8 +23,29 @@ export async function verifyCommentPagination({
       idempotencyKey: `pagination-${index}`,
     });
   }
-  await page.goto(origin + "/?room=" + roomId + "&roomTab=files");
-  await page.locator(".rah-file-open").filter({ hasText: filename }).click();
+  const source = await post("/v3/client/files/comments/list", {
+    attachmentId,
+    limit: 1,
+  });
+  assert.ok(source.threadRootMessageId);
+  // The original message is outside the latest Room window after seeding replies.
+  // Open its canonical Thread rather than enabling comments from the file list.
+  await page.goto(
+    origin +
+      "/?target=message&message=" +
+      source.messageId +
+      "&threadId=" +
+      source.threadId +
+      "&room=" +
+      roomId +
+      "&thread=" +
+      encodeURIComponent(roomId + ":" + source.threadRootMessageId),
+  );
+  await page
+    .locator(".rah-message-files .rah-file-open")
+    .filter({ hasText: filename })
+    .first()
+    .click();
   const modal = page.getByRole("dialog", { name: "预览 " + filename });
   await modal.getByRole("button", { name: "评论", exact: true }).click();
   const read = (beforeRoomSeq) =>
@@ -37,8 +58,8 @@ export async function verifyCommentPagination({
     modal.locator(".rah-attachment-comment-body").allTextContents();
   const matches = async (data) => {
     await expect
-      .poll(async () => (await rendered()).map((s) => s.trim()).sort())
-      .toEqual(data.comments.map((c) => c.content).sort());
+      .poll(async () => (await rendered()).map((s) => s.trim()))
+      .toEqual(data.comments.map((c) => c.content));
     assert.ok(data.comments.length <= 50);
   };
   const latest = await read();
@@ -97,7 +118,20 @@ export async function verifyCommentPagination({
     path: join(output, `${engine}-pagination-latest.png`),
   });
   await page.reload();
-  await page.locator(".rah-file-open").filter({ hasText: filename }).click();
+  await page
+    .locator(".rah-message-files .rah-file-open")
+    .filter({ hasText: filename })
+    .first()
+    .click();
+  await expect(modal)
+    .toBeVisible({ timeout: 5000 })
+    .catch(async (error) => {
+      await page.screenshot({
+        path: join(output, `${engine}-reload-failure.png`),
+      });
+      console.log(await page.locator("[role=alert]").allTextContents());
+      throw error;
+    });
   await modal.getByRole("button", { name: "评论", exact: true }).click();
   await matches(await read());
   await modal.getByRole("button", { name: "关闭", exact: true }).click();

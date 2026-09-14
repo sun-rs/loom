@@ -21,20 +21,17 @@ const task: Task = {
   reviewerIds: [],
   dependencyTaskIds: [],
 };
-test("assignee controls project creator authority and retain the existing active-work reassignment route", () => {
+test("assignee controls project authority independently of business status", () => {
   assert.equal(taskAssigneeMode(task, "h"), "idle");
-  assert.equal(taskAssigneeMode(task, "other"), "readonly");
+  assert.equal(taskAssigneeMode(task, "other"), "idle");
   assert.equal(
     taskAssigneeMode(
       { ...task, state: "in_progress", assigneeId: "a", claimedBy: "a" },
       "h",
     ),
-    "reassign",
+    "idle",
   );
-  assert.equal(
-    taskAssigneeMode({ ...task, state: "submitted" }, "h"),
-    "readonly",
-  );
+  assert.equal(taskAssigneeMode({ ...task, state: "submitted" }, "h"), "idle");
 });
 test("assignee commands reject a changed task before mutation and preserve original causal identity after an uncertain receipt", async () => {
   let current = { ...task };
@@ -87,7 +84,7 @@ test("assignee commands reject a changed task before mutation and preserve origi
   await assert.rejects(stale(), /任务已发生变化/);
   assert.equal(writes.length, 2);
 });
-test("forced reassignment calls the existing facade with explicit reason and never falls back to idle assignment", async () => {
+test("active assignment uses the same backend edit and causal identity", async () => {
   const active = {
     ...task,
     state: "in_progress" as const,
@@ -107,7 +104,7 @@ test("forced reassignment calls the existing facade with explicit reason and nev
     client,
     task: active,
     principalId: "h",
-    intent: { kind: "reassign", assigneeId: "b", reason: "Human requested" },
+    intent: { kind: "assign", assigneeId: "b" },
     idempotencyKey: "reassign",
     session: {
       syncUntilCurrent: async () => ({
@@ -118,11 +115,10 @@ test("forced reassignment calls the existing facade with explicit reason and nev
   })();
   assert.deepEqual(calls, [
     [
-      "task.reassign",
+      "task.assign",
       {
         taskId: "t",
         assigneeId: "b",
-        reason: "Human requested",
         idempotencyKey: "reassign",
         basedOnRoomSeq: 8,
       },

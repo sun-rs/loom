@@ -34,12 +34,12 @@ import { ForbiddenError } from "./errors.ts";
 import { taskProjectionFromRow } from "./task-projection.ts";
 import { integer, text } from "./sqlite-row.ts";
 
-export const discoveryVisibleRooms = `r.workspace_id = ? AND r.kind <> 'control' AND r.archived_at IS NULL
+export const discoveryVisibleRooms = `r.workspace_id = ? AND r.kind <> 'control' AND r.archived_at IS NULL AND r.system_hidden=0
   AND EXISTS(SELECT 1 FROM workspaces w WHERE w.workspace_id = r.workspace_id AND w.state = 'active')
   AND EXISTS(SELECT 1 FROM memberships access WHERE access.room_id = r.room_id AND access.principal_id = ?)`;
 
 // Content eligibility shared by Search and followed Thread Activity. Task reads retain membership.
-export const discoveryReadableRooms = `r.workspace_id=? AND r.kind<>'control' AND r.archived_at IS NULL
+export const discoveryReadableRooms = `r.workspace_id=? AND r.kind<>'control' AND r.archived_at IS NULL AND r.system_hidden=0
  AND EXISTS(SELECT 1 FROM workspaces w WHERE w.workspace_id=r.workspace_id AND w.state='active')
  AND ${ROOM_CONTENT_READER_PREDICATE}`;
 
@@ -501,7 +501,7 @@ export class GlobalDiscovery {
       .map(roomProjectionFromRow);
     const principals = this.db
       .prepare(
-        `SELECT DISTINCT p.principal_id AS principalId, p.handle, p.kind FROM principals p JOIN memberships peer ON peer.principal_id = p.principal_id JOIN rooms r ON r.room_id = peer.room_id WHERE r.workspace_id = ? AND r.archived_at IS NULL AND EXISTS(SELECT 1 FROM memberships access WHERE access.room_id = r.room_id AND access.principal_id = ?) AND p.kind IN ('human','agent') AND instr(rah_casefold(p.handle), ?) > 0 ORDER BY p.handle LIMIT 100`,
+        `SELECT DISTINCT p.principal_id AS principalId, p.handle, p.kind FROM principals p JOIN memberships peer ON peer.principal_id = p.principal_id JOIN rooms r ON r.room_id = peer.room_id WHERE r.workspace_id = ? AND r.archived_at IS NULL AND r.system_hidden=0 AND EXISTS(SELECT 1 FROM memberships access WHERE access.room_id = r.room_id AND access.principal_id = ?) AND p.kind IN ('human','agent') AND instr(rah_casefold(p.handle), ?) > 0 ORDER BY p.handle LIMIT 100`,
       )
       .all(workspaceId, actorId, query);
     return { rooms, principals };

@@ -1,3 +1,5 @@
+import { createPortal } from "react-dom";
+import { ComputerStopConfirmation } from "./computer-stop-confirmation.tsx";
 import type { RahClient } from "@rah-os/client-sdk";
 import { ComputerAgentError } from "./computer-agent-error.tsx";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
@@ -39,6 +41,7 @@ export function ComputerAgentControls({
     [pending, setPending] = useState(false),
     [result, setResult] = useState<string>(),
     [error, setError] = useState<string>();
+  const [stopIds, setStopIds] = useState<string[]>();
   const active = useRef<AbortController | undefined>(undefined);
   const keys = useRef(new Map<string, string>());
   const lastAction = useRef<string | undefined>(undefined);
@@ -51,6 +54,7 @@ export function ComputerAgentControls({
     active.current = undefined;
     keys.current = new Map();
     setPending(false);
+    setStopIds(undefined);
     setSelected([]);
     setResult(undefined);
     setError(undefined);
@@ -59,7 +63,7 @@ export function ComputerAgentControls({
       active.current = undefined;
     };
   }, [scope]);
-  async function apply(state: "enabled" | "disabled") {
+  async function apply(state: "enabled" | "disabled", ids = selected) {
     if (!onSetState || active.current) return;
     const controller = new AbortController();
     active.current = controller;
@@ -70,7 +74,7 @@ export function ComputerAgentControls({
     setError(undefined);
     try {
       await applyAgentStateBatch({
-        ids: selected,
+        ids,
         state,
         keys: keys.current,
         currentState: (id) =>
@@ -79,11 +83,13 @@ export function ComputerAgentControls({
         signal: controller.signal,
         onProgress: (count) => setResult(`已完成 ${count} 项`),
       });
+      return true;
     } catch (e) {
       if (!controller.signal.aborted)
         setError(
           e instanceof Error ? e.message : "批量操作失败，可重试未完成操作。",
         );
+      return false;
     } finally {
       if (active.current === controller) {
         active.current = undefined;
@@ -142,7 +148,7 @@ export function ComputerAgentControls({
         </>
       }
     >
-      {selecting ? (
+      {selecting && selected.length > 0 ? (
         <div className="rah-computer-bulk-actions">
           <span>已选 {selected.length} 个</span>
           <button
@@ -158,7 +164,7 @@ export function ComputerAgentControls({
             }
             onClick={() => void apply("enabled")}
           >
-            <Icon name="play" />
+            <Icon name="play" className="rah-computer-start-icon" />
             启动
           </button>
           <button
@@ -172,7 +178,16 @@ export function ComputerAgentControls({
                     .state !== "disabled",
               )
             }
-            onClick={() => void apply("disabled")}
+            onClick={() => {
+              setError(undefined);
+              setStopIds(
+                selected.filter(
+                  (id) =>
+                    bindings.find((b) => b.agentDefinitionId === id)?.agent
+                      .state !== "disabled",
+                ),
+              );
+            }}
           >
             <Icon name="square" />
             停止
@@ -202,19 +217,29 @@ export function ComputerAgentControls({
               key={binding.agentDefinitionId}
             >
               {selecting ? (
-                <input
-                  type="checkbox"
-                  aria-label={`选择 ${binding.agent.displayName}`}
-                  disabled={pending}
-                  checked={selected.includes(binding.agentDefinitionId)}
-                  onChange={(e) =>
-                    setSelected((ids) =>
-                      e.target.checked
-                        ? [...ids, binding.agentDefinitionId]
-                        : ids.filter((id) => id !== binding.agentDefinitionId),
-                    )
-                  }
-                />
+                <>
+                  <input
+                    type="checkbox"
+                    aria-label={`选择 ${binding.agent.displayName}`}
+                    disabled={pending}
+                    checked={selected.includes(binding.agentDefinitionId)}
+                    onChange={(e) =>
+                      setSelected((ids) =>
+                        e.target.checked
+                          ? [...ids, binding.agentDefinitionId]
+                          : ids.filter(
+                              (id) => id !== binding.agentDefinitionId,
+                            ),
+                      )
+                    }
+                  />
+                  <span
+                    className="rah-computer-selection-mark"
+                    aria-hidden="true"
+                  >
+                    <Icon name="check" />
+                  </span>
+                </>
               ) : null}
               <AgentEntityCard
                 agent={binding.agent}
@@ -245,6 +270,21 @@ export function ComputerAgentControls({
           ))}
         </div>
       )}
+      {stopIds &&
+        createPortal(
+          <ComputerStopConfirmation
+            count={stopIds.length}
+            pending={pending}
+            error={error}
+            onClose={() => {
+              if (!active.current) setStopIds(undefined);
+            }}
+            onConfirm={async () => {
+              if (await apply("disabled", stopIds)) setStopIds(undefined);
+            }}
+          />,
+          document.body,
+        )}
     </ProfileSection>
   );
 }

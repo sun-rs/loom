@@ -74,7 +74,7 @@ test("Agent profile queries are keyed by identity/revision rather than transient
   const app = readFileSync(new URL("../src/App.tsx", import.meta.url), "utf8");
   assert.match(
     app,
-    /\[activeWorkspace\?\.controlRoomId, client, health, reload\]/u,
+    /const agentDirectoryQuery = useReconciledQuery\(\s*client,\s*"agent.list",\s*\{ controlRoomId: activeWorkspace\?\.controlRoomId \?\? "none" \},[\s\S]*?\sreload,\s*\);/u,
   );
 });
 

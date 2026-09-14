@@ -17,6 +17,7 @@ import { AgentMemoryConfigStore } from "../../agent-host/src/agent-memory-config
 test("Client API authenticates humans and exposes canonical Room work without owning it", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-client-api-"));
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
+  let requestedCatalogOffer: string | undefined;
   let workspaceSummaryCalls = 0;
   let skillsCalls = 0;
   let memoryResetCalls = 0;
@@ -266,35 +267,38 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       state: "online",
     }),
     human: createHumanApplicationPort(kernel),
-    localRuntimeInventory: () => ({
-      hostId: "client-host",
-      computer: {
-        displayName: "Client Mac",
-        hostname: "client-mac.local",
-        instanceId: "client-instance",
-        lastSeenAt: "2026-09-01T00:00:00.000Z",
-        observedAt: "2026-09-01T00:01:00.000Z",
-        os: "darwin arm64",
-        staleAfterMs: 30_000,
-        status: "offline",
-      },
-      restartRequiredToRescan: true,
-      runtimes: [
-        {
-          agentBindings: [],
-          available: true,
-          configured: true,
-          displayName: "Codex",
-          executable: "codex",
-          modelBindingDescriptors: [],
-          resolvedExecutablePath: "/opt/homebrew/bin/codex",
-          runtimeOfferId: "offer-codex",
-          runtimeProfileId: "profile-codex",
-          runtimeProfileRevisionId: "revision-codex",
-          source: "configured",
+    localRuntimeInventory: (_actor, request) => (
+      (requestedCatalogOffer = request?.refreshOfferId),
+      {
+        hostId: "client-host",
+        computer: {
+          displayName: "Client Mac",
+          hostname: "client-mac.local",
+          instanceId: "client-instance",
+          lastSeenAt: "2026-09-01T00:00:00.000Z",
+          observedAt: "2026-09-01T00:01:00.000Z",
+          os: "darwin arm64",
+          staleAfterMs: 30_000,
+          status: "offline",
         },
-      ],
-    }),
+        restartRequiredToRescan: true,
+        runtimes: [
+          {
+            agentBindings: [],
+            available: true,
+            configured: true,
+            displayName: "Codex",
+            executable: "codex",
+            modelBindingDescriptors: [],
+            resolvedExecutablePath: "/opt/homebrew/bin/codex",
+            runtimeOfferId: "offer-codex",
+            runtimeProfileId: "profile-codex",
+            runtimeProfileRevisionId: "revision-codex",
+            source: "configured",
+          },
+        ],
+      }
+    ),
   });
   try {
     kernel.initialize();
@@ -548,6 +552,23 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       principalId: human.principal.principalId,
     });
 
+    const unknownAgentSettings = await request(
+      "/v3/client/runtime-guide/read",
+      { agentDefinitionId: "not-an-agent" },
+      human.accessToken,
+    );
+    assert.equal(unknownAgentSettings.status, 404);
+    const unknownAgentUpdate = await request(
+      "/v3/client/runtime-guide/update",
+      {
+        agentDefinitionId: "not-an-agent",
+        runtimeId: "codex",
+        environment: { LABEL: "private" },
+        expectedRevision: 0,
+      },
+      human.accessToken,
+    );
+    assert.equal(unknownAgentUpdate.status, 404);
     const globalInput = { workspaceId: workspace.workspace.workspaceId };
     for (const [path, body] of [
       ["/runtime-guide/read", {}],
@@ -1056,6 +1077,19 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     const inventory = await jsonObject(inventoryResponse);
     assert.equal(inventory.hostId, "client-host");
     assert.equal(inventory.runtimes[0]?.runtimeProfileId, "profile-codex");
+    const refreshed = await request(
+      "/v1/local/runtimes/list",
+      { refreshOfferId: "offer-codex" },
+      human.accessToken,
+    );
+    assert.equal(refreshed.status, 200);
+    assert.equal(requestedCatalogOffer, "offer-codex");
+    const invalidRefresh = await request(
+      "/v1/local/runtimes/list",
+      { refreshOfferId: "" },
+      human.accessToken,
+    );
+    assert.equal(invalidRefresh.status, 400);
 
     const legacyP2Route = await request(
       "/v1/client/workspaces/list",
@@ -2227,8 +2261,11 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       },
       human.accessToken,
     );
-    assert.equal(workflowResponse.status, 409);
-    assert.equal(await responseErrorCode(workflowResponse), "conflict");
+    assert.equal(workflowResponse.status, 200);
+    assert.equal(
+      (await jsonObject(workflowResponse)).task.workflowStatus,
+      "in_review",
+    );
     const workflowListResponse = await request(
       "/v3/client/tasks/list",
       { roomId: room.roomId },
@@ -2239,8 +2276,9 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     const unchangedTask = workflowList.tasks.find(
       (task: { taskId: string }) => task.taskId === openTask.task.taskId,
     );
-    assert.equal(unchangedTask.state, "todo");
-    assert.equal(unchangedTask.workflowStatus, "todo");
+    assert.equal(unchangedTask.state, "submitted");
+    assert.equal(unchangedTask.workflowStatus, "in_review");
+    assert.equal(unchangedTask.submittedAt, undefined);
     const exactTaskResponse = await request(
       "/v3/client/tasks/get",
       { roomId: room.roomId, taskId: openTask.task.taskId },
@@ -2265,7 +2303,8 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     const taskHistory = await jsonObject(taskHistoryResponse);
     assert.equal(taskHistory.taskId, openTask.task.taskId);
     assert.equal(taskHistory.events.length, 1);
-    assert.equal(taskHistory.events[0].type, "task.reopened");
+    assert.equal(taskHistory.events[0].type, "task.workflow_updated");
+    assert.equal(taskHistory.events[0].workflowStatus, "in_review");
     assert.ok(taskHistory.nextCursor);
     const historyNext = await request(
       "/v3/client/tasks/history",

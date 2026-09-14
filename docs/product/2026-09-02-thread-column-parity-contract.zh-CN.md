@@ -68,3 +68,21 @@
 ## 打开中的消息列持续同步
 
 Thread 明细读取必须跟随已提交的 Room 同步结果，不能只依赖会被 runtime/catalog 刷新取消的 reload 定时器。继续复用 MessageSession 的增量与历史窗口；切换目标后，异步引用状态不得写回旧 Thread 的结果。对应 [实时更新修复与双边证据](../audits/2026-09-08-thread-live-repair.zh-CN.md)。
+
+## 2026-09-13：关注 Agent 行打开侧栏
+
+来源：2026-09-08 冻结官方 `index-BVfbaScj.js`（SHA256 `65dda3865ac7263afb44308e22bcdc20034e84f886f78767f7198a65c5691dde`）中 `thread-follower-profile-row` 是 `flex-1` 的独立按钮；点击先准备 Agent 信息再打开 Agent panel，移除按钮是旁边独立 sibling。沿用现有 Raft Thread 合同，不为该行引入 Multica 的其他导航模型。结构移植，发布 bundle 仅为证据。
+
+本地 ThreadPane 通过已有 AgentMessageContext.onOpen 进入与聊天头像相同的右侧 Agent inspector，沿用 navigation.resolve 的身份校验与异步导航围栏，不整页跳转或修改 Thread 业务状态。点击关闭关注者弹层；侧栏内容与默认 tab 沿用既有 inspector。整行头像/文字/空白内容共用原生 button，支持 Enter/Space；“×”是独立移除按钮，错误/撤销逻辑保持不变。没有可用导航 context 的隔离组合中入口禁用，不连接虚假成功。
+
+专项 `scripts/test-thread-follower-profile-browser.mjs` 先复现原行不存在可操作入口，再验证头像区和空白区点击、Enter/Space、频道 URL 不变、真实既有侧栏打开，以及移除失败时只显示原错误、不打开侧栏。使用临时 daemon、Fake CLI 和受控关注者响应，无正式业务写入、无付费 CLI。原综合门禁移除按钮定位改为独立 remove class，避免把新增资料按钮误作删除操作。完整 `npm run check`、格式检查、diff 检查与正式构建通过。空闲检查、持久状态备份和优雅重启后，冻结构建 `d278a2743bd3a163cae3e6b8e11d545a3ef6b8f398d7bc387d88a05023050ccd` 经 loopback、LAN、Tailnet 三个正式入口的全新 Chromium 页面验证：使用原有消息列及关注记录，点击行后既有右侧 Agent 侧栏打开，频道 URL 不变。截图已检查；未发送消息、改变关注关系或调用付费 CLI。
+
+## 2026-09-14：操作菜单与数量入口稳定性
+
+使用较新的官方 `index-MqTUR4Ez.js`（SHA256 `9cf480531f38c29136637f7b373f285a0e915711c07dbebeadd22c05b33ad443`）的 `Adt` / `kR` 作为本次证据：菜单依次为搜索、新标签页、频道定位和按真实状态关注/取消；14px medium 文字、14px stroke-2 图标、8px gap、12px/8px padding、192px 最小宽度、4px 弹层间距。`g6e/Ose` 与 `b6e/Gv` 的 Lucide ISC 几何作为带版本说明的精确图标追加到 ui-tokens；保留原 sprite 冻结哈希，仅独立校验追加块。三点不再使用依赖字体的 Unicode 字符。
+
+新标签页通过既有 navigationSearch 生成当前消息列的同源地址，以 noopener/noreferrer 打开，不移动当前频道。关注菜单仍由真实 Human following 状态驱动，不能为匹配截图强制显示取消关注。
+
+数量入口原先以解析后的 followers.length 为显示条件，空数据或身份目录暂未解析时会卸载按钮；同时 thread.followers 没有可见页定时恢复。按用户要求，RAH 现在保留数量按钮与真实 0 的空态（此处有意不同于 Raft u9 的零成员隐藏规则）；计数使用后台 agentParticipantIds 长度，头像使用已有目录解析。沿用 useDiscoveryQuery 的可见页 5 秒刷新及 focus 刷新、AbortController 和 queryKey 隔离，覆盖后台新回复带来的关注变化，不新增队列或业务状态。
+
+专项浏览器测试先复现菜单缺项，再验证菜单顺序/字号/图标尺寸、新标签页地址及原页不变、零成员时入口保留，以及随后后台关注者增加无需重载便恢复计数。原关注行的鼠标、键盘和独立移除测试继续通过。`npm run check`、`npm run format:check`、`git diff --check` 和正式 Web 构建通过。正式服务已在空闲检查和持久状态备份后安全重启，冻结 Web 构建为 `94ebae7e486821a79a60b89878db043cdfdbbfff83d7520578ab26f7e82d43a9`。新开的 Chromium 页面在本机、局域网和 Tailnet 地址均通过菜单、新标签页同一消息列和 390px 窄屏无横向溢出检查；这是本机浏览器验证，不代表 iOS 实机或 Raft 在线双边验收。

@@ -1,3 +1,4 @@
+import { openServiceLogs } from "@rah-os/agent-host";
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
@@ -159,13 +160,19 @@ await guardedStop({
   },
 });
 process.stdout.write(`Verified backup: ${target}\n`);
+// The old writer is stopped before rotation; the new child receives fresh descriptors.
+const logDirectory = join(dirname(state), "logs");
+const serviceLogs = await openServiceLogs(logDirectory, "core");
+process.stdout.write(
+  `Workbench logs: ${logDirectory}/core.{stdout,stderr}.log\n`,
+);
 // Successor still uses the existing launcher/drain implementation and frozen bytes.
 const child = spawn(
   process.execPath,
   [join(repo, "scripts/run-local-workbench.mjs")],
   {
     cwd: repo,
-    stdio: "inherit",
+    stdio: ["ignore", serviceLogs.stdout.fd, serviceLogs.stderr.fd],
     env: {
       ...process.env,
       RAH_DATA_HOME: dirname(state),
@@ -184,3 +191,5 @@ child.once("error", (error) => {
 child.once("exit", (code) => {
   process.exitCode = code ?? 1;
 });
+
+await serviceLogs.close();

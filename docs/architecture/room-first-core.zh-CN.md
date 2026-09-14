@@ -138,3 +138,22 @@ Room 生命周期由 Kernel 单一 owner 持有。archive 是带 Room event 的�
 - A2A：远程 opaque Agent 的 Task/Artifact connector。
 
 这些项目提供约束和模式，不成为 RAH OS 的 canonical owner。
+
+### 本地工作台默认频道（2026-09-12）
+
+正式 bootstrap 通过既有 Kernel 创建命令补齐公共 `all`，保留旧默认频道和全部历史，
+默认入口指向 all；显式 Room 深链仍优先。Room lifecycle owner 保护其保留 slug，
+拒绝删除、归档、离开、改名和私密化。该规则不增加 Agent 执行成员资格。
+[来源、迁移与验证边界](../audits/2026-09-12-sidebar-context-menu-parity.zh-CN.md)。
+
+## Agent 身份删除（2026-09-13）
+
+Agent 删除仍使用 tombstoned 意图，由 Kernel `agent-deletion.ts` 将一次确认分成持久删除请求与终止证明后的最终事务。disabled 是执行停用投影，`agent.deletion_requested` 是恢复事实；不是让 UI 维护第二队列。请求后禁止重新启用/配置和旧 Worker 回写。未证明退出的进程、活动 lease/placement 或排他操作保持阻断，Daemon 只重试同一 Kernel 完成器。
+
+最终事务取消待执行工作与提醒，解除未完成任务的该 Agent 归属（审核中保持审核状态），清理无效输入/重分配、成员关系和 Host 授权；保留 Inbox 未读事实、Room/Task 历史及本地文件。归档 Room 仅允许经持久删除请求校验的有限生命周期清理事件，普通写入仍拒绝。Raft 中央服务器清理顺序未知，以上属于显式本地适配。来源、测试及部署见[一次确认删除审查](../audits/2026-09-13-agent-deletion-cascade.zh-CN.md)。
+
+系统频道 #all 的隐藏为 Kernel 工作空间策略，不能复用普通频道 private/archive。
+`rooms.system_hidden` 与 control Room 的 `workspace.system_channel_visibility_changed`
+事件在一个事务内更改，读取/发现/发送路径统一执行该策略；恢复需要 control Room
+管理权限，不依赖隐藏频道访问。隐藏不删除 Room 成员、历史或私有记忆，且需无活动工作。
+具体边界见[系统频道可见性审计](../audits/2026-09-13-channel-settings-and-system-visibility.zh-CN.md)。

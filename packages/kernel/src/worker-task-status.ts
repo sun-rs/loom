@@ -96,7 +96,9 @@ export function updateWorkerTaskStatus(
     }
     assertWorkerTaskFreshContext(db, scope, input.basedOnRoomSeq, input.taskId);
     if (
-      (input.status === "in_progress" && state === "in_progress") ||
+      (input.status === "in_progress" &&
+        state === "in_progress" &&
+        nullableText(task, "claimed_by") === scope.participantId) ||
       (input.status === "todo" && state === "todo")
     ) {
       const latest = db
@@ -125,7 +127,10 @@ export function updateWorkerTaskStatus(
         "Review status requires the canonical submission owner",
       );
     let basedOnRoomSeq = input.basedOnRoomSeq;
-    if (state === "todo") {
+    if (
+      state === "todo" ||
+      (state === "in_progress" && nullableText(task, "claimed_by") === null)
+    ) {
       const claim = claimTaskTransaction(context, scope, {
         ...input,
         idempotencyKey: input.idempotencyKey + ":claim",

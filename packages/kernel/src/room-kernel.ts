@@ -1,3 +1,10 @@
+import { editHumanTask } from "./human-task-edit.ts";
+import type {
+  SystemChannelVisibilityRead,
+  SystemChannelVisibilityUpdate,
+} from "@rah-os/protocol";
+import { requestAgentDeletion, finishAgentDeletion } from "./agent-deletion.ts";
+import { reconcileAllChannelMemberships } from "./all-channel-membership.ts";
 import { completeTaskTransaction } from "./task-completion.ts";
 import {
   releaseTaskTransaction,
@@ -205,6 +212,7 @@ import {
 import {
   migrateCollaborationSchemaV7,
   migrateRoomMetadataV14,
+  migrateSystemChannelVisibilityV56,
   migrateActivationRetryFencesV35,
   migrateInputRequestCancellationV38,
   migrateReminderTargetsV36,
@@ -255,7 +263,6 @@ import {
 } from "./message-forwarding-service.ts";
 import { TaskReviewService } from "./task-review-service.ts";
 import { unblockTaskTransaction } from "./task-unblock-service.ts";
-import { assignTaskTransaction } from "./task-assignment-service.ts";
 import {
   migrateWorkerSelfProfileObservations,
   WorkerSelfProfileService,
@@ -305,10 +312,7 @@ import {
   createTaskMutationTransaction,
   requireOwnedTaskClaim,
 } from "./task-intent.ts";
-import {
-  type TaskUnassignCommand,
-  unassignTaskTransaction,
-} from "./task-unassignment.ts";
+import { type TaskUnassignCommand } from "./task-unassignment.ts";
 import {
   normalizeAgentDefinitionContent,
   normalizeExecutionPolicyContent,
@@ -366,7 +370,7 @@ import {
 const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 55;
+export const KERNEL_SCHEMA_VERSION = 56;
 export class RoomKernel {
   readonly databasePath: string;
   readonly #database: DatabaseSync;
@@ -732,6 +736,7 @@ export class RoomKernel {
     migrateCollaborationSchemaV7(this.#database, this.#timestamp());
     migrateTaskAnchorsV9(this.#database, this.#createId, this.#roomEvents);
     migrateRoomMetadataV14(this.#database);
+    migrateSystemChannelVisibilityV56(this.#database);
     migrateActivationRetryFencesV35(this.#database);
     migrateReminderTargetsV36(this.#database);
     migrateInputRequestCancellationV38(this.#database);
@@ -763,6 +768,13 @@ export class RoomKernel {
     this.attachmentComments.initialize();
     initializeDiscoverySchema(this.#database);
     this.humanNotifications.initialize();
+    this.#transaction(() =>
+      reconcileAllChannelMemberships(
+        this.#database,
+        this.#roomEvents,
+        this.#now(),
+      ),
+    );
     this.#taskReviews.backfillLegacySubmissions();
     this.#activationObligations.backfillActive();
     agentThreads.backfillAgentThreadFollows(this.#database, this.#timestamp());
@@ -970,13 +982,7 @@ export class RoomKernel {
     actor: AuthenticatedActorContext,
     input: Parameters<TaskLifecycleService["updateTaskWorkflowStatus"]>[1],
   ): TaskCreateMutationResult {
-    return this.#taskLifecycle.updateTaskWorkflowStatus(actor, input, () =>
-      this.completeTask(actor, {
-        basedOnRoomSeq: input.basedOnRoomSeq,
-        idempotencyKey: input.idempotencyKey,
-        taskId: input.taskId,
-      }),
-    );
+    return this.#taskLifecycle.updateTaskWorkflowStatus(actor, input);
   }
 
   provisionPrincipal(input: {
@@ -1232,6 +1238,26 @@ export class RoomKernel {
       ),
     );
   }
+  getSystemChannelVisibility(
+    actor: AuthenticatedActorContext,
+    input: SystemChannelVisibilityRead,
+  ) {
+    return this.#collaboration.getSystemChannelVisibility(
+      this.getAuthenticatedPrincipal(actor),
+      input,
+    );
+  }
+  updateSystemChannelVisibility(
+    actor: AuthenticatedActorContext,
+    input: SystemChannelVisibilityUpdate,
+  ) {
+    return this.#transaction(() =>
+      this.#collaboration.updateSystemChannelVisibility(
+        this.getAuthenticatedPrincipal(actor),
+        input,
+      ),
+    );
+  }
   archiveWorkspaceRoom(
     actor: AuthenticatedActorContext,
     input: WorkspaceRoomLifecycleInput,
@@ -1261,12 +1287,20 @@ export class RoomKernel {
     actor: AuthenticatedActorContext,
     input: DirectRoomOpenInput,
   ): Room {
-    return this.#transaction(() =>
-      this.#collaboration.openDirectRoom(
+    return this.#transaction(() => {
+      const room = this.#collaboration.openDirectRoom(
         this.getAuthenticatedPrincipal(actor),
         input,
-      ),
-    );
+      );
+      if (this.getAuthenticatedPrincipal(actor).kind === "human")
+        this.humanSidebar.revealDirect(
+          actor,
+          input.workspaceId,
+          input.peerPrincipalId,
+          input.idempotencyKey,
+        );
+      return room;
+    });
   }
   addMember(
     actor: AuthenticatedActorContext,
@@ -2285,16 +2319,16 @@ export class RoomKernel {
     },
   ): TaskCreateMutationResult {
     return this.#transaction(() =>
-      assignTaskTransaction(
+      editHumanTask(
         {
           database: this.#database,
           events: this.#roomEvents,
-          assignedAt: this.#timestamp(),
-          assertFreshContext: (roomId, actorId, seq) =>
-            this.#assertFreshContext(roomId, actorId, seq),
+          now: this.#now,
+          createId: this.#createId,
         },
         this.#requireAuthenticatedActor(actor),
         input,
+        { assigneeId: input.assigneeId },
       ),
     );
   }
@@ -2304,11 +2338,17 @@ export class RoomKernel {
     input: TaskUnassignCommand,
   ): TaskCreateMutationResult {
     return this.#transaction(() =>
-      unassignTaskTransaction(this.#database, this.#roomEvents, {
-        actorId: this.#requireAuthenticatedActor(actor),
-        command: input,
-        unassignedAt: this.#timestamp(),
-      }),
+      editHumanTask(
+        {
+          database: this.#database,
+          events: this.#roomEvents,
+          now: this.#now,
+          createId: this.#createId,
+        },
+        this.#requireAuthenticatedActor(actor),
+        input,
+        { assigneeId: null },
+      ),
     );
   }
 
@@ -2840,6 +2880,11 @@ export class RoomKernel {
         roomId: input.controlRoomId,
         type: "agent.created",
       });
+      reconcileAllChannelMemberships(
+        this.#database,
+        this.#roomEvents,
+        this.#now(),
+      );
       return { deduplicated: false, definition, event, revision };
     });
   }
@@ -2950,6 +2995,22 @@ export class RoomKernel {
     rawInput: WorkspaceAgentManagementInput,
   ): WorkspaceAgentManagementResult {
     const input = ClientAgentManageRequestSchema.parse(rawInput);
+    if (input.action === "set_state" && input.state === "tombstoned") {
+      const actorId = this.#requireAuthenticatedActor(actor);
+      const owner = {
+        actorId,
+        createId: this.#createId,
+        database: this.#database,
+        events: this.#roomEvents,
+        now: this.#now,
+      };
+      // Commit the stop intent before waiting. Failed/closed HTTP requests cannot undo it.
+      const request = this.#transaction(() =>
+        requestAgentDeletion(owner, input),
+      );
+      return this.#transaction(() => finishAgentDeletion(owner, request));
+    }
+
     return this.#transaction(() => {
       const actorId = this.#requireAuthenticatedActor(actor);
       const current =
@@ -2982,6 +3043,35 @@ export class RoomKernel {
       }
       return result;
     });
+  }
+  reconcileAgentDeletions(): number {
+    let completed = 0;
+    const rows = this.#database
+      .prepare(
+        `SELECT e.* FROM room_events e JOIN agent_definitions a ON a.agent_definition_id=e.aggregate_id WHERE e.type='agent.deletion_requested' AND a.state='disabled' ORDER BY e.created_at LIMIT 50`,
+      )
+      .all();
+    for (const row of rows) {
+      const request = this.#roomEvents.eventFromRow(row);
+      try {
+        this.#transaction(() =>
+          finishAgentDeletion(
+            {
+              actorId: request.actorId,
+              createId: this.#createId,
+              database: this.#database,
+              events: this.#roomEvents,
+              now: this.#now,
+            },
+            request,
+          ),
+        );
+        completed++;
+      } catch (error) {
+        if (!(error instanceof RuntimeTerminationProofError)) throw error;
+      }
+    }
+    return completed;
   }
   getWorkspaceAgentManagementView(
     actor: AuthenticatedActorContext,
@@ -5657,6 +5747,17 @@ export class RoomKernel {
     activation: Row;
     runAttempt: Row;
   } {
+    if (
+      this.#database
+        .prepare(
+          "SELECT 1 FROM agent_definitions a JOIN room_events e ON e.aggregate_id=a.agent_definition_id WHERE a.participant_id=? AND e.type='agent.deletion_requested' LIMIT 1",
+        )
+        .get(scope.participantId)
+    ) {
+      throw new ExecutionFencedError(
+        "Agent deletion has revoked this execution",
+      );
+    }
     const activation = this.#database
       .prepare("SELECT * FROM activations WHERE activation_id = ?")
       .get(scope.activationId);

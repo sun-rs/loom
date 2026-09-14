@@ -15,7 +15,7 @@ export type WorkerVisibleRoomScope = Pick<
 >;
 export const WORKER_VISIBLE_ROOMS = `SELECT r.*, r.rowid AS room_order, d.left_principal_id, d.right_principal_id,
   peer.handle AS peer_handle FROM rooms r
-  JOIN memberships membership ON membership.room_id=r.room_id
+  JOIN memberships membership ON membership.room_id=r.room_id AND r.system_hidden=0
   LEFT JOIN direct_room_pairs d ON d.room_id=r.room_id
   LEFT JOIN principals peer ON peer.principal_id=CASE WHEN d.left_principal_id=membership.principal_id
     THEN d.right_principal_id ELSE d.left_principal_id END`;
@@ -47,7 +47,7 @@ export function workerRoomEntry(
  */
 const AGENT_ADDRESSABLE_PEER = `FROM principals peer
   JOIN memberships peer_shared ON peer_shared.principal_id=peer.principal_id
-  JOIN rooms shared ON shared.room_id=peer_shared.room_id AND shared.kind IN ('channel','direct')
+  JOIN rooms shared ON shared.room_id=peer_shared.room_id AND shared.kind IN ('channel','direct') AND shared.system_hidden=0
   JOIN memberships self_shared ON self_shared.room_id=shared.room_id AND self_shared.principal_id=?
   WHERE peer.kind IN ('human','agent') AND peer.principal_id<>?`;
 
@@ -241,7 +241,7 @@ export function resolveWorkerMessageRoom(
   const row = database
     .prepare(
       `SELECT m.room_id FROM messages m JOIN memberships membership ON membership.room_id=m.room_id
-    JOIN rooms r ON r.room_id=m.room_id WHERE m.message_id=? AND membership.principal_id=? AND r.kind IN ('channel','direct')`,
+    JOIN rooms r ON r.room_id=m.room_id WHERE m.message_id=? AND membership.principal_id=? AND r.kind IN ('channel','direct') AND r.system_hidden=0`,
     )
     .get(messageId, origin.participantId);
   if (!row) throw new NotFoundError("message is unavailable in joined Rooms");

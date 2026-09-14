@@ -102,3 +102,54 @@ test("legacy sidebar preferences default ordinary Room push to disabled", () => 
     { notifyAllMessages: ["room:room-a"] },
   );
 });
+
+test("custom section emoji is optional, survives validation, and is bounded", () => {
+  const input = {
+    workspaceId: "w",
+    expectedVersion: 0,
+    idempotencyKey: "emoji",
+    patch: {
+      customSections: [{ id: "work", name: "工作", emoji: "🚀", items: [] }],
+    },
+  };
+  assert.equal(
+    SidebarPatchRequestSchema.parse(input).patch.customSections?.[0]?.emoji,
+    "🚀",
+  );
+  assert.throws(() =>
+    SidebarPatchRequestSchema.parse({
+      ...input,
+      patch: {
+        customSections: [
+          { ...input.patch.customSections[0], emoji: "x".repeat(65) },
+        ],
+      },
+    }),
+  );
+});
+
+test("sidebar group order migrates old preferences and rejects duplicate groups", () => {
+  const old = {
+    version: 0,
+    pinned: [],
+    channelOrder: [],
+    dmOrder: [],
+    channelSortMode: "manual",
+    dmSortMode: "manual",
+    pinnedSortMode: "manual",
+  };
+  assert.deepEqual(SidebarPreferencesSchema.parse(old).sectionOrder, []);
+  const input = {
+    workspaceId: "workspace-a",
+    expectedVersion: 0,
+    idempotencyKey: "groups",
+    patch: { sectionOrder: ["custom:one", "dms", "channels", "pinned"] },
+  };
+  assert.deepEqual(SidebarPatchRequestSchema.parse(input).patch, input.patch);
+  assert.throws(() =>
+    SidebarPatchRequestSchema.parse({
+      ...input,
+      patch: { sectionOrder: ["dms", "dms"] },
+    }),
+  );
+});

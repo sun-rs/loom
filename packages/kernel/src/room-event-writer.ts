@@ -49,14 +49,34 @@ export class RoomEventWriter {
     this.#obligations = input.obligations;
   }
 
-  append(input: AppendRoomEventInput): RoomEvent {
+  append(input: AppendRoomEventInput, deletionRequest?: RoomEvent): RoomEvent {
     const room = this.#database
       .prepare("SELECT * FROM rooms WHERE room_id = ?")
       .get(input.roomId);
     if (room === undefined) {
       throw new NotFoundError(`room ${input.roomId} was not found`);
     }
-    if (room.archived_at !== null && room.archived_at !== undefined) {
+    const deletionCleanup =
+      deletionRequest !== undefined &&
+      [
+        "membership.removed",
+        "activation.cancelled",
+        "task.unassigned",
+        "task.participant_removed",
+        "input.cancelled",
+        "task.reassignment_failed_closed",
+      ].includes(input.type) &&
+      input.actorId === deletionRequest.actorId &&
+      this.#database
+        .prepare(
+          "SELECT 1 FROM room_events WHERE event_id=? AND type='agent.deletion_requested' AND actor_id=?",
+        )
+        .get(deletionRequest.eventId, input.actorId) !== undefined;
+    if (
+      room.archived_at !== null &&
+      room.archived_at !== undefined &&
+      !deletionCleanup
+    ) {
       throw new ConflictError(`Room ${input.roomId} is archived and read-only`);
     }
     const roomSeq = integer(room, "next_seq");

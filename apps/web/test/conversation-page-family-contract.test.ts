@@ -40,7 +40,7 @@ function task(state: Task["state"]): Task {
   };
 }
 
-test("message Task actions preserve Raft labels without bypassing canonical completion", () => {
+test("message Task actions share the Human editable workflow", () => {
   assert.deepEqual(messageTaskMenuAction(task("submitted"), true), {
     kind: "complete",
     label: "标记为完成",
@@ -50,14 +50,12 @@ test("message Task actions preserve Raft labels without bypassing canonical comp
     label: "重新打开任务",
   });
   assert.deepEqual(messageTaskMenuAction(task("todo"), true), {
-    kind: "unavailable",
+    kind: "complete",
     label: "标记为完成",
-    reason: "只有已提交且满足审阅要求的任务才能完成",
   });
   assert.deepEqual(messageTaskMenuAction(task("completed"), true), {
-    kind: "unavailable",
+    kind: "reopen",
     label: "重新打开任务",
-    reason: "已完成任务保留 canonical 完成记录",
   });
   assert.deepEqual(messageTaskMenuAction(task("submitted"), false), {
     kind: "unavailable",

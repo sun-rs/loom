@@ -48,7 +48,7 @@ test("short desktop shells use Raft's compact rail geometry", () => {
   );
 });
 
-test("mobile root navigation and detail visibility match Raft", () => {
+test("mobile navigation keeps Raft destinations and remains mounted on details", () => {
   const raft = readRaftBundle();
   const navigation = readWeb("components/workspace-navigation.tsx");
   const app = readWeb("App.tsx");
@@ -69,17 +69,24 @@ test("mobile root navigation and detail visibility match Raft", () => {
     navigation.slice(navigation.indexOf("export function MobileNavigation")),
     /label="(?:搜索|动态|Rooms|聊天|Agents|Inbox)"/u,
   );
-  assert.match(app, /showMobileNavigation=/u);
+  // User override: all mobile pages retain navigation, including detail routes.
+  assert.doesNotMatch(app, /showMobileNavigation/u);
+  assert.doesNotMatch(navigation, /if \(!showMobileNavigation\) return null/u);
   assert.match(app, /onHome=/u);
 });
 
-test("mobile Tasks start in Raft's board presentation", () => {
-  const tasks = readWeb("components/global-discovery.tsx");
-  assert.doesNotMatch(
-    tasks,
-    /matchMedia\("\(max-width: 767px\)"\)\.matches \? "list" : "board"/u,
-  );
-  assert.match(tasks, /const defaultView = "board"/u);
+test("both task surfaces share container-based defaults with explicit selection precedence", () => {
+  // Runtime default/resize/explicit-choice behavior is exercised by
+  // scripts/test-mobile-layout-browser.mjs in Chromium and WebKit.
+  for (const path of [
+    "components/global-discovery.tsx",
+    "components/conversation-panes.tsx",
+  ]) {
+    const source = readWeb(path);
+    assert.match(source, /useResponsiveTaskView\(/u);
+    assert.match(source, /ref=\{taskPaneRef\}/u);
+    assert.doesNotMatch(source, /const defaultView = "board"/u);
+  }
 });
 
 test("Room Tasks toolbar wraps whole controls and grows like Raft", () => {

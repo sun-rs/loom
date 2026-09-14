@@ -1187,14 +1187,13 @@ test("Task is a strict business projection with an independent claim lease", () 
     state: "waiting_input",
   });
   assert.equal(waiting.state, "waiting_input");
-  assert.throws(() =>
-    TaskSchema.parse({
-      ...task,
-      claimUntil: undefined,
-      claimedBy: undefined,
-      state: "submitted",
-    }),
-  );
+  const manualReview = TaskSchema.parse({
+    ...task,
+    claimUntil: undefined,
+    claimedBy: undefined,
+    state: "submitted",
+  });
+  assert.equal(manualReview.submissionSummary, undefined);
 });
 
 test("Task Coordination v1 represents open, blocked, and cancelled work explicitly", () => {

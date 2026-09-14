@@ -28,7 +28,8 @@ export function useDiscoveryQuery<K extends Query>(
       !enabled ||
       (operation !== "activity.list" &&
         operation !== "task.global.list" &&
-        operation !== "task.get")
+        operation !== "task.get" &&
+        operation !== "thread.followers")
     )
       return;
     const refreshVisible = () => {

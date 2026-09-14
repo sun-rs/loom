@@ -1,3 +1,6 @@
+import { useMessageHighlight } from "../use-message-highlight.ts";
+import { activityDisplayText } from "../activity-display-names.ts";
+import { useResponsiveTaskView } from "../use-responsive-task-view.ts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PanelHeader } from "@rah-os/ui-web/neo-brutalist/panel-header";
 import { EmptyState } from "@rah-os/ui-web/neo-brutalist/empty-state";
@@ -154,6 +157,9 @@ function useFilters(surface: GlobalSurface) {
         ]
       : [
           "room",
+          "target",
+          "task",
+          "highlight",
           "previewRoom",
           "previewMessage",
           "previewThread",
@@ -280,13 +286,12 @@ function GlobalTasks({
   useEffect(() => {
     result.refresh();
   }, [taskRefreshVersion, result.refresh]);
-  const defaultView = "board";
-  const view =
-    params.get("view") === "list"
-      ? "list"
-      : params.get("view") === "board"
-        ? "board"
-        : defaultView;
+  const selectedView = params.get("view");
+  const { ref: taskPaneRef, view } = useResponsiveTaskView(
+    selectedView === "board" || selectedView === "list"
+      ? selectedView
+      : undefined,
+  );
   const tasks = result.data?.tasks ?? [];
   const columns = createRoomViewModel({
     members: people,
@@ -299,7 +304,11 @@ function GlobalTasks({
   const options = (filter: "creator" | "assignee") =>
     taskPersonOptions(people, currentHuman?.principalId, filter, entities);
   return (
-    <main className="rah-discovery activity-main" aria-label="全局任务">
+    <main
+      className="rah-discovery activity-main"
+      aria-label="全局任务"
+      ref={taskPaneRef}
+    >
       <Header
         title="任务"
         subtitle={`${result.data?.total ?? 0} 个频道任务${result.data?.nextCursor || filters.previous ? ` · 本页 ${tasks.length} 项` : ""}`}
@@ -407,6 +416,7 @@ function GlobalSearch({
   const filters = useFilters("search");
   const { params, change } = filters;
   const query = params.get("q") ?? "";
+  const highlight = useMessageHighlight(query ? params.toString() : undefined);
   const scopes = normalizeScopes(params.getAll("scope"));
   const senderKind = senderKindForScopes(scopes);
   const sender = people.find(
@@ -478,7 +488,9 @@ function GlobalSearch({
         key: `room:${room.roomId}`,
         privateChannel: room.visibility === "private",
         title: peer?.displayName || peer?.handle || room.name,
-        subtitle: peer ? `@${peer.handle}` : room.description || "频道",
+        subtitle: peer
+          ? `@${peer.kind === "human" ? peer.displayName || peer.handle : peer.handle}`
+          : room.description || "频道",
         badge: peer ? (peer.kind === "agent" ? "Agent" : "人类成员") : "频道",
         roomId: room.roomId,
         kind: peer ? (peer.kind === "agent" ? "agent" : "human") : "channel",
@@ -488,10 +500,11 @@ function GlobalSearch({
     }),
     ...people
       .filter((person) => person.principalId !== currentHuman?.principalId)
+      .map((person) => entities?.resolvePerson(person) ?? person)
       .map((person) => ({
         key: `person:${person.principalId}`,
         title: person.displayName || person.handle,
-        subtitle: `@${person.handle}`,
+        subtitle: `@${person.kind === "human" ? person.displayName || person.handle : person.handle}`,
         badge: person.kind === "agent" ? "Agent" : "人类成员",
         principalId: person.principalId,
         kind: person.kind === "agent" ? ("agent" as const) : ("human" as const),
@@ -598,7 +611,7 @@ function GlobalSearch({
           multiple={false}
           triggerLabel={
             sender
-              ? `发送者：${sender.principalId === currentHuman?.principalId ? "我" : sender.handle}`
+              ? `发送者：${sender.principalId === currentHuman?.principalId ? "我" : entities?.resolvePerson(sender).displayName || sender.displayName || sender.handle}`
               : "发送者"
           }
           options={[...people]
@@ -615,7 +628,7 @@ function GlobalSearch({
               label:
                 person.principalId === currentHuman?.principalId
                   ? "我"
-                  : person.handle,
+                  : person.displayName || person.handle,
               leading: (
                 <ProfileImageAvatar
                   avatarKey={person.avatarKey}
@@ -811,6 +824,7 @@ function GlobalSearch({
             {groupedHits.map((group) => (
               <SearchResultPanel
                 group={group}
+                highlight={highlight.visible}
                 key={group.key}
                 onOpen={onOpen}
                 query={query}
@@ -855,15 +869,18 @@ function GlobalSearch({
 
 function SearchResultPanel({
   group,
+  highlight,
   onOpen,
   query,
   rooms,
 }: {
   group: ReturnType<typeof groupSearchHits>[number];
+  highlight: boolean;
   onOpen: DiscoveryNavigationHandler;
   query: string;
   rooms: readonly Room[];
 }) {
+  const [hovered, setHovered] = useState<string>();
   const first = group.hits[0]!;
   const entities = useWorkspaceEntities();
   return (
@@ -890,7 +907,12 @@ function SearchResultPanel({
         <button
           className="result-item rah-search-hit"
           key={hit.message.messageId}
-          onClick={() => onOpen({ target: hit.target })}
+          onMouseEnter={() => setHovered(hit.message.messageId)}
+          onMouseLeave={() => setHovered(undefined)}
+          onClick={() => {
+            setHovered(undefined);
+            return onOpen({ target: hit.target, highlightQuery: query });
+          }}
         >
           <span className="result-body">
             <span className="rah-search-hit-meta">
@@ -904,12 +926,18 @@ function SearchResultPanel({
               </span>
               <span className="rah-search-hit-author">
                 <ProfileImageAvatar
-                  name={hit.senderName}
+                  name={
+                    entities?.person(hit.message.actorId)?.displayName ||
+                    hit.senderName
+                  }
                   avatarKey={entities?.person(hit.message.actorId)?.avatarKey}
                   kind={entities?.person(hit.message.actorId)?.kind ?? "human"}
                   size="compact"
                 />
-                <b className="result-title">{hit.senderName}</b>
+                <b className="result-title">
+                  {entities?.person(hit.message.actorId)?.displayName ||
+                    hit.senderName}
+                </b>
               </span>
               <time className="result-time">
                 {formatActivityRelativeTime(hit.message.createdAt)}
@@ -917,10 +945,21 @@ function SearchResultPanel({
             </span>
             <span className="rah-search-excerpt">
               {highlightParts(
-                searchExcerpt(hit.message.body, query),
+                searchExcerpt(
+                  activityDisplayText(
+                    hit.message.body,
+                    entities?.humans().map((member) => member.principal) ?? [],
+                  ),
+                  query,
+                ),
                 query,
               ).map((part, index) =>
-                part.match ? <mark key={index}>{part.text}</mark> : part.text,
+                part.match &&
+                (highlight || hovered === hit.message.messageId) ? (
+                  <mark key={index}>{part.text}</mark>
+                ) : (
+                  part.text
+                ),
               )}
             </span>
           </span>
@@ -935,11 +974,27 @@ function GlobalActivity({
   workspaceId,
   rooms,
   people,
+  currentHuman,
   onOpen,
   onClose,
   navigationEpoch,
   beginNavigation,
 }: Props & { people: Principal[] }) {
+  const entities = useWorkspaceEntities();
+  const humans = [
+    ...new Map(
+      [...people, ...(currentHuman ? [currentHuman] : [])]
+        .filter((person) => person.kind === "human")
+        .map(
+          (person) =>
+            [
+              person.principalId,
+              entities?.resolvePerson(person) ?? person,
+            ] as const,
+        ),
+    ).values(),
+  ];
+  const displayText = (source: string) => activityDisplayText(source, humans);
   const actionGate = useRef(createLatestRequest());
   useEffect(() => () => actionGate.current.cancel(), [client, workspaceId]);
   const filters = useFilters("activity");
@@ -978,7 +1033,7 @@ function GlobalActivity({
     try {
       // Do not clear unread if the exact target is unavailable (e.g. membership revoked).
       if (open) {
-        await client.request(
+        const context = await client.request(
           "message.context",
           {
             messageId: item.latestMessage.messageId,
@@ -986,7 +1041,20 @@ function GlobalActivity({
           { signal: request.signal },
         );
         if (!request.current()) return;
-        await onOpen({ target: item.target, surface: "activity" });
+        await onOpen({
+          target: {
+            kind: "message",
+            roomId: context.message.roomId,
+            messageId: context.message.messageId,
+            ...(context.message.threadId === undefined
+              ? {}
+              : { threadId: context.message.threadId }),
+            ...(context.rootMessageId === undefined
+              ? {}
+              : { rootMessageId: context.rootMessageId }),
+          },
+          surface: "activity",
+        });
         // The mounted conversation acknowledges the messages actually in its viewport.
         return;
       }
@@ -1132,7 +1200,7 @@ function GlobalActivity({
                               : "hash"
                         }
                       />
-                      {item.title}
+                      {displayText(item.title)}
                     </span>
                     <time>
                       {formatActivityRelativeTime(
@@ -1141,13 +1209,20 @@ function GlobalActivity({
                     </time>
                   </span>
                   <span className="fc-summary">
-                    <strong>{item.senderName}:</strong>{" "}
-                    {item.latestMessage.body.slice(0, 800)}
+                    <strong>
+                      {humans.find(
+                        (person) =>
+                          person.principalId === item.latestMessage.actorId,
+                      )?.displayName || item.senderName}
+                      :
+                    </strong>{" "}
+                    {displayText(item.latestMessage.body).slice(0, 800)}
                   </span>
                   <span className="fc-chips">
                     {item.task && (
                       <span
                         className={`activity-chip is-task chip-${taskStatusPresentation(item.task).tone}`}
+                        data-task-status={taskStatusPresentation(item.task).id}
                         data-task-workflow-status={
                           taskStatusPresentation(item.task).id
                         }
@@ -1161,7 +1236,7 @@ function GlobalActivity({
                         />{" "}
                         #{item.task.taskNumber}
                         {item.task.assigneeId
-                          ? ` @${people.find((p) => p.principalId === item.task!.assigneeId)?.handle ?? "Agent"}`
+                          ? ` @${entities?.person(item.task!.assigneeId)?.displayName || people.find((p) => p.principalId === item.task!.assigneeId)?.displayName || "成员"}`
                           : ""}
                       </span>
                     )}
@@ -1180,33 +1255,13 @@ function GlobalActivity({
                 <div className="fc-actions">
                   <button
                     className="activity-done"
-                    aria-label={`标记为完成：${item.title.slice(0, 80)}`}
+                    aria-label={`标记为完成：${displayText(item.title).slice(0, 80)}`}
                     title="标记为完成（处理动态，不改变任务状态）"
                     disabled={pending !== undefined}
                     onClick={() => void mark(item, "done")}
                   >
                     <Icon name="check" />
                   </button>
-                  {item.threadId && (
-                    <button
-                      className="rah-unfollow"
-                      aria-label={`取消关注：${item.title.slice(0, 80)}`}
-                      onClick={() => {
-                        void client
-                          .request("activity.follow", {
-                            roomId: item.roomId,
-                            threadId: item.threadId!,
-                            following: false,
-                          })
-                          .then(() => result.refresh())
-                          .catch((failure: unknown) =>
-                            setError(String(failure)),
-                          );
-                      }}
-                    >
-                      取消关注
-                    </button>
-                  )}
                 </div>
               </article>
             ))}

@@ -167,6 +167,10 @@ export type ForwardedMessageBundle = z.infer<
 
 export const MessageSchema = z
   .object({
+    attachmentComment: z
+      .object({ attachmentId: IdentifierSchema, filename: z.string() })
+      .strict()
+      .optional(),
     attachments: z.array(AttachmentSchema).max(10).optional(),
     actorId: IdentifierSchema,
     body: z.string(),

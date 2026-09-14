@@ -13,13 +13,7 @@ export function globalTaskDetailFromSearch(
   const params = new URLSearchParams(search);
   const roomId = params.get("room"),
     taskId = params.get("task");
-  if (
-    params.get("surface") !== "tasks" ||
-    params.get("target") !== "task" ||
-    !roomId ||
-    !taskId
-  )
-    return undefined;
+  if (params.get("target") !== "task" || !roomId || !taskId) return undefined;
   const rootMessageId = threadRootSelectionFromSearch(search, roomId);
   return {
     roomId,
@@ -29,8 +23,11 @@ export function globalTaskDetailFromSearch(
 }
 
 export function closeGlobalTaskSearch(search: string): string {
-  const params = normalizeDiscoveryParams(search, "tasks");
-  for (const key of ["target", "task", "thread", "threadId"])
+  const params =
+    new URLSearchParams(search).get("surface") === "tasks"
+      ? normalizeDiscoveryParams(search, "tasks")
+      : new URLSearchParams(search);
+  for (const key of ["target", "task", "thread", "threadId", "message"])
     params.delete(key);
   return `?${params}`;
 }

@@ -621,3 +621,9 @@ export { quarantineAgentExecutionWorkspaceReset } from "./agent-execution-worksp
 export { withRuntimeExecutionWorkspace } from "./runtime-execution-workspace.ts";
 
 export { readAgentExecutionResetReceipt } from "./agent-execution-reset-coordinator.ts";
+
+export {
+  rotateLogIfNeeded,
+  rotateServiceLogs,
+  openServiceLogs,
+} from "./service-log-rotation.ts";

@@ -149,7 +149,7 @@ test("message mutation atomically derives event, Inbox, Activation, and content-
   kernel.close();
 });
 
-test("Task status menu cannot replace canonical execution and submission commands", () => {
+test("Human status edits change canonical business state without inventing execution evidence", () => {
   const { agent, humanActor, kernel, room } = createFixture();
   const created = kernel.createTask(humanActor, {
     assigneeId: agent.principalId,
@@ -157,34 +157,24 @@ test("Task status menu cannot replace canonical execution and submission command
     roomId: room.roomId,
     title: "Move through the Raft board",
   });
-  const activationsBefore = kernel.listActivations({
-    participantId: agent.principalId,
-    roomId: room.roomId,
-  }).length;
-
-  for (const workflowStatus of ["in_progress", "in_review", "done"] as const) {
-    assert.throws(
-      () =>
-        kernel.updateTaskWorkflowStatus(humanActor, {
-          basedOnRoomSeq: created.event.roomSeq,
-          idempotencyKey: `workflow-${workflowStatus}`,
-          taskId: created.task.taskId,
-          workflowStatus,
-        }),
-      ConflictError,
-    );
+  let seq = created.event.roomSeq;
+  for (const workflowStatus of [
+    "in_progress",
+    "in_review",
+    "done",
+    "todo",
+  ] as const) {
+    const result = kernel.updateTaskWorkflowStatus(humanActor, {
+      basedOnRoomSeq: seq,
+      idempotencyKey: `workflow-${workflowStatus}`,
+      taskId: created.task.taskId,
+      workflowStatus,
+    });
+    seq = result.event.roomSeq;
+    assert.equal(result.task.workflowStatus, workflowStatus);
+    assert.equal(result.task.claimedBy, undefined);
+    assert.equal(result.task.submittedAt, undefined);
   }
-  const [task] = kernel.listTasks(humanActor, { roomId: room.roomId });
-  assert.equal(task?.state, "todo");
-  assert.equal(task?.workflowStatus, "todo");
-  assert.equal(
-    kernel.listActivations({
-      participantId: agent.principalId,
-      roomId: room.roomId,
-    }).length,
-    activationsBefore,
-  );
-
   kernel.close();
 });
 

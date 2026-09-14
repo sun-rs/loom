@@ -70,23 +70,43 @@ test("Only explicit supported heading and video targets become navigable; unknow
   );
 });
 
-test("Comment presentation orders anchors while preserving canonical IDs and original input", () => {
+test("File comments read oldest to newest regardless of their file anchor", () => {
   const comments = [
     {
-      id: "last",
-      createdAt: "2026-09-08T00:00:03Z",
-      anchor: { type: "lines", data: { start: 3 } },
+      id: "reply",
+      roomSeq: 13,
+      createdAt: "2026-09-14T01:32:00Z",
+      anchor: null,
     },
-    { id: "whole", createdAt: "2026-09-08T00:00:01Z", anchor: null },
     {
-      id: "first",
-      createdAt: "2026-09-08T00:00:02Z",
-      anchor: { type: "lines", data: { start: 1 } },
+      id: "question",
+      roomSeq: 12,
+      createdAt: "2026-09-14T01:22:00Z",
+      anchor: { type: "md-section", data: { headingId: "section-4" } },
     },
+    {
+      id: "earliest",
+      roomSeq: 11,
+      createdAt: "2026-09-14T01:12:00Z",
+      anchor: { type: "lines", data: { start: 100 } },
+    },
+  ];
+  const original = structuredClone(comments);
+  assert.deepEqual(
+    orderAttachmentComments(comments).map((c) => c.id),
+    ["earliest", "question", "reply"],
+  );
+  assert.deepEqual(comments, original);
+});
+
+test("Equal comment times use durable Room order, including equivalent time zones", () => {
+  const comments = [
+    { id: "second", roomSeq: 21, createdAt: "2026-09-14T09:22:00+08:00" },
+    { id: "first", roomSeq: 20, createdAt: "2026-09-14T01:22:00Z" },
+    { id: "later", roomSeq: 22, createdAt: "2026-09-14T01:23:00Z" },
   ];
   assert.deepEqual(
     orderAttachmentComments(comments).map((c) => c.id),
-    ["whole", "first", "last"],
+    ["first", "second", "later"],
   );
-  assert.equal(comments[0]!.id, "last");
 });

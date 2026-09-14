@@ -1,3 +1,10 @@
+import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
+import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
+import { ChannelSettingsHeader } from "./channel-settings-header.tsx";
+import { HideAllChannelAction } from "./system-channel-settings.tsx";
+import { useOverlayDrawerMotion } from "../use-overlay-drawer-motion.ts";
+import type { ReactNode } from "react";
+import { RoomMemberRemoveConfirmation } from "./room-member-remove-confirmation.tsx";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { useEffect, useRef, useState } from "react";
 
@@ -86,19 +93,19 @@ export function RoomCreateDialog({
           </div>
           <button
             aria-label="关闭"
-            className="sq-btn"
+            className="sq-btn rah-card-dialog-close"
             disabled={pending}
             onClick={onClose}
           >
             <span className="rah-close-glyph" aria-hidden="true">
-              ×
+              <Icon name="x" />
             </span>
           </button>
         </header>
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            if (!valid) return;
+            if (pending || !valid) return;
             const collision = archivedRooms.find((room) => room.slug === slug);
             if (collision !== undefined) {
               setArchivedCollision(collision);
@@ -162,7 +169,9 @@ export function RoomCreateDialog({
             </section>
           )}
           <label>
-            名称 <em>*</em>
+            <span>
+              名称 <em>*</em>
+            </span>
             <input
               autoFocus
               onChange={(event) => {
@@ -184,7 +193,7 @@ export function RoomCreateDialog({
               maxLength={2000}
               onChange={(event) => setDescription(event.target.value)}
               placeholder="这个频道是做什么的？"
-              rows={3}
+              rows={2}
               value={description}
             />
           </label>
@@ -198,7 +207,7 @@ export function RoomCreateDialog({
                 role="radio"
                 type="button"
               >
-                <span>#</span> 公开
+                <Icon name="hash" /> 公开
               </button>
               <button
                 aria-checked={visibility === "private"}
@@ -207,7 +216,7 @@ export function RoomCreateDialog({
                 role="radio"
                 type="button"
               >
-                <span>▢</span> 私密
+                <Icon name="lock" /> 私密
               </button>
             </div>
           </fieldset>
@@ -215,13 +224,16 @@ export function RoomCreateDialog({
             <h3>
               成员 <small>可选</small>
             </h3>
-            <input
-              aria-label="搜索成员"
-              onChange={(event) => setMemberSearch(event.target.value)}
-              placeholder="按名称搜索成员"
-              type="search"
-              value={memberSearch}
-            />
+            <div className="rah-room-create-member-search">
+              <Icon name="search" />
+              <input
+                aria-label="搜索成员"
+                onChange={(event) => setMemberSearch(event.target.value)}
+                placeholder="按名称搜索成员"
+                type="search"
+                value={memberSearch}
+              />
+            </div>
             <div className="rah-room-create-agent-list rah-scroll-main">
               <h4>AGENT</h4>
               {visibleAgents.length === 0 ? (
@@ -248,14 +260,15 @@ export function RoomCreateDialog({
                       }
                       type="button"
                     >
-                      <AgentAvatar agent={agent} size="sidebar" />
+                      <AgentAvatar
+                        agent={agent}
+                        size="sidebar"
+                        showStatus={false}
+                      />
                       <span>
                         <b>{agent.displayName}</b>
-                        {agent.handle === agent.displayName ? null : (
-                          <small>@{agent.handle}</small>
-                        )}
                       </span>
-                      <i>{selected ? "✓" : ""}</i>
+                      {selected ? <Icon name="check" /> : null}
                     </button>
                   );
                 })
@@ -285,11 +298,11 @@ export function RoomCreateDialog({
 }
 
 export function RoomMembersDialog({
-  canAdd,
+  canAdd: allowedAdd,
   canDelete,
   canLeave,
-  canManageRoles,
-  canRemove,
+  canManageRoles: allowedRoles,
+  canRemove: allowedRemove,
   canStopAgents,
   canUpdate,
   candidates,
@@ -297,7 +310,9 @@ export function RoomMembersDialog({
   memberships = [],
   onAdd,
   onArchive,
-  onClose,
+  onClose: onClosed,
+  renderProfile,
+  onHideAll,
   onDelete,
   onLeave,
   onRemove,
@@ -321,6 +336,12 @@ export function RoomMembersDialog({
   onAdd: (agent: AgentMembershipIdentity) => Promise<void>;
   onArchive: () => Promise<void>;
   onClose: () => void;
+  onHideAll?: () => Promise<void>;
+  renderProfile?: (
+    target: { kind: "agent" | "human"; id: string },
+    onBack: () => void,
+    onClose: () => void,
+  ) => ReactNode;
   onDelete: () => Promise<void>;
   onLeave: () => Promise<void>;
   onRemove: (agent: AgentMembershipIdentity) => Promise<void>;
@@ -336,7 +357,19 @@ export function RoomMembersDialog({
   room: Room | undefined;
   leaveUnavailableReason?: string | undefined;
 }) {
+  const { closing, close: onClose } = useOverlayDrawerMotion(onClosed);
+  const [profile, setProfile] = useState<{
+    kind: "agent" | "human";
+    id: string;
+  }>();
+  const fixedMembership = room?.kind === "channel" && room.slug === "all";
+  const canAdd = allowedAdd && !fixedMembership;
+  const canRemove = allowedRemove && !fixedMembership;
+  const canManageRoles = allowedRoles && !fixedMembership;
   const [pendingAgentId, setPendingAgentId] = useState<string>();
+  const [removeTarget, setRemoveTarget] = useState<
+    AgentMembershipIdentity & { displayName?: string }
+  >();
   const sidebarPreferences = useSidebarPreferences();
   const [settingsPending, setSettingsPending] = useState(false);
   const [lifecyclePending, setLifecyclePending] = useState(false);
@@ -377,14 +410,22 @@ export function RoomMembersDialog({
   const dialogRef = useDialogProtocol({
     blocked: mutationBlocked,
     initialFocus: "container",
-    onClose: () => (view === "settings" ? onClose() : back()),
+    onClose: () =>
+      profile
+        ? setProfile(undefined)
+        : view === "settings"
+          ? onClose()
+          : back(),
   });
   useEffect(() => {
     setDescription(room?.description ?? "");
     setName(room?.name ?? "");
     setVisibility(room?.visibility ?? "private");
   }, [room?.description, room?.name, room?.roomId, room?.visibility]);
-  const humans = members.filter(({ kind }) => kind === "human");
+  const entities = useWorkspaceEntities();
+  const humans = members
+    .filter(({ kind }) => kind === "human")
+    .map((person) => ({ ...person, ...entities?.resolvePerson(person) }));
   const joinedAgents = candidates.filter(({ joined }) => joined);
   const settingsDirty =
     name.trim() !== (room?.name ?? "") ||
@@ -449,7 +490,10 @@ export function RoomMembersDialog({
     mutationPendingRef.current = true;
     setPendingAgentId(agent.participantId);
     void onRemove(agent)
-      .then(() => setActionError(undefined))
+      .then(() => {
+        setActionError(undefined);
+        setRemoveTarget(undefined);
+      })
       .catch((caught) => setActionError(errorMessage(caught)))
       .finally(() => {
         mutationPendingRef.current = false;
@@ -594,7 +638,11 @@ export function RoomMembersDialog({
     }
   };
   return (
-    <div className="rah-channel-settings-layer" role="presentation">
+    <div
+      className="rah-channel-settings-layer"
+      data-closing={closing || undefined}
+      role="presentation"
+    >
       <button
         aria-label="关闭频道详情与设置"
         className="rah-channel-settings-backdrop"
@@ -610,30 +658,23 @@ export function RoomMembersDialog({
         role="dialog"
         tabIndex={-1}
       >
-        {view === "settings" && (
-          <header className="rah-channel-settings-header">
-            <span className="rah-visually-hidden">频道详情与设置</span>
-            <h2 id="rah-room-members-title">#{room?.name ?? "Room"}</h2>
-            <b>{visibility === "private" ? "私密" : "公开"}</b>
-            <button
-              aria-label="关闭频道设置"
-              className="btn rah-room-settings-mobile-close"
-              disabled={mutationBlocked}
-              onClick={onClose}
-            >
-              ×
-            </button>
-            {description === "" ? null : (
-              <p className="rah-visually-hidden">{description}</p>
-            )}
-          </header>
+        {!profile && view === "settings" && (
+          <ChannelSettingsHeader
+            name={room?.name ?? "Room"}
+            description={description}
+            visibility={visibility}
+            blocked={mutationBlocked}
+            onClose={onClose}
+          />
         )}
         {actionError === undefined ? null : (
           <p className="rah-dialog-error" role="alert">
             {actionError}
           </p>
         )}
-        {view !== "settings" ? (
+        {profile && renderProfile ? (
+          renderProfile(profile, () => setProfile(undefined), onClose)
+        ) : view !== "settings" ? (
           <RoomMemberPage
             key={view}
             view={view}
@@ -644,15 +685,22 @@ export function RoomMembersDialog({
             }
             blocked={mutationBlocked}
             canAdd={canAdd}
+            fixedMembership={fixedMembership}
             canManageRoles={canManageRoles}
             canRemove={canRemove}
             candidates={candidates}
             humans={humans}
             memberships={memberships}
             onBack={back}
+            onOpenProfile={setProfile}
             onOpenAdd={openAdd}
             onAddSelection={addSelection}
-            onRemove={remove}
+            onRemove={(agent) => {
+              if (!mutationPendingRef.current && canRemove) {
+                setActionError(undefined);
+                setRemoveTarget(agent);
+              }
+            }}
             onRole={setRole}
           />
         ) : (
@@ -666,37 +714,48 @@ export function RoomMembersDialog({
                 >
                   <span>成员</span>
                   <span>
-                    {humans.length} 位人类 · {joinedAgents.length} 个 Agent ›
+                    {humans.length} 位人类 · {joinedAgents.length} 个 Agent{" "}
+                    <Icon name="chevron-right" />
                   </span>
                 </button>
               </header>
               <div className="rah-channel-member-avatars">
                 {humans.map((member) => (
-                  <span
-                    aria-label={member.handle}
+                  <button
+                    onClick={() => setView("members")}
+                    aria-label={`管理成员：${member.displayName || member.handle}`}
                     className="rah-channel-human-avatar"
                     key={member.principalId}
-                    title={member.handle}
+                    title={member.displayName || member.handle}
                   >
-                    {member.handle.slice(0, 1).toUpperCase()}
-                  </span>
+                    <ProfileImageAvatar
+                      avatarKey={member.avatarKey}
+                      name={member.displayName || member.handle}
+                      size="compact"
+                    />
+                  </button>
                 ))}
                 {joinedAgents.map((agent) => (
-                  <AgentAvatar
-                    agent={agent}
+                  <button
+                    className="rah-channel-avatar-trigger"
                     key={agent.participantId}
-                    size="header"
-                  />
+                    aria-label={`管理成员：${agent.displayName}`}
+                    onClick={() => setView("members")}
+                  >
+                    <AgentAvatar agent={agent} size="header" />
+                  </button>
                 ))}
-                <button
-                  aria-label="添加成员"
-                  className="rah-channel-member-add"
-                  disabled={!canAdd || mutationBlocked}
-                  onClick={openAdd}
-                  title="添加成员"
-                >
-                  +
-                </button>
+                {!fixedMembership && (
+                  <button
+                    aria-label="添加成员"
+                    className="rah-channel-member-add"
+                    disabled={!canAdd || mutationBlocked}
+                    onClick={openAdd}
+                    title="添加成员"
+                  >
+                    +
+                  </button>
+                )}
               </div>
             </section>
             <div className="rah-channel-settings-info">
@@ -715,7 +774,12 @@ export function RoomMembersDialog({
                     名称 <em>*</em>
                   </label>
                   <input
-                    disabled={!canUpdate || roomArchived || mutationBlocked}
+                    disabled={
+                      room?.slug === "all" ||
+                      !canUpdate ||
+                      roomArchived ||
+                      mutationBlocked
+                    }
                     id="rah-channel-name"
                     onChange={(event) => setName(event.target.value)}
                     placeholder="例如 ai-research"
@@ -876,61 +940,71 @@ export function RoomMembersDialog({
               </section>
               <section className="rah-channel-settings-operations">
                 <h3>操作</h3>
-                <button
-                  className="btn rah-channel-visibility-button"
-                  ref={visibilityTriggerRef}
-                  disabled={!canUpdate || roomArchived || mutationBlocked}
-                  onClick={() => {
-                    setActionError(undefined);
-                    setVisibilityConfirm(
-                      room?.visibility === "public" ? "private" : "public",
-                    );
-                  }}
-                  type="button"
-                >
-                  <Icon
-                    name={room?.visibility === "public" ? "lock" : "hash"}
+                {fixedMembership && onHideAll && (
+                  <HideAllChannelAction
+                    disabled={!canUpdate || mutationBlocked}
+                    onHide={onHideAll}
                   />
-                  {room?.visibility === "public" ? "设为私密" : "设为公开"}
-                </button>
-                {roomArchived ? (
-                  <button
-                    className="btn"
-                    disabled={!canUpdate || mutationBlocked}
-                    onClick={() => void changeArchiveState(false)}
-                    type="button"
-                  >
-                    {lifecyclePending ? "正在恢复…" : "取消归档频道"}
-                  </button>
-                ) : (
-                  <button
-                    className="btn rah-channel-archive-button"
-                    disabled={!canUpdate || mutationBlocked}
-                    onClick={() => setArchiveConfirmOpen(true)}
-                    ref={archiveTriggerRef}
-                    type="button"
-                  >
-                    <Icon name="archive" />
-                    归档频道
-                  </button>
                 )}
-                {!roomArchived ? (
+                {room?.slug !== "all" && (
                   <>
                     <button
-                      className="btn rah-channel-leave-button"
-                      disabled={!canLeave || mutationBlocked}
-                      onClick={() => setLeaveConfirmOpen(true)}
-                      ref={leaveTriggerRef}
+                      className="btn rah-channel-visibility-button"
+                      ref={visibilityTriggerRef}
+                      disabled={!canUpdate || roomArchived || mutationBlocked}
+                      onClick={() => {
+                        setActionError(undefined);
+                        setVisibilityConfirm(
+                          room?.visibility === "public" ? "private" : "public",
+                        );
+                      }}
                       type="button"
                     >
-                      <Icon name="log-out" />
-                      退出频道
+                      <Icon
+                        name={room?.visibility === "public" ? "lock" : "hash"}
+                      />
+                      {room?.visibility === "public" ? "设为私密" : "设为公开"}
                     </button>
+                    {roomArchived ? (
+                      <button
+                        className="btn"
+                        disabled={!canUpdate || mutationBlocked}
+                        onClick={() => void changeArchiveState(false)}
+                        type="button"
+                      >
+                        {lifecyclePending ? "正在恢复…" : "取消归档频道"}
+                      </button>
+                    ) : (
+                      <button
+                        className="btn btn-orange rah-channel-archive-button"
+                        disabled={!canUpdate || mutationBlocked}
+                        onClick={() => setArchiveConfirmOpen(true)}
+                        ref={archiveTriggerRef}
+                        type="button"
+                      >
+                        <Icon name="archive" />
+                        归档频道
+                      </button>
+                    )}
+                    {!roomArchived ? (
+                      <>
+                        <button
+                          className="btn btn-orange rah-channel-leave-button"
+                          disabled={!canLeave || mutationBlocked}
+                          onClick={() => setLeaveConfirmOpen(true)}
+                          ref={leaveTriggerRef}
+                          type="button"
+                        >
+                          <Icon name="log-out" />
+                          退出频道
+                        </button>
+                      </>
+                    ) : null}
                   </>
-                ) : null}
+                )}
                 {!roomArchived ? (
                   <button
-                    className="btn rah-channel-sos-button"
+                    className="btn btn-orange rah-channel-sos-button"
                     disabled={!canStopAgents || mutationBlocked}
                     onClick={() => {
                       setSosPhase("confirm");
@@ -944,24 +1018,38 @@ export function RoomMembersDialog({
                     停止 Agent
                   </button>
                 ) : null}
-                <button
-                  className="btn rah-channel-delete-button"
-                  disabled={!canDelete || mutationBlocked}
-                  onClick={() => {
-                    setDeleteError(undefined);
-                    setDeleteConfirmOpen(true);
-                  }}
-                  ref={deleteTriggerRef}
-                  type="button"
-                >
-                  <Icon name="trash-2" />
-                  删除频道
-                </button>
+                {room?.slug !== "all" && (
+                  <button
+                    className="btn rah-channel-delete-button"
+                    disabled={!canDelete || mutationBlocked}
+                    onClick={() => {
+                      setDeleteError(undefined);
+                      setDeleteConfirmOpen(true);
+                    }}
+                    ref={deleteTriggerRef}
+                    type="button"
+                  >
+                    <Icon name="trash-2" />
+                    删除频道
+                  </button>
+                )}
               </section>
             </div>
           </div>
         )}
       </section>
+      {removeTarget && (
+        <RoomMemberRemoveConfirmation
+          name={removeTarget.displayName ?? removeTarget.handle}
+          roomName={room?.name ?? ""}
+          blocked={pendingAgentId !== undefined}
+          error={actionError}
+          onCancel={() => {
+            if (!mutationPendingRef.current) setRemoveTarget(undefined);
+          }}
+          onConfirm={() => remove(removeTarget)}
+        />
+      )}
       {visibilityConfirm ? (
         <RoomVisibilityConfirmation
           blocked={settingsPending}
@@ -1078,7 +1166,7 @@ function RoomAgentSosDialog({
       <section
         aria-labelledby="rah-room-sos-title"
         aria-modal="true"
-        className="rah-dialog"
+        className="rah-dialog rah-channel-confirmation"
         ref={dialogRef}
         role="dialog"
         tabIndex={-1}
@@ -1093,7 +1181,7 @@ function RoomAgentSosDialog({
             disabled={blocked}
             onClick={onClose}
           >
-            ×
+            <Icon name="x" />
           </button>
         </header>
         {error === undefined ? null : (
@@ -1113,12 +1201,12 @@ function RoomAgentSosDialog({
               </button>
               <button
                 autoFocus
-                className="btn rah-channel-sos-button"
+                className="btn btn-orange rah-channel-sos-button"
                 data-dialog-initial-focus
                 disabled={blocked}
                 onClick={() => void onStop()}
               >
-                {stopping ? "停止中…" : "立即停止"}
+                {stopping ? "停止中…" : "停止"}
               </button>
             </footer>
           </>
@@ -1179,24 +1267,25 @@ function RoomArchiveConfirmation({
       <section
         aria-labelledby="rah-room-archive-title"
         aria-modal="true"
-        className="rah-dialog"
+        className="rah-dialog rah-channel-confirmation"
         ref={dialogRef}
         role="dialog"
         tabIndex={-1}
       >
         <header>
-          <h2 id="rah-room-archive-title">归档 #{name}？</h2>
+          <h2 id="rah-room-archive-title">归档频道</h2>
           <button
             aria-label="关闭"
             className="sq-btn"
             disabled={blocked}
             onClick={onCancel}
           >
-            ×
+            <Icon name="x" />
           </button>
         </header>
         <p>
-          成员仍可读取频道和历史记录，但不能再发布内容；频道会从侧栏隐藏，并可稍后恢复。
+          成员仍可阅读「{name}
+          」及其历史记录，但将无法发送新消息，且该频道会从侧栏中隐藏。你之后可以取消归档。
         </p>
         <footer>
           <button className="btn" disabled={blocked} onClick={onCancel}>
@@ -1204,12 +1293,12 @@ function RoomArchiveConfirmation({
           </button>
           <button
             autoFocus
-            className="btn rah-channel-archive-button"
+            className="btn btn-orange rah-channel-archive-button"
             data-dialog-initial-focus
             disabled={blocked}
             onClick={() => void onConfirm()}
           >
-            {blocked ? "正在归档…" : "归档频道"}
+            {blocked ? "正在归档…" : "归档"}
           </button>
         </footer>
       </section>
@@ -1240,7 +1329,7 @@ function RoomLeaveConfirmation({
       <section
         aria-labelledby="rah-room-leave-title"
         aria-modal="true"
-        className="rah-dialog"
+        className="rah-dialog rah-channel-confirmation"
         ref={dialogRef}
         role="dialog"
         tabIndex={-1}
@@ -1253,7 +1342,7 @@ function RoomLeaveConfirmation({
             disabled={blocked}
             onClick={onCancel}
           >
-            ×
+            <Icon name="x" />
           </button>
         </header>
         <p>
@@ -1272,7 +1361,7 @@ function RoomLeaveConfirmation({
           </button>
           <button
             autoFocus
-            className="btn rah-channel-leave-button"
+            className="btn btn-orange rah-channel-leave-button"
             data-dialog-initial-focus
             disabled={blocked}
             onClick={() => void onConfirm()}
@@ -1308,7 +1397,7 @@ function RoomDeleteConfirmation({
       <section
         aria-labelledby="rah-room-delete-title"
         aria-modal="true"
-        className="rah-dialog"
+        className="rah-dialog rah-channel-confirmation"
         ref={dialogRef}
         role="dialog"
         tabIndex={-1}
@@ -1321,7 +1410,7 @@ function RoomDeleteConfirmation({
             disabled={blocked}
             onClick={onCancel}
           >
-            ×
+            <Icon name="x" />
           </button>
         </header>
         <p>「{name}」及其中的所有消息都会被永久删除，且无法撤销。</p>

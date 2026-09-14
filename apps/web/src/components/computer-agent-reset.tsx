@@ -58,7 +58,8 @@ export function ComputerAgentReset({
       {batch &&
         createPortal(
           <AgentExecutionResetDialog
-            agentName={`所选 ${batch.ids.length} 个 Agent`}
+            agentName={`${batch.ids.length} 个 Agent`}
+            selectionCount={batch.ids.length}
             fullResetEnabled={fullResetEnabled}
             onClose={() => {
               current.current?.controller.abort();

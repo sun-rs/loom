@@ -1,3 +1,4 @@
+import { rotateServiceLogs } from "./service-log-rotation.ts";
 import {
   spawn,
   type ChildProcess,
@@ -147,6 +148,7 @@ export async function activateMacOSComputerLaunchAgent(
     kind = "reloaded";
   }
 
+  await rotateServiceLogs(plan.logDirectory, "computer");
   requireSuccess(
     "bootstrap",
     await launchctl.run(["bootstrap", domainTarget, plan.plistPath]),

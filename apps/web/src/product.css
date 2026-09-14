@@ -85,10 +85,9 @@
   min-height: 28px;
 }
 
-.rah-thread-overflow > span {
-  display: block;
-  font: 700 22px/20px var(--sans);
-  transform: translateY(-1px);
+.rah-thread-overflow > svg {
+  width: 14px;
+  height: 14px;
 }
 
 .rah-thread-close .rah-close-glyph {
@@ -114,12 +113,9 @@
 
 .rah-thread-followers-trigger .rah-agent-avatar.is-compact {
   height: 18px;
-  margin-left: -6px;
-  width: 18px;
-}
-
-.rah-thread-followers-trigger .rah-agent-avatar.is-compact:first-child {
   margin-left: 0;
+  flex-shrink: 0;
+  width: 18px;
 }
 
 .rah-thread-followers-trigger > svg {
@@ -201,7 +197,7 @@
   font: 10px/14px var(--mono);
 }
 
-.rah-thread-follower-row > button {
+.rah-thread-follower-row > .rah-thread-follower-remove {
   background: var(--bg);
   border: var(--bd);
   box-shadow: var(--shadow-s);
@@ -211,8 +207,9 @@
 }
 
 .rah-thread-overflow-menu {
-  min-width: 190px;
-  padding: 4px 0;
+  min-width: 192px;
+  padding: 0;
+  top: calc(100% + 4px);
 }
 
 .rah-thread-overflow-menu button {
@@ -220,8 +217,8 @@
   background: transparent;
   border: 0;
   display: flex;
-  font: 600 13px/20px var(--sans);
-  gap: 9px;
+  font: 500 14px/20px var(--sans);
+  gap: 8px;
   padding: 8px 12px;
   text-align: left;
   width: 100%;
@@ -232,8 +229,8 @@
 }
 
 .rah-thread-overflow-menu svg {
-  height: 16px;
-  width: 16px;
+  height: 14px;
+  width: 14px;
 }
 
 .rah-thread-search {
@@ -243,32 +240,43 @@
   flex: none;
   gap: 6px;
   min-height: 44px;
-  padding: 6px 10px;
+  padding: 8px;
 }
 
 .rah-thread-search > svg {
-  height: 16px;
-  width: 16px;
+  width: 14px;
+  height: 14px;
+  color: var(--muted);
+  flex-shrink: 0;
 }
-
 .rah-thread-search input {
-  border: 0;
+  border: var(--bd);
   flex: 1;
-  font: 13px/20px var(--sans);
+  font: 500 14px/20px var(--sans);
   min-width: 0;
+  padding: 4px 8px;
   outline: 0;
 }
-
-.rah-thread-search > span {
-  color: var(--muted);
-  font: 10px/16px var(--mono);
+.rah-thread-search input:focus {
+  outline: none;
+  box-shadow: var(--shadow-s);
 }
-
-.rah-thread-search button {
-  background: var(--bg);
-  border: 1px solid var(--black);
-  height: 24px;
-  width: 24px;
+.rah-thread-search > span {
+  width: 80px;
+  flex-shrink: 0;
+  text-align: center;
+  color: var(--muted);
+  font: 12px/16px var(--mono);
+}
+.rah-thread-search .sq-btn {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  padding: 0;
+}
+.rah-thread-search .sq-btn svg {
+  width: 14px;
+  height: 14px;
 }
 
 .rah-live-agent-activity-footer {
@@ -345,8 +353,8 @@
 .rah-composer-mention-copy small {
   border: 1px solid var(--black);
   color: var(--ink-60);
-  font: 10px/14px var(--mono);
-  padding: 0 3px;
+  font: 700 10px/10px var(--sans);
+  padding: 1px 4px;
 }
 
 .rah-composer-mention-menu .handle {
@@ -917,7 +925,7 @@
 
 .rah-thread-history-heading {
   color: var(--ink-40);
-  font: 400 11px/16px var(--mono);
+  font: 400 12px/16px var(--mono);
   text-align: center;
 }
 
@@ -1463,6 +1471,7 @@
   text-align: inherit;
   text-decoration: none;
   text-overflow: ellipsis;
+  user-select: text;
   vertical-align: bottom;
   white-space: nowrap;
 }
@@ -1478,6 +1487,10 @@
 
 .rah-rich-self-reference {
   background: var(--yellow);
+}
+
+.rah-rich-self-reference:hover {
+  background: color-mix(in srgb, var(--yellow) 80%, transparent);
 }
 
 .rah-rich-room-reference {
@@ -2032,7 +2045,11 @@ button.rah-rich-reference {
   justify-content: center;
   width: 40px;
 }
-:is(.rah-channel-settings-info, .rah-room-create-dialog form, .rah-dialog form)
+:is(
+    .rah-channel-settings-info,
+    .rah-room-create-dialog form,
+    .rah-dialog form:not(.rah-attachment-comment-composer)
+  )
   :is(
     input:not([type="checkbox"]):not([type="radio"]),
     textarea,
@@ -2512,13 +2529,13 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   margin-top: 3px;
 }
 
-.rah-dialog form {
+.rah-dialog form:not(.rah-attachment-comment-composer) {
   display: grid;
   gap: 16px;
   padding: 18px;
 }
 
-.rah-dialog form label {
+.rah-dialog form:not(.rah-attachment-comment-composer) label {
   display: grid;
   font-size: 12px;
   font-weight: 700;
@@ -2550,9 +2567,9 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   gap: 8px;
 }
 
-.rah-dialog form input,
-.rah-dialog form select,
-.rah-dialog form textarea {
+.rah-dialog form:not(.rah-attachment-comment-composer) input,
+.rah-dialog form:not(.rah-attachment-comment-composer) select,
+.rah-dialog form:not(.rah-attachment-comment-composer) textarea {
   background: var(--bg);
   border: var(--bd);
   box-shadow: var(--shadow-s);
@@ -2585,12 +2602,12 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   gap: 12px;
 }
 /* Raft Si close: p-1 + size20; dn/vqe sm: h-7 px-2.5 text-xs. */
-.rah-agent-reset-dialog > header .sq-btn {
+.rah-dialog .sq-btn.rah-card-dialog-close {
   width: var(--control-8);
   height: var(--control-8);
   padding: var(--space-1);
 }
-.rah-agent-reset-dialog > header .sq-btn svg {
+.rah-dialog .sq-btn.rah-card-dialog-close svg {
   width: var(--icon-5);
   height: var(--icon-5);
 }
@@ -2600,6 +2617,19 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   padding: 0 10px;
   gap: 6px;
   font: 700 12px/1 var(--sans);
+}
+
+/* Raft MachineDetailPanel Na: batch uses btn-brutal px-4 py-2 text-sm,
+   unlike the single-Agent Si small buttons above. */
+.rah-agent-reset-dialog[data-reset-scope="batch"] form footer .btn {
+  height: 40px;
+  padding: 8px 16px;
+  font-size: 14px;
+  line-height: 20px;
+}
+.rah-agent-reset-dialog[data-reset-scope="batch"] form footer .btn svg {
+  width: 14px;
+  height: 14px;
 }
 
 .rah-agent-reset-dialog fieldset {
@@ -2855,7 +2885,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   width: 1px;
 }
 
-.rah-dialog form textarea {
+.rah-dialog form:not(.rah-attachment-comment-composer) textarea {
   line-height: 1.5;
   resize: vertical;
 }
@@ -2951,177 +2981,195 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   z-index: 2;
 }
 
-.rah-room-create-dialog {
-  height: min(656px, calc(100vh - 34px));
+/* Raft _h + channel.create: max-w-md card p-6, normal-flow form. */
+.rah-dialog.rah-room-create-dialog {
+  height: auto;
   max-width: 448px;
-}
-
-.rah-room-create-dialog > header {
-  min-height: 60px;
-  padding: 12px 24px;
-}
-
-.rah-room-create-dialog form {
-  align-content: start;
-  flex: 1;
-  gap: 14px;
-  overflow-x: hidden;
+  min-width: 0;
+  max-height: calc(100dvh - 40px);
   overflow-y: auto;
-  padding: 22px 24px 0;
+  padding: 24px;
+  border: var(--bd);
+  box-shadow: var(--shadow-m);
 }
-
-.rah-room-create-dialog form label {
-  font-size: 13px;
-  gap: 6px;
+.rah-dialog.rah-room-create-dialog > header {
+  flex-shrink: 0;
+  min-height: 0;
+  border: 0;
+  padding: 0;
+  margin-bottom: 16px;
 }
-
+.rah-dialog.rah-room-create-dialog > header h2 {
+  font: 700 18px/28px var(--sans);
+}
+.rah-dialog.rah-room-create-dialog form {
+  flex: none;
+  gap: 16px;
+  overflow: visible;
+  padding: 0;
+}
+.rah-dialog.rah-room-create-dialog form label {
+  font: 700 14px/20px var(--sans);
+  gap: 4px;
+}
 .rah-room-create-dialog form label em {
   color: var(--pink);
   font-style: normal;
 }
-
 .rah-room-create-dialog form label small,
 .rah-room-create-members small {
   color: var(--ink-40);
   font-size: inherit;
   font-weight: 400;
 }
-
-.rah-room-create-dialog form input,
-.rah-room-create-dialog form textarea {
-  font-family: var(--sans);
-  font-size: 13px;
+.rah-dialog.rah-room-create-dialog form input,
+.rah-dialog.rah-room-create-dialog form textarea {
+  font: 400 16px/24px var(--sans);
   min-width: 0;
   width: 100%;
+  padding: 8px 12px;
+  box-shadow: var(--shadow-s);
 }
-
-.rah-room-create-dialog form input {
-  min-height: 42px;
+.rah-dialog.rah-room-create-dialog form input {
+  min-height: 44px;
 }
-
-.rah-room-create-dialog form textarea {
-  min-height: 70px;
-  resize: none;
+.rah-dialog.rah-room-create-dialog form textarea {
+  min-height: 68px;
+  resize: vertical;
 }
-
 .rah-room-visibility {
   border: 0;
   display: grid;
-  gap: 7px;
+  gap: 4px;
   margin: 0;
   padding: 0;
 }
-
 .rah-room-visibility legend,
 .rah-room-create-members h3 {
-  font-size: 13px;
-  font-weight: 700;
+  font: 700 14px/20px var(--sans);
 }
-
 .rah-room-visibility > div {
   display: flex;
-  gap: 8px;
+  gap: 4px;
 }
-
 .rah-room-visibility button {
   align-items: center;
   background: var(--bg);
   border: var(--bd);
   display: flex;
-  font-size: 12px;
-  font-weight: 700;
-  gap: 5px;
-  min-height: 34px;
-  padding: 5px 10px;
+  font: 600 12px/16px var(--sans);
+  gap: 6px;
+  padding: 6px 8px 6px 6px;
 }
-
+.rah-room-visibility button svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.5;
+}
 .rah-room-visibility button.is-selected {
   background: var(--yellow);
 }
-
-.rah-room-visibility button:hover,
-.rah-room-create-agent-list > button:hover {
-  background: var(--ink-05);
+.rah-room-visibility button:hover {
+  background: var(--soft-signal);
 }
-
-.rah-room-visibility button.is-selected:hover,
-.rah-room-create-agent-list > button.is-selected:hover {
+.rah-room-visibility button.is-selected:hover {
   background: var(--yellow);
 }
-
 .rah-room-create-members {
   display: grid;
-  gap: 7px;
+  gap: 8px;
 }
-
+.rah-room-create-members h3 {
+  margin-bottom: -4px;
+}
+.rah-room-create-member-search {
+  position: relative;
+}
+.rah-room-create-member-search > svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  color: var(--ink-40);
+  pointer-events: none;
+}
+.rah-dialog.rah-room-create-dialog .rah-room-create-member-search input {
+  padding-left: 36px;
+  font-size: 14px;
+  line-height: 20px;
+  min-height: 40px;
+}
 .rah-room-create-agent-list {
   border: var(--bd);
-  max-height: 160px;
-  min-height: 116px;
+  box-shadow: var(--shadow-s);
+  max-height: 192px;
   overflow-y: auto;
-  padding: 8px;
+  padding: 0;
 }
-
 .rah-room-create-agent-list h4 {
-  color: var(--ink-40);
-  font: 700 9px/1 var(--mono);
-  letter-spacing: 0.08em;
-  margin: 0 2px 5px;
+  color: var(--ink-60);
+  font: 700 12px/16px var(--sans);
+  letter-spacing: 0.1em;
+  margin: 0;
+  padding: 6px 12px;
 }
-
 .rah-room-create-agent-list > p {
   color: var(--ink-40);
-  font-size: 11px;
-  padding: 8px 2px;
+  font: 14px/20px var(--mono);
+  padding: 16px 12px;
 }
-
 .rah-room-create-agent-list > button {
   align-items: center;
   background: transparent;
   border: 0;
   display: flex;
   gap: 8px;
-  min-height: 34px;
-  padding: 4px;
+  padding: 6px 12px;
   text-align: left;
   width: 100%;
 }
-
-.rah-room-create-agent-list > button.is-selected {
+.rah-room-create-agent-list > button:hover {
   background: var(--yellow);
 }
-
+.rah-room-create-agent-list > button.is-selected {
+  background: color-mix(in srgb, var(--pink) 20%, transparent);
+}
 .rah-room-create-agent-list .rah-agent-avatar {
-  height: 24px;
-  width: 24px;
+  height: 18px;
+  width: 18px;
+  flex-shrink: 0;
+  border-width: 1px;
 }
-
 .rah-room-create-agent-list > button > span:nth-child(2) {
-  display: grid;
+  flex: 1;
   min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
-
 .rah-room-create-agent-list b {
-  font-size: 12px;
+  font: 500 14px/20px var(--sans);
 }
-
-.rah-room-create-agent-list small {
-  font: 9px/1.2 var(--mono);
+.rah-room-create-agent-list > button > svg {
+  width: 14px;
+  height: 14px;
+  color: var(--pink);
+  flex-shrink: 0;
 }
-
-.rah-room-create-agent-list i {
-  font-style: normal;
-  margin-left: auto;
+.rah-dialog.rah-room-create-dialog
+  form:not(.rah-attachment-comment-composer)
+  footer {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  position: static;
+  gap: 12px;
 }
-
-.rah-room-create-dialog form footer {
-  background: var(--bg);
-  border-top: 1px solid var(--ink-10);
-  bottom: 0;
-  margin: auto -24px 0;
-  padding: 12px 24px;
-  position: sticky;
-  z-index: 2;
+.rah-room-create-dialog footer .btn {
+  font: 700 14px/20px var(--sans);
+  padding: 8px 16px;
 }
 
 .rah-agent-form-grid {
@@ -3130,7 +3178,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.rah-dialog form footer {
+.rah-dialog form:not(.rah-attachment-comment-composer) footer {
   display: flex;
   gap: 9px;
   justify-content: flex-end;
@@ -3199,20 +3247,26 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   background: var(--yellow);
   border-bottom: var(--bd);
   display: flex;
-  flex-wrap: nowrap;
-  gap: 4px 8px;
-  height: 54px;
-  min-height: 54px;
-  padding: 12px 16px;
+  gap: 8px;
+  height: var(--head-h);
+  min-height: var(--head-h);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  padding: 6px 16px;
 }
 
 .rah-channel-settings-header h2 {
-  font-size: 20px;
+  flex: 0 1 auto;
+  font-size: 16px;
   font-weight: 700;
-  line-height: 28px;
+  line-height: 20px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.rah-channel-settings-header > b {
+.rah-channel-settings-header h2 > b {
   background: var(--green);
   border: 1.5px solid var(--black);
   font: 700 11px/15.4px var(--sans);
@@ -3273,7 +3327,11 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 
 .rah-channel-settings-members > header > button:hover {
-  background: var(--ink-05);
+  background: transparent;
+}
+.rah-channel-settings-members > header > button svg {
+  width: 14px;
+  height: 14px;
 }
 
 .rah-channel-member-avatars {
@@ -3391,7 +3449,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 
 .rah-channel-settings-info footer {
-  margin-top: 6.5px;
+  margin-top: 0;
   display: flex;
   gap: 8px;
   justify-content: flex-end;
@@ -3491,6 +3549,8 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 
 .rah-channel-settings-operations .btn {
+  font-size: 16px;
+  line-height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3517,55 +3577,73 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   z-index: 120;
 }
 
-.rah-room-visibility-confirm .rah-dialog > p,
-.rah-room-archive-confirm .rah-dialog > p,
-.rah-room-delete-confirm .rah-dialog > p,
-.rah-room-leave-confirm .rah-dialog > p {
-  font-size: 14px;
-  line-height: 1.5;
-  padding: 18px;
-}
-
-.rah-room-visibility-confirm .rah-dialog > footer,
-.rah-room-archive-confirm .rah-dialog > footer,
-.rah-room-delete-confirm .rah-dialog > footer,
-.rah-room-leave-confirm .rah-dialog > footer {
-  display: flex;
-  gap: 9px;
-  justify-content: flex-end;
-  padding: 0 18px 18px;
-}
-
-.rah-room-sos-dialog .rah-dialog > p {
-  font-size: 14px;
-  line-height: 1.5;
-  margin: 0 18px 12px;
-}
-
-.rah-room-sos-dialog .rah-dialog > p:first-of-type {
-  margin-top: 18px;
-}
-
-.rah-room-sos-dialog .rah-dialog > textarea {
-  background: var(--bg);
+/* Raft zi confirmation: max-w-sm, p-6, mb-4 header, mb-5 body, sm actions. */
+.rah-dialog.rah-channel-confirmation {
+  /* Raft zi confirmations remain content-sized, including narrow screens. */
+  align-self: center;
+  width: min(384px, calc(100vw - 32px));
+  max-width: 384px;
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  min-width: 0;
+  padding: 24px;
   border: var(--bd);
-  box-shadow: var(--shadow-s);
-  box-sizing: border-box;
-  font: 14px/1.5 var(--sans);
-  margin: 0 18px 16px;
-  min-height: 96px;
-  padding: 10px;
-  resize: vertical;
-  width: calc(100% - 36px);
 }
-
-.rah-room-sos-dialog .rah-dialog > footer {
+.rah-channel-confirmation > header {
+  padding: 0;
+  border-bottom: 0;
+  margin-bottom: 16px;
+}
+.rah-channel-confirmation > header h2 {
+  font: 700 18px/28px var(--sans);
+}
+.rah-agent-state-confirmation > header h2 {
+  text-transform: uppercase;
+}
+.rah-channel-confirmation > header .sq-btn {
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 4px;
+}
+.rah-channel-confirmation > header .sq-btn svg {
+  width: 20px;
+  height: 20px;
+}
+.rah-channel-confirmation > p {
+  color: rgb(0 0 0 / 75%);
+  font: 400 14px/1.625 var(--sans);
+  padding: 0;
+  margin: 0 0 20px;
+}
+.rah-channel-confirmation > footer {
   display: flex;
-  gap: 9px;
+  flex-wrap: wrap;
+  gap: 12px;
   justify-content: flex-end;
-  padding: 0 18px 18px;
+  padding: 0;
 }
-
+.rah-channel-confirmation > footer .btn {
+  min-height: 28px;
+  height: 28px;
+  font: 700 12px/16px var(--sans);
+  padding: 4px 10px;
+}
+.rah-channel-confirmation > footer .btn-orange {
+  background: var(--orange);
+}
+.rah-agent-state-confirmation > footer .btn,
+.rah-service-restart-confirmation > footer .btn {
+  line-height: 12px;
+  padding: 0 10px;
+}
+.rah-channel-confirmation > textarea {
+  width: 100%;
+  min-height: 96px;
+  margin: 0 0 20px;
+  padding: 10px;
+  border: var(--bd);
+}
 .rah-room-sos-dialog .rah-room-sos-success {
   background: var(--green);
   border: var(--bd);
@@ -3800,10 +3878,14 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 @media (max-width: 767px) {
   :root {
     --rah-mobile-nav-h: 52px;
+    --rah-mobile-nav-space: calc(
+      var(--rah-mobile-nav-h) + env(safe-area-inset-bottom)
+    );
   }
 
   .app.rah-product-shell {
     grid-template-columns: minmax(0, 1fr);
+    height: calc(100dvh - var(--rah-mobile-nav-space));
     min-width: 0;
     width: 100%;
   }
@@ -3916,7 +3998,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     left: 0;
-    min-height: calc(var(--rah-mobile-nav-h) + env(safe-area-inset-bottom));
+    height: var(--rah-mobile-nav-space);
     padding: 0 0 env(safe-area-inset-bottom);
     position: fixed;
     right: 0;
@@ -3935,7 +4017,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
     font-weight: 700;
     gap: 2px;
     justify-content: center;
-    min-height: var(--rah-mobile-nav-h);
+    min-height: 0;
     padding: 8px 0;
     position: relative;
     transition: background-color var(--rah-interaction-transition);
@@ -3973,10 +4055,6 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   .rah-mobile-nav svg {
     height: 18px;
     width: 18px;
-  }
-
-  .rah-product-shell.rah-mobile-navigation-visible > .channel {
-    padding-bottom: calc(var(--rah-mobile-nav-h) + env(safe-area-inset-bottom));
   }
 
   .rah-product-shell > .thread {
@@ -4225,19 +4303,27 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 .rah-product-shell:not([data-conversation-layout="split"])
   > .thread
+  .rah-thread-close {
+  display: none;
+}
+.rah-product-shell:not([data-conversation-layout="split"])
+  > .thread
   .rah-thread-back {
   display: inline-flex;
 }
 .rah-product-shell:not([data-conversation-layout="split"])
   > .thread
-  :is(.rah-thread-close, .rah-thread-resizer) {
+  .rah-thread-resizer {
   display: none;
 }
 .rah-product-shell:not([data-conversation-layout="split"]):not(
     .thread-hidden
   ):not(.rah-task-modal-open):not(.rah-global-shell)
-  > .channel {
-  display: none;
+  > .channel:not(.rah-agent-peek) {
+  visibility: hidden;
+  pointer-events: none;
+  grid-row: 1;
+  grid-column: 3;
 }
 .rah-product-shell:not([data-conversation-layout="split"]) > .thread {
   border-left: 0;
@@ -4251,6 +4337,12 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
     ):not(.thread-hidden):not(.rah-task-modal-open) {
     grid-template-columns: minmax(0, 1fr);
   }
+  .rah-product-shell[data-conversation-layout="fullscreen"]:not(
+      .thread-hidden
+    ):not(.rah-task-modal-open):not(.rah-global-shell)
+    > .channel:not(.rah-agent-peek) {
+    grid-column: 1;
+  }
   .rah-product-shell[data-conversation-layout="fullscreen"] > .thread {
     grid-column: 1;
     z-index: 70;
@@ -4258,6 +4350,138 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 
 .rah-channel-settings-operations .btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.rah-channel-settings-identity > p {
+  flex-basis: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-50);
+  font: 12px/16px var(--mono);
+}
+
+/* Raft Ki/an/vs: card-brutal shadow-md, small action and pending/error states. */
+.rah-dialog.rah-agent-state-confirmation {
+  /* Live Raft's declared TTF URLs return 404; match its measured fallback.
+     Evidence: docs/audits/2026-09-13-agent-deletion-cascade.zh-CN.md. */
+  font-family: "Raft Quote Glyphs", system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  box-shadow: 4px 4px 0 #141111;
+}
+.rah-agent-state-confirmation > footer .btn {
+  color: #000;
+  white-space: nowrap;
+  flex-shrink: 0;
+  gap: 6px;
+}
+.rah-agent-state-confirmation .btn,
+.rah-agent-state-confirmation .sq-btn {
+  --confirmation-x: 0px;
+  --confirmation-y: 0px;
+  translate: var(--confirmation-x) var(--confirmation-y);
+  transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.rah-agent-state-confirmation .btn:active,
+.rah-agent-state-confirmation .sq-btn:active {
+  --confirmation-x: 1px;
+  --confirmation-y: 1px;
+  transform: none;
+  box-shadow: 1px 1px 0 #141111;
+}
+@media (hover: hover) {
+  .rah-agent-state-confirmation .btn:hover,
+  .rah-agent-state-confirmation .sq-btn:hover {
+    --confirmation-y: -1px;
+    transform: none;
+    box-shadow: 4px 4px 0 #141111;
+  }
+}
+.rah-agent-state-confirmation button:disabled {
+  pointer-events: none;
+  cursor: not-allowed;
+  translate: none;
+  transform: none;
+  box-shadow: 2px 2px 0 #141111;
+}
+.rah-agent-state-confirmation > header button:disabled,
+.rah-agent-state-confirmation > footer .btn:first-child:disabled {
+  opacity: 0.3;
+}
+.rah-agent-state-confirmation > footer .btn:last-child:disabled {
+  opacity: 0.8;
+}
+.rah-confirmation-spinner {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border: 2px solid rgb(0 0 0 / 20%);
+  border-top-color: #000;
+  border-radius: 50%;
+  animation: rah-confirmation-spin 1s linear infinite;
+}
+@keyframes rah-confirmation-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.rah-agent-state-confirmation > .rah-confirmation-error {
+  padding: 12px;
+  margin: 0 0 16px;
+  border: var(--bd);
+  background: color-mix(in srgb, var(--orange) 20%, transparent);
+  color: #000;
+  font: 400 14px/20px var(--sans);
+}
+.rah-dialog.rah-agent-state-confirmation
+  :is(h2, p, button, .rah-confirmation-error) {
+  font-family: "Raft Quote Glyphs", system-ui, sans-serif;
+}
+
+/* Raft thread-follower-profile-row: one content button, independent remove sibling. */
+.rah-thread-follower-profile {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  margin: 0;
+  padding: 4px;
+  border-radius: 4px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.rah-thread-follower-profile:hover:not(:disabled) {
+  background: var(--ink-05);
+}
+.rah-thread-follower-profile:focus-visible {
+  outline: 2px solid var(--black);
+  outline-offset: -2px;
+}
+
+.rah-search-previous-icon {
+  transform: rotate(180deg);
+}
+
+.rah-thread-follower-remove {
+  flex: none;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.rah-thread-follower-remove svg {
+  display: block;
+  flex: none;
+  overflow: hidden;
   width: 14px;
   height: 14px;
 }

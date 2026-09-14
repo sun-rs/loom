@@ -51,7 +51,7 @@ for (const engine of ["chrome", "firefox"]) {
         .locator(".rah-agent-actions-section")
         .getByRole("button", { name: "重启 / 重置", exact: true })
         .click();
-      const dialog = page.getByRole("dialog", { name: /^重新启动/ });
+      const dialog = page.getByRole("dialog", { name: /^重启/ });
       // Transport/denial states must not dispatch a replacement operation or
       // let Escape dismiss an in-flight reset. Host fencing is tested separately.
       for (const status of [503, 403]) {
@@ -75,9 +75,7 @@ for (const engine of ["chrome", "firefox"]) {
             });
           },
         );
-        await dialog
-          .getByRole("button", { name: "重新启动", exact: true })
-          .click();
+        await dialog.getByRole("button", { name: "重启", exact: true }).click();
         await dialog
           .getByRole("button", { name: "重启中…", exact: true })
           .waitFor();
@@ -93,7 +91,7 @@ for (const engine of ["chrome", "firefox"]) {
         await dialog.getByRole("alert").waitFor();
         assert.equal(
           await dialog
-            .getByRole("button", { name: "重新启动", exact: true })
+            .getByRole("button", { name: "重启", exact: true })
             .isEnabled(),
           true,
         );
@@ -109,9 +107,7 @@ for (const engine of ["chrome", "firefox"]) {
         if (requests.length === 1) await route.abort("failed");
         else await route.fulfill({ response });
       });
-      await dialog
-        .getByRole("button", { name: "重新启动", exact: true })
-        .click();
+      await dialog.getByRole("button", { name: "重启", exact: true }).click();
       await dialog.getByRole("alert").waitFor();
       for (const radio of await dialog.getByRole("radio").all())
         assert.equal(
@@ -122,9 +118,7 @@ for (const engine of ["chrome", "firefox"]) {
       await page.screenshot({
         path: join(output, `${engine}-${width}-retry.png`),
       });
-      await dialog
-        .getByRole("button", { name: "重新启动", exact: true })
-        .click();
+      await dialog.getByRole("button", { name: "重启", exact: true }).click();
       await dialog.waitFor({ state: "hidden" });
       assert.equal(requests.length, 2);
       assert.equal(

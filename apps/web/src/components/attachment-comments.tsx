@@ -1,3 +1,7 @@
+import { useComposerAutosize } from "../use-composer-autosize.ts";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
+import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
+import { browserOpaqueId } from "../browser-opaque-id.ts";
 import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
 import {
   ComposerMentionMenu,
@@ -11,7 +15,6 @@ import { RoomSession, runRoomMutationAtLatest } from "@rah-os/client-core";
 import type { AttachmentPreviewKind } from "@rah-os/protocol";
 import { useReconciledQuery } from "../use-reconciled-query.ts";
 import { handleComposerKeyDown } from "../composer-keyboard.ts";
-import { navigationSearch } from "../navigation-target.ts";
 import { formatRahDateTime } from "../date-time-presentation.ts";
 import {
   attachmentAnchorLabel,
@@ -73,7 +76,21 @@ export function AttachmentComments({
   const agents =
     entities?.agents().filter((agent) => memberIds.has(agent.participantId)) ??
     [];
+  const principals = [...memberIds].flatMap((id) => {
+    const person = entities?.person(id);
+    return person?.kind === "human" ? [person] : [];
+  });
+  const references = {
+    agents,
+    principals,
+    currentPrincipal: principals.find(
+      (person) => person.principalId === entities?.scope?.actorId,
+    ),
+    rooms: [],
+    tasks: [],
+  };
   const composerRef = useRef<HTMLTextAreaElement>(null);
+  const attachComposer = useComposerAutosize(composerRef, body);
   const menuId = `attachment-mentions-${attachmentId}`;
   const mention = useComposerMention({
     agents,
@@ -106,7 +123,7 @@ export function AttachmentComments({
     if (intent.current?.fingerprint !== fingerprint)
       intent.current = {
         fingerprint,
-        idempotencyKey: crypto.randomUUID(),
+        idempotencyKey: browserOpaqueId(),
         recipientIds: mentionedRoomAgentIds({ agents, body: text }),
       };
     const { idempotencyKey, recipientIds } = intent.current;
@@ -142,7 +159,7 @@ export function AttachmentComments({
       intent.current = undefined;
       setBeforeRoomSeq(undefined);
       setRevision((n) => n + 1);
-      setStatus("评论已发送");
+      setStatus(undefined);
     } catch (cause) {
       if (active.current)
         setError(
@@ -160,7 +177,7 @@ export function AttachmentComments({
       data-collapsed={!open}
     >
       <div className="rah-attachment-comments-heading">
-        <strong>评论</strong>
+        <strong title={`对 ${filename} 的评论`}>评论 · {filename}</strong>
         <button
           type="button"
           className="rah-attachment-comments-sheet-toggle"
@@ -171,24 +188,8 @@ export function AttachmentComments({
         >
           {open ? "⌄" : "⌃"}
         </button>
-        {data?.threadId && (
-          <a
-            href={navigationSearch({
-              target: {
-                kind: "thread",
-                roomId: data.roomId,
-                threadId: data.threadId,
-                ...(data.threadRootMessageId
-                  ? { rootMessageId: data.threadRootMessageId }
-                  : {}),
-              },
-            })}
-          >
-            打开讨论
-          </a>
-        )}
       </div>
-      <div className="rah-attachment-comments-list">
+      <div className="rah-attachment-comments-list" inert={!open}>
         {!data && !request?.error && <p role="status">正在加载评论…</p>}
         {request?.error && (
           <div role="alert">
@@ -199,21 +200,31 @@ export function AttachmentComments({
           </div>
         )}
         {data?.comments.length === 0 && (
-          <p className="rah-attachment-comment-empty">暂无评论</p>
+          <p className="rah-attachment-comment-empty">
+            这里的评论仅关联 <strong>{filename}</strong>
+            。如需一般性讨论，请在消息列中回复。
+          </p>
         )}
         {data &&
           orderAttachmentComments(data.comments).map((comment) => {
             const anchor = comment.anchor,
               supported = anchor && attachmentAnchorTarget(anchor, kind);
+            const senderName =
+              comment.senderType === "human"
+                ? entities?.person(comment.senderId)?.displayName ||
+                  comment.senderName
+                : comment.senderName;
             const meta = (
               <>
-                {anchor && (
-                  <span className="rah-attachment-anchor-badge">
-                    {attachmentAnchorLabel(anchor)}
-                  </span>
-                )}
                 <span className="rah-attachment-comment-meta">
-                  <strong>{comment.senderName}</strong>
+                  <ProfileImageAvatar
+                    avatarKey={entities?.person(comment.senderId)?.avatarKey}
+                    name={senderName}
+                    size="compact"
+                    kind={comment.senderType}
+                    principalId={comment.senderId}
+                  />
+                  <strong>{senderName}</strong>
                   <time>
                     {formatRahDateTime(comment.createdAt, {
                       hour: "2-digit",
@@ -221,6 +232,20 @@ export function AttachmentComments({
                     })}
                   </time>
                 </span>
+                {anchor && (
+                  <span className="rah-attachment-anchor-location">
+                    <Icon name="map-pin" />
+                    {anchor.type === "md-section"
+                      ? "章节"
+                      : anchor.type === "video-timestamp"
+                        ? "时间点"
+                        : anchor.type === "html-region"
+                          ? "区域"
+                          : "位置"}
+                    {" · "}
+                    {attachmentAnchorLabel(anchor)}
+                  </span>
+                )}
                 {anchor && typeof anchor.data.quote === "string" && (
                   <span className="rah-attachment-comment-quote">
                     {anchor.data.quote.slice(0, 1000)}
@@ -249,7 +274,10 @@ export function AttachmentComments({
                   meta
                 )}
                 <div className="rah-attachment-comment-body">
-                  <MessageMarkdown source={comment.content} />
+                  <MessageMarkdown
+                    source={comment.content}
+                    references={references}
+                  />
                 </div>
                 {anchor && !supported && <small>当前预览不支持此位置</small>}
               </div>
@@ -271,6 +299,7 @@ export function AttachmentComments({
       </div>
       <form
         className="rah-attachment-comment-composer"
+        inert={!open}
         onSubmit={(event) => {
           event.preventDefault();
           void send();
@@ -288,9 +317,7 @@ export function AttachmentComments({
               ×
             </button>
           </div>
-        ) : (
-          <small>评论 {filename}</small>
-        )}
+        ) : null}
         {data && !data.viewer.canComment && <p>当前无权评论此附件。</p>}
         {members?.error && (
           <p role="alert">
@@ -307,35 +334,40 @@ export function AttachmentComments({
           onSelect={mention.select}
           open={mention.open}
         />
-        <textarea
-          aria-label="附件评论"
-          placeholder="添加评论…"
-          value={body}
-          maxLength={10000}
-          ref={composerRef}
-          aria-activedescendant={mention.activeDescendant}
-          aria-autocomplete="list"
-          aria-controls={menuId}
-          aria-expanded={mention.open}
-          onBlur={mention.onBlur}
-          onChange={mention.onChange}
-          onFocus={mention.onFocus}
-          onClick={(event) => mention.onSelectionChange(event.currentTarget)}
-          onKeyUp={(event) => mention.onSelectionChange(event.currentTarget)}
-          onKeyDown={(event) => {
-            mention.onKeyDown(event);
-            handleComposerKeyDown(event);
-          }}
-          disabled={pending || !canComment}
-        />
-        <div className="rah-attachment-comment-footer">
-          <span role="status">{status}</span>
-          <button
-            type="submit"
-            disabled={pending || !canComment || !data || !body.trim()}
-          >
-            {pending ? "发送中…" : "发送评论"}
-          </button>
+        <div className="composer-box">
+          <textarea
+            rows={1}
+            aria-label="附件评论"
+            placeholder={`评论 ${filename}…`}
+            value={body}
+            maxLength={10000}
+            ref={attachComposer}
+            aria-activedescendant={mention.activeDescendant}
+            aria-autocomplete="list"
+            aria-controls={menuId}
+            aria-expanded={mention.open}
+            onBlur={mention.onBlur}
+            onChange={mention.onChange}
+            onFocus={mention.onFocus}
+            onClick={(event) => mention.onSelectionChange(event.currentTarget)}
+            onKeyUp={(event) => mention.onSelectionChange(event.currentTarget)}
+            onKeyDown={(event) => {
+              mention.onKeyDown(event);
+              handleComposerKeyDown(event);
+            }}
+            disabled={pending || !canComment}
+          />
+          <div className="composer-bar rah-attachment-comment-footer">
+            <span role="status">{status}</span>
+            <button
+              type="submit"
+              className="sq-btn"
+              aria-label={pending ? "发送中…" : "发送评论"}
+              disabled={pending || !canComment || !data || !body.trim()}
+            >
+              <Icon name="send" />
+            </button>
+          </div>
         </div>
         {error && <p role="alert">{error}</p>}
       </form>

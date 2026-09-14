@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  BASELINE_DOC,
   collectTokens,
   committedRatchet,
   componentSpecErrors,
@@ -8,6 +9,7 @@ import {
   deriveTokenLiteral,
   isComponentScopedSelector,
   loadComponentSpecs,
+  fixtureDigest,
   matchedRulesErrors,
   normalizeLiteral,
   parseCssRules,
@@ -563,9 +565,12 @@ test("req4: an uncommitted ratchet counts as zero and fails", () => {
   );
   assert.ok(
     errors.includes(
-      "sq-btn: packages/ui-tokens/specs/ratchet.json is not committed at HEAD, so every committed value counts as 0; commit the ratchet before it can hold anything back",
+      `sq-btn: packages/ui-tokens/specs/ratchet.json is not committed at HEAD, so every committed value counts as 0; review the audited baseline in ${BASELINE_DOC} and commit packages/ui-tokens/specs/ratchet.json before it can hold anything back (--uncommitted-ratchet-preview previews the run, it does not replace the commit)`,
     ),
   );
+  // Finding 2: the message must send a human to the audited baseline table,
+  // not to a flag.
+  assert.match(BASELINE_DOC, /baseline-2026-09-12\.zh-CN\.md$/u);
   assert.ok(errors.some((line) => line.includes("overrides rose to 6")));
 });
 
@@ -699,7 +704,7 @@ test("req6: a matched-rules report is refused once the CSS inputs change", () =>
       [],
     ),
     [
-      "demo: r.json is missing; run node scripts/run-sq-btn-spec-browser-gate.mjs --report-matching-rules",
+      "demo: r.json is missing; run node scripts/run-component-spec-browser-gate.mjs demo --report-matching-rules",
     ],
   );
 });
@@ -746,4 +751,161 @@ test("req6: the shipped report proves channel-extras reaches the composer picker
     registered.source,
     /index-D8Neh8lc\.css \.btn-brutal-sm:disabled/u,
   );
+});
+
+// Requirement 7: the report is bound to the probe list and to the fixture -----
+
+const BIND_SPEC = {
+  component: "demo",
+  matchedRulesFile: "r.json",
+  fixture: { html: "f.html", tsx: "f.tsx" },
+  gateScript: "g.mjs",
+  fixtureMarkupFile: "m.json",
+  probes: [
+    { id: "a", selector: ".a" },
+    { id: "b", selector: ".b", coverage: false },
+    { id: "c", selector: ".c", capture: false },
+  ],
+};
+const BIND_INPUTS = { "c.css": ".a { width: 1px }" };
+const BIND_FILES = {
+  "f.html": "<html></html>",
+  "f.tsx": "export const Fixture = 1;\n",
+  "g.mjs": "// gate\n",
+};
+const bindRead = (path) => {
+  if (BIND_FILES[path] === undefined) throw new Error(`ENOENT ${path}`);
+  return BIND_FILES[path];
+};
+const bindMarkup = {
+  component: "demo",
+  cssInputsSha256: cssInputsDigest(BIND_INPUTS),
+  fixtureSha256: fixtureDigest(BIND_SPEC.fixture, bindRead),
+  gateScriptSha256: fixtureDigest(["g.mjs"], bindRead),
+  structureSha256: "s".repeat(64),
+  markup: { a: { base: "<div/>" }, b: { base: "<div/>" } },
+};
+const bindReport = () => ({
+  cssInputsSha256: cssInputsDigest(BIND_INPUTS),
+  fixtureSha256: bindMarkup.fixtureSha256,
+  gateScriptSha256: bindMarkup.gateScriptSha256,
+  structureSha256: bindMarkup.structureSha256,
+  probes: { a: [], c: [] },
+});
+const bindOptions = () => ({
+  readFile: bindRead,
+  fixtureMarkup: structuredClone(bindMarkup),
+});
+const bindErrors = (report, options = {}) =>
+  matchedRulesErrors(BIND_SPEC, BIND_INPUTS, report, new Set(), [], {
+    ...bindOptions(),
+    ...options,
+  });
+
+test("req7: a fully bound report passes", () => {
+  assert.deepEqual(bindErrors(bindReport()), []);
+});
+
+test("req7: an EMPTY probes report fails instead of passing silently", () => {
+  const report = { ...bindReport(), probes: {} };
+  assert.deepEqual(bindErrors(report), [
+    'demo: the matched-rules report is missing probe "a"; every probe declared in the spec must be reported (no skipping)',
+    'demo: the matched-rules report is missing probe "c"; every probe declared in the spec must be reported (no skipping)',
+  ]);
+});
+
+test("req7: a report missing one declared probe fails", () => {
+  const report = bindReport();
+  delete report.probes.c;
+  assert.deepEqual(bindErrors(report), [
+    'demo: the matched-rules report is missing probe "c"; every probe declared in the spec must be reported (no skipping)',
+  ]);
+});
+
+test("req7: a report carrying an undeclared probe fails", () => {
+  const report = bindReport();
+  report.probes.ghost = [];
+  assert.deepEqual(bindErrors(report), [
+    'demo: the matched-rules report carries probe "ghost", which the spec does not declare; declare it in spec.probes or regenerate the report',
+  ]);
+});
+
+test("req7: a fixture TSX byte change invalidates the report", () => {
+  const changed = { ...BIND_FILES, "f.tsx": "export const Fixture = 2;\n" };
+  const read = (path) => {
+    if (changed[path] === undefined) throw new Error(`ENOENT ${path}`);
+    return changed[path];
+  };
+  const errors = bindErrors(bindReport(), { readFile: read });
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /the fixture files now hash to/u);
+});
+
+test("req7: a gate-script change invalidates the report", () => {
+  const changed = { ...BIND_FILES, "g.mjs": "// gate, edited\n" };
+  const read = (path) => {
+    if (changed[path] === undefined) throw new Error(`ENOENT ${path}`);
+    return changed[path];
+  };
+  const errors = bindErrors(bindReport(), { readFile: read });
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /the gate script now hashes to/u);
+});
+
+test("req7: the rendered-DOM structure digest must match the exported markup", () => {
+  const report = { ...bindReport(), structureSha256: "0".repeat(64) };
+  const errors = bindErrors(report);
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /rendered fixture DOM digest/u);
+});
+
+test("req7: a missing fixture-markup export is a failure", () => {
+  const errors = bindErrors(bindReport(), { fixtureMarkup: undefined });
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /m\.json is missing/u);
+});
+
+test("req7: the fixture-markup export must cover every capture probe", () => {
+  const markup = structuredClone(bindMarkup);
+  delete markup.markup.a;
+  const errors = bindErrors(bindReport(), { fixtureMarkup: markup });
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /m\.json is missing rendered markup for probe "a"/u);
+});
+
+test("req7: the shipped specs declare probes, a fixture and a gate script", () => {
+  for (const spec of loadComponentSpecs()) {
+    assert.ok(
+      Array.isArray(spec.probes) && spec.probes.length > 0,
+      `${spec.component}: spec.probes must declare the probe list`,
+    );
+    for (const probe of spec.probes) {
+      assert.equal(typeof probe.id, "string", `${spec.component} probe id`);
+      assert.equal(
+        typeof probe.selector,
+        "string",
+        `${spec.component} ${probe.id} selector`,
+      );
+    }
+    assert.equal(typeof spec.fixture?.html, "string", spec.component);
+    assert.equal(typeof spec.fixture?.tsx, "string", spec.component);
+    assert.equal(typeof spec.gateScript, "string", spec.component);
+    assert.equal(typeof spec.fixtureMarkupFile, "string", spec.component);
+  }
+});
+
+test("req7: every shipped report is fully bound to the current tree", () => {
+  const inputs = cssContractInputs();
+  for (const spec of loadComponentSpecs()) {
+    const report = JSON.parse(readFileSync(spec.matchedRulesFile, "utf8"));
+    assert.deepEqual(
+      matchedRulesErrors(spec, inputs, report, new Set(), []).filter((error) =>
+        /report is missing probe|carries probe|hashing|DOM digest|is missing rendered markup/u.test(
+          error,
+        ),
+      ),
+      [],
+      spec.component,
+    );
+  }
 });

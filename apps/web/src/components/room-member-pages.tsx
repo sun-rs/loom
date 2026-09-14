@@ -1,3 +1,5 @@
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
+import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
 import { useEffect, useRef, useState } from "react";
 import type {
   MembershipRole,
@@ -23,12 +25,14 @@ export function RoomMemberPage({
   backLabel,
   blocked,
   canAdd,
+  fixedMembership = false,
   canManageRoles,
   canRemove,
   candidates,
   humans,
   memberships,
   onBack,
+  onOpenProfile,
   onOpenAdd,
   onAddSelection,
   onRemove,
@@ -38,12 +42,14 @@ export function RoomMemberPage({
   backLabel: string;
   blocked: boolean;
   canAdd: boolean;
+  fixedMembership?: boolean;
   canManageRoles: boolean;
   canRemove: boolean;
   candidates: readonly Candidate[];
   humans: readonly Principal[];
   memberships: readonly RoomMembership[];
   onBack: () => void;
+  onOpenProfile?: (target: { kind: "agent" | "human"; id: string }) => void;
   onOpenAdd: () => void;
   onAddSelection: (agents: Candidate[]) => Promise<string[]>;
   onRemove: (agent: AgentMembershipIdentity) => void;
@@ -84,6 +90,7 @@ export function RoomMemberPage({
   ) => {
     const role =
       memberships.find((m) => m.principalId === principalId)?.role ?? "member";
+    if (role === "member") return null;
     if (options?.editable && options.handle) {
       return (
         <button
@@ -91,6 +98,7 @@ export function RoomMemberPage({
           className={`rah-room-member-role is-${role} is-editable`}
           disabled={blocked}
           onClick={(event) => {
+            event.stopPropagation();
             roleTriggerRef.current = event.currentTarget;
             setRoleEditor({
               currentRole: role,
@@ -101,14 +109,12 @@ export function RoomMemberPage({
           }}
           type="button"
         >
-          {roomMemberRoleLabel(role)} ✎
+          频道管理员
         </button>
       );
     }
     return (
-      <span className={`rah-room-member-role is-${role}`}>
-        {roomMemberRoleLabel(role)}
-      </span>
+      <span className={`rah-room-member-role is-${role}`}>频道管理员</span>
     );
   };
   const closeRoleEditor = () => {
@@ -124,7 +130,7 @@ export function RoomMemberPage({
           disabled={blocked}
           onClick={onBack}
         >
-          ←
+          <Icon name="arrow-left" />
         </button>
         <h2 id="rah-room-members-title">
           {view === "add" ? "添加成员" : "成员"}
@@ -141,16 +147,13 @@ export function RoomMemberPage({
             <label htmlFor="rah-room-member-query">搜索</label>
           )}
           <div>
-            <svg aria-hidden="true" viewBox="0 0 24 24">
-              <circle cx="10" cy="10" r="7" />
-              <path d="m15 15 6 6" />
-            </svg>
+            <Icon name="search" />
             <input
-              aria-label={view === "add" ? "名称" : "搜索成员"}
+              aria-label="搜索成员"
               id="rah-room-member-query"
               disabled={blocked}
               ref={inputRef}
-              placeholder={view === "add" ? "名称" : "搜索成员…"}
+              placeholder={view === "add" ? "名称" : "搜索成员..."}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -201,146 +204,226 @@ export function RoomMemberPage({
                 void onAddSelection(selectedAgents).then(setSelected);
               }}
             >
+              <Icon name="plus" />
               {blocked ? "正在添加…" : `添加所选（${selectedAgents.length}）`}
             </button>
           </>
         ) : (
           <>
-            <details className="rah-room-member-group" open>
-              <summary>人类 · {humans.length}</summary>
-              {humans
-                .filter((h) => matches(h.handle))
-                .map((human) => (
-                  <div
-                    className="rah-room-member-human"
-                    key={human.principalId}
-                  >
-                    <div className="rah-room-member-entry">
-                      <span className="rah-channel-human-avatar">
-                        {human.handle.slice(0, 1).toUpperCase()}
-                      </span>
-                      <b>{human.handle}</b>
-                      {roleBadge(human.principalId, {
-                        editable: canManageRoles,
-                        handle: human.handle,
-                      })}
-                    </div>
-                    {roleEditor?.principalId === human.principalId ? (
-                      <form
-                        className="rah-room-member-role-editor"
-                        onKeyDown={(event) => {
-                          if (event.key !== "Escape" || blocked) return;
-                          event.preventDefault();
-                          event.stopPropagation();
-                          closeRoleEditor();
-                        }}
-                        onSubmit={(event) => {
-                          event.preventDefault();
+            <div className="rah-room-member-list rah-scroll-main">
+              <details className="rah-room-member-group" open>
+                <summary>
+                  <Icon name="chevron-down" />
+                  <span>
+                    人类
+                    <span className="rah-room-member-group-count">
+                      {" "}
+                      ·{" "}
+                      {
+                        humans.filter((h) => matches(h.handle, h.displayName))
+                          .length
+                      }
+                    </span>
+                  </span>
+                </summary>
+                {humans
+                  .filter((h) => matches(h.handle, h.displayName))
+                  .map((human) => (
+                    <div
+                      className="rah-room-member-human"
+                      key={human.principalId}
+                    >
+                      <div
+                        className="rah-room-member-entry"
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`查看 ${human.displayName || human.handle} 资料`}
+                        onClick={() =>
+                          onOpenProfile?.({
+                            kind: "human",
+                            id: human.principalId,
+                          })
+                        }
+                        onKeyDown={(e) => {
                           if (
-                            blocked ||
-                            roleEditor.selectedRole === roleEditor.currentRole
-                          )
-                            return;
-                          void onRole(
-                            roleEditor.principalId,
-                            roleEditor.selectedRole,
-                          )
-                            .then(closeRoleEditor)
-                            .catch(() => undefined);
+                            e.target === e.currentTarget &&
+                            (e.key === "Enter" || e.key === " ")
+                          ) {
+                            e.preventDefault();
+                            onOpenProfile?.({
+                              kind: "human",
+                              id: human.principalId,
+                            });
+                          }
                         }}
                       >
-                        <label>
-                          角色
-                          <select
-                            aria-label={`${human.handle} 的角色`}
-                            disabled={blocked}
-                            onChange={(event) =>
-                              setRoleEditor((current) =>
-                                current === undefined
-                                  ? current
-                                  : {
-                                      ...current,
-                                      selectedRole: event.target
-                                        .value as MembershipRole,
-                                    },
-                              )
-                            }
-                            ref={roleSelectRef}
-                            value={roleEditor.selectedRole}
-                          >
-                            {roomMemberRoleOptions("human").map((role) => (
-                              <option key={role} value={role}>
-                                {roomMemberRoleLabel(role)}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <div>
-                          <button
-                            className="btn"
-                            disabled={blocked}
-                            onClick={closeRoleEditor}
-                            type="button"
-                          >
-                            取消
-                          </button>
-                          <button
-                            aria-label={`保存 ${human.handle} 的角色`}
-                            className="btn btn-pink"
-                            disabled={
+                        <ProfileImageAvatar
+                          principalId={human.principalId}
+                          avatarKey={human.avatarKey}
+                          name={human.displayName || human.handle}
+                          size="compact"
+                        />
+                        <b>{human.displayName || human.handle}</b>
+                        {roleBadge(human.principalId, {
+                          editable: canManageRoles,
+                          handle: human.displayName || human.handle,
+                        })}
+                      </div>
+                      {roleEditor?.principalId === human.principalId ? (
+                        <form
+                          className="rah-room-member-role-editor"
+                          onKeyDown={(event) => {
+                            if (event.key !== "Escape" || blocked) return;
+                            event.preventDefault();
+                            event.stopPropagation();
+                            closeRoleEditor();
+                          }}
+                          onSubmit={(event) => {
+                            event.preventDefault();
+                            if (
                               blocked ||
                               roleEditor.selectedRole === roleEditor.currentRole
-                            }
-                          >
-                            {blocked ? "保存中…" : "保存"}
-                          </button>
-                        </div>
-                      </form>
-                    ) : null}
+                            )
+                              return;
+                            void onRole(
+                              roleEditor.principalId,
+                              roleEditor.selectedRole,
+                            )
+                              .then(closeRoleEditor)
+                              .catch(() => undefined);
+                          }}
+                        >
+                          <label>
+                            角色
+                            <select
+                              aria-label={`${human.displayName || human.handle} 的角色`}
+                              disabled={blocked}
+                              onChange={(event) =>
+                                setRoleEditor((current) =>
+                                  current === undefined
+                                    ? current
+                                    : {
+                                        ...current,
+                                        selectedRole: event.target
+                                          .value as MembershipRole,
+                                      },
+                                )
+                              }
+                              ref={roleSelectRef}
+                              value={roleEditor.selectedRole}
+                            >
+                              {roomMemberRoleOptions("human").map((role) => (
+                                <option key={role} value={role}>
+                                  {roomMemberRoleLabel(role)}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <div>
+                            <button
+                              className="btn"
+                              disabled={blocked}
+                              onClick={closeRoleEditor}
+                              type="button"
+                            >
+                              取消
+                            </button>
+                            <button
+                              aria-label={`保存 ${human.displayName || human.handle} 的角色`}
+                              className="btn btn-pink"
+                              disabled={
+                                blocked ||
+                                roleEditor.selectedRole ===
+                                  roleEditor.currentRole
+                              }
+                            >
+                              {blocked ? "保存中…" : "保存"}
+                            </button>
+                          </div>
+                        </form>
+                      ) : null}
+                    </div>
+                  ))}
+              </details>
+              <details className="rah-room-member-group" open>
+                <summary>
+                  <Icon name="chevron-down" />
+                  <span>
+                    Agent
+                    <span className="rah-room-member-group-count">
+                      {" "}
+                      · {visibleAgents.length}
+                    </span>
+                  </span>
+                </summary>
+                {visibleAgents.map((agent) => (
+                  <div
+                    className="rah-room-member-entry rah-member-row"
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`查看 ${agent.displayName} 资料`}
+                    onClick={() =>
+                      onOpenProfile?.({
+                        kind: "agent",
+                        id: agent.agentDefinitionId,
+                      })
+                    }
+                    onKeyDown={(e) => {
+                      if (
+                        e.target === e.currentTarget &&
+                        (e.key === "Enter" || e.key === " ")
+                      ) {
+                        e.preventDefault();
+                        onOpenProfile?.({
+                          kind: "agent",
+                          id: agent.agentDefinitionId,
+                        });
+                      }
+                    }}
+                    key={agent.participantId}
+                  >
+                    <AgentAvatar agent={agent} size="member" />
+                    <span>
+                      <b>{agent.displayName}</b>
+                      <small>{agentPresencePresentation(agent).label}</small>
+                    </span>
+                    {roleBadge(agent.participantId)}
+                    {canRemove && (
+                      <button
+                        className="btn rah-room-member-remove"
+                        aria-label={`移出 ${agent.displayName}`}
+                        disabled={blocked}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRemove(agent);
+                        }}
+                      >
+                        移除
+                      </button>
+                    )}
                   </div>
                 ))}
-            </details>
-            <details className="rah-room-member-group" open>
-              <summary>Agent · {agents.length}</summary>
-              {visibleAgents.map((agent) => (
-                <div
-                  className="rah-room-member-entry rah-member-row"
-                  key={agent.participantId}
+                {visibleAgents.length === 0 && (
+                  <p className="rah-members-empty">
+                    {agents.length
+                      ? "没有匹配的 Agent。"
+                      : "当前频道尚未添加 Agent。"}
+                  </p>
+                )}
+              </details>
+            </div>
+            {!fixedMembership && (
+              <footer className="rah-room-members-footer">
+                <button
+                  className="btn rah-room-members-add"
+                  aria-label="添加成员"
+                  disabled={!canAdd || blocked}
+                  onClick={onOpenAdd}
                 >
-                  <AgentAvatar agent={agent} size="member" />
-                  <span>
-                    <b>{agent.displayName}</b>
-                    <small>{agentPresencePresentation(agent).label}</small>
-                  </span>
-                  {roleBadge(agent.participantId)}
-                  {canRemove && (
-                    <button
-                      className="rah-room-member-remove"
-                      aria-label={`移出 ${agent.displayName}`}
-                      disabled={blocked}
-                      onClick={() => onRemove(agent)}
-                    >
-                      移出
-                    </button>
-                  )}
-                </div>
-              ))}
-              {visibleAgents.length === 0 && (
-                <p className="rah-members-empty">
-                  {agents.length
-                    ? "没有匹配的 Agent。"
-                    : "当前频道尚未添加 Agent。"}
-                </p>
-              )}
-            </details>
-            <button
-              className="btn rah-room-members-add"
-              aria-label="添加成员"
-              disabled={!canAdd || blocked}
-              onClick={onOpenAdd}
-            >
-              ＋ 添加成员
-            </button>
+                  <Icon name="plus" /> 添加成员
+                </button>
+              </footer>
+            )}
           </>
         )}
       </div>

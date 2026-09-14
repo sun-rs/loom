@@ -1,3 +1,4 @@
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { useDialogProtocol } from "../dialog-protocol.ts";
 
 export function RoomVisibilityConfirmation({
@@ -26,7 +27,7 @@ export function RoomVisibilityConfirmation({
       <section
         aria-labelledby="rah-room-visibility-title"
         aria-modal="true"
-        className="rah-dialog"
+        className="rah-dialog rah-channel-confirmation"
         ref={ref}
         role="dialog"
         tabIndex={-1}
@@ -39,7 +40,7 @@ export function RoomVisibilityConfirmation({
             disabled={blocked}
             onClick={onCancel}
           >
-            ×
+            <Icon name="x" />
           </button>
         </header>
         <p>

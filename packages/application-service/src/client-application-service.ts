@@ -1,8 +1,15 @@
 import {
+  SystemChannelVisibilityReadSchema,
+  SystemChannelVisibilityUpdateSchema,
+  SystemChannelVisibilityResponseSchema,
+  SystemChannelVisibilityMutationSchema,
+} from "@rah-os/protocol";
+import {
   RuntimeGuideReadSchema,
   RuntimeGuideUpdateSchema,
   RuntimeGuideSettingsSchema,
   type RuntimeGuideUpdate,
+  type RuntimeGuideRead,
   type RuntimeGuideSettingsView,
 } from "@rah-os/protocol";
 import {
@@ -171,6 +178,7 @@ import {
   type AgentMemoryMaterializedFile,
   type AgentMemoryWorkspaceSnapshot,
   type LocalRuntimeInventoryResponse,
+  type LocalRuntimeInventoryRequest,
 } from "@rah-os/protocol";
 
 import {
@@ -196,7 +204,7 @@ import {
 
 export type ClientApplicationServiceOptions = {
   runtimeGuideSettings?: {
-    read(): RuntimeGuideSettingsView;
+    read(input?: RuntimeGuideRead): RuntimeGuideSettingsView;
     update(input: RuntimeGuideUpdate): RuntimeGuideSettingsView;
   };
   agentExecutionAdministration?: AgentExecutionAdministrationPort;
@@ -207,6 +215,7 @@ export type ClientApplicationServiceOptions = {
   human: HumanApplicationPort;
   localRuntimeInventory?: (
     actor: AuthenticatedActorContext,
+    request?: LocalRuntimeInventoryRequest,
   ) => LocalRuntimeInventoryResponse | Promise<LocalRuntimeInventoryResponse>;
 
   port?: number;
@@ -380,6 +389,8 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/principals/me",
   "/principals/update",
   "/rooms/agents/activity/list",
+  "/workspaces/system-channel/read",
+  "/workspaces/system-channel/update",
   "/rooms/archive",
   "/rooms/create",
   "/rooms/delete",
@@ -418,6 +429,7 @@ export class ClientApplicationService {
   readonly #localRuntimeInventory:
     | ((
         actor: AuthenticatedActorContext,
+        request?: LocalRuntimeInventoryRequest,
       ) =>
         LocalRuntimeInventoryResponse | Promise<LocalRuntimeInventoryResponse>)
     | undefined;
@@ -570,7 +582,7 @@ export class ClientApplicationService {
         );
       }
       const actor = this.#authenticate(request).actor;
-      parseClientRequest(
+      const inventoryRequest = parseClientRequest(
         LocalRuntimeInventoryRequestSchema,
         await readJsonObject(request),
       );
@@ -578,7 +590,7 @@ export class ClientApplicationService {
         response,
         200,
         LocalRuntimeInventoryResponseSchema.parse(
-          await this.#localRuntimeInventory(actor),
+          await this.#localRuntimeInventory(actor, inventoryRequest),
         ),
       );
       return;
@@ -704,12 +716,19 @@ export class ClientApplicationService {
           "Runtime Guide settings unavailable",
           404,
         );
+      const settingsInput = path.endsWith("/update")
+        ? parseClientRequest(RuntimeGuideUpdateSchema, body)
+        : parseClientRequest(RuntimeGuideReadSchema, body);
+      if (settingsInput.agentDefinitionId)
+        this.#human.getWorkspaceAgentManagementView(
+          actor,
+          settingsInput.agentDefinitionId,
+        );
       const value = path.endsWith("/update")
         ? this.#runtimeGuideSettings.update(
-            parseClientRequest(RuntimeGuideUpdateSchema, body),
+            RuntimeGuideUpdateSchema.parse(settingsInput),
           )
-        : (parseClientRequest(RuntimeGuideReadSchema, body),
-          this.#runtimeGuideSettings.read());
+        : this.#runtimeGuideSettings.read(settingsInput);
       writeJson(response, 200, RuntimeGuideSettingsSchema.parse(value));
       return;
     }
@@ -1114,7 +1133,7 @@ export class ClientApplicationService {
         response,
         200,
         ClientAgentManageResponseSchema.parse(
-          this.#human.manageWorkspaceAgent(actor, command),
+          await manageAgentAfterTerminalProof(this.#human, actor, command),
         ),
       );
       return;
@@ -1210,6 +1229,32 @@ export class ClientApplicationService {
         200,
         ClientRoomMutationResponseSchema.parse(
           this.#human.createRoom(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/workspaces/system-channel/read") {
+      writeJson(
+        response,
+        200,
+        SystemChannelVisibilityResponseSchema.parse(
+          this.#human.getSystemChannelVisibility(
+            actor,
+            parseClientRequest(SystemChannelVisibilityReadSchema, body),
+          ),
+        ),
+      );
+      return;
+    }
+    if (path === "/workspaces/system-channel/update") {
+      writeJson(
+        response,
+        200,
+        SystemChannelVisibilityMutationSchema.parse(
+          this.#human.updateSystemChannelVisibility(
+            actor,
+            parseClientRequest(SystemChannelVisibilityUpdateSchema, body),
+          ),
         ),
       );
       return;
@@ -2159,3 +2204,25 @@ import {
   routeFiles,
   transferFile,
 } from "./client-file-routes.ts";
+
+async function manageAgentAfterTerminalProof(
+  human: HumanApplicationPort,
+  actor: AuthenticatedActorContext,
+  command: Parameters<HumanApplicationPort["manageWorkspaceAgent"]>[1],
+) {
+  const deadline = Date.now() + 30_000;
+  for (;;) {
+    try {
+      return human.manageWorkspaceAgent(actor, command);
+    } catch (error) {
+      if (
+        command.action !== "set_state" ||
+        command.state !== "tombstoned" ||
+        !(error instanceof RuntimeTerminationProofError) ||
+        Date.now() >= deadline
+      )
+        throw error;
+      await new Promise<void>((resolve) => setTimeout(resolve, 50));
+    }
+  }
+}

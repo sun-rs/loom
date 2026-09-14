@@ -1,3 +1,5 @@
+import { AgentModelMessagesFixture } from "./agent-model-messages-fixture.tsx";
+import { applySettingsPreferences } from "../src/settings-preferences.ts";
 import { Rail } from "../src/components/workspace-navigation.tsx";
 import { createRoot } from "react-dom/client";
 import {
@@ -5,6 +7,7 @@ import {
   AboutSettingsContent,
 } from "../src/components/settings-pages.tsx";
 import "../src/product-styles.ts";
+applySettingsPreferences(window.localStorage);
 const about = new URLSearchParams(location.search).has("about");
 createRoot(document.getElementById("root")!).render(
   <div style={{ height: "100vh", overflow: "auto", display: "flex" }}>
@@ -25,6 +28,9 @@ createRoot(document.getElementById("root")!).render(
       ) : (
         <AppearanceSettingsContent />
       )}
+      {new URLSearchParams(location.search).has("modelMessages") ? (
+        <AgentModelMessagesFixture />
+      ) : null}
     </main>
   </div>,
 );

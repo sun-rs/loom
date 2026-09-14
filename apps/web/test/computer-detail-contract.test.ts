@@ -58,7 +58,7 @@ test("Computer profile uses the durable Raft edit contract", () => {
   assert.match(profileFields, /maxLength=\{500\}/u);
   assert.match(profileFields, /computerProfileEditorAction/u);
   assert.match(profileFields, /expectedRevision: edit\.revision/u);
-  assert.match(profileFields, /crypto\.randomUUID\(\)/u);
+  assert.match(profileFields, /browserOpaqueId\(\)/u);
   assert.match(profileFields, /正在保存/u);
   assert.match(profileFields, /保存失败，草稿已保留/u);
 });

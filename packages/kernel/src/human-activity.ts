@@ -227,6 +227,32 @@ export class HumanActivity {
     );
     if (input.throughSeq > max)
       throw new Error("activity frontier exceeds visible message sequence");
+    if (input.action === "unread") {
+      if (input.throughSeq !== max)
+        throw new Error("activity changed; reload before marking unread");
+      const last = Number(
+        this.db
+          .prepare(
+            "SELECT COALESCE(MAX(room_seq),0) AS n FROM discovery_messages WHERE room_id=? AND thread_id IS ? AND actor_id<>?",
+          )
+          .get(input.roomId, input.threadId ?? null, actorId)!.n,
+      );
+      const before = Math.max(0, last - 1);
+      this.db
+        .prepare(
+          "INSERT INTO human_activity_frontiers(principal_id,room_id,scope_id,read_seq,done_seq) VALUES(?,?,?,?,?) ON CONFLICT(principal_id,room_id,scope_id) DO UPDATE SET read_seq=MIN(read_seq,excluded.read_seq),done_seq=MIN(done_seq,excluded.done_seq)",
+        )
+        .run(actorId, input.roomId, scope, before, before);
+      const row = this.db
+        .prepare(
+          "SELECT * FROM human_activity_frontiers WHERE principal_id=? AND room_id=? AND scope_id=?",
+        )
+        .get(actorId, input.roomId, scope)!;
+      return {
+        readThroughSeq: integer(row, "read_seq"),
+        doneThroughSeq: integer(row, "done_seq"),
+      };
+    }
     const restored = this.db
       .prepare(
         `INSERT INTO human_activity_frontiers(principal_id, room_id, scope_id, read_seq, done_seq) VALUES(?,?,?,?,?) ON CONFLICT(principal_id, room_id, scope_id) DO UPDATE SET read_seq = MAX(read_seq, excluded.read_seq), done_seq = MAX(done_seq, excluded.done_seq)`,

@@ -19,6 +19,7 @@ import {
 } from "@rah-os/protocol";
 
 export type RoomMessageView = {
+  attachmentComment?: Message["attachmentComment"];
   attachments?: readonly import("@rah-os/protocol").Attachment[];
   actorId: string;
   author: string;
@@ -111,6 +112,7 @@ export type MobileNavigationDestination =
   "home" | "members" | "settings" | "tasks";
 
 export type WorkspaceAgentView = {
+  modelBindingId?: string;
   presence?: import("@rah-os/protocol").AgentPresence;
   agentDefinitionId: string;
   agentDefinitionRevisionId?: string;
@@ -214,6 +216,9 @@ export function workspaceAgentDirectory(input: {
         ),
       );
       return Object.freeze({
+        ...(agent.modelBindingId
+          ? { modelBindingId: agent.modelBindingId }
+          : {}),
         agentDefinitionId: agent.definition.agentDefinitionId,
         agentDefinitionRevisionId:
           agent.currentRevision.agentDefinitionRevisionId,
@@ -635,6 +640,9 @@ export function createRoomViewModel(input: {
             actorId: message.actorId,
             author: handles.get(message.actorId) ?? message.actorId,
             body: message.body,
+            ...(message.attachmentComment
+              ? { attachmentComment: message.attachmentComment }
+              : {}),
             ...(message.attachments?.length
               ? { attachments: message.attachments }
               : {}),

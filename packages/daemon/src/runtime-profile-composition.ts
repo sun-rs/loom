@@ -38,7 +38,10 @@ type RuntimeWorkerService = Pick<
 
 export function createConfiguredRuntime(input: {
   executionWorkspace?: RuntimeRecoveryDescriptor["executionWorkspace"];
-  launchEnvironment?: (runtimeId: string) => Record<string, string>;
+  launchEnvironment?: (
+    runtimeId: string,
+    agentDefinitionId?: string,
+  ) => Record<string, string>;
   guideEnabled?: (runtimeId: string | undefined) => boolean;
   agentMemoryCoordinator?: AgentMemoryCoordinator;
   credentialEnvironment: RuntimeCredentialEnvironmentBinding;
@@ -68,7 +71,10 @@ export function createConfiguredRuntime(input: {
           } as Record<string, string>
         )[input.runtimeProfileRevision.manifest.adapter.kind];
         const launchEnv =
-          input.launchEnvironment?.(runtimeId ?? "unknown") ?? {};
+          input.launchEnvironment?.(
+            runtimeId ?? "unknown",
+            scope.agent?.agentDefinitionRevision.agentDefinitionId,
+          ) ?? {};
         const secretLease = await input.credentialEnvironment.resolve();
         const leases = [secretLease, { env: launchEnv }];
         try {

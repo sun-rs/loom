@@ -137,6 +137,8 @@ test("Human Task history uses the same frozen lifecycle projection with membersh
     );
     const first = f.kernel.humanTaskHistory.list(f.actor, input);
     assert.equal(first.events[0]?.type, "task.cancelled");
+    assert.equal(first.events[0]?.previousWorkflowStatus, "todo");
+    assert.equal(first.events[0]?.workflowStatus, "closed");
     assert.ok(first.nextCursor);
     f.kernel.reopenTask(f.actor, {
       taskId: task.taskId,

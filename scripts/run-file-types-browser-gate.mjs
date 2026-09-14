@@ -69,7 +69,10 @@ try {
         {
           name: "sample.md",
           mime: "text/markdown",
-          text: "# Markdown fixture\n\n**bold fixture**",
+          text:
+            "# Markdown fixture\n\n**bold fixture**\n\n" +
+            "Document paragraph.\n\n".repeat(50) +
+            "## Final section\n\nEnd.",
           kind: "markdown",
         },
         {
@@ -153,10 +156,44 @@ try {
             name: "预览 " + item.name,
             exact: true,
           });
+          if (item.kind === "markdown") {
+            await dialog
+              .getByRole("heading", { name: "Markdown fixture" })
+              .waitFor();
+            assert.equal(
+              (await dialog.boundingBox()).width,
+              width,
+              "Markdown opens across the viewport",
+            );
+            assert.equal(
+              await dialog
+                .getByRole("navigation", { name: "Markdown 大纲" })
+                .isVisible(),
+              width >= 1280,
+            );
+          }
           if (item.kind === "markdown")
             await dialog
               .getByRole("heading", { name: "Markdown fixture" })
               .waitFor();
+          if (item.kind === "markdown" && width >= 1280) {
+            const url = page.url();
+            await dialog
+              .getByRole("navigation", { name: "Markdown 大纲" })
+              .getByRole("link", { name: "Final section" })
+              .click();
+            assert.equal(
+              page.url(),
+              url,
+              "outline scroll does not change the Room route",
+            );
+            assert.ok(
+              await dialog
+                .getByRole("heading", { name: "Final section" })
+                .evaluate((e) => e.getBoundingClientRect().top < innerHeight),
+              "outline reaches its rendered heading",
+            );
+          }
           if (item.kind === "csv")
             await dialog
               .getByRole("cell", { name: "comma,value", exact: true })
@@ -167,6 +204,18 @@ try {
               .filter({ hasText: "+new fixture" })
               .waitFor();
           if (item.kind === "html") {
+            assert.equal(
+              (await dialog.boundingBox()).width,
+              width,
+              "HTML uses the viewport viewer",
+            );
+            assert.equal(
+              (
+                (await dialog.locator("iframe").getAttribute("srcdoc")) ?? ""
+              ).includes("parent.__previewExecuted"),
+              false,
+              "attachment script is removed; only the existing trusted bridge is allowed",
+            );
             await dialog
               .frameLocator("iframe")
               .getByRole("heading", { name: "HTML fixture" })
@@ -177,7 +226,7 @@ try {
             );
             assert.equal(
               await dialog.locator("iframe").getAttribute("sandbox"),
-              "",
+              "allow-scripts",
             );
           }
           if (["bounded", "csv-bounded", "diff-bounded"].includes(item.kind))

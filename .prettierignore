@@ -21,3 +21,5 @@ docs/evidence/raft-settings-20260905.js
 # Frozen browser observations; the comparison plan pins these exact bytes.
 docs/evidence/raft-ui-foundations-20260904.json
 docs/evidence/raft-ui-shell-20260904.json
+# Generated single-page UI catalog (scripts/build-ui-catalog.mjs); bytes are checked by check:ui-catalog.
+docs/design/ui-catalog.html

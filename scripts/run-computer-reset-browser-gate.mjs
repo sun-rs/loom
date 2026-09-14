@@ -77,9 +77,9 @@ try {
           .getByRole("button", { name: "全选 Agent", exact: true })
           .click();
         for (const [mode, label] of [
-          ["restart", "重新启动"],
+          ["restart", "重启"],
           ["session", "重置会话并重启"],
-          ["full", "完全重置并重启"],
+          ["full", "完整重置并重启"],
         ]) {
           const summaries = await Promise.all(
             before.map((agent) =>
@@ -94,7 +94,7 @@ try {
           });
           await trigger.click();
           const dialog = page.getByRole("dialog", {
-            name: "重新启动 所选 2 个 Agent",
+            name: "重启 2 个 Agent",
             exact: true,
           });
           await dialog

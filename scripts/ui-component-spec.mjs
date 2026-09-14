@@ -50,6 +50,9 @@ import {
 
 const SPEC_DIRECTORY = "packages/ui-tokens/specs";
 const RATCHET_PATH = "packages/ui-tokens/specs/ratchet.json";
+// The audited baseline a human reads before the initial ratchet commit.
+export const BASELINE_DOC =
+  "docs/design/component-specs/baseline-2026-09-12.zh-CN.md";
 
 export { normalizeLiteral, referencesVar };
 
@@ -500,7 +503,7 @@ export function ratchetErrors(component, counts, working, committed) {
   }
   if (zeroed)
     errors.push(
-      `${component}: ${RATCHET_PATH} is not committed at HEAD, so every committed value counts as 0; commit the ratchet before it can hold anything back`,
+      `${component}: ${RATCHET_PATH} is not committed at HEAD, so every committed value counts as 0; review the audited baseline in ${BASELINE_DOC} and commit ${RATCHET_PATH} before it can hold anything back (${"--uncommitted-ratchet-preview"} previews the run, it does not replace the commit)`,
     );
   // The working-tree ratchet may only ever move down.
   for (const key of ["overrides", "pending", "overrideBudget"]) {
@@ -561,9 +564,113 @@ export function cssInputsDigest(inputs) {
 }
 
 /**
+ * Content hash of a set of files, by path and bytes. Used to bind a
+ * browser-produced report to the fixture that produced it and to the gate
+ * program that read it: CSS alone is not enough, because the fixture's JSX
+ * decides which elements exist and the gate decides what is read from them.
+ *
+ * Accepts either an array of paths or a `{key: path}` map (spec.fixture).
+ */
+export function fixtureDigest(files, read = readFileSync) {
+  const paths = (Array.isArray(files) ? files : Object.values(files ?? {}))
+    .filter((path) => typeof path === "string")
+    .sort();
+  const hash = createHash("sha256");
+  for (const path of paths) {
+    hash.update(path);
+    hash.update("\0");
+    hash.update(read(path));
+    hash.update("\0");
+  }
+  return hash.digest("hex");
+}
+
+/**
+ * Requirement 7. Bind a browser-produced report to the fixture files, to the
+ * gate program, and to the rendered DOM the gate exported. The static checker
+ * cannot render anything, so the DOM half is held by comparing the report's
+ * `structureSha256` against the digest recorded in the exported markup file —
+ * which the gate writes in the same run, from the same DOM.
+ */
+function reportBindingErrors(spec, report, read, options = {}) {
+  const errors = [];
+  const name = spec.component;
+  if (spec.fixture !== undefined) {
+    let expected;
+    try {
+      expected = fixtureDigest(spec.fixture, read);
+    } catch (error) {
+      errors.push(`${name}: fixture files are unreadable (${error.message})`);
+    }
+    if (expected !== undefined && report.fixtureSha256 !== expected)
+      errors.push(
+        `${name}: the matched-rules report was produced from fixtures hashing ${report.fixtureSha256 ?? "(absent)"}, the fixture files now hash to ${expected}; re-run the browser gate with --report-matching-rules`,
+      );
+  }
+  if (spec.gateScript !== undefined) {
+    let expected;
+    try {
+      expected = fixtureDigest([spec.gateScript], read);
+    } catch (error) {
+      errors.push(`${name}: gate script is unreadable (${error.message})`);
+    }
+    if (expected !== undefined && report.gateScriptSha256 !== expected)
+      errors.push(
+        `${name}: the matched-rules report was produced by a gate hashing ${report.gateScriptSha256 ?? "(absent)"}, the gate script now hashes to ${expected}; re-run the browser gate with --report-matching-rules`,
+      );
+  }
+  if (spec.fixtureMarkupFile === undefined) return errors;
+  const markup =
+    "fixtureMarkup" in options
+      ? options.fixtureMarkup
+      : readJsonIfPresent(spec.fixtureMarkupFile);
+  if (markup === undefined) {
+    errors.push(
+      `${name}: ${spec.fixtureMarkupFile} is missing; run node scripts/run-component-spec-browser-gate.mjs ${name} --report-matching-rules`,
+    );
+    return errors;
+  }
+  if (
+    typeof report.structureSha256 !== "string" ||
+    report.structureSha256 !== markup.structureSha256
+  )
+    errors.push(
+      `${name}: the rendered fixture DOM digest in the report (${report.structureSha256 ?? "(absent)"}) does not match ${spec.fixtureMarkupFile} (${markup.structureSha256 ?? "(absent)"}); re-run the browser gate with --report-matching-rules`,
+    );
+  for (const id of captureProbeIds(spec))
+    if ((markup.markup ?? {})[id] === undefined)
+      errors.push(
+        `${name}: ${spec.fixtureMarkupFile} is missing rendered markup for probe "${id}"`,
+      );
+  return errors;
+}
+
+/** The probe ids a matched-rules report must carry, from the spec. */
+export function coverageProbeIds(spec) {
+  return (spec.probes ?? [])
+    .filter((probe) => probe.coverage !== false)
+    .map((probe) => probe.id);
+}
+
+/** The probe ids whose rendered markup the gate must export. */
+export function captureProbeIds(spec) {
+  return (spec.probes ?? [])
+    .filter((probe) => probe.capture !== false)
+    .map((probe) => probe.id);
+}
+
+/**
  * Requirement 6. For each fixture probe the browser reported every rule that
  * actually matches the element; anything unregistered that touches a property
  * this component owns is a bypass of the class-name-text registration.
+ *
+ * Requirement 7 (owner review 2026-09-12) closes the coverage bypass: the
+ * report used to bind only the CSS and to carry whatever probes the browser
+ * happened to find, so an EMPTY `probes` map with a correct `cssInputsSha256`
+ * passed with zero errors and a fixture JSX edit kept an old report valid. The
+ * probe list now lives in the spec and the report is bound to four things:
+ * the CSS inputs, the fixture files, the rendered fixture DOM, and the gate
+ * program itself.
  */
 export function matchedRulesErrors(
   spec,
@@ -571,19 +678,38 @@ export function matchedRulesErrors(
   report,
   registered,
   parsedRules = [],
+  options = {},
 ) {
   const errors = [];
   if (report === undefined) {
     errors.push(
-      `${spec.component}: ${spec.matchedRulesFile ?? "matched-rules report"} is missing; run node scripts/run-sq-btn-spec-browser-gate.mjs --report-matching-rules`,
+      `${spec.component}: ${spec.matchedRulesFile ?? "matched-rules report"} is missing; run node scripts/run-component-spec-browser-gate.mjs ${spec.component} --report-matching-rules`,
     );
     return errors;
   }
+  const read = options.readFile ?? ((path) => readFileSync(path));
   const digest = cssInputsDigest(inputs);
   if (report.cssInputsSha256 !== digest)
     errors.push(
       `${spec.component}: the matched-rules report was produced from CSS hashing ${report.cssInputsSha256}, the tree now hashes to ${digest}; re-run the browser gate with --report-matching-rules`,
     );
+  errors.push(...reportBindingErrors(spec, report, read, options));
+  // Requirement 7: no skipping. Every declared probe must be present, and the
+  // report may not smuggle in a probe the spec never declared.
+  if (Array.isArray(spec.probes)) {
+    const declared = new Set(coverageProbeIds(spec));
+    const reported = new Set(Object.keys(report.probes ?? {}));
+    for (const id of [...declared].sort())
+      if (!reported.has(id))
+        errors.push(
+          `${spec.component}: the matched-rules report is missing probe "${id}"; every probe declared in the spec must be reported (no skipping)`,
+        );
+    for (const id of [...reported].sort())
+      if (!declared.has(id))
+        errors.push(
+          `${spec.component}: the matched-rules report carries probe "${id}", which the spec does not declare; declare it in spec.probes or regenerate the report`,
+        );
+  }
   // The browser sees one bundled stylesheet, so a matched selector is
   // attributed back to its source file by looking it up in the statically
   // parsed CSS. That is also the only file path a registration can name.
@@ -788,6 +914,7 @@ export function componentSpecErrors(spec, inputs, options = {}) {
         options.matchedRules ?? readJsonIfPresent(spec.matchedRulesFile),
         registered,
         [...byKey.values()],
+        options,
       ),
     );
 
@@ -837,19 +964,23 @@ if (
 ) {
   const specs = loadComponentSpecs();
   const inputs = cssContractInputs();
-  // `--allow-uncommitted-ratchet` exists for the one local report run made
-  // before a human commits packages/ui-tokens/specs/ratchet.json. It must
-  // never appear in package.json: in CI the uncommitted ratchet IS the
-  // failure, because an uncommitted budget holds nothing back.
-  const allowUncommitted = process.argv.includes("--allow-uncommitted-ratchet");
+  // `--uncommitted-ratchet-preview` (owner review 2026-09-12, finding 2:
+  // renamed from `--allow-uncommitted-ratchet`, because "allow" reads like a
+  // sanctioned mode) exists for the one local report run a human makes while
+  // reviewing the baseline package before committing
+  // packages/ui-tokens/specs/ratchet.json. It must never appear in
+  // package.json: in CI the uncommitted ratchet IS the failure, because an
+  // uncommitted budget holds nothing back. It is not the long-term answer —
+  // BASELINE_DOC is.
+  const preview = process.argv.includes("--uncommitted-ratchet-preview");
   const committed = committedRatchet();
   const effective =
-    allowUncommitted && !committed.present
+    preview && !committed.present
       ? { present: true, value: readJsonIfPresent(RATCHET_PATH) ?? {} }
       : committed;
-  if (allowUncommitted && !committed.present)
+  if (preview && !committed.present)
     process.stderr.write(
-      `WARNING: --allow-uncommitted-ratchet is treating the working-tree ${RATCHET_PATH} as committed. Commit it.\n`,
+      `WARNING: --uncommitted-ratchet-preview is treating the working-tree ${RATCHET_PATH} as committed, which holds nothing back. This is a preview, not a mode: review ${BASELINE_DOC} and commit ${RATCHET_PATH}.\n`,
     );
   const errors = specs.flatMap((spec) =>
     componentSpecErrors(spec, inputs, { committedRatchet: effective }),

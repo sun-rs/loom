@@ -3,6 +3,20 @@ import { createRoot } from "react-dom/client";
 import type { RahClient } from "@rah-os/client-sdk";
 import "../src/product-styles.ts";
 import { MemberRelationshipSurface } from "../src/components/member-relationship-graph.tsx";
+import { AgentAvatar } from "../src/components/agent-avatar.tsx";
+const avatarAgent = {
+  avatarKey: "skull",
+  displayName: "Isolated",
+  participantId: "isolated",
+  runtimeAvailable: false,
+  state: "disabled" as const,
+  connectionStatus: "offline" as const,
+  presence: {
+    activity: "offline" as const,
+    agentDefinitionId: "isolated",
+    reason: "host_offline" as const,
+  },
+};
 const client = {
   request: async () => ({
     workspaceId: "fixture",
@@ -25,6 +39,7 @@ const client = {
         agentDefinitionId: "isolated",
         participantId: "isolated",
         type: "agent",
+        avatarKey: avatarAgent.avatarKey,
         displayName: "Isolated",
         handle: "isolated",
         channelIds: [],
@@ -33,11 +48,16 @@ const client = {
   }),
 } as unknown as RahClient;
 createRoot(document.getElementById("root")!).render(
-  <MemberRelationshipSurface
-    agents={[]}
-    client={client}
-    workspaceId="fixture"
-    onBack={() => {}}
-    onOpenAgent={() => {}}
-  />,
+  <>
+    <div data-testid="canonical-avatar">
+      <AgentAvatar agent={avatarAgent} size="sidebar" showStatus={false} />
+    </div>
+    <MemberRelationshipSurface
+      agents={[]}
+      client={client}
+      workspaceId="fixture"
+      onBack={() => {}}
+      onOpenAgent={() => {}}
+    />
+  </>,
 );

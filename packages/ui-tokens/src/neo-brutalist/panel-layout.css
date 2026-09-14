@@ -4,7 +4,7 @@
 /* Raft AppRail compact-height contract. Page composition cannot override the
    track independently from the rail. Default values remain in tokens.brutal. */
 @media (max-height: 600px) {
-  .rah-product-shell {
+  :is(.rah-product-shell, .rah-dialog-layer) {
     --head-h: 48px;
     --rail-w: 50px;
   }
@@ -30,10 +30,6 @@
   height: var(--head-h);
   min-width: 0;
   padding: 0 20px;
-}
-
-.rah-panel-header[data-header-kind="thread"] {
-  gap: 6px;
 }
 
 .rah-panel-header[data-header-kind="sidebar"] {
@@ -129,4 +125,10 @@
     height: 76px;
     padding: 10px 12px;
   }
+}
+
+/* Agent header container belongs to the shared PanelHeader layout owner. */
+.rah-agent-detail-head {
+  container-type: inline-size;
+  container-name: agent-header;
 }

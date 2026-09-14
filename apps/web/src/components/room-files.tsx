@@ -1,3 +1,4 @@
+import { MessageAttachmentCard } from "./message-attachment-card.tsx";
 import { AttachmentComments } from "./attachment-comments.tsx";
 import {
   attachmentAnchorAt,
@@ -38,6 +39,7 @@ const FilesContext = createContext<{
   client: RahClient;
   uploads: FileUploadStore;
 } | null>(null);
+export const useFilesClient = () => useContext(FilesContext)?.client;
 export function FilesProvider({
   client,
   children,
@@ -126,24 +128,44 @@ function bytesLabel(size: number) {
       ? `${(size / 1024).toFixed(1)} KB`
       : `${(size / 1024 / 1024).toFixed(1)} MB`;
 }
+export type AttachmentCommentContext = { parentMessageId: string };
+
 export function MessageAttachments({
   attachments,
+  commentCounts,
+  commentContext,
 }: {
   attachments?: readonly Attachment[] | undefined;
+  commentCounts?: Record<string, number> | undefined;
+  commentContext?: AttachmentCommentContext | undefined;
 }) {
   return attachments?.length ? (
     <div className="rah-message-files">
       {attachments.map((file) => (
-        <FileCard key={file.attachmentId} file={file} />
+        <MessageAttachmentCard
+          key={file.attachmentId}
+          file={
+            commentCounts
+              ? {
+                  ...file,
+                  commentCount:
+                    commentCounts[file.attachmentId] ?? file.commentCount,
+                }
+              : file
+          }
+          commentContext={commentContext}
+        />
       ))}
     </div>
   ) : null;
 }
 function FileCard({
   file,
+  commentContext,
   onSource,
 }: {
   file: Attachment | RoomFile;
+  commentContext?: AttachmentCommentContext | undefined;
   onSource?: (() => void) | undefined;
 }) {
   const context = useContext(FilesContext);
@@ -270,6 +292,7 @@ function FileCard({
       {preview && (
         <FilePreview
           file={file}
+          commentContext={commentContext}
           downloadPending={pending}
           downloadError={error}
           onClose={() => setPreview(false)}
@@ -279,14 +302,19 @@ function FileCard({
     </div>
   );
 }
-function FilePreview({
+export function FilePreview({
+  initialContent,
   file,
+  commentContext,
   downloadPending,
   downloadError,
   onClose,
   onDownload,
 }: {
+  initialContent?:
+    { text?: string; image?: string; error?: string } | undefined;
   file: Attachment;
+  commentContext: AttachmentCommentContext | undefined;
   downloadPending: boolean;
   downloadError: string | undefined;
   onClose: () => void;
@@ -294,18 +322,25 @@ function FilePreview({
 }) {
   const context = useContext(FilesContext);
   const kind = classifyAttachmentPreview(file.mimeType, file.filename);
-  const [content, setContent] = useState<{
-    text?: string;
-    image?: string;
-    error?: string;
-  }>();
+  // Raft RYe/SYe/EYe: entry context enables comments; PDF and audio omit it.
+  // The existing file-comments service still resolves authority and the source Room.
+  const commentsEnabled =
+    !!commentContext && kind !== "pdf" && kind !== "audio";
+  const [content, setContent] = useState<
+    | {
+        text?: string;
+        image?: string;
+        error?: string;
+      }
+    | undefined
+  >(initialContent);
   const dialogRef = useDialogProtocol({ blocked: false, onClose });
   const previewRef = useRef<HTMLDivElement>(null);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [pendingAnchor, setPendingAnchor] = useState<AttachmentAnchor>();
   const [videoTime, setVideoTime] = useState<number>();
   function selectAnchor(node: Node | null) {
-    if (!previewRef.current) return;
+    if (!commentsEnabled || !previewRef.current) return;
     const selection = window.getSelection();
     let anchor = attachmentAnchorAt(previewRef.current, node, kind);
     if (selection && !selection.isCollapsed && selection.rangeCount) {
@@ -339,6 +374,7 @@ function FilePreview({
   }
   useEffect(() => {
     const controller = new AbortController();
+    if (initialContent) return () => controller.abort();
     if (attachmentMediaPreview(file.mimeType, file.filename))
       return () => controller.abort();
     const raster = kind === "image";
@@ -378,7 +414,7 @@ function FilePreview({
     return () => {
       controller.abort();
     };
-  }, [context?.client, file, kind]);
+  }, [context?.client, file, kind, initialContent]);
   // Message rows own layout containment; modal geometry must belong to the viewport.
   return createPortal(
     <div className="rah-dialog-layer">
@@ -389,6 +425,7 @@ function FilePreview({
       />
       <section
         className="rah-dialog rah-file-preview"
+        data-preview-kind={kind}
         role="dialog"
         aria-modal="true"
         aria-label={`预览 ${file.filename}`}
@@ -397,14 +434,18 @@ function FilePreview({
       >
         <header>
           <h2>{file.filename}</h2>
-          <button
-            type="button"
-            aria-expanded={commentsOpen}
-            onClick={() => setCommentsOpen((value) => !value)}
-          >
-            评论
-          </button>
-          {videoTime !== undefined && (
+          {commentsEnabled && (
+            <button
+              type="button"
+              aria-expanded={commentsOpen}
+              aria-label="评论"
+              className={"sq-btn" + (commentsOpen ? " is-active" : "")}
+              onClick={() => setCommentsOpen((value) => !value)}
+            >
+              <Icon name="message-square-more" />
+            </button>
+          )}
+          {commentsEnabled && videoTime !== undefined && (
             <button
               type="button"
               onClick={() => {
@@ -418,8 +459,14 @@ function FilePreview({
               评论当前时间
             </button>
           )}
-          <button type="button" onClick={onDownload} disabled={downloadPending}>
-            {downloadPending ? "下载中…" : "下载"}
+          <button
+            type="button"
+            className="sq-btn"
+            aria-label={downloadPending ? "下载中…" : "下载"}
+            onClick={onDownload}
+            disabled={downloadPending}
+          >
+            <Icon name="download" />
           </button>
           <button
             type="button"
@@ -427,7 +474,7 @@ function FilePreview({
             aria-label="关闭"
             onClick={onClose}
           >
-            ×
+            <Icon name="x" />
           </button>
         </header>
         <div className="rah-file-preview-columns">
@@ -493,7 +540,7 @@ function FilePreview({
               <p>{content.error}</p>
             )}
           </div>
-          {context && (
+          {context && commentsEnabled && (
             <AttachmentComments
               key={file.attachmentId}
               client={context.client}

@@ -54,9 +54,9 @@ function fixture() {
     room,
     parent,
     latest,
-    close() {
+    close(alreadyClosed = false) {
       db.close();
-      kernel.close();
+      if (!alreadyClosed) kernel.close();
       rmSync(dir, { recursive: true, force: true });
     },
   };
@@ -82,6 +82,13 @@ test("attachment comments persist canonical Thread messages and exact anchors; r
     assert.ok(listed.threadId);
     assert.equal(listed.comments.length, 1);
     assert.equal(listed.comments[0]!.content, "check line");
+    assert.deepEqual(
+      f.kernel.listMessages(f.actor, {
+        roomId: f.room.roomId,
+        threadId: listed.threadId,
+      }).messages[0]?.attachmentComment,
+      { attachmentId: "file", filename: "file.txt" },
+    );
     assert.deepEqual(listed.comments[0]!.anchor, input.anchor);
     assert.equal(
       f.db
@@ -224,6 +231,7 @@ test("comments survive a fresh Kernel owner and schema 55 migration preserves Ro
       basedOnRoomSeq: f.latest(),
       idempotencyKey: "durable",
     });
+    f.db.exec("UPDATE messages SET attachment_comment_json=NULL"); // Simulate historical rows before adoption.
     const reopened = new RoomKernel({ databasePath: f.path });
     try {
       reopened.initialize();
@@ -233,7 +241,14 @@ test("comments survive a fresh Kernel owner and schema 55 migration preserves Ro
           .comments[0]!.id,
         result.event.aggregateId,
       );
-      assert.equal(f.db.prepare("PRAGMA user_version").get()!.user_version, 55);
+      assert.deepEqual(
+        reopened
+          .listMessages(actor, { roomId: f.room.roomId })
+          .messages.find((m) => m.messageId === result.event.aggregateId)
+          ?.attachmentComment,
+        { attachmentId: "file", filename: "file.txt" },
+      );
+      assert.equal(f.db.prepare("PRAGMA user_version").get()!.user_version, 56);
     } finally {
       reopened.close();
     }
@@ -340,5 +355,166 @@ test("independent: accepted comment body roundtrips including a JSON-legal embed
     assert.equal(result.comments[0]!.content, body);
   } finally {
     f.close();
+  }
+});
+
+test("first file comment reaches its participating Agent author without waking unrelated Agents", () => {
+  const f = fixture();
+  try {
+    const author = f.kernel.provisionPrincipal({
+      kind: "agent",
+      handle: "author",
+    });
+    const other = f.kernel.provisionPrincipal({
+      kind: "agent",
+      handle: "bystander",
+    });
+    for (const agent of [author, other])
+      f.kernel.addMember(f.actor, {
+        roomId: f.room.roomId,
+        principalId: agent.principal.principalId,
+      });
+    f.db
+      .prepare("UPDATE room_files SET actor_id=? WHERE attachment_id='file'")
+      .run(author.principal.principalId);
+    const first = f.kernel.attachmentComments.post(f.actor, {
+      attachmentId: "file",
+      body: "Question on your file",
+      basedOnRoomSeq: f.latest(),
+      idempotencyKey: "author-comment",
+    });
+    assert.deepEqual(first.event.payload.recipientIds, [
+      author.principal.principalId,
+    ]);
+    const thread = String(first.event.payload.threadId);
+    f.db
+      .prepare(
+        "UPDATE agent_thread_follows SET following=0,source='explicit_unfollow' WHERE thread_id=?",
+      )
+      .run(thread);
+    const second = f.kernel.attachmentComments.post(f.actor, {
+      attachmentId: "file",
+      body: "Another question",
+      basedOnRoomSeq: f.latest(),
+      idempotencyKey: "author-unfollow",
+    });
+    assert.deepEqual(second.event.payload.recipientIds, []);
+  } finally {
+    f.close();
+  }
+});
+
+test("file cards expose durable per-attachment counts, excluding ordinary and other-file replies", () => {
+  const f = fixture();
+  let closed = false;
+  try {
+    const attachment = (attachmentId: string) => ({
+      attachmentId,
+      filename: `${attachmentId}.txt`,
+      mimeType: "text/plain",
+      size: 1,
+      sha256: "a".repeat(64),
+    });
+    f.db
+      .prepare("UPDATE messages SET attachments_json=? WHERE message_id=?")
+      .run(
+        JSON.stringify([attachment("file"), attachment("second")]),
+        f.parent,
+      );
+    // Reuse the full current schema without assuming its column order.
+    f.db
+      .prepare(
+        "INSERT INTO room_files(attachment_id,room_id,actor_id,request_key,filename,mime_type,size,state,expires_at,message_id,created_at) SELECT 'second',room_id,actor_id,'second-upload','second.txt',mime_type,size,state,expires_at,message_id,created_at FROM room_files WHERE attachment_id='file'",
+      )
+      .run();
+    const input = {
+      attachmentId: "file",
+      body: "first comment",
+      basedOnRoomSeq: f.latest(),
+      idempotencyKey: "count-first",
+    };
+    f.kernel.attachmentComments.post(f.actor, input);
+    f.kernel.attachmentComments.post(f.actor, input);
+    f.kernel.attachmentComments.post(f.actor, {
+      attachmentId: "second",
+      body: "other file",
+      basedOnRoomSeq: f.latest(),
+      idempotencyKey: "count-second",
+    });
+    const threadId = f.kernel.attachmentComments.list(f.actor, {
+      attachmentId: "file",
+    }).threadId!;
+    f.kernel.replyThread(f.actor, {
+      roomId: f.room.roomId,
+      threadId,
+      body: "ordinary reply",
+      recipientIds: [],
+      basedOnRoomSeq: f.latest(),
+      idempotencyKey: "ordinary",
+    });
+    const read = () =>
+      f.kernel
+        .listMessages(f.actor, { roomId: f.room.roomId })
+        .messages.find((m) => m.messageId === f.parent)!
+        .attachments!.map((a) => a.commentCount);
+    assert.deepEqual(read(), [1, 1]);
+    assert.deepEqual(
+      f.kernel.messageSocial.list(f.actor, {
+        roomId: f.room.roomId,
+        messageIds: [f.parent],
+      }).items[0]?.attachmentCommentCounts,
+      { file: 1, second: 1 },
+    );
+    f.kernel.attachmentComments.post(f.actor, {
+      attachmentId: "file",
+      body: "next comment",
+      basedOnRoomSeq: f.latest(),
+      idempotencyKey: "count-next",
+    });
+    assert.deepEqual(read(), [2, 1]);
+    for (let i = 0; i < 50; i++)
+      f.kernel.attachmentComments.post(f.actor, {
+        attachmentId: "file",
+        body: `page ${i}`,
+        basedOnRoomSeq: f.latest(),
+        idempotencyKey: `page-${i}`,
+      });
+    assert.equal(
+      f.kernel.attachmentComments.list(f.actor, {
+        attachmentId: "file",
+        limit: 10,
+      }).comments.length,
+      10,
+    );
+    assert.deepEqual(read(), [52, 1]);
+    assert.throws(
+      () => f.kernel.listMessages(f.other, { roomId: f.room.roomId }),
+      /member|forbidden/i,
+    );
+    f.db
+      .prepare("UPDATE messages SET attachments_json=? WHERE message_id=?")
+      .run(
+        JSON.stringify([attachment("file"), attachment("second")]),
+        f.parent,
+      );
+    f.kernel.close();
+    closed = true;
+    const reopened = new RoomKernel({ databasePath: f.path });
+    reopened.initialize();
+    try {
+      assert.deepEqual(
+        reopened
+          .listMessages(reopened.authenticateAccessToken(f.token), {
+            roomId: f.room.roomId,
+          })
+          .messages.find((m) => m.messageId === f.parent)!
+          .attachments!.map((a) => a.commentCount),
+        [52, 1],
+      );
+    } finally {
+      reopened.close();
+    }
+  } finally {
+    f.close(closed);
   }
 });

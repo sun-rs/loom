@@ -90,3 +90,75 @@ test("Web Push dispatcher acknowledges success and removes expired endpoints", a
     "ack",
   ]);
 });
+
+for (const failure of [
+  "ack-expired",
+  "retry-expired",
+  "retry-broken",
+] as const) {
+  test(`Web Push lease recovery: ${failure}`, async () => {
+    const { LeaseConflictError } = await import("@rah-os/core");
+    const controller = new AbortController();
+    let leases = 0;
+    let retries = 0;
+    const dispatcher = new WebPushOutboxDispatcher({
+      dispatcherId: "push",
+      leaseMs: 1000,
+      pollIntervalMs: 1,
+      retryAfterMs: 1,
+      kernel: {
+        leaseNextOutbox() {
+          if (++leases > 1) {
+            controller.abort();
+            return null;
+          }
+          return { outboxId: "expired", roomId: "room", roomSeq: 1 };
+        },
+        humanNotifications: {
+          webPush: {
+            project() {
+              if (failure !== "ack-expired")
+                throw new Error("projection unavailable");
+              return [];
+            },
+          },
+        },
+        acknowledgeOutboxPublished() {
+          throw new LeaseConflictError("lease expired while suspended");
+        },
+        retryOutbox() {
+          retries++;
+          if (failure === "retry-broken") throw new Error("database failure");
+          throw new LeaseConflictError("retry no longer owns lease");
+        },
+      },
+      subscriptions: {
+        async list() {
+          return [];
+        },
+        async remove() {
+          return false;
+        },
+      },
+      transport: { async send() {} },
+    });
+    if (failure === "retry-broken") {
+      await assert.rejects(
+        dispatcher.run({ signal: controller.signal }),
+        /database failure/,
+      );
+    } else {
+      await dispatcher.run({ signal: controller.signal });
+      assert.equal(
+        leases,
+        2,
+        "dispatcher must remain alive to acquire subsequent work",
+      );
+      assert.equal(
+        retries,
+        failure === "ack-expired" ? 0 : 1,
+        "lost ownership must not retry an old lease",
+      );
+    }
+  });
+}

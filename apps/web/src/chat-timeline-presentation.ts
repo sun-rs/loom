@@ -158,6 +158,14 @@ function reminderReceipt(
 }
 
 function calendarParts(value: string | Date, timeZone?: string) {
+  const date = typeof value === "string" ? new Date(value) : value;
+  if (timeZone === undefined) {
+    return {
+      day: date.getDate(),
+      month: date.getMonth() + 1,
+      year: date.getFullYear(),
+    };
+  }
   const formatter = new Intl.DateTimeFormat("en-CA", {
     day: "2-digit",
     month: "2-digit",
@@ -179,6 +187,25 @@ function calendarParts(value: string | Date, timeZone?: string) {
 export function chatLocalDateKey(value: string | Date, timeZone?: string) {
   const { day, month, year } = calendarParts(value, timeZone);
   return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+/** Raft v3e: same calendar day omits the date; yesterday is a label. */
+export function chatMessageDateLabel(
+  createdAt: string,
+  now = new Date(),
+  timeZone?: string,
+): string {
+  if (Number.isNaN(new Date(createdAt).getTime())) return "";
+  const then = calendarParts(createdAt, timeZone);
+  const today = calendarParts(now, timeZone);
+  const difference =
+    (Date.UTC(today.year, today.month - 1, today.day) -
+      Date.UTC(then.year, then.month - 1, then.day)) /
+    86_400_000;
+  if (difference === 0) return "";
+  if (difference === 1) return "昨天";
+  const date = `${String(then.month).padStart(2, "0")}/${String(then.day).padStart(2, "0")}`;
+  return then.year === today.year ? date : `${then.year}/${date}`;
 }
 
 export function chatDateLabel(

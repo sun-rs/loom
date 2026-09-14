@@ -309,20 +309,13 @@
   grid-template-columns: max-content 8px minmax(0, 1fr);
   padding: 6px 12px;
 }
-.app.rah-agent-peek-open {
-  grid-template-columns: var(--rail-w) var(--sidebar-w) minmax(0, 1fr) auto;
-}
-.app.rah-agent-peek-open > .channel:not(.rah-agent-peek) {
-  grid-column: 3;
-}
+/* Conversation inspectors use the same right slot as Thread. */
 .app.rah-product-shell > .rah-agent-peek {
-  grid-column: 4;
   grid-row: 1;
-  width: var(--rah-agent-profile-panel-width, 380px);
-  border-left: var(--bd);
-  z-index: 41;
-  height: 100dvh;
   min-width: 0;
+  border-left: var(--bd);
+  height: 100dvh;
+  z-index: 41;
 }
 .rah-agent-profile-resizer {
   left: -4px;
@@ -341,33 +334,19 @@
   flex: 1;
   min-width: 0;
 }
-.rah-agent-peek-open > .thread {
+.app.rah-product-shell:not(.rah-agent-peek-open) > .rah-agent-peek {
   visibility: hidden;
+  pointer-events: none;
+  position: relative;
+  inset: auto;
+  grid-column: 3;
+  width: auto;
+}
+.app.rah-product-shell:not(
+    .rah-agent-peek-open
+  )[data-conversation-layout="split"]
+  > .rah-agent-peek {
   grid-column: 4;
-  grid-row: 1;
-}
-@media (max-width: 1023.98px) {
-  .app.rah-agent-peek-open {
-    grid-template-columns: var(--rail-w) var(--sidebar-w) minmax(0, 1fr);
-  }
-  .app.rah-product-shell > .rah-agent-peek {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100dvh;
-    border-left: 0;
-  }
-  .rah-agent-profile-resizer {
-    display: none;
-  }
-}
-@media (max-width: 767px) {
-  .app.rah-agent-peek-open {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .app.rah-agent-peek-open > .channel:not(.rah-agent-peek) {
-    grid-column: 1;
-  }
 }
 
 .rah-agent-role-block > small {
@@ -382,11 +361,81 @@
   box-shadow: 1px 1px 0 var(--ink);
 }
 
-/* Members already owns its sidebar inside the page; only chat reserves one. */
-@media (min-width: 768px) {
-  .app.rah-agent-peek-open:has(
-      > .rah-agent-directory-page:not(.rah-agent-peek)
-    ) {
-    grid-template-columns: var(--rail-w) 0 minmax(0, 1fr) auto;
+/* Raft Jmt: latest target + clicked source, never three conversation pages.
+   Hidden pages remain mounted so their existing draft/scroll owners survive. */
+.app.rah-product-shell.rah-agent-peek-open[data-conversation-layout][data-profile-source] {
+  grid-template-columns: var(--rail-w) var(--sidebar-w) minmax(0, 1fr);
+}
+.app.rah-product-shell.rah-agent-peek-open[data-conversation-layout][data-profile-source]
+  > .rah-agent-peek {
+  position: relative;
+  inset: auto;
+  grid-column: 3;
+  width: auto;
+  border-left: 0;
+}
+.app.rah-product-shell.rah-agent-peek-open[data-conversation-layout][data-profile-source]
+  > .channel:not(.rah-agent-peek),
+.app.rah-product-shell.rah-agent-peek-open[data-conversation-layout][data-profile-source]
+  > .thread {
+  display: flex;
+  visibility: hidden;
+  pointer-events: none;
+  grid-row: 1;
+  grid-column: 3;
+}
+.app.rah-product-shell.rah-agent-peek-open[data-conversation-layout="split"][data-profile-source] {
+  grid-template-columns: var(--rail-w) var(--sidebar-w) minmax(320px, 1fr) min(
+      var(--thread-w),
+      calc(100% - var(--rail-w) - var(--sidebar-w) - 320px)
+    );
+}
+.app.rah-product-shell.rah-agent-peek-open[data-conversation-layout="split"][data-profile-source]
+  > .rah-agent-peek {
+  grid-column: 4;
+  border-left: var(--bd);
+}
+.app.rah-product-shell.rah-agent-peek-open[data-conversation-layout="split"][data-profile-source="room"]
+  > .channel:not(.rah-agent-peek),
+.app.rah-product-shell.rah-agent-peek-open[data-conversation-layout="split"][data-profile-source="thread"]
+  > .thread {
+  display: flex;
+  visibility: visible;
+  pointer-events: auto;
+  grid-column: 3;
+  border-left: 0;
+}
+.app.rah-product-shell.rah-agent-peek-open[data-profile-source="thread"]
+  > .thread
+  .rah-thread-resizer,
+.app.rah-product-shell.rah-agent-peek-open:not(
+    [data-conversation-layout="split"]
+  )
+  .rah-agent-profile-resizer {
+  display: none;
+}
+@media (max-width: 767px) {
+  .app.rah-product-shell.rah-agent-peek-open[data-conversation-layout][data-profile-source] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app.rah-product-shell.rah-agent-peek-open[data-conversation-layout][data-profile-source]
+    > .rah-agent-peek {
+    grid-column: 1;
+    height: calc(100dvh - var(--rah-mobile-nav-space));
+  }
+}
+
+.app.rah-product-shell.rah-agent-peek-open[data-conversation-layout="split"][data-profile-source="room"]
+  > .thread {
+  grid-column: 4;
+}
+@media (max-width: 767px) {
+  .app.rah-product-shell:not(.rah-agent-peek-open)[data-conversation-layout]
+    > .rah-agent-peek,
+  .app.rah-product-shell.rah-agent-peek-open[data-conversation-layout][data-profile-source]
+    > .channel:not(.rah-agent-peek),
+  .app.rah-product-shell.rah-agent-peek-open[data-conversation-layout][data-profile-source]
+    > .thread {
+    grid-column: 1;
   }
 }

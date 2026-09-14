@@ -7,6 +7,10 @@
 
 状态：Phase 4B Anchored Task。Raft UI snapshot→generated `ui-tokens`、覆盖全部现有 v3 route 的 typed `RahClient`、cold-reload-safe ordered client-core 与 Room/Chat/Thread/Task React recovery slice 已经建立；manifest + Service Worker 提供同 bundle PWA shell，正式 HTTPS LAN gate 已覆盖设备配对、Secure/HttpOnly session、Core restart、service worker ready 与 390x844。Room/Task/Agent 的自动真实 Chrome + daemon v4 gate 继续覆盖 Room 创建、成员收敛、双 Agent reply、Thread、Task 顶层 Message/连续编号/讨论 Thread、单 winner、Human complete 和 reload recovery；独立 Firefox 150 production gate 覆盖 desktop/mobile、Agent/Settings/Room drawer、标准 scrollbar declaration 和 strict-CSP 零错误，并由此将 Zod 固定为 bootstrap-first jitless。仍不允许用 mock page 或离线 cache 反向定义缺失的 Kernel 业务协议。
 
+2026-09-14：资料页与 Room/Thread 共享区域按实测宽度分配，保留各面板状态并按剩余空间隐藏正文；参见[布局修复证据](../audits/2026-09-14-thread-inspector-search-parity.zh-CN.md)。
+
+2026-09-14：搜索拥有一列结果和一个可替换预览，Room/DM/Thread/Task共用导航选择；离开搜索清空临时查询和预览，宽度复用共享分隔器。参见[搜索预览证据](../audits/2026-09-14-search-preview-layout.zh-CN.md)。
+
 ## 1. 目标与非目标
 
 目标：
@@ -22,6 +26,11 @@
 - 不在 React store、Service Worker、desktop shell 或原生端创建第二套 Room/Task truth；
 - 不承诺 React DOM component 可以无成本转成 SwiftUI；
 - 不在 Phase 4 前用静态页面填补尚未存在的 daemon command。
+
+当前会话布局采用[Room／私聊最多两页](../audits/2026-09-14-two-page-conversation-layout.zh-CN.md)：
+conversation-panels统一选择点击来源和最新目标，Thread与人员页共用右侧槽位宽度；
+Room设置和Task详情模态是独立覆盖层。先为inspector扣宽再给Room/Thread分栏的旧三列策略
+已被取代，保留页面的草稿和测量继续归原组件owner。
 
 ## 2. 单向依赖与数据流
 
@@ -329,3 +338,27 @@ Computer 的批量 restart/session/full 同样复用现有 AgentExecutionResetDi
 单一呈现测量 owner `use-conversation-layout` 沿 Raft 的可用容器宽度与横竖屏条件选择并排、替换正文、全屏；不以固定1280px抽屉覆盖部分正文。sidebar拖动参与可用宽度计算，切换仅影响布局，不卸载已有消息、草稿与scroll owner。来源与边界见 [响应式修复](../audits/2026-09-11-conversation-responsive-parity.zh-CN.md)。
 
 Search 首页的常用项按搜索打开的实体排序，历史查询与实体使用偏好分离；消息列搜索标题消费 Kernel 有界根消息摘要。来源与验证见 [Search 修复](../audits/2026-09-12-search-home-result-parity.zh-CN.md)。
+
+## 2026-09-12 移动导航布局修正
+
+移动 Web/PWA 的主导航在所有页面（包括 Agent、Computer、Room 和 Thread 详情）常驻底部；shell 统一为底栏和 safe-area 预留空间，不再按路由隐藏。任务默认视图按实际容器宽度选择，手动选择优先。共享组件与业务 owner 不变；[实现与验证](../audits/2026-09-12-mobile-navigation-and-task-layout.zh-CN.md)。
+
+## 2026-09-12：构建探测不得阻塞客户端恢复
+
+Web bootstrap 与版本 HEAD 探测并行；成功 API 响应不等待刷新 modal 决策。探测限时 3 秒，
+不同响应报告的版本变化在后台共享一次新鲜 HEAD 验证。连接、Agent 与 Room 数据恢复仍归
+现有 Client SDK/App owner；不增加业务缓存或第二套状态。参见
+[恢复审计](../audits/2026-09-12-nonblocking-build-recovery.zh-CN.md)。
+
+频道设置与成员子页的标题区域遵循共享 --head-h；portal 在短窗口中使用同一高度分支。用户要求的标题/描述规格与 Raft 实景差异见 [截图 UI 收口](../audits/2026-09-12-screenshot-ui-closure.zh-CN.md)。Markdown/HTML 预览沿用 room-files 的单一视口外壳，文档大纲属于现有安全渲染层，不建立第二条附件读取或消息导航路径。
+
+2026-09-12：侧栏上下文菜单复用 Base UI ContextMenu，分区/隐藏 DM 由 HumanSidebar
+持久保存；重新打开 DM 由 canonical open 命令同事务恢复显示。标为未读由 HumanActivity
+显式操作处理，前端仅暂停当前页面的自动读取直到重新进入，不建立第二份未读计数。
+[后端规则与证据](../audits/2026-09-12-sidebar-context-menu-parity.zh-CN.md)。
+
+## 2026-09-13：Agent 目录读取恢复
+
+Agent 与 Human 目录复用 `useReconciledQuery` 的可见性轮询、超时及 scope/client 隔离。网络错误不等于空目录，首次失败可自动恢复；不使用持久缓存替代后台真值。见[复现和修复证据](../audits/2026-09-13-agent-directory-network-recovery.zh-CN.md)。
+
+2026-09-14：聊天侧栏的分组顺序由 HumanSidebar 的 `sectionOrder` 保存，旧偏好默认补齐系统组。分组与会话共享 sortable 交互，移动清除旧位置，删除自定义分区恢复默认归属；系统分区不可改名或删除。见[侧栏分组证据](../audits/2026-09-14-sidebar-groups.zh-CN.md)。

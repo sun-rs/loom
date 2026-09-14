@@ -5,10 +5,15 @@ import type { ReactElement, ReactNode } from "react";
 export function HintTooltip({
   children,
   content,
+  disabled = false,
+  side = "right",
 }: {
   children: ReactElement;
   content: ReactNode;
+  disabled?: boolean;
+  side?: "top" | "bottom" | "left" | "right";
 }) {
+  if (disabled) return children;
   return (
     <Tooltip.Root>
       <Tooltip.Trigger delay={0} render={children} />
@@ -20,7 +25,7 @@ export function HintTooltip({
             align: "shift",
             fallbackAxisSide: "none",
           }}
-          side="right"
+          side={side}
           sideOffset={6}
           className="rah-tooltip-positioner"
         >

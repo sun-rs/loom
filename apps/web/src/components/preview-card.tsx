@@ -12,7 +12,7 @@ import {
   placePreview,
 } from "../agent-trigger-contract.ts";
 
-/** Noninteractive preview only. Menus use menu keyboard behavior; dialogs use useDialogProtocol. */
+/** Shared hover lifetime; render-function content can expose a navigation action. */
 export function PreviewCard({
   label,
   onClick,
@@ -24,7 +24,7 @@ export function PreviewCard({
   label: string;
   onClick?: () => void;
   children: ReactNode;
-  content: ReactNode;
+  content: ReactNode | ((close: () => void) => ReactNode);
   triggerClassName?: string;
   className?: string;
 }) {
@@ -34,6 +34,7 @@ export function PreviewCard({
   const [phase, setPhase] = useState<"closed" | "pending" | "open">("closed"),
     id = useId();
   const open = phase === "open";
+  const interactive = typeof content === "function";
   const cancel = () => clearTimeout(timer.current);
   const close = () => {
     cancel();
@@ -54,10 +55,9 @@ export function PreviewCard({
       setPhase("closed");
       return;
     }
-    timer.current = setTimeout(
-      () => setPhase("closed"),
-      RAFT_AVATAR_PREVIEW.closeDelay,
-    );
+    timer.current = setTimeout(() => {
+      if (!card.current?.contains(document.activeElement)) setPhase("closed");
+    }, RAFT_AVATAR_PREVIEW.closeDelay);
   };
   useEffect(() => cancel, []);
   useLayoutEffect(() => {
@@ -93,6 +93,8 @@ export function PreviewCard({
       if (event.key === "Escape") {
         event.preventDefault();
         event.stopImmediatePropagation();
+        if (card.current?.contains(document.activeElement))
+          trigger.current?.focus();
         close();
       }
     };
@@ -119,7 +121,19 @@ export function PreviewCard({
         className={triggerClassName}
         ref={trigger}
         aria-label={label}
-        aria-describedby={open ? id : undefined}
+        aria-describedby={open && !interactive ? id : undefined}
+        aria-controls={open && interactive ? id : undefined}
+        aria-expanded={interactive ? open : undefined}
+        onKeyDown={(event) => {
+          if (interactive && open && event.key === "Tab" && !event.shiftKey) {
+            const action =
+              card.current?.querySelector<HTMLButtonElement>("button");
+            if (action) {
+              event.preventDefault();
+              action.focus();
+            }
+          }
+        }}
         onMouseEnter={enter}
         onMouseLeave={leave}
         onFocus={enter}
@@ -139,7 +153,8 @@ export function PreviewCard({
         createPortal(
           <aside
             id={id}
-            role="tooltip"
+            role={interactive ? "dialog" : "tooltip"}
+            aria-label={interactive ? label : undefined}
             ref={card}
             className={`rah-preview-card ${className ?? ""}`.trim()}
             style={{
@@ -149,10 +164,12 @@ export function PreviewCard({
               maxHeight: "calc(100vh - 12px)",
               overflow: "auto",
             }}
+            onFocus={cancel}
+            onBlur={leave}
             onMouseEnter={cancel}
             onMouseLeave={leave}
           >
-            {content}
+            {typeof content === "function" ? content(close) : content}
           </aside>,
           document.body,
         )}

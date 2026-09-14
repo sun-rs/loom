@@ -11,7 +11,8 @@ export function useReconciledQuery<
     | "activity.list"
     | "agent.presence.list"
     | "notification.list"
-    | "workspace.human.list",
+    | "workspace.human.list"
+    | "agent.list",
 >(
   client: RahClient,
   operation: K,

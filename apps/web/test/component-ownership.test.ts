@@ -120,7 +120,14 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
     dialogs,
     /<span className="rah-channel-settings-optional">可选<\/span>/u,
   );
-  assert.match(dialogs, />频道详情与设置</u);
+  assert.match(dialogs, /<ChannelSettingsHeader/u);
+  assert.match(
+    readFileSync(
+      new URL("../src/components/channel-settings-header.tsx", import.meta.url),
+      "utf8",
+    ),
+    />频道详情与设置</u,
+  );
   assert.match(dialogs, />偏好</u);
   assert.match(dialogs, /onUpdate/u);
   assert.match(dialogs, /useDialogProtocol/u);
@@ -138,7 +145,10 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   );
   assert.match(dialogs, /mutationPendingRef\.current/u);
   assert.match(
-    dialogs,
+    readFileSync(
+      new URL("../src/components/channel-settings-header.tsx", import.meta.url),
+      "utf8",
+    ),
     /aria-label="关闭频道设置"/u,
     "a full-width mobile settings drawer needs a visible pointer-close action",
   );
@@ -156,8 +166,8 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   assert.match(productCss, /box-shadow: var\(--raft-drawer-shadow\)/u);
   assert.match(
     productCss,
-    /height: 54px;\s+min-height: 54px;/u,
-    "the settings drawer title matches the measured Raft 54px header",
+    /height: var\(--head-h\);\s+min-height: var\(--head-h\);/u,
+    "the settings drawer shares the page header track, per the user alignment contract",
   );
   assert.match(
     productCss,
@@ -325,7 +335,8 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   );
   assert.match(agentSurface, /rah-agent-sidebar-resizer/u);
   assert.match(agentSurface, /const MIN_SIDEBAR_WIDTH = 180/u);
-  assert.match(agentSurface, /const MAX_SIDEBAR_WIDTH = 400/u);
+  // Raft index-BoAC7nSE.js slock:sidebarWidth: min180/max320/default240.
+  assert.match(agentSurface, /const MAX_SIDEBAR_WIDTH = 320/u);
   assert.match(agentSurface, /const DEFAULT_SIDEBAR_WIDTH = 240/u);
   assert.match(agentSurface, /reconcileAgentRouteIdentity/u);
   assert.match(agentSurface, /agents\.map\(\(\{ agentDefinitionId \}\)/u);

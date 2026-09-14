@@ -12,9 +12,9 @@ Kernel 保存定义意图、按 participant 匹配 mount 并冻结 Placement；A
 
 ## Runtime 级 Guide 设置
 
-用户更新的本地扩展：已接通的 Codex/Claude Guide 默认开启，其他接法等待；已有显式偏好保留。daemon 以 `runtime-guide.json` 保存按 CLI 的 Guide 开关与 revision。它只拥有投递偏好；待处理消息仍由 Kernel Inbox/Activation 唯一持久化。Human 认证 API 与共享 Client SDK 读取/修改，Host 在通知读取前及实际投递前检查偏好，技术能力、会话/工具边界仍由 adapter 检查。关闭不会撤回已提交输入，开启也不确认 read/ACK/Task；传输拒绝仍留在原 follow-up。等待仅延后主动输入，不隐藏已经发布的 Room 消息，Agent 主动读取仍受既有权限与 freshness 规则约束。
+用户更新的本地扩展：已接通的 Codex/Claude Guide 默认开启，其他接法等待；已有显式偏好保留。daemon 以 `runtime-guide.json` 保存按 CLI 的 Guide 开关与 revision。它只拥有投递偏好；待处理消息仍由 Kernel Inbox/Activation 唯一持久化。Human 认证 API 与共享 Client SDK 读取和修改独立 Guide 开关，Host 在通知读取前及实际投递前检查偏好，技术能力、会话/工具边界仍由 adapter 检查。关闭不会撤回已提交输入，开启也不确认 read/ACK/Task；传输拒绝仍留在原 follow-up。等待仅延后主动输入，不隐藏已经发布的 Room 消息，Agent 主动读取仍受既有权限与 freshness 规则约束。
 
-当前可选接法为 Codex app-server 与 Claude stream-json；Kimi ACP、OpenCode 尚未接通的 Guide 不可开启，未知 Runtime 默认等待。设置影响下一次尚未开始的投递，运行中可关闭；多页面冲突以 revision 拒绝并要求重读。此开关是用户授权扩展，不能冒称 Raft 已有同样设置。[源码对照](../audits/2026-09-11-runtime-wait-guide-source-matrix.zh-CN.md)。
+当前可选接法为 Codex app-server 与 Claude stream-json；Kimi ACP、OpenCode 尚未接通的 Guide 不可开启，未知 Runtime 默认等待。开关影响下一次尚未开始的投递，可独立开关；revision 冲突要求重新读取。此开关是用户授权扩展，不能冒称 Raft 已有同样设置。[源码对照](../audits/2026-09-11-runtime-wait-guide-source-matrix.zh-CN.md)。
 
 ## 当前原生忙时投递扩展
 
@@ -227,4 +227,14 @@ result 后不再开放输入。恢复失败转新建时重建 gate 并恢复共�
 
 用户要求内置 Claude/Codex driver 在每次启动时关闭 Provider 自动记忆读取/生成，保留登录、HOME、会话恢复与 RAH Agent MEMORY.md/notes。这是明确的本地策略，不是 Raft 已有开关。旧会话上下文不会被清除；自定义 Runtime 与普通文件读取不属于自动记忆开关保证。来源与验证见[进程级自动记忆关闭](../audits/2026-09-11-provider-auto-memory-disable.zh-CN.md)。
 
-管理页的内置 CLI 启动覆盖参数由 daemon 的现有 RuntimeGuideSettings 单点持有；在 Activation 准备时冻结到环境 lease，Driver 使用覆盖 argv（旧附加参数保留兼容）；null 恢复默认并清理旧附加值。它不热改活跃进程，不覆盖通信协议、Agent 模型及自动记忆策略，不创建第二个 Runtime 或记忆 owner。详见[启动参数设置](../audits/2026-09-11-provider-launch-settings.zh-CN.md)。
+管理页只展示系统固定启动命令与环境变量，不再提供全局启动参数/环境变量的追加、覆盖或保存；独立的 Guide 忙时投递开关保留。历史全局启动覆盖、附加参数及环境变量保留磁盘兼容，但不进入读取视图或下一次启动；不自动迁移到 Agent。详见[只读 Provider 设置](../audits/2026-09-13-provider-settings-readonly.zh-CN.md)。
+
+## 显式模型目录刷新
+
+Human 可通过 host.runtime.list 的可选 refreshOfferId 请求 daemon 对已配置 Runtime 重新探测模型目录。同一 offer 的并发刷新合并；普通轮询保持轻量。刷新必须保持 active revision 与 executable identity，发布新的不可变 offer observation，禁止改写既有 Placement/RunAttempt 引用。失败保留原目录，二进制更换要求重启。证据见[成员详情与目录修复](../audits/2026-09-13-member-runtime-detail-parity.zh-CN.md)。
+
+## Host 启动配置作用域
+
+RuntimeGuideSettings 是 Host 本地启动配置的唯一所有者。可编辑作用域仅为 AgentDefinition + runtime；执行时使用 Activation 的 Agent 身份读取。全局启动配置更新返回 conflict；仅 enabled 字段的独立 Guide 更新仍允许，系统受控通信、模型及环境参数保持保护。启动配置与 canonical 模型策略独立保存，下一次启动生效，不改写活动 Run。旧的全局继承策略已由[只读 Provider 设置](../audits/2026-09-13-provider-settings-readonly.zh-CN.md)取代。
+
+2026-09-13 用户范围收敛：Agent 额外启动配置仅支持环境变量；历史自定义 argv 不再应用或开放写入，系统生成参数与独立 Guide 设置保留。详见[环境变量收口](../audits/2026-09-13-agent-environment-only.zh-CN.md)。

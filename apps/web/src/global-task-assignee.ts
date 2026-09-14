@@ -7,20 +7,12 @@ import {
 } from "@rah-os/client-core";
 
 export type TaskAssigneeIntent =
-  | { kind: "assign"; assigneeId: string }
-  | { kind: "unassign" }
-  | { kind: "reassign"; assigneeId: string; reason: string };
+  { kind: "assign"; assigneeId: string } | { kind: "unassign" };
 export function taskAssigneeMode(
-  task: Task,
+  _task: Task,
   principalId: string | undefined,
-): "idle" | "reassign" | "readonly" {
-  if (task.creatorId !== principalId) return "readonly";
-  if (task.state === "todo" && !task.claimedBy) return "idle";
-  return (task.state === "claimed" || task.state === "in_progress") &&
-    task.assigneeId !== undefined &&
-    task.claimedBy === task.assigneeId
-    ? "reassign"
-    : "readonly";
+): "idle" | "readonly" {
+  return principalId === undefined ? "readonly" : "idle";
 }
 
 /** One UI command identity. After an uncertain response, replay exactly the first
@@ -47,16 +39,10 @@ export function createTaskAssigneeCommand(input: {
     const common = { taskId: task.taskId, idempotencyKey, basedOnRoomSeq };
     return intent.kind === "unassign"
       ? client.request("task.unassign", common)
-      : intent.kind === "assign"
-        ? client.request("task.assign", {
-            ...common,
-            assigneeId: intent.assigneeId,
-          })
-        : client.request("task.reassign", {
-            ...common,
-            assigneeId: intent.assigneeId,
-            reason: intent.reason,
-          });
+      : client.request("task.assign", {
+          ...common,
+          assigneeId: intent.assigneeId,
+        });
   };
   return async () => {
     if (attemptedSeq !== undefined) return mutate(attemptedSeq);
@@ -81,10 +67,7 @@ export function createTaskAssigneeCommand(input: {
         )
           throw new Error("任务已发生变化，请刷新后重试");
         const mode = taskAssigneeMode(current, input.principalId);
-        if (
-          !health.capabilities.taskWrite ||
-          (intent.kind === "reassign" ? mode !== "reassign" : mode !== "idle")
-        )
+        if (!health.capabilities.taskWrite || mode !== "idle")
           throw new Error("当前任务不允许此负责人操作");
         attemptedSeq = seq;
         try {

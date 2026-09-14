@@ -51,10 +51,27 @@
   border-top: var(--bd);
   padding: 8px 12px;
 }
-.rah-agent-preview h4 {
-  font-size: 10px;
+.rah-agent-preview-activity-open {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: 700 10px/1.5 var(--sans);
+  letter-spacing: 0.025em;
   color: var(--ink-50);
   margin-bottom: 6px;
+  cursor: pointer;
+}
+.rah-agent-preview-activity-open svg {
+  width: 10px;
+  height: 10px;
+  flex: none;
+}
+.rah-agent-preview-activity-open:hover {
+  color: var(--ink);
+  text-decoration: underline;
 }
 .rah-preview-event {
   display: flex;
@@ -93,13 +110,4 @@
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-.rah-agent-preview-description {
-  border-top: var(--bd);
-  padding: 8px 12px;
-  color: var(--ink-70);
-  font: 400 12px/16px var(--sans);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }

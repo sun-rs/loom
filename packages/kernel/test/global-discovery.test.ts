@@ -1099,3 +1099,38 @@ test("Search directory preserves canonical DM participants for identity cards", 
     f.close();
   }
 });
+
+test("explicit mark unread restores durable activity and refuses an obsolete message head", () => {
+  const f = fixture();
+  try {
+    f.post(f.channel.roomId, "hello", true);
+    const throughSeq = f.head(f.channel.roomId);
+    f.kernel.markHumanActivity(f.actor, {
+      roomId: f.channel.roomId,
+      throughSeq,
+      action: "done",
+    });
+    f.kernel.markHumanActivity(f.actor, {
+      roomId: f.channel.roomId,
+      throughSeq,
+      action: "unread",
+    });
+    assert.equal(
+      f.kernel.listHumanActivity(f.actor, { workspaceId: f.workspaceId })
+        .summary?.unreadActivityCount,
+      1,
+    );
+    f.post(f.channel.roomId, "newer", true);
+    assert.throws(
+      () =>
+        f.kernel.markHumanActivity(f.actor, {
+          roomId: f.channel.roomId,
+          throughSeq,
+          action: "unread",
+        }),
+      /changed|stale/,
+    );
+  } finally {
+    f.close();
+  }
+});

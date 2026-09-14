@@ -5,8 +5,10 @@ import type { LocalRuntimeInventoryEntry } from "@rah-os/protocol";
 
 import {
   DEFAULT_TOOL_ACCESS_MODE,
+  runtimeFastTier,
   normalizeModelBindingId,
   runtimeModelOptions,
+  runtimeModelLabel,
   runtimeReasoningOptions,
   runtimeToolAccessModes,
   supportedReasoningLevels,
@@ -95,4 +97,106 @@ test("Agent permission is fixed to the Raft-compatible unattended policy", () =>
 test("model selection never invents a runtime default", () => {
   assert.deepEqual(runtimeModelOptions(runtime), []);
   assert.equal(normalizeModelBindingId(undefined, runtime), "");
+});
+
+test("OpenCode labels preserve provider identity when model names collide", () => {
+  const r = {
+    ...runtime,
+    cliId: "opencode",
+    modelBindingDescriptors: ["deepseek", "aihubmix"].map((provider) => ({
+      modelBindingId: `${provider}/deepseek`,
+      modelId: "deepseek",
+      provider,
+      displayName: "DeepSeek",
+      evidence: "probed",
+      capabilityClasses: [],
+      supportedReasoning: [],
+      supportedServiceTiers: ["default"],
+    })),
+  } as LocalRuntimeInventoryEntry;
+  assert.deepEqual(
+    runtimeModelOptions(r).map((x) => x.label),
+    ["deepseek · DeepSeek", "aihubmix · DeepSeek"],
+  );
+});
+
+test("Fast mode requires a verified model service tier", () => {
+  const model = {
+    capabilityClasses: [],
+    evidence: "probed",
+    modelBindingId: "m",
+    modelId: "m",
+    provider: "openai",
+    supportedReasoning: [],
+    supportedServiceTiers: ["default", "priority"],
+  } as const;
+  const candidate = {
+    ...runtime,
+    modelBindingDescriptors: [model],
+  } as unknown as LocalRuntimeInventoryEntry;
+  assert.equal(runtimeFastTier(candidate, "m"), "priority");
+  assert.equal(runtimeFastTier(candidate, "missing"), undefined);
+  assert.equal(
+    runtimeFastTier(
+      {
+        ...candidate,
+        modelBindingDescriptors: [
+          { ...candidate.modelBindingDescriptors[0]!, evidence: "declared" },
+        ],
+      },
+      "m",
+    ),
+    undefined,
+  );
+});
+
+test("runtime options retain provider-qualified friendly model labels", () => {
+  const binding = {
+    modelBindingId: "aihubmix/deepseek-v4",
+    modelId: "deepseek-v4",
+    displayName: "DeepSeek V4",
+    provider: "aihubmix",
+    evidence: "probed",
+    capabilityClasses: [],
+    supportedReasoning: [],
+    supportedServiceTiers: ["default"],
+  } satisfies LocalRuntimeInventoryEntry["modelBindingDescriptors"][number];
+  const openCode = {
+    ...runtime,
+    cliId: "opencode",
+    modelBindingDescriptors: [binding],
+  } satisfies LocalRuntimeInventoryEntry;
+  assert.equal(runtimeModelLabel(openCode, binding), "aihubmix · DeepSeek V4");
+  assert.equal(
+    runtimeModelLabel(openCode, { ...binding, provider: "deepseek" }),
+    "deepseek · DeepSeek V4",
+  );
+  assert.equal(
+    runtimeModelOptions(openCode)[0]?.label,
+    runtimeModelLabel(openCode, binding),
+  );
+  assert.equal(
+    runtimeModelLabel(openCode, { ...binding, displayName: undefined }),
+    "aihubmix · deepseek-v4",
+  );
+  for (const cliId of ["codex", "claude", "kimi"] as const) {
+    assert.equal(
+      runtimeModelLabel({ ...runtime, cliId }, binding),
+      "DeepSeek V4",
+    );
+    assert.equal(
+      runtimeModelLabel(
+        { ...runtime, cliId },
+        { ...binding, displayName: undefined },
+      ),
+      "deepseek-v4",
+    );
+  }
+  assert.equal(
+    runtimeModelLabel(
+      { ...runtime, executable: "/usr/local/bin/opencode" },
+      binding,
+    ),
+    "aihubmix · DeepSeek V4",
+  );
 });

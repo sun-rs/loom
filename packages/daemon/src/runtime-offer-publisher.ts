@@ -15,7 +15,7 @@ export class RuntimeOfferPublisher {
   readonly #kernel: RoomKernel;
   readonly #leaseMs: number;
   readonly #maxConcurrent: number;
-  readonly #probeReport: RuntimeProfileProbeReport;
+  #probeReport: RuntimeProfileProbeReport;
   #available: boolean;
   readonly #refreshAvailability: () => Promise<boolean>;
   readonly #revisionIsActive: () => boolean;
@@ -86,6 +86,34 @@ export class RuntimeOfferPublisher {
     if (this.#refreshWorkspaceMountDescriptors)
       this.#workspaceMountDescriptors =
         await this.#refreshWorkspaceMountDescriptors();
+  }
+
+  replaceProbeReport(report: RuntimeProfileProbeReport): void {
+    const identity = report.executableIdentity,
+      expected = this.#runtimeExecutableIdentity;
+    if (
+      !this.#revisionIsActive() ||
+      !report.available ||
+      !identity ||
+      !expected ||
+      identity.contentDigest !== expected.contentDigest ||
+      identity.resolvedExecutablePath !== expected.resolvedExecutablePath ||
+      identity.requestedExecutable !== expected.requestedExecutable ||
+      identity.byteLength !== expected.byteLength
+    ) {
+      throw new Error(
+        "Runtime executable identity changed or unavailable; restart required",
+      );
+    }
+    const previous = this.#probeReport;
+    this.#probeReport = structuredClone(report);
+    try {
+      if (!this.publishAvailable())
+        throw new Error("Runtime host is no longer active");
+    } catch (error) {
+      this.#probeReport = previous;
+      throw error;
+    }
   }
 
   publishAvailable(): boolean {

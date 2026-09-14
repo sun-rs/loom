@@ -132,7 +132,12 @@ export class ProfileImageStore {
       const path = this.#path(name);
       const metadata = lstatSync(path);
       if (!metadata.isFile() || metadata.isSymbolicLink()) continue;
-      entries.push({ avatarKey: name, modifiedAtMs: metadata.mtimeMs });
+      // Filesystems expose fractional milliseconds; Kernel timestamps use integers.
+      // Round upward so normalization never shortens the collection grace period.
+      entries.push({
+        avatarKey: name,
+        modifiedAtMs: Math.ceil(metadata.mtimeMs),
+      });
     }
     return entries.sort((left, right) =>
       left.avatarKey.localeCompare(right.avatarKey),

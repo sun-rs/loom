@@ -1,3 +1,4 @@
+import { chatMessageDateLabel } from "./chat-timeline-presentation.ts";
 import type { RahTimeFormat } from "./settings-preferences.ts";
 
 function activeTimeFormat(): RahTimeFormat {
@@ -22,4 +23,23 @@ export function formatRahDateTime(
     ...options,
     ...(includesTime ? { hour12: timeFormat === "12" } : {}),
   }).format(parsed);
+}
+
+export function formatChatMessageTime(
+  value: string,
+  now = new Date(),
+  timeFormat: RahTimeFormat = activeTimeFormat(),
+  timeZone?: string,
+): string {
+  const date = chatMessageDateLabel(value, now, timeZone);
+  const time = formatRahDateTime(
+    value,
+    {
+      hour: "2-digit",
+      minute: "2-digit",
+      ...(timeZone === undefined ? {} : { timeZone }),
+    },
+    timeFormat,
+  );
+  return date ? `${date} ${time}` : time;
 }

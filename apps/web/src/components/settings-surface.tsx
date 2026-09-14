@@ -1,3 +1,4 @@
+import { SystemChannelSettings } from "./system-channel-settings.tsx";
 import { RuntimeGuideSettingsContent } from "./runtime-guide-settings.tsx";
 import { useEffect, useState } from "react";
 
@@ -89,6 +90,7 @@ export function SettingsSurface({
   client,
   currentPrincipal,
   onWorkspaceUpdated,
+  onSystemChannelUpdated,
   onPrincipalUpdated,
   workspace,
 }: {
@@ -97,6 +99,7 @@ export function SettingsSurface({
   client: RahClient;
   currentPrincipal: Principal | undefined;
   membershipRole?: MembershipRole | undefined;
+  onSystemChannelUpdated: () => void;
   onWorkspaceUpdated: (workspace: Workspace) => void;
   onPrincipalUpdated: (principal: Principal) => void;
   workspace: Workspace | undefined;
@@ -172,6 +175,12 @@ export function SettingsSurface({
           />
         ) : section === "administration" ? (
           <AdministrationSettingsContent>
+            <SystemChannelSettings
+              client={client}
+              workspace={workspace}
+              canManage={canManageWorkspace}
+              onUpdated={onSystemChannelUpdated}
+            />
             <RuntimeGuideSettingsContent client={client} />
           </AdministrationSettingsContent>
         ) : section === "about" ? (

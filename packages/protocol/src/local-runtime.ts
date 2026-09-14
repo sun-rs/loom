@@ -10,7 +10,9 @@ import {
   ToolAccessModeSchema,
 } from "./execution-policy.ts";
 
-export const LocalRuntimeInventoryRequestSchema = z.object({}).strict();
+export const LocalRuntimeInventoryRequestSchema = z
+  .object({ refreshOfferId: z.string().min(1).max(200).optional() })
+  .strict();
 export type LocalRuntimeInventoryRequest = z.infer<
   typeof LocalRuntimeInventoryRequestSchema
 >;

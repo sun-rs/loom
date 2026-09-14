@@ -1,3 +1,4 @@
+import { LeaseConflictError } from "@rah-os/core";
 import type { ClientPushSubscription, WebPushPayload } from "@rah-os/protocol";
 
 type PushKernel = {
@@ -117,12 +118,19 @@ export class WebPushOutboxDispatcher {
           outboxId: entry.outboxId,
         });
       } catch (error) {
-        this.#kernel.retryOutbox({
-          dispatcherId: this.#dispatcherId,
-          error: error instanceof Error ? error.message : String(error),
-          outboxId: entry.outboxId,
-          retryAfterMs: this.#retryAfterMs,
-        });
+        // Suspension or slow I/O may outlive the lease. The Kernel owns
+        // reclamation; this dispatcher must stop writing through the old lease.
+        if (error instanceof LeaseConflictError) continue;
+        try {
+          this.#kernel.retryOutbox({
+            dispatcherId: this.#dispatcherId,
+            error: error instanceof Error ? error.message : String(error),
+            outboxId: entry.outboxId,
+            retryAfterMs: this.#retryAfterMs,
+          });
+        } catch (retryError) {
+          if (!(retryError instanceof LeaseConflictError)) throw retryError;
+        }
       }
     }
   }

@@ -49,7 +49,7 @@ test("created Agents come from revision-one identity provenance and exclude tomb
       basedOnRoomSeq: currentSeq(),
       controlRoomId: workspace.controlRoom.roomId,
       idempotencyKey: "policy",
-      modelIntent: { fallback: "disabled" },
+      modelIntent: { fallback: "disabled", exactBindingIds: ["fixture-model"] },
       preferred: [],
       required: {
         allowedProtocolFamilies: ["rah-worker-process/v1"],
@@ -87,6 +87,17 @@ test("created Agents come from revision-one identity provenance and exclude tomb
     const childDefinition = create(
       child.principal.principalId,
       "child-definition",
+    );
+    assert.equal(
+      kernel
+        .listAgentCatalog(actor)
+        .find(
+          (entry) =>
+            entry.definition.agentDefinitionId ===
+            parentDefinition.definition.agentDefinitionId,
+        )?.modelBindingId,
+      "fixture-model",
+      "chat catalog exposes the saved model binding without per-message profile requests",
     );
     kernel.close();
 

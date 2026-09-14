@@ -22,6 +22,12 @@ const DAEMON_STARTUP_TIMEOUT_MS = 60_000;
 export type LocalCoreWorkbenchMode =
   | { kind: "loopback"; port: number }
   | {
+      kind: "tailnet";
+      port: number;
+      bindHost: string;
+      additionalBindHosts?: string[];
+    }
+  | {
       bindHost: string;
       certificatePath?: string;
       kind: "lan";
@@ -144,13 +150,23 @@ export async function startLocalCoreWorkbench(input: {
       daemonOrigin: requiredDaemonOrigin(application),
       staticDirectory,
     };
-    if (input.mode.kind === "loopback") {
+    if (input.mode.kind === "loopback" || input.mode.kind === "tailnet") {
       gateway = new LocalWorkbenchGateway({
         ...common,
+        ...(input.mode.kind === "tailnet"
+          ? {
+              bindHost: input.mode.bindHost,
+              ...(input.mode.additionalBindHosts === undefined
+                ? {}
+                : { additionalBindHosts: input.mode.additionalBindHosts }),
+              browserAccess: "trusted-network" as const,
+            }
+          : {
+              sessionToken: loadOrCreateLocalWorkbenchSessionToken({
+                directory: stateDirectory,
+              }),
+            }),
         port: validatePort(input.mode.port, true),
-        sessionToken: loadOrCreateLocalWorkbenchSessionToken({
-          directory: stateDirectory,
-        }),
       });
       await gateway.start();
       return runningWorkbench({

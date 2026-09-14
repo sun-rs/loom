@@ -1,3 +1,135 @@
+[聊天列表触摸与移动导航](./audits/2026-09-14-sidebar-touch-and-mobile-navigation.zh-CN.md)：长按不选字、不误导航，触摸滚动优先、停用手指拖动排序；底栏改抽屉的取舍与设备验收边界。
+
+[聊天侧栏分组与归属](./audits/2026-09-14-sidebar-groups.zh-CN.md)：分组间距、空分区、编辑图标、拖动顺序与会话单一归属。
+
+[搜索预览分栏与清理](./audits/2026-09-14-search-preview-layout.zh-CN.md)：可拖动分栏、私聊/任务统一预览、关闭返回、离开清空、摘要hover与标签字体。
+
+[Task回复提示字号](./audits/2026-09-14-task-reply-heading-type.zh-CN.md)：回复开头与数量按Raft源码统一12px/16px。
+
+[搜索跳转关键词](./audits/2026-09-14-search-destination-keywords.zh-CN.md)：补齐目标正文黄色关键词，保留点击同时清除蓝黄及滚动保留规则。
+
+[Agent候选行颜色约定](./audits/2026-09-14-agent-choice-hover-contract.zh-CN.md)：反证“弹窗明黄、基础页浅黄”；统一颜色档位、交互状态和四类组件配置，禁止每个窗口自行调色，区分设计约束与代码迁移。
+
+[新建分区弹窗对齐](./audits/2026-09-14-section-create-dialog-parity.zh-CN.md)：紧凑卡片、表情选择与持久化、独立弹窗层和移动布局；原生表情修复正式CSP下外部图源不可用。
+
+[创建频道弹窗对齐](./audits/2026-09-14-channel-create-dialog-parity.zh-CN.md)：统一加号/右键入口的卡片、字段、成员列表及按钮规格。
+
+[各页面当前用户身份](./audits/2026-09-14-current-human-identity-surfaces.zh-CN.md)：正文、回复预览、评论、动态、搜索、收藏和转发使用当前显示名称与头像。
+
+[Room／私聊两页布局](./audits/2026-09-14-two-page-conversation-layout.zh-CN.md)：按点击来源替换消息列和人员页，窄屏优先新页面，设置与Task覆盖层独立。
+
+[文件评论用户提及](./audits/2026-09-14-file-comment-plain-mentions.zh-CN.md)：取消当前用户提及黄底，普通聊天高亮及动态名称不变。
+
+[运行时切换真实实验](./audits/2026-09-14-runtime-switch-real-evidence.zh-CN.md)：同Agent/Room的Opus High→Sonnet Low→Codex Luna Low，原生历史核验。
+
+[文件评论上下文精简](./audits/2026-09-14-file-comment-context-presentation.zh-CN.md)：聊天区分评论/回复，侧栏移除重复文件名和发送成功文字，分析回复关联边界。
+
+[Task 弹窗操作历史](./audits/2026-09-14-task-detail-operation-history.zh-CN.md)：默认最新回复、操作时间线与频道成员负责人候选。
+
+[文件评论输入区精简](./audits/2026-09-14-comment-composer-remove-discussion-link.zh-CN.md)：移除打开讨论，×关闭预览保留原页面。
+
+[全局动态显示名称](./audits/2026-09-14-activity-display-names.zh-CN.md)：卡片作者、摘要和消息列标题中的Human提及随显示名称更新。
+
+[Agent悬浮卡与动态入口](./audits/2026-09-14-agent-hover-activity-entry.zh-CN.md)：移除描述行，最近动态可点击并打开右侧动态页。
+
+[文件评论身份与引用层级](./audits/2026-09-14-file-comment-identity-and-location.zh-CN.md)：动态显示名称、文件标签与章节定位分层。
+
+[文件评论时间顺序](./audits/2026-09-14-file-comment-chronology.zh-CN.md)：取消文件位置分组，改为时间升序及同时间Room序号。
+
+[紧凑聊天模型标识](./audits/2026-09-14-compact-chat-model-identifiers.zh-CN.md)：统一provider/model_id，缺省provider时仅显示模型ID。
+
+[成员整行光标与头像悬停](./audits/2026-09-14-member-pointer-avatar-hover.zh-CN.md)：可点击成员行手型、头像90%亮度及移走恢复。
+
+[聊天与评论输入框自动增高](./audits/2026-09-14-composer-autosize.zh-CN.md)：共用Raft文字区规格，自动增高至128px后内部滚动，取消手工拖拽。
+
+[聊天提及动态显示名称](./audits/2026-09-14-mention-display-names.zh-CN.md)：按当前身份显示名称渲染旧消息提及，保持原文和底层用户名。
+
+[Markdown报告纸张与大纲](./audits/2026-09-14-markdown-paper-and-outline.zh-CN.md)：2px边框、4px硬阴影，以及1280px大纲断点与80px吸顶。
+
+[预览评论按钮图标](./audits/2026-09-14-preview-comment-toggle-icon.zh-CN.md)：从 Raft 提取气泡内三点图标，复用于预览工具栏。
+
+[Human任务自由编辑](./audits/2026-09-14-human-task-edit-parity.zh-CN.md)：后端五状态切换、各状态负责人修改、旧执行隔离与共享前端菜单。
+
+[文件评论数与引用图标](./audits/2026-09-14-file-comment-count-and-glyph.zh-CN.md)：按附件统计、发表评论后更新及Raft file-text图标。
+
+[消息定位蓝色选中态](./audits/2026-09-14-message-location-focus.zh-CN.md)：共享频道、消息列与搜索定位样式，移除成功横幅。
+
+[聊天模型的 Provider 标识](./audits/2026-09-14-chat-model-provider-labels.zh-CN.md)：OpenCode 同名模型区分，正文与运行时配置共用标签。
+
+[聊天日期标识与跨日更新](./audits/2026-09-14-chat-calendar-timestamps.zh-CN.md)：Room/私聊今天仅时间、昨天和历史日期，以及共享午夜更新。
+
+[提及标签与关注控件](./audits/2026-09-14-mention-and-thread-follow-controls.zh-CN.md)：加粗AGENT、隐藏0入口、移除关注确认；关闭/返回按钮遵循最新响应式布局合同。
+
+[消息列与资料页空间分配、搜索对齐](./audits/2026-09-14-thread-inspector-search-parity.zh-CN.md)：内缩圆角关注行、并列布局、搜索框及蓝底选中。
+
+[成员悬停、移除确认与权限差异](./audits/2026-09-14-room-member-removal-parity.zh-CN.md)：修正重复透明度、按钮规格，并验证成员移除后的通知与历史边界。
+
+[系统频道实时显示与操作字号](./audits/2026-09-14-system-channel-live-visibility.zh-CN.md)：隐藏/恢复后刷新目录，核验动态过滤和历史恢复。
+
+[系统频道保存按钮尺寸](./audits/2026-09-14-system-channel-save-size.zh-CN.md)：Raft 12px 字号、32px 按钮高度。
+
+- [消息附件卡片与文件评论（2026-09-14）](audits/2026-09-14-message-artifact-cards-and-comments.zh-CN.md)
+
+[快速模式卡片与配置生效时点](./audits/2026-09-14-runtime-fast-mode-and-apply-timing.zh-CN.md)：整卡切换、黄色勾选及保存/调度/当前执行的源码边界。
+
+[任务标识状态颜色同步](./audits/2026-09-14-task-reference-colors.zh-CN.md)：聊天、正文引用、动态复用当前任务状态配色。
+
+[技能目录分组标签](./audits/2026-09-14-skill-directory-groups.zh-CN.md)：Raft浅黄色目录标识、Codex显示别名与工作区空状态。
+
+[运行时配置编辑图标悬停](./audits/2026-09-14-runtime-edit-hover.zh-CN.md)：仅改变图标颜色，移除灰色底。
+
+[聊天任务标识与任务详情弹窗](./audits/2026-09-14-chat-task-modal.zh-CN.md)：共享状态、负责人、历史和持久回复，保留频道背景。
+
+[外观设置显示 Agent 模型](./audits/2026-09-14-agent-model-appearance.zh-CN.md)：本设备开关、即时预览和聊天目录模型投影。
+
+- [添加环境变量按钮悬停对齐](audits/2026-09-13-runtime-add-variable-hover.zh-CN.md)
+
+[服务日志轮转与 Guide/升级/登录恢复澄清](audits/2026-09-13-service-log-rotation.zh-CN.md)：Raft 启动前 64MiB/跨日轮转，14 天保留及新句柄接线。
+
+[关系图头像与图标](./audits/2026-09-13-member-graph-avatar-icons.zh-CN.md)：移除节点强制蓝底，复用真实头像配色；页头、关系计数和侧栏采用 Raft git-branch 图标。
+
+[Agent 一次确认删除与弹窗规格](./audits/2026-09-13-agent-deletion-cascade.zh-CN.md)：持久停止请求、终止证明后清理、失败恢复及 Raft 确认框动态状态。
+
+[删除 Agent 与服务重启确认](./audits/2026-09-13-agent-delete-and-service-confirmation.zh-CN.md)：384px 确认规格、资料 SVG 关闭按钮、服务确认及灰色右侧状态提示。
+
+[Raft Computer 1.0.18 → 1.0.31 累计差异与复用优先级](audits/2026-09-13-raft-computer-1.0.31-source-review.zh-CN.md)：源码复核及环境变量编辑器字体修正。
+
+[正文引用标识规格与控制语义](./audits/2026-09-13-inline-reference-parity-and-control-semantics.zh-CN.md)：Raft 实际消息 CSS、几何回归与 Agent/频道停止、重启、重置、删除的区别。
+
+[Agent 环境变量与聊天任务开关收口](audits/2026-09-13-agent-environment-only.zh-CN.md)：仅环境变量、统一保存、移除聊天任务负责人区域。
+
+[环境变量与 CLI 参数研究](./audits/2026-09-13-agent-runtime-options-research.zh-CN.md)：Raft envVars、四种 CLI 差异、现有支持边界和分层建议；管理卡片默认展开。
+
+[Agent 目录断网恢复](./audits/2026-09-13-agent-directory-network-recovery.zh-CN.md)：修复短暂网络错误后 Agent 列表清空且不恢复。
+
+[Provider 启动配置只读](./audits/2026-09-13-provider-settings-readonly.zh-CN.md)：撤销全局启动追加配置，保留 Agent 独立配置和忙时投递开关。
+
+[成员资料入口边界](./audits/2026-09-13-member-profile-entry-boundary.zh-CN.md)：聊天头像用右侧面板，成员页 Human/Agent 在主内容区切换，刷新与后退保持。
+
+[动态时间与按钮互换](./audits/2026-09-13-activity-timestamp-action-swap.zh-CN.md)：更新 Raft Web 基线，时间右锚点 14px，悬停/聚焦时与处理按钮互换。
+
+[#all 固定成员规则](./audits/2026-09-13-all-channel-membership.zh-CN.md)：Kernel 自动成员、启动补齐与增删入口关闭。
+
+[文件预览评论入口](./audits/2026-09-13-file-preview-comment-entry.zh-CN.md)：按原消息上下文与文件类型控制评论，保留原权限和评论服务。
+
+[成员右键停止弹窗](./audits/2026-09-13-member-stop-confirmation.zh-CN.md)：核对 Raft zi 入口并修复宽度、X、按钮、标题线和文案。
+
+[Agent 启动配置与频道弹窗对齐](./audits/2026-09-13-agent-launch-channel-dialog-parity.zh-CN.md)：全局/Agent 环境和参数继承、冲突拒绝及 Raft zi 布局证据。
+
+- [Computer 控件与侧栏对齐](audits/2026-09-13-computer-controls-and-sidebar-parity.zh-CN.md)
+- [Raft Computer 1.0.31 源码更新核验](audits/2026-09-13-raft-computer-1.0.31-source-review.zh-CN.md)
+
+[Computer 批量重启弹窗](./audits/2026-09-13-computer-batch-restart-dialog.zh-CN.md)：修正文案及误用单Agent小按钮的尺寸。
+
+[动态时间锚点核查与窄屏修复](./audits/2026-09-13-activity-time-anchor.zh-CN.md)：旧构建的56px证据已失效，当前以顶部的新版时间/按钮互换记录为准。
+
+[成员详情与模型目录修复](./audits/2026-09-13-member-runtime-detail-parity.zh-CN.md)：Human 侧栏、排行与列表参数、模型提供商、显式刷新及快速模式。
+
+- [截图 UI 修复与部署边界](audits/2026-09-12-screenshot-ui-closure.zh-CN.md)
+  [停用浏览器 token 与 HTTPS 门槛](audits/2026-09-12-trusted-network-access.zh-CN.md)：Tailnet 入口不校验浏览器 token/cookie，错误重连不退回登录表单。
+
+[移动端常驻导航与任务布局](audits/2026-09-12-mobile-navigation-and-task-layout.zh-CN.md)：底栏统一占位、容器宽度决定默认任务视图、引用基线修复。
+
 [Computer 选择栏与分割线收口](audits/2026-09-12-computer-selection-toolbar-refinement.zh-CN.md)：选择模式标题操作、28px批量按钮、持续选中阴影与内缩分割线。
 
 [成员侧栏与运行时表单收口](audits/2026-09-12-member-profile-cleanup.zh-CN.md)：精简入口，Human 页面复用 Agent 侧栏，明确选模与常显推理强度。
@@ -631,3 +763,27 @@ Claude 工具边界追加与 Kimi 原生接口差异：[来源、实施与验证
 - [频道设置开关与操作修复（2026-09-12）](audits/2026-09-12-channel-settings-repair.zh-CN.md)
 
 - [Computer 选择与工作区 UI（2026-09-12）](audits/2026-09-12-computer-selection-and-workspace-ui.zh-CN.md)
+
+- [2026-09-12 非阻塞构建恢复：白屏与已返回数据被扣留](audits/2026-09-12-nonblocking-build-recovery.zh-CN.md)。
+
+- [2026-09-12 通知 Outbox 租约失效导致服务退出](audits/2026-09-12-web-push-lease-crash.zh-CN.md)。
+
+- [Tailnet 模式补回本机入口](audits/2026-09-12-tailnet-loopback-entry.zh-CN.md)
+
+- [侧栏上下文菜单核对](audits/2026-09-12-sidebar-context-menu-parity.zh-CN.md)
+
+- [Human 头像悬浮资料卡尺寸修复](audits/2026-09-13-human-avatar-preview.zh-CN.md)
+
+- [Agent 顶栏响应式操作与 tooltip](audits/2026-09-13-agent-header-responsive-actions.zh-CN.md)
+
+- [运行时配置入口与环境变量摘要](audits/2026-09-13-runtime-summary-and-refresh.zh-CN.md)
+
+- [频道成员管理页对齐](audits/2026-09-13-channel-members-page.zh-CN.md)
+
+- [频道设置抽屉、成员导航与系统频道隐藏](audits/2026-09-13-channel-settings-and-system-visibility.zh-CN.md)：源码规则、持久权限策略与验证范围。
+
+- [消息列 Human 身份与 Agent 更多图标修复](audits/2026-09-14-thread-human-identity.zh-CN.md)
+
+- [点击清除消息定位与搜索高亮](audits/2026-09-14-message-highlight-dismissal.zh-CN.md)
+
+- [任务操作时间线完整性与底部定位续修](audits/2026-09-14-task-timeline-completeness.zh-CN.md)

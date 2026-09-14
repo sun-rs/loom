@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   existsSync,
+  statSync,
   mkdtempSync,
   readdirSync,
   rmSync,
@@ -116,3 +117,25 @@ async function* chunks(bytes: Uint8Array) {
   yield bytes.subarray(0, 12);
   yield bytes.subarray(12);
 }
+
+test("filesystem fractional milliseconds become safe inventory timestamps without shortening GC grace", () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-profile-fractional-"));
+  try {
+    const store = new ProfileImageStore({ directory });
+    const avatarKey = "upload_png_" + "a".repeat(40);
+    const path = join(directory, avatarKey);
+    writeFileSync(path, PNG);
+    utimesSync(path, 1000.123456, 1000.123456);
+    const raw = statSync(path).mtimeMs;
+    assert.equal(
+      Number.isInteger(raw),
+      false,
+      "reproduce sub-millisecond filesystem metadata",
+    );
+    assert.deepEqual(store.inventory(), [
+      { avatarKey, modifiedAtMs: Math.ceil(raw) },
+    ]);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});

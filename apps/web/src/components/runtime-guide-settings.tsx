@@ -1,4 +1,4 @@
-import { RuntimeLaunchEditor } from "./runtime-launch-editor.tsx";
+import { formatLaunchArgs } from "../runtime-launch-editor-model.ts";
 import codexIcon from "@rah-os/ui-tokens/runtime-icons/codex.svg";
 import claudeIcon from "@rah-os/ui-tokens/runtime-icons/claude.svg";
 import kimiIcon from "@rah-os/ui-tokens/runtime-icons/kimi.svg";
@@ -23,16 +23,16 @@ const presentation = {
 
 export function RuntimeGuideSettingsContent({ client }: { client: RahClient }) {
   const [data, setData] = useState<RuntimeGuideSettingsView>();
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const generation = useRef(0);
   const writing = useRef(false);
+  const [busy, setBusy] = useState(false);
   useEffect(() => {
     const ticket = ++generation.current;
-    setData(undefined);
-    setError(undefined);
     writing.current = false;
     setBusy(false);
+    setData(undefined);
+    setError(undefined);
     client
       .request("runtime.guide.read", {})
       .then((value) => {
@@ -45,31 +45,28 @@ export function RuntimeGuideSettingsContent({ client }: { client: RahClient }) {
       generation.current++;
     };
   }, [client]);
-  async function update(
+  async function updateGuide(
     runtimeId: RuntimeGuideSettingsView["runtimes"][number]["runtimeId"],
-    change: { enabled?: boolean; additionalArgs?: string[] },
+    enabled: boolean,
   ) {
-    if (!data || writing.current) return false;
-    const ticket = ++generation.current;
+    if (!data || writing.current) return;
+    const ticket = generation.current;
     writing.current = true;
     setBusy(true);
     setError(undefined);
     try {
-      const value = await client.request("runtime.guide.update", {
+      const next = await client.request("runtime.guide.update", {
         runtimeId,
-        ...change,
+        enabled,
         expectedRevision: data.revision,
       });
-      if (generation.current === ticket) {
-        setData(value);
-        return true;
-      }
+      if (generation.current === ticket) setData(next);
     } catch (failure) {
-      if (generation.current !== ticket) return false;
+      if (generation.current !== ticket) return;
       setError(`保存失败，请重新确认设置：${String(failure)}`);
       try {
-        const value = await client.request("runtime.guide.read", {});
-        if (generation.current === ticket) setData(value);
+        const next = await client.request("runtime.guide.read", {});
+        if (generation.current === ticket) setData(next);
       } catch {
         if (generation.current === ticket) setData(undefined);
       }
@@ -79,12 +76,15 @@ export function RuntimeGuideSettingsContent({ client }: { client: RahClient }) {
         setBusy(false);
       }
     }
-    return false;
   }
   return (
     <div className="rah-runtime-settings">
       <header className="rah-runtime-settings-intro">
-        <h2>CLI 配置</h2>
+        <h2>CLI 启动信息</h2>
+        <p>
+          此处展示系统固定启动配置。单个 Agent
+          的附加参数和环境变量请在其运行时配置中编辑。
+        </p>
       </header>
       {error ? <p role="alert">{error}</p> : null}
       {!data && !error ? <p role="status">正在读取设置…</p> : null}
@@ -96,7 +96,7 @@ export function RuntimeGuideSettingsContent({ client }: { client: RahClient }) {
             aria-label={labels[row.runtimeId]}
             data-supported={row.supported}
           >
-            <details className="rah-runtime-provider-details">
+            <details className="rah-runtime-provider-details" open>
               <summary className="rah-runtime-settings-heading">
                 <span
                   className="rah-runtime-settings-icon"
@@ -129,26 +129,41 @@ export function RuntimeGuideSettingsContent({ client }: { client: RahClient }) {
                     checked={row.enabled}
                     disabled={busy || !row.supported}
                     onChange={(event) =>
-                      void update(row.runtimeId, {
-                        enabled: event.target.checked,
-                      })
+                      void updateGuide(row.runtimeId, event.target.checked)
                     }
                   />
                 </label>
-                <RuntimeLaunchEditor
-                  row={row}
-                  busy={busy}
-                  onSave={(additionalArgs) =>
-                    update(row.runtimeId, { additionalArgs })
-                  }
-                />
+                <div className="rah-runtime-launch-field">
+                  <strong>系统启动命令</strong>
+                  <pre
+                    className="rah-runtime-launch-fixed"
+                    aria-label={`${row.runtimeId} 系统启动命令`}
+                  >
+                    {formatLaunchArgs([
+                      row.runtimeId,
+                      ...row.defaultArgs,
+                      ...row.managedLaunch.args,
+                    ])}
+                  </pre>
+                </div>
+                {Object.keys(row.managedLaunch.environment).length > 0 && (
+                  <div className="rah-runtime-launch-field">
+                    <strong>系统环境变量</strong>
+                    <pre
+                      className="rah-runtime-launch-fixed"
+                      aria-label={`${row.runtimeId} 系统环境变量`}
+                    >
+                      {Object.entries(row.managedLaunch.environment)
+                        .map(([key, value]) => `${key}=${value}`)
+                        .join("\n")}
+                    </pre>
+                  </div>
+                )}
               </div>
             </details>
           </section>
         ))}
       </div>
-
-      {busy ? <p role="status">正在保存…</p> : null}
     </div>
   );
 }

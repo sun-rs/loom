@@ -1,3 +1,4 @@
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { HelpGuideSettings } from "./help-guide-settings.tsx";
 import { useEffect, useState, useRef, useMemo, type ChangeEvent } from "react";
 
@@ -5,6 +6,8 @@ import type { RahClient } from "@rah-os/client-sdk";
 import type { Principal, Workspace } from "@rah-os/protocol";
 
 import {
+  readAgentModelName,
+  writeAgentModelName,
   readLiveAgentActivity,
   readMessageSize,
   readTimeFormat,
@@ -14,6 +17,7 @@ import {
   type RahMessageSize,
   type RahTimeFormat,
 } from "../settings-preferences.ts";
+import { MessageModelName } from "./message-model-name.tsx";
 import { AgentAvatar } from "./agent-avatar.tsx";
 import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
 import { SettingsPage, SettingsSectionLabel } from "./settings-primitives.tsx";
@@ -131,7 +135,7 @@ export function AccountSettingsContent({
           />
           <div>
             <strong>{displayName || "本地用户"}</strong>
-            <p>@{principal?.handle ?? "local"}</p>
+            <p>@{displayName || "本地用户"}</p>
           </div>
         </div>
         <label>
@@ -243,6 +247,10 @@ export function LanguageRegionSettingsContent() {
 }
 
 export function AppearanceSettingsContent() {
+  const [agentModel, setAgentModel] = useState(() =>
+    readAgentModelName(window.localStorage),
+  );
+  const [modelStorageError, setModelStorageError] = useState(false);
   const [storageError, setStorageError] = useState(false);
   const [activityStorageError, setActivityStorageError] = useState(false);
   const [messageSize, setMessageSize] = useState<RahMessageSize>(() =>
@@ -314,7 +322,9 @@ export function AppearanceSettingsContent() {
             />
             <div>
               <div className="rah-settings-preview-meta">
-                <strong>Cindy</strong> <span>00:02</span>
+                <strong>Cindy</strong>{" "}
+                <MessageModelName name={agentModel ? "preview" : undefined} />{" "}
+                <span>00:02</span>
               </div>
               <div className="msg-body">
                 <MessageMarkdown
@@ -370,6 +380,34 @@ export function AppearanceSettingsContent() {
               );
             }}
             type="checkbox"
+          />
+          <span aria-hidden="true" />
+        </label>
+      </article>
+      <article className="rah-settings-card rah-settings-toggle-card">
+        <div>
+          <strong id="rah-agent-model-label">显示 Agent 模型</strong>
+          <p id="rah-agent-model-description">
+            在聊天里 Agent 名字旁显示它使用的模型。桌面端默认开启。
+          </p>
+          <p className="rah-settings-saved">
+            {modelStorageError
+              ? "仅本次生效，无法保存到此设备。"
+              : "已保存到此设备。"}
+          </p>
+        </div>
+        <label className="rah-settings-switch">
+          <input
+            type="checkbox"
+            aria-labelledby="rah-agent-model-label"
+            aria-describedby="rah-agent-model-description"
+            checked={agentModel}
+            onChange={(event) => {
+              setAgentModel(event.target.checked);
+              setModelStorageError(
+                !writeAgentModelName(window.localStorage, event.target.checked),
+              );
+            }}
           />
           <span aria-hidden="true" />
         </label>
@@ -597,8 +635,16 @@ export function FeedbackSettingsContent() {
 export function ReleaseNotesSettingsContent() {
   return (
     <SettingsPage icon="list" title="更新日志">
-      <article className="rah-settings-release">
-        <time>2026-09-01</time>
+      <div className="rah-release-eyebrow">
+        <Icon name="file" />
+        最近更新
+      </div>
+      <article className="rah-settings-release" data-current="true">
+        <header>
+          <time>2026-09-01</time>
+          <span className="rah-release-current">当前记录</span>
+        </header>
+        <span className="rah-release-category">改进</span>
         <h2>设置页行为合同收口</h2>
         <ul>
           <li>统一 Raft 设置侧栏、页头、卡片、按钮与选中态。</li>

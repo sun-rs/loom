@@ -373,14 +373,14 @@
 }
 
 .rah-settings-preview-meta {
-  align-items: baseline;
+  align-items: center;
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 
 .rah-settings-preview-meta span {
   color: var(--ink-40);
-  font: 10px/1 var(--mono);
+  font: 12px/16px var(--mono);
 }
 
 .rah-settings-message-preview.is-small {
@@ -412,9 +412,9 @@
   background: var(--bg);
   border: var(--bd);
   display: block;
-  height: 24px;
-  padding: 3px;
-  width: 44px;
+  height: 20px;
+  padding: 1px;
+  width: 36px;
 }
 
 .rah-settings-switch span::after {
@@ -431,7 +431,7 @@
 }
 
 .rah-settings-switch input:checked + span::after {
-  transform: translateX(20px);
+  transform: translateX(16px);
 }
 
 .rah-settings-push-card > header,
@@ -557,13 +557,54 @@
 }
 
 .rah-settings-release {
-  border-left: 4px solid var(--yellow);
-  padding: 4px 16px 16px;
+  border: 2px solid black;
+  padding: 16px;
+  box-shadow: var(--shadow-s);
+  background: white;
+}
+.rah-settings-release[data-current="true"] {
+  background: color-mix(in srgb, var(--yellow) 35%, white);
+}
+.rah-settings-release > header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.rah-release-current {
+  border-radius: 999px;
+  color: white;
+  background: #047857;
+  padding: 4px 10px;
+  font: 700 12px/12px var(--sans);
+}
+.rah-release-category {
+  display: inline-flex;
+  border: 2px solid black;
+  padding: 2px 6px;
+  font: 700 10px/14px var(--sans);
+  background: var(--green);
+}
+.rah-release-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  color: var(--ink-50);
+  font: 700 12px/16px var(--mono);
+}
+.rah-release-eyebrow svg {
+  width: 16px;
+  height: 16px;
 }
 
 .rah-settings-release time {
-  color: var(--ink-40);
-  font: 11px/16px var(--mono);
+  color: black;
+  border: 2px solid black;
+  background: var(--yellow);
+  padding: 2px 10px;
+  font: 700 14px/20px var(--mono);
 }
 
 .rah-settings-release h2 {
@@ -690,7 +731,7 @@
 
 /* Help owns its prose layout; release-note timeline decoration is separate. */
 .rah-settings-guide {
-  max-width: 80ch;
+  max-width: 1000px;
   min-width: 0;
   color: var(--ink);
   font-size: 14px;
@@ -698,8 +739,12 @@
   overflow-wrap: anywhere;
 }
 .rah-settings-guide section {
-  margin-top: 28px;
+  margin-top: 24px;
   scroll-margin-top: 16px;
+  border: 2px solid black;
+  box-shadow: var(--shadow-s);
+  padding: 24px;
+  background: white;
 }
 .rah-settings-guide h2 {
   margin: 0 0 12px;
@@ -755,8 +800,33 @@
   background: color-mix(in srgb, var(--yellow) 30%, white);
 }
 .rah-settings-guide nav {
-  margin: 16px 0;
-  line-height: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 20px 0;
+  font-size: 0;
+}
+.rah-settings-guide nav a {
+  display: inline-flex;
+  border: 2px solid black;
+  padding: 6px 12px;
+  background: var(--yellow);
+  box-shadow: var(--shadow-s);
+  color: black;
+  font: 700 13px/20px var(--sans);
+  text-decoration: none;
+}
+.rah-settings-guide nav a:hover {
+  background: var(--cream);
+}
+.rah-settings-guide section h2 {
+  border-bottom: 2px solid black;
+  padding-bottom: 12px;
+}
+@media (max-width: 767px) {
+  .rah-settings-guide section {
+    padding: 16px;
+  }
 }
 
 /* Appearance uses a stationary segment, not the generic lifted action button. */
@@ -769,4 +839,16 @@
 }
 .rah-settings-font-size .btn:hover:not(:disabled):not([aria-pressed="true"]) {
   background: color-mix(in srgb, var(--yellow) 30%, white);
+}
+
+/* Raft MessageItem: font-mono text-[11px] leading-none text-black/40. */
+.rah-message-agent-model,
+.rah-settings-preview-meta .rah-message-agent-model {
+  color: var(--ink-40);
+  flex-shrink: 0;
+  font: 11px/1 var(--mono);
+  white-space: nowrap;
+}
+html:not([data-rah-agent-model-name="true"]) .rah-message-agent-model {
+  display: none;
 }

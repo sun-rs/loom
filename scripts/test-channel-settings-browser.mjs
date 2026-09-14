@@ -10,6 +10,7 @@ const browser = await chromium.launch({
 try {
   const page = await browser.newPage({
     viewport: { width: 1440, height: 900 },
+    deviceScaleFactor: 2,
   });
   await page.goto(`${fixture.origin}/?room=${fixture.roomId}`);
   const open = async () => {
@@ -18,6 +19,53 @@ try {
       .click();
   };
   await open();
+  const header = page.locator(".rah-channel-settings-header");
+  const mainHeader = page.locator(".rah-conversation-head").first();
+  assert.equal(
+    (await header.boundingBox()).height,
+    (await mainHeader.boundingBox()).height,
+    "drawer and page share the header track",
+  );
+  assert.equal(
+    await header.locator("h2").evaluate((e) => getComputedStyle(e).fontSize),
+    "16px",
+  );
+
+  await page.setViewportSize({ width: 1098, height: 1172 });
+  const originalDescription = await page
+    .locator("#rah-channel-description")
+    .inputValue();
+  await page.locator("#rah-channel-description").fill("2222");
+  await page.waitForTimeout(260);
+  const title = await header.locator("h2").boundingBox();
+  const description = await header.locator("p").boundingBox();
+  assert.equal(title.y, 12);
+  assert.equal(title.height, 20);
+  assert.equal(description.y, 32);
+  assert.equal(description.height, 16);
+  assert.equal(
+    (await page.locator(".rah-channel-settings-drawer").boundingBox()).width,
+    544,
+  );
+  const label = await header.locator("h2 > span").boundingBox(),
+    badge = await header.locator("h2 > b").boundingBox();
+  assert.equal(badge.x - label.x - label.width, 8);
+  await page.screenshot({ path: "/tmp/rah-channel-title-measured.png" });
+  await page.locator("#rah-channel-description").fill(originalDescription);
+  await page.setViewportSize({ width: 1440, height: 500 });
+  assert.equal(
+    (await header.boundingBox()).height,
+    (await mainHeader.boundingBox()).height,
+    "short-height viewport shares the compact header track",
+  );
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const textareaBox = await page
+    .locator("#rah-channel-description")
+    .boundingBox();
+  const footerBox = await page
+    .locator(".rah-channel-settings-info footer")
+    .boundingBox();
+  assert.equal(footerBox.y - textareaBox.y - textareaBox.height, 12);
   const pin = page.getByRole("checkbox", { name: "置顶频道", exact: true });
   await pin.locator("..").click();
   await page.waitForFunction(
@@ -48,6 +96,32 @@ try {
   const original = await visibility.innerText();
   await visibility.click();
   let dialog = page.locator(".rah-room-visibility-confirm");
+  await page.screenshot({ path: "/tmp/rah-channel-visibility-parity.png" });
+  const modal = dialog.getByRole("dialog");
+  assert.equal((await modal.boundingBox()).width, 384);
+  assert.equal(
+    await modal
+      .locator("header")
+      .evaluate((el) => getComputedStyle(el).borderBottomWidth),
+    "0px",
+  );
+  assert.equal(
+    (
+      await modal
+        .getByRole("button", { name: "关闭", exact: true })
+        .boundingBox()
+    ).width,
+    32,
+  );
+  assert.equal(
+    (
+      await modal
+        .getByRole("button", { name: "取消", exact: true })
+        .boundingBox()
+    ).height,
+    28,
+  );
+
   await dialog.getByRole("button", { name: "取消", exact: true }).click();
   assert.equal(
     await visibility.innerText(),
@@ -94,7 +168,26 @@ try {
         footer = el.querySelector("footer").getBoundingClientRect();
       return footer.top - text.bottom;
     });
-  assert.ok(Math.abs(metrics - 18.5) <= 0.5, `footer gap ${metrics}`);
+  assert.ok(Math.abs(metrics - 12) <= 0.5, `footer gap ${metrics}`);
+  for (const action of ["archive", "sos", "delete"]) {
+    const trigger = page.locator(".rah-channel-" + action + "-button").first();
+    if (!(await trigger.isEnabled())) continue;
+    await trigger.click();
+    const popup = page.locator(".rah-channel-confirmation");
+    await popup.waitFor();
+    assert.equal((await popup.boundingBox()).width, 384);
+    assert.equal(
+      await popup
+        .locator("header")
+        .evaluate((el) => getComputedStyle(el).borderBottomWidth),
+      "0px",
+    );
+    await page.screenshot({
+      path: "/tmp/rah-channel-" + action + "-parity.png",
+    });
+    await popup.getByRole("button", { name: "关闭", exact: true }).click();
+  }
+
   for (const selector of ["archive", "sos", "leave"])
     assert.equal(
       await page

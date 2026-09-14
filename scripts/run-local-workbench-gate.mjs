@@ -166,14 +166,18 @@ if (args.join(" ") === "debug models --bundled") {
     consumerId: "local-workbench-gate-first",
     roomId: defaultRoom.roomId,
   });
-  const onboarded = await firstSession.client.request("agent.onboard", {
-    agentDefinitionId: agents.agents[0].definition.agentDefinitionId,
-    basedOnRoomSeq: initialSync.latestRoomSeq,
-    idempotencyKey: "local-workbench-gate-onboard",
+  assert.equal(defaultRoom.slug, "all");
+  const membership = await firstSession.client.request("room.member.list", {
     roomId: defaultRoom.roomId,
   });
+  assert.ok(
+    membership.memberships.some(
+      (m) => m.principalId === agents.agents[0].definition.participantId,
+    ),
+    "#all automatically includes the bootstrapped Agent",
+  );
   const posted = await firstSession.client.request("message.post", {
-    basedOnRoomSeq: onboarded.event.roomSeq,
+    basedOnRoomSeq: initialSync.latestRoomSeq,
     body: "Prove that the formal local workbench runs a real Agent lane.",
     idempotencyKey: "local-workbench-gate-message",
     recipients: [],

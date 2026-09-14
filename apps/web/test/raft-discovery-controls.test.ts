@@ -86,3 +86,13 @@ test("Raft sort defaults to relevance, filtered blank searches use recent, time 
   assert.equal(searchShouldRun("", { senderIds: ["human-a"] }), true);
   assert.equal(searchShouldRun("", { after: "2026-09-02T00:00:00Z" }), true);
 });
+
+test("Search normalization retains its current task preview and keyword across reload", () => {
+  const params = normalizeDiscoveryParams(
+    "?surface=search&q=hello&room=r&previewRoom=r&previewMessage=root&target=task&task=t&highlight=hello",
+    "search",
+  );
+  assert.equal(params.get("task"), "t");
+  assert.equal(params.get("target"), "task");
+  assert.equal(params.get("highlight"), "hello");
+});

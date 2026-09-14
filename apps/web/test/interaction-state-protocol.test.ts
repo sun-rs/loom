@@ -94,10 +94,10 @@ test("the product owns one Raft-derived interaction state protocol", () => {
     protocol,
     /\.rah-product-shell \.tab \{[\s\S]*?cursor:\s*default/u,
   );
-  assert.match(
-    protocol,
-    /\.rah-product-shell \.activity-done \{[\s\S]*?opacity:\s*0;[\s\S]*?transition:\s*opacity var\(--rah-press-transition\)/u,
-  );
+  // Activity's timestamp/action replacement has one owner; the generic
+  // interaction protocol must not override the card's paired visibility.
+  assert.doesNotMatch(protocol, /\.activity-done/u);
+  assert.match(read("activity.css"), /\.activity-done/u);
   assert.match(protocol, /\.rah-product-shell \.btn \{/u);
   assert.match(
     protocol,
@@ -234,7 +234,7 @@ test("navigation and identity controls opt into the shared interaction families"
 
   assert.match(settings, /rah-interaction-row/u);
   assert.match(agentSidebar, /rah-agent-member-row rah-interaction-row/u);
-  assert.match(agents, /rah-profile-edit rah-interaction-flat/u);
+  assert.match(agents, /rah-profile-edit rah-profile-edit-plain/u);
   assert.match(agents, /rah-interaction-brutal/u);
   assert.match(computers, /rah-computer-row rah-interaction-row/u);
   assert.match(

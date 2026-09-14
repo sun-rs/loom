@@ -1,5 +1,6 @@
 import type { SidebarPreferences } from "@rah-os/protocol";
-export type SidebarSectionId = "pinned" | "channels" | "dms";
+export type SidebarSectionId =
+  "pinned" | "channels" | "dms" | `custom:${string}`;
 export function sortSidebar<T extends { key: string; label: string }>(
   rows: readonly T[],
   mode: SidebarPreferences["channelSortMode"],
@@ -34,6 +35,25 @@ export function sidebarDrop(
   visible: readonly string[],
 ): Partial<Omit<SidebarPreferences, "version">> | undefined {
   if (key === target) return;
+  const custom = section.startsWith("custom:")
+    ? p.customSections.find((s) => `custom:${s.id}` === section)
+    : undefined;
+  if (section.startsWith("custom:") && !custom) return;
+  const cleaned = p.customSections.map((s) => ({
+    ...s,
+    items: s.items.filter((id) => id !== key),
+  }));
+  if (custom) {
+    const list = custom.items.filter((id) => id !== key);
+    const index = target ? custom.items.indexOf(target) : -1;
+    list.splice(index < 0 ? list.length : Math.min(index, list.length), 0, key);
+    return {
+      pinned: p.pinned.filter((id) => id !== key),
+      customSections: cleaned.map((s) =>
+        s.id === custom.id ? { ...s, items: list } : s,
+      ),
+    };
+  }
   const field =
     section === "pinned"
       ? "pinned"
@@ -64,6 +84,10 @@ export function sidebarDrop(
     list = original.filter((id) => id !== key);
   list.splice(index < 0 ? list.length : Math.min(index, list.length), 0, key);
   return section === "pinned"
-    ? { pinned: list }
-    : { [field]: list, pinned: p.pinned.filter((id) => id !== key) };
+    ? { pinned: list, customSections: cleaned }
+    : {
+        [field]: list,
+        pinned: p.pinned.filter((id) => id !== key),
+        customSections: cleaned,
+      };
 }
