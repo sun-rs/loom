@@ -212,7 +212,9 @@ export function DiscoveryFilter({
         }}
       >
         {icon && <Icon name={icon} />}
-        {triggerLabel}
+        {triggerLabel !== "" && (
+          <span className="task-filter-label">{triggerLabel}</span>
+        )}
         {showCount && values.length > 0 && (
           <span className="task-filter-count">{values.length}</span>
         )}

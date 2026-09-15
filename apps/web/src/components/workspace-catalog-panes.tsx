@@ -1,3 +1,4 @@
+import { useMobileLayout } from "../use-mobile-layout.ts";
 import { runtimeProductLabel } from "../agent-runtime-presentation.ts";
 import { WorkbenchServiceRestart } from "./workbench-service-restart.tsx";
 import type { AgentResetOperation } from "../agent-reset-batch.ts";
@@ -73,8 +74,9 @@ export function ComputerRuntimePane({
     input: ClientComputerProfileUpdateRequest,
   ) => Promise<void>;
 }) {
-  // Explicit local default. Raft also restores remembered selections; its root route may be empty.
-  const [selected, setSelected] = useState(true);
+  const mobile = useMobileLayout();
+  const [mobileDetailOpen, setSelected] = useState(false);
+  const selected = !mobile || mobileDetailOpen;
   const [sidebarWidth, setSidebarWidth] = useState(() =>
     typeof window === "undefined"
       ? RAFT_COMPUTER_SIDEBAR_DEFAULT_WIDTH

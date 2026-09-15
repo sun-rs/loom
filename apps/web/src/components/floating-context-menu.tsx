@@ -42,7 +42,7 @@ export function FloatingContextMenu({
     onClose();
     if (restoreFocus)
       queueMicrotask(() => {
-        triggerRef?.current?.focus();
+        triggerRef?.current?.focus({ preventScroll: true });
       });
   };
 
@@ -67,7 +67,7 @@ export function FloatingContextMenu({
       ?.querySelector<HTMLButtonElement>(
         'button[role="menuitem"]:not(:disabled), button[role="menuitemradio"]:not(:disabled)',
       )
-      ?.focus();
+      ?.focus({ preventScroll: true });
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") dismiss(true);
     };
@@ -104,13 +104,14 @@ export function FloatingContextMenu({
     const next = nextContextMenuItemIndex(enabled, current, direction);
     if (next === undefined) return;
     event.preventDefault();
-    items[next]?.focus();
+    items[next]?.focus({ preventScroll: true });
   }
 
   return createPortal(
     <>
       <div
         className={backdropClassName}
+        style={{ zIndex: 199 }}
         onContextMenu={(event) => event.preventDefault()}
         onPointerDown={() => dismiss(false)}
       />
@@ -121,7 +122,7 @@ export function FloatingContextMenu({
         onKeyDown={moveFocus}
         ref={menuRef}
         role="menu"
-        style={{ left: position.x, top: position.y }}
+        style={{ left: position.x, top: position.y, zIndex: 200 }}
       >
         {children}
       </div>

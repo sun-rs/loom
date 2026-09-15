@@ -805,27 +805,8 @@ export async function verifyDiscoveryFamily(page, origin, output, engine) {
   await page.screenshot({
     path: join(output, `${engine}-task-create-dialog-1440.png`),
   });
-  const prerequisiteTaskId = await roomTask.evaluate((element) =>
-    element.closest("[data-task-id]")?.getAttribute("data-task-id"),
-  );
-  assert.ok(prerequisiteTaskId);
-  await createDialog
-    .getByRole("button", { name: "配置负责人与依赖", exact: true })
-    .click();
-  const configuredDialog = page.getByRole("dialog", {
-    name: "配置任务协作",
-  });
-  await configuredDialog.waitFor();
-  await configuredDialog.getByText("当前 Room 尚未设置 Agent").waitFor();
-  await configuredDialog
-    .getByRole("group", { name: "前置任务", exact: true })
-    .getByRole("checkbox", {
-      name: /Keep the Room-first delivery contract/u,
-    })
-    .check();
-  await page.screenshot({
-    path: join(output, `${engine}-task-create-collaboration-1440.png`),
-  });
+  const configuredDialog = createDialog;
+  assert.equal(await createDialog.getByText("配置负责人与依赖").count(), 0);
   const createRequests = [];
   let failSecondCreate = true;
   let lostReceiptRequest;
@@ -881,29 +862,17 @@ export async function verifyDiscoveryFamily(page, origin, output, engine) {
     .getByRole("button", { name: "创建 2 个任务", exact: true })
     .click();
   await configuredDialog
-    .getByText(
-      /已确认 1 \/ 2；\s*标题与协作配置已冻结，只会重试尚未确认的任务。/u,
-    )
+    .getByText(/已确认 1 \/ 2；\s*标题已冻结，只会重试尚未确认的任务。/u)
     .waitFor();
   // The first accepted row already renders 1/2 while row two is in flight.
   // Only the injected response proves the second server acceptance completed.
   await lostReceiptResponse;
   assert.equal(
     await configuredDialog
-      .getByRole("group", { name: "前置任务", exact: true })
-      .getByRole("checkbox", {
-        name: /Keep the Room-first delivery contract/u,
-      })
+      .getByRole("textbox", { name: "任务 1", exact: true })
       .isDisabled(),
     true,
-    "an ambiguous partial create freezes the exact submitted dependencies",
-  );
-  assert.equal(
-    await configuredDialog
-      .getByRole("button", { name: "返回", exact: true })
-      .isDisabled(),
-    true,
-    "a partial create cannot return to editable titles",
+    "a partial create cannot edit accepted titles",
   );
   const afterPartialCreate = await postFixture(page, "/v3/client/tasks/list", {
     roomId: createRequests[0].roomId,
@@ -964,8 +933,8 @@ export async function verifyDiscoveryFamily(page, origin, output, engine) {
   for (const task of createdTasks)
     assert.deepEqual(
       task.dependencyTaskIds,
-      [prerequisiteTaskId],
-      "the optional collaboration step must persist dependencies in the canonical Task",
+      [],
+      "title-only creation has no implicit dependencies",
     );
   const createdLedger = await postFixture(page, "/v3/client/rooms/sync", {
     afterSeq: 0,

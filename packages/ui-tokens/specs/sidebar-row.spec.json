@@ -319,10 +319,28 @@
   "rules": [
     {
       "file": "apps/web/src/message-social.css",
-      "selector": ".rah-room-sidebar .rah-sidebar-disclosure",
+      "selector": ".rah-room-sidebar .channel-row",
       "state": "base",
-      "source": "docs/audits/2026-09-14-sidebar-touch-and-mobile-navigation.zh-CN.md; Raft index-MqTUR4Ez.js pretty 136250 select-none",
-      "reason": "侧栏长按用于菜单，禁止原生文字选取和callout；不影响搜索输入与聊天正文。",
+      "media": "@media (max-width: 767px)",
+      "source": "index-MqTUR4Ez.js@pretty:133835 Tg mb-1; docs/audits/2026-09-15-sidebar-defaults-touch-density.zh-CN.md",
+      "reason": "用户同设备截图比较：移动条目节距约34px；本地上下内边距4px、行32px加间距2px，桌面不变。后续证据见 sidebar-copy-home-refinement 审计。",
+      "declarations": { "margin-bottom": "2px", "padding-block": "4px" }
+    },
+    {
+      "file": "apps/web/src/message-social.css",
+      "selector": ".rah-room-sidebar .dm-row",
+      "state": "base",
+      "media": "@media (max-width: 767px)",
+      "source": "index-MqTUR4Ez.js@pretty:133835 Tg mb-1; docs/audits/2026-09-15-sidebar-defaults-touch-density.zh-CN.md",
+      "reason": "移动端频道与私信共享约34px节距；保留字号和头像，压缩行内上下留白。",
+      "declarations": { "margin-bottom": "2px", "padding-block": "4px" }
+    },
+    {
+      "file": "apps/web/src/message-social.css",
+      "selector": ".rah-room-sidebar",
+      "state": "base",
+      "source": "docs/audits/2026-09-15-sidebar-defaults-touch-density.zh-CN.md; Raft index-MqTUR4Ez.js pretty 136250 sidebar-root select-none",
+      "reason": "侧栏整体长按用于菜单，包括空白、提示和间隙；禁止原生文字选取和callout，不影响 portal 编辑表单与聊天正文。",
       "declarations": {
         "-webkit-user-select": "none",
         "user-select": "none",
@@ -912,20 +930,19 @@
       "evidenceNeeded": "双边同条件实测该表面上游对应元素的计算值，或一个把该规则并入本家族原语的决定。"
     },
     {
-      "file": "packages/ui-tokens/src/neo-brutalist/styles.css",
-      "selector": ".side-section:nth-child(2) .side-hint",
+      "file": "apps/web/src/message-social.css",
+      "selector": ".rah-room-sidebar [data-sidebar-group=\"pinned\"] .side-hint",
       "state": "base",
-      "status": "registered-unresolved",
-      "pending": "pinned-empty-hint",
-      "source": "packages/ui-tokens/src/neo-brutalist/styles.css",
-      "reason": "「已置顶」空态提示的尺寸，是规格明列的挂起项（缺 Raft 对应元素类名与计算值）。",
+      "source": "index-MqTUR4Ez.js@pretty:136653 sg: mb-1 min-h-9 py-1.5; SHA256 9cf480531f38c29136637f7b373f285a0e915711c07dbebeadd22c05b33ad443",
+      "reason": "2026-09-15 源码确认空置顶参数；用分区身份替代失效的 nth-child，实际生产页面浏览器门禁验证。",
+      "since": "2026-09-15",
+      "evidenceNeeded": "源码参数和 Chromium/WebKit 生产页几何已验证；线上 Raft 同条件双边与物理 iPhone 不在本批验收范围。",
       "declarations": {
         "min-height": "36px",
         "color": "rgba(0,0,0,.45)",
-        "padding-block": "6px"
-      },
-      "since": "2026-09-11",
-      "evidenceNeeded": "双边同条件实测该表面上游对应元素的计算值，或一个把该规则并入本家族原语的决定。"
+        "padding-block": "6px",
+        "margin-bottom": "4px"
+      }
     },
     {
       "file": "apps/web/src/chat-surface.css",
@@ -1086,9 +1103,10 @@
       "status": "registered-unresolved",
       "pending": "sidebar-sort-keeps-task-filter-class",
       "source": "packages/ui-tokens/src/neo-brutalist/interaction-state.css",
-      "reason": "裁决 2 之后：侧栏排序钮的几何（pad 0、图标 14）已由 message-social.css 的侧栏规则接管，但按钮仍带 .task-filter-trigger 类，这条通用规则的非几何声明仍命中它。",
+      "reason": "裁决 2 之后：侧栏排序钮的几何（pad 0、图标 14）已由 message-social.css 的侧栏规则接管，但按钮仍带 .task-filter-trigger 类，这条通用规则的非几何声明仍命中它。 2026-09-15：共享触发器统一关闭浏览器原生触摸闪色，保留真实选中态；PWA 回归见 first-tap-and-visible-selection 审计。",
       "declarations": {
-        "transition-timing-function": "cubic-bezier(0.4, 0, 0.2, 1)"
+        "transition-timing-function": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "-webkit-tap-highlight-color": "transparent"
       },
       "since": "2026-09-11",
       "evidenceNeeded": "一个把侧栏排序钮与任务页筛选器拆成两个原语（或共用一个扁平迷你钮原语）的决定；裁决 2 明确不改任务页通用规则。"
@@ -1111,12 +1129,6 @@
       "id": "kanban-count-reuse",
       "question": "看板列头复用 .count，用纯黑 700。",
       "evidenceNeeded": "上游看板列头计数的类名与计算值。",
-      "since": "2026-09-11"
-    },
-    {
-      "id": "pinned-empty-hint",
-      "question": "「已置顶」空态提示 12/16.5 mono 的尺寸无上游对应。",
-      "evidenceNeeded": "Raft 对应元素类名与计算值。",
       "since": "2026-09-11"
     },
     {

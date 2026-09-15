@@ -20,7 +20,7 @@ test("Saved pane follows the observed Raft page contract", () => {
   assert.match(pane, /query:\s*""/u);
   assert.match(pane, /sortDirection:\s*"desc"/u);
   assert.match(pane, /暂无收藏的消息/u);
-  assert.match(pane, /选择消息上的书签图标即可保存。/u);
+  assert.match(pane, /通过消息菜单收藏内容。/u);
   assert.doesNotMatch(pane, /rah-saved-refresh/u);
   assert.match(pane, /aria-busy="true"/u);
 });
@@ -29,7 +29,7 @@ test("Saved card carries Raft metadata, full-card navigation, menu, and removal"
   assert.match(card, /ProfileImageAvatar/u);
   assert.match(card, /onContextMenu/u);
   assert.match(card, /ariaLabel="收藏消息操作"/u);
-  assert.match(card, /复制链接/u);
+  assert.doesNotMatch(card, /复制链接/u);
   assert.match(card, /复制 Markdown/u);
   assert.match(card, /从收藏中移除/u);
   assert.match(card, /savedTargetLabel/u);

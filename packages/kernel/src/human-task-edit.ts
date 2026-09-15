@@ -218,7 +218,12 @@ export function editHumanTask(
     )
       recipients.set(id, { participantId: id, reason });
   };
-  if (changed) {
+  // Reopening a completed task is a Human correction, not new execution.
+  const quietReopen =
+    workflow &&
+    edit.workflowStatus === "todo" &&
+    text(task, "state") === "completed";
+  if (changed && !quietReopen) {
     add(previousAssigneeId, "task_updated");
     for (const participant of previousParticipants)
       add(text(participant, "participant_id"), "task_updated");

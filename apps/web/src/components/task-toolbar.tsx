@@ -1,15 +1,15 @@
+import { useMobileLayout } from "../use-mobile-layout.ts";
 import type { RoomAgentTarget } from "@rah-os/ui-web";
 import { DiscoveryFilter } from "./discovery-filter.tsx";
 import { taskPersonOptions } from "./task-person-options.tsx";
 import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 export type TaskViewMode = "board" | "list";
-const UNASSIGNED_FILTER_ID = "unassigned";
 
 export function TaskToolbar({
   agents,
-  assigneeId,
-  creatorId,
+  assigneeIds,
+  creatorIds,
   currentPrincipalId,
   onAssigneeChange,
   onCreate,
@@ -19,16 +19,17 @@ export function TaskToolbar({
   writeEnabled,
 }: {
   agents: readonly RoomAgentTarget[];
-  assigneeId: string | null | undefined;
-  creatorId: string | undefined;
+  assigneeIds: string[];
+  creatorIds: string[];
   currentPrincipalId: string | undefined;
-  onAssigneeChange: (id: string | null | undefined) => void;
+  onAssigneeChange: (ids: string[]) => void;
   onCreate: () => void;
-  onCreatorChange: (id: string | undefined) => void;
+  onCreatorChange: (ids: string[]) => void;
   onViewChange: (view: TaskViewMode) => void;
   view: TaskViewMode;
   writeEnabled: boolean;
 }) {
+  const mobile = useMobileLayout();
   const entities = useWorkspaceEntities();
   const people = [
     ...(currentPrincipalId
@@ -48,62 +49,63 @@ export function TaskToolbar({
         kind: "agent" as const,
       })),
   ];
-  const assignee = assigneeId === null ? UNASSIGNED_FILTER_ID : assigneeId;
   return (
-    <section className="tasks-toolbar" aria-label="任务筛选与视图">
+    <section
+      className="tasks-toolbar"
+      data-task-scope="room"
+      aria-label="任务筛选与视图"
+    >
       <div className="tasks-toolbar-row">
         <DiscoveryFilter
           label="创建者"
           icon="circle-user-round"
-          multiple={false}
-          showCount
           options={taskPersonOptions(
             people,
             currentPrincipalId,
             "creator",
             entities,
           )}
-          values={creatorId ? [creatorId] : []}
-          onChange={(values) => onCreatorChange(values[0])}
+          values={creatorIds}
+          onChange={onCreatorChange}
         />
         <DiscoveryFilter
           label="负责人"
-          multiple={false}
-          showCount
           options={taskPersonOptions(
             people,
             currentPrincipalId,
             "assignee",
             entities,
           )}
-          values={assignee ? [assignee] : []}
-          onChange={(values) =>
-            onAssigneeChange(
-              values[0] === UNASSIGNED_FILTER_ID ? null : values[0],
-            )
-          }
+          values={assigneeIds}
+          onChange={onAssigneeChange}
         />
-        {(creatorId !== undefined || assigneeId !== undefined) && (
+        {(creatorIds.length > 0 || assigneeIds.length > 0) && (
           <button
-            className="tasks-clear"
+            className="tasks-clear rah-desktop-only"
             onClick={() => {
-              onCreatorChange(undefined);
-              onAssigneeChange(undefined);
+              onCreatorChange([]);
+              onAssigneeChange([]);
             }}
           >
-            清除筛选
+            全部清除
           </button>
         )}
         <button
-          className="btn btn-pink rah-task-create"
+          className="task-filter-trigger rah-task-create"
+          aria-label="新建任务"
           disabled={!writeEnabled}
           onClick={onCreate}
           type="button"
         >
           <Icon name="plus" />
-          新建任务
+          <span>{mobile ? "新建任务" : "新建"}</span>
         </button>
-        <div className="tasks-view" role="radiogroup" aria-label="任务视图">
+        <div
+          className="tasks-view"
+          data-segment-surface="plain"
+          role="radiogroup"
+          aria-label="任务视图"
+        >
           {(["board", "list"] as const).map((mode) => (
             <button
               className="rah-interaction-segment"

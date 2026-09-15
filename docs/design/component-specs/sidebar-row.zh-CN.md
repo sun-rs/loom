@@ -5,6 +5,13 @@
 
 ## 上游来源
 
+2026-09-15 本地产品补充：[默认折叠、触摸选择与移动密度](../../audits/2026-09-15-sidebar-defaults-touch-density.zh-CN.md)。
+下面的上游表仍保留原值；当前 PWA 采用分组上间距 8px、条目下间距 2px，桌面为
+12px/4px。最新[同设备截图细化](../../audits/2026-09-15-sidebar-copy-home-refinement.zh-CN.md)
+将 PWA 行上下内边距改为 4px，普通行高 32px、中心间距 34px；分组净空仍为 12px。
+空组默认折叠、非空默认展开，容器整体禁止触摸文字选择。
+这些明确的本地规则已登记到机器规格并由生产页面浏览器门禁验证，未提高例外预算。
+
 与 `sq-btn.zh-CN.md` 相同的冻结包（v1.12.0，CSS sha256 `11f78ea3…`，JS sha256 `65dda386…`）。活体双边：2026-09-11，已登录 app.raft.build，1440×900 与 390×844，Raft 频道 `#test`，RAH `Agent Council`。
 
 ## 上游元素（live DOM 类名 + 冻结 CSS 声明）
@@ -136,3 +143,11 @@ declarations 对象，而 `componentSpecErrors` 又用 `Object.assign` 就地合
 - **夹具渲染导出**：新增 `packages/ui-tokens/specs/<组件>.fixture-markup.json`，目录页改为渲染它。
 - **flag 更名**：`--allow-uncommitted-ratchet` → `--uncommitted-ratchet-preview`，
   报错改为指向 `docs/design/component-specs/baseline-2026-09-12.zh-CN.md`。
+
+## 2026-09-15 生产分组几何补验
+
+`index-MqTUR4Ez.js` 的 FD/rg/sg、Pa/Yx 与 sidebar-section-list 已提供空置顶和分区
+几何证据，见[源码与浏览器记录](../../audits/2026-09-15-sidebar-spacing-and-actions.zh-CN.md)。
+解除 `pinned-empty-hint` 的待核实项；36px/6px/4px 改由稳定分区身份匹配。
+生产分区采用 flex column 防止边距合并，折叠标题净空 16px；排序/新建间距 4px。
+原基础夹具不代表完整生产 DOM；新增 sidebar-geometry gate 覆盖实际包装层及 390px 页面。

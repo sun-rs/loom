@@ -17,6 +17,7 @@ import {
   WorkspaceProfileSettingsContent,
 } from "./settings-pages.tsx";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
+import { PanelHeaderIcon } from "@rah-os/ui-web/neo-brutalist/panel-header-icon";
 import { PanelHeader } from "@rah-os/ui-web/neo-brutalist/panel-header";
 import { SettingsMobileBackProvider } from "./settings-primitives.tsx";
 import { WebPushSettingsContent } from "./web-push-settings.tsx";
@@ -152,7 +153,7 @@ export function SettingsSurface({
         onComputers={onComputers}
       />
       <SettingsNavigation
-        active={section}
+        active={undefined}
         className="rah-settings-mobile-index"
         onComputers={onComputers}
         onSelect={select}
@@ -209,7 +210,7 @@ function SettingsNavigation({
   onSelect,
 }: {
   onComputers?: (() => void) | undefined;
-  active: SettingsSection;
+  active: SettingsSection | undefined;
   className?: string;
   onSelect: (section: SettingsSection) => void;
 }) {
@@ -218,8 +219,8 @@ function SettingsNavigation({
       aria-label="设置导航"
       className={`rah-settings-navigation${className ? ` ${className}` : ""}`}
     >
-      <PanelHeader kind="sidebar">
-        <Icon name="gear" />
+      <PanelHeader kind="sidebar" className="rah-mobile-root-header">
+        <PanelHeaderIcon name="gear" />
         <strong>设置</strong>
       </PanelHeader>
       <nav>

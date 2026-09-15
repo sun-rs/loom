@@ -176,13 +176,15 @@ test("Raft focus, message toolbar and channel drawer interactions share the meas
     /\.composer-box textarea:focus-visible\s*\{\s*box-shadow:\s*none;\s*outline:\s*none;/u,
   );
   assert.match(social, /\.msg-actions\s*\{[^}]*opacity:\s*0;/su);
+  assert.doesNotMatch(social, /@media \(hover: none\)[\s\S]*opacity: 1/u);
+  assert.match(social, /\.msg\[data-actions-open\]/u);
   assert.match(
     social,
     /transition:\s*opacity\s+var\(--rah-interaction-transition\)/u,
   );
   assert.match(
     social,
-    /\.msg:hover \.msg-actions,[\s\S]*\.msg:focus-within \.msg-actions\s*\{[^}]*opacity:\s*1;/u,
+    /@media \(hover: hover\) and \(pointer: fine\)[\s\S]*\.msg:hover \.msg-actions\s*\{[^}]*opacity:\s*1;/u,
   );
   assert.match(
     product,

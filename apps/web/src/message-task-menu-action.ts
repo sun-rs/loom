@@ -11,23 +11,25 @@ export type MessageTaskMenuAction =
       reason: string;
     };
 
+/** Raft kg/Pd: only done reopens; closed and other states can be completed. */
+export function messageTaskMenuTarget(task: Task): "todo" | "done" {
+  return task.state === "completed" ? "todo" : "done";
+}
+
 /** Message actions share the canonical Human status editor. */
 export function messageTaskMenuAction(
   task: Task,
   canManageAnyTask: boolean,
 ): MessageTaskMenuAction {
-  const label =
-    task.state === "cancelled" || task.state === "completed"
-      ? ("重新打开任务" as const)
-      : ("标记为完成" as const);
+  const target = messageTaskMenuTarget(task);
+  const reopen = target === "todo";
+  const label = reopen ? "重新打开任务" : "标记为完成";
   if (!canManageAnyTask)
     return {
       kind: "unavailable",
       label,
       reason: "你没有管理此任务的权限",
     };
-  const reopen = task.state === "cancelled" || task.state === "completed";
-  const target = reopen ? "todo" : "done";
   const transition = globalTaskTransition(task, target, true);
   if (!transition.operation)
     return {

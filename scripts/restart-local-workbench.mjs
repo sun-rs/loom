@@ -1,3 +1,8 @@
+import {
+  readLaunchReceipt,
+  restartNetworkEnvironment,
+} from "./workbench-launch-receipt.mjs";
+import { workbenchLaunchMode } from "./workbench-launch-mode.mjs";
 import { openServiceLogs } from "@rah-os/agent-host";
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
@@ -23,6 +28,7 @@ const { values } = parseArgs({
     state: { type: "string" },
     port: { type: "string", default: "4173" },
     build: { type: "string" },
+    "adopt-network-from-environment": { type: "boolean", default: false },
   },
 });
 const repo = await realpath(join(import.meta.dirname, ".."));
@@ -93,6 +99,25 @@ function inspect() {
     db.close();
   }
 }
+const launchReceipt = values["adopt-network-from-environment"]
+  ? {
+      schemaVersion: 1,
+      pid,
+      mode: workbenchLaunchMode(process.env, dirname(state)),
+    }
+  : await readLaunchReceipt(state);
+const successorEnvironment = restartNetworkEnvironment(
+  process.env,
+  launchReceipt,
+  pid,
+);
+// This command retains the current port; changing network topology is a separate action.
+if (successorEnvironment.RAH_WEB_PORT)
+  assert.equal(
+    Number(successorEnvironment.RAH_WEB_PORT),
+    port,
+    "Incumbent port mismatch",
+  );
 let staticDirectory, receipt, baseline;
 const backupRoot = join(dirname(state), "backups");
 await mkdir(backupRoot, { recursive: true, mode: 0o700 });
@@ -174,7 +199,7 @@ const child = spawn(
     cwd: repo,
     stdio: ["ignore", serviceLogs.stdout.fd, serviceLogs.stderr.fd],
     env: {
-      ...process.env,
+      ...successorEnvironment,
       RAH_DATA_HOME: dirname(state),
       RAH_OS_HOME: dirname(state),
       RAH_WEB_STATIC_DIRECTORY: staticDirectory,

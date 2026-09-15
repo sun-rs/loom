@@ -252,7 +252,7 @@
   filter: brightness(0.9);
 }
 .rah-message-avatar-trigger:active {
-  transform: translate(1px, 1px);
+  filter: brightness(0.9);
 }
 .msg
   > .rah-message-avatar-trigger
@@ -437,5 +437,11 @@
   .app.rah-product-shell.rah-agent-peek-open[data-conversation-layout][data-profile-source]
     > .thread {
     grid-column: 1;
+  }
+}
+
+@media (max-width: 767px) {
+  .rah-agent-peek .rah-agent-mobile-back {
+    display: grid;
   }
 }

@@ -186,3 +186,19 @@ test("global Task selection retains its board and filters while Room task links 
     "room",
   );
 });
+
+test("Room task cards retain their task tab across opening, reload and closing approval", () => {
+  const target = {
+    kind: "task" as const,
+    roomId: "room-1",
+    taskId: "task-1",
+    rootMessageId: "root-1",
+  };
+  const presentation = navigationPresentation(target, "room-tasks");
+  assert.equal(presentation.surface, "room");
+  assert.equal(presentation.tab, "tasks");
+  const search = navigationSearch({ target, surface: "room-tasks" });
+  assert.equal(roomTabFromSearch(search), "tasks");
+  assert.equal(new URLSearchParams(search).get("surface"), null);
+  assert.equal(new URLSearchParams(search).get("task"), "task-1");
+});

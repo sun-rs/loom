@@ -1,3 +1,4 @@
+import { ChatTaskApproval } from "./components/chat-task-approval.tsx";
 import { useMobileLayout } from "./use-mobile-layout.ts";
 import { WorkspaceNavigation } from "./components/workspace-navigation-shell.tsx";
 import {
@@ -142,6 +143,7 @@ import { useThreadPanelWidth } from "./use-thread-panel-width.ts";
 import { useThreadFocusReturn } from "./thread-focus-return.ts";
 import { loadThreadHistoryPages } from "./thread-history.ts";
 import { applyGlobalTaskTransition } from "./global-task-actions.ts";
+import { messageTaskMenuTarget } from "./message-task-menu-action.ts";
 import { pendingInputRequestsForHuman } from "./human-inbox-projection.ts";
 import { useReconciledQuery } from "./use-reconciled-query.ts";
 import {
@@ -310,6 +312,7 @@ function WorkspaceScreen({
   const [tab, setTab] = useState<Tab>(() =>
     roomTabFromSearch(window.location.search),
   );
+  const taskFilterMemory = useRef(new Map<string, string>());
   const navigationGeneration = useRef(0);
   const diagnosticNavigation = useRef(createLatestRequest());
   const searchPreview = useSearchChannelPreview();
@@ -433,6 +436,9 @@ function WorkspaceScreen({
       new URLSearchParams(window.location.search).get("message") ??
       undefined,
   );
+  const [chatTaskTarget, setChatTaskTarget] =
+    useState<Extract<NavigationTarget, { kind: "task" }>>();
+  useEffect(() => setChatTaskTarget(undefined), [activeRoomId, surface]);
   const taskDetailVisible = globalTaskDetail !== undefined;
   const taskModalOpen = taskDetailVisible && surface !== "search";
   const taskDetailResult = useDiscoveryQuery(
@@ -521,6 +527,15 @@ function WorkspaceScreen({
           target: location.target,
         });
         if (navigationGeneration.current !== epoch) return false;
+        if (
+          resolved.target.kind === "task" &&
+          !location.surface &&
+          surface === "room" &&
+          resolved.target.roomId === activeRoomId
+        ) {
+          setChatTaskTarget(resolved.target);
+          return true;
+        }
         setFocusHighlightQuery(location.highlightQuery?.trim() || undefined);
         if (
           (surface === "search" ||
@@ -633,6 +648,7 @@ function WorkspaceScreen({
       surface,
       rooms,
       searchPreview.open,
+      activeRoomId,
     ],
   );
   useEffect(() => {
@@ -1015,6 +1031,20 @@ function WorkspaceScreen({
       if (tab === "tasks" || tab === "files") next.set("roomTab", tab);
       else next.delete("roomTab");
     }
+    if (mobileLayout && mobileRoomsOpen && surface === "room") {
+      for (const key of [
+        "room",
+        "roomTab",
+        "thread",
+        "threadId",
+        "message",
+        "target",
+        "task",
+        "artifact",
+        "highlight",
+      ])
+        next.delete(key);
+    }
     const nextSearch = `?${next}`;
     if (window.location.search !== nextSearch) {
       window.history.replaceState(null, "", nextSearch);
@@ -1026,6 +1056,8 @@ function WorkspaceScreen({
     agentRoute,
     globalSurface,
     globalTaskDetail,
+    mobileLayout,
+    mobileRoomsOpen,
     surface,
     tab,
   ]);
@@ -1711,10 +1743,7 @@ function WorkspaceScreen({
         client,
         idempotencyKey: `message-task-${browserOpaqueId()}`,
         session,
-        target:
-          task.state === "cancelled" || task.state === "completed"
-            ? "todo"
-            : "done",
+        target: messageTaskMenuTarget(task),
         task,
       });
       setReload((value) => value + 1);
@@ -3429,6 +3458,7 @@ function WorkspaceScreen({
                     setSurface("tasks");
                   }}
                   onSelect={(nextSurface) => {
+                    if (nextSurface === "room") setTab("chat");
                     setMobileRoomsOpen(false);
                     if (nextSurface === "agents")
                       setAgentRoute(agentDirectoryRootRoute());
@@ -3542,6 +3572,7 @@ function WorkspaceScreen({
                     workspace={activeWorkspace}
                     unreadRooms={unreadSummary?.rooms}
                     onSelect={(roomId) => {
+                      setTab("chat");
                       unreadHeld.current.delete(roomId);
                       setPeekAgentId(undefined);
                       setPeekHumanId(undefined);
@@ -3580,6 +3611,7 @@ function WorkspaceScreen({
                     surface={surface as "tasks" | "search" | "activity"}
                     workspaceId={activeWorkspace.workspaceId}
                     taskRefreshVersion={reload}
+                    taskFilterMemory={taskFilterMemory.current}
                     rooms={rooms}
                     currentHuman={currentPrincipal}
                     navigationEpoch={navigationEpoch}
@@ -3640,7 +3672,7 @@ function WorkspaceScreen({
                     client={client}
                     workspaceId={activeWorkspace.workspaceId}
                     onOpen={openDiscoveryLocation}
-                    onOpenRooms={() => setMobileRoomsOpen(true)}
+                    onOpenRooms={openMobileHome}
                   />
                 ) : surface === "settings" ? (
                   <SettingsSurface
@@ -3784,6 +3816,10 @@ function WorkspaceScreen({
                       />
                     ) : tab === "chat" ? (
                       <ChatPane
+                        selectionVisible={
+                          !mobileRoomsOpen &&
+                          (surface !== "room" || panels.room)
+                        }
                         onReturnToLatest={() => setFocusedMessageId(undefined)}
                         client={client}
                         currentPrincipal={currentPrincipal}
@@ -3840,7 +3876,7 @@ function WorkspaceScreen({
                           roomData?.caughtUp === true &&
                           activeRoom?.archivedAt === undefined
                         }
-                        loading={loading}
+                        loading={loading && roomData?.roomId !== activeRoomId}
                         messageAgents={agentDirectory}
                         hasEarlierMessages={
                           !messageContext &&
@@ -3885,6 +3921,7 @@ function WorkspaceScreen({
                       />
                     ) : tab === "tasks" ? (
                       <TaskPane
+                        key={activeRoomId}
                         agents={agentDirectory.filter(({ participantId }) =>
                           activeMemberIdSet.has(participantId),
                         )}
@@ -3906,13 +3943,11 @@ function WorkspaceScreen({
                         currentPrincipalId={currentPrincipal?.principalId}
                         earlierTasksLoading={earlierTasksLoading}
                         hasEarlierTasks={roomData?.taskNextPage !== undefined}
-                        loading={loading}
+                        loading={loading && roomData?.roomId !== activeRoomId}
                         onChanged={() => setReload((value) => value + 1)}
                         onCreate={() => setTaskCreateOpen(true)}
                         onLoadEarlierTasks={loadEarlierTasks}
-                        onOpenThread={(task) =>
-                          openThread(task.sourceMessageId)
-                        }
+                        onOpenTask={openDiscoveryLocation}
                         roomName={activeRoom?.name ?? ""}
                       />
                     ) : health?.capabilities.fileShare !== true ? (
@@ -3974,8 +4009,11 @@ function WorkspaceScreen({
                       onClose={closeTaskDetail}
                     >
                       <ThreadPane
+                        onConvertToTask={convertMessageToTask}
                         searchPreview={surface === "search" && previewJoined}
-                        inactive={peekOpen && !panels.thread}
+                        inactive={
+                          !taskModalOpen && surface === "room" && !panels.thread
+                        }
                         hideHeader={taskModalOpen}
                         parentSlot={
                           taskDetailVisible ? (
@@ -4181,6 +4219,40 @@ function WorkspaceScreen({
                     </TaskThreadPresentation>
                   </IdentityOriginContext.Provider>
                 )}
+                {chatTaskTarget &&
+                activeRoom &&
+                chatTaskTarget.roomId === activeRoom.roomId ? (
+                  <ChatTaskApproval
+                    client={client}
+                    target={chatTaskTarget}
+                    room={activeRoom}
+                    people={roomData?.members ?? []}
+                    activeMemberIds={roomData?.activeMemberIds ?? []}
+                    agents={agentDirectory}
+                    principal={currentPrincipal}
+                    session={sessions.current.get(activeRoom.roomId)}
+                    canManage={
+                      currentRoomRole === "owner" || currentRoomRole === "admin"
+                    }
+                    writeEnabled={
+                      health?.capabilities.taskWrite === true &&
+                      roomData?.caughtUp === true
+                    }
+                    canReply={
+                      health?.capabilities.threadWrite === true &&
+                      roomData?.caughtUp === true
+                    }
+                    canAttachFiles={health?.capabilities.fileShare === true}
+                    canForward={
+                      health?.capabilities.messageForward === true &&
+                      roomData?.caughtUp === true &&
+                      activeRoom.archivedAt === undefined
+                    }
+                    onTaskWorkflow={updateMessageTaskWorkflow}
+                    onChanged={() => setReload((value) => value + 1)}
+                    onClose={() => setChatTaskTarget(undefined)}
+                  />
+                ) : null}
                 {roomCreateOpen ? (
                   <RoomCreateDialog
                     agents={agentDirectory.filter(
@@ -4198,13 +4270,11 @@ function WorkspaceScreen({
                 ) : null}
                 {taskCreateOpen ? (
                   <TaskCreateDialog
-                    agents={roomAgents}
                     onClose={() => setTaskCreateOpen(false)}
                     onCreate={createBoardTask}
                     onDiscard={(clientIds) =>
                       taskCreateCommandLedger.current.discard(clientIds)
                     }
-                    tasks={roomData?.tasks ?? []}
                   />
                 ) : null}
                 {agentCreateOpen && activeWorkspace !== undefined ? (

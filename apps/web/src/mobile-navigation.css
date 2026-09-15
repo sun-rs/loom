@@ -4,8 +4,57 @@
   display: none;
 }
 @media (max-width: 767px) {
+  /* The document is the app viewport; only nested content panes may scroll.
+     Paint the canvas too: iOS standalone samples it behind the status bar. */
+  html:has(.rah-product-shell) {
+    --rah-mobile-canvas: white;
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+    background: var(--rah-mobile-canvas);
+  }
+  body:has(.rah-product-shell),
+  #root:has(.rah-product-shell) {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    background: var(--rah-mobile-canvas);
+  }
+  html:has(
+    .rah-product-shell
+      > :is(
+        .rah-room-sidebar.is-open,
+        .rah-discovery[aria-label="全局任务"],
+        .rah-agent-directory-page:not(.is-mobile-detail-open),
+        .rah-settings-surface[data-mobile-index="true"]
+      )
+  ) {
+    --rah-mobile-canvas: var(--yellow);
+  }
   .app.rah-product-shell {
+    position: fixed;
+    inset: 0;
     padding-top: env(safe-area-inset-top);
+  }
+  .rah-product-shell
+    :is(
+      .messages,
+      .sidebar-body,
+      .rah-global-kanban,
+      .rah-agent-sidebar-scroll,
+      .rah-settings-mobile-index,
+      .rah-settings-navigation nav,
+      .rah-settings-scroll,
+      .settings-main,
+      .feed,
+      .search-stage,
+      .kanban,
+      .file-list,
+      .rah-profile-body
+    ) {
+    overscroll-behavior: contain;
   }
   .rah-product-shell > .rah-room-sidebar {
     top: env(safe-area-inset-top);
@@ -17,15 +66,15 @@
     align-items: stretch;
     left: max(16px, env(safe-area-inset-left));
     right: max(16px, env(safe-area-inset-right));
-    bottom: max(12px, env(safe-area-inset-bottom));
-    height: 64px;
+    bottom: max(8px, calc(env(safe-area-inset-bottom) - 12px));
+    height: 50px;
     padding: 4px;
     gap: 2px;
     border: 1px solid rgb(255 255 255 / 75%);
     border-radius: 40px;
-    background: rgb(255 255 255 / 88%);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgb(255 255 255 / 55%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     box-shadow: 0 4px 24px rgb(0 0 0 / 8%);
   }
   .rah-mobile-nav button {
@@ -68,12 +117,18 @@
   .rah-agent-directory-page:not(.is-mobile-detail-open)
     .rah-agent-sidebar-scroll,
   .rah-settings-mobile-index {
-    padding-bottom: calc(92px + env(safe-area-inset-bottom));
-    scroll-padding-bottom: 92px;
+    padding-bottom: calc(66px + env(safe-area-inset-bottom));
+    scroll-padding-bottom: 66px;
   }
   .rah-mobile-home-notifications {
     width: 36px;
     height: 36px;
+    color: var(--black);
+    background: transparent;
+    border: 2px solid transparent;
+    box-shadow: none;
+  }
+  .rah-mobile-home-notifications[aria-expanded="true"] {
     background: white;
     border: var(--bd);
     box-shadow: var(--shadow-s);
@@ -83,7 +138,7 @@
     height: 22px;
   }
   .rah-product-shell .composer {
-    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    padding-bottom: max(8px, calc(env(safe-area-inset-bottom) - 12px));
   }
   /* Keep editable controls at iOS's non-zooming size without disabling pinch zoom. */
   .search-box input,
@@ -92,10 +147,9 @@
   }
   .rah-discovery[aria-label="全局任务"] .activity-head {
     gap: 8px;
-    padding: 12px;
-    min-height: 72px;
+    padding: 0 12px;
   }
-  .rah-discovery[aria-label="全局任务"] .channel-sub {
+  .rah-discovery .activity-head .channel-sub {
     display: block;
     font: 12px/18px var(--sans);
   }
@@ -115,10 +169,10 @@
     font-size: 12px;
   }
   .rah-discovery[aria-label="全局任务"] .tasks-toolbar {
+    min-height: 0;
     padding: 10px 8px;
   }
   .rah-discovery[aria-label="全局任务"] .tasks-toolbar-row {
-    gap: 6px;
     flex-wrap: nowrap;
   }
   .rah-discovery[aria-label="全局任务"] .task-filter-trigger {
@@ -134,11 +188,6 @@
   .rah-settings-mobile-index > header {
     display: flex;
     gap: 12px;
-    min-height: 72px;
-  }
-  .rah-settings-mobile-index > header svg {
-    width: 26px;
-    height: 26px;
   }
 }
 
@@ -147,17 +196,8 @@
   .rah-settings-mobile-index {
     background: white;
   }
-  .rah-product-shell .rah-agent-sidebar-head,
-  .rah-product-shell .rah-settings-mobile-index > header {
-    background: var(--yellow);
-    min-height: 72px;
-  }
   .rah-agent-sidebar-head {
     gap: 12px;
-  }
-  .rah-agent-sidebar-head > svg {
-    width: 26px;
-    height: 26px;
   }
 }
 
@@ -169,9 +209,58 @@
     height: min(200px, calc(100dvh - 100px));
   }
   .app.rah-product-shell {
-    background: white;
+    background: var(--rah-mobile-canvas);
   }
-  .app.rah-product-shell:has(> .rah-mobile-nav) {
-    background: var(--yellow);
+}
+
+@media (max-width: 767px) {
+  .search-top .rah-panel-header-icon,
+  .rah-mobile-child-header > .rah-panel-header-icon {
+    display: none;
+  }
+  .rah-product-shell .rah-mobile-child-header {
+    background: var(--bg);
+  }
+  /* Compact Room tools: the shared pickers retain their own clear actions. */
+  .tasks-toolbar {
+    --raft-tasks-toolbar-gap: 6px;
+  }
+  .tasks-toolbar[data-task-scope="room"] {
+    min-height: 0;
+    padding: 10px 8px;
+  }
+  .tasks-toolbar[data-task-scope="room"] .tasks-toolbar-row {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: var(--raft-tasks-toolbar-gap);
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 3px;
+    margin-bottom: -3px;
+  }
+  .tasks-toolbar[data-task-scope="room"] .task-filter-trigger {
+    gap: 2px;
+    padding: 4px;
+    font-size: 12px;
+  }
+  .tasks-toolbar[data-task-scope="room"] .tasks-clear {
+    display: none;
+  }
+  .tasks-toolbar[data-task-scope="room"] .rah-task-create {
+    flex: none;
+    width: auto;
+    height: 32px;
+    padding: 0 4px;
+    justify-content: center;
+  }
+  .tasks-toolbar[data-task-scope="room"] .tasks-view {
+    margin-left: auto;
+    gap: var(--raft-tasks-view-gap);
+    flex-wrap: nowrap;
+    flex: none;
+  }
+  .tasks-toolbar[data-task-scope="room"] .tasks-view button {
+    gap: 3px;
+    padding-inline: 4px;
   }
 }

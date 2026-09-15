@@ -1,4 +1,5 @@
 import { ChoiceRow } from "@rah-os/ui-web/neo-brutalist/choice-row";
+import { PanelHeaderAction } from "@rah-os/ui-web/neo-brutalist/panel-header-action";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { ProfileImageAvatar } from "./profile-image-avatar.tsx";
 import { useEffect, useRef, useState } from "react";
@@ -125,14 +126,13 @@ export function RoomMemberPage({
   return (
     <>
       <header className="rah-room-member-page-header">
-        <button
+        <PanelHeaderAction
           aria-label={backLabel}
-          className="btn"
           disabled={blocked}
           onClick={onBack}
         >
           <Icon name="arrow-left" />
-        </button>
+        </PanelHeaderAction>
         <h2 id="rah-room-members-title">
           {view === "add" ? "添加成员" : "成员"}
         </h2>

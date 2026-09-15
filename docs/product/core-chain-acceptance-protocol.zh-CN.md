@@ -48,6 +48,8 @@ node scripts/restart-local-workbench.mjs --pid <现役 pid> --state /Users/sun/.
 
 该脚本按 `scripts/workbench-restart-guard.mjs` 的顺序执行 validate → inspect → backup → verify → recheck → stop：`assertWorkbenchIdle(db)` 要求 `activations` 无 `queued/leased/quarantined`、`run_attempts` 无 `starting/running/orphaned`、`runtime_processes` 无非 `terminated`、`placements` 无非 `released`、`agent_exclusive_operation_leases` 无 `active`，否则拒绝重启；`backupState` 把整个 `state/` 逐文件备份到 `~/.rah/backups/pre-restart-<uuid>/`（`.db` 走 SQLite backup 并做 `PRAGMA quick_check` / `foreign_key_check`，WAL/SHM 侧车不备份），收据写到 `~/.rah/backups/pre-restart-<uuid>.receipt.json`。已有历史备份目录同在 `~/.rah/backups/`（如 `formal-pre-*`）。
 
+2026-09-14 起，重启还校验现役启动收据并保留网络模式，防止手机入口丢失。无收据的旧实例需核对原网络配置后显式迁移；参见[网络重启恢复](../audits/2026-09-14-pwa-network-restart-recovery.zh-CN.md)。验收必须覆盖原 PWA 网络地址，不能仅检查 loopback。
+
 **不要绕过这条路径手工 kill 正式实例。** 备份失败、非空闲、build id 不匹配时脚本会拒绝，这就是正确结果。
 
 ### 读取账本

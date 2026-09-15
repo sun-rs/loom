@@ -15,7 +15,13 @@ export function SidebarSection({
   children: ReactNode;
   unread?: boolean;
 }) {
-  const [open, setOpen] = useState(true);
+  const hasItems = count > 0;
+  const [disclosure, setDisclosure] = useState({ hasItems, open: hasItems });
+  // Apply defaults only across empty/nonempty boundaries, not every count poll.
+  if (disclosure.hasItems !== hasItems) {
+    setDisclosure({ hasItems, open: hasItems });
+  }
+  const open = disclosure.hasItems === hasItems ? disclosure.open : hasItems;
   const id = useId();
   const handle = useSidebarGroupHandle();
   return (
@@ -29,7 +35,7 @@ export function SidebarSection({
           className="rah-sidebar-disclosure"
           aria-expanded={open}
           aria-controls={id}
-          onClick={() => setOpen((value) => !value)}
+          onClick={() => setDisclosure({ hasItems, open: !open })}
         >
           <Icon name="chevron" />
           <span>{label}</span>

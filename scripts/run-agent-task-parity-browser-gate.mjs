@@ -142,17 +142,11 @@ for (const engine of ["chrome", "firefox"]) {
       await page
         .getByRole("textbox", { name: "任务 1", exact: true })
         .fill(`Isolated task ${engine} ${width}`);
-      await page
-        .getByRole("button", { name: "配置负责人与依赖", exact: true })
-        .click();
       const form = page.getByRole("dialog");
       assert.equal(
-        await form.getByText(/审阅者|协作者|任务协作角色/).count(),
+        await form.getByText(/配置负责人与依赖|前置任务|任务负责人/).count(),
         0,
       );
-      await form
-        .getByRole("combobox", { name: "任务负责人", exact: true })
-        .waitFor();
       await page.screenshot({
         path: join(output, `${engine}-${width}-task.png`),
       });
@@ -166,6 +160,8 @@ for (const engine of ["chrome", "firefox"]) {
       assert.equal(accepted.status(), 200);
       const request = accepted.request().postDataJSON();
       const task = (await accepted.json()).task;
+      assert.equal(request.assigneeId, undefined);
+      assert.deepEqual(request.dependencyTaskIds, []);
       assert.deepEqual(request.reviewerIds, []);
       assert.deepEqual(request.collaboratorIds, []);
       assert.deepEqual(task.reviewerIds, []);

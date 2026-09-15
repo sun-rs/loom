@@ -1,7 +1,7 @@
 import type { NavigationTarget } from "@rah-os/protocol";
 import type { RefObject } from "react";
 
-import { navigationSearch } from "../navigation-target.ts";
+import { useMobileLayout } from "../use-mobile-layout.ts";
 import { FloatingContextMenu } from "./floating-context-menu.tsx";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import {
@@ -19,9 +19,9 @@ export function MessageContextMenu({
   onError,
   onOpenThread,
   onSelectMessages,
+  onCopyText,
   social,
   taskAction,
-  target,
   threadFollow,
   triggerRef,
 }: {
@@ -33,6 +33,7 @@ export function MessageContextMenu({
   onError: (message: string) => void;
   onOpenThread?: () => void;
   onSelectMessages?: () => void;
+  onCopyText?: () => void;
   social: MessageSocialView;
   taskAction?:
     | {
@@ -53,6 +54,7 @@ export function MessageContextMenu({
     | undefined;
   triggerRef: RefObject<HTMLElement | null>;
 }) {
+  const mobile = useMobileLayout();
   const socialData = social.state?.data;
   const socialPending = social.state?.pending ?? false;
 
@@ -106,18 +108,6 @@ export function MessageContextMenu({
       ) : null}
       {social.enabled ? <hr /> : null}
       <button
-        onClick={() =>
-          void copy(
-            new URL(navigationSearch({ target }), window.location.href).href,
-          )
-        }
-        role="menuitem"
-        type="button"
-      >
-        <Icon name="link-2" />
-        复制链接
-      </button>
-      <button
         onClick={() => void copy(messageBody)}
         role="menuitem"
         type="button"
@@ -125,6 +115,19 @@ export function MessageContextMenu({
         <Icon name="copy" />
         复制 Markdown
       </button>
+      {mobile && onCopyText ? (
+        <button
+          role="menuitem"
+          type="button"
+          onClick={() => {
+            onClose();
+            onCopyText();
+          }}
+        >
+          <Icon name="copy" />
+          复制文本
+        </button>
+      ) : null}
       {onSelectMessages ? (
         <button
           onClick={() => {
@@ -134,7 +137,7 @@ export function MessageContextMenu({
           role="menuitem"
           type="button"
         >
-          <Icon name="listcheck" />
+          <Icon name="circle-check-big" />
           选择消息
         </button>
       ) : null}
@@ -149,7 +152,7 @@ export function MessageContextMenu({
           type="button"
         >
           <Icon name="chat" />
-          在消息列中回复
+          打开消息列
         </button>
       ) : null}
       {social.enabled ? (
@@ -166,6 +169,17 @@ export function MessageContextMenu({
           {socialData?.saved ? "从收藏中移除" : "收藏消息"}
         </button>
       ) : null}
+      {!taskAction && onConvertToTask ? (
+        <button
+          disabled={conversionPending}
+          onClick={() => void onConvertToTask()}
+          role="menuitem"
+          type="button"
+        >
+          <Icon name="task" />
+          {conversionPending ? "正在转换…" : "转为任务"}
+        </button>
+      ) : null}
       {threadFollow ? (
         <button
           disabled={
@@ -177,11 +191,11 @@ export function MessageContextMenu({
           role="menuitem"
           type="button"
         >
-          <Icon name="bell" />
+          <Icon name={threadFollow.following ? "bell-off" : "bell"} />
           {threadFollow.following ? "取消关注消息列" : "关注消息列"}
         </button>
       ) : null}
-      {threadFollow || taskAction || onConvertToTask ? <hr /> : null}
+      {taskAction ? <hr /> : null}
       {taskAction ? (
         <button
           disabled={taskAction.pending || taskAction.onAction === undefined}
@@ -191,19 +205,13 @@ export function MessageContextMenu({
           type="button"
         >
           <Icon
-            name={taskAction.label === "重新打开任务" ? "refresh-cw" : "task"}
+            name={
+              taskAction.label === "重新打开任务"
+                ? "rotate-ccw"
+                : "circle-check-big"
+            }
           />
           {taskAction.label}
-        </button>
-      ) : onConvertToTask ? (
-        <button
-          disabled={conversionPending}
-          onClick={() => void onConvertToTask()}
-          role="menuitem"
-          type="button"
-        >
-          <Icon name="task" />
-          {conversionPending ? "正在转换…" : "转为任务"}
         </button>
       ) : null}
     </FloatingContextMenu>

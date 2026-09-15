@@ -6,7 +6,7 @@ const subscribe = (changed: () => void) => {
   media.addEventListener("change", changed);
   return () => media.removeEventListener("change", changed);
 };
-/** One viewport contract for the drawer and visible-conversation indicators. */
+/** One viewport contract for responsive navigation and visible-detail indicators. */
 export function useMobileLayout() {
   return useSyncExternalStore(
     subscribe,

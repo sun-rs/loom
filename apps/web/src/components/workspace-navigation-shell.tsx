@@ -46,7 +46,6 @@ export function WorkspaceNavigation({
           }
         >
           <Icon name={icon} />
-          <span>{label}</span>
         </button>
       ))}
     </nav>

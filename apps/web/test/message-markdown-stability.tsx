@@ -254,8 +254,8 @@ function Fixture() {
       );
       check(
         scroller.current!.querySelector(".rah-rich-agent-reference")
-          ?.textContent === "@Alice",
-        "Agent 引用未按目录解析",
+          ?.textContent === "@Alice Assistant",
+        "Agent 引用未按目录显示名称解析",
       );
       scroller
         .current!.querySelector<HTMLButtonElement>(".rah-rich-agent-reference")!

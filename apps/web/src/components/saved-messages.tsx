@@ -156,7 +156,7 @@ export function SavedMessagesPane({
           <div className="rah-saved-empty">
             <Icon name="bookmark" />
             <strong>暂无收藏的消息</strong>
-            <p>选择消息上的书签图标即可保存。</p>
+            <p>通过消息菜单收藏内容。</p>
           </div>
         ) : null}
         {result.items.length ? (

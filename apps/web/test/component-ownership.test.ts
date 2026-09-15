@@ -331,7 +331,7 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   );
   assert.match(
     readFileSync("apps/web/src/components/agent-sidebar.tsx", "utf8"),
-    /className="rah-agent-sidebar-head"/u,
+    /className="rah-agent-sidebar-head rah-mobile-root-header"/u,
   );
   assert.match(agentSurface, /rah-agent-sidebar-resizer/u);
   assert.match(agentSurface, /const MIN_SIDEBAR_WIDTH = 180/u);

@@ -238,3 +238,11 @@ Task 删除由 kernel/task-deletion.ts 的 TaskDeletionService 独占。Human de
 ## 重启后的 Activation 代际校验
 
 Activation 的执行授权按当前 `attempt_count` 对应的 Run／Placement 校验 Host generation。已终止的历史 Run 保留原 Host、退出来源和代际围栏，不阻挡新 attempt 的合法领取；新 Host 也不得修改旧 Run。真实中断反例与修复见[恢复修复验收](../audits/2026-09-08-core-recovery-repair.zh-CN.md)。
+
+## Human 已完成任务静默重开
+
+2026-09-15：`human-task-edit.ts` 作为唯一 owner，Human `task.workflow.update` 将 completed
+改为 todo 时，仍原子更新 Task、追加 Room event、保留版本和幂等校验，但不派生 Agent
+Inbox/Activation。界面“重新打开任务”不是重新委派执行。closed/cancelled 后退回重做、
+重新指派及后续显式消息仍沿用各自投递合同；Worker 的证据式状态接口不变。
+见 [本批验证及用户要求](../audits/2026-09-15-message-touch-selection-export.zh-CN.md)。

@@ -193,7 +193,7 @@
 .rah-global-task-drag-shell {
   position: relative;
   width: 100%;
-  touch-action: none;
+  touch-action: auto;
   will-change: transform;
   cursor: grab;
 }

@@ -361,3 +361,43 @@ test("Raft todo-to-progress on an unassigned Task takes Human responsibility wit
     f.cleanup();
   }
 });
+
+test("Human reopening a completed task changes status without waking Agents", () => {
+  const f = createTaskFixture();
+  const db = new DatabaseSync(f.databasePath);
+  try {
+    const seq = () =>
+      f.kernel.sync(f.humanActor, {
+        roomId: f.roomId,
+        consumerId: "reopen-read",
+      }).latestRoomSeq;
+    f.kernel.updateTaskWorkflowStatus(f.humanActor, {
+      taskId: f.created.task.taskId,
+      basedOnRoomSeq: seq(),
+      idempotencyKey: "complete-before-reopen",
+      workflowStatus: "done",
+    });
+    const before = db.prepare("SELECT count(*) AS n FROM activations").get()!.n;
+    const result = f.kernel.updateTaskWorkflowStatus(f.humanActor, {
+      taskId: f.created.task.taskId,
+      basedOnRoomSeq: seq(),
+      idempotencyKey: "quiet-reopen",
+      workflowStatus: "todo",
+    });
+    assert.equal(result.task.workflowStatus, "todo");
+    assert.deepEqual(result.activationIds, []);
+    assert.equal(
+      db.prepare("SELECT count(*) AS n FROM activations").get()!.n,
+      before,
+    );
+    assert.equal(
+      db
+        .prepare("SELECT count(*) AS n FROM inbox_items WHERE event_id=?")
+        .get(result.event.eventId)!.n,
+      0,
+    );
+  } finally {
+    db.close();
+    f.cleanup();
+  }
+});

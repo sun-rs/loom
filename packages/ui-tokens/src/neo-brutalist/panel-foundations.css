@@ -60,3 +60,15 @@
   height: 12px;
   width: 12px;
 }
+
+@media (max-width: 767px) {
+  .rah-product-shell .rah-panel-header-action[data-action-size="header"] {
+    width: var(--rah-mobile-header-control);
+    height: var(--rah-mobile-header-control);
+    min-height: var(--rah-mobile-header-control);
+  }
+  .rah-product-shell .rah-panel-header-action[data-action-size="header"] > svg {
+    width: 18px;
+    height: 18px;
+  }
+}

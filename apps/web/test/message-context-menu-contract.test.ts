@@ -19,10 +19,11 @@ test("every ordinary message opens one Raft-ordered context menu", () => {
     /onContextMenu=\{\s*convertTaskAction === undefined/u,
   );
   assert.match(menu, /QUICK_REACTIONS\.map/u);
-  assert.match(menu, /复制链接/u);
+  assert.doesNotMatch(menu, /复制链接/u);
   assert.match(menu, /复制 Markdown/u);
   assert.match(menu, /选择消息/u);
-  assert.match(menu, /在消息列中回复/u);
+  assert.match(menu, /打开消息列/u);
+  assert.match(menu, /复制文本/u);
   assert.match(menu, /从收藏中移除|收藏消息/u);
   assert.match(menu, /转为任务/u);
   assert.match(interaction, /export const MESSAGE_LONG_PRESS_MS = 500/u);
@@ -40,8 +41,8 @@ test("every ordinary message opens one Raft-ordered context menu", () => {
   );
   assert.match(
     conversation,
-    /if \(!selection\?\.active\) return;[\s\S]*closest\("a, button, input, label"\)[\s\S]*selection\.onToggle\(\)/u,
-    "Raft selection mode toggles a message from the row while preserving nested controls",
+    /if \(!selection\?\.active\) return messageActions\.onClick\(event\);[\s\S]*closest\("a, button, input, label"\)[\s\S]*selection\.onToggle\(\)/u,
+    "Ordinary taps use the shared toolbar handler; explicit selection mode preserves nested controls",
   );
 });
 
@@ -55,9 +56,10 @@ test("Room and Thread consume one in-memory Raft selection owner", () => {
   assert.match(conversation, /selection\.enterThread/u);
   assert.match(conversation, /selection\.toggleWithThread/u);
   assert.match(conversation, /<MessageSelectionToolbar/u);
-  assert.match(toolbar, /已选择/u);
+  assert.match(toolbar, /已选/u);
   assert.match(toolbar, /全选/u);
-  assert.match(toolbar, /复制链接/u);
+  assert.doesNotMatch(toolbar, /复制链接|转发/u);
+  assert.match(toolbar, /生成图片/u);
   assert.match(toolbar, /复制 Markdown/u);
   assert.match(toolbar, /取消/u);
   assert.match(hook, /useSyncExternalStore/u);

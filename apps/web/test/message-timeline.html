@@ -16,7 +16,8 @@
         margin: 0;
       }
 
-      #root > .chan-pane {
+      #root > .chan-pane,
+      #root > .thread {
         height: 100%;
       }
     </style>
@@ -24,15 +25,23 @@
   <body>
     <div id="root"></div>
     <script type="module">
-      import React, { useState } from "react";
+      import React, { useEffect, useState } from "react";
       import { createRoot } from "react-dom/client";
+      import { flushSync } from "react-dom";
       import "@rah-os/ui-tokens/styles.css";
       import "@rah-os/ui-tokens/channel-extras.css";
       import "../src/product.css";
-      import { ChatPane } from "../src/components/conversation-panes.tsx";
+      import {
+        ChatPane,
+        ThreadPane,
+      } from "../src/components/conversation-panes.tsx";
       import { ComposerDraftProvider } from "../src/components/composer-draft-provider.tsx";
 
-      const initialCount = 10_000;
+      const mode =
+        new URLSearchParams(location.search).get("kind") || "channel";
+      const params = new URLSearchParams(location.search);
+      const initialCount =
+        Number(params.get("count")) || (mode === "thread" ? 150 : 10_000);
       const prependCount = 50;
 
       function createMessage(index) {
@@ -59,7 +68,35 @@
           ),
         );
         const [hasEarlierMessages, setHasEarlierMessages] = useState(true);
-        return React.createElement(ChatPane, {
+        useEffect(() => {
+          window.refreshTimelineFixture = () =>
+            setMessages((current) => current.map((item) => ({ ...item })));
+          window.appendTimelineFixture = () =>
+            flushSync(() =>
+              setMessages((current) => [
+                ...current,
+                createMessage(current.length + 1),
+              ]),
+            );
+          return () => {
+            delete window.refreshTimelineFixture;
+            delete window.appendTimelineFixture;
+            delete window.finishTimelineEarlier;
+          };
+        }, []);
+        return React.createElement(mode === "thread" ? ThreadPane : ChatPane, {
+          ...(mode === "thread"
+            ? {
+                canManageAnyTask: false,
+                canForward: false,
+                canReply: false,
+                replies: messages,
+                root: createMessage(-100),
+                hasEarlierReplies: hasEarlierMessages,
+                onClose() {},
+                async onTaskWorkflow() {},
+              }
+            : {}),
           agents: [],
           canCreateTask: false,
           canPost: true,
@@ -73,6 +110,10 @@
           onManageAgents() {},
           async onConvertToTask() {},
           async onLoadEarlier() {
+            if (params.has("delay"))
+              await new Promise((resolve) => {
+                window.finishTimelineEarlier = resolve;
+              });
             setMessages((current) => [
               ...Array.from({ length: prependCount }, (_, index) =>
                 createMessage(index - prependCount + 1),
@@ -86,7 +127,7 @@
           async onSubmit() {},
           roomEvents: [],
           roomId: "timeline-room",
-          roomKind: "channel",
+          roomKind: mode === "direct" ? "direct" : "channel",
           roomMembers: [],
           roomName: "timeline-room",
           selectedAgentIds: [],

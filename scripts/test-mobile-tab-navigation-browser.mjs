@@ -17,17 +17,58 @@ try {
   await page.goto(fixture.origin);
   const nav = page.getByRole("navigation", { name: "移动端主导航" });
   await expect(nav).toBeVisible();
+  await expect(page.locator("html")).toHaveCSS("position", "fixed");
+  await expect(page.locator("body")).toHaveCSS("overscroll-behavior-y", "none");
+  await expect(page.locator("body")).toHaveCSS(
+    "background-color",
+    "rgb(255, 212, 64)",
+  );
   await expect(
     page.locator(".rah-navigation-toggle,.rah-navigation-drawer"),
   ).toHaveCount(0);
   for (const name of ["首页", "任务", "成员", "设置"])
     await expect(nav.getByRole("button", { name, exact: true })).toBeVisible();
+  await expect(nav).toHaveJSProperty("innerText", "");
+  assert.ok((await nav.boundingBox()).height <= 52, "icon-only bar is compact");
+  await expect(nav).toHaveCSS("bottom", "8px");
+  await expect(nav).toHaveCSS("background-color", "rgba(255, 255, 255, 0.55)");
   const home = page.locator(".rah-room-sidebar.is-open");
   await expect(home).toBeVisible();
+  await expect(home.locator("[data-sidebar-key]").first()).toBeVisible();
+  await page.waitForTimeout(600);
+  assert.equal(
+    new URL(page.url()).searchParams.has("room"),
+    false,
+    "Home must not serialize its hidden default Room as the launch route",
+  );
+  await page.reload();
+  await expect(home).toBeVisible();
+  await expect(nav).toBeVisible();
   for (const name of ["搜索", "动态"])
     await expect(home.getByRole("button", { name, exact: true })).toBeVisible();
-  await home.getByRole("button", { name: "通知", exact: true }).tap();
+  const notificationButton = home.getByRole("button", {
+    name: "通知",
+    exact: true,
+  });
+  await expect(notificationButton).toHaveCSS(
+    "background-color",
+    "rgba(0, 0, 0, 0)",
+  );
+  await expect(notificationButton).toHaveCSS("box-shadow", "none");
+  await notificationButton.tap();
+  await expect(notificationButton).toHaveCSS(
+    "background-color",
+    "rgb(255, 255, 255)",
+  );
   const inbox = page.getByRole("dialog", { name: "Human Inbox" });
+  await expect(inbox).toBeVisible();
+  await notificationButton.tap();
+  await expect(inbox).toBeHidden();
+  await expect(notificationButton).toHaveCSS(
+    "background-color",
+    "rgba(0, 0, 0, 0)",
+  );
+  await notificationButton.tap();
   await expect(inbox).toBeVisible();
   const bell = await home
     .getByRole("button", { name: "通知", exact: true })
@@ -44,20 +85,94 @@ try {
   await home.getByRole("button", { name: "搜索", exact: true }).tap();
   const input = page.getByRole("textbox", { name: "搜索频道、私信、消息" });
   await expect(input).toBeVisible();
+  await expect(page.locator("body")).toHaveCSS(
+    "background-color",
+    "rgb(255, 255, 255)",
+  );
+  await expect(page.locator(".search-top .rah-panel-header-icon")).toBeHidden();
+  assert.equal(
+    (
+      await page
+        .getByRole("button", { name: "返回聊天", exact: true })
+        .boundingBox()
+    ).width,
+    32,
+  );
   assert.ok(
     (await input.evaluate((e) => parseFloat(getComputedStyle(e).fontSize))) >=
       16,
   );
   assert.equal(await page.evaluate(() => visualViewport?.scale ?? 1), 1);
   await expect(nav).toBeHidden();
+  await page.screenshot({ path: `${evidence}/search.png` });
   await page.getByRole("button", { name: "返回聊天", exact: true }).tap();
+  await home.getByRole("button", { name: "动态", exact: true }).tap();
+  const activityHead = page.locator(".activity-head");
+  await expect(activityHead.locator(".rah-panel-header-icon")).toBeHidden();
+  await expect(
+    page.getByRole("button", { name: "刷新动态", exact: true }),
+  ).toBeHidden();
+  const activityBack = page.getByRole("button", {
+    name: "返回聊天",
+    exact: true,
+  });
+  assert.ok(
+    (await activityBack.boundingBox()).x <
+      (await activityHead.locator(".channel-title").boundingBox()).x,
+  );
+  await expect(activityHead.locator(".channel-sub")).toBeVisible();
+  await expect(activityHead.locator(".channel-sub")).toHaveText(
+    /\d+ 条动态.*\d+ 条未读/,
+  );
+  await page.screenshot({ path: `${evidence}/activity.png` });
+  await activityBack.tap();
   await nav.getByRole("button", { name: "任务", exact: true }).tap();
   const tasks = page.getByRole("main", { name: "全局任务" });
   await expect(tasks.locator(".channel-sub")).toBeVisible();
+  assert.equal(
+    (await tasks.locator("header").first().boundingBox()).height,
+    60,
+  );
   const views = tasks.getByRole("radiogroup", { name: "任务视图" });
   assert.ok(
     await views.evaluate((e) => !!e.closest("header")),
     "mobile task view selector belongs to title header",
+  );
+  await expect(views.getByRole("radio").first()).toHaveCSS(
+    "-webkit-tap-highlight-color",
+    "rgba(0, 0, 0, 0)",
+  );
+  const off = views.locator('[aria-checked="false"]');
+  await expect(off).toHaveCSS("background-color", "rgb(255, 255, 255)");
+  await off.hover();
+  await expect(off).toHaveCSS("background-color", "rgb(255, 255, 255)");
+  await off.tap();
+  await expect(views.locator('[aria-checked="false"]')).toHaveCSS(
+    "background-color",
+    "rgb(255, 255, 255)",
+  );
+  const selectedColor = await views
+    .locator('[aria-checked="true"]')
+    .evaluate((e) => getComputedStyle(e).backgroundColor);
+  assert.notEqual(
+    selectedColor,
+    "rgb(255, 255, 255)",
+    "active differs from inactive",
+  );
+  assert.notEqual(
+    selectedColor,
+    await tasks
+      .locator("header")
+      .first()
+      .evaluate((e) => getComputedStyle(e).backgroundColor),
+    "active is pale yellow on yellow title",
+  );
+  await page.mouse.move(0, 500);
+  assert.equal(
+    await views
+      .locator('[aria-checked="true"]')
+      .evaluate((e) => getComputedStyle(e).backgroundColor),
+    selectedColor,
   );
   for (const name of ["频道", "创建者", "负责人"]) {
     await tasks.getByRole("button", { name, exact: true }).tap();
@@ -88,14 +203,25 @@ try {
     "clear filter fits its mobile row",
   );
   await page.waitForTimeout(350);
-  await page.screenshot({ path: `${evidence}/tasks.png` });
+  await page.screenshot({ path: `${evidence}/tasks-filtered.png` });
   await clear.tap();
+  await page.waitForTimeout(350);
+  await page.screenshot({ path: `${evidence}/tasks.png` });
   for (const [label, shot] of [
     ["成员", "members"],
     ["设置", "settings"],
   ]) {
     await nav.getByRole("button", { name: label, exact: true }).tap();
     await expect(nav).toBeVisible();
+    const rootHead = page.locator(
+      label === "成员"
+        ? ".rah-agent-sidebar-head"
+        : ".rah-settings-mobile-index > header",
+    );
+    assert.equal((await rootHead.boundingBox()).height, 60);
+    const rootIcon = rootHead.locator(".rah-panel-header-icon");
+    await expect(rootIcon).toHaveCSS("border-top-width", "2px");
+    assert.equal((await rootIcon.boundingBox()).width, 36);
     await page.waitForTimeout(350);
     await page.screenshot({ path: `${evidence}/${shot}.png` });
   }
@@ -111,6 +237,7 @@ try {
     .getByRole("button", { name: "计算机", exact: true })
     .tap();
   await expect(nav).toBeHidden();
+  await page.locator(".rah-computer-row").tap();
   await page.getByRole("button", { name: "返回计算机列表", exact: true }).tap();
   await page.getByRole("button", { name: "返回设置", exact: true }).tap();
   await expect(nav).toBeVisible();
@@ -129,7 +256,94 @@ try {
     page.getByRole("textbox", { name: "消息输入框", exact: true }),
   ).toBeVisible();
   await page.waitForTimeout(350);
+  assert.equal(
+    (
+      await page
+        .locator(".rah-conversation-head .rah-panel-header-icon")
+        .boundingBox()
+    ).width,
+    36,
+  );
   await page.screenshot({ path: `${evidence}/room.png` });
+  await page.getByRole("button", { name: "频道详情与设置", exact: true }).tap();
+  const closeSettings = page.getByRole("button", {
+    name: "关闭频道设置",
+    exact: true,
+  });
+  await expect(closeSettings.locator("svg use")).toHaveAttribute("href", /x$/);
+  await page.waitForTimeout(350);
+  const settingsHead = await page
+    .locator(".rah-channel-settings-header")
+    .boundingBox();
+  assert.equal(settingsHead.height, 60);
+  await page.screenshot({ path: `${evidence}/channel-settings.png` });
+  const closeBox = await closeSettings.boundingBox();
+  assert.ok(
+    Math.abs(
+      closeBox.y +
+        closeBox.height / 2 -
+        settingsHead.y -
+        settingsHead.height / 2,
+    ) <= 1,
+  );
+  await closeSettings.tap();
+  await page.getByRole("tab", { name: "任务", exact: true }).tap();
+  const roomToolbar = page.locator('.chan-pane [aria-label="任务筛选与视图"]');
+  const create = roomToolbar.getByRole("button", {
+    name: "新建任务",
+    exact: true,
+  });
+  const roomViews = roomToolbar.getByRole("radiogroup", { name: "任务视图" });
+  const assertToolbar = async () => {
+    const first = await roomToolbar
+      .getByRole("button", { name: /^创建者/ })
+      .boundingBox();
+    const second = await roomToolbar
+      .getByRole("button", { name: /^负责人/ })
+      .boundingBox();
+    const createBox = await create.boundingBox(),
+      viewBox = await roomViews.boundingBox();
+    assert.equal(first.y, second.y);
+    assert.equal(
+      createBox.y + createBox.height / 2,
+      first.y + first.height / 2,
+    );
+    if (viewBox.x + viewBox.width > 390)
+      await expect(roomToolbar.locator(".tasks-toolbar-row")).toHaveCSS(
+        "overflow-x",
+        "auto",
+      );
+    assert.ok(
+      Math.abs(
+        createBox.y + createBox.height / 2 - viewBox.y - viewBox.height / 2,
+      ) <= 1,
+    );
+  };
+  await assertToolbar();
+  await roomToolbar.getByRole("button", { name: /^创建者/ }).tap();
+  await page.getByRole("menuitemcheckbox").first().tap();
+  await page.keyboard.press("Escape");
+  await assertToolbar();
+  await roomToolbar.getByRole("button", { name: /^负责人/ }).tap();
+  await page.getByRole("menuitemcheckbox").first().tap();
+  await page.keyboard.press("Escape");
+  await assertToolbar();
+  await expect(
+    roomToolbar.getByRole("button", { name: "全部清除", exact: true }),
+  ).toBeHidden();
+  await expect(create).toHaveJSProperty("innerText", "新建任务");
+  for (const mode of ["看板", "列表"]) {
+    await roomViews.getByRole("radio", { name: mode }).tap();
+    await expect(roomViews.locator('[aria-checked="true"]')).toHaveCSS(
+      "background-color",
+      "rgb(255, 212, 64)",
+    );
+    const inactive = roomViews.locator('[aria-checked="false"]');
+    await inactive.hover();
+    await expect(inactive).toHaveCSS("background-color", "rgb(255, 255, 255)");
+  }
+  await page.screenshot({ path: `${evidence}/room-tasks-filtered.png` });
+  await page.getByRole("tab", { name: "聊天", exact: true }).tap();
   await page.getByRole("button", { name: "返回主页", exact: true }).tap();
   await expect(nav).toBeVisible();
   await home
@@ -137,6 +351,15 @@ try {
     .first()
     .tap();
   await expect(nav).toBeHidden();
+  assert.equal(
+    (
+      await page
+        .locator(".rah-conversation-head .rah-agent-avatar.is-header")
+        .boundingBox()
+    ).width,
+    36,
+  );
+  await page.screenshot({ path: `${evidence}/direct.png` });
   await page.getByRole("button", { name: "返回主页", exact: true }).tap();
   await expect(nav).toBeVisible();
   await page.waitForTimeout(350);
@@ -146,8 +369,16 @@ try {
   );
   await expect(inbox).toBeVisible();
   await expect(home).toBeVisible();
-  const linkedPopup = await inbox.boundingBox();
-  assert.ok(linkedPopup.x >= 0 && linkedPopup.x + linkedPopup.width <= 390);
+  await expect
+    .poll(async () => {
+      const linkedPopup = await inbox.boundingBox();
+      return (
+        linkedPopup !== null &&
+        linkedPopup.x >= 0 &&
+        linkedPopup.x + linkedPopup.width <= 390
+      );
+    })
+    .toBe(true);
   await page.keyboard.press("Escape");
   await page.setViewportSize({ width: 1440, height: 900 });
   await expect(nav).toBeHidden();

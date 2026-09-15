@@ -192,7 +192,7 @@ export function SidebarDrag({
         items={shown.sections.map((id) => `group:${id}`)}
         strategy={verticalListSortingStrategy}
       >
-        {children(shown)}
+        <div className="rah-sidebar-section-list">{children(shown)}</div>
       </SortableContext>
       {error && (
         <p role="status" className="side-hint">

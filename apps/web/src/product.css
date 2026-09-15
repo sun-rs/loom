@@ -664,9 +664,14 @@
     box-shadow 0.15s;
 }
 
-.task-filter-trigger:hover,
 .task-filter-trigger[aria-expanded="true"] {
   border-color: var(--black);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .task-filter-trigger:hover {
+    border-color: var(--black);
+  }
 }
 
 .task-filter.is-selected .task-filter-trigger {
@@ -713,6 +718,8 @@
 }
 
 .rah-task-create {
+  background: var(--pink);
+  box-shadow: none;
   flex: none;
   font-size: 12px;
   font-weight: 700;
@@ -1134,7 +1141,7 @@
 .rah-message-context-menu {
   background: var(--paper);
   border: 2px solid var(--black);
-  box-shadow: var(--shadow-l);
+  box-shadow: var(--shadow-m);
   max-height: calc(100dvh - 16px);
   min-width: 224px;
   overflow-y: auto;
@@ -3938,10 +3945,9 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
     width: 32px;
   }
 
-  .rah-mobile-home-notifications:hover,
   .rah-mobile-home-notifications:focus-visible {
-    border-color: var(--black);
-    background: white;
+    outline: 2px solid var(--black);
+    outline-offset: 3px;
   }
 
   .rah-mobile-home-notifications > svg {

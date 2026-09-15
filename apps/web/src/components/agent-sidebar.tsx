@@ -5,6 +5,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import type { WorkspaceHumanMember } from "@rah-os/protocol";
 import type { WorkspaceAgentView } from "@rah-os/ui-web";
+import { PanelHeaderIcon } from "@rah-os/ui-web/neo-brutalist/panel-header-icon";
 import { PanelHeader } from "@rah-os/ui-web/neo-brutalist/panel-header";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { computerStatusLabel } from "../attention-presentation.ts";
@@ -80,8 +81,11 @@ export function AgentSidebar({
 
   return (
     <aside className="rah-agent-directory-list" aria-label="Agent 列表">
-      <PanelHeader kind="sidebar" className="rah-agent-sidebar-head">
-        <Icon name="members" className="rah-mobile-only" />
+      <PanelHeader
+        kind="sidebar"
+        className="rah-agent-sidebar-head rah-mobile-root-header"
+      >
+        <PanelHeaderIcon name="members" className="rah-mobile-only" />
         <h1>成员</h1>
       </PanelHeader>
       <div className="rah-agent-sidebar-scroll rah-scroll-main">

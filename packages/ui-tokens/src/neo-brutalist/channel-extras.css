@@ -121,55 +121,6 @@
 .rah-task-create-dialog form {
   overflow-y: auto;
 }
-.rah-task-create-configuration {
-  display: grid;
-  gap: 12px;
-}
-.rah-task-create-configuration .rah-agent-targets {
-  border: 0;
-  padding: 0;
-}
-.rah-task-dialog-dependencies {
-  border: 1px solid var(--black);
-  margin: 0;
-  min-width: 0;
-  padding: 7px;
-}
-.rah-task-dialog-dependencies legend {
-  font: 700 9px/1 var(--mono);
-  padding: 0 4px;
-  text-transform: uppercase;
-}
-.rah-task-dialog-dependencies > div {
-  display: grid;
-  gap: 5px;
-  max-height: 160px;
-  overflow-y: auto;
-}
-.rah-task-dialog-dependencies label {
-  align-items: center;
-  background: var(--bg);
-  border: 1px solid var(--black);
-  cursor: pointer;
-  display: flex;
-  font: 700 10px/1.3 var(--mono);
-  grid-template-columns: auto minmax(0, 1fr);
-  padding: 6px 7px;
-}
-.rah-task-dialog-dependencies label:has(input:checked) {
-  background: var(--yellow);
-  box-shadow: var(--shadow-s);
-}
-.rah-task-dialog-dependencies label span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.rah-task-dialog-dependencies p {
-  color: var(--muted);
-  font: 10px/1.4 var(--mono);
-}
 @media (max-width: 767px) {
   .rah-task-create-dialog form footer {
     flex-wrap: wrap;

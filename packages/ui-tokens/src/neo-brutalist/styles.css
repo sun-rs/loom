@@ -156,7 +156,6 @@ a.rail-btn { color: var(--ink); text-decoration: none; }
 .side-actions button:active { background: var(--ink-10); }
 .side-actions button:focus-visible { background: var(--ink-05); }
 .side-hint { color: var(--ink-50); font-family: var(--mono); font-size: 12px; line-height: 16.5px; padding: 0 8px; }
-.side-section:nth-child(2) .side-hint { min-height: 36px; color: var(--ink-45); padding-block: 6px; }
 
 .channel-row {
   display: flex; align-items: center; gap: var(--space-1-5);

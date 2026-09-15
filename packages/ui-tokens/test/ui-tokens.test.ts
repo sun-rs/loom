@@ -7,6 +7,16 @@ import test from "node:test";
 const packageRoot = join(import.meta.dirname, "..");
 const repositoryRoot = join(packageRoot, "..", "..");
 
+const verifiedListChecksAddition = `  <!-- Raft index-CRDaMXft.js sGe/iGe, SHA256 9247f38f78bfb5df423d4424882da63d18268324a9c9c151b52a49d772764271. Verbatim Lucide list-checks; ISC /legal/lucide-icons-LICENSE.txt. -->
+  <symbol id="raft-icon-list-checks" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 5h8"/><path d="M13 12h8"/><path d="M13 19h8"/><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/></symbol>
+`;
+
+const verifiedCircleCheckBigAddition = `  <!-- Raft index-WTraJnrd.js qy/$Fe, verbatim Lucide circle-check-big; ISC /legal/lucide-icons-LICENSE.txt. -->
+  <symbol id="raft-icon-circle-check-big" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/>
+  </symbol>
+`;
+
 // Raft index-MqTUR4Ez.js I6e/Ec, SHA256
 // 9cf480531f38c29136637f7b373f285a0e915711c07dbebeadd22c05b33ad443.
 const verifiedCommentToggleAddition = `  <!-- Raft index-MqTUR4Ez.js lVe/Hse, SHA256 9cf480531f38c29136637f7b373f285a0e915711c07dbebeadd22c05b33ad443. Verbatim Lucide message-square-more geometry. ISC: /legal/lucide-icons-LICENSE.txt; Copyright (c) 2026 Lucide Icons and Contributors. -->
@@ -42,6 +52,8 @@ test("interaction icon geometry is frozen from Raft RFe/TFe/yze/cze/Bw, Agent ta
     join(packageRoot, "src", "interaction-icons.svg"),
   );
   const source = content.toString("utf8");
+  assert.ok(source.includes(verifiedCircleCheckBigAddition));
+  assert.ok(source.includes(verifiedListChecksAddition));
   for (const exactRaftPath of [
     'd="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"',
     'd="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"',
@@ -70,6 +82,8 @@ test("interaction icon geometry is frozen from Raft RFe/TFe/yze/cze/Bw, Agent ta
     createHash("sha256")
       .update(
         source
+          .replace(verifiedListChecksAddition, "")
+          .replace(verifiedCircleCheckBigAddition, "")
           .replace(verifiedCommentToggleAddition, "")
           .replace(verifiedFileTextAddition, "")
           .replace(verifiedGitBranchAddition, "")

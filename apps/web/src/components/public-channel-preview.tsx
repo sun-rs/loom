@@ -215,9 +215,11 @@ function PublicChannelPane({
               onLoadEarlierTasks={async () =>
                 setBeforeTaskNumber(current.nextBeforeTaskNumber)
               }
-              onOpenThread={async (task) =>
-                onOpen(roomId, task.sourceMessageId, task.threadId)
-              }
+              onOpenTask={async ({ target }) => {
+                if (target.kind !== "task") return false;
+                onOpen(roomId, target.rootMessageId, target.threadId);
+                return true;
+              }}
               roomName={current.room.name}
             />
           ) : (

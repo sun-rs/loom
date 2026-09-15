@@ -1,3 +1,4 @@
+import { useMobileLayout } from "../use-mobile-layout.ts";
 import { ThreadPanelResizer } from "./thread-panel-resizer.tsx";
 import { AgentEnvironmentSummary } from "./agent-environment-summary.tsx";
 import { AgentHeaderActions } from "./agent-header-actions.tsx";
@@ -210,6 +211,7 @@ export function AgentDirectoryPane({
   runtimes: readonly LocalRuntimeInventoryEntry[];
   workspaceId: string | undefined;
 }) {
+  const mobile = useMobileLayout();
   const entities = useWorkspaceEntities();
   const [selectedAgentDefinitionId, setSelectedAgentDefinitionId] = useState<
     string | undefined
@@ -693,13 +695,15 @@ export function AgentDirectoryPane({
           humansTruncated={humansTruncated}
           onRetryHumans={onRetryHumans}
           onSelectHuman={selectHuman}
-          selectedHumanId={memberView === "human" ? humanId : undefined}
+          selectedHumanId={
+            !mobile && memberView === "human" ? humanId : undefined
+          }
           onCreate={onCreate}
           onRelationship={selectRelationship}
           onSelect={selectAgent}
-          relationshipSelected={memberView === "relationship"}
+          relationshipSelected={!mobile && memberView === "relationship"}
           selectedAgentDefinitionId={
-            memberView === "agent"
+            !mobile && memberView === "agent"
               ? selectedAgent?.agentDefinitionId
               : undefined
           }
@@ -1281,9 +1285,9 @@ export function AgentDetailHeader({
   return (
     <PanelHeader kind="agent" className="rah-agent-detail-head">
       <PanelHeaderAction
-        aria-label={backLabel ?? "返回成员列表"}
+        aria-label={onClose ? "返回聊天" : (backLabel ?? "返回成员列表")}
         className="rah-agent-mobile-back"
-        onClick={onBack}
+        onClick={onClose ?? onBack}
       >
         <Icon name="arrow-left" />
       </PanelHeaderAction>
@@ -1303,7 +1307,11 @@ export function AgentDetailHeader({
           onRestart={onRestart}
         />
         {onClose ? (
-          <PanelHeaderAction aria-label="关闭 Agent 侧栏" onClick={onClose}>
+          <PanelHeaderAction
+            className="rah-desktop-only"
+            aria-label="关闭 Agent 侧栏"
+            onClick={onClose}
+          >
             <Icon name="x" />
           </PanelHeaderAction>
         ) : null}
@@ -1895,6 +1903,7 @@ export function AgentActivityPane({
   const [copied, setCopied] = useState(false);
   const scrollArea = useRef<HTMLElement>(null);
   const followLatest = useRef(true);
+  const lastScrollTop = useRef(0);
   const visibleActivities = useMemo(
     () => projectAgentActivityRows(activities),
     [activities],
@@ -1907,8 +1916,12 @@ export function AgentActivityPane({
 
   useEffect(() => {
     const element = scrollArea.current;
-    if (element !== null && followLatest.current) {
-      element.scrollTop = element.scrollHeight;
+    if (element !== null) {
+      // A native scroll may already have moved before onScroll is delivered.
+      if (element.scrollTop !== lastScrollTop.current)
+        followLatest.current = false;
+      if (followLatest.current) element.scrollTop = element.scrollHeight;
+      lastScrollTop.current = element.scrollTop;
     }
   }, [visibleActivities.at(-1)?.serverSequence]);
 
@@ -1939,6 +1952,7 @@ export function AgentActivityPane({
       className="rah-agent-activity-pane rah-scroll-main"
       onScroll={(event) => {
         const element = event.currentTarget;
+        lastScrollTop.current = element.scrollTop;
         followLatest.current =
           element.scrollHeight - element.scrollTop - element.clientHeight < 48;
       }}

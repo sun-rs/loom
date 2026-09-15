@@ -1,6 +1,7 @@
 export type MessageSelectionScope = {
   roomId: string;
   threadRootMessageId?: string;
+  ownerId?: string;
 };
 
 export type MessageSelectionSnapshot = {
@@ -10,11 +11,16 @@ export type MessageSelectionSnapshot = {
 };
 
 export type MessageSelectionStore = {
-  enterRoom: (roomId: string, initialIds?: readonly string[]) => void;
+  enterRoom: (
+    roomId: string,
+    initialIds?: readonly string[],
+    ownerId?: string,
+  ) => void;
   enterThread: (
     roomId: string,
     threadRootMessageId: string,
     initialIds?: readonly string[],
+    ownerId?: string,
   ) => void;
   exit: () => void;
   getSnapshot: () => MessageSelectionSnapshot;
@@ -53,17 +59,17 @@ export function createMessageSelectionStore(): MessageSelectionStore {
     for (const listener of listeners) listener();
   };
   return {
-    enterRoom(roomId, initialIds = []) {
+    enterRoom(roomId, initialIds = [], ownerId) {
       update({
         active: true,
-        scope: { roomId },
+        scope: { roomId, ...(ownerId ? { ownerId } : {}) },
         selectedIds: selectedIds(initialIds),
       });
     },
-    enterThread(roomId, threadRootMessageId, initialIds) {
+    enterThread(roomId, threadRootMessageId, initialIds, ownerId) {
       update({
         active: true,
-        scope: { roomId, threadRootMessageId },
+        scope: { roomId, threadRootMessageId, ...(ownerId ? { ownerId } : {}) },
         selectedIds: selectedIds(initialIds ?? [threadRootMessageId]),
       });
     },

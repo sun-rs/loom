@@ -50,7 +50,8 @@ export function useSearchChannelPreview() {
       setSelection(read());
       if (!id)
         queueMicrotask(() => {
-          if (focus.current?.isConnected) focus.current.focus();
+          if (focus.current?.isConnected)
+            focus.current.focus({ preventScroll: true });
         });
     },
     [],

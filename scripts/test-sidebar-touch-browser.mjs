@@ -38,10 +38,21 @@ try {
   }
   await page.goto(f.origin);
   const sidebar = page.locator(".rah-room-sidebar");
+  await expect(sidebar).toBeVisible();
   await expect
-    .poll(async () => Math.round((await sidebar.boundingBox()).x))
+    .poll(async () => Math.round((await sidebar.boundingBox())?.x ?? -1))
     .toBe(0);
   const body = sidebar.locator(".sidebar-body");
+  await expect(sidebar).toHaveCSS(
+    engine === "webkit" ? "-webkit-user-select" : "user-select",
+    "none",
+  );
+  if (await page.evaluate(() => CSS.supports("-webkit-touch-callout", "none")))
+    await expect(sidebar).toHaveCSS("-webkit-touch-callout", "none");
+  else
+    console.log(
+      `${engine}: touch-callout is iOS-only; desktop engine cannot verify the native callout`,
+    );
   const row = sidebar.locator("[data-sidebar-key]").first();
   await expect(row).toBeVisible();
   const label = row.locator("button").first();
@@ -130,6 +141,35 @@ try {
     assert.ok(b);
     return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
   };
+  // Blank padding and gaps belong to the same non-selectable menu surface.
+  for (const toggle of await sidebar.locator(".rah-sidebar-disclosure").all()) {
+    if ((await toggle.getAttribute("aria-expanded")) === "true")
+      await toggle.click();
+  }
+  const empty = await body.boundingBox();
+  const blank = {
+    x: empty.x + empty.width / 2,
+    y: empty.y + empty.height - 110,
+  };
+  await touch("touchStart", blank.x, blank.y);
+  await page.waitForTimeout(600);
+  await expect(
+    page.getByRole("menuitem", { name: "新建分区", exact: true }),
+  ).toBeVisible();
+  await touch("touchEnd", blank.x, blank.y);
+  assert.equal(
+    await page.evaluate(() => getSelection()?.isCollapsed ?? true),
+    true,
+  );
+  await page.screenshot({ path: `/tmp/rah-sidebar-blank-touch-${engine}.png` });
+  await page.keyboard.press("Escape");
+  for (const toggle of await sidebar.locator(".rah-sidebar-disclosure").all()) {
+    if (Number(await toggle.locator(".count").innerText()) > 0)
+      await toggle.click();
+  }
+  await body.evaluate((el) => {
+    el.scrollTop = 0;
+  });
   let pos = await point(row);
   if (cdp) {
     await touch("touchStart", pos.x, pos.y);
@@ -229,6 +269,13 @@ try {
     exact: true,
   });
   await expect(sectionDialog).toBeVisible();
+  const nameInput = sectionDialog.getByPlaceholder("我的项目");
+  await nameInput.fill("Selectable section name");
+  await nameInput.evaluate((el) => el.select());
+  assert.equal(
+    await nameInput.evaluate((el) => el.selectionEnd - el.selectionStart),
+    23,
+  );
   await sectionDialog.getByRole("button", { name: "取消", exact: true }).tap();
   await expect(sectionDialog).toBeHidden();
   // Movement and cancellation must release the long-press timer.

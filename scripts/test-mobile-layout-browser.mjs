@@ -35,7 +35,7 @@ async function navVisible(expected = false) {
   assert.equal(await nav.isVisible(), expected);
   if (expected) {
     const r = await nav.boundingBox();
-    assert.ok(r.x >= 0 && r.y > 700 && r.height >= 56);
+    assert.ok(r.x >= 0 && r.y > 700 && r.height === 50);
   }
   assert.equal(
     await page.evaluate(
@@ -78,11 +78,9 @@ try {
           a.y + a.height <= b.y,
           "composer must clear bottom navigation",
         );
-        await page.locator(".channel .msg").last().hover();
+        await page.locator(".channel .msg").last().click({ button: "right" });
         await page
-          .locator(".channel .msg")
-          .last()
-          .getByRole("button", { name: "在消息列中回复", exact: true })
+          .getByRole("menuitem", { name: "打开消息列", exact: true })
           .click();
         const thread = page.getByTestId("thread-side-column");
         await thread.waitFor();

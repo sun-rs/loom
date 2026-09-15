@@ -1,4 +1,38 @@
+[滚动所有者排查与工具栏覆盖](./audits/2026-09-16-scroll-owner-audit.zh-CN.md)：慢历史请求、搜索重复定位、活动尾随和关闭焦点恢复；三个任务入口的 Web/PWA 留白实测。
+
+[任务触摸滚动与工具栏留白](./audits/2026-09-16-task-scroll-and-toolbar-insets.zh-CN.md)：修复原生滚动与刷新交错时锚点回拉，移动任务工具栏上下留白统一。
+
+[首页与复制文本细化](./audits/2026-09-15-sidebar-copy-home-refinement.zh-CN.md)：当前 Raft 全选图标、按下保留粗阴影、手机条目节距、首页刷新与可局部选择文本区。
+
+[聊天列表默认折叠与移动密度](./audits/2026-09-15-sidebar-defaults-touch-density.zh-CN.md)：空/非空分组默认状态、容器级触摸防选择与移动端间距压缩。
+
+[消息菜单矩阵与 PWA 选择条间距](./audits/2026-09-15-message-menu-matrix.zh-CN.md)：按频道、私聊、母消息、回复和任务状态核对条件，已关闭任务操作对齐与触摸按钮阴影净空。
+
+[聊天列表间距与操作图标](./audits/2026-09-15-sidebar-spacing-and-actions.zh-CN.md)：分组外边距合并、空置顶高度与无文字图标按钮偏移的根因修复，源码字号和间距验收。
+
+[任务多选、共享间距与筛选生命周期](./audits/2026-09-15-task-filter-scope.zh-CN.md)。
+
+[菜单与选择条细化](./audits/2026-09-15-message-selection-refinement.zh-CN.md)：任务操作独立分组、按钮源参数和逐项紧凑、可见消息页选择归属、预览等距留白。
+
+[消息长按、文本选择与本地图片预览](./audits/2026-09-15-message-touch-selection-export.zh-CN.md)：PWA 无消息黑框、菜单和母消息转换、黄色多选条、审批属性换行、已完成任务静默重开。
+
+[PWA 任务筛选间距与关闭边框](./audits/2026-09-15-pwa-task-filter-spacing.zh-CN.md)。
+
+[聊天审批与阅读位置修复](./audits/2026-09-15-chat-approval-reading-position.zh-CN.md)：PWA 精简审批弹窗、人员资料返回与头像反馈。
+
+[PWA 首次点击与列表可见选中态](./audits/2026-09-15-pwa-first-tap-and-visible-selection.zh-CN.md)。
+
+[任务弹窗、创建与消息操作条](./audits/2026-09-15-task-presentation-and-message-actions.zh-CN.md)。
+
+[任务卡片触摸滚动与频道单行工具栏](./audits/2026-09-15-task-touch-and-compact-toolbar.zh-CN.md)。
+
+[PWA 底栏、铃铛、任务空结果与标题尺寸续修](./audits/2026-09-15-pwa-navigation-and-task-stability.zh-CN.md)。
+
+[PWA 网络入口重启恢复](./audits/2026-09-14-pwa-network-restart-recovery.zh-CN.md)：修复正式重启丢失 Tailnet/LAN 模式；启动收据与原网络入口验收。
+
 [移动端 iOS 风格根导航](./audits/2026-09-14-mobile-ios-tab-navigation.zh-CN.md)：按用户最新决定撤回左侧抽屉，改为根页面悬浮四项底栏；首页入口、任务移动布局及聚焦防放大。
+
+- [PWA 标题栏密度与导航状态修正](audits/2026-09-14-mobile-header-density.zh-CN.md)
 
 [Agent候选行共享组件与门禁](./audits/2026-09-14-choice-row-code-contract.zh-CN.md)：四类typed配置、现有调用迁移、局部样式越界检查及双浏览器状态验收。
 
@@ -795,3 +829,9 @@ Claude 工具边界追加与 Kimi 原生接口差异：[来源、实施与验证
 - [点击清除消息定位与搜索高亮](audits/2026-09-14-message-highlight-dismissal.zh-CN.md)
 
 - [任务操作时间线完整性与底部定位续修](audits/2026-09-14-task-timeline-completeness.zh-CN.md)
+
+- [空消息文案与后台同步稳定性](audits/2026-09-14-chat-empty-stability.zh-CN.md)
+
+# 2026-09-16
+
+- [PWA 滚动边界、历史补偿与原生文本选择](audits/2026-09-16-pwa-scroll-and-native-copy.zh-CN.md)

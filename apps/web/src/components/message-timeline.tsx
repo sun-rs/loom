@@ -2,6 +2,7 @@ import {
   forwardRef,
   useCallback,
   useImperativeHandle,
+  useEffect,
   useLayoutEffect,
   useRef,
   type ForwardedRef,
@@ -55,6 +56,8 @@ function MessageTimelineInner<Item>(
         messageId: string;
         previousItemIndex: number;
         viewportOffset: number;
+        scrollTop: number;
+        settleDeadline?: number;
       }
     | undefined
   >(undefined);
@@ -116,11 +119,31 @@ function MessageTimelineInner<Item>(
             (item) => getItemKeyRef.current(item) === messageId,
           ),
           viewportOffset,
+          scrollTop: scrollElementRef.current?.scrollTop ?? 0,
         };
       },
     }),
     [],
   );
+
+  useEffect(() => {
+    const scroller = scrollElementRef.current;
+    if (!scroller) return;
+    // While a history request is pending, keep its anchor relative to the
+    // user's latest reading position rather than the original click position.
+    const update = () => {
+      const pending = pendingAnchorRef.current;
+      if (!pending || pending.settleDeadline !== undefined) return;
+      const index = itemsRef.current.findIndex(
+        (item) => getItemKeyRef.current(item) === pending.messageId,
+      );
+      if (index !== pending.previousItemIndex) return;
+      pending.viewportOffset -= scroller.scrollTop - pending.scrollTop;
+      pending.scrollTop = scroller.scrollTop;
+    };
+    scroller.addEventListener("scroll", update, { passive: true });
+    return () => scroller.removeEventListener("scroll", update);
+  }, [scrollElementRef]);
 
   useLayoutEffect(() => {
     const pending = pendingAnchorRef.current;
@@ -136,22 +159,49 @@ function MessageTimelineInner<Item>(
     if (itemIndex === pending.previousItemIndex) return;
     let animationFrame = 0;
     let cancelled = false;
-    const settleDeadline = performance.now() + RAFT_MESSAGE_ANCHOR_SETTLE_MS;
+    const settleDeadline = (pending.settleDeadline ??=
+      performance.now() + RAFT_MESSAGE_ANCHOR_SETTLE_MS);
+    const release = () => {
+      pendingAnchorRef.current = undefined;
+    };
+    const releaseOnKey = (event: KeyboardEvent) => {
+      if (
+        [
+          "ArrowUp",
+          "ArrowDown",
+          "PageUp",
+          "PageDown",
+          "Home",
+          "End",
+          " ",
+        ].includes(event.key)
+      )
+        release();
+    };
+    scroller.addEventListener("wheel", release, { passive: true });
+    scroller.addEventListener("touchmove", release, { passive: true });
+    scroller.addEventListener("keydown", releaseOnKey);
     const settle = () => {
-      if (cancelled) return;
+      if (cancelled || pendingAnchorRef.current !== pending) return;
       const row = scroller.querySelector<HTMLElement>(
         `[data-message-id="${CSS.escape(pending.messageId)}"]`,
       );
       if (row === null) {
-        virtualizer.scrollToIndex(itemIndex + headerOffset, {
-          align: "start",
-        });
+        // An index target keeps reconciling after our correction is released.
+        // Prepend restoration needs a bounded offset, not a new navigation target.
+        const offset = virtualizer.getOffsetForIndex(
+          itemIndex + headerOffset,
+          "start",
+        );
+        if (offset)
+          virtualizer.scrollToOffset(offset[0] - pending.viewportOffset);
       } else {
         const delta =
           row.getBoundingClientRect().top -
           scroller.getBoundingClientRect().top -
           pending.viewportOffset;
-        if (Math.abs(delta) > 0.5) scroller.scrollTop += delta;
+        if (Math.abs(delta) > 0.5)
+          virtualizer.scrollToOffset(scroller.scrollTop + delta);
       }
       if (performance.now() < settleDeadline) {
         animationFrame = requestAnimationFrame(settle);
@@ -165,6 +215,9 @@ function MessageTimelineInner<Item>(
     return () => {
       cancelled = true;
       cancelAnimationFrame(animationFrame);
+      scroller.removeEventListener("wheel", release);
+      scroller.removeEventListener("touchmove", release);
+      scroller.removeEventListener("keydown", releaseOnKey);
     };
   }, [getItemKey, headerOffset, items, scrollElementRef, virtualizer]);
 

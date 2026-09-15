@@ -15,6 +15,7 @@ export function useMessageContextMenu<T extends HTMLElement>() {
     undefined,
   );
   const longPressOpened = useRef(false);
+  const origin = useRef<{ x: number; y: number } | undefined>(undefined);
   const [anchor, setAnchor] = useState<{ x: number; y: number }>();
 
   const cancelLongPress = useCallback(() => {
@@ -33,15 +34,16 @@ export function useMessageContextMenu<T extends HTMLElement>() {
   }, []);
   const startContextMenuLongPress = useCallback(
     (event: ReactTouchEvent<HTMLElement>) => {
-      if (
-        !(event.target instanceof Element) ||
-        event.target.closest("a, button, pre, code, img")
-      )
-        return;
       cancelLongPress();
       longPressOpened.current = false;
+      if (
+        !(event.target instanceof Element) ||
+        event.target.closest("a, button, input, textarea")
+      )
+        return;
       const touch = event.touches[0];
-      if (!touch) return;
+      if (!touch || event.touches.length !== 1) return;
+      origin.current = { x: touch.clientX, y: touch.clientY };
       longPressTimer.current = setTimeout(() => {
         longPressOpened.current = true;
         setAnchor({ x: touch.clientX, y: touch.clientY });
@@ -53,6 +55,7 @@ export function useMessageContextMenu<T extends HTMLElement>() {
     (event: ReactTouchEvent<HTMLElement>) => {
       cancelLongPress();
       if (longPressOpened.current) event.preventDefault();
+      longPressOpened.current = false;
     },
     [cancelLongPress],
   );
@@ -63,7 +66,16 @@ export function useMessageContextMenu<T extends HTMLElement>() {
     anchor,
     closeContextMenu,
     finishContextMenuLongPress,
-    moveContextMenuLongPress: cancelLongPress,
+    moveContextMenuLongPress: (event: ReactTouchEvent<HTMLElement>) => {
+      const touch = event.touches[0],
+        start = origin.current;
+      if (
+        !touch ||
+        !start ||
+        Math.hypot(touch.clientX - start.x, touch.clientY - start.y) > 8
+      )
+        cancelLongPress();
+    },
     openContextMenu,
     startContextMenuLongPress,
     triggerRef,

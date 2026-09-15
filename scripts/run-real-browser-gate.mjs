@@ -2312,7 +2312,7 @@ try {
     () =>
       document
         .querySelector(".rah-message-selection-toolbar")
-        ?.textContent?.includes("已选择 1 条") === true &&
+        ?.textContent?.includes("已选 1 条") === true &&
       document.querySelector('textarea[aria-label="消息输入框"]') === null,
     "Room Raft selection mode replaces the composer",
   );
@@ -2322,7 +2322,7 @@ try {
     () =>
       document
         .querySelector(".rah-message-selection-toolbar")
-        ?.textContent?.includes("已选择 2 条") === true,
+        ?.textContent?.includes("已选 2 条") === true,
     "Room selection row click toggles a second canonical Message",
   );
   await call(browser, () => {
@@ -2374,423 +2374,28 @@ try {
     "Room selection Escape restores the composer",
   );
 
+  // Retired forwarding UI is replaced by local image export. Canonical
+  // forwarding/attachment projections retain their SDK and Kernel tests.
   await openMessageContextMenu(browser, "browser gate: Kimi only");
   await clickButton(browser, { text: "选择消息" });
-  await clickMessageRow(browser, kimiOnlyReply);
-  await clickButton(browser, { text: "转发" });
+  await clickButton(browser, { text: "生成图片" });
   await waitFor(
     browser,
-    () =>
-      document.querySelector(
-        '.rah-message-forward-dialog[role="dialog"][aria-modal="true"]',
-      ) !== null,
-    "canonical Message forward dialog",
-  );
-  await waitFor(
-    browser,
-    () =>
-      [...document.querySelectorAll(".rah-message-forward-targets label")].some(
-        (label) => label.textContent?.includes("Agent Council") === true,
-      ),
-    "same-workspace joined forward targets",
-  );
-  assert.equal(
-    await call(browser, () => {
-      const label = [
-        ...document.querySelectorAll(".rah-message-forward-targets label"),
-      ].find(
-        (candidate) =>
-          candidate.textContent?.includes("Agent Council") === true,
-      );
-      const input = label?.querySelector('input[type="checkbox"]');
-      if (!(input instanceof HTMLInputElement)) return false;
-      input.click();
-      const note = document.querySelector(
-        ".rah-message-forward-dialog textarea",
-      );
-      if (!(note instanceof HTMLTextAreaElement)) return false;
-      const setter = Object.getOwnPropertyDescriptor(
-        HTMLTextAreaElement.prototype,
-        "value",
-      )?.set;
-      setter?.call(note, "browser gate: forwarded bundle");
-      note.dispatchEvent(new Event("input", { bubbles: true }));
-      return true;
-    }),
-    true,
-    "forward target and note must be editable",
-  );
-  await clickButton(browser, { text: "转发 (1)" });
-  await waitFor(
-    browser,
-    () =>
-      document.querySelector(".rah-message-forward-dialog") === null &&
-      document.querySelector(".rah-message-selection-toolbar") === null,
-    "successful forward exits selection and closes the dialog",
-  );
-  await clickButton(browser, { text: "Agent Council" });
-  await waitForMessage(browser, "browser gate: forwarded bundle");
-  await waitFor(
-    browser,
-    (firstBody, secondBody) => {
-      const bundle = document.querySelector(
-        '.msg [data-testid="forwarded-bundle"]',
-      );
+    () => {
+      const image = document.querySelector(".rah-message-image-dialog img");
       return (
-        bundle?.textContent?.includes(firstBody) === true &&
-        bundle.textContent.includes(secondBody) &&
-        bundle.querySelectorAll("a").length === 2
+        image instanceof HTMLImageElement &&
+        image.complete &&
+        image.naturalWidth > 0
       );
     },
-    "server-owned forwarded bundle and source permalinks",
-    ["browser gate: Kimi only", kimiOnlyReply],
+    "selected messages produce a local image preview",
   );
-  assert.equal(
-    await call(browser, () => {
-      const link = document.querySelector(
-        '.rah-forwarded-bundle a[href*="message="]',
-      );
-      if (!(link instanceof HTMLAnchorElement)) return false;
-      link.click();
-      return true;
-    }),
-    true,
-    "forwarded source permalink must be actionable",
-  );
-  await waitFor(
-    browser,
-    (body) =>
-      document.querySelector(".channel-title h1")?.textContent?.trim() ===
-        "Design Lab" &&
-      [...document.querySelectorAll(".msg")].some(
-        (message) =>
-          message.textContent?.includes(body) === true &&
-          message.getAttribute("data-focused") === "true",
-      ),
-    "forwarded source deep link re-authorizes and focuses the source Message",
-    ["browser gate: Kimi only"],
-  );
-
-  const forwardedAttachmentFilename = "forwarded-browser-gate.txt";
-  const forwardedAttachmentBody = "browser gate: attached source";
-  const forwardedAttachmentNote = "browser gate: forwarded attachment";
-  await uploadRoomAttachment(browser, forwardedAttachmentFilename);
-  await postMessage(browser, forwardedAttachmentBody);
-  await waitFor(
-    browser,
-    (body, filename) => {
-      const message = [...document.querySelectorAll(".msg")].find(
-        (candidate) =>
-          candidate.querySelector(".rah-message-markdown")?.textContent ===
-          body,
-      );
-      return [
-        ...(message?.querySelectorAll(".rah-file-card strong") ?? []),
-      ].some((element) => element.textContent === filename);
-    },
-    "canonical Room Message attachment before forwarding",
-    [forwardedAttachmentBody, forwardedAttachmentFilename],
-  );
-  const sourceForwardAttachment = await call(
-    browser,
-    async (filename) => {
-      const roomId = new URL(window.location.href).searchParams.get("room");
-      if (!roomId) return null;
-      const result = await fetch("/v3/client/files/list", {
-        body: JSON.stringify({ roomId }),
-        headers: { "content-type": "application/json" },
-        method: "POST",
-      }).then((response) => response.json());
-      const file = result.files?.find(
-        (candidate) => candidate.filename === filename,
-      );
-      return file
-        ? { attachmentId: file.attachmentId, roomId: file.roomId }
-        : null;
-    },
-    forwardedAttachmentFilename,
-  );
-  assert.ok(sourceForwardAttachment?.attachmentId);
-
-  await openMessageContextMenu(browser, forwardedAttachmentBody);
-  await clickButton(browser, { text: "选择消息" });
-  await clickButton(browser, { text: "转发" });
-  await waitFor(
-    browser,
-    () =>
-      document.querySelector(
-        '.rah-message-forward-dialog[role="dialog"][aria-modal="true"]',
-      ) !== null,
-    "attachment Message forward dialog",
-  );
-  await waitFor(
-    browser,
-    () =>
-      [...document.querySelectorAll(".rah-message-forward-targets label")].some(
-        (label) => label.textContent?.includes("Agent Council") === true,
-      ),
-    "attachment forward target list",
-  );
-  assert.equal(
-    await call(
-      browser,
-      (noteBody) => {
-        const label = [
-          ...document.querySelectorAll(".rah-message-forward-targets label"),
-        ].find(
-          (candidate) =>
-            candidate.textContent?.includes("Agent Council") === true,
-        );
-        const input = label?.querySelector('input[type="checkbox"]');
-        const note = document.querySelector(
-          ".rah-message-forward-dialog textarea",
-        );
-        if (
-          !(input instanceof HTMLInputElement) ||
-          !(note instanceof HTMLTextAreaElement)
-        )
-          return false;
-        input.click();
-        const setter = Object.getOwnPropertyDescriptor(
-          HTMLTextAreaElement.prototype,
-          "value",
-        )?.set;
-        setter?.call(note, noteBody);
-        note.dispatchEvent(new Event("input", { bubbles: true }));
-        return true;
-      },
-      forwardedAttachmentNote,
-    ),
-    true,
-    "attachment forward target and note must be editable",
-  );
-  await clickButton(browser, { text: "转发 (1)" });
-  await waitFor(
-    browser,
-    () =>
-      document.querySelector(".rah-message-forward-dialog") === null &&
-      document.querySelector(".rah-message-selection-toolbar") === null,
-    "attachment forward closes selection surfaces",
-  );
-  await clickButton(browser, { text: "Agent Council" });
-  await waitFor(
-    browser,
-    (noteBody, sourceBody, filename) => {
-      const message = [...document.querySelectorAll(".msg")].find(
-        (candidate) =>
-          candidate.querySelector(".rah-message-markdown")?.textContent ===
-          noteBody,
-      );
-      const bundle = message?.querySelector('[data-testid="forwarded-bundle"]');
-      return (
-        bundle?.textContent?.includes(sourceBody) === true &&
-        [...bundle.querySelectorAll(".rah-file-card strong")].some(
-          (element) => element.textContent === filename,
-        )
-      );
-    },
-    "server-projected forwarded attachment card",
-    [
-      forwardedAttachmentNote,
-      forwardedAttachmentBody,
-      forwardedAttachmentFilename,
-    ],
-  );
-  const targetForwardAttachment = await call(
-    browser,
-    async (filename) => {
-      const roomId = new URL(window.location.href).searchParams.get("room");
-      if (!roomId) return null;
-      const result = await fetch("/v3/client/files/list", {
-        body: JSON.stringify({ roomId }),
-        headers: { "content-type": "application/json" },
-        method: "POST",
-      }).then((response) => response.json());
-      const file = result.files?.find(
-        (candidate) => candidate.filename === filename,
-      );
-      return file
-        ? { attachmentId: file.attachmentId, roomId: file.roomId }
-        : null;
-    },
-    forwardedAttachmentFilename,
-  );
-  assert.ok(targetForwardAttachment?.attachmentId);
-  assert.notEqual(
-    targetForwardAttachment.attachmentId,
-    sourceForwardAttachment.attachmentId,
-    "forwarded attachment must expose a destination-scoped identity",
-  );
-  assert.notEqual(
-    targetForwardAttachment.roomId,
-    sourceForwardAttachment.roomId,
-  );
-  await captureBrowserEvidence(browser, "forwarded-attachment-desktop.png");
-  assert.equal(
-    await call(
-      browser,
-      (noteBody, filename) => {
-        const message = [...document.querySelectorAll(".msg")].find(
-          (candidate) =>
-            candidate.querySelector(".rah-message-markdown")?.textContent ===
-            noteBody,
-        );
-        const card = [
-          ...(message?.querySelectorAll(".rah-file-card") ?? []),
-        ].find(
-          (candidate) =>
-            candidate.querySelector("strong")?.textContent === filename,
-        );
-        const button = card?.querySelector(".rah-file-open");
-        if (!(button instanceof HTMLButtonElement)) return false;
-        button.click();
-        return true;
-      },
-      forwardedAttachmentNote,
-      forwardedAttachmentFilename,
-    ),
-    true,
-    "forwarded attachment preview trigger",
-  );
-  await waitFor(
-    browser,
-    (filename) =>
-      document
-        .querySelector(".rah-file-preview")
-        ?.getAttribute("aria-label") === `预览 ${filename}` &&
-      document
-        .querySelector(".rah-file-preview")
-        ?.textContent?.includes("RAH OS forwarded attachment browser gate") ===
-        true,
-    "forwarded attachment bytes are readable through the projected identity",
-    [forwardedAttachmentFilename],
-  );
-  assert.equal(
-    await call(browser, () => {
-      const layer = document.querySelector(".rah-file-preview")?.parentElement;
-      const bounds = layer?.getBoundingClientRect();
-      return (
-        layer?.parentElement === document.body &&
-        bounds?.left === 0 &&
-        bounds.top === 0 &&
-        bounds.width === innerWidth &&
-        bounds.height === innerHeight
-      );
-    }),
-    true,
-    "attachment preview backdrop covers the viewport, not only its contained message row",
-  );
-  assert.equal(
-    await call(browser, () => {
-      const download = document.querySelector(
-        ".rah-file-preview header > button",
-      );
-      return (
-        download !== null && getComputedStyle(download).borderTopWidth === "0px"
-      );
-    }),
-    true,
-    "portaled preview retains the shared button reset instead of native browser chrome",
-  );
-  await captureBrowserEvidence(browser, "forwarded-attachment-preview.png");
+  await clickButton(browser, { ariaLabel: "关闭分享预览" });
   await dispatchKey(browser, "Escape", 27);
-  await waitFor(
-    browser,
-    () => document.querySelector(".rah-file-preview") === null,
-    "forwarded attachment preview Escape close",
-  );
-  await browser.command("Page.reload", { ignoreCache: true });
-  await waitFor(
-    browser,
-    (noteBody, filename) => {
-      const message = [...document.querySelectorAll(".msg")].find(
-        (candidate) =>
-          candidate.querySelector(".rah-message-markdown")?.textContent ===
-          noteBody,
-      );
-      return [
-        ...(message?.querySelectorAll(".rah-file-card strong") ?? []),
-      ].some((element) => element.textContent === filename);
-    },
-    "forwarded attachment survives a full browser reload",
-    [forwardedAttachmentNote, forwardedAttachmentFilename],
-  );
-  await browser.command("Emulation.setDeviceMetricsOverride", {
-    deviceScaleFactor: 1,
-    height: 844,
-    mobile: true,
-    screenHeight: 844,
-    screenWidth: 390,
-    width: 390,
-  });
-  await waitFor(
-    browser,
-    (noteBody, filename) => {
-      const message = [...document.querySelectorAll(".msg")].find(
-        (candidate) =>
-          candidate.querySelector(".rah-message-markdown")?.textContent ===
-          noteBody,
-      );
-      const card = [
-        ...(message?.querySelectorAll(".rah-file-card") ?? []),
-      ].find(
-        (candidate) =>
-          candidate.querySelector("strong")?.textContent === filename,
-      );
-      const bounds = card?.getBoundingClientRect();
-      return (
-        bounds !== undefined &&
-        bounds.left >= 0 &&
-        bounds.right <= document.documentElement.clientWidth &&
-        document.documentElement.scrollWidth === 390
-      );
-    },
-    "390px forwarded attachment card remains viewport-safe",
-    [forwardedAttachmentNote, forwardedAttachmentFilename],
-  );
-  await captureBrowserEvidence(browser, "forwarded-attachment-mobile.png");
-  await browser.command("Emulation.setDeviceMetricsOverride", {
-    deviceScaleFactor: 1,
-    height: 1_000,
-    mobile: false,
-    screenHeight: 1_000,
-    screenWidth: 1_440,
-    width: 1_440,
-  });
-  assert.equal(
-    await call(
-      browser,
-      (noteBody) => {
-        const message = [...document.querySelectorAll(".msg")].find(
-          (candidate) =>
-            candidate.querySelector(".rah-message-markdown")?.textContent ===
-            noteBody,
-        );
-        const link = message?.querySelector(
-          '.rah-forwarded-bundle a[href*="message="]',
-        );
-        if (!(link instanceof HTMLAnchorElement)) return false;
-        link.click();
-        return true;
-      },
-      forwardedAttachmentNote,
-    ),
-    true,
-    "projected attachment bundle keeps its source permalink",
-  );
-  await waitFor(
-    browser,
-    (body) =>
-      document.querySelector(".channel-title h1")?.textContent?.trim() ===
-        "Design Lab" &&
-      [...document.querySelectorAll(".msg")].some(
-        (message) =>
-          message.querySelector(".rah-message-markdown")?.textContent ===
-            body && message.getAttribute("data-focused") === "true",
-      ),
-    "projected attachment source permalink focuses the source Message",
-    [forwardedAttachmentBody],
-  );
+  await uploadRoomAttachment(browser, "selected-browser-gate.txt");
+  await postMessage(browser, "browser gate: attached source");
+  await waitForMessage(browser, "browser gate: attached source");
 
   await clickButton(browser, { ariaLabel: "频道详情与设置" });
   await mutateRoomAgent(browser, "Owner Router", "加入 Room", "移出 Room");
@@ -3113,7 +2718,7 @@ try {
       .map((item) => item.textContent?.trim())
       .filter(Boolean),
   );
-  assert.equal(threadReplyContextItems.includes("复制链接"), true);
+  assert.equal(threadReplyContextItems.includes("复制链接"), false);
   assert.equal(threadReplyContextItems.includes("复制 Markdown"), true);
   assert.equal(
     threadReplyContextItems.includes("转为任务"),
@@ -3127,7 +2732,7 @@ try {
     () =>
       document
         .querySelector(".thread .rah-message-selection-toolbar")
-        ?.textContent?.includes("已选择 1 条") === true &&
+        ?.textContent?.includes("已选 1 条") === true &&
       document.querySelector('textarea[aria-label="Thread 回复输入框"]') ===
         null,
     "Thread Raft selection mode replaces the composer",
@@ -3149,7 +2754,7 @@ try {
       return (
         inputs.length >= 2 &&
         inputs.every((input) => input.checked) &&
-        countText === `已选择 ${String(inputs.length)} 条`
+        countText === `已选 ${String(inputs.length)} 条`
       );
     },
     "Thread root selection atomically includes loaded replies",
@@ -3396,7 +3001,7 @@ try {
   await clickButton(browser, { ariaLabel: "关闭消息列" });
   await clickTaskButton(browser, "browser gate: both agents", "确认完成");
 
-  await clickButton(browser, { text: "新建任务" });
+  await clickButton(browser, { ariaLabel: "新建任务" });
   await waitFor(
     browser,
     () => document.querySelector(".rah-task-create-dialog") !== null,
@@ -4134,7 +3739,7 @@ try {
     "Room settings drawer close before unassigned Task lifecycle",
   );
   await clickButton(browser, { text: "任务" });
-  await clickButton(browser, { text: "新建任务" });
+  await clickButton(browser, { ariaLabel: "新建任务" });
   await setTaskDialogContent(browser, "browser gate: close and reopen");
   await clickButton(browser, { text: "创建任务" });
   await waitFor(
@@ -4598,28 +4203,16 @@ try {
     },
     "390px Room selection toolbar remains viewport-safe",
   );
-  await clickButton(browser, { text: "转发" });
-  await waitFor(
-    browser,
-    () => {
-      const dialog = document.querySelector(".rah-message-forward-dialog");
-      const bounds = dialog?.getBoundingClientRect();
-      return (
-        bounds !== undefined &&
-        bounds.left >= 0 &&
-        bounds.right <= document.documentElement.clientWidth &&
-        bounds.bottom <= document.documentElement.clientHeight
-      );
-    },
-    "390px forward dialog remains viewport-safe",
-  );
-  await dispatchKey(browser, "Escape", 27);
-  await waitFor(
-    browser,
-    () =>
-      document.querySelector(".rah-message-forward-dialog") === null &&
-      document.querySelector(".rah-message-selection-toolbar") !== null,
-    "forward dialog Escape returns to message selection",
+  assert.equal(
+    await call(browser, () =>
+      [
+        ...document.querySelectorAll(".rah-message-selection-toolbar button"),
+      ].some((button) =>
+        /转发|复制链接|生成图片/.test(button.textContent ?? ""),
+      ),
+    ),
+    false,
+    "mobile selection only exposes local text actions",
   );
   await dispatchKey(browser, "Escape", 27);
   await waitFor(

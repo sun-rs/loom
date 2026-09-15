@@ -5,6 +5,7 @@ import type { RahClient } from "@rah-os/client-sdk";
 import type { Principal, Task } from "@rah-os/protocol";
 import { createRoomViewModel, type TaskColumnId } from "@rah-os/ui-web";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
+import { PanelHeaderAction } from "@rah-os/ui-web/neo-brutalist/panel-header-action";
 import { useDialogProtocol } from "../dialog-protocol.ts";
 import {
   applyGlobalTaskTransition,
@@ -21,6 +22,7 @@ import type { RoomAgentTarget } from "@rah-os/ui-web";
  * existing Thread, not a second discussion or Task execution owner. */
 export function TaskThreadPresentation({
   modal,
+  compact = false,
   children,
   roomName,
   task,
@@ -28,6 +30,7 @@ export function TaskThreadPresentation({
   onClose,
 }: {
   modal: boolean;
+  compact?: boolean;
   children: ReactNode;
   roomName?: string | undefined;
   task?: Task | undefined;
@@ -36,6 +39,7 @@ export function TaskThreadPresentation({
 }) {
   return modal ? (
     <TaskThreadModal
+      compact={compact}
       roomName={roomName}
       task={task}
       error={error}
@@ -49,6 +53,7 @@ export function TaskThreadPresentation({
 }
 
 function TaskThreadModal({
+  compact,
   children,
   roomName,
   task,
@@ -61,7 +66,9 @@ function TaskThreadModal({
     onClose,
   });
   return (
-    <div className="rah-dialog-layer rah-task-detail-layer">
+    <div
+      className={`rah-dialog-layer rah-task-detail-layer${compact ? " rah-task-approval-layer" : ""}`}
+    >
       <button
         className="rah-dialog-backdrop"
         aria-label="关闭任务详情背景"
@@ -69,7 +76,7 @@ function TaskThreadModal({
         tabIndex={-1}
       />
       <section
-        className="rah-task-detail-dialog"
+        className={`rah-task-detail-dialog${compact ? " rah-task-approval-compact" : ""}`}
         role="dialog"
         aria-modal="true"
         aria-label={task ? `任务 #${task.taskNumber} 详情` : "任务详情"}
@@ -78,17 +85,24 @@ function TaskThreadModal({
         data-testid="task-thread-modal"
       >
         <header className="rah-task-detail-bar">
+          <PanelHeaderAction
+            className={compact ? "rah-hidden" : "rah-mobile-only"}
+            aria-label="返回任务页面"
+            onClick={onClose}
+          >
+            <Icon name="arrow-left" />
+          </PanelHeaderAction>
           <div>
             <span>#{roomName ?? "频道"}</span>
             <b>{task ? `任务 #${task.taskNumber}` : "任务详情"}</b>
           </div>
-          <button
-            className="sq-btn"
+          <PanelHeaderAction
+            className={compact ? undefined : "rah-desktop-only"}
             aria-label="关闭任务详情"
             onClick={onClose}
           >
             <Icon name="x" />
-          </button>
+          </PanelHeaderAction>
         </header>
         {error ? (
           <div className="rah-task-detail-failure" role="alert">
@@ -198,58 +212,60 @@ export function TaskDetailMetadata({
         ) : null}
       </div>
       <dl className="rah-task-detail-properties">
-        <div>
-          <dt>状态</dt>
-          <dd>
-            <DiscoveryFilter
-              label="任务状态"
-              triggerLabel={column.label}
-              triggerAriaLabel={`任务 #${task.taskNumber} 状态：${column.label}`}
-              icon={null}
-              multiple={false}
-              searchable={false}
-              clearable={false}
-              variant="status"
-              className="rah-task-state rah-task-status-picker"
-              triggerClassName={`chip-${column.tone}`}
-              disabled={pending || !writeEnabled || !canManage}
-              values={[current]}
-              selected={false}
-              options={columns.map((item) => {
-                const reason = globalTaskTransition(
-                  task,
-                  item.id,
-                  canManage,
-                ).reason;
-                return {
-                  id: item.id,
-                  label: item.label,
-                  ...(item.id === current || !reason
-                    ? {}
-                    : { disabledReason: reason }),
-                };
-              })}
-              onChange={(values) => void choose(values[0] as TaskColumnId)}
-            />
-          </dd>
+        <div className="rah-task-detail-assignment">
+          <div>
+            <dt>状态</dt>
+            <dd>
+              <DiscoveryFilter
+                label="任务状态"
+                triggerLabel={column.label}
+                triggerAriaLabel={`任务 #${task.taskNumber} 状态：${column.label}`}
+                icon={null}
+                multiple={false}
+                searchable={false}
+                clearable={false}
+                variant="status"
+                className="rah-task-state rah-task-status-picker"
+                triggerClassName={`chip-${column.tone}`}
+                disabled={pending || !writeEnabled || !canManage}
+                values={[current]}
+                selected={false}
+                options={columns.map((item) => {
+                  const reason = globalTaskTransition(
+                    task,
+                    item.id,
+                    canManage,
+                  ).reason;
+                  return {
+                    id: item.id,
+                    label: item.label,
+                    ...(item.id === current || !reason
+                      ? {}
+                      : { disabledReason: reason }),
+                  };
+                })}
+                onChange={(values) => void choose(values[0] as TaskColumnId)}
+              />
+            </dd>
+          </div>
+          <div>
+            <dt>负责人</dt>
+            <dd>
+              <TaskAssigneeControl
+                client={client}
+                task={task}
+                people={people.filter((person) =>
+                  activeMemberIds.includes(person.principalId),
+                )}
+                principalId={principalId}
+                label={personName(task.assigneeId)}
+                writeEnabled={writeEnabled && canManage}
+                onChanged={onChanged}
+              />
+            </dd>
+          </div>
         </div>
-        <div>
-          <dt>负责人</dt>
-          <dd>
-            <TaskAssigneeControl
-              client={client}
-              task={task}
-              people={people.filter((person) =>
-                activeMemberIds.includes(person.principalId),
-              )}
-              principalId={principalId}
-              label={personName(task.assigneeId)}
-              writeEnabled={writeEnabled && canManage}
-              onChanged={onChanged}
-            />
-          </dd>
-        </div>
-        <div>
+        <div className="rah-task-detail-creator">
           <dt>创建人</dt>
           <dd>{personName(task.creatorId)}</dd>
         </div>

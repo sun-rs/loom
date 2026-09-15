@@ -281,7 +281,7 @@ test("Room Task behavior rows are machine-owned after the page-family gate", asy
   }
 });
 
-test("Task creation keeps Raft's multi-title default with one assignee and no preset audit roles", async () => {
+test("Task creation keeps Raft's multi-title default without assignment or dependency configuration", async () => {
   const [dialog, participantFields, execution, scenario] = await Promise.all([
     read("apps/web/src/components/task-dialogs.tsx"),
     read("apps/web/src/components/task-participant-fields.tsx"),
@@ -294,11 +294,11 @@ test("Task creation keeps Raft's multi-title default with one assignee and no pr
   assert.match(dialog, /再加一条/u);
   assert.match(dialog, /创建 \$\{String\(nonempty\.length\)\} 个任务/u);
   assert.match(dialog, /移除任务 \$\{String\(index \+ 1\)\}/u);
-  assert.match(dialog, /配置负责人与依赖/u);
+  assert.doesNotMatch(dialog, /配置负责人与依赖|configurationOpen/u);
   assert.match(participantFields, /aria-label="任务负责人"/u);
   assert.doesNotMatch(participantFields, /协作者|审阅者|任务协作角色/u);
-  assert.match(dialog, /前置任务/u);
-  assert.match(dialog, /taskParticipantsForSelection/u);
+  assert.doesNotMatch(dialog, /前置任务/u);
+  assert.match(dialog, /dependencyTaskIds: \[\]/u);
   assert.doesNotMatch(
     dialog,
     /详细说明（可选）|审阅者（提交后唤醒，可选）/u,
@@ -327,7 +327,6 @@ test("Task creation keeps Raft's multi-title default with one assignee and no pr
   assert.match(scenario, /创建 2 个任务/u);
   assert.match(scenario, /task\.created/u);
   assert.match(scenario, /配置负责人与依赖/u);
-  assert.match(scenario, /前置任务/u);
   assert.match(scenario, /dependencyTaskIds/u);
 });
 

@@ -22,7 +22,7 @@ export function ChannelSettingsHeader({
         disabled={blocked}
         onClick={onClose}
       >
-        <Icon name="arrow-left" />
+        <Icon name="x" />
       </button>
       <div className="rah-channel-settings-identity">
         <h2 id="rah-room-members-title">

@@ -545,7 +545,6 @@ a.rail-btn { color: var(--ink); text-decoration: none; }
 .side-actions button:active { background: var(--ink-10); }
 .side-actions button:focus-visible { background: var(--ink-05); }
 .side-hint { color: var(--ink-50); font-family: var(--mono); font-size: 12px; line-height: 16.5px; padding: 0 8px; }
-.side-section:nth-child(2) .side-hint { min-height: 36px; color: var(--ink-45); padding-block: 6px; }
 
 .channel-row {
   display: flex; align-items: center; gap: var(--space-1-5);
@@ -1638,55 +1637,6 @@ body.overlay-open { overflow: hidden; }
 .rah-task-create-dialog form {
   overflow-y: auto;
 }
-.rah-task-create-configuration {
-  display: grid;
-  gap: 12px;
-}
-.rah-task-create-configuration .rah-agent-targets {
-  border: 0;
-  padding: 0;
-}
-.rah-task-dialog-dependencies {
-  border: 1px solid var(--black);
-  margin: 0;
-  min-width: 0;
-  padding: 7px;
-}
-.rah-task-dialog-dependencies legend {
-  font: 700 9px/1 var(--mono);
-  padding: 0 4px;
-  text-transform: uppercase;
-}
-.rah-task-dialog-dependencies > div {
-  display: grid;
-  gap: 5px;
-  max-height: 160px;
-  overflow-y: auto;
-}
-.rah-task-dialog-dependencies label {
-  align-items: center;
-  background: var(--bg);
-  border: 1px solid var(--black);
-  cursor: pointer;
-  display: flex;
-  font: 700 10px/1.3 var(--mono);
-  grid-template-columns: auto minmax(0, 1fr);
-  padding: 6px 7px;
-}
-.rah-task-dialog-dependencies label:has(input:checked) {
-  background: var(--yellow);
-  box-shadow: var(--shadow-s);
-}
-.rah-task-dialog-dependencies label span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.rah-task-dialog-dependencies p {
-  color: var(--muted);
-  font: 10px/1.4 var(--mono);
-}
 @media (max-width: 767px) {
   .rah-task-create-dialog form footer {
     flex-wrap: wrap;
@@ -2638,6 +2588,7 @@ body.overlay-open { overflow: hidden; }
 }
 
 .rah-product-shell .rah-interaction-segment {
+  -webkit-tap-highlight-color: transparent;
   transition: none;
 }
 
@@ -2668,6 +2619,7 @@ body.overlay-open { overflow: hidden; }
 }
 
 .rah-product-shell .task-filter-trigger {
+  -webkit-tap-highlight-color: transparent;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -2685,6 +2637,31 @@ body.overlay-open { overflow: hidden; }
    owners for every rail, conversation row and tab instance. */
 .rah-product-shell :is(.rail-btn, .channel-row) {
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* On a mobile yellow title track, segments have two states only. Pointer hover
+   (including sticky touch hover) must not introduce a third selection color. */
+@media (max-width: 767px) {
+  .rah-product-shell
+    [data-segment-surface="plain"]
+    .rah-interaction-segment[aria-checked="false"] {
+    background: white;
+  }
+  .rah-product-shell
+    [data-segment-surface="plain"]
+    .rah-interaction-segment[aria-checked="true"] {
+    background: var(--yellow);
+  }
+  .rah-product-shell
+    [data-segment-surface="signal"]
+    .rah-interaction-segment[aria-checked="false"] {
+    background: white;
+  }
+  .rah-product-shell
+    [data-segment-surface="signal"]
+    .rah-interaction-segment[aria-checked="true"] {
+    background: color-mix(in srgb, var(--yellow) 30%, white);
+  }
 }
 
 /* ===== packages/ui-tokens/src/neo-brutalist/panel-foundations.css ===== */
@@ -2749,6 +2726,18 @@ body.overlay-open { overflow: hidden; }
 .rah-panel-header-action[data-action-size="compact"] > svg {
   height: 12px;
   width: 12px;
+}
+
+@media (max-width: 767px) {
+  .rah-product-shell .rah-panel-header-action[data-action-size="header"] {
+    width: var(--rah-mobile-header-control);
+    height: var(--rah-mobile-header-control);
+    min-height: var(--rah-mobile-header-control);
+  }
+  .rah-product-shell .rah-panel-header-action[data-action-size="header"] > svg {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 /* ===== packages/ui-tokens/src/neo-brutalist/panel-layout.css ===== */
@@ -2876,8 +2865,8 @@ body.overlay-open { overflow: hidden; }
   /* Retained reference mobile Agent composition; not the desktop shell row. */
   .rah-panel-header[data-header-kind="agent"] {
     gap: 10px;
-    height: 76px;
-    padding: 10px 12px;
+    height: var(--head-h);
+    padding: 0 12px;
   }
 }
 
@@ -2885,6 +2874,37 @@ body.overlay-open { overflow: hidden; }
 .rah-agent-detail-head {
   container-type: inline-size;
   container-name: agent-header;
+}
+
+/* RAH mobile native-reference geometry, inferred from the user-supplied iPhone
+   screenshots. Safe-area padding belongs to the shell, outside this track. */
+@media (max-width: 767px) {
+  :is(.rah-product-shell, .rah-dialog-layer) {
+    --head-h: 60px;
+    --rah-mobile-header-control: 32px;
+    --rah-mobile-root-icon: 36px;
+  }
+  .rah-product-shell .rah-panel-header {
+    height: var(--head-h);
+    min-height: var(--head-h);
+    padding: 0 12px;
+  }
+  .rah-product-shell .rah-mobile-root-header {
+    background: var(--yellow);
+  }
+  .rah-mobile-root-header .rah-panel-header-icon {
+    width: var(--rah-mobile-root-icon);
+    height: var(--rah-mobile-root-icon);
+  }
+  .rah-conversation-head
+    :is(
+      .rah-panel-header-icon,
+      .rah-agent-avatar.is-header,
+      .rah-direct-header-fallback
+    ) {
+    width: var(--rah-mobile-root-icon);
+    height: var(--rah-mobile-root-icon);
+  }
 }
 
 /* ===== packages/ui-tokens/src/neo-brutalist/identity.css ===== */
@@ -6081,9 +6101,14 @@ html:not([data-rah-agent-model-name="true"]) .rah-message-agent-model {
     box-shadow 0.15s;
 }
 
-.task-filter-trigger:hover,
 .task-filter-trigger[aria-expanded="true"] {
   border-color: var(--black);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .task-filter-trigger:hover {
+    border-color: var(--black);
+  }
 }
 
 .task-filter.is-selected .task-filter-trigger {
@@ -6130,6 +6155,8 @@ html:not([data-rah-agent-model-name="true"]) .rah-message-agent-model {
 }
 
 .rah-task-create {
+  background: var(--pink);
+  box-shadow: none;
   flex: none;
   font-size: 12px;
   font-weight: 700;
@@ -6551,7 +6578,7 @@ html:not([data-rah-agent-model-name="true"]) .rah-message-agent-model {
 .rah-message-context-menu {
   background: var(--paper);
   border: 2px solid var(--black);
-  box-shadow: var(--shadow-l);
+  box-shadow: var(--shadow-m);
   max-height: calc(100dvh - 16px);
   min-width: 224px;
   overflow-y: auto;
@@ -9355,10 +9382,9 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
     width: 32px;
   }
 
-  .rah-mobile-home-notifications:hover,
   .rah-mobile-home-notifications:focus-visible {
-    border-color: var(--black);
-    background: white;
+    outline: 2px solid var(--black);
+    outline-offset: 3px;
   }
 
   .rah-mobile-home-notifications > svg {
@@ -13144,7 +13170,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 .rah-task-detail-bar b {
   font-size: 14px;
 }
-.rah-task-detail-dialog .thread-side-column {
+.app .rah-task-detail-dialog .thread-side-column {
   position: relative;
   inset: auto;
   display: flex;
@@ -13361,6 +13387,114 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   background: var(--raft-source-color-brutal-stone, #c0b9b1);
 }
 
+/* A task approval overlay is not a conversation split pane. */
+@media (min-width: 768px) {
+  .app.rah-task-modal-open:not(.rah-global-shell) {
+    grid-template-columns:
+      var(--rail-w) var(--rah-room-sidebar-width, var(--sidebar-w))
+      minmax(0, 1fr);
+  }
+}
+/* Raft Xtt -> Gf: max-w-md, p-6, mb-4; title-only creation stays a dialog on touch. */
+.rah-dialog-layer.rah-task-create-layer {
+  align-items: center;
+  padding: 20px;
+}
+.rah-dialog.rah-task-create-dialog {
+  border: var(--bd-heavy);
+  min-width: 0;
+  max-width: 448px;
+  padding: 24px;
+  max-height: calc(100dvh - 40px);
+}
+.rah-task-create-dialog > header {
+  border: 0;
+  padding: 0;
+  margin-bottom: 16px;
+}
+.rah-task-create-dialog > header h2 {
+  font-size: 18px;
+  font-weight: 700;
+}
+.rah-task-create-dialog form:not(.rah-attachment-comment-composer) {
+  padding: 0;
+}
+@media (max-width: 767px) {
+  .rah-task-create-dialog form:not(.rah-attachment-comment-composer) input {
+    font-size: 16px;
+  }
+}
+
+/* User-defined phone approval: source conversation stays mounted behind it. */
+.rah-task-detail-dialog.rah-task-approval-compact {
+  width: calc(100vw - 32px);
+  height: auto;
+  max-height: calc(100dvh - 64px);
+  border: var(--bd-heavy);
+  box-shadow: var(--shadow-l);
+}
+.rah-task-approval-compact .rah-hidden {
+  display: none;
+}
+.rah-task-approval-compact > .rah-task-detail-metadata {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-bottom: 0;
+}
+.rah-task-approval-compact .rah-task-detail-history-body {
+  max-height: min(240px, 30dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.rah-dialog-layer.rah-task-approval-layer {
+  align-items: center;
+}
+
+.rah-task-detail-assignment {
+  display: flex;
+  gap: 24px;
+  min-width: 0;
+  max-width: 100%;
+}
+.rah-task-detail-assignment > div:last-child {
+  min-width: 0;
+  flex: 1;
+}
+.rah-task-detail-assignment .task-filter-trigger {
+  max-width: 100%;
+}
+.rah-task-detail-assignment .task-filter-trigger > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 16ch;
+}
+.rah-task-detail-assignment .task-filter {
+  max-width: 100%;
+}
+.rah-task-detail-creator {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 767px) {
+  .rah-task-approval-compact .rah-task-detail-properties {
+    gap: 12px;
+  }
+  .rah-task-approval-compact .rah-task-detail-assignment {
+    gap: 12px;
+    flex: 0 1 auto;
+  }
+  .rah-task-approval-compact
+    .rah-task-detail-assignment
+    .task-filter-trigger
+    > span {
+    max-width: 10ch;
+  }
+}
+
 /* ===== apps/web/src/discovery-controls.css ===== */
 /* Raft Zd/V9e class values, index-WTraJnrd.js. Portal is a shell adaptation. */
 .rah-discovery-filter .task-filter-trigger > svg:last-child {
@@ -13557,7 +13691,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 .rah-global-task-drag-shell {
   position: relative;
   width: 100%;
-  touch-action: none;
+  touch-action: auto;
   will-change: transform;
   cursor: grab;
 }
@@ -13970,7 +14104,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   filter: brightness(0.9);
 }
 .rah-message-avatar-trigger:active {
-  transform: translate(1px, 1px);
+  filter: brightness(0.9);
 }
 .msg
   > .rah-message-avatar-trigger
@@ -14158,6 +14292,12 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   }
 }
 
+@media (max-width: 767px) {
+  .rah-agent-peek .rah-agent-mobile-back {
+    display: grid;
+  }
+}
+
 /* ===== apps/web/src/chat-surface.css ===== */
 /* index-BoAC7nSE: source-backed ChatPanel/sidebar/RO presentation ports.
    See docs/product/2026-09-01-chat-surface-parity-contract.zh-CN.md. */
@@ -14316,8 +14456,9 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   overflow: visible;
   transition: opacity var(--rah-interaction-transition);
 }
-.msg:hover .msg-actions,
-.msg:focus-within .msg-actions {
+.msg[data-actions-open] .msg-actions,
+.msg:has(:focus-visible) .msg-actions,
+.msg:has(.msg-actions [aria-expanded="true"]) .msg-actions {
   opacity: 1;
   pointer-events: auto;
 }
@@ -14333,7 +14474,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  color: var(--ink-40);
+  color: var(--ink-50);
   transition: none;
 }
 .msg-actions .msg-action-btn:hover,
@@ -14539,7 +14680,8 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 .rah-sidebar-section-actions {
   display: flex;
   align-items: center;
-  gap: 2px;
+  flex: none;
+  gap: var(--space-1);
 }
 /* 批次 3b 裁决 2：侧栏排序钮按上游 `.btn-flat-sm flex size-6 p-0` 建模
    （pad 0、图标 14）。作用域限定侧栏，任务页 `.task-filter-trigger` 通用规则不动。 */
@@ -14579,10 +14721,9 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   position: relative;
   touch-action: pan-y;
 }
-/* Raft sidebar select-none: long press opens a menu, never text selection.
-   Scope to navigation rows so search fields and chat text remain selectable. */
-.rah-room-sidebar [data-sidebar-key],
-.rah-room-sidebar .rah-sidebar-disclosure {
+/* Raft sidebar-root select-none covers rows, hints, gaps and blank padding.
+   Keep this navigation policy out of chat text and portaled form editors. */
+.rah-room-sidebar {
   -webkit-tap-highlight-color: transparent;
   -webkit-user-select: none;
   user-select: none;
@@ -14899,29 +15040,80 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
     opacity: 0.5;
   }
 }
-@media (hover: none) {
-  .msg-actions {
+@media (hover: hover) and (pointer: fine) {
+  .msg:hover .msg-actions {
     opacity: 1;
     pointer-events: auto;
-    display: flex;
   }
 }
 
 /* Raft Zx/FD: mt-3 above each group, including wrapped drag containers. */
+.rah-sidebar-section-list {
+  display: flex;
+  flex-direction: column;
+}
 .rah-room-sidebar [data-sidebar-group] {
   margin-top: 12px;
+}
+.rah-room-sidebar [data-sidebar-group] .side-hint {
+  min-height: 28px;
+  padding-block: 4px;
+}
+.rah-room-sidebar [data-sidebar-group="pinned"] .side-hint {
+  min-height: 36px;
+  padding-block: 6px;
+  margin-bottom: 4px;
+  color: var(--ink-45);
+}
+/* Local iOS density: 32px rows plus 2px gap, based on same-device comparison. */
+@media (max-width: 767px) {
+  .rah-room-sidebar [data-sidebar-group] {
+    margin-top: 8px;
+  }
+  .rah-room-sidebar .channel-row,
+  .rah-room-sidebar .dm-row {
+    margin-bottom: 2px;
+    padding-block: 4px;
+  }
+}
+
+/* Mobile messages reserve all actions for the context menu. */
+@media (max-width: 767px) {
+  .msg,
+  .msg * {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .msg,
+  .msg:hover,
+  .msg:focus-within {
+    border-color: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+  .msg .msg-actions {
+    display: none !important;
+  }
+  .rah-message-context-menu hr,
+  .rah-saved-context-menu hr {
+    border-top: 1px solid rgb(0 0 0 / 12%);
+  }
+}
+.rah-message-context-backdrop {
+  touch-action: none;
 }
 
 /* ===== apps/web/src/message-selection.css ===== */
 .rah-message-selection-toolbar {
   align-items: center;
-  background: var(--paper);
+  background: var(--yellow);
   border-top: var(--bd-heavy);
   display: flex;
   flex: none;
-  gap: 12px;
-  min-height: 84px;
-  padding: 12px;
+  gap: 6px;
+  min-height: 46px;
+  padding: 8px;
   position: relative;
 }
 
@@ -14941,28 +15133,34 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 .rah-message-selection-toolbar button {
   align-items: center;
   background: white;
-  border: var(--bd);
+  border: 2px solid var(--black);
   box-shadow: var(--shadow-s);
   display: inline-flex;
   font: 700 12px/18px var(--sans);
-  gap: 5px;
-  min-height: 30px;
-  padding: 4px 8px;
+  gap: 6px;
+  height: 28px;
+  min-width: 28px;
+  flex-shrink: 0;
+  justify-content: center;
+  padding: 0 4px;
+  transform: translate(0, 0);
+  transition: all 100ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .rah-message-selection-toolbar button:hover:not(:disabled) {
-  background: var(--soft-signal);
+  background: white;
   box-shadow: var(--shadow-m);
+  transform: translateY(-1px);
 }
 
 .rah-message-selection-toolbar button:active:not(:disabled) {
-  box-shadow: none;
-  transform: translate(2px, 2px);
+  box-shadow: var(--shadow-m);
+  transform: translate(1px, 1px);
 }
 
 .rah-message-selection-toolbar svg {
-  height: 13px;
-  width: 13px;
+  height: 14px;
+  width: 14px;
 }
 
 .rah-message-selection-toolbar > p {
@@ -15098,30 +15296,167 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 
 @media (max-width: 767px) {
   .rah-message-selection-toolbar {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 6px;
+    gap: 8px;
+    padding: 8px;
   }
-
   .rah-message-selection-toolbar > div {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+    /* Preserve 4px clear space beyond the 4px brutal hover shadow. */
+    gap: 8px;
   }
-
   .rah-message-selection-toolbar button {
-    justify-content: center;
-    min-width: 0;
-    padding-inline: 4px;
+    padding: 0 4px;
+    white-space: nowrap;
   }
-
-  .rah-message-selection-toolbar button:nth-child(3) {
-    font-size: 0;
-  }
-
-  .rah-message-selection-toolbar button:nth-child(3) svg {
-    height: 14px;
-    width: 14px;
-  }
+}
+.rah-message-selection-check input {
+  appearance: none;
+  border: 2px solid var(--black);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.rah-message-selection-check input:checked {
+  background: var(--yellow);
+}
+.rah-message-selection-check input:checked::after {
+  content: "";
+  width: 8px;
+  height: 4px;
+  border-left: 2px solid black;
+  border-bottom: 2px solid black;
+  transform: rotate(-45deg);
+  margin-top: -2px;
+}
+.msg[data-selected="true"],
+.msg[data-selected="true"]:hover {
+  background: color-mix(in srgb, var(--pink) 20%, white) !important;
+}
+.rah-message-text-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px;
+  padding-top: calc(16px + env(safe-area-inset-top));
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  overscroll-behavior: contain;
+}
+.rah-message-text-dialog > header {
+  display: flex;
+  justify-content: flex-end;
+  flex: none;
+  pointer-events: none;
+  padding-bottom: 12px;
+  background: white;
+  z-index: 1;
+}
+.rah-message-text-dialog > header button {
+  pointer-events: auto;
+}
+.rah-message-text-dialog .msg-body,
+.rah-message-text-dialog .msg-body * {
+  user-select: text;
+  -webkit-user-select: text;
+  -webkit-touch-callout: default;
+}
+.rah-message-text-dialog > .msg-body {
+  flex: 0 1 auto;
+  overflow: auto;
+  background: color-mix(in srgb, var(--yellow) 30%, white);
+  border: 2px solid var(--black);
+  padding: 12px;
+  min-height: 120px;
+  overflow-wrap: anywhere;
+  outline: none;
+  touch-action: auto;
+}
+.rah-message-image-layer {
+  z-index: 100;
+}
+.rah-message-image-dialog {
+  width: min(960px, calc(100vw - 48px));
+  max-height: calc(100dvh - 48px);
+}
+.rah-message-image-scroll {
+  padding: 16px;
+  overflow: auto;
+  min-height: 0;
+}
+.rah-message-image-scroll > img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+}
+.rah-message-image-source {
+  width: 800px;
+  max-width: none;
+  border: 2px solid black;
+  box-sizing: border-box;
+  background: white;
+}
+.rah-message-image-source.is-rendered {
+  display: none;
+}
+.rah-message-image-brand {
+  background: var(--yellow);
+  padding: 12px 20px;
+  text-align: right;
+  border-bottom: 2px solid black;
+  font: 700 14px var(--mono);
+}
+.rah-message-image-source article {
+  display: flex;
+  gap: 16px;
+  padding: 24px;
+}
+.rah-message-image-source .msg-body > header {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+.rah-message-image-source time {
+  color: var(--ink-50);
+  font: 12px var(--mono);
+}
+.rah-message-image-dialog footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-top: var(--bd);
+}
+.rah-message-image-dialog footer [role="alert"] {
+  margin-right: auto;
+}
+.rah-dialog.rah-message-image-dialog {
+  max-width: min(836px, calc(100vw - 48px));
+}
+.rah-message-image-dialog footer a {
+  color: inherit;
+  text-decoration: none;
+}
+.rah-message-selection-toolbar > div {
+  flex-wrap: nowrap;
+}
+.rah-message-selection-toolbar button[data-icon-only] {
+  width: 28px;
+  gap: 0;
+}
+.rah-message-selection-toolbar button:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+.rah-message-selection-toolbar button {
+  white-space: nowrap;
 }
 
 /* ===== apps/web/src/room-files.css ===== */
@@ -16201,8 +16536,57 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   display: none;
 }
 @media (max-width: 767px) {
+  /* The document is the app viewport; only nested content panes may scroll.
+     Paint the canvas too: iOS standalone samples it behind the status bar. */
+  html:has(.rah-product-shell) {
+    --rah-mobile-canvas: white;
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+    background: var(--rah-mobile-canvas);
+  }
+  body:has(.rah-product-shell),
+  #root:has(.rah-product-shell) {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    background: var(--rah-mobile-canvas);
+  }
+  html:has(
+    .rah-product-shell
+      > :is(
+        .rah-room-sidebar.is-open,
+        .rah-discovery[aria-label="全局任务"],
+        .rah-agent-directory-page:not(.is-mobile-detail-open),
+        .rah-settings-surface[data-mobile-index="true"]
+      )
+  ) {
+    --rah-mobile-canvas: var(--yellow);
+  }
   .app.rah-product-shell {
+    position: fixed;
+    inset: 0;
     padding-top: env(safe-area-inset-top);
+  }
+  .rah-product-shell
+    :is(
+      .messages,
+      .sidebar-body,
+      .rah-global-kanban,
+      .rah-agent-sidebar-scroll,
+      .rah-settings-mobile-index,
+      .rah-settings-navigation nav,
+      .rah-settings-scroll,
+      .settings-main,
+      .feed,
+      .search-stage,
+      .kanban,
+      .file-list,
+      .rah-profile-body
+    ) {
+    overscroll-behavior: contain;
   }
   .rah-product-shell > .rah-room-sidebar {
     top: env(safe-area-inset-top);
@@ -16214,15 +16598,15 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
     align-items: stretch;
     left: max(16px, env(safe-area-inset-left));
     right: max(16px, env(safe-area-inset-right));
-    bottom: max(12px, env(safe-area-inset-bottom));
-    height: 64px;
+    bottom: max(8px, calc(env(safe-area-inset-bottom) - 12px));
+    height: 50px;
     padding: 4px;
     gap: 2px;
     border: 1px solid rgb(255 255 255 / 75%);
     border-radius: 40px;
-    background: rgb(255 255 255 / 88%);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgb(255 255 255 / 55%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     box-shadow: 0 4px 24px rgb(0 0 0 / 8%);
   }
   .rah-mobile-nav button {
@@ -16265,12 +16649,18 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   .rah-agent-directory-page:not(.is-mobile-detail-open)
     .rah-agent-sidebar-scroll,
   .rah-settings-mobile-index {
-    padding-bottom: calc(92px + env(safe-area-inset-bottom));
-    scroll-padding-bottom: 92px;
+    padding-bottom: calc(66px + env(safe-area-inset-bottom));
+    scroll-padding-bottom: 66px;
   }
   .rah-mobile-home-notifications {
     width: 36px;
     height: 36px;
+    color: var(--black);
+    background: transparent;
+    border: 2px solid transparent;
+    box-shadow: none;
+  }
+  .rah-mobile-home-notifications[aria-expanded="true"] {
     background: white;
     border: var(--bd);
     box-shadow: var(--shadow-s);
@@ -16280,7 +16670,7 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
     height: 22px;
   }
   .rah-product-shell .composer {
-    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    padding-bottom: max(8px, calc(env(safe-area-inset-bottom) - 12px));
   }
   /* Keep editable controls at iOS's non-zooming size without disabling pinch zoom. */
   .search-box input,
@@ -16289,10 +16679,9 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   }
   .rah-discovery[aria-label="全局任务"] .activity-head {
     gap: 8px;
-    padding: 12px;
-    min-height: 72px;
+    padding: 0 12px;
   }
-  .rah-discovery[aria-label="全局任务"] .channel-sub {
+  .rah-discovery .activity-head .channel-sub {
     display: block;
     font: 12px/18px var(--sans);
   }
@@ -16312,10 +16701,10 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
     font-size: 12px;
   }
   .rah-discovery[aria-label="全局任务"] .tasks-toolbar {
+    min-height: 0;
     padding: 10px 8px;
   }
   .rah-discovery[aria-label="全局任务"] .tasks-toolbar-row {
-    gap: 6px;
     flex-wrap: nowrap;
   }
   .rah-discovery[aria-label="全局任务"] .task-filter-trigger {
@@ -16331,11 +16720,6 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   .rah-settings-mobile-index > header {
     display: flex;
     gap: 12px;
-    min-height: 72px;
-  }
-  .rah-settings-mobile-index > header svg {
-    width: 26px;
-    height: 26px;
   }
 }
 
@@ -16344,17 +16728,8 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   .rah-settings-mobile-index {
     background: white;
   }
-  .rah-product-shell .rah-agent-sidebar-head,
-  .rah-product-shell .rah-settings-mobile-index > header {
-    background: var(--yellow);
-    min-height: 72px;
-  }
   .rah-agent-sidebar-head {
     gap: 12px;
-  }
-  .rah-agent-sidebar-head > svg {
-    width: 26px;
-    height: 26px;
   }
 }
 
@@ -16366,10 +16741,59 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
     height: min(200px, calc(100dvh - 100px));
   }
   .app.rah-product-shell {
-    background: white;
+    background: var(--rah-mobile-canvas);
   }
-  .app.rah-product-shell:has(> .rah-mobile-nav) {
-    background: var(--yellow);
+}
+
+@media (max-width: 767px) {
+  .search-top .rah-panel-header-icon,
+  .rah-mobile-child-header > .rah-panel-header-icon {
+    display: none;
+  }
+  .rah-product-shell .rah-mobile-child-header {
+    background: var(--bg);
+  }
+  /* Compact Room tools: the shared pickers retain their own clear actions. */
+  .tasks-toolbar {
+    --raft-tasks-toolbar-gap: 6px;
+  }
+  .tasks-toolbar[data-task-scope="room"] {
+    min-height: 0;
+    padding: 10px 8px;
+  }
+  .tasks-toolbar[data-task-scope="room"] .tasks-toolbar-row {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: var(--raft-tasks-toolbar-gap);
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 3px;
+    margin-bottom: -3px;
+  }
+  .tasks-toolbar[data-task-scope="room"] .task-filter-trigger {
+    gap: 2px;
+    padding: 4px;
+    font-size: 12px;
+  }
+  .tasks-toolbar[data-task-scope="room"] .tasks-clear {
+    display: none;
+  }
+  .tasks-toolbar[data-task-scope="room"] .rah-task-create {
+    flex: none;
+    width: auto;
+    height: 32px;
+    padding: 0 4px;
+    justify-content: center;
+  }
+  .tasks-toolbar[data-task-scope="room"] .tasks-view {
+    margin-left: auto;
+    gap: var(--raft-tasks-view-gap);
+    flex-wrap: nowrap;
+    flex: none;
+  }
+  .tasks-toolbar[data-task-scope="room"] .tasks-view button {
+    gap: 3px;
+    padding-inline: 4px;
   }
 }
 
@@ -16591,6 +17015,10 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 </svg>
 <!-- Verbatim geometry from Raft index-WTraJnrd.js: RFe, TFe, yze; circle-user-round also verified in live Search DOM. -->
 <svg xmlns="http://www.w3.org/2000/svg">
+  <!-- Raft index-WTraJnrd.js qy/$Fe, verbatim Lucide circle-check-big; ISC /legal/lucide-icons-LICENSE.txt. -->
+  <symbol id="raft-icon-circle-check-big" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/>
+  </symbol>
   <!-- Raft index-MqTUR4Ez.js lVe/Hse, SHA256 9cf480531f38c29136637f7b373f285a0e915711c07dbebeadd22c05b33ad443. Verbatim Lucide message-square-more geometry. ISC: /legal/lucide-icons-LICENSE.txt; Copyright (c) 2026 Lucide Icons and Contributors. -->
   <symbol id="raft-icon-message-square-more" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/>
@@ -16732,6 +17160,8 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   <!-- Raft index-MqTUR4Ez.js g6e/Ose and b6e/Gv, SHA256 9cf480531f38c29136637f7b373f285a0e915711c07dbebeadd22c05b33ad443; Lucide ISC geometry. -->
   <symbol id="raft-icon-ellipsis-vertical" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></symbol>
   <symbol id="raft-icon-external-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+  <!-- Raft index-CRDaMXft.js sGe/iGe, SHA256 9247f38f78bfb5df423d4424882da63d18268324a9c9c151b52a49d772764271. Verbatim Lucide list-checks; ISC /legal/lucide-icons-LICENSE.txt. -->
+  <symbol id="raft-icon-list-checks" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 5h8"/><path d="M13 12h8"/><path d="M13 19h8"/><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/></symbol>
 </svg>
 </div>
 <div class="uic-page">
@@ -16840,7 +17270,7 @@ npm run check:ui-catalog</pre>
   <div class="uic-stage"><div class="rah-product-shell" style="padding:calc(var(--space-2) * 3)"><button type="button" class="rah-sidebar-disclosure" aria-expanded="true" data-probe="sidebar-disclosure"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" stroke="currentColor" fill="none"></path></svg><span>频道</span><span class="count" data-probe="sidebar-count">3</span></button><button type="button" class="task-filter-trigger rah-interaction-flat" aria-label="私信排序" disabled="" data-probe="sidebar-sort-disabled"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z" fill="none" stroke="currentColor" stroke-width="2"></path></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z" fill="none" stroke="currentColor" stroke-width="2"></path></svg></button><button aria-label="新建频道" class="rah-side-create rah-interaction-flat" disabled="" title="新建频道" data-probe="sidebar-create-disabled"><svg aria-hidden="true"><use href="/@fs/Users/sun/Code/repos/rah_os/packages/ui-tokens/src/neo-brutalist/extracted/raft-icons.svg#raft-icon-plus"></use></svg></button></div></div>
 </figure></div>
     <h4 class="uic-md-head">响应式分支（产品 CSS 中触及本组件的 @media）</h4>
-    <div class="uic-scroll uic-scroll-tall"><table class="uic-table"><thead><tr><th>条件</th><th>选择器</th></tr></thead><tbody><tr><td>(max-height:600px)]:py-1 md:py-1`—— 基态 8px，≥768px 与视口高 ≤600px 收到 4px。RAH 基态写的是 ≥768px 的 4px， 这里补上窄视口分支；max-height 放在后面，与上游在窄且矮时同为 4px 一致。 */ @media (max-width: 767.98px)</td><td>.channel-row</td></tr><tr><td>(max-height: 600px)</td><td>.channel-row</td></tr></tbody></table></div>
+    <div class="uic-scroll uic-scroll-tall"><table class="uic-table"><thead><tr><th>条件</th><th>选择器</th></tr></thead><tbody><tr><td>(max-height:600px)]:py-1 md:py-1`—— 基态 8px，≥768px 与视口高 ≤600px 收到 4px。RAH 基态写的是 ≥768px 的 4px， 这里补上窄视口分支；max-height 放在后面，与上游在窄且矮时同为 4px 一致。 */ @media (max-width: 767.98px)</td><td>.channel-row</td></tr><tr><td>(max-height: 600px)</td><td>.channel-row</td></tr><tr><td>(max-width: 767px)</td><td>.rah-room-sidebar .channel-row, .rah-room-sidebar .dm-row</td></tr></tbody></table></div>
     <h4 class="uic-md-head">上游来源</h4>
     <div class="uic-scroll"><table class="uic-table"><tbody>
       <tr><th>上游选择器</th><td>.btn-flat-sm</td></tr>
@@ -16850,11 +17280,25 @@ npm run check:ui-catalog</pre>
     </tbody></table></div>
     <h4 class="uic-md-head">登记规则</h4>
     <div class="uic-scroll uic-scroll-tall"><table class="uic-table"><thead><tr><th>选择器</th><th>状态</th><th>上游期望（字面量）</th><th>文件</th><th>上游来源</th></tr></thead><tbody><tr>
-  <td>.rah-room-sidebar .rah-sidebar-disclosure</td>
+  <td>.rah-room-sidebar .channel-row</td>
+  <td>base</td>
+  <td class="uic-expect">margin-bottom: 2px; padding-block: 4px</td>
+  <td>apps/web/src/message-social.css</td>
+  <td>index-MqTUR4Ez.js@pretty:133835 Tg mb-1; docs/audits/2026-09-15-sidebar-defaults-touch-density.zh-CN.md</td>
+</tr>
+<tr>
+  <td>.rah-room-sidebar .dm-row</td>
+  <td>base</td>
+  <td class="uic-expect">margin-bottom: 2px; padding-block: 4px</td>
+  <td>apps/web/src/message-social.css</td>
+  <td>index-MqTUR4Ez.js@pretty:133835 Tg mb-1; docs/audits/2026-09-15-sidebar-defaults-touch-density.zh-CN.md</td>
+</tr>
+<tr>
+  <td>.rah-room-sidebar</td>
   <td>base</td>
   <td class="uic-expect">-webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent</td>
   <td>apps/web/src/message-social.css</td>
-  <td>docs/audits/2026-09-14-sidebar-touch-and-mobile-navigation.zh-CN.md; Raft index-MqTUR4Ez.js pretty 136250 select-none</td>
+  <td>docs/audits/2026-09-15-sidebar-defaults-touch-density.zh-CN.md; Raft index-MqTUR4Ez.js pretty 136250 sidebar-root select-none</td>
 </tr>
 <tr>
   <td>.rah-sidebar-disclosure</td>
@@ -17180,14 +17624,14 @@ npm run check:ui-catalog</pre>
   <td>双边同条件实测该表面上游对应元素的计算值，或一个把该规则并入本家族原语的决定。</td>
 </tr>
 <tr>
-  <td>.side-section:nth-child(2) .side-hint</td>
+  <td>.rah-room-sidebar [data-sidebar-group=&quot;pinned&quot;] .side-hint</td>
   <td>base</td>
-  <td><span class="uic-badge uic-badge-amber">registered-unresolved</span></td>
-  <td>min-height: 36px; color: rgba(0,0,0,.45); padding-block: 6px</td>
-  <td>packages/ui-tokens/src/neo-brutalist/styles.css</td>
-  <td>「已置顶」空态提示的尺寸，是规格明列的挂起项（缺 Raft 对应元素类名与计算值）。</td>
-  <td>2026-09-11</td>
-  <td>双边同条件实测该表面上游对应元素的计算值，或一个把该规则并入本家族原语的决定。</td>
+  <td><span class="uic-badge">registered</span></td>
+  <td>min-height: 36px; color: rgba(0,0,0,.45); padding-block: 6px; margin-bottom: 4px</td>
+  <td>index-MqTUR4Ez.js@pretty:136653 sg: mb-1 min-h-9 py-1.5; SHA256 9cf480531f38c29136637f7b373f285a0e915711c07dbebeadd22c05b33ad443</td>
+  <td>2026-09-15 源码确认空置顶参数；用分区身份替代失效的 nth-child，实际生产页面浏览器门禁验证。</td>
+  <td>2026-09-15</td>
+  <td>源码参数和 Chromium/WebKit 生产页几何已验证；线上 Raft 同条件双边与物理 iPhone 不在本批验收范围。</td>
 </tr>
 <tr>
   <td>.rah-direct-room-row .rah-direct-room-fallback</td>
@@ -17283,9 +17727,9 @@ npm run check:ui-catalog</pre>
   <td>.rah-product-shell .task-filter-trigger</td>
   <td>base</td>
   <td><span class="uic-badge uic-badge-amber">registered-unresolved</span></td>
-  <td>transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1)</td>
+  <td>transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); -webkit-tap-highlight-color: transparent</td>
   <td>packages/ui-tokens/src/neo-brutalist/interaction-state.css</td>
-  <td>裁决 2 之后：侧栏排序钮的几何（pad 0、图标 14）已由 message-social.css 的侧栏规则接管，但按钮仍带 .task-filter-trigger 类，这条通用规则的非几何声明仍命中它。</td>
+  <td>裁决 2 之后：侧栏排序钮的几何（pad 0、图标 14）已由 message-social.css 的侧栏规则接管，但按钮仍带 .task-filter-trigger 类，这条通用规则的非几何声明仍命中它。 2026-09-15：共享触发器统一关闭浏览器原生触摸闪色，保留真实选中态；PWA 回归见 first-tap-and-visible-selection 审计。</td>
   <td>2026-09-11</td>
   <td>一个把侧栏排序钮与任务页筛选器拆成两个原语（或共用一个扁平迷你钮原语）的决定；裁决 2 明确不改任务页通用规则。</td>
 </tr></tbody></table></div>
@@ -17306,12 +17750,6 @@ npm run check:ui-catalog</pre>
   <td>kanban-count-reuse</td>
   <td>看板列头复用 .count，用纯黑 700。</td>
   <td>上游看板列头计数的类名与计算值。</td>
-  <td>2026-09-11</td>
-</tr>
-<tr>
-  <td>pinned-empty-hint</td>
-  <td>「已置顶」空态提示 12/16.5 mono 的尺寸无上游对应。</td>
-  <td>Raft 对应元素类名与计算值。</td>
   <td>2026-09-11</td>
 </tr>
 <tr>

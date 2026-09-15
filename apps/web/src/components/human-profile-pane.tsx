@@ -98,8 +98,8 @@ export function HumanProfilePane({
       <PanelHeader kind="surface" className="rah-agent-detail-head">
         <PanelHeaderAction
           className="rah-agent-mobile-back"
-          aria-label={backLabel ?? "返回成员列表"}
-          onClick={onBack}
+          aria-label={onClose ? "返回聊天" : (backLabel ?? "返回成员列表")}
+          onClick={onClose ?? onBack}
         >
           <Icon name="arrow-left" />
         </PanelHeaderAction>
@@ -135,7 +135,11 @@ export function HumanProfilePane({
           </PanelHeaderAction>
         )}
         {onClose && (
-          <PanelHeaderAction aria-label="关闭 Human 侧栏" onClick={onClose}>
+          <PanelHeaderAction
+            className="rah-desktop-only"
+            aria-label="关闭 Human 侧栏"
+            onClick={onClose}
+          >
             <Icon name="x" />
           </PanelHeaderAction>
         )}

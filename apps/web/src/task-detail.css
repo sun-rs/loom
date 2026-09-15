@@ -38,7 +38,7 @@
 .rah-task-detail-bar b {
   font-size: 14px;
 }
-.rah-task-detail-dialog .thread-side-column {
+.app .rah-task-detail-dialog .thread-side-column {
   position: relative;
   inset: auto;
   display: flex;
@@ -253,4 +253,112 @@
 }
 .rah-task-history-transition .chip-stone {
   background: var(--raft-source-color-brutal-stone, #c0b9b1);
+}
+
+/* A task approval overlay is not a conversation split pane. */
+@media (min-width: 768px) {
+  .app.rah-task-modal-open:not(.rah-global-shell) {
+    grid-template-columns:
+      var(--rail-w) var(--rah-room-sidebar-width, var(--sidebar-w))
+      minmax(0, 1fr);
+  }
+}
+/* Raft Xtt -> Gf: max-w-md, p-6, mb-4; title-only creation stays a dialog on touch. */
+.rah-dialog-layer.rah-task-create-layer {
+  align-items: center;
+  padding: 20px;
+}
+.rah-dialog.rah-task-create-dialog {
+  border: var(--bd-heavy);
+  min-width: 0;
+  max-width: 448px;
+  padding: 24px;
+  max-height: calc(100dvh - 40px);
+}
+.rah-task-create-dialog > header {
+  border: 0;
+  padding: 0;
+  margin-bottom: 16px;
+}
+.rah-task-create-dialog > header h2 {
+  font-size: 18px;
+  font-weight: 700;
+}
+.rah-task-create-dialog form:not(.rah-attachment-comment-composer) {
+  padding: 0;
+}
+@media (max-width: 767px) {
+  .rah-task-create-dialog form:not(.rah-attachment-comment-composer) input {
+    font-size: 16px;
+  }
+}
+
+/* User-defined phone approval: source conversation stays mounted behind it. */
+.rah-task-detail-dialog.rah-task-approval-compact {
+  width: calc(100vw - 32px);
+  height: auto;
+  max-height: calc(100dvh - 64px);
+  border: var(--bd-heavy);
+  box-shadow: var(--shadow-l);
+}
+.rah-task-approval-compact .rah-hidden {
+  display: none;
+}
+.rah-task-approval-compact > .rah-task-detail-metadata {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-bottom: 0;
+}
+.rah-task-approval-compact .rah-task-detail-history-body {
+  max-height: min(240px, 30dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.rah-dialog-layer.rah-task-approval-layer {
+  align-items: center;
+}
+
+.rah-task-detail-assignment {
+  display: flex;
+  gap: 24px;
+  min-width: 0;
+  max-width: 100%;
+}
+.rah-task-detail-assignment > div:last-child {
+  min-width: 0;
+  flex: 1;
+}
+.rah-task-detail-assignment .task-filter-trigger {
+  max-width: 100%;
+}
+.rah-task-detail-assignment .task-filter-trigger > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 16ch;
+}
+.rah-task-detail-assignment .task-filter {
+  max-width: 100%;
+}
+.rah-task-detail-creator {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 767px) {
+  .rah-task-approval-compact .rah-task-detail-properties {
+    gap: 12px;
+  }
+  .rah-task-approval-compact .rah-task-detail-assignment {
+    gap: 12px;
+    flex: 0 1 auto;
+  }
+  .rah-task-approval-compact
+    .rah-task-detail-assignment
+    .task-filter-trigger
+    > span {
+    max-width: 10ch;
+  }
 }

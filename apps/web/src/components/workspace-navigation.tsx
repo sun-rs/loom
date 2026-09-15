@@ -509,7 +509,7 @@ export function RoomSidebar({
               <span>动态</span>
             </button>
             <button
-              className={`sidebar-bookmarks${savedActive ? " is-selected" : ""}`}
+              className={`sidebar-bookmarks${showConversationSelection && savedActive ? " is-selected" : ""}`}
               disabled={!onSaved}
               onClick={onSaved}
             >

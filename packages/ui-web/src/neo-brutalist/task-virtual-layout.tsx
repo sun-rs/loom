@@ -56,6 +56,7 @@ export function TaskVirtualLayout({
 }) {
   const root = useRef<HTMLDivElement>(null),
     anchors = useRef<Anchor[]>([]),
+    anchorScrollTop = useRef(0),
     registrations = useRef(new Map<string, Lookup>());
   const adjusting = useRef(false),
     corrections = useRef(0),
@@ -72,6 +73,16 @@ export function TaskVirtualLayout({
     const element = root.current,
       scroll = scrollElementRef.current;
     if (!element || !scroll) return;
+    // Native/compositor scrolling may precede its scroll event. A render or
+    // resize in that interval must rebase, not undo the user's movement.
+    if (scroll.scrollTop !== anchorScrollTop.current) {
+      cancelAnimationFrame(frame.current);
+      adjusting.current = false;
+      corrections.current = 0;
+      anchors.current = visible(element, scroll, registrations.current);
+      anchorScrollTop.current = scroll.scrollTop;
+      return;
+    }
     let changed = false;
     const mounted = new Map(
       Array.from(
@@ -96,6 +107,7 @@ export function TaskVirtualLayout({
       if (delta !== null) {
         if (Math.abs(delta) >= 0.5) {
           scroll.scrollTop += delta;
+          anchorScrollTop.current = scroll.scrollTop;
           changed = true;
         }
         break;
@@ -121,6 +133,7 @@ export function TaskVirtualLayout({
           registrations.current,
         );
         if (next.length) anchors.current = next;
+        anchorScrollTop.current = scrollElementRef.current?.scrollTop ?? 0;
       });
       return;
     }
@@ -139,6 +152,7 @@ export function TaskVirtualLayout({
         cancelAnimationFrame(capture);
         capture = requestAnimationFrame(() => {
           anchors.current = visible(element, scroll, registrations.current);
+          anchorScrollTop.current = scroll.scrollTop;
         });
       }
     };
@@ -146,6 +160,8 @@ export function TaskVirtualLayout({
       adjusting.current = false;
       corrections.current = 0;
       anchors.current = [];
+      anchorScrollTop.current = scroll.scrollTop;
+      cancelAnimationFrame(capture);
       cancelAnimationFrame(frame.current);
     };
     const observer = new ResizeObserver(correct);

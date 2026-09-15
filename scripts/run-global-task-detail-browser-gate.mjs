@@ -71,19 +71,30 @@ for (const engine of process.env.RAH_UI_BROWSER
       const chatComposer = chatModal.getByRole("textbox", {
         name: "Thread 回复输入框",
       });
-      await chatComposer.fill(chatReply);
-      await chatComposer.press("Enter");
-      await expect(
-        chatModal.locator(".msg-body").filter({ hasText: chatReply }).first(),
-      ).toBeVisible();
+      if (width === 390) {
+        await expect(chatComposer).toHaveCount(0);
+        const bounds = await chatModal.boundingBox();
+        assert.ok(bounds.x > 0 && bounds.y > 0 && bounds.height < 844);
+      } else {
+        await chatComposer.fill(chatReply);
+        await chatComposer.press("Enter");
+        await expect(
+          chatModal.locator(".msg-body").filter({ hasText: chatReply }).first(),
+        ).toBeVisible();
+      }
       await page.screenshot({
         path: join(output, `${engine}-${width}-chat-task.png`),
       });
+      // A chat approval is ephemeral; reload retains the Room route, and the
+      // canonical reply survives reopening the same badge.
       await page.reload();
+      await expect(chatModal).toHaveCount(0);
+      await badge.click();
       await expect(chatModal).toBeVisible();
-      await expect(
-        chatModal.locator(".msg-body").filter({ hasText: chatReply }).first(),
-      ).toBeVisible();
+      if (width !== 390)
+        await expect(
+          chatModal.locator(".msg-body").filter({ hasText: chatReply }).first(),
+        ).toBeVisible();
       const chatStatus = chatModal
         .locator(".rah-task-status-picker button")
         .first();
@@ -109,7 +120,10 @@ for (const engine of process.env.RAH_UI_BROWSER
         closedColor,
       );
       await chatModal
-        .getByRole("button", { name: "关闭任务详情", exact: true })
+        .getByRole("button", {
+          name: "关闭任务详情",
+          exact: true,
+        })
         .click();
       await expect(chatModal).toHaveCount(0);
       assert.equal(new URL(page.url()).searchParams.get("room"), roomId);
@@ -285,7 +299,10 @@ for (const engine of process.env.RAH_UI_BROWSER
         modal.locator(".msg-body").filter({ hasText: body }).first(),
       ).toBeVisible();
       await modal
-        .getByRole("button", { name: "关闭任务详情", exact: true })
+        .getByRole("button", {
+          name: width === 390 ? "返回任务页面" : "关闭任务详情",
+          exact: true,
+        })
         .click();
       await expect(modal).toHaveCount(0);
       await expect(card).toBeVisible();
@@ -302,7 +319,10 @@ for (const engine of process.env.RAH_UI_BROWSER
       await page.reload();
       await expect(modal.getByRole("heading", { name: title })).toBeVisible();
       await modal
-        .getByRole("button", { name: "关闭任务详情", exact: true })
+        .getByRole("button", {
+          name: width === 390 ? "返回任务页面" : "关闭任务详情",
+          exact: true,
+        })
         .click();
       let release;
       const held = new Promise((resolve) => {
@@ -321,7 +341,10 @@ for (const engine of process.env.RAH_UI_BROWSER
       await card.click();
       await reached;
       await page
-        .getByRole("button", { name: "关闭任务详情", exact: true })
+        .getByRole("button", {
+          name: width === 390 ? "返回任务页面" : "关闭任务详情",
+          exact: true,
+        })
         .click();
       release();
       await page.waitForTimeout(100);
@@ -339,15 +362,10 @@ for (const engine of process.env.RAH_UI_BROWSER
         { waitUntil: "domcontentloaded" },
       );
       await card.click();
-      await expect(
-        page.locator('[data-testid="thread-side-column"]'),
-      ).toBeVisible();
-      assert.equal(
-        await page.locator('[data-testid="task-thread-modal"]').count(),
-        0,
-      );
+      await expect(page.getByTestId("task-thread-modal")).toBeVisible();
+      await expect(page.getByTestId("task-detail-metadata")).toBeVisible();
       await page.screenshot({
-        path: join(output, `${engine}-${width}-room-thread.png`),
+        path: join(output, `${engine}-${width}-room-task-approval.png`),
       });
       assert.deepEqual(errors, []);
       results.push({
@@ -363,7 +381,7 @@ for (const engine of process.env.RAH_UI_BROWSER
         threadReply: true,
         readRecovery: true,
         lateRead: true,
-        roomThread: true,
+        roomTaskApproval: true,
         assigneeMutation: true,
         assigneeReload: true,
         nestedEscape: true,

@@ -30,7 +30,7 @@ try {
   await dialog.getByRole("button", { name: "创建分区", exact: true }).click();
   await expect(groups).toHaveCount(4);
   const custom = groups.filter({ has: p.getByText("111", { exact: true }) });
-  await expect(custom.getByText("暂无会话")).toBeVisible();
+  await expect(custom.getByText("暂无会话")).toBeHidden();
   const id = await custom.getAttribute("data-sidebar-group");
   assert.equal(
     await custom.evaluate((el) => getComputedStyle(el).marginTop),
@@ -80,6 +80,14 @@ try {
           `[data-sidebar-group="${sourceGroup}"] [data-sidebar-key="${sourceKey}"]`,
         ),
       ).toHaveCount(0);
+      // Cross-group preview moves the destination when the source row leaves.
+      // Release inside its current hit area, not the old pre-preview position.
+      const movedTarget = await target.boundingBox();
+      await p.mouse.move(
+        movedTarget.x + movedTarget.width / 2,
+        movedTarget.y + movedTarget.height / 2,
+        { steps: 4 },
+      );
     }
     const decorations = await p
       .locator(".rah-sidebar-sortable.is-over, .rah-sidebar-drop.is-over")

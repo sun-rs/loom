@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 
 import {
   resolveSelectedMessages,
@@ -20,17 +20,31 @@ export function useMessageSelectionActions<Message extends SelectableMessage>({
   messages,
   roomId,
   threadRootMessageId,
+  visible = true,
 }: {
   linkForMessage: (message: Message) => string | undefined;
   messages: readonly Message[];
   roomId: string | undefined;
   threadRootMessageId?: string | undefined;
+  visible?: boolean;
 }) {
   const [error, setError] = useState<string>();
   const [forwardOpen, setForwardOpen] = useState(false);
   const selection = useMessageSelection();
+  const ownerId = useId();
+  const enterRoom = useCallback(
+    (room: string, ids?: readonly string[]) =>
+      selection.enterRoom(room, ids, ownerId),
+    [selection.enterRoom, ownerId],
+  );
+  const enterThread = useCallback(
+    (room: string, root: string, ids?: readonly string[]) =>
+      selection.enterThread(room, root, ids, ownerId),
+    [selection.enterThread, ownerId],
+  );
   const active =
     selection.active &&
+    selection.scope?.ownerId === ownerId &&
     messageSelectionMatches(selection.scope, roomId, threadRootMessageId);
   const resolved = resolveSelectedMessages(
     active ? selection.selectedIds : [],
@@ -41,9 +55,14 @@ export function useMessageSelectionActions<Message extends SelectableMessage>({
     selectableMessageIds.length > 0 &&
     resolved.messages.length === selectableMessageIds.length;
 
+  useEffect(() => {
+    if (!visible && active) selection.exit();
+  }, [visible, active, selection.exit]);
+
   useEffect(
     () => () => {
       if (
+        selection.getSnapshot().scope?.ownerId === ownerId &&
         messageSelectionMatches(
           selection.getSnapshot().scope,
           roomId,
@@ -53,7 +72,13 @@ export function useMessageSelectionActions<Message extends SelectableMessage>({
         selection.exit();
       }
     },
-    [roomId, selection.exit, selection.getSnapshot, threadRootMessageId],
+    [
+      ownerId,
+      roomId,
+      selection.exit,
+      selection.getSnapshot,
+      threadRootMessageId,
+    ],
   );
   useEffect(() => {
     if (!active) return;
@@ -121,6 +146,6 @@ export function useMessageSelectionActions<Message extends SelectableMessage>({
     openForward,
     resolved,
     selectableMessageIds,
-    selection,
+    selection: { ...selection, enterRoom, enterThread },
   };
 }

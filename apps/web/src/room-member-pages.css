@@ -369,18 +369,17 @@
 .rah-room-settings-mobile-close {
   display: none;
 }
-@media (max-width: 600px) {
+@media (max-width: 767px) {
   .rah-channel-settings-header {
-    position: relative;
-    padding-right: 56px;
+    flex-wrap: nowrap;
   }
   .rah-room-settings-mobile-close {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    position: absolute;
-    right: 16px;
-    top: 20px;
+    order: 2;
+    flex: none;
+    margin-left: auto;
     width: 32px;
     height: 32px;
     padding: 0;

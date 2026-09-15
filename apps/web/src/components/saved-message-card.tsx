@@ -2,7 +2,6 @@ import { useWorkspaceEntities } from "./workspace-entity-context.tsx";
 import { activityDisplayText } from "../activity-display-names.ts";
 import { useCallback, useRef, useState } from "react";
 
-import { navigationSearch } from "../navigation-target.ts";
 import {
   formatSavedRelativeTime,
   savedTargetLabel,
@@ -126,21 +125,6 @@ export function SavedMessageCard({
           onClose={closeMenu}
           triggerRef={cardRef}
         >
-          <button
-            onClick={() =>
-              void copy(
-                new URL(
-                  navigationSearch({ target: row.target }),
-                  window.location.href,
-                ).href,
-              )
-            }
-            role="menuitem"
-            type="button"
-          >
-            <Icon name="link-2" />
-            复制链接
-          </button>
           <button
             onClick={() => void copy(row.message.body)}
             role="menuitem"

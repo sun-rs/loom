@@ -1,15 +1,10 @@
 import { browserOpaqueId } from "../browser-opaque-id.ts";
 import { useState } from "react";
 
-import type { Task } from "@rah-os/protocol";
-import {
-  taskParticipantsForSelection,
-  type RoomAgentTarget,
-} from "@rah-os/ui-web";
+import type { RoomAgentTarget } from "@rah-os/ui-web";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 
 import { useDialogProtocol } from "../dialog-protocol.ts";
-import { TaskParticipantFields } from "./task-participant-fields.tsx";
 
 export type TaskCreateInput = {
   assigneeId?: string;
@@ -244,25 +239,18 @@ export function TaskCloseDialog({
 }
 
 export function TaskCreateDialog({
-  agents,
   onClose,
   onCreate,
   onDiscard,
-  tasks,
 }: {
-  agents: readonly RoomAgentTarget[];
   onClose: () => void;
   onCreate: (
     input: TaskCreateInput,
     onAccepted: (clientId: string) => void,
   ) => Promise<void>;
   onDiscard: (clientIds: readonly string[]) => void;
-  tasks: readonly Task[];
 }) {
   const [titles, setTitles] = useState(() => [newTaskTitle()]);
-  const [configurationOpen, setConfigurationOpen] = useState(false);
-  const [assigneeId, setAssigneeId] = useState<string>();
-  const [dependencyTaskIds, setDependencyTaskIds] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
   const [submissionLocked, setSubmissionLocked] = useState(false);
   const [acceptedClientIds, setAcceptedClientIds] = useState<string[]>([]);
@@ -275,37 +263,10 @@ export function TaskCreateDialog({
   const nonempty = titles
     .map((task) => ({ ...task, title: task.title.trim() }))
     .filter((task) => task.title !== "");
-  const availableDependencies = tasks.filter(
-    ({ state }) => state !== "completed" && state !== "cancelled",
-  );
-  let participantIssue: string | undefined;
-  try {
-    taskParticipantsForSelection({
-      availableAgents: agents,
-      ...(assigneeId === undefined ? {} : { assigneeId }),
-      collaboratorIds: [],
-      reviewerIds: [],
-    });
-  } catch (caught) {
-    participantIssue = errorMessage(caught);
-  }
-
   const create = () => {
     if (pending) return;
     if (nonempty.length === 0) {
       setActionError("至少需要填写一个任务标题");
-      return;
-    }
-    let participants;
-    try {
-      participants = taskParticipantsForSelection({
-        availableAgents: agents,
-        ...(assigneeId === undefined ? {} : { assigneeId }),
-        collaboratorIds: [],
-        reviewerIds: [],
-      });
-    } catch (caught) {
-      setActionError(errorMessage(caught));
       return;
     }
     const accepted = new Set(acceptedClientIds);
@@ -317,8 +278,9 @@ export function TaskCreateDialog({
     setPending(true);
     void onCreate(
       {
-        ...participants,
-        dependencyTaskIds: [...new Set(dependencyTaskIds)].sort(),
+        collaboratorIds: [],
+        reviewerIds: [],
+        dependencyTaskIds: [],
         titles: remaining,
       },
       (clientId) =>
@@ -345,7 +307,7 @@ export function TaskCreateDialog({
         : "创建任务";
 
   return (
-    <div className="rah-dialog-layer" role="presentation">
+    <div className="rah-dialog-layer rah-task-create-layer" role="presentation">
       <button
         aria-label="关闭新建任务窗口"
         className="rah-dialog-backdrop"
@@ -362,12 +324,7 @@ export function TaskCreateDialog({
       >
         <header>
           <div>
-            <h2 id="rah-task-create-title">
-              {configurationOpen ? "配置任务协作" : "创建任务"}
-            </h2>
-            {configurationOpen ? (
-              <p>此配置将原子应用到本次创建的每个任务。</p>
-            ) : null}
+            <h2 id="rah-task-create-title">创建任务</h2>
           </div>
           <button
             aria-label="关闭"
@@ -392,141 +349,74 @@ export function TaskCreateDialog({
           {!submissionLocked ? null : (
             <p className="rah-dialog-status" role="status">
               已确认 {String(acceptedClientIds.length)} /{" "}
-              {String(nonempty.length)}；
-              标题与负责人配置已冻结，只会重试尚未确认的任务。
+              {String(nonempty.length)}； 标题已冻结，只会重试尚未确认的任务。
             </p>
           )}
-          {configurationOpen ? (
-            <div className="rah-task-create-configuration">
-              <TaskParticipantFields
-                agents={agents}
-                assigneeId={assigneeId}
-                disabled={submissionLocked}
-                initialFocus
-                onAssigneeChange={setAssigneeId}
-                taskTargetIssue={participantIssue}
-              />
-              <fieldset
-                className="rah-task-dialog-dependencies"
-                disabled={submissionLocked}
-              >
-                <legend>前置任务</legend>
-                {availableDependencies.length === 0 ? (
-                  <p>当前 Room 没有可选的前置任务。</p>
-                ) : (
-                  <div>
-                    {availableDependencies.map((task) => (
-                      <label key={task.taskId}>
-                        <input
-                          checked={dependencyTaskIds.includes(task.taskId)}
-                          onChange={() =>
-                            setDependencyTaskIds((current) =>
-                              current.includes(task.taskId)
-                                ? current.filter(
-                                    (candidate) => candidate !== task.taskId,
-                                  )
-                                : [...current, task.taskId],
-                            )
-                          }
-                          type="checkbox"
-                        />
-                        <span>
-                          #{String(task.taskNumber)} {task.title}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </fieldset>
-            </div>
-          ) : (
-            <div className="rah-task-create-fields">
-              {titles.map((task, index) => (
-                <div className="rah-task-create-row" key={task.clientId}>
-                  <input
-                    aria-label={`任务 ${String(index + 1)}`}
-                    autoFocus={index === 0}
-                    data-dialog-initial-focus={index === 0 ? true : undefined}
+          <div className="rah-task-create-fields">
+            {titles.map((task, index) => (
+              <div className="rah-task-create-row" key={task.clientId}>
+                <input
+                  aria-label={`任务 ${String(index + 1)}`}
+                  autoFocus={index === 0}
+                  data-dialog-initial-focus={index === 0 ? true : undefined}
+                  disabled={pending || submissionLocked}
+                  onChange={(event) =>
+                    setTitles((current) =>
+                      current.map((item) =>
+                        item.clientId === task.clientId
+                          ? { ...item, title: event.target.value }
+                          : item,
+                      ),
+                    )
+                  }
+                  placeholder={`任务 ${String(index + 1)}`}
+                  type="text"
+                  value={task.title}
+                />
+                {titles.length > 1 ? (
+                  <button
+                    aria-label={`移除任务 ${String(index + 1)}`}
+                    className="btn rah-task-create-remove"
                     disabled={pending || submissionLocked}
-                    onChange={(event) =>
+                    onClick={() =>
                       setTitles((current) =>
-                        current.map((item) =>
-                          item.clientId === task.clientId
-                            ? { ...item, title: event.target.value }
-                            : item,
+                        current.filter(
+                          (item) => item.clientId !== task.clientId,
                         ),
                       )
                     }
-                    placeholder={`任务 ${String(index + 1)}`}
-                    type="text"
-                    value={task.title}
-                  />
-                  {titles.length > 1 ? (
-                    <button
-                      aria-label={`移除任务 ${String(index + 1)}`}
-                      className="btn rah-task-create-remove"
-                      disabled={pending || submissionLocked}
-                      onClick={() =>
-                        setTitles((current) =>
-                          current.filter(
-                            (item) => item.clientId !== task.clientId,
-                          ),
-                        )
-                      }
-                      type="button"
-                    >
-                      <Icon name="x" />
-                    </button>
-                  ) : null}
-                </div>
-              ))}
-              <button
-                className="btn rah-task-create-another"
-                disabled={pending || submissionLocked}
-                onClick={() =>
-                  setTitles((current) => [...current, newTaskTitle()])
-                }
-                type="button"
-              >
-                <Icon name="plus" />
-                再加一条
-              </button>
-            </div>
-          )}
+                    type="button"
+                  >
+                    <Icon name="x" />
+                  </button>
+                ) : null}
+              </div>
+            ))}
+            <button
+              className="btn rah-task-create-another"
+              disabled={pending || submissionLocked}
+              onClick={() =>
+                setTitles((current) => [...current, newTaskTitle()])
+              }
+              type="button"
+            >
+              <Icon name="plus" />
+              再加一条
+            </button>
+          </div>
           <footer>
             <button
               className="btn"
-              disabled={pending || (configurationOpen && submissionLocked)}
-              onClick={() => {
-                if (configurationOpen) {
-                  setConfigurationOpen(false);
-                  setActionError(undefined);
-                } else dismiss();
-              }}
+              disabled={pending}
+              onClick={dismiss}
               type="button"
             >
-              {configurationOpen ? "返回" : "取消"}
+              取消
             </button>
-            {!configurationOpen ? (
-              <button
-                className="btn"
-                disabled={pending || submissionLocked || nonempty.length === 0}
-                onClick={() => {
-                  setActionError(undefined);
-                  setConfigurationOpen(true);
-                }}
-                type="button"
-              >
-                配置负责人与依赖
-              </button>
-            ) : null}
             <button
               className="btn btn-pink"
               disabled={
-                pending ||
-                nonempty.length === 0 ||
-                remainingCount === 0 ||
-                participantIssue !== undefined
+                pending || nonempty.length === 0 || remainingCount === 0
               }
             >
               {createLabel}

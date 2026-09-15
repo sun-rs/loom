@@ -1,23 +1,18 @@
 export { taskAttentionLabel, taskStatusPresentation } from "@rah-os/ui-web";
 
 export type TaskFilterSelection = {
-  assigneeId?: string | null;
-  creatorId?: string;
+  assigneeIds?: string[];
+  creatorIds?: string[];
 };
 
 export function taskMatchesFilters(
   task: { assigneeId?: string | undefined; creatorId: string },
   filters: TaskFilterSelection,
 ): boolean {
-  if (filters.creatorId !== undefined && task.creatorId !== filters.creatorId) {
-    return false;
-  }
-  if (filters.assigneeId === null) return task.assigneeId === undefined;
-  if (
-    filters.assigneeId !== undefined &&
-    task.assigneeId !== filters.assigneeId
-  ) {
-    return false;
-  }
-  return true;
+  return (
+    (!filters.creatorIds?.length ||
+      filters.creatorIds.includes(task.creatorId)) &&
+    (!filters.assigneeIds?.length ||
+      filters.assigneeIds.includes(task.assigneeId ?? "unassigned"))
+  );
 }

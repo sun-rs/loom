@@ -2,7 +2,7 @@
   "generatedBy": "node scripts/run-component-spec-browser-gate.mjs sidebar-row --report-matching-rules",
   "component": "sidebar-row",
   "note": "Rules Chrome reports as matching each fixture probe element. The static checker refuses it once the CSS inputs, the fixture files, the rendered fixture DOM or this gate program change, and refuses it if any probe declared in the spec is absent.",
-  "cssInputsSha256": "b39d69eb9faed11226f238591e71281ea83db8735515752175402b00821cd11b",
+  "cssInputsSha256": "4e4a6867a33a45db71ae608e5dac07c6565320f4f10090ead63c0040f7831b3c",
   "fixtureSha256": "fef45e09041a3902d135c0ac7c98f4c9c66b125fdf6b9fe3c24c6137f907392a",
   "gateScriptSha256": "bc7e998c999fee56cd3ecde9592703aaeb96beea610b5424f0e331de22e8e59b",
   "structureSha256": "614f16ae2a3d0f06b62133d51b9b55eb4b27cb64437096bc0b92a4b5284a20a8",
@@ -1078,7 +1078,10 @@
         "file": "packages/ui-tokens/src/neo-brutalist/index.css",
         "media": "",
         "selector": ".rah-product-shell .task-filter-trigger",
-        "properties": ["transition-timing-function"]
+        "properties": [
+          "-webkit-tap-highlight-color",
+          "transition-timing-function"
+        ]
       },
       {
         "file": "apps/web/src/product.css",
@@ -1134,7 +1137,7 @@
       },
       {
         "file": "apps/web/src/product.css",
-        "media": "",
+        "media": "@media (hover: hover) and (pointer: fine)",
         "selector": ".task-filter-trigger:hover",
         "properties": [
           "border-top-color",
@@ -1504,7 +1507,10 @@
         "file": "packages/ui-tokens/src/neo-brutalist/index.css",
         "media": "",
         "selector": ".rah-product-shell .task-filter-trigger",
-        "properties": ["transition-timing-function"]
+        "properties": [
+          "-webkit-tap-highlight-color",
+          "transition-timing-function"
+        ]
       },
       {
         "file": "apps/web/src/product.css",
@@ -1566,7 +1572,7 @@
       },
       {
         "file": "apps/web/src/product.css",
-        "media": "",
+        "media": "@media (hover: hover) and (pointer: fine)",
         "selector": ".task-filter-trigger:hover",
         "properties": [
           "border-top-color",

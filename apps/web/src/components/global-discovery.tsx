@@ -1,3 +1,7 @@
+import {
+  rememberTaskFilters,
+  restoreTaskFilters,
+} from "../task-filter-session.ts";
 import { useMobileLayout } from "../use-mobile-layout.ts";
 import { activityDisplayText } from "../activity-display-names.ts";
 import { useResponsiveTaskView } from "../use-responsive-task-view.ts";
@@ -72,6 +76,7 @@ type Props = {
   navigationEpoch?: () => number;
   beginNavigation?: () => number;
   taskRefreshVersion?: number;
+  taskFilterMemory?: Map<string, string>;
 };
 
 export function GlobalDiscoverySurface(props: Props) {
@@ -94,15 +99,27 @@ export function GlobalDiscoverySurface(props: Props) {
 }
 
 // URL and request state share one owner; no transcript/localStorage cache.
-function useFilters(surface: GlobalSurface) {
-  const [params, setParams] = useState(() =>
-    normalizeDiscoveryParams(window.location.search, surface),
-  );
+function useFilters(
+  surface: GlobalSurface,
+  memory?: Map<string, string>,
+  workspaceId = "",
+) {
+  const [params, setParams] = useState(() => {
+    const initial = normalizeDiscoveryParams(window.location.search, surface);
+    const reload =
+      (
+        performance.getEntriesByType("navigation")[0] as
+          PerformanceNavigationTiming | undefined
+      )?.type === "reload";
+    return memory
+      ? restoreTaskFilters(memory, workspaceId, initial, reload)
+      : initial;
+  });
   useEffect(() => {
-    const next = normalizeDiscoveryParams(window.location.search, surface);
-    if (window.location.search !== `?${next}`)
-      window.history.replaceState(null, "", `?${next}`);
-  }, [surface]);
+    if (memory) rememberTaskFilters(memory, workspaceId, params);
+    if (window.location.search !== `?${params}`)
+      window.history.replaceState(null, "", `?${params}`);
+  }, [surface, memory, workspaceId, params]);
   const [cursors, setCursors] = useState<Array<string | undefined>>([
     undefined,
   ]);
@@ -242,7 +259,19 @@ function Header({
   onClose: () => void;
 }) {
   return (
-    <PanelHeader kind="surface" className="activity-head">
+    <PanelHeader
+      kind="surface"
+      className={`activity-head ${root ? "rah-mobile-root-header" : "rah-mobile-child-header"}`}
+    >
+      {!root && (
+        <PanelHeaderAction
+          className="rah-mobile-only"
+          aria-label="返回聊天"
+          onClick={onClose}
+        >
+          <Icon name="arrow-left" />
+        </PanelHeaderAction>
+      )}
       <PanelHeaderIcon name={icon} />
       <div className="channel-title">
         <h2 className="rah-panel-title">{title}</h2>
@@ -251,17 +280,12 @@ function Header({
       <div className="head-actions">
         {actions}
         {onRefresh === undefined ? null : (
-          <PanelHeaderAction aria-label={`刷新${title}`} onClick={onRefresh}>
-            <Icon name="refresh-cw" />
-          </PanelHeaderAction>
-        )}
-        {!root && (
           <PanelHeaderAction
-            className="rah-mobile-only"
-            aria-label="返回聊天"
-            onClick={onClose}
+            className="rah-desktop-only"
+            aria-label={`刷新${title}`}
+            onClick={onRefresh}
           >
-            <Icon name="arrow-left" />
+            <Icon name="refresh-cw" />
           </PanelHeaderAction>
         )}
       </div>
@@ -278,8 +302,9 @@ function GlobalTasks({
   onOpen,
   onClose,
   taskRefreshVersion,
+  taskFilterMemory,
 }: Props & { people: Principal[] }) {
-  const filters = useFilters("tasks");
+  const filters = useFilters("tasks", taskFilterMemory, workspaceId);
   const { params, change } = filters;
   const result = useDiscoveryQuery(client, "task.global.list", {
     workspaceId,
@@ -312,7 +337,12 @@ function GlobalTasks({
     taskPersonOptions(people, currentHuman?.principalId, filter, entities);
   const mobile = useMobileLayout();
   const viewControl = (
-    <div className="tasks-view" role="radiogroup" aria-label="任务视图">
+    <div
+      className="tasks-view"
+      data-segment-surface="signal"
+      role="radiogroup"
+      aria-label="任务视图"
+    >
       {(["board", "list"] as const).map((mode) => (
         <button
           className="rah-interaction-segment"
@@ -1108,7 +1138,7 @@ function GlobalActivity({
     <main className="rah-discovery activity-main" aria-label="全局动态">
       <Header
         title="动态"
-        subtitle={`${result.data?.total ?? 0} 条进行中`}
+        subtitle={`${result.data?.total ?? 0} 条动态 · ${result.data?.summary?.unreadActivityCount ?? 0} 条未读`}
         icon="pulse"
         onRefresh={() => {
           filters.resetPage();

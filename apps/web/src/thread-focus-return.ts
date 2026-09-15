@@ -37,7 +37,9 @@ export function useThreadFocusReturn() {
               document.querySelectorAll<HTMLElement>("[data-message-id]"),
             ).find((element) => element.dataset.messageId === rootMessageId)
           : undefined;
-        chooseThreadFocusReturnTarget(opener, root)?.focus();
+        chooseThreadFocusReturnTarget(opener, root)?.focus({
+          preventScroll: true,
+        });
       });
     });
   }, []);

@@ -2,7 +2,6 @@ import { useRef, useState } from "react";
 import {
   DndContext,
   MouseSensor,
-  TouchSensor,
   KeyboardSensor,
   useSensor,
   useSensors,
@@ -83,7 +82,7 @@ export function GlobalTaskBoard({
   view: "board" | "list";
   writeEnabled?: boolean;
   showRoomName?: boolean;
-  openSurface?: "tasks";
+  openSurface?: "tasks" | "room-tasks";
   onOpen: DiscoveryNavigationHandler;
   onChanged: () => void;
 }) {
@@ -96,12 +95,10 @@ export function GlobalTaskBoard({
   const [pending, setPending] = useState<string>();
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
-  // Direct Raft Vie sensor settings (not a home-grown drag engine).
+  // Keep Raft mouse/keyboard dragging; touch belongs to native scrolling,
+  // including a held finger on a card. State menus remain available on touch.
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, {
-      activationConstraint: { delay: 200, tolerance: 5 },
-    }),
     useSensor(KeyboardSensor, { coordinateGetter: groupCoordinates }),
   );
   const canManage = (task: Task) =>

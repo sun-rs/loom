@@ -8,7 +8,6 @@ export function ChatEmptyState() {
         <Icon name="chat" />
       </div>
       <div className="rah-chat-empty-title">暂无消息</div>
-      <div className="rah-chat-empty-description">开始对话吧。</div>
     </div>
   );
 }

@@ -7,7 +7,7 @@ export type ProductNavigationRequest = {
   target: NavigationTarget;
   /** Ephemeral search presentation; never sent to the business resolver. */
   highlightQuery?: string;
-  surface?: "activity" | "tasks";
+  surface?: "activity" | "tasks" | "room-tasks";
 };
 
 export type NavigationPresentation = {
@@ -23,7 +23,7 @@ export type NavigationPresentation = {
 
 export function navigationPresentation(
   target: NavigationTarget,
-  originSurface?: "activity" | "tasks",
+  originSurface?: "activity" | "tasks" | "room-tasks",
 ): NavigationPresentation {
   if (target.kind === "agent")
     return {
@@ -69,7 +69,10 @@ export function navigationPresentation(
               : { focusedMessageId: target.rootMessageId }),
           }
         : {}),
-      tab: originSurface === "tasks" ? "tasks" : "chat",
+      tab:
+        originSurface === "tasks" || originSurface === "room-tasks"
+          ? "tasks"
+          : "chat",
       ...(target.rootMessageId === undefined
         ? {}
         : { threadRootMessageId: target.rootMessageId }),
@@ -136,7 +139,8 @@ export function navigationSearch(
     if (target.rootMessageId)
       params.set("thread", `${target.roomId}:${target.rootMessageId}`);
   } else if (target.kind === "task") {
-    if (request.surface === "tasks") params.set("roomTab", "tasks");
+    if (request.surface === "tasks" || request.surface === "room-tasks")
+      params.set("roomTab", "tasks");
     params.set("task", target.taskId);
     if (target.threadId) params.set("threadId", target.threadId);
     if (target.rootMessageId)

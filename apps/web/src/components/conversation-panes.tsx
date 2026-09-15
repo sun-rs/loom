@@ -1,3 +1,6 @@
+import { MessageTextDialog } from "./message-text-dialog.tsx";
+import { useMessageActions } from "../use-message-actions.ts";
+import type { ProductNavigationRequest } from "../navigation-target.ts";
 import { activityDisplayText } from "../activity-display-names.ts";
 import { useTaskInitialScroll } from "../use-task-initial-scroll.ts";
 import { useMessageHighlight } from "../use-message-highlight.ts";
@@ -119,6 +122,7 @@ export type ThreadSearchMatch = {
 };
 
 export function ChatPane({
+  selectionVisible = true,
   client,
   currentPrincipal,
   focusedMessageId,
@@ -159,6 +163,7 @@ export function ChatPane({
   threadReplyPreviews,
   threads,
 }: {
+  selectionVisible?: boolean;
   client: RahClient;
   currentPrincipal?: Principal | undefined;
   focusedMessageId?: string | undefined;
@@ -274,6 +279,7 @@ export function ChatPane({
   const [pending, setPending] = useState(false);
   const [submitError, setSubmitError] = useState<string>();
   const messageSelection = useMessageSelectionActions({
+    visible: selectionVisible,
     linkForMessage: (message) => {
       const target = messageNavigationTarget(message, roomId);
       return target === undefined ? undefined : navigationSearch({ target });
@@ -293,6 +299,16 @@ export function ChatPane({
   const previousFocus = useRef(focusedMessageId);
   const activeScrollRoomId = useRef<string | undefined>(undefined);
   const stickToBottom = useRef(true);
+  const lastScrollTop = useRef<number | undefined>(undefined);
+  function canFollowTail() {
+    const element = messagesRef.current;
+    return (
+      stickToBottom.current &&
+      (lastScrollTop.current === undefined ||
+        element === null ||
+        element.scrollTop === lastScrollTop.current)
+    );
+  }
   const [atBottom, setAtBottom] = useState(true);
   useEffect(() => {
     const leftContext =
@@ -331,7 +347,7 @@ export function ChatPane({
       timelineRef.current?.scrollToLatest();
       return;
     }
-    if (stickToBottom.current && !earlierMessagesLoading) {
+    if (canFollowTail() && !earlierMessagesLoading) {
       timelineRef.current?.scrollToLatest();
     }
   }, [earlierMessagesLoading, focusedMessageId, messages, roomId]);
@@ -348,7 +364,7 @@ export function ChatPane({
     const observer = new ResizeObserver(() => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        if (stickToBottom.current) timelineRef.current?.scrollToLatest();
+        if (canFollowTail()) timelineRef.current?.scrollToLatest();
       });
     });
     observer.observe(content);
@@ -484,6 +500,7 @@ export function ChatPane({
         }}
         onScroll={(event) => {
           const element = event.currentTarget;
+          lastScrollTop.current = element.scrollTop;
           const nextAtBottom =
             element.scrollHeight - element.scrollTop - element.clientHeight <
             48;
@@ -498,9 +515,7 @@ export function ChatPane({
         {!loading && timelineItems.length === 0 ? <ChatEmptyState /> : null}
         <MessageTimeline
           followOnAppend={
-            !focusedMessageId &&
-            stickToBottom.current &&
-            !earlierMessagesLoading
+            !focusedMessageId && canFollowTail() && !earlierMessagesLoading
           }
           getItemKey={chatTimelineKey}
           header={
@@ -701,9 +716,7 @@ export function ChatPane({
           allSelected={messageSelection.allSelected}
           error={messageSelection.error}
           onCancel={messageSelection.selection.exit}
-          onCopyLinks={() => void messageSelection.copy("links")}
           onCopyMarkdown={() => void messageSelection.copy("markdown")}
-          {...(canForward ? { onForward: messageSelection.openForward } : {})}
           onSelectAll={() =>
             messageSelection.selection.selectAll(
               messageSelection.allSelected
@@ -711,6 +724,8 @@ export function ChatPane({
                 : messageSelection.selectableMessageIds,
             )
           }
+          messages={messageSelection.resolved.messages}
+          unresolvedCount={messageSelection.resolved.unresolvedCount}
           selectedCount={messageSelection.selection.selectedIds.length}
         />
       ) : (
@@ -965,6 +980,8 @@ export function MessageArticle({
     startContextMenuLongPress,
     triggerRef: messageRef,
   } = useMessageContextMenu<HTMLElement>();
+  const messageActions = useMessageActions(messageRef);
+  const [copyTextOpen, setCopyTextOpen] = useState(false);
   const [conversionPending, setConversionPending] = useState(false);
   const [conversionError, setConversionError] = useState<string>();
   const [threadFollowPending, setThreadFollowPending] = useState(false);
@@ -1045,12 +1062,13 @@ export function MessageArticle({
   return (
     <article
       className="msg"
+      {...messageActions}
       data-message-id={message.messageId}
       data-focused={focused}
       data-selected={selection?.selected || undefined}
       data-selection-active={selection?.active || undefined}
       onClick={(event) => {
-        if (!selection?.active) return;
+        if (!selection?.active) return messageActions.onClick(event);
         if (
           event.target instanceof Element &&
           event.target.closest("a, button, input, label")
@@ -1253,6 +1271,7 @@ export function MessageArticle({
           anchor={contextMenu}
           conversionPending={conversionPending}
           messageBody={message.body}
+          onCopyText={() => setCopyTextOpen(true)}
           onClose={closeContextMenu}
           onError={setConversionError}
           social={social}
@@ -1292,6 +1311,12 @@ export function MessageArticle({
             : { onSelectMessages: selection.onEnter })}
         />
       )}
+      {copyTextOpen ? (
+        <MessageTextDialog
+          body={message.body}
+          onClose={() => setCopyTextOpen(false)}
+        />
+      ) : null}
     </article>
   );
 }
@@ -1325,6 +1350,7 @@ export function ThreadPane({
   onClose,
   onSubmit,
   onTaskWorkflow,
+  onConvertToTask,
   onFollow,
   onLoadEarlier,
   onRefreshFollowers,
@@ -1378,6 +1404,7 @@ export function ThreadPane({
   onClose: () => void;
   onSubmit: (body: string, attachmentIds?: string[]) => Promise<void>;
   onTaskWorkflow: (task: Task) => Promise<void>;
+  onConvertToTask?: ((messageId: string) => Promise<void>) | undefined;
   onFollow?: ((following: boolean) => Promise<void>) | undefined;
   onLoadEarlier?: (() => Promise<void>) | undefined;
   onRefreshFollowers?: (() => void) | undefined;
@@ -1484,7 +1511,8 @@ export function ThreadPane({
     },
     messages: threadMessages,
     roomId,
-    threadRootMessageId: root?.messageId,
+    threadRootMessageId: root?.messageId ?? `pending-thread:${threadId}`,
+    visible: !inactive,
   });
   const [following, setFollowing] = useState<boolean>();
   const [followersOpen, setFollowersOpen] = useState(false);
@@ -1658,24 +1686,29 @@ export function ThreadPane({
       : undefined,
   );
   useEffect(() => {
-    if (!searchOpen || searchMatches.length === 0) return;
+    if (!searchOpen || searchMatches.length === 0) {
+      revealedSearchMessageId.current = undefined;
+      return;
+    }
     const index = Math.min(searchIndex, searchMatches.length - 1);
     if (index !== searchIndex) setSearchIndex(index);
     const match = searchMatches[index]!;
+    const searchTarget = JSON.stringify([searchQuery, index, match.messageId]);
+    if (revealedSearchMessageId.current === searchTarget) return;
     const node = messagesElement.current?.querySelector(
       `[data-message-id="${CSS.escape(match.messageId)}"]`,
     );
     if (node) {
       node.scrollIntoView({ block: "center" });
-      revealedSearchMessageId.current = match.messageId;
+      revealedSearchMessageId.current = searchTarget;
     } else if (
       onOpenTarget !== undefined &&
-      revealedSearchMessageId.current !== match.messageId
+      revealedSearchMessageId.current !== `loading:${searchTarget}`
     ) {
-      revealedSearchMessageId.current = match.messageId;
+      revealedSearchMessageId.current = `loading:${searchTarget}`;
       onOpenTarget(match.target);
     }
-  }, [onOpenTarget, replies, root, searchIndex, searchMatches, searchOpen]);
+  });
   useEffect(() => {
     if (removeFollowerTarget || (!followersOpen && !overflowOpen)) return;
     const closeOutside = (event: PointerEvent) => {
@@ -1831,8 +1864,18 @@ export function ThreadPane({
     if (!onLoadEarlier || earlierRepliesLoading) return;
     const element = messagesElement.current;
     const previousHeight = element?.scrollHeight ?? 0;
-    const previousTop = element?.scrollTop ?? 0;
-    await onLoadEarlier();
+    let previousTop = element?.scrollTop ?? 0;
+    const updateReadingPosition = () => {
+      previousTop = element?.scrollTop ?? previousTop;
+    };
+    element?.addEventListener("scroll", updateReadingPosition, {
+      passive: true,
+    });
+    try {
+      await onLoadEarlier();
+    } finally {
+      element?.removeEventListener("scroll", updateReadingPosition);
+    }
     requestAnimationFrame(() => {
       if (element)
         element.scrollTop = previousTop + element.scrollHeight - previousHeight;
@@ -2188,6 +2231,7 @@ export function ThreadPane({
               } else if (event.key === "Enter" && searchMatches.length > 0) {
                 event.preventDefault();
                 messageHighlight.reveal();
+                revealedSearchMessageId.current = undefined;
                 setSearchIndex((current) =>
                   event.shiftKey
                     ? (current - 1 + searchMatches.length) %
@@ -2214,6 +2258,7 @@ export function ThreadPane({
             disabled={searchMatches.length === 0}
             onClick={() => {
               messageHighlight.reveal();
+              revealedSearchMessageId.current = undefined;
               setSearchIndex((current) =>
                 searchMatches.length === 0
                   ? 0
@@ -2230,6 +2275,7 @@ export function ThreadPane({
             disabled={searchMatches.length === 0}
             onClick={() => {
               messageHighlight.reveal();
+              revealedSearchMessageId.current = undefined;
               setSearchIndex((current) =>
                 searchMatches.length === 0
                   ? 0
@@ -2359,6 +2405,9 @@ export function ThreadPane({
                   (root.messageId === focusedMessageId ||
                     root.messageId === activeSearchMessageId)
                 }
+                {...(task === undefined && onConvertToTask
+                  ? { convertTaskAction: () => onConvertToTask(root.messageId) }
+                  : {})}
                 {...(task === undefined ? {} : { task })}
                 {...(task === undefined
                   ? {}
@@ -2523,9 +2572,7 @@ export function ThreadPane({
           allSelected={messageSelection.allSelected}
           error={messageSelection.error}
           onCancel={messageSelection.selection.exit}
-          onCopyLinks={() => void messageSelection.copy("links")}
           onCopyMarkdown={() => void messageSelection.copy("markdown")}
-          {...(canForward ? { onForward: messageSelection.openForward } : {})}
           onSelectAll={() =>
             messageSelection.selection.selectAll(
               messageSelection.allSelected
@@ -2533,6 +2580,8 @@ export function ThreadPane({
                 : messageSelection.selectableMessageIds,
             )
           }
+          messages={messageSelection.resolved.messages}
+          unresolvedCount={messageSelection.resolved.unresolvedCount}
           selectedCount={messageSelection.selection.selectedIds.length}
         />
       ) : (
@@ -2665,7 +2714,7 @@ export function TaskPane({
   onChanged,
   onCreate,
   onLoadEarlierTasks,
-  onOpenThread,
+  onOpenTask,
   roomName,
 }: {
   agents: readonly WorkspaceAgentView[];
@@ -2682,31 +2731,25 @@ export function TaskPane({
   onChanged: () => void;
   onCreate: () => void;
   onLoadEarlierTasks: () => Promise<void>;
-  onOpenThread: (task: Task) => Promise<void>;
+  onOpenTask: (request: ProductNavigationRequest) => Promise<boolean>;
   roomName: string;
 }) {
-  const [creatorFilterId, setCreatorFilterId] = useState<string>();
-  const [assigneeFilterId, setAssigneeFilterId] = useState<
-    string | null | undefined
-  >();
+  const [creatorFilterIds, setCreatorFilterIds] = useState<string[]>([]);
+  const [assigneeFilterIds, setAssigneeFilterIds] = useState<string[]>([]);
   const [selectedView, setView] = useState<TaskViewMode>();
   const { ref: taskPaneRef, view } = useResponsiveTaskView(selectedView);
   const visibleColumns = columns.map((column) => ({
     ...column,
     tasks: column.tasks.filter((task) =>
       taskMatchesFilters(task, {
-        ...(assigneeFilterId === undefined
-          ? {}
-          : { assigneeId: assigneeFilterId }),
-        ...(creatorFilterId === undefined
-          ? {}
-          : { creatorId: creatorFilterId }),
+        assigneeIds: assigneeFilterIds,
+        creatorIds: creatorFilterIds,
       }),
     ),
   }));
   const visibleTasks = visibleColumns.flatMap((column) => column.tasks);
   const filtersActive =
-    creatorFilterId !== undefined || assigneeFilterId !== undefined;
+    creatorFilterIds.length > 0 || assigneeFilterIds.length > 0;
   const taskItems = visibleTasks.map((task) => ({
     canManageAnyTask,
     roomName,
@@ -2717,12 +2760,12 @@ export function TaskPane({
     <div className="chan-pane" ref={taskPaneRef}>
       <TaskToolbar
         agents={agents}
-        assigneeId={assigneeFilterId}
-        creatorId={creatorFilterId}
+        assigneeIds={assigneeFilterIds}
+        creatorIds={creatorFilterIds}
         currentPrincipalId={currentPrincipalId}
-        onAssigneeChange={setAssigneeFilterId}
+        onAssigneeChange={setAssigneeFilterIds}
         onCreate={onCreate}
-        onCreatorChange={setCreatorFilterId}
+        onCreatorChange={setCreatorFilterIds}
         onViewChange={setView}
         view={view}
         writeEnabled={canWrite && caughtUp}
@@ -2751,15 +2794,8 @@ export function TaskPane({
             writeEnabled={canWrite && caughtUp}
             showRoomName={false}
             onChanged={onChanged}
-            onOpen={async ({ target }) => {
-              if (!canOpenThread || target.kind !== "task") return false;
-              const task = visibleTasks.find(
-                (candidate) => candidate.taskId === target.taskId,
-              );
-              if (task === undefined) return false;
-              await onOpenThread(task);
-              return true;
-            }}
+            openSurface="room-tasks"
+            onOpen={canOpenThread ? onOpenTask : async () => false}
           />
         )}
         {hasEarlierTasks ? (

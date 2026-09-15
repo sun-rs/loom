@@ -1,3 +1,4 @@
+import { writeLaunchReceipt } from "./workbench-launch-receipt.mjs";
 import { workbenchLaunchMode } from "./workbench-launch-mode.mjs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -30,15 +31,17 @@ const releaseLease = await acquireWorkbenchAssetLease(
   staticDirectory,
 );
 
+const launchMode = workbenchLaunchMode(process.env, workbenchHome);
 let running;
 try {
   running = await startRestartableLocalCoreWorkbench({
     environment: process.env,
-    mode: workbenchLaunchMode(process.env, workbenchHome),
+    mode: launchMode,
     staticDirectory,
     workbenchHome,
     workspaceCwd,
   });
+  await writeLaunchReceipt(join(workbenchHome, "state"), launchMode);
   await pruneWorkbenchAssetSnapshots(repositoryDirectory);
   process.stdout.write(
     `RAH_LOCAL_WORKBENCH ${JSON.stringify(running.descriptor)}\n`,

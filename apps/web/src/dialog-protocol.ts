@@ -82,7 +82,7 @@ export function useDialogProtocol(input: {
     });
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      returnFocusRef.current?.focus();
+      returnFocusRef.current?.focus({ preventScroll: true });
     };
   }, []);
 

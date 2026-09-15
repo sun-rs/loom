@@ -3,7 +3,10 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import type { Task } from "@rah-os/protocol";
-import { messageTaskMenuAction } from "../src/message-task-menu-action.ts";
+import {
+  messageTaskMenuAction,
+  messageTaskMenuTarget,
+} from "../src/message-task-menu-action.ts";
 
 const read = (path: string) =>
   readFileSync(new URL(`../src/${path}`, import.meta.url), "utf8");
@@ -41,13 +44,28 @@ function task(state: Task["state"]): Task {
 }
 
 test("message Task actions share the Human editable workflow", () => {
+  for (const state of [
+    "todo",
+    "claimed",
+    "in_progress",
+    "waiting_input",
+    "blocked",
+    "submitted",
+    "completed",
+    "cancelled",
+  ] as const) {
+    assert.equal(
+      messageTaskMenuTarget(task(state)),
+      state === "completed" ? "todo" : "done",
+    );
+  }
   assert.deepEqual(messageTaskMenuAction(task("submitted"), true), {
     kind: "complete",
     label: "标记为完成",
   });
   assert.deepEqual(messageTaskMenuAction(task("cancelled"), true), {
-    kind: "reopen",
-    label: "重新打开任务",
+    kind: "complete",
+    label: "标记为完成",
   });
   assert.deepEqual(messageTaskMenuAction(task("todo"), true), {
     kind: "complete",

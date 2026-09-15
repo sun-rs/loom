@@ -13,8 +13,9 @@
   overflow: visible;
   transition: opacity var(--rah-interaction-transition);
 }
-.msg:hover .msg-actions,
-.msg:focus-within .msg-actions {
+.msg[data-actions-open] .msg-actions,
+.msg:has(:focus-visible) .msg-actions,
+.msg:has(.msg-actions [aria-expanded="true"]) .msg-actions {
   opacity: 1;
   pointer-events: auto;
 }
@@ -30,7 +31,7 @@
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  color: var(--ink-40);
+  color: var(--ink-50);
   transition: none;
 }
 .msg-actions .msg-action-btn:hover,
@@ -236,7 +237,8 @@
 .rah-sidebar-section-actions {
   display: flex;
   align-items: center;
-  gap: 2px;
+  flex: none;
+  gap: var(--space-1);
 }
 /* 批次 3b 裁决 2：侧栏排序钮按上游 `.btn-flat-sm flex size-6 p-0` 建模
    （pad 0、图标 14）。作用域限定侧栏，任务页 `.task-filter-trigger` 通用规则不动。 */
@@ -276,10 +278,9 @@
   position: relative;
   touch-action: pan-y;
 }
-/* Raft sidebar select-none: long press opens a menu, never text selection.
-   Scope to navigation rows so search fields and chat text remain selectable. */
-.rah-room-sidebar [data-sidebar-key],
-.rah-room-sidebar .rah-sidebar-disclosure {
+/* Raft sidebar-root select-none covers rows, hints, gaps and blank padding.
+   Keep this navigation policy out of chat text and portaled form editors. */
+.rah-room-sidebar {
   -webkit-tap-highlight-color: transparent;
   -webkit-user-select: none;
   user-select: none;
@@ -596,15 +597,66 @@
     opacity: 0.5;
   }
 }
-@media (hover: none) {
-  .msg-actions {
+@media (hover: hover) and (pointer: fine) {
+  .msg:hover .msg-actions {
     opacity: 1;
     pointer-events: auto;
-    display: flex;
   }
 }
 
 /* Raft Zx/FD: mt-3 above each group, including wrapped drag containers. */
+.rah-sidebar-section-list {
+  display: flex;
+  flex-direction: column;
+}
 .rah-room-sidebar [data-sidebar-group] {
   margin-top: 12px;
+}
+.rah-room-sidebar [data-sidebar-group] .side-hint {
+  min-height: 28px;
+  padding-block: 4px;
+}
+.rah-room-sidebar [data-sidebar-group="pinned"] .side-hint {
+  min-height: 36px;
+  padding-block: 6px;
+  margin-bottom: 4px;
+  color: var(--ink-45);
+}
+/* Local iOS density: 32px rows plus 2px gap, based on same-device comparison. */
+@media (max-width: 767px) {
+  .rah-room-sidebar [data-sidebar-group] {
+    margin-top: 8px;
+  }
+  .rah-room-sidebar .channel-row,
+  .rah-room-sidebar .dm-row {
+    margin-bottom: 2px;
+    padding-block: 4px;
+  }
+}
+
+/* Mobile messages reserve all actions for the context menu. */
+@media (max-width: 767px) {
+  .msg,
+  .msg * {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .msg,
+  .msg:hover,
+  .msg:focus-within {
+    border-color: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+  .msg .msg-actions {
+    display: none !important;
+  }
+  .rah-message-context-menu hr,
+  .rah-saved-context-menu hr {
+    border-top: 1px solid rgb(0 0 0 / 12%);
+  }
+}
+.rah-message-context-backdrop {
+  touch-action: none;
 }

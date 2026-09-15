@@ -40,6 +40,13 @@ from the DOM; browser checks must scroll to them rather than assume every loaded
 Task has a mounted element. Pagination and refreshing previously visited pages
 remain independently required.
 
+2026-09-16: Native scrolling can update `scrollTop` before its event reaches
+the main thread. Layout correction now records the scroll offset associated
+with its anchors and rebases when the offset changed independently; a render
+in that interval must not undo user scrolling. Input cancellation also cancels
+pending anchor capture. This is an intentional correction to the source port,
+not a new Task scrolling owner. See [the repair evidence](../audits/2026-09-16-task-scroll-and-toolbar-insets.zh-CN.md).
+
 ## Evidence requirements
 
 The failing `task-virtual-window` gate first proves 500 loaded Tasks mount more

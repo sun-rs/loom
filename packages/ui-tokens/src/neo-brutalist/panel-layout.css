@@ -122,8 +122,8 @@
   /* Retained reference mobile Agent composition; not the desktop shell row. */
   .rah-panel-header[data-header-kind="agent"] {
     gap: 10px;
-    height: 76px;
-    padding: 10px 12px;
+    height: var(--head-h);
+    padding: 0 12px;
   }
 }
 
@@ -131,4 +131,35 @@
 .rah-agent-detail-head {
   container-type: inline-size;
   container-name: agent-header;
+}
+
+/* RAH mobile native-reference geometry, inferred from the user-supplied iPhone
+   screenshots. Safe-area padding belongs to the shell, outside this track. */
+@media (max-width: 767px) {
+  :is(.rah-product-shell, .rah-dialog-layer) {
+    --head-h: 60px;
+    --rah-mobile-header-control: 32px;
+    --rah-mobile-root-icon: 36px;
+  }
+  .rah-product-shell .rah-panel-header {
+    height: var(--head-h);
+    min-height: var(--head-h);
+    padding: 0 12px;
+  }
+  .rah-product-shell .rah-mobile-root-header {
+    background: var(--yellow);
+  }
+  .rah-mobile-root-header .rah-panel-header-icon {
+    width: var(--rah-mobile-root-icon);
+    height: var(--rah-mobile-root-icon);
+  }
+  .rah-conversation-head
+    :is(
+      .rah-panel-header-icon,
+      .rah-agent-avatar.is-header,
+      .rah-direct-header-fallback
+    ) {
+    width: var(--rah-mobile-root-icon);
+    height: var(--rah-mobile-root-icon);
+  }
 }

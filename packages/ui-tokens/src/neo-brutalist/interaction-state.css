@@ -188,6 +188,7 @@
 }
 
 .rah-product-shell .rah-interaction-segment {
+  -webkit-tap-highlight-color: transparent;
   transition: none;
 }
 
@@ -218,6 +219,7 @@
 }
 
 .rah-product-shell .task-filter-trigger {
+  -webkit-tap-highlight-color: transparent;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -235,4 +237,29 @@
    owners for every rail, conversation row and tab instance. */
 .rah-product-shell :is(.rail-btn, .channel-row) {
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* On a mobile yellow title track, segments have two states only. Pointer hover
+   (including sticky touch hover) must not introduce a third selection color. */
+@media (max-width: 767px) {
+  .rah-product-shell
+    [data-segment-surface="plain"]
+    .rah-interaction-segment[aria-checked="false"] {
+    background: white;
+  }
+  .rah-product-shell
+    [data-segment-surface="plain"]
+    .rah-interaction-segment[aria-checked="true"] {
+    background: var(--yellow);
+  }
+  .rah-product-shell
+    [data-segment-surface="signal"]
+    .rah-interaction-segment[aria-checked="false"] {
+    background: white;
+  }
+  .rah-product-shell
+    [data-segment-surface="signal"]
+    .rah-interaction-segment[aria-checked="true"] {
+    background: color-mix(in srgb, var(--yellow) 30%, white);
+  }
 }

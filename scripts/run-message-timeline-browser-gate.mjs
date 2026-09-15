@@ -151,10 +151,108 @@ try {
     anchorAfter.domRows <= 80,
     `prepended history must keep the DOM bounded, got ${String(anchorAfter.domRows)} rows`,
   );
+  // Reading gestures must release prepend correction, even during measurement.
+  const scrollArea = page.locator(".messages");
+  await scrollArea.hover();
+  const restoredTop = await scrollArea.evaluate((e) => e.scrollTop);
+  await page.mouse.wheel(0, 300);
+  await page.waitForTimeout(450);
+  assert.ok(
+    (await scrollArea.evaluate((e) => e.scrollTop)) > restoredTop + 100,
+    "history prepend must not pull a user's downward scroll back to its anchor",
+  );
+  await page.mouse.wheel(0, -300);
+  await page.waitForTimeout(1500);
+  assert.ok(
+    Math.abs((await scrollArea.evaluate((e) => e.scrollTop)) - restoredTop) <
+      80,
+    "history remains freely scrollable in both directions after settling",
+  );
   assert.deepEqual(
     { browserErrors, failedResponses },
     { browserErrors: [], failedResponses: [] },
   );
+  const touchPage = await browser.newPage({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  const touchSession = await touchPage.context().newCDPSession(touchPage);
+  for (const kind of ["channel", "direct", "thread"]) {
+    await touchPage.goto(`${origin}/test/message-timeline.html?kind=${kind}`, {
+      waitUntil: "networkidle",
+    });
+    const scroll = touchPage.locator(".messages");
+    await scroll.evaluate((e) => {
+      e.scrollTop = 0;
+    });
+    await touchPage.waitForTimeout(150);
+    const touchAnchor = await firstVisibleMessage(touchPage);
+    await touchPage.locator(".rah-message-history-trigger").click();
+    if (kind === "thread")
+      await touchPage.waitForFunction(
+        () => document.querySelectorAll(".messages .msg").length === 201,
+        undefined,
+        { timeout: 5000 },
+      );
+    else
+      await touchPage.waitForFunction(
+        ({ messageId, offset }) => {
+          const scroller = document.querySelector(".messages");
+          const row = scroller?.querySelector(
+            `[data-message-id="${CSS.escape(messageId)}"]`,
+          );
+          return (
+            row &&
+            Math.abs(
+              row.getBoundingClientRect().top -
+                scroller.getBoundingClientRect().top -
+                offset,
+            ) < 2
+          );
+        },
+        touchAnchor,
+        { timeout: 5000 },
+      );
+    const beforeTouch = await scroll.evaluate((e) => e.scrollTop);
+    const readingAnchor = await firstVisibleMessage(touchPage);
+    const area = await scroll.boundingBox();
+    const x = area.x + area.width / 2,
+      y = area.y + area.height / 2;
+    const gesture = async (direction) => {
+      await touchSession.send("Input.dispatchTouchEvent", {
+        type: "touchStart",
+        touchPoints: [{ x, y }],
+      });
+      for (let step = 1; step <= 8; step++) {
+        await touchSession.send("Input.dispatchTouchEvent", {
+          type: "touchMove",
+          touchPoints: [{ x, y: y + direction * step * 20 }],
+        });
+        await touchPage.waitForTimeout(35);
+      }
+      await touchSession.send("Input.dispatchTouchEvent", {
+        type: "touchEnd",
+        touchPoints: [],
+      });
+      await touchPage.waitForTimeout(500);
+    };
+    await gesture(-1);
+    const down = await scroll.evaluate((e) => e.scrollTop);
+    const afterDown = await messagePosition(touchPage, readingAnchor.messageId);
+    assert.ok(
+      afterDown === null || afterDown.offset < readingAnchor.offset - 70,
+      `${kind}: visible content must move down after prepend (${beforeTouch} -> ${down})`,
+    );
+    const reverseAnchor = await firstVisibleMessage(touchPage);
+    await gesture(1);
+    const afterUp = await messagePosition(touchPage, reverseAnchor.messageId);
+    assert.ok(
+      afterUp === null || afterUp.offset > reverseAnchor.offset + 70,
+      `${kind}: visible content must also move up`,
+    );
+  }
+  await touchPage.close();
   await page.goto(`${origin}/test/message-markdown-stability.html`, {
     waitUntil: "networkidle",
   });
