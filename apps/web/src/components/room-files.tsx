@@ -29,7 +29,10 @@ import {
 } from "@rah-os/protocol";
 import { FileUploadStore } from "../file-uploads.ts";
 import { useDialogProtocol } from "../dialog-protocol.ts";
+import { useReconciledQuery } from "../use-reconciled-query.ts";
 import { ComposerAttachmentPickers } from "@rah-os/ui-web/neo-brutalist/composer-attachment-pickers";
+import { ComposerComputerFiles } from "./composer-computer-files.tsx";
+import { useMobileLayout } from "../use-mobile-layout.ts";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { FileGlyph } from "./file-glyph.tsx";
 import { AttachmentTextPreview } from "./file-preview-renderers.tsx";
@@ -72,23 +75,45 @@ const emptyUploads = Object.freeze([]);
 const noopSubscribe = () => () => {};
 export function ComposerFiles({
   roomId,
+  conversationLabel,
   draftKey,
   disabled,
+  onReference,
+  uploadsDisabled = disabled,
 }: {
   roomId: string | undefined;
+  conversationLabel: string;
   draftKey?: string | undefined;
   disabled: boolean;
+  onReference: (paths: string[]) => void;
+  uploadsDisabled?: boolean;
 }) {
   const uploads = useRoomUploads(roomId, draftKey);
   const { rows, store, enabled } = uploads;
   const [error, setError] = useState<string>();
+  const client = useFilesClient();
+  const mobile = useMobileLayout();
+  const [browserOpen, setBrowserOpen] = useState(false);
   return (
     <div className="rah-composer-files">
       <ComposerAttachmentPickers
-        disabled={disabled || !enabled || !roomId}
+        disabled={disabled || !roomId}
+        uploadsDisabled={uploadsDisabled || !enabled || !roomId}
+        mobile={mobile}
+        onComputer={() => setBrowserOpen(true)}
+        browser={
+          browserOpen && client ? (
+            <ComposerComputerFiles
+              client={client}
+              conversationLabel={conversationLabel}
+              onClose={() => setBrowserOpen(false)}
+              onSelect={onReference}
+            />
+          ) : null
+        }
         onFiles={(files) => {
           setError(undefined);
-          if (!disabled && enabled && roomId && store)
+          if (!uploadsDisabled && enabled && roomId && store)
             for (const file of files)
               void store
                 .add(uploads.draftKey ?? roomId, roomId, file)

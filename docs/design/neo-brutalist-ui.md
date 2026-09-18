@@ -119,6 +119,11 @@ add-member checkboxes keep the default check-only marker. `as="div"` supports
 member rows containing independent controls without nesting buttons.
 The API excludes inline `style`; callers retain geometry classes and actions.
 
+The Computer file-reference picker also adopts `property-option`: hover and
+selected files use soft yellow, with a right-hand checkmark for every selected
+file. This user-requested file-selection adaptation shares the property-menu
+profile; it is not an additional palette or a claim of an upstream file picker.
+
 State rules are shared:
 
 - `hover` means pointer presence; `current` identifies the keyboard/pointer

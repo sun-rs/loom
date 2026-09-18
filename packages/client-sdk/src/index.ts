@@ -302,7 +302,12 @@ import {
   agentWorkspaceOperations,
   type AgentWorkspaceOperationMap,
 } from "./agent-workspace-operations.ts";
-export type RahClientOperationMap = AgentWorkspaceOperationMap &
+import {
+  composerOperations,
+  type ComposerOperationMap,
+} from "./composer-operations.ts";
+export type RahClientOperationMap = ComposerOperationMap &
+  AgentWorkspaceOperationMap &
   DiscoveryOperationMap &
   FileOperationMap & {
     "agent.memory.config.get": {
@@ -645,6 +650,7 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
   ...discoveryOperations,
   ...fileOperations,
   ...agentWorkspaceOperations,
+  ...composerOperations,
   "agent.activity.list": {
     authenticated: true,
     input: ClientAgentActivityListRequestSchema,

@@ -859,7 +859,8 @@
   color: var(--ink-40);
   font-style: normal;
 }
-.rah-runtime-model-refresh {
+.rah-runtime-model-refresh,
+.rah-inline-icon-action {
   width: 24px;
   height: 24px;
   display: inline-flex;
@@ -871,14 +872,17 @@
   color: #000;
   cursor: pointer;
 }
-.rah-runtime-model-refresh svg {
+.rah-runtime-model-refresh svg,
+.rah-inline-icon-action svg {
   width: 12px;
   height: 12px;
 }
-.rah-runtime-model-refresh:hover:not(:disabled) {
+.rah-runtime-model-refresh:hover:not(:disabled),
+.rah-inline-icon-action:hover:not(:disabled) {
   color: var(--black);
 }
-.rah-runtime-model-refresh:disabled {
+.rah-runtime-model-refresh:disabled,
+.rah-inline-icon-action:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

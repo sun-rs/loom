@@ -2,7 +2,6 @@ import { useMobileLayout } from "../use-mobile-layout.ts";
 import { ThreadPanelResizer } from "./thread-panel-resizer.tsx";
 import { AgentEnvironmentSummary } from "./agent-environment-summary.tsx";
 import { AgentHeaderActions } from "./agent-header-actions.tsx";
-import { browserOpaqueId } from "../browser-opaque-id.ts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   CSSProperties,
@@ -14,7 +13,6 @@ import type {
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
   ClientAgentGetResponse,
-  ClientAgentMemoryGetResponse,
   LocalRuntimeInventoryEntry,
   MembershipRole,
   NavigationTarget,
@@ -57,7 +55,6 @@ import { mergeTrajectoryWindow } from "../agent-trajectory-window.ts";
 import { renderAgentActivityDiagnostics } from "../agent-activity-diagnostics.ts";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { AgentStatusDot } from "./agent-status-dot.tsx";
-import { AgentMemoryConfigDialog } from "./agent-memory-config-dialog.tsx";
 import { AgentExecutionResetDialog } from "./agent-execution-reset-dialog.tsx";
 import { AgentIssueReportDialog } from "./agent-issue-report-dialog.tsx";
 import {
@@ -890,13 +887,6 @@ export function AgentDirectoryPane({
                 key={selectedAgent.agentDefinitionId}
                 agentDefinitionId={selectedAgent.agentDefinitionId}
                 client={client}
-                memoryControls={
-                  <AgentMemoryPane
-                    agentDefinitionId={selectedAgent.agentDefinitionId}
-                    agentName={selectedAgent.displayName}
-                    client={client}
-                  />
-                }
               />
             ) : null}
           </section>
@@ -904,237 +894,6 @@ export function AgentDirectoryPane({
       </section>
     </main>
   );
-}
-
-function AgentMemoryPane({
-  agentDefinitionId,
-  agentName,
-  client,
-}: {
-  agentDefinitionId: string;
-  agentName: string;
-  client: RahClient;
-}) {
-  const [memory, setMemory] = useState<ClientAgentMemoryGetResponse>();
-  const [error, setError] = useState<string>();
-  const [loading, setLoading] = useState(true);
-  const [reload, setReload] = useState(0);
-  const [selectedPath, setSelectedPath] = useState<string>();
-  const [content, setContent] = useState<string>();
-  const [contentError, setContentError] = useState<string>();
-  const [contentLoading, setContentLoading] = useState(false);
-  const [resetConfirming, setResetConfirming] = useState(false);
-  const [resetting, setResetting] = useState(false);
-  const [configOpen, setConfigOpen] = useState(false);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    setLoading(true);
-    setError(undefined);
-    void client
-      .request(
-        "agent.memory.get",
-        { agentDefinitionId },
-        { signal: controller.signal },
-      )
-      .then((response) => {
-        if (controller.signal.aborted) return;
-        setMemory(response);
-        const paths = response.memory.files.map((file) => file.relativePath);
-        setSelectedPath((current) =>
-          current !== undefined && paths.includes(current) ? current : paths[0],
-        );
-      })
-      .catch((caught: unknown) => {
-        if (!controller.signal.aborted) setError(errorMessage(caught));
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
-      });
-    return () => controller.abort();
-  }, [agentDefinitionId, client, reload]);
-
-  useEffect(() => {
-    if (selectedPath === undefined) {
-      setContent(undefined);
-      setContentError(undefined);
-      return;
-    }
-    const controller = new AbortController();
-    setContent(undefined);
-    setContentError(undefined);
-    setContentLoading(true);
-    void client
-      .request(
-        "agent.memory.read",
-        { agentDefinitionId, relativePath: selectedPath },
-        { signal: controller.signal },
-      )
-      .then((response) => {
-        if (!controller.signal.aborted) setContent(response.content);
-      })
-      .catch((caught: unknown) => {
-        if (!controller.signal.aborted) setContentError(errorMessage(caught));
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setContentLoading(false);
-      });
-    return () => controller.abort();
-  }, [agentDefinitionId, client, selectedPath, reload]);
-
-  async function resetMemory(): Promise<void> {
-    setResetting(true);
-    setError(undefined);
-    try {
-      await client.request("agent.memory.reset", {
-        agentDefinitionId,
-        confirmation: "RESET_AGENT_MEMORY",
-        idempotencyKey: browserMemoryMutationId(),
-      });
-      setResetConfirming(false);
-      setSelectedPath(undefined);
-      setContent(undefined);
-      setReload((current) => current + 1);
-    } catch (caught) {
-      setError(errorMessage(caught));
-    } finally {
-      setResetting(false);
-    }
-  }
-
-  return (
-    <section className="rah-agent-memory-pane rah-scroll-main">
-      <header>
-        <div>
-          <Icon name="folder" />
-          <span>
-            <b>Agent 私有记忆</b>
-            <small>
-              {memory === undefined
-                ? "Computer-owned MEMORY.md + notes/"
-                : `Computer ${memory.computerHostId}`}
-            </small>
-          </span>
-        </div>
-        {memory?.memory.state === "ready" ? (
-          <span className="rah-agent-memory-state">
-            {memory.memory.indexOverThreshold ? "需要整理" : "正常"}
-          </span>
-        ) : null}
-      </header>
-      {error === undefined ? null : (
-        <div className="rah-inline-error">{error}</div>
-      )}
-      {loading && memory === undefined ? (
-        <p className="rah-agent-memory-status">正在读取 Agent Memory…</p>
-      ) : memory?.memory.state === "absent" ? (
-        <div className="rah-agent-memory-empty">
-          <Icon name="folder" />
-          <h3>尚未建立记忆</h3>
-          <p>{agentName} 首次真实运行时会建立 MEMORY.md 与 notes/。</p>
-        </div>
-      ) : memory?.memory.state === "ready" ? (
-        <div className="rah-agent-memory-browser">
-          <nav aria-label="Agent Memory 文件">
-            {memory.memory.files.map((file) => (
-              <button
-                aria-current={selectedPath === file.relativePath}
-                key={file.relativePath}
-                onClick={() => setSelectedPath(file.relativePath)}
-                type="button"
-              >
-                <Icon
-                  name={file.relativePath === "MEMORY.md" ? "briefcase" : "doc"}
-                />
-                <span>
-                  <b>{file.relativePath}</b>
-                  <small>{formatMemoryBytes(file.bytes)}</small>
-                </span>
-              </button>
-            ))}
-          </nav>
-          <article>
-            <header>
-              <b>{selectedPath ?? "选择文件"}</b>
-              <small>只读 · UTF-8 · 最大 1 MiB</small>
-            </header>
-            {contentLoading ? (
-              <p>正在读取…</p>
-            ) : contentError !== undefined ? (
-              <div className="rah-inline-error">{contentError}</div>
-            ) : (
-              <pre>{content ?? ""}</pre>
-            )}
-          </article>
-        </div>
-      ) : null}
-      <footer className="rah-agent-memory-danger">
-        {resetConfirming ? null : (
-          <button
-            className="btn"
-            onClick={() => setConfigOpen(true)}
-            type="button"
-          >
-            大小提醒设置
-          </button>
-        )}
-        {resetConfirming ? (
-          <div role="alert">
-            <span>
-              <b>重置 {agentName} 的长期记忆？</b>
-              <small>
-                Memory 与 Provider continuity 将在全局 Agent fence
-                内隔离；下一次运行重新初始化。
-              </small>
-            </span>
-            <button
-              className="btn"
-              disabled={resetting}
-              onClick={() => setResetConfirming(false)}
-              type="button"
-            >
-              取消
-            </button>
-            <button
-              className="btn danger"
-              disabled={resetting}
-              onClick={() => void resetMemory()}
-              type="button"
-            >
-              {resetting ? "正在重置…" : "确认重置"}
-            </button>
-          </div>
-        ) : (
-          <button
-            className="btn danger"
-            disabled={loading || memory === undefined}
-            onClick={() => setResetConfirming(true)}
-            type="button"
-          >
-            重置 Agent Memory
-          </button>
-        )}
-      </footer>
-      {configOpen ? (
-        <AgentMemoryConfigDialog
-          agentDefinitionId={agentDefinitionId}
-          client={client}
-          onClose={() => setConfigOpen(false)}
-          onSaved={() => setReload((value) => value + 1)}
-        />
-      ) : null}
-    </section>
-  );
-}
-
-function browserMemoryMutationId(): string {
-  return browserOpaqueId();
-}
-
-function formatMemoryBytes(bytes: number): string {
-  if (bytes >= 1_048_576) return `${(bytes / 1_048_576).toFixed(1)} MiB`;
-  if (bytes >= 1_024) return `${(bytes / 1_024).toFixed(1)} KiB`;
-  return `${String(bytes)} B`;
 }
 
 function AgentChatPane({

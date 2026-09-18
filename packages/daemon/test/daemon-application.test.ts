@@ -46,6 +46,20 @@ test("daemon config is strict and file secrets must be owner-private", async () 
       DaemonConfigSchema.parse({ ...config, unexpected: true }),
     );
     assert.deepEqual(DaemonConfigSchema.parse(config), config);
+    assert.deepEqual(
+      DaemonConfigSchema.parse({ ...config, fileReferenceRoots: [directory] })
+        .fileReferenceRoots,
+      [directory],
+    );
+    assert.deepEqual(
+      DaemonConfigSchema.parse({ ...config, fileReferenceRoots: ["/"] })
+        .fileReferenceRoots,
+      ["/"],
+    );
+    for (const roots of [["relative"], []])
+      assert.throws(() =>
+        DaemonConfigSchema.parse({ ...config, fileReferenceRoots: roots }),
+      );
     assert.throws(() =>
       DaemonConfigSchema.parse({ ...config, schemaVersion: 1 }),
     );

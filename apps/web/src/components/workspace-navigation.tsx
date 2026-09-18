@@ -603,6 +603,7 @@ export function RoomSidebar({
                               label={[custom.emoji, custom.name]
                                 .filter(Boolean)
                                 .join(" ")}
+                              sectionId={id}
                               count={rows.length}
                             >
                               {rows.length ? (
@@ -647,6 +648,7 @@ export function RoomSidebar({
                         >
                           <SidebarSection
                             label={label}
+                            sectionId={section}
                             count={rows.length}
                             unread={rows.some(
                               (row) =>

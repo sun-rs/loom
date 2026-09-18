@@ -76,7 +76,8 @@ function TaskThreadModal({
         tabIndex={-1}
       />
       <section
-        className={`rah-task-detail-dialog${compact ? " rah-task-approval-compact" : ""}`}
+        className={`rah-dialog-frame rah-task-detail-dialog${compact ? " rah-task-approval-compact" : ""}`}
+        data-mobile-presentation={compact ? "compact" : undefined}
         role="dialog"
         aria-modal="true"
         aria-label={task ? `任务 #${task.taskNumber} 详情` : "任务详情"}
@@ -84,7 +85,7 @@ function TaskThreadModal({
         tabIndex={-1}
         data-testid="task-thread-modal"
       >
-        <header className="rah-task-detail-bar">
+        <header className="rah-dialog-header rah-task-detail-bar">
           <PanelHeaderAction
             className={compact ? "rah-hidden" : "rah-mobile-only"}
             aria-label="返回任务页面"

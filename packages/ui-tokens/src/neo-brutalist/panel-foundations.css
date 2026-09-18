@@ -61,13 +61,66 @@
   width: 12px;
 }
 
+/* Raft TaskModalHead: shared by task approval and Computer file reference. */
+.rah-dialog-frame {
+  --rah-dialog-preferred-height: min(86vh, 900px);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(960px, calc(100vw - 2rem));
+  height: var(--rah-dialog-preferred-height);
+  max-height: calc(100dvh - 2rem);
+  overflow: hidden;
+  border: var(--bd-heavy);
+  background: var(--bg);
+  box-shadow: var(--shadow-l);
+  outline: none;
+}
+.rah-dialog-header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: var(--bd-heavy);
+}
+.rah-dialog-header > div {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+}
+.rah-dialog-header span {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.6;
+}
+.rah-dialog-header :is(b, h2) {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
 @media (max-width: 767px) {
-  .rah-product-shell .rah-panel-header-action[data-action-size="header"] {
+  .rah-dialog-frame[data-mobile-presentation="compact"] {
+    width: calc(100vw - 32px);
+    height: auto;
+    max-height: calc(100dvh - 64px);
+    border: var(--bd-heavy);
+    box-shadow: var(--shadow-l);
+  }
+  .rah-dialog-frame[data-mobile-presentation="compact"][data-fixed-height="true"] {
+    height: var(--rah-dialog-preferred-height);
+  }
+  :is(.rah-product-shell, .rah-dialog-header)
+    .rah-panel-header-action[data-action-size="header"] {
     width: var(--rah-mobile-header-control);
     height: var(--rah-mobile-header-control);
     min-height: var(--rah-mobile-header-control);
   }
-  .rah-product-shell .rah-panel-header-action[data-action-size="header"] > svg {
+  :is(.rah-product-shell, .rah-dialog-header)
+    .rah-panel-header-action[data-action-size="header"]
+    > svg {
     width: 18px;
     height: 18px;
   }

@@ -1,0 +1,118 @@
+.rah-computer-file-row svg,
+.rah-computer-file-host > svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.rah-dialog-layer.rah-computer-file-layer {
+  align-items: center;
+  padding: 16px;
+}
+.rah-computer-file-dialog {
+  z-index: 1;
+  color: var(--ink);
+}
+.rah-computer-file-controls,
+.rah-computer-file-path,
+.rah-computer-file-dialog footer {
+  padding: 12px;
+  flex: none;
+}
+.rah-computer-file-dialog button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.rah-computer-file-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.rah-computer-file-dialog select {
+  min-width: 0;
+  max-width: 100%;
+  font: inherit;
+  font-size: 16px;
+  background: var(--bg);
+  border: 1px solid var(--ink-20);
+}
+.rah-computer-file-host {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.rah-computer-file-controls label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+}
+.rah-computer-file-path {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--ink-10);
+  padding-top: 0;
+}
+.rah-computer-file-path button {
+  width: 28px;
+  height: 28px;
+  flex: none;
+}
+.rah-computer-file-path code {
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rah-computer-file-list {
+  overflow: auto;
+  overscroll-behavior: contain;
+  flex: 1;
+  min-height: 0;
+  padding: 4px 12px;
+}
+.rah-computer-file-list p {
+  font-size: 14px;
+}
+.rah-computer-file-row {
+  display: flex;
+  min-height: 36px;
+}
+.rah-computer-file-row button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  border: 0;
+  color: var(--ink);
+  font: inherit;
+  padding: 8px;
+}
+.rah-computer-file-row button:first-child {
+  flex: 1;
+  text-align: left;
+}
+.rah-computer-file-row span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rah-computer-file-row button:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
+.rah-computer-file-dialog footer {
+  border-top: var(--bd);
+  display: grid;
+  gap: 12px;
+}
+.rah-computer-file-confirm {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}

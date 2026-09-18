@@ -7,6 +7,8 @@ import type { Principal, Workspace } from "@rah-os/protocol";
 
 import {
   readAgentModelName,
+  readHideEmptySidebarSections,
+  writeHideEmptySidebarSections,
   writeAgentModelName,
   readLiveAgentActivity,
   readMessageSize,
@@ -247,6 +249,10 @@ export function LanguageRegionSettingsContent() {
 }
 
 export function AppearanceSettingsContent() {
+  const [hideEmpty, setHideEmpty] = useState(() =>
+    readHideEmptySidebarSections(window.localStorage),
+  );
+  const [hideEmptyStorageError, setHideEmptyStorageError] = useState(false);
   const [agentModel, setAgentModel] = useState(() =>
     readAgentModelName(window.localStorage),
   );
@@ -262,6 +268,34 @@ export function AppearanceSettingsContent() {
   return (
     <SettingsPage icon="type" title="外观">
       <SettingsSectionLabel icon="type">外观</SettingsSectionLabel>
+      <article className="rah-settings-card rah-settings-toggle-card">
+        <div>
+          <strong id="rah-hide-empty-label">隐藏空的侧栏分区</strong>
+          <p>当侧栏分区没有内容时，整块隐藏不显示。</p>
+          <p className="rah-settings-saved">
+            {hideEmptyStorageError
+              ? "仅本次生效，无法保存到此设备。"
+              : "已保存到此设备。"}
+          </p>
+        </div>
+        <label className="rah-settings-switch">
+          <input
+            type="checkbox"
+            aria-labelledby="rah-hide-empty-label"
+            checked={hideEmpty}
+            onChange={(event) => {
+              setHideEmpty(event.target.checked);
+              setHideEmptyStorageError(
+                !writeHideEmptySidebarSections(
+                  window.localStorage,
+                  event.target.checked,
+                ),
+              );
+            }}
+          />
+          <span aria-hidden="true" />
+        </label>
+      </article>
       <article className="rah-settings-card rah-settings-form-card">
         <div>
           <strong>消息字号</strong>

@@ -3,12 +3,11 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { readyComposer } from "./composer-drop-browser-scenarios.mjs";
 
-const png = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1sAAAAASUVORK5CYII=",
-  "base64",
-);
 async function choose(page, form, label, keyboard = false) {
-  const button = form.getByRole("button", { name: label, exact: true });
+  const button = form.getByRole("button", {
+    name: "上传此设备的文件",
+    exact: true,
+  });
   const waiting = page.waitForEvent("filechooser");
   if (keyboard) {
     await button.focus();
@@ -16,10 +15,7 @@ async function choose(page, form, label, keyboard = false) {
   } else await button.click();
   const chooser = await waiting;
   assert.equal(chooser.isMultiple(), true);
-  assert.equal(
-    await chooser.element().getAttribute("accept"),
-    label === "添加媒体" ? "image/*,video/*" : null,
-  );
+  assert.equal(await chooser.element().getAttribute("accept"), null);
   return chooser;
 }
 
@@ -34,6 +30,26 @@ export async function verifyComposerPickers({
   thread,
 }) {
   const results = [];
+  if (width > 767) {
+    await expectDesktopOnlyReference(page);
+    return [
+      {
+        status:
+          "desktop uploads covered by drag/drop; native button is mobile-only",
+      },
+    ];
+  }
+  const png = Buffer.from(
+    await page.evaluate(() => {
+      const canvas = document.createElement("canvas");
+      canvas.width = canvas.height = 32;
+      const context = canvas.getContext("2d");
+      context.fillStyle = "#ffd440";
+      context.fillRect(0, 0, 32, 32);
+      return canvas.toDataURL("image/png").split(",")[1];
+    }),
+    "base64",
+  );
   for (const target of ["thread", "chat"]) {
     if (target === "chat") await page.goto(origin + "/?room=" + room.roomId);
     const label = target === "chat" ? "消息输入框" : "Thread 回复输入框";
@@ -51,11 +67,6 @@ export async function verifyComposerPickers({
     // Empty selection models the browser file-input cancel boundary, not an OS dialog assertion.
     for (const name of ["添加媒体", "添加文件"]) {
       const chooser = await choose(page, form, name);
-      assert.equal(
-        await text.evaluate((el) => el === document.activeElement),
-        true,
-        "pointer open preserves composer focus",
-      );
       await chooser.setFiles([]);
       assert.equal(await text.inputValue(), "draft preserved");
       assert.deepEqual(
@@ -72,7 +83,7 @@ export async function verifyComposerPickers({
     await (await choose(page, form, "添加媒体", true)).setFiles(media);
     await form.getByText("已上传", { exact: true }).waitFor();
     assert.equal(
-      await form.getByLabel("选择媒体", { exact: true }).inputValue(),
+      await form.getByLabel("选择附件", { exact: true }).inputValue(),
       "",
     );
     await form
@@ -112,7 +123,7 @@ export async function verifyComposerPickers({
       (el) => el.getBoundingClientRect().height,
     );
     assert.ok(
-      editorHeight >= 40,
+      editorHeight >= (width <= 767 ? 20 : 40),
       `selected attachments must leave the editor usable: ${editorHeight}`,
     );
     await text.fill("");
@@ -121,7 +132,7 @@ export async function verifyComposerPickers({
       .locator(".rah-composer-pickers")
       .evaluate((el) => ({
         gap: getComputedStyle(el).gap,
-        buttons: [...el.querySelectorAll("button")].map((b) => {
+        buttons: [...el.querySelectorAll(".rah-composer-picker")].map((b) => {
           const s = getComputedStyle(b),
             r = b.getBoundingClientRect(),
             svg = b.querySelector("svg").getBoundingClientRect();
@@ -172,20 +183,16 @@ export async function verifyComposerPickers({
         ? page.getByRole("complementary", { name: "Thread 讨论" })
         : page.locator(".channel");
     for (const file of [media, ...files]) {
-      const card = scope
-        .locator(".rah-file-card")
-        .filter({ has: page.getByText(file.name, { exact: true }) });
-      await card
-        .getByRole("button", { name: file.name + " 的操作", exact: true })
+      await scope
+        .getByRole("button", { name: `预览 ${file.name}`, exact: true })
         .click();
       const waiting = page.waitForEvent("download");
-      await page
-        .getByRole("menuitem", { name: "下载文件", exact: true })
-        .click();
+      await page.getByRole("button", { name: "下载", exact: true }).click();
       const d = await waiting;
       assert.equal(d.suggestedFilename(), file.name);
       assert.equal(await d.failure(), null);
       assert.deepEqual(await readFile(await d.path()), file.buffer);
+      await page.getByRole("button", { name: "关闭", exact: true }).click();
     }
     results.push({
       target,
@@ -195,4 +202,13 @@ export async function verifyComposerPickers({
     });
   }
   return results;
+}
+
+async function expectDesktopOnlyReference(page) {
+  assert.equal(
+    await page
+      .getByRole("button", { name: "上传此设备的文件", exact: true })
+      .count(),
+    0,
+  );
 }

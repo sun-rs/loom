@@ -9,25 +9,33 @@ import {
 import type { RahClient, RahClientOperationMap } from "@rah-os/client-sdk";
 import type { SidebarPreferences } from "@rah-os/protocol";
 import { socialRequestId } from "../message-social-store.ts";
+import { useSidebarDisclosure } from "../use-sidebar-disclosure.ts";
 type State = RahClientOperationMap["sidebar.get"]["output"];
 const Context = createContext<{
   data: State | undefined;
   pending: boolean;
   error: string | undefined;
   patch: (p: Partial<Omit<SidebarPreferences, "version">>) => Promise<boolean>;
+  disclosure: Record<string, boolean>;
+  setDisclosure: (section: string, open: boolean) => void;
 } | null>(null);
 export const useSidebarPreferences = () => useContext(Context);
 export function SidebarPreferencesProvider({
   client,
   workspaceId,
   enabled,
+  disclosureScope,
+  hostInstanceId,
   children,
 }: {
   client: RahClient;
   workspaceId: string | undefined;
   enabled: boolean;
+  disclosureScope: string;
+  hostInstanceId: string | undefined;
   children: ReactNode;
 }) {
+  const disclosure = useSidebarDisclosure(disclosureScope, hostInstanceId);
   const [data, setData] = useState<State>();
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
@@ -120,7 +128,7 @@ export function SidebarPreferencesProvider({
     return false;
   }
   return (
-    <Context.Provider value={{ data, pending, error, patch }}>
+    <Context.Provider value={{ data, pending, error, patch, ...disclosure }}>
       {children}
     </Context.Provider>
   );

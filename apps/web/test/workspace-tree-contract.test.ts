@@ -25,14 +25,14 @@ test("selected file and compact pane use the frozen Raft contract", () => {
   assert.match(css, /rah-workspace-resizer/);
 });
 
-test("workspace roots keep server-selected paths separate from relative file requests", () => {
+test("Agent workspace never offers a runtime-project or memory-management surface", () => {
   const source = readFileSync(
     new URL("../src/components/agent-workspace-browser.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(source, /"agent\.workspace\.roots"/);
+  assert.doesNotMatch(source, /"agent\.workspace\.roots"/);
   assert.match(source, /"agent\.workspace\.list"/);
   assert.match(source, /"agent\.workspace\.read"/);
-  assert.match(source, /rootId/);
-  assert.match(source, /来自 daemon 冻结的 workspace cwd/);
+  assert.match(source, /const rootId = "agent-workspace"/);
+  assert.doesNotMatch(source, /<select|memoryControls|<footer/);
 });

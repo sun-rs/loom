@@ -10,6 +10,8 @@ import { createDaemonAgentSkillsReader } from "./daemon-agent-skills.ts";
 import { createHash } from "node:crypto";
 import { lstat, mkdir } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
+import { homedir, hostname } from "node:os";
+import { ComputerFileBrowser } from "@rah-os/agent-host";
 
 import {
   AgentMemoryCoordinator,
@@ -82,12 +84,6 @@ export function createDaemonAgentMemoryCoordinator(input: {
     ),
   });
   return new AgentMemoryCoordinator({
-    ...(input.executionWorkspaces
-      ? {
-          resolveProjectDirectory: (owner: string) =>
-            input.executionWorkspaces!.projectDirectory(owner),
-        }
-      : {}),
     acquireResetFence: createAgentMemoryResetFenceAcquirer(
       createKernelAgentHostControlPort(input.kernel, input.host),
     ),
@@ -96,10 +92,6 @@ export function createDaemonAgentMemoryCoordinator(input: {
         ownerParticipantId,
         operationId,
       ),
-    projectDirectory:
-      input.config.schemaVersion === 4
-        ? input.config.workspace.cwd
-        : input.config.runtime.cwd,
     rootDirectory: join(
       input.config.stateDirectory,
       "supervisors",
@@ -563,6 +555,12 @@ export function createDaemonHumanClientService(input: {
       path: join(input.config.stateDirectory, "computer-profiles.json"),
     });
   return new HumanHttpApplicationService({
+    computerFiles: new ComputerFileBrowser({
+      hostId: input.host.hostId,
+      label: hostname(),
+      roots: input.config.fileReferenceRoots ?? ["/"],
+      initialDirectory: input.config.fileReferenceRoots?.[0] ?? homedir(),
+    }),
     ...(input.runtimeGuideSettings
       ? { runtimeGuideSettings: input.runtimeGuideSettings }
       : {}),

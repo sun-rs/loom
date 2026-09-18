@@ -68,9 +68,10 @@ function pathParts(path: string) {
     throw new Error("Workspace path is not permitted");
   return path.split("/").filter(Boolean);
 }
-async function safePath(root: string, path: string) {
+async function safePath(root: string, path: string, referenceOnly = false) {
   const home = await realpath(root);
-  if (home === sep) throw new Error("Filesystem root is not a workspace root");
+  if (home === sep && !referenceOnly)
+    throw new Error("Filesystem root is not a workspace root");
   const parts = pathParts(path);
   // Revalidate every component, including the Agent home; no symlink traversal.
   let target = home;
@@ -86,7 +87,7 @@ async function safePath(root: string, path: string) {
   if (
     (await realpath(home)) !== resolve(home) ||
     (await realpath(target)) !== resolve(target) ||
-    (target !== home && !target.startsWith(home + sep))
+    (target !== home && !target.startsWith(home === sep ? sep : home + sep))
   )
     throw new Error("Workspace path escaped its owner");
   return { home, target };
@@ -117,6 +118,20 @@ export async function listWorkspaceRoot(input: {
   path?: string;
   includeHidden?: boolean;
 }): Promise<AgentWorkspaceListing> {
+  return listDirectory(input, false);
+}
+
+/** Path references may list the host root; workspace previews never inherit this scope. */
+export async function listComputerReferenceRoot(
+  input: Parameters<typeof listWorkspaceRoot>[0],
+) {
+  return listDirectory(input, true);
+}
+
+async function listDirectory(
+  input: Parameters<typeof listWorkspaceRoot>[0],
+  referenceOnly: boolean,
+): Promise<AgentWorkspaceListing> {
   if (input.rootId !== input.rootKind)
     throw new Error("Workspace root id and kind must agree");
   const path = input.path ?? "";
@@ -136,7 +151,7 @@ export async function listWorkspaceRoot(input: {
   };
   let target: string;
   try {
-    ({ target } = await safePath(input.rootDirectory, path));
+    ({ target } = await safePath(input.rootDirectory, path, referenceOnly));
   } catch (error) {
     if (path === "" && (error as NodeJS.ErrnoException).code === "ENOENT")
       return { ...result, state: "absent" };
@@ -158,7 +173,11 @@ export async function listWorkspaceRoot(input: {
     const relative = [...parts, entry.name].join("/");
     if (secret(relative)) continue;
     try {
-      const checked = await safePath(input.rootDirectory, relative);
+      const checked = await safePath(
+        input.rootDirectory,
+        relative,
+        referenceOnly,
+      );
       const info = await lstat(checked.target);
       result.entries.push({
         name: entry.name,
@@ -172,7 +191,7 @@ export async function listWorkspaceRoot(input: {
       /* Deleted entries / unsafe links are not exposed. */
     }
   }
-  await safePath(input.rootDirectory, path);
+  await safePath(input.rootDirectory, path, referenceOnly);
   result.entries.sort(
     (a, b) =>
       Number(b.isDirectory) - Number(a.isDirectory) ||

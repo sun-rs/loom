@@ -46,9 +46,10 @@ try {
         page.setDefaultTimeout(15000);
         const errors = [];
         page.on("pageerror", (e) => errors.push(String(e)));
-        await page.addInitScript(() =>
-          localStorage.setItem("rah:web-push-desired:v1", "disabled"),
-        );
+        await page.addInitScript(() => {
+          localStorage.setItem("rah:web-push-desired:v1", "disabled");
+          localStorage.setItem("rah:composer-files-mode:v1", "menu");
+        });
         const post = async (path, data) => {
           const r = await page.request.post(
             fixture.origin + "/v3/client/" + path,
@@ -92,13 +93,15 @@ try {
           await composer.getByRole("textbox").waitFor();
           assert.equal(
             await composer
-              .getByRole("button", { name: "添加媒体", exact: true })
+              .getByRole("button", { name: "添加引用或附件", exact: true })
               .count(),
             1,
-            "Raft media picker must be independently reachable",
+            "one shared add trigger replaces both picker buttons",
           );
           await page.waitForFunction(() => {
-            const b = document.querySelector('button[aria-label="添加文件"]');
+            const b = document.querySelector(
+              'button[aria-label="添加引用或附件"]',
+            );
             return b && !b.disabled;
           });
           const transfer = await page.evaluateHandle(() => {
@@ -187,13 +190,15 @@ try {
           });
           await page.reload();
           await page.waitForFunction(() => {
-            const b = document.querySelector('button[aria-label="添加文件"]');
+            const b = document.querySelector(
+              'button[aria-label="添加引用或附件"]',
+            );
             return b && b.disabled;
           });
           const archivedForm = page.locator("form.composer");
           assert.equal(
             await archivedForm
-              .getByRole("button", { name: "添加媒体", exact: true })
+              .getByRole("button", { name: "添加引用或附件", exact: true })
               .isDisabled(),
             true,
           );

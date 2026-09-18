@@ -49,6 +49,7 @@ import {
   type AuthenticatedActorContext,
   type HumanApplicationPort,
   KernelError,
+  ForbiddenError,
   RuntimeTerminationProofError,
 } from "@rah-os/kernel";
 import {
@@ -202,7 +203,17 @@ import {
   type ProfileImageAdministrationPort,
 } from "./client-profile-image-routes.ts";
 
+import {
+  ComputerFilesListRequestSchema,
+  ComputerFilesListResponseSchema,
+  type ComputerFilesListRequest,
+  type ComputerFilesListResponse,
+} from "@rah-os/protocol";
+
 export type ClientApplicationServiceOptions = {
+  computerFiles?: {
+    list(input: ComputerFilesListRequest): Promise<ComputerFilesListResponse>;
+  };
   runtimeGuideSettings?: {
     read(input?: RuntimeGuideRead): RuntimeGuideSettingsView;
     update(input: RuntimeGuideUpdate): RuntimeGuideSettingsView;
@@ -398,6 +409,7 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/rooms/leave",
   "/rooms/sos/resume",
   "/rooms/sos/stop",
+  "/computers/files/list",
   "/rooms/unarchive",
   "/rooms/update",
   "/tasks/convert",
@@ -416,6 +428,7 @@ type ClientSession = {
 };
 
 export class ClientApplicationService {
+  readonly #computerFiles: ClientApplicationServiceOptions["computerFiles"];
   readonly #agentExecutionAdministration:
     AgentExecutionAdministrationPort | undefined;
   readonly #agentMemoryAdministration:
@@ -444,6 +457,7 @@ export class ClientApplicationService {
   #server: Server | undefined;
 
   constructor(options: ClientApplicationServiceOptions) {
+    this.#computerFiles = options.computerFiles;
     this.#agentExecutionAdministration = options.agentExecutionAdministration;
     this.#agentMemoryAdministration = options.agentMemoryAdministration;
     this.#bindHost = options.bindHost ?? "127.0.0.1";
@@ -1290,6 +1304,20 @@ export class ClientApplicationService {
           this.#human.leaveRoom(actor, command),
         ),
       );
+      return;
+    }
+    if (path === "/computers/files/list") {
+      if (this.#human.getAuthenticatedPrincipal(actor).kind !== "human")
+        throw new ForbiddenError(
+          "Computer files require an authenticated Human",
+        );
+      if (!this.#computerFiles)
+        throw new ForbiddenError("Computer file references are unavailable");
+      const result = await this.#computerFiles.list(
+        parseClientRequest(ComputerFilesListRequestSchema, body),
+      );
+      this.#human.getAuthenticatedPrincipal(actor);
+      writeJson(response, 200, ComputerFilesListResponseSchema.parse(result));
       return;
     }
     if (path === "/rooms/sos/stop") {

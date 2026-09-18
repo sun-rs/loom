@@ -1,8 +1,11 @@
 # Composer attachment pickers
 
-Scope: the separate media/file picker sub-behavior of B019, shared by Chat/DM
-and Thread. FileUploadStore remains the upload/draft owner; RoomFiles and message
-transactions remain the backend authority. No new endpoint, queue or memory rule.
+Scope: B019, shared by Chat/DM and Thread. As of 2026-09-18 Plus always opens the
+Computer tree; mobile adds one native-upload paperclip. FileUploadStore remains
+the upload/draft owner; RoomFiles and message transactions remain the authority.
+The new authenticated Computer path-listing endpoint is distinct from uploads.
+There is no new execution queue or memory rule. See
+[Composer controls](composer-controls.md) for current behavior and validation.
 
 Source: authorized Raft Web https://app.raft.build/assets/index-BoAC7nSE.js,
 local `docs/evidence/raft-web-20260831-current/index-BoAC7nSE.js`, SHA-256
@@ -44,11 +47,30 @@ authorization. The image-plus geometry carries [Lucide's ISC notice](https://raw
 Multica comparison: revision 11861145abc59a0d39c8c8f24ad837d4584e664f,
 `packages/views/chat/components/chat-add-menu.tsx`, uses one multiple-file input
 with a shared upload callback and value reset. Its Plus menu/project actions do
-not match Raft's dual buttons and are not ported. RAH uses the existing upload
-callback, with structural UI port and local eligibility glue, not copied React.
+not match Raft's original dual buttons. The current Plus entry adopts that
+structural pattern. The user's 2026-09-18 design replaces the separate media/file
+inputs with an unrestricted multiple input on mobile; the original Raft filter
+and dual-button evidence above is historical provenance, not the current UI.
+RAH uses the existing upload callback and local eligibility glue, not copied React.
 
-Local difference: archived/no-post, pending, Task mode and absent file transport
-disable both entries and reject late/direct change events. File accept is a picker
+2026-09-18 touch correction: the mobile paperclip places the native file input
+over its visual control. A touch reaches that input directly, without canceling
+pointerdown or forwarding a synthetic input click. Plus retains its caret-preserving
+pointer handler. The accessible button wrapper handles Enter/Space and direct
+border/assistive activation only; input clicks bubbling through it do not reopen
+the picker. Both input and wrapper share upload eligibility. Cancel needs no
+application-state reset and never uploads or sends; selection keeps the existing value reset.
+This is an intentional native-touch difference from the historical Raft proxy.
+WebKit's [FileInputType](https://github.com/WebKit/WebKit/blob/main/Source/WebCore/html/FileInputType.cpp)
+uses the user gesture and input renderer's rectangle for the native picker.
+No WebKit implementation code was copied. The regression uses actual `tap()`,
+checks trusted input click events and repeated cancellation, and runs Chromium
+and WebKit; automation does not claim to exercise the iOS system action sheet.
+See [touch regression evidence](../audits/2026-09-18-native-upload-reopen.zh-CN.md).
+
+Local difference: archived/no-post and pending disable the Plus. Task mode and
+absent file transport disable the mobile upload button; path references remain text input.
+Late/direct file change events retain these checks. File accept is a picker
 filter, not a new backend MIME permission rule. Cancel is no upload/no send;
 nonempty selection queues files but requires explicit send. Media and ordinary
 files share Room/Thread draft isolation and the existing failure/remove behavior.
@@ -69,4 +91,5 @@ zero and clipped a draft. The maintained styles owner now uses the same empty
 minimum and a non-shrinking editor, allowing draft content to grow the box.
 This is necessary local layout glue; the draft-chip tray itself does not claim
 source-exact Raft media-thumbnail parity. The regression requires an editable
-40px-or-taller editor after multiple selection, without forced actions.
+40px-or-taller desktop editor (the existing compact mobile minimum is 20px)
+after multiple selection, without forced actions.

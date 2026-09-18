@@ -45,6 +45,7 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "agent.workspace.read",
     "agent.workspace.roots",
     "agent.workspace.summary",
+    "computer.files.list",
     "computer.profile.update",
     "file.cancel",
     "file.comment",
@@ -154,6 +155,11 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
     operation: RahClientOperation;
     path: string;
   }> = [
+    {
+      input: { path: "" },
+      operation: "computer.files.list",
+      path: "/v3/client/computers/files/list",
+    },
     {
       input: { roomId: "room-main", threadId: "thread-main", following: true },
       operation: "activity.follow",

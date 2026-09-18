@@ -3,11 +3,18 @@
 .rah-mobile-nav {
   display: none;
 }
+html[data-rah-hide-empty-sidebar-sections="true"]
+  .rah-room-sidebar
+  [data-sidebar-group]:has(.side-section[data-empty="true"]) {
+  display: none;
+}
 @media (max-width: 767px) {
   /* The document is the app viewport; only nested content panes may scroll.
      Paint the canvas too: iOS standalone samples it behind the status bar. */
   html:has(.rah-product-shell) {
     --rah-mobile-canvas: white;
+    --rah-mobile-top-inset: env(safe-area-inset-top, 0px);
+    --rah-mobile-nav-bottom: max(8px, calc(env(safe-area-inset-bottom) - 12px));
     position: fixed;
     inset: 0;
     overflow: hidden;
@@ -33,10 +40,52 @@
   ) {
     --rah-mobile-canvas: var(--yellow);
   }
+  html:has(
+    .rah-product-shell .rah-task-detail-layer:not(.rah-task-approval-layer)
+  ),
+  html:has(.rah-product-shell):has(
+      .rah-channel-settings-layer .rah-channel-settings-drawer
+    ) {
+    --rah-mobile-canvas: white;
+  }
+  html:has(.rah-product-shell):has(
+      .rah-channel-settings-layer .rah-channel-settings-header
+    ) {
+    --rah-mobile-canvas: var(--yellow);
+  }
   .app.rah-product-shell {
     position: fixed;
     inset: 0;
-    padding-top: env(safe-area-inset-top);
+    isolation: isolate;
+    padding-top: var(--rah-mobile-top-inset);
+  }
+  /* Paint the safe area and header behind the shell's content, above its base
+     background. The isolated shell keeps this negative layer off the document
+     canvas. Painting has no minimum-inset requirement and never covers controls. */
+  .rah-mobile-status-canvas {
+    position: fixed;
+    inset: 0 0 auto;
+    height: calc(var(--rah-mobile-top-inset) + var(--head-h));
+    background-color: var(--rah-mobile-canvas);
+    pointer-events: none;
+    z-index: -1;
+  }
+  /* With no system inset the header itself is the sampled edge. Keep it a
+     bounded sticky surface rather than sampling the viewport-sized shell. */
+  .rah-product-shell .rah-panel-header,
+  .rah-task-detail-layer:not(.rah-task-approval-layer) .rah-task-detail-bar,
+  .rah-channel-settings-header {
+    position: sticky;
+    top: 0;
+  }
+  .rah-task-detail-layer:not(.rah-task-approval-layer),
+  .rah-channel-settings-layer {
+    top: var(--rah-mobile-top-inset);
+  }
+  .rah-task-detail-layer:not(.rah-task-approval-layer) .rah-task-detail-dialog,
+  .rah-channel-settings-layer .rah-channel-settings-drawer {
+    height: calc(100dvh - var(--rah-mobile-top-inset));
+    max-height: calc(100dvh - var(--rah-mobile-top-inset));
   }
   .rah-product-shell
     :is(
@@ -57,7 +106,7 @@
     overscroll-behavior: contain;
   }
   .rah-product-shell > .rah-room-sidebar {
-    top: env(safe-area-inset-top);
+    top: var(--rah-mobile-top-inset);
   }
   .rah-mobile-nav {
     position: fixed;
@@ -66,7 +115,7 @@
     align-items: stretch;
     left: max(16px, env(safe-area-inset-left));
     right: max(16px, env(safe-area-inset-right));
-    bottom: max(8px, calc(env(safe-area-inset-bottom) - 12px));
+    bottom: var(--rah-mobile-nav-bottom);
     height: 50px;
     padding: 4px;
     gap: 2px;
@@ -76,6 +125,33 @@
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow: 0 4px 24px rgb(0 0 0 / 8%);
+  }
+  .rah-room-sidebar.is-open .rah-live-agent-activity-footer {
+    position: fixed;
+    z-index: 70;
+    left: max(16px, env(safe-area-inset-left));
+    right: max(16px, env(safe-area-inset-right));
+    bottom: calc(var(--rah-mobile-nav-bottom) + 50px + 8px);
+    height: 34px;
+    min-height: 0;
+    padding: 4px 12px;
+    border: 1px solid rgb(0 0 0 / 12%);
+    border-radius: 24px;
+    background: rgb(255 255 255 / 85%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 2px 12px rgb(0 0 0 / 10%);
+  }
+  .rah-room-sidebar.is-open .rah-live-agent-activity-footer > span:last-child {
+    font-size: 12px;
+    line-height: 18px;
+  }
+  html:not([data-rah-live-agent-activity="false"])
+    .rah-room-sidebar.is-open:has(.rah-live-agent-activity-footer)
+    .sidebar-body {
+    padding-bottom: calc(
+      var(--rah-mobile-nav-bottom) + 50px + 8px + 34px + 12px
+    );
   }
   .rah-mobile-nav button {
     -webkit-tap-highlight-color: transparent;

@@ -1,63 +1,97 @@
-import { useRef, type ChangeEvent } from "react";
+import { useRef, type ChangeEvent, type ReactNode } from "react";
 import { Icon } from "./icon.tsx";
 
-// Raft composer: separate media/file inputs, one selection path. See
-// docs/design/composer-attachment-pickers.md for source and local boundaries.
+/** The plus button is always the daemon Computer path. Mobile gets one native upload input. */
 export function ComposerAttachmentPickers({
   disabled,
+  uploadsDisabled = disabled,
+  mobile,
+  onComputer,
+  browser,
   onFiles,
 }: {
   disabled: boolean;
+  uploadsDisabled?: boolean;
+  mobile: boolean;
+  onComputer: () => void;
+  browser: ReactNode;
   onFiles: (files: readonly File[]) => void;
 }) {
-  const media = useRef<HTMLInputElement>(null);
   const files = useRef<HTMLInputElement>(null);
   const select = (event: ChangeEvent<HTMLInputElement>) => {
     const input = event.currentTarget;
     const selected = Array.from(input.files ?? []);
     input.value = "";
-    if (disabled || !selected.length) return;
+    if (uploadsDisabled || !selected.length) return;
     input.closest("form")?.querySelector("textarea")?.blur();
     onFiles(selected);
   };
+  const nativeInput = (
+    <input
+      ref={files}
+      disabled={uploadsDisabled}
+      type="file"
+      aria-label="选择附件"
+      aria-hidden={mobile || undefined}
+      tabIndex={-1}
+      multiple
+      hidden={!mobile}
+      className={mobile ? "rah-composer-native-input" : undefined}
+      onChange={select}
+    />
+  );
   return (
     <div className="rah-composer-pickers">
-      <input
-        ref={media}
-        type="file"
-        aria-label="选择媒体"
-        accept="image/*,video/*"
-        multiple
-        hidden
-        onChange={select}
-      />
-      <input
-        ref={files}
-        type="file"
-        aria-label="选择附件"
-        multiple
-        hidden
-        onChange={select}
-      />
-      {[
-        { label: "添加媒体", input: media, icon: "image-plus" },
-        { label: "添加文件", input: files, icon: "clip" },
-      ].map(({ label, input, icon }) => (
-        <button
-          key={label}
-          className="sq-btn rah-composer-picker"
-          type="button"
-          aria-label={label}
-          title={label}
-          disabled={disabled}
-          onPointerDown={(event) => event.preventDefault()}
-          onClick={() => {
-            if (!disabled) input.current?.click();
+      <button
+        className="sq-btn rah-composer-picker"
+        type="button"
+        aria-label="添加引用或附件"
+        title="引用文件或文件夹"
+        disabled={disabled}
+        onPointerDown={(event) => event.preventDefault()}
+        onClick={onComputer}
+      >
+        <Icon name="plus" />
+      </button>
+      {mobile ? (
+        <span
+          className="sq-btn rah-composer-picker rah-composer-native-picker"
+          role="button"
+          tabIndex={uploadsDisabled ? -1 : 0}
+          aria-label="上传此设备的文件"
+          title="上传此设备的文件"
+          aria-disabled={uploadsDisabled}
+          onClick={(event) => {
+            // Border/assistive activation targets the wrapper; native input clicks
+            // bubble here too and must never open a second picker.
+            if (event.target === event.currentTarget && !uploadsDisabled)
+              files.current?.click();
+          }}
+          onKeyDown={(event) => {
+            if (event.target !== event.currentTarget) return;
+            if (event.key === "Enter" || event.key === " ")
+              event.preventDefault();
+            if (event.key === "Enter" && !event.repeat && !uploadsDisabled)
+              files.current?.click();
+          }}
+          onKeyUp={(event) => {
+            if (
+              event.target === event.currentTarget &&
+              event.key === " " &&
+              !uploadsDisabled
+            ) {
+              event.preventDefault();
+              files.current?.click();
+            }
           }}
         >
-          <Icon name={icon} />
-        </button>
-      ))}
+          <Icon name="clip" />
+          {nativeInput}
+        </span>
+      ) : (
+        nativeInput
+      )}
+      {browser}
     </div>
   );
 }

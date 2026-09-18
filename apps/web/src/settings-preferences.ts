@@ -5,6 +5,7 @@ const MESSAGE_SIZE_KEY = "rah:settings:message-size";
 const LIVE_ACTIVITY_KEY = "rah:settings:live-agent-activity";
 const AGENT_MODEL_KEY = "rah:settings:agent-model-name";
 const TIME_FORMAT_KEY = "rah:settings:time-format";
+const HIDE_EMPTY_KEY = "rah:settings:hide-empty-sidebar-sections";
 
 function read(storage: Storage, key: string): string | null {
   try {
@@ -26,6 +27,19 @@ function write(storage: Storage, key: string, value: string) {
 export function readMessageSize(storage: Storage): RahMessageSize {
   const value = read(storage, MESSAGE_SIZE_KEY);
   return value === "small" || value === "large" ? value : "medium";
+}
+
+export function readHideEmptySidebarSections(storage: Storage): boolean {
+  return read(storage, HIDE_EMPTY_KEY) === "true";
+}
+
+export function writeHideEmptySidebarSections(
+  storage: Storage,
+  value: boolean,
+) {
+  const saved = write(storage, HIDE_EMPTY_KEY, String(value));
+  document.documentElement.dataset.rahHideEmptySidebarSections = String(value);
+  return saved;
 }
 
 export function writeMessageSize(storage: Storage, value: RahMessageSize) {
@@ -67,6 +81,9 @@ export function writeTimeFormat(storage: Storage, value: RahTimeFormat) {
 }
 
 export function applySettingsPreferences(storage: Storage) {
+  document.documentElement.dataset.rahHideEmptySidebarSections = String(
+    readHideEmptySidebarSections(storage),
+  );
   document.documentElement.dataset.rahAgentModelName = String(
     readAgentModelName(storage),
   );

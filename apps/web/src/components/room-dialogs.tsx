@@ -728,14 +728,14 @@ export function RoomMembersDialog({
                   <button
                     onClick={() => setView("members")}
                     aria-label={`管理成员：${member.displayName || member.handle}`}
-                    className="rah-channel-human-avatar"
+                    className="rah-channel-avatar-trigger"
                     key={member.principalId}
                     title={member.displayName || member.handle}
                   >
                     <ProfileImageAvatar
                       avatarKey={member.avatarKey}
                       name={member.displayName || member.handle}
-                      size="compact"
+                      size="header"
                     />
                   </button>
                 ))}

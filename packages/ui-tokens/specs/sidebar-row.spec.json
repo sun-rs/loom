@@ -318,6 +318,14 @@
   "fixtureMarkupFile": "packages/ui-tokens/specs/sidebar-row.fixture-markup.json",
   "rules": [
     {
+      "file": "apps/web/src/mobile-navigation.css",
+      "selector": "html[data-rah-hide-empty-sidebar-sections=\"true\"] .rah-room-sidebar [data-sidebar-group]:has(.side-section[data-empty=\"true\"])",
+      "state": "base",
+      "source": "Raft Web 1.16.0 web-index.js@3512337; docs/audits/2026-09-18-sidebar-and-composer-controls.zh-CN.md",
+      "reason": "用户启用隐藏空分组时隐藏完整包装层，桌面与移动共用；偏好默认关闭，不改变保存的折叠选择。",
+      "declarations": { "display": "none" }
+    },
+    {
       "file": "apps/web/src/message-social.css",
       "selector": ".rah-room-sidebar .channel-row",
       "state": "base",

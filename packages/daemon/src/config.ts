@@ -51,6 +51,7 @@ const DaemonConcurrencySchema = z
   .max(64, "daemon concurrency must not exceed 64");
 
 const CommonDaemonConfigFields = {
+  fileReferenceRoots: z.array(AbsolutePathSchema).min(1).max(32).optional(),
   // Historical input only. The public config parser discards it without parsing
   // connections or reading credential references; no executor consumes it.
   managedMcpExecutors: z.unknown().optional(),

@@ -1,0 +1,65 @@
+{
+  "capturedOn": "2026-09-16",
+  "purpose": "Read-only rc.1 audit and upstream comparison; no product adoption implied",
+  "rahRevision": "98dc0951e4ecc86386d6433b2885f38e9e69de9e",
+  "web": {
+    "url": "https://app.raft.build/",
+    "branch": "release/v1.16.0",
+    "commitSha": "ba2a1dbac175595f28dfe1c09e4df2556d59ac0c",
+    "builtAt": "2026-09-16T05:28:44Z",
+    "indexUrl": "https://app.raft.build/assets/index-CKeqacxz.js",
+    "indexSha256": "7841ee0f6f5ea6d58c0fb9a8a9e509807a3df2a0fe9485cbd11215d42bcb393b",
+    "releaseNotesUrl": "https://app.raft.build/assets/ReleaseNotesPanel-CFTnPuA0.js",
+    "releaseNotesSha256": "0d213bc4ce21d1176096087abf9bb2918d289519f3823181300df3fd42d5c508",
+    "releaseNotesDate": "2026-09-15"
+  },
+  "computer": {
+    "version": "1.0.32",
+    "channel": "main",
+    "releasedAt": "2026-09-13T14:20:59.460Z",
+    "authorityUrl": "https://hands.build/public/v2/apps/raft-computer-cli/latest?channel=main&product_type=cli-binary",
+    "authorityResponseSha256": "da820b1fb01cf88e1c630b6d51ed0364b4b79b25ac5da8fe2859b7248fc61256",
+    "manifestUrl": "https://cdn.raft.build/computer/1.0.32/manifest.json",
+    "manifestSha256": "2503e72b51702e5cb43c78ead5b3006e28ee5f5dcb36686c9c759e88314239ce",
+    "binaryUrl": "https://cdn.raft.build/computer/1.0.32/raft-computer-darwin-arm64",
+    "binarySha256": "0db97964b6f21d500629e14a88fe4d24b94476428d01de997863ad2d7545aec5",
+    "binarySize": 158680976,
+    "gzipSha256": "5baa61ee163d9fd6220b966e6100a6f4c637176b20479e470bc1d8cd1a4ac07e",
+    "gzipSize": 46216343,
+    "seaOffset": 91160576,
+    "seaSize": 38658528,
+    "seaRemainingBytes": 0,
+    "mainSha256": "531f41e2ee626d729c92933fbc753008af42380c5745c54b5d0af9901e43d170",
+    "mainSize": 38658404,
+    "bundledDaemonVersion": "1.0.26",
+    "bundledCliVersion": "0.0.24",
+    "kCarrierVersion": "0.1.8",
+    "kCarrierPatchHash": "13117bc98923d3c5a7b99d69c5ec688f6006e9f5e139f9d7d8c24702a74dc132",
+    "signatureMetadata": {
+      "authority": "Developer ID Application: Botiverse, Inc. (XDAPXFY8FZ)",
+      "teamId": "XDAPXFY8FZ",
+      "cdHash": "67ddfc9b99445cf23dfc38798e2eb93d575e09fe",
+      "manifestNotarizationStatus": "Accepted",
+      "gatekeeperAcceptanceTested": false
+    }
+  },
+  "baseline": {
+    "computerVersion": "1.0.18",
+    "manifestUrl": "https://cdn.raft.build/computer/1.0.18/manifest.json",
+    "binarySha256": "b9d2637306a639003ac99cd0a9dc96ec70bc5173d6bdba7b9e5bb3242f690b90",
+    "mainSha256": "20f16da1a37173925bb8707254329dd6e0df4b694c809c53b3f35f38ab00fd0e",
+    "bundledDaemonVersion": "1.0.19",
+    "bundledCliVersion": "0.0.18",
+    "kCarrierVersion": "0.1.6"
+  },
+  "method": {
+    "extraction": "Node 24 SEA Mach-O section parsing, then preserved esbuild source-boundary slices",
+    "releaseNotes": "TypeScript AST static data extraction; no execution of downloaded JavaScript",
+    "binaryExecuted": false,
+    "liveRaftModified": false,
+    "serverImplementationAvailable": false,
+    "rawBundlesIncludedInRepository": false,
+    "sourceStatus": "Transformed shipped implementation, not original TypeScript or complete repository",
+    "licenseBoundary": "Analysis-only upstream artifacts; this record grants no redistribution rights"
+  }
+}

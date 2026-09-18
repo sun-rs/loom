@@ -14,6 +14,27 @@ const classify = (method, path) =>
     url: new URL(path, origin).href,
   });
 
+test("formal composer verification allows file metadata but not stop or uploads", () => {
+  for (const path of ["/v3/client/computers/files/list"])
+    assert.equal(classify("POST", path).decision, "allow-api");
+  for (const path of [
+    "/v3/client/rooms/sos/stop",
+    "/v3/client/rooms/sos/resume",
+    "/v3/client/files/upload",
+  ])
+    assert.equal(classify("POST", path).decision, "reject");
+});
+
+test("formal browser can display existing profile images without enabling image uploads", () => {
+  const path = "/v3/client/profile-images/content/upload_jpeg_123";
+  assert.equal(classify("GET", path).decision, "allow-api");
+  assert.equal(classify("POST", path).decision, "reject");
+  assert.equal(
+    classify("POST", "/v3/client/profile-images/upload").decision,
+    "reject",
+  );
+});
+
 test("formal Task detail permits reads while refusing lifecycle mutations", () => {
   for (const path of [
     "/v3/client/tasks/get",

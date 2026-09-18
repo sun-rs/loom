@@ -1,4 +1,5 @@
 import { MessageTextDialog } from "./message-text-dialog.tsx";
+import { fileReferenceText } from "../composer-controls.ts";
 import { useMessageActions } from "../use-message-actions.ts";
 import type { ProductNavigationRequest } from "../navigation-target.ts";
 import { activityDisplayText } from "../activity-display-names.ts";
@@ -779,8 +780,19 @@ export function ChatPane({
               <div className="composer-bar">
                 <ComposerFiles
                   roomId={roomId}
+                  conversationLabel={conversationTarget(
+                    roomName === undefined
+                      ? undefined
+                      : { kind: roomKind ?? "channel", name: roomName },
+                  )}
                   draftKey={uploadDraftKey}
-                  disabled={pending || asTask || !canPost || !canAttachFiles}
+                  onReference={(paths) =>
+                    mention(paths.map(fileReferenceText).join(" "))
+                  }
+                  disabled={pending || (!canPost && !canCreateTask)}
+                  uploadsDisabled={
+                    pending || asTask || !canPost || !canAttachFiles
+                  }
                 />
                 <span className="composer-spacer" />
                 {canCreateTask ? (
@@ -2635,8 +2647,17 @@ export function ThreadPane({
               <div className="composer-bar">
                 <ComposerFiles
                   roomId={roomId}
+                  conversationLabel={conversationTarget(
+                    roomName === undefined
+                      ? undefined
+                      : { kind: roomKind ?? "channel", name: roomName },
+                  )}
                   draftKey={uploadDraftKey}
-                  disabled={pending || !canReply || !canAttachFiles}
+                  onReference={(paths) =>
+                    mention(paths.map(fileReferenceText).join(" "))
+                  }
+                  disabled={pending || !canReply}
+                  uploadsDisabled={pending || !canReply || !canAttachFiles}
                 />
                 <span className="composer-spacer" />
                 <button

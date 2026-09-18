@@ -9,6 +9,7 @@ export const formalBrowserAllowedApiRequests = [
   "POST /v3/client/agents/get",
   "POST /v3/client/agents/skills/list",
   "POST /v3/client/agents/presence/list",
+  "POST /v3/client/computers/files/list",
   "POST /v3/client/files/comments/list",
   "POST /v3/client/humans/profile",
   "POST /v3/client/input-requests/list",
@@ -85,6 +86,13 @@ export function classifyFormalBrowserRequest(input) {
   const identity = `${method} ${url.pathname}`;
   if (url.origin !== input.origin)
     return { decision: "reject", identity, reason: "cross-origin" };
+  if (
+    method === "GET" &&
+    /^\/v3\/client\/profile-images\/content\/[A-Za-z0-9_-]+$/u.test(
+      url.pathname,
+    )
+  )
+    return { decision: "allow-api", identity };
   if (exactApiRequests.has(identity))
     return { decision: "allow-api", identity };
   if (exactReadStateRequests.has(identity))

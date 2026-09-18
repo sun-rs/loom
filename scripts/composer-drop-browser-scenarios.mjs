@@ -19,14 +19,14 @@ export async function readyComposer(page, label) {
   const form = page
     .locator("form.composer")
     .filter({ has: page.getByRole("textbox", { name: label, exact: true }) });
-  await form.getByRole("button", { name: "添加文件", exact: true }).waitFor();
+  await form
+    .getByRole("button", { name: "添加引用或附件", exact: true })
+    .waitFor();
   await page.waitForFunction((label) => {
     const t = [...document.querySelectorAll("textarea")].find(
       (e) => e.getAttribute("aria-label") === label,
     );
-    const b = t
-      ?.closest("form")
-      ?.querySelector('button[aria-label="添加文件"]');
+    const b = t?.closest("form")?.querySelector('input[aria-label="选择附件"]');
     return b && !b.disabled;
   }, label);
   return form;
@@ -44,6 +44,7 @@ export async function verifyDropEdges({
   const dt = await fileTransfer(page),
     overlay = form.locator('[data-testid="composer-drop-overlay"]');
   await form.dispatchEvent("dragenter", { dataTransfer: dt });
+  await overlay.waitFor({ state: "visible" });
   await form
     .getByRole("textbox")
     .dispatchEvent("dragenter", { dataTransfer: dt });
@@ -197,14 +198,15 @@ export async function downloadExact(page, scope, filename, expected) {
     .locator(".rah-file-card")
     .filter({ has: page.getByText(filename, { exact: true }) });
   await card
-    .getByRole("button", { name: filename + " 的操作", exact: true })
+    .getByRole("button", { name: `预览 ${filename}`, exact: true })
     .click();
   const waiting = page.waitForEvent("download");
-  await page.getByRole("menuitem", { name: "下载文件", exact: true }).click();
+  await page.getByRole("button", { name: "下载", exact: true }).click();
   const d = await waiting;
   assert.equal(d.suggestedFilename(), filename);
   assert.equal(await d.failure(), null);
   assert.equal(await readFile(await d.path(), "utf8"), expected);
+  await page.getByRole("button", { name: "关闭", exact: true }).click();
 }
 export async function verifyThreadDrop({
   page,
@@ -219,10 +221,8 @@ export async function verifyThreadDrop({
     .locator(".msg")
     .filter({ has: page.locator(".rah-message-files") })
     .first();
-  await root.hover();
-  await root
-    .getByRole("button", { name: "在消息列中回复", exact: true })
-    .click();
+  await root.click({ button: "right" });
+  await page.getByRole("menuitem", { name: "打开消息列", exact: true }).click();
   const panel = page.getByRole("complementary", { name: "Thread 讨论" });
   const form = await readyComposer(page, "Thread 回复输入框");
   const dt = await fileTransfer(page, "thread-drop.txt", "thread exact bytes");
@@ -291,14 +291,17 @@ export async function verifyThreadDrop({
     await again.getByText("上传中…", { exact: true }).waitFor();
     assert.equal(await again.locator("button[type=submit]").isDisabled(), true);
     await panel
-      .getByRole("button", { name: "关闭消息列", exact: true })
+      .getByRole("button", {
+        name: width <= 767 ? "返回聊天" : "关闭消息列",
+        exact: true,
+      })
       .click();
     await panel.waitFor({ state: "detached" });
     assert.equal(await chat.locator(".rah-file-draft").count(), 0);
     releaseUpload();
-    await root.hover();
-    await root
-      .getByRole("button", { name: "在消息列中回复", exact: true })
+    await root.click({ button: "right" });
+    await page
+      .getByRole("menuitem", { name: "打开消息列", exact: true })
       .click();
     const restored = await readyComposer(page, "Thread 回复输入框");
     await restored.getByText("已上传", { exact: true }).waitFor();
@@ -317,7 +320,7 @@ export async function verifyThreadDrop({
     );
   } finally {
     releaseUpload();
-    await page.unroute("**/v3/client/files/content/*");
+    await page.unrouteAll({ behavior: "wait" });
     await late.dispose();
   }
   await dt.dispose();

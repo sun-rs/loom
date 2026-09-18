@@ -1,16 +1,9 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
-  type CSSProperties,
-} from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
   AgentWorkspaceFile,
   AgentWorkspaceListing,
   AgentWorkspaceRoot,
-  AgentWorkspaceRoots,
 } from "@rah-os/protocol";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { FileGlyph } from "./file-glyph.tsx";
@@ -21,11 +14,9 @@ type Entry = AgentWorkspaceListing["entries"][number];
 export function AgentWorkspaceBrowser({
   client,
   agentDefinitionId,
-  memoryControls,
 }: {
   client: RahClient;
   agentDefinitionId: string;
-  memoryControls: ReactNode;
 }) {
   const [hidden, setHidden] = useState(() => {
       try {
@@ -38,16 +29,13 @@ export function AgentWorkspaceBrowser({
       }
     }),
     [revision, setRevision] = useState(0);
-  const [roots, setRoots] = useState<AgentWorkspaceRoots>();
-  const [rootId, setRootId] =
-    useState<AgentWorkspaceRoot["rootId"]>("agent-workspace");
+  const rootId = "agent-workspace" as const;
   const [root, setRoot] = useState<AgentWorkspaceListing>();
   const [selected, setSelected] = useState<string>();
   const [file, setFile] = useState<AgentWorkspaceFile>();
   const [error, setError] = useState<string>(),
     [copy, setCopy] = useState(false);
   const [copyError, setCopyError] = useState<string>();
-  const [memoryOpen, setMemoryOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"preview" | "raw">("preview");
   const [treeWidth, setTreeWidth] = useState(256);
   const drag = useRef<{ x: number; width: number } | undefined>(undefined);
@@ -63,7 +51,6 @@ export function AgentWorkspaceBrowser({
     [],
   );
   useEffect(() => {
-    const controller = new AbortController();
     try {
       setHidden(
         localStorage.getItem(`rah:workspace-hidden:${agentDefinitionId}`) ===
@@ -72,25 +59,7 @@ export function AgentWorkspaceBrowser({
     } catch {
       setHidden(false);
     }
-    setRoots(undefined);
-    setRootId("agent-workspace");
-    void client
-      .request(
-        "agent.workspace.roots",
-        { agentDefinitionId },
-        { signal: controller.signal },
-      )
-      .then((value) => {
-        if (!controller.signal.aborted) {
-          setRoots(value);
-          setRootId(value.defaultRootId);
-        }
-      })
-      .catch(() => {
-        /* Compatible default workspace remains available if discovery fails. */
-      });
-    return () => controller.abort();
-  }, [client, agentDefinitionId]);
+  }, [agentDefinitionId]);
   useEffect(() => {
     const controller = new AbortController();
     setFile(undefined);
@@ -113,19 +82,6 @@ export function AgentWorkspaceBrowser({
         });
     return () => controller.abort();
   }, [client, agentDefinitionId, rootId, selected, revision]);
-  const selectedRoot = roots?.roots.find(
-    (candidate) => candidate.rootId === rootId,
-  );
-  const switchRoot = (next: AgentWorkspaceRoot["rootId"]) => {
-    setRootId(next);
-    setRoot(undefined);
-    setSelected(undefined);
-    setFile(undefined);
-    setError(undefined);
-    setCopy(false);
-    setCopyError(undefined);
-    setViewMode("preview");
-  };
   const selectFile = (path: string) => {
     setViewMode("preview");
     setSelected(path);
@@ -136,28 +92,7 @@ export function AgentWorkspaceBrowser({
       style={{ "--rah-tree-width": `${treeWidth}px` } as CSSProperties}
     >
       <header className="rah-workspace-path">
-        {roots && roots.roots.length > 1 && (
-          <select
-            aria-label="工作区根目录"
-            value={rootId}
-            onChange={(event) =>
-              switchRoot(
-                event.currentTarget.value as AgentWorkspaceRoot["rootId"],
-              )
-            }
-          >
-            {roots.roots.map((candidate) => (
-              <option key={candidate.rootId} value={candidate.rootId}>
-                {candidate.rootKind === "agent-workspace"
-                  ? candidate.label
-                  : `本机项目 · ${candidate.label}`}
-              </option>
-            ))}
-          </select>
-        )}
-        <code>
-          {root?.rootPath ?? selectedRoot?.rootPath ?? "Agent 持久工作区"}
-        </code>
+        <code>{root?.rootPath ?? ""}</code>
         <button
           title="复制路径"
           aria-label="复制路径"
@@ -386,19 +321,6 @@ export function AgentWorkspaceBrowser({
           )}
         </section>
       </div>
-      <footer>
-        <p>
-          {selectedRoot?.rootKind === "runtime-project"
-            ? "本机运行项目（只读）；来自 daemon 冻结的 workspace cwd，不是 Agent 身份或记忆分区。"
-            : "Agent 持久工作区（只读）；MEMORY.md 与 notes/ 属于该 Agent，不等于本次运行项目。"}
-        </p>
-        {rootId === "agent-workspace" && (
-          <details onToggle={(e) => setMemoryOpen(e.currentTarget.open)}>
-            <summary>记忆管理</summary>
-            {memoryOpen && memoryControls}
-          </details>
-        )}
-      </footer>
     </section>
   );
 }
@@ -485,7 +407,8 @@ function Directory({
               entry.isDirectory ? expanded.includes(entry.path) : undefined
             }
             className="rah-workspace-entry"
-            style={{ paddingLeft: 12 + depth * 16 }}
+            data-hidden={entry.isHidden || undefined}
+            style={{ paddingLeft: (entry.isDirectory ? 8 : 22) + depth * 16 }}
             onClick={() =>
               entry.isDirectory ? toggle(entry) : select(entry.path)
             }
@@ -519,15 +442,25 @@ function Directory({
             }}
           >
             {entry.isDirectory ? (
-              <Icon
-                name={
-                  expanded.includes(entry.path)
-                    ? "chevron-down"
-                    : "chevron-right"
-                }
-              />
+              <>
+                <Icon
+                  name={
+                    expanded.includes(entry.path)
+                      ? "chevron-down"
+                      : "chevron-right"
+                  }
+                />
+                <Icon
+                  className="rah-workspace-folder-icon"
+                  name={
+                    expanded.includes(entry.path)
+                      ? "folder-open"
+                      : "folder-closed"
+                  }
+                />
+              </>
             ) : (
-              <FileGlyph kind="file" />
+              <Icon className="rah-workspace-file-icon" name="file-text" />
             )}
             <span>{entry.name}</span>
           </button>

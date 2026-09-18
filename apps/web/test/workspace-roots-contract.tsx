@@ -126,42 +126,32 @@ function Fixture() {
     const select = document.querySelector<HTMLSelectElement>(
       '[aria-label="工作区根目录"]',
     );
-    check(select?.value === "agent-workspace", "默认根必须是 Agent 工作区");
+    check(!select, "Agent 工作区不提供运行项目选择器");
     check(document.body.textContent?.includes("MEMORY.md"), "默认根非空树");
     check(
-      document.body.textContent?.includes("Agent 持久工作区（只读）"),
-      "默认根说明",
-    );
-    if (select) {
-      select.value = "runtime-project";
-      select.dispatchEvent(new Event("change", { bubbles: true }));
-    }
-    for (let index = 0; index < 4; index++) await frame();
-    check(
-      document.body.textContent?.includes("本机项目 · rah_os"),
-      "项目根标签",
-    );
-    check(document.body.textContent?.includes("README.md"), "项目非空树");
-    check(
-      document.body.textContent?.includes("来自 daemon 冻结的 workspace cwd"),
-      "项目根边界说明",
+      !document.querySelector(".rah-workspace-browser footer"),
+      "工作区不显示额外说明或记忆管理",
     );
     check(
       !document.body.textContent?.includes("记忆管理"),
       "项目根不显示记忆控制",
     );
     [...document.querySelectorAll<HTMLButtonElement>('[role="treeitem"]')]
-      .find((button) => button.textContent?.trim() === "README.md")
+      .find((button) => button.textContent?.trim() === "MEMORY.md")
       ?.click();
     for (let index = 0; index < 4; index++) await frame();
-    check(document.body.textContent?.includes("RAH project"), "项目文件读取");
+    check(
+      document.body.textContent?.includes("Alice memory"),
+      "Agent 文件读取",
+    );
     check(
       document.querySelector('[aria-label="工作区文件查看模式"]'),
       "Markdown 必须提供源码/预览",
     );
     check(
-      calls.includes("agent.workspace.read:runtime-project:README.md"),
-      "read 必须绑定服务端 rootId",
+      calls.includes("agent.workspace.read:agent-workspace:MEMORY.md") &&
+        calls.every((call) => !call.includes("runtime-project")),
+      "read/list 必须始终绑定 Agent 工作区",
     );
     check(
       document.documentElement.scrollWidth <= innerWidth,
@@ -185,11 +175,7 @@ function Fixture() {
         运行工作区根回归
       </button>
       <output id="workspace-roots-report">{report}</output>
-      <AgentWorkspaceBrowser
-        agentDefinitionId="agent-alice"
-        client={client}
-        memoryControls={<p>Memory controls</p>}
-      />
+      <AgentWorkspaceBrowser agentDefinitionId="agent-alice" client={client} />
     </main>
   );
 }

@@ -208,3 +208,15 @@
 }
 .rah-composer-pickers .rah-composer-picker svg { width: 14px; height: 14px; }
 .rah-composer-pickers .rah-composer-picker:disabled { opacity: 0.4; pointer-events: none; }
+/* Touch goes directly to the native input; only keyboard activation is forwarded. */
+.rah-composer-native-picker { position: relative; }
+.rah-composer-native-picker .rah-composer-native-input {
+  position: absolute; inset: 0; width: 100%; height: 100%; padding: 0;
+  opacity: 0; cursor: pointer;
+}
+.rah-composer-pickers .rah-composer-native-picker[aria-disabled="true"] {
+  opacity: 0.4; pointer-events: none; transform: none; box-shadow: var(--shadow-s);
+}
+.rah-composer-native-picker:focus-visible {
+  outline: 2px solid var(--ink); outline-offset: 0;
+}

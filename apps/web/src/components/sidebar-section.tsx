@@ -1,31 +1,30 @@
 import { useSidebarGroupHandle } from "./sidebar-drag.tsx";
 import { useId, useState, type ReactNode } from "react";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
+import { useSidebarPreferences } from "./sidebar-preferences.tsx";
 
 export function SidebarSection({
   label,
+  sectionId,
   count,
   action,
   children,
   unread = false,
 }: {
   label: string;
+  sectionId: string;
   count: number;
   action?: ReactNode;
   children: ReactNode;
   unread?: boolean;
 }) {
-  const hasItems = count > 0;
-  const [disclosure, setDisclosure] = useState({ hasItems, open: hasItems });
-  // Apply defaults only across empty/nonempty boundaries, not every count poll.
-  if (disclosure.hasItems !== hasItems) {
-    setDisclosure({ hasItems, open: hasItems });
-  }
-  const open = disclosure.hasItems === hasItems ? disclosure.open : hasItems;
+  const preferences = useSidebarPreferences();
+  const [localChoice, setLocalChoice] = useState<boolean>();
+  const open = preferences?.disclosure[sectionId] ?? localChoice ?? count > 0;
   const id = useId();
   const handle = useSidebarGroupHandle();
   return (
-    <section className="side-section">
+    <section className="side-section" data-empty={count === 0}>
       <div className="side-title">
         <button
           ref={handle?.setActivatorNodeRef}
@@ -35,7 +34,11 @@ export function SidebarSection({
           className="rah-sidebar-disclosure"
           aria-expanded={open}
           aria-controls={id}
-          onClick={() => setDisclosure({ hasItems, open: !open })}
+          onClick={() =>
+            preferences
+              ? preferences.setDisclosure(sectionId, !open)
+              : setLocalChoice(!open)
+          }
         >
           <Icon name="chevron" />
           <span>{label}</span>

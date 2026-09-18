@@ -627,3 +627,4 @@ export {
   rotateServiceLogs,
   openServiceLogs,
 } from "./service-log-rotation.ts";
+export { ComputerFileBrowser } from "./computer-file-browser.ts";

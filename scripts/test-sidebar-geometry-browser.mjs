@@ -75,11 +75,11 @@ try {
       await pinned.click();
       await pin(keys[1]);
       await pin(keys[0]);
-      await expect(pinned).toHaveAttribute("aria-expanded", "false");
+      await expect(pinned).toHaveAttribute("aria-expanded", "true");
       await pin(keys[0]);
       await expect(pinned).toHaveAttribute("aria-expanded", "true");
       await pin(keys[0]);
-      await expect(pinned).toHaveAttribute("aria-expanded", "false");
+      await expect(pinned).toHaveAttribute("aria-expanded", "true");
     });
     await verify("row-density", async () => {
       for (const row of await sidebar.locator(".channel-row, .dm-row").all())
@@ -151,11 +151,8 @@ try {
       .last();
     await verify("empty-content", async () => {
       const hint = sidebar.locator('[data-sidebar-group="pinned"] .side-hint');
-      await expect(hint).toBeHidden();
+      await expect(hint).toBeVisible();
       await expect(custom.locator(".side-hint")).toBeHidden();
-      await sidebar
-        .locator('[data-sidebar-group="pinned"] .rah-sidebar-disclosure')
-        .click();
       await custom.locator(".rah-sidebar-disclosure").click();
       assert.equal((await hint.boundingBox()).height, 36);
       await expect(hint).toHaveCSS("padding-top", "6px");

@@ -432,7 +432,28 @@ if (command === "debug models" || command === "debug models --bundled") {
   seed.close();
   seed = undefined;
 
+  if (process.env.RAH_FIXTURE_COMPOSER_FILES === "1") {
+    mkdirSync(join(directory, "reference-files", "Folder with spaces"), {
+      recursive: true,
+    });
+    writeFileSync(
+      join(directory, "reference-files", "Folder with spaces", "note.txt"),
+      "FAKE reference: this text must not be uploaded",
+    );
+    writeFileSync(
+      join(
+        directory,
+        "reference-files",
+        "Folder with spaces",
+        "second note.txt",
+      ),
+      "FAKE second reference: this text must not be uploaded",
+    );
+  }
   const config = DaemonConfigSchema.parse({
+    ...(process.env.RAH_FIXTURE_COMPOSER_FILES === "1"
+      ? { fileReferenceRoots: [join(directory, "reference-files")] }
+      : {}),
     client: { bindHost: "127.0.0.1", port: 0 },
     drainTimeoutMs: 30_000,
     host: {

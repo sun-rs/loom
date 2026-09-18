@@ -1,5 +1,5 @@
-/* Official live DOM: 256px tree; header px-3 py-2; border-black/10;
-   private-home notice and memory controls are explicit RAH extensions. */
+/* Raft 1.16.0 AgentDetailPanel: 256px tree, text-sm rows, text-xs title.
+   Source and local differences: agent-workspace-surface audit. */
 .rah-workspace-browser {
   container-type: inline-size;
   display: flex;
@@ -16,28 +16,13 @@
   padding: 6px 12px;
   border-bottom: 1px solid var(--ink-10);
   font-size: 12px;
-  color: var(--ink-40);
+  color: var(--ink-50);
+  line-height: 16px;
 }
 .rah-workspace-path > button {
   width: 24px;
   height: 24px;
   flex-shrink: 0;
-}
-.rah-workspace-path > select {
-  min-width: 0;
-  max-width: 180px;
-  height: 28px;
-  flex: 0 1 auto;
-  border: 1px solid var(--ink);
-  border-radius: 0;
-  background: var(--paper);
-  color: var(--ink);
-  font: inherit;
-  font-weight: 700;
-}
-.rah-workspace-path > select:focus-visible {
-  outline: 2px solid var(--ink);
-  outline-offset: 1px;
 }
 .rah-workspace-path code {
   overflow: hidden;
@@ -51,6 +36,8 @@
   background: transparent;
   font-family: inherit;
   cursor: pointer;
+  padding: 0;
+  line-height: inherit;
 }
 .rah-workspace-browser button:hover {
   color: var(--ink);
@@ -85,7 +72,12 @@
   border-bottom: 1px solid var(--ink-10);
   padding: 8px 12px;
   font-size: 12px;
+  line-height: 16px;
   color: var(--ink-40);
+}
+.rah-workspace-columns > nav > header b {
+  color: var(--ink-60);
+  font-weight: 700;
 }
 .rah-workspace-columns > nav > header > span {
   display: flex;
@@ -96,20 +88,53 @@
   width: 28px;
   height: 28px;
 }
+.rah-workspace-columns > nav > header button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rah-workspace-columns > nav > header button[aria-pressed="true"] {
+  color: var(--ink);
+}
+.rah-workspace-columns > nav > header button:first-child svg {
+  width: 13px;
+  height: 13px;
+}
+.rah-workspace-columns [role="tree"] {
+  padding-block: 4px;
+}
 .rah-workspace-columns [role="tree"] p,
 .rah-workspace-columns [role="alert"] {
   font-size: 12px;
   padding: 12px;
   color: var(--ink-60);
 }
-.rah-workspace-entry {
+.rah-workspace-browser .rah-workspace-entry {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   width: 100%;
-  padding: 6px 12px;
+  padding: 4px 8px;
   text-align: left;
-  font-size: 12px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ink);
+}
+.rah-workspace-entry svg {
+  width: 14px;
+  height: 14px;
+}
+.rah-workspace-entry[aria-expanded] span {
+  font-weight: 500;
+}
+.rah-workspace-entry[data-hidden] span {
+  color: rgb(0 0 0 / 55%);
+}
+.rah-workspace-folder-icon {
+  color: var(--orange);
+}
+.rah-workspace-file-icon {
+  color: var(--ink-50);
 }
 .rah-workspace-entry span {
   overflow: hidden;
@@ -208,30 +233,24 @@
   font-size: 12px;
   color: var(--ink-40);
 }
-.rah-workspace-empty {
+.rah-workspace-preview > .rah-workspace-empty {
   display: grid;
   place-items: center;
   height: 100%;
   margin: 0;
+  font: 14px/20px var(--mono);
+  color: var(--ink-30);
 }
 .rah-workspace-empty > span {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 .rah-workspace-empty svg {
   width: 32px;
   height: 32px;
   opacity: 0.3;
-}
-.rah-workspace-browser > footer {
-  border-top: 1px solid var(--ink-10);
-  font-size: 12px;
-  color: var(--ink-60);
-  padding: 8px 12px;
-  max-height: 40%;
-  overflow: auto;
 }
 .rah-role-dialog {
   max-width: 448px;

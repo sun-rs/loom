@@ -9,12 +9,14 @@ export function ActionMenu({
   trigger,
   className,
   items,
+  anchor,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   label: string;
   trigger: ReactElement;
   className: string;
+  anchor?: Menu.Positioner.Props["anchor"];
   items: readonly {
     label: ReactNode;
     key: string;
@@ -27,6 +29,7 @@ export function ActionMenu({
       <Menu.Trigger render={trigger} />
       <Menu.Portal>
         <Menu.Positioner
+          anchor={anchor}
           side="bottom"
           align="end"
           sideOffset={4}

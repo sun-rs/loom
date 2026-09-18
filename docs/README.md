@@ -1,3 +1,23 @@
+[UI 改造提交边界](./audits/2026-09-18-ui-commit-scope.zh-CN.md)：从 rc.1 分离界面改造，文件引用配套纳入，Stop 与后台审计补强保留未提交。
+
+[移动附件菜单连续打开](./audits/2026-09-18-native-upload-reopen.zh-CN.md)：以真实触摸替代鼠标式验证，原生 input 直接接收触摸，覆盖连续取消及重新选择。
+
+[文件引用窗口共享样式](./audits/2026-09-18-file-dialog-chrome.zh-CN.md)：标题栏、关闭按钮和确认按钮复用 Task 弹窗及 UI 库规则，覆盖桌面和移动端 portal。
+
+[PWA 顶部背景延伸](./audits/2026-09-17-pwa-status-edge.zh-CN.md)：外壳内背景位于标题控件下层，布局只避让系统安全区；撤销高层覆盖与人为最小留白，真机验收边界单列。
+
+[Composer 引用窗口与菜单定位](./audits/2026-09-17-composer-reference-navigation.zh-CN.md)：菜单脱离加号动画、用户目录起点与向上导航、取消目录根选择、共享配色与工作区隔离。
+
+[Room 成员头像尺寸修复](./audits/2026-09-17-room-member-avatar-size.zh-CN.md)：修正用户头像使用 compact 并嵌套橙色外框的问题，统一为 36px 共享头像。
+
+[Agent 工作区界面收缩](./audits/2026-09-17-agent-workspace-surface.zh-CN.md)：移除运行项目根、说明页脚和独立记忆管理；按 Raft 1.16.0 对齐树、标题及空态样式。
+
+[批次 B / R9：前端错误边界与 iOS 键盘](./audits/2026-09-16-r9-error-boundary-and-ios-keyboard.zh-CN.md)：`SurfaceErrorBoundary` 包裹整个 App 与九个页面区域,正常时透明,故障时脱敏诊断 + 重试/重载,不持有消息/草稿/选择状态;iOS 键盘只加 `?rahViewportDebug=1` 诊断钩子与实机验收脚本,未改 viewport/scroll owner,待实机验收。
+
+[侧栏偏好与 Composer 入口](./audits/2026-09-18-sidebar-and-composer-controls.zh-CN.md)：隐藏空分组、记忆展开选择、移动动态浮条及文件引用和设备上传。
+
+[Composer 文件引用](./design/composer-controls.md)：共享加号入口、授权文件树、多选路径引用、移动原生上传与共享弹窗样式。
+
 [滚动所有者排查与工具栏覆盖](./audits/2026-09-16-scroll-owner-audit.zh-CN.md)：慢历史请求、搜索重复定位、活动尾随和关闭焦点恢复；三个任务入口的 Web/PWA 留白实测。
 
 [任务触摸滚动与工具栏留白](./audits/2026-09-16-task-scroll-and-toolbar-insets.zh-CN.md)：修复原生滚动与刷新交错时锚点回拉，移动任务工具栏上下留白统一。
@@ -532,7 +552,7 @@ Task 页面与业务流的当前交付证据：[Raft Task 工作流对齐与正�
 
 本机 Computer 详情当前合同：[P6.6 Computer 侧栏、Runtime inspector、裁剪诊断与 Agent 跳转](./product/2026-09-02-computer-local-detail-contract.zh-CN.md)。当前证据为 `C/A/L/D`；Raft Computer 离线导致同前置非空数据 `R` 不可宣称。正式实例已从本轮验证过的不可变发布物恢复，但并发出现的非本批缺文件／缺导出仍阻塞当前源码整库重建，二者不得混为“全部通过”。
 
-P2 Agent workspace / 本地项目文件当前 owner 合同：[Raft workspace 请求、root 区分、AgentHost 路径安全、前端状态机与双边证据限制](./product/2026-09-02-agent-workspace-and-project-files-contract.zh-CN.md)。Raft 的 workspace 是 Agent 持久目录；RAH 的 `runtime-project` 是 daemon 冻结 cwd 的只读本地扩展，绝不能把客户端路径、cwd 或 Memory owner 混成同一身份。
+P2 Agent workspace / 本地项目文件历史 owner 合同：[Raft workspace 请求、AgentHost 路径安全、前端状态机与双边证据限制](./product/2026-09-02-agent-workspace-and-project-files-contract.zh-CN.md)。2026-09-17 用户撤回 `runtime-project` 第二根和独立记忆管理 UI；当前 Agent 工作区仅浏览 Agent 持久目录，主机文件引用由 Composer 的 Computer 文件树独立提供。
 
 前端鼠标、键盘和触屏状态的当前统一基线：[Raft 前端操作状态合同](./product/2026-09-02-raft-interaction-state-contract.zh-CN.md)、[双边 computed-style 与真实浏览器审计](./audits/2026-09-02-raft-interaction-state-verification.zh-CN.md)。该批把 rail、导航行、平面按钮、brutal 按钮、segmented、消息工具条和输入 focus 收敛为共享协议；条件弹层、逐实例拖拽和缺失发布 chunk 仍须继续追踪，不能据此宣称全站交互 1:1。
 

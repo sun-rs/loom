@@ -1,6 +1,12 @@
 # Agent 工作区与本地项目文件合同（P2）
 
-状态：`C/A/L/D` 完成。Raft 前端合同优先；项目 cwd 是 RAH local-first 的显式扩展，不冒称 Raft 服务端源码移植。
+当前规则（2026-09-17）：用户撤回第二根及独立记忆管理 UI，Agent 工作区只浏览该 Agent
+的持久目录。daemon 不再为该接口注入运行项目根；旧 runtime-project 请求不可读取文件。
+说明页脚一并移除，MEMORY.md 与 notes/ 原文件和运行时逻辑保持不变。
+参见[收缩与样式验收](../audits/2026-09-17-agent-workspace-surface.zh-CN.md)。
+下文保留 2026-09-02 的历史实现与证据，不再代表当前多根产品要求。
+
+历史状态：`C/A/L/D` 完成。项目 cwd 曾作为 RAH local-first 的显式扩展。
 
 ## 1. 上游事实与本地裁决
 
