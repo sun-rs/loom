@@ -11,6 +11,7 @@
     "packages/*"
   ],
   "scripts": {
+    "test:web:agent-start": "node scripts/test-agent-direct-start-browser.mjs",
     "check:repository-identity": "node scripts/repository-identity.mjs",
     "test:repository-identity": "node --test scripts/repository-identity.test.mjs",
     "prebuild:web:workbench": "npm run check:repository-identity",
@@ -79,7 +80,9 @@
     "test:web:local-help": "node scripts/run-local-help-browser-gate.mjs",
     "test:web:file-download": "node scripts/run-file-download-browser-gate.mjs",
     "test:web:agent-model-appearance": "node scripts/test-agent-model-appearance-browser.mjs",
+    "test:web:settings-repair": "node scripts/test-settings-repair-browser.mjs && node scripts/test-settings-archive-browser.mjs && node scripts/test-agent-activity-repair-browser.mjs",
     "test:web:agent-preview": "node scripts/run-agent-preview-browser-gate.mjs",
+    "test:web:tab-spacing": "node scripts/test-tab-content-spacing-browser.mjs",
     "test:web:foundations": "node scripts/run-ui-foundation-browser-gate.mjs",
     "test:web:ui-compare": "node scripts/run-ui-comparison.mjs && node scripts/run-ui-comparison.mjs docs/design/ui-shell-comparison-plan.json",
     "test:web:formal-discovery": "node scripts/run-discovery-formal-browser-acceptance.mjs",
@@ -94,7 +97,7 @@
     "test:real:opencode:deepseek-v4-flash": "RAH_REAL_CLI_GATE=opencode RAH_REAL_CLI_MODEL=deepseek/deepseek-v4-flash RAH_REAL_CLI_REASONING=max node --test packages/daemon/test/real-cli-gate.test.ts",
     "test:real:multi-cli": "RAH_REAL_MULTI_CLI_GATE=1 node --test packages/daemon/test/real-multi-cli-gate.test.ts",
     "typecheck": "tsc --noEmit && npm run typecheck --workspace=@rah-os/web",
-    "check": "npm run test:repository-identity && npm run test:workbench-launch && npm run check:ui-library && npm run test:ui:choice && npm run test:ui:component-spec && npm run check:ui-catalog && npm run check:ui-contract && npm run check:raft-parity && npm run typecheck && npm test && npm run test:web:unit && npm run test:parity:regression && npm run test:formal-browser-policy && npm run test:ui:bilateral-captures",
+    "check": "npm run test:repository-identity && npm run test:ci-workflow && npm run test:release-identity && npm run test:workbench-launch && npm run check:ui-library && npm run test:ui:choice && npm run test:ui:component-spec && npm run check:ui-catalog && npm run check:ui-contract && npm run check:raft-parity && npm run typecheck && npm test && npm run test:web:unit && npm run test:parity:regression && npm run test:formal-browser-policy && npm run test:ui:bilateral-captures",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "test:web:human-membership": "node scripts/run-human-membership-browser-gate.mjs",
@@ -118,6 +121,8 @@
     "test:web:search-count": "node scripts/run-search-count-browser-gate.mjs",
     "test:web:task-amend": "node scripts/run-task-amend-browser-gate.mjs",
     "test:web:sidebar-touch": "node scripts/test-sidebar-touch-browser.mjs && RAH_TOUCH_ENGINE=webkit node scripts/test-sidebar-touch-browser.mjs",
+    "test:release-identity": "node --test scripts/release-version.test.mjs scripts/workbench-web-assets.test.mjs",
+    "test:ci-workflow": "node --test scripts/ci-workflow-order.test.mjs",
     "test:workbench-launch": "node --test scripts/workbench-launch-mode.test.mjs scripts/workbench-launch-receipt.test.mjs"
   },
   "devDependencies": {

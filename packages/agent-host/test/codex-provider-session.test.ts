@@ -142,6 +142,18 @@ test("Codex automatically resumes Host-private Provider sessions with Raft fallb
     assert.equal((await runActivation("resume-fresh")).exit.code, 0);
     assert.equal((await runActivation("resume-resumed")).exit.code, 0);
     assert.equal((await runActivation("resume-missing")).exit.code, 0);
+    const unavailableModel = await runActivation("model-unavailable");
+    assert.equal(unavailableModel.exit.code, 1);
+    assert.equal(unavailableModel.exit.failure?.errorClass, "ModelConfigError");
+    assert.equal(
+      unavailableModel.exit.failure?.retryDisposition,
+      "sticky_terminal",
+      "an unavailable configured model must not trigger repeated paid attempts",
+    );
+    assert.match(
+      unavailableModel.exit.failure?.message ?? "",
+      /not supported by any configured account/,
+    );
     const permission = await runActivation("resume-permission");
     assert.equal(permission.exit.code, 1);
     assert.equal(
@@ -422,7 +434,9 @@ rl.on("line", (line) => {
   } else if (frame.method === "turn/start") {
     activeTurnId = "turn-" + activationId;
     send({jsonrpc:"2.0",id:frame.id,result:{turn:{id:activeTurnId,status:"inProgress"}}});
-    if (activationId !== "activation-codex-cancel-seed") {
+    if (activationId.endsWith("model-unavailable")) {
+      send({jsonrpc:"2.0",method:"turn/completed",params:{threadId,turn:{id:activeTurnId,status:"failed",error:{message:"Model gpt-test is not supported by any configured account in this group",codexErrorInfo:"other"}}}});
+    } else if (activationId !== "activation-codex-cancel-seed") {
       send({jsonrpc:"2.0",method:"turn/completed",params:{threadId,turn:{id:activeTurnId,status:"completed"}}});
     }
   } else if (frame.method === "turn/interrupt") {

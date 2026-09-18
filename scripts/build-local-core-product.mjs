@@ -31,6 +31,13 @@ import { build } from "rolldown";
 
 import { compareComputerReleaseVersions } from "../packages/agent-host/src/computer-release-source.ts";
 import { buildEmbeddedRuntimeDriverAsset } from "./build-embedded-runtime-driver.mjs";
+import {
+  BUILD_IDENTITY_META_NAME,
+  buildIdentitiesAgree,
+  decodeBuildIdentityMeta,
+  parseBuildIdentity,
+  resolveBuildIdentity,
+} from "./release-version.mjs";
 import { snapshotWorkbenchAssets } from "./workbench-web-assets.mjs";
 
 const execFileAsync = promisify(execFile);
@@ -67,13 +74,21 @@ export async function buildLocalCoreProduct(input) {
     "carrierExecutablePath",
   );
   const version = releaseVersion(input.version);
+  // One release identity for this artefact. A formal product build refuses to
+  // run without an explicit release version; it never falls back to 0.0.0 and
+  // never asks the Git working tree who it is.
+  const buildIdentity = adoptOrResolveBuildIdentity(
+    version,
+    input,
+    process.env.RAH_OS_BUILD_IDENTITY,
+  );
   const signIdentity = requiredText(input.signIdentity ?? "-", "signIdentity");
   const outputParent = dirname(outputPath);
   await ensureOutputParent(outputParent);
   await assertAbsent(outputPath);
   await assertSeaCarrier(carrierExecutablePath);
   const webBuildPath = await snapshotWorkbenchAssets(rootDirectory);
-  await assertWebBuild(webBuildPath);
+  await assertWebBuild(webBuildPath, buildIdentity);
   const stagingPath = await mkdtemp(
     join(outputParent, ".rah-os-local-core-build-"),
   );
@@ -85,7 +100,7 @@ export async function buildLocalCoreProduct(input) {
     await mkdir(bundleDirectory, { mode: 0o700 });
     await mkdir(binaryDirectory, { mode: 0o755 });
 
-    const bundlePath = await bundleCore(bundleDirectory);
+    const bundlePath = await bundleCore(bundleDirectory, buildIdentity);
     const supervisorPath = await bundleProcessSupervisor(bundleDirectory);
     const claudeDriverPath = await buildEmbeddedRuntimeDriverAsset({
       internalCommand: "__claude-stream-json-driver",
@@ -178,8 +193,15 @@ export async function buildLocalCoreProduct(input) {
   }
 }
 
-async function bundleCore(bundleDirectory) {
+async function bundleCore(bundleDirectory, buildIdentity) {
   const result = await build({
+    define: {
+      // Freeze the identity into the bundle so the shipped Core reports it
+      // without reading the environment it happens to start in.
+      "process.env.RAH_OS_BUILD_IDENTITY": JSON.stringify(
+        JSON.stringify(buildIdentity),
+      ),
+    },
     external: /^node:/u,
     input: coreEntryPath,
     output: {
@@ -274,14 +296,81 @@ async function fileDescriptor(productRoot, path) {
   });
 }
 
-async function assertWebBuild(path) {
+async function assertWebBuild(path, buildIdentity) {
   const metadata = await lstat(path);
   if (!metadata.isDirectory() || metadata.isSymbolicLink()) {
     throw new Error("production Web build is missing");
   }
-  const index = await lstat(join(path, "index.html"));
+  const indexPath = join(path, "index.html");
+  const index = await lstat(indexPath);
   if (!index.isFile() || index.isSymbolicLink() || index.size < 1) {
     throw new Error("production Web index is missing");
+  }
+  assertWebBuildIdentity(await readFile(indexPath, "utf8"), buildIdentity);
+}
+
+// One release identity per build. An identity already resolved by the operator
+// (`RAH_OS_BUILD_IDENTITY`, the same value the Web build consumed) wins, so the
+// Web bundle and the Core agree byte for byte. It must still name the release
+// version this invocation was told to build.
+function adoptOrResolveBuildIdentity(version, input, injected) {
+  if (injected !== undefined && injected !== "") {
+    const adopted = parseBuildIdentity(injected);
+    if (adopted.kind !== "release" || adopted.releaseVersion !== version) {
+      throw new Error(
+        `RAH_OS_BUILD_IDENTITY names ${adopted.version}, not the requested release ${version}`,
+      );
+    }
+    if (input.commit !== undefined && adopted.commit !== input.commit) {
+      throw new Error(
+        "RAH_OS_BUILD_IDENTITY commit does not match the requested --commit",
+      );
+    }
+    return adopted;
+  }
+  return resolveBuildIdentity({
+    mode: "formal",
+    releaseVersion: version,
+    ...(input.commit === undefined ? {} : { commit: input.commit }),
+    ...(input.builtAt === undefined ? {} : { builtAt: input.builtAt }),
+  });
+}
+
+// The Web bundle is built before this script runs. A product may only ship a
+// Web bundle that carries the same release identity as the Core it is packaged
+// with; a development bundle is refused instead of being relabelled.
+export function assertWebBuildIdentity(index, buildIdentity) {
+  const matches = Array.from(
+    index.matchAll(
+      new RegExp(
+        `<meta\\s+name=["']${BUILD_IDENTITY_META_NAME}["']\\s+content=["']([^"']+)["']\\s*/?\\s*>`,
+        "giu",
+      ),
+    ),
+    (match) => match[1],
+  );
+  if (matches.length !== 1) {
+    throw new Error(
+      "production Web build carries no release identity; rebuild it with RAH_OS_BUILD_IDENTITY",
+    );
+  }
+  const webIdentity = decodeBuildIdentityMeta(matches[0]);
+  if (webIdentity === undefined) {
+    throw new Error("production Web build release identity is invalid");
+  }
+  if (webIdentity.kind !== "release") {
+    throw new Error(
+      "production Web build is a development bundle; rebuild it with an explicit release version",
+    );
+  }
+  // Full identity equality, not just the version: two builds of the same commit
+  // are still two different artefacts, and the acceptance check after a restart
+  // compares buildId. Export RAH_OS_BUILD_IDENTITY once and reuse it for both
+  // the Web build and this one.
+  if (!buildIdentitiesAgree(webIdentity, buildIdentity)) {
+    throw new Error(
+      `production Web build identity (${webIdentity.version}, build ${webIdentity.buildId}) does not match the Core identity (${buildIdentity.version}, build ${buildIdentity.buildId}); resolve one identity with scripts/release-version.mjs and export RAH_OS_BUILD_IDENTITY for both builds`,
+    );
   }
 }
 
@@ -429,6 +518,8 @@ function parseArguments(values) {
     if (
       (key !== "--output" &&
         key !== "--carrier" &&
+        key !== "--commit" &&
+        key !== "--built-at" &&
         key !== "--sign-identity" &&
         key !== "--version") ||
       value === undefined ||
@@ -440,7 +531,9 @@ function parseArguments(values) {
   }
   if (!parsed.has("--output") || !parsed.has("--version")) throw usage();
   return {
+    builtAt: parsed.get("--built-at"),
     carrierExecutablePath: parsed.get("--carrier"),
+    commit: parsed.get("--commit"),
     outputPath: parsed.get("--output"),
     signIdentity: parsed.get("--sign-identity"),
     version: parsed.get("--version"),
@@ -449,7 +542,7 @@ function parseArguments(values) {
 
 function usage() {
   return new Error(
-    "usage: build-local-core-product --output <absolute-directory> --version <semver> [--carrier <absolute-node>] [--sign-identity <identity>]",
+    "usage: build-local-core-product --output <absolute-directory> --version <semver> [--commit <sha>] [--built-at <iso8601>] [--carrier <absolute-node>] [--sign-identity <identity>]",
   );
 }
 

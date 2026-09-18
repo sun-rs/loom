@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-09-18",
+  "scope": "Claude direct busy delivery; not complete runtime lifecycle parity",
+  "upstream": {
+    "version": "Raft Computer 1.0.32",
+    "url": "https://cdn.raft.build/computer/1.0.32/raft-computer-darwin-arm64",
+    "extractedFile": "main.js",
+    "sha256": "531f41e2ee626d729c92933fbc753008af42380c5745c54b5d0af9901e43d170",
+    "claudeDriverLine": 836632,
+    "turnEndLine": 847860
+  },
+  "realGate": {
+    "command": "RAH_REAL_NATIVE_BUSY_GATE=1 RAH_REAL_NATIVE_BUSY_CLI=claude node --test packages/daemon/test/real-native-busy-gate.test.ts",
+    "outcome": "passed",
+    "model": "sonnet",
+    "reasoning": "low",
+    "fixtureDirectory": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-native-busy-claude-YK73NX",
+    "scenario": "Completed warmup; 30-second tool in resumed session; append while tool remains active",
+    "appendCommittedAt": "2026-09-18T03:28:43.758Z",
+    "nativeAcceptedAt": "2026-09-18T03:28:44.176Z",
+    "nativeInputType": "queued_command",
+    "nativeInputCount": 1,
+    "appendToNativeAcceptedMs": 418,
+    "originalReplyAt": "2026-09-18T03:29:19.215Z",
+    "appendReplyAt": "2026-09-18T03:29:21.279Z",
+    "runsAtRepliesExcludingWarmup": 1,
+    "originalReplyCount": 1,
+    "appendReplyCount": 1,
+    "mainRunEndedAt": "2026-09-18T03:29:24.130Z",
+    "followupRunStartedAt": "2026-09-18T03:29:24.137Z",
+    "followupRunEndedAt": "2026-09-18T03:29:33.456Z",
+    "followupRunMs": 9319,
+    "followupBusinessReplies": 0
+  },
+  "automated": {
+    "directRegression": "three intended failures under old gated behavior, then passed",
+    "continuityRegression": "two intended failures for compatible prompt/session keys, then passed",
+    "packageTests": { "passed": 1677, "failed": 0, "paidSkipped": 17 },
+    "typecheck": "passed",
+    "formatCheck": "passed",
+    "diffCheck": "passed",
+    "fullCheck": "failed: concurrently modified sidebar CSS differs from maintained UI evidence; an unregistered empty-section rule is also reported"
+  },
+  "deployment": {
+    "status": "blocked",
+    "reason": "Formal state contains one pre-existing quarantined OpenCode Activation. Existing assertWorkbenchIdle rejects it. No active RunAttempt or nonterminal RuntimeProcess was found; quarantine was preserved.",
+    "formalInstanceRestarted": false
+  },
+  "raftBilateralTiming": "not performed",
+  "remaining": [
+    "Kernel proof for a follow-up already consumed by the active run",
+    "Persistent Provider instance separate from turn/RunAttempt authority and terminal proof",
+    "Kimi native system/steer compatible with installed CLI and existing session history",
+    "Same-precondition multi-provider DM and channel timing"
+  ]
+}

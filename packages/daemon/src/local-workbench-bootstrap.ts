@@ -23,6 +23,7 @@ import { z } from "zod";
 import { DaemonConfigSchema, type DaemonConfigV4 } from "./config.ts";
 import { ensureAllChannel } from "./ensure-all-channel.ts";
 import { reconcileLocalWorkbenchRuntimeBindings } from "./local-workbench-runtime-bindings.ts";
+import { protectKernelSchemaMigration } from "./state-backup.ts";
 
 const LocalWorkbenchMetadataSchema = z
   .object({
@@ -105,6 +106,9 @@ export async function prepareLocalWorkbench(input: {
   const hostSecretPath = join(stateDirectory, "host.token");
   const humanAccessToken = readOwnerPrivateSecret(humanSecretPath);
   const hostAccessToken = readOwnerPrivateSecret(hostSecretPath);
+  // Schema transitions are detected read-only and snapshotted before the Kernel
+  // is allowed to migrate. Nothing pending means nothing is copied.
+  await protectKernelSchemaMigration({ stateDirectory });
   verifyCanonicalState({
     hostAccessToken,
     humanAccessToken,
@@ -432,8 +436,18 @@ function verifyCanonicalState(input: {
   const kernel = new RoomKernel({
     databasePath: join(input.stateDirectory, "room.db"),
   });
-  kernel.initialize();
   try {
+    // Verification never migrates: the snapshot-guarded owner above already
+    // ran every schema transition, so a second initialize on the live database
+    // would re-run migrations outside that protection.
+    // `pendingSchemaChanges` reports only work a migration can act on; legacy
+    // drift is reported by the guarded migration owner and never blocks a start.
+    const pending = kernel.pendingSchemaChanges();
+    if (pending.length > 0) {
+      throw new Error(
+        `local workbench state still has ${pending.length} pending schema changes (first: ${pending[0]?.kind}:${pending[0]?.name}); the guarded migration did not complete`,
+      );
+    }
     const actor = kernel.authenticateHumanAccessToken(input.humanAccessToken);
     const principal = kernel.getAuthenticatedPrincipal(actor);
     if (principal.kind !== "human") {

@@ -6,7 +6,7 @@ import {
 } from "@rah-os/ui-web/neo-brutalist/context-actions";
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { useSidebarPreferences } from "./sidebar-preferences.tsx";
-import { useDialogProtocol } from "../dialog-protocol.ts";
+import { RoomArchiveConfirmation } from "./room-dialogs.tsx";
 import { browserOpaqueId } from "../browser-opaque-id.ts";
 export type ChatContextTarget = {
   key: string;
@@ -188,7 +188,7 @@ export function ChatContextActions({
       {error && <p role="alert">{error}</p>}
       {dialog && (
         <ContextDialog
-          title={dialog === "section" ? "新建分区" : `归档 #${target?.name}`}
+          title={dialog === "section" ? "新建分区" : (target?.name ?? "")}
           needsName={dialog === "section"}
           onClose={() => setDialog(undefined)}
           onSubmit={async (name, emoji) => {
@@ -220,7 +220,6 @@ export function ChatContextActions({
 }
 function ArchiveContextDialog({
   title,
-  needsName,
   onSubmit,
   onClose,
 }: {
@@ -229,78 +228,27 @@ function ArchiveContextDialog({
   onSubmit: (name: string) => Promise<void>;
   onClose: () => void;
 }) {
-  const [name, setName] = useState(""),
-    [pending, setPending] = useState(false),
+  const [pending, setPending] = useState(false),
     [error, setError] = useState<string>();
-  const dialogRef = useDialogProtocol({ blocked: pending, onClose });
   return (
-    <div className="rah-dialog-layer">
-      <button
-        className="rah-dialog-backdrop"
-        aria-label="关闭菜单操作"
-        disabled={pending}
-        onClick={onClose}
-      />
-      <section
-        className="rah-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        ref={dialogRef}
-        tabIndex={-1}
-      >
-        <header>
-          <h2>{title}</h2>
-        </header>
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            if (pending) return;
-            setPending(true);
-            try {
-              await onSubmit(name.trim());
-            } catch (e) {
-              setError(e instanceof Error ? e.message : "保存失败");
-            } finally {
-              setPending(false);
-            }
-          }}
-        >
-          <div className="rah-dialog-body">
-            {needsName ? (
-              <label>
-                名称
-                <input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  maxLength={80}
-                  autoFocus
-                />
-              </label>
-            ) : (
-              <p>归档后保留消息历史，停止接收新消息。</p>
-            )}
-            {error && <p role="alert">{error}</p>}
-          </div>
-          <footer>
-            <button
-              type="button"
-              className="btn"
-              disabled={pending}
-              onClick={onClose}
-            >
-              取消
-            </button>
-            <button
-              className="btn"
-              disabled={pending || (needsName && !name.trim())}
-            >
-              {pending ? "保存中…" : "确认"}
-            </button>
-          </footer>
-        </form>
-      </section>
-    </div>
+    <RoomArchiveConfirmation
+      name={title}
+      blocked={pending}
+      error={error}
+      onCancel={onClose}
+      onConfirm={async () => {
+        if (pending) return;
+        setPending(true);
+        setError(undefined);
+        try {
+          await onSubmit("");
+        } catch (e) {
+          setError(e instanceof Error ? e.message : "归档失败");
+        } finally {
+          setPending(false);
+        }
+      }}
+    />
   );
 }
 

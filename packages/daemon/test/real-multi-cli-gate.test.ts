@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import { agentExecutionWorkspacePath } from "../../agent-host/src/agent-execution-workspace.ts";
 
 import { RoomKernel } from "@rah-os/kernel";
 import type {
@@ -100,6 +101,19 @@ test(
         "/v1/local/runtimes/list",
         {},
       );
+      await waitUntil(
+        () =>
+          runtimeSpecs.every((spec) => {
+            const offerId = inventory.runtimes.find(
+              (runtime) => runtime.runtimeProfileId === spec.runtimeProfileId,
+            )?.runtimeOfferId;
+            return (
+              offerId !== undefined &&
+              observer!.runtimeOfferIsCurrentlyAvailable(offerId)
+            );
+          }),
+        60_000,
+      );
       const catalog = await postJson<{ agents: AgentCatalogEntry[] }>(
         origin,
         prepared.humanAccessToken,
@@ -180,23 +194,17 @@ test(
         });
       }
 
-      for (const [index, agent] of catalog.agents.entries()) {
-        const roomDelivery = await syncRoom(
-          origin,
-          prepared.humanAccessToken,
-          prepared.metadata.defaultRoomId,
-          "real-multi-cli-room-admin",
-        );
-        await postJson(
-          origin,
-          prepared.humanAccessToken,
-          "/v3/client/agents/onboard",
-          {
-            agentDefinitionId: agent.definition.agentDefinitionId,
-            basedOnRoomSeq: roomDelivery.latestRoomSeq,
-            idempotencyKey: `real-multi-cli-onboard-${String(index)}`,
-            roomId: prepared.metadata.defaultRoomId,
-          },
+      const membership = await postJson<{
+        memberships: { principalId: string }[];
+      }>(origin, prepared.humanAccessToken, "/v3/client/rooms/members/list", {
+        roomId: prepared.metadata.defaultRoomId,
+      });
+      for (const agent of catalog.agents) {
+        assert.ok(
+          membership.memberships.some(
+            (member) => member.principalId === agent.definition.participantId,
+          ),
+          "#all automatically includes every bootstrapped Agent",
         );
       }
 
@@ -232,6 +240,10 @@ test(
         const activations = observer!.listActivations({
           roomId: prepared.metadata.defaultRoomId,
         });
+        assert.ok(
+          activations.every((activation) => activation.state !== "quarantined"),
+          "a quarantined real Provider cannot pass ordinary-message acceptance",
+        );
         return (
           replies.length === APPROVED_CLIS.length &&
           activations.length >= APPROVED_CLIS.length &&
@@ -308,10 +320,6 @@ test(
         prepared.metadata.defaultRoomId,
         "real-multi-cli-human",
       );
-      const durableProofPath = join(
-        workspaceDirectory,
-        "RAH_TASK_INTENT_PROOF.txt",
-      );
       const durablePosted = await postJson<{
         activationIds: string[];
         event: { aggregateId: string; roomSeq: number };
@@ -368,6 +376,13 @@ test(
       assert.equal(automaticTask.state, "submitted");
       assert.ok(automaticTask.assigneeId);
       assert.ok(participantIds.has(automaticTask.assigneeId));
+      const durableProofPath = join(
+        agentExecutionWorkspacePath(
+          join(stateDirectory, "agent-workspaces"),
+          automaticTask.assigneeId,
+        ),
+        "RAH_TASK_INTENT_PROOF.txt",
+      );
       assert.equal(
         readFileSync(durableProofPath, "utf8").trim(),
         "RAH OS real Task intent gate",

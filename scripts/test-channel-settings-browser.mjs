@@ -67,6 +67,14 @@ try {
     .boundingBox();
   assert.equal(footerBox.y - textareaBox.y - textareaBox.height, 12);
   const pin = page.getByRole("checkbox", { name: "置顶频道", exact: true });
+  await pin.locator("..").locator("i").hover();
+  assert.equal(
+    await pin.evaluate(
+      (e) => getComputedStyle(e.nextElementSibling).backgroundColor,
+    ),
+    "rgba(255, 212, 64, 0.3)",
+    "unchecked channel switches use the same hover as Settings switches",
+  );
   await pin.locator("..").click();
   await page.waitForFunction(
     () => !document.querySelector('input[aria-label="置顶频道"]').disabled,

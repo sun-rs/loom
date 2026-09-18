@@ -1,6 +1,7 @@
 import { useAgentEnvironmentDraft } from "../use-agent-environment-draft.ts";
 import type { RahClient } from "@rah-os/client-sdk";
 import { AgentLaunchSettingsEditor } from "./agent-launch-settings-editor.tsx";
+import { AgentProviderEditor, providerKeys } from "./agent-provider-editor.tsx";
 import { useRef, useState, type ReactNode } from "react";
 import type {
   ClientAgentGetResponse,
@@ -191,6 +192,12 @@ export function AgentRuntimeDialog({
               setServiceTier("default");
             }}
           />
+          <AgentProviderEditor
+            runtimeId={runtime?.cliId}
+            rows={environmentDraft.rows}
+            onChange={environmentDraft.setRows}
+            disabled={pending || refreshing || !environmentDraft.ready}
+          />
           <RuntimePicker
             label="模型"
             belowControl={
@@ -285,6 +292,7 @@ export function AgentRuntimeDialog({
             </div>
           )}
           <AgentLaunchSettingsEditor
+            hiddenKeys={runtime?.cliId === "claude" ? providerKeys : []}
             draft={environmentDraft}
             blocked={pending || refreshing}
           />

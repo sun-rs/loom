@@ -388,14 +388,18 @@ async function resetAgentExecution(
     request.agentDefinitionId,
   );
   const ownerParticipantId = management.agent.definition.participantId;
+  const wasDisabled = management.agent.definition.state === "disabled";
   let disabled = false;
-  const disabledResult = manageAgentStateAtLatest(input.human, actor, {
-    agentDefinitionId: request.agentDefinitionId,
-    basedOnRoomSeq: request.basedOnRoomSeq,
-    idempotencyKey: `${request.idempotencyKey}:execution-reset:disable`,
-    state: "disabled",
-  });
-  disabled = true;
+  const disabledResult = wasDisabled
+    ? undefined
+    : manageAgentStateAtLatest(input.human, actor, {
+        agentDefinitionId: request.agentDefinitionId,
+        basedOnRoomSeq: request.basedOnRoomSeq,
+        idempotencyKey: `${request.idempotencyKey}:execution-reset:disable`,
+        state: "disabled",
+      });
+  const disabledSeq = disabledResult?.event.roomSeq ?? request.basedOnRoomSeq;
+  disabled = !wasDisabled;
   try {
     const receipt = await input.coordinator.reset(
       {
@@ -408,7 +412,7 @@ async function resetAgentExecution(
         afterContinuity: async () => {
           manageAgentStateAtLatest(input.human, actor, {
             agentDefinitionId: request.agentDefinitionId,
-            basedOnRoomSeq: disabledResult.event.roomSeq,
+            basedOnRoomSeq: disabledSeq,
             idempotencyKey: `${request.idempotencyKey}:execution-reset:enable`,
             state: "enabled",
           });
@@ -422,7 +426,7 @@ async function resetAgentExecution(
     try {
       manageAgentStateAtLatest(input.human, actor, {
         agentDefinitionId: request.agentDefinitionId,
-        basedOnRoomSeq: disabledResult.event.roomSeq,
+        basedOnRoomSeq: disabledSeq,
         idempotencyKey: `${request.idempotencyKey}:execution-reset:restore`,
         state: "enabled",
       });

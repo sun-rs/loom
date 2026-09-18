@@ -522,90 +522,120 @@ test("AgentHost daemon loop reconciles durable work without a wake hint", async 
   }
 });
 
-test("AgentHost cancels a hung runtime, records timeout, and requeues", async () => {
-  const directory = mkdtempSync(join(tmpdir(), "rah-os-agent-host-timeout-"));
-  try {
-    const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
-    kernel.initialize();
-    const humanProvisioning = kernel.provisionPrincipal({
-      handle: "timeout-human",
-      kind: "human",
-    });
-    const agentProvisioning = kernel.provisionPrincipal({
-      handle: "timeout-agent",
-      kind: "agent",
-    });
-    const humanActor = kernel.authenticateAccessToken(
-      humanProvisioning.accessToken,
-    );
-    const agentActor = kernel.authenticateAccessToken(
-      agentProvisioning.accessToken,
-    );
-    const room = kernel.createRoom(humanActor, {
-      name: "Runtime timeout",
-      slug: "runtime-timeout",
-    });
-    kernel.addMember(humanActor, {
-      principalId: agentProvisioning.principal.principalId,
-      roomId: room.roomId,
-    });
-    kernel.postMessage(humanActor, {
-      body: "This runtime will hang",
-      idempotencyKey: "timeout-message",
-      recipients: [
-        {
-          participantId: agentProvisioning.principal.principalId,
-          reason: "mention",
+for (const alive of [false, true])
+  test(`AgentHost ${alive ? "retains a live runtime across watchdog intervals" : "cancels an unresponsive runtime, records timeout, and requeues"}`, async () => {
+    const directory = mkdtempSync(join(tmpdir(), "rah-os-agent-host-timeout-"));
+    try {
+      const kernel = new RoomKernel({
+        databasePath: join(directory, "room.db"),
+      });
+      kernel.initialize();
+      const humanProvisioning = kernel.provisionPrincipal({
+        handle: "timeout-human",
+        kind: "human",
+      });
+      const agentProvisioning = kernel.provisionPrincipal({
+        handle: "timeout-agent",
+        kind: "agent",
+      });
+      const humanActor = kernel.authenticateAccessToken(
+        humanProvisioning.accessToken,
+      );
+      const agentActor = kernel.authenticateAccessToken(
+        agentProvisioning.accessToken,
+      );
+      const room = kernel.createRoom(humanActor, {
+        name: "Runtime timeout",
+        slug: "runtime-timeout",
+      });
+      kernel.addMember(humanActor, {
+        principalId: agentProvisioning.principal.principalId,
+        roomId: room.roomId,
+      });
+      kernel.postMessage(humanActor, {
+        body: "This runtime will hang",
+        idempotencyKey: "timeout-message",
+        recipients: [
+          {
+            participantId: agentProvisioning.principal.principalId,
+            reason: "mention",
+          },
+        ],
+        roomId: room.roomId,
+      });
+
+      let finish!: (exit: { code: number }) => void;
+      const completion = new Promise<{ code: number }>((resolve) => {
+        finish = resolve;
+      });
+      const runtime = Object.assign(
+        new FakeRuntimeAdapter({
+          onReap: async () => await completion,
+          onStart: (input) => {
+            const delivery = kernel.sync(agentActor, {
+              consumerId: input.consumerId,
+              roomId: input.roomId,
+            });
+            kernel.acknowledgeCursor(agentActor, {
+              consumerId: input.consumerId,
+              roomId: input.roomId,
+              throughSeq: delivery.cursorAfter,
+            });
+          },
+        }),
+        { isAlive: async () => alive },
+      );
+      let intervals = 0;
+      const host = new AgentHost({
+        host: authenticateHost(kernel, "timeout-host", [
+          agentProvisioning.principal.principalId,
+        ]),
+        kernel,
+        leaseMs: 30_000,
+        maintenanceWait: waitUntilAborted,
+        runTimeoutMs: 60_000,
+        runtime,
+        timeoutWait: async (_delay, signal) => {
+          if (++intervals === 3) {
+            finish({ code: 0 });
+            await waitUntilAborted(_delay, signal);
+          }
         },
-      ],
-      roomId: room.roomId,
-    });
+      });
 
-    const runtime = new FakeRuntimeAdapter({
-      onReap: async () => await new Promise(() => {}),
-      onStart: (input) => {
-        const delivery = kernel.sync(agentActor, {
-          consumerId: input.consumerId,
-          roomId: input.roomId,
-        });
-        kernel.acknowledgeCursor(agentActor, {
-          consumerId: input.consumerId,
-          roomId: input.roomId,
-          throughSeq: delivery.cursorAfter,
-        });
-      },
-    });
-    const host = new AgentHost({
-      host: authenticateHost(kernel, "timeout-host", [
-        agentProvisioning.principal.principalId,
-      ]),
-      kernel,
-      leaseMs: 30_000,
-      maintenanceWait: waitUntilAborted,
-      runTimeoutMs: 60_000,
-      runtime,
-      timeoutWait: async () => {},
-    });
+      const result = await host.reconcileOnce();
 
-    const result = await host.reconcileOnce();
+      if (alive) {
+        assert.equal(result.state, "completed");
+        assert.equal(intervals, 3);
+        assert.equal(runtime.cancellations.length, 0);
+        assert.equal(kernel.listRunAttempts({ roomId: room.roomId }).length, 1);
+        assert.equal(
+          kernel.listActivations({ roomId: room.roomId })[0]?.state,
+          "completed",
+        );
+      } else {
+        assert.equal(result.state, "failed");
+        assert.match(
+          result.state === "failed" ? result.error : "",
+          /timed out/i,
+        );
+        assert.equal(runtime.cancellations.length, 1);
+        assert.equal(
+          kernel.listRunAttempts({ roomId: room.roomId })[0]?.state,
+          "timed_out",
+        );
+        assert.equal(
+          kernel.listActivations({ roomId: room.roomId })[0]?.state,
+          "queued",
+        );
+      }
 
-    assert.equal(result.state, "failed");
-    assert.match(result.state === "failed" ? result.error : "", /timed out/i);
-    assert.equal(runtime.cancellations.length, 1);
-    assert.equal(
-      kernel.listRunAttempts({ roomId: room.roomId })[0]?.state,
-      "timed_out",
-    );
-    assert.equal(
-      kernel.listActivations({ roomId: room.roomId })[0]?.state,
-      "queued",
-    );
-
-    kernel.close();
-  } finally {
-    rmSync(directory, { force: true, recursive: true });
-  }
-});
+      kernel.close();
+    } finally {
+      rmSync(directory, { force: true, recursive: true });
+    }
+  });
 
 test("AgentHost quarantines a lane when runtime termination cannot be proven", async () => {
   const directory = mkdtempSync(

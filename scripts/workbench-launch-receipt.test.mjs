@@ -101,3 +101,122 @@ test("successful startup receipt is private, round-trips and is replaced with th
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+// The incumbent 2026-09-16 entry set: Tailnet plus one explicitly trusted LAN
+// address. A restart must reproduce it exactly, from the receipt, never from a
+// rescan of the host's interfaces.
+test("a Tailnet receipt carries its trusted LAN entries into an empty shell restart", () => {
+  const mode = {
+    kind: "tailnet",
+    bindHost: "100.101.107.87",
+    additionalBindHosts: ["127.0.0.1", "192.168.1.86"],
+    port: 4173,
+  };
+  const env = restartNetworkEnvironment(
+    { PATH: "/bin" },
+    { schemaVersion: 1, pid: 42, mode },
+    42,
+  );
+  assert.equal(env.RAH_TAILNET_HOST, "100.101.107.87");
+  assert.equal(env.RAH_TRUSTED_LAN_HOSTS, "192.168.1.86");
+  const restarted = workbenchLaunchMode(env, "/tmp/rah", {
+    en0: [{ family: "IPv4", internal: false, address: "10.55.0.9" }],
+  });
+  assert.deepEqual(restarted, mode);
+  assert.deepEqual(
+    [restarted.bindHost, ...restarted.additionalBindHosts]
+      .map((host) => `${host}:${String(restarted.port)}`)
+      .sort(),
+    ["100.101.107.87:4173", "127.0.0.1:4173", "192.168.1.86:4173"],
+  );
+});
+test("a Tailnet-only receipt does not reintroduce LAN entries on restart", () => {
+  const env = restartNetworkEnvironment(
+    { RAH_TRUSTED_LAN_HOSTS: "10.0.0.5" },
+    {
+      schemaVersion: 1,
+      pid: 42,
+      mode: { kind: "tailnet", bindHost: "100.64.0.2", port: 4173 },
+    },
+    42,
+  );
+  assert.equal(env.RAH_TRUSTED_LAN_HOSTS, undefined);
+  assert.deepEqual(
+    workbenchLaunchMode(env, "/tmp/rah", {
+      en0: [{ family: "IPv4", internal: false, address: "192.168.1.86" }],
+    }).additionalBindHosts,
+    ["127.0.0.1"],
+  );
+});
+test("a corrupted network entry list fails closed instead of narrowing or widening", () => {
+  for (const additionalBindHosts of [
+    ["127.0.0.1", "203.0.113.5"],
+    ["127.0.0.1", "192.168.1.999"],
+    ["127.0.0.1", "0.0.0.0"],
+    ["127.0.0.1", "192.168.1.86", "192.168.1.86"],
+    "192.168.1.86",
+  ]) {
+    assert.throws(
+      () =>
+        restartNetworkEnvironment(
+          {},
+          {
+            schemaVersion: 1,
+            pid: 42,
+            mode: {
+              kind: "tailnet",
+              bindHost: "100.101.107.87",
+              additionalBindHosts,
+              port: 4173,
+            },
+          },
+          42,
+        ),
+      /trusted LAN/iu,
+      `expected ${JSON.stringify(additionalBindHosts)} to fail closed`,
+    );
+  }
+});
+test("writing a receipt refuses a network entry set the launcher could not reproduce", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "rah-launch-receipt-"));
+  try {
+    await assert.rejects(
+      writeLaunchReceipt(
+        dir,
+        {
+          kind: "tailnet",
+          bindHost: "100.101.107.87",
+          additionalBindHosts: ["127.0.0.1", "203.0.113.5"],
+          port: 4173,
+        },
+        42,
+      ),
+      /trusted LAN/iu,
+    );
+    assert.equal(await readLaunchReceipt(dir), undefined);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+test("a receipt whose Tailnet entry left the CGNAT range fails closed", () => {
+  for (const bindHost of [
+    "192.168.1.86",
+    "127.0.0.1",
+    "203.0.113.5",
+    "0.0.0.0",
+  ])
+    assert.throws(
+      () =>
+        restartNetworkEnvironment(
+          {},
+          {
+            schemaVersion: 1,
+            pid: 42,
+            mode: { kind: "tailnet", bindHost, port: 4173 },
+          },
+          42,
+        ),
+      /Tailnet/u,
+      `expected receipt bindHost ${bindHost} to fail closed`,
+    );
+});

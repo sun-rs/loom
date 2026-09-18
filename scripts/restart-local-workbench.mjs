@@ -13,10 +13,11 @@ import { DatabaseSync } from "node:sqlite";
 import { parseArgs } from "node:util";
 import { snapshotWorkbenchAssets } from "./workbench-web-assets.mjs";
 import {
-  assertWorkbenchIdle,
+  assertWorkbenchRestartable,
   backupState,
   fileInventory,
   guardedStop,
+  preflightKernelUpgrade,
   verifyStateBackup,
 } from "./workbench-restart-guard.mjs";
 import { assertRahOsRepositoryIdentity } from "./repository-identity.mjs";
@@ -89,7 +90,7 @@ function inspect() {
   assert.equal(listening, String(pid), "PID does not own this port");
   const db = new DatabaseSync(join(state, "room.db"), { readOnly: true });
   try {
-    assertWorkbenchIdle(db);
+    assertWorkbenchRestartable(db);
     return db
       .prepare(
         "SELECT room_id, max(room_seq) AS seq FROM room_events GROUP BY room_id ORDER BY room_id",
@@ -144,7 +145,9 @@ await guardedStop({
     return true;
   },
   async verify() {
-    return verifyStateBackup(target, receipt);
+    await verifyStateBackup(target, receipt);
+    await preflightKernelUpgrade(join(target, "room.db"));
+    return true;
   },
   async recheck() {
     assert.deepEqual(await fileInventory(state), {

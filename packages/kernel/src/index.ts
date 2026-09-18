@@ -25,6 +25,13 @@ export {
   AuthenticatedWorkerExecutionContext,
 } from "./auth.ts";
 export { KERNEL_SCHEMA_VERSION, RoomKernel } from "./room-kernel.ts";
+export type {
+  KernelInitializeOptions,
+  KernelSchemaChange,
+  KernelSchemaState,
+} from "./kernel-schema-state.ts";
+export { readAllChannelCandidates } from "./all-channel-membership.ts";
+export type { AllChannelCandidateSnapshot } from "./all-channel-membership.ts";
 
 export { TaskReviewService } from "./task-review-service.ts";
 export { ReminderService } from "./reminder-service.ts";

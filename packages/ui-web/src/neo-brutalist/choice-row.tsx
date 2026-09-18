@@ -1,4 +1,8 @@
-import type { ComponentPropsWithRef, SyntheticEvent } from "react";
+import {
+  useState,
+  type ComponentPropsWithRef,
+  type SyntheticEvent,
+} from "react";
 
 type Profile =
   | {
@@ -21,8 +25,14 @@ type Profile =
     };
 type Props = Profile &
   (
-    | ({ as?: "button" } & Omit<ComponentPropsWithRef<"button">, "style">)
-    | ({ as: "div" } & Omit<ComponentPropsWithRef<"div">, "style">)
+    | ({ as?: "button"; clearHighlightOnDeselect?: boolean } & Omit<
+        ComponentPropsWithRef<"button">,
+        "style"
+      >)
+    | ({ as: "div"; clearHighlightOnDeselect?: never } & Omit<
+        ComponentPropsWithRef<"div">,
+        "style"
+      >)
   );
 
 /** Source-backed choice presentation. Callers own navigation, selection and checks.
@@ -32,9 +42,11 @@ export function ChoiceRow({
   selection,
   selected,
   current,
+  clearHighlightOnDeselect = false,
   className = "",
   ...props
 }: Props) {
+  const [highlightDismissed, setHighlightDismissed] = useState(false);
   const ariaDisabled =
     props["aria-disabled"] === true || props["aria-disabled"] === "true";
   const blockActivation = (event: SyntheticEvent) => {
@@ -45,6 +57,8 @@ export function ChoiceRow({
     className: `rah-choice-row ${className}`,
     "data-choice-profile": profile,
     "data-choice-current": current || undefined,
+    "data-choice-highlight-dismissed":
+      (clearHighlightOnDeselect && highlightDismissed && !current) || undefined,
     "data-choice-selected": (selected && selection === "tint") || undefined,
   };
   if (props.as === "div") {
@@ -68,6 +82,23 @@ export function ChoiceRow({
       {...rest}
       {...state}
       disabled={rest.disabled || ariaDisabled}
+      onClick={(event) => {
+        rest.onClick?.(event);
+        if (clearHighlightOnDeselect && !event.defaultPrevented)
+          setHighlightDismissed(Boolean(current));
+      }}
+      onPointerEnter={(event) => {
+        setHighlightDismissed(false);
+        rest.onPointerEnter?.(event);
+      }}
+      onPointerLeave={(event) => {
+        setHighlightDismissed(false);
+        rest.onPointerLeave?.(event);
+      }}
+      onBlur={(event) => {
+        setHighlightDismissed(false);
+        rest.onBlur?.(event);
+      }}
     />
   );
 }

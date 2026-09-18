@@ -364,6 +364,13 @@ export class ComputerApplicationService {
               request,
             ),
           };
+        case "delivery.presented.sent":
+          this.#computer.markPresentedDeliverySent?.(session.host, {
+            activationId: request.activationId,
+            consumerId: request.consumerId,
+            runAttemptId: request.runAttemptId,
+          });
+          return { kind: request.kind, registered: true as const };
         case "run.trajectory.append":
           return {
             activity: this.#computer.appendRunTrajectory(session.host, request),

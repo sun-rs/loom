@@ -4,9 +4,11 @@ import { RuntimeEnvironmentEditor } from "./runtime-environment-editor.tsx";
 export function AgentLaunchSettingsEditor({
   draft,
   blocked,
+  hiddenKeys,
 }: {
   draft: ReturnType<typeof useAgentEnvironmentDraft>;
   blocked: boolean;
+  hiddenKeys?: readonly string[];
 }) {
   return (
     <details className="rah-agent-launch-settings">
@@ -24,6 +26,7 @@ export function AgentLaunchSettingsEditor({
         </button>
       )}
       <RuntimeEnvironmentEditor
+        hiddenKeys={hiddenKeys ?? []}
         rows={draft.rows}
         disabled={blocked}
         onChange={draft.setRows}

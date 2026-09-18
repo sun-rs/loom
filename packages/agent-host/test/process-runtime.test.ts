@@ -106,6 +106,27 @@ function processExists(pid: number): boolean {
   }
 }
 
+for (const supervised of [false, true])
+  test(`runtime liveness probes the owned child (${supervised ? "supervised" : "direct"})`, async () => {
+    const directory = mkdtempSync(join(tmpdir(), "rah-runtime-liveness-"));
+    const adapter = new GenericProcessAdapter({
+      command: process.execPath,
+      args: ["-e", "setInterval(() => {}, 1000)"],
+      cwd: directory,
+      ...(supervised
+        ? { supervisorDirectory: join(directory, "supervisors") }
+        : {}),
+    });
+    const run = await startProcess(adapter);
+    try {
+      assert.equal(await adapter.isAlive(run), true);
+    } finally {
+      await adapter.cancel(run);
+    }
+    assert.equal(await adapter.isAlive(run), false);
+    rmSync(directory, { recursive: true, force: true });
+  });
+
 test("GenericProcessAdapter launches a Fake CLI and keeps output diagnostic-only", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-process-adapter-"));
   try {

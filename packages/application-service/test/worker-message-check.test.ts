@@ -10,7 +10,7 @@ import { runWorkerCliCommand } from "../../agent-host/src/worker-cli.ts";
 import { WorkerApplicationService } from "../src/index.ts";
 
 /** Raft message-check tool delivery and local durable replay recovery. */
-async function fixture(prefixCount = 0) {
+async function fixture(prefixCount = 0, withThreadReply = false) {
   const directory = mkdtempSync(join(tmpdir(), "rah-minimal-commands-"));
   const databasePath = join(directory, "room.db");
   let kernel = new RoomKernel({ databasePath });
@@ -63,6 +63,15 @@ async function fixture(prefixCount = 0) {
     idempotencyKey: "thread",
     basedOnRoomSeq: source.event.roomSeq,
   });
+  if (withThreadReply)
+    kernel.replyThread(actor, {
+      roomId: room.roomId,
+      threadId: thread.thread.threadId,
+      body: "Read this thread reply too",
+      idempotencyKey: "thread-reply",
+      recipientIds: [agent.principal.principalId],
+      basedOnRoomSeq: thread.event.roomSeq,
+    });
   const host = kernel.authenticateHostAccessToken(
     kernel.provisionHostCredential({
       hostId: "host",
@@ -132,7 +141,7 @@ async function fixture(prefixCount = 0) {
     });
   return {
     actor,
-    async cli(replay = false, loseAck = false) {
+    async cli(replay = false, loseAck = false, failOutput = false) {
       writeFileSync(token, credential.accessToken, { mode: 0o600 });
       let stdout = "",
         stderr = "";
@@ -152,6 +161,7 @@ async function fixture(prefixCount = 0) {
           },
           stdout: {
             write: (text) => {
+              if (failOutput) throw new Error("output pipe closed");
               stdout += text;
             },
           },
@@ -255,6 +265,12 @@ async function fixture(prefixCount = 0) {
     activationHead,
     call,
     database,
+    readPositions: () =>
+      database
+        .prepare(
+          "SELECT thread_key, through_room_seq FROM worker_target_read_positions WHERE participant_id=? AND room_id=? ORDER BY thread_key",
+        )
+        .all(agent.principal.principalId, room.roomId),
     head,
     kernel,
     post,
@@ -270,6 +286,128 @@ async function fixture(prefixCount = 0) {
     },
   };
 }
+
+test("message-check output and ACK allow a first reply without holding its already delivered source", async () => {
+  const f = await fixture();
+  try {
+    const check = await f.cli();
+    assert.equal(check.exit, 0, check.stderr);
+    assert.match(check.stdout, /Please carry this durable work/);
+    const sent = await f.call("messages/post", {
+      channel: "#channel",
+      body: "Hello back",
+    });
+    assert.equal(sent.status, 200, JSON.stringify(sent.body));
+    assert.equal(
+      sent.body.event?.payload.body,
+      "Hello back",
+      JSON.stringify(sent.body),
+    );
+    assert.equal(
+      f.readPositions()[0]?.through_room_seq,
+      f.source.event.roomSeq,
+    );
+  } finally {
+    await f.close();
+  }
+});
+
+test("failed message-check output never records a read or ACK", async () => {
+  const f = await fixture();
+  try {
+    const failed = await f.cli(false, false, true);
+    assert.equal(failed.exit, 1);
+    assert.match(failed.stderr, /output pipe closed/);
+    assert.deepEqual(f.readPositions(), []);
+    const replay = await f.call("message-check");
+    assert.ok(
+      replay.body.delivery.events.some(
+        (e: any) => e.eventId === f.source.event.eventId,
+      ),
+    );
+  } finally {
+    await f.close();
+  }
+});
+
+test("unacknowledged and later messages remain unread; ACK retries do not advance another target", async () => {
+  const f = await fixture();
+  try {
+    const check = await f.call("message-check");
+    assert.deepEqual(f.readPositions(), []);
+    const late = f.post("after-check");
+    const ack = { throughSeq: check.body.delivery.cursorAfter };
+    assert.equal((await f.call("acknowledge", ack)).status, 200);
+    const positions = f.readPositions();
+    assert.equal(positions[0]?.through_room_seq, f.source.event.roomSeq);
+    assert.equal((await f.call("acknowledge", ack)).status, 200);
+    assert.deepEqual(f.readPositions(), positions);
+    const sent = await f.call("messages/post", {
+      channel: "#channel",
+      body: "Outdated reply",
+    });
+    assert.equal(sent.body.state, "held");
+    assert.equal(sent.body.newMessageCount, 1);
+    assert.equal(sent.body.newerMessages[0].eventId, late.event.eventId);
+    assert.equal(
+      f.database
+        .prepare(
+          "SELECT count(*) n FROM worker_target_read_positions WHERE room_id=?",
+        )
+        .get(f.second.roomId)!.n,
+      0,
+    );
+  } finally {
+    await f.close();
+  }
+});
+
+test("acknowledged message-check pages record only their messages and separate Room and Thread positions", async () => {
+  const f = await fixture(510, true);
+  try {
+    const first = await f.call("message-check");
+    assert.equal(first.body.delivery.events.length, 500);
+    await f.call("acknowledge", {
+      throughSeq: first.body.delivery.cursorAfter,
+    });
+    const firstMessages = first.body.delivery.events.filter(
+      (e: any) => e.type === "message.posted",
+    );
+    assert.equal(
+      f.readPositions()[0]?.through_room_seq,
+      firstMessages.at(-1).roomSeq,
+    );
+    assert.ok(
+      Number(f.readPositions()[0]?.through_room_seq) < f.source.event.roomSeq,
+    );
+    const next = await f.call("message-check");
+    const reply = next.body.delivery.events.find(
+      (e: any) =>
+        e.type === "message.posted" && e.payload.threadId === f.thread.threadId,
+    );
+    assert.ok(reply);
+    await f.call("acknowledge", { throughSeq: next.body.delivery.cursorAfter });
+    assert.deepEqual(
+      f.readPositions().map((r) => [r.thread_key, r.through_room_seq]),
+      [
+        ["", f.source.event.roomSeq],
+        [f.thread.threadId, reply.roomSeq],
+      ],
+    );
+    const sent = await f.call("messages/post", {
+      channel: `#channel:${f.thread.threadId}`,
+      body: "Thread reply",
+    });
+    assert.equal(sent.status, 200, JSON.stringify(sent.body));
+    assert.equal(
+      sent.body.event?.payload.body,
+      "Thread reply",
+      JSON.stringify(sent.body),
+    );
+  } finally {
+    await f.close();
+  }
+});
 
 test("automatic delivery ACK survives model failure and restart with original prefix and Task obligation", async () => {
   const f = await fixture();
@@ -449,6 +587,10 @@ test("real CLI HTTP check recovers lost ACK response via replay and a new Run", 
     assert.equal(lost.exit, 1);
     assert.match(lost.stdout, /Original unacknowledged context/);
     assert.match(lost.stderr, /ACK response lost/);
+    assert.equal(
+      f.readPositions()[0]?.through_room_seq,
+      f.source.event.roomSeq,
+    );
     const replay = await f.cli(true);
     assert.equal(replay.exit, 0, replay.stderr);
     assert.match(replay.stdout, /Original unacknowledged context/);

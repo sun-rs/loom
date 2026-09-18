@@ -15,6 +15,39 @@ export type RoomSyncInput = {
   throughSeq?: number;
 };
 
+/** The caller owns authentication, membership and the transaction. */
+export function acknowledgeRoomEventWindow(
+  database: DatabaseSync,
+  participantId: string,
+  input: { consumerId: string; roomId: string; throughSeq: number },
+  latestRoomSeq: number,
+  updatedAt: string,
+): void {
+  if (input.consumerId.trim().length === 0)
+    throw new Error("consumerId is required");
+  if (!Number.isInteger(input.throughSeq) || input.throughSeq < 0)
+    throw new Error("throughSeq must be a non-negative integer");
+  if (input.throughSeq > latestRoomSeq)
+    throw new Error("throughSeq cannot exceed the latest Room sequence");
+  database
+    .prepare(
+      `
+    INSERT INTO subscription_cursors(room_id, participant_id, consumer_id, last_seq, updated_at)
+    VALUES(?, ?, ?, ?, ?)
+    ON CONFLICT(room_id, participant_id, consumer_id) DO UPDATE SET
+      last_seq = MAX(subscription_cursors.last_seq, excluded.last_seq),
+      updated_at = excluded.updated_at
+  `,
+    )
+    .run(
+      input.roomId,
+      participantId,
+      input.consumerId,
+      input.throughSeq,
+      updatedAt,
+    );
+}
+
 /**
  * Kernel-owned Room event delivery. Human clients may bootstrap from a current
  * snapshot plus a bounded tail; Worker calls never use that shortcut.

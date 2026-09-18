@@ -4,6 +4,7 @@ import { ClientAgentProfileRequestSchema } from "./client-agent-profile.ts";
 export * from "./client-agent-profile.ts";
 import { ClientAgentStateRequestSchema } from "./client-agent-state.ts";
 export * from "./client-agent-state.ts";
+export * from "./client-agent-deletion-diagnostics.ts";
 export * from "./client-computer-profile.ts";
 export * from "./client-discovery.ts";
 export * from "./message-reference.ts";
@@ -1672,6 +1673,7 @@ export * from "./task-delete.ts";
 export * from "./worker-addressing.ts";
 
 export * from "./worker-message-check.ts";
+export * from "./worker-message-present.ts";
 export * from "./worker-task-batch.ts";
 export * from "./worker-task-update.ts";
 

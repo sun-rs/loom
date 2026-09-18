@@ -174,15 +174,14 @@ export function ComposerComputerFiles({
                 重试
               </button>
             </div>
-          ) : loading || !listing ? (
-            <p role="status">正在读取目录…</p>
-          ) : (
+          ) : loading || !listing ? null : (
             <>
               {listing.entries.length === 0 && <p>此目录为空</p>}
               {listing.entries.map((entry) => (
                 <div className="rah-computer-file-row" key={entry.path}>
                   <ChoiceRow
                     profile="property-option"
+                    clearHighlightOnDeselect
                     current={selected.includes(entry.absolutePath)}
                     aria-label={
                       entry.isDirectory

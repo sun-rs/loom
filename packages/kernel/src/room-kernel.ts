@@ -1,5 +1,6 @@
 import { editHumanTask } from "./human-task-edit.ts";
 import type {
+  AgentDeletionDiagnostics,
   SystemChannelVisibilityRead,
   SystemChannelVisibilityUpdate,
 } from "@rah-os/protocol";
@@ -10,7 +11,20 @@ import {
   releaseTaskTransaction,
   transitionOwnedTaskTransaction,
 } from "./task-execution-transitions.ts";
-import { workerDeliveryReplayStart } from "./worker-delivery-window.ts";
+import {
+  recordCheckedWorkerMessages,
+  workerDeliveryReplayStart,
+  type WorkerDeliveryAcknowledgement,
+} from "./worker-delivery-window.ts";
+import {
+  deferPresentedAcknowledgement,
+  markPresentedWindowSent,
+  presentedFreshnessFloor,
+  presentedWindowAcknowledgement,
+  readPresentedDeliveryPhases,
+  renderPresentedWindow,
+  type RenderedPresentedWindow,
+} from "./activation-presented-window.ts";
 import { claimTaskTransaction, type TaskClaimInput } from "./task-claim.ts";
 import { projectPlacementCandidates } from "./placement-candidate-projection.ts";
 import { assertRuntimeWorkspaceProvenance } from "./runtime-workspace-provenance.ts";
@@ -30,6 +44,20 @@ import { RoomFiles } from "./room-files.ts";
 import { RoomDeletionService } from "./room-deletion-service.ts";
 import { readAgentPresence } from "./agent-presence.ts";
 import { DatabaseSync } from "node:sqlite";
+import {
+  assertNoUnexpectedSchemaDrift,
+  compareSchema,
+  databaseSchemaVersion,
+  inspectSchemaState,
+  migrationUnitRunner,
+  schemaObjects,
+  SCHEMA_MIGRATION_JOURNAL_SQL,
+} from "./kernel-schema-state.ts";
+import type {
+  KernelInitializeOptions,
+  KernelSchemaChange,
+  KernelSchemaState,
+} from "./kernel-schema-state.ts";
 import { GlobalDiscovery } from "./global-discovery.ts";
 import { initializeDiscoverySchema } from "./discovery-schema.ts";
 import { migrateLegacyTaskSchema } from "./legacy-task-schema.ts";
@@ -220,10 +248,12 @@ import {
   migrateTaskWorkflowStatusV44,
   migrateMessageForwardingV46,
   migrateBoundedRoomReadsV49,
+  migrateAgentDeletionEventIndexes,
   migrateFrozenTaskSubmissionEvidenceV50,
   migrateDropRoomTaskDefaultsV52,
   migrateSharedInPlaceWorkspaceLeasesV53,
-  SCHEMA_SQL,
+  SCHEMA_OBJECT_SQL,
+  SCHEMA_PRAGMA_SQL,
 } from "./schema.ts";
 import * as agentThreads from "./agent-thread-subscriptions.ts";
 import {
@@ -239,7 +269,11 @@ import {
   RoomEventWriter,
   type AppendRoomEventInput,
 } from "./room-event-writer.ts";
-import { syncRoomEventWindow } from "./room-sync.ts";
+import {
+  acknowledgeRoomEventWindow,
+  syncRoomEventWindow,
+} from "./room-sync.ts";
+import { finishProvenOrphanedRuns } from "./recovered-run-attempt.ts";
 import { listMessageReferenceReadStates as projectMessageReferenceReadStates } from "./message-reference-read-state.ts";
 import * as ar from "./room-agent-service.ts";
 import {
@@ -321,8 +355,18 @@ import {
 import {
   getWorkspaceAgentManagementView,
   manageWorkspaceAgentTransaction,
+  readAgentDefinition,
   requireAgentExecutionEnabled,
 } from "./workspace-agent-management.ts";
+import {
+  clearAgentDeletionBlock,
+  describeAgentDeletionBlocker,
+  findAgentDeletionBlocker,
+  readAgentDeletionBlockRecord,
+  readAgentDeletionDiagnostics,
+  recordAgentDeletionBlock,
+} from "./agent-deletion-diagnostics.ts";
+import type { AgentDeletionBlockChange } from "./agent-deletion-diagnostics.ts";
 import type {
   InboxItem,
   AgentDefinitionContent,
@@ -371,7 +415,10 @@ const SYSTEM_PRINCIPAL_ID = "principal_system";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
 export const KERNEL_SCHEMA_VERSION = 56;
+
 export class RoomKernel {
+  static #referenceSchema: Map<string, string> | undefined;
+  static #buildingReferenceSchema = false;
   readonly databasePath: string;
   readonly #database: DatabaseSync;
   readonly #agentExclusiveOperations: AgentExclusiveOperationService;
@@ -516,6 +563,10 @@ export class RoomKernel {
       collaboration: () => this.#collaboration,
       attachmentComments: () => this.attachmentComments,
       files: () => this.files,
+      acknowledgePresentedDelivery: (scope, input) =>
+        this.acknowledgePresentedDeliveryInTransaction(scope, input),
+      presentedFreshnessFloor: (scope, roomId) =>
+        presentedFreshnessFloor(this.#database, scope, roomId),
     });
     this.workerReads = new WorkerReadService({
       database: this.#database,
@@ -718,152 +769,208 @@ export class RoomKernel {
     return this.#taskReviews;
   }
 
-  initialize(): void {
-    const schemaVersionRow = this.#database
-      .prepare("PRAGMA user_version")
-      .get();
-    const schemaVersion = schemaVersionRow
-      ? integer(schemaVersionRow, "user_version")
-      : 0;
+  initialize(options?: KernelInitializeOptions): void {
+    const schemaVersion = databaseSchemaVersion(this.#database);
     if (schemaVersion > KERNEL_SCHEMA_VERSION) {
       throw new Error(
         `database uses newer Kernel schema ${schemaVersion}; this build supports ${KERNEL_SCHEMA_VERSION}`,
       );
     }
-    migrateLegacyTaskSchema(this.#database);
-    this.#database.exec(SCHEMA_SQL);
-    initializeHeldMessageDrafts(this.#database, this.#now());
-    migrateCollaborationSchemaV7(this.#database, this.#timestamp());
-    migrateTaskAnchorsV9(this.#database, this.#createId, this.#roomEvents);
-    migrateRoomMetadataV14(this.#database);
-    migrateSystemChannelVisibilityV56(this.#database);
-    migrateActivationRetryFencesV35(this.#database);
-    migrateReminderTargetsV36(this.#database);
-    migrateInputRequestCancellationV38(this.#database);
-    migrateTaskWorkflowStatusV44(this.#database);
-    migrateMessageForwardingV46(this.#database);
-    migrateTaskWorkflowAuthorityV48(this.#database);
-    migrateBoundedRoomReadsV49(this.#database);
-    migrateFrozenTaskSubmissionEvidenceV50(this.#database);
-    migrateDropRoomTaskDefaultsV52(this.#database);
-    migrateSharedInPlaceWorkspaceLeasesV53(this.#database);
-    migrateWorkerTargetReadPositions(this.#database);
-    migrateWorkerSelfProfileObservations(this.#database);
-    principalProfile.migrate(this.#database);
-    this.#database
-      .prepare(
-        "INSERT OR IGNORE INTO principals(principal_id, handle, kind, created_at) VALUES(?, ?, 'service', ?)",
-      )
-      .run(SYSTEM_PRINCIPAL_ID, "rah-system", this.#timestamp());
+    const initialSchema = RoomKernel.#buildingReferenceSchema
+      ? { pending: [], drift: [] }
+      : compareSchema({
+          database: this.#database,
+          databaseSchemaVersion: schemaVersion,
+          kernelSchemaVersion: KERNEL_SCHEMA_VERSION,
+          reference: RoomKernel.#referenceSchemaObjects(),
+        });
+    if (schemaVersion === KERNEL_SCHEMA_VERSION)
+      assertNoUnexpectedSchemaDrift(initialSchema.drift);
+    this.#database.exec(SCHEMA_PRAGMA_SQL);
+    const journalled = initialSchema.pending.length > 0;
+    this.#database.exec(SCHEMA_MIGRATION_JOURNAL_SQL);
+    const unit = migrationUnitRunner({
+      before: options?.beforeMigrationUnit,
+      database: this.#database,
+      fromVersion: schemaVersion,
+      journalled,
+      timestamp: () => this.#timestamp(),
+      toVersion: KERNEL_SCHEMA_VERSION,
+      transaction: (operation) => this.#transaction(operation),
+    });
+
+    unit("legacy-task-schema", "external", () =>
+      migrateLegacyTaskSchema(this.#database),
+    );
+    unit("base-schema", "transactional", () => {
+      this.#database.exec(SCHEMA_OBJECT_SQL);
+      initializeHeldMessageDrafts(this.#database, this.#now());
+    });
+    unit("collaboration-v7", "external", () =>
+      migrateCollaborationSchemaV7(this.#database, this.#timestamp()),
+    );
+    unit("task-anchors-v9", "external", () =>
+      migrateTaskAnchorsV9(this.#database, this.#createId, this.#roomEvents),
+    );
+    unit("room-metadata", "transactional", () => {
+      migrateRoomMetadataV14(this.#database);
+      migrateSystemChannelVisibilityV56(this.#database);
+    });
+    unit("activation-retry-fences-v35", "external", () =>
+      migrateActivationRetryFencesV35(this.#database),
+    );
+    unit("reminder-targets-v36", "transactional", () =>
+      migrateReminderTargetsV36(this.#database),
+    );
+    unit("input-request-cancellation-v38", "external", () =>
+      migrateInputRequestCancellationV38(this.#database),
+    );
+    unit("task-and-profile-schema", "transactional", () => {
+      migrateTaskWorkflowStatusV44(this.#database);
+      migrateMessageForwardingV46(this.#database);
+      migrateTaskWorkflowAuthorityV48(this.#database);
+      migrateBoundedRoomReadsV49(this.#database);
+      migrateAgentDeletionEventIndexes(this.#database);
+      migrateFrozenTaskSubmissionEvidenceV50(this.#database);
+      migrateDropRoomTaskDefaultsV52(this.#database);
+      migrateSharedInPlaceWorkspaceLeasesV53(this.#database);
+      migrateWorkerTargetReadPositions(this.#database);
+      migrateWorkerSelfProfileObservations(this.#database);
+      principalProfile.migrate(this.#database);
+      this.#database
+        .prepare(
+          "INSERT OR IGNORE INTO principals(principal_id, handle, kind, created_at) VALUES(?, ?, 'service', ?)",
+        )
+        .run(SYSTEM_PRINCIPAL_ID, "rah-system", this.#timestamp());
+      if (
+        !this.#database
+          .prepare("PRAGMA table_info(workspaces)")
+          .all()
+          .some((column) => column.name === "avatar_key")
+      ) {
+        this.#database.exec(
+          "ALTER TABLE workspaces ADD COLUMN avatar_key TEXT",
+        );
+      }
+    });
     assertMessageReferenceDirectoryIsUnambiguous(this.#database);
-    if (
-      !this.#database
-        .prepare("PRAGMA table_info(workspaces)")
-        .all()
-        .some((column) => column.name === "avatar_key")
-    ) {
-      this.#database.exec("ALTER TABLE workspaces ADD COLUMN avatar_key TEXT");
-    }
-    this.files.initialize();
-    this.attachmentComments.initialize();
-    initializeDiscoverySchema(this.#database);
-    this.humanNotifications.initialize();
-    this.#transaction(() =>
-      reconcileAllChannelMemberships(
-        this.#database,
-        this.#roomEvents,
-        this.#now(),
+    unit("room-file-schema", "external", () => this.files.initialize());
+    unit("service-schema", "transactional", () => {
+      this.attachmentComments.initialize();
+      initializeDiscoverySchema(this.#database);
+      this.humanNotifications.initialize();
+    });
+    unit("all-channel-memberships", "external", () =>
+      this.#transaction(() =>
+        reconcileAllChannelMemberships(
+          this.#database,
+          this.#roomEvents,
+          this.#now(),
+        ),
       ),
     );
-    this.#taskReviews.backfillLegacySubmissions();
-    this.#activationObligations.backfillActive();
-    agentThreads.backfillAgentThreadFollows(this.#database, this.#timestamp());
-    this.#database.exec(
-      "CREATE UNIQUE INDEX IF NOT EXISTS idx_one_control_room_per_workspace ON rooms(workspace_id) WHERE kind = 'control'",
+    unit("task-review-backfill", "external", () =>
+      this.#taskReviews.backfillLegacySubmissions(),
     );
-    const hostColumns = this.#database
-      .prepare("PRAGMA table_info(agent_hosts)")
-      .all();
-    if (!hostColumns.some((row) => text(row, "name") === "credential_id")) {
+    unit("activation-obligation-backfill", "external", () =>
+      this.#activationObligations.backfillActive(),
+    );
+    unit("agent-thread-follow-backfill", "transactional", () =>
+      agentThreads.backfillAgentThreadFollows(
+        this.#database,
+        this.#timestamp(),
+      ),
+    );
+    unit("host-and-offer-columns", "transactional", () => {
       this.#database.exec(
-        "ALTER TABLE agent_hosts ADD COLUMN credential_id TEXT",
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_one_control_room_per_workspace ON rooms(workspace_id) WHERE kind = 'control'",
       );
-      const now = this.#now();
+      const hostColumns = this.#database
+        .prepare("PRAGMA table_info(agent_hosts)")
+        .all();
+      if (!hostColumns.some((row) => text(row, "name") === "credential_id")) {
+        this.#database.exec(
+          "ALTER TABLE agent_hosts ADD COLUMN credential_id TEXT",
+        );
+        const now = this.#now();
+        this.#database
+          .prepare(
+            "UPDATE agent_hosts SET state = 'offline', last_seen_at = ?, last_seen_ms = ?",
+          )
+          .run(now.toISOString(), now.getTime());
+      }
+      if (!hostColumns.some((row) => text(row, "name") === "instance_id")) {
+        this.#database.exec(
+          "ALTER TABLE agent_hosts ADD COLUMN instance_id TEXT",
+        );
+        const now = this.#now();
+        this.#database
+          .prepare(
+            "UPDATE agent_hosts SET instance_id = 'legacy:' || host_id, state = 'offline', last_seen_at = ?, last_seen_ms = ?",
+          )
+          .run(now.toISOString(), now.getTime());
+      }
+      if (!hostColumns.some((row) => text(row, "name") === "build_version")) {
+        this.#database.exec(
+          "ALTER TABLE agent_hosts ADD COLUMN build_version TEXT",
+        );
+      }
+      if (
+        !hostColumns.some((row) => text(row, "name") === "protocol_version")
+      ) {
+        this.#database.exec(
+          "ALTER TABLE agent_hosts ADD COLUMN protocol_version INTEGER",
+        );
+      }
+      if (!hostColumns.some((row) => text(row, "name") === "process_id")) {
+        this.#database.exec(
+          "ALTER TABLE agent_hosts ADD COLUMN process_id INTEGER",
+        );
+      }
+      const runtimeOfferColumns = this.#database
+        .prepare("PRAGMA table_info(runtime_offers)")
+        .all();
+      if (
+        !runtimeOfferColumns.some(
+          (row) => text(row, "name") === "current_observation_id",
+        )
+      ) {
+        this.#database.exec(
+          "ALTER TABLE runtime_offers ADD COLUMN current_observation_id TEXT",
+        );
+      }
+      if (
+        !runtimeOfferColumns.some(
+          (row) => text(row, "name") === "current_snapshot_digest",
+        )
+      ) {
+        this.#database.exec(
+          "ALTER TABLE runtime_offers ADD COLUMN current_snapshot_digest TEXT",
+        );
+      }
+      if (
+        !runtimeOfferColumns.some((row) => text(row, "name") === "accepted_at")
+      ) {
+        this.#database.exec(
+          "ALTER TABLE runtime_offers ADD COLUMN accepted_at TEXT",
+        );
+      }
       this.#database
         .prepare(
-          "UPDATE agent_hosts SET state = 'offline', last_seen_at = ?, last_seen_ms = ?",
+          "UPDATE runtime_offers SET state = 'unavailable', lease_until_ms = 0 WHERE current_observation_id IS NULL",
         )
-        .run(now.toISOString(), now.getTime());
-    }
-    if (!hostColumns.some((row) => text(row, "name") === "instance_id")) {
-      this.#database.exec(
-        "ALTER TABLE agent_hosts ADD COLUMN instance_id TEXT",
-      );
-      const now = this.#now();
-      this.#database
-        .prepare(
-          "UPDATE agent_hosts SET instance_id = 'legacy:' || host_id, state = 'offline', last_seen_at = ?, last_seen_ms = ?",
-        )
-        .run(now.toISOString(), now.getTime());
-    }
-    if (!hostColumns.some((row) => text(row, "name") === "build_version")) {
-      this.#database.exec(
-        "ALTER TABLE agent_hosts ADD COLUMN build_version TEXT",
-      );
-    }
-    if (!hostColumns.some((row) => text(row, "name") === "protocol_version")) {
-      this.#database.exec(
-        "ALTER TABLE agent_hosts ADD COLUMN protocol_version INTEGER",
-      );
-    }
-    if (!hostColumns.some((row) => text(row, "name") === "process_id")) {
-      this.#database.exec(
-        "ALTER TABLE agent_hosts ADD COLUMN process_id INTEGER",
-      );
-    }
-    const runtimeOfferColumns = this.#database
-      .prepare("PRAGMA table_info(runtime_offers)")
-      .all();
-    if (
-      !runtimeOfferColumns.some(
-        (row) => text(row, "name") === "current_observation_id",
-      )
-    ) {
-      this.#database.exec(
-        "ALTER TABLE runtime_offers ADD COLUMN current_observation_id TEXT",
-      );
-    }
-    if (
-      !runtimeOfferColumns.some(
-        (row) => text(row, "name") === "current_snapshot_digest",
-      )
-    ) {
-      this.#database.exec(
-        "ALTER TABLE runtime_offers ADD COLUMN current_snapshot_digest TEXT",
-      );
-    }
-    if (
-      !runtimeOfferColumns.some((row) => text(row, "name") === "accepted_at")
-    ) {
-      this.#database.exec(
-        "ALTER TABLE runtime_offers ADD COLUMN accepted_at TEXT",
-      );
-    }
-    this.#database
-      .prepare(
-        "UPDATE runtime_offers SET state = 'unavailable', lease_until_ms = 0 WHERE current_observation_id IS NULL",
-      )
-      .run();
-    const runAttemptColumns = this.#database
-      .prepare("PRAGMA table_info(run_attempts)")
-      .all();
-    if (
-      !runAttemptColumns.some((row) => text(row, "name") === "placement_id")
-    ) {
-      this.#database.exec(
-        "ALTER TABLE run_attempts ADD COLUMN placement_id TEXT REFERENCES placements(placement_id)",
-      );
-    }
+        .run();
+      const runAttemptColumns = this.#database
+        .prepare("PRAGMA table_info(run_attempts)")
+        .all();
+      if (
+        !runAttemptColumns.some((row) => text(row, "name") === "placement_id")
+      ) {
+        this.#database.exec(
+          "ALTER TABLE run_attempts ADD COLUMN placement_id TEXT REFERENCES placements(placement_id)",
+        );
+      }
+    });
     const runAttemptPlacementForeignKey = this.#database
       .prepare("PRAGMA foreign_key_list(run_attempts)")
       .all()
@@ -873,9 +980,10 @@ export class RoomKernel {
           text(row, "table") === "placements",
       );
     if (!runAttemptPlacementForeignKey) {
-      this.#database.exec("PRAGMA foreign_keys = OFF");
-      try {
-        this.#database.exec(`
+      unit("run-attempts-placement-fk", "external", () => {
+        this.#database.exec("PRAGMA foreign_keys = OFF");
+        try {
+          this.#database.exec(`
           BEGIN IMMEDIATE;
           CREATE TABLE run_attempts_with_placement_fk (
             run_attempt_id TEXT PRIMARY KEY,
@@ -910,68 +1018,117 @@ export class RoomKernel {
             ON run_attempts(room_id, started_at, run_attempt_id);
           COMMIT;
         `);
-      } catch (error) {
-        if (this.#database.isTransaction) this.#database.exec("ROLLBACK");
-        throw error;
-      } finally {
-        this.#database.exec("PRAGMA foreign_keys = ON");
-      }
+        } catch (error) {
+          if (this.#database.isTransaction) this.#database.exec("ROLLBACK");
+          throw error;
+        } finally {
+          this.#database.exec("PRAGMA foreign_keys = ON");
+        }
+      });
     }
-    const placementColumns = this.#database
-      .prepare("PRAGMA table_info(placements)")
-      .all();
-    if (
-      !placementColumns.some(
-        (row) => text(row, "name") === "runtime_offer_observation_id",
-      )
-    ) {
-      this.#database.exec(
-        "ALTER TABLE placements ADD COLUMN runtime_offer_observation_id TEXT REFERENCES runtime_offer_observations(runtime_offer_observation_id)",
-      );
-    }
-    const runtimeProcessColumns = this.#database
-      .prepare("PRAGMA table_info(runtime_processes)")
-      .all();
-    if (
-      !runtimeProcessColumns.some(
-        (row) => text(row, "name") === "recovery_lease_owner_instance_id",
-      )
-    ) {
-      this.#database.exec(
-        "ALTER TABLE runtime_processes ADD COLUMN recovery_lease_owner_instance_id TEXT",
-      );
-    }
-    if (
-      !placementColumns.some(
-        (row) => text(row, "name") === "runtime_offer_snapshot_digest",
-      )
-    ) {
-      this.#database.exec(
-        "ALTER TABLE placements ADD COLUMN runtime_offer_snapshot_digest TEXT",
-      );
-    }
-    const compactedRuntimeOfferObservationCount =
-      compactUnreferencedRuntimeOfferObservations(
-        this.#database,
-        schemaVersion,
-      );
-    this.#database.exec(`PRAGMA user_version = ${KERNEL_SCHEMA_VERSION}`);
-    this.#transaction(() => {
-      backfillAgentMemoryHomes(this.#database);
-      const participantIds = this.#database
-        .prepare(
-          "SELECT DISTINCT participant_id FROM runtime_processes ORDER BY participant_id",
+    let compactedRuntimeOfferObservationCount = 0;
+    unit("placement-columns-and-version", "transactional", () => {
+      const placementColumns = this.#database
+        .prepare("PRAGMA table_info(placements)")
+        .all();
+      if (
+        !placementColumns.some(
+          (row) => text(row, "name") === "runtime_offer_observation_id",
         )
-        .all()
-        .map((row) => text(row, "participant_id"));
-      const now = this.#now();
-      this.#reconcileUnownedRuntimeProcesses(participantIds, now);
-      this.#quarantineExpiredActiveRuns(participantIds, now);
-      this.#reconcileProvenActivationQuarantines(participantIds);
+      ) {
+        this.#database.exec(
+          "ALTER TABLE placements ADD COLUMN runtime_offer_observation_id TEXT REFERENCES runtime_offer_observations(runtime_offer_observation_id)",
+        );
+      }
+      const runtimeProcessColumns = this.#database
+        .prepare("PRAGMA table_info(runtime_processes)")
+        .all();
+      if (
+        !runtimeProcessColumns.some(
+          (row) => text(row, "name") === "recovery_lease_owner_instance_id",
+        )
+      ) {
+        this.#database.exec(
+          "ALTER TABLE runtime_processes ADD COLUMN recovery_lease_owner_instance_id TEXT",
+        );
+      }
+      if (
+        !placementColumns.some(
+          (row) => text(row, "name") === "runtime_offer_snapshot_digest",
+        )
+      ) {
+        this.#database.exec(
+          "ALTER TABLE placements ADD COLUMN runtime_offer_snapshot_digest TEXT",
+        );
+      }
+      compactedRuntimeOfferObservationCount =
+        compactUnreferencedRuntimeOfferObservations(
+          this.#database,
+          schemaVersion,
+        );
+      // The version stamp commits with the last schema unit: an interrupted
+      // upgrade can never advertise a version its objects do not have.
+      if (!RoomKernel.#buildingReferenceSchema) this.pendingSchemaChanges();
+      this.#database.exec(`PRAGMA user_version = ${KERNEL_SCHEMA_VERSION}`);
     });
+    unit("runtime-process-reconciliation", "external", () =>
+      this.#transaction(() => {
+        backfillAgentMemoryHomes(this.#database);
+        const participantIds = this.#database
+          .prepare(
+            "SELECT DISTINCT participant_id FROM runtime_processes ORDER BY participant_id",
+          )
+          .all()
+          .map((row) => text(row, "participant_id"));
+        const now = this.#now();
+        this.#reconcileUnownedRuntimeProcesses(participantIds, now);
+        this.#quarantineExpiredActiveRuns(participantIds, now);
+        finishProvenOrphanedRuns(this.#database, this.#roomEvents);
+        this.#reconcileProvenActivationQuarantines(participantIds);
+      }),
+    );
     if (compactedRuntimeOfferObservationCount > 0) {
-      this.#database.exec("VACUUM");
+      unit("vacuum", "external", () => this.#database.exec("VACUUM"));
     }
+  }
+
+  /**
+   * Read-only report of whether opening this database would change its schema.
+   * Deployment owners call it before `initialize()` so an upgrade can be
+   * snapshotted first, and so an ordinary start copies nothing.
+   */
+  pendingSchemaChanges(): readonly KernelSchemaChange[] {
+    const state = compareSchema({
+      database: this.#database,
+      databaseSchemaVersion: databaseSchemaVersion(this.#database),
+      kernelSchemaVersion: KERNEL_SCHEMA_VERSION,
+      reference: RoomKernel.#referenceSchemaObjects(),
+    });
+    assertNoUnexpectedSchemaDrift(state.drift);
+    return state.pending;
+  }
+
+  /** Opens `databasePath` without writing to it and reports its schema state. */
+  static inspectSchemaState(databasePath: string): KernelSchemaState {
+    return inspectSchemaState({
+      databasePath,
+      kernelSchemaVersion: KERNEL_SCHEMA_VERSION,
+      reference: () => RoomKernel.#referenceSchemaObjects(),
+    });
+  }
+
+  static #referenceSchemaObjects(): Map<string, string> {
+    if (RoomKernel.#referenceSchema) return RoomKernel.#referenceSchema;
+    RoomKernel.#buildingReferenceSchema = true;
+    const reference = new RoomKernel({ databasePath: ":memory:" });
+    try {
+      reference.initialize();
+      RoomKernel.#referenceSchema = schemaObjects(reference.#database);
+    } finally {
+      RoomKernel.#buildingReferenceSchema = false;
+      reference.close();
+    }
+    return RoomKernel.#referenceSchema;
   }
 
   close(): void {
@@ -1545,7 +1702,7 @@ export class RoomKernel {
     actor: AuthenticatedActorContext,
     input: ar.HumanThreadReplyInput,
   ): MessageMutationResult {
-    return this.#transaction(() =>
+    return this.roomAgentSos.withHumanInput(input.roomId, () =>
       ar.replyHumanThread({
         actor,
         collaboration: this.#collaboration,
@@ -1566,18 +1723,18 @@ export class RoomKernel {
       roomId: string;
     },
   ): MessageMutationResult {
-    return this.#transaction(() => {
-      return this.#collaboration.postMessage(
+    return this.roomAgentSos.withHumanInput(input.roomId, () =>
+      this.#collaboration.postMessage(
         this.getAuthenticatedPrincipal(actor),
         input,
-      );
-    });
+      ),
+    );
   }
   postRoomMessage(
     actor: AuthenticatedActorContext,
     input: ar.HumanRoomMessageInput,
   ): MessageMutationResult {
-    return this.#transaction(() =>
+    return this.roomAgentSos.withHumanInput(input.roomId, () =>
       ar.postHumanRoomMessage({
         actor,
         collaboration: this.#collaboration,
@@ -1612,7 +1769,7 @@ export class RoomKernel {
       return this.workerTargetContext.post(execution, input);
     return this.#transaction(() => {
       const scope = this.#requireAuthenticatedWorkerExecution(execution);
-      return postWorkerMessageTransaction({
+      const result = postWorkerMessageTransaction({
         comments: this.attachmentComments,
         database: this.#database,
         collaboration: this.#collaboration,
@@ -1626,6 +1783,160 @@ export class RoomKernel {
         now: this.#now,
         eventFromRow: (row) => this.#eventFromRow(row),
       });
+      // Raft hides the ACK inside `raft message check` (main.js@729502). RAH's
+      // ACK stays credential-bound and model-side, but a post that the model
+      // based on content the Host already presented in this RunAttempt carries
+      // the same evidence, so it no longer needs a separate check turn. Only
+      // the presented prefix is acknowledged; a notice-degraded sequence stops
+      // the cursor and still requires an explicit `message-check`.
+      if ("event" in result)
+        this.acknowledgePresentedDeliveryInTransaction(scope, {
+          postedRoomId: result.event.roomId,
+          modelBasedOnRoomSeq: input.basedOnRoomSeq,
+        });
+      return result;
+    });
+  }
+
+  /**
+   * PRESENT-ONLY. The Kernel renders the Activation range's bodies and, in the
+   * same transaction, writes the immutable delivery record the implicit ACK
+   * later checks. It advances no cursor, registers no delivered cursor and
+   * appends no Room event; the record stays unusable for acknowledgement until
+   * the Host registers the send under its own credential.
+   */
+  presentWorkerMessages(
+    execution: AuthenticatedWorkerExecutionContext,
+  ): RenderedPresentedWindow {
+    return this.#transaction(() => {
+      const scope = this.#requireAuthenticatedWorkerExecution(execution);
+      return renderPresentedWindow(
+        this.#database,
+        scope,
+        this.#timestamp(),
+        (row) => this.#eventFromRow(row),
+      );
+    });
+  }
+
+  /** Phase-table fields for one RunAttempt's wake delivery. Read-only, and it
+   * measures nothing: see `readPresentedDeliveryPhases`. */
+  readPresentedDeliveryPhases(execution: AuthenticatedWorkerExecutionContext) {
+    const scope = this.#requireAuthenticatedWorkerExecution(execution);
+    return readPresentedDeliveryPhases(this.#database, scope);
+  }
+
+  /**
+   * The Host — authenticated by its own Host credential, which is a different
+   * identity from the worker execution credential the model holds — registers
+   * that it handed this server-written rendering to the runtime, after that
+   * driver's acceptance signal. It can change no range, page or digest. A
+   * Worker credential has no entry point into this table at all.
+   */
+  markPresentedDeliverySent(
+    host: AuthenticatedHostContext,
+    input: {
+      activationId: string;
+      consumerId: string;
+      runAttemptId: string;
+    },
+  ): void {
+    const authenticatedHost = this.#requireAuthenticatedHost(host);
+    this.#transaction(() => {
+      const runAttempt = this.#requireRunAttemptRow(input.runAttemptId);
+      if (text(runAttempt, "activation_id") !== input.activationId)
+        throw new ForbiddenError(
+          "run attempt does not belong to that Activation",
+        );
+      this.#requireHostParticipant(
+        authenticatedHost,
+        text(runAttempt, "participant_id"),
+      );
+      this.#requireRunAttemptOwner(runAttempt, authenticatedHost.hostId);
+      this.#requireRunAttemptHostGeneration(runAttempt, authenticatedHost);
+      const { pendingAckSeq } = markPresentedWindowSent(
+        this.#database,
+        input,
+        authenticatedHost.hostId,
+        this.#timestamp(),
+      );
+      // Race closure: a post that already succeeded, in this Room, with the
+      // model's own causal marker, and was refused only because the send was
+      // not yet registered. It is replayed here through the same four gates
+      // now that the last one can pass.
+      if (pendingAckSeq !== undefined)
+        this.acknowledgePresentedDeliveryInTransaction(
+          {
+            activationId: input.activationId,
+            consumerId: input.consumerId,
+            hostId: authenticatedHost.hostId,
+            participantId: text(runAttempt, "participant_id"),
+            roomId: text(runAttempt, "room_id"),
+            runAttemptId: input.runAttemptId,
+            toSeq: integer(
+              this.#database
+                .prepare("SELECT to_seq FROM activations WHERE activation_id=?")
+                .get(input.activationId)!,
+              "to_seq",
+            ),
+          },
+          {
+            postedRoomId: text(runAttempt, "room_id"),
+            modelBasedOnRoomSeq: pendingAckSeq,
+          },
+        );
+    });
+  }
+
+  /**
+   * The single confirmation entry point every successful worker post goes
+   * through — the originating route above and the `--target` route in
+   * `WorkerTargetContextService`. Called inside that post's own transaction.
+   *
+   * Two refusals live here, not at the call sites:
+   *
+   * - a post that landed in another Room or DM is evidence about that Room, so
+   *   it must never confirm this Activation's presented range;
+   * - only a causal marker the model itself submitted counts. The `--target`
+   *   route resolves a cursor from Kernel state when the model supplies none
+   *   (`#resolveSendWindow`); that resolved number is the server's own
+   *   reading, not the model's, so it never triggers an implicit ACK and the
+   *   model must go through the explicit `message-check`.
+   */
+  acknowledgePresentedDeliveryInTransaction(
+    scope: ActivationCredentialScope,
+    input: {
+      postedRoomId: string;
+      modelBasedOnRoomSeq: number | undefined;
+    },
+  ): void {
+    if (input.modelBasedOnRoomSeq === undefined) return;
+    if (input.postedRoomId !== scope.roomId) return;
+    // Both facts only this post can establish are now proven. If the Host has
+    // not registered the send yet, park them instead of dropping them; the
+    // mark-sent transaction replays this call. A record that is already sent
+    // is unaffected — the UPDATE is scoped to `sent_at IS NULL`.
+    deferPresentedAcknowledgement(
+      this.#database,
+      scope,
+      input.modelBasedOnRoomSeq,
+    );
+    const acknowledgement = presentedWindowAcknowledgement(
+      this.#database,
+      scope,
+      input.modelBasedOnRoomSeq,
+    );
+    if (acknowledgement === undefined) return;
+    recordCheckedWorkerMessages(
+      this.#database,
+      scope,
+      acknowledgement,
+      this.#timestamp(),
+    );
+    this.#acknowledgeCursorForParticipant(scope.participantId, {
+      consumerId: scope.consumerId,
+      roomId: scope.roomId,
+      throughSeq: acknowledgement.throughSeq,
     });
   }
 
@@ -1705,7 +2016,7 @@ export class RoomKernel {
     actor: AuthenticatedActorContext,
     input: TaskCreateCommand,
   ): TaskCreateMutationResult {
-    return this.#transaction(() => {
+    return this.roomAgentSos.withHumanInput(input.roomId, () => {
       const actorId = this.#requireAuthenticatedActor(actor);
       this.#requireMember(input.roomId, actorId);
       return createTaskMutationTransaction(
@@ -3044,7 +3355,15 @@ export class RoomKernel {
       return result;
     });
   }
-  reconcileAgentDeletions(): number {
+  /**
+   * R5: reports a block *state change* through `onBlockChange`, never once per
+   * tick. The projection row and the callback change together, so a reconciler
+   * running every second logs one line when a block opens, one when its
+   * blocking row changes identity, and one when it clears.
+   */
+  reconcileAgentDeletions(
+    onBlockChange?: (change: AgentDeletionBlockChange) => void,
+  ): number {
     let completed = 0;
     const rows = this.#database
       .prepare(
@@ -3053,6 +3372,9 @@ export class RoomKernel {
       .all();
     for (const row of rows) {
       const request = this.#roomEvents.eventFromRow(row);
+      const hadBlock =
+        readAgentDeletionBlockRecord(this.#database, request.aggregateId) !==
+        undefined;
       try {
         this.#transaction(() =>
           finishAgentDeletion(
@@ -3067,11 +3389,52 @@ export class RoomKernel {
           ),
         );
         completed++;
+        clearAgentDeletionBlock(this.#database, request.aggregateId);
+        if (hadBlock)
+          onBlockChange?.({
+            agentDefinitionId: request.aggregateId,
+            kind: "cleared",
+          });
       } catch (error) {
         if (!(error instanceof RuntimeTerminationProofError)) throw error;
+        const participantId = String(request.payload.participantId);
+        const blocker = findAgentDeletionBlocker(this.#database, participantId);
+        if (!blocker) continue;
+        const changed = recordAgentDeletionBlock(this.#database, {
+          agentDefinitionId: request.aggregateId,
+          blocker,
+          now: this.#now().toISOString(),
+          participantId,
+        });
+        if (changed)
+          onBlockChange?.({
+            agentDefinitionId: request.aggregateId,
+            blocker,
+            kind: "blocked",
+            summary: describeAgentDeletionBlocker(blocker).summary,
+          });
       }
     }
     return completed;
+  }
+  /** Read-only projection of a durable deletion intent and what blocks it. */
+  getAgentDeletionDiagnostics(
+    actor: AuthenticatedActorContext,
+    input: { agentDefinitionId: string },
+  ): AgentDeletionDiagnostics {
+    const actorId = this.#requireAuthenticatedActor(actor);
+    const record = readAgentDefinition(this.#database, input.agentDefinitionId);
+    requireHumanControlRoomManager(
+      this.#database,
+      record.definition.controlRoomId,
+      actorId,
+    );
+    return readAgentDeletionDiagnostics(this.#database, {
+      agentDefinitionId: input.agentDefinitionId,
+      now: this.#now().toISOString(),
+      participantId: record.definition.participantId,
+      state: record.definition.state,
+    });
   }
   getWorkspaceAgentManagementView(
     actor: AuthenticatedActorContext,
@@ -4379,16 +4742,20 @@ export class RoomKernel {
       );
       this.#requireActivationLease(row, authenticatedHost.hostId);
       this.#requireActivationHostGeneration(row, authenticatedHost);
-      return activationProjectionFromRow(
-        resolveActivationCancellationTransaction({
-          activation: row,
-          database: this.#database,
-          events: this.#roomEvents,
-          now: this.#now(),
-          systemPrincipalId: SYSTEM_PRINCIPAL_ID,
-        }),
-      );
+      return this.#resolveCancellation(row);
     });
+  }
+
+  #resolveCancellation(activation: Row): Activation {
+    const resolved = resolveActivationCancellationTransaction({
+      activation,
+      database: this.#database,
+      events: this.#roomEvents,
+      now: this.#now(),
+      systemPrincipalId: SYSTEM_PRINCIPAL_ID,
+    });
+    this.roomAgentSos.settleTerminalStop(text(activation, "room_id"));
+    return activationProjectionFromRow(resolved);
   }
 
   quarantineActivation(
@@ -4533,6 +4900,9 @@ export class RoomKernel {
         throw new RuntimeTerminationProofError(
           `activation ${input.activationId} has an unfinished RunAttempt ${text(activeRunAttempt, "run_attempt_id")}`,
         );
+      }
+      if (unresolvedActivationCancellation(this.#database, row) !== undefined) {
+        return this.#resolveCancellation(row);
       }
       const activePlacement = this.#database
         .prepare(
@@ -4717,14 +5087,19 @@ export class RoomKernel {
 
   acknowledgeWorkerCursor(
     execution: AuthenticatedWorkerExecutionContext,
-    input: { throughSeq: number },
+    input: WorkerDeliveryAcknowledgement,
   ): void {
     this.#transaction(() => {
       const scope = this.#requireAuthenticatedWorkerExecution(execution);
+      recordCheckedWorkerMessages(
+        this.#database,
+        scope,
+        input,
+        this.#timestamp(),
+      );
       this.#acknowledgeCursorForParticipant(scope.participantId, {
-        consumerId: scope.consumerId,
-        roomId: scope.roomId,
-        throughSeq: input.throughSeq,
+        ...scope,
+        ...input,
       });
     });
   }
@@ -4779,32 +5154,13 @@ export class RoomKernel {
     input: { consumerId: string; roomId: string; throughSeq: number },
   ): void {
     this.#requireMember(input.roomId, participantId);
-    if (input.consumerId.trim().length === 0) {
-      throw new Error("consumerId is required");
-    }
-    if (!Number.isInteger(input.throughSeq) || input.throughSeq < 0) {
-      throw new Error("throughSeq must be a non-negative integer");
-    }
-    const roomRow = this.#requireRoom(input.roomId);
-    const latestRoomSeq = integer(roomRow, "next_seq") - 1;
-    if (input.throughSeq > latestRoomSeq) {
-      throw new Error("throughSeq cannot exceed the latest Room sequence");
-    }
-    this.#database
-      .prepare(
-        `INSERT INTO subscription_cursors(room_id, participant_id, consumer_id, last_seq, updated_at)
-         VALUES(?, ?, ?, ?, ?)
-         ON CONFLICT(room_id, participant_id, consumer_id) DO UPDATE SET
-           last_seq = MAX(subscription_cursors.last_seq, excluded.last_seq),
-           updated_at = excluded.updated_at`,
-      )
-      .run(
-        input.roomId,
-        participantId,
-        input.consumerId,
-        input.throughSeq,
-        this.#timestamp(),
-      );
+    acknowledgeRoomEventWindow(
+      this.#database,
+      participantId,
+      input,
+      integer(this.#requireRoom(input.roomId), "next_seq") - 1,
+      this.#timestamp(),
+    );
   }
 
   #syncForParticipant(
@@ -6094,6 +6450,7 @@ export class RoomKernel {
       roomId: text(row, "room_id"),
       type: "run.termination_proven",
     });
+    finishProvenOrphanedRuns(this.#database, this.#roomEvents, runAttemptId);
     return this.#runtimeProcessFromRow(
       this.#requireRuntimeProcessById(runtimeProcessId),
     );
@@ -6312,6 +6669,7 @@ export class RoomKernel {
       roomId: text(row, "room_id"),
       type: "activation.quarantine_resolved",
     });
+    this.roomAgentSos.settleTerminalStop(text(row, "room_id"));
     return activationProjectionFromRow(
       this.#requireActivationRow(activationId),
     );
@@ -6632,6 +6990,7 @@ export class RoomKernel {
       roomId: text(activation, "room_id"),
       type: "activation.recovered",
     });
+    this.roomAgentSos.settleTerminalStop(text(activation, "room_id"));
   }
 
   #createRunAttemptInTransaction(

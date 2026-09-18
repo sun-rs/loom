@@ -8,9 +8,9 @@ import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 
 const OPTIONS = [
   {
-    description: "停止并重启 agent 进程，保留运行时会话和工作区文件。",
+    description: "停止并重新启动 agent 进程，保留运行时会话和工作区文件。",
     batchDescription: "停止并重启选中的 Agent。运行时会话和工作区文件会保留。",
-    label: "重启",
+    label: "重新启动",
     mode: "restart" as const,
     tone: "cyan",
   },
@@ -25,7 +25,7 @@ const OPTIONS = [
   {
     description: "清除运行时会话，删除所有工作区文件，并从零开始重启。",
     batchDescription: "清除运行时会话、删除工作区文件，并重启选中的 Agent。",
-    label: "完整重置并重启",
+    label: "完全重置并重启",
     mode: "full" as const,
     tone: "red",
   },
@@ -94,7 +94,7 @@ export function AgentExecutionResetDialog({
         <header>
           <div>
             <h2 id="rah-agent-reset-title">
-              重启{" "}
+              重新启动{" "}
               {selectionCount === undefined
                 ? agentName
                 : `${selectionCount} 个 Agent`}
@@ -182,10 +182,10 @@ export function AgentExecutionResetDialog({
               {pending
                 ? "重启中…"
                 : mode === "full"
-                  ? "完整重置并重启"
+                  ? "完全重置并重启"
                   : mode === "session"
                     ? "重置会话并重启"
-                    : "重启"}
+                    : "重新启动"}
             </button>
           </footer>
         </form>

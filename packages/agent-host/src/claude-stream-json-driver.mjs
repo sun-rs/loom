@@ -21,13 +21,13 @@ import {
 } from "./provider-trajectory-normalizer.js";
 
 import { attachClaudeBusyInput } from "./claude-busy-input.js";
+import { providerActivationInput } from "./provider-activation-input.js";
 
 const INTERRUPT_TIMEOUT_MS = 750;
 const TERM_TIMEOUT_MS = 300;
 const MAX_STDERR_BYTES = 64 * 1024;
 const MAX_FRAME_BYTES = 1024 * 1024;
-const ACTIVATION_PROMPT =
-  "Start this RAH OS Activation now. Pull the canonical Room range through the Worker interface, perform only that work, publish the explicit canonical result, and acknowledge delivery.";
+const ACTIVATION_PROMPT = providerActivationInput();
 const DISALLOWED_TOOLS = [
   "EnterPlanMode",
   "ExitPlanMode",

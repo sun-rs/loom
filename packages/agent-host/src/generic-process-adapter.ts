@@ -31,21 +31,7 @@ import type {
   RuntimeStartLifecycle,
 } from "./runtime.ts";
 import { classifyRuntimeFailure } from "./runtime-error-policy.ts";
-import {
-  LEGACY_RAH_WORKER_TOKEN_ENV,
-  LEGACY_RAH_WORKER_TOKEN_FILE_ENV,
-  RAH_AGENT_TOOL_BIN_ENV,
-  RAH_WORKER_API_URL_ENV,
-  RAH_WORKER_CLI_ENV,
-  RAH_WORKER_SESSION_FILE_ENV,
-} from "./worker-credential-file.ts";
-import {
-  RAH_AGENT_APP_INBOX_JSON_ENV,
-  RAH_AGENT_MEMORY_DIR_ENV,
-  RAH_AGENT_MEMORY_INDEX_ENV,
-} from "./agent-memory-workspace.ts";
-import { RAH_AGENT_MEMORY_BOOTSTRAP_JSON_ENV } from "./agent-memory-bootstrap.ts";
-import { RAH_AGENT_MEMORY_SOURCE_FILE_ENV } from "./agent-memory-project.ts";
+import { resolveActivationEnvironment } from "./launch-environment-policy.ts";
 
 import { RuntimeBusyInput, validBusyNotice } from "./runtime-busy-input.ts";
 
@@ -71,6 +57,10 @@ export type GenericProcessAdapterOptions = {
     input: ActivationEnvelope,
     evidence: RuntimeProviderSessionEvidence,
   ) => Promise<void> | void;
+  recordDeliveryAcceptance?: (
+    input: ActivationEnvelope,
+    acceptance: RuntimeDeliveryAcceptance,
+  ) => Promise<void> | void;
   supervisorControlTimeoutMs?: number;
   supervisorDirectory?: string;
   supervisorStartupTimeoutMs?: number;
@@ -87,6 +77,20 @@ export type RuntimeProviderSessionEvidence = Readonly<{
   provider: string;
   providerSessionId: string;
   state: "ready";
+}>;
+
+/**
+ * The driver's own acceptance signal for the wake input it just injected.
+ * Host-private, on the same intercepted fd3 transport: a runtime thread/turn
+ * id is never Room or UI truth. Receiving it is the ONLY thing that lets the
+ * Host register the send; no stdin write, spawn or exit code reaches it.
+ */
+export type RuntimeDeliveryAcceptance = Readonly<{
+  protocol: "rah-delivery-accepted/v1";
+  provider: string;
+  signal: string;
+  threadId: string;
+  turnId: string;
 }>;
 
 export type RuntimeRecoveryProvenance = Pick<
@@ -109,6 +113,8 @@ export type ActivationEnvironmentLease = {
    * this value; they never derive it from prompt text of their own.
    */
   standingPromptDigest?: string;
+  /** Host-compiled compatibility key for a source-backed delivery-mode upgrade. */
+  compatibleStandingPromptDigest?: string;
 };
 
 export type ProcessDiagnostics = {
@@ -205,6 +211,8 @@ class RuntimeTrajectoryCollector {
   readonly #runtimeRunId: string;
   readonly #recordProviderSessionEvidence:
     GenericProcessAdapterOptions["recordProviderSessionEvidence"] | undefined;
+  readonly #recordDeliveryAcceptance:
+    GenericProcessAdapterOptions["recordDeliveryAcceptance"] | undefined;
   #buffer = "";
   #finished = false;
   #queue = Promise.resolve();
@@ -219,6 +227,7 @@ class RuntimeTrajectoryCollector {
     diagnostics: BoundedOutput;
     lifecycle: RuntimeStartLifecycle;
     recordProviderSessionEvidence?: GenericProcessAdapterOptions["recordProviderSessionEvidence"];
+    recordDeliveryAcceptance?: GenericProcessAdapterOptions["recordDeliveryAcceptance"];
     redactions?: readonly string[];
     runAttemptId: string;
     runtimeRunId: string;
@@ -230,6 +239,7 @@ class RuntimeTrajectoryCollector {
     this.#runAttemptId = input.runAttemptId;
     this.#runtimeRunId = input.runtimeRunId;
     this.#recordProviderSessionEvidence = input.recordProviderSessionEvidence;
+    this.#recordDeliveryAcceptance = input.recordDeliveryAcceptance;
   }
 
   append(chunk: Buffer | string): void {
@@ -255,7 +265,8 @@ class RuntimeTrajectoryCollector {
     this.#finished = true;
     if (
       this.#lifecycle.recordTrajectory !== undefined ||
-      this.#recordProviderSessionEvidence !== undefined
+      this.#recordProviderSessionEvidence !== undefined ||
+      this.#recordDeliveryAcceptance !== undefined
     ) {
       this.#buffer += this.#decoder.end();
       this.#drainLines();
@@ -311,6 +322,11 @@ class RuntimeTrajectoryCollector {
             this.#activation,
             providerSession,
           );
+          return;
+        }
+        const acceptance = parseDeliveryAcceptance(frame);
+        if (acceptance !== null) {
+          await this.#recordDeliveryAcceptance?.(this.#activation, acceptance);
           return;
         }
         const activity = RuntimeTrajectoryAppendInputSchema.parse({
@@ -584,6 +600,8 @@ export class GenericProcessAdapter implements RuntimeAdapter {
   readonly #recoveryProvenance: RuntimeRecoveryProvenance | undefined;
   readonly #recordProviderSessionEvidence:
     GenericProcessAdapterOptions["recordProviderSessionEvidence"] | undefined;
+  readonly #recordDeliveryAcceptance:
+    GenericProcessAdapterOptions["recordDeliveryAcceptance"] | undefined;
   readonly #runs = new Map<string, ProcessRun>();
   readonly #supervisorControlTimeoutMs: number;
   readonly #supervisorDirectory: string;
@@ -649,6 +667,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
         ? undefined
         : structuredClone(options.recoveryProvenance);
     this.#recordProviderSessionEvidence = options.recordProviderSessionEvidence;
+    this.#recordDeliveryAcceptance = options.recordDeliveryAcceptance;
     this.#supervisorControlTimeoutMs = supervisorControlTimeoutMs;
     this.#supervisorDirectory = resolve(
       options.supervisorDirectory ??
@@ -781,6 +800,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
       diagnostics: stderr,
       lifecycle,
       recordProviderSessionEvidence: this.#recordProviderSessionEvidence,
+      recordDeliveryAcceptance: this.#recordDeliveryAcceptance,
       redactions: environmentLease?.redactions ?? [],
       runAttemptId: input.runAttemptId,
       runtimeRunId: runId,
@@ -908,6 +928,30 @@ export class GenericProcessAdapter implements RuntimeAdapter {
 
   async reap(handle: RunHandle): Promise<RunExit> {
     return await this.#run(handle).exitPromise;
+  }
+
+  async isAlive(handle: RunHandle): Promise<boolean> {
+    const run = this.#run(handle);
+    if (
+      run.exited ||
+      run.child.exitCode !== null ||
+      run.child.signalCode !== null
+    )
+      return false;
+    if (run.supervisorDescriptor) {
+      // Ask about the target, not the supervisor waiting for its descendants.
+      await this.#requestSupervisorControl(run.supervisorDescriptor, "probe");
+      return true;
+    }
+    if (run.child.pid === undefined) return false;
+    try {
+      process.kill(run.child.pid, 0);
+      return true;
+    } catch (error) {
+      if (error instanceof Error && "code" in error && error.code === "ESRCH")
+        return false;
+      throw error;
+    }
   }
 
   async recover(
@@ -1185,55 +1229,32 @@ export class GenericProcessAdapter implements RuntimeAdapter {
     input: ActivationEnvelope,
     environmentLease: ActivationEnvironmentLease | undefined,
   ): NodeJS.ProcessEnv {
-    const inheritedEnvironment: NodeJS.ProcessEnv = {
-      ...process.env,
-      ...this.#env,
-    };
-    delete inheritedEnvironment[LEGACY_RAH_WORKER_TOKEN_ENV];
-    delete inheritedEnvironment[RAH_WORKER_API_URL_ENV];
-    delete inheritedEnvironment[RAH_WORKER_SESSION_FILE_ENV];
-    delete inheritedEnvironment[LEGACY_RAH_WORKER_TOKEN_FILE_ENV];
-    delete inheritedEnvironment[RAH_AGENT_TOOL_BIN_ENV];
-    delete inheritedEnvironment[RAH_WORKER_CLI_ENV];
-    delete inheritedEnvironment.RAH_PROVIDER_LAUNCH_ARGS_JSON;
-    delete inheritedEnvironment.RAH_AGENT_CONTEXT_JSON;
-    delete inheritedEnvironment.RAH_CONTEXT_MANIFEST_JSON;
-    delete inheritedEnvironment[RAH_AGENT_MEMORY_DIR_ENV];
-    delete inheritedEnvironment[RAH_AGENT_MEMORY_INDEX_ENV];
-    delete inheritedEnvironment[RAH_AGENT_MEMORY_BOOTSTRAP_JSON_ENV];
-    delete inheritedEnvironment[RAH_AGENT_MEMORY_SOURCE_FILE_ENV];
-    delete inheritedEnvironment[RAH_AGENT_APP_INBOX_JSON_ENV];
-    delete inheritedEnvironment.RAH_AGENT_INBOX_API_URL;
-    delete inheritedEnvironment.RAH_AGENT_INBOX_SESSION_FILE;
-    delete inheritedEnvironment.RAH_AGENT_INBOX_CLI;
-    const environment: NodeJS.ProcessEnv = {
-      ...inheritedEnvironment,
-      ...environmentLease?.env,
-      ...(input.agent === undefined
+    return resolveActivationEnvironment({
+      configured: this.#env,
+      fences: {
+        ...(input.agent === undefined
+          ? {}
+          : { RAH_AGENT_CONTEXT_JSON: JSON.stringify(input.agent) }),
+        ...(input.contextManifest === undefined
+          ? {}
+          : {
+              RAH_CONTEXT_MANIFEST_JSON: JSON.stringify(input.contextManifest),
+            }),
+        RAH_ACTIVATION_ID: input.activationId,
+        RAH_ACTIVATION_REASON: input.reason,
+        RAH_CONSUMER_ID: input.consumerId,
+        RAH_FROM_SEQ: String(input.fromSeq),
+        RAH_HOST_ID: input.hostId,
+        RAH_PARTICIPANT_ID: input.participantId,
+        RAH_ROOM_ID: input.roomId,
+        RAH_RUN_ATTEMPT_ID: input.runAttemptId,
+        RAH_TO_SEQ: String(input.toSeq),
+      },
+      inherited: process.env,
+      ...(environmentLease?.env === undefined
         ? {}
-        : { RAH_AGENT_CONTEXT_JSON: JSON.stringify(input.agent) }),
-      ...(input.contextManifest === undefined
-        ? {}
-        : {
-            RAH_CONTEXT_MANIFEST_JSON: JSON.stringify(input.contextManifest),
-          }),
-      RAH_ACTIVATION_ID: input.activationId,
-      RAH_ACTIVATION_REASON: input.reason,
-      RAH_CONSUMER_ID: input.consumerId,
-      RAH_FROM_SEQ: String(input.fromSeq),
-      RAH_HOST_ID: input.hostId,
-      RAH_PARTICIPANT_ID: input.participantId,
-      RAH_ROOM_ID: input.roomId,
-      RAH_RUN_ATTEMPT_ID: input.runAttemptId,
-      RAH_TO_SEQ: String(input.toSeq),
-    };
-    delete environment[LEGACY_RAH_WORKER_TOKEN_ENV];
-    const toolDirectory = environment[RAH_AGENT_TOOL_BIN_ENV];
-    delete environment[RAH_AGENT_TOOL_BIN_ENV];
-    if (toolDirectory !== undefined) {
-      environment.PATH = `${toolDirectory}${delimiter}${environment.PATH ?? ""}`;
-    }
-    return environment;
+        : { leased: environmentLease.env }),
+    });
   }
 
   #recoveryDescriptorProvenance(
@@ -1370,7 +1391,7 @@ export class GenericProcessAdapter implements RuntimeAdapter {
 
   async #requestSupervisorControl(
     descriptor: SupervisorDescriptor,
-    command: "launch" | "terminate" | "notify",
+    command: "launch" | "terminate" | "notify" | "probe",
     input?: string,
   ): Promise<void> {
     await new Promise<void>((resolvePromise, reject) => {
@@ -1592,6 +1613,33 @@ function parseProviderSessionEvidence(
     provider: value.provider,
     providerSessionId: value.providerSessionId,
     state: "ready",
+  };
+}
+
+function parseDeliveryAcceptance(
+  value: unknown,
+): RuntimeDeliveryAcceptance | null {
+  if (!isRecord(value) || value.protocol !== "rah-delivery-accepted/v1") {
+    return null;
+  }
+  if (
+    Object.keys(value).sort().join("\0") !==
+      ["protocol", "provider", "signal", "threadId", "turnId"]
+        .sort()
+        .join("\0") ||
+    !isSafeProviderSessionText(value.provider, 512) ||
+    !isSafeProviderSessionText(value.signal, 512) ||
+    !isSafeProviderSessionText(value.threadId, 4_096) ||
+    !isSafeProviderSessionText(value.turnId, 4_096)
+  ) {
+    throw new Error("invalid runtime delivery acceptance frame");
+  }
+  return {
+    protocol: "rah-delivery-accepted/v1",
+    provider: value.provider,
+    signal: value.signal,
+    threadId: value.threadId,
+    turnId: value.turnId,
   };
 }
 

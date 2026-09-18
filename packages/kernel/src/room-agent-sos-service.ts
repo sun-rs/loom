@@ -6,10 +6,14 @@ import {
   type ClientRoomAgentSosResumeRequest,
   type ClientRoomAgentSosStopRequest,
   type RoomAgentSosOperation,
+  type RoomExecutionReadResponse,
 } from "@rah-os/protocol";
 
 import type { AuthenticatedActorContext } from "./auth.ts";
-import { requireRoomManager } from "./collaboration-policy.ts";
+import {
+  requireRoomManager,
+  requireRoomMember,
+} from "./collaboration-policy.ts";
 import {
   ConflictError,
   ForbiddenError,
@@ -19,6 +23,7 @@ import {
   StaleContextError,
 } from "./errors.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
+import { cancelStoppedRoomQuarantine } from "./room-stop-quarantine.ts";
 import { integer, nullableText, text, type Row } from "./sqlite-row.ts";
 
 export class RoomAgentSosService {
@@ -53,21 +58,66 @@ export class RoomAgentSosService {
       const actorId = this.#requireHumanManager(actor, input.roomId);
       const replay = this.#database
         .prepare(
-          "SELECT * FROM room_agent_sos_operations WHERE room_id = ? AND idempotency_key = ?",
+          "SELECT * FROM room_events WHERE room_id = ? AND idempotency_key = ?",
         )
         .get(input.roomId, input.idempotencyKey);
       if (replay !== undefined) {
-        if (text(replay, "requested_by") !== actorId) {
+        const payload = JSON.parse(text(replay, "payload_json"));
+        if (
+          text(replay, "type") !== "room.agent_sos_requested" ||
+          text(replay, "actor_id") !== actorId ||
+          typeof payload.operationId !== "string" ||
+          (payload.resumeOnMessage === true) !==
+            (input.resumeOnMessage === true)
+        ) {
           throw this.#idempotencyConflict(input.idempotencyKey);
         }
-        return this.#result(replay, true);
+        return this.#result(this.#requireOperation(payload.operationId), true);
       }
       const active = this.#database
         .prepare(
           "SELECT * FROM room_agent_sos_operations WHERE room_id = ? AND state <> 'resumed'",
         )
         .get(input.roomId);
-      if (active !== undefined) return this.#result(active, true);
+      if (active !== undefined) {
+        const request = this.#database
+          .prepare("SELECT payload_json FROM room_events WHERE event_id = ?")
+          .get(text(active, "request_event_id"))!;
+        if (
+          input.resumeOnMessage === true ||
+          JSON.parse(text(request, "payload_json")).resumeOnMessage !== true
+        )
+          return this.#result(active, true);
+
+        // Tightening a stop must never briefly release the hold or replace
+        // its attempt-scoped terminal-proof targets. Original events stay immutable.
+        this.#assertFresh(input.roomId, input.basedOnRoomSeq);
+        const operationId = text(active, "operation_id");
+        const event = this.#events.append({
+          actorId,
+          aggregateId: operationId,
+          aggregateType: "room_agent_sos",
+          idempotencyKey: input.idempotencyKey,
+          payload: {
+            basedOnRoomSeq: input.basedOnRoomSeq,
+            operationId,
+            resumeOnMessage: false,
+            supersedesRequestEventId: text(active, "request_event_id"),
+          },
+          roomId: input.roomId,
+          type: "room.agent_sos_requested",
+        });
+        this.#database
+          .prepare(
+            "UPDATE room_agent_sos_operations SET request_event_id = ?, updated_at = ? WHERE operation_id = ?",
+          )
+          .run(event.eventId, this.#now().toISOString(), operationId);
+        return {
+          deduplicated: false,
+          event,
+          operation: this.#projection(this.#requireOperation(operationId)),
+        };
+      }
 
       this.#assertFresh(input.roomId, input.basedOnRoomSeq);
       const requestedAt = this.#now().toISOString();
@@ -77,9 +127,19 @@ export class RoomAgentSosService {
         aggregateId: operationId,
         aggregateType: "room_agent_sos",
         idempotencyKey: input.idempotencyKey,
-        payload: { basedOnRoomSeq: input.basedOnRoomSeq, operationId },
+        payload: {
+          basedOnRoomSeq: input.basedOnRoomSeq,
+          operationId,
+          resumeOnMessage: input.resumeOnMessage === true,
+        },
         roomId: input.roomId,
         type: "room.agent_sos_requested",
+      });
+      cancelStoppedRoomQuarantine({
+        database: this.#database,
+        events: this.#events,
+        request: requestEvent,
+        now: requestedAt,
       });
       this.#database
         .prepare(
@@ -142,7 +202,7 @@ export class RoomAgentSosService {
     return this.#transaction(() => {
       const operation = this.#requireOperation(input.operationId);
       this.#requireHumanManager(actor, text(operation, "room_id"));
-      if (text(operation, "state") === "stopped") {
+      if (["stopped", "resumed"].includes(text(operation, "state"))) {
         return this.#result(operation, true);
       }
       if (text(operation, "state") !== "stopping") {
@@ -158,6 +218,105 @@ export class RoomAgentSosService {
       }
       return this.#finishStop(operation, false);
     });
+  }
+
+  read(
+    actor: AuthenticatedActorContext,
+    input: { roomId: string },
+  ): RoomExecutionReadResponse {
+    this.#requireHumanManager(actor, input.roomId);
+    const operation = this.#database
+      .prepare(
+        "SELECT * FROM room_agent_sos_operations WHERE room_id = ? AND state <> 'resumed'",
+      )
+      .get(input.roomId);
+    const room = this.#database
+      .prepare("SELECT next_seq FROM rooms WHERE room_id = ?")
+      .get(input.roomId)!;
+    const work = this.#database
+      .prepare(
+        "SELECT 1 FROM activations WHERE room_id = ? AND state IN ('queued', 'leased') LIMIT 1",
+      )
+      .get(input.roomId);
+    return {
+      operation: operation ? this.#projection(operation) : null,
+      latestRoomSeq: integer(room, "next_seq") - 1,
+      working: operation === undefined && work !== undefined,
+    };
+  }
+
+  settleTerminalStop(roomId: string): void {
+    const operation = this.#database
+      .prepare(
+        "SELECT * FROM room_agent_sos_operations WHERE room_id = ? AND state = 'stopping'",
+      )
+      .get(roomId);
+    if (
+      operation &&
+      this.#pendingTargetCount(text(operation, "operation_id")) === 0
+    )
+      this.#finishStop(operation, false);
+  }
+
+  withHumanInput<Result>(roomId: string, command: () => Result): Result {
+    return this.#transaction(() => {
+      const result = command();
+      this.resumeAfterHumanMessage(roomId);
+      return result;
+    });
+  }
+
+  // Called inside the message/stop transaction. A queued correction cannot lift
+  // the execution fence before all previous processes have terminal proof.
+  resumeAfterHumanMessage(roomId: string): void {
+    const operation = this.#database
+      .prepare(
+        `SELECT operation.*, event.room_seq AS request_seq, event.payload_json
+      FROM room_agent_sos_operations AS operation JOIN room_events AS event ON event.event_id = operation.request_event_id
+      WHERE operation.room_id = ? AND operation.state = 'stopped'`,
+      )
+      .get(roomId);
+    if (
+      !operation ||
+      JSON.parse(text(operation, "payload_json")).resumeOnMessage !== true
+    )
+      return;
+    const message = this.#database
+      .prepare(
+        `SELECT event.* FROM room_events AS event
+      JOIN principals ON principals.principal_id = event.actor_id
+      WHERE event.room_id = ? AND event.room_seq > ? AND event.type IN ('message.posted', 'task.created') AND principals.kind = 'human'
+      ORDER BY event.room_seq DESC LIMIT 1`,
+      )
+      .get(roomId, integer(operation, "request_seq"));
+    if (!message) return;
+    const operationId = text(operation, "operation_id");
+    const payload = JSON.parse(text(message, "payload_json"));
+    const content = payload.body ?? payload.title;
+    const guidance = typeof content === "string" ? content.slice(0, 4000) : "";
+    const now = this.#now().toISOString();
+    const event = this.#events.append({
+      actorId: text(message, "actor_id"),
+      aggregateId: operationId,
+      aggregateType: "room_agent_sos",
+      idempotencyKey: `composer-resume:${operationId}`,
+      roomId,
+      type: "room.agent_sos_resumed",
+      payload: {
+        operationId,
+        guidance,
+        inputEventId: text(message, "event_id"),
+      },
+    });
+    this.#events.deriveAttention(event, payload.recipients ?? [], now);
+    this.#database
+      .prepare(
+        "UPDATE room_agent_sos_operations SET state = 'resumed', resume_event_id = ?, guidance = ?, resumed_at = ?, updated_at = ? WHERE operation_id = ?",
+      )
+      .run(event.eventId, guidance, now, now, operationId);
+    this.#database
+      .prepare("DELETE FROM room_agent_sos_holds WHERE room_id = ?")
+      .run(roomId);
   }
 
   resume(
@@ -288,6 +447,9 @@ export class RoomAgentSosService {
          WHERE operation_id = ?`,
       )
       .run(event.eventId, stoppedAt, stoppedAt, operationId);
+    this.resumeAfterHumanMessage(text(operation, "room_id"));
+    if (text(this.#requireOperation(operationId), "state") === "resumed")
+      return this.#result(this.#requireOperation(operationId), deduplicated);
     return {
       deduplicated,
       event,
@@ -352,13 +514,17 @@ export class RoomAgentSosService {
     if (room === undefined) {
       throw new NotFoundError(`room ${roomId} was not found`);
     }
-    if (text(room, "kind") !== "channel") {
-      throw new ForbiddenError("Room Agent SOS is available only for Channels");
+    if (!["channel", "direct"].includes(text(room, "kind"))) {
+      throw new ForbiddenError(
+        "Room Agent SOS requires a Channel or direct Room",
+      );
     }
     if (nullableText(room, "archived_at") !== null) {
       throw new ConflictError(`Room ${roomId} is archived and read-only`);
     }
-    requireRoomManager(this.#database, roomId, actorId);
+    if (text(room, "kind") === "direct")
+      requireRoomMember(this.#database, roomId, actorId);
+    else requireRoomManager(this.#database, roomId, actorId);
     return actorId;
   }
 

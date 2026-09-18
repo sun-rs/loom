@@ -1,5 +1,26 @@
 # Inbox、Activation 与 AgentHost
 
+## Composer 停止与重发
+
+Composer 的 Stop 复用 Room Agent SOS 与 Runtime terminal proof，作用域为当前
+Room 的所有执行通道，消息列共享所属 Room。`resumeOnMessage: true` 仅用于
+Composer：停止后接受的新 Human 消息、消息列回复或 Task 创建会提供恢复指导，
+但必须等全部旧 Runtime 的终止证明后才解除 hold。停止中收到修正内容不丢弃，
+最后一份证明落库时可独立于 HTTP 调用者完成恢复。启动失败与停止竞态下，
+`retryActivation` 优先解析既有 cancellation，不能跨 attempt 重试遗留停止目标。
+设置页原有 SOS 默认仍需显式 Resume。发送不清除原消息、不改 Task 状态；忙碌时
+继续发送复用既有 durable follow-up 合并。详见
+[Composer 合同](../design/composer-controls.md)。
+
+Human 可以把已有的 Composer 停止升级为持续 Room SOS 暂停：再次请求 Stop 且
+`resumeOnMessage` 为 false（或省略），追加新的停止请求事件并更新该 operation
+的有效请求，保留原始事件、hold 和 attempt-scoped 终止目标。旧请求重放、迟到的
+Composer Stop、新 Human 消息、Task 创建/取消通知都不能降低暂停级别；只能通过
+带新鲜 Room 序号和指导的显式 Resume 恢复。该围栏持久化并跨 daemon 重启保持。
+暂停期间的 Inbox 和 queued Activation 保留，不能冒充已读或已完成；没有租约且
+被 stopped SOS hold 阻止领取的队列属于静止工作，不等于正在执行的进程。
+证据与边界见[持续暂停修复](../audits/2026-09-18-council-persistent-pause.zh-CN.md)。
+
 ## 1. 四种事实必须分开
 
 ```text
@@ -62,6 +83,13 @@ Agent Thread 关注由 Kernel 的 `agent_thread_follows` 持久表拥有，不�
 
 同一个 AgentParticipant 在同一时刻最多拥有一个 active lane。
 
+Room 的持久 SOS hold 同时约束 legacy lease 和 Placement 候选查询。
+停止完成但纠正消息尚未到达时，scheduler 不得提前预留旧 queued 范围；
+显式恢复或新 Human 消息解除 hold 后，沿既有 queued 合并路径接纳新范围。
+仍需旧执行的 terminal proof，不能以可见回复代替终止。2026-09-18 回归覆盖
+纠正输入在 terminal proof 前后两种到达顺序，见
+[Placement 竞态修复](../audits/2026-09-18-latency-p0-repair.zh-CN.md)。
+
 - queued 状态的多条事件合并到一个 Activation，扩展 `fromSeq/toSeq`。
 - 已 leased/running 时到达的新消息形成或扩展下一个 queued Activation。
 - Agent 每次运行先 `room_sync`，一次拉取该 cursor 范围内的完整增量。
@@ -70,6 +98,22 @@ Agent Thread 关注由 Kernel 的 `agent_thread_follows` 持久表拥有，不�
 - RuntimeProfile 只描述可执行能力，不能承载 Agent 身份。Kernel 为每次新 launch claim 在 `AgentRuntimeContext` 中冻结 canonical participant handle、Definition revision 与 Policy/Placement；本机和远程 Host 都把同一份 context 注入子进程。旧 v1 Computer 可暂时缺少 handle，新 claim 必须提供。这样多个 Agent 共享同一 Runtime Offer 时不会继承某个种子 Agent 的名称或提示词。
 
 `room_sync` 返回 continuation token，但不能仅因 HTTP/RPC 返回就永久推进消费位置。实现必须采用 client-owned continuation token，或 `deliver -> ackCursor` 两阶段协议；即使响应在服务端提交后丢失，客户端也必须能安全重放同一批事件。
+
+2026-09-18 的真实忙时追加验收再次确认一个未闭合差异：当前 Run 可经 target read
+和显式 post 回复后续消息，但冻结 `toSeq` 以外的 queued Activation 仍会另起一次
+运行来完成交付确认。原生投递回执、共享 target read position、已有回复均不能单独
+充当这次 Activation 的消费证明。后续修复必须由 Kernel 将实际 runtime 的有界
+交付确认与 Task 义务一并闭合，覆盖失败、未读页、新事件与跨 Room 情况；不能由
+adapter 删除 queued work 或在 post 后杀进程。见
+[运行时对齐证据](../audits/2026-09-18-runtime-scheduling-alignment.zh-CN.md)。
+
+Worker `message-check` 在输出成功后的 ACK 事务内，同时记录该页实际交付的
+`message.posted` 的 target read position。Application Service 保存页内序号，
+Kernel 验证 Room 与 Activation 范围，并按 Root/Thread 分别单调推进；HTTP 调用者
+不能自报已读消息序号。未输出、未确认、未返回的下一页与后来到达的消息均不推进。
+普通 sync ACK 不自动变成 target read，交付回执也不证明模型理解、Inbox 已处理或
+Task 已完成。实现与 Raft 1.0.32 对照见
+[交付与长请求修复](../audits/2026-09-17-reply-delivery-and-opencode-timeout-repair.zh-CN.md)。
 
 ## 4. AgentHost
 
@@ -125,11 +169,13 @@ Agent 向人类提问时：
 - Host 在创建 RunAttempt 前崩溃：`leaseUntil` 到期后可重新领取。
 - Host 在 `starting/running` RunAttempt 存在时失联：Kernel 将 RunAttempt 标记为 `orphaned`，将 Activation 标记为 `quarantined` 并冻结该 participant lane；不能仅凭 lease 到期启动第二个 runtime。
 - 每个可能产生启动副作用的 runtime 先有持久 `RuntimeProcess(prepared)` 与 opaque recovery descriptor，成功后转为 `active`。兼容 adapter 通过独立、周期续租并按 attempt fencing 的 recovery lease 竞争对账；只有 terminal proof 写入后才能解除 quarantine。多个 recovery Host 不能同时拥有同一 orphan，旧 attempt 不能提交新 lease 下的结果。
-- Agent busy：新事件进入下一次 Activation，不并发注入。
-- CLI 不退出：Host timeout 后 cancel、kill process group、reap 并记录 RunAttempt failure；Task 独立保留。
+- 已验证的 Runtime 终止证明与 orphaned RunAttempt 收口在同一 Kernel 事务内完成：零退出码且无 signal 记为 `exited`，其余记为 `failed`，保留原失联诊断并写 `run.finished`。这不是 Task 完成或 Inbox 已读证明。启动时仅修复已存在匹配 `run.termination_proven` 事件与终止投影的遗留 orphan，不改写已完成的 RunAttempt，也不绕过 recovery lease 或重试隔离围栏。实现与证据见[批次 A/B 接手收口](../audits/2026-09-17-ab-takeover-closure.zh-CN.md)。
+- Agent busy：新事件进入持久 follow-up；支持原生 direct/steer 时同时发送提示，不另起执行 lane，传输接纳不等于业务交付确认。
+- CLI 不退出：Host 周期复查实际 runtime 存活；不能只因总时长达到旧上限而终止仍存活的运行。探测失败或无此能力时仍经 cancel、kill process group、reap 记录 RunAttempt failure；Task 独立保留。
 - daemon signal 先进入 drain；超过 `drainTimeoutMs` 后才 cancel 当前 runtime。start/recover/cancel 各有独立 deadline，cancel deadline 到期且无 terminal proof 时 quarantine，而不是无限阻塞 shutdown 或伪造退出。
 - Runtime 明确失败时，Host 将 Activation 延迟重排；若已有 queued follow-up，先把范围合并回原 Activation 并取消重复 lane。默认退避按 Raft 可见源码使用 10 秒基准、5 分钟封顶。
 - 同一规范化 recoverable Runtime 错误指纹连续出现三次时，Kernel 写入 durable `activation_retry_fences`，把 Activation 保持为 fail-closed `quarantined` 并停止该 Agent lane 的普通 lease/reconcile；前两次和第三次分别留下 `activation.retry_scheduled` / `activation.retry_blocked`。Human 获得指向准确 Room 的系统通知。普通 quarantine 解除不能绕过该 fence，只有显式 Agent restart/reset 的 disable→enable 生命周期合并 follow-up、记录 `activation.retry_resumed` 后才能恢复。Raft 的 `actionRequired` 与 sticky terminal 分支现由结构化 `retryDisposition` 直接进入同一 fail-closed quarantine，不消耗三次指纹计数；普通 retry 使用 10 秒基准、5 分钟封顶和最多 10% 正向 crypto jitter。
+- Human 明确停止 Room 时，可以撤销该 Room 已有完整终止证明的隔离执行，记为 `cancelled` 并保留错误历史与取消事件；这不是 retry 或完成。未终止 Runtime、孤立 Run、未释放 Placement 仍阻止操作，Inbox、Task 和读位置不被伪造。见[超时与隔离撤销修复](../audits/2026-09-18-runtime-timeout-and-quarantine.zh-CN.md)。
 - Reminder 的 `roomId/messageId` 是不可变来源锚点，`targetRoomId` 是触发事实和 owner-only Activation 的目标；`--channel #slug` 只在同一 active Workspace 内解析，并在 schedule 与 fire 两次验证 Reminder owner 的 Room membership。Thread anchor 同时冻结 `threadId/rootMessageId`。同 Room Thread 的 `reminder.fired` 只投影到该 Thread；跨 Room receipt 留在目标 Room，并通过 typed message permalink 回到来源消息/Thread。Reminder mutation 仍不推进 Room seq，只有 fire 写 canonical Room fact。
 - 长 Run 由 Host supervisor 周期 heartbeat 并续租；timeout 时调用 Runtime cancel。只有 cancel 返回 terminal exit 并持久化 termination proof，才记录 `timed_out` 并重排；无法证明终止时隔离 lane。受控 fixture 已验证活动 POSIX process group 的 `SIGTERM`→`SIGKILL`、leader 先退出时的同组 descendant cleanup，以及 AgentHost→外部 worker→Room `sync/ack` delivery proof。跨进程 fixture 在 target launch 后、`run.started` 前硬杀原 AgentHost，随后验证 `starting + prepared` orphan/quarantine、identity-authenticated group cleanup 和签名 result，不依赖持久 PID/PGID；独立 Fake Host/Kernel fixture 验证 recovery lease 跨原到期点续租与 attempt fencing。fake daemon 已验证 canonical Task query、token-free sidecar claim heartbeat、跨 RunAttempt 幂等恢复、InputRequest 无 listening 唤醒及 `claim/start/progress/submit`；Codex Luna gate 已验证真实 CLI 的最小 Task submit。主动 `setsid`/double-fork 的 escape、Windows tree kill、supervisor artifact GC、真实 Provider InputRequest，以及 Artifact/Review 完整链路仍未验证。
 

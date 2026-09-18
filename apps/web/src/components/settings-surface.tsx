@@ -1,4 +1,6 @@
 import { SystemChannelSettings } from "./system-channel-settings.tsx";
+import { SettingsArchivedChannels } from "./settings-archived-channels.tsx";
+import type { Room } from "@rah-os/protocol";
 import { RuntimeGuideSettingsContent } from "./runtime-guide-settings.tsx";
 import { useEffect, useState } from "react";
 
@@ -87,7 +89,9 @@ function hasExplicitSettingsSection(search: string): boolean {
 }
 
 export function SettingsSurface({
-  onComputers,
+  archivedRooms = [],
+  onOpenRoom,
+  onUnarchiveRoom,
   canManageWorkspace,
   client,
   currentPrincipal,
@@ -96,7 +100,9 @@ export function SettingsSurface({
   onPrincipalUpdated,
   workspace,
 }: {
-  onComputers?: () => void;
+  archivedRooms?: readonly Room[];
+  onOpenRoom?: (roomId: string) => void;
+  onUnarchiveRoom?: (room: Room) => Promise<void>;
   agents: readonly WorkspaceAgentView[];
   canManageWorkspace: boolean;
   client: RahClient;
@@ -147,15 +153,10 @@ export function SettingsSurface({
       className="rah-settings-surface"
       data-mobile-index={mobileIndex || undefined}
     >
-      <SettingsNavigation
-        active={section}
-        onSelect={select}
-        onComputers={onComputers}
-      />
+      <SettingsNavigation active={section} onSelect={select} />
       <SettingsNavigation
         active={undefined}
         className="rah-settings-mobile-index"
-        onComputers={onComputers}
         onSelect={select}
       />
       <SettingsMobileBackProvider onBack={showMobileSettingsIndex}>
@@ -180,7 +181,16 @@ export function SettingsSurface({
             client={client}
             onUpdated={onWorkspaceUpdated}
             workspace={workspace}
-          />
+          >
+            {canManageWorkspace && onOpenRoom && onUnarchiveRoom ? (
+              <SettingsArchivedChannels
+                key={workspace?.workspaceId}
+                rooms={archivedRooms}
+                onOpen={onOpenRoom}
+                onUnarchive={onUnarchiveRoom}
+              />
+            ) : null}
+          </WorkspaceProfileSettingsContent>
         ) : section === "administration" ? (
           <AdministrationSettingsContent>
             <SystemChannelSettings
@@ -204,12 +214,10 @@ export function SettingsSurface({
 }
 
 function SettingsNavigation({
-  onComputers,
   active,
   className,
   onSelect,
 }: {
-  onComputers?: (() => void) | undefined;
   active: SettingsSection | undefined;
   className?: string;
   onSelect: (section: SettingsSection) => void;
@@ -241,16 +249,6 @@ function SettingsNavigation({
                 {item.localExtension ? <small>本地</small> : null}
               </button>
             ))}
-            {group.label === "工作空间" && onComputers && (
-              <button
-                type="button"
-                className="rah-interaction-row"
-                onClick={onComputers}
-              >
-                <Icon name="monitor" />
-                <span>计算机</span>
-              </button>
-            )}
           </section>
         ))}
       </nav>

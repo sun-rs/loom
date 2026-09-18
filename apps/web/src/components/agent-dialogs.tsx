@@ -1,4 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentProps,
+} from "react";
+import type { RahClient } from "@rah-os/client-sdk";
+import { RuntimeGuideIdSchema } from "@rah-os/protocol";
+import { parseAgentEnvironment } from "../agent-launch-environment.ts";
+import {
+  RuntimeEnvironmentEditor,
+  type EnvironmentRow,
+} from "./runtime-environment-editor.tsx";
+import { AgentProviderEditor, providerKeys } from "./agent-provider-editor.tsx";
 
 import type {
   ClientAgentGetResponse,
@@ -13,10 +27,12 @@ import {
   normalizeModelBindingId,
   normalizeReasoningLevel,
   runtimeModelOptions,
+  runtimeFastTier,
   runtimeReasoningOptions,
   runtimeToolAccessModes,
 } from "../agent-runtime-capabilities.ts";
 import { useDialogProtocol } from "../dialog-protocol.ts";
+import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 
 export type AgentCreateInput = Omit<
   ClientAgentProvisionRequest,
@@ -48,15 +64,28 @@ const RAFT_AVATAR_KEYS = [
   "tree",
 ] as const;
 
+function CreateAgentSelect(props: ComponentProps<"select">) {
+  return (
+    <span className="rah-create-agent-select">
+      <select {...props} />
+      <Icon name="chevron-down" />
+    </span>
+  );
+}
+
 export function AgentCreateDialog({
+  client,
   computerLabel,
   onClose,
   onCreate,
+  onRefreshModels,
   runtimes,
 }: {
+  client: RahClient;
   computerLabel: string | undefined;
   onClose: () => void;
-  onCreate: (input: AgentCreateInput) => Promise<void>;
+  onCreate: (input: AgentCreateInput) => Promise<string>;
+  onRefreshModels: (offerId: string) => Promise<void>;
   runtimes: readonly LocalRuntimeInventoryEntry[];
 }) {
   const runtimeOptions = useMemo(
@@ -71,24 +100,43 @@ export function AgentCreateDialog({
     [runtimes],
   );
   const [displayName, setDisplayName] = useState("");
-  const [handle, setHandle] = useState("");
-  const [handleEdited, setHandleEdited] = useState(false);
   const [description, setDescription] = useState("");
-  const [role, setRole] = useState("");
-  const [instructions, setInstructions] = useState("");
-  const [avatarKey, setAvatarKey] = useState<string>("");
   const [runtimeOfferId, setRuntimeOfferId] = useState("");
   const [modelBindingId, setModelBindingId] = useState("");
   const [reasoning, setReasoning] = useState<ReasoningLevel>("default");
-  const [showMore, setShowMore] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [serviceTier, setServiceTier] = useState<
+    "default" | "fast" | "priority"
+  >("default");
+  const [environmentRows, setEnvironmentRows] = useState<
+    Record<string, EnvironmentRow[]>
+  >({});
+  const [createdAgentId, setCreatedAgentId] = useState<string>();
+  const created = useRef<string | undefined>(undefined);
+  const saving = useRef(false);
   const [pending, setPending] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const refreshLock = useRef(false);
   const [actionError, setActionError] = useState<string>();
-  const dialogRef = useDialogProtocol({ blocked: pending, onClose });
+  const dialogRef = useDialogProtocol({
+    blocked: pending || refreshing,
+    onClose,
+  });
   const selectedRuntime = runtimeOptions.find(
     (runtime) => runtime.runtimeOfferId === runtimeOfferId,
   );
   const modelOptions = runtimeModelOptions(selectedRuntime);
+  const rows = environmentRows[runtimeOfferId] ?? [];
+  const setRows = (next: EnvironmentRow[]) =>
+    setEnvironmentRows((old) => ({ ...old, [runtimeOfferId]: next }));
+  let environment: Record<string, string> = {};
+  let environmentError: string | undefined;
+  try {
+    environment = parseAgentEnvironment(rows);
+  } catch (error) {
+    environmentError = errorMessage(error);
+  }
+  const fastTier = runtimeFastTier(selectedRuntime, modelBindingId);
+  const handle = handleFromName(displayName) || "agent";
   const reasoningOptions = runtimeReasoningOptions(
     selectedRuntime,
     modelBindingId,
@@ -106,16 +154,59 @@ export function AgentCreateDialog({
     );
   }, [modelBindingId, selectedRuntime]);
   const valid =
+    !environmentError &&
     displayName.trim() !== "" &&
     /^[\p{L}\p{N}][\p{L}\p{N}._-]*$/u.test(handle.trim()) &&
     runtimeOfferId !== "" &&
     modelOptions.some((option) => option.modelBindingId === modelBindingId);
-  const effectiveRole =
-    role.trim() || description.trim() || `${displayName.trim()} Agent`;
-  const effectiveInstructions =
-    instructions.trim() ||
-    description.trim() ||
-    "作为通用 Agent，遵循用户指令并清晰报告执行结果。";
+  async function submit() {
+    if (!valid || saving.current || refreshLock.current) return;
+    saving.current = true;
+    setPending(true);
+    setActionError(undefined);
+    try {
+      if (!created.current) {
+        created.current = await onCreate({
+          ...(description.trim() ? { description: description.trim() } : {}),
+          displayName: displayName.trim(),
+          handle,
+          instructions:
+            description.trim() ||
+            "作为通用 Agent，遵循用户指令并清晰报告执行结果。",
+          role: `${displayName.trim()} Agent`,
+          modelIntent: {
+            ...modelIntent(modelBindingId, reasoning),
+            serviceTier: fastTier ? serviceTier : "default",
+          },
+          runtimeOfferId,
+          toolAccessMode: DEFAULT_TOOL_ACCESS_MODE,
+        });
+        setCreatedAgentId(created.current);
+      }
+      if (Object.keys(environment).length) {
+        const runtimeId = RuntimeGuideIdSchema.parse(selectedRuntime?.cliId);
+        const current = await client.request("runtime.guide.read", {
+          agentDefinitionId: created.current,
+        });
+        await client.request("runtime.guide.update", {
+          agentDefinitionId: created.current,
+          runtimeId,
+          environment,
+          expectedRevision: current.revision,
+        });
+      }
+      onClose();
+    } catch (error) {
+      setActionError(
+        (created.current
+          ? "Agent 已创建，配置尚未保存；重试不会重复创建。"
+          : "") + errorMessage(error),
+      );
+    } finally {
+      saving.current = false;
+      setPending(false);
+    }
+  }
 
   return (
     <div className="rah-dialog-layer" role="presentation">
@@ -137,217 +228,193 @@ export function AgentCreateDialog({
           <h2 id="rah-agent-create-title">创建 AGENT</h2>
           <button
             aria-label="关闭"
-            className="sq-btn"
+            className="sq-btn rah-card-dialog-close"
             disabled={pending}
             onClick={onClose}
           >
-            <span className="rah-close-glyph" aria-hidden="true">
-              ×
-            </span>
+            <Icon name="x" />
           </button>
         </header>
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            if (!valid) return;
-            setPending(true);
-            void onCreate({
-              ...(avatarKey === "" ? {} : { avatarKey }),
-              ...(description.trim() === ""
-                ? {}
-                : { description: description.trim() }),
-              displayName: displayName.trim(),
-              handle: handle.trim(),
-              instructions: effectiveInstructions,
-              modelIntent: modelIntent(modelBindingId, reasoning),
-              role: effectiveRole,
-              runtimeOfferId,
-              toolAccessMode: DEFAULT_TOOL_ACCESS_MODE,
-            })
-              .then(() => setActionError(undefined))
-              .catch((caught) => setActionError(errorMessage(caught)))
-              .finally(() => setPending(false));
+            void submit();
           }}
         >
-          <label>
-            <span>
-              计算机 <em>*</em>
-            </span>
-            <select disabled value={computerLabel ?? ""}>
-              {computerLabel === undefined ? (
-                <option value="">没有在线的计算机</option>
-              ) : (
-                <option value={computerLabel}>{computerLabel}</option>
-              )}
-            </select>
-          </label>
-          <label>
-            <span>
-              名称 <em>*</em>
-            </span>
-            <input
-              autoFocus
-              maxLength={128}
-              onChange={(event) => {
-                const nextName = event.target.value;
-                setDisplayName(nextName);
-                if (!handleEdited) setHandle(handleFromName(nextName));
-              }}
-              placeholder="例如 Alice"
-              value={displayName}
-            />
-          </label>
-          <label>
-            描述
-            <textarea
-              maxLength={3_000}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder="留空作为通用 Agent，或描述一个角色…"
-              rows={4}
-              value={description}
-            />
-            <small className="rah-agent-description-count">
-              {description.length}/3000
-            </small>
-          </label>
-          <label>
-            <span>
-              运行时 <em>*</em>
-            </span>
-            <select
-              onChange={(event) => setRuntimeOfferId(event.target.value)}
-              value={runtimeOfferId}
-            >
-              <option value="">请选择…</option>
-              {runtimeOptions.map((runtime) => (
-                <option
-                  key={runtime.runtimeOfferId}
-                  value={runtime.runtimeOfferId}
-                >
-                  {runtime.displayName}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            模型
-            <select
-              onChange={(event) => {
-                const next = event.target.value;
-                setModelBindingId(next);
-                setReasoning((current) =>
-                  normalizeReasoningLevel(current, selectedRuntime, next),
-                );
-              }}
-              value={modelBindingId}
-            >
-              <option value="" disabled>
-                请选择模型
-              </option>
-              {modelOptions.map((option) => (
-                <option
-                  key={option.modelBindingId}
-                  value={option.modelBindingId}
-                >
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            {runtimeOfferId === "" ? (
-              <small>
-                请选择一台在线的 Computer 以及运行时以检查可用模型。
-              </small>
-            ) : null}
-          </label>
-          <button
-            aria-expanded={showMore}
-            className="rah-agent-disclosure"
-            onClick={() => {
-              setShowMore((current) => !current);
-              if (showMore) setShowAdvanced(false);
-            }}
-            type="button"
+          <fieldset
+            className="rah-agent-create-fields"
+            disabled={pending || refreshing || createdAgentId !== undefined}
           >
-            <span aria-hidden="true">{showMore ? "⌄" : "›"}</span> 更多
-          </button>
-          {showMore ? (
-            <section className="rah-agent-more-fields">
-              <button
-                aria-expanded={showAdvanced}
-                className="rah-agent-disclosure is-nested"
-                onClick={() => setShowAdvanced((current) => !current)}
-                type="button"
+            <label>
+              <span>
+                计算机 <em>*</em>
+              </span>
+              <CreateAgentSelect disabled value={computerLabel ?? ""}>
+                {computerLabel === undefined ? (
+                  <option value="">没有在线的计算机</option>
+                ) : (
+                  <option value={computerLabel}>{computerLabel}</option>
+                )}
+              </CreateAgentSelect>
+            </label>
+            <label>
+              <span>
+                名称 <em>*</em>
+              </span>
+              <input
+                autoFocus
+                maxLength={128}
+                onChange={(event) => {
+                  const nextName = event.target.value;
+                  setDisplayName(nextName);
+                }}
+                placeholder="例如 Alice"
+                value={displayName}
+              />
+            </label>
+            <label>
+              描述
+              <textarea
+                maxLength={2_000}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="留空作为通用 Agent，或描述一个角色…"
+                rows={3}
+                value={description}
+              />
+              <small className="rah-agent-description-count">
+                {description.length}/2000
+              </small>
+            </label>
+            <label>
+              <span>
+                运行时 <em>*</em>
+              </span>
+              <CreateAgentSelect
+                aria-label="运行时"
+                onChange={(event) => {
+                  setRuntimeOfferId(event.target.value);
+                  setServiceTier("default");
+                }}
+                value={runtimeOfferId}
               >
-                <span aria-hidden="true">{showAdvanced ? "⌄" : "›"}</span> 高级
-              </button>
-              {showAdvanced ? (
-                <div className="rah-agent-advanced-fields">
-                  <label>
-                    Handle
-                    <input
-                      maxLength={64}
-                      onChange={(event) => {
-                        setHandleEdited(true);
-                        setHandle(handleFromName(event.target.value));
-                      }}
-                      placeholder="alice"
-                      value={handle}
-                    />
-                  </label>
-                  <label>
-                    头像
-                    <select
-                      onChange={(event) => setAvatarKey(event.target.value)}
-                      value={avatarKey}
-                    >
-                      <option value="">官方头像库自动分配（优先未使用）</option>
-                      {RAFT_AVATAR_KEYS.map((key) => (
-                        <option key={key} value={key}>
-                          {key}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    人设指令
-                    <input
-                      maxLength={512}
-                      onChange={(event) => setRole(event.target.value)}
-                      placeholder="留空时使用名称与描述"
-                      value={role}
-                    />
-                  </label>
-                  <label>
-                    Agent 指令
-                    <textarea
-                      maxLength={64 * 1_024}
-                      onChange={(event) => setInstructions(event.target.value)}
-                      placeholder="留空时作为通用 Agent"
-                      rows={4}
-                      value={instructions}
-                    />
-                  </label>
-                  <label>
-                    推理强度
-                    <select
-                      onChange={(event) =>
-                        setReasoning(event.target.value as typeof reasoning)
-                      }
-                      value={reasoning}
-                    >
-                      {reasoningOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
+                <option value="">请选择…</option>
+                {runtimeOptions.map((runtime) => (
+                  <option
+                    key={runtime.runtimeOfferId}
+                    value={runtime.runtimeOfferId}
+                  >
+                    {runtime.displayName}
+                  </option>
+                ))}
+              </CreateAgentSelect>
+            </label>
+            <AgentProviderEditor
+              runtimeId={selectedRuntime?.cliId}
+              rows={rows}
+              onChange={setRows}
+              disabled={pending || createdAgentId !== undefined}
+            />
+            <label>
+              <span className="rah-create-model-label">
+                模型
+                <button
+                  type="button"
+                  className="rah-runtime-model-refresh"
+                  aria-label="刷新模型"
+                  disabled={pending || refreshing || !selectedRuntime}
+                  onClick={async () => {
+                    if (refreshLock.current) return;
+                    refreshLock.current = true;
+                    setRefreshing(true);
+                    setActionError(undefined);
+                    try {
+                      await onRefreshModels(runtimeOfferId);
+                    } catch (error) {
+                      setActionError(errorMessage(error));
+                    } finally {
+                      refreshLock.current = false;
+                      setRefreshing(false);
+                    }
+                  }}
+                >
+                  <Icon name="refresh-cw" />
+                </button>
+              </span>
+              <CreateAgentSelect
+                aria-label="模型"
+                onChange={(event) => {
+                  const next = event.target.value;
+                  setModelBindingId(next);
+                  setServiceTier("default");
+                  setReasoning((current) =>
+                    normalizeReasoningLevel(current, selectedRuntime, next),
+                  );
+                }}
+                value={modelBindingId}
+              >
+                <option value="" disabled>
+                  请选择模型
+                </option>
+                {modelOptions.map((option) => (
+                  <option
+                    key={option.modelBindingId}
+                    value={option.modelBindingId}
+                  >
+                    {option.label}
+                  </option>
+                ))}
+              </CreateAgentSelect>
+              {runtimeOfferId === "" ? (
+                <small>
+                  请选择一台在线的 Computer 以及运行时以检查可用模型。
+                </small>
               ) : null}
-            </section>
-          ) : null}
+            </label>
+            <label>
+              推理强度
+              <CreateAgentSelect
+                aria-label="推理强度"
+                value={reasoning}
+                onChange={(event) =>
+                  setReasoning(event.target.value as ReasoningLevel)
+                }
+              >
+                {reasoningOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </CreateAgentSelect>
+            </label>
+            {fastTier && (
+              <label className="rah-runtime-fast-mode">
+                <input
+                  type="checkbox"
+                  checked={serviceTier === fastTier}
+                  onChange={(event) =>
+                    setServiceTier(event.target.checked ? fastTier : "default")
+                  }
+                />
+                快速模式
+              </label>
+            )}
+            <details className="rah-agent-launch-settings">
+              <summary>更多</summary>
+              <RuntimeEnvironmentEditor
+                hiddenKeys={
+                  selectedRuntime?.cliId === "claude" ? providerKeys : []
+                }
+                rows={rows}
+                disabled={pending || createdAgentId !== undefined}
+                onChange={setRows}
+              />
+            </details>
+          </fieldset>
+          {environmentError && <p role="alert">{environmentError}</p>}
           {actionError === undefined ? null : (
-            <p className="rah-dialog-error">{actionError}</p>
+            <p className="rah-dialog-error" role="alert">
+              {actionError}
+            </p>
           )}
           <footer>
             <button
@@ -358,8 +425,15 @@ export function AgentCreateDialog({
             >
               取消
             </button>
-            <button className="btn btn-pink" disabled={pending || !valid}>
-              {pending ? "正在创建…" : "创建 Agent"}
+            <button
+              className="btn btn-pink"
+              disabled={pending || refreshing || !valid}
+            >
+              {pending
+                ? "正在保存…"
+                : createdAgentId
+                  ? "重试保存配置"
+                  : "创建 Agent"}
             </button>
           </footer>
         </form>

@@ -23,6 +23,10 @@ export function projectPlacementCandidates(input: {
            ON agent_definitions.participant_id = activations.participant_id
          WHERE activations.state = 'queued'
            AND activations.available_at_ms <= ?
+           AND NOT EXISTS (
+             SELECT 1 FROM room_agent_sos_holds AS hold
+             WHERE hold.room_id = activations.room_id
+           )
          ORDER BY activations.available_at_ms, activations.created_at, activations.activation_id`,
     )
     .all(input.now.getTime());

@@ -16,9 +16,28 @@ Kernel 保存定义意图、按 participant 匹配 mount 并冻结 Placement；A
 
 当前可选接法为 Codex app-server 与 Claude stream-json；Kimi ACP、OpenCode 尚未接通的 Guide 不可开启，未知 Runtime 默认等待。开关影响下一次尚未开始的投递，可独立开关；revision 冲突要求重新读取。此开关是用户授权扩展，不能冒称 Raft 已有同样设置。[源码对照](../audits/2026-09-11-runtime-wait-guide-source-matrix.zh-CN.md)。
 
+## OpenCode 长请求
+
+OpenCode native-server 的同步 prompt 请求使用仅连接本机 loopback 的 HTTP
+transport，避免 Node fetch 自带的响应头五分钟超时先于 Host 监督中止运行。
+普通控制请求仍保留短超时；长请求的生命期由 Host 存活检查、原生 abort 与进程终止
+共同管理。HTTP/Provider 错误、响应校验、会话恢复与 terminal proof 规则不变。
+这是 RAH 现有 serve 适配器的修复，Raft Computer 1.0.32 使用的是 `opencode run`
+子进程，不能称为传输代码的直接移植。证据见
+[交付与长请求修复](../audits/2026-09-17-reply-delivery-and-opencode-timeout-repair.zh-CN.md)。
+
+2026-09-18 起，`runTimeoutMs` 对支持 `isAlive` 的 adapter 是存活复查间隔，
+不再是每次运行的累计时长上限。参照 Raft Computer 1.0.32 的
+`markRuntimeProgressStaleIfNeeded`，目标进程仍存活时保留执行；监督进程通过
+认证控制通道查询实际 target leader，不能把 supervisor 自身活着当作 target 活着。
+未知/失败的探测进入原有 cancel/reap 流程，只有完整进程组终止证明允许重试。
+不支持探测的 adapter 保留原有有界回退。启动、取消和 drain 的截止时间不变；
+这不意味着仅凭进程存活就证明模型有进展。见
+[超时与隔离撤销修复](../audits/2026-09-18-runtime-timeout-and-quarantine.zh-CN.md)。
+
 ## 当前原生忙时投递扩展
 
-Codex 已提供可选 notifyBusy：Kernel 只读 pending Inbox 投影经 Host 和既有认证 supervisor，送入当前 turn 的原生 steer。传输回执不推进 canonical read/ACK/Task；未确认输入保留 durable follow-up。Claude 后续接入 gated 工具边界，来源与实际验证见 [Claude/Kimi 后续证据](../audits/2026-09-11-claude-gated-busy-delivery.zh-CN.md)。Kimi 与跨 Activation 常驻仍未据此完成，旧的 live-input 未实施描述应以[当前实施与验证边界](../audits/2026-09-11-codex-native-busy-delivery.zh-CN.md)为准。
+Codex 已提供可选 notifyBusy：Kernel 只读 pending Inbox 投影经 Host 和既有认证 supervisor，送入当前 turn 的原生 steer。传输回执不推进 canonical read/ACK/Task；未确认输入保留 durable follow-up。Claude 的旧 gated 工具边界已于 2026-09-18 按 Raft Computer 1.0.32 改为 direct：已就绪的恢复会话由原生 stream-json 队列接纳输入，不等待 thinking、工具或 compaction 边界。来源与验证见[调度对齐第一批](../audits/2026-09-18-runtime-scheduling-alignment.zh-CN.md)。Kimi 与跨 Activation 常驻、已消费 follow-up 的闭合仍未据此完成。
 
 ## 1. 承诺边界
 
@@ -66,6 +85,7 @@ probe -> start -> cancel -> reap
 - POSIX 下为每次 Run 建立独立 process group；取消先只向受监管 leader 发 `SIGTERM`，让结构化 adapter 有机会发送 ACP `session/cancel`、Codex `turn/interrupt` 等 Provider-native 取消；宽限期后对整个 group 发 `SIGKILL`，并验证留在该 group、忽略 `SIGTERM` 的 descendant 不会遗留；
 - `reap` 等待 stdio `close` 后返回 OS exit code/signal，且保留期间同一 handle 可重复读取结果；已完成 run 的 opaque diagnostics 默认只保留最近 100 个，也可显式释放，避免 daemon 内存无界增长。
 - 动态 environment lease 把 per-Activation Worker token 写入唯一 owner-private `0600` session file，并在同一 `0700` 目录生成不含 token 的可执行 `rah` wrapper。该目录在本次进程的最终 `PATH` 中置顶，同时以非敏感绝对路径 `RAH_WORKER_CLI` 显式发布 wrapper；standing prompt 必须调用 `"$RAH_WORKER_CLI" worker ...`，避免 Provider 的 login shell 重建 PATH。旧 `RAH_WORKER_TOKEN[_FILE]`、内部 tool-bin hint、继承环境和 RuntimeProfile 静态环境均在 direct/supervised 共用路径剔除；bearer 从不进入环境。Worker CLI 只映射固定的 Room/Task application commands，校验 origin/session file、参数、超时和响应上限，不接受任意 endpoint。进程 exit 或 spawn failure 时先撤销并清理精确目录，即使撤销失败仍尝试删除；真实子进程已通过该 wrapper 完成 Room `sync/ack`，Host 只依赖 Kernel cursor proof。SEA 通过精确的 `__worker-cli` 内部分派复用同一实现；Windows 目前 fail closed，尚无对应 wrapper。
+- 子进程环境由单一 owner `packages/agent-host/src/launch-environment-policy.ts` 决定，direct 与 supervised 两条启动路径调用同一函数，因此产生同一份过滤结果；supervised 路径只额外加入自己的 `RAH_PROCESS_SUPERVISOR_CONFIG/TOKEN`，并在启动 Provider 前删除。策略分三层：继承自 daemon 的环境按前缀剔除整个 `RAH_` 命名空间（服务凭据、内部传输与部署位置，如 `RAH_DATA_HOME`、`RAH_STATE_DIRECTORY`、`RAH_LAN_KEY_PATH`、`RAH_WEB_PORT`、`RAH_RESIDENT_RUNNER_TOKEN`、`RAH_WORKER_*`）；受控 capability 只经 Activation environment lease 重新注入；Activation identity fence 最后写入，任何继承值、RuntimeProfile 静态环境或 lease 都不能覆盖。`RAH_` 之外的环境一律保留，包括 `HOME`、`PATH`、Provider 登录/配置目录（`CODEX_HOME`、`CLAUDE_CONFIG_DIR` 等）、代理与证书变量（`HTTP(S)_PROXY`、`NO_PROXY`、`SSL_CERT_FILE`、`NODE_EXTRA_CA_CERTS`）、locale 与 `TERM`；这不是白名单。用户 per-Agent 启动环境另有 `filterUserLaunchEnvironment` 与 typed `RuntimeLaunchEnvironmentSchema` 两道同形拒绝规则，`RAH_*`、`HOME`/`PATH`/`NODE_OPTIONS`/`LD_*`/`DYLD_*` 与平台身份围栏（`CLAUDE_CODE_DISABLE_AUTO_MEMORY` 等）不可设置，合法的 `CODEX_HOME` 之类显式配置照常透传。该机制是环境卫生，不是同系统用户下的 OS 沙箱：Provider CLI 仍以同一 macOS 用户身份运行，仍可读取该用户可读的文件。
 - `cancel` 只有在返回 terminal `RunExit` 时才证明终止；若 cancel/reap 无法证明进程死亡，Activation 进入 durable quarantine，同一 participant 的后续 queued work 不得越过。
 - `start(input, lifecycle)` 必须先调用 `lifecycle.registerPrepared(handle)`；Kernel 在目标副作用前持久化 opaque `RuntimeRecoveryDescriptor` 与 `RuntimeProcess(prepared)`。adapter 返回的 handle 必须与已准备 handle 完全一致，Kernel 才把 RuntimeProcess 和 RunAttempt 推进为 `active/running`。正常 reap/cancel 必须先写 terminal proof，存在非 terminal RuntimeProcess 时 Kernel 拒绝完成 Activation。
 - orphan recovery 使用独立、可续租、按 attempt fencing 的 lease；只有声明匹配 descriptor driver 的 adapter 可以领取。恢复失败 durable backoff，恢复成功写 terminal proof、合并 follow-up 并解除 quarantine，daemon 主循环随后才能重新 lease Activation。旧 recovery attempt 不能在新 lease 下提交结果。
@@ -78,6 +98,19 @@ POSIX GenericProcessAdapter 现使用 `rah-process-supervisor-v1`：每 Run 的�
 Windows 仍使用 `generic-process-direct-v1` 且不声明 recovery driver。确定性 fake process 已证明 canonical Task query、claim heartbeat、跨 RunAttempt 恢复，以及 `waiting_input` 期间零 RunAttempt、human resolve 后新 Activation 恢复；fake MultiLane 又证明 open Task 单 winner 和 loser completion。2026-08-28 的真实 Provider 门禁进一步证明 Codex Sol/low、Kimi K3 与 OpenCode DeepSeek V4 Flash/max 可经绝对 `RAH_WORKER_CLI` 完成最小 durable Task；Kimi 的 gate 没有 effort selector，不能据此提升其 observed effort metadata。尚未证明的边界包括：真实 Provider InputRequest、Artifact/Review、supervisor 自身被 `SIGKILL`/断电后的 terminal proof、result directory 的安全回收、可安装 package lifecycle，以及 Windows Job Object/tree kill。详细决策见 [ADR-0003](../adr/0003-identity-safe-process-supervisor.md)、[ADR-0005](../adr/0005-daemon-composition-worker-delegation-and-wake.md)、[ADR-0006](../adr/0006-task-business-protocol-and-causal-worker-commands.md)、[ADR-0007](../adr/0007-durable-input-request-and-no-listen-waiting.md) 与 [ADR-0011](../adr/0011-task-coordination-v1.md)。
 
 ### L1 ProtocolAdapter：可选结构化能力
+
+2026-09-18 启动路径增量：四个 Provider 共用有界 `providerActivationInput`，
+首次 Worker 调用使用 `message-check --startup`。AgentHost 的
+`worker-startup-context.ts` 只输出白名单冻结上下文及当前 Agent 的完整原始
+`MEMORY.md`，随后复用原有消息交付/输出/ACK；没有另一套消息读取游标或记忆筛选。
+读取身份或输出失败不能 ACK。该聚合减少工具决策次数，不证明模型理解或业务完成。
+
+Kimi ACP 在已确认恢复同一 standing-prompt digest 的 session 时不再重复追加
+全量规则；fresh/fallback 仍发送完整规则。每 Run 的私有完整规则文件支持
+压缩后的提示式恢复并在退出时清理，但这不是 Raft 原生 `roleAdditional`，
+未完成真实 compaction 与 persistent/steer 验收。Codex 保留已核对 turn 身份的
+有界原生错误消息，使既有模型配置错误策略能停止无效重试。详见
+[P0 修复及残留](../audits/2026-09-18-latency-p0-repair.zh-CN.md)。
 
 优先采用 [ACP](https://github.com/agentclientprotocol/agent-client-protocol)、稳定 vendor app-server/SDK 或 A2A，而不是解析终端展示格式。能力包括：
 
@@ -217,11 +250,17 @@ Runtime adapter 的 `busyInputMode` 与可用 transport、用户 Guide 开关共
 每个 Run 编译时重读开关，通知说明不承诺运行中开关永远不变。mode 属行为
 默认，参与 provider continuity digest；Room/Host/cwd 仍不参与该摘要。
 
-Claude 匹配的恢复会话才允许 gated 忙时输入；新会话在当前有限进程模型下
+Claude 匹配的恢复会话才允许 direct 忙时输入；新会话在当前有限进程模型下
 通过后续 Activation 处理积攒内容。session ID 出现不等于新会话已经就绪；
-result 后不再开放输入。恢复失败转新建时重建 gate 并恢复共用输入流读取。
+result 后不再开放输入，已经写入 CLI 的输入可在退出前产生后续 result。
+恢复失败转新建时重新建立 admission 并恢复共用输入流读取。
 以上是 Raft readiness 的有限 Run 适配，非 persistent 会话完整移植。
-来源、差异及验证见[本批交付](../audits/2026-09-11-parity-batch-review-and-delivery.zh-CN.md)。
+从 gated 升级为 direct 时，daemon 用同一 Agent 的当前身份与规则精确重编译旧模式
+摘要；Claude adapter 仅在新 key 不存在时读取这个兼容 key。participant、Provider、
+profile revision 和 workspace mount 仍须一致，不能扫描或复用别的 Agent/角色的会话。
+新 key 仍只在原生成功结束且身份匹配后落盘。兼容摘要是 Host 内部 lease metadata，
+不进入子进程环境或公共协议。来源、差异及验证见
+[调度对齐第一批](../audits/2026-09-18-runtime-scheduling-alignment.zh-CN.md)。
 
 ## 受管 Provider 自动记忆
 

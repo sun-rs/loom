@@ -95,6 +95,42 @@ test("navigation resolution rechecks canonical existence and Room ACL", () => {
   }
 });
 
+test("explicit navigation can read an archived channel without admitting outsiders or writes", () => {
+  const f = fixture();
+  try {
+    const roomId = f.room.roomId;
+    const head = () =>
+      f.kernel.sync(f.actor, { consumerId: "archive-head", roomId })
+        .latestRoomSeq;
+    f.kernel.archiveWorkspaceRoom(f.actor, {
+      roomId,
+      basedOnRoomSeq: head(),
+      idempotencyKey: "archive",
+    });
+    const target = { kind: "room" as const, roomId };
+    assert.deepEqual(
+      f.kernel.humanNavigation.resolve(f.actor, { target }).target,
+      target,
+    );
+    assert.throws(
+      () => f.kernel.humanNavigation.resolve(f.stranger, { target }),
+      /membership|unavailable/i,
+    );
+    assert.throws(
+      () =>
+        f.kernel.postRoomMessage(f.actor, {
+          roomId,
+          basedOnRoomSeq: head(),
+          idempotencyKey: "archived-write",
+          body: "must fail",
+        }),
+      /archiv/i,
+    );
+  } finally {
+    f.close();
+  }
+});
+
 test("notification dismissals are per-Human/per-Workspace, idempotent and bounded", () => {
   const f = fixture();
   try {

@@ -601,16 +601,16 @@ test("schema v3 RunAttempts migrate to nullable placement provenance without dat
       activation_id TEXT PRIMARY KEY,
       room_id TEXT NOT NULL REFERENCES rooms(room_id),
       participant_id TEXT NOT NULL REFERENCES principals(principal_id),
-      from_seq INTEGER NOT NULL,
-      to_seq INTEGER NOT NULL,
+      from_seq INTEGER NOT NULL CHECK (from_seq > 0),
+      to_seq INTEGER NOT NULL CHECK (to_seq >= from_seq),
       reason TEXT NOT NULL,
-      state TEXT NOT NULL,
+      state TEXT NOT NULL CHECK (state IN ('queued', 'leased', 'quarantined', 'completed', 'cancelled')),
       lease_owner TEXT,
       lease_until TEXT,
       lease_until_ms INTEGER,
       available_at TEXT NOT NULL,
       available_at_ms INTEGER NOT NULL,
-      attempt_count INTEGER NOT NULL DEFAULT 0,
+      attempt_count INTEGER NOT NULL DEFAULT 0 CHECK (attempt_count >= 0),
       last_error TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
@@ -621,8 +621,8 @@ test("schema v3 RunAttempts migrate to nullable placement provenance without dat
       room_id TEXT NOT NULL REFERENCES rooms(room_id),
       participant_id TEXT NOT NULL REFERENCES principals(principal_id),
       host_id TEXT NOT NULL,
-      attempt_number INTEGER NOT NULL,
-      state TEXT NOT NULL,
+      attempt_number INTEGER NOT NULL CHECK (attempt_number > 0),
+      state TEXT NOT NULL CHECK (state IN ('starting', 'running', 'orphaned', 'exited', 'failed', 'cancelled', 'timed_out')),
       runtime_run_id TEXT,
       exit_code INTEGER,
       exit_signal TEXT,
@@ -736,7 +736,7 @@ test("schema v4 Offer head fails closed until republished as a v5 immutable obse
       runtime_profile_id TEXT NOT NULL,
       runtime_profile_revision_id TEXT NOT NULL,
       revision_digest TEXT NOT NULL,
-      state TEXT NOT NULL,
+      state TEXT NOT NULL CHECK (state IN ('available', 'degraded', 'draining', 'unavailable')),
       observed_at TEXT NOT NULL,
       observed_at_ms INTEGER NOT NULL,
       lease_until TEXT NOT NULL,
@@ -1006,6 +1006,69 @@ test("Agent revision digest is computed from normalized immutable content", () =
   assert.equal(revision.contentDigest, agentDefinitionRevision.contentDigest);
   kernel.close();
 });
+
+for (const timing of ["before-terminal", "after-terminal"] as const)
+  test(`placement preserves the SOS fence and resumes with the correction (${timing})`, () => {
+    const { agentId, humanActor, kernel, room } = createFixture();
+    try {
+      const host = authenticateHost(kernel, "sos-placement-host", agentId);
+      kernel.publishRuntimeOffer(
+        host,
+        runtimeOffer(host, "sos-placement-offer"),
+      );
+      kernel.postRoomMessage(humanActor, {
+        roomId: room.roomId,
+        body: "Old instruction",
+        idempotencyKey: "old",
+      });
+      const initial = kernel.scheduleNextPlacement({ leaseMs: 30000 })!;
+      const run = kernel.createRunAttempt(host, {
+        activationId: initial.activationId,
+      });
+      kernel.roomAgentSos.requestStop(humanActor, {
+        roomId: room.roomId,
+        basedOnRoomSeq: latestRoomSeq(kernel, humanActor, room.roomId),
+        idempotencyKey: "stop",
+        resumeOnMessage: true,
+      });
+      const correct = () =>
+        kernel.postRoomMessage(humanActor, {
+          roomId: room.roomId,
+          body: "Corrected instruction",
+          idempotencyKey: "corrected",
+          basedOnRoomSeq: latestRoomSeq(kernel, humanActor, room.roomId),
+        });
+      const early = timing === "before-terminal" ? correct() : undefined;
+      assert.equal(kernel.scheduleNextPlacement({ leaseMs: 30000 }), null);
+      kernel.finishRunAttempt(host, {
+        runAttemptId: run.runAttemptId,
+        state: "cancelled",
+        error: "stopped",
+      });
+      kernel.resolveActivationCancellation(host, {
+        activationId: initial.activationId,
+      });
+      if (!early) {
+        assert.equal(
+          kernel.scheduleNextPlacement({ leaseMs: 30000 }),
+          null,
+          "stopped work must not reserve and freeze the old input range before a correction",
+        );
+        assert.equal(kernel.pullNextPlacement(host), null);
+      }
+      const correction = early ?? correct();
+      const next = kernel.scheduleNextPlacement({ leaseMs: 30000 })!;
+      assert.ok(next);
+      const activation = kernel
+        .listActivations({ participantId: agentId })
+        .find((item) => item.activationId === next.activationId)!;
+      assert.ok(activation.toSeq >= correction.event.roomSeq);
+      assert.equal(next.activationId, initial.activationId);
+      assert.equal(kernel.scheduleNextPlacement({ leaseMs: 30000 }), null);
+    } finally {
+      kernel.close();
+    }
+  });
 
 test("Kernel placement is deterministic, pull-order independent, and reserved once", () => {
   const { agentId, clock, databasePath, humanActor, kernel, room } =

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { IdentifierSchema } from "./common.ts";
+import { RoomAgentSosOperationSchema } from "./room-agent-sos.ts";
 const RelativePath = z
   .string()
   .max(4096)
@@ -55,4 +56,17 @@ export const ComputerFilesListResponseSchema = z
   .strict();
 export type ComputerFilesListResponse = z.infer<
   typeof ComputerFilesListResponseSchema
+>;
+export const RoomExecutionReadRequestSchema = z
+  .object({ roomId: IdentifierSchema })
+  .strict();
+export const RoomExecutionReadResponseSchema = z
+  .object({
+    operation: RoomAgentSosOperationSchema.nullable(),
+    latestRoomSeq: z.number().int().nonnegative(),
+    working: z.boolean(),
+  })
+  .strict();
+export type RoomExecutionReadResponse = z.infer<
+  typeof RoomExecutionReadResponseSchema
 >;

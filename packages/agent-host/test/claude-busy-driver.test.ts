@@ -121,7 +121,7 @@ rl.on('line', line=>{
   }
   const frame=JSON.parse(line);
   emit({...frame,session_id:'session-a'});
-  emit({type:'assistant',session_id:'session-a',message:{content:[{type:'tool_use',id:'tool-1',name:'Bash',input:{}}]}});
+  emit({type:'assistant',session_id:${fallback ? "'session-a'" : "'wrong-session'"},message:{content:[{type:'tool_use',id:'tool-1',name:'Bash',input:{}}]}});
   setTimeout(()=>emit({type:'user',session_id:${fallback ? "'session-a'" : "'wrong-session'"},message:{content:[{type:'tool_result',tool_use_id:'tool-1',content:'done'}]}}),400);
   setTimeout(()=>{emit({type:'result',session_id:'session-a',subtype:'success',is_error:false});rl.close();process.stdin.destroy();},650);
 });

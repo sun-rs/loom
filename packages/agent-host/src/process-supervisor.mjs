@@ -397,6 +397,21 @@ const server = createServer((socket) => {
       void launchTarget(socket);
       return;
     }
+    if (command.command === "probe") {
+      const alive =
+        phase === "running" &&
+        !leaderExit &&
+        child?.pid !== undefined &&
+        child.exitCode === null &&
+        child.signalCode === null;
+      response(
+        socket,
+        alive
+          ? { ok: true }
+          : { ok: false, error: "runtime leader is not alive" },
+      );
+      return;
+    }
     if (command.command === "notify") {
       const input = command.input;
       if (

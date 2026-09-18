@@ -31,6 +31,7 @@ import {
   LanWorkbenchAccessStore,
   type LanWorkbenchDevice,
 } from "./lan-workbench-access-store.ts";
+import { workbenchHealthPayload } from "./daemon-health.ts";
 import { readWebBuildId, WEB_BUILD_HEADER } from "./web-build-metadata.ts";
 
 const SESSION_COOKIE = "rah_lan_session";
@@ -292,10 +293,9 @@ export class LanWorkbenchGateway {
       return;
     }
     if (requestUrl.pathname === "/_rah/health" && request.method === "GET") {
-      sendJson(response, 200, {
-        service: "rah-os-local-core",
-        state: "online",
-      });
+      // Same answer as the loopback gateway, from one owner, so the LAN and
+      // loopback entries can never report two different builds.
+      sendJson(response, 200, workbenchHealthPayload());
       return;
     }
     if (requestUrl.pathname === "/_rah/pair") {

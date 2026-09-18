@@ -6,6 +6,7 @@ import { chromium, webkit, expect } from "playwright/test";
 import { startShellFixture } from "./ui-shell-browser-scenarios.mjs";
 
 process.env.RAH_FIXTURE_COMPOSER_FILES = "1";
+process.env.RAH_FIXTURE_PRESENCE_PROBE = "1";
 const fixture = await startShellFixture();
 const browser = await (
   process.env.RAH_UI_BROWSER === "webkit" ? webkit : chromium
@@ -31,6 +32,8 @@ try {
       assert.equal(response.status(), 200, await response.text());
       return response.json();
     };
+    const seq = async (roomId) =>
+      (await post("rooms/sos/read", { roomId })).latestRoomSeq;
     await context.addInitScript(() => {
       if (window === window.top)
         localStorage.setItem("rah:composer-files-mode:v1", "menu");
@@ -192,10 +195,143 @@ try {
       page.getByRole("menu", { name: "添加引用或附件" }),
     ).toHaveCount(0);
     await page.keyboard.press("Escape");
+    if (process.env.RAH_COMPOSER_FILES_ONLY === "1") {
+      assert.deepEqual(errors, []);
+      results.push({
+        width,
+        files: "path references; direct Plus and native mobile upload",
+        errors,
+      });
+      await context.close();
+      continue;
+    }
+    await editor.fill("");
+    // Authenticated real daemon + fake child: stop must prove process termination.
+    const members = (
+      await post("rooms/agents/activity/list", { roomId: fixture.roomId })
+    ).agents;
+    const agentId = members?.[0]?.participantId;
+    assert.ok(agentId, JSON.stringify(members));
+    await post("messages/post", {
+      roomId: fixture.roomId,
+      body: "[presence-probe]",
+      recipients: [{ participantId: agentId, reason: "mention" }],
+      basedOnRoomSeq: await seq(fixture.roomId),
+      idempotencyKey: crypto.randomUUID(),
+    });
+    const stop = composer.getByRole("button", {
+      name: "停止当前对话的执行",
+      exact: true,
+    });
+    await expect(stop).toBeEnabled({ timeout: 30000 });
+    await page
+      .locator("main.channel .msg")
+      .filter({ hasText: "[presence-probe]" })
+      .last()
+      .click({ button: "right" });
+    await page
+      .getByRole("menuitem", { name: "打开消息列", exact: true })
+      .click();
+    const thread = page
+      .getByRole("complementary", { name: "Thread 讨论", exact: true })
+      .locator("form.composer");
+    await expect(
+      thread.getByRole("button", { name: "停止当前对话的执行", exact: true }),
+    ).toBeEnabled();
+    const reply = thread.getByRole("textbox");
+    await reply.fill("FAKE editable thread correction");
+    await expect(thread.locator('button[data-action="send"]')).toBeEnabled();
+    await reply.fill("");
+    await page
+      .getByRole("button", {
+        name: width === 390 ? "返回聊天" : "关闭消息列",
+        exact: true,
+      })
+      .click();
+    await editor.fill("correction stays editable while working");
+    await expect(
+      composer.getByRole("button", { name: "发送", exact: true }),
+    ).toBeEnabled();
+    await editor.fill("");
+    await page.screenshot({ path: join(output, `${width}-stop.png`) });
+    // First failure leaves the stop available and the draft intact.
+    await page.route("**/v3/client/rooms/sos/stop", (route) =>
+      route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: { code: "fixture_unavailable", message: "FAKE stop failure" },
+        }),
+      }),
+    );
+    await stop.click();
+    await expect(composer.getByRole("alert")).toContainText(
+      "FAKE stop failure",
+    );
+    await page.unroute("**/v3/client/rooms/sos/stop");
+    await stop.click();
+    await expect
+      .poll(
+        async () =>
+          (await post("rooms/sos/read", { roomId: fixture.roomId })).operation
+            ?.state,
+        { timeout: 30000 },
+      )
+      .toBe("stopped");
+    await expect(
+      composer.getByRole("button", { name: "发送", exact: true }),
+    ).toBeDisabled();
+    await page.reload();
+    await expect(editor).toBeEnabled();
+    await expect(
+      composer.getByRole("button", { name: "发送", exact: true }),
+    ).toBeDisabled();
+    await editor.fill("FAKE corrected instruction");
+    await composer.getByRole("button", { name: "发送", exact: true }).click();
+    await expect(editor).toHaveValue("");
+    await expect
+      .poll(
+        async () =>
+          (await post("rooms/sos/read", { roomId: fixture.roomId })).operation,
+      )
+      .toBe(null);
+    // Leave no long-lived fake execution behind before changing viewport.
+    if ((await post("rooms/sos/read", { roomId: fixture.roomId })).working) {
+      await post("rooms/sos/stop", {
+        roomId: fixture.roomId,
+        basedOnRoomSeq: await seq(fixture.roomId),
+        idempotencyKey: crypto.randomUUID(),
+        resumeOnMessage: true,
+      });
+    }
+    await page.goto(fixture.origin);
+    await page
+      .locator('[data-sidebar-group="dms"] [data-sidebar-key] button')
+      .first()
+      .click();
+    await expect(page.locator(".rah-direct-title")).toBeVisible();
+    await expect(editor).toBeEnabled();
+    await plus.click();
+    await expect(
+      dialog.getByRole("button", { name: "引用所选", exact: true }),
+    ).toBeEnabled();
+    await dialog.getByRole("button", { name: "引用所选", exact: true }).click();
+    assert.match(await editor.inputValue(), /reference-files"/);
+    await expect(editor).toBeFocused();
+    await editor.fill("[presence-probe]");
+    await expect(editor).toHaveValue("[presence-probe]");
+    await composer.getByRole("button", { name: "发送", exact: true }).click();
+    await expect(stop).toBeEnabled({ timeout: 30000 });
+    await page.screenshot({ path: join(output, `${width}-dm-stop.png`) });
+    await stop.click();
+    await expect(
+      composer.getByRole("button", { name: "发送", exact: true }),
+    ).toBeDisabled({ timeout: 30000 });
     assert.deepEqual(errors, []);
     results.push({
       width,
-      files: "path references; direct Plus and native mobile upload",
+      files: "path only, no upload",
+      stop: "terminal proven, failure/reload/correction",
       errors,
     });
     await context.close();

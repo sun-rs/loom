@@ -289,21 +289,6 @@
   display: none;
 }
 
-.rah-agent-detail-tabs .tab {
-  flex: 0 0 76px;
-  width: 76px;
-}
-
-.rah-agent-detail-tabs .tab:nth-child(5) {
-  flex-basis: 88px;
-  width: 88px;
-}
-
-.rah-agent-detail-tabs .tab:last-child {
-  flex-basis: 78px;
-  width: 78px;
-}
-
 .rah-agent-avatar {
   background: var(--rah-avatar-background, var(--cyan));
   border: var(--bd);
@@ -1077,16 +1062,6 @@
     font-size: 16px;
   }
 
-  .rah-agent-detail-tabs .tab {
-    flex-basis: 88px;
-    width: 88px;
-  }
-
-  .rah-agent-detail-tabs .tab:nth-child(5) {
-    flex-basis: 96px;
-    width: 96px;
-  }
-
   .rah-agent-activity-pane > header {
     align-items: flex-start;
     padding: 10px 14px;
@@ -1275,4 +1250,16 @@
 .rah-runtime-environment-row .sq-btn svg {
   width: 12px;
   height: 12px;
+}
+.rah-agent-activity-surface {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.rah-agent-activity-surface > .rah-scroll-to-bottom {
+  bottom: 16px;
 }

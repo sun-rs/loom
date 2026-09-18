@@ -198,6 +198,12 @@ else process.exitCode = 2;
     );
     assert.equal(retired.status, 404);
     assert.deepEqual(await health.json(), {
+      buildIdentity: {
+        schemaVersion: 1,
+        kind: "development",
+        version: "0.0.0-dev+local",
+        buildId: "development",
+      },
       service: "rah-os-local-core",
       state: "online",
     });

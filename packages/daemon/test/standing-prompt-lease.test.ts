@@ -178,3 +178,27 @@ test("delivery mode reaches the exact driver prompt and continuity digest", () =
   assert.notEqual(wait.standingPromptDigest, direct.standingPromptDigest);
   assert.notEqual(gated.standingPromptDigest, direct.standingPromptDigest);
 });
+
+test("Claude direct delivery can reuse only the same Agent's former gated prompt", () => {
+  const scope = envelope(agentContext({ role: "review" }));
+  const old = standingPromptLease(scope, { deliveryMode: "gated" })!;
+  const next = standingPromptLease(scope, {
+    deliveryMode: "direct",
+    previousDeliveryMode: "gated",
+  })!;
+  assert.equal(next.compatibleStandingPromptDigest, old.standingPromptDigest);
+  assert.notEqual(next.standingPromptDigest, old.standingPromptDigest);
+  const changedRole = standingPromptLease(
+    envelope(agentContext({ role: "different role" })),
+    { deliveryMode: "direct", previousDeliveryMode: "gated" },
+  )!;
+  assert.notEqual(
+    changedRole.compatibleStandingPromptDigest,
+    old.standingPromptDigest,
+  );
+  assert.equal(
+    standingPromptLease(scope, { deliveryMode: "direct" })!
+      .compatibleStandingPromptDigest,
+    undefined,
+  );
+});

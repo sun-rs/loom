@@ -16,9 +16,84 @@ import {
   backupState,
   verifyStateBackup,
   assertWorkbenchIdle,
+  assertWorkbenchRestartable,
 } from "../../../scripts/workbench-restart-guard.mjs";
 
 const stages = ["validate", "inspect", "backup", "verify", "recheck", "stop"];
+test("an operator restart preserves inert quarantine but blocks every live execution owner", () => {
+  const db = new DatabaseSync(":memory:");
+  try {
+    db.exec(`
+      CREATE TABLE activations (state TEXT, lease_owner TEXT, lease_until TEXT, lease_until_ms INTEGER, room_id TEXT);
+      CREATE TABLE room_agent_sos_holds (room_id TEXT, operation_id TEXT);
+      CREATE TABLE room_agent_sos_operations (room_id TEXT, operation_id TEXT, state TEXT);
+      CREATE TABLE run_attempts (state TEXT);
+      CREATE TABLE runtime_processes (state TEXT);
+      CREATE TABLE placements (state TEXT);
+      CREATE TABLE agent_exclusive_operation_leases (state TEXT);
+      INSERT INTO activations VALUES ('quarantined', NULL, NULL, NULL, 'room');
+      INSERT INTO run_attempts VALUES ('timed_out');
+      INSERT INTO runtime_processes VALUES ('terminated');
+      INSERT INTO placements VALUES ('released');
+    `);
+    const check = assertWorkbenchRestartable;
+    check(db);
+    assert.equal(
+      db.prepare("SELECT state FROM activations").get()?.state,
+      "quarantined",
+    );
+    assert.throws(
+      () => assertWorkbenchIdle(db),
+      /Active work/,
+      "strict restore guard is unchanged",
+    );
+    for (const [table, state] of [
+      ["activations", "queued"],
+      ["activations", "leased"],
+      ["run_attempts", "starting"],
+      ["run_attempts", "running"],
+      ["run_attempts", "orphaned"],
+      ["runtime_processes", "prepared"],
+      ["runtime_processes", "active"],
+      ["runtime_processes", "orphaned"],
+      ["placements", "reserved"],
+      ["agent_exclusive_operation_leases", "active"],
+    ]) {
+      db.prepare(`INSERT INTO ${table} (state) VALUES (?)`).run(state!);
+      assert.throws(() => check(db), /Active work/);
+      db.prepare(`DELETE FROM ${table} WHERE state = ?`).run(state!);
+    }
+    for (const column of ["lease_owner", "lease_until", "lease_until_ms"]) {
+      db.exec(`UPDATE activations SET ${column} = 1`);
+      assert.throws(() => check(db), /lease/i);
+      db.exec(`UPDATE activations SET ${column} = NULL`);
+    }
+    db.exec(`
+      DELETE FROM activations;
+      INSERT INTO activations VALUES ('queued', NULL, NULL, NULL, 'room');
+      INSERT INTO room_agent_sos_holds VALUES ('room', 'stop');
+      INSERT INTO room_agent_sos_operations VALUES ('room', 'stop', 'stopped');
+    `);
+    const pending = db.prepare("SELECT * FROM activations").all();
+    check(db);
+    assert.deepEqual(db.prepare("SELECT * FROM activations").all(), pending);
+    assert.throws(() => assertWorkbenchIdle(db), /Active work/);
+    for (const state of ["stopping", "resumed"]) {
+      db.prepare("UPDATE room_agent_sos_operations SET state=?").run(state);
+      assert.throws(() => check(db), /Active work/);
+    }
+    db.exec("UPDATE room_agent_sos_operations SET state='stopped'");
+    for (const column of ["lease_owner", "lease_until", "lease_until_ms"]) {
+      db.exec(`UPDATE activations SET ${column} = 1`);
+      assert.throws(() => check(db), /Active work/);
+      db.exec(`UPDATE activations SET ${column} = NULL`);
+    }
+    db.exec("UPDATE room_agent_sos_holds SET room_id='another-room'");
+    assert.throws(() => check(db), /Active work/);
+  } finally {
+    db.close();
+  }
+});
 test("private executable recovery helpers retain owner execute permission", async () => {
   const root = await mkdtemp(join(tmpdir(), "rah-restart-mode-test-"));
   const state = join(root, "state");

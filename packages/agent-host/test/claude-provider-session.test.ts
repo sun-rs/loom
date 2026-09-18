@@ -74,6 +74,8 @@ test("Claude stream-json resumes only accepted sessions and interrupts natively"
     const binding =
       report.reportVersion === 2 ? report.modelBindings[0] : undefined;
     assert.notEqual(binding, undefined);
+    let promptDigest = "sha256-standing-prompt-digest";
+    let compatibleDigest: string | undefined;
     const runtime = implementations.createRuntime(
       active,
       report,
@@ -94,7 +96,10 @@ test("Claude stream-json resumes only accepted sessions and interrupts natively"
             }),
             CLAUDE_CODE_DISABLE_AUTO_MEMORY: "0",
           },
-          standingPromptDigest: "sha256-standing-prompt-digest",
+          standingPromptDigest: promptDigest,
+          ...(compatibleDigest === undefined
+            ? {}
+            : { compatibleStandingPromptDigest: compatibleDigest }),
         }),
         cwd: directory,
         providerSessionStore: new ProviderSessionStore({
@@ -112,6 +117,7 @@ test("Claude stream-json resumes only accepted sessions and interrupts natively"
       "full_access",
     );
     assert.equal(runtime.busyInputSupported, true);
+    assert.equal(runtime.busyInputMode, "direct");
     const trajectory: unknown[] = [];
     const runActivation = async (
       scenario: string,
@@ -157,7 +163,11 @@ test("Claude stream-json resumes only accepted sessions and interrupts natively"
     };
 
     assert.equal((await runActivation("resumed", "seed")).code, 0);
+    compatibleDigest = promptDigest;
+    promptDigest = "sha256-direct-prompt-digest";
     assert.equal((await runActivation("resumed", "run")).code, 0);
+    compatibleDigest = undefined;
+    assert.equal((await runActivation("resumed", "after")).code, 0);
     assert.equal((await runActivation("missing", "seed")).code, 0);
     assert.equal((await runActivation("missing", "run")).code, 0);
     assert.equal((await runActivation("cancel", "seed", "cancel")).code, 0);
@@ -239,6 +249,13 @@ test("Claude stream-json resumes only accepted sessions and interrupts natively"
     );
     assert.equal(
       resumedSpawn.args[resumedSpawn.args.indexOf("--resume") + 1],
+      "claude-session-resumed",
+    );
+    const migratedSpawn = forActivation("resumed-after").find(
+      (record) => record.kind === "spawn",
+    );
+    assert.equal(
+      migratedSpawn.args[migratedSpawn.args.indexOf("--resume") + 1],
       "claude-session-resumed",
     );
     assert.equal(

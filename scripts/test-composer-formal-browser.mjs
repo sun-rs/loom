@@ -133,6 +133,9 @@ try {
     await expect(
       composer.getByRole("button", { name: "添加引用或附件", exact: true }),
     ).toBeEnabled();
+    await expect
+      .poll(() => observed.has("POST /v3/client/rooms/sos/read"))
+      .toBe(true);
     assert.ok(observed.has("POST /v3/client/computers/files/list"));
     assert.deepEqual(rejected, []);
     assert.deepEqual(errors, []);

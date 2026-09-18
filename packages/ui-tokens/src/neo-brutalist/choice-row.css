@@ -14,8 +14,8 @@
     :focus-within
   ):where(:not(:disabled, [aria-disabled="true"], [data-disabled])),
 .rah-choice-row[data-choice-profile="property-option"]:where(
-    :hover,
-    :focus-visible,
+    :hover:not([data-choice-highlight-dismissed]),
+    :focus-visible:not([data-choice-highlight-dismissed]),
     [data-highlighted],
     [data-choice-current]
   ):where(:not(:disabled, [aria-disabled="true"], [data-disabled])) {

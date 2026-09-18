@@ -19,7 +19,7 @@ Raft Web 1.16.0 / `ba2a1db`，发布包 `web-index.js` SHA-256：
 3. App 已有 inventory 查询负责提供实例身份，不新增启动 ID、轮询器或后端状态。冷启动 inventory 返回前的用户点击合并到该次启动状态。
 4. 移动首页活动浮条复用既有活动投影、开关及超时逻辑，固定在导航上方；列表拥有滚动，浮条和导航在上层。仅浮条出现时增加对应底部滚动余量；桌面原布局保留。
 5. Plus 在所有设备/地址直接打开 Computer 文件树。移动断点内额外显示回形针，调用当前终端的原生文件选择器。旧加号模式偏好不再读取，无地址或主机名推断分支。
-6. Home 使用现有授权列表接口返回起始目录。目录整行进入下一级；文件支持多选且可取消。唯一“引用所选”操作引用所选文件或当前目录，不读取正文、不上传路径引用。原有拒绝访问、取消请求、错误重试及目录边界保留。
+6. Home 使用现有授权列表接口返回起始目录。目录整行进入下一级；文件单选且可取消。唯一“引用所选”操作引用文件或当前目录，不读取正文、不上传路径引用。原有拒绝访问、取消请求、错误重试及目录边界保留。
 
 ## 验证与限制
 
@@ -31,8 +31,27 @@ Raft Web 1.16.0 / `ba2a1db`，发布包 `web-index.js` SHA-256：
 - `run-composer-drop-browser-gate.mjs`：Chromium/Firefox，设备上传取消、同文件重选、多个文件、任务模式禁用、失败恢复、实际字节下载和 Room/Thread 草稿隔离。
 - 浏览器文件 chooser 验证不等于真实 iPhone 原生相册/拍摄菜单验收；本轮未运行付费 CLI，也未声称最新官方站点同条件双边验收。
 
-## 提交边界
+## 本轮交付结果
 
-本次 UI 提交包含侧栏偏好、动态浮条、文件引用入口及必要的鉴权/目录读取配套。
-停止执行、隔离记录与重启预检修正属于独立后台工作，不包含在此提交中。
-本次独立提交的验证结果见 [UI 提交验证](2026-09-18-ui-commit-scope.zh-CN.md)。
+- `npm run check`、`npm run format:check`、`git diff --check` 通过；Web 正式资产构建通过。默认套件的付费 CLI 门禁仍跳过。
+- 侧栏偏好及活动浮条：Chromium/WebKit 桌面 1440x900、移动 390x844 通过。用 24 个额外真实夹具频道验证实际溢出滚动和浮条命中层级，而非只检查 `position: fixed`。
+- 侧栏几何回归、完整 Composer 频道/消息列/私聊与停止/修正回归通过。文件树额外复现了 hover 覆盖按压黄底，限定 hover 不匹配 active 后通过。
+- 原生上传及拖放：Chromium/Firefox 桌面与移动测试通过；文件引用专项也在 WebKit 通过。已检查桌面引用窗口、移动引用窗口及移动长列表浮条截图。
+- 首次交付时正式部署 **阻塞**：只读预检发现 Agent Council 有一条 `quarantined` Activation，错误为 `runtime timed out after 1800000ms`。没有 running/starting/orphaned RunAttempt，但当时 `assertWorkbenchIdle` 仍明确禁止带隔离执行重启。该次未改变业务状态或终止正式进程；后续修正与完成部署见下文。
+- 未提交或推送 Git；未运行付费 CLI；真实 iPhone 原生菜单仍待设备验收。
+
+## 隔离记录与重启预检修正
+
+用户随后明确授权重启。只读核实这条隔离 Activation 的三次 RunAttempt 都为 timed_out 且有 finished_at，RuntimeProcess 均已终止、Placement 已释放，没有 queued/leased Activation 或独占操作租约。原 operator 重启预检把全部 quarantined 记录计入活动工作，混淆了持久失败记录与正在运行的执行。
+
+修正仅在 daemon 的重启预检 owner：新增 `assertWorkbenchRestartable`，共用既有执行状态检查，但允许无租约的隔离记录原样保留。严格空闲/恢复检查不变；不更新生产数据库状态、不清除故障历史、不重试 Agent，不改变 Task 状态。新增回归逐个覆盖活动 owner 与隔离残留租约的拒绝，并确认严格恢复检查仍拒绝隔离状态。此为 RAH operator 部署条件修正，没有移植上游执行状态机。
+
+### 正式重启完成
+
+用户授权后，定向重启/升级/恢复回归 24 项通过；重新运行 `npm run check`、`format:check`、`git diff --check` 与 Web 构建通过。重启工具校验冻结资产、SQLite 在线备份、文件摘要及候选 Kernel 副本预检，然后正常 SIGTERM 旧实例并启动新实例。
+
+- 备份：`~/.rah/backups/pre-restart-38825f2d-5f3a-4f6a-86f5-53068fc6441b`。
+- Web build：`d04873d5436dbd3b7565b628cbc1bb850d7c5afd280a199212c496c3d5333885`。health 的完整 buildIdentity 与构建元数据一致。
+- 新旧启动收据的本机、LAN、Tailnet 监听集合一致。消息、Task、Agent 定义、Activation 和 RunAttempt 与备份逐行比较一致；隔离记录仍原样保留，重启没有自动产生执行。
+- 新 Chromium 正式页面：本机入口 1440x900/390x844 文件引用、Home、上级目录至 `/`、移动上传入口通过；LAN 入口同尺寸验证外观开关、隐藏空分组和折叠状态跨刷新保留，无页面异常。仅容许既有读取及已读状态请求，没有发消息、创建任务或启动 CLI。
+- 本次只读检查与重启证明的是故障记录不会误拦截部署，不声称修复造成原来 30 分钟超时的 Provider 问题。

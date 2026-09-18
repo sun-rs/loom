@@ -1,0 +1,800 @@
+{
+  "capturedAt": "2026-09-18T01:32:39.176Z",
+  "versions": {
+    "kimi": "0.39.1",
+    "opencode": "1.18.30"
+  },
+  "model": "k3",
+  "reasoning": "high",
+  "configuredEndpoint": "https://api.kimi.com/coding/v1",
+  "authentication": {
+    "opencode": "existing API key",
+    "kimi": "existing managed OAuth",
+    "sameAccountProven": false
+  },
+  "limitations": [
+    "Sequential single samples, not a latency distribution or controlled provider queue/cache experiment.",
+    "Same model name and configured endpoint, but OpenCode uses Anthropic compatibility and Kimi uses OpenAI chat compatibility; native prompts and tools differ.",
+    "Native timing ends at complete emitted answer, not first token; RAH timing ends at canonical message creation, not browser paint.",
+    "Pilot native-results.json excluded because OpenCode recorded repository cwd; confirmed run explicitly sets --dir/PWD and asserts actual session directory.",
+    "Formal user workload remained running; it was not interrupted for this benchmark.",
+    "No production code, provider account/config, formal Agent model, or formal workbench deployment changed."
+  ],
+  "rawFiles": [
+    {
+      "path": "/Users/sun/Code/repos/rah_os/scratchpad/2026-09-18-k3-transport-benchmark/native-confirmed-results.json",
+      "sha256": "02666b9889f1969badf7e70d9c5e2092eeb840444b567fc206708fb32e1c3fbc"
+    },
+    {
+      "path": "/Users/sun/Code/repos/rah_os/scratchpad/2026-09-18-k3-transport-benchmark/rah-dm-results.json",
+      "sha256": "338f0599a24ae640e5ddfecc4c582a558eb28ccc75d9858581b0f847c8aca5bf"
+    },
+    {
+      "path": "/Users/sun/Code/repos/rah_os/scratchpad/2026-09-18-k3-transport-benchmark/native.mjs",
+      "sha256": "ac119307b207144349292c8c06554db65f0d7eb529c429662573d7876f178a74"
+    },
+    {
+      "path": "/Users/sun/Code/repos/rah_os/scratchpad/2026-09-18-k3-transport-benchmark/rah-dm.mjs",
+      "sha256": "ba5ceae781ba69d42fcbb2ab4e59aaf9297f89f5126bc35bdca7f6b6c906ed14"
+    }
+  ],
+  "native": [
+    {
+      "provider": "opencode",
+      "round": 1,
+      "sessionMode": "fresh",
+      "prompt": "这是回复延迟验收 K3-R1。只回复：K3-R1 你好。不要调用工具，不读取或修改文件，不修改记忆。",
+      "startedAt": "2026-09-18T01:25:01.145Z",
+      "replySeconds": 5.734573208,
+      "answer": "K3-R1 你好",
+      "exitSeconds": 5.754080374999999,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "sessionId": "ses_f4de20fcfffeUHjReSloUVs2of"
+    },
+    {
+      "provider": "kimi",
+      "round": 1,
+      "sessionMode": "fresh",
+      "prompt": "这是回复延迟验收 K3-R1。只回复：K3-R1 你好。不要调用工具，不读取或修改文件，不修改记忆。",
+      "startedAt": "2026-09-18T01:25:06.900Z",
+      "replySeconds": 12.754109166000001,
+      "answer": "K3-R1 你好。",
+      "exitSeconds": 12.857800582999998,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "sessionId": "session_d815e103-bf28-40d0-bfae-61d0a9e013e1"
+    },
+    {
+      "provider": "kimi",
+      "round": 2,
+      "sessionMode": "resumed",
+      "prompt": "这是回复延迟验收 K3-R2。请仅调用一次 date -u +%Y-%m-%d，获取当前 UTC 日期，然后用一行回答：K3-R2 YYYY-MM-DD。不要读取或修改项目文件，不修改记忆。",
+      "startedAt": "2026-09-18T01:25:19.759Z",
+      "replySeconds": 15.820450167000002,
+      "answer": "K3-R2 2026-09-18",
+      "exitSeconds": 15.942240917000003,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "sessionId": "session_d815e103-bf28-40d0-bfae-61d0a9e013e1"
+    },
+    {
+      "provider": "opencode",
+      "round": 2,
+      "sessionMode": "resumed",
+      "prompt": "这是回复延迟验收 K3-R2。请仅调用一次 date -u +%Y-%m-%d，获取当前 UTC 日期，然后用一行回答：K3-R2 YYYY-MM-DD。不要读取或修改项目文件，不修改记忆。",
+      "startedAt": "2026-09-18T01:25:35.701Z",
+      "replySeconds": 13.162215082999996,
+      "answer": "K3-R2 2026-09-18",
+      "exitSeconds": 13.201014833,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "sessionId": "ses_f4de20fcfffeUHjReSloUVs2of"
+    },
+    {
+      "provider": "opencode",
+      "round": 3,
+      "sessionMode": "resumed",
+      "prompt": "这是回复延迟验收 K3-R3。只回复：K3-R3 你好。不要调用工具，不读取或修改文件，不修改记忆。",
+      "startedAt": "2026-09-18T01:25:48.903Z",
+      "replySeconds": 6.444033999999999,
+      "answer": "K3-R3 你好",
+      "exitSeconds": 6.482592417,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "sessionId": "ses_f4de20fcfffeUHjReSloUVs2of"
+    },
+    {
+      "provider": "kimi",
+      "round": 3,
+      "sessionMode": "resumed",
+      "prompt": "这是回复延迟验收 K3-R3。只回复：K3-R3 你好。不要调用工具，不读取或修改文件，不修改记忆。",
+      "startedAt": "2026-09-18T01:25:55.387Z",
+      "replySeconds": 2.8031302090000025,
+      "answer": "K3-R3 你好。",
+      "exitSeconds": 2.916485459000003,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "sessionId": "session_d815e103-bf28-40d0-bfae-61d0a9e013e1"
+    }
+  ],
+  "rah": [
+    {
+      "provider": "opencode",
+      "round": 1,
+      "prompt": "这是回复延迟验收 K3-R1。只回复：K3-R1 你好。不要读取或修改项目文件，不修改记忆。这是普通问答，不创建任务。请使用 canonical Worker message-post 回复一次。",
+      "humanCreatedAt": "2026-09-18T01:20:18.886Z",
+      "replySeconds": 17.077,
+      "idleSeconds": 22.018,
+      "afterReplySeconds": 4.940999999999999,
+      "answers": ["K3-R1 你好"],
+      "attempts": [
+        {
+          "startedAt": "2026-09-18T01:20:18.999Z",
+          "finishedAt": "2026-09-18T01:20:40.829Z",
+          "state": "exited",
+          "exitCode": 0,
+          "resolvedModel": {
+            "source": "explicit_binding",
+            "modelBindingId": "local:opencode-cli/v1:kimi-for-coding/k3",
+            "provider": "kimi-for-coding",
+            "modelId": "kimi-for-coding/k3",
+            "reasoning": "high"
+          },
+          "scheduleMs": 113
+        }
+      ]
+    },
+    {
+      "provider": "kimi",
+      "round": 1,
+      "prompt": "这是回复延迟验收 K3-R1。只回复：K3-R1 你好。不要读取或修改项目文件，不修改记忆。这是普通问答，不创建任务。请使用 canonical Worker message-post 回复一次。",
+      "humanCreatedAt": "2026-09-18T01:20:40.910Z",
+      "replySeconds": 20.451,
+      "idleSeconds": 26.811,
+      "afterReplySeconds": 6.359999999999999,
+      "answers": ["K3-R1 你好"],
+      "attempts": [
+        {
+          "startedAt": "2026-09-18T01:20:41.128Z",
+          "finishedAt": "2026-09-18T01:21:07.631Z",
+          "state": "exited",
+          "exitCode": 0,
+          "resolvedModel": {
+            "source": "explicit_binding",
+            "modelBindingId": "local:kimi-cli/v1:kimi-code/k3",
+            "provider": "kimi-code",
+            "modelId": "kimi-code/k3",
+            "reasoning": "high"
+          },
+          "scheduleMs": 218
+        }
+      ]
+    },
+    {
+      "provider": "kimi",
+      "round": 2,
+      "prompt": "这是回复延迟验收 K3-R2。请仅调用一次 date -u +%Y-%m-%d，获取当前 UTC 日期，然后用一行回答：K3-R2 YYYY-MM-DD。不要读取或修改项目文件，不修改记忆。这是普通问答，不创建任务。请使用 canonical Worker message-post 回复一次。",
+      "humanCreatedAt": "2026-09-18T01:21:07.727Z",
+      "replySeconds": 24.779,
+      "idleSeconds": 30.939,
+      "afterReplySeconds": 6.16,
+      "answers": ["K3-R2 2026-09-18"],
+      "attempts": [
+        {
+          "startedAt": "2026-09-18T01:21:07.789Z",
+          "finishedAt": "2026-09-18T01:21:38.606Z",
+          "state": "exited",
+          "exitCode": 0,
+          "resolvedModel": {
+            "source": "explicit_binding",
+            "modelBindingId": "local:kimi-cli/v1:kimi-code/k3",
+            "provider": "kimi-code",
+            "modelId": "kimi-code/k3",
+            "reasoning": "high"
+          },
+          "scheduleMs": 62
+        }
+      ]
+    },
+    {
+      "provider": "opencode",
+      "round": 2,
+      "prompt": "这是回复延迟验收 K3-R2。请仅调用一次 date -u +%Y-%m-%d，获取当前 UTC 日期，然后用一行回答：K3-R2 YYYY-MM-DD。不要读取或修改项目文件，不修改记忆。这是普通问答，不创建任务。请使用 canonical Worker message-post 回复一次。",
+      "humanCreatedAt": "2026-09-18T01:21:38.673Z",
+      "replySeconds": 16.879,
+      "idleSeconds": 20.506,
+      "afterReplySeconds": 3.626999999999999,
+      "answers": ["K3-R2 2026-09-18"],
+      "attempts": [
+        {
+          "startedAt": "2026-09-18T01:21:38.735Z",
+          "finishedAt": "2026-09-18T01:21:59.170Z",
+          "state": "exited",
+          "exitCode": 0,
+          "resolvedModel": {
+            "source": "explicit_binding",
+            "modelBindingId": "local:opencode-cli/v1:kimi-for-coding/k3",
+            "provider": "kimi-for-coding",
+            "modelId": "kimi-for-coding/k3",
+            "reasoning": "high"
+          },
+          "scheduleMs": 62
+        }
+      ]
+    }
+  ],
+  "traces": {
+    "kimiNative": {
+      "path": "/Users/sun/.kimi-code/sessions/wd_kimi_1ddb83813517/session_d815e103-bf28-40d0-bfae-61d0a9e013e1/agents/main/wire.jsonl",
+      "sha256": "b0db1a38f208d11fc75c1ce38088b7524b063422955e20124a7b5b95a7fd64cb",
+      "turns": [
+        {
+          "startedAt": 1789694707540,
+          "inputChars": 77,
+          "requests": [
+            {
+              "startedAt": 1789694707550,
+              "step": "0.1",
+              "model": "k3",
+              "effort": "high",
+              "messageCount": 3,
+              "endedAt": 1789694719649,
+              "durationMs": 12099,
+              "usage": {
+                "inputOther": 1794,
+                "output": 35,
+                "inputCacheRead": 19456,
+                "inputCacheCreation": 0
+              }
+            }
+          ],
+          "tools": []
+        },
+        {
+          "startedAt": 1789694720353,
+          "inputChars": 122,
+          "requests": [
+            {
+              "startedAt": 1789694720364,
+              "step": "1.1",
+              "model": "k3",
+              "effort": "high",
+              "messageCount": 6,
+              "endedAt": 1789694730238,
+              "durationMs": 9874,
+              "usage": {
+                "inputOther": 2238,
+                "output": 63,
+                "inputCacheRead": 18432,
+                "inputCacheCreation": 0
+              }
+            },
+            {
+              "startedAt": 1789694730264,
+              "step": "1.2",
+              "model": "k3",
+              "effort": "high",
+              "messageCount": 8,
+              "endedAt": 1789694735577,
+              "durationMs": 5313,
+              "usage": {
+                "inputOther": 329,
+                "output": 24,
+                "inputCacheRead": 21248,
+                "inputCacheCreation": 0
+              }
+            }
+          ],
+          "tools": [
+            {
+              "id": "tool_BBnk1AHbCb5blzhPcTBoB7dS",
+              "name": "Bash",
+              "command": "date -u +%Y-%m-%d",
+              "startedAt": 1789694730252,
+              "endedAt": 1789694730260,
+              "durationMs": 8
+            }
+          ]
+        },
+        {
+          "startedAt": 1789694756020,
+          "inputChars": 77,
+          "requests": [
+            {
+              "startedAt": 1789694756032,
+              "step": "2.1",
+              "model": "k3",
+              "effort": "high",
+              "messageCount": 11,
+              "endedAt": 1789694758188,
+              "durationMs": 2156,
+              "usage": {
+                "inputOther": 485,
+                "output": 27,
+                "inputCacheRead": 20480,
+                "inputCacheCreation": 0
+              }
+            }
+          ],
+          "tools": []
+        }
+      ]
+    },
+    "kimiRah": {
+      "path": "/Users/sun/.kimi-code/sessions/wd_fc969d7bd4efe99a42e5252d55f60f3ad7af72aa_2accea433a43/session_5e04106b-d4db-4802-95b7-06f0da351429/agents/main/wire.jsonl",
+      "sha256": "36202fae58b5c14f2d183651f67e4f23618c27edf05a1c1ec4b753865b329bce",
+      "turns": [
+        {
+          "startedAt": 1789694441973,
+          "inputChars": 50047,
+          "requests": [
+            {
+              "startedAt": 1789694441984,
+              "step": "0.1",
+              "model": "k3",
+              "effort": "high",
+              "messageCount": 2,
+              "endedAt": 1789694450708,
+              "durationMs": 8724,
+              "usage": {
+                "inputOther": 12110,
+                "output": 72,
+                "inputCacheRead": 19456,
+                "inputCacheCreation": 0
+              }
+            },
+            {
+              "startedAt": 1789694451131,
+              "step": "0.2",
+              "model": "k3",
+              "effort": "high",
+              "messageCount": 4,
+              "endedAt": 1789694461114,
+              "durationMs": 9983,
+              "usage": {
+                "inputOther": 1622,
+                "output": 119,
+                "inputCacheRead": 31488,
+                "inputCacheCreation": 0
+              }
+            },
+            {
+              "startedAt": 1789694461374,
+              "step": "0.3",
+              "model": "k3",
+              "effort": "high",
+              "messageCount": 6,
+              "endedAt": 1789694467114,
+              "durationMs": 5740,
+              "usage": {
+                "inputOther": 280,
+                "output": 57,
+                "inputCacheRead": 33024,
+                "inputCacheCreation": 0
+              }
+            }
+          ],
+          "tools": [
+            {
+              "id": "tool_e1kVUT4YqPhVEz6m9dgV3oYZ",
+              "name": "Bash",
+              "command": "\"$RAH_WORKER_CLI\" worker message-check --startup",
+              "startedAt": 1789694450724,
+              "endedAt": 1789694451127,
+              "durationMs": 403
+            },
+            {
+              "id": "tool_lUFIxVO857nK3sQGkNSjp4kb",
+              "name": "Bash",
+              "command": "\"$RAH_WORKER_CLI\" worker message-post --target dm:@owner <<'RAH_MESSAGE_EOF'\nK3-R1 你好\nRAH_MESSAGE_EOF",
+              "startedAt": 1789694461117,
+              "endedAt": 1789694461371,
+              "durationMs": 254
+            }
+          ]
+        },
+        {
+          "startedAt": 1789694468623,
+          "inputChars": 1355,
+          "requests": [
+            {
+              "startedAt": 1789694468634,
+              "step": "1.1",
+              "model": "k3",
+              "effort": "high",
+              "messageCount": 8,
+              "endedAt": 1789694479102,
+              "durationMs": 10468,
+              "usage": {
+                "inputOther": 371,
+                "output": 72,
+                "inputCacheRead": 33280,
+                "inputCacheCreation": 0
+              }
+            },
+            {
+              "startedAt": 1789694479597,
+              "step": "1.2",
+              "model": "k3",
+              "effort": "high",
+              "messageCount": 10,
+              "endedAt": 1789694484871,
+              "durationMs": 5274,
+              "usage": {
+                "inputOther": 2772,
+                "output": 75,
+                "inputCacheRead": 33536,
+                "inputCacheCreation": 0
+              }
+            },
+            {
+              "startedAt": 1789694484891,
+              "step": "1.3",
+              "model": "k3",
+              "effort": "high",
+              "messageCount": 12,
+              "endedAt": 1789694492284,
+              "durationMs": 7393,
+              "usage": {
+                "inputOther": 321,
+                "output": 89,
+                "inputCacheRead": 36096,
+                "inputCacheCreation": 0
+              }
+            },
+            {
+              "startedAt": 1789694492521,
+              "step": "1.4",
+              "model": "k3",
+              "effort": "high",
+              "messageCount": 14,
+              "endedAt": 1789694498092,
+              "durationMs": 5571,
+              "usage": {
+                "inputOther": 231,
+                "output": 58,
+                "inputCacheRead": 36352,
+                "inputCacheCreation": 0
+              }
+            }
+          ],
+          "tools": [
+            {
+              "id": "tool_MW67TqnW6livnzBxxsJBo0Pm",
+              "name": "Bash",
+              "command": "\"$RAH_WORKER_CLI\" worker message-check --startup",
+              "startedAt": 1789694479130,
+              "endedAt": 1789694479592,
+              "durationMs": 462
+            },
+            {
+              "id": "tool_2AyKXDQTBzJGMPAY62nDeUm2",
+              "name": "Bash",
+              "command": "date -u +%Y-%m-%d",
+              "startedAt": 1789694484876,
+              "endedAt": 1789694484885,
+              "durationMs": 9
+            },
+            {
+              "id": "tool_Gmuz5EIT5SzmNEZuzt1NuZbb",
+              "name": "Bash",
+              "command": "\"$RAH_WORKER_CLI\" worker message-post --target dm:@owner <<'RAH_MESSAGE_EOF'\nK3-R2 2026-09-18\nRAH_MESSAGE_EOF",
+              "startedAt": 1789694492288,
+              "endedAt": 1789694492517,
+              "durationMs": 229
+            }
+          ]
+        }
+      ]
+    },
+    "opencodeNative": {
+      "session": {
+        "id": "ses_f4de20fcfffeUHjReSloUVs2of",
+        "directory": "/private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-k3-native-K7JawV/opencode"
+      },
+      "turns": [
+        {
+          "startedAt": 1789694701638,
+          "systemChars": 0,
+          "requests": [
+            {
+              "startedAt": 1789694701809,
+              "endedAt": 1789694706876,
+              "durationMs": 5067,
+              "model": "k3",
+              "effort": "high",
+              "usage": {
+                "total": 3399,
+                "input": 218,
+                "output": 21,
+                "reasoning": 88,
+                "cache": {
+                  "write": 0,
+                  "read": 3072
+                }
+              },
+              "finish": "stop"
+            }
+          ],
+          "tools": []
+        },
+        {
+          "startedAt": 1789694736215,
+          "systemChars": 0,
+          "requests": [
+            {
+              "startedAt": 1789694736387,
+              "endedAt": 1789694744213,
+              "durationMs": 7826,
+              "model": "k3",
+              "effort": "high",
+              "usage": {
+                "total": 3670,
+                "input": 400,
+                "output": 59,
+                "reasoning": 139,
+                "cache": {
+                  "write": 0,
+                  "read": 3072
+                }
+              },
+              "finish": "tool-calls"
+            },
+            {
+              "startedAt": 1789694744214,
+              "endedAt": 1789694748876,
+              "durationMs": 4662,
+              "model": "k3",
+              "effort": "high",
+              "usage": {
+                "total": 3768,
+                "input": 375,
+                "output": 26,
+                "reasoning": 39,
+                "cache": {
+                  "write": 0,
+                  "read": 3328
+                }
+              },
+              "finish": "stop"
+            }
+          ],
+          "tools": [
+            {
+              "name": "bash",
+              "command": "date -u +%Y-%m-%d",
+              "startedAt": 1789694744160,
+              "endedAt": 1789694744197,
+              "durationMs": 37
+            }
+          ]
+        },
+        {
+          "startedAt": 1789694749421,
+          "systemChars": 0,
+          "requests": [
+            {
+              "startedAt": 1789694749596,
+              "endedAt": 1789694755360,
+              "durationMs": 5764,
+              "model": "k3",
+              "effort": "high",
+              "usage": {
+                "total": 3895,
+                "input": 236,
+                "output": 21,
+                "reasoning": 54,
+                "cache": {
+                  "write": 0,
+                  "read": 3584
+                }
+              },
+              "finish": "stop"
+            }
+          ],
+          "tools": []
+        }
+      ],
+      "durationMeaning": "Assistant step wall time includes its tool; not pure API latency"
+    },
+    "opencodeRah": {
+      "session": {
+        "id": "ses_f4de65c81ffe3MkSkVMTEeYpQ2",
+        "directory": "/private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-k3-dm-sD15HK/state/agent-workspaces/314a36e25327bae57133cb20662bcc2196a8c6337e6a70ed0c143f33966a5094"
+      },
+      "turns": [
+        {
+          "startedAt": 1789694419852,
+          "systemChars": 48304,
+          "requests": [
+            {
+              "startedAt": 1789694420012,
+              "endedAt": 1789694428243,
+              "durationMs": 8231,
+              "model": "k3",
+              "effort": "high",
+              "usage": {
+                "total": 17596,
+                "input": 16248,
+                "output": 59,
+                "reasoning": 9,
+                "cache": {
+                  "write": 0,
+                  "read": 1280
+                }
+              },
+              "finish": "tool-calls"
+            },
+            {
+              "startedAt": 1789694428244,
+              "endedAt": 1789694435976,
+              "durationMs": 7732,
+              "model": "k3",
+              "effort": "high",
+              "usage": {
+                "total": 19179,
+                "input": 1646,
+                "output": 82,
+                "reasoning": 43,
+                "cache": {
+                  "write": 0,
+                  "read": 17408
+                }
+              },
+              "finish": "tool-calls"
+            },
+            {
+              "startedAt": 1789694435977,
+              "endedAt": 1789694440514,
+              "durationMs": 4537,
+              "model": "k3",
+              "effort": "high",
+              "usage": {
+                "total": 19358,
+                "input": 314,
+                "output": 75,
+                "reasoning": 25,
+                "cache": {
+                  "write": 0,
+                  "read": 18944
+                }
+              },
+              "finish": "stop"
+            }
+          ],
+          "tools": [
+            {
+              "name": "bash",
+              "command": "\"$RAH_WORKER_CLI\" worker message-check --startup",
+              "startedAt": 1789694427797,
+              "endedAt": 1789694428237,
+              "durationMs": 440
+            },
+            {
+              "name": "bash",
+              "command": "\"$RAH_WORKER_CLI\" worker message-post --target \"dm:@owner\" <<'RAH_MESSAGE_EOF'\nK3-R1 你好\nRAH_MESSAGE_EOF",
+              "startedAt": 1789694435735,
+              "endedAt": 1789694435973,
+              "durationMs": 238
+            }
+          ]
+        },
+        {
+          "startedAt": 1789694501663,
+          "systemChars": 48304,
+          "requests": [
+            {
+              "startedAt": 1789694501832,
+              "endedAt": 1789694506652,
+              "durationMs": 4820,
+              "model": "k3",
+              "effort": "high",
+              "usage": {
+                "total": 19622,
+                "input": 363,
+                "output": 59,
+                "reasoning": 0,
+                "cache": {
+                  "write": 0,
+                  "read": 19200
+                }
+              },
+              "finish": "tool-calls"
+            },
+            {
+              "startedAt": 1789694506653,
+              "endedAt": 1789694511837,
+              "durationMs": 5184,
+              "model": "k3",
+              "effort": "high",
+              "usage": {
+                "total": 22295,
+                "input": 2740,
+                "output": 57,
+                "reasoning": 42,
+                "cache": {
+                  "write": 0,
+                  "read": 19456
+                }
+              },
+              "finish": "tool-calls"
+            },
+            {
+              "startedAt": 1789694511838,
+              "endedAt": 1789694515565,
+              "durationMs": 3727,
+              "model": "k3",
+              "effort": "high",
+              "usage": {
+                "total": 22418,
+                "input": 315,
+                "output": 87,
+                "reasoning": 0,
+                "cache": {
+                  "write": 0,
+                  "read": 22016
+                }
+              },
+              "finish": "tool-calls"
+            },
+            {
+              "startedAt": 1789694515567,
+              "endedAt": 1789694518849,
+              "durationMs": 3282,
+              "model": "k3",
+              "effort": "high",
+              "usage": {
+                "total": 22579,
+                "input": 224,
+                "output": 72,
+                "reasoning": 11,
+                "cache": {
+                  "write": 0,
+                  "read": 22272
+                }
+              },
+              "finish": "stop"
+            }
+          ],
+          "tools": [
+            {
+              "name": "bash",
+              "command": "\"$RAH_WORKER_CLI\" worker message-check --startup",
+              "startedAt": 1789694506214,
+              "endedAt": 1789694506647,
+              "durationMs": 433
+            },
+            {
+              "name": "bash",
+              "command": "date -u +%Y-%m-%d",
+              "startedAt": 1789694511825,
+              "endedAt": 1789694511835,
+              "durationMs": 10
+            },
+            {
+              "name": "bash",
+              "command": "\"$RAH_WORKER_CLI\" worker message-post --target \"dm:@owner\" <<'RAH_MESSAGE_EOF'\nK3-R2 2026-09-18\nRAH_MESSAGE_EOF",
+              "startedAt": 1789694515315,
+              "endedAt": 1789694515563,
+              "durationMs": 248
+            }
+          ]
+        }
+      ],
+      "durationMeaning": "Assistant step wall time includes its tool; not pure API latency"
+    }
+  }
+}

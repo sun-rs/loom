@@ -124,6 +124,7 @@ test("daemon reset retries stale Room sequence and replays a receipt without a s
 function fakeHuman(
   calls: string[],
   beforeManage: () => void = () => undefined,
+  state = "enabled",
 ): HumanApplicationPort {
   const manageWorkspaceAgent: HumanApplicationPort["manageWorkspaceAgent"] = (
     _actor,
@@ -135,6 +136,8 @@ function fakeHuman(
       `manage:${input.state}:${input.basedOnRoomSeq}:${input.idempotencyKey}`,
     );
     beforeManage();
+    if (input.state === state) throw new Error(`Agent is already ${state}`);
+    state = input.state;
     return {
       event: { roomSeq: input.state === "disabled" ? 12 : 13 },
     } as ClientAgentManageResponse;
@@ -143,12 +146,63 @@ function fakeHuman(
     getWorkspaceAgentManagementView: () =>
       ({
         agent: {
-          definition: { participantId: "participant-1" },
+          definition: { participantId: "participant-1", state },
         },
       }) as never,
     manageWorkspaceAgent,
   } as unknown as HumanApplicationPort;
 }
+
+for (const mode of ["restart", "session", "full"] as const) {
+  test(`stopped Agent ${mode} enables inside the Host fence without disabling twice`, async () => {
+    const calls: string[] = [];
+    const administration = createDaemonAgentExecutionAdministration({
+      human: fakeHuman(calls, undefined, "disabled"),
+      coordinator: {
+        receipt: async () => null,
+        reset: async (input, hooks) => {
+          calls.push(`host:${input.mode}`);
+          await hooks?.afterContinuity?.();
+          return receipt(input);
+        },
+      },
+    });
+    await administration.reset(actor, {
+      agentDefinitionId: "definition-1",
+      basedOnRoomSeq: 11,
+      idempotencyKey: "stopped",
+      mode,
+    });
+    assert.deepEqual(calls, [
+      `host:${mode}`,
+      "manage:enabled:11:stopped:execution-reset:enable",
+    ]);
+  });
+}
+
+test("failed reset of a stopped Agent leaves it stopped", async () => {
+  const calls: string[] = [];
+  const administration = createDaemonAgentExecutionAdministration({
+    human: fakeHuman(calls, undefined, "disabled"),
+    coordinator: {
+      receipt: async () => null,
+      reset: async () => {
+        throw new Error("terminal proof failed");
+      },
+    },
+  });
+  await assert.rejects(
+    async () =>
+      await administration.reset(actor, {
+        agentDefinitionId: "definition-1",
+        basedOnRoomSeq: 11,
+        idempotencyKey: "failed-stopped",
+        mode: "full",
+      }),
+    /terminal proof failed/,
+  );
+  assert.deepEqual(calls, []);
+});
 
 function receipt(
   input: Readonly<{

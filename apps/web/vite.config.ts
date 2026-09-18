@@ -5,6 +5,23 @@ import { join, relative } from "node:path";
 import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin, type ResolvedConfig } from "vite";
 import { webBuildOutput } from "./build-output.ts";
+// The release identity resolver is shared, untyped build tooling. The Web app
+// itself never imports it; only this build config does.
+// @ts-expect-error -- plain ESM build script without type declarations
+import * as releaseIdentity from "../../scripts/release-version.mjs";
+
+const BUILD_IDENTITY_META_NAME: string =
+  releaseIdentity.BUILD_IDENTITY_META_NAME;
+const encodeBuildIdentityMeta: (value: unknown) => string =
+  releaseIdentity.encodeBuildIdentityMeta;
+
+// One release identity per build. `RAH_OS_BUILD_IDENTITY` (already resolved by
+// a parent build step) wins; otherwise `RAH_OS_RELEASE_VERSION` declares a
+// formal build and its absence means a development bundle. There is no
+// fallback to a placeholder release version.
+const buildIdentity: unknown = releaseIdentity.buildIdentityForEnvironment(
+  process.env,
+);
 
 const daemonTarget = process.env.RAH_DAEMON_URL ?? "http://127.0.0.1:7314";
 const developmentAccessToken = process.env.RAH_DEV_ACCESS_TOKEN;
@@ -76,6 +93,16 @@ function webBuildMetadataPlugin(command: "build" | "serve"): Plugin {
           },
           injectTo: "head",
         },
+        {
+          // Base64 so the payload is safe in an attribute and a product build
+          // can verify the Web bundle carries the same identity as the Core.
+          tag: "meta",
+          attrs: {
+            name: BUILD_IDENTITY_META_NAME,
+            content: encodeBuildIdentityMeta(buildIdentity),
+          },
+          injectTo: "head",
+        },
       ];
     },
     async closeBundle() {
@@ -123,9 +150,16 @@ function webBuildMetadataPlugin(command: "build" | "serve"): Plugin {
         indexPath,
         index.replace(WEB_BUILD_META_PLACEHOLDER, webBuildId),
       );
+      // The bundle records its own release identity next to the content hash so
+      // the workbench launcher can hand the very same identity to the daemon
+      // and the product build can verify Core and Web are one artefact.
       await writeFile(
         join(outputDirectory, ".rah-web-build.json"),
-        `${JSON.stringify({ schemaVersion: 1, webBuildId }, null, 2)}\n`,
+        `${JSON.stringify(
+          { buildIdentity, schemaVersion: 1, webBuildId },
+          null,
+          2,
+        )}\n`,
       );
     },
   };
@@ -139,6 +173,7 @@ export default defineConfig(({ command }) => {
       outDir: webBuildOutput(productionTrustedProxyAuth),
     },
     define: {
+      __RAH_BUILD_IDENTITY__: JSON.stringify(JSON.stringify(buildIdentity)),
       __RAH_TRUSTED_PROXY_AUTH__: JSON.stringify(
         productionTrustedProxyAuth ||
           (command === "serve" && developmentAccessToken !== undefined),

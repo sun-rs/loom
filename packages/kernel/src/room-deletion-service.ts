@@ -32,6 +32,7 @@ export const ROOM_DELETION_REFERENCED_TABLES = new Set([
   "activation_cancellation_requests",
   "activation_delivery_windows",
   "activation_obligations",
+  "activation_presented_windows",
   "activation_retry_fences",
   "activations",
   "agent_definition_revisions",
@@ -318,6 +319,8 @@ export class RoomDeletionService {
       `DELETE FROM run_attempts WHERE room_id=?`,
       `DELETE FROM placements WHERE room_id=?`,
       `DELETE FROM activation_retry_fences WHERE room_id=?`,
+      `DELETE FROM activation_presented_windows WHERE activation_id IN
+         (SELECT activation_id FROM activations WHERE room_id=?)`,
       `DELETE FROM activation_delivery_windows WHERE activation_id IN
          (SELECT activation_id FROM activations WHERE room_id=?)`,
       `DELETE FROM activations WHERE room_id=?`,

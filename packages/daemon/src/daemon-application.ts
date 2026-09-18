@@ -382,6 +382,7 @@ export class DaemonApplication {
           host,
           implementations,
           probeReport,
+          deliveryAcceptanceKernel: kernel,
           runtimeProfileRegistry,
           runtimeProfileRevision: activeRevision,
           supervisorDirectory: join(this.#config.stateDirectory, "supervisors"),

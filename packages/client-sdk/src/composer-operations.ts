@@ -9,6 +9,13 @@ export const composerOperations = {
     method: "POST",
     authenticated: true,
   },
+  "room.execution.read": {
+    input: P.RoomExecutionReadRequestSchema,
+    output: P.RoomExecutionReadResponseSchema,
+    path: "/v3/client/rooms/sos/read",
+    method: "POST",
+    authenticated: true,
+  },
 } as const;
 export type ComposerOperationMap = {
   [K in keyof typeof composerOperations]: {

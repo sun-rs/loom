@@ -14,8 +14,11 @@ const classify = (method, path) =>
     url: new URL(path, origin).href,
   });
 
-test("formal composer verification allows file metadata but not stop or uploads", () => {
-  for (const path of ["/v3/client/computers/files/list"])
+test("formal composer verification allows file metadata and execution reads but not stop or uploads", () => {
+  for (const path of [
+    "/v3/client/computers/files/list",
+    "/v3/client/rooms/sos/read",
+  ])
     assert.equal(classify("POST", path).decision, "allow-api");
   for (const path of [
     "/v3/client/rooms/sos/stop",

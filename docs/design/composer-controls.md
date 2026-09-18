@@ -1,4 +1,4 @@
-# Composer file references and device uploads
+# Composer file references and execution control
 
 Current contract: 2026-09-18. This user-requested design preserves the upload
 pipeline and shared button geometry, with separate path and mobile upload actions.
@@ -25,8 +25,11 @@ pipeline and shared button geometry, with separate path and mobile upload action
   no remote connection or SSH upload is implied by a path reference.
 - Click a directory row to open it; click files to toggle multiple selections in
   the current directory. Hover and selected rows use the shared `property-option`
-  soft yellow profile; selected files also show a right-aligned check. There are no separate
-  row arrows. The Home button next to the Computer name returns to the configured
+  soft yellow profile; selected files also show a right-aligned check.
+  Explicit deselection clears the check and fill together,
+  even while the pointer stays over the file or a touch leaves sticky hover.
+  Pointer re-entry restores normal hover; the keyboard focus outline remains.
+  There are no separate row arrows. The Home button next to the Computer name returns to the configured
   starting directory (normally the daemon user's home). The single pink confirm
   action inserts all selected files in selection order, or the current directory
   when none are selected, as space-separated `@"/absolute/path"` references in one
@@ -88,11 +91,35 @@ it also checks shared action styles, close/reopen and Escape/focus return. The
 directory gate holds network replies to verify stable header position and text,
 disabled references during loading, and Home winning over a late response.
 
+## Send and Stop
+
+`packages/kernel` owns execution state; the client polls its authenticated Room
+projection. Text or attachments always select Send. Empty plus working selects
+Stop; empty plus stopping displays a disabled stop control. New text restores Send
+even while cancellation is pending. Submission still uses existing Room mutations
+and durable follow-up activation merging, never a browser queue or a fabricated
+provider-level steer acknowledgement.
+
+Stop reuses Room Agent SOS, covering all execution lanes in the current Room.
+Direct Rooms allow their Human member; Channel authority stays owner/admin.
+Thread shares its Room. Task state and canonical messages are not deleted or
+rewritten. Success requires terminal proof for every targeted runtime.
+
+Composer requests set `resumeOnMessage: true`. The next accepted Human message,
+Thread reply or created task supplies canonical guidance and releases the hold
+only after all previous runtimes are proven stopped. A correction arriving during
+stopping is durable and resumes after the final proof even if the HTTP caller
+disconnects. A startup failure racing cancellation resolves the cancellation
+instead of retrying it into a newer execution attempt. Original settings SOS
+requests omit this flag and still require explicit manual Resume.
+Host recovery also settles completed cancellation targets after lease expiry or
+quarantine resolution; a disconnected browser is not required to finish Stop.
+
 ## Sources and ownership
 
 - Raft Web 1.16.0, commit `ba2a1db`, published `web-index.js`, SHA-256
   `7841ee0f6f5ea6d58c0fb9a8a9e509807a3df2a0fe9485cbd11215d42bcb393b`:
-  the shared button and dialog families are the upstream UI reference.
+  Xht's stop-all-agents/resume-all-agents is the upstream behavior reference.
   Immutable URLs/hashes and license/provenance limits are in the
   [release evidence manifest](../evidence/raft-release-20260916/manifest.json).
   The published bundle is analysis-only, under the user's source-access authority.
@@ -102,19 +129,32 @@ disabled references during loading, and Home winning over a late response.
 - Legacy RAH's FileReferencePicker informed quoted path insertion only. Its
   Session ownership and unrestricted filesystem assumptions are not imported.
 - Protocol owns schemas; AgentHost owns filesystem scope; daemon supplies roots;
-  application-service/client-sdk own authenticated transport; Web/ui-web own
-  interaction and layout.
-  Current source-backed UI plus RAH-specific file reference glue does not claim exact
+  application-service/client-sdk own authenticated transport; Kernel owns stop,
+  terminal proof, sequencing and resume; Web/ui-web own interaction and layout.
+  Current source-backed UI plus RAH-specific file/stop glue does not claim exact
   Raft visual parity for this intentionally different composer.
 
 ## Verification
 
+Directory loading keeps the fixed-height list region empty with `aria-busy`;
+it does not insert a transient loading-text row. Confirm stays disabled until
+the requested listing arrives; errors retain the existing retry action.
+`test-file-dialog-chrome-browser.mjs` delays directory responses and verifies
+Home/folder navigation has no loading-text flash or list-frame movement in
+desktop Chromium and mobile WebKit. The 2026-09-18 repair passed these gates
+and the Web build, but formal restart remains pending: the unrelated
+`/v1/worker/message-present` registration gate and backend formatting checks
+are failing. No deployment acceptance is implied.
+
 - Unit/integration: path traversal, absolute-input and symlink rejection; sensitive
   paths and unknown hosts/roots; unauthenticated/Agent denial; path-only metadata;
-  reference text quoting. Tests use temporary state and fake providers.
+  Channel/DM authority; manual SOS preserved; correction while stopping;
+  startup/cancel/retry race; idempotency flag mismatch; reference text and action
+  priority. Tests use temporary state and fake providers.
 - `node scripts/test-composer-controls-browser.mjs` exercises desktop 1440x900 and
   touch 390x844: tree/caret/folder references, Home, file deselection, native upload
-  entry, dialog geometry, access denial recovery and focus return.
+  entry, dialog geometry, Room/Thread/DM
+  execution controls, injected failure, reload, repeated stop and correction.
   `RAH_UI_BROWSER=webkit` selects WebKit; default is Chromium.
   The same gate is exposed as `npm run test:web:composer-controls`.
 - `npm run test:web:composer-drop` covers Chrome/Firefox upload, native chooser,

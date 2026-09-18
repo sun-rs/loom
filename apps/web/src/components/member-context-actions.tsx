@@ -8,6 +8,7 @@ import {
   type AgentStateChange,
 } from "./agent-state-dialog.tsx";
 import { AgentExecutionResetDialog } from "./agent-execution-reset-dialog.tsx";
+import { useAgentStart } from "../use-agent-start.ts";
 export type MemberContextControl = {
   canManage: boolean;
   fullResetEnabled: boolean;
@@ -37,6 +38,10 @@ export function MemberContextActions({
   const [action, setAction] = useState<"state" | "reset">();
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
+  const startAgent = useAgentStart(
+    agent?.agentDefinitionId,
+    control.onChangeState,
+  );
   const send = async () => {
     if (pending) return;
     setPending(true);
@@ -79,8 +84,14 @@ export function MemberContextActions({
                       {agent.state === "disabled" ? "启动" : "停止"}
                     </>
                   ),
-                  disabled: !control.canManage || !control.onChangeState,
-                  onSelect: () => setAction("state"),
+                  disabled:
+                    !control.canManage ||
+                    !control.onChangeState ||
+                    startAgent.pending,
+                  onSelect: () =>
+                    agent.state === "disabled"
+                      ? void startAgent.start()
+                      : setAction("state"),
                 },
                 {
                   key: "reset",
@@ -98,6 +109,7 @@ export function MemberContextActions({
         ]}
       />
       {error && <p role="alert">{error}</p>}
+      {startAgent.error && <p role="alert">{startAgent.error}</p>}
       {agent && action === "state" && control.onChangeState && (
         <AgentStateDialog
           agent={agent}

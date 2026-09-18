@@ -105,6 +105,23 @@ try {
       header,
       `${width}: shared header spacing/border`,
     );
+    await page.route("**/v3/client/computers/files/list", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 350));
+      await route.continue();
+    });
+    const list = files.locator(".rah-computer-file-list");
+    const beforeLoad = await list.boundingBox();
+    await home.click();
+    await expect(list).toHaveAttribute("aria-busy", "true");
+    assert.equal(
+      await list.getByText("正在读取目录…", { exact: true }).count(),
+      0,
+    );
+    await expect(
+      files.getByRole("button", { name: "引用所选", exact: true }),
+    ).toBeDisabled();
+    assert.deepEqual(await list.boundingBox(), beforeLoad);
+    await expect(list).toHaveAttribute("aria-busy", "false");
     assert.deepEqual(
       await style(files.getByText("引用文件或文件夹", { exact: true }), [
         "fontSize",
@@ -149,6 +166,12 @@ try {
         exact: true,
       })
       .click();
+    await expect(list).toHaveAttribute("aria-busy", "true");
+    assert.equal(
+      await list.getByText("正在读取目录…", { exact: true }).count(),
+      0,
+    );
+    await expect(list).toHaveAttribute("aria-busy", "false");
     const firstFile = files.getByRole("button", {
       name: "note.txt",
       exact: true,
@@ -157,8 +180,9 @@ try {
       name: "second note.txt",
       exact: true,
     });
-    await firstFile.click();
-    await secondFile.click();
+    const activate = (row) => (width === 390 ? row.tap() : row.click());
+    await activate(firstFile);
+    await activate(secondFile);
     await expect(firstFile).toHaveAttribute("aria-pressed", "true");
     await expect(secondFile).toHaveAttribute("aria-pressed", "true");
     const softColor = "rgba(255, 212, 64, 0.3)";
@@ -169,12 +193,28 @@ try {
       await expect(file).toHaveCSS("background-color", softColor);
     }
     await page.screenshot({ path: `${evidence}/${width}-selected-files.png` });
-    await firstFile.click();
+    await activate(firstFile);
     await expect(firstFile).toHaveAttribute("aria-pressed", "false");
     await expect(
       firstFile.locator('use[href$="#raft-icon-check"]'),
     ).toHaveCount(0);
-    await firstFile.click();
+    await expect(firstFile).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+    await expect(secondFile).toHaveCSS("background-color", softColor);
+    if (width === 1440) {
+      await home.hover();
+      await firstFile.hover();
+      await expect(firstFile).toHaveCSS("background-color", softColor);
+      await home.hover();
+      await expect(firstFile).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+      await firstFile.focus();
+      await firstFile.press("Space");
+      await expect(firstFile).toHaveAttribute("aria-pressed", "true");
+      await firstFile.press("Space");
+      await expect(firstFile).toHaveAttribute("aria-pressed", "false");
+      await expect(firstFile).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+      await expect(firstFile).toHaveCSS("outline-width", "2px");
+    }
+    await activate(firstFile);
     const paths = await Promise.all([
       secondFile.getAttribute("title"),
       firstFile.getAttribute("title"),

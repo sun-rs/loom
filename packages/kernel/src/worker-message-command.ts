@@ -110,6 +110,15 @@ export function postWorkerMessageTransaction(context: {
     {
       activationId: scope.activationId,
       basedOnRoomSeq,
+      // No presented floor here, and the omission is load-bearing rather than
+      // an oversight. This route's own gate is `basedOnRoomSeq === scope.toSeq`
+      // (`resolveWorkerReplyRoute`, `worker-message-routing.ts:192-193`), so
+      // the causal marker is always the Activation head, and the presented
+      // prefix is by construction at most that head — `Math.max` with it can
+      // never raise this floor. A mutation adding it turns no test red because
+      // it cannot change an outcome. Making the prefix meaningful on this route
+      // means letting the marker be BELOW the head, which is a change to that
+      // staleness gate and a separate decision.
       idempotencyKey,
       recipients: route.recipients,
       roomId: scope.roomId,

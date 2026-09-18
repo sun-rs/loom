@@ -1,4 +1,5 @@
 import { MessageTextDialog } from "./message-text-dialog.tsx";
+import { ComposerSubmitControl } from "./composer-submit-control.tsx";
 import { fileReferenceText } from "../composer-controls.ts";
 import { useMessageActions } from "../use-message-actions.ts";
 import type { ProductNavigationRequest } from "../navigation-target.ts";
@@ -155,6 +156,8 @@ export function ChatPane({
   onSubmit,
   roomName,
   roomKind,
+  archived = false,
+  canUnarchive = false,
   roomId,
   mentionReadStates: canonicalMentionReadStates,
   referenceRooms = [],
@@ -204,6 +207,8 @@ export function ChatPane({
   ) => Promise<void>;
   roomName: string | undefined;
   roomKind: Room["kind"] | undefined;
+  archived?: boolean;
+  canUnarchive?: boolean;
   roomId: string | undefined;
   mentionReadStates?: MessageReferenceReadStateIndex;
   referenceRooms?: readonly {
@@ -546,6 +551,11 @@ export function ChatPane({
                     <ChatDateDivider createdAt={item.createdAt} />
                   ) : null}
                   <p className="rah-chat-system-notice">
+                    {item.kind === "archive-changed" ? (
+                      <>
+                        <ChatMessageTime value={item.createdAt} />{" "}
+                      </>
+                    ) : null}
                     {item.kind === "reminder-fired" ? (
                       <NavigationReceiptLink
                         {...(onOpenTarget === undefined
@@ -729,6 +739,15 @@ export function ChatPane({
           unresolvedCount={messageSelection.resolved.unresolvedCount}
           selectedCount={messageSelection.selection.selectedIds.length}
         />
+      ) : archived ? (
+        <div className="rah-channel-archived-notice">
+          <span>该频道已归档。</span>
+          {canUnarchive ? (
+            <button type="button" onClick={onManageAgents}>
+              取消归档
+            </button>
+          ) : null}
+        </div>
       ) : (
         <>
           {submitError === undefined ? null : (
@@ -807,19 +826,19 @@ export function ChatPane({
                     作为任务
                   </label>
                 ) : null}
-                <button
-                  className="send-btn"
-                  type="submit"
-                  disabled={
+                <ComposerSubmitControl
+                  client={client}
+                  roomId={roomId}
+                  body={body}
+                  attachmentCount={fileUploads.rows.length}
+                  stopAllowed={canPost}
+                  sendDisabled={
                     (body.trim() === "" && fileUploads.rows.length === 0) ||
                     fileUploads.rows.some((row) => row.status !== "ready") ||
                     pending ||
                     (asTask ? !canCreateTask : !canPost)
                   }
-                  title="发送"
-                >
-                  <Icon name="send" />
-                </button>
+                />
               </div>
             </div>
           </ComposerDropForm>
@@ -2660,19 +2679,20 @@ export function ThreadPane({
                   uploadsDisabled={pending || !canReply || !canAttachFiles}
                 />
                 <span className="composer-spacer" />
-                <button
-                  className="send-btn"
-                  type="submit"
-                  disabled={
+                <ComposerSubmitControl
+                  client={client}
+                  roomId={roomId}
+                  body={body}
+                  attachmentCount={fileUploads.rows.length}
+                  stopAllowed={canReply}
+                  label="回复"
+                  sendDisabled={
                     !canReply ||
                     (body.trim() === "" && fileUploads.rows.length === 0) ||
                     fileUploads.rows.some((row) => row.status !== "ready") ||
                     pending
                   }
-                  title="回复"
-                >
-                  <Icon name="send" />
-                </button>
+                />
               </div>
             </div>
           </ComposerDropForm>

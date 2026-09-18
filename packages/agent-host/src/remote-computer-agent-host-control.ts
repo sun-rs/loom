@@ -65,6 +65,15 @@ export function createRemoteComputerAgentHostControlPort(
       if (response.kind !== "run.finish") throw invalidResponse();
       return toRunAttempt(response.runAttempt);
     },
+    markPresentedDeliverySent: async (input) => {
+      const response = await resident.commandExecution({
+        activationId: input.activationId,
+        consumerId: input.consumerId,
+        kind: "delivery.presented.sent",
+        runAttemptId: input.runAttemptId,
+      });
+      if (response.kind !== "delivery.presented.sent") throw invalidResponse();
+    },
     heartbeatHost: async (input) => {
       const request = input ?? {};
       return toHostRecord(

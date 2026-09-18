@@ -1,6 +1,10 @@
 import { createRoot } from "react-dom/client";
+import { useState } from "react";
+import type { Room } from "@rah-os/protocol";
 import type { RahClient } from "@rah-os/client-sdk";
 import { SettingsSurface } from "../src/components/settings-surface.tsx";
+import { AgentChatPane } from "../src/components/agent-directory-pane.tsx";
+import "../src/agent-directory.css";
 import "../src/product-styles.ts";
 const longLaunch = new URLSearchParams(location.search).has("longLaunch");
 let revision = 0;
@@ -64,23 +68,75 @@ const client = {
     };
   },
 } as unknown as RahClient;
-createRoot(document.getElementById("root")!).render(
-  <main
-    style={{
-      height: "100vh",
-      display: "flex",
-      gridTemplateColumns: "0 minmax(0, 1fr) 0",
-      gridTemplateRows: "minmax(0, 1fr)",
-    }}
-  >
-    <SettingsSurface
-      client={client}
-      agents={[]}
-      canManageWorkspace={false}
-      currentPrincipal={undefined}
-      workspace={undefined}
-      onWorkspaceUpdated={() => {}}
-      onPrincipalUpdated={() => {}}
-    />
-  </main>,
-);
+function Fixture() {
+  const [archivedRooms, setArchivedRooms] = useState<Room[]>([
+    {
+      roomId: "archive-fixture",
+      workspaceId: "fixture",
+      kind: "channel",
+      name: "Archived fixture",
+      slug: "archived-fixture",
+      archivedAt: "2026-09-15T08:06:00Z",
+      visibility: "public",
+    } as Room,
+  ]);
+  const [attempts, setAttempts] = useState(0);
+  if (new URLSearchParams(location.search).has("agentChat"))
+    return (
+      <AgentChatPane
+        directError={undefined}
+        error={undefined}
+        loading={false}
+        onOpenRoom={(id) => {
+          document.body.dataset.openedRoom = id;
+        }}
+        rooms={[
+          {
+            ...archivedRooms[0]!,
+            roomId: "public",
+            name: "Public fixture",
+            visibility: "public",
+          },
+          {
+            ...archivedRooms[0]!,
+            roomId: "private",
+            name: "Private fixture",
+            visibility: "private",
+          },
+        ]}
+      />
+    );
+  return (
+    <main
+      style={{
+        height: "100vh",
+        display: "flex",
+        gridTemplateColumns: "0 minmax(0, 1fr) 0",
+        gridTemplateRows: "minmax(0, 1fr)",
+      }}
+    >
+      <SettingsSurface
+        client={client}
+        agents={[]}
+        canManageWorkspace={true}
+        archivedRooms={archivedRooms}
+        onOpenRoom={(id) => {
+          document.body.dataset.openedRoom = id;
+        }}
+        onUnarchiveRoom={async (room) => {
+          setAttempts(attempts + 1);
+          if (attempts === 0) throw new Error("Fixture denied");
+          setArchivedRooms((rooms) =>
+            rooms.filter((item) => item.roomId !== room.roomId),
+          );
+        }}
+        onSystemChannelUpdated={() => {}}
+        currentPrincipal={undefined}
+        workspace={undefined}
+        onWorkspaceUpdated={() => {}}
+        onPrincipalUpdated={() => {}}
+      />
+    </main>
+  );
+}
+createRoot(document.getElementById("root")!).render(<Fixture />);

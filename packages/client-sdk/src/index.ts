@@ -66,6 +66,8 @@ import {
   ClientAgentOnboardRequestSchema,
   ClientAgentRoomsListRequestSchema,
   ClientAgentRoomsListResponseSchema,
+  ClientAgentDeletionDiagnosticsRequestSchema,
+  ClientAgentDeletionDiagnosticsResponseSchema,
   ClientAgentManageRequestSchema,
   ClientAgentManageResponseSchema,
   ClientAgentGetRequestSchema,
@@ -184,6 +186,8 @@ import {
   type ClientAgentOnboardRequest,
   type ClientAgentRoomsListRequest,
   type ClientAgentRoomsListResponse,
+  type ClientAgentDeletionDiagnosticsRequest,
+  type ClientAgentDeletionDiagnosticsResponse,
   type ClientAgentManageRequest,
   type ClientAgentManageResponse,
   type ClientAgentGetRequest,
@@ -357,6 +361,10 @@ export type RahClientOperationMap = ComposerOperationMap &
     "agent.list": {
       input: ClientAgentsListRequest;
       output: ClientAgentsListResponse;
+    };
+    "agent.deletion.diagnostics": {
+      input: ClientAgentDeletionDiagnosticsRequest;
+      output: ClientAgentDeletionDiagnosticsResponse;
     };
     "agent.manage": {
       input: ClientAgentManageRequest;
@@ -734,6 +742,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     method: "POST",
     output: ClientAgentsListResponseSchema,
     path: "/v3/client/agents/list",
+  },
+  "agent.deletion.diagnostics": {
+    authenticated: true,
+    input: ClientAgentDeletionDiagnosticsRequestSchema,
+    method: "POST",
+    output: ClientAgentDeletionDiagnosticsResponseSchema,
+    path: "/v3/client/agents/deletion/diagnostics",
   },
   "agent.manage": {
     authenticated: true,

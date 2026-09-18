@@ -116,3 +116,13 @@
   gap: 12px;
   justify-content: flex-end;
 }
+.rah-composer-execution {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rah-composer-execution [role="alert"] {
+  max-width: 180px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}

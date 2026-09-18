@@ -46,6 +46,17 @@ const fakeCodexProtocolPath = join(
   temporaryDirectory,
   "fake-codex-protocol.jsonl",
 );
+const expectedCodexArgs = [
+  "app-server",
+  "-c",
+  "features.memories=false",
+  "-c",
+  "memories.generate_memories=false",
+  "-c",
+  "memories.use_memories=false",
+  "--listen",
+  "stdio://",
+];
 const webPort = await availablePort();
 let browser;
 let chrome;
@@ -70,8 +81,8 @@ const args = process.argv.slice(2);
 if (args.join(" ") === "debug models --bundled") {
   process.stdout.write(JSON.stringify({models:[{slug:"gpt-test",visibility:"list",supported_in_api:true,supported_reasoning_levels:[{effort:"high"}],service_tiers:[]}]}));
 } else {
-  if (args.join(" ") !== "app-server --listen stdio://") process.exit(64);
-  const record = (value) => appendFileSync(process.env.RAH_FAKE_CODEX_PROTOCOL_PATH, JSON.stringify(value) + "\\n");
+  if (JSON.stringify(args) !== ${JSON.stringify(JSON.stringify(expectedCodexArgs))}) process.exit(64);
+  const record = (value) => appendFileSync(${JSON.stringify(fakeCodexProtocolPath)}, JSON.stringify(value) + "\\n");
   const send = (value) => process.stdout.write(JSON.stringify(value) + "\\n");
   record({args});
   const lines = createInterface({input:process.stdin});
@@ -87,7 +98,12 @@ if (args.join(" ") === "debug models --bundled") {
     } else if (frame.method === "turn/start") {
       send({jsonrpc:"2.0",id:frame.id,result:{turn:{id:"local-workbench-turn",status:"inProgress"}}});
       const worker = spawn(process.execPath, [${JSON.stringify(fakeCli)}], {
-        env: process.env,
+        env: {
+          ...process.env,
+          RAH_FAKE_MODE: "worker-task",
+          RAH_FAKE_REMINDER_TITLE: "Verify durable Reminder projection",
+          RAH_FAKE_ROOM_REPLY: "formal-workbench-agent-reply",
+        },
         stdio: ["ignore", "ignore", "pipe"],
       });
       worker.stderr.on("data", (chunk) => record({workerStderr:String(chunk)}));
@@ -196,11 +212,7 @@ if (args.join(" ") === "debug models --bundled") {
     .trim()
     .split("\n")
     .map((line) => JSON.parse(line));
-  assert.deepEqual(codexProtocol[0]?.args, [
-    "app-server",
-    "--listen",
-    "stdio://",
-  ]);
+  assert.deepEqual(codexProtocol[0]?.args, expectedCodexArgs);
   const threadStart = codexProtocol.find(
     ({ method }) => method === "thread/start",
   );
@@ -343,11 +355,14 @@ if (args.join(" ") === "debug models --bundled") {
     width: 1_440,
   });
   await browser.command("Page.navigate", {
-    url: second.descriptor.webOrigin,
+    url:
+      second.descriptor.webOrigin +
+      "?room=" +
+      encodeURIComponent(second.descriptor.defaultRoomId),
   });
   await waitForBrowserValue(
     browser,
-    `document.querySelector(".channel-title h1")?.textContent?.trim() === "Agent Council"`,
+    `document.querySelector(".channel-title h1")?.textContent?.trim() === "all"`,
     { description: "production local workbench Room" },
   );
   await waitForBrowserValue(
@@ -357,7 +372,16 @@ if (args.join(" ") === "debug models --bundled") {
   );
   await evaluate(
     browser,
-    `document.querySelector('button[title="Agent 与成员"]')?.click()`,
+    `document.querySelector('.rail button[aria-label="Agent 与成员"]')?.click()`,
+  );
+  await waitForBrowserValue(
+    browser,
+    `document.querySelector(".rah-agent-member-row") !== null`,
+    { description: "persistent Agent member row" },
+  );
+  await evaluate(
+    browser,
+    `document.querySelector(".rah-agent-member-row").click()`,
   );
   try {
     await waitForBrowserValue(
@@ -380,30 +404,39 @@ if (args.join(" ") === "debug models --bundled") {
   }
   await evaluate(
     browser,
-    `document.querySelector('.rah-agent-detail-head button[title="Agent 菜单"]')?.click()`,
+    `[...document.querySelectorAll(".rah-agent-detail-tabs button")].find((button) => button.textContent?.trim() === "资料")?.click()`,
   );
   await waitForBrowserValue(
     browser,
-    `document.querySelector(".rah-agent-manage-dialog") !== null`,
+    `document.querySelector('[aria-label="编辑运行时配置"]') !== null`,
+    { description: "Agent runtime profile" },
+  );
+  await evaluate(
+    browser,
+    `document.querySelector('[aria-label="编辑运行时配置"]').click()`,
+  );
+  await waitForBrowserValue(
+    browser,
+    `document.querySelector(".rah-runtime-edit-dialog") !== null`,
     { description: "Agent model settings" },
   );
   assert.equal(
     await evaluate(
       browser,
-      `[...document.querySelectorAll(".rah-agent-manage-dialog label")].find((label) => label.firstChild?.textContent?.trim() === "模型")?.querySelector("select")?.value`,
+      `document.querySelector('.rah-runtime-edit-dialog [aria-label^="模型："]')?.textContent?.trim()`,
     ),
-    modelBinding.modelBindingId,
+    "gpt-test",
   );
   assert.equal(
     await evaluate(
       browser,
-      `[...document.querySelectorAll(".rah-agent-manage-dialog label")].some((label) => /权限|访问模式|沙箱/.test(label.firstChild?.textContent ?? ""))`,
+      `[...document.querySelectorAll(".rah-runtime-edit-dialog .rah-runtime-edit-field > b")].some((label) => /权限|访问模式|沙箱/.test(label.textContent ?? ""))`,
     ),
     false,
   );
   await evaluate(
     browser,
-    `document.querySelector('.rah-agent-manage-dialog button[aria-label="关闭"]')?.click()`,
+    `document.querySelector('.rah-runtime-edit-dialog button[aria-label="关闭"]')?.click()`,
   );
   await evaluate(
     browser,
@@ -571,10 +604,6 @@ async function startWorkbench() {
       env: {
         ...process.env,
         PATH: `${binDirectory}${delimiter}${dirname(process.execPath)}`,
-        RAH_FAKE_MODE: "worker-task",
-        RAH_FAKE_CODEX_PROTOCOL_PATH: fakeCodexProtocolPath,
-        RAH_FAKE_REMINDER_TITLE: "Verify durable Reminder projection",
-        RAH_FAKE_ROOM_REPLY: "formal-workbench-agent-reply",
         RAH_DATA_HOME: workbenchHome,
         RAH_WEB_PORT: String(webPort),
         RAH_WORKSPACE_CWD: workspaceCwd,

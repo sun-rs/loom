@@ -76,6 +76,13 @@ export type RuntimeCreationOptions = Pick<
   "activationEnvironment" | "beforeStart" | "cwd" | "supervisorDirectory"
 > & {
   providerSessionStore?: ProviderSessionStore;
+  /**
+   * Codex only in this batch. Invoked when the driver reports that the runtime
+   * accepted the wake injection; the Host turns that into the Host-credential
+   * `markPresentedDeliverySent`. The other three drivers do not pass it, so
+   * their Activations keep the explicit `message-check` path unchanged.
+   */
+  recordDeliveryAcceptance?: GenericProcessAdapterOptions["recordDeliveryAcceptance"];
 };
 
 type RuntimeAdapterImplementation = {
@@ -421,8 +428,9 @@ function createGenericProcessRuntime(
       : undefined,
     toolAccessMode ?? "full_access",
   );
+  const { recordDeliveryAcceptance: _generic, ...genericOptions } = options;
   return new GenericProcessAdapter({
-    ...options,
+    ...genericOptions,
     args: [
       ...modelArguments,
       ...toolAccessLaunch.args,
@@ -516,6 +524,10 @@ function createClaudeStreamJsonRuntime(
   const {
     activationEnvironment: baseActivationEnvironment,
     providerSessionStore,
+    // Codex-only in this batch: dropped here so this driver's path is
+    // behaviourally identical to before, with no acceptance signal and no
+    // `sent_at`, and its Activations keep the explicit `message-check`.
+    recordDeliveryAcceptance: _unusedDeliveryAcceptance,
     ...processOptions
   } = options;
   const args = [
@@ -548,7 +560,7 @@ function createClaudeStreamJsonRuntime(
     ...processOptions,
     nativeBusyInput: true,
     guideRuntimeId: "claude",
-    busyInputMode: "gated",
+    busyInputMode: "direct",
     activationEnvironment: async (input) => {
       const lease = (await baseActivationEnvironment?.(input)) ?? { env: {} };
       standingPromptDigests.remember(input, lease.standingPromptDigest);
@@ -559,7 +571,14 @@ function createClaudeStreamJsonRuntime(
         lease.standingPromptDigest,
       );
       if (providerSessionStore === undefined || key === undefined) return lease;
-      const previous = await providerSessionStore.load(key);
+      const previous =
+        (await providerSessionStore.load(key)) ??
+        (lease.compatibleStandingPromptDigest === undefined
+          ? null
+          : await providerSessionStore.load({
+              ...key,
+              standingPromptDigest: lease.compatibleStandingPromptDigest,
+            }));
       if (previous === null) return lease;
       return {
         ...lease,
@@ -670,6 +689,7 @@ function createCodexAppServerRuntime(
   const {
     activationEnvironment: baseActivationEnvironment,
     providerSessionStore,
+    recordDeliveryAcceptance,
     ...processOptions
   } = options;
   const args = [
@@ -751,6 +771,18 @@ function createCodexAppServerRuntime(
       runtimeProfileDigest: revision.contentDigest,
       runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
     },
+    ...(recordDeliveryAcceptance === undefined
+      ? {}
+      : {
+          recordDeliveryAcceptance: async (input, acceptance) => {
+            if (acceptance.provider !== "codex-app-server/v1") {
+              throw new Error(
+                `unexpected runtime delivery acceptance: ${acceptance.provider}`,
+              );
+            }
+            await recordDeliveryAcceptance(input, acceptance);
+          },
+        }),
     ...(providerSessionStore === undefined
       ? {}
       : {
@@ -890,6 +922,10 @@ function createKimiAcpRuntime(
   const {
     activationEnvironment: baseActivationEnvironment,
     providerSessionStore,
+    // Codex-only in this batch: dropped here so this driver's path is
+    // behaviourally identical to before, with no acceptance signal and no
+    // `sent_at`, and its Activations keep the explicit `message-check`.
+    recordDeliveryAcceptance: _unusedDeliveryAcceptance,
     ...processOptions
   } = options;
   const args = [
@@ -1041,6 +1077,10 @@ function createOpenCodeServerRuntime(
   const {
     activationEnvironment: baseActivationEnvironment,
     providerSessionStore,
+    // Codex-only in this batch: dropped here so this driver's path is
+    // behaviourally identical to before, with no acceptance signal and no
+    // `sent_at`, and its Activations keep the explicit `message-check`.
+    recordDeliveryAcceptance: _unusedDeliveryAcceptance,
     ...processOptions
   } = options;
   const args = [

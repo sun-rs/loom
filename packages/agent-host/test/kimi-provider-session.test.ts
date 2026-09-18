@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   chmodSync,
+  existsSync,
   mkdtempSync,
   readFileSync,
   rmSync,
@@ -159,6 +160,52 @@ test("Kimi resumes Host-private ACP sessions and only retries proven side-effect
           (method): method is string =>
             typeof method === "string" && !method.startsWith("process/"),
         );
+
+    const promptsFor = (suffix: string): string[] =>
+      records
+        .filter(
+          (record) =>
+            record.activationId === `activation-kimi-${suffix}` &&
+            record.frame?.method === "session/prompt",
+        )
+        .map((record) => record.frame.params.prompt[0].text);
+    assert.match(
+      promptsFor("resumed-seed")[0]!,
+      /canonical room worker prompt/,
+    );
+    assert.doesNotMatch(
+      promptsFor("resumed-run")[0]!,
+      /canonical room worker prompt/,
+      "a confirmed same-digest resume must not append the entire standing prompt again",
+    );
+    assert.match(promptsFor("resumed-run")[0]!, /message-check --startup/);
+    assert.match(promptsFor("resumed-run")[0]!, /standing instructions file/i);
+    assert.match(
+      promptsFor("missing-run")[0]!,
+      /canonical room worker prompt/,
+      "a missing session still receives complete instructions on fresh fallback",
+    );
+    assert.match(
+      promptsFor("prompt-missing-run")[1]!,
+      /canonical room worker prompt/,
+    );
+    for (const record of records.filter(
+      (item) => item.frame?.method === "process/standing-instructions",
+    )) {
+      assert.equal(record.frame.text, "canonical room worker prompt");
+      assert.equal(record.frame.fileMode, 0o600);
+      assert.equal(record.frame.directoryMode, 0o700);
+      assert.equal(
+        existsSync(record.frame.path),
+        false,
+        "Run-scoped recovery file is cleaned after exit/cancel",
+      );
+    }
+    assert.ok(
+      records.some(
+        (item) => item.frame?.method === "process/standing-instructions",
+      ),
+    );
 
     assert.deepEqual(methodsFor("resumed-run"), [
       "initialize",
@@ -339,7 +386,8 @@ function contextManifest(input: {
 }
 
 const fakeKimiServer = `#!/usr/bin/env node
-import { appendFileSync } from "node:fs";
+import { appendFileSync, readFileSync, statSync } from "node:fs";
+import { dirname } from "node:path";
 import { createInterface } from "node:readline";
 const args = process.argv.slice(2);
 if (args.join(" ") === "provider list --json") {
@@ -375,6 +423,11 @@ rl.on("line", (line) => {
     activeSessionId = activationId.endsWith("-run") ? "kimi-session-replacement" : "kimi-session-persisted";
     send({jsonrpc:"2.0",id:frame.id,result:{sessionId:activeSessionId}});
   } else if (frame.method === "session/prompt") {
+    const line = frame.params.prompt[0].text.split("\\n").find((line) => line.startsWith("Current standing instructions file: "));
+    if (line) {
+      const path = JSON.parse(line.slice("Current standing instructions file: ".length).split(". On a resumed session")[0]);
+      record({method:"process/standing-instructions", path, text:readFileSync(path,"utf8"),fileMode:statSync(path).mode & 0o777,directoryMode:statSync(dirname(path)).mode & 0o777});
+    }
     if (activationId === "activation-kimi-cancel-seed") {
       pendingPromptId = frame.id;
     } else if (activationId === "activation-kimi-prompt-missing-run" && activeSessionId === "kimi-session-persisted") {

@@ -16,7 +16,7 @@ import {
   type RuntimeAdapter,
 } from "@rah-os/agent-host";
 import type { WorkerApplicationService } from "@rah-os/application-service";
-import type { AuthenticatedHostContext } from "@rah-os/core";
+import type { AuthenticatedHostContext, RoomKernel } from "@rah-os/core";
 import type {
   ResolvedModel,
   RuntimeProfileProbeReport,
@@ -24,6 +24,7 @@ import type {
   ToolAccessMode,
 } from "@rah-os/protocol";
 
+import { deliveryAcceptanceRegistration } from "./delivery-acceptance-registration.ts";
 import { standingPromptLease } from "./standing-prompt-lease.ts";
 
 export { assertRuntimeProfileRevisionStillActive };
@@ -50,6 +51,13 @@ export function createConfiguredRuntime(input: {
   implementations: RuntimeImplementationRegistry;
 
   probeReport: RuntimeProfileProbeReport;
+  /**
+   * Codex only in this batch. Present when the deployment can register a send
+   * under `input.host`'s own credential once the driver reports that the
+   * runtime accepted the injected wake turn. Absent for every other driver,
+   * whose Activations keep the explicit `message-check` path unchanged.
+   */
+  deliveryAcceptanceKernel?: Pick<RoomKernel, "markPresentedDeliverySent">;
   resolvedModel?: ResolvedModel;
   toolAccessMode?: ToolAccessMode;
   runtimeProfileRegistry: RuntimeProfileRegistry;
@@ -79,11 +87,15 @@ export function createConfiguredRuntime(input: {
         const leases = [secretLease, { env: launchEnv }];
         try {
           if (scope.agent !== undefined) {
+            const deliveryMode = resolveRuntimeDeliveryMode(
+              runtime,
+              input.guideEnabled?.(runtime.guideRuntimeId) === true,
+            );
             const promptLease = standingPromptLease(scope, {
-              deliveryMode: resolveRuntimeDeliveryMode(
-                runtime,
-                input.guideEnabled?.(runtime.guideRuntimeId) === true,
-              ),
+              deliveryMode,
+              ...(runtimeId === "claude" && deliveryMode === "direct"
+                ? { previousDeliveryMode: "gated" }
+                : {}),
               ...(input.toolAccessMode === undefined
                 ? {}
                 : { toolAccessMode: input.toolAccessMode }),
@@ -166,6 +178,22 @@ export function createConfiguredRuntime(input: {
       providerSessionStore: new ProviderSessionStore({
         rootDirectory: join(input.supervisorDirectory, "provider-sessions"),
       }),
+      ...(input.deliveryAcceptanceKernel === undefined
+        ? {}
+        : {
+            recordDeliveryAcceptance: ((register) => (scope) => {
+              register({
+                activationId: scope.activationId,
+                consumerId: scope.consumerId,
+                runAttemptId: scope.runAttemptId,
+              });
+            })(
+              deliveryAcceptanceRegistration(
+                input.deliveryAcceptanceKernel,
+                input.host,
+              ),
+            ),
+          }),
       supervisorDirectory: input.supervisorDirectory,
     },
     input.resolvedModel,

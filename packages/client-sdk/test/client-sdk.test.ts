@@ -25,6 +25,7 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "activity.list",
     "activity.mark",
     "agent.activity.list",
+    "agent.deletion.diagnostics",
     "agent.execution.reset",
     "agent.get",
     "agent.list",
@@ -82,6 +83,7 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "room.create",
     "room.delete",
     "room.direct.open",
+    "room.execution.read",
     "room.leave",
     "room.list",
     "room.member.add",
@@ -159,6 +161,11 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
       input: { path: "" },
       operation: "computer.files.list",
       path: "/v3/client/computers/files/list",
+    },
+    {
+      input: { roomId: "room-main" },
+      operation: "room.execution.read",
+      path: "/v3/client/rooms/sos/read",
     },
     {
       input: { roomId: "room-main", threadId: "thread-main", following: true },

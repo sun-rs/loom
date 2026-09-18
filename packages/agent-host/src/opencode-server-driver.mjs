@@ -1,7 +1,9 @@
 import { providerLaunchArguments } from "./provider-launch-arguments.js";
+import { providerActivationInput } from "./provider-activation-input.js";
 import { spawn } from "node:child_process";
 import { writeSync } from "node:fs";
 import { createServer } from "node:net";
+import { fetchOpenCodePrompt } from "./opencode-prompt-transport.mjs";
 import {
   OpenCodeEventIdentityFilter,
   scopedOpenCodeEvent,
@@ -454,9 +456,7 @@ async function submitPrompt(resumed) {
   const body = {
     parts: [
       {
-        text: resumed
-          ? "Resume this RAH OS Activation now. Read canonical Room state through the Worker interface and complete the current work."
-          : "Start this RAH OS Activation now. Follow the system instructions and complete the canonical Room work.",
+        text: providerActivationInput(),
         type: "text",
       },
     ],
@@ -493,17 +493,21 @@ async function requestJson(path, init = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
       ? undefined
       : setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await openCodeFetch(path, {
-      ...init,
-      headers: {
-        Accept: "application/json",
-        ...(init.body === undefined
-          ? {}
-          : { "Content-Type": "application/json" }),
-        ...(init.headers ?? {}),
+    const response = await openCodeFetch(
+      path,
+      {
+        ...init,
+        headers: {
+          Accept: "application/json",
+          ...(init.body === undefined
+            ? {}
+            : { "Content-Type": "application/json" }),
+          ...(init.headers ?? {}),
+        },
+        ...(controller === undefined ? {} : { signal: controller.signal }),
       },
-      ...(controller === undefined ? {} : { signal: controller.signal }),
-    });
+      timeoutMs === 0,
+    );
     if (!response.ok) {
       throw new HttpError(
         path,
@@ -518,7 +522,7 @@ async function requestJson(path, init = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
   }
 }
 
-async function openCodeFetch(path, init = {}) {
+async function openCodeFetch(path, init = {}, longPrompt = false) {
   if (server === undefined) throw new Error("OpenCode server is not running");
   const url = new URL(path, server.baseUrl);
   if (!url.searchParams.has("directory")) {
@@ -528,7 +532,10 @@ async function openCodeFetch(path, init = {}) {
   if (server.authHeader !== undefined && !headers.has("Authorization")) {
     headers.set("Authorization", server.authHeader);
   }
-  return await fetch(url, { ...init, headers });
+  return await (longPrompt ? fetchOpenCodePrompt : fetch)(url, {
+    ...init,
+    headers,
+  });
 }
 
 async function allocatePort() {

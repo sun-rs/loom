@@ -1,13 +1,20 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { readFile, writeFile, rename, rm } from "node:fs/promises";
-import { isIP } from "node:net";
 import { isAbsolute, join } from "node:path";
+import {
+  assertTailnetHost,
+  assertTrustedLanHosts,
+} from "./workbench-launch-mode.mjs";
 
 // Startup evidence, not a second service configuration. The current launch-mode
 // owner still interprets network options; restart preserves the incumbent mode.
+// The receipt is authoritative for the authorized network entries: a restart
+// replays the recorded Tailnet and trusted LAN addresses instead of rescanning
+// interfaces, so a restart can neither drop nor widen the incumbent entry set.
 const networkKeys = [
   "RAH_TAILNET_HOST",
+  "RAH_TRUSTED_LAN_HOSTS",
   "RAH_LAN_ORIGIN",
   "RAH_LAN_BIND_HOST",
   "RAH_LAN_CERT_PATH",
@@ -43,12 +50,39 @@ function networkEnvironment(mode) {
     Number.isInteger(mode.port) && mode.port > 0 && mode.port <= 65535,
     "Invalid launch port",
   );
-  if (mode.kind === "tailnet")
-    assert.ok(isIP(mode.bindHost), "Invalid Tailnet bind address");
+  if (mode.kind !== "tailnet") return { RAH_WEB_PORT: String(mode.port) };
+  assertTailnetHost(mode.bindHost, "Launch receipt Tailnet entry");
+  const trusted = receiptTrustedLanHosts(mode);
   return {
     RAH_WEB_PORT: String(mode.port),
-    ...(mode.kind === "tailnet" ? { RAH_TAILNET_HOST: mode.bindHost } : {}),
+    RAH_TAILNET_HOST: mode.bindHost,
+    ...(trusted.length === 0
+      ? {}
+      : { RAH_TRUSTED_LAN_HOSTS: trusted.join(",") }),
   };
+}
+// Ordinary LAN entries stay an explicit, separately recorded decision. Anything
+// the launcher could not reproduce from configuration fails closed here rather
+// than silently restarting on a narrower or wider set of addresses.
+function receiptTrustedLanHosts(mode) {
+  const recorded = mode.additionalBindHosts;
+  if (recorded === undefined) return [];
+  assert.ok(
+    Array.isArray(recorded),
+    "Launch receipt trusted LAN entries must be a list of addresses",
+  );
+  const trusted = recorded.filter((host) => host !== "127.0.0.1");
+  assert.ok(
+    recorded.length - trusted.length <= 1,
+    "Launch receipt repeats loopback among its trusted LAN entries",
+  );
+  return trusted.length === 0
+    ? []
+    : assertTrustedLanHosts(
+        trusted,
+        mode.bindHost,
+        "Launch receipt trusted LAN entries",
+      );
 }
 export function restartNetworkEnvironment(environment, receipt, incumbentPid) {
   assert.ok(

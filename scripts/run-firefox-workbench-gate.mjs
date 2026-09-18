@@ -1145,7 +1145,10 @@ if (args.join(" ") === "--version") {
   await page.getByTitle("Agent 与成员").click();
   await page.locator(".rah-agent-member-row").first().click();
   await page.getByRole("tab", { name: "聊天", exact: true }).click();
-  await page.locator(".rah-agent-chat-compose").click({ timeout: 20_000 });
+  await page
+    .locator(".rah-agent-head-actions")
+    .getByRole("button", { name: /^给 .* 发消息$/ })
+    .click({ timeout: 20_000 });
   const profileAvatar = page.locator(
     'button[aria-label^="打开 "][aria-label$=" Agent 资料"]',
   );
@@ -1314,64 +1317,9 @@ if (args.join(" ") === "--version") {
     ),
     true,
   );
-  const reportIssueButton = page.getByRole("button", {
-    exact: true,
-    name: "报告问题",
-  });
-  await reportIssueButton.click();
-  const issueDialog = page.locator(".rah-agent-issue-report-dialog");
-  await issueDialog.waitFor();
-  await page.keyboard.press("Escape");
-  await issueDialog.waitFor({ state: "detached" });
   assert.equal(
-    await reportIssueButton.evaluate((node) => node === document.activeElement),
-    true,
-  );
-  await page.setViewportSize({ height: 844, width: 390 });
-  await reportIssueButton.click();
-  await issueDialog.waitFor();
-  assert.deepEqual(
-    await page.evaluate(() => ({
-      clientWidth: document.documentElement.clientWidth,
-      scrollWidth: document.documentElement.scrollWidth,
-    })),
-    { clientWidth: 390, scrollWidth: 390 },
-  );
-  await page.keyboard.press("Escape");
-  await issueDialog.waitFor({ state: "detached" });
-  await page.setViewportSize({ height: 1_000, width: 1_440 });
-  await reportIssueButton.click();
-  await issueDialog.waitFor();
-  const exportButton = issueDialog.getByRole("button", {
-    exact: true,
-    name: "导出到本机",
-  });
-  assert.equal(await exportButton.isDisabled(), true);
-  await issueDialog.locator("textarea").fill("firefox local diagnostic export");
-  await issueDialog
-    .locator('.rah-agent-issue-report-warning input[type="checkbox"]')
-    .check();
-  const downloadPromise = page.waitForEvent("download");
-  await exportButton.click();
-  const issueDownload = await downloadPromise;
-  const issueDownloadPath = await issueDownload.path();
-  assert.notEqual(issueDownloadPath, null);
-  const issueReport = JSON.parse(readFileSync(issueDownloadPath, "utf8"));
-  assert.equal(issueReport.schemaVersion, "rah-agent-issue-report-v1");
-  assert.equal(issueReport.disclosure.transport, "local_download");
-  assert.equal(
-    issueReport.issue.description,
-    "firefox local diagnostic export",
-  );
-  assert.doesNotMatch(
-    JSON.stringify(issueReport),
-    /toolInput|recentMessages|runtimeTranscript|SECRET=/u,
-  );
-  await issueDialog.getByRole("button", { exact: true, name: "完成" }).click();
-  await issueDialog.waitFor({ state: "detached" });
-  assert.equal(
-    await reportIssueButton.evaluate((node) => node === document.activeElement),
-    true,
+    await page.getByRole("button", { name: "报告问题", exact: true }).count(),
+    0,
   );
   await page.getByRole("tab", { name: "聊天", exact: true }).click();
   await page.locator(".rah-agent-chat-pane").waitFor();

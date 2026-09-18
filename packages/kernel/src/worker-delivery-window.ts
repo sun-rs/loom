@@ -1,6 +1,60 @@
 import type { DatabaseSync } from "node:sqlite";
 import type { ActivationCredentialScope } from "@rah-os/protocol";
 import { integer } from "./sqlite-row.ts";
+import { recordWorkerTargetReadPosition } from "./worker-target-read-position.ts";
+import { ForbiddenError } from "./errors.ts";
+
+export type WorkerDeliveryAcknowledgement = {
+  throughSeq: number;
+  /** Server-retained message-check page, never accepted from HTTP input. */
+  messageSeqs?: readonly number[] | undefined;
+};
+
+/** Called in the same authenticated transaction as the delivery ACK. */
+export function recordCheckedWorkerMessages(
+  database: DatabaseSync,
+  scope: ActivationCredentialScope,
+  input: WorkerDeliveryAcknowledgement,
+  updatedAt: string,
+): void {
+  if (input.throughSeq > scope.toSeq)
+    throw new ForbiddenError("acknowledgement exceeds the Activation range");
+  if (!input.messageSeqs?.length) return;
+  const seqs = [...new Set(input.messageSeqs)];
+  if (
+    seqs.length > 500 ||
+    seqs.some(
+      (seq) => !Number.isSafeInteger(seq) || seq <= 0 || seq > input.throughSeq,
+    )
+  )
+    throw new ForbiddenError("invalid acknowledged message-check page");
+  const messages = database
+    .prepare(
+      `
+    SELECT room_seq, json_extract(payload_json, '$.threadId') AS thread_id
+    FROM room_events WHERE room_id=? AND type='message.posted'
+      AND room_seq IN (SELECT value FROM json_each(?)) ORDER BY room_seq
+  `,
+    )
+    .all(scope.roomId, JSON.stringify(seqs));
+  if (messages.length !== seqs.length)
+    throw new ForbiddenError("acknowledged message is outside the Room");
+  // Each target advances only through a message actually included in the page.
+  const targets = new Map<string, number>();
+  for (const message of messages) {
+    const target = message.thread_id == null ? "" : String(message.thread_id);
+    targets.delete(target);
+    targets.set(target, integer(message, "room_seq"));
+  }
+  for (const [threadId, throughRoomSeq] of targets)
+    recordWorkerTargetReadPosition(database, {
+      participantId: scope.participantId,
+      roomId: scope.roomId,
+      ...(threadId === "" ? {} : { threadId }),
+      throughRoomSeq,
+      updatedAt,
+    });
+}
 
 /** Immutable input boundary for retry, not another acknowledgement cursor.
  * Called only inside syncWorker's authenticated transaction. Raft's check hides

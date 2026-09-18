@@ -3,7 +3,7 @@
   "component": "sq-btn",
   "note": "outerHTML of each fixture probe after React rendered it in real Chrome, at the gate's primary viewport. docs/design/ui-catalog.html renders exactly these strings; no component markup in the catalog is hand-written.",
   "viewport": "1440x900",
-  "cssInputsSha256": "4e86f5f718acb567cc469dafca63a1614d238ba7fcc3696842e209c3137e3d30",
+  "cssInputsSha256": "c2ec7777153ba26f87527b6a04e13069dcb87b769171f243271ac2e67ceb7ad6",
   "fixtureSha256": "a727338cd2b1a215b119ee2cbcce91c3632dd2f6125cccacd1c4c830f96bea97",
   "gateScriptSha256": "bc7e998c999fee56cd3ecde9592703aaeb96beea610b5424f0e331de22e8e59b",
   "structureSha256": "08f539335909b3ae8c7df078e1e217ef9527209c997cd3aaa43cf8070423b7be",

@@ -1,6 +1,15 @@
 import { providerLaunchArguments } from "./provider-launch-arguments.js";
+import { providerActivationInput } from "./provider-activation-input.js";
 import { spawn } from "node:child_process";
-import { writeSync } from "node:fs";
+import {
+  chmodSync,
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+  writeSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { readFile } from "node:fs/promises";
 import { createInterface } from "node:readline";
 
@@ -38,6 +47,10 @@ class AcpRpcError extends Error {
 }
 
 const options = parseArguments(driverArguments(process.argv.slice(2)));
+const promptDirectory = mkdtempSync(join(tmpdir(), "rah-os-kimi-prompt-"));
+chmodSync(promptDirectory, 0o700);
+const promptPath = join(promptDirectory, "standing-instructions.md");
+writeFileSync(promptPath, options.prompt, { mode: 0o600 });
 const terminals = new Map();
 const trajectoryWriter = new RuntimeTrajectoryWriter();
 let terminalSequence = 0;
@@ -231,6 +244,8 @@ try {
     await Promise.race([processExited, delay(1_000)]);
     process.exitCode = 1;
   }
+} finally {
+  rmSync(promptDirectory, { recursive: true, force: true });
 }
 
 async function runTurn(resumeSessionId, mcpServers) {
@@ -271,7 +286,16 @@ async function runTurn(resumeSessionId, mcpServers) {
     const promptResult = await request(
       "session/prompt",
       {
-        prompt: [{ text: options.prompt, type: "text" }],
+        prompt: [
+          {
+            text: [
+              ...(resumeSessionId === undefined ? [options.prompt] : []),
+              `Current standing instructions file: ${JSON.stringify(promptPath)}. On a resumed session follow the previously delivered instructions; if compaction or context loss removed them, read this complete file before acting. It is scoped to this Run and contains no Worker credential.`,
+              providerActivationInput(),
+            ].join("\n\n"),
+            type: "text",
+          },
+        ],
         sessionId,
       },
       0,

@@ -799,6 +799,9 @@ export function ChannelHeader({
               : (room?.description ?? "RAH OS canonical Room")}
           </p>
         </div>
+        {!direct && room?.archivedAt !== undefined ? (
+          <span className="rah-channel-archived-badge">已归档</span>
+        ) : null}
       </div>
       {!direct || onCloseSearchPreview ? (
         <div className="head-actions">

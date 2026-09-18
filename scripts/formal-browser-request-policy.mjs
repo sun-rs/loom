@@ -25,6 +25,7 @@ export const formalBrowserAllowedApiRequests = [
   "POST /v3/client/rooms/list",
   "POST /v3/client/rooms/members/list",
   "POST /v3/client/rooms/sync",
+  "POST /v3/client/rooms/sos/read",
   "POST /v3/client/sidebar/get",
   "POST /v3/client/search",
   "POST /v3/client/tasks/global",

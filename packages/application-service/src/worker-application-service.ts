@@ -6,6 +6,8 @@ import {
 import {
   WorkerMessageCheckRequestSchema,
   WorkerMessageCheckResponseSchema,
+  WorkerMessagePresentRequestSchema,
+  WorkerMessagePresentResponseSchema,
 } from "@rah-os/protocol";
 import type { WorkerProfileMetadataPort } from "@rah-os/kernel";
 import {
@@ -176,7 +178,7 @@ export type TaskDeliveryEvidenceCollector = {
 };
 
 type WorkerGrant = {
-  messageCheck?: { cursor?: number; pending: Set<number> };
+  messageCheck?: { cursor?: number; pending: Map<number, number[]> };
   claimedTaskIds: Set<string>;
   deliveredCursors: Set<number>;
   deliveryEvidenceBaseline?: TaskDeliveryEvidenceBaseline;
@@ -265,6 +267,7 @@ export const WORKER_HTTP_ROUTE_PATHS = [
   "/v1/worker/reminders/update",
   "/v1/worker/sync",
   "/v1/worker/message-check",
+  "/v1/worker/message-present",
   "/v1/worker/threads/unfollow",
   "/v1/worker/channels/mute",
   "/v1/worker/channels/unmute",
@@ -757,7 +760,7 @@ export class WorkerApplicationService {
       );
       const check =
         replay || grant.messageCheck === undefined
-          ? (grant.messageCheck = { pending: new Set<number>() })
+          ? (grant.messageCheck = { pending: new Map<number, number[]>() })
           : grant.messageCheck;
       const delivery = this.#kernel.syncWorker(grant.execution, {
         ...(check.cursor === undefined
@@ -766,13 +769,61 @@ export class WorkerApplicationService {
       });
       grant.deliveredCursors.add(delivery.cursorAfter);
       grant.knownRoomSeqs.add(delivery.cursorAfter);
-      check.pending.add(delivery.cursorAfter);
+      check.pending.set(
+        delivery.cursorAfter,
+        delivery.events
+          .filter((event) => event.type === "message.posted")
+          .map((event) => event.roomSeq),
+      );
       writeJson(
         response,
         200,
         WorkerMessageCheckResponseSchema.parse({
           delivery,
           throughSeq: grant.scope.toSeq,
+        }),
+      );
+      return;
+    }
+
+    if (route === "/v1/worker/message-present") {
+      parseWorkerRequest(WorkerMessagePresentRequestSchema, body);
+      const presented = this.#kernel.presentWorkerMessages(grant.execution);
+      // PRESENT-ONLY: deliberately no `grant.deliveredCursors` write.
+      // A delivered cursor is what `/v1/worker/acknowledge` and the `sync`
+      // continuation accept, so registering one here would let the Host's own
+      // *fetch* acknowledge the range — the exact confusion this batch removes.
+      //
+      // `knownRoomSeqs` is the separate, weaker fence on a causal marker the
+      // model submits, and it registers the presented PREFIX, not `toSeq`.
+      // "Nothing was acknowledged past the notice" and "nothing may be posted
+      // past the notice" are two different guarantees: handing out `toSeq`
+      // would let the model clear the freshness gate with a number covering
+      // content it never saw. An empty prefix registers nothing at all, so
+      // such a RunAttempt can only reach the Room through `message-check`.
+      if (presented.presentedThroughSeq > 0)
+        grant.knownRoomSeqs.add(presented.presentedThroughSeq);
+      writeJson(
+        response,
+        200,
+        WorkerMessagePresentResponseSchema.parse({
+          fromSeq: presented.fromSeq,
+          toSeq: presented.toSeq,
+          contentDigest: presented.contentDigest,
+          events: presented.events,
+          presentedSeqs: presented.presentedSeqs,
+          presentedThroughSeq: presented.presentedThroughSeq,
+          noticeCount: presented.noticeCount,
+          ...(presented.noticeFromSeq === undefined
+            ? {}
+            : { noticeFromSeq: presented.noticeFromSeq }),
+          ...(presented.noticeToSeq === undefined
+            ? {}
+            : { noticeToSeq: presented.noticeToSeq }),
+          renderedAt: presented.renderedAt,
+          ...(presented.sentAt === undefined
+            ? {}
+            : { sentAt: presented.sentAt }),
         }),
       );
       return;
@@ -1144,6 +1195,7 @@ export class WorkerApplicationService {
     }
     this.#kernel.acknowledgeWorkerCursor(grant.execution, {
       throughSeq,
+      messageSeqs: grant.messageCheck?.pending.get(throughSeq),
     });
     if (grant.messageCheck?.pending.has(throughSeq)) {
       grant.messageCheck.cursor = throughSeq;

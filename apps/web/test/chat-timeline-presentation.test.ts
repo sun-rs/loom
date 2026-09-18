@@ -67,6 +67,21 @@ test("chat timeline interleaves canonical membership notices by Room sequence", 
   }
 });
 
+test("archive lifecycle notices come from durable Room events in sequence", () => {
+  const items = buildChatTimeline({
+    events: [event(5, "room.unarchived", {}), event(4, "room.archived", {})],
+    members,
+    messages: [],
+  });
+  assert.deepEqual(
+    items.map((item) => [item.roomSeq, "text" in item && item.text]),
+    [
+      [4, "📦 Hakase archived this channel"],
+      [5, "📤 Hakase unarchived this channel"],
+    ],
+  );
+});
+
 test("chat date labels use the Raft today/yesterday and Chinese calendar forms", () => {
   const now = new Date("2026-09-02T12:00:00+08:00");
   assert.equal(

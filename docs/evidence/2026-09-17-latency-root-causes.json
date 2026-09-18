@@ -1,0 +1,1820 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-09-17T08:37:43.525Z",
+  "measuredBuildIdentity": {
+    "schemaVersion": 1,
+    "kind": "development",
+    "version": "0.0.0-dev+local",
+    "builtAt": "2026-09-17T05:11:45.846Z",
+    "buildId": "81a4959c371a1730"
+  },
+  "scope": "Read-only attribution of prior authorized latency runs; no provider invocation, no product mutation. Input includes cache-read/cache-write tokens; serialized history sizes are not active token counts.",
+  "kimi": {
+    "beforeD1": {
+      "turns": 39,
+      "standingPromptTurns": 39,
+      "totalPromptTextChars": 1880541
+    },
+    "native": [
+      {
+        "round": "D1",
+        "inputTokens": 21255,
+        "usage": {
+          "inputOther": 21255,
+          "output": 21,
+          "inputCacheRead": 0,
+          "inputCacheCreation": 0
+        },
+        "firstTokenMs": 13487
+      },
+      {
+        "round": "D2",
+        "inputTokens": 21397,
+        "usage": {
+          "inputOther": 405,
+          "output": 24,
+          "inputCacheRead": 20992,
+          "inputCacheCreation": 0
+        },
+        "firstTokenMs": 4191
+      }
+    ],
+    "measuredTurns": [
+      {
+        "ordinal": 39,
+        "at": "2026-09-17T05:21:43.060Z",
+        "promptTextChars": 48219,
+        "containsStandingPrompt": true,
+        "requests": [
+          {
+            "at": "2026-09-17T05:21:43.071Z",
+            "model": "k3",
+            "thinkingEffort": "low",
+            "messageCount": 317,
+            "step": "39.1"
+          },
+          {
+            "at": "2026-09-17T05:23:13.139Z",
+            "model": "k3",
+            "thinkingEffort": "low",
+            "messageCount": 319,
+            "step": "39.2"
+          },
+          {
+            "at": "2026-09-17T05:23:26.913Z",
+            "model": "k3",
+            "thinkingEffort": "low",
+            "messageCount": 321,
+            "step": "39.3"
+          }
+        ],
+        "steps": [
+          {
+            "at": "2026-09-17T05:23:13.134Z",
+            "step": 1,
+            "finishReason": "tool_use",
+            "inputTokens": 681392,
+            "usage": {
+              "inputOther": 662192,
+              "output": 72,
+              "inputCacheRead": 19200,
+              "inputCacheCreation": 0
+            },
+            "firstTokenMs": 87834,
+            "requestBuildMs": 2,
+            "serverFirstTokenMs": 87832,
+            "serverDecodeMs": 1530,
+            "clientConsumeMs": 10
+          },
+          {
+            "at": "2026-09-17T05:23:26.909Z",
+            "step": 2,
+            "finishReason": "tool_use",
+            "inputTokens": 681787,
+            "usage": {
+              "inputOther": 571,
+              "output": 93,
+              "inputCacheRead": 681216,
+              "inputCacheCreation": 0
+            },
+            "firstTokenMs": 11487,
+            "requestBuildMs": 1,
+            "serverFirstTokenMs": 11486,
+            "serverDecodeMs": 2014,
+            "clientConsumeMs": 7
+          },
+          {
+            "at": "2026-09-17T05:23:34.722Z",
+            "step": 3,
+            "finishReason": "end_turn",
+            "inputTokens": 681961,
+            "usage": {
+              "inputOther": 233,
+              "output": 32,
+              "inputCacheRead": 681728,
+              "inputCacheCreation": 0
+            },
+            "firstTokenMs": 7555,
+            "requestBuildMs": 1,
+            "serverFirstTokenMs": 7554,
+            "serverDecodeMs": 247,
+            "clientConsumeMs": 4
+          }
+        ],
+        "tools": [
+          {
+            "at": "2026-09-17T05:23:12.589Z",
+            "kind": "tool.call",
+            "tool": "Bash",
+            "operations": ["message-check"]
+          },
+          {
+            "at": "2026-09-17T05:23:13.134Z",
+            "kind": "tool.result",
+            "held": false
+          },
+          {
+            "at": "2026-09-17T05:23:26.654Z",
+            "kind": "tool.call",
+            "tool": "Bash",
+            "operations": ["message-post"]
+          },
+          {
+            "at": "2026-09-17T05:23:26.909Z",
+            "kind": "tool.result",
+            "held": false
+          }
+        ]
+      },
+      {
+        "ordinal": 40,
+        "at": "2026-09-17T05:23:36.981Z",
+        "promptTextChars": 48219,
+        "containsStandingPrompt": true,
+        "requests": [
+          {
+            "at": "2026-09-17T05:23:36.993Z",
+            "model": "k3",
+            "thinkingEffort": "low",
+            "messageCount": 323,
+            "step": "40.1"
+          },
+          {
+            "at": "2026-09-17T05:23:47.023Z",
+            "model": "k3",
+            "thinkingEffort": "low",
+            "messageCount": 325,
+            "step": "40.2"
+          },
+          {
+            "at": "2026-09-17T05:23:56.793Z",
+            "model": "k3",
+            "thinkingEffort": "low",
+            "messageCount": 327,
+            "step": "40.3"
+          }
+        ],
+        "steps": [
+          {
+            "at": "2026-09-17T05:23:47.018Z",
+            "step": 1,
+            "finishReason": "tool_use",
+            "inputTokens": 692107,
+            "usage": {
+              "inputOther": 10379,
+              "output": 58,
+              "inputCacheRead": 681728,
+              "inputCacheCreation": 0
+            },
+            "firstTokenMs": 8812,
+            "requestBuildMs": 3,
+            "serverFirstTokenMs": 8809,
+            "serverDecodeMs": 626,
+            "clientConsumeMs": 4
+          },
+          {
+            "at": "2026-09-17T05:23:56.788Z",
+            "step": 2,
+            "finishReason": "tool_use",
+            "inputTokens": 693566,
+            "usage": {
+              "inputOther": 1598,
+              "output": 81,
+              "inputCacheRead": 691968,
+              "inputCacheCreation": 0
+            },
+            "firstTokenMs": 7757,
+            "requestBuildMs": 1,
+            "serverFirstTokenMs": 7756,
+            "serverDecodeMs": 1738,
+            "clientConsumeMs": 6
+          },
+          {
+            "at": "2026-09-17T05:24:04.283Z",
+            "step": 3,
+            "finishReason": "end_turn",
+            "inputTokens": 693727,
+            "usage": {
+              "inputOther": 223,
+              "output": 36,
+              "inputCacheRead": 693504,
+              "inputCacheCreation": 0
+            },
+            "firstTokenMs": 6907,
+            "requestBuildMs": 1,
+            "serverFirstTokenMs": 6906,
+            "serverDecodeMs": 575,
+            "clientConsumeMs": 6
+          }
+        ],
+        "tools": [
+          {
+            "at": "2026-09-17T05:23:46.465Z",
+            "kind": "tool.call",
+            "tool": "Bash",
+            "operations": ["message-check"]
+          },
+          {
+            "at": "2026-09-17T05:23:47.017Z",
+            "kind": "tool.result",
+            "held": false
+          },
+          {
+            "at": "2026-09-17T05:23:56.531Z",
+            "kind": "tool.call",
+            "tool": "Bash",
+            "operations": ["message-post"]
+          },
+          {
+            "at": "2026-09-17T05:23:56.788Z",
+            "kind": "tool.result",
+            "held": false
+          }
+        ]
+      },
+      {
+        "ordinal": 41,
+        "at": "2026-09-17T05:29:08.507Z",
+        "promptTextChars": 48219,
+        "containsStandingPrompt": true,
+        "requests": [
+          {
+            "at": "2026-09-17T05:29:08.520Z",
+            "model": "k3",
+            "thinkingEffort": "low",
+            "messageCount": 329,
+            "step": "41.1"
+          },
+          {
+            "at": "2026-09-17T05:29:18.736Z",
+            "model": "k3",
+            "thinkingEffort": "low",
+            "messageCount": 331,
+            "step": "41.2"
+          },
+          {
+            "at": "2026-09-17T05:30:49.424Z",
+            "model": "k3",
+            "thinkingEffort": "low",
+            "messageCount": 333,
+            "step": "41.3"
+          },
+          {
+            "at": "2026-09-17T05:30:58.247Z",
+            "model": "k3",
+            "thinkingEffort": "low",
+            "messageCount": 335,
+            "step": "41.4"
+          }
+        ],
+        "steps": [
+          {
+            "at": "2026-09-17T05:29:18.731Z",
+            "step": 1,
+            "finishReason": "tool_use",
+            "inputTokens": 703872,
+            "usage": {
+              "inputOther": 10368,
+              "output": 70,
+              "inputCacheRead": 693504,
+              "inputCacheCreation": 0
+            },
+            "firstTokenMs": 8117,
+            "requestBuildMs": 2,
+            "serverFirstTokenMs": 8115,
+            "serverDecodeMs": 1596,
+            "clientConsumeMs": 6
+          },
+          {
+            "at": "2026-09-17T05:30:49.420Z",
+            "step": 2,
+            "finishReason": "tool_use",
+            "inputTokens": 704407,
+            "usage": {
+              "inputOther": 663,
+              "output": 84,
+              "inputCacheRead": 703744,
+              "inputCacheCreation": 0
+            },
+            "firstTokenMs": 89046,
+            "requestBuildMs": 1,
+            "serverFirstTokenMs": 89045,
+            "serverDecodeMs": 1276,
+            "clientConsumeMs": 12
+          },
+          {
+            "at": "2026-09-17T05:30:58.243Z",
+            "step": 3,
+            "finishReason": "tool_use",
+            "inputTokens": 704761,
+            "usage": {
+              "inputOther": 505,
+              "output": 71,
+              "inputCacheRead": 704256,
+              "inputCacheCreation": 0
+            },
+            "firstTokenMs": 7477,
+            "requestBuildMs": 1,
+            "serverFirstTokenMs": 7476,
+            "serverDecodeMs": 1082,
+            "clientConsumeMs": 7
+          },
+          {
+            "at": "2026-09-17T05:32:35.552Z",
+            "step": 4,
+            "finishReason": "end_turn",
+            "inputTokens": 704922,
+            "usage": {
+              "inputOther": 410,
+              "output": 49,
+              "inputCacheRead": 704512,
+              "inputCacheCreation": 0
+            },
+            "firstTokenMs": 96504,
+            "requestBuildMs": 0,
+            "serverFirstTokenMs": 96504,
+            "serverDecodeMs": 799,
+            "clientConsumeMs": 1
+          }
+        ],
+        "tools": [
+          {
+            "at": "2026-09-17T05:29:18.269Z",
+            "kind": "tool.call",
+            "tool": "Bash",
+            "operations": ["message-check"]
+          },
+          {
+            "at": "2026-09-17T05:29:18.731Z",
+            "kind": "tool.result",
+            "held": false
+          },
+          {
+            "at": "2026-09-17T05:30:49.189Z",
+            "kind": "tool.call",
+            "tool": "Bash",
+            "operations": ["message-post"]
+          },
+          {
+            "at": "2026-09-17T05:30:49.420Z",
+            "kind": "tool.result",
+            "held": true
+          },
+          {
+            "at": "2026-09-17T05:30:58.001Z",
+            "kind": "tool.call",
+            "tool": "Bash",
+            "operations": ["message-post", "send-draft"]
+          },
+          {
+            "at": "2026-09-17T05:30:58.242Z",
+            "kind": "tool.result",
+            "held": false
+          }
+        ]
+      },
+      {
+        "ordinal": 42,
+        "at": "2026-09-17T05:32:36.969Z",
+        "promptTextChars": 48219,
+        "containsStandingPrompt": true,
+        "requests": [
+          {
+            "at": "2026-09-17T05:32:36.981Z",
+            "model": "k3",
+            "thinkingEffort": "low",
+            "messageCount": 337,
+            "step": "42.1"
+          },
+          {
+            "at": "2026-09-17T05:32:50.383Z",
+            "model": "k3",
+            "thinkingEffort": "low",
+            "messageCount": 339,
+            "step": "42.2"
+          }
+        ],
+        "steps": [
+          {
+            "at": "2026-09-17T05:32:50.377Z",
+            "step": 1,
+            "finishReason": "tool_use",
+            "inputTokens": 715080,
+            "usage": {
+              "inputOther": 10312,
+              "output": 58,
+              "inputCacheRead": 704768,
+              "inputCacheCreation": 0
+            },
+            "firstTokenMs": 12097,
+            "requestBuildMs": 2,
+            "serverFirstTokenMs": 12095,
+            "serverDecodeMs": 883,
+            "clientConsumeMs": 3
+          },
+          {
+            "at": "2026-09-17T05:33:00.179Z",
+            "step": 2,
+            "finishReason": "end_turn",
+            "inputTokens": 716907,
+            "usage": {
+              "inputOther": 1899,
+              "output": 78,
+              "inputCacheRead": 715008,
+              "inputCacheCreation": 0
+            },
+            "firstTokenMs": 6451,
+            "requestBuildMs": 1,
+            "serverFirstTokenMs": 6450,
+            "serverDecodeMs": 3335,
+            "clientConsumeMs": 9
+          }
+        ],
+        "tools": [
+          {
+            "at": "2026-09-17T05:32:49.981Z",
+            "kind": "tool.call",
+            "tool": "Bash",
+            "operations": ["message-check"]
+          },
+          {
+            "at": "2026-09-17T05:32:50.377Z",
+            "kind": "tool.result",
+            "held": false
+          }
+        ]
+      },
+      {
+        "ordinal": 43,
+        "at": "2026-09-17T05:35:52.452Z",
+        "promptTextChars": 48219,
+        "containsStandingPrompt": true,
+        "requests": [
+          {
+            "at": "2026-09-17T05:35:52.465Z",
+            "model": "k3",
+            "thinkingEffort": "low",
+            "messageCount": 341,
+            "step": "43.1"
+          },
+          {
+            "at": "2026-09-17T05:36:07.576Z",
+            "model": "k3",
+            "thinkingEffort": "low",
+            "messageCount": 343,
+            "step": "43.2"
+          },
+          {
+            "at": "2026-09-17T05:36:18.003Z",
+            "model": "k3",
+            "thinkingEffort": "low",
+            "messageCount": 345,
+            "step": "43.3"
+          }
+        ],
+        "steps": [
+          {
+            "at": "2026-09-17T05:36:07.571Z",
+            "step": 1,
+            "finishReason": "tool_use",
+            "inputTokens": 727094,
+            "usage": {
+              "inputOther": 10294,
+              "output": 58,
+              "inputCacheRead": 716800,
+              "inputCacheCreation": 0
+            },
+            "firstTokenMs": 13508,
+            "requestBuildMs": 2,
+            "serverFirstTokenMs": 13506,
+            "serverDecodeMs": 1189,
+            "clientConsumeMs": 2
+          },
+          {
+            "at": "2026-09-17T05:36:17.999Z",
+            "step": 2,
+            "finishReason": "tool_use",
+            "inputTokens": 730468,
+            "usage": {
+              "inputOther": 3428,
+              "output": 84,
+              "inputCacheRead": 727040,
+              "inputCacheCreation": 0
+            },
+            "firstTokenMs": 8231,
+            "requestBuildMs": 1,
+            "serverFirstTokenMs": 8230,
+            "serverDecodeMs": 1944,
+            "clientConsumeMs": 1
+          },
+          {
+            "at": "2026-09-17T05:36:24.857Z",
+            "step": 3,
+            "finishReason": "end_turn",
+            "inputTokens": 730638,
+            "usage": {
+              "inputOther": 270,
+              "output": 35,
+              "inputCacheRead": 730368,
+              "inputCacheCreation": 0
+            },
+            "firstTokenMs": 6363,
+            "requestBuildMs": 1,
+            "serverFirstTokenMs": 6362,
+            "serverDecodeMs": 488,
+            "clientConsumeMs": 2
+          }
+        ],
+        "tools": [
+          {
+            "at": "2026-09-17T05:36:07.183Z",
+            "kind": "tool.call",
+            "tool": "Bash",
+            "operations": ["message-check"]
+          },
+          {
+            "at": "2026-09-17T05:36:07.570Z",
+            "kind": "tool.result",
+            "held": false
+          },
+          {
+            "at": "2026-09-17T05:36:17.755Z",
+            "kind": "tool.call",
+            "tool": "Bash",
+            "operations": ["message-post"]
+          },
+          {
+            "at": "2026-09-17T05:36:17.999Z",
+            "kind": "tool.result",
+            "held": false
+          }
+        ]
+      },
+      {
+        "ordinal": 44,
+        "at": "2026-09-17T05:36:42.993Z",
+        "promptTextChars": 48219,
+        "containsStandingPrompt": true,
+        "requests": [
+          {
+            "at": "2026-09-17T05:36:43.005Z",
+            "model": "k3",
+            "thinkingEffort": "low",
+            "messageCount": 347,
+            "step": "44.1"
+          },
+          {
+            "at": "2026-09-17T05:36:54.099Z",
+            "model": "k3",
+            "thinkingEffort": "low",
+            "messageCount": 349,
+            "step": "44.2"
+          }
+        ],
+        "steps": [
+          {
+            "at": "2026-09-17T05:36:54.093Z",
+            "step": 1,
+            "finishReason": "tool_use",
+            "inputTokens": 740782,
+            "usage": {
+              "inputOther": 10158,
+              "output": 58,
+              "inputCacheRead": 730624,
+              "inputCacheCreation": 0
+            },
+            "firstTokenMs": 9934,
+            "requestBuildMs": 2,
+            "serverFirstTokenMs": 9932,
+            "serverDecodeMs": 726,
+            "clientConsumeMs": 3
+          },
+          {
+            "at": "2026-09-17T05:37:01.821Z",
+            "step": 2,
+            "finishReason": "end_turn",
+            "inputTokens": 742998,
+            "usage": {
+              "inputOther": 2390,
+              "output": 59,
+              "inputCacheRead": 740608,
+              "inputCacheCreation": 0
+            },
+            "firstTokenMs": 6073,
+            "requestBuildMs": 1,
+            "serverFirstTokenMs": 6072,
+            "serverDecodeMs": 1530,
+            "clientConsumeMs": 4
+          }
+        ],
+        "tools": [
+          {
+            "at": "2026-09-17T05:36:53.685Z",
+            "kind": "tool.call",
+            "tool": "Bash",
+            "operations": ["message-check"]
+          },
+          {
+            "at": "2026-09-17T05:36:54.093Z",
+            "kind": "tool.result",
+            "held": false
+          }
+        ]
+      }
+    ]
+  },
+  "claude": {
+    "native": [
+      {
+        "round": "D1",
+        "model": "claude-opus-5[1m]",
+        "inputTokens": 15924
+      },
+      {
+        "round": "D2",
+        "model": "claude-opus-5[1m]",
+        "inputTokens": 15932
+      }
+    ],
+    "requests": [
+      {
+        "at": "2026-09-17T05:20:48.117Z",
+        "model": "claude-opus-5",
+        "inputTokens": 456270,
+        "usage": {
+          "input_tokens": 2,
+          "cache_creation_input_tokens": 456268,
+          "cache_read_input_tokens": 0,
+          "output_tokens": 131
+        },
+        "operations": ["RAH_FROM_SEQ"]
+      },
+      {
+        "at": "2026-09-17T05:20:53.020Z",
+        "model": "claude-opus-5",
+        "inputTokens": 457735,
+        "usage": {
+          "input_tokens": 2,
+          "cache_creation_input_tokens": 1465,
+          "cache_read_input_tokens": 456268,
+          "output_tokens": 169
+        },
+        "operations": []
+      },
+      {
+        "at": "2026-09-17T05:20:59.689Z",
+        "model": "claude-opus-5",
+        "inputTokens": 458532,
+        "usage": {
+          "input_tokens": 2,
+          "cache_creation_input_tokens": 797,
+          "cache_read_input_tokens": 457733,
+          "output_tokens": 394
+        },
+        "operations": []
+      },
+      {
+        "at": "2026-09-17T05:21:04.770Z",
+        "model": "claude-opus-5",
+        "inputTokens": 459024,
+        "usage": {
+          "input_tokens": 2,
+          "cache_creation_input_tokens": 492,
+          "cache_read_input_tokens": 458530,
+          "output_tokens": 106
+        },
+        "operations": ["message-check"]
+      },
+      {
+        "at": "2026-09-17T05:21:11.110Z",
+        "model": "claude-opus-5",
+        "inputTokens": 459221,
+        "usage": {
+          "input_tokens": 2,
+          "cache_creation_input_tokens": 197,
+          "cache_read_input_tokens": 459022,
+          "output_tokens": 273
+        },
+        "operations": []
+      },
+      {
+        "at": "2026-09-17T05:21:19.013Z",
+        "model": "claude-opus-5",
+        "inputTokens": 459889,
+        "usage": {
+          "input_tokens": 2,
+          "cache_creation_input_tokens": 668,
+          "cache_read_input_tokens": 459219,
+          "output_tokens": 131
+        },
+        "operations": ["RAH_FROM_SEQ"]
+      },
+      {
+        "at": "2026-09-17T05:21:22.927Z",
+        "model": "claude-opus-5",
+        "inputTokens": 461354,
+        "usage": {
+          "input_tokens": 2,
+          "cache_creation_input_tokens": 1465,
+          "cache_read_input_tokens": 459887,
+          "output_tokens": 155
+        },
+        "operations": ["message-check"]
+      },
+      {
+        "at": "2026-09-17T05:21:28.094Z",
+        "model": "claude-opus-5",
+        "inputTokens": 462009,
+        "usage": {
+          "input_tokens": 2,
+          "cache_creation_input_tokens": 655,
+          "cache_read_input_tokens": 461352,
+          "output_tokens": 250
+        },
+        "operations": []
+      },
+      {
+        "at": "2026-09-17T05:21:34.002Z",
+        "model": "claude-opus-5",
+        "inputTokens": 462351,
+        "usage": {
+          "input_tokens": 2,
+          "cache_creation_input_tokens": 342,
+          "cache_read_input_tokens": 462007,
+          "output_tokens": 106
+        },
+        "operations": ["message-check"]
+      },
+      {
+        "at": "2026-09-17T05:21:40.159Z",
+        "model": "claude-opus-5",
+        "inputTokens": 462548,
+        "usage": {
+          "input_tokens": 2,
+          "cache_creation_input_tokens": 197,
+          "cache_read_input_tokens": 462349,
+          "output_tokens": 225
+        },
+        "operations": []
+      }
+    ]
+  },
+  "codex": {
+    "requests": [
+      {
+        "at": "2026-09-17T05:28:21.607Z",
+        "usage": {
+          "input_tokens": 113965,
+          "cached_input_tokens": 113408,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 175,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 114140
+        }
+      },
+      {
+        "at": "2026-09-17T05:34:22.538Z",
+        "usage": {
+          "input_tokens": 117187,
+          "cached_input_tokens": 11008,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 62,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 117249
+        }
+      },
+      {
+        "at": "2026-09-17T05:35:40.297Z",
+        "usage": {
+          "input_tokens": 117441,
+          "cached_input_tokens": 117248,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 178,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 117619
+        }
+      },
+      {
+        "at": "2026-09-17T05:35:50.561Z",
+        "usage": {
+          "input_tokens": 120846,
+          "cached_input_tokens": 117248,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 69,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 120915
+        }
+      },
+      {
+        "at": "2026-09-17T05:35:57.100Z",
+        "usage": {
+          "input_tokens": 121108,
+          "cached_input_tokens": 120704,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 27,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 121135
+        }
+      },
+      {
+        "at": "2026-09-17T05:36:15.636Z",
+        "usage": {
+          "input_tokens": 121160,
+          "cached_input_tokens": 120960,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 177,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 121337
+        }
+      },
+      {
+        "at": "2026-09-17T05:36:28.507Z",
+        "usage": {
+          "input_tokens": 124878,
+          "cached_input_tokens": 120960,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 62,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 124940
+        }
+      },
+      {
+        "at": "2026-09-17T05:36:37.482Z",
+        "usage": {
+          "input_tokens": 125050,
+          "cached_input_tokens": 124672,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 8,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 125058
+        }
+      }
+    ],
+    "tokenEvents": [
+      {
+        "at": "2026-09-17T05:27:30.380Z",
+        "usage": {
+          "input_tokens": 113924,
+          "cached_input_tokens": 106880,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 29,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 113953
+        }
+      },
+      {
+        "at": "2026-09-17T05:28:21.851Z",
+        "usage": {
+          "input_tokens": 113965,
+          "cached_input_tokens": 113408,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 175,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 114140
+        }
+      },
+      {
+        "at": "2026-09-17T05:34:22.540Z",
+        "usage": {
+          "input_tokens": 117187,
+          "cached_input_tokens": 11008,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 62,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 117249
+        }
+      },
+      {
+        "at": "2026-09-17T05:35:40.298Z",
+        "usage": {
+          "input_tokens": 117441,
+          "cached_input_tokens": 117248,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 178,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 117619
+        }
+      },
+      {
+        "at": "2026-09-17T05:35:50.563Z",
+        "usage": {
+          "input_tokens": 120846,
+          "cached_input_tokens": 117248,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 69,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 120915
+        }
+      },
+      {
+        "at": "2026-09-17T05:35:57.100Z",
+        "usage": {
+          "input_tokens": 121108,
+          "cached_input_tokens": 120704,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 27,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 121135
+        }
+      },
+      {
+        "at": "2026-09-17T05:36:16.124Z",
+        "usage": {
+          "input_tokens": 121160,
+          "cached_input_tokens": 120960,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 177,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 121337
+        }
+      },
+      {
+        "at": "2026-09-17T05:36:28.508Z",
+        "usage": {
+          "input_tokens": 124878,
+          "cached_input_tokens": 120960,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 62,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 124940
+        }
+      },
+      {
+        "at": "2026-09-17T05:36:37.482Z",
+        "usage": {
+          "input_tokens": 125050,
+          "cached_input_tokens": 124672,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 8,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 125058
+        }
+      }
+    ],
+    "stopResume": {
+      "runs": [
+        {
+          "run_attempt_id": "run_4c94d5c3-39ce-4f89-941d-f9bce9193c9a",
+          "activation_id": "activation_4503f6db-9f7e-4f66-938f-b7b01a70b8c3",
+          "started_at": "2026-09-17T05:21:51.751Z",
+          "finished_at": "2026-09-17T05:34:32.825Z",
+          "state": "cancelled",
+          "from_seq": 13,
+          "to_seq": 13
+        },
+        {
+          "run_attempt_id": "run_aa1d792d-705b-462a-a078-86c0b1a39c11",
+          "activation_id": "activation_4503f6db-9f7e-4f66-938f-b7b01a70b8c3",
+          "started_at": "2026-09-17T05:34:33.178Z",
+          "finished_at": "2026-09-17T05:36:02.625Z",
+          "state": "exited",
+          "from_seq": 13,
+          "to_seq": 13
+        },
+        {
+          "run_attempt_id": "run_e9c5622d-16ef-4736-a0b9-adba71e02cca",
+          "activation_id": "activation_d3dd80c1-6fac-4baf-9d4e-1c2a5fb96c74",
+          "started_at": "2026-09-17T05:36:02.630Z",
+          "finished_at": "2026-09-17T05:36:43.001Z",
+          "state": "exited",
+          "from_seq": 25,
+          "to_seq": 26
+        }
+      ],
+      "newPromptAt": "2026-09-17T05:34:32.989Z",
+      "ownActivationWaitSeconds": 89.641,
+      "ownRunToReplySeconds": 25.511
+    }
+  },
+  "opencode": {
+    "beforeD1": {
+      "messageRecords": 366,
+      "parts": {
+        "text": {
+          "count": 310,
+          "serializedChars": 251372
+        },
+        "step-start": {
+          "count": 317,
+          "serializedChars": 23775
+        },
+        "reasoning": {
+          "count": 7,
+          "serializedChars": 35330
+        },
+        "tool:bash": {
+          "count": 161,
+          "serializedChars": 1377060
+        },
+        "step-finish": {
+          "count": 317,
+          "serializedChars": 65083
+        },
+        "tool:read": {
+          "count": 66,
+          "serializedChars": 1049417
+        },
+        "patch": {
+          "count": 37,
+          "serializedChars": 7911
+        },
+        "tool:edit": {
+          "count": 38,
+          "serializedChars": 253480
+        },
+        "tool:glob": {
+          "count": 4,
+          "serializedChars": 22760
+        },
+        "tool:grep": {
+          "count": 7,
+          "serializedChars": 9985
+        }
+      }
+    },
+    "native": [
+      {
+        "round": "D1",
+        "directory": "/Users/sun/Code/repos/rah_os",
+        "requests": [
+          {
+            "inputTokens": 12874,
+            "tokens": {
+              "total": 13057,
+              "input": 12874,
+              "output": 183,
+              "reasoning": 0,
+              "cache": {
+                "write": 0,
+                "read": 0
+              }
+            }
+          }
+        ]
+      },
+      {
+        "round": "D2",
+        "directory": "/Users/sun/Code/repos/rah_os",
+        "requests": [
+          {
+            "inputTokens": 12883,
+            "tokens": {
+              "total": 13170,
+              "input": 12883,
+              "output": 287,
+              "reasoning": 0,
+              "cache": {
+                "write": 0,
+                "read": 0
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "requests": [
+      {
+        "at": "2026-09-17T05:18:49.831Z",
+        "completedAt": "2026-09-17T05:19:05.230Z",
+        "inputTokens": 659975,
+        "tokens": {
+          "total": 660119,
+          "input": 659975,
+          "output": 144,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:19:05.249Z",
+        "completedAt": "2026-09-17T05:19:16.207Z",
+        "inputTokens": 662062,
+        "tokens": {
+          "total": 662349,
+          "input": 662062,
+          "output": 287,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:19:16.225Z",
+        "completedAt": "2026-09-17T05:19:25.419Z",
+        "inputTokens": 662959,
+        "tokens": {
+          "total": 663159,
+          "input": 662959,
+          "output": 200,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:19:25.437Z",
+        "completedAt": "2026-09-17T05:19:36.092Z",
+        "inputTokens": 663232,
+        "tokens": {
+          "total": 663342,
+          "input": 5861,
+          "output": 110,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 657371
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:19:36.110Z",
+        "completedAt": "2026-09-17T05:19:45.602Z",
+        "inputTokens": 663943,
+        "tokens": {
+          "total": 664086,
+          "input": 663943,
+          "output": 143,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:19:48.031Z",
+        "completedAt": "2026-09-17T05:20:01.176Z",
+        "inputTokens": 664110,
+        "tokens": {
+          "total": 664278,
+          "input": 664110,
+          "output": 168,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:20:01.195Z",
+        "completedAt": "2026-09-17T05:20:11.366Z",
+        "inputTokens": 666261,
+        "tokens": {
+          "total": 666657,
+          "input": 4817,
+          "output": 396,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 661444
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:20:11.384Z",
+        "completedAt": "2026-09-17T05:20:21.027Z",
+        "inputTokens": 667340,
+        "tokens": {
+          "total": 667476,
+          "input": 667340,
+          "output": 136,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:20:21.046Z",
+        "completedAt": "2026-09-17T05:20:33.104Z",
+        "inputTokens": 667548,
+        "tokens": {
+          "total": 667657,
+          "input": 6112,
+          "output": 109,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 661436
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:20:33.121Z",
+        "completedAt": "2026-09-17T05:20:42.704Z",
+        "inputTokens": 668296,
+        "tokens": {
+          "total": 668465,
+          "input": 2781,
+          "output": 169,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 665515
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:29:09.072Z",
+        "completedAt": "2026-09-17T05:29:25.832Z",
+        "inputTokens": 668485,
+        "tokens": {
+          "total": 668696,
+          "input": 668485,
+          "output": 211,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:29:25.850Z",
+        "completedAt": "2026-09-17T05:29:37.150Z",
+        "inputTokens": 669209,
+        "tokens": {
+          "total": 669592,
+          "input": 3705,
+          "output": 383,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 665504
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:29:37.168Z",
+        "completedAt": "2026-09-17T05:29:46.820Z",
+        "inputTokens": 669810,
+        "tokens": {
+          "total": 669963,
+          "input": 669810,
+          "output": 153,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:29:46.836Z",
+        "completedAt": "2026-09-17T05:29:58.142Z",
+        "inputTokens": 670052,
+        "tokens": {
+          "total": 670180,
+          "input": 670052,
+          "output": 128,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:29:58.158Z",
+        "completedAt": "2026-09-17T05:30:08.662Z",
+        "inputTokens": 670439,
+        "tokens": {
+          "total": 670618,
+          "input": 670439,
+          "output": 179,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:30:59.260Z",
+        "completedAt": "2026-09-17T05:31:12.163Z",
+        "inputTokens": 670642,
+        "tokens": {
+          "total": 670840,
+          "input": 670642,
+          "output": 198,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:31:12.180Z",
+        "completedAt": "2026-09-17T05:31:22.872Z",
+        "inputTokens": 673803,
+        "tokens": {
+          "total": 674142,
+          "input": 673803,
+          "output": 339,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:31:22.888Z",
+        "completedAt": "2026-09-17T05:31:33.839Z",
+        "inputTokens": 674539,
+        "tokens": {
+          "total": 674803,
+          "input": 674539,
+          "output": 264,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:35:53.007Z",
+        "completedAt": "2026-09-17T05:36:05.681Z",
+        "inputTokens": 674827,
+        "tokens": {
+          "total": 675085,
+          "input": 5267,
+          "output": 258,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 669560
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:36:05.701Z",
+        "completedAt": "2026-09-17T05:36:17.187Z",
+        "inputTokens": 678917,
+        "tokens": {
+          "total": 679294,
+          "input": 678917,
+          "output": 377,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:36:17.210Z",
+        "completedAt": "2026-09-17T05:36:31.060Z",
+        "inputTokens": 679846,
+        "tokens": {
+          "total": 680015,
+          "input": 679846,
+          "output": 169,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:36:31.079Z",
+        "completedAt": "2026-09-17T05:36:42.114Z",
+        "inputTokens": 680285,
+        "tokens": {
+          "total": 680459,
+          "input": 680285,
+          "output": 174,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:36:42.134Z",
+        "completedAt": "2026-09-17T05:36:53.144Z",
+        "inputTokens": 680546,
+        "tokens": {
+          "total": 680675,
+          "input": 680546,
+          "output": 129,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:36:53.162Z",
+        "completedAt": "2026-09-17T05:37:03.355Z",
+        "inputTokens": 681246,
+        "tokens": {
+          "total": 681429,
+          "input": 3530,
+          "output": 183,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 677716
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:37:04.767Z",
+        "completedAt": "2026-09-17T05:37:23.739Z",
+        "inputTokens": 681453,
+        "tokens": {
+          "total": 681614,
+          "input": 681453,
+          "output": 161,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:37:23.756Z",
+        "completedAt": "2026-09-17T05:37:44.855Z",
+        "inputTokens": 684091,
+        "tokens": {
+          "total": 684452,
+          "input": 6380,
+          "output": 361,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 677711
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      },
+      {
+        "at": "2026-09-17T05:37:44.873Z",
+        "completedAt": "2026-09-17T05:38:05.427Z",
+        "inputTokens": 685023,
+        "tokens": {
+          "total": 685226,
+          "input": 3232,
+          "output": 203,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 681791
+          }
+        },
+        "model": "iiiiitoken/gemini-3.8-flash-high"
+      }
+    ],
+    "tools": [
+      {
+        "at": "2026-09-17T05:19:04.482Z",
+        "tool": "bash",
+        "start": 1789622344486,
+        "end": 1789622345166,
+        "operations": ["RAH_FROM_SEQ", "message-check"],
+        "held": false
+      },
+      {
+        "at": "2026-09-17T05:19:15.896Z",
+        "tool": "bash",
+        "start": 1789622355902,
+        "end": 1789622356145,
+        "operations": ["message-read"],
+        "held": false
+      },
+      {
+        "at": "2026-09-17T05:19:25.117Z",
+        "tool": "bash",
+        "start": 1789622365120,
+        "end": 1789622365357,
+        "operations": ["message-post"],
+        "held": false
+      },
+      {
+        "at": "2026-09-17T05:19:35.781Z",
+        "tool": "bash",
+        "start": 1789622375786,
+        "end": 1789622376032,
+        "operations": ["message-read"],
+        "held": false
+      },
+      {
+        "at": "2026-09-17T05:20:00.632Z",
+        "tool": "bash",
+        "start": 1789622400639,
+        "end": 1789622401106,
+        "operations": ["RAH_FROM_SEQ", "message-check"],
+        "held": false
+      },
+      {
+        "at": "2026-09-17T05:20:11.053Z",
+        "tool": "bash",
+        "start": 1789622411058,
+        "end": 1789622411307,
+        "operations": ["message-read"],
+        "held": false
+      },
+      {
+        "at": "2026-09-17T05:20:20.710Z",
+        "tool": "bash",
+        "start": 1789622420715,
+        "end": 1789622420965,
+        "operations": ["message-post"],
+        "held": false
+      },
+      {
+        "at": "2026-09-17T05:20:32.784Z",
+        "tool": "bash",
+        "start": 1789622432786,
+        "end": 1789622433021,
+        "operations": ["message-read"],
+        "held": false
+      },
+      {
+        "at": "2026-09-17T05:29:25.331Z",
+        "tool": "bash",
+        "start": 1789622965335,
+        "end": 1789622965765,
+        "operations": ["RAH_FROM_SEQ", "message-check"],
+        "held": false
+      },
+      {
+        "at": "2026-09-17T05:29:36.842Z",
+        "tool": "bash",
+        "start": 1789622976848,
+        "end": 1789622977092,
+        "operations": ["message-read"],
+        "held": false
+      },
+      {
+        "at": "2026-09-17T05:29:46.508Z",
+        "tool": "bash",
+        "start": 1789622986514,
+        "end": 1789622986766,
+        "operations": ["message-post"],
+        "held": false
+      },
+      {
+        "at": "2026-09-17T05:29:57.856Z",
+        "tool": "bash",
+        "start": 1789622997860,
+        "end": 1789622998086,
+        "operations": ["message-read"],
+        "held": false
+      },
+      {
+        "at": "2026-09-17T05:31:11.622Z",
+        "tool": "bash",
+        "start": 1789623071629,
+        "end": 1789623072100,
+        "operations": ["RAH_FROM_SEQ", "message-check"],
+        "held": false
+      },
+      {
+        "at": "2026-09-17T05:31:22.568Z",
+        "tool": "bash",
+        "start": 1789623082572,
+        "end": 1789623082817,
+        "operations": ["message-read"],
+        "held": false
+      },
+      {
+        "at": "2026-09-17T05:36:05.172Z",
+        "tool": "bash",
+        "start": 1789623365176,
+        "end": 1789623365605,
+        "operations": ["RAH_FROM_SEQ", "message-check"],
+        "held": false
+      },
+      {
+        "at": "2026-09-17T05:36:16.882Z",
+        "tool": "bash",
+        "start": 1789623376885,
+        "end": 1789623377107,
+        "operations": ["message-read"],
+        "held": false
+      },
+      {
+        "at": "2026-09-17T05:36:30.753Z",
+        "tool": "bash",
+        "start": 1789623390755,
+        "end": 1789623390990,
+        "operations": ["message-post"],
+        "held": true
+      },
+      {
+        "at": "2026-09-17T05:36:41.810Z",
+        "tool": "bash",
+        "start": 1789623401813,
+        "end": 1789623402050,
+        "operations": ["message-post", "send-draft"],
+        "held": false
+      },
+      {
+        "at": "2026-09-17T05:36:52.824Z",
+        "tool": "bash",
+        "start": 1789623412827,
+        "end": 1789623413062,
+        "operations": ["message-read"],
+        "held": false
+      },
+      {
+        "at": "2026-09-17T05:37:23.215Z",
+        "tool": "bash",
+        "start": 1789623443221,
+        "end": 1789623443680,
+        "operations": ["RAH_FROM_SEQ", "message-check"],
+        "held": false
+      },
+      {
+        "at": "2026-09-17T05:37:44.554Z",
+        "tool": "bash",
+        "start": 1789623464560,
+        "end": 1789623464798,
+        "operations": ["message-read"],
+        "held": false
+      }
+    ]
+  },
+  "postReplyTails": [
+    {
+      "provider": "claude",
+      "round": "D1",
+      "replyAt": "2026-09-17T05:21:01.671Z",
+      "finishedAt": "2026-09-17T05:21:11.998Z",
+      "postReplySeconds": 10.327
+    },
+    {
+      "provider": "claude",
+      "round": "D2",
+      "replyAt": "2026-09-17T05:21:29.806Z",
+      "finishedAt": "2026-09-17T05:21:41.106Z",
+      "postReplySeconds": 11.3
+    },
+    {
+      "provider": "opencode",
+      "round": "D1",
+      "replyAt": "2026-09-17T05:19:25.347Z",
+      "finishedAt": "2026-09-17T05:19:45.958Z",
+      "postReplySeconds": 20.611
+    },
+    {
+      "provider": "opencode",
+      "round": "D2",
+      "replyAt": "2026-09-17T05:20:20.956Z",
+      "finishedAt": "2026-09-17T05:20:43.063Z",
+      "postReplySeconds": 22.107
+    },
+    {
+      "provider": "kimi",
+      "round": "D1",
+      "replyAt": "2026-09-17T05:23:26.898Z",
+      "finishedAt": "2026-09-17T05:23:35.239Z",
+      "postReplySeconds": 8.341
+    },
+    {
+      "provider": "kimi",
+      "round": "D2",
+      "replyAt": "2026-09-17T05:23:56.778Z",
+      "finishedAt": "2026-09-17T05:24:04.802Z",
+      "postReplySeconds": 8.024
+    },
+    {
+      "provider": "codex",
+      "round": "D1",
+      "replyAt": "2026-09-17T05:34:22.340Z",
+      "finishedAt": "2026-09-17T05:34:32.825Z",
+      "postReplySeconds": 10.485
+    },
+    {
+      "provider": "codex",
+      "round": "D2",
+      "replyAt": "2026-09-17T05:36:28.141Z",
+      "finishedAt": "2026-09-17T05:36:43.001Z",
+      "postReplySeconds": 14.86
+    }
+  ],
+  "sourceFiles": [
+    {
+      "path": "docs/evidence/2026-09-17-native-cli-dm-and-channel-latency.json",
+      "sha256": "649b63a941e69144dd0eb62d8d77307964a412f216264951a7ed276b17910a06"
+    },
+    {
+      "path": "/Users/sun/.kimi-code/sessions/wd_rah_os_6ab3941a7716/session_c98c615f-2284-43c7-b1c6-0d58a812bd47/agents/main/wire.jsonl",
+      "sha256": "7163b06ae784c23f437df54cb56960f0b62764761da06b70cfdd9556a0f8307f"
+    },
+    {
+      "path": "/Users/sun/.kimi-code/sessions/wd_rah-native-kimi-22jiwu_a0109877959a/session_db26cf54-84f2-4327-ab28-c7d9c2667bed/agents/main/wire.jsonl",
+      "sha256": "a1284dd10504aa3bf1087bda8bdfcc2371389dd5df68e720bf2342b5d032ea7e"
+    },
+    {
+      "path": "/Users/sun/.kimi-code/sessions/wd_rah-native-kimi-22jiwu_a0109877959a/session_810a5bd9-34f2-4a88-b115-a1e9a33c92e3/agents/main/wire.jsonl",
+      "sha256": "d8d41e49729b143165dedc08f563a358e3768093218da401bdcde1c5cae32797"
+    },
+    {
+      "path": "/Users/sun/.claude/projects/-Users-sun-Code-repos-rah-os/34e8595b-5deb-445b-9e7e-ee35dd78143c.jsonl",
+      "sha256": "0dfb751a0b2d29d9014896e398d33958ba1f6e298f6f329ee5bb18c262c9be00"
+    },
+    {
+      "path": "scratchpad/2026-09-17-cli-dm-latency/claude.json",
+      "sha256": "66ed371436af7c2991754107c612f333155254c52e22acdce277471f3cf8858b"
+    },
+    {
+      "path": "/Users/sun/.codex/sessions/2026/09/17/rollout-2026-09-17T01-49-08-01a0ab56-35a5-70b2-8c8b-747a3e04fcd4.jsonl",
+      "sha256": "5c3ebd60741f15e7eefce51ad8319424669e28cfff25c016e381c27f0f2e0b06"
+    },
+    {
+      "path": "packages/agent-host/src/kimi-acp-driver.mjs",
+      "sha256": "7a1e9e4e6a47599d44d5d80fac6b6720e89850f509a17a5fec63d68123092acf"
+    },
+    {
+      "path": "packages/agent-host/src/opencode-server-driver.mjs",
+      "sha256": "ab3a01a8d34c47100b313594809ec618ceff827c9e97de11fdf062347e2c0776"
+    },
+    {
+      "path": "packages/agent-host/src/codex-app-server-driver.mjs",
+      "sha256": "140e293fb19e7fed392893712867277f5eeab52c546708ac130818388d775e9c"
+    },
+    {
+      "path": "packages/daemon/src/standing-prompt-compiler.ts",
+      "sha256": "258e29d6a36c0552bcbb8f611b52aa1487f1a0a8e17276fde8073550934ee8fe"
+    },
+    {
+      "path": "packages/daemon/src/standing-prompt-delivery.ts",
+      "sha256": "d564314e96967beda22836cad90a71bbbf23c64b417cb6c924df5102f4ffa386"
+    },
+    {
+      "path": "packages/kernel/src/activation-cancellation.ts",
+      "sha256": "e01f2095c58045187d1186b081905811ef6629589d9f9d88bfc25bf94536d849"
+    },
+    {
+      "path": "packages/kernel/src/room-agent-sos-service.ts",
+      "sha256": "b780117ab567f7e6efca98e2f9667a760c00841078de22b4e11a5a2982e2c9b8"
+    },
+    {
+      "path": "/private/tmp/raft-20260916-audit/computer-1.0.32/main.js",
+      "sha256": "531f41e2ee626d729c92933fbc753008af42380c5745c54b5d0af9901e43d170"
+    }
+  ]
+}

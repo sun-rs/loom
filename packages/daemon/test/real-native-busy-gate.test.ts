@@ -15,6 +15,7 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 import { GenericProcessAdapter } from "@rah-os/agent-host";
+import { agentExecutionWorkspacePath } from "../../agent-host/src/agent-execution-workspace.ts";
 import { RoomKernel } from "@rah-os/kernel";
 import type {
   AgentCatalogEntry,
@@ -60,8 +61,8 @@ assert.ok(
   selectedCli === undefined || cases.some((row) => row.cli === selectedCli),
 );
 
-// These are new identities/sessions, not replacements for the preserved
-// accident-session gate. Each new session must then survive eight target hops.
+// Use isolated identities. Claude first needs a completed turn: an announced
+// fresh session id is not yet eligible for native busy delivery in Raft either.
 for (const binding of cases.filter(
   (row) => selectedCli === undefined || row.cli === selectedCli,
 ))
@@ -127,7 +128,6 @@ for (const binding of cases.filter(
         return accepted;
       };
       evidence.nativeNotices = nativeNotices;
-      let providerSessionId: string | undefined;
       const head = (roomId: string) =>
         k.sync(actor, { roomId, consumerId: "target-matrix" }).latestRoomSeq;
       const post = async (path: string, body: unknown): Promise<any> => {
@@ -220,7 +220,6 @@ for (const binding of cases.filter(
           toolAccessMode: "full_access",
         });
         const roomA = prepared.metadata.defaultRoomId;
-        k.addMember(actor, { roomId: roomA, principalId: participantId });
         const postMessage = (body: string, idempotencyKey: string) =>
           k.postMessage(actor, {
             roomId: roomA,
@@ -228,9 +227,38 @@ for (const binding of cases.filter(
             idempotencyKey,
             recipients: [{ participantId, reason: "mention" }],
           });
+        if (binding.cli === "claude") {
+          postMessage(
+            `@${handle} 本轮仅为通信验收。请在当前频道只回复 [READY]，不创建Task，不使用Thread，不修改记忆，然后结束本轮。`,
+            "busy-warmup",
+          );
+          await wait(() =>
+            Boolean(
+              db
+                .prepare(
+                  "SELECT 1 FROM messages WHERE actor_id=? AND body='[READY]'",
+                )
+                .get(participantId),
+            ),
+          );
+          await wait(
+            () =>
+              !db
+                .prepare(
+                  "SELECT 1 FROM activations WHERE state IN ('queued','leased','quarantined') LIMIT 1",
+                )
+                .get(),
+          );
+        }
+        const baselineRunIds = new Set(
+          db
+            .prepare("SELECT run_attempt_id FROM run_attempts")
+            .all()
+            .map((row) => row.run_attempt_id),
+        );
         const started = Date.now();
         postMessage(
-          `@${handle} 本轮仅为通信验收，不创建Task，不使用Thread。先执行 touch acceptance/busy-started; sleep 30，然后在当前频道回复 [ORIGINAL:DONE]。执行期间可能有另一条Human消息，请保留原请求并分别处理。`,
+          `@${handle} 本轮仅为通信验收，不创建Task，不使用Thread。先执行 touch '${join(workspace, "acceptance/busy-started")}'; sleep 30，然后在当前频道回复 [ORIGINAL:DONE]。执行期间可能有另一条Human消息，请保留原请求并分别处理。`,
           "busy-original",
         );
         await wait(() =>
@@ -266,7 +294,8 @@ for (const binding of cases.filter(
           .prepare(
             "SELECT run_attempt_id,state FROM run_attempts ORDER BY rowid",
           )
-          .all();
+          .all()
+          .filter((row) => !baselineRunIds.has(row.run_attempt_id));
         evidence.runsAtReplies = runs;
         assert.equal(
           runs.length,
@@ -299,11 +328,15 @@ for (const binding of cases.filter(
           );
         }
         if (binding.cli === "claude") {
+          const runtimeCwd = agentExecutionWorkspacePath(
+            join(stateDirectory, "agent-workspaces"),
+            participantId,
+          );
           const project = join(
             homedir(),
             ".claude",
             "projects",
-            realpathSync(workspace).replace(/[^a-zA-Z0-9]/gu, "-"),
+            realpathSync(runtimeCwd).replace(/[^a-zA-Z0-9]/gu, "-"),
           );
           const notices = readdirSync(project)
             .filter((name) => name.endsWith(".jsonl"))
@@ -341,6 +374,11 @@ for (const binding of cases.filter(
         throw error;
       } finally {
         evidence.finishedAt = new Date().toISOString();
+        evidence.finalRuns = db
+          .prepare(
+            "SELECT run_attempt_id,activation_id,state,started_at,finished_at FROM run_attempts ORDER BY rowid",
+          )
+          .all();
         writeFileSync(
           join(directory, "evidence.json"),
           JSON.stringify(evidence, null, 2),

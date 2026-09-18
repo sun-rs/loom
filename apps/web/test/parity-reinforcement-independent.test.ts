@@ -314,7 +314,14 @@ test("audit: shared navigation intent rejects superseded completion without an o
   assert.equal(third.signal.aborted, true);
 });
 
-for (const runnerName of ["run-local-workbench.mjs", "run-lan-workbench.mjs"]) {
+// The loopback launcher must snapshot the Web bundle and apply its release
+// identity to the environment BEFORE the daemon module is loaded, because the
+// daemon resolves its build identity once at import time. That makes its call
+// order snapshot-first; the LAN launcher still prepares the data home first.
+for (const [runnerName, expectedOrder] of [
+  ["run-local-workbench.mjs", ["snapshot", "identity", "prepare", "lease"]],
+  ["run-lan-workbench.mjs", ["prepare", "snapshot", "lease"]],
+] as const) {
   test(`audit: actual ${runnerName} forwards the pinned source and serves only the resulting snapshot`, () => {
     const runnerUrl = new URL(`../../../scripts/${runnerName}`, import.meta.url)
       .href;
@@ -345,6 +352,11 @@ for (const runnerName of ["run-local-workbench.mjs", "run-lan-workbench.mjs"]) {
           pruneWorkbenchAssetSnapshots: async () => {
             calls.push("prune");
           },
+          readWorkbenchAssetIdentity: async (staticDirectory) => {
+            assert.equal(staticDirectory, "/independent-audit/frozen-result");
+            calls.push("identity");
+            return undefined;
+          },
           snapshotWorkbenchAssets: async (repositoryDirectory, pinnedDirectory) => {
             assert.equal(pinnedDirectory, expectedPinned);
             assert.equal(repositoryDirectory, ${JSON.stringify(repositoryDirectory)});
@@ -358,7 +370,7 @@ for (const runnerName of ["run-local-workbench.mjs", "run-lan-workbench.mjs"]) {
             return "/independent-audit/home";
           },
           startRestartableLocalCoreWorkbench: async options => {
-            assert.deepEqual(calls, ["prepare", "snapshot", "lease"]);
+            assert.deepEqual(calls, ${JSON.stringify(expectedOrder)});
             assert.equal(options.staticDirectory, "/independent-audit/frozen-result");
             assert.equal(options.workbenchHome, "/independent-audit/home");
             calls.push("start");
@@ -366,7 +378,7 @@ for (const runnerName of ["run-local-workbench.mjs", "run-lan-workbench.mjs"]) {
           }
         }});
         await assert.rejects(import(${JSON.stringify(runnerUrl)}), error => error === stopped);
-        assert.deepEqual(calls, ["prepare", "snapshot", "lease", "start", "release"]);
+        assert.deepEqual(calls, [...${JSON.stringify(expectedOrder)}, "start", "release"]);
       `;
       execFileSync(
         process.execPath,

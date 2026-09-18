@@ -75,6 +75,12 @@ test("the local workbench gateway keeps Human authority server-side", async () =
     const health = await fetch(`${origin}/_rah/health`);
     assert.equal(health.status, 200);
     assert.deepEqual(await health.json(), {
+      buildIdentity: {
+        schemaVersion: 1,
+        kind: "development",
+        version: "0.0.0-dev+local",
+        buildId: "development",
+      },
       service: "rah-os-local-core",
       state: "online",
     });

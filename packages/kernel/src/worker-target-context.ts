@@ -73,6 +73,29 @@ type Context = {
   collaboration: () => CollaborationService;
   attachmentComments: () => AttachmentCommentsService;
   files: () => RoomFiles;
+  /**
+   * The Kernel's single post-confirmation entry point. The `--target` route is
+   * a second way to publish the same mutation, so it must reach the same
+   * confirmation the originating route reaches — but it passes the Room the
+   * post actually landed in (a cross-Room or DM target confirms nothing about
+   * this Activation's Room) and the model's *own* `basedOnRoomSeq`, never the
+   * one `#resolveSendWindow` derived from Kernel state.
+   */
+  acknowledgePresentedDelivery: (
+    scope: P.ActivationCredentialScope,
+    input: { postedRoomId: string; modelBasedOnRoomSeq: number | undefined },
+  ) => void;
+  /**
+   * The freshness floor a *sent* presented rendering justifies on one target:
+   * the presented prefix, or 0. A hold exists to stop an Agent answering past
+   * facts it has not seen; a range the Host really put in front of this
+   * RunAttempt is seen, so holding it again buys nothing but a round trip.
+   * Content past the first degraded event is genuinely unread and still holds.
+   */
+  presentedFreshnessFloor: (
+    scope: P.ActivationCredentialScope,
+    roomId: string,
+  ) => number;
 };
 /** Signed presentation receipts reuse canonical bounded Room sync. They never
  * mutate subscriptions, Activations, execution scope or task ownership. */
@@ -378,6 +401,11 @@ export class WorkerTargetContextService {
       if ("event" in result && !result.deduplicated)
         this.#context.files().consume(attachments, result.event.aggregateId);
       this.#context.attachmentComments().bindWorkerResult(metadata, result);
+      if ("event" in result)
+        this.#context.acknowledgePresentedDelivery(origin, {
+          postedRoomId: result.event.roomId,
+          modelBasedOnRoomSeq: input.basedOnRoomSeq,
+        });
       return P.WorkerMessagePostResponseSchema.parse(result);
     });
   }
@@ -654,10 +682,17 @@ export class WorkerTargetContextService {
       // An Agent has necessarily seen what it published itself, so its own
       // latest message in this target never re-holds its next one. This widens
       // nothing: no other participant's message is treated as seen.
-      freshnessFloorSeq:
-        own === undefined
-          ? basedOnRoomSeq
-          : Math.max(basedOnRoomSeq, integer(own, "seq")),
+      //
+      // The presented prefix joins it for the same reason and with the same
+      // narrowness: it is a range the Kernel rendered and the Host reported
+      // sending to this very RunAttempt. It raises the FLOOR only — never
+      // `basedOnRoomSeq`, which stays the server's own read position, so the
+      // implicit acknowledgement still needs the model's own causal marker.
+      freshnessFloorSeq: Math.max(
+        basedOnRoomSeq,
+        own === undefined ? 0 : integer(own, "seq"),
+        this.#context.presentedFreshnessFloor(origin, target.roomId),
+      ),
       causal,
       idempotencyKey: derive(basedOnRoomSeq),
     };

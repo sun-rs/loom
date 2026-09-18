@@ -12,6 +12,12 @@ import {
 } from "node:fs/promises";
 import { dirname, join, posix, resolve } from "node:path";
 import { webBuildOutput } from "../apps/web/build-output.ts";
+import {
+  BUILD_IDENTITY_META_NAME,
+  buildIdentitiesAgree,
+  decodeBuildIdentityMeta,
+  parseBuildIdentity,
+} from "./release-version.mjs";
 
 // Product builds and validation builds never share an output directory.
 export { webBuildOutput };
@@ -156,6 +162,7 @@ export async function snapshotWorkbenchAssets(
   if (metadataBytes === undefined)
     throw new Error("Product Web build metadata is missing");
   let webBuildId;
+  let bundleIdentity;
   try {
     const metadata = JSON.parse(metadataBytes.toString());
     if (
@@ -168,12 +175,14 @@ export async function snapshotWorkbenchAssets(
       throw new Error("invalid Web build metadata");
     }
     webBuildId = metadata.webBuildId;
+    bundleIdentity = metadata.buildIdentity;
   } catch (error) {
     throw new Error("Product Web build metadata is invalid", {
       cause: error,
     });
   }
   const index = assets.get("index.html").toString();
+  assertBundleIdentityAgreement(index, bundleIdentity);
   const embeddedBuildIds = Array.from(
     index.matchAll(
       /<meta\s+name=["']rah-web-build-id["']\s+content=["']([^"']+)["']\s*\/?\s*>/giu,
@@ -252,6 +261,73 @@ export async function snapshotWorkbenchAssets(
   } finally {
     await rm(staging, { recursive: true, force: true });
   }
+}
+
+/**
+ * The bundle states its release identity twice: in `index.html` for the browser
+ * and in `.rah-web-build.json` for the launcher and the product build. They are
+ * one build, so they must agree exactly; one present without the other, or two
+ * different identities, is a corrupt or mixed bundle and is refused.
+ */
+function assertBundleIdentityAgreement(index, metadataIdentity) {
+  const encoded = Array.from(
+    index.matchAll(
+      new RegExp(
+        `<meta\\s+name=["']${BUILD_IDENTITY_META_NAME}["']\\s+content=["']([^"']+)["']\\s*/?\\s*>`,
+        "giu",
+      ),
+    ),
+    (match) => match[1],
+  );
+  if (encoded.length > 1) {
+    throw new Error(
+      "Product index.html declares more than one release identity",
+    );
+  }
+  const indexIdentity =
+    encoded.length === 1 ? decodeBuildIdentityMeta(encoded[0]) : undefined;
+  if (encoded.length === 1 && indexIdentity === undefined) {
+    throw new Error("Product index.html release identity is invalid");
+  }
+  if (indexIdentity === undefined && metadataIdentity === undefined) return;
+  if (indexIdentity === undefined || metadataIdentity === undefined) {
+    throw new Error(
+      "Product Web build declares its release identity in only one place; rebuild it with build:web:workbench",
+    );
+  }
+  const declared = parseBuildIdentity(JSON.stringify(metadataIdentity));
+  if (!buildIdentitiesAgree(indexIdentity, declared)) {
+    throw new Error(
+      `Product Web build identity disagrees: index.html says ${indexIdentity.version} (build ${indexIdentity.buildId}), metadata says ${declared.version} (build ${declared.buildId})`,
+    );
+  }
+}
+
+/**
+ * The release identity of an already-snapshotted Web bundle. The launcher hands
+ * exactly this to the daemon so a development workbench reports one identity for
+ * the bundle it serves.
+ */
+export async function readWorkbenchAssetIdentity(staticDirectory) {
+  let metadata;
+  try {
+    metadata = JSON.parse(
+      await readFile(join(staticDirectory, ".rah-web-build.json"), "utf8"),
+    );
+  } catch {
+    return undefined;
+  }
+  if (
+    metadata === null ||
+    typeof metadata !== "object" ||
+    metadata.schemaVersion !== 1 ||
+    metadata.buildIdentity === undefined
+  ) {
+    return undefined;
+  }
+  const index = await readFile(join(staticDirectory, "index.html"), "utf8");
+  assertBundleIdentityAgreement(index, metadata.buildIdentity);
+  return parseBuildIdentity(JSON.stringify(metadata.buildIdentity));
 }
 
 async function collectLiveReleaseLeases(releases) {

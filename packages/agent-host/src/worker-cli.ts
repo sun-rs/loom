@@ -1,4 +1,5 @@
 import { WorkerTaskUpdateRequestSchema } from "@rah-os/protocol";
+import { workerStartupContext } from "./worker-startup-context.ts";
 import { parseWorkerTaskBatchCommand } from "./worker-task-batch-cli.ts";
 import { deriveArtifactPublicationKey } from "./worker-artifact-key.ts";
 import {
@@ -383,10 +384,18 @@ export async function runWorkerCliCommand(
     };
     if (arguments_[0] === "worker" && arguments_[1] === "message-check") {
       await parseWorkerRequest(async () => {
-        const options = parseOptions(arguments_.slice(2), ["replay"]);
-        assertAllowed(options, ["replay"]);
+        const options = parseOptions(arguments_.slice(2), [
+          "replay",
+          "startup",
+        ]);
+        assertAllowed(options, ["replay", "startup"]);
         return options;
       });
+      if (arguments_.includes("--startup"))
+        await writeWorkerCheckOutput(
+          runtime.stdout,
+          await workerStartupContext(runtime.env),
+        );
       await drainWorkerMessages({
         send,
         write: (text) => writeWorkerCheckOutput(runtime.stdout, text),
@@ -1900,7 +1909,7 @@ rah reminder cancel --id ID
 rah reminder snooze --id ID --by 30m
 rah reminder update --id ID (--in 30m|--fire-at ISO|--cadence RULE|--title TEXT) [--tz IANA]
 rah reminder log --id ID
-rah worker message-check [--replay]
+rah worker message-check [--replay] [--startup]
 rah worker sync [--after-seq N]
 rah worker acknowledge --through-seq N
 rah worker room-list [--limit N] [--cursor CURSOR]

@@ -7,6 +7,12 @@ import test from "node:test";
 const packageRoot = join(import.meta.dirname, "..");
 const repositoryRoot = join(packageRoot, "..", "..");
 
+const verifiedArchiveRestoreAddition = `  <!-- Raft release/v1.16.0 index-CKeqacxz.js IKe/l5; Lucide archive-restore, ISC /legal/lucide-icons-LICENSE.txt. -->
+  <symbol id="raft-icon-archive-restore" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h2"/><path d="M20 8v11a2 2 0 0 1-2 2h-2"/><path d="m9 15 3-3 3 3"/><path d="M12 12v9"/>
+  </symbol>
+`;
+
 const verifiedListChecksAddition = `  <!-- Raft index-CRDaMXft.js sGe/iGe, SHA256 9247f38f78bfb5df423d4424882da63d18268324a9c9c151b52a49d772764271. Verbatim Lucide list-checks; ISC /legal/lucide-icons-LICENSE.txt. -->
   <symbol id="raft-icon-list-checks" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 5h8"/><path d="M13 12h8"/><path d="M13 19h8"/><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/></symbol>
 `;
@@ -52,6 +58,7 @@ test("interaction icon geometry is frozen from Raft RFe/TFe/yze/cze/Bw, Agent ta
     join(packageRoot, "src", "interaction-icons.svg"),
   );
   const source = content.toString("utf8");
+  assert.ok(source.includes(verifiedArchiveRestoreAddition));
   assert.ok(source.includes(verifiedCircleCheckBigAddition));
   assert.ok(source.includes(verifiedListChecksAddition));
   for (const exactRaftPath of [
@@ -82,6 +89,7 @@ test("interaction icon geometry is frozen from Raft RFe/TFe/yze/cze/Bw, Agent ta
     createHash("sha256")
       .update(
         source
+          .replace(verifiedArchiveRestoreAddition, "")
           .replace(verifiedListChecksAddition, "")
           .replace(verifiedCircleCheckBigAddition, "")
           .replace(verifiedCommentToggleAddition, "")

@@ -32,7 +32,7 @@ export class HumanNavigation {
     if (target.kind === "room") {
       requireRoomContentReader(db, target.roomId, actorId);
       this.#requireRow(
-        "SELECT room_id FROM rooms WHERE room_id=? AND archived_at IS NULL",
+        "SELECT room_id FROM rooms WHERE room_id=?",
         target.roomId,
       );
       return { target };

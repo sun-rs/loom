@@ -59,6 +59,8 @@ export interface RuntimeAdapter {
   notifyBusy?(run: RunHandle, notice: RuntimeBusyNotice): Promise<boolean>;
   readonly recoveryDrivers?: readonly string[];
   probe(): Promise<RuntimeAvailability>;
+  /** Liveness only, never delivery/completion or process-group terminal proof. */
+  isAlive?(run: RunHandle): Promise<boolean>;
   start(
     input: ActivationEnvelope,
     lifecycle: RuntimeStartLifecycle,

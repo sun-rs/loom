@@ -222,7 +222,11 @@ function MessageReferenceToken({ token }: { token: MessageTextToken }) {
   const entities = useWorkspaceEntities();
   if (token.kind === "text" || context === undefined)
     return <HighlightedText value={token.value} />;
-  const content = <HighlightedText value={token.value} />;
+  const content = (
+    <span className="rah-reference-label">
+      <HighlightedText value={token.value} />
+    </span>
+  );
   if (token.kind === "agent") {
     const candidate = context.references.agents.find(
       ({ agentDefinitionId }) => agentDefinitionId === token.agentDefinitionId,
@@ -248,6 +252,14 @@ function MessageReferenceToken({ token }: { token: MessageTextToken }) {
       </span>
     );
   if (token.kind === "human") {
+    const mentionLabel = (value: string) =>
+      token.self ? (
+        <span className="rah-reference-label">
+          <HighlightedText value={value} />
+        </span>
+      ) : (
+        <HighlightedText value={value} />
+      );
     const principal = [
       context.references.currentPrincipal,
       ...(context.references.principals ?? []),
@@ -262,12 +274,12 @@ function MessageReferenceToken({ token }: { token: MessageTextToken }) {
         principal={principal}
         className={referenceClassName(token)}
       >
-        <HighlightedText value={`@${person.displayName || person.handle}`} />
+        {mentionLabel(`@${person.displayName || person.handle}`)}
         <MentionReadDot state={token.readState} />
       </HumanIdentity>
     ) : (
       <span className={referenceClassName(token)}>
-        {content}
+        {mentionLabel(token.value)}
         <MentionReadDot state={token.readState} />
       </span>
     );

@@ -16,6 +16,7 @@ export type HumanApplicationPort = Pick<
   | "createWorkspace"
   | "deleteWorkspaceRoom"
   | "updateWorkspace"
+  | "getAgentDeletionDiagnostics"
   | "getAuthenticatedPrincipal"
   | "getTask"
   | "updateAuthenticatedPrincipal"
@@ -84,6 +85,7 @@ export type HumanApplicationPort = Pick<
   requestRoomAgentSos: RoomKernel["roomAgentSos"]["requestStop"];
   continueRoomAgentSos: RoomKernel["roomAgentSos"]["continueStop"];
   resumeRoomAgentSos: RoomKernel["roomAgentSos"]["resume"];
+  readRoomExecution: RoomKernel["roomAgentSos"]["read"];
   listAgentReminders: RoomKernel["reminders"]["listHuman"];
   listAttachmentComments: RoomKernel["attachmentComments"]["list"];
   postAttachmentComment: RoomKernel["attachmentComments"]["post"];
@@ -137,6 +139,7 @@ export function createHumanApplicationPort(
       kernel.roomAgentSos.continueStop(actor, input),
     resumeRoomAgentSos: (actor, input) =>
       kernel.roomAgentSos.resume(actor, input),
+    readRoomExecution: (actor, input) => kernel.roomAgentSos.read(actor, input),
     listAgentReminders: (actor, input) =>
       kernel.reminders.listHuman(actor, input),
     listAttachmentComments: (actor, input) =>
@@ -170,6 +173,8 @@ export function createHumanApplicationPort(
     deleteWorkspaceRoom: (actor, input) =>
       kernel.deleteWorkspaceRoom(actor, input),
     updateWorkspace: (actor, input) => kernel.updateWorkspace(actor, input),
+    getAgentDeletionDiagnostics: (actor, input) =>
+      kernel.getAgentDeletionDiagnostics(actor, input),
     getAuthenticatedPrincipal: (actor) =>
       kernel.getAuthenticatedPrincipal(actor),
     getTask: (actor, input) => kernel.getTask(actor, input),

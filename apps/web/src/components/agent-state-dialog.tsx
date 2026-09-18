@@ -1,4 +1,6 @@
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
+import type { AgentDeletionDiagnostics } from "@rah-os/protocol";
+import { AgentDeletionStatus } from "./agent-deletion-status.tsx";
 import { browserOpaqueId } from "../browser-opaque-id.ts";
 import { useEffect, useRef, useState } from "react";
 import type { WorkspaceAgentView } from "@rah-os/ui-web";
@@ -17,15 +19,25 @@ export function AgentStateDialog({
   state,
   onChange,
   onClose,
+  loadDeletionDiagnostics,
 }: {
   agent: WorkspaceAgentView;
   state: "enabled" | "disabled" | "tombstoned";
   onChange: AgentStateChange;
   onClose: () => void;
+  /**
+   * R5: read-only Kernel projection of why a durable deletion intent is
+   * blocked. Supplied where a client is available; the dialog stays usable
+   * without it and never keeps a second copy of deletion state.
+   */
+  loadDeletionDiagnostics?: (
+    agentDefinitionId: string,
+  ) => Promise<AgentDeletionDiagnostics>;
 }) {
   const [key] = useState(() => `web-agent-state-${browserOpaqueId()}`);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>();
+  const [diagnostics, setDiagnostics] = useState<AgentDeletionDiagnostics>();
   const inFlight = useRef(false);
   const actions = useRef(createLatestRequest());
   useEffect(() => {
@@ -45,12 +57,23 @@ export function AgentStateDialog({
     inFlight.current = true;
     setPending(true);
     setError(undefined);
+    setDiagnostics(undefined);
     try {
       await onChange(agent.agentDefinitionId, state, key);
       if (request.current()) onClose();
     } catch (error) {
       if (request.current())
         setError(error instanceof Error ? error.message : "操作失败，请重试。");
+      // The client wait is a deadline, not a deletion outcome: read the durable
+      // block projection so the operator sees what must terminate first.
+      if (state === "tombstoned" && loadDeletionDiagnostics) {
+        try {
+          const read = await loadDeletionDiagnostics(agent.agentDefinitionId);
+          if (request.current()) setDiagnostics(read);
+        } catch {
+          // A failed diagnostic read must not replace the original error.
+        }
+      }
     } finally {
       if (request.owns()) {
         inFlight.current = false;
@@ -98,6 +121,7 @@ export function AgentStateDialog({
                 {error}
               </div>
             )}
+            <AgentDeletionStatus diagnostics={diagnostics} />
           </>
         ) : (
           <div className="rah-dialog-body">

@@ -195,9 +195,10 @@ try {
     input: [
       {
         text:
-          resumeRecovery === undefined
-            ? "Start this RAH OS Activation now. Follow the developer instructions and complete the canonical Room work."
-            : "The previous Provider thread was not recovered. Use canonical Room history and workspace memory as the recovery point. Start this RAH OS Activation now.",
+          (resumeRecovery === undefined
+            ? ""
+            : "The previous Provider thread was not recovered. Use canonical Room history and workspace memory as the recovery point.\n") +
+          providerActivationInput(),
         type: "text",
       },
     ],
@@ -214,6 +215,15 @@ try {
   if (activeTurnId === undefined) {
     throw new Error("turn/start returned no turn.id");
   }
+  // ACCEPTANCE SIGNAL (Codex only). The JSON-RPC *response* to the very
+  // `turn/start` request that carried this wake text, correlated two ways: the
+  // request id is matched by `pending` before `requestState.resolve` runs
+  // (`handleFrame`), and `turnStart.threadId === activeThreadId` was verified
+  // from `thread/start`/`thread/resume`. `result.turn.id` is the turn the
+  // input now belongs to, so this is an acknowledgement of THIS injection and
+  // not merely "the process is alive". It is emitted only here: a stdin write
+  // returning, or the process starting, never reaches this line.
+  writeDeliveryAcceptance(activeThreadId, activeTurnId);
 
   const completedTurn = await turnCompleted;
   if (
@@ -224,7 +234,9 @@ try {
   }
   const interruptedByHost = stopping && completedTurn.status === "interrupted";
   if (completedTurn.status !== "completed" && !interruptedByHost) {
-    throw new Error(`Codex turn ended with status ${completedTurn.status}`);
+    throw new Error(
+      `Codex turn ended with status ${completedTurn.status}${completedTurn.errorMessage ? `: ${completedTurn.errorMessage}` : ""}`,
+    );
   }
   if (!stopping) writeProviderSessionEvidence(activeThreadId);
 
@@ -334,7 +346,13 @@ function handleNotification(frame) {
     );
     return;
   }
-  resolveTurnCompletion({ status, threadId, turnId });
+  const errorMessage = stringField(recordField(turn, "error"), "message");
+  resolveTurnCompletion({
+    status,
+    threadId,
+    turnId,
+    errorMessage: errorMessage?.slice(0, 2048),
+  });
 }
 
 function belongsToActiveCodexTurn(frame) {
@@ -525,6 +543,30 @@ function classifyCodexResumeError(message) {
   return undefined;
 }
 
+/**
+ * Host-private frame on the same fd3 transport as the Provider session
+ * evidence, intercepted before canonical trajectory parsing so a runtime turn
+ * id never becomes Room or UI truth. The Host turns it into a Host-credential
+ * `delivery.presented.sent`; the driver itself has no Kernel authority.
+ */
+function writeDeliveryAcceptance(threadId, turnId) {
+  try {
+    writeSync(
+      3,
+      `${JSON.stringify({
+        protocol: "rah-delivery-accepted/v1",
+        provider: "codex-app-server/v1",
+        signal: "turn/start.response",
+        threadId,
+        turnId,
+      })}\n`,
+    );
+  } catch {
+    // A missing fd3 means no Host is listening; the Activation then simply
+    // never registers a send and falls back to the explicit message-check.
+  }
+}
+
 function writeProviderSessionEvidence(providerSessionId) {
   try {
     writeSync(
@@ -579,3 +621,4 @@ class RpcError extends Error {
     this.code = code;
   }
 }
+import { providerActivationInput } from "./provider-activation-input.js";

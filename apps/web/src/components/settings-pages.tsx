@@ -6,6 +6,11 @@ import type { RahClient } from "@rah-os/client-sdk";
 import type { Principal, Workspace } from "@rah-os/protocol";
 
 import {
+  WEB_BUILD_IDENTITY,
+  buildIdentityDetail,
+  buildIdentityLabel,
+} from "../build-identity.ts";
+import {
   readAgentModelName,
   readHideEmptySidebarSections,
   writeHideEmptySidebarSections,
@@ -268,34 +273,6 @@ export function AppearanceSettingsContent() {
   return (
     <SettingsPage icon="type" title="外观">
       <SettingsSectionLabel icon="type">外观</SettingsSectionLabel>
-      <article className="rah-settings-card rah-settings-toggle-card">
-        <div>
-          <strong id="rah-hide-empty-label">隐藏空的侧栏分区</strong>
-          <p>当侧栏分区没有内容时，整块隐藏不显示。</p>
-          <p className="rah-settings-saved">
-            {hideEmptyStorageError
-              ? "仅本次生效，无法保存到此设备。"
-              : "已保存到此设备。"}
-          </p>
-        </div>
-        <label className="rah-settings-switch">
-          <input
-            type="checkbox"
-            aria-labelledby="rah-hide-empty-label"
-            checked={hideEmpty}
-            onChange={(event) => {
-              setHideEmpty(event.target.checked);
-              setHideEmptyStorageError(
-                !writeHideEmptySidebarSections(
-                  window.localStorage,
-                  event.target.checked,
-                ),
-              );
-            }}
-          />
-          <span aria-hidden="true" />
-        </label>
-      </article>
       <article className="rah-settings-card rah-settings-form-card">
         <div>
           <strong>消息字号</strong>
@@ -446,16 +423,46 @@ export function AppearanceSettingsContent() {
           <span aria-hidden="true" />
         </label>
       </article>
+      <article className="rah-settings-card rah-settings-toggle-card">
+        <div>
+          <strong id="rah-hide-empty-label">隐藏空的侧栏分区</strong>
+          <p>当侧栏分区没有内容时，整块隐藏不显示。</p>
+          <p className="rah-settings-saved">
+            {hideEmptyStorageError
+              ? "仅本次生效，无法保存到此设备。"
+              : "已保存到此设备。"}
+          </p>
+        </div>
+        <label className="rah-settings-switch">
+          <input
+            type="checkbox"
+            aria-labelledby="rah-hide-empty-label"
+            checked={hideEmpty}
+            onChange={(event) => {
+              setHideEmpty(event.target.checked);
+              setHideEmptyStorageError(
+                !writeHideEmptySidebarSections(
+                  window.localStorage,
+                  event.target.checked,
+                ),
+              );
+            }}
+          />
+          <span aria-hidden="true" />
+        </label>
+      </article>
     </SettingsPage>
   );
 }
 
 export function WorkspaceProfileSettingsContent({
+  children,
   canManage,
   client,
   onUpdated,
   workspace,
 }: {
+  children?: React.ReactNode;
   canManage: boolean;
   client: RahClient;
   onUpdated: (workspace: Workspace) => void;
@@ -538,6 +545,7 @@ export function WorkspaceProfileSettingsContent({
           </p>
         ) : null}
       </form>
+      {children}
       <p className="rah-settings-footnote">
         本地版服务器即当前协作空间；它由本机 daemon 承载，不依赖 Raft
         中央服务器。
@@ -603,7 +611,18 @@ export function AboutSettingsContent({
     <SettingsPage icon="info" title="关于">
       <SettingsSectionLabel>版本</SettingsSectionLabel>
       <article className="rah-settings-card rah-settings-copy-card rah-settings-readonly-card">
-        <strong>RAH OS 0.0.0</strong>
+        <strong>{buildIdentityLabel(WEB_BUILD_IDENTITY)}</strong>
+        <p>
+          {WEB_BUILD_IDENTITY.kind === "development"
+            ? "development 构建（未签发版本）"
+            : "正式构建"}
+        </p>
+        {/* Acceptance evidence: this build id must equal the one /_rah/health
+            reports, otherwise the Web bundle and the running Core are not the
+            same build. */}
+        <p>
+          <code>{buildIdentityDetail(WEB_BUILD_IDENTITY)}</code>
+        </p>
         <p>local-first 多 Agent 聊天室与任务工作台</p>
       </article>
       <SettingsSectionLabel>移动端</SettingsSectionLabel>

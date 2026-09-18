@@ -1,11 +1,16 @@
 import type { DatabaseSync } from "node:sqlite";
+import { ACTIVATION_PRESENTED_WINDOW_SCHEMA } from "./activation-presented-window.ts";
 
 export const LEGACY_WORKSPACE_ID = "workspace_legacy";
 
-export const SCHEMA_SQL = `
+// Connection pragmas can never run inside a transaction; keeping them separate
+// lets the object DDL below be applied as one transactional migration unit.
+export const SCHEMA_PRAGMA_SQL = `
 PRAGMA journal_mode = WAL;
 PRAGMA foreign_keys = ON;
+`;
 
+export const SCHEMA_OBJECT_SQL = `
 CREATE TABLE IF NOT EXISTS kernel_runtime_secrets (
   secret_name TEXT PRIMARY KEY,
   secret_value TEXT NOT NULL
@@ -586,7 +591,7 @@ CREATE TABLE IF NOT EXISTS activation_delivery_windows (
   after_seq INTEGER NOT NULL CHECK (after_seq >= 0),
   PRIMARY KEY (activation_id, consumer_id)
 ) STRICT;
-
+${ACTIVATION_PRESENTED_WINDOW_SCHEMA}
 CREATE TABLE IF NOT EXISTS activation_retry_fences (
   activation_id TEXT PRIMARY KEY REFERENCES activations(activation_id),
   room_id TEXT NOT NULL REFERENCES rooms(room_id),
@@ -1073,6 +1078,27 @@ CREATE TABLE IF NOT EXISTS runtime_processes (
 CREATE INDEX IF NOT EXISTS idx_runtime_processes_recovery
   ON runtime_processes(state, recovery_driver, recovery_available_at_ms, recovery_lease_until_ms, registered_at);
 
+-- R5: the only Agent-deletion block fact that cannot be derived from the rows
+-- the deletion fence already reads is *when* the block started. Everything else
+-- (which table, which RunAttempt/Host/recovery driver, current states) is
+-- re-derived on read. One row per blocked Agent, written only when the blocker
+-- identity changes and deleted when the block clears: no per-tick write, and no
+-- event stream. The row is never a substitute for terminal proof.
+--
+-- It deliberately carries no foreign keys. It is derived bookkeeping with no
+-- historical value: it is written by the deletion reconciler, deleted when the
+-- deletion completes, and readable only through a live agent_definition. Adding
+-- an FK path to rooms would pull a diagnostics projection into the Room-deletion
+-- eraser contract (ROOM_DELETION_REFERENCED_TABLES), changing an owner this
+-- work item does not own.
+CREATE TABLE IF NOT EXISTS agent_deletion_blocks (
+  agent_definition_id TEXT PRIMARY KEY,
+  participant_id TEXT NOT NULL,
+  blocker_signature TEXT NOT NULL,
+  first_observed_at TEXT NOT NULL,
+  recorded_at TEXT NOT NULL
+) STRICT;
+
 CREATE TABLE IF NOT EXISTS subscription_cursors (
   room_id TEXT NOT NULL REFERENCES rooms(room_id),
   participant_id TEXT NOT NULL REFERENCES principals(principal_id),
@@ -1111,6 +1137,8 @@ CREATE INDEX IF NOT EXISTS idx_inbox_participant_state
 CREATE INDEX IF NOT EXISTS idx_outbox_unpublished
   ON outbox(published_at, available_at_ms, lease_until_ms, outbox_seq);
 `;
+
+export const SCHEMA_SQL = `${SCHEMA_PRAGMA_SQL}${SCHEMA_OBJECT_SQL}`;
 
 export function migrateCollaborationSchemaV7(
   database: DatabaseSync,
@@ -1526,6 +1554,57 @@ export function migrateTaskWorkflowAuthorityV48(database: DatabaseSync): void {
       SELECT RAISE(ABORT, 'workflow_status must match canonical Task state');
     END
   `);
+}
+
+/**
+ * Indexes for the two `agent.deletion_requested` hot paths:
+ * `RoomKernel.reconcileAgentDeletions()` (run every second by the daemon
+ * reconciler) and `#assertWorkerGrantScope` (run on every Worker
+ * authorization). Both filter `room_events` without a `room_id`, so the
+ * existing room-leading indexes cannot serve them.
+ *
+ * They are partial indexes on purpose: `agent.deletion_requested` is a tiny
+ * fraction of `room_events`, so the index pages stay in the kilobyte range and
+ * every other event insert only pays a `WHERE` evaluation instead of a b-tree
+ * write.
+ */
+export const AGENT_DELETION_EVENT_INDEXES = [
+  {
+    name: "idx_room_events_agent_deletion_requested_created",
+    sql: `CREATE INDEX IF NOT EXISTS idx_room_events_agent_deletion_requested_created
+      ON room_events(created_at, aggregate_id)
+      WHERE type = 'agent.deletion_requested'`,
+  },
+  {
+    name: "idx_room_events_agent_deletion_requested_aggregate",
+    sql: `CREATE INDEX IF NOT EXISTS idx_room_events_agent_deletion_requested_aggregate
+      ON room_events(aggregate_id)
+      WHERE type = 'agent.deletion_requested'`,
+  },
+] as const;
+
+/**
+ * Creates the deletion-event indexes. Adding an index rewrites no row, so this
+ * step is safe to repeat: each statement is `IF NOT EXISTS`, and a failure
+ * part-way through leaves the already-created indexes in place and lets the
+ * next startup finish the rest. A failure is reported with the blocked index
+ * name so the operator can clear the cause instead of reading a bare SQLite
+ * message.
+ */
+export function migrateAgentDeletionEventIndexes(database: DatabaseSync): void {
+  for (const index of AGENT_DELETION_EVENT_INDEXES) {
+    try {
+      database.exec(index.sql);
+    } catch (cause) {
+      throw new Error(
+        `Kernel index migration failed: cannot create ${index.name} on room_events. ` +
+          `Remove the object blocking that name or restore write access to the database, ` +
+          `then start again; this migration only adds indexes, rewrites no row and is safe to retry. ` +
+          `Cause: ${cause instanceof Error ? cause.message : String(cause)}`,
+        { cause },
+      );
+    }
+  }
 }
 
 export function migrateBoundedRoomReadsV49(database: DatabaseSync): void {

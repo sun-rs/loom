@@ -145,6 +145,12 @@ test("the formal LAN gateway requires TLS pairing and keeps Human authority serv
     const health = await secureRequest(origin, "/_rah/health");
     assert.equal(health.statusCode, 200);
     assert.deepEqual(JSON.parse(health.body), {
+      buildIdentity: {
+        schemaVersion: 1,
+        kind: "development",
+        version: "0.0.0-dev+local",
+        buildId: "development",
+      },
       service: "rah-os-local-core",
       state: "online",
     });

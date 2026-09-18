@@ -478,6 +478,24 @@ export const ComputerExecutionCommandRequestSchema = z.discriminatedUnion(
         kind: z.literal("activation.cancellation.resolve"),
       })
       .strict(),
+    /**
+     * The Host registers that it handed the Kernel's own rendering of this
+     * Activation's range to the runtime, after that driver's acceptance
+     * signal. It carries no range, no page and no digest: everything the
+     * record contains was written by the server when it rendered. This rides
+     * the existing authenticated Host session — the same `session.host`
+     * (`AuthenticatedHostContext` from `agent_host_credentials`) that
+     * `run.finish` and `activation.complete` use — so no new authentication
+     * path exists anywhere for this fact.
+     */
+    z
+      .object({
+        activationId: IdentifierSchema,
+        consumerId: IdentifierSchema,
+        kind: z.literal("delivery.presented.sent"),
+        runAttemptId: IdentifierSchema,
+      })
+      .strict(),
   ],
 );
 export type ComputerExecutionCommandRequest = z.infer<
@@ -545,6 +563,12 @@ export const ComputerExecutionCommandResponseSchema = z.discriminatedUnion(
       .object({
         activation: ActivationSchema,
         kind: z.literal("activation.cancellation.resolve"),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("delivery.presented.sent"),
+        registered: z.literal(true),
       })
       .strict(),
   ],

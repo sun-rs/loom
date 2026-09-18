@@ -1,8 +1,9 @@
 import { useMobileLayout } from "../use-mobile-layout.ts";
+import { useAgentStart } from "../use-agent-start.ts";
 import { ThreadPanelResizer } from "./thread-panel-resizer.tsx";
 import { AgentEnvironmentSummary } from "./agent-environment-summary.tsx";
 import { AgentHeaderActions } from "./agent-header-actions.tsx";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type {
   CSSProperties,
   KeyboardEvent,
@@ -56,7 +57,6 @@ import { renderAgentActivityDiagnostics } from "../agent-activity-diagnostics.ts
 import { Icon } from "@rah-os/ui-web/neo-brutalist/icon";
 import { AgentStatusDot } from "./agent-status-dot.tsx";
 import { AgentExecutionResetDialog } from "./agent-execution-reset-dialog.tsx";
-import { AgentIssueReportDialog } from "./agent-issue-report-dialog.tsx";
 import {
   AgentStateDialog,
   type AgentStateChange,
@@ -297,6 +297,11 @@ export function AgentDirectoryPane({
             agentDefinitionId === selectedAgentDefinitionId,
         );
   const detailAgentId = selectedAgent?.agentDefinitionId;
+  const startAgent = useAgentStart(detailAgentId, onChangeState);
+  const requestStartStop = () => {
+    if (selectedAgent?.state === "enabled") setStateAction("disabled");
+    else void startAgent.start();
+  };
   useEffect(() => {
     setStateAction(undefined);
     setHeaderResetOpen(false);
@@ -756,6 +761,11 @@ export function AgentDirectoryPane({
                 agent={selectedAgent}
                 state={stateAction}
                 onChange={onChangeState}
+                loadDeletionDiagnostics={(agentDefinitionId) =>
+                  client.request("agent.deletion.diagnostics", {
+                    agentDefinitionId,
+                  })
+                }
                 onClose={() => setStateAction(undefined)}
               />
             )}
@@ -785,13 +795,8 @@ export function AgentDirectoryPane({
               }}
               onManage={() => onManage(selectedAgent.agentDefinitionId)}
               onStartStop={
-                canManage && onChangeState
-                  ? () =>
-                      setStateAction(
-                        selectedAgent.state === "enabled"
-                          ? "disabled"
-                          : "enabled",
-                      )
+                canManage && onChangeState && !startAgent.pending
+                  ? requestStartStop
                   : undefined
               }
               onRestart={
@@ -802,6 +807,11 @@ export function AgentDirectoryPane({
               onMessage={() => void openSelectedDirectRoom()}
             />
             <AgentTabList activeTab={tab} onSelect={selectTab} />
+            {startAgent.error && (
+              <p className="rah-inline-error" role="alert">
+                {startAgent.error}
+              </p>
+            )}
             {tab === "activity" ? (
               <AgentActivityPane
                 onOpenRoom={onOpenRoom}
@@ -831,13 +841,8 @@ export function AgentDirectoryPane({
                 loading={agentDetailLoading}
                 onManage={() => onManage(selectedAgent.agentDefinitionId)}
                 onStartStop={
-                  canManage && onChangeState
-                    ? () =>
-                        setStateAction(
-                          selectedAgent.state === "enabled"
-                            ? "disabled"
-                            : "enabled",
-                        )
+                  canManage && onChangeState && !startAgent.pending
+                    ? requestStartStop
                     : undefined
                 }
                 onDelete={
@@ -864,13 +869,9 @@ export function AgentDirectoryPane({
               />
             ) : tab === "chat" ? (
               <AgentChatPane
-                agentName={selectedAgent.displayName}
-                canMessage={canMessage}
                 directError={directRoomError}
-                directOpening={directRoomOpening}
                 error={agentRoomsError}
                 loading={agentRoomsLoading}
-                onOpenDirectRoom={() => void openSelectedDirectRoom()}
                 onOpenRoom={onOpenRoom}
                 rooms={agentRooms}
               />
@@ -896,24 +897,16 @@ export function AgentDirectoryPane({
   );
 }
 
-function AgentChatPane({
-  agentName,
-  canMessage,
+export function AgentChatPane({
   directError,
-  directOpening,
   error,
   loading,
-  onOpenDirectRoom,
   onOpenRoom,
   rooms,
 }: {
-  agentName: string;
-  canMessage: boolean;
   directError: string | undefined;
-  directOpening: boolean;
   error: string | undefined;
   loading: boolean;
-  onOpenDirectRoom: () => void;
   onOpenRoom: (roomId: string) => void;
   rooms: readonly Room[];
 }) {
@@ -923,15 +916,6 @@ function AgentChatPane({
     <section className="rah-agent-chat-pane rah-scroll-main">
       <header className="rah-agent-chat-title">
         <h3>频道和私信</h3>
-        <button
-          className="rah-agent-chat-compose"
-          disabled={!canMessage || directOpening}
-          onClick={onOpenDirectRoom}
-          type="button"
-        >
-          <Icon name="chat" />
-          {directOpening ? "正在打开…" : `给 ${agentName} 发消息`}
-        </button>
       </header>
       {directError === undefined ? null : (
         <div className="rah-inline-error">{directError}</div>
@@ -1005,12 +989,24 @@ function AgentChatRoomGroup({
               key={room.roomId}
               onClick={() => onOpenRoom(room.roomId)}
             >
-              <Icon name={room.kind === "direct" ? "lock" : "hash"} />
+              <Icon
+                name={
+                  room.kind === "direct" || room.visibility === "private"
+                    ? "lock"
+                    : "hash"
+                }
+              />
               <span>
                 <b>{room.name}</b>
                 <small>#{room.slug}</small>
               </span>
-              <i>{room.kind === "direct" ? "私信" : "频道"}</i>
+              <i>
+                {room.kind === "direct"
+                  ? "私信"
+                  : room.visibility === "private"
+                    ? "私有"
+                    : "公开"}
+              </i>
             </button>
           ))}
         </div>
@@ -1142,7 +1138,6 @@ export function AgentProfilePane({
   runtimes: readonly LocalRuntimeInventoryEntry[];
 }) {
   const [resetOpen, setResetOpen] = useState(false);
-  const [issueReportOpen, setIssueReportOpen] = useState(false);
   const runtimeView = runtimeProfilePresentation(
     runtimes,
     detail?.policy.modelIntent,
@@ -1373,15 +1368,6 @@ export function AgentProfilePane({
             查看活动诊断
           </button>
           <button
-            className="rah-interaction-brutal is-orange"
-            disabled={!canManage}
-            onClick={() => setIssueReportOpen(true)}
-            title="生成经过裁剪的本地诊断文件，不会自动上传"
-          >
-            <Icon name="bug" />
-            报告问题
-          </button>
-          <button
             className="rah-interaction-brutal is-red"
             disabled={!canManage}
             onClick={onDelete ?? onManage}
@@ -1398,13 +1384,6 @@ export function AgentProfilePane({
           fullResetEnabled={fullResetEnabled}
           onClose={() => setResetOpen(false)}
           onConfirm={onResetExecution}
-        />
-      ) : null}
-      {issueReportOpen ? (
-        <AgentIssueReportDialog
-          agent={agent}
-          client={client}
-          onClose={() => setIssueReportOpen(false)}
         />
       ) : null}
     </section>
@@ -1638,7 +1617,6 @@ function ProfileChip({
 }
 
 export function AgentActivityPane({
-  onOpenRoom,
   activities,
   agent,
   error,
@@ -1662,11 +1640,43 @@ export function AgentActivityPane({
   const [copied, setCopied] = useState(false);
   const scrollArea = useRef<HTMLElement>(null);
   const followLatest = useRef(true);
+  const [atBottom, setAtBottom] = useState(true);
   const lastScrollTop = useRef(0);
+  const earlierAnchor = useRef<{ id: string; offset: number } | undefined>(
+    undefined,
+  );
   const visibleActivities = useMemo(
     () => projectAgentActivityRows(activities),
     [activities],
   );
+
+  useLayoutEffect(() => {
+    followLatest.current = true;
+    earlierAnchor.current = undefined;
+    lastScrollTop.current = 0;
+    setAtBottom(true);
+    const element = scrollArea.current;
+    if (element) {
+      element.scrollTop = element.scrollHeight;
+      lastScrollTop.current = element.scrollTop;
+    }
+  }, [agent.agentDefinitionId]);
+
+  useLayoutEffect(() => {
+    const element = scrollArea.current;
+    const anchor = earlierAnchor.current;
+    if (!element || !anchor) return;
+    const row = Array.from(
+      element.querySelectorAll<HTMLElement>("[data-activity-id]"),
+    ).find((candidate) => candidate.dataset.activityId === anchor.id);
+    if (row)
+      element.scrollTop +=
+        row.getBoundingClientRect().top -
+        element.getBoundingClientRect().top -
+        anchor.offset;
+    lastScrollTop.current = element.scrollTop;
+    earlierAnchor.current = undefined;
+  }, [visibleActivities[0]?.activityId]);
 
   useEffect(() => {
     setCopyError(undefined);
@@ -1682,7 +1692,7 @@ export function AgentActivityPane({
       if (followLatest.current) element.scrollTop = element.scrollHeight;
       lastScrollTop.current = element.scrollTop;
     }
-  }, [visibleActivities.at(-1)?.serverSequence]);
+  }, [visibleActivities.at(-1)?.serverSequence, history]);
 
   async function copyDiagnostics(): Promise<void> {
     setCopyError(undefined);
@@ -1706,93 +1716,135 @@ export function AgentActivityPane({
   }
 
   return (
-    <section
-      aria-label={`${agent.displayName} 动态`}
-      className="rah-agent-activity-pane rah-scroll-main"
-      onScroll={(event) => {
-        const element = event.currentTarget;
-        lastScrollTop.current = element.scrollTop;
-        followLatest.current =
-          element.scrollHeight - element.scrollTop - element.clientHeight < 48;
-      }}
-      ref={scrollArea}
-    >
-      <header>
-        <div>
-          <h3>活动诊断</h3>
-        </div>
+    <div className="rah-agent-activity-surface">
+      <section
+        aria-label={`${agent.displayName} 动态`}
+        className="rah-agent-activity-pane rah-scroll-main"
+        onScroll={(event) => {
+          const element = event.currentTarget;
+          if (earlierAnchor.current) {
+            const top = element.getBoundingClientRect().top;
+            const row = Array.from(
+              element.querySelectorAll<HTMLElement>("[data-activity-id]"),
+            ).find(
+              (candidate) => candidate.getBoundingClientRect().bottom > top,
+            );
+            if (row)
+              earlierAnchor.current = {
+                id: row.dataset.activityId!,
+                offset: row.getBoundingClientRect().top - top,
+              };
+          }
+          lastScrollTop.current = element.scrollTop;
+          followLatest.current =
+            element.scrollHeight - element.scrollTop - element.clientHeight <
+            48;
+          setAtBottom(followLatest.current);
+        }}
+        ref={scrollArea}
+      >
+        <header>
+          <div>
+            <h3>活动诊断</h3>
+          </div>
+          <button
+            className="btn"
+            disabled={activities.length === 0}
+            onClick={() => void copyDiagnostics()}
+            title="复制已加载的安全诊断元数据"
+          >
+            {copied ? "已复制" : "复制诊断信息"}
+          </button>
+        </header>
+        {error === undefined ? null : (
+          <div className="rah-inline-error">{error}</div>
+        )}
+        {copyError === undefined ? null : (
+          <div className="rah-inline-error">{copyError}</div>
+        )}
+        {hasEarlier ? (
+          <button
+            className="btn"
+            disabled={loading}
+            onClick={() => {
+              followLatest.current = false;
+              const element = scrollArea.current;
+              if (element) {
+                const top = element.getBoundingClientRect().top;
+                const row = Array.from(
+                  element.querySelectorAll<HTMLElement>("[data-activity-id]"),
+                ).find(
+                  (candidate) => candidate.getBoundingClientRect().bottom > top,
+                );
+                if (row)
+                  earlierAnchor.current = {
+                    id: row.dataset.activityId!,
+                    offset: row.getBoundingClientRect().top - top,
+                  };
+              }
+              onLoadEarlier();
+            }}
+          >
+            {loading ? "正在读取…" : "加载更早记录"}
+          </button>
+        ) : null}
+        {loading && activities.length === 0 ? (
+          <p className="rah-agent-activity-empty" role="status">
+            正在读取活动…
+          </p>
+        ) : activities.length === 0 && error === undefined ? (
+          <EmptyState
+            context="profile"
+            placement="fill"
+            icon="pulse"
+            title="暂无活动"
+            description="启动 Agent 以查看其活动日志。"
+          />
+        ) : (
+          <div className="rah-agent-activity-list" aria-live="polite">
+            {visibleActivities.map((activity) => (
+              <AgentTrajectoryRow
+                activity={activity}
+                key={activity.activityId}
+              />
+            ))}
+          </div>
+        )}
+        {activities.length > 0 && (
+          <p className="rah-agent-activity-note">
+            未运行的 Agent 不会显示其他测试环境的历史。动态来自 Provider
+            的结构化事件，不解析 ANSI。Codex 只显示公开 reasoning
+            summary，原始思维链不会进入该投影。
+          </p>
+        )}
+      </section>
+      {!atBottom && visibleActivities.length > 0 ? (
         <button
-          className="btn"
-          disabled={activities.length === 0}
-          onClick={() => void copyDiagnostics()}
-          title="复制已加载的安全诊断元数据"
-        >
-          {copied ? "已复制" : "复制诊断信息"}
-        </button>
-      </header>
-      {history && (
-        <button className="btn" onClick={onLatest}>
-          返回最新动态（历史浏览已暂停自动刷新）
-        </button>
-      )}
-      {error === undefined ? null : (
-        <div className="rah-inline-error">{error}</div>
-      )}
-      {copyError === undefined ? null : (
-        <div className="rah-inline-error">{copyError}</div>
-      )}
-      {loading && activities.length === 0 ? (
-        <p className="rah-agent-activity-empty" role="status">
-          正在读取活动…
-        </p>
-      ) : activities.length === 0 && error === undefined ? (
-        <EmptyState
-          context="profile"
-          placement="fill"
-          icon="pulse"
-          title="暂无活动"
-          description="启动 Agent 以查看其活动日志。"
-        />
-      ) : (
-        <div className="rah-agent-activity-list" aria-live="polite">
-          {visibleActivities.map((activity) => (
-            <AgentTrajectoryRow
-              activity={activity}
-              key={activity.activityId}
-              onOpenRoom={onOpenRoom}
-            />
-          ))}
-        </div>
-      )}
-      {hasEarlier ? (
-        <button
-          className="btn"
-          disabled={loading}
+          className="rah-scroll-to-bottom"
+          type="button"
           onClick={() => {
-            followLatest.current = false;
-            onLoadEarlier();
+            earlierAnchor.current = undefined;
+            followLatest.current = true;
+            const element = scrollArea.current;
+            if (element) {
+              element.scrollTop = element.scrollHeight;
+              lastScrollTop.current = element.scrollTop;
+            }
+            setAtBottom(true);
+            if (history) onLatest();
           }}
         >
-          {loading ? "正在读取…" : "加载更早记录"}
+          <span aria-hidden="true">↓</span> 回到底部
         </button>
       ) : null}
-      {activities.length > 0 && (
-        <p className="rah-agent-activity-note">
-          未运行的 Agent 不会显示其他测试环境的历史。动态来自 Provider
-          的结构化事件，不解析 ANSI。Codex 只显示公开 reasoning
-          summary，原始思维链不会进入该投影。
-        </p>
-      )}
-    </section>
+    </div>
   );
 }
 
 function AgentTrajectoryRow({
   activity,
-  onOpenRoom,
 }: {
   activity: RuntimeTrajectoryRecord;
-  onOpenRoom: (roomId: string) => void;
 }) {
   const presentation = activityPresentation(activity.entry);
   const detail = presentation.detail;
@@ -1802,6 +1854,7 @@ function AgentTrajectoryRow({
     collapsible && !expanded ? `${detail.slice(0, 200)}…` : detail;
   return (
     <article
+      data-activity-id={activity.activityId}
       className={`is-${agentTrajectoryTone(activity)} is-${activity.entry.kind}`}
     >
       <time>{formatActivityTime(activity.observedAt)}</time>
@@ -1812,7 +1865,13 @@ function AgentTrajectoryRow({
         <b>{presentation.label}</b>
         {visibleDetail === "" ? null : (
           <span className="rah-trajectory-detail">
-            <DiagnosticReferences text={visibleDetail} />
+            {activity.entry.kind === "system" ||
+            activity.entry.kind === "slock_action" ||
+            activity.entry.kind === "status" ? (
+              <DiagnosticReferences text={visibleDetail} />
+            ) : (
+              visibleDetail
+            )}
           </span>
         )}
         {collapsible ? (
@@ -1824,23 +1883,6 @@ function AgentTrajectoryRow({
             {expanded ? "收起" : "展开"}
           </button>
         ) : null}
-        {activity.context && (
-          <small className="rah-trajectory-context">
-            对话：
-            <a
-              href={`?room=${encodeURIComponent(activity.context.roomId)}`}
-              onClick={(e) => {
-                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
-                  e.preventDefault();
-                  onOpenRoom(activity.context!.roomId);
-                }
-              }}
-            >
-              {activity.context.roomKind === "direct" ? "@" : "#"}
-              {activity.context.roomName}
-            </a>
-          </small>
-        )}
       </div>
     </article>
   );

@@ -2,6 +2,14 @@
 
 ## Scope and ownership
 
+The 2026-09-18 correction keeps Hide Empty Sections in its own bordered card,
+16px below Show Agent Model. Both halves of each Settings switch receive the
+same pointer/click behavior; unchecked hover uses soft signal and checked uses
+yellow. Computers is accessed through its main surface, not a duplicate Settings
+entry. Archived Channels consumes App's canonical archived-room projection and
+the existing causal unarchive mutation; it creates no second room store.
+See [source comparison and verification](../audits/2026-09-18-settings-activity-repair.zh-CN.md).
+
 Complete the shared Settings composition before further page families. The
 maintained visual owner is `packages/ui-tokens/src/neo-brutalist/settings.css`;
 remove the migrated rules from `product.css`. Account uses the existing Human

@@ -6,6 +6,12 @@
 
 ## 1. 目标与非目标
 
+2026-09-18 修正：`restart/session/full` 都接受已停止（disabled）的 Agent，
+成功后在原有 Host fence 内恢复 enabled。已停止时跳过重复 disable；若 Host
+重置失败，原本停止的 Agent 保持停止，原本启用的 Agent 沿用已有恢复处理。
+不放宽 tombstoned、权限、terminal proof、幂等收据或工作区范围保护。
+详见[重启语义及弹窗修复](../audits/2026-09-18-agent-reset-parity.zh-CN.md)。
+
 本批只闭合本机 Agent 的两种显式运行控制：
 
 - `restart`：终止当前 Run，并让尚未完成的 canonical Activation 重新调度；保留 Agent 身份、`MEMORY.md + notes/`、Workspace 文件和 Provider continuity。

@@ -1,5 +1,6 @@
 import { resolveRuntimeDeliveryMode } from "./runtime.ts";
 import { maintainRuntimeBusyNotices } from "./runtime-busy-notices.ts";
+import { watchRuntimeLiveness } from "./runtime-watchdog.ts";
 import {
   ActivationCancellationRequestedError,
   AgentExecutionPausedError,
@@ -639,10 +640,13 @@ export class AgentHost {
         kind: "reap_failed",
       }),
     );
-    const timeoutOutcome = this.#timeoutWait(
-      this.#runTimeoutMs,
-      supervisor.signal,
-    ).then<RuntimeOutcome>(() => ({ kind: "timeout" }));
+    const timeoutOutcome = watchRuntimeLiveness({
+      intervalMs: this.#runTimeoutMs,
+      run,
+      runtime,
+      signal: supervisor.signal,
+      wait: this.#timeoutWait,
+    });
     const maintenanceOutcome = this.#maintainRunLease(
       activation.activationId,
       supervisor.signal,

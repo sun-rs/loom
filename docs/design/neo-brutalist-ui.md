@@ -123,6 +123,12 @@ The Computer file-reference picker also adopts `property-option`: hover and
 selected files use soft yellow, with a right-hand checkmark for every selected
 file. This user-requested file-selection adaptation shares the property-menu
 profile; it is not an additional palette or a claim of an upstream file picker.
+It opts into `clearHighlightOnDeselect`: explicit deselection dismisses the
+existing hover/focus fill until pointer re-entry or a new focus visit. This also
+prevents touch-generated sticky hover from looking selected. Keyboard focus
+outlines remain visible, other selected rows retain their fill, and other choice
+surfaces keep their existing behavior. This is a user-requested interaction
+difference, not a new color profile.
 
 State rules are shared:
 

@@ -20,6 +20,7 @@ export const DAEMON_VERSION = "0.1.0";
 
 export type StandingPromptLeaseOptions = {
   deliveryMode?: PromptDeliveryMode;
+  previousDeliveryMode?: PromptDeliveryMode;
   daemonVersion?: string;
   machineHostname?: string;
   machineOs?: string;
@@ -44,7 +45,7 @@ export function standingPromptLease(
     return undefined;
   }
   const revision = agent.agentDefinitionRevision;
-  const compiled = compileStandingPrompt({
+  const compilerInput = {
     agent: {
       ...(revision.description === undefined
         ? {}
@@ -76,8 +77,22 @@ export function standingPromptLease(
         ? {}
         : { workspacePath: options.workspacePath }),
     },
-  });
+  };
+  const compiled = compileStandingPrompt(compilerInput);
+  const compatible =
+    options.previousDeliveryMode === undefined
+      ? undefined
+      : compileStandingPrompt({
+          ...compilerInput,
+          runtimeContext: {
+            ...compilerInput.runtimeContext,
+            deliveryMode: options.previousDeliveryMode,
+          },
+        }).deterministicDigest;
   return Object.freeze({
+    ...(compatible === undefined
+      ? {}
+      : { compatibleStandingPromptDigest: compatible }),
     args: Object.freeze(["--prompt", compiled.prompt]),
     diagnostics: Object.freeze([
       `[rah-os] standing prompt compiler v${String(STANDING_PROMPT_COMPILER_VERSION)} digest ${compiled.deterministicDigest}`,

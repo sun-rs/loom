@@ -15,7 +15,24 @@ export function combineActivationEnvironmentLeases(
       "activation environment carries conflicting standing prompt digests",
     );
   }
+  const compatibleDigests = leases.flatMap((lease) => {
+    if (lease.compatibleStandingPromptDigest === undefined) return [];
+    if (lease.standingPromptDigest === undefined) {
+      throw new Error(
+        "compatible prompt digest requires its current prompt digest",
+      );
+    }
+    return [lease.compatibleStandingPromptDigest];
+  });
+  if (new Set(compatibleDigests).size > 1) {
+    throw new Error(
+      "activation environment carries conflicting compatible prompt digests",
+    );
+  }
   return Object.freeze({
+    ...(compatibleDigests[0] === undefined
+      ? {}
+      : { compatibleStandingPromptDigest: compatibleDigests[0] }),
     ...(standingPromptDigests[0] === undefined
       ? {}
       : { standingPromptDigest: standingPromptDigests[0] }),

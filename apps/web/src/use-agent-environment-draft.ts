@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
-import {
-  RuntimeLaunchEnvironmentSchema,
-  type RuntimeGuideSettingsView,
-} from "@rah-os/protocol";
+import { type RuntimeGuideSettingsView } from "@rah-os/protocol";
 import type { EnvironmentRow } from "./components/runtime-environment-editor.tsx";
+import { parseAgentEnvironment } from "./agent-launch-environment.ts";
 
 /** Daemon-owned environment preferences; never copied into Room policy or messages. */
 export function useAgentEnvironmentDraft(
@@ -43,13 +41,7 @@ export function useAgentEnvironmentDraft(
   let environment: Record<string, string> = Object.create(null);
   let validationError: string | undefined;
   try {
-    for (const item of rows) {
-      if (!item.key && !item.value) continue;
-      if (Object.hasOwn(environment, item.key))
-        throw new Error("环境变量名称重复：" + item.key);
-      environment[item.key] = item.value;
-    }
-    environment = RuntimeLaunchEnvironmentSchema.parse(environment);
+    environment = parseAgentEnvironment(rows);
   } catch (error) {
     validationError =
       error instanceof Error ? error.message : "环境变量格式错误";

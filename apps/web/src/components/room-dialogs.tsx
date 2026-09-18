@@ -1250,16 +1250,18 @@ function RoomAgentSosDialog({
   );
 }
 
-function RoomArchiveConfirmation({
+export function RoomArchiveConfirmation({
   blocked,
   name,
   onCancel,
   onConfirm,
+  error,
 }: {
   blocked: boolean;
   name: string;
   onCancel: () => void;
   onConfirm: () => Promise<void>;
+  error?: string | undefined;
 }) {
   const dialogRef = useDialogProtocol({ blocked, onClose: onCancel });
   return (
@@ -1271,6 +1273,7 @@ function RoomArchiveConfirmation({
       <section
         aria-labelledby="rah-room-archive-title"
         aria-modal="true"
+        aria-busy={blocked}
         className="rah-dialog rah-channel-confirmation"
         ref={dialogRef}
         role="dialog"
@@ -1288,9 +1291,10 @@ function RoomArchiveConfirmation({
           </button>
         </header>
         <p>
-          成员仍可阅读「{name}
-          」及其历史记录，但将无法发送新消息，且该频道会从侧栏中隐藏。你之后可以取消归档。
+          归档“{name}
+          ”？成员仍可查看历史消息和读取内容，但将无法写入，频道也会从侧栏中隐藏。你之后可以取消归档。
         </p>
+        {error && <p role="alert">{error}</p>}
         <footer>
           <button className="btn" disabled={blocked} onClick={onCancel}>
             取消
@@ -1302,7 +1306,7 @@ function RoomArchiveConfirmation({
             disabled={blocked}
             onClick={() => void onConfirm()}
           >
-            {blocked ? "正在归档…" : "归档"}
+            {blocked ? "正在归档…" : "归档频道"}
           </button>
         </footer>
       </section>

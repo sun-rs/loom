@@ -1,4 +1,4 @@
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import {
   profileEditorKeyAction,
   validProfileField,
@@ -28,6 +28,13 @@ export function AgentProfileFieldEditor({
   const [error, setError] = useState<string>();
   const saving = useRef(false);
   const trigger = useRef<HTMLButtonElement>(null);
+  const descriptionInput = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => {
+    const input = descriptionInput.current;
+    if (!input) return;
+    input.style.height = "auto";
+    input.style.height = `${Math.max(40, Math.min(input.scrollHeight, 160))}px`;
+  }, [edit?.value]);
   function close() {
     setEdit(undefined);
     setError(undefined);
@@ -115,6 +122,8 @@ export function AgentProfileFieldEditor({
         >
           {field === "description" ? (
             <textarea
+              ref={descriptionInput}
+              rows={2}
               autoFocus
               aria-label={label}
               maxLength={2000}
@@ -155,6 +164,11 @@ export function AgentProfileFieldEditor({
               取消
             </button>
           </div>
+          {field === "description" && (
+            <div className="rah-profile-field-count">
+              {edit.value.trim().length}/2000
+            </div>
+          )}
         </form>
       ) : (
         <p className={!value ? "is-empty" : undefined}>{value || "暂无描述"}</p>

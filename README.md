@@ -36,7 +36,22 @@ The Room Kernel service and Mac AgentHost daemon are logically independent of ev
 
 ## Repository status
 
-Current release: **one Human, multiple Agents, local Mac**. Multi-Human onboarding,
+Release identity: this branch is **post-`v1.0.0-rc.1` development**. The
+`v1.0.0-rc.1` tag is an existing local milestone and is never rewritten; the code
+after it has **no release version yet** — the next version number is a user
+decision, not something a build or an audit may assign. Until that decision,
+every artefact built from this tree reports a `development` identity
+(`0.0.0-dev+<short commit or local>`), and that identity is what Settings → 关于,
+`/_rah/health`, `agent_hosts.build_version` and `rah-os-daemon --version` all
+show. A formal product build refuses to run without an explicit release version
+instead of falling back to a placeholder; see
+[R4 release identity](./docs/audits/2026-09-16-r4-release-identity.zh-CN.md).
+Schema (`KERNEL_SCHEMA_VERSION`), protocol versions and runtime binding versions
+are separate contracts and are not derived from the release identity. A `parity`
+PASS in this repository means the registry/ratchet check is valid, not that the
+product reached full Raft parity.
+
+Current release scope: **one Human, multiple Agents, local Mac**. Multi-Human onboarding,
 collaboration and differentiated Human Room access are a deferred optional project,
 not first-release blockers. [Scope decision and mainline order](./docs/product/single-human-mainline-and-multi-human-backlog.zh-CN.md)
 supersede earlier public-Channel closure priorities; existing authentication and
@@ -90,7 +105,7 @@ Current scope:
 - a Host-bound, owner-private Runtime Profile Registry with strict v1/v2/v3 manifests, domain-separated canonical digests, immutable semantic revisions and versioned probe reports, idempotent object/file import, explicit activate/deprecate projections, and database-enforced append-only local audit;
 - a versioned built-in adapter/recovery implementation registry, immutable executable-content probes with spawn-time identity revalidation, bounded redact-before-truncate diagnostics, spawn-time credential-slot binding, old-revision recovery provenance/routing, and live-probed redacted profile-to-Offer publishers for daemon configs v3/v4.
 
-Current status is a **v0.1 local Core and Web workbench candidate with tested remote-Computer infrastructure**, not a signed production product or published SDK. The Core has fake E2 coverage for concurrent Room Tasks, atomic competition for one open Task, per-Agent serialization, Host restart recovery, quarantine isolation, active-run Agent pause/resume, and causal/idempotent collaboration commands. The P3 local gate drives managed Workspace/Room creation, persistent Agent provision/manage/lifecycle, Message/Thread context, two activation-scoped canonical Agent replies, one open Task, placement-managed dual lanes, one winner, Human completion, daemon restart, and durable client-cursor recovery entirely through canonical APIs; no transcript/JSONL is parsed. Compatibility configs v2/v3 retain delivery, Task resume, InputRequest, `SIGTERM`, and restart coverage. Runtime Profile v3 now probes machine-readable Claude/Codex/Kimi/OpenCode model catalogs without making a model request, freezes redacted bindings in the probe digest, and converts a Placement-selected model/reasoning intent into shell-free child launch controls. Kimi 0.38.0 effort is executable through its native per-process `KIMI_MODEL_THINKING_EFFORT` override; no user config is mutated. Opt-in delivery gates passed Codex CLI 0.149.1 (`gpt-5.6-sol`, low), Kimi CLI 0.38.0 (`kimi-code/k3`, runtime effort default), OpenCode 1.18.22 (`deepseek/deepseek-v4-flash`, max), and Claude Code 2.1.234. Kernel schema v12 now freezes a digest-verified ContextManifest for each new RunAttempt and owns versioned managed-MCP Server/Agent-assignment state. Local and remote launches inject the ContextManifest; a version-fenced Worker catalog/call path, Provider-specific local proxy and real Streamable HTTP executor keep credentials in daemon-owned SecretProvider references. The Web Settings slice can discover tools, create/revise/disable Servers and manage Agent tool allowlists entirely through the typed Human API and control Room causal barrier. It does not yet create executor URLs, request-header secrets or OAuth connections. The Raft-conformant Workspace instruction-pack protocol and rollback-capable installer are implemented. Each Activation also receives a token-free PATH-first `rah` wrapper whose fixed `rah worker` commands map to the scoped Worker application service, so default prompts and fake process gates no longer handcraft bearer HTTP. Task discussion anchors and Message-to-Task conversion are implemented; Human Inbox, Workspace/Room archive, explicit execution restart/session reset, canonical Artifact/Skill content resolution and pack assignment/materialization proof, Artifact/Review, stronger process containment, signed/notarized packaging, automatic LAN certificate trust/rotation, actual memory injection and memory governance remain roadmap work. The HTTPS Human LAN pairing edge, Raft-shaped paired-device administration and installable PWA shell are implemented; the external Computer HTTPS/pairing edge is not. See the [Raft official tutorial supervision baseline](./docs/product/raft-official-tutorial-supervision.zh-CN.md), [managed MCP supervision baseline](./docs/product/raft-managed-mcp-supervision.zh-CN.md), [Provider catalog audit](./docs/audits/2026-08-28-provider-model-effort-catalog-audit.zh-CN.md), [Core SDK boundary](./docs/architecture/core-sdk-boundary.zh-CN.md), and [Daemon Core architecture](./docs/architecture/daemon-core.zh-CN.md).
+Current status is a **local Core and Web workbench milestone (tagged `v1.0.0-rc.1`) with tested remote-Computer infrastructure**, not a signed production product or published SDK. The milestone tag names that snapshot only; this branch has moved past it and carries no release version. The Core has fake E2 coverage for concurrent Room Tasks, atomic competition for one open Task, per-Agent serialization, Host restart recovery, quarantine isolation, active-run Agent pause/resume, and causal/idempotent collaboration commands. The P3 local gate drives managed Workspace/Room creation, persistent Agent provision/manage/lifecycle, Message/Thread context, two activation-scoped canonical Agent replies, one open Task, placement-managed dual lanes, one winner, Human completion, daemon restart, and durable client-cursor recovery entirely through canonical APIs; no transcript/JSONL is parsed. Compatibility configs v2/v3 retain delivery, Task resume, InputRequest, `SIGTERM`, and restart coverage. Runtime Profile v3 now probes machine-readable Claude/Codex/Kimi/OpenCode model catalogs without making a model request, freezes redacted bindings in the probe digest, and converts a Placement-selected model/reasoning intent into shell-free child launch controls. Kimi 0.38.0 effort is executable through its native per-process `KIMI_MODEL_THINKING_EFFORT` override; no user config is mutated. Opt-in delivery gates passed Codex CLI 0.149.1 (`gpt-5.6-sol`, low), Kimi CLI 0.38.0 (`kimi-code/k3`, runtime effort default), OpenCode 1.18.22 (`deepseek/deepseek-v4-flash`, max), and Claude Code 2.1.234. Kernel schema v12 now freezes a digest-verified ContextManifest for each new RunAttempt and owns versioned managed-MCP Server/Agent-assignment state. Local and remote launches inject the ContextManifest; a version-fenced Worker catalog/call path, Provider-specific local proxy and real Streamable HTTP executor keep credentials in daemon-owned SecretProvider references. The Web Settings slice can discover tools, create/revise/disable Servers and manage Agent tool allowlists entirely through the typed Human API and control Room causal barrier. It does not yet create executor URLs, request-header secrets or OAuth connections. The Raft-conformant Workspace instruction-pack protocol and rollback-capable installer are implemented. Each Activation also receives a token-free PATH-first `rah` wrapper whose fixed `rah worker` commands map to the scoped Worker application service, so default prompts and fake process gates no longer handcraft bearer HTTP. Task discussion anchors and Message-to-Task conversion are implemented; Human Inbox, Workspace/Room archive, explicit execution restart/session reset, canonical Artifact/Skill content resolution and pack assignment/materialization proof, Artifact/Review, stronger process containment, signed/notarized packaging, automatic LAN certificate trust/rotation, actual memory injection and memory governance remain roadmap work. The HTTPS Human LAN pairing edge, Raft-shaped paired-device administration and installable PWA shell are implemented; the external Computer HTTPS/pairing edge is not. See the [Raft official tutorial supervision baseline](./docs/product/raft-official-tutorial-supervision.zh-CN.md), [managed MCP supervision baseline](./docs/product/raft-managed-mcp-supervision.zh-CN.md), [Provider catalog audit](./docs/audits/2026-08-28-provider-model-effort-catalog-audit.zh-CN.md), [Core SDK boundary](./docs/architecture/core-sdk-boundary.zh-CN.md), and [Daemon Core architecture](./docs/architecture/daemon-core.zh-CN.md).
 
 A persistent loopback local workbench is available with `npm run start:local-workbench`. A separate formal HTTPS LAN/PWA edge is available with `npm run start:lan-workbench`: the daemon remains loopback-only, the edge validates an explicit certificate/hostname/key, devices use expiring one-time pairing and revocable Secure/HttpOnly sessions, and the Human PAT stays server-side. Both paths serve the same production Web bundle and preserve Workspace/Room/Agent/Runtime state across restart. Their automated gates use fake CLIs and real Chrome; installed real CLIs are only invoked after the user explicitly adds an Agent to a Room and sends work. A source-independent, ad-hoc-signed Mac SEA product and LaunchAgent path now exist, but Developer ID/notarization, automatic local-CA trust and the external Computer pairing endpoint remain release gaps; see [ADR-0017](./docs/adr/0017-persistent-loopback-local-workbench.md) and [ADR-0019](./docs/adr/0019-local-core-secure-lan-edge-and-direct-computers.md).
 
@@ -148,6 +163,9 @@ display name so a future rename, upgrade, reinstall, or checkout deletion does n
 
 The normative rules are in
 [`docs/product/2026-09-02-install-data-lifecycle-contract.zh-CN.md`](docs/product/2026-09-02-install-data-lifecycle-contract.zh-CN.md).
+An operator restart preserves inert quarantined Activations when their leases
+are clear and all execution owners are terminal. Queued or active work still
+blocks restart; a restart never clears quarantine or marks a Task complete.
 Any change to storage, installation, migration, service management, reset, or product naming must
 update that contract and this README together.
 
@@ -175,27 +193,43 @@ mkdir -m 700 /absolute/carrier-directory
 npm run fetch:core:sea-carrier -- \
   --output-directory /absolute/carrier-directory
 
+# Resolve the release identity once; every build step of this release reuses it.
+export RAH_OS_BUILD_IDENTITY="$(node scripts/release-version.mjs \
+  --release-version <release-version> \
+  --commit "$(git rev-parse HEAD)")"
+
+npm run build:web:workbench
+
 npm run build:core:macos-product -- \
-  --output /absolute/RAH-OS-Core-0.1.0 \
-  --version 0.1.0 \
+  --output /absolute/RAH-OS-Core-<release-version> \
+  --version <release-version> \
   --carrier /absolute/carrier-directory/node
 ```
+
+`<release-version>` is an explicit input. There is no default and no fallback to
+`0.0.0`: `release-version.mjs` refuses a missing or placeholder version, the
+product build refuses to package a Web bundle built without an identity, and a
+Web bundle whose identity names a different release is rejected rather than
+relabelled. Without `RAH_OS_BUILD_IDENTITY` (or `RAH_OS_RELEASE_VERSION`) the Web
+build produces an honest `development` bundle instead of a fake release. Commit
+and build time are frozen into the artefact at build time; nothing reads a Git
+working tree at run time.
 
 The product contains one SEA executable, the production Web/PWA bundle, and a strict SHA-256 manifest. It imports no TypeScript, `node_modules`, repository script, or source checkout at runtime. The installer and uninstaller are embedded in that same executable. Install it as a per-user LaunchAgent; staging is the default and does not touch launchd, while `--activate` is an explicit second authority boundary:
 
 ```bash
-/absolute/RAH-OS-Core-0.1.0/bin/rah-os-core install --quick-start
+/absolute/RAH-OS-Core-<release-version>/bin/rah-os-core install --quick-start
 ```
 
 Quick start is the customer trial path: it requires at least one supported signed-in Agent CLI, creates an owner-private `~/RAH OS Workspace`, configures loopback Web at `http://127.0.0.1:4173`, and activates the per-user LaunchAgent in one explicitly requested operation. It never exposes the daemon to the LAN. For a custom workspace, staged installation, or LAN/PWA access, use the advanced path:
 
 ```bash
-/absolute/RAH-OS-Core-0.1.0/bin/rah-os-core install \
+/absolute/RAH-OS-Core-<release-version>/bin/rah-os-core install \
   --mode lan \
   --workspace /absolute/workspace/path \
   --origin https://rah-core.example.test:7443
 
-/absolute/RAH-OS-Core-0.1.0/bin/rah-os-core install \
+/absolute/RAH-OS-Core-<release-version>/bin/rah-os-core install \
   --mode lan \
   --workspace /absolute/workspace/path \
   --origin https://rah-core.example.test:7443 \
@@ -207,7 +241,7 @@ The embedded installer verifies its product manifest, executable, and every Web 
 Uninstalling stops the LaunchAgent and removes its plist while preserving Rooms, Agents, TLS identity and all other persistent state:
 
 ```bash
-/absolute/RAH-OS-Core-0.1.0/bin/rah-os-core uninstall
+/absolute/RAH-OS-Core-<release-version>/bin/rah-os-core uninstall
 ```
 
 The uninstall command has no data-deletion flag. Any future reset product must use an independently reviewed, product-owned data inventory; it cannot delete the shared `~/.rah` tree.

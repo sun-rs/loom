@@ -24,6 +24,13 @@ export type ChatTimelineItem =
       roomSeq: number;
       text: string;
     }
+  | {
+      createdAt: string;
+      eventId: string;
+      kind: "archive-changed";
+      roomSeq: number;
+      text: string;
+    }
   | (ReminderReceiptPresentation & { kind: "reminder-fired" });
 
 export type ThreadReceiptTimelineItem =
@@ -54,6 +61,18 @@ export function buildChatTimeline({
     roomSeq: message.roomSeq,
   }));
   for (const event of events) {
+    if (event.type === "room.archived" || event.type === "room.unarchived") {
+      const archived = event.type === "room.archived";
+      const actor = handles.get(event.actorId) ?? event.actorId;
+      items.push({
+        createdAt: event.createdAt,
+        eventId: event.eventId,
+        kind: "archive-changed",
+        roomSeq: event.roomSeq,
+        text: `${archived ? "📦" : "📤"} ${actor} ${archived ? "archived" : "unarchived"} this channel`,
+      });
+      continue;
+    }
     if (event.type === "membership.added") {
       const participantId = event.payload.participantId;
       if (typeof participantId !== "string") continue;

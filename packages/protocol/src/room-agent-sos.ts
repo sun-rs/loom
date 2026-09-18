@@ -72,6 +72,7 @@ export type RoomAgentSosOperation = z.infer<typeof RoomAgentSosOperationSchema>;
 
 export const ClientRoomAgentSosStopRequestSchema = z
   .object({
+    resumeOnMessage: z.boolean().optional(),
     basedOnRoomSeq: z.number().int().nonnegative(),
     idempotencyKey: IdentifierSchema,
     roomId: IdentifierSchema,

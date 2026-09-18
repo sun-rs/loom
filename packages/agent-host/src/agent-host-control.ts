@@ -38,6 +38,11 @@ export type AgentHostControlPort = {
   leaseNextRuntimeRecovery(
     input: HostInput<RoomKernel["leaseNextRuntimeRecovery"]>,
   ): Promise<HostResult<RoomKernel["leaseNextRuntimeRecovery"]>>;
+  /** Registers "handed to the runtime" under the Host's own credential, after
+   * the driver's acceptance signal. Never called on a write alone. */
+  markPresentedDeliverySent(
+    input: HostInput<RoomKernel["markPresentedDeliverySent"]>,
+  ): Promise<void>;
   markRunAttemptRunning(
     input: HostInput<RoomKernel["markRunAttemptRunning"]>,
   ): Promise<HostResult<RoomKernel["markRunAttemptRunning"]>>;
@@ -103,6 +108,8 @@ export function createKernelAgentHostControlPort(
       kernel.leaseNextActivation(host, input),
     leaseNextRuntimeRecovery: async (input) =>
       kernel.leaseNextRuntimeRecovery(host, input),
+    markPresentedDeliverySent: async (input) =>
+      kernel.markPresentedDeliverySent(host, input),
     markRunAttemptRunning: async (input) =>
       kernel.markRunAttemptRunning(host, input),
     prepareRunAttemptRuntime: async (input) =>

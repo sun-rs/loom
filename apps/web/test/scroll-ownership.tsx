@@ -39,6 +39,7 @@ const activity = (i: number): RuntimeTrajectoryRecord => ({
   producerSequence: i,
   serverSequence: i,
   roomId: "fixture",
+  context: { roomId: "fixture", roomName: "fixture-room", roomKind: "channel" },
   runAttemptId: "fixture",
   runtimeRunId: "fixture",
 });
@@ -49,6 +50,7 @@ function Fixture() {
   const [activities, setActivities] = useState(() =>
     Array.from({ length: 80 }, (_, i) => activity(i)),
   );
+  const [activityHistory, setActivityHistory] = useState(false);
   const [open, setOpen] = useState("");
   const thread = useThreadFocusReturn();
   const search = useSearchChannelPreview();
@@ -82,11 +84,24 @@ function Fixture() {
           agent={agent}
           activities={activities}
           error={undefined}
-          hasEarlier={false}
+          hasEarlier={new URLSearchParams(location.search).has(
+            "activityRepair",
+          )}
           loading={false}
-          history={false}
-          onLatest={() => {}}
-          onLoadEarlier={() => {}}
+          history={activityHistory}
+          onLatest={() => {
+            setActivityHistory(false);
+            setActivities(Array.from({ length: 80 }, (_, i) => activity(i)));
+          }}
+          onLoadEarlier={() => {
+            setActivityHistory(true);
+            setActivities((current) => [
+              ...Array.from({ length: 20 }, (_, i) =>
+                activity(current[0]!.serverSequence - 20 + i),
+              ),
+              ...current,
+            ]);
+          }}
           onOpenRoom={() => {}}
         />
       </div>

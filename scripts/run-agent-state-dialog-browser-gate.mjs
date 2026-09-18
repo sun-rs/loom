@@ -145,7 +145,7 @@ for (const engine of engines)
         );
         assert.equal(
           await dialog()
-            .getByRole("button", { name: "停止中…", exact: true })
+            .getByRole("button", { name: /停止中…$/ })
             .isDisabled(),
           true,
         );

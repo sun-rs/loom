@@ -1,3 +1,7 @@
+import {
+  clearAgentDeletionBlock,
+  findAgentDeletionBlocker,
+} from "./agent-deletion-diagnostics.ts";
 import { cancelDeletedAgentReminders } from "./reminder-agent-deletion.ts";
 import { requireHumanControlRoomManager } from "./collaboration-policy.ts";
 import type { ClientAgentManageRequest, RoomEvent } from "@rah-os/protocol";
@@ -113,23 +117,18 @@ export function finishAgentDeletion(
   }
   const participantId = String(request.payload.participantId);
   // Timeouts, disabled state, and process signals are not terminal proof.
-  for (const [table, predicate] of [
-    ["run_attempts", "state IN ('starting','running','orphaned')"],
-    ["runtime_processes", "state <> 'terminated'"],
-    ["activations", "state = 'leased'"],
-    ["placements", "state IN ('reserved','consumed')"],
-    ["agent_exclusive_operation_leases", "state = 'active'"],
-  ])
-    if (
-      db
-        .prepare(
-          `SELECT 1 FROM ${table} WHERE participant_id=? AND ${predicate} LIMIT 1`,
-        )
-        .get(participantId)
-    )
-      throw new RuntimeTerminationProofError(
-        "Agent deletion is waiting for Host terminal proof; the durable request will resume automatically",
-      );
+  // The blocking row is reported by identity so the operator knows which Host
+  // must come back; there is no bypass.
+  const blocker = findAgentDeletionBlocker(db, participantId);
+  if (blocker)
+    throw new RuntimeTerminationProofError(
+      `Agent deletion is waiting for Host terminal proof from ${blocker.table} (${blocker.predicate})` +
+        `${blocker.runAttemptId === undefined ? "" : `, run attempt ${blocker.runAttemptId}`}` +
+        `${blocker.hostId === undefined ? "" : `, host ${blocker.hostId}`}` +
+        `${blocker.recoveryDriver === undefined ? "" : `, recovery driver ${blocker.recoveryDriver}`}` +
+        "; the durable request will resume automatically",
+    );
+  clearAgentDeletionBlock(db, request.aggregateId);
   const now = owner.now().toISOString();
   for (const activation of db
     .prepare(

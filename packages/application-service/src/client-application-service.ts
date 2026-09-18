@@ -56,6 +56,8 @@ import {
   ClientAgentActivityListRequestSchema,
   ClientAgentActivityListResponseSchema,
   ClientAgentTrajectoryListRequestSchema,
+  ClientAgentDeletionDiagnosticsRequestSchema,
+  ClientAgentDeletionDiagnosticsResponseSchema,
   ClientAgentPresenceListRequestSchema,
   ClientAgentPresenceListResponseSchema,
   ClientAgentRemindersListRequestSchema,
@@ -206,6 +208,8 @@ import {
 import {
   ComputerFilesListRequestSchema,
   ComputerFilesListResponseSchema,
+  RoomExecutionReadRequestSchema,
+  RoomExecutionReadResponseSchema,
   type ComputerFilesListRequest,
   type ComputerFilesListResponse,
 } from "@rah-os/protocol";
@@ -409,6 +413,7 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/rooms/leave",
   "/rooms/sos/resume",
   "/rooms/sos/stop",
+  "/rooms/sos/read",
   "/computers/files/list",
   "/rooms/unarchive",
   "/rooms/update",
@@ -1141,6 +1146,23 @@ export class ClientApplicationService {
       );
       return;
     }
+    // R5: read-only projection of a blocked Agent deletion. No mutation, no
+    // force delete; the durable intent remains the only way the Agent is
+    // removed.
+    if (path === "/agents/deletion/diagnostics") {
+      const command = parseClientRequest(
+        ClientAgentDeletionDiagnosticsRequestSchema,
+        body,
+      );
+      writeJson(
+        response,
+        200,
+        ClientAgentDeletionDiagnosticsResponseSchema.parse(
+          this.#human.getAgentDeletionDiagnostics(actor, command),
+        ),
+      );
+      return;
+    }
     if (path === "/agents/manage") {
       const command = parseClientRequest(ClientAgentManageRequestSchema, body);
       writeJson(
@@ -1318,6 +1340,19 @@ export class ClientApplicationService {
       );
       this.#human.getAuthenticatedPrincipal(actor);
       writeJson(response, 200, ComputerFilesListResponseSchema.parse(result));
+      return;
+    }
+    if (path === "/rooms/sos/read") {
+      writeJson(
+        response,
+        200,
+        RoomExecutionReadResponseSchema.parse(
+          this.#human.readRoomExecution(
+            actor,
+            parseClientRequest(RoomExecutionReadRequestSchema, body),
+          ),
+        ),
+      );
       return;
     }
     if (path === "/rooms/sos/stop") {

@@ -1,5 +1,20 @@
 # Client、Daemon 与部署边界
 
+## Composer 计算机文件引用
+
+Human API `POST /v3/client/computers/files/list` 通过 AgentHost 的有界目录读取器
+提供文件/文件夹绝对路径元数据，不提供文件正文、不创建 Artifact。
+daemon 的 `fileReferenceRoots` 配置授权绝对根目录。按 2026-09-17 用户决定，
+引用目录默认范围为 `/`，起点为运行 daemon 的用户目录，可逐级向上导航；
+显式配置较窄范围时仍保留该边界。仅 Computer 路径元数据读取器允许 `/`，
+Agent 工作区的列表和正文读取仍拒绝它。子路径不接受绝对路径、`..` 或
+符号链接逃逸，并沿用敏感目录过滤。
+必须经过 Human 身份认证；Agent 与未认证请求不能列目录。
+当前只支持本 daemon 的 Computer；其他 hostId 明确拒绝。浏览器设备图片与文件
+继续通过已有附件上传契约进入 daemon，与路径引用分开。UI 的 loopback 自动识别
+只是可覆盖的交互偏好，不是文件权限或跨机器访问证明。详见
+[Composer 合同及验证](../design/composer-controls.md)。
+
 状态：本机 daemon core 已有独立 composition/CLI entrypoint、严格配置、Host generation fencing、deadline、Outbox wake、Worker delivery/Task/InputRequest command，以及 collaboration P2/P3 versioned loopback Human API；Workspace Agent 创建、版本化配置、暂停/恢复/删除已经打通 Kernel→Human API→Web→冻结运行上下文→真实子进程，运行中暂停由 AgentHost 受控 cancel 并保存 terminal proof，并通过 daemon restart 与 desktop/mobile browser gate。Agent execution `restart/session` 已复用同一 terminal proof、全局per-Agent fence、Provider continuity store与canonical manage闭环；`full` workspace删除仍禁用。ADR-0017 提供持久化 production Web build、server-side Human session 与重启恢复入口；durable root 已稳定为 `~/.rah`，旧 Application Support 数据以无覆盖、可恢复 staging 迁移，operator uninstall 只卸载服务且不提供数据删除。ADR-0019 又新增 daemon 继续 loopback 的正式 HTTPS LAN edge、一次性设备 pairing、可撤销持久 session、Raft 形态设备管理、PWA shell 和真实 Chrome 重启门禁。Remote Computer v1 已有独立 protocol、窄 Kernel application port、loopback HTTP transport、独立进程双 Host/generation handoff fixture、持久 resident runner supervisor、owner-private control socket、签名 terminal result、parent-SIGKILL reconnect E2、owner-private 多 attachment catalog、短 session/heartbeat/RuntimeOffer reconcile、远程 Placement/RunAttempt/terminal-proof 控制闭环、activation-scoped Worker credential、持久 ComputerOperation、两阶段 Server-delivery receipt、固定 Ed25519 release source、离线 Ed25519 release publisher、K two-slot/WAL、detached replacement、successor-owned ready、service-start recovery、handoff `SIGKILL` rollback、launchd-owned constant supervisor/FD lease、typed provisioning、shell-free launchctl lifecycle API、Runtime Provider Keychain loader、strict operator install/stage/activate CLI，以及 darwin-arm64 自包含 SEA 构建和 staging gate。系统/iOS CA trust 安装与 CA 轮换/告警、跨机器 HTTPS Computer/Worker endpoint、operation hint、真实 login/reboot/power-loss gate、`full` execution reset、skill/memory、Artifact/Review、Developer ID/notarization、生产私钥托管/HTTPS publication 与 attachment/supervisor Keychain credential 管理尚未实现。
 
 ## 1. 产品形态不改变核心 owner
@@ -314,6 +329,29 @@ HTTP 不具备浏览器 secure-context 功能；普通 Web 响应式访问可用
 2026-09-12 后续用户要求明确停用浏览器 token 门槛；原 session 和 HTTPS 代码保留，
 Tailnet 通过 `browserAccess: trusted-network` 绕过浏览器会话检查。重连也不返回 token 表单。
 [实现和验收](../audits/2026-09-12-trusted-network-access.zh-CN.md)取代先前“自动 HttpOnly 会话”的当前入口描述。
+
+### 网络入口的所有权：Tailnet 与普通 LAN 分别显式配置（2026-09-16）
+
+网络入口由两个互不派生的决定组成，`scripts/workbench-launch-mode.mjs` 是唯一解释者：
+
+- `RAH_TAILNET_HOST` 只授权该精确 100.64.0.0/10 地址与 `127.0.0.1`，保留用户选择的
+  Tailnet HTTP 与停用浏览器 token 门槛策略。
+- `RAH_TRUSTED_LAN_HOSTS` 是普通 LAN 受信入口的唯一来源：逗号分隔、逐个显式列出的
+  RFC1918 IPv4 地址。重复、回环、非私有、越界、格式错误或与 Tailnet 地址相同的条目
+  一律报错拒绝，不做静默去重或跳过。
+- 该变量必须与 `RAH_TAILNET_HOST` 同时出现。没有 Tailnet 入口时单独设置它会失败，并
+  指向既有的 `RAH_LAN_ORIGIN` 认证 HTTPS/配对网关；不新增第二个 Core，也不新增第二条
+  无认证 LAN 路径。
+
+launcher 不再枚举本机网卡推导监听集合。新增或消失的网卡都不改变已授权入口，只有改写显式
+配置才能改变。`local-core-workbench.ts` 与 `LocalWorkbenchGateway` 的信任模式合同不变：
+trusted-network 仍以网络访问控制为边界，Host/Origin 校验只防跨站，不认证同网其他用户；
+普通 LAN 若要做应用层认证，走既有 LAN gateway 的配对/HTTPS 路径。
+
+`scripts/workbench-launch-receipt.mjs` 的收据对已授权入口具有权威性。tailnet 收据回放
+`RAH_TAILNET_HOST` 与 `RAH_TRUSTED_LAN_HOSTS`，空 shell 重启按收据复现同一监听集合，既不
+降回 loopback 也不扩大范围；收据里记录了 launcher 无法由配置复现的地址时失败并给出明确诊断，
+不静默丢弃。写收据时同样校验，避免留下一份重启不可复现的证据。
 
 ## 通知租约失效的恢复边界（2026-09-12）
 

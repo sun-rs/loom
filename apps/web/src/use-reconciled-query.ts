@@ -14,7 +14,7 @@ export function useReconciledQuery<
     | "workspace.human.list"
     | "agent.list",
 >(
-  client: RahClient,
+  client: RahClient | undefined,
   operation: K,
   input: RahClientOperationMap[K]["input"],
   enabled = true,
@@ -23,13 +23,13 @@ export function useReconciledQuery<
   // Refreshing the same scope must retain its read projection and mounted drafts.
   const key = JSON.stringify([operation, input]);
   const [state, setState] = useState<{
-    client: RahClient;
+    client?: RahClient;
     key: string;
     data?: RahClientOperationMap[K]["output"];
     error?: string;
   }>();
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || !client) return;
     let stopped = false,
       pending = false;
     let timer: ReturnType<typeof setTimeout>;
@@ -92,7 +92,10 @@ export function useReconciledQuery<
       document.removeEventListener("visibilitychange", focus);
     };
   }, [client, key, enabled, operation, refreshKey]);
-  return enabled && state?.client === client && state.key === key
+  return enabled &&
+    client !== undefined &&
+    state?.client === client &&
+    state.key === key
     ? state
     : undefined;
 }

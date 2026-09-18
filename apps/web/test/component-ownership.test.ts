@@ -352,7 +352,8 @@ test("WorkspaceScreen composes owner components without owning their DOM", () =>
   assert.match(agentSurface, /agent\.get/u);
   assert.match(agentSurface, /agent\.room\.list/u);
   assert.match(agentSurface, /onOpenDirectRoom/u);
-  assert.match(agentSurface, /发消息/u);
+  assert.match(agentSurface, /AgentHeaderActions/u);
+  assert.doesNotMatch(agentSurface, /rah-agent-chat-compose/u);
   assert.match(agentSurface, /function AgentChatPane/u);
   assert.match(agentSurface, />活动诊断</u);
   assert.doesNotMatch(

@@ -24,6 +24,7 @@ import {
   sep,
 } from "node:path";
 
+import { workbenchHealthPayload } from "./daemon-health.ts";
 import { readWebBuildId, WEB_BUILD_HEADER } from "./web-build-metadata.ts";
 
 const SESSION_COOKIE = "rah_workbench_session";
@@ -246,10 +247,10 @@ export class LocalWorkbenchGateway {
       return;
     }
     if (requestUrl.pathname === "/_rah/health" && request.method === "GET") {
-      sendJson(response, 200, {
-        service: "rah-os-local-core",
-        state: "online",
-      });
+      // The Core and this gateway are one build, so the identity here is the
+      // daemon's own. It is the acceptance surface compared against Settings →
+      // 关于 after a restart, in development as well as in a formal release.
+      sendJson(response, 200, workbenchHealthPayload());
       return;
     }
     if (requestUrl.pathname === "/_rah/session" && request.method === "GET") {

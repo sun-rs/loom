@@ -194,6 +194,13 @@ export type {
 } from "./agent-host.ts";
 export { FakeRuntimeAdapter } from "./fake-runtime.ts";
 export { GenericProcessAdapter } from "./generic-process-adapter.ts";
+export {
+  ACTIVATION_IDENTITY_FENCE_KEYS,
+  filterUserLaunchEnvironment,
+  resolveActivationEnvironment,
+  sanitizeInheritedEnvironment,
+} from "./launch-environment-policy.ts";
+export type { ActivationEnvironmentPolicyInput } from "./launch-environment-policy.ts";
 export type { RuntimeProviderSessionEvidence } from "./generic-process-adapter.ts";
 export { ProviderSessionStore } from "./provider-session-store.ts";
 export type {

@@ -12,6 +12,7 @@ function press(
     keyCode?: number;
     disabled?: boolean;
     defaultPrevented?: boolean;
+    stopOnly?: boolean;
   } = {},
 ) {
   let prevented = false;
@@ -30,7 +31,7 @@ function press(
       form: {
         querySelector(selector: string) {
           assert.equal(selector, 'button[type="submit"]');
-          return button;
+          return options.stopOnly ? null : button;
         },
         requestSubmit(submitter: unknown) {
           assert.equal(submitter, button);
@@ -72,6 +73,10 @@ test("keyboard cannot bypass disabled Send (empty, pending, permission, invalid 
     prevented: true,
     submissions: 0,
   });
+  assert.deepEqual(press({ stopOnly: true }), {
+    prevented: true,
+    submissions: 0,
+  });
 });
 test("Room/DM and Thread composers share one Enter implementation and explicit submit buttons", () => {
   const source = readFileSync(
@@ -79,5 +84,11 @@ test("Room/DM and Thread composers share one Enter implementation and explicit s
     "utf8",
   );
   assert.equal(source.match(/handleComposerKeyDown\(event\)/g)?.length, 2);
-  assert.equal(source.match(/type="submit"/g)?.length, 2);
+  assert.equal(source.match(/<ComposerSubmitControl\s/g)?.length, 2);
+  const control = readFileSync(
+    new URL("../src/components/composer-submit-control.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(control, /type=\{action === "send" \? "submit" : "button"\}/);
+  assert.match(control, /action === "send"\s*\? sendDisabled/);
 });

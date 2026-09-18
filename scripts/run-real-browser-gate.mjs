@@ -4,7 +4,6 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
-  readdirSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -718,77 +717,13 @@ try {
       document.activeElement?.textContent?.trim() === "重启 / 重置",
     "Agent reset Escape and focus return",
   );
-  await clickButton(browser, { text: "报告问题" });
-  await waitFor(
-    browser,
-    () => document.querySelector(".rah-agent-issue-report-dialog") !== null,
-    "Raft-shaped local Agent issue report dialog",
-  );
-  await dispatchKey(browser, "Escape", 27);
-  await waitFor(
-    browser,
-    () =>
-      document.querySelector(".rah-agent-issue-report-dialog") === null &&
-      document.activeElement?.textContent?.trim() === "报告问题",
-    "Agent issue report Escape and focus return",
-  );
-  await clickButton(browser, { text: "报告问题" });
   assert.equal(
-    await call(browser, () => {
-      const dialog = document.querySelector(".rah-agent-issue-report-dialog");
-      const submit = [...(dialog?.querySelectorAll("button") ?? [])].find(
-        (button) => button.textContent?.trim() === "导出到本机",
-      );
-      return submit?.disabled;
-    }),
-    true,
-    "local issue export requires explicit sensitive-data consent",
-  );
-  await call(browser, () => {
-    const dialog = document.querySelector(".rah-agent-issue-report-dialog");
-    const textarea = dialog?.querySelector("textarea");
-    if (textarea instanceof HTMLTextAreaElement) {
-      const setter = Object.getOwnPropertyDescriptor(
-        HTMLTextAreaElement.prototype,
-        "value",
-      )?.set;
-      setter?.call(textarea, "browser gate local diagnostic export");
-      textarea.dispatchEvent(new Event("input", { bubbles: true }));
-    }
-    const consent = [
-      ...(dialog?.querySelectorAll('input[type="checkbox"]') ?? []),
-    ].at(-1);
-    if (consent instanceof HTMLInputElement) consent.click();
-  });
-  await clickButton(browser, { text: "导出到本机" });
-  await waitFor(
-    browser,
-    () =>
-      document
-        .querySelector(".rah-agent-issue-report-success")
-        ?.textContent?.includes("已导出到本机") === true,
-    "local Agent issue report success state",
-  );
-  const issueReportPath = await waitForDownloadedIssueReport(downloadDirectory);
-  const issueReport = JSON.parse(readFileSync(issueReportPath, "utf8"));
-  assert.equal(issueReport.schemaVersion, "rah-agent-issue-report-v1");
-  assert.equal(issueReport.disclosure.transport, "local_download");
-  assert.equal(
-    issueReport.issue.description,
-    "browser gate local diagnostic export",
-  );
-  assert.equal(issueReport.logs.activityDiagnostics.included, true);
-  assert.doesNotMatch(
-    JSON.stringify(issueReport),
-    /toolInput|recentMessages|runtimeTranscript|RAH_FAKE/u,
-  );
-  await clickButton(browser, { text: "完成" });
-  await waitFor(
-    browser,
-    () =>
-      document.querySelector(".rah-agent-issue-report-dialog") === null &&
-      document.activeElement?.textContent?.trim() === "报告问题",
-    "close local Agent issue report and restore focus",
+    await call(browser, () =>
+      [...document.querySelectorAll("button")].some(
+        (button) => button.textContent?.trim() === "报告问题",
+      ),
+    ),
+    false,
   );
   await clickButton(browser, { ariaLabel: "更换 Alice 头像" });
   await waitFor(
@@ -4538,21 +4473,6 @@ async function waitFor(
     description,
     timeoutMs,
   });
-}
-
-async function waitForDownloadedIssueReport(directory, timeoutMs = 10_000) {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    const filename = readdirSync(directory).find(
-      (candidate) =>
-        candidate.startsWith("rah-agent-issue-") &&
-        candidate.endsWith(".json") &&
-        !candidate.endsWith(".crdownload"),
-    );
-    if (filename !== undefined) return join(directory, filename);
-    await delay(50);
-  }
-  throw new Error("Timed out waiting for local Agent issue report download");
 }
 
 async function clickButton(connection, criteria) {

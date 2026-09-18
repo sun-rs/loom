@@ -458,22 +458,48 @@
 }
 .rah-profile-field-editor input,
 .rah-profile-field-editor textarea {
+  display: block;
   box-sizing: border-box;
   width: 100%;
-  padding: 8px;
+  margin: 0;
+  padding: 4px 8px;
   border: 2px solid var(--ink);
-  font: inherit;
+  border-radius: 0;
+  box-shadow: var(--shadow-s);
+  font: 400 14px/20px var(--sans);
   color: var(--ink);
   background: white;
 }
+.rah-profile-field-editor input {
+  height: 32px;
+}
+.rah-profile-field-editor input:focus,
+.rah-profile-field-editor textarea:focus {
+  outline: none;
+  box-shadow: var(--shadow-s);
+}
 .rah-profile-field-editor textarea {
-  min-height: 80px;
-  resize: vertical;
+  min-height: 40px;
+  line-height: 16px;
+  resize: none;
+  overflow: hidden;
 }
 .rah-profile-field-buttons {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 6px;
+  margin-top: 5px;
+}
+.rah-profile-field-buttons .btn {
+  min-height: 0;
+  height: 28px;
+  padding: 4px 8px;
+  font: 700 12px/16px var(--sans);
+}
+.rah-profile-field-count {
+  margin-top: 5px;
+  text-align: right;
+  color: var(--ink-50);
+  font: 400 12px/16px var(--mono);
 }
 .rah-profile-field-editor [role="alert"] {
   color: #a92820;

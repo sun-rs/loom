@@ -1462,7 +1462,8 @@
 }
 
 .rah-rich-reference {
-  display: inline-block;
+  display: inline-flex;
+  align-items: baseline;
   max-width: 100%;
   overflow: hidden;
   margin: 0;
@@ -1478,7 +1479,7 @@
   text-decoration: none;
   text-overflow: ellipsis;
   user-select: text;
-  vertical-align: bottom;
+  vertical-align: baseline;
   white-space: nowrap;
 }
 
@@ -1493,6 +1494,12 @@
 
 .rah-rich-self-reference {
   background: var(--yellow);
+}
+
+.rah-reference-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .rah-rich-self-reference:hover {
@@ -2598,12 +2605,15 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 .rah-agent-reset-dialog > header h2 {
   font: 700 18px/28px var(--sans);
+  text-transform: uppercase;
 }
-.rah-agent-reset-dialog form {
+.rah-dialog.rah-agent-reset-dialog form:not(.rah-attachment-comment-composer) {
   gap: 20px;
   padding: 0;
 }
-.rah-agent-reset-dialog form footer {
+.rah-dialog.rah-agent-reset-dialog
+  form:not(.rah-attachment-comment-composer)
+  footer {
   flex-wrap: wrap;
   gap: 12px;
 }
@@ -2734,151 +2744,6 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 
 .rah-agent-reset-confirm.is-full {
   background: var(--coral);
-}
-
-.rah-agent-issue-report-dialog > header h2 {
-  align-items: center;
-  display: inline-flex;
-  gap: 8px;
-}
-
-.rah-agent-issue-report-dialog > header h2 svg {
-  height: 18px;
-  width: 18px;
-}
-
-.rah-agent-issue-report-dialog form {
-  gap: 14px;
-  overflow-y: auto;
-}
-
-.rah-agent-issue-report-agent {
-  border: var(--bd);
-  display: grid;
-  gap: 2px;
-  padding: 10px;
-}
-
-.rah-agent-issue-report-agent span,
-.rah-agent-issue-report-agent small,
-.rah-agent-issue-report-dialog fieldset > p,
-.rah-agent-issue-report-success small {
-  color: var(--muted);
-  font: 10px/1.45 var(--mono);
-}
-
-.rah-agent-issue-report-agent b {
-  font-size: 13px;
-}
-
-.rah-agent-issue-report-dialog form > label > small {
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 400;
-  margin-left: 3px;
-}
-
-.rah-agent-issue-report-dialog fieldset {
-  border: 0;
-  display: grid;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-}
-
-.rah-agent-issue-report-dialog legend {
-  font-size: 12px;
-  font-weight: 800;
-  margin-bottom: 4px;
-}
-
-.rah-agent-issue-report-choice {
-  align-items: flex-start;
-  border: 1px solid var(--ink-20);
-  display: flex !important;
-  gap: 9px !important;
-  padding: 10px;
-}
-
-.rah-agent-issue-report-choice:focus-within,
-.rah-agent-issue-report-choice:hover {
-  border-color: var(--ink);
-}
-
-.rah-agent-issue-report-choice input,
-.rah-agent-issue-report-warning input {
-  margin-top: 2px;
-}
-
-.rah-agent-issue-report-choice > span {
-  display: grid;
-  gap: 3px;
-}
-
-.rah-agent-issue-report-choice b {
-  font-size: 12px;
-}
-
-.rah-agent-issue-report-choice small {
-  color: var(--muted);
-  font: 10px/1.4 var(--mono);
-}
-
-.rah-agent-issue-report-warning {
-  background: color-mix(in srgb, var(--orange) 22%, var(--bg));
-  border: var(--bd);
-  display: grid;
-  gap: 10px;
-  padding: 11px;
-}
-
-.rah-agent-issue-report-warning p {
-  font-size: 11px;
-  line-height: 1.5;
-}
-
-.rah-agent-issue-report-warning label {
-  align-items: flex-start;
-  display: flex !important;
-  font-size: 11px !important;
-  gap: 8px !important;
-}
-
-.rah-agent-issue-report-success {
-  align-items: center;
-  display: grid;
-  gap: 14px;
-  grid-template-columns: auto minmax(0, 1fr);
-  padding: 22px 18px 18px;
-}
-
-.rah-agent-issue-report-success > span {
-  align-items: center;
-  background: var(--green);
-  border: var(--bd);
-  display: flex;
-  height: 48px;
-  justify-content: center;
-  width: 48px;
-}
-
-.rah-agent-issue-report-success > span svg {
-  height: 24px;
-  width: 24px;
-}
-
-.rah-agent-issue-report-success h3 {
-  font-size: 15px;
-}
-
-.rah-agent-issue-report-success p {
-  font: 10px/1.45 var(--mono);
-  overflow-wrap: anywhere;
-}
-
-.rah-agent-issue-report-success .btn {
-  grid-column: 1 / -1;
-  justify-self: end;
 }
 
 .sr-only {
@@ -3519,6 +3384,11 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 
 .rah-channel-settings-preferences input:checked + i {
   background: var(--yellow);
+}
+.rah-channel-settings-preferences
+  label:has(input:not(:disabled):not(:checked))
+  > i:hover {
+  background: var(--soft-signal);
 }
 .rah-channel-settings-preferences input:checked + i::after {
   left: 17px;
@@ -4176,6 +4046,129 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
 }
 
 /* Raft create-agent-name Sl/nOe and dOe/lOe; brutal field tokens. */
+.rah-dialog.rah-agent-create-dialog:not(.rah-agent-manage-dialog) {
+  align-self: center;
+  border: var(--bd);
+  height: auto;
+  max-height: calc(100dvh - 40px);
+  min-width: 0;
+  width: min(448px, calc(100vw - 32px));
+  padding: 24px;
+  overflow-y: auto;
+  box-shadow: var(--shadow-m);
+}
+
+.rah-agent-create-dialog:not(.rah-agent-manage-dialog) > header {
+  min-height: 0;
+  border: 0;
+  padding: 0;
+  margin-bottom: 16px;
+}
+
+.rah-agent-create-dialog:not(.rah-agent-manage-dialog) > header h2 {
+  font: 700 18px/28px var(--sans);
+  text-transform: uppercase;
+}
+
+.rah-dialog.rah-agent-create-dialog:not(.rah-agent-manage-dialog) form {
+  flex: none;
+  gap: 4px;
+  padding: 0;
+  overflow: visible;
+}
+
+.rah-dialog.rah-agent-create-dialog:not(.rah-agent-manage-dialog) form label {
+  gap: 4px;
+  font: 700 14px/20px var(--sans);
+}
+
+/* Raft Field keeps a description line even when there is no hint. */
+.rah-agent-create-dialog:not(.rah-agent-manage-dialog)
+  form
+  label:not(:has(small))::after {
+  content: "";
+  min-height: 16px;
+}
+
+.rah-dialog.rah-agent-create-dialog:not(.rah-agent-manage-dialog) form small {
+  min-height: 16px;
+  border: 0;
+  padding: 0;
+  color: var(--ink-50);
+  font: 400 12px/16px var(--sans);
+}
+
+.rah-dialog.rah-agent-create-dialog:not(.rah-agent-manage-dialog)
+  form
+  .rah-agent-description-count {
+  text-align: right;
+  font-family: var(--mono);
+}
+
+.rah-dialog.rah-agent-create-dialog:not(.rah-agent-manage-dialog) form select {
+  appearance: none;
+  border-radius: 0;
+  font: 400 16px/24px var(--sans);
+  padding: 8px 36px 8px 12px;
+}
+
+.rah-create-agent-select {
+  position: relative;
+  display: block;
+}
+.rah-agent-create-fields {
+  display: contents;
+}
+.rah-create-model-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.rah-agent-provider-editor {
+  display: grid;
+  gap: 4px;
+}
+.rah-agent-provider-editor label {
+  display: grid;
+  gap: 4px;
+}
+.rah-create-agent-select > svg {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--ink-50);
+}
+
+.rah-dialog.rah-agent-create-dialog:not(.rah-agent-manage-dialog)
+  form
+  textarea {
+  min-height: 96px;
+}
+
+.rah-dialog.rah-agent-create-dialog:not(.rah-agent-manage-dialog) form footer {
+  position: static;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  gap: 12px;
+}
+
+.rah-agent-create-dialog:not(.rah-agent-manage-dialog) .rah-agent-disclosure {
+  padding: 0;
+  font: 700 14px/20px var(--sans);
+  color: var(--ink-60);
+}
+
+.rah-agent-create-dialog:not(.rah-agent-manage-dialog) form footer .btn {
+  min-height: 40px;
+  padding: 8px 16px;
+  font: 700 14px/20px var(--sans);
+}
+
 .rah-agent-create-dialog:not(.rah-agent-manage-dialog) form input,
 .rah-agent-create-dialog:not(.rah-agent-manage-dialog) form textarea {
   font: 400 16px/24px var(--sans);
@@ -4403,4 +4396,35 @@ html[data-rah-live-agent-activity="false"] .rah-live-agent-activity-footer {
   overflow: hidden;
   width: 14px;
   height: 14px;
+}
+.rah-channel-archived-badge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  border: 2px solid var(--ink);
+  background: color-mix(in srgb, var(--orange) 30%, transparent);
+  padding: 4px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.rah-channel-archived-notice {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-top: 2px solid var(--ink);
+  background: color-mix(in srgb, var(--orange) 20%, transparent);
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.rah-channel-archived-notice button {
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline;
 }

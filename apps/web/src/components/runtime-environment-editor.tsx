@@ -4,10 +4,12 @@ export function RuntimeEnvironmentEditor({
   rows,
   disabled,
   onChange,
+  hiddenKeys = [],
 }: {
   rows: EnvironmentRow[];
   disabled: boolean;
   onChange: (rows: EnvironmentRow[]) => void;
+  hiddenKeys?: readonly string[];
 }) {
   return (
     <div className="rah-runtime-environment-editor">
@@ -17,46 +19,48 @@ export function RuntimeEnvironmentEditor({
           环境变量会注入到 Agent 运行时中。
         </p>
       </div>
-      {rows.map((row, index) => (
-        <div className="rah-runtime-environment-row" key={index}>
-          <input
-            aria-label={`环境变量名称 ${index + 1}`}
-            placeholder="KEY"
-            value={row.key}
-            disabled={disabled}
-            onChange={(e) =>
-              onChange(
-                rows.map((item, i) =>
-                  i === index ? { ...item, key: e.target.value } : item,
-                ),
-              )
-            }
-          />
-          <span aria-hidden="true">=</span>
-          <input
-            aria-label={`环境变量值 ${index + 1}`}
-            placeholder="value"
-            value={row.value}
-            disabled={disabled}
-            onChange={(e) =>
-              onChange(
-                rows.map((item, i) =>
-                  i === index ? { ...item, value: e.target.value } : item,
-                ),
-              )
-            }
-          />
-          <button
-            className="sq-btn"
-            type="button"
-            aria-label={`删除环境变量 ${index + 1}`}
-            disabled={disabled}
-            onClick={() => onChange(rows.filter((_, i) => i !== index))}
-          >
-            <Icon name="trash-2" />
-          </button>
-        </div>
-      ))}
+      {rows.map((row, index) =>
+        hiddenKeys.includes(row.key) ? null : (
+          <div className="rah-runtime-environment-row" key={index}>
+            <input
+              aria-label={`环境变量名称 ${index + 1}`}
+              placeholder="KEY"
+              value={row.key}
+              disabled={disabled}
+              onChange={(e) =>
+                onChange(
+                  rows.map((item, i) =>
+                    i === index ? { ...item, key: e.target.value } : item,
+                  ),
+                )
+              }
+            />
+            <span aria-hidden="true">=</span>
+            <input
+              aria-label={`环境变量值 ${index + 1}`}
+              placeholder="value"
+              value={row.value}
+              disabled={disabled}
+              onChange={(e) =>
+                onChange(
+                  rows.map((item, i) =>
+                    i === index ? { ...item, value: e.target.value } : item,
+                  ),
+                )
+              }
+            />
+            <button
+              className="sq-btn"
+              type="button"
+              aria-label={`删除环境变量 ${index + 1}`}
+              disabled={disabled}
+              onClick={() => onChange(rows.filter((_, i) => i !== index))}
+            >
+              <Icon name="trash-2" />
+            </button>
+          </div>
+        ),
+      )}
       <button
         className="rah-runtime-environment-add"
         type="button"

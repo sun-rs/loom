@@ -743,7 +743,9 @@ function WorkspaceScreen({
   const directRoomOpenRequests = useRef(new Map<string, Promise<Room>>());
   const consecutivePollFailures = useRef(0);
   const consumerPrefix = useMemo(() => browserConsumerId(), []);
-  const activeRoom = rooms.find((room) => room.roomId === activeRoomId);
+  const activeRoom =
+    rooms.find((room) => room.roomId === activeRoomId) ??
+    archivedRooms.find((room) => room.roomId === activeRoomId);
   const activeWorkspace =
     workspaces.find(
       (workspace) => workspace.workspaceId === activeRoom?.workspaceId,
@@ -952,25 +954,25 @@ function WorkspaceScreen({
         const activeWorkspaceIds = new Set(
           activeWorkspaces.map(({ workspaceId }) => workspaceId),
         );
-        setArchivedRooms(
-          roomResult.rooms.filter(
-            (room) =>
-              room.kind === "channel" &&
-              room.archivedAt !== undefined &&
-              activeWorkspaceIds.has(room.workspaceId),
-          ),
+        const archivedChannels = roomResult.rooms.filter(
+          (room) =>
+            room.kind === "channel" &&
+            room.archivedAt !== undefined &&
+            activeWorkspaceIds.has(room.workspaceId),
         );
+        setArchivedRooms(archivedChannels);
         setRooms(visibleRooms);
+        const navigableRooms = [...visibleRooms, ...archivedChannels];
         setActiveRoomId((current) => {
           if (
             current !== undefined &&
-            visibleRooms.some(({ roomId }) => roomId === current)
+            navigableRooms.some(({ roomId }) => roomId === current)
           ) {
             return current;
           }
           const requested = roomSelectionFromSearch(window.location.search);
           return (
-            visibleRooms.find(({ roomId }) => roomId === requested)?.roomId ??
+            navigableRooms.find(({ roomId }) => roomId === requested)?.roomId ??
             visibleRooms.find(
               (room) => room.kind === "channel" && room.slug === "all",
             )?.roomId ??
@@ -2414,7 +2416,7 @@ function WorkspaceScreen({
   };
 
   const unarchiveRoomFromCreate = useCallback(
-    async (room: Room) => {
+    async (room: Room, openAfter = true) => {
       if (!canCreateCurrentWorkspaceRoom) {
         throw new Error("当前 Human 没有取消归档此频道的权限");
       }
@@ -2444,7 +2446,8 @@ function WorkspaceScreen({
             )
           : [...current, result.room],
       );
-      if (navigationGeneration.current !== navigationIntent) return;
+      if (!openAfter || navigationGeneration.current !== navigationIntent)
+        return;
       setRoomCreateOpen(false);
       setRoomData(undefined);
       setActiveThreadRootMessageId(undefined);
@@ -2484,9 +2487,13 @@ function WorkspaceScreen({
         session,
       });
       setRooms((current) =>
-        current.map((room) =>
-          room.roomId === result.room.roomId ? result.room : room,
-        ),
+        archive
+          ? current.filter((room) => room.roomId !== result.room.roomId)
+          : current.some((room) => room.roomId === result.room.roomId)
+            ? current.map((room) =>
+                room.roomId === result.room.roomId ? result.room : room,
+              )
+            : [...current, result.room],
       );
       setArchivedRooms((current) =>
         archive
@@ -2904,7 +2911,7 @@ function WorkspaceScreen({
               },
         ),
       );
-      setAgentCreateOpen(false);
+      return result.agent.definition.agentDefinitionId;
     },
     [activeWorkspace, canCreateCurrentWorkspaceAgent, client, consumerPrefix],
   );
@@ -3688,7 +3695,18 @@ function WorkspaceScreen({
                 ) : surface === "settings" ? (
                   <SurfaceErrorBoundary surface="设置">
                     <SettingsSurface
-                      onComputers={() => setSurface("computers")}
+                      archivedRooms={archivedRooms.filter(
+                        (room) =>
+                          room.workspaceId === activeWorkspace?.workspaceId,
+                      )}
+                      onOpenRoom={(roomId) =>
+                        void openDiscoveryLocation({
+                          target: { kind: "room", roomId },
+                        })
+                      }
+                      onUnarchiveRoom={(room) =>
+                        unarchiveRoomFromCreate(room, false)
+                      }
                       onSystemChannelUpdated={() => {
                         setDirectoryRevision((value) => value + 1);
                         setReload((value) => value + 1);
@@ -3929,6 +3947,8 @@ function WorkspaceScreen({
                           }
                           roomName={activeRoom?.name}
                           roomKind={activeRoom?.kind}
+                          archived={activeRoom?.archivedAt !== undefined}
+                          canUnarchive={canManageCurrentRoomMembers}
                           roomId={activeRoom?.roomId}
                           referenceComputers={messageReferenceComputers}
                           referenceEventsComplete={
@@ -4325,6 +4345,13 @@ function WorkspaceScreen({
                 ) : null}
                 {agentCreateOpen && activeWorkspace !== undefined ? (
                   <AgentCreateDialog
+                    client={client}
+                    onRefreshModels={async (refreshOfferId) => {
+                      const result = await client.request("host.runtime.list", {
+                        refreshOfferId,
+                      });
+                      setLocalRuntimes(result.runtimes);
+                    }}
                     computerLabel={
                       computer?.displayName ?? computer?.hostname ?? "本机"
                     }

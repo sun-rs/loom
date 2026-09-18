@@ -1,8 +1,30 @@
+[创建 Agent 运行时设置](./audits/2026-09-18-agent-create-runtime-settings.zh-CN.md)：移除高级身份字段，统一模型、推理、Provider 和环境变量，保留失败重试边界。
+
+[Agent 资料编辑样式](./audits/2026-09-18-agent-profile-field-ui.zh-CN.md)：名称、描述输入框与紧凑操作按钮对齐 Raft，描述框自动高度且不可拖拽。
+
+[归档确认弹窗统一](./audits/2026-09-18-archive-dialog-parity.zh-CN.md)：侧栏和频道设置共用 Raft 风格确认框，含桌面和移动尺寸验证。
+
+[Tab 内容留白与正文提及对齐](./audits/2026-09-18-tab-spacing-and-mention-alignment.zh-CN.md)：移除 Agent tab 固定宽度，测量共享 tab 左右留白，核对黄色提及的 Raft 行内规则。
+
+[设置与 Agent 动态修复](./audits/2026-09-18-settings-activity-repair.zh-CN.md)：文件反选、独立外观卡片、开关命中、已归档频道与动态展示规则；区分 Raft 1.16.0 证据及本地历史分页扩展。
+
 [UI 改造提交边界](./audits/2026-09-18-ui-commit-scope.zh-CN.md)：从 rc.1 分离界面改造，文件引用配套纳入，Stop 与后台审计补强保留未提交。
+
+[Agent Council 持续暂停](./audits/2026-09-18-council-persistent-pause.zh-CN.md)：明确暂停可覆盖 Composer 自动恢复，旧请求、新消息和任务通知不能解除持久停止围栏。
 
 [移动附件菜单连续打开](./audits/2026-09-18-native-upload-reopen.zh-CN.md)：以真实触摸替代鼠标式验证，原生 input 直接接收触摸，覆盖连续取消及重新选择。
 
 [文件引用窗口共享样式](./audits/2026-09-18-file-dialog-chrome.zh-CN.md)：标题栏、关闭按钮和确认按钮复用 Task 弹窗及 UI 库规则，覆盖桌面和移动端 portal。
+
+[运行超时与隔离撤销](./audits/2026-09-18-runtime-timeout-and-quarantine.zh-CN.md)：对照 Raft 的存活判定，避免固定总时长反复杀死活进程；人工停止可撤销已确认终止的隔离执行，保留消息与审计事实。
+
+[运行时调度对齐第一批](./audits/2026-09-18-runtime-scheduling-alignment.zh-CN.md)：按 Raft Computer 1.0.32 将 Claude 从 gated 改为原生 direct，保留已有 Provider session；记录忙时回复后仍有后续运行的实证与常驻生命周期边界。
+
+[Kimi K3 跨 CLI 实测](./audits/2026-09-18-k3-transport-benchmark.zh-CN.md)：官方 K3/high 在 OpenCode 与 Kimi CLI 的原生、恢复和 RAH 私聊对照；两条接入路径仍有共同模型往返，不能把功能通过当作性能闭合。
+
+[延迟 P0 第一批修复](./audits/2026-09-18-latency-p0-repair.zh-CN.md)：启动读取聚合、Kimi 恢复去重、Placement 停止围栏与 Codex 原生错误传播；三家真实业务门禁通过，Kimi 长尾、原生生命周期和 Codex 服务阻塞仍明确未闭合。
+
+[侧栏偏好与 Composer 入口](./audits/2026-09-18-sidebar-and-composer-controls.zh-CN.md)：隐藏空分组开关、展开选择、移动动态浮条、文件引用与上传入口；修正隔离执行误拦截重启，已完成正式部署与浏览器验证。
 
 [PWA 顶部背景延伸](./audits/2026-09-17-pwa-status-edge.zh-CN.md)：外壳内背景位于标题控件下层，布局只避让系统安全区；撤销高层覆盖与人为最小留白，真机验收边界单列。
 
@@ -12,11 +34,47 @@
 
 [Agent 工作区界面收缩](./audits/2026-09-17-agent-workspace-surface.zh-CN.md)：移除运行项目根、说明页脚和独立记忆管理；按 Raft 1.16.0 对齐树、标题及空态样式。
 
+[Composer 文件引用与停止](./design/composer-controls.md)：单加号、本机路径与设备上传、Room/私聊/消息列共享停止状态、终止证明与修正消息恢复；源码依据、边界和验收入口。
+
+[Composer 控件验收](./audits/2026-09-17-composer-controls.zh-CN.md)：连续停止的启动竞态与 Host 恢复收口、桌面／窄屏真实浏览器与上传回归，正式部署证据。
+
+[交付与 OpenCode 长请求修复](./audits/2026-09-17-reply-delivery-and-opencode-timeout-repair.zh-CN.md)：对照 Raft Computer 1.0.32，修复 message-check 已交付消息被重复 hold 与长请求底层五分钟超时；验证及部署状态以文中记录为准。
+
+[正式频道双边短问答验收](./audits/2026-09-17-bilateral-reply-latency-acceptance.zh-CN.md)：三轮真实问答的正式回复、耗时区间与答案；记录 Raft Codex 配额阻塞、现有模型差异和额外激活成本，不等同于同模型性能基准。
+
+[本机 CLI、私聊与双边频道延迟](./audits/2026-09-17-native-cli-dm-and-channel-latency.zh-CN.md)：四个 CLI 对同模型 RAH 私聊，两 Agent 频道对 Raft；记录 Codex 750.748 秒迟到回复、阶段耗时、双边回复人数与采样边界。
+
+[延迟根因与修复顺序](./audits/2026-09-17-latency-root-causes.zh-CN.md)：原生 usage 证实的大上下文、Kimi 逐轮重复长期规则、工具往返、停止后旧激活重跑与频道收尾；更正 Codex D2 的 89.641 秒排队归因，保留供应商长尾的证据边界。
+
+[Provider Session 连续性与 Raft 生命周期](./audits/2026-09-17-provider-session-lifecycle-parity.zh-CN.md)：区分已实现的会话恢复与尚缺失的常驻实例；定位有限 Run/进程终止耦合、首次中断恢复边界及 Kimi/Claude 差异，明确不能用清空有价值上下文或文件记忆替代原生 Session。
+
+[all 频道回复与延迟调查](./audits/2026-09-17-all-channel-reply-latency.zh-CN.md)：修复前正式发帖与暂存草稿时间线、隔离复现、OpenCode 网络与恢复耗时；后续实测见上述双边短问答验收，同条件性能对照仍未完成。
+
+[付费 CLI 与 iPhone 键盘验收](./audits/2026-09-17-paid-cli-and-iphone-acceptance.zh-CN.md)：Claude、Kimi、OpenCode 联合门禁通过；Codex 未登录返回 401，iPhone 尚未连接，分别保留待验收状态。
+
+[批次 A/B 接手收口](./audits/2026-09-17-ab-takeover-closure.zh-CN.md)：终止证明收口 orphaned RunAttempt、限定历史 schema 差异、收紧恢复证明、停机前副本预检；修复验收与部署记录集中在此。
+
+[rc.1 修复与补强施工指南](./product/2026-09-16-rc-repair-and-hardening-guide.zh-CN.md)：分批工作单，包含 owner、失败测试、产品边界、正式重启及验收要求；A/B 已实施并接手复核，C/D 未启动。
+
+[rc.1 审计复核与最新 Raft 差异](./audits/2026-09-16-rc1-audit-and-latest-raft.zh-CN.md)：区分 Web 1.16.0 与 Computer 1.0.32，核对 1.0.18 基线，记录真实缺陷、用户决定及按 owner 划分的修复顺序。
+
+[批次 A / R1：CI 浏览器依赖顺序](./audits/2026-09-16-r1-ci-browser-order.zh-CN.md)：Playwright chromium/firefox/webkit 与 chrome 通道在 `npm run check` 之前安装并按锁文件缓存；新增 workflow 顺序不变量测试并接入 `check`；接入移动导航、消息菜单/选择、任务筛选、滚动所有权、侧栏触摸六个门禁。本机通过，远端 CI 待推送后验证。
+
+[批次 A / R2：Tailnet 与普通 LAN 信任分离](./audits/2026-09-16-r2-tailnet-lan-trust-separation.zh-CN.md)：删除按网卡自动扩大监听的推导，普通 LAN 受信入口改为显式 `RAH_TRUSTED_LAN_HOSTS`；启动收据对已授权入口具权威性，重启回放同一集合，损坏收据 fail-closed。保留 Tailnet HTTP 无 token 的产品决定；LAN 入口信任级别待用户裁决，裁决前保持现状。
+
+[批次 A / R3：事件查询热点](./audits/2026-09-16-r3-event-query-hotspot.zh-CN.md)：为 `agent.deletion_requested` 增加两条部分索引，删除协调每秒查询与 Worker 授权围栏不再全表扫描；200k 事件实测计划前后对比，DB 体积零增长；迁移保护限于本次索引（幂等、旧库补齐、失败可重试）。
+
+[批次 A / R4：产品 release identity 与文档一致性](./audits/2026-09-16-r4-release-identity.zh-CN.md)：单一 release version 输入，构建时固化 commit/build identity，供 Settings、health、`agent_hosts.build_version` 与制品共用；缺版本拒绝正式构建，开发构建明确标 development；ADR-0029 决策 4 标注被 2026-09-14 Human 任务编辑合同取代。下一个版本号未定。
+
+[批次 B / R5：Agent 删除阻塞诊断](./audits/2026-09-16-r5-agent-deletion-diagnostics.zh-CN.md)：阻塞诊断、只读 API/SDK、删除对话框与状态变化上报。原报告所列 orphaned RunAttempt 恢复缺口由 09-17 接手收口修复，不增加强制删除。
+
+[批次 B / R6：升级迁移保护](./audits/2026-09-16-r6-upgrade-migration-protection.zh-CN.md)：只读 `inspectSchemaState` 识别待迁移项;有变化才建独占校验快照,快照失败即拒绝迁移;`initialize()` 重组为命名 unit,可事务 DDL 合并进单个 `BEGIN IMMEDIATE` 并与 `user_version` 同事务提交,external 步骤留 journal;online backup 逻辑移入 daemon 包;`verifyCanonicalState` 不再二次 initialize;恢复只经显式确认且证明无新写入。
+
+[批次 B / R7：旧 all 频道升级预检](./audits/2026-09-16-r7-legacy-all-channel-precheck.zh-CN.md)：按 Workspace 只读读取候选(绕开成员过滤),状态 missing/name_drift 自动恢复,archived/private/ambiguous fail closed 带结构化诊断与恢复选项;Human 成员缺失只报告。
+
+[批次 B / R8：子进程环境定向隔离](./audits/2026-09-16-r8-child-environment-isolation.zh-CN.md)：新增 `launch-environment-policy.ts` 单一 owner,继承层按 `RAH_` 前缀剔除,身份围栏不可覆盖,direct 与 supervised 共用;保留 HOME、PATH、Provider 配置目录、代理与证书变量。这是环境卫生,不是 OS 沙箱。
+
 [批次 B / R9：前端错误边界与 iOS 键盘](./audits/2026-09-16-r9-error-boundary-and-ios-keyboard.zh-CN.md)：`SurfaceErrorBoundary` 包裹整个 App 与九个页面区域,正常时透明,故障时脱敏诊断 + 重试/重载,不持有消息/草稿/选择状态;iOS 键盘只加 `?rahViewportDebug=1` 诊断钩子与实机验收脚本,未改 viewport/scroll owner,待实机验收。
-
-[侧栏偏好与 Composer 入口](./audits/2026-09-18-sidebar-and-composer-controls.zh-CN.md)：隐藏空分组、记忆展开选择、移动动态浮条及文件引用和设备上传。
-
-[Composer 文件引用](./design/composer-controls.md)：共享加号入口、授权文件树、多选路径引用、移动原生上传与共享弹窗样式。
 
 [滚动所有者排查与工具栏覆盖](./audits/2026-09-16-scroll-owner-audit.zh-CN.md)：慢历史请求、搜索重复定位、活动尾随和关闭焦点恢复；三个任务入口的 Web/PWA 留白实测。
 
@@ -855,3 +913,11 @@ Claude 工具边界追加与 Kimi 原生接口差异：[来源、实施与验证
 # 2026-09-16
 
 - [PWA 滚动边界、历史补偿与原生文本选择](audits/2026-09-16-pwa-scroll-and-native-copy.zh-CN.md)
+
+# 暂停通知与正式重启
+
+- [2026-09-18：保留已停止 Room 的通知队列，修复重启误拦截](audits/2026-09-18-held-activation-restart.zh-CN.md)
+  [Agent 直接启动](./audits/2026-09-18-agent-direct-start.zh-CN.md)：移除启动确认，保留停止确认、请求保护和失败反馈。
+  [Agent 重启语义及弹窗修复](./audits/2026-09-18-agent-reset-parity.zh-CN.md)：停止状态支持三种重启，修复弹窗样式覆盖。
+  [移除 Agent 报告问题](./audits/2026-09-18-agent-issue-report-retirement.zh-CN.md)：按用户要求退役入口、弹窗和本地报告导出。
+  [创建 Agent 弹窗视觉对齐](./audits/2026-09-18-agent-create-dialog-parity.zh-CN.md)：对齐上游布局参数，修正 WebKit 控件外观与窄屏拉伸。
