@@ -240,7 +240,10 @@ function actualRun(
       ? {
           source: model.source,
           ...(model.source === "custom_model"
-            ? { modelId: model.modelId }
+            ? {
+                modelId: model.modelId,
+                ...(model.reasoning ? { reasoning: model.reasoning } : {}),
+              }
             : {}),
           ...(model.source === "explicit_binding"
             ? {

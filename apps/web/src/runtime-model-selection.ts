@@ -1,4 +1,8 @@
-import { CustomModelSchema, type ModelIntent } from "@rah-os/protocol";
+import {
+  CustomModelSchema,
+  ModelIntentSchema,
+  type ModelIntent,
+} from "@rah-os/protocol";
 
 export function customModelDraft(runtime: string, modelId: string) {
   return `custom:${runtime}:${modelId}`;
@@ -23,7 +27,7 @@ export function selectedModelIntent(
 ): ModelIntent {
   const customModel = parseCustomModelDraft(value);
   return customModel
-    ? { customModel, fallback: "disabled", reasoning: "default" }
+    ? ModelIntentSchema.parse({ customModel, fallback: "disabled", reasoning })
     : {
         fallback: "disabled",
         reasoning,

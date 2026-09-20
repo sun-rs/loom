@@ -1,3 +1,5 @@
+import { customModelAllowsEffort } from "./custom-model-effort.ts";
+export * from "./custom-model-effort.ts";
 export * from "./runtime-guide-settings.ts";
 import { z } from "zod";
 import { ClientAgentProfileRequestSchema } from "./client-agent-profile.ts";
@@ -1031,7 +1033,14 @@ export type RuntimeOfferProjection = z.infer<
 >;
 
 export const ResolvedModelSchema = z.discriminatedUnion("source", [
-  CustomModelSchema.extend({ source: z.literal("custom_model") }).strict(),
+  CustomModelSchema.extend({
+    source: z.literal("custom_model"),
+    reasoning: ExplicitReasoningLevelSchema.optional(),
+  })
+    .strict()
+    .refine((model) => customModelAllowsEffort(model, model.reasoning), {
+      message: "unsupported custom model effort",
+    }),
   z
     .object({
       source: z.literal("runtime_default"),
@@ -1061,7 +1070,8 @@ function resolvedModelsEqual(
     return (
       right.source === "custom_model" &&
       left.runtime === right.runtime &&
-      left.modelId === right.modelId
+      left.modelId === right.modelId &&
+      left.reasoning === right.reasoning
     );
   if (right.source !== "explicit_binding") return false;
   return (

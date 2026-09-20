@@ -13,7 +13,13 @@ import { ProfileImageLifecycleService } from "../src/profile-image-lifecycle.ts"
 import { RoomEventWriter } from "../src/room-event-writer.ts";
 import { ActivationObligationService } from "../src/activation-obligation-service.ts";
 import { inImmediateTransaction } from "../src/sqlite-transaction.ts";
-function fixture() {
+function fixture(
+  modelIntent: import("@rah-os/protocol").ModelIntent = {
+    fallback: "disabled",
+    exactBindingIds: ["model-current"],
+    reasoning: "low",
+  },
+) {
   const dir = mkdtempSync(join(tmpdir(), "rah-worker-profile-")),
     path = join(dir, "room.db"),
     now = () => new Date("2026-09-08T00:00:00Z");
@@ -65,11 +71,7 @@ function fixture() {
     controlRoomId: control,
     basedOnRoomSeq: head(),
     idempotencyKey: "policy",
-    modelIntent: {
-      fallback: "disabled",
-      exactBindingIds: ["model-current"],
-      reasoning: "low",
-    },
+    modelIntent,
     preferred: [],
     required: {
       allowedOfferIds: ["offer"],
@@ -416,6 +418,24 @@ test("visible profile separates configured offer/model from the frozen actual Ru
     );
     assert.ok(!JSON.stringify(profile).includes("secret-never-visible"));
     assert.ok(!JSON.stringify(profile).includes("/private"));
+    const custom = {
+      source: "custom_model",
+      runtime: "claude",
+      modelId: "claude-sonnet-5",
+      reasoning: "high",
+    };
+    f.db
+      .prepare(
+        "UPDATE placements SET decision_json=? WHERE placement_id='placement'",
+      )
+      .run(JSON.stringify({ resolvedModel: custom }));
+    const customRun = f.reads.profile(f.execution, {}).actualRun!;
+    assert.deepEqual(customRun.model, {
+      source: "custom_model",
+      modelId: "claude-sonnet-5",
+      reasoning: "high",
+    });
+
     const hidden = f.kernel.createRoom(f.actor, {
       name: "Hidden",
       slug: "hidden",
@@ -687,6 +707,23 @@ test("large created-Agent metadata stays byte bounded and serverInfo remains rea
       cursor = page.nextCursor;
     } while (cursor);
     assert.equal(seen.size, 42);
+  } finally {
+    f.close();
+  }
+});
+
+test("persisted custom Claude effort is visible to the Agent without a fabricated binding", () => {
+  const f = fixture({
+    customModel: { runtime: "claude", modelId: "claude-sonnet-5" },
+    reasoning: "high",
+    fallback: "disabled",
+  });
+  try {
+    const configured = f.reads.profile(f.execution, {}).configured!;
+    assert.equal(configured.reasoning, "high");
+    assert.equal(configured.customModelId, "claude-sonnet-5");
+    assert.equal(configured.modelSelection, "custom_model");
+    assert.deepEqual(configured.modelBindingIds, []);
   } finally {
     f.close();
   }

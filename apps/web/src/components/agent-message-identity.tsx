@@ -267,7 +267,9 @@ function AgentPreview({
             <dt>运行时</dt>
             <dd title={runtimeLabel}>{runtimeLabel}</dd>
             <dt>模型</dt>
-            <dd title={runtimeView.modelLabel}>{runtimeView.modelLabel}</dd>
+            <dd title={runtimeView.modelId ?? runtimeView.modelLabel}>
+              {runtimeView.modelLabel}
+            </dd>
             {!profileError && runtimeView.reasoningLabel ? (
               <>
                 <dt>推理强度</dt>

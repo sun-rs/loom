@@ -1,3 +1,7 @@
+[模型显示名称统一](./audits/2026-09-21-model-display-names.zh-CN.md)：选择器、资料、预览与聊天共享标签解析，原始 ID 保留在提示与执行配置。
+
+[Claude 具体版本推理强度闭环](./audits/2026-09-21-claude-custom-effort.zh-CN.md)：按文档限定档位，保留配置、Placement 与 CLI 参数，区分提交许可和本机探测。
+
 [移动端根入口列表](./audits/2026-09-21-mobile-root-entry.zh-CN.md)：底部导航先显示列表，明确链接与缩窄继续保留详情。
 
 [移动端会话标题栏与搜索身份修复](./audits/2026-09-21-mobile-conversation-chrome.zh-CN.md)：单页返回、不可用资料图标、身份去重与按下反馈；偶发白屏仍待复现。

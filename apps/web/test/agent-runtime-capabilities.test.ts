@@ -210,7 +210,7 @@ test("OpenCode options prefer real names with provider first and preserve native
         { ...runtime, cliId },
         { ...binding, displayName: undefined },
       ),
-      "deepseek-v4",
+      "DeepSeek-V4",
     );
   }
   assert.equal(

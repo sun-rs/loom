@@ -484,3 +484,39 @@ test("explicit custom model IDs require a matching native runtime and never fall
     assert.equal(planNextPlacement(request).selection, undefined);
   }
 });
+
+test("custom Claude effort survives placement and strict decision serialization", () => {
+  const request = input([
+    offer("custom-effort", { customModelRuntime: "claude" }),
+  ]);
+  request.candidates[0]!.executionPolicy = policy({
+    modelIntent: {
+      customModel: { runtime: "claude", modelId: "claude-sonnet-5" },
+      reasoning: "high",
+      fallback: "disabled",
+    },
+  });
+  const result = planNextPlacement(request);
+  assert.deepEqual(result.selection?.resolvedModel, {
+    source: "custom_model",
+    runtime: "claude",
+    modelId: "claude-sonnet-5",
+    reasoning: "high",
+  });
+  const decision = PlacementDecisionSchema.parse({
+    ...result.selection,
+    createdAt: now,
+    leaseUntil: "2026-08-26T00:05:00.000Z",
+    placementId: "custom-effort-placement",
+    state: "reserved",
+  });
+  assert.equal((decision.resolvedModel as any).reasoning, "high");
+  assert.throws(
+    () =>
+      PlacementDecisionSchema.parse({
+        ...decision,
+        resolvedModel: { ...decision.resolvedModel, reasoning: "low" },
+      }),
+    /resolvedModel/,
+  );
+});

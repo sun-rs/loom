@@ -73,7 +73,7 @@ try {
   const chatModel = page.locator(
     '[data-message-id="agent"] .rah-message-agent-model',
   );
-  assert.equal(await chatModel.innerText(), "fixture/model");
+  assert.equal(await chatModel.innerText(), "Fixture · Model");
   assert.equal(await chatModel.isVisible(), true);
   assert.equal(
     await page
@@ -89,21 +89,25 @@ try {
   );
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 844 });
-    for (const [id, label] of [
-      ["aihubmix", "model"],
-      ["deepseek", "model"],
-      ["codex", "model"],
-      ["claude", "model"],
-      ["kimi", "model"],
-      ["grokbuild", "model"],
-      ["deleted-opencode", "iiiiitoken/gemini-3.8-flash-high"],
-      ["deleted-kimi", "kimi-code/k3"],
+    for (const [id, label, raw] of [
+      ["aihubmix", "Aihubmix · DeepSeek V4", "model"],
+      ["deepseek", "DeepSeek · DeepSeek V4", "model"],
+      ["codex", "DeepSeek V4", "model"],
+      ["claude", "DeepSeek V4", "model"],
+      ["kimi", "DeepSeek V4", "model"],
+      ["grokbuild", "DeepSeek V4", "model"],
+      [
+        "deleted-opencode",
+        "Iiiiitoken · Gemini-3.8-Flash-High",
+        "iiiiitoken/gemini-3.8-flash-high",
+      ],
+      ["deleted-kimi", "Kimi-Code · K3", "kimi-code/k3"],
     ]) {
       const labelNode = page.locator(
         `[data-message-id="${id}"] .rah-message-agent-model`,
       );
       assert.equal(await labelNode.innerText(), label);
-      assert.equal(await labelNode.getAttribute("title"), label);
+      assert.equal(await labelNode.getAttribute("title"), raw);
       assert.equal(
         await labelNode.evaluate((e) => e.nextElementSibling.tagName),
         "TIME",

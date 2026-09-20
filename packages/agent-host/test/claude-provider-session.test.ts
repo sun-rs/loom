@@ -87,6 +87,105 @@ test("Claude custom native model ID reaches the CLI unchanged", async () => {
   }
 });
 
+test("Claude version model and explicit effort both reach the CLI", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-claude-custom-model-"));
+  try {
+    const executable = join(directory, "fake-claude.mjs");
+    const recordPath = join(directory, "record.jsonl");
+    writeFileSync(executable, fakeClaude, { mode: 0o700 });
+    const registry = new RuntimeProfileRegistry({
+      databasePath: join(directory, "registry.db"),
+      hostId: "host-claude",
+    });
+    registry.initialize();
+    const implementations = new RuntimeImplementationRegistry();
+    const revision = registry.importManifest(manifest(executable));
+    const report = registry.recordProbeReport(
+      await implementations.probeRevision(revision, { cwd: directory }),
+    );
+    const active = registry.activateRevision({
+      contentDigest: revision.contentDigest,
+      runtimeProfileRevisionId: revision.runtimeProfileRevisionId,
+    });
+    assert.throws(
+      () =>
+        implementations.createRuntime(
+          active,
+          report,
+          {} as any,
+          {
+            source: "custom_model",
+            runtime: "claude",
+            modelId: "vendor/unknown",
+            reasoning: "high",
+          } as any,
+        ),
+      /unsupported custom model effort/,
+    );
+    assert.throws(
+      () =>
+        implementations.createRuntime(
+          active,
+          report,
+          {} as any,
+          {
+            source: "custom_model",
+            runtime: "claude",
+            modelId: "claude-sonnet-4-6",
+            reasoning: "xhigh",
+          } as any,
+        ),
+      /unsupported custom model effort/,
+    );
+    const runtime = implementations.createRuntime(
+      active,
+      report,
+      {
+        cwd: directory,
+        supervisorDirectory: join(directory, "supervisors"),
+        activationEnvironment: () => ({
+          args: ["--prompt", "test prompt"],
+          env: { FAKE_CLAUDE_RECORD_PATH: recordPath },
+        }),
+      },
+      {
+        source: "custom_model",
+        runtime: "claude",
+        modelId: "claude-sonnet-5",
+        reasoning: "high",
+      },
+      "full_access",
+    );
+    const run = await runtime.start(
+      {
+        activationId: "activation-custom",
+        consumerId: "consumer-custom",
+        fromSeq: 1,
+        toSeq: 1,
+        hostId: "host-claude",
+        participantId: "agent-custom",
+        roomId: "room-custom",
+        runAttemptId: "run-custom",
+        reason: "manual",
+      },
+      { registerPrepared: async () => undefined },
+    );
+    assert.equal((await runtime.reap(run)).code, 0);
+    const spawn = readFileSync(recordPath, "utf8")
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line))
+      .find((row) => row.kind === "spawn");
+    assert.equal(
+      spawn.args[spawn.args.indexOf("--model") + 1],
+      "claude-sonnet-5",
+    );
+    assert.equal(spawn.args[spawn.args.indexOf("--effort") + 1], "high");
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test("Claude stream-json resumes only accepted sessions and interrupts natively", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-claude-provider-session-"));
   chmodSync(directory, 0o700);

@@ -661,6 +661,7 @@ test("a Workspace manager atomically provisions a real runtime-bound Agent", () 
     );
     kernel.heartbeatHost(host);
     const offer: RuntimeOffer = {
+      customModelRuntime: "claude",
       capacityPoolIds: [],
       capabilityEvidence: [],
       certificationRefs: [],

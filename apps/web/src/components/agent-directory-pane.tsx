@@ -1188,6 +1188,7 @@ export function AgentProfilePane({
               label="模型"
               tone="lavender"
               value={runtimeView.modelLabel}
+              title={runtimeView.modelId}
               onEdit={canManage ? onEditRuntime : undefined}
             />
             {runtimeView.reasoningLabel !== undefined ? (
@@ -1511,11 +1512,13 @@ function ProfileChip({
   label,
   tone,
   value,
+  title,
   onEdit,
 }: {
   label: string;
   tone: "cyan" | "lavender" | "orange" | "yellow";
   value: string;
+  title?: string | undefined;
   onEdit?: (() => void) | undefined;
 }) {
   return (
@@ -1525,13 +1528,17 @@ function ProfileChip({
         <button
           className="rah-profile-chip-edit"
           aria-label={`编辑${label}`}
-          title={`编辑${label}`}
+          title={title ?? `编辑${label}`}
           onClick={onEdit}
         >
-          <strong className={`is-${tone}`}>{value}</strong>
+          <strong title={title} className={`is-${tone}`}>
+            {value}
+          </strong>
         </button>
       ) : (
-        <strong className={`is-${tone}`}>{value}</strong>
+        <strong title={title} className={`is-${tone}`}>
+          {value}
+        </strong>
       )}
     </div>
   );

@@ -1,3 +1,5 @@
+import { modelDisplayName } from "./model-display-name.ts";
+import { customModelEffortLevels } from "@rah-os/protocol";
 import {
   claudeModelSuggestions,
   customModelDraft,
@@ -25,7 +27,18 @@ export function runtimeReasoningOptions(
     (candidate) => candidate.modelBindingId === modelBindingId,
   );
   if (descriptor === undefined) {
-    return [{ label: "Runtime 默认", value: "default" }];
+    const custom = parseCustomModelDraft(modelBindingId);
+    const levels =
+      custom && custom.runtime === runtime?.customModelRuntime
+        ? customModelEffortLevels(custom)
+        : [];
+    return [
+      { label: "Runtime 默认", value: "default" },
+      ...levels.map((value) => ({
+        value,
+        label: fallbackReasoningLabel(value),
+      })),
+    ];
   }
   const observedLabels = new Map(
     (descriptor.reasoningOptions ?? []).map((option) => [
@@ -93,7 +106,7 @@ export function runtimeModelOptions(
     !models.some((model) => model.modelBindingId === selected)
   )
     models.push({
-      label: custom.modelId,
+      label: modelDisplayName({ modelId: custom.modelId }, custom.runtime),
       nativeId: custom.modelId,
       modelBindingId: selected,
     });
@@ -111,13 +124,7 @@ export function runtimeModelLabel(
       .split(/[\\/]/u)
       .at(-1)
       ?.replace(/\.exe$/iu, "");
-  const providerPrefix = `${binding.provider}/`;
-  const modelId = binding.modelId.startsWith(providerPrefix)
-    ? binding.modelId.slice(providerPrefix.length)
-    : binding.modelId;
-  return cliId === "opencode"
-    ? `${friendlyModelToken(binding.provider)} · ${binding.displayName?.trim() || friendlyModelId(modelId)}`
-    : (binding.displayName ?? binding.modelId);
+  return modelDisplayName(binding, cliId);
 }
 
 export function normalizeModelBindingId(
@@ -174,31 +181,15 @@ export function runtimeFastTier(
       : undefined;
 }
 
-// Source-inspired Raft humanization fallback. Catalog display names always win;
-// retain model separators/version punctuation instead of changing execution IDs.
-function friendlyModelToken(token: string): string {
-  const brands: Record<string, string> = {
-    aihubmix: "Aihubmix",
-    openai: "OpenAI",
-    anthropic: "Anthropic",
-    deepseek: "DeepSeek",
-    gpt: "GPT",
-    gemini: "Gemini",
-    claude: "Claude",
-    kimi: "Kimi",
-    minimax: "MiniMax",
-    glm: "GLM",
-    api: "API",
-    ai: "AI",
-  };
-  return (
-    brands[token.toLowerCase()] ??
-    token.replace(/^./u, (value) => value.toUpperCase())
-  );
-}
-function friendlyModelId(id: string): string {
-  return id
-    .split(/([-_/])/u)
-    .map((part) => (/^[-_/]$/u.test(part) ? part : friendlyModelToken(part)))
-    .join("");
+/** Never label a documentation-backed submission choice as a local probe. */
+export function runtimeReasoningNotice(
+  runtime: LocalRuntimeInventoryEntry | undefined,
+  value: string,
+): string | undefined {
+  const custom = parseCustomModelDraft(value);
+  return custom &&
+    custom.runtime === runtime?.customModelRuntime &&
+    customModelEffortLevels(custom).length > 0
+    ? "可按模型文档选择推理强度；当前 CLI 与账户支持尚未验证。"
+    : undefined;
 }

@@ -36,6 +36,7 @@ import {
   runtimeModelOptions,
   runtimeFastTier,
   runtimeReasoningOptions,
+  runtimeReasoningNotice,
   runtimeToolAccessModes,
 } from "../agent-runtime-capabilities.ts";
 import { useDialogProtocol } from "../dialog-protocol.ts";
@@ -378,6 +379,13 @@ export function AgentCreateDialog({
             />
             <RuntimePicker
               label="推理强度"
+              belowControl={
+                runtimeReasoningNotice(selectedRuntime, modelBindingId) ? (
+                  <small>
+                    {runtimeReasoningNotice(selectedRuntime, modelBindingId)}
+                  </small>
+                ) : undefined
+              }
               disabled={
                 pending || createdAgentId !== undefined || !selectedRuntime
               }

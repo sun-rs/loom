@@ -1,3 +1,4 @@
+import { ResolvedModelSchema } from "@rah-os/protocol";
 import { createHash } from "node:crypto";
 import { constants, createReadStream } from "node:fs";
 import { access, realpath, stat } from "node:fs/promises";
@@ -341,6 +342,8 @@ export class RuntimeImplementationRegistry {
     resolvedModel?: ResolvedModel,
     toolAccessMode?: ToolAccessMode,
   ): GenericProcessAdapter {
+    if (resolvedModel?.source === "custom_model")
+      ResolvedModelSchema.parse(resolvedModel);
     revision = validateRuntimeProfileRevision(revision);
     if (revision.state !== "active") {
       throw new Error(
@@ -552,6 +555,7 @@ function createClaudeStreamJsonRuntime(
   ];
   if (resolvedModel?.source === "custom_model") {
     args.push("--model", resolvedModel.modelId);
+    if (resolvedModel.reasoning) args.push("--effort", resolvedModel.reasoning);
   }
   if (resolvedModel?.source === "explicit_binding") {
     requireModelBinding(probeReport, resolvedModel.modelBindingId);

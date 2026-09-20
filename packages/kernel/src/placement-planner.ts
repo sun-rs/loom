@@ -1,3 +1,4 @@
+import { customModelAllowsEffort } from "@rah-os/protocol";
 import { createHash } from "node:crypto";
 
 import type {
@@ -313,9 +314,18 @@ function resolveModel(
 ): ResolvedModel | undefined {
   const intent = policy.modelIntent;
   if (intent.customModel) {
-    if (offer.customModelRuntime !== intent.customModel.runtime)
+    if (
+      offer.customModelRuntime !== intent.customModel.runtime ||
+      !customModelAllowsEffort(intent.customModel, intent.reasoning)
+    )
       return undefined;
-    return { source: "custom_model", ...intent.customModel };
+    return {
+      source: "custom_model",
+      ...intent.customModel,
+      ...(intent.reasoning && intent.reasoning !== "default"
+        ? { reasoning: intent.reasoning }
+        : {}),
+    };
   }
   const reasoning = intent.reasoning ?? "default";
   const serviceTier = intent.serviceTier ?? "default";

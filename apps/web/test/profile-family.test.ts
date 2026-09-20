@@ -72,7 +72,7 @@ test("exact model identity selects the same runtime irrespective of inventory or
   ]) {
     const result = runtimeProfilePresentation(inputs, intent);
     assert.equal(result.runtime, b);
-    assert.equal(result.modelLabel, "real-model");
+    assert.equal(result.modelLabel, "Verified Model");
     assert.equal(result.reasoningLabel, "High");
   }
 });
@@ -127,7 +127,7 @@ test("full Agent directory uses the same scoped runtime join as identity preview
   assert.doesNotMatch(source, /runtimes\.filter\(/);
 });
 
-test("missing runtime catalogs show native model IDs for historical Agents", () => {
+test("missing runtime catalogs retain native model IDs separately from labels for historical Agents", () => {
   for (const [binding, native] of [
     ["local:kimi-cli/v1:kimi-code/k3", "kimi-code/k3"],
     [
@@ -140,7 +140,7 @@ test("missing runtime catalogs show native model IDs for historical Agents", () 
     for (const state of ["ready", "loading", "error"] as const)
       assert.equal(
         runtimeProfilePresentation([], { exactBindingIds: [binding!] }, state)
-          .modelLabel,
+          .modelId,
         native,
       );
   }
@@ -170,7 +170,7 @@ test("profile model identity is native across catalog, custom and unavailable ru
           [entry],
           { exactBindingIds: [binding] },
           state,
-        ).modelLabel,
+        ).modelId,
         native,
       );
       assert.equal(
@@ -178,7 +178,7 @@ test("profile model identity is native across catalog, custom and unavailable ru
           [],
           { customModel: { modelId: binding } },
           state,
-        ).modelLabel,
+        ).modelId,
         native,
       );
     }

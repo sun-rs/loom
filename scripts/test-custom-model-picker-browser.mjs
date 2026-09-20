@@ -41,6 +41,15 @@ try {
         page.getByRole("menuitemradio", { name: /Claude Opus 5/ }),
       ).toBeVisible();
       await page.getByRole("menuitemradio", { name: /Claude Opus 5/ }).click();
+      await dialog.getByRole("button", { name: /^推理强度：/ }).click();
+      await page
+        .getByRole("menuitemradio", { name: "High", exact: true })
+        .click();
+      await expect(
+        dialog.getByText(
+          "可按模型文档选择推理强度；当前 CLI 与账户支持尚未验证。",
+        ),
+      ).toBeVisible();
       await dialog
         .getByRole("button", { name: "保存运行时配置", exact: true })
         .click();
@@ -48,6 +57,7 @@ try {
         .poll(() => saved?.modelIntent?.customModel?.modelId)
         .toBe("claude-opus-5");
       assert.equal(saved.modelIntent.exactBindingIds, undefined);
+      assert.equal(saved.modelIntent.reasoning, "high");
       await dialog.getByRole("button", { name: "取消", exact: true }).click();
       await page
         .getByRole("button", { name: "编辑运行时配置", exact: true })
@@ -69,6 +79,59 @@ try {
       .toBe(`vendor/${cli}-special-v2`);
     await page.screenshot({ path: "/tmp/rah-custom-model-picker.png" });
     console.log("PASS", cli, "custom model save explicit native IDs");
+    if (cli === "claude") {
+      await dialog.getByRole("button", { name: "取消", exact: true }).click();
+      await page
+        .getByRole("button", { name: "添加 Agent", exact: true })
+        .click();
+      await page
+        .getByRole("menuitem", { name: "创建 Agent", exact: true })
+        .click();
+      const create = page.getByRole("dialog", {
+        name: "创建 AGENT",
+        exact: true,
+      });
+      let created;
+      await page.route("**/v3/client/agents/provision", async (route) => {
+        created = route.request().postDataJSON();
+        await route.fulfill({
+          status: 400,
+          json: { error: { message: "Fixture captured creation" } },
+        });
+      });
+      await create
+        .getByRole("textbox", { name: /名称/ })
+        .fill("Effort Fixture");
+      await create.getByRole("button", { name: /^运行时：/ }).click();
+      await page.getByRole("menuitemradio").first().click();
+      await create.getByRole("button", { name: /^模型：/ }).click();
+      await page
+        .getByRole("menuitemradio", { name: "Claude Sonnet 5", exact: true })
+        .click();
+      await create.getByRole("button", { name: /^推理强度：/ }).click();
+      await page
+        .getByRole("menuitemradio", { name: "High", exact: true })
+        .click();
+      for (const width of [1440, 390]) {
+        await page.setViewportSize({ width, height: 844 });
+        await expect(
+          create.getByText(
+            "可按模型文档选择推理强度；当前 CLI 与账户支持尚未验证。",
+          ),
+        ).toBeVisible();
+        await create
+          .getByRole("button", { name: /^推理强度：High/ })
+          .scrollIntoViewIfNeeded();
+        await page.screenshot({
+          path: `/tmp/claude-version-effort-${width}.png`,
+        });
+      }
+      await create
+        .getByRole("button", { name: "创建 Agent", exact: true })
+        .click();
+      await expect.poll(() => created?.modelIntent?.reasoning).toBe("high");
+      assert.equal(created.modelIntent.customModel.modelId, "claude-sonnet-5");
+    }
     await page.close();
   }
 } finally {

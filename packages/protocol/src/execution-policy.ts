@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { customModelAllowsEffort } from "./custom-model-effort.ts";
 
 import { VersionedContentRefSchema } from "./agent-definition.ts";
 import {
@@ -116,11 +117,11 @@ export const ModelIntentSchema = z
       (!intent.exactBindingIds &&
         !intent.capabilityClass &&
         intent.fallback === "disabled" &&
-        (!intent.reasoning || intent.reasoning === "default") &&
+        customModelAllowsEffort(intent.customModel, intent.reasoning) &&
         (!intent.serviceTier || intent.serviceTier === "default")),
     {
       message:
-        "custom model requires exclusive selection, disabled fallback and default effort/tier",
+        "custom model requires exclusive selection, disabled fallback, allowed effort and default tier",
     },
   )
   .refine(

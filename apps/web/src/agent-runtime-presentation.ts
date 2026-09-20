@@ -1,3 +1,4 @@
+import { modelDisplayName } from "./model-display-name.ts";
 import { chatModelIdentifier } from "./chat-model-identifier.ts";
 import type { LocalRuntimeInventoryEntry, ModelIntent } from "@rah-os/protocol";
 import { runtimeReasoningOptions } from "./agent-runtime-capabilities.ts";
@@ -34,6 +35,9 @@ export function runtimeProfilePresentation(
   // unavailable. An unsupported default must not pretend to be a capability.
   return {
     runtime,
+    modelId: nativeModelId
+      ? chatModelIdentifier({ modelId: nativeModelId })
+      : undefined,
     runtimeLabel: runtime
       ? runtimeProductLabel(runtime)
       : runtimes.length > 1
@@ -41,7 +45,10 @@ export function runtimeProfilePresentation(
         : "未绑定",
     modelLabel: intent
       ? nativeModelId
-        ? chatModelIdentifier({ modelId: nativeModelId })
+        ? modelDisplayName(
+            model ?? { modelId: nativeModelId },
+            runtime?.cliId ?? intent?.customModel?.runtime,
+          )
         : "未选择模型"
       : state === "loading"
         ? "加载中…"

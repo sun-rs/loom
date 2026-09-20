@@ -1,5 +1,7 @@
 # Runtime Adapter 与观察平面
 
+Claude 具体版本自定义模型的显式 effort 由 Protocol 提交许可表校验，Kernel 冻结到 ResolvedModel，AgentHost 二次校验并原样传入 CLI。文档许可不等于本机/账户已验证；未知组合禁止静默降级。见 [闭环修复与证据](../audits/2026-09-21-claude-custom-effort.zh-CN.md)。
+
 状态：最小 AgentHost、Fake/Generic Runtime、Host generation fencing、deadline、Outbox wake、持久 `prepared -> active` RunAttempt/RuntimeProcess 和 scoped Worker API 已实现；Codex `gpt-5.6-sol/low`、Kimi `kimi-code/k3` 与 OpenCode `deepseek/deepseek-v4-flash/max` 已通过 opt-in 本机完整 Task gate，fake process 已通过 InputRequest 无 listening 恢复 gate。主动逃离 process group 的 descendant、完整 Artifact/Review workflow 和 Windows tree recovery 尚未实现或验证。
 
 ## Agent 默认执行目录
